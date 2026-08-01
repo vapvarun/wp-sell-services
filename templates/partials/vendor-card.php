@@ -38,12 +38,12 @@ $completed_orders = $vendor_profile ? $vendor_profile->orders_completed : 0;
 $response_time    = get_user_meta( $vendor_id, '_wpss_vendor_response_time', true );
 // Through the shared resolver so a code renders as a name and legacy
 // free-text values still display. Same call on every country surface.
-$country          = $vendor_profile ? wpss_get_country_name( (string) $vendor_profile->country ) : '';
-$member_since     = get_user_meta( $vendor_id, '_wpss_vendor_since', true );
-$member_since     = $member_since ? $member_since : $vendor->user_registered;
-$is_verified      = $vendor_profile && $vendor_profile->is_verified;
-$is_online        = get_user_meta( $vendor_id, '_wpss_last_active', true );
-$last_delivery    = wpss_get_vendor_last_delivery( $vendor_id );
+$country       = $vendor_profile ? wpss_get_country_name( (string) $vendor_profile->country ) : '';
+$member_since  = get_user_meta( $vendor_id, '_wpss_vendor_since', true );
+$member_since  = $member_since ? $member_since : $vendor->user_registered;
+$is_verified   = $vendor_profile && $vendor_profile->is_verified;
+$is_online     = get_user_meta( $vendor_id, '_wpss_last_active', true );
+$last_delivery = wpss_get_vendor_last_delivery( $vendor_id );
 
 // Check if vendor is online (active in last 5 minutes).
 $is_currently_online = $is_online && ( time() - strtotime( $is_online ) ) < 300;

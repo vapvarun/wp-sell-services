@@ -86,7 +86,10 @@ class RealtimeController extends RestController {
 			return $this->error(
 				'wpss_realtime_disabled',
 				__( 'Real-time updates are not enabled on this site.', 'wp-sell-services' ),
-				404
+				// 501, not 404: the route exists, the feature is switched off.
+				// A 404 tells a client the endpoint does not exist, which it
+				// then caches — so turning realtime on later does not help.
+				501
 			);
 		}
 

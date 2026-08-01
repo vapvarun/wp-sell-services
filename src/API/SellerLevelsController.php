@@ -274,17 +274,10 @@ class SellerLevelsController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function check_vendor_permissions( WP_REST_Request $request ) {
-		$perm_check = $this->check_permissions( $request );
-		if ( is_wp_error( $perm_check ) ) {
-			return $perm_check;
-		}
-
-		// Canonical vendor check (capability/role + legacy meta) so role-based
-		// and demo-seeded vendors are not wrongly 403'd.
-		if ( ! wpss_is_vendor() ) {
-			return new WP_Error( 'rest_forbidden', __( 'Only vendors can access this endpoint.', 'wp-sell-services' ), array( 'status' => 403 ) );
-		}
-
-		return true;
+		// Shared gate: 401 when logged out, 403 wpss_not_vendor otherwise. This
+		// returned the generic rest_forbidden, so /vendors/me and
+		// /vendors/me/level answered the same question with two different codes
+		// for the same user in the same state.
+		return wpss_rest_require_vendor();
 	}
 }

@@ -95,7 +95,8 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 
 		// Snapshot the package data at order creation time so it's immune to later edits.
 		$package_snapshot = null;
-		if ( $service && ! empty( $order_data['package_id'] ) ) {
+		// package_id is an index, so 0 is a real package. isset(), not empty().
+		if ( $service && isset( $order_data['package_id'] ) && '' !== $order_data['package_id'] ) {
 			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
 			if ( isset( $packages[ $order_data['package_id'] ] ) ) {
 				$package_snapshot = $packages[ $order_data['package_id'] ];
@@ -121,7 +122,9 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 				'customer_id'        => (int) $order_data['customer_id'],
 				'vendor_id'          => $service->vendor_id,
 				'service_id'         => $service->id,
-				'package_id'         => ! empty( $order_data['package_id'] ) ? (int) $order_data['package_id'] : null,
+				// Storing NULL for index 0 lost the package on every order of a
+				// service's first package - only a genuinely absent value is NULL.
+				'package_id'         => ( isset( $order_data['package_id'] ) && '' !== $order_data['package_id'] ) ? (int) $order_data['package_id'] : null,
 				'addons'             => wp_json_encode( $order_data['addons'] ?? [] ),
 				'platform'           => 'standalone',
 				'platform_order_id'  => null,
@@ -155,17 +158,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		$order_id = (int) $wpdb->insert_id;
 
 		if ( $order_id ) {
-			/**
-			 * Fires after a standalone order is created.
-			 *
-			 * Pro uses this for recurring service subscription creation.
-			 *
-			 * @since 1.1.0
-			 *
-			 * @param int   $order_id   The new order ID.
-			 * @param array $order_data The order creation data.
-			 */
-			do_action( 'wpss_order_created', $order_id, $order_data );
+			wpss_after_order_created( $order_id, $order_data );
 		}
 
 		return $order_id ? wpss_get_order( $order_id ) : null;

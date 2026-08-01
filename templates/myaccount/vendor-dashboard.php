@@ -31,7 +31,15 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 	<header class="wpss-dashboard__header">
 		<h1 class="wpss-dashboard__title"><?php esc_html_e( 'Vendor Dashboard', 'wp-sell-services' ); ?></h1>
 		<div class="wpss-dashboard__actions">
-			<a href="<?php echo esc_url( home_url( '/my-account/vendor-services/' ) ); ?>" class="wpss-btn wpss-btn--secondary">
+			<?php
+			// `vendor-services` IS a registered endpoint, but the My Account page
+			// slug is not always "my-account" (renamed, translated, or nested), so
+			// the hardcoded path 404s on those sites. Ask WooCommerce for it.
+			$wpss_services_url = function_exists( 'wc_get_endpoint_url' ) && function_exists( 'wc_get_page_permalink' )
+				? wc_get_endpoint_url( 'vendor-services', '', wc_get_page_permalink( 'myaccount' ) )
+				: wpss_get_dashboard_url( 'services' );
+			?>
+			<a href="<?php echo esc_url( $wpss_services_url ); ?>" class="wpss-btn wpss-btn--secondary">
 				<?php esc_html_e( 'Manage Services', 'wp-sell-services' ); ?>
 			</a>
 			<?php
@@ -174,8 +182,21 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 			</div>
 
 			<!-- Quick Links -->
+			<?php
+			// These three cards hardcoded /my-account/{service-orders,conversations,earnings}/.
+			// Only the first was ever a registered endpoint (and it is now retired
+			// in favour of WooCommerce's own Orders tab); `conversations` and
+			// `earnings` were never registered by ANY account provider, so two of
+			// the three cards on this dashboard 404'd on every install. Every
+			// destination now resolves through the dashboard URL builder, which is
+			// where those screens actually live and which follows the site's own
+			// dashboard page and permalink shape.
+			$wpss_sales_url    = wpss_get_dashboard_url( 'sales' );
+			$wpss_messages_url = wpss_get_dashboard_url( 'messages' );
+			$wpss_earnings_url = wpss_get_dashboard_url( 'earnings' );
+			?>
 			<div class="wpss-card-grid wpss-card-grid--3col">
-				<a href="<?php echo esc_url( home_url( '/my-account/service-orders/' ) ); ?>" class="wpss-card wpss-card--link">
+				<a href="<?php echo esc_url( $wpss_sales_url ); ?>" class="wpss-card wpss-card--link">
 					<div class="wpss-card__body">
 						<i data-lucide="file-text" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 						<h4><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></h4>
@@ -183,7 +204,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 					</div>
 				</a>
 
-				<a href="<?php echo esc_url( home_url( '/my-account/conversations/' ) ); ?>" class="wpss-card wpss-card--link">
+				<a href="<?php echo esc_url( $wpss_messages_url ); ?>" class="wpss-card wpss-card--link">
 					<div class="wpss-card__body">
 						<i data-lucide="message-square" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 						<h4><?php esc_html_e( 'Messages', 'wp-sell-services' ); ?></h4>
@@ -191,7 +212,7 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 					</div>
 				</a>
 
-				<a href="<?php echo esc_url( home_url( '/my-account/earnings/' ) ); ?>" class="wpss-card wpss-card--link">
+				<a href="<?php echo esc_url( $wpss_earnings_url ); ?>" class="wpss-card wpss-card--link">
 					<div class="wpss-card__body">
 						<i data-lucide="dollar-sign" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 						<h4><?php esc_html_e( 'Earnings', 'wp-sell-services' ); ?></h4>

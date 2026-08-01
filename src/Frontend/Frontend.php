@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace WPSellServices\Frontend;
 
+use WPSellServices\Assets\ScriptRegistry;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -133,12 +135,19 @@ class Frontend {
 			true
 		);
 
-		wp_register_script(
+		// wpss-ui is otherwise only registered by the dashboard, so on any other
+		// page the realtime script's dependency on it would go unmet and
+		// WordPress would silently drop realtime entirely. Registering is
+		// idempotent, so this simply guarantees the handle exists wherever
+		// realtime runs.
+		ScriptRegistry::register_ui();
+
+		ScriptRegistry::register(
 			'wpss-realtime',
-			\WPSS_PLUGIN_URL . 'assets/js/wpss-realtime.js',
-			array( 'wpss-pusher' ),
-			\WPSS_VERSION,
-			true
+			'assets/js/wpss-realtime.js',
+			// wpss-ui provides window.wpssToast, which is how a realtime event
+			// becomes something the user can actually see.
+			array( 'wpss-pusher', ScriptRegistry::HANDLE_UI )
 		);
 
 		$this->enqueue_realtime_script();
@@ -178,6 +187,10 @@ class Frontend {
 				array(
 					'userId'    => get_current_user_id(),
 					'restNonce' => wp_create_nonce( 'wp_rest' ),
+					'i18n'      => array(
+						'notification' => __( 'You have a new notification.', 'wp-sell-services' ),
+						'message'      => __( 'You have a new message.', 'wp-sell-services' ),
+					),
 				)
 			)
 		);
@@ -234,6 +247,14 @@ class Frontend {
 				'cartNonce'        => wp_create_nonce( 'wpss_cart_nonce' ),
 				'i18n'             => array(
 					'loading'                     => __( 'Loading...', 'wp-sell-services' ),
+
+					// Buyer-request form validation and success, rendered by
+					// frontend.js. Without these the messages stay English in every
+					// locale - the JS fallbacks were carrying them.
+					'requestTitleRequired'        => __( 'Please enter a title for your request.', 'wp-sell-services' ),
+					'requestDescriptionRequired'  => __( 'Please describe what you need.', 'wp-sell-services' ),
+					'requestBudgetRange'          => __( 'Maximum budget must be greater than or equal to the minimum.', 'wp-sell-services' ),
+					'requestPosted'               => __( 'Request posted successfully.', 'wp-sell-services' ),
 					'error'                       => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'tipAmountRequired'           => __( 'Enter a tip amount greater than zero.', 'wp-sell-services' ),
 					'tipRedirecting'              => __( 'Redirecting to payment…', 'wp-sell-services' ),

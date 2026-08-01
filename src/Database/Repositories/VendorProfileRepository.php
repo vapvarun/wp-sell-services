@@ -73,11 +73,53 @@ class VendorProfileRepository extends AbstractRepository {
 
 		if ( $existing ) {
 			$success = $this->update( $existing->id, $data );
+
+			if ( $success ) {
+				self::flush_avatar_map_cache();
+			}
+
 			return $success ? $existing->id : false;
 		}
 
 		$data['user_id'] = $user_id;
-		return $this->insert( $data );
+		$inserted        = $this->insert( $data );
+
+		if ( $inserted ) {
+			self::flush_avatar_map_cache();
+		}
+
+		return $inserted;
+	}
+
+	/**
+	 * Object-cache key for the user_id => avatar_id map.
+	 *
+	 * @since 1.4.0
+	 * @var   string
+	 */
+	public const AVATAR_MAP_CACHE_KEY = 'wpss_vendor_avatar_map';
+
+	/**
+	 * Object-cache group shared by the plugin.
+	 *
+	 * @since 1.4.0
+	 * @var   string
+	 */
+	public const CACHE_GROUP = 'wpss';
+
+	/**
+	 * Invalidate the cached vendor avatar map.
+	 *
+	 * The avatar filter (see Plugin::define_avatar_filter) caches the whole
+	 * user_id => avatar_id map so rendering many avatars costs one query
+	 * instead of one per avatar. Any write that can change an avatar_id has to
+	 * drop it, or vendors keep showing a stale picture.
+	 *
+	 * @since 1.4.0
+	 * @return void
+	 */
+	public static function flush_avatar_map_cache(): void {
+		wp_cache_delete( self::AVATAR_MAP_CACHE_KEY, self::CACHE_GROUP );
 	}
 
 	/**

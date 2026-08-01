@@ -79,16 +79,42 @@
 	 * @param {string} name   Event name (wpss:realtime:*).
 	 * @param {Object} detail Event payload.
 	 */
+	var strings = (cfg && cfg.i18n) || {};
+
 	function broadcast(name, detail) {
 		document.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+	}
+
+	/**
+	 * Show a realtime event to the user.
+	 *
+	 * The CustomEvents below stay the public extension point, but nothing in
+	 * either plugin listened to them and no shipped template contains a
+	 * [data-wpss-notification-count] badge — so a correctly configured site
+	 * published to Pusher, the browser received the event, and the user saw
+	 * nothing at all. Render through the shared toast helper rather than adding
+	 * a second notification UI.
+	 *
+	 * @param {string} message Text to display.
+	 */
+	function render(message) {
+		if (!message) {
+			return;
+		}
+
+		if (typeof window.wpssToast === 'function') {
+			window.wpssToast(message, 'info');
+		}
 	}
 
 	channel.bind('notification.created', function (data) {
 		broadcast('wpss:realtime:notification', data);
 		bumpNotificationBadges();
+		render((data && (data.message || data.title)) || strings.notification);
 	});
 
 	channel.bind('message.created', function (data) {
 		broadcast('wpss:realtime:message', data);
+		render((data && data.excerpt) || strings.message);
 	});
 })();

@@ -20,6 +20,14 @@ defined( 'ABSPATH' ) || exit;
 class MigrationManager {
 
 	/**
+	 * Option marking the proposal -> order backfill as done.
+	 *
+	 * @since 1.4.0
+	 * @var string
+	 */
+	const PROPOSAL_BACKFILL_OPTION = 'wpss_backfilled_proposal_order_ids';
+
+	/**
 	 * Schema manager instance.
 	 *
 	 * @var SchemaManager
@@ -57,7 +65,87 @@ class MigrationManager {
 			$results['wss_migration'] = $this->migrate_from_wss();
 		}
 
+		// Backfill the proposal -> order link for accepts that predate 1.4.0.
+		if ( ! get_option( self::PROPOSAL_BACKFILL_OPTION, false ) ) {
+			$results['proposal_order_ids'] = $this->backfill_proposal_order_ids();
+		}
+
 		return $results;
+	}
+
+	/**
+	 * Fill in proposals.order_id for proposals accepted before 1.4.0.
+	 *
+	 * Accepting a proposal minted the order but never recorded WHICH order it
+	 * produced, while Proposal::to_array() published that column in
+	 * every REST response — so existing installs answer `order_id: null` for
+	 * every proposal ever accepted. Writing it going forward does not repair
+	 * that history, and the link is recoverable: the minted order carries
+	 * platform = 'request' with platform_order_id set to the originating
+	 * request id.
+	 *
+	 * Deliberately conservative — it only ever fills a NULL, and only when
+	 * exactly ONE order matches the request and vendor. Where a request
+	 * produced several orders for the same vendor the right one cannot be
+	 * known, so the row is left NULL rather than guessed: a wrong link would
+	 * point a buyer or vendor at somebody else's order.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @return bool True once the pass has run.
+	 */
+	public function backfill_proposal_order_ids(): bool {
+		$proposals = $this->wpdb->prefix . 'wpss_proposals';
+		$orders    = $this->wpdb->prefix . 'wpss_orders';
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from $wpdb->prefix; all values are prepared.
+		$rows = $this->wpdb->get_results(
+			"SELECT id, request_id, vendor_id FROM {$proposals}
+			WHERE status = 'accepted' AND order_id IS NULL"
+		);
+
+		$linked = 0;
+
+		foreach ( (array) $rows as $row ) {
+			// platform_order_id is a varchar, so compare as a string rather
+			// than forcing a numeric conversion of the whole column.
+			$matches = $this->wpdb->get_col(
+				$this->wpdb->prepare(
+					"SELECT id FROM {$orders}
+					WHERE platform = 'request' AND platform_order_id = %s AND vendor_id = %d
+					LIMIT 2",
+					(string) $row->request_id,
+					(int) $row->vendor_id
+				)
+			);
+
+			if ( 1 !== count( $matches ) ) {
+				continue;
+			}
+
+			$this->wpdb->update(
+				$proposals,
+				array( 'order_id' => (int) $matches[0] ),
+				array( 'id' => (int) $row->id ),
+				array( '%d' ),
+				array( '%d' )
+			);
+
+			++$linked;
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		update_option( self::PROPOSAL_BACKFILL_OPTION, true );
+
+		wpss_log(
+			sprintf(
+				'Proposal order_id backfill: linked %d of %d accepted proposals that had no order recorded.',
+				$linked,
+				count( (array) $rows )
+			)
+		);
+
+		return true;
 	}
 
 	/**

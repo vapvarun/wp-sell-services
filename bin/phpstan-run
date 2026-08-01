@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+#
+# Run PHPStan against a tree whose committed autoloader is --no-dev.
+#
+# vendor/ ships with the plugin, so vendor/composer/autoload_static.php is
+# generated with --no-dev (see bin/pre-commit). PHPStan's WordPress extension
+# is a dev dependency, so it cannot be autoloaded from that file and PHPStan
+# dies with "Class SzepeViktor\PHPStan\WordPress\... not found" before it
+# analyses a single line. Without this wrapper the gate looks broken rather
+# than failing loudly, and gets skipped.
+#
+# This regenerates the dev autoloader, runs PHPStan, and restores the --no-dev
+# autoloader on the way out - including on failure or Ctrl-C - so the working
+# tree is never left in a state the pre-commit guard would reject.
+#
+# Usage: bin/phpstan-run [phpstan args...]      (default: analyse)
+
+set -uo pipefail
+
+cd "$( dirname "${BASH_SOURCE[0]}" )/.." || exit 1
+
+restore_autoloader() {
+	composer dump-autoload --no-dev --quiet 2>/dev/null
+}
+trap restore_autoloader EXIT INT TERM
+
+composer dump-autoload --quiet 2>/dev/null || {
+	echo "phpstan-run: could not generate the dev autoloader (is composer installed?)" >&2
+	exit 1
+}
+
+if [ "$#" -eq 0 ]; then
+	set -- analyse --no-progress
+fi
+
+# The WordPress stubs alone exhaust the stock 256M limit before analysis starts,
+# so default to a workable one - but let an explicit --memory-limit win.
+case " $* " in
+	*" --memory-limit"*) ;;
+	*) set -- "$@" --memory-limit=1G ;;
+esac
+
+./vendor/bin/phpstan "$@"
+exit $?

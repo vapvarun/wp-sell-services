@@ -930,68 +930,254 @@ function wpss_get_countries(): array {
 		// Complete ISO 3166-1 alpha-2 list. A partial list silently blocks
 		// checkout for every country left out, so this is the whole set.
 		$countries = array(
-			'AF' => __( 'Afghanistan', 'wp-sell-services' ), 'AX' => __( 'Åland Islands', 'wp-sell-services' ), 'AL' => __( 'Albania', 'wp-sell-services' ), 'DZ' => __( 'Algeria', 'wp-sell-services' ),
-			'AS' => __( 'American Samoa', 'wp-sell-services' ), 'AD' => __( 'Andorra', 'wp-sell-services' ), 'AO' => __( 'Angola', 'wp-sell-services' ), 'AI' => __( 'Anguilla', 'wp-sell-services' ),
-			'AQ' => __( 'Antarctica', 'wp-sell-services' ), 'AG' => __( 'Antigua and Barbuda', 'wp-sell-services' ), 'AR' => __( 'Argentina', 'wp-sell-services' ), 'AM' => __( 'Armenia', 'wp-sell-services' ),
-			'AW' => __( 'Aruba', 'wp-sell-services' ), 'AU' => __( 'Australia', 'wp-sell-services' ), 'AT' => __( 'Austria', 'wp-sell-services' ), 'AZ' => __( 'Azerbaijan', 'wp-sell-services' ),
-			'BS' => __( 'Bahamas', 'wp-sell-services' ), 'BH' => __( 'Bahrain', 'wp-sell-services' ), 'BD' => __( 'Bangladesh', 'wp-sell-services' ), 'BB' => __( 'Barbados', 'wp-sell-services' ),
-			'BY' => __( 'Belarus', 'wp-sell-services' ), 'BE' => __( 'Belgium', 'wp-sell-services' ), 'BZ' => __( 'Belize', 'wp-sell-services' ), 'BJ' => __( 'Benin', 'wp-sell-services' ),
-			'BM' => __( 'Bermuda', 'wp-sell-services' ), 'BT' => __( 'Bhutan', 'wp-sell-services' ), 'BO' => __( 'Bolivia', 'wp-sell-services' ), 'BQ' => __( 'Bonaire, Sint Eustatius and Saba', 'wp-sell-services' ),
-			'BA' => __( 'Bosnia and Herzegovina', 'wp-sell-services' ), 'BW' => __( 'Botswana', 'wp-sell-services' ), 'BV' => __( 'Bouvet Island', 'wp-sell-services' ), 'BR' => __( 'Brazil', 'wp-sell-services' ),
-			'IO' => __( 'British Indian Ocean Territory', 'wp-sell-services' ), 'BN' => __( 'Brunei', 'wp-sell-services' ), 'BG' => __( 'Bulgaria', 'wp-sell-services' ), 'BF' => __( 'Burkina Faso', 'wp-sell-services' ),
-			'BI' => __( 'Burundi', 'wp-sell-services' ), 'CV' => __( 'Cabo Verde', 'wp-sell-services' ), 'KH' => __( 'Cambodia', 'wp-sell-services' ), 'CM' => __( 'Cameroon', 'wp-sell-services' ),
-			'CA' => __( 'Canada', 'wp-sell-services' ), 'KY' => __( 'Cayman Islands', 'wp-sell-services' ), 'CF' => __( 'Central African Republic', 'wp-sell-services' ), 'TD' => __( 'Chad', 'wp-sell-services' ),
-			'CL' => __( 'Chile', 'wp-sell-services' ), 'CN' => __( 'China', 'wp-sell-services' ), 'CX' => __( 'Christmas Island', 'wp-sell-services' ), 'CC' => __( 'Cocos (Keeling) Islands', 'wp-sell-services' ),
-			'CO' => __( 'Colombia', 'wp-sell-services' ), 'KM' => __( 'Comoros', 'wp-sell-services' ), 'CG' => __( 'Congo', 'wp-sell-services' ), 'CD' => __( 'Congo (DRC)', 'wp-sell-services' ),
-			'CK' => __( 'Cook Islands', 'wp-sell-services' ), 'CR' => __( 'Costa Rica', 'wp-sell-services' ), 'CI' => __( "Côte d'Ivoire", 'wp-sell-services' ), 'HR' => __( 'Croatia', 'wp-sell-services' ),
-			'CU' => __( 'Cuba', 'wp-sell-services' ), 'CW' => __( 'Curaçao', 'wp-sell-services' ), 'CY' => __( 'Cyprus', 'wp-sell-services' ), 'CZ' => __( 'Czechia', 'wp-sell-services' ),
-			'DK' => __( 'Denmark', 'wp-sell-services' ), 'DJ' => __( 'Djibouti', 'wp-sell-services' ), 'DM' => __( 'Dominica', 'wp-sell-services' ), 'DO' => __( 'Dominican Republic', 'wp-sell-services' ),
-			'EC' => __( 'Ecuador', 'wp-sell-services' ), 'EG' => __( 'Egypt', 'wp-sell-services' ), 'SV' => __( 'El Salvador', 'wp-sell-services' ), 'GQ' => __( 'Equatorial Guinea', 'wp-sell-services' ),
-			'ER' => __( 'Eritrea', 'wp-sell-services' ), 'EE' => __( 'Estonia', 'wp-sell-services' ), 'SZ' => __( 'Eswatini', 'wp-sell-services' ), 'ET' => __( 'Ethiopia', 'wp-sell-services' ),
-			'FK' => __( 'Falkland Islands', 'wp-sell-services' ), 'FO' => __( 'Faroe Islands', 'wp-sell-services' ), 'FJ' => __( 'Fiji', 'wp-sell-services' ), 'FI' => __( 'Finland', 'wp-sell-services' ),
-			'FR' => __( 'France', 'wp-sell-services' ), 'GF' => __( 'French Guiana', 'wp-sell-services' ), 'PF' => __( 'French Polynesia', 'wp-sell-services' ), 'TF' => __( 'French Southern Territories', 'wp-sell-services' ),
-			'GA' => __( 'Gabon', 'wp-sell-services' ), 'GM' => __( 'Gambia', 'wp-sell-services' ), 'GE' => __( 'Georgia', 'wp-sell-services' ), 'DE' => __( 'Germany', 'wp-sell-services' ),
-			'GH' => __( 'Ghana', 'wp-sell-services' ), 'GI' => __( 'Gibraltar', 'wp-sell-services' ), 'GR' => __( 'Greece', 'wp-sell-services' ), 'GL' => __( 'Greenland', 'wp-sell-services' ),
-			'GD' => __( 'Grenada', 'wp-sell-services' ), 'GP' => __( 'Guadeloupe', 'wp-sell-services' ), 'GU' => __( 'Guam', 'wp-sell-services' ), 'GT' => __( 'Guatemala', 'wp-sell-services' ),
-			'GG' => __( 'Guernsey', 'wp-sell-services' ), 'GN' => __( 'Guinea', 'wp-sell-services' ), 'GW' => __( 'Guinea-Bissau', 'wp-sell-services' ), 'GY' => __( 'Guyana', 'wp-sell-services' ),
-			'HT' => __( 'Haiti', 'wp-sell-services' ), 'HM' => __( 'Heard Island and McDonald Islands', 'wp-sell-services' ), 'HN' => __( 'Honduras', 'wp-sell-services' ), 'HK' => __( 'Hong Kong', 'wp-sell-services' ),
-			'HU' => __( 'Hungary', 'wp-sell-services' ), 'IS' => __( 'Iceland', 'wp-sell-services' ), 'IN' => __( 'India', 'wp-sell-services' ), 'ID' => __( 'Indonesia', 'wp-sell-services' ),
-			'IR' => __( 'Iran', 'wp-sell-services' ), 'IQ' => __( 'Iraq', 'wp-sell-services' ), 'IE' => __( 'Ireland', 'wp-sell-services' ), 'IM' => __( 'Isle of Man', 'wp-sell-services' ),
-			'IL' => __( 'Israel', 'wp-sell-services' ), 'IT' => __( 'Italy', 'wp-sell-services' ), 'JM' => __( 'Jamaica', 'wp-sell-services' ), 'JP' => __( 'Japan', 'wp-sell-services' ),
-			'JE' => __( 'Jersey', 'wp-sell-services' ), 'JO' => __( 'Jordan', 'wp-sell-services' ), 'KZ' => __( 'Kazakhstan', 'wp-sell-services' ), 'KE' => __( 'Kenya', 'wp-sell-services' ),
-			'KI' => __( 'Kiribati', 'wp-sell-services' ), 'KW' => __( 'Kuwait', 'wp-sell-services' ), 'KG' => __( 'Kyrgyzstan', 'wp-sell-services' ), 'LA' => __( 'Laos', 'wp-sell-services' ),
-			'LV' => __( 'Latvia', 'wp-sell-services' ), 'LB' => __( 'Lebanon', 'wp-sell-services' ), 'LS' => __( 'Lesotho', 'wp-sell-services' ), 'LR' => __( 'Liberia', 'wp-sell-services' ),
-			'LY' => __( 'Libya', 'wp-sell-services' ), 'LI' => __( 'Liechtenstein', 'wp-sell-services' ), 'LT' => __( 'Lithuania', 'wp-sell-services' ), 'LU' => __( 'Luxembourg', 'wp-sell-services' ),
-			'MO' => __( 'Macao', 'wp-sell-services' ), 'MG' => __( 'Madagascar', 'wp-sell-services' ), 'MW' => __( 'Malawi', 'wp-sell-services' ), 'MY' => __( 'Malaysia', 'wp-sell-services' ),
-			'MV' => __( 'Maldives', 'wp-sell-services' ), 'ML' => __( 'Mali', 'wp-sell-services' ), 'MT' => __( 'Malta', 'wp-sell-services' ), 'MH' => __( 'Marshall Islands', 'wp-sell-services' ),
-			'MQ' => __( 'Martinique', 'wp-sell-services' ), 'MR' => __( 'Mauritania', 'wp-sell-services' ), 'MU' => __( 'Mauritius', 'wp-sell-services' ), 'YT' => __( 'Mayotte', 'wp-sell-services' ),
-			'MX' => __( 'Mexico', 'wp-sell-services' ), 'FM' => __( 'Micronesia', 'wp-sell-services' ), 'MD' => __( 'Moldova', 'wp-sell-services' ), 'MC' => __( 'Monaco', 'wp-sell-services' ),
-			'MN' => __( 'Mongolia', 'wp-sell-services' ), 'ME' => __( 'Montenegro', 'wp-sell-services' ), 'MS' => __( 'Montserrat', 'wp-sell-services' ), 'MA' => __( 'Morocco', 'wp-sell-services' ),
-			'MZ' => __( 'Mozambique', 'wp-sell-services' ), 'MM' => __( 'Myanmar', 'wp-sell-services' ), 'NA' => __( 'Namibia', 'wp-sell-services' ), 'NR' => __( 'Nauru', 'wp-sell-services' ),
-			'NP' => __( 'Nepal', 'wp-sell-services' ), 'NL' => __( 'Netherlands', 'wp-sell-services' ), 'NC' => __( 'New Caledonia', 'wp-sell-services' ), 'NZ' => __( 'New Zealand', 'wp-sell-services' ),
-			'NI' => __( 'Nicaragua', 'wp-sell-services' ), 'NE' => __( 'Niger', 'wp-sell-services' ), 'NG' => __( 'Nigeria', 'wp-sell-services' ), 'NU' => __( 'Niue', 'wp-sell-services' ),
-			'NF' => __( 'Norfolk Island', 'wp-sell-services' ), 'KP' => __( 'North Korea', 'wp-sell-services' ), 'MK' => __( 'North Macedonia', 'wp-sell-services' ), 'MP' => __( 'Northern Mariana Islands', 'wp-sell-services' ),
-			'NO' => __( 'Norway', 'wp-sell-services' ), 'OM' => __( 'Oman', 'wp-sell-services' ), 'PK' => __( 'Pakistan', 'wp-sell-services' ), 'PW' => __( 'Palau', 'wp-sell-services' ),
-			'PS' => __( 'Palestine', 'wp-sell-services' ), 'PA' => __( 'Panama', 'wp-sell-services' ), 'PG' => __( 'Papua New Guinea', 'wp-sell-services' ), 'PY' => __( 'Paraguay', 'wp-sell-services' ),
-			'PE' => __( 'Peru', 'wp-sell-services' ), 'PH' => __( 'Philippines', 'wp-sell-services' ), 'PN' => __( 'Pitcairn', 'wp-sell-services' ), 'PL' => __( 'Poland', 'wp-sell-services' ),
-			'PT' => __( 'Portugal', 'wp-sell-services' ), 'PR' => __( 'Puerto Rico', 'wp-sell-services' ), 'QA' => __( 'Qatar', 'wp-sell-services' ), 'RE' => __( 'Réunion', 'wp-sell-services' ),
-			'RO' => __( 'Romania', 'wp-sell-services' ), 'RU' => __( 'Russia', 'wp-sell-services' ), 'RW' => __( 'Rwanda', 'wp-sell-services' ), 'BL' => __( 'Saint Barthélemy', 'wp-sell-services' ),
-			'SH' => __( 'Saint Helena', 'wp-sell-services' ), 'KN' => __( 'Saint Kitts and Nevis', 'wp-sell-services' ), 'LC' => __( 'Saint Lucia', 'wp-sell-services' ), 'MF' => __( 'Saint Martin', 'wp-sell-services' ),
-			'PM' => __( 'Saint Pierre and Miquelon', 'wp-sell-services' ), 'VC' => __( 'Saint Vincent and the Grenadines', 'wp-sell-services' ), 'WS' => __( 'Samoa', 'wp-sell-services' ), 'SM' => __( 'San Marino', 'wp-sell-services' ),
-			'ST' => __( 'Sao Tome and Principe', 'wp-sell-services' ), 'SA' => __( 'Saudi Arabia', 'wp-sell-services' ), 'SN' => __( 'Senegal', 'wp-sell-services' ), 'RS' => __( 'Serbia', 'wp-sell-services' ),
-			'SC' => __( 'Seychelles', 'wp-sell-services' ), 'SL' => __( 'Sierra Leone', 'wp-sell-services' ), 'SG' => __( 'Singapore', 'wp-sell-services' ), 'SX' => __( 'Sint Maarten', 'wp-sell-services' ),
-			'SK' => __( 'Slovakia', 'wp-sell-services' ), 'SI' => __( 'Slovenia', 'wp-sell-services' ), 'SB' => __( 'Solomon Islands', 'wp-sell-services' ), 'SO' => __( 'Somalia', 'wp-sell-services' ),
-			'ZA' => __( 'South Africa', 'wp-sell-services' ), 'GS' => __( 'South Georgia', 'wp-sell-services' ), 'KR' => __( 'South Korea', 'wp-sell-services' ), 'SS' => __( 'South Sudan', 'wp-sell-services' ),
-			'ES' => __( 'Spain', 'wp-sell-services' ), 'LK' => __( 'Sri Lanka', 'wp-sell-services' ), 'SD' => __( 'Sudan', 'wp-sell-services' ), 'SR' => __( 'Suriname', 'wp-sell-services' ),
-			'SJ' => __( 'Svalbard and Jan Mayen', 'wp-sell-services' ), 'SE' => __( 'Sweden', 'wp-sell-services' ), 'CH' => __( 'Switzerland', 'wp-sell-services' ), 'SY' => __( 'Syria', 'wp-sell-services' ),
-			'TW' => __( 'Taiwan', 'wp-sell-services' ), 'TJ' => __( 'Tajikistan', 'wp-sell-services' ), 'TZ' => __( 'Tanzania', 'wp-sell-services' ), 'TH' => __( 'Thailand', 'wp-sell-services' ),
-			'TL' => __( 'Timor-Leste', 'wp-sell-services' ), 'TG' => __( 'Togo', 'wp-sell-services' ), 'TK' => __( 'Tokelau', 'wp-sell-services' ), 'TO' => __( 'Tonga', 'wp-sell-services' ),
-			'TT' => __( 'Trinidad and Tobago', 'wp-sell-services' ), 'TN' => __( 'Tunisia', 'wp-sell-services' ), 'TR' => __( 'Türkiye', 'wp-sell-services' ), 'TM' => __( 'Turkmenistan', 'wp-sell-services' ),
-			'TC' => __( 'Turks and Caicos Islands', 'wp-sell-services' ), 'TV' => __( 'Tuvalu', 'wp-sell-services' ), 'UG' => __( 'Uganda', 'wp-sell-services' ), 'UA' => __( 'Ukraine', 'wp-sell-services' ),
-			'AE' => __( 'United Arab Emirates', 'wp-sell-services' ), 'GB' => __( 'United Kingdom', 'wp-sell-services' ), 'US' => __( 'United States', 'wp-sell-services' ), 'UM' => __( 'United States Minor Outlying Islands', 'wp-sell-services' ),
-			'UY' => __( 'Uruguay', 'wp-sell-services' ), 'UZ' => __( 'Uzbekistan', 'wp-sell-services' ), 'VU' => __( 'Vanuatu', 'wp-sell-services' ), 'VA' => __( 'Vatican City', 'wp-sell-services' ),
-			'VE' => __( 'Venezuela', 'wp-sell-services' ), 'VN' => __( 'Vietnam', 'wp-sell-services' ), 'VG' => __( 'Virgin Islands (British)', 'wp-sell-services' ), 'VI' => __( 'Virgin Islands (U.S.)', 'wp-sell-services' ),
-			'WF' => __( 'Wallis and Futuna', 'wp-sell-services' ), 'EH' => __( 'Western Sahara', 'wp-sell-services' ), 'YE' => __( 'Yemen', 'wp-sell-services' ), 'ZM' => __( 'Zambia', 'wp-sell-services' ),
+			'AF' => __( 'Afghanistan', 'wp-sell-services' ),
+			'AX' => __( 'Åland Islands', 'wp-sell-services' ),
+			'AL' => __( 'Albania', 'wp-sell-services' ),
+			'DZ' => __( 'Algeria', 'wp-sell-services' ),
+			'AS' => __( 'American Samoa', 'wp-sell-services' ),
+			'AD' => __( 'Andorra', 'wp-sell-services' ),
+			'AO' => __( 'Angola', 'wp-sell-services' ),
+			'AI' => __( 'Anguilla', 'wp-sell-services' ),
+			'AQ' => __( 'Antarctica', 'wp-sell-services' ),
+			'AG' => __( 'Antigua and Barbuda', 'wp-sell-services' ),
+			'AR' => __( 'Argentina', 'wp-sell-services' ),
+			'AM' => __( 'Armenia', 'wp-sell-services' ),
+			'AW' => __( 'Aruba', 'wp-sell-services' ),
+			'AU' => __( 'Australia', 'wp-sell-services' ),
+			'AT' => __( 'Austria', 'wp-sell-services' ),
+			'AZ' => __( 'Azerbaijan', 'wp-sell-services' ),
+			'BS' => __( 'Bahamas', 'wp-sell-services' ),
+			'BH' => __( 'Bahrain', 'wp-sell-services' ),
+			'BD' => __( 'Bangladesh', 'wp-sell-services' ),
+			'BB' => __( 'Barbados', 'wp-sell-services' ),
+			'BY' => __( 'Belarus', 'wp-sell-services' ),
+			'BE' => __( 'Belgium', 'wp-sell-services' ),
+			'BZ' => __( 'Belize', 'wp-sell-services' ),
+			'BJ' => __( 'Benin', 'wp-sell-services' ),
+			'BM' => __( 'Bermuda', 'wp-sell-services' ),
+			'BT' => __( 'Bhutan', 'wp-sell-services' ),
+			'BO' => __( 'Bolivia', 'wp-sell-services' ),
+			'BQ' => __( 'Bonaire, Sint Eustatius and Saba', 'wp-sell-services' ),
+			'BA' => __( 'Bosnia and Herzegovina', 'wp-sell-services' ),
+			'BW' => __( 'Botswana', 'wp-sell-services' ),
+			'BV' => __( 'Bouvet Island', 'wp-sell-services' ),
+			'BR' => __( 'Brazil', 'wp-sell-services' ),
+			'IO' => __( 'British Indian Ocean Territory', 'wp-sell-services' ),
+			'BN' => __( 'Brunei', 'wp-sell-services' ),
+			'BG' => __( 'Bulgaria', 'wp-sell-services' ),
+			'BF' => __( 'Burkina Faso', 'wp-sell-services' ),
+			'BI' => __( 'Burundi', 'wp-sell-services' ),
+			'CV' => __( 'Cabo Verde', 'wp-sell-services' ),
+			'KH' => __( 'Cambodia', 'wp-sell-services' ),
+			'CM' => __( 'Cameroon', 'wp-sell-services' ),
+			'CA' => __( 'Canada', 'wp-sell-services' ),
+			'KY' => __( 'Cayman Islands', 'wp-sell-services' ),
+			'CF' => __( 'Central African Republic', 'wp-sell-services' ),
+			'TD' => __( 'Chad', 'wp-sell-services' ),
+			'CL' => __( 'Chile', 'wp-sell-services' ),
+			'CN' => __( 'China', 'wp-sell-services' ),
+			'CX' => __( 'Christmas Island', 'wp-sell-services' ),
+			'CC' => __( 'Cocos (Keeling) Islands', 'wp-sell-services' ),
+			'CO' => __( 'Colombia', 'wp-sell-services' ),
+			'KM' => __( 'Comoros', 'wp-sell-services' ),
+			'CG' => __( 'Congo', 'wp-sell-services' ),
+			'CD' => __( 'Congo (DRC)', 'wp-sell-services' ),
+			'CK' => __( 'Cook Islands', 'wp-sell-services' ),
+			'CR' => __( 'Costa Rica', 'wp-sell-services' ),
+			'CI' => __( "Côte d'Ivoire", 'wp-sell-services' ),
+			'HR' => __( 'Croatia', 'wp-sell-services' ),
+			'CU' => __( 'Cuba', 'wp-sell-services' ),
+			'CW' => __( 'Curaçao', 'wp-sell-services' ),
+			'CY' => __( 'Cyprus', 'wp-sell-services' ),
+			'CZ' => __( 'Czechia', 'wp-sell-services' ),
+			'DK' => __( 'Denmark', 'wp-sell-services' ),
+			'DJ' => __( 'Djibouti', 'wp-sell-services' ),
+			'DM' => __( 'Dominica', 'wp-sell-services' ),
+			'DO' => __( 'Dominican Republic', 'wp-sell-services' ),
+			'EC' => __( 'Ecuador', 'wp-sell-services' ),
+			'EG' => __( 'Egypt', 'wp-sell-services' ),
+			'SV' => __( 'El Salvador', 'wp-sell-services' ),
+			'GQ' => __( 'Equatorial Guinea', 'wp-sell-services' ),
+			'ER' => __( 'Eritrea', 'wp-sell-services' ),
+			'EE' => __( 'Estonia', 'wp-sell-services' ),
+			'SZ' => __( 'Eswatini', 'wp-sell-services' ),
+			'ET' => __( 'Ethiopia', 'wp-sell-services' ),
+			'FK' => __( 'Falkland Islands', 'wp-sell-services' ),
+			'FO' => __( 'Faroe Islands', 'wp-sell-services' ),
+			'FJ' => __( 'Fiji', 'wp-sell-services' ),
+			'FI' => __( 'Finland', 'wp-sell-services' ),
+			'FR' => __( 'France', 'wp-sell-services' ),
+			'GF' => __( 'French Guiana', 'wp-sell-services' ),
+			'PF' => __( 'French Polynesia', 'wp-sell-services' ),
+			'TF' => __( 'French Southern Territories', 'wp-sell-services' ),
+			'GA' => __( 'Gabon', 'wp-sell-services' ),
+			'GM' => __( 'Gambia', 'wp-sell-services' ),
+			'GE' => __( 'Georgia', 'wp-sell-services' ),
+			'DE' => __( 'Germany', 'wp-sell-services' ),
+			'GH' => __( 'Ghana', 'wp-sell-services' ),
+			'GI' => __( 'Gibraltar', 'wp-sell-services' ),
+			'GR' => __( 'Greece', 'wp-sell-services' ),
+			'GL' => __( 'Greenland', 'wp-sell-services' ),
+			'GD' => __( 'Grenada', 'wp-sell-services' ),
+			'GP' => __( 'Guadeloupe', 'wp-sell-services' ),
+			'GU' => __( 'Guam', 'wp-sell-services' ),
+			'GT' => __( 'Guatemala', 'wp-sell-services' ),
+			'GG' => __( 'Guernsey', 'wp-sell-services' ),
+			'GN' => __( 'Guinea', 'wp-sell-services' ),
+			'GW' => __( 'Guinea-Bissau', 'wp-sell-services' ),
+			'GY' => __( 'Guyana', 'wp-sell-services' ),
+			'HT' => __( 'Haiti', 'wp-sell-services' ),
+			'HM' => __( 'Heard Island and McDonald Islands', 'wp-sell-services' ),
+			'HN' => __( 'Honduras', 'wp-sell-services' ),
+			'HK' => __( 'Hong Kong', 'wp-sell-services' ),
+			'HU' => __( 'Hungary', 'wp-sell-services' ),
+			'IS' => __( 'Iceland', 'wp-sell-services' ),
+			'IN' => __( 'India', 'wp-sell-services' ),
+			'ID' => __( 'Indonesia', 'wp-sell-services' ),
+			'IR' => __( 'Iran', 'wp-sell-services' ),
+			'IQ' => __( 'Iraq', 'wp-sell-services' ),
+			'IE' => __( 'Ireland', 'wp-sell-services' ),
+			'IM' => __( 'Isle of Man', 'wp-sell-services' ),
+			'IL' => __( 'Israel', 'wp-sell-services' ),
+			'IT' => __( 'Italy', 'wp-sell-services' ),
+			'JM' => __( 'Jamaica', 'wp-sell-services' ),
+			'JP' => __( 'Japan', 'wp-sell-services' ),
+			'JE' => __( 'Jersey', 'wp-sell-services' ),
+			'JO' => __( 'Jordan', 'wp-sell-services' ),
+			'KZ' => __( 'Kazakhstan', 'wp-sell-services' ),
+			'KE' => __( 'Kenya', 'wp-sell-services' ),
+			'KI' => __( 'Kiribati', 'wp-sell-services' ),
+			'KW' => __( 'Kuwait', 'wp-sell-services' ),
+			'KG' => __( 'Kyrgyzstan', 'wp-sell-services' ),
+			'LA' => __( 'Laos', 'wp-sell-services' ),
+			'LV' => __( 'Latvia', 'wp-sell-services' ),
+			'LB' => __( 'Lebanon', 'wp-sell-services' ),
+			'LS' => __( 'Lesotho', 'wp-sell-services' ),
+			'LR' => __( 'Liberia', 'wp-sell-services' ),
+			'LY' => __( 'Libya', 'wp-sell-services' ),
+			'LI' => __( 'Liechtenstein', 'wp-sell-services' ),
+			'LT' => __( 'Lithuania', 'wp-sell-services' ),
+			'LU' => __( 'Luxembourg', 'wp-sell-services' ),
+			'MO' => __( 'Macao', 'wp-sell-services' ),
+			'MG' => __( 'Madagascar', 'wp-sell-services' ),
+			'MW' => __( 'Malawi', 'wp-sell-services' ),
+			'MY' => __( 'Malaysia', 'wp-sell-services' ),
+			'MV' => __( 'Maldives', 'wp-sell-services' ),
+			'ML' => __( 'Mali', 'wp-sell-services' ),
+			'MT' => __( 'Malta', 'wp-sell-services' ),
+			'MH' => __( 'Marshall Islands', 'wp-sell-services' ),
+			'MQ' => __( 'Martinique', 'wp-sell-services' ),
+			'MR' => __( 'Mauritania', 'wp-sell-services' ),
+			'MU' => __( 'Mauritius', 'wp-sell-services' ),
+			'YT' => __( 'Mayotte', 'wp-sell-services' ),
+			'MX' => __( 'Mexico', 'wp-sell-services' ),
+			'FM' => __( 'Micronesia', 'wp-sell-services' ),
+			'MD' => __( 'Moldova', 'wp-sell-services' ),
+			'MC' => __( 'Monaco', 'wp-sell-services' ),
+			'MN' => __( 'Mongolia', 'wp-sell-services' ),
+			'ME' => __( 'Montenegro', 'wp-sell-services' ),
+			'MS' => __( 'Montserrat', 'wp-sell-services' ),
+			'MA' => __( 'Morocco', 'wp-sell-services' ),
+			'MZ' => __( 'Mozambique', 'wp-sell-services' ),
+			'MM' => __( 'Myanmar', 'wp-sell-services' ),
+			'NA' => __( 'Namibia', 'wp-sell-services' ),
+			'NR' => __( 'Nauru', 'wp-sell-services' ),
+			'NP' => __( 'Nepal', 'wp-sell-services' ),
+			'NL' => __( 'Netherlands', 'wp-sell-services' ),
+			'NC' => __( 'New Caledonia', 'wp-sell-services' ),
+			'NZ' => __( 'New Zealand', 'wp-sell-services' ),
+			'NI' => __( 'Nicaragua', 'wp-sell-services' ),
+			'NE' => __( 'Niger', 'wp-sell-services' ),
+			'NG' => __( 'Nigeria', 'wp-sell-services' ),
+			'NU' => __( 'Niue', 'wp-sell-services' ),
+			'NF' => __( 'Norfolk Island', 'wp-sell-services' ),
+			'KP' => __( 'North Korea', 'wp-sell-services' ),
+			'MK' => __( 'North Macedonia', 'wp-sell-services' ),
+			'MP' => __( 'Northern Mariana Islands', 'wp-sell-services' ),
+			'NO' => __( 'Norway', 'wp-sell-services' ),
+			'OM' => __( 'Oman', 'wp-sell-services' ),
+			'PK' => __( 'Pakistan', 'wp-sell-services' ),
+			'PW' => __( 'Palau', 'wp-sell-services' ),
+			'PS' => __( 'Palestine', 'wp-sell-services' ),
+			'PA' => __( 'Panama', 'wp-sell-services' ),
+			'PG' => __( 'Papua New Guinea', 'wp-sell-services' ),
+			'PY' => __( 'Paraguay', 'wp-sell-services' ),
+			'PE' => __( 'Peru', 'wp-sell-services' ),
+			'PH' => __( 'Philippines', 'wp-sell-services' ),
+			'PN' => __( 'Pitcairn', 'wp-sell-services' ),
+			'PL' => __( 'Poland', 'wp-sell-services' ),
+			'PT' => __( 'Portugal', 'wp-sell-services' ),
+			'PR' => __( 'Puerto Rico', 'wp-sell-services' ),
+			'QA' => __( 'Qatar', 'wp-sell-services' ),
+			'RE' => __( 'Réunion', 'wp-sell-services' ),
+			'RO' => __( 'Romania', 'wp-sell-services' ),
+			'RU' => __( 'Russia', 'wp-sell-services' ),
+			'RW' => __( 'Rwanda', 'wp-sell-services' ),
+			'BL' => __( 'Saint Barthélemy', 'wp-sell-services' ),
+			'SH' => __( 'Saint Helena', 'wp-sell-services' ),
+			'KN' => __( 'Saint Kitts and Nevis', 'wp-sell-services' ),
+			'LC' => __( 'Saint Lucia', 'wp-sell-services' ),
+			'MF' => __( 'Saint Martin', 'wp-sell-services' ),
+			'PM' => __( 'Saint Pierre and Miquelon', 'wp-sell-services' ),
+			'VC' => __( 'Saint Vincent and the Grenadines', 'wp-sell-services' ),
+			'WS' => __( 'Samoa', 'wp-sell-services' ),
+			'SM' => __( 'San Marino', 'wp-sell-services' ),
+			'ST' => __( 'Sao Tome and Principe', 'wp-sell-services' ),
+			'SA' => __( 'Saudi Arabia', 'wp-sell-services' ),
+			'SN' => __( 'Senegal', 'wp-sell-services' ),
+			'RS' => __( 'Serbia', 'wp-sell-services' ),
+			'SC' => __( 'Seychelles', 'wp-sell-services' ),
+			'SL' => __( 'Sierra Leone', 'wp-sell-services' ),
+			'SG' => __( 'Singapore', 'wp-sell-services' ),
+			'SX' => __( 'Sint Maarten', 'wp-sell-services' ),
+			'SK' => __( 'Slovakia', 'wp-sell-services' ),
+			'SI' => __( 'Slovenia', 'wp-sell-services' ),
+			'SB' => __( 'Solomon Islands', 'wp-sell-services' ),
+			'SO' => __( 'Somalia', 'wp-sell-services' ),
+			'ZA' => __( 'South Africa', 'wp-sell-services' ),
+			'GS' => __( 'South Georgia', 'wp-sell-services' ),
+			'KR' => __( 'South Korea', 'wp-sell-services' ),
+			'SS' => __( 'South Sudan', 'wp-sell-services' ),
+			'ES' => __( 'Spain', 'wp-sell-services' ),
+			'LK' => __( 'Sri Lanka', 'wp-sell-services' ),
+			'SD' => __( 'Sudan', 'wp-sell-services' ),
+			'SR' => __( 'Suriname', 'wp-sell-services' ),
+			'SJ' => __( 'Svalbard and Jan Mayen', 'wp-sell-services' ),
+			'SE' => __( 'Sweden', 'wp-sell-services' ),
+			'CH' => __( 'Switzerland', 'wp-sell-services' ),
+			'SY' => __( 'Syria', 'wp-sell-services' ),
+			'TW' => __( 'Taiwan', 'wp-sell-services' ),
+			'TJ' => __( 'Tajikistan', 'wp-sell-services' ),
+			'TZ' => __( 'Tanzania', 'wp-sell-services' ),
+			'TH' => __( 'Thailand', 'wp-sell-services' ),
+			'TL' => __( 'Timor-Leste', 'wp-sell-services' ),
+			'TG' => __( 'Togo', 'wp-sell-services' ),
+			'TK' => __( 'Tokelau', 'wp-sell-services' ),
+			'TO' => __( 'Tonga', 'wp-sell-services' ),
+			'TT' => __( 'Trinidad and Tobago', 'wp-sell-services' ),
+			'TN' => __( 'Tunisia', 'wp-sell-services' ),
+			'TR' => __( 'Türkiye', 'wp-sell-services' ),
+			'TM' => __( 'Turkmenistan', 'wp-sell-services' ),
+			'TC' => __( 'Turks and Caicos Islands', 'wp-sell-services' ),
+			'TV' => __( 'Tuvalu', 'wp-sell-services' ),
+			'UG' => __( 'Uganda', 'wp-sell-services' ),
+			'UA' => __( 'Ukraine', 'wp-sell-services' ),
+			'AE' => __( 'United Arab Emirates', 'wp-sell-services' ),
+			'GB' => __( 'United Kingdom', 'wp-sell-services' ),
+			'US' => __( 'United States', 'wp-sell-services' ),
+			'UM' => __( 'United States Minor Outlying Islands', 'wp-sell-services' ),
+			'UY' => __( 'Uruguay', 'wp-sell-services' ),
+			'UZ' => __( 'Uzbekistan', 'wp-sell-services' ),
+			'VU' => __( 'Vanuatu', 'wp-sell-services' ),
+			'VA' => __( 'Vatican City', 'wp-sell-services' ),
+			'VE' => __( 'Venezuela', 'wp-sell-services' ),
+			'VN' => __( 'Vietnam', 'wp-sell-services' ),
+			'VG' => __( 'Virgin Islands (British)', 'wp-sell-services' ),
+			'VI' => __( 'Virgin Islands (U.S.)', 'wp-sell-services' ),
+			'WF' => __( 'Wallis and Futuna', 'wp-sell-services' ),
+			'EH' => __( 'Western Sahara', 'wp-sell-services' ),
+			'YE' => __( 'Yemen', 'wp-sell-services' ),
+			'ZM' => __( 'Zambia', 'wp-sell-services' ),
 			'ZW' => __( 'Zimbabwe', 'wp-sell-services' ),
 		);
 	}
@@ -1191,7 +1377,7 @@ function wpss_save_billing_address( int $user_id, array $address ): bool {
  * @since 1.2.3
  *
  * @param array<string, mixed> $request Raw request data ($_POST or a REST payload).
- * @param int   $user_id Optional. Defaults to the current user.
+ * @param int                  $user_id Optional. Defaults to the current user.
  * @return bool True when something was written.
  */
 function wpss_save_billing_from_request( array $request, int $user_id = 0 ): bool {
@@ -1375,15 +1561,47 @@ function wpss_sanitize_html( string $content ): string {
 }
 
 /**
- * Generate unique order number.
+ * Generate a unique, human-quotable order number.
+ *
+ * THE single generator. Every rail calls this so one install never mixes
+ * formats: six call sites had hand-rolled the same eight-character shape while
+ * the standalone rail produced something else entirely, so a buyer's order
+ * number looked different depending on which checkout created it.
+ *
+ * The old standalone format was six random digits plus time() — e.g.
+ * WPSS-309001-1785562349. Twenty-two characters for a buyer to read out to
+ * support, and the length bought nothing: the timestamp was there for
+ * uniqueness and so was the random number, yet neither was ever checked against
+ * the table, so two orders created in the same second still collided at roughly
+ * one in 900k. It also published each order's creation time.
+ *
+ * @since 1.0.0
  *
  * @return string
  */
 function wpss_generate_order_number(): string {
-	$prefix = apply_filters( 'wpss_order_number_prefix', 'WPSS-' );
-	$number = wp_rand( 100000, 999999 );
+	global $wpdb;
 
-	return $prefix . $number . '-' . time();
+	$prefix = apply_filters( 'wpss_order_number_prefix', 'WPSS-' );
+	$table  = $wpdb->prefix . 'wpss_orders';
+
+	// Uniqueness is now verified rather than assumed. Ten attempts is far more
+	// than 36^8 needs; the time-suffixed fallback keeps checkout working rather
+	// than failing a payment over a cosmetic identifier.
+	for ( $attempt = 0; $attempt < 10; $attempt++ ) {
+		$candidate = $prefix . strtoupper( wp_generate_password( 8, false ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$taken = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE order_number = %s LIMIT 1", $candidate ) );
+
+		if ( ! $taken ) {
+			return $candidate;
+		}
+	}
+
+	wpss_log( 'Order number generation hit 10 collisions; falling back to a time-suffixed number.', 'warning' );
+
+	return $prefix . strtoupper( wp_generate_password( 8, false ) ) . '-' . time();
 }
 
 /**
@@ -2288,17 +2506,24 @@ function wpss_get_currencies(): array {
 /**
  * Calculate time difference in human readable format.
  *
- * @param string $datetime MySQL datetime string.
+ * Both sides of the comparison must be real UTC timestamps. The stored
+ * datetime is UTC, so it is parsed as UTC; "now" is time(), not
+ * current_time( 'timestamp' ). current_time() returns UTC shifted by the
+ * site's offset — a fake timestamp — so comparing the two added the offset to
+ * every result: on a UTC+5:30 site an order placed 47 minutes ago rendered as
+ * "6 hours ago". Correct on a UTC site, wrong everywhere else.
+ *
+ * @param string $datetime MySQL datetime string, in UTC.
  * @return string
  */
 function wpss_time_ago( string $datetime ): string {
-	$timestamp = strtotime( $datetime );
+	$timestamp = strtotime( $datetime . ' UTC' );
 
 	if ( ! $timestamp ) {
 		return '';
 	}
 
-	return human_time_diff( $timestamp, current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'wp-sell-services' );
+	return human_time_diff( $timestamp, time() ) . ' ' . __( 'ago', 'wp-sell-services' );
 }
 
 /**
@@ -2406,6 +2631,150 @@ function wpss_get_service_url( int $service_id ): string {
 }
 
 /**
+ * Resolve the vendor-directory page ID.
+ *
+ * `wpss_pages['vendors_page']` used to be read in three places and written in
+ * none: the installer never seeds a vendors page, no settings field offered
+ * one, and the legacy `wpss_vendors_page` option was equally write-only. The
+ * key was therefore permanently 0 on every install, which made
+ * `GET /settings` report `pages.vendors = 0` and `page_urls.vendors = null`
+ * even on sites that plainly HAVE a directory page.
+ *
+ * This is the single resolver for that page, in the order a site actually
+ * carries the answer:
+ *
+ * 1. the mapped page (Settings -> Pages, which now offers the field),
+ * 2. the legacy standalone option, for sites mapped before the page map,
+ * 3. auto-discovery of a published page carrying `[wpss_vendors]` — which is
+ *    what a site owner builds when they want a directory — persisted back into
+ *    the page map so every reader (and the admin UI) agrees from then on.
+ *
+ * Returns 0 only when the site genuinely has no vendor directory; callers must
+ * treat that as "no such page" rather than as an error.
+ *
+ * @since 1.6.1
+ *
+ * @return int Page ID, or 0 when the site has no vendor directory page.
+ */
+function wpss_get_vendors_page_id(): int {
+	static $resolved = null;
+
+	if ( null !== $resolved ) {
+		return $resolved;
+	}
+
+	$pages   = get_option( 'wpss_pages', array() );
+	$pages   = is_array( $pages ) ? $pages : array();
+	$page_id = (int) ( $pages['vendors_page'] ?? 0 );
+
+	// Legacy standalone option, for sites mapped before the page map existed.
+	if ( ! $page_id ) {
+		$page_id = (int) get_option( 'wpss_vendors_page' );
+	}
+
+	// A mapped page that has since been deleted or trashed is not an answer.
+	if ( $page_id ) {
+		$post = get_post( $page_id );
+
+		if ( ! $post || 'page' !== $post->post_type || 'publish' !== $post->post_status ) {
+			$page_id = 0;
+		}
+	}
+
+	if ( ! $page_id ) {
+		$page_id = wpss_discover_vendors_page_id();
+
+		// Persist the discovery so the key stops being read-never-written and
+		// the admin Pages panel shows the page the site is really using.
+		if ( $page_id ) {
+			$pages['vendors_page'] = $page_id;
+			update_option( 'wpss_pages', $pages );
+		}
+	}
+
+	/**
+	 * Filter the resolved vendor-directory page ID.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param int $page_id Resolved page ID, or 0 when the site has none.
+	 */
+	$resolved = (int) apply_filters( 'wpss_vendors_page_id', $page_id );
+
+	return $resolved;
+}
+
+/**
+ * Find a published page carrying the `[wpss_vendors]` directory shortcode.
+ *
+ * Cached in a transient (including the "nothing found" answer) so the lookup
+ * costs one query per half day rather than one per request on sites that have
+ * no directory page at all.
+ *
+ * @since 1.6.1
+ *
+ * @return int Page ID, or 0 when no such page exists.
+ */
+function wpss_discover_vendors_page_id(): int {
+	$cached = get_transient( 'wpss_vendors_page_lookup' );
+
+	if ( false !== $cached ) {
+		return (int) $cached;
+	}
+
+	$found = get_posts(
+		array(
+			'post_type'              => 'page',
+			'post_status'            => 'publish',
+			'posts_per_page'         => 1,
+			'fields'                 => 'ids',
+			's'                      => '[wpss_vendors',
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+
+	$page_id = ! empty( $found ) ? (int) $found[0] : 0;
+
+	set_transient( 'wpss_vendors_page_lookup', $page_id, 12 * HOUR_IN_SECONDS );
+
+	return $page_id;
+}
+
+/**
+ * Get the vendor-directory (archive) URL.
+ *
+ * The counterpart to wpss_get_vendor_url(): that one addresses ONE vendor,
+ * this one addresses the list. Returns an empty string when the site has no
+ * directory, which callers should surface as "no such page" rather than
+ * linking to a URL that 404s — there is no `/{vendor-slug}/` archive route,
+ * only `/{vendor-slug}/{nicename}/` for a single profile, so guessing an
+ * archive URL from the slug would hand clients a dead link.
+ *
+ * @since 1.6.1
+ *
+ * @return string Directory URL, or an empty string when the site has none.
+ */
+function wpss_get_vendors_url(): string {
+	$page_id = wpss_get_vendors_page_id();
+	$url     = $page_id ? (string) get_permalink( $page_id ) : '';
+
+	/**
+	 * Filter the vendor-directory URL.
+	 *
+	 * Themes and integrations that render a directory somewhere other than a
+	 * mapped page (a CPT archive, a headless route) answer here.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param string $url     Resolved directory URL, or an empty string.
+	 * @param int    $page_id Resolved directory page ID, or 0.
+	 */
+	return (string) apply_filters( 'wpss_vendors_url', $url, $page_id );
+}
+
+/**
  * Get vendor profile URL.
  *
  * @param int $user_id Vendor user ID.
@@ -2418,13 +2787,8 @@ function wpss_get_vendor_url( int $user_id ): string {
 		return '';
 	}
 
-	$pages        = get_option( 'wpss_pages', array() );
-	$vendors_page = (int) ( $pages['vendors_page'] ?? 0 );
-
-	// Fallback to legacy option.
-	if ( ! $vendors_page ) {
-		$vendors_page = (int) get_option( 'wpss_vendors_page' );
-	}
+	// One resolver for the directory page — see wpss_get_vendors_page_id().
+	$vendors_page = wpss_get_vendors_page_id();
 
 	if ( $vendors_page ) {
 		return add_query_arg( 'vendor', $user->user_nicename, get_permalink( $vendors_page ) );
@@ -2432,6 +2796,45 @@ function wpss_get_vendor_url( int $user_id ): string {
 
 	$vendor_slug = apply_filters( 'wpss_vendor_slug', 'provider' );
 	return home_url( '/' . $vendor_slug . '/' . $user->user_nicename );
+}
+
+/**
+ * Resolve the page ID that the ACTIVE e-commerce rail's cart/checkout URL
+ * actually lands on.
+ *
+ * `wpss_pages['cart']` / `['checkout']` hold the STANDALONE pages, which stay
+ * mapped even after a site switches to WooCommerce or EDD. Reporting those IDs
+ * beside a URL resolved through wpss_get_cart_url() / wpss_get_checkout_base_url()
+ * names two different screens: a client that deep-links by ID lands on the
+ * dormant standalone page while the URL it was given points at WooCommerce.
+ * Deriving the ID FROM the resolved URL keeps the two answers describing the
+ * same page by construction.
+ *
+ * @since 1.6.1
+ *
+ * @param string $key Either `cart` or `checkout`.
+ * @return int Page ID, or 0 when the rail's URL is not a WP page.
+ */
+function wpss_get_active_store_page_id( string $key ): int {
+	static $cache = array();
+
+	if ( isset( $cache[ $key ] ) ) {
+		return $cache[ $key ];
+	}
+
+	$url = 'cart' === $key ? wpss_get_cart_url() : wpss_get_checkout_base_url();
+
+	$page_id = '' !== $url ? (int) url_to_postid( $url ) : 0;
+
+	// A rail whose URL is not a WP page (or an unresolvable permalink) still
+	// has the mapped standalone page as the best available answer.
+	if ( ! $page_id ) {
+		$page_id = wpss_get_page_id( $key );
+	}
+
+	$cache[ $key ] = $page_id;
+
+	return $page_id;
 }
 
 /**
@@ -2516,6 +2919,168 @@ function wpss_append_dashboard_section( string $base_url, string $section ): str
 	$path = trailingslashit( $base_url ) . $section . '/';
 
 	return $path . $query . $fragment;
+}
+
+/**
+ * Every dashboard section slug this product knows how to address.
+ *
+ * "Known" is not the same as "renderable here": `analytics` is a real address
+ * whose template ships in Pro, so a Free-only site must still recognise the
+ * slug and explain the gap rather than treat the URL as junk. Renderability is
+ * answered separately by wpss_get_dashboard_section_template().
+ *
+ * @since 1.6.1
+ *
+ * @return array<int, string> Section slugs.
+ */
+function wpss_get_known_dashboard_sections(): array {
+	$sections = array(
+		// Buying.
+		'orders',
+		'favorites',
+		'requests',
+		// Selling.
+		'services',
+		'sales',
+		'earnings',
+		'wallet',
+		'portfolio',
+		// Account.
+		'messages',
+		'notifications',
+		'disputes',
+		'profile',
+		// Actions.
+		'create',
+		'create-request',
+		'edit-request',
+		'become-vendor',
+		// Known Pro addresses. Listed here so a Free-only site answers
+		// "this needs Pro" instead of bouncing the URL as unrecognised.
+		'analytics',
+		'subscription',
+		'subscriptions',
+	);
+
+	/**
+	 * Filter the set of known dashboard section slugs.
+	 *
+	 * Anything not in this set is treated as a mistyped URL and redirected to
+	 * the dashboard's default landing section, so add-ons that register their
+	 * own section must add its slug here as well as to `wpss_dashboard_sections`.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param array<int, string> $sections Known section slugs.
+	 */
+	$sections = (array) apply_filters( 'wpss_known_dashboard_sections', $sections );
+
+	return array_values( array_unique( array_map( 'sanitize_key', $sections ) ) );
+}
+
+/**
+ * Label-derived guesses that resolve to a real dashboard section.
+ *
+ * The nav item for `orders` is LABELLED "My Orders", so `?section=my-orders`
+ * is the URL people type — and it used to render a dead "Section Not Available"
+ * card, because nothing in the product has ever emitted that slug. The same
+ * applies to "My Services" and "Sales Orders". Mapping the plausible guesses is
+ * cheaper for everyone than teaching every tester the canonical slug.
+ *
+ * @since 1.6.1
+ *
+ * @return array<string, string> Alias slug => canonical slug.
+ */
+function wpss_get_dashboard_section_aliases(): array {
+	$aliases = array(
+		'my-orders'      => 'orders',
+		'my-order'       => 'orders',
+		'order'          => 'orders',
+		'my-sales'       => 'sales',
+		'sales-orders'   => 'sales',
+		'vendor-orders'  => 'sales',
+		'my-services'    => 'services',
+		'service'        => 'services',
+		'my-favorites'   => 'favorites',
+		'my-portfolio'   => 'portfolio',
+		'my-earnings'    => 'earnings',
+		'buyer-requests' => 'requests',
+		'my-profile'     => 'profile',
+		'become_vendor'  => 'become-vendor',
+		// Slugs the product itself has emitted into emails and gateway return
+		// URLs but never had a template for — every one of them landed on the
+		// same dead card. The links are fixed at source too; these entries keep
+		// the mail already sitting in people's inboxes working.
+		'edit-service'   => 'create',
+		'stripe-connect' => 'earnings',
+	);
+
+	/**
+	 * Filter the dashboard section alias map.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param array<string, string> $aliases Alias slug => canonical slug.
+	 */
+	return (array) apply_filters( 'wpss_dashboard_section_aliases', $aliases );
+}
+
+/**
+ * Resolve a requested section slug to the canonical slug it addresses.
+ *
+ * Returns an empty string when the slug names nothing this product has — the
+ * caller's cue to send the visitor to the default landing section instead of
+ * rendering (or worse, 301-canonicalising) a dead end.
+ *
+ * @since 1.6.1
+ *
+ * @param string $section Requested section slug.
+ * @return string Canonical section slug, or an empty string when unknown.
+ */
+function wpss_normalize_dashboard_section( string $section ): string {
+	$section = sanitize_key( $section );
+
+	if ( '' === $section ) {
+		return '';
+	}
+
+	$aliases = wpss_get_dashboard_section_aliases();
+
+	if ( isset( $aliases[ $section ] ) ) {
+		$section = sanitize_key( (string) $aliases[ $section ] );
+	}
+
+	return in_array( $section, wpss_get_known_dashboard_sections(), true ) ? $section : '';
+}
+
+/**
+ * Resolve the template file that renders a dashboard section.
+ *
+ * Runs the same `wpss_dashboard_section_template` filter the dashboard renderer
+ * uses, so Pro-supplied templates and third-party overrides are accounted for.
+ * An empty string means "known address, nothing here can render it" — which on
+ * a Free-only site is exactly the Pro-only case.
+ *
+ * @since 1.6.1
+ *
+ * @param string $section Canonical section slug.
+ * @return string Absolute template path, or an empty string when none exists.
+ */
+function wpss_get_dashboard_section_template( string $section ): string {
+	$section = sanitize_key( $section );
+
+	if ( '' === $section ) {
+		return '';
+	}
+
+	// `wallet` and `earnings` are one screen; earnings.php renders both.
+	$template_section = ( 'wallet' === $section ) ? 'earnings' : $section;
+	$template_path    = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$template_section}.php";
+
+	/** This filter is documented in src/Frontend/UnifiedDashboard.php */
+	$template_path = (string) apply_filters( 'wpss_dashboard_section_template', $template_path, $section );
+
+	return ( '' !== $template_path && file_exists( $template_path ) ) ? $template_path : '';
 }
 
 /**
@@ -3146,7 +3711,18 @@ function wpss_get_checkout_base_url(): string {
 	if ( $adapter && 'standalone' !== $adapter->get_id() ) {
 		$checkout_provider = $adapter->get_checkout_provider();
 		if ( $checkout_provider ) {
-			return $checkout_provider->get_checkout_url();
+			// Pass the service id explicitly. 0 means "no particular service",
+			// which is exactly what a BASE checkout URL is.
+			//
+			// This used to call get_checkout_url() with no arguments.
+			// CheckoutProviderInterface declares get_checkout_url( int $service_id, … )
+			// with NO default, and only WCCheckoutProvider widened it with one -
+			// so omitting the argument worked on WooCommerce and threw
+			// ArgumentCountError on EDD, FluentCart and SureCart. This function
+			// feeds the cart, every pay URL and several templates, so those
+			// three rails fataled on their own checkout while Woo, the rail
+			// everybody tests, stayed green.
+			return $checkout_provider->get_checkout_url( 0 );
 		}
 	}
 
@@ -3158,6 +3734,667 @@ function wpss_get_checkout_base_url(): string {
 	// Fallback to adapter slug.
 	$slug = \WPSellServices\Integrations\Standalone\StandaloneAdapter::get_checkout_slug();
 	return home_url( '/' . $slug . '/' );
+}
+
+/**
+ * Get the URL a buyer uses to pay one existing order.
+ *
+ * This is the single seam for "send the buyer somewhere they can pay THIS
+ * order" — tips, milestones, extensions and accepted proposals all resolve
+ * through here, including the links we put in emails.
+ *
+ * The standalone checkout understands `?pay_order=N` and renders that order.
+ * A cart-based rail (WooCommerce, EDD) does not: appending the query arg to
+ * its checkout URL lands the buyer on an empty cart with no way to pay, so
+ * those rails hook `wpss_pay_order_url` and return a URL on their own
+ * payment flow instead. Never rebuild this URL inline — a caller that does
+ * is correct only on standalone.
+ *
+ * @since 1.4.0
+ *
+ * @param int $order_id WPSS order ID to be paid.
+ * @return string Payment URL for the active e-commerce rail.
+ */
+function wpss_get_pay_order_url( int $order_id ): string {
+	$url = add_query_arg( 'pay_order', $order_id, wpss_get_checkout_base_url() );
+
+	/**
+	 * Filter the URL a buyer is sent to in order to pay a single order.
+	 *
+	 * Cart-based rails replace this entirely — see the WooCommerce
+	 * implementation in Pro, which creates (or reuses) a real WC order and
+	 * returns its native order-pay URL so the link works from an email with
+	 * no cart session.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param string $url      Default standalone pay URL.
+	 * @param int    $order_id WPSS order ID being paid.
+	 */
+	return (string) apply_filters( 'wpss_pay_order_url', $url, $order_id );
+}
+
+/**
+ * Platform values that mark a row as a sub-order rather than a real order.
+ *
+ * Tips, milestones and extensions are stored as their own rows in
+ * wpss_orders but they are not orders a buyer placed or a seller sold —
+ * they hang off a parent order. Every list, count and stat has to agree on
+ * that, so the list lives here rather than being re-authored per query.
+ *
+ * @since 1.4.0
+ *
+ * @return array<int, string> Sub-order platform values.
+ */
+/**
+ * Decode HTML entities for a JSON payload.
+ *
+ * WordPress stores term names and similar strings HTML-encoded, because its
+ * own consumer is HTML. A JSON API's string field is not HTML: a native client
+ * renders it into a text node, so "Graphics &amp; Design" reaches the screen
+ * verbatim. Entity encoding is a transport concern for HTML and does not
+ * belong in the payload — decode once here rather than making every consumer
+ * carry a decoder and remember to use it.
+ *
+ * @since 1.4.0
+ *
+ * @param mixed $value Raw stored value.
+ * @return string Decoded text.
+ */
+function wpss_rest_text( $value ): string {
+	return html_entity_decode( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+}
+
+/**
+ * Whether NEW payments are taken through the plugin's own gateways.
+ *
+ * ONE rule, decided in one place: our gateways take payment only on the
+ * standalone rail. The cart integrations are optional - a site turns one on
+ * when it wants that plugin to take the money. The moment it does, WooCommerce
+ * (or EDD, FluentCart, SureCart) processes ALL new payment and ours stop
+ * offering a second way to pay.
+ *
+ * Not filterable, on purpose. Giving a buyer the choice between "pay with
+ * WooCommerce" and "pay with our Stripe" on one site is confusing for them and
+ * leaves the two systems disagreeing about whether the order was paid: our
+ * gateway would charge on our keys with no order in the store, so no store
+ * receipt, refund or report would ever know about it.
+ *
+ * This governs STARTING a payment, not history. Switching rails never rewrites
+ * past orders: an order paid through our Stripe keeps its reference and its
+ * webhooks keep being handled, and an order that went through Woo keeps its WC
+ * order link, whichever rail the site later runs. Only the next order is
+ * affected by the switch.
+ *
+ * Sub-order payments (tips, milestones, extensions) do not consult this: they
+ * resolve through wpss_get_pay_order_url(), which hands off to whichever rail
+ * is active.
+ *
+ * @since 1.4.0
+ *
+ * @return bool True when new payments are taken through our own gateways.
+ */
+function wpss_uses_standalone_payments(): bool {
+	$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
+
+	return ! $adapter || 'standalone' === $adapter->get_id();
+}
+
+/**
+ * Default checkout reassurance badges.
+ *
+ * ONE definition, used by the settings screen (as placeholders) and by the
+ * checkout (as fallbacks), so what an owner sees while editing is exactly what
+ * a buyer gets when a row is left blank.
+ *
+ * Every default is a statement of fact the plugin can back up. Nothing here
+ * promises a refund, a guarantee or an outcome - the checkout used to say
+ * "On-time Delivery / Or your money back", which no code in this plugin
+ * honours and no owner agreed to. An owner who genuinely offers that can type
+ * it in; we will not say it on their behalf.
+ *
+ * `delivery` and `revisions` carry no default sub-text because theirs comes
+ * from the package being bought - see wpss_get_checkout_badges().
+ *
+ * @since 1.4.0
+ *
+ * @return array<string, array<string, string>> Keyed by badge id.
+ */
+function wpss_get_checkout_badge_defaults(): array {
+	return array(
+		'delivery'      => array(
+			'label' => __( 'Delivery time', 'wp-sell-services' ),
+			'title' => __( 'Delivery time', 'wp-sell-services' ),
+			'note'  => '',
+		),
+		'communication' => array(
+			'label' => __( 'Communication', 'wp-sell-services' ),
+			'title' => __( 'Direct communication', 'wp-sell-services' ),
+			'note'  => __( 'Message your seller on the order', 'wp-sell-services' ),
+		),
+		'revisions'     => array(
+			'label' => __( 'Revisions', 'wp-sell-services' ),
+			'title' => __( 'Revisions', 'wp-sell-services' ),
+			'note'  => '',
+		),
+	);
+}
+
+/**
+ * Build the checkout reassurance badges for a purchase.
+ *
+ * Owner text wins; where they have left a row blank we fall back to the real
+ * numbers on the package being bought, so the badge can never contradict the
+ * order it sits next to.
+ *
+ * @since 1.4.0
+ *
+ * @param array<string, mixed> $package Package being purchased.
+ * @return array<int, array<string, string>> Renderable badges.
+ */
+function wpss_get_checkout_badges( array $package ): array {
+	$settings = get_option( 'wpss_general', array() );
+
+	if ( isset( $settings['checkout_badges_enabled'] ) && ! $settings['checkout_badges_enabled'] ) {
+		return array();
+	}
+
+	$owner    = isset( $settings['checkout_badges'] ) && is_array( $settings['checkout_badges'] ) ? $settings['checkout_badges'] : array();
+	$defaults = wpss_get_checkout_badge_defaults();
+
+	$days      = isset( $package['delivery_days'] ) ? (int) $package['delivery_days'] : 0;
+	$revisions = isset( $package['revisions'] ) ? (int) $package['revisions'] : null;
+
+	// Facts about THIS purchase, used when the owner has not written their own.
+	$fallback_notes = array(
+		'delivery'  => $days > 0
+			/* translators: %d: number of days. */
+			? sprintf( _n( '%d day from requirements', '%d days from requirements', $days, 'wp-sell-services' ), $days )
+			: '',
+		'revisions' => null === $revisions
+			? ''
+			: ( -1 === $revisions
+				? __( 'Unlimited revisions included', 'wp-sell-services' )
+				/* translators: %d: number of revisions. */
+				: sprintf( _n( '%d revision included', '%d revisions included', $revisions, 'wp-sell-services' ), $revisions ) ),
+	);
+
+	$icons = array(
+		'delivery'      => "\xE2\x8F\xB1",
+		'communication' => "\xF0\x9F\x92\xAC",
+		'revisions'     => "\xE2\x9C\x85",
+	);
+
+	$badges = array();
+
+	foreach ( $defaults as $key => $default ) {
+		$title = trim( (string) ( $owner[ $key ]['title'] ?? '' ) );
+		$note  = trim( (string) ( $owner[ $key ]['note'] ?? '' ) );
+
+		$title = '' !== $title ? $title : $default['title'];
+		$note  = '' !== $note ? $note : ( $fallback_notes[ $key ] ?? $default['note'] );
+
+		// Nothing true to say about this one for this package - say nothing.
+		if ( '' === $note ) {
+			continue;
+		}
+
+		$badges[] = array(
+			'icon'  => $icons[ $key ] ?? '',
+			'title' => $title,
+			'note'  => $note,
+		);
+	}
+
+	/**
+	 * Filter the checkout reassurance badges.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param array $badges  Each entry: icon, title, note.
+	 * @param array $package Package being purchased.
+	 */
+	return (array) apply_filters( 'wpss_checkout_badges', $badges, $package );
+}
+
+/**
+ * Whether the plugin is running payments in demo mode.
+ *
+ * A fresh install is meant to work end to end from the first minute. Until
+ * this existed it could not: Stripe and PayPal ship without credentials and
+ * the Test gateway was hidden behind WP_DEBUG, which is off on every
+ * production site - so a new owner set up a marketplace, walked a buyer to
+ * checkout and hit an empty gateway list, with nothing on screen to say a
+ * step was missing.
+ *
+ * Demo mode fills that gap and then gets out of the way. It is ON only while
+ * ALL of these hold:
+ *
+ *   - this site takes payment through our own gateways (standalone rail)
+ *   - no real gateway has been configured yet
+ *   - the owner has not turned it off
+ *
+ * So it disables itself the moment real credentials are saved. There is no
+ * state to remember and no way to be silently stuck in test mode with a live
+ * store - the thing that makes "enable a test gateway by default" dangerous
+ * in most plugins.
+ *
+ * @since 1.4.0
+ *
+ * @return bool
+ */
+function wpss_demo_payments_enabled(): bool {
+	if ( ! wpss_uses_standalone_payments() ) {
+		return false;
+	}
+
+	// An explicit opt-out always wins, so an owner can run a live standalone
+	// store with no gateway yet configured without a demo checkout appearing.
+	if ( 'no' === get_option( 'wpss_demo_payments', '' ) ) {
+		return false;
+	}
+
+	return ! wpss_has_live_gateway();
+}
+
+/**
+ * Whether any real payment gateway is configured and usable.
+ *
+ * "Configured" means enabled AND carrying the credentials it needs - an
+ * enabled gateway with empty keys cannot take money, so it does not count.
+ *
+ * @since 1.4.0
+ *
+ * @return bool
+ */
+function wpss_has_live_gateway(): bool {
+	$gateways = wpss()->get_payment_gateways();
+
+	foreach ( $gateways as $id => $gateway ) {
+		if ( 'test' === $id ) {
+			continue;
+		}
+
+		// is_enabled() is the interface method, and Stripe/PayPal implement it
+		// as "enabled AND has the keys it needs" - which is exactly the
+		// question here. An enabled gateway with blank credentials cannot take
+		// money, so it must not count as live.
+		if ( $gateway instanceof \WPSellServices\Integrations\Contracts\PaymentGatewayInterface && $gateway->is_enabled() ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * REST permission callback: the caller must be logged in.
+ *
+ * Use this instead of `'permission_callback' => 'is_user_logged_in'`. A bare
+ * boolean callback makes WordPress answer with the code `rest_forbidden`, so
+ * an anonymous caller is told it is FORBIDDEN when the truth is that it is
+ * UNAUTHENTICATED. A client whose rule is "401 means refresh the token and
+ * retry" then reads an expired token as a permanent denial and never
+ * recovers - and the two routes that did this, /me and /dashboard, are the
+ * first two a cold-starting app calls.
+ *
+ * The HTTP status was already 401; it was the machine-readable code that lied.
+ *
+ * @since 1.4.0
+ *
+ * @return true|WP_Error
+ */
+function wpss_rest_require_login() {
+	if ( is_user_logged_in() ) {
+		return true;
+	}
+
+	return new WP_Error(
+		'rest_not_logged_in',
+		__( 'You must be logged in to access this endpoint.', 'wp-sell-services' ),
+		array( 'status' => 401 )
+	);
+}
+
+/**
+ * REST permission callback: the caller must be a site administrator.
+ *
+ * Answers "who are you?" before "may you?", so an anonymous caller gets 401
+ * and a logged-in non-admin gets 403. Returning 403 to both is what breaks a
+ * client's re-auth logic.
+ *
+ * @since 1.4.0
+ *
+ * @return true|WP_Error
+ */
+function wpss_rest_require_admin() {
+	$logged_in = wpss_rest_require_login();
+
+	if ( is_wp_error( $logged_in ) ) {
+		return $logged_in;
+	}
+
+	if ( current_user_can( 'manage_options' ) ) {
+		return true;
+	}
+
+	return new WP_Error(
+		'wpss_not_owner',
+		__( 'You do not have permission to access this endpoint.', 'wp-sell-services' ),
+		array( 'status' => 403 )
+	);
+}
+
+/**
+ * REST permission callback: the caller must be a vendor.
+ *
+ * One code for one condition. "You are not a vendor" was answered with four
+ * different codes across the API - rest_not_vendor, not_vendor, wpss_not_vendor
+ * and a plain rest_forbidden - so a client could not branch on it without
+ * knowing which endpoint it had called.
+ *
+ * @since 1.4.0
+ *
+ * @return true|WP_Error
+ */
+function wpss_rest_require_vendor() {
+	$logged_in = wpss_rest_require_login();
+
+	if ( is_wp_error( $logged_in ) ) {
+		return $logged_in;
+	}
+
+	if ( wpss_is_vendor( get_current_user_id() ) ) {
+		return true;
+	}
+
+	return new WP_Error(
+		'wpss_not_vendor',
+		__( 'Only vendors can access this endpoint.', 'wp-sell-services' ),
+		array( 'status' => 403 )
+	);
+}
+
+/**
+ * Shape a money value for the REST API.
+ *
+ * Returns the three fields every money value in the API carries, under
+ * predictable names derived from the base key: the float (unchanged, so no
+ * existing consumer breaks), the exact integer in minor units, and the
+ * currency needed to interpret both.
+ *
+ * Use this instead of adding `*_minor` by hand. Hand-written pairs are how
+ * the API ended up with money on some endpoints carrying minor units and
+ * money on others not, and with a `_minor` value scaled by the store currency
+ * on a row that was actually sold in a different one.
+ *
+ * Example: wpss_rest_money( 'total', 25.20, 'USD' ) returns
+ * array( 'total' => 25.2, 'total_minor' => 2520, 'currency' => 'USD' ).
+ *
+ * @since 1.4.0
+ *
+ * @param string $key      Base field name, e.g. 'total' or 'amount'.
+ * @param float  $amount   Amount in major units.
+ * @param string $currency Optional. Currency of THIS amount - pass the row's
+ *                         own currency, not the store default, or historic
+ *                         rows scale wrongly. Defaults to the store currency.
+ * @return array<string, mixed> The money fields, ready to merge into a response.
+ */
+function wpss_rest_money( string $key, float $amount, string $currency = '' ): array {
+	$currency = '' !== $currency ? $currency : wpss_get_currency();
+
+	return array(
+		$key            => round( $amount, wpss_get_currency_decimals( $currency ) ),
+		$key . '_minor' => wpss_amount_to_minor_units( $amount, $currency ),
+		'currency'      => $currency,
+	);
+}
+
+/**
+ * Shape a user for the REST API.
+ *
+ * One actor shape wherever the API names a person - order participants,
+ * timeline actors, review authors, vendors on a service card. Without a
+ * shared shape these drift into `user_id` here, `author` there and a bare
+ * display name somewhere else, and a client needs a parser per endpoint.
+ *
+ * @since 1.4.0
+ *
+ * @param int $user_id User ID. 0 or an unknown user yields null.
+ * @return array<string, mixed>|null
+ */
+function wpss_rest_user( int $user_id ): ?array {
+	if ( $user_id <= 0 ) {
+		return null;
+	}
+
+	$user = get_userdata( $user_id );
+
+	if ( ! $user ) {
+		return null;
+	}
+
+	return array(
+		'id'     => $user_id,
+		'name'   => wpss_rest_text( $user->display_name ),
+		'avatar' => get_avatar_url( $user_id ),
+	);
+}
+
+/**
+ * Shape a taxonomy term for the REST API.
+ *
+ * One definition, because there were two: /categories returned
+ * {id, name, slug, description, count, parent, icon, image} while the
+ * categories inside a service payload were raw WP_Term objects carrying
+ * term_taxonomy_id, term_group and filter, and an `id` that was actually
+ * called `term_id`. A client could not use one parser for both, so the
+ * category it read off a service did not match the category list it was
+ * asked to match it against.
+ *
+ * @since 1.4.0
+ *
+ * @param \WP_Term $term Term object.
+ * @return array<string, mixed> Term data.
+ */
+function wpss_prepare_term_for_rest( \WP_Term $term ): array {
+	$icon  = get_term_meta( $term->term_id, '_wpss_icon', true );
+	$image = get_term_meta( $term->term_id, '_wpss_image', true );
+
+	return array(
+		'id'          => (int) $term->term_id,
+		'name'        => wpss_rest_text( $term->name ),
+		'slug'        => (string) $term->slug,
+		'description' => wpss_rest_text( $term->description ),
+		'count'       => (int) $term->count,
+		'parent'      => (int) $term->parent,
+		'icon'        => $icon ?: '',
+		'image'       => $image ? wp_get_attachment_url( $image ) : '',
+	);
+}
+
+/**
+ * Platform slugs that mark an order as a sub-order of another order.
+ *
+ * Sub-orders (tips, extras, revisions) hang off a parent order, so they must
+ * never surface as standalone rows in a buyer's or vendor's order list.
+ *
+ * @since 1.4.0
+ *
+ * @return string[] Platform slugs.
+ */
+function wpss_get_sub_order_platforms(): array {
+	return array_keys( \WPSellServices\Models\ServiceOrder::get_sub_order_types() );
+}
+
+/**
+ * Freeze the package an order was bought on.
+ *
+ * Package data lives in the service's `_wpss_packages` post meta, which the
+ * vendor can edit at any time. Without a copy taken at purchase, a rename or a
+ * price change silently rewrites what every past order says it was — the buyer
+ * opens an old order and sees a package they never bought.
+ *
+ * @since 1.4.0
+ *
+ * @param int      $service_id Service post ID.
+ * @param int|null $package_id Package INDEX into the service's packages meta.
+ * @return array<string, mixed>|null Frozen package data, or null when the order has no package.
+ */
+function wpss_build_package_snapshot( int $service_id, ?int $package_id ): ?array {
+	if ( null === $package_id || $service_id <= 0 ) {
+		return null;
+	}
+
+	$packages = get_post_meta( $service_id, '_wpss_packages', true );
+
+	if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) || ! is_array( $packages[ $package_id ] ) ) {
+		return null;
+	}
+
+	return $packages[ $package_id ];
+}
+
+/**
+ * Run the shared post-creation steps for a service order.
+ *
+ * Every rail creates its order row itself — standalone, WooCommerce, EDD,
+ * recurring renewals, admin manual orders — and they had each grown their own
+ * idea of what happens next. Only standalone froze the package, and only
+ * standalone and the manual-order screen fired `wpss_order_created`, so
+ * anything listening to that hook silently never ran for a WooCommerce or EDD
+ * purchase.
+ *
+ * A buyer's order should behave the same whoever sold it and however they
+ * paid, so the steps that must happen for every order live here and each rail
+ * calls this once after its insert.
+ *
+ * Safe to call more than once: the snapshot is only written when missing.
+ *
+ * @since 1.4.0
+ *
+ * @param int                  $order_id   Newly created WPSS order ID.
+ * @param array<string, mixed> $order_data Raw creation data, passed to the hook.
+ * @return void
+ */
+function wpss_after_order_created( int $order_id, array $order_data = array() ): void {
+	if ( $order_id <= 0 ) {
+		return;
+	}
+
+	wpss_capture_order_package_snapshot( $order_id );
+
+	/**
+	 * Fires after a service order is created, on every e-commerce rail.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param int   $order_id   The new order ID.
+	 * @param array $order_data The order creation data.
+	 */
+	do_action( 'wpss_order_created', $order_id, $order_data );
+}
+
+/**
+ * Write the package snapshot onto an order that does not have one yet.
+ *
+ * Idempotent, and a no-op for order types that cannot carry a package (tips,
+ * milestones, extensions) or for orders bought without one.
+ *
+ * @since 1.4.0
+ *
+ * @param int $order_id WPSS order ID.
+ * @return bool Whether a snapshot was written.
+ */
+function wpss_capture_order_package_snapshot( int $order_id ): bool {
+	global $wpdb;
+
+	$table = $wpdb->prefix . 'wpss_orders';
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$row = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT service_id, package_id, platform, meta FROM {$table} WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$order_id
+		)
+	);
+
+	if ( ! $row || null === $row->package_id ) {
+		return false;
+	}
+
+	if ( in_array( (string) $row->platform, wpss_get_sub_order_platforms(), true ) ) {
+		return false;
+	}
+
+	$meta = json_decode( (string) $row->meta, true );
+	$meta = is_array( $meta ) ? $meta : array();
+
+	if ( ! empty( $meta['package_snapshot'] ) ) {
+		return false;
+	}
+
+	$snapshot = wpss_build_package_snapshot( (int) $row->service_id, (int) $row->package_id );
+
+	if ( null === $snapshot ) {
+		return false;
+	}
+
+	$meta['package_snapshot'] = $snapshot;
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	return false !== $wpdb->update(
+		$table,
+		array( 'meta' => wp_json_encode( $meta ) ),
+		array( 'id' => $order_id ),
+		array( '%s' ),
+		array( '%d' )
+	);
+}
+
+/**
+ * Get the payment-rail receipt reference for an order, if any.
+ *
+ * A WPSS order is the order, and its lifecycle is the same whichever rail took
+ * the money — standalone Stripe/PayPal, WooCommerce, EDD, Razorpay. Those rails
+ * keep their own order flow and issue their own receipt number, so one purchase
+ * ends up with two identities and support lookups fail when the buyer quotes the
+ * receipt and the seller searches order numbers (or the reverse).
+ *
+ * This returns the rail's reference so it can sit beside the WPSS order number
+ * as a secondary identifier. Rail-neutral by design: each integration answers
+ * the filter rather than adding its own block to the order template.
+ *
+ * @since 1.4.0
+ *
+ * @param object $order WPSS order.
+ * @return array{label: string, number: string, url: string}|null Reference, or null when the rail has none.
+ */
+function wpss_get_order_payment_reference( object $order ): ?array {
+	/**
+	 * Filter the payment-rail receipt reference shown on an order.
+	 *
+	 * Return an array with `label` (e.g. "WooCommerce Order"), `number` (the
+	 * receipt number as the buyer sees it) and optionally `url` (a link the
+	 * current user is allowed to open). Return null for rails with no separate
+	 * receipt — standalone gateways record the transaction on the order itself.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param array|null $reference Reference data, or null.
+	 * @param object     $order     WPSS order.
+	 */
+	$reference = apply_filters( 'wpss_order_payment_reference', null, $order );
+
+	if ( ! is_array( $reference ) || empty( $reference['number'] ) ) {
+		return null;
+	}
+
+	return array(
+		'label'  => (string) ( $reference['label'] ?? __( 'Payment Reference', 'wp-sell-services' ) ),
+		'number' => (string) $reference['number'],
+		'url'    => (string) ( $reference['url'] ?? '' ),
+	);
 }
 
 /**

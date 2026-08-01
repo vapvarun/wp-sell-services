@@ -93,9 +93,22 @@ abstract class RestController extends WP_REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function check_admin_permissions( WP_REST_Request $request ) {
+		// Answer "who are you?" before "may you?". This returned 403 for an
+		// anonymous caller while every other protected route returns 401, so a
+		// client with the usual "401 -> refresh the token and retry" rule never
+		// re-authenticated against the moderation and audit-log endpoints — it
+		// read an expired token as a permanent permission denial.
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'rest_not_logged_in',
+				__( 'You must be logged in to access this endpoint.', 'wp-sell-services' ),
+				[ 'status' => 401 ]
+			);
+		}
+
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You do not have permission to access this endpoint.', 'wp-sell-services' ),
 				[ 'status' => 403 ]
 			);

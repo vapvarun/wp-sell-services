@@ -59,7 +59,7 @@ if ( $view_dispute_id ) {
 	$status_key = (string) $dispute->status;
 	$timeline   = ( new DisputeWorkflowManager() )->get_timeline( (int) $dispute->id );
 	?>
-	<div class="wpss-dashboard-section wpss-disputes wpss-dispute-detail">
+	<div class="wpss-section wpss-section--disputes wpss-card wpss-disputes wpss-dispute-detail">
 		<p class="wpss-dispute-detail__back">
 			<a href="<?php echo esc_url( $section_base_url ); ?>">&larr; <?php esc_html_e( 'All disputes', 'wp-sell-services' ); ?></a>
 		</p>
@@ -125,7 +125,7 @@ if ( $view_dispute_id ) {
 		// existed, but no member-facing surface ever rendered the thread or a
 		// reply form — a party could OPEN a dispute and then never respond to it.
 		// This wires the existing backend to the dashboard.
-		$evidence_items = $dispute_service->get_evidence( (int) $dispute->id );
+		$evidence_items   = $dispute_service->get_evidence( (int) $dispute->id );
 		$can_add_evidence = ! in_array( $status_key, array( 'resolved', 'closed' ), true );
 		?>
 		<div class="wpss-dispute-detail__evidence">
@@ -230,7 +230,7 @@ if ( $view_dispute_id ) {
  */
 $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 ?>
-<div class="wpss-dashboard-section wpss-disputes">
+<div class="wpss-section wpss-section--disputes wpss-card wpss-disputes">
 	<?php
 	// No <h2>Disputes</h2> here. The dashboard shell already renders the
 	// section title in its header; this was the ONLY section of the fourteen

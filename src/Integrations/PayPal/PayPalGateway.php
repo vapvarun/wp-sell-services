@@ -14,6 +14,7 @@ namespace WPSellServices\Integrations\PayPal;
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
+use WPSellServices\Assets\ScriptRegistry;
 
 /**
  * PayPal payment gateway implementation using PayPal REST API.
@@ -548,12 +549,10 @@ class PayPalGateway implements PaymentGatewayInterface {
 			true
 		);
 
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-paypal',
-			WPSS_PLUGIN_URL . 'assets/js/paypal.js',
-			array( 'paypal-sdk', 'jquery' ),
-			WPSS_VERSION,
-			true
+			'assets/js/paypal.js',
+			array( 'paypal-sdk', 'jquery' )
 		);
 
 		wp_localize_script(
@@ -687,6 +686,27 @@ class PayPalGateway implements PaymentGatewayInterface {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
 			return; // Explicit return for defensive coding.
 		}
+
+		// Remember any billing the buyer entered or corrected at checkout, so
+		// their NEXT checkout prefills and collapses to a one-line summary
+		// instead of asking for the same address again. The billing block is
+		// ours, not the gateway's, so every gateway completing a checkout has
+		// to persist it — Stripe did, PayPal and offline did not, so only
+		// Stripe buyers ever built up a saved address.
+		//
+		// Saved HERE and not in ajax_capture_order(): capture runs on the
+		// return leg from PayPal, which is a GET carrying only the PayPal
+		// token, so the billing fields are long gone by then. This handler is
+		// the one that receives the submitted checkout form.
+		//
+		// Deliberately after the nonce check, rather than from one shared
+		// pre-dispatch hook across the checkout actions: running before each
+		// gateway verifies its own nonce would let a forged cross-site POST
+		// overwrite a logged-in buyer's saved address.
+		//
+		// Nonce was verified by check_ajax_referer() above.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		wpss_save_billing_from_request( $_POST );
 
 		$currency = sanitize_text_field( wp_unslash( $_POST['currency'] ?? wpss_get_currency() ) );
 

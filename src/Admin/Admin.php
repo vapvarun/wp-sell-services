@@ -30,6 +30,7 @@ use WPSellServices\Admin\Tables\DisputesListTable;
 use WPSellServices\Models\Dispute;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\OrderService;
+use WPSellServices\Assets\ScriptRegistry;
 
 /**
  * Handles all admin-side functionality.
@@ -396,6 +397,78 @@ class Admin {
 		// Page setup admin notice.
 		add_action( 'admin_notices', array( $this, 'check_page_setup_notice' ) );
 		add_action( 'wp_ajax_wpss_dismiss_pages_notice', array( $this, 'ajax_dismiss_pages_notice' ) );
+
+		// Demo payments notice. Deliberately NOT dismissible - see the method.
+		add_action( 'admin_notices', array( $this, 'demo_payments_notice' ) );
+		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
+	}
+
+	/**
+	 * Warn, on every admin screen, while payments are simulated.
+	 *
+	 * A fresh install registers the Test gateway so the marketplace works end
+	 * to end before any gateway credentials exist. That is the right default -
+	 * an owner can take a service from listing to paid order on day one - but
+	 * it must never be quiet, because the failure mode is a real store selling
+	 * to real buyers and settling nothing.
+	 *
+	 * No dismiss control, on purpose. The notice goes away by fixing its cause:
+	 * configure a gateway, and wpss_demo_payments_enabled() is false on the
+	 * next request.
+	 *
+	 * @since 1.4.0
+	 * @return void
+	 */
+	public function demo_payments_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'wpss_demo_payments_enabled' ) ) {
+			return;
+		}
+
+		if ( ! wpss_demo_payments_enabled() ) {
+			return;
+		}
+
+		// The opt-out link is what makes wpss_demo_payments reachable. Without
+		// it the option is read but never written, so an owner running a live
+		// standalone store before configuring a gateway had no way to stop a
+		// simulated checkout appearing to their buyers.
+		$turn_off = wp_nonce_url(
+			admin_url( 'admin-post.php?action=wpss_disable_demo_payments' ),
+			'wpss_disable_demo_payments'
+		);
+
+		printf(
+			'<div class="notice notice-warning"><p><strong>%s</strong> %s</p><p><a href="%s" class="button button-primary">%s</a> <a href="%s" class="button">%s</a></p></div>',
+			esc_html__( 'Demo payments are on.', 'wp-sell-services' ),
+			esc_html__( 'Checkout is simulated so you can test the whole buying flow - no money moves and no card is charged. Configure a payment gateway before taking real orders; this notice clears itself once one is ready.', 'wp-sell-services' ),
+			esc_url( admin_url( 'admin.php?page=wpss-settings#payments' ) ),
+			esc_html__( 'Set up payments', 'wp-sell-services' ),
+			esc_url( $turn_off ),
+			esc_html__( 'Turn demo payments off', 'wp-sell-services' )
+		);
+	}
+
+	/**
+	 * Turn the simulated checkout off for good.
+	 *
+	 * An explicit opt-out, so a store that is live but has not configured a
+	 * gateway yet shows buyers nothing rather than a demo checkout. Reversed by
+	 * configuring a real gateway, which is what the notice asks for anyway.
+	 *
+	 * @since 1.4.0
+	 * @return void
+	 */
+	public function disable_demo_payments(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to change payment settings.', 'wp-sell-services' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( 'wpss_disable_demo_payments' );
+
+		update_option( 'wpss_demo_payments', 'no' );
+
+		wp_safe_redirect( wp_get_referer() ? wp_get_referer() : admin_url() );
+		exit;
 	}
 
 	/**
@@ -742,13 +815,7 @@ class Admin {
 		// Shared UI primitives: wpssConfirm (Promise modal) + wpssToast fallback.
 		// Enqueued globally on all WPSS admin surfaces so Pro's admin.js can rely
 		// on window.wpssConfirm being present (loaded in footer before pro script).
-		wp_enqueue_script(
-			'wpss-ui',
-			\WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
-			array(),
-			\WPSS_VERSION,
-			true
-		);
+		ScriptRegistry::enqueue_ui();
 
 		// Settings saved via the options.php round-trip reload with
 		// settings-updated=true but custom admin pages never render core's
@@ -1612,10 +1679,11 @@ class Admin {
 										<?php endif; ?>
 									</td>
 								</tr>
-								<?php if ( ! empty( $order->package_name ) ) : ?>
+								<?php $wpss_package_name = $order->get_package_name(); ?>
+								<?php if ( '' !== $wpss_package_name ) : ?>
 									<tr>
 										<th><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></th>
-										<td><?php echo esc_html( $order->package_name ); ?></td>
+										<td><?php echo esc_html( $wpss_package_name ); ?></td>
 									</tr>
 								<?php endif; ?>
 								<tr>
@@ -1648,7 +1716,19 @@ class Admin {
 									?>
 									</td>
 								</tr>
-								<?php if ( ! empty( $order->platform_order_id ) ) : ?>
+								<?php
+								// `platform_order_id` does NOT always hold a WooCommerce
+								// order id: on a sub-order (tip / milestone / extension)
+								// the same column holds the PARENT WPSS order id, and
+								// `platform` holds the sub-order type rather than a rail.
+								// Gating this row on the column alone therefore printed
+								// "WooCommerce Order #74" for a milestone whose 74 is a
+								// WPSS order — a link straight into a WooCommerce order
+								// edit screen for an order that does not exist. Only a
+								// row whose platform really IS woocommerce has a WC order
+								// behind that number.
+								if ( ! empty( $order->platform_order_id ) && 'woocommerce' === ( $order->platform ?? '' ) ) :
+									?>
 									<tr>
 										<th><?php esc_html_e( 'WooCommerce Order', 'wp-sell-services' ); ?></th>
 										<td>
@@ -1657,7 +1737,9 @@ class Admin {
 											</a>
 										</td>
 									</tr>
-								<?php endif; ?>
+									<?php
+								endif;
+								?>
 							</table>
 						</div>
 					</div>

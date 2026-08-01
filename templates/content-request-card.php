@@ -52,15 +52,23 @@ if ( 'range' === $budget_type && $budget_min && $budget_max ) {
 }
 
 // Calculate time remaining.
+//
+// $has_time_left carries the FACT; $time_remaining carries the LABEL. They are
+// separate on purpose: the countdown badge used to be gated on
+// `'Expired' !== $time_remaining`, comparing a translated string to an English
+// literal, so on every non-English site the test passed and already-expired
+// requests rendered a clock badge reading "Expired".
 $time_remaining = '';
+$has_time_left  = false;
 if ( $expires_at ) {
 	$expires_timestamp = strtotime( $expires_at );
 	$now               = time();
 	$diff              = $expires_timestamp - $now;
 
 	if ( $diff > 0 ) {
-		$days  = floor( $diff / DAY_IN_SECONDS );
-		$hours = floor( ( $diff % DAY_IN_SECONDS ) / HOUR_IN_SECONDS );
+		$has_time_left = true;
+		$days          = floor( $diff / DAY_IN_SECONDS );
+		$hours         = floor( ( $diff % DAY_IN_SECONDS ) / HOUR_IN_SECONDS );
 
 		if ( $days > 0 ) {
 			/* translators: %d: number of days */
@@ -211,7 +219,7 @@ do_action( 'wpss_before_request_card', $request_id );
 		</div>
 
 		<div class="wpss-request-card__actions">
-			<?php if ( $time_remaining && 'Expired' !== $time_remaining ) : ?>
+			<?php if ( $has_time_left ) : ?>
 				<span class="wpss-request-card__expires">
 					<i data-lucide="clock" class="wpss-icon wpss-icon--sm wpss-request-card__expires-icon" aria-hidden="true"></i>
 					<?php echo esc_html( $time_remaining ); ?>

@@ -85,6 +85,30 @@ class PortfolioController extends RestController {
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
+				// The collection was POST-only, so a client that listed before
+				// creating got a 404 and no clue that /vendors/{id}/portfolio
+				// was the read route. This is the caller's own portfolio, which
+				// is what a "My portfolio" screen needs.
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_own_portfolio' ),
+					'permission_callback' => array( $this, 'check_vendor_permissions' ),
+					'args'                => array(
+						'page'     => array(
+							'description' => __( 'Current page of the collection.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
+						),
+						'per_page' => array(
+							'description' => __( 'Items per page.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 10,
+							'minimum'     => 1,
+							'maximum'     => 100,
+						),
+					),
+				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
@@ -177,6 +201,23 @@ class PortfolioController extends RestController {
 				),
 			)
 		);
+	}
+
+	/**
+	 * List the current user's own portfolio.
+	 *
+	 * Delegates to get_vendor_portfolio() so there is one query, one shape and
+	 * one pagination contract — the only difference is whose portfolio it is.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_own_portfolio( WP_REST_Request $request ) {
+		$request->set_param( 'vendor_id', get_current_user_id() );
+
+		return $this->get_vendor_portfolio( $request );
 	}
 
 	/**
@@ -405,7 +446,7 @@ class PortfolioController extends RestController {
 		// and demo-seeded vendors — who never carry the _wpss_is_vendor meta —
 		// are not wrongly 403'd.
 		if ( ! wpss_is_vendor() ) {
-			return new WP_Error( 'rest_forbidden', __( 'Only vendors can manage portfolio items.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			return new WP_Error( 'wpss_not_vendor', __( 'Only vendors can manage portfolio items.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
 		return true;
@@ -430,7 +471,7 @@ class PortfolioController extends RestController {
 		}
 
 		if ( (int) $item['vendor_id'] !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not own this portfolio item.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			return new WP_Error( 'wpss_not_owner', __( 'You do not own this portfolio item.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
 		return true;

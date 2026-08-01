@@ -241,7 +241,7 @@ class ProposalsController extends RestController {
 		}
 
 		return new WP_Error(
-			'rest_forbidden',
+			'wpss_not_owner',
 			__( 'You do not have permission to access this proposal.', 'wp-sell-services' ),
 			[ 'status' => 403 ]
 		);
@@ -272,7 +272,7 @@ class ProposalsController extends RestController {
 
 		if ( (int) $proposal->vendor_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You can only modify your own proposals.', 'wp-sell-services' ),
 				[ 'status' => 403 ]
 			);
@@ -558,22 +558,28 @@ class ProposalsController extends RestController {
 			$milestones = is_array( $decoded ) ? $decoded : array();
 		}
 
-		$data = [
-			'id'            => (int) $proposal->id,
-			'request_id'    => (int) $proposal->request_id,
-			'request_title' => $request ? $request->post_title : '',
-			'vendor'        => [
-				'id'     => (int) $proposal->vendor_id,
-				'name'   => $vendor ? $vendor->display_name : '',
-				'avatar' => get_avatar_url( $proposal->vendor_id, [ 'size' => 48 ] ),
+		$data = array_merge(
+			[
+				'id'            => (int) $proposal->id,
+				'request_id'    => (int) $proposal->request_id,
+				'request_title' => $request ? $request->post_title : '',
+				'vendor'        => [
+					'id'     => (int) $proposal->vendor_id,
+					'name'   => $vendor ? $vendor->display_name : '',
+					'avatar' => get_avatar_url( $proposal->vendor_id, [ 'size' => 48 ] ),
+				],
 			],
-			'price'         => (float) $proposal->proposed_price,
-			'delivery_days' => (int) $proposal->proposed_days,
-			'contract_type' => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
-			'milestones'    => $milestones,
-			'status'        => $proposal->status,
-			'created_at'    => $proposal->created_at,
-		];
+			// The proposals table has no currency column - a proposal is
+			// priced in the store currency, the helper's default.
+			wpss_rest_money( 'price', (float) $proposal->proposed_price ),
+			[
+				'delivery_days' => (int) $proposal->proposed_days,
+				'contract_type' => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
+				'milestones'    => $milestones,
+				'status'        => $proposal->status,
+				'created_at'    => $proposal->created_at,
+			]
+		);
 
 		if ( $detailed ) {
 			$data['cover_letter'] = $proposal->cover_letter;
@@ -583,14 +589,23 @@ class ProposalsController extends RestController {
 				$data['service_title'] = get_the_title( $proposal->service_id );
 			}
 
-			// Include request details.
+			// Include request details. Both budget bounds share the store
+			// currency (a buyer request has no currency of its own), so the
+			// minor units go in directly beside a single 'currency' key.
 			if ( $request ) {
+				$currency   = wpss_get_currency();
+				$budget_min = (float) get_post_meta( $request->ID, '_wpss_budget_min', true );
+				$budget_max = (float) get_post_meta( $request->ID, '_wpss_budget_max', true );
+
 				$data['request'] = [
-					'id'         => $request->ID,
-					'title'      => $request->post_title,
-					'budget_min' => (float) get_post_meta( $request->ID, '_wpss_budget_min', true ),
-					'budget_max' => (float) get_post_meta( $request->ID, '_wpss_budget_max', true ),
-					'deadline'   => get_post_meta( $request->ID, '_wpss_deadline', true ),
+					'id'               => $request->ID,
+					'title'            => $request->post_title,
+					'budget_min'       => $budget_min,
+					'budget_min_minor' => wpss_amount_to_minor_units( $budget_min, $currency ),
+					'budget_max'       => $budget_max,
+					'budget_max_minor' => wpss_amount_to_minor_units( $budget_max, $currency ),
+					'currency'         => $currency,
+					'deadline'         => get_post_meta( $request->ID, '_wpss_deadline', true ),
 				];
 			}
 

@@ -439,8 +439,10 @@ class Settings {
 	private function get_page_content( string $field ): string {
 		$shortcodes = array(
 			'services_page' => '[wpss_services]',
+			'vendors_page'  => '[wpss_vendors]',
 			'dashboard'     => '[wpss_dashboard]',
 			'become_vendor' => '[wpss_vendor_registration]',
+			'cart'          => '[wpss_cart]',
 			'checkout'      => '[wpss_checkout]',
 		);
 
@@ -517,6 +519,46 @@ class Settings {
 			array(
 				'option_name' => 'wpss_general',
 				'field'       => 'ecommerce_platform',
+			)
+		);
+
+		// Checkout reassurance badges.
+		//
+		// These print on a PUBLIC page a buyer reads while paying, so the words
+		// belong to the site owner, not to us. The plugin ships factual
+		// defaults derived from the package being bought and never asserts a
+		// guarantee on the owner's behalf - it previously promised "on-time
+		// delivery or your money back", which nothing in the code honours.
+		add_settings_section(
+			'wpss_checkout_badges_section',
+			__( 'Checkout Reassurance', 'wp-sell-services' ),
+			array( $this, 'render_checkout_badges_section' ),
+			'wpss_general'
+		);
+
+		add_settings_field(
+			'checkout_badges_enabled',
+			__( 'Show reassurance badges', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_general',
+			'wpss_checkout_badges_section',
+			array(
+				'option_name' => 'wpss_general',
+				'field'       => 'checkout_badges_enabled',
+				'label'       => __( 'Display a short row of reassurance items on the checkout page.', 'wp-sell-services' ),
+				'default'     => true,
+			)
+		);
+
+		add_settings_field(
+			'checkout_badges',
+			__( 'Badge text', 'wp-sell-services' ),
+			array( $this, 'render_checkout_badges_field' ),
+			'wpss_general',
+			'wpss_checkout_badges_section',
+			array(
+				'option_name' => 'wpss_general',
+				'field'       => 'checkout_badges',
 			)
 		);
 
@@ -1083,9 +1125,19 @@ class Settings {
 			'wpss_pages'
 		);
 
+		// Every key here must also appear in sanitize_pages_settings()'s
+		// $page_keys, or saving this panel drops it from the option.
+		//
+		// `vendors_page` and `cart` were both readable and unwritable before:
+		// the vendors page had no field at all (so `wpss_pages['vendors_page']`
+		// could never be set by anyone) and the cart page was seeded by the
+		// installer but missing from the save whitelist, so the first save of
+		// this panel deleted it with no way to put it back.
 		$pages = array(
 			'services_page' => __( 'Services Page', 'wp-sell-services' ),
+			'vendors_page'  => __( 'Vendors Directory', 'wp-sell-services' ),
 			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
+			'cart'          => __( 'Service Cart', 'wp-sell-services' ),
 			'checkout'      => __( 'Service Checkout', 'wp-sell-services' ),
 		);
 
@@ -1094,9 +1146,9 @@ class Settings {
 		$pages_registration_mode = $pages_vendor_settings['vendor_registration'] ?? 'open';
 		if ( 'closed' !== $pages_registration_mode ) {
 			// Insert after 'dashboard' to maintain original order.
-			$pages = array_slice( $pages, 0, 2, true )
+			$pages = array_slice( $pages, 0, 3, true )
 				+ array( 'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ) )
-				+ array_slice( $pages, 2, null, true );
+				+ array_slice( $pages, 3, null, true );
 		}
 
 		foreach ( $pages as $key => $label ) {
@@ -1675,6 +1727,38 @@ class Settings {
 	 * @return void
 	 */
 	private function render_gateway_cards(): void {
+		// When a cart plugin owns payment, say so before showing anything else.
+		//
+		// These gateways are for the standalone rail. With WooCommerce (or EDD,
+		// FluentCart, SureCart) active, that plugin takes the money and none of
+		// this is used - but the screen still rendered enabled toggles and key
+		// fields, so an owner could configure Stripe here, see it saved, and
+		// reasonably believe their store was taking card payments through it.
+		// A saved setting that silently does nothing is worse than one that is
+		// not offered.
+		if ( ! wpss_uses_standalone_payments() ) {
+			$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
+			$rail    = $adapter ? $adapter->get_name() : __( 'your store plugin', 'wp-sell-services' );
+
+			printf(
+				'<div class="notice notice-info inline wpss-gateway-notice"><p><strong>%s</strong> %s</p><p>%s</p></div>',
+				esc_html__( 'Payments are handled by', 'wp-sell-services' ) . ' ' . esc_html( $rail ) . '.',
+				esc_html__( 'The gateways below belong to this plugin and are not used while a store plugin is taking payment.', 'wp-sell-services' ),
+				esc_html__( 'Configure your payment methods in that plugin instead. Switch Ecommerce Platform to Standalone under General if you want this plugin to take payment directly.', 'wp-sell-services' )
+			);
+
+			/**
+			 * Fires instead of the gateway cards when a cart rail owns payment.
+			 *
+			 * @since 1.4.0
+			 *
+			 * @param string $rail Active ecommerce rail name.
+			 */
+			do_action( 'wpss_gateway_settings_owned_by_rail', $rail );
+
+			return;
+		}
+
 		// Test Gateway section (only in debug mode).
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			$this->render_gateway_card(
@@ -1846,6 +1930,60 @@ class Settings {
 	 */
 	public function render_general_section(): void {
 		echo '<p>' . esc_html__( 'Configure general platform settings.', 'wp-sell-services' ) . '</p>';
+	}
+
+	/**
+	 * Render the checkout badges section description.
+	 *
+	 * @since 1.4.0
+	 * @return void
+	 */
+	public function render_checkout_badges_section(): void {
+		echo '<p>' . esc_html__( 'Short reassurance items shown to buyers on the checkout page. These are your words, on your storefront - edit or clear anything you do not want to say.', 'wp-sell-services' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Leave a row empty to hide it. Delivery time and revisions fall back to the real values from the package being bought, so they always match the order.', 'wp-sell-services' ) . '</p>';
+	}
+
+	/**
+	 * Render the editable checkout badge rows.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param array<string, mixed> $args Field args.
+	 * @return void
+	 */
+	public function render_checkout_badges_field( array $args ): void {
+		$option = get_option( 'wpss_general', array() );
+		$stored = isset( $option['checkout_badges'] ) && is_array( $option['checkout_badges'] ) ? $option['checkout_badges'] : array();
+
+		// Same source the checkout uses, so the placeholders an owner sees are
+		// exactly what buyers get when a row is left blank.
+		$defaults = function_exists( 'wpss_get_checkout_badge_defaults' ) ? wpss_get_checkout_badge_defaults() : array();
+
+		echo '<table class="widefat striped wpss-badge-editor"><thead><tr>';
+		echo '<th style="width:12rem">' . esc_html__( 'Item', 'wp-sell-services' ) . '</th>';
+		echo '<th>' . esc_html__( 'Heading', 'wp-sell-services' ) . '</th>';
+		echo '<th>' . esc_html__( 'Sub-text', 'wp-sell-services' ) . '</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( $defaults as $key => $default ) {
+			$title = (string) ( $stored[ $key ]['title'] ?? '' );
+			$note  = (string) ( $stored[ $key ]['note'] ?? '' );
+
+			printf(
+				'<tr><td><strong>%s</strong></td>
+				<td><input type="text" class="regular-text" name="wpss_general[checkout_badges][%s][title]" value="%s" placeholder="%s"></td>
+				<td><input type="text" class="regular-text" name="wpss_general[checkout_badges][%s][note]" value="%s" placeholder="%s"></td></tr>',
+				esc_html( $default['label'] ),
+				esc_attr( $key ),
+				esc_attr( $title ),
+				esc_attr( $default['title'] ),
+				esc_attr( $key ),
+				esc_attr( $note ),
+				esc_attr( $default['note'] )
+			);
+		}
+
+		echo '</tbody></table>';
 	}
 
 	/**
@@ -2936,15 +3074,58 @@ class Settings {
 	 * @return array<string, mixed> Sanitized input.
 	 */
 	public function sanitize_general_settings( mixed $input ): array {
-		$input     = is_array( $input ) ? $input : array();
-		$sanitized = array();
+		$input = is_array( $input ) ? $input : array();
+
+		// Start from what is stored, not from an empty array. Returning only the
+		// keys this panel renders silently deletes every other key in
+		// wpss_general, so anything added later - a future tab, a migration, an
+		// integration - is destroyed the next time an owner saves this screen.
+		// Same defect that was fixed on the Pages tab.
+		$existing  = get_option( 'wpss_general', array() );
+		$existing  = is_array( $existing ) ? $existing : array();
+		$sanitized = $existing;
 
 		// Platform name defaults to site name if empty.
 		$platform_name              = sanitize_text_field( $input['platform_name'] ?? '' );
 		$sanitized['platform_name'] = ! empty( $platform_name ) ? $platform_name : get_bloginfo( 'name' );
 
-		$sanitized['currency']           = sanitize_text_field( $input['currency'] ?? 'USD' );
+		$sanitized['currency'] = sanitize_text_field( $input['currency'] ?? 'USD' );
+
+		$previous                        = (string) ( $existing['ecommerce_platform'] ?? 'auto' );
 		$sanitized['ecommerce_platform'] = sanitize_key( $input['ecommerce_platform'] ?? 'auto' );
+
+		// Changing the rail changes which rewrite rules exist. The standalone
+		// adapter owns /wpss-payment/{gateway}/callback - the URL every gateway
+		// webhook is delivered to - and registers it only while standalone is
+		// the active rail. Without a flush, that rule is missing from the stored
+		// rewrite rules after a switch, so every incoming webhook 404s until
+		// somebody happens to re-save Permalinks. Nothing surfaces it: the
+		// charge succeeds at the gateway and the order silently never goes paid.
+		//
+		// Deferred through the transient the plugin already uses rather than
+		// flushed inline, because this runs during option save - before the new
+		// rail's adapter has registered its rules, so an inline flush would
+		// persist the OLD rail's rule set again.
+		if ( $previous !== $sanitized['ecommerce_platform'] ) {
+			set_transient( 'wpss_flush_rewrite_rules', true, MINUTE_IN_SECONDS );
+		}
+
+		// Checkout reassurance badges. Owner-authored text for a public page,
+		// so it is sanitised as plain text - no markup, no shortcodes.
+		$sanitized['checkout_badges_enabled'] = ! empty( $input['checkout_badges_enabled'] );
+
+		$badges = array();
+
+		if ( isset( $input['checkout_badges'] ) && is_array( $input['checkout_badges'] ) ) {
+			foreach ( wpss_get_checkout_badge_defaults() as $key => $unused ) {
+				$badges[ $key ] = array(
+					'title' => sanitize_text_field( (string) ( $input['checkout_badges'][ $key ]['title'] ?? '' ) ),
+					'note'  => sanitize_text_field( (string) ( $input['checkout_badges'][ $key ]['note'] ?? '' ) ),
+				);
+			}
+		}
+
+		$sanitized['checkout_badges'] = $badges;
 
 		return $sanitized;
 	}
@@ -2993,7 +3174,7 @@ class Settings {
 		// for why the wallet ledger makes that safe). Capped at 90 to match the
 		// field, enforced HERE and not just by the max attribute, which is only
 		// a browser hint a posted value can sail straight past.
-		$sanitized['clearance_days'] = min( 90, absint( $input['clearance_days'] ?? 0 ) );
+		$sanitized['clearance_days']            = min( 90, absint( $input['clearance_days'] ?? 0 ) );
 		$sanitized['auto_withdrawal_enabled']   = ! empty( $input['auto_withdrawal_enabled'] );
 		$sanitized['auto_withdrawal_threshold'] = absint( $input['auto_withdrawal_threshold'] ?? 500 );
 		$sanitized['auto_withdrawal_schedule']  = sanitize_key( $input['auto_withdrawal_schedule'] ?? 'monthly' );
@@ -3121,13 +3302,14 @@ class Settings {
 	 * @return array<string, mixed> Sanitized input.
 	 */
 	public function sanitize_pages_settings( ?array $input ): array {
-		$input     = $input ?? array();
-		$sanitized = array();
+		$input = $input ?? array();
 
 		$page_keys = array(
 			'services_page',
+			'vendors_page',
 			'dashboard',
 			'become_vendor',
+			'cart',
 			'checkout',
 		);
 
@@ -3142,6 +3324,16 @@ class Settings {
 		// mapping, and reopening registration then pointed at nothing. Absent
 		// key now means "unchanged", not "clear it".
 		$existing = get_option( 'wpss_pages', array() );
+		$existing = is_array( $existing ) ? $existing : array();
+
+		// Start from what is already stored rather than from an empty array.
+		// The old code returned ONLY the whitelisted keys, so any key the
+		// Pages panel does not enumerate was destroyed on every save — `cart`
+		// is seeded by the installer and was missing from the whitelist, so
+		// saving this tab once silently deleted `wpss_pages['cart']` and left
+		// no field able to restore it. Keys this panel does not own now
+		// survive it.
+		$sanitized = array_map( 'absint', $existing );
 
 		foreach ( $page_keys as $key ) {
 			if ( array_key_exists( $key, $input ) ) {
@@ -3151,6 +3343,10 @@ class Settings {
 
 			$sanitized[ $key ] = absint( $existing[ $key ] ?? 0 );
 		}
+
+		// A re-mapped (or cleared) vendors page invalidates the discovery
+		// cache behind wpss_get_vendors_page_id().
+		delete_transient( 'wpss_vendors_page_lookup' );
 
 		return $sanitized;
 	}

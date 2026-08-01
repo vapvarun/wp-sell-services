@@ -8,7 +8,7 @@ namespace:
 /wp-json/wpss/v1/
 ```
 
-Every route below is generated from the 1.3.0 source. Path parameters are shown
+Every route below is generated from the 1.4.0 source. Path parameters are shown
 as WordPress route regex (`(?P<id>[\d]+)`) so you can match them exactly.
 
 For authentication, pagination, error shapes, and the generic endpoints, see
@@ -16,6 +16,42 @@ For authentication, pagination, error shapes, and the generic endpoints, see
 
 > `POST/PUT/PATCH` means the route is registered as `EDITABLE`, so WordPress
 > accepts all three verbs on it.
+
+## Two namespaces -- and only one of them is the API
+
+There are two namespaces, and the split is not the one the names suggest.
+
+| Namespace | What is on it |
+|---|---|
+| `wpss/v1` | **Everything.** All 23 free controllers *and* all 10 Pro controllers. Pro extends the API; it does not run a parallel one. |
+| `wpss-pro/v1` | Exactly **four** cart-adapter routes, and only while the matching cart plugin is active. |
+
+The four `wpss-pro/v1` routes are:
+
+| Method | Route | Present when |
+|--------|-------|--------------|
+| POST | `/wpss-pro/v1/surecart/sync-products` | SureCart is active |
+| GET | `/wpss-pro/v1/surecart/orders` | SureCart is active |
+| GET | `/wpss-pro/v1/fluentcart/products` | FluentCart is active |
+| GET | `/wpss-pro/v1/fluentcart/orders` | FluentCart is active |
+
+Build every client against `wpss/v1`. Prefixing a Pro endpoint with
+`wpss-pro/v1` returns `rest_no_route` on every single one.
+
+## Route presence is conditional
+
+Two things change which routes exist on a given site, so enumerate rather than
+assume:
+
+- **The active e-commerce rail.** `/payments/*` -- in free *and* Pro -- registers
+  only when `wpss_uses_standalone_payments()` is true, i.e. no cart plugin has
+  claimed payments. Activate WooCommerce, EDD, FluentCart or SureCart and those
+  routes stop registering entirely; a call to them answers `404 rest_no_route`
+  from WordPress core. That is by design: when a cart plugin is enabled it owns
+  all payment, and the plugin does not offer a second way in.
+- **Pro + a valid license.** The 10 Pro controllers register on `wpss_loaded`.
+
+To see the truth for a site, read the index: `GET /wp-json/wpss/v1`.
 
 ## Free controllers
 
@@ -25,6 +61,7 @@ Registered by the API bootstrap rather than a dedicated controller.
 
 | Method | Route | Purpose |
 |--------|-------|---------|
+| GET | `/` | Namespace index -- the WordPress-generated route list for `wpss/v1`. The authoritative answer to "what exists on this site". |
 | GET | `/categories` | Service categories |
 | GET | `/tags` | Service tags |
 | GET | `/settings` | Public marketplace settings |
@@ -32,6 +69,7 @@ Registered by the API bootstrap rather than a dedicated controller.
 | GET | `/dashboard` | Dashboard payload for the current user |
 | GET | `/search` | Cross-entity search |
 | POST | `/batch` | Batch several reads into one request |
+| POST | `/tour/complete` | Mark the guided onboarding tour finished for the current user. Called by the bundled tour; persists per-user so the tour does not replay. |
 
 ### Services
 
@@ -62,23 +100,106 @@ over `/services` when you only need cards.
 | POST | `/orders/(?P<id>[\d]+)/requirements/skip` |
 | DELETE | `/orders/(?P<id>[\d]+)/requirements/files/(?P<file_id>[\d]+)` |
 | GET | `/orders/(?P<id>[\d]+)/sub-orders` |
+| GET | `/orders/(?P<id>[\d]+)/timeline` |
 | POST | `/orders/(?P<id>[\d]+)/pay` |
 
 Order transitions all go through **one** action route rather than a verb per
 transition. `(?P<action>…)` accepts exactly:
 
 ```
-accept | reject | start | deliver | complete | revision | cancel | dispute
+start | deliver | complete | revision | cancel | dispute
 hold | resume | accept-cancellation | reject-cancellation
 ```
 
+> **Changed in 1.4.0:** `accept` and `reject` were removed. They had no
+> handler behind them and returned a misleading success on some paths, so a
+> client built against them was never actually transitioning anything. There is
+> no replacement -- an order is accepted by being paid. `deliver` now routes
+> through `DeliveryService` rather than writing the status directly, so a
+> delivery made over REST produces the same records and notifications as one
+> made in the dashboard.
+
 ```bash
-curl -X POST https://yoursite.com/wp-json/wpss/v1/orders/42/accept \
+curl -X POST https://yoursite.com/wp-json/wpss/v1/orders/42/deliver \
   -H "X-WP-Nonce: $NONCE"
 ```
 
 `/sub-orders` lists the milestone, tip, and extension sub-orders attached to a
 parent order -- see [Sub-Order Pattern](https://github.com/vapvarun/wp-sell-services/blob/main/docs/architecture/SUB_ORDER_PATTERN.md).
+
+`GET /orders/{id}/timeline` (**new in 1.4.0**) returns the merged, chronological
+event history for one order -- status transitions, deliveries, revisions,
+milestone and extension events, and payment events -- as a single list. It is
+what an order-detail screen renders instead of stitching four endpoints
+together.
+
+### Paying an order or a phase
+
+`POST /orders/{id}/pay` and `POST /milestones/{id}/pay` do **not** take money.
+They resolve *where the buyer must go to pay*, and enforce the milestone
+lock-step guard while doing so.
+
+**`POST /orders/{id}/pay`** -- 200:
+
+```json
+{
+  "success": true,
+  "order_id": 42,
+  "checkout_url": "https://yoursite.com/checkout/order-pay/1042/?key=wc_order_…",
+  "platform": "milestone"
+}
+```
+
+`platform` is the sub-order type when the row is one (`milestone`, `tip`,
+`extension`) and an empty string for a normal order.
+
+**`POST /milestones/{id}/pay`** -- 200:
+
+```json
+{
+  "success": true,
+  "milestone_id": 57,
+  "checkout_url": "https://yoursite.com/checkout/order-pay/1043/?key=wc_order_…"
+}
+```
+
+**Errors on both:**
+
+| Status | Code | When |
+|---|---|---|
+| 404 | `wpss_order_not_found` / `wpss_milestone_not_found` | No such row, or the row is not a milestone |
+| 409 | `wpss_order_not_payable` / `wpss_milestone_not_payable` | The row is not in `pending_payment` |
+| 409 | `wpss_milestone_locked` | An earlier phase is still open |
+
+> ### `checkout_url` is a BROWSER url, not an API endpoint
+>
+> This is the single most common way to get this wrong. `checkout_url` is a
+> page for a human, resolved through the `wpss_pay_order_url` filter by whatever
+> e-commerce rail is active. **Do not fetch it, do not parse it, do not
+> reconstruct it.** A native client must open it in a webview (or the system
+> browser) and watch for the return URL.
+>
+> On the **WooCommerce** rail it is a WooCommerce *order-pay* page
+> (`/checkout/order-pay/{wc_id}/?key=…`), rendered by WooCommerce with whatever
+> gateways the store has enabled. There is no JSON behind it.
+>
+> **Side effect on Woo: generating this URL creates a real WooCommerce order.**
+> Pro's `WCPayOrderResolver` creates (or reuses) an unpaid WC order for the
+> amount owed so the link survives an email with no cart session. It is
+> idempotent -- the WC order id is stored on the WPSS row as `wc_pay_order_id`
+> and reused while the order still needs payment -- but calling `/pay`
+> speculatively on a site with Woo active still puts a pending order in the
+> store. Call it when the buyer is actually about to pay.
+>
+> On the **standalone** rail it is `…/checkout/?pay_order={id}` and nothing is
+> created.
+>
+> **EDD, FluentCart and SureCart have no pay-order rail at all.** They do not
+> hook the filter, so `checkout_url` falls back to the standalone
+> `?pay_order=N` URL, which those checkouts do not understand -- the buyer
+> lands on an empty cart. See
+> [WooCommerce Checkout](../payments-checkout/woocommerce-checkout.md#paying-a-milestone-tip-or-extension)
+> for the support matrix.
 
 ### Milestones
 
@@ -132,7 +253,7 @@ vocabulary as the milestone hooks.
 | Method | Route |
 |--------|-------|
 | GET | `/vendors/(?P<vendor_id>[\d]+)/portfolio` |
-| POST | `/portfolio` |
+| GET, POST | `/portfolio` |
 | GET, POST/PUT/PATCH, DELETE | `/portfolio/(?P<id>[\d]+)` |
 | POST | `/portfolio/(?P<id>[\d]+)/featured` |
 | POST | `/portfolio/reorder` |
@@ -141,7 +262,7 @@ vocabulary as the milestone hooks.
 
 | Method | Route |
 |--------|-------|
-| GET | `/reviews` |
+| GET, POST | `/reviews` |
 | GET, POST/PUT/PATCH, DELETE | `/reviews/(?P<id>[\d]+)` |
 | POST | `/orders/(?P<order_id>[\d]+)/review` |
 | POST | `/reviews/(?P<id>[\d]+)/reply` |
@@ -206,7 +327,7 @@ vocabulary as the milestone hooks.
 | POST/PUT/PATCH | `/withdrawals/(?P<id>[\d]+)` |
 | GET | `/withdrawals/methods` |
 
-### Payments (free)
+### Payments (free) -- standalone rail only
 
 | Method | Route |
 |--------|-------|
@@ -216,6 +337,17 @@ vocabulary as the milestone hooks.
 
 These are the **standalone checkout** payment routes shipped in free. Pro
 replaces them with a wider, gateway-specific set -- see [Payments (Pro)](#payments-pro).
+
+> **These routes do not exist on every site.** As of 1.4.0 the whole controller
+> is skipped unless `wpss_uses_standalone_payments()` is true
+> (`src/API/PaymentController.php`). With WooCommerce, EDD, FluentCart or
+> SureCart enabled, that rail owns **all** payment and these routes are never
+> registered -- a client calling them gets `404 rest_no_route`. Do not treat
+> that as an error to retry: check `GET /wpss/v1` (or `GET /settings`) and send
+> the buyer to the rail's own checkout instead.
+>
+> Switching rails never rewrites past orders -- an order paid through a gateway
+> keeps its record, and that gateway's webhooks keep working.
 
 ### Cart
 
@@ -241,7 +373,7 @@ Authentication ships in the **free** plugin, not Pro.
 | GET | `/auth/me` |
 | POST | `/auth/forgot-password` |
 | POST | `/auth/change-password` |
-| POST | `/auth/devices` |
+| GET, POST | `/auth/devices` |
 | DELETE | `/auth/devices/(?P<device_id>[a-zA-Z0-9_-]+)` |
 
 `/auth/devices` registers a device for push notifications -- what a mobile
@@ -254,7 +386,7 @@ client calls after login.
 | GET | `/favorites` |
 | POST, DELETE | `/favorites/(?P<service_id>[\d]+)` |
 | GET | `/services/(?P<service_id>[\d]+)/favorited` |
-| POST | `/media` |
+| GET, POST | `/media` |
 | GET, DELETE | `/media/(?P<id>[\d]+)` |
 | GET | `/notifications` |
 | GET | `/notifications/unread-count` |
@@ -269,6 +401,10 @@ client calls after login.
 | GET | `/audit-log` |
 
 ### Realtime
+
+| Method | Route |
+|--------|-------|
+| POST | `/realtime/auth` |
 
 Private-channel authorization for the realtime (WebSocket) layer. The plugin speaks the Pusher protocol, so this works with Pusher.com or any self-hosted Pusher-compatible server (e.g. Soketi). Client connection settings (key, host, cluster, port, TLS) are exposed under the `realtime` key of `GET /settings`; the app secret never leaves the server.
 
@@ -381,14 +517,14 @@ without persisting anything -- use it to explain a rate in your own UI.
 | GET, POST | `/subscription-plans` |
 | GET, POST/PUT/PATCH, DELETE | `/subscription-plans/(?P<id>[\d]+)` |
 | GET | `/subscription-plans/my-subscription` |
-| POST | `/subscription-plans/subscribe` |
+| POST, DELETE | `/subscription-plans/subscribe` |
 
 ### Recurring services
 
 | Method | Route |
 |--------|-------|
 | GET, POST | `/recurring-services` |
-| GET, DELETE | `/recurring-services/(?P<id>[\d]+)` |
+| GET | `/recurring-services/(?P<id>[\d]+)` |
 | GET | `/recurring-services/my-subscriptions` |
 | GET | `/recurring-services/vendor-subscriptions` |
 | POST | `/recurring-services/(?P<id>[\d]+)/cancel` |
@@ -401,13 +537,29 @@ register, but the feature's UI is hidden until you opt in -- see
 
 ### Analytics
 
-| Method | Route |
-|--------|-------|
-| GET | `/analytics/vendor/overview` |
-| GET | `/analytics/vendor/revenue` |
-| GET | `/analytics/vendor/orders` |
-| GET | `/analytics/vendor/services` |
-| GET | `/analytics/export` |
+| Method | Route | Scope |
+|--------|-------|-------|
+| GET | `/analytics/overview` | **Marketplace-wide** -- admin only |
+| GET | `/analytics/revenue` | **Marketplace-wide** -- admin only |
+| GET | `/analytics/vendor/overview` | The calling vendor |
+| GET | `/analytics/vendor/revenue` | The calling vendor |
+| GET | `/analytics/vendor/orders` | The calling vendor |
+| GET | `/analytics/vendor/services` | The calling vendor |
+| POST | `/analytics/export` | Queue a data export |
+
+The two un-prefixed routes (`/analytics/overview`, `/analytics/revenue`) are the
+platform-owner numbers and were previously undocumented; the `/vendor/*` ones
+are scoped to whoever is calling. `/analytics/export` is **POST**, not GET --
+it starts an export rather than returning one.
+
+`/analytics/revenue` takes `period`, one of `7days` | `30days` (default) |
+`90days` | `12months`.
+
+Both admin routes register even on an **unlicensed** site, deliberately: an
+unlicensed call answers `403 wpss_pro_license_required` rather than
+`404 rest_no_route`, so a client can tell "you need a license" apart from "this
+build does not have that endpoint". Anonymous callers get `401 rest_not_logged_in`;
+a logged-in non-admin gets `403`.
 
 ### Cloud storage
 
@@ -425,7 +577,7 @@ its expiry.
 
 | Method | Route |
 |--------|-------|
-| GET | `/white-label` |
+| GET, POST/PUT/PATCH | `/white-label` |
 
 Returns the active branding (name, logo, colors) so a headless or mobile client
 can render the same identity as the site.

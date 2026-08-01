@@ -63,7 +63,7 @@ Consultants define clear scope for each package. "Business Strategy Consultation
 
 Requirements collection gathers business context: industry, current challenges, team size, budget constraints, and specific goals. Consultants receive thorough briefing before engagement starts.
 
-Milestone-based delivery breaks large projects into phases. Strategy project might have milestones: initial analysis (25% payment), draft recommendations (25%), final strategy document (50%). Client approves and pays at each stage.
+Milestone-based delivery breaks large projects into phases. A strategy project might have three: initial analysis ($1,000), draft recommendations ($1,000), final strategy document ($2,000). Phase amounts are set as fixed sums, not percentages of a total. The client pays a phase to start it, the consultant delivers, the client approves - and approval is what unlocks the next phase.
 
 Dispute resolution handles disagreements on deliverables or scope. Admin reviews evidence from both parties and enforces fair resolution.
 

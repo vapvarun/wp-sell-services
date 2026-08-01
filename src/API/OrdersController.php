@@ -161,9 +161,17 @@ class OrdersController extends RestController {
 		);
 
 		// Order status actions.
+		//
+		// 'accept' and 'reject' are deliberately absent. Both gated on status
+		// 'pending', which nothing in either plugin ever writes - real orders go
+		// pending_payment -> pending_requirements -> in_progress - so every call
+		// returned 400 and no order could ever reach the state they were written
+		// for. There is no vendor-acceptance step in this product; it is
+		// payment-first. Advertising verbs that can only fail is worse than not
+		// having them.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>accept|reject|start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation)',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -250,6 +258,34 @@ class OrdersController extends RestController {
 							'description' => __( 'Filter by sub-order type: milestone, extension, or tip.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'enum'        => array_keys( ServiceOrder::get_sub_order_types() ),
+						),
+					),
+				),
+			)
+		);
+
+		// Order activity log. Disputes already exposed a timeline; orders did
+		// not, so an Activity tab had to be invented from notifications or
+		// left blank. Same participants-only gate as the order itself.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/timeline',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_timeline' ),
+					'permission_callback' => array( $this, 'check_item_permissions' ),
+					'args'                => array(
+						'page'     => array(
+							'type'    => 'integer',
+							'default' => 1,
+							'minimum' => 1,
+						),
+						'per_page' => array(
+							'type'    => 'integer',
+							'default' => 50,
+							'minimum' => 1,
+							'maximum' => 100,
 						),
 					),
 				),
@@ -700,35 +736,6 @@ class OrdersController extends RestController {
 		$error  = null;
 
 		switch ( $action ) {
-			case 'accept':
-				if ( ! $is_vendor && ! $is_admin ) {
-					$error = __( 'Only the vendor can accept orders.', 'wp-sell-services' );
-				} elseif ( 'pending' !== $order->status ) {
-					$error = __( 'Order cannot be accepted in current status.', 'wp-sell-services' );
-				} else {
-					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_ACCEPTED );
-					if ( $result ) {
-						do_action( 'wpss_order_accepted', $order_id );
-					}
-				}
-				break;
-
-			case 'reject':
-				if ( ! $is_vendor && ! $is_admin ) {
-					$error = __( 'Only the vendor can reject orders.', 'wp-sell-services' );
-				} elseif ( 'pending' !== $order->status ) {
-					$error = __( 'Order cannot be rejected in current status.', 'wp-sell-services' );
-				} elseif ( empty( $reason ) ) {
-					$error = __( 'Reason is required for rejection.', 'wp-sell-services' );
-				} else {
-					$order->update( array( 'vendor_notes' => $reason ) );
-					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_REJECTED, $reason );
-					if ( $result ) {
-						do_action( 'wpss_order_rejected', $order_id, $reason );
-					}
-				}
-				break;
-
 			case 'start':
 				if ( ! $is_vendor && ! $is_admin ) {
 					$error = __( 'Only the vendor can start work.', 'wp-sell-services' );
@@ -748,9 +755,22 @@ class OrdersController extends RestController {
 				} elseif ( ! in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) {
 					$error = __( 'Order cannot be delivered in current status.', 'wp-sell-services' );
 				} else {
-					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_DELIVERED );
-					if ( $result ) {
-						do_action( 'wpss_order_delivered', $order_id );
+					// Through DeliveryService, the same seam the web AJAX handler
+					// and POST /orders/{id}/deliverables both use.
+					//
+					// This used to call update_status( STATUS_DELIVERED ) directly.
+					// It returned 200, so it looked like it worked - and then the
+					// order was stranded: no delivery row for the buyer to open,
+					// and a status no template understands. Every buyer-side
+					// surface keys on pending_approval, so the approval panel
+					// never rendered, "Accept delivery" failed its own guard and
+					// the revision button was hidden. A successful call left the
+					// order unfinishable by either party.
+					$delivery = new \WPSellServices\Services\DeliveryService();
+					$result   = $delivery->submit( $order_id, (string) $request->get_param( 'message' ), array() );
+
+					if ( ! $result ) {
+						$error = __( 'Delivery could not be submitted.', 'wp-sell-services' );
 					}
 				}
 				break;
@@ -1188,7 +1208,7 @@ class OrdersController extends RestController {
 
 		if ( (int) $attachment->post_author !== $user_id && ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You do not have permission to delete this file.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -1269,23 +1289,38 @@ class OrdersController extends RestController {
 
 		$data = array();
 		foreach ( $rows ?: array() as $row ) {
-			$meta = is_string( $row->meta ?? '' ) && '' !== $row->meta ? json_decode( $row->meta, true ) : array();
+			// `meta` is a nullable column. The old guard tested `$row->meta ??
+			// ''` for is_string but then compared the RAW value to '', so a
+			// NULL meta passed both halves and fatalled in json_decode( null ).
+			$meta_raw = is_string( $row->meta ?? null ) ? $row->meta : '';
+			$decoded  = '' !== $meta_raw ? json_decode( $meta_raw, true ) : null;
+			$meta     = is_array( $decoded ) ? $decoded : array();
+
+			// One currency for the whole row, so the minor units are added
+			// alongside the floats rather than through wpss_rest_money() -
+			// that would repeat the shared 'currency' key three times.
+			$row_currency    = (string) $row->currency;
+			$vendor_earnings = isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null;
+			$platform_fee    = isset( $row->platform_fee ) ? (float) $row->platform_fee : null;
 
 			$item = array(
-				'id'              => (int) $row->id,
-				'parent_order_id' => $order_id,
-				'type'            => (string) $row->platform,
-				'order_number'    => (string) $row->order_number,
-				'status'          => (string) $row->status,
-				'payment_status'  => (string) $row->payment_status,
-				'amount'          => (float) $row->total,
-				'currency'        => (string) $row->currency,
-				'vendor_earnings' => isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null,
-				'platform_fee'    => isset( $row->platform_fee ) ? (float) $row->platform_fee : null,
-				'title'           => (string) ( $meta['title'] ?? '' ),
-				'description'     => (string) ( $meta['description'] ?? ( $row->vendor_notes ?? '' ) ),
-				'created_at'      => $this->format_datetime( $row->created_at ?? null ),
-				'completed_at'    => $this->format_datetime( $row->completed_at ?? null ),
+				'id'                    => (int) $row->id,
+				'parent_order_id'       => $order_id,
+				'type'                  => (string) $row->platform,
+				'order_number'          => (string) $row->order_number,
+				'status'                => (string) $row->status,
+				'payment_status'        => (string) $row->payment_status,
+				'amount'                => (float) $row->total,
+				'amount_minor'          => wpss_amount_to_minor_units( (float) $row->total, $row_currency ),
+				'currency'              => $row_currency,
+				'vendor_earnings'       => $vendor_earnings,
+				'vendor_earnings_minor' => null !== $vendor_earnings ? wpss_amount_to_minor_units( $vendor_earnings, $row_currency ) : null,
+				'platform_fee'          => $platform_fee,
+				'platform_fee_minor'    => null !== $platform_fee ? wpss_amount_to_minor_units( $platform_fee, $row_currency ) : null,
+				'title'                 => (string) ( $meta['title'] ?? '' ),
+				'description'           => (string) ( $meta['description'] ?? ( $row->vendor_notes ?? '' ) ),
+				'created_at'            => $this->format_datetime( $row->created_at ?? null ),
+				'completed_at'          => $this->format_datetime( $row->completed_at ?? null ),
 			);
 
 			if ( 'milestone' === $row->platform ) {
@@ -1315,6 +1350,33 @@ class OrdersController extends RestController {
 			),
 			200
 		);
+	}
+
+	/**
+	 * GET /orders/{id}/timeline
+	 *
+	 * The ordered list of what actually happened on an order, so a client can
+	 * render an Activity tab from the record instead of reconstructing one
+	 * from notifications.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_timeline( WP_REST_Request $request ): WP_REST_Response {
+		$order_id = (int) $request->get_param( 'id' );
+		$events   = ( new \WPSellServices\Services\OrderTimelineService() )->get_timeline( $order_id );
+
+		$pagination = $this->get_pagination_args( $request );
+		$total      = count( $events );
+
+		$response = new WP_REST_Response( array_slice( $events, $pagination['offset'], $pagination['per_page'] ) );
+
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / $pagination['per_page'] ) );
+
+		return $response;
 	}
 
 	/**
@@ -1365,8 +1427,7 @@ class OrdersController extends RestController {
 			}
 		}
 
-		$base_url     = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
-		$checkout_url = add_query_arg( 'pay_order', $order_id, $base_url );
+		$checkout_url = wpss_get_pay_order_url( $order_id );
 
 		return new WP_REST_Response(
 			array(
@@ -1400,7 +1461,7 @@ class OrdersController extends RestController {
 
 		if ( ! $this->user_owns_resource( $order_id, 'order' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You do not have permission to access this order.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -1431,7 +1492,7 @@ class OrdersController extends RestController {
 
 		if ( ! $order || (int) $order->vendor_id !== get_current_user_id() ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_vendor',
 				__( 'Only the vendor can perform this action.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -1462,7 +1523,7 @@ class OrdersController extends RestController {
 
 		if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'Only the customer can perform this action.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -1488,6 +1549,82 @@ class OrdersController extends RestController {
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response
 	 */
+	/**
+	 * What kind of order this is.
+	 *
+	 * `service` for a normal purchase, otherwise the sub-order type (tip,
+	 * milestone, extension). Sourced from the same platform column the rest of
+	 * the plugin keys off, so it cannot drift from how orders are filtered and
+	 * counted elsewhere.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param object $order Order row.
+	 * @return string
+	 */
+	private function get_order_type( $order ): string {
+		$platform = (string) ( $order->platform ?? '' );
+
+		return in_array( $platform, wpss_get_sub_order_platforms(), true ) ? $platform : 'service';
+	}
+
+	/**
+	 * The order a sub-order hangs off, if any.
+	 *
+	 * Sub-orders store the parent id in platform_order_id, with a copy in the
+	 * meta JSON; a normal order has no parent.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param object $order Order row.
+	 * @return int|null
+	 */
+	private function get_parent_order_id( $order ): ?int {
+		if ( 'service' === $this->get_order_type( $order ) ) {
+			return null;
+		}
+
+		$parent = (int) ( $order->platform_order_id ?? 0 );
+
+		if ( $parent <= 0 ) {
+			$meta   = $order->meta ?? array();
+			$meta   = is_string( $meta ) ? json_decode( $meta, true ) : $meta;
+			$parent = (int) ( is_array( $meta ) ? ( $meta['parent_order_id'] ?? 0 ) : 0 );
+		}
+
+		return $parent > 0 ? $parent : null;
+	}
+
+	/**
+	 * Where the buyer pays this order, when it is still unpaid.
+	 *
+	 * Resolved through the shared seam, so it is correct on whichever rail the
+	 * site runs — the standalone checkout, or a real WooCommerce order-pay URL.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param object $order Order row.
+	 * @return string|null
+	 */
+	private function get_checkout_url_for( $order ): ?string {
+		if ( 'paid' === (string) ( $order->payment_status ?? '' ) ) {
+			return null;
+		}
+
+		if ( ! function_exists( 'wpss_get_pay_order_url' ) ) {
+			return null;
+		}
+
+		return wpss_get_pay_order_url( (int) $order->id );
+	}
+
+	/**
+	 * Shape one order row for the API.
+	 *
+	 * @param object          $order   Order row.
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
 	public function prepare_item_for_response( $order, $request ): WP_REST_Response {
 		$service  = get_post( $order->service_id );
 		$vendor   = get_userdata( (int) $order->vendor_id );
@@ -1507,7 +1644,20 @@ class OrdersController extends RestController {
 			'customer_avatar'   => get_avatar_url( (int) $order->customer_id, array( 'size' => 48 ) ),
 			'status'            => $order->status,
 			'status_label'      => $this->get_status_label( $order->status ),
+			// A tip, milestone or extension was indistinguishable from a service
+			// purchase in this payload: same shape, no type, no link to the
+			// order it belongs to, and no way to pay it. A client could render
+			// the row but not explain or action it.
+			'type'              => $this->get_order_type( $order ),
+			'parent_id'         => $this->get_parent_order_id( $order ),
+			'checkout_url'      => $this->get_checkout_url_for( $order ),
 			'total'             => (float) $order->total,
+			// Exact integer minor units. `total` stays a float for existing
+			// clients, but it cannot represent most amounts precisely — 150.20
+			// serialises as 150.19999999999999 — so anything doing arithmetic
+			// should read this instead. Scaled by the ORDER's currency: the
+			// old `* 100` fallback was wrong for JPY (x1) and KWD (x1000).
+			'total_minor'       => wpss_amount_to_minor_units( (float) $order->total, (string) $order->currency ),
 			'currency'          => $order->currency,
 			'formatted_total'   => wpss_format_currency( (float) $order->total, $order->currency ),
 			'due_date'          => $this->format_datetime( $order->delivery_deadline ),
@@ -1571,11 +1721,11 @@ class OrdersController extends RestController {
 		$actions = array();
 
 		switch ( $order->status ) {
+			// Kept only so an order somehow left in this legacy status still
+			// offers a way out. 'accept'/'reject' are not listed: the routes are
+			// gone, and advertising an action the client cannot call is how the
+			// app team ended up building screens around two dead verbs.
 			case 'pending':
-				if ( $is_vendor || $is_admin ) {
-					$actions[] = 'accept';
-					$actions[] = 'reject';
-				}
 				if ( $is_customer || $is_admin ) {
 					$actions[] = 'cancel';
 				}

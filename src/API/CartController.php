@@ -347,15 +347,69 @@ class CartController extends RestController {
 			return $order_result;
 		}
 
-		// A handler must return a created order for checkout to succeed. When no
-		// handler is wired (or it returns null) NO order exists — clearing the
-		// cart here would destroy the buyer's selections and then falsely report
-		// "Order created". Keep the cart intact and report honestly instead.
+		// Nothing is wired to wpss_cart_checkout on a stock install, so create
+		// the orders here — on EVERY rail, not just standalone.
+		//
+		// Handing the cart to WooCommerce and returning /checkout/ instead was
+		// wrong for the same reason it is wrong for tips and milestones: that
+		// URL only shows a cart to a browser that already carries the WC
+		// session cookie, so a native client opening it in a fresh WebView
+		// sees an empty cart and cannot pay at all.
+		//
+		// So the WPSS order is created first and is the canonical record on
+		// every rail, and the URL where the buyer pays is resolved through
+		// wpss_get_pay_order_url() — the one seam tips, milestones and
+		// extensions already use. On Woo that filter returns a real order-pay
+		// URL carrying its own key, which needs no session; on standalone it
+		// stays the local pay page. One checkout, one contract, whatever the
+		// site sells through.
 		if ( empty( $order_result ) ) {
-			return new WP_Error(
-				'checkout_unavailable',
-				__( 'Checkout could not be completed right now. Please try again or contact the site owner.', 'wp-sell-services' ),
-				array( 'status' => 501 )
+			$provider  = new \WPSellServices\Integrations\Standalone\StandaloneOrderProvider();
+			$order_ids = $provider->create_orders_from_cart( $cart, $payment_method, '', $user_id );
+
+			if ( empty( $order_ids ) ) {
+				return new WP_Error(
+					'checkout_unavailable',
+					__( 'Checkout could not be completed right now. Please try again or contact the site owner.', 'wp-sell-services' ),
+					array( 'status' => 501 )
+				);
+			}
+
+			// Only now is it safe to drop the cart — an order exists.
+			delete_user_meta( $user_id, '_wpss_cart' );
+
+			$orders = array();
+
+			foreach ( $order_ids as $order_id ) {
+				$order = wpss_get_order( (int) $order_id );
+
+				$orders[] = array(
+					'order_id'     => (int) $order_id,
+					'order_number' => $order->order_number ?? '',
+					'status'       => $order->status ?? '',
+					'total'        => (float) ( $order->total ?? 0 ),
+					'currency'     => (string) ( $order->currency ?? wpss_get_currency() ),
+					// Where the buyer actually pays. Resolved through the shared
+					// seam, so it is right on whichever rail the site runs.
+					'checkout_url' => wpss_get_pay_order_url( (int) $order_id ),
+				);
+			}
+
+			$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
+
+			return new WP_REST_Response(
+				array(
+					'orders'       => $orders,
+					// One cart can hold services from several vendors, which is
+					// several orders — but a client with a single-order screen
+					// needs somewhere to send the buyer, so surface the first.
+					'order_id'     => $orders[0]['order_id'],
+					'checkout_url' => $orders[0]['checkout_url'],
+					// Informational only. The client opens checkout_url the same
+					// way regardless of what this says.
+					'rail'         => $adapter ? $adapter->get_id() : 'standalone',
+				),
+				201
 			);
 		}
 

@@ -43,6 +43,31 @@ class MediaController extends RestController {
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
+				// The collection was POST-only, so listing what you had already
+				// uploaded returned 404 — a client could add files and never
+				// enumerate them. Scoped to the caller's own uploads: media is
+				// not a public library, and one user must not be able to page
+				// through another's files.
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_items' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+					'args'                => array(
+						'page'     => array(
+							'description' => __( 'Current page of the collection.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
+						),
+						'per_page' => array(
+							'description' => __( 'Items per page.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 20,
+							'minimum'     => 1,
+							'maximum'     => 100,
+						),
+					),
+				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'upload' ),
@@ -163,6 +188,49 @@ class MediaController extends RestController {
 	}
 
 	/**
+	 * List the caller's own uploads.
+	 *
+	 * Uploads are tagged with _wpss_uploader at upload time, which is what
+	 * scopes this — the query is paginated in SQL by WP_Query rather than
+	 * fetched and sliced, so a heavy uploader does not load their whole
+	 * library to read one page.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_items( $request ) {
+		$page     = max( 1, (int) $request->get_param( 'page' ) );
+		$per_page = min( 100, max( 1, (int) $request->get_param( 'per_page' ) ?: 20 ) );
+
+		$query = new \WP_Query(
+			array(
+				'post_type'      => 'attachment',
+				'post_status'    => 'inherit',
+				'author'         => get_current_user_id(),
+				'posts_per_page' => $per_page,
+				'paged'          => $page,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+				'fields'         => 'ids',
+			)
+		);
+
+		$items = array();
+
+		foreach ( $query->posts as $attachment_id ) {
+			$items[] = $this->format_attachment( (int) $attachment_id );
+		}
+
+		$response = new \WP_REST_Response( $items );
+		$response->header( 'X-WP-Total', (string) (int) $query->found_posts );
+		$response->header( 'X-WP-TotalPages', (string) (int) $query->max_num_pages );
+
+		return $response;
+	}
+
+	/**
 	 * Delete file.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -200,7 +268,7 @@ class MediaController extends RestController {
 		}
 
 		if ( (int) $attachment->post_author !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not own this file.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			return new WP_Error( 'wpss_not_owner', __( 'You do not own this file.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
 		return true;
@@ -249,7 +317,7 @@ class MediaController extends RestController {
 			}
 		}
 
-		return new WP_Error( 'rest_forbidden', __( 'You do not have access to this file.', 'wp-sell-services' ), array( 'status' => 403 ) );
+		return new WP_Error( 'wpss_not_owner', __( 'You do not have access to this file.', 'wp-sell-services' ), array( 'status' => 403 ) );
 	}
 
 	/**

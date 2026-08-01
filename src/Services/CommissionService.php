@@ -88,6 +88,34 @@ class CommissionService {
 		// to the store currency when the order has none (e.g. at creation time).
 		$decimals = wpss_get_currency_decimals( (string) ( $order->currency ?? '' ) );
 
+		// The platform can only pay a vendor out of money the buyer actually
+		// kept paying. A partial refund shrinks that pot, so the fee and the
+		// earning are derived from the NET base — the same fraction of the base
+		// that the buyer did not get back.
+		//
+		// This is the seam because refunded_amount is CUMULATIVE and
+		// authoritative: netting here is idempotent no matter how many partial
+		// refunds arrive, and it self-corrects an order whose stored
+		// vendor_earnings was set before the refund. Reducing the stored figure
+		// on each refund instead would compound — the second refund would size
+		// its share against an already-reduced base and under-pay the vendor.
+		//
+		// Scaled rather than subtracted: $base is pre-tax (subtotal + addons)
+		// while refunded_amount is against the gross total, so a straight
+		// subtraction would over-deduct on any taxed order.
+		//
+		// Before this, a partial refund BEFORE completion left the credit
+		// untouched: order #111 refunded $20.00 of $75.00 still credited the
+		// vendor the full $67.50 while the buyer had net-paid $55.00, and the
+		// platform silently absorbed the difference.
+		$order_total = (float) ( $order->total ?? 0 );
+		$refunded    = (float) ( $order->refunded_amount ?? 0 );
+
+		if ( $refunded > 0 && $order_total > 0 ) {
+			$kept_share = 1 - ( min( $refunded, $order_total ) / $order_total );
+			$base       = round( $base * $kept_share, $decimals );
+		}
+
 		/**
 		 * Filters the base amount used for commission calculation.
 		 *

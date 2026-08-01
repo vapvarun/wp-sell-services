@@ -95,7 +95,7 @@ $completed_count = (int) ( $stats['completed_orders'] ?? 0 );
 $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 ?>
 
-<div class="wpss-section wpss-section--orders">
+<div class="wpss-section wpss-section--orders wpss-card">
 	<div class="wpss-stats-grid">
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( $total_count ); ?></span>
@@ -266,7 +266,7 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 								);
 								?>
 								<span class="wpss-order-card__sep">&bull;</span>
-								<?php echo esc_html( human_time_diff( strtotime( $order_item->created_at ), current_time( 'timestamp' ) ) ); ?>
+								<?php echo esc_html( human_time_diff( strtotime( $order_item->created_at . ' UTC' ), time() ) ); ?>
 								<?php esc_html_e( 'ago', 'wp-sell-services' ); ?>
 							</p>
 						</div>

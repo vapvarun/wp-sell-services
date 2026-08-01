@@ -40,7 +40,7 @@ $show_payout_banner = empty( $payout_method )
 	&& ( (float) $earnings['available_balance'] > 0 || (float) $earnings['pending_clearance'] > 0 );
 ?>
 
-<div class="wpss-section wpss-section--earnings">
+<div class="wpss-section wpss-section--earnings wpss-card">
 	<?php if ( $show_payout_banner ) : ?>
 		<div class="wpss-dashboard__payout-banner" role="status">
 			<span class="wpss-payout-banner__icon">
@@ -263,7 +263,7 @@ $show_payout_banner = empty( $payout_method )
 	?>
 
 	<!-- Wallet Transactions Ledger -->
-	<div class="wpss-earnings__wallet wpss-wallet wpss-card" style="margin-top: 2rem;">
+	<div class="wpss-earnings__wallet wpss-wallet wpss-card">
 		<div class="wpss-wallet__header">
 			<div>
 				<h3><?php esc_html_e( 'Wallet Transactions', 'wp-sell-services' ); ?></h3>

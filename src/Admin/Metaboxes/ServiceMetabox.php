@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace WPSellServices\Admin\Metaboxes;
 
 use WPSellServices\PostTypes\ServicePostType;
+use WPSellServices\Assets\ScriptRegistry;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -142,12 +143,12 @@ class ServiceMetabox {
 		);
 
 		// Service edit specific scripts.
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-service-edit',
-			$plugin_url . 'assets/js/service-edit.js',
+			'assets/js/service-edit.js',
 			array( 'jquery' ),
-			$version,
-			true
+			true,
+			$version
 		);
 
 		wp_localize_script(
@@ -1101,8 +1102,10 @@ class ServiceMetabox {
 			<?php $this->render_addons_content( $post ); ?>
 		</div>
 		<div id="wpss_requirements_panel" class="wpss-panel">
-			<?php // Sentinel: marks that the requirements UI was on this form, so a
-			// save with zero rows means "cleared" rather than "not rendered". ?>
+			<?php
+			// Sentinel: marks that the requirements UI was on this form, so a
+			// save with zero rows means "cleared" rather than "not rendered".
+			?>
 			<input type="hidden" name="wpss_requirements_present" value="1">
 			<?php $this->render_requirements_content( $post ); ?>
 		</div>

@@ -131,7 +131,11 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 	 * @return string
 	 */
 	public function get_vendor_dashboard_url(): string {
-		return add_query_arg( 'section', 'overview', wpss_get_page_url( 'dashboard' ) );
+		// `overview` was never a dashboard section — the slug had no template
+		// and rendered a dead "Section Not Available" card. A seller's
+		// operational home is Sales Orders, which is also where the dashboard
+		// lands an active vendor by default.
+		return wpss_get_dashboard_url( 'sales' );
 	}
 
 	/**

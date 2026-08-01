@@ -599,7 +599,7 @@ class BuyerRequestService {
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 
 		// Generate order number.
-		$order_number = 'WPSS-' . strtoupper( wp_generate_password( 8, false ) );
+		$order_number = wpss_generate_order_number();
 
 		// Calculate delivery deadline.
 		$delivery_days = $proposal->proposed_days ?: $request->delivery_days ?: 7;
@@ -746,8 +746,11 @@ class BuyerRequestService {
 			}
 		}
 
-		// Accept the proposal.
+		// Accept the proposal, and record WHICH order it produced. The column is
+		// published in every proposal REST response and was never written, so
+		// nothing could get from an accepted proposal to its order.
 		$proposal_service->update_status( $proposal_id, ProposalService::STATUS_ACCEPTED );
+		$proposal_service->link_order( $proposal_id, $order_id );
 
 		// Reject other proposals for this request.
 		$proposal_service->reject_other_proposals( $request_id, $proposal_id );

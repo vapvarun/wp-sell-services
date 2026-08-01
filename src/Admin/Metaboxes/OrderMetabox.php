@@ -17,6 +17,7 @@ use WPSellServices\Database\Repositories\ConversationRepository;
 use WPSellServices\Database\Repositories\DeliveryRepository;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Services\OrderService;
+use WPSellServices\Assets\ScriptRegistry;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -192,20 +193,12 @@ class OrderMetabox {
 
 		// Shared design-system primitives (wpssConfirm / wpssToast). Same
 		// handle + src as Admin::enqueue_scripts() — no-op when already queued.
-		wp_enqueue_script(
-			'wpss-ui',
-			\WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
-			array(),
-			\WPSS_VERSION,
-			true
-		);
+		ScriptRegistry::enqueue_ui();
 
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-order-metabox',
-			\WPSS_PLUGIN_URL . 'assets/js/admin-order.js',
-			array( 'jquery', 'wpss-ui' ),
-			\WPSS_VERSION,
-			true
+			'assets/js/admin-order.js',
+			array( 'jquery', ScriptRegistry::HANDLE_UI )
 		);
 
 		wp_localize_script(
@@ -215,17 +208,17 @@ class OrderMetabox {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'wpss_order_admin' ),
 				'i18n'    => array(
-					'confirmStatusChange' => __( 'Are you sure you want to change the order status?', 'wp-sell-services' ),
+					'confirmStatusChange'  => __( 'Are you sure you want to change the order status?', 'wp-sell-services' ),
 					'confirmRefund'        => __( 'Refund this order? The gateway payment will be refunded where supported.', 'wp-sell-services' ),
 					'confirmPartialRefund' => __( 'Issue this partial refund? The buyer is refunded the amount entered and the vendor\'s proportional share is clawed back.', 'wp-sell-services' ),
 					'refund'               => __( 'Refund', 'wp-sell-services' ),
-					'noteAdded'           => __( 'Note added successfully.', 'wp-sell-services' ),
-					'requirementsSaved'   => __( 'Requirements saved successfully.', 'wp-sell-services' ),
-					'error'               => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'enterNote'           => __( 'Please enter a note.', 'wp-sell-services' ),
-					'update'              => __( 'Update', 'wp-sell-services' ),
-					'updating'            => __( 'Updating...', 'wp-sell-services' ),
-					'savingRequirements'  => __( 'Saving...', 'wp-sell-services' ),
+					'noteAdded'            => __( 'Note added successfully.', 'wp-sell-services' ),
+					'requirementsSaved'    => __( 'Requirements saved successfully.', 'wp-sell-services' ),
+					'error'                => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'enterNote'            => __( 'Please enter a note.', 'wp-sell-services' ),
+					'update'               => __( 'Update', 'wp-sell-services' ),
+					'updating'             => __( 'Updating...', 'wp-sell-services' ),
+					'savingRequirements'   => __( 'Saving...', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -1029,6 +1022,9 @@ class OrderMetabox {
 			}
 
 			$order_total = (float) $order->total;
+			// Cast to float IS the sanitisation for a money field; there is no
+			// sanitize_* that returns a float. Nonce is verified above.
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$amount      = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
 			$is_partial  = $amount > 0 && $amount < $order_total;
 

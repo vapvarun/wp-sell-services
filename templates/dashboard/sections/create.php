@@ -24,9 +24,17 @@ defined( 'ABSPATH' ) || exit;
  */
 do_action( 'wpss_dashboard_section_before', 'create', $user_id );
 
-// Check if editing existing service.
+// Check if editing existing service. `service_id` is accepted alongside `id`
+// because moderation emails sent before 1.6.1 named the service that way; those
+// links are already in vendors' inboxes and must keep opening the right service
+// instead of an empty wizard.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Just checking for edit ID.
 $service_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
+
+if ( ! $service_id && isset( $_GET['service_id'] ) ) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Just checking for edit ID.
+	$service_id = absint( $_GET['service_id'] );
+}
 
 // Verify ownership if editing.
 if ( $service_id ) {

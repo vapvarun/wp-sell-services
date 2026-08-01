@@ -50,6 +50,39 @@ class ReviewsController extends RestController {
 					'permission_callback' => '__return_true',
 					'args'                => $this->get_collection_params(),
 				),
+				// Collection POST, aliasing /orders/{id}/review.
+				//
+				// A review belongs to an order, so the nested route is the more
+				// honest URL and stays the documented one. But POSTing to the
+				// collection you just read from is what every REST client tries
+				// first, and answering that with rest_no_route reads as "review
+				// submission is broken" rather than "wrong URL". Same callback
+				// and same permission check, so there is one implementation and
+				// the two paths cannot drift in validation.
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_item' ),
+					'permission_callback' => array( $this, 'check_create_permissions' ),
+					'args'                => array(
+						'order_id' => array(
+							'description' => __( 'Order being reviewed.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+						'rating'   => array(
+							'description' => __( 'Rating (1-5).', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'required'    => true,
+							'minimum'     => 1,
+							'maximum'     => 5,
+						),
+						'review'   => array(
+							'description' => __( 'Review text.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'required'    => true,
+						),
+					),
+				),
 				'schema' => array( $this, 'get_public_item_schema' ),
 			)
 		);
@@ -329,7 +362,7 @@ class ReviewsController extends RestController {
 		// Verify user is the customer.
 		if ( (int) $order->customer_id !== $user_id ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You can only review orders you placed.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -905,7 +938,7 @@ class ReviewsController extends RestController {
 
 		if ( ! $review || (int) $review->customer_id !== get_current_user_id() ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You can only edit your own reviews.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -921,15 +954,13 @@ class ReviewsController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function check_delete_permissions( WP_REST_Request $request ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error(
-				'rest_forbidden',
-				__( 'Only administrators can delete reviews.', 'wp-sell-services' ),
-				array( 'status' => 403 )
-			);
-		}
-
-		return true;
+		// Delegate rather than hand-roll a fourth gate in this file. The three
+		// siblings here all check login before capability; this one went
+		// straight to manage_options, so a logged-out caller got 403 - an
+		// authorization answer to an authentication question. A client whose
+		// rule is "401 means refresh the token and retry" reads that as a
+		// permanent denial and never recovers from an expired token.
+		return $this->check_admin_permissions( $request );
 	}
 
 	/**
@@ -955,7 +986,7 @@ class ReviewsController extends RestController {
 
 		if ( ! $review || (int) $review->vendor_id !== get_current_user_id() ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_vendor',
 				__( 'Only the vendor can reply to reviews.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -976,28 +1007,28 @@ class ReviewsController extends RestController {
 		$service = get_post( (int) $review->service_id );
 
 		$data = array(
-			'id'              => (int) $review->id,
-			'order_id'        => (int) $review->order_id,
-			'service_id'      => (int) $review->service_id,
-			'service_title'   => $service ? $service->post_title : '',
-			'vendor_id'       => (int) $review->vendor_id,
-			'vendor_name'     => $vendor ? $vendor->display_name : '',
-			'customer_id'     => (int) $review->customer_id,
-			'customer_name'   => Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ),
-			'customer_avatar' => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),
-			'rating'          => (int) $review->rating,
-			'review'          => $review->review,
-			'status'          => $review->status,
-			'helpful_count'   => (int) ( $review->helpful_count ?? 0 ),
-			'vendor_reply'    => $review->vendor_reply ?? null,
-			'vendor_reply_at' => $review->vendor_reply_at ?? null,
-			'created_at'      => $review->created_at,
-			'updated_at'      => $review->updated_at ?? null,
+			'id'                 => (int) $review->id,
+			'order_id'           => (int) $review->order_id,
+			'service_id'         => (int) $review->service_id,
+			'service_title'      => $service ? $service->post_title : '',
+			'vendor_id'          => (int) $review->vendor_id,
+			'vendor_name'        => $vendor ? $vendor->display_name : '',
+			'customer_id'        => (int) $review->customer_id,
+			'customer_name'      => Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ),
+			'customer_avatar'    => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),
+			'rating'             => (int) $review->rating,
+			'review'             => $review->review,
+			'status'             => $review->status,
+			'helpful_count'      => (int) ( $review->helpful_count ?? 0 ),
+			'vendor_reply'       => $review->vendor_reply ?? null,
+			'vendor_reply_at'    => $review->vendor_reply_at ?? null,
+			'created_at'         => $review->created_at,
+			'updated_at'         => $review->updated_at ?? null,
 			// Additive presentation fields so REST consumers (single-service.js
 			// reviews block) can render with parity to the legacy server-rendered
 			// markup without reimplementing wpautop/time-ago client-side.
-			'created_human'   => $review->created_at ? wpss_time_ago( (string) $review->created_at ) : '',
-			'review_html'     => wp_kses_post( wpautop( (string) $review->review ) ),
+			'created_human'      => $review->created_at ? wpss_time_ago( (string) $review->created_at ) : '',
+			'review_html'        => wp_kses_post( wpautop( (string) $review->review ) ),
 			'vendor_reply_html'  => ! empty( $review->vendor_reply ) ? wp_kses_post( wpautop( (string) $review->vendor_reply ) ) : '',
 			'vendor_reply_human' => ! empty( $review->vendor_reply_at ) ? wpss_time_ago( (string) $review->vendor_reply_at ) : '',
 		);

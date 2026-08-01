@@ -80,10 +80,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |--------|-----------|------|
 | `wpss_pre_create_order` | `array $order_data` | `StandaloneOrderProvider.php` |
 | `wpss_pre_order_status_change` | `bool $allow, int $order_id, string $new_status, string $old_status` | `OrderService.php` |
-| `wpss_order_accepted` | `int $order_id` | `OrdersController.php:564` |
-| `wpss_order_rejected` | `int $order_id, string $reason` | `OrdersController.php:582` |
-| `wpss_order_started` | `int $order_id` | `OrdersController.php:598` |
-| `wpss_order_delivered` | `int $order_id` | `OrdersController.php:613` |
+| `wpss_order_started` | `int $order_id` | `OrdersController.php:747` |
 | `wpss_order_completed` | `int $order_id, object $order` | `OrderWorkflowManager.php:685` |
 | `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `OrderService.php:427` |
 | `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `OrdersController.php:670` |
@@ -92,6 +89,23 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `OrderWorkflowManager.php:638` |
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `OrderWorkflowManager.php:338` |
 | `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `OrderWorkflowManager.php:472` |
+
+> **Removed in 1.4.0: `wpss_order_accepted`, `wpss_order_rejected`,
+> `wpss_order_delivered`.** The first two went when the dead `accept` / `reject`
+> order verbs were removed -- they never had a real transition behind them.
+> `wpss_order_delivered` went when `deliver` was routed through
+> `DeliveryService`, which already fires its own, better-shaped hooks.
+>
+> Rebind as follows:
+>
+> | Was | Use instead |
+> |---|---|
+> | `wpss_order_accepted` | `wpss_order_paid`, or `wpss_order_status_changed` -- an order is accepted by being paid |
+> | `wpss_order_rejected` | `wpss_order_cancelled` |
+> | `wpss_order_delivered` | `wpss_delivery_submitted` (`$delivery_id, $order_id`) or `wpss_delivery_accepted` (`$order_id`) |
+>
+> All three are gone from the source, so a callback still bound to them runs
+> never -- silently. Grep your integrations.
 
 ## Delivery Actions
 
@@ -497,6 +511,66 @@ add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `AjaxHandlers.php:2524` |
+| `wpss_pay_order_url` | `string $url, int $order_id` | `functions.php:3391` |
+
+### `wpss_pay_order_url` -- the payment-handoff seam
+
+This is the one seam for **"send the buyer somewhere they can pay THIS
+order."** Every tip, milestone phase, paid extension and accepted proposal
+resolves its pay link through it -- on the order page, in the dashboard, in the
+REST `checkout_url` field, and in the emails the plugin sends.
+
+Never rebuild that URL inline. Code that does is correct on the standalone rail
+and broken on every other one.
+
+```php
+// The helper. Call this; do not re-author it.
+$url = wpss_get_pay_order_url( $order_id );   // src/functions.php:3375
+```
+
+**Default (unfiltered):** `<checkout page>?pay_order={id}`. The standalone
+checkout understands that query arg and renders the single order.
+
+**Why it needs a filter at all:** a cart-based rail has no concept of "pay this
+existing order." Appending `?pay_order=N` to a WooCommerce checkout URL lands
+the buyer on an **empty cart with no way to pay and no error message** -- which
+is exactly what every tip, milestone and extension link did in Woo mode before
+1.4.0.
+
+**Who hooks it:**
+
+| Rail | Hooks it? | What the buyer gets |
+|---|---|---|
+| Standalone | n/a (the default) | `?pay_order=N` on the plugin's own checkout |
+| WooCommerce | **Yes** -- `WCPayOrderResolver` (Pro) | A native WC order-pay URL |
+| EDD | No | The unfiltered default -> empty cart |
+| FluentCart | No | The unfiltered default -> empty cart |
+| SureCart | No | The unfiltered default -> empty cart |
+
+**Two things to know before you hook it:**
+
+1. **It is called speculatively.** Rendering the order page asks for a pay URL
+   for every unpaid phase, and `MilestoneService::propose()` asks for one when
+   the phase is created. A resolver that has side effects (Woo's creates a WC
+   order) will have them at render time, not at click time -- so make yours
+   idempotent, as `WCPayOrderResolver` is.
+2. **It is not a security gate.** The milestone lock-step guard lives on the
+   *checkout* side, not here. Returning a URL for a locked phase is possible and
+   the plugin's own Woo resolver does it.
+
+```php
+// Point a custom rail at its own pay page.
+add_filter( 'wpss_pay_order_url', function ( string $url, int $order_id ): string {
+    $order = wpss_get_order( $order_id );
+    if ( ! $order || 'paid' === ( $order->payment_status ?? '' ) ) {
+        return $url;
+    }
+    return my_gateway_build_pay_page( $order_id, (float) $order->total );
+}, 10, 2 );
+```
+
+See [WooCommerce Checkout](../payments-checkout/woocommerce-checkout.md#paying-a-milestone-tip-or-extension)
+for the full WC implementation and the platform-support matrix.
 
 ## Email Filters
 
@@ -717,8 +791,8 @@ add_filter( 'wpss_realtime_settings', function( $settings ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_use_fullwidth_template` | `bool $use` | `FullwidthTemplate.php` |
-| `wpss_fullwidth_page_keys` | `string[] $page_keys` | `FullwidthTemplate.php` |
+| `wpss_use_fullwidth_template` | `bool $use` | `src/Frontend/TemplateLoader.php:246` (and `:332`) |
+| `wpss_fullwidth_page_keys` | `string[] $page_keys` | `src/Frontend/TemplateLoader.php:292` |
 
 **`wpss_use_fullwidth_template`** — return `false` to keep the active theme's normal page template (with sidebar) on the plugin's pages instead of the sidebar-free full-width layout:
 
@@ -869,3 +943,57 @@ WooCommerce or standalone checkout.
 - [REST API Reference](rest-api-overview.md) - API endpoints and authentication
 - [Custom Integrations](custom-integrations.md) - Building custom adapters and gateways
 - [Theme Integration](theme-integration.md) - Template overrides and styling
+
+---
+
+## Paying for a single order (sub-orders)
+
+Tips, milestone phases and extension quotes are **sub-orders**: a real WPSS
+order of their own, created against a parent order, that the buyer pays
+separately. They are the one deliberate exception to the one-rail catalog rule
+— the catalog checkout belongs entirely to the active platform, but a sub-order
+has no cart and cannot go through it.
+
+### `wpss_get_pay_order_url( int $order_id ): string`
+
+**The single source for "pay THIS order."** Every surface that links a buyer to
+a payment — dashboard timeline, order view, emails, notifications — must call
+it. Never build a `?pay_order=` link by hand; it is correct only on one rail.
+
+```php
+$url = wpss_get_pay_order_url( $order_id );
+```
+
+### `wpss_pay_order_url` (filter)
+
+```php
+apply_filters( 'wpss_pay_order_url', string $url, int $order_id );
+```
+
+A cart-based rail replaces the URL entirely. Pro's WooCommerce implementation
+(`WCPayOrderResolver`) creates — or reuses — a real WooCommerce order for the
+sub-order and returns its native order-pay URL, so the link works from an email
+days later with no cart session.
+
+### Supported rails
+
+| `ecommerce_platform` | Sub-order Pay | How |
+|---|---|---|
+| `standalone` | Supported | `?pay_order=N` on the WPSS checkout page |
+| `woocommerce` | Supported | Real WC order + native order-pay URL (Pro) |
+
+These are the two rails the sub-order payment path is built and tested against.
+
+A platform that has not implemented `wpss_pay_order_url` inherits the standalone
+URL, which is not the checkout that rail owns — so implement the filter for any
+new platform the way `WCPayOrderResolver` does. Do **not** solve it by
+re-enabling WPSS gateways alongside the platform's own, which would break the
+one-rail contract.
+
+### Why `wpss_get_checkout_base_url()` is not the answer
+
+It returns the **active rail's** checkout — WooCommerce's under Woo. Sending a
+buyer there for a sub-order lands them on an empty cart, because a sub-order was
+never added to one. That is the trap the filter above exists to avoid, and the
+reason browser Pay never reaches `StandaloneCheckoutProvider::render_pay_order_checkout()`
+on a cart rail.

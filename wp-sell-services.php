@@ -13,7 +13,7 @@
  * Plugin Name:       WP Sell Services
  * Plugin URI:        https://wbcomdesigns.com/downloads/wp-sell-services/
  * Description:       A complete Fiverr-style service marketplace platform for WordPress. Create a service marketplace with built-in standalone checkout, order management, messaging, reviews, and more.
- * Version:           1.3.0
+ * Version:           1.4.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Wbcom Designs
@@ -39,7 +39,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @var string
  */
-define( 'WPSS_VERSION', '1.3.0' );
+define( 'WPSS_VERSION', '1.4.0' );
 
 /**
  * Plugin file path.
@@ -276,7 +276,15 @@ function wpss_init(): void {
 		return;
 	}
 
-	wpss_load_composer_autoloader();
+	// Respect the guard's verdict. It pre-flights every file the autoloader
+	// eagerly requires and returns false (having queued an admin notice) when
+	// one is missing — but this caller discarded that and carried on to
+	// `require_once src/Core/Plugin.php`, which then fataled on the first
+	// namespaced class. The notice written to prevent a white screen was being
+	// rendered underneath one. See Basecamp #9828326478.
+	if ( ! wpss_load_composer_autoloader() ) {
+		return;
+	}
 
 	// Load WP-CLI commands.
 	if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -450,7 +458,12 @@ register_activation_hook( __FILE__, __NAMESPACE__ . '\\wpss_activate' );
  * @return void
  */
 function wpss_deactivate(): void {
-	wpss_load_composer_autoloader();
+	// Same reason as wpss_init(): Deactivator is a namespaced class, so
+	// continuing past a failed autoloader turns "deactivate the broken plugin"
+	// — the one action left to a site owner in this state — into a fatal.
+	if ( ! wpss_load_composer_autoloader() ) {
+		return;
+	}
 
 	// Run deactivator.
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Deactivator.php';
@@ -476,7 +489,34 @@ add_action(
 	}
 );
 
-// EDD Software Licensing SDK — free plugin auto-updates with preset key.
+// ---------------------------------------------------------------------------
+// EDD Software Licensing SDK — automatic updates for free and Pro.
+//
+// The SDK is vendored at libs/edd-sl-sdk and is the single source of truth for
+// the product family: WP Sell Services Pro registers its own product on the
+// same registry hook and requires this same file (require_once makes the double
+// load safe). It is NOT a Composer dependency — see
+// libs/edd-sl-sdk/WBCOM-PATCHES.md for the three patches we carry and the rule
+// that keeps it out of vendor/.
+//
+// The free product ships with a preset, unlimited-activation key so updates
+// work with zero customer setup. License state never gates functionality — it
+// only authorises update downloads.
+// ---------------------------------------------------------------------------
+
+/**
+ * Preset license key for the free plugin (unlimited activations).
+ *
+ * Shared by the SDK registration and the first-run activation below so the two
+ * can never drift apart.
+ */
+const WPSS_PRESET_LICENSE_KEY = 'wbcomfree3c8a1f7e5d2b9a4c6e0f1d8b7a2c9e66';
+
+/**
+ * EDD download ID for the free plugin on wbcomdesigns.com.
+ */
+const WPSS_EDD_ITEM_ID = 1660955;
+
 add_action(
 	'edd_sl_sdk_registry',
 	function ( $registry ) {
@@ -484,33 +524,60 @@ add_action(
 			array(
 				'id'          => 'wp-sell-services',
 				'url'         => 'https://wbcomdesigns.com',
-				'item_id'     => 1660955,
+				'item_id'     => WPSS_EDD_ITEM_ID,
 				'version'     => WPSS_VERSION,
 				'file'        => WPSS_PLUGIN_FILE,
-				'license'     => 'wbcomfree3c8a1f7e5d2b9a4c6e0f1d8b7a2c9e66',
+				'license'     => WPSS_PRESET_LICENSE_KEY,
 				'option_name' => 'wpss_license_key',
 			)
 		);
 	}
 );
 
-if ( file_exists( WPSS_PLUGIN_DIR . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' ) ) {
-	require_once WPSS_PLUGIN_DIR . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
+// Load the vendored SDK only when the package is COMPLETE. A partial build or
+// extract that keeps the entry file but drops libs/edd-sl-sdk/src would fatal
+// inside the SDK the moment it instantiates a src class (the failure mode that
+// has bitten stripped bundled-SDK releases). Guard on the source being present
+// and degrade to "updates disabled" with a soft admin notice instead of a white
+// screen — licensing only gates updates, never features, so the marketplace
+// keeps working.
+if ( file_exists( WPSS_PLUGIN_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php' )
+	&& file_exists( WPSS_PLUGIN_DIR . 'libs/edd-sl-sdk/src/Versions.php' ) ) {
+	require_once WPSS_PLUGIN_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php';
+} elseif ( is_admin() ) {
+	add_action(
+		'admin_notices',
+		static function (): void {
+			if ( ! current_user_can( 'update_plugins' ) ) {
+				return;
+			}
+			echo '<div class="notice notice-warning"><p>';
+			esc_html_e( 'WP Sell Services: the bundled updater library is incomplete, so automatic updates are disabled. Re-install the plugin from a complete zip. All marketplace features continue to work.', 'wp-sell-services' );
+			echo '</p></div>';
+		}
+	);
 }
 
-// Auto-activate the preset license key on first load so updates work.
+// Activate the preset key once so the store recognises this site for updates.
+//
+// Runs at most once per day until it succeeds: without the backoff an
+// unreachable store meant a blocking 15-second POST on EVERY admin page load,
+// forever.
 add_action(
 	'admin_init',
 	function () {
-		$preset_key = 'wbcomfree3c8a1f7e5d2b9a4c6e0f1d8b7a2c9e66';
-		$option     = 'wpss_license_key';
-		$activated  = 'wpss_preset_activated';
+		$activated = 'wpss_preset_activated';
+		$attempted = 'wpss_preset_activation_retry';
 
-		if ( get_option( $activated ) ) {
+		if ( get_option( $activated ) || get_transient( $attempted ) ) {
 			return;
 		}
 
-		update_option( $option, $preset_key, false );
+		// Claim the window up front so a failure (or a fatal mid-request)
+		// cannot produce a retry storm across concurrent admin requests.
+		set_transient( $attempted, 1, DAY_IN_SECONDS );
+
+		update_option( 'wpss_license_key', WPSS_PRESET_LICENSE_KEY, false );
 
 		$response = wp_remote_post(
 			'https://wbcomdesigns.com',
@@ -518,27 +585,33 @@ add_action(
 				'timeout' => 15,
 				'body'    => array(
 					'edd_action' => 'activate_license',
-					'license'    => $preset_key,
-					'item_id'    => 1660955,
+					'license'    => WPSS_PRESET_LICENSE_KEY,
+					'item_id'    => WPSS_EDD_ITEM_ID,
 					'url'        => home_url(),
 				),
 			)
 		);
 
-		if ( ! is_wp_error( $response ) ) {
-			$body = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( 'valid' === ( $body['license'] ?? '' ) ) {
-				update_option( $activated, 1, false );
-				// Auto-enable usage tracking checkbox.
-				update_option(
-					$option . '_allow_tracking',
-					array(
-						'allowed'   => true,
-						'timestamp' => time(),
-					),
-					false
-				);
-			}
+		if ( is_wp_error( $response ) ) {
+			return;
 		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( 'valid' !== ( $body['license'] ?? '' ) ) {
+			return;
+		}
+
+		update_option( $activated, 1, false );
+		delete_transient( $attempted );
+
+		// Auto-enable usage tracking checkbox.
+		update_option(
+			'wpss_license_key_allow_tracking',
+			array(
+				'allowed'   => true,
+				'timestamp' => time(),
+			),
+			false
+		);
 	}
 );

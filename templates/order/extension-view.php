@@ -28,8 +28,11 @@ $net_vendor = (float) ( $current_order->vendor_earnings ?? $gross );
 $platform_f = (float) ( $current_order->platform_fee ?? 0 );
 $parent_id  = (int) ( $current_order->platform_order_id ?? 0 );
 $parent_url = $parent_id ? add_query_arg( 'order_id', $parent_id, remove_query_arg( 'order_id' ) ) : '';
-$base_url   = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
-$pay_url    = add_query_arg( 'pay_order', (int) $current_order->id, $base_url );
+// Resolved through the seam, never rebuilt inline: ?pay_order=N is a real
+// payment page only on the standalone rail. On WooCommerce it lands on the
+// store cart and bounces the buyer away, so this button was dead on every
+// Woo site. wpss_get_pay_order_url() returns an order-pay URL there instead.
+$pay_url = wpss_get_pay_order_url( (int) $current_order->id );
 
 // Extension metadata lives on the sub-order's `meta` JSON plus the linked
 // wpss_extension_requests row. Prefer the JSON for extra_days and reason

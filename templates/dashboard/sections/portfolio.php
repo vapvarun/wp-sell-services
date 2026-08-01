@@ -44,7 +44,7 @@ $vendor_services = get_posts(
 do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id ) );
 ?>
 
-<div class="wpss-section wpss-section--portfolio">
+<div class="wpss-section wpss-section--portfolio wpss-card">
 	<div class="wpss-portfolio__header">
 		<p class="wpss-portfolio__count">
 			<?php

@@ -36,7 +36,7 @@ wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', arra
 wpss_enqueue_frontend_assets();
 
 // Enqueue requirements form script.
-wp_enqueue_script( 'wpss-requirements-form', WPSS_PLUGIN_URL . 'assets/js/requirements-form.js', array( 'jquery' ), WPSS_VERSION, true );
+\WPSellServices\Assets\ScriptRegistry::enqueue( 'wpss-requirements-form', 'assets/js/requirements-form.js', array( 'jquery' ) );
 wp_localize_script(
 	'wpss-requirements-form',
 	'wpss_ajax',
@@ -205,18 +205,12 @@ do_action( 'wpss_before_order_view', $order );
 			$actions = array();
 
 			if ( $is_vendor ) {
-				if ( 'pending' === $order->status ) {
-					$actions['accept'] = array(
-						'label' => __( 'Accept Order', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--success wpss-order-action',
-						'attrs' => 'data-action="accept" data-order="' . esc_attr( $order_id ) . '"',
-					);
-					$actions['reject'] = array(
-						'label' => __( 'Decline', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--danger-outline wpss-order-action',
-						'attrs' => 'data-action="reject" data-order="' . esc_attr( $order_id ) . '"',
-					);
-				}
+				// No Accept / Decline buttons here. They only ever rendered for
+				// status 'pending', which nothing in the plugin writes - orders
+				// go pending_payment -> pending_requirements -> in_progress - so
+				// they were unreachable, and the REST verbs behind them have been
+				// removed. This product is payment-first: there is no vendor
+				// acceptance step to offer.
 
 				if ( in_array( $order->status, array( 'accepted', 'requirements_submitted' ), true ) ) {
 					$actions['start'] = array(
@@ -238,13 +232,10 @@ do_action( 'wpss_before_order_view', $order );
 			if ( $is_customer ) {
 				// Pay Now button for unpaid orders (e.g., from accepted proposals).
 				if ( 'pending_payment' === $order->status ) {
-					// Use base checkout URL when service_id is 0 to avoid service-checkout/0/ URLs
-					if ( $order->service_id > 0 ) {
-						$checkout_url = wpss_get_service_checkout_url( $order->service_id );
-					} else {
-						$checkout_url = wpss_get_checkout_base_url();
-					}
-					$pay_url        = add_query_arg( 'pay_order', $order_id, $checkout_url );
+					// Through the seam, so the button is right on whichever rail
+					// the site runs. Building ?pay_order=N inline is correct only
+					// on standalone; on WooCommerce it lands on the store cart.
+					$pay_url        = wpss_get_pay_order_url( (int) $order_id );
 					$actions['pay'] = array(
 						'label' => sprintf(
 							/* translators: %s: formatted price */
@@ -412,9 +403,36 @@ do_action( 'wpss_before_order_view', $order );
 		</div>
 		<div class="wpss-order-section__body">
 			<div class="wpss-order-details-grid">
+				<?php
+				// Payment reference from whichever rail took the money. It sits
+				// UNDER the order number as a secondary line, not beside it as a
+				// peer: the WPSS number is the order, this is only the receipt
+				// the buyer sees on their statement or in the store's own order
+				// list. Rail-neutral on purpose — WooCommerce, EDD, Razorpay and
+				// any future gateway fill the same slot instead of each adding
+				// their own block to this template.
+				$wpss_payment_ref = wpss_get_order_payment_reference( $order );
+				?>
 				<div class="wpss-order-detail-item">
 					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Number', 'wp-sell-services' ); ?></span>
-					<span class="wpss-order-detail-item__value">#<?php echo esc_html( $order->order_number ); ?></span>
+					<span class="wpss-order-detail-item__value wpss-order-detail-item__value--id">#<?php echo esc_html( $order->order_number ); ?></span>
+					<?php if ( $wpss_payment_ref ) : ?>
+						<span class="wpss-order-detail-item__sub">
+							<?php
+							echo esc_html( $wpss_payment_ref['label'] );
+							echo ' ';
+							if ( ! empty( $wpss_payment_ref['url'] ) ) {
+								printf(
+									'<a href="%1$s">%2$s</a>',
+									esc_url( $wpss_payment_ref['url'] ),
+									esc_html( $wpss_payment_ref['number'] )
+								);
+							} else {
+								echo esc_html( $wpss_payment_ref['number'] );
+							}
+							?>
+						</span>
+					<?php endif; ?>
 				</div>
 				<div class="wpss-order-detail-item">
 					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Date', 'wp-sell-services' ); ?></span>
@@ -847,8 +865,8 @@ do_action( 'wpss_before_order_view', $order );
 				</h2>
 			</div>
 			<div class="wpss-order-section__body">
-				<div class="wpss-notice wpss-notice--warning" style="margin-bottom: 20px; padding: 15px; background: #fff8e1; border-radius: 8px; border-left: 4px solid #f59e0b;">
-					<p style="margin: 0; color: #92400e;">
+				<div class="wpss-notice wpss-notice--warning">
+					<p class="wpss-notice__text">
 						<strong><?php esc_html_e( 'Note:', 'wp-sell-services' ); ?></strong>
 						<?php esc_html_e( 'No requirements were formally submitted for this order. Below are the questions the service requires:', 'wp-sell-services' ); ?>
 					</p>
@@ -863,11 +881,11 @@ do_action( 'wpss_before_order_view', $order );
 						<h4 class="wpss-requirement-view__question">
 							<?php echo esc_html( $question ); ?>
 							<?php if ( $required ) : ?>
-								<span class="wpss-required" style="color: #dc3545;">*</span>
+								<span class="wpss-required">*</span>
 							<?php endif; ?>
 						</h4>
 						<div class="wpss-requirement-view__answer">
-							<span class="wpss-text-muted" style="color: #6c757d; font-style: italic;">
+							<span class="wpss-text-muted wpss-text-italic">
 								<?php esc_html_e( 'Not provided', 'wp-sell-services' ); ?>
 							</span>
 						</div>
@@ -887,8 +905,8 @@ do_action( 'wpss_before_order_view', $order );
 				</h2>
 			</div>
 			<div class="wpss-order-section__body">
-				<div class="wpss-notice wpss-notice--info" style="padding: 15px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-					<p style="margin: 0; color: #1e3a5f;">
+				<div class="wpss-notice wpss-notice--info">
+					<p class="wpss-notice__text">
 						<i data-lucide="info" class="wpss-icon" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;"></i>
 						<?php esc_html_e( 'This service does not require any specific information from the buyer.', 'wp-sell-services' ); ?>
 					</p>
@@ -922,9 +940,14 @@ do_action( 'wpss_before_order_view', $order );
 		$cancellation_deadline_ts = 0;
 		$time_remaining_label     = '';
 		if ( $requested_at_iso ) {
-			$requested_ts             = strtotime( $requested_at_iso );
+			// requested_at is stored site-local (current_time( 'mysql' )), so
+			// normalise to UTC and compare against a UTC now — the same
+			// convention OrderWorkflowManager uses to actually fire the 48h
+			// auto-resolve. Both sides have to agree or the countdown the
+			// buyer reads disagrees with the cron that acts on it.
+			$requested_ts             = strtotime( get_gmt_from_date( (string) $requested_at_iso ) . ' UTC' );
 			$cancellation_deadline_ts = $requested_ts + ( 48 * HOUR_IN_SECONDS );
-			$seconds_left             = $cancellation_deadline_ts - current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+			$seconds_left             = $cancellation_deadline_ts - time();
 			if ( $seconds_left > 0 ) {
 				$hours_left   = floor( $seconds_left / HOUR_IN_SECONDS );
 				$minutes_left = floor( ( $seconds_left % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS );
@@ -977,7 +1000,7 @@ do_action( 'wpss_before_order_view', $order );
 							</p>
 						<?php endif; ?>
 						<?php if ( $time_remaining_label ) : ?>
-							<p style="margin: 12px 0 0 0; font-size: 0.875rem; color: #92400e; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(255, 255, 255, 0.6); border-radius: 9999px;">
+							<p class="wpss-pill wpss-pill--warning">
 								<i data-lucide="clock" class="wpss-icon" aria-hidden="true" style="width:14px;height:14px;"></i>
 								<?php echo esc_html( $time_remaining_label ); ?>
 							</p>
@@ -1367,7 +1390,7 @@ do_action( 'wpss_before_order_view', $order );
 							$ms_status      = $m['status'];
 							$ms_sub_id      = (int) $m['id'];
 							$ms_sub_url     = add_query_arg( 'order_id', $ms_sub_id, remove_query_arg( 'order_id' ) );
-							$ms_pay_url     = add_query_arg( 'pay_order', $ms_sub_id, wpss_get_checkout_base_url() );
+							$ms_pay_url     = wpss_get_pay_order_url( $ms_sub_id );
 							$ms_state_label = '';
 							$ms_state_class = 'wpss-ms-state--' . sanitize_html_class( $ms_status );
 
@@ -1656,7 +1679,7 @@ do_action( 'wpss_before_order_view', $order );
 
 	if ( $buyer_sees_pending_extension ) :
 		$ext_pay_url  = $pending_extension->pay_order_id
-			? add_query_arg( 'pay_order', (int) $pending_extension->pay_order_id, wpss_get_checkout_base_url() )
+			? wpss_get_pay_order_url( (int) $pending_extension->pay_order_id )
 			: '';
 		$ext_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
 		?>

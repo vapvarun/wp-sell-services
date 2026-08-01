@@ -1,0 +1,30 @@
+{
+  "plugin": "wp-sell-services",
+  "version": "1.3.1",
+  "generated": "2026-08-01",
+  "method": "agent-enumeration-only (write-manifest.mjs undercounts REST on this plugin)",
+  "rest_endpoints": 142,
+  "rest_namespace": "wpss/v1",
+  "ajax_actions": 111,
+  "hooks": {
+    "actions_fired": 128,
+    "filters_exposed": 152
+  },
+  "wp_cli_commands": 6,
+  "roles": [
+    "wpss_vendor"
+  ],
+  "capabilities": [
+    "wpss_manage_services",
+    "wpss_manage_orders",
+    "wpss_manage_vendors",
+    "wpss_manage_disputes",
+    "wpss_manage_settings",
+    "wpss_respond_to_requests"
+  ],
+  "see_also": [
+    "audit/manifest.json",
+    "audit/FEATURE_AUDIT.md",
+    "audit/CAPABILITIES.md"
+  ]
+}

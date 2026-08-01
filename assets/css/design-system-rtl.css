@@ -1212,12 +1212,51 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-billing-summary__gst-label { color: var(--wpss-text-secondary); }
 .wpss-billing-summary__gst-value { font-weight: 600; color: var(--wpss-text); font-variant-numeric: tabular-nums; }
 
-/* Order summary rows had NO styling anywhere in the codebase — they inherited
-   whatever the theme happened to give them, so the same order looked different
-   on BuddyX and a generic theme. */
-.wpss-order-detail-item { display: flex; justify-content: space-between; align-items: baseline; gap: var(--wpss-space-4); padding: var(--wpss-space-2) 0; font-size: var(--wpss-text-sm); }
-.wpss-order-detail-item__label { color: var(--wpss-text-secondary); }
-.wpss-order-detail-item__value { color: var(--wpss-text); font-weight: 500; text-align: left; }
+/* The GRID had no rules at all, so the item below (flex + space-between, value
+   right-aligned) was being dropped into whatever columns the theme produced.
+   In a narrow column a long value cannot sit beside its label, so it wrapped
+   to a second line and stayed right-aligned under a left-aligned label. Own
+   the container and stack each cell. */
+.wpss-order-details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--wpss-space-4) var(--wpss-space-6); align-items: start; }
+.wpss-order-detail-item { display: flex; flex-direction: column; gap: var(--wpss-space-1); min-width: 0; padding: var(--wpss-space-2) 0; font-size: var(--wpss-text-sm); }
+.wpss-order-detail-item__label { color: var(--wpss-text-secondary); text-transform: uppercase; letter-spacing: .04em; font-size: var(--wpss-text-xs, .75rem); }
+.wpss-order-detail-item__value { color: var(--wpss-text); font-weight: 600; text-align: start; min-width: 0; overflow-wrap: anywhere; }
+/* Order numbers are long and hyphenated but are identifiers, not prose: keep
+   them whole rather than breaking mid-token. */
+.wpss-order-detail-item__value--id { font-variant-numeric: tabular-nums; overflow-wrap: normal; }
+/* The payment rail's receipt number: secondary to the order number, not a peer. */
+.wpss-order-detail-item__sub { color: var(--wpss-text-secondary); font-size: var(--wpss-text-xs, .75rem); overflow-wrap: anywhere; }
+.wpss-order-detail-item__sub a { color: inherit; text-decoration: underline; }
+.wpss-order-detail-item__sub a:hover,
+.wpss-order-detail-item__sub a:focus { color: var(--wpss-primary); }
+
+@media (max-width: 480px) {
+	.wpss-order-details-grid { grid-template-columns: 1fr 1fr; gap: var(--wpss-space-3) var(--wpss-space-4); }
+	/* The order number is long enough to break across three lines in a half
+	   -width column, so give it (and the total) the full row. */
+	.wpss-order-details-grid > .wpss-order-detail-item--highlight,
+	.wpss-order-details-grid > .wpss-order-detail-item:has(> .wpss-order-detail-item__value--id) { grid-column: 1 / -1; }
+}
 .wpss-order-detail-item--highlight .wpss-order-detail-item__value { font-weight: 700; font-size: var(--wpss-text-md); }
 .wpss-order-detail-item--refunded .wpss-order-detail-item__label,
 .wpss-order-detail-item--refunded .wpss-order-detail-item__value { color: var(--wpss-danger-dark, #991b1b); }
+
+/* Small inline status pill. Added when order-view's inline "deadline extended"
+   note was un-hardcoded: it carried raw #92400e text on a translucent white
+   pill, which in dark mode is dark-brown-on-near-white and unreadable. */
+.wpss-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 6px);
+	margin: var(--wpss-space-3, 12px) 0 0;
+	padding: var(--wpss-space-1, 4px) var(--wpss-space-3, 10px);
+	font-size: var(--wpss-text-sm, 0.875rem);
+	border-radius: var(--wpss-radius-full, 9999px);
+	background: var(--wpss-bg-subtle);
+	color: var(--wpss-text);
+}
+
+.wpss-pill--warning {
+	background: var(--wpss-warning-light, var(--wpss-bg-subtle));
+	color: var(--wpss-warning-fg, var(--wpss-text));
+}

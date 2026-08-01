@@ -538,30 +538,34 @@ class ServiceOrder {
 	public static function from_db( object $row ): self {
 		$order = new self();
 
-		$order->id                 = (int) $row->id;
-		$order->order_number       = $row->order_number;
-		$order->customer_id        = (int) $row->customer_id;
-		$order->vendor_id          = (int) $row->vendor_id;
-		$order->service_id         = (int) $row->service_id;
-		$order->package_id         = $row->package_id ? (int) $row->package_id : null;
-		$order->addons             = $row->addons ? json_decode( $row->addons, true ) : array();
-		$order->platform           = $row->platform;
-		$order->platform_order_id  = $row->platform_order_id ? (int) $row->platform_order_id : null;
-		$order->platform_item_id   = $row->platform_item_id ? (int) $row->platform_item_id : null;
-		$order->subtotal           = (float) $row->subtotal;
-		$order->addons_total       = (float) $row->addons_total;
-		$order->total              = (float) $row->total;
-		$order->currency           = $row->currency;
-		$order->commission_rate    = isset( $row->commission_rate ) ? (float) $row->commission_rate : null;
-		$order->platform_fee       = isset( $row->platform_fee ) ? (float) $row->platform_fee : null;
-		$order->vendor_earnings    = isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null;
-		$order->status             = $row->status;
-		$order->payment_method     = $row->payment_method;
-		$order->payment_status     = $row->payment_status;
-		$order->transaction_id     = $row->transaction_id;
+		$order->id           = (int) $row->id;
+		$order->order_number = $row->order_number;
+		$order->customer_id  = (int) $row->customer_id;
+		$order->vendor_id    = (int) $row->vendor_id;
+		$order->service_id   = (int) $row->service_id;
+		// package_id is an INDEX into the service's _wpss_packages meta, so 0 is
+		// a real package (the first one, usually "Basic") and only NULL means
+		// "no package". A truthiness check here collapsed 0 to null, which is
+		// why the first package of every service resolved as "Custom".
+		$order->package_id        = null === $row->package_id ? null : (int) $row->package_id;
+		$order->addons            = $row->addons ? json_decode( $row->addons, true ) : array();
+		$order->platform          = $row->platform;
+		$order->platform_order_id = $row->platform_order_id ? (int) $row->platform_order_id : null;
+		$order->platform_item_id  = $row->platform_item_id ? (int) $row->platform_item_id : null;
+		$order->subtotal          = (float) $row->subtotal;
+		$order->addons_total      = (float) $row->addons_total;
+		$order->total             = (float) $row->total;
+		$order->currency          = $row->currency;
+		$order->commission_rate   = isset( $row->commission_rate ) ? (float) $row->commission_rate : null;
+		$order->platform_fee      = isset( $row->platform_fee ) ? (float) $row->platform_fee : null;
+		$order->vendor_earnings   = isset( $row->vendor_earnings ) ? (float) $row->vendor_earnings : null;
+		$order->status            = $row->status;
+		$order->payment_method    = $row->payment_method;
+		$order->payment_status    = $row->payment_status;
+		$order->transaction_id    = $row->transaction_id;
 		// Null-coalesced: rows read before the 1.4.9 migration ran, or from a
 		// partial SELECT, simply have no refund recorded.
-		$order->refunded_amount    = $row->refunded_amount ?? null;
+		$order->refunded_amount = $row->refunded_amount ?? null;
 		// Cast before decode: the column is nullable and this class runs under
 		// strict_types, where json_decode( null ) is a fatal TypeError.
 		$billing                   = json_decode( (string) ( $row->billing_address ?? '' ), true );
@@ -863,6 +867,61 @@ class ServiceOrder {
 	 *
 	 * @return array|null Package data array or null if not available.
 	 */
+	/**
+	 * Whether this order can carry a service package at all.
+	 *
+	 * Tips, milestones and extensions hang off a parent order and never have a
+	 * package of their own. This matters because package_id is an INDEX, so 0
+	 * is a real package, and a good number of order-creation paths default the
+	 * field to 0 when nothing was chosen — without this guard a tip would
+	 * confidently report the service's first package.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @return bool
+	 */
+	private function can_have_package(): bool {
+		return ! in_array(
+			$this->platform,
+			array( self::SUB_ORDER_TYPE_TIP, self::SUB_ORDER_TYPE_MILESTONE, self::SUB_ORDER_TYPE_EXTENSION ),
+			true
+		);
+	}
+
+	/**
+	 * Whether this order actually resolves to a named package.
+	 *
+	 * False means the order is a custom quote — `get_package_name()` answers
+	 * with the localised word "Custom", which is a LABEL, not an identifier.
+	 * Callers that need to branch on "is this a real package?" must ask this
+	 * method: comparing `get_package_name()` against the string 'Custom'
+	 * silently stops matching the moment the site is translated, which is
+	 * exactly what Pro's WooCommerce order bridge used to do.
+	 *
+	 * @since 1.3.2
+	 *
+	 * @return bool True when the order carries a package (or a proposal
+	 *              snapshot standing in for one).
+	 */
+	public function has_package(): bool {
+		if ( ! empty( $this->meta['proposal_snapshot'] ) ) {
+			return true;
+		}
+
+		return null !== $this->package_id && $this->can_have_package();
+	}
+
+	/**
+	 * Get the package snapshot recorded on this order.
+	 *
+	 * Prefers the snapshot stored in meta, which is what the order was actually
+	 * bought against, so a later edit to the live package cannot rewrite history
+	 * on an existing order.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return array<string, mixed>|null Snapshot, or null when the order has none.
+	 */
 	public function get_package_snapshot(): ?array {
 		// Try snapshot from meta first.
 		$snapshot = $this->meta['package_snapshot'] ?? null;
@@ -876,8 +935,13 @@ class ServiceOrder {
 			return $proposal;
 		}
 
-		// Fall back to live data.
-		if ( ! $this->package_id ) {
+		// Fall back to live data. Only NULL means "no package" — index 0 is the
+		// service's first package.
+		if ( null === $this->package_id ) {
+			return null;
+		}
+
+		if ( ! $this->can_have_package() ) {
 			return null;
 		}
 
@@ -899,26 +963,35 @@ class ServiceOrder {
 	 * @return string
 	 */
 	public function get_package_name(): string {
-		if ( ! $this->package_id && empty( $this->meta['proposal_snapshot'] ) ) {
+		// Only a NULL package_id means the order has no package (a custom
+		// quote). Index 0 is the service's first package. The predicate lives
+		// in has_package() so callers can branch on it without string-matching
+		// this localised label.
+		if ( ! $this->has_package() ) {
 			return __( 'Custom', 'wp-sell-services' );
 		}
 
-		// Try snapshot first.
+		// get_package_snapshot() resolves the frozen snapshot first and falls
+		// back to live data itself — package_id indexing the service's
+		// _wpss_packages meta, the same way the service page, cart and checkout
+		// resolve it. This used to run its own query against a
+		// wpss_service_packages table by primary key: a second meaning for the
+		// same column, against a table nothing has ever written to, so the
+		// lookup always missed and every package rendered as "Package".
 		$snapshot = $this->get_package_snapshot();
-		if ( $snapshot ) {
+
+		if ( is_array( $snapshot ) ) {
 			// Package snapshot has 'name', proposal snapshot has 'request_title'.
-			return $snapshot['name'] ?? $snapshot['request_title'] ?? __( 'Package', 'wp-sell-services' );
+			$name = $snapshot['name'] ?? $snapshot['request_title'] ?? '';
+
+			if ( '' !== $name ) {
+				return (string) $name;
+			}
 		}
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_service_packages';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$name = $wpdb->get_var(
-			$wpdb->prepare( "SELECT name FROM {$table} WHERE id = %d", $this->package_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		);
-
-		return $name ?: __( 'Package', 'wp-sell-services' );
+		// A package index that no longer resolves — e.g. the vendor deleted the
+		// tier, or the service never defined packages at all.
+		return __( 'Package', 'wp-sell-services' );
 	}
 
 	/**

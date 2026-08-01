@@ -99,7 +99,7 @@ do_action( 'wpss_service_orders_before', $user_id );
 											<a href="<?php echo esc_url( $service->get_permalink() ); ?>" class="wpss-service-info__title">
 												<?php echo esc_html( $service->title ); ?>
 											</a>
-											<span class="wpss-service-info__package"><?php echo esc_html( $order->package_name ); ?></span>
+											<span class="wpss-service-info__package"><?php echo esc_html( $order->get_package_name() ); ?></span>
 										</div>
 									</div>
 								<?php else : ?>

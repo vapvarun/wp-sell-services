@@ -560,8 +560,7 @@ class EmailService {
 		$parent_order = $parent_id ? wpss_get_order( $parent_id ) : null;
 		$meta         = $this->decode_order_meta( $milestone );
 
-		$base_url = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
-		$pay_url  = add_query_arg( 'pay_order', (int) $milestone->id, $base_url );
+		$pay_url = wpss_get_pay_order_url( (int) $milestone->id );
 
 		$subject = sprintf(
 			/* translators: 1: site name, 2: phase title */
@@ -756,8 +755,7 @@ class EmailService {
 		$vendor_name = $vendor ? $vendor->display_name : __( 'Your seller', 'wp-sell-services' );
 		$reason      = (string) ( $extension->vendor_notes ?? '' );
 
-		$base_url = function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : home_url( '/checkout/' );
-		$pay_url  = add_query_arg( 'pay_order', (int) $extension->id, $base_url );
+		$pay_url = wpss_get_pay_order_url( (int) $extension->id );
 
 		$subject = sprintf(
 			/* translators: %s: site name */
@@ -1614,8 +1612,12 @@ class EmailService {
 			'recipient'     => $vendor,
 			'email_heading' => __( 'Proposal Not Accepted', 'wp-sell-services' ),
 			'content'       => $content,
-			'button_url'    => wpss_get_page_url( 'dashboard' ) ? add_query_arg( 'section', 'proposals', wpss_get_page_url( 'dashboard' ) ) : '',
-			'button_text'   => __( 'View Proposals', 'wp-sell-services' ),
+			// There is no "proposals" dashboard section — this used to link at
+			// `?section=proposals`, which rendered a dead "Section Not
+			// Available" card. Send the seller where more work actually is:
+			// the buyer-request archive they bid from.
+			'button_url'    => (string) get_post_type_archive_link( 'wpss_request' ),
+			'button_text'   => __( 'Browse Requests', 'wp-sell-services' ),
 		);
 
 		if ( $buyer ) {

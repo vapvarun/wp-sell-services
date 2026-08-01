@@ -298,7 +298,7 @@ class VendorProfile {
 		$profile->vacation_message = (string) ( $row->vacation_message ?? '' );
 
 		// Optional buyer-facing return date (Y-m-d). Normalise blank/zero dates to null.
-		$return_date = isset( $row->vacation_return_date ) ? (string) $row->vacation_return_date : '';
+		$return_date                   = isset( $row->vacation_return_date ) ? (string) $row->vacation_return_date : '';
 		$profile->vacation_return_date = ( '' !== $return_date && '0000-00-00' !== $return_date ) ? $return_date : null;
 
 		// Timestamps.

@@ -246,7 +246,7 @@ class ConversationsController extends RestController {
 
 		if ( ! $this->conversation_service->user_can_access( $conversation_id, $user_id ) && ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You do not have permission to access this conversation.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -271,7 +271,7 @@ class ConversationsController extends RestController {
 
 		if ( ! $this->user_owns_resource( $order_id, 'order' ) && ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You do not have permission to access this order.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);

@@ -36,6 +36,7 @@ use WPSellServices\API\API;
 use WPSellServices\Blocks\BlocksManager;
 use WPSellServices\SEO\SEO;
 use WPSellServices\Database\SchemaManager;
+use WPSellServices\Database\Repositories\VendorProfileRepository;
 
 /**
  * Main plugin class.
@@ -230,7 +231,6 @@ final class Plugin {
 		// in SCRIPT_DEBUG mode by Assets::init() itself.
 		\WPSellServices\Frontend\Assets::init();
 
-		$this->init_updater();
 		$this->maybe_run_install();
 		$this->set_locale();
 		$this->define_vendor_settings_filters();
@@ -292,20 +292,6 @@ final class Plugin {
 		 * @param Plugin $plugin Plugin instance.
 		 */
 		do_action( 'wpss_loaded', $this );
-	}
-
-	/**
-	 * Initialize the plugin updater.
-	 *
-	 * Sets up EDD Software Licensing for automatic updates.
-	 * No license required for the free version.
-	 *
-	 * @since 1.1.0
-	 * @return void
-	 */
-	private function init_updater(): void {
-		$updater = new Updater();
-		$updater->init();
 	}
 
 	/**
@@ -450,6 +436,19 @@ final class Plugin {
 	private function define_api_hooks(): void {
 		$api = new API();
 		$this->loader->add_action( 'rest_api_init', $api, 'register_routes' );
+
+		// Wrong method on a known route answers 405 with an Allow header rather
+		// than 404. WordPress matches path AND method together, so DELETE on a
+		// GET-only route is indistinguishable from a path that does not exist -
+		// a client cannot tell "endpoint gone" from "wrong verb", and neither
+		// retrying nor re-authenticating helps.
+		//
+		// Hooked here rather than inside API::init(): that method is never
+		// called - this class wires register_routes directly - so everything in
+		// it has always been dead code. See the note on API::init() itself;
+		// enabling the rest of it is a behaviour change that belongs in its own
+		// release, not a quiet side effect of this fix.
+		$this->loader->add_filter( 'rest_post_dispatch', $api, 'clarify_method_not_allowed', 10, 3 );
 	}
 
 	/**
@@ -552,9 +551,17 @@ final class Plugin {
 			}
 		);
 
-		// 301-redirect legacy ?section= URLs to the pretty endpoint when
-		// permalinks are pretty, so old links and bookmarks resolve cleanly.
+		// Validate + canonicalize the requested dashboard section (aliases,
+		// unknown-slug fallback, legacy ?section= -> pretty endpoint).
 		add_action( 'template_redirect', array( $this, 'redirect_legacy_section_url' ) );
+
+		// Send the standalone cart/checkout pages to the active rail's own
+		// pages before ANY output is produced.
+		add_action( 'template_redirect', array( $this, 'redirect_dormant_store_pages' ), 1 );
+
+		// Keep those dormant pages out of search results and the sitemap.
+		add_filter( 'wp_robots', array( $this, 'filter_dormant_store_page_robots' ) );
+		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'exclude_dormant_store_pages_from_sitemap' ), 10, 2 );
 
 		// Flush rewrite rules once after activation (consumes transient set by Activator).
 		add_action(
@@ -644,49 +651,87 @@ final class Plugin {
 	}
 
 	/**
-	 * Redirect legacy `?section=` dashboard URLs to the pretty endpoint.
+	 * Validate and canonicalise the dashboard section a URL is asking for.
 	 *
-	 * Only fires on the dashboard page when permalinks are pretty (a permalink
-	 * structure is set) and a `section` query arg is present without the pretty
-	 * endpoint already being matched. Issues a 301 to the canonical pretty URL,
-	 * preserving every other query arg (order_id, action, conversation_id, etc.).
+	 * Runs on the dashboard page for BOTH URL shapes — the pretty endpoint
+	 * (`/dashboard/{section}/`, matched into the `wpss_section` query var) and
+	 * the legacy `?section=` query arg — and does three things:
+	 *
+	 * 1. Maps a label-derived guess onto the slug it means. The nav item for
+	 *    `orders` is labelled "My Orders", so `?section=my-orders` is what
+	 *    people type; nothing in the product has ever EMITTED that slug, and
+	 *    the dashboard used to answer it with a dead "Section Not Available"
+	 *    card. Worse, this method used to 301 it to `/dashboard/my-orders/`,
+	 *    blessing a broken address as canonical.
+	 * 2. Sends an unrecognised slug to the dashboard's default landing section
+	 *    (302 — it is a correction, not a permanent address) instead of
+	 *    rendering a dead end or canonicalising it.
+	 * 3. 301s the legacy query-arg form to the pretty endpoint when permalinks
+	 *    are pretty, preserving every sibling query arg (order_id, action,
+	 *    conversation_id, ...) — the original job of this method.
+	 *
+	 * A slug that IS known but has no template here (Analytics on a Free-only
+	 * site) is deliberately left alone so the renderer can explain the gap.
 	 *
 	 * @since 1.2.0
+	 * @since 1.6.1 Validates and aliases the slug instead of trusting it.
 	 *
 	 * @return void
 	 */
 	public function redirect_legacy_section_url(): void {
-		// Pretty permalinks must be active; on "plain" permalinks the
-		// query-arg form is the canonical URL, so do nothing.
-		if ( ! get_option( 'permalink_structure' ) ) {
-			return;
-		}
-
 		if ( ! function_exists( 'wpss_is_page' ) || ! wpss_is_page( 'dashboard' ) ) {
 			return;
 		}
 
-		// Already on the pretty endpoint — nothing to redirect.
-		if ( '' !== (string) get_query_var( 'wpss_section', '' ) ) {
+		if ( ! function_exists( 'wpss_normalize_dashboard_section' ) || ! function_exists( 'wpss_get_dashboard_url' ) ) {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
-		if ( ! isset( $_GET['section'] ) ) {
+		$requested   = (string) get_query_var( 'wpss_section', '' );
+		$from_getarg = false;
+
+		if ( '' === $requested ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
+			if ( ! isset( $_GET['section'] ) ) {
+				return;
+			}
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
+			$requested   = sanitize_key( wp_unslash( $_GET['section'] ) );
+			$from_getarg = true;
+		}
+
+		$requested = sanitize_key( (string) $requested );
+
+		if ( '' === $requested ) {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
-		$section = sanitize_key( wp_unslash( $_GET['section'] ) );
-		if ( '' === $section ) {
+		$canonical = wpss_normalize_dashboard_section( $requested );
+
+		// Unrecognised slug: correct it to the dashboard landing section. Query
+		// args are dropped on purpose — they belonged to a section that does
+		// not exist, so carrying them forward would only re-target the mistake.
+		if ( '' === $canonical ) {
+			$fallback = wpss_get_dashboard_url();
+
+			if ( '' === $fallback ) {
+				return;
+			}
+
+			wp_safe_redirect( $fallback, 302 );
+			exit;
+		}
+
+		// The legacy query-arg form is only worth canonicalising when pretty
+		// permalinks are on; on "plain" permalinks it IS the canonical shape.
+		$needs_pretty = $from_getarg && (bool) get_option( 'permalink_structure' );
+
+		if ( ! $needs_pretty && $canonical === $requested ) {
 			return;
 		}
 
-		if ( ! function_exists( 'wpss_get_dashboard_url' ) ) {
-			return;
-		}
-
-		$target = wpss_get_dashboard_url( $section );
+		$target = wpss_get_dashboard_url( $canonical );
 		if ( '' === $target ) {
 			return;
 		}
@@ -700,6 +745,168 @@ final class Plugin {
 
 		wp_safe_redirect( $target, 301 );
 		exit;
+	}
+
+	/**
+	 * The standalone cart/checkout page IDs that the active rail has made dormant.
+	 *
+	 * The installer seeds `/service-cart/` and `/service-checkout/` for the
+	 * standalone rail and NEVER removes them, so on a site that runs WooCommerce
+	 * (or EDD, or any other adapter) those two pages sit published with nothing
+	 * behind them. They must not be unpublished — old bookmarks, emailed
+	 * `?pay_order=N` links and the pages' own IDs still have to resolve — so
+	 * they are redirected and de-indexed instead.
+	 *
+	 * Returns an empty array on a standalone site, where both pages are live.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @return array<string, int> Page key (`cart`/`checkout`) => page ID.
+	 */
+	private function get_dormant_store_page_ids(): array {
+		if ( ! function_exists( 'wpss_get_active_adapter' ) || ! function_exists( 'wpss_get_page_id' ) ) {
+			return array();
+		}
+
+		$adapter = wpss_get_active_adapter();
+
+		if ( ! $adapter || 'standalone' === $adapter->get_id() ) {
+			return array();
+		}
+
+		$ids = array();
+
+		foreach ( array( 'cart', 'checkout' ) as $key ) {
+			$page_id = wpss_get_page_id( $key );
+
+			if ( $page_id > 0 ) {
+				$ids[ $key ] = $page_id;
+			}
+		}
+
+		return $ids;
+	}
+
+	/**
+	 * Redirect the dormant standalone cart/checkout pages to the active rail.
+	 *
+	 * The guard used to live inside the `[wpss_cart]` / `[wpss_checkout]`
+	 * shortcodes, which run during `the_content` — by then the theme has
+	 * already emitted the whole document head and half the page (~34KB on the
+	 * default theme), so the redirect only ever worked because PHP's output
+	 * buffering happened to be on. With `output_buffering = Off` the header is
+	 * refused and the visitor gets a truncated page instead of the cart. Doing
+	 * it on `template_redirect` is the correct seam: nothing has been sent yet.
+	 *
+	 * The shortcode guards stay in place as defence-in-depth for the case where
+	 * an owner has pasted the shortcode onto some OTHER page.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @return void
+	 */
+	public function redirect_dormant_store_pages(): void {
+		if ( is_admin() || wp_doing_ajax() ) {
+			return;
+		}
+
+		$dormant = $this->get_dormant_store_page_ids();
+
+		if ( empty( $dormant ) ) {
+			return;
+		}
+
+		$current = get_queried_object_id();
+
+		if ( ! $current || ! in_array( $current, $dormant, true ) ) {
+			return;
+		}
+
+		$key = (string) array_search( $current, $dormant, true );
+
+		if ( 'cart' === $key ) {
+			$target = function_exists( 'wpss_get_cart_url' ) ? wpss_get_cart_url() : '';
+		} else {
+			// `?pay_order=N` is how the standalone rail pays ONE order, and we
+			// have already emailed those links. Resolve through the shared seam
+			// so an old link lands on that order's real payment page instead of
+			// a generic (empty) checkout.
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect of a public link.
+			$pay_order = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0;
+
+			$target = ( $pay_order > 0 && function_exists( 'wpss_get_pay_order_url' ) )
+				? wpss_get_pay_order_url( $pay_order )
+				: ( function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : '' );
+		}
+
+		if ( '' === $target ) {
+			return;
+		}
+
+		// A rail that resolves back to this very page (misconfiguration, or an
+		// owner who mapped the WPSS page as the rail's own) must not loop.
+		if ( (int) url_to_postid( $target ) === $current ) {
+			return;
+		}
+
+		wp_safe_redirect( $target, 302 );
+		exit;
+	}
+
+	/**
+	 * Keep the dormant cart/checkout pages out of search engines.
+	 *
+	 * They 302 to the live rail, but a page that redirects is still a page a
+	 * crawler can be pointed at, and they were sitting in the WP core sitemap
+	 * next to WooCommerce's real cart and checkout.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param array<string, mixed> $robots Robots directives.
+	 * @return array<string, mixed>
+	 */
+	public function filter_dormant_store_page_robots( array $robots ): array {
+		$dormant = $this->get_dormant_store_page_ids();
+
+		if ( empty( $dormant ) ) {
+			return $robots;
+		}
+
+		$current = get_queried_object_id();
+
+		if ( $current && in_array( $current, $dormant, true ) ) {
+			$robots['noindex'] = true;
+			$robots['follow']  = true;
+		}
+
+		return $robots;
+	}
+
+	/**
+	 * Drop the dormant cart/checkout pages from the WP core sitemap.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param array<string, mixed> $args      Query args.
+	 * @param string               $post_type Post type being listed.
+	 * @return array<string, mixed>
+	 */
+	public function exclude_dormant_store_pages_from_sitemap( array $args, string $post_type ): array {
+		if ( 'page' !== $post_type ) {
+			return $args;
+		}
+
+		$dormant = $this->get_dormant_store_page_ids();
+
+		if ( empty( $dormant ) ) {
+			return $args;
+		}
+
+		$existing = isset( $args['post__not_in'] ) ? (array) $args['post__not_in'] : array();
+
+		$args['post__not_in'] = array_values( array_unique( array_merge( $existing, array_values( $dormant ) ) ) );
+
+		return $args;
 	}
 
 	/**
@@ -1244,9 +1451,12 @@ final class Plugin {
 		// In-memory cache to avoid repeated DB queries within a single request.
 		$cache = array();
 
+		// Whether the vendor-avatar table has been bulk-loaded this request.
+		$primed = false;
+
 		add_filter(
 			'pre_get_avatar_data',
-			function ( array $args, $id_or_email ) use ( &$cache ): array {
+			function ( array $args, $id_or_email ) use ( &$cache, &$primed ): array {
 				$user_id = 0;
 
 				if ( is_numeric( $id_or_email ) ) {
@@ -1271,17 +1481,61 @@ final class Plugin {
 					if ( $meta_avatar ) {
 						$cache[ $user_id ] = (int) $meta_avatar;
 					} else {
-						// Fall back to vendor profiles table for vendors.
-						global $wpdb;
-						$table = $wpdb->prefix . 'wpss_vendor_profiles';
-						$raw   = $wpdb->get_var(
-							$wpdb->prepare(
-								"SELECT avatar_id FROM {$table} WHERE user_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-								$user_id
-							)
-						);
+						// Fall back to the vendor profiles table. Prime EVERY
+						// vendor avatar in one query the first time we get here,
+						// instead of one query per user.
+						//
+						// Any page that renders many avatars — a leaderboard, a
+						// member directory, an order list — otherwise costs one
+						// query per avatar, and the overwhelming majority return
+						// nothing because most users are not vendors. Vendors are
+						// a small, bounded set (they are the sellers, not the
+						// buyers), so priming the whole table once is cheaper
+						// than N lookups and is what makes this O(1) per request.
+						if ( ! $primed ) {
+							$primed = true;
 
-						$cache[ $user_id ] = $raw ? (int) $raw : 0;
+							$map = wp_cache_get(
+								VendorProfileRepository::AVATAR_MAP_CACHE_KEY,
+								VendorProfileRepository::CACHE_GROUP
+							);
+
+							if ( false === $map ) {
+								global $wpdb;
+								$table = $wpdb->prefix . 'wpss_vendor_profiles';
+								$rows  = $wpdb->get_results(
+									"SELECT user_id, avatar_id FROM {$table} WHERE avatar_id > 0", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+									ARRAY_A
+								);
+
+								$map = array();
+								foreach ( (array) $rows as $row ) {
+									$map[ (int) $row['user_id'] ] = (int) $row['avatar_id'];
+								}
+
+								// Invalidated by VendorProfileRepository::upsert().
+								wp_cache_set(
+									VendorProfileRepository::AVATAR_MAP_CACHE_KEY,
+									$map,
+									VendorProfileRepository::CACHE_GROUP,
+									HOUR_IN_SECONDS
+								);
+							}
+
+							foreach ( (array) $map as $vendor_uid => $avatar ) {
+								// Never clobber a user-meta avatar already resolved
+								// this request — user meta wins over the table.
+								if ( ! array_key_exists( (int) $vendor_uid, $cache ) ) {
+									$cache[ (int) $vendor_uid ] = (int) $avatar;
+								}
+							}
+						}
+
+						// Absent from the primed set means "no vendor avatar" —
+						// record it so we do not look again this request.
+						if ( ! array_key_exists( $user_id, $cache ) ) {
+							$cache[ $user_id ] = 0;
+						}
 					}
 				}
 
@@ -1597,6 +1851,7 @@ final class Plugin {
 		);
 	}
 
+
 	/**
 	 * Initialize providers via filters.
 	 *
@@ -1604,8 +1859,21 @@ final class Plugin {
 	 * @return void
 	 */
 	private function init_providers(): void {
-		// Register Test Gateway (only in debug mode).
-		$this->maybe_register_test_gateway();
+		// Gateways stay REGISTERED on every rail, deliberately.
+		//
+		// It is tempting to skip this when WooCommerce is taking payment, but
+		// init() is also what hooks each gateway's webhook handler
+		// (wpss_payment_callback_stripe and friends). Switching a site from our
+		// Stripe to Woo must not change orders that were already paid through
+		// our Stripe - a later refund, dispute or delayed-capture webhook for
+		// one of those still has to be received and applied. Unregistering the
+		// gateway would silently drop it, and the old order would sit there
+		// saying "paid" forever.
+		//
+		// What IS gated is starting a NEW payment: PaymentController does not
+		// register its routes unless wpss_uses_standalone_payments(), so on a
+		// cart rail there is no way to begin a payment through our gateways.
+		// New orders go through the rail; historical orders keep their own.
 
 		// Register Stripe Gateway.
 		$stripe_gateway = new \WPSellServices\Integrations\Stripe\StripeGateway();
@@ -1633,6 +1901,13 @@ final class Plugin {
 		 * @param array $gateways Array of payment gateway instances.
 		 */
 		$this->payment_gateways = apply_filters( 'wpss_payment_gateways', $this->payment_gateways );
+
+		// Test gateway LAST, on purpose: it decides whether to register by asking
+		// whether any real gateway is usable, and that is only correct once
+		// Stripe, PayPal, Offline and anything Pro or a third party adds through
+		// the filter above are all present. Registered first it would always see
+		// an empty list, and demo mode would never switch itself off.
+		$this->maybe_register_test_gateway();
 
 		/**
 		 * Filter the registered wallet providers.
@@ -1690,7 +1965,21 @@ final class Plugin {
 	 * @return void
 	 */
 	private function maybe_register_test_gateway(): void {
-		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+		// Registered when this is a developer site OR when the store has no
+		// real gateway yet.
+		//
+		// It used to be WP_DEBUG only, which is off on every production site -
+		// so a fresh install had Stripe and PayPal with no credentials, no Test
+		// gateway, and therefore no way to complete a purchase at all. The
+		// owner met an empty gateway list at checkout with nothing explaining
+		// which step they had missed.
+		//
+		// wpss_demo_payments_enabled() switches itself off the moment real
+		// credentials are saved, so a live store cannot sit in demo mode by
+		// accident. Admin\Admin surfaces a standing notice while it is on.
+		$is_dev_site = defined( 'WP_DEBUG' ) && WP_DEBUG;
+
+		if ( ! $is_dev_site && ! wpss_demo_payments_enabled() ) {
 			return;
 		}
 

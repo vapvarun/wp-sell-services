@@ -32,6 +32,22 @@ class API {
 	 *
 	 * @return void
 	 */
+	/**
+	 * NOT CALLED. Kept for reference, and as a record of a real gap.
+	 *
+	 * Core\Plugin::define_api_hooks() constructs this class and hooks
+	 * register_routes() directly, so this method has never run on any install.
+	 * That means add_cors_headers() and the rest_pre_serve_request filter below
+	 * have never been applied either - the CORS support this plugin advertises
+	 * for frontend apps does not exist at runtime.
+	 *
+	 * Do not simply call this to "fix" it: switching CORS on for every REST
+	 * response is a behaviour change that needs its own release and testing,
+	 * not a side effect of an unrelated bug fix. The 405 handler is wired from
+	 * define_api_hooks() for that reason.
+	 *
+	 * @return void
+	 */
 	public function init(): void {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 
@@ -40,6 +56,90 @@ class API {
 
 		// Filter REST response.
 		add_filter( 'rest_pre_serve_request', [ $this, 'serve_request' ], 10, 4 );
+	}
+
+	/**
+	 * Turn "route not found" into "method not allowed" where that is the truth.
+	 *
+	 * WordPress answers a wrong-method request with `404 rest_no_route`, because
+	 * its dispatcher matches on path AND method together - so `DELETE /services`
+	 * looks identical to a path that does not exist. A client cannot tell "this
+	 * endpoint is gone" from "I used the wrong verb", and retrying or
+	 * re-authenticating never helps.
+	 *
+	 * Scoped to our own namespace: this inspects the route table only after core
+	 * has already decided it has nothing, and only rewrites the answer when the
+	 * same path IS registered under other methods. Anything genuinely unknown
+	 * keeps its 404, and no other plugin's routes are touched.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param \WP_HTTP_Response $result  Response to send.
+	 * @param \WP_REST_Server   $server  Server instance.
+	 * @param \WP_REST_Request  $request Request used to generate the response.
+	 * @return \WP_HTTP_Response
+	 */
+	public function clarify_method_not_allowed( $result, $server, $request ) {
+		if ( ! $result instanceof \WP_REST_Response || 404 !== $result->get_status() ) {
+			return $result;
+		}
+
+		$data = $result->get_data();
+
+		if ( ! is_array( $data ) || 'rest_no_route' !== ( $data['code'] ?? '' ) ) {
+			return $result;
+		}
+
+		$path = $request->get_route();
+
+		// Both namespaces: Pro registers four cart-adapter routes under
+		// wpss-pro/v1, and a wrong verb on those deserves the same 405 as
+		// anything under wpss/v1.
+		if ( 0 !== strpos( $path, '/wpss/v1' ) && 0 !== strpos( $path, '/wpss-pro/v1' ) ) {
+			return $result;
+		}
+
+		$allowed = [];
+
+		foreach ( $server->get_routes() as $route => $handlers ) {
+			// get_routes() keys are regex patterns for parameterised routes.
+			if ( ! preg_match( '@^' . $route . '$@i', $path ) ) {
+				continue;
+			}
+
+			foreach ( $handlers as $handler ) {
+				$allowed = array_merge( $allowed, array_keys( array_filter( $handler['methods'] ) ) );
+			}
+		}
+
+		$allowed = array_values( array_unique( $allowed ) );
+
+		if ( empty( $allowed ) ) {
+			// Genuinely no such path - core's 404 is the right answer.
+			return $result;
+		}
+
+		$response = new \WP_REST_Response(
+			[
+				'code'    => 'rest_method_not_allowed',
+				'message' => sprintf(
+					/* translators: 1: HTTP method used, 2: comma-separated list of allowed methods. */
+					__( '%1$s is not supported on this endpoint. Allowed: %2$s.', 'wp-sell-services' ),
+					$request->get_method(),
+					implode( ', ', $allowed )
+				),
+				'data'    => [
+					'status'  => 405,
+					'allowed' => $allowed,
+				],
+			],
+			405
+		);
+
+		// RFC 9110 requires Allow on a 405.
+		$response->header( 'Allow', implode( ', ', $allowed ) );
+
+		return $response;
 	}
 
 	/**
@@ -111,16 +211,28 @@ class API {
 							'default'     => 0,
 						],
 						'hide_empty' => [
-							'description' => __( 'Hide empty categories.', 'wp-sell-services' ),
+							'description' => __( 'Hide categories with no published services.', 'wp-sell-services' ),
 							'type'        => 'boolean',
-							'default'     => true,
+							// Defaulted to true, which meant a site whose services
+							// are not categorised — or a new site with no services
+							// yet — served an EMPTY browse tree to every client,
+							// with no error to explain it. A category list is
+							// navigation, not search results: show the taxonomy and
+							// let the caller opt into filtering.
+							'default'     => false,
 						],
 						'per_page'   => [
 							'description' => __( 'Maximum number of categories to return.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 100,
 							'minimum'     => 1,
-							'maximum'     => 500,
+							'maximum'     => 100,
+						],
+						'page'       => [
+							'description' => __( 'Current page of the collection.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
 						],
 					],
 				],
@@ -137,9 +249,22 @@ class API {
 					'callback'            => [ $this, 'get_tags' ],
 					'permission_callback' => '__return_true',
 					'args'                => [
-						'search' => [
+						'search'   => [
 							'description' => __( 'Search tags.', 'wp-sell-services' ),
 							'type'        => 'string',
+						],
+						'per_page' => [
+							'description' => __( 'Maximum number of tags to return.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 50,
+							'minimum'     => 1,
+							'maximum'     => 100,
+						],
+						'page'     => [
+							'description' => __( 'Current page of the collection.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
 						],
 					],
 				],
@@ -167,7 +292,7 @@ class API {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_current_user' ],
-					'permission_callback' => 'is_user_logged_in',
+					'permission_callback' => 'wpss_rest_require_login',
 				],
 			]
 		);
@@ -180,7 +305,7 @@ class API {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_dashboard' ],
-					'permission_callback' => 'is_user_logged_in',
+					'permission_callback' => 'wpss_rest_require_login',
 				],
 			]
 		);
@@ -193,7 +318,7 @@ class API {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'handle_batch' ],
-					'permission_callback' => 'is_user_logged_in',
+					'permission_callback' => 'wpss_rest_require_login',
 					'args'                => [
 						'requests' => [
 							'description' => __( 'Array of sub-requests.', 'wp-sell-services' ),
@@ -229,7 +354,14 @@ class API {
 						'q'        => [
 							'description' => __( 'Search query.', 'wp-sell-services' ),
 							'type'        => 'string',
-							'required'    => true,
+							// Not `required`: /services calls this same thing
+							// `search`, and either name is accepted here, so the
+							// request is valid with one or the other.
+							'required'    => false,
+						],
+						'search'   => [
+							'description' => __( 'Search query. Alias of `q`, accepted for parity with /services.', 'wp-sell-services' ),
+							'type'        => 'string',
 						],
 						'type'     => [
 							'description' => __( 'Search type.', 'wp-sell-services' ),
@@ -243,6 +375,12 @@ class API {
 							'default'     => 10,
 							'minimum'     => 1,
 							'maximum'     => 50,
+						],
+						'page'     => [
+							'description' => __( 'Current page of the results.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
 						],
 					],
 				],
@@ -259,17 +397,33 @@ class API {
 	public function get_categories( \WP_REST_Request $request ): \WP_REST_Response {
 		$parent     = (int) $request->get_param( 'parent' );
 		$hide_empty = (bool) $request->get_param( 'hide_empty' );
-		$per_page   = (int) $request->get_param( 'per_page' ) ?: 100;
+		$per_page   = min( 100, max( 1, (int) $request->get_param( 'per_page' ) ?: 100 ) );
+		$page       = max( 1, (int) $request->get_param( 'page' ) );
+
+		// Shared with the count below so the total can never describe a
+		// different set than the page. This endpoint used to take a per_page
+		// but no page, so nothing past the first 100 categories was reachable
+		// and the client had no way to learn how many there were.
+		$query_args = [
+			'taxonomy'   => 'wpss_service_category',
+			'parent'     => $parent,
+			'hide_empty' => $hide_empty,
+		];
+
+		$total = (int) wp_count_terms(
+			array_merge( $query_args, [ 'hide_empty' => $hide_empty ] )
+		);
 
 		$terms = get_terms(
-			[
-				'taxonomy'   => 'wpss_service_category',
-				'parent'     => $parent,
-				'hide_empty' => $hide_empty,
-				'orderby'    => 'name',
-				'order'      => 'ASC',
-				'number'     => $per_page,
-			]
+			array_merge(
+				$query_args,
+				[
+					'orderby' => 'name',
+					'order'   => 'ASC',
+					'number'  => $per_page,
+					'offset'  => ( $page - 1 ) * $per_page,
+				]
+			)
 		);
 
 		if ( is_wp_error( $terms ) ) {
@@ -278,22 +432,14 @@ class API {
 
 		$data = [];
 		foreach ( $terms as $term ) {
-			$icon  = get_term_meta( $term->term_id, '_wpss_icon', true );
-			$image = get_term_meta( $term->term_id, '_wpss_image', true );
-
-			$data[] = [
-				'id'          => $term->term_id,
-				'name'        => $term->name,
-				'slug'        => $term->slug,
-				'description' => $term->description,
-				'count'       => $term->count,
-				'parent'      => $term->parent,
-				'icon'        => $icon ?: '',
-				'image'       => $image ? wp_get_attachment_url( $image ) : '',
-			];
+			$data[] = wpss_prepare_term_for_rest( $term );
 		}
 
-		return new \WP_REST_Response( $data );
+		$response = new \WP_REST_Response( $data );
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / $per_page ) );
+
+		return $response;
 	}
 
 	/**
@@ -303,21 +449,34 @@ class API {
 	 * @return \WP_REST_Response
 	 */
 	public function get_tags( \WP_REST_Request $request ): \WP_REST_Response {
-		$search = $request->get_param( 'search' );
+		$search   = $request->get_param( 'search' );
+		$per_page = min( 100, max( 1, (int) $request->get_param( 'per_page' ) ?: 50 ) );
+		$page     = max( 1, (int) $request->get_param( 'page' ) );
 
-		$args = [
+		// Was hardcoded to 50 with no page argument, so tag 51 onwards simply
+		// did not exist as far as any client was concerned.
+		$base_args = [
 			'taxonomy'   => 'wpss_service_tag',
 			'hide_empty' => false,
-			'orderby'    => 'count',
-			'order'      => 'DESC',
-			'number'     => 50,
 		];
 
 		if ( $search ) {
-			$args['search'] = $search;
+			$base_args['search'] = $search;
 		}
 
-		$terms = get_terms( $args );
+		$total = (int) wp_count_terms( $base_args );
+
+		$terms = get_terms(
+			array_merge(
+				$base_args,
+				[
+					'orderby' => 'count',
+					'order'   => 'DESC',
+					'number'  => $per_page,
+					'offset'  => ( $page - 1 ) * $per_page,
+				]
+			)
+		);
 
 		if ( is_wp_error( $terms ) ) {
 			return new \WP_REST_Response( [] );
@@ -327,13 +486,94 @@ class API {
 		foreach ( $terms as $term ) {
 			$data[] = [
 				'id'    => $term->term_id,
-				'name'  => $term->name,
+				'name'  => wpss_rest_text( $term->name ),
 				'slug'  => $term->slug,
 				'count' => $term->count,
 			];
 		}
 
-		return new \WP_REST_Response( $data );
+		$response = new \WP_REST_Response( $data );
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / $per_page ) );
+
+		return $response;
+	}
+
+	/**
+	 * Resolve the plugin's page map to ids a client can actually navigate to.
+	 *
+	 * THE one place the page map is authored. `pages` and `page_urls` used to
+	 * each build their own copy of this list, so they could name different
+	 * screens for the same key.
+	 *
+	 * vendors, checkout and cart are resolved rather than read straight from the
+	 * option: vendors_page was a key nothing ever wrote, so it was permanently
+	 * 0, and checkout/cart in the option are the STANDALONE pages, which on a
+	 * WooCommerce site are not the pages a client should be sent to.
+	 *
+	 * Every value is an id of a PUBLISHED page or null. A 0 was never navigable
+	 * — an app opening a legal or vendor-directory WebView from `pages` landed
+	 * on an invalid post id and 404'd — and an id whose page has since been
+	 * trashed or unpublished is just as broken, so both collapse to null and the
+	 * client can hide the entry instead of linking nowhere.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param array<string, mixed> $pages_settings Stored page map.
+	 * @return array<string, int|null>
+	 */
+	private function get_page_ids( array $pages_settings ): array {
+		$ids = array(
+			'services'      => (int) ( $pages_settings['services_page'] ?? 0 ),
+			'vendors'       => function_exists( 'wpss_get_vendors_page_id' ) ? wpss_get_vendors_page_id() : (int) ( $pages_settings['vendors_page'] ?? 0 ),
+			'dashboard'     => (int) ( $pages_settings['dashboard'] ?? 0 ),
+			'checkout'      => function_exists( 'wpss_get_active_store_page_id' ) ? wpss_get_active_store_page_id( 'checkout' ) : (int) ( $pages_settings['checkout'] ?? 0 ),
+			'cart'          => function_exists( 'wpss_get_active_store_page_id' ) ? wpss_get_active_store_page_id( 'cart' ) : (int) ( $pages_settings['cart'] ?? 0 ),
+			'become_vendor' => (int) ( $pages_settings['become_vendor'] ?? 0 ),
+			'terms'         => (int) get_option( 'wpss_terms_page' ),
+		);
+
+		foreach ( $ids as $key => $id ) {
+			$ids[ $key ] = ( $id > 0 && 'publish' === get_post_status( $id ) ) ? $id : null;
+		}
+
+		return $ids;
+	}
+
+	/**
+	 * Resolve each mapped page to a URL a client can navigate to.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param array<string, mixed> $pages_settings Stored page map.
+	 * @return array<string, string|null>
+	 */
+	private function get_page_urls( array $pages_settings ): array {
+		$urls = array();
+
+		foreach ( $this->get_page_ids( $pages_settings ) as $key => $id ) {
+			$url = $id ? get_permalink( $id ) : '';
+
+			$urls[ $key ] = $url ?: null;
+		}
+
+		// Checkout and cart belong to whichever rail owns the store, so read
+		// them through the same resolvers the rest of the plugin uses rather
+		// than trusting our own page map — on a WooCommerce site these point at
+		// WooCommerce's pages, not the standalone ones.
+		if ( function_exists( 'wpss_get_checkout_base_url' ) ) {
+			$urls['checkout'] = wpss_get_checkout_base_url() ?: $urls['checkout'];
+		}
+
+		if ( function_exists( 'wpss_get_cart_url' ) ) {
+			$urls['cart'] = wpss_get_cart_url() ?: $urls['cart'];
+		}
+
+		if ( function_exists( 'wpss_get_vendors_url' ) ) {
+			$urls['vendors'] = wpss_get_vendors_url() ?: $urls['vendors'];
+		}
+
+		return $urls;
 	}
 
 	/**
@@ -357,13 +597,16 @@ class API {
 			'review_moderation'   => ! empty( $vendor_settings['moderate_reviews'] ),
 			'max_file_size'       => (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024, // MB to bytes.
 			'allowed_file_types'  => explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) ),
-			'pages'               => [
-				'services'  => (int) ( $pages_settings['services_page'] ?? 0 ),
-				'vendors'   => (int) ( $pages_settings['vendors_page'] ?? 0 ),
-				'dashboard' => (int) ( $pages_settings['dashboard'] ?? 0 ),
-				'checkout'  => (int) ( $pages_settings['checkout'] ?? 0 ),
-				'terms'     => (int) get_option( 'wpss_terms_page' ),
-			],
+			// Page IDs, or NULL where the site has no published page for that
+			// key. `vendors` and `terms` are never created by the installer, so
+			// they are null on a stock install until the owner maps them —
+			// never 0, which is not a post id a client can open.
+			'pages'               => $this->get_page_ids( $pages_settings ),
+			// Resolved URLs for the same keys, because an ID of 0 is not
+			// something a client can navigate to and an ID alone still needs a
+			// second round trip. NULL where the site genuinely has no such page,
+			// so a client can hide the entry rather than link to nowhere.
+			'page_urls'           => $this->get_page_urls( $pages_settings ),
 			// Non-sensitive realtime (WebSocket) client config — never the secret.
 			'realtime'            => ( new \WPSellServices\Services\RealtimeService() )->get_client_config(),
 		];
@@ -390,13 +633,34 @@ class API {
 			'email'        => $user->user_email,
 			'display_name' => $user->display_name,
 			'avatar'       => get_avatar_url( $user_id, [ 'size' => 96 ] ),
-			'is_vendor'    => (bool) get_user_meta( $user_id, '_wpss_is_vendor', true ),
+			// Canonical check, not the raw meta. A vendor created by role — which
+			// is every vendor the wizard, admin screen or demo seeder makes — has
+			// no _wpss_is_vendor meta, so /me told real sellers they were not
+			// sellers while /orders and /vendors/me said otherwise.
+			'is_vendor'    => wpss_is_vendor( $user_id ),
 			'is_admin'     => current_user_can( 'manage_options' ),
 			'capabilities' => [
-				'can_create_services' => current_user_can( 'wpss_manage_services' ) && get_user_meta( $user_id, '_wpss_is_vendor', true ),
-				'can_manage_orders'   => current_user_can( 'manage_options' ),
+				'can_create_services' => current_user_can( 'wpss_manage_services' ) && wpss_is_vendor( $user_id ),
+				// The capability the vendor role actually grants, not the admin
+				// one. Every vendor holds wpss_manage_orders and manages their
+				// own orders daily, but this reported false for all of them —
+				// so a client gating its order screens on it hid the seller's
+				// core workflow. Admins keep access through manage_options.
+				'can_manage_orders'   => current_user_can( 'wpss_manage_orders' ) || current_user_can( 'manage_options' ),
 			],
 		];
+
+		// The other current-user endpoint, /auth/me, also returns these. Both
+		// answer the same question, so both carry the same fields — a client
+		// should not have to know which one it called.
+		$user_object        = get_userdata( $user_id );
+		$data['username']   = $user_object ? $user_object->user_login : '';
+		$data['registered'] = $user_object ? $user_object->user_registered : '';
+
+		// Always present, so a client can read them without branching on role.
+		$data['vendor_status'] = null;
+		$data['rating']        = 0.0;
+		$data['review_count']  = 0;
 
 		if ( $data['is_vendor'] ) {
 			// Canonical profile status — _wpss_vendor_status was never written.
@@ -417,7 +681,7 @@ class API {
 		global $wpdb;
 
 		$user_id   = get_current_user_id();
-		$is_vendor = get_user_meta( $user_id, '_wpss_is_vendor', true );
+		$is_vendor = wpss_is_vendor( $user_id );
 
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 
@@ -521,12 +785,18 @@ class API {
 	 * @return \WP_REST_Response
 	 */
 	public function search( \WP_REST_Request $request ): \WP_REST_Response {
-		$query    = sanitize_text_field( $request->get_param( 'q' ) );
+		$query    = sanitize_text_field( $request->get_param( 'q' ) ?: $request->get_param( 'search' ) );
 		$type     = $request->get_param( 'type' );
 		$per_page = (int) $request->get_param( 'per_page' ) ?: 10;
+		$page     = max( 1, (int) $request->get_param( 'page' ) );
+		$offset   = ( $page - 1 ) * $per_page;
 
+		// Results were capped at per_page with no page argument, so there was
+		// no second page of anything. Totals are returned per type so a client
+		// can tell "no more results" from "the cap cut you off".
 		$results = [
 			'query' => $query,
+			'page'  => $page,
 		];
 
 		// Search services.
@@ -537,6 +807,7 @@ class API {
 					'post_status'    => 'publish',
 					's'              => $query,
 					'posts_per_page' => $per_page,
+					'offset'         => $offset,
 				]
 			);
 
@@ -553,18 +824,37 @@ class API {
 				];
 			}
 
-			$results['services'] = $services;
+			$results['services']       = $services;
+			$results['services_total'] = (int) $services_query->found_posts;
 		}
 
 		// Search vendors.
 		if ( 'all' === $type || 'vendors' === $type ) {
+			global $wpdb;
+
+			// Match the vendor directory: role OR the legacy meta. Searching on
+			// the meta alone missed every vendor created by role — which is
+			// every vendor the wizard, the admin screen and the seeder make —
+			// so they were unfindable by name.
 			$vendors_query = new \WP_User_Query(
 				[
-					'meta_key'       => '_wpss_is_vendor',
-					'meta_value'     => '1',
+					'meta_query'     => [
+						'relation' => 'OR',
+						[
+							'key'     => $wpdb->prefix . 'capabilities',
+							'value'   => '"' . \WPSellServices\Services\VendorService::ROLE . '"',
+							'compare' => 'LIKE',
+						],
+						[
+							'key'   => '_wpss_is_vendor',
+							'value' => '1',
+						],
+					],
 					'search'         => '*' . $query . '*',
 					'search_columns' => [ 'user_login', 'display_name', 'user_nicename' ],
 					'number'         => $per_page,
+					'offset'         => $offset,
+					'count_total'    => true,
 				]
 			);
 
@@ -584,7 +874,8 @@ class API {
 				];
 			}
 
-			$results['vendors'] = $vendors;
+			$results['vendors']       = $vendors;
+			$results['vendors_total'] = (int) $vendors_query->get_total();
 		}
 
 		return new \WP_REST_Response( $results );

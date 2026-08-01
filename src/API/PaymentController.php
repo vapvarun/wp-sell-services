@@ -39,9 +39,23 @@ class PaymentController extends RestController {
 	/**
 	 * Register routes.
 	 *
+	 * These endpoints drive the plugin's own gateways, so they exist only when
+	 * this site pays through them. If the owner has enabled WooCommerce, EDD,
+	 * FluentCart or SureCart to take payment, that plugin processes everything
+	 * and none of these routes are registered at all - rather than registering
+	 * them and having each one refuse, which leaves a payment surface that
+	 * looks half alive.
+	 *
+	 * The buyer's pay URL on those rails comes back with the order itself, from
+	 * wpss_get_pay_order_url().
+	 *
 	 * @return void
 	 */
 	public function register_routes(): void {
+		if ( ! wpss_uses_standalone_payments() ) {
+			return;
+		}
+
 		// GET /payments/methods - Available payment gateways.
 		register_rest_route(
 			$this->namespace,
@@ -324,10 +338,20 @@ class PaymentController extends RestController {
 	private function create_stripe_intent( object $gateway, float $amount, string $currency, int $service_id, int $package_id, int $pay_order ) {
 		$result = $gateway->create_payment_intent(
 			array(
-				'amount'     => $amount,
-				'currency'   => $currency,
-				'service_id' => $service_id,
-				'package_id' => $package_id,
+				'amount'      => $amount,
+				'currency'    => $currency,
+				'service_id'  => $service_id,
+				'package_id'  => $package_id,
+				// The order this intent pays for. Without it the charge cannot
+				// be matched back to an order: the webhook handler resolves the
+				// order from metadata['order_id'], so a succeeded payment
+				// arrived with nothing to apply it to. Verified against a live
+				// Stripe sandbox - the card was charged, Stripe delivered
+				// payment_intent.succeeded, and the order sat at
+				// pending_payment with no transaction id and no vendor credit.
+				// Money in, order unpaid, silently.
+				'order_id'    => $pay_order,
+				'customer_id' => get_current_user_id(),
 			)
 		);
 
@@ -476,7 +500,7 @@ class PaymentController extends RestController {
 			}
 
 			if ( get_current_user_id() !== (int) $order->customer_id && ! current_user_can( 'manage_options' ) ) {
-				return new WP_Error( 'rest_forbidden', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
+				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
 			}
 
 			// Idempotency: never re-process an order that is already paid.
@@ -577,7 +601,7 @@ class PaymentController extends RestController {
 			}
 
 			if ( get_current_user_id() !== (int) $order->customer_id && ! current_user_can( 'manage_options' ) ) {
-				return new WP_Error( 'rest_forbidden', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
+				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
 			}
 
 			// Idempotency: never re-process an order that is already paid.

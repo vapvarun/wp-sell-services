@@ -1309,12 +1309,6 @@ parameters:
 			path: src/Core/SchemaValidator.php
 
 		-
-			message: '#^Instantiated class EDD_SL_Plugin_Updater not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Core/Updater.php
-
-		-
 			message: '#^Method WPSellServices\\CustomFields\\FieldInterface\:\:format_value\(\) has parameter \$field with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

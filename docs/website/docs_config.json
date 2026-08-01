@@ -2,7 +2,7 @@
   "product_name": "WP Sell Services",
   "product_slug": "wp-sell-services",
   "short_id": "wpss",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "categories": [
     {
       "name": "Getting Started",
@@ -34,28 +34,46 @@
           "order": 4
         },
         {
+          "title": "WP Sell Services Pro Overview",
+          "slug": "pro-overview-wpss",
+          "file": "getting-started/pro-overview.md",
+          "order": 5
+        },
+        {
           "title": "Dashboard Tour (Buyer & Seller)",
           "slug": "dashboard-tour-wpss",
           "file": "getting-started/dashboard-tour.md",
-          "order": 5
+          "order": 6
         },
         {
           "title": "License Activation & Updates [PRO]",
           "slug": "pro-license-wpss",
           "file": "getting-started/pro-license.md",
-          "order": 6
+          "order": 7
         },
         {
           "title": "What's New in 1.3.0",
           "slug": "whats-new-1-3-0-wpss",
           "file": "getting-started/whats-new-1-3-0.md",
-          "order": 7
+          "order": 8
         },
         {
           "title": "Launch Checklist",
           "slug": "launch-checklist-wpss",
           "file": "getting-started/launch-checklist.md",
-          "order": 8
+          "order": 9
+        },
+        {
+          "title": "Documentation Coverage (what is and is not documented)",
+          "slug": "documentation-coverage-wpss",
+          "file": "getting-started/documentation-coverage.md",
+          "order": 10
+        },
+        {
+          "title": "Feature Catalog",
+          "slug": "feature-catalog-wpss",
+          "file": "feature-catalog.md",
+          "order": 11
         }
       ]
     },
@@ -619,16 +637,34 @@
           "order": 2
         },
         {
-          "title": "Advanced Settings (Debug, API, Uninstall)",
-          "slug": "advanced-settings-wpss",
-          "file": "platform-settings/advanced-settings.md",
+          "title": "Payment Gateways Settings",
+          "slug": "payment-gateways-settings-wpss",
+          "file": "platform-settings/payment-gateways-settings.md",
           "order": 3
+        },
+        {
+          "title": "Commission & Tax Settings",
+          "slug": "commission-tax-settings-wpss",
+          "file": "platform-settings/commission-tax-settings.md",
+          "order": 4
+        },
+        {
+          "title": "Payouts Settings",
+          "slug": "payouts-settings-wpss",
+          "file": "platform-settings/payouts-settings.md",
+          "order": 5
         },
         {
           "title": "White Label Branding [PRO]",
           "slug": "white-label-wpss",
           "file": "platform-settings/white-label.md",
-          "order": 4
+          "order": 6
+        },
+        {
+          "title": "Advanced Settings (Debug, API, Uninstall)",
+          "slug": "advanced-settings-wpss",
+          "file": "platform-settings/advanced-settings.md",
+          "order": 7
         }
       ]
     },

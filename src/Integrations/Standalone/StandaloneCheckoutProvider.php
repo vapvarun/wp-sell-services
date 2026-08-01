@@ -78,8 +78,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	public function get_checkout_url( int $service_id, array $args = [] ): string {
 		$url = home_url( '/' . StandaloneAdapter::get_checkout_slug() . '/' . $service_id . '/' );
 
-		if ( ! empty( $args['package_id'] ) ) {
-			$url = add_query_arg( 'package', $args['package_id'], $url );
+		// Index 0 is a real package, so the arg must survive it.
+		if ( isset( $args['package_id'] ) && '' !== $args['package_id'] ) {
+			$url = add_query_arg( 'package', (int) $args['package_id'], $url );
 		}
 
 		if ( ! empty( $args['addons'] ) ) {
@@ -155,6 +156,78 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	}
 
 	/**
+	 * Render the outcome for a buyer returning from off-site authentication.
+	 *
+	 * Display only — fulfilment stays with the webhook, which is what Stripe
+	 * prescribes because a buyer may close the tab before ever getting back
+	 * here. The gateway reconciles idempotently, so this page reports what
+	 * happened rather than deciding it.
+	 *
+	 * Every branch avoids offering a second payment for a charge that already
+	 * succeeded. "Processing" deliberately does not, either: the money moved,
+	 * and the honest instruction is to wait, not to pay again.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param string $payment_intent_id PaymentIntent id from the return URL.
+	 * @return string
+	 */
+	private function render_payment_return( string $payment_intent_id ): string {
+		$gateways = function_exists( 'wpss' ) ? wpss()->get_payment_gateways() : array();
+		$gateway  = $gateways['stripe'] ?? null;
+
+		if ( ! $gateway || ! method_exists( $gateway, 'reconcile_redirect_return' ) ) {
+			return '<div class="wpss-checkout-return wpss-notice wpss-notice--info"><p>'
+				. esc_html__( 'We are confirming your payment. Please check your orders in a moment — do not pay again.', 'wp-sell-services' )
+				. '</p></div>';
+		}
+
+		$result   = $gateway->reconcile_redirect_return( $payment_intent_id );
+		$orders   = wpss_get_page_url( 'dashboard' );
+		$continue = '';
+
+		ob_start();
+
+		if ( 'paid' === $result['status'] ) {
+			$order_url = $result['order_id'] > 0 ? wpss_get_order_url( (int) $result['order_id'] ) : $orders;
+			?>
+			<div class="wpss-checkout-return wpss-checkout-return--paid">
+				<h2><?php esc_html_e( 'Payment received', 'wp-sell-services' ); ?></h2>
+				<p><?php esc_html_e( 'Thank you. Your payment is confirmed and your order is on its way to the seller.', 'wp-sell-services' ); ?></p>
+				<p><a class="wpss-btn wpss-btn-primary" href="<?php echo esc_url( $order_url ); ?>"><?php esc_html_e( 'View your order', 'wp-sell-services' ); ?></a></p>
+			</div>
+			<?php
+		} elseif ( 'processing' === $result['status'] ) {
+			// Refresh rather than ask for another payment. The webhook usually
+			// settles within a second or two.
+			?>
+			<div class="wpss-checkout-return wpss-checkout-return--processing" data-wpss-return-poll="1">
+				<h2><?php esc_html_e( 'Confirming your payment', 'wp-sell-services' ); ?></h2>
+				<p><?php echo esc_html( $result['message'] ); ?></p>
+				<p><strong><?php esc_html_e( 'Please do not pay again.', 'wp-sell-services' ); ?></strong></p>
+				<p><a class="wpss-btn" href="<?php echo esc_url( $orders ); ?>"><?php esc_html_e( 'Go to your orders', 'wp-sell-services' ); ?></a></p>
+			</div>
+			<script>setTimeout(function(){ window.location.reload(); }, 5000);</script>
+			<?php
+		} else {
+			// Genuinely not paid — this is the ONE branch where offering to pay
+			// again is correct.
+			$continue = wpss_get_checkout_base_url();
+			?>
+			<div class="wpss-checkout-return wpss-checkout-return--failed">
+				<h2><?php esc_html_e( 'Payment not completed', 'wp-sell-services' ); ?></h2>
+				<p><?php echo esc_html( $result['message'] ); ?></p>
+				<?php if ( $continue ) : ?>
+					<p><a class="wpss-btn wpss-btn-primary" href="<?php echo esc_url( $continue ); ?>"><?php esc_html_e( 'Try another payment method', 'wp-sell-services' ); ?></a></p>
+				<?php endif; ?>
+			</div>
+			<?php
+		}
+
+		return (string) ob_get_clean();
+	}
+
+	/**
 	 * Render checkout shortcode.
 	 *
 	 * Handles both regular service purchase and pay_order flow (from proposal acceptance).
@@ -166,6 +239,18 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	public function render_checkout_shortcode( array $atts ): string {
 		// Enqueue frontend assets for proper styling and functionality.
 		wpss_enqueue_frontend_assets();
+
+		// A buyer coming back from an off-site authentication (redirect-based 3D
+		// Secure, or any redirect payment method) lands here with the gateway's
+		// own parameters on the URL. Show them the OUTCOME — never the checkout
+		// form again. The charge has already happened, so re-rendering a live
+		// Pay button over it is an invitation to pay twice.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$returned_intent = isset( $_GET['payment_intent'] ) ? sanitize_text_field( wp_unslash( $_GET['payment_intent'] ) ) : '';
+
+		if ( '' !== $returned_intent ) {
+			return $this->render_payment_return( $returned_intent );
+		}
 
 		// Check if paying for an existing order (from proposal acceptance).
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -1069,30 +1154,34 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					</div><!-- /layout -->
 				</form>
 
-				<!-- Guarantee badges (horizontal) -->
+				<?php
+				/*
+				 * Reassurance badges are the SITE OWNER'S words, edited under
+				 * Settings > General > Checkout Reassurance. This is a public page a
+				 * buyer reads while paying, so the plugin must not put claims in the
+				 * owner's mouth - it previously printed "On-time Delivery / Or your
+				 * money back", a refund promise nothing in the code honours, and
+				 * "Unlimited revisions" on packages that include two.
+				 *
+				 * Where the owner has left a row blank we fall back to facts about
+				 * the package being bought, so a badge can never contradict the order
+				 * beside it.
+				 */
+				$badges = wpss_get_checkout_badges( is_array( $selected_package ) ? $selected_package : array() );
+				?>
+				<?php if ( ! empty( $badges ) ) : ?>
 				<div class="wpss-co-guarantees-bar">
-					<div class="wpss-co-guarantee">
-						<span aria-hidden="true">&#9201;</span>
-						<div>
-							<strong><?php esc_html_e( 'On-time Delivery', 'wp-sell-services' ); ?></strong>
-							<span><?php esc_html_e( 'Or your money back', 'wp-sell-services' ); ?></span>
+					<?php foreach ( $badges as $badge ) : ?>
+						<div class="wpss-co-guarantee">
+							<span aria-hidden="true"><?php echo esc_html( $badge['icon'] ); ?></span>
+							<div>
+								<strong><?php echo esc_html( $badge['title'] ); ?></strong>
+								<span><?php echo esc_html( $badge['note'] ); ?></span>
+							</div>
 						</div>
-					</div>
-					<div class="wpss-co-guarantee">
-						<span aria-hidden="true">&#128172;</span>
-						<div>
-							<strong><?php esc_html_e( 'Direct Communication', 'wp-sell-services' ); ?></strong>
-							<span><?php esc_html_e( 'Chat with your seller', 'wp-sell-services' ); ?></span>
-						</div>
-					</div>
-					<div class="wpss-co-guarantee">
-						<span aria-hidden="true">&#9989;</span>
-						<div>
-							<strong><?php esc_html_e( 'Satisfaction Guarantee', 'wp-sell-services' ); ?></strong>
-							<span><?php esc_html_e( 'Unlimited revisions in your plan', 'wp-sell-services' ); ?></span>
-						</div>
-					</div>
+					<?php endforeach; ?>
 				</div>
+				<?php endif; ?>
 
 				<!-- What happens next -->
 				<div class="wpss-co-steps">

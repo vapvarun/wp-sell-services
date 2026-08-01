@@ -18,13 +18,24 @@
  * @package WPSellServices\Templates
  * @since   1.2.2
  *
- * @var int $user_id Optional. User whose notifications to render. Defaults to
- *                   the current user.
+ * @var int  $user_id           Optional. User whose notifications to render.
+ *                              Defaults to the current user.
+ * @var bool $wpss_show_heading Optional. Whether this partial renders its own
+ *                              "Notifications" heading. Defaults to true.
+ *                              Surfaces that already show a page title — the
+ *                              unified dashboard, whose shell renders an h1 —
+ *                              pass false, otherwise the word appears twice,
+ *                              which on a 390px screen cost most of the first
+ *                              screenful before a single notification.
  */
 
 defined( 'ABSPATH' ) || exit;
 
 $wpss_notif_user = isset( $user_id ) ? (int) $user_id : get_current_user_id();
+
+// Default true: the standalone account and myaccount surfaces have no page
+// title of their own and still need it.
+$wpss_show_heading = ! isset( $wpss_show_heading ) || (bool) $wpss_show_heading;
 
 if ( $wpss_notif_user <= 0 ) {
 	return;
@@ -57,18 +68,29 @@ foreach ( $wpss_notifications as $wpss_n ) {
 .wpss-notif-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .wpss-notif-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px solid var( --wpss-border, #e5e7eb ); border-radius: var( --wpss-radius, 8px ); background: var( --wpss-bg, #fff ); }
 .wpss-notif-row--unread { background: var( --wpss-primary-light, #eef2ff ); border-color: var( --wpss-primary, #4f46e5 ); }
-.wpss-notif-row__icon { flex: 0 0 auto; color: var( --wpss-primary, #4f46e5 ); display: inline-flex; }
+/* Icon, title and the mark-read control share ONE first-line band so they sit
+	on the same optical line. The icon is a replaced SVG whose box does not match
+	the title's line box, so flex-start alone left it floating above the text on
+	every multi-line row. Sizing the icon to the title's line-height and centring
+	the glyph inside it is what actually aligns them. */
+.wpss-notif-row__icon { flex: 0 0 auto; color: var( --wpss-primary, #4f46e5 ); display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 24px; }
+.wpss-notif-row__icon svg { width: 18px; height: 18px; }
 .wpss-notif-row__body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.wpss-notif-row__title { line-height: 24px; }
+.wpss-notif-row__message { line-height: 1.5; }
 .wpss-notif-row__title { font-weight: 600; color: var( --wpss-text, #1f2937 ); }
 .wpss-notif-row__message { color: var( --wpss-text-light, #6b7280 ); }
 .wpss-notif-row__time { font-size: 12px; color: var( --wpss-text-muted, #6b7280 ); }
-.wpss-notif-row__mark { flex: 0 0 auto; background: none; border: none; cursor: pointer; color: var( --wpss-text-light, #6b7280 ); padding: 4px; border-radius: 4px; }
+.wpss-notif-row__mark { flex: 0 0 auto; background: none; border: none; cursor: pointer; color: var( --wpss-text-light, #6b7280 ); padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
+.wpss-notif-row__mark svg { width: 18px; height: 18px; }
 .wpss-notif-row__mark:hover { color: var( --wpss-primary, #4f46e5 ); }
 @media (max-width: 480px) { .wpss-notif-row { padding: 12px; } }
 </style>
 <div class="wpss-notif-center" data-ajax-url="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wpss_notification_nonce' ) ); ?>">
 	<div class="wpss-notif-center__head">
-		<h2><?php esc_html_e( 'Notifications', 'wp-sell-services' ); ?></h2>
+		<?php if ( $wpss_show_heading ) : ?>
+			<h2><?php esc_html_e( 'Notifications', 'wp-sell-services' ); ?></h2>
+		<?php endif; ?>
 		<?php if ( $wpss_has_unread ) : ?>
 			<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-notif-mark-all">
 				<?php esc_html_e( 'Mark all as read', 'wp-sell-services' ); ?>

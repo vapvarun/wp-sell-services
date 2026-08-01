@@ -31,9 +31,8 @@ printf( esc_html__( 'Vendor: %s', 'wp-sell-services' ), esc_html( $vendor ? $ven
 echo "\n";
 printf( esc_html__( 'Email: %s', 'wp-sell-services' ), esc_html( $vendor ? $vendor->user_email : '' ) );
 echo "\n";
-// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_strip_all_tags() is a safe function.
 /* translators: %s: requested withdrawal amount. */
-printf( esc_html__( 'Amount Requested: %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $amount ) ) );
+printf( esc_html__( 'Amount Requested: %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $amount ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_strip_all_tags() is safe here; esc_html() would encode entities into a plain-text body.
 echo "\n----------\n\n";
 
 echo esc_html__( 'Review Withdrawal:', 'wp-sell-services' ) . ' ';

@@ -19,6 +19,7 @@ defined( 'ABSPATH' ) || exit;
 use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\ConversationService;
 use WPSellServices\Services\ServiceAddonService;
+use WPSellServices\Assets\ScriptRegistry;
 
 /**
  * Manual Order Page Class.
@@ -80,12 +81,10 @@ class ManualOrderPage {
 		);
 		wp_style_add_data( 'wpss-admin-manual-order', 'rtl', 'replace' );
 
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-admin-manual-order',
-			\WPSS_PLUGIN_URL . 'assets/js/admin-manual-order.js',
-			array( 'jquery', 'wpss-admin' ),
-			\WPSS_VERSION,
-			true
+			'assets/js/admin-manual-order.js',
+			array( 'jquery', 'wpss-admin' )
 		);
 
 		$default_rate = CommissionService::get_global_commission_rate();
@@ -649,7 +648,7 @@ class ManualOrderPage {
 		}
 
 		// Generate order number.
-		$order_number = 'WPSS-' . strtoupper( wp_generate_password( 8, false ) );
+		$order_number = wpss_generate_order_number();
 
 		// --- 10. Insert order ---
 		// Build data/format arrays dynamically to avoid passing null values
@@ -776,7 +775,7 @@ class ManualOrderPage {
 			'platform'       => 'manual',
 		);
 		ob_start();
-		do_action( 'wpss_order_created', $order_id, $order_data );
+		wpss_after_order_created( $order_id, $order_data );
 		do_action( 'wpss_order_status_changed', $order_id, $status, '' );
 		do_action( "wpss_order_status_{$status}", $order_id, '' );
 		ob_end_clean();

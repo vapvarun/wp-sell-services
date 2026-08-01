@@ -18,6 +18,7 @@ use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\SellerLevelService;
 use WPSellServices\Services\VendorService;
 use WPSellServices\Models\VendorProfile;
+use WPSellServices\Assets\ScriptRegistry;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -168,23 +169,18 @@ class VendorsPage {
 		);
 
 		// Enqueue free plugin admin scripts with unique handle.
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-free-admin',
-			\WPSS_PLUGIN_URL . 'assets/js/admin.js',
-			array( 'jquery', 'jquery-ui-sortable', 'wp-util' ),
-			\WPSS_VERSION,
-			true
+			'assets/js/admin.js',
+			array( 'jquery', 'jquery-ui-sortable', 'wp-util' )
 		);
 
 		// wpss-ui provides wpssConfirm() for the portfolio-item delete confirm.
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-admin-vendors',
-			\WPSS_PLUGIN_URL . 'assets/js/admin-vendors.js',
-			array( 'jquery', 'wpss-free-admin', 'wpss-ui' ),
-			\WPSS_VERSION,
-			true
+			'assets/js/admin-vendors.js',
+			array( 'jquery', 'wpss-free-admin', ScriptRegistry::HANDLE_UI )
 		);
-		wp_set_script_translations( 'wpss-admin-vendors', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 		$this->localize_vendors_script();
 	}

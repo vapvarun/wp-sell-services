@@ -18,6 +18,12 @@ defined( 'ABSPATH' ) || exit;
 
 do_action( 'wpss_dashboard_section_before', 'notifications', $user_id );
 ?>
-<div class="wpss-dashboard-section">
-	<?php require WPSS_PLUGIN_DIR . 'templates/partials/notifications-list.php'; ?>
+<div class="wpss-section wpss-section--notifications wpss-card">
+	<?php
+	// The dashboard shell already renders "Notifications" as the page h1, so the
+	// partial must not repeat it here. The other two surfaces have no page title
+	// of their own and keep theirs.
+	$wpss_show_heading = false;
+	require WPSS_PLUGIN_DIR . 'templates/partials/notifications-list.php';
+	?>
 </div>

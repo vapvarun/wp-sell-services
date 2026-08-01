@@ -182,7 +182,18 @@ class ExtensionRequestsController extends RestController {
 			ARRAY_A
 		);
 
-		return new WP_REST_Response( array_map( array( $this, 'format_item' ), $items ?: array() ), 200 );
+		// Every row here belongs to the same parent order, so its currency is
+		// resolved once rather than per row. An extension is charged in the
+		// currency the order was sold in, not the current store default.
+		$order    = wpss_get_order( $order_id );
+		$currency = ( $order && $order->currency ) ? (string) $order->currency : wpss_get_currency();
+
+		$data = array();
+		foreach ( $items ?: array() as $item ) {
+			$data[] = $this->format_item( $item, $currency );
+		}
+
+		return new WP_REST_Response( $data, 200 );
 	}
 
 	/**
@@ -342,12 +353,16 @@ class ExtensionRequestsController extends RestController {
 	/**
 	 * Format a raw extension-request row for the REST response.
 	 *
-	 * @param array $item Raw DB row.
+	 * @param array  $item     Raw DB row.
+	 * @param string $currency Optional. Currency of the parent order. Defaults
+	 *                         to the store currency when the caller has none.
 	 * @return array
 	 */
-	private function format_item( array $item ): array {
+	private function format_item( array $item, string $currency = '' ): array {
 		$requester = get_user_by( 'id', (int) $item['requested_by'] );
 		$responder = ! empty( $item['responded_by'] ) ? get_user_by( 'id', (int) $item['responded_by'] ) : null;
+		$currency  = '' !== $currency ? $currency : wpss_get_currency();
+		$amount    = isset( $item['amount'] ) ? (float) $item['amount'] : null;
 
 		return array(
 			'id'                => (int) $item['id'],
@@ -358,7 +373,11 @@ class ExtensionRequestsController extends RestController {
 				'name' => $requester ? $requester->display_name : __( 'Unknown', 'wp-sell-services' ),
 			),
 			'extra_days'        => (int) $item['extra_days'],
-			'amount'            => isset( $item['amount'] ) ? (float) $item['amount'] : null,
+			// Nullable money, so the minor units are added directly - the
+			// wpss_rest_money() shape has no way to express "no amount".
+			'amount'            => $amount,
+			'amount_minor'      => null !== $amount ? wpss_amount_to_minor_units( $amount, $currency ) : null,
+			'currency'          => $currency,
 			'reason'            => $item['reason'] ?? '',
 			'status'            => $item['status'],
 			'responded_by'      => $responder

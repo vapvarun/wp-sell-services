@@ -1796,7 +1796,7 @@ class AjaxHandlers {
 				$redirect_url = add_query_arg( 'order_id', $result['order_id'], wpss_get_dashboard_url() );
 				$message      = __( 'Proposal accepted — your project is set up. Opening the order…', 'wp-sell-services' );
 			} else {
-				$redirect_url = add_query_arg( 'pay_order', $result['order_id'], wpss_get_checkout_base_url() );
+				$redirect_url = wpss_get_pay_order_url( (int) $result['order_id'] );
 				$message      = __( 'Proposal accepted! Redirecting to payment…', 'wp-sell-services' );
 			}
 
@@ -2555,6 +2555,15 @@ class AjaxHandlers {
 			)
 		);
 
+		// Bodies are stored as plain text, but rows written before that change
+		// still carry email markup — reduce them on the way out, exactly as the
+		// REST controller does, so no client has to strip tags itself.
+		foreach ( $notifications as $wpss_notification ) {
+			if ( isset( $wpss_notification->message ) ) {
+				$wpss_notification->message = \WPSellServices\Services\NotificationMessage::to_plain( (string) $wpss_notification->message );
+			}
+		}
+
 		wp_send_json_success(
 			array(
 				'notifications' => $notifications,
@@ -3049,11 +3058,9 @@ class AjaxHandlers {
 		$result = array( 'success' => false );
 
 		switch ( $action ) {
-			case 'accept':
-				if ( (int) $order->vendor_id === $user_id ) {
-					$result = $order_service->update_status( $order_id, 'accepted' );
-				}
-				break;
+			// No 'accept' case. It wrote status 'accepted', which only the
+			// removed accept verb ever produced and which no template renders.
+			// This product is payment-first - there is no acceptance step.
 
 			case 'start':
 				if ( (int) $order->vendor_id === $user_id ) {
@@ -3062,7 +3069,12 @@ class AjaxHandlers {
 				break;
 
 			case 'cancel':
-				$result = $order_service->update_status( $order_id, 'cancelled' );
+				// Assign to ['success'], not over the whole array.
+				// update_status() returns a BOOL, so `$result = ...` left the
+				// check below reading an array offset on a bool - always empty -
+				// and every successful cancellation answered "Action failed"
+				// while having actually cancelled the order.
+				$result['success'] = $order_service->update_status( $order_id, 'cancelled' );
 				break;
 
 			case 'refund':

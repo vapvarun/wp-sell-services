@@ -14,6 +14,7 @@ namespace WPSellServices\Frontend;
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Models\Service;
+use WPSellServices\Assets\ScriptRegistry;
 
 /**
  * Handles the single service page display.
@@ -104,12 +105,10 @@ class SingleServiceView {
 		wp_style_add_data( 'wpss-single-service', 'rtl', 'replace' );
 
 		// Single service JS.
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-single-service',
-			\WPSS_PLUGIN_URL . 'assets/js/single-service.js',
-			array( 'jquery', 'wpss-frontend' ),
-			\WPSS_VERSION,
-			true
+			'assets/js/single-service.js',
+			array( 'jquery', 'wpss-frontend' )
 		);
 
 		$checkout_url = wpss_get_service_checkout_url( get_the_ID() );
@@ -431,9 +430,9 @@ class SingleServiceView {
 		$vendor_service = new \WPSellServices\Services\VendorService();
 		$profile        = $vendor_service->get_profile( $vendor_id );
 
-		$bio              = $profile->bio ?? get_user_meta( $vendor_id, 'description', true );
-		$languages        = ! empty( $profile->languages ) ? json_decode( $profile->languages, true ) : get_user_meta( $vendor_id, '_wpss_vendor_languages', true );
-		$skills           = ! empty( $profile->skills ) ? json_decode( $profile->skills, true ) : get_user_meta( $vendor_id, '_wpss_vendor_skills', true );
+		$bio       = $profile->bio ?? get_user_meta( $vendor_id, 'description', true );
+		$languages = ! empty( $profile->languages ) ? json_decode( $profile->languages, true ) : get_user_meta( $vendor_id, '_wpss_vendor_languages', true );
+		$skills    = ! empty( $profile->skills ) ? json_decode( $profile->skills, true ) : get_user_meta( $vendor_id, '_wpss_vendor_skills', true );
 		// completed_orders lives in the wpss_vendor_profiles table; the
 		// _wpss_completed_orders user meta was never written, so there is no
 		// meta fallback to read.
@@ -466,10 +465,12 @@ class SingleServiceView {
 							$rating_count = (int) ( $profile->total_reviews ?? get_user_meta( $vendor_id, '_wpss_rating_count', true ) );
 							if ( $rating_count > 0 ) :
 								?>
-								<?php // This is the SELLER's overall rating (across all their
+								<?php
+								// This is the SELLER's overall rating (across all their
 								// services). Label it so it doesn't read as this one
 								// service's rating and contradict the service-scoped
-								// "No reviews yet" in the Reviews section below. ?>
+								// "No reviews yet" in the Reviews section below.
+								?>
 								<span class="wpss-quick-stat" title="<?php esc_attr_e( 'Overall seller rating across all their services', 'wp-sell-services' ); ?>">
 									<span class="wpss-star filled">★</span>
 									<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>

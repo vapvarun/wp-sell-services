@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace WPSellServices\Frontend;
 
 use WPSellServices\Services\VendorService;
+use WPSellServices\Assets\ScriptRegistry;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -98,13 +99,7 @@ class UnifiedDashboard {
 		// Shared UI primitives: wpssConfirm (Promise modal) + wpssToast fallback.
 		// Must be enqueued before any dashboard script (free or pro) that calls
 		// wpssConfirm() / wpssToast().
-		wp_enqueue_script(
-			'wpss-ui',
-			WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
-			array(),
-			WPSS_VERSION,
-			true
-		);
+		ScriptRegistry::enqueue_ui();
 
 		wp_enqueue_style(
 			'wpss-unified-dashboard',
@@ -114,12 +109,10 @@ class UnifiedDashboard {
 		);
 		wp_style_add_data( 'wpss-unified-dashboard', 'rtl', 'replace' );
 
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-unified-dashboard',
-			WPSS_PLUGIN_URL . 'assets/js/unified-dashboard.js',
-			array( 'jquery' ),
-			WPSS_VERSION,
-			true
+			'assets/js/unified-dashboard.js',
+			array( 'jquery' )
 		);
 
 		wp_localize_script(
@@ -135,6 +128,19 @@ class UnifiedDashboard {
 				'zeroDecimalCurrencies' => wpss_get_zero_decimal_currencies(),
 				'i18n'                  => array(
 					'becomeVendorConfirm'    => __( 'Start selling services on this marketplace?', 'wp-sell-services' ),
+
+					// Wallet transactions table. These are rendered entirely in JS,
+					// so without them here the table headers and its empty/error
+					// states stay English in every locale - the JS `|| 'Date'`
+					// fallbacks were doing the work.
+					'walletColDate'          => __( 'Date', 'wp-sell-services' ),
+					'walletColType'          => __( 'Type', 'wp-sell-services' ),
+					'walletColDescription'   => __( 'Description', 'wp-sell-services' ),
+					'walletColAmount'        => __( 'Amount', 'wp-sell-services' ),
+					'walletColBalance'       => __( 'Balance', 'wp-sell-services' ),
+					'walletEmpty'            => __( 'No wallet transactions yet.', 'wp-sell-services' ),
+					'walletLoadFailed'       => __( 'Could not load transactions. Please try again.', 'wp-sell-services' ),
+					'walletTypeUnknown'      => __( 'Other', 'wp-sell-services' ),
 					'processing'             => __( 'Processing...', 'wp-sell-services' ),
 					'confirmDelete'          => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),
 					'pause'                  => __( 'Pause', 'wp-sell-services' ),
@@ -225,6 +231,17 @@ class UnifiedDashboard {
 	 * `?section=` query arg so plain-permalink sites and old links keep working.
 	 * Defaults to the role-aware landing section (see default_section()).
 	 *
+	 * The requested slug is resolved through wpss_normalize_dashboard_section(),
+	 * which maps label-derived guesses (`my-orders` -> `orders`) onto the real
+	 * slug and answers with an empty string for anything this product does not
+	 * have. An unrecognised slug therefore falls through to the default landing
+	 * section instead of being handed on to the renderer, which used to accept
+	 * ANY sanitize_key-clean string and then render a dead "Section Not
+	 * Available" card. Plugin::redirect_dashboard_section_url() normally
+	 * redirects those URLs before we get here; this is the fallback for the
+	 * contexts template_redirect never runs in (AJAX, the shortcode embedded on
+	 * a page that is not the mapped dashboard).
+	 *
 	 * @since 1.2.0
 	 *
 	 * @return string Sanitized section slug.
@@ -237,7 +254,7 @@ class UnifiedDashboard {
 			$section = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( $_GET['section'] ) ) : '';
 		}
 
-		$section = sanitize_key( $section );
+		$section = wpss_normalize_dashboard_section( $section );
 
 		if ( '' !== $section ) {
 			return $section;
@@ -656,14 +673,27 @@ class UnifiedDashboard {
 				 * Filters whether the "Powered by WP Sell Services" footer credit
 				 * is rendered on the frontend dashboard.
 				 *
-				 * Pro's WhiteLabel branding hooks this filter to remove the credit
-				 * when the "Remove Powered by" white-label toggle is enabled.
+				 * DEFAULT FALSE since 1.4.0. This is a self-hosted plugin, not a
+				 * hosted service: the dashboard belongs to the site owner and their
+				 * members, and we do not put our name and an outbound link on it
+				 * uninvited. It previously defaulted to true and could only be
+				 * taken off with Pro's white-label toggle, which made an owner pay
+				 * to remove our branding from their own site — a SaaS pattern that
+				 * does not belong in a WordPress plugin.
+				 *
+				 * Owners who want to credit the plugin can opt in:
+				 *
+				 *     add_filter( 'wpss_show_powered_by', '__return_true' );
+				 *
+				 * Pro's white-label toggle still filters this hook; with the default
+				 * off it simply has nothing left to remove.
 				 *
 				 * @since 1.2.0
+				 * @since 1.4.0 Default changed from true to false.
 				 *
-				 * @param bool $show_powered_by Whether to render the credit. Default true.
+				 * @param bool $show_powered_by Whether to render the credit. Default false.
 				 */
-				if ( apply_filters( 'wpss_show_powered_by', true ) ) :
+				if ( apply_filters( 'wpss_show_powered_by', false ) ) :
 					?>
 					<footer class="wpss-dashboard__footer">
 						<p class="wpss-powered-by">
@@ -854,14 +884,30 @@ class UnifiedDashboard {
 			</div>
 			<?php
 		} else {
-			// Genuinely missing sections.
+			// A KNOWN section whose template this install cannot render. Since
+			// the router now redirects unrecognised slugs instead of routing
+			// them here (see wpss_normalize_dashboard_section()), the only way
+			// to land in this branch is a real address whose template ships
+			// somewhere else — in practice, a Pro-only section such as
+			// Analytics viewed on a Free-only site. Say that, rather than the
+			// old flat "This section is not available", which read as a broken
+			// link and sent testers to file bugs against working URLs.
+			$pro_active = defined( 'WPSS_PRO_VERSION' );
 			?>
 			<div class="wpss-dashboard__empty">
 				<div class="wpss-dashboard__empty-icon">
 					<?php $this->render_icon( 'folder' ); ?>
 				</div>
 				<h3><?php esc_html_e( 'Section Not Available', 'wp-sell-services' ); ?></h3>
-				<p><?php esc_html_e( 'This section is not available.', 'wp-sell-services' ); ?></p>
+				<p>
+					<?php
+					if ( $pro_active ) {
+						esc_html_e( 'This section is not available on this site.', 'wp-sell-services' );
+					} else {
+						esc_html_e( 'This section is part of WP Sell Services Pro and is not available on this site.', 'wp-sell-services' );
+					}
+					?>
+				</p>
 				<a href="<?php echo esc_url( wpss_get_dashboard_url() ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php esc_html_e( 'Back to Dashboard', 'wp-sell-services' ); ?>
 				</a>

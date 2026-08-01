@@ -12,7 +12,7 @@ WP Sell Services provides six contract interfaces in `src/Integrations/Contracts
 | Payment Gateway | `PaymentGatewayInterface` | Stripe, PayPal, Offline | Razorpay **[PRO]** |
 | Storage Provider | `wpss_storage_providers` | Local uploads | S3, GCS, DigitalOcean Spaces **[PRO]** |
 | Email Provider | `wpss_email_providers` | WordPress mail | SendGrid, Mailgun, SES |
-| REST API Controller | `wpss_api_controllers` | 21 controllers | Additional endpoints |
+| REST API Controller | `wpss_api_controllers` | 23 controllers | Additional endpoints |
 | Analytics Widget | `wpss_analytics_widgets` | Basic stats | Revenue, conversion, vendor analytics **[PRO]** |
 
 ## E-Commerce Adapters

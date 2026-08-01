@@ -58,7 +58,7 @@ This adds an extra quality gate -- vendors must be verified before they can list
 
 When enabled, every new service a vendor creates goes into "Pending Review" status instead of being published immediately. You review each service and approve or reject it.
 
-To review pending services, go to **Sell Services > Services** and filter by status.
+To review pending services, go to **Sell Services > Moderation** — the queue carries a pending count in the menu. To browse everything else, go to **Sell Services > All Services** and filter by status.
 
 This is useful for maintaining marketplace quality, especially in the early days. As you build trust with your top vendors, you might consider disabling this to speed things up.
 

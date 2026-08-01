@@ -34,7 +34,7 @@ $unread_count      = $conversation_repo->count_unread_for_user( $user_id );
 $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash( $_GET['conversation_id'] ) ) : 0;
 ?>
 
-<div class="wpss-section wpss-section--messages">
+<div class="wpss-section wpss-section--messages wpss-card">
 
 <?php if ( $active_conversation_id ) : ?>
 	<?php
@@ -88,8 +88,8 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 									<strong><?php echo esc_html( $sender ? $sender->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
 									<time>
 										<?php
-										$msg_ts = $msg->created_at instanceof DateTimeInterface ? $msg->created_at->getTimestamp() : strtotime( $msg->created_at );
-										echo esc_html( human_time_diff( $msg_ts, current_time( 'timestamp' ) ) );
+										$msg_ts = $msg->created_at instanceof DateTimeInterface ? $msg->created_at->getTimestamp() : strtotime( $msg->created_at . ' UTC' );
+										echo esc_html( human_time_diff( $msg_ts, time() ) );
 										?>
 										<?php esc_html_e( 'ago', 'wp-sell-services' ); ?>
 									</time>
@@ -230,79 +230,85 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				$unread_data       = $conversation->unread_counts ? json_decode( $conversation->unread_counts, true ) : array();
 				$my_unread         = (int) ( $unread_data[ $user_id ] ?? 0 );
 				$is_unread         = $my_unread > 0;
-				$last_message_time = ! empty( $conversation->last_message_at ) ? strtotime( $conversation->last_message_at ) : false;
-				$time_ago          = $last_message_time ? human_time_diff( $last_message_time, current_time( 'timestamp' ) ) : '';
+				$last_message_time = ! empty( $conversation->last_message_at ) ? strtotime( $conversation->last_message_at . ' UTC' ) : false;
+				$time_ago          = $last_message_time ? human_time_diff( $last_message_time, time() ) : '';
 
-				// Determine conversation title.
-				if ( $is_direct ) {
-					// For direct conversations, show the other participant's name or the subject.
-					$participants  = ! empty( $conversation->participants ) ? json_decode( $conversation->participants, true ) : array();
-					$other_user_id = 0;
-					if ( is_array( $participants ) ) {
-						foreach ( $participants as $pid ) {
-							if ( (int) $pid !== $user_id ) {
-								$other_user_id = (int) $pid;
-								break;
-							}
+				// EVERY row leads with the person, never the thing being discussed.
+				// Order conversations used to title themselves with the service,
+				// so a buyer saw "Maya Chen" on one row and "I will design a
+				// modern, memorable…" on the next three — no name at all — and two
+				// rows for the same service were distinguishable only by an order
+				// number, which is the one thing a human cannot use.
+				//
+				// The other participant is resolved ONCE here and reused by the
+				// avatar below, which repeated this same lookup per row.
+				$participants  = ! empty( $conversation->participants ) ? json_decode( $conversation->participants, true ) : array();
+				$other_user_id = 0;
+
+				if ( is_array( $participants ) ) {
+					foreach ( $participants as $pid ) {
+						if ( (int) $pid !== $user_id ) {
+							$other_user_id = (int) $pid;
+							break;
 						}
 					}
-					$other_user         = $other_user_id ? get_userdata( $other_user_id ) : null;
-					$conversation_title = $other_user
-						? $other_user->display_name
-						: ( ! empty( $conversation->subject ) ? $conversation->subject : __( 'Direct Message', 'wp-sell-services' ) );
-				} else {
-					// For request-based orders, use the request title.
-					$request_post = null;
-					if ( ! $service && ! empty( $conversation->platform ) && 'request' === $conversation->platform && $conversation->platform_order_id ) {
-						$request_post = get_post( $conversation->platform_order_id );
-					}
-					$conversation_title = $service
-						? wp_trim_words( $service->post_title, 6 )
-						: ( ! empty( $request_post )
-							? wp_trim_words( $request_post->post_title, 6 )
-							: sprintf(
-								/* translators: %s: order number */
-								__( 'Order #%s', 'wp-sell-services' ),
-								$conversation->order_number
-							)
-						);
 				}
+
+				// participants can be NULL on older order conversations; recover the
+				// other party from the order itself. Hoisted out of the avatar
+				// block so the NAME and the AVATAR can never disagree about who
+				// this conversation is with.
+				if ( ! $other_user_id && ! empty( $conversation->order_id ) ) {
+					global $wpdb;
+
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$order_row = $wpdb->get_row(
+						$wpdb->prepare( "SELECT customer_id, vendor_id FROM {$wpdb->prefix}wpss_orders WHERE id = %d", $conversation->order_id )
+					);
+
+					if ( $order_row ) {
+						$other_user_id = ( (int) $order_row->vendor_id !== $user_id )
+							? (int) $order_row->vendor_id
+							: (int) $order_row->customer_id;
+					}
+				}
+
+				$other_user = $other_user_id ? get_userdata( $other_user_id ) : null;
+
+				// What the conversation is ABOUT — the secondary line.
+				$request_post = null;
+
+				if ( ! $service && ! empty( $conversation->platform ) && 'request' === $conversation->platform && $conversation->platform_order_id ) {
+					$request_post = get_post( $conversation->platform_order_id );
+				}
+
+				$conversation_subject = $service
+					? wp_trim_words( $service->post_title, 6 )
+					: ( ! empty( $request_post )
+						? wp_trim_words( $request_post->post_title, 6 )
+						: sprintf(
+							/* translators: %s: order number */
+							__( 'Order #%s', 'wp-sell-services' ),
+							$conversation->order_number
+						)
+					);
+
+				// Name first; fall back to the subject only when the other party
+				// cannot be resolved (a deleted account), never to nothing.
+				$conversation_title = $other_user
+					? $other_user->display_name
+					: ( $is_direct
+						? ( ! empty( $conversation->subject ) ? $conversation->subject : __( 'Direct Message', 'wp-sell-services' ) )
+						: $conversation_subject );
 				?>
 				<a href="<?php echo esc_url( $conv_url ); ?>" class="wpss-conversation-card <?php echo $is_unread ? 'wpss-conversation-card--unread' : ''; ?>">
 					<div class="wpss-conversation-card__avatar">
 						<?php
-						// Always show the other participant's avatar instead of the service image.
-						$avatar_user_id = 0;
-						if ( $is_direct && ! empty( $other_user_id ) ) {
-							$avatar_user_id = $other_user_id;
-						} else {
-							// For order conversations, resolve the other party from participants.
-							$order_participants = ! empty( $conversation->participants ) ? json_decode( $conversation->participants, true ) : array();
-							if ( is_array( $order_participants ) && ! empty( $order_participants ) ) {
-								foreach ( $order_participants as $p_id ) {
-									if ( (int) $p_id !== $user_id ) {
-										$avatar_user_id = (int) $p_id;
-										break;
-									}
-								}
-							}
-
-							// Fallback: if participants is NULL, get the other party from the order record.
-							if ( ! $avatar_user_id && ! empty( $conversation->order_id ) ) {
-								global $wpdb;
-								$order_row = $wpdb->get_row(
-									$wpdb->prepare(
-										"SELECT customer_id, vendor_id FROM {$wpdb->prefix}wpss_orders WHERE id = %d",
-										$conversation->order_id
-									)
-								);
-								if ( $order_row ) {
-									$avatar_user_id = ( (int) $order_row->vendor_id !== $user_id )
-										? (int) $order_row->vendor_id
-										: (int) $order_row->customer_id;
-								}
-							}
-						}
+						// The other participant, already resolved above for the row
+						// title — including the order-record fallback. This block
+						// used to repeat that whole lookup, second JSON decode and
+						// per-row query included, and could disagree with the name.
+						$avatar_user_id = $other_user_id;
 
 						if ( $avatar_user_id ) :
 							?>
@@ -335,6 +341,11 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 									$sender_prefix = ''; // System message — no prefix.
 								}
 								echo esc_html( $sender_prefix . wp_trim_words( $last_msg_text, 15 ) );
+							} else {
+								// An order opens its conversation before anyone has
+								// written in it. Those rows rendered an empty line and
+								// no timestamp, which read as broken rather than new.
+								echo '<em>' . esc_html__( 'No messages yet — say hello', 'wp-sell-services' ) . '</em>';
 							}
 							?>
 						</p>
@@ -345,11 +356,11 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 						<?php else : ?>
 							<span class="wpss-conversation-card__order">
 								<?php
-								printf(
-									/* translators: %s: order number */
-									esc_html__( 'Order #%s', 'wp-sell-services' ),
-									esc_html( $conversation->order_number )
-								);
+								// The service, not the order number. Two rows for the
+								// same seller are told apart by what they are about;
+								// an order number identifies nothing to a human, and
+								// it is already on the order itself.
+								echo esc_html( $conversation_subject );
 								?>
 							</span>
 						<?php endif; ?>

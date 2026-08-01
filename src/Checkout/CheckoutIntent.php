@@ -129,10 +129,10 @@ final class CheckoutIntent {
 	 *
 	 * @since 1.5.2
 	 *
-	 * @param string $kind     Kind.
-	 * @param float  $amount   Amount.
-	 * @param string $currency Currency.
-	 * @param int    $buyer_id Buyer ID.
+	 * @param string               $kind     Kind.
+	 * @param float                $amount   Amount.
+	 * @param string               $currency Currency.
+	 * @param int                  $buyer_id Buyer ID.
 	 * @param array<string, mixed> $metadata Gateway metadata.
 	 */
 	private function __construct( string $kind, float $amount, string $currency, int $buyer_id, array $metadata ) {
@@ -148,10 +148,10 @@ final class CheckoutIntent {
 	 *
 	 * @since 1.5.2
 	 *
-	 * @param int    $order_id Order ID.
-	 * @param float  $amount   Order total.
-	 * @param string $currency Currency.
-	 * @param int    $buyer_id Buyer ID.
+	 * @param int                  $order_id Order ID.
+	 * @param float                $amount   Order total.
+	 * @param string               $currency Currency.
+	 * @param int                  $buyer_id Buyer ID.
 	 * @param array<string, mixed> $metadata Gateway metadata.
 	 * @return self
 	 */
@@ -167,10 +167,10 @@ final class CheckoutIntent {
 	 *
 	 * @since 1.5.2
 	 *
-	 * @param array<int, mixed> $cart Cart line items.
-	 * @param float  $amount   Server-computed cart total.
-	 * @param string $currency Currency.
-	 * @param int    $buyer_id Buyer ID.
+	 * @param array<int, mixed>    $cart Cart line items.
+	 * @param float                $amount   Server-computed cart total.
+	 * @param string               $currency Currency.
+	 * @param int                  $buyer_id Buyer ID.
 	 * @param array<string, mixed> $metadata Gateway metadata.
 	 * @return self
 	 */
@@ -186,13 +186,13 @@ final class CheckoutIntent {
 	 *
 	 * @since 1.5.2
 	 *
-	 * @param int    $service_id   Service ID.
-	 * @param int    $package_id   Package ID.
-	 * @param array<int, mixed> $addons       Resolved add-ons.
-	 * @param float  $addons_total Add-ons total.
-	 * @param float  $amount       Package price + add-ons.
-	 * @param string $currency     Currency.
-	 * @param int    $buyer_id     Buyer ID.
+	 * @param int                  $service_id   Service ID.
+	 * @param int                  $package_id   Package ID.
+	 * @param array<int, mixed>    $addons       Resolved add-ons.
+	 * @param float                $addons_total Add-ons total.
+	 * @param float                $amount       Package price + add-ons.
+	 * @param string               $currency     Currency.
+	 * @param int                  $buyer_id     Buyer ID.
 	 * @param array<string, mixed> $metadata     Gateway metadata.
 	 * @return self
 	 */

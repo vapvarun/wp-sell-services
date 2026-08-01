@@ -29,6 +29,12 @@ $vendor_profile = $is_vendor ? $vendor_service->get_profile( $user_id ) : null;
 do_action( 'wpss_dashboard_section_before', 'profile', $user );
 ?>
 
+<?php
+// No wpss-card here on purpose. This screen is BUILT of cards — every
+// .wpss-profile-form__section is one — so an outer card wrapped a card in a
+// card and drew two borders a few pixels apart. On form screens the card unit
+// is the form section, not the screen.
+?>
 <div class="wpss-section wpss-section--profile">
 	<form class="wpss-profile-form" method="post" action="" data-ajax-form="update-profile">
 		<?php wp_nonce_field( 'wpss_update_profile', 'wpss_profile_nonce' ); ?>
@@ -69,11 +75,11 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				?>
 				<div class="wpss-form-row wpss-cover-upload">
 					<label><?php esc_html_e( 'Cover Image', 'wp-sell-services' ); ?></label>
-					<div class="wpss-cover-upload__preview" style="position:relative;width:100%;max-width:600px;aspect-ratio:3/1;border:2px dashed #ddd;border-radius:8px;overflow:hidden;background:#f9f9f9;">
+					<div class="wpss-cover-upload__preview" style="position:relative;width:100%;max-width:600px;aspect-ratio:3/1;border: 2px dashed var(--wpss-border);border-radius:8px;overflow:hidden;background:var(--wpss-bg-subtle);">
 						<?php if ( $cover_url ) : ?>
 							<img src="<?php echo esc_url( $cover_url ); ?>" alt="<?php esc_attr_e( 'Cover image', 'wp-sell-services' ); ?>" id="wpss-cover-preview" style="width:100%;height:100%;object-fit:cover;">
 						<?php else : ?>
-							<div id="wpss-cover-placeholder" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#999;font-size:14px;">
+							<div id="wpss-cover-placeholder" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:var(--wpss-text-muted);font-size:14px;">
 								<?php esc_html_e( 'No cover image set', 'wp-sell-services' ); ?>
 							</div>
 							<img src="" alt="<?php esc_attr_e( 'Cover image', 'wp-sell-services' ); ?>" id="wpss-cover-preview" style="width:100%;height:100%;object-fit:cover;display:none;">
@@ -120,10 +126,14 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			// address for invoices and never sees the seller fields below.
 			$wpss_billing  = wpss_get_billing_address( $user->ID );
 			$wpss_complete = false;
-			wpss_get_template_part( 'partials/billing', 'fields', array(
-				'wpss_billing'  => $wpss_billing,
-				'wpss_complete' => $wpss_complete,
-			) );
+			wpss_get_template_part(
+				'partials/billing',
+				'fields',
+				array(
+					'wpss_billing'  => $wpss_billing,
+					'wpss_complete' => $wpss_complete,
+				)
+			);
 			?>
 		</div>
 

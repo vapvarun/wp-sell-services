@@ -130,7 +130,7 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 ?>
 
-<div class="wpss-section wpss-section--sales">
+<div class="wpss-section wpss-section--sales wpss-card">
 	<div class="wpss-stats-grid">
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( $total_count ); ?></span>

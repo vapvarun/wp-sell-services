@@ -349,7 +349,7 @@ class ServicesController extends RestController {
 		}
 
 		// Search.
-		$search = $request->get_param( 'search' );
+		$search = $request->get_param( 'search' ) ?: $request->get_param( 'q' );
 		if ( $search ) {
 			$args['s'] = sanitize_text_field( $search );
 		}
@@ -496,12 +496,66 @@ class ServicesController extends RestController {
 	}
 
 	/**
+	 * Resolve requested categories to term IDs.
+	 *
+	 * Accepts term IDs or slugs, because /categories hands the client both and
+	 * nothing said which one to send back. The previous intval() turned every
+	 * slug into 0 and assigned nothing at all — the service saved "successfully"
+	 * and came back uncategorised, which is the worst of both outcomes.
+	 * Unknown terms are dropped rather than created: taxonomy is the site
+	 * owner's, and an API that invents categories fills the catalog with
+	 * one-off duplicates.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param mixed $categories Term IDs or slugs.
+	 * @return int[] Term IDs that exist.
+	 */
+	private function resolve_category_terms( $categories ): array {
+		if ( ! is_array( $categories ) ) {
+			$categories = ( null === $categories || '' === $categories ) ? array() : array( $categories );
+		}
+
+		$term_ids = array();
+
+		foreach ( $categories as $category ) {
+			if ( is_numeric( $category ) ) {
+				$term = get_term( (int) $category, 'wpss_service_category' );
+			} else {
+				$term = get_term_by( 'slug', sanitize_title( (string) $category ), 'wpss_service_category' );
+			}
+
+			if ( $term instanceof \WP_Term ) {
+				$term_ids[] = (int) $term->term_id;
+			}
+		}
+
+		return array_values( array_unique( $term_ids ) );
+	}
+
+	/**
 	 * Create service.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
+		// The web wizard refuses to publish a service without a category, and
+		// this endpoint must refuse for the same reason: an uncategorised
+		// service is invisible to category browse, so it is published and
+		// unfindable at the same time. Letting the app create one produced
+		// exactly the "categories are empty, discovery is broken" catalogue
+		// the web form was written to prevent.
+		$requested_categories = $this->resolve_category_terms( $request->get_param( 'categories' ) );
+
+		if ( empty( $requested_categories ) ) {
+			return new WP_Error(
+				'wpss_category_required',
+				__( 'Select at least one category. A service without one cannot be found by buyers browsing the catalog.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
+
 		// Determine post status based on moderation setting.
 		$post_status = ModerationService::is_enabled() ? 'pending' : 'publish';
 
@@ -523,11 +577,7 @@ class ServicesController extends RestController {
 		// Save meta.
 		$this->save_service_meta( $service_id, $request );
 
-		// Set categories.
-		$categories = $request->get_param( 'categories' );
-		if ( $categories ) {
-			wp_set_object_terms( $service_id, array_map( 'intval', $categories ), 'wpss_service_category' );
-		}
+		wp_set_object_terms( $service_id, $requested_categories, 'wpss_service_category' );
 
 		// Set tags.
 		$tags = $request->get_param( 'tags' );
@@ -611,7 +661,7 @@ class ServicesController extends RestController {
 
 		// Update categories.
 		if ( $request->has_param( 'categories' ) ) {
-			wp_set_object_terms( $service_id, array_map( 'intval', $request->get_param( 'categories' ) ), 'wpss_service_category' );
+			wp_set_object_terms( $service_id, $this->resolve_category_terms( $request->get_param( 'categories' ) ), 'wpss_service_category' );
 		}
 
 		// Update tags.
@@ -775,12 +825,16 @@ class ServicesController extends RestController {
 
 		$data = array();
 		foreach ( $addons as $addon ) {
-			$data[] = array(
-				'id'          => (int) $addon->id,
-				'service_id'  => (int) $addon->service_id,
-				'title'       => $addon->title,
-				'description' => $addon->description ?? '',
-				'price'       => (float) $addon->price,
+			// Addons have no currency column - they are always priced in the
+			// store currency, so the helper's default is the right one.
+			$data[] = array_merge(
+				array(
+					'id'          => (int) $addon->id,
+					'service_id'  => (int) $addon->service_id,
+					'title'       => $addon->title,
+					'description' => $addon->description ?? '',
+				),
+				wpss_rest_money( 'price', (float) $addon->price )
 			);
 		}
 
@@ -815,12 +869,14 @@ class ServicesController extends RestController {
 		}
 
 		return new WP_REST_Response(
-			array(
-				'id'          => (int) $wpdb->insert_id,
-				'service_id'  => $service_id,
-				'title'       => sanitize_text_field( $request->get_param( 'title' ) ),
-				'description' => sanitize_textarea_field( $request->get_param( 'description' ) ?? '' ),
-				'price'       => (float) $request->get_param( 'price' ),
+			array_merge(
+				array(
+					'id'          => (int) $wpdb->insert_id,
+					'service_id'  => $service_id,
+					'title'       => sanitize_text_field( $request->get_param( 'title' ) ),
+					'description' => sanitize_textarea_field( $request->get_param( 'description' ) ?? '' ),
+				),
+				wpss_rest_money( 'price', (float) $request->get_param( 'price' ) )
 			),
 			201
 		);
@@ -883,12 +939,14 @@ class ServicesController extends RestController {
 		);
 
 		return new WP_REST_Response(
-			array(
-				'id'          => (int) $updated->id,
-				'service_id'  => (int) $updated->service_id,
-				'title'       => $updated->title,
-				'description' => $updated->description ?? '',
-				'price'       => (float) $updated->price,
+			array_merge(
+				array(
+					'id'          => (int) $updated->id,
+					'service_id'  => (int) $updated->service_id,
+					'title'       => $updated->title,
+					'description' => $updated->description ?? '',
+				),
+				wpss_rest_money( 'price', (float) $updated->price )
 			)
 		);
 	}
@@ -961,8 +1019,11 @@ class ServicesController extends RestController {
 				__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
 			);
 
+			// Its own code: the caller is permitted, they have simply hit their
+			// plan's service limit, and a client should offer "remove one" rather
+			// than "you are not allowed".
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_service_limit_reached',
 				$error_message,
 				array( 'status' => 403 )
 			);
@@ -970,7 +1031,7 @@ class ServicesController extends RestController {
 
 		if ( ! current_user_can( 'wpss_manage_services' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_cannot_create',
 				__( 'You do not have permission to create services.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -996,7 +1057,7 @@ class ServicesController extends RestController {
 
 		if ( ! $this->user_owns_resource( $service_id, 'service' ) && ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You do not have permission to edit this service.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -1036,16 +1097,15 @@ class ServicesController extends RestController {
 				'name'   => get_the_author_meta( 'display_name', $service->post_author ),
 				'avatar' => get_avatar_url( $service->post_author, array( 'size' => 96 ) ),
 			),
-			'pricing'     => array(
-				'base_price' => (float) get_post_meta( $service->ID, '_wpss_starting_price', true ),
-				'currency'   => wpss_get_currency(),
-			),
+			// wpss_rest_money() yields exactly the keys this block already
+			// carried - base_price and currency - plus the minor units.
+			'pricing'     => wpss_rest_money( 'base_price', (float) get_post_meta( $service->ID, '_wpss_starting_price', true ) ),
 			'delivery'    => array(
 				'time'      => wpss_get_service_delivery_days( $service->ID ) ?: 7,
 				'revisions' => wpss_get_service_revisions( $service->ID ),
 			),
 			'images'      => $this->get_service_images( $service->ID ),
-			'categories'  => wp_get_object_terms( $service->ID, 'wpss_service_category', array( 'fields' => 'all' ) ),
+			'categories'  => $this->prepare_terms_for_response( wp_get_object_terms( $service->ID, 'wpss_service_category', array( 'fields' => 'all' ) ) ),
 			'tags'        => wp_get_object_terms( $service->ID, 'wpss_service_tag', array( 'fields' => 'names' ) ),
 			'rating'      => $this->get_service_rating( $service->ID ),
 			'created_at'  => $this->format_datetime( $service->post_date_gmt ),
@@ -1065,10 +1125,38 @@ class ServicesController extends RestController {
 	}
 
 	/**
-	 * Get service images.
+	 * Shape a service's terms for JSON.
+	 *
+	 * Returns the same structure as GET /categories — one term shape across
+	 * the API, so a client parses a service's categories with the code it
+	 * already uses for the category list.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param mixed $terms Terms from wp_get_object_terms(), or a WP_Error.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function prepare_terms_for_response( $terms ): array {
+		if ( is_wp_error( $terms ) || ! is_array( $terms ) ) {
+			return array();
+		}
+
+		$data = array();
+
+		foreach ( $terms as $term ) {
+			if ( $term instanceof \WP_Term ) {
+				$data[] = wpss_prepare_term_for_rest( $term );
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Collect a service's featured image and gallery.
 	 *
 	 * @param int $service_id Service ID.
-	 * @return array
+	 * @return array<int, array<string, mixed>>
 	 */
 	private function get_service_images( int $service_id ): array {
 		$images = array();
@@ -1092,8 +1180,21 @@ class ServicesController extends RestController {
 		$gallery_ids = wpss_get_gallery_ids( $gallery_raw );
 
 		if ( ! empty( $gallery_ids ) ) {
+			// The gallery meta normally also contains the featured image, so it
+			// was emitted twice — once as the featured entry and again as the
+			// first gallery entry, same id and same URL. Every consumer building
+			// a carousel from this showed its first slide twice, and each one
+			// would have had to dedupe independently. Fixed here so the payload
+			// is right for all of them.
+			$seen = array_column( $images, 'id' );
+
 			foreach ( $gallery_ids as $attachment_id ) {
+				if ( in_array( (int) $attachment_id, array_map( 'intval', $seen ), true ) ) {
+					continue;
+				}
+
 				if ( $attachment_id && wp_attachment_is_image( $attachment_id ) ) {
+					$seen[]   = (int) $attachment_id;
 					$images[] = array(
 						'id'    => $attachment_id,
 						'url'   => wp_get_attachment_url( $attachment_id ),
@@ -1273,6 +1374,14 @@ class ServicesController extends RestController {
 				'description' => __( 'Search term.', 'wp-sell-services' ),
 				'type'        => 'string',
 			),
+			// /search names this same thing `q`. Rather than have one endpoint
+			// silently ignore the other's parameter name — which returns 200
+			// and the whole unfiltered catalogue, so it reads as "search
+			// matched everything" — both names work on both endpoints.
+			'q'                 => array(
+				'description' => __( 'Search term. Alias of `search`, accepted for parity with /search.', 'wp-sell-services' ),
+				'type'        => 'string',
+			),
 			'min_price'         => array(
 				'description' => __( 'Minimum price filter.', 'wp-sell-services' ),
 				'type'        => 'number',
@@ -1342,9 +1451,12 @@ class ServicesController extends RestController {
 						'context'     => array( 'view', 'edit' ),
 					),
 					'categories'  => array(
-						'description' => __( 'Category IDs.', 'wp-sell-services' ),
+						// IDs or slugs. /categories hands the client both and
+						// never said which to send back, so rejecting slugs
+						// here meant the API refused half of what it published.
+						'description' => __( 'Category IDs or slugs.', 'wp-sell-services' ),
 						'type'        => 'array',
-						'items'       => array( 'type' => 'integer' ),
+						'items'       => array( 'type' => array( 'integer', 'string' ) ),
 						'context'     => array( 'view', 'edit' ),
 					),
 					'tags'        => array(

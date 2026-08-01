@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
 wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', array( 'wpss-design-system' ), WPSS_VERSION );
 
 // Enqueue requirements form script and localize wpss_ajax.
-wp_enqueue_script( 'wpss-requirements-form', WPSS_PLUGIN_URL . 'assets/js/requirements-form.js', array( 'jquery' ), WPSS_VERSION, true );
+\WPSellServices\Assets\ScriptRegistry::enqueue( 'wpss-requirements-form', 'assets/js/requirements-form.js', array( 'jquery' ) );
 wp_localize_script(
 	'wpss-requirements-form',
 	'wpss_ajax',

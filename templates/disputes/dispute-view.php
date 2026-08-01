@@ -55,21 +55,17 @@ $opener        = get_userdata( $dispute->initiator_id );
 $customer_name = $customer ? $customer->display_name : __( 'Deleted User', 'wp-sell-services' );
 $vendor_name   = $vendor ? $vendor->display_name : __( 'Deleted User', 'wp-sell-services' );
 
-// Back link.
-if ( function_exists( 'wc_get_endpoint_url' ) ) {
-	$disputes_url = wc_get_endpoint_url( 'service-disputes', '', wc_get_page_permalink( 'myaccount' ) );
-	$order_url    = wc_get_endpoint_url( 'service-orders', $order->id, wc_get_page_permalink( 'myaccount' ) );
-} else {
-	$dashboard_url = wpss_get_dashboard_url();
-	$disputes_url  = add_query_arg( 'section', 'disputes', $dashboard_url );
-	$order_url     = add_query_arg(
-		array(
-			'section'  => 'orders',
-			'order_id' => $order->id,
-		),
-		$dashboard_url
-	);
-}
+// Back links.
+//
+// These used to branch on WooCommerce being loaded and point at
+// /my-account/service-disputes/ and /my-account/service-orders/{id}/.
+// `service-disputes` has never been registered by ANY account provider, and
+// `service-orders` is retired, so on exactly the sites the branch existed for
+// both back links 404'd. Disputes and orders live in the WPSS dashboard on
+// every rail, so resolve them there unconditionally — and through
+// wpss_get_dashboard_url(), which emits the site's own permalink shape.
+$disputes_url = wpss_get_dashboard_url( 'disputes' );
+$order_url    = add_query_arg( 'order_id', (int) $order->id, wpss_get_dashboard_url( 'orders' ) );
 
 /**
  * Hook: wpss_before_dispute_view

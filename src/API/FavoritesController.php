@@ -118,6 +118,29 @@ class FavoritesController extends RestController {
 			return $this->paginated_response( array(), 0, $pagination['page'], $pagination['per_page'] );
 		}
 
+		// Count what the client will actually receive, not what the meta holds.
+		// The stored ID list can name services that were since deleted or
+		// unpublished, while the body below is filtered to published ones — so
+		// the total described a different set than the items, and a single
+		// orphaned ID produced a "Favorites (1)" badge over an empty list.
+		//
+		// Bounded by one user's own favourites, so the unbounded query is the
+		// size of their list, not the catalogue.
+		$favorites = get_posts(
+			array(
+				'post_type'      => 'wpss_service',
+				'post_status'    => 'publish',
+				'post__in'       => array_map( 'intval', $favorites ),
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'orderby'        => 'post__in',
+			)
+		);
+
+		if ( empty( $favorites ) ) {
+			return $this->paginated_response( array(), 0, $pagination['page'], $pagination['per_page'] );
+		}
+
 		$total = count( $favorites );
 
 		// Paginate the favorites.
@@ -139,19 +162,25 @@ class FavoritesController extends RestController {
 
 		$items = array();
 		foreach ( $services as $service ) {
-			$items[] = array(
-				'id'        => $service->ID,
-				'title'     => $service->post_title,
-				'slug'      => $service->post_name,
-				'excerpt'   => wp_trim_words( $service->post_excerpt ?: $service->post_content, 20 ),
-				'thumbnail' => get_the_post_thumbnail_url( $service->ID, 'medium' ) ?: '',
-				'price'     => (float) get_post_meta( $service->ID, '_wpss_starting_price', true ),
-				'rating'    => (float) get_post_meta( $service->ID, '_wpss_rating_average', true ) ?: 0,
-				'vendor'    => array(
-					'id'     => (int) $service->post_author,
-					'name'   => get_the_author_meta( 'display_name', $service->post_author ),
-					'avatar' => get_avatar_url( $service->post_author, array( 'size' => 48 ) ),
+			$items[] = array_merge(
+				array(
+					'id'        => $service->ID,
+					'title'     => $service->post_title,
+					'slug'      => $service->post_name,
+					'excerpt'   => wp_trim_words( $service->post_excerpt ?: $service->post_content, 20 ),
+					'thumbnail' => get_the_post_thumbnail_url( $service->ID, 'medium' ) ?: '',
 				),
+				// Services carry no currency of their own - they are priced in
+				// the store currency, which is the helper's default.
+				wpss_rest_money( 'price', (float) get_post_meta( $service->ID, '_wpss_starting_price', true ) ),
+				array(
+					'rating' => (float) get_post_meta( $service->ID, '_wpss_rating_average', true ) ?: 0,
+					'vendor' => array(
+						'id'     => (int) $service->post_author,
+						'name'   => get_the_author_meta( 'display_name', $service->post_author ),
+						'avatar' => get_avatar_url( $service->post_author, array( 'size' => 48 ) ),
+					),
+				)
 			);
 		}
 

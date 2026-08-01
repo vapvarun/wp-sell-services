@@ -51,7 +51,7 @@ $active_count = count(
 );
 ?>
 
-<div class="wpss-section wpss-section--requests">
+<div class="wpss-section wpss-section--requests wpss-card">
 	<div class="wpss-stats-grid">
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( $active_count ); ?></span>
@@ -154,26 +154,26 @@ $active_count = count(
 						// an icon + tooltip on mobile/tablet so the full action set stays on
 						// one line at every width (Basecamp #9985554351). aria-label + title
 						// keep every control named for assistive tech and hover tooltips.
-						$view_offers_label = esc_attr__( 'View Offers', 'wp-sell-services' );
+						$view_offers_label = __( 'View Offers', 'wp-sell-services' );
 						?>
-						<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-btn--action" aria-label="<?php echo $view_offers_label; ?>" title="<?php echo $view_offers_label; ?>">
+						<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-btn--action" aria-label="<?php echo esc_attr( $view_offers_label ); ?>" title="<?php echo esc_attr( $view_offers_label ); ?>">
 							<i data-lucide="inbox" class="wpss-icon" aria-hidden="true"></i>
 							<span class="wpss-btn__label"><?php esc_html_e( 'View Offers', 'wp-sell-services' ); ?></span>
 						</a>
 						<?php if ( 'publish' === $item_status ) : ?>
-							<?php $close_label = esc_attr__( 'Close', 'wp-sell-services' ); ?>
-							<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--action wpss-close-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo $close_label; ?>" title="<?php echo $close_label; ?>">
+							<?php $close_label = __( 'Close', 'wp-sell-services' ); ?>
+							<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--action wpss-close-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo esc_attr( $close_label ); ?>" title="<?php echo esc_attr( $close_label ); ?>">
 								<i data-lucide="lock" class="wpss-icon" aria-hidden="true"></i>
 								<span class="wpss-btn__label"><?php esc_html_e( 'Close', 'wp-sell-services' ); ?></span>
 							</button>
 						<?php elseif ( 'draft' === $item_status ) : ?>
-							<?php $reopen_label = esc_attr__( 'Reopen', 'wp-sell-services' ); ?>
-							<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--action wpss-reopen-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo $reopen_label; ?>" title="<?php echo $reopen_label; ?>">
+							<?php $reopen_label = __( 'Reopen', 'wp-sell-services' ); ?>
+							<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--action wpss-reopen-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo esc_attr( $reopen_label ); ?>" title="<?php echo esc_attr( $reopen_label ); ?>">
 								<i data-lucide="rotate-ccw" class="wpss-icon" aria-hidden="true"></i>
 								<span class="wpss-btn__label"><?php esc_html_e( 'Reopen', 'wp-sell-services' ); ?></span>
 							</button>
 						<?php endif; ?>
-						<?php $edit_label = esc_attr__( 'Edit', 'wp-sell-services' ); ?>
+						<?php $edit_label = __( 'Edit', 'wp-sell-services' ); ?>
 						<a href="
 						<?php
 						echo esc_url(
@@ -186,12 +186,12 @@ $active_count = count(
 							)
 						);
 						?>
-									" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-btn--action" aria-label="<?php echo $edit_label; ?>" title="<?php echo $edit_label; ?>">
+									" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-btn--action" aria-label="<?php echo esc_attr( $edit_label ); ?>" title="<?php echo esc_attr( $edit_label ); ?>">
 							<i data-lucide="pencil" class="wpss-icon" aria-hidden="true"></i>
 							<span class="wpss-btn__label"><?php esc_html_e( 'Edit', 'wp-sell-services' ); ?></span>
 						</a>
-						<?php $delete_label = esc_attr__( 'Delete', 'wp-sell-services' ); ?>
-						<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--danger wpss-btn--action wpss-delete-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo $delete_label; ?>" title="<?php echo $delete_label; ?>">
+						<?php $delete_label = __( 'Delete', 'wp-sell-services' ); ?>
+						<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--danger wpss-btn--action wpss-delete-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo esc_attr( $delete_label ); ?>" title="<?php echo esc_attr( $delete_label ); ?>">
 							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 							<span class="wpss-btn__label"><?php esc_html_e( 'Delete', 'wp-sell-services' ); ?></span>
 						</button>

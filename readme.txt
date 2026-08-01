@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,7 +53,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 * Post buyer requests for vendors to bid on
 * Browse and compare vendor proposals (Fixed vs Milestone contract types)
-* Accept multi-phase milestone contracts with lock-step payments
+* Accept multi-phase milestone contracts, paid one phase at a time in order
 * Buyer dashboard for order tracking
 * Add services to favorites/wishlist
 * Optional tipping for exceptional work
@@ -61,11 +61,12 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 **Milestone Contracts & Paid Extensions (1.1.0)**
 
-* Upwork-style milestone contracts on buyer-request orders with lock-step phase payments
+* Upwork-style milestone contracts on buyer-request orders - each phase unlocks once the one before it is signed off
 * Paid extensions on catalog orders for mid-order add-ons
 * Mutual exclusion: a single order surfaces milestones OR extensions, never both
 * Ad-hoc milestone additions when scope grows mid-contract
-* Auto-complete parent order when every phase is approved
+* Auto-complete the parent order once every phase is finished (approved, declined or cancelled)
+* Phase, tip and extension payments are supported on Standalone and WooCommerce
 
 **Reviews and Ratings**
 
@@ -98,6 +99,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 * Built-in checkout system — no WooCommerce or other e-commerce plugin required
 * Offline payment gateway with admin confirmation workflow
 * Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce, EDD, FluentCart, and SureCart checkout integrations.
+* Milestone, tip and extension payments are supported on Standalone and WooCommerce
 
 **Developer Ready**
 
@@ -152,7 +154,7 @@ Unlike simple directory plugins, WP Sell Services provides a complete transactio
 
 = Mobile App Ready =
 
-The complete REST API with 21 controllers makes building iOS and Android apps straightforward. The batch endpoint allows mobile apps to execute multiple requests efficiently in a single HTTP call.
+The complete REST API with 23 controllers makes building iOS and Android apps straightforward. The batch endpoint allows mobile apps to execute multiple requests efficiently in a single HTTP call.
 
 = Documentation =
 
@@ -206,7 +208,7 @@ Yes. Any registered WordPress user can apply to become a vendor. Administrators 
 
 = How does the commission system work? =
 
-Set a global commission percentage (0-50%) in settings. When an order completes, the commission is automatically calculated and deducted from the vendor's earnings. Vendors can request withdrawals of their available balance. You can also set custom commission rates for individual vendors.
+Set a global commission percentage (0-50%) in settings. The commission is calculated and deducted from the vendor's earnings automatically. On a service order that happens when the order completes; on a tip, milestone phase or paid extension it happens as soon as the buyer pays, so that money reaches the vendor's wallet before delivery rather than being held. Vendors can request withdrawals of their available balance. You can also set custom commission rates for individual vendors.
 
 = Can buyers post job requests? =
 
@@ -215,6 +217,8 @@ Yes. Buyers can post project requests with budget range, description, and deadli
 = What payment gateways are supported? =
 
 The free version includes a standalone checkout with Stripe, PayPal, and Offline payment gateways — no e-commerce plugin required. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, Easy Digital Downloads, FluentCart, and SureCart checkout integrations for sites already using those platforms.
+
+One difference worth knowing: paying a single existing amount (a milestone phase, a tip, a paid extension) is supported on Standalone and WooCommerce. If your marketplace needs milestones, tipping or paid extensions, run it on one of those two.
 
 = How are disputes handled? =
 
@@ -258,6 +262,47 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.4.0 - August 2026 =
+
+Payment ownership is now unambiguous, milestone and tip payments work on WooCommerce, and the REST API tells clients the truth.
+
+* New      - Milestone phases, tips and paid extensions can be paid on WooCommerce; the link opens a real WooCommerce order-pay page, so it works from an email with no cart session.
+* New      - GET /orders/{id}/timeline returns one merged, chronological event history for an order.
+* New      - GET /auth/devices lists a user's registered push devices, and POST /reviews works as an alias for the order review route.
+* New      - New filter wpss_pay_order_url is the single seam for "send the buyer somewhere they can pay this order".
+* New      - Returning from an off-site card authentication now shows the outcome instead of the checkout form again, so a buyer cannot pay twice for the same order.
+* New      - Settings shows whether the Stripe webhook is actually receiving events, so an owner is not left guessing whether setup worked.
+* Improve  - When WooCommerce, Easy Digital Downloads, FluentCart or SureCart is active, that platform now owns all payment; the plugin's own gateways and payment routes stay out of the way.
+* Improve  - Switching e-commerce platform never rewrites past orders, and webhooks from the gateway that took the payment keep working.
+* Improve  - Notification text is now plain, with HTML composed only where it belongs, in email.
+* Improve  - Billing details are remembered on every payment method, not only Stripe, so a returning buyer confirms one line instead of retyping their address.
+* Improve  - Order numbers are shorter and easier to read out to support, and no longer carry the time the order was placed.
+* Improve  - Menu visibility is set one role at a time with plain "visible" toggles, rather than a grid of tick-to-hide boxes that meant the opposite of what it looked like.
+* Improve  - Notifications name the order the way the rest of the site does, and a proposed milestone says which phase and how much.
+* Improve  - Messages list every conversation by the person it is with, with a preview and what it is about.
+* Improve  - Dashboard sections share one card style, so borders and corners match from screen to screen.
+* Improve  - Every money value now carries a minor-unit integer alongside the decimal, so zero- and three-decimal currencies stay exact.
+* Fix      - Refunding a WooCommerce order now also reverses the tip, milestone phase or paid extension attached to it.
+* Fix      - A refund started at the payment gateway is no longer sent back to the gateway a second time, which could return double the money.
+* Fix      - A partially refunded order can be completed, and the vendor is credited on what the buyer actually paid rather than the original total.
+* Fix      - A vendor can no longer stack withdrawal requests past their available balance; pending requests and funds still clearing are now counted.
+* Fix      - A declined card says it was declined and why, instead of asking the buyer to complete an authentication step that does not exist.
+* Fix      - The settings API reports an unmapped page as null rather than 0, so an app no longer builds a link to a page that cannot open.
+* Fix      - An existing terms page on the site is picked up automatically instead of the setting staying empty.
+* Fix      - The REST API answers 401 for a caller with no session and 403 for one who is signed in but not allowed; a client refreshing an expired token no longer reads it as a permanent denial.
+* Fix      - A 403 now names its reason so an app can act on it: wpss_not_vendor, wpss_vendor_pending, wpss_not_owner, wpss_not_admin, wpss_cannot_create or wpss_service_limit_reached, instead of one generic code for every refusal.
+* Fix      - Submitting a delivery over the REST API now records it and notifies exactly as the dashboard does.
+* Dev      - Removed the order actions accept and reject; they had no transition behind them. An order is accepted by being paid.
+* Dev      - Removed the hooks wpss_order_accepted, wpss_order_rejected and wpss_order_delivered. Use wpss_order_paid, wpss_order_cancelled, and wpss_delivery_submitted / wpss_delivery_accepted.
+* Dev      - The payment routes register only on the standalone rail; on a cart platform they are absent and answer rest_no_route.
+* Dev      - Translation catalogs (.mo and .json) are generated in the build, with a CI gate to keep them current.
+* Dev      - Every user-facing string in JavaScript is now translatable, including the whole wallet transactions table, which was English in every locale.
+* Dev      - An accepted proposal records which order it produced, and existing accepted proposals are linked on upgrade where the match is unambiguous.
+* Dev      - The dashboard credit is off by default; owners who want it can switch it on with the wpss_show_powered_by filter.
+* Dev      - Documented the pay-order seam, the two REST namespaces, the milestone failure paths, and the three money settings tabs.
+* Compat   - Aligned with WP Sell Services Pro 1.4.0. Install both updates together.
+* Compat   - Milestone, tip and extension payment links are supported on Standalone and WooCommerce.
 
 = 1.3.0 - July 2026 =
 
@@ -512,6 +557,9 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * WP 6.7+ compatible (lazy-loaded translations)
 
 == Upgrade Notice ==
+
+= 1.4.0 =
+WooCommerce sites can now take milestone, tip and extension payments. A cart plugin, when active, owns all payment. The order actions accept and reject, and the hooks wpss_order_accepted / wpss_order_rejected / wpss_order_delivered, have been removed.
 
 = 1.3.0 =
 Hardens payments across every gateway, adds full dark-mode support on all frontend surfaces, and makes fresh installs sell-ready with offline payment and seeded categories. Safe to upgrade - no settings changes required.
