@@ -439,8 +439,10 @@ class Settings {
 	private function get_page_content( string $field ): string {
 		$shortcodes = array(
 			'services_page' => '[wpss_services]',
+			'vendors_page'  => '[wpss_vendors]',
 			'dashboard'     => '[wpss_dashboard]',
 			'become_vendor' => '[wpss_vendor_registration]',
+			'cart'          => '[wpss_cart]',
 			'checkout'      => '[wpss_checkout]',
 		);
 
@@ -1083,9 +1085,19 @@ class Settings {
 			'wpss_pages'
 		);
 
+		// Every key here must also appear in sanitize_pages_settings()'s
+		// $page_keys, or saving this panel drops it from the option.
+		//
+		// `vendors_page` and `cart` were both readable and unwritable before:
+		// the vendors page had no field at all (so `wpss_pages['vendors_page']`
+		// could never be set by anyone) and the cart page was seeded by the
+		// installer but missing from the save whitelist, so the first save of
+		// this panel deleted it with no way to put it back.
 		$pages = array(
 			'services_page' => __( 'Services Page', 'wp-sell-services' ),
+			'vendors_page'  => __( 'Vendors Directory', 'wp-sell-services' ),
 			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
+			'cart'          => __( 'Service Cart', 'wp-sell-services' ),
 			'checkout'      => __( 'Service Checkout', 'wp-sell-services' ),
 		);
 
@@ -1094,9 +1106,9 @@ class Settings {
 		$pages_registration_mode = $pages_vendor_settings['vendor_registration'] ?? 'open';
 		if ( 'closed' !== $pages_registration_mode ) {
 			// Insert after 'dashboard' to maintain original order.
-			$pages = array_slice( $pages, 0, 2, true )
+			$pages = array_slice( $pages, 0, 3, true )
 				+ array( 'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ) )
-				+ array_slice( $pages, 2, null, true );
+				+ array_slice( $pages, 3, null, true );
 		}
 
 		foreach ( $pages as $key => $label ) {
@@ -2936,15 +2948,41 @@ class Settings {
 	 * @return array<string, mixed> Sanitized input.
 	 */
 	public function sanitize_general_settings( mixed $input ): array {
-		$input     = is_array( $input ) ? $input : array();
-		$sanitized = array();
+		$input = is_array( $input ) ? $input : array();
+
+		// Start from what is stored, not from an empty array. Returning only the
+		// keys this panel renders silently deletes every other key in
+		// wpss_general, so anything added later - a future tab, a migration, an
+		// integration - is destroyed the next time an owner saves this screen.
+		// Same defect that was fixed on the Pages tab.
+		$existing  = get_option( 'wpss_general', array() );
+		$existing  = is_array( $existing ) ? $existing : array();
+		$sanitized = $existing;
 
 		// Platform name defaults to site name if empty.
 		$platform_name              = sanitize_text_field( $input['platform_name'] ?? '' );
 		$sanitized['platform_name'] = ! empty( $platform_name ) ? $platform_name : get_bloginfo( 'name' );
 
-		$sanitized['currency']           = sanitize_text_field( $input['currency'] ?? 'USD' );
+		$sanitized['currency'] = sanitize_text_field( $input['currency'] ?? 'USD' );
+
+		$previous                        = (string) ( $existing['ecommerce_platform'] ?? 'auto' );
 		$sanitized['ecommerce_platform'] = sanitize_key( $input['ecommerce_platform'] ?? 'auto' );
+
+		// Changing the rail changes which rewrite rules exist. The standalone
+		// adapter owns /wpss-payment/{gateway}/callback - the URL every gateway
+		// webhook is delivered to - and registers it only while standalone is
+		// the active rail. Without a flush, that rule is missing from the stored
+		// rewrite rules after a switch, so every incoming webhook 404s until
+		// somebody happens to re-save Permalinks. Nothing surfaces it: the
+		// charge succeeds at the gateway and the order silently never goes paid.
+		//
+		// Deferred through the transient the plugin already uses rather than
+		// flushed inline, because this runs during option save - before the new
+		// rail's adapter has registered its rules, so an inline flush would
+		// persist the OLD rail's rule set again.
+		if ( $previous !== $sanitized['ecommerce_platform'] ) {
+			set_transient( 'wpss_flush_rewrite_rules', true, MINUTE_IN_SECONDS );
+		}
 
 		return $sanitized;
 	}
@@ -3121,13 +3159,14 @@ class Settings {
 	 * @return array<string, mixed> Sanitized input.
 	 */
 	public function sanitize_pages_settings( ?array $input ): array {
-		$input     = $input ?? array();
-		$sanitized = array();
+		$input = $input ?? array();
 
 		$page_keys = array(
 			'services_page',
+			'vendors_page',
 			'dashboard',
 			'become_vendor',
+			'cart',
 			'checkout',
 		);
 
@@ -3142,6 +3181,16 @@ class Settings {
 		// mapping, and reopening registration then pointed at nothing. Absent
 		// key now means "unchanged", not "clear it".
 		$existing = get_option( 'wpss_pages', array() );
+		$existing = is_array( $existing ) ? $existing : array();
+
+		// Start from what is already stored rather than from an empty array.
+		// The old code returned ONLY the whitelisted keys, so any key the
+		// Pages panel does not enumerate was destroyed on every save — `cart`
+		// is seeded by the installer and was missing from the whitelist, so
+		// saving this tab once silently deleted `wpss_pages['cart']` and left
+		// no field able to restore it. Keys this panel does not own now
+		// survive it.
+		$sanitized = array_map( 'absint', $existing );
 
 		foreach ( $page_keys as $key ) {
 			if ( array_key_exists( $key, $input ) ) {
@@ -3151,6 +3200,10 @@ class Settings {
 
 			$sanitized[ $key ] = absint( $existing[ $key ] ?? 0 );
 		}
+
+		// A re-mapped (or cleared) vendors page invalidates the discovery
+		// cache behind wpss_get_vendors_page_id().
+		delete_transient( 'wpss_vendors_page_lookup' );
 
 		return $sanitized;
 	}

@@ -1425,11 +1425,37 @@ class Shortcodes {
 	public function cart_page( array $atts = array() ): string {
 		wpss_enqueue_frontend_assets();
 
-		// If WooCommerce adapter is active, hand off to WC cart.
+		// Defence in depth. The mapped cart PAGE is redirected on
+		// template_redirect (see Plugin::redirect_dormant_store_pages()), which
+		// is the only point at which a header can still be sent; this branch
+		// catches the shortcode pasted onto some other page. It runs inside
+		// the_content, so by now the theme has emitted the document head —
+		// wp_safe_redirect() would be refused on any host without output
+		// buffering, and the visitor would be left with a truncated page. Fall
+		// back to a real link when the headers have already gone out.
 		$adapter = wpss_get_active_adapter();
-		if ( $adapter && 'woocommerce' === $adapter->get_id() && function_exists( 'wc_get_cart_url' ) ) {
-			wp_safe_redirect( wc_get_cart_url() );
-			exit;
+		if ( $adapter && 'standalone' !== $adapter->get_id() ) {
+			$target = wpss_get_cart_url();
+
+			// Never bounce a page at itself: a rail that resolves back to this
+			// very page (misconfigured, or mapped onto the WPSS page) would
+			// otherwise loop forever.
+			if ( '' !== $target && (int) url_to_postid( $target ) !== get_queried_object_id() ) {
+				if ( ! headers_sent() ) {
+					wp_safe_redirect( $target );
+					exit;
+				}
+
+				return '<div class="wpss-cart-redirect"><p>'
+					. wp_kses_post(
+						sprintf(
+							/* translators: %s: cart page link */
+							__( 'Your cart is handled by the store. <a href="%s">Go to cart</a>.', 'wp-sell-services' ),
+							esc_url( $target )
+						)
+					)
+					. '</p></div>';
+			}
 		}
 
 		if ( ! is_user_logged_in() ) {
@@ -1457,14 +1483,21 @@ class Shortcodes {
 	public function checkout_fallback(): string {
 		wpss_enqueue_frontend_assets();
 
-		$general  = get_option( 'wpss_general', array() );
-		$platform = $general['ecommerce_platform'] ?? 'standalone';
-
-		// When WooCommerce handles checkout, this page is a dead standalone
+		// When another rail owns the store, this page is a dead standalone
 		// funnel — send the buyer to the rail that can actually take money.
-		if ( function_exists( 'wc_get_checkout_url' )
-			&& ( 'woocommerce' === $platform || ( 'auto' === $platform && class_exists( 'WooCommerce' ) ) )
-		) {
+		//
+		// Asked through the adapter rather than by re-reading
+		// `wpss_general['ecommerce_platform']` and hard-coding WooCommerce: the
+		// adapter is the one thing that already knows which rail resolved
+		// (including 'auto'), and EDD / SureCart / FluentCart sites had exactly
+		// the same dead page with no branch to catch them.
+		//
+		// Defence in depth only — the mapped checkout PAGE is redirected on
+		// template_redirect, before a byte of the theme is emitted (see
+		// Plugin::redirect_dormant_store_pages()).
+		$adapter = wpss_get_active_adapter();
+
+		if ( $adapter && 'standalone' !== $adapter->get_id() ) {
 			// `?pay_order=N` is the standalone way to pay one order, and we
 			// have already emailed those links to buyers. Resolve the id
 			// through the shared seam so an old link lands on that order's
@@ -1473,20 +1506,25 @@ class Shortcodes {
 
 			$target = $pay_order > 0 && function_exists( 'wpss_get_pay_order_url' )
 				? wpss_get_pay_order_url( $pay_order )
-				: wc_get_checkout_url();
+				: wpss_get_checkout_base_url();
 
-			if ( ! headers_sent() ) {
-				wp_safe_redirect( $target );
-				exit;
+			// Never bounce a page at itself — see cart_page().
+			if ( '' !== $target && (int) url_to_postid( $target ) !== get_queried_object_id() ) {
+				if ( ! headers_sent() ) {
+					wp_safe_redirect( $target );
+					exit;
+				}
+
+				return '<div class="wpss-checkout-redirect"><p>'
+					. wp_kses_post(
+						sprintf(
+							/* translators: %s: checkout page link */
+							__( 'Checkout is handled by the store. <a href="%s">Go to checkout</a>.', 'wp-sell-services' ),
+							esc_url( $target )
+						)
+					)
+					. '</p></div>';
 			}
-
-			return '<div class="wpss-checkout-redirect"><p>'
-				. sprintf(
-					/* translators: %s: checkout page link */
-					__( 'Checkout is handled by WooCommerce. <a href="%s">Go to checkout</a>.', 'wp-sell-services' ),
-					esc_url( $target )
-				)
-				. '</p></div>';
 		}
 
 		// For any other adapter or misconfigured state.

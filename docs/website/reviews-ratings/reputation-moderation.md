@@ -62,7 +62,7 @@ With moderation enabled, new reviews go into "Pending" status. They are hidden f
 
 ### Approving and Rejecting Reviews
 
-Go to **Sell Services > Reviews** to manage pending reviews.
+Go to **Sell Services > Review Moderation** to manage pending reviews.
 
 **To approve:** Click **Approve**. The review goes live instantly, the vendor is notified, and ratings are updated.
 

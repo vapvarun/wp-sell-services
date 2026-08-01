@@ -51,7 +51,7 @@
 |---------|-----------|----------|---------|----------|-----------|----------------|
 | **Order statuses** | 11 | 11 | ~6 | ~6 | ~4 | 6 |
 | **Requirements collection** | Y | Y | -- | -- | -- | -- |
-| **Milestone payments** | Y | Y | Y (projects only) | Y (projects only) | -- | -- |
+| **Milestone payments** | Y (Standalone + WooCommerce) | Y | Y (projects only) | Y (projects only) | -- | -- |
 | **Revision management** | Y | Y | P | P | P | P |
 | **Deadline extensions** | Y | Y | -- | -- | -- | -- |
 | **Auto-complete (cron)** | Y | Y | -- | -- | -- | -- |

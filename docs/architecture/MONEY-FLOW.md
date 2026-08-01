@@ -25,7 +25,7 @@ buyer pays FULL amount to the platform
 The platform holds the money until it is paid out. **The clearance window is
 the owner's choice, not ours** (owner decision 2026-07-23): it defaults to
 **0 — pay out as soon as an order completes** — and an owner who wants a refund
-window sets 7 / 14 / 30 in Settings → Payments → Payout Settings. How long to
+window sets 7 / 14 / 30 in Settings → Payouts → Withdrawal Settings. How long to
 sit on a vendor's money is business policy, and many marketplaces pay
 immediately.
 
@@ -126,12 +126,64 @@ replayed webhook must each produce exactly one row and one transfer.
 
 ## 3. Where credit happens (a common misreading)
 
+**There are two answers, and which one applies depends on the row type.** This
+section used to give only the first, which is why it contradicted the milestone
+documentation. Both are correct; they are different code paths.
+
+### 3.1 Real orders — credit at COMPLETION
+
+For an order a buyer placed against a service (`platform` = `standalone`,
+`woocommerce`, `request`, …):
+
 Payment does **not** credit the vendor. `vendor_earnings` is written on the
 order at payment, but the ledger row is created at **completion**. A paid
 in-flight order therefore has `vendor_earnings = 45.00` and **zero ledger rows**.
 
 Any code that reverses earnings must not assume a credit exists just because
 `vendor_earnings` is set, or it will debit a vendor who was never paid.
+
+### 3.2 Sub-orders — credit at PAYMENT
+
+**Tips, milestone phases and paid extensions credit the vendor the moment they
+are paid.** There is no completion step to wait for and no escrow.
+
+- `MilestoneService::credit_milestone_on_payment_complete()`,
+  `TippingService` and `ExtensionOrderService` all bind `wpss_order_paid` and
+  write the wallet ledger row inside that handler, in one transaction with the
+  status flip to `in_progress`.
+- Approving a phase moves **no money**. Approval is a delivery sign-off; the
+  payment already settled. The ledger entry type is `milestone` / `tip` /
+  `extension`, `reference_type = 'order'`, `reference_id` = the sub-order id.
+- The credit is idempotent on `(reference_type, reference_id)` — a replayed
+  webhook or double-clicked button credits once.
+
+**Why the split is deliberate:** a sub-order has no independent lifecycle. It is
+paid, worked, and signed off inside its parent. Deferring its credit to
+"completion" would mean deferring it to the parent's completion, which can be
+weeks later and may never come — a tip would sit uncredited until the whole
+project finished.
+
+**The consequence to be honest about: sub-orders are not escrowed.** Money paid
+on a phase is in the vendor's wallet before the work is delivered. A refund
+after the fact is a *reversal* against the ledger (see §2.7), which can drive
+the balance negative — it is not a release of money the platform was still
+holding. Do not describe milestones as escrow, in docs or in marketing.
+
+### 3.3 The rule for anyone touching this
+
+Before writing or reversing a credit, branch on `platform`:
+
+| `platform` | Credited at | Reversal target |
+|---|---|---|
+| `tip`, `milestone`, `extension` | **Payment** | A ledger row that already exists |
+| everything else | **Completion** | A ledger row that may not exist yet |
+
+Pro's `WalletManager` encodes exactly this: it early-returns for the three
+sub-order platforms so completion cannot credit them a second time.
+
+Cross-references that must agree with this section:
+[Milestone Contracts](../website/order-management/milestones-wpss.md),
+[Sub-Order Pattern](SUB_ORDER_PATTERN.md).
 
 ---
 

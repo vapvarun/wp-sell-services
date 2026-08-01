@@ -28,20 +28,68 @@ FREE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PRO = os.path.join(os.path.dirname(FREE), "wp-sell-services-pro")
 DOCS = os.path.join(FREE, "docs", "website")
 
+# Admin-path checks run over the WHOLE docs tree, not just the published one.
+# docs/architecture/ and docs/qa/ are read by the people most likely to act on
+# a wrong breadcrumb, and a stale tab name there rots exactly the same way -
+# which is how "Settings > Payments" survived the July settings regroup in
+# MONEY-FLOW.md and the QA checklist while docs/website/ passed clean.
+ADMIN_PATH_ROOTS = [
+    os.path.join(FREE, "docs", "website"),
+    os.path.join(FREE, "docs", "architecture"),
+    os.path.join(FREE, "docs", "qa"),
+    os.path.join(FREE, "docs", "decisions"),
+]
+
 # The Settings tabs that actually exist (src/Admin/Settings.php::init_tabs,
 # plus Branding added by Pro). Anything else in a "Settings > X" path is stale.
 VALID_TABS = {
     "General", "Pages", "Payment Gateways", "Commission & Tax", "Payouts",
     "Vendors", "Orders & Disputes", "Emails", "Advanced", "Branding",
 }
+
+# Tab names retired by the July 2026 settings regroup. They read as plausible,
+# so they are called out by name rather than lumped into "not a real tab" -
+# each one has a specific successor and the message should say which.
+RETIRED_TABS = {
+    "Payments": "Payment Gateways (gateways) / Payouts (withdrawals, clearance)",
+    "Vendor": "Vendors",
+    "Orders": "Orders & Disputes",
+    "Gateways": "Payment Gateways",
+    "Commission": "Commission & Tax",
+    "License": "not a Settings tab - License is a top-level page, 'Sell Services > License'",
+    "Notifications": "Emails",
+}
+
+# Top-level items under the "Sell Services" admin menu (src/Admin/Admin.php,
+# src/Admin/Pages/*, plus the Pro-only ones). These are MENU titles, which are
+# not always the page title - the service queue's menu label is "Moderation"
+# even though its page heading says "Service Moderation".
+VALID_MENU_ITEMS = {
+    "Dashboard", "Setup Wizard", "All Services", "Add New Service",
+    "Buyer Requests", "Add New Request", "Categories", "Tags",
+    "Moderation", "Review Moderation", "Disputes", "Vendors", "Orders",
+    "Create Order", "Subscriptions", "Withdrawals", "Analytics",
+    "Audit Log", "My Notifications", "Settings", "License", "Upgrade to Pro",
+}
+
+# Menu labels that used to exist, or that docs keep inventing.
+RETIRED_MENU_ITEMS = {
+    "Reviews": "Review Moderation",
+    "Services": "All Services (browse) / Moderation (the pending queue)",
+    "System": "no such menu - the log viewer is 'Sell Services > Audit Log'",
+    "Logs": "Audit Log",
+    "Payouts": "Withdrawals (the payout queue) / Settings > Payouts (the rules)",
+    "Earnings": "Withdrawals",
+}
+
 # Other products' settings screens - not ours to validate. Covers both
 # "WooCommerce > Settings > X" and "Settings > X in the Razorpay Dashboard",
 # where the third-party product is named anywhere on the line.
 FOREIGN = re.compile(
-    r"(WooCommerce|Downloads|FluentCart|SureCart) > Settings"
-    r"|Settings > (Permalinks|General\b.*Anyone can register)"
+    r"(WooCommerce|Downloads|FluentCart|SureCart) [>→] Settings"
+    r"|Settings [>→] (Permalinks|General\b.*Anyone can register)"
     r"|(Razorpay|Stripe|PayPal|WordPress|Google|Apple) Dashboard"
-    r"|Dashboard > (Developers|Settings)"
+    r"|Dashboard [>→] (Developers|Settings)"
 )
 
 failures, notes = [], []
@@ -149,20 +197,63 @@ if fired and os.path.exists(hooks_doc):
         ok("hooks", f"all {len(documented)} tabled hooks are fired in source")
 
 # --- 5. stale admin paths -----------------------------------------------------
-path_re = re.compile(r"Settings > ([A-Z][A-Za-z& ]*?)(?=\*\*|\.|,|:|<|\||$| and | to | for | in )")
-stale = 0
-for p in md_files(DOCS):
-    rel = os.path.relpath(p, DOCS)
-    for i, line in enumerate(open(p), 1):
-        if FOREIGN.search(line):
+# Both separators are in use across the docs: "Settings > X" in the customer
+# pages, "Settings -> X" (an arrow) in the architecture and QA notes. Checking
+# only one of them is how half these refs went stale unnoticed.
+SEP = r"[>→]"
+TERM = r"(?=\*\*|\.|,|:|<|\||\)|$| and | to | for | in |" + SEP + r")"
+tab_re = re.compile(r"Settings\s*" + SEP + r"\s*([A-Z][A-Za-z& ]*?)" + TERM)
+menu_re = re.compile(r"Sell Services\s*" + SEP + r"\s*([A-Z][A-Za-z&' ]*?)" + TERM)
+
+
+def audit_admin_paths():
+    stale = 0
+    scanned = 0
+    for root in ADMIN_PATH_ROOTS:
+        if not os.path.isdir(root):
             continue
-        for m in path_re.finditer(line):
-            tab = m.group(1).strip()
-            if tab and tab not in VALID_TABS:
-                fail("admin-paths", f"{rel}:{i} names a Settings tab that does not exist: '{tab}'")
-                stale += 1
+        for p in md_files(root):
+            scanned += 1
+            rel = os.path.relpath(p, FREE)
+            for i, line in enumerate(open(p, errors="ignore"), 1):
+                if FOREIGN.search(line):
+                    continue
+
+                for m in tab_re.finditer(line):
+                    tab = m.group(1).strip()
+                    if not tab or tab in VALID_TABS:
+                        continue
+                    if tab in RETIRED_TABS:
+                        fail("admin-paths",
+                             f"{rel}:{i} names the RETIRED Settings tab '{tab}' "
+                             f"-- it is now {RETIRED_TABS[tab]}")
+                    else:
+                        fail("admin-paths",
+                             f"{rel}:{i} names a Settings tab that does not exist: '{tab}'")
+                    stale += 1
+
+                for m in menu_re.finditer(line):
+                    item = m.group(1).strip()
+                    if not item or item in VALID_MENU_ITEMS:
+                        continue
+                    if item in RETIRED_MENU_ITEMS:
+                        fail("admin-paths",
+                             f"{rel}:{i} names the RETIRED menu item "
+                             f"'Sell Services > {item}' -- it is now "
+                             f"{RETIRED_MENU_ITEMS[item]}")
+                    else:
+                        fail("admin-paths",
+                             f"{rel}:{i} names a 'Sell Services' menu item that "
+                             f"does not exist: '{item}'")
+                    stale += 1
+    return stale, scanned
+
+
+stale, scanned = audit_admin_paths()
 if not stale:
-    ok("admin-paths", "every 'Settings > X' path names a real tab")
+    ok("admin-paths",
+       f"every 'Settings > X' tab and 'Sell Services > X' menu path is real "
+       f"({scanned} pages across docs/website, docs/architecture, docs/qa, docs/decisions)")
 
 # --- 6. UI label drift --------------------------------------------------------
 # Left column: names that appeared in docs but are not what the UI says.

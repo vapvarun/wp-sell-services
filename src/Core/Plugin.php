@@ -538,9 +538,17 @@ final class Plugin {
 			}
 		);
 
-		// 301-redirect legacy ?section= URLs to the pretty endpoint when
-		// permalinks are pretty, so old links and bookmarks resolve cleanly.
+		// Validate + canonicalize the requested dashboard section (aliases,
+		// unknown-slug fallback, legacy ?section= -> pretty endpoint).
 		add_action( 'template_redirect', array( $this, 'redirect_legacy_section_url' ) );
+
+		// Send the standalone cart/checkout pages to the active rail's own
+		// pages before ANY output is produced.
+		add_action( 'template_redirect', array( $this, 'redirect_dormant_store_pages' ), 1 );
+
+		// Keep those dormant pages out of search results and the sitemap.
+		add_filter( 'wp_robots', array( $this, 'filter_dormant_store_page_robots' ) );
+		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'exclude_dormant_store_pages_from_sitemap' ), 10, 2 );
 
 		// Flush rewrite rules once after activation (consumes transient set by Activator).
 		add_action(
@@ -630,49 +638,87 @@ final class Plugin {
 	}
 
 	/**
-	 * Redirect legacy `?section=` dashboard URLs to the pretty endpoint.
+	 * Validate and canonicalise the dashboard section a URL is asking for.
 	 *
-	 * Only fires on the dashboard page when permalinks are pretty (a permalink
-	 * structure is set) and a `section` query arg is present without the pretty
-	 * endpoint already being matched. Issues a 301 to the canonical pretty URL,
-	 * preserving every other query arg (order_id, action, conversation_id, etc.).
+	 * Runs on the dashboard page for BOTH URL shapes — the pretty endpoint
+	 * (`/dashboard/{section}/`, matched into the `wpss_section` query var) and
+	 * the legacy `?section=` query arg — and does three things:
+	 *
+	 * 1. Maps a label-derived guess onto the slug it means. The nav item for
+	 *    `orders` is labelled "My Orders", so `?section=my-orders` is what
+	 *    people type; nothing in the product has ever EMITTED that slug, and
+	 *    the dashboard used to answer it with a dead "Section Not Available"
+	 *    card. Worse, this method used to 301 it to `/dashboard/my-orders/`,
+	 *    blessing a broken address as canonical.
+	 * 2. Sends an unrecognised slug to the dashboard's default landing section
+	 *    (302 — it is a correction, not a permanent address) instead of
+	 *    rendering a dead end or canonicalising it.
+	 * 3. 301s the legacy query-arg form to the pretty endpoint when permalinks
+	 *    are pretty, preserving every sibling query arg (order_id, action,
+	 *    conversation_id, ...) — the original job of this method.
+	 *
+	 * A slug that IS known but has no template here (Analytics on a Free-only
+	 * site) is deliberately left alone so the renderer can explain the gap.
 	 *
 	 * @since 1.2.0
+	 * @since 1.6.1 Validates and aliases the slug instead of trusting it.
 	 *
 	 * @return void
 	 */
 	public function redirect_legacy_section_url(): void {
-		// Pretty permalinks must be active; on "plain" permalinks the
-		// query-arg form is the canonical URL, so do nothing.
-		if ( ! get_option( 'permalink_structure' ) ) {
-			return;
-		}
-
 		if ( ! function_exists( 'wpss_is_page' ) || ! wpss_is_page( 'dashboard' ) ) {
 			return;
 		}
 
-		// Already on the pretty endpoint — nothing to redirect.
-		if ( '' !== (string) get_query_var( 'wpss_section', '' ) ) {
+		if ( ! function_exists( 'wpss_normalize_dashboard_section' ) || ! function_exists( 'wpss_get_dashboard_url' ) ) {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
-		if ( ! isset( $_GET['section'] ) ) {
+		$requested   = (string) get_query_var( 'wpss_section', '' );
+		$from_getarg = false;
+
+		if ( '' === $requested ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
+			if ( ! isset( $_GET['section'] ) ) {
+				return;
+			}
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
+			$requested   = sanitize_key( wp_unslash( $_GET['section'] ) );
+			$from_getarg = true;
+		}
+
+		$requested = sanitize_key( (string) $requested );
+
+		if ( '' === $requested ) {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
-		$section = sanitize_key( wp_unslash( $_GET['section'] ) );
-		if ( '' === $section ) {
+		$canonical = wpss_normalize_dashboard_section( $requested );
+
+		// Unrecognised slug: correct it to the dashboard landing section. Query
+		// args are dropped on purpose — they belonged to a section that does
+		// not exist, so carrying them forward would only re-target the mistake.
+		if ( '' === $canonical ) {
+			$fallback = wpss_get_dashboard_url();
+
+			if ( '' === $fallback ) {
+				return;
+			}
+
+			wp_safe_redirect( $fallback, 302 );
+			exit;
+		}
+
+		// The legacy query-arg form is only worth canonicalising when pretty
+		// permalinks are on; on "plain" permalinks it IS the canonical shape.
+		$needs_pretty = $from_getarg && (bool) get_option( 'permalink_structure' );
+
+		if ( ! $needs_pretty && $canonical === $requested ) {
 			return;
 		}
 
-		if ( ! function_exists( 'wpss_get_dashboard_url' ) ) {
-			return;
-		}
-
-		$target = wpss_get_dashboard_url( $section );
+		$target = wpss_get_dashboard_url( $canonical );
 		if ( '' === $target ) {
 			return;
 		}
@@ -686,6 +732,168 @@ final class Plugin {
 
 		wp_safe_redirect( $target, 301 );
 		exit;
+	}
+
+	/**
+	 * The standalone cart/checkout page IDs that the active rail has made dormant.
+	 *
+	 * The installer seeds `/service-cart/` and `/service-checkout/` for the
+	 * standalone rail and NEVER removes them, so on a site that runs WooCommerce
+	 * (or EDD, or any other adapter) those two pages sit published with nothing
+	 * behind them. They must not be unpublished — old bookmarks, emailed
+	 * `?pay_order=N` links and the pages' own IDs still have to resolve — so
+	 * they are redirected and de-indexed instead.
+	 *
+	 * Returns an empty array on a standalone site, where both pages are live.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @return array<string, int> Page key (`cart`/`checkout`) => page ID.
+	 */
+	private function get_dormant_store_page_ids(): array {
+		if ( ! function_exists( 'wpss_get_active_adapter' ) || ! function_exists( 'wpss_get_page_id' ) ) {
+			return array();
+		}
+
+		$adapter = wpss_get_active_adapter();
+
+		if ( ! $adapter || 'standalone' === $adapter->get_id() ) {
+			return array();
+		}
+
+		$ids = array();
+
+		foreach ( array( 'cart', 'checkout' ) as $key ) {
+			$page_id = wpss_get_page_id( $key );
+
+			if ( $page_id > 0 ) {
+				$ids[ $key ] = $page_id;
+			}
+		}
+
+		return $ids;
+	}
+
+	/**
+	 * Redirect the dormant standalone cart/checkout pages to the active rail.
+	 *
+	 * The guard used to live inside the `[wpss_cart]` / `[wpss_checkout]`
+	 * shortcodes, which run during `the_content` — by then the theme has
+	 * already emitted the whole document head and half the page (~34KB on the
+	 * default theme), so the redirect only ever worked because PHP's output
+	 * buffering happened to be on. With `output_buffering = Off` the header is
+	 * refused and the visitor gets a truncated page instead of the cart. Doing
+	 * it on `template_redirect` is the correct seam: nothing has been sent yet.
+	 *
+	 * The shortcode guards stay in place as defence-in-depth for the case where
+	 * an owner has pasted the shortcode onto some OTHER page.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @return void
+	 */
+	public function redirect_dormant_store_pages(): void {
+		if ( is_admin() || wp_doing_ajax() ) {
+			return;
+		}
+
+		$dormant = $this->get_dormant_store_page_ids();
+
+		if ( empty( $dormant ) ) {
+			return;
+		}
+
+		$current = get_queried_object_id();
+
+		if ( ! $current || ! in_array( $current, $dormant, true ) ) {
+			return;
+		}
+
+		$key = (string) array_search( $current, $dormant, true );
+
+		if ( 'cart' === $key ) {
+			$target = function_exists( 'wpss_get_cart_url' ) ? wpss_get_cart_url() : '';
+		} else {
+			// `?pay_order=N` is how the standalone rail pays ONE order, and we
+			// have already emailed those links. Resolve through the shared seam
+			// so an old link lands on that order's real payment page instead of
+			// a generic (empty) checkout.
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect of a public link.
+			$pay_order = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0;
+
+			$target = ( $pay_order > 0 && function_exists( 'wpss_get_pay_order_url' ) )
+				? wpss_get_pay_order_url( $pay_order )
+				: ( function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : '' );
+		}
+
+		if ( '' === $target ) {
+			return;
+		}
+
+		// A rail that resolves back to this very page (misconfiguration, or an
+		// owner who mapped the WPSS page as the rail's own) must not loop.
+		if ( (int) url_to_postid( $target ) === $current ) {
+			return;
+		}
+
+		wp_safe_redirect( $target, 302 );
+		exit;
+	}
+
+	/**
+	 * Keep the dormant cart/checkout pages out of search engines.
+	 *
+	 * They 302 to the live rail, but a page that redirects is still a page a
+	 * crawler can be pointed at, and they were sitting in the WP core sitemap
+	 * next to WooCommerce's real cart and checkout.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param array<string, mixed> $robots Robots directives.
+	 * @return array<string, mixed>
+	 */
+	public function filter_dormant_store_page_robots( array $robots ): array {
+		$dormant = $this->get_dormant_store_page_ids();
+
+		if ( empty( $dormant ) ) {
+			return $robots;
+		}
+
+		$current = get_queried_object_id();
+
+		if ( $current && in_array( $current, $dormant, true ) ) {
+			$robots['noindex'] = true;
+			$robots['follow']  = true;
+		}
+
+		return $robots;
+	}
+
+	/**
+	 * Drop the dormant cart/checkout pages from the WP core sitemap.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param array<string, mixed> $args      Query args.
+	 * @param string               $post_type Post type being listed.
+	 * @return array<string, mixed>
+	 */
+	public function exclude_dormant_store_pages_from_sitemap( array $args, string $post_type ): array {
+		if ( 'page' !== $post_type ) {
+			return $args;
+		}
+
+		$dormant = $this->get_dormant_store_page_ids();
+
+		if ( empty( $dormant ) ) {
+			return $args;
+		}
+
+		$existing = isset( $args['post__not_in'] ) ? (array) $args['post__not_in'] : array();
+
+		$args['post__not_in'] = array_values( array_unique( array_merge( $existing, array_values( $dormant ) ) ) );
+
+		return $args;
 	}
 
 	/**

@@ -355,34 +355,52 @@ WP-CLI commands support bulk operations and automation scripts. Perfect for deve
 
 ## Database Architecture
 
-Seventeen custom tables for optimal performance:
+Eighteen custom tables in the free plugin, prefixed `{$wpdb->prefix}wpss_`:
 
 **Core Tables:**
-- `wpss_orders` - Service orders
+- `wpss_orders` - Service orders **and** sub-orders (see below)
 - `wpss_service_packages` - Pricing tiers
-- `wpss_conversations` - Order messages
-- `wpss_deliveries` - Final deliveries
+- `wpss_service_addons` - Service extras
+- `wpss_order_requirements` - Buyer answers to a vendor's requirement questions
+- `wpss_conversations` / `wpss_messages` - Order messaging (thread metadata, then message bodies)
+- `wpss_deliveries` - Delivered work
+- `wpss_extension_requests` - Paid-extension quotes on catalog orders
+
+**Reputation and resolution:**
 - `wpss_reviews` - Ratings and reviews
-- `wpss_disputes` - Dispute cases
+- `wpss_disputes` / `wpss_dispute_messages` - Dispute cases and their threads
 
 **Financial Tables:**
-- `wpss_earnings` - Vendor earnings
+- `wpss_wallet_transactions` - The wallet ledger. One `SUM` over this table is the *only* balance authority
 - `wpss_withdrawals` - Payout requests
-- `wpss_commissions` - Platform fees
 
-**Request System:**
-- `wpss_buyer_requests` - Job postings
-- `wpss_proposals` - Vendor proposals
-
-**Features Tables:**
-- `wpss_service_addons` - Service extras
-- `wpss_requirements` - Order requirements
-- `wpss_portfolio` - Vendor portfolio items
+**Vendor and request system:**
+- `wpss_vendor_profiles` - Canonical vendor profile store
+- `wpss_portfolio_items` - Vendor portfolio
+- `wpss_proposals` - Vendor proposals on buyer requests
 - `wpss_notifications` - In-app notifications
-- `wpss_favorites` - Buyer wishlist
-- `wpss_milestones` - Payment milestones
+- `wpss_audit_log` - Admin-visible audit trail
 
-Custom tables provide better performance than post meta for transaction data. All tables use proper indexes and foreign key relationships.
+Pro adds seven more, all prefixed `wpss_pro_` (commission rules, Connect
+accounts, PayPal payout batches and items, recurring subscriptions,
+subscription plans, vendor subscriptions).
+
+**Three things that are deliberately *not* tables:**
+
+- **Milestones.** A milestone phase is a **row in `wpss_orders`** with
+  `platform = 'milestone'` and its parent's id in `platform_order_id`. Tips
+  (`platform = 'tip'`) and paid extensions (`platform = 'extension'`) work the
+  same way. There is no `wpss_milestones` table. This is the sub-order pattern:
+  a phase gets the whole order machinery - status, commission, wallet credit,
+  messaging - for free, instead of a parallel half-implementation.
+- **Services and buyer requests.** Both are custom post types
+  (`wpss_service`, `wpss_request`), not tables, so they inherit the editor,
+  revisions, taxonomies and search.
+- **Favorites.** Stored in user meta. A wishlist is a small per-user list; a
+  table would buy nothing.
+
+Custom tables provide better performance than post meta for transactional data,
+and every one is indexed on the columns its queries filter and sort by.
 
 ## Code Architecture
 

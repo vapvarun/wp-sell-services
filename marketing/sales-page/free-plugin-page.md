@@ -161,7 +161,7 @@ Most WordPress marketplace solutions force compromises: require WooCommerce, loc
 | Seller levels | 4 tiers | None |
 | Multi-criteria reviews | Yes | No |
 | REST API controllers | 20 + batch | Limited |
-| Milestone payments | Yes | No |
+| Milestone payments | Yes (Standalone + WooCommerce) | No |
 | Dispute types | 5 | Basic |
 | JSON-LD SEO | Free | $29 addon |
 

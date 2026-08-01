@@ -831,12 +831,15 @@ class ServiceModerationPage {
 			? __( 'Your service has been approved', 'wp-sell-services' )
 			: __( 'Your service was not approved', 'wp-sell-services' );
 
+		// The service wizard lives at the `create` section and reads `?id=`.
+		// This link used to name a section (`edit-service`) that has no
+		// template and an argument (`service_id`) the wizard does not read, so
+		// a vendor who followed a moderation email hit "Section Not Available"
+		// with no way back to the service they were asked to change.
 		$edit_url = add_query_arg(
-			array(
-				'section'    => 'edit-service',
-				'service_id' => $service_id,
-			),
-			wpss_get_dashboard_url()
+			'id',
+			$service_id,
+			wpss_get_dashboard_url( 'create' )
 		);
 
 		$email_type = 'approved' === $status ? 'moderation_approved' : 'moderation_rejected';

@@ -41,7 +41,7 @@ Choosing between WP Sell Services and Taskbot for your WordPress service marketp
 |---------|-----------------|---------|
 | **Total order statuses** | 11 (pending_payment, pending_requirements, in_progress, pending_approval, completed, revision_requested, disputed, late, on_hold, cancelled) | ~6 (pending, active, delivered, completed, cancelled, disputed) |
 | **Requirements collection** | Yes - custom forms before work starts | No |
-| **Milestone payments** | Yes | Yes (projects module only) |
+| **Milestone payments** | Yes (Standalone + WooCommerce) | Yes (projects module only) |
 | **Deadline extensions** | Yes - request and approve | No |
 | **Auto-complete** | Yes - configurable timer via cron | No |
 | **Revision management** | Yes - per-package revision limits | Basic |

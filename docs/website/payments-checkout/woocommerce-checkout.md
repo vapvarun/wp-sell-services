@@ -138,6 +138,139 @@ Commission is calculated at order creation time and recorded immediately:
 
 ---
 
+## Paying a milestone, tip or extension
+
+Everything above describes buying a service: the buyer fills a cart and checks
+out. But a marketplace also has to charge for things that appear *after* the
+first payment -- a milestone phase, a tip, a paid extension, an accepted
+proposal. There is no cart for those. The buyer already has an order; they need
+to pay one specific amount against it.
+
+This is the **pay-order** path, and it is the part of WooCommerce mode most
+worth understanding, because it is the only place a service marketplace needs
+something WooCommerce does not natively have.
+
+### The seam
+
+```
+wpss_get_pay_order_url( $wpss_order_id )      free — src/functions.php:3375
+        │
+        │  default: <checkout page>?pay_order=N     (standalone understands this)
+        ▼
+apply_filters( 'wpss_pay_order_url', $url, $order_id )
+        │
+        ▼
+WCPayOrderResolver::filter_pay_order_url()     Pro — Integrations/WooCommerce/
+        │
+        ├─ reuse the linked WC order if it still needs payment
+        └─ else create a NEW pending WC order for the amount owed
+                │
+                ▼
+        $wc_order->get_checkout_payment_url()
+                │
+                ▼
+        /checkout/order-pay/{wc_id}/?pay_for_order=true&key=wc_order_…
+```
+
+Every surface that offers a "pay this" link -- the order page, the milestone
+list, the extension quote, the REST `checkout_url` field, and the emails --
+calls `wpss_get_pay_order_url()`. None of them build the URL themselves. That
+is deliberate: a link built inline is correct only on standalone.
+
+### Why WooCommerce needs its own resolver
+
+WooCommerce is cart-based. It has no notion of "pay this existing thing," so the
+default `?pay_order=N` URL appended to a WooCommerce checkout drops the buyer on
+an **empty cart, with no way to pay and no error message**. That was the actual
+behaviour of every tip, milestone and extension link in WooCommerce mode before
+1.3.1.
+
+The resolver fixes it by meeting WooCommerce on its own terms: it creates a real
+WooCommerce order for the amount owed and hands back WooCommerce's native
+*order-pay* URL. That URL carries an order key, so it works from an email link
+with no cart and no session, offers every gateway the store has enabled, and
+produces one proper WooCommerce receipt per payment.
+
+### What the resolver actually does
+
+1. Bails out (returning the default URL) if WooCommerce is not loaded, the WPSS
+   order does not exist, or it is already `paid`.
+2. Looks for a WooCommerce order already linked to this WPSS row. Reuses it
+   **only while it still needs payment**; if it was paid, cancelled or deleted,
+   it makes a fresh one.
+3. Creates a `pending` WooCommerce order for the buyer with a **single fee line
+   item** -- not a product. The label is human-readable: `Milestone: <title>`,
+   `Tip for your seller`, `Additional work on your order`, or `Order <number>`.
+4. Writes both link keys, then returns `get_checkout_payment_url()`.
+
+Two consequences worth planning around:
+
+- **Asking for the URL creates the order.** Rendering an order page with three
+  unpaid phases can mint three pending WooCommerce orders. This is idempotent --
+  they are reused, not duplicated -- but a site owner will see pending orders in
+  WooCommerce that nobody has paid yet. That is expected, not a bug.
+- **The lock-step guard does not apply here.** The resolver checks only that the
+  row is unpaid. See
+  [Milestone Contracts](../order-management/milestones-wpss.md#the-lock-step-rule-and-where-it-actually-holds).
+
+### The two link keys
+
+The link is stored on both sides, because neither side can find the other
+without it.
+
+| Key | Lives on | Contains | Why |
+|---|---|---|---|
+| `wc_pay_order_id` | The WPSS order -- a key inside the JSON `meta` column of `{prefix}wpss_orders`. **Not a column, not post meta.** | The WooCommerce order ID | Lets the resolver reuse an existing pay order instead of minting a new one on every render |
+| `_wpss_pay_order_id` | WooCommerce order meta (HPOS-safe) | The WPSS order ID, as a string | Lets the payment-complete handler find the WPSS row when the WooCommerce order is paid |
+
+The reverse key is not optional. A sub-order (tip, milestone, extension) stores
+its **parent** order's id in `platform_order_id`, never a WooCommerce order id --
+so the normal `platform_order_id = wc_id` lookup can never find one. Without
+`_wpss_pay_order_id`, a paid tip would settle into nothing.
+
+### What happens when the buyer pays
+
+There is no custom webhook. WooCommerce's own status actions
+(`woocommerce_order_status_processing` and `…_completed`) resolve the linked
+WPSS row through `_wpss_pay_order_id` and call the shared `mark_as_paid()`, which
+fires `wpss_order_paid`. That is what credits the vendor and moves the phase to
+**In progress**.
+
+Sub-orders are deliberately *not* pushed into `pending_requirements` when paid --
+requirements belong to the parent order, not to each phase.
+
+**Refunds (1.3.1):** refunding the WooCommerce order now reverses the tip,
+milestone or extension too. Previously only the *paid* handler knew how to
+resolve a sub-order, so a refunded or cancelled tip was silently ignored while
+the buyer got their money back. The refunded amount is apportioned across every
+linked WPSS order and written before the status change, then the vendor's share
+is clawed back through the single refund formula.
+
+### Platform support -- read this before promising it
+
+The pay-order rail is **WooCommerce-only**. It is not a general capability of
+"Pro e-commerce integrations."
+
+| Platform | Pay-order rail | What a milestone / tip / extension pay link does |
+|---|---|---|
+| **Standalone** | Yes (native) | Opens the plugin's own checkout for that one order. Lock-step guard enforced here. |
+| **WooCommerce** | Yes -- `WCPayOrderResolver` **[PRO]** | Opens a WooCommerce order-pay page. Works from email. |
+| **EDD** | **No** | Falls back to `?pay_order=N` on the EDD checkout, which EDD does not understand. **Dead end.** |
+| **FluentCart** | **No** | Same. **Dead end.** |
+| **SureCart** | **No** | Same. **Dead end.** |
+
+Exactly one implementation of the `wpss_pay_order_url` filter exists in the
+whole codebase, and it is the WooCommerce one. EDD, FluentCart and SureCart
+register no equivalent.
+
+**Practical consequence:** if your marketplace relies on milestone contracts,
+tipping, or paid extensions, run it on **WooCommerce or standalone**. On EDD,
+FluentCart or SureCart the initial service purchase works, but every follow-on
+payment link is a dead end for the buyer. This is a known gap, not a
+configuration mistake -- there is nothing to switch on.
+
+---
+
 ## Order Status Sync
 
 Orders stay connected between WooCommerce and your marketplace with **bidirectional sync**:
@@ -213,7 +346,9 @@ For developers building custom integrations or debugging the WC integration:
 | `WCServiceCarrier` | Creates and manages the virtual carrier product |
 | `WCProductProvider` | Implements `ProductProviderInterface` for WC |
 | `WCCheckoutProvider` | Handles cart item data, dynamic pricing, checkout processing |
-| `WCOrderProvider` | Splits WC orders into WPSS orders, handles status sync |
+| `WCOrderProvider` | Splits WC orders into WPSS orders, handles status sync, marks sub-orders paid, apportions refunds |
+| `WCPayOrderResolver` | **The pay-order rail.** Hooks `wpss_pay_order_url`; creates or reuses a WC order so a milestone, tip, extension or accepted proposal can be paid individually |
+| `WCOrderBridge` | Cross-links the two systems for humans: "WooCommerce Order #N" on the WPSS order, a "what happens next" panel on the WC thank-you page, and links between the WC and WPSS order screens (front-end and admin). Also owns the forward/reverse lookup helpers |
 | `WooCommerceAdapter` | Main adapter class, registers all WC hooks |
 
 ### Cart Item Meta Keys
@@ -223,6 +358,15 @@ For developers building custom integrations or debugging the WC integration:
 | `_wpss_service_id` | Links cart/order item to the service CPT |
 | `_wpss_package_id` | Index of the selected package (0, 1, or 2) |
 | `_wpss_addons` | Array of selected add-on indices |
+
+### Pay-order link keys
+
+| Key | Stored on | Purpose |
+|-----|-----------|---------|
+| `wc_pay_order_id` | Key inside the JSON `meta` column of `{prefix}wpss_orders` | The WC order minted to pay this WPSS order |
+| `_wpss_pay_order_id` | WooCommerce order meta | The WPSS order this WC order pays |
+
+See [Paying a milestone, tip or extension](#paying-a-milestone-tip-or-extension).
 
 ### WooCommerce Hooks Used
 

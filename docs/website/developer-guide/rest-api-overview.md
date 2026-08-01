@@ -281,13 +281,49 @@ The plugin returns **78 distinct error codes**. Branch on `code`, never on
 Codes are grouped by the status they return. Anything not listed here comes from
 WordPress core (`rest_no_route`, `rest_cookie_invalid_nonce`, and friends).
 
+#### The codes you will actually branch on
+
+If you implement nothing else, implement these. They are the ones a real client
+hits, and several were undocumented before 1.3.1.
+
+| Status | Code | Means | What to do |
+|---|---|---|---|
+| 401 | `rest_not_logged_in` | No usable session or credentials | Refresh the token / re-auth, then retry once |
+| 403 | `wpss_forbidden` | Logged in, but not a party to this object (not the buyer, not the vendor) | Do not retry. Surface it |
+| 403 | `wpss_not_vendor` | Logged in, but the account is not a vendor | Offer the "become a vendor" flow |
+| 403 | `wpss_pro_license_required` | A Pro endpoint on a site with no active license | Hide the feature; do not retry |
+| 400 | `wpss_category_required` | Publishing a service with no category, on a site that requires one | Fix the payload |
+| 404 | `wpss_milestone_not_found` | No such milestone, or the id is not a milestone sub-order | Re-fetch the order |
+| 409 | `wpss_milestone_not_payable` | The phase is not in `pending_payment` | Re-fetch; someone already paid or cancelled it |
+| 409 | `wpss_milestone_locked` | An earlier phase is still open | Show the "pay the previous phase first" hint |
+| 409 | `wpss_milestone_not_declinable` | The phase is not awaiting approval | Re-fetch |
+| 409 | `wpss_milestone_not_cancellable` | The phase has moved past the cancellable window | Re-fetch |
+| 409 | `wpss_order_not_payable` | The order is not awaiting payment | Re-fetch |
+
+**On 401 vs 403 (changed in 1.3.1):** the plugin now answers these two
+correctly. Routes that used a bare boolean permission callback made WordPress
+report `rest_forbidden` to an *anonymous* caller -- so a client whose rule is
+"401 means refresh the token and retry" read an expired token as a permanent
+denial and never recovered. `/me` and `/dashboard`, the first two routes a
+cold-starting app calls, both did this. Anonymous is now always `401
+rest_not_logged_in`; a logged-in caller who lacks the right is `403`, and the
+vendor case has one code, `wpss_not_vendor`, instead of several spellings.
+
+**There is no error code for "a cart plugin owns payments."** When WooCommerce,
+EDD, FluentCart or SureCart is enabled, the `/payments/*` routes are simply not
+registered, so the answer is WordPress core's `404 rest_no_route`. Detect the
+rail from `GET /settings` rather than probing a payment route and interpreting
+the 404.
+
 #### 401 -- not authenticated
 
 `rest_not_logged_in` · `invalid_credentials`
 
 #### 403 -- authenticated but not allowed
 
-`rest_forbidden` (admin-only action) · `not_vendor` · `disputes_disabled` ·
+`rest_forbidden` (admin-only action) · `wpss_forbidden` · `wpss_not_vendor` ·
+`not_vendor` (legacy spelling, still emitted by some vendor routes) ·
+`wpss_pro_license_required` · `wpss_realtime_forbidden` · `disputes_disabled` ·
 `registration_disabled`
 
 #### 404 -- not found
@@ -301,10 +337,24 @@ WordPress core (`rest_no_route`, `rest_cookie_invalid_nonce`, and friends).
 #### 409 -- conflicting state
 
 `wpss_order_not_payable` -- the order is not awaiting payment
-`wpss_milestone_locked` -- an earlier phase must be paid and approved first
+`wpss_milestone_not_payable` -- the phase is not awaiting payment
+`wpss_milestone_not_declinable` -- the phase is past the point where it can be declined
+`wpss_milestone_not_cancellable` -- the phase is past the point where it can be cancelled
+`wpss_milestone_locked` -- an earlier phase is still open
 
-These two are the ones worth handling explicitly: they mean "your request was
+These are the ones worth handling explicitly: they mean "your request was
 valid, but the object has moved on." Re-fetch the order rather than retrying.
+
+**`wpss_milestone_locked` is narrower than it sounds.** A phase unlocks when
+every earlier phase has reached `completed` **or** `cancelled` -- and `cancelled`
+covers a buyer declining it, a vendor deleting it while unpaid, and the 48-hour
+abandon sweep. *Paying* an earlier phase does **not** unlock the next one: a paid
+phase is `in_progress`, which still blocks. See
+[Milestone Contracts](../order-management/milestones-wpss.md#the-lock-step-rule-and-where-it-actually-holds).
+
+There is also a second, differently-spelled code for the same condition:
+`wpss_phase_locked`, returned by `CheckoutIntentService` on the Stripe and
+Razorpay standalone paths. Branch on both.
 
 #### 429 -- rate limited
 
@@ -437,7 +487,7 @@ See [Custom Integrations](custom-integrations.md) for detailed examples.
 
 ## Related Documentation
 
-- [REST API Controllers Reference](rest-api-controllers.md) - All 20 controller endpoints
+- [REST API Controllers Reference](rest-api-controllers.md) - Every route, by controller
 - [Hooks and Filters](hooks-filters.md) - Available action and filter hooks
 - [Custom Integrations](custom-integrations.md) - Building custom controllers
 - [Theme Integration](theme-integration.md) - Frontend integration
@@ -445,5 +495,10 @@ See [Custom Integrations](custom-integrations.md) for detailed examples.
 ---
 
 **API Version**: v1
-**Last Updated**: Compatible with WP Sell Services 1.0.0+
+**Documented against**: WP Sell Services 1.3.1 (free) + WP Sell Services Pro 1.3.1
 **WordPress Version**: Requires WordPress 6.4+ with REST API enabled
+
+The API has changed since 1.0.0 -- routes were added, `accept`/`reject` order
+actions were removed in 1.3.1, and `/payments/*` became conditional on the
+active e-commerce rail. Treat this page as describing 1.3.1, not "1.0.0 and
+everything after".

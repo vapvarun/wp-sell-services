@@ -51,7 +51,7 @@ Enable detailed logging when you need to troubleshoot issues. When active, the p
 
 **Where to view logs:**
 - **Free version:** Check the WordPress debug log at `wp-content/debug.log`
-- **Pro version:** Go to **Sell Services > System > Logs** for a filterable log viewer
+- Go to **Sell Services > Audit Log** for a filterable record of admin and marketplace actions
 
 **Tip:** Enable debug mode only when troubleshooting. Disable it in normal operation to keep your logs clean and avoid any (minor) overhead.
 

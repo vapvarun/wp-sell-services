@@ -2599,6 +2599,150 @@ function wpss_get_service_url( int $service_id ): string {
 }
 
 /**
+ * Resolve the vendor-directory page ID.
+ *
+ * `wpss_pages['vendors_page']` used to be read in three places and written in
+ * none: the installer never seeds a vendors page, no settings field offered
+ * one, and the legacy `wpss_vendors_page` option was equally write-only. The
+ * key was therefore permanently 0 on every install, which made
+ * `GET /settings` report `pages.vendors = 0` and `page_urls.vendors = null`
+ * even on sites that plainly HAVE a directory page.
+ *
+ * This is the single resolver for that page, in the order a site actually
+ * carries the answer:
+ *
+ * 1. the mapped page (Settings -> Pages, which now offers the field),
+ * 2. the legacy standalone option, for sites mapped before the page map,
+ * 3. auto-discovery of a published page carrying `[wpss_vendors]` — which is
+ *    what a site owner builds when they want a directory — persisted back into
+ *    the page map so every reader (and the admin UI) agrees from then on.
+ *
+ * Returns 0 only when the site genuinely has no vendor directory; callers must
+ * treat that as "no such page" rather than as an error.
+ *
+ * @since 1.6.1
+ *
+ * @return int Page ID, or 0 when the site has no vendor directory page.
+ */
+function wpss_get_vendors_page_id(): int {
+	static $resolved = null;
+
+	if ( null !== $resolved ) {
+		return $resolved;
+	}
+
+	$pages   = get_option( 'wpss_pages', array() );
+	$pages   = is_array( $pages ) ? $pages : array();
+	$page_id = (int) ( $pages['vendors_page'] ?? 0 );
+
+	// Legacy standalone option, for sites mapped before the page map existed.
+	if ( ! $page_id ) {
+		$page_id = (int) get_option( 'wpss_vendors_page' );
+	}
+
+	// A mapped page that has since been deleted or trashed is not an answer.
+	if ( $page_id ) {
+		$post = get_post( $page_id );
+
+		if ( ! $post || 'page' !== $post->post_type || 'publish' !== $post->post_status ) {
+			$page_id = 0;
+		}
+	}
+
+	if ( ! $page_id ) {
+		$page_id = wpss_discover_vendors_page_id();
+
+		// Persist the discovery so the key stops being read-never-written and
+		// the admin Pages panel shows the page the site is really using.
+		if ( $page_id ) {
+			$pages['vendors_page'] = $page_id;
+			update_option( 'wpss_pages', $pages );
+		}
+	}
+
+	/**
+	 * Filter the resolved vendor-directory page ID.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param int $page_id Resolved page ID, or 0 when the site has none.
+	 */
+	$resolved = (int) apply_filters( 'wpss_vendors_page_id', $page_id );
+
+	return $resolved;
+}
+
+/**
+ * Find a published page carrying the `[wpss_vendors]` directory shortcode.
+ *
+ * Cached in a transient (including the "nothing found" answer) so the lookup
+ * costs one query per half day rather than one per request on sites that have
+ * no directory page at all.
+ *
+ * @since 1.6.1
+ *
+ * @return int Page ID, or 0 when no such page exists.
+ */
+function wpss_discover_vendors_page_id(): int {
+	$cached = get_transient( 'wpss_vendors_page_lookup' );
+
+	if ( false !== $cached ) {
+		return (int) $cached;
+	}
+
+	$found = get_posts(
+		array(
+			'post_type'              => 'page',
+			'post_status'            => 'publish',
+			'posts_per_page'         => 1,
+			'fields'                 => 'ids',
+			's'                      => '[wpss_vendors',
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+
+	$page_id = ! empty( $found ) ? (int) $found[0] : 0;
+
+	set_transient( 'wpss_vendors_page_lookup', $page_id, 12 * HOUR_IN_SECONDS );
+
+	return $page_id;
+}
+
+/**
+ * Get the vendor-directory (archive) URL.
+ *
+ * The counterpart to wpss_get_vendor_url(): that one addresses ONE vendor,
+ * this one addresses the list. Returns an empty string when the site has no
+ * directory, which callers should surface as "no such page" rather than
+ * linking to a URL that 404s — there is no `/{vendor-slug}/` archive route,
+ * only `/{vendor-slug}/{nicename}/` for a single profile, so guessing an
+ * archive URL from the slug would hand clients a dead link.
+ *
+ * @since 1.6.1
+ *
+ * @return string Directory URL, or an empty string when the site has none.
+ */
+function wpss_get_vendors_url(): string {
+	$page_id = wpss_get_vendors_page_id();
+	$url     = $page_id ? (string) get_permalink( $page_id ) : '';
+
+	/**
+	 * Filter the vendor-directory URL.
+	 *
+	 * Themes and integrations that render a directory somewhere other than a
+	 * mapped page (a CPT archive, a headless route) answer here.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param string $url     Resolved directory URL, or an empty string.
+	 * @param int    $page_id Resolved directory page ID, or 0.
+	 */
+	return (string) apply_filters( 'wpss_vendors_url', $url, $page_id );
+}
+
+/**
  * Get vendor profile URL.
  *
  * @param int $user_id Vendor user ID.
@@ -2611,13 +2755,8 @@ function wpss_get_vendor_url( int $user_id ): string {
 		return '';
 	}
 
-	$pages        = get_option( 'wpss_pages', array() );
-	$vendors_page = (int) ( $pages['vendors_page'] ?? 0 );
-
-	// Fallback to legacy option.
-	if ( ! $vendors_page ) {
-		$vendors_page = (int) get_option( 'wpss_vendors_page' );
-	}
+	// One resolver for the directory page — see wpss_get_vendors_page_id().
+	$vendors_page = wpss_get_vendors_page_id();
 
 	if ( $vendors_page ) {
 		return add_query_arg( 'vendor', $user->user_nicename, get_permalink( $vendors_page ) );
@@ -2625,6 +2764,45 @@ function wpss_get_vendor_url( int $user_id ): string {
 
 	$vendor_slug = apply_filters( 'wpss_vendor_slug', 'provider' );
 	return home_url( '/' . $vendor_slug . '/' . $user->user_nicename );
+}
+
+/**
+ * Resolve the page ID that the ACTIVE e-commerce rail's cart/checkout URL
+ * actually lands on.
+ *
+ * `wpss_pages['cart']` / `['checkout']` hold the STANDALONE pages, which stay
+ * mapped even after a site switches to WooCommerce or EDD. Reporting those IDs
+ * beside a URL resolved through wpss_get_cart_url() / wpss_get_checkout_base_url()
+ * names two different screens: a client that deep-links by ID lands on the
+ * dormant standalone page while the URL it was given points at WooCommerce.
+ * Deriving the ID FROM the resolved URL keeps the two answers describing the
+ * same page by construction.
+ *
+ * @since 1.6.1
+ *
+ * @param string $key Either `cart` or `checkout`.
+ * @return int Page ID, or 0 when the rail's URL is not a WP page.
+ */
+function wpss_get_active_store_page_id( string $key ): int {
+	static $cache = array();
+
+	if ( isset( $cache[ $key ] ) ) {
+		return $cache[ $key ];
+	}
+
+	$url = 'cart' === $key ? wpss_get_cart_url() : wpss_get_checkout_base_url();
+
+	$page_id = '' !== $url ? (int) url_to_postid( $url ) : 0;
+
+	// A rail whose URL is not a WP page (or an unresolvable permalink) still
+	// has the mapped standalone page as the best available answer.
+	if ( ! $page_id ) {
+		$page_id = wpss_get_page_id( $key );
+	}
+
+	$cache[ $key ] = $page_id;
+
+	return $page_id;
 }
 
 /**
@@ -2709,6 +2887,168 @@ function wpss_append_dashboard_section( string $base_url, string $section ): str
 	$path = trailingslashit( $base_url ) . $section . '/';
 
 	return $path . $query . $fragment;
+}
+
+/**
+ * Every dashboard section slug this product knows how to address.
+ *
+ * "Known" is not the same as "renderable here": `analytics` is a real address
+ * whose template ships in Pro, so a Free-only site must still recognise the
+ * slug and explain the gap rather than treat the URL as junk. Renderability is
+ * answered separately by wpss_get_dashboard_section_template().
+ *
+ * @since 1.6.1
+ *
+ * @return array<int, string> Section slugs.
+ */
+function wpss_get_known_dashboard_sections(): array {
+	$sections = array(
+		// Buying.
+		'orders',
+		'favorites',
+		'requests',
+		// Selling.
+		'services',
+		'sales',
+		'earnings',
+		'wallet',
+		'portfolio',
+		// Account.
+		'messages',
+		'notifications',
+		'disputes',
+		'profile',
+		// Actions.
+		'create',
+		'create-request',
+		'edit-request',
+		'become-vendor',
+		// Known Pro addresses. Listed here so a Free-only site answers
+		// "this needs Pro" instead of bouncing the URL as unrecognised.
+		'analytics',
+		'subscription',
+		'subscriptions',
+	);
+
+	/**
+	 * Filter the set of known dashboard section slugs.
+	 *
+	 * Anything not in this set is treated as a mistyped URL and redirected to
+	 * the dashboard's default landing section, so add-ons that register their
+	 * own section must add its slug here as well as to `wpss_dashboard_sections`.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param array<int, string> $sections Known section slugs.
+	 */
+	$sections = (array) apply_filters( 'wpss_known_dashboard_sections', $sections );
+
+	return array_values( array_unique( array_map( 'sanitize_key', $sections ) ) );
+}
+
+/**
+ * Label-derived guesses that resolve to a real dashboard section.
+ *
+ * The nav item for `orders` is LABELLED "My Orders", so `?section=my-orders`
+ * is the URL people type — and it used to render a dead "Section Not Available"
+ * card, because nothing in the product has ever emitted that slug. The same
+ * applies to "My Services" and "Sales Orders". Mapping the plausible guesses is
+ * cheaper for everyone than teaching every tester the canonical slug.
+ *
+ * @since 1.6.1
+ *
+ * @return array<string, string> Alias slug => canonical slug.
+ */
+function wpss_get_dashboard_section_aliases(): array {
+	$aliases = array(
+		'my-orders'      => 'orders',
+		'my-order'       => 'orders',
+		'order'          => 'orders',
+		'my-sales'       => 'sales',
+		'sales-orders'   => 'sales',
+		'vendor-orders'  => 'sales',
+		'my-services'    => 'services',
+		'service'        => 'services',
+		'my-favorites'   => 'favorites',
+		'my-portfolio'   => 'portfolio',
+		'my-earnings'    => 'earnings',
+		'buyer-requests' => 'requests',
+		'my-profile'     => 'profile',
+		'become_vendor'  => 'become-vendor',
+		// Slugs the product itself has emitted into emails and gateway return
+		// URLs but never had a template for — every one of them landed on the
+		// same dead card. The links are fixed at source too; these entries keep
+		// the mail already sitting in people's inboxes working.
+		'edit-service'   => 'create',
+		'stripe-connect' => 'earnings',
+	);
+
+	/**
+	 * Filter the dashboard section alias map.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param array<string, string> $aliases Alias slug => canonical slug.
+	 */
+	return (array) apply_filters( 'wpss_dashboard_section_aliases', $aliases );
+}
+
+/**
+ * Resolve a requested section slug to the canonical slug it addresses.
+ *
+ * Returns an empty string when the slug names nothing this product has — the
+ * caller's cue to send the visitor to the default landing section instead of
+ * rendering (or worse, 301-canonicalising) a dead end.
+ *
+ * @since 1.6.1
+ *
+ * @param string $section Requested section slug.
+ * @return string Canonical section slug, or an empty string when unknown.
+ */
+function wpss_normalize_dashboard_section( string $section ): string {
+	$section = sanitize_key( $section );
+
+	if ( '' === $section ) {
+		return '';
+	}
+
+	$aliases = wpss_get_dashboard_section_aliases();
+
+	if ( isset( $aliases[ $section ] ) ) {
+		$section = sanitize_key( (string) $aliases[ $section ] );
+	}
+
+	return in_array( $section, wpss_get_known_dashboard_sections(), true ) ? $section : '';
+}
+
+/**
+ * Resolve the template file that renders a dashboard section.
+ *
+ * Runs the same `wpss_dashboard_section_template` filter the dashboard renderer
+ * uses, so Pro-supplied templates and third-party overrides are accounted for.
+ * An empty string means "known address, nothing here can render it" — which on
+ * a Free-only site is exactly the Pro-only case.
+ *
+ * @since 1.6.1
+ *
+ * @param string $section Canonical section slug.
+ * @return string Absolute template path, or an empty string when none exists.
+ */
+function wpss_get_dashboard_section_template( string $section ): string {
+	$section = sanitize_key( $section );
+
+	if ( '' === $section ) {
+		return '';
+	}
+
+	// `wallet` and `earnings` are one screen; earnings.php renders both.
+	$template_section = ( 'wallet' === $section ) ? 'earnings' : $section;
+	$template_path    = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$template_section}.php";
+
+	/** This filter is documented in src/Frontend/UnifiedDashboard.php */
+	$template_path = (string) apply_filters( 'wpss_dashboard_section_template', $template_path, $section );
+
+	return ( '' !== $template_path && file_exists( $template_path ) ) ? $template_path : '';
 }
 
 /**
@@ -3339,7 +3679,18 @@ function wpss_get_checkout_base_url(): string {
 	if ( $adapter && 'standalone' !== $adapter->get_id() ) {
 		$checkout_provider = $adapter->get_checkout_provider();
 		if ( $checkout_provider ) {
-			return $checkout_provider->get_checkout_url();
+			// Pass the service id explicitly. 0 means "no particular service",
+			// which is exactly what a BASE checkout URL is.
+			//
+			// This used to call get_checkout_url() with no arguments.
+			// CheckoutProviderInterface declares get_checkout_url( int $service_id, … )
+			// with NO default, and only WCCheckoutProvider widened it with one -
+			// so omitting the argument worked on WooCommerce and threw
+			// ArgumentCountError on EDD, FluentCart and SureCart. This function
+			// feeds the cart, every pay URL and several templates, so those
+			// three rails fataled on their own checkout while Woo, the rail
+			// everybody tests, stayed green.
+			return $checkout_provider->get_checkout_url( 0 );
 		}
 	}
 

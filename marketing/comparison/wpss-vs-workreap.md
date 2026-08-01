@@ -51,7 +51,7 @@ This is the single most important difference between WP Sell Services and Workre
 |---------|-----------------|----------|
 | **Total order statuses** | 11 | ~6 |
 | **Requirements collection** | Yes - custom forms before work starts | No |
-| **Milestone payments** | Yes | Yes (projects module) |
+| **Milestone payments** | Yes (Standalone + WooCommerce) | Yes (projects module) |
 | **Deadline extensions** | Yes - request and approve | No |
 | **Auto-complete** | Yes - configurable timer via cron | No |
 | **Revision management** | Yes - per-package limits | Basic |

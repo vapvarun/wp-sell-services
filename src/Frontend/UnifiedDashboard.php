@@ -218,6 +218,17 @@ class UnifiedDashboard {
 	 * `?section=` query arg so plain-permalink sites and old links keep working.
 	 * Defaults to the role-aware landing section (see default_section()).
 	 *
+	 * The requested slug is resolved through wpss_normalize_dashboard_section(),
+	 * which maps label-derived guesses (`my-orders` -> `orders`) onto the real
+	 * slug and answers with an empty string for anything this product does not
+	 * have. An unrecognised slug therefore falls through to the default landing
+	 * section instead of being handed on to the renderer, which used to accept
+	 * ANY sanitize_key-clean string and then render a dead "Section Not
+	 * Available" card. Plugin::redirect_dashboard_section_url() normally
+	 * redirects those URLs before we get here; this is the fallback for the
+	 * contexts template_redirect never runs in (AJAX, the shortcode embedded on
+	 * a page that is not the mapped dashboard).
+	 *
 	 * @since 1.2.0
 	 *
 	 * @return string Sanitized section slug.
@@ -230,7 +241,7 @@ class UnifiedDashboard {
 			$section = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( $_GET['section'] ) ) : '';
 		}
 
-		$section = sanitize_key( $section );
+		$section = wpss_normalize_dashboard_section( $section );
 
 		if ( '' !== $section ) {
 			return $section;
@@ -847,14 +858,30 @@ class UnifiedDashboard {
 			</div>
 			<?php
 		} else {
-			// Genuinely missing sections.
+			// A KNOWN section whose template this install cannot render. Since
+			// the router now redirects unrecognised slugs instead of routing
+			// them here (see wpss_normalize_dashboard_section()), the only way
+			// to land in this branch is a real address whose template ships
+			// somewhere else — in practice, a Pro-only section such as
+			// Analytics viewed on a Free-only site. Say that, rather than the
+			// old flat "This section is not available", which read as a broken
+			// link and sent testers to file bugs against working URLs.
+			$pro_active = defined( 'WPSS_PRO_VERSION' );
 			?>
 			<div class="wpss-dashboard__empty">
 				<div class="wpss-dashboard__empty-icon">
 					<?php $this->render_icon( 'folder' ); ?>
 				</div>
 				<h3><?php esc_html_e( 'Section Not Available', 'wp-sell-services' ); ?></h3>
-				<p><?php esc_html_e( 'This section is not available.', 'wp-sell-services' ); ?></p>
+				<p>
+					<?php
+					if ( $pro_active ) {
+						esc_html_e( 'This section is not available on this site.', 'wp-sell-services' );
+					} else {
+						esc_html_e( 'This section is part of WP Sell Services Pro and is not available on this site.', 'wp-sell-services' );
+					}
+					?>
+				</p>
 				<a href="<?php echo esc_url( wpss_get_dashboard_url() ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php esc_html_e( 'Back to Dashboard', 'wp-sell-services' ); ?>
 				</a>

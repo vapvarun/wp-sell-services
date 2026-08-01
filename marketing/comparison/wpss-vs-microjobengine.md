@@ -51,7 +51,7 @@ MicrojobEngine was built in a different era of WordPress development. WP Sell Se
 |---------|-----------------|----------------|
 | **Order statuses** | 11 | 6 (Pending, Active, Late, Delivered, Finished, Disputed) |
 | **Requirements collection** | Yes - custom forms before work starts | No |
-| **Milestone payments** | Yes | No |
+| **Milestone payments** | Yes (Standalone + WooCommerce) | No |
 | **Deadline extensions** | Yes - request and approve | No |
 | **Auto-complete** | Yes - configurable timer via cron | No |
 | **Revision management** | Yes - per-package limits | Basic |

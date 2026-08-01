@@ -52,7 +52,7 @@ Choosing between WP Sell Services and HivePress (with the TaskHive theme) for yo
 |---------|-----------------|---------------------|
 | **Order statuses** | 11 | ~4 (created, active, completed, disputed) |
 | **Requirements collection** | Yes - custom forms before work starts | No |
-| **Milestone payments** | Yes | No |
+| **Milestone payments** | Yes (Standalone + WooCommerce) | No |
 | **Revision management** | Yes - per-package limits | No structured system |
 | **Deadline extensions** | Yes - request and approve | No |
 | **Auto-complete** | Yes - configurable timer via cron | No |

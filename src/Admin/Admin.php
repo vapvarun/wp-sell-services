@@ -1644,7 +1644,19 @@ class Admin {
 									?>
 									</td>
 								</tr>
-								<?php if ( ! empty( $order->platform_order_id ) ) : ?>
+								<?php
+								// `platform_order_id` does NOT always hold a WooCommerce
+								// order id: on a sub-order (tip / milestone / extension)
+								// the same column holds the PARENT WPSS order id, and
+								// `platform` holds the sub-order type rather than a rail.
+								// Gating this row on the column alone therefore printed
+								// "WooCommerce Order #74" for a milestone whose 74 is a
+								// WPSS order — a link straight into a WooCommerce order
+								// edit screen for an order that does not exist. Only a
+								// row whose platform really IS woocommerce has a WC order
+								// behind that number.
+								if ( ! empty( $order->platform_order_id ) && 'woocommerce' === ( $order->platform ?? '' ) ) :
+									?>
 									<tr>
 										<th><?php esc_html_e( 'WooCommerce Order', 'wp-sell-services' ); ?></th>
 										<td>
@@ -1653,7 +1665,9 @@ class Admin {
 											</a>
 										</td>
 									</tr>
-								<?php endif; ?>
+									<?php
+								endif;
+								?>
 							</table>
 						</div>
 					</div>
