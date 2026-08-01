@@ -170,23 +170,22 @@ The work is managed in the Dashboard.
 
 ---
 
-## If Pay does not work on your site
+## What your site needs for phase payments
 
-Phase payment depends on which ecommerce platform the site runs.
+Milestone contracts require the site to run **Standalone WPSS payments** or
+**WooCommerce**. Those are the two setups phase payment is built and tested
+against.
 
 | Site setup | Phase Pay |
 |---|---|
-| Standalone WPSS payments | Works |
-| WooCommerce | Works — a real WooCommerce order is created for the phase, so the Pay link keeps working even from an email days later |
-| EDD, FluentCart, SureCart | **Not supported yet** |
+| Standalone WPSS payments | Supported |
+| WooCommerce | Supported — a real WooCommerce order is created for the phase, so the Pay link keeps working even from an email days later |
 
-On EDD, FluentCart or SureCart the Pay link currently sends you to the
-standalone checkout, which is not the checkout your site uses — so payment
-cannot complete. If you are on one of those platforms, use **Extensions** for
-extra work instead, or ask the site owner about milestone support.
+If your marketplace runs on another ecommerce platform, use **Extensions** for
+extra paid work instead, or ask the site owner about milestone support.
 
-Site owners: this is decided by **WP Sell Services → Settings → General →
-Ecommerce Integration**.
+Site owners set this at **WP Sell Services → Settings → General → Ecommerce
+Integration**.
 
 ---
 

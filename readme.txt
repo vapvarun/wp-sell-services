@@ -66,7 +66,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 * Mutual exclusion: a single order surfaces milestones OR extensions, never both
 * Ad-hoc milestone additions when scope grows mid-contract
 * Auto-complete the parent order once every phase is finished (approved, declined or cancelled)
-* Phase, tip and extension payments run on Standalone and WooCommerce. EDD, FluentCart and SureCart take the initial service purchase only, so milestones are not usable on those platforms.
+* Phase, tip and extension payments are supported on Standalone and WooCommerce
 
 **Reviews and Ratings**
 
@@ -99,7 +99,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 * Built-in checkout system — no WooCommerce or other e-commerce plugin required
 * Offline payment gateway with admin confirmation workflow
 * Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce, EDD, FluentCart, and SureCart checkout integrations.
-* Milestone, tip and extension payments run on Standalone and WooCommerce. EDD, FluentCart and SureCart handle the initial service purchase only.
+* Milestone, tip and extension payments are supported on Standalone and WooCommerce
 
 **Developer Ready**
 
@@ -218,7 +218,7 @@ Yes. Buyers can post project requests with budget range, description, and deadli
 
 The free version includes a standalone checkout with Stripe, PayPal, and Offline payment gateways — no e-commerce plugin required. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, Easy Digital Downloads, FluentCart, and SureCart checkout integrations for sites already using those platforms.
 
-One difference worth knowing: paying a single existing amount (a milestone phase, a tip, a paid extension) works on Standalone and WooCommerce. Easy Digital Downloads, FluentCart and SureCart have no equivalent flow, so on those platforms buyers can purchase a service but cannot pay a follow-on charge.
+One difference worth knowing: paying a single existing amount (a milestone phase, a tip, a paid extension) is supported on Standalone and WooCommerce. If your marketplace needs milestones, tipping or paid extensions, run it on one of those two.
 
 = How are disputes handled? =
 
@@ -285,7 +285,7 @@ Payment ownership is now unambiguous, milestone and tip payments work on WooComm
 * Dev      - Translation catalogs (.mo and .json) are generated in the build, with a CI gate to keep them current.
 * Dev      - Documented the pay-order seam, the two REST namespaces, the milestone failure paths, and the three money settings tabs.
 * Compat   - Aligned with WP Sell Services Pro 1.3.1. Install both updates together.
-* Compat   - Milestone, tip and extension payment links work on Standalone and WooCommerce only. Easy Digital Downloads, FluentCart and SureCart have no pay-order flow.
+* Compat   - Milestone, tip and extension payment links are supported on Standalone and WooCommerce.
 
 = 1.3.0 - July 2026 =
 

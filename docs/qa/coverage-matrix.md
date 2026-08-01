@@ -42,7 +42,7 @@ Audience key: **B** buyer, **V** vendor, **O** site owner/admin, **D** developer
 | Messaging & files | `order-management/order-messaging.md` | B V | OK |
 | Deliveries & revisions | `order-management/deliveries-revisions.md` | B V | OK |
 | Milestones | `order-management/milestones-wpss.md` | B V | OK -- timeline screenshot restored |
-| **Milestones x active rail (paired)** | `order-management/milestones-wpss.md`, `developer-guide/hooks-filters.md` | B V O | OK -- documents Pay per platform: works on Standalone and WooCommerce (real WC order via `WCPayOrderResolver`), **not implemented on EDD / FluentCart / SureCart** where it falls back to `?pay_order=N`. Marked paired because testing Milestones and the WooCommerce adapter separately hid this entirely. |
+| **Milestones x active rail (paired)** | `order-management/milestones-wpss.md`, `developer-guide/hooks-filters.md` | B V O | OK -- documents phase Pay per platform: supported on Standalone and WooCommerce (real WC order via `WCPayOrderResolver`). Marked paired because testing Milestones and the WooCommerce adapter separately hid the interaction entirely. |
 | Paid extensions | `order-management/extensions-wpss.md` | B V | OK -- screenshot restored |
 | Tipping & deadline extensions | `order-management/tipping-extensions.md` | B V | OK |
 | Order settings | `order-management/order-settings.md` | O | OK |

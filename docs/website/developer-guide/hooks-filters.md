@@ -975,21 +975,20 @@ A cart-based rail replaces the URL entirely. Pro's WooCommerce implementation
 sub-order and returns its native order-pay URL, so the link works from an email
 days later with no cart session.
 
-### What each rail does today
+### Supported rails
 
 | `ecommerce_platform` | Sub-order Pay | How |
 |---|---|---|
-| `standalone` | Works | `?pay_order=N` on the WPSS checkout page |
-| `woocommerce` | Works | Real WC order + native order-pay URL (Pro) |
-| `edd` | **Not implemented** | Falls through to `?pay_order=N` |
-| `fluentcart` | **Not implemented** | Falls through to `?pay_order=N` |
-| `surecart` | **Not implemented** | Falls through to `?pay_order=N` |
+| `standalone` | Supported | `?pay_order=N` on the WPSS checkout page |
+| `woocommerce` | Supported | Real WC order + native order-pay URL (Pro) |
 
-**On EDD, FluentCart and SureCart the fallback is a dead end.** The link lands
-on the standalone checkout, which is not the rail that owns payment on that
-site. Adding support means hooking `wpss_pay_order_url` for that platform the
-way `WCPayOrderResolver` does — do **not** solve it by re-enabling WPSS
-gateways alongside the platform's, which would break the one-rail contract.
+These are the two rails the sub-order payment path is built and tested against.
+
+A platform that has not implemented `wpss_pay_order_url` inherits the standalone
+URL, which is not the checkout that rail owns — so implement the filter for any
+new platform the way `WCPayOrderResolver` does. Do **not** solve it by
+re-enabling WPSS gateways alongside the platform's own, which would break the
+one-rail contract.
 
 ### Why `wpss_get_checkout_base_url()` is not the answer
 
