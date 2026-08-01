@@ -3638,3 +3638,25 @@ select.wpss-input option,
 .wpss-evidence-filename{font-size:12px;color:var(--wpss-gray-500,#6b7280)}
 .wpss-evidence-locked{font-size:13px;color:var(--wpss-gray-500,#6b7280);margin:12px 0 0}
 @media (max-width:480px){.wpss-evidence-bubble{max-width:100%}.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:0;width:100%}}
+
+/* Wallet transactions: the header block (title, hint, period filter + export)
+   sat flush against the table - a measured 0px gap - so the controls read as
+   part of the table header rather than as controls above it. */
+.wpss-wallet__header {
+	margin-bottom: var(--wpss-space-5, 20px);
+}
+
+.wpss-ledger-controls {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--wpss-space-3, 12px);
+	margin-top: var(--wpss-space-4, 16px);
+}
+
+/* Was an inline style="margin-top: 2rem" on the template. Spacing belongs in
+   the stylesheet and in tokens, not hardcoded in markup where no theme or dark
+   mode can reach it. */
+.wpss-earnings__wallet {
+	margin-top: var(--wpss-space-8, 32px);
+}

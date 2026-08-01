@@ -179,7 +179,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 							</button>
 						<?php endif; ?>
 						<?php if ( ( ! is_user_logged_in() || (int) ( $review->reviewer_id ?? 0 ) === get_current_user_id() ) && isset( $review->helpful_count ) && $review->helpful_count > 0 ) : ?>
-							<span style="color:#999;font-size:13px;">
+							<span class="wpss-text-muted" style="font-size:13px;">
 								<?php
 								printf(
 									/* translators: %d: number of people */

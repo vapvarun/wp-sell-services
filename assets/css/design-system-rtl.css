@@ -1240,3 +1240,23 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-order-detail-item--highlight .wpss-order-detail-item__value { font-weight: 700; font-size: var(--wpss-text-md); }
 .wpss-order-detail-item--refunded .wpss-order-detail-item__label,
 .wpss-order-detail-item--refunded .wpss-order-detail-item__value { color: var(--wpss-danger-dark, #991b1b); }
+
+/* Small inline status pill. Added when order-view's inline "deadline extended"
+   note was un-hardcoded: it carried raw #92400e text on a translucent white
+   pill, which in dark mode is dark-brown-on-near-white and unreadable. */
+.wpss-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 6px);
+	margin: var(--wpss-space-3, 12px) 0 0;
+	padding: var(--wpss-space-1, 4px) var(--wpss-space-3, 10px);
+	font-size: var(--wpss-text-sm, 0.875rem);
+	border-radius: var(--wpss-radius-full, 9999px);
+	background: var(--wpss-bg-subtle);
+	color: var(--wpss-text);
+}
+
+.wpss-pill--warning {
+	background: var(--wpss-warning-light, var(--wpss-bg-subtle));
+	color: var(--wpss-warning-fg, var(--wpss-text));
+}

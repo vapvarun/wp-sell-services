@@ -75,11 +75,11 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 				?>
 				<div class="wpss-form-row wpss-cover-upload">
 					<label><?php esc_html_e( 'Cover Image', 'wp-sell-services' ); ?></label>
-					<div class="wpss-cover-upload__preview" style="position:relative;width:100%;max-width:600px;aspect-ratio:3/1;border:2px dashed #ddd;border-radius:8px;overflow:hidden;background:#f9f9f9;">
+					<div class="wpss-cover-upload__preview" style="position:relative;width:100%;max-width:600px;aspect-ratio:3/1;border: 2px dashed var(--wpss-border);border-radius:8px;overflow:hidden;background:var(--wpss-bg-subtle);">
 						<?php if ( $cover_url ) : ?>
 							<img src="<?php echo esc_url( $cover_url ); ?>" alt="<?php esc_attr_e( 'Cover image', 'wp-sell-services' ); ?>" id="wpss-cover-preview" style="width:100%;height:100%;object-fit:cover;">
 						<?php else : ?>
-							<div id="wpss-cover-placeholder" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#999;font-size:14px;">
+							<div id="wpss-cover-placeholder" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:var(--wpss-text-muted);font-size:14px;">
 								<?php esc_html_e( 'No cover image set', 'wp-sell-services' ); ?>
 							</div>
 							<img src="" alt="<?php esc_attr_e( 'Cover image', 'wp-sell-services' ); ?>" id="wpss-cover-preview" style="width:100%;height:100%;object-fit:cover;display:none;">
@@ -126,10 +126,14 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 			// address for invoices and never sees the seller fields below.
 			$wpss_billing  = wpss_get_billing_address( $user->ID );
 			$wpss_complete = false;
-			wpss_get_template_part( 'partials/billing', 'fields', array(
-				'wpss_billing'  => $wpss_billing,
-				'wpss_complete' => $wpss_complete,
-			) );
+			wpss_get_template_part(
+				'partials/billing',
+				'fields',
+				array(
+					'wpss_billing'  => $wpss_billing,
+					'wpss_complete' => $wpss_complete,
+				)
+			);
 			?>
 		</div>
 

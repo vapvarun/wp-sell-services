@@ -865,8 +865,8 @@ do_action( 'wpss_before_order_view', $order );
 				</h2>
 			</div>
 			<div class="wpss-order-section__body">
-				<div class="wpss-notice wpss-notice--warning" style="margin-bottom: 20px; padding: 15px; background: #fff8e1; border-radius: 8px; border-left: 4px solid #f59e0b;">
-					<p style="margin: 0; color: #92400e;">
+				<div class="wpss-notice wpss-notice--warning">
+					<p class="wpss-notice__text">
 						<strong><?php esc_html_e( 'Note:', 'wp-sell-services' ); ?></strong>
 						<?php esc_html_e( 'No requirements were formally submitted for this order. Below are the questions the service requires:', 'wp-sell-services' ); ?>
 					</p>
@@ -881,11 +881,11 @@ do_action( 'wpss_before_order_view', $order );
 						<h4 class="wpss-requirement-view__question">
 							<?php echo esc_html( $question ); ?>
 							<?php if ( $required ) : ?>
-								<span class="wpss-required" style="color: #dc3545;">*</span>
+								<span class="wpss-required">*</span>
 							<?php endif; ?>
 						</h4>
 						<div class="wpss-requirement-view__answer">
-							<span class="wpss-text-muted" style="color: #6c757d; font-style: italic;">
+							<span class="wpss-text-muted wpss-text-italic">
 								<?php esc_html_e( 'Not provided', 'wp-sell-services' ); ?>
 							</span>
 						</div>
@@ -905,8 +905,8 @@ do_action( 'wpss_before_order_view', $order );
 				</h2>
 			</div>
 			<div class="wpss-order-section__body">
-				<div class="wpss-notice wpss-notice--info" style="padding: 15px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-					<p style="margin: 0; color: #1e3a5f;">
+				<div class="wpss-notice wpss-notice--info">
+					<p class="wpss-notice__text">
 						<i data-lucide="info" class="wpss-icon" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;"></i>
 						<?php esc_html_e( 'This service does not require any specific information from the buyer.', 'wp-sell-services' ); ?>
 					</p>
@@ -1000,7 +1000,7 @@ do_action( 'wpss_before_order_view', $order );
 							</p>
 						<?php endif; ?>
 						<?php if ( $time_remaining_label ) : ?>
-							<p style="margin: 12px 0 0 0; font-size: 0.875rem; color: #92400e; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(255, 255, 255, 0.6); border-radius: 9999px;">
+							<p class="wpss-pill wpss-pill--warning">
 								<i data-lucide="clock" class="wpss-icon" aria-hidden="true" style="width:14px;height:14px;"></i>
 								<?php echo esc_html( $time_remaining_label ); ?>
 							</p>
