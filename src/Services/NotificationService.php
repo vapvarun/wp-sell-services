@@ -1095,9 +1095,9 @@ class NotificationService {
 				$opener_name = $opener ? $opener->display_name : __( 'The other party', 'wp-sell-services' );
 				$message->line(
 					/* translators: 1: opener name, 2: order ID */
-					__( '%1$s has opened a dispute for Order #%2$d.', 'wp-sell-services' ),
+					__( '%1$s has opened a dispute for Order #%2$s.', 'wp-sell-services' ),
 					NotificationMessage::strong( $opener_name ),
-					(int) ( $data['order_id'] ?? 0 )
+					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				if ( ! empty( $data['reason'] ) ) {
 					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), (string) $data['reason'] );
@@ -1118,9 +1118,9 @@ class NotificationService {
 				$from_name = $from_user ? $from_user->display_name : __( 'The other party', 'wp-sell-services' );
 				$message->line(
 					/* translators: 1: responder name, 2: order ID */
-					__( '%1$s has responded to the dispute for Order #%2$d.', 'wp-sell-services' ),
+					__( '%1$s has responded to the dispute for Order #%2$s.', 'wp-sell-services' ),
 					NotificationMessage::strong( $from_name ),
-					(int) ( $data['order_id'] ?? 0 )
+					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				$message->paragraph( __( 'Please log in to your dashboard to view the response and continue the discussion if needed.', 'wp-sell-services' ) );
 				break;
@@ -1137,9 +1137,9 @@ class NotificationService {
 			case 'dispute_reminder':
 				$title = __( 'Dispute Response Reminder', 'wp-sell-services' );
 				$message->line(
-					/* translators: %d: order ID */
-					__( 'This is a reminder that you have a pending dispute for Order #%d that requires your response.', 'wp-sell-services' ),
-					(int) ( $data['order_id'] ?? 0 )
+					/* translators: %s: order number */
+					__( 'This is a reminder that you have a pending dispute for Order #%s that requires your response.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				$message->paragraph( __( 'Please log in to your dashboard to respond to the dispute to avoid automatic escalation.', 'wp-sell-services' ) );
 				break;
@@ -1147,9 +1147,9 @@ class NotificationService {
 			case 'deadline_warning':
 				$title = __( 'Order Deadline Approaching', 'wp-sell-services' );
 				$message->line(
-					/* translators: %d: order ID */
-					__( 'The delivery deadline for Order #%d is approaching.', 'wp-sell-services' ),
-					(int) ( $data['order_id'] ?? 0 )
+					/* translators: %s: order number */
+					__( 'The delivery deadline for Order #%s is approaching.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				$message->paragraph( __( 'Please ensure you deliver the order on time to maintain your seller rating.', 'wp-sell-services' ) );
 				break;
@@ -1157,9 +1157,9 @@ class NotificationService {
 			case 'extension_requested':
 				$title = __( 'Quote for extra work', 'wp-sell-services' );
 				$message->line(
-					/* translators: %d: parent order ID */
-					__( 'Your seller sent a quote for additional work on Order #%d. Open the order to review — Accept & Pay to expand the scope, or Decline to keep things as-is.', 'wp-sell-services' ),
-					(int) ( $data['order_id'] ?? 0 )
+					/* translators: %s: parent order number */
+					__( 'Your seller sent a quote for additional work on Order #%s. Open the order to review — Accept & Pay to expand the scope, or Decline to keep things as-is.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
 
@@ -1167,19 +1167,20 @@ class NotificationService {
 				$title = __( 'Extra work paid', 'wp-sell-services' );
 				$message->line(
 					/* translators: 1: net amount, 2: extra days, 3: parent order ID */
-					__( 'Buyer approved your quote. %1$s credited to your wallet, deadline on Order #%3$d extended by %2$d days.', 'wp-sell-services' ),
+					__( 'Buyer approved your quote. %1$s credited to your wallet, deadline on Order #%3$s extended by %2$d days.', 'wp-sell-services' ),
 					function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ) : (string) ( $data['net_amount'] ?? 0 ),
 					(int) ( $data['extra_days'] ?? 0 ),
-					(int) ( $data['order_id'] ?? 0 )
+					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
 
 			case 'milestone_proposed':
 				$title = __( 'Milestone proposed', 'wp-sell-services' );
 				$message->line(
-					/* translators: %d: parent order ID */
-					__( 'Your seller proposed a new phase on Order #%d. Open the order to review and Accept & Pay.', 'wp-sell-services' ),
-					(int) ( $data['order_id'] ?? 0 )
+					/* translators: 1: phase name and amount, 2: parent order number */
+					__( 'Your seller proposed %1$s on Order #%2$s. Open the order to review and Accept & Pay.', 'wp-sell-services' ),
+					$this->milestone_label( $data['milestone_id'] ?? 0 ),
+					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
 
@@ -1187,27 +1188,27 @@ class NotificationService {
 				$title = __( 'Milestone paid — start work', 'wp-sell-services' );
 				$message->line(
 					/* translators: 1: net amount, 2: parent order ID */
-					__( 'Buyer paid the phase on Order #%2$d. %1$s credited to your wallet — you can start work and submit when delivered.', 'wp-sell-services' ),
+					__( 'Buyer paid the phase on Order #%2$s. %1$s credited to your wallet — you can start work and submit when delivered.', 'wp-sell-services' ),
 					function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ) : (string) ( $data['net_amount'] ?? 0 ),
-					(int) ( $data['order_id'] ?? 0 )
+					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
 
 			case 'milestone_submitted':
 				$title = __( 'Milestone delivered', 'wp-sell-services' );
 				$message->line(
-					/* translators: %d: parent order ID */
-					__( 'Your seller submitted a phase delivery on Order #%d. Review it and approve, or request a revision in chat.', 'wp-sell-services' ),
-					(int) ( $data['order_id'] ?? 0 )
+					/* translators: %s: parent order number */
+					__( 'Your seller submitted a phase delivery on Order #%s. Review it and approve, or request a revision in chat.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
 
 			case 'milestone_approved':
 				$title = __( 'Milestone approved', 'wp-sell-services' );
 				$message->line(
-					/* translators: %d: parent order ID */
-					__( 'Buyer approved your phase on Order #%d.', 'wp-sell-services' ),
-					(int) ( $data['order_id'] ?? 0 )
+					/* translators: %s: parent order number */
+					__( 'Buyer approved your phase on Order #%s.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
 				);
 				break;
 
@@ -1216,16 +1217,16 @@ class NotificationService {
 				$note  = (string) ( $data['response_note'] ?? '' );
 				if ( '' !== trim( $note ) ) {
 					$message->line(
-						/* translators: 1: order ID, 2: buyer's note */
-						__( 'Buyer declined your quote on Order #%1$d. Their note: %2$s', 'wp-sell-services' ),
-						(int) ( $data['order_id'] ?? 0 ),
+						/* translators: 1: order number, 2: buyer's note */
+						__( 'Buyer declined your quote on Order #%1$s. Their note: %2$s', 'wp-sell-services' ),
+						$this->order_ref( $data['order_id'] ?? 0 ),
 						$note
 					);
 				} else {
 					$message->line(
-						/* translators: %d: order ID */
-						__( 'Buyer declined your quote on Order #%d.', 'wp-sell-services' ),
-						(int) ( $data['order_id'] ?? 0 )
+						/* translators: %s: order number */
+						__( 'Buyer declined your quote on Order #%s.', 'wp-sell-services' ),
+						$this->order_ref( $data['order_id'] ?? 0 )
 					);
 				}
 				break;
@@ -1779,6 +1780,72 @@ class NotificationService {
 		);
 
 		return $type_to_category[ $type ] ?? null;
+	}
+
+	/**
+	 * Describe a milestone phase well enough to tell two of them apart.
+	 *
+	 * A contract with several phases produced a run of notifications reading
+	 * "Your seller proposed a new phase on Order #74", identical down to the
+	 * word. A buyer could not tell which phase each referred to, or what any of
+	 * them cost, without opening the order.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param mixed $milestone_id Milestone sub-order ID.
+	 * @return string Phase name with amount, or a generic fallback.
+	 */
+	private function milestone_label( $milestone_id ): string {
+		$milestone = ( (int) $milestone_id > 0 && function_exists( 'wpss_get_order' ) )
+			? wpss_get_order( (int) $milestone_id )
+			: null;
+
+		if ( ! $milestone ) {
+			return __( 'a new phase', 'wp-sell-services' );
+		}
+
+		$meta  = is_string( $milestone->meta ) ? json_decode( $milestone->meta, true ) : (array) $milestone->meta;
+		$name  = (string) ( $meta['title'] ?? '' );
+		$price = function_exists( 'wpss_format_price' )
+			? wpss_format_price( (float) $milestone->total, (string) $milestone->currency )
+			: (string) $milestone->total;
+
+		if ( '' === $name ) {
+			/* translators: %s: formatted amount */
+			return sprintf( __( 'a new phase (%s)', 'wp-sell-services' ), $price );
+		}
+
+		/* translators: 1: phase name, 2: formatted amount */
+		return sprintf( __( '"%1$s" (%2$s)', 'wp-sell-services' ), $name, $price );
+	}
+
+	/**
+	 * Resolve an order id to the reference a member actually recognises.
+	 *
+	 * Half of the notification catalogue printed the raw primary key — "Order
+	 * #74" — while the other half printed the order number, so the same list
+	 * showed a buyer two different identifiers for their orders and one of them
+	 * appears nowhere else in the product. The order number is what the order
+	 * page, emails and invoices show, so it is what a notification must say.
+	 *
+	 * Falls back to the id only when the order has since been deleted, which is
+	 * better than rendering an empty "Order #".
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param mixed $order_id Order ID from the notification payload.
+	 * @return string
+	 */
+	private function order_ref( $order_id ): string {
+		$order_id = (int) $order_id;
+
+		if ( $order_id <= 0 ) {
+			return '';
+		}
+
+		$order = function_exists( 'wpss_get_order' ) ? wpss_get_order( $order_id ) : null;
+
+		return ( $order && ! empty( $order->order_number ) ) ? (string) $order->order_number : (string) $order_id;
 	}
 
 	/**
