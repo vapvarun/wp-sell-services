@@ -1019,8 +1019,11 @@ class ServicesController extends RestController {
 				__( 'You have reached the maximum number of services allowed. Please remove an existing service before creating a new one.', 'wp-sell-services' )
 			);
 
+			// Its own code: the caller is permitted, they have simply hit their
+			// plan's service limit, and a client should offer "remove one" rather
+			// than "you are not allowed".
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_service_limit_reached',
 				$error_message,
 				array( 'status' => 403 )
 			);
@@ -1028,7 +1031,7 @@ class ServicesController extends RestController {
 
 		if ( ! current_user_can( 'wpss_manage_services' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_cannot_create',
 				__( 'You do not have permission to create services.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -1054,7 +1057,7 @@ class ServicesController extends RestController {
 
 		if ( ! $this->user_owns_resource( $service_id, 'service' ) && ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You do not have permission to edit this service.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);

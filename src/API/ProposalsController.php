@@ -241,7 +241,7 @@ class ProposalsController extends RestController {
 		}
 
 		return new WP_Error(
-			'rest_forbidden',
+			'wpss_not_owner',
 			__( 'You do not have permission to access this proposal.', 'wp-sell-services' ),
 			[ 'status' => 403 ]
 		);
@@ -272,7 +272,7 @@ class ProposalsController extends RestController {
 
 		if ( (int) $proposal->vendor_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You can only modify your own proposals.', 'wp-sell-services' ),
 				[ 'status' => 403 ]
 			);

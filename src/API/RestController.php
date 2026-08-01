@@ -108,7 +108,7 @@ abstract class RestController extends WP_REST_Controller {
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You do not have permission to access this endpoint.', 'wp-sell-services' ),
 				[ 'status' => 403 ]
 			);

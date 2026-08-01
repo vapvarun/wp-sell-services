@@ -4079,7 +4079,7 @@ function wpss_rest_require_admin() {
 	}
 
 	return new WP_Error(
-		'rest_forbidden',
+		'wpss_not_owner',
 		__( 'You do not have permission to access this endpoint.', 'wp-sell-services' ),
 		array( 'status' => 403 )
 	);

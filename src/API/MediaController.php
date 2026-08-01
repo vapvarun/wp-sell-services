@@ -268,7 +268,7 @@ class MediaController extends RestController {
 		}
 
 		if ( (int) $attachment->post_author !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not own this file.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			return new WP_Error( 'wpss_not_owner', __( 'You do not own this file.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
 		return true;
@@ -317,7 +317,7 @@ class MediaController extends RestController {
 			}
 		}
 
-		return new WP_Error( 'rest_forbidden', __( 'You do not have access to this file.', 'wp-sell-services' ), array( 'status' => 403 ) );
+		return new WP_Error( 'wpss_not_owner', __( 'You do not have access to this file.', 'wp-sell-services' ), array( 'status' => 403 ) );
 	}
 
 	/**

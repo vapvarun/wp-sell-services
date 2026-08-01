@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-01T12:13:29+00:00\n"
+"POT-Creation-Date: 2026-08-01T12:24:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -6379,7 +6379,7 @@ msgstr ""
 #: src/API/ProposalsController.php:632
 #: src/API/ReviewsController.php:1058
 #: src/API/ServicesController.php:215
-#: src/API/ServicesController.php:1352
+#: src/API/ServicesController.php:1355
 #: src/API/VendorsController.php:950
 msgid "Current page."
 msgstr ""
@@ -6394,7 +6394,7 @@ msgstr ""
 #: src/API/ProposalsController.php:638
 #: src/API/ReviewsController.php:1064
 #: src/API/ServicesController.php:221
-#: src/API/ServicesController.php:1357
+#: src/API/ServicesController.php:1360
 #: src/API/VendorsController.php:956
 msgid "Items per page."
 msgstr ""
@@ -7430,7 +7430,7 @@ msgid "Filter by rating."
 msgstr ""
 
 #: src/API/ReviewsController.php:1085
-#: src/API/ServicesController.php:1391
+#: src/API/ServicesController.php:1394
 #: src/API/VendorsController.php:971
 msgid "Order by field."
 msgstr ""
@@ -7510,11 +7510,11 @@ msgstr ""
 msgid "You have reached the maximum number of services allowed. Please remove an existing service before creating a new one."
 msgstr ""
 
-#: src/API/ServicesController.php:1032
+#: src/API/ServicesController.php:1035
 msgid "You do not have permission to create services."
 msgstr ""
 
-#: src/API/ServicesController.php:1058
+#: src/API/ServicesController.php:1061
 #: src/Frontend/ServiceWizard.php:328
 #: src/Frontend/ServiceWizard.php:1543
 #: src/Frontend/ServiceWizard.php:1714
@@ -7522,66 +7522,66 @@ msgstr ""
 msgid "You do not have permission to edit this service."
 msgstr ""
 
-#: src/API/ServicesController.php:1363
+#: src/API/ServicesController.php:1366
 msgid "Filter by category ID or slug."
 msgstr ""
 
-#: src/API/ServicesController.php:1367
+#: src/API/ServicesController.php:1370
 msgid "Filter by vendor ID."
 msgstr ""
 
-#: src/API/ServicesController.php:1371
+#: src/API/ServicesController.php:1374
 msgid "Search term."
 msgstr ""
 
-#: src/API/ServicesController.php:1379
+#: src/API/ServicesController.php:1382
 msgid "Search term. Alias of `search`, accepted for parity with /search."
 msgstr ""
 
-#: src/API/ServicesController.php:1383
+#: src/API/ServicesController.php:1386
 #: src/Core/AbilitiesRegistrar.php:111
 msgid "Minimum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1387
+#: src/API/ServicesController.php:1390
 #: src/Core/AbilitiesRegistrar.php:115
 msgid "Maximum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1397
+#: src/API/ServicesController.php:1400
 msgid "Sort order."
 msgstr ""
 
-#: src/API/ServicesController.php:1403
+#: src/API/ServicesController.php:1406
 msgid "Maximum delivery days filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1408
+#: src/API/ServicesController.php:1411
 msgid "Minimum rating filter (0-5)."
 msgstr ""
 
-#: src/API/ServicesController.php:1430
+#: src/API/ServicesController.php:1433
 #: src/Core/AbilitiesRegistrar.php:231
 msgid "Service title."
 msgstr ""
 
-#: src/API/ServicesController.php:1436
+#: src/API/ServicesController.php:1439
 msgid "Service description."
 msgstr ""
 
-#: src/API/ServicesController.php:1441
+#: src/API/ServicesController.php:1444
 msgid "Service excerpt."
 msgstr ""
 
-#: src/API/ServicesController.php:1446
+#: src/API/ServicesController.php:1449
 msgid "Base price."
 msgstr ""
 
-#: src/API/ServicesController.php:1454
+#: src/API/ServicesController.php:1457
 msgid "Category IDs or slugs."
 msgstr ""
 
-#: src/API/ServicesController.php:1460
+#: src/API/ServicesController.php:1463
 msgid "Tags."
 msgstr ""
 
@@ -16111,13 +16111,13 @@ msgid "a new phase"
 msgstr ""
 
 #. translators: %s: formatted amount
-#: src/Services/NotificationService.php:1815
+#: src/Services/NotificationService.php:1816
 #, php-format
 msgid "a new phase (%s)"
 msgstr ""
 
 #. translators: 1: phase name, 2: formatted amount
-#: src/Services/NotificationService.php:1819
+#: src/Services/NotificationService.php:1820
 #, php-format
 msgid "\"%1$s\" (%2$s)"
 msgstr ""

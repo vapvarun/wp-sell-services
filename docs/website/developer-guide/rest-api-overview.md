@@ -69,6 +69,48 @@ fetch('/wp-json/wpss/v1/services', {
 });
 ```
 
+## Error codes
+
+Branch on `code`, never on the message — messages are translated and will not
+match in another locale.
+
+### Status codes
+
+| Status | Meaning | What a client should do |
+|---|---|---|
+| `401` | Not authenticated | Refresh the token / prompt sign-in, then retry |
+| `403` | Authenticated, not permitted | Do **not** retry with the same credentials - show the reason |
+| `404` | No such route or record | Stop; the path or id is wrong |
+| `405` | Wrong method on a real route | Fix the verb; the `Allow` header lists what is accepted |
+| `409` | Conflict / illegal state | Refresh state and re-decide |
+| `501` | Feature disabled on this site | Hide the feature; do not retry |
+
+### Permission codes
+
+A `403` always carries one of these, so the reason is machine-readable:
+
+| Code | Meaning |
+|---|---|
+| `rest_not_logged_in` | Not signed in (this one is `401`) |
+| `wpss_not_vendor` | Signed in, but the account is not a vendor |
+| `wpss_vendor_pending` | Vendor account exists but is awaiting approval |
+| `wpss_not_owner` | Signed in, but this order / service / file / conversation belongs to someone else |
+| `wpss_not_admin` | Requires an administrator |
+| `wpss_cannot_create` | Lacks the capability to create this resource |
+| `wpss_service_limit_reached` | Permitted, but the account is at its service limit - offer to remove one |
+
+`wpss_not_vendor` and `wpss_not_owner` used to be a single generic
+`rest_forbidden`, so a client could not tell "you need a vendor account" from
+"that is not your order" without reading English.
+
+### One caveat worth knowing
+
+WordPress validates required parameters **before** it runs the permission
+callback. A request that omits a required argument therefore returns
+`400 rest_missing_callback_param` even when unauthenticated - so **do not treat
+`400` as an authentication signal**. A well-formed anonymous request always
+returns `401`.
+
 ## Generic Endpoints
 
 These endpoints are registered directly in `API.php` (not controllers).

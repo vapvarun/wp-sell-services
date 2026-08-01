@@ -1208,7 +1208,7 @@ class OrdersController extends RestController {
 
 		if ( (int) $attachment->post_author !== $user_id && ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You do not have permission to delete this file.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -1461,7 +1461,7 @@ class OrdersController extends RestController {
 
 		if ( ! $this->user_owns_resource( $order_id, 'order' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You do not have permission to access this order.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -1492,7 +1492,7 @@ class OrdersController extends RestController {
 
 		if ( ! $order || (int) $order->vendor_id !== get_current_user_id() ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_vendor',
 				__( 'Only the vendor can perform this action.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -1523,7 +1523,7 @@ class OrdersController extends RestController {
 
 		if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'Only the customer can perform this action.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);

@@ -363,7 +363,7 @@ class BuyerRequestsController extends RestController {
 
 		if ( (int) $buyer_request->post_author !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You do not have permission to access this request.', 'wp-sell-services' ),
 				[ 'status' => 403 ]
 			);

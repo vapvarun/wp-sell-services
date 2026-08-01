@@ -664,7 +664,7 @@ class EarningsController extends RestController {
 		}
 
 		if ( ! wpss_is_vendor( get_current_user_id() ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'Only vendors can access earnings.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			return new WP_Error( 'wpss_not_vendor', __( 'Only vendors can access earnings.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
 		// Prevent pending vendors from accessing earnings. Reads the canonical
@@ -673,7 +673,7 @@ class EarningsController extends RestController {
 		// vendor could reach every earnings endpoint.
 		$vendor_status = wpss_get_vendor_status( get_current_user_id() );
 		if ( 'pending' === $vendor_status ) {
-			return new WP_Error( 'rest_forbidden', __( 'Your vendor account is pending approval.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			return new WP_Error( 'wpss_vendor_pending', __( 'Your vendor account is pending approval.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
 		return true;

@@ -362,7 +362,7 @@ class ReviewsController extends RestController {
 		// Verify user is the customer.
 		if ( (int) $order->customer_id !== $user_id ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You can only review orders you placed.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -938,7 +938,7 @@ class ReviewsController extends RestController {
 
 		if ( ! $review || (int) $review->customer_id !== get_current_user_id() ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_owner',
 				__( 'You can only edit your own reviews.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);
@@ -986,7 +986,7 @@ class ReviewsController extends RestController {
 
 		if ( ! $review || (int) $review->vendor_id !== get_current_user_id() ) {
 			return new WP_Error(
-				'rest_forbidden',
+				'wpss_not_vendor',
 				__( 'Only the vendor can reply to reviews.', 'wp-sell-services' ),
 				array( 'status' => 403 )
 			);

@@ -446,7 +446,7 @@ class PortfolioController extends RestController {
 		// and demo-seeded vendors — who never carry the _wpss_is_vendor meta —
 		// are not wrongly 403'd.
 		if ( ! wpss_is_vendor() ) {
-			return new WP_Error( 'rest_forbidden', __( 'Only vendors can manage portfolio items.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			return new WP_Error( 'wpss_not_vendor', __( 'Only vendors can manage portfolio items.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
 		return true;
@@ -471,7 +471,7 @@ class PortfolioController extends RestController {
 		}
 
 		if ( (int) $item['vendor_id'] !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
-			return new WP_Error( 'rest_forbidden', __( 'You do not own this portfolio item.', 'wp-sell-services' ), array( 'status' => 403 ) );
+			return new WP_Error( 'wpss_not_owner', __( 'You do not own this portfolio item.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
 		return true;

@@ -500,7 +500,7 @@ class PaymentController extends RestController {
 			}
 
 			if ( get_current_user_id() !== (int) $order->customer_id && ! current_user_can( 'manage_options' ) ) {
-				return new WP_Error( 'rest_forbidden', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
+				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
 			}
 
 			// Idempotency: never re-process an order that is already paid.
@@ -601,7 +601,7 @@ class PaymentController extends RestController {
 			}
 
 			if ( get_current_user_id() !== (int) $order->customer_id && ! current_user_can( 'manage_options' ) ) {
-				return new WP_Error( 'rest_forbidden', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
+				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
 			}
 
 			// Idempotency: never re-process an order that is already paid.
