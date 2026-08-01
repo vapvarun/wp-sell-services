@@ -888,6 +888,29 @@ class ServiceOrder {
 		);
 	}
 
+	/**
+	 * Whether this order actually resolves to a named package.
+	 *
+	 * False means the order is a custom quote — `get_package_name()` answers
+	 * with the localised word "Custom", which is a LABEL, not an identifier.
+	 * Callers that need to branch on "is this a real package?" must ask this
+	 * method: comparing `get_package_name()` against the string 'Custom'
+	 * silently stops matching the moment the site is translated, which is
+	 * exactly what Pro's WooCommerce order bridge used to do.
+	 *
+	 * @since 1.3.2
+	 *
+	 * @return bool True when the order carries a package (or a proposal
+	 *              snapshot standing in for one).
+	 */
+	public function has_package(): bool {
+		if ( ! empty( $this->meta['proposal_snapshot'] ) ) {
+			return true;
+		}
+
+		return null !== $this->package_id && $this->can_have_package();
+	}
+
 	public function get_package_snapshot(): ?array {
 		// Try snapshot from meta first.
 		$snapshot = $this->meta['package_snapshot'] ?? null;
@@ -930,8 +953,10 @@ class ServiceOrder {
 	 */
 	public function get_package_name(): string {
 		// Only a NULL package_id means the order has no package (a custom
-		// quote). Index 0 is the service's first package.
-		if ( ( null === $this->package_id || ! $this->can_have_package() ) && empty( $this->meta['proposal_snapshot'] ) ) {
+		// quote). Index 0 is the service's first package. The predicate lives
+		// in has_package() so callers can branch on it without string-matching
+		// this localised label.
+		if ( ! $this->has_package() ) {
 			return __( 'Custom', 'wp-sell-services' );
 		}
 

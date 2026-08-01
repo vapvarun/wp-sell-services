@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace WPSellServices\Frontend;
 
+use WPSellServices\Assets\ScriptRegistry;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -138,22 +140,14 @@ class Frontend {
 		// WordPress would silently drop realtime entirely. Registering is
 		// idempotent, so this simply guarantees the handle exists wherever
 		// realtime runs.
-		wp_register_script(
-			'wpss-ui',
-			\WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
-			array(),
-			\WPSS_VERSION,
-			true
-		);
+		ScriptRegistry::register_ui();
 
-		wp_register_script(
+		ScriptRegistry::register(
 			'wpss-realtime',
-			\WPSS_PLUGIN_URL . 'assets/js/wpss-realtime.js',
+			'assets/js/wpss-realtime.js',
 			// wpss-ui provides window.wpssToast, which is how a realtime event
 			// becomes something the user can actually see.
-			array( 'wpss-pusher', 'wpss-ui' ),
-			\WPSS_VERSION,
-			true
+			array( 'wpss-pusher', ScriptRegistry::HANDLE_UI )
 		);
 
 		$this->enqueue_realtime_script();

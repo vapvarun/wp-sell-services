@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace WPSellServices\Admin\Metaboxes;
 
 use WPSellServices\PostTypes\ServicePostType;
+use WPSellServices\Assets\ScriptRegistry;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -142,12 +143,12 @@ class ServiceMetabox {
 		);
 
 		// Service edit specific scripts.
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-service-edit',
-			$plugin_url . 'assets/js/service-edit.js',
+			'assets/js/service-edit.js',
 			array( 'jquery' ),
-			$version,
-			true
+			true,
+			$version
 		);
 
 		wp_localize_script(

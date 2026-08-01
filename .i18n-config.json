@@ -1,0 +1,68 @@
+{
+	"_comment": "Single source of truth for this plugin's i18n build + gate. Consumed by Gruntfile.js (makepot:wpcli / makemo / makejson) and by bin/i18n-verify.py. Keep it here, not duplicated in either consumer, so the POT the gate regenerates is byte-comparable to the POT the build ships.",
+	"domain": "wp-sell-services",
+	"slug": "wp-sell-services",
+	"languagesDir": "languages",
+	"potFile": "languages/wp-sell-services.pot",
+	"potExclude": [
+		"node_modules",
+		"vendor",
+		"tests",
+		"dist",
+		"scripts",
+		"plan",
+		"plans",
+		"docs",
+		"marketing",
+		"bin",
+		"audit"
+	],
+	"potHeaders": {
+		"Report-Msgid-Bugs-To": "https://wbcomdesigns.com/support/",
+		"Last-Translator": "Wbcom Designs <admin@wbcomdesigns.com>",
+		"Language-Team": "Wbcom Designs <admin@wbcomdesigns.com>"
+	},
+	"domainScanExclude": [
+		"node_modules",
+		"vendor",
+		"libs",
+		"tests",
+		"dist",
+		"scripts",
+		"plan",
+		"plans",
+		"docs",
+		"marketing",
+		"bin",
+		"audit",
+		"build"
+	],
+	"scriptScanExclude": [
+		"node_modules",
+		"vendor",
+		"libs",
+		"tests",
+		"dist",
+		"scripts",
+		"plan",
+		"plans",
+		"docs",
+		"marketing",
+		"bin",
+		"audit",
+		"build"
+	],
+	"jsScanDirs": [
+		"assets/js"
+	],
+	"jsScanExclude": [
+		"assets/js/vendor"
+	],
+	"scriptRegisterHelpers": [
+		"ScriptRegistry::register",
+		"ScriptRegistry::enqueue",
+		"ScriptRegistry::register_ui",
+		"ScriptRegistry::enqueue_ui"
+	],
+	"allowedDomains": []
+}

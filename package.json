@@ -15,8 +15,12 @@
     "release": "grunt release",
     "i18n": "grunt i18n",
     "rtl": "grunt rtl",
-    "pot": "grunt makepot",
-    "checktextdomain": "grunt checktextdomain"
+    "pot": "grunt i18n:pot",
+    "checktextdomain": "grunt checktextdomain",
+    "i18n:verify": "python3 bin/i18n-verify.py",
+    "i18n:pot": "grunt i18n:pot",
+    "i18n:mo": "grunt i18n:mo",
+    "i18n:json": "grunt i18n:json"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",

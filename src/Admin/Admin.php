@@ -30,6 +30,7 @@ use WPSellServices\Admin\Tables\DisputesListTable;
 use WPSellServices\Models\Dispute;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\OrderService;
+use WPSellServices\Assets\ScriptRegistry;
 
 /**
  * Handles all admin-side functionality.
@@ -742,13 +743,7 @@ class Admin {
 		// Shared UI primitives: wpssConfirm (Promise modal) + wpssToast fallback.
 		// Enqueued globally on all WPSS admin surfaces so Pro's admin.js can rely
 		// on window.wpssConfirm being present (loaded in footer before pro script).
-		wp_enqueue_script(
-			'wpss-ui',
-			\WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
-			array(),
-			\WPSS_VERSION,
-			true
-		);
+		ScriptRegistry::enqueue_ui();
 
 		// Settings saved via the options.php round-trip reload with
 		// settings-updated=true but custom admin pages never render core's

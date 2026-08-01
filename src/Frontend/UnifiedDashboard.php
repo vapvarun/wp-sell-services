@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace WPSellServices\Frontend;
 
 use WPSellServices\Services\VendorService;
+use WPSellServices\Assets\ScriptRegistry;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -98,13 +99,7 @@ class UnifiedDashboard {
 		// Shared UI primitives: wpssConfirm (Promise modal) + wpssToast fallback.
 		// Must be enqueued before any dashboard script (free or pro) that calls
 		// wpssConfirm() / wpssToast().
-		wp_enqueue_script(
-			'wpss-ui',
-			WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
-			array(),
-			WPSS_VERSION,
-			true
-		);
+		ScriptRegistry::enqueue_ui();
 
 		wp_enqueue_style(
 			'wpss-unified-dashboard',
@@ -114,12 +109,10 @@ class UnifiedDashboard {
 		);
 		wp_style_add_data( 'wpss-unified-dashboard', 'rtl', 'replace' );
 
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-unified-dashboard',
-			WPSS_PLUGIN_URL . 'assets/js/unified-dashboard.js',
-			array( 'jquery' ),
-			WPSS_VERSION,
-			true
+			'assets/js/unified-dashboard.js',
+			array( 'jquery' )
 		);
 
 		wp_localize_script(

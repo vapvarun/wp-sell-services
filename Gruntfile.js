@@ -1,6 +1,10 @@
 module.exports = function ( grunt ) {
 	const pkg = grunt.file.readJSON( 'package.json' );
 
+	// Shared i18n contract. Also read by bin/i18n-verify.py, so the POT the
+	// gate regenerates is built with exactly the args the release build used.
+	const i18n = grunt.file.readJSON( '.i18n-config.json' );
+
 	grunt.initConfig( {
 		pkg: pkg,
 
@@ -226,40 +230,119 @@ module.exports = function ( grunt ) {
 	grunt.loadNpmTasks( 'grunt-checktextdomain' );
 	grunt.loadNpmTasks( 'grunt-rtlcss' );
 
-	// i18n: Generate .pot file.
+	// runWpCli — one spawn helper for every `wp i18n …` step below.
 	//
-	// Modern path runs `wp i18n make-pot` (the WP-CLI built-in extractor) —
-	// faster, supports JS strings, and the legacy grunt-wp-i18n package
-	// fails on PHP 8.1+ in some environments. Falls back to the grunt
-	// `makepot` task only if WP-CLI is not installed.
-	grunt.registerTask( 'makepot:wpcli', 'Generate POT via WP-CLI', function () {
-		const done = this.async();
+	// Each returns a promise-free grunt async handle; `onMissing` lets the POT
+	// step fall back to grunt-wp-i18n when WP-CLI is not installed, while the
+	// MO/JSON steps hard-fail instead (grunt-wp-i18n cannot produce either, and
+	// silently shipping a plugin with no compiled catalog is the exact bug this
+	// pipeline exists to prevent).
+	function runWpCli( grunt, task, args, onMissing ) {
+		const done = task.async();
 		const { spawn } = require( 'child_process' );
-		const args = [
-			'i18n',
-			'make-pot',
-			'.',
-			'languages/wp-sell-services.pot',
-			'--slug=wp-sell-services',
-			'--domain=wp-sell-services',
-			'--exclude=node_modules,vendor,tests,dist,scripts,plan,plans,docs,marketing,bin,audit',
-			'--headers={"Report-Msgid-Bugs-To":"https://wbcomdesigns.com/support/","Last-Translator":"Wbcom Designs <admin@wbcomdesigns.com>","Language-Team":"Wbcom Designs <admin@wbcomdesigns.com>"}',
-		];
 		const child = spawn( 'wp', args, { stdio: 'inherit' } );
 		child.on( 'error', ( err ) => {
-			grunt.log.warn( 'WP-CLI not available (' + err.message + '), falling back to grunt-wp-i18n.' );
-			grunt.task.run( 'makepot' );
+			if ( onMissing ) {
+				onMissing( err );
+				done();
+				return;
+			}
+			grunt.fail.warn(
+				'WP-CLI (`wp`) is required for `' + args.slice( 0, 3 ).join( ' ' ) +
+				'` but was not found: ' + err.message
+			);
 			done();
 		} );
 		child.on( 'close', ( code ) => {
 			if ( code !== 0 ) {
-				grunt.fail.warn( 'wp i18n make-pot exited with code ' + code );
+				grunt.fail.warn( 'wp ' + args.slice( 0, 3 ).join( ' ' ) + ' exited with code ' + code );
+			}
+			done();
+		} );
+	}
+
+	// i18n:pot — generate the POT via `wp i18n make-pot` (the WP-CLI built-in
+	// extractor): faster than grunt-wp-i18n, supports JS strings, and the legacy
+	// package fails on PHP 8.1+ in some environments. Falls back to the grunt
+	// `makepot` task only if WP-CLI is missing.
+	grunt.registerTask( 'i18n:pot', 'Generate POT via WP-CLI', function () {
+		runWpCli( grunt, this, [
+			'i18n',
+			'make-pot',
+			'.',
+			i18n.potFile,
+			'--slug=' + i18n.slug,
+			'--domain=' + i18n.domain,
+			'--exclude=' + i18n.potExclude.join( ',' ),
+			'--headers=' + JSON.stringify( i18n.potHeaders ),
+		], ( err ) => {
+			grunt.log.warn( 'WP-CLI not available (' + err.message + '), falling back to grunt-wp-i18n.' );
+			grunt.task.run( 'makepot' );
+		} );
+	} );
+
+	// i18n:mo — compile every `languages/*.po` into the `.mo` binary WordPress
+	// actually loads. Without this step a translator's .po file is inert: the
+	// plugin ships a POT nobody can use and every string stays English.
+	//
+	// No-ops (with a notice) when no .po exists yet — that is the state of a
+	// plugin whose translations have not started, not a build failure.
+	grunt.registerTask( 'i18n:mo', 'Compile PO -> MO via WP-CLI', function () {
+		const po = grunt.file.expand( i18n.languagesDir + '/*.po' );
+		if ( ! po.length ) {
+			grunt.log.writeln(
+				'i18n:mo — no .po files in ' + i18n.languagesDir + '/, nothing to compile.'
+			);
+			return;
+		}
+		runWpCli( grunt, this, [ 'i18n', 'make-mo', i18n.languagesDir ] );
+	} );
+
+	// i18n:json — split the JS strings out of each `.po` into the per-script
+	// JSON catalogs that `wp_set_script_translations()` loads. Every
+	// `wp.i18n.__()` call in our JavaScript is dead without these files.
+	//
+	// --no-purge keeps the JS strings in the .po so future diffs stay readable
+	// (the default strips them, which makes the next translator update noisy).
+	grunt.registerTask( 'i18n:json', 'Extract JS strings to JSON via WP-CLI', function () {
+		const po = grunt.file.expand( i18n.languagesDir + '/*.po' );
+		if ( ! po.length ) {
+			grunt.log.writeln(
+				'i18n:json — no .po files in ' + i18n.languagesDir + '/, nothing to extract.'
+			);
+			return;
+		}
+		runWpCli( grunt, this, [ 'i18n', 'make-json', i18n.languagesDir, '--no-purge' ] );
+	} );
+
+	// i18n:verify — the release gate (stale POT / wrong text domain / JS script
+	// registered without wp_set_script_translations). Quiet on success.
+	grunt.registerTask( 'i18n:verify', 'Run the i18n verification gate', function () {
+		const done = this.async();
+		const { spawn } = require( 'child_process' );
+		const child = spawn( 'python3', [ 'bin/i18n-verify.py' ], { stdio: 'inherit' } );
+		child.on( 'error', ( err ) => {
+			grunt.fail.warn( 'i18n:verify could not run bin/i18n-verify.py: ' + err.message );
+			done();
+		} );
+		child.on( 'close', ( code ) => {
+			if ( code !== 0 ) {
+				grunt.fail.warn( 'i18n:verify found violations (exit ' + code + ').' );
 			}
 			done();
 		} );
 	} );
 
-	grunt.registerTask( 'i18n', [ 'checktextdomain', 'makepot:wpcli' ] );
+	// i18n — POT, then the binary + JSON catalogs built from it, then the gate.
+	// Order matters: verify runs LAST so it inspects the artefacts this run
+	// just produced rather than the previous release's.
+	grunt.registerTask( 'i18n', [
+		'checktextdomain',
+		'i18n:pot',
+		'i18n:mo',
+		'i18n:json',
+		'i18n:verify',
+	] );
 
 	// RTL: Generate RTL stylesheets.
 	grunt.registerTask( 'rtl', [ 'rtlcss' ] );

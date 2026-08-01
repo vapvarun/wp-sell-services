@@ -41,7 +41,8 @@
         "phpcbf": "phpcbf",
         "test": "phpunit",
         "lint": "@phpcs",
-        "lint:fix": "@phpcbf"
+        "lint:fix": "@phpcbf",
+        "i18n:verify": "python3 bin/i18n-verify.py"
     },
     "config": {
         "allow-plugins": {

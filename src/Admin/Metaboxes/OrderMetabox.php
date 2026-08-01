@@ -17,6 +17,7 @@ use WPSellServices\Database\Repositories\ConversationRepository;
 use WPSellServices\Database\Repositories\DeliveryRepository;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Services\OrderService;
+use WPSellServices\Assets\ScriptRegistry;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -192,20 +193,12 @@ class OrderMetabox {
 
 		// Shared design-system primitives (wpssConfirm / wpssToast). Same
 		// handle + src as Admin::enqueue_scripts() — no-op when already queued.
-		wp_enqueue_script(
-			'wpss-ui',
-			\WPSS_PLUGIN_URL . 'assets/js/wpss-ui.js',
-			array(),
-			\WPSS_VERSION,
-			true
-		);
+		ScriptRegistry::enqueue_ui();
 
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-order-metabox',
-			\WPSS_PLUGIN_URL . 'assets/js/admin-order.js',
-			array( 'jquery', 'wpss-ui' ),
-			\WPSS_VERSION,
-			true
+			'assets/js/admin-order.js',
+			array( 'jquery', ScriptRegistry::HANDLE_UI )
 		);
 
 		wp_localize_script(

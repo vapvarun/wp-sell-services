@@ -14,6 +14,7 @@ namespace WPSellServices\Frontend;
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Models\Service;
+use WPSellServices\Assets\ScriptRegistry;
 
 /**
  * Handles the single service page display.
@@ -104,12 +105,10 @@ class SingleServiceView {
 		wp_style_add_data( 'wpss-single-service', 'rtl', 'replace' );
 
 		// Single service JS.
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-single-service',
-			\WPSS_PLUGIN_URL . 'assets/js/single-service.js',
-			array( 'jquery', 'wpss-frontend' ),
-			\WPSS_VERSION,
-			true
+			'assets/js/single-service.js',
+			array( 'jquery', 'wpss-frontend' )
 		);
 
 		$checkout_url = wpss_get_service_checkout_url( get_the_ID() );

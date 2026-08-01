@@ -14,6 +14,7 @@ namespace WPSellServices\Integrations\PayPal;
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
+use WPSellServices\Assets\ScriptRegistry;
 
 /**
  * PayPal payment gateway implementation using PayPal REST API.
@@ -548,12 +549,10 @@ class PayPalGateway implements PaymentGatewayInterface {
 			true
 		);
 
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-paypal',
-			WPSS_PLUGIN_URL . 'assets/js/paypal.js',
-			array( 'paypal-sdk', 'jquery' ),
-			WPSS_VERSION,
-			true
+			'assets/js/paypal.js',
+			array( 'paypal-sdk', 'jquery' )
 		);
 
 		wp_localize_script(

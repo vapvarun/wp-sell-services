@@ -36,7 +36,7 @@ wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', arra
 wpss_enqueue_frontend_assets();
 
 // Enqueue requirements form script.
-wp_enqueue_script( 'wpss-requirements-form', WPSS_PLUGIN_URL . 'assets/js/requirements-form.js', array( 'jquery' ), WPSS_VERSION, true );
+\WPSellServices\Assets\ScriptRegistry::enqueue( 'wpss-requirements-form', 'assets/js/requirements-form.js', array( 'jquery' ) );
 wp_localize_script(
 	'wpss-requirements-form',
 	'wpss_ajax',

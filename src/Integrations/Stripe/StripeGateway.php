@@ -14,6 +14,7 @@ namespace WPSellServices\Integrations\Stripe;
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Integrations\Contracts\PaymentGatewayInterface;
+use WPSellServices\Assets\ScriptRegistry;
 
 /**
  * Stripe payment gateway implementation.
@@ -731,12 +732,10 @@ class StripeGateway implements PaymentGatewayInterface {
 			true
 		);
 
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-stripe',
-			WPSS_PLUGIN_URL . 'assets/js/stripe.js',
-			array( 'stripe-js', 'jquery' ),
-			WPSS_VERSION,
-			true
+			'assets/js/stripe.js',
+			array( 'stripe-js', 'jquery' )
 		);
 
 		wp_localize_script(

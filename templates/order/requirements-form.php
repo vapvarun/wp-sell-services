@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', array( 'wpss-design-system' ), WPSS_VERSION );
 
 // Enqueue requirements form script.
-wp_enqueue_script( 'wpss-requirements-form', WPSS_PLUGIN_URL . 'assets/js/requirements-form.js', array( 'jquery' ), WPSS_VERSION, true );
+\WPSellServices\Assets\ScriptRegistry::enqueue( 'wpss-requirements-form', 'assets/js/requirements-form.js', array( 'jquery' ) );
 
 if ( empty( $order_id ) || empty( $order ) ) {
 	return;

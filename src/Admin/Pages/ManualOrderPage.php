@@ -19,6 +19,7 @@ defined( 'ABSPATH' ) || exit;
 use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\ConversationService;
 use WPSellServices\Services\ServiceAddonService;
+use WPSellServices\Assets\ScriptRegistry;
 
 /**
  * Manual Order Page Class.
@@ -80,12 +81,10 @@ class ManualOrderPage {
 		);
 		wp_style_add_data( 'wpss-admin-manual-order', 'rtl', 'replace' );
 
-		wp_enqueue_script(
+		ScriptRegistry::enqueue(
 			'wpss-admin-manual-order',
-			\WPSS_PLUGIN_URL . 'assets/js/admin-manual-order.js',
-			array( 'jquery', 'wpss-admin' ),
-			\WPSS_VERSION,
-			true
+			'assets/js/admin-manual-order.js',
+			array( 'jquery', 'wpss-admin' )
 		);
 
 		$default_rate = CommissionService::get_global_commission_rate();
