@@ -13,7 +13,7 @@
   },
   "rest": {
     "namespace": "wpss/v1",
-    "endpoint_count": 139,
+    "endpoint_count": 142,
     "controllers": [
       {
         "class": "API",
@@ -141,11 +141,11 @@
         "purpose": "Vendor list, profile, stats"
       }
     ],
-    "endpoints_detail_at": "Refresh manifest with --rebuild to enumerate all 138 endpoints individually."
+    "endpoints_detail_at": "Counted by agent enumeration of register_rest_route( calls, not by write-manifest.mjs - the generator undercounts because controllers are registered through an array wrapper. 142 = 134 across 23 *Controller.php files + 7 generic routes in API.php + 1 in Frontend/Tour.php. RestController.php is the shared base class and registers none."
   },
   "ajax": {
-    "handler_count": 106,
-    "handlers_file": "src/Frontend/AjaxHandlers.php (4158 lines, ~106 unique wp_ajax_wpss_* actions)",
+    "handler_count": 111,
+    "handlers_file": "src/Frontend/AjaxHandlers.php plus a small number registered by feature classes; 111 unique wp_ajax_ actions in total (nopriv variants counted once).",
     "handlers_outside_ajaxhandlers": [
       {
         "action": "wpss_stripe_process_payment",
@@ -706,5 +706,13 @@
     "account_billing_layer": "~/.claude/workflows/wbcom-account-billing-standard.md — LOCKED 2026-07-22. Applies to EVERY Wbcom plugin that takes money, not just this one. Billing identity lives on the USER via WooCommerce's billing_* meta keys (plus billing_gst, which Woo lacks), so one address is shared across Learnomy, Eventonomy, WP Sell Services, Career Board, Listora and BuddyNext with no cross-plugin dependency. Orders snapshot the address at payment so invoices cannot be rewritten by a later profile edit. Gateways CONSUME the values, never render or own them. Country and currency lists must be COMPLETE and come from one helper each — a partial list silently excludes customers rather than failing visibly. This plugin is the reference implementation.",
     "reference_implementation": "wpss_get_billing_fields() / wpss_get_billing_address() / wpss_save_billing_address() / wpss_is_billing_address_complete() / wpss_get_countries() / wpss_get_currency_registry() in src/functions.php; wpss_orders.billing_address JSON snapshot; templates/partials/billing-fields.php. Commits a86b867, 7655e99, d97f1f0, b6d18c4.",
     "billing_display_authority": "templates/partials/billing-summary.php is THE ONLY read-only billing renderer — buyer order view (templates/order/order-view.php), admin order screen (Admin::render_order_detail) and any future invoice/export all include this one partial, so the customer and the admin can never be shown different invoice detail. It accepts BOTH shapes billing_address arrives in (ServiceOrder decodes to array; admin passes a raw $wpdb row where it is still a JSON string) rather than forcing callers to hydrate a model. It reads the ORDER SNAPSHOT only and never falls back to the live profile — a fallback would show an address the buyer was not billed under. Pre-1.5.0 orders have no snapshot and render nothing. Editable counterpart is billing-fields.php; the two must stay in step. Styled in design-system.css AND admin.css because design-system.css is not enqueued in wp-admin. Commit 894161d."
+  },
+  "hooks": {
+    "actions_fired": 128,
+    "filters_exposed": 152,
+    "_note": "Unique do_action()/apply_filters() literals in src/. Enumerated by hand for 1.3.1."
+  },
+  "cli": {
+    "command_count": 6
   }
 }
