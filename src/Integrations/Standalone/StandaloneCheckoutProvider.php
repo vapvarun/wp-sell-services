@@ -1072,69 +1072,18 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 				<?php
 				/*
-				 * Checkout badges state what THIS purchase actually includes.
+				 * Reassurance badges are the SITE OWNER'S words, edited under
+				 * Settings > General > Checkout Reassurance. This is a public page a
+				 * buyer reads while paying, so the plugin must not put claims in the
+				 * owner's mouth - it previously printed "On-time Delivery / Or your
+				 * money back", a refund promise nothing in the code honours, and
+				 * "Unlimited revisions" on packages that include two.
 				 *
-				 * They were three hardcoded marketing lines, two of them untrue:
-				 *
-				 *  - "On-time Delivery / Or your money back" promised a refund the
-				 *    plugin does not implement. There is a delivery deadline and an
-				 *    is_late() check, but nothing refunds a late order. That is a
-				 *    binding promise printed at the moment of payment which no code
-				 *    honours and no site owner agreed to - the owner's problem, not
-				 *    just wrong copy. An owner who really offers it can add it back
-				 *    through the filter below.
-				 *
-				 *  - "Unlimited revisions in your plan" contradicted the order.
-				 *    Revisions are a per-package count and only -1 means unlimited,
-				 *    so a buyer paying for a 2-revision package was told at checkout
-				 *    they had unlimited.
-				 *
-				 * What remains is read from the package being bought.
+				 * Where the owner has left a row blank we fall back to facts about
+				 * the package being bought, so a badge can never contradict the order
+				 * beside it.
 				 */
-				$pkg_revisions = isset( $selected_package['revisions'] ) ? (int) $selected_package['revisions'] : null;
-				$pkg_delivery  = isset( $selected_package['delivery_days'] ) ? (int) $selected_package['delivery_days'] : 0;
-
-				$badges = array();
-
-				if ( $pkg_delivery > 0 ) {
-					$badges[] = array(
-						'icon'  => "\xE2\x8F\xB1",
-						'title' => __( 'Delivery time', 'wp-sell-services' ),
-						/* translators: %d: number of days. */
-						'note'  => sprintf( _n( '%d day from requirements', '%d days from requirements', $pkg_delivery, 'wp-sell-services' ), $pkg_delivery ),
-					);
-				}
-
-				$badges[] = array(
-					'icon'  => "\xF0\x9F\x92\xAC",
-					'title' => __( 'Direct communication', 'wp-sell-services' ),
-					'note'  => __( 'Message your seller on the order', 'wp-sell-services' ),
-				);
-
-				if ( null !== $pkg_revisions ) {
-					$badges[] = array(
-						'icon'  => "\xE2\x9C\x85",
-						'title' => __( 'Revisions', 'wp-sell-services' ),
-						'note'  => -1 === $pkg_revisions
-							? __( 'Unlimited revisions included', 'wp-sell-services' )
-							/* translators: %d: number of revisions. */
-							: sprintf( _n( '%d revision included', '%d revisions included', $pkg_revisions, 'wp-sell-services' ), $pkg_revisions ),
-					);
-				}
-
-				/**
-				 * Filter the checkout reassurance badges.
-				 *
-				 * Add a money-back or satisfaction guarantee here if the site
-				 * genuinely offers one - the plugin will not claim it on the
-				 * owner's behalf.
-				 *
-				 * @since 1.3.1
-				 *
-				 * @param array $badges  Each entry: icon, title, note.
-				 * @param mixed $service Service being purchased.
-				 */
-				$badges = (array) apply_filters( 'wpss_checkout_badges', $badges, $service );
+				$badges = wpss_get_checkout_badges( is_array( $selected_package ) ? $selected_package : array() );
 				?>
 				<?php if ( ! empty( $badges ) ) : ?>
 				<div class="wpss-co-guarantees-bar">

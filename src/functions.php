@@ -3809,6 +3809,123 @@ function wpss_uses_standalone_payments(): bool {
 }
 
 /**
+ * Default checkout reassurance badges.
+ *
+ * ONE definition, used by the settings screen (as placeholders) and by the
+ * checkout (as fallbacks), so what an owner sees while editing is exactly what
+ * a buyer gets when a row is left blank.
+ *
+ * Every default is a statement of fact the plugin can back up. Nothing here
+ * promises a refund, a guarantee or an outcome - the checkout used to say
+ * "On-time Delivery / Or your money back", which no code in this plugin
+ * honours and no owner agreed to. An owner who genuinely offers that can type
+ * it in; we will not say it on their behalf.
+ *
+ * `delivery` and `revisions` carry no default sub-text because theirs comes
+ * from the package being bought - see wpss_get_checkout_badges().
+ *
+ * @since 1.3.1
+ *
+ * @return array<string, array<string, string>> Keyed by badge id.
+ */
+function wpss_get_checkout_badge_defaults(): array {
+	return array(
+		'delivery'      => array(
+			'label' => __( 'Delivery time', 'wp-sell-services' ),
+			'title' => __( 'Delivery time', 'wp-sell-services' ),
+			'note'  => '',
+		),
+		'communication' => array(
+			'label' => __( 'Communication', 'wp-sell-services' ),
+			'title' => __( 'Direct communication', 'wp-sell-services' ),
+			'note'  => __( 'Message your seller on the order', 'wp-sell-services' ),
+		),
+		'revisions'     => array(
+			'label' => __( 'Revisions', 'wp-sell-services' ),
+			'title' => __( 'Revisions', 'wp-sell-services' ),
+			'note'  => '',
+		),
+	);
+}
+
+/**
+ * Build the checkout reassurance badges for a purchase.
+ *
+ * Owner text wins; where they have left a row blank we fall back to the real
+ * numbers on the package being bought, so the badge can never contradict the
+ * order it sits next to.
+ *
+ * @since 1.3.1
+ *
+ * @param array<string, mixed> $package Package being purchased.
+ * @return array<int, array<string, string>> Renderable badges.
+ */
+function wpss_get_checkout_badges( array $package ): array {
+	$settings = get_option( 'wpss_general', array() );
+
+	if ( isset( $settings['checkout_badges_enabled'] ) && ! $settings['checkout_badges_enabled'] ) {
+		return array();
+	}
+
+	$owner    = isset( $settings['checkout_badges'] ) && is_array( $settings['checkout_badges'] ) ? $settings['checkout_badges'] : array();
+	$defaults = wpss_get_checkout_badge_defaults();
+
+	$days      = isset( $package['delivery_days'] ) ? (int) $package['delivery_days'] : 0;
+	$revisions = isset( $package['revisions'] ) ? (int) $package['revisions'] : null;
+
+	// Facts about THIS purchase, used when the owner has not written their own.
+	$fallback_notes = array(
+		'delivery'  => $days > 0
+			/* translators: %d: number of days. */
+			? sprintf( _n( '%d day from requirements', '%d days from requirements', $days, 'wp-sell-services' ), $days )
+			: '',
+		'revisions' => null === $revisions
+			? ''
+			: ( -1 === $revisions
+				? __( 'Unlimited revisions included', 'wp-sell-services' )
+				/* translators: %d: number of revisions. */
+				: sprintf( _n( '%d revision included', '%d revisions included', $revisions, 'wp-sell-services' ), $revisions ) ),
+	);
+
+	$icons = array(
+		'delivery'      => "\xE2\x8F\xB1",
+		'communication' => "\xF0\x9F\x92\xAC",
+		'revisions'     => "\xE2\x9C\x85",
+	);
+
+	$badges = array();
+
+	foreach ( $defaults as $key => $default ) {
+		$title = trim( (string) ( $owner[ $key ]['title'] ?? '' ) );
+		$note  = trim( (string) ( $owner[ $key ]['note'] ?? '' ) );
+
+		$title = '' !== $title ? $title : $default['title'];
+		$note  = '' !== $note ? $note : ( $fallback_notes[ $key ] ?? $default['note'] );
+
+		// Nothing true to say about this one for this package - say nothing.
+		if ( '' === $note ) {
+			continue;
+		}
+
+		$badges[] = array(
+			'icon'  => $icons[ $key ] ?? '',
+			'title' => $title,
+			'note'  => $note,
+		);
+	}
+
+	/**
+	 * Filter the checkout reassurance badges.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param array $badges  Each entry: icon, title, note.
+	 * @param array $package Package being purchased.
+	 */
+	return (array) apply_filters( 'wpss_checkout_badges', $badges, $package );
+}
+
+/**
  * Whether the plugin is running payments in demo mode.
  *
  * A fresh install is meant to work end to end from the first minute. Until

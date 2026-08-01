@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-01T07:43:50+00:00\n"
+"POT-Creation-Date: 2026-08-01T07:48:22+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -87,7 +87,7 @@ msgstr ""
 #: src/Admin/Admin.php:986
 #: src/Admin/Pages/SetupWizardPage.php:331
 #: src/Admin/Pages/SetupWizardPage.php:389
-#: src/Admin/Settings.php:1099
+#: src/Admin/Settings.php:1139
 #: src/Core/Activator.php:357
 #: src/Frontend/UnifiedDashboard.php:731
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:176
@@ -97,7 +97,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:461
 #: src/Admin/Pages/SetupWizardPage.php:332
-#: src/Admin/Settings.php:1110
+#: src/Admin/Settings.php:1150
 #: src/Core/Activator.php:361
 #: src/Frontend/ServiceWizard.php:2253
 #: src/Frontend/UnifiedDashboard.php:837
@@ -107,7 +107,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:462
 #: src/Admin/Pages/SetupWizardPage.php:333
-#: src/Admin/Settings.php:1101
+#: src/Admin/Settings.php:1141
 #: src/Core/Activator.php:370
 msgid "Service Checkout"
 msgstr ""
@@ -121,7 +121,7 @@ msgid "The following pages need to be set up"
 msgstr ""
 
 #: src/Admin/Admin.php:489
-#: src/Admin/Settings.php:2255
+#: src/Admin/Settings.php:2349
 msgid "Run Setup Wizard"
 msgstr ""
 
@@ -284,7 +284,7 @@ msgid "Page Created!"
 msgstr ""
 
 #: src/Admin/Admin.php:888
-#: src/Admin/Settings.php:2956
+#: src/Admin/Settings.php:3050
 msgid "Create Page"
 msgstr ""
 
@@ -306,8 +306,8 @@ msgstr ""
 #: src/Frontend/Shortcodes.php:1264
 #: src/Frontend/UnifiedDashboard.php:141
 #: src/Integrations/PayPal/PayPalGateway.php:566
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1321
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1871
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1270
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1820
 #: src/Integrations/Stripe/StripeGateway.php:839
 #: templates/dashboard/sections/create-request.php:230
 #: templates/dashboard/sections/edit-request.php:277
@@ -324,7 +324,7 @@ msgid "Sending..."
 msgstr ""
 
 #: src/Admin/Admin.php:909
-#: src/Admin/Settings.php:2182
+#: src/Admin/Settings.php:2276
 msgid "Send Test Email"
 msgstr ""
 
@@ -356,7 +356,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:933
 #: src/Admin/Pages/SetupWizardPage.php:597
-#: src/Admin/Settings.php:2216
+#: src/Admin/Settings.php:2310
 msgid "Import Demo Content"
 msgstr ""
 
@@ -381,7 +381,7 @@ msgid "Deletion failed."
 msgstr ""
 
 #: src/Admin/Admin.php:939
-#: src/Admin/Settings.php:2209
+#: src/Admin/Settings.php:2303
 msgid "Delete Demo Content"
 msgstr ""
 
@@ -664,7 +664,7 @@ msgstr ""
 #: src/Frontend/SingleServiceView.php:139
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:487
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:982
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1742
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1691
 #: templates/cart/cart.php:442
 #: templates/emails/new-order.php:83
 #: templates/emails/order-completed.php:91
@@ -868,8 +868,8 @@ msgid "Delivered"
 msgstr ""
 
 #: src/Admin/Admin.php:1599
-#: src/Admin/Settings.php:1033
-#: src/Admin/Settings.php:3158
+#: src/Admin/Settings.php:1073
+#: src/Admin/Settings.php:3269
 #: src/functions.php:2544
 #: src/functions.php:3373
 #: src/Models/Notification.php:270
@@ -969,7 +969,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:973
 #: src/Frontend/ServiceWizard.php:96
 #: src/Frontend/SingleServiceView.php:395
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1196
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1145
 msgid "Requirements"
 msgstr ""
 
@@ -1591,7 +1591,7 @@ msgid "%d days left"
 msgstr ""
 
 #: src/Admin/Metaboxes/OrderMetabox.php:297
-#: src/Admin/Settings.php:2318
+#: src/Admin/Settings.php:2412
 msgid "Not set"
 msgstr ""
 
@@ -1621,6 +1621,7 @@ msgid "Service not found"
 msgstr ""
 
 #: src/Admin/Metaboxes/OrderMetabox.php:411
+#: src/Admin/Settings.php:1963
 msgid "Item"
 msgstr ""
 
@@ -2039,7 +2040,8 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:1464
 #: src/Frontend/ServiceWizard.php:737
 #: src/Frontend/SingleServiceView.php:153
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1117
+#: src/functions.php:3844
+#: src/functions.php:3845
 #: templates/partials/service-packages.php:151
 msgid "Revisions"
 msgstr ""
@@ -2644,7 +2646,7 @@ msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:363
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:907
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1693
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1642
 #: templates/dashboard/sections/earnings.php:141
 msgid "Payment Method"
 msgstr ""
@@ -2826,7 +2828,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/Pages/NotificationsPage.php:294
-#: src/functions.php:5287
+#: src/functions.php:5404
 #: src/Integrations/Stripe/StripeGateway.php:1398
 msgid "Read"
 msgstr ""
@@ -2834,7 +2836,7 @@ msgstr ""
 #: src/Admin/Pages/ReviewModerationPage.php:104
 #: src/Admin/Pages/ReviewModerationPage.php:112
 #: src/Admin/Pages/ReviewModerationPage.php:281
-#: src/Admin/Settings.php:867
+#: src/Admin/Settings.php:907
 msgid "Review Moderation"
 msgstr ""
 
@@ -2945,7 +2947,7 @@ msgstr ""
 
 #: src/Admin/Pages/ReviewModerationPage.php:390
 #: src/Frontend/ServiceWizard.php:104
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1204
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1153
 msgid "Review"
 msgstr ""
 
@@ -3041,7 +3043,7 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:127
 #: src/Admin/Pages/ServiceModerationPage.php:348
 #: src/Admin/Pages/ServiceModerationPage.php:1218
-#: src/Admin/Settings.php:852
+#: src/Admin/Settings.php:892
 msgid "Service Moderation"
 msgstr ""
 
@@ -3081,8 +3083,8 @@ msgstr ""
 #: src/Frontend/UnifiedDashboard.php:131
 #: src/Integrations/Gateways/OfflineGateway.php:633
 #: src/Integrations/PayPal/PayPalGateway.php:565
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1289
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1840
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1238
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1789
 #: src/Integrations/Stripe/StripeGateway.php:838
 #: templates/dashboard/sections/earnings.php:387
 msgid "Processing..."
@@ -3176,8 +3178,8 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:550
 #: src/Admin/Pages/VendorsPage.php:774
 #: src/Admin/Pages/VendorsPage.php:1752
-#: src/Admin/Settings.php:2964
-#: src/Admin/Settings.php:2969
+#: src/Admin/Settings.php:3058
+#: src/Admin/Settings.php:3063
 #: src/Admin/Tables/DisputesListTable.php:117
 #: src/Admin/Tables/OrdersListTable.php:119
 #: src/Frontend/Shortcodes.php:715
@@ -3253,7 +3255,7 @@ msgstr ""
 
 #: src/Admin/Pages/SetupWizardPage.php:61
 #: src/Admin/Pages/SetupWizardPage.php:62
-#: src/Admin/Settings.php:1874
+#: src/Admin/Settings.php:1914
 msgid "Setup Wizard"
 msgstr ""
 
@@ -3305,7 +3307,7 @@ msgstr ""
 
 #: src/Admin/Pages/SetupWizardPage.php:390
 #: src/Admin/Pages/SetupWizardPage.php:540
-#: src/Admin/Settings.php:816
+#: src/Admin/Settings.php:856
 msgid "Vendor Registration"
 msgstr ""
 
@@ -3332,7 +3334,7 @@ msgid "Marketplace Name"
 msgstr ""
 
 #: src/Admin/Pages/SetupWizardPage.php:429
-#: src/Admin/Settings.php:541
+#: src/Admin/Settings.php:581
 msgid "Commission Rate (%)"
 msgstr ""
 
@@ -3447,8 +3449,8 @@ msgid "Add"
 msgstr ""
 
 #: src/Admin/Pages/SetupWizardPage.php:536
-#: src/Admin/Settings.php:809
-#: src/Admin/Settings.php:2101
+#: src/Admin/Settings.php:849
+#: src/Admin/Settings.php:2195
 msgid "Vendor Settings"
 msgstr ""
 
@@ -3615,7 +3617,7 @@ msgstr ""
 
 #: src/Admin/Pages/UpgradePage.php:186
 #: src/Admin/Settings.php:84
-#: src/Admin/Settings.php:1592
+#: src/Admin/Settings.php:1632
 msgid "Payment Gateways"
 msgstr ""
 
@@ -3760,7 +3762,7 @@ msgstr ""
 #: src/Admin/ProTeaser.php:154
 #: src/Admin/ProTeaser.php:189
 #: src/Admin/ProTeaser.php:221
-#: src/Admin/Settings.php:1451
+#: src/Admin/Settings.php:1491
 msgid "Pro"
 msgstr ""
 
@@ -4221,7 +4223,7 @@ msgid "Availability"
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1636
-#: src/Admin/Settings.php:2886
+#: src/Admin/Settings.php:2980
 msgid "Available"
 msgstr ""
 
@@ -4261,7 +4263,7 @@ msgstr ""
 #: src/Blocks/BlocksManager.php:153
 #: src/Blocks/ServiceGrid.php:213
 #: src/Frontend/Shortcodes.php:169
-#: src/functions.php:4910
+#: src/functions.php:5027
 #: src/PostTypes/ServicePostType.php:183
 msgid "No services found."
 msgstr ""
@@ -4628,7 +4630,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:74
 #: src/Admin/Pages/WithdrawalsPage.php:75
 #: src/Admin/Pages/WithdrawalsPage.php:367
-#: src/Admin/Settings.php:1671
+#: src/Admin/Settings.php:1711
 msgid "Withdrawals"
 msgstr ""
 
@@ -4921,7 +4923,7 @@ msgid "SYSTEM"
 msgstr ""
 
 #: src/Admin/Settings.php:270
-#: src/Admin/Settings.php:2335
+#: src/Admin/Settings.php:2429
 msgid "Reveal"
 msgstr ""
 
@@ -4978,274 +4980,290 @@ msgid "E-Commerce Platform"
 msgstr ""
 
 #: src/Admin/Settings.php:534
+msgid "Checkout Reassurance"
+msgstr ""
+
+#: src/Admin/Settings.php:541
+msgid "Show reassurance badges"
+msgstr ""
+
+#: src/Admin/Settings.php:548
+msgid "Display a short row of reassurance items on the checkout page."
+msgstr ""
+
+#: src/Admin/Settings.php:555
+msgid "Badge text"
+msgstr ""
+
+#: src/Admin/Settings.php:574
 msgid "Platform Commission"
 msgstr ""
 
-#: src/Admin/Settings.php:552
+#: src/Admin/Settings.php:592
 msgid "Platform commission deducted from each order. Example: 20% on a $100 order = you keep $20, vendor gets $80."
 msgstr ""
 
-#: src/Admin/Settings.php:558
+#: src/Admin/Settings.php:598
 msgid "Per-Vendor Rates"
 msgstr ""
 
-#: src/Admin/Settings.php:565
+#: src/Admin/Settings.php:605
 msgid "Allow custom commission rates per vendor (configured in vendor profile)"
 msgstr ""
 
-#: src/Admin/Settings.php:567
+#: src/Admin/Settings.php:607
 msgid "Allow setting custom commission rates per vendor in their admin profile. Per-vendor rates override the default above."
 msgstr ""
 
-#: src/Admin/Settings.php:573
+#: src/Admin/Settings.php:613
 msgid "Tip Commission Rate (%)"
 msgstr ""
 
-#: src/Admin/Settings.php:584
+#: src/Admin/Settings.php:624
 msgid "Cut the platform keeps on tips. Leave empty to use the main commission rate (vendors receive the same net cut as on regular orders). Set to 0 to give vendors 100% of every tip."
 msgstr ""
 
-#: src/Admin/Settings.php:597
+#: src/Admin/Settings.php:637
 msgid "Withdrawal Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:613
+#: src/Admin/Settings.php:653
 msgid "Wallet Provider"
 msgstr ""
 
-#: src/Admin/Settings.php:621
+#: src/Admin/Settings.php:661
 msgid "Minimum Withdrawal"
 msgstr ""
 
-#: src/Admin/Settings.php:632
+#: src/Admin/Settings.php:672
 msgid "Vendors must earn at least this amount before they can request a withdrawal. Recommended: $50-$100 for most marketplaces."
 msgstr ""
 
-#: src/Admin/Settings.php:653
+#: src/Admin/Settings.php:693
 msgid "Clearance Period (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:664
+#: src/Admin/Settings.php:704
 msgid "Days to hold earnings after an order completes, before a vendor can be paid. 0 pays out as soon as an order completes. A hold is your refund window: if a refund lands after you have already paid the vendor, their balance goes negative and future earnings clear it — a hold avoids that situation entirely. 7 = weekly, 14 = fortnightly, 30 = monthly."
 msgstr ""
 
-#: src/Admin/Settings.php:670
+#: src/Admin/Settings.php:710
 msgid "Automatic Withdrawals"
 msgstr ""
 
-#: src/Admin/Settings.php:677
+#: src/Admin/Settings.php:717
 msgid "Enable Auto-Withdrawal"
 msgstr ""
 
-#: src/Admin/Settings.php:684
+#: src/Admin/Settings.php:724
 msgid "Automatically process withdrawals for high-earning vendors"
 msgstr ""
 
-#: src/Admin/Settings.php:691
+#: src/Admin/Settings.php:731
 msgid "Auto-Withdrawal Threshold"
 msgstr ""
 
-#: src/Admin/Settings.php:702
+#: src/Admin/Settings.php:742
 msgid "Vendors with available balance above this amount are automatically paid on the schedule below. Set to 0 to disable auto-withdrawals."
 msgstr ""
 
-#: src/Admin/Settings.php:708
+#: src/Admin/Settings.php:748
 msgid "Auto-Withdrawal Schedule"
 msgstr ""
 
-#: src/Admin/Settings.php:716
+#: src/Admin/Settings.php:756
 msgid "Weekly (every Monday)"
 msgstr ""
 
-#: src/Admin/Settings.php:717
+#: src/Admin/Settings.php:757
 msgid "Bi-weekly (1st and 15th)"
 msgstr ""
 
-#: src/Admin/Settings.php:718
+#: src/Admin/Settings.php:758
 msgid "Monthly (1st of month)"
 msgstr ""
 
-#: src/Admin/Settings.php:721
+#: src/Admin/Settings.php:761
 msgid "How often automatic withdrawals are processed for eligible vendors."
 msgstr ""
 
-#: src/Admin/Settings.php:734
+#: src/Admin/Settings.php:774
 msgid "Tax Configuration"
 msgstr ""
 
-#: src/Admin/Settings.php:741
+#: src/Admin/Settings.php:781
 msgid "Enable Tax"
 msgstr ""
 
-#: src/Admin/Settings.php:748
+#: src/Admin/Settings.php:788
 msgid "Enable tax calculation on service orders"
 msgstr ""
 
-#: src/Admin/Settings.php:750
+#: src/Admin/Settings.php:790
 msgid "Add tax to service orders at checkout. Only applies to standalone checkout — WooCommerce uses its own tax settings."
 msgstr ""
 
-#: src/Admin/Settings.php:756
+#: src/Admin/Settings.php:796
 msgid "Tax Label"
 msgstr ""
 
-#: src/Admin/Settings.php:763
-#: src/Admin/Settings.php:3091
+#: src/Admin/Settings.php:803
+#: src/Admin/Settings.php:3202
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:468
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1356
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1305
 msgid "Tax"
 msgstr ""
 
-#: src/Admin/Settings.php:764
+#: src/Admin/Settings.php:804
 msgid "Label shown to buyers at checkout and in emails (e.g., VAT, GST, Sales Tax)."
 msgstr ""
 
-#: src/Admin/Settings.php:770
+#: src/Admin/Settings.php:810
 msgid "Tax Rate (%)"
 msgstr ""
 
-#: src/Admin/Settings.php:781
+#: src/Admin/Settings.php:821
 msgid "Default tax rate applied to all services."
 msgstr ""
 
-#: src/Admin/Settings.php:787
+#: src/Admin/Settings.php:827
 msgid "Prices Include Tax"
 msgstr ""
 
-#: src/Admin/Settings.php:794
+#: src/Admin/Settings.php:834
 msgid "Service prices already include tax (display tax as part of price)"
 msgstr ""
 
-#: src/Admin/Settings.php:796
+#: src/Admin/Settings.php:836
 msgid "When enabled, displayed prices already include tax. When disabled, tax is added on top at checkout."
 msgstr ""
 
-#: src/Admin/Settings.php:824
+#: src/Admin/Settings.php:864
 msgid "Open (anyone can register)"
 msgstr ""
 
-#: src/Admin/Settings.php:825
+#: src/Admin/Settings.php:865
 msgid "Requires Approval"
 msgstr ""
 
-#: src/Admin/Settings.php:826
+#: src/Admin/Settings.php:866
 msgid "Closed (admin only)"
 msgstr ""
 
-#: src/Admin/Settings.php:834
+#: src/Admin/Settings.php:874
 msgid "Max Services per Vendor"
 msgstr ""
 
-#: src/Admin/Settings.php:844
+#: src/Admin/Settings.php:884
 msgid "Maximum services each vendor can publish. Set to 0 for unlimited. Vendors see an error when they reach the limit."
 msgstr ""
 
-#: src/Admin/Settings.php:859
+#: src/Admin/Settings.php:899
 msgid "Require admin approval before services are published"
 msgstr ""
 
-#: src/Admin/Settings.php:861
+#: src/Admin/Settings.php:901
 msgid "New services require admin approval before becoming visible to buyers. Manage pending services in the Moderation page."
 msgstr ""
 
-#: src/Admin/Settings.php:874
+#: src/Admin/Settings.php:914
 msgid "Hold new reviews for admin approval before they are published"
 msgstr ""
 
-#: src/Admin/Settings.php:876
+#: src/Admin/Settings.php:916
 msgid "New reviews land as pending and appear on the Review Moderation page until approved."
 msgstr ""
 
-#: src/Admin/Settings.php:889
-#: src/Admin/Settings.php:2123
+#: src/Admin/Settings.php:929
+#: src/Admin/Settings.php:2217
 msgid "Order Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:896
+#: src/Admin/Settings.php:936
 msgid "Auto-Complete Days"
 msgstr ""
 
-#: src/Admin/Settings.php:906
+#: src/Admin/Settings.php:946
 msgid "Days after vendor submits delivery before the order auto-completes if buyer does not respond. Set to 0 to require buyer action."
 msgstr ""
 
-#: src/Admin/Settings.php:914
+#: src/Admin/Settings.php:954
 msgid "Allow Disputes"
 msgstr ""
 
-#: src/Admin/Settings.php:921
+#: src/Admin/Settings.php:961
 msgid "Allow buyers to open disputes on orders"
 msgstr ""
 
-#: src/Admin/Settings.php:928
+#: src/Admin/Settings.php:968
 msgid "Dispute Window (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:938
+#: src/Admin/Settings.php:978
 msgid "Days after order completion during which buyers can open a dispute. After this window, disputes are locked."
 msgstr ""
 
-#: src/Admin/Settings.php:944
+#: src/Admin/Settings.php:984
 msgid "Auto-Dispute Late Orders (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:954
+#: src/Admin/Settings.php:994
 msgid "Automatically open a dispute if delivery is overdue by this many days past the deadline. Set to 0 to disable."
 msgstr ""
 
-#: src/Admin/Settings.php:960
+#: src/Admin/Settings.php:1000
 msgid "Late Requirements Submission"
 msgstr ""
 
-#: src/Admin/Settings.php:967
+#: src/Admin/Settings.php:1007
 msgid "Allow buyers to submit requirements after work has started"
 msgstr ""
 
-#: src/Admin/Settings.php:969
+#: src/Admin/Settings.php:1009
 msgid "If enabled, buyers can submit requirements even if the order is already in progress without them."
 msgstr ""
 
-#: src/Admin/Settings.php:975
+#: src/Admin/Settings.php:1015
 msgid "Requirements Timeout (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:985
+#: src/Admin/Settings.php:1025
 msgid "Days to wait for buyer to submit requirements before the order auto-starts or auto-cancels (see next setting). Set to 0 to disable."
 msgstr ""
 
-#: src/Admin/Settings.php:991
+#: src/Admin/Settings.php:1031
 msgid "Auto-Start on Timeout"
 msgstr ""
 
-#: src/Admin/Settings.php:998
+#: src/Admin/Settings.php:1038
 msgid "Auto-start order when requirements timeout is reached"
 msgstr ""
 
-#: src/Admin/Settings.php:1000
+#: src/Admin/Settings.php:1040
 msgid "If enabled, the order starts without requirements. If disabled, the order is cancelled instead."
 msgstr ""
 
-#: src/Admin/Settings.php:1013
-#: src/Admin/Settings.php:2151
+#: src/Admin/Settings.php:1053
+#: src/Admin/Settings.php:2245
 msgid "Email Notifications"
 msgstr ""
 
-#: src/Admin/Settings.php:1028
-#: src/Admin/Settings.php:3153
+#: src/Admin/Settings.php:1068
+#: src/Admin/Settings.php:3264
 #: src/functions.php:3368
 #: src/Models/Notification.php:264
 msgid "New Order"
 msgstr ""
 
-#: src/Admin/Settings.php:1029
-#: src/Admin/Settings.php:3154
+#: src/Admin/Settings.php:1069
+#: src/Admin/Settings.php:3265
 #: src/Models/Notification.php:268
 #: src/Services/NotificationService.php:499
 msgid "Order Completed"
 msgstr ""
 
-#: src/Admin/Settings.php:1030
-#: src/Admin/Settings.php:3155
+#: src/Admin/Settings.php:1070
+#: src/Admin/Settings.php:3266
 #: src/Models/Notification.php:269
 #: src/Services/EmailService.php:1142
 #: src/Services/NotificationService.php:620
@@ -5255,8 +5273,8 @@ msgstr ""
 msgid "Order Cancelled"
 msgstr ""
 
-#: src/Admin/Settings.php:1031
-#: src/Admin/Settings.php:3156
+#: src/Admin/Settings.php:1071
+#: src/Admin/Settings.php:3267
 #: src/API/OrdersController.php:1702
 #: src/functions.php:2543
 #: src/Models/ServiceOrder.php:612
@@ -5267,32 +5285,32 @@ msgstr ""
 msgid "Cancellation Requested"
 msgstr ""
 
-#: src/Admin/Settings.php:1032
-#: src/Admin/Settings.php:3157
+#: src/Admin/Settings.php:1072
+#: src/Admin/Settings.php:3268
 #: src/functions.php:3371
 msgid "Delivery Submitted"
 msgstr ""
 
-#: src/Admin/Settings.php:1034
-#: src/Admin/Settings.php:3159
+#: src/Admin/Settings.php:1074
+#: src/Admin/Settings.php:3270
 #: src/functions.php:3370
 #: src/Models/Notification.php:272
 msgid "New Message"
 msgstr ""
 
-#: src/Admin/Settings.php:1035
-#: src/Admin/Settings.php:3160
+#: src/Admin/Settings.php:1075
+#: src/Admin/Settings.php:3271
 msgid "Vendor Direct Message"
 msgstr ""
 
-#: src/Admin/Settings.php:1036
-#: src/Admin/Settings.php:3161
+#: src/Admin/Settings.php:1076
+#: src/Admin/Settings.php:3272
 #: src/functions.php:3374
 msgid "New Review"
 msgstr ""
 
-#: src/Admin/Settings.php:1037
-#: src/Admin/Settings.php:3162
+#: src/Admin/Settings.php:1077
+#: src/Admin/Settings.php:3273
 #: src/functions.php:3375
 #: src/Models/Notification.php:274
 #: src/Services/EmailService.php:1190
@@ -5302,681 +5320,697 @@ msgstr ""
 msgid "Dispute Opened"
 msgstr ""
 
-#: src/Admin/Settings.php:1038
-#: src/Admin/Settings.php:3163
+#: src/Admin/Settings.php:1078
+#: src/Admin/Settings.php:3274
 msgid "Withdrawal Requested"
 msgstr ""
 
-#: src/Admin/Settings.php:1039
-#: src/Admin/Settings.php:3164
+#: src/Admin/Settings.php:1079
+#: src/Admin/Settings.php:3275
 #: src/functions.php:3381
 #: src/Models/Notification.php:281
 #: src/Services/EmailService.php:1461
 msgid "Withdrawal Approved"
 msgstr ""
 
-#: src/Admin/Settings.php:1040
-#: src/Admin/Settings.php:3165
+#: src/Admin/Settings.php:1080
+#: src/Admin/Settings.php:3276
 #: src/functions.php:3382
 #: src/Models/Notification.php:282
 #: src/Services/EmailService.php:1461
 msgid "Withdrawal Rejected"
 msgstr ""
 
-#: src/Admin/Settings.php:1041
-#: src/Admin/Settings.php:3166
+#: src/Admin/Settings.php:1081
+#: src/Admin/Settings.php:3277
 msgid "Proposal Submitted"
 msgstr ""
 
-#: src/Admin/Settings.php:1042
-#: src/Admin/Settings.php:3167
+#: src/Admin/Settings.php:1082
+#: src/Admin/Settings.php:3278
 #: src/Models/Notification.php:278
 msgid "Proposal Accepted"
 msgstr ""
 
-#: src/Admin/Settings.php:1043
-#: src/Admin/Settings.php:3168
+#: src/Admin/Settings.php:1083
+#: src/Admin/Settings.php:3279
 msgid "Tip Received"
 msgstr ""
 
-#: src/Admin/Settings.php:1044
-#: src/Admin/Settings.php:3169
+#: src/Admin/Settings.php:1084
+#: src/Admin/Settings.php:3280
 msgid "Milestone Proposed"
 msgstr ""
 
-#: src/Admin/Settings.php:1045
-#: src/Admin/Settings.php:3170
+#: src/Admin/Settings.php:1085
+#: src/Admin/Settings.php:3281
 msgid "Milestone Paid"
 msgstr ""
 
-#: src/Admin/Settings.php:1046
-#: src/Admin/Settings.php:3171
+#: src/Admin/Settings.php:1086
+#: src/Admin/Settings.php:3282
 msgid "Milestone Delivered"
 msgstr ""
 
-#: src/Admin/Settings.php:1047
-#: src/Admin/Settings.php:3172
+#: src/Admin/Settings.php:1087
+#: src/Admin/Settings.php:3283
 msgid "Milestone Approved"
 msgstr ""
 
-#: src/Admin/Settings.php:1048
-#: src/Admin/Settings.php:3173
+#: src/Admin/Settings.php:1088
+#: src/Admin/Settings.php:3284
 msgid "Extension Proposed"
 msgstr ""
 
-#: src/Admin/Settings.php:1049
-#: src/Admin/Settings.php:3174
+#: src/Admin/Settings.php:1089
+#: src/Admin/Settings.php:3285
 #: src/Models/Notification.php:287
 #: src/Services/ExtensionRequestService.php:341
 msgid "Extension Approved"
 msgstr ""
 
-#: src/Admin/Settings.php:1050
-#: src/Admin/Settings.php:3175
+#: src/Admin/Settings.php:1090
+#: src/Admin/Settings.php:3286
 msgid "Extension Declined"
 msgstr ""
 
 #. translators: %s: notification type
-#: src/Admin/Settings.php:1066
+#: src/Admin/Settings.php:1106
 #, php-format
 msgid "Send email for %s"
 msgstr ""
 
-#: src/Admin/Settings.php:1083
+#: src/Admin/Settings.php:1123
 msgid "Page Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:1097
+#: src/Admin/Settings.php:1137
 msgid "Services Page"
 msgstr ""
 
-#: src/Admin/Settings.php:1098
+#: src/Admin/Settings.php:1138
 msgid "Vendors Directory"
 msgstr ""
 
-#: src/Admin/Settings.php:1100
+#: src/Admin/Settings.php:1140
 #: src/Core/Activator.php:375
 msgid "Service Cart"
 msgstr ""
 
-#: src/Admin/Settings.php:1138
+#: src/Admin/Settings.php:1178
 msgid "Advanced Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:1145
+#: src/Admin/Settings.php:1185
 msgid "Delete Data on Uninstall"
 msgstr ""
 
-#: src/Admin/Settings.php:1152
+#: src/Admin/Settings.php:1192
 msgid "Delete all plugin data when uninstalling"
 msgstr ""
 
-#: src/Admin/Settings.php:1159
+#: src/Admin/Settings.php:1199
 msgid "Debug Mode"
 msgstr ""
 
-#: src/Admin/Settings.php:1166
+#: src/Admin/Settings.php:1206
 msgid "Enable debug logging"
 msgstr ""
 
-#: src/Admin/Settings.php:1173
+#: src/Admin/Settings.php:1213
 msgid "Max File Upload Size (MB)"
 msgstr ""
 
-#: src/Admin/Settings.php:1184
+#: src/Admin/Settings.php:1224
 msgid "Maximum file size in megabytes for uploads."
 msgstr ""
 
-#: src/Admin/Settings.php:1190
+#: src/Admin/Settings.php:1230
 #: src/CustomFields/Fields/FileUploadField.php:140
 msgid "Allowed File Types"
 msgstr ""
 
-#: src/Admin/Settings.php:1198
+#: src/Admin/Settings.php:1238
 msgid "Comma-separated list of allowed file extensions."
 msgstr ""
 
-#: src/Admin/Settings.php:1204
+#: src/Admin/Settings.php:1244
 msgid "Currency Symbol Position"
 msgstr ""
 
-#: src/Admin/Settings.php:1213
+#: src/Admin/Settings.php:1253
 msgid "Before amount ($99)"
 msgstr ""
 
-#: src/Admin/Settings.php:1214
+#: src/Admin/Settings.php:1254
 msgid "After amount (99$)"
 msgstr ""
 
-#: src/Admin/Settings.php:1216
+#: src/Admin/Settings.php:1256
 msgid "Position of the currency symbol relative to the amount."
 msgstr ""
 
-#: src/Admin/Settings.php:1232
+#: src/Admin/Settings.php:1272
 msgid "Real-time Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:1239
+#: src/Admin/Settings.php:1279
 msgid "Enable Real-time Updates"
 msgstr ""
 
-#: src/Admin/Settings.php:1246
+#: src/Admin/Settings.php:1286
 msgid "Push live messages and notifications to logged-in users over WebSockets"
 msgstr ""
 
-#: src/Admin/Settings.php:1253
+#: src/Admin/Settings.php:1293
 msgid "App ID"
 msgstr ""
 
-#: src/Admin/Settings.php:1261
+#: src/Admin/Settings.php:1301
 msgid "The application ID from your Pusher.com app or Soketi configuration."
 msgstr ""
 
-#: src/Admin/Settings.php:1267
+#: src/Admin/Settings.php:1307
 msgid "Key"
 msgstr ""
 
-#: src/Admin/Settings.php:1275
+#: src/Admin/Settings.php:1315
 msgid "The publishable app key. This is shared with browsers; it cannot publish events on its own."
 msgstr ""
 
-#: src/Admin/Settings.php:1281
+#: src/Admin/Settings.php:1321
 msgid "Secret"
 msgstr ""
 
-#: src/Admin/Settings.php:1288
+#: src/Admin/Settings.php:1328
 msgid "Realtime app secret"
 msgstr ""
 
-#: src/Admin/Settings.php:1289
+#: src/Admin/Settings.php:1329
 msgid "The app secret used to sign events and channel authorizations. Never sent to browsers."
 msgstr ""
 
-#: src/Admin/Settings.php:1295
+#: src/Admin/Settings.php:1335
 msgid "Host"
 msgstr ""
 
-#: src/Admin/Settings.php:1303
+#: src/Admin/Settings.php:1343
 msgid "Leave empty for Pusher.com, or enter your self-hosted Pusher-compatible (Soketi) server hostname, e.g. wss-server.example.com."
 msgstr ""
 
-#: src/Admin/Settings.php:1309
+#: src/Admin/Settings.php:1349
 msgid "Cluster"
 msgstr ""
 
-#: src/Admin/Settings.php:1317
+#: src/Admin/Settings.php:1357
 msgid "Pusher.com cluster (e.g. mt1, eu, ap2). Ignored when a custom host is set."
 msgstr ""
 
-#: src/Admin/Settings.php:1323
+#: src/Admin/Settings.php:1363
 msgid "Port"
 msgstr ""
 
-#: src/Admin/Settings.php:1334
+#: src/Admin/Settings.php:1374
 msgid "Server port. 443 for Pusher.com and TLS-terminated Soketi servers."
 msgstr ""
 
-#: src/Admin/Settings.php:1340
+#: src/Admin/Settings.php:1380
 msgid "Use TLS"
 msgstr ""
 
-#: src/Admin/Settings.php:1347
+#: src/Admin/Settings.php:1387
 msgid "Connect over TLS (wss/https) - recommended"
 msgstr ""
 
-#: src/Admin/Settings.php:1370
+#: src/Admin/Settings.php:1410
 msgid "You do not have permission to manage these settings."
 msgstr ""
 
-#: src/Admin/Settings.php:1371
+#: src/Admin/Settings.php:1411
 msgid "Permission denied"
 msgstr ""
 
-#: src/Admin/Settings.php:1385
+#: src/Admin/Settings.php:1425
 msgid "WP Sell Services Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:1388
+#: src/Admin/Settings.php:1428
 msgid "Configure your service marketplace."
 msgstr ""
 
-#: src/Admin/Settings.php:1428
+#: src/Admin/Settings.php:1468
 msgid "SETTINGS"
 msgstr ""
 
-#: src/Admin/Settings.php:1461
+#: src/Admin/Settings.php:1501
 msgid "Documentation"
 msgstr ""
 
-#: src/Admin/Settings.php:1466
+#: src/Admin/Settings.php:1506
 msgid "Get Pro"
 msgstr ""
 
-#: src/Admin/Settings.php:1534
+#: src/Admin/Settings.php:1574
 msgid "GENERAL SETTINGS"
 msgstr ""
 
-#: src/Admin/Settings.php:1535
-#: src/Admin/Settings.php:1892
+#: src/Admin/Settings.php:1575
+#: src/Admin/Settings.php:1932
 msgid "Configure general platform settings."
 msgstr ""
 
-#: src/Admin/Settings.php:1544
+#: src/Admin/Settings.php:1584
 msgid "Save General Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:1561
+#: src/Admin/Settings.php:1601
 msgid "PAGE SETTINGS"
 msgstr ""
 
-#: src/Admin/Settings.php:1562
-#: src/Admin/Settings.php:1976
+#: src/Admin/Settings.php:1602
+#: src/Admin/Settings.php:2070
 msgid "Assign pages for plugin functionality."
 msgstr ""
 
-#: src/Admin/Settings.php:1571
+#: src/Admin/Settings.php:1611
 msgid "Save Page Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:1593
+#: src/Admin/Settings.php:1633
 msgid "Configure how buyers pay for services. Each gateway can be enabled independently."
 msgstr ""
 
-#: src/Admin/Settings.php:1624
+#: src/Admin/Settings.php:1664
 msgid "Commission Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:1625
+#: src/Admin/Settings.php:1665
 msgid "Configure the platform commission deducted from vendor earnings."
 msgstr ""
 
-#: src/Admin/Settings.php:1631
+#: src/Admin/Settings.php:1671
 msgid "Tax Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:1632
+#: src/Admin/Settings.php:1672
 msgid "Configure tax calculation for services."
 msgstr ""
 
-#: src/Admin/Settings.php:1657
+#: src/Admin/Settings.php:1697
 msgid "Payout Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:1658
+#: src/Admin/Settings.php:1698
 msgid "Configure vendor withdrawal and payout settings."
 msgstr ""
 
 #. translators: %s: link to the Withdrawals admin screen.
-#: src/Admin/Settings.php:1670
+#: src/Admin/Settings.php:1710
 #, php-format
 msgid "Work the payout batch itself on the %s screen."
 msgstr ""
 
-#: src/Admin/Settings.php:1701
+#: src/Admin/Settings.php:1741
 msgid "your store plugin"
 msgstr ""
 
-#: src/Admin/Settings.php:1705
+#: src/Admin/Settings.php:1745
 msgid "Payments are handled by"
 msgstr ""
 
-#: src/Admin/Settings.php:1706
+#: src/Admin/Settings.php:1746
 msgid "The gateways below belong to this plugin and are not used while a store plugin is taking payment."
 msgstr ""
 
-#: src/Admin/Settings.php:1707
+#: src/Admin/Settings.php:1747
 msgid "Configure your payment methods in that plugin instead. Switch Ecommerce Platform to Standalone under General if you want this plugin to take payment directly."
 msgstr ""
 
-#: src/Admin/Settings.php:1726
+#: src/Admin/Settings.php:1766
 #: src/Integrations/Gateways/TestGateway.php:68
 msgid "Test Gateway"
 msgstr ""
 
-#: src/Admin/Settings.php:1727
+#: src/Admin/Settings.php:1767
 msgid "Test payment gateway for development. No real charges."
 msgstr ""
 
-#: src/Admin/Settings.php:1735
+#: src/Admin/Settings.php:1775
 #: src/Integrations/Stripe/StripeGateway.php:70
 msgid "Stripe"
 msgstr ""
 
-#: src/Admin/Settings.php:1736
+#: src/Admin/Settings.php:1776
 msgid "Accept credit card payments via Stripe."
 msgstr ""
 
-#: src/Admin/Settings.php:1743
+#: src/Admin/Settings.php:1783
 #: src/API/EarningsController.php:643
 #: src/Integrations/PayPal/PayPalGateway.php:78
 #: src/Services/EarningsService.php:995
 msgid "PayPal"
 msgstr ""
 
-#: src/Admin/Settings.php:1744
+#: src/Admin/Settings.php:1784
 msgid "Accept payments via PayPal."
 msgstr ""
 
-#: src/Admin/Settings.php:1770
+#: src/Admin/Settings.php:1810
 #: src/Integrations/Gateways/OfflineGateway.php:69
 #: src/Integrations/Gateways/OfflineGateway.php:200
 msgid "Offline Payment"
 msgstr ""
 
-#: src/Admin/Settings.php:1771
+#: src/Admin/Settings.php:1811
 msgid "Accept bank transfer, cash, and other manual payments."
 msgstr ""
 
-#: src/Admin/Settings.php:1793
+#: src/Admin/Settings.php:1833
 msgid "Enabled"
 msgstr ""
 
-#: src/Admin/Settings.php:1793
+#: src/Admin/Settings.php:1833
 msgid "Disabled"
 msgstr ""
 
-#: src/Admin/Settings.php:1805
+#: src/Admin/Settings.php:1845
 msgid "Toggle"
 msgstr ""
 
 #. translators: %s: gateway name
-#: src/Admin/Settings.php:1825
+#: src/Admin/Settings.php:1865
 #, php-format
 msgid "Save %s Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:1853
+#: src/Admin/Settings.php:1893
 msgid "System Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:1854
+#: src/Admin/Settings.php:1894
 msgid "Configure advanced system options."
 msgstr ""
 
-#: src/Admin/Settings.php:1860
+#: src/Admin/Settings.php:1900
 msgid "Real-time (WebSockets)"
 msgstr ""
 
-#: src/Admin/Settings.php:1861
+#: src/Admin/Settings.php:1901
 msgid "Push live messages and notifications to logged-in users. Works with Pusher.com or any self-hosted Pusher-compatible server such as Soketi."
 msgstr ""
 
-#: src/Admin/Settings.php:1867
+#: src/Admin/Settings.php:1907
 msgid "Demo Content"
 msgstr ""
 
-#: src/Admin/Settings.php:1868
+#: src/Admin/Settings.php:1908
 msgid "Import sample services, vendors, and categories to preview your marketplace. Demo content can be removed at any time."
 msgstr ""
 
-#: src/Admin/Settings.php:1875
+#: src/Admin/Settings.php:1915
 msgid "Re-run the setup wizard to reconfigure your marketplace settings."
 msgstr ""
 
-#: src/Admin/Settings.php:1901
-msgid "Configure e-commerce platform for service checkout. Standalone checkout is included. Pro adds WooCommerce, EDD, and more."
+#: src/Admin/Settings.php:1942
+msgid "Short reassurance items shown to buyers on the checkout page. These are your words, on your storefront - edit or clear anything you do not want to say."
 msgstr ""
 
-#: src/Admin/Settings.php:1910
-msgid "Configure how much commission the platform takes from each order."
-msgstr ""
-
-#: src/Admin/Settings.php:1919
-msgid "Configure how and when vendors can withdraw their earnings."
-msgstr ""
-
-#: src/Admin/Settings.php:1928
-msgid "Configure automatic withdrawals for high-earning vendors. When enabled, the system will automatically create and process withdrawal requests for vendors who meet the threshold."
-msgstr ""
-
-#: src/Admin/Settings.php:1937
-msgid "Configure tax settings for service transactions. These settings apply when not using an e-commerce platform that handles its own tax calculations."
-msgstr ""
-
-#: src/Admin/Settings.php:1946
-#: src/Admin/Settings.php:2102
-msgid "Configure vendor registration and capabilities."
-msgstr ""
-
-#: src/Admin/Settings.php:1955
-#: src/Admin/Settings.php:2124
-msgid "Configure order workflow and policies."
+#: src/Admin/Settings.php:1943
+msgid "Leave a row empty to hide it. Delivery time and revisions fall back to the real values from the package being bought, so they always match the order."
 msgstr ""
 
 #: src/Admin/Settings.php:1964
-msgid "Configure which email notifications are sent."
+msgid "Heading"
 msgstr ""
 
-#: src/Admin/Settings.php:1966
-msgid "These toggles are the master switch for each notification type. When a notification is disabled here, no email will be sent regardless of other settings."
-msgstr ""
-
-#: src/Admin/Settings.php:1985
-msgid "Advanced configuration options."
+#: src/Admin/Settings.php:1965
+msgid "Sub-text"
 msgstr ""
 
 #: src/Admin/Settings.php:1995
+msgid "Configure e-commerce platform for service checkout. Standalone checkout is included. Pro adds WooCommerce, EDD, and more."
+msgstr ""
+
+#: src/Admin/Settings.php:2004
+msgid "Configure how much commission the platform takes from each order."
+msgstr ""
+
+#: src/Admin/Settings.php:2013
+msgid "Configure how and when vendors can withdraw their earnings."
+msgstr ""
+
+#: src/Admin/Settings.php:2022
+msgid "Configure automatic withdrawals for high-earning vendors. When enabled, the system will automatically create and process withdrawal requests for vendors who meet the threshold."
+msgstr ""
+
+#: src/Admin/Settings.php:2031
+msgid "Configure tax settings for service transactions. These settings apply when not using an e-commerce platform that handles its own tax calculations."
+msgstr ""
+
+#: src/Admin/Settings.php:2040
+#: src/Admin/Settings.php:2196
+msgid "Configure vendor registration and capabilities."
+msgstr ""
+
+#: src/Admin/Settings.php:2049
+#: src/Admin/Settings.php:2218
+msgid "Configure order workflow and policies."
+msgstr ""
+
+#: src/Admin/Settings.php:2058
+msgid "Configure which email notifications are sent."
+msgstr ""
+
+#: src/Admin/Settings.php:2060
+msgid "These toggles are the master switch for each notification type. When a notification is disabled here, no email will be sent regardless of other settings."
+msgstr ""
+
+#: src/Admin/Settings.php:2079
+msgid "Advanced configuration options."
+msgstr ""
+
+#: src/Admin/Settings.php:2089
 msgid "Real-time updates power live order messages and notifications without page refreshes. Paste credentials from a Pusher.com app, or point the host at any self-hosted Pusher-compatible server (e.g. Soketi)."
 msgstr ""
 
 #. translators: %s: section title
-#: src/Admin/Settings.php:2071
+#: src/Admin/Settings.php:2165
 #, php-format
 msgid "Save %s"
 msgstr ""
 
-#: src/Admin/Settings.php:2072
+#: src/Admin/Settings.php:2166
 msgid "Changes"
 msgstr ""
 
-#: src/Admin/Settings.php:2145
+#: src/Admin/Settings.php:2239
 msgid "Email Deliverability"
 msgstr ""
 
-#: src/Admin/Settings.php:2146
+#: src/Admin/Settings.php:2240
 msgid "Verify that your site can send emails. If the test fails, check your SMTP or email sending plugin configuration."
 msgstr ""
 
-#: src/Admin/Settings.php:2152
+#: src/Admin/Settings.php:2246
 msgid "Configure which email notifications are sent. These toggles are the master switch for each notification type."
 msgstr ""
 
 #. translators: %s: admin email address
-#: src/Admin/Settings.php:2176
+#: src/Admin/Settings.php:2270
 #, php-format
 msgid "Send a test email to %s to verify email delivery is working."
 msgstr ""
 
-#: src/Admin/Settings.php:2206
+#: src/Admin/Settings.php:2300
 msgid "Demo content is currently installed."
 msgstr ""
 
-#: src/Admin/Settings.php:2213
+#: src/Admin/Settings.php:2307
 msgid "Creates 20 sample services across 6 categories with 4 demo vendors."
 msgstr ""
 
 #. translators: %s: completion date
-#: src/Admin/Settings.php:2244
+#: src/Admin/Settings.php:2338
 #, php-format
 msgid "Setup wizard was completed on %s."
 msgstr ""
 
-#: src/Admin/Settings.php:2251
+#: src/Admin/Settings.php:2345
 msgid "The setup wizard has not been completed yet."
 msgstr ""
 
-#: src/Admin/Settings.php:2255
+#: src/Admin/Settings.php:2349
 msgid "Re-Run Setup Wizard"
 msgstr ""
 
-#: src/Admin/Settings.php:2317
+#: src/Admin/Settings.php:2411
 msgid "••••••••••••  (saved — leave blank to keep)"
 msgstr ""
 
-#: src/Admin/Settings.php:2343
-#: src/Admin/Settings.php:2355
+#: src/Admin/Settings.php:2437
+#: src/Admin/Settings.php:2449
 msgid "Configured"
 msgstr ""
 
 #. translators: %s: non-secret key prefix, e.g. whsec_
-#: src/Admin/Settings.php:2347
+#: src/Admin/Settings.php:2441
 #, php-format
 msgid "A secret starting with %s is stored. Type a new value to replace it."
 msgstr ""
 
-#: src/Admin/Settings.php:2356
+#: src/Admin/Settings.php:2450
 msgid "A secret is stored. Type a new value to replace it."
 msgstr ""
 
-#: src/Admin/Settings.php:2537
+#: src/Admin/Settings.php:2631
 msgid "Internal Wallet"
 msgstr ""
 
-#: src/Admin/Settings.php:2547
+#: src/Admin/Settings.php:2641
 msgid "Which wallet integration funds and receives marketplace wallet operations. Providers appear here when their plugin is active."
 msgstr ""
 
-#: src/Admin/Settings.php:2576
+#: src/Admin/Settings.php:2670
 msgid "Price Decimal Places"
 msgstr ""
 
-#: src/Admin/Settings.php:2581
+#: src/Admin/Settings.php:2675
 msgid "Decimal places used when formatting prices."
 msgstr ""
 
-#: src/Admin/Settings.php:2588
+#: src/Admin/Settings.php:2682
 msgid "Minimum Order Amount"
 msgstr ""
 
-#: src/Admin/Settings.php:2595
+#: src/Admin/Settings.php:2689
 msgid "Smallest order total buyers can place."
 msgstr ""
 
-#: src/Admin/Settings.php:2602
+#: src/Admin/Settings.php:2696
 msgid "Maximum Order Amount"
 msgstr ""
 
-#: src/Admin/Settings.php:2609
+#: src/Admin/Settings.php:2703
 msgid "Largest order total buyers can place."
 msgstr ""
 
-#: src/Admin/Settings.php:2618
+#: src/Admin/Settings.php:2712
 msgid "Max Extension Days"
 msgstr ""
 
-#: src/Admin/Settings.php:2623
+#: src/Admin/Settings.php:2717
 msgid "Longest deadline extension a vendor can quote on an order."
 msgstr ""
 
-#: src/Admin/Settings.php:2630
+#: src/Admin/Settings.php:2724
 msgid "Buyer Request Expiry (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:2635
+#: src/Admin/Settings.php:2729
 msgid "Open buyer requests expire after this many days."
 msgstr ""
 
-#: src/Admin/Settings.php:2642
+#: src/Admin/Settings.php:2736
 msgid "Dispute Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:2650
+#: src/Admin/Settings.php:2744
 msgid "Response Window (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:2655
+#: src/Admin/Settings.php:2749
 msgid "Days the other party has to respond to a dispute before it can escalate."
 msgstr ""
 
-#: src/Admin/Settings.php:2662
+#: src/Admin/Settings.php:2756
 msgid "Reminder After (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:2667
+#: src/Admin/Settings.php:2761
 msgid "Days of silence before a dispute reminder email is sent."
 msgstr ""
 
-#: src/Admin/Settings.php:2674
+#: src/Admin/Settings.php:2768
 msgid "Auto-Escalate After (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:2679
+#: src/Admin/Settings.php:2773
 msgid "Unresolved disputes escalate to admin review after this many days."
 msgstr ""
 
-#: src/Admin/Settings.php:2686
+#: src/Admin/Settings.php:2780
 msgid "Dispute Notifications Email"
 msgstr ""
 
-#: src/Admin/Settings.php:2692
+#: src/Admin/Settings.php:2786
 msgid "Escalated disputes are sent here. Leave blank to use the site admin email."
 msgstr ""
 
-#: src/Admin/Settings.php:2701
+#: src/Admin/Settings.php:2795
 msgid "Max Portfolio Items"
 msgstr ""
 
-#: src/Admin/Settings.php:2706
+#: src/Admin/Settings.php:2800
 msgid "Portfolio items each vendor can publish."
 msgstr ""
 
-#: src/Admin/Settings.php:2713
+#: src/Admin/Settings.php:2807
 msgid "Max Featured Portfolio Items"
 msgstr ""
 
-#: src/Admin/Settings.php:2718
+#: src/Admin/Settings.php:2812
 msgid "Portfolio items a vendor can mark as featured."
 msgstr ""
 
-#: src/Admin/Settings.php:2727
+#: src/Admin/Settings.php:2821
 msgid "Audit Log Retention (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:2732
+#: src/Admin/Settings.php:2826
 msgid "Audit log entries older than this are pruned. 0 keeps entries forever."
 msgstr ""
 
-#: src/Admin/Settings.php:2738
+#: src/Admin/Settings.php:2832
 msgid "Order Confirmation Page"
 msgstr ""
 
-#: src/Admin/Settings.php:2738
+#: src/Admin/Settings.php:2832
 msgid "Custom thank-you page buyers land on after checkout. Leave unset to use the default order view."
 msgstr ""
 
-#: src/Admin/Settings.php:2739
+#: src/Admin/Settings.php:2833
 msgid "Terms & Conditions Page"
 msgstr ""
 
-#: src/Admin/Settings.php:2739
+#: src/Admin/Settings.php:2833
 msgid "Linked from checkout and exposed to API clients."
 msgstr ""
 
-#: src/Admin/Settings.php:2815
+#: src/Admin/Settings.php:2909
 msgid "— Not set —"
 msgstr ""
 
-#: src/Admin/Settings.php:2880
+#: src/Admin/Settings.php:2974
 msgid "Auto-detect (recommended)"
 msgstr ""
 
-#: src/Admin/Settings.php:2886
+#: src/Admin/Settings.php:2980
 msgid "Not Installed"
 msgstr ""
 
-#: src/Admin/Settings.php:2911
+#: src/Admin/Settings.php:3005
 msgid "Currently Active"
 msgstr ""
 
-#: src/Admin/Settings.php:2917
+#: src/Admin/Settings.php:3011
 msgid "No e-commerce platform detected. Please check your configuration."
 msgstr ""
 
-#: src/Admin/Settings.php:2923
+#: src/Admin/Settings.php:3017
 msgid "Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD, FluentCart, and SureCart."
 msgstr ""
 
-#: src/Admin/Settings.php:2944
+#: src/Admin/Settings.php:3038
 msgid "— Select —"
 msgstr ""
 
@@ -7254,7 +7288,7 @@ msgstr ""
 #: src/API/RestController.php:64
 #: src/API/RestController.php:104
 #: src/API/RestController.php:291
-#: src/functions.php:3905
+#: src/functions.php:4022
 msgid "You must be logged in to access this endpoint."
 msgstr ""
 
@@ -7266,7 +7300,7 @@ msgid "Too many requests. Please try again in %d seconds."
 msgstr ""
 
 #: src/API/RestController.php:112
-#: src/functions.php:3934
+#: src/functions.php:4051
 msgid "You do not have permission to access this endpoint."
 msgstr ""
 
@@ -10187,7 +10221,7 @@ msgstr ""
 #: src/Frontend/ServiceWizard.php:2234
 #: src/Frontend/UnifiedDashboard.php:491
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:747
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1588
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1537
 msgid "Log In"
 msgstr ""
 
@@ -10323,7 +10357,7 @@ msgstr ""
 #: src/Frontend/Shortcodes.php:880
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:244
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:750
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1591
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1540
 msgid "Register"
 msgstr ""
 
@@ -12700,31 +12734,68 @@ msgstr ""
 msgid "Withdrawal Request"
 msgstr ""
 
-#: src/functions.php:3964
+#: src/functions.php:3834
+#: src/functions.php:3835
+msgid "Delivery time"
+msgstr ""
+
+#: src/functions.php:3839
+msgid "Communication"
+msgstr ""
+
+#: src/functions.php:3840
+msgid "Direct communication"
+msgstr ""
+
+#: src/functions.php:3841
+msgid "Message your seller on the order"
+msgstr ""
+
+#. translators: %d: number of days.
+#: src/functions.php:3880
+#, php-format
+msgid "%d day from requirements"
+msgid_plural "%d days from requirements"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/functions.php:3885
+msgid "Unlimited revisions included"
+msgstr ""
+
+#. translators: %d: number of revisions.
+#: src/functions.php:3887
+#, php-format
+msgid "%d revision included"
+msgid_plural "%d revisions included"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/functions.php:4081
 msgid "Only vendors can access this endpoint."
 msgstr ""
 
-#: src/functions.php:4245
+#: src/functions.php:4362
 msgid "Payment Reference"
 msgstr ""
 
-#: src/functions.php:4706
+#: src/functions.php:4823
 msgid "Pagination"
 msgstr ""
 
-#: src/functions.php:4850
+#: src/functions.php:4967
 msgid "Vendor intro video"
 msgstr ""
 
-#: src/functions.php:5001
+#: src/functions.php:5118
 msgid "unsupported file type"
 msgstr ""
 
-#: src/functions.php:5008
+#: src/functions.php:5125
 msgid "invalid MIME type"
 msgstr ""
 
-#: src/functions.php:5013
+#: src/functions.php:5130
 msgid "file too large (max 10MB)"
 msgstr ""
 
@@ -13214,22 +13285,22 @@ msgid "Back to service"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:733
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1575
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1524
 msgid "Secure Checkout"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:741
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1582
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1531
 msgid "Sign in to continue"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:743
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1584
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1533
 msgid "Please log in or create an account to complete your purchase."
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:758
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1598
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1547
 msgid "No payment methods available. Please contact support."
 msgstr ""
 
@@ -13266,7 +13337,7 @@ msgid "Order Payment"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:936
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1720
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1669
 #: templates/cart/cart.php:426
 #: templates/order/order-confirmation.php:84
 #: templates/order/order-view.php:401
@@ -13275,19 +13346,19 @@ msgstr ""
 
 #. translators: %s: formatted price
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:993
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1752
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1701
 #: templates/order/order-view.php:242
 #, php-format
 msgid "Pay %s"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1002
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1760
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1709
 msgid "Secure payment"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1006
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1764
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1713
 msgid "Order protection"
 msgstr ""
 
@@ -13315,96 +13386,64 @@ msgstr ""
 msgid "Verified Buyer"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1102
-msgid "Delivery time"
-msgstr ""
-
-#. translators: %d: number of days.
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1104
-#, php-format
-msgid "%d day from requirements"
-msgid_plural "%d days from requirements"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1110
-msgid "Direct communication"
-msgstr ""
-
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1111
-msgid "Message your seller on the order"
-msgstr ""
-
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1119
-msgid "Unlimited revisions included"
-msgstr ""
-
-#. translators: %d: number of revisions.
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1121
-#, php-format
-msgid "%d revision included"
-msgid_plural "%d revisions included"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1157
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1106
 #: src/Services/NotificationService.php:1384
 msgid "What happens next?"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1164
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1192
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1113
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1141
 msgid "Pay"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1172
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1181
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1121
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1130
 msgid "Seller credited"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1175
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1124
 msgid "Work continues on extended scope"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1178
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1127
 msgid "Seller works on this phase"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1200
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1149
 msgid "Seller Works"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1208
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1157
 msgid "Complete"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1273
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1824
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1222
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1773
 msgid "Please select a payment method."
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1313
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1863
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1262
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1812
 msgid "Payment failed. Please try again."
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1429
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1378
 msgid "Your cart contains no valid services."
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1571
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1520
 msgid "Back to cart"
 msgstr ""
 
 #. translators: %d: number of items
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1630
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1579
 #, php-format
 msgid "Your Order (%d Service)"
 msgid_plural "Your Order (%d Services)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1663
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1612
 msgid "add-on(s)"
 msgstr ""
 

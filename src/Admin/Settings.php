@@ -522,6 +522,46 @@ class Settings {
 			)
 		);
 
+		// Checkout reassurance badges.
+		//
+		// These print on a PUBLIC page a buyer reads while paying, so the words
+		// belong to the site owner, not to us. The plugin ships factual
+		// defaults derived from the package being bought and never asserts a
+		// guarantee on the owner's behalf - it previously promised "on-time
+		// delivery or your money back", which nothing in the code honours.
+		add_settings_section(
+			'wpss_checkout_badges_section',
+			__( 'Checkout Reassurance', 'wp-sell-services' ),
+			array( $this, 'render_checkout_badges_section' ),
+			'wpss_general'
+		);
+
+		add_settings_field(
+			'checkout_badges_enabled',
+			__( 'Show reassurance badges', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_general',
+			'wpss_checkout_badges_section',
+			array(
+				'option_name' => 'wpss_general',
+				'field'       => 'checkout_badges_enabled',
+				'label'       => __( 'Display a short row of reassurance items on the checkout page.', 'wp-sell-services' ),
+				'default'     => true,
+			)
+		);
+
+		add_settings_field(
+			'checkout_badges',
+			__( 'Badge text', 'wp-sell-services' ),
+			array( $this, 'render_checkout_badges_field' ),
+			'wpss_general',
+			'wpss_checkout_badges_section',
+			array(
+				'option_name' => 'wpss_general',
+				'field'       => 'checkout_badges',
+			)
+		);
+
 		// Commission settings.
 		register_setting(
 			'wpss_commission',
@@ -1893,6 +1933,60 @@ class Settings {
 	}
 
 	/**
+	 * Render the checkout badges section description.
+	 *
+	 * @since 1.3.1
+	 * @return void
+	 */
+	public function render_checkout_badges_section(): void {
+		echo '<p>' . esc_html__( 'Short reassurance items shown to buyers on the checkout page. These are your words, on your storefront - edit or clear anything you do not want to say.', 'wp-sell-services' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Leave a row empty to hide it. Delivery time and revisions fall back to the real values from the package being bought, so they always match the order.', 'wp-sell-services' ) . '</p>';
+	}
+
+	/**
+	 * Render the editable checkout badge rows.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param array<string, mixed> $args Field args.
+	 * @return void
+	 */
+	public function render_checkout_badges_field( array $args ): void {
+		$option = get_option( 'wpss_general', array() );
+		$stored = isset( $option['checkout_badges'] ) && is_array( $option['checkout_badges'] ) ? $option['checkout_badges'] : array();
+
+		// Same source the checkout uses, so the placeholders an owner sees are
+		// exactly what buyers get when a row is left blank.
+		$defaults = function_exists( 'wpss_get_checkout_badge_defaults' ) ? wpss_get_checkout_badge_defaults() : array();
+
+		echo '<table class="widefat striped wpss-badge-editor"><thead><tr>';
+		echo '<th style="width:12rem">' . esc_html__( 'Item', 'wp-sell-services' ) . '</th>';
+		echo '<th>' . esc_html__( 'Heading', 'wp-sell-services' ) . '</th>';
+		echo '<th>' . esc_html__( 'Sub-text', 'wp-sell-services' ) . '</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( $defaults as $key => $default ) {
+			$title = (string) ( $stored[ $key ]['title'] ?? '' );
+			$note  = (string) ( $stored[ $key ]['note'] ?? '' );
+
+			printf(
+				'<tr><td><strong>%s</strong></td>
+				<td><input type="text" class="regular-text" name="wpss_general[checkout_badges][%s][title]" value="%s" placeholder="%s"></td>
+				<td><input type="text" class="regular-text" name="wpss_general[checkout_badges][%s][note]" value="%s" placeholder="%s"></td></tr>',
+				esc_html( $default['label'] ),
+				esc_attr( $key ),
+				esc_attr( $title ),
+				esc_attr( $default['title'] ),
+				esc_attr( $key ),
+				esc_attr( $note ),
+				esc_attr( $default['note'] )
+			);
+		}
+
+		echo '</tbody></table>';
+	}
+
+	/**
 	 * Render e-commerce section description.
 	 *
 	 * @return void
@@ -3015,6 +3109,23 @@ class Settings {
 		if ( $previous !== $sanitized['ecommerce_platform'] ) {
 			set_transient( 'wpss_flush_rewrite_rules', true, MINUTE_IN_SECONDS );
 		}
+
+		// Checkout reassurance badges. Owner-authored text for a public page,
+		// so it is sanitised as plain text - no markup, no shortcodes.
+		$sanitized['checkout_badges_enabled'] = ! empty( $input['checkout_badges_enabled'] );
+
+		$badges = array();
+
+		if ( isset( $input['checkout_badges'] ) && is_array( $input['checkout_badges'] ) ) {
+			foreach ( wpss_get_checkout_badge_defaults() as $key => $unused ) {
+				$badges[ $key ] = array(
+					'title' => sanitize_text_field( (string) ( $input['checkout_badges'][ $key ]['title'] ?? '' ) ),
+					'note'  => sanitize_text_field( (string) ( $input['checkout_badges'][ $key ]['note'] ?? '' ) ),
+				);
+			}
+		}
+
+		$sanitized['checkout_badges'] = $badges;
 
 		return $sanitized;
 	}
