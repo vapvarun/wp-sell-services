@@ -128,6 +128,19 @@ class UnifiedDashboard {
 				'zeroDecimalCurrencies' => wpss_get_zero_decimal_currencies(),
 				'i18n'                  => array(
 					'becomeVendorConfirm'    => __( 'Start selling services on this marketplace?', 'wp-sell-services' ),
+
+					// Wallet transactions table. These are rendered entirely in JS,
+					// so without them here the table headers and its empty/error
+					// states stay English in every locale - the JS `|| 'Date'`
+					// fallbacks were doing the work.
+					'walletColDate'          => __( 'Date', 'wp-sell-services' ),
+					'walletColType'          => __( 'Type', 'wp-sell-services' ),
+					'walletColDescription'   => __( 'Description', 'wp-sell-services' ),
+					'walletColAmount'        => __( 'Amount', 'wp-sell-services' ),
+					'walletColBalance'       => __( 'Balance', 'wp-sell-services' ),
+					'walletEmpty'            => __( 'No wallet transactions yet.', 'wp-sell-services' ),
+					'walletLoadFailed'       => __( 'Could not load transactions. Please try again.', 'wp-sell-services' ),
+					'walletTypeUnknown'      => __( 'Other', 'wp-sell-services' ),
 					'processing'             => __( 'Processing...', 'wp-sell-services' ),
 					'confirmDelete'          => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),
 					'pause'                  => __( 'Pause', 'wp-sell-services' ),

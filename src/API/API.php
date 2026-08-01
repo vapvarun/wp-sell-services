@@ -92,7 +92,10 @@ class API {
 
 		$path = $request->get_route();
 
-		if ( 0 !== strpos( $path, '/wpss/v1' ) ) {
+		// Both namespaces: Pro registers four cart-adapter routes under
+		// wpss-pro/v1, and a wrong verb on those deserves the same 405 as
+		// anything under wpss/v1.
+		if ( 0 !== strpos( $path, '/wpss/v1' ) && 0 !== strpos( $path, '/wpss-pro/v1' ) ) {
 			return $result;
 		}
 

@@ -247,6 +247,14 @@ class Frontend {
 				'cartNonce'        => wp_create_nonce( 'wpss_cart_nonce' ),
 				'i18n'             => array(
 					'loading'                     => __( 'Loading...', 'wp-sell-services' ),
+
+					// Buyer-request form validation and success, rendered by
+					// frontend.js. Without these the messages stay English in every
+					// locale - the JS fallbacks were carrying them.
+					'requestTitleRequired'        => __( 'Please enter a title for your request.', 'wp-sell-services' ),
+					'requestDescriptionRequired'  => __( 'Please describe what you need.', 'wp-sell-services' ),
+					'requestBudgetRange'          => __( 'Maximum budget must be greater than or equal to the minimum.', 'wp-sell-services' ),
+					'requestPosted'               => __( 'Request posted successfully.', 'wp-sell-services' ),
 					'error'                       => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'tipAmountRequired'           => __( 'Enter a tip amount greater than zero.', 'wp-sell-services' ),
 					'tipRedirecting'              => __( 'Redirecting to payment…', 'wp-sell-services' ),

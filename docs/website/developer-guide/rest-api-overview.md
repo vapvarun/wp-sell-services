@@ -1,6 +1,6 @@
 # REST API Overview
 
-WP Sell Services provides a comprehensive REST API for building custom integrations, mobile apps, and external applications. The API follows WordPress REST API standards with 21 dedicated controllers plus generic endpoints.
+WP Sell Services provides a comprehensive REST API for building custom integrations, mobile apps, and external applications. The API follows WordPress REST API standards with 23 dedicated controllers plus generic endpoints.
 
 ## Overview
 

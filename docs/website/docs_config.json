@@ -68,6 +68,12 @@
           "slug": "documentation-coverage-wpss",
           "file": "getting-started/documentation-coverage.md",
           "order": 10
+        },
+        {
+          "title": "Feature Catalog",
+          "slug": "feature-catalog-wpss",
+          "file": "feature-catalog.md",
+          "order": 11
         }
       ]
     },

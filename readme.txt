@@ -154,7 +154,7 @@ Unlike simple directory plugins, WP Sell Services provides a complete transactio
 
 = Mobile App Ready =
 
-The complete REST API with 21 controllers makes building iOS and Android apps straightforward. The batch endpoint allows mobile apps to execute multiple requests efficiently in a single HTTP call.
+The complete REST API with 23 controllers makes building iOS and Android apps straightforward. The batch endpoint allows mobile apps to execute multiple requests efficiently in a single HTTP call.
 
 = Documentation =
 
