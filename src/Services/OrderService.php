@@ -24,6 +24,75 @@ use WPSellServices\Models\Service;
 class OrderService {
 
 	/**
+	 * Orders whose refund was already settled AT the payment rail.
+	 *
+	 * Keyed by order id, held only for the duration of the status change.
+	 *
+	 * A refund can start in two places, and they need opposite handling:
+	 *
+	 * - WE initiate it (admin metabox, dispute resolution, buyer cancel). The
+	 *   money has NOT moved yet, so the refund handler must call the gateway.
+	 * - THE RAIL initiates it (a refund in the Stripe dashboard arriving on
+	 *   charge.refunded, or a Woo refund). The money has ALREADY moved; calling
+	 *   the gateway again refunds the buyer a second time.
+	 *
+	 * Without this distinction the second case is a money-loss bug: verified in
+	 * the Stripe sandbox on 2026-08-01, a $5.00 dashboard refund on order #114
+	 * produced a second $5.00 refund four seconds later — $10.00 out the door
+	 * on a $12.50 charge, from a single click.
+	 *
+	 * Only the gateway call is suppressed. The vendor-earnings reversal must
+	 * still run either way, because the rail knows nothing about our wallet.
+	 *
+	 * @since 1.3.1
+	 * @var array<int, true>
+	 */
+	private static array $settled_at_rail = array();
+
+	/**
+	 * Mark a refund as already settled at the payment rail.
+	 *
+	 * For rails that do not route through apply_refund_status() — Pro's
+	 * WooCommerce provider persists the amount itself and then moves the
+	 * status. Always pair with clear_settled_at_rail() in a finally block.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param int $order_id Order ID.
+	 * @return void
+	 */
+	public static function mark_settled_at_rail( int $order_id ): void {
+		self::$settled_at_rail[ $order_id ] = true;
+	}
+
+	/**
+	 * Clear the rail-settled marker for an order.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param int $order_id Order ID.
+	 * @return void
+	 */
+	public static function clear_settled_at_rail( int $order_id ): void {
+		unset( self::$settled_at_rail[ $order_id ] );
+	}
+
+	/**
+	 * Whether this order's in-flight refund already moved money at the rail.
+	 *
+	 * Read by OrderWorkflowManager::attempt_payment_refund() to decide whether
+	 * the buyer still needs paying back.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public static function is_settled_at_rail( int $order_id ): bool {
+		return isset( self::$settled_at_rail[ $order_id ] );
+	}
+
+	/**
 	 * Get order by ID.
 	 *
 	 * @param int $order_id Order ID.
@@ -173,9 +242,15 @@ class OrderService {
 	 *                             anything at or above the order total means the
 	 *                             whole order.
 	 * @param string     $status   Target status.
+	 * @param bool       $settled_at_rail Whether the money already went back at
+	 *                                    the payment rail (a gateway-initiated
+	 *                                    refund arriving on a webhook). Suppresses
+	 *                                    the second gateway call only; the vendor
+	 *                                    reversal still runs. See
+	 *                                    self::$settled_at_rail.
 	 * @return bool True when the order actually moved.
 	 */
-	public function apply_refund_status( int $order_id, ?float $amount, string $status ): bool {
+	public function apply_refund_status( int $order_id, ?float $amount, string $status, bool $settled_at_rail = false ): bool {
 		global $wpdb;
 
 		$order = $this->get( $order_id );
@@ -201,7 +276,17 @@ class OrderService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update( $table, array( 'refunded_amount' => $refunded ), array( 'id' => $order_id ), array( '%f' ), array( '%d' ) );
 
-		$moved = $this->update_status( $order_id, $status );
+		if ( $settled_at_rail ) {
+			self::mark_settled_at_rail( $order_id );
+		}
+
+		try {
+			$moved = $this->update_status( $order_id, $status );
+		} finally {
+			if ( $settled_at_rail ) {
+				self::clear_settled_at_rail( $order_id );
+			}
+		}
 
 		if ( ! $moved ) {
 			// Put the column back exactly as it was — including NULL, which is
@@ -426,6 +511,27 @@ class OrderService {
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_REFUNDED,
 				ServiceOrder::STATUS_PARTIALLY_REFUNDED,
+			),
+			// A PARTIAL refund is a money fact, not the end of the job: the
+			// buyer got some of it back and the vendor is still owed the rest.
+			// This status was previously a destination only — never a key — so
+			// the order froze the moment a partial refund landed. It could never
+			// reach completed, which meant the vendor was never credited for the
+			// share the buyer kept paying, and the only escape was an admin
+			// force-transition.
+			//
+			// The work therefore continues from here exactly as it would from
+			// in_progress, and the two money endings (settle in full, or escalate
+			// to a full refund) both stay reachable. Full `refunded` remains
+			// terminal — that one really is the end.
+			ServiceOrder::STATUS_PARTIALLY_REFUNDED     => array(
+				ServiceOrder::STATUS_IN_PROGRESS,
+				ServiceOrder::STATUS_PENDING_APPROVAL,
+				ServiceOrder::STATUS_DELIVERED,
+				ServiceOrder::STATUS_COMPLETED,
+				ServiceOrder::STATUS_DISPUTED,
+				ServiceOrder::STATUS_CANCELLED,
+				ServiceOrder::STATUS_REFUNDED,
 			),
 			// REST API workflow statuses.
 			ServiceOrder::STATUS_PENDING                => array(

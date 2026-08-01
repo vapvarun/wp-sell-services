@@ -746,8 +746,11 @@ class BuyerRequestService {
 			}
 		}
 
-		// Accept the proposal.
+		// Accept the proposal, and record WHICH order it produced. The column is
+		// published in every proposal REST response and was never written, so
+		// nothing could get from an accepted proposal to its order.
 		$proposal_service->update_status( $proposal_id, ProposalService::STATUS_ACCEPTED );
+		$proposal_service->link_order( $proposal_id, $order_id );
 
 		// Reject other proposals for this request.
 		$proposal_service->reject_other_proposals( $request_id, $proposal_id );

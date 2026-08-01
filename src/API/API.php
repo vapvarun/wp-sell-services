@@ -497,20 +497,29 @@ class API {
 	}
 
 	/**
-	 * Resolve each mapped page to a URL a client can navigate to.
+	 * Resolve the plugin's page map to ids a client can actually navigate to.
+	 *
+	 * THE one place the page map is authored. `pages` and `page_urls` used to
+	 * each build their own copy of this list, so they could name different
+	 * screens for the same key.
+	 *
+	 * vendors, checkout and cart are resolved rather than read straight from the
+	 * option: vendors_page was a key nothing ever wrote, so it was permanently
+	 * 0, and checkout/cart in the option are the STANDALONE pages, which on a
+	 * WooCommerce site are not the pages a client should be sent to.
+	 *
+	 * Every value is an id of a PUBLISHED page or null. A 0 was never navigable
+	 * — an app opening a legal or vendor-directory WebView from `pages` landed
+	 * on an invalid post id and 404'd — and an id whose page has since been
+	 * trashed or unpublished is just as broken, so both collapse to null and the
+	 * client can hide the entry instead of linking nowhere.
 	 *
 	 * @since 1.3.1
 	 *
 	 * @param array<string, mixed> $pages_settings Stored page map.
-	 * @return array<string, string|null>
+	 * @return array<string, int|null>
 	 */
-	private function get_page_urls( array $pages_settings ): array {
-		// vendors, checkout and cart are resolved, not read straight from the
-		// option. vendors_page was a key nothing ever wrote, so it was
-		// permanently 0; checkout/cart in the option are the STANDALONE pages,
-		// which on a WooCommerce site are not the pages the URLs below point at
-		// - so `pages` and `page_urls` named different screens and a client
-		// deep-linking from `pages` landed on the wrong one.
+	private function get_page_ids( array $pages_settings ): array {
 		$ids = array(
 			'services'      => (int) ( $pages_settings['services_page'] ?? 0 ),
 			'vendors'       => function_exists( 'wpss_get_vendors_page_id' ) ? wpss_get_vendors_page_id() : (int) ( $pages_settings['vendors_page'] ?? 0 ),
@@ -521,10 +530,26 @@ class API {
 			'terms'         => (int) get_option( 'wpss_terms_page' ),
 		);
 
+		foreach ( $ids as $key => $id ) {
+			$ids[ $key ] = ( $id > 0 && 'publish' === get_post_status( $id ) ) ? $id : null;
+		}
+
+		return $ids;
+	}
+
+	/**
+	 * Resolve each mapped page to a URL a client can navigate to.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param array<string, mixed> $pages_settings Stored page map.
+	 * @return array<string, string|null>
+	 */
+	private function get_page_urls( array $pages_settings ): array {
 		$urls = array();
 
-		foreach ( $ids as $key => $id ) {
-			$url = $id > 0 ? get_permalink( $id ) : '';
+		foreach ( $this->get_page_ids( $pages_settings ) as $key => $id ) {
+			$url = $id ? get_permalink( $id ) : '';
 
 			$urls[ $key ] = $url ?: null;
 		}
@@ -569,18 +594,11 @@ class API {
 			'review_moderation'   => ! empty( $vendor_settings['moderate_reviews'] ),
 			'max_file_size'       => (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024, // MB to bytes.
 			'allowed_file_types'  => explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) ),
-			// Page IDs, unchanged. A 0 here means the site has no such page —
-			// `vendors` and `terms` are never created by the installer, so they
-			// are 0 on a stock install.
-			'pages'               => [
-				'services'      => (int) ( $pages_settings['services_page'] ?? 0 ),
-				'vendors'       => function_exists( 'wpss_get_vendors_page_id' ) ? wpss_get_vendors_page_id() : (int) ( $pages_settings['vendors_page'] ?? 0 ),
-				'dashboard'     => (int) ( $pages_settings['dashboard'] ?? 0 ),
-				'checkout'      => function_exists( 'wpss_get_active_store_page_id' ) ? wpss_get_active_store_page_id( 'checkout' ) : (int) ( $pages_settings['checkout'] ?? 0 ),
-				'cart'          => function_exists( 'wpss_get_active_store_page_id' ) ? wpss_get_active_store_page_id( 'cart' ) : (int) ( $pages_settings['cart'] ?? 0 ),
-				'become_vendor' => (int) ( $pages_settings['become_vendor'] ?? 0 ),
-				'terms'         => (int) get_option( 'wpss_terms_page' ),
-			],
+			// Page IDs, or NULL where the site has no published page for that
+			// key. `vendors` and `terms` are never created by the installer, so
+			// they are null on a stock install until the owner maps them —
+			// never 0, which is not a post id a client can open.
+			'pages'               => $this->get_page_ids( $pages_settings ),
 			// Resolved URLs for the same keys, because an ID of 0 is not
 			// something a client can navigate to and an ID alone still needs a
 			// second round trip. NULL where the site genuinely has no such page,

@@ -136,10 +136,21 @@ Get public marketplace settings.
   "allowed_file_types": ["jpg", "jpeg", "png", "pdf", "zip"],
   "pages": {
     "services": 123,
-    "vendors": 124,
+    "vendors": null,
     "dashboard": 125,
     "checkout": 126,
-    "terms": 127
+    "cart": 128,
+    "become_vendor": 129,
+    "terms": null
+  },
+  "page_urls": {
+    "services": "https://yoursite.com/services/",
+    "vendors": null,
+    "dashboard": "https://yoursite.com/dashboard/",
+    "checkout": "https://yoursite.com/service-checkout/",
+    "cart": "https://yoursite.com/service-cart/",
+    "become_vendor": "https://yoursite.com/become-a-vendor/",
+    "terms": null
   },
   "realtime": {
     "enabled": false,
@@ -152,6 +163,39 @@ Get public marketplace settings.
   }
 }
 ```
+
+#### Which pages exist, and which are optional
+
+`pages` gives the post ID, `page_urls` the absolute URL, for the same keys. Both
+are always present with the same key set, so a client can read either without
+checking for missing keys.
+
+**A value is either a published page or `null` - never `0`.** `null` means the
+site has no such page: it was never mapped, or the page it pointed at has since
+been unpublished or deleted. Hide the entry rather than linking to it; a `0` was
+never a post ID a client could open.
+
+The installer creates these automatically:
+
+| Key | Created on install |
+|---|---|
+| `services` | Yes |
+| `dashboard` | Yes |
+| `checkout` | Yes |
+| `cart` | Yes |
+| `become_vendor` | Yes |
+
+These are **optional** and stay `null` until the site owner maps them in
+**WP Sell Services > Settings**:
+
+| Key | Notes |
+|---|---|
+| `terms` | Mapped to the site's existing terms page - the plugin deliberately does not create a second one. |
+| `vendors` | Only set when the owner publishes a vendor-directory page. `page_urls.vendors` may still resolve when the directory is served from an archive rather than a page. |
+
+On a WooCommerce or EDD install, `checkout` and `cart` resolve to that rail's
+pages, not the standalone ones - so a client always deep-links to the checkout
+the buyer will actually use.
 
 The `realtime` key carries the non-sensitive client config for the realtime (WebSocket) layer - see [Realtime controller](rest-api-controllers.md#21-realtime-realtime). The app secret is never included.
 

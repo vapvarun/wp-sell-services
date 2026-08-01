@@ -323,6 +323,22 @@ class OfflineGateway implements PaymentGatewayInterface {
 			return;
 		}
 
+		// Remember any billing the buyer entered or corrected at checkout, so
+		// their NEXT checkout prefills and collapses to a one-line summary
+		// instead of asking for the same address again. The billing block is
+		// ours, not the gateway's, so every gateway completing a checkout has
+		// to persist it — Stripe did, offline and PayPal did not, so only
+		// Stripe buyers ever built up a saved address.
+		//
+		// Deliberately called here, after the nonce check, rather than from one
+		// shared pre-dispatch hook on all checkout actions: running before each
+		// gateway verifies its own nonce would let a forged cross-site POST
+		// overwrite a logged-in buyer's saved address.
+		//
+		// Nonce was verified at the top of this handler.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		wpss_save_billing_from_request( $_POST );
+
 		// Handle payment for existing order (from proposal acceptance).
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$pay_order_id = isset( $_POST['pay_order'] ) ? (int) wp_unslash( $_POST['pay_order'] ) : 0;

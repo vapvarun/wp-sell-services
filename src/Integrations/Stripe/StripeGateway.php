@@ -39,6 +39,14 @@ class StripeGateway implements PaymentGatewayInterface {
 	private const OPTION_NAME = 'wpss_stripe_settings';
 
 	/**
+	 * Where the last verified webhook receipt is recorded.
+	 *
+	 * @since 1.3.1
+	 * @var string
+	 */
+	private const HEALTH_OPTION = 'wpss_stripe_webhook_health';
+
+	/**
 	 * Gateway settings.
 	 *
 	 * @var array
@@ -346,11 +354,71 @@ class StripeGateway implements PaymentGatewayInterface {
 			);
 		}
 
+		// A declined card and an unfinished 3DS are both "not paid yet", but they
+		// need OPPOSITE instructions: use a different card, versus finish the
+		// step you already started. These three statuses used to collapse into
+		// one "requires additional action" message, so a buyer whose card was
+		// declined was told to complete an action that does not exist and had no
+		// way to learn the real reason. Verified against a live sandbox decline
+		// (card_declined / generic_decline) on 2026-08-01.
+		//
+		// requires_payment_method means "declined" only once an attempt has been
+		// made; on a fresh intent it just means nothing was submitted yet.
+		// last_payment_error is what distinguishes the two.
+		$last_error = $response['last_payment_error'] ?? array();
+
+		if ( 'requires_payment_method' === $status && ! empty( $last_error ) ) {
+			// Stripe's own message is written for the cardholder, is already
+			// localized by Stripe, and names the actual reason (insufficient
+			// funds, expired card) far more precisely than we could infer from
+			// a decline code.
+			$declined_message = ! empty( $last_error['message'] )
+				? (string) $last_error['message']
+				: __( 'Your card was declined. Please try a different payment method.', 'wp-sell-services' );
+
+			/**
+			 * Filters the message shown to a buyer whose card was declined.
+			 *
+			 * The default is Stripe's own cardholder-facing message. Site owners
+			 * who want their own wording — or who must not surface a bank's
+			 * reason verbatim — can replace it here without overriding a
+			 * template.
+			 *
+			 * @since 1.3.1
+			 *
+			 * @param string $declined_message Message shown to the buyer.
+			 * @param array  $last_error       Stripe's last_payment_error payload.
+			 * @param array  $response         The full PaymentIntent.
+			 */
+			$declined_message = (string) apply_filters( 'wpss_payment_declined_message', $declined_message, $last_error, $response );
+
+			return array(
+				'success'      => false,
+				'status'       => 'failed',
+				'error'        => $declined_message,
+				'decline_code' => (string) ( $last_error['decline_code'] ?? $last_error['code'] ?? '' ),
+			);
+		}
+
 		if ( in_array( $status, array( 'requires_payment_method', 'requires_confirmation', 'requires_action' ), true ) ) {
+			$action_message = __( 'Payment requires additional action.', 'wp-sell-services' );
+
+			/**
+			 * Filters the message shown when a payment still needs a buyer step
+			 * (typically 3D Secure authentication).
+			 *
+			 * @since 1.3.1
+			 *
+			 * @param string $action_message Message shown to the buyer.
+			 * @param string $status         PaymentIntent status.
+			 * @param array  $response       The full PaymentIntent.
+			 */
+			$action_message = (string) apply_filters( 'wpss_payment_action_required_message', $action_message, $status, $response );
+
 			return array(
 				'success' => false,
 				'status'  => 'pending',
-				'error'   => __( 'Payment requires additional action.', 'wp-sell-services' ),
+				'error'   => $action_message,
 			);
 		}
 
@@ -547,6 +615,23 @@ class StripeGateway implements PaymentGatewayInterface {
 	public function handle_webhook( array $payload ): array {
 		$event_type = $payload['type'] ?? '';
 		$data       = $payload['data']['object'] ?? array();
+
+		// Record that a SIGNATURE-VERIFIED event arrived. This is the only
+		// honest evidence the owner's webhook is actually wired up: they follow
+		// the setup guide, paste a secret, and otherwise have no way to know it
+		// worked until a real buyer's order fails to appear.
+		//
+		// Recorded here rather than in handle_webhook_callback() so an
+		// unsigned or replayed request cannot make the indicator claim health.
+		update_option(
+			self::HEALTH_OPTION,
+			array(
+				'last_event_at'   => time(),
+				'last_event_type' => (string) $event_type,
+				'mode'            => $this->is_test_mode() ? 'test' : 'live',
+			),
+			false
+		);
 
 		/**
 		 * Fires when a Stripe webhook event is received.
@@ -1081,6 +1166,167 @@ class StripeGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * Report whether the owner's webhook is actually wired up.
+	 *
+	 * Stripe is the authority for fulfilment, so a Stripe install with no
+	 * working webhook is a site where a buyer can be charged and never get an
+	 * order. That state was completely silent — this makes it reportable.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @return array{state: string, message: string, last_event_at: int}
+	 */
+	public function get_webhook_health(): array {
+		$health   = (array) get_option( self::HEALTH_OPTION, array() );
+		$last     = (int) ( $health['last_event_at'] ?? 0 );
+		$has_key  = ! empty( $this->settings['webhook_secret'] );
+		$mode     = $this->is_test_mode() ? 'test' : 'live';
+		$same_env = ( $health['mode'] ?? $mode ) === $mode;
+
+		if ( ! $has_key ) {
+			return array(
+				'state'         => 'missing',
+				'message'       => __( 'No signing secret saved yet. Until the webhook is set up, a buyer who is redirected to their bank can be charged without an order being created.', 'wp-sell-services' ),
+				'last_event_at' => $last,
+			);
+		}
+
+		if ( $last <= 0 || ! $same_env ) {
+			return array(
+				'state'         => 'untested',
+				'message'       => __( 'A signing secret is saved, but no verified event has arrived yet in this mode. Send a test event from your Stripe dashboard to confirm the endpoint is reachable.', 'wp-sell-services' ),
+				'last_event_at' => $last,
+			);
+		}
+
+		return array(
+			'state'         => 'healthy',
+			'message'       => sprintf(
+				/* translators: %s: human-readable time difference, e.g. "5 mins". */
+				__( 'Last verified event received %s ago.', 'wp-sell-services' ),
+				human_time_diff( $last, time() )
+			),
+			'last_event_at' => $last,
+		);
+	}
+
+	/**
+	 * Reconcile a buyer who came back from an off-site authentication.
+	 *
+	 * A redirect-based 3D Secure (or any redirect payment method) sends the
+	 * buyer away and Stripe returns them to our checkout URL with its own
+	 * `payment_intent` parameter. Nothing consumed it, so the buyer landed on a
+	 * fresh checkout form with a live Pay button over a charge that had already
+	 * gone through — an invitation to pay twice.
+	 *
+	 * The webhook remains the authority for fulfilment, exactly as Stripe
+	 * prescribes, because a buyer may close the tab and never come back. This
+	 * runs the SAME settle path so the two are interchangeable and idempotent:
+	 * whichever arrives first creates the order, the other finds it and stops.
+	 * An order is looked up by transaction id before anything is created, so a
+	 * webhook that already landed cannot be duplicated by the return leg.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param string $payment_intent_id PaymentIntent id from the return URL.
+	 * @return array{status: string, order_id: int, message: string}
+	 */
+	public function reconcile_redirect_return( string $payment_intent_id ): array {
+		$fail = static function ( string $status, string $message, int $order_id = 0 ): array {
+			return array(
+				'status'   => $status,
+				'order_id' => $order_id,
+				'message'  => $message,
+			);
+		};
+
+		if ( ! preg_match( '/^pi_[a-zA-Z0-9_]+$/', $payment_intent_id ) ) {
+			return $fail( 'failed', __( 'That payment reference is not valid.', 'wp-sell-services' ) );
+		}
+
+		$intent = $this->api_request( "payment_intents/{$payment_intent_id}", array(), 'GET' );
+
+		if ( isset( $intent['error'] ) ) {
+			// Stripe telling us the intent does not exist is a definite answer —
+			// a stale or tampered URL. Anything else (timeout, outage, bad key)
+			// is NOT: the charge may well have succeeded, so the buyer waits for
+			// the webhook rather than being told their payment failed.
+			//
+			// Without this split a bogus id sat on "confirming" and reloaded
+			// every few seconds forever.
+			$error_code = (string) ( $intent['error']['code'] ?? '' );
+			$error_type = (string) ( $intent['error']['type'] ?? '' );
+
+			if ( 'resource_missing' === $error_code || 'invalid_request_error' === $error_type ) {
+				return $fail( 'failed', __( 'We could not find that payment. If you were charged, contact the site owner before paying again.', 'wp-sell-services' ) );
+			}
+
+			return $fail( 'processing', __( 'We could not confirm your payment just yet. It is safe to wait here; do not pay again.', 'wp-sell-services' ) );
+		}
+
+		$status = (string) ( $intent['status'] ?? '' );
+
+		if ( 'succeeded' !== $status ) {
+			// process_payment() already separates a decline from an unfinished
+			// authentication and carries the buyer-facing reason.
+			$checked = $this->process_payment( $payment_intent_id );
+
+			return $fail(
+				'processing' === $status ? 'processing' : 'failed',
+				(string) ( $checked['error'] ?? __( 'Your payment was not completed.', 'wp-sell-services' ) )
+			);
+		}
+
+		// Already settled — by the webhook, or by an earlier visit to this URL.
+		$existing = $this->find_order_by_transaction( $payment_intent_id );
+
+		if ( $existing > 0 ) {
+			return array(
+				'status'   => 'paid',
+				'order_id' => $existing,
+				'message'  => '',
+			);
+		}
+
+		// Not settled yet: run the same handler the webhook runs.
+		$this->handle_payment_succeeded( $intent );
+
+		$order_id = $this->find_order_by_transaction( $payment_intent_id );
+
+		if ( $order_id > 0 ) {
+			return array(
+				'status'   => 'paid',
+				'order_id' => $order_id,
+				'message'  => '',
+			);
+		}
+
+		// Charged, but no order yet. Never tell the buyer to pay again.
+		wpss_log( "Stripe return: {$payment_intent_id} succeeded but no order resolved yet; leaving it to the webhook.", 'warning' );
+
+		return $fail( 'processing', __( 'Your payment went through and we are preparing your order.', 'wp-sell-services' ) );
+	}
+
+	/**
+	 * Find an order already settled against a transaction id.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param string $transaction_id Gateway transaction id.
+	 * @return int Order ID, or 0.
+	 */
+	private function find_order_by_transaction( string $transaction_id ): int {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT id FROM {$table} WHERE transaction_id = %s ORDER BY id ASC LIMIT 1", $transaction_id )
+		);
+	}
+
+	/**
 	 * Handle payment succeeded webhook.
 	 *
 	 * @param array $payment_intent Payment intent data.
@@ -1239,7 +1485,10 @@ class StripeGateway implements PaymentGatewayInterface {
 		// that action, so a real Stripe refund returned the buyer's money and
 		// left the order marked paid with the vendor still credited. Verified
 		// against a live sandbox refund before this fix.
-		( new \WPSellServices\Services\OrderService() )->apply_refund_status( $order_id, $refunded, $status );
+		// $settled_at_rail = true: this refund HAPPENED at Stripe, we are only
+		// recording it. Without that flag the status change re-enters
+		// attempt_payment_refund() and refunds the buyer a second time.
+		( new \WPSellServices\Services\OrderService() )->apply_refund_status( $order_id, $refunded, $status, true );
 
 		/**
 		 * Fires when a Stripe refund is processed.
@@ -1386,6 +1635,28 @@ class StripeGateway implements PaymentGatewayInterface {
 				</li>
 				<li><?php esc_html_e( 'After creating the endpoint, copy the "Signing secret" (starts with whsec_) and paste it in the Webhook Secret field above.', 'wp-sell-services' ); ?></li>
 			</ol>
+
+			<?php
+			// Tell the owner whether the steps above actually worked. Following
+			// them correctly and following them incorrectly looked identical
+			// until a real buyer's order failed to appear.
+			$wpss_health = $this->get_webhook_health();
+			$wpss_colors = array(
+				'healthy'  => array( '#eef7ee', '#46b450' ),
+				'untested' => array( '#fff8e5', '#dba617' ),
+				'missing'  => array( '#fcf0f1', '#d63638' ),
+			);
+			$wpss_style  = $wpss_colors[ $wpss_health['state'] ] ?? $wpss_colors['missing'];
+			$wpss_labels = array(
+				'healthy'  => __( 'Webhook is receiving events', 'wp-sell-services' ),
+				'untested' => __( 'Webhook not confirmed yet', 'wp-sell-services' ),
+				'missing'  => __( 'Webhook not set up', 'wp-sell-services' ),
+			);
+			?>
+			<p style="margin: 10px 0 0; padding: 10px 12px; background: <?php echo esc_attr( $wpss_style[0] ); ?>; border-left: 4px solid <?php echo esc_attr( $wpss_style[1] ); ?>;">
+				<strong><?php echo esc_html( $wpss_labels[ $wpss_health['state'] ] ?? '' ); ?></strong><br>
+				<?php echo esc_html( $wpss_health['message'] ); ?>
+			</p>
 
 			<p><strong><?php esc_html_e( 'Step 3: Required Permissions (for Restricted API Keys)', 'wp-sell-services' ); ?></strong></p>
 			<p style="margin-left: 20px; margin-bottom: 5px;">

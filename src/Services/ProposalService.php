@@ -487,6 +487,44 @@ class ProposalService {
 	}
 
 	/**
+	 * Record the order a proposal produced.
+	 *
+	 * The proposals table has always carried an order_id column, the Proposal
+	 * model reads it, and Proposal::to_array() publishes it in every REST
+	 * response — but no code path ever wrote it, so every consumer saw null
+	 * forever and nothing could get from an accepted proposal to the order it
+	 * created. Verified on 2026-08-01: proposals #16 and #17 both minted real
+	 * orders (#61 and #106) while their order_id stayed NULL.
+	 *
+	 * The link was only recoverable by joining orders.platform_order_id back to
+	 * the originating request, which is an inference, not a stored fact.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param int $proposal_id Proposal ID.
+	 * @param int $order_id    Order minted from this proposal.
+	 * @return bool True on success.
+	 */
+	public function link_order( int $proposal_id, int $order_id ): bool {
+		global $wpdb;
+
+		if ( $proposal_id <= 0 || $order_id <= 0 ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = $wpdb->update(
+			$this->table,
+			array( 'order_id' => $order_id ),
+			array( 'id' => $proposal_id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+
+		return false !== $result;
+	}
+
+	/**
 	 * Update proposal status directly.
 	 *
 	 * Use this for simple status updates without full accept/reject workflow.

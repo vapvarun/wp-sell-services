@@ -1114,6 +1114,27 @@ class OrderWorkflowManager {
 			return;
 		}
 
+		// The refund started AT the rail — a Stripe dashboard refund arriving on
+		// charge.refunded, or a Woo refund. That money is already back with the
+		// buyer; calling the gateway now pays them twice. Verified in the Stripe
+		// sandbox on 2026-08-01: a $5.00 dashboard refund on order #114 echoed
+		// into a second $5.00 refund four seconds later, $10.00 out the door on
+		// a $12.50 charge.
+		//
+		// Only this step is skipped. settle_refund() still reverses the vendor's
+		// earnings afterwards, because the rail knows nothing about our wallet.
+		if ( OrderService::is_settled_at_rail( $order->id ) ) {
+			wpss_log(
+				sprintf(
+					'Order %d: refund already settled at the "%s" rail; skipping the gateway call so the buyer is not refunded twice.',
+					$order->id,
+					$order->payment_method
+				),
+				'info'
+			);
+			return;
+		}
+
 		// Ask the plugin for its registered gateways, NOT the filter with an
 		// empty array. Free registers stripe/paypal/offline into
 		// Plugin::$payment_gateways and applies the filter to THAT array once
