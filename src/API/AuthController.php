@@ -675,7 +675,11 @@ class AuthController extends RestController {
 			'username'      => $user->user_login,
 			'email'         => $user->user_email,
 			'display_name'  => $user->display_name,
-			'avatar'        => get_avatar_url( $user->ID, array( 'size' => 256 ) ),
+			// Same size as /me. These two endpoints describe the same user and
+			// were handing back the same field at two different sizes, so a
+			// client still had to know which one it had called - the very thing
+			// aligning their shapes was meant to end.
+			'avatar'        => get_avatar_url( $user->ID, array( 'size' => 96 ) ),
 			'is_vendor'     => $is_vendor,
 			// Canonical profile status — _wpss_vendor_status was never written.
 			'vendor_status' => $is_vendor ? ( wpss_get_vendor_status( $user->ID ) ?: 'active' ) : null,
