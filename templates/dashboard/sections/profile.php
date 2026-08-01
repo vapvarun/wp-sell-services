@@ -29,7 +29,13 @@ $vendor_profile = $is_vendor ? $vendor_service->get_profile( $user_id ) : null;
 do_action( 'wpss_dashboard_section_before', 'profile', $user );
 ?>
 
-<div class="wpss-section wpss-section--profile wpss-card">
+<?php
+// No wpss-card here on purpose. This screen is BUILT of cards — every
+// .wpss-profile-form__section is one — so an outer card wrapped a card in a
+// card and drew two borders a few pixels apart. On form screens the card unit
+// is the form section, not the screen.
+?>
+<div class="wpss-section wpss-section--profile">
 	<form class="wpss-profile-form" method="post" action="" data-ajax-form="update-profile">
 		<?php wp_nonce_field( 'wpss_update_profile', 'wpss_profile_nonce' ); ?>
 

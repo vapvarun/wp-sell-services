@@ -660,14 +660,27 @@ class UnifiedDashboard {
 				 * Filters whether the "Powered by WP Sell Services" footer credit
 				 * is rendered on the frontend dashboard.
 				 *
-				 * Pro's WhiteLabel branding hooks this filter to remove the credit
-				 * when the "Remove Powered by" white-label toggle is enabled.
+				 * DEFAULT FALSE since 1.3.1. This is a self-hosted plugin, not a
+				 * hosted service: the dashboard belongs to the site owner and their
+				 * members, and we do not put our name and an outbound link on it
+				 * uninvited. It previously defaulted to true and could only be
+				 * taken off with Pro's white-label toggle, which made an owner pay
+				 * to remove our branding from their own site — a SaaS pattern that
+				 * does not belong in a WordPress plugin.
+				 *
+				 * Owners who want to credit the plugin can opt in:
+				 *
+				 *     add_filter( 'wpss_show_powered_by', '__return_true' );
+				 *
+				 * Pro's white-label toggle still filters this hook; with the default
+				 * off it simply has nothing left to remove.
 				 *
 				 * @since 1.2.0
+				 * @since 1.3.1 Default changed from true to false.
 				 *
-				 * @param bool $show_powered_by Whether to render the credit. Default true.
+				 * @param bool $show_powered_by Whether to render the credit. Default false.
 				 */
-				if ( apply_filters( 'wpss_show_powered_by', true ) ) :
+				if ( apply_filters( 'wpss_show_powered_by', false ) ) :
 					?>
 					<footer class="wpss-dashboard__footer">
 						<p class="wpss-powered-by">

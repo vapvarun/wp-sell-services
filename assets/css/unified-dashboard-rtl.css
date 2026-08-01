@@ -1007,12 +1007,13 @@
 	max-width: 640px;
 } */
 
+/* Matches .wpss-card's tokens — see the LTR sheet for why. */
 .wpss-profile-form__section {
-	background: var(--wpss-surface, #fff);
-	border-radius: var(--wpss-radius);
-	border: 1px solid var(--wpss-gray-200);
-	padding: 24px;
-	margin-bottom: 24px;
+	background: var(--wpss-bg, #fff);
+	border-radius: var(--wpss-radius-lg);
+	border: 1px solid var(--wpss-border);
+	padding: var(--wpss-space-6, 24px);
+	margin-bottom: var(--wpss-space-6, 24px);
 }
 
 .wpss-profile-form__section h3 {
