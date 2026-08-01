@@ -400,6 +400,7 @@ class Admin {
 
 		// Demo payments notice. Deliberately NOT dismissible - see the method.
 		add_action( 'admin_notices', array( $this, 'demo_payments_notice' ) );
+		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
 	}
 
 	/**
@@ -427,13 +428,47 @@ class Admin {
 			return;
 		}
 
+		// The opt-out link is what makes wpss_demo_payments reachable. Without
+		// it the option is read but never written, so an owner running a live
+		// standalone store before configuring a gateway had no way to stop a
+		// simulated checkout appearing to their buyers.
+		$turn_off = wp_nonce_url(
+			admin_url( 'admin-post.php?action=wpss_disable_demo_payments' ),
+			'wpss_disable_demo_payments'
+		);
+
 		printf(
-			'<div class="notice notice-warning"><p><strong>%s</strong> %s</p><p><a href="%s" class="button button-primary">%s</a></p></div>',
+			'<div class="notice notice-warning"><p><strong>%s</strong> %s</p><p><a href="%s" class="button button-primary">%s</a> <a href="%s" class="button">%s</a></p></div>',
 			esc_html__( 'Demo payments are on.', 'wp-sell-services' ),
 			esc_html__( 'Checkout is simulated so you can test the whole buying flow - no money moves and no card is charged. Configure a payment gateway before taking real orders; this notice clears itself once one is ready.', 'wp-sell-services' ),
 			esc_url( admin_url( 'admin.php?page=wpss-settings#payments' ) ),
-			esc_html__( 'Set up payments', 'wp-sell-services' )
+			esc_html__( 'Set up payments', 'wp-sell-services' ),
+			esc_url( $turn_off ),
+			esc_html__( 'Turn demo payments off', 'wp-sell-services' )
 		);
+	}
+
+	/**
+	 * Turn the simulated checkout off for good.
+	 *
+	 * An explicit opt-out, so a store that is live but has not configured a
+	 * gateway yet shows buyers nothing rather than a demo checkout. Reversed by
+	 * configuring a real gateway, which is what the notice asks for anyway.
+	 *
+	 * @since 1.4.0
+	 * @return void
+	 */
+	public function disable_demo_payments(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to change payment settings.', 'wp-sell-services' ), '', array( 'response' => 403 ) );
+		}
+
+		check_admin_referer( 'wpss_disable_demo_payments' );
+
+		update_option( 'wpss_demo_payments', 'no' );
+
+		wp_safe_redirect( wp_get_referer() ? wp_get_referer() : admin_url() );
+		exit;
 	}
 
 	/**
