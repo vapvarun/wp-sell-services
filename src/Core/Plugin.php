@@ -1630,6 +1630,7 @@ final class Plugin {
 		);
 	}
 
+
 	/**
 	 * Initialize providers via filters.
 	 *
@@ -1637,6 +1638,22 @@ final class Plugin {
 	 * @return void
 	 */
 	private function init_providers(): void {
+		// Gateways stay REGISTERED on every rail, deliberately.
+		//
+		// It is tempting to skip this when WooCommerce is taking payment, but
+		// init() is also what hooks each gateway's webhook handler
+		// (wpss_payment_callback_stripe and friends). Switching a site from our
+		// Stripe to Woo must not change orders that were already paid through
+		// our Stripe - a later refund, dispute or delayed-capture webhook for
+		// one of those still has to be received and applied. Unregistering the
+		// gateway would silently drop it, and the old order would sit there
+		// saying "paid" forever.
+		//
+		// What IS gated is starting a NEW payment: PaymentController does not
+		// register its routes unless wpss_uses_standalone_payments(), so on a
+		// cart rail there is no way to begin a payment through our gateways.
+		// New orders go through the rail; historical orders keep their own.
+
 		// Register Test Gateway (only in debug mode).
 		$this->maybe_register_test_gateway();
 

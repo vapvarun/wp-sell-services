@@ -3423,6 +3423,41 @@ function wpss_rest_text( $value ): string {
 }
 
 /**
+ * Whether NEW payments are taken through the plugin's own gateways.
+ *
+ * ONE rule, decided in one place: our gateways take payment only on the
+ * standalone rail. The cart integrations are optional - a site turns one on
+ * when it wants that plugin to take the money. The moment it does, WooCommerce
+ * (or EDD, FluentCart, SureCart) processes ALL new payment and ours stop
+ * offering a second way to pay.
+ *
+ * Not filterable, on purpose. Giving a buyer the choice between "pay with
+ * WooCommerce" and "pay with our Stripe" on one site is confusing for them and
+ * leaves the two systems disagreeing about whether the order was paid: our
+ * gateway would charge on our keys with no order in the store, so no store
+ * receipt, refund or report would ever know about it.
+ *
+ * This governs STARTING a payment, not history. Switching rails never rewrites
+ * past orders: an order paid through our Stripe keeps its reference and its
+ * webhooks keep being handled, and an order that went through Woo keeps its WC
+ * order link, whichever rail the site later runs. Only the next order is
+ * affected by the switch.
+ *
+ * Sub-order payments (tips, milestones, extensions) do not consult this: they
+ * resolve through wpss_get_pay_order_url(), which hands off to whichever rail
+ * is active.
+ *
+ * @since 1.3.1
+ *
+ * @return bool True when new payments are taken through our own gateways.
+ */
+function wpss_uses_standalone_payments(): bool {
+	$adapter = function_exists( 'wpss_get_ecommerce_adapter' ) ? wpss_get_ecommerce_adapter() : null;
+
+	return ! $adapter || 'standalone' === $adapter->get_id();
+}
+
+/**
  * REST permission callback: the caller must be logged in.
  *
  * Use this instead of `'permission_callback' => 'is_user_logged_in'`. A bare

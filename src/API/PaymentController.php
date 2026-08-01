@@ -39,9 +39,23 @@ class PaymentController extends RestController {
 	/**
 	 * Register routes.
 	 *
+	 * These endpoints drive the plugin's own gateways, so they exist only when
+	 * this site pays through them. If the owner has enabled WooCommerce, EDD,
+	 * FluentCart or SureCart to take payment, that plugin processes everything
+	 * and none of these routes are registered at all - rather than registering
+	 * them and having each one refuse, which leaves a payment surface that
+	 * looks half alive.
+	 *
+	 * The buyer's pay URL on those rails comes back with the order itself, from
+	 * wpss_get_pay_order_url().
+	 *
 	 * @return void
 	 */
 	public function register_routes(): void {
+		if ( ! wpss_uses_standalone_payments() ) {
+			return;
+		}
+
 		// GET /payments/methods - Available payment gateways.
 		register_rest_route(
 			$this->namespace,
