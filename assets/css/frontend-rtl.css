@@ -1426,16 +1426,8 @@ article.wpss-service-card:hover {
 	background: var(--wpss-primary-light);
 }
 
-.wpss-stat-icon {
-	width: 48px;
-	height: 48px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: var(--wpss-surface);
-	border-radius: var(--wpss-radius);
-	font-size: 20px;
-}
+/* .wpss-stat-icon deliberately NOT styled here — admin-only component that
+   collided with Pro's analytics cards. See the LTR sheet for the detail. */
 
 .wpss-stat-value {
 	display: block;
