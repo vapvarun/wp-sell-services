@@ -152,6 +152,69 @@ class StripeGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * Build Stripe shipping details for a buyer.
+	 *
+	 * Uses the shared billing identity stored on the user - WooCommerce's
+	 * billing_* meta keys - so the address a buyer has already given any Wbcom
+	 * product is reused rather than asked for again.
+	 *
+	 * Returns an empty array when there is no usable address; a partial
+	 * shipping object is worse than none, because Stripe rejects it outright.
+	 *
+	 * @since 1.3.1
+	 *
+	 * @param int $user_id Buyer user ID.
+	 * @return array<string, mixed> Stripe shipping payload, or empty.
+	 */
+	private function get_customer_shipping( int $user_id ): array {
+		if ( $user_id <= 0 ) {
+			return array();
+		}
+
+		$user = get_userdata( $user_id );
+
+		if ( ! $user ) {
+			return array();
+		}
+
+		$name = trim( get_user_meta( $user_id, 'billing_first_name', true ) . ' ' . get_user_meta( $user_id, 'billing_last_name', true ) );
+		$name = '' !== $name ? $name : $user->display_name;
+
+		$line1   = (string) get_user_meta( $user_id, 'billing_address_1', true );
+		$city    = (string) get_user_meta( $user_id, 'billing_city', true );
+		$country = (string) get_user_meta( $user_id, 'billing_country', true );
+
+		// Stripe needs at least line1, city and country for the address to be
+		// accepted. Anything less is rejected, so send nothing and let the
+		// gateway surface its own error rather than a malformed request.
+		if ( '' === $line1 || '' === $city || '' === $country ) {
+			return array();
+		}
+
+		$shipping = array(
+			'name'    => $name,
+			'address' => array(
+				'line1'       => $line1,
+				'city'        => $city,
+				'country'     => $country,
+				'line2'       => (string) get_user_meta( $user_id, 'billing_address_2', true ),
+				'state'       => (string) get_user_meta( $user_id, 'billing_state', true ),
+				'postal_code' => (string) get_user_meta( $user_id, 'billing_postcode', true ),
+			),
+		);
+
+		/**
+		 * Filter the buyer shipping details sent to Stripe.
+		 *
+		 * @since 1.3.1
+		 *
+		 * @param array $shipping Stripe shipping payload.
+		 * @param int   $user_id  Buyer user ID.
+		 */
+		return (array) apply_filters( 'wpss_stripe_customer_shipping', $shipping, $user_id );
+	}
+
+	/**
 	 * Create a payment intent.
 	 *
 	 * @param float  $amount   Amount to charge.
@@ -198,6 +261,25 @@ class StripeGateway implements PaymentGatewayInterface {
 				$metadata
 			),
 		);
+
+		// Buyer name and address on the intent.
+		//
+		// Not cosmetic: an India-based Stripe account cannot process an export
+		// (non-INR) charge without them. Stripe rejects the confirmation with
+		// "As per Indian regulations, export transactions require a customer
+		// name and address", so on a plugin that sent neither, EVERY USD charge
+		// from an Indian merchant failed - and the buyer only found out at the
+		// moment they tried to pay. Verified against a live sandbox: identical
+		// intent fails without these and passes with them.
+		//
+		// Read from the shared billing identity on the user (WooCommerce's
+		// billing_* meta), so one address serves every Wbcom product rather
+		// than each collecting its own.
+		$shipping = $this->get_customer_shipping( (int) ( $metadata['customer_id'] ?? get_current_user_id() ) );
+
+		if ( ! empty( $shipping ) ) {
+			$params['shipping'] = $shipping;
+		}
 
 		/**
 		 * Filter Stripe PaymentIntent parameters before creation.
@@ -790,7 +872,11 @@ class StripeGateway implements PaymentGatewayInterface {
 			array(
 				'service_id'  => (int) ( $params['service_id'] ?? 0 ),
 				'package_id'  => (int) ( $params['package_id'] ?? 0 ),
-				'customer_id' => get_current_user_id(),
+				// Carried through to the intent's metadata so a succeeded
+				// payment can be matched back to the order it paid. Dropping it
+				// here is how a charged card left an order at pending_payment.
+				'order_id'    => (int) ( $params['order_id'] ?? 0 ),
+				'customer_id' => (int) ( $params['customer_id'] ?? get_current_user_id() ),
 			)
 		);
 	}
@@ -1100,21 +1186,72 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return array
 	 */
 	private function handle_refund( array $charge ): array {
-		$payment_intent_id = $charge['payment_intent'] ?? '';
+		$payment_intent_id = (string) ( $charge['payment_intent'] ?? '' );
 
-		if ( $payment_intent_id ) {
-			/**
-			 * Fires when a Stripe refund is processed.
-			 *
-			 * @param string $payment_intent_id Payment intent ID.
-			 * @param array  $charge            Charge data.
-			 */
-			do_action( 'wpss_stripe_refund_processed', $payment_intent_id, $charge );
+		if ( '' === $payment_intent_id ) {
+			return array(
+				'success' => true,
+				'message' => 'Refund had no payment intent to resolve.',
+			);
 		}
+
+		// Resolve the order this charge paid for. Orders store the intent id in
+		// transaction_id when they are marked paid.
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$order_id = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT id FROM {$table} WHERE transaction_id = %s LIMIT 1", $payment_intent_id )
+		);
+
+		if ( $order_id <= 0 ) {
+			return array(
+				'success' => true,
+				'message' => 'Refund did not match a service order.',
+			);
+		}
+
+		$order = wpss_get_order( $order_id );
+
+		// Stripe reports refunds in minor units, so convert with the currency's
+		// real precision rather than dividing by 100 - wrong for JPY and KWD.
+		$currency = (string) ( $charge['currency'] ?? ( $order->currency ?? '' ) );
+		$refunded = wpss_amount_from_minor_units( (int) ( $charge['amount_refunded'] ?? 0 ), $currency );
+
+		if ( $refunded <= 0 ) {
+			return array(
+				'success' => true,
+				'message' => 'Refund amount was zero.',
+			);
+		}
+
+		$total  = (float) ( $order->total ?? 0 );
+		$status = wpss_amounts_match( $refunded, $total, $currency ) || $refunded > $total
+			? 'refunded'
+			: 'partially_refunded';
+
+		// Through the ONE routine that owns this. It clamps an over-refund,
+		// rolls the column back when the status will not move, and reverses the
+		// vendor's earning. This handler previously fired an action and
+		// returned success without touching the order - and nothing listened to
+		// that action, so a real Stripe refund returned the buyer's money and
+		// left the order marked paid with the vendor still credited. Verified
+		// against a live sandbox refund before this fix.
+		( new \WPSellServices\Services\OrderService() )->apply_refund_status( $order_id, $refunded, $status );
+
+		/**
+		 * Fires when a Stripe refund is processed.
+		 *
+		 * @param string $payment_intent_id Payment intent ID.
+		 * @param array  $charge            Charge data.
+		 */
+		do_action( 'wpss_stripe_refund_processed', $payment_intent_id, $charge );
 
 		return array(
 			'success' => true,
-			'message' => 'Refund processed.',
+			'message' => 'Refund applied to order #' . $order_id . '.',
 		);
 	}
 

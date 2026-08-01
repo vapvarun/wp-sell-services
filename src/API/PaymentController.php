@@ -338,10 +338,20 @@ class PaymentController extends RestController {
 	private function create_stripe_intent( object $gateway, float $amount, string $currency, int $service_id, int $package_id, int $pay_order ) {
 		$result = $gateway->create_payment_intent(
 			array(
-				'amount'     => $amount,
-				'currency'   => $currency,
-				'service_id' => $service_id,
-				'package_id' => $package_id,
+				'amount'      => $amount,
+				'currency'    => $currency,
+				'service_id'  => $service_id,
+				'package_id'  => $package_id,
+				// The order this intent pays for. Without it the charge cannot
+				// be matched back to an order: the webhook handler resolves the
+				// order from metadata['order_id'], so a succeeded payment
+				// arrived with nothing to apply it to. Verified against a live
+				// Stripe sandbox - the card was charged, Stripe delivered
+				// payment_intent.succeeded, and the order sat at
+				// pending_payment with no transaction id and no vendor credit.
+				// Money in, order unpaid, silently.
+				'order_id'    => $pay_order,
+				'customer_id' => get_current_user_id(),
 			)
 		);
 
