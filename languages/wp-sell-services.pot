@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-01T04:55:11+00:00\n"
+"POT-Creation-Date: 2026-08-01T05:10:32+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -6107,7 +6107,7 @@ msgstr ""
 msgid "Current page of the results."
 msgstr ""
 
-#: src/API/API.php:641
+#: src/API/API.php:651
 #: src/API/EarningsController.php:297
 #: src/Services/EarningsService.php:596
 #: templates/dashboard/sections/orders.php:219
@@ -6117,12 +6117,12 @@ msgid "Deleted Service"
 msgstr ""
 
 #. translators: %d: maximum number of batch requests
-#: src/API/API.php:778
+#: src/API/API.php:788
 #, php-format
 msgid "Batch requests limited to %d operations."
 msgstr ""
 
-#: src/API/API.php:797
+#: src/API/API.php:807
 msgid "Path must start with /wpss/v1/"
 msgstr ""
 
