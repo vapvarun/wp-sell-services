@@ -3809,6 +3809,76 @@ function wpss_uses_standalone_payments(): bool {
 }
 
 /**
+ * Whether the plugin is running payments in demo mode.
+ *
+ * A fresh install is meant to work end to end from the first minute. Until
+ * this existed it could not: Stripe and PayPal ship without credentials and
+ * the Test gateway was hidden behind WP_DEBUG, which is off on every
+ * production site - so a new owner set up a marketplace, walked a buyer to
+ * checkout and hit an empty gateway list, with nothing on screen to say a
+ * step was missing.
+ *
+ * Demo mode fills that gap and then gets out of the way. It is ON only while
+ * ALL of these hold:
+ *
+ *   - this site takes payment through our own gateways (standalone rail)
+ *   - no real gateway has been configured yet
+ *   - the owner has not turned it off
+ *
+ * So it disables itself the moment real credentials are saved. There is no
+ * state to remember and no way to be silently stuck in test mode with a live
+ * store - the thing that makes "enable a test gateway by default" dangerous
+ * in most plugins.
+ *
+ * @since 1.3.1
+ *
+ * @return bool
+ */
+function wpss_demo_payments_enabled(): bool {
+	if ( ! wpss_uses_standalone_payments() ) {
+		return false;
+	}
+
+	// An explicit opt-out always wins, so an owner can run a live standalone
+	// store with no gateway yet configured without a demo checkout appearing.
+	if ( 'no' === get_option( 'wpss_demo_payments', '' ) ) {
+		return false;
+	}
+
+	return ! wpss_has_live_gateway();
+}
+
+/**
+ * Whether any real payment gateway is configured and usable.
+ *
+ * "Configured" means enabled AND carrying the credentials it needs - an
+ * enabled gateway with empty keys cannot take money, so it does not count.
+ *
+ * @since 1.3.1
+ *
+ * @return bool
+ */
+function wpss_has_live_gateway(): bool {
+	$gateways = wpss()->get_payment_gateways();
+
+	foreach ( $gateways as $id => $gateway ) {
+		if ( 'test' === $id ) {
+			continue;
+		}
+
+		// is_enabled() is the interface method, and Stripe/PayPal implement it
+		// as "enabled AND has the keys it needs" - which is exactly the
+		// question here. An enabled gateway with blank credentials cannot take
+		// money, so it must not count as live.
+		if ( $gateway instanceof \WPSellServices\Integrations\Contracts\PaymentGatewayInterface && $gateway->is_enabled() ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
  * REST permission callback: the caller must be logged in.
  *
  * Use this instead of `'permission_callback' => 'is_user_logged_in'`. A bare

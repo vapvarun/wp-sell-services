@@ -1875,9 +1875,6 @@ final class Plugin {
 		// cart rail there is no way to begin a payment through our gateways.
 		// New orders go through the rail; historical orders keep their own.
 
-		// Register Test Gateway (only in debug mode).
-		$this->maybe_register_test_gateway();
-
 		// Register Stripe Gateway.
 		$stripe_gateway = new \WPSellServices\Integrations\Stripe\StripeGateway();
 		$stripe_gateway->init();
@@ -1904,6 +1901,13 @@ final class Plugin {
 		 * @param array $gateways Array of payment gateway instances.
 		 */
 		$this->payment_gateways = apply_filters( 'wpss_payment_gateways', $this->payment_gateways );
+
+		// Test gateway LAST, on purpose: it decides whether to register by asking
+		// whether any real gateway is usable, and that is only correct once
+		// Stripe, PayPal, Offline and anything Pro or a third party adds through
+		// the filter above are all present. Registered first it would always see
+		// an empty list, and demo mode would never switch itself off.
+		$this->maybe_register_test_gateway();
 
 		/**
 		 * Filter the registered wallet providers.
@@ -1961,7 +1965,21 @@ final class Plugin {
 	 * @return void
 	 */
 	private function maybe_register_test_gateway(): void {
-		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+		// Registered when this is a developer site OR when the store has no
+		// real gateway yet.
+		//
+		// It used to be WP_DEBUG only, which is off on every production site -
+		// so a fresh install had Stripe and PayPal with no credentials, no Test
+		// gateway, and therefore no way to complete a purchase at all. The
+		// owner met an empty gateway list at checkout with nothing explaining
+		// which step they had missed.
+		//
+		// wpss_demo_payments_enabled() switches itself off the moment real
+		// credentials are saved, so a live store cannot sit in demo mode by
+		// accident. Admin\Admin surfaces a standing notice while it is on.
+		$is_dev_site = defined( 'WP_DEBUG' ) && WP_DEBUG;
+
+		if ( ! $is_dev_site && ! wpss_demo_payments_enabled() ) {
 			return;
 		}
 

@@ -397,6 +397,43 @@ class Admin {
 		// Page setup admin notice.
 		add_action( 'admin_notices', array( $this, 'check_page_setup_notice' ) );
 		add_action( 'wp_ajax_wpss_dismiss_pages_notice', array( $this, 'ajax_dismiss_pages_notice' ) );
+
+		// Demo payments notice. Deliberately NOT dismissible - see the method.
+		add_action( 'admin_notices', array( $this, 'demo_payments_notice' ) );
+	}
+
+	/**
+	 * Warn, on every admin screen, while payments are simulated.
+	 *
+	 * A fresh install registers the Test gateway so the marketplace works end
+	 * to end before any gateway credentials exist. That is the right default -
+	 * an owner can take a service from listing to paid order on day one - but
+	 * it must never be quiet, because the failure mode is a real store selling
+	 * to real buyers and settling nothing.
+	 *
+	 * No dismiss control, on purpose. The notice goes away by fixing its cause:
+	 * configure a gateway, and wpss_demo_payments_enabled() is false on the
+	 * next request.
+	 *
+	 * @since 1.3.1
+	 * @return void
+	 */
+	public function demo_payments_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'wpss_demo_payments_enabled' ) ) {
+			return;
+		}
+
+		if ( ! wpss_demo_payments_enabled() ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning"><p><strong>%s</strong> %s</p><p><a href="%s" class="button button-primary">%s</a></p></div>',
+			esc_html__( 'Demo payments are on.', 'wp-sell-services' ),
+			esc_html__( 'Checkout is simulated so you can test the whole buying flow - no money moves and no card is charged. Configure a payment gateway before taking real orders; this notice clears itself once one is ready.', 'wp-sell-services' ),
+			esc_url( admin_url( 'admin.php?page=wpss-settings#payments' ) ),
+			esc_html__( 'Set up payments', 'wp-sell-services' )
+		);
 	}
 
 	/**
