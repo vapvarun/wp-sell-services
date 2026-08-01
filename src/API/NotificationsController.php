@@ -17,6 +17,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use WPSellServices\Services\NotificationMessage;
 use WPSellServices\Services\NotificationService;
 
 /**
@@ -268,6 +269,13 @@ class NotificationsController extends RestController {
 	/**
 	 * Format notification for response.
 	 *
+	 * `message` is always plain text. Rows written since notification bodies
+	 * became structured are stored that way already; older rows still hold the
+	 * email markup they were authored with, so they are reduced here rather
+	 * than migrated — see {@see NotificationMessage::to_plain()}. Clients that
+	 * want their own emphasis read the structured `data` instead of parsing
+	 * the sentence.
+	 *
 	 * @param array $notification Raw notification data.
 	 * @return array
 	 */
@@ -277,8 +285,8 @@ class NotificationsController extends RestController {
 		return array(
 			'id'         => (int) $notification['id'],
 			'type'       => $notification['type'],
-			'title'      => $notification['title'],
-			'message'    => $notification['message'],
+			'title'      => NotificationMessage::to_plain( (string) ( $notification['title'] ?? '' ) ),
+			'message'    => NotificationMessage::to_plain( (string) ( $notification['message'] ?? '' ) ),
 			'data'       => $data ?: array(),
 			'is_read'    => (bool) $notification['is_read'],
 			'created_at' => $notification['created_at'],

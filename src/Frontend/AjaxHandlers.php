@@ -2555,6 +2555,15 @@ class AjaxHandlers {
 			)
 		);
 
+		// Bodies are stored as plain text, but rows written before that change
+		// still carry email markup — reduce them on the way out, exactly as the
+		// REST controller does, so no client has to strip tags itself.
+		foreach ( $notifications as $wpss_notification ) {
+			if ( isset( $wpss_notification->message ) ) {
+				$wpss_notification->message = \WPSellServices\Services\NotificationMessage::to_plain( (string) $wpss_notification->message );
+			}
+		}
+
 		wp_send_json_success(
 			array(
 				'notifications' => $notifications,
