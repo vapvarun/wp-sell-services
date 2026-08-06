@@ -673,7 +673,7 @@ class VendorService {
 	 * white-label settings and admin enable toggle the rest of the email system
 	 * uses.
 	 *
-	 * @since 1.5.0
+	 * @since 1.2.0
 	 *
 	 * @param int    $user_id User ID of the recipient vendor.
 	 * @param string $type    Email type: 'vendor_approved' or 'vendor_rejected'.
@@ -729,7 +729,7 @@ class VendorService {
 		/**
 		 * Filters the template variables for a vendor status-change email.
 		 *
-		 * @since 1.5.0
+		 * @since 1.2.0
 		 *
 		 * @param array  $template_vars Variables passed to the email template.
 		 * @param string $type          Email type identifier.
@@ -774,7 +774,7 @@ class VendorService {
 	 * Resolves theme overrides first, then falls back to the bundled template,
 	 * mirroring the lookup the core email system uses.
 	 *
-	 * @since 1.5.0
+	 * @since 1.2.0
 	 *
 	 * @param string               $template_name Template file name, e.g. 'vendor-approved.php'.
 	 * @param array<string, mixed> $template_vars Variables extracted into template scope.

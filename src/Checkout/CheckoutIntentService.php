@@ -9,7 +9,7 @@
  * charges it with its own create_payment(), then calls settle() on success.
  *
  * @package WPSellServices\Checkout
- * @since   1.5.2
+ * @since   1.3.0
  */
 
 declare(strict_types=1);
@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Resolves and settles gateway-agnostic checkout intents.
  *
- * @since 1.5.2
+ * @since 1.3.0
  */
 class CheckoutIntentService {
 
@@ -34,7 +34,7 @@ class CheckoutIntentService {
 	 * server cart) — the client-supplied amount is never trusted. Priority:
 	 * pay an existing order → multi-item cart → single service+package.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param array<string,mixed> $request Sanitized request data ($_POST-shaped).
 	 * @param int                 $buyer_id Buyer user ID (defaults to current user).
@@ -62,7 +62,7 @@ class CheckoutIntentService {
 	/**
 	 * Resolve a "pay an existing order" intent (proposal / milestone / tip / …).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param int $order_id Order ID.
 	 * @param int $buyer_id Buyer ID.
@@ -113,7 +113,7 @@ class CheckoutIntentService {
 	 * Mirrors StandaloneOrderProvider::create_orders_from_cart() exactly, so the
 	 * amount charged equals the sum of the orders that settle() will create.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param int $buyer_id Buyer ID.
 	 * @return CheckoutIntent|\WP_Error
@@ -165,7 +165,7 @@ class CheckoutIntentService {
 	/**
 	 * Resolve a single service + package (+ add-ons) intent.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param array<string, mixed> $request  Request data.
 	 * @param int                  $buyer_id Buyer ID.
@@ -216,7 +216,7 @@ class CheckoutIntentService {
 	 * Gateway-agnostic. Does NOT refund on failure — the gateway owns its own
 	 * refund API, so on a false return the gateway refunds the charge it made.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param CheckoutIntent $intent          The resolved intent.
 	 * @param string         $gateway_id      Gateway slug (e.g. 'stripe').
@@ -250,7 +250,7 @@ class CheckoutIntentService {
 	/**
 	 * Settle an existing-order payment: mark it paid.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param CheckoutIntent $intent   Intent.
 	 * @param object         $provider Order provider.
@@ -280,7 +280,7 @@ class CheckoutIntentService {
 	/**
 	 * Settle a multi-item cart: create one order per line, mark paid, clear cart.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param CheckoutIntent $intent   Intent.
 	 * @param object         $provider Order provider.
@@ -314,7 +314,7 @@ class CheckoutIntentService {
 	/**
 	 * Settle a single purchase: create the order, mark it paid.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param CheckoutIntent $intent           Intent.
 	 * @param object         $provider         Order provider.

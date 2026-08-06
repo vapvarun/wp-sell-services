@@ -344,7 +344,7 @@ class Activator {
 	 * Creates Services, Dashboard, Become a Vendor, and Service Checkout pages
 	 * if they don't already exist. Maps page IDs in the wpss_pages option.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 * @return void
 	 */
 	public static function create_pages(): void {

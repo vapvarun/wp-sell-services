@@ -919,7 +919,7 @@ class UnifiedDashboard {
 	/**
 	 * Show a payout setup banner if vendor has earnings but no payout method.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 *
 	 * @param int  $user_id   Current user ID.
 	 * @param bool $is_active Whether user is an active vendor.

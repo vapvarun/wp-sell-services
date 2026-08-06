@@ -49,7 +49,7 @@ class ServicePostType {
 	 * Guarded so it runs at most once and never overwrites an owner's own
 	 * categories: if any term already exists, it just marks the job done.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function maybe_seed_default_categories(): void {
@@ -82,7 +82,7 @@ class ServicePostType {
 	 * Separated from maybe_seed_default_categories() so it is directly testable
 	 * and reusable (e.g. from the setup wizard's "skip categories" path).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @return int[] Created term IDs.
 	 */
 	public function seed_default_categories(): array {

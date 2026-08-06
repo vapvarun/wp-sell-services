@@ -79,7 +79,7 @@ class SetupWizardPage {
 	 * no hook suffix — but the screen stays reachable by direct URL and by the
 	 * "Re-Run Setup Wizard" button in Settings, and it must still be styled.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 *
 	 * @param string $hook Current admin page hook suffix.
 	 * @return void

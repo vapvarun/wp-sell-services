@@ -5,7 +5,7 @@
  * Handles cascade deletion of plugin data when services or users are deleted.
  *
  * @package WPSellServices\Services
- * @since   1.5.0
+ * @since   1.0.0
  */
 
 namespace WPSellServices\Services;
@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
  * Hooks into WordPress post and user deletion to clean up related plugin data
  * from custom tables, preventing orphaned records.
  *
- * @since 1.5.0
+ * @since 1.0.0
  */
 class DataCascadeHandler {
 
@@ -95,7 +95,7 @@ class DataCascadeHandler {
 		/**
 		 * Fires before service cascade data is deleted.
 		 *
-		 * @since 1.5.0
+		 * @since 1.0.0
 		 * @param int $service_id Service post ID.
 		 */
 		do_action( 'wpss_before_cascade_delete_service', $service_id );
@@ -133,7 +133,7 @@ class DataCascadeHandler {
 		/**
 		 * Fires after service cascade data is deleted.
 		 *
-		 * @since 1.5.0
+		 * @since 1.0.0
 		 * @param int $service_id Service post ID.
 		 */
 		do_action( 'wpss_after_cascade_delete_service', $service_id );
@@ -149,7 +149,7 @@ class DataCascadeHandler {
 		/**
 		 * Fires before buyer request cascade data is deleted.
 		 *
-		 * @since 1.5.0
+		 * @since 1.0.0
 		 * @param int $request_id Buyer request post ID.
 		 */
 		do_action( 'wpss_before_cascade_delete_request', $request_id );
@@ -160,7 +160,7 @@ class DataCascadeHandler {
 		/**
 		 * Fires after buyer request cascade data is deleted.
 		 *
-		 * @since 1.5.0
+		 * @since 1.0.0
 		 * @param int $request_id Buyer request post ID.
 		 */
 		do_action( 'wpss_after_cascade_delete_request', $request_id );
@@ -176,7 +176,7 @@ class DataCascadeHandler {
 		/**
 		 * Fires before user cascade data is deleted.
 		 *
-		 * @since 1.5.0
+		 * @since 1.0.0
 		 * @param int $user_id User ID.
 		 */
 		do_action( 'wpss_before_cascade_delete_user', $user_id );
@@ -220,7 +220,7 @@ class DataCascadeHandler {
 		/**
 		 * Fires after user cascade data is deleted.
 		 *
-		 * @since 1.5.0
+		 * @since 1.0.0
 		 * @param int $user_id User ID.
 		 */
 		do_action( 'wpss_after_cascade_delete_user', $user_id );

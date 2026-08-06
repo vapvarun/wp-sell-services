@@ -17,7 +17,7 @@
  * lists it — most-restrictive wins, matching the "hide X for role Y" intent.
  *
  * @package WPSellServices\Frontend
- * @since   1.5.2
+ * @since   1.3.0
  */
 
 namespace WPSellServices\Frontend;
@@ -27,14 +27,14 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Applies role-based visibility to the dashboard nav and the admin menu.
  *
- * @since 1.5.2
+ * @since 1.3.0
  */
 class MenuVisibility {
 
 	/**
 	 * Option that stores the per-role visibility map.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @var   string
 	 */
 	public const OPTION = 'wpss_menu_visibility';
@@ -42,7 +42,7 @@ class MenuVisibility {
 	/**
 	 * Register hooks.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @return void
 	 */
@@ -68,7 +68,7 @@ class MenuVisibility {
 	 * The stable key set the frontend nav uses (free + Pro 'analytics'). Kept here
 	 * so the settings UI does not have to instantiate the dashboard.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @return array<string,string>
 	 */
@@ -92,7 +92,7 @@ class MenuVisibility {
 	/**
 	 * Register the visibility option in the Advanced settings group.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @return void
 	 */
@@ -127,7 +127,7 @@ class MenuVisibility {
 	 * roles are recomputed; without it, any partial submission would hide every
 	 * section from every absent role.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param  mixed $input Raw posted value.
 	 * @return array<string, mixed>
@@ -229,7 +229,7 @@ class MenuVisibility {
 	/**
 	 * Render the role x dashboard-section "hide" matrix in the Advanced tab.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @return void
 	 */
@@ -310,7 +310,7 @@ class MenuVisibility {
 	 * Only ever tightens access — never re-grants a section another rule already
 	 * denied (e.g. a vendor-only section for a non-vendor).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param bool   $can_access Current access decision.
 	 * @param string $section    Section key.
@@ -328,7 +328,7 @@ class MenuVisibility {
 	/**
 	 * Remove admin submenu pages hidden for the current user's role.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @return void
 	 */
@@ -349,7 +349,7 @@ class MenuVisibility {
 	/**
 	 * Hidden keys for a surface, unioned across the user's roles.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param string $surface 'dashboard' | 'admin'.
 	 * @param int    $user_id User ID.

@@ -113,7 +113,7 @@ class Settings {
 	 * missed the sidebar, which promptly badged two free tabs as "Pro" — so it
 	 * is defined once here and read everywhere.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 *
 	 * @return array<int, string> Core tab slugs.
 	 */
@@ -349,7 +349,7 @@ class Settings {
 	/**
 	 * AJAX handler to send a test email.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -1652,7 +1652,7 @@ class Settings {
 	/**
 	 * Render the Commission &amp; Tax tab — what the platform KEEPS.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 * @return void
 	 */
 	private function render_commission_tab(): void {
@@ -1685,7 +1685,7 @@ class Settings {
 	 * buried inside "Payments", so an owner looking for payout configuration
 	 * had to guess it lived under the tab about taking payments.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 * @return void
 	 */
 	private function render_payouts_tab(): void {
@@ -2254,7 +2254,7 @@ class Settings {
 	/**
 	 * Render the test email section in the Emails tab.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -2558,7 +2558,7 @@ class Settings {
 	 * Keeps whole numbers whole — `min="0"`, not `min="0.0"` — while preserving
 	 * a genuine decimal bound (a 2.5 % rate stays 2.5).
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 *
 	 * @param float $bound Bound value.
 	 * @return string Attribute-ready value.

@@ -300,7 +300,7 @@ class SchemaManager {
 	 * (service_packages/addons price, proposals.proposed_price) are recomputed
 	 * into these on order creation and are a separate follow-up.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @return void
 	 */
@@ -330,7 +330,7 @@ class SchemaManager {
 	 * when the column is already at the target type — safe to run repeatedly and
 	 * on fresh installs (where the CREATE TABLE already used the target type).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param string $table       Logical table name (without prefix).
 	 * @param string $column      Column name.

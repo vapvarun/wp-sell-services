@@ -11,7 +11,7 @@
  * the gateway code is identical.
  *
  * @package WPSellServices\Checkout
- * @since   1.5.2
+ * @since   1.3.0
  */
 
 declare(strict_types=1);
@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Immutable value object produced by CheckoutIntentService::resolve().
  *
- * @since 1.5.2
+ * @since 1.3.0
  */
 final class CheckoutIntent {
 
@@ -39,7 +39,7 @@ final class CheckoutIntent {
 	/**
 	 * One of the KIND_* constants.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @var   string
 	 */
 	public string $kind;
@@ -47,7 +47,7 @@ final class CheckoutIntent {
 	/**
 	 * Amount to charge, computed SERVER-SIDE. Never from the client.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @var   float
 	 */
 	public float $amount;
@@ -55,7 +55,7 @@ final class CheckoutIntent {
 	/**
 	 * ISO currency code.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @var   string
 	 */
 	public string $currency;
@@ -63,7 +63,7 @@ final class CheckoutIntent {
 	/**
 	 * Buyer user ID.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @var   int
 	 */
 	public int $buyer_id;
@@ -71,7 +71,7 @@ final class CheckoutIntent {
 	/**
 	 * Metadata for the gateway (customer id, order id, etc.).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @var   array<string,mixed>
 	 */
 	public array $metadata;
@@ -79,7 +79,7 @@ final class CheckoutIntent {
 	/**
 	 * Existing order ID (KIND_ORDER only).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @var   int
 	 */
 	public int $order_id = 0;
@@ -87,7 +87,7 @@ final class CheckoutIntent {
 	/**
 	 * Cart line items (KIND_CART only).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @var   array<int,array<string,mixed>>
 	 */
 	public array $cart = array();
@@ -95,7 +95,7 @@ final class CheckoutIntent {
 	/**
 	 * Service ID (KIND_SINGLE only).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @var   int
 	 */
 	public int $service_id = 0;
@@ -103,7 +103,7 @@ final class CheckoutIntent {
 	/**
 	 * Package ID (KIND_SINGLE only).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @var   int
 	 */
 	public int $package_id = 0;
@@ -111,7 +111,7 @@ final class CheckoutIntent {
 	/**
 	 * Resolved add-ons (KIND_SINGLE only).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @var   array<int,array<string,mixed>>
 	 */
 	public array $addons = array();
@@ -119,7 +119,7 @@ final class CheckoutIntent {
 	/**
 	 * Add-ons total (KIND_SINGLE only).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @var   float
 	 */
 	public float $addons_total = 0.0;
@@ -127,7 +127,7 @@ final class CheckoutIntent {
 	/**
 	 * Private constructor — use the named factories.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param string               $kind     Kind.
 	 * @param float                $amount   Amount.
@@ -146,7 +146,7 @@ final class CheckoutIntent {
 	/**
 	 * Intent to pay an existing order.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param int                  $order_id Order ID.
 	 * @param float                $amount   Order total.
@@ -165,7 +165,7 @@ final class CheckoutIntent {
 	/**
 	 * Intent to buy a multi-item cart.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param array<int, mixed>    $cart Cart line items.
 	 * @param float                $amount   Server-computed cart total.
@@ -184,7 +184,7 @@ final class CheckoutIntent {
 	/**
 	 * Intent to buy a single service + package (+ add-ons).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param int                  $service_id   Service ID.
 	 * @param int                  $package_id   Package ID.

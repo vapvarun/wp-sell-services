@@ -2234,7 +2234,7 @@ final class Plugin {
 	 * Ensures plugin data in custom tables is cleaned up when
 	 * services, buyer requests, or users are permanently deleted.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 * @return void
 	 */
 	private function define_cascade_hooks(): void {

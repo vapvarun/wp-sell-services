@@ -88,7 +88,7 @@ function wpss_format_price( float $price, string $currency = '' ): string {
  * The stored value is ALWAYS the base amount; any hint is presentation only and
  * changes nothing in the database, the charge, or the ledger.
  *
- * @since 1.5.2
+ * @since 1.3.0
  *
  * @param float  $amount  Catalog amount in the store base currency.
  * @param string $context Where it is shown ('card', 'package', 'single', …).
@@ -155,7 +155,7 @@ function wpss_catalog_price_html( float $amount, string $context = '' ): string 
  * The status keeps its own semantic colour, defined once in the status-badge
  * CSS. Filterable so a site can recolour a status without editing core.
  *
- * @since 1.5.1
+ * @since 1.3.0
  *
  * @param string $status Raw status value (e.g. 'revision_requested').
  * @return string Space-joined classes: the badge base + the status class.
@@ -167,7 +167,7 @@ function wpss_status_class( string $status ): string {
 	/**
 	 * Filter the CSS classes for a status badge.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 *
 	 * @param string $class  Space-joined badge classes.
 	 * @param string $status Raw status value.
@@ -3189,7 +3189,7 @@ function wpss_get_service_requirements( int $service_id ): array {
  *   - `options` : value=>label ARRAY      (buyer requirements form)
  * derived from whichever key/type was stored. Non-choice fields are untouched.
  *
- * @since 1.5.2
+ * @since 1.3.0
  *
  * @param array<string,mixed> $req A single requirement definition.
  * @return array<string,mixed>

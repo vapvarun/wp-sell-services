@@ -66,7 +66,7 @@ class UpgradePage {
 	/**
 	 * Enqueue the onboarding stylesheet on this screen only.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 *
 	 * @param string $hook Current admin page hook suffix.
 	 * @return void

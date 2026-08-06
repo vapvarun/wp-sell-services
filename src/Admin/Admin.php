@@ -477,7 +477,7 @@ class Admin {
 	 * Lists missing pages and links to the setup wizard or settings page.
 	 * Dismissible via user meta so it does not persist after dismissal.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 * @return void
 	 */
 	public function check_page_setup_notice(): void {
@@ -535,7 +535,7 @@ class Admin {
 	/**
 	 * AJAX handler to dismiss the pages setup notice.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 * @return void
 	 */
 	public function ajax_dismiss_pages_notice(): void {

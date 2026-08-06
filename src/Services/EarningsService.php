@@ -415,7 +415,7 @@ class EarningsService {
 	 * Idempotent: the row lock serialises concurrent calls, and the loser
 	 * re-reads a completed row and is refused — marking twice debits once.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 *
 	 * @param int    $withdrawal_id Withdrawal record ID.
 	 * @param string $note          Optional admin note.
@@ -1094,7 +1094,7 @@ class EarningsService {
 	 * never disagree between the settings field, the activator and runtime —
 	 * that drift is how "saved but not applied" bugs start.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 *
 	 * @return int Days to hold earnings. 0 means no hold.
 	 */
