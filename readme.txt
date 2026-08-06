@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.4.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -262,6 +262,16 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.5.1 - August 2026 =
+
+Shoppers see prices in their own currency, and checkout says plainly what they will be charged.
+
+* New      - Catalog prices carry their base amount in the markup, so a display-currency add-on can show an approximate price in the shopper's own currency without changing what is charged.
+* New      - The order modal total now carries the same information, so the estimate follows the price as extras and quantity change.
+* New      - New action wpss_payable_total_after fires wherever a payable total is shown, on both the cart summary and the checkout, so an add-on can state the charge currency at the last screen before payment.
+* Improve  - Prices are marked up identically for every visitor, so a page cache can never serve one shopper's currency to another.
+* Fix      - Docblocks across the plugin cited @since versions that were never released, which made them useless for judging when a function or hook became available; every one now names the version it actually shipped in.
 
 = 1.4.0 - August 2026 =
 
