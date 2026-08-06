@@ -594,7 +594,22 @@
             // Update display.
             $modal.find('.wpss-package-name').text(packageName);
             $modal.find('.wpss-delivery-time').text(totalDays + ' ' + (totalDays === 1 ? ((wpssService.i18n && wpssService.i18n.day) || 'Day') : ((wpssService.i18n && wpssService.i18n.days) || 'Days')));
-            $modal.find('.wpss-total-price').text(this.formatPrice(totalPrice));
+            // The total is computed here, in the browser, from the base price
+            // plus whichever extras are ticked — so no server-side filter can
+            // ever reach it. Carrying the base amount on the element (the same
+            // `data-wbcom-amount` contract wpss_catalog_price_html() emits) lets
+            // a display-currency layer hint this total exactly like a package
+            // price, instead of the modal being the one surface that silently
+            // shows base currency only.
+            $modal.find('.wpss-total-price')
+                .text(this.formatPrice(totalPrice))
+                .attr('data-wbcom-amount', totalPrice.toFixed(4));
+
+            // Announce it: the total just changed, so anything decorating prices
+            // needs to re-render. No-op when nothing is listening.
+            document.dispatchEvent(new CustomEvent('wbcom:prices-updated', {
+                detail: { root: $modal.get(0) || document }
+            }));
 
             // Update hidden input.
             $modal.find('input[name="package_index"]').val(this.state.selectedPackage);

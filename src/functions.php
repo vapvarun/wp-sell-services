@@ -95,6 +95,26 @@ function wpss_format_price( float $price, string $currency = '' ): string {
  * @return string Base-price HTML, with a display hint appended if one is hooked.
  */
 function wpss_catalog_price_html( float $amount, string $context = '' ): string {
+	// The base amount travels with the markup so a display-currency add-on can
+	// render its hint IN THE BROWSER instead of forking the server response.
+	// That distinction is the whole point: this HTML is identical for every
+	// visitor, so it stays cacheable, and a page cache can never serve one
+	// shopper's currency to another. %F (not %f) keeps the decimal separator a
+	// dot regardless of locale, so JS can parseFloat() it.
+	//
+	// PORTFOLIO CONTRACT — `data-wbcom-amount` is deliberately NOT wpss-prefixed.
+	// A site can run several Wbcom products at once (BuddyNext bundles them), and
+	// per-plugin attributes would mean each one shipping its own rate fetch,
+	// timezone map and renderer for the same job. One neutral attribute lets a
+	// single currency layer hint prices emitted by any of them. See
+	// ~/.claude/workflows/wbcom-display-currency-standard.md. The wpss-prefixed
+	// class stays for styling, which IS plugin-specific.
+	$html = sprintf(
+		'<span class="wpss-price wbcom-price" data-wbcom-amount="%s">%s</span>',
+		esc_attr( sprintf( '%.4F', $amount ) ),
+		wpss_format_price( $amount )
+	);
+
 	/**
 	 * Filter catalog price HTML to append a display-currency hint.
 	 *
@@ -102,13 +122,18 @@ function wpss_catalog_price_html( float $amount, string $context = '' ): string 
 	 * and the raw base amount; must return HTML that still shows the base price
 	 * (append, never replace) so the shopper always sees what they are charged.
 	 *
-	 * @since 1.5.2
+	 * Server-side hinting is the no-JS fallback only — see Pro's
+	 * DisplayCurrencyManager::append_hint(), which deliberately fires only on an
+	 * explicit ?wpss_currency= request because a query-var URL is cache-keyed
+	 * separately by every page cache.
 	 *
-	 * @param string $html    Base price HTML from wpss_format_price().
+	 * @since 1.5.1
+	 *
+	 * @param string $html    Base price HTML, wrapped in a .wpss-price span.
 	 * @param float  $amount  Raw base amount.
 	 * @param string $context Catalog surface identifier.
 	 */
-	return apply_filters( 'wpss_catalog_price_html', wpss_format_price( $amount ), $amount, $context );
+	return apply_filters( 'wpss_catalog_price_html', $html, $amount, $context );
 }
 
 /**
