@@ -1068,6 +1068,22 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									</div>
 								</div>
 
+								<?php
+								/**
+								 * Fires after the payable total, before the Pay button.
+								 *
+								 * Placed where the pay-order and normal branches rejoin, so a
+								 * consumer runs once on either path. Same hook the cart summary
+								 * fires — see templates/cart/cart.php.
+								 *
+								 * @since 1.5.1
+								 *
+								 * @param float  $total   Payable total in the store base currency.
+								 * @param string $context Surface identifier ('cart', 'checkout').
+								 */
+								do_action( 'wpss_payable_total_after', (float) $total, 'checkout' );
+								?>
+
 								<div class="wpss-card__footer" style="flex-direction:column;align-items:stretch;">
 									<!-- CTA button -->
 									<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-btn--full wpss-checkout-button">
