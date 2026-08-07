@@ -609,6 +609,8 @@ class API {
 			'page_urls'           => $this->get_page_urls( $pages_settings ),
 			// Non-sensitive realtime (WebSocket) client config — never the secret.
 			'realtime'            => ( new \WPSellServices\Services\RealtimeService() )->get_client_config(),
+			// Bootstrap contract for native app clients.
+			'app'                 => $this->get_app_contract( $pages_settings ),
 		];
 
 		/**
@@ -617,6 +619,113 @@ class API {
 		 * @param array $settings Settings array.
 		 */
 		return new \WP_REST_Response( apply_filters( 'wpss_api_public_settings', $settings ) );
+	}
+
+	/**
+	 * Bootstrap contract a native app reads before it renders anything.
+	 *
+	 * Anonymous by design: the app needs this BEFORE a user logs in, to decide
+	 * whether it may run against this site at all, whether it must force an
+	 * upgrade first, and what to brand itself as.
+	 *
+	 * FAIL CLOSED. `app_enabled` defaults to false here and only Pro flips it, on
+	 * a real license check. An app that cannot find the key, because it is talking
+	 * to a plugin older than this release, must also treat it as false. Defaulting
+	 * to true anywhere in that chain would let an app run against a site that never
+	 * agreed to host it — and the failure would be silent on the server side, which
+	 * is the worst place for it to be.
+	 *
+	 * Everything here is world-readable, so it carries only what is already public.
+	 * Secrets stay behind the admin-only white-label routes.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param array<string,mixed> $pages_settings Configured page mapping.
+	 * @return array<string,mixed>
+	 */
+	private function get_app_contract( array $pages_settings ): array {
+		$page_urls = $this->get_page_urls( $pages_settings );
+
+		$branding = array(
+			'brand_name'    => get_bloginfo( 'name' ),
+			'logo_url'      => $this->get_site_logo_url(),
+			'primary_color' => '',
+		);
+
+		return array(
+			/*
+			 * Bump when a FIELD changes shape or meaning, never for a value change.
+			 * It exists so an app can refuse a payload it does not understand rather
+			 * than silently misread one.
+			 */
+			'contract_version' => 1,
+
+			/*
+			 * Force-upgrade floor. '0.0.0' means "no floor" — every build is
+			 * acceptable — which is the right default for a site that has never
+			 * thought about it. Owners raise it when a release breaks a client.
+			 */
+			'min_app_version'  => (string) apply_filters( 'wpss_app_min_version', '0.0.0' ),
+
+			/*
+			 * Free NEVER enables an app client. Pro flips this against
+			 * License\Manager::is_valid(). See the fail-closed note above.
+			 */
+			'app_enabled'      => (bool) apply_filters( 'wpss_app_enabled', false ),
+
+			/** Public subset only. Pro's white label supplies the real values. */
+			'branding'         => (array) apply_filters( 'wpss_app_branding', $branding ),
+
+			'legal'            => array(
+				'privacy_policy_url'  => get_privacy_policy_url() ?: null,
+				'terms_url'           => $page_urls['terms'] ?? null,
+				/*
+				 * Deliberately NOT defaulted to admin_email. This endpoint is
+				 * anonymous and world-readable, so defaulting would publish the
+				 * site owner's inbox to every scraper that finds the route — a
+				 * privacy leak the owner never opted into, in exchange for a field
+				 * only app-store review actually needs. Empty until set on purpose.
+				 */
+				'abuse_contact_email' => (string) apply_filters( 'wpss_app_abuse_contact', '' ),
+			),
+
+			/*
+			 * Booleans an app may gate screens on. Only flags derivable from real
+			 * state belong here — a flag that is always true tells a client nothing
+			 * and becomes a lie the first time the feature is disabled.
+			 */
+			'features'         => (array) apply_filters(
+				'wpss_app_features',
+				array(
+					'buyer_requests' => (bool) wpss_get_option( 'general', 'enable_buyer_requests', true ),
+					'disputes'       => (bool) wpss_get_option( 'general', 'enable_disputes', true ),
+					'realtime'       => ! empty( ( new \WPSellServices\Services\RealtimeService() )->get_client_config()['enabled'] ),
+				)
+			),
+		);
+	}
+
+	/**
+	 * The site's own logo, for a client that has no white-label branding to use.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @return string Absolute URL, or empty string when the site has no logo.
+	 */
+	private function get_site_logo_url(): string {
+		$logo_id = (int) get_theme_mod( 'custom_logo' );
+
+		if ( $logo_id ) {
+			$src = wp_get_attachment_image_src( $logo_id, 'full' );
+
+			if ( ! empty( $src[0] ) ) {
+				return (string) $src[0];
+			}
+		}
+
+		$icon = get_site_icon_url();
+
+		return $icon ? (string) $icon : '';
 	}
 
 	/**
