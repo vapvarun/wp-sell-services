@@ -572,6 +572,16 @@
         "name": "wpss_dashboard_section_before",
         "type": "action",
         "purpose": "Fires inside a dashboard section wrapper before its body renders; receives the section key"
+      },
+      {
+        "name": "wpss_catalog_price_html",
+        "type": "filter",
+        "purpose": "Catalog price HTML (service card, package tiers). Wraps the base amount in a .wpss-price span carrying data-wbcom-amount so a display-currency add-on can render an approximate price IN THE BROWSER. Deliberately separate from wpss_format_price, which serves settlement surfaces (orders, wallet, earnings, payouts) and must never carry a hint."
+      },
+      {
+        "name": "wpss_payable_total_after",
+        "type": "action",
+        "purpose": "Fires wherever a payable total is shown, before its pay/continue CTA - cart summary and standalone checkout, with (float $total, string $context). The last surface WPSS owns before payment hands off. Args are base currency; consumers state the charge, never replace it. NOT fired on a host platform's own checkout by design (see ecommerce_adapter_boundary)."
       }
     ],
     "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 237 hook firings."
@@ -710,7 +720,7 @@
   "hooks": {
     "actions_fired": 128,
     "filters_exposed": 152,
-    "_note": "Unique do_action()/apply_filters() literals in src/. Enumerated by hand for 1.3.1."
+    "_note": "Unique do_action()/apply_filters() literals in src/. Counts enumerated by hand for 1.3.1 and NOT re-counted since; treat as indicative, not exact. key_extension_hooks below is maintained per-change and is authoritative for documented seams."
   },
   "cli": {
     "command_count": 6
