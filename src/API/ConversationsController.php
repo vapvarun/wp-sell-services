@@ -389,6 +389,60 @@ class ConversationsController extends RestController {
 	}
 
 	/**
+	 * Refuse the send if either party has blocked the other.
+	 *
+	 * Direction-blind, per {@see wpss_is_blocked_between()}: a block someone can
+	 * walk around by messaging first is not a block.
+	 *
+	 * The refusal deliberately does NOT say which way round it is. Telling the
+	 * sender "they blocked you" hands an unwanted contact the one piece of
+	 * information most likely to push them onto another channel to argue about
+	 * it, and telling them nothing costs a blocked-by-mistake member only an
+	 * unblock they can perform themselves.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param int $conversation_id Conversation ID.
+	 * @param int $user_id         Sender.
+	 * @return WP_Error|null Error when blocked, null when clear.
+	 */
+	private function blocked_participant( int $conversation_id, int $user_id ) {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$participants = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT participants FROM {$wpdb->prefix}wpss_conversations WHERE id = %d",
+				$conversation_id
+			)
+		);
+
+		$participants = json_decode( (string) $participants, true );
+
+		if ( ! is_array( $participants ) ) {
+			return null;
+		}
+
+		foreach ( $participants as $participant_id ) {
+			$participant_id = (int) $participant_id;
+
+			if ( $participant_id === $user_id ) {
+				continue;
+			}
+
+			if ( wpss_is_blocked_between( $user_id, $participant_id ) ) {
+				return new WP_Error(
+					'wpss_conversation_blocked',
+					__( 'You can no longer send messages in this conversation.', 'wp-sell-services' ),
+					array( 'status' => 403 )
+				);
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Send a message to an order's conversation, creating it if needed.
 	 *
 	 * Order-thread composer twin of the legacy wpss_send_message action.
@@ -427,6 +481,22 @@ class ConversationsController extends RestController {
 		$user_id     = get_current_user_id();
 		$content     = (string) $request->get_param( 'content' );
 		$attachments = (array) $request->get_param( 'attachments' );
+
+		// A block has to actually stop contact, or it is only a preference.
+		// Checked here rather than in the two callers because this is the one
+		// place both message routes pass through — a guard on send_message()
+		// alone would leave the order-thread composer as the way around it.
+		$blocked = $this->blocked_participant( $conversation_id, $user_id );
+
+		if ( $blocked ) {
+			return $blocked;
+		}
+
+		// Standing is deliberately NOT checked here. Messaging is how a member
+		// finishes an order someone already paid for, and cutting it off would
+		// strand the counterparty mid-delivery with no way to reach the person
+		// holding their money. Suspension stops new supply; it does not sever a
+		// conversation about work in flight.
 
 		// Multipart file uploads (the order/dashboard composer posts raw files
 		// as attachments[]). Validate + ingest them through the shared helper so

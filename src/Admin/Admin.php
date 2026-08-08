@@ -18,6 +18,7 @@ use WPSellServices\Admin\Metaboxes\BuyerRequestMetabox;
 use WPSellServices\Admin\Metaboxes\OrderMetabox;
 use WPSellServices\Admin\Pages\ManualOrderPage;
 use WPSellServices\Admin\Pages\VendorsPage;
+use WPSellServices\Admin\Pages\ReportsPage;
 use WPSellServices\Admin\Pages\ServiceModerationPage;
 use WPSellServices\Admin\Pages\ReviewModerationPage;
 use WPSellServices\Admin\Pages\WithdrawalsPage;
@@ -66,6 +67,13 @@ class Admin {
 	 * @var ServiceModerationPage
 	 */
 	private ServiceModerationPage $moderation_page;
+
+	/**
+	 * Reports queue page.
+	 *
+	 * @var ReportsPage
+	 */
+	private ReportsPage $reports_page;
 
 	/**
 	 * Review moderation page instance.
@@ -121,6 +129,7 @@ class Admin {
 		$this->withdrawals_page       = new WithdrawalsPage();
 		$this->notifications_page     = new NotificationsPage();
 		$this->audit_log_page         = new AuditLogPage();
+		$this->reports_page           = new ReportsPage();
 		$this->setup_wizard_page      = new SetupWizardPage();
 
 		if ( ! $this->is_pro_active() ) {
@@ -386,8 +395,11 @@ class Admin {
 		$this->withdrawals_page->init();
 		$this->notifications_page->init();
 		$this->audit_log_page->init();
-		$this->review_moderation_page->init();
-		$this->notifications_page->init();
+		$this->reports_page->init();
+		// review_moderation_page and notifications_page were each init()ed a
+		// second time here. Harmless — WordPress keys callbacks by identity, so
+		// the repeat replaced rather than duplicated the registration — but it
+		// read as though those two pages needed something the others did not.
 		$this->setup_wizard_page->init();
 
 		if ( $this->upgrade_page ) {
@@ -887,6 +899,18 @@ class Admin {
 		);
 		wp_set_script_translations( 'wpss-admin-icons', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
+		// Reports queue: confirm before suspending or closing an account.
+		if ( 'sell-services_page_wpss-reports' === $hook ) {
+			wp_enqueue_script(
+				'wpss-admin-reports',
+				\WPSS_PLUGIN_URL . 'assets/js/admin-reports.js',
+				array( 'wpss-ui' ),
+				\WPSS_VERSION,
+				true
+			);
+			wp_set_script_translations( 'wpss-admin-reports', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
+		}
+
 		// Settings page scripts.
 		if ( $this->is_settings_page( $hook ) ) {
 			wp_enqueue_script(
@@ -1110,6 +1134,11 @@ class Admin {
 			'sell-services_page_wpss-settings',
 			'sell-services_page_wpss-notifications',
 			'sell-services_page_wpss-audit-log',
+			// A new admin page that is not listed here still renders — it just
+			// renders with no plugin CSS at all, which looks like a styling bug
+			// rather than a missing registration. Add the hook suffix in the
+			// same commit that adds the page.
+			'sell-services_page_wpss-reports',
 			'admin_page_wpss-create-order',
 			'admin_page_wpss-setup-wizard',
 			'sell-services_page_wpss-upgrade',

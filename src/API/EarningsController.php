@@ -667,15 +667,12 @@ class EarningsController extends RestController {
 			return new WP_Error( 'wpss_not_vendor', __( 'Only vendors can access earnings.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
-		// Prevent pending vendors from accessing earnings. Reads the canonical
-		// profile status — this used to read _wpss_vendor_status user meta,
-		// which nothing ever wrote, so the gate never fired and a pending
-		// vendor could reach every earnings endpoint.
-		$vendor_status = wpss_get_vendor_status( get_current_user_id() );
-		if ( 'pending' === $vendor_status ) {
-			return new WP_Error( 'wpss_vendor_pending', __( 'Your vendor account is pending approval.', 'wp-sell-services' ), array( 'status' => 403 ) );
-		}
-
-		return true;
+		// Account status gate. This used to read `_wpss_vendor_status` user
+		// meta, which nothing ever wrote, so it never fired at all; it was then
+		// fixed to read the canonical profile status but still caught only
+		// `pending` — leaving a SUSPENDED vendor able to read earnings and
+		// request a payout. Both cases now route through the shared rule, so
+		// the list of blocking statuses lives in one place.
+		return wpss_vendor_status_block() ?? true;
 	}
 }

@@ -412,6 +412,17 @@ class VendorsController extends RestController {
 			);
 		}
 
+		// A vendor profile is public marketing copy — tagline, bio, avatar,
+		// cover, social links. A suspended vendor does not get to keep editing
+		// what the marketplace shows about them. Vacation mode is deliberately
+		// NOT gated: it only tells buyers the seller is away, which is true and
+		// useful whatever their standing. See wpss_vendor_status_block().
+		$status_block = wpss_vendor_status_block( $user_id );
+
+		if ( $status_block ) {
+			return $status_block;
+		}
+
 		// Resolve avatar/cover attachment ids (accept both cover_image_id and
 		// the form's legacy cover_id name).
 		$avatar_id = $request->has_param( 'avatar_id' ) ? absint( $request->get_param( 'avatar_id' ) ) : 0;
