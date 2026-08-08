@@ -177,7 +177,42 @@ F-1 and F-5 are one card deliberately: fixing either alone leaves the drift open
 |---|---|---|---|---|
 | **F-1** | **`OrdersController` duplicates the order-status label map, incompletely and unfilterably** | ❌ Open | `get_status_label()` carries a **private map of 11 statuses** and falls through to `ucfirst( $status )` for the rest. Seven statuses fall through — `pending_payment`, `pending_requirements`, `pending_approval`, `revision_requested`, `on_hold`, `late`, `partially_refunded` — so the API answers **"Pending_payment"**, underscore and all. Those are the three most common buyer-facing states among them. Meanwhile `wpss_get_order_statuses()` already has all 18, already translated, already filterable via `wpss_order_statuses`, and the REST layer simply does not call it. **Consequence:** the app carries its own English label map, so every order status renders in English on a localised site, and no owner's filter reaches the app. This is the CLAUDE.md "no duplicate code" rule and skill rule 11 in the same defect. **Fix: route `get_status_label()` through `wpss_get_order_status_label()` and delete the private map.** | ◆ `src/API/OrdersController.php:1691-1707` vs `src/functions.php:2576,2588` |
 | **F-2** | **No report and no block route exists anywhere in Free or Pro** | ❌ Open | Zero matches for a report/block/flag route across both plugins. App Store Guideline 1.2 requires both wherever members post content to each other — which is every order conversation, review and proposal in this product. **This blocks app submission outright**, and it is not something the app can work around. Needs: report a service / review / message / member, block a member, and a queue the owner can act on. | ◆ zero route matches in `src/` of both plugins |
-| **F-3** | **Two withdrawal rails, no declared winner** | ❌ Open | Free ships `/withdrawals` + `/withdrawals/methods`; Pro ships `/wallet/withdraw` + `/wallet/withdrawals` + `/wallet/balance`. Both are live simultaneously on a Pro site. Nothing in `/settings` says which one a client should use, so the app picked Free's and may be showing a seller a balance and a history that Pro considers secondary. Either publish the canonical rail in the app contract or converge them. | ◆ live index; `src/API/WalletController.php` (Pro) vs `src/API/EarningsController.php` (Free) |
+| **F-3** | **Two withdrawal rails — resolved: Free's is canonical, and the wallet read was lying** | ✅ **Fixed** | See below. The app was already on the right rail; the real defect was that `GET /wallet/balance` showed a seller money they could not withdraw. | ◆ Pro `src/API/WalletController.php`; `Pro.php:1463` |
+
+### F-3 — there was never a decision to make
+
+The product already decided this in **1.2.0**, and `Pro.php:1463` states it:
+
+> Free is always active with Pro, so Pro does **NOT** replace Free's single
+> "Earnings & Payouts" section with a duplicate template. Pro enhances that one
+> section via hooks instead. **One vendor section, no duplication.** The legacy
+> earnings→wallet swap was removed in 1.2.0.
+
+So **`/earnings/*` + `/withdrawals*` is the canonical rail on every site, Free or
+Pro.** Pro's `/wallet/*` is the provider layer behind it, not a second front
+door. The app had already picked correctly.
+
+**No field was added to the contract to say so.** A `payouts.rail` key would be
+the constant string `earnings` on every site forever — the same always-true flag
+that `API.php` warns against and that F-4 was careful not to publish. The
+decision belongs in documentation, not in a payload field that can only ever
+carry one value.
+
+**The real defect the investigation surfaced.** `POST /wallet/withdraw` already
+treated Free's `EarningsService` as authoritative, capped by the provider
+balance, and its own comment records why: a vendor holding 531.90 once stacked
+five pending requests totalling 900.00. But `GET /wallet/balance` returned the
+**raw provider balance** — the exact number that comment says "is NOT what a
+vendor may withdraw".
+
+On live data, vendor 56 held a provider balance of **135.00** against **24.00**
+actually withdrawable. The seller was shown 135.00 and refused at 24.00. That
+reads to them as the marketplace losing their money, and it reaches the owner as
+a support ticket rather than a bug report.
+
+Both routes now share one `resolve_balances()`, and the read publishes
+`balance` (what the provider holds) **and** `available` (what may be withdrawn
+now), so the figure shown and the figure enforced are the same by construction.
 | **F-4** | **`features` publishes only 3 flags for a surface this size** | ❌ Open | `buyer_requests`, `disputes`, `realtime` (`src/API/API.php:697`). Milestones, tips, extensions, portfolio, reviews and seller levels each have a real on/off or licence state and none is published, so a client cannot tell *disabled* from *not built*. Rule 9 says a flag that is always true tells a client nothing — the inverse also holds: a feature with no flag forces the client to guess. | ◆ `src/API/API.php:697-704` |
 | **F-5** | **Order statuses and labels are not published in `/settings`** | ❌ Open | The app must carry a copy of an 18-value vocabulary that `wpss_order_statuses` lets any site edit. This is exactly the shape of the Listora "Expired" filter bug and the Career Board pipeline-stage bug: a client-side copy of a server-owned list that scores ✅ while drifting. Publishing `{ slug, label }` from `wpss_get_order_statuses()` closes the whole class. Pairs with F-1. | ◆ `GET /settings` response has no status list |
 | **F-6** | **A suspended vendor is blocked on the web and not in the API** | ❌ Open | `ServiceWizard.php:276` blocks suspended and pending vendors before the web form renders. `ServicesController::create_item_permissions_check()` does not — it calls `check_permissions()` (login + rate limit only, `RestController.php:60-85`) and then the `wpss_vendor_can_create_service` filter, neither of which consults `wpss_get_vendor_status()`. A suspended vendor holding a valid Application Password can therefore publish services through the API. `EarningsController:674` *does* check the status, which shows the gate is understood — it is just not applied on the write paths. This is skill rule 2's ban gate, and mobile makes it worse: Application Passwords are minted by core and survive whatever the plugin does at login. | ◆ `src/API/ServicesController.php:989-1006`, `src/API/RestController.php:60`, `src/Frontend/ServiceWizard.php:276` |
