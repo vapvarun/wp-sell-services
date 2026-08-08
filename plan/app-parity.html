@@ -497,7 +497,7 @@
 
   <header class="masthead">
     <p class="eyebrow">Plugin ↔ app parity · release gate</p>
-    <h1>The API is ahead of the app, not behind it</h1>
+    <h1>Six blockers closed, three left — and all seven plugin findings fixed</h1>
     <p class="standfirst">
       Every member-facing capability WP Sell Services exposes, mapped against the screen in
       <code>wpss-app</code> that covers it. Eight of the nine release blockers need no plugin change at
@@ -513,24 +513,24 @@
 
   <div class="stats">
     <div class="stat">
-      <span class="stat-n" id="n-total">179</span>
+      <span class="stat-n" id="n-total">183</span>
       <span class="stat-k">Live routes</span>
       <span class="stat-sub">GET /wpss/v1</span>
     </div>
     <div class="stat">
-      <span class="stat-n is-covered" id="n-called">58</span>
+      <span class="stat-n is-covered" id="n-called">71</span>
       <span class="stat-k">Called by the app</span>
       <span class="stat-sub" id="n-pct">32%</span>
     </div>
     <div class="stat">
-      <span class="stat-n is-blocker">9</span>
+      <span class="stat-n is-blocker">3</span>
       <span class="stat-k">Missing — blocks release</span>
-      <span class="stat-sub">1 needs the plugin</span>
+      <span class="stat-sub">6 closed and rendered</span>
     </div>
     <div class="stat">
-      <span class="stat-n">6</span>
-      <span class="stat-k">Plugin findings open</span>
-      <span class="stat-sub">2 urgent</span>
+      <span class="stat-n is-covered">7</span>
+      <span class="stat-k">Plugin findings fixed</span>
+      <span class="stat-sub">all in PRs</span>
     </div>
   </div>
 
@@ -775,8 +775,8 @@
     ['orders', [
       ['', 'c'], ['{id}', 'c'], ['{id}/{action}', 'c'], ['{id}/deliverables', 'c'],
       ['{id}/requirements', 'c'], ['{id}/requirements/skip', 'c'], ['{id}/review', 'c'],
-      ['{id}/milestones', 'b', 'M-2'], ['{id}/tip', 'b', 'M-7'], ['{id}/extension', 'b', 'M-7'],
-      ['{id}/extensions', 'b', 'M-7'], ['{id}/dispute', 'b', 'M-3'], ['{id}/timeline', 'b', 'M-6'],
+      ['{id}/milestones', 'c'], ['{id}/tip', 'b', 'M-7'], ['{id}/extension', 'b', 'M-7'],
+      ['{id}/extensions', 'b', 'M-7'], ['{id}/dispute', 'd', 'app uses the action verb instead'], ['{id}/timeline', 'c'],
       ['{id}/sub-orders', 'b', 'M-2 / M-7'], ['{id}/requirements/files/{fid}', 'p', 'no upload path'],
       ['{id}/pay', 'w', 'checkout hands off to web'], ['{id}/messages', 'd', 'conversations covers it'],
       ['{id}/conversation', 'd', 'duplicate rail'], ['{id}/conversation/messages', 'd', 'duplicate rail'],
@@ -784,7 +784,7 @@
     ['vendors', [
       ['{id}', 'c'], ['{id}/services', 'c'], ['{id}/portfolio', 'c'], ['me', 'c'], ['me/vacation', 'c'],
       ['', 'b', 'M-9'], ['{id}/stats', 'b', 'M-9'], ['{id}/reviews', 'b', 'M-9'],
-      ['{id}/reviews/summary', 'b', 'M-9'], ['{id}/level', 'b', 'M-8'], ['me/level', 'b', 'M-8'],
+      ['{id}/reviews/summary', 'b', 'M-9'], ['{id}/level', 'b', 'M-8'], ['me/level', 'c'],
       ['register', 'b', 'M-5'], ['{id}/tips', 'b', 'M-7'], ['{id}/tips/total', 'b', 'M-7'],
     ]],
     ['payments', [
@@ -801,7 +801,7 @@
     ]],
     ['disputes', [
       ['', 'c'], ['{id}', 'c'], ['{id}/timeline', 'c'], ['{id}/respond', 'c'],
-      ['options', 'b', 'M-3 — reason list'], ['{id}/evidence', 'b', 'member attaches evidence'],
+      ['options', 'c'], ['{id}/evidence', 'b', 'member attaches evidence'],
       ['{id}/escalate', 'b', 'member action'], ['{id}/cancel', 'b', 'member withdraws own'],
       ['{id}/assign', 'w', 'admin'], ['{id}/resolve', 'w', 'admin'],
     ]],
@@ -820,7 +820,7 @@
     ]],
     ['buyer-requests', [
       ['', 'c'], ['{id}', 'c'], ['mine', 'c'], ['{id}/proposals', 'c'],
-      ['{id}/proposals/{pid}/accept', 'b', 'M-1'], ['{id}/proposals/{pid}/reject', 'b', 'M-1'],
+      ['{id}/proposals/{pid}/accept', 'c'], ['{id}/proposals/{pid}/reject', 'c'],
     ]],
     ['stripe-connect', [
       ['onboard', 'w'], ['status', 'w'], ['accounts', 'w'], ['accounts/{id}', 'w'],
@@ -839,8 +839,8 @@
       ['withdraw', 'd', 'F-3'], ['withdrawals', 'd', 'F-3'],
     ]],
     ['milestones', [
-      ['{id}', 'b', 'M-2'], ['{id}/submit', 'b', 'M-2'], ['{id}/approve', 'b', 'M-2'],
-      ['{id}/decline', 'b', 'M-2'], ['{id}/pay', 'b', 'M-2'],
+      ['{id}', 'd', 'list covers it'], ['{id}/submit', 'c'], ['{id}/approve', 'c'],
+      ['{id}/decline', 'c'], ['{id}/pay', 'c'],
     ]],
     ['moderation', [
       ['pending', 'w'], ['count', 'w'], ['{id}', 'w'], ['{id}/approve', 'w'], ['{id}/reject', 'w'],
@@ -873,6 +873,12 @@
     ['seller-levels', [['', 'b', 'M-8'], ['{level}', 'b', 'M-8']]],
     ['favorites', [['', 'c'], ['{id}', 'c']]],
     ['media', [['', 'p', 'no upload path'], ['{id}', 'p']]],
+    ['reports', [
+      ['', 'c'], ['{id}/resolve', 'c'],
+    ]],
+    ['blocks', [
+      ['', 'c'], ['{user_id}', 'c'],
+    ]],
     ['misc', [
       ['/settings', 'c'], ['/categories', 'c'], ['/search', 'c'],
       ['/tags', 'd'], ['/me', 'd', 'auth/me covers it'], ['/dashboard', 'd'],
