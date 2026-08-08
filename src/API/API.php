@@ -663,6 +663,31 @@ class API {
 			);
 		}
 
+		$adapter = wpss_get_active_adapter();
+		$rail    = $adapter ? (string) $adapter->get_id() : 'standalone';
+
+		/*
+		 * Can a buyer pay for ONE existing order on this site?
+		 *
+		 * Milestones, tips and paid extensions all reach the buyer the same way:
+		 * a link to pay a single already-created order. Standalone answers it
+		 * with `?pay_order=N`, and WooCommerce replaces the URL with a real
+		 * order-pay link through the `wpss_pay_order_url` seam. EDD, FluentCart
+		 * and SureCart implement neither, so the link falls back to a standalone
+		 * checkout that is not the active rail — a dead end for the buyer.
+		 *
+		 * Asked as "has anyone implemented the seam?" rather than by naming
+		 * rails, so an integration added later turns the capability on by
+		 * implementing it, instead of by someone remembering to edit this list.
+		 */
+		$can_pay_single_order = wpss_uses_standalone_payments() || has_filter( 'wpss_pay_order_url' );
+
+		// Milestone contracts only exist on buyer-request orders, so an owner who
+		// turns buyer requests off has turned milestones off whether they meant
+		// to or not. Better the app hears that here than discovers it by
+		// rendering a control nobody can reach.
+		$buyer_requests = (bool) wpss_get_option( 'general', 'enable_buyer_requests', true );
+
 		return array(
 			/*
 			 * Bump when a FIELD changes shape or meaning, never for a value change.
@@ -708,10 +733,49 @@ class API {
 			'features'         => (array) apply_filters(
 				'wpss_app_features',
 				array(
-					'buyer_requests' => (bool) wpss_get_option( 'general', 'enable_buyer_requests', true ),
+					'buyer_requests' => $buyer_requests,
 					'disputes'       => (bool) wpss_get_option( 'general', 'enable_disputes', true ),
 					'realtime'       => ! empty( ( new \WPSellServices\Services\RealtimeService() )->get_client_config()['enabled'] ),
+
+					/*
+					 * The three money-between-members features. Each is false
+					 * when the active rail cannot bill a single order, because
+					 * on those rails the buyer reaches a dead end rather than a
+					 * payment screen — and a dead end an owner cannot see is how
+					 * this arrives as "the app is broken" instead of "this rail
+					 * does not support that yet".
+					 */
+					'milestones'     => $buyer_requests && $can_pay_single_order,
+					'tips'           => $can_pay_single_order,
+					'extensions'     => $can_pay_single_order,
+
+					/*
+					 * NOT PUBLISHED HERE, deliberately: portfolio, reviews and
+					 * seller levels. None of them has an owner-facing switch, so
+					 * a flag for them would be hardcoded true on every site —
+					 * which tells a client nothing and becomes a lie the day one
+					 * of them gains a toggle and this line is not updated. Add
+					 * one at the moment the setting appears, not before.
+					 *
+					 * Review and service moderation ARE published, alongside the
+					 * other site-owned values below, because those are real
+					 * settings an owner already changes.
+					 */
 				)
+			),
+
+			/*
+			 * What owns payment on this site, and what that implies.
+			 *
+			 * The three booleans above are the answer; this is the reason. An
+			 * owner reading a support thread — or a developer reading a bug
+			 * report — can see "rail is surecart, single-order billing is not
+			 * available" instead of inferring it from three flags that happen to
+			 * be false together.
+			 */
+			'payments'         => array(
+				'rail'                 => $rail,
+				'can_pay_single_order' => $can_pay_single_order,
 			),
 
 			/*
