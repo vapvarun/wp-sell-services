@@ -449,7 +449,9 @@ class PortfolioController extends RestController {
 			return new WP_Error( 'wpss_not_vendor', __( 'Only vendors can manage portfolio items.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
-		return true;
+		// Portfolio is how a vendor advertises. A suspended one does not get to
+		// keep publishing work samples. See wpss_vendor_status_block().
+		return wpss_vendor_status_block() ?? true;
 	}
 
 	/**

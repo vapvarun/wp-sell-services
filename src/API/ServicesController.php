@@ -993,6 +993,15 @@ class ServicesController extends RestController {
 			return $perm_check;
 		}
 
+		// A suspended, pending or rejected vendor cannot list new work. The web
+		// wizard has always enforced this; this route did not, so the rule was
+		// reachable around by anyone holding an Application Password.
+		$status_block = wpss_vendor_status_block();
+
+		if ( $status_block ) {
+			return $status_block;
+		}
+
 		// Check if user can create services (Pro may restrict by subscription plan).
 		/**
 		 * Filter whether a vendor can create a new service.
@@ -1063,6 +1072,16 @@ class ServicesController extends RestController {
 			);
 		}
 
+		// Editing is supply too: a suspended vendor re-pricing or rewriting a
+		// listing is the same act as publishing one. Ownership is checked
+		// first so the caller learns "not yours" before "not active", and
+		// administrators pass both (they edit on a vendor's behalf).
+		$status_block = wpss_vendor_status_block();
+
+		if ( $status_block ) {
+			return $status_block;
+		}
+
 		return true;
 	}
 
@@ -1073,6 +1092,11 @@ class ServicesController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function delete_item_permissions_check( $request ) {
+		// Delegating means delete inherits the vendor-status gate, which is the
+		// behaviour we want: a vendor suspended for abuse should not be able to
+		// clear their listings out from under a moderator who is still looking
+		// at them. Administrators are exempt, so the owner can always remove
+		// content on their behalf.
 		return $this->update_item_permissions_check( $request );
 	}
 

@@ -393,7 +393,9 @@ class BuyerRequestsController extends RestController {
 			);
 		}
 
-		return true;
+		// Same rule as POST /proposals — the two routes reach the same act, so
+		// gating only one of them would leave the other as the way around it.
+		return wpss_vendor_status_block() ?? true;
 	}
 
 	/**

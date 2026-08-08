@@ -4141,6 +4141,103 @@ function wpss_rest_require_vendor() {
 }
 
 /**
+ * Guard: does this vendor's account status forbid taking on new work?
+ *
+ * The one place that owns the rule. Every vendor gate used to answer only
+ * "are you a vendor?" (`wpss_is_vendor()` — role and capability), and none of
+ * them asked "are you a vendor in good standing?". The web service wizard did
+ * ask ({@see \WPSellServices\Frontend\ServiceWizard}), so a suspended vendor
+ * was blocked in the browser and waved straight through over REST — publishing
+ * services, submitting proposals and requesting payouts with a valid
+ * Application Password. Passwords are minted by WordPress core and survive
+ * whatever the plugin does at login, so on mobile the web-only gate reached
+ * nothing at all.
+ *
+ * WHAT THIS BLOCKS is new supply, not existing obligations. A suspended vendor
+ * must not list more work, bid for more work, or pull money out — but they can
+ * still deliver, message and complete orders a buyer has already PAID for.
+ * Blocking fulfilment would punish the buyer for the seller's suspension and
+ * strand paid work with no way to finish it, so delivery paths deliberately do
+ * not call this. Refunding a stranded order is the owner's tool for that case.
+ *
+ * An empty status means the user has no `wpss_vendor_profiles` row at all —
+ * role-granted, legacy and demo-seeded vendors. Those are treated as active,
+ * matching every other read site (`wpss_get_vendor_status( $id ) ?: 'active'`).
+ * Failing closed there would lock out every vendor created before the profile
+ * table existed.
+ *
+ * Administrators are never blocked: they act on vendors' behalf.
+ *
+ * @since 1.5.1
+ *
+ * @param int $user_id Vendor user ID. Defaults to the current user.
+ * @return WP_Error|null WP_Error when the status forbids it, null when allowed.
+ */
+function wpss_vendor_status_block( int $user_id = 0 ) {
+	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+
+	if ( user_can( $user_id, 'manage_options' ) ) {
+		return null;
+	}
+
+	$status = wpss_get_vendor_status( $user_id );
+
+	if ( '' === $status || 'active' === $status ) {
+		return null;
+	}
+
+	// One code per condition so a client can word its own message. Reuses the
+	// code EarningsController already returned for pending, so no consumer
+	// that already branches on it breaks.
+	$blocked = array(
+		'pending'   => array(
+			'wpss_vendor_pending',
+			__( 'Your vendor account is pending approval.', 'wp-sell-services' ),
+		),
+		'suspended' => array(
+			'wpss_vendor_suspended',
+			__( 'Your vendor account is suspended.', 'wp-sell-services' ),
+		),
+		'rejected'  => array(
+			'wpss_vendor_rejected',
+			__( 'Your vendor account was not approved.', 'wp-sell-services' ),
+		),
+	);
+
+	// An unrecognised status is not a pass. A new state added to the profile
+	// table must be classified deliberately rather than inheriting "allowed"
+	// by falling off the end of this list.
+	list( $code, $message ) = $blocked[ $status ] ?? array(
+		'wpss_vendor_not_active',
+		__( 'Your vendor account is not active.', 'wp-sell-services' ),
+	);
+
+	return new WP_Error( $code, $message, array( 'status' => 403 ) );
+}
+
+/**
+ * REST permission callback: the caller must be a vendor in good standing.
+ *
+ * Login, then vendor, then status — in that order, so an anonymous caller gets
+ * 401 and a logged-in one gets 403. Use this on any route that lets a vendor
+ * take on new work. See {@see wpss_vendor_status_block()} for what "new work"
+ * deliberately excludes.
+ *
+ * @since 1.5.1
+ *
+ * @return true|WP_Error
+ */
+function wpss_rest_require_active_vendor() {
+	$is_vendor = wpss_rest_require_vendor();
+
+	if ( is_wp_error( $is_vendor ) ) {
+		return $is_vendor;
+	}
+
+	return wpss_vendor_status_block() ?? true;
+}
+
+/**
  * Shape a money value for the REST API.
  *
  * Returns the three fields every money value in the API carries, under

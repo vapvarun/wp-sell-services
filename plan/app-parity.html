@@ -1,0 +1,973 @@
+<title>WPSS — app ↔ plugin parity</title>
+<style>
+  :root {
+    --ground:        #F1F2F5;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #E7E9EE;
+    --rule:          #D3D7DF;
+    --rule-soft:     #E3E6EC;
+    --ink:           #1A1E26;
+    --ink-soft:      #4B525F;
+    --ink-faint:     #767E8D;
+    --accent:        #2F5FD0;
+    --accent-soft:   #E4EAF9;
+
+    --covered:       #1F6F5C;
+    --covered-bg:    #DCEBE5;
+    --partial:       #B0690F;
+    --partial-bg:    #F6E9D5;
+    --deferred:      #6E7688;
+    --deferred-bg:   #E1E4EA;
+    --webonly:       #9AA1AE;
+    --webonly-bg:    #EAECF0;
+    --blocker:       #BE3B2E;
+    --blocker-bg:    #F7DFDC;
+
+    --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+    --step-0: 0.9375rem;
+    --step--1: 0.8125rem;
+    --step--2: 0.6875rem;
+    --step-1: 1.125rem;
+    --step-2: 1.375rem;
+    --step-3: clamp(1.75rem, 1.1rem + 2.6vw, 2.5rem);
+
+    --gap: 1.5rem;
+    --pad: clamp(1.25rem, 4vw, 3rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:        #13161B;
+      --surface:       #1B1F26;
+      --surface-sunk:  #22262F;
+      --rule:          #333944;
+      --rule-soft:     #262B34;
+      --ink:           #E4E7EC;
+      --ink-soft:      #A8AFBC;
+      --ink-faint:     #79818F;
+      --accent:        #7CA0EE;
+      --accent-soft:   #22304C;
+
+      --covered:       #5FBFA2;
+      --covered-bg:    #1B3A33;
+      --partial:       #E0A24F;
+      --partial-bg:    #3C2E19;
+      --deferred:      #99A1B0;
+      --deferred-bg:   #2A2F39;
+      --webonly:       #6B7280;
+      --webonly-bg:    #23272F;
+      --blocker:       #F0776A;
+      --blocker-bg:    #3D211E;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:        #13161B;
+    --surface:       #1B1F26;
+    --surface-sunk:  #22262F;
+    --rule:          #333944;
+    --rule-soft:     #262B34;
+    --ink:           #E4E7EC;
+    --ink-soft:      #A8AFBC;
+    --ink-faint:     #79818F;
+    --accent:        #7CA0EE;
+    --accent-soft:   #22304C;
+
+    --covered:       #5FBFA2;
+    --covered-bg:    #1B3A33;
+    --partial:       #E0A24F;
+    --partial-bg:    #3C2E19;
+    --deferred:      #99A1B0;
+    --deferred-bg:   #2A2F39;
+    --webonly:       #6B7280;
+    --webonly-bg:    #23272F;
+    --blocker:       #F0776A;
+    --blocker-bg:    #3D211E;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: var(--step-0);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: var(--pad);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2rem, 5vw, 3.5rem);
+  }
+
+  /* ---------------------------------------------------------- masthead */
+
+  .masthead { display: flex; flex-direction: column; gap: 1rem; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: var(--step-3);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .standfirst {
+    max-width: 46rem;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.75rem;
+    font-family: var(--mono);
+    font-size: var(--step--1);
+    color: var(--ink-faint);
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--rule);
+  }
+  .meta b { color: var(--ink-soft); font-weight: 500; }
+
+  /* ------------------------------------------------------------ stats */
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .stat {
+    background: var(--surface);
+    padding: 1rem 1.125rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .stat-n {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--step-2);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .stat-n.is-blocker { color: var(--blocker); }
+  .stat-n.is-covered { color: var(--covered); }
+
+  .stat-k {
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+  }
+  .stat-sub {
+    font-family: var(--mono);
+    font-size: var(--step--2);
+    color: var(--ink-faint);
+  }
+
+  /* -------------------------------------------------------- sections */
+
+  section { display: flex; flex-direction: column; gap: 1.125rem; }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: var(--step-2);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+  h2 .count {
+    font-family: var(--mono);
+    font-size: var(--step--1);
+    font-weight: 400;
+    color: var(--ink-faint);
+    letter-spacing: 0;
+  }
+
+  .lede { margin: 0; max-width: 46rem; color: var(--ink-soft); }
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  /* ------------------------------------------------------- coverage bar */
+
+  .bar {
+    display: flex;
+    height: 0.625rem;
+    border-radius: 2px;
+    overflow: hidden;
+    background: var(--surface-sunk);
+  }
+  .bar span { display: block; }
+  /* The bar reuses the cell status classes so a theme switch repaints it live. */
+  .bar .s-webonly { background: var(--webonly); border: 0; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .legend li { display: flex; align-items: center; gap: 0.45rem; }
+  .legend i {
+    width: 0.7rem; height: 0.7rem;
+    border-radius: 2px;
+    flex: none;
+  }
+  .legend b {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  /* -------------------------------------------------------- route map */
+
+  .map {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+    gap: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1.25rem;
+  }
+
+  .grp { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+
+  .grp-h {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-family: var(--mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--rule-soft);
+    padding-bottom: 0.3rem;
+  }
+  .grp-h span { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .grp-h b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .cells { display: flex; flex-wrap: wrap; gap: 3px; }
+
+  .cell {
+    width: 0.95rem;
+    height: 0.95rem;
+    border-radius: 2px;
+    border: 1px solid transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.08s ease;
+  }
+  .cell:hover, .cell:focus-visible { transform: scale(1.25); }
+  .cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .s-covered  { background: var(--covered); }
+  .s-partial  { background: var(--partial); }
+  .s-deferred { background: var(--deferred); }
+  .s-webonly  { background: var(--webonly-bg); border-color: var(--webonly); }
+  .s-blocker  { background: var(--blocker); }
+
+  .inspect {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.875rem;
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: var(--step--1);
+    overflow-x: auto;
+  }
+  .inspect-tag {
+    flex: none;
+    font-size: var(--step--2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.45rem;
+    border-radius: 2px;
+    font-weight: 600;
+  }
+  .t-covered  { background: var(--covered-bg);  color: var(--covered); }
+  .t-partial  { background: var(--partial-bg);  color: var(--partial); }
+  .t-deferred { background: var(--deferred-bg); color: var(--deferred); }
+  .t-webonly  { background: var(--webonly-bg);  color: var(--ink-faint); }
+  .t-blocker  { background: var(--blocker-bg);  color: var(--blocker); }
+
+  .inspect-path { color: var(--ink); white-space: nowrap; }
+  .inspect-note { color: var(--ink-faint); white-space: nowrap; }
+  .inspect.is-idle .inspect-path { color: var(--ink-faint); }
+
+  /* ------------------------------------------------------------ tables */
+
+  .scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 4px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    font-size: var(--step--1);
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.7rem 0.875rem;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  th {
+    font-family: var(--mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    white-space: nowrap;
+    background: var(--surface-sunk);
+    border-bottom-color: var(--rule);
+  }
+
+  td.id {
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  td.cap { font-weight: 600; min-width: 11rem; }
+  td code, .lede code, li code {
+    font-family: var(--mono);
+    font-size: 0.92em;
+    background: var(--surface-sunk);
+    padding: 0.05em 0.3em;
+    border-radius: 2px;
+    color: var(--ink-soft);
+  }
+  td.routes { min-width: 15rem; }
+  td.routes code { display: inline-block; margin: 0.1rem 0.15rem 0.1rem 0; }
+
+  .flag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: var(--step--2);
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.45rem;
+    border-radius: 2px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .flag-app { background: var(--accent-soft); color: var(--accent); }
+  .flag-plugin { background: var(--blocker-bg); color: var(--blocker); }
+  .flag-open { background: var(--blocker-bg); color: var(--blocker); }
+
+  /* --------------------------------------------------------- findings */
+
+  .findings { display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+
+  .finding {
+    background: var(--surface);
+    padding: 1rem 1.125rem;
+    display: grid;
+    grid-template-columns: 3.25rem 1fr;
+    gap: 0.25rem 0.875rem;
+  }
+  .finding-id {
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--blocker);
+    font-size: var(--step--1);
+    padding-top: 0.1rem;
+  }
+  .finding-t { font-weight: 600; margin: 0; }
+  .finding-b { grid-column: 2; margin: 0; color: var(--ink-soft); font-size: var(--step--1); }
+  .finding-b + .finding-b { margin-top: 0.4rem; }
+  .finding-b em { color: var(--ink); font-style: normal; font-weight: 600; }
+  .finding-src {
+    grid-column: 2;
+    font-family: var(--mono);
+    font-size: var(--step--2);
+    color: var(--ink-faint);
+    margin: 0.5rem 0 0;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* ------------------------------------------------------------ ships */
+
+  .ships {
+    columns: 2;
+    column-gap: 2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--step--1);
+  }
+  .ships li {
+    break-inside: avoid;
+    padding: 0.3rem 0 0.3rem 1.1rem;
+    position: relative;
+    color: var(--ink-soft);
+  }
+  .ships li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0.72rem;
+    width: 0.45rem; height: 0.45rem;
+    border-radius: 1px;
+    background: var(--covered);
+  }
+  .ships li b { color: var(--ink); font-weight: 600; }
+
+  /* ----------------------------------------------------------- honest */
+
+  .honest {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--partial);
+    border-radius: 4px;
+    background: var(--surface);
+    padding: 1.125rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .honest h2 { font-size: var(--step-1); }
+  .honest ul { margin: 0; padding-left: 1.1rem; color: var(--ink-soft); font-size: var(--step--1); }
+  .honest li { padding: 0.15rem 0; }
+  .honest li b { color: var(--ink); font-weight: 600; }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 1rem;
+    font-family: var(--mono);
+    font-size: var(--step--2);
+    color: var(--ink-faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.5rem;
+  }
+
+  @media (max-width: 640px) {
+    .ships { columns: 1; }
+    .finding { grid-template-columns: 1fr; }
+    .finding-b, .finding-src { grid-column: 1; }
+    .meta { gap: 0.15rem 1.25rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Plugin ↔ app parity · release gate</p>
+    <h1>The API is ahead of the app, not behind it</h1>
+    <p class="standfirst">
+      Every member-facing capability WP Sell Services exposes, mapped against the screen in
+      <code>wpss-app</code> that covers it. Eight of the nine release blockers need no plugin change at
+      all — the endpoints already ship and nothing calls them.
+    </p>
+    <div class="meta">
+      <span><b>Plugins</b> Free + Pro 1.5.1</span>
+      <span><b>App</b> wpss-app 1.0.0 · main</span>
+      <span><b>Verified</b> 2026-08-08</span>
+      <span><b>Evidence</b> code-level only</span>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-n" id="n-total">179</span>
+      <span class="stat-k">Live routes</span>
+      <span class="stat-sub">GET /wpss/v1</span>
+    </div>
+    <div class="stat">
+      <span class="stat-n is-covered" id="n-called">58</span>
+      <span class="stat-k">Called by the app</span>
+      <span class="stat-sub" id="n-pct">32%</span>
+    </div>
+    <div class="stat">
+      <span class="stat-n is-blocker">9</span>
+      <span class="stat-k">Missing — blocks release</span>
+      <span class="stat-sub">1 needs the plugin</span>
+    </div>
+    <div class="stat">
+      <span class="stat-n">6</span>
+      <span class="stat-k">Plugin findings open</span>
+      <span class="stat-sub">2 urgent</span>
+    </div>
+  </div>
+
+  <section>
+    <h2>The route surface <span class="count">all 179 endpoints, grouped by resource</span></h2>
+    <p class="lede">
+      One cell per registered route. The solid green blocks are whole groups the app covers end to end —
+      <code>auth</code>, <code>cart</code>, <code>favorites</code>, <code>earnings</code>. The red seams
+      are where a member hits a wall: <strong>every milestone route, and most of what hangs off an
+      order.</strong> Hover or tab a cell to read it.
+    </p>
+
+    <div class="bar" id="bar" aria-hidden="true"></div>
+    <ul class="legend" id="legend"></ul>
+
+    <div class="map" id="map"></div>
+
+    <div class="inspect is-idle" id="inspect" role="status" aria-live="polite">
+      <span class="inspect-tag t-deferred">idle</span>
+      <span class="inspect-path">Hover a cell to inspect a route</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Blocks the release <span class="count">9 missing capabilities</span></h2>
+    <p class="lede">
+      Ordered by what it costs a member to not have it. Two of these end a flow one tap before its
+      point — a buyer can read proposals but not <em>hire</em>, and can answer a dispute but not
+      <em>open</em> one.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Capability</th><th>Routes that exist and go uncalled</th><th>Owner</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="id">M-1</td>
+            <td class="cap">Hire someone — accept or reject a proposal</td>
+            <td class="routes"><code>POST /buyer-requests/{id}/proposals/{pid}/accept</code> <code>…/reject</code></td>
+            <td><span class="flag flag-app">app</span></td>
+          </tr>
+          <tr>
+            <td class="id">M-2</td>
+            <td class="cap">Milestones — the whole feature</td>
+            <td class="routes"><code>/orders/{id}/milestones</code> <code>/milestones/{id}</code> <code>…/submit</code> <code>…/approve</code> <code>…/decline</code> <code>…/pay</code></td>
+            <td><span class="flag flag-app">app</span></td>
+          </tr>
+          <tr>
+            <td class="id">M-3</td>
+            <td class="cap">Open a dispute</td>
+            <td class="routes"><code>POST /orders/{id}/dispute</code> <code>GET /disputes/options</code></td>
+            <td><span class="flag flag-app">app</span></td>
+          </tr>
+          <tr>
+            <td class="id">M-4</td>
+            <td class="cap">Report or block a member</td>
+            <td class="routes"><em>no route exists in Free or Pro</em></td>
+            <td><span class="flag flag-plugin">plugin</span></td>
+          </tr>
+          <tr>
+            <td class="id">M-7</td>
+            <td class="cap">Tips and paid extensions</td>
+            <td class="routes"><code>/orders/{id}/tip</code> <code>…/extension</code> <code>…/extensions</code> <code>/extensions/{id}/decline</code></td>
+            <td><span class="flag flag-app">app</span></td>
+          </tr>
+          <tr>
+            <td class="id">M-5</td>
+            <td class="cap">Become a seller</td>
+            <td class="routes"><code>POST /vendors/register</code></td>
+            <td><span class="flag flag-app">app</span></td>
+          </tr>
+          <tr>
+            <td class="id">M-6</td>
+            <td class="cap">Order timeline</td>
+            <td class="routes"><code>GET /orders/{id}/timeline</code></td>
+            <td><span class="flag flag-app">app</span></td>
+          </tr>
+          <tr>
+            <td class="id">M-8</td>
+            <td class="cap">Seller level</td>
+            <td class="routes"><code>/vendors/me/level</code> <code>/vendors/{id}/level</code> <code>/seller-levels</code></td>
+            <td><span class="flag flag-app">app</span></td>
+          </tr>
+          <tr>
+            <td class="id">M-9</td>
+            <td class="cap">Browse sellers</td>
+            <td class="routes"><code>GET /vendors</code> <code>/vendors/{id}/stats</code> <code>…/reviews</code> <code>…/reviews/summary</code></td>
+            <td><span class="flag flag-app">app</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>What the plugin still owes <span class="count">6 open · all carded</span></h2>
+    <p class="lede">
+      <strong>F-2 and F-6 should not wait.</strong> One blocks App Store submission outright; the other
+      is a live authorisation hole on the current release. All six now sit in Basecamp
+      <b>Ready for Development</b> in the order below — the plugin work is being wrapped before app
+      screens start.
+    </p>
+
+    <div class="findings">
+
+      <article class="finding">
+        <span class="finding-id">F-2</span>
+        <p class="finding-t">No report and no block route exists anywhere in Free or Pro</p>
+        <p class="finding-b">
+          Zero route matches across both plugins. App Store Guideline 1.2 requires both wherever
+          members post content to each other — which here is every order conversation, review and
+          proposal. <em>This blocks submission and the app cannot work around it.</em>
+        </p>
+        <p class="finding-src">◆ zero matches for a report/block/flag route in src/ of both plugins</p>
+      </article>
+
+      <article class="finding">
+        <span class="finding-id">F-6</span>
+        <p class="finding-t">A suspended vendor is blocked on the web and not in the API</p>
+        <p class="finding-b">
+          <code>ServiceWizard.php:276</code> blocks suspended and pending vendors before the web form
+          renders. <code>ServicesController::create_item_permissions_check()</code> does not — it calls
+          <code>check_permissions()</code>, which is login plus rate limit only, then a filter. Neither
+          consults <code>wpss_get_vendor_status()</code>.
+          <em>A suspended vendor holding a valid Application Password can publish services through the API.</em>
+          <code>EarningsController:674</code> does check status, so the gate is understood — just not
+          applied on the write paths.
+        </p>
+        <p class="finding-src">◆ src/API/ServicesController.php:989 · src/API/RestController.php:60 · src/Frontend/ServiceWizard.php:276</p>
+      </article>
+
+      <article class="finding">
+        <span class="finding-id">F-1</span>
+        <p class="finding-t">OrdersController duplicates the status label map, incompletely and unfilterably</p>
+        <p class="finding-b">
+          <code>get_status_label()</code> carries a private map of <b>11</b> statuses and falls through
+          to <code>ucfirst($status)</code> for the rest. Seven fall through — including
+          <code>pending_payment</code>, <code>pending_requirements</code> and
+          <code>pending_approval</code>, the three most common buyer-facing states — so the API answers
+          <em>"Pending_payment"</em>, underscore and all.
+        </p>
+        <p class="finding-b">
+          Meanwhile <code>wpss_get_order_statuses()</code> already has all 18, already translated,
+          already filterable via <code>wpss_order_statuses</code>. The REST layer just does not call it.
+          The app compensates with its own English map, so <em>statuses render in English on every
+          localised site</em> and no owner's filter ever reaches the app.
+        </p>
+        <p class="finding-src">◆ src/API/OrdersController.php:1691-1707 vs src/functions.php:2576,2588</p>
+      </article>
+
+      <article class="finding">
+        <span class="finding-id">F-3</span>
+        <p class="finding-t">Two withdrawal rails, no declared winner</p>
+        <p class="finding-b">
+          Free ships <code>/withdrawals</code>; Pro ships <code>/wallet/withdraw</code> and
+          <code>/wallet/balance</code>. Both are live simultaneously on a Pro site and nothing in
+          <code>/settings</code> says which one a client should use. The app picked Free's and may be
+          showing a seller a balance Pro considers secondary.
+        </p>
+        <p class="finding-src">◆ live index · WalletController.php (Pro) vs EarningsController.php (Free)</p>
+      </article>
+
+      <article class="finding">
+        <span class="finding-id">F-4</span>
+        <p class="finding-t">The app contract publishes only 3 feature flags</p>
+        <p class="finding-b">
+          <code>buyer_requests</code>, <code>disputes</code>, <code>realtime</code>. Milestones, tips,
+          extensions, portfolio and seller levels each have a real on/off or licence state and none is
+          published — so a client cannot tell <em>disabled</em> from <em>not built</em>, and the three
+          biggest missing features cannot be gated safely when they ship.
+        </p>
+        <p class="finding-src">◆ src/API/API.php:697-704</p>
+      </article>
+
+      <article class="finding">
+        <span class="finding-id">F-5</span>
+        <p class="finding-t">Order statuses are not published in /settings</p>
+        <p class="finding-b">
+          The app must carry its own copy of an 18-value vocabulary that any site can edit through
+          <code>wpss_order_statuses</code>. This is the exact shape of the Listora "Expired" filter bug
+          and the Career Board pipeline-stage bug: <em>a client-side copy of a server-owned list that
+          scores ✅ while drifting.</em> Publishing <code>{ slug, label }</code> closes the whole class.
+        </p>
+        <p class="finding-src">◆ GET /settings carries no status list · pairs with F-1</p>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>What ships today <span class="count">read in code, not inferred from commits</span></h2>
+    <p class="lede">
+      The app is a competent buyer client and a thin seller one. Everything below was re-read at the
+      call site on 2026-08-08.
+    </p>
+    <ul class="ships">
+      <li><b>Discovery</b> — services, categories, search</li>
+      <li><b>Service detail</b> — packages, FAQs, reviews, summary</li>
+      <li><b>Seller profile</b> — services and portfolio, read-only</li>
+      <li><b>Favourites</b> — whole group covered</li>
+      <li><b>Cart</b> — whole group covered</li>
+      <li><b>Checkout hand-off</b> — one path on both rails; the server prices and clears the cart</li>
+      <li><b>Orders</b> — list, detail, and all 10 lifecycle verbs</li>
+      <li><b>Requirements</b> — submit and skip</li>
+      <li><b>Deliverables</b> — avoids the status-only <code>/deliver</code> trap</li>
+      <li><b>Review an order</b></li>
+      <li><b>Messaging</b> — conversations, unread counts</li>
+      <li><b>Notifications</b> — read, read-all, badge</li>
+      <li><b>Buyer requests</b> — browse, post, mine</li>
+      <li><b>Proposals</b> — send, list, withdraw</li>
+      <li><b>Earnings and withdrawal</b> — the whole Free rail</li>
+      <li><b>Vacation mode</b></li>
+      <li><b>Auth</b> — all 8 routes</li>
+      <li><b>Licence gate</b> — fails closed on <code>app_enabled</code>, open on <code>min_app_version</code></li>
+    </ul>
+  </section>
+
+  <section class="honest">
+    <h2>Not verified — do not read absence as assurance</h2>
+    <ul>
+      <li><b>Runtime behaviour.</b> No simulator run. Every row on this page is code-level; nothing has been <em>seen</em> working.</li>
+      <li><b>The ban gate.</b> Read in code and found open (F-6) — not yet proven against a live suspended vendor holding an Application Password.</li>
+      <li><b>The licence gate on a device.</b> The logic in <code>utils/gate.ts</code> is correct; it has not been watched blocking a connect.</li>
+      <li><b>A live API flow run.</b> Listora's equivalent run found 3 of 22 rows scored wrong from commit messages. This product has not had that check.</li>
+      <li><b>The previous coverage number was wrong.</b> The first matrix claimed 94 of 178 routes called by grepping any string starting with a slash. Resolving real call sites gives <b>58 of 179</b>.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <span>plan/app-parity.md — the plugin-side twin</span>
+    <span>wpss-app/docs/FEATURE-COVERAGE.md — the release gate</span>
+    <span>update both in the PR that moves a row</span>
+  </footer>
+
+</div>
+
+<script>
+  // One entry per registered route on wpss/v1, grouped as the index groups them.
+  // s: c=called  b=blocker(missing)  p=partial  d=deferred  w=web-only by design
+  const GROUPS = [
+    ['orders', [
+      ['', 'c'], ['{id}', 'c'], ['{id}/{action}', 'c'], ['{id}/deliverables', 'c'],
+      ['{id}/requirements', 'c'], ['{id}/requirements/skip', 'c'], ['{id}/review', 'c'],
+      ['{id}/milestones', 'b', 'M-2'], ['{id}/tip', 'b', 'M-7'], ['{id}/extension', 'b', 'M-7'],
+      ['{id}/extensions', 'b', 'M-7'], ['{id}/dispute', 'b', 'M-3'], ['{id}/timeline', 'b', 'M-6'],
+      ['{id}/sub-orders', 'b', 'M-2 / M-7'], ['{id}/requirements/files/{fid}', 'p', 'no upload path'],
+      ['{id}/pay', 'w', 'checkout hands off to web'], ['{id}/messages', 'd', 'conversations covers it'],
+      ['{id}/conversation', 'd', 'duplicate rail'], ['{id}/conversation/messages', 'd', 'duplicate rail'],
+    ]],
+    ['vendors', [
+      ['{id}', 'c'], ['{id}/services', 'c'], ['{id}/portfolio', 'c'], ['me', 'c'], ['me/vacation', 'c'],
+      ['', 'b', 'M-9'], ['{id}/stats', 'b', 'M-9'], ['{id}/reviews', 'b', 'M-9'],
+      ['{id}/reviews/summary', 'b', 'M-9'], ['{id}/level', 'b', 'M-8'], ['me/level', 'b', 'M-8'],
+      ['register', 'b', 'M-5'], ['{id}/tips', 'b', 'M-7'], ['{id}/tips/total', 'b', 'M-7'],
+    ]],
+    ['payments', [
+      ['methods', 'w'], ['create-intent', 'w'], ['confirm', 'w'], ['{id}/status', 'w'],
+      ['offline/submit', 'w'], ['stripe/create-intent', 'w'], ['stripe/confirm', 'w'],
+      ['paypal/create-order', 'w'], ['paypal/capture', 'w'], ['razorpay/create-order', 'w'],
+      ['razorpay/verify', 'w'],
+    ]],
+    ['services', [
+      ['', 'c'], ['{id}', 'c'], ['{id}/packages', 'c'], ['{id}/faqs', 'c'], ['{id}/reviews', 'c'],
+      ['{id}/reviews/summary', 'c'], ['{id}/favorited', 'c'],
+      ['{id}/addons', 'p', 'REST create has no add-ons'], ['{id}/addons/{aid}', 'p', 'REST create has no add-ons'],
+      ['grid', 'w', 'server-rendered for shortcodes'],
+    ]],
+    ['disputes', [
+      ['', 'c'], ['{id}', 'c'], ['{id}/timeline', 'c'], ['{id}/respond', 'c'],
+      ['options', 'b', 'M-3 — reason list'], ['{id}/evidence', 'b', 'member attaches evidence'],
+      ['{id}/escalate', 'b', 'member action'], ['{id}/cancel', 'b', 'member withdraws own'],
+      ['{id}/assign', 'w', 'admin'], ['{id}/resolve', 'w', 'admin'],
+    ]],
+    ['auth', [
+      ['login', 'c'], ['register', 'c'], ['me', 'c'], ['logout', 'c'], ['devices', 'c'],
+      ['devices/{id}', 'c'], ['forgot-password', 'c'], ['change-password', 'c'],
+    ]],
+    ['analytics', [
+      ['vendor/overview', 'b', 'seller-facing'], ['vendor/revenue', 'b', 'seller-facing'],
+      ['vendor/orders', 'b', 'seller-facing'], ['vendor/services', 'b', 'seller-facing'],
+      ['overview', 'w', 'owner'], ['revenue', 'w', 'owner'], ['export', 'w', 'owner'],
+    ]],
+    ['recurring-services', [
+      ['', 'd', 'ships default-off, UI hidden'], ['{id}', 'd'], ['{id}/pause', 'd'],
+      ['{id}/resume', 'd'], ['{id}/cancel', 'd'], ['my-subscriptions', 'd'], ['vendor-subscriptions', 'd'],
+    ]],
+    ['buyer-requests', [
+      ['', 'c'], ['{id}', 'c'], ['mine', 'c'], ['{id}/proposals', 'c'],
+      ['{id}/proposals/{pid}/accept', 'b', 'M-1'], ['{id}/proposals/{pid}/reject', 'b', 'M-1'],
+    ]],
+    ['stripe-connect', [
+      ['onboard', 'w'], ['status', 'w'], ['accounts', 'w'], ['accounts/{id}', 'w'],
+      ['disconnect', 'w'], ['settings', 'w'],
+    ]],
+    ['conversations', [
+      ['', 'c'], ['{id}/messages', 'c'], ['{id}/read', 'c'], ['unread-count', 'c'],
+      ['{id}', 'd', 'list payload is enough'],
+    ]],
+    ['notifications', [
+      ['', 'c'], ['{id}/read', 'c'], ['read-all', 'c'], ['unread-count', 'c'],
+      ['{id}', 'd', 'delete — no UI for it yet'],
+    ]],
+    ['wallet', [
+      ['balance', 'd', 'F-3 rail undeclared'], ['transactions', 'd', 'F-3'], ['providers', 'd', 'F-3'],
+      ['withdraw', 'd', 'F-3'], ['withdrawals', 'd', 'F-3'],
+    ]],
+    ['milestones', [
+      ['{id}', 'b', 'M-2'], ['{id}/submit', 'b', 'M-2'], ['{id}/approve', 'b', 'M-2'],
+      ['{id}/decline', 'b', 'M-2'], ['{id}/pay', 'b', 'M-2'],
+    ]],
+    ['moderation', [
+      ['pending', 'w'], ['count', 'w'], ['{id}', 'w'], ['{id}/approve', 'w'], ['{id}/reject', 'w'],
+    ]],
+    ['paypal-payouts', [
+      ['batches', 'w'], ['batches/{id}', 'w'], ['batches/{id}/sync', 'w'], ['pending', 'w'], ['profile', 'w'],
+    ]],
+    ['reviews', [
+      ['{id}/reply', 'b', 'seller cannot reply'], ['{id}/helpful', 'b', 'no helpful vote'],
+      ['{id}', 'p', 'read/edit own'], ['', 'd', 'app posts via /orders/{id}/review'],
+    ]],
+    ['proposals', [
+      ['', 'c'], ['{id}/withdraw', 'c'], ['{id}', 'd', 'list payload is enough'], ['stats', 'd'],
+    ]],
+    ['portfolio', [
+      ['', 'p', 'read-only'], ['{id}', 'p', 'read-only'], ['{id}/featured', 'p', 'read-only'],
+      ['reorder', 'p', 'read-only'],
+    ]],
+    ['cart', [['', 'c'], ['add', 'c'], ['{key}', 'c'], ['checkout', 'c']]],
+    ['storage', [
+      ['upload', 'p', 'no upload path in the app'], ['providers', 'p'], ['{id}', 'p'], ['{id}/url', 'p'],
+    ]],
+    ['subscription-plans', [
+      ['my-subscription', 'd', 'Pro wave'], ['subscribe', 'd', 'purchase stays on web'],
+      ['', 'w', 'owner config'], ['{id}', 'w', 'owner config'],
+    ]],
+    ['withdrawals', [['', 'c'], ['methods', 'c'], ['{id}', 'w', 'owner approves']]],
+    ['commission-rules', [['', 'w'], ['{id}', 'w'], ['preview', 'w']]],
+    ['earnings', [['summary', 'c'], ['history', 'c']]],
+    ['seller-levels', [['', 'b', 'M-8'], ['{level}', 'b', 'M-8']]],
+    ['favorites', [['', 'c'], ['{id}', 'c']]],
+    ['media', [['', 'p', 'no upload path'], ['{id}', 'p']]],
+    ['misc', [
+      ['/settings', 'c'], ['/categories', 'c'], ['/search', 'c'],
+      ['/tags', 'd'], ['/me', 'd', 'auth/me covers it'], ['/dashboard', 'd'],
+      ['/realtime/auth', 'd', 'flag is off'], ['/extensions/{id}/decline', 'b', 'M-7'],
+      ['/audit-log', 'w'], ['/white-label', 'w'], ['/tour/complete', 'w'], ['/batch', 'w'],
+      ['/', 'w', 'route index'],
+    ]],
+  ];
+
+  const META = {
+    c: { label: 'called',   cls: 's-covered',  tag: 't-covered',  legend: 'Called by the app' },
+    b: { label: 'missing',  cls: 's-blocker',  tag: 't-blocker',  legend: 'Missing — blocks release' },
+    p: { label: 'partial',  cls: 's-partial',  tag: 't-partial',  legend: 'Partial' },
+    d: { label: 'deferred', cls: 's-deferred', tag: 't-deferred', legend: 'Deferred, with a reason' },
+    w: { label: 'web-only', cls: 's-webonly',  tag: 't-webonly',  legend: 'Web-only by design' },
+  };
+  const ORDER = ['c', 'b', 'p', 'd', 'w'];
+
+  const map = document.getElementById('map');
+  const inspect = document.getElementById('inspect');
+  const tally = { c: 0, b: 0, p: 0, d: 0, w: 0 };
+  let total = 0;
+
+  function show(path, s, note) {
+    const m = META[s];
+    inspect.classList.remove('is-idle');
+    inspect.innerHTML = '';
+    const tag = document.createElement('span');
+    tag.className = 'inspect-tag ' + m.tag;
+    tag.textContent = m.label;
+    const p = document.createElement('span');
+    p.className = 'inspect-path';
+    p.textContent = path;
+    inspect.append(tag, p);
+    if (note) {
+      const n = document.createElement('span');
+      n.className = 'inspect-note';
+      n.textContent = '— ' + note;
+      inspect.append(n);
+    }
+  }
+
+  for (const [group, routes] of GROUPS) {
+    const box = document.createElement('div');
+    box.className = 'grp';
+
+    const head = document.createElement('div');
+    head.className = 'grp-h';
+    const name = document.createElement('b');
+    name.textContent = group;
+    const n = document.createElement('span');
+    n.textContent = routes.length;
+    head.append(name, n);
+
+    const cells = document.createElement('div');
+    cells.className = 'cells';
+
+    for (const [seg, s, note] of routes) {
+      total++;
+      tally[s]++;
+      const full = group === 'misc' ? seg : '/' + group + (seg ? '/' + seg : '');
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'cell ' + META[s].cls;
+      b.setAttribute('aria-label', full + ' — ' + META[s].label + (note ? ' — ' + note : ''));
+      b.addEventListener('mouseenter', () => show(full, s, note));
+      b.addEventListener('focus', () => show(full, s, note));
+      cells.append(b);
+    }
+
+    box.append(head, cells);
+    map.append(box);
+  }
+
+  // Numbers on the page are computed from the data above, never hand-typed.
+  document.getElementById('n-total').textContent = total;
+  document.getElementById('n-called').textContent = tally.c;
+  document.getElementById('n-pct').textContent = Math.round((tally.c / total) * 100) + '% of the surface';
+
+  const bar = document.getElementById('bar');
+  const legend = document.getElementById('legend');
+  for (const k of ORDER) {
+    const seg = document.createElement('span');
+    seg.style.flex = tally[k];
+    seg.className = META[k].cls;
+    bar.append(seg);
+
+    const li = document.createElement('li');
+    const sw = document.createElement('i');
+    sw.className = META[k].cls;
+    const txt = document.createElement('span');
+    const cnt = document.createElement('b');
+    cnt.textContent = tally[k];
+    txt.append(cnt, document.createTextNode(' ' + META[k].legend));
+    li.append(sw, txt);
+    legend.append(li);
+  }
+</script>
