@@ -9,9 +9,9 @@ app repo at `~/apps/wpss-app/docs/FEATURE-COVERAGE.md` and blocks release on any
 | **App** | `~/apps/wpss-app` 1.0.0 · `main` @ `66daa41` |
 | **Last verified** | 2026-08-08 |
 | **Live routes** | **183** (`GET /wp-json/wpss/v1`, Free + Pro both active) |
-| **Called by the app** | **72 routes** (from 71 call templates) — 39% |
-| **App — member-facing gaps** | **3 Missing · 4 Partial** (was 9 · 5) |
-| **Plugin — findings this pass** | **7 fixed** (F-1 … F-7), all in PRs |
+| **Called by the app** | **77 routes** (from 76 call templates) — 42% |
+| **App — member-facing gaps** | **0 Missing · 4 Partial** (was 9 · 5) |
+| **Plugin — findings this pass** | **8 fixed** — F-1 … F-7 plus a 500 on vendor registration |
 | **Verification** | Plugin: live API + browser. App: **rendered** at 390px — see the app-side gate file |
 
 ## Why this file lives here
@@ -90,7 +90,7 @@ correction is what turned this from a classification exercise into a gap list.
 | Reviews | `/services/{id}/reviews` | ⚠️ Partial | ◆ `…/helpful` and `…/reply` uncalled — **a seller cannot reply to a review** |
 | Attachments | `/storage/*`, `/media/*` | ⚠️ Partial | ◆ no upload path anywhere in the app |
 
-### App gate — six closed, three open
+### App gate — all nine closed
 
 | # | Capability | Status |
 |---|---|---|
@@ -100,11 +100,11 @@ correction is what turned this from a classification exercise into a gap list.
 | M-4 | Report / block a member | ✅ Done, rendered. Needed **F-2** first |
 | M-6 | Order timeline | ✅ Done, rendered |
 | M-8 | Seller level | ✅ Done, rendered |
-| M-5 | Become a seller | ❌ Open — `POST /vendors/register`, one route and a screen |
-| M-7 | Tips and paid extensions | ❌ Open — a real feature |
-| M-9 | Browse sellers | ❌ Open — a list view, needs the big-site checklist |
+| M-5 | Become a seller | ✅ Done, rendered. Surfaced a plugin 500 |
+| M-7 | Tips and paid extensions | ✅ Done, rendered |
+| M-9 | Browse sellers | ✅ Done, rendered — directory **and** seller page |
 
-**All three remaining are app-side.** The API is ahead of the client, not behind it.
+**Nothing is left on the gate.**
 
 **What the plugin owed and has now delivered:** report/block routes and storage (F-2), the order
 status vocabulary (F-1, F-5), the dispute reasons (F-7), real feature flags (F-4), the honest wallet
@@ -265,3 +265,31 @@ Stated so nobody reads absence as assurance.
 | Ban gate | ⚠️ **read in code and found open (F-6)** — not yet proven with a live suspended vendor + Application Password |
 | `app_enabled` gate on a device | ⚠️ logic correct in `utils/gate.ts`; not seen running |
 | Live flow run against the API | ❌ not done. Listora's equivalent run found three rows scored wrong from commit messages — this file has not had that check |
+
+---
+
+## Static analysis — run at last
+
+PHPStan had never run across any of this work, because its WordPress extension
+is a dev dependency absent from the committed `vendor/` and `composer install`
+would rewrite the runtime vendor these plugins ship (the regression CLAUDE.md
+records). It can be run without touching that tree: the extension is installed
+globally, so a config with absolute paths analyses the plugin in place.
+
+| | Result |
+|---|---|
+| **Free**, level 6 | **No errors** |
+| **Pro**, level 5 | 39 findings, **all** in `Integrations/EDD/*` — calls to `edd_*` functions on a site where EDD is not installed. Zero overlap with any file changed in this work. |
+
+Two things that make the Free run trustworthy rather than merely green: it needs
+`tests/stubs/action-scheduler-stubs.php` in `scanFiles` (without it, eight
+Action Scheduler calls report as missing functions) and the `.asset.php`
+ignore for un-built assets. A run that drops either reports nine phantom errors,
+which is what a first attempt here did.
+
+Pro's config wants `php-stubs/woocommerce-stubs`, also a dev dependency. The
+real WooCommerce plugin on the install serves the same purpose via
+`scanDirectories`, which is how the run above was done.
+
+**For CI:** both plugins need their dev dependencies for a clean run — that is
+the right place for this gate, not a developer's machine.
