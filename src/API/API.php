@@ -652,6 +652,17 @@ class API {
 			'primary_color' => '',
 		);
 
+		// Resolved once: wpss_get_order_statuses() applies a filter, and calling
+		// it twice would run third-party code twice for one response.
+		$order_statuses = array();
+
+		foreach ( wpss_get_order_statuses() as $slug => $label ) {
+			$order_statuses[] = array(
+				'slug'  => (string) $slug,
+				'label' => (string) $label,
+			);
+		}
+
 		return array(
 			/*
 			 * Bump when a FIELD changes shape or meaning, never for a value change.
@@ -702,6 +713,35 @@ class API {
 					'realtime'       => ! empty( ( new \WPSellServices\Services\RealtimeService() )->get_client_config()['enabled'] ),
 				)
 			),
+
+			/*
+			 * The order-status vocabulary, so a client renders what THIS site
+			 * calls each state instead of carrying its own copy.
+			 *
+			 * A copy is what every client had to keep, because the API published
+			 * no list — and a client-side copy of a server-owned, filterable
+			 * vocabulary is the defect that has now cost three products in this
+			 * portfolio real customer time. It always reads as working: the
+			 * screen renders a plausible word, so nothing looks broken until
+			 * someone notices the site says something else. The mobile app's
+			 * copy is hardcoded English, so every localised site renders its
+			 * order statuses untranslated today.
+			 *
+			 * Ordered as `wpss_get_order_statuses()` returns them, which is the
+			 * same map the web renders and the same one `wpss_order_statuses`
+			 * filters — so an owner who renames a status sees it change in the
+			 * app too.
+			 *
+			 * A LIST of objects, not a slug => label map: JSON objects have no
+			 * guaranteed key order, so a map would lose the site's ordering the
+			 * moment a client parsed it.
+			 *
+			 * Additive, so contract_version stays at 1 — a client that does not
+			 * know this key ignores it and keeps working. Bumping would brick
+			 * every build already shipped, because clients refuse a contract
+			 * newer than the one they understand.
+			 */
+			'order_statuses'   => $order_statuses,
 		);
 	}
 

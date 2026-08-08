@@ -1683,27 +1683,27 @@ class OrdersController extends RestController {
 	}
 
 	/**
-	 * Get status label.
+	 * Get the display label for an order status.
+	 *
+	 * Delegates to the canonical map. This method used to carry its own
+	 * hardcoded copy of 11 statuses and fall through to `ucfirst( $status )`
+	 * for the rest — but there are 18, so the seven it did not list came back
+	 * as "Pending_payment", underscore and all, untranslated. Those seven
+	 * included pending_payment, pending_requirements and pending_approval: the
+	 * three states most buyers see most often.
+	 *
+	 * The copy also could not be filtered, so a site that customised
+	 * `wpss_order_statuses` saw the change on the web and not in the API, and
+	 * every client had to keep its own label map to compensate — which is how
+	 * the mobile app ended up rendering English on localised sites.
+	 *
+	 * @since 1.5.1 Delegated to wpss_get_order_status_label().
 	 *
 	 * @param string $status Status key.
 	 * @return string
 	 */
 	private function get_status_label( string $status ): string {
-		$labels = array(
-			'pending'                => __( 'Pending', 'wp-sell-services' ),
-			'accepted'               => __( 'Accepted', 'wp-sell-services' ),
-			'rejected'               => __( 'Rejected', 'wp-sell-services' ),
-			'requirements_submitted' => __( 'Requirements Submitted', 'wp-sell-services' ),
-			'in_progress'            => __( 'In Progress', 'wp-sell-services' ),
-			'delivered'              => __( 'Delivered', 'wp-sell-services' ),
-			'completed'              => __( 'Completed', 'wp-sell-services' ),
-			'cancelled'              => __( 'Cancelled', 'wp-sell-services' ),
-			'disputed'               => __( 'Disputed', 'wp-sell-services' ),
-			'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
-			'refunded'               => __( 'Refunded', 'wp-sell-services' ),
-		);
-
-		return $labels[ $status ] ?? ucfirst( $status );
+		return wpss_get_order_status_label( $status );
 	}
 
 	/**
