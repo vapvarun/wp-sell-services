@@ -492,6 +492,12 @@ class ConversationsController extends RestController {
 			return $blocked;
 		}
 
+		// Standing is deliberately NOT checked here. Messaging is how a member
+		// finishes an order someone already paid for, and cutting it off would
+		// strand the counterparty mid-delivery with no way to reach the person
+		// holding their money. Suspension stops new supply; it does not sever a
+		// conversation about work in flight.
+
 		// Multipart file uploads (the order/dashboard composer posts raw files
 		// as attachments[]). Validate + ingest them through the shared helper so
 		// the allow-list/MIME/size rules match the legacy admin-ajax path. The

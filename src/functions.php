@@ -4384,6 +4384,18 @@ function wpss_vendor_status_block( int $user_id = 0 ) {
 		return null;
 	}
 
+	// Marketplace standing first. A suspended or banned member must not be able
+	// to take on new work regardless of how healthy their VENDOR application
+	// looks — the two are different questions, and answering only the second
+	// would leave a banned member with an approved vendor row still selling.
+	// Composed here rather than added at each call site so all ten vendor gates
+	// inherit it and none can be forgotten.
+	$account_block = wpss_account_status_block( $user_id );
+
+	if ( $account_block ) {
+		return $account_block;
+	}
+
 	$status = wpss_get_vendor_status( $user_id );
 
 	if ( '' === $status || 'active' === $status ) {
