@@ -200,6 +200,31 @@ class ReportsController extends RestController {
 			)
 		);
 
+		// $wpdb->query() has THREE outcomes and only two used to be handled.
+		// FALSE means the write did not happen — a missing table, a lock, a full
+		// disk. Because `0 === false` is false, a failure fell through to the
+		// "new report" branch and this endpoint answered 201 "our team will
+		// review this" while storing nothing. On an abuse-reporting path that is
+		// the worst possible failure: the member is reassured, no record exists,
+		// and nobody ever learns. Fail loudly instead.
+		if ( false === $inserted ) {
+			$error = $wpdb->last_error;
+
+			// Logged rather than returned: $wpdb->last_error can carry schema
+			// detail, and this endpoint is reachable by any logged-in member.
+			if ( $error && function_exists( 'wpss_log' ) ) {
+				wpss_log( 'Report insert failed: ' . $error, 'error' );
+			} else {
+				error_log( 'WPSS report insert failed: ' . $error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+
+			return new WP_Error(
+				'wpss_report_not_saved',
+				__( 'We could not record that report. Please try again, and contact support if it keeps happening.', 'wp-sell-services' ),
+				array( 'status' => 500 )
+			);
+		}
+
 		// INSERT IGNORE returning 0 means the unique key caught a duplicate. That
 		// is a success from the member's side — they reported it, it is on
 		// record — so it answers 200 rather than an error that would invite them

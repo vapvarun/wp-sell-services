@@ -341,7 +341,41 @@ final class Plugin {
 			);
 		}
 
-		if ( version_compare( $installed_version, WPSS_VERSION, '<' ) ) {
+		// The schema has its OWN version, and it moves independently of the
+		// plugin version — a release can add a table without changing
+		// WPSS_VERSION. Gating the installer on the plugin version alone meant
+		// such a release silently never ran: 1.5.1 shipped DB_VERSION 1.5.3 and
+		// the wpss_reports table, but every site already on 1.5.1 saw
+		// wpss_version === WPSS_VERSION, returned here, and never created it.
+		// Abuse reports then wrote to a table that did not exist.
+		//
+		// Compared as an autoloaded option rather than by calling
+		// SchemaManager::needs_update(), which falls through to a SHOW TABLES
+		// probe when the version matches — that is the common case, so asking it
+		// here would add a query to every request to catch a once-per-release
+		// event. Activator::install() still runs the full check, including
+		// missing tables, once we know something is stale.
+		$schema_installed = get_option( SchemaManager::VERSION_OPTION, '0.0.0' );
+		$schema_is_stale  = version_compare( $schema_installed, SchemaManager::DB_VERSION, '<' );
+
+		// The option comparison above catches a release that bumps DB_VERSION,
+		// which is the case that broke reports. It does NOT catch a table that
+		// vanished while the version option stayed current — a manual drop, a
+		// half-restored backup, a migration that died midway. needs_update()
+		// does catch that, by probing for missing tables, but the probe is a
+		// SHOW TABLES query and the version-matches case is every normal
+		// request, so asking it on the front end would buy a once-in-a-lifetime
+		// recovery at the cost of a query on every page view.
+		//
+		// Admin requests are a small fraction of traffic and already do far more
+		// work, so the expensive question is asked only there. A site with a
+		// dropped table self-heals the next time an admin loads a page, rather
+		// than never.
+		if ( ! $schema_is_stale && is_admin() ) {
+			$schema_is_stale = ( new SchemaManager() )->needs_update();
+		}
+
+		if ( version_compare( $installed_version, WPSS_VERSION, '<' ) || $schema_is_stale ) {
 			// DB, roles, settings — safe on plugins_loaded.
 			Activator::install();
 
