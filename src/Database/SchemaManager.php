@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.5.2';
+	const DB_VERSION = '1.5.3';
 
 	/**
 	 * Option name for storing DB version.
@@ -95,6 +95,7 @@ class SchemaManager {
 		'wallet_transactions',
 		'withdrawals',
 		'audit_log',
+		'reports',
 	);
 
 	/**
@@ -382,6 +383,56 @@ class SchemaManager {
 			$sql    = $this->{$method}( $charset_collate );
 			dbDelta( $sql );
 		}
+	}
+
+	/**
+	 * Get reports table SQL.
+	 *
+	 * Member-filed reports on a person, a service, a review or a message. One
+	 * table for all four, because the owner works ONE queue — a queue per target
+	 * type is four screens to check and three to forget.
+	 *
+	 * `reported_user_id` is denormalised on purpose: it is resolved once at write
+	 * time from whatever was reported, so "show me everything filed against this
+	 * member" is an index hit rather than four joins. It is the question a site
+	 * owner actually asks before suspending someone.
+	 *
+	 * The UNIQUE key is the anti-brigading rule, enforced by the database rather
+	 * than by a read-then-write in PHP: one member may file one report per
+	 * target, so a second submission updates nothing and cannot be used to stack
+	 * the queue against someone.
+	 *
+	 * Indexes cover the four real queries: the open queue by age, everything
+	 * about one target, everything against one member, and counts by reason.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param string $charset_collate Charset collation.
+	 * @return string SQL statement.
+	 */
+	private function get_reports_table( string $charset_collate ): string {
+		$table = $this->get_table_name( 'reports' );
+
+		return "CREATE TABLE {$table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			target_type varchar(32) NOT NULL,
+			target_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			reported_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			reporter_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			reason varchar(32) NOT NULL,
+			details text DEFAULT NULL,
+			status varchar(20) NOT NULL DEFAULT 'open',
+			resolved_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			resolution varchar(32) DEFAULT NULL,
+			resolved_at datetime DEFAULT NULL,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY uniq_reporter_target (reporter_id, target_type, target_id),
+			KEY idx_queue (status, created_at),
+			KEY idx_target (target_type, target_id, status),
+			KEY idx_reported_user (reported_user_id, status),
+			KEY idx_reason (reason, status)
+		) {$charset_collate};";
 	}
 
 	/**

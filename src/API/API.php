@@ -172,6 +172,8 @@ class API {
 			new PaymentController(),
 			new AuditLogController(),
 			new RealtimeController(),
+			new ReportsController(),
+			new BlocksController(),
 		];
 
 		/**
@@ -663,6 +665,27 @@ class API {
 			);
 		}
 
+		// Same {slug,label} shape as the statuses above, and a list for the same
+		// reason: JSON has no guaranteed key order, so a map would lose the
+		// site's ordering the moment a client parsed it.
+		$report_reasons = array();
+
+		foreach ( wpss_get_report_reasons() as $slug => $label ) {
+			$report_reasons[] = array(
+				'slug'  => (string) $slug,
+				'label' => (string) $label,
+			);
+		}
+
+		$report_targets = array();
+
+		foreach ( wpss_get_report_target_types() as $slug => $label ) {
+			$report_targets[] = array(
+				'slug'  => (string) $slug,
+				'label' => (string) $label,
+			);
+		}
+
 		$adapter = wpss_get_active_adapter();
 		$rail    = $adapter ? (string) $adapter->get_id() : 'standalone';
 
@@ -806,6 +829,18 @@ class API {
 			 * newer than the one they understand.
 			 */
 			'order_statuses'   => $order_statuses,
+
+			/*
+			 * The report vocabulary, published for the same reason the order
+			 * statuses above are: a client that hardcodes its own copy of a
+			 * filterable, translatable list drifts from what the site says, and
+			 * scores as working the whole time it is wrong.
+			 *
+			 * Both halves travel together because a report sheet needs both to
+			 * render: what can be reported, and why.
+			 */
+			'report_reasons'   => $report_reasons,
+			'report_targets'   => $report_targets,
 		);
 	}
 
