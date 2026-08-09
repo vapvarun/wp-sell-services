@@ -303,7 +303,7 @@ from the running site with Free and Pro both active.
 
 | | |
 |---|---|
-| Registered paths | **183** (521 method endpoints) |
+| Registered paths | **183** (260 distinct path+method pairs) |
 | Called by the app | **76** — 41% |
 | Owner-only, correctly absent | 25 |
 | Payment rail, deliberately skipped (hosted checkout) | 12 |
