@@ -642,7 +642,17 @@ class VendorsController extends RestController {
 
 		$vendor_status = $vendor_service->get_vendor_status( $user_id );
 
-		do_action( 'wpss_vendor_registered', $user_id, $vendor_status );
+		// `wpss_vendor_registered` is NOT fired here. VendorService::register_vendor()
+		// already fires it with the profile array the listener declares, so this
+		// line was both a duplicate and the wrong type: it passed the status
+		// STRING, and the notification listener is typed
+		// `function ( int $user_id, array $profile_data )`.
+		//
+		// The result was a 500 on every REST vendor registration, AFTER the
+		// vendor had been created — so the member became a seller and saw
+		// "There has been a critical error on this website." Nothing on the web
+		// path hit it, because the web path goes through the service and never
+		// re-fired the hook.
 
 		return new WP_REST_Response(
 			array(

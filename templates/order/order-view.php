@@ -2103,12 +2103,10 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					<label for="dispute-reason" class="wpss-label"><?php esc_html_e( 'Reason for Dispute', 'wp-sell-services' ); ?> <span class="wpss-required">*</span></label>
 					<select name="reason" id="dispute-reason" class="wpss-select" required>
 						<option value=""><?php esc_html_e( 'Select a reason', 'wp-sell-services' ); ?></option>
-						<option value="not_delivered"><?php esc_html_e( 'Work not delivered', 'wp-sell-services' ); ?></option>
-						<option value="poor_quality"><?php esc_html_e( 'Poor quality work', 'wp-sell-services' ); ?></option>
-						<option value="not_as_described"><?php esc_html_e( 'Not as described', 'wp-sell-services' ); ?></option>
-						<option value="communication"><?php esc_html_e( 'Communication issues', 'wp-sell-services' ); ?></option>
-						<option value="deadline"><?php esc_html_e( 'Missed deadline', 'wp-sell-services' ); ?></option>
-						<option value="other"><?php esc_html_e( 'Other', 'wp-sell-services' ); ?></option>
+						<?php // One map, shared with the REST options endpoint, so the web form and every client offer the same reasons. ?>
+						<?php foreach ( wpss_get_dispute_reasons() as $wpss_reason_key => $wpss_reason_label ) : ?>
+							<option value="<?php echo esc_attr( $wpss_reason_key ); ?>"><?php echo esc_html( $wpss_reason_label ); ?></option>
+						<?php endforeach; ?>
 					</select>
 				</div>
 

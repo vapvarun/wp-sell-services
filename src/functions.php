@@ -4189,6 +4189,43 @@ function wpss_get_report_reasons(): array {
 }
 
 /**
+ * Why a buyer opens a dispute.
+ *
+ * These six existed as a hardcoded `<select>` in `templates/order/order-view.php`
+ * and nowhere else — not filterable, not published, and invisible to the REST
+ * API, whose `reason` arg is a free string with no enum. So a client had two
+ * bad options: invent its own list, or ask the member to type one.
+ *
+ * Lifted here for the same reason the order statuses were: one map, so the web
+ * form, any client and the site owner's filter cannot disagree about what a
+ * dispute can be about. The keys are the wire format and are stored on every
+ * dispute row — add and remove, never rename.
+ *
+ * @since 1.5.1
+ *
+ * @return array<string,string> Reason key => translated label.
+ */
+function wpss_get_dispute_reasons(): array {
+	$reasons = array(
+		'not_delivered'    => __( 'Work not delivered', 'wp-sell-services' ),
+		'poor_quality'     => __( 'Poor quality work', 'wp-sell-services' ),
+		'not_as_described' => __( 'Not as described', 'wp-sell-services' ),
+		'communication'    => __( 'Communication issues', 'wp-sell-services' ),
+		'deadline'         => __( 'Missed deadline', 'wp-sell-services' ),
+		'other'            => __( 'Other', 'wp-sell-services' ),
+	);
+
+	/**
+	 * Filter the reasons a buyer may give for opening a dispute.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param array<string,string> $reasons Reason key => label.
+	 */
+	return apply_filters( 'wpss_dispute_reasons', $reasons );
+}
+
+/**
  * What can be reported.
  *
  * Kept beside the reasons because the two travel together: a client needs both

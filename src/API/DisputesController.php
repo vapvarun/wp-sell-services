@@ -721,6 +721,11 @@ class DisputesController extends RestController {
 			array(
 				'statuses'         => DisputeService::get_statuses(),
 				'resolution_types' => DisputeService::get_resolution_types(),
+				// Why a buyer opens one. Published so a client renders the
+				// site's list instead of inventing its own — the `reason` arg
+				// on POST /orders/{id}/dispute is a free string with no enum,
+				// so without this every client guessed.
+				'reasons'          => wpss_get_dispute_reasons(),
 			)
 		);
 	}

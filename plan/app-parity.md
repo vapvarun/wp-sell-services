@@ -8,10 +8,11 @@ app repo at `~/apps/wpss-app/docs/FEATURE-COVERAGE.md` and blocks release on any
 | **Plugins** | Free + Pro **1.5.1** (both on branch `1.5.1`) |
 | **App** | `~/apps/wpss-app` 1.0.0 · `main` @ `66daa41` |
 | **Last verified** | 2026-08-08 |
-| **Live routes** | **179** (`GET /wp-json/wpss/v1`, Free + Pro both active) |
-| **Called by the app** | **58** — 32% |
-| **App — member-facing gaps** | **9 Missing · 5 Partial** |
-| **Plugin — findings this pass** | **6 open** (F-1 … F-6), 1 of them a security parity bug |
+| **Live routes** | **183** (`GET /wp-json/wpss/v1`, Free + Pro both active) |
+| **Called by the app** | **77 routes** (from 76 call templates) — 42% |
+| **App — member-facing gaps** | **0 Missing · 4 Partial** (was 9 · 5) |
+| **Plugin — findings this pass** | **8 fixed** — F-1 … F-7 plus a 500 on vendor registration |
+| **Verification** | Plugin: live API + browser. App: **rendered** at 390px — see the app-side gate file |
 
 ## Why this file lives here
 
@@ -84,27 +85,31 @@ correction is what turned this from a classification exercise into a gap list.
 | Auth — 8 routes | `/auth/*` | ✅ Done | ◆ whole group covered |
 | Bootstrap + licence gate | `GET /settings` | ✅ Done | ◆ `utils/gate.ts` fails closed on `app_enabled`, open on `min_app_version`, checks `contract_version` first |
 | Publish a service | `POST /services` | ⚠️ Partial | ◆ title, price, categories only — no packages, gallery, FAQs, requirements or add-ons. The REST create is genuinely simpler than the six-step web wizard; the app states the limit on screen |
-| Disputes | `/disputes`, `…/{id}`, `…/timeline`, `…/respond` | ⚠️ Partial | ◆ read + respond only — **cannot open one** |
+| Disputes — read, respond and **open** | `/disputes`, `…/{id}`, `…/timeline`, `…/respond`, `/disputes/options` | ✅ Done | ▣ rendered. Resolving stays admin-only by design |
 | Portfolio | `GET /vendors/{id}/portfolio` | ⚠️ Partial | ◆ read-only; the 4 write routes are uncalled, so a seller cannot manage their own work |
 | Reviews | `/services/{id}/reviews` | ⚠️ Partial | ◆ `…/helpful` and `…/reply` uncalled — **a seller cannot reply to a review** |
 | Attachments | `/storage/*`, `/media/*` | ⚠️ Partial | ◆ no upload path anywhere in the app |
 
-### ❌ Missing — the app release gate
+### App gate — all nine closed
 
-| # | Capability | Routes that exist and go uncalled | Plugin work needed? |
-|---|---|---|---|
-| M-1 | Accept / reject a proposal — **hire someone** | `POST /buyer-requests/{id}/proposals/{pid}/{accept,reject}` | **No** — app only |
-| M-2 | Milestones — the whole feature | `/orders/{id}/milestones`, `/milestones/{id}` + `submit`, `approve`, `decline`, `pay` | **No** — app only |
-| M-3 | Open a dispute | `POST /orders/{id}/dispute`, `GET /disputes/options` | **No** — app only |
-| M-4 | Report / block a member | **none exist** | **YES — see F-2** |
-| M-5 | Become a seller | `POST /vendors/register` | **No** — app only |
-| M-6 | Order timeline | `GET /orders/{id}/timeline` | **No** — app only |
-| M-7 | Tips and paid extensions | `/orders/{id}/{tip,extension,extensions}`, `/extensions/{id}/decline` | **No** — app only |
-| M-8 | Seller level | `/vendors/me/level`, `/vendors/{id}/level`, `/seller-levels` | **No** — app only |
-| M-9 | Browse sellers | `/vendors`, `/vendors/{id}/{stats,reviews,reviews/summary}` | **No** — app only |
+| # | Capability | Status |
+|---|---|---|
+| M-1 | Accept / reject a proposal — **hire someone** | ✅ Done, rendered |
+| M-2 | Milestones — pay, submit, approve, decline | ✅ Done, rendered against a seeded milestone order |
+| M-3 | Open a dispute | ✅ Done, rendered. Needed **F-7** first |
+| M-4 | Report / block a member | ✅ Done, rendered. Needed **F-2** first |
+| M-6 | Order timeline | ✅ Done, rendered |
+| M-8 | Seller level | ✅ Done, rendered |
+| M-5 | Become a seller | ✅ Done, rendered. Surfaced a plugin 500 |
+| M-7 | Tips and paid extensions | ✅ Done, rendered |
+| M-9 | Browse sellers | ✅ Done, rendered — directory **and** seller page |
 
-**Eight of nine are app-side work against endpoints that already ship.** That is a good position to
-be in — the API is ahead of the client, not behind it. Only M-4 needs the plugin.
+**Nothing is left on the gate.**
+
+**What the plugin owed and has now delivered:** report/block routes and storage (F-2), the order
+status vocabulary (F-1, F-5), the dispute reasons (F-7), real feature flags (F-4), the honest wallet
+balance (F-3), and the vendor-status gate on every write path (F-6).
+
 
 ---
 
@@ -176,6 +181,7 @@ F-1 and F-5 are one card deliberately: fixing either alone leaves the drift open
 | ID | Finding | Status | Where it stands | Evidence |
 |---|---|---|---|---|
 | **F-1** | **`OrdersController` duplicates the order-status label map, incompletely and unfilterably** | ❌ Open | `get_status_label()` carries a **private map of 11 statuses** and falls through to `ucfirst( $status )` for the rest. Seven statuses fall through — `pending_payment`, `pending_requirements`, `pending_approval`, `revision_requested`, `on_hold`, `late`, `partially_refunded` — so the API answers **"Pending_payment"**, underscore and all. Those are the three most common buyer-facing states among them. Meanwhile `wpss_get_order_statuses()` already has all 18, already translated, already filterable via `wpss_order_statuses`, and the REST layer simply does not call it. **Consequence:** the app carries its own English label map, so every order status renders in English on a localised site, and no owner's filter reaches the app. This is the CLAUDE.md "no duplicate code" rule and skill rule 11 in the same defect. **Fix: route `get_status_label()` through `wpss_get_order_status_label()` and delete the private map.** | ◆ `src/API/OrdersController.php:1691-1707` vs `src/functions.php:2576,2588` |
+| **F-7** | **Dispute reasons lived only in a web template** | ✅ **Fixed** | The six reasons a buyer can give existed as a hardcoded `<select>` in `templates/order/order-view.php` — not filterable, not published, invisible to the API. It matters more than the status case because `DisputeService` only `sanitize_text_field()`s the reason: **no enum, no validation**, so a guessed value is accepted and files the dispute under something the site does not recognise. Now `wpss_get_dispute_reasons()`, rendered by the web form and published in `GET /disputes/options`. | ◆ live `/disputes/options` returns 6 |
 | **F-2** | **No report and no block route exists anywhere in Free or Pro** | ❌ Open | Zero matches for a report/block/flag route across both plugins. App Store Guideline 1.2 requires both wherever members post content to each other — which is every order conversation, review and proposal in this product. **This blocks app submission outright**, and it is not something the app can work around. Needs: report a service / review / message / member, block a member, and a queue the owner can act on. | ◆ zero route matches in `src/` of both plugins |
 | **F-3** | **Two withdrawal rails — resolved: Free's is canonical, and the wallet read was lying** | ✅ **Fixed** | See below. The app was already on the right rail; the real defect was that `GET /wallet/balance` showed a seller money they could not withdraw. | ◆ Pro `src/API/WalletController.php`; `Pro.php:1463` |
 
@@ -259,3 +265,31 @@ Stated so nobody reads absence as assurance.
 | Ban gate | ⚠️ **read in code and found open (F-6)** — not yet proven with a live suspended vendor + Application Password |
 | `app_enabled` gate on a device | ⚠️ logic correct in `utils/gate.ts`; not seen running |
 | Live flow run against the API | ❌ not done. Listora's equivalent run found three rows scored wrong from commit messages — this file has not had that check |
+
+---
+
+## Static analysis — run at last
+
+PHPStan had never run across any of this work, because its WordPress extension
+is a dev dependency absent from the committed `vendor/` and `composer install`
+would rewrite the runtime vendor these plugins ship (the regression CLAUDE.md
+records). It can be run without touching that tree: the extension is installed
+globally, so a config with absolute paths analyses the plugin in place.
+
+| | Result |
+|---|---|
+| **Free**, level 6 | **No errors** |
+| **Pro**, level 5 | 39 findings, **all** in `Integrations/EDD/*` — calls to `edd_*` functions on a site where EDD is not installed. Zero overlap with any file changed in this work. |
+
+Two things that make the Free run trustworthy rather than merely green: it needs
+`tests/stubs/action-scheduler-stubs.php` in `scanFiles` (without it, eight
+Action Scheduler calls report as missing functions) and the `.asset.php`
+ignore for un-built assets. A run that drops either reports nine phantom errors,
+which is what a first attempt here did.
+
+Pro's config wants `php-stubs/woocommerce-stubs`, also a dev dependency. The
+real WooCommerce plugin on the install serves the same purpose via
+`scanDirectories`, which is how the run above was done.
+
+**For CI:** both plugins need their dev dependencies for a clean run — that is
+the right place for this gate, not a developer's machine.
