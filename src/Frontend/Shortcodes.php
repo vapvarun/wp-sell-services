@@ -907,7 +907,7 @@ class Shortcodes {
 			// Fallback rendering.
 			$price  = get_post_meta( $service_id, '_wpss_starting_price', true );
 			$rating = get_post_meta( $service_id, '_wpss_rating_average', true );
-			$vendor = get_userdata( get_post_field( 'post_author', $service_id ) );
+			$vendor_id = (int) get_post_field( 'post_author', $service_id );
 			?>
 			<div class="wpss-service-card">
 				<?php if ( has_post_thumbnail( $service_id ) ) : ?>
@@ -917,8 +917,8 @@ class Shortcodes {
 				<?php endif; ?>
 				<div class="wpss-service-info">
 					<div class="wpss-service-vendor">
-						<?php echo get_avatar( $vendor->ID, 24 ); ?>
-						<span><?php echo esc_html( $vendor->display_name ); ?></span>
+						<?php echo get_avatar( $vendor_id, 24 ); ?>
+						<span><?php echo esc_html( wpss_get_member_display_name( $vendor_id ) ); ?></span>
 					</div>
 					<h3 class="wpss-service-title">
 						<a href="<?php echo esc_url( get_permalink( $service_id ) ); ?>"><?php echo esc_html( get_the_title( $service_id ) ); ?></a>
@@ -973,13 +973,13 @@ class Shortcodes {
 	 * @return void
 	 */
 	private function render_request_card( object $request ): void {
-		$buyer = get_userdata( $request->author_id ?? $request->post_author ?? 0 );
+		$buyer_id = (int) ( $request->author_id ?? $request->post_author ?? 0 );
 		?>
 		<div class="wpss-request-card">
 			<div class="wpss-request-header">
 				<div class="wpss-request-buyer">
-					<?php echo get_avatar( $buyer->ID, 40 ); ?>
-					<span><?php echo esc_html( $buyer->display_name ); ?></span>
+					<?php echo get_avatar( $buyer_id, 40 ); ?>
+					<span><?php echo esc_html( wpss_get_member_display_name( $buyer_id ) ); ?></span>
 				</div>
 				<span class="wpss-request-date"><?php echo esc_html( human_time_diff( strtotime( ( $request->created_at ?? $request->post_date ) . ' UTC' ), time() ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?></span>
 			</div>

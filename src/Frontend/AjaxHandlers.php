@@ -2275,7 +2275,16 @@ class AjaxHandlers {
 		}
 
 		// Get sender info.
+		//
+		// Guarded because send_vendor_contact() typehints \WP_User: handing it
+		// the `false` get_userdata() returns is a TypeError, not a blank name.
+		// The sender is the logged-in user, so this only fires if the account
+		// went away mid-request - rare, but a 500 either way.
 		$sender = get_userdata( $user_id );
+
+		if ( ! $sender instanceof \WP_User ) {
+			wp_send_json_error( array( 'message' => __( 'Your session has expired. Please sign in again.', 'wp-sell-services' ) ) );
+		}
 
 		// Create notification for vendor.
 		$notification_service = new \WPSellServices\Services\NotificationService();

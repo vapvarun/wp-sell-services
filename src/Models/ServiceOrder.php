@@ -346,6 +346,7 @@ class ServiceOrder {
 	 *     @type int    $customer_id Filter by customer.
 	 *     @type int    $user_id     Filter where user is vendor OR customer.
 	 *     @type string $status      Filter by status.
+	 *     @type array  $status__not_in Exclude these statuses.
 	 *     @type int    $service_id  Filter by service.
 	 *     @type string $orderby     Column to sort by. Default 'created_at'.
 	 *     @type string $order       ASC or DESC. Default 'DESC'.
@@ -436,6 +437,27 @@ class ServiceOrder {
 		if ( ! empty( $args['status'] ) ) {
 			$conditions[] = 'status = %s';
 			$params[]     = $args['status'];
+		}
+
+		/*
+		 * Exclusion by status, which account deletion needs and single-value
+		 * `status` cannot express: "does this member have anything still in
+		 * flight?" is a question about every status EXCEPT a short settled set.
+		 *
+		 * Asked this way round on purpose. Listing the settled statuses and
+		 * excluding them means a status added later counts as in-flight until
+		 * someone says otherwise, so the failure direction is a member who
+		 * cannot delete yet rather than one who vanishes mid-order.
+		 */
+		if ( ! empty( $args['status__not_in'] ) ) {
+			$excluded = array_values( array_unique( array_map( 'strval', (array) $args['status__not_in'] ) ) );
+
+			$placeholders = implode( ', ', array_fill( 0, count( $excluded ), '%s' ) );
+			$conditions[] = "status NOT IN ( {$placeholders} )";
+
+			foreach ( $excluded as $status ) {
+				$params[] = $status;
+			}
 		}
 
 		if ( ! empty( $args['service_id'] ) ) {

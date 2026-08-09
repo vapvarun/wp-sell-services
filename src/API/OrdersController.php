@@ -506,12 +506,11 @@ class OrdersController extends RestController {
 
 		$data = array();
 		foreach ( $messages as $message ) {
-			$user   = get_userdata( (int) $message->sender_id );
 			$data[] = array(
 				'id'          => (int) $message->id,
 				'order_id'    => $order_id,
 				'user_id'     => (int) $message->sender_id,
-				'user_name'   => $user ? $user->display_name : __( 'Unknown', 'wp-sell-services' ),
+				'user_name'   => wpss_get_member_display_name( (int) $message->sender_id ),
 				'user_avatar' => get_avatar_url( (int) $message->sender_id, array( 'size' => 48 ) ),
 				'message'     => $message->content,
 				'attachments' => $message->attachments ? json_decode( $message->attachments, true ) : array(),
@@ -1627,8 +1626,6 @@ class OrdersController extends RestController {
 	 */
 	public function prepare_item_for_response( $order, $request ): WP_REST_Response {
 		$service  = get_post( $order->service_id );
-		$vendor   = get_userdata( (int) $order->vendor_id );
-		$customer = get_userdata( (int) $order->customer_id );
 
 		$data = array(
 			'id'                => (int) $order->id,
@@ -1637,10 +1634,10 @@ class OrdersController extends RestController {
 			'service_title'     => $service ? $service->post_title : '',
 			'package_id'        => (int) $order->package_id,
 			'vendor_id'         => (int) $order->vendor_id,
-			'vendor_name'       => $vendor ? $vendor->display_name : '',
+			'vendor_name'       => wpss_get_member_display_name( (int) $order->vendor_id ),
 			'vendor_avatar'     => get_avatar_url( (int) $order->vendor_id, array( 'size' => 48 ) ),
 			'customer_id'       => (int) $order->customer_id,
-			'customer_name'     => $customer ? $customer->display_name : '',
+			'customer_name'     => wpss_get_member_display_name( (int) $order->customer_id ),
 			'customer_avatar'   => get_avatar_url( (int) $order->customer_id, array( 'size' => 48 ) ),
 			'status'            => $order->status,
 			'status_label'      => $this->get_status_label( $order->status ),

@@ -50,6 +50,12 @@ class RateLimiter {
 			'requests' => 3,
 			'window'   => 86400,
 		), // 3 attempts per day.
+		// 5 WRONG passwords per hour on DELETE /me. Only failures are charged,
+		// so this is a guessing ceiling, not a budget an honest member spends.
+		'account_delete'  => array(
+			'requests' => 5,
+			'window'   => 3600,
+		),
 		'file_upload'     => array(
 			'requests' => 50,
 			'window'   => 3600,

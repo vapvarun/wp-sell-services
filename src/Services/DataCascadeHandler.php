@@ -181,6 +181,29 @@ class DataCascadeHandler {
 		 */
 		do_action( 'wpss_before_cascade_delete_user', $user_id );
 
+		/**
+		 * Filter whether records shared with another member survive this cascade.
+		 *
+		 * An order, a review, a message and a dispute each belong to TWO people.
+		 * Deleting them because one of those people is going destroys the other
+		 * one's history: the seller's completed jobs and earnings, the buyer's
+		 * proof of what they bought, and the owner's revenue record for the sale.
+		 *
+		 * Self-service account deletion turns this on, so the member's own data
+		 * goes and the counterparty's record stays, attributed to a deleted
+		 * member (see AccountDeletionService and wpss_get_member_display_name()).
+		 *
+		 * The default is false, which is the long-standing behaviour for an
+		 * administrator deleting a user outright and for the demo-data cleanup
+		 * that relies on seeded orders actually disappearing.
+		 *
+		 * @since 1.5.2
+		 *
+		 * @param bool $preserve Whether to keep shared records.
+		 * @param int  $user_id  User being deleted.
+		 */
+		$preserve_shared = (bool) apply_filters( 'wpss_cascade_preserve_shared_records', false, $user_id );
+
 		// Delete vendor profile.
 		$this->delete_where( 'vendor_profiles', 'user_id', $user_id );
 
@@ -199,23 +222,41 @@ class DataCascadeHandler {
 		// Delete proposals by this vendor.
 		$this->delete_where( 'proposals', 'vendor_id', $user_id );
 
-		// Get order IDs where user is customer or vendor.
-		$customer_order_ids = $this->get_column( 'orders', 'id', 'customer_id', $user_id );
-		$vendor_order_ids   = $this->get_column( 'orders', 'id', 'vendor_id', $user_id );
-		$order_ids          = array_unique( array_merge( $customer_order_ids, $vendor_order_ids ) );
+		/*
+		 * Abuse reports, both directions.
+		 *
+		 * Deleted whether or not shared records are being preserved, because
+		 * neither direction survives the member usefully: a report THEY filed is
+		 * their own words, and a report ABOUT them describes an account that no
+		 * longer exists and a person no owner can action.
+		 *
+		 * The audit log is deliberately NOT touched here. It records what the
+		 * marketplace did rather than who a member is, it carries no personal
+		 * detail beyond an actor id, and it is the owner's own compliance
+		 * record — not the departing member's to erase.
+		 */
+		$this->delete_where( 'reports', 'reporter_id', $user_id );
+		$this->delete_where( 'reports', 'reported_user_id', $user_id );
 
-		// Delete order-related data.
-		foreach ( $order_ids as $order_id ) {
-			$this->delete_order_data( (int) $order_id );
+		if ( ! $preserve_shared ) {
+			// Get order IDs where user is customer or vendor.
+			$customer_order_ids = $this->get_column( 'orders', 'id', 'customer_id', $user_id );
+			$vendor_order_ids   = $this->get_column( 'orders', 'id', 'vendor_id', $user_id );
+			$order_ids          = array_unique( array_merge( $customer_order_ids, $vendor_order_ids ) );
+
+			// Delete order-related data.
+			foreach ( $order_ids as $order_id ) {
+				$this->delete_order_data( (int) $order_id );
+			}
+
+			// Delete orders where user is customer or vendor.
+			$this->delete_where( 'orders', 'customer_id', $user_id );
+			$this->delete_where( 'orders', 'vendor_id', $user_id );
+
+			// Delete reviews written by or about this user.
+			$this->delete_where( 'reviews', 'reviewer_id', $user_id );
+			$this->delete_where( 'reviews', 'reviewee_id', $user_id );
 		}
-
-		// Delete orders where user is customer or vendor.
-		$this->delete_where( 'orders', 'customer_id', $user_id );
-		$this->delete_where( 'orders', 'vendor_id', $user_id );
-
-		// Delete reviews written by or about this user.
-		$this->delete_where( 'reviews', 'reviewer_id', $user_id );
-		$this->delete_where( 'reviews', 'reviewee_id', $user_id );
 
 		/**
 		 * Fires after user cascade data is deleted.

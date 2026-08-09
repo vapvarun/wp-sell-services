@@ -443,8 +443,6 @@ class ReportsController extends RestController {
 	 */
 	private function prepare_report( $row ): array {
 		$reasons  = wpss_get_report_reasons();
-		$reported = get_userdata( (int) $row->reported_user_id );
-		$reporter = get_userdata( (int) $row->reporter_id );
 
 		return array(
 			'id'             => (int) $row->id,
@@ -460,11 +458,11 @@ class ReportsController extends RestController {
 			'resolution'     => $row->resolution,
 			'reported_user'  => array(
 				'id'   => (int) $row->reported_user_id,
-				'name' => $reported ? $reported->display_name : '',
+				'name' => wpss_get_member_display_name( (int) $row->reported_user_id ),
 			),
 			'reporter'       => array(
 				'id'   => (int) $row->reporter_id,
-				'name' => $reporter ? $reporter->display_name : '',
+				'name' => wpss_get_member_display_name( (int) $row->reporter_id ),
 			),
 			'account_status' => wpss_get_account_status( (int) $row->reported_user_id ),
 			'created_at'     => $this->format_datetime( $row->created_at ),

@@ -151,15 +151,13 @@ class ModerationController extends RestController {
 
 		$services = array();
 		foreach ( $query->posts as $post ) {
-			$author = get_user_by( 'id', $post->post_author );
-
 			$services[] = array(
 				'id'           => $post->ID,
 				'title'        => $post->post_title,
 				'excerpt'      => wp_trim_words( $post->post_content, 30 ),
 				'vendor'       => array(
 					'id'     => (int) $post->post_author,
-					'name'   => $author ? $author->display_name : __( 'Unknown', 'wp-sell-services' ),
+					'name'   => wpss_get_member_display_name( (int) $post->post_author ),
 					'avatar' => get_avatar_url( $post->post_author, array( 'size' => 48 ) ),
 				),
 				// Same term shape as /categories and /services, so a moderation

@@ -749,7 +749,6 @@ class BuyerRequestsController extends RestController {
 	 */
 	private function prepare_request_for_response( object $buyer_request, bool $is_owner = false ): array {
 		$author_id = $buyer_request->author_id ?? $buyer_request->post_author ?? 0;
-		$author    = get_userdata( $author_id );
 
 		// A buyer request has no currency of its own, so both budget bounds
 		// are in the store currency. Two money fields sharing one currency
@@ -774,7 +773,7 @@ class BuyerRequestsController extends RestController {
 			'proposal_count'   => (int) ( $buyer_request->proposal_count ?? 0 ),
 			'author'           => [
 				'id'     => (int) $author_id,
-				'name'   => $author ? $author->display_name : '',
+				'name'   => wpss_get_member_display_name( (int) $author_id ),
 				'avatar' => get_avatar_url( $author_id, [ 'size' => 48 ] ),
 			],
 			'created_at'       => $buyer_request->created_at ?? $buyer_request->post_date ?? '',
@@ -795,14 +794,13 @@ class BuyerRequestsController extends RestController {
 	 * @return array
 	 */
 	private function prepare_proposal_for_response( object $proposal ): array {
-		$vendor = get_userdata( $proposal->vendor_id );
 
 		return array_merge(
 			[
 				'id'           => (int) $proposal->id,
 				'vendor'       => [
 					'id'     => (int) $proposal->vendor_id,
-					'name'   => $vendor ? $vendor->display_name : '',
+					'name'   => wpss_get_member_display_name( (int) $proposal->vendor_id ),
 					'avatar' => get_avatar_url( $proposal->vendor_id, [ 'size' => 48 ] ),
 				],
 				'cover_letter' => $proposal->cover_letter,

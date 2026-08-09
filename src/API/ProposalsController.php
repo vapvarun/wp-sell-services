@@ -547,7 +547,6 @@ class ProposalsController extends RestController {
 	 * @return array
 	 */
 	private function prepare_proposal_for_response( object $proposal, bool $detailed = false ): array {
-		$vendor  = get_userdata( $proposal->vendor_id );
 		$request = get_post( $proposal->request_id );
 
 		// ProposalService::format_proposal() normalises milestones to an
@@ -566,7 +565,7 @@ class ProposalsController extends RestController {
 				'request_title' => $request ? $request->post_title : '',
 				'vendor'        => [
 					'id'     => (int) $proposal->vendor_id,
-					'name'   => $vendor ? $vendor->display_name : '',
+					'name'   => wpss_get_member_display_name( (int) $proposal->vendor_id ),
 					'avatar' => get_avatar_url( $proposal->vendor_id, [ 'size' => 48 ] ),
 				],
 			],

@@ -738,7 +738,6 @@ class DisputesController extends RestController {
 	 * @return array
 	 */
 	private function prepare_dispute_for_response( object $dispute, bool $detailed = false ): array {
-		$initiator = get_userdata( $dispute->initiated_by );
 
 		$data = array(
 			'id'           => (int) $dispute->id,
@@ -748,7 +747,7 @@ class DisputesController extends RestController {
 			'status_label' => DisputeService::get_statuses()[ $dispute->status ] ?? $dispute->status,
 			'initiated_by' => array(
 				'id'     => (int) $dispute->initiated_by,
-				'name'   => $initiator ? $initiator->display_name : '',
+				'name'   => wpss_get_member_display_name( (int) $dispute->initiated_by ),
 				'avatar' => get_avatar_url( $dispute->initiated_by, array( 'size' => 48 ) ),
 			),
 			'created_at'   => $dispute->created_at,
@@ -765,10 +764,9 @@ class DisputesController extends RestController {
 
 			// Get resolver if resolved.
 			if ( ! empty( $dispute->resolved_by ) ) {
-				$resolver            = get_userdata( $dispute->resolved_by );
 				$data['resolved_by'] = array(
 					'id'   => (int) $dispute->resolved_by,
-					'name' => $resolver ? $resolver->display_name : '',
+					'name' => wpss_get_member_display_name( (int) $dispute->resolved_by ),
 				);
 			}
 		}
@@ -786,7 +784,6 @@ class DisputesController extends RestController {
 	 */
 	private function prepare_evidence_for_response( array $evidence ): array {
 		$user_id = (int) ( $evidence['user_id'] ?? 0 );
-		$user    = $user_id ? get_userdata( $user_id ) : null;
 
 		return array(
 			'id'          => $evidence['id'] ?? '',
@@ -795,7 +792,7 @@ class DisputesController extends RestController {
 			'description' => $evidence['description'] ?? '',
 			'user'        => array(
 				'id'     => $user_id,
-				'name'   => $user ? $user->display_name : '',
+				'name'   => wpss_get_member_display_name( (int) $user_id ),
 				'avatar' => get_avatar_url( $user_id, array( 'size' => 48 ) ),
 			),
 			'created_at'  => $evidence['created_at'] ?? '',
