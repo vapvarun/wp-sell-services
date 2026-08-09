@@ -1,979 +1,299 @@
-<title>WPSS — app ↔ plugin parity</title>
+<title>WP Sell Services — functionality catalog</title>
+
 <style>
-  :root {
-    --ground:        #F1F2F5;
-    --surface:       #FFFFFF;
-    --surface-sunk:  #E7E9EE;
-    --rule:          #D3D7DF;
-    --rule-soft:     #E3E6EC;
-    --ink:           #1A1E26;
-    --ink-soft:      #4B525F;
-    --ink-faint:     #767E8D;
-    --accent:        #2F5FD0;
-    --accent-soft:   #E4EAF9;
-
-    --covered:       #1F6F5C;
-    --covered-bg:    #DCEBE5;
-    --partial:       #B0690F;
-    --partial-bg:    #F6E9D5;
-    --deferred:      #6E7688;
-    --deferred-bg:   #E1E4EA;
-    --webonly:       #9AA1AE;
-    --webonly-bg:    #EAECF0;
-    --blocker:       #BE3B2E;
-    --blocker-bg:    #F7DFDC;
-
-    --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
-
-    --step-0: 0.9375rem;
-    --step--1: 0.8125rem;
-    --step--2: 0.6875rem;
-    --step-1: 1.125rem;
-    --step-2: 1.375rem;
-    --step-3: clamp(1.75rem, 1.1rem + 2.6vw, 2.5rem);
-
-    --gap: 1.5rem;
-    --pad: clamp(1.25rem, 4vw, 3rem);
+  :root{
+    --paper:#fbfbfd; --surface:#ffffff; --surface-2:#f4f6fa;
+    --ink:#14161c; --muted:#5b6373; --line:#e3e6ec;
+    --accent:#2f5fd8; --accent-soft:#eaf0ff;
+    --ok:#12704a; --ok-bg:#e6f4ed;
+    --warn:#8a5510; --warn-bg:#fdf1de;
+    --miss:#a5322f; --miss-bg:#fceceb;
+    --nil:#6b7280; --nil-bg:#eef0f3;
+    --display:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
   }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --ground:        #13161B;
-      --surface:       #1B1F26;
-      --surface-sunk:  #22262F;
-      --rule:          #333944;
-      --rule-soft:     #262B34;
-      --ink:           #E4E7EC;
-      --ink-soft:      #A8AFBC;
-      --ink-faint:     #79818F;
-      --accent:        #7CA0EE;
-      --accent-soft:   #22304C;
-
-      --covered:       #5FBFA2;
-      --covered-bg:    #1B3A33;
-      --partial:       #E0A24F;
-      --partial-bg:    #3C2E19;
-      --deferred:      #99A1B0;
-      --deferred-bg:   #2A2F39;
-      --webonly:       #6B7280;
-      --webonly-bg:    #23272F;
-      --blocker:       #F0776A;
-      --blocker-bg:    #3D211E;
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0e1014; --surface:#161a21; --surface-2:#1c212a;
+      --ink:#e6e9ef; --muted:#98a0ae; --line:#262c37;
+      --accent:#7ea2ff; --accent-soft:#1b2440;
+      --ok:#5cc793; --ok-bg:#12291f;
+      --warn:#dfae5c; --warn-bg:#2b2213;
+      --miss:#ef8a86; --miss-bg:#2e1917;
+      --nil:#8d95a3; --nil-bg:#1e232c;
     }
   }
-
-  :root[data-theme="dark"] {
-    --ground:        #13161B;
-    --surface:       #1B1F26;
-    --surface-sunk:  #22262F;
-    --rule:          #333944;
-    --rule-soft:     #262B34;
-    --ink:           #E4E7EC;
-    --ink-soft:      #A8AFBC;
-    --ink-faint:     #79818F;
-    --accent:        #7CA0EE;
-    --accent-soft:   #22304C;
-
-    --covered:       #5FBFA2;
-    --covered-bg:    #1B3A33;
-    --partial:       #E0A24F;
-    --partial-bg:    #3C2E19;
-    --deferred:      #99A1B0;
-    --deferred-bg:   #2A2F39;
-    --webonly:       #6B7280;
-    --webonly-bg:    #23272F;
-    --blocker:       #F0776A;
-    --blocker-bg:    #3D211E;
+  :root[data-theme="dark"]{
+    --paper:#0e1014; --surface:#161a21; --surface-2:#1c212a;
+    --ink:#e6e9ef; --muted:#98a0ae; --line:#262c37;
+    --accent:#7ea2ff; --accent-soft:#1b2440;
+    --ok:#5cc793; --ok-bg:#12291f;
+    --warn:#dfae5c; --warn-bg:#2b2213;
+    --miss:#ef8a86; --miss-bg:#2e1917;
+    --nil:#8d95a3; --nil-bg:#1e232c;
   }
 
-  * { box-sizing: border-box; }
-
-  body {
-    margin: 0;
-    background: var(--ground);
-    color: var(--ink);
-    font-family: var(--sans);
-    font-size: var(--step-0);
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--body); font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
   }
+  .wrap{max-width:1120px; margin:0 auto; padding:clamp(1.5rem,4vw,3.5rem) clamp(1rem,4vw,2rem) 5rem}
 
-  .wrap {
-    max-width: 68rem;
-    margin: 0 auto;
-    padding: var(--pad);
-    display: flex;
-    flex-direction: column;
-    gap: clamp(2rem, 5vw, 3.5rem);
+  header.masthead{border-bottom:2px solid var(--ink); padding-bottom:1.5rem; margin-bottom:2.5rem}
+  .eyebrow{
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); margin:0 0 .75rem
   }
-
-  /* ---------------------------------------------------------- masthead */
-
-  .masthead { display: flex; flex-direction: column; gap: 1rem; }
-
-  .eyebrow {
-    font-family: var(--mono);
-    font-size: var(--step--2);
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-    margin: 0;
+  h1{
+    font-family:var(--display); font-weight:600; font-size:clamp(2rem,5vw,3.1rem);
+    line-height:1.08; margin:0 0 .6rem; text-wrap:balance; letter-spacing:-.01em
   }
+  .standfirst{font-size:clamp(1rem,2.2vw,1.14rem); color:var(--muted); margin:0; max-width:62ch}
 
-  h1 {
-    font-family: var(--serif);
-    font-size: var(--step-3);
-    font-weight: 600;
-    line-height: 1.1;
-    letter-spacing: -0.015em;
-    text-wrap: balance;
-    margin: 0;
+  .stats{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:1px; background:var(--line); border:1px solid var(--line);
+    border-radius:10px; overflow:hidden; margin:2rem 0 2.5rem
   }
-
-  .standfirst {
-    max-width: 46rem;
-    color: var(--ink-soft);
-    margin: 0;
+  .stat{background:var(--surface); padding:1rem 1.1rem}
+  .stat b{
+    display:block; font-family:var(--display); font-size:2rem; line-height:1;
+    font-variant-numeric:tabular-nums; margin-bottom:.3rem
   }
+  .stat span{font-size:.8rem; color:var(--muted); display:block; line-height:1.4}
 
-  .meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 1.75rem;
-    font-family: var(--mono);
-    font-size: var(--step--1);
-    color: var(--ink-faint);
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--rule);
+  h2{
+    font-family:var(--display); font-size:clamp(1.35rem,3vw,1.75rem); font-weight:600;
+    margin:3.5rem 0 .5rem; letter-spacing:-.01em; text-wrap:balance
   }
-  .meta b { color: var(--ink-soft); font-weight: 500; }
+  h3{font-size:1rem; font-weight:650; margin:2rem 0 .6rem; letter-spacing:.01em}
+  p{margin:0 0 1rem; max-width:70ch}
+  .lede{color:var(--muted); margin-bottom:1.5rem; max-width:70ch}
 
-  /* ------------------------------------------------------------ stats */
+  .bar{display:flex; height:34px; border-radius:7px; overflow:hidden; border:1px solid var(--line); margin:1.25rem 0 .75rem}
+  .bar div{display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:650; color:#fff; min-width:0}
+  .legend{display:flex; flex-wrap:wrap; gap:.35rem 1.25rem; font-size:.82rem; color:var(--muted); margin-bottom:1rem}
+  .legend i{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:.4rem}
 
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-    gap: 1px;
-    background: var(--rule);
-    border: 1px solid var(--rule);
-    border-radius: 4px;
-    overflow: hidden;
+  .scroll{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface); margin:1rem 0 1.5rem}
+  table{border-collapse:collapse; width:100%; min-width:640px; font-size:.9rem}
+  th,td{text-align:left; padding:.62rem .85rem; border-bottom:1px solid var(--line); vertical-align:top}
+  thead th{
+    background:var(--surface-2); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); font-weight:650; white-space:nowrap
   }
+  tbody tr:last-child td{border-bottom:none}
+  td.cap{font-weight:600}
+  td.note{color:var(--muted); font-size:.85rem}
+  code{font-family:var(--mono); font-size:.82em; background:var(--surface-2); padding:.1em .38em; border-radius:4px; word-break:break-word}
 
-  .stat {
-    background: var(--surface);
-    padding: 1rem 1.125rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
+  .pill{
+    display:inline-block; font-size:.7rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+    padding:.2rem .5rem; border-radius:20px; white-space:nowrap
   }
+  .p-done{background:var(--ok-bg); color:var(--ok)}
+  .p-part{background:var(--warn-bg); color:var(--warn)}
+  .p-miss{background:var(--miss-bg); color:var(--miss)}
+  .p-nil{background:var(--nil-bg); color:var(--nil)}
 
-  .stat-n {
-    font-family: var(--mono);
-    font-variant-numeric: tabular-nums;
-    font-size: var(--step-2);
-    font-weight: 600;
-    letter-spacing: -0.02em;
+  .callout{
+    border-left:3px solid var(--accent); background:var(--accent-soft);
+    padding:1rem 1.15rem; border-radius:0 8px 8px 0; margin:1.5rem 0
   }
-  .stat-n.is-blocker { color: var(--blocker); }
-  .stat-n.is-covered { color: var(--covered); }
+  .callout.alert{border-left-color:var(--miss); background:var(--miss-bg)}
+  .callout p:last-child{margin-bottom:0}
 
-  .stat-k {
-    font-size: var(--step--1);
-    color: var(--ink-soft);
+  ul.gaps{list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(255px,1fr)); gap:.4rem}
+  ul.gaps li{
+    background:var(--surface); border:1px solid var(--line); border-radius:7px;
+    padding:.5rem .7rem; font-size:.85rem
   }
-  .stat-sub {
-    font-family: var(--mono);
-    font-size: var(--step--2);
-    color: var(--ink-faint);
-  }
+  ul.gaps li b{display:block; font-size:.8rem; margin-bottom:.15rem}
+  ul.gaps li span{color:var(--muted); font-size:.76rem; font-family:var(--mono)}
 
-  /* -------------------------------------------------------- sections */
-
-  section { display: flex; flex-direction: column; gap: 1.125rem; }
-
-  h2 {
-    font-family: var(--serif);
-    font-size: var(--step-2);
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    margin: 0;
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-  }
-  h2 .count {
-    font-family: var(--mono);
-    font-size: var(--step--1);
-    font-weight: 400;
-    color: var(--ink-faint);
-    letter-spacing: 0;
-  }
-
-  .lede { margin: 0; max-width: 46rem; color: var(--ink-soft); }
-  .lede strong { color: var(--ink); font-weight: 600; }
-
-  /* ------------------------------------------------------- coverage bar */
-
-  .bar {
-    display: flex;
-    height: 0.625rem;
-    border-radius: 2px;
-    overflow: hidden;
-    background: var(--surface-sunk);
-  }
-  .bar span { display: block; }
-  /* The bar reuses the cell status classes so a theme switch repaints it live. */
-  .bar .s-webonly { background: var(--webonly); border: 0; }
-
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.25rem;
-    font-size: var(--step--1);
-    color: var(--ink-soft);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .legend li { display: flex; align-items: center; gap: 0.45rem; }
-  .legend i {
-    width: 0.7rem; height: 0.7rem;
-    border-radius: 2px;
-    flex: none;
-  }
-  .legend b {
-    font-family: var(--mono);
-    font-variant-numeric: tabular-nums;
-    font-weight: 500;
-    color: var(--ink);
-  }
-
-  /* -------------------------------------------------------- route map */
-
-  .map {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
-    gap: 1rem 1.25rem;
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 4px;
-    padding: 1.25rem;
-  }
-
-  .grp { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
-
-  .grp-h {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem;
-    font-family: var(--mono);
-    font-size: var(--step--2);
-    letter-spacing: 0.04em;
-    color: var(--ink-soft);
-    border-bottom: 1px solid var(--rule-soft);
-    padding-bottom: 0.3rem;
-  }
-  .grp-h span { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
-  .grp-h b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-  .cells { display: flex; flex-wrap: wrap; gap: 3px; }
-
-  .cell {
-    width: 0.95rem;
-    height: 0.95rem;
-    border-radius: 2px;
-    border: 1px solid transparent;
-    padding: 0;
-    cursor: pointer;
-    transition: transform 0.08s ease;
-  }
-  .cell:hover, .cell:focus-visible { transform: scale(1.25); }
-  .cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-  .s-covered  { background: var(--covered); }
-  .s-partial  { background: var(--partial); }
-  .s-deferred { background: var(--deferred); }
-  .s-webonly  { background: var(--webonly-bg); border-color: var(--webonly); }
-  .s-blocker  { background: var(--blocker); }
-
-  .inspect {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-height: 2.5rem;
-    padding: 0.5rem 0.875rem;
-    background: var(--surface-sunk);
-    border: 1px solid var(--rule);
-    border-radius: 4px;
-    font-family: var(--mono);
-    font-size: var(--step--1);
-    overflow-x: auto;
-  }
-  .inspect-tag {
-    flex: none;
-    font-size: var(--step--2);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 0.15rem 0.45rem;
-    border-radius: 2px;
-    font-weight: 600;
-  }
-  .t-covered  { background: var(--covered-bg);  color: var(--covered); }
-  .t-partial  { background: var(--partial-bg);  color: var(--partial); }
-  .t-deferred { background: var(--deferred-bg); color: var(--deferred); }
-  .t-webonly  { background: var(--webonly-bg);  color: var(--ink-faint); }
-  .t-blocker  { background: var(--blocker-bg);  color: var(--blocker); }
-
-  .inspect-path { color: var(--ink); white-space: nowrap; }
-  .inspect-note { color: var(--ink-faint); white-space: nowrap; }
-  .inspect.is-idle .inspect-path { color: var(--ink-faint); }
-
-  /* ------------------------------------------------------------ tables */
-
-  .scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 4px; }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--surface);
-    font-size: var(--step--1);
-  }
-
-  th, td {
-    text-align: left;
-    padding: 0.7rem 0.875rem;
-    border-bottom: 1px solid var(--rule-soft);
-    vertical-align: top;
-  }
-  tbody tr:last-child td { border-bottom: 0; }
-
-  th {
-    font-family: var(--mono);
-    font-size: var(--step--2);
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-    font-weight: 500;
-    white-space: nowrap;
-    background: var(--surface-sunk);
-    border-bottom-color: var(--rule);
-  }
-
-  td.id {
-    font-family: var(--mono);
-    font-weight: 600;
-    color: var(--ink-soft);
-    white-space: nowrap;
-  }
-  td.cap { font-weight: 600; min-width: 11rem; }
-  td code, .lede code, li code {
-    font-family: var(--mono);
-    font-size: 0.92em;
-    background: var(--surface-sunk);
-    padding: 0.05em 0.3em;
-    border-radius: 2px;
-    color: var(--ink-soft);
-  }
-  td.routes { min-width: 15rem; }
-  td.routes code { display: inline-block; margin: 0.1rem 0.15rem 0.1rem 0; }
-
-  .flag {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: var(--step--2);
-    letter-spacing: 0.04em;
-    padding: 0.15rem 0.45rem;
-    border-radius: 2px;
-    white-space: nowrap;
-    font-weight: 600;
-  }
-  .flag-app { background: var(--accent-soft); color: var(--accent); }
-  .flag-plugin { background: var(--blocker-bg); color: var(--blocker); }
-  .flag-open { background: var(--blocker-bg); color: var(--blocker); }
-
-  /* --------------------------------------------------------- findings */
-
-  .findings { display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
-
-  .finding {
-    background: var(--surface);
-    padding: 1rem 1.125rem;
-    display: grid;
-    grid-template-columns: 3.25rem 1fr;
-    gap: 0.25rem 0.875rem;
-  }
-  .finding-id {
-    font-family: var(--mono);
-    font-weight: 600;
-    color: var(--blocker);
-    font-size: var(--step--1);
-    padding-top: 0.1rem;
-  }
-  .finding-t { font-weight: 600; margin: 0; }
-  .finding-b { grid-column: 2; margin: 0; color: var(--ink-soft); font-size: var(--step--1); }
-  .finding-b + .finding-b { margin-top: 0.4rem; }
-  .finding-b em { color: var(--ink); font-style: normal; font-weight: 600; }
-  .finding-src {
-    grid-column: 2;
-    font-family: var(--mono);
-    font-size: var(--step--2);
-    color: var(--ink-faint);
-    margin: 0.5rem 0 0;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  /* ------------------------------------------------------------ ships */
-
-  .ships {
-    columns: 2;
-    column-gap: 2rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    font-size: var(--step--1);
-  }
-  .ships li {
-    break-inside: avoid;
-    padding: 0.3rem 0 0.3rem 1.1rem;
-    position: relative;
-    color: var(--ink-soft);
-  }
-  .ships li::before {
-    content: "";
-    position: absolute;
-    left: 0; top: 0.72rem;
-    width: 0.45rem; height: 0.45rem;
-    border-radius: 1px;
-    background: var(--covered);
-  }
-  .ships li b { color: var(--ink); font-weight: 600; }
-
-  /* ----------------------------------------------------------- honest */
-
-  .honest {
-    border: 1px solid var(--rule);
-    border-left: 3px solid var(--partial);
-    border-radius: 4px;
-    background: var(--surface);
-    padding: 1.125rem 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  .honest h2 { font-size: var(--step-1); }
-  .honest ul { margin: 0; padding-left: 1.1rem; color: var(--ink-soft); font-size: var(--step--1); }
-  .honest li { padding: 0.15rem 0; }
-  .honest li b { color: var(--ink); font-weight: 600; }
-
-  footer {
-    border-top: 1px solid var(--rule);
-    padding-top: 1rem;
-    font-family: var(--mono);
-    font-size: var(--step--2);
-    color: var(--ink-faint);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem 1.5rem;
-  }
-
-  @media (max-width: 640px) {
-    .ships { columns: 1; }
-    .finding { grid-template-columns: 1fr; }
-    .finding-b, .finding-src { grid-column: 1; }
-    .meta { gap: 0.15rem 1.25rem; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; }
-  }
+  footer{margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--line); color:var(--muted); font-size:.83rem}
+  @media (max-width:560px){ .stat b{font-size:1.6rem} }
 </style>
 
 <div class="wrap">
 
-  <header class="masthead">
-    <p class="eyebrow">Plugin ↔ app parity · release gate</p>
-    <h1>The nine blockers are closed. One capability is still missing, and the client found four plugin bugs on its way</h1>
-    <p class="standfirst">
-      Every member-facing capability WP Sell Services exposes, mapped against the screen in
-      <code>wpss-app</code> that covers it. Eight of the nine release blockers need no plugin change at
-      all — the endpoints already ship and nothing calls them.
-    </p>
-    <div class="meta">
-      <span><b>Plugins</b> Free + Pro 1.5.1</span>
-      <span><b>App</b> wpss-app 1.0.0 · main</span>
-      <span><b>Verified</b> 2026-08-08</span>
-      <span><b>Evidence</b> code-level only</span>
-    </div>
-  </header>
+<header class="masthead">
+  <p class="eyebrow">WP Sell Services · Free + Pro + mobile app</p>
+  <h1>Functionality catalog</h1>
+  <p class="standfirst">
+    What the two plugins do, what the app has reached, and what is still missing —
+    measured from the running code rather than from the last time anyone wrote it down.
+  </p>
+</header>
 
-  <div class="stats">
-    <div class="stat">
-      <span class="stat-n" id="n-total">183</span>
-      <span class="stat-k">Live routes</span>
-      <span class="stat-sub">GET /wpss/v1</span>
-    </div>
-    <div class="stat">
-      <span class="stat-n is-covered" id="n-called">77</span>
-      <span class="stat-k">Called by the app</span>
-      <span class="stat-sub" id="n-pct">32%</span>
-    </div>
-    <div class="stat">
-      <span class="stat-n is-blocker">4</span>
-      <span class="stat-k">Missing — vendor analytics</span>
-      <span class="stat-sub">the nine blockers are closed</span>
-    </div>
-    <div class="stat">
-      <span class="stat-n is-covered">8</span>
-      <span class="stat-k">Plugin findings fixed</span>
-      <span class="stat-sub">4 found by the client</span>
-    </div>
-  </div>
-
-  <section>
-    <h2>The route surface <span class="count">all 179 endpoints, grouped by resource</span></h2>
-    <p class="lede">
-      One cell per registered route. The solid green blocks are whole groups the app covers end to end —
-      <code>auth</code>, <code>cart</code>, <code>favorites</code>, <code>earnings</code>. The red seams
-      are where a member hits a wall: <strong>every milestone route, and most of what hangs off an
-      order.</strong> Hover or tab a cell to read it.
-    </p>
-
-    <div class="bar" id="bar" aria-hidden="true"></div>
-    <ul class="legend" id="legend"></ul>
-
-    <div class="map" id="map"></div>
-
-    <div class="inspect is-idle" id="inspect" role="status" aria-live="polite">
-      <span class="inspect-tag t-deferred">idle</span>
-      <span class="inspect-path">Hover a cell to inspect a route</span>
-    </div>
-  </section>
-
-  <section>
-    <h2>Blocks the release <span class="count">9 missing capabilities</span></h2>
-    <p class="lede">
-      Ordered by what it costs a member to not have it. Two of these end a flow one tap before its
-      point — a buyer can read proposals but not <em>hire</em>, and can answer a dispute but not
-      <em>open</em> one.
-    </p>
-    <div class="scroll">
-      <table>
-        <thead>
-          <tr><th>#</th><th>Capability</th><th>Routes that exist and go uncalled</th><th>Owner</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="id">M-1</td>
-            <td class="cap">Hire someone — accept or reject a proposal</td>
-            <td class="routes"><code>POST /buyer-requests/{id}/proposals/{pid}/accept</code> <code>…/reject</code></td>
-            <td><span class="flag flag-app">app</span></td>
-          </tr>
-          <tr>
-            <td class="id">M-2</td>
-            <td class="cap">Milestones — the whole feature</td>
-            <td class="routes"><code>/orders/{id}/milestones</code> <code>/milestones/{id}</code> <code>…/submit</code> <code>…/approve</code> <code>…/decline</code> <code>…/pay</code></td>
-            <td><span class="flag flag-app">app</span></td>
-          </tr>
-          <tr>
-            <td class="id">M-3</td>
-            <td class="cap">Open a dispute</td>
-            <td class="routes"><code>POST /orders/{id}/dispute</code> <code>GET /disputes/options</code></td>
-            <td><span class="flag flag-app">app</span></td>
-          </tr>
-          <tr>
-            <td class="id">M-4</td>
-            <td class="cap">Report or block a member</td>
-            <td class="routes"><em>no route exists in Free or Pro</em></td>
-            <td><span class="flag flag-plugin">plugin</span></td>
-          </tr>
-          <tr>
-            <td class="id">M-7</td>
-            <td class="cap">Tips and paid extensions</td>
-            <td class="routes"><code>/orders/{id}/tip</code> <code>…/extension</code> <code>…/extensions</code> <code>/extensions/{id}/decline</code></td>
-            <td><span class="flag flag-app">app</span></td>
-          </tr>
-          <tr>
-            <td class="id">M-5</td>
-            <td class="cap">Become a seller</td>
-            <td class="routes"><code>POST /vendors/register</code></td>
-            <td><span class="flag flag-app">app</span></td>
-          </tr>
-          <tr>
-            <td class="id">M-6</td>
-            <td class="cap">Order timeline</td>
-            <td class="routes"><code>GET /orders/{id}/timeline</code></td>
-            <td><span class="flag flag-app">app</span></td>
-          </tr>
-          <tr>
-            <td class="id">M-8</td>
-            <td class="cap">Seller level</td>
-            <td class="routes"><code>/vendors/me/level</code> <code>/vendors/{id}/level</code> <code>/seller-levels</code></td>
-            <td><span class="flag flag-app">app</span></td>
-          </tr>
-          <tr>
-            <td class="id">M-9</td>
-            <td class="cap">Browse sellers</td>
-            <td class="routes"><code>GET /vendors</code> <code>/vendors/{id}/stats</code> <code>…/reviews</code> <code>…/reviews/summary</code></td>
-            <td><span class="flag flag-app">app</span></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section>
-    <h2>What the plugin still owes <span class="count">6 open · all carded</span></h2>
-    <p class="lede">
-      <strong>F-2 and F-6 should not wait.</strong> One blocks App Store submission outright; the other
-      is a live authorisation hole on the current release. All six now sit in Basecamp
-      <b>Ready for Development</b> in the order below — the plugin work is being wrapped before app
-      screens start.
-    </p>
-
-    <div class="findings">
-
-      <article class="finding">
-        <span class="finding-id">F-2</span>
-        <p class="finding-t">No report and no block route exists anywhere in Free or Pro</p>
-        <p class="finding-b">
-          Zero route matches across both plugins. App Store Guideline 1.2 requires both wherever
-          members post content to each other — which here is every order conversation, review and
-          proposal. <em>This blocks submission and the app cannot work around it.</em>
-        </p>
-        <p class="finding-src">◆ zero matches for a report/block/flag route in src/ of both plugins</p>
-      </article>
-
-      <article class="finding">
-        <span class="finding-id">F-6</span>
-        <p class="finding-t">A suspended vendor is blocked on the web and not in the API</p>
-        <p class="finding-b">
-          <code>ServiceWizard.php:276</code> blocks suspended and pending vendors before the web form
-          renders. <code>ServicesController::create_item_permissions_check()</code> does not — it calls
-          <code>check_permissions()</code>, which is login plus rate limit only, then a filter. Neither
-          consults <code>wpss_get_vendor_status()</code>.
-          <em>A suspended vendor holding a valid Application Password can publish services through the API.</em>
-          <code>EarningsController:674</code> does check status, so the gate is understood — just not
-          applied on the write paths.
-        </p>
-        <p class="finding-src">◆ src/API/ServicesController.php:989 · src/API/RestController.php:60 · src/Frontend/ServiceWizard.php:276</p>
-      </article>
-
-      <article class="finding">
-        <span class="finding-id">F-1</span>
-        <p class="finding-t">OrdersController duplicates the status label map, incompletely and unfilterably</p>
-        <p class="finding-b">
-          <code>get_status_label()</code> carries a private map of <b>11</b> statuses and falls through
-          to <code>ucfirst($status)</code> for the rest. Seven fall through — including
-          <code>pending_payment</code>, <code>pending_requirements</code> and
-          <code>pending_approval</code>, the three most common buyer-facing states — so the API answers
-          <em>"Pending_payment"</em>, underscore and all.
-        </p>
-        <p class="finding-b">
-          Meanwhile <code>wpss_get_order_statuses()</code> already has all 18, already translated,
-          already filterable via <code>wpss_order_statuses</code>. The REST layer just does not call it.
-          The app compensates with its own English map, so <em>statuses render in English on every
-          localised site</em> and no owner's filter ever reaches the app.
-        </p>
-        <p class="finding-src">◆ src/API/OrdersController.php:1691-1707 vs src/functions.php:2576,2588</p>
-      </article>
-
-      <article class="finding">
-        <span class="finding-id">F-3</span>
-        <p class="finding-t">Two withdrawal rails, no declared winner</p>
-        <p class="finding-b">
-          Free ships <code>/withdrawals</code>; Pro ships <code>/wallet/withdraw</code> and
-          <code>/wallet/balance</code>. Both are live simultaneously on a Pro site and nothing in
-          <code>/settings</code> says which one a client should use. The app picked Free's and may be
-          showing a seller a balance Pro considers secondary.
-        </p>
-        <p class="finding-src">◆ live index · WalletController.php (Pro) vs EarningsController.php (Free)</p>
-      </article>
-
-      <article class="finding">
-        <span class="finding-id">F-4</span>
-        <p class="finding-t">The app contract publishes only 3 feature flags</p>
-        <p class="finding-b">
-          <code>buyer_requests</code>, <code>disputes</code>, <code>realtime</code>. Milestones, tips,
-          extensions, portfolio and seller levels each have a real on/off or licence state and none is
-          published — so a client cannot tell <em>disabled</em> from <em>not built</em>, and the three
-          biggest missing features cannot be gated safely when they ship.
-        </p>
-        <p class="finding-src">◆ src/API/API.php:697-704</p>
-      </article>
-
-      <article class="finding">
-        <span class="finding-id">F-5</span>
-        <p class="finding-t">Order statuses are not published in /settings</p>
-        <p class="finding-b">
-          The app must carry its own copy of an 18-value vocabulary that any site can edit through
-          <code>wpss_order_statuses</code>. This is the exact shape of the Listora "Expired" filter bug
-          and the Career Board pipeline-stage bug: <em>a client-side copy of a server-owned list that
-          scores ✅ while drifting.</em> Publishing <code>{ slug, label }</code> closes the whole class.
-        </p>
-        <p class="finding-src">◆ GET /settings carries no status list · pairs with F-1</p>
-      </article>
-
-    </div>
-  </section>
-
-  <section>
-    <h2>What ships today <span class="count">read in code, not inferred from commits</span></h2>
-    <p class="lede">
-      The app is a competent buyer client and a thin seller one. Everything below was re-read at the
-      call site on 2026-08-08.
-    </p>
-    <ul class="ships">
-      <li><b>Discovery</b> — services, categories, search</li>
-      <li><b>Service detail</b> — packages, FAQs, reviews, summary</li>
-      <li><b>Seller profile</b> — services and portfolio, read-only</li>
-      <li><b>Favourites</b> — whole group covered</li>
-      <li><b>Cart</b> — whole group covered</li>
-      <li><b>Checkout hand-off</b> — one path on both rails; the server prices and clears the cart</li>
-      <li><b>Orders</b> — list, detail, and all 10 lifecycle verbs</li>
-      <li><b>Requirements</b> — submit and skip</li>
-      <li><b>Deliverables</b> — avoids the status-only <code>/deliver</code> trap</li>
-      <li><b>Review an order</b></li>
-      <li><b>Messaging</b> — conversations, unread counts</li>
-      <li><b>Notifications</b> — read, read-all, badge</li>
-      <li><b>Buyer requests</b> — browse, post, mine</li>
-      <li><b>Proposals</b> — send, list, withdraw</li>
-      <li><b>Earnings and withdrawal</b> — the whole Free rail</li>
-      <li><b>Vacation mode</b></li>
-      <li><b>Auth</b> — all 8 routes</li>
-      <li><b>Licence gate</b> — fails closed on <code>app_enabled</code>, open on <code>min_app_version</code></li>
-    </ul>
-  </section>
-
-  <section class="honest">
-    <h2>Not verified — do not read absence as assurance</h2>
-    <ul>
-      <li><b>Runtime behaviour.</b> No simulator run. Every row on this page is code-level; nothing has been <em>seen</em> working.</li>
-      <li><b>The ban gate.</b> Read in code and found open (F-6) — not yet proven against a live suspended vendor holding an Application Password.</li>
-      <li><b>The licence gate on a device.</b> The logic in <code>utils/gate.ts</code> is correct; it has not been watched blocking a connect.</li>
-      <li><b>A live API flow run.</b> Listora's equivalent run found 3 of 22 rows scored wrong from commit messages. This product has not had that check.</li>
-      <li><b>The previous coverage number was wrong.</b> The first matrix claimed 94 of 178 routes called by grepping any string starting with a slash. Resolving real call sites gives <b>58 of 179</b>.</li>
-    </ul>
-  </section>
-
-  <footer>
-    <span>plan/app-parity.md — the plugin-side twin</span>
-    <span>wpss-app/docs/FEATURE-COVERAGE.md — the release gate</span>
-    <span>update both in the PR that moves a row</span>
-  </footer>
-
+<div class="stats">
+  <div class="stat"><b>183</b><span>REST paths registered<br>521 method endpoints</span></div>
+  <div class="stat"><b>76</b><span>paths the app calls<br>41% of the surface</span></div>
+  <div class="stat"><b>58</b><span>genuine gaps<br>member-facing, missing</span></div>
+  <div class="stat"><b>26</b><span>database tables<br>19 free · 7 pro</span></div>
+  <div class="stat"><b>23</b><span>app screens<br>13 API modules</span></div>
 </div>
 
-<script>
-  // One entry per registered route on wpss/v1, grouped as the index groups them.
-  // s: c=called  b=blocker(missing)  p=partial  d=deferred  w=web-only by design
-  const GROUPS = [
-    ['orders', [
-      ['', 'c'], ['{id}', 'c'], ['{id}/{action}', 'c'], ['{id}/deliverables', 'c'],
-      ['{id}/requirements', 'c'], ['{id}/requirements/skip', 'c'], ['{id}/review', 'c'],
-      ['{id}/milestones', 'c'], ['{id}/tip', 'c'], ['{id}/extension', 'd', 'duplicate of /extensions'],
-      ['{id}/extensions', 'c'], ['{id}/dispute', 'd', 'app uses the action verb instead'], ['{id}/timeline', 'c'],
-      ['{id}/sub-orders', 'd', 'phases + extensions listed directly'], ['{id}/requirements/files/{fid}', 'p', 'no upload path'],
-      ['{id}/pay', 'w', 'checkout hands off to web'], ['{id}/messages', 'd', 'conversations covers it'],
-      ['{id}/conversation', 'd', 'duplicate rail'], ['{id}/conversation/messages', 'd', 'duplicate rail'],
-    ]],
-    ['vendors', [
-      ['{id}', 'c'], ['{id}/services', 'c'], ['{id}/portfolio', 'c'], ['me', 'c'], ['me/vacation', 'c'],
-      ['', 'c'], ['{id}/stats', 'd', 'profile counts used instead'], ['{id}/reviews', 'd', 'service reviews shown instead'],
-      ['{id}/reviews/summary', 'd'], ['{id}/level', 'd', 'own level via me/level'], ['me/level', 'c'],
-      ['register', 'c'], ['{id}/tips', 'd', 'per-order tip shown instead'], ['{id}/tips/total', 'd'],
-    ]],
-    ['payments', [
-      ['methods', 'w'], ['create-intent', 'w'], ['confirm', 'w'], ['{id}/status', 'w'],
-      ['offline/submit', 'w'], ['stripe/create-intent', 'w'], ['stripe/confirm', 'w'],
-      ['paypal/create-order', 'w'], ['paypal/capture', 'w'], ['razorpay/create-order', 'w'],
-      ['razorpay/verify', 'w'],
-    ]],
-    ['services', [
-      ['', 'c'], ['{id}', 'c'], ['{id}/packages', 'c'], ['{id}/faqs', 'c'], ['{id}/reviews', 'c'],
-      ['{id}/reviews/summary', 'c'], ['{id}/favorited', 'c'],
-      ['{id}/addons', 'p', 'REST create has no add-ons'], ['{id}/addons/{aid}', 'p', 'REST create has no add-ons'],
-      ['grid', 'w', 'server-rendered for shortcodes'],
-    ]],
-    ['disputes', [
-      ['', 'c'], ['{id}', 'c'], ['{id}/timeline', 'c'], ['{id}/respond', 'c'],
-      ['options', 'c'], ['{id}/evidence', 'p', 'open/read/respond ship; evidence does not'],
-      ['{id}/escalate', 'p'], ['{id}/cancel', 'p'],
-      ['{id}/assign', 'w', 'admin'], ['{id}/resolve', 'w', 'admin'],
-    ]],
-    ['auth', [
-      ['login', 'c'], ['register', 'c'], ['me', 'c'], ['logout', 'c'], ['devices', 'c'],
-      ['devices/{id}', 'c'], ['forgot-password', 'c'], ['change-password', 'c'],
-    ]],
-    ['analytics', [
-      ['vendor/overview', 'b', 'seller-facing'], ['vendor/revenue', 'b', 'seller-facing'],
-      ['vendor/orders', 'b', 'seller-facing'], ['vendor/services', 'b', 'seller-facing'],
-      ['overview', 'w', 'owner'], ['revenue', 'w', 'owner'], ['export', 'w', 'owner'],
-    ]],
-    ['recurring-services', [
-      ['', 'd', 'ships default-off, UI hidden'], ['{id}', 'd'], ['{id}/pause', 'd'],
-      ['{id}/resume', 'd'], ['{id}/cancel', 'd'], ['my-subscriptions', 'd'], ['vendor-subscriptions', 'd'],
-    ]],
-    ['buyer-requests', [
-      ['', 'c'], ['{id}', 'c'], ['mine', 'c'], ['{id}/proposals', 'c'],
-      ['{id}/proposals/{pid}/accept', 'c'], ['{id}/proposals/{pid}/reject', 'c'],
-    ]],
-    ['stripe-connect', [
-      ['onboard', 'w'], ['status', 'w'], ['accounts', 'w'], ['accounts/{id}', 'w'],
-      ['disconnect', 'w'], ['settings', 'w'],
-    ]],
-    ['conversations', [
-      ['', 'c'], ['{id}/messages', 'c'], ['{id}/read', 'c'], ['unread-count', 'c'],
-      ['{id}', 'd', 'list payload is enough'],
-    ]],
-    ['notifications', [
-      ['', 'c'], ['{id}/read', 'c'], ['read-all', 'c'], ['unread-count', 'c'],
-      ['{id}', 'd', 'delete — no UI for it yet'],
-    ]],
-    ['wallet', [
-      ['balance', 'd', 'F-3 rail undeclared'], ['transactions', 'd', 'F-3'], ['providers', 'd', 'F-3'],
-      ['withdraw', 'd', 'F-3'], ['withdrawals', 'd', 'F-3'],
-    ]],
-    ['milestones', [
-      ['{id}', 'd', 'list covers it'], ['{id}/submit', 'c'], ['{id}/approve', 'c'],
-      ['{id}/decline', 'c'], ['{id}/pay', 'c'],
-    ]],
-    ['moderation', [
-      ['pending', 'w'], ['count', 'w'], ['{id}', 'w'], ['{id}/approve', 'w'], ['{id}/reject', 'w'],
-    ]],
-    ['paypal-payouts', [
-      ['batches', 'w'], ['batches/{id}', 'w'], ['batches/{id}/sync', 'w'], ['pending', 'w'], ['profile', 'w'],
-    ]],
-    ['reviews', [
-      ['{id}/reply', 'p', 'seller cannot reply to a review'], ['{id}/helpful', 'p'],
-      ['{id}', 'p', 'read/edit own'], ['', 'd', 'app posts via /orders/{id}/review'],
-    ]],
-    ['proposals', [
-      ['', 'c'], ['{id}/withdraw', 'c'], ['{id}', 'd', 'list payload is enough'], ['stats', 'd'],
-    ]],
-    ['portfolio', [
-      ['', 'p', 'read-only'], ['{id}', 'p', 'read-only'], ['{id}/featured', 'p', 'read-only'],
-      ['reorder', 'p', 'read-only'],
-    ]],
-    ['cart', [['', 'c'], ['add', 'c'], ['{key}', 'c'], ['checkout', 'c']]],
-    ['storage', [
-      ['upload', 'p', 'no upload path in the app'], ['providers', 'p'], ['{id}', 'p'], ['{id}/url', 'p'],
-    ]],
-    ['subscription-plans', [
-      ['my-subscription', 'd', 'Pro wave'], ['subscribe', 'd', 'purchase stays on web'],
-      ['', 'w', 'owner config'], ['{id}', 'w', 'owner config'],
-    ]],
-    ['withdrawals', [['', 'c'], ['methods', 'c'], ['{id}', 'w', 'owner approves']]],
-    ['commission-rules', [['', 'w'], ['{id}', 'w'], ['preview', 'w']]],
-    ['earnings', [['summary', 'c'], ['history', 'c']]],
-    ['seller-levels', [['', 'd', 'own level via vendors/me/level'], ['{level}', 'd']]],
-    ['favorites', [['', 'c'], ['{id}', 'c']]],
-    ['media', [['', 'p', 'no upload path'], ['{id}', 'p']]],
-    ['reports', [
-      ['', 'c'], ['{id}/resolve', 'c'],
-    ]],
-    ['blocks', [
-      ['', 'c'], ['{user_id}', 'c'],
-    ]],
-    ['misc', [
-      ['/settings', 'c'], ['/categories', 'c'], ['/search', 'c'],
-      ['/tags', 'd'], ['/me', 'd', 'auth/me covers it'], ['/dashboard', 'd'],
-      ['/realtime/auth', 'd', 'flag is off'], ['/extensions/{id}/decline', 'c'],
-      ['/audit-log', 'w'], ['/white-label', 'w'], ['/tour/complete', 'w'], ['/batch', 'w'],
-      ['/', 'w', 'route index'],
-    ]],
-  ];
+<h2>How these numbers were produced</h2>
+<p class="lede">
+  Route counts come from asking WordPress itself — <code>rest_get_server()-&gt;get_routes()</code>
+  with both plugins active — not from counting <code>register_rest_route</code> calls, which
+  undercounts because one call can carry several methods. The app's side is every
+  <code>client.&lt;verb&gt;()</code> literal in <code>api/</code>, normalised and matched against those
+  routes. All 87 call sites matched a real route with a method that exists, so the app
+  currently calls nothing that isn't there.
+</p>
 
-  const META = {
-    c: { label: 'called',   cls: 's-covered',  tag: 't-covered',  legend: 'Called by the app' },
-    b: { label: 'missing',  cls: 's-blocker',  tag: 't-blocker',  legend: 'Missing — blocks release' },
-    p: { label: 'partial',  cls: 's-partial',  tag: 't-partial',  legend: 'Partial' },
-    d: { label: 'deferred', cls: 's-deferred', tag: 't-deferred', legend: 'Deferred, with a reason' },
-    w: { label: 'web-only', cls: 's-webonly',  tag: 't-webonly',  legend: 'Web-only by design' },
-  };
-  const ORDER = ['c', 'b', 'p', 'd', 'w'];
+<div class="callout">
+  <p>
+    <strong>183 has not moved this session, and that is correct.</strong> Account deletion added
+    <code>DELETE</code> to the existing <code>/me</code> path rather than creating a new path.
+    Counting paths hides that; counting method endpoints (521) shows it. Both are quoted above so
+    neither number can be mistaken for the whole story.
+  </p>
+</div>
 
-  const map = document.getElementById('map');
-  const inspect = document.getElementById('inspect');
-  const tally = { c: 0, b: 0, p: 0, d: 0, w: 0 };
-  let total = 0;
+<h2>Where the 183 actually go</h2>
 
-  function show(path, s, note) {
-    const m = META[s];
-    inspect.classList.remove('is-idle');
-    inspect.innerHTML = '';
-    const tag = document.createElement('span');
-    tag.className = 'inspect-tag ' + m.tag;
-    tag.textContent = m.label;
-    const p = document.createElement('span');
-    p.className = 'inspect-path';
-    p.textContent = path;
-    inspect.append(tag, p);
-    if (note) {
-      const n = document.createElement('span');
-      n.className = 'inspect-note';
-      n.textContent = '— ' + note;
-      inspect.append(n);
-    }
-  }
+<div class="bar" role="img" aria-label="76 called by the app, 25 owner-only, 12 payment rail, 12 alias infrastructure or web-only, 58 gaps">
+  <div style="flex:76;background:#12704a">76</div>
+  <div style="flex:25;background:#5b6373">25</div>
+  <div style="flex:12;background:#2f5fd8">12</div>
+  <div style="flex:12;background:#8a8f9b">12</div>
+  <div style="flex:58;background:#a5322f">58</div>
+</div>
+<div class="legend">
+  <span><i style="background:#12704a"></i>76 called by the app</span>
+  <span><i style="background:#5b6373"></i>25 owner-only</span>
+  <span><i style="background:#2f5fd8"></i>12 payment rail</span>
+  <span><i style="background:#8a8f9b"></i>12 alias · infra · web-only</span>
+  <span><i style="background:#a5322f"></i>58 gaps</span>
+</div>
+<p class="lede">
+  Only the last band is a problem. The 25 owner routes are moderation queues, commission rules,
+  the audit log, white-label and payout runs — a member's phone has no business calling them. The
+  12 payment routes are skipped deliberately: the app opens the marketplace's own checkout rather
+  than embedding a card form, which is also what keeps it outside In-App Purchase. The remaining
+  12 are duplicate paths the app reaches under another name, the namespace index, the batch
+  endpoint, and three web-dashboard-only routes.
+</p>
 
-  for (const [group, routes] of GROUPS) {
-    const box = document.createElement('div');
-    box.className = 'grp';
+<h2>Free plugin — capability by capability</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Capability</th><th>App</th><th>What is or isn't there</th></tr></thead>
+  <tbody>
+    <tr><td class="cap">Service catalog &amp; search</td><td><span class="pill p-done">Done</span></td><td class="note">Browse, search, categories, detail, packages, FAQs, reviews.</td></tr>
+    <tr><td class="cap">Service add-ons</td><td><span class="pill p-miss">Missing</span></td><td class="note">Add-ons exist on every service and the app never reads or offers them, so a buyer cannot select paid extras.</td></tr>
+    <tr><td class="cap">Create a service</td><td><span class="pill p-part">Partial</span></td><td class="note">Create only. No edit, no gallery upload, no add-on management.</td></tr>
+    <tr><td class="cap">Buyer requests</td><td><span class="pill p-done">Done</span></td><td class="note">Browse, post, own requests, detail.</td></tr>
+    <tr><td class="cap">Proposals</td><td><span class="pill p-done">Done</span></td><td class="note">Submit, accept, reject, withdraw.</td></tr>
+    <tr><td class="cap">Order lifecycle · 18 statuses</td><td><span class="pill p-done">Done</span></td><td class="note">List, detail, timeline, status actions. Labels come from the server's vocabulary, never mapped client-side.</td></tr>
+    <tr><td class="cap">Requirements</td><td><span class="pill p-part">Partial</span></td><td class="note">Submit and skip. Cannot remove a file already uploaded.</td></tr>
+    <tr><td class="cap">Deliveries &amp; revisions</td><td><span class="pill p-done">Done</span></td><td class="note">Fetch and submit deliverables; revision states handled.</td></tr>
+    <tr><td class="cap">Milestone contracts</td><td><span class="pill p-done">Done</span></td><td class="note">List, pay, submit, approve, decline. Lock-step enforced server-side.</td></tr>
+    <tr><td class="cap">Paid extensions</td><td><span class="pill p-done">Done</span></td><td class="note">List, request, decline. Accepting is paying.</td></tr>
+    <tr><td class="cap">Tipping</td><td><span class="pill p-done">Done</span></td><td class="note">Read and send.</td></tr>
+    <tr><td class="cap">Messaging</td><td><span class="pill p-part">Partial</span></td><td class="note">Threads, messages, read receipts, unread counts — but <strong>no attachments</strong>, because the media routes are never called.</td></tr>
+    <tr><td class="cap">Reviews</td><td><span class="pill p-part">Partial</span></td><td class="note">Read and leave. A seller cannot reply, and nobody can mark one helpful.</td></tr>
+    <tr><td class="cap">Disputes</td><td><span class="pill p-miss">Read-only</span></td><td class="note"><strong>Cannot be opened from the app.</strong> Read, respond and reasons only — no create, no evidence, no escalate, no cancel.</td></tr>
+    <tr><td class="cap">Vendor directory &amp; profiles</td><td><span class="pill p-done">Done</span></td><td class="note">Paginated directory, seller page, their services and portfolio.</td></tr>
+    <tr><td class="cap">Portfolio management</td><td><span class="pill p-miss">Missing</span></td><td class="note">A seller can be seen but cannot add, reorder or feature their own work.</td></tr>
+    <tr><td class="cap">Seller levels</td><td><span class="pill p-part">Partial</span></td><td class="note">Own level only. The ladder itself — what the next level needs — is never fetched.</td></tr>
+    <tr><td class="cap">Vacation mode</td><td><span class="pill p-done">Done</span></td><td class="note">Toggle from the app.</td></tr>
+    <tr><td class="cap">Favorites</td><td><span class="pill p-done">Done</span></td><td class="note">List, add, remove.</td></tr>
+    <tr><td class="cap">Notifications</td><td><span class="pill p-part">Partial</span></td><td class="note">List, read, read-all, counts. Cannot delete one.</td></tr>
+    <tr><td class="cap">Cart &amp; checkout</td><td><span class="pill p-done">Done</span></td><td class="note">Cart in-app, payment handed to the site's own checkout.</td></tr>
+    <tr><td class="cap">Earnings &amp; withdrawals</td><td><span class="pill p-part">Partial</span></td><td class="note">Summary, history, methods, request. No single-withdrawal detail view.</td></tr>
+    <tr><td class="cap">Report &amp; block members</td><td><span class="pill p-done">Done</span></td><td class="note">Report a listing or a person; block, unblock, and a managed blocked list.</td></tr>
+    <tr><td class="cap">Delete your account</td><td><span class="pill p-done">Done</span></td><td class="note">Password-confirmed, two-step, with a preview of what it costs. Personal data erased; shared records kept as “Deleted member”.</td></tr>
+    <tr><td class="cap">Account standing</td><td><span class="pill p-nil">Server</span></td><td class="note">Suspension and closure gate the API. No app surface needed or wanted.</td></tr>
+    <tr><td class="cap">Moderation · audit log · manual orders</td><td><span class="pill p-nil">Owner</span></td><td class="note">Admin surfaces. Correctly absent from a member app.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="lede" style="font-size:.88rem">
+  Free also ships 19 shortcodes, 8 blocks, 5 WP-CLI commands, 37 email templates and a
+  Pusher-compatible realtime layer (off by default) — all web-side, none of which the app needs.
+</p>
 
-    const head = document.createElement('div');
-    head.className = 'grp-h';
-    const name = document.createElement('b');
-    name.textContent = group;
-    const n = document.createElement('span');
-    n.textContent = routes.length;
-    head.append(name, n);
+<h2>Pro plugin — capability by capability</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Capability</th><th>App</th><th>What is or isn't there</th></tr></thead>
+  <tbody>
+    <tr><td class="cap">Vendor analytics</td><td><span class="pill p-miss">Missing</span></td><td class="note">Four routes, no screen. A seller cannot read their own overview, revenue, orders or per-service numbers. The largest single gap.</td></tr>
+    <tr><td class="cap">Wallet</td><td><span class="pill p-miss">Missing</span></td><td class="note">Balance, transactions, providers, withdraw — none reached, across four wallet providers.</td></tr>
+    <tr><td class="cap">Recurring services</td><td><span class="pill p-miss">Missing</span></td><td class="note">Seven routes. A buyer cannot see, pause, resume or cancel a subscription they are being billed for.</td></tr>
+    <tr><td class="cap">Stripe Connect · seller</td><td><span class="pill p-miss">Missing</span></td><td class="note">Onboard, status, disconnect. A seller cannot connect the account they get paid into.</td></tr>
+    <tr><td class="cap">Vendor subscription plans</td><td><span class="pill p-miss">Missing</span></td><td class="note">Browse plans, subscribe, see own subscription.</td></tr>
+    <tr><td class="cap">PayPal payout profile</td><td><span class="pill p-miss">Missing</span></td><td class="note">The seller's own payout details. Batch runs are owner-side and correctly excluded.</td></tr>
+    <tr><td class="cap">Cloud storage</td><td><span class="pill p-miss">Missing</span></td><td class="note">S3 / GCS / DO Spaces upload. Tied to the attachment gap above.</td></tr>
+    <tr><td class="cap">Cart adapters · Woo, EDD, FluentCart, SureCart</td><td><span class="pill p-nil">Server</span></td><td class="note">Chooses which rail owns payment. The app follows whatever the site publishes.</td></tr>
+    <tr><td class="cap">Gateways · Stripe, PayPal, Razorpay</td><td><span class="pill p-nil">By design</span></td><td class="note">Hosted checkout rather than an in-app card form — which is also what keeps this outside In-App Purchase.</td></tr>
+    <tr><td class="cap">Admin analytics · commission rules · white label · ledger export</td><td><span class="pill p-nil">Owner</span></td><td class="note">Owner surfaces. Correctly absent.</td></tr>
+  </tbody>
+</table>
+</div>
 
-    const cells = document.createElement('div');
-    cells.className = 'cells';
+<div class="callout alert">
+  <p><strong>A correction to an earlier summary.</strong> I previously reported that a buyer
+  “can open a dispute” from the app. That is wrong. The app fetches the site's dispute reasons and
+  can read and respond to an existing case, but <code>POST /orders/{id}/dispute</code> is never
+  called — so a dispute can still only be started on the web. The reasons work shipped the
+  vocabulary correctly; the create flow was never wired.</p>
+</div>
 
-    for (const [seg, s, note] of routes) {
-      total++;
-      tally[s]++;
-      const full = group === 'misc' ? seg : '/' + group + (seg ? '/' + seg : '');
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'cell ' + META[s].cls;
-      b.setAttribute('aria-label', full + ' — ' + META[s].label + (note ? ' — ' + note : ''));
-      b.addEventListener('mouseenter', () => show(full, s, note));
-      b.addEventListener('focus', () => show(full, s, note));
-      cells.append(b);
-    }
+<h2>The 58 gaps, grouped</h2>
+<p class="lede">Every one is a member-facing capability the plugins already serve and the app does not reach.</p>
+<ul class="gaps">
+  <li><b>Vendor analytics · 4</b><span>/analytics/vendor/*</span></li>
+  <li><b>Recurring subscriptions · 7</b><span>/recurring-services/*</span></li>
+  <li><b>Vendor detail &amp; stats · 7</b><span>/vendors/me · {id}/level|reviews|stats|tips</span></li>
+  <li><b>Wallet · 5</b><span>/wallet/*</span></li>
+  <li><b>Portfolio management · 4</b><span>/portfolio · {id} · reorder · featured</span></li>
+  <li><b>Dispute actions · 4</b><span>orders/{id}/dispute · evidence · escalate · cancel</span></li>
+  <li><b>Cloud storage &amp; media · 5</b><span>/storage/* · /media · /media/{id}</span></li>
+  <li><b>Stripe Connect · 3</b><span>onboard · status · disconnect</span></li>
+  <li><b>Subscription plans · 3</b><span>list · subscribe · my-subscription</span></li>
+  <li><b>Reviews · 3</b><span>/reviews/{id} · helpful · reply</span></li>
+  <li><b>Seller levels · 2</b><span>/seller-levels · /seller-levels/{id}</span></li>
+  <li><b>Service add-ons · 2</b><span>/services/{id}/addons</span></li>
+  <li><b>Proposals · 2</b><span>/proposals/{id} · /proposals/stats</span></li>
+  <li><b>Odds and ends · 7</b><span>tags · sub-orders · milestone detail · notification delete · requirement file delete · withdrawal detail · paypal profile</span></li>
+</ul>
 
-    box.append(head, cells);
-    map.append(box);
-  }
+<h2>What shipped this session</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Change</th><th>Where</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td class="cap">Account deletion</td><td>Free · Pro · App</td><td class="note">Apple 5.1.1(v). Personal data erased, shared records kept and attributed to “Deleted member”. Password checked against the real hash, so a stolen app token cannot delete an account.</td></tr>
+    <tr><td class="cap">Deleted-member display</td><td>Free</td><td class="note">A resolver that existed with zero callers, now used by 16 REST payloads that shipped empty names, plus 3 unguarded reads a visitor could hit and one real TypeError.</td></tr>
+    <tr><td class="cap">Pro data hygiene</td><td>Pro</td><td class="note">Own tables cleared on deletion, registered above the licence gate. Recurring subscriptions cancelled at Stripe, not merely marked cancelled locally.</td></tr>
+    <tr><td class="cap">Dispute reasons published</td><td>Free</td><td class="note">Moved out of a template into a filterable server vocabulary.</td></tr>
+    <tr><td class="cap">Vendor registration 500</td><td>Free</td><td class="note">A hook fired with the wrong argument type killed the request <em>after</em> the vendor was created — so it worked and looked like it hadn't.</td></tr>
+    <tr><td class="cap">Static analysis</td><td>Free · Pro</td><td class="note">PHPStan run for the first time across this work. Free clean at level 6. Pro's 39 findings are all EDD calls on a machine without EDD installed.</td></tr>
+  </tbody>
+</table>
+</div>
 
-  // Numbers on the page are computed from the data above, never hand-typed.
-  document.getElementById('n-total').textContent = total;
-  document.getElementById('n-called').textContent = tally.c;
-  document.getElementById('n-pct').textContent = Math.round((tally.c / total) * 100) + '% of the surface';
+<h2>What has never been verified</h2>
+<p class="lede">
+  Stated plainly, because an unverified thing and a working thing look identical in a table.
+  No run on a real device. No run on a localised site — which is the entire point of the
+  status-label and vocabulary work. No run on the EDD, FluentCart or SureCart rails, where four
+  features are supposed to disappear from the app. No dark-mode pass. What verification has
+  happened is browser rendering at 390px against a seeded local site, plus route-level checks.
+</p>
 
-  const bar = document.getElementById('bar');
-  const legend = document.getElementById('legend');
-  for (const k of ORDER) {
-    const seg = document.createElement('span');
-    seg.style.flex = tally[k];
-    seg.className = META[k].cls;
-    bar.append(seg);
+<footer>
+  Measured against the running plugins on a local site with Free and Pro both active. Counts will
+  differ where different plugins are enabled — the four <code>wpss-pro/v1</code> cart-adapter routes
+  only exist when SureCart or FluentCart is installed, and were not counted here.
+</footer>
 
-    const li = document.createElement('li');
-    const sw = document.createElement('i');
-    sw.className = META[k].cls;
-    const txt = document.createElement('span');
-    const cnt = document.createElement('b');
-    cnt.textContent = tally[k];
-    txt.append(cnt, document.createTextNode(' ' + META[k].legend));
-    li.append(sw, txt);
-    legend.append(li);
-  }
-</script>
+</div>
