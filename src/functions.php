@@ -4533,9 +4533,20 @@ function wpss_rest_money( string $key, float $amount, string $currency = '' ): a
  * shared shape these drift into `user_id` here, `author` there and a bare
  * display name somewhere else, and a client needs a parser per endpoint.
  *
+ * A DELETED member still gets a shape. Only a genuinely absent actor - id 0,
+ * meaning the marketplace itself acted - yields null.
+ *
+ * That distinction is the point. Orders, reviews, messages and disputes outlive
+ * the people in them by design (see AccountDeletionService), so returning null
+ * for a departed member told every client "nobody did this", and a timeline
+ * entry that plainly WAS somebody's doing rendered as a system event. The
+ * client needs to know a person acted, that we can no longer name them, and
+ * that there is no profile behind the name to link to - hence `deleted`.
+ *
  * @since 1.4.0
  *
- * @param int $user_id User ID. 0 or an unknown user yields null.
+ * @param int $user_id User ID. 0 yields null; an unknown user yields a
+ *                     placeholder shape with `deleted` set.
  * @return array<string, mixed>|null
  */
 function wpss_rest_user( int $user_id ): ?array {
@@ -4545,14 +4556,20 @@ function wpss_rest_user( int $user_id ): ?array {
 
 	$user = get_userdata( $user_id );
 
-	if ( ! $user ) {
-		return null;
+	if ( ! $user instanceof WP_User ) {
+		return array(
+			'id'      => $user_id,
+			'name'    => wpss_get_member_display_name( $user_id ),
+			'avatar'  => get_avatar_url( $user_id ),
+			'deleted' => true,
+		);
 	}
 
 	return array(
-		'id'     => $user_id,
-		'name'   => wpss_rest_text( $user->display_name ),
-		'avatar' => get_avatar_url( $user_id ),
+		'id'      => $user_id,
+		'name'    => wpss_rest_text( $user->display_name ),
+		'avatar'  => get_avatar_url( $user_id ),
+		'deleted' => false,
 	);
 }
 
@@ -5819,4 +5836,112 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 	endif;
 
 	return (string) ob_get_clean();
+}
+
+/**
+ * Revoke every mobile session this member holds.
+ *
+ * Deletes the WPSS-prefixed Application Passwords the app mints at login, and
+ * forgets the push devices registered against them. After this call every
+ * `Authorization: Basic` token the app has ever been handed is dead.
+ *
+ * ONE FLOW, ONE IMPLEMENTATION. This is the body that used to sit inline in
+ * `AuthController::logout()`. Account deletion needs exactly the same
+ * operation, and two copies of "how do we revoke a session?" is the kind of
+ * pair that drifts until one of them forgets a credential store.
+ *
+ * The `WPSS` name prefix is the contract with `create_app_password()`: it is
+ * how an app-minted credential is told apart from one the member created by
+ * hand in wp-admin for some other tool. Those are deliberately left alone.
+ *
+ * @since 1.5.2
+ *
+ * @param int $user_id User ID.
+ * @return int Number of application passwords revoked.
+ */
+function wpss_revoke_app_sessions( int $user_id ): int {
+	$revoked = 0;
+
+	if ( class_exists( 'WP_Application_Passwords' ) ) {
+		$passwords = WP_Application_Passwords::get_user_application_passwords( $user_id );
+
+		foreach ( (array) $passwords as $password ) {
+			if ( ! isset( $password['name'], $password['uuid'] ) ) {
+				continue;
+			}
+
+			if ( ! str_starts_with( (string) $password['name'], 'WPSS' ) ) {
+				continue;
+			}
+
+			WP_Application_Passwords::delete_application_password( $user_id, $password['uuid'] );
+			++$revoked;
+		}
+	}
+
+	delete_user_meta( $user_id, '_wpss_push_devices' );
+
+	/**
+	 * Fires after a member's app sessions have been revoked.
+	 *
+	 * @since 1.5.2
+	 *
+	 * @param int $user_id User ID.
+	 * @param int $revoked Number of application passwords deleted.
+	 */
+	do_action( 'wpss_app_sessions_revoked', $user_id, $revoked );
+
+	return $revoked;
+}
+
+/**
+ * Display name for a member who may no longer exist.
+ *
+ * Orders, reviews, messages and disputes outlive the people in them. A member
+ * can delete their account while a counterparty still holds a completed order
+ * that has to keep showing what was bought, for how much, from whom — see
+ * `AccountDeletionService`, which keeps those rows precisely so the other side
+ * does not lose their history.
+ *
+ * That leaves every display surface holding a user id with no user behind it.
+ * `get_userdata()` returns false there, and `false->display_name` is a fatal on
+ * PHP 8. So this is the one way a member's name should ever be resolved for
+ * output: it always returns a printable string.
+ *
+ * @since 1.5.2
+ *
+ * @param int    $user_id User ID.
+ * @param string $fallback Optional override for the gone-member label.
+ * @return string Display name, never empty.
+ */
+function wpss_get_member_display_name( int $user_id, string $fallback = '' ): string {
+	$user = $user_id > 0 ? get_userdata( $user_id ) : false;
+
+	if ( $user instanceof WP_User ) {
+		$name = trim( (string) $user->display_name );
+
+		if ( '' === $name ) {
+			$name = trim( (string) $user->user_login );
+		}
+
+		if ( '' !== $name ) {
+			/** This filter is documented below. */
+			return (string) apply_filters( 'wpss_member_display_name', $name, $user_id, true );
+		}
+	}
+
+	if ( '' === $fallback ) {
+		$fallback = __( 'Deleted member', 'wp-sell-services' );
+	}
+
+	/**
+	 * Filter the display name shown for a member.
+	 *
+	 * @since 1.5.2
+	 *
+	 * @param string $name    The name to display.
+	 * @param int    $user_id User ID.
+	 * @param bool   $exists  Whether the user still exists.
+	 */
+	return (string) apply_filters( 'wpss_member_display_name', $fallback, $user_id, false );
 }

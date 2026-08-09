@@ -286,7 +286,7 @@ class API {
 			]
 		);
 
-		// Current user info.
+		// Current user info, and self-service account deletion.
 		register_rest_route(
 			'wpss/v1',
 			'/me',
@@ -295,6 +295,30 @@ class API {
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_current_user' ],
 					'permission_callback' => 'wpss_rest_require_login',
+				],
+				[
+					/*
+					 * App Store Guideline 5.1.1(v) and Google Play's data
+					 * deletion policy: an account that can be created in the app
+					 * must be deletable in the app. "Email the site owner" is
+					 * the answer both of them reject.
+					 */
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'delete_current_user' ],
+					'permission_callback' => 'wpss_rest_require_login',
+					'args'                => [
+						'password' => [
+							'required'    => true,
+							'type'        => 'string',
+							'description' => __( 'The account password, re-entered to confirm.', 'wp-sell-services' ),
+						],
+						'confirm'  => [
+							'required'    => false,
+							'type'        => 'boolean',
+							'default'     => false,
+							'description' => __( 'Set true to delete. False returns what deletion would cost, and deletes nothing.', 'wp-sell-services' ),
+						],
+					],
 				],
 			]
 		);
@@ -918,6 +942,101 @@ class API {
 		}
 
 		return new \WP_REST_Response( $data );
+	}
+
+	/**
+	 * Delete the current member's account.
+	 *
+	 * Two-step by design. `confirm: false` — the default — answers what
+	 * deletion would cost and deletes nothing, so the app can show a member
+	 * their open orders and the wallet balance they are about to forfeit
+	 * BEFORE they commit. `confirm: true` performs it.
+	 *
+	 * The password re-entry is checked against `user_pass` through
+	 * wp_check_password() rather than wp_authenticate(). That is deliberate and
+	 * load-bearing: wp_authenticate() also accepts an Application Password, and
+	 * the app's own token IS one. Checking the real password hash means a
+	 * stolen token can read this account but can never destroy it.
+	 *
+	 * @since 1.5.2
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function delete_current_user( \WP_REST_Request $request ) {
+		$user_id = get_current_user_id();
+		$user    = get_userdata( $user_id );
+
+		if ( ! $user instanceof \WP_User ) {
+			return new \WP_Error(
+				'wpss_user_not_found',
+				__( 'That account no longer exists.', 'wp-sell-services' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		/*
+		 * Rate limit, charged on FAILURE only.
+		 *
+		 * This route takes a password, so it is a guessing surface and needs a
+		 * ceiling. But the legitimate flow spends two calls — the dry run that
+		 * shows the member what they are about to lose, then the confirmation —
+		 * and charging those would lock out an honest member who mistyped once
+		 * while barely inconveniencing anyone actually guessing.
+		 *
+		 * So: refuse when already over, and only spend budget when the password
+		 * was wrong.
+		 */
+		if ( \WPSellServices\Core\RateLimiter::is_limited( 'account_delete', $user_id ) ) {
+			return new \WP_Error(
+				'wpss_rate_limited',
+				__( 'Too many attempts. Please wait a few minutes and try again.', 'wp-sell-services' ),
+				[ 'status' => 429 ]
+			);
+		}
+
+		$password = (string) $request->get_param( 'password' );
+
+		if ( ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
+			\WPSellServices\Core\RateLimiter::track( 'account_delete', $user_id );
+
+			return new \WP_Error(
+				'wpss_bad_password',
+				__( 'That password is not correct.', 'wp-sell-services' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		$service     = new \WPSellServices\Services\AccountDeletionService();
+		$obligations = $service->get_obligations( $user_id );
+
+		// The dry run: what would happen, and what it would cost.
+		if ( ! $request->get_param( 'confirm' ) ) {
+			return new \WP_REST_Response(
+				[
+					'deleted'          => false,
+					'can_delete'       => ! $obligations['blocked'],
+					'orders'           => $obligations['orders'],
+					'order_count'      => $obligations['order_count'],
+					'open_withdrawals' => $obligations['open_withdrawals'],
+					'wallet_balance'   => $obligations['wallet_balance'],
+					'currency'         => $obligations['currency'],
+				]
+			);
+		}
+
+		$deleted = $service->delete( $user_id );
+
+		if ( is_wp_error( $deleted ) ) {
+			return $deleted;
+		}
+
+		return new \WP_REST_Response(
+			[
+				'deleted' => true,
+				'message' => __( 'Your account and personal data have been deleted.', 'wp-sell-services' ),
+			]
+		);
 	}
 
 	/**

@@ -1003,7 +1003,6 @@ class ReviewsController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function prepare_item_for_response( $review, $request ): WP_REST_Response {
-		$vendor  = get_userdata( (int) $review->vendor_id );
 		$service = get_post( (int) $review->service_id );
 
 		$data = array(
@@ -1012,7 +1011,7 @@ class ReviewsController extends RestController {
 			'service_id'         => (int) $review->service_id,
 			'service_title'      => $service ? $service->post_title : '',
 			'vendor_id'          => (int) $review->vendor_id,
-			'vendor_name'        => $vendor ? $vendor->display_name : '',
+			'vendor_name'        => wpss_get_member_display_name( (int) $review->vendor_id ),
 			'customer_id'        => (int) $review->customer_id,
 			'customer_name'      => Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ),
 			'customer_avatar'    => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),

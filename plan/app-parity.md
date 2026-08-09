@@ -293,3 +293,51 @@ real WooCommerce plugin on the install serves the same purpose via
 
 **For CI:** both plugins need their dev dependencies for a clean run — that is
 the right place for this gate, not a developer's machine.
+
+---
+
+## Functionality catalog — re-measured 2026-08-09
+
+The board above was a route-coverage view. This is the capability view, measured
+from the running site with Free and Pro both active.
+
+| | |
+|---|---|
+| Registered paths | **183** (260 distinct path+method pairs) |
+| Called by the app | **76** — 41% |
+| Owner-only, correctly absent | 25 |
+| Payment rail, deliberately skipped (hosted checkout) | 12 |
+| Alias / infra / web-only | 12 |
+| **Genuine gaps** | **58** |
+
+The path total did not move when account deletion landed, because `DELETE /me`
+added a method to an existing path rather than a new path. Both numbers are quoted
+so neither can be read as the whole story.
+
+### Free — where the app stands
+
+Done: catalog and search, buyer requests, proposals, the 18-status order lifecycle,
+deliveries, milestones, extensions, tips, the vendor directory and seller pages,
+vacation mode, favourites, cart, report and block, and account deletion.
+
+Partial: create-a-service (no edit, no gallery, no add-ons), requirements (cannot
+remove an uploaded file), messaging (**no attachments**), reviews (no reply, no
+helpful), seller levels (own level only), notifications (cannot delete),
+earnings (no single-withdrawal detail).
+
+Missing: service add-ons, portfolio management, and **opening a dispute**.
+
+### Pro — where the app stands
+
+Everything member-facing in Pro is missing: vendor analytics (4), wallet (5),
+recurring services (7), Stripe Connect onboarding (3), subscription plans (3),
+the PayPal payout profile (1) and cloud storage (3). The adapters and gateways are
+server-side by design — the app uses the site's own hosted checkout, which is also
+what keeps it outside In-App Purchase.
+
+### Correction
+
+An earlier note in this session said a buyer "can open a dispute" from the app.
+That is wrong: `POST /orders/{id}/dispute` is never called. The app reads, responds
+and renders the site's reasons; the create flow was never wired. Left here rather
+than silently fixed, because this file exists to catch exactly that.

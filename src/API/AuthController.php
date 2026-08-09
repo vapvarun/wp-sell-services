@@ -408,19 +408,12 @@ class AuthController extends RestController {
 	public function logout( WP_REST_Request $request ): WP_REST_Response {
 		$user_id = get_current_user_id();
 
-		// Revoke all WPSS app passwords for this user.
-		if ( class_exists( 'WP_Application_Passwords' ) ) {
-			$app_passwords = WP_Application_Passwords::get_user_application_passwords( $user_id );
-
-			foreach ( $app_passwords as $app_password ) {
-				if ( str_starts_with( $app_password['name'], 'WPSS' ) ) {
-					WP_Application_Passwords::delete_application_password( $user_id, $app_password['uuid'] );
-				}
-			}
-		}
-
-		// Remove push notification devices.
-		delete_user_meta( $user_id, '_wpss_push_devices' );
+		// Revoke every WPSS app password and forget the push devices.
+		//
+		// Shared with account deletion, which needs the identical operation.
+		// See wpss_revoke_app_sessions() for why the WPSS name prefix decides
+		// what gets revoked and what is left alone.
+		wpss_revoke_app_sessions( $user_id );
 
 		return new WP_REST_Response( array( 'logged_out' => true ) );
 	}

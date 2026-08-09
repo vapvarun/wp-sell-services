@@ -37,6 +37,19 @@ buyer-request order into phases that unlock one at a time, and tips and paid
 extensions work the same way. Run your marketplace on one of those two rails if
 you need this.
 
+## Can members delete their own account?
+
+**YES.** A member can delete their account from the app or the site, confirming
+with their password. Their personal data goes — profile, seller profile,
+portfolio, listings, saved items, notifications, devices. Completed orders,
+reviews and messages stay, attributed to a deleted member, because those records
+belong to the person on the other side of them as well and you need them for your
+own accounting. Deletion is refused while an order is in flight or a payout is
+mid-transfer, so nobody can vanish owing work or money.
+
+This is what App Store Guideline 5.1.1(v) and Google Play require if you ship the
+companion app, and what a GDPR erasure request needs.
+
 ## Can I charge subscriptions for a service?
 
 **NO.** Recurring billing exists in the Pro codebase but ships behind a

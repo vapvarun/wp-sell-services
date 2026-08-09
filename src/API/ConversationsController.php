@@ -604,7 +604,6 @@ class ConversationsController extends RestController {
 				break;
 			}
 		}
-		$other_user = $other_user_id ? get_userdata( $other_user_id ) : null;
 
 		// Get service_id from the associated order.
 		$order      = $conversation->get_order();
@@ -628,7 +627,7 @@ class ConversationsController extends RestController {
 			'service_title' => $service_id ? get_the_title( $service_id ) : '',
 			'other_user'    => array(
 				'id'     => $other_user_id,
-				'name'   => $other_user ? $other_user->display_name : '',
+				'name'   => wpss_get_member_display_name( (int) $other_user_id ),
 				'avatar' => get_avatar_url( $other_user_id, array( 'size' => 48 ) ),
 			),
 			'last_message'  => $last_message ? array(
@@ -651,7 +650,6 @@ class ConversationsController extends RestController {
 	 */
 	private function prepare_message_for_response( object $message ): array {
 		$user_id     = get_current_user_id();
-		$sender      = get_userdata( $message->sender_id );
 		$attachments = array();
 
 		// Handle attachments - could be array already or JSON string.
@@ -690,7 +688,9 @@ class ConversationsController extends RestController {
 			'type'        => $message->type ?? 'text',
 			'sender'      => array(
 				'id'     => (int) $message->sender_id,
-				'name'   => $sender ? $sender->display_name : ( 0 === $message->sender_id ? __( 'System', 'wp-sell-services' ) : '' ),
+				'name'   => 0 === (int) $message->sender_id
+					? __( 'System', 'wp-sell-services' )
+					: wpss_get_member_display_name( (int) $message->sender_id ),
 				'avatar' => $message->sender_id ? get_avatar_url( $message->sender_id, array( 'size' => 48 ) ) : '',
 			),
 			'content'     => $message->content ?? '',

@@ -760,6 +760,38 @@ class EarningsService {
 	}
 
 	/**
+	 * Count withdrawals that are still moving.
+	 *
+	 * Pending and approved are the two states where a payout has been asked for
+	 * and not yet settled. Account deletion asks this question: a vendor whose
+	 * money is mid-transfer must not be deleted out from under it, because the
+	 * owner still has to pay someone who would no longer exist.
+	 *
+	 * Deliberately a COUNT rather than counting get_withdrawals(), which pages
+	 * at 20 and would report "no open withdrawals" for a vendor with 30.
+	 *
+	 * @since 1.5.2
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @return int Number of pending or approved withdrawals.
+	 */
+	public function count_open_withdrawals( int $vendor_id ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_withdrawals';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is internal.
+				"SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND status IN ( %s, %s )",
+				$vendor_id,
+				self::WITHDRAWAL_PENDING,
+				self::WITHDRAWAL_APPROVED
+			)
+		);
+	}
+
+	/**
 	 * Get vendor withdrawals.
 	 *
 	 * @param int   $vendor_id Vendor user ID.

@@ -295,7 +295,6 @@ class SchemaMarkup {
 	 * @return array
 	 */
 	public function get_person_schema( int $user_id ): array {
-		$user        = get_userdata( $user_id );
 		$profile_url = get_author_posts_url( $user_id );
 		$avatar_url  = get_avatar_url( $user_id, array( 'size' => 256 ) );
 
@@ -310,7 +309,7 @@ class SchemaMarkup {
 		$schema = array(
 			'@type' => 'Person',
 			'@id'   => $profile_url . '#person',
-			'name'  => $user->display_name,
+			'name'  => wpss_get_member_display_name( $user_id ),
 			'url'   => $profile_url,
 		);
 
