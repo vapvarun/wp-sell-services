@@ -260,6 +260,46 @@ class BuyerRequestService {
 	}
 
 	/**
+	 * THE definition of "a request a buyer can still be offered on".
+	 *
+	 * Open AND not past its expiry (a request with no expiry never expires).
+	 *
+	 * It lives here because it was previously expressed twice: this service had
+	 * the full rule, while the wpss/buyer-requests block re-implemented it with
+	 * the status clause only. The block therefore listed EXPIRED requests that
+	 * [wpss_buyer_requests] correctly hid - a seller could open one and pitch
+	 * for work that had already closed. Any surface listing open requests asks
+	 * this instead of writing the clause again.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @return array<mixed> meta_query fragment.
+	 */
+	public static function open_meta_query(): array {
+		return array(
+			'relation' => 'AND',
+			array(
+				'key'     => '_wpss_status',
+				'value'   => self::STATUS_OPEN,
+				'compare' => '=',
+			),
+			array(
+				'relation' => 'OR',
+				array(
+					'key'     => '_wpss_expires_at',
+					'value'   => current_time( 'mysql' ),
+					'compare' => '>',
+					'type'    => 'DATETIME',
+				),
+				array(
+					'key'     => '_wpss_expires_at',
+					'compare' => 'NOT EXISTS',
+				),
+			),
+		);
+	}
+
+	/**
 	 * Get open requests.
 	 *
 	 * @param array<string, mixed> $args Query arguments.
@@ -285,27 +325,7 @@ class BuyerRequestService {
 			'paged'          => $args['paged'],
 			'orderby'        => $args['order_by'],
 			'order'          => $args['order'],
-			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				'relation' => 'AND',
-				array(
-					'key'     => '_wpss_status',
-					'value'   => self::STATUS_OPEN,
-					'compare' => '=',
-				),
-				array(
-					'relation' => 'OR',
-					array(
-						'key'     => '_wpss_expires_at',
-						'value'   => current_time( 'mysql' ),
-						'compare' => '>',
-						'type'    => 'DATETIME',
-					),
-					array(
-						'key'     => '_wpss_expires_at',
-						'compare' => 'NOT EXISTS',
-					),
-				),
-			),
+			'meta_query'     => self::open_meta_query(), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		);
 
 		// Filter by category.

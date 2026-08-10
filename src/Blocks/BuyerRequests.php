@@ -147,19 +147,15 @@ class BuyerRequests extends AbstractBlock {
 			'orderby'        => $attributes['orderBy'],
 			'order'          => $attributes['order'],
 			'paged'          => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
-			// BuyerRequestService writes `_wpss_status` (and reads it back for
-			// listings). `_wpss_request_status` is written by nothing except a CLI
-			// test helper, so this required clause matched nothing and the block
-			// rendered "No requests" on every real site while the shortcode — which
-			// goes through the service — listed them fine. Same class of bug as the
-			// `_wpss_featured` / `_wpss_is_featured` drift.
-			'meta_query'     => [
-				[
-					'key'     => '_wpss_status',
-					'value'   => 'open',
-					'compare' => '=',
-				],
-			],
+			// ONE definition of "open request", owned by BuyerRequestService.
+			//
+			// This block previously spelled out the status clause on its own and
+			// stopped there, missing the expiry half of the rule that the service
+			// applies. The block therefore listed EXPIRED requests that
+			// [wpss_buyer_requests] correctly hid, so a seller could open one and
+			// pitch for work that had already closed. Verified before the fix: an
+			// expired request appeared in the block and not in the shortcode.
+			'meta_query'     => \WPSellServices\Services\BuyerRequestService::open_meta_query(), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		];
 
 		// Filter by category.
