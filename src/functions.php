@@ -5471,15 +5471,58 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 		'order'          => in_array( ( $attributes['order'] ?? 'DESC' ), array( 'ASC', 'DESC' ), true ) ? $attributes['order'] : 'DESC',
 	);
 
-	// Category filter.
+	// Category filter. Accepts a term id OR a slug: the [wpss_services]
+	// shortcode has always documented `category="logo-design"`, so restricting
+	// this to ids would quietly break every existing use of it.
 	if ( ! empty( $attributes['category'] ) ) {
 		$args['tax_query'] = array(
 			array(
 				'taxonomy' => 'wpss_service_category',
-				'field'    => 'term_id',
-				'terms'    => absint( $attributes['category'] ),
+				'field'    => is_numeric( $attributes['category'] ) ? 'term_id' : 'slug',
+				'terms'    => is_numeric( $attributes['category'] ) ? absint( $attributes['category'] ) : sanitize_title( (string) $attributes['category'] ),
 			),
 		);
+	}
+
+	// Tag filter.
+	if ( ! empty( $attributes['tag'] ) ) {
+		$args['tax_query'][] = array(
+			'taxonomy' => 'wpss_service_tag',
+			'field'    => is_numeric( $attributes['tag'] ) ? 'term_id' : 'slug',
+			'terms'    => is_numeric( $attributes['tag'] ) ? absint( $attributes['tag'] ) : sanitize_title( (string) $attributes['tag'] ),
+		);
+	}
+
+	// Vendor filter.
+	if ( ! empty( $attributes['vendor'] ) ) {
+		$args['author'] = absint( $attributes['vendor'] );
+	}
+
+	// Featured filter. Accepts a real boolean (blocks) or the string a
+	// shortcode attribute arrives as.
+	if ( ! empty( $attributes['featured'] ) && filter_var( $attributes['featured'], FILTER_VALIDATE_BOOLEAN ) ) {
+		// The written key is `_wpss_featured` - `_wpss_is_featured` was an
+		// orphan that matched nothing.
+		$args['meta_query'] = array(
+			array(
+				'key'   => '_wpss_featured',
+				'value' => '1',
+			),
+		);
+	}
+
+	// Sort vocabulary. "rating", "sales" and "price" are not columns WP_Query
+	// understands; without this remap they fall through to post_date and the
+	// grid silently ignores the sort the caller asked for.
+	$orderby_meta = array(
+		'rating' => '_wpss_rating_average',
+		'sales'  => '_wpss_total_sales',
+		'price'  => '_wpss_starting_price',
+	);
+
+	if ( isset( $orderby_meta[ $args['orderby'] ] ) ) {
+		$args['meta_key'] = $orderby_meta[ $args['orderby'] ]; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- ordering by a service stat is the documented behaviour of these surfaces.
+		$args['orderby']  = 'meta_value_num';
 	}
 
 	$query = new \WP_Query( $args );

@@ -3865,3 +3865,60 @@ body.wpss-modal-active {
 		grid-template-columns: 1fr;
 	}
 }
+
+/* ==========================================================================
+   Pagination
+   ==========================================================================
+   wpss_pagination() is shared by the archive, [wpss_services], the
+   wpss/service-grid block and the REST/AJAX grid, but its rules lived only in
+   archive-service.css - a stylesheet enqueued on the service archive alone.
+   Until 1.5.1 the shortcode and block rendered their own markup and never
+   called it, so the gap was invisible; now that every grid goes through the
+   one renderer, the list rendered with raw bullets on any other page.
+
+   Kept identical to the archive rules so the component looks the same
+   wherever it appears. 40px targets satisfy the touch-target minimum.
+   ========================================================================== */
+
+.wpss-pagination {
+	margin-top: 2rem;
+	display: flex;
+	justify-content: center;
+}
+
+.wpss-pagination ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wpss-pagination li {
+	margin: 0;
+}
+
+.wpss-pagination a,
+.wpss-pagination span {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 40px;
+	height: 40px;
+	padding: 0 0.75rem;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius, 8px);
+	background: var(--wpss-surface, #fff);
+	color: var(--wpss-text, #111827);
+	text-decoration: none;
+	font-size: 0.875rem;
+}
+
+.wpss-pagination .current,
+.wpss-pagination a:hover,
+.wpss-pagination a:focus-visible {
+	border-color: var(--wpss-primary, #4f46e5);
+	background: var(--wpss-primary, #4f46e5);
+	color: #fff;
+}

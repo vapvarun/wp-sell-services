@@ -93,84 +93,38 @@ class Shortcodes {
 			'wpss_services'
 		);
 
-		$args = array(
-			'post_type'      => 'wpss_service',
-			'post_status'    => 'publish',
-			'posts_per_page' => absint( $atts['limit'] ),
-			'orderby'        => $atts['orderby'],
-			'order'          => $atts['order'],
+		// ONE grid implementation.
+		//
+		// This method used to build its own WP_Query and render through a
+		// private render_service_card(), while the wpss/service-grid block built
+		// a second query with its own inline markup, and wpss_render_services_grid()
+		// - the only one that renders the theme-overridable
+		// templates/content-service-card.php, fires the wpss_service_card_*
+		// hooks and shows the favourites toggle - was reachable only from REST
+		// and one AJAX handler. Three implementations of the same grid, and the
+		// two a visitor actually saw were the two missing those features.
+		//
+		// The shortcode keeps its documented attribute names; they are mapped
+		// onto the shared renderer's vocabulary here.
+		$grid = wpss_render_services_grid(
+			array(
+				'postsPerPage' => absint( $atts['limit'] ),
+				'orderBy'      => $atts['orderby'],
+				'order'        => $atts['order'],
+				'category'     => $atts['category'],
+				'tag'          => $atts['tag'],
+				'vendor'       => $atts['vendor'],
+				'featured'     => $atts['featured'],
+			),
+			max( 1, (int) get_query_var( 'paged' ) )
 		);
 
-		// Category filter.
-		if ( $atts['category'] ) {
-			$args['tax_query'] = array(
-				array(
-					'taxonomy' => 'wpss_service_category',
-					'field'    => is_numeric( $atts['category'] ) ? 'term_id' : 'slug',
-					'terms'    => $atts['category'],
-				),
-			);
-		}
-
-		// Tag filter.
-		if ( $atts['tag'] ) {
-			$args['tax_query'][] = array(
-				'taxonomy' => 'wpss_service_tag',
-				'field'    => is_numeric( $atts['tag'] ) ? 'term_id' : 'slug',
-				'terms'    => $atts['tag'],
-			);
-		}
-
-		// Vendor filter.
-		if ( $atts['vendor'] ) {
-			$args['author'] = absint( $atts['vendor'] );
-		}
-
-		// Featured filter.
-		if ( 'true' === $atts['featured'] || '1' === $atts['featured'] ) {
-			// The written meta key is `_wpss_featured` (MarketplaceSeeder, CLI,
-			// ServiceGrid + the FeaturedServices block all use it). `_wpss_is_featured`
-			// was an orphan that matched nothing, so [wpss_featured_services]
-			// returned no featured items.
-			$args['meta_query'] = array(
-				array(
-					'key'   => '_wpss_featured',
-					'value' => '1',
-				),
-			);
-		}
-
-		// Custom ordering.
-		if ( 'rating' === $atts['orderby'] ) {
-			$args['orderby']  = 'meta_value_num';
-			$args['meta_key'] = '_wpss_rating_average';
-		} elseif ( 'sales' === $atts['orderby'] ) {
-			$args['orderby']  = 'meta_value_num';
-			$args['meta_key'] = '_wpss_total_sales';
-		} elseif ( 'price' === $atts['orderby'] ) {
-			$args['orderby']  = 'meta_value_num';
-			$args['meta_key'] = '_wpss_starting_price';
-		}
-
-		$query = new \WP_Query( $args );
-
-		ob_start();
-		?>
-		<div class="wpss-services-grid wpss-columns-<?php echo esc_attr( $atts['columns'] ); ?>">
-			<?php
-			if ( $query->have_posts() ) :
-				while ( $query->have_posts() ) :
-					$query->the_post();
-					$this->render_service_card( get_the_ID() );
-				endwhile;
-				wp_reset_postdata();
-			else :
-				?>
-				<p class="wpss-no-results"><?php esc_html_e( 'No services found.', 'wp-sell-services' ); ?></p>
-			<?php endif; ?>
-		</div>
-		<?php
-		return ob_get_clean();
+		return sprintf(
+			'<div class="wpss-services-grid wpss-columns-%s">%s</div>%s',
+			esc_attr( (string) $atts['columns'] ),
+			$grid['html'],
+			$grid['pagination']
+		);
 	}
 
 	/**
@@ -899,52 +853,6 @@ class Shortcodes {
 		</form>
 		<?php
 		return ob_get_clean();
-	}
-
-	/**
-	 * Render service card.
-	 *
-	 * @param int $service_id Service post ID.
-	 * @return void
-	 */
-	private function render_service_card( int $service_id ): void {
-		$template = locate_template( 'wp-sell-services/content-service-card.php' );
-		if ( ! $template ) {
-			$template = WPSS_PLUGIN_DIR . 'templates/content-service-card.php';
-		}
-
-		if ( file_exists( $template ) ) {
-			include $template;
-		} else {
-			// Fallback rendering.
-			$price  = get_post_meta( $service_id, '_wpss_starting_price', true );
-			$rating = get_post_meta( $service_id, '_wpss_rating_average', true );
-			$vendor_id = (int) get_post_field( 'post_author', $service_id );
-			?>
-			<div class="wpss-service-card">
-				<?php if ( has_post_thumbnail( $service_id ) ) : ?>
-					<a href="<?php echo esc_url( get_permalink( $service_id ) ); ?>" class="wpss-service-thumbnail">
-						<?php echo get_the_post_thumbnail( $service_id, 'medium' ); ?>
-					</a>
-				<?php endif; ?>
-				<div class="wpss-service-info">
-					<div class="wpss-service-vendor">
-						<?php echo get_avatar( $vendor_id, 24 ); ?>
-						<span><?php echo esc_html( wpss_get_member_display_name( $vendor_id ) ); ?></span>
-					</div>
-					<h3 class="wpss-service-title">
-						<a href="<?php echo esc_url( get_permalink( $service_id ) ); ?>"><?php echo esc_html( get_the_title( $service_id ) ); ?></a>
-					</h3>
-					<div class="wpss-service-meta">
-						<?php if ( $rating ) : ?>
-							<span class="wpss-service-rating"><?php echo esc_html( number_format( (float) $rating, 1 ) ); ?> ★</span>
-						<?php endif; ?>
-						<span class="wpss-service-price"><?php esc_html_e( 'From', 'wp-sell-services' ); ?> <?php echo wp_kses_post( function_exists( 'wpss_format_currency' ) ? wpss_format_currency( (float) $price ) : '$' . number_format( (float) $price, 2 ) ); ?></span>
-					</div>
-				</div>
-			</div>
-			<?php
-		}
 	}
 
 	/**

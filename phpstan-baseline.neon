@@ -877,12 +877,6 @@ parameters:
 			path: src/Blocks/ServiceGrid.php
 
 		-
-			message: '#^Method WPSellServices\\Blocks\\ServiceGrid\:\:render_service_card\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Blocks/ServiceGrid.php
-
-		-
 			message: '#^Method WPSellServices\\Blocks\\ServiceSearch\:\:get_attributes\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
