@@ -781,12 +781,6 @@ parameters:
 			path: src/Blocks/BuyerRequests.php
 
 		-
-			message: '#^Method WPSellServices\\Blocks\\BuyerRequests\:\:render_request_card\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Blocks/BuyerRequests.php
-
-		-
 			message: '#^Method WPSellServices\\Blocks\\FeaturedServices\:\:get_attributes\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
