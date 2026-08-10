@@ -40,7 +40,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 	public function find( int $id ): ?ExtensionRequest {
 		$row = $this->find_by_id( $id );
 
-		return $row ? ExtensionRequest::from_row( $row ) : null;
+		return $row ? ExtensionRequest::from_db( $row ) : null;
 	}
 
 	/**
@@ -59,7 +59,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ ExtensionRequest::class, 'from_row' ], $results );
+		return array_map( [ ExtensionRequest::class, 'from_db' ], $results );
 	}
 
 	/**
@@ -81,7 +81,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 			)
 		);
 
-		return $row ? ExtensionRequest::from_row( $row ) : null;
+		return $row ? ExtensionRequest::from_db( $row ) : null;
 	}
 
 	/**
@@ -111,7 +111,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ ExtensionRequest::class, 'from_row' ], $results );
+		return array_map( [ ExtensionRequest::class, 'from_db' ], $results );
 	}
 
 	/**
@@ -138,7 +138,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ ExtensionRequest::class, 'from_row' ], $results );
+		return array_map( [ ExtensionRequest::class, 'from_db' ], $results );
 	}
 
 	/**

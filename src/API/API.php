@@ -297,6 +297,7 @@ class API {
 					'permission_callback' => 'wpss_rest_require_login',
 				],
 				[
+
 					/*
 					 * App Store Guideline 5.1.1(v) and Google Play's data
 					 * deletion policy: an account that can be created in the app
@@ -736,6 +737,7 @@ class API {
 		$buyer_requests = (bool) wpss_get_option( 'general', 'enable_buyer_requests', true );
 
 		return array(
+
 			/*
 			 * Bump when a FIELD changes shape or meaning, never for a value change.
 			 * It exists so an app can refuse a payload it does not understand rather
@@ -762,6 +764,7 @@ class API {
 			'legal'            => array(
 				'privacy_policy_url'  => get_privacy_policy_url() ?: null,
 				'terms_url'           => $page_urls['terms'] ?? null,
+
 				/*
 				 * Deliberately NOT defaulted to admin_email. This endpoint is
 				 * anonymous and world-readable, so defaulting would publish the

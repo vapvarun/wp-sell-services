@@ -125,7 +125,7 @@ class Proposal {
 	 * @param object $row Database row.
 	 * @return self
 	 */
-	public static function from_row( object $row ): self {
+	public static function from_db( object $row ): self {
 		$proposal = new self();
 
 		$proposal->id                = (int) $row->id;

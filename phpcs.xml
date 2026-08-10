@@ -13,6 +13,10 @@
     <exclude-pattern>/languages/*</exclude-pattern>
     <exclude-pattern>/tests/*</exclude-pattern>
     <exclude-pattern>/plans/*</exclude-pattern>
+    <!-- Static-analysis bootstrap: declares WordPress core constants (DB_NAME)
+         so PHPStan knows they exist. Dev tooling, never shipped, and the
+         plugin-prefix rule does not apply to core constants. -->
+    <exclude-pattern>/phpstan-bootstrap.php</exclude-pattern>
     <exclude-pattern>*.min.js</exclude-pattern>
     <exclude-pattern>*.min.css</exclude-pattern>
 
