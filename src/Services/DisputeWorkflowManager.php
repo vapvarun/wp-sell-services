@@ -138,7 +138,7 @@ class DisputeWorkflowManager {
 		$response_type = 'response';
 		if ( current_user_can( 'manage_options' ) ) {
 			$response_type = 'admin_response';
-		} elseif ( (int) $dispute->initiated_by === $user_id ) {
+		} elseif ( (int) $dispute->initiator_id === $user_id ) {
 			$response_type = 'opener_response';
 		}
 
@@ -170,7 +170,7 @@ class DisputeWorkflowManager {
 		$this->update_response_deadline( $dispute_id, $user_id );
 
 		// Update dispute status if it was awaiting response.
-		if ( DisputeService::STATUS_OPEN === $dispute->status && (int) $dispute->initiated_by !== $user_id ) {
+		if ( DisputeService::STATUS_OPEN === $dispute->status && (int) $dispute->initiator_id !== $user_id ) {
 			$this->dispute_service->update_status( $dispute_id, DisputeService::STATUS_PENDING );
 		}
 
@@ -287,7 +287,7 @@ class DisputeWorkflowManager {
 		// Update dispute meta with escalation info.
 		global $wpdb;
 
-		$meta               = $dispute->meta ?? array();
+		$meta               = $dispute->meta;
 		$meta['escalation'] = array(
 			'reason'       => sanitize_textarea_field( $reason ),
 			'escalated_by' => $escalated_by,
@@ -361,7 +361,7 @@ class DisputeWorkflowManager {
 
 		global $wpdb;
 
-		$meta                = $dispute->meta ?? array();
+		$meta                = $dispute->meta;
 		$meta['assigned_to'] = $admin_id;
 		$meta['assigned_at'] = current_time( 'mysql' );
 
@@ -419,7 +419,7 @@ class DisputeWorkflowManager {
 		}
 
 		// Only opener can cancel, or admin.
-		if ( (int) $dispute->initiated_by !== $user_id && ! current_user_can( 'manage_options' ) ) {
+		if ( (int) $dispute->initiator_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
 			return array(
 				'success' => false,
 				'message' => __( 'You are not authorized to cancel this dispute.', 'wp-sell-services' ),
@@ -436,12 +436,21 @@ class DisputeWorkflowManager {
 
 		global $wpdb;
 
-		$meta                 = $dispute->meta ?? array();
+		$meta                 = $dispute->meta;
 		$meta['cancellation'] = array(
 			'reason'       => sanitize_textarea_field( $reason ),
 			'cancelled_by' => $user_id,
 			'cancelled_at' => current_time( 'mysql' ),
 		);
+
+		// Closing the dispute and releasing the order are ONE unit of work.
+		//
+		// Previously these were two unguarded statements: the status write
+		// committed, then restore_order_status() threw, and the caller got a 500
+		// while the data was left half-changed - dispute `closed` but the order
+		// still `disputed`, with no open dispute able to release it, so the order
+		// could never progress again. Either both land or neither does.
+		$wpdb->query( 'START TRANSACTION' );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
@@ -457,17 +466,29 @@ class DisputeWorkflowManager {
 		);
 
 		if ( false === $result ) {
+			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
 				'message' => __( 'Failed to cancel dispute.', 'wp-sell-services' ),
 			);
 		}
 
-		// Fire status change hook (consistent with DisputeService::update_status).
-		do_action( 'wpss_dispute_status_changed', $dispute_id, DisputeService::STATUS_CLOSED, $dispute->status );
+		try {
+			// Restore order status to previous state if possible.
+			$this->restore_order_status( $dispute->order_id );
+		} catch ( \Throwable $e ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'message' => __( 'Failed to cancel dispute.', 'wp-sell-services' ),
+			);
+		}
 
-		// Restore order status to previous state if possible.
-		$this->restore_order_status( $dispute->order_id );
+		$wpdb->query( 'COMMIT' );
+
+		// Fire status change hook AFTER commit - listeners must not observe, or
+		// act on, a state that could still be rolled back.
+		do_action( 'wpss_dispute_status_changed', $dispute_id, DisputeService::STATUS_CLOSED, $dispute->status );
 
 		/**
 		 * Fires when a dispute is cancelled.
@@ -849,8 +870,17 @@ class DisputeWorkflowManager {
 		);
 
 		if ( $order ) {
-			$meta                          = $this->decode_json_array( $order->meta );
-			$meta['status_before_dispute'] = $order->status;
+			$meta = $this->decode_json_array( $order->meta );
+
+			// Only record a fallback if nothing captured the real pre-dispute
+			// status. DisputeService::open() now writes it BEFORE flipping the
+			// order to `disputed`; this hook runs afterwards, so reading
+			// $order->status here yields `disputed` itself. Overwriting with that
+			// is what made cancel/resolve restore an order to `disputed` and
+			// leave it permanently stuck. Never clobber the good value.
+			if ( ! isset( $meta['status_before_dispute'] ) && \WPSellServices\Models\ServiceOrder::STATUS_DISPUTED !== $order->status ) {
+				$meta['status_before_dispute'] = $order->status;
+			}
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
@@ -968,7 +998,7 @@ class DisputeWorkflowManager {
 		if ( $dispute ) {
 			$timeline[] = array(
 				'type'       => 'dispute_opened',
-				'user_id'    => $dispute->initiated_by,
+				'user_id'    => $dispute->initiator_id,
 				'content'    => $dispute->description,
 				'created_at' => $dispute->created_at,
 			);

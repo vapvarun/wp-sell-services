@@ -11,6 +11,7 @@
 namespace WPSellServices\Services;
 
 use WPSellServices\Database\Repositories\OrderRepository;
+use WPSellServices\Models\Dispute;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Services\OrderService;
 
@@ -211,6 +212,27 @@ class DisputeService {
 		if ( $result ) {
 			$dispute_id = (int) $wpdb->insert_id;
 
+			// Record the pre-dispute status BEFORE overwriting it.
+			//
+			// This used to be done by DisputeWorkflowManager::on_dispute_opened(),
+			// which runs on `wpss_dispute_opened` - i.e. AFTER the update_status()
+			// call below. It therefore read the status as `disputed` and stored
+			// status_before_dispute = 'disputed'. Cancelling or resolving the
+			// dispute then faithfully "restored" the order to `disputed`, so the
+			// order could never be released and stayed stuck forever. $order was
+			// loaded above, before any status change, so it holds the real one.
+			$order_meta                          = is_string( $order->meta ?? null ) ? ( json_decode( $order->meta, true ) ?: array() ) : ( (array) ( $order->meta ?? array() ) );
+			$order_meta['status_before_dispute'] = $order->status;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$wpdb->prefix . 'wpss_orders',
+				array( 'meta' => wp_json_encode( $order_meta ) ),
+				array( 'id' => $order_id ),
+				array( '%s' ),
+				array( '%d' )
+			);
+
 			// Update order status via OrderService to fire hooks (notifications, emails).
 			$this->order_service->update_status( $order_id, ServiceOrder::STATUS_DISPUTED );
 
@@ -235,54 +257,50 @@ class DisputeService {
 	 * Get dispute by ID.
 	 *
 	 * @param int $dispute_id Dispute ID.
-	 * @return object|null Dispute object or null.
+	 * @return Dispute|null Dispute model or null.
 	 */
-	public function get( int $dispute_id ): ?object {
+	public function get( int $dispute_id ): ?Dispute {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$dispute = $wpdb->get_row(
+		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$this->table} WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$dispute_id
 			)
 		);
 
-		if ( $dispute ) {
-			if ( ! empty( $dispute->evidence ) ) {
-				$dispute->evidence = json_decode( $dispute->evidence, true );
-			}
-			$dispute->meta = json_decode( $dispute->meta ?: '[]', true ) ?: [];
-		}
-
-		return $dispute;
+		// Hydrate the MODEL, never hand back a raw row.
+		//
+		// $wpdb returns every column as a string. Consumers of this method run
+		// under strict_types and pass these values into int-typed helpers, so a
+		// raw row threw `Argument #1 ($order_id) must be of type int, string
+		// given` in DisputeWorkflowManager::restore_order_status() - AFTER the
+		// dispute status had already been written, leaving the dispute closed
+		// while its order stayed `disputed` with no open dispute to resolve it.
+		// from_db() also decodes evidence/meta and maps the column names.
+		return $row ? Dispute::from_db( $row ) : null;
 	}
 
 	/**
 	 * Get dispute by order ID.
 	 *
 	 * @param int $order_id Order ID.
-	 * @return object|null Dispute object or null.
+	 * @return Dispute|null Dispute model or null.
 	 */
-	public function get_by_order( int $order_id ): ?object {
+	public function get_by_order( int $order_id ): ?Dispute {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$dispute = $wpdb->get_row(
+		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$this->table} WHERE order_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$order_id
 			)
 		);
 
-		if ( $dispute ) {
-			if ( ! empty( $dispute->evidence ) ) {
-				$dispute->evidence = json_decode( $dispute->evidence, true );
-			}
-			$dispute->meta = json_decode( $dispute->meta ?: '[]', true ) ?: [];
-		}
-
-		return $dispute;
+		// Same contract as get() - hydrate, never return a raw row.
+		return $row ? Dispute::from_db( $row ) : null;
 	}
 
 	/**
@@ -307,7 +325,7 @@ class DisputeService {
 		}
 
 		// Get existing evidence or initialize empty array.
-		$evidence = is_array( $dispute->evidence ) ? $dispute->evidence : array();
+		$evidence = $dispute->evidence;
 
 		// Sanitize content based on evidence type. image/file/link all carry a
 		// URL (the AJAX handler stores the wp_handle_upload() URL, not an
@@ -368,7 +386,7 @@ class DisputeService {
 			return array();
 		}
 
-		return is_array( $dispute->evidence ) ? $dispute->evidence : array();
+		return $dispute->evidence;
 	}
 
 	/**
@@ -406,7 +424,7 @@ class DisputeService {
 
 		// Store status note in evidence JSON if provided.
 		if ( $note && $dispute ) {
-			$evidence         = is_array( $dispute->evidence ) ? $dispute->evidence : array();
+			$evidence         = $dispute->evidence;
 			$evidence[]       = array(
 				'id'         => uniqid( 'note_' ),
 				'type'       => 'status_note',
@@ -461,7 +479,7 @@ class DisputeService {
 		}
 
 		// Store refund amount in evidence JSON if applicable.
-		$evidence = is_array( $dispute->evidence ) ? $dispute->evidence : array();
+		$evidence = $dispute->evidence;
 		if ( $refund_amount > 0 ) {
 			$evidence[] = array(
 				'id'            => uniqid( 'refund_' ),
@@ -600,7 +618,16 @@ class DisputeService {
 		);
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql produced by $wpdb->prepare() above; static analyser can't trace through the local var.
-		return $wpdb->get_results( $sql );
+		$rows = $wpdb->get_results( $sql );
+
+		// Hydrate so every read method on this service returns the SAME shape.
+		// Previously get()/get_by_order() returned decoded rows while these two
+		// returned raw JOINed rows with evidence/meta still JSON strings - and
+		// all four feed DisputesController::prepare_dispute_for_response().
+		// The JOINed o.customer_id/o.vendor_id/o.service_id columns are not read
+		// by any consumer of these two methods (verified: DisputesController is
+		// the only caller, and DisputesListTable runs its own queries).
+		return array_map( array( Dispute::class, 'from_db' ), $rows ?: array() );
 	}
 
 	/**
@@ -653,7 +680,16 @@ class DisputeService {
 		);
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql produced by $wpdb->prepare() above; static analyser can't trace through the local var.
-		return $wpdb->get_results( $sql );
+		$rows = $wpdb->get_results( $sql );
+
+		// Hydrate so every read method on this service returns the SAME shape.
+		// Previously get()/get_by_order() returned decoded rows while these two
+		// returned raw JOINed rows with evidence/meta still JSON strings - and
+		// all four feed DisputesController::prepare_dispute_for_response().
+		// The JOINed o.customer_id/o.vendor_id/o.service_id columns are not read
+		// by any consumer of these two methods (verified: DisputesController is
+		// the only caller, and DisputesListTable runs its own queries).
+		return array_map( array( Dispute::class, 'from_db' ), $rows ?: array() );
 	}
 
 	/**

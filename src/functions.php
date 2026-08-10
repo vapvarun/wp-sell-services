@@ -4838,16 +4838,31 @@ function wpss_get_ecommerce_adapter( ?string $adapter_id = null ): ?\WPSellServi
  *
  * @since 1.2.0
  *
- * @return \WPSellServices\Integrations\Contracts\OrderProviderInterface|null Order provider or null.
+ * @return \WPSellServices\Integrations\Contracts\OrderProviderInterface The marketplace order provider.
  */
-function wpss_get_order_provider(): ?\WPSellServices\Integrations\Contracts\OrderProviderInterface {
-	$adapter = wpss_get_ecommerce_adapter();
-
-	if ( ! $adapter ) {
-		return null;
-	}
-
-	return $adapter->get_order_provider();
+function wpss_get_order_provider(): \WPSellServices\Integrations\Contracts\OrderProviderInterface {
+	// ONE order authority, always.
+	//
+	// Orders live in wpss_orders and belong to the marketplace. A third-party
+	// plugin (WooCommerce, EDD, FluentCart, SureCart) is a payment PROCESSOR: it
+	// collects the money and reports a status back. It never owns the order.
+	//
+	// This used to hand back `$adapter->get_order_provider()`, so the object
+	// changed with whichever adapter happened to be active. Two consequences,
+	// both real:
+	// 1. Only StandaloneOrderProvider implements create_order() /
+	// create_orders_from_cart() / mark_as_paid(). On a licensed site with
+	// WooCommerce active this resolved to WCOrderProvider, which implements
+	// none of them - so a late Stripe/PayPal webhook for a legacy order hit
+	// "Call to undefined method WCOrderProvider::mark_as_paid()". Gateways
+	// stay registered on every rail BY DESIGN (see Plugin.php) precisely so
+	// those webhooks keep working, so this was reachable from an
+	// unauthenticated request.
+	// 2. Each adapter's provider filtered reads to its own `platform`, so a
+	// buyer saw only the orders taken by today's rail.
+	//
+	// One provider removes both. `platform` still records the processor per order.
+	return new \WPSellServices\Integrations\Standalone\StandaloneOrderProvider();
 }
 
 /**
@@ -5095,7 +5110,14 @@ function wpss_get_user_orders( int $user_id, array $args = array() ): array {
 	$params[] = $args['offset'];
 
 	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is hardcoded fragments with %d/%s placeholders; values come via prepare().
-	return $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
+	$rows = $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
+
+	// Return hydrated models, never raw rows. $wpdb hands back every column as a
+	// string, and the callers are strict_types files that pass these values into
+	// typed helpers - `wpss_format_price( float $price, ... )` threw
+	// "must be of type float, string given" and white-screened [wpss_account]
+	// for any logged-in user with at least one order.
+	return array_map( array( \WPSellServices\Models\ServiceOrder::class, 'from_db' ), $rows ?: array() );
 }
 
 /**
@@ -5130,6 +5152,8 @@ function wpss_get_user_notifications( int $user_id, array $args = array() ): arr
 	$params[] = $args['offset'];
 
 	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is hardcoded fragments with %d/%s placeholders; values come via prepare().
+	$rows = $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
+
 	return $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
 }
 
@@ -5166,7 +5190,14 @@ function wpss_get_vendor_orders( int $vendor_id, array $args = array() ): array 
 	$params[] = $args['offset'];
 
 	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is hardcoded fragments with %d/%s placeholders; values come via prepare().
-	return $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
+	$rows = $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
+
+	// Return hydrated models, never raw rows. $wpdb hands back every column as a
+	// string, and the callers are strict_types files that pass these values into
+	// typed helpers - `wpss_format_price( float $price, ... )` threw
+	// "must be of type float, string given" and white-screened [wpss_account]
+	// for any logged-in user with at least one order.
+	return array_map( array( \WPSellServices\Models\ServiceOrder::class, 'from_db' ), $rows ?: array() );
 }
 
 /**
@@ -5176,7 +5207,7 @@ function wpss_get_vendor_orders( int $vendor_id, array $args = array() ): array 
  *
  * @param int   $vendor_id Vendor user ID.
  * @param array $args      Query arguments (limit, offset, status).
- * @return \WP_Post[] Array of service posts.
+ * @return \WPSellServices\Models\Service[] Array of hydrated service models.
  */
 function wpss_get_vendor_services( int $vendor_id, array $args = array() ): array {
 	$defaults = array(
@@ -5196,7 +5227,19 @@ function wpss_get_vendor_services( int $vendor_id, array $args = array() ): arra
 		'order'          => 'DESC',
 	);
 
-	return get_posts( $query_args );
+	// Hydrate to Service models rather than returning raw WP_Post objects.
+	//
+	// The sole caller (StandaloneAccountProvider::render_vendor_services) was
+	// written against the model - it calls get_starting_price() and reads
+	// ->title / ->id / ->thumbnail_id, none of which exist on WP_Post. That made
+	// the [wpss_account] "My Services" screen a hard fatal
+	// ("Call to undefined method WP_Post::get_starting_price()") for any vendor
+	// with at least one published service, and silently blanked the title,
+	// thumbnail and both action links besides.
+	return array_map(
+		array( \WPSellServices\Models\Service::class, 'from_post' ),
+		get_posts( $query_args )
+	);
 }
 
 /**

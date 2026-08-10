@@ -227,12 +227,6 @@ class CheckoutIntentService {
 	 */
 	public function settle( CheckoutIntent $intent, string $gateway_id, string $transaction_id, float $charged_amount, string $charged_currency ): array {
 		$provider = wpss_get_order_provider();
-		if ( ! $provider ) {
-			return array(
-				'success' => false,
-				'error'   => __( 'No order provider available.', 'wp-sell-services' ),
-			);
-		}
 
 		switch ( $intent->kind ) {
 			case CheckoutIntent::KIND_ORDER:

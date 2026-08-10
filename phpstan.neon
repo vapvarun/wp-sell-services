@@ -20,15 +20,29 @@ parameters:
         - src/functions.php
         - tests/stubs/action-scheduler-stubs.php
     treatPhpDocTypesAsCertain: false
-    reportUnmatchedIgnoredErrors: false
+    reportUnmatchedIgnoredErrors: true
     ignoreErrors:
+        # These four are DEFENSIVE patterns: they cover error shapes that may or
+        # may not occur depending on the analysed tree, so `reportUnmatched:
+        # false` is correct for them. It is deliberately NOT set globally -
+        # `reportUnmatchedIgnoredErrors: true` above must keep reporting stale
+        # *baseline* entries, which is the whole point of enabling it.
         # WordPress dynamic hook parameter counts
-        - '#Function apply_filters invoked with#'
-        - '#Function do_action invoked with#'
-        # Template variables passed via extract()
-        - '#Variable \$\w+ might not be defined#'
+        -
+            message: '#Function apply_filters invoked with#'
+            reportUnmatched: false
+        -
+            message: '#Function do_action invoked with#'
+            reportUnmatched: false
+        # Template variables passed via extract() (templates/ is not in `paths`,
+        # so this only fires if analysis is ever widened to include them)
+        -
+            message: '#Variable \$\w+ might not be defined#'
+            reportUnmatched: false
         # WP functions returning mixed types
-        - '#Cannot access offset .* on mixed#'
+        -
+            message: '#Cannot access offset .* on mixed#'
+            reportUnmatched: false
         # WP_CLI::add_command() registers a command as its side effect; its
         # return value is intentionally unused (phpstan-wordpress cannot model
         # the registration side effect).

@@ -500,8 +500,8 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 								<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
 							</span>
 						</td>
-						<td><?php echo esc_html( wpss_format_price( $order->total, $order->currency ) ); ?></td>
-						<td><?php echo esc_html( wp_date( 'M j, Y', strtotime( $order->created_at ) ) ); ?></td>
+						<td><?php echo esc_html( wpss_format_price( $order->total, (string) $order->currency ) ); ?></td>
+						<td><?php echo esc_html( $order->created_at ? wp_date( 'M j, Y', $order->created_at->getTimestamp() ) : '' ); ?></td>
 						<td>
 							<a href="<?php echo esc_url( wpss_get_order_url( $order->id ) ); ?>" class="button button-small">
 								<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
@@ -572,8 +572,15 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 			return;
 		}
 
+		// Stats live on VendorService, not on the VendorProfile model.
+		//
+		// This read `$vendor->get_stats()`, a method VendorProfile does not have,
+		// so the vendor-dashboard section of [wpss_account] fataled outright for
+		// any vendor that HAS a profile row. It only looked healthy in testing
+		// because a vendor without a profile row makes `$vendor` null and the
+		// ternary short-circuits - so a thin fixture hides the bug entirely.
 		$vendor = wpss_get_vendor( get_current_user_id() );
-		$stats  = $vendor ? $vendor->get_stats() : array();
+		$stats  = $vendor ? ( new \WPSellServices\Services\VendorService() )->get_stats( get_current_user_id() ) : array();
 		?>
 		<h2><?php esc_html_e( 'Vendor Dashboard', 'wp-sell-services' ); ?></h2>
 
@@ -643,7 +650,7 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 						</td>
 						<td>
 							<?php if ( $order->delivery_deadline ) : ?>
-								<?php echo esc_html( wp_date( 'M j, Y', strtotime( $order->delivery_deadline ) ) ); ?>
+								<?php echo esc_html( wp_date( 'M j, Y', $order->delivery_deadline->getTimestamp() ) ); ?>
 							<?php else : ?>
 								-
 							<?php endif; ?>

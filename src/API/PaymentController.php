@@ -435,10 +435,6 @@ class PaymentController extends RestController {
 		// Create a new service order.
 		$order_provider = wpss_get_order_provider();
 
-		if ( ! $order_provider ) {
-			return new WP_Error( 'no_provider', __( 'No order provider available.', 'wp-sell-services' ), array( 'status' => 500 ) );
-		}
-
 		$order = $order_provider->create_order(
 			array(
 				'service_id'     => $service_id,
@@ -536,9 +532,7 @@ class PaymentController extends RestController {
 			}
 
 			$order_provider = wpss_get_order_provider();
-			if ( $order_provider ) {
-				$order_provider->mark_as_paid( $pay_order, $payment_id, 'stripe' );
-			}
+			$order_provider->mark_as_paid( $pay_order, $payment_id, 'stripe' );
 			$order = wpss_get_order( $pay_order );
 
 			return new WP_REST_Response(
@@ -635,9 +629,7 @@ class PaymentController extends RestController {
 
 			$transaction_id = $capture['transaction_id'] ?? $payment_id;
 			$order_provider = wpss_get_order_provider();
-			if ( $order_provider ) {
-				$order_provider->mark_as_paid( $pay_order, $transaction_id, 'paypal' );
-			}
+			$order_provider->mark_as_paid( $pay_order, $transaction_id, 'paypal' );
 			$order = wpss_get_order( $pay_order );
 
 			return new WP_REST_Response(

@@ -1604,18 +1604,20 @@ class Admin {
 	 */
 	private function render_order_detail( int $order_id ): void {
 		global $wpdb;
-		$orders_table        = $wpdb->prefix . 'wpss_orders';
 		$conversations_table = $wpdb->prefix . 'wpss_conversations';
 		$deliveries_table    = $wpdb->prefix . 'wpss_deliveries';
 
-		// Get order.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$order = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT * FROM {$orders_table} WHERE id = %d",
-				$order_id
-			)
-		);
+		// Hydrate the MODEL, never a raw row.
+		//
+		// This screen renders model methods (get_package_name(), get_requirements())
+		// and treats timestamps as objects. A raw $wpdb->get_row() is a plain
+		// stdClass, so `$order->get_package_name()` was a hard fatal that killed
+		// the screen for EVERY order, on every rail - the card renders "There has
+		// been a critical error" and everything below it is lost. $wpdb also
+		// returns every column as a string, which breaks the typed helpers this
+		// screen passes values into. ServiceOrder::find() does the coercion once,
+		// in one place.
+		$order = \WPSellServices\Models\ServiceOrder::find( $order_id );
 
 		if ( ! $order ) {
 			echo '<div class="wrap"><div class="notice notice-error"><p>' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</p></div></div>';
@@ -1724,10 +1726,9 @@ class Admin {
 										<th><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></th>
 										<td>
 										<?php
-										$deadline_timestamp = $order->delivery_deadline instanceof \DateTimeInterface
-											? $order->delivery_deadline->getTimestamp()
-											: strtotime( $order->delivery_deadline );
-										echo esc_html( wp_date( get_option( 'date_format' ), $deadline_timestamp ) );
+										// ServiceOrder::from_db() guarantees a DateTimeImmutable here,
+										// so the old string/object dual handling is now dead.
+										echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) );
 										?>
 										</td>
 									</tr>
@@ -1737,10 +1738,8 @@ class Admin {
 									<td>
 									<?php
 									if ( $order->created_at ) {
-										$created_timestamp = $order->created_at instanceof \DateTimeInterface
-											? $order->created_at->getTimestamp()
-											: strtotime( $order->created_at );
-										echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $created_timestamp ) );
+										// Always a DateTimeImmutable via the model hydrator.
+										echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) );
 									}
 									?>
 									</td>
@@ -1762,7 +1761,7 @@ class Admin {
 										<th><?php esc_html_e( 'WooCommerce Order', 'wp-sell-services' ); ?></th>
 										<td>
 											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-orders&action=edit&id=' . $order->platform_order_id ) ); ?>">
-												#<?php echo esc_html( $order->platform_order_id ); ?>
+												#<?php echo esc_html( (string) $order->platform_order_id ); ?>
 											</a>
 										</td>
 									</tr>
@@ -1774,22 +1773,25 @@ class Admin {
 					</div>
 
 					<!-- Requirements -->
-					<?php if ( ! empty( $order->requirements ) ) : ?>
+					<?php
+					// Requirements live in the wpss_order_requirements table, NOT on
+					// the orders row. This block previously read `$order->requirements`,
+					// a column that does not exist, so the panel never rendered for
+					// any order. get_requirements() is the canonical accessor and is
+					// what the buyer-facing surfaces already use.
+					$wpss_requirements = $order->get_requirements();
+					?>
+					<?php if ( ! empty( $wpss_requirements ) ) : ?>
 						<div class="postbox">
 							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Requirements', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<?php
-								$requirements = maybe_unserialize( $order->requirements );
-								if ( is_array( $requirements ) ) {
-									echo '<dl>';
-									foreach ( $requirements as $key => $value ) {
-										echo '<dt><strong>' . esc_html( $key ) . '</strong></dt>';
-										echo '<dd>' . esc_html( is_array( $value ) ? implode( ', ', $value ) : $value ) . '</dd>';
-									}
-									echo '</dl>';
-								} else {
-									echo wp_kses_post( wpautop( $requirements ) );
+								echo '<dl>';
+								foreach ( $wpss_requirements as $wpss_req_key => $wpss_req_value ) {
+									echo '<dt><strong>' . esc_html( (string) $wpss_req_key ) . '</strong></dt>';
+									echo '<dd>' . esc_html( is_array( $wpss_req_value ) ? implode( ', ', $wpss_req_value ) : (string) $wpss_req_value ) . '</dd>';
 								}
+								echo '</dl>';
 								?>
 							</div>
 						</div>

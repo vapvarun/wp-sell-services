@@ -2,9 +2,18 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # Release branches are named after the version they ship (e.g. `1.5.1`), so
+    # CI must fire on them as well as on main. Without this, every release
+    # branch was developed and tagged with no gate running at all.
+    branches:
+      - main
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - 'feat/**'
+      - 'fix/**'
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - '[0-9]+.[0-9]+.[0-9]+'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,8 +39,8 @@ jobs:
         run: find src/ -name "*.php" -exec php -l {} \; 2>&1 | grep -v "No syntax errors" && exit 1 || echo "All files pass syntax check"
 
 
-  phpstan:
-    name: PHPStan (Level 5)
+  phpcs:
+    name: WPCS
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,8 +54,31 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
+      - name: Run WPCS
+        run: vendor/bin/phpcs --standard=phpcs.xml
+
+  phpstan:
+    # Level comes from phpstan.neon (currently 6). The job name previously said
+    # "Level 5" and was wrong; keep the level out of the name so it cannot drift.
+    name: PHPStan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      # 2G was not enough: the WordPress stubs alone exhaust it before analysis
+      # of src/ completes, and the run dies with "reached configured PHP memory
+      # limit" rather than reporting errors - which reads as a passing gate.
       - name: Run PHPStan
-        run: vendor/bin/phpstan analyse --memory-limit=2G --no-progress
+        run: vendor/bin/phpstan analyse --memory-limit=6G --no-progress
 
   phpunit:
     name: PHPUnit (PHP ${{ matrix.php }} / WP ${{ matrix.wp }})
@@ -98,8 +130,9 @@ jobs:
         env:
           WP_TESTS_DIR: /tmp/wordpress-tests-lib
 
+      # Previously `continue-on-error: true`, which meant a failing test suite
+      # still reported a green build - the tests existed but gated nothing.
       - name: Run PHPUnit (unit tests)
         run: vendor/bin/phpunit --testsuite unit --no-coverage
         env:
           WP_TESTS_DIR: /tmp/wordpress-tests-lib
-        continue-on-error: true

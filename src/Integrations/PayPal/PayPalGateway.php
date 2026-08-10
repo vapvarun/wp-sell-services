@@ -635,13 +635,6 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		$order_provider = wpss_get_order_provider();
 
-		if ( ! $order_provider ) {
-			return array(
-				'success' => false,
-				'error'   => __( 'No order provider available.', 'wp-sell-services' ),
-			);
-		}
-
 		$order = $order_provider->create_order(
 			array(
 				'service_id'     => $service_id,
@@ -907,16 +900,6 @@ class PayPalGateway implements PaymentGatewayInterface {
 			$customer_id    = (int) ( $metadata['customer_id'] ?? get_current_user_id() );
 			$order_provider = wpss_get_order_provider();
 
-			if ( ! $order_provider ) {
-				if ( wp_doing_ajax() ) {
-					wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
-					return;
-				} else {
-					wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
-					exit;
-				}
-			}
-
 			$cart = get_user_meta( $customer_id, '_wpss_cart', true );
 			$cart = is_array( $cart ) ? $cart : array();
 
@@ -976,9 +959,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 			if ( $pay_order && (int) $pay_order->customer_id === get_current_user_id() ) {
 				$order_provider = wpss_get_order_provider();
-				if ( $order_provider ) {
-					$order_provider->mark_as_paid( $pay_order_id, $payment['transaction_id'], 'paypal' );
-				}
+				$order_provider->mark_as_paid( $pay_order_id, $payment['transaction_id'], 'paypal' );
 
 				$redirect_url = wpss_get_order_requirements_url( $pay_order_id );
 
@@ -999,16 +980,6 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		// Create service order.
 		$order_provider = wpss_get_order_provider();
-
-		if ( ! $order_provider ) {
-			if ( wp_doing_ajax() ) {
-				wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
-				return;
-			} else {
-				wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
-				exit;
-			}
-		}
 
 		$order = $order_provider->create_order(
 			array(
@@ -1088,13 +1059,11 @@ class PayPalGateway implements PaymentGatewayInterface {
 		if ( ! empty( $metadata['order_id'] ) ) {
 			$order_provider = wpss_get_order_provider();
 
-			if ( $order_provider ) {
-				$order_provider->mark_as_paid(
-					(int) $metadata['order_id'],
-					$resource['id'],
-					'paypal'
-				);
-			}
+			$order_provider->mark_as_paid(
+				(int) $metadata['order_id'],
+				$resource['id'],
+				'paypal'
+			);
 		}
 
 		return array(

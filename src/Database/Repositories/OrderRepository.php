@@ -467,12 +467,29 @@ class OrderRepository extends AbstractRepository {
 			ARRAY_A
 		);
 
-		return $stats ?: array(
-			'total_orders'         => 0,
-			'completed_orders'     => 0,
-			'active_orders'        => 0,
-			'total_earnings'       => 0,
-			'avg_completion_hours' => 0,
+		if ( ! $stats ) {
+			return array(
+				'total_orders'         => 0,
+				'completed_orders'     => 0,
+				'active_orders'        => 0,
+				'total_earnings'       => 0.0,
+				'avg_completion_hours' => 0.0,
+			);
+		}
+
+		// Cast the aggregates before returning.
+		//
+		// $wpdb hands back SUM()/AVG() as strings (and NULL when no rows match).
+		// Consumers run under strict_types and pass these straight into typed
+		// helpers - wpss_format_price( float $price ) threw "must be of type
+		// float, string given" and fataled the [wpss_account] vendor dashboard.
+		// Cast once here so every consumer gets real numbers.
+		return array(
+			'total_orders'         => (int) ( $stats['total_orders'] ?? 0 ),
+			'completed_orders'     => (int) ( $stats['completed_orders'] ?? 0 ),
+			'active_orders'        => (int) ( $stats['active_orders'] ?? 0 ),
+			'total_earnings'       => (float) ( $stats['total_earnings'] ?? 0 ),
+			'avg_completion_hours' => (float) ( $stats['avg_completion_hours'] ?? 0 ),
 		);
 	}
 

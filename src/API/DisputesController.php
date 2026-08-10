@@ -739,6 +739,18 @@ class DisputesController extends RestController {
 	 */
 	private function prepare_dispute_for_response( object $dispute, bool $detailed = false ): array {
 
+		// DisputeService now returns hydrated Dispute models, so the column
+		// names are the model's (initiated_by -> initiator_id, resolution ->
+		// resolution_type) and timestamps are ?DateTimeImmutable. The wire
+		// format is deliberately unchanged: format the dates back to the same
+		// 'Y-m-d H:i:s' strings clients already receive.
+		$format_date = static function ( $value ): ?string {
+			if ( $value instanceof \DateTimeInterface ) {
+				return $value->format( 'Y-m-d H:i:s' );
+			}
+			return null !== $value && '' !== $value ? (string) $value : null;
+		};
+
 		$data = array(
 			'id'           => (int) $dispute->id,
 			'order_id'     => (int) $dispute->order_id,
@@ -746,20 +758,20 @@ class DisputesController extends RestController {
 			'status'       => $dispute->status,
 			'status_label' => DisputeService::get_statuses()[ $dispute->status ] ?? $dispute->status,
 			'initiated_by' => array(
-				'id'     => (int) $dispute->initiated_by,
-				'name'   => wpss_get_member_display_name( (int) $dispute->initiated_by ),
-				'avatar' => get_avatar_url( $dispute->initiated_by, array( 'size' => 48 ) ),
+				'id'     => (int) $dispute->initiator_id,
+				'name'   => wpss_get_member_display_name( (int) $dispute->initiator_id ),
+				'avatar' => get_avatar_url( $dispute->initiator_id, array( 'size' => 48 ) ),
 			),
-			'created_at'   => $dispute->created_at,
-			'updated_at'   => $dispute->updated_at,
+			'created_at'   => $format_date( $dispute->created_at ),
+			'updated_at'   => $format_date( $dispute->updated_at ),
 		);
 
 		if ( $detailed ) {
 			$data['description']       = $dispute->description;
 			$data['evidence']          = $dispute->evidence ?? array();
-			$data['response_deadline'] = $dispute->response_deadline ?? null;
-			$data['resolved_at']       = $dispute->resolved_at ?? null;
-			$data['resolution']        = $dispute->resolution ?? null;
+			$data['response_deadline'] = $format_date( $dispute->response_deadline );
+			$data['resolved_at']       = $format_date( $dispute->resolved_at );
+			$data['resolution']        = $dispute->resolution_type ?? null;
 			$data['resolution_notes']  = $dispute->resolution_notes ?? null;
 
 			// Get resolver if resolved.

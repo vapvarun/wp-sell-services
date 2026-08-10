@@ -236,10 +236,16 @@ class ServiceOrder {
 	 * refund, less for a partial one — which is what lets the vendor's
 	 * proportional share be computed (see wpss_get_refund_vendor_share()).
 	 *
+	 * Typed ?float, like every other money column on this model. It was ?string
+	 * purely to mirror what $wpdb hands back, which pushed the coercion out to
+	 * every reader - OrderWorkflowManager and CommissionService each re-cast it.
+	 * The NULL sentinel above is unaffected: null stays null and still means
+	 * "full refund"; only a recorded number becomes a float.
+	 *
 	 * @since 1.2.3
-	 * @var string|null
+	 * @var float|null
 	 */
-	public ?string $refunded_amount = null;
+	public ?float $refunded_amount = null;
 
 	/**
 	 * Billing address as it stood when the order was paid.
@@ -586,8 +592,10 @@ class ServiceOrder {
 		$order->payment_status    = $row->payment_status;
 		$order->transaction_id    = $row->transaction_id;
 		// Null-coalesced: rows read before the 1.4.9 migration ran, or from a
-		// partial SELECT, simply have no refund recorded.
-		$order->refunded_amount = $row->refunded_amount ?? null;
+		// partial SELECT, simply have no refund recorded. NULL is load-bearing
+		// (it means "fully refunded" - see wpss_get_order_refunded_amount()), so
+		// it must survive the cast rather than collapse to 0.0.
+		$order->refunded_amount = isset( $row->refunded_amount ) ? (float) $row->refunded_amount : null;
 		// Cast before decode: the column is nullable and this class runs under
 		// strict_types, where json_decode( null ) is a fatal TypeError.
 		$billing                   = json_decode( (string) ( $row->billing_address ?? '' ), true );

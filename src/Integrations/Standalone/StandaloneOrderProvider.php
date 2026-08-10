@@ -471,7 +471,13 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		];
 		$args     = wp_parse_args( $args, $defaults );
 
-		$where = $wpdb->prepare( 'WHERE customer_id = %d AND platform = %s', $user_id, 'standalone' );
+		// No platform filter: this is THE marketplace order list, not a per-rail
+		// view. A third-party plugin (WooCommerce, EDD, ...) is only the payment
+		// processor - the order is ours either way. Filtering by platform meant a
+		// buyer saw only the orders whose processor happened to match the rail the
+		// site is on TODAY, so switching rails made past orders disappear from
+		// their account. `platform` still records which processor took the money.
+		$where = $wpdb->prepare( 'WHERE customer_id = %d', $user_id );
 
 		if ( ! empty( $args['status'] ) ) {
 			$where .= $wpdb->prepare( ' AND status = %s', $args['status'] );
@@ -507,7 +513,8 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		];
 		$args     = wp_parse_args( $args, $defaults );
 
-		$where = $wpdb->prepare( 'WHERE vendor_id = %d AND platform = %s', $vendor_id, 'standalone' );
+		// Same as get_customer_orders(): one marketplace list, no per-rail filter.
+		$where = $wpdb->prepare( 'WHERE vendor_id = %d', $vendor_id );
 
 		if ( ! empty( $args['status'] ) ) {
 			$where .= $wpdb->prepare( ' AND status = %s', $args['status'] );

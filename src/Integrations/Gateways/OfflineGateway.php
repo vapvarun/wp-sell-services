@@ -370,11 +370,6 @@ class OfflineGateway implements PaymentGatewayInterface {
 		if ( $is_multi ) {
 			$order_provider = wpss_get_order_provider();
 
-			if ( ! $order_provider ) {
-				wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
-				return;
-			}
-
 			$customer_id = get_current_user_id();
 			$cart        = get_user_meta( $customer_id, '_wpss_cart', true );
 			$cart        = is_array( $cart ) ? $cart : array();
@@ -465,11 +460,6 @@ class OfflineGateway implements PaymentGatewayInterface {
 		// Get order provider.
 		$order_provider = wpss_get_order_provider();
 
-		if ( ! $order_provider ) {
-			wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
-			return;
-		}
-
 		// Create order (stays in pending_payment status).
 		// subtotal = package price only; addons_total is separate — StandaloneOrderProvider sums them.
 		$order = $order_provider->create_order(
@@ -555,11 +545,6 @@ class OfflineGateway implements PaymentGatewayInterface {
 
 		// Get order provider and mark as paid.
 		$order_provider = wpss_get_order_provider();
-
-		if ( ! $order_provider ) {
-			wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
-			return;
-		}
 
 		$result = $order_provider->mark_as_paid( $order_id, $transaction_id, 'offline' );
 
