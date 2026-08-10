@@ -90,6 +90,14 @@ class ServiceSearch extends AbstractBlock {
 				'type'    => 'string',
 				'default' => 'default',
 			],
+			// Where the form submits. Empty means the service archive.
+			// [wpss_service_search] has always accepted an `action` attribute;
+			// the block hardcoded the archive, so the two surfaces could not
+			// share a renderer until this existed.
+			'action'             => [
+				'type'    => 'string',
+				'default' => '',
+			],
 		];
 	}
 
@@ -136,7 +144,7 @@ class ServiceSearch extends AbstractBlock {
 		$wrapper_classes = [ 'wpss-search-style-' . $attributes['style'] ];
 		?>
 		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns safe markup. ?>>
-			<form class="wpss-search-form" method="get" action="<?php echo esc_url( get_post_type_archive_link( 'wpss_service' ) ); ?>">
+			<form class="wpss-search-form" method="get" action="<?php echo esc_url( ! empty( $attributes['action'] ) ? $attributes['action'] : get_post_type_archive_link( 'wpss_service' ) ); ?>">
 				<div class="wpss-search-fields">
 					<div class="wpss-search-input-wrap">
 						<i data-lucide="search" class="wpss-icon wpss-search-icon" aria-hidden="true"></i>
@@ -152,10 +160,20 @@ class ServiceSearch extends AbstractBlock {
 					<?php if ( $attributes['showCategoryFilter'] ) : ?>
 						<div class="wpss-category-select-wrap">
 							<?php
+							// Top-level only, and bounded.
+							//
+							// This had neither: it fetched EVERY category on the
+							// site, flat, so children appeared as siblings and a
+							// marketplace with a large taxonomy rendered a select
+							// with thousands of options. The shortcode scoped to
+							// parent = 0 but was equally unbounded; now that both
+							// surfaces share this one query, both are fixed.
 							$categories = get_terms(
 								[
 									'taxonomy'   => 'wpss_service_category',
 									'hide_empty' => true,
+									'parent'     => 0,
+									'number'     => (int) apply_filters( 'wpss_search_categories_limit', 100 ),
 								]
 							);
 							?>

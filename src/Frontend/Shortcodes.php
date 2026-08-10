@@ -140,61 +140,36 @@ class Shortcodes {
 
 		$atts = shortcode_atts(
 			array(
-				'placeholder'     => __( 'Search services...', 'wp-sell-services' ),
+				'placeholder'     => '',
 				'show_categories' => 'true',
-				'button_text'     => __( 'Search', 'wp-sell-services' ),
+				'button_text'     => '',
 				'action'          => '',
 			),
 			$atts,
 			'wpss_service_search'
 		);
 
-		$action = $atts['action'] ?: get_post_type_archive_link( 'wpss_service' );
-
-		ob_start();
-		?>
-		<?php
-		// Match the contract ServiceArchiveView::modify_archive_query reads:
-		// `search` (text) and `category` (term_id). The old form posted `s` +
-		// `post_type=wpss_service` + `service_category` (slug), which is WP core
-		// search — the archive query returns early, so moderation filtering,
-		// vacation-vendor exclusion and the category dropdown were all ignored
-		// (Basecamp #10110742943). This is the same contract the block uses.
-		$wpss_current_search = isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public search form.
-		$wpss_current_cat    = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public search form.
-		?>
-		<form class="wpss-search-form" action="<?php echo esc_url( $action ); ?>" method="get">
-			<div class="wpss-search-fields">
-				<input type="text" name="search" class="wpss-search-input" placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>" value="<?php echo esc_attr( $wpss_current_search ); ?>" aria-label="<?php esc_attr_e( 'Search services', 'wp-sell-services' ); ?>">
-
-				<?php if ( 'true' === $atts['show_categories'] ) : ?>
-					<select name="category" class="wpss-search-category" aria-label="<?php esc_attr_e( 'Filter by category', 'wp-sell-services' ); ?>">
-						<option value=""><?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?></option>
-						<?php
-						$categories = get_terms(
-							array(
-								'taxonomy'   => 'wpss_service_category',
-								'hide_empty' => true,
-								'parent'     => 0,
-							)
-						);
-
-						if ( ! is_wp_error( $categories ) ) :
-							foreach ( $categories as $category ) :
-								?>
-								<option value="<?php echo esc_attr( $category->term_id ); ?>" <?php selected( $wpss_current_cat, $category->term_id ); ?>><?php echo esc_html( $category->name ); ?></option>
-								<?php
-							endforeach;
-						endif;
-						?>
-					</select>
-				<?php endif; ?>
-
-				<button type="submit" class="wpss-search-button"><?php echo esc_html( $atts['button_text'] ); ?></button>
-			</div>
-		</form>
-		<?php
-		return ob_get_clean();
+		// ONE search form.
+		//
+		// The shortcode and the wpss/service-search block rendered two forms
+		// with the same field contract (name="search", name="category") but
+		// different class vocabularies - wpss-search-category here against
+		// wpss-category-select-wrap / wpss-category-select in the block - so
+		// the stylesheet had to carry both, and the block's search icon and
+		// input wrapper never appeared on the shortcode. Delegating leaves one
+		// markup to style and one place to change.
+		//
+		// Empty placeholder/button_text are passed through deliberately: the
+		// block substitutes its own translated defaults, so the copy is defined
+		// once rather than differing per surface as it did.
+		return ( new \WPSellServices\Blocks\ServiceSearch() )->render(
+			array(
+				'placeholder'        => (string) $atts['placeholder'],
+				'buttonText'         => (string) $atts['button_text'],
+				'showCategoryFilter' => filter_var( $atts['show_categories'], FILTER_VALIDATE_BOOLEAN ),
+				'action'             => (string) $atts['action'],
+			)
+		);
 	}
 
 	/**

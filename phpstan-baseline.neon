@@ -2139,12 +2139,6 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
 			identifier: argument.type
-			count: 1
-			path: src/Frontend/Shortcodes.php
-
-		-
-			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
-			identifier: argument.type
 			count: 4
 			path: src/Frontend/SingleServiceView.php
 
