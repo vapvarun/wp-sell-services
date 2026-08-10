@@ -3771,3 +3771,97 @@ body.wpss-modal-active {
 @media ( max-width: 640px ) {
 	.wpss-fullwidth-page { padding: var( --wpss-space-4, 16px ) var( --wpss-space-3, 12px ); }
 }
+
+/* ==========================================================================
+   Vendors grid ([wpss_vendors] / [wpss_top_vendors])
+   ==========================================================================
+   The grid container had NO styles at all. Both shortcodes fataled before
+   1.5.1, so the layout was never exercised and the missing CSS never showed:
+   the cards simply stacked full width and the wpss-columns-N class did
+   nothing. The card itself is templates/partials/vendor-card.php, whose rules
+   live in single-service.css - a stylesheet only enqueued on single service
+   pages, so on a page carrying the shortcode the card arrives unstyled.
+
+   Everything here is scoped under .wpss-vendors-grid so it cannot alter the
+   single-service sidebar card. Extracting the shared card rules into their own
+   stylesheet, enqueued by both surfaces, is the proper follow-up.
+   ========================================================================== */
+
+.wpss-vendors-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: var(--wpss-space-5, 24px);
+	align-items: stretch;
+}
+
+.wpss-vendors-grid.wpss-columns-2 { grid-template-columns: repeat(2, 1fr); }
+.wpss-vendors-grid.wpss-columns-3 { grid-template-columns: repeat(3, 1fr); }
+.wpss-vendors-grid.wpss-columns-4 { grid-template-columns: repeat(4, 1fr); }
+
+.wpss-vendors-grid .wpss-vendor-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wpss-space-3, 12px);
+	height: 100%;
+	padding: var(--wpss-space-4, 16px);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius-lg, 12px);
+	background: var(--wpss-background, #fff);
+}
+
+.wpss-vendors-grid .wpss-vendor-header {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-3, 12px);
+}
+
+.wpss-vendors-grid .wpss-vendor-avatar {
+	width: 48px;
+	height: 48px;
+	border-radius: var(--wpss-radius-full, 999px);
+}
+
+/* The stat block is a headline figure in the sidebar; in a tile it has to sit
+   inline or it dwarfs the card. */
+.wpss-vendors-grid .wpss-vendor-stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--wpss-space-3, 12px);
+	font-size: 0.875rem;
+}
+
+.wpss-vendors-grid .wpss-vendor-details {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: 0.8125rem;
+}
+
+.wpss-vendors-grid .wpss-vendor-details li {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 8px);
+}
+
+/* Push the action to the bottom so every tile's button lines up. */
+.wpss-vendors-grid .wpss-vendor-actions {
+	margin-block-start: auto;
+}
+
+@media (max-width: 782px) {
+	.wpss-vendors-grid,
+	.wpss-vendors-grid.wpss-columns-2,
+	.wpss-vendors-grid.wpss-columns-3,
+	.wpss-vendors-grid.wpss-columns-4 {
+		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	}
+}
+
+@media (max-width: 480px) {
+	.wpss-vendors-grid,
+	.wpss-vendors-grid.wpss-columns-2,
+	.wpss-vendors-grid.wpss-columns-3,
+	.wpss-vendors-grid.wpss-columns-4 {
+		grid-template-columns: 1fr;
+	}
+}

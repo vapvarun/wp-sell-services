@@ -370,7 +370,19 @@ class Shortcodes {
 			<?php
 			if ( ! empty( $vendors ) ) :
 				foreach ( $vendors as $vendor ) :
-					$this->render_vendor_card( $vendor );
+					// ONE vendor card, the theme-overridable partial.
+					//
+					// This used to call a private render_vendor_card() that
+					// duplicated templates/partials/vendor-card.php - same class
+					// vocabulary, different markup, and neither fired the card's
+					// hooks or honoured a theme override. The partial derives
+					// everything it needs from the vendor id, so nothing has to
+					// be reshaped for it here.
+					wpss_get_template_part(
+						'partials/vendor-card',
+						'',
+						array( 'vendor_id' => (int) $vendor->user_id )
+					);
 				endforeach;
 			else :
 				?>
@@ -423,7 +435,7 @@ class Shortcodes {
 		}
 
 		$vendor_service = new VendorService();
-		$profile        = $vendor_service->get_vendor_profile( $vendor_id );
+		$profile        = $vendor_service->get_profile( $vendor_id );
 
 		if ( ! $profile ) {
 			return '<p class="wpss-error">' . esc_html__( 'Vendor not found.', 'wp-sell-services' ) . '</p>';
@@ -936,37 +948,6 @@ class Shortcodes {
 	}
 
 	/**
-	 * Render vendor card.
-	 *
-	 * @param array $vendor Vendor data.
-	 * @return void
-	 */
-	private function render_vendor_card( array $vendor ): void {
-		?>
-		<div class="wpss-vendor-card">
-			<div class="wpss-vendor-avatar">
-				<?php echo get_avatar( $vendor['id'], 80 ); ?>
-			</div>
-			<div class="wpss-vendor-info">
-				<h3 class="wpss-vendor-name">
-					<a href="<?php echo esc_url( wpss_get_vendor_url( $vendor['id'] ) ); ?>">
-						<?php echo esc_html( $vendor['display_name'] ); ?>
-					</a>
-				</h3>
-				<?php if ( ! empty( $vendor['tagline'] ) ) : ?>
-					<p class="wpss-vendor-tagline"><?php echo esc_html( $vendor['tagline'] ); ?></p>
-				<?php endif; ?>
-				<div class="wpss-vendor-meta">
-					<?php if ( $vendor['rating'] ) : ?>
-						<span class="wpss-vendor-rating"><?php echo esc_html( number_format( (float) $vendor['rating'], 1 ) ); ?> ★ (<?php echo esc_html( $vendor['review_count'] ); ?>)</span>
-					<?php endif; ?>
-				</div>
-			</div>
-		</div>
-		<?php
-	}
-
-	/**
 	 * Render request card.
 	 *
 	 * @param object $request Request data.
@@ -1015,23 +996,35 @@ class Shortcodes {
 	/**
 	 * Render vendor profile fallback.
 	 *
-	 * @param array $profile Vendor profile data.
-	 * @param int   $vendor_id Vendor ID.
+	 * Takes the profile ROW as VendorService::get_profile() returns it - an
+	 * object. It previously declared `array`, matching a get_vendor_profile()
+	 * method that never existed, so this could only ever have been reached by
+	 * code that already fataled one line earlier.
+	 *
+	 * `display_name` is not a column on wpss_vendor_profiles; it belongs to the
+	 * WP user, so it is resolved through the shared accessor rather than read
+	 * off the row.
+	 *
+	 * @param object $profile   Vendor profile row.
+	 * @param int    $vendor_id Vendor ID.
 	 * @return void
 	 */
-	private function render_vendor_profile_fallback( array $profile, int $vendor_id ): void {
+	private function render_vendor_profile_fallback( object $profile, int $vendor_id ): void {
+		$display_name = wpss_get_member_display_name( $vendor_id );
+		$tagline      = (string) ( $profile->tagline ?? '' );
+		$bio          = (string) ( $profile->bio ?? '' );
 		?>
 		<div class="wpss-app-shell"><div class="wpss-app-shell__container">
 		<div class="wpss-vendor-profile">
 			<div class="wpss-vendor-header">
 				<?php echo get_avatar( $vendor_id, 120 ); ?>
-				<h1><?php echo esc_html( $profile['display_name'] ); ?></h1>
-				<?php if ( ! empty( $profile['tagline'] ) ) : ?>
-					<p class="wpss-vendor-tagline"><?php echo esc_html( $profile['tagline'] ); ?></p>
+				<h1><?php echo esc_html( $display_name ); ?></h1>
+				<?php if ( '' !== $tagline ) : ?>
+					<p class="wpss-vendor-tagline"><?php echo esc_html( $tagline ); ?></p>
 				<?php endif; ?>
 			</div>
-			<?php if ( ! empty( $profile['bio'] ) ) : ?>
-				<div class="wpss-vendor-bio"><?php echo wp_kses_post( $profile['bio'] ); ?></div>
+			<?php if ( '' !== $bio ) : ?>
+				<div class="wpss-vendor-bio"><?php echo wp_kses_post( $bio ); ?></div>
 			<?php endif; ?>
 		</div>
 		</div></div>

@@ -589,6 +589,40 @@ class VendorService {
 	}
 
 	/**
+	 * List vendor profiles.
+	 *
+	 * Backs the [wpss_vendors] and [wpss_top_vendors] shortcodes, which called
+	 * this method before it existed - every page carrying either one fataled
+	 * with "Call to undefined method VendorService::get_all()".
+	 *
+	 * `orderby` is translated from the display vocabulary the shortcodes use
+	 * ("rating", "orders") to the real column names, because the repository
+	 * validates orderby against the table's own columns and silently falls back
+	 * to the primary key for anything it does not recognise - which would have
+	 * ordered a "top vendors" grid by row id.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param array<string, mixed> $args Query arguments (limit, offset, orderby, order).
+	 * @return array<object> Array of vendor profile rows.
+	 */
+	public function get_all( array $args = array() ): array {
+		$orderby_map = array(
+			'rating'  => 'avg_rating',
+			'reviews' => 'total_reviews',
+			'orders'  => 'completed_orders',
+			'sales'   => 'completed_orders',
+			'recent'  => 'created_at',
+		);
+
+		$orderby = (string) ( $args['orderby'] ?? 'avg_rating' );
+
+		$args['orderby'] = $orderby_map[ $orderby ] ?? $orderby;
+
+		return $this->profile_repo->get_all( $args );
+	}
+
+	/**
 	 * Get top vendors.
 	 *
 	 * @param int $limit Number of vendors.

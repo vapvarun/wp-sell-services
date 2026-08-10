@@ -2053,18 +2053,6 @@ parameters:
 			path: src/Frontend/ServiceWizard.php
 
 		-
-			message: '#^Call to an undefined method WPSellServices\\Services\\VendorService\:\:get_all\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Frontend/Shortcodes.php
-
-		-
-			message: '#^Call to an undefined method WPSellServices\\Services\\VendorService\:\:get_vendor_profile\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Frontend/Shortcodes.php
-
-		-
 			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:buyer_requests\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -2108,18 +2096,6 @@ parameters:
 
 		-
 			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:register_form\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Frontend/Shortcodes.php
-
-		-
-			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:render_vendor_card\(\) has parameter \$vendor with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Frontend/Shortcodes.php
-
-		-
-			message: '#^Method WPSellServices\\Frontend\\Shortcodes\:\:render_vendor_profile_fallback\(\) has parameter \$profile with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Frontend/Shortcodes.php
