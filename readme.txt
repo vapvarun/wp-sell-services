@@ -265,13 +265,34 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 = 1.5.1 - August 2026 =
 
-Shoppers see prices in their own currency, and checkout says plainly what they will be charged.
+Fixes for screens that could white-screen or silently do nothing, plus a large cut in the queries the marketplace pages run.
 
+* New      - [wpss_my_orders] is paginated. A buyer with more than one page of orders can now reach the rest of them.
+* New      - [wpss_seller_card] renders a single seller card, so classic-editor and page-builder sites can place one without the block.
+* New      - Buyer request blocks accept budget bounds, matching what the shortcode always supported.
 * New      - Catalog prices carry their base amount in the markup, so a display-currency add-on can show an approximate price in the shopper's own currency without changing what is charged.
 * New      - The order modal total now carries the same information, so the estimate follows the price as extras and quantity change.
 * New      - New action wpss_payable_total_after fires wherever a payable total is shown, on both the cart summary and the checkout, so an add-on can state the charge currency at the last screen before payment.
+* Improve  - Vendor and service grids run far fewer queries. A vendor grid dropped from 49 queries to 9 and a service grid from 70 to 30, with identical output.
+* Improve  - Category choosers no longer load every category on the site. The limit is 200 and filterable with wpss_category_terms_limit.
+* Improve  - Shortcodes and blocks that show the same thing now share one renderer and one template, so a theme override applies to both and they cannot drift apart again.
 * Improve  - Prices are marked up identically for every visitor, so a page cache can never serve one shopper's currency to another.
-* Fix      - Docblocks across the plugin cited @since versions that were never released, which made them useless for judging when a function or hook became available; every one now names the version it actually shipped in.
+* Fix      - The dashboard Disputes section white-screened for everyone, in both the list and the detail view. It now renders.
+* Fix      - An offline order could not be marked as paid from the admin. The control existed only on a screen that was never reachable.
+* Fix      - The admin order detail screen fataled for every order.
+* Fix      - Cancelling a dispute returned an error and left the order stuck as disputed. The cancel now completes or rolls back as one unit.
+* Fix      - [wpss_vendors], [wpss_top_vendors], [wpss_vendor_profile] and the vendor sections of [wpss_account] fataled instead of rendering.
+* Fix      - The buyer requests block listed expired requests that the shortcode correctly hid, so sellers could pitch for closed work.
+* Fix      - columns="" was ignored by the services and categories grids, which always rendered a single stacked column.
+* Fix      - Category cards and the search form rendered differently depending on whether the block or the shortcode was used.
+* Fix      - A dispute opened automatically for a late order stored a translated label where a reason code belongs, which left non-English sites with an untranslatable reason.
+* Fix      - The disputes table was unreadable on phones, with values pushed to the right against blank labels.
+* Fix      - Demo data sized vendor withdrawals against earnings still inside the clearance window, leaving negative available balances, and re-running the seeder credited every order again.
+* Fix      - Docblocks across the plugin cited @since versions that were never released; every one now names the version it actually shipped in.
+* Dev      - Helper functions moved from one 6,187-line file into eleven files grouped by domain. No function was renamed or resignatured, so no call site changes.
+* Dev      - wpss_admin_order_actions now fires on the order screen admins actually use.
+* Dev      - New wpss_category_card_link and wpss_category_card_classes filters, and a category-card template that themes can override.
+* Dev      - Translation templates regenerated for both plugins, and ambiguous translator comments corrected.
 
 = 1.4.0 - August 2026 =
 
