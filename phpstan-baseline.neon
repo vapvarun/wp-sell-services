@@ -2599,42 +2599,6 @@ parameters:
 			path: src/Integrations/PayPal/PayPalGateway.php
 
 		-
-			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_capture_completed\(\) has parameter \$resource with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Integrations/PayPal/PayPalGateway.php
-
-		-
-			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_capture_completed\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Integrations/PayPal/PayPalGateway.php
-
-		-
-			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_order_approved\(\) has parameter \$resource with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Integrations/PayPal/PayPalGateway.php
-
-		-
-			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_order_approved\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Integrations/PayPal/PayPalGateway.php
-
-		-
-			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_refund_completed\(\) has parameter \$resource with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Integrations/PayPal/PayPalGateway.php
-
-		-
-			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_refund_completed\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Integrations/PayPal/PayPalGateway.php
-
-		-
 			message: '#^Method WPSellServices\\Integrations\\PayPal\\PayPalGateway\:\:handle_webhook\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

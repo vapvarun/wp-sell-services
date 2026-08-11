@@ -1035,8 +1035,8 @@ class PayPalGateway implements PaymentGatewayInterface {
 	/**
 	 * Handle order approved webhook.
 	 *
-	 * @param array $resource_data Order resource.
-	 * @return array
+	 * @param array<string, mixed> $resource_data Order resource from the webhook payload.
+	 * @return array{success: bool, message: string}
 	 */
 	private function handle_order_approved( array $resource_data ): array {
 		// Order approved, ready to capture - usually handled client-side.
@@ -1049,8 +1049,8 @@ class PayPalGateway implements PaymentGatewayInterface {
 	/**
 	 * Handle capture completed webhook.
 	 *
-	 * @param array $resource_data Capture resource.
-	 * @return array
+	 * @param array<string, mixed> $resource_data Capture resource from the webhook payload.
+	 * @return array{success: bool, message: string}
 	 */
 	private function handle_capture_completed( array $resource_data ): array {
 		$custom_id = $resource_data['custom_id'] ?? '';
@@ -1075,15 +1075,15 @@ class PayPalGateway implements PaymentGatewayInterface {
 	/**
 	 * Handle refund completed webhook.
 	 *
-	 * @param array $resource_data Refund resource.
-	 * @return array
+	 * @param array<string, mixed> $resource_data Refund resource from the webhook payload.
+	 * @return array{success: bool, message: string}
 	 */
 	private function handle_refund_completed( array $resource_data ): array {
 		/**
 		 * Fires when a PayPal refund is processed.
 		 *
 		 * @param string $capture_id Capture ID.
-		 * @param array  $resource_data   Refund resource.
+		 * @param array  $resource_data Refund resource.
 		 */
 		do_action( 'wpss_paypal_refund_processed', $resource_data['links'][0]['href'] ?? '', $resource_data );
 
