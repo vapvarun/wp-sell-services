@@ -318,7 +318,7 @@ class NotificationService {
 				$order_number
 			)
 			->line(
-				/* translators: %s: order amount */
+				/* translators: %s: formatted monetary amount */
 				__( 'Amount: %s', 'wp-sell-services' ),
 				$amount
 			)
@@ -357,7 +357,7 @@ class NotificationService {
 				$order_number
 			)
 			->line(
-				/* translators: %s: order amount */
+				/* translators: %s: formatted monetary amount */
 				__( 'Amount: %s', 'wp-sell-services' ),
 				$amount
 			)

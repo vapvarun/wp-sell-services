@@ -37,6 +37,7 @@ printf( esc_html__( 'Order: #%s', 'wp-sell-services' ), esc_html( $order->order_
 echo "\n";
 printf( esc_html__( 'Service: %s', 'wp-sell-services' ), esc_html( get_the_title( $order->service_id ) ) );
 echo "\n";
+/* translators: %s: package tier name, e.g. Basic / Standard / Premium */
 printf( esc_html__( 'Package: %s', 'wp-sell-services' ), esc_html( ucfirst( $order->package_type ) ) );
 echo "\n";
 printf( esc_html__( 'Customer: %s', 'wp-sell-services' ), esc_html( $customer_name ) );

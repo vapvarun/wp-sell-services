@@ -32,7 +32,7 @@ echo "\n";
 /* translators: %s: vendor email address. */
 printf( esc_html__( 'Email: %s', 'wp-sell-services' ), esc_html( $vendor ? $vendor->user_email : '' ) );
 echo "\n";
-/* translators: %s: payout amount. */
+/* translators: %s: formatted monetary amount */
 printf( esc_html__( 'Amount: %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $amount ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_strip_all_tags() is safe here; esc_html() would encode entities into a plain-text body.
 echo "\n----------\n\n";
 
