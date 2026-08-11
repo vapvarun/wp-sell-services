@@ -847,12 +847,6 @@ parameters:
 			path: src/Blocks/ServiceCategories.php
 
 		-
-			message: '#^Method WPSellServices\\Blocks\\ServiceCategories\:\:render_category_card\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Blocks/ServiceCategories.php
-
-		-
 			message: '#^Method WPSellServices\\Blocks\\ServiceGrid\:\:get_attributes\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
