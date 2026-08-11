@@ -452,16 +452,17 @@ function wpss_get_service_checkout_url( int $service_id, int $package_id = 0, ar
 	// Try the active e-commerce adapter's checkout URL builder first.
 	$adapter = wpss_get_ecommerce_adapter();
 	if ( $adapter ) {
-		$checkout_provider = $adapter->get_checkout_provider();
-		if ( $checkout_provider ) {
-			return $checkout_provider->get_checkout_url(
-				$service_id,
-				array(
-					'package_id' => $package_id,
-					'addons'     => $addons,
-				)
-			);
-		}
+		// No null check on the provider: EcommerceAdapterInterface and all five
+		// implementations declare get_checkout_provider(): CheckoutProviderInterface,
+		// so PHP would fatal before it could return null. The guard that used to
+		// be here was unreachable.
+		return $adapter->get_checkout_provider()->get_checkout_url(
+			$service_id,
+			array(
+				'package_id' => $package_id,
+				'addons'     => $addons,
+			)
+		);
 	}
 
 	// Fallback: use mapped checkout page with query args.
@@ -493,21 +494,22 @@ function wpss_get_checkout_base_url(): string {
 	// If a non-standalone adapter is active, use its checkout URL.
 	$adapter = wpss_get_ecommerce_adapter();
 	if ( $adapter && 'standalone' !== $adapter->get_id() ) {
-		$checkout_provider = $adapter->get_checkout_provider();
-		if ( $checkout_provider ) {
-			// Pass the service id explicitly. 0 means "no particular service",
-			// which is exactly what a BASE checkout URL is.
-			//
-			// This used to call get_checkout_url() with no arguments.
-			// CheckoutProviderInterface declares get_checkout_url( int $service_id, … )
-			// with NO default, and only WCCheckoutProvider widened it with one -
-			// so omitting the argument worked on WooCommerce and threw
-			// ArgumentCountError on EDD, FluentCart and SureCart. This function
-			// feeds the cart, every pay URL and several templates, so those
-			// three rails fataled on their own checkout while Woo, the rail
-			// everybody tests, stayed green.
-			return $checkout_provider->get_checkout_url( 0 );
-		}
+		// Pass the service id explicitly. 0 means "no particular service",
+		// which is exactly what a BASE checkout URL is.
+		//
+		// This used to call get_checkout_url() with no arguments.
+		// CheckoutProviderInterface declares get_checkout_url( int $service_id, … )
+		// with NO default, and only WCCheckoutProvider widened it with one -
+		// so omitting the argument worked on WooCommerce and threw
+		// ArgumentCountError on EDD, FluentCart and SureCart. This function
+		// feeds the cart, every pay URL and several templates, so those
+		// three rails fataled on their own checkout while Woo, the rail
+		// everybody tests, stayed green.
+		//
+		// The provider is never null - the interface and all five adapters
+		// declare a non-nullable CheckoutProviderInterface return - so the
+		// unreachable guard that used to wrap this is gone.
+		return $adapter->get_checkout_provider()->get_checkout_url( 0 );
 	}
 
 	$url = wpss_get_page_url( 'checkout' );
