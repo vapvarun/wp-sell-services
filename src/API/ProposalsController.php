@@ -458,6 +458,7 @@ class ProposalsController extends RestController {
 		$data = [];
 
 		if ( $request->get_param( 'cover_letter' ) !== null ) {
+			// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Explains the field-name mapping; not dead code.
 			// ProposalService::update() reads 'description' (matches submit()).
 			$data['description'] = $request->get_param( 'cover_letter' );
 		}

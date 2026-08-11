@@ -3378,7 +3378,10 @@ class AjaxHandlers {
 			}
 		}
 
-		fclose( $output );
+		// WP_Filesystem abstracts FILES; this is the php://output stream opened
+		// above to stream a CSV straight to the browser, which it has no
+		// equivalent for. fclose() is the only way to close it.
+		fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- php://output stream, not a filesystem path.
 		exit;
 	}
 

@@ -41,7 +41,7 @@ if ( ! class_exists( 'WP_CLI' ) ) {
 		 * @param bool   $exit    Whether to exit (default true).
 		 * @return void
 		 */
-		public static function error( string $message, bool $exit = true ): void {} // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		public static function error( string $message, bool $exit = true ): void {} // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found, Universal.NamingConventions.NoReservedKeywordParameterNames.exitFound -- Mirrors the real WP_CLI::error() signature.
 
 		/**
 		 * Display a success message.
@@ -86,7 +86,7 @@ if ( ! class_exists( 'WP_CLI' ) ) {
 		 * @param string $string String with color tokens.
 		 * @return string
 		 */
-		public static function colorize( string $string ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		public static function colorize( string $string ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found, Universal.NamingConventions.NoReservedKeywordParameterNames.stringFound -- Mirrors the real WP_CLI::colorize() signature.
 			return $string;
 		}
 

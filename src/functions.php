@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
  * @param mixed  $default Default value if option doesn't exist.
  * @return mixed
  */
-function wpss_get_option( string $group, string $key, $default = null ) {
+function wpss_get_option( string $group, string $key, $default = null ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound -- Public documented helper; renaming breaks `default:` named-argument callers.
 	$option_name = 'wpss_' . $group;
 	$options     = get_option( $option_name, array() );
 
@@ -3304,11 +3304,13 @@ function wpss_get_gallery_ids( $raw ): array {
 		return array();
 	}
 
+	// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Documents the meta shape this branch handles; not dead code.
 	// ServiceWizard format: ['images' => [...], 'video' => '...'].
 	if ( isset( $raw['images'] ) && is_array( $raw['images'] ) ) {
 		return array_values( array_filter( array_map( 'absint', $raw['images'] ) ) );
 	}
 
+	// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Documents the meta shape this branch handles; not dead code.
 	// GalleryService format: [['type' => 'image', 'attachment_id' => 123], ...].
 	if ( isset( $raw[0] ) && is_array( $raw[0] ) && isset( $raw[0]['type'] ) ) {
 		$ids = array();
@@ -3320,6 +3322,7 @@ function wpss_get_gallery_ids( $raw ): array {
 		return $ids;
 	}
 
+	// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Documents the meta shape this branch handles; not dead code.
 	// Legacy flat array of IDs: [123, 456, ...].
 	return array_values( array_filter( array_map( 'absint', $raw ) ) );
 }
@@ -3337,11 +3340,13 @@ function wpss_get_gallery_video_url( $raw ): string {
 		return '';
 	}
 
+	// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Documents the meta shape this branch handles; not dead code.
 	// ServiceWizard format: ['images' => [...], 'video' => '...'].
 	if ( isset( $raw['video'] ) && is_string( $raw['video'] ) ) {
 		return $raw['video'];
 	}
 
+	// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Documents the meta shape this branch handles; not dead code.
 	// GalleryService format: [['type' => 'video', 'url' => '...'], ...].
 	if ( isset( $raw[0] ) && is_array( $raw[0] ) ) {
 		foreach ( $raw as $item ) {

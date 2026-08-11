@@ -3453,7 +3453,7 @@ class Settings {
 	 * @param mixed  $default Default value.
 	 * @return mixed Setting value.
 	 */
-	public static function get( string $group, string $key, mixed $default = null ): mixed {
+	public static function get( string $group, string $key, mixed $default = null ): mixed { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound -- Public API; renaming is a named-argument BC break.
 		$options = get_option( 'wpss_' . $group, array() );
 		return $options[ $key ] ?? $default;
 	}

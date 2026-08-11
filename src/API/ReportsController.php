@@ -442,7 +442,7 @@ class ReportsController extends RestController {
 	 * @return array<string,mixed>
 	 */
 	private function prepare_report( $row ): array {
-		$reasons  = wpss_get_report_reasons();
+		$reasons = wpss_get_report_reasons();
 
 		return array(
 			'id'             => (int) $row->id,

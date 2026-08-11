@@ -54,23 +54,17 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
-      # Errors block; warnings do not. Matches the Pro repo's job exactly.
-      # The tree carries ~300 long-standing warnings (slow-query notices on
-      # meta_query/tax_query, unused parameters); failing on those would mean
-      # the gate is red from the first commit and gets ignored, which is how
-      # WPCS came to be missing from this workflow in the first place.
-      - name: Run WPCS
-        run: vendor/bin/phpcs --standard=phpcs.xml --report=full --report-file=phpcs-report.txt || true
-
-      - name: Check for errors (warnings allowed)
-        run: |
-          ERROR_COUNT=$(vendor/bin/phpcs --standard=phpcs.xml --report=summary 2>&1 | grep -oE '[0-9]+(?= ERROR)' | head -1 || echo "0")
-          if [ "${ERROR_COUNT:-0}" -gt 0 ] 2>/dev/null; then
-            echo "WPCS found $ERROR_COUNT error(s). Fix before merging."
-            vendor/bin/phpcs --standard=phpcs.xml
-            exit 1
-          fi
-          echo "WPCS passed (0 errors)"
+      # The tree is at zero errors AND zero warnings. phpcs.xml no longer sets
+      # ignore_warnings_on_exit, so phpcs itself exits non-zero on either and
+      # this single step is the whole gate - no summary-parsing needed.
+      #
+      # The earlier "errors only" policy existed because the tree carried ~300
+      # long-standing warnings and a gate that is red from day one gets ignored.
+      # Those were worked through: WP-idiom families are excluded in phpcs.xml
+      # with reasoning, individually-justified ones carry a site-local
+      # phpcs:ignore, and the real ones were fixed. A warning now is a NEW one.
+      - name: Run WPCS (fails on errors and warnings)
+        run: vendor/bin/phpcs --standard=phpcs.xml --report=full
 
   phpstan:
     # Level comes from phpstan.neon (currently 6). The job name previously said

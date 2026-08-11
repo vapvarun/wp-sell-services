@@ -1035,10 +1035,10 @@ class PayPalGateway implements PaymentGatewayInterface {
 	/**
 	 * Handle order approved webhook.
 	 *
-	 * @param array $resource Order resource.
+	 * @param array $resource_data Order resource.
 	 * @return array
 	 */
-	private function handle_order_approved( array $resource ): array {
+	private function handle_order_approved( array $resource_data ): array {
 		// Order approved, ready to capture - usually handled client-side.
 		return array(
 			'success' => true,
@@ -1049,11 +1049,11 @@ class PayPalGateway implements PaymentGatewayInterface {
 	/**
 	 * Handle capture completed webhook.
 	 *
-	 * @param array $resource Capture resource.
+	 * @param array $resource_data Capture resource.
 	 * @return array
 	 */
-	private function handle_capture_completed( array $resource ): array {
-		$custom_id = $resource['custom_id'] ?? '';
+	private function handle_capture_completed( array $resource_data ): array {
+		$custom_id = $resource_data['custom_id'] ?? '';
 		$metadata  = json_decode( $custom_id, true ) ?: array();
 
 		if ( ! empty( $metadata['order_id'] ) ) {
@@ -1061,7 +1061,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 			$order_provider->mark_as_paid(
 				(int) $metadata['order_id'],
-				$resource['id'],
+				$resource_data['id'],
 				'paypal'
 			);
 		}
@@ -1075,17 +1075,17 @@ class PayPalGateway implements PaymentGatewayInterface {
 	/**
 	 * Handle refund completed webhook.
 	 *
-	 * @param array $resource Refund resource.
+	 * @param array $resource_data Refund resource.
 	 * @return array
 	 */
-	private function handle_refund_completed( array $resource ): array {
+	private function handle_refund_completed( array $resource_data ): array {
 		/**
 		 * Fires when a PayPal refund is processed.
 		 *
 		 * @param string $capture_id Capture ID.
-		 * @param array  $resource   Refund resource.
+		 * @param array  $resource_data   Refund resource.
 		 */
-		do_action( 'wpss_paypal_refund_processed', $resource['links'][0]['href'] ?? '', $resource );
+		do_action( 'wpss_paypal_refund_processed', $resource_data['links'][0]['href'] ?? '', $resource_data );
 
 		return array(
 			'success' => true,

@@ -1349,11 +1349,11 @@ class MarketplaceSeeder {
 	 * @param string $seed   Deterministic seed that varies which bundled file is picked.
 	 * @param int    $width  Intended width (square => avatar pool; used for the placeholder fallback).
 	 * @param int    $height Intended height (used for the placeholder fallback).
-	 * @param int    $parent Parent post ID to attach to (0 for none).
+	 * @param int    $parent_id Parent post ID to attach to (0 for none).
 	 * @param string $label  Human label used for alt text + placeholder fallback.
 	 * @return int Attachment ID, or 0 when images are disabled or all paths fail.
 	 */
-	private function sideload_image( string $seed, int $width, int $height, int $parent, string $label ): int {
+	private function sideload_image( string $seed, int $width, int $height, int $parent_id, string $label ): int {
 		if ( ! $this->seed_images ) {
 			return 0;
 		}
@@ -1375,7 +1375,7 @@ class MarketplaceSeeder {
 					'name'     => sanitize_file_name( basename( $source ) ),
 					'tmp_name' => $tmp,
 				);
-				$attachment_id = media_handle_sideload( $file, $parent, $label );
+				$attachment_id = media_handle_sideload( $file, $parent_id, $label );
 				if ( is_wp_error( $attachment_id ) ) {
 					if ( file_exists( $tmp ) ) {
 						wp_delete_file( $tmp );
@@ -1387,7 +1387,7 @@ class MarketplaceSeeder {
 		}
 
 		// Bundled media missing - guarantee an image via a generated placeholder.
-		return $this->generate_placeholder_image( $label, $width, $height, $parent );
+		return $this->generate_placeholder_image( $label, $width, $height, $parent_id );
 	}
 
 	/**
@@ -1399,10 +1399,10 @@ class MarketplaceSeeder {
 	 * @param string $label  Label drawn on the placeholder + used as alt text.
 	 * @param int    $width  Image width in pixels.
 	 * @param int    $height Image height in pixels.
-	 * @param int    $parent Parent post ID to attach to (0 for none).
+	 * @param int    $parent_id Parent post ID to attach to (0 for none).
 	 * @return int Attachment ID, or 0 when GD is unavailable / insertion fails.
 	 */
-	private function generate_placeholder_image( string $label, int $width, int $height, int $parent ): int {
+	private function generate_placeholder_image( string $label, int $width, int $height, int $parent_id ): int {
 		if ( ! function_exists( 'imagecreatetruecolor' ) ) {
 			return 0;
 		}
@@ -1436,7 +1436,7 @@ class MarketplaceSeeder {
 			'post_status'    => 'inherit',
 		);
 
-		$attachment_id = wp_insert_attachment( $attachment, $path, $parent );
+		$attachment_id = wp_insert_attachment( $attachment, $path, $parent_id );
 		if ( is_wp_error( $attachment_id ) || ! $attachment_id ) {
 			return 0;
 		}

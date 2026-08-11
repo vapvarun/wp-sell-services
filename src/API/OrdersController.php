@@ -1625,7 +1625,7 @@ class OrdersController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function prepare_item_for_response( $order, $request ): WP_REST_Response {
-		$service  = get_post( $order->service_id );
+		$service = get_post( $order->service_id );
 
 		$data = array(
 			'id'                => (int) $order->id,

@@ -1426,7 +1426,7 @@ final class Plugin {
 		// Connect vendor registration open/closed filter to settings.
 		add_filter(
 			'wpss_vendor_registration_open',
-			function ( bool $default ): bool {
+			function ( bool $default_value ): bool {
 				$vendor_settings   = get_option( 'wpss_vendor', array() );
 				$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
 				return 'closed' !== $registration_mode;
@@ -1436,7 +1436,7 @@ final class Plugin {
 		// Connect auto-approve vendors filter to settings.
 		add_filter(
 			'wpss_auto_approve_vendors',
-			function ( bool $default ): bool {
+			function ( bool $default_value ): bool {
 				$vendor_settings   = get_option( 'wpss_vendor', array() );
 				$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
 				return 'open' === $registration_mode;
@@ -1446,7 +1446,7 @@ final class Plugin {
 		// Connect service moderation filter to settings.
 		add_filter(
 			'wpss_require_service_moderation',
-			function ( bool $default ): bool {
+			function ( bool $default_value ): bool {
 				$vendor_settings = get_option( 'wpss_vendor', array() );
 				return ! empty( $vendor_settings['require_service_moderation'] );
 			}
@@ -2250,6 +2250,10 @@ final class Plugin {
 		}
 
 		// Register EarningsService cron schedules early so they are available during activation.
+		// The sniff wants a literal interval at the add_filter() site and cannot
+		// follow into a class callback. The interval IS defined, in
+		// EarningsService::add_cron_schedules(): 'biweekly' => 14 * DAY_IN_SECONDS.
+		// phpcs:ignore WordPress.WP.CronInterval.ChangeDetected -- Interval defined in EarningsService::add_cron_schedules().
 		add_filter( 'cron_schedules', array( \WPSellServices\Services\EarningsService::class, 'add_cron_schedules' ) );
 
 		// Auto-withdrawal processing.

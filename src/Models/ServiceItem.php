@@ -222,7 +222,7 @@ class ServiceItem {
 	 * @param mixed  $default Default value.
 	 * @return mixed
 	 */
-	public function get_meta( string $key, mixed $default = null ): mixed {
+	public function get_meta( string $key, mixed $default = null ): mixed { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound -- Public model API; renaming is a named-argument BC break.
 		return $this->meta[ $key ] ?? $default;
 	}
 

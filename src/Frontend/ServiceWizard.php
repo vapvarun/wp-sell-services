@@ -1212,13 +1212,13 @@ class ServiceWizard {
 	 * Render category options recursively.
 	 *
 	 * @param array $categories Categories array.
-	 * @param int   $parent Parent term ID.
+	 * @param int   $parent_id Parent term ID.
 	 * @param int   $depth Current depth.
 	 * @return void
 	 */
-	private function render_category_options( array $categories, int $parent = 0, int $depth = 0 ): void {
+	private function render_category_options( array $categories, int $parent_id = 0, int $depth = 0 ): void {
 		foreach ( $categories as $category ) {
-			if ( (int) $category->parent !== $parent ) {
+			if ( (int) $category->parent !== $parent_id ) {
 				continue;
 			}
 

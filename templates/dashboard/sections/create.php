@@ -31,10 +31,11 @@ do_action( 'wpss_dashboard_section_before', 'create', $user_id );
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Just checking for edit ID.
 $service_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
 
+// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only edit-ID lookup, no state change.
 if ( ! $service_id && isset( $_GET['service_id'] ) ) {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Just checking for edit ID.
 	$service_id = absint( $_GET['service_id'] );
 }
+// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 // Verify ownership if editing.
 if ( $service_id ) {

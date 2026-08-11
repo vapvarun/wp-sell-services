@@ -205,7 +205,11 @@ class MigrationManager {
 			return true;
 		} catch ( \Exception $e ) {
 			$this->wpdb->query( 'ROLLBACK' );
-			error_log( 'WPSS Migration Error: ' . $e->getMessage() );
+			// Use the plugin's own logger - the same one
+			// backfill_proposal_order_ids() below already uses. It gates on
+			// WP_DEBUG or the plugin's debug setting, so a production site does
+			// not get raw exception text in its PHP error log.
+			wpss_log( 'Migration failed: ' . $e->getMessage(), 'error' );
 			return false;
 		}
 	}

@@ -1025,8 +1025,8 @@ class OrderMetabox {
 			// Cast to float IS the sanitisation for a money field; there is no
 			// sanitize_* that returns a float. Nonce is verified above.
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			$amount      = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
-			$is_partial  = $amount > 0 && $amount < $order_total;
+			$amount     = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
+			$is_partial = $amount > 0 && $amount < $order_total;
 
 			$result = $this->order_service->apply_refund_status(
 				$order_id,
