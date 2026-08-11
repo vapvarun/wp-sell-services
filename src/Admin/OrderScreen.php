@@ -30,8 +30,6 @@ namespace WPSellServices\Admin;
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Database\Repositories\OrderRepository;
-use WPSellServices\Database\Repositories\ConversationRepository;
-use WPSellServices\Database\Repositories\DeliveryRepository;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Services\OrderService;
 use WPSellServices\Assets\ScriptRegistry;
@@ -44,13 +42,29 @@ use WPSellServices\Assets\ScriptRegistry;
 class OrderScreen {
 
 	/**
+	 * Order repository.
+	 *
+	 * @var OrderRepository
+	 */
+	private OrderRepository $order_repo;
+
+	/**
+	 * Order service.
+	 *
+	 * @var OrderService
+	 */
+	private OrderService $order_service;
+
+	/**
 	 * Constructor.
+	 *
+	 * The conversation and delivery repositories used to be constructed here
+	 * too, but their only readers were the metabox render methods that could
+	 * never run. Nothing left in this class touches them.
 	 */
 	public function __construct() {
-		$this->order_repo        = new OrderRepository();
-		$this->conversation_repo = new ConversationRepository();
-		$this->delivery_repo     = new DeliveryRepository();
-		$this->order_service     = new OrderService();
+		$this->order_repo    = new OrderRepository();
+		$this->order_service = new OrderService();
 	}
 
 	/**
