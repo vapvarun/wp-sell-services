@@ -5206,6 +5206,132 @@ function wpss_get_vendor_orders( int $vendor_id, array $args = array() ): array 
 }
 
 /**
+ * Prime the caches every service card reads, in one pass.
+ *
+ * WP_Query primes the posts, their meta and their terms for the result set, but
+ * a service card also renders the featured image and the gallery - and those
+ * ATTACHMENTS are not in the result set. Each one was therefore fetched
+ * individually: measured on a 12-card grid, 18 separate
+ * `SELECT * FROM wp_posts WHERE ID = N` plus 19 postmeta primes, which is most
+ * of the cost of the page.
+ *
+ * Collecting the thumbnail and gallery IDs first and priming them together
+ * turns that into one posts query and one meta query. The thumbnail/gallery
+ * meta reads here are themselves free, because WP_Query already primed the
+ * services' own meta.
+ *
+ * Safe to call with an empty or non-post array; it simply does nothing.
+ *
+ * @since 1.5.1
+ *
+ * @param array<int, \WP_Post|int> $posts Service posts (or IDs) about to be rendered.
+ * @return void
+ */
+function wpss_prime_service_card_caches( array $posts ): void {
+	if ( empty( $posts ) ) {
+		return;
+	}
+
+	$service_ids = array();
+	foreach ( $posts as $post ) {
+		$service_ids[] = $post instanceof \WP_Post ? (int) $post->ID : (int) $post;
+	}
+
+	$service_ids = array_values( array_filter( $service_ids ) );
+
+	if ( empty( $service_ids ) ) {
+		return;
+	}
+
+	$attachment_ids = array();
+
+	foreach ( $service_ids as $service_id ) {
+		$thumbnail_id = (int) get_post_thumbnail_id( $service_id );
+		if ( $thumbnail_id ) {
+			$attachment_ids[] = $thumbnail_id;
+		}
+
+		// Same resolver the card uses, so this cannot drift from what it reads.
+		$gallery_ids = wpss_get_gallery_ids( get_post_meta( $service_id, '_wpss_gallery', true ) );
+		if ( $gallery_ids ) {
+			$attachment_ids = array_merge( $attachment_ids, $gallery_ids );
+		}
+	}
+
+	$attachment_ids = array_values( array_unique( array_filter( $attachment_ids ) ) );
+
+	if ( $attachment_ids ) {
+		_prime_post_caches( $attachment_ids, false, true );
+	}
+}
+
+/**
+ * Count a buyer's orders.
+ *
+ * A dedicated COUNT(*) so a caller never fetches rows just to size a list.
+ * Pairs with wpss_get_user_orders(), which already takes limit + offset but had
+ * no way to learn the total - so nothing built on it could paginate, and
+ * [wpss_my_orders] simply showed the first 20 with no route to the rest.
+ *
+ * @since 1.5.1
+ *
+ * @param int    $user_id Customer user ID.
+ * @param string $status  Optional. Restrict to one order status.
+ * @return int Number of matching orders.
+ */
+function wpss_count_user_orders( int $user_id, string $status = '' ): int {
+	return wpss_count_orders_for( 'customer_id', $user_id, $status );
+}
+
+/**
+ * Count a vendor's orders.
+ *
+ * @since 1.5.1
+ *
+ * @param int    $vendor_id Vendor user ID.
+ * @param string $status    Optional. Restrict to one order status.
+ * @return int Number of matching orders.
+ */
+function wpss_count_vendor_orders( int $vendor_id, string $status = '' ): int {
+	return wpss_count_orders_for( 'vendor_id', $vendor_id, $status );
+}
+
+/**
+ * Shared COUNT(*) behind the two order-count helpers.
+ *
+ * A column name cannot be bound with a placeholder, so it is chosen from a
+ * fixed allow-list instead of being interpolated from the caller. Anything else
+ * returns 0 rather than reaching the query.
+ *
+ * @since 1.5.1
+ *
+ * @param string $column  Either 'customer_id' or 'vendor_id'.
+ * @param int    $user_id User ID to match.
+ * @param string $status  Optional. Restrict to one order status.
+ * @return int Number of matching orders.
+ */
+function wpss_count_orders_for( string $column, int $user_id, string $status = '' ): int {
+	global $wpdb;
+
+	if ( ! in_array( $column, array( 'customer_id', 'vendor_id' ), true ) ) {
+		return 0;
+	}
+
+	$table = $wpdb->prefix . 'wpss_orders';
+
+	if ( '' !== $status ) {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $column is allow-listed above; both values are bound.
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$column} = %d AND status = %s", $user_id, $status );
+	} else {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $column is allow-listed above; the value is bound.
+		$sql = $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$column} = %d", $user_id );
+	}
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is the prepared statement built above.
+	return (int) $wpdb->get_var( $sql );
+}
+
+/**
  * Get services for a vendor.
  *
  * @since 1.2.0
@@ -5259,13 +5385,34 @@ function wpss_get_vendor_services( int $vendor_id, array $args = array() ): arra
  * @return void
  */
 function wpss_pagination( \WP_Query $query, array $args = array() ): void {
-	$total_pages = $query->max_num_pages;
+	wpss_render_pagination( (int) $query->max_num_pages, $args );
+}
 
+/**
+ * Render pagination from a page COUNT rather than a WP_Query.
+ *
+ * Only a WP_Query is accepted by wpss_pagination(), so every surface backed by a
+ * CUSTOM TABLE - orders, withdrawals, disputes - had no paginator available and
+ * simply did not paginate. [wpss_my_orders] was the visible case: it ran
+ * `LIMIT 20` with no OFFSET, no COUNT(*) and no navigation, so a buyer with
+ * more than 20 orders could see the first 20 and had no route to the rest.
+ *
+ * The link-building below is exactly what wpss_pagination() used to do inline;
+ * that function now delegates here, so both kinds of surface produce identical
+ * markup and there is one place to change it.
+ *
+ * @since 1.5.1
+ *
+ * @param int                  $total_pages Total number of pages.
+ * @param array<string, mixed> $args        Optional. Arguments passed to paginate_links().
+ * @return void
+ */
+function wpss_render_pagination( int $total_pages, array $args = array() ): void {
 	if ( $total_pages <= 1 ) {
 		return;
 	}
 
-	$current_page = max( 1, get_query_var( 'paged', 1 ) );
+	$current_page = max( 1, (int) get_query_var( 'paged', 1 ) );
 
 	// get_pagenum_link() resolves the current request URL. Outside the main
 	// query (e.g. a REST render) it can return a non-string, which would make
@@ -5531,6 +5678,8 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 	}
 
 	$query = new \WP_Query( $args );
+
+	wpss_prime_service_card_caches( $query->posts );
 
 	ob_start();
 	if ( $query->have_posts() ) {

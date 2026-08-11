@@ -650,37 +650,44 @@ class Shortcodes {
 			'wpss_my_orders'
 		);
 
-		global $wpdb;
+		$user_id        = get_current_user_id();
+		$is_vendor_view = 'vendor' === $atts['type'];
+		$status         = sanitize_key( (string) $atts['status'] );
+		$per_page       = max( 1, absint( $atts['limit'] ) );
+		$paged          = max( 1, (int) get_query_var( 'paged', 1 ) );
 
-		$user_id      = get_current_user_id();
-		$orders_table = $wpdb->prefix . 'wpss_orders';
+		// Paginated, counted, and hydrated - none of which this did before.
+		//
+		// It ran its own raw $wpdb SELECT with `LIMIT 20` and no OFFSET, no
+		// COUNT(*) and no navigation, so a buyer with more than 20 orders saw
+		// the first 20 and had no route to the rest. It also duplicated a query
+		// wpss_get_user_orders()/wpss_get_vendor_orders() already own - and
+		// those return hydrated ServiceOrder models, so the raw-row reads below
+		// become model reads.
+		$total = $is_vendor_view
+			? wpss_count_vendor_orders( $user_id, $status )
+			: wpss_count_user_orders( $user_id, $status );
 
-		$where  = array();
-		$params = array();
-
-		if ( 'vendor' === $atts['type'] ) {
-			$where[] = 'vendor_id = %d';
-		} else {
-			$where[] = 'customer_id = %d';
-		}
-		$params[] = $user_id;
-
-		if ( $atts['status'] ) {
-			$where[]  = 'status = %s';
-			$params[] = $atts['status'];
-		}
-
-		$params[] = absint( $atts['limit'] );
-
-		$orders = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$orders_table}
-				WHERE " . implode( ' AND ', $where ) . '
-				ORDER BY created_at DESC
-				LIMIT %d',
-				$params
-			)
+		$query_args = array(
+			'limit'  => $per_page,
+			'offset' => ( $paged - 1 ) * $per_page,
+			'status' => $status,
 		);
+
+		$orders = $is_vendor_view
+			? wpss_get_vendor_orders( $user_id, $query_args )
+			: wpss_get_user_orders( $user_id, $query_args );
+
+		// One query for every service title on the page instead of one per row.
+		// get_the_title() in the loop below was an N+1: 20 rows meant 20 extra
+		// post lookups.
+		$service_ids = array_values(
+			array_filter( array_map( static fn ( $order ) => (int) $order->service_id, $orders ) )
+		);
+
+		if ( $service_ids ) {
+			_prime_post_caches( $service_ids, false, false );
+		}
 
 		ob_start();
 		?>
@@ -704,12 +711,26 @@ class Shortcodes {
 								<td><?php echo esc_html( get_the_title( $order->service_id ) ); ?></td>
 								<td><?php echo wp_kses_post( function_exists( 'wpss_format_currency' ) ? wpss_format_currency( (float) $order->total, $order->currency ) : '$' . number_format( (float) $order->total, 2 ) ); ?></td>
 								<td><span class="wpss-status wpss-status-<?php echo esc_attr( $order->status ); ?>"><?php echo esc_html( ucwords( str_replace( '_', ' ', $order->status ) ) ); ?></span></td>
-								<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $order->created_at ) ) ); ?></td>
+								<td>
+									<?php
+									// ServiceOrder hydrates created_at to a DateTimeImmutable, so
+									// strtotime() - which this used while it read raw $wpdb rows -
+									// throws a TypeError. Same accessor the admin order screen uses.
+									echo $order->created_at
+										? esc_html( wp_date( get_option( 'date_format' ), $order->created_at->getTimestamp() ) )
+										: '&mdash;';
+									?>
+								</td>
 								<td><a href="<?php echo esc_url( wpss_get_dashboard_url( 'orders' ) ? add_query_arg( 'order_id', $order->id, wpss_get_dashboard_url() ) : '#' ); ?>" class="button button-small"><?php esc_html_e( 'View', 'wp-sell-services' ); ?></a></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+
+				<?php
+				// The route to orders 21+, which did not exist before.
+				wpss_render_pagination( (int) ceil( $total / $per_page ) );
+				?>
 			<?php else : ?>
 				<div class="wpss-empty-state">
 					<div class="wpss-empty-state__icon">

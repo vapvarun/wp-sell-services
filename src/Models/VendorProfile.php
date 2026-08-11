@@ -315,12 +315,37 @@ class VendorProfile {
 	}
 
 	/**
+	 * Request-scoped memo of resolved profiles, keyed by user ID.
+	 *
+	 * @var array<int, self|null>
+	 */
+	private static array $profile_memo = array();
+
+	/**
 	 * Get vendor profile by user ID.
 	 *
 	 * @param int $user_id WordPress user ID.
 	 * @return self|null
 	 */
 	public static function get_by_user_id( int $user_id ): ?self {
+		// Memoised for the life of the request.
+		//
+		// This had no caching of any kind, and it is read once per card by every
+		// vendor-bearing surface: rendering 12 service cards fired 12 identical
+		// `SELECT * FROM wpss_vendor_profiles WHERE user_id = N` queries, one of
+		// the four N+1s measured on [wpss_services].
+		//
+		// Deliberately a request-scoped memo rather than wp_cache_*: the profile
+		// has five separate write paths (upsert, update_stats, set_vacation_mode,
+		// set_availability, update_verification_tier). A persistent cache that
+		// missed any one of them would serve a stale profile - wrong vacation
+		// state, wrong tier - for the whole TTL, which is a worse bug than the
+		// N+1 it fixes. A memo cannot outlive the request, and the writers call
+		// flush_memo() so even a read-after-write inside one request is correct.
+		if ( array_key_exists( $user_id, self::$profile_memo ) ) {
+			return self::$profile_memo[ $user_id ];
+		}
+
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'wpss_vendor_profiles';
@@ -333,7 +358,81 @@ class VendorProfile {
 			)
 		);
 
-		return $row ? self::from_db( $row ) : null;
+		$profile = $row ? self::from_db( $row ) : null;
+
+		self::$profile_memo[ $user_id ] = $profile;
+
+		return $profile;
+	}
+
+	/**
+	 * Load many profiles in one query and fill the memo.
+	 *
+	 * The memo above collapses REPEATED lookups of the same vendor, but a list
+	 * of N distinct vendors still costs N queries because each is a first look.
+	 * A vendors grid is exactly that case: 8 cards, 8 different vendors, 8
+	 * queries. This fetches them together so the grid costs one.
+	 *
+	 * User IDs with no profile row are memoised as null too, so a later
+	 * get_by_user_id() for them does not fall through to its own query.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param int[] $user_ids Vendor user IDs about to be rendered.
+	 * @return void
+	 */
+	public static function prime( array $user_ids ): void {
+		$user_ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
+
+		// Anything already memoised does not need fetching again.
+		$missing = array_values(
+			array_filter(
+				$user_ids,
+				static fn ( int $id ): bool => ! array_key_exists( $id, self::$profile_memo )
+			)
+		);
+
+		if ( empty( $missing ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$table        = $wpdb->prefix . 'wpss_vendor_profiles';
+		$placeholders = implode( ', ', array_fill( 0, count( $missing ), '%d' ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholders are generated from the ID count; every value is bound.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE user_id IN ({$placeholders})", $missing ) );
+
+		// Seed misses first, then overwrite the ones that came back, so a user
+		// with no profile is remembered as null rather than re-queried per card.
+		foreach ( $missing as $id ) {
+			self::$profile_memo[ $id ] = null;
+		}
+
+		foreach ( (array) $rows as $row ) {
+			self::$profile_memo[ (int) $row->user_id ] = self::from_db( $row );
+		}
+	}
+
+	/**
+	 * Drop a memoised profile after a write.
+	 *
+	 * Called by every VendorProfileRepository method that mutates a row, so a
+	 * read following a write inside the same request sees the new values.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param int|null $user_id User ID to forget, or null to forget all.
+	 * @return void
+	 */
+	public static function flush_memo( ?int $user_id = null ): void {
+		if ( null === $user_id ) {
+			self::$profile_memo = array();
+			return;
+		}
+
+		unset( self::$profile_memo[ $user_id ] );
 	}
 
 	/**
