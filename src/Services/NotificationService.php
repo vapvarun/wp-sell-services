@@ -1632,8 +1632,14 @@ class NotificationService {
 			self::TYPE_NEW_MESSAGE        => 'notify_new_message',
 			self::TYPE_REVIEW_RECEIVED    => 'notify_new_review',
 			// Types used by OrderWorkflowManager and status notifications.
+			//
+			// Only the ones with NO constant above. 'order_created',
+			// 'revision_requested', 'dispute_opened' and 'dispute_resolved' used to
+			// be repeated here as literals, but each is exactly the value of the
+			// constant already keyed above and mapped to the same setting, so PHP
+			// silently overwrote one with an identical entry. Harmless, but it read
+			// as though the constant and the literal were different types.
 			'new_order'                   => 'notify_new_order',
-			'order_created'               => 'notify_new_order',
 			'order_confirmation'          => 'notify_new_order',
 			'order_started'               => 'notify_new_order',
 			'order_in_progress'           => 'notify_new_order',
@@ -1643,13 +1649,10 @@ class NotificationService {
 			'order_auto_completed'        => 'notify_order_completed',
 			'order_cancelled'             => 'notify_order_cancelled',
 			'delivery_received'           => 'notify_delivery_submitted',
-			'revision_requested'          => 'notify_revision_requested',
 			'order_late'                  => 'notify_new_order',
 			'deadline_reminder'           => 'notify_new_order',
 			// Dispute types used by DisputeWorkflowManager.
-			'dispute_opened'              => 'notify_dispute_opened',
 			'dispute_response_received'   => 'notify_dispute_opened',
-			'dispute_resolved'            => 'notify_dispute_opened',
 			'dispute_reminder'            => 'notify_dispute_opened',
 			// Cancellation types.
 			'cancellation_requested'      => 'notify_order_cancelled',
@@ -1704,9 +1707,10 @@ class NotificationService {
 			self::TYPE_DISPUTE_RESOLVED,
 			self::TYPE_DEADLINE_WARNING,
 			self::TYPE_VENDOR_REGISTERED,
-			// OrderWorkflowManager types and status notifications.
+			// OrderWorkflowManager types and status notifications. Again only the
+			// ones without a constant above - this is an in_array() haystack, so the
+			// duplicates were inert, just misleading.
 			'new_order',
-			'order_created',
 			'order_confirmation',
 			'order_started',
 			'order_in_progress',
@@ -1716,13 +1720,10 @@ class NotificationService {
 			'order_auto_completed',
 			'order_cancelled',
 			'delivery_received',
-			'revision_requested',
 			'order_late',
 			'deadline_reminder',
 			// Dispute types used by DisputeWorkflowManager.
-			'dispute_opened',
 			'dispute_response_received',
-			'dispute_resolved',
 			'dispute_reminder',
 			// Cancellation types.
 			'cancellation_requested',

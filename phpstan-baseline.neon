@@ -3697,30 +3697,6 @@ parameters:
 			path: src/Services/ModerationService.php
 
 		-
-			message: '#^Array has 2 duplicate keys with value ''dispute_opened'' \(self\:\:TYPE_DISPUTE_OPENED, ''dispute_opened''\)\.$#'
-			identifier: array.duplicateKey
-			count: 2
-			path: src/Services/NotificationService.php
-
-		-
-			message: '#^Array has 2 duplicate keys with value ''dispute_resolved'' \(self\:\:TYPE_DISPUTE_RESOLVED, ''dispute_resolved''\)\.$#'
-			identifier: array.duplicateKey
-			count: 2
-			path: src/Services/NotificationService.php
-
-		-
-			message: '#^Array has 2 duplicate keys with value ''order_created'' \(self\:\:TYPE_ORDER_CREATED, ''order_created''\)\.$#'
-			identifier: array.duplicateKey
-			count: 2
-			path: src/Services/NotificationService.php
-
-		-
-			message: '#^Array has 2 duplicate keys with value ''revision_requested'' \(self\:\:TYPE_REVISION_REQUESTED, ''revision_requested''\)\.$#'
-			identifier: array.duplicateKey
-			count: 2
-			path: src/Services/NotificationService.php
-
-		-
 			message: '#^Method WPSellServices\\Services\\NotificationService\:\:build_email_content\(\) has parameter \$data with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
