@@ -1095,10 +1095,14 @@ class MarketplaceSeeder {
 		// balance. Tracked separately: $balances is what was credited (used for
 		// balance_after), $withdrawable is what has cleared (what is returned).
 		$clearance_days = EarningsService::get_clearance_days();
-		$clearance_cut  = $clearance_days > 0
-			? strtotime( '-' . $clearance_days . ' days', (int) current_time( 'timestamp' ) )
+		// strtotime() with no base uses the same clock strtotime( $created_at )
+		// will use below, so the two sides of the comparison agree. current_time(
+		// 'timestamp' ) is explicitly discouraged - it does not return a real
+		// Unix timestamp - and would have skewed the cut-off by the site's offset.
+		$clearance_cut = $clearance_days > 0
+			? strtotime( '-' . $clearance_days . ' days' )
 			: PHP_INT_MAX;
-		$withdrawable   = array();
+		$withdrawable  = array();
 
 		foreach ( (array) $rows as $row ) {
 			$vendor_id = (int) $row->vendor_id;
