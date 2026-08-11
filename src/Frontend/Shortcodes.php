@@ -393,7 +393,7 @@ class Shortcodes {
 	 *
 	 * @since 1.5.1
 	 *
-	 * @param array $atts Shortcode attributes.
+	 * @param array<string, mixed> $atts Shortcode attributes.
 	 * @return string
 	 */
 	public function seller_card( array $atts = array() ): string {
