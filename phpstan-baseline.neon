@@ -1849,12 +1849,6 @@ parameters:
 			path: src/Frontend/AjaxHandlers.php
 
 		-
-			message: '#^Call to function is_wp_error\(\) with list will always evaluate to false\.$#'
-			identifier: function.impossibleType
-			count: 1
-			path: src/Frontend/ServiceArchiveView.php
-
-		-
 			message: '#^Parameter \#1 \$text of function esc_attr expects string, int\<1, 4\> given\.$#'
 			identifier: argument.type
 			count: 1
