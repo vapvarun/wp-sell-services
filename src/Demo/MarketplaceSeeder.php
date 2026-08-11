@@ -1060,6 +1060,21 @@ class MarketplaceSeeder {
 			return $balances;
 		}
 
+		// Idempotency. This never removed anything, so a second seeder run
+		// credited every completed order AGAIN - doubling each vendor's ledger
+		// and leaving balance_after values that no longer matched the running
+		// total. Scoped precisely to the ledger rows this method writes
+		// (reference_type 'order' for the orders being seeded), so a real
+		// site's tips, milestones, adjustments and debits are untouched.
+		$id_placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from a count; ids bound via prepare().
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$table} WHERE type = 'order_earning' AND reference_type = 'order' AND reference_id IN ( {$id_placeholders} )",
+				...$order_ids
+			)
+		);
+
 		// Pull the recorded vendor earnings for the completed orders in one read.
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 		$placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
@@ -1072,6 +1087,19 @@ class MarketplaceSeeder {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
+		// Earnings credited inside the clearance window are NOT withdrawable, and
+		// EarningsService subtracts them: available = ledger - pending - in_clearance.
+		// This method used to return the GROSS credited total, so seed_withdrawals()
+		// sized requests against money the vendor could not actually draw and the
+		// Earnings screen then showed a withdrawal larger than the available
+		// balance. Tracked separately: $balances is what was credited (used for
+		// balance_after), $withdrawable is what has cleared (what is returned).
+		$clearance_days = EarningsService::get_clearance_days();
+		$clearance_cut  = $clearance_days > 0
+			? strtotime( '-' . $clearance_days . ' days', (int) current_time( 'timestamp' ) )
+			: PHP_INT_MAX;
+		$withdrawable   = array();
+
 		foreach ( (array) $rows as $row ) {
 			$vendor_id = (int) $row->vendor_id;
 			$earnings  = round( (float) $row->vendor_earnings, 2 );
@@ -1081,6 +1109,11 @@ class MarketplaceSeeder {
 
 			$balances[ $vendor_id ] = round( ( $balances[ $vendor_id ] ?? 0 ) + $earnings, 2 );
 			$created_at             = $row->completed_at ? $row->completed_at : current_time( 'mysql' );
+
+			// Only credits OLDER than the clearance window count as withdrawable.
+			if ( PHP_INT_MAX === $clearance_cut || strtotime( $created_at ) <= $clearance_cut ) {
+				$withdrawable[ $vendor_id ] = round( ( $withdrawable[ $vendor_id ] ?? 0 ) + $earnings, 2 );
+			}
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->insert(
@@ -1102,7 +1135,10 @@ class MarketplaceSeeder {
 			);
 		}
 
-		return $balances;
+		// Deliberately the CLEARED total, not $balances. Callers use this to size
+		// withdrawals, and a withdrawal must be funded by money that has actually
+		// cleared or the Earnings screen reserves against nothing.
+		return $withdrawable;
 	}
 
 	/**

@@ -56,7 +56,11 @@ class DisputeRepository extends AbstractRepository {
 	 * @return Dispute|null
 	 */
 	public function find( int $id ): ?Dispute {
-		$row = $this->find_by_id( $id );
+		// parent::find(), NOT $this->find() - this method OVERRIDES the parent's
+		// find(), so calling it on $this would recurse until the stack blew.
+		// The original called find_by_id(), which AbstractRepository does not
+		// define at all, so this threw "Call to undefined method" on every call.
+		$row = parent::find( $id );
 
 		return $row ? Dispute::from_db( $row ) : null;
 	}
