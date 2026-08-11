@@ -258,21 +258,22 @@ class SellerCard extends AbstractBlock {
 		// VendorsController): only APPROVED customer-to-vendor reviews count.
 		// Without these filters the card averaged in pending/rejected reviews
 		// and vendor->customer reviews, so its stars diverged from the profile.
-		$rating = (float) $wpdb->get_var(
+		// One scan, not two. The average and the count had identical WHERE
+		// clauses and were run as separate queries, so every seller card scanned
+		// wpss_reviews twice for the same rows. Aggregating both in one pass also
+		// removes the chance of the two disagreeing if a review is approved
+		// between them.
+		$review_stats = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT AVG(rating) FROM {$wpdb->prefix}wpss_reviews
+				"SELECT AVG(rating) AS avg_rating, COUNT(*) AS review_count
+				FROM {$wpdb->prefix}wpss_reviews
 				WHERE vendor_id = %d AND status = 'approved' AND review_type = 'customer_to_vendor'",
 				$user_id
 			)
 		);
 
-		$reviews = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_reviews
-				WHERE vendor_id = %d AND status = 'approved' AND review_type = 'customer_to_vendor'",
-				$user_id
-			)
-		);
+		$rating  = (float) ( $review_stats->avg_rating ?? 0 );
+		$reviews = (int) ( $review_stats->review_count ?? 0 );
 
 		// Response time comes from the response_time_hours column on the
 		// canonical wpss_vendor_profiles table.

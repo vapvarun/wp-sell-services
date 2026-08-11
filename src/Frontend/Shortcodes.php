@@ -287,6 +287,11 @@ class Shortcodes {
 			)
 		);
 
+		// Four queries for the whole grid instead of four PER CARD.
+		wpss_prime_vendor_card_caches(
+			array_map( static fn ( $vendor ) => (int) $vendor->user_id, $vendors )
+		);
+
 		ob_start();
 		?>
 		<div class="wpss-vendors-grid wpss-columns-<?php echo esc_attr( $atts['columns'] ); ?>">

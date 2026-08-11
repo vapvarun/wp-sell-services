@@ -542,6 +542,10 @@ class OrderRepository extends AbstractRepository {
 	 * @return string|null MySQL datetime of the last completed order, or null.
 	 */
 	public function get_last_completed_date( int $vendor_id ): ?string {
+		if ( array_key_exists( $vendor_id, self::$last_completed_memo ) ) {
+			return self::$last_completed_memo[ $vendor_id ];
+		}
+
 		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
 
 		$date = $this->wpdb->get_var(
@@ -554,7 +558,73 @@ class OrderRepository extends AbstractRepository {
 			)
 		);
 
-		return $date ? (string) $date : null;
+		self::$last_completed_memo[ $vendor_id ] = $date ? (string) $date : null;
+
+		return self::$last_completed_memo[ $vendor_id ];
+	}
+
+	/**
+	 * Request-scoped memo of last-completed dates, keyed by vendor ID.
+	 *
+	 * @var array<int, string|null>
+	 */
+	private static array $last_completed_memo = array();
+
+	/**
+	 * Resolve the last completed delivery for many vendors in one query.
+	 *
+	 * Every vendor card calls get_last_completed_date(), so a grid of 8 vendors
+	 * fired 8 separate MAX(completed_at) scans. This answers all of them with a
+	 * single GROUP BY and fills the memo the single-vendor method reads.
+	 *
+	 * Vendors with no completed order are memoised as null, so they do not fall
+	 * through to a query of their own afterwards.
+	 *
+	 * The memo is request-scoped on purpose. This is display-only data ("last
+	 * delivery 3 days ago"); the worst case is that an order completing DURING
+	 * the same request is not reflected until the next one, which is not worth
+	 * the invalidation surface a persistent cache would need.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param int[] $vendor_ids Vendor user IDs about to be rendered.
+	 * @return void
+	 */
+	public function prime_last_completed_dates( array $vendor_ids ): void {
+		$vendor_ids = array_values( array_unique( array_filter( array_map( 'intval', $vendor_ids ) ) ) );
+
+		$missing = array_values(
+			array_filter(
+				$vendor_ids,
+				static fn ( int $id ): bool => ! array_key_exists( $id, self::$last_completed_memo )
+			)
+		);
+
+		if ( empty( $missing ) ) {
+			return;
+		}
+
+		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
+		$placeholders = implode( ', ', array_fill( 0, count( $missing ), '%d' ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholders are generated from the ID count; every value is bound.
+		$rows = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT vendor_id, MAX(completed_at) AS last_completed
+				FROM {$this->table}
+				WHERE vendor_id IN ({$placeholders}) AND status = 'completed' AND platform != %s
+				GROUP BY vendor_id",
+				array_merge( $missing, array( $tip_platform ) )
+			)
+		);
+
+		foreach ( $missing as $id ) {
+			self::$last_completed_memo[ $id ] = null;
+		}
+
+		foreach ( (array) $rows as $row ) {
+			self::$last_completed_memo[ (int) $row->vendor_id ] = $row->last_completed ? (string) $row->last_completed : null;
+		}
 	}
 
 	/**

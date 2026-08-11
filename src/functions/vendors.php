@@ -541,3 +541,72 @@ function wpss_get_member_display_name( int $user_id, string $fallback = '' ): st
 	 */
 	return (string) apply_filters( 'wpss_member_display_name', $fallback, $user_id, false );
 }
+
+/**
+ * Prime the caches every vendor card reads, in one pass.
+ *
+ * The vendor-card partial (templates/partials/vendor-card.php) resolves three
+ * things per card, and each
+ * was a query of its own: get_userdata(), wpss_get_vendor() and
+ * wpss_get_vendor_last_delivery(). Measured on an 8-card grid that was 8 user
+ * selects, 8 usermeta primes, 8 profile selects and 8 MAX(completed_at) scans.
+ *
+ * Priming them together turns that into roughly four queries regardless of how
+ * many vendors are shown. Each underlying lookup is memoised, so the card code
+ * is unchanged - it simply stops hitting the database.
+ *
+ * @since 1.5.1
+ *
+ * @param int[] $vendor_ids Vendor user IDs about to be rendered.
+ * @return void
+ */
+function wpss_prime_vendor_card_caches( array $vendor_ids ): void {
+	$vendor_ids = array_values( array_unique( array_filter( array_map( 'intval', $vendor_ids ) ) ) );
+
+	if ( empty( $vendor_ids ) ) {
+		return;
+	}
+
+	// Core batches users AND their meta into two queries.
+	cache_users( $vendor_ids );
+
+	\WPSellServices\Models\VendorProfile::prime( $vendor_ids );
+
+	( new \WPSellServices\Database\Repositories\OrderRepository() )->prime_last_completed_dates( $vendor_ids );
+
+	// Avatars are attachments, and an attachment is a post: the avatar filter
+	// resolves the ID cheaply (it caches per request) but then calls
+	// wp_get_attachment_image_url() on it, and THAT fetches a post plus its
+	// meta one at a time. Priming them together removes two queries per vendor
+	// who has an avatar.
+	//
+	// The two sources and their precedence mirror the resolver in
+	// Plugin::define_avatar_filter(): the `_wpss_avatar_id` user meta wins, and
+	// the vendor profile's avatar_id is the fallback. If that precedence ever
+	// changes there, change it here too - priming the wrong ID is only a missed
+	// optimisation, never a wrong avatar, because the filter still does the
+	// real resolution.
+	//
+	// Both reads are already free: cache_users() primed the user meta and
+	// VendorProfile::prime() primed the profiles, both above.
+	$avatar_ids = array();
+	foreach ( $vendor_ids as $vendor_id ) {
+		$meta_avatar = (int) get_user_meta( $vendor_id, '_wpss_avatar_id', true );
+
+		if ( $meta_avatar ) {
+			$avatar_ids[] = $meta_avatar;
+			continue;
+		}
+
+		$profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
+		if ( $profile && $profile->avatar_id ) {
+			$avatar_ids[] = (int) $profile->avatar_id;
+		}
+	}
+
+	$avatar_ids = array_values( array_unique( array_filter( $avatar_ids ) ) );
+
+	if ( $avatar_ids ) {
+		_prime_post_caches( $avatar_ids, false, true );
+	}
+}
