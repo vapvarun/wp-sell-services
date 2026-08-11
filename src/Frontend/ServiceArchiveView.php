@@ -127,12 +127,7 @@ class ServiceArchiveView {
 	 * @return void
 	 */
 	public function render_filters_bar(): void {
-		$categories = get_terms(
-			array(
-				'taxonomy'   => 'wpss_service_category',
-				'hide_empty' => true,
-			)
-		);
+		$categories = wpss_get_category_terms();
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_sort = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : 'default';
@@ -176,7 +171,7 @@ class ServiceArchiveView {
 			</form>
 
 			<div class="wpss-filters-bar-controls">
-				<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
+				<?php if ( ! empty( $categories ) ) : ?>
 					<select class="wpss-category-filter wpss-url-select">
 						<option value="<?php echo esc_url( add_query_arg( $base_args, $base_url ) ); ?>">
 							<?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?>
@@ -277,23 +272,16 @@ class ServiceArchiveView {
 	 */
 	public function render_sidebar(): void {
 		// Fetch all categories in one query to avoid N+1.
-		$all_categories = get_terms(
-			array(
-				'taxonomy'   => 'wpss_service_category',
-				'hide_empty' => true,
-			)
-		);
+		$all_categories = wpss_get_category_terms();
 
 		// Group by parent for efficient lookup.
 		$categories         = array();
 		$children_by_parent = array();
-		if ( ! is_wp_error( $all_categories ) ) {
-			foreach ( $all_categories as $term ) {
-				if ( 0 === $term->parent ) {
-					$categories[] = $term;
-				} else {
-					$children_by_parent[ $term->parent ][] = $term;
-				}
+		foreach ( $all_categories as $term ) {
+			if ( 0 === $term->parent ) {
+				$categories[] = $term;
+			} else {
+				$children_by_parent[ $term->parent ][] = $term;
 			}
 		}
 
@@ -354,7 +342,7 @@ class ServiceArchiveView {
 				<?php endif; ?>
 
 				<!-- Categories -->
-				<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
+				<?php if ( ! empty( $categories ) ) : ?>
 					<div class="wpss-filter-section">
 						<h4><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></h4>
 						<ul class="wpss-category-list">

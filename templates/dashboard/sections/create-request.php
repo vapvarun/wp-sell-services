@@ -25,12 +25,7 @@ defined( 'ABSPATH' ) || exit;
 do_action( 'wpss_dashboard_section_before', 'create_request', $user_id );
 
 // Get categories for the dropdown.
-$categories = get_terms(
-	array(
-		'taxonomy'   => 'wpss_service_category',
-		'hide_empty' => false,
-	)
-);
+$categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 ?>
 
 <div class="wpss-request-wizard">
@@ -78,7 +73,7 @@ $categories = get_terms(
 				<label for="request_category"><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></label>
 				<select name="category" id="request_category" class="wpss-input">
 					<option value=""><?php esc_html_e( 'Select a category (optional)', 'wp-sell-services' ); ?></option>
-					<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
+					<?php if ( ! empty( $categories ) ) : ?>
 						<?php foreach ( $categories as $category ) : ?>
 							<option value="<?php echo esc_attr( $category->term_id ); ?>">
 								<?php echo esc_html( $category->name ); ?>

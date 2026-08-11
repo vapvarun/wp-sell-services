@@ -500,3 +500,46 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 		'pages'      => (int) $query->max_num_pages,
 	);
 }
+
+/**
+ * Fetch service-category terms for a chooser, with a bound.
+ *
+ * Eight call sites built this same get_terms() call by hand and NONE of them
+ * passed `number`, so every category dropdown and filter bar on the site -
+ * the service archive, the buyer-request archive, the service wizard, the
+ * create/edit request forms and the block editor's category control - fetched
+ * EVERY term on the site and rendered one <option> per term. On a marketplace
+ * with a large taxonomy that is a select box with thousands of entries and a
+ * query to match.
+ *
+ * The bound is deliberately generous (200) so no realistic site loses a
+ * category today, and filterable for the ones that outgrow it. Callers keep
+ * passing their own `hide_empty` / `parent`, because those genuinely differ:
+ * an archive filter shows only categories that have services, while the
+ * wizard must offer empty ones too.
+ *
+ * Returns a plain array on WP_Error, so callers do not each repeat that guard.
+ *
+ * @since 1.5.1
+ *
+ * @param array<string, mixed> $args Overrides passed through to get_terms().
+ * @return \WP_Term[] Matching terms, or an empty array.
+ */
+function wpss_get_category_terms( array $args = array() ): array {
+	$defaults = array(
+		'taxonomy'   => 'wpss_service_category',
+		'hide_empty' => true,
+		/**
+		 * Filter the maximum number of category terms a chooser will render.
+		 *
+		 * @since 1.5.1
+		 *
+		 * @param int $limit Maximum terms. Default 200.
+		 */
+		'number'     => (int) apply_filters( 'wpss_category_terms_limit', 200 ),
+	);
+
+	$terms = get_terms( wp_parse_args( $args, $defaults ) );
+
+	return is_wp_error( $terms ) ? array() : $terms;
+}

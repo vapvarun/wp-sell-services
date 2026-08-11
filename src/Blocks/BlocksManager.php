@@ -230,16 +230,9 @@ class BlocksManager {
 	 * @return array
 	 */
 	private function get_service_categories(): array {
-		$terms = get_terms(
-			[
-				'taxonomy'   => 'wpss_service_category',
-				'hide_empty' => false,
-			]
-		);
-
-		if ( is_wp_error( $terms ) ) {
-			return [];
-		}
+		// wpss_get_category_terms() already returns an array on WP_Error, so the
+		// is_wp_error() branch that used to be here could never be taken.
+		$terms = wpss_get_category_terms( [ 'hide_empty' => false ] );
 
 		$categories = [];
 

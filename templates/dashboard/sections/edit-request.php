@@ -54,12 +54,7 @@ $skills_string   = is_array( $skills_required ) ? implode( ', ', $skills_require
 $current_status  = get_post_status( $request_id );
 
 // Get categories for the dropdown.
-$categories = get_terms(
-	array(
-		'taxonomy'   => 'wpss_service_category',
-		'hide_empty' => false,
-	)
-);
+$categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 
 $current_categories = wp_get_object_terms( $request_id, 'wpss_service_category', array( 'fields' => 'ids' ) );
 $current_cat_id     = ! empty( $current_categories ) ? $current_categories[0] : 0;
@@ -125,7 +120,7 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 				<label for="request_category"><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></label>
 				<select name="category" id="request_category" class="wpss-input">
 					<option value=""><?php esc_html_e( 'Select a category (optional)', 'wp-sell-services' ); ?></option>
-					<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
+					<?php if ( ! empty( $categories ) ) : ?>
 						<?php foreach ( $categories as $category ) : ?>
 							<option value="<?php echo esc_attr( $category->term_id ); ?>" <?php selected( $current_cat_id, $category->term_id ); ?>>
 								<?php echo esc_html( $category->name ); ?>

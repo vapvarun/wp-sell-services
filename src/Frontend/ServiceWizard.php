@@ -462,23 +462,16 @@ class ServiceWizard {
 	 * @return void
 	 */
 	private function render_step_basic( ?\WP_Post $_service ): void {
-		$categories = get_terms(
-			array(
-				'taxonomy'   => 'wpss_service_category',
-				'hide_empty' => false,
-			)
-		);
+		$categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 
 		// Build categories data for JavaScript subcategory filtering.
 		$categories_data = array();
-		if ( ! is_wp_error( $categories ) ) {
-			foreach ( $categories as $cat ) {
-				$categories_data[] = array(
-					'id'     => (int) $cat->term_id,
-					'name'   => $cat->name,
-					'parent' => (int) $cat->parent,
-				);
-			}
+		foreach ( $categories as $cat ) {
+			$categories_data[] = array(
+				'id'     => (int) $cat->term_id,
+				'name'   => $cat->name,
+				'parent' => (int) $cat->parent,
+			);
 		}
 		?>
 		<script>
@@ -528,9 +521,7 @@ class ServiceWizard {
 					required>
 					<option value=""><?php esc_html_e( 'Select a category', 'wp-sell-services' ); ?></option>
 					<?php
-					if ( ! is_wp_error( $categories ) ) :
-						$this->render_category_options( $categories );
-					endif;
+					$this->render_category_options( $categories );
 					?>
 				</select>
 				<p id="service_category-error" class="wpss-form-error" hidden></p>

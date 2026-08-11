@@ -214,12 +214,7 @@ class BuyerRequestArchiveView {
 	 * @return void
 	 */
 	public function render_filters_bar(): void {
-		$categories = get_terms(
-			array(
-				'taxonomy'   => 'wpss_service_category',
-				'hide_empty' => true,
-			)
-		);
+		$categories = wpss_get_category_terms();
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_sort = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : 'newest';
@@ -233,7 +228,7 @@ class BuyerRequestArchiveView {
 			</button>
 
 			<div class="wpss-filters-bar-controls">
-				<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
+				<?php if ( ! empty( $categories ) ) : ?>
 					<select class="wpss-category-filter wpss-url-select">
 						<option value="<?php echo esc_url( remove_query_arg( 'category' ) ); ?>">
 							<?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?>
@@ -330,13 +325,7 @@ class BuyerRequestArchiveView {
 	 * @return void
 	 */
 	public function render_sidebar(): void {
-		$categories = get_terms(
-			array(
-				'taxonomy'   => 'wpss_service_category',
-				'hide_empty' => true,
-				'parent'     => 0,
-			)
-		);
+		$categories = wpss_get_category_terms( array( 'parent' => 0 ) );
 
 		// Get current filter values.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -354,7 +343,7 @@ class BuyerRequestArchiveView {
 
 			<form class="wpss-filter-form" method="get">
 				<!-- Categories -->
-				<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
+				<?php if ( ! empty( $categories ) ) : ?>
 					<div class="wpss-filter-section">
 						<h4><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></h4>
 						<ul class="wpss-category-list">
