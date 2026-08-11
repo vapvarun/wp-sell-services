@@ -1,0 +1,592 @@
+<?php
+/**
+ * URLs and page mapping: dashboard sections, mapped pages, checkout and cart links.
+ *
+ * Split out of src/functions.php, which had grown to 6,187 lines and 148
+ * global functions in a single file. This is a positional move only - no
+ * function was renamed, resignatured or changed, so every call site is
+ * untouched. src/functions.php now just requires these files.
+ *
+ * @package WPSellServices
+ * @since   1.5.1
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Resolve the page ID that the ACTIVE e-commerce rail's cart/checkout URL
+ * actually lands on.
+ *
+ * `wpss_pages['cart']` / `['checkout']` hold the STANDALONE pages, which stay
+ * mapped even after a site switches to WooCommerce or EDD. Reporting those IDs
+ * beside a URL resolved through wpss_get_cart_url() / wpss_get_checkout_base_url()
+ * names two different screens: a client that deep-links by ID lands on the
+ * dormant standalone page while the URL it was given points at WooCommerce.
+ * Deriving the ID FROM the resolved URL keeps the two answers describing the
+ * same page by construction.
+ *
+ * @since 1.6.1
+ *
+ * @param string $key Either `cart` or `checkout`.
+ * @return int Page ID, or 0 when the rail's URL is not a WP page.
+ */
+function wpss_get_active_store_page_id( string $key ): int {
+	static $cache = array();
+
+	if ( isset( $cache[ $key ] ) ) {
+		return $cache[ $key ];
+	}
+
+	$url = 'cart' === $key ? wpss_get_cart_url() : wpss_get_checkout_base_url();
+
+	$page_id = '' !== $url ? (int) url_to_postid( $url ) : 0;
+
+	// A rail whose URL is not a WP page (or an unresolvable permalink) still
+	// has the mapped standalone page as the best available answer.
+	if ( ! $page_id ) {
+		$page_id = wpss_get_page_id( $key );
+	}
+
+	$cache[ $key ] = $page_id;
+
+	return $page_id;
+}
+
+/**
+ * Get dashboard URL.
+ *
+ * @param string $section Optional dashboard section slug.
+ * @return string
+ */
+function wpss_get_dashboard_url( string $section = '' ): string {
+	// First check wpss_pages option (newer, preferred).
+	$pages          = get_option( 'wpss_pages', array() );
+	$dashboard_page = (int) ( $pages['dashboard'] ?? 0 );
+
+	// Fallback to legacy option for backward compatibility.
+	if ( ! $dashboard_page ) {
+		$dashboard_page = (int) get_option( 'wpss_dashboard_page' );
+	}
+
+	if ( ! $dashboard_page ) {
+		return '';
+	}
+
+	$url = get_permalink( $dashboard_page );
+
+	if ( ! $url ) {
+		return '';
+	}
+
+	if ( '' !== $section ) {
+		$url = wpss_append_dashboard_section( $url, $section );
+	}
+
+	return $url;
+}
+
+/**
+ * Append a dashboard section to a base dashboard URL.
+ *
+ * Emits a pretty endpoint path (e.g. /dashboard/services/) when permalinks
+ * are pretty, falling back to the `?section=` query arg on plain permalinks.
+ * Centralizing this keeps every internal link, breadcrumb, and redirect on
+ * the same URL shape, and means a single behavior change toggles them all.
+ *
+ * The default `orders` section maps to the bare dashboard URL (no segment)
+ * to keep the canonical dashboard landing URL clean.
+ *
+ * @since 1.2.0
+ *
+ * @param string $base_url Base dashboard page permalink (may already carry query args).
+ * @param string $section  Section slug (e.g. 'services', 'earnings').
+ * @return string Section URL.
+ */
+function wpss_append_dashboard_section( string $base_url, string $section ): string {
+	$section = sanitize_key( $section );
+
+	if ( '' === $section || 'orders' === $section ) {
+		return $base_url;
+	}
+
+	// Plain permalinks: keep the query-arg form.
+	if ( ! get_option( 'permalink_structure' ) ) {
+		return add_query_arg( 'section', $section, $base_url );
+	}
+
+	// Split off any query string / fragment so the endpoint segment is
+	// inserted into the path, not appended after the query args.
+	$query    = '';
+	$fragment = '';
+
+	$hash_pos = strpos( $base_url, '#' );
+	if ( false !== $hash_pos ) {
+		$fragment = substr( $base_url, $hash_pos );
+		$base_url = substr( $base_url, 0, $hash_pos );
+	}
+
+	$query_pos = strpos( $base_url, '?' );
+	if ( false !== $query_pos ) {
+		$query    = substr( $base_url, $query_pos );
+		$base_url = substr( $base_url, 0, $query_pos );
+	}
+
+	$path = trailingslashit( $base_url ) . $section . '/';
+
+	return $path . $query . $fragment;
+}
+
+/**
+ * Every dashboard section slug this product knows how to address.
+ *
+ * "Known" is not the same as "renderable here": `analytics` is a real address
+ * whose template ships in Pro, so a Free-only site must still recognise the
+ * slug and explain the gap rather than treat the URL as junk. Renderability is
+ * answered separately by wpss_get_dashboard_section_template().
+ *
+ * @since 1.6.1
+ *
+ * @return array<int, string> Section slugs.
+ */
+function wpss_get_known_dashboard_sections(): array {
+	$sections = array(
+		// Buying.
+		'orders',
+		'favorites',
+		'requests',
+		// Selling.
+		'services',
+		'sales',
+		'earnings',
+		'wallet',
+		'portfolio',
+		// Account.
+		'messages',
+		'notifications',
+		'disputes',
+		'profile',
+		// Actions.
+		'create',
+		'create-request',
+		'edit-request',
+		'become-vendor',
+		// Known Pro addresses. Listed here so a Free-only site answers
+		// "this needs Pro" instead of bouncing the URL as unrecognised.
+		'analytics',
+		'subscription',
+		'subscriptions',
+	);
+
+	/**
+	 * Filter the set of known dashboard section slugs.
+	 *
+	 * Anything not in this set is treated as a mistyped URL and redirected to
+	 * the dashboard's default landing section, so add-ons that register their
+	 * own section must add its slug here as well as to `wpss_dashboard_sections`.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param array<int, string> $sections Known section slugs.
+	 */
+	$sections = (array) apply_filters( 'wpss_known_dashboard_sections', $sections );
+
+	return array_values( array_unique( array_map( 'sanitize_key', $sections ) ) );
+}
+
+/**
+ * Label-derived guesses that resolve to a real dashboard section.
+ *
+ * The nav item for `orders` is LABELLED "My Orders", so `?section=my-orders`
+ * is the URL people type — and it used to render a dead "Section Not Available"
+ * card, because nothing in the product has ever emitted that slug. The same
+ * applies to "My Services" and "Sales Orders". Mapping the plausible guesses is
+ * cheaper for everyone than teaching every tester the canonical slug.
+ *
+ * @since 1.6.1
+ *
+ * @return array<string, string> Alias slug => canonical slug.
+ */
+function wpss_get_dashboard_section_aliases(): array {
+	$aliases = array(
+		'my-orders'      => 'orders',
+		'my-order'       => 'orders',
+		'order'          => 'orders',
+		'my-sales'       => 'sales',
+		'sales-orders'   => 'sales',
+		'vendor-orders'  => 'sales',
+		'my-services'    => 'services',
+		'service'        => 'services',
+		'my-favorites'   => 'favorites',
+		'my-portfolio'   => 'portfolio',
+		'my-earnings'    => 'earnings',
+		'buyer-requests' => 'requests',
+		'my-profile'     => 'profile',
+		'become_vendor'  => 'become-vendor',
+		// Slugs the product itself has emitted into emails and gateway return
+		// URLs but never had a template for — every one of them landed on the
+		// same dead card. The links are fixed at source too; these entries keep
+		// the mail already sitting in people's inboxes working.
+		'edit-service'   => 'create',
+		'stripe-connect' => 'earnings',
+	);
+
+	/**
+	 * Filter the dashboard section alias map.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param array<string, string> $aliases Alias slug => canonical slug.
+	 */
+	return (array) apply_filters( 'wpss_dashboard_section_aliases', $aliases );
+}
+
+/**
+ * Resolve a requested section slug to the canonical slug it addresses.
+ *
+ * Returns an empty string when the slug names nothing this product has — the
+ * caller's cue to send the visitor to the default landing section instead of
+ * rendering (or worse, 301-canonicalising) a dead end.
+ *
+ * @since 1.6.1
+ *
+ * @param string $section Requested section slug.
+ * @return string Canonical section slug, or an empty string when unknown.
+ */
+function wpss_normalize_dashboard_section( string $section ): string {
+	$section = sanitize_key( $section );
+
+	if ( '' === $section ) {
+		return '';
+	}
+
+	$aliases = wpss_get_dashboard_section_aliases();
+
+	if ( isset( $aliases[ $section ] ) ) {
+		$section = sanitize_key( (string) $aliases[ $section ] );
+	}
+
+	return in_array( $section, wpss_get_known_dashboard_sections(), true ) ? $section : '';
+}
+
+/**
+ * Resolve the template file that renders a dashboard section.
+ *
+ * Runs the same `wpss_dashboard_section_template` filter the dashboard renderer
+ * uses, so Pro-supplied templates and third-party overrides are accounted for.
+ * An empty string means "known address, nothing here can render it" — which on
+ * a Free-only site is exactly the Pro-only case.
+ *
+ * @since 1.6.1
+ *
+ * @param string $section Canonical section slug.
+ * @return string Absolute template path, or an empty string when none exists.
+ */
+function wpss_get_dashboard_section_template( string $section ): string {
+	$section = sanitize_key( $section );
+
+	if ( '' === $section ) {
+		return '';
+	}
+
+	// `wallet` and `earnings` are one screen; earnings.php renders both.
+	$template_section = ( 'wallet' === $section ) ? 'earnings' : $section;
+	$template_path    = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$template_section}.php";
+
+	/** This filter is documented in src/Frontend/UnifiedDashboard.php */
+	$template_path = (string) apply_filters( 'wpss_dashboard_section_template', $template_path, $section );
+
+	return ( '' !== $template_path && file_exists( $template_path ) ) ? $template_path : '';
+}
+
+/**
+ * Get default page slugs for standalone mode.
+ *
+ * These are used as fallbacks when no page is mapped in Settings → Pages.
+ * Site owners can override by mapping WP pages in settings.
+ *
+ * @since 1.2.0
+ *
+ * @return array<string, string> Map of page_key => default slug.
+ */
+function wpss_get_default_page_slugs(): array {
+	/**
+	 * Filter default page slugs.
+	 *
+	 * Allows changing the default URL slugs for all WPSS pages.
+	 * These only apply when no WP page is mapped in Settings → Pages.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param array $slugs Default slugs keyed by page key.
+	 */
+	return apply_filters(
+		'wpss_default_page_slugs',
+		array(
+			'services_page'  => 'services',
+			'dashboard'      => 'dashboard',
+			'become_vendor'  => 'become-vendor',
+			'create_service' => 'create-service',
+			'checkout'       => 'service-checkout',
+			'cart'           => 'service-cart',
+		)
+	);
+}
+
+/**
+ * Get page URL by settings key.
+ *
+ * Checks mapped WP page first (Settings → Pages), then falls back
+ * to the default slug. This ensures URLs work for translated or
+ * custom-slug sites without hardcoded paths.
+ *
+ * @since 1.1.0
+ *
+ * @param string $page_key Page settings key (e.g., 'services_page', 'dashboard', 'checkout').
+ * @return string Page URL or empty string.
+ */
+function wpss_get_page_url( string $page_key ): string {
+	$pages   = get_option( 'wpss_pages', array() );
+	$page_id = (int) ( $pages[ $page_key ] ?? 0 );
+
+	if ( $page_id ) {
+		$url = get_permalink( $page_id );
+		if ( $url ) {
+			return $url;
+		}
+	}
+
+	// Fallback to default slug.
+	$defaults = wpss_get_default_page_slugs();
+	if ( isset( $defaults[ $page_key ] ) ) {
+		return home_url( '/' . $defaults[ $page_key ] . '/' );
+	}
+
+	return '';
+}
+
+/**
+ * Get the mapped page ID for a given page key.
+ *
+ * @since 1.1.0
+ *
+ * @param string $page_key Page settings key (e.g., 'services_page', 'dashboard').
+ * @return int Page ID or 0.
+ */
+function wpss_get_page_id( string $page_key ): int {
+	$pages = get_option( 'wpss_pages', array() );
+	return (int) ( $pages[ $page_key ] ?? 0 );
+}
+
+/**
+ * Check if the current page is a specific mapped page.
+ *
+ * Uses the global $post to check the page ID before any query modification,
+ * making it safe to use in pre_get_posts and template_include.
+ *
+ * @since 1.1.0
+ *
+ * @param string $page_key Page settings key (e.g., 'services_page', 'dashboard').
+ * @return bool
+ */
+function wpss_is_page( string $page_key ): bool {
+	global $post;
+
+	$page_id = wpss_get_page_id( $page_key );
+
+	if ( ! $page_id ) {
+		return false;
+	}
+
+	// Check global $post first (available before query modification).
+	if ( $post instanceof \WP_Post && (int) $post->ID === $page_id ) {
+		return true;
+	}
+
+	// Fallback: check queried object.
+	$queried = get_queried_object_id();
+	if ( $queried && $queried === $page_id ) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Get the Become a Vendor URL.
+ *
+ * Returns the URL to the vendor registration page or dashboard with become-vendor section.
+ *
+ * @since 1.1.0
+ *
+ * @return string Become vendor URL.
+ */
+function wpss_get_become_vendor_url(): string {
+	// First check for a dedicated vendor registration page.
+	$vendor_page_url = wpss_get_page_url( 'vendor_registration' );
+	if ( $vendor_page_url ) {
+		return $vendor_page_url;
+	}
+
+	// Fall back to dashboard with become-vendor section.
+	$dashboard_url = wpss_get_page_url( 'dashboard' );
+	if ( $dashboard_url ) {
+		return wpss_append_dashboard_section( $dashboard_url, 'become-vendor' );
+	}
+
+	return wpss_get_page_url( 'become_vendor' );
+}
+
+/**
+ * Get service checkout URL.
+ *
+ * Generates a URL to the checkout page with service parameters.
+ *
+ * @since 1.1.0
+ *
+ * @param int   $service_id Service CPT ID.
+ * @param int   $package_id Package index (0, 1, 2).
+ * @param array $addons     Optional addon IDs.
+ * @return string Checkout URL with service parameters.
+ */
+function wpss_get_service_checkout_url( int $service_id, int $package_id = 0, array $addons = array() ): string {
+	// Try the active e-commerce adapter's checkout URL builder first.
+	$adapter = wpss_get_ecommerce_adapter();
+	if ( $adapter ) {
+		$checkout_provider = $adapter->get_checkout_provider();
+		if ( $checkout_provider ) {
+			return $checkout_provider->get_checkout_url(
+				$service_id,
+				array(
+					'package_id' => $package_id,
+					'addons'     => $addons,
+				)
+			);
+		}
+	}
+
+	// Fallback: use mapped checkout page with query args.
+	$url = wpss_get_page_url( 'checkout' );
+	if ( ! $url ) {
+		return '';
+	}
+
+	$url = add_query_arg( 'service_id', $service_id, $url );
+	if ( $package_id > 0 ) {
+		$url = add_query_arg( 'package', $package_id, $url );
+	}
+	if ( ! empty( $addons ) ) {
+		$url = add_query_arg( 'addons', implode( ',', $addons ), $url );
+	}
+
+	return $url;
+}
+
+/**
+ * Get the base checkout URL (without service ID).
+ *
+ * Uses the mapped checkout page URL, or builds from the adapter's checkout slug.
+ *
+ * @since 1.2.0
+ * @return string Base checkout URL.
+ */
+function wpss_get_checkout_base_url(): string {
+	// If a non-standalone adapter is active, use its checkout URL.
+	$adapter = wpss_get_ecommerce_adapter();
+	if ( $adapter && 'standalone' !== $adapter->get_id() ) {
+		$checkout_provider = $adapter->get_checkout_provider();
+		if ( $checkout_provider ) {
+			// Pass the service id explicitly. 0 means "no particular service",
+			// which is exactly what a BASE checkout URL is.
+			//
+			// This used to call get_checkout_url() with no arguments.
+			// CheckoutProviderInterface declares get_checkout_url( int $service_id, … )
+			// with NO default, and only WCCheckoutProvider widened it with one -
+			// so omitting the argument worked on WooCommerce and threw
+			// ArgumentCountError on EDD, FluentCart and SureCart. This function
+			// feeds the cart, every pay URL and several templates, so those
+			// three rails fataled on their own checkout while Woo, the rail
+			// everybody tests, stayed green.
+			return $checkout_provider->get_checkout_url( 0 );
+		}
+	}
+
+	$url = wpss_get_page_url( 'checkout' );
+	if ( $url ) {
+		return $url;
+	}
+
+	// Fallback to adapter slug.
+	$slug = \WPSellServices\Integrations\Standalone\StandaloneAdapter::get_checkout_slug();
+	return home_url( '/' . $slug . '/' );
+}
+
+/**
+ * Get the URL a buyer uses to pay one existing order.
+ *
+ * This is the single seam for "send the buyer somewhere they can pay THIS
+ * order" — tips, milestones, extensions and accepted proposals all resolve
+ * through here, including the links we put in emails.
+ *
+ * The standalone checkout understands `?pay_order=N` and renders that order.
+ * A cart-based rail (WooCommerce, EDD) does not: appending the query arg to
+ * its checkout URL lands the buyer on an empty cart with no way to pay, so
+ * those rails hook `wpss_pay_order_url` and return a URL on their own
+ * payment flow instead. Never rebuild this URL inline — a caller that does
+ * is correct only on standalone.
+ *
+ * @since 1.4.0
+ *
+ * @param int $order_id WPSS order ID to be paid.
+ * @return string Payment URL for the active e-commerce rail.
+ */
+function wpss_get_pay_order_url( int $order_id ): string {
+	$url = add_query_arg( 'pay_order', $order_id, wpss_get_checkout_base_url() );
+
+	/**
+	 * Filter the URL a buyer is sent to in order to pay a single order.
+	 *
+	 * Cart-based rails replace this entirely — see the WooCommerce
+	 * implementation in Pro, which creates (or reuses) a real WC order and
+	 * returns its native order-pay URL so the link works from an email with
+	 * no cart session.
+	 *
+	 * @since 1.4.0
+	 *
+	 * @param string $url      Default standalone pay URL.
+	 * @param int    $order_id WPSS order ID being paid.
+	 */
+	return (string) apply_filters( 'wpss_pay_order_url', $url, $order_id );
+}
+
+/**
+ * Platform values that mark a row as a sub-order rather than a real order.
+ *
+ * Tips, milestones and extensions are stored as their own rows in
+ * wpss_orders but they are not orders a buyer placed or a seller sold —
+ * they hang off a parent order. Every list, count and stat has to agree on
+ * that, so the list lives here rather than being re-authored per query.
+ *
+ * @since 1.4.0
+ *
+ * @return array<int, string> Sub-order platform values.
+ */
+
+/**
+ * Get the cart page URL for the active adapter.
+ *
+ * For WooCommerce returns the WC cart page; for standalone returns the service-checkout page.
+ *
+ * @since 1.2.0
+ * @return string Cart URL.
+ */
+function wpss_get_cart_url(): string {
+	$adapter = wpss_get_ecommerce_adapter();
+
+	// WooCommerce: use WC cart page.
+	if ( $adapter && 'woocommerce' === $adapter->get_id() && function_exists( 'wc_get_cart_url' ) ) {
+		return wc_get_cart_url();
+	}
+
+	// Standalone: use the dedicated cart page.
+	return wpss_get_page_url( 'cart' ) ?: wpss_get_checkout_base_url();
+}

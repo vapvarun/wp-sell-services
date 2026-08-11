@@ -4162,106 +4162,100 @@ parameters:
 			message: '#^Function wpss_add_notification\(\) has parameter \$data with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/misc.php
 
 		-
 			message: '#^Function wpss_get_order_requirements\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/orders.php
 
 		-
 			message: '#^Function wpss_get_order_statuses\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/orders.php
 
 		-
 			message: '#^Function wpss_get_service_checkout_url\(\) has parameter \$addons with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/urls.php
 
 		-
 			message: '#^Function wpss_get_service_packages\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/services.php
 
 		-
 			message: '#^Function wpss_get_service_requirements\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/orders.php
 
 		-
 			message: '#^Function wpss_get_template\(\) has parameter \$args with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/templates.php
 
 		-
 			message: '#^Function wpss_get_template_part\(\) has parameter \$args with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/templates.php
 
 		-
 			message: '#^Function wpss_get_user_notifications\(\) has parameter \$args with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/misc.php
 
 		-
 			message: '#^Function wpss_get_user_notifications\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/misc.php
 
 		-
 			message: '#^Function wpss_get_user_orders\(\) has parameter \$args with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/orders.php
 
 		-
 			message: '#^Function wpss_get_user_orders\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/orders.php
 
 		-
 			message: '#^Function wpss_get_vendor_orders\(\) has parameter \$args with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/orders.php
 
 		-
 			message: '#^Function wpss_get_vendor_orders\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/orders.php
 
 		-
 			message: '#^Function wpss_get_vendor_services\(\) has parameter \$args with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/vendors.php
 
 		-
 			message: '#^Function wpss_pagination\(\) has parameter \$args with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
+			path: src/functions/templates.php
 
 		-
 			message: '#^Function wpss_resolve_checkout_addons\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/functions.php
-
-		-
-			message: '#^If condition is always true\.$#'
-			identifier: if.alwaysTrue
-			count: 2
-			path: src/functions.php
+			path: src/functions/services.php
