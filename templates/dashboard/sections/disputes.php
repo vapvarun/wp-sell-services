@@ -264,7 +264,18 @@ $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 						$order_number = $order_row->order_number;
 					}
 					$detail_url = add_query_arg( 'dispute', (int) $dispute->id, $section_base_url );
-					$opened     = ! empty( $dispute->created_at ) ? mysql2date( get_option( 'date_format' ), $dispute->created_at ) : '';
+					// $dispute is a hydrated Dispute model, so created_at is a
+					// DateTimeImmutable - mysql2date() takes a STRING and fataled
+					// with "date_create(): Argument #1 must be of type string",
+					// white-screening this whole section. Same accessor the admin
+					// order screen uses.
+					//
+					// The two mysql2date() calls further up this template are fine:
+					// they read $entry['created_at'] / $item['created_at'] from
+					// plain arrays, which are still strings.
+					$opened = $dispute->created_at
+						? wp_date( get_option( 'date_format' ), $dispute->created_at->getTimestamp() )
+						: '';
 					?>
 					<tr>
 						<td><?php echo esc_html( $order_number ); ?></td>

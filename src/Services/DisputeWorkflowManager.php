@@ -1000,7 +1000,7 @@ class DisputeWorkflowManager {
 				'type'       => 'dispute_opened',
 				'user_id'    => $dispute->initiator_id,
 				'content'    => $dispute->description,
-				'created_at' => $dispute->created_at,
+				'created_at' => self::timeline_datetime( $dispute->created_at ),
 			);
 		}
 
@@ -1018,7 +1018,7 @@ class DisputeWorkflowManager {
 					'evidence_type' => $item['type'] ?? '',
 					'content'       => $item['content'] ?? '',
 				),
-				'created_at' => $item['created_at'] ?? '',
+				'created_at' => self::timeline_datetime( $item['created_at'] ?? '' ),
 			);
 		}
 
@@ -1029,7 +1029,7 @@ class DisputeWorkflowManager {
 				'user_id'     => $message->sender_id,
 				'content'     => $message->message,
 				'attachments' => $message->attachment_urls ?? array(),
-				'created_at'  => $message->created_at,
+				'created_at'  => self::timeline_datetime( $message->created_at ),
 			);
 		}
 
@@ -1037,7 +1037,7 @@ class DisputeWorkflowManager {
 		usort(
 			$timeline,
 			function ( $a, $b ) {
-				return strtotime( $a['created_at'] ) - strtotime( $b['created_at'] );
+				return strtotime( $a['created_at'] ) <=> strtotime( $b['created_at'] );
 			}
 		);
 
@@ -1049,5 +1049,35 @@ class DisputeWorkflowManager {
 		}
 
 		return $timeline;
+	}
+
+	/**
+	 * Normalise a timeline entry's created_at to a MySQL datetime string.
+	 *
+	 * The timeline is assembled from three sources that do NOT agree on type:
+	 * the Dispute model and the Message model hydrate created_at to a
+	 * DateTimeImmutable, while evidence rows are JSON-decoded associative arrays
+	 * whose created_at is still a string.
+	 *
+	 * That mixture fataled twice over. The usort() comparator called strtotime()
+	 * on it - "strtotime(): Argument #1 must be of type string, DateTimeImmutable
+	 * given" - which 500'd the dispute detail view. And
+	 * templates/dashboard/sections/disputes.php hands the same value to
+	 * mysql2date(), which would fatal on the object entries for the same reason.
+	 *
+	 * Normalising here, as each entry is built, fixes every consumer at once
+	 * instead of teaching each one to handle both shapes.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param mixed $value Raw created_at from a model or an array.
+	 * @return string MySQL datetime, or '' when there is nothing usable.
+	 */
+	private static function timeline_datetime( $value ): string {
+		if ( $value instanceof \DateTimeInterface ) {
+			return $value->format( 'Y-m-d H:i:s' );
+		}
+
+		return is_string( $value ) ? $value : '';
 	}
 }
