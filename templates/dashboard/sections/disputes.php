@@ -277,16 +277,24 @@ $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 						? wp_date( get_option( 'date_format' ), $dispute->created_at->getTimestamp() )
 						: '';
 					?>
+					<?php
+					// data-title feeds the stacked mobile layout: under 782px the
+					// stylesheet hides <thead> and renders `content: attr(data-title)`
+					// as each cell's label. Without it the labels were empty and
+					// `justify-content: space-between` pushed every value hard right
+					// against a blank gutter. Nobody had seen it, because this whole
+					// section 500'd before the date fix above.
+					?>
 					<tr>
-						<td><?php echo esc_html( $order_number ); ?></td>
+						<td data-title="<?php esc_attr_e( 'Order', 'wp-sell-services' ); ?>"><?php echo esc_html( $order_number ); ?></td>
 						<?php $wpss_reason_key = (string) ( $dispute->reason ?? '' ); ?>
-						<td><?php echo esc_html( $wpss_dispute_reasons[ $wpss_reason_key ] ?? $wpss_reason_key ); ?></td>
-						<td>
+						<td data-title="<?php esc_attr_e( 'Reason', 'wp-sell-services' ); ?>"><?php echo esc_html( $wpss_dispute_reasons[ $wpss_reason_key ] ?? $wpss_reason_key ); ?></td>
+						<td data-title="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
 							<span class="wpss-status-badge wpss-status-<?php echo esc_attr( $status_key ); ?>">
 								<?php echo esc_html( $statuses[ $status_key ] ?? $status_key ); ?>
 							</span>
 						</td>
-						<td><?php echo esc_html( $opened ); ?></td>
+						<td data-title="<?php esc_attr_e( 'Opened', 'wp-sell-services' ); ?>"><?php echo esc_html( $opened ); ?></td>
 						<td>
 							<a class="wpss-btn wpss-btn--sm wpss-btn--secondary" href="<?php echo esc_url( $detail_url ); ?>">
 								<?php esc_html_e( 'View', 'wp-sell-services' ); ?>

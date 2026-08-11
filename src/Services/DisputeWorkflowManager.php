@@ -687,7 +687,16 @@ class DisputeWorkflowManager {
 			$this->dispute_service->open(
 				(int) $order->id,
 				(int) $order->customer_id,
-				__( 'Late delivery', 'wp-sell-services' ),
+				// The SLUG, not the label. This passed
+				// __( 'Late delivery', 'wp-sell-services' ), so the auto-opened
+				// dispute stored a translated display string in a column that
+				// holds one of Dispute::get_reasons()' keys. Two consequences:
+				// the dispute list matched no key and fell back to printing the
+				// raw value, and because the string was translated AT WRITE TIME
+				// the database kept whatever locale the cron happened to run in
+				// - a German site stored "Verspatete Lieferung" permanently, and
+				// no later locale switch could ever re-translate it.
+				\WPSellServices\Models\Dispute::REASON_LATE_DELIVERY,
 				sprintf(
 					/* translators: %d: number of days the order has been late */
 					__( 'Dispute auto-opened: Order has been late for more than %d days without delivery.', 'wp-sell-services' ),
