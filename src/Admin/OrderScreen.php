@@ -139,23 +139,7 @@ class OrderScreen {
 		);
 	}
 
-	/**
-	 * Get order from request.
-	 *
-	 * @return ServiceOrder|null
-	 */
-	private function get_order(): ?ServiceOrder {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
 
-		if ( ! $order_id ) {
-			return null;
-		}
-
-		$row = $this->order_repo->find( $order_id );
-
-		return $row ? ServiceOrder::from_db( $row ) : null;
-	}
 
 	/**
 	 * AJAX: Update order status.
