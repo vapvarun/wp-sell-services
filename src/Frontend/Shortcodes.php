@@ -41,6 +41,7 @@ class Shortcodes {
 		add_shortcode( 'wpss_vendors', array( $this, 'vendors_grid' ) );
 		add_shortcode( 'wpss_vendor_profile', array( $this, 'vendor_profile' ) );
 		add_shortcode( 'wpss_top_vendors', array( $this, 'top_vendors' ) );
+		add_shortcode( 'wpss_seller_card', array( $this, 'seller_card' ) );
 
 		// Buyer request shortcodes.
 		add_shortcode( 'wpss_buyer_requests', array( $this, 'buyer_requests' ) );
@@ -375,6 +376,74 @@ class Shortcodes {
 			$this->render_vendor_profile_fallback( $profile, $vendor_id );
 		}
 		return ob_get_clean();
+	}
+
+	/**
+	 * Seller card shortcode.
+	 *
+	 * [wpss_seller_card user_id="12" show_bio="true" layout="vertical"]
+	 *
+	 * The wpss/seller-card block existed with no shortcode equivalent, so a
+	 * classic-editor or page-builder site had no way to place a single seller
+	 * card - the only routes to one were the block or the single-service
+	 * sidebar. This is a wrapper around that block, not a second renderer.
+	 *
+	 * Defaults to the vendor whose profile is being viewed, so
+	 * [wpss_seller_card] with no attributes works inside a vendor template.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param array $atts Shortcode attributes.
+	 * @return string
+	 */
+	public function seller_card( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
+		$atts = shortcode_atts(
+			array(
+				'user_id'       => 0,
+				'show_bio'      => 'true',
+				'show_stats'    => 'true',
+				'show_rating'   => 'true',
+				'show_services' => 'true',
+				'show_button'   => 'true',
+				'layout'        => 'vertical',
+			),
+			$atts,
+			'wpss_seller_card'
+		);
+
+		$user_id = absint( $atts['user_id'] );
+
+		if ( ! $user_id ) {
+			$user_id = (int) get_query_var( 'author' );
+		}
+
+		if ( ! $user_id ) {
+			$user_id = get_current_user_id();
+		}
+
+		if ( ! $user_id ) {
+			return '';
+		}
+
+		$block = \WPSellServices\Blocks\BlocksManager::instance()->get_block( 'seller-card' );
+
+		if ( ! $block instanceof \WPSellServices\Blocks\AbstractBlock ) {
+			return '';
+		}
+
+		return $block->render(
+			array(
+				'userId'       => $user_id,
+				'showBio'      => filter_var( $atts['show_bio'], FILTER_VALIDATE_BOOLEAN ),
+				'showStats'    => filter_var( $atts['show_stats'], FILTER_VALIDATE_BOOLEAN ),
+				'showRating'   => filter_var( $atts['show_rating'], FILTER_VALIDATE_BOOLEAN ),
+				'showServices' => filter_var( $atts['show_services'], FILTER_VALIDATE_BOOLEAN ),
+				'showButton'   => filter_var( $atts['show_button'], FILTER_VALIDATE_BOOLEAN ),
+				'layout'       => sanitize_key( (string) $atts['layout'] ),
+			)
+		);
 	}
 
 	/**
