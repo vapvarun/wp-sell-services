@@ -604,7 +604,9 @@ function wpss_prime_vendor_card_caches( array $vendor_ids ): void {
 		}
 	}
 
-	$avatar_ids = array_values( array_unique( array_filter( $avatar_ids ) ) );
+	// No array_filter(): both branches above only push a value they have already
+	// checked is truthy, so there is nothing falsy left to strip.
+	$avatar_ids = array_values( array_unique( $avatar_ids ) );
 
 	if ( $avatar_ids ) {
 		_prime_post_caches( $avatar_ids, false, true );
