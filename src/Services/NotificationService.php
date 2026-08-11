@@ -2011,10 +2011,14 @@ class NotificationService {
 		}
 
 		// Map notification types to WPSS WC email class keys.
+		//
+		// Literals here are only the types that have NO constant. The four that
+		// did ('order_created', 'revision_requested', 'dispute_opened',
+		// 'dispute_resolved') were listed twice, each time resolving to the same
+		// class as its constant, so PHP kept one and discarded an identical twin.
 		$type_to_wc_class = array(
 			self::TYPE_ORDER_CREATED      => 'WPSS_Email_New_Order',
 			'new_order'                   => 'WPSS_Email_New_Order',
-			'order_created'               => 'WPSS_Email_New_Order',
 			'order_confirmation'          => 'WPSS_Email_New_Order',
 			'order_started'               => 'WPSS_Email_Order_In_Progress',
 			'order_in_progress'           => 'WPSS_Email_Order_In_Progress',
@@ -2026,12 +2030,9 @@ class NotificationService {
 			'order_auto_completed'        => 'WPSS_Email_Order_Completed',
 			'order_cancelled'             => 'WPSS_Email_Order_Cancelled',
 			self::TYPE_REVISION_REQUESTED => 'WPSS_Email_Revision_Requested',
-			'revision_requested'          => 'WPSS_Email_Revision_Requested',
 			self::TYPE_DISPUTE_OPENED     => 'WPSS_Email_Dispute_Opened',
-			'dispute_opened'              => 'WPSS_Email_Dispute_Opened',
 			self::TYPE_DISPUTE_RESOLVED   => 'WPSS_Email_Dispute_Opened',
 			'dispute_response_received'   => 'WPSS_Email_Dispute_Opened',
-			'dispute_resolved'            => 'WPSS_Email_Dispute_Opened',
 			self::TYPE_NEW_MESSAGE        => 'WPSS_Email_New_Message',
 		);
 
