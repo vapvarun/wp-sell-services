@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Admin\Metaboxes\ServiceMetabox;
 use WPSellServices\Admin\Metaboxes\BuyerRequestMetabox;
-use WPSellServices\Admin\Metaboxes\OrderMetabox;
+use WPSellServices\Admin\OrderScreen;
 use WPSellServices\Admin\Pages\ManualOrderPage;
 use WPSellServices\Admin\Pages\VendorsPage;
 use WPSellServices\Admin\Pages\ReportsPage;
@@ -378,8 +378,8 @@ class Admin {
 		$request_metabox = new BuyerRequestMetabox();
 		$request_metabox->init();
 
-		$order_metabox = new OrderMetabox();
-		$order_metabox->init();
+		$order_screen = new OrderScreen();
+		$order_screen->init();
 	}
 
 	/**
@@ -1953,6 +1953,49 @@ class Admin {
 							</div>
 						</div>
 					<?php endif; ?>
+
+					<?php
+					// Gateway-specific admin actions.
+					//
+					// `wpss_admin_order_actions` used to fire ONLY from
+					// OrderMetabox::render_actions_metabox(), and that metabox is
+					// registered against post type `wpss_orders` - which is not a
+					// registered post type, so the screen does not exist and the
+					// hook never ran. OfflineGateway is its only listener, and it
+					// renders the "Mark as Paid" control for offline orders
+					// awaiting payment. The net effect was that an offline order
+					// could NOT be marked paid from the admin at all: the button
+					// existed, on a screen no one could reach.
+					//
+					// Firing it here puts it on the screen admins actually use.
+					// Buffered so the postbox wrapper only appears when a gateway
+					// has something to contribute - an order with no listener
+					// output must not render an empty box.
+					ob_start();
+
+					/**
+					 * Fires in the admin order actions area for gateway-specific actions.
+					 *
+					 * @since 1.0.0
+					 *
+					 * @param \WPSellServices\Models\ServiceOrder $order  The order.
+					 * @param string                             $status Current order status.
+					 */
+					do_action( 'wpss_admin_order_actions', $order, $order->status );
+
+					$wpss_gateway_actions = trim( (string) ob_get_clean() );
+
+					if ( '' !== $wpss_gateway_actions ) :
+						?>
+						<div class="postbox">
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Payment Actions', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<?php echo $wpss_gateway_actions; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Listener output; each gateway escapes its own markup. ?>
+							</div>
+						</div>
+						<?php
+					endif;
+					?>
 
 					<?php
 					// Billing address as recorded when the order was paid — the
