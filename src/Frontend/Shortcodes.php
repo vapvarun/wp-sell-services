@@ -17,7 +17,6 @@ defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Services\SearchService;
 use WPSellServices\Services\VendorService;
-use WPSellServices\Services\BuyerRequestService;
 
 /**
  * Handles all shortcode registrations and rendering.
@@ -228,35 +227,29 @@ class Shortcodes {
 		ob_start();
 		?>
 		<div class="wpss-categories-grid wpss-columns-<?php echo esc_attr( $atts['columns'] ); ?>">
-			<?php foreach ( $categories as $category ) : ?>
-				<?php
-				$icon  = get_term_meta( $category->term_id, '_wpss_icon', true );
-				$image = get_term_meta( $category->term_id, '_wpss_image', true );
-				?>
-				<a href="<?php echo esc_url( get_term_link( $category ) ); ?>" class="wpss-category-card">
-					<?php if ( $image ) : ?>
-						<div class="wpss-category-image">
-							<?php echo wp_get_attachment_image( $image, 'medium' ); ?>
-						</div>
-					<?php elseif ( $icon ) : ?>
-						<div class="wpss-category-icon">
-							<span class="<?php echo esc_attr( $icon ); ?>"></span>
-						</div>
-					<?php endif; ?>
-					<h3 class="wpss-category-name"><?php echo esc_html( $category->name ); ?></h3>
-					<?php if ( 'true' === $atts['show_count'] ) : ?>
-						<span class="wpss-category-count">
-							<?php
-							printf(
-								/* translators: %d: number of services */
-								esc_html( _n( '%d service', '%d services', $category->count, 'wp-sell-services' ) ),
-								(int) $category->count
-							);
-							?>
-						</span>
-					<?php endif; ?>
-				</a>
-			<?php endforeach; ?>
+			<?php
+			foreach ( $categories as $category ) :
+				// ONE category card, the theme-overridable partial.
+				//
+				// This used to emit its own markup, and the wpss/service-categories
+				// block emitted a second version: <h3> with a bare
+				// <span class="{icon}"> here against <h4>, a dashicons-prefixed
+				// span, a Lucide folder fallback and a lazy-loaded image there. The
+				// card CSS lives in blocks.css and targets .wpss-category-name /
+				// .wpss-category-content, so the block's structure was the one the
+				// stylesheet was written for - the shortcode was the odd one out.
+				wpss_get_template_part(
+					'partials/category-card',
+					'',
+					array(
+						'category'   => $category,
+						'show_count' => 'true' === $atts['show_count'],
+						'show_icon'  => true,
+						'show_image' => true,
+					)
+				);
+			endforeach;
+			?>
 		</div>
 		<?php
 		return ob_get_clean();
@@ -406,42 +399,32 @@ class Shortcodes {
 			'wpss_buyer_requests'
 		);
 
-		$request_service = new BuyerRequestService();
-		$args            = array(
-			'posts_per_page' => absint( $atts['limit'] ),
+		// The shortcode is a wrapper around the block, not a second renderer.
+		//
+		// It used to run its own get_open() call and its own card markup, which
+		// is how the two surfaces drifted: the block showed expired requests,
+		// and only the shortcode's card was currency-aware. Rendering through
+		// the block means one query, one card template (content-request-card.php,
+		// so a theme override applies to both), and one set of hooks.
+		//
+		// The shortcode's own attribute names are kept - `limit`, `budget_min`,
+		// `budget_max` are the published API - and mapped onto the block's.
+		$block = \WPSellServices\Blocks\BlocksManager::instance()->get_block( 'buyer-requests' );
+
+		if ( ! $block instanceof \WPSellServices\Blocks\AbstractBlock ) {
+			return '';
+		}
+
+		$output = $block->render(
+			array(
+				'perPage'   => absint( $atts['limit'] ),
+				'category'  => absint( $atts['category'] ),
+				'budgetMin' => (float) $atts['budget_min'],
+				'budgetMax' => (float) $atts['budget_max'],
+			)
 		);
 
-		if ( $atts['category'] ) {
-			$args['category_id'] = absint( $atts['category'] );
-		}
-
-		if ( $atts['budget_min'] ) {
-			$args['budget_min'] = floatval( $atts['budget_min'] );
-		}
-
-		if ( $atts['budget_max'] ) {
-			$args['budget_max'] = floatval( $atts['budget_max'] );
-		}
-
-		$requests = $request_service->get_open( $args );
-
-		ob_start();
-		?>
-		<div class="wpss-app-shell"><div class="wpss-app-shell__container">
-		<div class="wpss-buyer-requests">
-			<?php
-			if ( ! empty( $requests ) ) :
-				foreach ( $requests as $request ) :
-					$this->render_request_card( $request );
-				endforeach;
-			else :
-				?>
-				<p class="wpss-no-results"><?php esc_html_e( 'No buyer requests found.', 'wp-sell-services' ); ?></p>
-			<?php endif; ?>
-		</div>
-		</div></div>
-		<?php
-		return ob_get_clean();
+		return '<div class="wpss-app-shell"><div class="wpss-app-shell__container">' . $output . '</div></div>';
 	}
 
 	/**
@@ -828,52 +811,6 @@ class Shortcodes {
 		</form>
 		<?php
 		return ob_get_clean();
-	}
-
-	/**
-	 * Render request card.
-	 *
-	 * @param object $request Request data.
-	 * @return void
-	 */
-	private function render_request_card( object $request ): void {
-		$buyer_id = (int) ( $request->author_id ?? $request->post_author ?? 0 );
-		?>
-		<div class="wpss-request-card">
-			<div class="wpss-request-header">
-				<div class="wpss-request-buyer">
-					<?php echo get_avatar( $buyer_id, 40 ); ?>
-					<span><?php echo esc_html( wpss_get_member_display_name( $buyer_id ) ); ?></span>
-				</div>
-				<span class="wpss-request-date"><?php echo esc_html( human_time_diff( strtotime( ( $request->created_at ?? $request->post_date ) . ' UTC' ), time() ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?></span>
-			</div>
-			<h3 class="wpss-request-title">
-				<a href="<?php echo esc_url( get_permalink( $request->ID ?? $request->id ?? 0 ) ); ?>">
-					<?php echo esc_html( $request->title ?? $request->post_title ); ?>
-				</a>
-			</h3>
-			<p class="wpss-request-excerpt"><?php echo esc_html( wp_trim_words( $request->description ?? $request->post_content, 30 ) ); ?></p>
-			<div class="wpss-request-meta">
-				<span class="wpss-request-budget">
-					<?php
-					$min = $request->budget_min ?? 0;
-					$max = $request->budget_max ?? 0;
-					if ( $min && $max ) {
-						// Currency-aware, not a hardcoded $ — non-USD marketplaces
-						// were showing dollar budgets (Basecamp #10110742943).
-						echo esc_html( sprintf( '%s - %s', wpss_format_price( (float) $min ), wpss_format_price( (float) $max ) ) );
-					} elseif ( $max ) {
-						/* translators: %s: maximum budget amount. */
-						echo esc_html( sprintf( __( 'Up to %s', 'wp-sell-services' ), wpss_format_price( (float) $max ) ) );
-					} else {
-						esc_html_e( 'Open budget', 'wp-sell-services' );
-					}
-					?>
-				</span>
-				<span class="wpss-request-proposals"><?php echo esc_html( $request->proposal_count ?? 0 ); ?> <?php esc_html_e( 'proposals', 'wp-sell-services' ); ?></span>
-			</div>
-		</div>
-		<?php
 	}
 
 	/**

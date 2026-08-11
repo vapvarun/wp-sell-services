@@ -110,6 +110,17 @@ class BuyerRequests extends AbstractBlock {
 				'type'    => 'string',
 				'default' => 'list',
 			],
+			// Budget bounds. [wpss_buyer_requests] has always accepted these;
+			// the block had no equivalent, so the shortcode could not be
+			// expressed as a wrapper around the block without losing them.
+			'budgetMin'      => [
+				'type'    => 'number',
+				'default' => 0,
+			],
+			'budgetMax'      => [
+				'type'    => 'number',
+				'default' => 0,
+			],
 		];
 	}
 
@@ -135,41 +146,37 @@ class BuyerRequests extends AbstractBlock {
 			'showDeadline'   => true,
 			'showOffers'     => true,
 			'layout'         => 'list',
+			'budgetMin'      => 0,
+			'budgetMax'      => 0,
 		];
 
 		$attributes = wp_parse_args( $attributes, $defaults );
 
-		// Query arguments.
-		$args = [
-			'post_type'      => 'wpss_request',
-			'post_status'    => 'publish',
-			'posts_per_page' => $attributes['perPage'],
-			'orderby'        => $attributes['orderBy'],
-			'order'          => $attributes['order'],
-			'paged'          => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
-			// ONE definition of "open request", owned by BuyerRequestService.
-			//
-			// This block previously spelled out the status clause on its own and
-			// stopped there, missing the expiry half of the rule that the service
-			// applies. The block therefore listed EXPIRED requests that
-			// [wpss_buyer_requests] correctly hid, so a seller could open one and
-			// pitch for work that had already closed. Verified before the fix: an
-			// expired request appeared in the block and not in the shortcode.
-			'meta_query'     => \WPSellServices\Services\BuyerRequestService::open_meta_query(), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-		];
-
-		// Filter by category.
-		if ( ! empty( $attributes['category'] ) ) {
-			$args['tax_query'] = [
+		// ONE definition of the open-requests query, owned by BuyerRequestService.
+		//
+		// This block used to assemble the query itself and spelled out only the
+		// status half of "open", missing the expiry half the service applies. It
+		// therefore listed EXPIRED requests that [wpss_buyer_requests] correctly
+		// hid, so a seller could open one and pitch for work that had already
+		// closed. Verified before the fix: an expired request appeared in the
+		// block and not in the shortcode.
+		//
+		// Building the whole argument set here - not just the meta fragment -
+		// is what lets the shortcode be a thin wrapper around this block instead
+		// of a second implementation that can drift again.
+		$query = new \WP_Query(
+			\WPSellServices\Services\BuyerRequestService::open_query_args(
 				[
-					'taxonomy' => 'wpss_service_category',
-					'field'    => 'term_id',
-					'terms'    => $attributes['category'],
-				],
-			];
-		}
-
-		$query = new \WP_Query( $args );
+					'posts_per_page' => $attributes['perPage'],
+					'paged'          => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
+					'order_by'       => $attributes['orderBy'],
+					'order'          => $attributes['order'],
+					'category_id'    => $attributes['category'],
+					'budget_min'     => $attributes['budgetMin'],
+					'budget_max'     => $attributes['budgetMax'],
+				]
+			)
+		);
 
 		$wrapper_classes = [ 'wpss-requests-' . $attributes['layout'] ];
 		?>

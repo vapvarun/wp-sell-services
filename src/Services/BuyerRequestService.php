@@ -306,6 +306,41 @@ class BuyerRequestService {
 	 * @return array<object> Array of requests.
 	 */
 	public function get_open( array $args = array() ): array {
+		$query = new \WP_Query( self::open_query_args( $args ) );
+
+		$requests = array();
+		foreach ( $query->posts as $post ) {
+			$requests[] = $this->format_request( $post );
+		}
+
+		return $requests;
+	}
+
+	/**
+	 * THE query that lists open requests, as WP_Query arguments.
+	 *
+	 * Where open_meta_query() above settles what "open" MEANS, this settles how the
+	 * list is actually built - paging, category, budget bounds, ordering - so
+	 * that a caller needing the WP_Query itself (to run a loop, to read
+	 * max_num_pages) does not have to restate any of it.
+	 *
+	 * Why this exists as well: get_open() returns flattened objects from
+	 * format_request(), which is what [wpss_buyer_requests] wanted, but the
+	 * shared content-request-card.php template is loop-based and needs real
+	 * posts. Without this, the block had to rebuild the query by hand - and it
+	 * did, which is precisely how it came to omit the expiry half of the rule.
+	 * Both surfaces now build from this one definition.
+	 *
+	 * Ordering is sanitised HERE rather than at each call site: `order` is
+	 * allow-listed to ASC/DESC and `orderby` passed through sanitize_key(),
+	 * because both surfaces previously handed user input straight to WP_Query.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param array<string, mixed> $args Query arguments.
+	 * @return array<string, mixed> WP_Query arguments.
+	 */
+	public static function open_query_args( array $args = array() ): array {
 		$defaults = array(
 			'posts_per_page' => 20,
 			'paged'          => 1,
@@ -318,13 +353,18 @@ class BuyerRequestService {
 
 		$args = wp_parse_args( $args, $defaults );
 
+		$order = strtoupper( (string) $args['order'] );
+		if ( ! in_array( $order, array( 'ASC', 'DESC' ), true ) ) {
+			$order = 'DESC';
+		}
+
 		$query_args = array(
 			'post_type'      => BuyerRequestPostType::POST_TYPE,
 			'post_status'    => 'publish',
-			'posts_per_page' => $args['posts_per_page'],
-			'paged'          => $args['paged'],
-			'orderby'        => $args['order_by'],
-			'order'          => $args['order'],
+			'posts_per_page' => (int) $args['posts_per_page'],
+			'paged'          => max( 1, (int) $args['paged'] ),
+			'orderby'        => sanitize_key( (string) $args['order_by'] ),
+			'order'          => $order,
 			'meta_query'     => self::open_meta_query(), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		);
 
@@ -358,14 +398,7 @@ class BuyerRequestService {
 			);
 		}
 
-		$query = new \WP_Query( $query_args );
-
-		$requests = array();
-		foreach ( $query->posts as $post ) {
-			$requests[] = $this->format_request( $post );
-		}
-
-		return $requests;
+		return $query_args;
 	}
 
 	/**

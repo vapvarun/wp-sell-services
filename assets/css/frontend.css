@@ -3867,6 +3867,83 @@ body.wpss-modal-active {
 }
 
 /* ==========================================================================
+   Services grid + Categories grid — the columns attribute had no effect
+   ==========================================================================
+   Same defect the vendors grid above had, found by screenshotting the two
+   surfaces side by side: [wpss_services], [wpss_featured_services] and
+   [wpss_service_categories] all rendered ONE full-width column no matter what
+   columns="" was set to.
+
+   The cause is two vocabularies for the same idea. blocks.css styles the BLOCK
+   wrapper form - `.wpss-grid-cols-N .wpss-services-grid` and
+   `.wpss-grid-cols-N .wpss-categories-list` - while the grid element itself
+   carries `.wpss-columns-N`, which nothing ever styled. The service grid emits
+   identical markup from both surfaces (ServiceGrid.php and Shortcodes.php build
+   the same string), so both were stacked; only the block's own wrapper class
+   rescued it inside the editor's block markup.
+
+   Styling `.wpss-columns-N` on the grid element fixes every surface that emits
+   it at once, and leaves the block wrapper rules in blocks.css untouched.
+   Breakpoints mirror the vendors grid so the three behave identically.
+
+   Two different states, deliberately treated differently:
+
+   - `.wpss-services-grid` ALREADY has a working base in design-system.css
+     (display:grid, auto-fill minmax(280px, 1fr)). It was never stacked - it
+     just ignored columns="". So no base rule is restated here; doing so would
+     silently retune the archive's existing 280px track to something else.
+     Only the columns-N modifiers are added.
+   - `.wpss-categories-grid` had NO rule anywhere, which is the one that
+     actually rendered as a single full-width column. It gets the base too.
+   ========================================================================== */
+
+.wpss-categories-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: var(--wpss-space-5, 24px);
+	align-items: stretch;
+}
+
+.wpss-services-grid.wpss-columns-2,
+.wpss-categories-grid.wpss-columns-2 { grid-template-columns: repeat(2, 1fr); }
+.wpss-services-grid.wpss-columns-3,
+.wpss-categories-grid.wpss-columns-3 { grid-template-columns: repeat(3, 1fr); }
+.wpss-services-grid.wpss-columns-4,
+.wpss-categories-grid.wpss-columns-4 { grid-template-columns: repeat(4, 1fr); }
+.wpss-services-grid.wpss-columns-5,
+.wpss-categories-grid.wpss-columns-5 { grid-template-columns: repeat(5, 1fr); }
+
+@media (max-width: 782px) {
+	.wpss-services-grid,
+	.wpss-services-grid.wpss-columns-2,
+	.wpss-services-grid.wpss-columns-3,
+	.wpss-services-grid.wpss-columns-4,
+	.wpss-services-grid.wpss-columns-5,
+	.wpss-categories-grid,
+	.wpss-categories-grid.wpss-columns-2,
+	.wpss-categories-grid.wpss-columns-3,
+	.wpss-categories-grid.wpss-columns-4,
+	.wpss-categories-grid.wpss-columns-5 {
+		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	}
+}
+
+@media (max-width: 480px) {
+	.wpss-services-grid,
+	.wpss-services-grid.wpss-columns-2,
+	.wpss-services-grid.wpss-columns-3,
+	.wpss-services-grid.wpss-columns-4,
+	.wpss-services-grid.wpss-columns-5,
+	.wpss-categories-grid,
+	.wpss-categories-grid.wpss-columns-2,
+	.wpss-categories-grid.wpss-columns-3,
+	.wpss-categories-grid.wpss-columns-4,
+	.wpss-categories-grid.wpss-columns-5 {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ==========================================================================
    Pagination
    ==========================================================================
    wpss_pagination() is shared by the archive, [wpss_services], the
