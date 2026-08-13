@@ -194,7 +194,30 @@ class UnifiedDashboard {
 			return false;
 		}
 
-		return has_shortcode( $post->post_content, 'wpss_dashboard' );
+		// [wpss_account] renders this dashboard too - it is a thin wrapper that
+		// maps the legacy account pages onto our sections - so a page using it
+		// needs these assets just as much. Matching only [wpss_dashboard] left
+		// the wrapper rendering correct markup with no stylesheet: nav and stats
+		// came out as bare bullet lists. Caught in the browser; no PHP-level
+		// check would have shown it.
+		$shortcodes = array( 'wpss_dashboard', 'wpss_account' );
+
+		/**
+		 * Filters the shortcodes that make a page load the dashboard assets.
+		 *
+		 * @since 1.6.0
+		 *
+		 * @param string[] $shortcodes Shortcode tags.
+		 */
+		$shortcodes = (array) apply_filters( 'wpss_dashboard_asset_shortcodes', $shortcodes );
+
+		foreach ( $shortcodes as $tag ) {
+			if ( has_shortcode( $post->post_content, (string) $tag ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
