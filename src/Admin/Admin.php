@@ -916,7 +916,7 @@ class Admin {
 			wp_enqueue_script(
 				'wpss-admin-settings-nav',
 				\WPSS_PLUGIN_URL . 'assets/js/admin-settings-nav.js',
-				array( 'wpss-ui' ),
+				array( 'wpss-ui', 'wp-i18n' ),
 				\WPSS_VERSION,
 				true
 			);

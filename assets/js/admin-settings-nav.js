@@ -11,6 +11,8 @@
 ( function() {
 	'use strict';
 
+	var __ = wp.i18n.__;
+
 	var NAV     = '.wpss-settings-nav-item[data-section]';
 	var SECTION = '.wpss-settings-section';
 	var ACTIVE  = 'is-active';
@@ -82,7 +84,7 @@
 	var params = new URLSearchParams( location.search );
 	if ( params.get( 'settings-updated' ) === 'true' ) {
 		if ( window.wpssToast ) {
-			wpssToast( 'Settings saved.', 'success' );
+			wpssToast( __( 'Settings saved.', 'wp-sell-services' ), 'success' );
 		}
 		// Clean URL without reloading.
 		var url = location.href

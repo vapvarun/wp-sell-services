@@ -365,7 +365,79 @@ def check_pot(root: Path, cfg: dict, verbose: bool):
 
 
 # ---------------------------------------------------------------------------
-# Check 2 -- text domain
+# Check 2 -- version agreement
+#
+# The POT records the version it was generated from in Project-Id-Version. A
+# release that bumps the plugin header AFTER generating the POT leaves a POT
+# that is string-fresh (so the stale-pot check above stays silent) but declares
+# the previous version. That is exactly how 1.6.0 shipped a POT saying 1.5.1.
+# Translators use that header to tell catalogues apart, so pin every version
+# source to the plugin header and fail when any of them drifts.
+# ---------------------------------------------------------------------------
+
+def read_version_sources(root: Path, cfg: dict):
+    """Return {label: (version, relative_path)} for every file declaring a version."""
+    found = {}
+
+    main_file = root / cfg.get('mainFile', cfg['slug'] + '.php')
+    if main_file.exists():
+        m = re.search(r'^\s*\*\s*Version:\s*(.+?)\s*$',
+                      main_file.read_text(encoding='utf-8'), re.MULTILINE)
+        if m:
+            found['plugin header'] = (m.group(1), main_file.name)
+
+    pot = root / cfg['potFile']
+    if pot.exists():
+        # Only the header block; a msgid could legitimately contain this text.
+        head = pot.read_text(encoding='utf-8')[:4096]
+        m = re.search(r'"Project-Id-Version:\s*(.*?)\\n"', head)
+        if m:
+            # "WP Sell Services 1.6.0" -> "1.6.0"
+            found['POT Project-Id-Version'] = (m.group(1).split()[-1], cfg['potFile'])
+
+    pkg = root / 'package.json'
+    if pkg.exists():
+        try:
+            v = json.loads(pkg.read_text(encoding='utf-8')).get('version')
+        except json.JSONDecodeError:
+            v = None
+        if v:
+            found['package.json'] = (v, 'package.json')
+
+    readme = root / 'readme.txt'
+    if readme.exists():
+        m = re.search(r'^Stable tag:\s*(.+?)\s*$',
+                      readme.read_text(encoding='utf-8'), re.MULTILINE)
+        if m and m.group(1) != 'trunk':
+            found['readme Stable tag'] = (m.group(1), 'readme.txt')
+
+    return found
+
+
+def check_versions(root: Path, cfg: dict):
+    sources = read_version_sources(root, cfg)
+    expected = sources.pop('plugin header', None)
+    if expected is None:
+        # Nothing to pin against; the text-domain check already covers a
+        # missing/unreadable main file.
+        return []
+
+    violations = []
+    for label, (version, path) in sorted(sources.items()):
+        if version == expected[0]:
+            continue
+        hint = ('Run `npm run i18n` and commit the regenerated POT.'
+                if label.startswith('POT')
+                else f'Set the version in {path} to {expected[0]}.')
+        violations.append(Violation(
+            'version-drift', path, 0,
+            f'{label} says {version}, but {expected[1]} says {expected[0]}.',
+            hint))
+    return violations
+
+
+# ---------------------------------------------------------------------------
+# Check 3 -- text domain
 # ---------------------------------------------------------------------------
 
 def check_text_domain(root: Path, cfg: dict):
@@ -582,6 +654,7 @@ def main() -> int:
         print(f'i18n-verify: {cfg["domain"]} @ {root}')
 
     violations = []
+    violations += check_versions(root, cfg)
     violations += check_text_domain(root, cfg)
     violations += check_script_translations(root, cfg, opts.list_handles)
     if opts.skip_pot:
@@ -600,7 +673,7 @@ def main() -> int:
         by_check.setdefault(v.check, []).append(v)
 
     print(f'i18n-verify: {len(violations)} violation(s) in {cfg["domain"]}\n', file=sys.stderr)
-    for check in ('stale-pot', 'text-domain', 'script-i18n'):
+    for check in ('version-drift', 'stale-pot', 'text-domain', 'script-i18n'):
         items = by_check.get(check)
         if not items:
             continue
