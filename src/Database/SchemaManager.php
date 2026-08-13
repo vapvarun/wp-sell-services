@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.5.4';
+	const DB_VERSION = '1.6.0';
 
 	/**
 	 * Option name for storing DB version.
@@ -96,6 +96,7 @@ class SchemaManager {
 		'withdrawals',
 		'audit_log',
 		'reports',
+		'payment_receipts',
 	);
 
 	/**
@@ -584,6 +585,47 @@ class SchemaManager {
 	 * @param string $charset_collate Charset collation.
 	 * @return string SQL statement.
 	 */
+	/**
+	 * Get payment receipts table SQL.
+	 *
+	 * Proof-of-payment a buyer uploads against an offline order, and the record
+	 * of who verified it (Basecamp #10194890682).
+	 *
+	 * A TABLE, not order meta, because the admin screen queries it BY STATUS
+	 * across orders - "show me everything awaiting verification" is the whole
+	 * job, and that is a query post meta cannot serve without scanning.
+	 *
+	 * It is also an audit record. Verifying a receipt credits a vendor, so who
+	 * approved what, when, and on what evidence has to survive independently of
+	 * the order row - `verified_by` and `verified_at` are the answer to "who
+	 * released this money", which the order's status history alone cannot give.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param string $charset_collate Charset collation.
+	 * @return string SQL statement.
+	 */
+	private function get_payment_receipts_table( string $charset_collate ): string {
+		$table = $this->get_table_name( 'payment_receipts' );
+
+		return "CREATE TABLE {$table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			order_id bigint(20) unsigned NOT NULL,
+			uploaded_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			attachment_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			note text DEFAULT NULL,
+			status varchar(20) NOT NULL DEFAULT 'submitted',
+			verified_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			verified_at datetime DEFAULT NULL,
+			admin_note text DEFAULT NULL,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_order (order_id, status),
+			KEY idx_queue (status, created_at),
+			KEY idx_uploader (uploaded_by)
+		) {$charset_collate};";
+	}
+
 	private function get_reports_table( string $charset_collate ): string {
 		$table = $this->get_table_name( 'reports' );
 
