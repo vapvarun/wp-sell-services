@@ -51,8 +51,8 @@ class OrderRepository extends AbstractRepository {
 	/**
 	 * Insert an order, keeping platform_order_ref in step with platform_order_id.
 	 *
-	 * platform_order_ref must mirror platform_order_id on every numeric rail, and
-	 * that invariant is the whole reason a single lookup can serve both numeric
+	 * The ref must mirror platform_order_id on every numeric rail, and that
+	 * invariant is the whole reason a single lookup can serve both numeric
 	 * and string rails. Deriving it here rather than at the call sites is
 	 * deliberate: there are eight places that insert an order with a platform id
 	 * (four rails plus tips, milestones, extensions and buyer-request conversion),
