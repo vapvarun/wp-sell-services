@@ -2145,6 +2145,37 @@ final class Plugin {
 			3
 		);
 
+		// Offline payment proof: tell the people who need to act
+		// (Basecamp #10194890682). The service fires these three; the emails
+		// route through EmailService so they honour the member's own
+		// preferences rather than sending regardless.
+		add_action(
+			'wpss_payment_receipt_submitted',
+			static function ( int $receipt_id, int $order_id ): void {
+				( new \WPSellServices\Services\EmailService() )->send_receipt_submitted( $receipt_id, $order_id );
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'wpss_payment_receipt_verified',
+			static function ( int $receipt_id, int $order_id ): void {
+				( new \WPSellServices\Services\EmailService() )->send_receipt_verified( $receipt_id, $order_id );
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'wpss_payment_receipt_rejected',
+			static function ( int $receipt_id, int $order_id, int $reviewer_id, string $reason = '' ): void {
+				( new \WPSellServices\Services\EmailService() )->send_receipt_rejected( $receipt_id, $order_id, $reason );
+			},
+			10,
+			4
+		);
+
 		// Payment hooks.
 		add_action(
 			'wpss_order_paid',

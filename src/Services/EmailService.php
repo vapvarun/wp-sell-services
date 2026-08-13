@@ -65,6 +65,16 @@ class EmailService {
 	public const TYPE_TEST_EMAIL             = 'test_email';
 
 	/**
+	 * Offline payment proof: submitted, verified, rejected.
+	 *
+	 * @since 1.6.0
+	 * @var string
+	 */
+	public const TYPE_RECEIPT_SUBMITTED = 'receipt_submitted';
+	public const TYPE_RECEIPT_VERIFIED  = 'receipt_verified';
+	public const TYPE_RECEIPT_REJECTED  = 'receipt_rejected';
+
+	/**
 	 * Default email settings. Lazily initialized to avoid early __() calls.
 	 *
 	 * @var array|null
@@ -534,6 +544,159 @@ class EmailService {
 				'tip_note'       => $note,
 				'reply_to_email' => $customer ? $customer->user_email : '',
 				'reply_to_name'  => $customer ? $customer->display_name : '',
+			)
+		);
+	}
+
+	/**
+	 * Tell the site owner a buyer has sent proof of an offline payment.
+	 *
+	 * Goes to the admin notification address, not the vendor: releasing an
+	 * offline payment is the marketplace's decision, and a vendor cannot verify
+	 * money that lands in someone else's bank account.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param int $receipt_id Receipt ID.
+	 * @param int $order_id   Order ID.
+	 * @return bool
+	 */
+	public function send_receipt_submitted( int $receipt_id, int $order_id ): bool {
+		$order = wpss_get_order( $order_id );
+
+		if ( ! $order ) {
+			return false;
+		}
+
+		$to = (string) apply_filters( 'wpss_admin_notification_email', get_option( 'admin_email' ) );
+
+		return $this->send(
+			$to,
+			sprintf(
+				/* translators: 1: site name, 2: order number */
+				__( '[%1$s] Payment proof submitted for order #%2$s', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$order->order_number
+			),
+			self::TYPE_RECEIPT_SUBMITTED,
+			array(
+				'recipient'     => get_user_by( 'email', $to ) ?: null,
+				'email_heading' => __( 'Payment proof is waiting for review', 'wp-sell-services' ),
+				'content'       => sprintf(
+					/* translators: %s: order number */
+					__( 'A buyer has uploaded proof of payment for order #%s. Review it and approve or reject the payment.', 'wp-sell-services' ),
+					$order->order_number
+				),
+				'button_url'    => admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $order_id ),
+				'button_text'   => __( 'Review the receipt', 'wp-sell-services' ),
+				'receipt_id'    => $receipt_id,
+				'order'         => $order,
+			)
+		);
+	}
+
+	/**
+	 * Tell the buyer their payment was accepted.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param int $receipt_id Receipt ID.
+	 * @param int $order_id   Order ID.
+	 * @return bool
+	 */
+	public function send_receipt_verified( int $receipt_id, int $order_id ): bool {
+		$order = wpss_get_order( $order_id );
+
+		if ( ! $order ) {
+			return false;
+		}
+
+		$buyer = get_user_by( 'id', (int) $order->customer_id );
+
+		if ( ! $buyer ) {
+			return false;
+		}
+
+		return $this->send(
+			$buyer->user_email,
+			sprintf(
+				/* translators: 1: site name, 2: order number */
+				__( '[%1$s] Payment confirmed for order #%2$s', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$order->order_number
+			),
+			self::TYPE_RECEIPT_VERIFIED,
+			array(
+				'recipient'     => $buyer,
+				'email_heading' => __( 'Your payment has been confirmed', 'wp-sell-services' ),
+				'content'       => sprintf(
+					/* translators: %s: order number */
+					__( 'We have checked your receipt and confirmed payment for order #%s. Your order is now underway.', 'wp-sell-services' ),
+					$order->order_number
+				),
+				'button_url'    => wpss_get_dashboard_url( 'orders' ) . '?order_id=' . $order_id,
+				'button_text'   => __( 'View your order', 'wp-sell-services' ),
+				'receipt_id'    => $receipt_id,
+				'order'         => $order,
+			)
+		);
+	}
+
+	/**
+	 * Tell the buyer their proof was not accepted, and why.
+	 *
+	 * The reason is the whole point of this email - without it the buyer sends
+	 * back the same unreadable screenshot.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param int    $receipt_id Receipt ID.
+	 * @param int    $order_id   Order ID.
+	 * @param string $reason     Admin note.
+	 * @return bool
+	 */
+	public function send_receipt_rejected( int $receipt_id, int $order_id, string $reason = '' ): bool {
+		$order = wpss_get_order( $order_id );
+
+		if ( ! $order ) {
+			return false;
+		}
+
+		$buyer = get_user_by( 'id', (int) $order->customer_id );
+
+		if ( ! $buyer ) {
+			return false;
+		}
+
+		$content = sprintf(
+			/* translators: %s: order number */
+			__( 'We could not confirm your payment for order #%s from the receipt you sent.', 'wp-sell-services' ),
+			$order->order_number
+		);
+
+		if ( '' !== $reason ) {
+			$content .= '</p><p>' . esc_html( $reason );
+		}
+
+		$content .= '</p><p>' . esc_html__( 'Please upload a clearer copy from your order page.', 'wp-sell-services' );
+
+		return $this->send(
+			$buyer->user_email,
+			sprintf(
+				/* translators: 1: site name, 2: order number */
+				__( '[%1$s] We need a clearer receipt for order #%2$s', 'wp-sell-services' ),
+				wpss_get_platform_name(),
+				$order->order_number
+			),
+			self::TYPE_RECEIPT_REJECTED,
+			array(
+				'recipient'     => $buyer,
+				'email_heading' => __( 'We could not confirm your payment', 'wp-sell-services' ),
+				'content'       => $content,
+				'button_url'    => wpss_get_dashboard_url( 'orders' ) . '?order_id=' . $order_id,
+				'button_text'   => __( 'Upload a new receipt', 'wp-sell-services' ),
+				'receipt_id'    => $receipt_id,
+				'order'         => $order,
 			)
 		);
 	}
@@ -1886,6 +2049,9 @@ class EmailService {
 			self::TYPE_EXTENSION_APPROVED     => 'extension-approved.php',
 			self::TYPE_EXTENSION_DECLINED     => 'extension-declined.php',
 			self::TYPE_TEST_EMAIL             => 'test-email.php',
+			self::TYPE_RECEIPT_SUBMITTED      => 'generic.php',
+			self::TYPE_RECEIPT_VERIFIED       => 'generic.php',
+			self::TYPE_RECEIPT_REJECTED       => 'generic.php',
 		);
 
 		return $templates[ $type ] ?? 'generic.php';
@@ -2007,6 +2173,12 @@ class EmailService {
 			self::TYPE_EXTENSION_PROPOSED     => 'proposals',
 			self::TYPE_EXTENSION_APPROVED     => 'proposals',
 			self::TYPE_EXTENSION_DECLINED     => 'proposals',
+			// A receipt decision is news about the buyer's own order, so it
+			// belongs to the category they already control for order updates -
+			// not a new switch nobody knows to look for.
+			self::TYPE_RECEIPT_SUBMITTED      => 'orders',
+			self::TYPE_RECEIPT_VERIFIED       => 'orders',
+			self::TYPE_RECEIPT_REJECTED       => 'orders',
 		);
 		return $type_to_category[ $type ] ?? null;
 	}

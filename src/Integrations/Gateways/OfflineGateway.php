@@ -127,6 +127,9 @@ class OfflineGateway implements PaymentGatewayInterface {
 		// instruction text - and a buyer still needs somewhere to send evidence
 		// whether or not the owner wrote bank details into a settings box.
 		add_action( 'wpss_order_view_details', array( $this, 'display_buyer_receipt_upload' ), 11, 1 );
+
+		// Printable receipt, once the money is confirmed.
+		add_action( 'wpss_order_view_details', array( $this, 'display_payment_receipt' ), 12, 1 );
 	}
 
 	/**
@@ -1014,6 +1017,141 @@ class OfflineGateway implements PaymentGatewayInterface {
 				<?php endif; ?>
 			</div>
 		</section>
+		<?php
+	}
+
+	/**
+	 * Printable payment receipt, shown once the order is paid.
+	 *
+	 * A PRINT VIEW, not a generated PDF. A PDF library is a dependency decision
+	 * of its own - this plugin ships its runtime vendor directory in the repo,
+	 * so adding one is a size and maintenance cost on every install for a
+	 * document the browser can already produce. window.print() gives the buyer
+	 * a PDF through their own print dialog on every platform, and the print
+	 * stylesheet keeps it to the receipt alone.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param object $order Order object.
+	 * @return void
+	 */
+	public function display_payment_receipt( $order ): void {
+		if ( ! \WPSellServices\Services\PaymentReceiptService::is_enabled() ) {
+			return;
+		}
+
+		if ( 'offline' !== (string) ( $order->payment_method ?? '' ) ) {
+			return;
+		}
+
+		if ( 'paid' !== (string) ( $order->payment_status ?? '' ) ) {
+			return;
+		}
+
+		$user_id = get_current_user_id();
+
+		// The buyer and the site owner. A vendor is paid through the wallet and
+		// has their own earnings record; this is the buyer's proof of purchase.
+		if ( (int) $order->customer_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$service  = new \WPSellServices\Services\PaymentReceiptService();
+		$receipts = $service->get_for_order( (int) $order->id );
+		$verified = null;
+
+		foreach ( $receipts as $receipt ) {
+			if ( 'verified' === (string) $receipt->status ) {
+				$verified = $receipt;
+				break;
+			}
+		}
+
+		// The model hydrates dates into DateTimeImmutable, so casting to string
+		// fatals - the same hydration boundary this release already had to fix
+		// across the dispute timeline and the order model. Normalise, never
+		// assume a string.
+		$paid_on = $order->paid_at ?? null;
+
+		if ( $paid_on instanceof \DateTimeInterface ) {
+			$paid_ts = $paid_on->getTimestamp();
+		} else {
+			$paid_ts = $paid_on ? (int) strtotime( (string) $paid_on ) : 0;
+		}
+		?>
+		<section class="wpss-order-section wpss-payment-receipt" id="wpss-payment-receipt">
+			<div class="wpss-order-section__header">
+				<h2 class="wpss-order-section__title">
+					<i data-lucide="receipt" class="wpss-icon" aria-hidden="true"></i>
+					<?php esc_html_e( 'Payment receipt', 'wp-sell-services' ); ?>
+				</h2>
+				<button type="button" class="wpss-btn wpss-btn--secondary wpss-btn--sm wpss-receipt-print">
+					<?php esc_html_e( 'Print or save as PDF', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+			<div class="wpss-order-section__body">
+				<table class="wpss-receipt-table" style="width:100%;border-collapse:collapse;">
+					<tbody>
+						<tr>
+							<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Receipt for', 'wp-sell-services' ); ?></th>
+							<td style="text-align:right;"><?php echo esc_html( wpss_get_platform_name() ); ?></td>
+						</tr>
+						<tr>
+							<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></th>
+							<td style="text-align:right;">#<?php echo esc_html( (string) $order->order_number ); ?></td>
+						</tr>
+						<tr>
+							<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Amount paid', 'wp-sell-services' ); ?></th>
+							<td style="text-align:right;"><?php echo esc_html( wpss_format_price( (float) $order->total, (string) $order->currency ) ); ?></td>
+						</tr>
+						<tr>
+							<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Method', 'wp-sell-services' ); ?></th>
+							<td style="text-align:right;"><?php esc_html_e( 'Offline payment', 'wp-sell-services' ); ?></td>
+						</tr>
+						<?php if ( ! empty( $order->transaction_id ) ) : ?>
+							<tr>
+								<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Reference', 'wp-sell-services' ); ?></th>
+								<td style="text-align:right;"><?php echo esc_html( (string) $order->transaction_id ); ?></td>
+							</tr>
+						<?php endif; ?>
+						<?php if ( $paid_ts ) : ?>
+							<tr>
+								<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Paid on', 'wp-sell-services' ); ?></th>
+								<td style="text-align:right;"><?php echo esc_html( wp_date( get_option( 'date_format' ), $paid_ts ) ); ?></td>
+							</tr>
+						<?php endif; ?>
+						<?php
+						$verified_ts = 0;
+						if ( $verified && $verified->verified_at ) {
+							$verified_ts = $verified->verified_at instanceof \DateTimeInterface
+								? $verified->verified_at->getTimestamp()
+								: (int) strtotime( (string) $verified->verified_at );
+						}
+						?>
+						<?php if ( $verified_ts ) : ?>
+							<tr>
+								<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Verified on', 'wp-sell-services' ); ?></th>
+								<td style="text-align:right;"><?php echo esc_html( wp_date( get_option( 'date_format' ), $verified_ts ) ); ?></td>
+							</tr>
+						<?php endif; ?>
+					</tbody>
+				</table>
+			</div>
+		</section>
+
+		<style>
+		@media print {
+			body * { visibility: hidden; }
+			#wpss-payment-receipt, #wpss-payment-receipt * { visibility: visible; }
+			#wpss-payment-receipt { position: absolute; left: 0; top: 0; width: 100%; }
+			.wpss-receipt-print { display: none !important; }
+		}
+		</style>
+		<script>
+		jQuery(function($){
+			$('.wpss-receipt-print').on('click', function(){ window.print(); });
+		});
+		</script>
 		<?php
 	}
 
