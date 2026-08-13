@@ -484,7 +484,21 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 						<span class="wpss-messaging__sender"><?php echo esc_html( $sender_name ); ?></span>
 					<?php endif; ?>
 					<div class="wpss-messaging__text">
-						<?php echo wp_kses_post( nl2br( $content ) ); ?>
+						<?php
+						// Linkify, then break lines, then escape.
+						//
+						// A URL pasted into a message rendered as plain text on both
+						// threads - people paste briefs, references and file links
+						// constantly, and none of them were clickable
+						// (Basecamp #10159632931).
+						//
+						// Order matters: make_clickable() before nl2br(), because it
+						// matches to whitespace and an injected <br> mid-URL truncates
+						// the link. wp_kses_post() still runs last, so the anchors
+						// make_clickable() produces are the only new markup allowed
+						// through - a message body cannot smuggle anything else.
+						echo wp_kses_post( nl2br( make_clickable( $content ) ) );
+						?>
 					</div>
 					<?php if ( ! empty( $attachments ) ) : ?>
 						<div class="wpss-messaging__attachments">

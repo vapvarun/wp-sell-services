@@ -109,6 +109,19 @@ class UnifiedDashboard {
 		);
 		wp_style_add_data( 'wpss-unified-dashboard', 'rtl', 'replace' );
 
+		// The Messages section renders through wpss_render_message_row(), the
+		// same renderer the order conversation uses, so it needs the same
+		// stylesheet. That sheet used to be enqueued only from
+		// templates/order/conversation.php, which is why the dashboard thread
+		// could not simply reuse the renderer (Basecamp #10159632931).
+		wp_enqueue_style(
+			'wpss-messaging',
+			WPSS_PLUGIN_URL . 'assets/css/messaging.css',
+			array( 'wpss-design-system' ),
+			WPSS_VERSION
+		);
+		wp_style_add_data( 'wpss-messaging', 'rtl', 'replace' );
+
 		ScriptRegistry::enqueue(
 			'wpss-unified-dashboard',
 			'assets/js/unified-dashboard.js',

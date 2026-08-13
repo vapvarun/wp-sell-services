@@ -75,44 +75,18 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				<?php else : ?>
 					<?php foreach ( $messages as $msg ) : ?>
 						<?php
-						$is_mine   = (int) $msg->sender_id === $user_id;
-						$sender    = get_userdata( (int) $msg->sender_id );
-						$msg_class = $is_mine ? 'wpss-message--mine' : 'wpss-message--theirs';
+						// The SAME renderer the order conversation, the REST endpoint and
+						// the AJAX handlers use. This template used to hand-roll its own
+						// message markup, which is why the dashboard thread had no image
+						// previews, lost the original filename on attachments, showed no
+						// read receipts, rendered system messages as ordinary ones, and
+						// let long URLs run out of the container - the shared renderer's
+						// .wpss-messaging__text carries the break-word rule
+						// (Basecamp #10159632931).
+						//
+						// Two renderers for one thing is how they drift; there is now one.
+						echo wpss_render_message_row( $msg, $user_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Renderer returns internally-escaped markup.
 						?>
-						<div class="wpss-message <?php echo esc_attr( $msg_class ); ?>">
-							<div class="wpss-message__avatar">
-								<?php echo get_avatar( (int) $msg->sender_id, 36 ); ?>
-							</div>
-							<div class="wpss-message__body">
-								<div class="wpss-message__meta">
-									<strong><?php echo esc_html( $sender ? $sender->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
-									<time>
-										<?php
-										$msg_ts = $msg->created_at instanceof DateTimeInterface ? $msg->created_at->getTimestamp() : strtotime( $msg->created_at . ' UTC' );
-										echo esc_html( human_time_diff( $msg_ts, time() ) );
-										?>
-										<?php esc_html_e( 'ago', 'wp-sell-services' ); ?>
-									</time>
-								</div>
-								<div class="wpss-message__content"><?php echo wp_kses_post( wpautop( $msg->content ) ); ?></div>
-								<?php if ( ! empty( $msg->attachments ) ) : ?>
-									<?php $atts = is_string( $msg->attachments ) ? json_decode( $msg->attachments, true ) : $msg->attachments; ?>
-									<?php if ( ! empty( $atts ) && is_array( $atts ) ) : ?>
-										<div class="wpss-message__attachments">
-											<?php foreach ( $atts as $att_id ) : ?>
-												<?php
-												$att_id  = is_array( $att_id ) ? ( $att_id['id'] ?? 0 ) : (int) $att_id;
-												$att_url = $att_id ? wp_get_attachment_url( $att_id ) : '';
-												?>
-												<?php if ( $att_url ) : ?>
-													<a href="<?php echo esc_url( $att_url ); ?>" target="_blank" class="wpss-attachment-link"><?php echo esc_html( basename( $att_url ) ); ?></a>
-												<?php endif; ?>
-											<?php endforeach; ?>
-										</div>
-									<?php endif; ?>
-								<?php endif; ?>
-							</div>
-						</div>
 					<?php endforeach; ?>
 				<?php endif; ?>
 			</div>
@@ -124,6 +98,15 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 					<div class="wpss-form-group">
 						<label for="wpss-reply-message" class="screen-reader-text"><?php esc_html_e( 'Message', 'wp-sell-services' ); ?></label>
 						<textarea name="message" id="wpss-reply-message" class="wpss-textarea" rows="3" placeholder="<?php esc_attr_e( 'Type your message...', 'wp-sell-services' ); ?>" required></textarea>
+					</div>
+					<div class="wpss-form-group">
+						<label for="wpss-reply-attachments" class="wpss-messaging__composer-action">
+							<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>
+							<span><?php esc_html_e( 'Attach files', 'wp-sell-services' ); ?></span>
+						</label>
+						<?php // Same accept list as the order composer - one answer to "what may be uploaded". ?>
+						<input type="file" name="attachments[]" id="wpss-reply-attachments" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt" style="display:none;">
+						<span class="wpss-messaging__composer-attachments" aria-live="polite"></span>
 					</div>
 					<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--sm"><?php esc_html_e( 'Send', 'wp-sell-services' ); ?></button>
 				</form>
@@ -154,7 +137,22 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 						$.ajax({
 							url: '<?php echo esc_url_raw( rest_url( 'wpss/v1/conversations/' ) ); ?>' + convId + '/messages',
 							method: 'POST',
-							data: { content: $textarea.val() },
+							// FormData, not a plain object: the endpoint already parses
+							// multipart attachments (wpss_handle_message_attachments),
+							// the dashboard form simply never sent any.
+							data: (function() {
+								var fd = new FormData();
+								fd.append('content', $textarea.val());
+								var files = $form.find('input[type="file"]')[0];
+								if (files && files.files) {
+									for (var i = 0; i < files.files.length; i++) {
+										fd.append('attachments[]', files.files[i]);
+									}
+								}
+								return fd;
+							})(),
+							processData: false,
+							contentType: false,
 							beforeSend: function(xhr) {
 								xhr.setRequestHeader('X-WP-Nonce', '<?php echo esc_js( wp_create_nonce( 'wp_rest' ) ); ?>');
 							},
@@ -170,6 +168,14 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 								$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Send', 'wp-sell-services' ) ); ?>');
 							}
 						});
+					});
+
+					// Name the files the moment they are picked - a file input that
+					// shows nothing back looks broken.
+					$('#wpss-reply-attachments').on('change', function() {
+						var names = [];
+						for (var i = 0; i < this.files.length; i++) { names.push(this.files[i].name); }
+						$(this).closest('.wpss-form-group').find('.wpss-messaging__composer-attachments').text(names.join(', '));
 					});
 
 					// Auto-scroll to bottom of messages.
