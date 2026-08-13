@@ -8,13 +8,11 @@
 
 declare(strict_types=1);
 
-
 namespace WPSellServices\Integrations\Standalone;
 
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Integrations\Contracts\EcommerceAdapterInterface;
-use WPSellServices\Integrations\Contracts\OrderProviderInterface;
 use WPSellServices\Integrations\Contracts\ProductProviderInterface;
 use WPSellServices\Integrations\Contracts\CheckoutProviderInterface;
 use WPSellServices\Integrations\Contracts\AccountProviderInterface;
@@ -279,18 +277,6 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		</main>
 		<?php
 		get_footer();
-	}
-
-	/**
-	 * Get the order provider.
-	 *
-	 * @return OrderProviderInterface
-	 */
-	public function get_order_provider(): OrderProviderInterface {
-		if ( null === $this->order_provider ) {
-			$this->order_provider = new StandaloneOrderProvider();
-		}
-		return $this->order_provider;
 	}
 
 	/**
