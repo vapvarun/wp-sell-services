@@ -30,6 +30,7 @@ $wpss_function_files = array(
 	'rest',
 	'billing',
 	'moderation',
+	'notifications',
 	'payments',
 	'misc',
 );

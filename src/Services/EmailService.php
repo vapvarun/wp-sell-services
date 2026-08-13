@@ -998,6 +998,20 @@ class EmailService {
 			return false;
 		}
 
+		// Do not email someone who is reading the message on screen.
+		//
+		// This is the most frequent email the plugin sends - one per message on
+		// every active order - and the existing 5-minute cooldown only thins it
+		// out, it does not recognise that the recipient is already here
+		// (Basecamp #10159633576).
+		//
+		// Off unless the owner switches it on: presence depends on
+		// _wpss_last_active being written as people browse, and on a site where
+		// that is sparse this would silently swallow mail people expect.
+		if ( wpss_should_skip_message_email( $recipient_id ) ) {
+			return false;
+		}
+
 		$subject = sprintf(
 			/* translators: %1$s: site name, %2$s: order number */
 			__( '[%1$s] New Message - Order #%2$s', 'wp-sell-services' ),

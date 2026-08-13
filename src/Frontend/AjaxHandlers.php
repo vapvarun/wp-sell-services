@@ -3511,9 +3511,24 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
 		}
 
-		$valid_keys  = array( 'orders', 'messages', 'completion', 'cancellation', 'disputes', 'tips', 'withdrawals', 'proposals' );
+		// Only the categories this user was actually OFFERED.
+		//
+		// The list is role-aware now (Basecamp #10159633379), so a buyer's form
+		// carries no tips / withdrawals / proposals checkboxes. This used to
+		// iterate a hardcoded list of all eight and read "checkbox absent" as
+		// "explicitly muted" - which would have recorded those three as OFF for
+		// every buyer who ever saved the form, and left them silently muted if
+		// that person later became a vendor, with nothing in the UI to explain
+		// why their sales mail had stopped.
+		//
+		// Preferences the form did not show are preserved as they were stored.
+		$valid_keys = array_keys( wpss_get_email_preference_categories( $user_id ) );
+
+		$existing = get_user_meta( $user_id, 'wpss_email_preferences', true );
+		$existing = is_array( $existing ) ? $existing : array();
+
 		$submitted   = isset( $_POST['prefs'] ) && is_array( $_POST['prefs'] ) ? wp_unslash( $_POST['prefs'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Whitelisted booleans below.
-		$preferences = array();
+		$preferences = $existing;
 		foreach ( $valid_keys as $key ) {
 			// Checkbox is present only if checked. Absence = explicit false (muted).
 			$preferences[ $key ] = isset( $submitted[ $key ] );
