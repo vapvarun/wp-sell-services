@@ -25,8 +25,9 @@ class SetupWizardPage {
 	/**
 	 * Admin page hook suffix returned by add_submenu_page().
 	 *
-	 * Empty once setup is complete, because the submenu stops being
-	 * registered — see enqueue_styles() for why that case still needs styling.
+	 * Always set now: the page is registered whether or not it appears in the
+	 * menu, so its assets can still be enqueued when an owner reaches it
+	 * directly after setup is complete.
 	 *
 	 * @var string
 	 */
@@ -55,19 +56,30 @@ class SetupWizardPage {
 	 * @return void
 	 */
 	public function add_menu_page(): void {
-		if ( $this->should_show_in_menu() ) {
-			$hook = add_submenu_page(
-				'wp-sell-services',
-				__( 'Setup Wizard', 'wp-sell-services' ),
-				__( 'Setup Wizard', 'wp-sell-services' ),
-				'manage_options',
-				'wpss-setup-wizard',
-				array( $this, 'render' )
-			);
+		// Registered ALWAYS, listed only while it is worth listing.
+		//
+		// Menu visibility and page accessibility are different questions, and
+		// tying them together made the wizard unreachable the moment setup was
+		// marked complete: admin.php?page=wpss-setup-wizard answered 403, so an
+		// owner could never re-run it, revisit a step, or follow an old link or
+		// a support instruction to it.
+		//
+		// Passing a null parent registers the page without putting it in any
+		// menu, which is the standard way to keep a screen addressable. The
+		// capability check is unchanged, so this grants nobody new access.
+		$parent = $this->should_show_in_menu() ? 'wp-sell-services' : null;
 
-			if ( $hook ) {
-				$this->hook_suffix = $hook;
-			}
+		$hook = add_submenu_page(
+			$parent,
+			__( 'Setup Wizard', 'wp-sell-services' ),
+			__( 'Setup Wizard', 'wp-sell-services' ),
+			'manage_options',
+			'wpss-setup-wizard',
+			array( $this, 'render' )
+		);
+
+		if ( $hook ) {
+			$this->hook_suffix = $hook;
 		}
 	}
 
@@ -136,18 +148,69 @@ class SetupWizardPage {
 	/**
 	 * Whether to show the wizard link in the admin menu.
 	 *
-	 * Visible when wizard hasn't been completed or no services exist.
+	 * Visible while setup is unfinished, and again afterwards if the site still
+	 * has no published services - a marketplace with nothing to sell is not
+	 * really set up, so the nudge stays.
+	 *
+	 * The completion flag is written in ONE place: step 5 of the wizard. An
+	 * owner who set the site up and left before reaching that step - or who
+	 * clicked Exit Wizard, which goes to Settings without marking anything -
+	 * never got the flag, so the menu entry stayed forever. Measured on a site
+	 * with 6 mapped pages and 52 published services: the flag was still false
+	 * and "Setup Wizard" was still in the menu.
+	 *
+	 * The check below was already written to notice a configured site; it was
+	 * simply unreachable, because the early return above it fired first
+	 * whenever the flag was empty - which is exactly the case it needed to
+	 * catch. Reordering makes it work, and recording the result means the
+	 * question is asked once rather than on every admin page load.
 	 *
 	 * @return bool
 	 */
 	private function should_show_in_menu(): bool {
-		if ( ! get_option( 'wpss_setup_wizard_completed' ) ) {
+		$completed = (bool) get_option( 'wpss_setup_wizard_completed' );
+
+		if ( ! $completed && $this->site_is_configured() ) {
+			// Self-heal rather than nag. Deliberately not autoloaded: it is read
+			// on admin screens only.
+			update_option( 'wpss_setup_wizard_completed', time(), false );
+			$completed = true;
+		}
+
+		if ( ! $completed ) {
 			return true;
 		}
 
 		$service_count = wp_count_posts( 'wpss_service' );
 
 		return ! $service_count || 0 === (int) ( $service_count->publish ?? 0 );
+	}
+
+	/**
+	 * Whether the site plainly has been set up already.
+	 *
+	 * Both halves are required. Pages alone are not enough - the installer
+	 * creates those on activation, so every site has them from minute one and
+	 * treating that as "configured" would suppress the wizard for the very
+	 * owners who need it. A published service is the signal that a human has
+	 * actually used the thing.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @return bool
+	 */
+	private function site_is_configured(): bool {
+		$pages = (array) get_option( 'wpss_pages', array() );
+
+		$has_core_pages = ! empty( $pages['services_page'] ) && ! empty( $pages['dashboard'] );
+
+		if ( ! $has_core_pages ) {
+			return false;
+		}
+
+		$service_count = wp_count_posts( 'wpss_service' );
+
+		return $service_count && (int) ( $service_count->publish ?? 0 ) > 0;
 	}
 
 	/**
