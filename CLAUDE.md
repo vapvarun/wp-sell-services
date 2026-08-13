@@ -428,8 +428,27 @@ docs/website/
 
 | Column | ID | URL | Purpose |
 |--------|-----|-----|---------|
-| Bugs | `9381846253` | https://3.basecamp.com/5798509/buckets/45156734/card_tables/columns/9381846253 | Active bugs to fix |
-| Ready for Testing | `9381846060` | https://3.basecamp.com/5798509/buckets/45156734/card_tables/columns/9381846060 | Fixed bugs awaiting QA |
+Verified against the live board on 2026-08-13. The board has 11 columns; these
+are the ones this workflow touches.
+
+| Column | ID | Purpose |
+|--------|-----|---------|
+| Triage | `9381845573` | Unsorted inbox |
+| Not now | `9381845574` | Parked |
+| Scope | `9381845723` | Product spec + feature definitions (not bugs) |
+| Suggestion | `9381846474` | Feature requests + API/UX suggestions |
+| Bugs | `9381846253` | Active bugs to fix |
+| UI Issues | `9542411037` | Visual/layout defects |
+| Ready For Development | `9381845980` | Specced, not started |
+| **Ready for Testing** | **`9381846126`** | **Fixed, awaiting QA — this is the move-to target** |
+| In Testing | `9381846060` | QA actively verifying |
+| In Development | `9381845879` | In progress |
+| Done | `9381845577` | Verified |
+
+> **Corrected 2026-08-13:** this table previously listed `9381846060` as "Ready
+> for Testing". That ID is **In Testing**. A fixed card moved with the old ID
+> skipped the QA queue and landed in the column QA uses for work already picked
+> up, so it would sit there unclaimed. Use `9381846126`.
 
 ### Workflow
 1. Pick bug card from **Bugs** column
