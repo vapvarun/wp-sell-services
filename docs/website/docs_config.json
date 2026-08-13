@@ -744,6 +744,12 @@
           "slug": "abilities-api-wpss",
           "file": "developer-guide/abilities-api.md",
           "order": 12
+        },
+        {
+          "title": "REST Error Codes",
+          "slug": "rest-error-codes-wpss",
+          "file": "developer-guide/rest-error-codes.md",
+          "order": 13
         }
       ]
     },
