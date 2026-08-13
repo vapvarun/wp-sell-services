@@ -26,6 +26,9 @@
  * @var bool    $show_count Whether to print the service count.
  * @var bool    $show_icon  Whether to print the icon when there is no image.
  * @var bool    $show_image Whether to print the term image when one is set.
+ * @var array   $service_counts Optional term_id => service count map, primed in
+ *                              bulk by the caller so a grid of cards costs one
+ *                              query instead of one per card.
  *
  * Available hooks:
  * - wpss_before_category_card - Before the card anchor
@@ -106,12 +109,22 @@ do_action( 'wpss_before_category_card', $category );
 		<h3 class="wpss-category-name"><?php echo esc_html( $category->name ); ?></h3>
 
 		<?php if ( $show_count ) : ?>
+			<?php
+			// NOT $category->count. wpss_service_category is registered for
+			// wpss_service AND wpss_request, and WordPress counts every object in
+			// the term, so a category holding 6 services and 3 buyer requests
+			// rendered "9 services" on a card that links to an archive listing 6.
+			// The caller can prime these in bulk; a single card resolves its own.
+			$wpss_card_count = isset( $service_counts[ $category->term_id ] )
+				? (int) $service_counts[ $category->term_id ]
+				: (int) ( wpss_get_category_service_counts( array( $category->term_id ) )[ $category->term_id ] ?? 0 );
+			?>
 			<span class="wpss-category-count">
 				<?php
 				printf(
 					/* translators: %d: number of services */
-					esc_html( _n( '%d service', '%d services', (int) $category->count, 'wp-sell-services' ) ),
-					absint( $category->count )
+					esc_html( _n( '%d service', '%d services', $wpss_card_count, 'wp-sell-services' ) ),
+					absint( $wpss_card_count )
 				);
 				?>
 			</span>

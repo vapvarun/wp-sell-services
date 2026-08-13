@@ -543,3 +543,58 @@ function wpss_get_category_terms( array $args = array() ): array {
 
 	return is_wp_error( $terms ) ? array() : $terms;
 }
+
+/**
+ * Count PUBLISHED SERVICES per category term, in one query.
+ *
+ * A term's own `count` is not the answer. wpss_service_category is registered
+ * for BOTH wpss_service and wpss_request, and WordPress counts every object in
+ * the term regardless of post type - so a category holding 6 services and 3
+ * buyer requests reports 9. The service archive sidebar printed that number
+ * beside a result list that (correctly) showed 6.
+ *
+ * One grouped query for the whole sidebar rather than a count per term, so a
+ * marketplace with a large taxonomy does not pay a query per row.
+ *
+ * @since 1.5.1
+ *
+ * @param int[] $term_ids Category term IDs.
+ * @return array<int, int> term_id => published service count (0 when none).
+ */
+function wpss_get_category_service_counts( array $term_ids ): array {
+	$term_ids = array_values( array_unique( array_filter( array_map( 'intval', $term_ids ) ) ) );
+
+	if ( empty( $term_ids ) ) {
+		return array();
+	}
+
+	global $wpdb;
+
+	$placeholders = implode( ', ', array_fill( 0, count( $term_ids ), '%d' ) );
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholders generated from the ID count; every value is bound.
+	$rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT tt.term_id, COUNT( DISTINCT p.ID ) AS total
+			   FROM {$wpdb->term_taxonomy} tt
+			   JOIN {$wpdb->term_relationships} tr ON tr.term_taxonomy_id = tt.term_taxonomy_id
+			   JOIN {$wpdb->posts} p ON p.ID = tr.object_id
+			  WHERE tt.term_id IN ({$placeholders})
+			    AND tt.taxonomy = 'wpss_service_category'
+			    AND p.post_type = 'wpss_service'
+			    AND p.post_status = 'publish'
+			  GROUP BY tt.term_id",
+			$term_ids
+		)
+	);
+
+	// Seed every requested term so a category with no services reads 0 rather
+	// than falling back to the mixed-type count.
+	$counts = array_fill_keys( $term_ids, 0 );
+
+	foreach ( (array) $rows as $row ) {
+		$counts[ (int) $row->term_id ] = (int) $row->total;
+	}
+
+	return $counts;
+}

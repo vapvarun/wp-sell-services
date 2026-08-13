@@ -167,6 +167,10 @@ class ServiceCategories extends AbstractBlock {
 			return $this->end_render();
 		}
 
+		// One query for the whole grid (see the card partial for why the term's
+		// own count cannot be used).
+		$service_counts = wpss_get_category_service_counts( wp_list_pluck( $categories, 'term_id' ) );
+
 		$wrapper_classes = [
 			'wpss-categories-' . $attributes['layout'],
 			'wpss-grid-cols-' . $attributes['columns'],
@@ -185,10 +189,11 @@ class ServiceCategories extends AbstractBlock {
 						'partials/category-card',
 						'',
 						[
-							'category'   => $category,
-							'show_count' => (bool) $attributes['showCount'],
-							'show_icon'  => (bool) $attributes['showIcon'],
-							'show_image' => (bool) $attributes['showImage'],
+							'category'       => $category,
+							'show_count'     => (bool) $attributes['showCount'],
+							'show_icon'      => (bool) $attributes['showIcon'],
+							'show_image'     => (bool) $attributes['showImage'],
+							'service_counts' => $service_counts,
 						]
 					);
 				endforeach;

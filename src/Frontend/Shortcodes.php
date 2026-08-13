@@ -225,6 +225,10 @@ class Shortcodes {
 			return '<p class="wpss-no-results">' . esc_html__( 'No categories found.', 'wp-sell-services' ) . '</p>';
 		}
 
+		// One query for the whole grid; the card falls back to its own lookup only
+		// when a caller does not prime.
+		$service_counts = wpss_get_category_service_counts( wp_list_pluck( $categories, 'term_id' ) );
+
 		ob_start();
 		?>
 		<div class="wpss-categories-grid wpss-columns-<?php echo esc_attr( $atts['columns'] ); ?>">
@@ -243,10 +247,11 @@ class Shortcodes {
 					'partials/category-card',
 					'',
 					array(
-						'category'   => $category,
-						'show_count' => 'true' === $atts['show_count'],
-						'show_icon'  => true,
-						'show_image' => true,
+						'category'       => $category,
+						'show_count'     => 'true' === $atts['show_count'],
+						'show_icon'      => true,
+						'show_image'     => true,
+						'service_counts' => $service_counts,
 					)
 				);
 			endforeach;

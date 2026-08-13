@@ -342,6 +342,24 @@ class ServiceArchiveView {
 				<?php endif; ?>
 
 				<!-- Categories -->
+				<?php
+				// Service-only counts, in ONE query for the whole sidebar.
+				//
+				// $category->count cannot be used: wpss_service_category is
+				// registered for wpss_service AND wpss_request, and WordPress
+				// counts every object in the term, so a category with 6 services
+				// and 3 buyer requests reported 9 - right next to a result list
+				// that showed 6.
+				$wpss_service_counts = wpss_get_category_service_counts(
+					array_merge(
+						wp_list_pluck( $categories, 'term_id' ),
+						array_map(
+							static fn ( $child ) => (int) $child->term_id,
+							array_merge( array(), ...array_values( $children_by_parent ) )
+						)
+					)
+				);
+				?>
 				<?php if ( ! empty( $categories ) ) : ?>
 					<div class="wpss-filter-section">
 						<h4><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></h4>
@@ -365,7 +383,7 @@ class ServiceArchiveView {
 										class="wpss-category-link<?php echo $is_active ? ' is-active' : ''; ?>"
 										<?php echo $is_active ? ' aria-current="true"' : ''; ?>>
 										<?php echo esc_html( $category->name ); ?>
-										<span class="wpss-count">(<?php echo esc_html( $category->count ); ?>)</span>
+										<span class="wpss-count">(<?php echo esc_html( $wpss_service_counts[ $category->term_id ] ?? 0 ); ?>)</span>
 									</a>
 									<?php if ( ! empty( $children ) ) : ?>
 										<ul class="wpss-subcategory-list">
@@ -375,7 +393,7 @@ class ServiceArchiveView {
 														class="<?php echo $active_category_id === $child->term_id ? 'is-active' : ''; ?>"
 														<?php echo $active_category_id === $child->term_id ? ' aria-current="true"' : ''; ?>>
 														<?php echo esc_html( $child->name ); ?>
-														<span class="wpss-count">(<?php echo esc_html( $child->count ); ?>)</span>
+														<span class="wpss-count">(<?php echo esc_html( $wpss_service_counts[ $child->term_id ] ?? 0 ); ?>)</span>
 													</a>
 												</li>
 											<?php endforeach; ?>
@@ -591,6 +609,21 @@ class ServiceArchiveView {
 		if ( ! $is_services_page && ! $query->is_post_type_archive( 'wpss_service' ) && ! $query->is_tax( 'wpss_service_category' ) && ! $query->is_tax( 'wpss_service_tag' ) ) {
 			return;
 		}
+
+		// Every surface that reaches here is a SERVICES surface, so constrain the
+		// post type for all of them - not just the mapped-page branch below.
+		//
+		// wpss_service_category and wpss_service_tag are registered for BOTH
+		// wpss_service and wpss_request. A taxonomy archive therefore queries
+		// every object type of that taxonomy, so /service-category/<slug>/ listed
+		// buyer REQUESTS alongside services and counted them in "N services
+		// found": the SQL carried `post_type IN ('wpss_request','wpss_service')`.
+		// Measured on graphics-design - 9 results for a term with 6 services,
+		// the extra three being requests 436, 441 and 272.
+		//
+		// The ?category= route was always correct because it sets post_type
+		// explicitly further down; this makes the two routes agree.
+		$query->set( 'post_type', 'wpss_service' );
 
 		// Convert the mapped services page query to fetch services.
 		if ( $is_services_page ) {
