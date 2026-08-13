@@ -760,3 +760,90 @@ function wpss_count_orders_for( string $column, int $user_id, string $status = '
 	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is the prepared statement built above.
 	return (int) $wpdb->get_var( $sql );
 }
+
+/**
+ * Map a payment rail's order status onto a WPSS order status.
+ *
+ * ONE table for every rail, replacing the private arrays that used to live in
+ * WCOrderProvider, FluentCartAdapter and EDDOrderProvider. Those three had
+ * drifted into disagreeing about the same event:
+ *
+ * - WooCommerce mapped `refunded` to `refunded`; FluentCart mapped it to
+ *   `cancelled`, losing the refund state entirely. The Woo map carried a comment
+ *   explaining why `cancelled` was wrong and the fix was never carried across.
+ * - FluentCart mapped `partially_refunded` to `on_hold`, even though WPSS has a
+ *   real `partially_refunded` status.
+ * - The same status was spelled `on_hold` by one rail and `on-hold` by another.
+ * - EDD emitted `processing` and `failed`, which are not WPSS statuses at all.
+ *
+ * Two rules make the table safe to extend:
+ *
+ * 1. KEYS ARE NORMALISED. Rails spell the same status differently ('on-hold' vs
+ *    'on_hold', 'complete' vs 'completed'), so the incoming key is lowercased
+ *    and hyphens folded to underscores before lookup. The spelling divergence
+ *    cannot come back.
+ *
+ * 2. PAID TRANSITIONS ARE NOT IN THE TABLE. `completed` / `processing` /
+ *    `complete` deliberately return null. Payment must go through
+ *    StandaloneOrderProvider::mark_as_paid(), which is the only place
+ *    `wpss_order_paid` is fired - and that hook is what credits the vendor,
+ *    records commission and drives milestones, extensions and tips. A rail that
+ *    "helpfully" mapped completed -> in_progress moved the order forward while
+ *    paying nobody, which is exactly how three rails shipped without ever
+ *    crediting a vendor. Returning null here is load-bearing, not an omission.
+ *
+ * @since 1.6.0
+ *
+ * @param string $platform    Rail identifier ('woocommerce', 'edd', 'fluentcart', 'surecart').
+ * @param string $rail_status The rail's own status string.
+ * @return string|null WPSS status, or null when the rail status must not drive a status change.
+ */
+function wpss_map_rail_status( string $platform, string $rail_status ): ?string {
+	$key = str_replace( '-', '_', strtolower( trim( $rail_status ) ) );
+
+	// Shared across every rail. A refund is a refund on all of them.
+	$shared = array(
+		'cancelled'          => 'cancelled',
+		'canceled'           => 'cancelled',
+		'failed'             => 'cancelled',
+		'refunded'           => 'refunded',
+		'partially_refunded' => 'partially_refunded',
+		'on_hold'            => 'on_hold',
+		'pending'            => 'pending_payment',
+	);
+
+	// Rail-specific vocabulary only. Anything a rail shares with the others
+	// belongs above, not here.
+	$per_rail = array(
+		'edd' => array(
+			'abandoned' => 'cancelled',
+			'revoked'   => 'cancelled',
+		),
+	);
+
+	$map = array_merge( $shared, $per_rail[ strtolower( $platform ) ] ?? array() );
+
+	/**
+	 * Filters the rail status map.
+	 *
+	 * Keys must already be normalised (lowercase, underscores). Values must be
+	 * real WPSS statuses - anything else is discarded below.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param array<string, string> $map      Normalised rail status => WPSS status.
+	 * @param string                $platform Rail identifier.
+	 */
+	$map = (array) apply_filters( 'wpss_rail_status_map', $map, $platform );
+
+	$mapped = $map[ $key ] ?? null;
+
+	if ( null === $mapped ) {
+		return null;
+	}
+
+	// Never hand back a status the plugin does not know. A rail (or a filter)
+	// producing an unregistered status is how EDD came to write 'processing',
+	// which then had no label, no filter entry and no transition rules.
+	return array_key_exists( $mapped, wpss_get_order_statuses() ) ? $mapped : null;
+}
