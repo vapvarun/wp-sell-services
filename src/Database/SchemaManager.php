@@ -24,7 +24,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.5.3';
+	const DB_VERSION = '1.5.4';
 
 	/**
 	 * Option name for storing DB version.
@@ -237,6 +237,28 @@ class SchemaManager {
 				'definition' => 'longtext',
 				'after'      => 'refunded_amount',
 			),
+			// The external order id AS THE RAIL SPELLS IT.
+			//
+			// platform_order_id is bigint, which fits WooCommerce, EDD and
+			// FluentCart because all three number their orders. It does not fit
+			// SureCart, whose ids are opaque strings ('ord_a1b2c3'), and it will
+			// not fit the next rail that numbers things the same way — Stripe,
+			// Paddle and LemonSqueezy all use string ids. SureCart could not be
+			// wired to the paid path at all until this column existed: the
+			// provider is strict_types and typed int, so a real SureCart id was a
+			// TypeError, not a silent zero.
+			//
+			// Every rail writes it, including the numeric ones (as a string), so
+			// there is ONE lookup that works for all of them rather than a
+			// per-rail branch. platform_order_id stays as-is and stays authoritative
+			// for the numeric rails — nothing is migrated off it, and no existing
+			// query changes meaning.
+			array(
+				'table'      => 'orders',
+				'column'     => 'platform_order_ref',
+				'definition' => 'varchar(64) DEFAULT NULL',
+				'after'      => 'platform_order_id',
+			),
 		);
 
 		foreach ( $migrations as $migration ) {
@@ -246,6 +268,65 @@ class SchemaManager {
 				$migration['definition'],
 				$migration['after']
 			);
+		}
+
+		$this->backfill_platform_order_ref();
+	}
+
+	/**
+	 * Give existing orders a platform_order_ref matching their platform_order_id.
+	 *
+	 * Without this, every order placed before the column existed would look
+	 * unmatched to any code that resolves by ref, and a webhook replay on an old
+	 * WooCommerce order could create a duplicate WPSS order instead of finding
+	 * the one already there.
+	 *
+	 * Only fills rows where the ref is missing and the numeric id is present, so
+	 * it is idempotent and never overwrites a rail-supplied value (SureCart's
+	 * 'ord_...' has no numeric id to be rewritten from). Batched, because a
+	 * marketplace of any age can hold hundreds of thousands of orders and an
+	 * unbounded UPDATE would lock the money table for the duration.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return void
+	 */
+	private function backfill_platform_order_ref(): void {
+		$table = $this->get_table_name( 'orders' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$column_exists = $this->wpdb->get_var(
+			$this->wpdb->prepare(
+				'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+				WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+				DB_NAME,
+				$table,
+				'platform_order_ref'
+			)
+		);
+
+		if ( (int) $column_exists < 1 ) {
+			return;
+		}
+
+		// A hard cap rather than while(true): if something about the UPDATE stops
+		// making progress, an activation hook must not spin forever. 200 batches
+		// of 2000 covers 400k orders; anything beyond that finishes on the next
+		// upgrade pass, and nothing is broken in the meantime because the rows
+		// left behind are simply not yet resolvable by ref.
+		for ( $batch = 0; $batch < 200; $batch++ ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$updated = $this->wpdb->query(
+				"UPDATE `{$table}`
+				SET platform_order_ref = CAST(platform_order_id AS CHAR)
+				WHERE platform_order_ref IS NULL
+				  AND platform_order_id IS NOT NULL
+				LIMIT 2000"
+			);
+
+			if ( ! $updated ) {
+				return;
+			}
 		}
 	}
 
@@ -555,6 +636,7 @@ class SchemaManager {
 			addons longtext,
 			platform varchar(50) DEFAULT 'standalone',
 			platform_order_id bigint(20) unsigned DEFAULT NULL,
+			platform_order_ref varchar(64) DEFAULT NULL,
 			platform_item_id bigint(20) unsigned DEFAULT NULL,
 			subtotal decimal(11,3) NOT NULL,
 			addons_total decimal(11,3) DEFAULT 0,
@@ -589,6 +671,7 @@ class SchemaManager {
 			KEY idx_status_date (status,created_at),
 			KEY idx_vendor_status (vendor_id,status),
 			KEY idx_platform (platform,platform_order_id),
+			KEY idx_platform_ref (platform,platform_order_ref),
 			KEY idx_deadline (delivery_deadline)
 		) {$charset_collate};";
 	}

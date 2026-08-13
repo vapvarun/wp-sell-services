@@ -49,6 +49,42 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Insert an order, keeping platform_order_ref in step with platform_order_id.
+	 *
+	 * platform_order_ref must mirror platform_order_id on every numeric rail, and
+	 * that invariant is the whole reason a single lookup can serve both numeric
+	 * and string rails. Deriving it here rather than at the call sites is
+	 * deliberate: there are eight places that insert an order with a platform id
+	 * (four rails plus tips, milestones, extensions and buyer-request conversion),
+	 * every one of them would have to remember, and the failure mode of forgetting
+	 * is invisible — the order inserts fine and simply never resolves by ref
+	 * later, which surfaces as a duplicate order on webhook replay rather than as
+	 * an error anyone would notice.
+	 *
+	 * A caller that supplies its own ref keeps it: that is how SureCart stores
+	 * 'ord_a1b2c3' with no numeric id at all.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param array<string, mixed> $data   Column data.
+	 * @param array<string>        $format Optional explicit formats.
+	 * @return int|false Inserted ID or false.
+	 */
+	public function insert( array $data, array $format = array() ): int|false {
+		// Only when formats are inferred. An explicit $format array is positional
+		// against $data, so appending a key here would shift every format by one
+		// and quietly write the wrong types.
+		if ( empty( $format )
+			&& ! isset( $data['platform_order_ref'] )
+			&& isset( $data['platform_order_id'] )
+			&& null !== $data['platform_order_id'] ) {
+			$data['platform_order_ref'] = (string) $data['platform_order_id'];
+		}
+
+		return parent::insert( $data, $format );
+	}
+
+	/**
 	 * Generate a unique order number.
 	 *
 	 * @return string Order number.
@@ -725,6 +761,43 @@ class OrderRepository extends AbstractRepository {
 				$platform
 			)
 		);
+	}
+
+	/**
+	 * Find orders by the external order reference, as the rail spells it.
+	 *
+	 * The string counterpart to {@see get_by_external_order()}, for rails whose
+	 * order ids are not numbers — SureCart's 'ord_a1b2c3' and anything else that
+	 * hands out opaque ids. Numeric rails write their id here too (as a string),
+	 * so a caller that has a reference never has to ask which kind of rail it
+	 * came from.
+	 *
+	 * Returns ALL matching orders, not one: a single cart order can carry several
+	 * service line items, and each becomes its own WPSS order. Every caller so far
+	 * has wanted all of them (marking a payment paid has to cover every order on
+	 * the receipt), and a LIMIT 1 here is how you silently credit one vendor out
+	 * of three.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param string $platform_order_ref External order reference.
+	 * @param string $platform           Platform identifier.
+	 * @return array<int, object> Matching order rows, oldest first.
+	 */
+	public function get_all_by_external_ref( string $platform_order_ref, string $platform ): array {
+		if ( '' === $platform_order_ref ) {
+			return array();
+		}
+
+		$rows = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT * FROM {$this->table} WHERE platform_order_ref = %s AND platform = %s ORDER BY id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$platform_order_ref,
+				$platform
+			)
+		);
+
+		return is_array( $rows ) ? $rows : array();
 	}
 
 	/**
