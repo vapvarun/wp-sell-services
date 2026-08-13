@@ -1454,6 +1454,27 @@ class OrdersController extends RestController {
 
 		$order_id = (int) $request->get_param( 'id' );
 
+		// An order that does not exist is 404, not 403.
+		//
+		// user_owns_resource() answers false for a missing row exactly as it does
+		// for someone else's, so a request for a non-existent order came back
+		// "You do not have permission to access this order" with status 403. A
+		// client cannot tell "this order is gone, drop it from the cache" from
+		// "this belongs to another account", which is what the app's error
+		// branching needs.
+		//
+		// This matches the convention the rest of the plugin already follows:
+		// /disputes/{id} and /proposals/{id} are private too and both answer 404
+		// for a missing record. Orders was the outlier, so no enumeration
+		// guarantee is being given up here - it was never being kept.
+		if ( ! $this->order_exists( $order_id ) ) {
+			return new WP_Error(
+				'wpss_order_not_found',
+				__( 'Order not found.', 'wp-sell-services' ),
+				array( 'status' => 404 )
+			);
+		}
+
 		if ( current_user_can( 'manage_options' ) ) {
 			return true;
 		}
@@ -1467,6 +1488,30 @@ class OrdersController extends RestController {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Whether an order row exists.
+	 *
+	 * Deliberately a bare existence probe, not a full fetch: it runs inside a
+	 * permission callback, before we know the caller may see anything.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	private function order_exists( int $order_id ): bool {
+		if ( $order_id <= 0 ) {
+			return false;
+		}
+
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (bool) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE id = %d", $order_id ) );
 	}
 
 	/**
