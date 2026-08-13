@@ -87,6 +87,7 @@ function wpss_rest_require_login() {
  * client's re-auth logic.
  *
  * @since 1.4.0
+ * @since 1.6.0 Denials carry `wpss_not_admin`, not `wpss_not_owner`.
  *
  * @return true|WP_Error
  */
@@ -101,8 +102,19 @@ function wpss_rest_require_admin() {
 		return true;
 	}
 
+	// One code for one condition - the same rule the vendor gate below already
+	// follows. This used to answer `wpss_not_owner`, which everywhere else in
+	// the API means "you do not own THIS resource" (a portfolio item, an order,
+	// a review). Lacking a capability is a different condition with a different
+	// remedy, and a client could not tell the two apart without reading the
+	// English message.
+	//
+	// Measured before the change: `wpss_not_owner` was the answer for the
+	// moderation queue, the moderation count, analytics and the Pro
+	// commission-rules and white-label endpoints - five capability failures
+	// wearing an ownership code (Basecamp #10154921558).
 	return new WP_Error(
-		'wpss_not_owner',
+		'wpss_not_admin',
 		__( 'You do not have permission to access this endpoint.', 'wp-sell-services' ),
 		array( 'status' => 403 )
 	);
