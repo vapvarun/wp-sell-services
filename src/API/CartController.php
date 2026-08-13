@@ -54,7 +54,7 @@ class CartController extends RestController {
 							'required'    => true,
 						),
 						'package_id' => array(
-							'description' => __( 'Package index/ID.', 'wp-sell-services' ),
+							'description' => __( 'Stable package id from GET /services/{id}/packages. A legacy array index is still accepted for older clients.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
@@ -143,14 +143,27 @@ class CartController extends RestController {
 			return new WP_Error( 'service_paused', __( 'This service is not accepting orders right now.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		// Get package.
-		$packages = get_post_meta( $service_id, '_wpss_packages', true );
-		if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) ) {
+		// Get package, by STABLE ID or by legacy index.
+		//
+		// GET /services/{id}/packages now publishes a stable `id`, but shipped
+		// clients still send the array index and saved carts may hold either.
+		// The resolver tries the stable id first and falls back to the index, so
+		// old and new clients both work during the transition
+		// (Basecamp #10154919857).
+		$resolved = wpss_resolve_service_package( $service_id, $package_id );
+
+		if ( null === $resolved ) {
 			return new WP_Error( 'invalid_package', __( 'Package not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		$package = $packages[ $package_id ];
+		$package = $resolved['package'];
 		$total   = (float) $package['price'];
+
+		// Store the POSITION, because that is what the rest of the order
+		// pipeline and every historical row still mean by package_id. The stable
+		// id is how the client NAMES a package; converting it here keeps that
+		// change at the edge instead of rewriting the storage format mid-release.
+		$package_id = $resolved['index'];
 
 		// Calculate addon totals.
 		$selected_addons = array();

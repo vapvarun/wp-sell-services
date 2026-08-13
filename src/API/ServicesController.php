@@ -733,13 +733,22 @@ class ServicesController extends RestController {
 	 */
 	public function get_packages( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
-		$packages   = get_post_meta( $service_id, '_wpss_packages', true );
 
-		if ( ! is_array( $packages ) ) {
-			$packages = array();
-		}
+		// Publish a STABLE id with every package.
+		//
+		// This response carried no id at all, while POST /cart/add required
+		// `package_id` - so every client had to send the array INDEX and inherit
+		// its instability: reorder the tiers and saved carts, deep links and
+		// order history all repoint at a different package (Basecamp
+		// #10154919857).
+		//
+		// Assigning here rather than only in the backfill means a service always
+		// answers with ids the moment a client asks for them, including services
+		// created after the upgrade pass ran. It writes only when an id is
+		// missing, so a normal request does no work.
+		$packages = wpss_assign_package_ids( $service_id );
 
-		return new WP_REST_Response( $packages, 200 );
+		return new WP_REST_Response( array_values( $packages ), 200 );
 	}
 
 	/**

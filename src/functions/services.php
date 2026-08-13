@@ -74,6 +74,150 @@ function wpss_get_service_packages( int $service_id ): array {
 }
 
 /**
+ * Give every package on a service a stable id, and persist it.
+ *
+ * A package's identity has always been its POSITION in `_wpss_packages`, so
+ * reordering the tiers repoints saved carts, deep links and historical orders
+ * at a different package (Basecamp #10154919857). Snapshots already protect
+ * orders after the fact; this gives the API something durable to name a package
+ * BY, so a client never has to send an index at all.
+ *
+ * Ids come from a per-service counter kept in `_wpss_package_next_id` and are
+ * NEVER REUSED. That is the whole point: if tier 2 is deleted and a new one
+ * added, the newcomer gets a fresh id rather than inheriting the dead tier's
+ * identity and, with it, the meaning of every link that still points there.
+ *
+ * Writes only when something is missing an id, so it is safe to call
+ * repeatedly. Deliberately not called from the read accessor above - a public
+ * archive rendering fifty service cards must not turn into fifty writes.
+ * Assignment happens on the write paths and in the upgrade backfill.
+ *
+ * @since 1.6.0
+ *
+ * @param int $service_id Service post ID.
+ * @return array<int, array<string, mixed>> Packages, each carrying an `id`.
+ */
+function wpss_assign_package_ids( int $service_id ): array {
+	$packages = wpss_get_service_packages( $service_id );
+
+	if ( ! $packages ) {
+		return array();
+	}
+
+	$next    = (int) get_post_meta( $service_id, '_wpss_package_next_id', true );
+	$changed = false;
+
+	// Stable ids start well above any plausible package INDEX, so the two id
+	// spaces can never collide.
+	//
+	// This is not tidiness, it is a correctness requirement. `package_id` has to
+	// accept both readings during the transition - shipped clients send the
+	// index, new ones send the stable id - and a resolver cannot tell them apart
+	// if the ranges overlap. With ids starting at 1, a client sending
+	// package_id=1 to mean "the second tier" would silently receive the FIRST
+	// tier, whose stable id is 1. That is the same silent-wrong-package failure
+	// this whole change exists to prevent, introduced by the fix for it.
+	//
+	// Caught by the reorder test before release. Indices are 0..n for a handful
+	// of tiers; 1000 leaves the two spaces permanently disjoint.
+	$base = (int) apply_filters( 'wpss_package_id_base', 1000, $service_id );
+
+	if ( $next < $base ) {
+		$next = $base;
+	}
+
+	// Never hand out an id that is already in use, even if the counter was lost
+	// or reset - reusing one would silently merge two different tiers.
+	$used = array();
+	foreach ( $packages as $package ) {
+		if ( is_array( $package ) && ! empty( $package['id'] ) ) {
+			$used[] = (int) $package['id'];
+		}
+	}
+
+	if ( $used ) {
+		$next = max( $next, max( $used ) + 1 );
+	}
+
+	foreach ( $packages as $index => $package ) {
+		if ( ! is_array( $package ) ) {
+			continue;
+		}
+
+		if ( ! empty( $package['id'] ) ) {
+			continue;
+		}
+
+		while ( in_array( $next, $used, true ) ) {
+			++$next;
+		}
+
+		$packages[ $index ]['id'] = $next;
+		$used[]                   = $next;
+		++$next;
+		$changed = true;
+	}
+
+	if ( $changed ) {
+		update_post_meta( $service_id, '_wpss_packages', $packages );
+		update_post_meta( $service_id, '_wpss_package_next_id', $next );
+	}
+
+	return $packages;
+}
+
+/**
+ * Resolve a package on a service from either a stable id or a legacy index.
+ *
+ * `POST /cart/add` has always required `package_id` and documented it as
+ * "Package index/ID", while `GET /services/{id}/packages` returned no id at
+ * all - so every client had to send the array index and inherit its
+ * instability. From 1.6.0 the API publishes a stable `id`, but shipped clients
+ * are still sending indices, and a saved cart may hold either.
+ *
+ * The two readings CANNOT overlap: stable ids are issued from 1000 upward
+ * (see wpss_assign_package_ids) while indices are 0..n for a handful of tiers.
+ * That is deliberate - an earlier draft started ids at 1, which made
+ * `package_id=1` ambiguous between "the tier with id 1" and "the second tier",
+ * and silently served the wrong package to every shipped client. The stable id
+ * is checked first; the positional read is the fallback for older callers.
+ *
+ * @since 1.6.0
+ *
+ * @param int $service_id Service post ID.
+ * @param int $package_id A stable package id, or a legacy positional index.
+ * @return array{package: array<string, mixed>, index: int}|null Resolved package
+ *                                                              and its current index.
+ */
+function wpss_resolve_service_package( int $service_id, int $package_id ): ?array {
+	$packages = wpss_get_service_packages( $service_id );
+
+	if ( ! $packages ) {
+		return null;
+	}
+
+	foreach ( $packages as $index => $package ) {
+		if ( is_array( $package ) && isset( $package['id'] ) && (int) $package['id'] === $package_id ) {
+			return array(
+				'package' => $package,
+				'index'   => (int) $index,
+			);
+		}
+	}
+
+	// Legacy positional read. Index 0 is a real package, so this is isset(),
+	// never empty().
+	if ( isset( $packages[ $package_id ] ) && is_array( $packages[ $package_id ] ) ) {
+		return array(
+			'package' => $packages[ $package_id ],
+			'index'   => (int) $package_id,
+		);
+	}
+
+	return null;
+}
+
+/**
  * Normalize gallery meta into a flat array of attachment IDs.
  *
  * Handles all gallery storage formats:

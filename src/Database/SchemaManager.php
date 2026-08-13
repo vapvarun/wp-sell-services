@@ -272,6 +272,7 @@ class SchemaManager {
 
 		$this->backfill_platform_order_ref();
 		$this->backfill_package_snapshots();
+		$this->backfill_package_ids();
 	}
 
 	/**
@@ -382,6 +383,43 @@ class SchemaManager {
 			// Idempotent, and it skips sub-orders (tips, milestone phases,
 			// extensions) itself - those carry no package of their own.
 			wpss_capture_order_package_snapshot( (int) $order_id );
+		}
+	}
+
+	/**
+	 * Give existing services' packages a stable id.
+	 *
+	 * So a client can name a package by something that survives reordering,
+	 * rather than by its position (Basecamp #10154919857). New and edited
+	 * services get ids on write; this covers everything already in the database.
+	 *
+	 * Bounded like the other backfills - one meta read and at most one write per
+	 * service, taken in slices so an upgrade hook never walks a whole catalogue
+	 * in a single request. Services left for the next pass keep answering
+	 * without an `id`, exactly as they do today, and clients fall back to the
+	 * index.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return void
+	 */
+	private function backfill_package_ids(): void {
+		if ( ! function_exists( 'wpss_assign_package_ids' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		$service_ids = $this->wpdb->get_col(
+			"SELECT p.ID FROM `{$this->wpdb->posts}` p
+			 INNER JOIN `{$this->wpdb->postmeta}` m ON m.post_id = p.ID AND m.meta_key = '_wpss_packages'
+			 LEFT JOIN `{$this->wpdb->postmeta}` n ON n.post_id = p.ID AND n.meta_key = '_wpss_package_next_id'
+			 WHERE p.post_type = 'wpss_service'
+			   AND n.post_id IS NULL
+			 LIMIT 200"
+		);
+
+		foreach ( (array) $service_ids as $service_id ) {
+			wpss_assign_package_ids( (int) $service_id );
 		}
 	}
 
