@@ -2155,6 +2155,37 @@ final class Plugin {
 			2
 		);
 
+		// Freeze what was bought, at the moment money changes hands.
+		//
+		// `package_id` is a POSITIONAL index into the service's _wpss_packages
+		// meta, not a stable key. Reorder or delete a tier and every order
+		// carrying that index silently re-resolves to a different package - an
+		// order placed for "Premium" starts reading as "Basic" (Basecamp
+		// #10154919857).
+		//
+		// A snapshot makes the order self-describing, so the index stops
+		// mattering for anything already sold. StandaloneOrderProvider took one
+		// at creation, but the cart rails never did, and
+		// wpss_capture_order_package_snapshot() - written for exactly this - was
+		// never called from anywhere.
+		//
+		// Priority 5 so it runs BEFORE the workflow, milestone, extension and
+		// tipping listeners: those can change the order's state, and the point
+		// of the snapshot is to record what was bought at the moment of payment.
+		//
+		// wpss_order_paid is the right seam because, since the 1.6.0 rail work,
+		// EVERY rail reaches it - WooCommerce, EDD, FluentCart, SureCart and
+		// standalone all route through mark_as_paid(). One listener covers all
+		// five. The function is idempotent and skips sub-orders itself.
+		add_action(
+			'wpss_order_paid',
+			static function ( int $order_id ): void {
+				wpss_capture_order_package_snapshot( $order_id );
+			},
+			5,
+			1
+		);
+
 		// Set delivery deadline when requirements are submitted.
 		add_action(
 			'wpss_requirements_submitted',

@@ -418,11 +418,76 @@ function wpss_build_package_snapshot( int $service_id, ?int $package_id ): ?arra
 
 	$packages = get_post_meta( $service_id, '_wpss_packages', true );
 
-	if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) || ! is_array( $packages[ $package_id ] ) ) {
+	if ( is_array( $packages ) && isset( $packages[ $package_id ] ) && is_array( $packages[ $package_id ] ) ) {
+		return $packages[ $package_id ];
+	}
+
+	return wpss_build_package_snapshot_from_legacy_id( $service_id, $package_id );
+}
+
+/**
+ * Recover a package snapshot for an order whose package_id is a legacy row id.
+ *
+ * `package_id` has meant two different things over the life of this plugin: a
+ * PRIMARY KEY in `wpss_service_packages`, and a POSITIONAL index into the
+ * service's `_wpss_packages` meta. The index won, and the table lookup was
+ * removed - but orders written under the old meaning still carry row ids, and
+ * on those the index lookup simply misses. They render as a generic "Package"
+ * with no price tier, and until now nothing could tell them apart from an order
+ * whose tier was genuinely deleted.
+ *
+ * Real example from a live database: order #26 on service 251 carries
+ * package_id 17 while that service has three packages (indices 0-2). Row 17 in
+ * wpss_service_packages is "Standard", service_id 251 - the order's own
+ * service. Ten orders on that site were in this state.
+ *
+ * THE SERVICE-ID MATCH IS THE SAFETY CHECK, not a detail. A bare id lookup
+ * would happily hand back another vendor's package and freeze the wrong name
+ * and price onto someone's order. If the row belongs to a different service the
+ * id is meaningless here and nothing is recovered.
+ *
+ * Recovery only. New orders always store an index and snapshot themselves at
+ * payment, so nothing written from 1.6.0 onward needs this path.
+ *
+ * @since 1.6.0
+ *
+ * @param int $service_id Service post ID the order belongs to.
+ * @param int $package_id The order's package_id, read as a legacy row id.
+ * @return array<string, mixed>|null Snapshot, or null when it cannot be recovered.
+ */
+function wpss_build_package_snapshot_from_legacy_id( int $service_id, int $package_id ): ?array {
+	global $wpdb;
+
+	if ( $package_id <= 0 || $service_id <= 0 ) {
 		return null;
 	}
 
-	return $packages[ $package_id ];
+	$table = $wpdb->prefix . 'wpss_service_packages';
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$row = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT name, description, price, delivery_days, revisions, features FROM {$table} WHERE id = %d AND service_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$package_id,
+			$service_id
+		),
+		ARRAY_A
+	);
+
+	if ( ! $row ) {
+		return null;
+	}
+
+	$features = json_decode( (string) ( $row['features'] ?? '' ), true );
+
+	return array(
+		'name'          => (string) ( $row['name'] ?? '' ),
+		'description'   => (string) ( $row['description'] ?? '' ),
+		'price'         => (float) ( $row['price'] ?? 0 ),
+		'delivery_days' => (int) ( $row['delivery_days'] ?? 0 ),
+		'revisions'     => (int) ( $row['revisions'] ?? 0 ),
+		'features'      => is_array( $features ) ? $features : array(),
+	);
 }
 
 /**

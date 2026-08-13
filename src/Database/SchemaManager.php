@@ -271,6 +271,7 @@ class SchemaManager {
 		}
 
 		$this->backfill_platform_order_ref();
+		$this->backfill_package_snapshots();
 	}
 
 	/**
@@ -327,6 +328,60 @@ class SchemaManager {
 			if ( ! $updated ) {
 				return;
 			}
+		}
+	}
+
+	/**
+	 * Freeze what was bought on orders placed before snapshots were taken.
+	 *
+	 * `package_id` is a POSITIONAL index into the service's `_wpss_packages`
+	 * meta, not a stable key. Reorder or delete a tier and every order holding
+	 * that index silently re-resolves to a different package - an order placed
+	 * for "Premium" begins reading as "Basic" (Basecamp #10154919857).
+	 *
+	 * From 1.6.0 every paid order snapshots itself, because every rail now
+	 * routes through `wpss_order_paid`. Orders placed before that have nothing
+	 * frozen and stay exposed, so they are backfilled here. On the sandbox this
+	 * was 14 of 17 orders carrying a package - the mitigation existed but
+	 * covered 18% of them.
+	 *
+	 * Bounded on purpose. Each capture reads the service's meta, so this is one
+	 * query per order, and an upgrade hook must not walk a marketplace with
+	 * 200k orders in a single request. It takes a fixed slice per run and the
+	 * rest are picked up on the next upgrade pass; nothing is broken meanwhile,
+	 * because an order with no snapshot behaves exactly as it does today.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return void
+	 */
+	private function backfill_package_snapshots(): void {
+		if ( ! function_exists( 'wpss_capture_order_package_snapshot' ) ) {
+			return;
+		}
+
+		$table = $this->get_table_name( 'orders' );
+
+		// Candidates: a real package, and no snapshot recorded yet. The JSON is
+		// matched with LIKE rather than a JSON function so this keeps working on
+		// MySQL 5.6 / MariaDB builds without JSON support.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$order_ids = $this->wpdb->get_col(
+			"SELECT id FROM `{$table}`
+			WHERE package_id IS NOT NULL
+			  AND ( meta IS NULL OR meta NOT LIKE '%package_snapshot%' )
+			ORDER BY id ASC
+			LIMIT 500"
+		);
+
+		if ( empty( $order_ids ) ) {
+			return;
+		}
+
+		foreach ( $order_ids as $order_id ) {
+			// Idempotent, and it skips sub-orders (tips, milestone phases,
+			// extensions) itself - those carry no package of their own.
+			wpss_capture_order_package_snapshot( (int) $order_id );
 		}
 	}
 
