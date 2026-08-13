@@ -925,6 +925,13 @@ class Settings {
 			array( $this, 'sanitize_billing_field_settings' )
 		);
 
+		// Offline payment proof (Basecamp #10194890682).
+		register_setting(
+			'wpss_orders',
+			'wpss_offline_receipt_settings',
+			array( $this, 'sanitize_offline_receipt_settings' )
+		);
+
 		// Order settings.
 		register_setting(
 			'wpss_orders',
@@ -961,6 +968,21 @@ class Settings {
 			array( $this, 'render_billing_fields_field' ),
 			'wpss_orders',
 			'wpss_orders_section'
+		);
+
+		add_settings_field(
+			'wpss_offline_receipts',
+			__( 'Offline Payment Proof', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_orders',
+			'wpss_orders_section',
+			array(
+				'option_name' => 'wpss_offline_receipt_settings',
+				'field'       => 'enabled',
+				'label'       => __( 'Let buyers upload proof of an offline payment for an admin to verify', 'wp-sell-services' ),
+				'default'     => false,
+				'description' => __( 'A buyer paying by bank transfer can attach a receipt to their order. An admin reviews it and either approves it — which marks the order paid — or rejects it with a reason so the buyer can try again. Off by default: a marketplace taking only card payments should not see an upload box it will never use.', 'wp-sell-services' ),
+			)
 		);
 
 		// Revision limits are defined per-package in service packages, not as a global setting.
@@ -2134,6 +2156,18 @@ class Settings {
 			esc_html__( 'Suggested set for digital services:', 'wp-sell-services' ),
 			esc_html( implode( ', ', $preset ) )
 		);
+	}
+
+	/**
+	 * Sanitize the offline payment proof settings.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param mixed $input Raw option value.
+	 * @return array<string, bool> Clean value.
+	 */
+	public function sanitize_offline_receipt_settings( $input ): array {
+		return array( 'enabled' => ! empty( $input['enabled'] ) );
 	}
 
 	/**

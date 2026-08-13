@@ -267,6 +267,36 @@ class OrdersController extends RestController {
 		// Order activity log. Disputes already exposed a timeline; orders did
 		// not, so an Activity tab had to be invented from notifications or
 		// left blank. Same participants-only gate as the order itself.
+		// Offline payment proof (Basecamp #10194890682).
+		//
+		// The third entry point. This project's own rule is frontend + admin +
+		// REST for every data store; a receipts table reachable only from two
+		// rendered forms would be half a feature, and the mobile client has no
+		// other way to submit or read proof of an offline payment.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/receipts',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_receipts' ),
+					'permission_callback' => array( $this, 'check_item_permissions' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_receipt' ),
+					'permission_callback' => array( $this, 'check_item_permissions' ),
+					'args'                => array(
+						'note' => array(
+							'description' => __( 'Optional reference number or note.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'required'    => false,
+						),
+					),
+				),
+			)
+		);
+
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/timeline',
@@ -1349,6 +1379,72 @@ class OrdersController extends RestController {
 			),
 			200
 		);
+	}
+
+	/**
+	 * GET /orders/{id}/receipts — proof of payment on this order.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_receipts( $request ) {
+		$order_id = (int) $request->get_param( 'id' );
+
+		if ( ! $this->order_exists( $order_id ) ) {
+			return new \WP_Error( 'wpss_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		$receipts = ( new \WPSellServices\Services\PaymentReceiptService() )->get_for_order( $order_id );
+
+		$data = array_map(
+			static function ( $receipt ) {
+				return array(
+					'id'          => (int) $receipt->id,
+					'order_id'    => (int) $receipt->order_id,
+					'status'      => (string) $receipt->status,
+					'note'        => (string) ( $receipt->note ?? '' ),
+					'admin_note'  => (string) ( $receipt->admin_note ?? '' ),
+					'file_url'    => $receipt->attachment_id ? wp_get_attachment_url( (int) $receipt->attachment_id ) : '',
+					'uploaded_by' => (int) $receipt->uploaded_by,
+					'created_at'  => (string) $receipt->created_at,
+					'verified_at' => $receipt->verified_at ? (string) $receipt->verified_at : null,
+				);
+			},
+			$receipts
+		);
+
+		return new \WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * POST /orders/{id}/receipts — submit proof of an offline payment.
+	 *
+	 * Multipart, same as the conversation attachment endpoint: the file arrives
+	 * in $_FILES['attachments'] and is validated by
+	 * wpss_handle_message_attachments() rather than trusting the client.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function create_receipt( $request ) {
+		$order_id = (int) $request->get_param( 'id' );
+		$note     = (string) ( $request->get_param( 'note' ) ?? '' );
+
+		$files       = $request->get_file_params();
+		$attachments = isset( $files['attachments'] ) ? (array) $files['attachments'] : array();
+
+		$result = ( new \WPSellServices\Services\PaymentReceiptService() )
+			->submit( $order_id, get_current_user_id(), $attachments, $note );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new \WP_REST_Response( array( 'id' => $result ), 201 );
 	}
 
 	/**
