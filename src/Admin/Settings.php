@@ -2893,6 +2893,17 @@ class Settings {
 	}
 
 	/**
+	 * Build the walker that disambiguates same-titled pages in a dropdown.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @return PageDropdownWalker
+	 */
+	private function page_dropdown_walker(): PageDropdownWalker {
+		return new PageDropdownWalker( get_pages( array( 'post_status' => 'publish' ) ) ?: array() );
+	}
+
+	/**
 	 * Render a page dropdown for a standalone option.
 	 *
 	 * @param array<string, mixed> $args Field arguments (option, description).
@@ -2909,6 +2920,8 @@ class Settings {
 				'show_option_none'  => esc_html__( '— Not set —', 'wp-sell-services' ),
 				'option_none_value' => '0',
 				'echo'              => 0,
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- A Walker OBJECT passed as an argument, not output. The sniff sees `$this` inside a function call that can echo.
+				'walker'            => $this->page_dropdown_walker(),
 			)
 		);
 
@@ -3039,6 +3052,8 @@ class Settings {
 				'option_none_value' => '',
 				'selected'          => esc_attr( $value ),
 				'class'             => 'wpss-page-dropdown',
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- A Walker OBJECT passed as an argument, not output. The sniff sees `$this` inside a function call that can echo.
+				'walker'            => $this->page_dropdown_walker(),
 			)
 		);
 
