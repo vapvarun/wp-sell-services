@@ -585,6 +585,31 @@ class SchemaManager {
 	 * @param string $charset_collate Charset collation.
 	 * @return string SQL statement.
 	 */
+	private function get_reports_table( string $charset_collate ): string {
+		$table = $this->get_table_name( 'reports' );
+
+		return "CREATE TABLE {$table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			target_type varchar(32) NOT NULL,
+			target_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			reported_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			reporter_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			reason varchar(32) NOT NULL,
+			details text DEFAULT NULL,
+			status varchar(20) NOT NULL DEFAULT 'open',
+			resolved_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			resolution varchar(32) DEFAULT NULL,
+			resolved_at datetime DEFAULT NULL,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY uniq_reporter_target (reporter_id, target_type, target_id),
+			KEY idx_queue (status, created_at),
+			KEY idx_target (target_type, target_id, status),
+			KEY idx_reported_user (reported_user_id, status),
+			KEY idx_reason (reason, status)
+		) {$charset_collate};";
+	}
+
 	/**
 	 * Get payment receipts table SQL.
 	 *
@@ -623,31 +648,6 @@ class SchemaManager {
 			KEY idx_order (order_id, status),
 			KEY idx_queue (status, created_at),
 			KEY idx_uploader (uploaded_by)
-		) {$charset_collate};";
-	}
-
-	private function get_reports_table( string $charset_collate ): string {
-		$table = $this->get_table_name( 'reports' );
-
-		return "CREATE TABLE {$table} (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			target_type varchar(32) NOT NULL,
-			target_id bigint(20) unsigned NOT NULL DEFAULT 0,
-			reported_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
-			reporter_id bigint(20) unsigned NOT NULL DEFAULT 0,
-			reason varchar(32) NOT NULL,
-			details text DEFAULT NULL,
-			status varchar(20) NOT NULL DEFAULT 'open',
-			resolved_by bigint(20) unsigned NOT NULL DEFAULT 0,
-			resolution varchar(32) DEFAULT NULL,
-			resolved_at datetime DEFAULT NULL,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			UNIQUE KEY uniq_reporter_target (reporter_id, target_type, target_id),
-			KEY idx_queue (status, created_at),
-			KEY idx_target (target_type, target_id, status),
-			KEY idx_reported_user (reported_user_id, status),
-			KEY idx_reason (reason, status)
 		) {$charset_collate};";
 	}
 
