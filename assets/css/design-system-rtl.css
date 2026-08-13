@@ -269,12 +269,20 @@
 	--wpss-wp-admin-text-secondary: #646970;
 	--wpss-wp-admin-text-subtle: #2c3338;
 
-	/* ---- Vendor Marketplace Green ----
-	   The "Fiverr-green" highlight used for vendor-positive UI moments
-	   (verified badges, earnings, available balance). Distinct from
-	   --wpss-success which is general semantic green. */
-	--wpss-vendor-green: #1dbf73;
-	--wpss-vendor-green-dark: #19a463;
+	/* ---- Vendor Marketplace accent (retired) ----
+	   Was a "Fiverr-green" (#1dbf73) used for vendor-positive moments. The
+	   plugin ended up shipping TWO brand accents: this green and the indigo
+	   --wpss-primary, both defined tokens, both hardcoded across the sheets.
+	   Customers saw both on one screen - a green Search button beside a purple
+	   revenue card (Basecamp #10186526090), which reads as two products glued
+	   together.
+
+	   Indigo wins: it already owned the dashboard and the whole button ladder.
+	   These two names are kept as ALIASES so any third-party CSS or child theme
+	   referencing them keeps working - they simply resolve to the one accent
+	   now. Do not reintroduce a second literal accent here. */
+	--wpss-vendor-green: var( --wpss-primary );
+	--wpss-vendor-green-dark: var( --wpss-primary-dark, var( --wpss-primary ) );
 
 	/* ---- Bootstrap-style Alert Palette ----
 	   Used by older alert / status-pill components. Each pair is tinted

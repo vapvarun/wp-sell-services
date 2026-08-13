@@ -12,8 +12,8 @@
    ========================================================================== */
 
 :root {
-	--wpss-admin-primary: var(--wpss-vendor-green, #1dbf73);
-	--wpss-admin-primary-hover: var(--wpss-vendor-green-dark, #19a463);
+	--wpss-admin-primary: var(--wpss-vendor-green, var(--wpss-primary, #4f46e5));
+	--wpss-admin-primary-hover: var(--wpss-vendor-green-dark, var(--wpss-primary-dark, #4338ca));
 	--wpss-admin-border: var(--wpss-gray-300, #ddd);
 	--wpss-admin-bg-light: var(--wpss-bg-subtle, #f9fafb);
 	--wpss-admin-text: var(--wpss-gray-800, #1e1e1e);
