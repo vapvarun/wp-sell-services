@@ -63,11 +63,11 @@ class PageDropdownWalker extends \Walker_PageDropdown {
 	/**
 	 * Render one option, appending the slug when the title is ambiguous.
 	 *
-	 * @param string   $output            Accumulated output, passed by reference.
-	 * @param \WP_Post $data_object       Page object.
-	 * @param int      $depth             Depth of the page in the tree.
-	 * @param array    $args              Dropdown arguments.
-	 * @param int      $current_object_id Currently selected page ID.
+	 * @param string               $output            Accumulated output, passed by reference.
+	 * @param \WP_Post             $data_object       Page object.
+	 * @param int                  $depth             Depth of the page in the tree.
+	 * @param array<string, mixed> $args      Dropdown arguments.
+	 * @param int                  $current_object_id Currently selected page ID.
 	 * @return void
 	 */
 	public function start_el( &$output, $data_object, $depth = 0, $args = array(), $current_object_id = 0 ): void { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
