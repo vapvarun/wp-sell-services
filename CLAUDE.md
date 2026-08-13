@@ -426,8 +426,6 @@ docs/website/
 
 ### Card Table Columns
 
-| Column | ID | URL | Purpose |
-|--------|-----|-----|---------|
 Verified against the live board on 2026-08-13. The board has 11 columns; these
 are the ones this workflow touches.
 
