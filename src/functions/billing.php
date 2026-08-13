@@ -35,6 +35,40 @@ defined( 'ABSPATH' ) || exit;
  * @return array<string, array{label:string, required:bool, type:string, autocomplete:string}>
  */
 function wpss_get_billing_fields(): array {
+	$fields = wpss_get_all_billing_field_definitions();
+
+	// Drop fields the owner has switched off.
+	//
+	// Twelve billing fields, most of them required, is a physical-goods
+	// checkout. A marketplace selling logo design has no use for street
+	// address, apartment, city, state or postcode, and every one of them is a
+	// reason to abandon (Basecamp #10159633185).
+	//
+	// Applied BEFORE the filter below so code can still override the owner's
+	// choice - a tax plugin that genuinely needs the address can put it back.
+	$fields = wpss_filter_enabled_billing_fields( $fields );
+
+	/**
+	 * Filter the billing address fields.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param array $fields Field definitions keyed by meta key.
+	 */
+	return apply_filters( 'wpss_billing_fields', $fields );
+}
+
+/**
+ * Every billing field this plugin knows about, before any owner setting.
+ *
+ * The settings screen needs the unfiltered list so a field that has been
+ * switched off can still be shown - and switched back on.
+ *
+ * @since 1.6.0
+ *
+ * @return array<string, array{label:string, required:bool, type:string, autocomplete:string}>
+ */
+function wpss_get_all_billing_field_definitions(): array {
 	$fields = array(
 		'billing_first_name' => array(
 			'label'        => __( 'First name', 'wp-sell-services' ),
@@ -113,14 +147,88 @@ function wpss_get_billing_fields(): array {
 		),
 	);
 
+	return $fields;
+}
+
+/**
+ * Billing fields that cannot be switched off.
+ *
+ * An order has to be attributable to a person who can be contacted about it.
+ * Everything else is a preference; these three are the record.
+ *
+ * @since 1.6.0
+ *
+ * @return array<int, string> Field keys.
+ */
+function wpss_get_required_billing_fields(): array {
 	/**
-	 * Filter the billing address fields.
+	 * Filters the billing fields that cannot be disabled.
 	 *
-	 * @since 1.2.3
+	 * @since 1.6.0
 	 *
-	 * @param array $fields Field definitions keyed by meta key.
+	 * @param array<int, string> $keys Field keys.
 	 */
-	return apply_filters( 'wpss_billing_fields', $fields );
+	return (array) apply_filters(
+		'wpss_locked_billing_fields',
+		array( 'billing_first_name', 'billing_last_name', 'billing_email' )
+	);
+}
+
+/**
+ * Remove billing fields the site owner has disabled.
+ *
+ * DEFAULT IS EVERY FIELD ON. A site upgrading into this release keeps
+ * collecting exactly what it collected yesterday - silently dropping address
+ * fields from a live checkout would leave invoices and tax records incomplete
+ * with nothing to say why. Owners opt into the shorter form.
+ *
+ * @since 1.6.0
+ *
+ * @param array<string, array<string, mixed>> $fields Full field definitions.
+ * @return array<string, array<string, mixed>> Enabled field definitions.
+ */
+function wpss_filter_enabled_billing_fields( array $fields ): array {
+	$settings = get_option( 'wpss_billing_field_settings', array() );
+
+	if ( ! is_array( $settings ) || ! isset( $settings['enabled'] ) || ! is_array( $settings['enabled'] ) ) {
+		return $fields;
+	}
+
+	$enabled = array_map( 'strval', $settings['enabled'] );
+	$locked  = wpss_get_required_billing_fields();
+
+	foreach ( array_keys( $fields ) as $key ) {
+		if ( in_array( $key, $locked, true ) ) {
+			continue;
+		}
+
+		if ( ! in_array( (string) $key, $enabled, true ) ) {
+			unset( $fields[ $key ] );
+		}
+	}
+
+	return $fields;
+}
+
+/**
+ * The shorter field set that suits a marketplace selling digital work.
+ *
+ * Offered as a one-click preset rather than imposed as a default, so the choice
+ * stays the owner's and is visible in the settings after they make it.
+ *
+ * @since 1.6.0
+ *
+ * @return array<int, string> Field keys.
+ */
+function wpss_get_digital_billing_field_preset(): array {
+	return array(
+		'billing_first_name',
+		'billing_last_name',
+		'billing_email',
+		'billing_phone',
+		'billing_company',
+		'billing_country',
+	);
 }
 
 /**

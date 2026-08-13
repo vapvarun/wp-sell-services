@@ -917,6 +917,14 @@ class Settings {
 			)
 		);
 
+		// Checkout billing fields. Owner picks which of the twelve are collected
+		// (Basecamp #10159633185).
+		register_setting(
+			'wpss_orders',
+			'wpss_billing_field_settings',
+			array( $this, 'sanitize_billing_field_settings' )
+		);
+
 		// Order settings.
 		register_setting(
 			'wpss_orders',
@@ -945,6 +953,14 @@ class Settings {
 				'default'     => 3,
 				'description' => __( 'Days after vendor submits delivery before the order auto-completes if buyer does not respond. Set to 0 to require buyer action.', 'wp-sell-services' ),
 			)
+		);
+
+		add_settings_field(
+			'wpss_billing_fields',
+			__( 'Checkout Billing Fields', 'wp-sell-services' ),
+			array( $this, 'render_billing_fields_field' ),
+			'wpss_orders',
+			'wpss_orders_section'
 		);
 
 		// Revision limits are defined per-package in service packages, not as a global setting.
@@ -2047,6 +2063,100 @@ class Settings {
 	 */
 	public function render_orders_section(): void {
 		echo '<p>' . esc_html__( 'Configure order workflow and policies.', 'wp-sell-services' ) . '</p>';
+	}
+
+	/**
+	 * Render the checkout billing-field toggles.
+	 *
+	 * Twelve fields, most of them required, is a physical-goods checkout. A
+	 * marketplace selling logo design has no use for street address, apartment,
+	 * city, state or postcode, and each one is a reason to abandon
+	 * (Basecamp #10159633185).
+	 *
+	 * Name and email cannot be switched off - an order has to be attributable to
+	 * someone who can be contacted about it - so those render as disabled,
+	 * checked boxes rather than being hidden, which would look like an omission.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return void
+	 */
+	public function render_billing_fields_field(): void {
+		// The unfiltered definitions, so a field the owner has already switched
+		// off still appears here to be switched back on.
+		$all      = wpss_get_all_billing_field_definitions();
+		$settings = get_option( 'wpss_billing_field_settings', array() );
+		$enabled  = isset( $settings['enabled'] ) && is_array( $settings['enabled'] )
+			? array_map( 'strval', $settings['enabled'] )
+			: array_map( 'strval', array_keys( $all ) );
+
+		$locked = wpss_get_required_billing_fields();
+		$preset = wpss_get_digital_billing_field_preset();
+
+		echo '<fieldset class="wpss-billing-fields-toggles">';
+		echo '<legend class="screen-reader-text">' . esc_html__( 'Checkout billing fields', 'wp-sell-services' ) . '</legend>';
+
+		foreach ( $all as $key => $definition ) {
+			$is_locked  = in_array( $key, $locked, true );
+			$is_checked = $is_locked || in_array( (string) $key, $enabled, true );
+
+			printf(
+				'<label style="display:block;margin-bottom:6px;"><input type="checkbox" name="wpss_billing_field_settings[enabled][]" value="%1$s"%2$s%3$s> %4$s%5$s</label>',
+				esc_attr( (string) $key ),
+				checked( $is_checked, true, false ),
+				$is_locked ? ' disabled' : '',
+				esc_html( (string) ( $definition['label'] ?? $key ) ),
+				$is_locked
+					? ' <em>' . esc_html__( '(always collected)', 'wp-sell-services' ) . '</em>'
+					: ''
+			);
+
+			// A disabled checkbox submits nothing, so post the locked keys
+			// explicitly - otherwise saving the form would try to drop them and
+			// the sanitiser would have to guess.
+			if ( $is_locked ) {
+				printf(
+					'<input type="hidden" name="wpss_billing_field_settings[enabled][]" value="%s">',
+					esc_attr( (string) $key )
+				);
+			}
+		}
+
+		echo '</fieldset>';
+
+		printf(
+			'<p class="description">%s</p>',
+			esc_html__( 'Uncheck what your marketplace does not need. Address fields suit physical goods; a digital service rarely needs more than a name, an email and a country.', 'wp-sell-services' )
+		);
+
+		printf(
+			'<p class="description">%s <code>%s</code></p>',
+			esc_html__( 'Suggested set for digital services:', 'wp-sell-services' ),
+			esc_html( implode( ', ', $preset ) )
+		);
+	}
+
+	/**
+	 * Sanitize the billing-field toggles.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param mixed $input Raw option value.
+	 * @return array<string, array<int, string>> Clean value.
+	 */
+	public function sanitize_billing_field_settings( $input ): array {
+		$all   = array_keys( wpss_get_all_billing_field_definitions() );
+		$given = is_array( $input ) && isset( $input['enabled'] ) && is_array( $input['enabled'] )
+			? array_map( 'sanitize_key', $input['enabled'] )
+			: array();
+
+		// Only real field keys, and never without the ones an order cannot do
+		// without - a hand-crafted POST must not be able to strip the buyer's
+		// name and email off checkout.
+		$clean = array_values( array_intersect( $all, $given ) );
+		$clean = array_values( array_unique( array_merge( $clean, wpss_get_required_billing_fields() ) ) );
+
+		return array( 'enabled' => $clean );
 	}
 
 	/**
