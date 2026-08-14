@@ -1007,7 +1007,15 @@
 	max-width: 640px;
 } */
 
-/* Matches .wpss-card's tokens — see the LTR sheet for why. */
+/* The card unit on FORM screens — profile, post a request, edit a request.
+   Those screens are built of these blocks rather than wrapped in one card, so
+   this is what has to match .wpss-card or their borders read as a different
+   style from every other dashboard section.
+
+   It previously used --wpss-gray-200 and --wpss-radius while .wpss-card uses
+   --wpss-border and --wpss-radius-lg: a different colour AND a different corner
+   on the same screen. Values are not re-authored here, they point at the same
+   tokens the card primitive uses. */
 .wpss-profile-form__section {
 	background: var(--wpss-bg, #fff);
 	border-radius: var(--wpss-radius-lg);

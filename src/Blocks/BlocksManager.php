@@ -155,10 +155,13 @@ class BlocksManager {
 			]
 		);
 
+		// The editor iframe gets no frontend enqueue, so register the tokens here.
+		wpss_register_design_system();
+
 		wp_enqueue_style(
 			'wpss-blocks-editor',
 			\WPSS_PLUGIN_URL . 'assets/css/blocks-editor.css',
-			[ 'wp-edit-blocks' ],
+			[ 'wp-edit-blocks', 'wpss-design-system' ],
 			\WPSS_VERSION
 		);
 		wp_style_add_data( 'wpss-blocks-editor', 'rtl', 'replace' );

@@ -21,7 +21,7 @@
 	font-size: 48px;
 	width: 48px;
 	height: 48px;
-	color: var(--wpss-success, #1dbf73);
+	color: var(--wpss-success);
 	margin-bottom: 16px;
 }
 
@@ -83,7 +83,7 @@
 
 .wp-block-wpss-service-grid .wpss-block-placeholder {
 	background: linear-gradient(-135deg, var(--wpss-success-light, #f8fdf9) 0%, var(--wpss-success-light, #f0f9f4) 100%);
-	border-color: var(--wpss-success, #1dbf73);
+	border-color: var(--wpss-success);
 }
 
 /* Grid preview in editor */
@@ -203,11 +203,11 @@
 }
 
 .wpss-layout-option:hover {
-	border-color: var(--wpss-success, #1dbf73);
+	border-color: var(--wpss-success);
 }
 
 .wpss-layout-option.is-selected {
-	border-color: var(--wpss-success, #1dbf73);
+	border-color: var(--wpss-success);
 	background: var(--wpss-success-light, #f0f9f4);
 }
 
@@ -220,7 +220,7 @@
 }
 
 .wpss-layout-option.is-selected .dashicons {
-	color: var(--wpss-success, #1dbf73);
+	color: var(--wpss-success);
 }
 
 .wpss-layout-option span {
@@ -254,13 +254,13 @@
 }
 
 .wpss-columns-selector button:hover {
-	border-color: var(--wpss-success, #1dbf73);
-	color: var(--wpss-success, #1dbf73);
+	border-color: var(--wpss-success);
+	color: var(--wpss-success);
 }
 
 .wpss-columns-selector button.is-selected {
-	border-color: var(--wpss-success, #1dbf73);
-	background: var(--wpss-success, #1dbf73);
+	border-color: var(--wpss-success);
+	background: var(--wpss-success);
 	color: var(--wpss-white, #fff);
 }
 

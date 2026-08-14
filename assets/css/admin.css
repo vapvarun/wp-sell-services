@@ -10,8 +10,8 @@
    ========================================================================== */
 
 :root {
-	--wpss-admin-primary: var(--wpss-vendor-green, #1dbf73);
-	--wpss-admin-primary-dark: var(--wpss-vendor-green-dark, #19a463);
+	--wpss-admin-primary: var(--wpss-vendor-green);
+	--wpss-admin-primary-dark: var(--wpss-vendor-green-dark);
 	--wpss-admin-secondary: var(--wpss-gray-700, #404145);
 	--wpss-admin-text: var(--wpss-gray-800, #1e1e1e);
 	--wpss-admin-text-light: var(--wpss-text-muted, #757575);
@@ -518,6 +518,24 @@
 	color: var(--wpss-admin-primary);
 }
 
+/* Stat-icon semantics. These three carried inline hex colours in the markup,
+   which put a literal #1dbf73 on the revenue icon and kept the retired accent
+   alive on the dashboard no matter what the tokens said. Colour belongs to the
+   status, not to the element: amber for work in flight, green for a completed
+   outcome (a genuine success signal, not the brand accent), and the accent
+   itself for revenue. */
+.wpss-stat-icon--pending {
+	color: var(--wpss-warning, #dba617);
+}
+
+.wpss-stat-icon--success {
+	color: var(--wpss-success, #10b981);
+}
+
+.wpss-stat-icon--revenue {
+	color: var(--wpss-primary, #4f46e5);
+}
+
 .wpss-stat-info {
 	display: flex;
 	flex-direction: column;
@@ -967,7 +985,7 @@
 	margin: 15px 0 0;
 	padding: 10px 12px;
 	background: var(--wpss-info-light, #f0f6fc);
-	border-left: 3px solid var(--wpss-admin-primary, #1dbf73);
+	border-left: 3px solid var(--wpss-admin-primary);
 	border-radius: 0 4px 4px 0;
 	color: var(--wpss-text-secondary, #555);
 	font-size: 13px;
@@ -977,7 +995,7 @@
 }
 
 .wpss-details-note .dashicons {
-	color: var(--wpss-admin-primary, #1dbf73);
+	color: var(--wpss-admin-primary);
 	font-size: 16px;
 	width: 16px;
 	height: 16px;
@@ -1747,7 +1765,7 @@
 
 .wpss-addon-toggle:hover {
 	color: var(--wpss-admin-primary);
-	background: rgba(29, 191, 115, 0.1);
+	background: var(--wpss-primary-50);
 }
 
 .wpss-remove-addon:hover {
@@ -2675,7 +2693,7 @@
 	height: 72px;
 	margin: 0 auto 20px;
 	border-radius: 50%;
-	background: rgba(29, 191, 115, 0.08);
+	background: var(--wpss-primary-50);
 	color: var(--wpss-admin-primary);
 }
 

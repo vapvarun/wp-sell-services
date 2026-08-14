@@ -80,6 +80,25 @@ class SetupWizardPage {
 
 		if ( $hook ) {
 			$this->hook_suffix = $hook;
+
+			// Give core a title to work with.
+			//
+			// A null parent (above) is what keeps this screen addressable, but it
+			// also means the page is in no $submenu, so core's
+			// get_admin_page_title() cannot match it and leaves $GLOBALS['title']
+			// null. admin-header.php then runs strip_tags( null ), which is a
+			// PHP 8.1+ deprecation, and the browser tab renders as a bare
+			// "<separator> Site Name" with no page name at all.
+			//
+			// The fix belongs here rather than in the menu: keep the screen
+			// reachable AND name it. `load-{$hook}` fires before admin-header.php
+			// is included, so the title is set by the time core reads it.
+			add_action(
+				'load-' . $hook,
+				static function (): void {
+					$GLOBALS['title'] = __( 'Setup Wizard', 'wp-sell-services' );
+				}
+			);
 		}
 	}
 
@@ -104,10 +123,14 @@ class SetupWizardPage {
 			return;
 		}
 
+		// The wizard renders standalone (no admin chrome), so it cannot rely on
+		// another screen's enqueue having run. Register the tokens explicitly.
+		wpss_register_design_system( true );
+
 		wp_enqueue_style(
 			'wpss-admin-wizard',
 			\WPSS_PLUGIN_URL . 'assets/css/admin-wizard.css',
-			array(),
+			array( 'wpss-design-system' ),
 			\WPSS_VERSION
 		);
 		wp_style_add_data( 'wpss-admin-wizard', 'rtl', 'replace' );

@@ -46,14 +46,9 @@ class Frontend {
 	 * @return void
 	 */
 	public function enqueue_styles(): void {
-		// Design system tokens (must load first).
-		wp_register_style(
-			'wpss-design-system',
-			\WPSS_PLUGIN_URL . 'assets/css/design-system.css',
-			array(),
-			\WPSS_VERSION
-		);
-		wp_style_add_data( 'wpss-design-system', 'rtl', 'replace' );
+		// Design system tokens (must load first). Shared registrar so the src
+		// and version cannot drift between the frontend and admin.
+		wpss_register_design_system();
 
 		wp_register_style(
 			'wpss-frontend',

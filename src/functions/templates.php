@@ -543,3 +543,40 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 
 	return (string) ob_get_clean();
 }
+
+/**
+ * Register the design-system stylesheet (tokens) exactly once.
+ *
+ * Every WPSS sheet - frontend, admin, wizard, block editor - is authored
+ * against the tokens in design-system.css, and most rules carry a hardcoded
+ * fallback such as `var( --wpss-vendor-green, #1dbf73 )`. That makes a missing
+ * registration invisible rather than loud: nothing 404s, the tokens are simply
+ * undefined and every fallback silently becomes the value. Through 1.6.0 the
+ * handle was registered only on the frontend, so the entire admin rendered the
+ * retired green accent while the frontend rendered the correct indigo one.
+ *
+ * Registering from one place means the src and version cannot drift between
+ * contexts, and any sheet may safely declare `wpss-design-system` as a
+ * dependency without caring which surface it is on. Idempotent: WP_Styles::add()
+ * ignores a handle that is already registered.
+ *
+ * @since 1.6.1
+ *
+ * @param bool $enqueue Whether to enqueue it as well as register it.
+ * @return void
+ */
+function wpss_register_design_system( bool $enqueue = false ): void {
+	if ( ! wp_style_is( 'wpss-design-system', 'registered' ) ) {
+		wp_register_style(
+			'wpss-design-system',
+			\WPSS_PLUGIN_URL . 'assets/css/design-system.css',
+			array(),
+			\WPSS_VERSION
+		);
+		wp_style_add_data( 'wpss-design-system', 'rtl', 'replace' );
+	}
+
+	if ( $enqueue ) {
+		wp_enqueue_style( 'wpss-design-system' );
+	}
+}

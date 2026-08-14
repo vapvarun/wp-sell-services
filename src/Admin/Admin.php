@@ -776,10 +776,17 @@ class Admin {
 			return;
 		}
 
+		// Design-system tokens. Until 1.6.1 these were registered ONLY on the
+		// frontend, so in admin --wpss-primary and the --wpss-vendor-green alias
+		// were undefined and every `var( --wpss-vendor-green, #1dbf73 )` fell
+		// through to its hardcoded fallback -- the whole admin kept rendering the
+		// retired green accent the 1.6.0 work was meant to end.
+		wpss_register_design_system( true );
+
 		wp_enqueue_style(
 			'wpss-admin',
 			\WPSS_PLUGIN_URL . 'assets/css/admin.css',
-			array(),
+			array( 'wpss-design-system' ),
 			\WPSS_VERSION
 		);
 		wp_style_add_data( 'wpss-admin', 'rtl', 'replace' );
@@ -1298,7 +1305,7 @@ class Admin {
 					</div>
 
 					<div class="wpss-stat-card">
-						<i data-lucide="clock" class="wpss-icon wpss-stat-icon" style="color: #dba617;" aria-hidden="true"></i>
+						<i data-lucide="clock" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->in_progress ?? 0 ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'In Progress', 'wp-sell-services' ); ?></span>
@@ -1306,7 +1313,7 @@ class Admin {
 					</div>
 
 					<div class="wpss-stat-card">
-						<i data-lucide="check-circle-2" class="wpss-icon wpss-stat-icon" style="color: #00a32a;" aria-hidden="true"></i>
+						<i data-lucide="check-circle-2" class="wpss-icon wpss-stat-icon wpss-stat-icon--success" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->completed ?? 0 ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
@@ -1314,7 +1321,7 @@ class Admin {
 					</div>
 
 					<div class="wpss-stat-card">
-						<i data-lucide="banknote" class="wpss-icon wpss-stat-icon" style="color: #1dbf73;" aria-hidden="true"></i>
+						<i data-lucide="banknote" class="wpss-icon wpss-stat-icon wpss-stat-icon--revenue" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( wpss_format_price( (float) ( $revenue ?? 0 ) ) ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Total Revenue', 'wp-sell-services' ); ?></span>

@@ -1715,7 +1715,7 @@ body.wpss-modal-open {
 	   unmistakable, not just a subtle border-colour shift (WCAG 2.4.7). Hex
 	   fallback first, color-mix() progressive enhancement second. */
 	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 1800%, transparent);
 }
 
 .wpss-field-hint {

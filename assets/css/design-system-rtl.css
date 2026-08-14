@@ -1220,6 +1220,9 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-billing-summary__gst-label { color: var(--wpss-text-secondary); }
 .wpss-billing-summary__gst-value { font-weight: 600; color: var(--wpss-text); font-variant-numeric: tabular-nums; }
 
+/* Order summary rows had NO styling anywhere in the codebase — they inherited
+   whatever the theme happened to give them, so the same order looked different
+   on BuddyX and a generic theme. */
 /* The GRID had no rules at all, so the item below (flex + space-between, value
    right-aligned) was being dropped into whatever columns the theme produced.
    In a narrow column a long value cannot sit beside its label, so it wrapped
