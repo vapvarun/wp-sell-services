@@ -122,10 +122,15 @@ class UnifiedDashboard {
 		);
 		wp_style_add_data( 'wpss-messaging', 'rtl', 'replace' );
 
+		// wpss-ui provides window.wpssToast. The dashboard reports a saved
+		// profile through it, so declare the dependency rather than relying on
+		// some other surface having registered the handle first.
+		ScriptRegistry::register_ui();
+
 		ScriptRegistry::enqueue(
 			'wpss-unified-dashboard',
 			'assets/js/unified-dashboard.js',
-			array( 'jquery' )
+			array( 'jquery', ScriptRegistry::HANDLE_UI )
 		);
 
 		wp_localize_script(

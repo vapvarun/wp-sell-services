@@ -434,17 +434,11 @@
 					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 				},
 				success: function () {
-					$form.prepend(
-						'<div class="wpss-alert wpss-alert--success" style="margin-bottom: 16px;">' +
-						wpssUnifiedDashboard.i18n.profileSaved +
-						'</div>'
-					);
-
-					setTimeout(function () {
-						$form.find('.wpss-alert--success').fadeOut(function () {
-							$(this).remove();
-						});
-					}, 3000);
+					// Report through the shared toast rather than injecting an
+					// alert at the top of the form: on a long profile form the
+					// inline banner appears above the fold the user is not
+					// looking at, so a save could look like it did nothing.
+					wpssToast(wpssUnifiedDashboard.i18n.profileSaved, 'success');
 
 					$button
 						.prop('disabled', false)

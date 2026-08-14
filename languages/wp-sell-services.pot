@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-14T08:51:19+00:00\n"
+"POT-Creation-Date: 2026-08-14T09:47:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -20,7 +20,7 @@ msgstr ""
 #: src/Admin/Pages/SetupWizardPage.php:485
 #: src/Blocks/BlocksManager.php:134
 #: src/Blocks/BlocksManager.php:222
-#: src/Frontend/UnifiedDashboard.php:746
+#: src/Frontend/UnifiedDashboard.php:751
 #: wp-sell-services.php:372
 msgid "WP Sell Services"
 msgstr ""
@@ -97,7 +97,7 @@ msgstr ""
 #: src/Admin/Pages/SetupWizardPage.php:475
 #: src/Admin/Settings.php:1177
 #: src/Core/Activator.php:357
-#: src/Frontend/UnifiedDashboard.php:799
+#: src/Frontend/UnifiedDashboard.php:804
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:197
 msgid "Dashboard"
 msgstr ""
@@ -107,7 +107,7 @@ msgstr ""
 #: src/Admin/Settings.php:1188
 #: src/Core/Activator.php:361
 #: src/Frontend/ServiceWizard.php:2244
-#: src/Frontend/UnifiedDashboard.php:905
+#: src/Frontend/UnifiedDashboard.php:910
 #: templates/single-request.php:477
 msgid "Become a Vendor"
 msgstr ""
@@ -312,7 +312,7 @@ msgstr ""
 #: src/Frontend/Frontend.php:257
 #: src/Frontend/ServiceWizard.php:1429
 #: src/Frontend/Shortcodes.php:1177
-#: src/Frontend/UnifiedDashboard.php:173
+#: src/Frontend/UnifiedDashboard.php:178
 #: src/Integrations/PayPal/PayPalGateway.php:566
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1370
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1920
@@ -443,8 +443,8 @@ msgstr ""
 #: src/Admin/Admin.php:1101
 #: src/Admin/Admin.php:2074
 #: src/Frontend/MenuVisibility.php:87
-#: src/Frontend/UnifiedDashboard.php:506
-#: src/Frontend/UnifiedDashboard.php:782
+#: src/Frontend/UnifiedDashboard.php:511
+#: src/Frontend/UnifiedDashboard.php:787
 #: src/functions/notifications.php:84
 msgid "Disputes"
 msgstr ""
@@ -579,8 +579,8 @@ msgstr ""
 #: src/Frontend/BuyerRequestArchiveView.php:197
 #: src/Frontend/MenuVisibility.php:79
 #: src/Frontend/Tour.php:538
-#: src/Frontend/UnifiedDashboard.php:463
-#: src/Frontend/UnifiedDashboard.php:769
+#: src/Frontend/UnifiedDashboard.php:468
+#: src/Frontend/UnifiedDashboard.php:774
 #: assets/js/blocks.js:555
 #: assets/js/blocks.js:650
 msgid "Buyer Requests"
@@ -735,7 +735,7 @@ msgstr ""
 #: src/Admin/Tables/OrdersListTable.php:57
 #: src/CustomFields/Fields/DateField.php:38
 #: src/Frontend/Shortcodes.php:713
-#: src/Frontend/UnifiedDashboard.php:149
+#: src/Frontend/UnifiedDashboard.php:154
 #: templates/dashboard/sections/earnings.php:316
 #: templates/order/order-confirmation.php:197
 #: assets/js/blocks.js:101
@@ -963,8 +963,8 @@ msgstr ""
 #: src/Admin/Admin.php:2320
 #: src/Frontend/MenuVisibility.php:85
 #: src/Frontend/Tour.php:596
-#: src/Frontend/UnifiedDashboard.php:498
-#: src/Frontend/UnifiedDashboard.php:776
+#: src/Frontend/UnifiedDashboard.php:503
+#: src/Frontend/UnifiedDashboard.php:781
 #: templates/myaccount/vendor-dashboard.php:210
 msgid "Messages"
 msgstr ""
@@ -1269,7 +1269,7 @@ msgstr ""
 #: src/Frontend/ServiceWizard.php:544
 #: src/Frontend/ServiceWizard.php:1024
 #: src/Frontend/Shortcodes.php:556
-#: src/Frontend/UnifiedDashboard.php:151
+#: src/Frontend/UnifiedDashboard.php:156
 #: src/Integrations/Gateways/OfflineGateway.php:214
 #: templates/dashboard/sections/create-request.php:58
 #: templates/dashboard/sections/edit-request.php:107
@@ -1616,7 +1616,7 @@ msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:192
 #: src/Admin/Metaboxes/ServiceMetabox.php:1151
-#: src/Frontend/UnifiedDashboard.php:175
+#: src/Frontend/UnifiedDashboard.php:180
 #: templates/dashboard/sections/edit-request.php:137
 msgid "Draft"
 msgstr ""
@@ -1665,7 +1665,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:1622
 #: src/Admin/Metaboxes/ServiceMetabox.php:1649
 #: src/Admin/Pages/VendorsPage.php:2442
-#: src/Frontend/UnifiedDashboard.php:198
+#: src/Frontend/UnifiedDashboard.php:203
 #: src/Services/FAQService.php:267
 #: src/Services/GalleryService.php:439
 #: templates/dashboard/sections/profile.php:64
@@ -2317,8 +2317,8 @@ msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:154
 #: src/Core/AbilitiesRegistrar.php:222
-#: src/Frontend/UnifiedDashboard.php:696
-#: src/Frontend/UnifiedDashboard.php:785
+#: src/Frontend/UnifiedDashboard.php:701
+#: src/Frontend/UnifiedDashboard.php:790
 msgid "Create Service"
 msgstr ""
 
@@ -2474,7 +2474,7 @@ msgid "Cash"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:368
-#: src/Frontend/UnifiedDashboard.php:156
+#: src/Frontend/UnifiedDashboard.php:161
 #: src/functions/moderation.php:88
 #: src/Models/Dispute.php:254
 #: src/Services/EmailService.php:1224
@@ -2625,7 +2625,7 @@ msgstr ""
 
 #: src/Admin/Pages/NotificationsPage.php:209
 #: src/Admin/Pages/VendorsPage.php:2186
-#: src/Frontend/UnifiedDashboard.php:150
+#: src/Frontend/UnifiedDashboard.php:155
 msgid "Type"
 msgstr ""
 
@@ -3058,7 +3058,7 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:252
 #: src/Frontend/Frontend.php:262
 #: src/Frontend/Shortcodes.php:1162
-#: src/Frontend/UnifiedDashboard.php:157
+#: src/Frontend/UnifiedDashboard.php:162
 #: src/Integrations/Gateways/OfflineGateway.php:657
 #: src/Integrations/PayPal/PayPalGateway.php:565
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1338
@@ -3941,7 +3941,7 @@ msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:789
 #: src/Admin/Pages/VendorsPage.php:925
-#: src/Frontend/UnifiedDashboard.php:164
+#: src/Frontend/UnifiedDashboard.php:169
 msgid "Activate"
 msgstr ""
 
@@ -3951,8 +3951,8 @@ msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:863
 #: src/Admin/Pages/VendorsPage.php:1210
-#: src/API/VendorsController.php:343
-#: src/API/VendorsController.php:355
+#: src/API/VendorsController.php:351
+#: src/API/VendorsController.php:363
 #: src/Frontend/AjaxHandlers.php:2188
 #: src/Frontend/Shortcodes.php:367
 #: src/Frontend/Shortcodes.php:374
@@ -3987,7 +3987,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:959
 #: src/Admin/Pages/VendorsPage.php:1272
 #: src/Admin/Pages/VendorsPage.php:2189
-#: src/Frontend/UnifiedDashboard.php:153
+#: src/Frontend/UnifiedDashboard.php:158
 msgid "Balance"
 msgstr ""
 
@@ -4008,8 +4008,8 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:998
 #: src/Frontend/MenuVisibility.php:83
 #: src/Frontend/SingleServiceView.php:756
-#: src/Frontend/UnifiedDashboard.php:487
-#: src/Frontend/UnifiedDashboard.php:775
+#: src/Frontend/UnifiedDashboard.php:492
+#: src/Frontend/UnifiedDashboard.php:780
 msgid "Portfolio"
 msgstr ""
 
@@ -4256,7 +4256,7 @@ msgid "Pending Requirements"
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1845
-#: src/Frontend/UnifiedDashboard.php:575
+#: src/Frontend/UnifiedDashboard.php:580
 #: src/functions/orders.php:115
 #: src/Models/ServiceOrder.php:635
 msgid "Pending Approval"
@@ -4352,7 +4352,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:531
 #: src/Admin/Pages/WithdrawalsPage.php:649
 #: src/Frontend/Shortcodes.php:711
-#: src/Frontend/UnifiedDashboard.php:152
+#: src/Frontend/UnifiedDashboard.php:157
 #: templates/dashboard/sections/earnings.php:118
 #: templates/dashboard/sections/earnings.php:317
 #: templates/emails/withdrawal-approved.php:50
@@ -4404,7 +4404,7 @@ msgid "Showing the %d most recent transactions."
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:2180
-#: src/Frontend/UnifiedDashboard.php:154
+#: src/Frontend/UnifiedDashboard.php:159
 msgid "No wallet transactions yet."
 msgstr ""
 
@@ -4793,7 +4793,7 @@ msgstr[1] ""
 
 #: src/Admin/ProTeaser.php:83
 #: src/Frontend/MenuVisibility.php:84
-#: src/Frontend/UnifiedDashboard.php:774
+#: src/Frontend/UnifiedDashboard.php:779
 msgid "Analytics"
 msgstr ""
 
@@ -6386,7 +6386,7 @@ msgid "Request updated successfully."
 msgstr ""
 
 #: src/API/BuyerRequestsController.php:619
-#: src/Frontend/UnifiedDashboard.php:181
+#: src/Frontend/UnifiedDashboard.php:186
 msgid "Failed to delete request."
 msgstr ""
 
@@ -6425,7 +6425,7 @@ msgstr ""
 #: src/API/ReviewsController.php:1057
 #: src/API/ServicesController.php:215
 #: src/API/ServicesController.php:1388
-#: src/API/VendorsController.php:971
+#: src/API/VendorsController.php:979
 msgid "Current page."
 msgstr ""
 
@@ -6440,7 +6440,7 @@ msgstr ""
 #: src/API/ReviewsController.php:1063
 #: src/API/ServicesController.php:221
 #: src/API/ServicesController.php:1393
-#: src/API/VendorsController.php:977
+#: src/API/VendorsController.php:985
 msgid "Items per page."
 msgstr ""
 
@@ -7184,7 +7184,7 @@ msgid "Payment capture failed."
 msgstr ""
 
 #: src/API/PortfolioController.php:52
-#: src/API/VendorsController.php:1012
+#: src/API/VendorsController.php:1020
 msgid "Vendor ID."
 msgstr ""
 
@@ -7474,7 +7474,7 @@ msgstr ""
 
 #: src/API/ReviewsController.php:1084
 #: src/API/ServicesController.php:1427
-#: src/API/VendorsController.php:992
+#: src/API/VendorsController.php:1000
 msgid "Order by field."
 msgstr ""
 
@@ -7669,87 +7669,87 @@ msgid "Vendor bio/description."
 msgstr ""
 
 #: src/API/VendorsController.php:217
-#: src/API/VendorsController.php:1033
+#: src/API/VendorsController.php:1041
 msgid "Vendor skills."
 msgstr ""
 
-#: src/API/VendorsController.php:378
-#: src/API/VendorsController.php:406
-#: src/API/VendorsController.php:540
+#: src/API/VendorsController.php:386
+#: src/API/VendorsController.php:414
+#: src/API/VendorsController.php:548
 msgid "You are not registered as a vendor."
 msgstr ""
 
-#: src/API/VendorsController.php:486
+#: src/API/VendorsController.php:494
 #: src/Frontend/AjaxHandlers.php:3634
 msgid "Your profile could not be saved. Please try again or contact support."
 msgstr ""
 
-#: src/API/VendorsController.php:565
+#: src/API/VendorsController.php:573
 msgid "Could not update vacation mode. Please try again."
 msgstr ""
 
-#: src/API/VendorsController.php:593
+#: src/API/VendorsController.php:601
 #: src/Services/VendorService.php:225
 msgid "You are already registered as a vendor."
 msgstr ""
 
-#: src/API/VendorsController.php:602
+#: src/API/VendorsController.php:610
 #: src/Services/VendorService.php:233
 msgid "You already have a pending vendor application. Please wait for admin approval."
 msgstr ""
 
-#: src/API/VendorsController.php:612
-#: src/Frontend/UnifiedDashboard.php:1055
+#: src/API/VendorsController.php:620
+#: src/Frontend/UnifiedDashboard.php:1060
 #: src/Services/VendorService.php:217
 msgid "Vendor registration is currently closed."
 msgstr ""
 
-#: src/API/VendorsController.php:662
+#: src/API/VendorsController.php:670
 msgid "You are now registered as a vendor."
 msgstr ""
 
-#: src/API/VendorsController.php:663
+#: src/API/VendorsController.php:671
 msgid "Your vendor application has been submitted for review."
 msgstr ""
 
-#: src/API/VendorsController.php:984
+#: src/API/VendorsController.php:992
 msgid "Search by name."
 msgstr ""
 
-#: src/API/VendorsController.php:988
+#: src/API/VendorsController.php:996
 msgid "Filter by skill."
 msgstr ""
 
-#: src/API/VendorsController.php:1018
+#: src/API/VendorsController.php:1026
 msgid "Display name."
 msgstr ""
 
-#: src/API/VendorsController.php:1023
+#: src/API/VendorsController.php:1031
 msgid "Vendor bio."
 msgstr ""
 
-#: src/API/VendorsController.php:1028
+#: src/API/VendorsController.php:1036
 msgid "Vendor tagline."
 msgstr ""
 
-#: src/API/VendorsController.php:1039
+#: src/API/VendorsController.php:1047
 msgid "Languages spoken."
 msgstr ""
 
-#: src/API/VendorsController.php:1045
+#: src/API/VendorsController.php:1053
 msgid "Social media links."
 msgstr ""
 
-#: src/API/VendorsController.php:1050
+#: src/API/VendorsController.php:1058
 msgid "Typical response time."
 msgstr ""
 
-#: src/API/VendorsController.php:1055
+#: src/API/VendorsController.php:1063
 msgid "Avatar media attachment ID."
 msgstr ""
 
 #: src/Blocks/BlocksManager.php:139
-#: src/Frontend/UnifiedDashboard.php:573
+#: src/Frontend/UnifiedDashboard.php:578
 #: templates/disputes/dispute-view.php:479
 #: templates/order/conversation.php:155
 #: templates/order/extension-view.php:139
@@ -8844,7 +8844,7 @@ msgid "Request updated."
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:1686
-#: src/Frontend/UnifiedDashboard.php:180
+#: src/Frontend/UnifiedDashboard.php:185
 msgid "Request deleted."
 msgstr ""
 
@@ -9092,7 +9092,7 @@ msgid "Preferences saved."
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:3655
-#: src/Frontend/UnifiedDashboard.php:166
+#: src/Frontend/UnifiedDashboard.php:171
 msgid "Profile updated successfully."
 msgstr ""
 
@@ -9454,22 +9454,22 @@ msgstr ""
 
 #: src/Frontend/MenuVisibility.php:77
 #: src/Frontend/Tour.php:528
-#: src/Frontend/UnifiedDashboard.php:455
-#: src/Frontend/UnifiedDashboard.php:767
+#: src/Frontend/UnifiedDashboard.php:460
+#: src/Frontend/UnifiedDashboard.php:772
 #: templates/myaccount/service-orders.php:35
 msgid "My Orders"
 msgstr ""
 
 #: src/Frontend/MenuVisibility.php:78
-#: src/Frontend/UnifiedDashboard.php:459
-#: src/Frontend/UnifiedDashboard.php:768
+#: src/Frontend/UnifiedDashboard.php:464
+#: src/Frontend/UnifiedDashboard.php:773
 msgid "Favorites"
 msgstr ""
 
 #: src/Frontend/MenuVisibility.php:80
 #: src/Frontend/Tour.php:552
-#: src/Frontend/UnifiedDashboard.php:475
-#: src/Frontend/UnifiedDashboard.php:770
+#: src/Frontend/UnifiedDashboard.php:480
+#: src/Frontend/UnifiedDashboard.php:775
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:221
 #: templates/myaccount/vendor-services.php:26
 msgid "My Services"
@@ -9477,29 +9477,29 @@ msgstr ""
 
 #: src/Frontend/MenuVisibility.php:81
 #: src/Frontend/Tour.php:562
-#: src/Frontend/UnifiedDashboard.php:479
-#: src/Frontend/UnifiedDashboard.php:771
+#: src/Frontend/UnifiedDashboard.php:484
+#: src/Frontend/UnifiedDashboard.php:776
 msgid "Sales Orders"
 msgstr ""
 
 #: src/Frontend/MenuVisibility.php:82
-#: src/Frontend/UnifiedDashboard.php:483
-#: src/Frontend/UnifiedDashboard.php:772
-#: src/Frontend/UnifiedDashboard.php:773
+#: src/Frontend/UnifiedDashboard.php:488
+#: src/Frontend/UnifiedDashboard.php:777
+#: src/Frontend/UnifiedDashboard.php:778
 msgid "Earnings & Payouts"
 msgstr ""
 
 #: src/Frontend/MenuVisibility.php:86
-#: src/Frontend/UnifiedDashboard.php:502
-#: src/Frontend/UnifiedDashboard.php:783
+#: src/Frontend/UnifiedDashboard.php:507
+#: src/Frontend/UnifiedDashboard.php:788
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:207
 #: templates/partials/notifications-list.php:92
 msgid "Notifications"
 msgstr ""
 
 #: src/Frontend/MenuVisibility.php:88
-#: src/Frontend/UnifiedDashboard.php:510
-#: src/Frontend/UnifiedDashboard.php:784
+#: src/Frontend/UnifiedDashboard.php:515
+#: src/Frontend/UnifiedDashboard.php:789
 msgid "Profile"
 msgstr ""
 
@@ -9722,7 +9722,7 @@ msgid "Save Draft"
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:419
-#: src/Frontend/UnifiedDashboard.php:682
+#: src/Frontend/UnifiedDashboard.php:687
 msgid "Update Service"
 msgstr ""
 
@@ -10168,7 +10168,7 @@ msgid "Add Gallery Image"
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:1453
-#: src/Frontend/UnifiedDashboard.php:171
+#: src/Frontend/UnifiedDashboard.php:176
 #: templates/dashboard/sections/portfolio.php:142
 #: templates/dashboard/sections/requests.php:193
 #: templates/dashboard/sections/requests.php:196
@@ -10271,7 +10271,7 @@ msgid "Please log in to create a service."
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:2225
-#: src/Frontend/UnifiedDashboard.php:546
+#: src/Frontend/UnifiedDashboard.php:551
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:831
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1637
 msgid "Log In"
@@ -10349,7 +10349,7 @@ msgid "Separate multiple skills with commas."
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:608
-#: src/Frontend/UnifiedDashboard.php:700
+#: src/Frontend/UnifiedDashboard.php:705
 #: templates/dashboard/sections/create-request.php:154
 msgid "Post Request"
 msgstr ""
@@ -10443,7 +10443,7 @@ msgstr ""
 
 #: src/Frontend/Shortcodes.php:1000
 #: src/Frontend/Shortcodes.php:1097
-#: src/Frontend/UnifiedDashboard.php:644
+#: src/Frontend/UnifiedDashboard.php:649
 msgid "Start selling your services"
 msgstr ""
 
@@ -10517,7 +10517,7 @@ msgstr ""
 
 #: src/Frontend/Shortcodes.php:1172
 #: src/Frontend/SingleServiceView.php:156
-#: src/Frontend/UnifiedDashboard.php:172
+#: src/Frontend/UnifiedDashboard.php:177
 #: src/Integrations/Gateways/OfflineGateway.php:669
 #: templates/dashboard/sections/create-request.php:218
 #: templates/dashboard/sections/earnings.php:410
@@ -10871,79 +10871,79 @@ msgstr ""
 msgid "<i data-lucide=\"check-circle-2\"></i> That's the whole dashboard. Browse services, post a request, or open a conversation whenever you need."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:143
+#: src/Frontend/UnifiedDashboard.php:148
 msgid "Start selling services on this marketplace?"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:155
+#: src/Frontend/UnifiedDashboard.php:160
 msgid "Could not load transactions. Please try again."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:158
+#: src/Frontend/UnifiedDashboard.php:163
 msgid "Are you sure you want to delete this service? This action cannot be undone."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:159
+#: src/Frontend/UnifiedDashboard.php:164
 #: templates/dashboard/sections/services.php:319
 msgid "Pause"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:163
+#: src/Frontend/UnifiedDashboard.php:168
 #: templates/dashboard/sections/services.php:320
 msgid "Publish"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:167
+#: src/Frontend/UnifiedDashboard.php:172
 msgid "Close this request? It will no longer be visible to sellers."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:168
+#: src/Frontend/UnifiedDashboard.php:173
 msgid "Reopen this request? It will be visible to sellers again."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:169
+#: src/Frontend/UnifiedDashboard.php:174
 msgid "Delete this request permanently? This cannot be undone."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:170
+#: src/Frontend/UnifiedDashboard.php:175
 msgid "Are you sure you want to delete this portfolio item?"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:174
+#: src/Frontend/UnifiedDashboard.php:179
 #: templates/dashboard/sections/edit-request.php:136
 msgid "Published"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:176
+#: src/Frontend/UnifiedDashboard.php:181
 msgid "Request closed."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:177
+#: src/Frontend/UnifiedDashboard.php:182
 msgid "Failed to close request."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:178
+#: src/Frontend/UnifiedDashboard.php:183
 msgid "Request reopened."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:179
+#: src/Frontend/UnifiedDashboard.php:184
 msgid "Failed to reopen request."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:182
+#: src/Frontend/UnifiedDashboard.php:187
 msgid "Delete failed."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:183
+#: src/Frontend/UnifiedDashboard.php:188
 msgid "Save failed."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:184
+#: src/Frontend/UnifiedDashboard.php:189
 msgid "Failed."
 msgstr ""
 
 #. translators: %d: number of saved services
-#: src/Frontend/UnifiedDashboard.php:186
+#: src/Frontend/UnifiedDashboard.php:191
 #: templates/dashboard/sections/favorites.php:71
 #, php-format
 msgid "%d saved service"
@@ -10952,155 +10952,155 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of saved services.
-#: src/Frontend/UnifiedDashboard.php:188
+#: src/Frontend/UnifiedDashboard.php:193
 #, php-format
 msgid "%d saved services"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:189
+#: src/Frontend/UnifiedDashboard.php:194
 msgid "Could not remove favorite. Please try again."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:190
+#: src/Frontend/UnifiedDashboard.php:195
 msgid "Choose Profile Photo"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:191
+#: src/Frontend/UnifiedDashboard.php:196
 msgid "Use as Profile Photo"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:192
+#: src/Frontend/UnifiedDashboard.php:197
 msgid "Select Cover Image"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:193
+#: src/Frontend/UnifiedDashboard.php:198
 msgid "Set Cover Image"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:194
+#: src/Frontend/UnifiedDashboard.php:199
 #: templates/dashboard/sections/portfolio.php:61
 #: templates/dashboard/sections/portfolio.php:215
 msgid "Add Portfolio Item"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:195
+#: src/Frontend/UnifiedDashboard.php:200
 msgid "Edit Portfolio Item"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:196
+#: src/Frontend/UnifiedDashboard.php:201
 msgid "Select Portfolio Images"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:197
+#: src/Frontend/UnifiedDashboard.php:202
 msgid "Add to Portfolio"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:451
+#: src/Frontend/UnifiedDashboard.php:456
 msgid "Buying"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:471
+#: src/Frontend/UnifiedDashboard.php:476
 msgid "Selling"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:494
+#: src/Frontend/UnifiedDashboard.php:499
 #: templates/emails/vendor-approved.php:54
 #: templates/emails/vendor-rejected.php:53
 msgid "Account"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:543
+#: src/Frontend/UnifiedDashboard.php:548
 msgid "Access Your Dashboard"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:544
+#: src/Frontend/UnifiedDashboard.php:549
 msgid "Please log in to view your orders, messages, and manage your services."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:626
+#: src/Frontend/UnifiedDashboard.php:631
 msgid "Log Out"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:635
+#: src/Frontend/UnifiedDashboard.php:640
 msgid "Your vendor application is pending admin approval. You will be notified once your application is reviewed."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:646
-#: src/Frontend/UnifiedDashboard.php:908
-#: src/Frontend/UnifiedDashboard.php:923
+#: src/Frontend/UnifiedDashboard.php:651
+#: src/Frontend/UnifiedDashboard.php:913
+#: src/Frontend/UnifiedDashboard.php:928
 msgid "Start Selling"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:705
+#: src/Frontend/UnifiedDashboard.php:710
 msgid "Replay tour"
 msgstr ""
 
 #. translators: %s: linked plugin name "WP Sell Services".
-#: src/Frontend/UnifiedDashboard.php:745
+#: src/Frontend/UnifiedDashboard.php:750
 #, php-format
 msgid "Powered by %s"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:786
+#: src/Frontend/UnifiedDashboard.php:791
 #: templates/dashboard/sections/requests.php:70
 msgid "Post a Request"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:787
+#: src/Frontend/UnifiedDashboard.php:792
 #: src/PostTypes/BuyerRequestPostType.php:55
 #: templates/dashboard/sections/edit-request.php:75
 msgid "Edit Request"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:906
+#: src/Frontend/UnifiedDashboard.php:911
 msgid "Start selling your services on this marketplace. Click the button below to register as a vendor and begin offering your skills."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:919
+#: src/Frontend/UnifiedDashboard.php:924
 msgid "Vendor Access Required"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:920
+#: src/Frontend/UnifiedDashboard.php:925
 msgid "This section is available to vendors. Become a vendor to access this feature and start selling your services."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:943
+#: src/Frontend/UnifiedDashboard.php:948
 msgid "Section Not Available"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:947
+#: src/Frontend/UnifiedDashboard.php:952
 msgid "This section is not available on this site."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:949
+#: src/Frontend/UnifiedDashboard.php:954
 msgid "This section is part of WP Sell Services Pro and is not available on this site."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:954
+#: src/Frontend/UnifiedDashboard.php:959
 msgid "Back to Dashboard"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1048
+#: src/Frontend/UnifiedDashboard.php:1053
 msgid "Please log in first."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1061
+#: src/Frontend/UnifiedDashboard.php:1066
 msgid "You are already a seller."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1066
+#: src/Frontend/UnifiedDashboard.php:1071
 msgid "Your vendor application is already pending approval."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1079
+#: src/Frontend/UnifiedDashboard.php:1084
 msgid "Your vendor application has been submitted! It is pending admin approval."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1104
+#: src/Frontend/UnifiedDashboard.php:1109
 msgid "Welcome! You can now create and sell services."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1110
+#: src/Frontend/UnifiedDashboard.php:1115
 msgid "Unable to complete registration. Please try again."
 msgstr ""
 

@@ -266,8 +266,16 @@ class VendorsController extends RestController {
 		// Search by name.
 		$search = $request->get_param( 'search' );
 		if ( $search ) {
-			$args['search']         = '*' . $search . '*';
-			$args['search_columns'] = array( 'user_login', 'display_name', 'user_nicename' );
+			$args['search'] = '*' . $search . '*';
+			// Deliberately NOT user_login. Searching that column turns a public
+			// endpoint into a login-name oracle: an unauthenticated caller can
+			// probe one letter at a time and learn which WordPress usernames
+			// exist, which is the first half of a credential-stuffing attempt.
+			// display_name and user_nicename are both already public (nicename
+			// is the author slug in URLs), so buyer-facing search is unaffected
+			// -- what is lost is only the ability to find a vendor by a private
+			// login name, which is not something a buyer knows to search for.
+			$args['search_columns'] = array( 'display_name', 'user_nicename' );
 		}
 
 		// Filter by skill/category.
