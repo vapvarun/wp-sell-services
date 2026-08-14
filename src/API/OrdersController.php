@@ -1769,41 +1769,66 @@ class OrdersController extends RestController {
 		$service = get_post( $order->service_id );
 
 		$data = array(
-			'id'                => (int) $order->id,
-			'order_number'      => $order->order_number,
-			'service_id'        => (int) $order->service_id,
-			'service_title'     => $service ? $service->post_title : '',
-			'package_id'        => (int) $order->package_id,
-			'vendor_id'         => (int) $order->vendor_id,
-			'vendor_name'       => wpss_get_member_display_name( (int) $order->vendor_id ),
-			'vendor_avatar'     => get_avatar_url( (int) $order->vendor_id, array( 'size' => 48 ) ),
-			'customer_id'       => (int) $order->customer_id,
-			'customer_name'     => wpss_get_member_display_name( (int) $order->customer_id ),
-			'customer_avatar'   => get_avatar_url( (int) $order->customer_id, array( 'size' => 48 ) ),
-			'status'            => $order->status,
-			'status_label'      => $this->get_status_label( $order->status ),
+			'id'                  => (int) $order->id,
+			'order_number'        => $order->order_number,
+			'service_id'          => (int) $order->service_id,
+			'service_title'       => $service ? $service->post_title : '',
+			'package_id'          => (int) $order->package_id,
+			// Flat keys KEPT. The app reads them today, so removing them would
+			// break it; they are the compatibility surface and should be retired
+			// on a stated version, not silently.
+			'vendor_id'           => (int) $order->vendor_id,
+			'vendor_name'         => wpss_get_member_display_name( (int) $order->vendor_id ),
+			'vendor_avatar'       => get_avatar_url( (int) $order->vendor_id, array( 'size' => 48 ) ),
+			'customer_id'         => (int) $order->customer_id,
+			'customer_name'       => wpss_get_member_display_name( (int) $order->customer_id ),
+			'customer_avatar'     => get_avatar_url( (int) $order->customer_id, array( 'size' => 48 ) ),
+			// The same two people in the shared actor shape. Order detail was the
+			// only place that embedded NO user object at all -- a client had to
+			// reassemble a person from three sibling keys here, read a nested
+			// object on a service, and a third shape on /vendors.
+			'vendor'              => wpss_rest_user( (int) $order->vendor_id ),
+			'customer'            => wpss_rest_user( (int) $order->customer_id ),
+			'status'              => $order->status,
+			'status_label'        => $this->get_status_label( $order->status ),
 			// A tip, milestone or extension was indistinguishable from a service
 			// purchase in this payload: same shape, no type, no link to the
 			// order it belongs to, and no way to pay it. A client could render
 			// the row but not explain or action it.
-			'type'              => $this->get_order_type( $order ),
-			'parent_id'         => $this->get_parent_order_id( $order ),
-			'checkout_url'      => $this->get_checkout_url_for( $order ),
-			'total'             => (float) $order->total,
+			'type'                => $this->get_order_type( $order ),
+			'parent_id'           => $this->get_parent_order_id( $order ),
+			'checkout_url'        => $this->get_checkout_url_for( $order ),
+			'total'               => (float) $order->total,
 			// Exact integer minor units. `total` stays a float for existing
 			// clients, but it cannot represent most amounts precisely — 150.20
 			// serialises as 150.19999999999999 — so anything doing arithmetic
 			// should read this instead. Scaled by the ORDER's currency: the
 			// old `* 100` fallback was wrong for JPY (x1) and KWD (x1000).
-			'total_minor'       => wpss_amount_to_minor_units( (float) $order->total, (string) $order->currency ),
-			'currency'          => $order->currency,
-			'formatted_total'   => wpss_format_currency( (float) $order->total, $order->currency ),
-			'due_date'          => $this->format_datetime( $order->delivery_deadline ),
-			'started_at'        => $this->format_datetime( $order->started_at ),
-			'completed_at'      => $this->format_datetime( $order->completed_at ),
-			'created_at'        => $this->format_datetime( $order->created_at ),
-			'updated_at'        => $this->format_datetime( $order->updated_at ),
-			'available_actions' => $this->get_available_actions( $order ),
+			'total_minor'         => wpss_amount_to_minor_units( (float) $order->total, (string) $order->currency ),
+			'currency'            => $order->currency,
+			'formatted_total'     => wpss_format_currency( (float) $order->total, $order->currency ),
+			// Revisions. Both numbers were already ON the order row and simply
+			// never exposed, so a client could not tell a buyer how many
+			// revisions were left before requesting one -- nor a vendor before
+			// accepting. `remaining` is computed rather than stored so it cannot
+			// drift from the two values it derives from.
+			'revisions_included'  => (int) ( $order->revisions_included ?? 0 ),
+			'revisions_used'      => (int) ( $order->revisions_used ?? 0 ),
+			'revisions_remaining' => max( 0, (int) ( $order->revisions_included ?? 0 ) - (int) ( $order->revisions_used ?? 0 ) ),
+			// The package the buyer actually bought, frozen onto the order in
+			// 1.6.0. Read from the snapshot, NOT from the service -- the service
+			// may have been edited or re-priced since, and what the buyer paid
+			// for is the authoritative answer.
+			'package'             => $this->get_package_snapshot( $order ),
+			'requirements'        => function_exists( 'wpss_get_order_requirements' )
+				? wpss_get_order_requirements( (int) $order->id )
+				: array(),
+			'due_date'            => $this->format_datetime( $order->delivery_deadline ),
+			'started_at'          => $this->format_datetime( $order->started_at ),
+			'completed_at'        => $this->format_datetime( $order->completed_at ),
+			'created_at'          => $this->format_datetime( $order->created_at ),
+			'updated_at'          => $this->format_datetime( $order->updated_at ),
+			'available_actions'   => $this->get_available_actions( $order ),
 		);
 
 		/**
@@ -1842,6 +1867,48 @@ class OrdersController extends RestController {
 	 */
 	private function get_status_label( string $status ): string {
 		return wpss_get_order_status_label( $status );
+	}
+
+	/**
+	 * The package the buyer actually purchased.
+	 *
+	 * Read from the snapshot frozen onto the order in 1.6.0, never from the
+	 * service. A vendor may have renamed, re-priced or removed that tier since,
+	 * and the order must keep reporting what was bought and paid for -- that is
+	 * the whole reason the snapshot exists.
+	 *
+	 * Returns null rather than a guess for orders placed before the snapshot
+	 * existed and not covered by the backfill. A client can then say "package
+	 * details unavailable" instead of showing today's price as though it were
+	 * the one the buyer agreed to.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param object $order Order row.
+	 * @return array<string, mixed>|null
+	 */
+	private function get_package_snapshot( object $order ): ?array {
+		$meta = $order->meta ?? null;
+
+		if ( is_string( $meta ) ) {
+			$meta = json_decode( $meta, true );
+		}
+
+		$snapshot = is_array( $meta ) ? ( $meta['package_snapshot'] ?? null ) : null;
+
+		if ( ! is_array( $snapshot ) || empty( $snapshot ) ) {
+			return null;
+		}
+
+		return array(
+			'id'            => (int) ( $order->package_id ?? 0 ),
+			'name'          => (string) ( $snapshot['name'] ?? '' ),
+			'description'   => (string) ( $snapshot['description'] ?? '' ),
+			'price'         => (float) ( $snapshot['price'] ?? 0 ),
+			'delivery_days' => (int) ( $snapshot['delivery_days'] ?? 0 ),
+			'revisions'     => (int) ( $snapshot['revisions'] ?? 0 ),
+			'features'      => array_values( (array) ( $snapshot['features'] ?? array() ) ),
+		);
 	}
 
 	/**

@@ -492,7 +492,83 @@ class ServicesController extends RestController {
 			}
 		}
 
-		return $this->prepare_item_for_response( $service, $request );
+		// The detail response is the LIST shape plus the fields a service page
+		// needs. Both routes share prepare_item_for_response(), which is exactly
+		// why /services/{id} returned a payload byte-identical to a list item:
+		// 16 keys either way, nothing a client could not already see.
+		//
+		// Enriched here rather than inside the shared method on purpose. Adding
+		// packages, add-ons and requirements to prepare_item_for_response()
+		// would put them on every card in a grid too, undoing the query work in
+		// 1.6.0 that took a services grid from 70 queries to 30.
+		$response = $this->prepare_item_for_response( $service, $request );
+		$response->set_data( array_merge( $response->get_data(), $this->get_detail_fields( $service ) ) );
+
+		return $response;
+	}
+
+	/**
+	 * Fields that belong on a single service, not on a card in a grid.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param \WP_Post $service Service post.
+	 * @return array<string, mixed>
+	 */
+	private function get_detail_fields( \WP_Post $service ): array {
+		$service_id = (int) $service->ID;
+
+		// Packages carry the STABLE id introduced in 1.6.0, not the array index.
+		// A client that stores an index sends the wrong tier the moment a vendor
+		// reorders their packages, which is the bug that release repaired on ten
+		// live orders.
+		$packages = function_exists( 'wpss_get_service_packages' )
+			? (array) wpss_get_service_packages( $service_id )
+			: array();
+
+		return array(
+			'content'        => apply_filters( 'the_content', $service->post_content ),
+			'packages'       => array_values( $packages ),
+			'extras'         => function_exists( 'wpss_get_service_extras' )
+				? array_values( (array) wpss_get_service_extras( $service_id ) )
+				: array(),
+			'requirements'   => function_exists( 'wpss_get_service_requirements' )
+				? array_values( (array) wpss_get_service_requirements( $service_id ) )
+				: array(),
+			// The full vendor profile, not the compact actor shape already on the
+			// card. A service page shows the seller's tagline, rating and
+			// completed orders; without this a client had to make a second call
+			// to /vendors/{id} to render the page it just fetched.
+			'vendor_profile' => $this->get_vendor_profile( (int) $service->post_author ),
+		);
+	}
+
+	/**
+	 * Public vendor profile for a service detail response.
+	 *
+	 * @since 1.6.1
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @return array<string, mixed>|null
+	 */
+	private function get_vendor_profile( int $vendor_id ): ?array {
+		if ( $vendor_id <= 0 || ! function_exists( 'wpss_get_vendor' ) ) {
+			return null;
+		}
+
+		$profile = wpss_get_vendor( $vendor_id );
+
+		return array(
+			'id'               => $vendor_id,
+			'tagline'          => $profile ? (string) $profile->title : '',
+			'bio'              => $profile ? (string) $profile->bio : '',
+			'country'          => $profile ? (string) $profile->country : '',
+			'is_verified'      => $profile ? (bool) $profile->is_verified : false,
+			'completed_orders' => $profile ? (int) $profile->orders_completed : 0,
+			'rating_average'   => (float) get_user_meta( $vendor_id, '_wpss_rating_average', true ),
+			'rating_count'     => (int) get_user_meta( $vendor_id, '_wpss_rating_count', true ),
+			'response_time'    => (string) ( get_user_meta( $vendor_id, '_wpss_vendor_response_time', true ) ?: '' ),
+		);
 	}
 
 	/**
@@ -1125,11 +1201,15 @@ class ServicesController extends RestController {
 			'excerpt'     => $service->post_excerpt,
 			'status'      => $service->post_status,
 			'link'        => get_permalink( $service->ID ),
-			'vendor'      => array(
-				'id'     => (int) $service->post_author,
-				'name'   => get_the_author_meta( 'display_name', $service->post_author ),
-				'avatar' => get_avatar_url( $service->post_author, array( 'size' => 96 ) ),
-			),
+			// The shared actor shape, not a hand-rolled one. wpss_rest_user() has
+			// existed since 1.4.0 and its docblock names "vendors on a service
+			// card" as a case it is for -- but it had exactly one caller, so this
+			// endpoint kept its own {id, name, avatar} copy and the API ended up
+			// describing a person differently depending on where you asked.
+			//
+			// Additive for clients: the same id/name/avatar keys, plus `deleted`
+			// so a client can tell "this member is gone" from "no member acted".
+			'vendor'      => wpss_rest_user( (int) $service->post_author ),
 			// wpss_rest_money() yields exactly the keys this block already
 			// carried - base_price and currency - plus the minor units.
 			'pricing'     => wpss_rest_money( 'base_price', (float) get_post_meta( $service->ID, '_wpss_starting_price', true ) ),
