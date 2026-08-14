@@ -1666,7 +1666,27 @@ final class Plugin {
 	private function define_integration_hooks(): void {
 		$this->integration_manager = new IntegrationManager();
 
-		$this->loader->add_action( 'init', $this->integration_manager, 'init' );
+		// Priority 1, NOT the default 10.
+		//
+		// Cart plugins dispatch their own form handlers on `init` at priority
+		// 10 -- EDD routes every checkout POST through edd_post_actions, which
+		// is added on `init` at file-load time. Because EDD's plugin file loads
+		// before ours, its callback was registered first and therefore ran
+		// first, completing the whole purchase (payment created, marked
+		// complete, edd_complete_purchase fired) BEFORE this line had
+		// registered a single adapter.
+		//
+		// The effect was silent and total: on the checkout POST the adapter
+		// list was empty, so our edd_complete_purchase handler was never
+		// attached, no WPSS order was created and no vendor was credited --
+		// while EDD reported a completed payment and the buyer saw a
+		// confirmation page. Every other request looked healthy, which is why
+		// this survived a hook audit: the hooks were right, they just fired on
+		// a request where our integration did not exist yet.
+		//
+		// Found by driving a real EDD checkout; no amount of code reading
+		// surfaced it, because nothing is wrong with the code that runs.
+		$this->loader->add_action( 'init', $this->integration_manager, 'init', 1 );
 	}
 
 	/**
