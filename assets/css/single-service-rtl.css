@@ -26,19 +26,14 @@
 
 	/* Page-local tokens with no design-system equivalent. */
 	--wpss-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 6%);
-	--wpss-sticky-top: 32px;
 }
 
-/* Admin bar offset adjustment */
-.admin-bar {
-	--wpss-sticky-top: 64px;
-}
-
-@media (max-width: 782px) {
-	.admin-bar {
-		--wpss-sticky-top: 78px;
-	}
-}
+/* --wpss-sticky-top is NOT redefined here. frontend.css already declares it
+   (32px, 64px under .admin-bar, 78px below 782px) and loads earlier in the
+   single-service cascade. This file used to carry a byte-identical copy of all
+   three values -- one constant with two definitions, free to drift the moment
+   either was touched. Deleted rather than re-scoped; the single owner flows
+   through. */
 
 /* ==========================================================================
    CSS Isolation - Prevent theme style conflicts

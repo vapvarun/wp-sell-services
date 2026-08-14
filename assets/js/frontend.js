@@ -2100,9 +2100,64 @@
 		window.addEventListener('resize', updateOptionLabels);
 	};
 
+	/**
+	 * Let position: sticky survive a clipping ancestor.
+	 *
+	 * An ancestor with `overflow: hidden` makes `position: sticky` inert on
+	 * every descendant. Themes routinely set it on their page wrapper to stop
+	 * horizontal scroll, and it silently kills the vertical axis too. Measured
+	 * on the stock theme: the single-service sidebar is correctly
+	 * `position: sticky; top: 64px` with 1000px of room in its container, yet
+	 * scrolled straight off screen. That sidebar carries the price and the
+	 * Order button, so on a long service page the buyer loses the buy button.
+	 *
+	 * Deliberately NOT done in CSS. A selector cannot ask whether an element is
+	 * already clipping, so a blanket rule has to clip every ancestor -- which
+	 * cut 55px off each end of the theme's full-bleed breadcrumb bar when tried.
+	 * Walking the real ancestors lets us relax only the ones that clip and
+	 * introduce clipping nowhere.
+	 *
+	 * This does not emulate sticky (the old initStickyPackages did, and was
+	 * removed for good reason). It runs once and lets native sticky work.
+	 */
+	var STICKY_SURFACES = [
+		'.wpss-sticky',
+		'.wpss-service-sidebar',
+		'.wpss-service-main',
+		'.wpss-sidebar-header',
+		'.wpss-requirements-page__sidebar',
+		'.wpss-dashboard__sidebar'
+	].join(',');
+
+	WPSS.enableSticky = function() {
+		document.querySelectorAll(STICKY_SURFACES).forEach(function(el) {
+			if (getComputedStyle(el).position !== 'sticky') {
+				return; // Stacked layout (mobile) -- nothing to protect.
+			}
+			var node = el.parentElement;
+			while (node && node !== document.documentElement) {
+				var cs = getComputedStyle(node);
+				// Only 'hidden'. An ancestor set to auto/scroll is a deliberate
+				// scroll container and releasing it would break that surface;
+				// sticky simply resolves against it instead of the viewport.
+				if (cs.overflowY === 'hidden') {
+					// clip is the only value that may pair with visible --
+					// hidden + visible computes the visible axis to auto, which
+					// creates a scroll container and breaks sticky just as badly.
+					if (cs.overflowX === 'hidden') {
+						node.style.overflowX = 'clip';
+					}
+					node.style.overflowY = 'visible';
+				}
+				node = node.parentElement;
+			}
+		});
+	};
+
 	// Initialize on DOM ready.
 	$(document).ready(function() {
 		WPSS.init();
+		WPSS.enableSticky();
 	});
 
 })(jQuery);

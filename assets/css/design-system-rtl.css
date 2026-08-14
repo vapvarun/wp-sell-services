@@ -971,6 +971,13 @@ a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
 .wpss-divider { height: 1px; background: var(--wpss-border-light); margin: var(--wpss-space-5) 0; border: none; }
 .wpss-sticky { position: sticky; top: var(--wpss-sticky-top, 32px); align-self: start; }
 
+/* Sticky surfaces need every ancestor to stop clipping the Y axis. That cannot
+   be expressed in CSS, because a selector cannot ask "is this element already
+   clipping?" -- applying it blindly to every ancestor introduces clipping on
+   wrappers that were not clipping before, which cuts full-bleed theme elements.
+   Handled in assets/js/frontend.js (wpssEnableSticky) instead, which touches
+   only the ancestors that actually clip. */
+
 /* ==========================================================================
    12. LOADING STATES
    ========================================================================== */
