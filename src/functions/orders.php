@@ -859,7 +859,7 @@ function wpss_count_orders_for( string $column, int $user_id, string $status = '
  *
  * @since 1.6.0
  *
- * @param string $platform    Rail identifier ('woocommerce', 'edd', 'fluentcart', 'surecart').
+ * @param string $platform    Rail identifier ('woocommerce', 'edd', 'fluentcart').
  * @param string $rail_status The rail's own status string.
  * @return string|null WPSS status, or null when the rail status must not drive a status change.
  */

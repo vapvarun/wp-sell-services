@@ -819,7 +819,7 @@ class API {
 			 *
 			 * The three booleans above are the answer; this is the reason. An
 			 * owner reading a support thread — or a developer reading a bug
-			 * report — can see "rail is surecart, single-order billing is not
+			 * report — can see "rail is fluentcart, single-order billing is not
 			 * available" instead of inferring it from three flags that happen to
 			 * be false together.
 			 */
