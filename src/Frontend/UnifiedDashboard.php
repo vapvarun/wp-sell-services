@@ -157,7 +157,13 @@ class UnifiedDashboard {
 					'processing'             => __( 'Processing...', 'wp-sell-services' ),
 					'confirmDelete'          => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),
 					'pause'                  => __( 'Pause', 'wp-sell-services' ),
+					// The same button toggles between these two labels, but only
+					// 'pause' was ever sent -- so it read translated when paused and
+					// English when published. Both are sent now.
+					'publish'                => __( 'Publish', 'wp-sell-services' ),
 					'activate'               => __( 'Activate', 'wp-sell-services' ),
+					// Shown after a successful profile save.
+					'profileSaved'           => __( 'Profile updated successfully.', 'wp-sell-services' ),
 					'closeRequestConfirm'    => __( 'Close this request? It will no longer be visible to sellers.', 'wp-sell-services' ),
 					'reopenRequestConfirm'   => __( 'Reopen this request? It will be visible to sellers again.', 'wp-sell-services' ),
 					'deleteRequestConfirm'   => __( 'Delete this request permanently? This cannot be undone.', 'wp-sell-services' ),

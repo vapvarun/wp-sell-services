@@ -179,9 +179,9 @@
 			$prevBtn.prop('disabled', index === 0);
 
 			if (isLastStep) {
-				$nextBtn.text(wpssServiceEdit.i18n.finish || 'Finish');
+				$nextBtn.text(wpssServiceEdit.i18n.finish);
 			} else {
-				$nextBtn.text(wpssServiceEdit.i18n.next || 'Next');
+				$nextBtn.text(wpssServiceEdit.i18n.next);
 			}
 
 			// Trigger custom event.

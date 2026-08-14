@@ -251,7 +251,7 @@
                 const serviceId = $btn.data('service');
                 const page = parseInt($btn.data('page'), 10);
 
-                $btn.prop('disabled', true).text((wpssService.i18n && wpssService.i18n.loading) || 'Loading...');
+                $btn.prop('disabled', true).text(wpssService.i18n.loading);
 
                 $.ajax({
                     url: wpssService.apiUrl + '/reviews?service_id=' + serviceId + '&page=' + page + '&per_page=' + perPage,
@@ -274,13 +274,13 @@
                         const total = parseInt(xhr.getResponseHeader('X-WP-Total'), 10) || 0;
                         const hasMore = (page * perPage) < total;
                         if (hasMore) {
-                            $btn.data('page', page + 1).prop('disabled', false).text((wpssService.i18n && wpssService.i18n.loadMoreReviews) || 'Load More Reviews');
+                            $btn.data('page', page + 1).prop('disabled', false).text(wpssService.i18n.loadMoreReviews);
                         } else {
                             $btn.remove();
                         }
                     },
                     error: function() {
-                        $btn.prop('disabled', false).text((wpssService.i18n && wpssService.i18n.loadMoreReviews) || 'Load More Reviews');
+                        $btn.prop('disabled', false).text(wpssService.i18n.loadMoreReviews);
                     }
                 });
             });
@@ -338,7 +338,7 @@
             const i18n = (wpssService && wpssService.i18n) || {};
             const esc = function(s) { return $('<div>').text(s == null ? '' : s).html(); };
 
-            const author = review.customer_name || i18n.anonymous || 'Anonymous';
+            const author = review.customer_name || i18n.anonymous;
             const avatar = review.customer_avatar || '';
             const rating = parseInt(review.rating, 10) || 0;
 
@@ -356,7 +356,7 @@
                 reply =
                     '<div class="wpss-review-reply">' +
                         '<div class="wpss-reply-header">' +
-                            '<strong>' + esc(i18n.sellerResponse || 'Seller Response:') + '</strong>' +
+                            '<strong>' + esc(i18n.sellerResponse) + '</strong>' +
                             replyDate +
                         '</div>' +
                         review.vendor_reply_html +
@@ -384,7 +384,7 @@
                     '<div class="wpss-review-actions">' +
                         '<button type="button" class="wpss-review-helpful-btn" data-review="' + esc(review.id) + '">' +
                             '<span class="wpss-helpful-icon"><i data-lucide="thumbs-up" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i></span>' +
-                            '<span class="wpss-helpful-text">' + esc(i18n.helpful || 'Helpful') + '</span>' +
+                            '<span class="wpss-helpful-text">' + esc(i18n.helpful) + '</span>' +
                             count +
                         '</button>' +
                     '</div>' +
@@ -593,7 +593,7 @@
 
             // Update display.
             $modal.find('.wpss-package-name').text(packageName);
-            $modal.find('.wpss-delivery-time').text(totalDays + ' ' + (totalDays === 1 ? ((wpssService.i18n && wpssService.i18n.day) || 'Day') : ((wpssService.i18n && wpssService.i18n.days) || 'Days')));
+            $modal.find('.wpss-delivery-time').text(totalDays + ' ' + (totalDays === 1 ? wpssService.i18n.day : wpssService.i18n.days));
             // The total is computed here, in the browser, from the base price
             // plus whichever extras are ticked — so no server-side filter can
             // ever reach it. Carrying the base amount on the element (the same
@@ -623,7 +623,7 @@
             const $modal = $(this.config.orderModal);
             const $btn = $modal.find('.wpss-add-to-cart-btn');
 
-            $btn.prop('disabled', true).text(wpssService.i18n.addingToCart || 'Adding to cart...');
+            $btn.prop('disabled', true).text(wpssService.i18n.addingToCart);
 
             const data = {
                 action: 'wpss_add_service_to_cart',
@@ -640,7 +640,7 @@
                 data: data,
                 success: function(response) {
                     if (response.success) {
-                        $btn.text(wpssService.i18n.added || 'Added to cart!');
+                        $btn.text(wpssService.i18n.added);
 
                         // Store checkout URL from response (includes service_id).
                         if (response.data.checkout_url) {
@@ -670,13 +670,13 @@
                             window.location.href = response.data.login_url;
                             return;
                         }
-                        self.showError(response.data.message || (wpssService.i18n && wpssService.i18n.error) || 'Could not add to cart. Please try again.');
-                        $btn.prop('disabled', false).text((wpssService.i18n && wpssService.i18n.continueToCheckout) || 'Continue to Checkout');
+                        self.showError(response.data.message || wpssService.i18n.error);
+                        $btn.prop('disabled', false).text(wpssService.i18n.continueToCheckout);
                     }
                 },
                 error: function() {
-                    self.showError((wpssService.i18n && wpssService.i18n.error) || (wpssService.i18n && wpssService.i18n.errorGeneric) || 'An error occurred.');
-                    $btn.prop('disabled', false).text((wpssService.i18n && wpssService.i18n.continueToCheckout) || 'Continue to Checkout');
+                    self.showError((wpssService.i18n && wpssService.i18n.error) || wpssService.i18n.errorGeneric);
+                    $btn.prop('disabled', false).text(wpssService.i18n.continueToCheckout);
                 }
             });
         },
@@ -692,13 +692,13 @@
 
             $footer.html(
                 '<div class="wpss-cart-success">' +
-                '<p class="wpss-success-message">&#10003; ' + (wpssService.i18n.added || 'Added to cart!') + '</p>' +
+                '<p class="wpss-success-message">&#10003; ' + wpssService.i18n.added + '</p>' +
                 '<div class="wpss-cart-actions">' +
                 '<a href="' + cartUrl + '" class="wpss-btn wpss-btn-outline">' +
-                (wpssService.i18n.viewCart || 'View Cart') +
+                wpssService.i18n.viewCart +
                 '</a>' +
                 '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn-primary">' +
-                (wpssService.i18n.checkout || 'Checkout') +
+                wpssService.i18n.checkout +
                 '</a>' +
                 '</div>' +
                 '</div>'
@@ -740,7 +740,7 @@
                 const $form = $(this);
                 const $btn = $form.find('button[type="submit"]');
 
-                $btn.prop('disabled', true).text((wpssService.i18n && wpssService.i18n.sending) || 'Sending...');
+                $btn.prop('disabled', true).text(wpssService.i18n.sending);
 
                 const formData = new FormData($form[0]);
                 formData.append('action', 'wpss_contact_vendor');
@@ -766,12 +766,12 @@
                             }, 2000);
                         } else {
                             self.showError(response.data.message);
-                            $btn.prop('disabled', false).text((wpssService.i18n && wpssService.i18n.sendMessage) || 'Send Message');
+                            $btn.prop('disabled', false).text(wpssService.i18n.sendMessage);
                         }
                     },
                     error: function() {
-                        self.showError((wpssService.i18n && wpssService.i18n.contactFailed) || 'Failed to send message. Please try again.');
-                        $btn.prop('disabled', false).text((wpssService.i18n && wpssService.i18n.sendMessage) || 'Send Message');
+                        self.showError(wpssService.i18n.contactFailed);
+                        $btn.prop('disabled', false).text(wpssService.i18n.sendMessage);
                     }
                 });
             });
@@ -865,7 +865,7 @@
             html += '<div class="wpss-modal-overlay"></div>';
             html += '<div class="wpss-modal-content wpss-modal-large">';
             html += '<button class="wpss-modal-close">&times;</button>';
-            html += '<h3>' + ((wpssService.i18n && wpssService.i18n.comparePackages) || 'Compare Packages') + '</h3>';
+            html += '<h3>' + wpssService.i18n.comparePackages + '</h3>';
             html += '<table class="wpss-comparison-table">';
             html += '<thead><tr><th></th>';
 
@@ -874,19 +874,19 @@
             });
 
             html += '</tr></thead><tbody>';
-            html += '<tr><td>' + ((wpssService.i18n && wpssService.i18n.price) || 'Price') + '</td>';
+            html += '<tr><td>' + wpssService.i18n.price + '</td>';
 
             packages.forEach(function(pkg) {
                 html += '<td><strong>' + WPSSService.escapeHtml(pkg.price) + '</strong></td>';
             });
 
-            html += '</tr><tr><td>' + ((wpssService.i18n && wpssService.i18n.delivery) || 'Delivery') + '</td>';
+            html += '</tr><tr><td>' + wpssService.i18n.delivery + '</td>';
 
             packages.forEach(function(pkg) {
                 html += '<td>' + WPSSService.escapeHtml(pkg.delivery) + '</td>';
             });
 
-            html += '</tr><tr><td>' + ((wpssService.i18n && wpssService.i18n.revisions) || 'Revisions') + '</td>';
+            html += '</tr><tr><td>' + wpssService.i18n.revisions + '</td>';
 
             packages.forEach(function(pkg) {
                 html += '<td>' + WPSSService.escapeHtml(pkg.revisions) + '</td>';
@@ -964,7 +964,7 @@
                 // Show copied message.
                 const $btn = $('.wpss-share-btn[data-platform="copy"]');
                 const originalText = $btn.text();
-                $btn.text((wpssService.i18n && wpssService.i18n.copied) || 'Copied!');
+                $btn.text(wpssService.i18n.copied);
                 setTimeout(function() {
                     $btn.text(originalText);
                 }, 2000);

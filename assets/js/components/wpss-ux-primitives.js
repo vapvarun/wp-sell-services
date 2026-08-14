@@ -218,11 +218,11 @@
 			var i18n = ( window.wpssData && window.wpssData.i18n ) || {};
 			switch ( state ) {
 				case 'saving':
-					return i18n.autosaveSaving || 'Saving…';
+					return i18n.autosaveSaving;
 				case 'saved':
-					return i18n.autosaveSaved || 'Saved';
+					return i18n.autosaveSaved;
 				case 'error':
-					return i18n.autosaveError || 'Save failed';
+					return i18n.autosaveError;
 				default:
 					return '';
 			}

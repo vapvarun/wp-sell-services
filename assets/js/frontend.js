@@ -202,7 +202,7 @@
 						const $container = $('#wpss-messages-container');
 						$container.scrollTop($container[0].scrollHeight);
 					} else {
-						WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.messageFailed) || 'Failed to send message.', 'error');
+						WPSS.showNotification(response.data.message || wpssData.i18n.messageFailed, 'error');
 					}
 				},
 				error: function() {
@@ -233,7 +233,7 @@
 				<div class="wpss-message-content">
 					<span class="wpss-message-author">${data.user_name}</span>
 					<div class="wpss-message-text"><p>${WPSS.escapeHtml(data.message)}</p></div>
-					<span class="wpss-message-time">${data.time_ago || ((wpssData.i18n && wpssData.i18n.justNow) || 'Just now')}</span>
+					<span class="wpss-message-time">${data.time_ago || wpssData.i18n.justNow}</span>
 				</div>
 			</div>
 		`;
@@ -260,7 +260,7 @@
 			if (reasonActions.includes(action)) {
 				WPSS.showPrompt(WPSS.getActionPrompt(action), function(reason) {
 					WPSS.performOrderAction(orderId, action, reason);
-				}, { submitText: (wpssData.i18n && wpssData.i18n.submit) || 'Submit', placeholder: (wpssData.i18n && wpssData.i18n.enterReason) || 'Enter your reason...' });
+				}, { submitText: wpssData.i18n.submit, placeholder: wpssData.i18n.enterReason });
 			} else {
 				WPSS.showConfirm(WPSS.getActionConfirm(action), function() {
 					WPSS.performOrderAction(orderId, action);
@@ -291,11 +291,11 @@
 			const reason = $form.find('textarea[name="reason"]').val();
 
 			if (!reason || !reason.trim()) {
-				WPSS.showNotification((wpssData.i18n && wpssData.i18n.revisionRequired) || 'Please describe what changes you need.', 'error');
+				WPSS.showNotification(wpssData.i18n.revisionRequired, 'error');
 				return;
 			}
 
-			$btn.prop('disabled', true).html('<span class="wpss-spinner"></span> ' + ((wpssData.i18n && wpssData.i18n.submitting) || 'Submitting...'));
+			$btn.prop('disabled', true).html('<span class="wpss-spinner"></span> ' + wpssData.i18n.submitting);
 
 			WPSS.requestRevision(orderId, reason);
 
@@ -342,8 +342,7 @@
 			error: function(xhr) {
 				var msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.data && xhr.responseJSON.data.message)))
 					|| (wpssData.i18n && wpssData.i18n.actionFailed)
-					|| (wpssData.i18n && wpssData.i18n.error)
-					|| 'Action failed. Please try again.';
+					|| wpssData.i18n.error;
 				WPSS.showNotification(msg, 'error');
 			}
 		});
@@ -355,15 +354,15 @@
 	WPSS.getActionConfirm = function(action) {
 		var i18n = (wpssData && wpssData.i18n) || {};
 		var confirms = {
-			accept: i18n.confirmAcceptOrder || 'Are you sure you want to accept this order?',
-			start: i18n.confirmStartOrder || 'Are you sure you want to start working on this order?',
-			deliver: i18n.confirmDeliverOrder || 'Are you sure you want to mark this order as delivered?',
-			complete: i18n.confirmCompleteOrder || 'Are you sure you want to mark this order as complete?',
-			'accept-cancellation': i18n.confirmAcceptCancellation || 'Are you sure you want to accept this cancellation request? The order will be cancelled.',
-			'reject-cancellation': i18n.confirmRejectCancellation || 'Are you sure you want to dispute this cancellation? The order will be escalated for admin review.'
+			accept: i18n.confirmAcceptOrder,
+			start: i18n.confirmStartOrder,
+			deliver: i18n.confirmDeliverOrder,
+			complete: i18n.confirmCompleteOrder,
+			'accept-cancellation': i18n.confirmAcceptCancellation,
+			'reject-cancellation': i18n.confirmRejectCancellation
 		};
 
-		return confirms[action] || (i18n.confirmTitle || 'Are you sure?');
+		return confirms[action] || i18n.confirmTitle;
 	};
 
 	/**
@@ -372,12 +371,12 @@
 	WPSS.getActionPrompt = function(action) {
 		var i18n = (wpssData && wpssData.i18n) || {};
 		var prompts = {
-			reject: i18n.promptReject || 'Please provide a reason for declining:',
-			cancel: i18n.promptCancel || 'Please provide a reason for cancellation:',
-			dispute: i18n.promptDispute || 'Please describe your issue:'
+			reject: i18n.promptReject,
+			cancel: i18n.promptCancel,
+			dispute: i18n.promptDispute
 		};
 
-		return prompts[action] || (i18n.promptDefault || 'Please provide details:');
+		return prompts[action] || i18n.promptDefault;
 	};
 
 	/**
@@ -393,7 +392,7 @@
 			const vendorId = $btn.data('vendor');
 			const page = parseInt($btn.data('page')) || 2;
 
-			$btn.prop('disabled', true).text((wpssData.i18n && wpssData.i18n.loading) || 'Loading...');
+			$btn.prop('disabled', true).text(wpssData.i18n.loading);
 
 			let endpoint = 'reviews?';
 			if (serviceId) {
@@ -417,14 +416,14 @@
 						if (response.length < 10) {
 							$btn.hide();
 						} else {
-							$btn.data('page', page + 1).text((wpssData.i18n && wpssData.i18n.loadMoreReviews) || 'Load More Reviews');
+							$btn.data('page', page + 1).text(wpssData.i18n.loadMoreReviews);
 						}
 					} else {
 						$btn.hide();
 					}
 				},
 				error: function() {
-					WPSS.showNotification((wpssData.i18n && wpssData.i18n.reviewsFailed) || 'Failed to load reviews.', 'error');
+					WPSS.showNotification(wpssData.i18n.reviewsFailed, 'error');
 				},
 				complete: function() {
 					$btn.prop('disabled', false);
@@ -476,7 +475,7 @@
 			$error.prop('hidden', true).text('');
 
 			if (!orderId || !isFinite(amount) || amount <= 0) {
-				$error.text((wpssData.i18n && wpssData.i18n.tipAmountRequired) || 'Enter a tip amount greater than zero.').prop('hidden', false);
+				$error.text(wpssData.i18n.tipAmountRequired).prop('hidden', false);
 				return;
 			}
 
@@ -496,19 +495,18 @@
 					if (response && response.success && response.checkout_url) {
 						WPSS.hideModal();
 						WPSS.showNotification(
-							(wpssData.i18n && wpssData.i18n.tipRedirecting) || 'Redirecting to payment…',
+							wpssData.i18n.tipRedirecting,
 							'info'
 						);
 						window.location.href = response.checkout_url;
 					} else {
-						$error.text((response && response.message) || (wpssData.i18n && wpssData.i18n.tipFailed) || 'Could not send tip.').prop('hidden', false);
+						$error.text((response && response.message) || wpssData.i18n.tipFailed).prop('hidden', false);
 						$submit.prop('disabled', false);
 					}
 				},
 				error: function(xhr) {
 					const msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.data && xhr.responseJSON.data.message)))
-						|| (wpssData.i18n && wpssData.i18n.tipFailed)
-						|| 'Could not send tip.';
+						|| wpssData.i18n.tipFailed;
 					$error.text(msg).prop('hidden', false);
 					$submit.prop('disabled', false);
 				}
@@ -530,7 +528,7 @@
 			replyHtml = `
 				<div class="wpss-review-reply">
 					<div class="wpss-reply-header">
-						<strong>${WPSS.escapeHtml((wpssData.i18n && wpssData.i18n.sellerResponse) || 'Seller Response:')}</strong>
+						<strong>${WPSS.escapeHtml(wpssData.i18n.sellerResponse)}</strong>
 					</div>
 					<p>${WPSS.escapeHtml(review.vendor_reply)}</p>
 				</div>
@@ -545,7 +543,7 @@
 						<strong class="wpss-review-author">${WPSS.escapeHtml(review.customer_name)}</strong>
 						<div class="wpss-review-rating">${starsHtml}</div>
 					</div>
-					<span class="wpss-review-date">${review.time_ago || review.created_at || ((wpssData.i18n && wpssData.i18n.justNow) || 'Just now')}</span>
+					<span class="wpss-review-date">${review.time_ago || review.created_at || wpssData.i18n.justNow}</span>
 				</div>
 				<div class="wpss-review-content">
 					<p>${WPSS.escapeHtml(review.review)}</p>
@@ -586,14 +584,14 @@
 						if (response.data.redirect) {
 							window.location.href = response.data.redirect;
 						} else {
-							WPSS.showNotification((wpssData.i18n && wpssData.i18n.addedToCart) || 'Added to cart!', 'success');
+							WPSS.showNotification(wpssData.i18n.addedToCart, 'success');
 						}
 					} else {
-						WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.cartFailed) || 'Failed to add to cart.', 'error');
+						WPSS.showNotification(response.data.message || wpssData.i18n.cartFailed, 'error');
 					}
 				},
 				error: function() {
-					WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
+					WPSS.showNotification(wpssData.i18n.error, 'error');
 				}
 			});
 		}
@@ -612,9 +610,9 @@
 			WPSS.showModal('wpss-deliver-modal');
 		} else {
 			// Fallback for when modal doesn't exist
-			WPSS.showPrompt((wpssData.i18n && wpssData.i18n.describeDelivery) || 'Describe your delivery:', function(message) {
+			WPSS.showPrompt(wpssData.i18n.describeDelivery, function(message) {
 				WPSS.submitDelivery(orderId, message, null);
-			}, { placeholder: (wpssData.i18n && wpssData.i18n.deliveryPlaceholder) || 'Describe what you are delivering...' });
+			}, { placeholder: wpssData.i18n.deliveryPlaceholder });
 		}
 	};
 
@@ -644,15 +642,14 @@
 				xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
 			},
 			success: function() {
-				WPSS.showNotification((wpssData.i18n && wpssData.i18n.deliverySubmitted) || 'Delivery submitted successfully!', 'success');
+				WPSS.showNotification(wpssData.i18n.deliverySubmitted, 'success');
 				setTimeout(function() {
 					location.reload();
 				}, 1500);
 			},
 			error: function(xhr) {
 				var msg = (xhr.responseJSON && xhr.responseJSON.message)
-					|| (wpssData.i18n && wpssData.i18n.deliveryFailed)
-					|| 'Failed to submit delivery.';
+					|| wpssData.i18n.deliveryFailed;
 				WPSS.showNotification(msg, 'error');
 			}
 		});
@@ -805,14 +802,14 @@
 			const originalText = $btn.html();
 
 			// Disable button
-			$btn.prop('disabled', true).html('<span class="wpss-spinner"></span> ' + ((wpssData.i18n && wpssData.i18n.submitting) || 'Submitting...'));
+			$btn.prop('disabled', true).html('<span class="wpss-spinner"></span> ' + wpssData.i18n.submitting);
 
 			const orderId = $form.find('input[name="order_id"]').val();
 			const message = $form.find('#deliver-message').val();
 			const fileInput = $form.find('#deliver-files')[0];
 
 			if (!message || !message.trim()) {
-				WPSS.showNotification((wpssData.i18n && wpssData.i18n.deliveryRequired) || 'Please provide a delivery message.', 'error');
+				WPSS.showNotification(wpssData.i18n.deliveryRequired, 'error');
 				$btn.prop('disabled', false).html(originalText);
 				return;
 			}
@@ -950,7 +947,7 @@
 		const $btn = $form.find('button[type="submit"]');
 		const btnText = $btn.text();
 
-		$btn.prop('disabled', true).text((wpssData.i18n && wpssData.i18n.submitting) || 'Submitting...');
+		$btn.prop('disabled', true).text(wpssData.i18n.submitting);
 
 		$.ajax({
 			url: wpssData.ajaxUrl,
@@ -959,16 +956,16 @@
 			success: function(response) {
 				if (response.success) {
 					WPSS.hideModal();
-					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.reviewSubmitted) || 'Review submitted successfully!', 'success');
+					WPSS.showNotification(response.data.message || wpssData.i18n.reviewSubmitted, 'success');
 					setTimeout(function() {
 						location.reload();
 					}, 1500);
 				} else {
-					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.reviewFailed) || 'Failed to submit review.', 'error');
+					WPSS.showNotification(response.data.message || wpssData.i18n.reviewFailed, 'error');
 				}
 			},
 			error: function() {
-				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
+				WPSS.showNotification(wpssData.i18n.error, 'error');
 			},
 			complete: function() {
 				$btn.prop('disabled', false).text(btnText);
@@ -983,7 +980,7 @@
 		const $btn = $form.find('button[type="submit"]');
 		const btnText = $btn.text();
 
-		$btn.prop('disabled', true).text((wpssData.i18n && wpssData.i18n.submitting) || 'Submitting...');
+		$btn.prop('disabled', true).text(wpssData.i18n.submitting);
 
 		$.ajax({
 			url: wpssData.ajaxUrl,
@@ -992,16 +989,16 @@
 			success: function(response) {
 				if (response.success) {
 					WPSS.hideModal();
-					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.disputeOpened) || 'Dispute opened successfully. Our team will review your case.', 'success');
+					WPSS.showNotification(response.data.message || wpssData.i18n.disputeOpened, 'success');
 					setTimeout(function() {
 						location.reload();
 					}, 1500);
 				} else {
-					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.disputeFailed) || 'Failed to open dispute.', 'error');
+					WPSS.showNotification(response.data.message || wpssData.i18n.disputeFailed, 'error');
 				}
 			},
 			error: function() {
-				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
+				WPSS.showNotification(wpssData.i18n.error, 'error');
 			},
 			complete: function() {
 				$btn.prop('disabled', false).text(btnText);
@@ -1022,7 +1019,7 @@
 		const data = new FormData(formEl);
 		data.append('action', 'wpss_add_dispute_evidence');
 
-		$btn.prop('disabled', true).text((wpssData.i18n && wpssData.i18n.submitting) || 'Sending...');
+		$btn.prop('disabled', true).text(wpssData.i18n.submitting);
 
 		$.ajax({
 			url: wpssData.ajaxUrl,
@@ -1044,11 +1041,11 @@
 					}
 					WPSS.showNotification((response.data && response.data.message) || 'Message added.', 'success');
 				} else {
-					WPSS.showNotification((response.data && response.data.message) || (wpssData.i18n && wpssData.i18n.error) || 'Failed to add message.', 'error');
+					WPSS.showNotification((response.data && response.data.message) || wpssData.i18n.error, 'error');
 				}
 			},
 			error: function() {
-				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
+				WPSS.showNotification(wpssData.i18n.error, 'error');
 			},
 			complete: function() {
 				$btn.prop('disabled', false).text(btnText);
@@ -1072,16 +1069,16 @@
 			success: function(response) {
 				if (response.success) {
 					WPSS.hideModal();
-					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.revisionSubmitted) || 'Revision requested successfully!', 'success');
+					WPSS.showNotification(response.data.message || wpssData.i18n.revisionSubmitted, 'success');
 					setTimeout(function() {
 						location.reload();
 					}, 1500);
 				} else {
-					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.revisionFailed) || 'Failed to request revision.', 'error');
+					WPSS.showNotification(response.data.message || wpssData.i18n.revisionFailed, 'error');
 				}
 			},
 			error: function() {
-				WPSS.showNotification((wpssData.i18n && wpssData.i18n.error) || 'An error occurred. Please try again.', 'error');
+				WPSS.showNotification(wpssData.i18n.error, 'error');
 			}
 		});
 	};
@@ -1298,12 +1295,12 @@
 		let hasError = false;
 
 		if (!title) {
-			WPSS.showRequestFieldError($form, 'title', i18n.requestTitleRequired || 'Please enter a title for your request.');
+			WPSS.showRequestFieldError($form, 'title', i18n.requestTitleRequired);
 			hasError = true;
 		}
 
 		if (!description) {
-			WPSS.showRequestFieldError($form, 'description', i18n.requestDescriptionRequired || 'Please describe what you need.');
+			WPSS.showRequestFieldError($form, 'description', i18n.requestDescriptionRequired);
 			hasError = true;
 		}
 
@@ -1311,7 +1308,7 @@
 		const budgetMin = parseFloat($form.find('[data-field="budget_min"]').val());
 		const budgetMax = parseFloat($form.find('[data-field="budget_max"]').val());
 		if (!isNaN(budgetMin) && !isNaN(budgetMax) && budgetMax < budgetMin) {
-			WPSS.showRequestFieldError($form, 'budget_max', i18n.requestBudgetRange || 'Maximum budget must be greater than or equal to the minimum.');
+			WPSS.showRequestFieldError($form, 'budget_max', i18n.requestBudgetRange);
 			hasError = true;
 		}
 
@@ -1335,7 +1332,7 @@
 			skills_required: skills
 		};
 
-		$btn.prop('disabled', true).text(i18n.submitting || 'Submitting...');
+		$btn.prop('disabled', true).text(i18n.submitting);
 
 		$.ajax({
 			url: wpssData.apiUrl + 'buyer-requests',
@@ -1346,7 +1343,7 @@
 				xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
 			},
 			success: function(response) {
-				const message = (response && response.message) || i18n.requestPosted || 'Request posted successfully.';
+				const message = (response && response.message) || i18n.requestPosted;
 				WPSS.showNotification(message, 'success');
 
 				// Swap the form for the success state.
@@ -1390,7 +1387,7 @@
 					}
 				}
 
-				const message = res.message || i18n.requestFailed || i18n.error || 'Failed to post request. Please try again.';
+				const message = res.message || i18n.requestFailed || i18n.error;
 				$wrapper.find('[data-request-form-error]').text(message).prop('hidden', false);
 				WPSS.showNotification(message, 'error');
 			}
@@ -1579,7 +1576,7 @@
 						location.reload();
 					}
 				} else {
-					WPSS.showNotification(response.data.message || (wpssData.i18n && wpssData.i18n.actionFailed) || 'Action failed.', 'error');
+					WPSS.showNotification(response.data.message || wpssData.i18n.actionFailed, 'error');
 					$btn.prop('disabled', false).text(btnText);
 				}
 			},
@@ -1644,14 +1641,13 @@
 				var favorited = (response && typeof response.favorited !== 'undefined') ? !!response.favorited : willFavorite;
 				WPSS.setFavoriteState($btn, favorited);
 
-				var savedMsg = (wpssData.i18n && wpssData.i18n.favoriteSaved) || 'Saved to favorites.';
-				var removedMsg = (wpssData.i18n && wpssData.i18n.favoriteRemoved) || 'Removed from favorites.';
+				var savedMsg = wpssData.i18n.favoriteSaved;
+				var removedMsg = wpssData.i18n.favoriteRemoved;
 				WPSS.showNotification(favorited ? savedMsg : removedMsg, 'success');
 			}).fail(function(xhr) {
 				var msg = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.data && xhr.responseJSON.data.message)))
 					|| (wpssData.i18n && wpssData.i18n.favoriteFailed)
-					|| (wpssData.i18n && wpssData.i18n.ajaxError)
-					|| 'Could not update favorites. Please try again.';
+					|| wpssData.i18n.ajaxError;
 				WPSS.showNotification(msg, 'error');
 			}).always(function() {
 				$btn.prop('disabled', false).removeClass('is-loading');
@@ -1673,12 +1669,12 @@
 		var label;
 		if (isInline) {
 			label = favorited
-				? ((wpssData.i18n && wpssData.i18n.favoriteSavedLabel) || 'Saved to favorites')
-				: ((wpssData.i18n && wpssData.i18n.favoriteSaveLabel) || 'Save to favorites');
+				? wpssData.i18n.favoriteSavedLabel
+				: wpssData.i18n.favoriteSaveLabel;
 		} else {
 			label = favorited
-				? ((wpssData.i18n && wpssData.i18n.favoriteRemoveLabel) || 'Remove from favorites')
-				: ((wpssData.i18n && wpssData.i18n.favoriteAddLabel) || 'Add to favorites');
+				? wpssData.i18n.favoriteRemoveLabel
+				: wpssData.i18n.favoriteAddLabel;
 			$btn.attr('aria-label', label).attr('title', label);
 		}
 		$btn.find('.wpss-fav-toggle__label').text(label);
@@ -1774,9 +1770,9 @@
 		// Default the action label to a danger verb when this is a destructive
 		// confirm so the Delete button reads correctly even if the caller does
 		// not pass an explicit confirmText.
-		var defaultConfirm = isDanger ? (i18n.delete || 'Delete') : (i18n.confirm || 'Confirm');
+		var defaultConfirm = isDanger ? (i18n.delete) : (i18n.confirm);
 		var confirmText = options.confirmText || defaultConfirm;
-		var cancelText = options.cancelText || i18n.cancel || 'Cancel';
+		var cancelText = options.cancelText || i18n.cancel;
 		var title = options.title || '';
 		var confirmVariant = isDanger ? 'wpss-btn--danger' : 'wpss-btn--primary';
 
@@ -1857,8 +1853,8 @@
 		options = options || {};
 		var i18n = (wpssData && wpssData.i18n) || {};
 		var placeholder = options.placeholder || '';
-		var submitText = options.submitText || i18n.submit || 'Submit';
-		var cancelText = options.cancelText || i18n.cancel || 'Cancel';
+		var submitText = options.submitText || i18n.submit;
+		var cancelText = options.cancelText || i18n.cancel;
 		var required = options.required !== false;
 
 		$('#wpss-prompt-modal').remove();
@@ -1885,7 +1881,7 @@
 		$modal.find('.wpss-prompt-submit').on('click', function() {
 			var value = $modal.find('.wpss-prompt-input').val();
 			if (required && (!value || !value.trim())) {
-				WPSS.showNotification((wpssData.i18n && wpssData.i18n.promptRequired) || 'Please provide a response.', 'warning');
+				WPSS.showNotification(wpssData.i18n.promptRequired, 'warning');
 				return;
 			}
 			$modal.remove();

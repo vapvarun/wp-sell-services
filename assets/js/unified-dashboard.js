@@ -138,12 +138,12 @@
 				if (self.walletPage === 0) {
 					$list.html(
 						'<p class="wpss-text-muted">' +
-						(i18n.walletLoadFailed || 'Could not load transactions. Please try again.') +
+						(i18n.walletLoadFailed) +
 						'</p>'
 					);
 				} else {
 					$more.prop('disabled', false);
-					WPSS.showNotification(i18n.walletLoadFailed || 'Could not load transactions. Please try again.', 'error');
+					WPSS.showNotification(i18n.walletLoadFailed, 'error');
 				}
 			}).always(function () {
 				$list.attr('aria-busy', 'false');
@@ -167,7 +167,7 @@
 			if (page === 1 && !transactions.length) {
 				$list.html(
 					'<p class="wpss-text-muted">' +
-					(i18n.walletEmpty || 'No wallet transactions yet.') +
+					(i18n.walletEmpty) +
 					'</p>'
 				);
 				return;
@@ -179,11 +179,11 @@
 					'<div class="wpss-table-responsive">' +
 						'<table class="wpss-table wpss-wallet__table">' +
 							'<thead><tr>' +
-								'<th>' + (i18n.walletColDate || 'Date') + '</th>' +
-								'<th>' + (i18n.walletColType || 'Type') + '</th>' +
-								'<th>' + (i18n.walletColDescription || 'Description') + '</th>' +
-								'<th class="wpss-wallet__amount-col">' + (i18n.walletColAmount || 'Amount') + '</th>' +
-								'<th class="wpss-wallet__amount-col">' + (i18n.walletColBalance || 'Balance') + '</th>' +
+								'<th>' + (i18n.walletColDate) + '</th>' +
+								'<th>' + (i18n.walletColType) + '</th>' +
+								'<th>' + (i18n.walletColDescription) + '</th>' +
+								'<th class="wpss-wallet__amount-col">' + (i18n.walletColAmount) + '</th>' +
+								'<th class="wpss-wallet__amount-col">' + (i18n.walletColBalance) + '</th>' +
 							'</tr></thead>' +
 							'<tbody></tbody>' +
 						'</table>' +
@@ -236,7 +236,7 @@
 
 			$('<td>').text(dateText).appendTo($row);
 			$('<td>').append(
-				$('<span>').addClass('wpss-badge wpss-badge--' + (txn.type || 'neutral')).text(typeLabel || (i18n.walletTypeUnknown || 'Transaction'))
+				$('<span>').addClass('wpss-badge wpss-badge--' + (txn.type || 'neutral')).text(typeLabel || i18n.walletTypeUnknown)
 			).appendTo($row);
 
 			// Description + an optional clickable reference link ("View Order" /
@@ -314,8 +314,8 @@
 							if ($count.length && typeof response.count === 'number') {
 								$count.text(
 									(response.count === 1
-										? (i18n.favoriteCountSingular || '%d saved service')
-										: (i18n.favoriteCountPlural || '%d saved services')
+										? (i18n.favoriteCountSingular)
+										: (i18n.favoriteCountPlural)
 									).replace('%d', response.count)
 								);
 							}
@@ -323,11 +323,11 @@
 					});
 				} else {
 					$button.prop('disabled', false);
-					WPSS.showNotification((response && response.message) || i18n.favoriteRemoveFailed || 'Could not remove favorite.', 'error');
+					WPSS.showNotification((response && response.message) || i18n.favoriteRemoveFailed, 'error');
 				}
 			}).fail(function () {
 				$button.prop('disabled', false);
-				WPSS.showNotification(i18n.favoriteRemoveFailed || 'Could not remove favorite. Please try again.', 'error');
+				WPSS.showNotification(i18n.favoriteRemoveFailed, 'error');
 			});
 		},
 
@@ -363,14 +363,14 @@
 							window.location.reload();
 						}
 					} else {
-						WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
+						WPSS.showNotification(response.data.message || wpssUnifiedDashboard.i18n.errorOccurred, 'error');
 						$button
 							.prop('disabled', false)
 							.text(originalText);
 					}
 				},
 				error: function () {
-					WPSS.showNotification((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.', 'error');
+					WPSS.showNotification(wpssUnifiedDashboard.i18n.errorTryAgain, 'error');
 					$button
 						.prop('disabled', false)
 						.text(originalText);
@@ -436,7 +436,7 @@
 				success: function () {
 					$form.prepend(
 						'<div class="wpss-alert wpss-alert--success" style="margin-bottom: 16px;">' +
-						((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.profileSaved) || 'Profile updated successfully.') +
+						wpssUnifiedDashboard.i18n.profileSaved +
 						'</div>'
 					);
 
@@ -452,8 +452,7 @@
 				},
 				error: function (xhr) {
 					const msg = (xhr.responseJSON && xhr.responseJSON.message)
-						|| (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain)
-						|| 'An error occurred. Please try again.';
+						|| wpssUnifiedDashboard.i18n.errorTryAgain;
 					WPSS.showNotification(msg, 'error');
 					$button
 						.prop('disabled', false)
@@ -498,21 +497,21 @@
 						// .wpss-service-card wrapper + .wpss-service-card__status badge.
 						const $card = $button.closest('.wpss-service-card');
 						const $badge = $card.find('.wpss-service-card__status');
-						const newStatusText = newStatus === 'publish' ? ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.published) || 'Published') : ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.draft) || 'Draft');
+						const newStatusText = newStatus === 'publish' ? wpssUnifiedDashboard.i18n.published : wpssUnifiedDashboard.i18n.draft;
 						$badge.text(newStatusText);
 						$badge.removeClass('wpss-service-card__status--publish wpss-service-card__status--draft');
 						$badge.addClass(newStatus === 'publish' ? 'wpss-service-card__status--publish' : 'wpss-service-card__status--draft');
 
 						// Button label is plain text ("Pause" / "Publish"),
 						// matching how the template renders it.
-						$button.text(newStatus === 'publish' ? (wpssUnifiedDashboard.i18n.pause || 'Pause') : (wpssUnifiedDashboard.i18n.publish || 'Publish'));
+						$button.text(newStatus === 'publish' ? wpssUnifiedDashboard.i18n.pause : wpssUnifiedDashboard.i18n.publish);
 					} else {
-						WPSS.showNotification((response && response.message) || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
+						WPSS.showNotification((response && response.message) || wpssUnifiedDashboard.i18n.errorOccurred, 'error');
 					}
 					$button.prop('disabled', false);
 				},
 				error: function (xhr) {
-					var msg = (xhr.responseJSON && xhr.responseJSON.message) || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.';
+					var msg = (xhr.responseJSON && xhr.responseJSON.message) || wpssUnifiedDashboard.i18n.errorTryAgain;
 					WPSS.showNotification(msg, 'error');
 					$button.prop('disabled', false);
 				}
@@ -535,7 +534,7 @@
 			// toggle-status selector bug).
 			const $card = $button.closest('.wpss-service-card');
 
-			WPSS.showConfirm(wpssUnifiedDashboard.i18n.confirmDelete || 'Are you sure you want to delete this service? This action cannot be undone.', function () {
+			WPSS.showConfirm(wpssUnifiedDashboard.i18n.confirmDelete, function () {
 				$button.prop('disabled', true);
 
 				$.ajax({
@@ -552,12 +551,12 @@
 								$(this).remove();
 							});
 						} else {
-							WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorOccurred) || 'An error occurred.', 'error');
+							WPSS.showNotification(response.data.message || wpssUnifiedDashboard.i18n.errorOccurred, 'error');
 							$button.prop('disabled', false);
 						}
 					},
 					error: function () {
-						WPSS.showNotification((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.errorTryAgain) || 'An error occurred. Please try again.', 'error');
+						WPSS.showNotification(wpssUnifiedDashboard.i18n.errorTryAgain, 'error');
 						$button.prop('disabled', false);
 					}
 				});
@@ -578,8 +577,8 @@
 			}
 
 			this.avatarFrame = wp.media({
-				title: (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.chooseProfilePhoto) || 'Choose Profile Photo',
-				button: { text: (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.useAsProfilePhoto) || 'Use as Profile Photo' },
+				title: wpssUnifiedDashboard.i18n.chooseProfilePhoto,
+				button: { text: wpssUnifiedDashboard.i18n.useAsProfilePhoto },
 				multiple: false,
 				library: { type: 'image' }
 			});
@@ -596,7 +595,7 @@
 				// Show remove button if not already visible.
 				if ($('#wpss-avatar-remove-btn').length === 0) {
 					$('#wpss-avatar-upload-btn').after(
-						' <button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" id="wpss-avatar-remove-btn">' + ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.remove) || 'Remove') + '</button>'
+						' <button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" id="wpss-avatar-remove-btn">' + wpssUnifiedDashboard.i18n.remove + '</button>'
 					);
 				}
 			}.bind(this));
@@ -636,8 +635,8 @@
 			}
 
 			this.coverFrame = wp.media({
-				title: (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.selectCoverImage) || 'Select Cover Image',
-				button: { text: (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.setCoverImage) || 'Set Cover Image' },
+				title: wpssUnifiedDashboard.i18n.selectCoverImage,
+				button: { text: wpssUnifiedDashboard.i18n.setCoverImage },
 				multiple: false,
 				library: { type: 'image' }
 			});
@@ -655,7 +654,7 @@
 				// Show remove button if not already visible.
 				if ($('#wpss-cover-remove-btn').length === 0) {
 					$('#wpss-cover-upload-btn').after(
-						' <button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" id="wpss-cover-remove-btn">' + ((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.remove) || 'Remove') + '</button>'
+						' <button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" id="wpss-cover-remove-btn">' + wpssUnifiedDashboard.i18n.remove + '</button>'
 					);
 				}
 			}.bind(this));
@@ -687,7 +686,7 @@
 			var requestId = $(e.currentTarget).data('request-id');
 
 			WPSS.showConfirm(
-				wpssUnifiedDashboard.i18n.closeRequestConfirm || 'Close this request? It will no longer be visible to sellers.',
+				wpssUnifiedDashboard.i18n.closeRequestConfirm,
 				function () {
 					$.ajax({
 						url: wpssUnifiedDashboard.ajaxUrl,
@@ -700,10 +699,10 @@
 						},
 						success: function (response) {
 							if (response.success) {
-								WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.requestClosed) || 'Request closed.', 'success');
+								WPSS.showNotification(response.data.message || wpssUnifiedDashboard.i18n.requestClosed, 'success');
 								location.reload();
 							} else {
-								WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.requestCloseFailed) || 'Failed to close request.', 'error');
+								WPSS.showNotification(response.data.message || wpssUnifiedDashboard.i18n.requestCloseFailed, 'error');
 							}
 						}
 					});
@@ -721,7 +720,7 @@
 			var requestId = $(e.currentTarget).data('request-id');
 
 			WPSS.showConfirm(
-				wpssUnifiedDashboard.i18n.reopenRequestConfirm || 'Reopen this request? It will be visible to sellers again.',
+				wpssUnifiedDashboard.i18n.reopenRequestConfirm,
 				function () {
 					$.ajax({
 						url: wpssUnifiedDashboard.ajaxUrl,
@@ -734,10 +733,10 @@
 						},
 						success: function (response) {
 							if (response.success) {
-								WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.requestReopened) || 'Request reopened.', 'success');
+								WPSS.showNotification(response.data.message || wpssUnifiedDashboard.i18n.requestReopened, 'success');
 								location.reload();
 							} else {
-								WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.requestReopenFailed) || 'Failed to reopen request.', 'error');
+								WPSS.showNotification(response.data.message || wpssUnifiedDashboard.i18n.requestReopenFailed, 'error');
 							}
 						}
 					});
@@ -755,7 +754,7 @@
 			var requestId = $(e.currentTarget).data('request-id');
 
 			WPSS.showConfirm(
-				wpssUnifiedDashboard.i18n.deleteRequestConfirm || 'Delete this request permanently? This cannot be undone.',
+				wpssUnifiedDashboard.i18n.deleteRequestConfirm,
 				function () {
 					$.ajax({
 						url: wpssUnifiedDashboard.ajaxUrl,
@@ -767,15 +766,15 @@
 						},
 						success: function (response) {
 							if (response.success) {
-								WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.requestDeleted) || 'Request deleted.', 'success');
+								WPSS.showNotification(response.data.message || wpssUnifiedDashboard.i18n.requestDeleted, 'success');
 								location.reload();
 							} else {
-								WPSS.showNotification(response.data.message || (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.requestDeleteFailed) || 'Failed to delete request.', 'error');
+								WPSS.showNotification(response.data.message || wpssUnifiedDashboard.i18n.requestDeleteFailed, 'error');
 							}
 						}
 					});
 				},
-				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn || 'Delete', tone: 'danger' }
+				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn, tone: 'danger' }
 			);
 		},
 
@@ -785,7 +784,7 @@
 		handlePortfolioAdd: function (e) {
 			e.preventDefault();
 			this.resetPortfolioForm();
-			$('#wpss-portfolio-modal-title').text((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.addPortfolioItem) || 'Add Portfolio Item');
+			$('#wpss-portfolio-modal-title').text(wpssUnifiedDashboard.i18n.addPortfolioItem);
 			$('#wpss-portfolio-modal').addClass('wpss-modal-open');
 		},
 
@@ -800,7 +799,7 @@
 			var itemId = $item.data('item-id');
 
 			this.resetPortfolioForm();
-			$('#wpss-portfolio-modal-title').text((wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.editPortfolioItem) || 'Edit Portfolio Item');
+			$('#wpss-portfolio-modal-title').text(wpssUnifiedDashboard.i18n.editPortfolioItem);
 			$('#wpss-portfolio-item-id').val(itemId);
 
 			// Populate form from data attributes.
@@ -852,7 +851,7 @@
 			var itemId = $btn.data('item-id');
 
 			WPSS.showConfirm(
-				wpssUnifiedDashboard.i18n.deletePortfolioConfirm || 'Are you sure you want to delete this portfolio item?',
+				wpssUnifiedDashboard.i18n.deletePortfolioConfirm,
 				function () {
 					$btn.prop('disabled', true);
 
@@ -868,14 +867,14 @@
 							});
 						},
 						error: function (xhr) {
-							var msg = (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.deleteFailed) || 'Delete failed.';
+							var msg = wpssUnifiedDashboard.i18n.deleteFailed;
 							try { msg = JSON.parse(xhr.responseText).message || msg; } catch (ex) {}
 							WPSS.showNotification(msg, 'error');
 							$btn.prop('disabled', false);
 						}
 					});
 				},
-				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn || 'Delete', tone: 'danger' }
+				{ confirmText: wpssUnifiedDashboard.i18n.deleteConfirmBtn, tone: 'danger' }
 			);
 		},
 
@@ -901,7 +900,7 @@
 					window.location.reload();
 				},
 				error: function (xhr) {
-					var msg = (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.failed) || 'Failed.';
+					var msg = wpssUnifiedDashboard.i18n.failed;
 					try { msg = JSON.parse(xhr.responseText).message || msg; } catch (ex) {}
 					WPSS.showNotification(msg, 'error');
 					$btn.prop('disabled', false);
@@ -950,7 +949,7 @@
 					window.location.reload();
 				},
 				error: function (xhr) {
-					var msg = (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.saveFailed) || 'Save failed.';
+					var msg = wpssUnifiedDashboard.i18n.saveFailed;
 					try { msg = JSON.parse(xhr.responseText).message || msg; } catch (ex) {}
 					WPSS.showNotification(msg, 'error');
 					$btn.prop('disabled', false).text(originalText);
@@ -972,8 +971,8 @@
 			}
 
 			this.portfolioMediaFrame = wp.media({
-				title: (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.selectPortfolioImages) || 'Select Portfolio Images',
-				button: { text: (wpssUnifiedDashboard.i18n && wpssUnifiedDashboard.i18n.addToPortfolio) || 'Add to Portfolio' },
+				title: wpssUnifiedDashboard.i18n.selectPortfolioImages,
+				button: { text: wpssUnifiedDashboard.i18n.addToPortfolio },
 				multiple: true,
 				library: { type: 'image' }
 			});

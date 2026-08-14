@@ -312,6 +312,20 @@ class Frontend {
 					'autosaveError'               => __( 'Save failed', 'wp-sell-services' ),
 					// UX primitives — form-level error summary heading.
 					'formErrorSummaryTitle'       => __( 'Please fix the following:', 'wp-sell-services' ),
+					// Favourites. frontend.js has always read these keys, and none of
+					// them were ever sent -- the English fallbacks in the JS stood in
+					// silently, so every string the favourites feature shows was
+					// untranslatable in every locale. Sending them is the fix; the
+					// fallbacks are removed in the same change.
+					'favoriteSaved'               => __( 'Saved to favorites.', 'wp-sell-services' ),
+					'favoriteRemoved'             => __( 'Removed from favorites.', 'wp-sell-services' ),
+					'favoriteFailed'              => __( 'Could not update favorites. Please try again.', 'wp-sell-services' ),
+					'favoriteSaveLabel'           => __( 'Save to favorites', 'wp-sell-services' ),
+					'favoriteSavedLabel'          => __( 'Saved to favorites', 'wp-sell-services' ),
+					'favoriteAddLabel'            => __( 'Add to favorites', 'wp-sell-services' ),
+					'favoriteRemoveLabel'         => __( 'Remove from favorites', 'wp-sell-services' ),
+					// Buyer-request submission failure.
+					'requestFailed'               => __( 'Failed to post request. Please try again.', 'wp-sell-services' ),
 				),
 			)
 		);
