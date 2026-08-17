@@ -282,11 +282,6 @@ parameters:
 			count: 1
 			path: src/API/ServicesController.php
 
-		-
-			message: '#^Method WPSellServices\\API\\ServicesController\:\:get_service_rating\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/API/ServicesController.php
 
 		-
 			message: '#^Method WPSellServices\\API\\VendorsController\:\:get_collection_params\(\) return type has no value type specified in iterable type array\.$#'

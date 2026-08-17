@@ -738,18 +738,17 @@ class DisputesController extends RestController {
 	 * @return array
 	 */
 	private function prepare_dispute_for_response( object $dispute, bool $detailed = false ): array {
-
-		// DisputeService now returns hydrated Dispute models, so the column
-		// names are the model's (initiated_by -> initiator_id, resolution ->
-		// resolution_type) and timestamps are ?DateTimeImmutable. The wire
-		// format is deliberately unchanged: format the dates back to the same
-		// 'Y-m-d H:i:s' strings clients already receive.
-		$format_date = static function ( $value ): ?string {
-			if ( $value instanceof \DateTimeInterface ) {
-				return $value->format( 'Y-m-d H:i:s' );
-			}
-			return null !== $value && '' !== $value ? (string) $value : null;
-		};
+		/*
+		 * DisputeService returns hydrated Dispute models, so the column names are
+		 * the model's (initiated_by -> initiator_id, resolution -> resolution_type)
+		 * and timestamps are ?DateTimeImmutable.
+		 *
+		 * A THIRD date implementation used to live here, formatting to
+		 * 'Y-m-d H:i:s' while /services and /orders emitted ISO-8601 - so a client
+		 * needed two parsers and had to guess the zone for this one (Basecamp
+		 * 10154919636). RestController::format_datetime() is the one formatter.
+		 */
+		$format_date = fn( $value ): ?string => $this->format_datetime( $value );
 
 		$data = array(
 			'id'           => (int) $dispute->id,
@@ -807,7 +806,7 @@ class DisputesController extends RestController {
 				'name'   => wpss_get_member_display_name( (int) $user_id ),
 				'avatar' => get_avatar_url( $user_id, array( 'size' => 48 ) ),
 			),
-			'created_at'  => $evidence['created_at'] ?? '',
+			'created_at'  => $this->format_datetime( $evidence['created_at'] ?? null ),
 		);
 	}
 

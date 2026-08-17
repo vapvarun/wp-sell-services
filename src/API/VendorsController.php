@@ -768,7 +768,7 @@ class VendorsController extends RestController {
 				'rating'          => (int) $review->rating,
 				'review'          => $review->review,
 				'vendor_reply'    => $review->vendor_reply,
-				'created_at'      => $review->created_at,
+				'created_at'      => $this->format_datetime( $review->created_at ?? null ),
 			);
 		}
 
@@ -862,7 +862,7 @@ class VendorsController extends RestController {
 				'total_reviews'     => (int) $review_stats->total,
 				'average_rating'    => round( (float) $review_stats->average, 1 ),
 				'avg_response_time' => $avg_response_time,
-				'member_since'      => get_user_meta( $vendor_id, '_wpss_vendor_since', true ),
+				'member_since'      => $this->format_datetime( get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: null ),
 			)
 		);
 	}
@@ -901,7 +901,7 @@ class VendorsController extends RestController {
 			'rating_average'   => (float) get_user_meta( $vendor_id, '_wpss_rating_average', true ) ?: 0,
 			'rating_count'     => (int) get_user_meta( $vendor_id, '_wpss_rating_count', true ) ?: 0,
 			'completed_orders' => $profile ? $profile->orders_completed : 0,
-			'member_since'     => get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered,
+			'member_since'     => $this->format_datetime( get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered ),
 			'is_verified'      => $profile ? $profile->is_verified : false,
 			'country'          => $profile ? $profile->country : '',
 		);

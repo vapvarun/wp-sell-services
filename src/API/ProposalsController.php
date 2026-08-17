@@ -578,7 +578,7 @@ class ProposalsController extends RestController {
 				'contract_type' => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
 				'milestones'    => $milestones,
 				'status'        => $proposal->status,
-				'created_at'    => $proposal->created_at,
+				'created_at'    => $this->format_datetime( $proposal->created_at ?? null ),
 			]
 		);
 

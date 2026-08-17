@@ -1020,9 +1020,10 @@ class ReviewsController extends RestController {
 			'status'             => $review->status,
 			'helpful_count'      => (int) ( $review->helpful_count ?? 0 ),
 			'vendor_reply'       => $review->vendor_reply ?? null,
-			'vendor_reply_at'    => $review->vendor_reply_at ?? null,
-			'created_at'         => $review->created_at,
-			'updated_at'         => $review->updated_at ?? null,
+			// ISO-8601 through the shared formatter (Basecamp 10154919636).
+			'vendor_reply_at'    => $this->format_datetime( $review->vendor_reply_at ?? null ),
+			'created_at'         => $this->format_datetime( $review->created_at ?? null ),
+			'updated_at'         => $this->format_datetime( $review->updated_at ?? null ),
 			// Additive presentation fields so REST consumers (single-service.js
 			// reviews block) can render with parity to the legacy server-rendered
 			// markup without reimplementing wpautop/time-ago client-side.

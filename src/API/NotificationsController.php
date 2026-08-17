@@ -289,7 +289,10 @@ class NotificationsController extends RestController {
 			'message'    => NotificationMessage::to_plain( (string) ( $notification['message'] ?? '' ) ),
 			'data'       => $data ?: array(),
 			'is_read'    => (bool) $notification['is_read'],
-			'created_at' => $notification['created_at'],
+			// ISO-8601 through the shared formatter, like every other endpoint.
+			// This shipped the raw MySQL string, so a client had to keep a second
+			// parser AND guess the timezone (Basecamp 10154919636).
+			'created_at' => $this->format_datetime( $notification['created_at'] ?? null ),
 		);
 	}
 

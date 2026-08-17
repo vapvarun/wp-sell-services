@@ -286,3 +286,171 @@ function wpss_prepare_term_for_rest( \WP_Term $term ): array {
 		'image'       => $image ? wp_get_attachment_url( $image ) : '',
 	);
 }
+
+/**
+ * A service's images for the REST API.
+ *
+ * Moved out of ServicesController so the ONE card shape below can be built
+ * anywhere. It was a private method, which is why /favorites could not reuse it
+ * and invented a single `thumbnail` string instead.
+ *
+ * @since 1.6.0
+ *
+ * @param int $service_id Service post ID.
+ * @return array<int, array<string, mixed>> Images, featured first.
+ */
+function wpss_rest_service_images( int $service_id ): array {
+	$images       = array();
+	$thumbnail_id = get_post_thumbnail_id( $service_id );
+
+	if ( $thumbnail_id ) {
+		$images[] = array(
+			'id'    => (int) $thumbnail_id,
+			'url'   => wp_get_attachment_url( $thumbnail_id ),
+			'sizes' => array(
+				'thumbnail' => wp_get_attachment_image_url( $thumbnail_id, 'thumbnail' ),
+				'medium'    => wp_get_attachment_image_url( $thumbnail_id, 'medium' ),
+				'large'     => wp_get_attachment_image_url( $thumbnail_id, 'large' ),
+			),
+		);
+	}
+
+	$gallery_ids = wpss_get_gallery_ids( get_post_meta( $service_id, '_wpss_gallery', true ) );
+
+	foreach ( $gallery_ids as $gallery_id ) {
+		$gallery_id = (int) $gallery_id;
+
+		// The gallery meta normally also contains the featured image; do not
+		// ship it twice.
+		if ( $gallery_id === (int) $thumbnail_id ) {
+			continue;
+		}
+
+		$images[] = array(
+			'id'    => $gallery_id,
+			'url'   => wp_get_attachment_url( $gallery_id ),
+			'sizes' => array(
+				'thumbnail' => wp_get_attachment_image_url( $gallery_id, 'thumbnail' ),
+				'medium'    => wp_get_attachment_image_url( $gallery_id, 'medium' ),
+				'large'     => wp_get_attachment_image_url( $gallery_id, 'large' ),
+			),
+		);
+	}
+
+	return $images;
+}
+
+/**
+ * A service's rating summary for the REST API.
+ *
+ * @since 1.6.0
+ *
+ * @param int $service_id Service post ID.
+ * @return array{average: float, count: int}
+ */
+function wpss_rest_service_rating( int $service_id ): array {
+	global $wpdb;
+
+	$table = $wpdb->prefix . 'wpss_reviews';
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$rating = $wpdb->get_row(
+		$wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table from $wpdb->prefix.
+			"SELECT AVG(rating) AS average, COUNT(*) AS count FROM {$table} WHERE service_id = %d AND status = 'approved'",
+			$service_id
+		)
+	);
+
+	return array(
+		'average' => $rating ? round( (float) $rating->average, 2 ) : 0.0,
+		'count'   => $rating ? (int) $rating->count : 0,
+	);
+}
+
+/**
+ * THE service card shape.
+ *
+ * One definition, because there were three. /services returned `images[]`,
+ * `pricing{}` and `rating{}`; /favorites returned a `thumbnail` string, a flat
+ * `price` and a flat `rating` float; and neither used the shared actor shape for
+ * the vendor. A client could not write one renderer for "a service card", which
+ * is the whole complaint on Basecamp 10154919636.
+ *
+ * Terms are resolved through wpss_prepare_term_for_rest() and text through
+ * wpss_rest_text(), so a category reaches a native client as "Graphics & Design"
+ * rather than HTML-encoded.
+ *
+ * @since 1.6.0
+ *
+ * @param \WP_Post $service Service post.
+ * @return array<string, mixed>
+ */
+function wpss_rest_service_card( \WP_Post $service ): array {
+	$terms = wp_get_object_terms( $service->ID, 'wpss_service_category', array( 'fields' => 'all' ) );
+
+	$categories = array();
+
+	if ( ! is_wp_error( $terms ) ) {
+		foreach ( $terms as $term ) {
+			if ( $term instanceof \WP_Term ) {
+				$categories[] = wpss_prepare_term_for_rest( $term );
+			}
+		}
+	}
+
+	$tags = wp_get_object_terms( $service->ID, 'wpss_service_tag', array( 'fields' => 'names' ) );
+
+	return array(
+		'id'          => (int) $service->ID,
+		'title'       => wpss_rest_text( $service->post_title ),
+		'slug'        => $service->post_name,
+		'description' => $service->post_content,
+		'excerpt'     => $service->post_excerpt,
+		'status'      => $service->post_status,
+		'link'        => get_permalink( $service->ID ),
+		'vendor'      => wpss_rest_user( (int) $service->post_author ),
+		// Services carry no currency of their own - they are priced in the store
+		// currency, which is the helper's default.
+		'pricing'     => wpss_rest_money( 'base_price', (float) get_post_meta( $service->ID, '_wpss_starting_price', true ) ),
+		'delivery'    => array(
+			'time'      => wpss_get_service_delivery_days( $service->ID ) ?: 7,
+			'revisions' => wpss_get_service_revisions( $service->ID ),
+		),
+		'images'      => wpss_rest_service_images( $service->ID ),
+		'categories'  => $categories,
+		'tags'        => is_wp_error( $tags ) ? array() : $tags,
+		'rating'      => wpss_rest_service_rating( $service->ID ),
+		'created_at'  => wpss_rest_date( $service->post_date_gmt ),
+		'updated_at'  => wpss_rest_date( $service->post_modified_gmt ),
+	);
+}
+
+/**
+ * ISO-8601 for a JSON payload, from whatever the store happened to hold.
+ *
+ * The global twin of RestController::format_datetime(), for the shared shapes
+ * above and for any caller that is not a controller. A bare MySQL string is
+ * read as UTC, which is what WordPress stores in the *_gmt columns and in this
+ * plugin's own tables.
+ *
+ * @since 1.6.0
+ *
+ * @param mixed $value DateTimeInterface, MySQL datetime string, or empty.
+ * @return string|null ISO-8601 with offset, or null.
+ */
+function wpss_rest_date( $value ): ?string {
+	if ( $value instanceof \DateTimeInterface ) {
+		return $value->format( 'c' );
+	}
+
+	if ( ! is_string( $value ) || '' === $value || '0000-00-00 00:00:00' === $value ) {
+		return null;
+	}
+
+	try {
+		return ( new \DateTimeImmutable( $value, new \DateTimeZone( 'UTC' ) ) )->format( 'c' );
+	} catch ( \Exception $e ) {
+		return null;
+	}
+}

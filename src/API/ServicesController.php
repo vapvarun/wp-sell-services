@@ -1193,37 +1193,17 @@ class ServicesController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function prepare_item_for_response( $service, $request ) {
-		$data = array(
-			'id'          => $service->ID,
-			'title'       => $service->post_title,
-			'slug'        => $service->post_name,
-			'description' => $service->post_content,
-			'excerpt'     => $service->post_excerpt,
-			'status'      => $service->post_status,
-			'link'        => get_permalink( $service->ID ),
-			// The shared actor shape, not a hand-rolled one. wpss_rest_user() has
-			// existed since 1.4.0 and its docblock names "vendors on a service
-			// card" as a case it is for -- but it had exactly one caller, so this
-			// endpoint kept its own {id, name, avatar} copy and the API ended up
-			// describing a person differently depending on where you asked.
-			//
-			// Additive for clients: the same id/name/avatar keys, plus `deleted`
-			// so a client can tell "this member is gone" from "no member acted".
-			'vendor'      => wpss_rest_user( (int) $service->post_author ),
-			// wpss_rest_money() yields exactly the keys this block already
-			// carried - base_price and currency - plus the minor units.
-			'pricing'     => wpss_rest_money( 'base_price', (float) get_post_meta( $service->ID, '_wpss_starting_price', true ) ),
-			'delivery'    => array(
-				'time'      => wpss_get_service_delivery_days( $service->ID ) ?: 7,
-				'revisions' => wpss_get_service_revisions( $service->ID ),
-			),
-			'images'      => $this->get_service_images( $service->ID ),
-			'categories'  => $this->prepare_terms_for_response( wp_get_object_terms( $service->ID, 'wpss_service_category', array( 'fields' => 'all' ) ) ),
-			'tags'        => wp_get_object_terms( $service->ID, 'wpss_service_tag', array( 'fields' => 'names' ) ),
-			'rating'      => $this->get_service_rating( $service->ID ),
-			'created_at'  => $this->format_datetime( $service->post_date_gmt ),
-			'updated_at'  => $this->format_datetime( $service->post_modified_gmt ),
-		);
+		/*
+		 * This shape used to be written out here, which is how /favorites came to
+		 * return a different one: the pieces it needed were private methods on
+		 * this class, so it invented a `thumbnail` string and a flat `price`
+		 * instead. The definition now lives in wpss_rest_service_card() and both
+		 * endpoints read it, which is the point of Basecamp 10154919636 - a client
+		 * should be able to write ONE renderer for "a service card".
+		 *
+		 * Byte-for-byte the same keys this endpoint already returned.
+		 */
+		$data = wpss_rest_service_card( $service );
 
 		/**
 		 * Filter service REST response data.
@@ -1235,116 +1215,6 @@ class ServicesController extends RestController {
 		$data = apply_filters( 'wpss_rest_service_data', $data, $service, $request );
 
 		return new WP_REST_Response( $data, 200 );
-	}
-
-	/**
-	 * Shape a service's terms for JSON.
-	 *
-	 * Returns the same structure as GET /categories — one term shape across
-	 * the API, so a client parses a service's categories with the code it
-	 * already uses for the category list.
-	 *
-	 * @since 1.4.0
-	 *
-	 * @param mixed $terms Terms from wp_get_object_terms(), or a WP_Error.
-	 * @return array<int, array<string, mixed>>
-	 */
-	private function prepare_terms_for_response( $terms ): array {
-		if ( is_wp_error( $terms ) || ! is_array( $terms ) ) {
-			return array();
-		}
-
-		$data = array();
-
-		foreach ( $terms as $term ) {
-			if ( $term instanceof \WP_Term ) {
-				$data[] = wpss_prepare_term_for_rest( $term );
-			}
-		}
-
-		return $data;
-	}
-
-	/**
-	 * Collect a service's featured image and gallery.
-	 *
-	 * @param int $service_id Service ID.
-	 * @return array<int, array<string, mixed>>
-	 */
-	private function get_service_images( int $service_id ): array {
-		$images = array();
-
-		// Featured image.
-		$thumbnail_id = get_post_thumbnail_id( $service_id );
-		if ( $thumbnail_id ) {
-			$images[] = array(
-				'id'    => $thumbnail_id,
-				'url'   => wp_get_attachment_url( $thumbnail_id ),
-				'sizes' => array(
-					'thumbnail' => wp_get_attachment_image_url( $thumbnail_id, 'thumbnail' ),
-					'medium'    => wp_get_attachment_image_url( $thumbnail_id, 'medium' ),
-					'large'     => wp_get_attachment_image_url( $thumbnail_id, 'large' ),
-				),
-			);
-		}
-
-		// Gallery images.
-		$gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true );
-		$gallery_ids = wpss_get_gallery_ids( $gallery_raw );
-
-		if ( ! empty( $gallery_ids ) ) {
-			// The gallery meta normally also contains the featured image, so it
-			// was emitted twice — once as the featured entry and again as the
-			// first gallery entry, same id and same URL. Every consumer building
-			// a carousel from this showed its first slide twice, and each one
-			// would have had to dedupe independently. Fixed here so the payload
-			// is right for all of them.
-			$seen = array_column( $images, 'id' );
-
-			foreach ( $gallery_ids as $attachment_id ) {
-				if ( in_array( (int) $attachment_id, array_map( 'intval', $seen ), true ) ) {
-					continue;
-				}
-
-				if ( $attachment_id && wp_attachment_is_image( $attachment_id ) ) {
-					$seen[]   = (int) $attachment_id;
-					$images[] = array(
-						'id'    => $attachment_id,
-						'url'   => wp_get_attachment_url( $attachment_id ),
-						'sizes' => array(
-							'thumbnail' => wp_get_attachment_image_url( $attachment_id, 'thumbnail' ),
-							'medium'    => wp_get_attachment_image_url( $attachment_id, 'medium' ),
-							'large'     => wp_get_attachment_image_url( $attachment_id, 'large' ),
-						),
-					);
-				}
-			}
-		}
-
-		return $images;
-	}
-
-	/**
-	 * Get service rating.
-	 *
-	 * @param int $service_id Service ID.
-	 * @return array
-	 */
-	private function get_service_rating( int $service_id ): array {
-		global $wpdb;
-
-		$table  = $wpdb->prefix . 'wpss_reviews';
-		$rating = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT AVG(rating) as average, COUNT(*) as count FROM {$table} WHERE service_id = %d AND status = 'approved'",
-				$service_id
-			)
-		);
-
-		return array(
-			'average' => $rating ? round( (float) $rating->average, 2 ) : 0,
-			'count'   => $rating ? (int) $rating->count : 0,
-		);
 	}
 
 	/**

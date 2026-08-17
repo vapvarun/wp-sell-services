@@ -776,7 +776,8 @@ class BuyerRequestsController extends RestController {
 				'name'   => wpss_get_member_display_name( (int) $author_id ),
 				'avatar' => get_avatar_url( $author_id, [ 'size' => 48 ] ),
 			],
-			'created_at'       => $buyer_request->created_at ?? $buyer_request->post_date ?? '',
+			// ISO-8601 through the shared formatter (Basecamp 10154919636).
+			'created_at'       => $this->format_datetime( $buyer_request->created_at ?? $buyer_request->post_date ?? null ),
 		];
 
 		// Add attachments if owner.
@@ -816,7 +817,7 @@ class BuyerRequestsController extends RestController {
 				'contract_type' => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
 				'milestones'    => is_array( $proposal->milestones ?? null ) ? $proposal->milestones : [],
 				'status'        => $proposal->status,
-				'created_at'    => $proposal->created_at,
+				'created_at'    => $this->format_datetime( $proposal->created_at ?? null ),
 			]
 		);
 	}
