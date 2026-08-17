@@ -536,16 +536,32 @@ class UnifiedDashboard {
 	private function render_login_prompt(): string {
 		$login_url = wp_login_url( get_permalink() ?: home_url() );
 
-		return sprintf(
+		/*
+		 * The heading is an H1, not an H2, and it has to be here.
+		 *
+		 * The dashboard is a plugin-shell surface, so ShellHeader suppresses the
+		 * theme's own <h1> in favour of the plugin's. The signed-in dashboard
+		 * renders one; this prompt did not, so once suppression started working a
+		 * logged-out visitor got a page with NO H1 at all — worse than the
+		 * duplicate that was reported (Basecamp 10208511245).
+		 *
+		 * Rendered through ShellHeader::render() rather than a hand-written <h1>,
+		 * so it is the same component, class names and styling as every other
+		 * plugin heading.
+		 */
+		return \WPSellServices\Frontend\ShellHeader::render(
+			array(
+				'title' => __( 'Access Your Dashboard', 'wp-sell-services' ),
+				'echo'  => false,
+			)
+		) . sprintf(
 			'<div class="wpss-dashboard-login">
 				<div class="wpss-dashboard-login__icon">
 					<i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 				</div>
-				<h2>%s</h2>
 				<p>%s</p>
 				<a href="%s" class="wpss-btn wpss-btn--primary">%s</a>
 			</div>',
-			esc_html__( 'Access Your Dashboard', 'wp-sell-services' ),
 			esc_html__( 'Please log in to view your orders, messages, and manage your services.', 'wp-sell-services' ),
 			esc_url( $login_url ),
 			esc_html__( 'Log In', 'wp-sell-services' )

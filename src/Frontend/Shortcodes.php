@@ -1390,7 +1390,8 @@ class Shortcodes {
 					exit;
 				}
 
-				return '<div class="wpss-cart-redirect"><p>'
+				return self::cart_heading()
+					. '<div class="wpss-cart-redirect"><p>'
 					. wp_kses_post(
 						sprintf(
 							/* translators: %s: cart page link */
@@ -1403,7 +1404,8 @@ class Shortcodes {
 		}
 
 		if ( ! is_user_logged_in() ) {
-			return '<p class="wpss-alert">' . esc_html__( 'Please log in to view your cart.', 'wp-sell-services' ) . '</p>';
+			return self::cart_heading()
+				. '<p class="wpss-alert">' . esc_html__( 'Please log in to view your cart.', 'wp-sell-services' ) . '</p>';
 		}
 
 		$cart_items = get_user_meta( get_current_user_id(), '_wpss_cart', true );
@@ -1414,6 +1416,32 @@ class Shortcodes {
 		ob_start();
 		wpss_get_template( 'cart/cart.php', array( 'cart_items' => $cart_items ) );
 		return ob_get_clean();
+	}
+
+	/**
+	 * The cart page's heading, for the branches that render no template.
+	 *
+	 * The cart page is a plugin-shell surface, which means ShellHeader suppresses
+	 * the theme's own <h1> in favour of the plugin's. templates/cart/cart.php
+	 * prints one - but the logged-out branch and the "another rail owns the cart"
+	 * branch return before it, so those two ended up with NO heading at all once
+	 * suppression started working. A page with zero H1s is worse than the
+	 * duplicate that was reported (Basecamp 10208511245).
+	 *
+	 * Same wording as the template's heading, so the page reads identically
+	 * whichever branch runs.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return string Header markup.
+	 */
+	private static function cart_heading(): string {
+		return \WPSellServices\Frontend\ShellHeader::render(
+			array(
+				'title' => __( 'Your Cart', 'wp-sell-services' ),
+				'echo'  => false,
+			)
+		);
 	}
 
 	/**

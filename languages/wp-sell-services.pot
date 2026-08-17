@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-17T11:29:01+00:00\n"
+"POT-Creation-Date: 2026-08-17T12:08:07+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -20,7 +20,7 @@ msgstr ""
 #: src/Admin/Pages/SetupWizardPage.php:479
 #: src/Blocks/BlocksManager.php:134
 #: src/Blocks/BlocksManager.php:222
-#: src/Frontend/UnifiedDashboard.php:751
+#: src/Frontend/UnifiedDashboard.php:767
 #: wp-sell-services.php:372
 msgid "WP Sell Services"
 msgstr ""
@@ -344,7 +344,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:1050
 #: src/Admin/Admin.php:1051
-#: src/Frontend/UnifiedDashboard.php:804
+#: src/Frontend/UnifiedDashboard.php:820
 #: src/functions/urls.php:344
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:197
 msgid "Dashboard"
@@ -397,7 +397,7 @@ msgstr ""
 #: src/Admin/Admin.php:2145
 #: src/Frontend/MenuVisibility.php:87
 #: src/Frontend/UnifiedDashboard.php:511
-#: src/Frontend/UnifiedDashboard.php:787
+#: src/Frontend/UnifiedDashboard.php:803
 #: src/functions/notifications.php:84
 msgid "Disputes"
 msgstr ""
@@ -533,7 +533,7 @@ msgstr ""
 #: src/Frontend/MenuVisibility.php:79
 #: src/Frontend/Tour.php:538
 #: src/Frontend/UnifiedDashboard.php:468
-#: src/Frontend/UnifiedDashboard.php:774
+#: src/Frontend/UnifiedDashboard.php:790
 #: assets/js/blocks.js:555
 #: assets/js/blocks.js:650
 msgid "Buyer Requests"
@@ -929,7 +929,7 @@ msgstr ""
 #: src/Frontend/MenuVisibility.php:85
 #: src/Frontend/Tour.php:596
 #: src/Frontend/UnifiedDashboard.php:503
-#: src/Frontend/UnifiedDashboard.php:781
+#: src/Frontend/UnifiedDashboard.php:797
 #: templates/myaccount/vendor-dashboard.php:210
 msgid "Messages"
 msgstr ""
@@ -2282,8 +2282,8 @@ msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:154
 #: src/Core/AbilitiesRegistrar.php:222
-#: src/Frontend/UnifiedDashboard.php:701
-#: src/Frontend/UnifiedDashboard.php:790
+#: src/Frontend/UnifiedDashboard.php:717
+#: src/Frontend/UnifiedDashboard.php:806
 msgid "Create Service"
 msgstr ""
 
@@ -3984,7 +3984,7 @@ msgstr ""
 #: src/Frontend/MenuVisibility.php:83
 #: src/Frontend/SingleServiceView.php:756
 #: src/Frontend/UnifiedDashboard.php:492
-#: src/Frontend/UnifiedDashboard.php:780
+#: src/Frontend/UnifiedDashboard.php:796
 msgid "Portfolio"
 msgstr ""
 
@@ -4231,7 +4231,7 @@ msgid "Pending Requirements"
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1845
-#: src/Frontend/UnifiedDashboard.php:580
+#: src/Frontend/UnifiedDashboard.php:596
 #: src/functions/orders.php:115
 #: src/Models/ServiceOrder.php:635
 msgid "Pending Approval"
@@ -4768,7 +4768,7 @@ msgstr[1] ""
 
 #: src/Admin/ProTeaser.php:83
 #: src/Frontend/MenuVisibility.php:84
-#: src/Frontend/UnifiedDashboard.php:779
+#: src/Frontend/UnifiedDashboard.php:795
 msgid "Analytics"
 msgstr ""
 
@@ -7636,7 +7636,7 @@ msgid "You already have a pending vendor application. Please wait for admin appr
 msgstr ""
 
 #: src/API/VendorsController.php:620
-#: src/Frontend/UnifiedDashboard.php:1060
+#: src/Frontend/UnifiedDashboard.php:1076
 #: src/Services/VendorService.php:217
 msgid "Vendor registration is currently closed."
 msgstr ""
@@ -7686,7 +7686,7 @@ msgid "Avatar media attachment ID."
 msgstr ""
 
 #: src/Blocks/BlocksManager.php:139
-#: src/Frontend/UnifiedDashboard.php:578
+#: src/Frontend/UnifiedDashboard.php:594
 #: templates/order/conversation.php:155
 #: templates/order/extension-view.php:139
 #: templates/order/milestone-view.php:153
@@ -9389,21 +9389,21 @@ msgstr ""
 #: src/Frontend/MenuVisibility.php:77
 #: src/Frontend/Tour.php:528
 #: src/Frontend/UnifiedDashboard.php:460
-#: src/Frontend/UnifiedDashboard.php:772
+#: src/Frontend/UnifiedDashboard.php:788
 #: templates/myaccount/service-orders.php:35
 msgid "My Orders"
 msgstr ""
 
 #: src/Frontend/MenuVisibility.php:78
 #: src/Frontend/UnifiedDashboard.php:464
-#: src/Frontend/UnifiedDashboard.php:773
+#: src/Frontend/UnifiedDashboard.php:789
 msgid "Favorites"
 msgstr ""
 
 #: src/Frontend/MenuVisibility.php:80
 #: src/Frontend/Tour.php:552
 #: src/Frontend/UnifiedDashboard.php:480
-#: src/Frontend/UnifiedDashboard.php:775
+#: src/Frontend/UnifiedDashboard.php:791
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:221
 #: templates/myaccount/vendor-services.php:26
 msgid "My Services"
@@ -9412,20 +9412,20 @@ msgstr ""
 #: src/Frontend/MenuVisibility.php:81
 #: src/Frontend/Tour.php:562
 #: src/Frontend/UnifiedDashboard.php:484
-#: src/Frontend/UnifiedDashboard.php:776
+#: src/Frontend/UnifiedDashboard.php:792
 msgid "Sales Orders"
 msgstr ""
 
 #: src/Frontend/MenuVisibility.php:82
 #: src/Frontend/UnifiedDashboard.php:488
-#: src/Frontend/UnifiedDashboard.php:777
-#: src/Frontend/UnifiedDashboard.php:778
+#: src/Frontend/UnifiedDashboard.php:793
+#: src/Frontend/UnifiedDashboard.php:794
 msgid "Earnings & Payouts"
 msgstr ""
 
 #: src/Frontend/MenuVisibility.php:86
 #: src/Frontend/UnifiedDashboard.php:507
-#: src/Frontend/UnifiedDashboard.php:788
+#: src/Frontend/UnifiedDashboard.php:804
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:207
 #: templates/partials/notifications-list.php:110
 msgid "Notifications"
@@ -9433,7 +9433,7 @@ msgstr ""
 
 #: src/Frontend/MenuVisibility.php:88
 #: src/Frontend/UnifiedDashboard.php:515
-#: src/Frontend/UnifiedDashboard.php:789
+#: src/Frontend/UnifiedDashboard.php:805
 msgid "Profile"
 msgstr ""
 
@@ -9656,7 +9656,7 @@ msgid "Save Draft"
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:419
-#: src/Frontend/UnifiedDashboard.php:687
+#: src/Frontend/UnifiedDashboard.php:703
 msgid "Update Service"
 msgstr ""
 
@@ -10205,7 +10205,7 @@ msgid "Please log in to create a service."
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:2225
-#: src/Frontend/UnifiedDashboard.php:551
+#: src/Frontend/UnifiedDashboard.php:567
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:831
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1637
 msgid "Log In"
@@ -10216,7 +10216,7 @@ msgid "You need to be a registered vendor to create services."
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:2244
-#: src/Frontend/UnifiedDashboard.php:910
+#: src/Frontend/UnifiedDashboard.php:926
 #: src/functions/urls.php:350
 #: templates/single-request.php:477
 msgid "Become a Vendor"
@@ -10290,7 +10290,7 @@ msgid "Separate multiple skills with commas."
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:627
-#: src/Frontend/UnifiedDashboard.php:705
+#: src/Frontend/UnifiedDashboard.php:721
 #: templates/dashboard/sections/create-request.php:154
 msgid "Post Request"
 msgstr ""
@@ -10384,7 +10384,7 @@ msgstr ""
 
 #: src/Frontend/Shortcodes.php:1019
 #: src/Frontend/Shortcodes.php:1128
-#: src/Frontend/UnifiedDashboard.php:649
+#: src/Frontend/UnifiedDashboard.php:665
 msgid "Start selling your services"
 msgstr ""
 
@@ -10467,22 +10467,27 @@ msgid "An error occurred."
 msgstr ""
 
 #. translators: %s: cart page link
-#: src/Frontend/Shortcodes.php:1397
+#: src/Frontend/Shortcodes.php:1398
 #, php-format
 msgid "Your cart is handled by the store. <a href=\"%s\">Go to cart</a>."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1406
+#: src/Frontend/Shortcodes.php:1408
 msgid "Please log in to view your cart."
 msgstr ""
 
+#: src/Frontend/Shortcodes.php:1441
+#: templates/cart/cart.php:292
+msgid "Your Cart"
+msgstr ""
+
 #. translators: %s: checkout page link
-#: src/Frontend/Shortcodes.php:1466
+#: src/Frontend/Shortcodes.php:1494
 #, php-format
 msgid "Checkout is handled by the store. <a href=\"%s\">Go to checkout</a>."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1476
+#: src/Frontend/Shortcodes.php:1504
 msgid "Checkout is not available. Please configure an e-commerce platform in settings."
 msgstr ""
 
@@ -10955,98 +10960,98 @@ msgstr ""
 msgid "Account"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:548
+#: src/Frontend/UnifiedDashboard.php:554
 msgid "Access Your Dashboard"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:549
+#: src/Frontend/UnifiedDashboard.php:565
 msgid "Please log in to view your orders, messages, and manage your services."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:631
+#: src/Frontend/UnifiedDashboard.php:647
 msgid "Log Out"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:640
+#: src/Frontend/UnifiedDashboard.php:656
 msgid "Your vendor application is pending admin approval. You will be notified once your application is reviewed."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:651
-#: src/Frontend/UnifiedDashboard.php:913
-#: src/Frontend/UnifiedDashboard.php:928
+#: src/Frontend/UnifiedDashboard.php:667
+#: src/Frontend/UnifiedDashboard.php:929
+#: src/Frontend/UnifiedDashboard.php:944
 msgid "Start Selling"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:710
+#: src/Frontend/UnifiedDashboard.php:726
 msgid "Replay tour"
 msgstr ""
 
 #. translators: %s: linked plugin name "WP Sell Services".
-#: src/Frontend/UnifiedDashboard.php:750
+#: src/Frontend/UnifiedDashboard.php:766
 #, php-format
 msgid "Powered by %s"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:791
+#: src/Frontend/UnifiedDashboard.php:807
 #: templates/dashboard/sections/requests.php:70
 msgid "Post a Request"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:792
+#: src/Frontend/UnifiedDashboard.php:808
 #: src/PostTypes/BuyerRequestPostType.php:55
 #: templates/dashboard/sections/edit-request.php:75
 msgid "Edit Request"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:911
+#: src/Frontend/UnifiedDashboard.php:927
 msgid "Start selling your services on this marketplace. Click the button below to register as a vendor and begin offering your skills."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:924
+#: src/Frontend/UnifiedDashboard.php:940
 msgid "Vendor Access Required"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:925
+#: src/Frontend/UnifiedDashboard.php:941
 msgid "This section is available to vendors. Become a vendor to access this feature and start selling your services."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:948
+#: src/Frontend/UnifiedDashboard.php:964
 msgid "Section Not Available"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:952
+#: src/Frontend/UnifiedDashboard.php:968
 msgid "This section is not available on this site."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:954
+#: src/Frontend/UnifiedDashboard.php:970
 msgid "This section is part of WP Sell Services Pro and is not available on this site."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:959
+#: src/Frontend/UnifiedDashboard.php:975
 msgid "Back to Dashboard"
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1053
+#: src/Frontend/UnifiedDashboard.php:1069
 msgid "Please log in first."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1066
+#: src/Frontend/UnifiedDashboard.php:1082
 msgid "You are already a seller."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1071
+#: src/Frontend/UnifiedDashboard.php:1087
 msgid "Your vendor application is already pending approval."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1084
+#: src/Frontend/UnifiedDashboard.php:1100
 msgid "Your vendor application has been submitted! It is pending admin approval."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1109
+#: src/Frontend/UnifiedDashboard.php:1125
 msgid "Welcome! You can now create and sell services."
 msgstr ""
 
-#: src/Frontend/UnifiedDashboard.php:1115
+#: src/Frontend/UnifiedDashboard.php:1131
 msgid "Unable to complete registration. Please try again."
 msgstr ""
 
@@ -17321,10 +17326,6 @@ msgstr ""
 
 #: src/Taxonomies/ServiceTagTaxonomy.php:71
 msgid "&larr; Back to Tags"
-msgstr ""
-
-#: templates/cart/cart.php:292
-msgid "Your Cart"
 msgstr ""
 
 #: templates/cart/cart.php:300
