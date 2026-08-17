@@ -1063,8 +1063,20 @@ class Shortcodes {
 			return ob_get_clean();
 		}
 
-		$user_id   = get_current_user_id();
-		$is_vendor = get_user_meta( $user_id, '_wpss_is_vendor', true );
+		$user_id = get_current_user_id();
+
+		// Canonical check, not the raw `_wpss_is_vendor` meta.
+		//
+		// That meta is a LEGACY marker. Vendors created by role assignment, by an
+		// admin, by the demo seeder, or by anything that grants the wpss_vendor
+		// role do not carry it — on a normal install that is every vendor. Reading
+		// the meta directly therefore answered "not a vendor" for real sellers, and
+		// this page offered them "Register as Vendor" while their dashboard,
+		// services and earnings all worked (Basecamp 10208142467).
+		//
+		// wpss_is_vendor() is the one answer: capability, then role, then the
+		// legacy meta, then the wpss_is_vendor filter.
+		$is_vendor = wpss_is_vendor( $user_id );
 
 		if ( $is_vendor ) {
 			$dashboard_url = wpss_get_page_url( 'dashboard' );

@@ -260,23 +260,25 @@ class VendorService {
 	/**
 	 * Check if user is a vendor.
 	 *
+	 * Delegates to wpss_is_vendor(), which is the one answer to this question.
+	 * This method used to check role-then-meta itself, which made it a SECOND
+	 * implementation missing two things the canonical helper has: the
+	 * `wpss_vendor` capability (so a user granted the capability without the role
+	 * was a vendor everywhere except the dashboard and the service wizard), and
+	 * the `wpss_is_vendor` filter, so a site extending vendor status saw it
+	 * respected on some screens and ignored on others.
+	 *
+	 * Kept as a method rather than replaced at its dozen call sites: those pass
+	 * an explicit $user_id through an injected service, and the indirection is
+	 * how the dashboard and wizard already read it.
+	 *
+	 * @since 1.6.0 Delegates instead of re-deriving.
+	 *
 	 * @param int $user_id User ID.
 	 * @return bool True if vendor.
 	 */
 	public function is_vendor( int $user_id ): bool {
-		$user = get_userdata( $user_id );
-
-		if ( ! $user ) {
-			return false;
-		}
-
-		// Check role.
-		if ( in_array( self::ROLE, $user->roles, true ) ) {
-			return true;
-		}
-
-		// Check meta.
-		return (bool) get_user_meta( $user_id, '_wpss_is_vendor', true );
+		return wpss_is_vendor( $user_id );
 	}
 
 	/**

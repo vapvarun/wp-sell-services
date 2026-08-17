@@ -3605,11 +3605,13 @@ class AjaxHandlers {
 			delete_user_meta( $user_id, '_wpss_avatar_id' );
 		}
 
-		// Check if user is a vendor and update vendor-specific fields.
-		$is_vendor = get_user_meta( $user_id, '_wpss_is_vendor', true );
-
 		// Check if user is a vendor (canonical capability/role check - role-based
 		// vendors do not always carry the _wpss_is_vendor meta).
+		//
+		// A raw get_user_meta( '_wpss_is_vendor' ) read sat directly above this
+		// line, its result overwritten one statement later. Dead since the
+		// canonical check was added; removed so nobody reinstates it by reading
+		// the first line and stopping.
 		$is_vendor = wpss_is_vendor( $user_id );
 
 		if ( $is_vendor ) {
