@@ -88,6 +88,13 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 $dispute_service  = new \WPSellServices\Services\DisputeService();
 $can_open_dispute = $dispute_service->can_open_dispute( $order );
 
+// The dispute this order already has, if any. can_open_dispute() returns false
+// once one exists, which removed the Open Dispute button and put nothing in its
+// place — so the order page went silent about the very thing in progress on it,
+// and the buyer had to go hunting through Dashboard > Disputes. Shown for
+// resolved disputes too: "how did that end?" is asked from the order.
+$order_dispute = $dispute_service->get_by_order( $order_id );
+
 /**
  * Hook: wpss_before_order_view
  *
@@ -353,6 +360,18 @@ do_action( 'wpss_before_order_view', $order );
 					'class' => 'wpss-btn wpss-btn--danger-outline wpss-dispute-btn',
 					'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
 				);
+			} elseif ( $order_dispute && ( $is_customer || $is_vendor ) ) {
+				// Mutually exclusive with Open Dispute by definition: one exists,
+				// so the action is to go and read it.
+				$dispute_url = wpss_get_dashboard_url( 'disputes' );
+
+				if ( $dispute_url ) {
+					$actions['view-dispute'] = array(
+						'label' => __( 'View Dispute', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--danger-outline',
+						'url'   => add_query_arg( 'dispute', (int) $order_dispute->id, $dispute_url ),
+					);
+				}
 			}
 
 			/**
@@ -383,11 +402,26 @@ do_action( 'wpss_before_order_view', $order );
 					do_action( 'wpss_order_view_actions', $order );
 
 					foreach ( $actions as $action_key => $action_data ) :
-						?>
-						<button type="button" class="<?php echo esc_attr( $action_data['class'] ); ?>" <?php echo $action_data['attrs']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
-							<?php echo esc_html( $action_data['label'] ); ?>
-						</button>
-					<?php endforeach; ?>
+						// An action that carries a `url` is a link, not a
+						// button: every action here used to open a modal, so
+						// the renderer only emitted <button> and an action that
+						// simply navigates had nowhere to go. `attrs` stays
+						// optional so a link needs no dummy value.
+						$action_attrs = $action_data['attrs'] ?? '';
+
+						if ( ! empty( $action_data['url'] ) ) :
+							?>
+							<a class="<?php echo esc_attr( $action_data['class'] ); ?>" href="<?php echo esc_url( $action_data['url'] ); ?>" <?php echo $action_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+								<?php echo esc_html( $action_data['label'] ); ?>
+							</a>
+						<?php else : ?>
+							<button type="button" class="<?php echo esc_attr( $action_data['class'] ); ?>" <?php echo $action_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+								<?php echo esc_html( $action_data['label'] ); ?>
+							</button>
+							<?php
+						endif;
+					endforeach;
+					?>
 				</div>
 			<?php endif; ?>
 		<?php endif; ?>

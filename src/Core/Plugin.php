@@ -341,6 +341,25 @@ final class Plugin {
 			);
 		}
 
+		// Dispute evidence used to live in the disputes row's `evidence` JSON
+		// while the opening statement and admin replies lived in
+		// wpss_dispute_messages, and each surface read only one of them. The
+		// table is now the single store, so existing evidence has to move
+		// there or those disputes lose their history. Own flag rather than the
+		// version gate, for the same reason as the ledger reconciliation
+		// above: a release that forgets to bump the version cannot skip it.
+		// Idempotent — see migrate_evidence_to_messages().
+		if ( ! get_option( 'wpss_dispute_evidence_migrated', false ) ) {
+			add_action(
+				'init',
+				static function (): void {
+					( new \WPSellServices\Services\DisputeService() )->migrate_evidence_to_messages();
+					update_option( 'wpss_dispute_evidence_migrated', 1, false );
+				},
+				20
+			);
+		}
+
 		// The schema has its OWN version, and it moves independently of the
 		// plugin version — a release can add a table without changing
 		// WPSS_VERSION. Gating the installer on the plugin version alone meant

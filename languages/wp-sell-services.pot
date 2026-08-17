@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-17T08:49:27+00:00\n"
+"POT-Creation-Date: 2026-08-17T09:05:53+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -480,8 +480,8 @@ msgstr ""
 #: templates/dashboard/sections/orders.php:110
 #: templates/dashboard/sections/sales.php:145
 #: templates/emails/order-completed.php:96
-#: templates/order/order-view.php:1064
-#: templates/order/order-view.php:1171
+#: templates/order/order-view.php:1098
+#: templates/order/order-view.php:1205
 msgid "Completed"
 msgstr ""
 
@@ -810,7 +810,7 @@ msgstr ""
 #: src/Admin/Pages/ManualOrderPage.php:807
 #: src/functions/orders.php:121
 #: src/Models/ServiceOrder.php:634
-#: templates/order/order-view.php:1055
+#: templates/order/order-view.php:1089
 msgid "Delivered"
 msgstr ""
 
@@ -824,7 +824,7 @@ msgstr ""
 #: src/Services/EmailService.php:1130
 #: src/Services/NotificationService.php:550
 #: templates/emails/revision-requested.php:74
-#: templates/order/order-view.php:1117
+#: templates/order/order-view.php:1151
 msgid "Revision Requested"
 msgstr ""
 
@@ -834,8 +834,8 @@ msgstr ""
 #: src/Models/ServiceOrder.php:638
 #: src/Services/BuyerRequestService.php:1060
 #: templates/emails/order-cancelled.php:66
-#: templates/order/order-view.php:1079
-#: templates/order/order-view.php:1418
+#: templates/order/order-view.php:1113
+#: templates/order/order-view.php:1452
 msgid "Cancelled"
 msgstr ""
 
@@ -843,7 +843,7 @@ msgstr ""
 #: src/functions/orders.php:128
 #: src/Models/ServiceOrder.php:639
 #: templates/emails/dispute-opened.php:108
-#: templates/order/order-view.php:1099
+#: templates/order/order-view.php:1133
 msgid "Disputed"
 msgstr ""
 
@@ -862,13 +862,13 @@ msgstr ""
 #: templates/emails/requirements-submitted.php:63
 #: templates/emails/revision-requested.php:63
 #: templates/order/order-requirements.php:113
-#: templates/order/order-view.php:119
+#: templates/order/order-view.php:126
 #, php-format
 msgid "Order #%s"
 msgstr ""
 
 #: src/Admin/Admin.php:1688
-#: templates/order/order-view.php:108
+#: templates/order/order-view.php:115
 msgid "Back to Orders"
 msgstr ""
 
@@ -890,7 +890,7 @@ msgid "Package"
 msgstr ""
 
 #: src/Admin/Admin.php:1732
-#: templates/order/order-view.php:443
+#: templates/order/order-view.php:477
 msgid "Due Date"
 msgstr ""
 
@@ -964,7 +964,7 @@ msgid "No messages yet."
 msgstr ""
 
 #: src/Admin/Admin.php:1843
-#: templates/order/order-view.php:1187
+#: templates/order/order-view.php:1221
 msgid "Deliveries"
 msgstr ""
 
@@ -1133,7 +1133,7 @@ msgstr ""
 #: src/Models/BuyerRequest.php:270
 #: src/Models/Dispute.php:234
 #: src/Services/BuyerRequestService.php:1056
-#: src/Services/DisputeService.php:731
+#: src/Services/DisputeService.php:902
 msgid "Open"
 msgstr ""
 
@@ -1142,7 +1142,7 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:200
 #: src/Admin/Tables/DisputesListTable.php:289
 #: src/Models/Dispute.php:235
-#: src/Services/DisputeService.php:732
+#: src/Services/DisputeService.php:903
 #: src/Services/ModerationService.php:537
 #: templates/dashboard/sections/services.php:124
 #: templates/emails/moderation-pending.php:59
@@ -1153,7 +1153,7 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:201
 #: src/Admin/Tables/DisputesListTable.php:290
 #: src/Models/Dispute.php:237
-#: src/Services/DisputeService.php:733
+#: src/Services/DisputeService.php:904
 msgid "Resolved"
 msgstr ""
 
@@ -1161,7 +1161,7 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:202
 #: src/Admin/Tables/DisputesListTable.php:291
 #: src/Models/Dispute.php:236
-#: src/Services/DisputeService.php:734
+#: src/Services/DisputeService.php:905
 #: templates/emails/dispute-escalated.php:59
 msgid "Escalated"
 msgstr ""
@@ -1172,7 +1172,7 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:292
 #: src/Models/BuyerRequest.php:271
 #: src/Models/Dispute.php:238
-#: src/Services/DisputeService.php:735
+#: src/Services/DisputeService.php:906
 msgid "Closed"
 msgstr ""
 
@@ -1200,7 +1200,7 @@ msgstr ""
 #: templates/dashboard/sections/disputes.php:251
 #: templates/dashboard/sections/disputes.php:291
 #: templates/order/extension-view.php:162
-#: templates/order/order-view.php:1712
+#: templates/order/order-view.php:1746
 msgid "Reason"
 msgstr ""
 
@@ -1229,7 +1229,7 @@ msgstr ""
 #: templates/dashboard/sections/edit-request.php:107
 #: templates/dashboard/sections/portfolio.php:228
 #: templates/order/milestone-view.php:176
-#: templates/order/order-view.php:2114
+#: templates/order/order-view.php:2148
 msgid "Description"
 msgstr ""
 
@@ -1410,7 +1410,7 @@ msgstr ""
 #: src/Frontend/SingleServiceView.php:152
 #: src/Models/Message.php:143
 #: templates/content-request-card.php:202
-#: templates/order/order-view.php:1164
+#: templates/order/order-view.php:1198
 msgid "Delivery"
 msgstr ""
 
@@ -1421,8 +1421,8 @@ msgstr ""
 #: src/Models/Proposal.php:237
 #: src/Services/VendorService.php:886
 #: templates/content-request-card.php:207
-#: templates/order/order-view.php:1705
-#: templates/order/order-view.php:1751
+#: templates/order/order-view.php:1739
+#: templates/order/order-view.php:1785
 #: templates/single-request.php:358
 #: templates/single-request.php:427
 #, php-format
@@ -1772,7 +1772,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:818
 #: src/Admin/Pages/VendorsPage.php:969
 #: src/Admin/Pages/VendorsPage.php:1268
-#: templates/order/order-view.php:2010
+#: templates/order/order-view.php:2044
 msgid "Rating"
 msgstr ""
 
@@ -2214,7 +2214,7 @@ msgstr[1] ""
 #: src/API/ConversationsController.php:692
 #: src/Models/Message.php:146
 #: src/Models/Message.php:170
-#: src/Services/DisputeWorkflowManager.php:1056
+#: src/Services/DisputeWorkflowManager.php:1057
 #: templates/dashboard/sections/disputes.php:101
 #: templates/dashboard/sections/disputes.php:142
 msgid "System"
@@ -2339,7 +2339,7 @@ msgid "Commission Rate"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:302
-#: templates/order/order-view.php:505
+#: templates/order/order-view.php:539
 msgid "Platform Fee"
 msgstr ""
 
@@ -2383,9 +2383,9 @@ msgstr ""
 #: src/Services/EarningsService.php:1046
 #: src/Services/ExtensionRequestService.php:491
 #: src/Services/ProposalService.php:858
-#: templates/order/order-view.php:1156
-#: templates/order/order-view.php:1165
-#: templates/order/order-view.php:1172
+#: templates/order/order-view.php:1190
+#: templates/order/order-view.php:1199
+#: templates/order/order-view.php:1206
 msgid "Pending"
 msgstr ""
 
@@ -2401,8 +2401,8 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:1848
 #: src/functions/orders.php:129
 #: src/Models/ServiceOrder.php:643
-#: templates/order/order-view.php:470
-#: templates/order/order-view.php:1075
+#: templates/order/order-view.php:504
+#: templates/order/order-view.php:1109
 msgid "Refunded"
 msgstr ""
 
@@ -2433,7 +2433,7 @@ msgstr ""
 #: src/Models/Dispute.php:254
 #: src/Services/EmailService.php:1224
 #: src/Services/NotificationService.php:578
-#: templates/order/order-view.php:931
+#: templates/order/order-view.php:965
 msgid "Other"
 msgstr ""
 
@@ -2491,9 +2491,9 @@ msgstr ""
 #: templates/order/order-confirmation.php:137
 #: templates/order/order-requirements.php:86
 #: templates/order/order-requirements.php:282
-#: templates/order/order-view.php:266
-#: templates/order/order-view.php:656
-#: templates/order/order-view.php:762
+#: templates/order/order-view.php:273
+#: templates/order/order-view.php:690
+#: templates/order/order-view.php:796
 #: templates/order/requirements-form.php:409
 msgid "Submit Requirements"
 msgstr ""
@@ -2856,7 +2856,7 @@ msgstr ""
 #: templates/dashboard/sections/services.php:129
 #: templates/dashboard/sections/services.php:230
 #: templates/emails/withdrawal-rejected.php:55
-#: templates/order/order-view.php:1108
+#: templates/order/order-view.php:1142
 msgid "Rejected"
 msgstr ""
 
@@ -3878,14 +3878,14 @@ msgstr[1] ""
 #: templates/dashboard/sections/requests.php:164
 #: templates/dashboard/sections/requests.php:167
 #: templates/order/milestone-view.php:270
-#: templates/order/order-view.php:1523
-#: templates/order/order-view.php:1839
-#: templates/order/order-view.php:1925
-#: templates/order/order-view.php:1999
-#: templates/order/order-view.php:2047
-#: templates/order/order-view.php:2088
-#: templates/order/order-view.php:2140
-#: templates/order/order-view.php:3135
+#: templates/order/order-view.php:1557
+#: templates/order/order-view.php:1873
+#: templates/order/order-view.php:1959
+#: templates/order/order-view.php:2033
+#: templates/order/order-view.php:2081
+#: templates/order/order-view.php:2122
+#: templates/order/order-view.php:2174
+#: templates/order/order-view.php:3169
 #: templates/single-request.php:534
 msgid "Close"
 msgstr ""
@@ -4105,7 +4105,7 @@ msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1564
 #: src/Admin/Pages/VendorsPage.php:1568
-#: templates/order/order-view.php:889
+#: templates/order/order-view.php:923
 msgid "Not provided"
 msgstr ""
 
@@ -4324,8 +4324,8 @@ msgstr ""
 #: templates/emails/withdrawal-approved.php:50
 #: templates/emails/withdrawal-auto.php:46
 #: templates/emails/withdrawal-rejected.php:50
-#: templates/order/order-view.php:1541
-#: templates/order/order-view.php:1697
+#: templates/order/order-view.php:1575
+#: templates/order/order-view.php:1731
 #: templates/single-request.php:627
 msgid "Amount"
 msgstr ""
@@ -4702,13 +4702,13 @@ msgstr ""
 #: src/Frontend/Frontend.php:301
 #: templates/dashboard/sections/portfolio.php:274
 #: templates/order/milestone-view.php:283
-#: templates/order/order-view.php:1555
-#: templates/order/order-view.php:1887
-#: templates/order/order-view.php:1980
-#: templates/order/order-view.php:2029
-#: templates/order/order-view.php:2070
-#: templates/order/order-view.php:2122
-#: templates/order/order-view.php:3161
+#: templates/order/order-view.php:1589
+#: templates/order/order-view.php:1921
+#: templates/order/order-view.php:2014
+#: templates/order/order-view.php:2063
+#: templates/order/order-view.php:2104
+#: templates/order/order-view.php:2156
+#: templates/order/order-view.php:3195
 #: templates/single-request.php:641
 msgid "Cancel"
 msgstr ""
@@ -5234,7 +5234,7 @@ msgstr ""
 #: src/Services/EmailService.php:1256
 #: src/Services/NotificationService.php:586
 #: templates/emails/cancellation-requested.php:84
-#: templates/order/order-view.php:1090
+#: templates/order/order-view.php:1124
 msgid "Cancellation Requested"
 msgstr ""
 
@@ -6178,7 +6178,7 @@ msgstr ""
 #: src/Services/EarningsService.php:596
 #: templates/dashboard/sections/orders.php:219
 #: templates/dashboard/sections/sales.php:293
-#: templates/order/order-view.php:555
+#: templates/order/order-view.php:589
 msgid "Deleted Service"
 msgstr ""
 
@@ -7715,7 +7715,7 @@ msgstr ""
 #: templates/order/conversation.php:155
 #: templates/order/extension-view.php:139
 #: templates/order/milestone-view.php:153
-#: templates/order/order-view.php:577
+#: templates/order/order-view.php:611
 msgid "Seller"
 msgstr ""
 
@@ -8229,21 +8229,21 @@ msgstr ""
 msgid "The site owner will contact you with payment instructions after you place your order."
 msgstr ""
 
-#: src/Core/Plugin.php:1428
+#: src/Core/Plugin.php:1447
 msgid "All milestones on this custom-project order are complete."
 msgstr ""
 
 #. translators: %d: count of paid phases
-#: src/Core/Plugin.php:1485
+#: src/Core/Plugin.php:1504
 #, php-format
 msgid "Project cancelled while %d milestone was already paid. Money has moved to the seller wallet; open a dispute if the work cannot be accepted."
 msgstr ""
 
-#: src/Core/Plugin.php:1490
+#: src/Core/Plugin.php:1509
 msgid "Paid milestone not delivered"
 msgstr ""
 
-#: src/Core/Plugin.php:1491
+#: src/Core/Plugin.php:1510
 msgid "Paid milestone on cancelled project"
 msgstr ""
 
@@ -9194,7 +9194,7 @@ msgid "Upload File"
 msgstr ""
 
 #: src/Frontend/Frontend.php:261
-#: templates/order/order-view.php:766
+#: templates/order/order-view.php:800
 #: templates/order/requirements-form.php:412
 msgid "Submitting..."
 msgstr ""
@@ -12930,7 +12930,7 @@ msgstr ""
 
 #: src/functions/orders.php:122
 #: src/Models/ServiceOrder.php:640
-#: templates/order/order-view.php:1144
+#: templates/order/order-view.php:1178
 msgid "On Hold"
 msgstr ""
 
@@ -12942,8 +12942,8 @@ msgstr ""
 
 #: src/functions/orders.php:130
 #: src/Models/ServiceOrder.php:644
-#: templates/order/order-view.php:471
-#: templates/order/order-view.php:1077
+#: templates/order/order-view.php:505
+#: templates/order/order-view.php:1111
 msgid "Partially Refunded"
 msgstr ""
 
@@ -13676,7 +13676,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:913
-#: templates/order/order-view.php:538
+#: templates/order/order-view.php:572
 msgid "Service Details"
 msgstr ""
 
@@ -13703,14 +13703,14 @@ msgstr ""
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1769
 #: templates/cart/cart.php:426
 #: templates/order/order-confirmation.php:84
-#: templates/order/order-view.php:401
+#: templates/order/order-view.php:435
 msgid "Order Summary"
 msgstr ""
 
 #. translators: %s: formatted price
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1093
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1801
-#: templates/order/order-view.php:242
+#: templates/order/order-view.php:249
 #, php-format
 msgid "Pay %s"
 msgstr ""
@@ -14106,12 +14106,12 @@ msgid "Late delivery"
 msgstr ""
 
 #: src/Models/Dispute.php:265
-#: src/Services/DisputeService.php:746
+#: src/Services/DisputeService.php:917
 msgid "Full Refund"
 msgstr ""
 
 #: src/Models/Dispute.php:266
-#: src/Services/DisputeService.php:747
+#: src/Services/DisputeService.php:918
 msgid "Partial Refund"
 msgstr ""
 
@@ -14128,7 +14128,7 @@ msgid "Resolved in Seller Favor"
 msgstr ""
 
 #: src/Models/Dispute.php:270
-#: src/Services/DisputeService.php:750
+#: src/Services/DisputeService.php:921
 msgid "Mutual Agreement"
 msgstr ""
 
@@ -14157,7 +14157,7 @@ msgid "Order Delivered"
 msgstr ""
 
 #: src/Models/Notification.php:271
-#: templates/order/order-view.php:1126
+#: templates/order/order-view.php:1160
 msgid "Order Late"
 msgstr ""
 
@@ -14250,7 +14250,7 @@ msgid "%d days delivery"
 msgstr ""
 
 #: src/Models/ServicePackage.php:206
-#: templates/order/order-view.php:169
+#: templates/order/order-view.php:176
 msgid "Unlimited revisions"
 msgstr ""
 
@@ -14863,11 +14863,11 @@ msgstr ""
 msgid "Earning from order #%1$d (Total: %2$s, Commission: %3$s%%)"
 msgstr ""
 
-#: src/Services/DisputeService.php:748
+#: src/Services/DisputeService.php:919
 msgid "In Favor of Vendor"
 msgstr ""
 
-#: src/Services/DisputeService.php:749
+#: src/Services/DisputeService.php:920
 msgid "In Favor of Buyer"
 msgstr ""
 
@@ -15287,7 +15287,7 @@ msgstr ""
 
 #: src/Services/EmailService.php:936
 #: src/Services/NotificationService.php:1167
-#: templates/order/order-view.php:1690
+#: templates/order/order-view.php:1724
 msgid "Quote for extra work"
 msgstr ""
 
@@ -15348,35 +15348,35 @@ msgstr ""
 
 #: src/Services/EmailService.php:1219
 #: src/Services/NotificationService.php:573
-#: templates/order/order-view.php:926
+#: templates/order/order-view.php:960
 msgid "Changed my mind"
 msgstr ""
 
 #: src/Services/EmailService.php:1220
 #: src/Services/NotificationService.php:574
-#: templates/order/order-view.php:927
-#: templates/order/order-view.php:2164
+#: templates/order/order-view.php:961
+#: templates/order/order-view.php:2198
 msgid "Found an alternative"
 msgstr ""
 
 #: src/Services/EmailService.php:1221
 #: src/Services/NotificationService.php:575
-#: templates/order/order-view.php:928
-#: templates/order/order-view.php:2165
+#: templates/order/order-view.php:962
+#: templates/order/order-view.php:2199
 msgid "Taking too long"
 msgstr ""
 
 #: src/Services/EmailService.php:1222
 #: src/Services/NotificationService.php:576
-#: templates/order/order-view.php:929
-#: templates/order/order-view.php:2166
+#: templates/order/order-view.php:963
+#: templates/order/order-view.php:2200
 msgid "Ordered by mistake"
 msgstr ""
 
 #: src/Services/EmailService.php:1223
 #: src/Services/NotificationService.php:577
-#: templates/order/order-view.php:930
-#: templates/order/order-view.php:2167
+#: templates/order/order-view.php:964
+#: templates/order/order-view.php:2201
 msgid "Communication issues with vendor"
 msgstr ""
 
@@ -16043,7 +16043,7 @@ msgstr ""
 #: templates/emails/plain/order-cancelled.php:41
 #: templates/emails/vendor-rejected.php:65
 #: templates/emails/withdrawal-rejected.php:62
-#: templates/order/order-view.php:992
+#: templates/order/order-view.php:1026
 msgid "Reason:"
 msgstr ""
 
@@ -17994,7 +17994,7 @@ msgid "Could not save. Try again."
 msgstr ""
 
 #: templates/dashboard/sections/profile.php:315
-#: templates/order/order-view.php:3217
+#: templates/order/order-view.php:3251
 msgid "Network error. Try again."
 msgstr ""
 
@@ -18115,7 +18115,7 @@ msgstr ""
 
 #. translators: %s: buyer-paid amount
 #: templates/dashboard/sections/sales.php:359
-#: templates/order/order-view.php:1437
+#: templates/order/order-view.php:1471
 #, php-format
 msgid "(buyer paid %s)"
 msgstr ""
@@ -18300,7 +18300,7 @@ msgstr ""
 
 #: templates/disputes/dispute-view.php:472
 #: templates/order/conversation.php:155
-#: templates/order/order-view.php:577
+#: templates/order/order-view.php:611
 msgid "Buyer"
 msgstr ""
 
@@ -18435,7 +18435,7 @@ msgstr ""
 
 #: templates/emails/cancellation-requested.php:119
 #: templates/emails/plain/cancellation-requested.php:79
-#: templates/order/order-view.php:338
+#: templates/order/order-view.php:345
 msgid "Accept Cancellation"
 msgstr ""
 
@@ -18446,7 +18446,7 @@ msgstr ""
 
 #: templates/emails/cancellation-requested.php:120
 #: templates/emails/plain/cancellation-requested.php:81
-#: templates/order/order-view.php:343
+#: templates/order/order-view.php:350
 msgid "Dispute Cancellation"
 msgstr ""
 
@@ -18513,7 +18513,7 @@ msgstr ""
 #: templates/emails/dispute-opened.php:60
 #: templates/emails/order-completed.php:31
 #: templates/emails/plain/order-completed.php:21
-#: templates/order/order-view.php:1851
+#: templates/order/order-view.php:1885
 msgid "the vendor"
 msgstr ""
 
@@ -18679,7 +18679,7 @@ msgid "What this phase covers:"
 msgstr ""
 
 #: templates/emails/milestone-proposed.php:59
-#: templates/order/order-view.php:1450
+#: templates/order/order-view.php:1484
 #: templates/single-request.php:368
 msgid "Deliverables:"
 msgstr ""
@@ -18696,8 +18696,8 @@ msgstr ""
 #: templates/emails/milestone-proposed.php:75
 #: templates/order/extension-view.php:174
 #: templates/order/milestone-view.php:202
-#: templates/order/order-view.php:1479
-#: templates/order/order-view.php:1723
+#: templates/order/order-view.php:1513
+#: templates/order/order-view.php:1757
 #, php-format
 msgid "Accept & Pay %s"
 msgstr ""
@@ -18713,7 +18713,7 @@ msgid "Delivery note from the seller:"
 msgstr ""
 
 #: templates/emails/milestone-submitted.php:53
-#: templates/order/order-view.php:1501
+#: templates/order/order-view.php:1535
 msgid "Review & approve"
 msgstr ""
 
@@ -19352,7 +19352,7 @@ msgid "Your withdrawal request for %s has been approved and is being processed."
 msgstr ""
 
 #: templates/emails/withdrawal-approved.php:62
-#: templates/order/order-view.php:870
+#: templates/order/order-view.php:904
 msgid "Note:"
 msgstr ""
 
@@ -19568,8 +19568,8 @@ msgstr ""
 
 #: templates/order/extension-view.php:182
 #: templates/order/milestone-view.php:209
-#: templates/order/order-view.php:1485
-#: templates/order/order-view.php:1732
+#: templates/order/order-view.php:1519
+#: templates/order/order-view.php:1766
 #: templates/single-request.php:390
 msgid "Decline"
 msgstr ""
@@ -19641,7 +19641,7 @@ msgid "Delivery note"
 msgstr ""
 
 #: templates/order/milestone-view.php:216
-#: templates/order/order-view.php:1491
+#: templates/order/order-view.php:1525
 msgid "Cancel proposal"
 msgstr ""
 
@@ -19652,7 +19652,7 @@ msgstr ""
 #: templates/order/milestone-view.php:223
 #: templates/order/milestone-view.php:269
 #: templates/order/milestone-view.php:284
-#: templates/order/order-view.php:1496
+#: templates/order/order-view.php:1530
 msgid "Submit delivery"
 msgstr ""
 
@@ -19677,7 +19677,7 @@ msgid "Approve delivery of this phase? This marks it as complete and cannot be u
 msgstr ""
 
 #: templates/order/milestone-view.php:357
-#: templates/order/order-view.php:1618
+#: templates/order/order-view.php:1652
 msgid "Decline this phase? Your seller can propose a revised one."
 msgstr ""
 
@@ -19721,7 +19721,7 @@ msgid "Accept the delivery or request revisions if needed."
 msgstr ""
 
 #: templates/order/order-confirmation.php:166
-#: templates/order/order-view.php:1036
+#: templates/order/order-view.php:1070
 msgid "Order Placed"
 msgstr ""
 
@@ -19739,7 +19739,7 @@ msgstr ""
 
 #: templates/order/order-confirmation.php:194
 #: templates/order/order-requirements.php:299
-#: templates/order/order-view.php:417
+#: templates/order/order-view.php:451
 msgid "Order Number"
 msgstr ""
 
@@ -19821,582 +19821,586 @@ msgstr ""
 msgid "Mention any specific preferences"
 msgstr ""
 
-#: templates/order/order-view.php:165
+#: templates/order/order-view.php:172
 msgid "Revision policy for this order"
 msgstr ""
 
 #. translators: %d: total revisions used
-#: templates/order/order-view.php:173
+#: templates/order/order-view.php:180
 #, php-format
 msgid "All %d revisions used"
 msgstr ""
 
 #. translators: 1: revisions remaining, 2: total included
-#: templates/order/order-view.php:179
+#: templates/order/order-view.php:186
 #, php-format
 msgid "%1$d of %2$d revisions left"
 msgstr ""
 
-#: templates/order/order-view.php:217
+#: templates/order/order-view.php:224
 msgid "Start Working"
 msgstr ""
 
-#: templates/order/order-view.php:225
+#: templates/order/order-view.php:232
 msgid "Deliver Revision"
 msgstr ""
 
-#: templates/order/order-view.php:225
+#: templates/order/order-view.php:232
 msgid "Deliver Work"
 msgstr ""
 
-#: templates/order/order-view.php:274
+#: templates/order/order-view.php:281
 msgid "Accept & Complete"
 msgstr ""
 
-#: templates/order/order-view.php:282
-#: templates/order/order-view.php:2046
+#: templates/order/order-view.php:289
+#: templates/order/order-view.php:2080
 msgid "Request Revision"
 msgstr ""
 
 #. translators: %d: number of revisions remaining
-#: templates/order/order-view.php:284
+#: templates/order/order-view.php:291
 #, php-format
 msgid "Request Revision (%d left)"
 msgstr ""
 
-#: templates/order/order-view.php:296
+#: templates/order/order-view.php:303
 msgid "Waiting for Revised Delivery"
 msgstr ""
 
-#: templates/order/order-view.php:298
+#: templates/order/order-view.php:305
 msgid "The vendor is working on your requested revision."
 msgstr ""
 
-#: templates/order/order-view.php:304
+#: templates/order/order-view.php:311
 msgid "Cancellation Pending"
 msgstr ""
 
-#: templates/order/order-view.php:306
+#: templates/order/order-view.php:313
 msgid "Waiting for vendor response to your cancellation request."
 msgstr ""
 
-#: templates/order/order-view.php:314
-#: templates/order/order-view.php:2139
-#: templates/order/order-view.php:2190
+#: templates/order/order-view.php:321
+#: templates/order/order-view.php:2173
+#: templates/order/order-view.php:2224
 msgid "Cancel Order"
 msgstr ""
 
-#: templates/order/order-view.php:327
+#: templates/order/order-view.php:334
 msgid "Request Cancellation"
 msgstr ""
 
-#: templates/order/order-view.php:352
-#: templates/order/order-view.php:2087
-#: templates/order/order-view.php:2125
+#: templates/order/order-view.php:359
+#: templates/order/order-view.php:2121
+#: templates/order/order-view.php:2159
 msgid "Open Dispute"
 msgstr ""
 
-#: templates/order/order-view.php:438
+#: templates/order/order-view.php:370
+msgid "View Dispute"
+msgstr ""
+
+#: templates/order/order-view.php:472
 msgid "Order Date"
 msgstr ""
 
-#: templates/order/order-view.php:448
+#: templates/order/order-view.php:482
 msgid "Total Amount"
 msgstr ""
 
 #. translators: %s: refunded amount
-#: templates/order/order-view.php:479
+#: templates/order/order-view.php:513
 #, php-format
 msgid "-%s"
 msgstr ""
 
-#: templates/order/order-view.php:509
+#: templates/order/order-view.php:543
 msgid "Your Earnings"
 msgstr ""
 
-#: templates/order/order-view.php:589
+#: templates/order/order-view.php:623
 msgid "reviews"
 msgstr ""
 
-#: templates/order/order-view.php:663
+#: templates/order/order-view.php:697
 msgid "Work has already started, but you can still submit requirements to help the seller complete your order."
 msgstr ""
 
-#: templates/order/order-view.php:668
+#: templates/order/order-view.php:702
 msgid "Please provide the following information so the seller can start working on your order."
 msgstr ""
 
 #. translators: 1: filled count, 2: total required
-#: templates/order/order-view.php:700
+#: templates/order/order-view.php:734
 #: templates/order/requirements-form.php:98
 #: templates/order/requirements-form.php:529
 #, php-format
 msgid "%1$d of %2$d required answered"
 msgstr ""
 
-#: templates/order/order-view.php:738
+#: templates/order/order-view.php:772
 msgid "Choose a file or drag it here"
 msgstr ""
 
-#: templates/order/order-view.php:781
-#: templates/order/order-view.php:864
-#: templates/order/order-view.php:904
+#: templates/order/order-view.php:815
+#: templates/order/order-view.php:898
+#: templates/order/order-view.php:938
 msgid "Order Requirements"
 msgstr ""
 
 #. translators: %s: submission date/time
-#: templates/order/order-view.php:788
+#: templates/order/order-view.php:822
 #, php-format
 msgid "Submitted %s"
 msgstr ""
 
-#: templates/order/order-view.php:840
+#: templates/order/order-view.php:874
 msgid "Show more"
 msgstr ""
 
-#: templates/order/order-view.php:841
+#: templates/order/order-view.php:875
 msgid "Show less"
 msgstr ""
 
-#: templates/order/order-view.php:845
+#: templates/order/order-view.php:879
 msgid "Copy to clipboard"
 msgstr ""
 
-#: templates/order/order-view.php:849
+#: templates/order/order-view.php:883
 msgid "No response provided"
 msgstr ""
 
-#: templates/order/order-view.php:871
+#: templates/order/order-view.php:905
 msgid "No requirements were formally submitted for this order. Below are the questions the service requires:"
 msgstr ""
 
-#: templates/order/order-view.php:911
+#: templates/order/order-view.php:945
 msgid "This service does not require any specific information from the buyer."
 msgstr ""
 
 #. translators: 1: days, 2: hours
-#: templates/order/order-view.php:959
+#: templates/order/order-view.php:993
 #, php-format
 msgid "Auto-cancels in %1$dd %2$dh if no response"
 msgstr ""
 
 #. translators: 1: hours, 2: minutes
-#: templates/order/order-view.php:966
+#: templates/order/order-view.php:1000
 #, php-format
 msgid "Auto-cancels in %1$dh %2$dm if no response"
 msgstr ""
 
-#: templates/order/order-view.php:972
+#: templates/order/order-view.php:1006
 msgid "Auto-cancellation pending — will process within the hour."
 msgstr ""
 
-#: templates/order/order-view.php:984
+#: templates/order/order-view.php:1018
 msgid "The buyer has requested to cancel this order."
 msgstr ""
 
-#: templates/order/order-view.php:986
+#: templates/order/order-view.php:1020
 msgid "Your cancellation request has been submitted. Waiting for vendor response."
 msgstr ""
 
-#: templates/order/order-view.php:998
+#: templates/order/order-view.php:1032
 msgid "Details:"
 msgstr ""
 
-#: templates/order/order-view.php:1028
+#: templates/order/order-view.php:1062
 msgid "Order Timeline"
 msgstr ""
 
-#: templates/order/order-view.php:1045
-#: templates/order/order-view.php:1155
+#: templates/order/order-view.php:1079
+#: templates/order/order-view.php:1189
 msgid "Work Started"
 msgstr ""
 
-#: templates/order/order-view.php:1135
+#: templates/order/order-view.php:1169
 msgid "Awaiting Approval"
 msgstr ""
 
-#: templates/order/order-view.php:1259
+#: templates/order/order-view.php:1293
 msgid "Conversation"
 msgstr ""
 
-#: templates/order/order-view.php:1293
+#: templates/order/order-view.php:1327
 msgid "Rate Your Experience"
 msgstr ""
 
-#: templates/order/order-view.php:1294
+#: templates/order/order-view.php:1328
 msgid "How was your experience with this order? Your feedback helps other buyers."
 msgstr ""
 
-#: templates/order/order-view.php:1297
-#: templates/order/order-view.php:1998
+#: templates/order/order-view.php:1331
+#: templates/order/order-view.php:2032
 msgid "Write a Review"
 msgstr ""
 
-#: templates/order/order-view.php:1342
+#: templates/order/order-view.php:1376
 msgid "Project complete"
 msgstr ""
 
 #. translators: 1: approved phase count, 2: total paid
-#: templates/order/order-view.php:1347
+#: templates/order/order-view.php:1381
 #, php-format
 msgid "All %1$d phases approved. Total paid: %2$s."
 msgstr ""
 
 #. translators: %d: milestone count
-#: templates/order/order-view.php:1364
+#: templates/order/order-view.php:1398
 #, php-format
 msgid "Milestones (%d)"
 msgstr ""
 
-#: templates/order/order-view.php:1371
+#: templates/order/order-view.php:1405
 msgid "+ Propose a phase"
 msgstr ""
 
-#: templates/order/order-view.php:1380
+#: templates/order/order-view.php:1414
 msgid "This is a custom project — break it into paid phases so the buyer can approve each stage as you deliver."
 msgstr ""
 
-#: templates/order/order-view.php:1382
+#: templates/order/order-view.php:1416
 msgid "Your seller will propose the first phase. You pay each phase up front; they deliver and you approve."
 msgstr ""
 
-#: templates/order/order-view.php:1401
-#: templates/order/order-view.php:1472
+#: templates/order/order-view.php:1435
+#: templates/order/order-view.php:1506
 msgid "Locked — finish the earlier phase first"
 msgstr ""
 
-#: templates/order/order-view.php:1402
+#: templates/order/order-view.php:1436
 msgid "Locked behind earlier phase"
 msgstr ""
 
-#: templates/order/order-view.php:1405
+#: templates/order/order-view.php:1439
 msgid "Ready to pay"
 msgstr ""
 
-#: templates/order/order-view.php:1405
+#: templates/order/order-view.php:1439
 msgid "Awaiting buyer payment"
 msgstr ""
 
-#: templates/order/order-view.php:1409
+#: templates/order/order-view.php:1443
 msgid "Paid · ready for delivery"
 msgstr ""
 
-#: templates/order/order-view.php:1409
+#: templates/order/order-view.php:1443
 msgid "Paid · seller working"
 msgstr ""
 
-#: templates/order/order-view.php:1412
+#: templates/order/order-view.php:1446
 msgid "Delivered · awaiting your approval"
 msgstr ""
 
-#: templates/order/order-view.php:1412
+#: templates/order/order-view.php:1446
 msgid "Submitted · awaiting buyer"
 msgstr ""
 
-#: templates/order/order-view.php:1415
+#: templates/order/order-view.php:1449
 msgid "Approved · completed"
 msgstr ""
 
-#: templates/order/order-view.php:1429
+#: templates/order/order-view.php:1463
 msgid "Untitled phase"
 msgstr ""
 
-#: templates/order/order-view.php:1468
+#: templates/order/order-view.php:1502
 msgid "This phase unlocks once the earlier phase is approved or cancelled."
 msgstr ""
 
-#: templates/order/order-view.php:1496
+#: templates/order/order-view.php:1530
 msgid "View / resubmit"
 msgstr ""
 
-#: templates/order/order-view.php:1505
+#: templates/order/order-view.php:1539
 msgid "View phase"
 msgstr ""
 
-#: templates/order/order-view.php:1522
+#: templates/order/order-view.php:1556
 msgid "Propose a phase"
 msgstr ""
 
-#: templates/order/order-view.php:1528
+#: templates/order/order-view.php:1562
 msgid "Break the work into a named phase the buyer can pay for up front. Once paid, you can start work and submit delivery here when done."
 msgstr ""
 
-#: templates/order/order-view.php:1532
+#: templates/order/order-view.php:1566
 msgid "Phase title"
 msgstr ""
 
-#: templates/order/order-view.php:1533
+#: templates/order/order-view.php:1567
 msgid "e.g. Phase 1 — Concepts & Wireframes"
 msgstr ""
 
-#: templates/order/order-view.php:1536
+#: templates/order/order-view.php:1570
 msgid "Description (buyer sees this)"
 msgstr ""
 
-#: templates/order/order-view.php:1537
+#: templates/order/order-view.php:1571
 msgid "What the buyer is paying for in this phase."
 msgstr ""
 
-#: templates/order/order-view.php:1545
+#: templates/order/order-view.php:1579
 msgid "Days to deliver"
 msgstr ""
 
-#: templates/order/order-view.php:1550
+#: templates/order/order-view.php:1584
 msgid "Deliverables (optional)"
 msgstr ""
 
-#: templates/order/order-view.php:1551
+#: templates/order/order-view.php:1585
 msgid "e.g. Low-fi sketches + 2 direction options + Figma file"
 msgstr ""
 
-#: templates/order/order-view.php:1556
+#: templates/order/order-view.php:1590
 msgid "Send to buyer"
 msgstr ""
 
-#: templates/order/order-view.php:1592
+#: templates/order/order-view.php:1626
 msgid "Sent."
 msgstr ""
 
-#: templates/order/order-view.php:1597
+#: templates/order/order-view.php:1631
 msgid "Error"
 msgstr ""
 
-#: templates/order/order-view.php:1604
-#: templates/order/order-view.php:3250
+#: templates/order/order-view.php:1638
+#: templates/order/order-view.php:3284
 msgid "Network error."
 msgstr ""
 
-#: templates/order/order-view.php:1643
+#: templates/order/order-view.php:1677
 msgid "Cancel this phase proposal?"
 msgstr ""
 
-#: templates/order/order-view.php:1693
+#: templates/order/order-view.php:1727
 msgid "Your seller sent a quote for additional work on this order. Review the details — pay to approve and they will continue with the expanded scope, or decline and discuss first in chat."
 msgstr ""
 
-#: templates/order/order-view.php:1701
-#: templates/order/order-view.php:3151
+#: templates/order/order-view.php:1735
+#: templates/order/order-view.php:3185
 msgid "Extra days"
 msgstr ""
 
-#: templates/order/order-view.php:1742
+#: templates/order/order-view.php:1776
 msgid "Extra work awaiting buyer payment"
 msgstr ""
 
 #. translators: 1: amount, 2: days
-#: templates/order/order-view.php:1749
+#: templates/order/order-view.php:1783
 #, php-format
 msgid "You requested %1$s / %2$s. Buyer has not responded yet."
 msgstr ""
 
-#: templates/order/order-view.php:1763
+#: templates/order/order-view.php:1797
 msgid "Need to quote extra work?"
 msgstr ""
 
-#: templates/order/order-view.php:1764
+#: templates/order/order-view.php:1798
 msgid "Fixed-price order, buyer already paid the base. For small add-ons on top, quote the extra amount and time here. Once they pay, keep going on the expanded scope."
 msgstr ""
 
-#: templates/order/order-view.php:1767
+#: templates/order/order-view.php:1801
 msgid "Send quote to buyer"
 msgstr ""
 
-#: templates/order/order-view.php:1804
+#: templates/order/order-view.php:1838
 #: templates/order/tip-view.php:82
 msgid "Tip sent"
 msgstr ""
 
-#: templates/order/order-view.php:1804
+#: templates/order/order-view.php:1838
 #: templates/order/tip-view.php:82
 msgid "Tip not sent yet — payment didn't complete"
 msgstr ""
 
-#: templates/order/order-view.php:1820
+#: templates/order/order-view.php:1854
 msgid "Say thanks with a tip"
 msgstr ""
 
-#: templates/order/order-view.php:1821
+#: templates/order/order-view.php:1855
 msgid "Loved the work? A tip goes straight to the vendor on top of the order total."
 msgstr ""
 
-#: templates/order/order-view.php:1824
-#: templates/order/order-view.php:1838
+#: templates/order/order-view.php:1858
+#: templates/order/order-view.php:1872
 msgid "Send a tip"
 msgstr ""
 
 #. translators: %s: vendor display name
-#: templates/order/order-view.php:1850
+#: templates/order/order-view.php:1884
 #, php-format
 msgid "Send a tip to %s — it is credited to their wallet after the platform fee."
 msgstr ""
 
-#: templates/order/order-view.php:1875
+#: templates/order/order-view.php:1909
 msgid "Custom amount"
 msgstr ""
 
-#: templates/order/order-view.php:1880
+#: templates/order/order-view.php:1914
 msgid "Message (optional)"
 msgstr ""
 
-#: templates/order/order-view.php:1881
+#: templates/order/order-view.php:1915
 msgid "Thanks for the great work!"
 msgstr ""
 
-#: templates/order/order-view.php:1889
+#: templates/order/order-view.php:1923
 msgid "Send tip"
 msgstr ""
 
-#: templates/order/order-view.php:1924
-#: templates/order/order-view.php:1984
+#: templates/order/order-view.php:1958
+#: templates/order/order-view.php:2018
 msgid "Submit Delivery"
 msgstr ""
 
-#: templates/order/order-view.php:1937
+#: templates/order/order-view.php:1971
 msgid "Describe what you are delivering. The buyer will review and can accept or request revisions."
 msgstr ""
 
-#: templates/order/order-view.php:1942
+#: templates/order/order-view.php:1976
 msgid "Delivery Message"
 msgstr ""
 
-#: templates/order/order-view.php:1951
+#: templates/order/order-view.php:1985
 msgid "Describe what you are delivering and any important notes for the buyer..."
 msgstr ""
 
-#: templates/order/order-view.php:1957
+#: templates/order/order-view.php:1991
 msgid "Attachments (Optional)"
 msgstr ""
 
-#: templates/order/order-view.php:1970
+#: templates/order/order-view.php:2004
 msgid "Choose files or drag and drop"
 msgstr ""
 
-#: templates/order/order-view.php:1974
+#: templates/order/order-view.php:2008
 msgid "Max file size: 50MB. Supported: images, documents, archives."
 msgstr ""
 
-#: templates/order/order-view.php:2009
+#: templates/order/order-view.php:2043
 msgid "Overall Rating"
 msgstr ""
 
-#: templates/order/order-view.php:2013
+#: templates/order/order-view.php:2047
 msgid "stars"
 msgstr ""
 
-#: templates/order/order-view.php:2021
+#: templates/order/order-view.php:2055
 msgid "Your Review"
 msgstr ""
 
-#: templates/order/order-view.php:2023
+#: templates/order/order-view.php:2057
 msgid "Share your experience with this service..."
 msgstr ""
 
-#: templates/order/order-view.php:2032
+#: templates/order/order-view.php:2066
 msgid "Submit Review"
 msgstr ""
 
-#: templates/order/order-view.php:2058
+#: templates/order/order-view.php:2092
 msgid "Please describe the changes you need. The seller will review your request and update the delivery."
 msgstr ""
 
-#: templates/order/order-view.php:2062
+#: templates/order/order-view.php:2096
 msgid "What changes would you like?"
 msgstr ""
 
-#: templates/order/order-view.php:2064
+#: templates/order/order-view.php:2098
 msgid "Please be specific about what needs to be changed..."
 msgstr ""
 
-#: templates/order/order-view.php:2073
+#: templates/order/order-view.php:2107
 msgid "Submit Revision Request"
 msgstr ""
 
-#: templates/order/order-view.php:2099
+#: templates/order/order-view.php:2133
 msgid "Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the seller first."
 msgstr ""
 
-#: templates/order/order-view.php:2103
+#: templates/order/order-view.php:2137
 msgid "Reason for Dispute"
 msgstr ""
 
-#: templates/order/order-view.php:2105
-#: templates/order/order-view.php:2162
+#: templates/order/order-view.php:2139
+#: templates/order/order-view.php:2196
 msgid "Select a reason"
 msgstr ""
 
-#: templates/order/order-view.php:2116
+#: templates/order/order-view.php:2150
 msgid "Please describe the issue in detail..."
 msgstr ""
 
-#: templates/order/order-view.php:2152
+#: templates/order/order-view.php:2186
 msgid "Since work has already started, your cancellation request will be sent to the vendor for review. They have 48 hours to respond."
 msgstr ""
 
-#: templates/order/order-view.php:2158
+#: templates/order/order-view.php:2192
 msgid "Reason for Cancellation"
 msgstr ""
 
-#: templates/order/order-view.php:2163
+#: templates/order/order-view.php:2197
 msgid "I changed my mind"
 msgstr ""
 
-#: templates/order/order-view.php:2168
+#: templates/order/order-view.php:2202
 msgid "Other (please specify)"
 msgstr ""
 
-#: templates/order/order-view.php:2174
+#: templates/order/order-view.php:2208
 msgid "Additional Details (optional)"
 msgstr ""
 
-#: templates/order/order-view.php:2177
+#: templates/order/order-view.php:2211
 msgid "Any additional details about why you want to cancel..."
 msgstr ""
 
-#: templates/order/order-view.php:2183
+#: templates/order/order-view.php:2217
 msgid "Keep Order"
 msgstr ""
 
-#: templates/order/order-view.php:2188
+#: templates/order/order-view.php:2222
 msgid "Submit Cancellation Request"
 msgstr ""
 
-#: templates/order/order-view.php:3134
+#: templates/order/order-view.php:3168
 msgid "Quote Extra Work"
 msgstr ""
 
-#: templates/order/order-view.php:3141
+#: templates/order/order-view.php:3175
 msgid "The buyer requested extra work on top of the original scope. Quote how much and how many more days you need — they pay through the same checkout, and once payment clears you can continue on the extended scope."
 msgstr ""
 
-#: templates/order/order-view.php:3147
+#: templates/order/order-view.php:3181
 msgid "Extra amount"
 msgstr ""
 
-#: templates/order/order-view.php:3156
+#: templates/order/order-view.php:3190
 msgid "Describe the extra work (buyer sees this)"
 msgstr ""
 
-#: templates/order/order-view.php:3157
+#: templates/order/order-view.php:3191
 msgid "e.g. Added a second logo variation and source files, per your message on Mar 12."
 msgstr ""
 
-#: templates/order/order-view.php:3162
+#: templates/order/order-view.php:3196
 msgid "Send Payment Link"
 msgstr ""
 
-#: templates/order/order-view.php:3206
+#: templates/order/order-view.php:3240
 msgid "Quote sent."
 msgstr ""
 
-#: templates/order/order-view.php:3211
+#: templates/order/order-view.php:3245
 msgid "Could not send quote."
 msgstr ""
 
-#: templates/order/order-view.php:3231
+#: templates/order/order-view.php:3265
 msgid "Decline this extra-work quote?"
 msgstr ""
 
-#: templates/order/order-view.php:3246
+#: templates/order/order-view.php:3280
 msgid "Could not decline."
 msgstr ""
 

@@ -997,9 +997,12 @@ class DisputeWorkflowManager {
 	 * @return array Timeline events.
 	 */
 	public function get_timeline( int $dispute_id ): array {
-		$dispute  = $this->dispute_service->get( $dispute_id );
-		$evidence = $this->dispute_service->get_evidence( $dispute_id );
-		$messages = $this->get_messages( $dispute_id );
+		$dispute = $this->dispute_service->get( $dispute_id );
+
+		// ONE read. Evidence and messages used to be two stores, so this
+		// merged both; they are now the same table, and reading it twice would
+		// show every message on the timeline twice.
+		$conversation = $this->dispute_service->get_evidence( $dispute_id );
 
 		$timeline = array();
 
@@ -1013,33 +1016,31 @@ class DisputeWorkflowManager {
 			);
 		}
 
-		// Add evidence items. DisputeService stores evidence as associative
-		// arrays (JSON-decoded with assoc=true), so these must be read with
-		// array access — the previous object access ($item->user_id, etc.)
-		// silently yielded null, so every evidence row rendered as "System"
-		// with blank content.
-		foreach ( $evidence as $item ) {
-			$timeline[] = array(
-				'type'       => 'evidence',
-				'user_id'    => $item['user_id'] ?? 0,
-				'content'    => $item['description'] ?? '',
-				'data'       => array(
-					'evidence_type' => $item['type'] ?? '',
-					'content'       => $item['content'] ?? '',
-				),
-				'created_at' => self::timeline_datetime( $item['created_at'] ?? '' ),
-			);
-		}
+		foreach ( $conversation as $item ) {
+			$item_type = (string) ( $item['type'] ?? 'text' );
+			$is_text   = '' === $item_type || 'text' === $item_type;
 
-		// Add messages.
-		foreach ( $messages as $message ) {
-			$timeline[] = array(
-				'type'        => 'message',
-				'user_id'     => $message->sender_id,
-				'content'     => $message->message,
-				'attachments' => $message->attachment_urls ?? array(),
-				'created_at'  => self::timeline_datetime( $message->created_at ),
-			);
+			// A plain reply reads as a message; anything carrying a URL (an
+			// upload or a link) reads as evidence, with its caption as the
+			// line and the URL kept in data for the renderer.
+			$timeline[] = $is_text
+				? array(
+					'type'        => 'message',
+					'user_id'     => (int) ( $item['user_id'] ?? 0 ),
+					'content'     => (string) ( $item['content'] ?? '' ),
+					'attachments' => $item['attachments'] ?? array(),
+					'created_at'  => self::timeline_datetime( $item['created_at'] ?? '' ),
+				)
+				: array(
+					'type'       => 'evidence',
+					'user_id'    => (int) ( $item['user_id'] ?? 0 ),
+					'content'    => (string) ( $item['description'] ?? '' ),
+					'data'       => array(
+						'evidence_type' => $item_type,
+						'content'       => (string) ( $item['content'] ?? '' ),
+					),
+					'created_at' => self::timeline_datetime( $item['created_at'] ?? '' ),
+				);
 		}
 
 		// Sort by date.

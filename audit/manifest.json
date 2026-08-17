@@ -788,5 +788,20 @@
     "render_partial": "templates/partials/notifications-list.php",
     "deep_link_column": "action_url (written by create() from $data['action_url'], rendered as the row title link)",
     "known_drift": "Notification::get_icon() is keyed on TYPE_* constants ('order_new', 'message_new') that are largely never written; the live icon map is in the render partial. Unifying them is an open item."
+  },
+  "disputes": {
+    "_note": "A dispute conversation is ONE store: {prefix}wpss_dispute_messages. It used to be two -- the opening statement and admin replies in that table, member evidence in the disputes row's `evidence` JSON -- and each surface read only one, so members saw 'No messages yet' on a thread the admin could read in full, and admins never saw member evidence. DisputeService::add_evidence() writes the table; get_evidence() reads it and is the single reader (DisputeWorkflowManager::get_timeline() consumes it rather than querying again, or every message would appear twice). The `evidence` column now holds ONLY status_note entries written by update_status() -- dispute status history, not conversation. Legacy rows are moved by DisputeService::migrate_evidence_to_messages(), gated on the wpss_dispute_evidence_migrated option.",
+    "conversation_table": "{prefix}wpss_dispute_messages",
+    "writer": "WPSellServices\\Services\\DisputeService::add_evidence",
+    "reader": "WPSellServices\\Services\\DisputeService::get_evidence",
+    "timeline": "WPSellServices\\Services\\DisputeWorkflowManager::get_timeline",
+    "backfill": "WPSellServices\\Services\\DisputeService::migrate_evidence_to_messages (option wpss_dispute_evidence_migrated)",
+    "legacy_evidence_column": "wpss_disputes.evidence — status_note entries only after 1.6.0",
+    "schema_version": "DB_VERSION 1.6.1 adds message_type + description + idx_dispute_created",
+    "surfaces": [
+      "templates/dashboard/sections/disputes.php (member thread + reply form)",
+      "src/Admin/Admin.php (admin detail)",
+      "src/API/DisputesController.php (evidence endpoints)"
+    ]
   }
 }

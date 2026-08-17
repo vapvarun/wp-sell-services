@@ -1754,6 +1754,31 @@
 	color: var(--wpss-white, #fff);
 }
 
+/* Order actions rendered as links rather than buttons.
+   Themes style anchors far more aggressively than buttons — BuddyX puts
+   `border: 2px solid transparent` on its anchor buttons, which outranks the
+   1px border above and left "View Dispute" as floating red text with no
+   outline. Pinning the anchor states keeps a link action looking like the
+   button beside it, including :visited, which themes recolour by default. */
+a.wpss-btn.wpss-btn--danger-outline,
+a.wpss-btn.wpss-btn--danger-outline:visited {
+	border: 1px solid var(--wpss-danger, #ef4444);
+	color: var(--wpss-danger, #ef4444);
+	background: transparent;
+	text-decoration: none;
+}
+
+/* Both classes repeated deliberately: the theme's own anchor-hover rule sits at
+   the same specificity as a single class, and won — the link went to a pale
+   tint while the identical <button> beside it fills solid. */
+a.wpss-btn.wpss-btn--danger-outline:hover,
+a.wpss-btn.wpss-btn--danger-outline:focus-visible {
+	border-color: var(--wpss-danger, #ef4444);
+	background: var(--wpss-danger, #ef4444);
+	color: var(--wpss-white, #fff);
+	text-decoration: none;
+}
+
 .wpss-btn--sm {
 	padding: 6px 12px;
 	font-size: 13px;

@@ -324,9 +324,6 @@ class DisputeService {
 			return false;
 		}
 
-		// Get existing evidence or initialize empty array.
-		$evidence = $dispute->evidence;
-
 		// Sanitize content based on evidence type. image/file/link all carry a
 		// URL (the AJAX handler stores the wp_handle_upload() URL, not an
 		// attachment ID) — absint() here silently zeroed every uploaded file,
@@ -337,25 +334,44 @@ class DisputeService {
 			default                 => sanitize_textarea_field( $content ),
 		};
 
-		// Add new evidence item.
-		$evidence[] = array(
-			'id'          => uniqid( 'ev_' ),
-			'user_id'     => $user_id,
-			'type'        => $sanitized_type,
-			'content'     => $sanitized_content,
-			'description' => sanitize_textarea_field( $description ),
-			'created_at'  => current_time( 'mysql' ),
-		);
+		// Written to the messages table, NOT to the disputes row's `evidence`
+		// JSON. Those were two stores for one conversation: this method fed the
+		// JSON, the opening statement and admin replies fed the table, and each
+		// surface read only its own — so members saw "No messages yet" on a
+		// dispute the admin could read in full. One store now.
+		$sender_role = 'response';
+
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			$sender_role = 'admin_response';
+		} elseif ( (int) $dispute->initiator_id === $user_id ) {
+			$sender_role = 'opener_response';
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update(
-			$this->table,
+		$result = $wpdb->insert(
+			$this->messages_table,
 			array(
-				'evidence'   => wp_json_encode( $evidence ),
-				'updated_at' => current_time( 'mysql' ),
+				'dispute_id'   => $dispute_id,
+				'sender_id'    => $user_id,
+				'sender_role'  => $sender_role,
+				'message'      => $sanitized_content,
+				'message_type' => $sanitized_type,
+				'description'  => sanitize_textarea_field( $description ),
+				'created_at'   => current_time( 'mysql' ),
 			),
-			array( 'id' => $dispute_id )
+			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s' )
 		);
+
+		// Keep the dispute row's timestamp moving so "last activity" sorting
+		// still reflects the conversation.
+		if ( false !== $result ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$this->table,
+				array( 'updated_at' => current_time( 'mysql' ) ),
+				array( 'id' => $dispute_id )
+			);
+		}
 
 		if ( false !== $result ) {
 			/**
@@ -374,19 +390,174 @@ class DisputeService {
 	}
 
 	/**
-	 * Get evidence for a dispute.
+	 * Move legacy evidence out of the disputes row's JSON and into the
+	 * messages table, so no existing dispute loses its history.
+	 *
+	 * Idempotent: a dispute is only migrated once, and the JSON column is
+	 * cleared as each one is done, so re-running cannot duplicate rows. Rows
+	 * are matched on the sender + timestamp + content already present, which
+	 * also covers a half-finished run.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return int Number of evidence items moved.
+	 */
+	public function migrate_evidence_to_messages(): int {
+		global $wpdb;
+
+		// Column is `initiated_by`; the model exposes it as initiator_id.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			"SELECT id, initiated_by, evidence FROM {$this->table}
+			 WHERE evidence IS NOT NULL AND evidence != '' AND evidence != '[]'"
+		);
+
+		if ( ! $rows ) {
+			return 0;
+		}
+
+		$moved = 0;
+
+		foreach ( $rows as $row ) {
+			$items = json_decode( (string) $row->evidence, true );
+
+			if ( ! is_array( $items ) ) {
+				continue;
+			}
+
+			// Status notes are dispute STATUS history written by
+			// update_status(), not conversation, and they share this column.
+			// They stay put — clearing the column wholesale would delete them.
+			$keep = array();
+
+			foreach ( $items as $item ) {
+				// Oldest rows are bare filename strings rather than objects.
+				// They are still evidence someone attached, so carry them over
+				// as files instead of dropping them on the floor.
+				if ( is_string( $item ) ) {
+					$item = array(
+						'user_id'     => 0,
+						'type'        => 'file',
+						'content'     => $item,
+						'description' => '',
+						'created_at'  => current_time( 'mysql' ),
+					);
+				}
+
+				if ( ! is_array( $item ) ) {
+					continue;
+				}
+
+				if ( 'status_note' === ( $item['type'] ?? '' ) ) {
+					$keep[] = $item;
+					continue;
+				}
+
+				$user_id    = (int) ( $item['user_id'] ?? 0 );
+				$content    = (string) ( $item['content'] ?? '' );
+				$created_at = (string) ( $item['created_at'] ?? current_time( 'mysql' ) );
+
+				// Already carried over by an earlier partial run.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$exists = (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COUNT(*) FROM {$this->messages_table}
+						 WHERE dispute_id = %d AND sender_id = %d AND created_at = %s AND message = %s",
+						(int) $row->id,
+						$user_id,
+						$created_at,
+						$content
+					)
+				);
+
+				if ( $exists ) {
+					continue;
+				}
+
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$inserted = $wpdb->insert(
+					$this->messages_table,
+					array(
+						'dispute_id'   => (int) $row->id,
+						'sender_id'    => $user_id,
+						'sender_role'  => $user_id === (int) $row->initiated_by ? 'opener_response' : 'response',
+						'message'      => $content,
+						'message_type' => (string) ( $item['type'] ?? 'text' ),
+						'description'  => (string) ( $item['description'] ?? '' ),
+						'created_at'   => $created_at,
+					),
+					array( '%d', '%d', '%s', '%s', '%s', '%s', '%s' )
+				);
+
+				if ( $inserted ) {
+					++$moved;
+				}
+			}
+
+			// Rewritten only after its items are in the table, so an
+			// interrupted run resumes instead of losing the remainder. Keeps
+			// the status notes, which were never conversation.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$this->table,
+				array( 'evidence' => wp_json_encode( array_values( $keep ) ) ),
+				array( 'id' => (int) $row->id )
+			);
+		}
+
+		return $moved;
+	}
+
+	/**
+	 * Get the dispute conversation: every message and piece of evidence.
+	 *
+	 * Reads the messages table, which is the single store. This used to return
+	 * the disputes row's `evidence` JSON, which held only what members posted
+	 * through add_evidence() — never the opening statement or admin replies,
+	 * which have always gone to the table. The member-facing thread therefore
+	 * announced "No messages yet" on disputes the admin could read in full.
+	 *
+	 * Shape is unchanged for callers: id / user_id / type / content /
+	 * description / created_at, plus attachments.
 	 *
 	 * @param int $dispute_id Dispute ID.
-	 * @return array<array<string, mixed>> Array of evidence items.
+	 * @return array<array<string, mixed>> Conversation items, oldest first.
 	 */
 	public function get_evidence( int $dispute_id ): array {
-		$dispute = $this->get( $dispute_id );
+		global $wpdb;
 
-		if ( ! $dispute ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$this->messages_table} WHERE dispute_id = %d ORDER BY created_at ASC, id ASC",
+				$dispute_id
+			),
+			ARRAY_A
+		);
+
+		if ( ! $rows ) {
 			return array();
 		}
 
-		return $dispute->evidence;
+		$items = array();
+
+		foreach ( $rows as $row ) {
+			$attachments = ! empty( $row['attachments'] ) ? json_decode( (string) $row['attachments'], true ) : array();
+
+			$items[] = array(
+				'id'          => (int) $row['id'],
+				'user_id'     => (int) $row['sender_id'],
+				'sender_role' => (string) ( $row['sender_role'] ?? '' ),
+				// Rows written before the columns existed are plain messages.
+				'type'        => (string) ( $row['message_type'] ?? '' ) ?: 'text',
+				'content'     => (string) $row['message'],
+				'description' => (string) ( $row['description'] ?? '' ),
+				'attachments' => is_array( $attachments ) ? $attachments : array(),
+				'created_at'  => (string) $row['created_at'],
+			);
+		}
+
+		return $items;
 	}
 
 	/**

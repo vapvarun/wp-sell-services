@@ -22,9 +22,15 @@ class SchemaManager {
 	/**
 	 * Database version.
 	 *
+	 * Moves independently of WPSS_VERSION — a schema change inside an already
+	 * numbered release still has to bump this, or install() short-circuits on
+	 * needs_update() and the new columns are never added. 1.6.1 adds
+	 * message_type + description to wpss_dispute_messages, which makes that
+	 * table the single store for a dispute conversation.
+	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.6.0';
+	const DB_VERSION = '1.6.1';
 
 	/**
 	 * Option name for storing DB version.
@@ -209,6 +215,25 @@ class SchemaManager {
 				'column'     => 'reviewer_name',
 				'definition' => 'varchar(255) DEFAULT NULL',
 				'after'      => 'reviewer_id',
+			),
+			// A dispute conversation used to live in two places: the opening
+			// statement and admin replies in wpss_dispute_messages, member
+			// evidence in the disputes row's `evidence` JSON column. Each
+			// surface read only one, so the parties saw "No messages yet" on a
+			// thread the admin could read in full. These two columns let the
+			// messages table hold everything the JSON did, so there is one
+			// store. Listed here so upgrades self-heal if dbDelta misses them.
+			array(
+				'table'      => 'dispute_messages',
+				'column'     => 'message_type',
+				'definition' => "varchar(20) NOT NULL DEFAULT 'text'",
+				'after'      => 'message',
+			),
+			array(
+				'table'      => 'dispute_messages',
+				'column'     => 'description',
+				'definition' => 'text',
+				'after'      => 'message_type',
 			),
 			// How much was actually refunded to the buyer. NULL = never
 			// refunded; equal to total = full refund; less = partial.
@@ -1033,16 +1058,23 @@ class SchemaManager {
 	private function get_dispute_messages_table( string $charset_collate ): string {
 		$table = $this->get_table_name( 'dispute_messages' );
 
+		// message_type + description carry what used to live in the disputes
+		// row's `evidence` JSON column. A dispute conversation is now ONE
+		// store: 'text' rows hold their text in `message`, and image/file/link
+		// rows hold the URL there with the caption in `description`.
 		return "CREATE TABLE {$table} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			dispute_id bigint(20) unsigned NOT NULL,
 			sender_id bigint(20) unsigned NOT NULL,
 			sender_role varchar(50) NOT NULL,
 			message text NOT NULL,
+			message_type varchar(20) NOT NULL DEFAULT 'text',
+			description text,
 			attachments longtext,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			KEY idx_dispute (dispute_id)
+			KEY idx_dispute (dispute_id),
+			KEY idx_dispute_created (dispute_id, created_at)
 		) {$charset_collate};";
 	}
 
