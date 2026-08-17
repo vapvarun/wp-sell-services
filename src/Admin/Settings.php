@@ -3171,7 +3171,7 @@ class Settings {
 
 		printf(
 			'<p class="description">%s</p>',
-			esc_html__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD, FluentCart, and SureCart.', 'wp-sell-services' )
+			esc_html__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD and FluentCart.', 'wp-sell-services' )
 		);
 	}
 

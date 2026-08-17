@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-14T12:07:38+00:00\n"
+"POT-Creation-Date: 2026-08-17T07:26:07+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -3582,157 +3582,153 @@ msgstr ""
 msgid "FluentCart"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:176
-msgid "SureCart"
-msgstr ""
-
-#: src/Admin/Pages/UpgradePage.php:181
+#: src/Admin/Pages/UpgradePage.php:180
 msgid "Standalone (no e-commerce plugin needed)"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:186
+#: src/Admin/Pages/UpgradePage.php:185
 #: src/Admin/Settings.php:84
 #: src/Admin/Settings.php:1670
 msgid "Payment Gateways"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:188
+#: src/Admin/Pages/UpgradePage.php:187
 msgid "WooCommerce payment gateways"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:193
+#: src/Admin/Pages/UpgradePage.php:192
 msgid "Direct Stripe integration"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:198
+#: src/Admin/Pages/UpgradePage.php:197
 msgid "Direct PayPal integration"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:203
+#: src/Admin/Pages/UpgradePage.php:202
 msgid "Razorpay integration"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:208
+#: src/Admin/Pages/UpgradePage.php:207
 msgid "Storage & Media"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:210
+#: src/Admin/Pages/UpgradePage.php:209
 msgid "Local file storage"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:215
+#: src/Admin/Pages/UpgradePage.php:214
 msgid "Amazon S3 cloud storage"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:220
+#: src/Admin/Pages/UpgradePage.php:219
 msgid "Google Cloud Storage"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:225
+#: src/Admin/Pages/UpgradePage.php:224
 msgid "DigitalOcean Spaces"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:230
+#: src/Admin/Pages/UpgradePage.php:229
 msgid "Vendor Payouts & Commissions"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:232
+#: src/Admin/Pages/UpgradePage.php:231
 msgid "Manual payouts (mark as paid)"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:237
+#: src/Admin/Pages/UpgradePage.php:236
 msgid "Stripe Connect direct vendor payouts"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:242
+#: src/Admin/Pages/UpgradePage.php:241
 msgid "PayPal mass payouts"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:247
+#: src/Admin/Pages/UpgradePage.php:246
 msgid "Tiered commission rules (category, volume, seller level)"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:252
+#: src/Admin/Pages/UpgradePage.php:251
 msgid "Vendor subscription plans"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:257
+#: src/Admin/Pages/UpgradePage.php:256
 msgid "Analytics & Vendor Management"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:259
+#: src/Admin/Pages/UpgradePage.php:258
 msgid "Basic vendor dashboard"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:264
+#: src/Admin/Pages/UpgradePage.php:263
 msgid "Vendor earnings & withdrawals"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:269
+#: src/Admin/Pages/UpgradePage.php:268
 msgid "Advanced analytics dashboard"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:274
+#: src/Admin/Pages/UpgradePage.php:273
 msgid "Revenue reports & charts"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:279
+#: src/Admin/Pages/UpgradePage.php:278
 msgid "Wallet integrations"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:284
+#: src/Admin/Pages/UpgradePage.php:283
 msgid "White-label branding (admin, emails, dashboard)"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:289
+#: src/Admin/Pages/UpgradePage.php:288
 msgid "Support & Updates"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:291
+#: src/Admin/Pages/UpgradePage.php:290
 msgid "Community support"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:296
+#: src/Admin/Pages/UpgradePage.php:295
 msgid "Priority email support"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:301
+#: src/Admin/Pages/UpgradePage.php:300
 msgid "Automatic updates"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:354
+#: src/Admin/Pages/UpgradePage.php:353
 msgid "Upgrade to WP Sell Services Pro"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:356
+#: src/Admin/Pages/UpgradePage.php:355
 msgid "Unlock WooCommerce checkout, Stripe Connect vendor payouts, tiered commissions, cloud storage, advanced analytics, and more."
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:364
-#: src/Admin/Pages/UpgradePage.php:406
+#: src/Admin/Pages/UpgradePage.php:363
+#: src/Admin/Pages/UpgradePage.php:405
 msgid "Get Pro Now — Starting at $69/year"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:367
+#: src/Admin/Pages/UpgradePage.php:366
 msgid "Read the Documentation"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:370
-#: src/Admin/Pages/UpgradePage.php:409
+#: src/Admin/Pages/UpgradePage.php:369
+#: src/Admin/Pages/UpgradePage.php:408
 msgid "30-day money-back guarantee. No questions asked."
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:384
+#: src/Admin/Pages/UpgradePage.php:383
 #: src/Admin/Pages/VendorsPage.php:2437
 #: templates/dashboard/sections/portfolio.php:139
 msgid "Feature"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:385
+#: src/Admin/Pages/UpgradePage.php:384
 msgid "Free"
 msgstr ""
 
-#: src/Admin/Pages/UpgradePage.php:386
+#: src/Admin/Pages/UpgradePage.php:385
 #: src/Admin/ProTeaser.php:124
 #: src/Admin/ProTeaser.php:154
 #: src/Admin/ProTeaser.php:189
@@ -6018,7 +6014,7 @@ msgid "No e-commerce platform detected. Please check your configuration."
 msgstr ""
 
 #: src/Admin/Settings.php:3174
-msgid "Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD, FluentCart, and SureCart."
+msgid "Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD and FluentCart."
 msgstr ""
 
 #: src/Admin/Settings.php:3195

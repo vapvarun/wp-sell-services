@@ -172,11 +172,10 @@ class UpgradePage {
 					'free'    => false,
 					'pro'     => true,
 				),
-				array(
-					'feature' => __( 'SureCart', 'wp-sell-services' ),
-					'free'    => false,
-					'pro'     => true,
-				),
+				// SureCart row removed in 1.6.1 with the integration itself. An
+				// upgrade page that promises a rail Pro no longer has is a
+				// straightforward misrepresentation to someone deciding whether
+				// to buy.
 				array(
 					'feature' => __( 'Standalone (no e-commerce plugin needed)', 'wp-sell-services' ),
 					'free'    => true,
