@@ -353,6 +353,17 @@ class Activator {
 				'title'     => __( 'Services', 'wp-sell-services' ),
 				'shortcode' => '[wpss_services]',
 			),
+			// Settings offers a "Vendors Directory" mapping, but the installer
+			// never created a page for it -- the only mapping in the panel with
+			// nothing behind it. A fresh site therefore shipped an empty setting
+			// the owner had to notice, create a page for, and map by hand, or
+			// point at whatever page happened to be lying around. On this
+			// sandbox it ended up pointing at a QA repro page, which is what
+			// surfaced it.
+			'vendors_page'  => array(
+				'title'     => __( 'Vendors', 'wp-sell-services' ),
+				'shortcode' => '[wpss_vendors]',
+			),
 			'dashboard'     => array(
 				'title'     => __( 'Dashboard', 'wp-sell-services' ),
 				'shortcode' => '[wpss_dashboard]',

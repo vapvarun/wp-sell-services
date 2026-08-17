@@ -1882,7 +1882,7 @@ class OrdersController extends RestController {
 	 * details unavailable" instead of showing today's price as though it were
 	 * the one the buyer agreed to.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @param object $order Order row.
 	 * @return array<string, mixed>|null

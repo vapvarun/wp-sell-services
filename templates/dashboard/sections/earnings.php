@@ -47,9 +47,9 @@ $payout_method = get_user_meta( $user_id, 'wpss_payout_method', true );
 // debt, two holding less than the $50 minimum.
 //
 // Three honest states instead of one optimistic one:
-//   ready    - available >= the minimum, so "ready for withdrawal" is true
-//   coming   - money exists or is clearing, but cannot be withdrawn yet
-//   none     - nothing to say, so say nothing
+// - ready: available >= the minimum, so "ready for withdrawal" is true.
+// - coming: money exists or is clearing, but cannot be withdrawn yet.
+// - none: nothing to say, so say nothing.
 //
 // The minimum matters as much as the sign: telling someone holding $26 that
 // their earnings are ready, when the site requires $50, is the same lie in a
@@ -76,7 +76,7 @@ if ( $available_balance < 0 ) {
  * showing 'ready' as soon as any balance exists on a site with no minimum, or
  * suppressing it entirely for vendors they onboard by hand.
  *
- * @since 1.6.1
+ * @since 1.6.0
  *
  * @param string $payout_banner_state 'ready', 'coming' or 'none'.
  * @param float  $available_balance   Withdrawable balance.

@@ -125,26 +125,28 @@ function wpss_get_reviewer_name( int $reviewer_id, ?string $reviewer_name = null
 /**
  * Resolve the vendor-directory page ID.
  *
- * `wpss_pages['vendors_page']` used to be read in three places and written in
- * none: the installer never seeds a vendors page, no settings field offered
- * one, and the legacy `wpss_vendors_page` option was equally write-only. The
- * key was therefore permanently 0 on every install, which made
- * `GET /settings` report `pages.vendors = 0` and `page_urls.vendors = null`
- * even on sites that plainly HAVE a directory page.
+ * `wpss_pages['vendors_page']` was once read in three places and written in
+ * none: no settings field offered it, the installer did not seed it, and the
+ * legacy `wpss_vendors_page` option was equally write-only. The key was
+ * therefore permanently 0 on every install, which made `GET /settings` report
+ * `pages.vendors = 0` and `page_urls.vendors = null` even on sites that plainly
+ * HAVE a directory page. Both writers now exist: `Activator::create_pages()`
+ * seeds the page on install and upgrade, and Settings -> Pages maps it.
  *
  * This is the single resolver for that page, in the order a site actually
  * carries the answer:
  *
- * 1. the mapped page (Settings -> Pages, which now offers the field),
+ * 1. the mapped page (Settings -> Pages, or what the installer seeded),
  * 2. the legacy standalone option, for sites mapped before the page map,
  * 3. auto-discovery of a published page carrying `[wpss_vendors]` — which is
- *    what a site owner builds when they want a directory — persisted back into
- *    the page map so every reader (and the admin UI) agrees from then on.
+ *    what a site owner builds when they want their own directory instead of
+ *    ours — persisted back into the page map so every reader (and the admin UI)
+ *    agrees from then on.
  *
  * Returns 0 only when the site genuinely has no vendor directory; callers must
  * treat that as "no such page" rather than as an error.
  *
- * @since 1.6.1
+ * @since 1.6.0
  *
  * @return int Page ID, or 0 when the site has no vendor directory page.
  */
@@ -187,7 +189,7 @@ function wpss_get_vendors_page_id(): int {
 	/**
 	 * Filter the resolved vendor-directory page ID.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @param int $page_id Resolved page ID, or 0 when the site has none.
 	 */
@@ -203,7 +205,7 @@ function wpss_get_vendors_page_id(): int {
  * costs one query per half day rather than one per request on sites that have
  * no directory page at all.
  *
- * @since 1.6.1
+ * @since 1.6.0
  *
  * @return int Page ID, or 0 when no such page exists.
  */
@@ -244,7 +246,7 @@ function wpss_discover_vendors_page_id(): int {
  * only `/{vendor-slug}/{nicename}/` for a single profile, so guessing an
  * archive URL from the slug would hand clients a dead link.
  *
- * @since 1.6.1
+ * @since 1.6.0
  *
  * @return string Directory URL, or an empty string when the site has none.
  */
@@ -258,7 +260,7 @@ function wpss_get_vendors_url(): string {
 	 * Themes and integrations that render a directory somewhere other than a
 	 * mapped page (a CPT archive, a headless route) answer here.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @param string $url     Resolved directory URL, or an empty string.
 	 * @param int    $page_id Resolved directory page ID, or 0.

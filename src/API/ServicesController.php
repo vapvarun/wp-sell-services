@@ -510,7 +510,7 @@ class ServicesController extends RestController {
 	/**
 	 * Fields that belong on a single service, not on a card in a grid.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @param \WP_Post $service Service post.
 	 * @return array<string, mixed>
@@ -546,7 +546,7 @@ class ServicesController extends RestController {
 	/**
 	 * Public vendor profile for a service detail response.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @param int $vendor_id Vendor user ID.
 	 * @return array<string, mixed>|null

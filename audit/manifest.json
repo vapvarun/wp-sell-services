@@ -205,7 +205,43 @@
     ]
   },
   "settings": {
-    "_note": "Stored under various wpss_* options. Settings page in src/Admin/Settings.php (2346 lines). Tabs: General, Vendor, Orders, Earnings, Reviews, Disputes, Pages, Emails, Gateways, Advanced. Advanced tab includes the Real-time (WebSockets) card storing wpss_realtime_settings (enabled, app_id, key, secret, host, cluster, port, use_tls — secret uses the masked-field keep-on-blank contract)."
+    "_note": "Stored under various wpss_* options. Settings page in src/Admin/Settings.php (2346 lines). Tabs: General, Vendor, Orders, Earnings, Reviews, Disputes, Pages, Emails, Gateways, Advanced. Advanced tab includes the Real-time (WebSockets) card storing wpss_realtime_settings (enabled, app_id, key, secret, host, cluster, port, use_tls — secret uses the masked-field keep-on-blank contract).",
+    "pages": {
+      "_note": "Option `wpss_pages` maps page keys -> post IDs. Activator::create_pages() (src/Core/Activator.php) is the ONE writer; it runs on activation AND on the version-bump upgrade path (src/Core/Plugin.php, init:5). Every key listed here MUST have both an installer entry and a Settings mapping field -- a key with only a field is an unwritable setting the owner has to fill by hand. Adoption rule: if a published page already contains the shortcode, that page is adopted rather than a duplicate created.",
+      "option": "wpss_pages",
+      "writer": "WPSellServices\\Core\\Activator::create_pages",
+      "mapping_ui": "src/Admin/Settings.php (Pages tab)",
+      "keys": {
+        "services_page": {
+          "title": "Services",
+          "shortcode": "[wpss_services]"
+        },
+        "vendors_page": {
+          "title": "Vendors",
+          "shortcode": "[wpss_vendors]",
+          "resolver": "wpss_get_vendors_page_id()",
+          "since": "1.6.0"
+        },
+        "dashboard": {
+          "title": "Dashboard",
+          "shortcode": "[wpss_dashboard]"
+        },
+        "become_vendor": {
+          "title": "Become a Vendor",
+          "shortcode": "[wpss_vendor_registration]"
+        },
+        "checkout": {
+          "title": "Service Checkout",
+          "shortcode": "[wpss_checkout]",
+          "slug": "service-checkout"
+        },
+        "cart": {
+          "title": "Service Cart",
+          "shortcode": "[wpss_cart]",
+          "slug": "service-cart"
+        }
+      }
+    }
   },
   "shortcodes": {
     "count": 19,

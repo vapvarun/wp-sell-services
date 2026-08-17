@@ -560,7 +560,7 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
  * dependency without caring which surface it is on. Idempotent: WP_Styles::add()
  * ignores a handle that is already registered.
  *
- * @since 1.6.1
+ * @since 1.6.0
  *
  * @param bool $enqueue Whether to enqueue it as well as register it.
  * @return void

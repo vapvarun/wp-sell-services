@@ -708,7 +708,7 @@ final class Plugin {
 	 * site) is deliberately left alone so the renderer can explain the gap.
 	 *
 	 * @since 1.2.0
-	 * @since 1.6.1 Validates and aliases the slug instead of trusting it.
+	 * @since 1.6.0 Validates and aliases the slug instead of trusting it.
 	 *
 	 * @return void
 	 */
@@ -793,7 +793,7 @@ final class Plugin {
 	 *
 	 * Returns an empty array on a standalone site, where both pages are live.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @return array<string, int> Page key (`cart`/`checkout`) => page ID.
 	 */
@@ -835,7 +835,7 @@ final class Plugin {
 	 * The shortcode guards stay in place as defence-in-depth for the case where
 	 * an owner has pasted the shortcode onto some OTHER page.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @return void
 	 */
@@ -894,7 +894,7 @@ final class Plugin {
 	 * crawler can be pointed at, and they were sitting in the WP core sitemap
 	 * next to WooCommerce's real cart and checkout.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @param array<string, mixed> $robots Robots directives.
 	 * @return array<string, mixed>
@@ -919,7 +919,7 @@ final class Plugin {
 	/**
 	 * Drop the dormant cart/checkout pages from the WP core sitemap.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @param array<string, mixed> $args      Query args.
 	 * @param string               $post_type Post type being listed.

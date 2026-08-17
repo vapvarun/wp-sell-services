@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-17T08:01:25+00:00\n"
+"POT-Creation-Date: 2026-08-17T08:20:24+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -96,7 +96,7 @@ msgstr ""
 #: src/Admin/Pages/SetupWizardPage.php:417
 #: src/Admin/Pages/SetupWizardPage.php:475
 #: src/Admin/Settings.php:1177
-#: src/Core/Activator.php:357
+#: src/Core/Activator.php:368
 #: src/Frontend/UnifiedDashboard.php:804
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:197
 msgid "Dashboard"
@@ -105,7 +105,7 @@ msgstr ""
 #: src/Admin/Admin.php:508
 #: src/Admin/Pages/SetupWizardPage.php:418
 #: src/Admin/Settings.php:1188
-#: src/Core/Activator.php:361
+#: src/Core/Activator.php:372
 #: src/Frontend/ServiceWizard.php:2244
 #: src/Frontend/UnifiedDashboard.php:910
 #: templates/single-request.php:477
@@ -115,7 +115,7 @@ msgstr ""
 #: src/Admin/Admin.php:509
 #: src/Admin/Pages/SetupWizardPage.php:419
 #: src/Admin/Settings.php:1179
-#: src/Core/Activator.php:370
+#: src/Core/Activator.php:381
 msgid "Service Checkout"
 msgstr ""
 
@@ -2774,7 +2774,7 @@ msgstr ""
 
 #: src/Admin/Pages/ReportsPage.php:342
 #: src/Admin/Pages/ReportsPage.php:361
-#: src/functions/vendors.php:530
+#: src/functions/vendors.php:532
 msgid "Deleted member"
 msgstr ""
 
@@ -3741,6 +3741,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:107
 #: src/Admin/Pages/VendorsPage.php:470
 #: src/Admin/Settings.php:88
+#: src/Core/Activator.php:364
 #: src/Frontend/Tour.php:420
 msgid "Vendors"
 msgstr ""
@@ -5396,7 +5397,7 @@ msgid "Vendors Directory"
 msgstr ""
 
 #: src/Admin/Settings.php:1178
-#: src/Core/Activator.php:375
+#: src/Core/Activator.php:386
 msgid "Service Cart"
 msgstr ""
 
@@ -13034,19 +13035,19 @@ msgstr ""
 msgid "Vendor intro video"
 msgstr ""
 
-#: src/functions/vendors.php:357
+#: src/functions/vendors.php:359
 msgid "Your vendor account is pending approval."
 msgstr ""
 
-#: src/functions/vendors.php:361
+#: src/functions/vendors.php:363
 msgid "Your vendor account is suspended."
 msgstr ""
 
-#: src/functions/vendors.php:365
+#: src/functions/vendors.php:367
 msgid "Your vendor account was not approved."
 msgstr ""
 
-#: src/functions/vendors.php:374
+#: src/functions/vendors.php:376
 msgid "Your vendor account is not active."
 msgstr ""
 

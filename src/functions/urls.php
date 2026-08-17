@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
  * Deriving the ID FROM the resolved URL keeps the two answers describing the
  * same page by construction.
  *
- * @since 1.6.1
+ * @since 1.6.0
  *
  * @param string $key Either `cart` or `checkout`.
  * @return int Page ID, or 0 when the rail's URL is not a WP page.
@@ -144,7 +144,7 @@ function wpss_append_dashboard_section( string $base_url, string $section ): str
  * slug and explain the gap rather than treat the URL as junk. Renderability is
  * answered separately by wpss_get_dashboard_section_template().
  *
- * @since 1.6.1
+ * @since 1.6.0
  *
  * @return array<int, string> Section slugs.
  */
@@ -184,7 +184,7 @@ function wpss_get_known_dashboard_sections(): array {
 	 * the dashboard's default landing section, so add-ons that register their
 	 * own section must add its slug here as well as to `wpss_dashboard_sections`.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @param array<int, string> $sections Known section slugs.
 	 */
@@ -202,7 +202,7 @@ function wpss_get_known_dashboard_sections(): array {
  * applies to "My Services" and "Sales Orders". Mapping the plausible guesses is
  * cheaper for everyone than teaching every tester the canonical slug.
  *
- * @since 1.6.1
+ * @since 1.6.0
  *
  * @return array<string, string> Alias slug => canonical slug.
  */
@@ -233,7 +233,7 @@ function wpss_get_dashboard_section_aliases(): array {
 	/**
 	 * Filter the dashboard section alias map.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @param array<string, string> $aliases Alias slug => canonical slug.
 	 */
@@ -247,7 +247,7 @@ function wpss_get_dashboard_section_aliases(): array {
  * caller's cue to send the visitor to the default landing section instead of
  * rendering (or worse, 301-canonicalising) a dead end.
  *
- * @since 1.6.1
+ * @since 1.6.0
  *
  * @param string $section Requested section slug.
  * @return string Canonical section slug, or an empty string when unknown.
@@ -276,7 +276,7 @@ function wpss_normalize_dashboard_section( string $section ): string {
  * An empty string means "known address, nothing here can render it" — which on
  * a Free-only site is exactly the Pro-only case.
  *
- * @since 1.6.1
+ * @since 1.6.0
  *
  * @param string $section Canonical section slug.
  * @return string Absolute template path, or an empty string when none exists.
