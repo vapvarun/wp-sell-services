@@ -35,9 +35,65 @@ $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
 // call-to-action rather than a bare notice. Consumes the existing
 // .wpss-payout-banner primitive (design-system.css / unified-dashboard.css) —
 // info notice token surface, solid icon chip, primary-token CTA.
-$payout_method      = get_user_meta( $user_id, 'wpss_payout_method', true );
-$show_payout_banner = empty( $payout_method )
-	&& ( (float) $earnings['available_balance'] > 0 || (float) $earnings['pending_clearance'] > 0 );
+$payout_method = get_user_meta( $user_id, 'wpss_payout_method', true );
+
+// Say what is actually true of THIS vendor's balance.
+//
+// The old guard was `available > 0 || pending_clearance > 0`, which told a
+// vendor "You have earnings ready for withdrawal!" while the stat card beside
+// it read -$185.00. It fired for anyone with work in flight, because
+// pending_clearance counts expected earnings from in-progress orders, not money
+// that can be withdrawn. On this data 4 of 8 vendors saw it wrongly -- two in
+// debt, two holding less than the $50 minimum.
+//
+// Three honest states instead of one optimistic one:
+//   ready    - available >= the minimum, so "ready for withdrawal" is true
+//   coming   - money exists or is clearing, but cannot be withdrawn yet
+//   none     - nothing to say, so say nothing
+//
+// The minimum matters as much as the sign: telling someone holding $26 that
+// their earnings are ready, when the site requires $50, is the same lie in a
+// smaller hat.
+$available_balance = (float) $earnings['available_balance'];
+$pending_clearance = (float) $earnings['pending_clearance'];
+
+if ( $available_balance < 0 ) {
+	// In debt. Prompting about payouts here competes with the explanation of
+	// what they owe, which is the only thing that matters to them right now.
+	$payout_banner_state = 'none';
+} elseif ( $available_balance >= (float) $min_withdrawal ) {
+	$payout_banner_state = 'ready';
+} elseif ( $available_balance > 0 || $pending_clearance > 0 ) {
+	$payout_banner_state = 'coming';
+} else {
+	$payout_banner_state = 'none';
+}
+
+/**
+ * Filters the payout banner state shown on the earnings section.
+ *
+ * Lets a site owner tune the prompt to their own payout rules -- for example
+ * showing 'ready' as soon as any balance exists on a site with no minimum, or
+ * suppressing it entirely for vendors they onboard by hand.
+ *
+ * @since 1.6.1
+ *
+ * @param string $payout_banner_state 'ready', 'coming' or 'none'.
+ * @param float  $available_balance   Withdrawable balance.
+ * @param float  $pending_clearance   Earnings still clearing.
+ * @param int    $user_id             Vendor user ID.
+ */
+$payout_banner_state = (string) apply_filters(
+	'wpss_payout_banner_state',
+	$payout_banner_state,
+	$available_balance,
+	$pending_clearance,
+	$user_id
+);
+
+// Only prompt when there is no payout method yet -- the banner exists to get one
+// configured, not to report a balance the stat cards already show.
+$show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state;
 ?>
 
 <div class="wpss-section wpss-section--earnings wpss-card">
@@ -48,10 +104,26 @@ $show_payout_banner = empty( $payout_method )
 			</span>
 			<div class="wpss-payout-banner__content">
 				<strong class="wpss-payout-banner__title">
-					<?php esc_html_e( 'You have earnings ready for withdrawal!', 'wp-sell-services' ); ?>
+					<?php
+					if ( 'ready' === $payout_banner_state ) {
+						esc_html_e( 'You have earnings ready for withdrawal!', 'wp-sell-services' );
+					} else {
+						esc_html_e( 'Your earnings are on the way', 'wp-sell-services' );
+					}
+					?>
 				</strong>
 				<span class="wpss-payout-banner__text">
-					<?php esc_html_e( 'Set up your payout method below to start receiving payments.', 'wp-sell-services' ); ?>
+					<?php
+					if ( 'ready' === $payout_banner_state ) {
+						esc_html_e( 'Set up your payout method below to start receiving payments.', 'wp-sell-services' );
+					} else {
+						printf(
+							/* translators: %s: formatted minimum withdrawal amount. */
+							esc_html__( 'Set up your payout method now so you are ready. You can withdraw once your available balance reaches %s.', 'wp-sell-services' ),
+							esc_html( wpss_format_price( (float) $min_withdrawal ) )
+						);
+					}
+					?>
 				</span>
 			</div>
 			<a href="#wpss-withdrawal" class="wpss-btn wpss-btn--primary wpss-payout-banner__btn">
