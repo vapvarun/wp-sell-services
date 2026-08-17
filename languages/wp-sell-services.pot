@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-17T20:05:16+00:00\n"
+"POT-Creation-Date: 2026-08-17T20:15:50+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -6172,6 +6172,10 @@ msgstr ""
 msgid "Path must start with /wpss/v1/"
 msgstr ""
 
+#: src/API/AppTokenGuard.php:76
+msgid "This sign-in has expired. Please sign in again."
+msgstr ""
+
 #: src/API/AuditLogController.php:84
 msgid "Filter by object type (e.g. order, proposal)."
 msgstr ""
@@ -6228,54 +6232,74 @@ msgstr ""
 msgid "Human-readable device label shown in the account's device list."
 msgstr ""
 
-#: src/API/AuthController.php:272
+#: src/API/AuthController.php:289
+msgid "Session identifier from GET /auth/sessions."
+msgstr ""
+
+#: src/API/AuthController.php:365
+msgid "Application passwords are not available on this site."
+msgstr ""
+
+#: src/API/AuthController.php:388
+msgid "That sign-in was not found. It may already have been revoked."
+msgstr ""
+
+#: src/API/AuthController.php:398
+msgid "Could not revoke that sign-in. Please try again."
+msgstr ""
+
+#: src/API/AuthController.php:432
 msgid "Too many attempts. Please try again later."
 msgstr ""
 
-#: src/API/AuthController.php:302
+#: src/API/AuthController.php:462
 msgid "Invalid username or password."
 msgstr ""
 
-#: src/API/AuthController.php:344
+#: src/API/AuthController.php:484
+msgid "Sign in with your account password. An existing app sign-in cannot be used to create another one."
+msgstr ""
+
+#: src/API/AuthController.php:534
 msgid "User registration is disabled."
 msgstr ""
 
-#: src/API/AuthController.php:354
+#: src/API/AuthController.php:544
 msgid "Username already exists."
 msgstr ""
 
-#: src/API/AuthController.php:361
+#: src/API/AuthController.php:551
 #: src/Frontend/PublicSignup.php:98
 msgid "Password must be at least 8 characters."
 msgstr ""
 
-#: src/API/AuthController.php:414
+#: src/API/AuthController.php:604
 msgid "Account created but user lookup failed. Please log in."
 msgstr ""
 
-#: src/API/AuthController.php:426
+#: src/API/AuthController.php:616
 msgid "Account created. Please log in."
 msgstr ""
 
-#: src/API/AuthController.php:490
-#: src/API/AuthController.php:498
-#: src/API/AuthController.php:503
+#: src/API/AuthController.php:686
+#: src/API/AuthController.php:694
+#: src/API/AuthController.php:699
 msgid "If an account exists with that email, a password reset link has been sent."
 msgstr ""
 
-#: src/API/AuthController.php:519
+#: src/API/AuthController.php:715
 msgid "Current password is incorrect."
 msgstr ""
 
-#: src/API/AuthController.php:523
+#: src/API/AuthController.php:719
 msgid "New password must be at least 8 characters."
 msgstr ""
 
-#: src/API/AuthController.php:528
+#: src/API/AuthController.php:724
 msgid "Password changed successfully."
 msgstr ""
 
-#: src/API/AuthController.php:661
+#: src/API/AuthController.php:857
 msgid "Application passwords are not available."
 msgstr ""
 
@@ -8208,21 +8232,21 @@ msgstr ""
 msgid "The site owner will contact you with payment instructions after you place your order."
 msgstr ""
 
-#: src/Core/Plugin.php:1517
+#: src/Core/Plugin.php:1532
 msgid "All milestones on this custom-project order are complete."
 msgstr ""
 
 #. translators: %d: count of paid phases
-#: src/Core/Plugin.php:1574
+#: src/Core/Plugin.php:1589
 #, php-format
 msgid "Project cancelled while %d milestone was already paid. Money has moved to the seller wallet; open a dispute if the work cannot be accepted."
 msgstr ""
 
-#: src/Core/Plugin.php:1579
+#: src/Core/Plugin.php:1594
 msgid "Paid milestone not delivered"
 msgstr ""
 
-#: src/Core/Plugin.php:1580
+#: src/Core/Plugin.php:1595
 msgid "Paid milestone on cancelled project"
 msgstr ""
 

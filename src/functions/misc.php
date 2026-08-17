@@ -444,3 +444,149 @@ function wpss_revoke_app_sessions( int $user_id ): int {
 
 	return $revoked;
 }
+
+/**
+ * How long an app token stays valid.
+ *
+ * Two limits, because either alone leaves the hole open (Basecamp
+ * 10154918753):
+ *
+ * - IDLE alone would let a token that is actively being used live forever,
+ *   which is exactly the stolen-token case.
+ * - ABSOLUTE alone would log a daily user out on a fixed schedule for no
+ *   security gain, and people respond to that by staying logged in elsewhere.
+ *
+ * So a token dies 30 days after it was last used, OR 90 days after it was
+ * issued, whichever comes first. A daily user is never interrupted inside the
+ * quarter; a token nobody is using is gone in a month.
+ *
+ * @since 1.6.0
+ *
+ * @return array{idle: int, absolute: int} Seconds.
+ */
+function wpss_app_token_lifetime(): array {
+	$lifetime = array(
+		'idle'     => 30 * DAY_IN_SECONDS,
+		'absolute' => 90 * DAY_IN_SECONDS,
+	);
+
+	/**
+	 * Filter how long a mobile app token stays valid.
+	 *
+	 * Returning 0 for either key disables that limit. Disabling BOTH restores
+	 * the pre-1.6.0 behaviour of tokens that never expire - which is what this
+	 * card was filed about, so do it only with a reason.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param array{idle: int, absolute: int} $lifetime Seconds.
+	 */
+	$lifetime = (array) apply_filters( 'wpss_app_token_lifetime', $lifetime );
+
+	return array(
+		'idle'     => max( 0, (int) ( $lifetime['idle'] ?? 0 ) ),
+		'absolute' => max( 0, (int) ( $lifetime['absolute'] ?? 0 ) ),
+	);
+}
+
+/**
+ * When an app token expires, as a unix timestamp.
+ *
+ * @since 1.6.0
+ *
+ * @param array<string, mixed> $item Application password item from core.
+ * @return int|null Timestamp, or null if it never expires.
+ */
+function wpss_app_token_expires_at( array $item ): ?int {
+	$lifetime = wpss_app_token_lifetime();
+	$created  = (int) ( $item['created'] ?? 0 );
+
+	// last_used is null until the token is actually used; fall back to issue
+	// time so a token minted and abandoned still ages out.
+	$last_used = (int) ( $item['last_used'] ?? 0 );
+	$last_used = $last_used > 0 ? $last_used : $created;
+
+	$deadlines = array();
+
+	if ( $lifetime['absolute'] > 0 && $created > 0 ) {
+		$deadlines[] = $created + $lifetime['absolute'];
+	}
+
+	if ( $lifetime['idle'] > 0 && $last_used > 0 ) {
+		$deadlines[] = $last_used + $lifetime['idle'];
+	}
+
+	return $deadlines ? min( $deadlines ) : null;
+}
+
+/**
+ * Whether an app token has expired.
+ *
+ * @since 1.6.0
+ *
+ * @param array<string, mixed> $item Application password item from core.
+ * @return bool
+ */
+function wpss_app_token_is_expired( array $item ): bool {
+	$expires = wpss_app_token_expires_at( $item );
+
+	return null !== $expires && $expires <= time();
+}
+
+/**
+ * Whether a submitted password is one of this member's app tokens.
+ *
+ * Used to stop a token minting more tokens. WordPress authenticates
+ * application passwords through the same wp_authenticate() chain as the real
+ * account password, so POST /auth/login accepted a token where it meant to ask
+ * for the password - and happily issued another one (Basecamp 10154918753).
+ *
+ * @since 1.6.0
+ *
+ * @param \WP_User $user     User being authenticated.
+ * @param string   $password The submitted password.
+ * @return bool
+ */
+function wpss_password_is_app_token( \WP_User $user, string $password ): bool {
+	if ( ! class_exists( 'WP_Application_Passwords' ) || '' === $password ) {
+		return false;
+	}
+
+	// Application passwords are shown to the member with spaces in, and stored
+	// without them.
+	$candidate = str_replace( ' ', '', $password );
+
+	foreach ( (array) \WP_Application_Passwords::get_user_application_passwords( $user->ID ) as $item ) {
+		if ( empty( $item['password'] ) ) {
+			continue;
+		}
+
+		/*
+		 * Verify the way CORE verifies, not with wp_check_password().
+		 *
+		 * WordPress 6.8 moved application passwords onto fast hashes with their
+		 * own checker; wp_check_password() does not recognise them and returns
+		 * false for a perfectly valid token. That is a silent failure in
+		 * exactly the wrong direction - the guard reports "not a token" and
+		 * waves the request through. It was caught only because the fix was
+		 * re-run against the live HTTP endpoint rather than assumed.
+		 */
+		/*
+		 * The method_exists() guard is NOT redundant, whatever the analyser
+		 * says: it is stubbed against current WordPress, where the method
+		 * exists, but this plugin supports 6.4 and up and the method arrived in
+		 * 6.8. Removing the guard fatals on a supported version.
+		 *
+		 * @phpstan-ignore function.alreadyNarrowedType
+		 */
+		$matches = method_exists( '\WP_Application_Passwords', 'check_password' )
+			? \WP_Application_Passwords::check_password( $candidate, (string) $item['password'] )
+			: wp_check_password( $candidate, (string) $item['password'], $user->ID );
+
+		if ( $matches ) {
+			return true;
+		}
+	}
+
+	return false;
+}

@@ -251,6 +251,166 @@ class AuthController extends RestController {
 				),
 			)
 		);
+
+		/*
+		 * GET /auth/sessions - the member's active sign-ins.
+		 * DELETE /auth/sessions/{uuid} - revoke one of them.
+		 *
+		 * Deliberately NOT hung off /auth/devices. That path already exists and
+		 * means something else entirely: PUSH NOTIFICATION tokens, stored in
+		 * _wpss_push_devices. Reading the route list, "devices" looks like it
+		 * answers "where am I signed in?" and it does not - which is how this
+		 * card came to be filed with a devices endpoint already shipped
+		 * (Basecamp 10154918753). A session is not a device; one phone can hold
+		 * both, and revoking a push token must not sign anybody out.
+		 */
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/sessions',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_sessions' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/sessions/(?P<uuid>[a-zA-Z0-9\-]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'revoke_session' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+					'args'                => array(
+						'uuid' => array(
+							'description'       => __( 'Session identifier from GET /auth/sessions.', 'wp-sell-services' ),
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * List the member's active app sign-ins.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_sessions( WP_REST_Request $request ): WP_REST_Response {
+		unset( $request );
+
+		$user_id  = get_current_user_id();
+		$sessions = array();
+
+		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
+			return new WP_REST_Response( $sessions );
+		}
+
+		// Which one is making THIS request, so a client can mark it "this
+		// device" and avoid offering to revoke the session it is using.
+		$current = function_exists( 'rest_get_authenticated_app_password' )
+			? (string) rest_get_authenticated_app_password()
+			: '';
+
+		foreach ( (array) WP_Application_Passwords::get_user_application_passwords( $user_id ) as $item ) {
+			// Only sign-ins this plugin issued. An application password the
+			// member created by hand in their WordPress profile belongs to
+			// whatever script they built with it, and is not ours to list as a
+			// "sign-in" or to offer for revocation here.
+			if ( ! str_starts_with( (string) ( $item['name'] ?? '' ), 'WPSS' ) ) {
+				continue;
+			}
+
+			$expires_at = wpss_app_token_expires_at( $item );
+
+			$sessions[] = array(
+				'uuid'       => (string) ( $item['uuid'] ?? '' ),
+				// The name is stored as "WPSS <device>"; give back the device.
+				'device'     => trim( substr( (string) ( $item['name'] ?? '' ), 4 ) ),
+				'created'    => wpss_rest_date( gmdate( 'Y-m-d H:i:s', (int) ( $item['created'] ?? 0 ) ) ),
+				'last_used'  => ! empty( $item['last_used'] )
+					? wpss_rest_date( gmdate( 'Y-m-d H:i:s', (int) $item['last_used'] ) )
+					: null,
+				'last_ip'    => (string) ( $item['last_ip'] ?? '' ),
+				'expires'    => null !== $expires_at ? wpss_rest_date( gmdate( 'Y-m-d H:i:s', $expires_at ) ) : null,
+				'expired'    => wpss_app_token_is_expired( $item ),
+				'is_current' => '' !== $current && $current === (string) ( $item['uuid'] ?? '' ),
+			);
+		}
+
+		return new WP_REST_Response( $sessions );
+	}
+
+	/**
+	 * Revoke one app sign-in.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function revoke_session( WP_REST_Request $request ) {
+		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
+			return new WP_Error(
+				'wpss_sessions_unavailable',
+				__( 'Application passwords are not available on this site.', 'wp-sell-services' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$user_id = get_current_user_id();
+		$uuid    = (string) $request->get_param( 'uuid' );
+
+		// Look the session up on THIS member before touching it. Without this
+		// the uuid alone would decide what gets deleted, and one member could
+		// revoke another's sign-in by guessing it.
+		$match = null;
+
+		foreach ( (array) WP_Application_Passwords::get_user_application_passwords( $user_id ) as $item ) {
+			if ( (string) ( $item['uuid'] ?? '' ) === $uuid && str_starts_with( (string) ( $item['name'] ?? '' ), 'WPSS' ) ) {
+				$match = $item;
+				break;
+			}
+		}
+
+		if ( null === $match ) {
+			return new WP_Error(
+				'wpss_session_not_found',
+				__( 'That sign-in was not found. It may already have been revoked.', 'wp-sell-services' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$deleted = WP_Application_Passwords::delete_application_password( $user_id, $uuid );
+
+		if ( is_wp_error( $deleted ) || ! $deleted ) {
+			return new WP_Error(
+				'wpss_session_revoke_failed',
+				__( 'Could not revoke that sign-in. Please try again.', 'wp-sell-services' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		/**
+		 * Fires after a single app sign-in is revoked.
+		 *
+		 * @since 1.6.0
+		 *
+		 * @param int    $user_id Member whose session was revoked.
+		 * @param string $uuid    Session identifier.
+		 */
+		do_action( 'wpss_app_session_revoked', $user_id, $uuid );
+
+		return new WP_REST_Response( array( 'revoked' => true ) );
 	}
 
 	/**
@@ -304,6 +464,28 @@ class AuthController extends RestController {
 			);
 		}
 
+		/*
+		 * A token must not be able to mint more tokens (Basecamp 10154918753).
+		 *
+		 * WordPress authenticates application passwords through this same
+		 * wp_authenticate() chain, so passing a previously issued token as the
+		 * `password` succeeded here and was handed a brand new one - verified
+		 * over HTTP returning 200. Whoever stole one token had an unlimited
+		 * supply, and revoking the original changed nothing.
+		 *
+		 * Checked AFTER wp_authenticate() rather than by calling
+		 * wp_authenticate_username_password() directly: bypassing the chain
+		 * would also bypass any two-factor or SSO plugin on the site, trading
+		 * this hole for a worse one.
+		 */
+		if ( wpss_password_is_app_token( $user, (string) $password ) ) {
+			return new WP_Error(
+				'wpss_token_cannot_mint',
+				__( 'Sign in with your account password. An existing app sign-in cannot be used to create another one.', 'wp-sell-services' ),
+				array( 'status' => 401 )
+			);
+		}
+
 		$device_name = sanitize_text_field( $request->get_param( 'device_name' ) );
 		$app_pass    = $this->create_app_password( $user, $device_name );
 
@@ -311,11 +493,19 @@ class AuthController extends RestController {
 			return $app_pass;
 		}
 
+		// `expires` was hardcoded null and the server enforced nothing, so a
+		// token was valid forever. It is now the real deadline, enforced at
+		// authentication by AppTokenGuard - see wpss_app_token_lifetime().
+		// Still nullable, because a site can switch expiry off with that
+		// filter, and a client must read null as "no expiry" rather than
+		// assuming a number is always there.
+		$expires_at = wpss_app_token_expires_at( $app_pass['item'] );
+
 		return new WP_REST_Response(
 			array(
-				'token'   => base64_encode( $user->user_login . ':' . $app_pass ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+				'token'   => base64_encode( $user->user_login . ':' . $app_pass['password'] ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 				'user'    => $this->format_user( $user ),
-				'expires' => null,
+				'expires' => null !== $expires_at ? wpss_rest_date( gmdate( 'Y-m-d H:i:s', $expires_at ) ) : null,
 			)
 		);
 	}
@@ -429,10 +619,16 @@ class AuthController extends RestController {
 			);
 		}
 
+		// Registration hands back a token too, so it carries the same expiry
+		// contract as /auth/login - a client should not have to learn that one
+		// entry point expires and the other does not.
+		$expires_at = wpss_app_token_expires_at( $app_pass['item'] );
+
 		return new WP_REST_Response(
 			array(
-				'token' => base64_encode( $user->user_login . ':' . $app_pass ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-				'user'  => $this->format_user( $user ),
+				'token'   => base64_encode( $user->user_login . ':' . $app_pass['password'] ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+				'user'    => $this->format_user( $user ),
+				'expires' => null !== $expires_at ? wpss_rest_date( gmdate( 'Y-m-d H:i:s', $expires_at ) ) : null,
 			),
 			201
 		);
@@ -654,7 +850,7 @@ class AuthController extends RestController {
 	 *
 	 * @param WP_User $user        User object.
 	 * @param string  $device_name Device name.
-	 * @return string|WP_Error
+	 * @return array{password: string, item: array<string, mixed>}|WP_Error
 	 */
 	private function create_app_password( WP_User $user, string $device_name ) {
 		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
@@ -690,7 +886,13 @@ class AuthController extends RestController {
 			return $result;
 		}
 
-		return $result[0]; // The unhashed password.
+		// Both halves: the unhashed password, which is the only moment it is
+		// ever readable, and the stored record, which carries the `created`
+		// timestamp the expiry deadline is computed from.
+		return array(
+			'password' => $result[0],
+			'item'     => (array) $result[1],
+		);
 	}
 
 	/**

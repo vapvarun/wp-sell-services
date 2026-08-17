@@ -502,6 +502,21 @@ final class Plugin {
 		// enabling the rest of it is a behaviour change that belongs in its own
 		// release, not a quiet side effect of this fix.
 		$this->loader->add_filter( 'rest_post_dispatch', $api, 'clarify_method_not_allowed', 10, 3 );
+
+		// Enforce app-token expiry at authentication. Application passwords do
+		// not expire on their own, so `expires` on a login response was purely
+		// decorative and a stolen token worked forever (Basecamp 10154918753).
+		//
+		// Registered here, not on rest_api_init: authentication runs before
+		// that fires, so a hook added there would never see the request it is
+		// supposed to reject.
+		$this->loader->add_action(
+			'wp_authenticate_application_password_errors',
+			new \WPSellServices\API\AppTokenGuard(),
+			'reject_expired_token',
+			10,
+			4
+		);
 	}
 
 	/**
