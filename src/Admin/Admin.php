@@ -1692,6 +1692,79 @@ class Admin {
 			</a>
 			<hr class="wp-header-end">
 
+			<?php
+			/*
+			 * An order's dispute, surfaced ON the order.
+			 *
+			 * A dispute does not force the order's status: an order can be
+			 * Completed and still carry an open dispute, which is exactly the
+			 * case support most needs to see. This screen showed status,
+			 * messages, deliveries and the refund controls with no mention of
+			 * the dispute at all, so an admin could read the whole order,
+			 * process a refund, and never learn a conflict was live on it
+			 * (Basecamp 10208211608).
+			 *
+			 * Resolved disputes are shown too, quieter: "how did that end?" is
+			 * asked from the order, and the answer drives whether a refund is
+			 * appropriate. Same reasoning as the buyer-facing order view, which
+			 * uses the same reader.
+			 */
+			$wpss_order_dispute = ( new \WPSellServices\Services\DisputeService() )->get_by_order( $order_id );
+
+			if ( $wpss_order_dispute ) :
+				$wpss_dispute_statuses = \WPSellServices\Models\Dispute::get_statuses();
+				$wpss_dispute_reasons  = \WPSellServices\Models\Dispute::get_reasons();
+				$wpss_dispute_live     = in_array(
+					$wpss_order_dispute->status,
+					array(
+						\WPSellServices\Models\Dispute::STATUS_OPEN,
+						\WPSellServices\Models\Dispute::STATUS_PENDING,
+						\WPSellServices\Models\Dispute::STATUS_ESCALATED,
+					),
+					true
+				);
+				$wpss_dispute_url      = admin_url(
+					'admin.php?page=wpss-disputes&action=view&dispute_id=' . (int) $wpss_order_dispute->id
+				);
+				?>
+				<div class="notice <?php echo $wpss_dispute_live ? 'notice-error' : 'notice-info'; ?> wpss-order-dispute-notice" style="margin-top: 20px;">
+					<p>
+						<strong>
+							<?php
+							if ( $wpss_dispute_live ) {
+								printf(
+									/* translators: %s: dispute status label, e.g. Open or Escalated */
+									esc_html__( 'Active dispute on this order (%s)', 'wp-sell-services' ),
+									esc_html( $wpss_dispute_statuses[ $wpss_order_dispute->status ] ?? $wpss_order_dispute->status )
+								);
+							} else {
+								printf(
+									/* translators: %s: dispute status label, e.g. Resolved or Closed */
+									esc_html__( 'Dispute history on this order (%s)', 'wp-sell-services' ),
+									esc_html( $wpss_dispute_statuses[ $wpss_order_dispute->status ] ?? $wpss_order_dispute->status )
+								);
+							}
+							?>
+						</strong>
+						&mdash;
+						<?php echo esc_html( $wpss_dispute_reasons[ $wpss_order_dispute->reason ] ?? $wpss_order_dispute->reason ); ?>
+						<?php if ( ! empty( $wpss_order_dispute->dispute_number ) ) : ?>
+							(<?php echo esc_html( $wpss_order_dispute->dispute_number ); ?>)
+						<?php endif; ?>
+						<a href="<?php echo esc_url( $wpss_dispute_url ); ?>" class="button button-small" style="margin-inline-start: 8px;">
+							<?php esc_html_e( 'Open dispute', 'wp-sell-services' ); ?>
+						</a>
+					</p>
+					<?php if ( $wpss_dispute_live && 'completed' === $order->status ) : ?>
+						<p>
+							<?php esc_html_e( 'This order is marked completed while the dispute is still unresolved. Resolve the dispute before treating the order as settled.', 'wp-sell-services' ); ?>
+						</p>
+					<?php endif; ?>
+				</div>
+				<?php
+			endif;
+			?>
+
 			<div class="wpss-order-layout" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
 				<div class="wpss-order-main" style="flex: 2;">
 					<!-- Order Info -->

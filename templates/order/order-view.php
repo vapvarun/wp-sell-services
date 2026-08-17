@@ -1315,30 +1315,115 @@ do_action( 'wpss_before_order_view', $order );
 		</div>
 	</section>
 
-	<!-- Review CTA (for completed orders) -->
-	<?php if ( 'completed' === $order->status && $is_customer ) : ?>
-		<?php
-		// Check if already reviewed.
-		$review_exists = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT id FROM {$wpdb->prefix}wpss_reviews WHERE order_id = %d",
-				$order_id
-			)
+	<!-- Review: the CTA, or the review that was already left -->
+	<?php
+	/*
+	 * This block used to be `if ( ! $review_exists )` with no else, so the
+	 * moment a buyer submitted a review the order page went silent about it -
+	 * no stars, no text, no seller response, no confirmation it had been
+	 * recorded. The buyer's own review became invisible to the buyer on the
+	 * only page they would look for it (Basecamp 10208142348).
+	 *
+	 * Two other things were wrong in the same seven lines:
+	 *
+	 * - it ran a raw $wpdb query for "has this been reviewed", duplicating
+	 *   ReviewService, which already owns that question;
+	 * - it gated the CTA on completed + is_customer + no-review only, ignoring
+	 *   the review WINDOW that ReviewService::can_review() enforces. So after
+	 *   the window closed the button still invited a review that the server
+	 *   then refused.
+	 *
+	 * can_review() is now the single authority and it returns the reason, so
+	 * when the CTA is withheld the buyer is told why instead of being shown
+	 * nothing.
+	 */
+	$wpss_review_service = new \WPSellServices\Services\ReviewService();
+	$wpss_order_review   = $wpss_review_service->get_by_order( $order_id );
+	$review_exists       = null !== $wpss_order_review;
+	$wpss_review_gate    = $is_customer
+		? $wpss_review_service->can_review( $order_id, $user_id )
+		: array(
+			'can_review' => false,
+			'reason'     => '',
 		);
-		?>
-		<?php if ( ! $review_exists ) : ?>
-			<section class="wpss-order-section wpss-order-section--review">
-				<div class="wpss-review-cta">
-					<i data-lucide="star" class="wpss-icon wpss-icon--lg wpss-review-cta__icon" aria-hidden="true"></i>
-					<h3 class="wpss-review-cta__title"><?php esc_html_e( 'Rate Your Experience', 'wp-sell-services' ); ?></h3>
-					<p class="wpss-review-cta__text"><?php esc_html_e( 'How was your experience with this order? Your feedback helps other buyers.', 'wp-sell-services' ); ?></p>
-					<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-write-review-btn"
-							data-order="<?php echo esc_attr( $order_id ); ?>">
-						<?php esc_html_e( 'Write a Review', 'wp-sell-services' ); ?>
-					</button>
+	?>
+
+	<?php if ( $wpss_review_gate['can_review'] ) : ?>
+		<section class="wpss-order-section wpss-order-section--review">
+			<div class="wpss-review-cta">
+				<i data-lucide="star" class="wpss-icon wpss-icon--lg wpss-review-cta__icon" aria-hidden="true"></i>
+				<h3 class="wpss-review-cta__title"><?php esc_html_e( 'Rate Your Experience', 'wp-sell-services' ); ?></h3>
+				<p class="wpss-review-cta__text"><?php esc_html_e( 'How was your experience with this order? Your feedback helps other buyers.', 'wp-sell-services' ); ?></p>
+				<?php
+				// Say how long is left while there is still time to act on it.
+				$wpss_review_days_left = $wpss_review_service->get_remaining_review_days( $order );
+				?>
+				<?php if ( null !== $wpss_review_days_left ) : ?>
+					<p class="wpss-review-cta__deadline">
+						<?php
+						printf(
+							/* translators: %d: number of days left to leave a review */
+							esc_html( _n( '%d day left to leave a review.', '%d days left to leave a review.', $wpss_review_days_left, 'wp-sell-services' ) ),
+							absint( $wpss_review_days_left )
+						);
+						?>
+					</p>
+				<?php endif; ?>
+				<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-write-review-btn"
+						data-order="<?php echo esc_attr( $order_id ); ?>">
+					<?php esc_html_e( 'Write a Review', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+		</section>
+	<?php elseif ( $review_exists && ( $is_customer || $is_vendor ) ) : ?>
+		<section class="wpss-order-section wpss-order-section--review">
+			<div class="wpss-order-section__header">
+				<h2 class="wpss-order-section__title">
+					<i data-lucide="star" class="wpss-icon" aria-hidden="true"></i>
+					<?php
+					echo $is_vendor
+						? esc_html__( 'Buyer Review', 'wp-sell-services' )
+						: esc_html__( 'Your Review', 'wp-sell-services' );
+					?>
+				</h2>
+			</div>
+			<div class="wpss-order-section__body">
+				<div class="wpss-review">
+					<?php
+					$wpss_review = $wpss_order_review;
+					require WPSS_PLUGIN_DIR . 'templates/partials/review-body.php';
+					?>
 				</div>
-			</section>
-		<?php endif; ?>
+				<?php
+				// A review awaiting moderation is not on the service page yet.
+				// Saying so stops the buyer re-submitting because they cannot
+				// find it, and stops the seller thinking it was withdrawn.
+				?>
+				<?php if ( ! $wpss_order_review->is_approved() ) : ?>
+					<p class="wpss-notice wpss-notice--info wpss-review-pending">
+						<?php esc_html_e( 'This review is awaiting moderation and is not public yet.', 'wp-sell-services' ); ?>
+					</p>
+				<?php endif; ?>
+				<?php if ( $is_vendor && '' === $wpss_order_review->response ) : ?>
+					<p class="wpss-text-muted wpss-review-respond-hint">
+						<?php esc_html_e( 'You can respond to this review from your Reviews section.', 'wp-sell-services' ); ?>
+					</p>
+				<?php endif; ?>
+			</div>
+		</section>
+	<?php elseif ( $is_customer && '' !== $wpss_review_gate['reason'] && 'completed' === $order->status ) : ?>
+		<?php
+		// Completed, unreviewed, and the buyer cannot review - almost always the
+		// window having closed. Previously this rendered nothing at all, so the
+		// buyer had no way to know why the option had gone.
+		?>
+		<section class="wpss-order-section wpss-order-section--review">
+			<div class="wpss-order-section__body">
+				<p class="wpss-notice wpss-notice--info wpss-review-closed">
+					<?php echo esc_html( $wpss_review_gate['reason'] ); ?>
+				</p>
+			</div>
+		</section>
 	<?php endif; ?>
 
 	<!-- Milestones timeline (parent order only — request-mode orders) -->
@@ -1938,8 +2023,12 @@ do_action( 'wpss_before_order_view', $order );
 // Check if delivery modal should be available.
 $can_deliver = $is_vendor && in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true );
 
-// Check if review modal should be available.
-$can_review           = 'completed' === $order->status && $is_customer && empty( $review_exists );
+// Whether the review modal should be available. Reuses the SAME gate the CTA
+// above used, rather than re-deriving the condition: this line was a third copy
+// that ignored the review window, so once the window closed the modal was still
+// rendered for a button that no longer existed - and before that, whenever the
+// two conditions disagreed, the buyer got a button that opened nothing.
+$can_review           = $wpss_review_gate['can_review'];
 $can_open_dispute     = $can_open_dispute && ( $is_customer || $is_vendor );
 $can_request_revision = $is_customer && 'pending_approval' === $order->status && $order->can_request_revision();
 
