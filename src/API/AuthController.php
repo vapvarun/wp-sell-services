@@ -716,7 +716,11 @@ class AuthController extends RestController {
 			// Canonical profile status — _wpss_vendor_status was never written.
 			'vendor_status' => $is_vendor ? ( wpss_get_vendor_status( $user->ID ) ?: 'active' ) : null,
 			'is_admin'      => $user->has_cap( 'manage_options' ),
-			'registered'    => $user->user_registered,
+			// user_registered is site-local MySQL with no zone. Every other date
+			// in the API is ISO-8601 with an offset (Basecamp 10154919636), and
+			// this one was missed on the first pass because the audit probed
+			// collection endpoints, not /auth/login and /me.
+			'registered'    => wpss_rest_date( $user->user_registered ),
 			// /me and this endpoint both answer "who is the current user?" but
 			// returned different shapes, so a client had two contracts for one
 			// question and had to know which endpoint it had called. Both are

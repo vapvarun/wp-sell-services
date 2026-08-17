@@ -928,9 +928,11 @@ class API {
 		// The other current-user endpoint, /auth/me, also returns these. Both
 		// answer the same question, so both carry the same fields — a client
 		// should not have to know which one it called.
-		$user_object        = get_userdata( $user_id );
-		$data['username']   = $user_object ? $user_object->user_login : '';
-		$data['registered'] = $user_object ? $user_object->user_registered : '';
+		$user_object      = get_userdata( $user_id );
+		$data['username'] = $user_object ? $user_object->user_login : '';
+		// ISO-8601 with an offset, like every other date in the API. The raw
+		// column is site-local MySQL with no zone (Basecamp 10154919636).
+		$data['registered'] = $user_object ? wpss_rest_date( $user_object->user_registered ) : null;
 
 		// Always present, so a client can read them without branching on role.
 		$data['vendor_status'] = null;
