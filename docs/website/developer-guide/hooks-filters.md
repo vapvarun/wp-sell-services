@@ -866,17 +866,20 @@ WooCommerce or standalone checkout.
 |------|-----------|------|
 | `wpss_fluentcart_adapter_init` | `FluentCartAdapter $adapter` | `FluentCartAdapter.php:157` |
 | `wpss_fluentcart_order_created` | `int $order_id, int $external_order_id, array $order_data` | `FluentCartOrderProvider.php:93` |
-| `wpss_fluentcart_product_created` | `int $product_id, int $service_id` | `FluentCartProductProvider.php:96` |
 | `wpss_fluentcart_order_detail` | `object $order` | `FluentCartAccountProvider.php:384` |
 
-### SureCart Integration Actions
+> `wpss_fluentcart_product_created` was removed in 1.6.1. FluentCart is a
+> payment rail, not a catalogue: the plugin no longer creates FluentCart
+> products, so there is no creation event to fire. A service is linked to an
+> existing FluentCart product instead.
 
-| Hook | Parameters | File |
-|------|-----------|------|
-| `wpss_surecart_adapter_init` | `SureCartAdapter $adapter` | `SureCartAdapter.php:152` |
-| `wpss_surecart_order_created` | `int $order_id, int $external_order_id, array $order_data` | `SureCartOrderProvider.php:99` |
-| `wpss_surecart_product_created` | `int $product_id, int $service_id` | `SureCartProductProvider.php:174` |
-| `wpss_surecart_order_detail` | `object $order` | `SureCartAccountProvider.php:453` |
+> **SureCart integration removed in 1.6.1.** Its four namespaced hooks
+> (`wpss_surecart_adapter_init`, `wpss_surecart_order_created`,
+> `wpss_surecart_product_created`, `wpss_surecart_order_detail`) no longer
+> exist. SureCart keeps products and prices as objects in its own cloud and
+> settles through webhooks, so it cannot act as a payment rail the way
+> WooCommerce, EDD and FluentCart do -- charging an arbitrary amount would mean
+> creating a remote price object per order.
 
 ### Wallet Actions
 

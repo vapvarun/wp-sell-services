@@ -91,9 +91,10 @@ events without coupling to the rail.
 | `wpss_edd_service_meta_saved` | Service meta is saved on the EDD product. |
 | `wpss_edd_service_checkout_processed` | An EDD checkout line has been turned into an order. |
 
-**FluentCart** and **SureCart** expose parallel hooks
-(`wpss_fluentcart_adapter_init`, `wpss_fluentcart_order_created`,
-`wpss_surecart_adapter_init`, `wpss_surecart_order_created`, and so on).
+**FluentCart** exposes parallel hooks (`wpss_fluentcart_adapter_init`,
+`wpss_fluentcart_order_created`, and so on).
+
+**SureCart was removed in 1.6.1** and fires nothing.
 
 **WooCommerce is the exception.** The WooCommerce adapter does not fire its own
 namespaced lifecycle hooks -- it reuses the core `wpss_order_created` and
