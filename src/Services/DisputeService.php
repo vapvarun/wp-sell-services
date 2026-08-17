@@ -500,7 +500,9 @@ class DisputeService {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$this->table,
-				array( 'evidence' => wp_json_encode( array_values( $keep ) ) ),
+				// $keep is appended to with [], so it is already a list and
+				// encodes as a JSON array.
+				array( 'evidence' => wp_json_encode( $keep ) ),
 				array( 'id' => (int) $row->id )
 			);
 		}

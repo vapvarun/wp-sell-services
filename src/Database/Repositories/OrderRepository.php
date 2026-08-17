@@ -74,10 +74,10 @@ class OrderRepository extends AbstractRepository {
 		// Only when formats are inferred. An explicit $format array is positional
 		// against $data, so appending a key here would shift every format by one
 		// and quietly write the wrong types.
+		// isset() already excludes null, so no separate null check is needed.
 		if ( empty( $format )
 			&& ! isset( $data['platform_order_ref'] )
-			&& isset( $data['platform_order_id'] )
-			&& null !== $data['platform_order_id'] ) {
+			&& isset( $data['platform_order_id'] ) ) {
 			$data['platform_order_ref'] = (string) $data['platform_order_id'];
 		}
 

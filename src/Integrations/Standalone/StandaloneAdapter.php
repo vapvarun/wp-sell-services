@@ -48,12 +48,13 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		return apply_filters( 'wpss_checkout_slug', self::DEFAULT_CHECKOUT_SLUG );
 	}
 
-	/**
-	 * Order provider instance.
-	 *
-	 * @var StandaloneOrderProvider|null
+	/*
+	 * There is deliberately NO $order_provider property here. Orders have one
+	 * authority regardless of which rail took the money, so callers go through
+	 * wpss_get_order_provider(), which always returns StandaloneOrderProvider -
+	 * see the reasoning on that function. This class used to construct one in
+	 * init() and never read it again.
 	 */
-	private ?StandaloneOrderProvider $order_provider = null;
 
 	/**
 	 * Product provider instance.
@@ -126,7 +127,6 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->order_provider    = new StandaloneOrderProvider();
 		$this->product_provider  = new StandaloneProductProvider();
 		$this->checkout_provider = new StandaloneCheckoutProvider();
 		$this->account_provider  = new StandaloneAccountProvider();

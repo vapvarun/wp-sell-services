@@ -17,9 +17,13 @@
 		<testsuite name="integration">
 			<directory suffix="Test.php">./tests/Integration</directory>
 		</testsuite>
-		<testsuite name="api">
-			<directory suffix="Test.php">./tests/API</directory>
-		</testsuite>
+		<!--
+			The REST tests live in ./tests/Rest. There used to be a second
+			"api" suite pointing at ./tests/API, a directory that does not
+			exist, which made bare `composer test` die with "Test directory
+			not found" before running anything. CI names the unit suite
+			explicitly, so only the local shortcut was affected.
+		-->
 		<testsuite name="rest">
 			<directory suffix="Test.php">./tests/Rest</directory>
 		</testsuite>
