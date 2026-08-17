@@ -1744,6 +1744,28 @@ class EmailService {
 	 * @return bool
 	 */
 	public function send_proposal_rejected( int $proposal_id, object $proposal, string $reason = '' ): bool {
+		/*
+		 * Losing because someone else was hired does not send an email.
+		 *
+		 * Until 1.6.0 nothing told losing sellers at all — reject_other_proposals()
+		 * bulk-UPDATEd their rows and fired no event, so they found out by
+		 * re-reading the request. That is fixed, but it means hiring on a request
+		 * with 200 proposals now produces 199 notifications AND 199 emails inside
+		 * the buyer's single click: enough to time the request out and enough to
+		 * trip a host's mail limit.
+		 *
+		 * Owner decision (2026-08-17): in-app only for this case. The in-app
+		 * notification still fires for every losing seller — they are told — it
+		 * simply is not 199 emails.
+		 *
+		 * An EXPLICIT rejection, where the buyer chose that seller and usually
+		 * wrote a reason, still emails: it is a deliberate, personal act and it is
+		 * one message, not a burst.
+		 */
+		if ( ! empty( $proposal->wpss_not_selected ) ) {
+			return false;
+		}
+
 		$vendor = get_user_by( 'id', $proposal->vendor_id ?? 0 );
 
 		if ( ! $vendor ) {

@@ -611,13 +611,31 @@ class ProposalService {
 		);
 
 		foreach ( $rejected as $proposal ) {
+			// Marks this as "not selected" rather than "rejected by the buyer".
+			//
+			// Deliberately a property on the proposal passed to the action, not a
+			// second action name: `wpss_proposal_rejected` has been the event for
+			// this since 1.0.0 and a listener in Pro or a customer's site must keep
+			// firing. Adding a fourth argument would not reach EmailService either,
+			// whose handler is registered with three.
+			//
+			// EmailService checks this and stays silent; NotificationService does
+			// not, so every losing seller is still told in-app. See
+			// EmailService::send_proposal_rejected() for the reasoning (owner
+			// decision 2026-08-17: 200 proposals must not mean 199 emails).
+			$proposal->wpss_not_selected = true;
+
 			/**
 			 * Fires when a proposal is rejected because another was hired.
 			 *
 			 * Same event as an explicit rejection, with an empty reason — the
-			 * buyer did not write one, they simply picked someone else.
+			 * buyer did not write one, they simply picked someone else. The
+			 * proposal object carries `wpss_not_selected = true` so a listener can
+			 * tell the two apart; anything that treats them the same keeps working.
 			 *
 			 * @since 1.0.0
+			 * @since 1.6.0 Proposal carries `wpss_not_selected`.
+			 *
 			 * @param int    $proposal_id Proposal ID.
 			 * @param object $proposal    Proposal object.
 			 * @param string $reason      Rejection reason (empty here).
