@@ -860,8 +860,13 @@ class BuyerRequestService {
 			$proposal->vendor_id,
 			'proposal_accepted',
 			array(
-				'order_id'   => $order_id,
-				'request_id' => $request_id,
+				'order_id'      => $order_id,
+				'request_id'    => $request_id,
+				'proposal_id'   => $proposal_id,
+				'request_title' => $request->title ?? ( $wp_request ? $wp_request->post_title : '' ),
+				// Same destination as the proposal-accepted email: the seller's
+				// sales list, where the new order is waiting.
+				'action_url'    => wpss_get_page_url( 'dashboard' ) ? add_query_arg( 'section', 'sales', wpss_get_page_url( 'dashboard' ) ) : '',
 			)
 		);
 

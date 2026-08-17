@@ -1052,6 +1052,78 @@ final class Plugin {
 			2
 		);
 
+		// Proposal notifications.
+		//
+		// EmailService has listened to these three events since 1.0.0, so the
+		// buyer got an email when a seller proposed — but no in-app row was
+		// ever written, and the marketplace dashboard is where buyers actually
+		// live. Notification::TYPE_PROPOSAL_RECEIVED existed with an icon and a
+		// label the whole time; nothing produced one.
+		$this->loader->add_action(
+			'wpss_proposal_submitted',
+			function ( int $proposal_id, int $request_id, int $vendor_id, array $proposal_data ) use ( $notification_service ): void {
+				$request = get_post( $request_id );
+
+				if ( ! $request ) {
+					return;
+				}
+
+				$buyer_id = (int) $request->post_author;
+
+				// A seller proposing on their own request has nobody to tell.
+				if ( ! $buyer_id || $buyer_id === $vendor_id ) {
+					return;
+				}
+
+				$notification_service->send(
+					$buyer_id,
+					'proposal_received',
+					array(
+						'proposal_id'   => $proposal_id,
+						'request_id'    => $request_id,
+						'request_title' => $request->post_title,
+						'vendor_id'     => $vendor_id,
+						// ProposalService::submit() passes its insert row to this
+						// hook, so the price key is `proposed_price`.
+						'bid_amount'    => $proposal_data['proposed_price'] ?? 0,
+						'action_url'    => get_permalink( $request_id ),
+					)
+				);
+			},
+			null,
+			10,
+			4
+		);
+
+		$this->loader->add_action(
+			'wpss_proposal_rejected',
+			function ( int $proposal_id, $proposal, string $reason = '' ) use ( $notification_service ): void {
+				$vendor_id = (int) ( $proposal->vendor_id ?? 0 );
+
+				if ( ! $vendor_id ) {
+					return;
+				}
+
+				$request_id = (int) ( $proposal->request_id ?? 0 );
+				$request    = $request_id ? get_post( $request_id ) : null;
+
+				$notification_service->send(
+					$vendor_id,
+					'proposal_rejected',
+					array(
+						'proposal_id'   => $proposal_id,
+						'request_id'    => $request_id,
+						'request_title' => $request ? $request->post_title : '',
+						'reason'        => $reason,
+						'action_url'    => $request_id ? get_permalink( $request_id ) : '',
+					)
+				);
+			},
+			null,
+			10,
+			3
+		);
+
 		// Review created notification + email.
 		$this->loader->add_action(
 			'wpss_review_created',

@@ -70,20 +70,29 @@ class NotificationService {
 			$email_message  = $message;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$result = $wpdb->insert(
-			$table,
-			array(
-				'user_id'    => $user_id,
-				'type'       => $type,
-				'title'      => $title,
-				'message'    => $stored_message,
-				'data'       => wp_json_encode( $data ),
-				'is_read'    => 0,
-				'created_at' => current_time( 'mysql' ),
-			),
-			array( '%d', '%s', '%s', '%s', '%s', '%d', '%s' )
+		$row = array(
+			'user_id'    => $user_id,
+			'type'       => $type,
+			'title'      => $title,
+			'message'    => $stored_message,
+			'data'       => wp_json_encode( $data ),
+			'is_read'    => 0,
+			'created_at' => current_time( 'mysql' ),
 		);
+
+		$formats = array( '%d', '%s', '%s', '%s', '%s', '%d', '%s' );
+
+		// `action_url` has been a column since the first schema, is read back
+		// into the model and published in the REST payload — and nothing ever
+		// wrote it, so every notification arrived with nowhere to go. Callers
+		// pass it in $data; this is the one place it is persisted.
+		if ( ! empty( $data['action_url'] ) ) {
+			$row['action_url'] = esc_url_raw( (string) $data['action_url'] );
+			$formats[]         = '%s';
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$result = $wpdb->insert( $table, $row, $formats );
 
 		if ( ! $result ) {
 			wpss_log( "Failed to create notification (type: {$type}) for user {$user_id}: " . $wpdb->last_error, 'error' );
@@ -1231,6 +1240,57 @@ class NotificationService {
 				}
 				break;
 
+			// The three proposal types were declared on the Notification model
+			// (constant, icon and label) but had no case here, so the one that
+			// did get sent — proposal_accepted, from convert_to_order() — fell
+			// through to the default below and reached the vendor as
+			// "Notification / You have a new notification."
+			case 'proposal_received':
+				$title  = __( 'New proposal received', 'wp-sell-services' );
+				$vendor = get_user_by( 'id', $data['vendor_id'] ?? 0 );
+				$message->line(
+					/* translators: 1: vendor name, 2: request title */
+					__( '%1$s sent a proposal on your request "%2$s".', 'wp-sell-services' ),
+					NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'A seller', 'wp-sell-services' ) ),
+					(string) ( $data['request_title'] ?? '' )
+				);
+				if ( ! empty( $data['bid_amount'] ) ) {
+					$message->block()->field(
+						__( 'Their price:', 'wp-sell-services' ),
+						function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) $data['bid_amount'] ) : (string) $data['bid_amount']
+					);
+				}
+				$message->paragraph( __( 'Open the request to compare proposals and hire when you are ready.', 'wp-sell-services' ) );
+				break;
+
+			case 'proposal_accepted':
+				$title = __( 'Your proposal was accepted', 'wp-sell-services' );
+				$message->line(
+					/* translators: %s: request title */
+					__( 'The buyer accepted your proposal on "%s" and the order is now open.', 'wp-sell-services' ),
+					(string) ( $data['request_title'] ?? '' )
+				);
+				$message->paragraph(
+					/* translators: %s: order number */
+					__( 'Order #%s is yours — open it to see the brief and start work.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
+				);
+				break;
+
+			case 'proposal_rejected':
+				$title  = __( 'Proposal not selected', 'wp-sell-services' );
+				$reason = trim( (string) ( $data['reason'] ?? '' ) );
+				$message->line(
+					/* translators: %s: request title */
+					__( 'The buyer went with another seller on "%s".', 'wp-sell-services' ),
+					(string) ( $data['request_title'] ?? '' )
+				);
+				if ( '' !== $reason ) {
+					$message->block()->field( __( 'Their note:', 'wp-sell-services' ), $reason );
+				}
+				$message->paragraph( __( 'Nothing is wrong with your account — browse open requests and send another proposal.', 'wp-sell-services' ) );
+				break;
+
 			default:
 				$title = __( 'Notification', 'wp-sell-services' );
 				$message->line( __( 'You have a new notification. Please check your dashboard for details.', 'wp-sell-services' ) );
@@ -2112,6 +2172,13 @@ class NotificationService {
 			self::TYPE_DELIVERY_SUBMITTED,
 			'delivery_received',
 			self::TYPE_NEW_MESSAGE,
+			// Proposals. EmailService has hooked wpss_proposal_submitted /
+			// _accepted / _rejected with branded templates since 1.0.0, so the
+			// in-app rows must NOT email as well — the same person would get
+			// the branded mail and a plain duplicate for one event.
+			'proposal_received',
+			'proposal_accepted',
+			'proposal_rejected',
 		);
 
 		return in_array( $type, $covered_types, true );

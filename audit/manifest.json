@@ -777,5 +777,16 @@
   },
   "cli": {
     "command_count": 6
+  },
+  "notifications": {
+    "_note": "In-app notifications live in {prefix}wpss_notifications. NotificationService::create() is the ONE writer (it also persists action_url, the deep link) and NotificationService::send() maps a type to its title/body copy -- add a `case` there for any new type or it silently renders the generic 'You have a new notification.' fallback. Domain event -> notification wiring lives in Plugin::define_notification_hooks(). A type that emails via EmailService MUST also be listed in NotificationService::is_email_service_handling()'s $covered_types, or the recipient gets the branded mail plus a plain duplicate.",
+    "table": "{prefix}wpss_notifications",
+    "writer": "WPSellServices\\Services\\NotificationService::create",
+    "copy_registry": "WPSellServices\\Services\\NotificationService::send",
+    "event_wiring": "WPSellServices\\Core\\Plugin::define_notification_hooks",
+    "duplicate_email_guard": "WPSellServices\\Services\\NotificationService::is_email_service_handling",
+    "render_partial": "templates/partials/notifications-list.php",
+    "deep_link_column": "action_url (written by create() from $data['action_url'], rendered as the row title link)",
+    "known_drift": "Notification::get_icon() is keyed on TYPE_* constants ('order_new', 'message_new') that are largely never written; the live icon map is in the render partial. Unifying them is an open item."
   }
 }

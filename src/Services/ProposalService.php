@@ -579,6 +579,21 @@ class ProposalService {
 	public function reject_other_proposals( int $request_id, int $except_id ): void {
 		global $wpdb;
 
+		// Read the losers BEFORE the update, so they can be told. This was a
+		// bulk UPDATE and nothing else: every seller who lost the job had their
+		// proposal flipped to rejected in silence, with no notification and no
+		// email, even though reject() has fired wpss_proposal_rejected (which
+		// EmailService listens to) since 1.0.0. Losing is part of bidding;
+		// finding out only by re-reading the request is not.
+		$rejected = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}wpss_proposals WHERE request_id = %d AND status = %s AND id != %d",
+				$request_id,
+				self::STATUS_PENDING,
+				$except_id
+			)
+		);
+
 		$wpdb->update(
 			$this->table,
 			array( 'status' => self::STATUS_REJECTED ),
@@ -594,6 +609,21 @@ class ProposalService {
 			array( 'status' => self::STATUS_ACCEPTED ),
 			array( 'id' => $except_id )
 		);
+
+		foreach ( $rejected as $proposal ) {
+			/**
+			 * Fires when a proposal is rejected because another was hired.
+			 *
+			 * Same event as an explicit rejection, with an empty reason — the
+			 * buyer did not write one, they simply picked someone else.
+			 *
+			 * @since 1.0.0
+			 * @param int    $proposal_id Proposal ID.
+			 * @param object $proposal    Proposal object.
+			 * @param string $reason      Rejection reason (empty here).
+			 */
+			do_action( 'wpss_proposal_rejected', (int) $proposal->id, $proposal, '' );
+		}
 	}
 
 	/**
