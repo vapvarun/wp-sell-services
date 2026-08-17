@@ -801,43 +801,107 @@ final class Plugin {
 	}
 
 	/**
-	 * The standalone cart/checkout page IDs that the active rail has made dormant.
+	 * Memoised dormant page IDs for this request.
 	 *
-	 * The installer seeds `/service-cart/` and `/service-checkout/` for the
-	 * standalone rail and NEVER removes them, so on a site that runs WooCommerce
-	 * (or EDD, or any other adapter) those two pages sit published with nothing
-	 * behind them. They must not be unpublished — old bookmarks, emailed
-	 * `?pay_order=N` links and the pages' own IDs still have to resolve — so
-	 * they are redirected and de-indexed instead.
+	 * @var array<string, int>|null
+	 */
+	private ?array $dormant_page_ids = null;
+
+	/**
+	 * WPSS pages that are published but have nothing behind them.
 	 *
-	 * Returns an empty array on a standalone site, where both pages are live.
+	 * Two separate causes, one treatment:
+	 *
+	 * 1. **Cart / checkout on a non-standalone rail.** The installer seeds
+	 *    `/service-cart/` and `/service-checkout/` for the standalone rail and
+	 *    NEVER removes them, so on a site running WooCommerce (or EDD, or any
+	 *    other adapter) those two sit published with nothing behind them.
+	 *
+	 * 2. **The legacy `/create-service/` page.** `create_service` is a VIRTUAL
+	 *    route — the dashboard renders it, and it is deliberately absent from
+	 *    `wpss_get_page_definitions()`, so no current install creates a page for
+	 *    it. Installs that upgraded from a version which DID create one are left
+	 *    with a published, empty, unmapped page that renders no wizard and is
+	 *    reachable by anyone (Basecamp 10208199338). Same shape as the orphan
+	 *    `cart-N` pages.
+	 *
+	 * None of them may be unpublished — old bookmarks, emailed `?pay_order=N`
+	 * links and the pages' own IDs still have to resolve — so they are
+	 * redirected, de-indexed and dropped from the sitemap instead.
+	 *
+	 * A page an owner has deliberately MAPPED in Settings → Pages is never
+	 * treated as dormant: that is them telling us it is in use.
 	 *
 	 * @since 1.6.0
 	 *
-	 * @return array<string, int> Page key (`cart`/`checkout`) => page ID.
+	 * @return array<string, int> Page key (`cart`/`checkout`/`create_service`) => page ID.
 	 */
-	private function get_dormant_store_page_ids(): array {
+	private function get_dormant_page_ids(): array {
+		if ( null !== $this->dormant_page_ids ) {
+			return $this->dormant_page_ids;
+		}
+
 		if ( ! function_exists( 'wpss_get_active_adapter' ) || ! function_exists( 'wpss_get_page_id' ) ) {
 			return array();
 		}
 
+		$ids     = array();
 		$adapter = wpss_get_active_adapter();
 
-		if ( ! $adapter || 'standalone' === $adapter->get_id() ) {
-			return array();
-		}
+		// Cause 1 — only when another rail owns payment.
+		if ( $adapter && 'standalone' !== $adapter->get_id() ) {
+			foreach ( array( 'cart', 'checkout' ) as $key ) {
+				$page_id = wpss_get_page_id( $key );
 
-		$ids = array();
-
-		foreach ( array( 'cart', 'checkout' ) as $key ) {
-			$page_id = wpss_get_page_id( $key );
-
-			if ( $page_id > 0 ) {
-				$ids[ $key ] = $page_id;
+				if ( $page_id > 0 ) {
+					$ids[ $key ] = $page_id;
+				}
 			}
 		}
 
+		// Cause 2 — always, on every rail: the route is virtual regardless.
+		$legacy_create = $this->find_legacy_create_service_page();
+
+		if ( $legacy_create > 0 ) {
+			$ids['create_service'] = $legacy_create;
+		}
+
+		$this->dormant_page_ids = $ids;
+
 		return $ids;
+	}
+
+	/**
+	 * Find a leftover published page sitting on the virtual `create-service` slug.
+	 *
+	 * Returns 0 when there is none, or when the page an owner has mapped in
+	 * Settings → Pages happens to live there — a mapped page is in use by
+	 * definition and must be left alone.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return int Page ID, or 0.
+	 */
+	private function find_legacy_create_service_page(): int {
+		if ( ! function_exists( 'wpss_get_default_page_slugs' ) ) {
+			return 0;
+		}
+
+		$slug = wpss_get_default_page_slugs()['create_service'] ?? '';
+
+		if ( '' === $slug ) {
+			return 0;
+		}
+
+		$page = get_page_by_path( $slug );
+
+		if ( ! $page || 'publish' !== $page->post_status ) {
+			return 0;
+		}
+
+		$mapped = array_map( 'intval', array_values( (array) get_option( 'wpss_pages', array() ) ) );
+
+		return in_array( (int) $page->ID, $mapped, true ) ? 0 : (int) $page->ID;
 	}
 
 	/**
@@ -863,7 +927,7 @@ final class Plugin {
 			return;
 		}
 
-		$dormant = $this->get_dormant_store_page_ids();
+		$dormant = $this->get_dormant_page_ids();
 
 		if ( empty( $dormant ) ) {
 			return;
@@ -877,7 +941,13 @@ final class Plugin {
 
 		$key = (string) array_search( $current, $dormant, true );
 
-		if ( 'cart' === $key ) {
+		if ( 'create_service' === $key ) {
+			// The wizard lives on the dashboard's create section — the virtual
+			// route this leftover page was named after. Sending the visitor there
+			// is what the page was always meant to do; it just never carried
+			// anything (Basecamp 10208199338).
+			$target = function_exists( 'wpss_get_create_service_url' ) ? wpss_get_create_service_url() : '';
+		} elseif ( 'cart' === $key ) {
 			$target = function_exists( 'wpss_get_cart_url' ) ? wpss_get_cart_url() : '';
 		} else {
 			// `?pay_order=N` is how the standalone rail pays ONE order, and we
@@ -919,7 +989,7 @@ final class Plugin {
 	 * @return array<string, mixed>
 	 */
 	public function filter_dormant_store_page_robots( array $robots ): array {
-		$dormant = $this->get_dormant_store_page_ids();
+		$dormant = $this->get_dormant_page_ids();
 
 		if ( empty( $dormant ) ) {
 			return $robots;
@@ -949,7 +1019,7 @@ final class Plugin {
 			return $args;
 		}
 
-		$dormant = $this->get_dormant_store_page_ids();
+		$dormant = $this->get_dormant_page_ids();
 
 		if ( empty( $dormant ) ) {
 			return $args;

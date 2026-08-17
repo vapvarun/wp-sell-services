@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-17T11:07:22+00:00\n"
+"POT-Creation-Date: 2026-08-17T11:13:28+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -8204,21 +8204,21 @@ msgstr ""
 msgid "The site owner will contact you with payment instructions after you place your order."
 msgstr ""
 
-#: src/Core/Plugin.php:1447
+#: src/Core/Plugin.php:1517
 msgid "All milestones on this custom-project order are complete."
 msgstr ""
 
 #. translators: %d: count of paid phases
-#: src/Core/Plugin.php:1504
+#: src/Core/Plugin.php:1574
 #, php-format
 msgid "Project cancelled while %d milestone was already paid. Money has moved to the seller wallet; open a dispute if the work cannot be accepted."
 msgstr ""
 
-#: src/Core/Plugin.php:1509
+#: src/Core/Plugin.php:1579
 msgid "Paid milestone not delivered"
 msgstr ""
 
-#: src/Core/Plugin.php:1510
+#: src/Core/Plugin.php:1580
 msgid "Paid milestone on cancelled project"
 msgstr ""
 
