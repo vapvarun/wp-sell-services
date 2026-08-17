@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-17T11:23:14+00:00\n"
+"POT-Creation-Date: 2026-08-17T11:29:01+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -1386,7 +1386,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:511
 #: src/Admin/Pages/WithdrawalsPage.php:530
 #: src/Admin/Tables/OrdersListTable.php:54
-#: src/Services/EmailService.php:2103
+#: src/Services/EmailService.php:2125
 #: src/Services/NotificationService.php:307
 #: src/Services/NotificationService.php:429
 #: templates/emails/delivery-ready.php:73
@@ -2392,7 +2392,7 @@ msgstr ""
 #: src/Models/ServiceOrder.php:628
 #: src/Services/EarningsService.php:1046
 #: src/Services/ExtensionRequestService.php:491
-#: src/Services/ProposalService.php:858
+#: src/Services/ProposalService.php:876
 #: templates/order/order-view.php:1196
 #: templates/order/order-view.php:1205
 #: templates/order/order-view.php:1212
@@ -2861,7 +2861,7 @@ msgstr ""
 #: src/Services/EarningsService.php:1049
 #: src/Services/ExtensionRequestService.php:493
 #: src/Services/ModerationService.php:539
-#: src/Services/ProposalService.php:860
+#: src/Services/ProposalService.php:878
 #: templates/dashboard/sections/services.php:129
 #: templates/dashboard/sections/services.php:230
 #: templates/emails/withdrawal-rejected.php:55
@@ -4243,7 +4243,7 @@ msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1868
 #: src/Admin/Tables/OrdersListTable.php:53
-#: src/Services/EmailService.php:2092
+#: src/Services/EmailService.php:2114
 #: src/Services/NotificationService.php:305
 #: src/Services/NotificationService.php:427
 #: templates/emails/dispute-opened.php:88
@@ -12892,7 +12892,7 @@ msgstr ""
 #: src/functions/orders.php:117
 #: src/Models/Proposal.php:273
 #: src/Models/ServiceOrder.php:629
-#: src/Services/ProposalService.php:859
+#: src/Services/ProposalService.php:877
 msgid "Accepted"
 msgstr ""
 
@@ -14220,7 +14220,7 @@ msgid "Extension Rejected"
 msgstr ""
 
 #: src/Models/Proposal.php:275
-#: src/Services/ProposalService.php:861
+#: src/Services/ProposalService.php:879
 msgid "Withdrawn"
 msgstr ""
 
@@ -15554,37 +15554,37 @@ msgstr ""
 msgid "Congratulations! %1$s has accepted your proposal for \"%2$s\". An order will be created automatically."
 msgstr ""
 
-#: src/Services/EmailService.php:1763
+#: src/Services/EmailService.php:1785
 msgid "Buyer Request"
 msgstr ""
 
 #. translators: 1: platform name, 2: request title
-#: src/Services/EmailService.php:1767
+#: src/Services/EmailService.php:1789
 #, php-format
 msgid "[%1$s] Your Proposal Was Not Accepted - %2$s"
 msgstr ""
 
 #. translators: %s: request title
-#: src/Services/EmailService.php:1774
+#: src/Services/EmailService.php:1796
 #, php-format
 msgid "Unfortunately, your proposal for \"%s\" was not accepted by the buyer."
 msgstr ""
 
 #. translators: %s: rejection reason
-#: src/Services/EmailService.php:1781
+#: src/Services/EmailService.php:1803
 #, php-format
 msgid "Reason: %s"
 msgstr ""
 
-#: src/Services/EmailService.php:1786
+#: src/Services/EmailService.php:1808
 msgid "Don't worry — keep submitting proposals to find the right match!"
 msgstr ""
 
-#: src/Services/EmailService.php:1790
+#: src/Services/EmailService.php:1812
 msgid "Proposal Not Accepted"
 msgstr ""
 
-#: src/Services/EmailService.php:1797
+#: src/Services/EmailService.php:1819
 msgid "Browse Requests"
 msgstr ""
 
