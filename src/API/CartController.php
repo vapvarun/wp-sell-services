@@ -284,14 +284,45 @@ class CartController extends RestController {
 					}
 				}
 
+				// Report the package the way /services/{id} does.
+				//
+				// The cart ACCEPTS a stable id, then stored and returned the
+				// array position, so a client that round-tripped what we handed
+				// back was sending a positional value: fine today, wrong the
+				// moment a vendor reorders their tiers. Service detail taught
+				// the stable id and cart taught the index.
+				//
+				// Only the RESPONSE changes. The stored value stays positional
+				// because the pipeline genuinely still means position -- notably
+				// CheckoutIntentService does `$packages[ (int) $item['package_id'] ]`,
+				// a direct positional lookup that would fall through to
+				// reset($packages) and silently charge the FIRST tier if this
+				// were switched underneath it. Migrating storage is a separate,
+				// larger change; misreporting the contract is the bug here.
+				$stable_id = 0;
+				if ( isset( $item['package']['id'] ) ) {
+					$stable_id = (int) $item['package']['id'];
+				} else {
+					$service_packages = get_post_meta( $item['service_id'], '_wpss_packages', true );
+					if ( is_array( $service_packages ) && isset( $service_packages[ $item['package_id'] ]['id'] ) ) {
+						$stable_id = (int) $service_packages[ $item['package_id'] ]['id'];
+					}
+				}
+
 				$items[] = array(
-					'key'          => $key,
-					'service_id'   => $item['service_id'],
-					'service'      => $service ? $service->post_title : '',
-					'package_id'   => $item['package_id'],
-					'package_name' => $package_name,
-					'addons'       => $item['addons'] ?? array(),
-					'total'        => (float) $item['total'],
+					'key'           => $key,
+					'service_id'    => $item['service_id'],
+					'service'       => $service ? $service->post_title : '',
+					// Stable id when the service has one; falls back to the
+					// position for a service whose packages predate ids, so this
+					// never reports an id that cannot be resolved.
+					'package_id'    => $stable_id ?: (int) $item['package_id'],
+					// The positional value, named for what it is. Published so
+					// the transition is visible rather than implied.
+					'package_index' => (int) $item['package_id'],
+					'package_name'  => $package_name,
+					'addons'        => $item['addons'] ?? array(),
+					'total'         => (float) $item['total'],
 				);
 
 				$cart_total += (float) $item['total'];
