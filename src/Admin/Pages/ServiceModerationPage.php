@@ -1212,7 +1212,7 @@ class ServiceModerationPage {
 	 * @return void
 	 */
 	private function render_disabled_notice(): void {
-		$settings_url = admin_url( 'admin.php?page=wpss-settings&tab=vendor' );
+		$settings_url = wpss_get_settings_url( 'vendor' );
 		?>
 		<div class="wrap wpss-listing-page wpss-moderation-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Service Moderation', 'wp-sell-services' ); ?></h1>

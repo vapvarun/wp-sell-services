@@ -518,7 +518,7 @@ class Admin {
 			return;
 		}
 
-		$settings_url = admin_url( 'admin.php?page=wpss-settings&tab=pages' );
+		$settings_url = wpss_get_settings_url( 'pages' );
 		$wizard_url   = admin_url( 'admin.php?page=wpss-setup-wizard' );
 
 		printf(

@@ -703,3 +703,81 @@ function wpss_get_cart_url(): string {
 	// Standalone: use the dedicated cart page.
 	return wpss_get_page_url( 'cart' ) ?: wpss_get_checkout_base_url();
 }
+
+/**
+ * Admin settings sections, keyed by the identifier the page routes on.
+ *
+ * Kept beside the URL builder rather than inside Admin\Settings because Pro and
+ * every notice that deep-links into settings needs to name a section without
+ * instantiating the settings page. Pro tabs are added through the same filter
+ * the settings sidebar uses, so a Pro-only section still resolves here.
+ *
+ * @since 1.6.0
+ *
+ * @return string[] Section identifiers.
+ */
+function wpss_get_settings_sections(): array {
+	$sections = array(
+		'general',
+		'pages',
+		'payments',
+		'commission',
+		'payouts',
+		'vendor',
+		'orders',
+		'emails',
+		'advanced',
+	);
+
+	/**
+	 * Filter the known admin settings sections.
+	 *
+	 * Pro registers its own tabs (branding, analytics, integrations) and must
+	 * add them here too, or wpss_get_settings_url() will refuse to link to them.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param string[] $sections Section identifiers.
+	 */
+	return (array) apply_filters( 'wpss_settings_sections', $sections );
+}
+
+/**
+ * Build a URL to the admin settings page, optionally to one section.
+ *
+ * THE single way to link into settings. 1.3.0 moved the settings page to a
+ * sidebar + hash layout (all sections render at once; JS shows one based on
+ * `location.hash`), but thirteen call sites across Free and Pro kept emitting
+ * the pre-1.3.0 `&tab=<section>` query arg. Nothing reads `tab`, so every one of
+ * those links dropped the admin on General - a notice saying "configure your
+ * pages" sent them to the wrong screen and left them to find Pages themselves
+ * (Basecamp 10208211769).
+ *
+ * Two of those links also named `gateways`, which has never been a section id;
+ * the tab is `payments`. An unknown id silently lands on General as well, so the
+ * mistake was invisible. Unknown sections are dropped here instead of being
+ * emitted as a hash that goes nowhere.
+ *
+ * @since 1.6.0
+ *
+ * @param string $section Section identifier, e.g. 'pages'. Empty for the page itself.
+ * @return string Admin URL.
+ */
+function wpss_get_settings_url( string $section = '' ): string {
+	$url = admin_url( 'admin.php?page=wpss-settings' );
+
+	if ( '' === $section ) {
+		return $url;
+	}
+
+	if ( ! in_array( $section, wpss_get_settings_sections(), true ) ) {
+		wpss_log(
+			sprintf( 'wpss_get_settings_url() called with unknown section "%s"; linking to the settings page instead.', $section ),
+			'warning'
+		);
+
+		return $url;
+	}
+
+	return $url . '#' . $section;
+}
