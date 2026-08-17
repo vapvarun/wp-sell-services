@@ -80,9 +80,14 @@ class AuthController extends RestController {
 					'callback'            => array( $this, 'register' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
+						// Username and password are OPTIONAL as of 1.6.0, so the app
+						// can offer the same low-friction signup the web checkout
+						// does: the username is derived from the email and, with no
+						// password, the buyer gets a set-password email instead of
+						// being asked to invent one mid-purchase. Email is the only
+						// thing genuinely required.
 						'username'     => array(
-							'type'     => 'string',
-							'required' => true,
+							'type' => 'string',
 						),
 						'email'        => array(
 							'type'     => 'string',
@@ -90,10 +95,15 @@ class AuthController extends RestController {
 							'required' => true,
 						),
 						'password'     => array(
-							'type'     => 'string',
-							'required' => true,
+							'type' => 'string',
 						),
 						'display_name' => array(
+							'type' => 'string',
+						),
+						'first_name'   => array(
+							'type' => 'string',
+						),
+						'last_name'    => array(
 							'type' => 'string',
 						),
 						'role'         => array(
@@ -322,50 +332,79 @@ class AuthController extends RestController {
 			return $rate_check;
 		}
 
-		if ( ! get_option( 'users_can_register' ) ) {
+		/*
+		 * Either WordPress registration is open, or the owner has switched on
+		 * account-at-checkout - which is itself a decision that buyers may create
+		 * accounts. Without the second clause the app and the web would disagree:
+		 * a site with WP registration off but checkout account creation on would
+		 * let a browser buyer sign up mid-purchase and refuse the same buyer in the
+		 * app, for the same purchase.
+		 */
+		if ( ! get_option( 'users_can_register' ) && ! wpss_checkout_creates_accounts() ) {
 			return new WP_Error( 'registration_disabled', __( 'User registration is disabled.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
-		$username     = sanitize_user( $request->get_param( 'username' ) );
-		$email        = sanitize_email( $request->get_param( 'email' ) );
-		$password     = $request->get_param( 'password' );
-		$display_name = sanitize_text_field( $request->get_param( 'display_name' ) ?: $username );
+		$username     = sanitize_user( (string) $request->get_param( 'username' ) );
+		$email        = sanitize_email( (string) $request->get_param( 'email' ) );
+		$password     = (string) $request->get_param( 'password' );
+		$display_name = sanitize_text_field( (string) ( $request->get_param( 'display_name' ) ?: $username ) );
 		$role         = $request->get_param( 'role' );
 
-		if ( username_exists( $username ) ) {
+		if ( '' !== $username && username_exists( $username ) ) {
 			return new WP_Error( 'username_exists', __( 'Username already exists.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		if ( email_exists( $email ) ) {
-			return new WP_Error( 'email_exists', __( 'Email already exists.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		if ( strlen( $password ) < 8 ) {
+		// A password is optional now, matching the web flow: omit it and the buyer
+		// gets a set-password email instead of being asked to invent one. Supply
+		// one and it still has to be strong.
+		if ( '' !== $password && strlen( $password ) < 8 ) {
 			return new WP_Error( 'weak_password', __( 'Password must be at least 8 characters.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		$user_id = wp_insert_user(
+		/*
+		 * Creation goes through the ONE account path.
+		 *
+		 * This method used to run its own wp_insert_user(), which meant the app
+		 * created users differently from the web: no first/last name, no
+		 * show_admin_bar_front, no wpss_public_signup_complete for Pro to hook,
+		 * and a username that had to be supplied rather than derived. Two ways to
+		 * make a user is precisely the shape that produced most of 1.6.0's bugs.
+		 *
+		 * email_exists() is checked inside create_account(), which returns
+		 * wpss_email_exists - mapped below so the app keeps the code it expects.
+		 */
+		$user_id = \WPSellServices\Frontend\PublicSignup::create_account(
 			array(
-				'user_login'   => $username,
-				'user_email'   => $email,
-				'user_pass'    => $password,
+				'email'        => $email,
+				'password'     => $password,
 				'display_name' => $display_name,
-				'role'         => get_option( 'default_role', 'subscriber' ),
+				'first_name'   => sanitize_text_field( (string) $request->get_param( 'first_name' ) ),
+				'last_name'    => sanitize_text_field( (string) $request->get_param( 'last_name' ) ),
+				'intent'       => 'vendor' === $role ? 'vendor' : 'buyer',
 			)
 		);
 
 		if ( is_wp_error( $user_id ) ) {
+			// Keep the documented error codes the app already branches on.
+			$map = array(
+				'wpss_email_exists'  => array( 'email_exists', 400 ),
+				'wpss_invalid_email' => array( 'invalid_email', 400 ),
+			);
+
+			$code = $user_id->get_error_code();
+
+			if ( isset( $map[ $code ] ) ) {
+				return new WP_Error( $map[ $code ][0], $user_id->get_error_message(), array( 'status' => $map[ $code ][1] ) );
+			}
+
 			return $user_id;
 		}
 
-		if ( 'vendor' === $role ) {
-			// Register the vendor through the canonical service so they receive
-			// the wpss_vendor role, capabilities, a vendor_profiles record, and a
-			// status that honours the site's vendor_registration mode
-			// (open/approval/closed) — instead of an ad-hoc, capability-less,
-			// permanently-"pending" meta flag that no other surface recognises.
-			( new \WPSellServices\Services\VendorService() )->register( $user_id, array( 'display_name' => $display_name ) );
-		}
+		// Vendor promotion is NOT repeated here: create_account() was given the
+		// intent above and the signup path already routes it through
+		// VendorService::register(), which honours the site's
+		// open/approval/closed vendor_registration mode. Calling it twice would
+		// re-run that decision.
 
 		$user = get_user_by( 'ID', $user_id );
 

@@ -759,3 +759,39 @@ function wpss_is_billing_address_complete( $user_or_address = 0 ): bool {
 
 	return true;
 }
+
+/**
+ * Whether a logged-out buyer may complete checkout, getting an account created.
+ *
+ * There is no guest order in this product, and that is a decision rather than an
+ * omission (owner, 2026-08-17). After paying, a buyer has to submit requirements,
+ * message the seller, review a delivery, request revisions and possibly open a
+ * dispute - every one of which needs an identity. An order with `customer_id = 0`
+ * could not be fulfilled, and worse: order access is checked as
+ * `customer_id === get_current_user_id()`, and a logged-out visitor IS user 0, so
+ * such an order would be readable by every logged-out visitor on the internet.
+ *
+ * So this setting does not enable guest checkout. It removes the sign-in WALL and
+ * creates the account from the billing name and email the buyer is already
+ * entering, signing them in before the order is inserted. `customer_id` is real
+ * from the first moment and no schema or second ownership model is involved.
+ *
+ * Off by default: it changes who is able to transact on the site.
+ *
+ * @since 1.6.0
+ *
+ * @return bool
+ */
+function wpss_checkout_creates_accounts(): bool {
+	$settings = get_option( 'wpss_general', array() );
+	$enabled  = ! empty( $settings['checkout_account_creation'] );
+
+	/**
+	 * Filter whether checkout creates an account for a logged-out buyer.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param bool $enabled Whether the flow is enabled.
+	 */
+	return (bool) apply_filters( 'wpss_checkout_creates_accounts', $enabled );
+}

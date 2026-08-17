@@ -583,6 +583,20 @@ class Settings {
 		}
 
 		add_settings_field(
+			'checkout_account_creation',
+			__( 'Account at checkout', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_general',
+			'wpss_checkout_badges_section',
+			array(
+				'option_name' => 'wpss_general',
+				'field'       => 'checkout_account_creation',
+				'label'       => __( 'Let a logged-out buyer complete checkout. Their account is created from the billing name and email they enter, and they are signed in before the order is placed, so they can submit requirements and message the seller straight away. Off by default: it changes who can transact on your site.', 'wp-sell-services' ),
+				'default'     => false,
+			)
+		);
+
+		add_settings_field(
 			'checkout_badges',
 			__( 'Badge text', 'wp-sell-services' ),
 			array( $this, 'render_checkout_badges_field' ),
@@ -3287,14 +3301,40 @@ class Settings {
 		$existing  = is_array( $existing ) ? $existing : array();
 		$sanitized = $existing;
 
-		// Platform name defaults to site name if empty.
-		$platform_name              = sanitize_text_field( $input['platform_name'] ?? '' );
-		$sanitized['platform_name'] = ! empty( $platform_name ) ? $platform_name : get_bloginfo( 'name' );
+		/*
+		 * ABSENT IS NOT EMPTY.
+		 *
+		 * register_setting() hangs this sanitizer on sanitize_option_wpss_general,
+		 * so it runs for EVERY update_option( 'wpss_general', ... ) - not just a
+		 * settings-form submit. `wp option patch`, a migration, a Pro feature or a
+		 * unit test all pass a PARTIAL array, and defaulting an absent key
+		 * overwrites a stored value nobody asked to change.
+		 *
+		 * For `ecommerce_platform` that is not cosmetic: absent became 'auto',
+		 * which resolves to whichever cart plugin is detected first, so a
+		 * one-key patch silently moved the site's PAYMENT RAIL. Reproduced by
+		 * accident here - `wp option patch insert wpss_general
+		 * checkout_account_creation 1` flipped a standalone site to EDD, changing
+		 * who takes the money, with nothing in the UI to show it.
+		 *
+		 * The guard below is the same one the `use_marketplace_cart_link` block
+		 * further down already carries; these three keys never got it.
+		 */
+		if ( array_key_exists( 'platform_name', $input ) ) {
+			// Platform name defaults to site name if empty.
+			$platform_name              = sanitize_text_field( (string) $input['platform_name'] );
+			$sanitized['platform_name'] = '' !== $platform_name ? $platform_name : get_bloginfo( 'name' );
+		}
 
-		$sanitized['currency'] = sanitize_text_field( $input['currency'] ?? 'USD' );
+		if ( array_key_exists( 'currency', $input ) ) {
+			$sanitized['currency'] = sanitize_text_field( (string) $input['currency'] );
+		}
 
-		$previous                        = (string) ( $existing['ecommerce_platform'] ?? 'auto' );
-		$sanitized['ecommerce_platform'] = sanitize_key( $input['ecommerce_platform'] ?? 'auto' );
+		$previous = (string) ( $existing['ecommerce_platform'] ?? 'auto' );
+
+		if ( array_key_exists( 'ecommerce_platform', $input ) ) {
+			$sanitized['ecommerce_platform'] = sanitize_key( (string) $input['ecommerce_platform'] );
+		}
 
 		// Changing the rail changes which rewrite rules exist. The standalone
 		// adapter owns /wpss-payment/{gateway}/callback - the URL every gateway
@@ -3308,19 +3348,25 @@ class Settings {
 		// flushed inline, because this runs during option save - before the new
 		// rail's adapter has registered its rules, so an inline flush would
 		// persist the OLD rail's rule set again.
-		if ( $previous !== $sanitized['ecommerce_platform'] ) {
+		if ( $previous !== (string) ( $sanitized['ecommerce_platform'] ?? 'auto' ) ) {
 			set_transient( 'wpss_flush_rewrite_rules', true, MINUTE_IN_SECONDS );
 		}
 
 		// Checkout reassurance badges. Owner-authored text for a public page,
 		// so it is sanitised as plain text - no markup, no shortcodes.
-		$sanitized['checkout_badges_enabled'] = ! empty( $input['checkout_badges_enabled'] );
+		if ( array_key_exists( 'checkout_badges_enabled', $input ) ) {
+			$sanitized['checkout_badges_enabled'] = ! empty( $input['checkout_badges_enabled'] );
+		}
 
 		// The field only renders when WooCommerce is active, so an absent key
 		// must not clear a stored preference on a site that has since
 		// deactivated Woo — same trap that once wiped wpss_pages['cart'].
 		if ( array_key_exists( 'use_marketplace_cart_link', $input ) || class_exists( 'WooCommerce' ) ) {
 			$sanitized['use_marketplace_cart_link'] = ! empty( $input['use_marketplace_cart_link'] );
+		}
+
+		if ( array_key_exists( 'checkout_account_creation', $input ) ) {
+			$sanitized['checkout_account_creation'] = ! empty( $input['checkout_account_creation'] );
 		}
 
 		$badges = array();
