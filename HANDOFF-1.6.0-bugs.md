@@ -1,286 +1,134 @@
-# Handoff — WPSS 1.6.0 release (2026-08-17)
+# Handoff — WPSS 1.6.0 release (2026-08-17, second session)
 
-Everything below is committed and pushed to branch **`1.6.0`** in both repos.
-Nothing is left uncommitted.
+**Bugs column is EMPTY.** Everything below is committed and pushed to branch
+`1.6.0` in both repos. Nothing is uncommitted.
 
-## The plan (owner's call, 2026-08-17)
+The gate the owner set — "clear every card in Bugs" — is met. 12 cards moved to
+**Ready for Testing** (`9381846126`), 2 moved out to Ready For Development by
+owner decision. Every card carries a comment with root cause, files changed, and
+step-by-step verification, so QA can verify without re-deriving anything.
 
-**No hotfix. 1.6.0 is the release.** The route to shipping it:
+## What shipped this session
 
-1. **Clear every card in Bugs** — not a triaged subset. Bugs column empty is the
-   gate.
-2. **Keep `audit/manifest.json` in sync** with each change, in the same commit.
-3. **Get the CI checks actually running** the gates (today most run only by
-   hand — see "CI gap" below).
-4. **Journey checks** over the touched surfaces before handing to QA.
-5. **Then QA clears the RFT column.** QA verifies; they do not carry the fix
-   work. Every card lands in RFT with replication + proof so they can.
-
-Do NOT widen scope beyond this. The three fatals fixed in `631e711` stay live
-for customers until 1.6.0 ships, so shipping is the objective.
-
-## Per-card process (non-negotiable)
-
-**Replicate first (data + code) → plan → fix → verify in the browser →
-update `audit/manifest.json` → move to Ready for Testing with proof.**
-
-QA cards are entry points, not specifications. Today, most turned out to be a
-symptom of something larger — a store with no writer, or one flow implemented
-twice and drifting. Fixing only the reported symptom would have left the real
-defect shipping.
-
-Two things earned their keep repeatedly and should not be skipped:
-- **Browser-verify per item**, not in a batch at the end. Several defects only
-  showed up in computed styles (see the anchor-button note below).
-- **Check the sandbox's real data before trusting a code read.** Twice the data
-  contradicted what the code appeared to do (`status_note` rows sharing the
-  evidence column; bare filename strings in legacy evidence).
-
-Board: project `45156734`. Bugs = `9381846253`, **Ready for Testing =
-`9381846126`** (not `9381846060`, that is In Testing).
-
-## Shipped today
-
-| Commit | Card | What it actually was |
+| Commit | Card(s) | What it actually was |
 |---|---|---|
-| `a5a0ce0` | 10208003415 | Vendors page: a Settings mapping with **no writer** |
-| `c341923` | 10208047602 | **8 copies** of the page registry; the creator the admin UI calls set no slug |
-| `2a45054` | — | `@since 1.6.1` → `1.6.0` sweep (pro) |
-| `d0d4dd6` | 10208094430, 10208094503 | Proposal notification type defined since 1.0.0, **written by nothing** |
-| `4264144` | 10208075086, 10208074988 | Dispute conversation split across **two stores**; order hid the dispute |
-| `e29809c` | 10208183009 | Vendor links landed on the directory (**regression from `a5a0ce0`**) |
-| `57eaee1` | 10208047602 (bounce) | Owner switch for the cart link |
+| `7deda27` | 10208094640, 10208199238 | `get_post( 0 )` returns the **global post**, so proposal orders resolved their "service" to whatever page was rendering. Plus offline pay-order never recorded `payment_method`, which made the order **impossible to confirm by anyone** |
+| `4caaf6e` | — | PHPStan (7 errors) and `composer test` were **red at HEAD**, contrary to the previous handoff |
+| `52d4281` | 10208211608, 10208142348 | A guard hid a CTA and nothing replaced it, twice: the admin order never mentioned its dispute; the order page never showed the review the buyer wrote |
+| `57d3cc2` + Pro `c97e8c0` | 10208211769 | Settings deep links used the pre-1.3.0 `?tab=` arg nothing reads — and **5 of 13 also pointed at the wrong section**, which the dead arg had been hiding |
+| `19b08e1`, `386790e` | 10208142467 | Become a Vendor read the legacy `_wpss_is_vendor` meta. All six vendors hold the role and **none** holds the meta, so every vendor was told to sign up |
+| `ee4f31e` | 10208075268 | The unread count was **correct and invisible** — `text-indent: -999999px` rendered it as a bare dot. Plus no pagination while the banner counted every conversation |
+| `019ff5b` | 10208199338 | `/create-service/` was a leftover published page for a **virtual route**; now redirects to the wizard, de-indexed |
+| `c5c1b5b` | 10207973462 | `--wpss-sticky-top` assumed admin-bar-only; measured 47px of the package sidebar behind BuddyX's sticky header |
+| `3dd1968`, `c9d6413` | — | Owner decision: losing bidders get in-app only, no email burst |
+| `d9a66c5` + Pro `eec19c7` | 10138985537 | i18n was largely done; the gap was **no gate**. New `js-fallback` check; Pro's CI never ran the i18n gate it shipped |
+| Pro `c6c943a`, `ea846d7` | 10154920673 | Push notification **sending** built in Pro (owner decision). Device tokens had been stored since 1.1.0 and never read |
+| `dfece70` | 10208511245 | Dual H1 on cart and dashboard — filed by QA mid-session |
 
-### Cross-cutting things worth remembering
+## Owner decisions taken this session
 
-- **`DB_VERSION` is now `1.6.1`** (`SchemaManager`). It moves independently of
-  `WPSS_VERSION`. A schema change inside an already-numbered release **must**
-  bump it or `install()` short-circuits on `needs_update()` and the columns
-  never appear. This cost me a debugging cycle.
-- **Activation does not load `src/functions.php`.** The activation hook loads
-  only the Composer autoloader, so any global helper called from `Activator`
-  fatals and leaves the plugin *silently inactive*. Now required explicitly in
-  `wpss_activate()`. Any future helper call from the activator is safe.
-- **`is_email_service_handling()`'s `$covered_types`** must list any type that
-  `EmailService` already mails, or the recipient gets the branded email **plus**
-  a plain duplicate from `NotificationService::create()`.
-- **`NotificationService::send()`** is a `switch` on type. A type with no `case`
-  silently renders "You have a new notification." — add a case for every new type.
-- **`action_url`** is now written by `create()` and rendered as the notification
-  title link. It was a column/model property/REST field with no writer since 1.0.0.
-- Theme-fit: **BuddyX puts `border: 2px solid transparent` on anchor buttons**,
-  which outranks a single-class rule. Any `<a class="wpss-btn…">` needs its
-  states pinned (see `unified-dashboard.css`), and `.min` + RTL rebuilt
-  (`npm run rtl && npm run build:min`).
+1. **Big non-bug cards → Ready For Development.** 10154919636 (normalise API) and
+   10163575694 (guest purchase) left Bugs. Neither is a defect; both are multi-day
+   contract work. Comments record "not started" plus starting points.
+2. **Push notifications → Pro.** Built. Off by default.
+3. **Losing bidders → in-app only.** Implemented; explicit rejections still email.
+4. **Cart-link default → stays off.** No code change needed.
 
-## In progress — ROOT CAUSE PROVEN, fix not yet written
+## Gate state — read this before tagging
 
-**Cards 10208094640 + 10208199238 — proposal orders with `service_id = 0`.**
+Corrected from the previous handoff, which claimed all gates green.
 
-### The root cause (proven live, 2026-08-17)
-
-`ServiceOrder::get_service()` is this, at `src/Models/ServiceOrder.php:737`:
-
-```php
-public function get_service(): ?Service {
-    $post = get_post( $this->service_id );   // service_id is 0 on proposal orders
-    return $post ? Service::from_post( $post ) : null;
-}
-```
-
-**`get_post( 0 )` does not return null — it returns the global `$post`.** That
-is standard WordPress behaviour and the whole bug. On the checkout page the
-global post *is* the checkout page, so a proposal order silently resolves its
-"service" to **the page you happen to be looking at**.
-
-Verified on the live sandbox:
-
-```
-global $post; $post = get_post( 297 );
-get_post( 0 )  ->  #297 ("Service Checkout")
-```
-
-That single line explains all of it:
-- checkout line title reads **"Service Checkout"** — the page's title
-- the form posts **`service_id=297`** — the page's ID (confirmed in the live
-  DOM: `hidden_fields.service_id === "297"`)
-- wp-admin shows **"Service Deleted"** for the same orders (card 10208199238),
-  because there the global post is different or absent
-
-**Correcting an earlier note in this handoff:** I first suspected
-`build_proposal_service_placeholder()`. It is **not** at fault — called directly
-against order 3128 it returns the right title
-(`'Playwright QA — Need a landing page redesign for TestMarketplace'`, `id = 0`).
-It is simply never reached, because `get_service()` returns a truthy Service
-(the page) and the `if ( ! $service )` fallback never fires.
-
-### The fix
-
-Guard the ID before asking WordPress for it — one place, and every caller of
-`get_service()` is fixed at once:
-
-```php
-public function get_service(): ?Service {
-    if ( $this->service_id <= 0 ) {
-        return null;            // proposal/request orders have no service post
-    }
-    $post = get_post( $this->service_id );
-    return $post && 'wpss_service' === $post->post_type
-        ? Service::from_post( $post )
-        : null;
-}
-```
-
-The `post_type` check matters too: without it any post ID that happens to match
-resolves as a "service".
-
-Then `render_pay_order_checkout()`'s existing `if ( ! $service )` branch starts
-working and the placeholder (which is already correct) takes over.
-
-**Before changing it, grep every `get_service()` caller** — some may currently
-depend on the truthy-global-post accident. `wpss_get_order()`-based admin
-screens are the ones to check first.
-
-### Still to diagnose
-
-3. **Offline Pay leaves the order `pending_payment`** with `payment_method = NULL`
-   and no receipt. Not yet investigated. Compare against the cart Offline path,
-   which QA reports works. Note the form does carry `wpss_offline_nonce`, so the
-   gateway is being offered; the question is what the POST handler does with
-   `pay_order` present.
-
-### Reproduction
-
-```
-/service-checkout/?pay_order=3128     (as wpss_buyer_amelia)
-```
-Order 3128 / `WPSS-9UEPWHXB`, `$350`, `service_id = 0`, `platform = 'request'`,
-title in `meta.proposal_snapshot.request_title`.
-
-Journey `audit/journeys/01-buyer-hires-seller.md` step 7 covers this.
-
-## Remaining Bugs (13 after the moves above)
-
-Natural groups:
-
-- **`service_id = 0` / proposal order identity:** 10208094640 (in progress),
-  10208199238
-- **"guard hides the CTA and nothing replaces it"** — same shape as the dispute
-  CTA already fixed: 10208211608 (admin order hides open dispute),
-  10208142348 (review CTA hidden, review never shown)
-- **Page-registry follow-ups:** 10208199338 (`/create-service/` published but
-  empty — note `create_service` is a *virtual route* in
-  `wpss_get_default_page_slugs()`, deliberately not in the page registry;
-  the page should probably not exist, or should carry the wizard)
-- **Standalone:** 10208211769 (Settings `?tab=` links open General — 1.3.0 moved
-  to hash routing, so these links are stale), 10208142467 (Become a Vendor still
-  offers Register to existing vendors), 10208075268 (messages unread inflated),
-  10207973462 (sticky sidebar vs theme header)
-- **Older//larger:** 10138985537 (P1 i18n), 10154919636 (normalise API),
-  10163575694 (guest purchase — owner decided: always create an account with
-  First/Last/Email), 10154920673 (push notifications)
-
-## CI — gap CLOSED 2026-08-17 (commit below)
-
-`.github/workflows/ci.yml` previously ran only `php-lint`, `phpcs`, `phpstan`,
-`phpunit`. The gates that catch release-breaking mistakes ran **only when
-someone remembered**. Two jobs added:
-
-| Gate | Command | In CI |
+| Gate | Free | Pro |
 |---|---|---|
-| PHP lint / WPCS / PHPStan / PHPUnit | (existing) | yes |
-| i18n + version drift | `python3 bin/i18n-verify.py` | yes — `project-gates` |
-| Docs audit | `python3 bin/docs-audit.py` | yes — `project-gates` |
-| App parity | `python3 bin/app-parity.py` | yes — `project-gates` |
-| Manifest freshness | diff-based | yes — `manifest-freshness` |
+| phpcs | **0 errors** | **0 errors in touched files**; 59 pre-existing errors across 52 other files |
+| phpstan | **0** | **runs at all now** (see below); 22 pre-existing EDD/FluentCart stub errors |
+| phpunit `--testsuite unit` (what CI runs) | **7/7 pass** | pass |
+| `composer test` (all suites) | **7 pre-existing failures** | — |
+| i18n / version drift | **pass** | **pass**, and now runs in CI |
+| docs audit | pass | — |
+| app parity | pass | — |
 
-All three python gates were confirmed exit-0 on the current tree before being
-added, so CI is not red on arrival.
+Three things were broken before this session and need your decision:
 
-**`manifest-freshness` is deliberately diff-based, not a regeneration.** It
-fails when a contract file (`src/API/*Controller.php`,
-`src/Database/SchemaManager.php`, `src/CLI/*.php`) changes without
-`audit/manifest.json` changing in the same push/PR. It does **not** run the
-deterministic generator — `CLAUDE.md` marks this plugin
-`manifest_refresh: agent-enumeration-only` because REST registers through a
-controller-array wrapper, so the generator undercounts REST (142 → 7) and would
-silently clobber the file. **Never wire the generator in.**
+- **Pro's PHPStan could not run at all.** `phpstan.neon` and its baseline still
+  referenced `src/Integrations/SureCart/*`, deleted in `cfe766e`, so the tool
+  exited on a config error rather than analysing. Pro has had no static analysis
+  since that commit. Fixed in `c6c943a`.
+- **`composer test` died instantly** on a testsuite pointing at `./tests/API`,
+  which does not exist. Fixed in `4caaf6e`. Running it now exposes **7 pre-existing
+  failures** in the integration + rest suites that CI never ran — confirmed
+  pre-existing by re-running with this session's changes stashed. One is a
+  genuinely wrong test: `MilestonesUpworkFlowTest` fires `wpss_order_paid` with 1
+  arg where production fires 2.
+- **Pro's phpcs has 59 pre-existing errors** in files nobody touched.
 
-The logic was tested against real commits before landing: `4264144` (touched
-SchemaManager *and* the manifest) passes, `e29809c` (no contract files) passes,
-and a synthetic SchemaManager-without-manifest change correctly fails.
+**Decision needed:** fix those before tagging, or ship with CI's current gates
+(which are green) and file them. They are unrelated to the bug sweep.
 
-## Journeys — gap CLOSED 2026-08-17
+## Not verified, and cannot be from this sandbox
 
-`audit/journeys/` now exists with the four walks that actually caught defects,
-plus a README covering how to run one and the verified role table:
+- **Push notifications** reaching a real handset. Everything the plugin controls is
+  verified with the HTTP layer intercepted — the OAuth JWT, the FCM endpoint, the
+  message body, dead-token pruning, token caching. What Google does with a
+  valid-looking request is untested. **Recommend leaving it off by default in 1.6.0
+  and doing a real-device pass before advertising it.**
+- **EDD / FluentCart purchase flows.** Still never purchase-tested, as the previous
+  handoff noted. SureCart was removed in `cfe766e`.
 
-| File | Covers | Status |
-|---|---|---|
-| `01-buyer-hires-seller.md` | request → proposal → hire → pay | passes |
-| `02-dispute.md` | open → both parties reply → admin reads → back to order | passes |
-| `03-install-and-upgrade.md` | activation, pages, settings, preflight, upgrade | passes |
-| `04-vendor-discovery.md` | directory → profile → service | passes |
+## Release checklist (Bugs is empty, so this is the remaining work)
 
-`audit/ROLE_MATRIX.md` was also missing and is now written **from live role
-data**, not from code comments. The load-bearing fact in it: **a buyer holds no
-WPSS capability at all** — a buyer is a plain subscriber, so every buyer-side
-gate must be an ownership check, never `current_user_can()`.
-
-`CLAUDE.md`'s READ FIRST block pointed at `audit/CODE_FLOWS.md`, which has
-**never existed**. Corrected to point at `audit/FLOW-AUDIT.md` (which does) and
-to the new journeys directory. Every link in that block now resolves — checked.
-
-Still not present, and fine for now: `docs/qa/qa-config.json` and
-`docs/standards/qa-catalog.md` (the cross-plugin catalog convention). The
-journeys above are the working substitute.
-
-**Not yet written**, worth adding as cards clear: messages/unread, review
-submit + display, withdrawal/payout, milestones, extensions, and the three
-non-standalone rails (WooCommerce, EDD, FluentCart).
-
-## Release checklist (after Bugs is empty)
-
-1. All gates green: `composer phpcs`, `composer phpstan`, `composer test`,
-   `python3 bin/i18n-verify.py`, `python3 bin/docs-audit.py`.
-2. `wp wpss preflight` — clean (ignore the pre-existing debug.log entry count,
-   which is dominated by third-party plugin deprecations on this sandbox).
-3. Deactivate → reactivate both plugins; confirm zero fatals. **This caught a
-   real activation fatal today** — do not skip it.
-4. Rebuild assets: `npm run rtl && npm run build:min`. `Assets.php` swaps to
-   `.min`, so unbuilt CSS/JS edits are inert.
-5. `readme.txt` changelog for 1.6.0 — **needs today's work folded in**; the
-   existing entry predates 8 cards, a schema change (`DB_VERSION` 1.6.1) and a
-   new owner setting. WooCommerce-style action-prefix format, no em-dashes,
-   no emoji.
+1. Decide the gate question above.
+2. `wp wpss preflight` — clean (ignore the third-party deprecation count on this
+   sandbox).
+3. Deactivate → reactivate both plugins; confirm zero fatals. **This caught a real
+   activation fatal previously — do not skip it.**
+4. Assets are already rebuilt (`npm run rtl && npm run build:min`) for every CSS/JS
+   change this session. Re-run if you touch anything.
+5. **`readme.txt` changelog for 1.6.0 — still needs this session's 13 commits
+   folded in.** WooCommerce-style action prefixes, no em-dashes, no emoji. This is
+   the biggest remaining task.
 6. Update `CLAUDE.md` "Recent Changes".
-7. Verify version consistency (all four already read 1.6.0):
-   plugin header / readme Stable tag / `package.json` / POT `Project-Id-Version`.
-8. Tag. Latest tag today is still `v1.4.0`.
+7. Verify version consistency (all four read 1.6.0; the i18n gate enforces this).
+8. Tag. Latest tag is still `v1.4.0`, so the three fatals fixed in `631e711` —
+   including the customer-reported one — stay live until this ships.
 
-## Open questions for the owner
+## Cross-cutting things learned this session
 
-1. **Losing bidders now get notified.** `reject_other_proposals()` fired nothing,
-   so sellers who lost were rejected silently — fixed. But hiring on a request
-   with 200 proposals now sends 200 notifications **and** 200 emails at once.
-   Acceptable, in-app only, or batched?
-2. **Push notifications (10154920673)** — Free or Pro? Blocked until decided.
-3. ~~**Release exposure** — hotfix or wait?~~ **DECIDED 2026-08-17: no hotfix.
-   1.6.0 is the release vehicle.** Do not cut `v1.4.1`.
-
-   Consequence to hold onto: the latest tag is still `v1.4.0`, so the three
-   shipped fatals fixed in `631e711` — including the customer-reported one —
-   stay live for customers **until 1.6.0 ships**. That makes shipping 1.6.0 the
-   priority, not an open-ended bug sweep. Ship what is fixed; do not widen scope beyond clearing Bugs.
-4. **Cart link default** — currently off. Flip to on when the site has zero
-   published WooCommerce products? (One-line change; I kept it off because
-   "no products today" isn't proof of none tomorrow.)
+- **`get_post( 0 )` returns the global `$post`.** Any `get_post( $maybe_zero )` is a
+  latent version of the 10208094640 bug. Guard the id first.
+- **A store with a reader and no writer, or a writer and no reader, is the
+  recurring shape.** This session: `payment_method` on offline pay-order (writer
+  missing), push tokens (reader missing), the unread badge count (written, then
+  hidden by CSS).
+- **Check the sandbox's real data before trusting a code read.** It contradicted the
+  code three more times: `wpss_disputes.reason` holds free text, not enum keys;
+  every vendor holds the role and no legacy meta; the "inflated" unread counts were
+  arithmetically correct.
+- **A page joining `ShellHeader`'s shell list must render its own `<h1>` in every
+  branch** — logged out, empty, and rail-redirected included. Two headingless pages
+  were created and fixed while doing exactly that.
+- **`in_the_loop()` is not where themes render their entry title.** BuddyX does it
+  outside the loop.
+- **QA cards are entry points.** Every card this session was bigger than filed, and
+  two had a fix gate that would have introduced a regression if followed literally
+  (10208511245's page list, and 10208075268's premise that the count was wrong).
 
 ## Sandbox state (local only, not product changes)
 
-- 17 orphan `cart-N` pages → **Trash** (recoverable), to prove clean-install
-  behaviour.
-- QA repro page "WPSS RFT Bug Repro Vendors" deleted for the same reason.
-- `wpss_general['use_marketplace_cart_link']` left **on** while testing — turn
-  it off to see default behaviour.
-- Test data created: proposals #26–28, orders #3129+, dispute #22 replies.
+Left from the previous session:
+- 17 orphan `cart-N` pages → **Trash** (recoverable).
+- QA repro page "WPSS RFT Bug Repro Vendors" deleted.
+- `wpss_general['use_marketplace_cart_link']` left **on**.
+
+Added and then cleaned up this session — all removed, verified:
+- Order 3128 carried through to `pending_requirements` / `payment_status = paid`
+  (proving the offline chain). **Orders 3129 and 3130 left unpaid as fresh repros.**
+- Review 16 now has a seller response (kept deliberately — QA needs it).
+- Requests 550-554, proposals 43-52, orders 3169-3170, 2 conversations and
+  notifications 851-863: **deleted**.
+- Fake push service account, 2 fake devices, notifications 862-863: **deleted**.
+- de_DE `.mo` files, the `wp-content/languages` directory, the locale-forcing
+  mu-plugin, the title-probe mu-plugin, the messages-per-page mu-plugin: **deleted**.
+- `wpss_orders[review_window_days]`, `wpss_pages[create_service]` and BuddyX's
+  `site_sticky_header` theme mod: **restored to their exact prior state** (all
+  absent).
