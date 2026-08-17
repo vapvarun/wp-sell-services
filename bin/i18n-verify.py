@@ -632,6 +632,88 @@ def check_script_translations(root: Path, cfg: dict, list_handles: bool):
 
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# JS localized-string fallbacks
+# ---------------------------------------------------------------------------
+
+JS_FALLBACK_RE = re.compile(
+    r"\b(wpss[A-Za-z0-9_]*|l10n)((?:\.[A-Za-z_][A-Za-z0-9_]*)+)\s*\|\|\s*(['\"])([^'\"]{3,})\3"
+)
+
+JS_BLOCK_COMMENT_RE = re.compile(r'/\*.*?\*/', re.DOTALL)
+JS_LINE_COMMENT_RE = re.compile(r'(?m)^\s*//.*$')
+
+
+def collect_localized_keys(root: Path, cfg: dict):
+    """Every key inside every wp_localize_script() array in this plugin.
+
+    Nested arrays count too, so `'i18n' => array( 'loading' => __(...) )`
+    contributes both `i18n` and `loading`.
+    """
+    keys = set()
+
+    for path in walk_files(root, '.php', cfg['scriptScanExclude']):
+        raw = path.read_text(encoding='utf-8', errors='replace')
+        if 'wp_localize_script' not in raw:
+            continue
+        src = mask_comments(raw)
+        for _name, args, _start in iter_calls(src, ['wp_localize_script']):
+            if len(args) < 3:
+                continue
+            for match in re.finditer(r"['\"]([A-Za-z_][A-Za-z0-9_]*)['\"]\s*=>", args[2]):
+                keys.add(match.group(1))
+
+    return keys
+
+
+def check_js_fallbacks(root: Path, cfg: dict):
+    """Flag `l10n.key || 'English'` where nothing localizes `key`.
+
+    The pattern itself is correct and deliberate: PHP owns the string, JS keeps a
+    literal so a missing payload does not render `undefined`. It turns into a
+    permanent English string the moment the PHP key is renamed or dropped -- the
+    fallback still works, so nothing looks broken, and no translator can reach
+    it. 54 of these had accumulated by 1.6.0 and were removed by hand; this is
+    the check that stops them coming back.
+
+    Only the KEY is verified, not that the English matches -- the POT is the
+    authority on the text.
+    """
+    violations = []
+    localized = collect_localized_keys(root, cfg)
+    allowed = set(cfg.get('jsFallbackAllowedKeys') or [])
+    scan_dirs = cfg.get('jsScanDirs') or []
+    excluded = tuple(cfg.get('jsScanExclude') or [])
+
+    for rel_dir in scan_dirs:
+        base = root / rel_dir
+        if not base.is_dir():
+            continue
+
+        for path in sorted(base.rglob('*.js')):
+            rel = str(path.relative_to(root))
+            if rel.endswith('.min.js') or rel.startswith(excluded):
+                continue
+
+            raw = path.read_text(encoding='utf-8', errors='replace')
+            src = JS_LINE_COMMENT_RE.sub('', JS_BLOCK_COMMENT_RE.sub('', raw))
+
+            for match in JS_FALLBACK_RE.finditer(src):
+                key = match.group(2).split('.')[-1]
+                if key in localized or key in allowed:
+                    continue
+                violations.append(Violation(
+                    'js-fallback',
+                    rel,
+                    src[:match.start()].count('\n') + 1,
+                    f'`{match.group(1)}{match.group(2)}` falls back to '
+                    f'"{match.group(4)[:60]}" but nothing localizes `{key}`.',
+                    'Add the key to the wp_localize_script() payload, or drop the '
+                    'dead fallback so the string cannot ship untranslated.'))
+
+    return violations
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description='i18n verification gate.')
     parser.add_argument('--root', default=None,
@@ -657,6 +739,7 @@ def main() -> int:
     violations += check_versions(root, cfg)
     violations += check_text_domain(root, cfg)
     violations += check_script_translations(root, cfg, opts.list_handles)
+    violations += check_js_fallbacks(root, cfg)
     if opts.skip_pot:
         if opts.verbose:
             print('  (POT freshness check skipped)')
@@ -673,7 +756,7 @@ def main() -> int:
         by_check.setdefault(v.check, []).append(v)
 
     print(f'i18n-verify: {len(violations)} violation(s) in {cfg["domain"]}\n', file=sys.stderr)
-    for check in ('version-drift', 'stale-pot', 'text-domain', 'script-i18n'):
+    for check in ('version-drift', 'stale-pot', 'text-domain', 'script-i18n', 'js-fallback'):
         items = by_check.get(check)
         if not items:
             continue
