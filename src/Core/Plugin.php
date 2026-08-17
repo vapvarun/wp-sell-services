@@ -949,6 +949,38 @@ final class Plugin {
 	 * @return void
 	 */
 	private function define_notification_hooks(): void {
+		// Record presence, so "is this person online" can ever be true.
+		//
+		// VendorService::update_last_active() has always existed and was never
+		// hooked to anything, so `_wpss_last_active` was never written. Every
+		// reader of it therefore answered "offline" for everybody: the
+		// skip-the-email-when-they-are-here behaviour could not fire, and the
+		// SellerCard online dot could not light. A store with no writer.
+		//
+		// Throttled to one write per 5 minutes per user. The readers use a
+		// 15-minute window, so 5 minutes is precise enough while keeping this
+		// off the hot path -- an unthrottled usermeta write on every page load
+		// is exactly the kind of per-request cost this codebase has been
+		// removing elsewhere.
+		$this->loader->add_action(
+			'init',
+			static function (): void {
+				$user_id = get_current_user_id();
+
+				if ( ! $user_id ) {
+					return;
+				}
+
+				$last = get_user_meta( $user_id, '_wpss_last_active', true );
+
+				if ( $last && ( time() - (int) strtotime( (string) $last ) ) < 5 * MINUTE_IN_SECONDS ) {
+					return;
+				}
+
+				update_user_meta( $user_id, '_wpss_last_active', current_time( 'mysql' ) );
+			}
+		);
+
 		$notification_service = new NotificationService();
 		// Sub-order email dispatcher shared by every milestone / extension /
 		// tip listener below — declared up front so closures further down

@@ -183,7 +183,18 @@ function wpss_user_is_online( int $user_id ): bool {
  */
 function wpss_should_skip_message_email( int $recipient_id ): bool {
 	$settings = get_option( 'wpss_notification_settings', array() );
-	$enabled  = ! empty( $settings['skip_message_email_when_online'] );
+	// ON unless the owner has explicitly turned it off.
+	//
+	// This shipped off by default, which meant nobody got the benefit without
+	// finding a setting they had no reason to look for -- and the behaviour it
+	// prevents is the one people complain about: an email about a message they
+	// are, at that moment, reading on screen.
+	//
+	// `array_key_exists` rather than `! empty`, so an explicit `false` is
+	// honoured. Reading a missing key as "off" is what made the default
+	// unreachable in the first place.
+	$enabled = ! array_key_exists( 'skip_message_email_when_online', $settings )
+		|| ! empty( $settings['skip_message_email_when_online'] );
 
 	$skip = $enabled && wpss_user_is_online( $recipient_id );
 
