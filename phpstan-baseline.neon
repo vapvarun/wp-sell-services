@@ -102,11 +102,6 @@ parameters:
 			count: 1
 			path: src/API/ExtensionRequestsController.php
 
-		-
-			message: '#^Parameter \#2 \$user_id of function get_the_author_meta expects int\|false, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/API/FavoritesController.php
 
 		-
 			message: '#^Method WPSellServices\\API\\MediaController\:\:format_attachment\(\) return type has no value type specified in iterable type array\.$#'

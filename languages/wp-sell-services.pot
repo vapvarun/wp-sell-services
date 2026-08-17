@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-17T12:44:47+00:00\n"
+"POT-Creation-Date: 2026-08-17T20:05:16+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -2050,7 +2050,7 @@ msgid "Invalid order ID."
 msgstr ""
 
 #: src/Admin/OrderScreen.php:245
-#: src/API/FavoritesController.php:203
+#: src/API/FavoritesController.php:235
 #: src/API/ModerationController.php:209
 #: src/API/ModerationController.php:251
 #: src/API/ModerationController.php:291
@@ -6137,24 +6137,24 @@ msgstr ""
 msgid "Current page of the results."
 msgstr ""
 
-#: src/API/API.php:976
+#: src/API/API.php:978
 #: src/Services/AccountDeletionService.php:178
 msgid "That account no longer exists."
 msgstr ""
 
-#: src/API/API.php:996
+#: src/API/API.php:998
 msgid "Too many attempts. Please wait a few minutes and try again."
 msgstr ""
 
-#: src/API/API.php:1008
+#: src/API/API.php:1010
 msgid "That password is not correct."
 msgstr ""
 
-#: src/API/API.php:1040
+#: src/API/API.php:1042
 msgid "Your account and personal data have been deleted."
 msgstr ""
 
-#: src/API/API.php:1139
+#: src/API/API.php:1141
 #: src/API/EarningsController.php:297
 #: src/Services/EarningsService.php:596
 #: templates/dashboard/sections/orders.php:219
@@ -6163,12 +6163,12 @@ msgid "Deleted Service"
 msgstr ""
 
 #. translators: %d: maximum number of batch requests
-#: src/API/API.php:1276
+#: src/API/API.php:1278
 #, php-format
 msgid "Batch requests limited to %d operations."
 msgstr ""
 
-#: src/API/API.php:1295
+#: src/API/API.php:1297
 msgid "Path must start with /wpss/v1/"
 msgstr ""
 
@@ -6353,30 +6353,30 @@ msgstr ""
 msgid "Proposal rejected."
 msgstr ""
 
-#: src/API/BuyerRequestsController.php:858
+#: src/API/BuyerRequestsController.php:859
 #: src/API/ConversationsController.php:716
-#: src/API/DisputesController.php:822
-#: src/API/NotificationsController.php:304
+#: src/API/DisputesController.php:821
+#: src/API/NotificationsController.php:307
 #: src/API/OrdersController.php:99
 #: src/API/ProposalsController.php:633
-#: src/API/ReviewsController.php:1057
+#: src/API/ReviewsController.php:1058
 #: src/API/ServicesController.php:215
-#: src/API/ServicesController.php:1468
+#: src/API/ServicesController.php:1338
 #: src/API/VendorsController.php:979
 msgid "Current page."
 msgstr ""
 
-#: src/API/BuyerRequestsController.php:864
+#: src/API/BuyerRequestsController.php:865
 #: src/API/ConversationsController.php:722
-#: src/API/DisputesController.php:828
+#: src/API/DisputesController.php:827
 #: src/API/MediaController.php:63
-#: src/API/NotificationsController.php:309
+#: src/API/NotificationsController.php:312
 #: src/API/OrdersController.php:105
 #: src/API/PortfolioController.php:104
 #: src/API/ProposalsController.php:639
-#: src/API/ReviewsController.php:1063
+#: src/API/ReviewsController.php:1064
 #: src/API/ServicesController.php:221
-#: src/API/ServicesController.php:1473
+#: src/API/ServicesController.php:1343
 #: src/API/VendorsController.php:985
 msgid "Items per page."
 msgstr ""
@@ -6385,7 +6385,7 @@ msgstr ""
 #: src/API/OrdersController.php:2104
 #: src/API/PaymentController.php:83
 #: src/API/PaymentController.php:128
-#: src/API/ReviewsController.php:1122
+#: src/API/ReviewsController.php:1123
 #: src/API/ServicesController.php:118
 msgid "Service ID."
 msgstr ""
@@ -6739,11 +6739,11 @@ msgstr ""
 msgid "Notification not found."
 msgstr ""
 
-#: src/API/NotificationsController.php:315
+#: src/API/NotificationsController.php:318
 msgid "Filter by notification type."
 msgstr ""
 
-#: src/API/NotificationsController.php:319
+#: src/API/NotificationsController.php:322
 msgid "Filter by read status."
 msgstr ""
 
@@ -6763,7 +6763,7 @@ msgstr ""
 #: src/API/OrdersController.php:236
 #: src/API/OrdersController.php:351
 #: src/API/ReviewsController.php:133
-#: src/API/ReviewsController.php:1116
+#: src/API/ReviewsController.php:1117
 msgid "Order ID."
 msgstr ""
 
@@ -7313,13 +7313,13 @@ msgstr ""
 
 #: src/API/ReviewsController.php:73
 #: src/API/ReviewsController.php:138
-#: src/API/ReviewsController.php:1128
+#: src/API/ReviewsController.php:1129
 msgid "Rating (1-5)."
 msgstr ""
 
 #: src/API/ReviewsController.php:80
 #: src/API/ReviewsController.php:145
-#: src/API/ReviewsController.php:1135
+#: src/API/ReviewsController.php:1136
 msgid "Review text."
 msgstr ""
 
@@ -7401,41 +7401,41 @@ msgstr ""
 msgid "Only the vendor can reply to reviews."
 msgstr ""
 
-#: src/API/ReviewsController.php:1070
+#: src/API/ReviewsController.php:1071
 msgid "Filter by service."
 msgstr ""
 
-#: src/API/ReviewsController.php:1074
+#: src/API/ReviewsController.php:1075
 msgid "Filter by vendor."
 msgstr ""
 
-#: src/API/ReviewsController.php:1078
+#: src/API/ReviewsController.php:1079
 msgid "Filter by rating."
 msgstr ""
 
-#: src/API/ReviewsController.php:1084
-#: src/API/ServicesController.php:1507
+#: src/API/ReviewsController.php:1085
+#: src/API/ServicesController.php:1377
 #: src/API/VendorsController.php:1000
 msgid "Order by field."
 msgstr ""
 
-#: src/API/ReviewsController.php:1090
+#: src/API/ReviewsController.php:1091
 msgid "Order direction."
 msgstr ""
 
-#: src/API/ReviewsController.php:1110
+#: src/API/ReviewsController.php:1111
 msgid "Review ID."
 msgstr ""
 
-#: src/API/ReviewsController.php:1140
+#: src/API/ReviewsController.php:1141
 msgid "Review status."
 msgstr ""
 
-#: src/API/ReviewsController.php:1146
+#: src/API/ReviewsController.php:1147
 msgid "Vendor reply."
 msgstr ""
 
-#: src/API/ReviewsController.php:1152
+#: src/API/ReviewsController.php:1153
 msgid "Created date."
 msgstr ""
 
@@ -7506,66 +7506,66 @@ msgstr ""
 msgid "You do not have permission to edit this service."
 msgstr ""
 
-#: src/API/ServicesController.php:1479
+#: src/API/ServicesController.php:1349
 msgid "Filter by category ID or slug."
 msgstr ""
 
-#: src/API/ServicesController.php:1483
+#: src/API/ServicesController.php:1353
 msgid "Filter by vendor ID."
 msgstr ""
 
-#: src/API/ServicesController.php:1487
+#: src/API/ServicesController.php:1357
 msgid "Search term."
 msgstr ""
 
-#: src/API/ServicesController.php:1495
+#: src/API/ServicesController.php:1365
 msgid "Search term. Alias of `search`, accepted for parity with /search."
 msgstr ""
 
-#: src/API/ServicesController.php:1499
+#: src/API/ServicesController.php:1369
 #: src/Core/AbilitiesRegistrar.php:111
 msgid "Minimum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1503
+#: src/API/ServicesController.php:1373
 #: src/Core/AbilitiesRegistrar.php:115
 msgid "Maximum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1513
+#: src/API/ServicesController.php:1383
 msgid "Sort order."
 msgstr ""
 
-#: src/API/ServicesController.php:1519
+#: src/API/ServicesController.php:1389
 msgid "Maximum delivery days filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1524
+#: src/API/ServicesController.php:1394
 msgid "Minimum rating filter (0-5)."
 msgstr ""
 
-#: src/API/ServicesController.php:1546
+#: src/API/ServicesController.php:1416
 #: src/Core/AbilitiesRegistrar.php:231
 msgid "Service title."
 msgstr ""
 
-#: src/API/ServicesController.php:1552
+#: src/API/ServicesController.php:1422
 msgid "Service description."
 msgstr ""
 
-#: src/API/ServicesController.php:1557
+#: src/API/ServicesController.php:1427
 msgid "Service excerpt."
 msgstr ""
 
-#: src/API/ServicesController.php:1562
+#: src/API/ServicesController.php:1432
 msgid "Base price."
 msgstr ""
 
-#: src/API/ServicesController.php:1570
+#: src/API/ServicesController.php:1440
 msgid "Category IDs or slugs."
 msgstr ""
 
-#: src/API/ServicesController.php:1576
+#: src/API/ServicesController.php:1446
 msgid "Tags."
 msgstr ""
 
@@ -9345,7 +9345,7 @@ msgid "Save failed"
 msgstr ""
 
 #: src/Frontend/Frontend.php:332
-#: src/Frontend/PublicSignup.php:487
+#: src/Frontend/PublicSignup.php:491
 #: src/Frontend/ServiceWizard.php:489
 #: src/Frontend/ServiceWizard.php:593
 #: src/Frontend/ServiceWizard.php:797
@@ -9520,11 +9520,11 @@ msgstr ""
 msgid "Could not generate a unique username. Try a different email."
 msgstr ""
 
-#: src/Frontend/PublicSignup.php:493
+#: src/Frontend/PublicSignup.php:497
 msgid "Your name"
 msgstr ""
 
-#: src/Frontend/PublicSignup.php:508
+#: src/Frontend/PublicSignup.php:512
 #: src/Frontend/Shortcodes.php:913
 #: src/functions/billing.php:137
 #: src/Services/NotificationService.php:1500
@@ -9534,41 +9534,41 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: src/Frontend/PublicSignup.php:523
+#: src/Frontend/PublicSignup.php:527
 #: src/Frontend/Shortcodes.php:918
 msgid "Password"
 msgstr ""
 
-#: src/Frontend/PublicSignup.php:535
+#: src/Frontend/PublicSignup.php:539
 msgid "At least 8 characters."
 msgstr ""
 
-#: src/Frontend/PublicSignup.php:547
+#: src/Frontend/PublicSignup.php:551
 msgid "Create vendor account"
 msgstr ""
 
-#: src/Frontend/PublicSignup.php:549
+#: src/Frontend/PublicSignup.php:553
 msgid "Create account"
 msgstr ""
 
-#: src/Frontend/PublicSignup.php:555
+#: src/Frontend/PublicSignup.php:559
 #: src/Frontend/Shortcodes.php:927
 msgid "Already have an account?"
 msgstr ""
 
-#: src/Frontend/PublicSignup.php:556
+#: src/Frontend/PublicSignup.php:560
 msgid "Sign in"
 msgstr ""
 
-#: src/Frontend/PublicSignup.php:584
+#: src/Frontend/PublicSignup.php:588
 msgid "Creating your account…"
 msgstr ""
 
-#: src/Frontend/PublicSignup.php:595
+#: src/Frontend/PublicSignup.php:599
 msgid "Could not create your account. Try again."
 msgstr ""
 
-#: src/Frontend/PublicSignup.php:610
+#: src/Frontend/PublicSignup.php:614
 msgid "Network error. Please try again."
 msgstr ""
 
