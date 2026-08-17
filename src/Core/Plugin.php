@@ -510,12 +510,28 @@ final class Plugin {
 		// Registered here, not on rest_api_init: authentication runs before
 		// that fires, so a hook added there would never see the request it is
 		// supposed to reject.
+		$token_guard = new \WPSellServices\API\AppTokenGuard();
+
 		$this->loader->add_action(
 			'wp_authenticate_application_password_errors',
-			new \WPSellServices\API\AppTokenGuard(),
+			$token_guard,
 			'reject_expired_token',
 			10,
 			4
+		);
+
+		// A dead token must not block the route that replaces it. WordPress
+		// 401s the WHOLE request on a failed application password, so
+		// POST /auth/login with a stale token in the header never reaches the
+		// handler - and a mobile client that attaches its stored token to every
+		// request can never sign in again. Late priority so this runs after
+		// core has had its say.
+		$this->loader->add_filter(
+			'rest_authentication_errors',
+			$token_guard,
+			'allow_anonymous_auth_routes',
+			100,
+			1
 		);
 	}
 

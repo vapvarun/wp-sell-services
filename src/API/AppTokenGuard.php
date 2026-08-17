@@ -77,4 +77,80 @@ class AppTokenGuard {
 			array( 'status' => 401 )
 		);
 	}
+
+	/**
+	 * Let a client reach the sign-in routes with a dead token in its header.
+	 *
+	 * Without this, expiry is a LOCKOUT rather than a prompt to sign in again.
+	 *
+	 * WordPress turns a failed application password into a 401 for the whole
+	 * request, whatever was being asked - so `POST /auth/login` with a stale
+	 * token in the Authorization header answers 401 and never reaches the
+	 * handler, even when the body carries the correct password. Mobile clients
+	 * attach the stored token to every request from one interceptor, so an app
+	 * that has just been told "expired, sign in again" sends the expired token
+	 * along with the sign-in attempt and gets 401 forever. The member cannot
+	 * recover without clearing the app's storage.
+	 *
+	 * That behaviour predates this plugin and is not new - a garbage token has
+	 * always done the same thing. What is new is that WPSS tokens now actually
+	 * go bad on their own, so a correct client WILL hit it, where before it
+	 * could not.
+	 *
+	 * These three routes take their credentials from the request body and
+	 * ignore whoever the caller appears to be, so running them as an anonymous
+	 * visitor is exactly right: a failed credential should mean "you are nobody"
+	 * on a public endpoint, not "your request is refused". Nothing is granted -
+	 * the expired token does NOT authenticate the request, it is simply no
+	 * longer fatal to it.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param \WP_Error|null|true $errors Current authentication result.
+	 * @return \WP_Error|null|true
+	 */
+	public function allow_anonymous_auth_routes( $errors ) {
+		if ( ! is_wp_error( $errors ) ) {
+			return $errors;
+		}
+
+		$route = isset( $GLOBALS['wp']->query_vars['rest_route'] )
+			? (string) $GLOBALS['wp']->query_vars['rest_route']
+			: '';
+
+		if ( '' === $route ) {
+			return $errors;
+		}
+
+		/**
+		 * Filter the routes reachable without a valid token.
+		 *
+		 * Keep this list to endpoints that authenticate from the request body
+		 * and grant nothing on their own. Adding an endpoint that reads the
+		 * current user would make it callable by anyone.
+		 *
+		 * @since 1.6.0
+		 *
+		 * @param array<int, string> $routes Route paths, relative to the namespace.
+		 */
+		$open = (array) apply_filters(
+			'wpss_token_recovery_routes',
+			array(
+				'/wpss/v1/auth/login',
+				'/wpss/v1/auth/register',
+				'/wpss/v1/auth/forgot-password',
+			)
+		);
+
+		foreach ( $open as $path ) {
+			if ( untrailingslashit( $route ) === untrailingslashit( (string) $path ) ) {
+				// Drop the authentication error only. The request continues as
+				// a logged-out visitor, which is what a failed credential
+				// means.
+				return null;
+			}
+		}
+
+		return $errors;
+	}
 }
