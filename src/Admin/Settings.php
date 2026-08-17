@@ -563,6 +563,25 @@ class Settings {
 			)
 		);
 
+		// Only worth showing when a second cart actually exists to be confused
+		// with — on a site without WooCommerce there is only one cart and the
+		// option would be noise.
+		if ( class_exists( 'WooCommerce' ) ) {
+			add_settings_field(
+				'use_marketplace_cart_link',
+				__( 'Site cart link', 'wp-sell-services' ),
+				array( $this, 'render_checkbox_field' ),
+				'wpss_general',
+				'wpss_checkout_badges_section',
+				array(
+					'option_name' => 'wpss_general',
+					'field'       => 'use_marketplace_cart_link',
+					'label'       => __( 'Point the theme\'s cart link at the marketplace cart. Turn this on for a marketplace-only site; leave it off if you also sell WooCommerce products, or their cart link will send buyers to the wrong place.', 'wp-sell-services' ),
+					'default'     => false,
+				)
+			);
+		}
+
 		add_settings_field(
 			'checkout_badges',
 			__( 'Badge text', 'wp-sell-services' ),
@@ -3296,6 +3315,13 @@ class Settings {
 		// Checkout reassurance badges. Owner-authored text for a public page,
 		// so it is sanitised as plain text - no markup, no shortcodes.
 		$sanitized['checkout_badges_enabled'] = ! empty( $input['checkout_badges_enabled'] );
+
+		// The field only renders when WooCommerce is active, so an absent key
+		// must not clear a stored preference on a site that has since
+		// deactivated Woo — same trap that once wiped wpss_pages['cart'].
+		if ( array_key_exists( 'use_marketplace_cart_link', $input ) || class_exists( 'WooCommerce' ) ) {
+			$sanitized['use_marketplace_cart_link'] = ! empty( $input['use_marketplace_cart_link'] );
+		}
 
 		$badges = array();
 

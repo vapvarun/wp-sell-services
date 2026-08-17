@@ -145,6 +145,17 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
 		add_action( 'template_redirect', [ $this, 'handle_template_redirect' ] );
 
+		// On a site that runs WooCommerce alongside the standalone rail there
+		// are genuinely two carts, and the theme's header shows Woo's. Whether
+		// that is wrong depends on the business: a marketplace-only site where
+		// Woo is installed for something else wants one cart link, while a site
+		// actually selling Woo products would be broken by us pointing its cart
+		// somewhere else. So it is the owner's switch, off by default — we do
+		// not silently redirect another plugin's checkout path.
+		if ( ! empty( get_option( 'wpss_general', array() )['use_marketplace_cart_link'] ) ) {
+			add_filter( 'woocommerce_get_cart_url', [ $this, 'filter_cart_url' ], 20 );
+		}
+
 		/**
 		 * Fires after standalone adapter is initialized.
 		 *
@@ -182,6 +193,25 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 			'index.php?wpss_payment_callback=1&wpss_gateway=$matches[1]',
 			'top'
 		);
+	}
+
+	/**
+	 * Point the site's cart link at the marketplace cart.
+	 *
+	 * Opt-in (Settings -> General -> "Use the marketplace cart for the site's
+	 * cart link"), so an owner who really does sell WooCommerce products keeps
+	 * Woo's cart untouched. Returns the original URL when no marketplace cart
+	 * page is mapped, rather than handing back an empty href.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param string $url Cart URL supplied by WooCommerce.
+	 * @return string
+	 */
+	public function filter_cart_url( string $url ): string {
+		$cart_url = wpss_get_page_url( 'cart' );
+
+		return $cart_url ? $cart_url : $url;
 	}
 
 	/**
