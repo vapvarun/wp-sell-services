@@ -73,35 +73,91 @@ Board: project `45156734`. Bugs = `9381846253`, **Ready for Testing =
   states pinned (see `unified-dashboard.css`), and `.min` + RTL rebuilt
   (`npm run rtl && npm run build:min`).
 
-## In progress — NOT finished
+## In progress — ROOT CAUSE PROVEN, fix not yet written
 
-**Card 10208094640 — proposal hire checkout.** Replicated, root cause partly
-mapped, **no fix written yet**.
+**Cards 10208094640 + 10208199238 — proposal orders with `service_id = 0`.**
 
-Confirmed at data level (order 3128 / `WPSS-9UEPWHXB`):
-- `service_id = 0`, `platform = 'request'`, `payment_method = NULL`,
-  `status = 'pending_payment'`
-- the real title is in `meta.proposal_snapshot.request_title`
+### The root cause (proven live, 2026-08-17)
 
-Three sub-problems from the card:
-1. Line title shows "Service Checkout" (the checkout **page** name) instead of
-   the request title.
-2. The form posts `service_id=297` — the checkout page ID.
-3. Offline Pay leaves the order `pending_payment` with no receipt.
+`ServiceOrder::get_service()` is this, at `src/Models/ServiceOrder.php:737`:
 
-Where to look: `src/Integrations/Standalone/StandaloneCheckoutProvider.php`
-- `render_checkout_shortcode()` → `render_pay_order_checkout()` (line ~360)
-- `build_proposal_service_placeholder()` — **the likely source of (1) and (2)**;
-  it fabricates a service when `service_id = 0` and I suspect it falls back to
-  the current page. Read this first.
-- `render_checkout_form()` (line ~486) is shared by cart checkout and pay_order
-  via `$is_pay_order`. There are **two `wpss_checkout` nonce sites** (lines ~886
-  and ~1655) — check whether that is two form implementations drifting, which is
-  this codebase's recurring defect.
-- For (3), compare against the cart Offline path, which QA says works.
+```php
+public function get_service(): ?Service {
+    $post = get_post( $this->service_id );   // service_id is 0 on proposal orders
+    return $post ? Service::from_post( $post ) : null;
+}
+```
 
-**Card 10208199238** ("Admin shows Service Deleted for proposal orders") is the
-**same `service_id = 0` root cause** — fix both together.
+**`get_post( 0 )` does not return null — it returns the global `$post`.** That
+is standard WordPress behaviour and the whole bug. On the checkout page the
+global post *is* the checkout page, so a proposal order silently resolves its
+"service" to **the page you happen to be looking at**.
+
+Verified on the live sandbox:
+
+```
+global $post; $post = get_post( 297 );
+get_post( 0 )  ->  #297 ("Service Checkout")
+```
+
+That single line explains all of it:
+- checkout line title reads **"Service Checkout"** — the page's title
+- the form posts **`service_id=297`** — the page's ID (confirmed in the live
+  DOM: `hidden_fields.service_id === "297"`)
+- wp-admin shows **"Service Deleted"** for the same orders (card 10208199238),
+  because there the global post is different or absent
+
+**Correcting an earlier note in this handoff:** I first suspected
+`build_proposal_service_placeholder()`. It is **not** at fault — called directly
+against order 3128 it returns the right title
+(`'Playwright QA — Need a landing page redesign for TestMarketplace'`, `id = 0`).
+It is simply never reached, because `get_service()` returns a truthy Service
+(the page) and the `if ( ! $service )` fallback never fires.
+
+### The fix
+
+Guard the ID before asking WordPress for it — one place, and every caller of
+`get_service()` is fixed at once:
+
+```php
+public function get_service(): ?Service {
+    if ( $this->service_id <= 0 ) {
+        return null;            // proposal/request orders have no service post
+    }
+    $post = get_post( $this->service_id );
+    return $post && 'wpss_service' === $post->post_type
+        ? Service::from_post( $post )
+        : null;
+}
+```
+
+The `post_type` check matters too: without it any post ID that happens to match
+resolves as a "service".
+
+Then `render_pay_order_checkout()`'s existing `if ( ! $service )` branch starts
+working and the placeholder (which is already correct) takes over.
+
+**Before changing it, grep every `get_service()` caller** — some may currently
+depend on the truthy-global-post accident. `wpss_get_order()`-based admin
+screens are the ones to check first.
+
+### Still to diagnose
+
+3. **Offline Pay leaves the order `pending_payment`** with `payment_method = NULL`
+   and no receipt. Not yet investigated. Compare against the cart Offline path,
+   which QA reports works. Note the form does carry `wpss_offline_nonce`, so the
+   gateway is being offered; the question is what the POST handler does with
+   `pay_order` present.
+
+### Reproduction
+
+```
+/service-checkout/?pay_order=3128     (as wpss_buyer_amelia)
+```
+Order 3128 / `WPSS-9UEPWHXB`, `$350`, `service_id = 0`, `platform = 'request'`,
+title in `meta.proposal_snapshot.request_title`.
+
+Journey `audit/journeys/01-buyer-hires-seller.md` step 7 covers this.
 
 ## Remaining Bugs (13 after the moves above)
 
