@@ -2129,6 +2129,122 @@
 		'.wpss-dashboard__sidebar'
 	].join(',');
 
+	/**
+	 * Measure what is actually pinned to the top of the viewport.
+	 *
+	 * --wpss-sticky-top was admin-bar-only: 32px, 64px with the bar, 78px with
+	 * the bar on mobile. It knew nothing about the THEME's header, so on BuddyX
+	 * (and any theme with a fixed header) a sticky sidebar pinned underneath it.
+	 * Measured on this sandbox with BuddyX's sticky header on: the header is
+	 * fixed at top 32px and 79px tall, so it occupies 32-111px, while the
+	 * service sidebar pinned at 64px -- 47px of it, including part of the price
+	 * and the Order button, sat behind the header (Basecamp 10207973462).
+	 *
+	 * A stylesheet cannot fix this: the offset depends on a third party's header,
+	 * which varies per theme, per breakpoint, and often shrinks on scroll. So it
+	 * is measured. Notes on the approach:
+	 *
+	 * - The admin bar is itself a fixed top bar, so measuring covers
+	 *   "admin bar + theme header" in one number rather than adding cases.
+	 * - The result is a FLOOR over the CSS value, never a replacement, so a site
+	 *   with no theme header keeps exactly the offset it has today. This fixes
+	 *   the broken case without moving anything on the working ones.
+	 * - Written to <body>, not :root -- `.admin-bar` declares the variable on
+	 *   body, and a custom property on a descendant beats one on the ancestor.
+	 * - WPSS's own sticky surfaces are excluded, or the sidebar would measure
+	 *   itself and walk down the page.
+	 * - Recomputed on resize and (throttled) on scroll, because themes routinely
+	 *   shrink their header once scrolled.
+	 */
+	var STICKY_TOP_VAR = '--wpss-sticky-top';
+
+	function measurePinnedTop() {
+		var viewportW = window.innerWidth;
+		var viewportH = window.innerHeight;
+		var bars = [];
+
+		document.querySelectorAll('body *').forEach(function(el) {
+			// Never measure our own sticky surfaces.
+			if (el.closest(STICKY_SURFACES)) {
+				return;
+			}
+
+			var cs = getComputedStyle(el);
+
+			if (cs.position !== 'fixed' && cs.position !== 'sticky') {
+				return;
+			}
+
+			if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) === 0) {
+				return;
+			}
+
+			var r = el.getBoundingClientRect();
+
+			// A top bar spans most of the width, is tall enough to matter, and is
+			// not tall enough to be an overlay, drawer or full-screen menu.
+			if (r.height < 8 || r.height > viewportH * 0.4) {
+				return;
+			}
+			if (r.width < viewportW * 0.5) {
+				return;
+			}
+			// In the upper region of the viewport and still visible.
+			if (r.bottom <= 0 || r.top > viewportH * 0.3) {
+				return;
+			}
+
+			bars.push({ top: r.top, bottom: r.bottom });
+		});
+
+		// Bars STACK. On an admin-bar site with a fixed theme header the header
+		// sits at top: 32px, not 0 — so a naive "is it at the very top" test
+		// misses it, which is exactly how the theme header went unmeasured on the
+		// first attempt at this fix. Walk them in order instead and grow the
+		// pinned region only while each bar starts where the last one ended;
+		// anything floating lower is not part of the fixed chrome.
+		bars.sort(function(a, b) {
+			return a.top - b.top;
+		});
+
+		var bottom = 0;
+
+		bars.forEach(function(bar) {
+			if (bar.top <= bottom + 2) {
+				bottom = Math.max(bottom, bar.bottom);
+			}
+		});
+
+		return Math.round(bottom);
+	}
+
+	WPSS.syncStickyTop = function() {
+		var body = document.body;
+		if (!body) {
+			return;
+		}
+
+		// Clear our own value first so the CSS floor can be read back honestly.
+		body.style.removeProperty(STICKY_TOP_VAR);
+
+		var cssFloor = parseFloat(getComputedStyle(body).getPropertyValue(STICKY_TOP_VAR)) || 0;
+		var extra = (window.wpssData && parseFloat(window.wpssData.stickyTopOffset)) || 0;
+		var measured = measurePinnedTop();
+
+		if (measured <= 0) {
+			return; // Nothing pinned -- leave the stylesheet in charge.
+		}
+
+		var total = measured + extra + STICKY_TOP_GAP;
+
+		if (total > cssFloor) {
+			body.style.setProperty(STICKY_TOP_VAR, total + 'px');
+		}
+	};
+
+	// Breathing room between the theme header and whatever pins below it.
+	var STICKY_TOP_GAP = 16;
+
 	WPSS.enableSticky = function() {
 		document.querySelectorAll(STICKY_SURFACES).forEach(function(el) {
 			if (getComputedStyle(el).position !== 'sticky') {
@@ -2158,6 +2274,30 @@
 	$(document).ready(function() {
 		WPSS.init();
 		WPSS.enableSticky();
+		WPSS.syncStickyTop();
+
+		// Themes shrink their header on scroll and reflow it on resize, so the
+		// offset is not a one-time measurement. rAF-throttled: this reads layout,
+		// and doing that unthrottled on scroll is how you build a janky page.
+		var stickyTopQueued = false;
+
+		function queueStickyTopSync() {
+			if (stickyTopQueued) {
+				return;
+			}
+			stickyTopQueued = true;
+			window.requestAnimationFrame(function() {
+				stickyTopQueued = false;
+				WPSS.syncStickyTop();
+			});
+		}
+
+		window.addEventListener('resize', queueStickyTopSync);
+		window.addEventListener('scroll', queueStickyTopSync, { passive: true });
+
+		// One more pass after web fonts and late-loading theme scripts settle —
+		// a header measured before its font loads can be several pixels short.
+		window.addEventListener('load', queueStickyTopSync);
 	});
 
 })(jQuery);

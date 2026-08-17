@@ -240,6 +240,24 @@ class Frontend {
 				'cartCount'        => $cart_count,
 				'checkoutUrl'      => wpss_get_checkout_base_url(),
 				'cartNonce'        => wp_create_nonce( 'wpss_cart_nonce' ),
+				/**
+				 * Extra pixels to add above every sticky WPSS surface.
+				 *
+				 * The frontend script measures whatever is actually pinned to the
+				 * top of the viewport (admin bar + theme header) and writes the
+				 * total into `--wpss-sticky-top`. That covers themes whose header is
+				 * a real fixed/sticky element, which is nearly all of them.
+				 *
+				 * This filter is the escape hatch for the rest: a header positioned
+				 * by transform, one rendered inside a shadow root, or a floating
+				 * toolbar from another plugin that the measurement cannot see. The
+				 * value is ADDED to the measurement, not a replacement for it.
+				 *
+				 * @since 1.6.0
+				 *
+				 * @param int $offset Extra offset in pixels. Default 0.
+				 */
+				'stickyTopOffset'  => (int) apply_filters( 'wpss_sticky_top_offset', 0 ),
 				'i18n'             => array(
 					'loading'                     => __( 'Loading...', 'wp-sell-services' ),
 
