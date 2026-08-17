@@ -416,9 +416,24 @@ class PaymentController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	private function create_offline_order( object $gateway, float $amount, string $currency, int $service_id, int $package_id, int $pay_order ) {
-		// For existing orders (pay_order), just confirm and return.
+		// For existing orders (pay_order), record the rail and return. Ownership
+		// and pending_payment status are already verified by create_intent().
+		//
+		// Out-of-band rails settle later, so the order has to remember which one
+		// it is waiting on: the admin confirmation box and the buyer's proof
+		// upload both key off payment_method being the gateway id, and this
+		// branch used to leave it NULL - the same dead end the AJAX checkout had
+		// (Basecamp 10208094640). One writer serves both entry points.
 		if ( $pay_order ) {
 			$order = wpss_get_order( $pay_order );
+
+			if ( ! wpss_record_pending_payment_method( $pay_order, $gateway->get_id() ) ) {
+				return new WP_Error(
+					'wpss_payment_method_not_recorded',
+					__( 'Could not record the payment method on this order.', 'wp-sell-services' ),
+					array( 'status' => 500 )
+				);
+			}
 
 			return new WP_REST_Response(
 				array(

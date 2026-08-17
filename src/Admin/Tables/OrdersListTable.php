@@ -172,92 +172,35 @@ class OrdersListTable extends \WP_List_Table {
 	/**
 	 * Service column.
 	 *
-	 * Shows the catalog service for standalone orders. For sub-orders (tip,
-	 * extension, milestone) and request-converted orders the column never
-	 * carries a `service_id` (column is `0`), so render the relationship to
-	 * the parent / source instead of an unhelpful "Deleted" label.
+	 * Delegates to wpss_get_order_subject(), the single resolver for "what is
+	 * this order for" - sub-orders describe their parent, request orders name the
+	 * buyer request, and only a genuinely removed service post reads "Deleted".
+	 * This column used to own that logic alone while three other surfaces got it
+	 * wrong (Basecamp 10208199238).
 	 *
 	 * @param object $item Item.
 	 * @return string
 	 */
 	public function column_service( $item ): string {
-		$platform   = (string) ( $item->platform ?? 'standalone' );
-		$parent_id  = (int) ( $item->platform_order_id ?? 0 );
-		$service_id = (int) ( $item->service_id ?? 0 );
+		$subject = wpss_get_order_subject( $item, 'admin' );
 
-		// Sub-order platforms — render relationship to the parent rather
-		// than try to resolve a non-existent service post.
-		$sub_order_labels = array(
-			/* translators: %s: parent order number. */
-			'tip'       => __( 'Tip on order #%s', 'wp-sell-services' ),
-			/* translators: %s: parent order number. */
-			'extension' => __( 'Extension on order #%s', 'wp-sell-services' ),
-			/* translators: %s: parent order number. */
-			'milestone' => __( 'Milestone of order #%s', 'wp-sell-services' ),
-		);
-		if ( isset( $sub_order_labels[ $platform ] ) ) {
-			if ( $parent_id > 0 ) {
-				return sprintf(
-					'<em>%s</em>',
-					esc_html( sprintf( $sub_order_labels[ $platform ], $parent_id ) )
-				);
-			}
-
-			// Sub-order missing its parent reference — surface that explicitly
-			// rather than hiding it behind a generic "Deleted" label.
-			return '<em>' . esc_html(
-				sprintf(
-					/* translators: %s: sub-order platform (tip/extension/milestone) */
-					__( '%s sub-order (parent missing)', 'wp-sell-services' ),
-					ucfirst( $platform )
-				)
-			) . '</em>';
-		}
-
-		// Buyer-request orders carry the request post id in `platform_order_id`.
-		if ( 'request' === $platform ) {
-			$request_post = $parent_id > 0 ? get_post( $parent_id ) : null;
-			if ( $request_post ) {
-				return sprintf(
-					'<a href="%s" target="_blank"><em>%s</em></a>',
-					esc_url( (string) get_edit_post_link( $request_post->ID ) ),
-					esc_html(
-						sprintf(
-							/* translators: %s: buyer request title */
-							__( 'Request: %s', 'wp-sell-services' ),
-							$request_post->post_title
-						)
-					)
-				);
-			}
-			return '<em>' . esc_html__( 'Buyer request', 'wp-sell-services' ) . '</em>';
-		}
-
-		// Standalone catalog order with no service_id at all (data integrity issue).
-		if ( $service_id <= 0 ) {
-			return '<em>' . esc_html__( 'No service linked', 'wp-sell-services' ) . '</em>';
-		}
-
-		$service = get_post( $service_id );
-
-		if ( ! $service ) {
+		if ( $subject['is_service'] ) {
 			return sprintf(
-				'<em>%s</em>',
-				esc_html(
-					sprintf(
-						/* translators: %d: removed service post ID */
-						__( 'Deleted service #%d', 'wp-sell-services' ),
-						$service_id
-					)
-				)
+				'<a href="%s" target="_blank">%s</a>',
+				esc_url( $subject['url'] ),
+				esc_html( $subject['label'] )
 			);
 		}
 
-		return sprintf(
-			'<a href="%s" target="_blank">%s</a>',
-			esc_url( (string) get_edit_post_link( $service->ID ) ),
-			esc_html( $service->post_title )
-		);
+		if ( '' !== $subject['url'] ) {
+			return sprintf(
+				'<a href="%s" target="_blank"><em>%s</em></a>',
+				esc_url( $subject['url'] ),
+				esc_html( $subject['label'] )
+			);
+		}
+
+		return '<em>' . esc_html( $subject['label'] ) . '</em>';
 	}
 
 	/**

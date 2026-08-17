@@ -217,7 +217,7 @@ plus a README covering how to run one and the verified role table:
 
 | File | Covers | Status |
 |---|---|---|
-| `01-buyer-hires-seller.md` | request → proposal → hire → pay | **step 7 fails** (10208094640) |
+| `01-buyer-hires-seller.md` | request → proposal → hire → pay | passes |
 | `02-dispute.md` | open → both parties reply → admin reads → back to order | passes |
 | `03-install-and-upgrade.md` | activation, pages, settings, preflight, upgrade | passes |
 | `04-vendor-discovery.md` | directory → profile → service | passes |

@@ -2,7 +2,7 @@
 
 **Roles:** buyer (`subscriber`), two sellers (`wpss_vendor`), admin
 **Rail:** standalone payments
-**Status:** step 7 currently FAILS — Basecamp 10208094640
+**Status:** passes (steps 7 + 8 fixed 2026-08-17, Basecamp 10208094640 / 10208199238)
 
 Guards cards 10208094430, 10208094503, 10208094640, 10208199238.
 
@@ -69,26 +69,36 @@ Buyer opens the new order.
 - **Not** "Service Checkout" — that is the checkout *page* name leaking in
   because proposal orders carry `service_id = 0`.
 
-### 7. Pay the order — **CURRENTLY FAILING**
+### 7. Pay the order
 Click Pay → `?pay_order={id}` → choose **Offline** → Pay.
 
 **Expect**
-- Checkout line shows the request title.
-- The form does **not** post `service_id={checkout page ID}`.
-- After paying: `payment_method` recorded, status leaves `pending_payment`, and
-  the order enters the offline awaiting-confirmation path — same as the cart
-  Offline flow.
+- Checkout line shows the request title, not the checkout page's name.
+- The form posts `service_id=0` — never the checkout page's ID.
+- After paying: `payment_method = 'offline'` recorded. Status stays
+  `pending_payment` (correct — offline money arrives out of band), and the
+  buyer's order page shows the Payment Instructions.
 
-**Actual:** title reads "Service Checkout", form posts the checkout page ID, and
-the order stays `pending_payment` with `payment_method = NULL`.
+Then confirm it is not a dead end: wp-admin → the order → the
+**Offline Payment - Awaiting Confirmation** box must be present with
+**Mark as Paid**. That box is gated on `payment_method === 'offline'`, so if the
+checkout failed to record the rail the order can never be confirmed by anyone.
+Mark as Paid → status `pending_requirements`, `payment_status = paid`.
 
-Start at `StandaloneCheckoutProvider::build_proposal_service_placeholder()`.
+Seller earnings are NOT credited here. `CommissionService::record()` runs on
+transition to `completed` (escrow), so an empty `wpss_wallet_transactions` at
+this point is correct.
 
 ### 8. Admin sees the order
 wp-admin → Orders → the new order.
 
-**Expect** the request title. **Not** "Service Deleted", which is what
-`service_id = 0` currently produces (card 10208199238 — same root cause as 7).
+**Expect** the Service row reads `Request: {title}` and links to the buyer
+request post. **Not** "Deleted" — that is what `service_id = 0` produced before
+`get_service()` guarded the ID (card 10208199238, same root cause as 7).
+
+Same check on the admin **Recent Orders** table and the admin Orders list: every
+request order and every sub-order names its source, and only a genuinely removed
+service post says "Deleted service #N".
 
 ## Regression checks
 

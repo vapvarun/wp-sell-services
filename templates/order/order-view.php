@@ -72,9 +72,15 @@ if ( ! $order ) {
 $user_id     = get_current_user_id();
 $is_vendor   = (int) $order->vendor_id === $user_id;
 $is_customer = (int) $order->customer_id === $user_id;
-$service     = get_post( $order->service_id );
-$vendor      = get_userdata( $order->vendor_id );
-$customer    = get_userdata( $order->customer_id );
+// What this order is for. Resolved through the shared helper: request orders
+// and sub-orders carry service_id = 0, and get_post( 0 ) returns the GLOBAL
+// post - on this template that is the dashboard page, so the Service Details
+// block used to name the page the buyer was standing on and read its post meta
+// as if it were the service's requirements (Basecamp 10208094640).
+$wpss_subject = wpss_get_order_subject( $order, 'public' );
+$service      = $wpss_subject['is_service'] ? get_post( $wpss_subject['service_id'] ) : null;
+$vendor       = get_userdata( $order->vendor_id );
+$customer     = get_userdata( $order->customer_id );
 
 // Handle deleted users gracefully.
 $vendor_name   = $vendor ? $vendor->display_name : __( 'Deleted User', 'wp-sell-services' );
@@ -581,12 +587,12 @@ do_action( 'wpss_before_order_view', $order );
 				<?php endif; ?>
 				<div class="wpss-service-info__content">
 					<h3 class="wpss-service-info__title">
-						<?php if ( $service ) : ?>
-							<a href="<?php echo esc_url( get_permalink( $service->ID ) ); ?>">
-								<?php echo esc_html( $service->post_title ); ?>
+						<?php if ( '' !== $wpss_subject['url'] ) : ?>
+							<a href="<?php echo esc_url( $wpss_subject['url'] ); ?>">
+								<?php echo esc_html( $wpss_subject['label'] ); ?>
 							</a>
 						<?php else : ?>
-							<?php esc_html_e( 'Deleted Service', 'wp-sell-services' ); ?>
+							<?php echo esc_html( $wpss_subject['label'] ); ?>
 						<?php endif; ?>
 					</h3>
 					<p class="wpss-service-info__price">

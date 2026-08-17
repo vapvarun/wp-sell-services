@@ -317,3 +317,63 @@ function wpss_is_woocommerce_enabled(): bool {
 
 	return 'woocommerce' === $adapter->get_id();
 }
+
+/**
+ * Record the payment method a buyer chose on an order that is not yet settled.
+ *
+ * Most gateways write `payment_method` as a side effect of `mark_as_paid()`,
+ * because they settle in the same request. Out-of-band rails do not: with
+ * offline payment the money arrives later and only an admin confirmation
+ * credits the seller, so the order has to remember which rail it is waiting on
+ * while it sits in `pending_payment`.
+ *
+ * Nothing here writes money. `payment_status`, `paid_at`, the ledger and the
+ * order status are all left alone - settlement stays the single responsibility
+ * of `mark_as_paid()`.
+ *
+ * The UPDATE is guarded rather than unconditional so it can never overwrite a
+ * settlement that landed in between - a buyer double-tapping Pay while an admin
+ * approves, or a webhook arriving first, simply matches no row. Re-running
+ * against an order already on the same method reports success.
+ *
+ * @since 1.6.0
+ *
+ * @param int    $order_id Order ID.
+ * @param string $method   Gateway ID (e.g. 'offline', 'test').
+ * @return bool True when the order carries $method afterwards.
+ */
+function wpss_record_pending_payment_method( int $order_id, string $method ): bool {
+	global $wpdb;
+
+	if ( $order_id <= 0 || '' === $method ) {
+		return false;
+	}
+
+	$table = $wpdb->prefix . 'wpss_orders';
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$updated = $wpdb->query(
+		$wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name built from $wpdb->prefix, not input.
+			"UPDATE {$table}
+			 SET payment_method = %s
+			 WHERE id = %d
+			   AND status = %s
+			   AND ( payment_method IS NULL OR payment_method = '' OR payment_method = %s )",
+			$method,
+			$order_id,
+			\WPSellServices\Models\ServiceOrder::STATUS_PENDING_PAYMENT,
+			$method
+		)
+	);
+
+	if ( $updated ) {
+		return true;
+	}
+
+	// No row changed: either it already read $method (a re-submit, which is
+	// fine) or the guard refused because the order has moved on.
+	$order = wpss_get_order( $order_id );
+
+	return $order && $method === (string) ( $order->payment_method ?? '' );
+}

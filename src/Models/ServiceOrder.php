@@ -732,11 +732,31 @@ class ServiceOrder {
 	/**
 	 * Get service.
 	 *
-	 * @return Service|null
+	 * Guards the ID before asking WordPress for the post, because
+	 * `get_post( 0 )` does NOT return null — it returns the global `$post`.
+	 * Orders that legitimately carry `service_id = 0` (proposal/buyer-request
+	 * orders and every sub-order: tips, extensions, milestones) therefore
+	 * resolved their "service" to whatever page happened to be rendering. On
+	 * the checkout page that meant a proposal order reported the checkout page
+	 * as its service: the line title read "Service Checkout", the form posted
+	 * the page's ID as `service_id`, and every `if ( ! $service )` fallback in
+	 * the plugin was unreachable dead code (Basecamp 10208094640 / 10208199238).
+	 *
+	 * The post-type check matters for the same reason: without it any post ID
+	 * that happens to collide resolves as a "service".
+	 *
+	 * @since 1.6.0 Guards `service_id <= 0` and verifies the post type.
+	 *
+	 * @return Service|null Null when the order has no service post.
 	 */
 	public function get_service(): ?Service {
+		if ( $this->service_id <= 0 ) {
+			return null;
+		}
+
 		$post = get_post( $this->service_id );
-		return $post ? Service::from_post( $post ) : null;
+
+		return ( $post && 'wpss_service' === $post->post_type ) ? Service::from_post( $post ) : null;
 	}
 
 	/**

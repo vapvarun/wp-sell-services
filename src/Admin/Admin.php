@@ -1400,14 +1400,14 @@ class Admin {
 							</thead>
 							<tbody>
 								<?php foreach ( $recent_orders as $order ) : ?>
-									<?php $service = get_post( $order->service_id ); ?>
+									<?php $wpss_subject = wpss_get_order_subject( $order, 'admin' ); ?>
 									<tr>
 										<td>
 											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $order->id ) ); ?>">
 												#<?php echo esc_html( $order->order_number ); ?>
 											</a>
 										</td>
-										<td><?php echo esc_html( $service ? $service->post_title : __( 'Deleted', 'wp-sell-services' ) ); ?></td>
+										<td><?php echo esc_html( $wpss_subject['label'] ); ?></td>
 										<td><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></td>
 										<td>
 											<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
@@ -1636,8 +1636,11 @@ class Admin {
 			return;
 		}
 
-		// Get service.
-		$service = get_post( $order->service_id );
+		// What the order is FOR. Resolved through the shared helper rather than
+		// get_post( $order->service_id ): request orders and sub-orders carry
+		// service_id = 0 by design, and this screen used to render them all as
+		// an italic "Deleted" (Basecamp 10208199238).
+		$subject = wpss_get_order_subject( $order, 'admin' );
 		$vendor  = get_userdata( $order->vendor_id );
 		$buyer   = get_userdata( $order->customer_id );
 
@@ -1707,12 +1710,12 @@ class Admin {
 								<tr>
 									<th><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
 									<td>
-										<?php if ( $service ) : ?>
-											<a href="<?php echo esc_url( get_edit_post_link( $service->ID ) ); ?>">
-												<?php echo esc_html( $service->post_title ); ?>
+										<?php if ( '' !== $subject['url'] ) : ?>
+											<a href="<?php echo esc_url( $subject['url'] ); ?>">
+												<?php echo esc_html( $subject['label'] ); ?>
 											</a>
 										<?php else : ?>
-											<em><?php esc_html_e( 'Deleted', 'wp-sell-services' ); ?></em>
+											<em><?php echo esc_html( $subject['label'] ); ?></em>
 										<?php endif; ?>
 									</td>
 								</tr>

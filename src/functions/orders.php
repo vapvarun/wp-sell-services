@@ -633,6 +633,148 @@ function wpss_get_order_payment_reference( object $order ): ?array {
 }
 
 /**
+ * Resolve what an order is FOR, in one place.
+ *
+ * Not every order points at a service post. Buyer-request orders are sold off a
+ * proposal, and tips / extensions / milestones are sub-orders of a parent — all
+ * of them carry `service_id = 0` by design. Five surfaces rendered that line
+ * with five different fallbacks, and the three that only knew how to say
+ * "Deleted" told the site owner a catalog service had been removed when none
+ * ever existed (Basecamp 10208199238).
+ *
+ * Resolution order, most specific first:
+ *
+ * 1. Sub-order (tip / extension / milestone) — describe the parent relationship.
+ * 2. Buyer-request order — the request post, else the frozen request title from
+ *    `meta.proposal_snapshot.request_title`, else a generic label.
+ * 3. `service_id <= 0` on a catalog order — a real data-integrity problem, said
+ *    plainly rather than dressed up as a deletion.
+ * 4. Service post gone — "Deleted service #N", with the ID so it can be traced.
+ * 5. The service post.
+ *
+ * @since 1.6.0
+ *
+ * @param object $order   Order model or raw `wpss_orders` row.
+ * @param string $context 'admin' for edit links, 'public' for permalinks.
+ * @return array{label: string, url: string, service_id: int, is_service: bool} Resolved subject.
+ */
+function wpss_get_order_subject( object $order, string $context = 'public' ): array {
+	$platform   = (string) ( $order->platform ?? 'standalone' );
+	$parent_id  = (int) ( $order->platform_order_id ?? 0 );
+	$service_id = (int) ( $order->service_id ?? 0 );
+	$is_admin   = 'admin' === $context;
+
+	$subject = array(
+		'label'      => '',
+		'url'        => '',
+		'service_id' => 0,
+		'is_service' => false,
+	);
+
+	// 1. Sub-orders describe their parent, never a service post they never had.
+	$sub_order_labels = array(
+		/* translators: %s: parent order number. */
+		'tip'       => __( 'Tip on order #%s', 'wp-sell-services' ),
+		/* translators: %s: parent order number. */
+		'extension' => __( 'Extension on order #%s', 'wp-sell-services' ),
+		/* translators: %s: parent order number. */
+		'milestone' => __( 'Milestone of order #%s', 'wp-sell-services' ),
+	);
+
+	if ( isset( $sub_order_labels[ $platform ] ) ) {
+		if ( $parent_id > 0 ) {
+			$subject['label'] = sprintf( $sub_order_labels[ $platform ], $parent_id );
+			$subject['url']   = $is_admin
+				? admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $parent_id )
+				: wpss_get_order_url( $parent_id );
+
+			return $subject;
+		}
+
+		// Parent reference missing — surface that instead of hiding it behind
+		// a generic "Deleted" label.
+		$subject['label'] = sprintf(
+			/* translators: %s: sub-order platform (Tip/Extension/Milestone). */
+			__( '%s sub-order (parent missing)', 'wp-sell-services' ),
+			ucfirst( $platform )
+		);
+
+		return $subject;
+	}
+
+	// 2. Buyer-request orders carry the request post ID in platform_order_id.
+	if ( 'request' === $platform ) {
+		$request_post = $parent_id > 0 ? get_post( $parent_id ) : null;
+
+		if ( $request_post && 'wpss_request' === $request_post->post_type ) {
+			$subject['label'] = sprintf(
+				/* translators: %s: buyer request title. */
+				__( 'Request: %s', 'wp-sell-services' ),
+				$request_post->post_title
+			);
+			$subject['url'] = (string) ( $is_admin
+				? get_edit_post_link( $request_post->ID, 'raw' )
+				: get_permalink( $request_post->ID ) );
+
+			return $subject;
+		}
+
+		// The request post can be gone (or never resolvable on a rail order),
+		// but the title the buyer actually hired against was frozen onto the
+		// order at conversion. Prefer it over a generic label.
+		$meta = $order->meta ?? array();
+
+		if ( is_string( $meta ) && '' !== $meta ) {
+			$meta = json_decode( $meta, true );
+		}
+
+		$frozen_title = is_array( $meta ) && ! empty( $meta['proposal_snapshot']['request_title'] )
+			? (string) $meta['proposal_snapshot']['request_title']
+			: '';
+
+		$subject['label'] = '' !== $frozen_title
+			? sprintf(
+				/* translators: %s: buyer request title. */
+				__( 'Request: %s', 'wp-sell-services' ),
+				$frozen_title
+			)
+			: __( 'Buyer request', 'wp-sell-services' );
+
+		return $subject;
+	}
+
+	// 3. Catalog order with no service at all — a data-integrity problem.
+	if ( $service_id <= 0 ) {
+		$subject['label'] = __( 'No service linked', 'wp-sell-services' );
+
+		return $subject;
+	}
+
+	$service_post = get_post( $service_id );
+
+	// 4. The service post really is gone.
+	if ( ! $service_post || 'wpss_service' !== $service_post->post_type ) {
+		$subject['label'] = sprintf(
+			/* translators: %d: removed service post ID. */
+			__( 'Deleted service #%d', 'wp-sell-services' ),
+			$service_id
+		);
+
+		return $subject;
+	}
+
+	// 5. A real service.
+	$subject['label']      = $service_post->post_title;
+	$subject['url']        = (string) ( $is_admin
+		? get_edit_post_link( $service_post->ID, 'raw' )
+		: get_permalink( $service_post->ID ) );
+	$subject['service_id'] = $service_id;
+	$subject['is_service'] = true;
+
+	return $subject;
+}
+
+/**
  * Get total order count for a user (as customer).
  *
  * @since 1.2.0

@@ -362,13 +362,44 @@ class OfflineGateway implements PaymentGatewayInterface {
 				wp_send_json_error( array( 'message' => __( 'This order has already been paid.', 'wp-sell-services' ) ) );
 				return;
 			}
-			// For offline payments, order stays in pending_payment until admin marks it paid.
-			// Just confirm the order and redirect to instructions.
+
+			// Record the method the buyer chose.
+			//
+			// Offline is the one gateway that does NOT settle here - the order
+			// stays pending_payment until an admin confirms the money arrived.
+			// Every other gateway writes payment_method as a side effect of
+			// mark_as_paid(), so this branch was the only path that left it
+			// NULL, and three things downstream key off it being 'offline':
+			// the admin "Awaiting Confirmation" box with Mark as Paid
+			// (render_admin_order_actions()), the buyer's proof-of-payment
+			// upload (PaymentReceiptService::can_submit()), and the payment
+			// instructions. With it NULL the order could never be confirmed by
+			// anyone - a dead end, not just a cosmetic gap (Basecamp
+			// 10208094640).
+			if ( ! wpss_record_pending_payment_method( (int) $order->id, self::GATEWAY_ID ) ) {
+				wp_send_json_error( array( 'message' => __( 'Could not record your payment method. Please try again.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			/**
+			 * Fires when an existing order is put on the offline rail.
+			 *
+			 * Same hook the cart path fires, so listeners do not need to know
+			 * which entry point the buyer came through.
+			 *
+			 * @since 1.6.0
+			 *
+			 * @param int    $order_id Order ID.
+			 * @param object $order    Order object.
+			 */
+			do_action( 'wpss_offline_order_created', (int) $order->id, $order );
+
 			wp_send_json_success(
 				array(
 					'order_id'     => $order->id,
 					'order_number' => $order->order_number,
 					'redirect'     => wpss_get_order_url( $order->id ),
+					'instructions' => $this->render_buyer_instructions( (int) $order->id ),
 					'message'      => __( 'Please complete your payment using the instructions below. Your order will be activated once payment is confirmed.', 'wp-sell-services' ),
 				)
 			);
