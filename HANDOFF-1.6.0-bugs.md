@@ -1,14 +1,40 @@
-# Handoff — WPSS 1.6.0 bug sweep (2026-08-17)
+# Handoff — WPSS 1.6.0 release (2026-08-17)
 
 Everything below is committed and pushed to branch **`1.6.0`** in both repos.
 Nothing is left uncommitted.
 
-## Process being followed (agreed with the owner)
+## The plan (owner's call, 2026-08-17)
 
-Per card: **replicate first (data + code) → plan → fix → verify in the browser →
+**No hotfix. 1.6.0 is the release.** The route to shipping it:
+
+1. **Clear every card in Bugs** — not a triaged subset. Bugs column empty is the
+   gate.
+2. **Keep `audit/manifest.json` in sync** with each change, in the same commit.
+3. **Get the CI checks actually running** the gates (today most run only by
+   hand — see "CI gap" below).
+4. **Journey checks** over the touched surfaces before handing to QA.
+5. **Then QA clears the RFT column.** QA verifies; they do not carry the fix
+   work. Every card lands in RFT with replication + proof so they can.
+
+Do NOT widen scope beyond this. The three fatals fixed in `631e711` stay live
+for customers until 1.6.0 ships, so shipping is the objective.
+
+## Per-card process (non-negotiable)
+
+**Replicate first (data + code) → plan → fix → verify in the browser →
 update `audit/manifest.json` → move to Ready for Testing with proof.**
-QA cards are entry points, not specifications — several turned out to be
-describing a symptom of a larger defect.
+
+QA cards are entry points, not specifications. Today, most turned out to be a
+symptom of something larger — a store with no writer, or one flow implemented
+twice and drifting. Fixing only the reported symptom would have left the real
+defect shipping.
+
+Two things earned their keep repeatedly and should not be skipped:
+- **Browser-verify per item**, not in a batch at the end. Several defects only
+  showed up in computed styles (see the anchor-button note below).
+- **Check the sandbox's real data before trusting a code read.** Twice the data
+  contradicted what the code appeared to do (`status_note` rows sharing the
+  evidence column; bare filename strings in legacy evidence).
 
 Board: project `45156734`. Bugs = `9381846253`, **Ready for Testing =
 `9381846126`** (not `9381846060`, that is In Testing).
@@ -98,6 +124,88 @@ Natural groups:
   10163575694 (guest purchase — owner decided: always create an account with
   First/Last/Email), 10154920673 (push notifications)
 
+## CI gap — verified 2026-08-17, needs fixing before release
+
+`.github/workflows/ci.yml` runs **only** four jobs:
+`php-lint`, `phpcs` (WPCS), `phpstan`, `phpunit`.
+
+**None of the gates I have been running by hand are in CI:**
+
+| Gate | Command | In CI? |
+|---|---|---|
+| WPCS | `composer phpcs` | yes |
+| PHPStan | `composer phpstan` | yes |
+| PHPUnit | `composer test` | yes |
+| i18n / version drift | `python3 bin/i18n-verify.py` | **no** |
+| Docs audit | `python3 bin/docs-audit.py` | **no** |
+| App parity | `python3 bin/app-parity.py` | **no** |
+| Manifest freshness | (no check exists) | **no** |
+
+So the i18n gate — which is the thing that catches version drift between the
+plugin header, POT `Project-Id-Version`, `package.json` and the readme Stable
+tag, i.e. exactly what breaks a release — only runs if someone remembers.
+Add these three python gates as CI steps. They are fast and already exit
+non-zero on failure, so they drop straight in.
+
+**Manifest freshness has no check at all.** Note `CLAUDE.md` says
+`manifest_refresh: agent-enumeration-only` — the deterministic generator
+undercounts REST (142 → 7) because routes register through a controller array,
+and **will silently clobber the manifest**. Do not wire the generator into CI.
+A cheap honest check is: fail if `src/API/*Controller.php` changed in a commit
+that did not touch `audit/manifest.json`.
+
+## Journey checks — the infrastructure does not exist here
+
+`CLAUDE.md` points at a QA catalog with per-plugin data files. **None of it is
+in this repo** (verified):
+
+- no `audit/journeys/`
+- no `docs/qa/qa-config.json`
+- no `docs/standards/qa-catalog.md`
+- no `audit/ROLE_MATRIX.md`
+- no `audit/CODE_FLOWS.md`
+
+`CLAUDE.md`'s READ FIRST block references `audit/ROLE_MATRIX.md` and
+`audit/CODE_FLOWS.md` as if they exist. **They do not.** Either create them or
+correct that block — right now it sends the next person to missing files.
+
+Until they exist, "journey check" means driving the real flow in the browser as
+the real role. The journeys that actually caught defects today, worth writing
+down first:
+
+1. **Buyer hires a seller:** post request → seller proposes → buyer sees the
+   in-app notification → hire → seller notified → losing bidder notified →
+   pay the order. *(The pay step is where card 10208094640 still fails.)*
+2. **Dispute:** buyer opens a dispute from the order → both parties see the
+   thread and can reply → admin sees every message → order links back to the
+   dispute.
+3. **Fresh install / upgrade:** activate on a site running WooCommerce → check
+   all 6 pages created with the right slugs → Settings > Pages populated →
+   save without losing keys → `wp wpss preflight` all PASS.
+4. **Vendor discovery:** directory → vendor card → profile → their service.
+
+Each of those is a browser walk, and each maps to cards already fixed, so they
+double as regression tests for this release.
+
+## Release checklist (after Bugs is empty)
+
+1. All gates green: `composer phpcs`, `composer phpstan`, `composer test`,
+   `python3 bin/i18n-verify.py`, `python3 bin/docs-audit.py`.
+2. `wp wpss preflight` — clean (ignore the pre-existing debug.log entry count,
+   which is dominated by third-party plugin deprecations on this sandbox).
+3. Deactivate → reactivate both plugins; confirm zero fatals. **This caught a
+   real activation fatal today** — do not skip it.
+4. Rebuild assets: `npm run rtl && npm run build:min`. `Assets.php` swaps to
+   `.min`, so unbuilt CSS/JS edits are inert.
+5. `readme.txt` changelog for 1.6.0 — **needs today's work folded in**; the
+   existing entry predates 8 cards, a schema change (`DB_VERSION` 1.6.1) and a
+   new owner setting. WooCommerce-style action-prefix format, no em-dashes,
+   no emoji.
+6. Update `CLAUDE.md` "Recent Changes".
+7. Verify version consistency (all four already read 1.6.0):
+   plugin header / readme Stable tag / `package.json` / POT `Project-Id-Version`.
+8. Tag. Latest tag today is still `v1.4.0`.
+
 ## Open questions for the owner
 
 1. **Losing bidders now get notified.** `reject_other_proposals()` fired nothing,
@@ -111,8 +219,7 @@ Natural groups:
    Consequence to hold onto: the latest tag is still `v1.4.0`, so the three
    shipped fatals fixed in `631e711` — including the customer-reported one —
    stay live for customers **until 1.6.0 ships**. That makes shipping 1.6.0 the
-   priority, not an open-ended bug sweep. Bank the fixes that are done rather
-   than widening scope.
+   priority, not an open-ended bug sweep. Ship what is fixed; do not widen scope beyond clearing Bugs.
 4. **Cart link default** — currently off. Flip to on when the site has zero
    published WooCommerce products? (One-line change; I kept it off because
    "no products today" isn't proof of none tomorrow.)
