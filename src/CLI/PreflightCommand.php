@@ -468,18 +468,53 @@ class PreflightCommand {
 			'wpss_update_vendor_stats'           => 'Vendor stats refresh',
 		);
 
+		// Ask the scheduler the plugin actually uses.
+		//
+		// This looked only at _get_cron_array(), i.e. WP-Cron. Every recurring
+		// job moved to Action Scheduler in 1.1.0 (see
+		// docs/standards/background-jobs.md, AS-first with a WP-Cron fallback),
+		// so preflight reported all six lifecycle jobs "not scheduled" while
+		// Action Scheduler held a pending action for each with a real next run.
+		//
+		// That is worse than a cosmetic wrong answer: preflight is what an owner
+		// or support runs to decide whether a marketplace is healthy, and it was
+		// telling them their automation was dead when it was working. A tool
+		// that cries wolf gets ignored, including when it is right.
+		//
+		// Checks AS first, falls back to WP-Cron, and reports WHICH scheduler
+		// holds the job so the answer is actionable rather than just green.
 		$crons = _get_cron_array();
 		foreach ( $hooks as $hook => $desc ) {
-			$found = false;
-			if ( is_array( $crons ) ) {
+			$found     = false;
+			$scheduler = '';
+
+			if ( function_exists( 'as_next_scheduled_action' ) ) {
+				$next = as_next_scheduled_action( $hook );
+
+				// as_next_scheduled_action() returns a timestamp, or true for an
+				// action already due. Both mean scheduled; only false does not.
+				if ( false !== $next && null !== $next ) {
+					$found     = true;
+					$scheduler = 'Action Scheduler';
+				}
+			}
+
+			if ( ! $found && is_array( $crons ) ) {
 				foreach ( $crons as $ts => $ch ) {
 					if ( isset( $ch[ $hook ] ) ) {
-						$found = true;
+						$found     = true;
+						$scheduler = 'WP-Cron';
 						break;
 					}
 				}
 			}
-			$this->record( 'Cron', $desc, $found ? 'pass' : 'warn', $found ? $hook : $hook . ' not scheduled' );
+
+			$this->record(
+				'Cron',
+				$desc,
+				$found ? 'pass' : 'warn',
+				$found ? $hook . ' (' . $scheduler . ')' : $hook . ' not scheduled on Action Scheduler or WP-Cron'
+			);
 		}
 
 		WP_CLI::log( '' );
