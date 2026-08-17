@@ -124,68 +124,64 @@ Natural groups:
   10163575694 (guest purchase — owner decided: always create an account with
   First/Last/Email), 10154920673 (push notifications)
 
-## CI gap — verified 2026-08-17, needs fixing before release
+## CI — gap CLOSED 2026-08-17 (commit below)
 
-`.github/workflows/ci.yml` runs **only** four jobs:
-`php-lint`, `phpcs` (WPCS), `phpstan`, `phpunit`.
+`.github/workflows/ci.yml` previously ran only `php-lint`, `phpcs`, `phpstan`,
+`phpunit`. The gates that catch release-breaking mistakes ran **only when
+someone remembered**. Two jobs added:
 
-**None of the gates I have been running by hand are in CI:**
-
-| Gate | Command | In CI? |
+| Gate | Command | In CI |
 |---|---|---|
-| WPCS | `composer phpcs` | yes |
-| PHPStan | `composer phpstan` | yes |
-| PHPUnit | `composer test` | yes |
-| i18n / version drift | `python3 bin/i18n-verify.py` | **no** |
-| Docs audit | `python3 bin/docs-audit.py` | **no** |
-| App parity | `python3 bin/app-parity.py` | **no** |
-| Manifest freshness | (no check exists) | **no** |
+| PHP lint / WPCS / PHPStan / PHPUnit | (existing) | yes |
+| i18n + version drift | `python3 bin/i18n-verify.py` | yes — `project-gates` |
+| Docs audit | `python3 bin/docs-audit.py` | yes — `project-gates` |
+| App parity | `python3 bin/app-parity.py` | yes — `project-gates` |
+| Manifest freshness | diff-based | yes — `manifest-freshness` |
 
-So the i18n gate — which is the thing that catches version drift between the
-plugin header, POT `Project-Id-Version`, `package.json` and the readme Stable
-tag, i.e. exactly what breaks a release — only runs if someone remembers.
-Add these three python gates as CI steps. They are fast and already exit
-non-zero on failure, so they drop straight in.
+All three python gates were confirmed exit-0 on the current tree before being
+added, so CI is not red on arrival.
 
-**Manifest freshness has no check at all.** Note `CLAUDE.md` says
-`manifest_refresh: agent-enumeration-only` — the deterministic generator
-undercounts REST (142 → 7) because routes register through a controller array,
-and **will silently clobber the manifest**. Do not wire the generator into CI.
-A cheap honest check is: fail if `src/API/*Controller.php` changed in a commit
-that did not touch `audit/manifest.json`.
+**`manifest-freshness` is deliberately diff-based, not a regeneration.** It
+fails when a contract file (`src/API/*Controller.php`,
+`src/Database/SchemaManager.php`, `src/CLI/*.php`) changes without
+`audit/manifest.json` changing in the same push/PR. It does **not** run the
+deterministic generator — `CLAUDE.md` marks this plugin
+`manifest_refresh: agent-enumeration-only` because REST registers through a
+controller-array wrapper, so the generator undercounts REST (142 → 7) and would
+silently clobber the file. **Never wire the generator in.**
 
-## Journey checks — the infrastructure does not exist here
+The logic was tested against real commits before landing: `4264144` (touched
+SchemaManager *and* the manifest) passes, `e29809c` (no contract files) passes,
+and a synthetic SchemaManager-without-manifest change correctly fails.
 
-`CLAUDE.md` points at a QA catalog with per-plugin data files. **None of it is
-in this repo** (verified):
+## Journeys — gap CLOSED 2026-08-17
 
-- no `audit/journeys/`
-- no `docs/qa/qa-config.json`
-- no `docs/standards/qa-catalog.md`
-- no `audit/ROLE_MATRIX.md`
-- no `audit/CODE_FLOWS.md`
+`audit/journeys/` now exists with the four walks that actually caught defects,
+plus a README covering how to run one and the verified role table:
 
-`CLAUDE.md`'s READ FIRST block references `audit/ROLE_MATRIX.md` and
-`audit/CODE_FLOWS.md` as if they exist. **They do not.** Either create them or
-correct that block — right now it sends the next person to missing files.
+| File | Covers | Status |
+|---|---|---|
+| `01-buyer-hires-seller.md` | request → proposal → hire → pay | **step 7 fails** (10208094640) |
+| `02-dispute.md` | open → both parties reply → admin reads → back to order | passes |
+| `03-install-and-upgrade.md` | activation, pages, settings, preflight, upgrade | passes |
+| `04-vendor-discovery.md` | directory → profile → service | passes |
 
-Until they exist, "journey check" means driving the real flow in the browser as
-the real role. The journeys that actually caught defects today, worth writing
-down first:
+`audit/ROLE_MATRIX.md` was also missing and is now written **from live role
+data**, not from code comments. The load-bearing fact in it: **a buyer holds no
+WPSS capability at all** — a buyer is a plain subscriber, so every buyer-side
+gate must be an ownership check, never `current_user_can()`.
 
-1. **Buyer hires a seller:** post request → seller proposes → buyer sees the
-   in-app notification → hire → seller notified → losing bidder notified →
-   pay the order. *(The pay step is where card 10208094640 still fails.)*
-2. **Dispute:** buyer opens a dispute from the order → both parties see the
-   thread and can reply → admin sees every message → order links back to the
-   dispute.
-3. **Fresh install / upgrade:** activate on a site running WooCommerce → check
-   all 6 pages created with the right slugs → Settings > Pages populated →
-   save without losing keys → `wp wpss preflight` all PASS.
-4. **Vendor discovery:** directory → vendor card → profile → their service.
+`CLAUDE.md`'s READ FIRST block pointed at `audit/CODE_FLOWS.md`, which has
+**never existed**. Corrected to point at `audit/FLOW-AUDIT.md` (which does) and
+to the new journeys directory. Every link in that block now resolves — checked.
 
-Each of those is a browser walk, and each maps to cards already fixed, so they
-double as regression tests for this release.
+Still not present, and fine for now: `docs/qa/qa-config.json` and
+`docs/standards/qa-catalog.md` (the cross-plugin catalog convention). The
+journeys above are the working substitute.
+
+**Not yet written**, worth adding as cards clear: messages/unread, review
+submit + display, withdrawal/payout, milestones, extensions, and the three
+non-standalone rails (WooCommerce, EDD, FluentCart).
 
 ## Release checklist (after Bugs is empty)
 

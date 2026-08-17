@@ -145,3 +145,79 @@ jobs:
         run: vendor/bin/phpunit --testsuite unit --no-coverage
         env:
           WP_TESTS_DIR: /tmp/wordpress-tests-lib
+
+  # The three python gates below already existed in bin/ and already exit
+  # non-zero on failure, but nothing ran them automatically - they fired only
+  # when a developer remembered. i18n-verify is the one that catches version
+  # drift between the plugin header, the POT Project-Id-Version, package.json
+  # and the readme Stable tag, which is exactly the class of mistake that
+  # breaks a release, so "runs if someone remembers" was not a gate at all.
+  project-gates:
+    name: i18n / docs / app parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Fails on version drift across the four version sources, and on a POT
+      # that is stale relative to the source strings.
+      - name: i18n + version drift
+        run: python3 bin/i18n-verify.py
+
+      # Fails when docs reference a Settings tab or admin menu path that the
+      # plugin does not actually render.
+      - name: Docs audit
+        run: python3 bin/docs-audit.py
+
+      # Fails when a feature has no reachable REST route - this plugin is
+      # mobile-app ready by contract, so an unreachable feature is a defect.
+      - name: App parity
+        run: python3 bin/app-parity.py
+
+  # audit/manifest.json is the canonical inventory that every task is supposed
+  # to read BEFORE adding a hook, route or helper. It is only useful while it is
+  # true, and today nothing noticed when it went stale.
+  #
+  # Deliberately a diff-based reminder, NOT a regeneration: CLAUDE.md marks this
+  # plugin manifest_refresh: agent-enumeration-only because REST registers
+  # through a controller-array wrapper, so the deterministic generator
+  # undercounts REST (142 -> 7) and would silently clobber the file. Never wire
+  # the generator in here.
+  manifest-freshness:
+    name: Manifest freshness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Manifest updated alongside contract changes
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$BASE" ]; then
+            BASE=$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
+          fi
+          CHANGED=$(git diff --name-only "$BASE" HEAD)
+
+          # Surfaces that define the plugin's public contract.
+          CONTRACT=$(echo "$CHANGED" | grep -E '^src/(API/.*Controller\.php|Database/SchemaManager\.php|CLI/.*\.php)$' || true)
+
+          if [ -n "$CONTRACT" ] && ! echo "$CHANGED" | grep -q '^audit/manifest\.json$'; then
+            echo "::error::Contract files changed without updating audit/manifest.json:"
+            echo "$CONTRACT"
+            echo ""
+            echo "Update the affected manifest section in the same commit."
+            echo "Do NOT run the deterministic generator - it undercounts REST for this plugin."
+            exit 1
+          fi
+          echo "Manifest freshness OK"
