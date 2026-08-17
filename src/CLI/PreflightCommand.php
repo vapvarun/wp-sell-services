@@ -250,18 +250,21 @@ class PreflightCommand {
 	private function check_pages(): void {
 		WP_CLI::log( '> Required Pages' );
 
-		$pages    = get_option( 'wpss_pages', array() );
-		$required = array(
-			'services_page' => '[wpss_services]',
-			'dashboard'     => '[wpss_dashboard]',
-			'become_vendor' => '[wpss_vendor_registration]',
-			'checkout'      => '[wpss_checkout]',
-			'cart'          => '[wpss_cart]',
-		);
+		$pages = get_option( 'wpss_pages', array() );
 
-		foreach ( $required as $key => $shortcode ) {
+		// Checked against the page registry rather than a list of its own, so
+		// preflight cannot silently stop covering a page the installer creates
+		// -- which is what happened to the vendors directory.
+		$definitions = wpss_get_page_definitions();
+
+		foreach ( $definitions as $key => $definition ) {
+			$shortcode = $definition['shortcode'];
+
 			if ( empty( $pages[ $key ] ) ) {
-				$this->record( 'Pages', $key, 'fail', 'Not mapped in wpss_pages' );
+				// Only the pages a marketplace cannot run without are a
+				// failure; the optional ones are a note, not a red mark.
+				$severity = ! empty( $definition['required'] ) ? 'fail' : 'warn';
+				$this->record( 'Pages', $key, $severity, 'Not mapped in wpss_pages' );
 				continue;
 			}
 

@@ -207,40 +207,57 @@
   "settings": {
     "_note": "Stored under various wpss_* options. Settings page in src/Admin/Settings.php (2346 lines). Tabs: General, Vendor, Orders, Earnings, Reviews, Disputes, Pages, Emails, Gateways, Advanced. Advanced tab includes the Real-time (WebSockets) card storing wpss_realtime_settings (enabled, app_id, key, secret, host, cluster, port, use_tls — secret uses the masked-field keep-on-blank contract).",
     "pages": {
-      "_note": "Option `wpss_pages` maps page keys -> post IDs. Activator::create_pages() (src/Core/Activator.php) is the ONE writer; it runs on activation AND on the version-bump upgrade path (src/Core/Plugin.php, init:5). Every key listed here MUST have both an installer entry and a Settings mapping field -- a key with only a field is an unwritable setting the owner has to fill by hand. Adoption rule: if a published page already contains the shortcode, that page is adopted rather than a duplicate created.",
+      "_note": "Option `wpss_pages` maps page keys -> post IDs. `wpss_get_page_definitions()` (src/functions/urls.php) is the SINGLE registry of title + shortcode + slug + required; read it before adding a page, a label list or a shortcode map. Consumers: Activator::create_pages() (installer + upgrade path), Settings::ajax_create_page() (the creator the wizard and Pages panel call), Settings pages panel + sanitize_pages_settings() whitelist, SetupWizardPage, Admin::check_page_setup_notice(), PreflightCommand, wpss_get_default_page_slugs(). This registry replaced 8 hardcoded copies that had drifted -- the wizard offered 'Checkout' where the installer said 'Service Checkout', and the AJAX creator set no slug at all, which is how sites running WooCommerce collected /cart-2/ ... /cart-16/. Adoption rule: a published page already carrying the shortcode is adopted, never duplicated. Filter: wpss_page_definitions.",
       "option": "wpss_pages",
       "writer": "WPSellServices\\Core\\Activator::create_pages",
       "mapping_ui": "src/Admin/Settings.php (Pages tab)",
       "keys": {
         "services_page": {
           "title": "Services",
-          "shortcode": "[wpss_services]"
+          "shortcode": "[wpss_services]",
+          "slug": "services",
+          "required": true
         },
         "vendors_page": {
           "title": "Vendors",
           "shortcode": "[wpss_vendors]",
           "resolver": "wpss_get_vendors_page_id()",
-          "since": "1.6.0"
+          "since": "1.6.0",
+          "slug": "vendors",
+          "required": false
         },
         "dashboard": {
           "title": "Dashboard",
-          "shortcode": "[wpss_dashboard]"
+          "shortcode": "[wpss_dashboard]",
+          "slug": "dashboard",
+          "required": true
         },
         "become_vendor": {
           "title": "Become a Vendor",
-          "shortcode": "[wpss_vendor_registration]"
+          "shortcode": "[wpss_vendor_registration]",
+          "slug": "become-vendor",
+          "required": true
         },
         "checkout": {
           "title": "Service Checkout",
           "shortcode": "[wpss_checkout]",
-          "slug": "service-checkout"
+          "slug": "service-checkout",
+          "required": true
         },
         "cart": {
           "title": "Service Cart",
           "shortcode": "[wpss_cart]",
-          "slug": "service-cart"
+          "slug": "service-cart",
+          "required": false
         }
-      }
+      },
+      "registry": "wpss_get_page_definitions",
+      "required_helper": "wpss_get_required_pages",
+      "filter": "wpss_page_definitions",
+      "writers": [
+        "WPSellServices\\Core\\Activator::create_pages",
+        "WPSellServices\\Admin\\Settings::ajax_create_page"
+      ]
     }
   },
   "shortcodes": {

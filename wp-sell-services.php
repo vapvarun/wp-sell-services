@@ -445,6 +445,16 @@ function wpss_activate(): void {
 		);
 	}
 
+	// Activation runs on a request where this plugin was not yet active, so
+	// wpss_init() never fired and the global helpers in src/functions.php are
+	// NOT loaded. Activator::create_pages() reads the page registry from
+	// there, so load it explicitly rather than relying on a bootstrap that has
+	// not run — otherwise activation fatals with "Call to undefined function
+	// wpss_get_page_definitions()" and the plugin silently stays inactive.
+	// Every file it pulls in is require_once and side-effect free, so this is
+	// safe alongside the normal load path.
+	require_once WPSS_PLUGIN_DIR . 'src/functions.php';
+
 	// Run activator.
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Activator.php';
 	Core\Activator::activate();

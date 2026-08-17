@@ -295,6 +295,22 @@ class Settings {
 			wp_send_json_error( array( 'message' => __( 'Missing required data.', 'wp-sell-services' ) ) );
 		}
 
+		// The registry, not the browser, decides what a known page is called and
+		// where it lives. This handler used to take the posted title and let
+		// WordPress derive a slug from it, so creating the cart page on a site
+		// running WooCommerce found `cart` taken and silently produced
+		// `/cart-2/`, `/cart-3/` … while the installer's `service-cart` slug was
+		// never used. A key the registry does not know (added through the
+		// wpss_page_definitions filter) still honours the posted title.
+		$definitions = wpss_get_page_definitions();
+		$definition  = $definitions[ $field ] ?? null;
+		$slug        = '';
+
+		if ( is_array( $definition ) ) {
+			$title = $definition['title'];
+			$slug  = $definition['slug'];
+		}
+
 		// Check if a page with this shortcode already exists.
 		$page_content     = $this->get_page_content( $field );
 		$existing_page_id = $this->find_existing_page( $field, $page_content );
@@ -318,14 +334,18 @@ class Settings {
 		}
 
 		// Create the page.
-		$page_id = wp_insert_post(
-			array(
-				'post_title'   => $title,
-				'post_content' => $page_content,
-				'post_status'  => 'publish',
-				'post_type'    => 'page',
-			)
+		$new_page = array(
+			'post_title'   => $title,
+			'post_content' => $page_content,
+			'post_status'  => 'publish',
+			'post_type'    => 'page',
 		);
+
+		if ( '' !== $slug ) {
+			$new_page['post_name'] = $slug;
+		}
+
+		$page_id = wp_insert_post( $new_page );
 
 		if ( is_wp_error( $page_id ) ) {
 			wp_send_json_error( array( 'message' => $page_id->get_error_message() ) );
@@ -437,16 +457,9 @@ class Settings {
 	 * @return string Page content.
 	 */
 	private function get_page_content( string $field ): string {
-		$shortcodes = array(
-			'services_page' => '[wpss_services]',
-			'vendors_page'  => '[wpss_vendors]',
-			'dashboard'     => '[wpss_dashboard]',
-			'become_vendor' => '[wpss_vendor_registration]',
-			'cart'          => '[wpss_cart]',
-			'checkout'      => '[wpss_checkout]',
-		);
+		$definitions = wpss_get_page_definitions();
 
-		return $shortcodes[ $field ] ?? '';
+		return $definitions[ $field ]['shortcode'] ?? '';
 	}
 
 	/**
@@ -1171,22 +1184,33 @@ class Settings {
 		// could never be set by anyone) and the cart page was seeded by the
 		// installer but missing from the save whitelist, so the first save of
 		// this panel deleted it with no way to put it back.
-		$pages = array(
+		// The panel iterates the page registry, so a key added through the
+		// wpss_page_definitions filter gets a mapping field automatically
+		// instead of being creatable but unmappable.
+		//
+		// The field label describes the mapping ("Services Page"); the page
+		// title is what the page will actually be called ("Services"). Where
+		// the two differ the label is overridden below -- anything else falls
+		// back to the registry title.
+		$page_definitions = wpss_get_page_definitions();
+
+		$page_labels = array(
 			'services_page' => __( 'Services Page', 'wp-sell-services' ),
 			'vendors_page'  => __( 'Vendors Directory', 'wp-sell-services' ),
-			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
-			'cart'          => __( 'Service Cart', 'wp-sell-services' ),
-			'checkout'      => __( 'Service Checkout', 'wp-sell-services' ),
 		);
 
-		// Only show "Become a Vendor" page option when vendor registration is not closed.
+		$pages = array();
+
+		foreach ( $page_definitions as $page_key => $page_definition ) {
+			$pages[ $page_key ] = $page_labels[ $page_key ] ?? $page_definition['title'];
+		}
+
+		// Hide the "Become a Vendor" mapping when vendor registration is closed.
 		$pages_vendor_settings   = get_option( 'wpss_vendor', array() );
 		$pages_registration_mode = $pages_vendor_settings['vendor_registration'] ?? 'open';
-		if ( 'closed' !== $pages_registration_mode ) {
-			// Insert after 'dashboard' to maintain original order.
-			$pages = array_slice( $pages, 0, 3, true )
-				+ array( 'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ) )
-				+ array_slice( $pages, 3, null, true );
+
+		if ( 'closed' === $pages_registration_mode ) {
+			unset( $pages['become_vendor'] );
 		}
 
 		foreach ( $pages as $key => $label ) {
@@ -1199,7 +1223,7 @@ class Settings {
 				array(
 					'option_name' => 'wpss_pages',
 					'field'       => $key,
-					'page_title'  => $label,
+					'page_title'  => $page_definitions[ $key ]['title'] ?? $label,
 				)
 			);
 		}
@@ -3463,14 +3487,11 @@ class Settings {
 	public function sanitize_pages_settings( ?array $input ): array {
 		$input = $input ?? array();
 
-		$page_keys = array(
-			'services_page',
-			'vendors_page',
-			'dashboard',
-			'become_vendor',
-			'cart',
-			'checkout',
-		);
+		// Derived from the page registry, not listed again here. This list
+		// having to be kept in step by hand is what dropped `cart` (seeded by
+		// the installer, absent from the whitelist) on the first save of this
+		// panel; a registry key can no longer go missing from it.
+		$page_keys = array_keys( wpss_get_page_definitions() );
 
 		// Preserve the stored value for any key the submitted form did not
 		// contain, instead of zeroing it.

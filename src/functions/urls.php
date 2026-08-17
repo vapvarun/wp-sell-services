@@ -299,6 +299,117 @@ function wpss_get_dashboard_section_template( string $section ): string {
 }
 
 /**
+ * The plugin's page registry: what each mapped page is called, what shortcode
+ * it carries, and which slug it should live at.
+ *
+ * This is the single definition of a WPSS page. It used to be seven, and they
+ * had drifted:
+ *
+ * - the installer (`Activator::create_pages()`) knew the canonical slugs,
+ * - `Settings::ajax_create_page()` — the creator the wizard and the Pages panel
+ *   actually call — knew no slugs at all, so WordPress derived one from a
+ *   client-supplied title,
+ * - the wizard, the Pages panel, the setup notice and the wizard's completion
+ *   check each carried their own label list, disagreeing on the names.
+ *
+ * The practical result: an owner who created the cart page from the wizard or
+ * from Settings got the title "Cart", WordPress took the `cart` slug (or, with
+ * WooCommerce installed, found it taken and appended a number), and the site
+ * ended up on `/cart-2/` … `/cart-16/` while the installer's `service-cart`
+ * slug was never used. Same mechanism for checkout against `/checkout/`.
+ *
+ * Every consumer now reads this. A page key added here appears in the
+ * installer, the wizard, the Pages panel and the setup notice at once, and
+ * cannot be created without its slug.
+ *
+ * @since 1.6.0
+ *
+ * @return array<string, array{title: string, shortcode: string, slug: string, required: bool}>
+ */
+function wpss_get_page_definitions(): array {
+	$definitions = array(
+		'services_page' => array(
+			'title'     => __( 'Services', 'wp-sell-services' ),
+			'shortcode' => '[wpss_services]',
+			'slug'      => 'services',
+			'required'  => true,
+		),
+		'vendors_page'  => array(
+			'title'     => __( 'Vendors', 'wp-sell-services' ),
+			'shortcode' => '[wpss_vendors]',
+			'slug'      => 'vendors',
+			'required'  => false,
+		),
+		'dashboard'     => array(
+			'title'     => __( 'Dashboard', 'wp-sell-services' ),
+			'shortcode' => '[wpss_dashboard]',
+			'slug'      => 'dashboard',
+			'required'  => true,
+		),
+		'become_vendor' => array(
+			'title'     => __( 'Become a Vendor', 'wp-sell-services' ),
+			'shortcode' => '[wpss_vendor_registration]',
+			'slug'      => 'become-vendor',
+			'required'  => true,
+		),
+		// Both carry an explicit service-* slug. These pages are only the
+		// standalone rail; when WooCommerce or EDD runs the store, that plugin
+		// owns /cart/ and /checkout/. Taking the generic slug is what produced
+		// the /cart-2/ … /cart-16/ trail on sites running both.
+		'cart'          => array(
+			'title'     => __( 'Service Cart', 'wp-sell-services' ),
+			'shortcode' => '[wpss_cart]',
+			'slug'      => 'service-cart',
+			'required'  => false,
+		),
+		'checkout'      => array(
+			'title'     => __( 'Service Checkout', 'wp-sell-services' ),
+			'shortcode' => '[wpss_checkout]',
+			'slug'      => 'service-checkout',
+			'required'  => true,
+		),
+	);
+
+	/**
+	 * Filter the page registry.
+	 *
+	 * Changing a title or slug here changes what the installer, the wizard and
+	 * the Pages panel create — so an owner can ship "Freelancers" instead of
+	 * "Vendors" without editing pages by hand afterwards. Existing pages are
+	 * never renamed or moved.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param array<string, array{title: string, shortcode: string, slug: string, required: bool}> $definitions Page registry.
+	 */
+	return (array) apply_filters( 'wpss_page_definitions', $definitions );
+}
+
+/**
+ * The pages a marketplace cannot run without, as page_key => title.
+ *
+ * Backs the setup notice, the wizard's page step and the wizard's completion
+ * check, which each used to carry their own list and disagreed on the names —
+ * the wizard offered "Checkout" and "Vendor Registration" where the installer
+ * and the notice said "Service Checkout" and "Become a Vendor".
+ *
+ * @since 1.6.0
+ *
+ * @return array<string, string> Map of page_key => page title.
+ */
+function wpss_get_required_pages(): array {
+	$required = array();
+
+	foreach ( wpss_get_page_definitions() as $key => $definition ) {
+		if ( ! empty( $definition['required'] ) ) {
+			$required[ $key ] = $definition['title'];
+		}
+	}
+
+	return $required;
+}
+
+/**
  * Get default page slugs for standalone mode.
  *
  * These are used as fallbacks when no page is mapped in Settings → Pages.
@@ -309,6 +420,16 @@ function wpss_get_dashboard_section_template( string $section ): string {
  * @return array<string, string> Map of page_key => default slug.
  */
 function wpss_get_default_page_slugs(): array {
+	$slugs = array();
+
+	foreach ( wpss_get_page_definitions() as $key => $definition ) {
+		$slugs[ $key ] = $definition['slug'];
+	}
+
+	// A virtual route rather than an installer-created page: the dashboard
+	// renders it, so it has a slug but no page and no entry in the registry.
+	$slugs['create_service'] = 'create-service';
+
 	/**
 	 * Filter default page slugs.
 	 *
@@ -319,17 +440,7 @@ function wpss_get_default_page_slugs(): array {
 	 *
 	 * @param array $slugs Default slugs keyed by page key.
 	 */
-	return apply_filters(
-		'wpss_default_page_slugs',
-		array(
-			'services_page'  => 'services',
-			'dashboard'      => 'dashboard',
-			'become_vendor'  => 'become-vendor',
-			'create_service' => 'create-service',
-			'checkout'       => 'service-checkout',
-			'cart'           => 'service-cart',
-		)
-	);
+	return apply_filters( 'wpss_default_page_slugs', $slugs );
 }
 
 /**

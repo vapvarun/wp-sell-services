@@ -502,12 +502,7 @@ class Admin {
 			return;
 		}
 
-		$required_pages = array(
-			'services_page' => __( 'Services', 'wp-sell-services' ),
-			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
-			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
-			'checkout'      => __( 'Service Checkout', 'wp-sell-services' ),
-		);
+		$required_pages = wpss_get_required_pages();
 
 		$pages   = get_option( 'wpss_pages', array() );
 		$missing = array();

@@ -412,12 +412,7 @@ class SetupWizardPage {
 		}
 
 		// Validate that all required pages exist before completing.
-		$required_pages = array(
-			'services_page' => __( 'Services', 'wp-sell-services' ),
-			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
-			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
-			'checkout'      => __( 'Service Checkout', 'wp-sell-services' ),
-		);
+		$required_pages = wpss_get_required_pages();
 
 		$pages   = get_option( 'wpss_pages', array() );
 		$missing = array();
@@ -470,12 +465,11 @@ class SetupWizardPage {
 		$max_services        = $vendor['max_services_per_vendor'] ?? 20;
 		$require_moderation  = ! empty( $vendor['require_service_moderation'] );
 
-		$page_fields = array(
-			'services_page' => __( 'Services', 'wp-sell-services' ),
-			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
-			'become_vendor' => __( 'Vendor Registration', 'wp-sell-services' ),
-			'checkout'      => __( 'Checkout', 'wp-sell-services' ),
-		);
+		// The wizard's Create buttons post these titles, so they must be the
+		// registry's titles: "Checkout" here (against the installer's "Service
+		// Checkout") is how sites running WooCommerce ended up with the WPSS
+		// page on /checkout-2/ instead of /service-checkout/.
+		$page_fields = wpss_get_required_pages();
 		?>
 		<div id="wpss-wizard-wrap">
 			<!-- Header -->
