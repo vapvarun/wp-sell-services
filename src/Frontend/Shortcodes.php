@@ -272,6 +272,25 @@ class Shortcodes {
 	public function vendors_grid( array $atts = array() ): string {
 		wpss_enqueue_frontend_assets();
 
+		// wpss_get_vendor_url() points every vendor link on the site at
+		// `{vendors page}?vendor={nicename}` whenever a vendors page exists, but
+		// this grid never read that parameter — so following any vendor link
+		// landed you back on the full directory instead of the profile you
+		// clicked. Renders the profile through the existing shortcode rather
+		// than a second copy of that markup.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public link.
+		$requested_vendor = isset( $_GET['vendor'] ) ? sanitize_title( wp_unslash( $_GET['vendor'] ) ) : '';
+
+		if ( '' !== $requested_vendor ) {
+			$vendor_user = get_user_by( 'slug', $requested_vendor );
+
+			// Fall through to the directory for an unknown slug: a stale link
+			// should show the list, not an error page.
+			if ( $vendor_user && wpss_is_vendor( (int) $vendor_user->ID ) ) {
+				return $this->vendor_profile( array( 'id' => (int) $vendor_user->ID ) );
+			}
+		}
+
 		$atts = shortcode_atts(
 			array(
 				'limit'   => 12,

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-17T09:05:53+00:00\n"
+"POT-Creation-Date: 2026-08-17T09:12:51+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -257,7 +257,7 @@ msgstr ""
 #: src/Frontend/Frontend.php:253
 #: src/Frontend/Frontend.php:257
 #: src/Frontend/ServiceWizard.php:1429
-#: src/Frontend/Shortcodes.php:1177
+#: src/Frontend/Shortcodes.php:1196
 #: src/Frontend/UnifiedDashboard.php:178
 #: src/Integrations/PayPal/PayPalGateway.php:566
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1370
@@ -265,7 +265,6 @@ msgstr ""
 #: src/Integrations/Stripe/StripeGateway.php:924
 #: templates/dashboard/sections/create-request.php:225
 #: templates/dashboard/sections/edit-request.php:272
-#: templates/disputes/dispute-view.php:1273
 #: templates/order/order-requirements.php:34
 #: templates/order/order-view.php:47
 msgid "An error occurred. Please try again."
@@ -556,7 +555,7 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:52
 #: src/Admin/Tables/OrdersListTable.php:51
 #: src/Blocks/BlocksManager.php:149
-#: src/Frontend/Shortcodes.php:709
+#: src/Frontend/Shortcodes.php:728
 #: src/Integrations/Gateways/OfflineGateway.php:1100
 #: templates/dashboard/sections/disputes.php:250
 #: templates/dashboard/sections/disputes.php:289
@@ -579,7 +578,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:1715
 #: src/Admin/Pages/VendorsPage.php:1869
 #: src/Admin/Tables/OrdersListTable.php:52
-#: src/Frontend/Shortcodes.php:710
+#: src/Frontend/Shortcodes.php:729
 #: src/functions/moderation.php:118
 #: src/Services/NotificationService.php:303
 #: src/Services/NotificationService.php:425
@@ -649,7 +648,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:672
 #: src/Admin/Tables/DisputesListTable.php:55
 #: src/Admin/Tables/OrdersListTable.php:56
-#: src/Frontend/Shortcodes.php:712
+#: src/Frontend/Shortcodes.php:731
 #: templates/dashboard/sections/disputes.php:252
 #: templates/dashboard/sections/disputes.php:292
 #: templates/dashboard/sections/earnings.php:391
@@ -688,7 +687,7 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:56
 #: src/Admin/Tables/OrdersListTable.php:57
 #: src/CustomFields/Fields/DateField.php:38
-#: src/Frontend/Shortcodes.php:713
+#: src/Frontend/Shortcodes.php:732
 #: src/Frontend/UnifiedDashboard.php:154
 #: templates/dashboard/sections/earnings.php:388
 #: templates/order/order-confirmation.php:197
@@ -768,8 +767,8 @@ msgstr[1] ""
 #: src/Frontend/AjaxHandlers.php:929
 #: src/Frontend/AjaxHandlers.php:1374
 #: src/Frontend/AjaxHandlers.php:3059
-#: src/Frontend/Shortcodes.php:790
-#: src/Frontend/Shortcodes.php:803
+#: src/Frontend/Shortcodes.php:809
+#: src/Frontend/Shortcodes.php:822
 #: src/Integrations/Gateways/OfflineGateway.php:541
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:364
 #: src/Services/ExtensionOrderService.php:157
@@ -788,7 +787,7 @@ msgid "Order not found."
 msgstr ""
 
 #: src/Admin/Admin.php:1635
-#: src/Frontend/Shortcodes.php:810
+#: src/Frontend/Shortcodes.php:829
 #: src/Frontend/TemplateLoader.php:380
 msgid "You do not have permission to view this order."
 msgstr ""
@@ -849,7 +848,7 @@ msgstr ""
 
 #. translators: %s: order number
 #: src/Admin/Admin.php:1682
-#: src/Frontend/Shortcodes.php:965
+#: src/Frontend/Shortcodes.php:984
 #: templates/dashboard/sections/messages.php:297
 #: templates/emails/cancellation-requested.php:69
 #: templates/emails/delivery-ready.php:63
@@ -875,7 +874,6 @@ msgstr ""
 #: src/Admin/Admin.php:1696
 #: src/Admin/Pages/ManualOrderPage.php:169
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:913
-#: templates/disputes/dispute-view.php:430
 #: templates/order/order-confirmation.php:191
 #: templates/order/order-requirements.php:295
 msgid "Order Details"
@@ -943,8 +941,6 @@ msgstr ""
 #: templates/content-service-card.php:140
 #: templates/dashboard/sections/orders.php:265
 #: templates/dashboard/sections/sales.php:339
-#: templates/disputes/dispute-view.php:123
-#: templates/disputes/dispute-view.php:260
 #: templates/emails/plain/withdrawal-auto.php:30
 #: templates/emails/plain/withdrawal-requested.php:30
 #: templates/emails/withdrawal-auto.php:39
@@ -1178,13 +1174,11 @@ msgstr ""
 
 #. translators: %d: dispute ID
 #: src/Admin/Admin.php:2246
-#: templates/disputes/dispute-view.php:99
 #, php-format
 msgid "Dispute #%d"
 msgstr ""
 
 #: src/Admin/Admin.php:2252
-#: templates/disputes/dispute-view.php:88
 msgid "Back to Disputes"
 msgstr ""
 
@@ -1222,7 +1216,7 @@ msgstr ""
 #: src/CustomFields/Fields/AbstractField.php:110
 #: src/Frontend/ServiceWizard.php:544
 #: src/Frontend/ServiceWizard.php:1024
-#: src/Frontend/Shortcodes.php:556
+#: src/Frontend/Shortcodes.php:575
 #: src/Frontend/UnifiedDashboard.php:156
 #: src/Integrations/Gateways/OfflineGateway.php:214
 #: templates/dashboard/sections/create-request.php:58
@@ -1244,7 +1238,6 @@ msgstr ""
 #: src/Admin/Admin.php:2376
 #: src/Admin/Admin.php:2419
 #: src/Services/ServiceAddonService.php:650
-#: templates/disputes/dispute-view.php:378
 msgid "Resolution"
 msgstr ""
 
@@ -1353,7 +1346,7 @@ msgid "Expires On"
 msgstr ""
 
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:147
-#: src/Frontend/Shortcodes.php:602
+#: src/Frontend/Shortcodes.php:621
 #: templates/dashboard/sections/create-request.php:138
 #: templates/dashboard/sections/edit-request.php:191
 msgid "Required Skills"
@@ -1796,7 +1789,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:632
 #: src/Admin/Metaboxes/ServiceMetabox.php:1517
 #: src/Admin/Pages/VendorsPage.php:2393
-#: src/Frontend/Shortcodes.php:550
+#: src/Frontend/Shortcodes.php:569
 #: src/Integrations/Gateways/OfflineGateway.php:208
 #: templates/dashboard/sections/create-request.php:41
 #: templates/dashboard/sections/edit-request.php:91
@@ -2326,7 +2319,6 @@ msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:283
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1028
-#: templates/disputes/dispute-view.php:454
 #: templates/emails/cancellation-requested.php:79
 msgid "Order Total"
 msgstr ""
@@ -2477,7 +2469,6 @@ msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:435
 #: src/API/EarningsController.php:364
-#: templates/disputes/dispute-view.php:458
 #: templates/emails/new-order.php:112
 #: templates/emails/order-completed.php:144
 #: templates/emails/order-in-progress.php:131
@@ -2719,7 +2710,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:2397
 #: src/Admin/Pages/WithdrawalsPage.php:516
 #: src/Admin/Pages/WithdrawalsPage.php:535
-#: src/Frontend/Shortcodes.php:714
+#: src/Frontend/Shortcodes.php:733
 #: templates/dashboard/sections/disputes.php:254
 #: templates/myaccount/service-orders.php:73
 #: templates/myaccount/service-orders.php:143
@@ -3011,7 +3002,7 @@ msgstr ""
 
 #: src/Admin/Pages/ServiceModerationPage.php:252
 #: src/Frontend/Frontend.php:262
-#: src/Frontend/Shortcodes.php:1162
+#: src/Frontend/Shortcodes.php:1181
 #: src/Frontend/UnifiedDashboard.php:162
 #: src/Integrations/Gateways/OfflineGateway.php:657
 #: src/Integrations/PayPal/PayPalGateway.php:565
@@ -3087,7 +3078,7 @@ msgstr ""
 #: src/Frontend/BuyerRequestArchiveView.php:348
 #: src/Frontend/ServiceArchiveView.php:365
 #: src/Frontend/ServiceWizard.php:514
-#: src/Frontend/Shortcodes.php:562
+#: src/Frontend/Shortcodes.php:581
 #: templates/dashboard/sections/create-request.php:73
 #: templates/dashboard/sections/edit-request.php:120
 #: assets/js/blocks.js:89
@@ -3113,7 +3104,7 @@ msgstr ""
 #: src/Admin/Settings.php:3246
 #: src/Admin/Tables/DisputesListTable.php:117
 #: src/Admin/Tables/OrdersListTable.php:119
-#: src/Frontend/Shortcodes.php:734
+#: src/Frontend/Shortcodes.php:753
 #: templates/dashboard/sections/disputes.php:300
 #: templates/dashboard/sections/orders.php:279
 #: templates/dashboard/sections/sales.php:372
@@ -3920,8 +3911,8 @@ msgstr ""
 #: src/API/VendorsController.php:351
 #: src/API/VendorsController.php:363
 #: src/Frontend/AjaxHandlers.php:2188
-#: src/Frontend/Shortcodes.php:367
-#: src/Frontend/Shortcodes.php:374
+#: src/Frontend/Shortcodes.php:386
+#: src/Frontend/Shortcodes.php:393
 msgid "Vendor not found."
 msgstr ""
 
@@ -4317,7 +4308,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:512
 #: src/Admin/Pages/WithdrawalsPage.php:531
 #: src/Admin/Pages/WithdrawalsPage.php:649
-#: src/Frontend/Shortcodes.php:711
+#: src/Frontend/Shortcodes.php:730
 #: src/Frontend/UnifiedDashboard.php:157
 #: templates/dashboard/sections/earnings.php:190
 #: templates/dashboard/sections/earnings.php:389
@@ -6081,7 +6072,7 @@ msgid "All order types"
 msgstr ""
 
 #: src/Admin/Tables/OrdersListTable.php:677
-#: src/Frontend/Shortcodes.php:758
+#: src/Frontend/Shortcodes.php:777
 #: templates/dashboard/sections/orders.php:132
 msgid "No orders yet"
 msgstr ""
@@ -7711,7 +7702,6 @@ msgstr ""
 
 #: src/Blocks/BlocksManager.php:139
 #: src/Frontend/UnifiedDashboard.php:578
-#: templates/disputes/dispute-view.php:479
 #: templates/order/conversation.php:155
 #: templates/order/extension-view.php:139
 #: templates/order/milestone-view.php:153
@@ -8777,7 +8767,6 @@ msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:1465
 #: templates/dashboard/sections/disputes.php:162
-#: templates/disputes/dispute-view.php:277
 msgid "Evidence image"
 msgstr ""
 
@@ -9330,7 +9319,6 @@ msgid "Just now"
 msgstr ""
 
 #: src/Frontend/Frontend.php:302
-#: templates/disputes/dispute-view.php:348
 msgid "Submit"
 msgstr ""
 
@@ -9525,7 +9513,7 @@ msgid "Your name"
 msgstr ""
 
 #: src/Frontend/PublicSignup.php:241
-#: src/Frontend/Shortcodes.php:894
+#: src/Frontend/Shortcodes.php:913
 #: src/functions/billing.php:137
 #: src/Services/NotificationService.php:1500
 #: templates/emails/vendor-contact.php:76
@@ -9535,7 +9523,7 @@ msgid "Email"
 msgstr ""
 
 #: src/Frontend/PublicSignup.php:256
-#: src/Frontend/Shortcodes.php:899
+#: src/Frontend/Shortcodes.php:918
 msgid "Password"
 msgstr ""
 
@@ -9552,7 +9540,7 @@ msgid "Create account"
 msgstr ""
 
 #: src/Frontend/PublicSignup.php:288
-#: src/Frontend/Shortcodes.php:908
+#: src/Frontend/Shortcodes.php:927
 msgid "Already have an account?"
 msgstr ""
 
@@ -9718,7 +9706,7 @@ msgid "characters"
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:522
-#: src/Frontend/Shortcodes.php:564
+#: src/Frontend/Shortcodes.php:583
 msgid "Select a category"
 msgstr ""
 
@@ -10269,34 +10257,34 @@ msgstr ""
 msgid "You have reached the maximum limit of %d services. Please remove an existing service before creating a new one."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:322
+#: src/Frontend/Shortcodes.php:341
 msgid "No vendors found."
 msgstr ""
 
 #. translators: %s: login URL
-#: src/Frontend/Shortcodes.php:523
+#: src/Frontend/Shortcodes.php:542
 #, php-format
 msgid "Please <a href=\"%s\">log in</a> to post a request."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:551
+#: src/Frontend/Shortcodes.php:570
 #: templates/dashboard/sections/create-request.php:51
 msgid "e.g., I need a WordPress website designed"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:557
+#: src/Frontend/Shortcodes.php:576
 msgid "Describe what you need in detail..."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:586
+#: src/Frontend/Shortcodes.php:605
 msgid "Budget Min"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:590
+#: src/Frontend/Shortcodes.php:609
 msgid "Budget Max"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:597
+#: src/Frontend/Shortcodes.php:616
 #: templates/dashboard/sections/create-request.php:126
 #: templates/dashboard/sections/edit-request.php:180
 #: templates/myaccount/service-orders.php:72
@@ -10305,82 +10293,82 @@ msgstr ""
 msgid "Deadline"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:603
+#: src/Frontend/Shortcodes.php:622
 #: templates/dashboard/sections/create-request.php:144
 #: templates/dashboard/sections/edit-request.php:198
 msgid "e.g., WordPress, PHP, JavaScript (comma-separated)"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:604
+#: src/Frontend/Shortcodes.php:623
 #: templates/dashboard/sections/create-request.php:146
 msgid "Separate multiple skills with commas."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:608
+#: src/Frontend/Shortcodes.php:627
 #: src/Frontend/UnifiedDashboard.php:705
 #: templates/dashboard/sections/create-request.php:154
 msgid "Post Request"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:625
+#: src/Frontend/Shortcodes.php:644
 msgid "Request posted"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:626
+#: src/Frontend/Shortcodes.php:645
 msgid "Your request is now live. Vendors can browse it and send you proposals."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:627
+#: src/Frontend/Shortcodes.php:646
 msgid "View buyer requests"
 msgstr ""
 
 #. translators: %s: login URL
-#: src/Frontend/Shortcodes.php:648
+#: src/Frontend/Shortcodes.php:667
 #, php-format
 msgid "Please <a href=\"%s\">log in</a> to view your orders."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:759
+#: src/Frontend/Shortcodes.php:778
 msgid "Your orders will show here once you purchase a service."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:760
+#: src/Frontend/Shortcodes.php:779
 #: templates/dashboard/sections/favorites.php:62
 msgid "Browse services"
 msgstr ""
 
 #. translators: %s: login URL
-#: src/Frontend/Shortcodes.php:782
+#: src/Frontend/Shortcodes.php:801
 #, php-format
 msgid "Please <a href=\"%s\">log in</a> to view order details."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:843
-#: src/Frontend/Shortcodes.php:876
+#: src/Frontend/Shortcodes.php:862
+#: src/Frontend/Shortcodes.php:895
 msgid "You are already logged in."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:880
+#: src/Frontend/Shortcodes.php:899
 msgid "Registration is currently disabled."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:889
+#: src/Frontend/Shortcodes.php:908
 #: src/Services/NotificationService.php:1498
 msgid "Username"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:904
+#: src/Frontend/Shortcodes.php:923
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:312
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:834
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1640
 msgid "Register"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:909
+#: src/Frontend/Shortcodes.php:928
 msgid "Log in"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:970
+#: src/Frontend/Shortcodes.php:989
 #: src/Services/NotificationService.php:451
 #: src/Services/NotificationService.php:471
 #: src/Services/NotificationService.php:494
@@ -10400,90 +10388,90 @@ msgstr ""
 msgid "Service:"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:971
+#: src/Frontend/Shortcodes.php:990
 #: src/Frontend/SingleServiceView.php:963
 msgid "Total:"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:972
+#: src/Frontend/Shortcodes.php:991
 msgid "Date:"
-msgstr ""
-
-#: src/Frontend/Shortcodes.php:1000
-#: src/Frontend/Shortcodes.php:1097
-#: src/Frontend/UnifiedDashboard.php:649
-msgid "Start selling your services"
-msgstr ""
-
-#: src/Frontend/Shortcodes.php:1001
-msgid "Create your vendor account in seconds. No credit card required."
-msgstr ""
-
-#: src/Frontend/Shortcodes.php:1009
-#: src/Frontend/Shortcodes.php:1106
-msgid "Create Services"
-msgstr ""
-
-#: src/Frontend/Shortcodes.php:1010
-#: src/Frontend/Shortcodes.php:1107
-msgid "Build unlimited service listings with custom packages"
-msgstr ""
-
-#: src/Frontend/Shortcodes.php:1018
-#: src/Frontend/Shortcodes.php:1115
-msgid "Get Paid"
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1019
 #: src/Frontend/Shortcodes.php:1116
-msgid "Secure payments with flexible withdrawal options"
+#: src/Frontend/UnifiedDashboard.php:649
+msgid "Start selling your services"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1027
-#: src/Frontend/Shortcodes.php:1124
-msgid "Grow Your Business"
+#: src/Frontend/Shortcodes.php:1020
+msgid "Create your vendor account in seconds. No credit card required."
 msgstr ""
 
 #: src/Frontend/Shortcodes.php:1028
 #: src/Frontend/Shortcodes.php:1125
+msgid "Create Services"
+msgstr ""
+
+#: src/Frontend/Shortcodes.php:1029
+#: src/Frontend/Shortcodes.php:1126
+msgid "Build unlimited service listings with custom packages"
+msgstr ""
+
+#: src/Frontend/Shortcodes.php:1037
+#: src/Frontend/Shortcodes.php:1134
+msgid "Get Paid"
+msgstr ""
+
+#: src/Frontend/Shortcodes.php:1038
+#: src/Frontend/Shortcodes.php:1135
+msgid "Secure payments with flexible withdrawal options"
+msgstr ""
+
+#: src/Frontend/Shortcodes.php:1046
+#: src/Frontend/Shortcodes.php:1143
+msgid "Grow Your Business"
+msgstr ""
+
+#: src/Frontend/Shortcodes.php:1047
+#: src/Frontend/Shortcodes.php:1144
 msgid "Analytics dashboard to track performance and revenue"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1058
+#: src/Frontend/Shortcodes.php:1077
 msgid "You're already a vendor"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1059
+#: src/Frontend/Shortcodes.php:1078
 msgid "Your vendor account is active. Head to your dashboard to manage services, view orders, and track earnings."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1062
+#: src/Frontend/Shortcodes.php:1081
 msgid "Go to Dashboard"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1082
+#: src/Frontend/Shortcodes.php:1101
 msgid "Registration is closed"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1083
+#: src/Frontend/Shortcodes.php:1102
 msgid "We're not accepting new vendors at the moment. Please check back later."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1098
+#: src/Frontend/Shortcodes.php:1117
 msgid "Join our marketplace and turn your skills into income. Create listings, set your rates, and connect with clients worldwide."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1132
+#: src/Frontend/Shortcodes.php:1151
 msgid "Applications are reviewed by our team. You'll be notified once approved."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1138
-#: src/Frontend/Shortcodes.php:1174
-#: src/Frontend/Shortcodes.php:1179
+#: src/Frontend/Shortcodes.php:1157
+#: src/Frontend/Shortcodes.php:1193
+#: src/Frontend/Shortcodes.php:1198
 msgid "Register as Vendor"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1172
+#: src/Frontend/Shortcodes.php:1191
 #: src/Frontend/SingleServiceView.php:156
 #: src/Frontend/UnifiedDashboard.php:177
 #: src/Integrations/Gateways/OfflineGateway.php:669
@@ -10494,22 +10482,22 @@ msgid "An error occurred."
 msgstr ""
 
 #. translators: %s: cart page link
-#: src/Frontend/Shortcodes.php:1366
+#: src/Frontend/Shortcodes.php:1385
 #, php-format
 msgid "Your cart is handled by the store. <a href=\"%s\">Go to cart</a>."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1375
+#: src/Frontend/Shortcodes.php:1394
 msgid "Please log in to view your cart."
 msgstr ""
 
 #. translators: %s: checkout page link
-#: src/Frontend/Shortcodes.php:1435
+#: src/Frontend/Shortcodes.php:1454
 #, php-format
 msgid "Checkout is handled by the store. <a href=\"%s\">Go to checkout</a>."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1445
+#: src/Frontend/Shortcodes.php:1464
 msgid "Checkout is not available. Please configure an e-commerce platform in settings."
 msgstr ""
 
@@ -13450,7 +13438,6 @@ msgstr ""
 
 #. translators: %d: order ID
 #: src/Integrations/PayPal/PayPalGateway.php:753
-#: templates/disputes/dispute-view.php:446
 #, php-format
 msgid "Order #%d"
 msgstr ""
@@ -16196,7 +16183,6 @@ msgstr ""
 
 #: src/Services/NotificationService.php:1028
 #: src/Services/NotificationService.php:1060
-#: templates/disputes/dispute-view.php:386
 msgid "Refund Amount:"
 msgstr ""
 
@@ -17314,7 +17300,6 @@ msgstr ""
 #. translators: %s: vendor or user display name
 #: templates/cart/cart.php:370
 #: templates/dashboard/sections/orders.php:264
-#: templates/disputes/dispute-view.php:122
 #: templates/order/order-confirmation.php:99
 #, php-format
 msgid "by %s"
@@ -17729,7 +17714,6 @@ msgid "Type your message..."
 msgstr ""
 
 #: templates/dashboard/sections/messages.php:105
-#: templates/disputes/dispute-view.php:334
 #: templates/order/conversation.php:286
 msgid "Attach files"
 msgstr ""
@@ -18176,140 +18160,6 @@ msgstr ""
 
 #: templates/dashboard/sections/services.php:334
 msgid "Service pages"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:55
-#: templates/disputes/dispute-view.php:56
-#: templates/order/conversation.php:47
-#: templates/order/order-view.php:80
-#: templates/order/order-view.php:81
-msgid "Deleted User"
-msgstr ""
-
-#. translators: %s: date
-#: templates/disputes/dispute-view.php:113
-#, php-format
-msgid "Opened on %s"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:139
-msgid "You and the other party can still resolve this between yourselves"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:140
-msgid "Add evidence and discuss the issue. Most disputes are resolved here without needing admin involvement."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:141
-msgid "If no resolution is reached within 7 days, this dispute can be escalated for admin review."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:146
-msgid "Awaiting the other party's response"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:147
-msgid "You've added your side. The other party has been notified and can add their own evidence and response."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:148
-msgid "You'll get an email when they reply, or when an admin intervenes if escalation happens."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:153
-msgid "Escalated to admin review"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:154
-msgid "A platform admin will review all the evidence from both sides and decide the outcome. You can still add evidence or comments while review is ongoing."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:155
-msgid "Admin decisions are final and typically arrive within 3 to 7 business days. Both parties will be emailed the resolution."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:160
-msgid "Dispute resolved"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:161
-msgid "The resolution is documented below. Any refund or commission adjustment has been processed."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:167
-msgid "Dispute closed"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:168
-msgid "This dispute is no longer active. Records remain available for reference."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:210
-msgid "Dispute Reason"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:224
-msgid "Evidence & Messages"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:231
-msgid "No evidence has been submitted yet."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:262
-msgid "Admin"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:342
-msgid "Add a message or describe your evidence..."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:354
-msgid "You can attach files as evidence to support your case."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:363
-msgid "This dispute has been resolved. You can no longer submit evidence."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:365
-msgid "This dispute has been closed."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:367
-msgid "You cannot submit evidence at this time."
-msgstr ""
-
-#: templates/disputes/dispute-view.php:381
-msgid "Decision:"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:392
-msgid "Notes:"
-msgstr ""
-
-#. translators: %s: date
-#: templates/disputes/dispute-view.php:401
-#, php-format
-msgid "Resolved on %s"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:466
-msgid "Participants"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:472
-#: templates/order/conversation.php:155
-#: templates/order/order-view.php:611
-msgid "Buyer"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:488
-msgid "Status History"
-msgstr ""
-
-#: templates/disputes/dispute-view.php:1269
-msgid "Failed to submit evidence."
 msgstr ""
 
 #. translators: %s: recipient name
@@ -19471,6 +19321,17 @@ msgstr ""
 
 #: templates/myaccount/vendor-services.php:79
 msgid "orders"
+msgstr ""
+
+#: templates/order/conversation.php:47
+#: templates/order/order-view.php:80
+#: templates/order/order-view.php:81
+msgid "Deleted User"
+msgstr ""
+
+#: templates/order/conversation.php:155
+#: templates/order/order-view.php:611
+msgid "Buyer"
 msgstr ""
 
 #: templates/order/conversation.php:190
