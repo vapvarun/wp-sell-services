@@ -105,9 +105,14 @@ Natural groups:
    with 200 proposals now sends 200 notifications **and** 200 emails at once.
    Acceptable, in-app only, or batched?
 2. **Push notifications (10154920673)** — Free or Pro? Blocked until decided.
-3. **Release exposure.** Latest tag is still **`v1.4.0`**. Commit `631e711`,
-   which fixes three shipped fatals including a customer's, is in **no release**.
-   Customers stay exposed until 1.6.0 ships. Cut a `v1.4.1` hotfix, or wait?
+3. ~~**Release exposure** — hotfix or wait?~~ **DECIDED 2026-08-17: no hotfix.
+   1.6.0 is the release vehicle.** Do not cut `v1.4.1`.
+
+   Consequence to hold onto: the latest tag is still `v1.4.0`, so the three
+   shipped fatals fixed in `631e711` — including the customer-reported one —
+   stay live for customers **until 1.6.0 ships**. That makes shipping 1.6.0 the
+   priority, not an open-ended bug sweep. Bank the fixes that are done rather
+   than widening scope.
 4. **Cart link default** — currently off. Flip to on when the site has zero
    published WooCommerce products? (One-line change; I kept it off because
    "no products today" isn't proof of none tomorrow.)
