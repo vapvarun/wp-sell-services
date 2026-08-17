@@ -1723,18 +1723,6 @@ parameters:
 			path: src/Database/MigrationManager.php
 
 		-
-			message: '#^Method WPSellServices\\Database\\Repositories\\ConversationRepository\:\:add_message\(\) has parameter \$attachments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Database/Repositories/ConversationRepository.php
-
-		-
-			message: '#^Method WPSellServices\\Database\\Repositories\\ConversationRepository\:\:create_conversation\(\) has parameter \$participants with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Database/Repositories/ConversationRepository.php
-
-		-
 			message: '#^Method WPSellServices\\Database\\Repositories\\DisputeRepository\:\:count_by_status\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

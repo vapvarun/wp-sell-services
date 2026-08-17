@@ -745,16 +745,40 @@
 	height: 48px;
 }
 
+/*
+ * Unread count bubble on the conversation avatar.
+ *
+ * This was a 12px dot with `text-indent: -999999px`, so the template rendered
+ * the unread COUNT and the stylesheet pushed it off screen. The row then read
+ * "Ella Martinez / • / You: First draft is on the way..." - a dot beside a
+ * preview of your OWN last message, with no number anywhere to say that the
+ * unread messages are the older ones from the other party. That is what was
+ * reported as "unread dots" on own outbound (Basecamp 10208075268); the count
+ * itself was always correct, it was simply invisible.
+ *
+ * Now it shows the number, like every other messaging product. Sized from the
+ * text rather than fixed, so 1, 2 or "9+" all fit; min-width keeps a single
+ * digit circular. `inset-inline-end` instead of `right` so RTL mirrors.
+ */
 .wpss-conversation-card__badge {
 	position: absolute;
-	top: 0;
-	left: 0;
-	width: 12px;
-	height: 12px;
+	top: -4px;
+	inset-inline-end: -4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
 	background: var(--wpss-primary);
 	border: 2px solid var(--wpss-white, #fff);
-	border-radius: 50%;
-	text-indent: -999999px;
+	border-radius: 9px;
+	color: var(--wpss-white, #fff);
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
 }
 
 .wpss-conversation-card__content {

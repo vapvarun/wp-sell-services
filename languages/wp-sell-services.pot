@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-17T10:43:14+00:00\n"
+"POT-Creation-Date: 2026-08-17T11:07:22+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -272,7 +272,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:969
 #: src/Frontend/SingleServiceView.php:147
-#: templates/dashboard/sections/messages.php:133
+#: templates/dashboard/sections/messages.php:163
 msgid "Sending..."
 msgstr ""
 
@@ -842,7 +842,7 @@ msgstr ""
 #. translators: %s: order number
 #: src/Admin/Admin.php:1685
 #: src/Frontend/Shortcodes.php:984
-#: templates/dashboard/sections/messages.php:297
+#: templates/dashboard/sections/messages.php:332
 #: templates/emails/cancellation-requested.php:69
 #: templates/emails/delivery-ready.php:63
 #: templates/emails/dispute-opened.php:77
@@ -968,7 +968,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:1911
 #: src/Admin/Admin.php:2409
-#: templates/dashboard/sections/messages.php:74
+#: templates/dashboard/sections/messages.php:104
 msgid "No messages yet."
 msgstr ""
 
@@ -3305,7 +3305,7 @@ msgstr ""
 #: src/Admin/Pages/SetupWizardPage.php:688
 #: src/Frontend/Tour.php:356
 #: src/Frontend/Tour.php:488
-#: templates/dashboard/sections/messages.php:65
+#: templates/dashboard/sections/messages.php:95
 msgid "Back"
 msgstr ""
 
@@ -8634,7 +8634,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:816
 #: src/Frontend/AjaxHandlers.php:867
 #: src/Frontend/Frontend.php:271
-#: templates/dashboard/sections/messages.php:164
+#: templates/dashboard/sections/messages.php:194
 #: templates/order/conversation.php:531
 msgid "Failed to send message."
 msgstr ""
@@ -8903,9 +8903,9 @@ msgid "Inquiry about \"%s\""
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:2339
-#: templates/dashboard/sections/messages.php:58
-#: templates/dashboard/sections/messages.php:307
-#: templates/dashboard/sections/messages.php:360
+#: templates/dashboard/sections/messages.php:88
+#: templates/dashboard/sections/messages.php:342
+#: templates/dashboard/sections/messages.php:429
 msgid "Direct Message"
 msgstr ""
 
@@ -9158,8 +9158,8 @@ msgstr ""
 
 #: src/Frontend/Frontend.php:258
 #: templates/dashboard/sections/disputes.php:200
-#: templates/dashboard/sections/messages.php:111
-#: templates/dashboard/sections/messages.php:168
+#: templates/dashboard/sections/messages.php:141
+#: templates/dashboard/sections/messages.php:198
 msgid "Send"
 msgstr ""
 
@@ -12195,7 +12195,7 @@ msgid "Member"
 msgstr ""
 
 #: src/functions/moderation.php:120
-#: templates/dashboard/sections/messages.php:99
+#: templates/dashboard/sections/messages.php:129
 #: templates/order/conversation.php:292
 #: templates/order/tip-view.php:127
 msgid "Message"
@@ -17742,46 +17742,62 @@ msgstr ""
 msgid "Remove %s from favorites"
 msgstr ""
 
-#: templates/dashboard/sections/messages.php:100
+#: templates/dashboard/sections/messages.php:130
 #: templates/order/conversation.php:296
 msgid "Type your message..."
 msgstr ""
 
-#: templates/dashboard/sections/messages.php:105
+#: templates/dashboard/sections/messages.php:135
 #: templates/order/conversation.php:286
 msgid "Attach files"
 msgstr ""
 
-#: templates/dashboard/sections/messages.php:190
+#: templates/dashboard/sections/messages.php:220
 msgid "Conversation not found or you do not have permission to view it."
 msgstr ""
 
-#: templates/dashboard/sections/messages.php:191
+#: templates/dashboard/sections/messages.php:221
 msgid "Back to Messages"
 msgstr ""
 
 #. translators: %d: number of unread messages
-#: templates/dashboard/sections/messages.php:201
+#: templates/dashboard/sections/messages.php:231
 #, php-format
 msgid "You have %d unread message."
 msgid_plural "You have %d unread messages."
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/dashboard/sections/messages.php:213
+#: templates/dashboard/sections/messages.php:243
 #: templates/order/conversation.php:186
 msgid "No messages yet"
 msgstr ""
 
-#: templates/dashboard/sections/messages.php:214
+#: templates/dashboard/sections/messages.php:244
 msgid "Your conversations with buyers and sellers will appear here."
 msgstr ""
 
-#: templates/dashboard/sections/messages.php:345
+#. translators: 1: number of unread messages, 2: other participant's name
+#: templates/dashboard/sections/messages.php:384
+#, php-format
+msgid "%1$d unread message from %2$s"
+msgid_plural "%1$d unread messages from %2$s"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of unread messages
+#: templates/dashboard/sections/messages.php:390
+#, php-format
+msgid "%d unread message"
+msgid_plural "%d unread messages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: templates/dashboard/sections/messages.php:414
 msgid "You: "
 msgstr ""
 
-#: templates/dashboard/sections/messages.php:354
+#: templates/dashboard/sections/messages.php:423
 msgid "No messages yet — say hello"
 msgstr ""
 
