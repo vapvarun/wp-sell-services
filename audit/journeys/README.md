@@ -47,13 +47,31 @@ check. `wpss_user_can_view_order()` is the correct participant check; there are
 
 | File | Covers | Status |
 |---|---|---|
-| `01-buyer-hires-seller.md` | request → proposal → hire → pay | **step 7 fails** (card 10208094640) |
+| `01-buyer-hires-seller.md` | request → proposal → hire → pay | passes (step 7 fixed in `7deda27`) |
 | `02-dispute.md` | open → both parties reply → admin reads → back to order | passes |
 | `03-install-and-upgrade.md` | activation, pages, settings, preflight | passes |
 | `04-vendor-discovery.md` | directory → profile → service | passes |
+| `05-vendor-creates-a-service.md` | wizard: categories, checklist, admin access | passes |
+| `06-standalone-checkout.md` | container, 390px, guest account, offline method | passes |
+| `07-service-page-media.md` | gallery: image first, video thumb, no render writes | passes |
+| `08-mobile-app-session.md` | login, token expiry, revoke, payload contract | passes |
 
 ## Not yet written
 
 Worth adding as the remaining cards are cleared: messages/unread, review
 submission and display, withdrawal + payout, milestone contracts, extensions,
 and the three non-standalone rails (WooCommerce, EDD, FluentCart).
+
+## Two things these journeys have taught, the hard way
+
+**A browser is not the only environment that lies.** Journey 08 is walked over
+HTTP rather than through `wp eval` because `rest_do_request()` neither defines
+`REST_REQUEST` nor runs `rest_post_dispatch` — so application-password
+authentication and `_fields` filtering both behave differently there. Two
+security findings were verified as "safe" from WP-CLI and were not.
+
+**Demo data is test coverage.** Journey 05 could not fail on a default install
+until the seeder built a category hierarchy, because every branch it exercises
+only runs when a child term exists. Before writing a journey, check the seeded
+dataset can actually reach the state it describes — otherwise it passes by
+walking past the code.

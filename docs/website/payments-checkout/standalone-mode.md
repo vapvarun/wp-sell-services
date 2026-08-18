@@ -30,6 +30,30 @@ Choose WooCommerce mode if you need access to 100+ payment gateways, WooCommerce
 
 Buyers can purchase services from multiple vendors in a single checkout. Each service becomes its own separate order with independent delivery tracking.
 
+## Letting Buyers Create an Account at Checkout
+
+By default a buyer must sign in before paying. On a marketplace selling to people
+who have never visited before, that sign-in wall is where a good number of them
+leave.
+
+Turn on **Sell Services > Settings > General > Account at checkout** and
+the wall goes away: the buyer fills in the billing details they were going to
+fill in anyway, and their account is created from those when they pay. They are
+signed in immediately afterwards.
+
+**There is no guest order.** After paying, a buyer has to submit requirements,
+message the seller, review the delivery, possibly request a revision or open a
+dispute -- every one of those needs an identity. An order with no owner could not
+be fulfilled, and could be read by any logged-out visitor. So the account is
+created rather than skipped.
+
+No new fields appear at checkout. Name and email are already required billing
+fields, which is exactly what an account needs.
+
+**Off by default.** Turning it on means anyone who completes a checkout gets a
+WordPress user account, which is a decision for the site owner rather than
+something to inherit silently.
+
 ## Setting Up Standalone Mode
 
 1. Go to **Sell Services > Settings > General**
