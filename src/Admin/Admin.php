@@ -2595,17 +2595,17 @@ class Admin {
 		require_once $cli_file;
 		$commands = new \WPSellServices\CLI\ServiceCommands();
 
-		// Use reflection to access the private templates and create_service method.
+		/*
+		 * Reflection reaches the private templates and the create_service
+		 * method. No setAccessible( true ) calls: they have done nothing since
+		 * PHP 8.1, which is this plugin's minimum, and PHP 8.5 deprecates them.
+		 */
 		$ref_class     = new \ReflectionClass( $commands );
 		$ref_templates = $ref_class->getProperty( 'service_templates' );
-		$ref_templates->setAccessible( true );
-		$templates = $ref_templates->getValue( $commands );
+		$templates     = $ref_templates->getValue( $commands );
 
-		$ref_create = $ref_class->getMethod( 'create_service' );
-		$ref_create->setAccessible( true );
-
+		$ref_create    = $ref_class->getMethod( 'create_service' );
 		$ref_variation = $ref_class->getMethod( 'apply_variation' );
-		$ref_variation->setAccessible( true );
 
 		// Create categories first.
 		$categories = array_unique( array_column( $templates, 'category' ) );
