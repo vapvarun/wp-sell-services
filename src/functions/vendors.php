@@ -614,3 +614,41 @@ function wpss_prime_vendor_card_caches( array $vendor_ids ): void {
 		_prime_post_caches( $avatar_ids, false, true );
 	}
 }
+
+/**
+ * Whether a member is exempt from vendor selling limits.
+ *
+ * The site owner is not one of their own subscribers. An administrator seeding
+ * demo content, importing a catalogue, or building services for a client met
+ * their own paywall: the create-service wizard rendered "You have reached your
+ * service limit" and POST /wpss/v1/services answered 403, with no admin-side
+ * explanation of why (Basecamp 10212521285).
+ *
+ * ONE definition, because there are TWO independent limit gates on
+ * `wpss_vendor_can_create_service` - this plugin's per-profile maximum at
+ * priority 10, and Pro's subscription plan limit at priority 20. The card was
+ * filed against Pro's, but a fix there alone would still leave an owner blocked
+ * by this plugin's gate, which runs first. Both call this.
+ *
+ * @since 1.6.0
+ *
+ * @param int $user_id Member being checked.
+ * @return bool True when selling limits do not apply to this member.
+ */
+function wpss_member_bypasses_limits( int $user_id ): bool {
+	$bypasses = $user_id > 0 && user_can( $user_id, 'manage_options' );
+
+	/**
+	 * Filter whether a member is exempt from vendor selling limits.
+	 *
+	 * Defaults to site administrators. Metering admins is a legitimate product
+	 * choice, but it has to be a deliberate one - returning false here restores
+	 * the behaviour of an owner being blocked by their own marketplace.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param bool $bypasses Whether limits are waived for this member.
+	 * @param int  $user_id  Member being checked.
+	 */
+	return (bool) apply_filters( 'wpss_member_bypasses_limits', $bypasses, $user_id );
+}

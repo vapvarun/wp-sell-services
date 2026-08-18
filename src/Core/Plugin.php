@@ -1684,6 +1684,13 @@ final class Plugin {
 					return false;
 				}
 
+				// The site owner is not bound by the marketplace's own selling
+				// limits. Shared with Pro's plan enforcer, which gates the same
+				// filter at priority 20 (Basecamp 10212521285).
+				if ( wpss_member_bypasses_limits( $vendor_id ) ) {
+					return true;
+				}
+
 				$vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
 				if ( $vendor_profile && $vendor_profile->has_reached_service_limit() ) {
 					return false;
