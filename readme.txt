@@ -297,6 +297,7 @@ Security fixes for the mobile sign-in, a marketplace that credits vendors on eve
 * Improve  - Losing bidders on a buyer request are told in the app rather than by email, so deciding a busy request no longer sends a burst of rejections.
 * Improve  - The dashboard messages list is paginated, so a member with many conversations no longer loads all of them at once.
 * Improve  - SureCart is no longer advertised in Settings or on the Upgrade page, which described an integration Pro does not include.
+* Fix      - Vendors could not submit a fixed-price proposal. A hidden milestone field was marked required, so the browser blocked the form and reported nothing the vendor could see.
 * Fix      - Orders placed before this release could show the wrong package name and price once a service was edited. Existing orders are repaired on update using what the buyer actually paid.
 * Fix      - The category archive listed buyer requests alongside services.
 * Fix      - Pages with the same title could not be told apart in the Pages settings dropdowns.
