@@ -19,21 +19,21 @@ $gallery_raw = get_post_meta( $service_id, '_wpss_gallery', true );
 $gallery_ids = wpss_get_gallery_ids( $gallery_raw );
 
 /*
- * Resolve the video URL WITHOUT writing anything.
+ * Resolve the video URL from the gallery, and write nothing.
  *
  * This block used to call update_post_meta() on every render, so every
  * anonymous GET of a single-service page wrote a row - cache-hostile, and two
  * simultaneous visitors raced each other over the same value. A template is a
- * read surface; extraction belongs at save time.
+ * read surface.
  *
- * Both sources are read here so behaviour is unchanged for services whose video
- * only ever lived in the gallery meta and was relying on that write to appear.
+ * `_wpss_video_url` is deliberately NOT read. That key had exactly one writer -
+ * the render-time write removed above - and it derived its value from this same
+ * gallery meta, so it can never hold anything the gallery does not. What it CAN
+ * hold is a stale value: a vendor who removes the video from their gallery
+ * would still have the old row, and reading it first would keep showing a video
+ * they deleted. One source of truth is both simpler and more correct.
  */
-$video_url = (string) get_post_meta( $service_id, '_wpss_video_url', true );
-
-if ( '' === $video_url ) {
-	$video_url = (string) wpss_get_gallery_video_url( $gallery_raw );
-}
+$video_url = (string) wpss_get_gallery_video_url( $gallery_raw );
 
 $has_thumbnail = has_post_thumbnail( $service_id );
 
