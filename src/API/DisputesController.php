@@ -605,6 +605,23 @@ class DisputesController extends RestController {
 		$dispute_id = (int) $request->get_param( 'id' );
 		$timeline   = $this->workflow_manager->get_timeline( $dispute_id );
 
+		/*
+		 * The workflow manager returns raw table rows, so its dates arrive as
+		 * MySQL datetimes. Converted at the REST boundary - the wire format is
+		 * this layer's concern (Basecamp 10154919636).
+		 */
+		foreach ( $timeline as $index => $entry ) {
+			$entry = (array) $entry;
+
+			foreach ( array( 'created_at', 'updated_at' ) as $date_key ) {
+				if ( array_key_exists( $date_key, $entry ) ) {
+					$entry[ $date_key ] = wpss_rest_date( $entry[ $date_key ] );
+				}
+			}
+
+			$timeline[ $index ] = $entry;
+		}
+
 		return new WP_REST_Response( $timeline );
 	}
 

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-18T06:35:43+00:00\n"
+"POT-Creation-Date: 2026-08-18T06:41:02+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -2222,7 +2222,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/Admin/Pages/AuditLogPage.php:371
-#: src/API/ConversationsController.php:688
+#: src/API/ConversationsController.php:698
 #: src/Models/Message.php:146
 #: src/Models/Message.php:170
 #: src/Services/DisputeWorkflowManager.php:1057
@@ -6378,9 +6378,9 @@ msgid "Proposal rejected."
 msgstr ""
 
 #: src/API/BuyerRequestsController.php:851
-#: src/API/ConversationsController.php:712
-#: src/API/DisputesController.php:816
-#: src/API/NotificationsController.php:307
+#: src/API/ConversationsController.php:723
+#: src/API/DisputesController.php:833
+#: src/API/NotificationsController.php:314
 #: src/API/OrdersController.php:99
 #: src/API/ProposalsController.php:629
 #: src/API/ReviewsController.php:1069
@@ -6391,10 +6391,10 @@ msgid "Current page."
 msgstr ""
 
 #: src/API/BuyerRequestsController.php:857
-#: src/API/ConversationsController.php:718
-#: src/API/DisputesController.php:822
+#: src/API/ConversationsController.php:729
+#: src/API/DisputesController.php:839
 #: src/API/MediaController.php:63
-#: src/API/NotificationsController.php:312
+#: src/API/NotificationsController.php:319
 #: src/API/OrdersController.php:105
 #: src/API/PortfolioController.php:104
 #: src/API/ProposalsController.php:635
@@ -6555,11 +6555,11 @@ msgstr ""
 msgid "Evidence added successfully."
 msgstr ""
 
-#: src/API/DisputesController.php:677
+#: src/API/DisputesController.php:694
 msgid "Failed to resolve dispute."
 msgstr ""
 
-#: src/API/DisputesController.php:685
+#: src/API/DisputesController.php:702
 msgid "Dispute resolved successfully."
 msgstr ""
 
@@ -6763,11 +6763,11 @@ msgstr ""
 msgid "Notification not found."
 msgstr ""
 
-#: src/API/NotificationsController.php:318
+#: src/API/NotificationsController.php:325
 msgid "Filter by notification type."
 msgstr ""
 
-#: src/API/NotificationsController.php:322
+#: src/API/NotificationsController.php:329
 msgid "Filter by read status."
 msgstr ""
 

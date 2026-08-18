@@ -454,3 +454,41 @@ function wpss_rest_date( $value ): ?string {
 		return null;
 	}
 }
+
+/**
+ * Normalise any date-looking values inside a free-form payload.
+ *
+ * For blobs the API does not own the shape of - a notification's `data` column
+ * holds whatever the producing service chose to store, and some producers store
+ * a raw MySQL datetime. A client should not have to parse dates one way in the
+ * payload and another inside a nested blob.
+ *
+ * Only keys that NAME a date are touched, and only when the value actually
+ * looks like a MySQL datetime, so a field that happens to hold similar text is
+ * left alone.
+ *
+ * @since 1.6.0
+ *
+ * @param array<string, mixed> $data Arbitrary stored data.
+ * @return array<string, mixed>
+ */
+function wpss_rest_normalise_dates( array $data ): array {
+	foreach ( $data as $key => $value ) {
+		if ( is_array( $value ) ) {
+			$data[ $key ] = wpss_rest_normalise_dates( $value );
+			continue;
+		}
+
+		if ( ! is_string( $value ) || ! is_string( $key ) ) {
+			continue;
+		}
+
+		$looks_like_a_date = (bool) preg_match( '/(_at|_on|_deadline|_date|date|since|expires)$/i', $key );
+
+		if ( $looks_like_a_date && preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value ) ) {
+			$data[ $key ] = wpss_rest_date( $value );
+		}
+	}
+
+	return $data;
+}

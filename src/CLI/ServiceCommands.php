@@ -2050,4 +2050,5 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'wpss test:flow', TestFlowCommand::class, array( 'shortdesc' => 'Run end-to-end data flow tests.' ) );
 	WP_CLI::add_command( 'wpss scale', ScaleCommand::class, array( 'shortdesc' => 'Seed, benchmark and teardown a production-shape scale dataset.' ) );
 	WP_CLI::add_command( 'wpss rest:contract', RestContractCommand::class, array( 'shortdesc' => 'Assert the REST 401/403/404 contract the client depends on.' ) );
+	WP_CLI::add_command( 'wpss api:shapes', array( ApiShapeCommand::class, 'shapes' ), array( 'shortdesc' => 'Audit every GET payload for ISO dates and the shared actor shape.' ) );
 }

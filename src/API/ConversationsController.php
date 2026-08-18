@@ -682,13 +682,24 @@ class ConversationsController extends RestController {
 		return array(
 			'id'          => (int) $message->id,
 			'type'        => $message->type ?? 'text',
-			'sender'      => array(
-				'id'     => (int) $message->sender_id,
-				'name'   => 0 === (int) $message->sender_id
-					? __( 'System', 'wp-sell-services' )
-					: wpss_get_member_display_name( (int) $message->sender_id ),
-				'avatar' => $message->sender_id ? get_avatar_url( $message->sender_id, array( 'size' => 48 ) ) : '',
-			),
+			/*
+			 * The shared actor shape for a real sender, and the System shape kept
+			 * for sender_id 0 - wpss_rest_user() returns null there, and a client
+			 * rendering a thread needs an object either way.
+			 *
+			 * `deleted` matters here for the same reason it does on an order: a
+			 * conversation outlives the people in it, and a thread has to
+			 * distinguish "this member's account is gone" from "the system said
+			 * this" (Basecamp 10154919636).
+			 */
+			'sender'      => 0 === (int) $message->sender_id
+				? array(
+					'id'      => 0,
+					'name'    => __( 'System', 'wp-sell-services' ),
+					'avatar'  => '',
+					'deleted' => false,
+				)
+				: wpss_rest_user( (int) $message->sender_id ),
 			'content'     => $message->content ?? '',
 			'attachments' => $attachments,
 			'is_read'     => $is_read,

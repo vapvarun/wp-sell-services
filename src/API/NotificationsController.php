@@ -287,7 +287,14 @@ class NotificationsController extends RestController {
 			'type'       => $notification['type'],
 			'title'      => NotificationMessage::to_plain( (string) ( $notification['title'] ?? '' ) ),
 			'message'    => NotificationMessage::to_plain( (string) ( $notification['message'] ?? '' ) ),
-			'data'       => $data ?: array(),
+			/*
+			 * `data` is whatever the producer stored, so it carries raw MySQL
+			 * datetimes - a dispute notification ships response_deadline. A
+			 * client should not have to parse dates one way in the payload and
+			 * another inside this blob, so known date keys are normalised on the
+			 * way out. Unknown keys are left exactly as stored.
+			 */
+			'data'       => $data ? wpss_rest_normalise_dates( $data ) : array(),
 			'is_read'    => (bool) $notification['is_read'],
 			// ISO-8601 through the shared formatter, like every other endpoint.
 			// This shipped the raw MySQL string, so a client had to keep a second
