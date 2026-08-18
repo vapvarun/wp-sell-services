@@ -618,7 +618,24 @@ do_action( 'wpss_before_single_request', $request_id );
 					<div class="wpss-milestone-row" data-milestone-row>
 						<div class="wpss-milestone-row__head">
 							<span class="wpss-milestone-row__num" data-milestone-num>1.</span>
-							<input type="text" class="wpss-form-input wpss-milestone-row__title" name="milestones[__INDEX__][title]" placeholder="<?php esc_attr_e( 'Phase title (e.g. Wireframes)', 'wp-sell-services' ); ?>" required>
+							<?php
+							/*
+							 * No `required` here on purpose.
+							 *
+							 * This row is cloned into a pane that is HIDDEN whenever the
+							 * vendor is proposing a fixed price, and a hidden required
+							 * field fails HTML5 validation on a control the browser
+							 * cannot focus or show a message on - so the form silently
+							 * refuses to submit and logs "An invalid form control with
+							 * name='milestones[0][title]' is not focusable."
+							 *
+							 * `required` is owned by WPSS.applyContractToggle(), which is
+							 * the only code that knows which pane is active. Asserting it
+							 * here as well made two writers for one property, and they
+							 * disagreed the moment a row existed before the toggle ran.
+							 */
+							?>
+							<input type="text" class="wpss-form-input wpss-milestone-row__title" name="milestones[__INDEX__][title]" placeholder="<?php esc_attr_e( 'Phase title (e.g. Wireframes)', 'wp-sell-services' ); ?>">
 							<button type="button" class="wpss-milestone-row__remove" data-remove-milestone aria-label="<?php esc_attr_e( 'Remove phase', 'wp-sell-services' ); ?>">&times;</button>
 						</div>
 						<textarea class="wpss-form-textarea wpss-milestone-row__desc" rows="2" name="milestones[__INDEX__][description]" placeholder="<?php esc_attr_e( 'What the buyer is paying for in this phase', 'wp-sell-services' ); ?>"></textarea>

@@ -1513,12 +1513,22 @@
 	 * so the server receives a clean indexed array on submit.
 	 */
 	WPSS.addMilestoneRow = function() {
-		const $rows = $('#wpss-proposal-modal [data-milestone-rows]');
-		const $tpl  = $('#wpss-proposal-modal template[data-milestone-row-template]');
+		const $modal = $('#wpss-proposal-modal');
+		const $rows = $modal.find('[data-milestone-rows]');
+		const $tpl  = $modal.find('template[data-milestone-row-template]');
 		if (!$rows.length || !$tpl.length) return;
 		const html = $tpl.html();
 		$rows.append(html);
 		WPSS.renumberMilestoneRows();
+		/*
+		 * A row that appears AFTER the toggle last ran is a row the toggle
+		 * never saw. initContractToggle() applies the toggle and then seeds
+		 * the first row, so that seeded row was always missed - and every
+		 * later row would be too. Re-applying here makes the toggle the single
+		 * authority over `required` for rows that exist at any moment, rather
+		 * than only the ones present when the pane last changed.
+		 */
+		WPSS.applyContractToggle($modal.find('input[name="contract_type"]:checked').val() || 'fixed');
 	};
 
 	WPSS.renumberMilestoneRows = function() {
