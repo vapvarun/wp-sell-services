@@ -314,16 +314,15 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 			 * the rest of the plugin already uses - one definition, not a second
 			 * one invented for this route.
 			 *
-			 * Where a theme DOES provide a container this nests inside it, which
-			 * costs one extra gutter: measured on BuddyX free, content goes from
-			 * 1170px to 1100px at desktop and carries 70px of total gutter at
-			 * 390px rather than 30px. That is a real but small cost, and it buys
-			 * a checkout that cannot go full-bleed on any theme. Left as the
-			 * trade-off rather than trying to detect an ancestor container,
-			 * which CSS cannot ask for and which would guess wrong somewhere.
+			 * Where a theme DOES provide a container, ours stands down rather
+			 * than nesting inside it and adding a second gutter - the theme's
+			 * width wins on its own site. CSS cannot ask whether an ancestor is
+			 * already constraining, so WPSS.relaxRedundantContainer() walks the
+			 * real ancestors on load, the same approach enableSticky() takes.
+			 * data-wpss-auto-container is what marks this one as ours to relax.
 			 */
 			?>
-			<div class="wpss-container">
+			<div class="wpss-container" data-wpss-auto-container>
 				<article class="wpss-standalone-page">
 					<header class="entry-header">
 						<h1 class="entry-title"><?php echo esc_html( $title ); ?></h1>

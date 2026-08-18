@@ -119,6 +119,39 @@ do_action( 'wpss_before_service_gallery', $service_id );
 	?>
 	<?php if ( $wpss_thumb_count > 1 ) : ?>
 		<div class="wpss-gallery-thumbs">
+			<?php if ( '' !== $video_url ) : ?>
+				<?php
+				/*
+				 * The video leads the strip. It is the seller's pitch, and it is
+				 * what a marketplace shows first - the main area still opens on
+				 * the image, so the active thumb is the second one. Owner
+				 * decision, 2026-08-18.
+				 *
+				 * The poster is the PROVIDER's own frame. Reusing the service's
+				 * featured image made this button pixel-identical to the first
+				 * image thumb next to it, so nothing but the play badge said
+				 * which one was the video. Falls back to the featured image only
+				 * when the provider offers no poster.
+				 */
+				$wpss_video_poster = wpss_get_video_thumbnail_url( $video_url );
+
+				if ( '' === $wpss_video_poster ) {
+					$wpss_video_poster = has_post_thumbnail( $service_id )
+						? get_the_post_thumbnail_url( $service_id, 'thumbnail' )
+						: wp_get_attachment_image_url( $first_image, 'thumbnail' );
+				}
+				?>
+				<button type="button"
+						class="wpss-gallery-thumb wpss-gallery-thumb--video"
+						data-video="1"
+						aria-label="<?php esc_attr_e( 'Play the service video', 'wp-sell-services' ); ?>">
+					<img src="<?php echo esc_url( (string) $wpss_video_poster ); ?>" alt="" loading="lazy">
+					<span class="wpss-gallery-thumb__play" aria-hidden="true">
+						<i data-lucide="play"></i>
+					</span>
+				</button>
+			<?php endif; ?>
+
 			<?php foreach ( $gallery_ids as $index => $image_id ) : ?>
 				<button type="button"
 						class="wpss-gallery-thumb <?php echo 0 === $index ? 'active' : ''; ?>"
@@ -128,29 +161,6 @@ do_action( 'wpss_before_service_gallery', $service_id );
 						alt="<?php echo esc_attr( get_the_title() . ' - ' . ( $index + 1 ) ); ?>">
 				</button>
 			<?php endforeach; ?>
-
-			<?php if ( '' !== $video_url ) : ?>
-				<?php
-				/*
-				 * Appended rather than placed first: the main area shows image
-				 * one on load, and a strip whose first thumb is not the active
-				 * one reads as broken. Move it with wpss_gallery_video_thumb_first
-				 * if a site prefers the video leading.
-				 */
-				$wpss_video_poster = has_post_thumbnail( $service_id )
-					? get_the_post_thumbnail_url( $service_id, 'thumbnail' )
-					: wp_get_attachment_image_url( $first_image, 'thumbnail' );
-				?>
-				<button type="button"
-						class="wpss-gallery-thumb wpss-gallery-thumb--video"
-						data-video="1"
-						aria-label="<?php esc_attr_e( 'Play the service video', 'wp-sell-services' ); ?>">
-					<img src="<?php echo esc_url( (string) $wpss_video_poster ); ?>" alt="">
-					<span class="wpss-gallery-thumb__play" aria-hidden="true">
-						<i data-lucide="play"></i>
-					</span>
-				</button>
-			<?php endif; ?>
 		</div>
 	<?php endif; ?>
 </div>

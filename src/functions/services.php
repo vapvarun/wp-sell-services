@@ -801,3 +801,58 @@ function wpss_get_category_service_counts( array $term_ids ): array {
 
 	return $counts;
 }
+
+/**
+ * The provider's own thumbnail for an embedded video.
+ *
+ * YouTube, Vimeo and the rest all publish a poster frame through oEmbed, and it
+ * is the right image for a video thumb: reusing the service's featured image
+ * made the video thumb look identical to the first image thumb beside it, so
+ * nothing on screen said "this one is the video" except the play badge.
+ *
+ * CACHED, deliberately. get_data() makes an HTTP request to the provider, and
+ * this runs while rendering a public page - an uncached call would put a
+ * third-party round trip in front of every visitor, which is a worse version of
+ * the render-time database write this same template just lost.
+ *
+ * Returns an empty string when the provider offers nothing, so callers can fall
+ * back to their own poster.
+ *
+ * @since 1.6.0
+ *
+ * @param string $video_url Video URL.
+ * @return string Thumbnail URL, or an empty string.
+ */
+function wpss_get_video_thumbnail_url( string $video_url ): string {
+	if ( '' === $video_url || ! function_exists( '_wp_oembed_get_object' ) ) {
+		return '';
+	}
+
+	$key    = 'wpss_video_thumb_' . md5( $video_url );
+	$cached = get_transient( $key );
+
+	// A miss and a known-empty answer are different: '' is cached too, so a URL
+	// the provider cannot poster does not re-ask on every page view.
+	if ( is_string( $cached ) ) {
+		return $cached;
+	}
+
+	$data      = _wp_oembed_get_object()->get_data( $video_url );
+	$thumbnail = ( is_object( $data ) && ! empty( $data->thumbnail_url ) )
+		? esc_url_raw( (string) $data->thumbnail_url )
+		: '';
+
+	/**
+	 * Filter how long a video's poster URL is cached.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param int    $ttl       Seconds. Default one week.
+	 * @param string $video_url The video URL.
+	 */
+	$ttl = (int) apply_filters( 'wpss_video_thumbnail_cache_ttl', WEEK_IN_SECONDS, $video_url );
+
+	set_transient( $key, $thumbnail, max( HOUR_IN_SECONDS, $ttl ) );
+
+	return $thumbnail;
+}

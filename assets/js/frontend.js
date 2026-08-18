@@ -2270,10 +2270,50 @@
 		});
 	};
 
+	/**
+	 * Stand our container down when the theme already has one.
+	 *
+	 * The standalone checkout wraps itself in .wpss-container because plenty of
+	 * themes never open a content wrapper on that route and the page would
+	 * otherwise run the full width of the viewport. But where a theme DOES
+	 * constrain, ours nests inside it and adds a second gutter for nothing -
+	 * measured at 1170px of content becoming 1100px, and 70px of gutter at
+	 * 390px instead of 30px. Owner decision, 2026-08-18: the theme's own
+	 * container wins wherever there is one.
+	 *
+	 * CSS cannot ask "is one of my ancestors already constraining me", so this
+	 * walks the real ancestors, the way enableSticky() above does. An ancestor
+	 * counts as constraining only if it is actually narrower than the page -
+	 * a max-width that never binds at this viewport is not doing anything, and
+	 * standing down for it would leave the checkout full-bleed after all.
+	 */
+	WPSS.relaxRedundantContainer = function() {
+		document.querySelectorAll('[data-wpss-auto-container]').forEach(function(el) {
+			var pageWidth = document.documentElement.clientWidth;
+			var node = el.parentElement;
+
+			while (node && node !== document.documentElement) {
+				var width = node.getBoundingClientRect().width;
+
+				// Narrower than the viewport by more than a scrollbar's worth
+				// means this ancestor is genuinely holding the content in.
+				if (width > 0 && width < pageWidth - 4) {
+					el.style.maxWidth = 'none';
+					el.style.paddingLeft = '0';
+					el.style.paddingRight = '0';
+					return;
+				}
+
+				node = node.parentElement;
+			}
+		});
+	};
+
 	// Initialize on DOM ready.
 	$(document).ready(function() {
 		WPSS.init();
 		WPSS.enableSticky();
+		WPSS.relaxRedundantContainer();
 		WPSS.syncStickyTop();
 
 		// Themes shrink their header on scroll and reflow it on resize, so the
