@@ -109,10 +109,28 @@ class UnifiedDashboard {
 		);
 		wp_style_add_data( 'wpss-unified-dashboard', 'rtl', 'replace' );
 
+		// The Messages section renders through wpss_render_message_row(), the
+		// same renderer the order conversation uses, so it needs the same
+		// stylesheet. That sheet used to be enqueued only from
+		// templates/order/conversation.php, which is why the dashboard thread
+		// could not simply reuse the renderer (Basecamp #10159632931).
+		wp_enqueue_style(
+			'wpss-messaging',
+			WPSS_PLUGIN_URL . 'assets/css/messaging.css',
+			array( 'wpss-design-system' ),
+			WPSS_VERSION
+		);
+		wp_style_add_data( 'wpss-messaging', 'rtl', 'replace' );
+
+		// wpss-ui provides window.wpssToast. The dashboard reports a saved
+		// profile through it, so declare the dependency rather than relying on
+		// some other surface having registered the handle first.
+		ScriptRegistry::register_ui();
+
 		ScriptRegistry::enqueue(
 			'wpss-unified-dashboard',
 			'assets/js/unified-dashboard.js',
-			array( 'jquery' )
+			array( 'jquery', ScriptRegistry::HANDLE_UI )
 		);
 
 		wp_localize_script(
@@ -144,7 +162,13 @@ class UnifiedDashboard {
 					'processing'             => __( 'Processing...', 'wp-sell-services' ),
 					'confirmDelete'          => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),
 					'pause'                  => __( 'Pause', 'wp-sell-services' ),
+					// The same button toggles between these two labels, but only
+					// 'pause' was ever sent -- so it read translated when paused and
+					// English when published. Both are sent now.
+					'publish'                => __( 'Publish', 'wp-sell-services' ),
 					'activate'               => __( 'Activate', 'wp-sell-services' ),
+					// Shown after a successful profile save.
+					'profileSaved'           => __( 'Profile updated successfully.', 'wp-sell-services' ),
 					'closeRequestConfirm'    => __( 'Close this request? It will no longer be visible to sellers.', 'wp-sell-services' ),
 					'reopenRequestConfirm'   => __( 'Reopen this request? It will be visible to sellers again.', 'wp-sell-services' ),
 					'deleteRequestConfirm'   => __( 'Delete this request permanently? This cannot be undone.', 'wp-sell-services' ),
@@ -194,7 +218,30 @@ class UnifiedDashboard {
 			return false;
 		}
 
-		return has_shortcode( $post->post_content, 'wpss_dashboard' );
+		// [wpss_account] renders this dashboard too - it is a thin wrapper that
+		// maps the legacy account pages onto our sections - so a page using it
+		// needs these assets just as much. Matching only [wpss_dashboard] left
+		// the wrapper rendering correct markup with no stylesheet: nav and stats
+		// came out as bare bullet lists. Caught in the browser; no PHP-level
+		// check would have shown it.
+		$shortcodes = array( 'wpss_dashboard', 'wpss_account' );
+
+		/**
+		 * Filters the shortcodes that make a page load the dashboard assets.
+		 *
+		 * @since 1.6.0
+		 *
+		 * @param string[] $shortcodes Shortcode tags.
+		 */
+		$shortcodes = (array) apply_filters( 'wpss_dashboard_asset_shortcodes', $shortcodes );
+
+		foreach ( $shortcodes as $tag ) {
+			if ( has_shortcode( $post->post_content, (string) $tag ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -489,16 +536,32 @@ class UnifiedDashboard {
 	private function render_login_prompt(): string {
 		$login_url = wp_login_url( get_permalink() ?: home_url() );
 
-		return sprintf(
+		/*
+		 * The heading is an H1, not an H2, and it has to be here.
+		 *
+		 * The dashboard is a plugin-shell surface, so ShellHeader suppresses the
+		 * theme's own <h1> in favour of the plugin's. The signed-in dashboard
+		 * renders one; this prompt did not, so once suppression started working a
+		 * logged-out visitor got a page with NO H1 at all — worse than the
+		 * duplicate that was reported (Basecamp 10208511245).
+		 *
+		 * Rendered through ShellHeader::render() rather than a hand-written <h1>,
+		 * so it is the same component, class names and styling as every other
+		 * plugin heading.
+		 */
+		return \WPSellServices\Frontend\ShellHeader::render(
+			array(
+				'title' => __( 'Access Your Dashboard', 'wp-sell-services' ),
+				'echo'  => false,
+			)
+		) . sprintf(
 			'<div class="wpss-dashboard-login">
 				<div class="wpss-dashboard-login__icon">
 					<i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 				</div>
-				<h2>%s</h2>
 				<p>%s</p>
 				<a href="%s" class="wpss-btn wpss-btn--primary">%s</a>
 			</div>',
-			esc_html__( 'Access Your Dashboard', 'wp-sell-services' ),
 			esc_html__( 'Please log in to view your orders, messages, and manage your services.', 'wp-sell-services' ),
 			esc_url( $login_url ),
 			esc_html__( 'Log In', 'wp-sell-services' )
@@ -919,7 +982,7 @@ class UnifiedDashboard {
 	/**
 	 * Show a payout setup banner if vendor has earnings but no payout method.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 *
 	 * @param int  $user_id   Current user ID.
 	 * @param bool $is_active Whether user is an active vendor.

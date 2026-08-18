@@ -118,7 +118,7 @@ class ExtensionRequest {
 	 * @param object $row Database row.
 	 * @return self
 	 */
-	public static function from_row( object $row ): self {
+	public static function from_db( object $row ): self {
 		$request = new self();
 
 		$request->id                = (int) $row->id;

@@ -876,6 +876,42 @@ article.wpss-service-card:hover {
 	border-color: var(--wpss-primary);
 }
 
+/* Video thumb: same tile as an image, with a play badge over it so it reads as
+   a video rather than a duplicate of the poster image. */
+.wpss-gallery-thumb--video {
+	position: relative;
+}
+
+.wpss-gallery-thumb__play {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--wpss-white);
+	background: rgb(0 0 0 / 45%);
+	pointer-events: none;
+}
+
+.wpss-gallery-thumb__play svg,
+.wpss-gallery-thumb__play i {
+	width: 22px;
+	height: 22px;
+}
+
+/* The main area holds the image and the video in the same box; whichever is
+   hidden must take no space, including against a theme that sets img{display}. */
+.wpss-gallery-active [hidden] {
+	display: none !important;
+}
+
+.wpss-gallery-video iframe,
+.wpss-gallery-video video {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	border: 0;
+}
+
 .wpss-gallery-thumb img {
 	width: 100%;
 	height: 100%;
@@ -1426,8 +1462,20 @@ article.wpss-service-card:hover {
 	background: var(--wpss-primary-light);
 }
 
-/* .wpss-stat-icon deliberately NOT styled here — admin-only component that
-   collided with Pro's analytics cards. See the LTR sheet for the detail. */
+/* .wpss-stat-icon deliberately NOT styled here.
+ *
+ * It is an ADMIN component - only ServiceMetabox and Admin.php render it, and
+ * admin.css already styles it. No frontend template uses the class at all, so
+ * this rule was dead on the frontend and did active harm: Pro's analytics stat
+ * cards use the same class name, and because both rules are a single class at
+ * equal specificity, whichever stylesheet loaded last won. frontend.css loads
+ * after analytics.css, so `background: var(--wpss-surface)` overrode Pro's
+ * colour tint and every analytics icon rendered as a bare glyph on white
+ * instead of the intended tinted square.
+ *
+ * If a frontend surface ever needs a stat icon, give it its own class rather
+ * than reviving this one.
+ */
 
 .wpss-stat-value {
 	display: block;
@@ -3758,4 +3806,232 @@ body.wpss-modal-active {
 }
 @media ( max-width: 640px ) {
 	.wpss-fullwidth-page { padding: var( --wpss-space-4, 16px ) var( --wpss-space-3, 12px ); }
+}
+
+/* ==========================================================================
+   Vendors grid ([wpss_vendors] / [wpss_top_vendors])
+   ==========================================================================
+   The grid container had NO styles at all. Both shortcodes fataled before
+   1.5.1, so the layout was never exercised and the missing CSS never showed:
+   the cards simply stacked full width and the wpss-columns-N class did
+   nothing. The card itself is templates/partials/vendor-card.php, whose rules
+   live in single-service.css - a stylesheet only enqueued on single service
+   pages, so on a page carrying the shortcode the card arrives unstyled.
+
+   Everything here is scoped under .wpss-vendors-grid so it cannot alter the
+   single-service sidebar card. Extracting the shared card rules into their own
+   stylesheet, enqueued by both surfaces, is the proper follow-up.
+   ========================================================================== */
+
+.wpss-vendors-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: var(--wpss-space-5, 24px);
+	align-items: stretch;
+}
+
+.wpss-vendors-grid.wpss-columns-2 { grid-template-columns: repeat(2, 1fr); }
+.wpss-vendors-grid.wpss-columns-3 { grid-template-columns: repeat(3, 1fr); }
+.wpss-vendors-grid.wpss-columns-4 { grid-template-columns: repeat(4, 1fr); }
+
+.wpss-vendors-grid .wpss-vendor-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wpss-space-3, 12px);
+	height: 100%;
+	padding: var(--wpss-space-4, 16px);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius-lg, 12px);
+	background: var(--wpss-background, #fff);
+}
+
+.wpss-vendors-grid .wpss-vendor-header {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-3, 12px);
+}
+
+.wpss-vendors-grid .wpss-vendor-avatar {
+	width: 48px;
+	height: 48px;
+	border-radius: var(--wpss-radius-full, 999px);
+}
+
+/* The stat block is a headline figure in the sidebar; in a tile it has to sit
+   inline or it dwarfs the card. */
+.wpss-vendors-grid .wpss-vendor-stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--wpss-space-3, 12px);
+	font-size: 0.875rem;
+}
+
+.wpss-vendors-grid .wpss-vendor-details {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: 0.8125rem;
+}
+
+.wpss-vendors-grid .wpss-vendor-details li {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 8px);
+}
+
+/* Push the action to the bottom so every tile's button lines up. */
+.wpss-vendors-grid .wpss-vendor-actions {
+	margin-block-start: auto;
+}
+
+@media (max-width: 782px) {
+	.wpss-vendors-grid,
+	.wpss-vendors-grid.wpss-columns-2,
+	.wpss-vendors-grid.wpss-columns-3,
+	.wpss-vendors-grid.wpss-columns-4 {
+		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	}
+}
+
+@media (max-width: 480px) {
+	.wpss-vendors-grid,
+	.wpss-vendors-grid.wpss-columns-2,
+	.wpss-vendors-grid.wpss-columns-3,
+	.wpss-vendors-grid.wpss-columns-4 {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ==========================================================================
+   Services grid + Categories grid — the columns attribute had no effect
+   ==========================================================================
+   Same defect the vendors grid above had, found by screenshotting the two
+   surfaces side by side: [wpss_services], [wpss_featured_services] and
+   [wpss_service_categories] all rendered ONE full-width column no matter what
+   columns="" was set to.
+
+   The cause is two vocabularies for the same idea. blocks.css styles the BLOCK
+   wrapper form - `.wpss-grid-cols-N .wpss-services-grid` and
+   `.wpss-grid-cols-N .wpss-categories-list` - while the grid element itself
+   carries `.wpss-columns-N`, which nothing ever styled. The service grid emits
+   identical markup from both surfaces (ServiceGrid.php and Shortcodes.php build
+   the same string), so both were stacked; only the block's own wrapper class
+   rescued it inside the editor's block markup.
+
+   Styling `.wpss-columns-N` on the grid element fixes every surface that emits
+   it at once, and leaves the block wrapper rules in blocks.css untouched.
+   Breakpoints mirror the vendors grid so the three behave identically.
+
+   Two different states, deliberately treated differently:
+
+   - `.wpss-services-grid` ALREADY has a working base in design-system.css
+     (display:grid, auto-fill minmax(280px, 1fr)). It was never stacked - it
+     just ignored columns="". So no base rule is restated here; doing so would
+     silently retune the archive's existing 280px track to something else.
+     Only the columns-N modifiers are added.
+   - `.wpss-categories-grid` had NO rule anywhere, which is the one that
+     actually rendered as a single full-width column. It gets the base too.
+   ========================================================================== */
+
+.wpss-categories-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: var(--wpss-space-5, 24px);
+	align-items: stretch;
+}
+
+.wpss-services-grid.wpss-columns-2,
+.wpss-categories-grid.wpss-columns-2 { grid-template-columns: repeat(2, 1fr); }
+.wpss-services-grid.wpss-columns-3,
+.wpss-categories-grid.wpss-columns-3 { grid-template-columns: repeat(3, 1fr); }
+.wpss-services-grid.wpss-columns-4,
+.wpss-categories-grid.wpss-columns-4 { grid-template-columns: repeat(4, 1fr); }
+.wpss-services-grid.wpss-columns-5,
+.wpss-categories-grid.wpss-columns-5 { grid-template-columns: repeat(5, 1fr); }
+
+@media (max-width: 782px) {
+	.wpss-services-grid,
+	.wpss-services-grid.wpss-columns-2,
+	.wpss-services-grid.wpss-columns-3,
+	.wpss-services-grid.wpss-columns-4,
+	.wpss-services-grid.wpss-columns-5,
+	.wpss-categories-grid,
+	.wpss-categories-grid.wpss-columns-2,
+	.wpss-categories-grid.wpss-columns-3,
+	.wpss-categories-grid.wpss-columns-4,
+	.wpss-categories-grid.wpss-columns-5 {
+		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	}
+}
+
+@media (max-width: 480px) {
+	.wpss-services-grid,
+	.wpss-services-grid.wpss-columns-2,
+	.wpss-services-grid.wpss-columns-3,
+	.wpss-services-grid.wpss-columns-4,
+	.wpss-services-grid.wpss-columns-5,
+	.wpss-categories-grid,
+	.wpss-categories-grid.wpss-columns-2,
+	.wpss-categories-grid.wpss-columns-3,
+	.wpss-categories-grid.wpss-columns-4,
+	.wpss-categories-grid.wpss-columns-5 {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ==========================================================================
+   Pagination
+   ==========================================================================
+   wpss_pagination() is shared by the archive, [wpss_services], the
+   wpss/service-grid block and the REST/AJAX grid, but its rules lived only in
+   archive-service.css - a stylesheet enqueued on the service archive alone.
+   Until 1.5.1 the shortcode and block rendered their own markup and never
+   called it, so the gap was invisible; now that every grid goes through the
+   one renderer, the list rendered with raw bullets on any other page.
+
+   Kept identical to the archive rules so the component looks the same
+   wherever it appears. 40px targets satisfy the touch-target minimum.
+   ========================================================================== */
+
+.wpss-pagination {
+	margin-top: 2rem;
+	display: flex;
+	justify-content: center;
+}
+
+.wpss-pagination ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.wpss-pagination li {
+	margin: 0;
+}
+
+.wpss-pagination a,
+.wpss-pagination span {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 40px;
+	height: 40px;
+	padding: 0 0.75rem;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius, 8px);
+	background: var(--wpss-surface, #fff);
+	color: var(--wpss-text, #111827);
+	text-decoration: none;
+	font-size: 0.875rem;
+}
+
+.wpss-pagination .current,
+.wpss-pagination a:hover,
+.wpss-pagination a:focus-visible {
+	border-color: var(--wpss-primary, #4f46e5);
+	background: var(--wpss-primary, #4f46e5);
+	color: #fff;
 }

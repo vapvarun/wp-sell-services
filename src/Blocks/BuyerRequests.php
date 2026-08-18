@@ -110,6 +110,17 @@ class BuyerRequests extends AbstractBlock {
 				'type'    => 'string',
 				'default' => 'list',
 			],
+			// Budget bounds. [wpss_buyer_requests] has always accepted these;
+			// the block had no equivalent, so the shortcode could not be
+			// expressed as a wrapper around the block without losing them.
+			'budgetMin'      => [
+				'type'    => 'number',
+				'default' => 0,
+			],
+			'budgetMax'      => [
+				'type'    => 'number',
+				'default' => 0,
+			],
 		];
 	}
 
@@ -135,45 +146,37 @@ class BuyerRequests extends AbstractBlock {
 			'showDeadline'   => true,
 			'showOffers'     => true,
 			'layout'         => 'list',
+			'budgetMin'      => 0,
+			'budgetMax'      => 0,
 		];
 
 		$attributes = wp_parse_args( $attributes, $defaults );
 
-		// Query arguments.
-		$args = [
-			'post_type'      => 'wpss_request',
-			'post_status'    => 'publish',
-			'posts_per_page' => $attributes['perPage'],
-			'orderby'        => $attributes['orderBy'],
-			'order'          => $attributes['order'],
-			'paged'          => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
-			// BuyerRequestService writes `_wpss_status` (and reads it back for
-			// listings). `_wpss_request_status` is written by nothing except a CLI
-			// test helper, so this required clause matched nothing and the block
-			// rendered "No requests" on every real site while the shortcode — which
-			// goes through the service — listed them fine. Same class of bug as the
-			// `_wpss_featured` / `_wpss_is_featured` drift.
-			'meta_query'     => [
+		// ONE definition of the open-requests query, owned by BuyerRequestService.
+		//
+		// This block used to assemble the query itself and spelled out only the
+		// status half of "open", missing the expiry half the service applies. It
+		// therefore listed EXPIRED requests that [wpss_buyer_requests] correctly
+		// hid, so a seller could open one and pitch for work that had already
+		// closed. Verified before the fix: an expired request appeared in the
+		// block and not in the shortcode.
+		//
+		// Building the whole argument set here - not just the meta fragment -
+		// is what lets the shortcode be a thin wrapper around this block instead
+		// of a second implementation that can drift again.
+		$query = new \WP_Query(
+			\WPSellServices\Services\BuyerRequestService::open_query_args(
 				[
-					'key'     => '_wpss_status',
-					'value'   => 'open',
-					'compare' => '=',
-				],
-			],
-		];
-
-		// Filter by category.
-		if ( ! empty( $attributes['category'] ) ) {
-			$args['tax_query'] = [
-				[
-					'taxonomy' => 'wpss_service_category',
-					'field'    => 'term_id',
-					'terms'    => $attributes['category'],
-				],
-			];
-		}
-
-		$query = new \WP_Query( $args );
+					'posts_per_page' => $attributes['perPage'],
+					'paged'          => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
+					'order_by'       => $attributes['orderBy'],
+					'order'          => $attributes['order'],
+					'category_id'    => $attributes['category'],
+					'budget_min'     => $attributes['budgetMin'],
+					'budget_max'     => $attributes['budgetMax'],
+				]
+			)
+		);
 
 		$wrapper_classes = [ 'wpss-requests-' . $attributes['layout'] ];
 		?>
@@ -183,7 +186,12 @@ class BuyerRequests extends AbstractBlock {
 					<?php
 					while ( $query->have_posts() ) :
 						$query->the_post();
-						$this->render_request_card( $attributes );
+						// The shared, theme-overridable card - the same one the
+						// request archive renders. This block emitted its own
+						// inline markup, so a theme override applied on the
+						// archive and silently did not here, and the two cards
+						// drifted apart in what they showed.
+						wpss_get_template_part( 'content', 'request-card' );
 					endwhile;
 					?>
 				</div>
@@ -217,121 +225,5 @@ class BuyerRequests extends AbstractBlock {
 		wp_reset_postdata();
 
 		return $this->end_render();
-	}
-
-	/**
-	 * Render a single request card.
-	 *
-	 * @param array $attributes Block attributes.
-	 * @return void
-	 */
-	private function render_request_card( array $attributes ): void {
-		$request_id   = get_the_ID();
-		$buyer_id     = get_post_field( 'post_author', $request_id );
-		$budget_min   = get_post_meta( $request_id, '_wpss_budget_min', true );
-		$budget_max   = get_post_meta( $request_id, '_wpss_budget_max', true );
-		$deadline     = get_post_meta( $request_id, '_wpss_deadline', true );
-		$offers_count = $this->get_offers_count( $request_id );
-		$categories   = get_the_terms( $request_id, 'wpss_service_category' );
-		?>
-		<article class="wpss-request-card">
-			<div class="wpss-request-header">
-				<div class="wpss-request-buyer">
-					<?php echo get_avatar( $buyer_id, 40 ); ?>
-					<div class="wpss-buyer-info">
-						<span class="wpss-buyer-name"><?php echo esc_html( get_the_author_meta( 'display_name', $buyer_id ) ); ?></span>
-						<span class="wpss-request-date"><?php echo esc_html( human_time_diff( get_the_time( 'U' ), time() ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?></span>
-					</div>
-				</div>
-
-				<?php if ( $categories && ! is_wp_error( $categories ) ) : ?>
-					<div class="wpss-request-categories">
-						<?php foreach ( $categories as $category ) : ?>
-							<span class="wpss-category-tag"><?php echo esc_html( $category->name ); ?></span>
-						<?php endforeach; ?>
-					</div>
-				<?php endif; ?>
-			</div>
-
-			<div class="wpss-request-content">
-				<h3 class="wpss-request-title">
-					<a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
-				</h3>
-
-				<div class="wpss-request-excerpt">
-					<?php the_excerpt(); ?>
-				</div>
-			</div>
-
-			<div class="wpss-request-footer">
-				<div class="wpss-request-meta">
-					<?php if ( $attributes['showBudget'] && ( $budget_min || $budget_max ) ) : ?>
-						<span class="wpss-request-budget">
-							<i data-lucide="banknote" class="wpss-icon" aria-hidden="true"></i>
-							<?php
-							if ( $budget_min && $budget_max ) {
-								printf(
-									'%s - %s',
-									esc_html( wpss_format_currency( (float) $budget_min ) ),
-									esc_html( wpss_format_currency( (float) $budget_max ) )
-								);
-							} elseif ( $budget_max ) {
-								printf(
-									/* translators: %s: maximum budget amount. */
-									esc_html__( 'Up to %s', 'wp-sell-services' ),
-									esc_html( wpss_format_currency( (float) $budget_max ) )
-								);
-							} else {
-								echo esc_html( wpss_format_currency( (float) $budget_min ) );
-							}
-							?>
-						</span>
-					<?php endif; ?>
-
-					<?php if ( $attributes['showDeadline'] && $deadline ) : ?>
-						<span class="wpss-request-deadline">
-							<i data-lucide="calendar-clock" class="wpss-icon" aria-hidden="true"></i>
-							<?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $deadline ) ) ); ?>
-						</span>
-					<?php endif; ?>
-
-					<?php if ( $attributes['showOffers'] ) : ?>
-						<span class="wpss-request-offers">
-							<i data-lucide="message-square" class="wpss-icon" aria-hidden="true"></i>
-							<?php
-							printf(
-								/* translators: %d: number of offers */
-								esc_html( _n( '%d offer', '%d offers', $offers_count, 'wp-sell-services' ) ),
-								absint( $offers_count )
-							);
-							?>
-						</span>
-					<?php endif; ?>
-				</div>
-
-				<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--outline">
-					<?php esc_html_e( 'Send Offer', 'wp-sell-services' ); ?>
-				</a>
-			</div>
-		</article>
-		<?php
-	}
-
-	/**
-	 * Get offers count for a request.
-	 *
-	 * @param int $request_id Request post ID.
-	 * @return int
-	 */
-	private function get_offers_count( int $request_id ): int {
-		global $wpdb;
-
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_request_offers
-				WHERE request_id = %d",
-				$request_id
-			)
-		);
 	}
 }

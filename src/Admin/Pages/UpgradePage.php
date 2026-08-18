@@ -66,7 +66,7 @@ class UpgradePage {
 	/**
 	 * Enqueue the onboarding stylesheet on this screen only.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 *
 	 * @param string $hook Current admin page hook suffix.
 	 * @return void
@@ -172,11 +172,10 @@ class UpgradePage {
 					'free'    => false,
 					'pro'     => true,
 				),
-				array(
-					'feature' => __( 'SureCart', 'wp-sell-services' ),
-					'free'    => false,
-					'pro'     => true,
-				),
+				// SureCart row removed in 1.6.1 with the integration itself. An
+				// upgrade page that promises a rail Pro no longer has is a
+				// straightforward misrepresentation to someone deciding whether
+				// to buy.
 				array(
 					'feature' => __( 'Standalone (no e-commerce plugin needed)', 'wp-sell-services' ),
 					'free'    => true,

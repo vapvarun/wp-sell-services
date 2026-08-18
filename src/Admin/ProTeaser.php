@@ -58,7 +58,7 @@ class ProTeaser {
 	 * Replaces two inline <style> blocks — one of which needed a static flag
 	 * purely to stop it printing three times on a page with three teasers.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function enqueue_styles(): void {

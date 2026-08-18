@@ -72,9 +72,15 @@ if ( ! $order ) {
 $user_id     = get_current_user_id();
 $is_vendor   = (int) $order->vendor_id === $user_id;
 $is_customer = (int) $order->customer_id === $user_id;
-$service     = get_post( $order->service_id );
-$vendor      = get_userdata( $order->vendor_id );
-$customer    = get_userdata( $order->customer_id );
+// What this order is for. Resolved through the shared helper: request orders
+// and sub-orders carry service_id = 0, and get_post( 0 ) returns the GLOBAL
+// post - on this template that is the dashboard page, so the Service Details
+// block used to name the page the buyer was standing on and read its post meta
+// as if it were the service's requirements (Basecamp 10208094640).
+$wpss_subject = wpss_get_order_subject( $order, 'public' );
+$service      = $wpss_subject['is_service'] ? get_post( $wpss_subject['service_id'] ) : null;
+$vendor       = get_userdata( $order->vendor_id );
+$customer     = get_userdata( $order->customer_id );
 
 // Handle deleted users gracefully.
 $vendor_name   = $vendor ? $vendor->display_name : __( 'Deleted User', 'wp-sell-services' );
@@ -87,6 +93,13 @@ $deliveries       = $delivery_service->get_order_deliveries( $order_id );
 // Dispute eligibility check via service layer.
 $dispute_service  = new \WPSellServices\Services\DisputeService();
 $can_open_dispute = $dispute_service->can_open_dispute( $order );
+
+// The dispute this order already has, if any. can_open_dispute() returns false
+// once one exists, which removed the Open Dispute button and put nothing in its
+// place — so the order page went silent about the very thing in progress on it,
+// and the buyer had to go hunting through Dashboard > Disputes. Shown for
+// resolved disputes too: "how did that end?" is asked from the order.
+$order_dispute = $dispute_service->get_by_order( $order_id );
 
 /**
  * Hook: wpss_before_order_view
@@ -353,6 +366,18 @@ do_action( 'wpss_before_order_view', $order );
 					'class' => 'wpss-btn wpss-btn--danger-outline wpss-dispute-btn',
 					'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
 				);
+			} elseif ( $order_dispute && ( $is_customer || $is_vendor ) ) {
+				// Mutually exclusive with Open Dispute by definition: one exists,
+				// so the action is to go and read it.
+				$dispute_url = wpss_get_dashboard_url( 'disputes' );
+
+				if ( $dispute_url ) {
+					$actions['view-dispute'] = array(
+						'label' => __( 'View Dispute', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--danger-outline',
+						'url'   => add_query_arg( 'dispute', (int) $order_dispute->id, $dispute_url ),
+					);
+				}
 			}
 
 			/**
@@ -383,11 +408,26 @@ do_action( 'wpss_before_order_view', $order );
 					do_action( 'wpss_order_view_actions', $order );
 
 					foreach ( $actions as $action_key => $action_data ) :
-						?>
-						<button type="button" class="<?php echo esc_attr( $action_data['class'] ); ?>" <?php echo $action_data['attrs']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
-							<?php echo esc_html( $action_data['label'] ); ?>
-						</button>
-					<?php endforeach; ?>
+						// An action that carries a `url` is a link, not a
+						// button: every action here used to open a modal, so
+						// the renderer only emitted <button> and an action that
+						// simply navigates had nowhere to go. `attrs` stays
+						// optional so a link needs no dummy value.
+						$action_attrs = $action_data['attrs'] ?? '';
+
+						if ( ! empty( $action_data['url'] ) ) :
+							?>
+							<a class="<?php echo esc_attr( $action_data['class'] ); ?>" href="<?php echo esc_url( $action_data['url'] ); ?>" <?php echo $action_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+								<?php echo esc_html( $action_data['label'] ); ?>
+							</a>
+						<?php else : ?>
+							<button type="button" class="<?php echo esc_attr( $action_data['class'] ); ?>" <?php echo $action_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+								<?php echo esc_html( $action_data['label'] ); ?>
+							</button>
+							<?php
+						endif;
+					endforeach;
+					?>
 				</div>
 			<?php endif; ?>
 		<?php endif; ?>
@@ -547,12 +587,12 @@ do_action( 'wpss_before_order_view', $order );
 				<?php endif; ?>
 				<div class="wpss-service-info__content">
 					<h3 class="wpss-service-info__title">
-						<?php if ( $service ) : ?>
-							<a href="<?php echo esc_url( get_permalink( $service->ID ) ); ?>">
-								<?php echo esc_html( $service->post_title ); ?>
+						<?php if ( '' !== $wpss_subject['url'] ) : ?>
+							<a href="<?php echo esc_url( $wpss_subject['url'] ); ?>">
+								<?php echo esc_html( $wpss_subject['label'] ); ?>
 							</a>
 						<?php else : ?>
-							<?php esc_html_e( 'Deleted Service', 'wp-sell-services' ); ?>
+							<?php echo esc_html( $wpss_subject['label'] ); ?>
 						<?php endif; ?>
 					</h3>
 					<p class="wpss-service-info__price">
@@ -1275,30 +1315,115 @@ do_action( 'wpss_before_order_view', $order );
 		</div>
 	</section>
 
-	<!-- Review CTA (for completed orders) -->
-	<?php if ( 'completed' === $order->status && $is_customer ) : ?>
-		<?php
-		// Check if already reviewed.
-		$review_exists = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT id FROM {$wpdb->prefix}wpss_reviews WHERE order_id = %d",
-				$order_id
-			)
+	<!-- Review: the CTA, or the review that was already left -->
+	<?php
+	/*
+	 * This block used to be `if ( ! $review_exists )` with no else, so the
+	 * moment a buyer submitted a review the order page went silent about it -
+	 * no stars, no text, no seller response, no confirmation it had been
+	 * recorded. The buyer's own review became invisible to the buyer on the
+	 * only page they would look for it (Basecamp 10208142348).
+	 *
+	 * Two other things were wrong in the same seven lines:
+	 *
+	 * - it ran a raw $wpdb query for "has this been reviewed", duplicating
+	 *   ReviewService, which already owns that question;
+	 * - it gated the CTA on completed + is_customer + no-review only, ignoring
+	 *   the review WINDOW that ReviewService::can_review() enforces. So after
+	 *   the window closed the button still invited a review that the server
+	 *   then refused.
+	 *
+	 * can_review() is now the single authority and it returns the reason, so
+	 * when the CTA is withheld the buyer is told why instead of being shown
+	 * nothing.
+	 */
+	$wpss_review_service = new \WPSellServices\Services\ReviewService();
+	$wpss_order_review   = $wpss_review_service->get_by_order( $order_id );
+	$review_exists       = null !== $wpss_order_review;
+	$wpss_review_gate    = $is_customer
+		? $wpss_review_service->can_review( $order_id, $user_id )
+		: array(
+			'can_review' => false,
+			'reason'     => '',
 		);
-		?>
-		<?php if ( ! $review_exists ) : ?>
-			<section class="wpss-order-section wpss-order-section--review">
-				<div class="wpss-review-cta">
-					<i data-lucide="star" class="wpss-icon wpss-icon--lg wpss-review-cta__icon" aria-hidden="true"></i>
-					<h3 class="wpss-review-cta__title"><?php esc_html_e( 'Rate Your Experience', 'wp-sell-services' ); ?></h3>
-					<p class="wpss-review-cta__text"><?php esc_html_e( 'How was your experience with this order? Your feedback helps other buyers.', 'wp-sell-services' ); ?></p>
-					<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-write-review-btn"
-							data-order="<?php echo esc_attr( $order_id ); ?>">
-						<?php esc_html_e( 'Write a Review', 'wp-sell-services' ); ?>
-					</button>
+	?>
+
+	<?php if ( $wpss_review_gate['can_review'] ) : ?>
+		<section class="wpss-order-section wpss-order-section--review">
+			<div class="wpss-review-cta">
+				<i data-lucide="star" class="wpss-icon wpss-icon--lg wpss-review-cta__icon" aria-hidden="true"></i>
+				<h3 class="wpss-review-cta__title"><?php esc_html_e( 'Rate Your Experience', 'wp-sell-services' ); ?></h3>
+				<p class="wpss-review-cta__text"><?php esc_html_e( 'How was your experience with this order? Your feedback helps other buyers.', 'wp-sell-services' ); ?></p>
+				<?php
+				// Say how long is left while there is still time to act on it.
+				$wpss_review_days_left = $wpss_review_service->get_remaining_review_days( $order );
+				?>
+				<?php if ( null !== $wpss_review_days_left ) : ?>
+					<p class="wpss-review-cta__deadline">
+						<?php
+						printf(
+							/* translators: %d: number of days left to leave a review */
+							esc_html( _n( '%d day left to leave a review.', '%d days left to leave a review.', $wpss_review_days_left, 'wp-sell-services' ) ),
+							absint( $wpss_review_days_left )
+						);
+						?>
+					</p>
+				<?php endif; ?>
+				<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-write-review-btn"
+						data-order="<?php echo esc_attr( $order_id ); ?>">
+					<?php esc_html_e( 'Write a Review', 'wp-sell-services' ); ?>
+				</button>
+			</div>
+		</section>
+	<?php elseif ( $review_exists && ( $is_customer || $is_vendor ) ) : ?>
+		<section class="wpss-order-section wpss-order-section--review">
+			<div class="wpss-order-section__header">
+				<h2 class="wpss-order-section__title">
+					<i data-lucide="star" class="wpss-icon" aria-hidden="true"></i>
+					<?php
+					echo $is_vendor
+						? esc_html__( 'Buyer Review', 'wp-sell-services' )
+						: esc_html__( 'Your Review', 'wp-sell-services' );
+					?>
+				</h2>
+			</div>
+			<div class="wpss-order-section__body">
+				<div class="wpss-review">
+					<?php
+					$wpss_review = $wpss_order_review;
+					require WPSS_PLUGIN_DIR . 'templates/partials/review-body.php';
+					?>
 				</div>
-			</section>
-		<?php endif; ?>
+				<?php
+				// A review awaiting moderation is not on the service page yet.
+				// Saying so stops the buyer re-submitting because they cannot
+				// find it, and stops the seller thinking it was withdrawn.
+				?>
+				<?php if ( ! $wpss_order_review->is_approved() ) : ?>
+					<p class="wpss-notice wpss-notice--info wpss-review-pending">
+						<?php esc_html_e( 'This review is awaiting moderation and is not public yet.', 'wp-sell-services' ); ?>
+					</p>
+				<?php endif; ?>
+				<?php if ( $is_vendor && '' === $wpss_order_review->response ) : ?>
+					<p class="wpss-text-muted wpss-review-respond-hint">
+						<?php esc_html_e( 'You can respond to this review from your Reviews section.', 'wp-sell-services' ); ?>
+					</p>
+				<?php endif; ?>
+			</div>
+		</section>
+	<?php elseif ( $is_customer && '' !== $wpss_review_gate['reason'] && 'completed' === $order->status ) : ?>
+		<?php
+		// Completed, unreviewed, and the buyer cannot review - almost always the
+		// window having closed. Previously this rendered nothing at all, so the
+		// buyer had no way to know why the option had gone.
+		?>
+		<section class="wpss-order-section wpss-order-section--review">
+			<div class="wpss-order-section__body">
+				<p class="wpss-notice wpss-notice--info wpss-review-closed">
+					<?php echo esc_html( $wpss_review_gate['reason'] ); ?>
+				</p>
+			</div>
+		</section>
 	<?php endif; ?>
 
 	<!-- Milestones timeline (parent order only — request-mode orders) -->
@@ -1898,8 +2023,12 @@ do_action( 'wpss_before_order_view', $order );
 // Check if delivery modal should be available.
 $can_deliver = $is_vendor && in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true );
 
-// Check if review modal should be available.
-$can_review           = 'completed' === $order->status && $is_customer && empty( $review_exists );
+// Whether the review modal should be available. Reuses the SAME gate the CTA
+// above used, rather than re-deriving the condition: this line was a third copy
+// that ignored the review window, so once the window closed the modal was still
+// rendered for a button that no longer existed - and before that, whenever the
+// two conditions disagreed, the buyer got a button that opened nothing.
+$can_review           = $wpss_review_gate['can_review'];
 $can_open_dispute     = $can_open_dispute && ( $is_customer || $is_vendor );
 $can_request_revision = $is_customer && 'pending_approval' === $order->status && $order->can_request_revision();
 
@@ -2103,12 +2232,10 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					<label for="dispute-reason" class="wpss-label"><?php esc_html_e( 'Reason for Dispute', 'wp-sell-services' ); ?> <span class="wpss-required">*</span></label>
 					<select name="reason" id="dispute-reason" class="wpss-select" required>
 						<option value=""><?php esc_html_e( 'Select a reason', 'wp-sell-services' ); ?></option>
-						<option value="not_delivered"><?php esc_html_e( 'Work not delivered', 'wp-sell-services' ); ?></option>
-						<option value="poor_quality"><?php esc_html_e( 'Poor quality work', 'wp-sell-services' ); ?></option>
-						<option value="not_as_described"><?php esc_html_e( 'Not as described', 'wp-sell-services' ); ?></option>
-						<option value="communication"><?php esc_html_e( 'Communication issues', 'wp-sell-services' ); ?></option>
-						<option value="deadline"><?php esc_html_e( 'Missed deadline', 'wp-sell-services' ); ?></option>
-						<option value="other"><?php esc_html_e( 'Other', 'wp-sell-services' ); ?></option>
+						<?php // One map, shared with the REST options endpoint, so the web form and every client offer the same reasons. ?>
+						<?php foreach ( wpss_get_dispute_reasons() as $wpss_reason_key => $wpss_reason_label ) : ?>
+							<option value="<?php echo esc_attr( $wpss_reason_key ); ?>"><?php echo esc_html( $wpss_reason_label ); ?></option>
+						<?php endforeach; ?>
 					</select>
 				</div>
 

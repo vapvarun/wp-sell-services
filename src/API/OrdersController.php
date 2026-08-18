@@ -267,6 +267,36 @@ class OrdersController extends RestController {
 		// Order activity log. Disputes already exposed a timeline; orders did
 		// not, so an Activity tab had to be invented from notifications or
 		// left blank. Same participants-only gate as the order itself.
+		// Offline payment proof (Basecamp #10194890682).
+		//
+		// The third entry point. This project's own rule is frontend + admin +
+		// REST for every data store; a receipts table reachable only from two
+		// rendered forms would be half a feature, and the mobile client has no
+		// other way to submit or read proof of an offline payment.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/receipts',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_receipts' ),
+					'permission_callback' => array( $this, 'check_item_permissions' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_receipt' ),
+					'permission_callback' => array( $this, 'check_item_permissions' ),
+					'args'                => array(
+						'note' => array(
+							'description' => __( 'Optional reference number or note.', 'wp-sell-services' ),
+							'type'        => 'string',
+							'required'    => false,
+						),
+					),
+				),
+			)
+		);
+
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/timeline',
@@ -506,12 +536,11 @@ class OrdersController extends RestController {
 
 		$data = array();
 		foreach ( $messages as $message ) {
-			$user   = get_userdata( (int) $message->sender_id );
 			$data[] = array(
 				'id'          => (int) $message->id,
 				'order_id'    => $order_id,
 				'user_id'     => (int) $message->sender_id,
-				'user_name'   => $user ? $user->display_name : __( 'Unknown', 'wp-sell-services' ),
+				'user_name'   => wpss_get_member_display_name( (int) $message->sender_id ),
 				'user_avatar' => get_avatar_url( (int) $message->sender_id, array( 'size' => 48 ) ),
 				'message'     => $message->content,
 				'attachments' => $message->attachments ? json_decode( $message->attachments, true ) : array(),
@@ -1018,7 +1047,7 @@ class OrdersController extends RestController {
 				'template'     => $requirements,
 				'submitted'    => $submitted,
 				'status'       => empty( $submitted ) ? 'pending' : 'submitted',
-				'submitted_at' => $row->submitted_at ?? null,
+				'submitted_at' => $this->format_datetime( $row->submitted_at ?? null ),
 			)
 		);
 	}
@@ -1353,6 +1382,72 @@ class OrdersController extends RestController {
 	}
 
 	/**
+	 * GET /orders/{id}/receipts — proof of payment on this order.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_receipts( $request ) {
+		$order_id = (int) $request->get_param( 'id' );
+
+		if ( ! $this->order_exists( $order_id ) ) {
+			return new \WP_Error( 'wpss_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		$receipts = ( new \WPSellServices\Services\PaymentReceiptService() )->get_for_order( $order_id );
+
+		$data = array_map(
+			static function ( $receipt ) {
+				return array(
+					'id'          => (int) $receipt->id,
+					'order_id'    => (int) $receipt->order_id,
+					'status'      => (string) $receipt->status,
+					'note'        => (string) ( $receipt->note ?? '' ),
+					'admin_note'  => (string) ( $receipt->admin_note ?? '' ),
+					'file_url'    => $receipt->attachment_id ? wp_get_attachment_url( (int) $receipt->attachment_id ) : '',
+					'uploaded_by' => (int) $receipt->uploaded_by,
+					'created_at'  => (string) $receipt->created_at,
+					'verified_at' => $receipt->verified_at ? (string) $receipt->verified_at : null,
+				);
+			},
+			$receipts
+		);
+
+		return new \WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * POST /orders/{id}/receipts — submit proof of an offline payment.
+	 *
+	 * Multipart, same as the conversation attachment endpoint: the file arrives
+	 * in $_FILES['attachments'] and is validated by
+	 * wpss_handle_message_attachments() rather than trusting the client.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function create_receipt( $request ) {
+		$order_id = (int) $request->get_param( 'id' );
+		$note     = (string) ( $request->get_param( 'note' ) ?? '' );
+
+		$files       = $request->get_file_params();
+		$attachments = isset( $files['attachments'] ) ? (array) $files['attachments'] : array();
+
+		$result = ( new \WPSellServices\Services\PaymentReceiptService() )
+			->submit( $order_id, get_current_user_id(), $attachments, $note );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new \WP_REST_Response( array( 'id' => $result ), 201 );
+	}
+
+	/**
 	 * GET /orders/{id}/timeline
 	 *
 	 * The ordered list of what actually happened on an order, so a client can
@@ -1455,6 +1550,27 @@ class OrdersController extends RestController {
 
 		$order_id = (int) $request->get_param( 'id' );
 
+		// An order that does not exist is 404, not 403.
+		//
+		// user_owns_resource() answers false for a missing row exactly as it does
+		// for someone else's, so a request for a non-existent order came back
+		// "You do not have permission to access this order" with status 403. A
+		// client cannot tell "this order is gone, drop it from the cache" from
+		// "this belongs to another account", which is what the app's error
+		// branching needs.
+		//
+		// This matches the convention the rest of the plugin already follows:
+		// /disputes/{id} and /proposals/{id} are private too and both answer 404
+		// for a missing record. Orders was the outlier, so no enumeration
+		// guarantee is being given up here - it was never being kept.
+		if ( ! $this->order_exists( $order_id ) ) {
+			return new WP_Error(
+				'wpss_order_not_found',
+				__( 'Order not found.', 'wp-sell-services' ),
+				array( 'status' => 404 )
+			);
+		}
+
 		if ( current_user_can( 'manage_options' ) ) {
 			return true;
 		}
@@ -1468,6 +1584,30 @@ class OrdersController extends RestController {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Whether an order row exists.
+	 *
+	 * Deliberately a bare existence probe, not a full fetch: it runs inside a
+	 * permission callback, before we know the caller may see anything.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	private function order_exists( int $order_id ): bool {
+		if ( $order_id <= 0 ) {
+			return false;
+		}
+
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wpss_orders';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (bool) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE id = %d", $order_id ) );
 	}
 
 	/**
@@ -1626,46 +1766,69 @@ class OrdersController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function prepare_item_for_response( $order, $request ): WP_REST_Response {
-		$service  = get_post( $order->service_id );
-		$vendor   = get_userdata( (int) $order->vendor_id );
-		$customer = get_userdata( (int) $order->customer_id );
+		$service = get_post( $order->service_id );
 
 		$data = array(
-			'id'                => (int) $order->id,
-			'order_number'      => $order->order_number,
-			'service_id'        => (int) $order->service_id,
-			'service_title'     => $service ? $service->post_title : '',
-			'package_id'        => (int) $order->package_id,
-			'vendor_id'         => (int) $order->vendor_id,
-			'vendor_name'       => $vendor ? $vendor->display_name : '',
-			'vendor_avatar'     => get_avatar_url( (int) $order->vendor_id, array( 'size' => 48 ) ),
-			'customer_id'       => (int) $order->customer_id,
-			'customer_name'     => $customer ? $customer->display_name : '',
-			'customer_avatar'   => get_avatar_url( (int) $order->customer_id, array( 'size' => 48 ) ),
-			'status'            => $order->status,
-			'status_label'      => $this->get_status_label( $order->status ),
+			'id'                  => (int) $order->id,
+			'order_number'        => $order->order_number,
+			'service_id'          => (int) $order->service_id,
+			'service_title'       => $service ? $service->post_title : '',
+			'package_id'          => (int) $order->package_id,
+			// Flat keys KEPT. The app reads them today, so removing them would
+			// break it; they are the compatibility surface and should be retired
+			// on a stated version, not silently.
+			'vendor_id'           => (int) $order->vendor_id,
+			'vendor_name'         => wpss_get_member_display_name( (int) $order->vendor_id ),
+			'vendor_avatar'       => get_avatar_url( (int) $order->vendor_id, array( 'size' => 48 ) ),
+			'customer_id'         => (int) $order->customer_id,
+			'customer_name'       => wpss_get_member_display_name( (int) $order->customer_id ),
+			'customer_avatar'     => get_avatar_url( (int) $order->customer_id, array( 'size' => 48 ) ),
+			// The same two people in the shared actor shape. Order detail was the
+			// only place that embedded NO user object at all -- a client had to
+			// reassemble a person from three sibling keys here, read a nested
+			// object on a service, and a third shape on /vendors.
+			'vendor'              => wpss_rest_user( (int) $order->vendor_id ),
+			'customer'            => wpss_rest_user( (int) $order->customer_id ),
+			'status'              => $order->status,
+			'status_label'        => $this->get_status_label( $order->status ),
 			// A tip, milestone or extension was indistinguishable from a service
 			// purchase in this payload: same shape, no type, no link to the
 			// order it belongs to, and no way to pay it. A client could render
 			// the row but not explain or action it.
-			'type'              => $this->get_order_type( $order ),
-			'parent_id'         => $this->get_parent_order_id( $order ),
-			'checkout_url'      => $this->get_checkout_url_for( $order ),
-			'total'             => (float) $order->total,
+			'type'                => $this->get_order_type( $order ),
+			'parent_id'           => $this->get_parent_order_id( $order ),
+			'checkout_url'        => $this->get_checkout_url_for( $order ),
+			'total'               => (float) $order->total,
 			// Exact integer minor units. `total` stays a float for existing
 			// clients, but it cannot represent most amounts precisely — 150.20
 			// serialises as 150.19999999999999 — so anything doing arithmetic
 			// should read this instead. Scaled by the ORDER's currency: the
 			// old `* 100` fallback was wrong for JPY (x1) and KWD (x1000).
-			'total_minor'       => wpss_amount_to_minor_units( (float) $order->total, (string) $order->currency ),
-			'currency'          => $order->currency,
-			'formatted_total'   => wpss_format_currency( (float) $order->total, $order->currency ),
-			'due_date'          => $this->format_datetime( $order->delivery_deadline ),
-			'started_at'        => $this->format_datetime( $order->started_at ),
-			'completed_at'      => $this->format_datetime( $order->completed_at ),
-			'created_at'        => $this->format_datetime( $order->created_at ),
-			'updated_at'        => $this->format_datetime( $order->updated_at ),
-			'available_actions' => $this->get_available_actions( $order ),
+			'total_minor'         => wpss_amount_to_minor_units( (float) $order->total, (string) $order->currency ),
+			'currency'            => $order->currency,
+			'formatted_total'     => wpss_format_currency( (float) $order->total, $order->currency ),
+			// Revisions. Both numbers were already ON the order row and simply
+			// never exposed, so a client could not tell a buyer how many
+			// revisions were left before requesting one -- nor a vendor before
+			// accepting. `remaining` is computed rather than stored so it cannot
+			// drift from the two values it derives from.
+			'revisions_included'  => (int) ( $order->revisions_included ?? 0 ),
+			'revisions_used'      => (int) ( $order->revisions_used ?? 0 ),
+			'revisions_remaining' => max( 0, (int) ( $order->revisions_included ?? 0 ) - (int) ( $order->revisions_used ?? 0 ) ),
+			// The package the buyer actually bought, frozen onto the order in
+			// 1.6.0. Read from the snapshot, NOT from the service -- the service
+			// may have been edited or re-priced since, and what the buyer paid
+			// for is the authoritative answer.
+			'package'             => $this->get_package_snapshot( $order ),
+			'requirements'        => function_exists( 'wpss_get_order_requirements' )
+				? wpss_get_order_requirements( (int) $order->id )
+				: array(),
+			'due_date'            => $this->format_datetime( $order->delivery_deadline ),
+			'started_at'          => $this->format_datetime( $order->started_at ),
+			'completed_at'        => $this->format_datetime( $order->completed_at ),
+			'created_at'          => $this->format_datetime( $order->created_at ),
+			'updated_at'          => $this->format_datetime( $order->updated_at ),
+			'available_actions'   => $this->get_available_actions( $order ),
 		);
 
 		/**
@@ -1683,27 +1846,69 @@ class OrdersController extends RestController {
 	}
 
 	/**
-	 * Get status label.
+	 * Get the display label for an order status.
+	 *
+	 * Delegates to the canonical map. This method used to carry its own
+	 * hardcoded copy of 11 statuses and fall through to `ucfirst( $status )`
+	 * for the rest — but there are 18, so the seven it did not list came back
+	 * as "Pending_payment", underscore and all, untranslated. Those seven
+	 * included pending_payment, pending_requirements and pending_approval: the
+	 * three states most buyers see most often.
+	 *
+	 * The copy also could not be filtered, so a site that customised
+	 * `wpss_order_statuses` saw the change on the web and not in the API, and
+	 * every client had to keep its own label map to compensate — which is how
+	 * the mobile app ended up rendering English on localised sites.
+	 *
+	 * @since 1.5.1 Delegated to wpss_get_order_status_label().
 	 *
 	 * @param string $status Status key.
 	 * @return string
 	 */
 	private function get_status_label( string $status ): string {
-		$labels = array(
-			'pending'                => __( 'Pending', 'wp-sell-services' ),
-			'accepted'               => __( 'Accepted', 'wp-sell-services' ),
-			'rejected'               => __( 'Rejected', 'wp-sell-services' ),
-			'requirements_submitted' => __( 'Requirements Submitted', 'wp-sell-services' ),
-			'in_progress'            => __( 'In Progress', 'wp-sell-services' ),
-			'delivered'              => __( 'Delivered', 'wp-sell-services' ),
-			'completed'              => __( 'Completed', 'wp-sell-services' ),
-			'cancelled'              => __( 'Cancelled', 'wp-sell-services' ),
-			'disputed'               => __( 'Disputed', 'wp-sell-services' ),
-			'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
-			'refunded'               => __( 'Refunded', 'wp-sell-services' ),
-		);
+		return wpss_get_order_status_label( $status );
+	}
 
-		return $labels[ $status ] ?? ucfirst( $status );
+	/**
+	 * The package the buyer actually purchased.
+	 *
+	 * Read from the snapshot frozen onto the order in 1.6.0, never from the
+	 * service. A vendor may have renamed, re-priced or removed that tier since,
+	 * and the order must keep reporting what was bought and paid for -- that is
+	 * the whole reason the snapshot exists.
+	 *
+	 * Returns null rather than a guess for orders placed before the snapshot
+	 * existed and not covered by the backfill. A client can then say "package
+	 * details unavailable" instead of showing today's price as though it were
+	 * the one the buyer agreed to.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param object $order Order row.
+	 * @return array<string, mixed>|null
+	 */
+	private function get_package_snapshot( object $order ): ?array {
+		$meta = $order->meta ?? null;
+
+		if ( is_string( $meta ) ) {
+			$meta = json_decode( $meta, true );
+		}
+
+		$snapshot = is_array( $meta ) ? ( $meta['package_snapshot'] ?? null ) : null;
+
+		if ( ! is_array( $snapshot ) || empty( $snapshot ) ) {
+			return null;
+		}
+
+		return array(
+			'id'            => (int) ( $order->package_id ?? 0 ),
+			'name'          => (string) ( $snapshot['name'] ?? '' ),
+			'description'   => (string) ( $snapshot['description'] ?? '' ),
+			'price'         => (float) ( $snapshot['price'] ?? 0 ),
+			'delivery_days' => (int) ( $snapshot['delivery_days'] ?? 0 ),
+			'revisions'     => (int) ( $snapshot['revisions'] ?? 0 ),
+			'features'      => array_values( (array) ( $snapshot['features'] ?? array() ) ),
+		);
 	}
 
 	/**

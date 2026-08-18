@@ -31,7 +31,12 @@ $vendor         = get_userdata( $vendor_id );
 $starting_price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
 $rating_avg     = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
 $rating_count   = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
-$categories     = wp_get_post_terms( $service_id, 'wpss_service_category', array( 'fields' => 'names' ) );
+// get_the_terms() reads the object-term cache that WP_Query already primed for
+// the whole result set; wp_get_post_terms() with a `fields` argument bypasses
+// that cache and queries per card - 12 cards meant 12 term queries. Same data,
+// so the $categories contract below is unchanged.
+$category_terms = get_the_terms( $service_id, 'wpss_service_category' );
+$categories     = is_array( $category_terms ) ? wp_list_pluck( $category_terms, 'name' ) : array();
 
 // Filter card classes.
 $card_classes = apply_filters( 'wpss_service_card_classes', array( 'wpss-service-card' ), $service_id );

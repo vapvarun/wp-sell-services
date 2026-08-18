@@ -43,6 +43,15 @@ if ( $wpss_notif_user <= 0 ) {
 
 $wpss_notifications = wpss_get_user_notifications( $wpss_notif_user, array( 'limit' => 50 ) );
 
+// Keyed on the type strings actually stored in wpss_notifications.
+//
+// Notification::get_icon() carries a second, larger map keyed on the model's
+// TYPE_* constants — but most of those strings ('order_new', 'message_new',
+// 'order_delivered') are never written by anything, while the live rows use
+// 'order_created', 'new_message', 'delivery_submitted'. The two vocabularies
+// have drifted, so this map is the one that matches reality. Unifying them
+// would change icons across every existing notification and wants its own
+// card; anything unmapped falls back to 'bell'.
 $wpss_notif_icons = array(
 	'order_created'      => 'package',
 	'order_status'       => 'refresh-cw',
@@ -53,6 +62,9 @@ $wpss_notif_icons = array(
 	'review_received'    => 'star',
 	'dispute_opened'     => 'alert-triangle',
 	'dispute_resolved'   => 'check',
+	'proposal_received'  => 'briefcase',
+	'proposal_accepted'  => 'thumbs-up',
+	'proposal_rejected'  => 'thumbs-down',
 );
 
 $wpss_has_unread = false;
@@ -80,6 +92,12 @@ foreach ( $wpss_notifications as $wpss_n ) {
 .wpss-notif-row__message { line-height: 1.5; }
 .wpss-notif-row__title { font-weight: 600; color: var( --wpss-text, #1f2937 ); }
 .wpss-notif-row__message { color: var( --wpss-text-light, #6b7280 ); }
+/* Themes routinely restyle bare <a>; pin the states so a linked notification
+	title still reads as the heading it is, in dark mode too. */
+.wpss-notif-row__link,
+.wpss-notif-row__link:visited { color: inherit; text-decoration: none; }
+.wpss-notif-row__link:hover,
+.wpss-notif-row__link:focus-visible { color: var( --wpss-primary, #4f46e5 ); text-decoration: underline; }
 .wpss-notif-row__time { font-size: 12px; color: var( --wpss-text-muted, #6b7280 ); }
 .wpss-notif-row__mark { flex: 0 0 auto; background: none; border: none; cursor: pointer; color: var( --wpss-text-light, #6b7280 ); padding: 0; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
 .wpss-notif-row__mark svg { width: 18px; height: 18px; }
@@ -120,7 +138,22 @@ foreach ( $wpss_notifications as $wpss_n ) {
 					<span class="wpss-notif-row__icon" aria-hidden="true"><i data-lucide="<?php echo esc_attr( $wpss_icon ); ?>"></i></span>
 					<span class="wpss-notif-row__body">
 						<?php if ( ! empty( $wpss_n->title ) ) : ?>
-							<span class="wpss-notif-row__title"><?php echo esc_html( $wpss_n->title ); ?></span>
+							<span class="wpss-notif-row__title">
+								<?php
+								// action_url has been a column, a model property
+								// and a REST field since the first release with
+								// nothing writing it, so every notification was
+								// a dead end -- it told you something happened
+								// and left you to go find it. Linked only when
+								// the row actually carries one, so older rows
+								// render exactly as before.
+								if ( ! empty( $wpss_n->action_url ) ) :
+									?>
+									<a class="wpss-notif-row__link" href="<?php echo esc_url( (string) $wpss_n->action_url ); ?>"><?php echo esc_html( $wpss_n->title ); ?></a>
+								<?php else : ?>
+									<?php echo esc_html( $wpss_n->title ); ?>
+								<?php endif; ?>
+							</span>
 						<?php endif; ?>
 						<?php if ( ! empty( $wpss_n->message ) ) : ?>
 							<span class="wpss-notif-row__message"><?php echo esc_html( wp_strip_all_tags( (string) $wpss_n->message ) ); ?></span>

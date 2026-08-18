@@ -138,7 +138,7 @@ class DisputeWorkflowManager {
 		$response_type = 'response';
 		if ( current_user_can( 'manage_options' ) ) {
 			$response_type = 'admin_response';
-		} elseif ( (int) $dispute->initiated_by === $user_id ) {
+		} elseif ( (int) $dispute->initiator_id === $user_id ) {
 			$response_type = 'opener_response';
 		}
 
@@ -170,7 +170,7 @@ class DisputeWorkflowManager {
 		$this->update_response_deadline( $dispute_id, $user_id );
 
 		// Update dispute status if it was awaiting response.
-		if ( DisputeService::STATUS_OPEN === $dispute->status && (int) $dispute->initiated_by !== $user_id ) {
+		if ( DisputeService::STATUS_OPEN === $dispute->status && (int) $dispute->initiator_id !== $user_id ) {
 			$this->dispute_service->update_status( $dispute_id, DisputeService::STATUS_PENDING );
 		}
 
@@ -287,7 +287,7 @@ class DisputeWorkflowManager {
 		// Update dispute meta with escalation info.
 		global $wpdb;
 
-		$meta               = $dispute->meta ?? array();
+		$meta               = $dispute->meta;
 		$meta['escalation'] = array(
 			'reason'       => sanitize_textarea_field( $reason ),
 			'escalated_by' => $escalated_by,
@@ -361,7 +361,7 @@ class DisputeWorkflowManager {
 
 		global $wpdb;
 
-		$meta                = $dispute->meta ?? array();
+		$meta                = $dispute->meta;
 		$meta['assigned_to'] = $admin_id;
 		$meta['assigned_at'] = current_time( 'mysql' );
 
@@ -419,7 +419,7 @@ class DisputeWorkflowManager {
 		}
 
 		// Only opener can cancel, or admin.
-		if ( (int) $dispute->initiated_by !== $user_id && ! current_user_can( 'manage_options' ) ) {
+		if ( (int) $dispute->initiator_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
 			return array(
 				'success' => false,
 				'message' => __( 'You are not authorized to cancel this dispute.', 'wp-sell-services' ),
@@ -436,12 +436,21 @@ class DisputeWorkflowManager {
 
 		global $wpdb;
 
-		$meta                 = $dispute->meta ?? array();
+		$meta                 = $dispute->meta;
 		$meta['cancellation'] = array(
 			'reason'       => sanitize_textarea_field( $reason ),
 			'cancelled_by' => $user_id,
 			'cancelled_at' => current_time( 'mysql' ),
 		);
+
+		// Closing the dispute and releasing the order are ONE unit of work.
+		//
+		// Previously these were two unguarded statements: the status write
+		// committed, then restore_order_status() threw, and the caller got a 500
+		// while the data was left half-changed - dispute `closed` but the order
+		// still `disputed`, with no open dispute able to release it, so the order
+		// could never progress again. Either both land or neither does.
+		$wpdb->query( 'START TRANSACTION' );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
@@ -457,17 +466,29 @@ class DisputeWorkflowManager {
 		);
 
 		if ( false === $result ) {
+			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
 				'message' => __( 'Failed to cancel dispute.', 'wp-sell-services' ),
 			);
 		}
 
-		// Fire status change hook (consistent with DisputeService::update_status).
-		do_action( 'wpss_dispute_status_changed', $dispute_id, DisputeService::STATUS_CLOSED, $dispute->status );
+		try {
+			// Restore order status to previous state if possible.
+			$this->restore_order_status( $dispute->order_id );
+		} catch ( \Throwable $e ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'message' => __( 'Failed to cancel dispute.', 'wp-sell-services' ),
+			);
+		}
 
-		// Restore order status to previous state if possible.
-		$this->restore_order_status( $dispute->order_id );
+		$wpdb->query( 'COMMIT' );
+
+		// Fire status change hook AFTER commit - listeners must not observe, or
+		// act on, a state that could still be rolled back.
+		do_action( 'wpss_dispute_status_changed', $dispute_id, DisputeService::STATUS_CLOSED, $dispute->status );
 
 		/**
 		 * Fires when a dispute is cancelled.
@@ -666,7 +687,16 @@ class DisputeWorkflowManager {
 			$this->dispute_service->open(
 				(int) $order->id,
 				(int) $order->customer_id,
-				__( 'Late delivery', 'wp-sell-services' ),
+				// The SLUG, not the label. This passed
+				// __( 'Late delivery', 'wp-sell-services' ), so the auto-opened
+				// dispute stored a translated display string in a column that
+				// holds one of Dispute::get_reasons()' keys. Two consequences:
+				// the dispute list matched no key and fell back to printing the
+				// raw value, and because the string was translated AT WRITE TIME
+				// the database kept whatever locale the cron happened to run in
+				// - a German site stored "Verspatete Lieferung" permanently, and
+				// no later locale switch could ever re-translate it.
+				\WPSellServices\Models\Dispute::REASON_LATE_DELIVERY,
 				sprintf(
 					/* translators: %d: number of days the order has been late */
 					__( 'Dispute auto-opened: Order has been late for more than %d days without delivery.', 'wp-sell-services' ),
@@ -849,8 +879,17 @@ class DisputeWorkflowManager {
 		);
 
 		if ( $order ) {
-			$meta                          = $this->decode_json_array( $order->meta );
-			$meta['status_before_dispute'] = $order->status;
+			$meta = $this->decode_json_array( $order->meta );
+
+			// Only record a fallback if nothing captured the real pre-dispute
+			// status. DisputeService::open() now writes it BEFORE flipping the
+			// order to `disputed`; this hook runs afterwards, so reading
+			// $order->status here yields `disputed` itself. Overwriting with that
+			// is what made cancel/resolve restore an order to `disputed` and
+			// leave it permanently stuck. Never clobber the good value.
+			if ( ! isset( $meta['status_before_dispute'] ) && \WPSellServices\Models\ServiceOrder::STATUS_DISPUTED !== $order->status ) {
+				$meta['status_before_dispute'] = $order->status;
+			}
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
@@ -958,9 +997,12 @@ class DisputeWorkflowManager {
 	 * @return array Timeline events.
 	 */
 	public function get_timeline( int $dispute_id ): array {
-		$dispute  = $this->dispute_service->get( $dispute_id );
-		$evidence = $this->dispute_service->get_evidence( $dispute_id );
-		$messages = $this->get_messages( $dispute_id );
+		$dispute = $this->dispute_service->get( $dispute_id );
+
+		// ONE read. Evidence and messages used to be two stores, so this
+		// merged both; they are now the same table, and reading it twice would
+		// show every message on the timeline twice.
+		$conversation = $this->dispute_service->get_evidence( $dispute_id );
 
 		$timeline = array();
 
@@ -968,46 +1010,44 @@ class DisputeWorkflowManager {
 		if ( $dispute ) {
 			$timeline[] = array(
 				'type'       => 'dispute_opened',
-				'user_id'    => $dispute->initiated_by,
+				'user_id'    => $dispute->initiator_id,
 				'content'    => $dispute->description,
-				'created_at' => $dispute->created_at,
+				'created_at' => self::timeline_datetime( $dispute->created_at ),
 			);
 		}
 
-		// Add evidence items. DisputeService stores evidence as associative
-		// arrays (JSON-decoded with assoc=true), so these must be read with
-		// array access — the previous object access ($item->user_id, etc.)
-		// silently yielded null, so every evidence row rendered as "System"
-		// with blank content.
-		foreach ( $evidence as $item ) {
-			$timeline[] = array(
-				'type'       => 'evidence',
-				'user_id'    => $item['user_id'] ?? 0,
-				'content'    => $item['description'] ?? '',
-				'data'       => array(
-					'evidence_type' => $item['type'] ?? '',
-					'content'       => $item['content'] ?? '',
-				),
-				'created_at' => $item['created_at'] ?? '',
-			);
-		}
+		foreach ( $conversation as $item ) {
+			$item_type = (string) ( $item['type'] ?? 'text' );
+			$is_text   = '' === $item_type || 'text' === $item_type;
 
-		// Add messages.
-		foreach ( $messages as $message ) {
-			$timeline[] = array(
-				'type'        => 'message',
-				'user_id'     => $message->sender_id,
-				'content'     => $message->message,
-				'attachments' => $message->attachment_urls ?? array(),
-				'created_at'  => $message->created_at,
-			);
+			// A plain reply reads as a message; anything carrying a URL (an
+			// upload or a link) reads as evidence, with its caption as the
+			// line and the URL kept in data for the renderer.
+			$timeline[] = $is_text
+				? array(
+					'type'        => 'message',
+					'user_id'     => (int) ( $item['user_id'] ?? 0 ),
+					'content'     => (string) ( $item['content'] ?? '' ),
+					'attachments' => $item['attachments'] ?? array(),
+					'created_at'  => self::timeline_datetime( $item['created_at'] ?? '' ),
+				)
+				: array(
+					'type'       => 'evidence',
+					'user_id'    => (int) ( $item['user_id'] ?? 0 ),
+					'content'    => (string) ( $item['description'] ?? '' ),
+					'data'       => array(
+						'evidence_type' => $item_type,
+						'content'       => (string) ( $item['content'] ?? '' ),
+					),
+					'created_at' => self::timeline_datetime( $item['created_at'] ?? '' ),
+				);
 		}
 
 		// Sort by date.
 		usort(
 			$timeline,
 			function ( $a, $b ) {
-				return strtotime( $a['created_at'] ) - strtotime( $b['created_at'] );
+				return strtotime( $a['created_at'] ) <=> strtotime( $b['created_at'] );
 			}
 		);
 
@@ -1019,5 +1059,35 @@ class DisputeWorkflowManager {
 		}
 
 		return $timeline;
+	}
+
+	/**
+	 * Normalise a timeline entry's created_at to a MySQL datetime string.
+	 *
+	 * The timeline is assembled from three sources that do NOT agree on type:
+	 * the Dispute model and the Message model hydrate created_at to a
+	 * DateTimeImmutable, while evidence rows are JSON-decoded associative arrays
+	 * whose created_at is still a string.
+	 *
+	 * That mixture fataled twice over. The usort() comparator called strtotime()
+	 * on it - "strtotime(): Argument #1 must be of type string, DateTimeImmutable
+	 * given" - which 500'd the dispute detail view. And
+	 * templates/dashboard/sections/disputes.php hands the same value to
+	 * mysql2date(), which would fatal on the object entries for the same reason.
+	 *
+	 * Normalising here, as each entry is built, fixes every consumer at once
+	 * instead of teaching each one to handle both shapes.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param mixed $value Raw created_at from a model or an array.
+	 * @return string MySQL datetime, or '' when there is nothing usable.
+	 */
+	private static function timeline_datetime( $value ): string {
+		if ( $value instanceof \DateTimeInterface ) {
+			return $value->format( 'Y-m-d H:i:s' );
+		}
+
+		return is_string( $value ) ? $value : '';
 	}
 }

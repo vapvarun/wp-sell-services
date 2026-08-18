@@ -140,6 +140,25 @@ proposal count and expiry that the canonical template and the block show.
 | 15 | `[wpss_order_details]` broken | `Shortcodes.php:780` locates `order/details.php`, which does not exist | Always renders the reduced inline fallback |
 | 16 | Duplicated inline `<style>` | `StandaloneAccountProvider.php:706`, `:713` re-declare `.wpss-service-card` / `.wpss-orders-table` | Styling outside the design system, drifts from tokens |
 | 17 | Notifications ×3 | ✅ **FIXED** — consolidated into `templates/partials/notifications-list.php` (`f009858`, `ecbb2d8`) | — |
+| 18 | Order-status label map ×4 | ✅ **PARTLY FIXED** — see below | REST copy was returning `Pending_payment` for 7 of 18 statuses |
+
+### #18 — the order-status label map, in four places
+
+`wpss_get_order_statuses()` (`functions.php:2588`) is canonical: all 18 statuses,
+translated, filterable via `wpss_order_statuses`. Three other copies existed.
+
+| Copy | Covers | Status |
+|---|---|---|
+| `API/OrdersController::get_status_label()` | 11 of 18, `ucfirst()` for the rest | ✅ **Fixed** — delegates to the canonical map |
+| `Admin/Admin.php:1630` (order detail) | 8 of 18, and calls `pending_requirements` **"Waiting for Requirements"** where the canonical map says "Pending Requirements" | ❌ **Open** — straight drift, but it is admin display copy so changing it needs a browser check |
+| `Admin/Pages/VendorsPage.php:1840` (filter dropdown) | 7 of 18 | ❌ **Open** — a *deliberate* subset is defensible for a filter, but it omits `disputed`, `on_hold`, `late` and `revision_requested`, so an order in any of those cannot be filtered to. Needs a UX call, not just a rename. |
+| `Admin/Pages/ManualOrderPage.php:802` | 5, with **intentionally different wording** — "In Progress (Skip Requirements)", "Pending Requirements (Payment Complete)" | ✅ **Leave alone.** These explain the consequence of picking a starting status when creating a manual order. Context copy, not drift. |
+
+The REST copy was the one that reached customers hardest: it fell through to
+`ucfirst( $status )` for the seven statuses it did not list — including the three
+most common buyer-facing ones — so the API answered `Pending_payment`, underscore
+and all, untranslated. Every client then kept its own label map to compensate,
+which is why the mobile app renders English on localised sites.
 
 ---
 

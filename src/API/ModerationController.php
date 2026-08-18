@@ -151,17 +151,11 @@ class ModerationController extends RestController {
 
 		$services = array();
 		foreach ( $query->posts as $post ) {
-			$author = get_user_by( 'id', $post->post_author );
-
 			$services[] = array(
 				'id'           => $post->ID,
 				'title'        => $post->post_title,
 				'excerpt'      => wp_trim_words( $post->post_content, 30 ),
-				'vendor'       => array(
-					'id'     => (int) $post->post_author,
-					'name'   => $author ? $author->display_name : __( 'Unknown', 'wp-sell-services' ),
-					'avatar' => get_avatar_url( $post->post_author, array( 'size' => 48 ) ),
-				),
+				'vendor'       => wpss_rest_user( (int) $post->post_author ),
 				// Same term shape as /categories and /services, so a moderation
 				// screen and a catalog screen parse categories the same way.
 				// This returned bare name strings, which was a third shape.
@@ -173,7 +167,7 @@ class ModerationController extends RestController {
 					)
 				),
 				'price'        => (float) get_post_meta( $post->ID, '_wpss_starting_price', true ),
-				'submitted_at' => $post->post_date_gmt,
+				'submitted_at' => $this->format_datetime( $post->post_date_gmt ),
 			);
 		}
 

@@ -125,7 +125,7 @@ class Notification {
 	 * @param object $row Database row.
 	 * @return self
 	 */
-	public static function from_row( object $row ): self {
+	public static function from_db( object $row ): self {
 		$notification = new self();
 
 		$notification->id         = (int) $row->id;

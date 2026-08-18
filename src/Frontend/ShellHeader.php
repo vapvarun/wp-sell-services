@@ -65,6 +65,29 @@ class ShellHeader {
 		// the queried object only — menus, widgets, related-card titles, and
 		// admin output are never affected.
 		add_filter( 'the_title', array( __CLASS__, 'maybe_suppress_theme_title' ), 10, 2 );
+
+		/*
+		 * Repair the one nav-menu label our suppression can break.
+		 *
+		 * wp_setup_nav_menu_item() builds a page menu item's label with
+		 * get_the_title( $object_id ) - the SAME id and the SAME filter as the page
+		 * being viewed - so blanking the title makes WordPress substitute its own
+		 * placeholder and the "Dashboard" item in the site menu renders as
+		 * "#153 (no title)" while you are on the dashboard. Measured, not theorised:
+		 * it is what the first attempt at this fix actually produced.
+		 *
+		 * Two approaches were tried and rejected before this one. Excluding menus
+		 * with a flag set around wp_nav_menu() depends on when a theme renders its
+		 * menu relative to its title, and on BuddyX the flag was still set when the
+		 * entry-title rendered, so the duplicate H1 came straight back. Hiding
+		 * .entry-title with CSS leaves both headings in the accessibility tree,
+		 * which is the actual thing being fixed.
+		 *
+		 * This repairs the label instead, from the RAW post_title, and only for the
+		 * single item that points at the page currently being viewed. No flags, no
+		 * assumptions about theme hook order.
+		 */
+		add_filter( 'wp_setup_nav_menu_item', array( __CLASS__, 'restore_nav_menu_item_title' ) );
 	}
 
 	/**
@@ -78,10 +101,40 @@ class ShellHeader {
 	 * @return bool True when the theme's entry-title should be suppressed.
 	 */
 	public static function is_shell_surface(): bool {
+		/*
+		 * ONLY pages that print their own <h1>.
+		 *
+		 * That is the precondition for suppressing the theme's title, and it is
+		 * easy to miss: this list is about "who owns the heading", not "which
+		 * pages belong to the plugin". Adding a page that has NO heading of its
+		 * own leaves it with no <h1> at all - worse than the duplicate it was
+		 * meant to fix, and invisible in a diff.
+		 *
+		 * Measured on BuddyX at 1.6.0 (Basecamp 10208511245):
+		 *
+		 *   /service-cart/      theme H1 + plugin H1   -> suppress (added here)
+		 *   /dashboard/         theme H1 + plugin H1   -> suppress (already here)
+		 *   /                   plugin H1 only         -> correct already
+		 *   /service-checkout/  theme H1 ONLY          -> must NOT suppress
+		 *   /become-a-vendor/   theme H1 ONLY          -> must NOT suppress
+		 *   /vendors/           theme H1 ONLY          -> must NOT suppress
+		 *
+		 * The card that reported this asked for checkout, become_vendor and
+		 * vendors_page to be added too. They are deliberately left out: each has
+		 * a single, correct H1 today, and it is the theme's. Give one of them its
+		 * own ShellHeader::render() heading first, then add it here - in that
+		 * order.
+		 */
+		$page_keys = array( 'dashboard', 'services_page', 'cart' );
+
+		foreach ( $page_keys as $page_key ) {
+			if ( \wpss_is_page( $page_key ) ) {
+				return self::filter_shell_surface( true );
+			}
+		}
+
 		$is_shell = (
-			\wpss_is_page( 'dashboard' )
-			|| \wpss_is_page( 'services_page' )
-			|| \is_singular( 'wpss_service' )
+			\is_singular( 'wpss_service' )
 			|| \is_post_type_archive( 'wpss_service' )
 			|| \is_tax( 'wpss_service_category' )
 			|| \is_tax( 'wpss_service_tag' )
@@ -89,6 +142,24 @@ class ShellHeader {
 			|| \is_post_type_archive( 'wpss_request' )
 			|| (bool) \get_query_var( 'wpss_vendor' )
 		);
+
+		return self::filter_shell_surface( $is_shell );
+	}
+
+	/**
+	 * Apply the public override filter to a shell decision.
+	 *
+	 * Extracted so every return path in is_shell_surface() goes through the
+	 * filter — an early return that skipped it would silently ignore a site's
+	 * `wpss_suppress_theme_title` override on exactly the pages it most wants to
+	 * control.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param bool $is_shell Whether this is a plugin-shell surface.
+	 * @return bool
+	 */
+	private static function filter_shell_surface( bool $is_shell ): bool {
 
 		/**
 		 * Filter whether the active theme's entry-title is suppressed on the
@@ -133,7 +204,28 @@ class ShellHeader {
 	 * @return string Possibly-emptied title.
 	 */
 	public static function maybe_suppress_theme_title( string $title, $id = 0 ): string {
-		if ( \is_admin() || ! \is_main_query() || ! \in_the_loop() ) {
+		/*
+		 * `in_the_loop()` is NOT required, and requiring it was the bug.
+		 *
+		 * Themes do not agree on where they print the entry title. BuddyX renders
+		 * it from a template part that runs OUTSIDE the loop on the dashboard: the
+		 * probe showed `the_title` firing four times for the queried page, three
+		 * with in_the_loop() false, and the heading that reached the screen was one
+		 * of those three. So the dashboard carried the plugin-shell body class,
+		 * passed every other check, and still showed two H1s (Basecamp
+		 * 10208511245).
+		 *
+		 * What keeps this tight is the pair below, not the loop: the MAIN query,
+		 * and an id that matches the queried object. A menu item, a related-service
+		 * card, a widget or a breadcrumb ancestor all carry a different post id and
+		 * are untouched.
+		 *
+		 * Checked on BuddyX before relying on it: the document <title> and the
+		 * breadcrumb's current-page label both come from single_post_title(), which
+		 * does not run through `the_title`, so neither goes blank. Breadcrumb
+		 * ANCESTORS use get_the_title( $other_id ) and are guarded by the id match.
+		 */
+		if ( \is_admin() || ! \is_main_query() ) {
 			return $title;
 		}
 
@@ -147,6 +239,53 @@ class ShellHeader {
 		}
 
 		return $title;
+	}
+
+	/**
+	 * Give back a menu item's label when it points at the suppressed page.
+	 *
+	 * Only ever touches an item whose linked object IS the queried page, and only
+	 * when the item carries no custom label of its own - a menu item renamed by
+	 * hand keeps its name.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param object $menu_item Menu item, already set up by WordPress.
+	 * @return object
+	 */
+	public static function restore_nav_menu_item_title( $menu_item ) {
+		if ( \is_admin() || ! \is_object( $menu_item ) ) {
+			return $menu_item;
+		}
+
+		$object_id = (int) ( $menu_item->object_id ?? 0 );
+		$queried   = (int) \get_queried_object_id();
+
+		if ( ! $object_id || ! $queried || $object_id !== $queried ) {
+			return $menu_item;
+		}
+
+		if ( ! self::is_shell_surface() ) {
+			return $menu_item;
+		}
+
+		// A hand-written label lives on the nav_menu_item post itself. Read it raw:
+		// by this point core may already have replaced $menu_item->post_title with
+		// its "#123 (no title)" placeholder, so the item's own record is the only
+		// honest source.
+		$item_post = isset( $menu_item->db_id ) ? \get_post( (int) $menu_item->db_id ) : null;
+
+		if ( $item_post && '' !== (string) $item_post->post_title ) {
+			return $menu_item;
+		}
+
+		$linked = \get_post( $object_id );
+
+		if ( $linked && '' !== (string) $linked->post_title ) {
+			$menu_item->title = $linked->post_title;
+		}
+
+		return $menu_item;
 	}
 
 	/**

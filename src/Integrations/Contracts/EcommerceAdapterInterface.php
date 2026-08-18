@@ -8,7 +8,6 @@
 
 declare(strict_types=1);
 
-
 namespace WPSellServices\Integrations\Contracts;
 
 defined( 'ABSPATH' ) || exit;
@@ -57,13 +56,6 @@ interface EcommerceAdapterInterface {
 	 * @return bool
 	 */
 	public function supports_feature( string $feature ): bool;
-
-	/**
-	 * Get the order provider for this platform.
-	 *
-	 * @return OrderProviderInterface
-	 */
-	public function get_order_provider(): OrderProviderInterface;
 
 	/**
 	 * Get the product provider for this platform.

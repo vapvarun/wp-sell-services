@@ -443,6 +443,27 @@ defined( 'ABSPATH' ) || exit;
 					<span><?php echo esc_html( wpss_format_price( $subtotal ) ); ?></span>
 				</div>
 
+				<?php
+				/**
+				 * Fires after a payable total is displayed, before its pay/continue CTA.
+				 *
+				 * ONE hook for every surface that shows an amount the shopper is about to
+				 * pay — this cart summary and the standalone checkout. Deliberately not a
+				 * cart-specific name: the buy flow goes straight from the order modal to
+				 * /service-checkout/ without touching this template at all, so a hook that
+				 * only fired here would decorate a page many shoppers never see.
+				 *
+				 * The total is passed in the store BASE currency, which is what is
+				 * charged. Consumers must state it, never replace it.
+				 *
+				 * @since 1.5.1
+				 *
+				 * @param float  $total   Payable total in the store base currency.
+				 * @param string $context Surface identifier ('cart', 'checkout').
+				 */
+				do_action( 'wpss_payable_total_after', (float) $subtotal, 'cart' );
+				?>
+
 				<div class="wpss-cart-summary__cta">
 					<a href="<?php echo esc_url( wpss_get_checkout_base_url() ); ?>" class="wpss-btn wpss-btn--primary">
 						<?php esc_html_e( 'Proceed to Checkout', 'wp-sell-services' ); ?>

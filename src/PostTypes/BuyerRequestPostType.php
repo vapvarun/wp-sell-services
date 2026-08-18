@@ -133,10 +133,17 @@ class BuyerRequestPostType {
 			2  => __( 'Custom field updated.', 'wp-sell-services' ),
 			3  => __( 'Custom field deleted.', 'wp-sell-services' ),
 			4  => __( 'Request updated.', 'wp-sell-services' ),
+			// The `revision` parameter is supplied by WordPress core's own redirect
+			// after a revision restore, and this whole array is core's
+			// `post_updated_messages` pattern - core reads $_GET the same way here.
+			// It renders one admin notice and changes no state, so there is no
+			// action for a nonce to protect. Cast to int on use.
+			// phpcs:disable WordPress.Security.NonceVerification.Recommended
 			5  => isset( $_GET['revision'] )
 				/* translators: %s: date and time of the revision */
 				? sprintf( __( 'Request restored to revision from %s', 'wp-sell-services' ), wp_post_revision_title( (int) $_GET['revision'], false ) )
 				: false,
+			// phpcs:enable WordPress.Security.NonceVerification.Recommended
 			/* translators: %s: post permalink */
 			6  => sprintf( __( 'Request published. <a href="%s">View Request</a>', 'wp-sell-services' ), esc_url( $permalink ) ),
 			7  => __( 'Request saved.', 'wp-sell-services' ),

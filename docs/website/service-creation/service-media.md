@@ -54,6 +54,26 @@ Simply paste the video URL into the wizard. The video will embed automatically o
 
 **Note:** Direct video file uploads (MP4, MOV, etc.) are not supported in the wizard. Use YouTube or Vimeo to host your videos and paste the link.
 
+### How your video appears to buyers
+
+Your gallery opens on your **main image**, not the video. Buyers came to see the
+work; the video is the pitch beside it.
+
+The video sits **first in the thumbnail strip**, with a play badge over it, using
+the thumbnail YouTube or Vimeo already generated for it. Buyers click it to
+watch, click any image to go back, and can switch between them as often as they
+like without the page reloading.
+
+Two things worth knowing:
+
+- The video player is only loaded **when a buyer actually clicks it**. Your
+  service page stays fast for the people who never watch it, and YouTube is not
+  contacted on a visit that ignores the video.
+- If your video's provider does not supply a thumbnail, your main image is used
+  for that button instead.
+
+Nothing here needs configuring. Paste the URL and it behaves this way.
+
 ## Tips for a Great Gallery
 
 ### Image Quality

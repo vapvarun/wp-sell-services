@@ -209,7 +209,7 @@
 				const billing = this.readBillingDetails();
 
 				if (!billing.complete) {
-					this.showError(wpssStripe.i18n.addressRequired || 'Please complete your billing name and address.');
+					this.showError(wpssStripe.i18n.addressRequired);
 					this.revealBillingForm();
 					this.setLoading(false);
 					return;

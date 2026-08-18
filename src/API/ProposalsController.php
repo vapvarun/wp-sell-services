@@ -302,7 +302,8 @@ class ProposalsController extends RestController {
 			return $this->error( 'wpss_not_vendor', __( 'You must be a vendor to submit proposals.', 'wp-sell-services' ), 403 );
 		}
 
-		return true;
+		// Bidding for work is taking on new work. See wpss_vendor_status_block().
+		return wpss_vendor_status_block() ?? true;
 	}
 
 	/**
@@ -457,6 +458,7 @@ class ProposalsController extends RestController {
 		$data = [];
 
 		if ( $request->get_param( 'cover_letter' ) !== null ) {
+			// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Explains the field-name mapping; not dead code.
 			// ProposalService::update() reads 'description' (matches submit()).
 			$data['description'] = $request->get_param( 'cover_letter' );
 		}
@@ -546,7 +548,6 @@ class ProposalsController extends RestController {
 	 * @return array
 	 */
 	private function prepare_proposal_for_response( object $proposal, bool $detailed = false ): array {
-		$vendor  = get_userdata( $proposal->vendor_id );
 		$request = get_post( $proposal->request_id );
 
 		// ProposalService::format_proposal() normalises milestones to an
@@ -563,11 +564,7 @@ class ProposalsController extends RestController {
 				'id'            => (int) $proposal->id,
 				'request_id'    => (int) $proposal->request_id,
 				'request_title' => $request ? $request->post_title : '',
-				'vendor'        => [
-					'id'     => (int) $proposal->vendor_id,
-					'name'   => $vendor ? $vendor->display_name : '',
-					'avatar' => get_avatar_url( $proposal->vendor_id, [ 'size' => 48 ] ),
-				],
+				'vendor'        => wpss_rest_user( (int) $proposal->vendor_id ),
 			],
 			// The proposals table has no currency column - a proposal is
 			// priced in the store currency, the helper's default.
@@ -577,7 +574,7 @@ class ProposalsController extends RestController {
 				'contract_type' => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
 				'milestones'    => $milestones,
 				'status'        => $proposal->status,
-				'created_at'    => $proposal->created_at,
+				'created_at'    => $this->format_datetime( $proposal->created_at ?? null ),
 			]
 		);
 

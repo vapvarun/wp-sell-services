@@ -192,7 +192,7 @@ class VendorsPage {
 	 * vendor id merged in — the detail drawer's AJAX needs it, and it is the
 	 * one genuinely per-render value in an otherwise static config.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 *
 	 * @param int $vendor_id Vendor being viewed, or 0 on the list screen.
 	 * @return void

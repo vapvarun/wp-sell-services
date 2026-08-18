@@ -54,12 +54,7 @@ $skills_string   = is_array( $skills_required ) ? implode( ', ', $skills_require
 $current_status  = get_post_status( $request_id );
 
 // Get categories for the dropdown.
-$categories = get_terms(
-	array(
-		'taxonomy'   => 'wpss_service_category',
-		'hide_empty' => false,
-	)
-);
+$categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 
 $current_categories = wp_get_object_terms( $request_id, 'wpss_service_category', array( 'fields' => 'ids' ) );
 $current_cat_id     = ! empty( $current_categories ) ? $current_categories[0] : 0;
@@ -125,11 +120,25 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 				<label for="request_category"><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></label>
 				<select name="category" id="request_category" class="wpss-input">
 					<option value=""><?php esc_html_e( 'Select a category (optional)', 'wp-sell-services' ); ?></option>
-					<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
-						<?php foreach ( $categories as $category ) : ?>
-							<option value="<?php echo esc_attr( $category->term_id ); ?>" <?php selected( $current_cat_id, $category->term_id ); ?>>
-								<?php echo esc_html( $category->name ); ?>
+					<?php if ( ! empty( $categories ) ) : ?>
+						<?php
+						// One dropdown, no subcategory field beside it, so the
+						// hierarchy has to be visible here (Basecamp 10208080926).
+						foreach ( wpss_group_category_terms( $categories ) as $wpss_group ) :
+							$wpss_parent = $wpss_group['term'];
+							?>
+							<option value="<?php echo esc_attr( $wpss_parent->term_id ); ?>" <?php selected( $current_cat_id, $wpss_parent->term_id ); ?>>
+								<?php echo esc_html( $wpss_parent->name ); ?>
 							</option>
+							<?php if ( ! empty( $wpss_group['children'] ) ) : ?>
+								<optgroup label="<?php echo esc_attr( $wpss_parent->name ); ?>">
+									<?php foreach ( $wpss_group['children'] as $wpss_child ) : ?>
+										<option value="<?php echo esc_attr( $wpss_child->term_id ); ?>" <?php selected( $current_cat_id, $wpss_child->term_id ); ?>>
+											<?php echo esc_html( $wpss_child->name ); ?>
+										</option>
+									<?php endforeach; ?>
+								</optgroup>
+							<?php endif; ?>
 						<?php endforeach; ?>
 					<?php endif; ?>
 				</select>

@@ -13,6 +13,19 @@
     <exclude-pattern>/languages/*</exclude-pattern>
     <exclude-pattern>/tests/*</exclude-pattern>
     <exclude-pattern>/plans/*</exclude-pattern>
+    <!--
+      dist/ is a gitignored BUILD of the whole plugin, so scanning it counted every
+      violation twice - once in source, once in a stale copy - and reported hits in
+      code that had already been deleted from src/. The i18n tooling hit the same
+      trap: `wp i18n make-pot .` scanned dist/ and pulled in strings that no longer
+      existed (see the notes on card #10138985537), which is why `npm run i18n` is
+      the documented command rather than the bare WP-CLI one.
+    -->
+    <exclude-pattern>/dist/*</exclude-pattern>
+    <!-- Static-analysis bootstrap: declares WordPress core constants (DB_NAME)
+         so PHPStan knows they exist. Dev tooling, never shipped, and the
+         plugin-prefix rule does not apply to core constants. -->
+    <exclude-pattern>/phpstan-bootstrap.php</exclude-pattern>
     <exclude-pattern>*.min.js</exclude-pattern>
     <exclude-pattern>*.min.css</exclude-pattern>
 
@@ -23,12 +36,23 @@
     <arg name="extensions" value="php"/>
     <arg name="parallel" value="8"/> <!-- Enables parallel processing when available for faster results -->
 
-    <!-- CI policy: errors block the build, warnings are advisory. Warnings are
-         still printed for review, but a clean run (zero errors) exits 0. This
-         matches the documented quality gate (errors fixed; warnings advisory)
-         and keeps legitimate WP-idiom warnings (meta_query, prepared-SQL
-         placeholders, current_time, etc.) from failing CI. -->
-    <config name="ignore_warnings_on_exit" value="1"/>
+    <!--
+      CI policy: the tree is at ZERO errors and ZERO warnings, and phpcs exits
+      non-zero on either, so it stays that way.
+
+      This used to set ignore_warnings_on_exit=1 because the tree carried ~300
+      warnings and a gate that is red from day one gets ignored. Those 306 were
+      then worked through one at a time: the WP-idiom families (prepared-SQL
+      placeholder arithmetic, meta_query/tax_query "slow query" notices, hook
+      callbacks that cannot drop an argument WordPress hands them) are excluded
+      below with the reasoning; the individually-justified ones carry a
+      site-local phpcs:ignore naming the sniff and the reason; and the genuine
+      ones were fixed.
+
+      So a warning appearing now is NEW, and it should fail. If a future warning
+      is a real false positive, annotate it at the site with a reason rather
+      than reopening this valve.
+    -->
 
     <!-- Rules: Check PHP version compatibility -->
     <config name="testVersion" value="8.1-"/>
@@ -53,6 +77,61 @@
         <!-- Allow interpolated table names in $wpdb->prepare() — all queries use prepare() -->
         <exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
         <exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
+        <!--
+          $wpdb->prepare( $sql, $array ) is valid — WordPress accepts an array of
+          replacements as the second argument. The sniff counts that array as ONE
+          parameter and reports "found 1, expected 2" against SQL that is correct;
+          UnfinishedPrepare fires on the same pattern. Every one of the 60 hits was
+          checked before excluding these: all are the array form, none was a real
+          malformed query or an injection risk.
+
+          Scope note: the InterpolatedNotPrepared / NotPrepared exclusions above
+          already cover the "is it prepared at all" question, so what is lost here
+          is only the arity arithmetic, which cannot be evaluated for an array.
+        -->
+        <exclude name="WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber"/>
+        <exclude name="WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare"/>
+        <!--
+          A services marketplace is meta- and taxonomy-shaped: services carry price,
+          rating, delivery and featured flags as meta, and category/tag as taxonomies.
+          Filtering and sorting on them is the product, not an oversight, so this
+          sniff fires 67 times on queries that have no alternative formulation.
+
+          The real risk it is pointing at — unbounded or per-row queries — is covered
+          properly instead: the big-site checklist in plans/ requires pagination,
+          COUNT(*) and no N+1 on every list, and those are verified by measurement at
+          250 vendors / 3000 orders rather than by a static sniff.
+        -->
+        <exclude name="WordPress.DB.SlowDBQuery.slow_db_query_meta_query"/>
+        <exclude name="WordPress.DB.SlowDBQuery.slow_db_query_meta_key"/>
+        <exclude name="WordPress.DB.SlowDBQuery.slow_db_query_meta_value"/>
+        <exclude name="WordPress.DB.SlowDBQuery.slow_db_query_tax_query"/>
+        <!--
+          WordPress dictates hook callback signatures, so a callback routinely
+          receives context arguments it does not need: $hook on
+          admin_enqueue_scripts, $taxonomy on edited_{taxonomy}, $jsonld on
+          rank_math/json_ld, $old_status on transition hooks. The parameter cannot
+          be dropped without changing what the hook hands us, and 84 of these
+          warnings are exactly that.
+
+          Checked before excluding, because a FILTER that ignores an argument can
+          be a real bug: RankMathIntegration::add_schema() and
+          modify_breadcrumbs() both take the filtered value FIRST, modify it and
+          return it - the unused argument is the trailing context object.
+
+          Three callbacks DO discard the filtered value, and that is deliberate:
+          the settings-bridge closures in Plugin::define_vendor_settings_filters()
+          for wpss_vendor_registration_open, wpss_auto_approve_vendors and
+          wpss_require_service_moderation. Each makes the stored SETTING
+          authoritative over whatever default was passed in - that is the whole
+          point of the bridge. They run at the default priority 10, so a site
+          can still override them at 11+.
+
+          A genuinely unused parameter in our own (non-callback) code is better
+          caught by PHPStan, which understands whether a method is used as a
+          callback at all.
+        -->
+        <exclude name="Generic.CodeAnalysis.UnusedFunctionParameter"/>
         <!-- Allow non-Yoda conditions — project uses standard condition order -->
         <exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
         <!-- Templates use standard variable names ($order, $service, etc.) -->
@@ -73,6 +152,7 @@
         <!-- Allow multiple classes in stub files -->
         <exclude name="Generic.Files.OneObjectStructurePerFile.MultipleFound"/>
     </rule>
+
 
     <!-- Verify that the text_domain is set to the desired text-domain -->
     <rule ref="WordPress.WP.I18n">
@@ -101,7 +181,26 @@
         </properties>
     </rule>
 
-    <!-- Custom capabilities used by this plugin -->
+    <!--
+      Custom capabilities used by this plugin.
+
+      This list already existed but was incomplete, which is the only reason the
+      capability sniff was warning. Each addition was traced to where it is
+      granted before being listed:
+
+        wpss_manage_settings      add_cap() in the activator
+        wpss_respond_to_requests  role capability array, Core/Activator.php:93
+        wpss_vendor               a ROLE, not a capability. functions.php:1519
+                                  calls user_can( $id, 'wpss_vendor' ), which
+                                  works because WordPress merges role names into
+                                  the user's allcaps - verified live:
+                                  user_can(1,'wpss_vendor') is TRUE for a holder
+                                  of the role. Unidiomatic but correct, so it is
+                                  declared rather than "fixed" blind.
+
+      The sniff stays ON, so a genuinely misspelled capability - the kind that
+      silently grants or denies access - is still reported.
+    -->
     <rule ref="WordPress.WP.Capabilities">
         <properties>
             <property name="custom_capabilities" type="array">
@@ -110,6 +209,10 @@
                 <element value="wpss_view_analytics"/>
                 <element value="wpss_manage_disputes"/>
                 <element value="wpss_manage_withdrawals"/>
+                <element value="wpss_manage_settings"/>
+                <element value="wpss_manage_vendors"/>
+                <element value="wpss_respond_to_requests"/>
+                <element value="wpss_vendor"/>
             </property>
         </properties>
     </rule>

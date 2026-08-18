@@ -745,16 +745,40 @@
 	height: 48px;
 }
 
+/*
+ * Unread count bubble on the conversation avatar.
+ *
+ * This was a 12px dot with `text-indent: -999999px`, so the template rendered
+ * the unread COUNT and the stylesheet pushed it off screen. The row then read
+ * "Ella Martinez / • / You: First draft is on the way..." - a dot beside a
+ * preview of your OWN last message, with no number anywhere to say that the
+ * unread messages are the older ones from the other party. That is what was
+ * reported as "unread dots" on own outbound (Basecamp 10208075268); the count
+ * itself was always correct, it was simply invisible.
+ *
+ * Now it shows the number, like every other messaging product. Sized from the
+ * text rather than fixed, so 1, 2 or "9+" all fit; min-width keeps a single
+ * digit circular. `inset-inline-end` instead of `right` so RTL mirrors.
+ */
 .wpss-conversation-card__badge {
 	position: absolute;
-	top: 0;
-	right: 0;
-	width: 12px;
-	height: 12px;
+	top: -4px;
+	inset-inline-end: -4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
 	background: var(--wpss-primary);
 	border: 2px solid var(--wpss-white, #fff);
-	border-radius: 50%;
-	text-indent: -999999px;
+	border-radius: 9px;
+	color: var(--wpss-white, #fff);
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
 }
 
 .wpss-conversation-card__content {
@@ -1752,6 +1776,31 @@
 .wpss-btn--danger-outline:hover {
 	background: var(--wpss-danger, #ef4444);
 	color: var(--wpss-white, #fff);
+}
+
+/* Order actions rendered as links rather than buttons.
+   Themes style anchors far more aggressively than buttons — BuddyX puts
+   `border: 2px solid transparent` on its anchor buttons, which outranks the
+   1px border above and left "View Dispute" as floating red text with no
+   outline. Pinning the anchor states keeps a link action looking like the
+   button beside it, including :visited, which themes recolour by default. */
+a.wpss-btn.wpss-btn--danger-outline,
+a.wpss-btn.wpss-btn--danger-outline:visited {
+	border: 1px solid var(--wpss-danger, #ef4444);
+	color: var(--wpss-danger, #ef4444);
+	background: transparent;
+	text-decoration: none;
+}
+
+/* Both classes repeated deliberately: the theme's own anchor-hover rule sits at
+   the same specificity as a single class, and won — the link went to a pale
+   tint while the identical <button> beside it fills solid. */
+a.wpss-btn.wpss-btn--danger-outline:hover,
+a.wpss-btn.wpss-btn--danger-outline:focus-visible {
+	border-color: var(--wpss-danger, #ef4444);
+	background: var(--wpss-danger, #ef4444);
+	color: var(--wpss-white, #fff);
+	text-decoration: none;
 }
 
 .wpss-btn--sm {

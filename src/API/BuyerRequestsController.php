@@ -393,7 +393,9 @@ class BuyerRequestsController extends RestController {
 			);
 		}
 
-		return true;
+		// Same rule as POST /proposals — the two routes reach the same act, so
+		// gating only one of them would leave the other as the way around it.
+		return wpss_vendor_status_block() ?? true;
 	}
 
 	/**
@@ -747,7 +749,6 @@ class BuyerRequestsController extends RestController {
 	 */
 	private function prepare_request_for_response( object $buyer_request, bool $is_owner = false ): array {
 		$author_id = $buyer_request->author_id ?? $buyer_request->post_author ?? 0;
-		$author    = get_userdata( $author_id );
 
 		// A buyer request has no currency of its own, so both budget bounds
 		// are in the store currency. Two money fields sharing one currency
@@ -770,12 +771,9 @@ class BuyerRequestsController extends RestController {
 			'deadline'         => $buyer_request->deadline ?? null,
 			'category'         => $buyer_request->category ?? null,
 			'proposal_count'   => (int) ( $buyer_request->proposal_count ?? 0 ),
-			'author'           => [
-				'id'     => (int) $author_id,
-				'name'   => $author ? $author->display_name : '',
-				'avatar' => get_avatar_url( $author_id, [ 'size' => 48 ] ),
-			],
-			'created_at'       => $buyer_request->created_at ?? $buyer_request->post_date ?? '',
+			'author'           => wpss_rest_user( (int) $author_id ),
+			// ISO-8601 through the shared formatter (Basecamp 10154919636).
+			'created_at'       => $this->format_datetime( $buyer_request->created_at ?? $buyer_request->post_date ?? null ),
 		];
 
 		// Add attachments if owner.
@@ -793,16 +791,11 @@ class BuyerRequestsController extends RestController {
 	 * @return array
 	 */
 	private function prepare_proposal_for_response( object $proposal ): array {
-		$vendor = get_userdata( $proposal->vendor_id );
 
 		return array_merge(
 			[
 				'id'           => (int) $proposal->id,
-				'vendor'       => [
-					'id'     => (int) $proposal->vendor_id,
-					'name'   => $vendor ? $vendor->display_name : '',
-					'avatar' => get_avatar_url( $proposal->vendor_id, [ 'size' => 48 ] ),
-				],
+				'vendor'       => wpss_rest_user( (int) $proposal->vendor_id ),
 				'cover_letter' => $proposal->cover_letter,
 			],
 			// DB columns are proposed_price / proposed_days; the old code read
@@ -816,7 +809,7 @@ class BuyerRequestsController extends RestController {
 				'contract_type' => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
 				'milestones'    => is_array( $proposal->milestones ?? null ) ? $proposal->milestones : [],
 				'status'        => $proposal->status,
-				'created_at'    => $proposal->created_at,
+				'created_at'    => $this->format_datetime( $proposal->created_at ?? null ),
 			]
 		);
 	}

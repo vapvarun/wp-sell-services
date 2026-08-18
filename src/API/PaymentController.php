@@ -416,9 +416,24 @@ class PaymentController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	private function create_offline_order( object $gateway, float $amount, string $currency, int $service_id, int $package_id, int $pay_order ) {
-		// For existing orders (pay_order), just confirm and return.
+		// For existing orders (pay_order), record the rail and return. Ownership
+		// and pending_payment status are already verified by create_intent().
+		//
+		// Out-of-band rails settle later, so the order has to remember which one
+		// it is waiting on: the admin confirmation box and the buyer's proof
+		// upload both key off payment_method being the gateway id, and this
+		// branch used to leave it NULL - the same dead end the AJAX checkout had
+		// (Basecamp 10208094640). One writer serves both entry points.
 		if ( $pay_order ) {
 			$order = wpss_get_order( $pay_order );
+
+			if ( ! wpss_record_pending_payment_method( $pay_order, $gateway->get_id() ) ) {
+				return new WP_Error(
+					'wpss_payment_method_not_recorded',
+					__( 'Could not record the payment method on this order.', 'wp-sell-services' ),
+					array( 'status' => 500 )
+				);
+			}
 
 			return new WP_REST_Response(
 				array(
@@ -434,10 +449,6 @@ class PaymentController extends RestController {
 
 		// Create a new service order.
 		$order_provider = wpss_get_order_provider();
-
-		if ( ! $order_provider ) {
-			return new WP_Error( 'no_provider', __( 'No order provider available.', 'wp-sell-services' ), array( 'status' => 500 ) );
-		}
 
 		$order = $order_provider->create_order(
 			array(
@@ -536,9 +547,7 @@ class PaymentController extends RestController {
 			}
 
 			$order_provider = wpss_get_order_provider();
-			if ( $order_provider ) {
-				$order_provider->mark_as_paid( $pay_order, $payment_id, 'stripe' );
-			}
+			$order_provider->mark_as_paid( $pay_order, $payment_id, 'stripe' );
 			$order = wpss_get_order( $pay_order );
 
 			return new WP_REST_Response(
@@ -635,9 +644,7 @@ class PaymentController extends RestController {
 
 			$transaction_id = $capture['transaction_id'] ?? $payment_id;
 			$order_provider = wpss_get_order_provider();
-			if ( $order_provider ) {
-				$order_provider->mark_as_paid( $pay_order, $transaction_id, 'paypal' );
-			}
+			$order_provider->mark_as_paid( $pay_order, $transaction_id, 'paypal' );
 			$order = wpss_get_order( $pay_order );
 
 			return new WP_REST_Response(

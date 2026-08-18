@@ -161,25 +161,57 @@ class FavoritesController extends RestController {
 		);
 
 		$items = array();
+
 		foreach ( $services as $service ) {
+			/*
+			 * A favourite IS a service card, so it is built from the one card
+			 * shape rather than a third hand-rolled copy (Basecamp 10154919636).
+			 * This endpoint used to return `thumbnail` as a bare string where
+			 * /services returned `images[]`, a flat `price` where /services
+			 * returned `pricing{}`, and its own {id,name,avatar} vendor - not
+			 * out of disagreement, but because the pieces it needed were
+			 * PRIVATE methods on ServicesController and could not be called
+			 * from here. They are shared functions now.
+			 *
+			 * The legacy keys are merged ON TOP and deliberately kept. Removing
+			 * or retyping a field is a contract change, and src/API/API.php is
+			 * explicit that bumping contract_version bricks every build already
+			 * shipped. So a client gets the canonical shape AND everything it
+			 * reads today.
+			 */
 			$items[] = array_merge(
+				wpss_rest_service_card( $service ),
 				array(
-					'id'        => $service->ID,
-					'title'     => $service->post_title,
-					'slug'      => $service->post_name,
+					// Kept at 20 words. /services returns the excerpt whole, so
+					// this is the one field whose MEANING still differs between
+					// the two endpoints - and lengthening the text a shipped app
+					// is already laying out is not a change to make silently.
 					'excerpt'   => wp_trim_words( $service->post_excerpt ?: $service->post_content, 20 ),
+					// Superseded by images[], which carries the same URL under
+					// images[0].sizes.medium plus the gallery and the ids.
 					'thumbnail' => get_the_post_thumbnail_url( $service->ID, 'medium' ) ?: '',
 				),
-				// Services carry no currency of their own - they are priced in
-				// the store currency, which is the helper's default.
+				// Superseded by pricing{}. Same number, flat keys: price,
+				// price_minor, currency. Services carry no currency of their
+				// own - they are priced in the store currency, the helper's
+				// default.
 				wpss_rest_money( 'price', (float) get_post_meta( $service->ID, '_wpss_starting_price', true ) ),
 				array(
+					/*
+					 * THE ONE KEY THAT COULD NOT BE UNIFIED.
+					 *
+					 * Canonically `rating` is {average, count}; here it is a
+					 * float. Same name, different TYPE, so this is the single
+					 * case where additive is impossible - a client doing
+					 * rating.toFixed() would crash on an object. It therefore
+					 * stays a float until the next contract_version bump, at
+					 * which point deleting these four lines is the whole fix.
+					 *
+					 * Note it also reads a different source: the cached
+					 * _wpss_rating_average meta, where the canonical shape
+					 * counts approved reviews live. They can disagree.
+					 */
 					'rating' => (float) get_post_meta( $service->ID, '_wpss_rating_average', true ) ?: 0,
-					'vendor' => array(
-						'id'     => (int) $service->post_author,
-						'name'   => get_the_author_meta( 'display_name', $service->post_author ),
-						'avatar' => get_avatar_url( $service->post_author, array( 'size' => 48 ) ),
-					),
 				)
 			);
 		}

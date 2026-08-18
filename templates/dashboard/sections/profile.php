@@ -246,40 +246,14 @@ do_action( 'wpss_dashboard_section_before', 'profile', $user );
 	if ( ! is_array( $user_prefs ) ) {
 		$user_prefs = array();
 	}
-	$pref_categories = array(
-		'orders'       => array(
-			'label' => __( 'New orders', 'wp-sell-services' ),
-			'desc'  => __( 'When a buyer places a new order on one of your services.', 'wp-sell-services' ),
-		),
-		'messages'     => array(
-			'label' => __( 'New messages', 'wp-sell-services' ),
-			'desc'  => __( 'When a buyer sends a message on an active order.', 'wp-sell-services' ),
-		),
-		'completion'   => array(
-			'label' => __( 'Order completion + reviews', 'wp-sell-services' ),
-			'desc'  => __( 'When a buyer approves a delivery or leaves a review.', 'wp-sell-services' ),
-		),
-		'cancellation' => array(
-			'label' => __( 'Cancellation requests', 'wp-sell-services' ),
-			'desc'  => __( 'When a buyer requests to cancel an active order.', 'wp-sell-services' ),
-		),
-		'disputes'     => array(
-			'label' => __( 'Disputes', 'wp-sell-services' ),
-			'desc'  => __( 'Always recommended — disputes need a quick response to avoid escalation.', 'wp-sell-services' ),
-		),
-		'tips'         => array(
-			'label' => __( 'Tips received', 'wp-sell-services' ),
-			'desc'  => __( 'When a buyer sends you a tip on a completed order.', 'wp-sell-services' ),
-		),
-		'withdrawals'  => array(
-			'label' => __( 'Withdrawal status updates', 'wp-sell-services' ),
-			'desc'  => __( 'When your withdrawal request is approved, paid out, or rejected.', 'wp-sell-services' ),
-		),
-		'proposals'    => array(
-			'label' => __( 'Proposals + milestones + extensions', 'wp-sell-services' ),
-			'desc'  => __( 'When a proposal is accepted or a milestone / extension is paid.', 'wp-sell-services' ),
-		),
-	);
+	// Role-aware, and resolved in PHP rather than hardcoded here.
+	//
+	// This list used to be a single vendor-oriented array rendered to everyone,
+	// so a buyer was offered "New orders on your services", "Tips received" and
+	// "Withdrawal status updates" - none of which can ever fire for them
+	// (Basecamp #10159633379). The registry decides what a given person can
+	// actually receive; the template just renders it.
+	$pref_categories = wpss_get_email_preference_categories( $user_id );
 	?>
 	<div class="wpss-email-preferences" id="wpss-email-preferences">
 		<h3><?php esc_html_e( 'Email preferences', 'wp-sell-services' ); ?></h3>

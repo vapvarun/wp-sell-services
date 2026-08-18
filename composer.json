@@ -42,7 +42,9 @@
         "test": "phpunit",
         "lint": "@phpcs",
         "lint:fix": "@phpcbf",
-        "i18n:verify": "python3 bin/i18n-verify.py"
+        "i18n:verify": "python3 bin/i18n-verify.py",
+        "phpstan": "bin/phpstan-run analyse --no-progress",
+        "phpstan:baseline": "bin/phpstan-run analyse --no-progress --generate-baseline"
     },
     "config": {
         "allow-plugins": {

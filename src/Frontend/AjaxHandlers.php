@@ -2275,7 +2275,16 @@ class AjaxHandlers {
 		}
 
 		// Get sender info.
+		//
+		// Guarded because send_vendor_contact() typehints \WP_User: handing it
+		// the `false` get_userdata() returns is a TypeError, not a blank name.
+		// The sender is the logged-in user, so this only fires if the account
+		// went away mid-request - rare, but a 500 either way.
 		$sender = get_userdata( $user_id );
+
+		if ( ! $sender instanceof \WP_User ) {
+			wp_send_json_error( array( 'message' => __( 'Your session has expired. Please sign in again.', 'wp-sell-services' ) ) );
+		}
 
 		// Create notification for vendor.
 		$notification_service = new \WPSellServices\Services\NotificationService();
@@ -3369,7 +3378,10 @@ class AjaxHandlers {
 			}
 		}
 
-		fclose( $output );
+		// WP_Filesystem abstracts FILES; this is the php://output stream opened
+		// above to stream a CSV straight to the browser, which it has no
+		// equivalent for. fclose() is the only way to close it.
+		fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- php://output stream, not a filesystem path.
 		exit;
 	}
 
@@ -3499,9 +3511,24 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
 		}
 
-		$valid_keys  = array( 'orders', 'messages', 'completion', 'cancellation', 'disputes', 'tips', 'withdrawals', 'proposals' );
+		// Only the categories this user was actually OFFERED.
+		//
+		// The list is role-aware now (Basecamp #10159633379), so a buyer's form
+		// carries no tips / withdrawals / proposals checkboxes. This used to
+		// iterate a hardcoded list of all eight and read "checkbox absent" as
+		// "explicitly muted" - which would have recorded those three as OFF for
+		// every buyer who ever saved the form, and left them silently muted if
+		// that person later became a vendor, with nothing in the UI to explain
+		// why their sales mail had stopped.
+		//
+		// Preferences the form did not show are preserved as they were stored.
+		$valid_keys = array_keys( wpss_get_email_preference_categories( $user_id ) );
+
+		$existing = get_user_meta( $user_id, 'wpss_email_preferences', true );
+		$existing = is_array( $existing ) ? $existing : array();
+
 		$submitted   = isset( $_POST['prefs'] ) && is_array( $_POST['prefs'] ) ? wp_unslash( $_POST['prefs'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Whitelisted booleans below.
-		$preferences = array();
+		$preferences = $existing;
 		foreach ( $valid_keys as $key ) {
 			// Checkbox is present only if checked. Absence = explicit false (muted).
 			$preferences[ $key ] = isset( $submitted[ $key ] );
@@ -3578,11 +3605,13 @@ class AjaxHandlers {
 			delete_user_meta( $user_id, '_wpss_avatar_id' );
 		}
 
-		// Check if user is a vendor and update vendor-specific fields.
-		$is_vendor = get_user_meta( $user_id, '_wpss_is_vendor', true );
-
 		// Check if user is a vendor (canonical capability/role check - role-based
 		// vendors do not always carry the _wpss_is_vendor meta).
+		//
+		// A raw get_user_meta( '_wpss_is_vendor' ) read sat directly above this
+		// line, its result overwritten one statement later. Dead since the
+		// canonical check was added; removed so nobody reinstates it by reading
+		// the first line and stopping.
 		$is_vendor = wpss_is_vendor( $user_id );
 
 		if ( $is_vendor ) {

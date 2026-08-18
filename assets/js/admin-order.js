@@ -89,12 +89,12 @@
 		var newStatus = $select.val();
 
 		if (!newStatus) {
-			notify(wpssOrderAdmin.i18n.error || 'Please select a status.', 'warning');
+			notify(wpssOrderAdmin.i18n.error, 'warning');
 			return;
 		}
 
 		adminConfirm(wpssOrderAdmin.i18n.confirmStatusChange, function() {
-			$button.prop('disabled', true).text(wpssOrderAdmin.i18n.updating || 'Updating...');
+			$button.prop('disabled', true).text(wpssOrderAdmin.i18n.updating);
 
 			$.ajax({
 				url: wpssOrderAdmin.ajaxUrl,
@@ -110,12 +110,12 @@
 						location.reload();
 					} else {
 						notify(response.data.message || wpssOrderAdmin.i18n.error, 'error');
-						$button.prop('disabled', false).text(wpssOrderAdmin.i18n.update || 'Update');
+						$button.prop('disabled', false).text(wpssOrderAdmin.i18n.update);
 					}
 				},
 				error: function() {
 					notify(wpssOrderAdmin.i18n.error, 'error');
-					$button.prop('disabled', false).text(wpssOrderAdmin.i18n.update || 'Update');
+					$button.prop('disabled', false).text(wpssOrderAdmin.i18n.update);
 				}
 			});
 		});
@@ -193,7 +193,7 @@
 		var note = $textarea.val().trim();
 
 		if (!note) {
-			notify((wpssOrderAdmin.i18n && wpssOrderAdmin.i18n.enterNote) || 'Please enter a note.', 'warning');
+			notify(wpssOrderAdmin.i18n.enterNote, 'warning');
 			return;
 		}
 
@@ -287,7 +287,7 @@
 			: wpssOrderAdmin.i18n.confirmRefund;
 
 		wpssConfirm(confirmMessage, {
-			confirmText: wpssOrderAdmin.i18n.refund || 'Refund',
+			confirmText: wpssOrderAdmin.i18n.refund,
 			tone: 'danger'
 		}).then(function(confirmed) {
 			if (!confirmed) {
@@ -402,7 +402,7 @@
 				}
 			},
 			error: function() {
-				$errors.html('<p>' + escapeHtml(wpssOrderAdmin.i18n.error || 'An error occurred.') + '</p>').show();
+				$errors.html('<p>' + escapeHtml(wpssOrderAdmin.i18n.error) + '</p>').show();
 				$button.prop('disabled', false);
 				$spinner.removeClass('is-active');
 			}

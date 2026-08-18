@@ -46,7 +46,7 @@ echo "----------\n";
 /* translators: %s: order number. */
 printf( esc_html__( 'Order: #%s', 'wp-sell-services' ), esc_html( $order->order_number ) );
 echo "\n";
-/* translators: %s: service title. */
+/* translators: %s: service name */
 printf( esc_html__( 'Service: %s', 'wp-sell-services' ), esc_html( get_the_title( $order->service_id ) ) );
 echo "\n";
 /* translators: %s: order total amount. */

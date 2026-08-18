@@ -1003,13 +1003,6 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		$order_provider = wpss_get_order_provider();
 
-		if ( ! $order_provider ) {
-			return array(
-				'success' => false,
-				'error'   => __( 'No order provider available.', 'wp-sell-services' ),
-			);
-		}
-
 		$order = $order_provider->create_order(
 			array(
 				'service_id'     => $service_id,
@@ -1335,13 +1328,6 @@ class StripeGateway implements PaymentGatewayInterface {
 	private function handle_payment_succeeded( array $payment_intent ): array {
 		$metadata       = $payment_intent['metadata'] ?? array();
 		$order_provider = wpss_get_order_provider();
-
-		if ( ! $order_provider ) {
-			return array(
-				'success' => false,
-				'message' => 'No order provider.',
-			);
-		}
 
 		// Path 1: Order already created via AJAX — just confirm payment.
 		if ( ! empty( $metadata['order_id'] ) ) {

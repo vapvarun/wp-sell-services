@@ -260,23 +260,25 @@ class VendorService {
 	/**
 	 * Check if user is a vendor.
 	 *
+	 * Delegates to wpss_is_vendor(), which is the one answer to this question.
+	 * This method used to check role-then-meta itself, which made it a SECOND
+	 * implementation missing two things the canonical helper has: the
+	 * `wpss_vendor` capability (so a user granted the capability without the role
+	 * was a vendor everywhere except the dashboard and the service wizard), and
+	 * the `wpss_is_vendor` filter, so a site extending vendor status saw it
+	 * respected on some screens and ignored on others.
+	 *
+	 * Kept as a method rather than replaced at its dozen call sites: those pass
+	 * an explicit $user_id through an injected service, and the indirection is
+	 * how the dashboard and wizard already read it.
+	 *
+	 * @since 1.6.0 Delegates instead of re-deriving.
+	 *
 	 * @param int $user_id User ID.
 	 * @return bool True if vendor.
 	 */
 	public function is_vendor( int $user_id ): bool {
-		$user = get_userdata( $user_id );
-
-		if ( ! $user ) {
-			return false;
-		}
-
-		// Check role.
-		if ( in_array( self::ROLE, $user->roles, true ) ) {
-			return true;
-		}
-
-		// Check meta.
-		return (bool) get_user_meta( $user_id, '_wpss_is_vendor', true );
+		return wpss_is_vendor( $user_id );
 	}
 
 	/**
@@ -589,6 +591,40 @@ class VendorService {
 	}
 
 	/**
+	 * List vendor profiles.
+	 *
+	 * Backs the [wpss_vendors] and [wpss_top_vendors] shortcodes, which called
+	 * this method before it existed - every page carrying either one fataled
+	 * with "Call to undefined method VendorService::get_all()".
+	 *
+	 * `orderby` is translated from the display vocabulary the shortcodes use
+	 * ("rating", "orders") to the real column names, because the repository
+	 * validates orderby against the table's own columns and silently falls back
+	 * to the primary key for anything it does not recognise - which would have
+	 * ordered a "top vendors" grid by row id.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param array<string, mixed> $args Query arguments (limit, offset, orderby, order).
+	 * @return array<object> Array of vendor profile rows.
+	 */
+	public function get_all( array $args = array() ): array {
+		$orderby_map = array(
+			'rating'  => 'avg_rating',
+			'reviews' => 'total_reviews',
+			'orders'  => 'completed_orders',
+			'sales'   => 'completed_orders',
+			'recent'  => 'created_at',
+		);
+
+		$orderby = (string) ( $args['orderby'] ?? 'avg_rating' );
+
+		$args['orderby'] = $orderby_map[ $orderby ] ?? $orderby;
+
+		return $this->profile_repo->get_all( $args );
+	}
+
+	/**
 	 * Get top vendors.
 	 *
 	 * @param int $limit Number of vendors.
@@ -673,7 +709,7 @@ class VendorService {
 	 * white-label settings and admin enable toggle the rest of the email system
 	 * uses.
 	 *
-	 * @since 1.5.0
+	 * @since 1.2.0
 	 *
 	 * @param int    $user_id User ID of the recipient vendor.
 	 * @param string $type    Email type: 'vendor_approved' or 'vendor_rejected'.
@@ -729,7 +765,7 @@ class VendorService {
 		/**
 		 * Filters the template variables for a vendor status-change email.
 		 *
-		 * @since 1.5.0
+		 * @since 1.2.0
 		 *
 		 * @param array  $template_vars Variables passed to the email template.
 		 * @param string $type          Email type identifier.
@@ -774,7 +810,7 @@ class VendorService {
 	 * Resolves theme overrides first, then falls back to the bundled template,
 	 * mirroring the lookup the core email system uses.
 	 *
-	 * @since 1.5.0
+	 * @since 1.2.0
 	 *
 	 * @param string               $template_name Template file name, e.g. 'vendor-approved.php'.
 	 * @param array<string, mixed> $template_vars Variables extracted into template scope.

@@ -172,6 +172,8 @@ class API {
 			new PaymentController(),
 			new AuditLogController(),
 			new RealtimeController(),
+			new ReportsController(),
+			new BlocksController(),
 		];
 
 		/**
@@ -284,7 +286,7 @@ class API {
 			]
 		);
 
-		// Current user info.
+		// Current user info, and self-service account deletion.
 		register_rest_route(
 			'wpss/v1',
 			'/me',
@@ -293,6 +295,31 @@ class API {
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_current_user' ],
 					'permission_callback' => 'wpss_rest_require_login',
+				],
+				[
+
+					/*
+					 * App Store Guideline 5.1.1(v) and Google Play's data
+					 * deletion policy: an account that can be created in the app
+					 * must be deletable in the app. "Email the site owner" is
+					 * the answer both of them reject.
+					 */
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'delete_current_user' ],
+					'permission_callback' => 'wpss_rest_require_login',
+					'args'                => [
+						'password' => [
+							'required'    => true,
+							'type'        => 'string',
+							'description' => __( 'The account password, re-entered to confirm.', 'wp-sell-services' ),
+						],
+						'confirm'  => [
+							'required'    => false,
+							'type'        => 'boolean',
+							'default'     => false,
+							'description' => __( 'Set true to delete. False returns what deletion would cost, and deletes nothing.', 'wp-sell-services' ),
+						],
+					],
 				],
 			]
 		);
@@ -609,6 +636,8 @@ class API {
 			'page_urls'           => $this->get_page_urls( $pages_settings ),
 			// Non-sensitive realtime (WebSocket) client config — never the secret.
 			'realtime'            => ( new \WPSellServices\Services\RealtimeService() )->get_client_config(),
+			// Bootstrap contract for native app clients.
+			'app'                 => $this->get_app_contract( $pages_settings ),
 		];
 
 		/**
@@ -617,6 +646,252 @@ class API {
 		 * @param array $settings Settings array.
 		 */
 		return new \WP_REST_Response( apply_filters( 'wpss_api_public_settings', $settings ) );
+	}
+
+	/**
+	 * Bootstrap contract a native app reads before it renders anything.
+	 *
+	 * Anonymous by design: the app needs this BEFORE a user logs in, to decide
+	 * whether it may run against this site at all, whether it must force an
+	 * upgrade first, and what to brand itself as.
+	 *
+	 * FAIL CLOSED. `app_enabled` defaults to false here and only Pro flips it, on
+	 * a real license check. An app that cannot find the key, because it is talking
+	 * to a plugin older than this release, must also treat it as false. Defaulting
+	 * to true anywhere in that chain would let an app run against a site that never
+	 * agreed to host it — and the failure would be silent on the server side, which
+	 * is the worst place for it to be.
+	 *
+	 * Everything here is world-readable, so it carries only what is already public.
+	 * Secrets stay behind the admin-only white-label routes.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param array<string,mixed> $pages_settings Configured page mapping.
+	 * @return array<string,mixed>
+	 */
+	private function get_app_contract( array $pages_settings ): array {
+		$page_urls = $this->get_page_urls( $pages_settings );
+
+		$branding = array(
+			'brand_name'    => get_bloginfo( 'name' ),
+			'logo_url'      => $this->get_site_logo_url(),
+			'primary_color' => '',
+		);
+
+		// Resolved once: wpss_get_order_statuses() applies a filter, and calling
+		// it twice would run third-party code twice for one response.
+		$order_statuses = array();
+
+		foreach ( wpss_get_order_statuses() as $slug => $label ) {
+			$order_statuses[] = array(
+				'slug'  => (string) $slug,
+				'label' => (string) $label,
+			);
+		}
+
+		// Same {slug,label} shape as the statuses above, and a list for the same
+		// reason: JSON has no guaranteed key order, so a map would lose the
+		// site's ordering the moment a client parsed it.
+		$report_reasons = array();
+
+		foreach ( wpss_get_report_reasons() as $slug => $label ) {
+			$report_reasons[] = array(
+				'slug'  => (string) $slug,
+				'label' => (string) $label,
+			);
+		}
+
+		$report_targets = array();
+
+		foreach ( wpss_get_report_target_types() as $slug => $label ) {
+			$report_targets[] = array(
+				'slug'  => (string) $slug,
+				'label' => (string) $label,
+			);
+		}
+
+		$adapter = wpss_get_active_adapter();
+		$rail    = $adapter ? (string) $adapter->get_id() : 'standalone';
+
+		/*
+		 * Can a buyer pay for ONE existing order on this site?
+		 *
+		 * Milestones, tips and paid extensions all reach the buyer the same way:
+		 * a link to pay a single already-created order. Standalone answers it
+		 * with `?pay_order=N`, and WooCommerce replaces the URL with a real
+		 * order-pay link through the `wpss_pay_order_url` seam. EDD, FluentCart
+		 * and SureCart implement neither, so the link falls back to a standalone
+		 * checkout that is not the active rail — a dead end for the buyer.
+		 *
+		 * Asked as "has anyone implemented the seam?" rather than by naming
+		 * rails, so an integration added later turns the capability on by
+		 * implementing it, instead of by someone remembering to edit this list.
+		 */
+		$can_pay_single_order = wpss_uses_standalone_payments() || has_filter( 'wpss_pay_order_url' );
+
+		// Milestone contracts only exist on buyer-request orders, so an owner who
+		// turns buyer requests off has turned milestones off whether they meant
+		// to or not. Better the app hears that here than discovers it by
+		// rendering a control nobody can reach.
+		$buyer_requests = (bool) wpss_get_option( 'general', 'enable_buyer_requests', true );
+
+		return array(
+
+			/*
+			 * Bump when a FIELD changes shape or meaning, never for a value change.
+			 * It exists so an app can refuse a payload it does not understand rather
+			 * than silently misread one.
+			 */
+			'contract_version' => 1,
+
+			/*
+			 * Force-upgrade floor. '0.0.0' means "no floor" — every build is
+			 * acceptable — which is the right default for a site that has never
+			 * thought about it. Owners raise it when a release breaks a client.
+			 */
+			'min_app_version'  => (string) apply_filters( 'wpss_app_min_version', '0.0.0' ),
+
+			/*
+			 * Free NEVER enables an app client. Pro flips this against
+			 * License\Manager::is_valid(). See the fail-closed note above.
+			 */
+			'app_enabled'      => (bool) apply_filters( 'wpss_app_enabled', false ),
+
+			/** Public subset only. Pro's white label supplies the real values. */
+			'branding'         => (array) apply_filters( 'wpss_app_branding', $branding ),
+
+			'legal'            => array(
+				'privacy_policy_url'  => get_privacy_policy_url() ?: null,
+				'terms_url'           => $page_urls['terms'] ?? null,
+
+				/*
+				 * Deliberately NOT defaulted to admin_email. This endpoint is
+				 * anonymous and world-readable, so defaulting would publish the
+				 * site owner's inbox to every scraper that finds the route — a
+				 * privacy leak the owner never opted into, in exchange for a field
+				 * only app-store review actually needs. Empty until set on purpose.
+				 */
+				'abuse_contact_email' => (string) apply_filters( 'wpss_app_abuse_contact', '' ),
+			),
+
+			/*
+			 * Booleans an app may gate screens on. Only flags derivable from real
+			 * state belong here — a flag that is always true tells a client nothing
+			 * and becomes a lie the first time the feature is disabled.
+			 */
+			'features'         => (array) apply_filters(
+				'wpss_app_features',
+				array(
+					'buyer_requests' => $buyer_requests,
+					'disputes'       => (bool) wpss_get_option( 'general', 'enable_disputes', true ),
+					'realtime'       => ! empty( ( new \WPSellServices\Services\RealtimeService() )->get_client_config()['enabled'] ),
+
+					/*
+					 * The three money-between-members features. Each is false
+					 * when the active rail cannot bill a single order, because
+					 * on those rails the buyer reaches a dead end rather than a
+					 * payment screen — and a dead end an owner cannot see is how
+					 * this arrives as "the app is broken" instead of "this rail
+					 * does not support that yet".
+					 */
+					'milestones'     => $buyer_requests && $can_pay_single_order,
+					'tips'           => $can_pay_single_order,
+					'extensions'     => $can_pay_single_order,
+
+					/*
+					 * NOT PUBLISHED HERE, deliberately: portfolio, reviews and
+					 * seller levels. None of them has an owner-facing switch, so
+					 * a flag for them would be hardcoded true on every site —
+					 * which tells a client nothing and becomes a lie the day one
+					 * of them gains a toggle and this line is not updated. Add
+					 * one at the moment the setting appears, not before.
+					 *
+					 * Review and service moderation ARE published, alongside the
+					 * other site-owned values below, because those are real
+					 * settings an owner already changes.
+					 */
+				)
+			),
+
+			/*
+			 * What owns payment on this site, and what that implies.
+			 *
+			 * The three booleans above are the answer; this is the reason. An
+			 * owner reading a support thread — or a developer reading a bug
+			 * report — can see "rail is fluentcart, single-order billing is not
+			 * available" instead of inferring it from three flags that happen to
+			 * be false together.
+			 */
+			'payments'         => array(
+				'rail'                 => $rail,
+				'can_pay_single_order' => $can_pay_single_order,
+			),
+
+			/*
+			 * The order-status vocabulary, so a client renders what THIS site
+			 * calls each state instead of carrying its own copy.
+			 *
+			 * A copy is what every client had to keep, because the API published
+			 * no list — and a client-side copy of a server-owned, filterable
+			 * vocabulary is the defect that has now cost three products in this
+			 * portfolio real customer time. It always reads as working: the
+			 * screen renders a plausible word, so nothing looks broken until
+			 * someone notices the site says something else. The mobile app's
+			 * copy is hardcoded English, so every localised site renders its
+			 * order statuses untranslated today.
+			 *
+			 * Ordered as `wpss_get_order_statuses()` returns them, which is the
+			 * same map the web renders and the same one `wpss_order_statuses`
+			 * filters — so an owner who renames a status sees it change in the
+			 * app too.
+			 *
+			 * A LIST of objects, not a slug => label map: JSON objects have no
+			 * guaranteed key order, so a map would lose the site's ordering the
+			 * moment a client parsed it.
+			 *
+			 * Additive, so contract_version stays at 1 — a client that does not
+			 * know this key ignores it and keeps working. Bumping would brick
+			 * every build already shipped, because clients refuse a contract
+			 * newer than the one they understand.
+			 */
+			'order_statuses'   => $order_statuses,
+
+			/*
+			 * The report vocabulary, published for the same reason the order
+			 * statuses above are: a client that hardcodes its own copy of a
+			 * filterable, translatable list drifts from what the site says, and
+			 * scores as working the whole time it is wrong.
+			 *
+			 * Both halves travel together because a report sheet needs both to
+			 * render: what can be reported, and why.
+			 */
+			'report_reasons'   => $report_reasons,
+			'report_targets'   => $report_targets,
+		);
+	}
+
+	/**
+	 * The site's own logo, for a client that has no white-label branding to use.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @return string Absolute URL, or empty string when the site has no logo.
+	 */
+	private function get_site_logo_url(): string {
+		$logo_id = (int) get_theme_mod( 'custom_logo' );
+
+		if ( $logo_id ) {
+			$src = wp_get_attachment_image_src( $logo_id, 'full' );
+
+			if ( ! empty( $src[0] ) ) {
+				return (string) $src[0];
+			}
+		}
+
+		$icon = get_site_icon_url();
+
+		return $icon ? (string) $icon : '';
 	}
 
 	/**
@@ -653,9 +928,11 @@ class API {
 		// The other current-user endpoint, /auth/me, also returns these. Both
 		// answer the same question, so both carry the same fields — a client
 		// should not have to know which one it called.
-		$user_object        = get_userdata( $user_id );
-		$data['username']   = $user_object ? $user_object->user_login : '';
-		$data['registered'] = $user_object ? $user_object->user_registered : '';
+		$user_object      = get_userdata( $user_id );
+		$data['username'] = $user_object ? $user_object->user_login : '';
+		// ISO-8601 with an offset, like every other date in the API. The raw
+		// column is site-local MySQL with no zone (Basecamp 10154919636).
+		$data['registered'] = $user_object ? wpss_rest_date( $user_object->user_registered ) : null;
 
 		// Always present, so a client can read them without branching on role.
 		$data['vendor_status'] = null;
@@ -670,6 +947,101 @@ class API {
 		}
 
 		return new \WP_REST_Response( $data );
+	}
+
+	/**
+	 * Delete the current member's account.
+	 *
+	 * Two-step by design. `confirm: false` — the default — answers what
+	 * deletion would cost and deletes nothing, so the app can show a member
+	 * their open orders and the wallet balance they are about to forfeit
+	 * BEFORE they commit. `confirm: true` performs it.
+	 *
+	 * The password re-entry is checked against `user_pass` through
+	 * wp_check_password() rather than wp_authenticate(). That is deliberate and
+	 * load-bearing: wp_authenticate() also accepts an Application Password, and
+	 * the app's own token IS one. Checking the real password hash means a
+	 * stolen token can read this account but can never destroy it.
+	 *
+	 * @since 1.5.2
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function delete_current_user( \WP_REST_Request $request ) {
+		$user_id = get_current_user_id();
+		$user    = get_userdata( $user_id );
+
+		if ( ! $user instanceof \WP_User ) {
+			return new \WP_Error(
+				'wpss_user_not_found',
+				__( 'That account no longer exists.', 'wp-sell-services' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		/*
+		 * Rate limit, charged on FAILURE only.
+		 *
+		 * This route takes a password, so it is a guessing surface and needs a
+		 * ceiling. But the legitimate flow spends two calls — the dry run that
+		 * shows the member what they are about to lose, then the confirmation —
+		 * and charging those would lock out an honest member who mistyped once
+		 * while barely inconveniencing anyone actually guessing.
+		 *
+		 * So: refuse when already over, and only spend budget when the password
+		 * was wrong.
+		 */
+		if ( \WPSellServices\Core\RateLimiter::is_limited( 'account_delete', $user_id ) ) {
+			return new \WP_Error(
+				'wpss_rate_limited',
+				__( 'Too many attempts. Please wait a few minutes and try again.', 'wp-sell-services' ),
+				[ 'status' => 429 ]
+			);
+		}
+
+		$password = (string) $request->get_param( 'password' );
+
+		if ( ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
+			\WPSellServices\Core\RateLimiter::track( 'account_delete', $user_id );
+
+			return new \WP_Error(
+				'wpss_bad_password',
+				__( 'That password is not correct.', 'wp-sell-services' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		$service     = new \WPSellServices\Services\AccountDeletionService();
+		$obligations = $service->get_obligations( $user_id );
+
+		// The dry run: what would happen, and what it would cost.
+		if ( ! $request->get_param( 'confirm' ) ) {
+			return new \WP_REST_Response(
+				[
+					'deleted'          => false,
+					'can_delete'       => ! $obligations['blocked'],
+					'orders'           => $obligations['orders'],
+					'order_count'      => $obligations['order_count'],
+					'open_withdrawals' => $obligations['open_withdrawals'],
+					'wallet_balance'   => $obligations['wallet_balance'],
+					'currency'         => $obligations['currency'],
+				]
+			);
+		}
+
+		$deleted = $service->delete( $user_id );
+
+		if ( is_wp_error( $deleted ) ) {
+			return $deleted;
+		}
+
+		return new \WP_REST_Response(
+			[
+				'deleted' => true,
+				'message' => __( 'Your account and personal data have been deleted.', 'wp-sell-services' ),
+			]
+		);
 	}
 
 	/**

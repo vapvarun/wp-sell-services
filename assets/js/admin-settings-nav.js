@@ -11,6 +11,8 @@
 ( function() {
 	'use strict';
 
+	var __ = wp.i18n.__;
+
 	var NAV     = '.wpss-settings-nav-item[data-section]';
 	var SECTION = '.wpss-settings-section';
 	var ACTIVE  = 'is-active';
@@ -82,7 +84,7 @@
 	var params = new URLSearchParams( location.search );
 	if ( params.get( 'settings-updated' ) === 'true' ) {
 		if ( window.wpssToast ) {
-			wpssToast( 'Settings saved.', 'success' );
+			wpssToast( __( 'Settings saved.', 'wp-sell-services' ), 'success' );
 		}
 		// Clean URL without reloading.
 		var url = location.href
@@ -93,7 +95,35 @@
 	}
 
 	// Activate from hash on page load.
-	activate( location.hash.replace( '#', '' ) || '' );
+	//
+	// `?tab=<section>` is honoured when there is no hash. That query arg is how
+	// settings were addressed before 1.3.0, and it survives in places we do not
+	// control - published docs, support replies, and admins' own bookmarks. The
+	// internal callers now emit hashes, but silently landing every one of those
+	// older links on General is the bug this fixes, not just the internal ones
+	// (Basecamp 10208211769).
+	//
+	// It is rewritten to a hash rather than merely honoured, so a save (which
+	// preserves the hash through _wp_http_referer) returns to the same section
+	// instead of falling back to General on the round trip.
+	var initial = location.hash.replace( '#', '' );
+
+	if ( ! initial ) {
+		var legacyTab = new URLSearchParams( location.search ).get( 'tab' );
+
+		if ( legacyTab && document.getElementById( 'section-' + legacyTab ) ) {
+			initial = legacyTab;
+			history.replaceState( null, '', '#' + legacyTab );
+		}
+	}
+
+	activate( initial || '' );
+
+	// Browser back/forward between sections. Without this the URL changed and
+	// the page did not.
+	window.addEventListener( 'hashchange', function() {
+		activate( location.hash.replace( '#', '' ) || '' );
+	} );
 
 	// Gateway card collapse/expand toggle.
 	document.querySelectorAll( '.wpss-card[data-gateway] .wpss-card__head' ).forEach( function( head ) {

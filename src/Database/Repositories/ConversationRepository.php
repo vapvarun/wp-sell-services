@@ -159,9 +159,18 @@ class ConversationRepository extends AbstractRepository {
 	/**
 	 * Get unread message count for a user from unread_counts JSON field.
 	 *
-	 * Supports both participant formats:
-	 * - Flat array: [5, 3] (from ConversationService::create_for_order)
-	 * - Key-value:  {"5": true} (from ConversationRepository::create_conversation)
+	 * `participants` has ONE shape: a flat list of user ids, [5, 3], written by
+	 * ConversationService::create_for_order() and create_direct(). The docblock
+	 * here used to advertise a second key-value shape, {"5": true}, produced by
+	 * this class's own create_conversation() — that method had no callers and has
+	 * been removed, along with the add_message() that iterated it. JSON_CONTAINS
+	 * below matches list VALUES, so it would never have matched a key-value row
+	 * anyway: those conversations' unread counts were silently excluded from this
+	 * total.
+	 *
+	 * Closed conversations are excluded deliberately — a finished thread must not
+	 * keep nagging. The dashboard list therefore suppresses the unread badge on
+	 * closed rows, so the badges on screen always sum to this number.
 	 *
 	 * @param int $user_id User ID.
 	 * @return int Unread count.
@@ -455,6 +464,51 @@ class ConversationRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Count the conversations a user can see.
+	 *
+	 * Counts exactly what get_conversation_summary() returns — the same two arms,
+	 * the same participation rules — so a paginator built on this can never
+	 * disagree with the rows on screen.
+	 *
+	 * The messages dashboard previously ran the summary with a hardcoded
+	 * `LIMIT 20`, no OFFSET, no total and no navigation, so a vendor with more
+	 * than twenty threads could see twenty and had no route to the rest — while
+	 * the unread banner counted ALL of them, which is one way a correct banner
+	 * reads as "inflated" (Basecamp 10208075268).
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param int $user_id User ID.
+	 * @return int Conversation count.
+	 */
+	public function count_conversations_for_user( int $user_id ): int {
+		$orders_table = $this->table_name( 'orders' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $this->wpdb->get_var(
+			$this->wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names come from $wpdb->prefix.
+				"SELECT COUNT(*) FROM (
+					(SELECT c.id
+					FROM {$this->table} c
+					INNER JOIN {$orders_table} o ON c.order_id = o.id
+					WHERE (o.customer_id = %d OR o.vendor_id = %d)
+					GROUP BY c.id)
+					UNION
+					(SELECT c.id
+					FROM {$this->table} c
+					WHERE c.order_id = 0
+					AND c.participants IS NOT NULL
+					AND JSON_CONTAINS(c.participants, %s))
+				) conversations",
+				$user_id,
+				$user_id,
+				wp_json_encode( $user_id )
+			)
+		);
+	}
+
+	/**
 	 * Get conversation summary for user dashboard.
 	 *
 	 * Returns both order-linked conversations (where user is customer/vendor)
@@ -543,120 +597,26 @@ class ConversationRepository extends AbstractRepository {
 		);
 	}
 
-	/**
-	 * Create a new conversation for an order.
+	/*
+	 * Two methods used to live here and both are gone.
 	 *
-	 * @param int    $order_id     Order ID.
-	 * @param array  $participants Array of participant user IDs.
-	 * @param string $subject     Optional subject.
-	 * @return int|false Conversation ID or false on failure.
-	 */
-	public function create_conversation( int $order_id, array $participants, string $subject = '' ): int|false {
-		// Check if conversation already exists.
-		$existing = $this->find_by_order( $order_id );
-		if ( $existing ) {
-			return (int) $existing->id;
-		}
-
-		// Build participants JSON.
-		$participants_json = wp_json_encode( array_fill_keys( array_map( 'strval', $participants ), true ) );
-
-		// Build initial unread counts (all zero).
-		$unread_json = wp_json_encode( array_fill_keys( array_map( 'strval', $participants ), 0 ) );
-
-		$result = $this->wpdb->insert(
-			$this->table,
-			array(
-				'order_id'      => $order_id,
-				'subject'       => $subject,
-				'participants'  => $participants_json,
-				'message_count' => 0,
-				'unread_counts' => $unread_json,
-				'is_closed'     => 0,
-				'created_at'    => current_time( 'mysql' ),
-				'updated_at'    => current_time( 'mysql' ),
-			),
-			array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s' )
-		);
-
-		return $result ? $this->wpdb->insert_id : false;
-	}
-
-	/**
-	 * Add a message to a conversation.
+	 * create_conversation() and add_message() were DEAD - zero callers anywhere
+	 * in Free or Pro - and between them they held a second, incompatible idea of
+	 * the `participants` column plus an iterator built on it:
 	 *
-	 * @param int    $conversation_id Conversation ID.
-	 * @param int    $sender_id       Sender user ID.
-	 * @param string $content         Message content.
-	 * @param string $type            Message type (text, system, delivery, etc.).
-	 * @param array  $attachments     Optional attachments.
-	 * @return int|false Message ID or false on failure.
+	 * - create_conversation() wrote participants as a MAP keyed by user id,
+	 *   array_fill_keys( [ "24", "13" ], true ) => {"24":true,"13":true}, while
+	 *   ConversationService (the live creator) writes a LIST, [24,13].
+	 * - add_message() then incremented unread with
+	 *   `foreach ( array_keys( $participants ) ... )`, which on the LIST shape
+	 *   yields the INDICES 0 and 1, not user ids. Wired up against real data it
+	 *   would have credited unread messages to users 0 and 1 forever and never
+	 *   to the actual recipient.
+	 *
+	 * Nothing was broken in production because nothing called them. They are
+	 * removed rather than fixed because ConversationService::send_message() and
+	 * create_for_order()/create_direct() already own these jobs - keeping a
+	 * second implementation of a store shape is exactly how this plugin
+	 * accumulated its recurring bugs (Basecamp 10208075268).
 	 */
-	public function add_message( int $conversation_id, int $sender_id, string $content, string $type = 'text', array $attachments = array() ): int|false {
-		$messages_table = $this->get_messages_table();
-
-		$result = $this->wpdb->insert(
-			$messages_table,
-			array(
-				'conversation_id' => $conversation_id,
-				'sender_id'       => $sender_id,
-				'type'            => $type,
-				'content'         => $content,
-				'attachments'     => ! empty( $attachments ) ? wp_json_encode( $attachments ) : null,
-				'read_by'         => wp_json_encode( array( (string) $sender_id => current_time( 'mysql' ) ) ),
-				'created_at'      => current_time( 'mysql' ),
-				'updated_at'      => current_time( 'mysql' ),
-			),
-			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
-		);
-
-		if ( ! $result ) {
-			return false;
-		}
-
-		$message_id = (int) $this->wpdb->insert_id;
-
-		// Update conversation stats.
-		$conversation = $this->wpdb->get_row(
-			$this->wpdb->prepare(
-				"SELECT participants, unread_counts FROM {$this->table} WHERE id = %d",
-				$conversation_id
-			)
-		);
-
-		if ( $conversation ) {
-			// Increment unread counts for other participants.
-			$participants = json_decode( $conversation->participants ?: '{}', true );
-			$unread       = json_decode( $conversation->unread_counts ?: '{}', true );
-
-			foreach ( array_keys( $participants ) as $participant_id ) {
-				if ( (int) $participant_id !== $sender_id ) {
-					$unread[ $participant_id ] = ( $unread[ $participant_id ] ?? 0 ) + 1;
-				}
-			}
-
-			$stats_result = $this->wpdb->update(
-				$this->table,
-				array(
-					'message_count'   => $this->wpdb->get_var(
-						$this->wpdb->prepare(
-							"SELECT COUNT(*) FROM {$messages_table} WHERE conversation_id = %d",
-							$conversation_id
-						)
-					),
-					'unread_counts'   => wp_json_encode( $unread ),
-					'last_message_at' => current_time( 'mysql' ),
-					'updated_at'      => current_time( 'mysql' ),
-				),
-				array( 'id' => $conversation_id ),
-				array( '%d', '%s', '%s', '%s' ),
-				array( '%d' )
-			);
-			if ( false === $stats_result ) {
-				wpss_log( "Failed to update conversation {$conversation_id} stats: " . $this->wpdb->last_error, 'error' );
-			}
-		}
-
-		return $message_id;
-	}
 }

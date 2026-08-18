@@ -8,13 +8,11 @@
 
 declare(strict_types=1);
 
-
 namespace WPSellServices\Integrations\Standalone;
 
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Integrations\Contracts\EcommerceAdapterInterface;
-use WPSellServices\Integrations\Contracts\OrderProviderInterface;
 use WPSellServices\Integrations\Contracts\ProductProviderInterface;
 use WPSellServices\Integrations\Contracts\CheckoutProviderInterface;
 use WPSellServices\Integrations\Contracts\AccountProviderInterface;
@@ -50,12 +48,13 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		return apply_filters( 'wpss_checkout_slug', self::DEFAULT_CHECKOUT_SLUG );
 	}
 
-	/**
-	 * Order provider instance.
-	 *
-	 * @var StandaloneOrderProvider|null
+	/*
+	 * There is deliberately NO $order_provider property here. Orders have one
+	 * authority regardless of which rail took the money, so callers go through
+	 * wpss_get_order_provider(), which always returns StandaloneOrderProvider -
+	 * see the reasoning on that function. This class used to construct one in
+	 * init() and never read it again.
 	 */
-	private ?StandaloneOrderProvider $order_provider = null;
 
 	/**
 	 * Product provider instance.
@@ -128,7 +127,6 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->order_provider    = new StandaloneOrderProvider();
 		$this->product_provider  = new StandaloneProductProvider();
 		$this->checkout_provider = new StandaloneCheckoutProvider();
 		$this->account_provider  = new StandaloneAccountProvider();
@@ -146,6 +144,17 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		}
 		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
 		add_action( 'template_redirect', [ $this, 'handle_template_redirect' ] );
+
+		// On a site that runs WooCommerce alongside the standalone rail there
+		// are genuinely two carts, and the theme's header shows Woo's. Whether
+		// that is wrong depends on the business: a marketplace-only site where
+		// Woo is installed for something else wants one cart link, while a site
+		// actually selling Woo products would be broken by us pointing its cart
+		// somewhere else. So it is the owner's switch, off by default — we do
+		// not silently redirect another plugin's checkout path.
+		if ( ! empty( get_option( 'wpss_general', array() )['use_marketplace_cart_link'] ) ) {
+			add_filter( 'woocommerce_get_cart_url', [ $this, 'filter_cart_url' ], 20 );
+		}
 
 		/**
 		 * Fires after standalone adapter is initialized.
@@ -184,6 +193,25 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 			'index.php?wpss_payment_callback=1&wpss_gateway=$matches[1]',
 			'top'
 		);
+	}
+
+	/**
+	 * Point the site's cart link at the marketplace cart.
+	 *
+	 * Opt-in (Settings -> General -> "Use the marketplace cart for the site's
+	 * cart link"), so an owner who really does sell WooCommerce products keeps
+	 * Woo's cart untouched. Returns the original URL when no marketplace cart
+	 * page is mapped, rather than handing back an empty href.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param string $url Cart URL supplied by WooCommerce.
+	 * @return string
+	 */
+	public function filter_cart_url( string $url ): string {
+		$cart_url = wpss_get_page_url( 'cart' );
+
+		return $cart_url ? $cart_url : $url;
 	}
 
 	/**
@@ -268,29 +296,45 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		get_header();
 		?>
 		<main id="primary" class="site-main">
-			<article class="wpss-standalone-page">
-				<header class="entry-header">
-					<h1 class="entry-title"><?php echo esc_html( $title ); ?></h1>
-				</header>
-				<div class="entry-content">
-					<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Content is escaped in provider. ?>
-				</div>
-			</article>
+			<?php
+			/*
+			 * OUR container, not the theme's (Basecamp 10208392848).
+			 *
+			 * get_header() prints whatever the theme puts in header.php and
+			 * nothing more. Some themes happen to open their content wrapper
+			 * there - BuddyX free does, which is why this route looked fine on
+			 * it - but plenty open it inside the page template instead, via a
+			 * hook this route never reaches. Those get a checkout spanning the
+			 * whole viewport: reproduced at 1790px on BuddyX Pro by QA and on
+			 * stock Twenty Twenty-Four here, so it is not one theme's quirk.
+			 *
+			 * Firing a theme's own before-content hook would fix the two themes
+			 * we happened to test and leave every other one broken. Constraining
+			 * it ourselves works everywhere, and .wpss-container is the width
+			 * the rest of the plugin already uses - one definition, not a second
+			 * one invented for this route.
+			 *
+			 * Where a theme DOES provide a container, ours stands down rather
+			 * than nesting inside it and adding a second gutter - the theme's
+			 * width wins on its own site. CSS cannot ask whether an ancestor is
+			 * already constraining, so WPSS.relaxRedundantContainer() walks the
+			 * real ancestors on load, the same approach enableSticky() takes.
+			 * data-wpss-auto-container is what marks this one as ours to relax.
+			 */
+			?>
+			<div class="wpss-container" data-wpss-auto-container>
+				<article class="wpss-standalone-page">
+					<header class="entry-header">
+						<h1 class="entry-title"><?php echo esc_html( $title ); ?></h1>
+					</header>
+					<div class="entry-content">
+						<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Content is escaped in provider. ?>
+					</div>
+				</article>
+			</div>
 		</main>
 		<?php
 		get_footer();
-	}
-
-	/**
-	 * Get the order provider.
-	 *
-	 * @return OrderProviderInterface
-	 */
-	public function get_order_provider(): OrderProviderInterface {
-		if ( null === $this->order_provider ) {
-			$this->order_provider = new StandaloneOrderProvider();
-		}
-		return $this->order_provider;
 	}
 
 	/**

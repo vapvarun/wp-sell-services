@@ -37,7 +37,7 @@ fi
 # so default to a workable one - but let an explicit --memory-limit win.
 case " $* " in
 	*" --memory-limit"*) ;;
-	*) set -- "$@" --memory-limit=1G ;;
+	*) set -- "$@" --memory-limit=6G ;;
 esac
 
 ./vendor/bin/phpstan "$@"

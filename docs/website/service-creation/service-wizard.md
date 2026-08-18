@@ -25,7 +25,11 @@ This is where vendors describe what they are offering.
 
 **Service title** -- A clear, specific headline for the service. Think "I will design a professional logo for your brand" rather than "Logo design." The title should tell buyers exactly what they will get. Keep it between 10 and 80 characters.
 
-**Category** -- Choose from the service categories you have created (e.g., Design, Writing, Marketing). Subcategories are supported if your marketplace uses them.
+**Category** -- Choose from the service categories the site owner has created (e.g., Design, Writing, Marketing). The Category dropdown lists **top-level categories only**.
+
+**Subcategory** -- If the category you picked has subcategories, a second dropdown appears listing them. Choosing a subcategory keeps the parent category too, so your service is found under both.
+
+If a category has no subcategories, the second dropdown stays empty and can be skipped -- it is optional.
 
 **Description** -- A detailed explanation of what the vendor delivers, their process, what is included, and what is not. This is where vendors sell their expertise. Up to 5,000 characters.
 

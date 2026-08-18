@@ -49,6 +49,42 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Insert an order, keeping platform_order_ref in step with platform_order_id.
+	 *
+	 * The ref must mirror platform_order_id on every numeric rail, and that
+	 * invariant is the whole reason a single lookup can serve both numeric
+	 * and string rails. Deriving it here rather than at the call sites is
+	 * deliberate: there are eight places that insert an order with a platform id
+	 * (four rails plus tips, milestones, extensions and buyer-request conversion),
+	 * every one of them would have to remember, and the failure mode of forgetting
+	 * is invisible — the order inserts fine and simply never resolves by ref
+	 * later, which surfaces as a duplicate order on webhook replay rather than as
+	 * an error anyone would notice.
+	 *
+	 * A caller that supplies its own ref keeps it: that is how SureCart stores
+	 * 'ord_a1b2c3' with no numeric id at all.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param array<string, mixed> $data   Column data.
+	 * @param array<string>        $format Optional explicit formats.
+	 * @return int|false Inserted ID or false.
+	 */
+	public function insert( array $data, array $format = array() ): int|false {
+		// Only when formats are inferred. An explicit $format array is positional
+		// against $data, so appending a key here would shift every format by one
+		// and quietly write the wrong types.
+		// isset() already excludes null, so no separate null check is needed.
+		if ( empty( $format )
+			&& ! isset( $data['platform_order_ref'] )
+			&& isset( $data['platform_order_id'] ) ) {
+			$data['platform_order_ref'] = (string) $data['platform_order_id'];
+		}
+
+		return parent::insert( $data, $format );
+	}
+
+	/**
 	 * Generate a unique order number.
 	 *
 	 * @return string Order number.
@@ -467,12 +503,29 @@ class OrderRepository extends AbstractRepository {
 			ARRAY_A
 		);
 
-		return $stats ?: array(
-			'total_orders'         => 0,
-			'completed_orders'     => 0,
-			'active_orders'        => 0,
-			'total_earnings'       => 0,
-			'avg_completion_hours' => 0,
+		if ( ! $stats ) {
+			return array(
+				'total_orders'         => 0,
+				'completed_orders'     => 0,
+				'active_orders'        => 0,
+				'total_earnings'       => 0.0,
+				'avg_completion_hours' => 0.0,
+			);
+		}
+
+		// Cast the aggregates before returning.
+		//
+		// $wpdb hands back SUM()/AVG() as strings (and NULL when no rows match).
+		// Consumers run under strict_types and pass these straight into typed
+		// helpers - wpss_format_price( float $price ) threw "must be of type
+		// float, string given" and fataled the [wpss_account] vendor dashboard.
+		// Cast once here so every consumer gets real numbers.
+		return array(
+			'total_orders'         => (int) ( $stats['total_orders'] ?? 0 ),
+			'completed_orders'     => (int) ( $stats['completed_orders'] ?? 0 ),
+			'active_orders'        => (int) ( $stats['active_orders'] ?? 0 ),
+			'total_earnings'       => (float) ( $stats['total_earnings'] ?? 0 ),
+			'avg_completion_hours' => (float) ( $stats['avg_completion_hours'] ?? 0 ),
 		);
 	}
 
@@ -525,6 +578,10 @@ class OrderRepository extends AbstractRepository {
 	 * @return string|null MySQL datetime of the last completed order, or null.
 	 */
 	public function get_last_completed_date( int $vendor_id ): ?string {
+		if ( array_key_exists( $vendor_id, self::$last_completed_memo ) ) {
+			return self::$last_completed_memo[ $vendor_id ];
+		}
+
 		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
 
 		$date = $this->wpdb->get_var(
@@ -537,7 +594,73 @@ class OrderRepository extends AbstractRepository {
 			)
 		);
 
-		return $date ? (string) $date : null;
+		self::$last_completed_memo[ $vendor_id ] = $date ? (string) $date : null;
+
+		return self::$last_completed_memo[ $vendor_id ];
+	}
+
+	/**
+	 * Request-scoped memo of last-completed dates, keyed by vendor ID.
+	 *
+	 * @var array<int, string|null>
+	 */
+	private static array $last_completed_memo = array();
+
+	/**
+	 * Resolve the last completed delivery for many vendors in one query.
+	 *
+	 * Every vendor card calls get_last_completed_date(), so a grid of 8 vendors
+	 * fired 8 separate MAX(completed_at) scans. This answers all of them with a
+	 * single GROUP BY and fills the memo the single-vendor method reads.
+	 *
+	 * Vendors with no completed order are memoised as null, so they do not fall
+	 * through to a query of their own afterwards.
+	 *
+	 * The memo is request-scoped on purpose. This is display-only data ("last
+	 * delivery 3 days ago"); the worst case is that an order completing DURING
+	 * the same request is not reflected until the next one, which is not worth
+	 * the invalidation surface a persistent cache would need.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param int[] $vendor_ids Vendor user IDs about to be rendered.
+	 * @return void
+	 */
+	public function prime_last_completed_dates( array $vendor_ids ): void {
+		$vendor_ids = array_values( array_unique( array_filter( array_map( 'intval', $vendor_ids ) ) ) );
+
+		$missing = array_values(
+			array_filter(
+				$vendor_ids,
+				static fn ( int $id ): bool => ! array_key_exists( $id, self::$last_completed_memo )
+			)
+		);
+
+		if ( empty( $missing ) ) {
+			return;
+		}
+
+		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
+		$placeholders = implode( ', ', array_fill( 0, count( $missing ), '%d' ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholders are generated from the ID count; every value is bound.
+		$rows = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT vendor_id, MAX(completed_at) AS last_completed
+				FROM {$this->table}
+				WHERE vendor_id IN ({$placeholders}) AND status = 'completed' AND platform != %s
+				GROUP BY vendor_id",
+				array_merge( $missing, array( $tip_platform ) )
+			)
+		);
+
+		foreach ( $missing as $id ) {
+			self::$last_completed_memo[ $id ] = null;
+		}
+
+		foreach ( (array) $rows as $row ) {
+			self::$last_completed_memo[ (int) $row->vendor_id ] = $row->last_completed ? (string) $row->last_completed : null;
+		}
 	}
 
 	/**
@@ -638,6 +761,43 @@ class OrderRepository extends AbstractRepository {
 				$platform
 			)
 		);
+	}
+
+	/**
+	 * Find orders by the external order reference, as the rail spells it.
+	 *
+	 * The string counterpart to {@see get_by_external_order()}, for rails whose
+	 * order ids are not numbers — SureCart's 'ord_a1b2c3' and anything else that
+	 * hands out opaque ids. Numeric rails write their id here too (as a string),
+	 * so a caller that has a reference never has to ask which kind of rail it
+	 * came from.
+	 *
+	 * Returns ALL matching orders, not one: a single cart order can carry several
+	 * service line items, and each becomes its own WPSS order. Every caller so far
+	 * has wanted all of them (marking a payment paid has to cover every order on
+	 * the receipt), and a LIMIT 1 here is how you silently credit one vendor out
+	 * of three.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param string $platform_order_ref External order reference.
+	 * @param string $platform           Platform identifier.
+	 * @return array<int, object> Matching order rows, oldest first.
+	 */
+	public function get_all_by_external_ref( string $platform_order_ref, string $platform ): array {
+		if ( '' === $platform_order_ref ) {
+			return array();
+		}
+
+		$rows = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT * FROM {$this->table} WHERE platform_order_ref = %s AND platform = %s ORDER BY id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$platform_order_ref,
+				$platform
+			)
+		);
+
+		return is_array( $rows ) ? $rows : array();
 	}
 
 	/**

@@ -22,9 +22,15 @@ class SchemaManager {
 	/**
 	 * Database version.
 	 *
+	 * Moves independently of WPSS_VERSION — a schema change inside an already
+	 * numbered release still has to bump this, or install() short-circuits on
+	 * needs_update() and the new columns are never added. 1.6.1 adds
+	 * message_type + description to wpss_dispute_messages, which makes that
+	 * table the single store for a dispute conversation.
+	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.5.2';
+	const DB_VERSION = '1.6.1';
 
 	/**
 	 * Option name for storing DB version.
@@ -95,6 +101,8 @@ class SchemaManager {
 		'wallet_transactions',
 		'withdrawals',
 		'audit_log',
+		'reports',
+		'payment_receipts',
 	);
 
 	/**
@@ -208,6 +216,25 @@ class SchemaManager {
 				'definition' => 'varchar(255) DEFAULT NULL',
 				'after'      => 'reviewer_id',
 			),
+			// A dispute conversation used to live in two places: the opening
+			// statement and admin replies in wpss_dispute_messages, member
+			// evidence in the disputes row's `evidence` JSON column. Each
+			// surface read only one, so the parties saw "No messages yet" on a
+			// thread the admin could read in full. These two columns let the
+			// messages table hold everything the JSON did, so there is one
+			// store. Listed here so upgrades self-heal if dbDelta misses them.
+			array(
+				'table'      => 'dispute_messages',
+				'column'     => 'message_type',
+				'definition' => "varchar(20) NOT NULL DEFAULT 'text'",
+				'after'      => 'message',
+			),
+			array(
+				'table'      => 'dispute_messages',
+				'column'     => 'description',
+				'definition' => 'text',
+				'after'      => 'message_type',
+			),
 			// How much was actually refunded to the buyer. NULL = never
 			// refunded; equal to total = full refund; less = partial.
 			//
@@ -236,6 +263,28 @@ class SchemaManager {
 				'definition' => 'longtext',
 				'after'      => 'refunded_amount',
 			),
+			// The external order id AS THE RAIL SPELLS IT.
+			//
+			// platform_order_id is bigint, which fits WooCommerce, EDD and
+			// FluentCart because all three number their orders. It does not fit
+			// SureCart, whose ids are opaque strings ('ord_a1b2c3'), and it will
+			// not fit the next rail that numbers things the same way — Stripe,
+			// Paddle and LemonSqueezy all use string ids. SureCart could not be
+			// wired to the paid path at all until this column existed: the
+			// provider is strict_types and typed int, so a real SureCart id was a
+			// TypeError, not a silent zero.
+			//
+			// Every rail writes it, including the numeric ones (as a string), so
+			// there is ONE lookup that works for all of them rather than a
+			// per-rail branch. platform_order_id stays as-is and stays authoritative
+			// for the numeric rails — nothing is migrated off it, and no existing
+			// query changes meaning.
+			array(
+				'table'      => 'orders',
+				'column'     => 'platform_order_ref',
+				'definition' => 'varchar(64) DEFAULT NULL',
+				'after'      => 'platform_order_id',
+			),
 		);
 
 		foreach ( $migrations as $migration ) {
@@ -245,6 +294,158 @@ class SchemaManager {
 				$migration['definition'],
 				$migration['after']
 			);
+		}
+
+		$this->backfill_platform_order_ref();
+		$this->backfill_package_snapshots();
+		$this->backfill_package_ids();
+	}
+
+	/**
+	 * Give existing orders a platform_order_ref matching their platform_order_id.
+	 *
+	 * Without this, every order placed before the column existed would look
+	 * unmatched to any code that resolves by ref, and a webhook replay on an old
+	 * WooCommerce order could create a duplicate WPSS order instead of finding
+	 * the one already there.
+	 *
+	 * Only fills rows where the ref is missing and the numeric id is present, so
+	 * it is idempotent and never overwrites a rail-supplied value (SureCart's
+	 * 'ord_...' has no numeric id to be rewritten from). Batched, because a
+	 * marketplace of any age can hold hundreds of thousands of orders and an
+	 * unbounded UPDATE would lock the money table for the duration.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return void
+	 */
+	private function backfill_platform_order_ref(): void {
+		$table = $this->get_table_name( 'orders' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$column_exists = $this->wpdb->get_var(
+			$this->wpdb->prepare(
+				'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+				WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+				DB_NAME,
+				$table,
+				'platform_order_ref'
+			)
+		);
+
+		if ( (int) $column_exists < 1 ) {
+			return;
+		}
+
+		// A hard cap rather than while(true): if something about the UPDATE stops
+		// making progress, an activation hook must not spin forever. 200 batches
+		// of 2000 covers 400k orders; anything beyond that finishes on the next
+		// upgrade pass, and nothing is broken in the meantime because the rows
+		// left behind are simply not yet resolvable by ref.
+		for ( $batch = 0; $batch < 200; $batch++ ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$updated = $this->wpdb->query(
+				"UPDATE `{$table}`
+				SET platform_order_ref = CAST(platform_order_id AS CHAR)
+				WHERE platform_order_ref IS NULL
+				  AND platform_order_id IS NOT NULL
+				LIMIT 2000"
+			);
+
+			if ( ! $updated ) {
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Freeze what was bought on orders placed before snapshots were taken.
+	 *
+	 * `package_id` is a POSITIONAL index into the service's `_wpss_packages`
+	 * meta, not a stable key. Reorder or delete a tier and every order holding
+	 * that index silently re-resolves to a different package - an order placed
+	 * for "Premium" begins reading as "Basic" (Basecamp #10154919857).
+	 *
+	 * From 1.6.0 every paid order snapshots itself, because every rail now
+	 * routes through `wpss_order_paid`. Orders placed before that have nothing
+	 * frozen and stay exposed, so they are backfilled here. On the sandbox this
+	 * was 14 of 17 orders carrying a package - the mitigation existed but
+	 * covered 18% of them.
+	 *
+	 * Bounded on purpose. Each capture reads the service's meta, so this is one
+	 * query per order, and an upgrade hook must not walk a marketplace with
+	 * 200k orders in a single request. It takes a fixed slice per run and the
+	 * rest are picked up on the next upgrade pass; nothing is broken meanwhile,
+	 * because an order with no snapshot behaves exactly as it does today.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return void
+	 */
+	private function backfill_package_snapshots(): void {
+		if ( ! function_exists( 'wpss_capture_order_package_snapshot' ) ) {
+			return;
+		}
+
+		$table = $this->get_table_name( 'orders' );
+
+		// Candidates: a real package, and no snapshot recorded yet. The JSON is
+		// matched with LIKE rather than a JSON function so this keeps working on
+		// MySQL 5.6 / MariaDB builds without JSON support.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$order_ids = $this->wpdb->get_col(
+			"SELECT id FROM `{$table}`
+			WHERE package_id IS NOT NULL
+			  AND ( meta IS NULL OR meta NOT LIKE '%package_snapshot%' )
+			ORDER BY id ASC
+			LIMIT 500"
+		);
+
+		if ( empty( $order_ids ) ) {
+			return;
+		}
+
+		foreach ( $order_ids as $order_id ) {
+			// Idempotent, and it skips sub-orders (tips, milestone phases,
+			// extensions) itself - those carry no package of their own.
+			wpss_capture_order_package_snapshot( (int) $order_id );
+		}
+	}
+
+	/**
+	 * Give existing services' packages a stable id.
+	 *
+	 * So a client can name a package by something that survives reordering,
+	 * rather than by its position (Basecamp #10154919857). New and edited
+	 * services get ids on write; this covers everything already in the database.
+	 *
+	 * Bounded like the other backfills - one meta read and at most one write per
+	 * service, taken in slices so an upgrade hook never walks a whole catalogue
+	 * in a single request. Services left for the next pass keep answering
+	 * without an `id`, exactly as they do today, and clients fall back to the
+	 * index.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return void
+	 */
+	private function backfill_package_ids(): void {
+		if ( ! function_exists( 'wpss_assign_package_ids' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		$service_ids = $this->wpdb->get_col(
+			"SELECT p.ID FROM `{$this->wpdb->posts}` p
+			 INNER JOIN `{$this->wpdb->postmeta}` m ON m.post_id = p.ID AND m.meta_key = '_wpss_packages'
+			 LEFT JOIN `{$this->wpdb->postmeta}` n ON n.post_id = p.ID AND n.meta_key = '_wpss_package_next_id'
+			 WHERE p.post_type = 'wpss_service'
+			   AND n.post_id IS NULL
+			 LIMIT 200"
+		);
+
+		foreach ( (array) $service_ids as $service_id ) {
+			wpss_assign_package_ids( (int) $service_id );
 		}
 	}
 
@@ -300,7 +501,7 @@ class SchemaManager {
 	 * (service_packages/addons price, proposals.proposed_price) are recomputed
 	 * into these on order creation and are a separate follow-up.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @return void
 	 */
@@ -330,7 +531,7 @@ class SchemaManager {
 	 * when the column is already at the target type — safe to run repeatedly and
 	 * on fresh installs (where the CREATE TABLE already used the target type).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 *
 	 * @param string $table       Logical table name (without prefix).
 	 * @param string $column      Column name.
@@ -382,6 +583,97 @@ class SchemaManager {
 			$sql    = $this->{$method}( $charset_collate );
 			dbDelta( $sql );
 		}
+	}
+
+	/**
+	 * Get reports table SQL.
+	 *
+	 * Member-filed reports on a person, a service, a review or a message. One
+	 * table for all four, because the owner works ONE queue — a queue per target
+	 * type is four screens to check and three to forget.
+	 *
+	 * `reported_user_id` is denormalised on purpose: it is resolved once at write
+	 * time from whatever was reported, so "show me everything filed against this
+	 * member" is an index hit rather than four joins. It is the question a site
+	 * owner actually asks before suspending someone.
+	 *
+	 * The UNIQUE key is the anti-brigading rule, enforced by the database rather
+	 * than by a read-then-write in PHP: one member may file one report per
+	 * target, so a second submission updates nothing and cannot be used to stack
+	 * the queue against someone.
+	 *
+	 * Indexes cover the four real queries: the open queue by age, everything
+	 * about one target, everything against one member, and counts by reason.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param string $charset_collate Charset collation.
+	 * @return string SQL statement.
+	 */
+	private function get_reports_table( string $charset_collate ): string {
+		$table = $this->get_table_name( 'reports' );
+
+		return "CREATE TABLE {$table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			target_type varchar(32) NOT NULL,
+			target_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			reported_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			reporter_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			reason varchar(32) NOT NULL,
+			details text DEFAULT NULL,
+			status varchar(20) NOT NULL DEFAULT 'open',
+			resolved_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			resolution varchar(32) DEFAULT NULL,
+			resolved_at datetime DEFAULT NULL,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY uniq_reporter_target (reporter_id, target_type, target_id),
+			KEY idx_queue (status, created_at),
+			KEY idx_target (target_type, target_id, status),
+			KEY idx_reported_user (reported_user_id, status),
+			KEY idx_reason (reason, status)
+		) {$charset_collate};";
+	}
+
+	/**
+	 * Get payment receipts table SQL.
+	 *
+	 * Proof-of-payment a buyer uploads against an offline order, and the record
+	 * of who verified it (Basecamp #10194890682).
+	 *
+	 * A TABLE, not order meta, because the admin screen queries it BY STATUS
+	 * across orders - "show me everything awaiting verification" is the whole
+	 * job, and that is a query post meta cannot serve without scanning.
+	 *
+	 * It is also an audit record. Verifying a receipt credits a vendor, so who
+	 * approved what, when, and on what evidence has to survive independently of
+	 * the order row - `verified_by` and `verified_at` are the answer to "who
+	 * released this money", which the order's status history alone cannot give.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param string $charset_collate Charset collation.
+	 * @return string SQL statement.
+	 */
+	private function get_payment_receipts_table( string $charset_collate ): string {
+		$table = $this->get_table_name( 'payment_receipts' );
+
+		return "CREATE TABLE {$table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			order_id bigint(20) unsigned NOT NULL,
+			uploaded_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			attachment_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			note text DEFAULT NULL,
+			status varchar(20) NOT NULL DEFAULT 'submitted',
+			verified_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			verified_at datetime DEFAULT NULL,
+			admin_note text DEFAULT NULL,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY idx_order (order_id, status),
+			KEY idx_queue (status, created_at),
+			KEY idx_uploader (uploaded_by)
+		) {$charset_collate};";
 	}
 
 	/**
@@ -504,6 +796,7 @@ class SchemaManager {
 			addons longtext,
 			platform varchar(50) DEFAULT 'standalone',
 			platform_order_id bigint(20) unsigned DEFAULT NULL,
+			platform_order_ref varchar(64) DEFAULT NULL,
 			platform_item_id bigint(20) unsigned DEFAULT NULL,
 			subtotal decimal(11,3) NOT NULL,
 			addons_total decimal(11,3) DEFAULT 0,
@@ -538,6 +831,7 @@ class SchemaManager {
 			KEY idx_status_date (status,created_at),
 			KEY idx_vendor_status (vendor_id,status),
 			KEY idx_platform (platform,platform_order_id),
+			KEY idx_platform_ref (platform,platform_order_ref),
 			KEY idx_deadline (delivery_deadline)
 		) {$charset_collate};";
 	}
@@ -764,16 +1058,23 @@ class SchemaManager {
 	private function get_dispute_messages_table( string $charset_collate ): string {
 		$table = $this->get_table_name( 'dispute_messages' );
 
+		// message_type + description carry what used to live in the disputes
+		// row's `evidence` JSON column. A dispute conversation is now ONE
+		// store: 'text' rows hold their text in `message`, and image/file/link
+		// rows hold the URL there with the caption in `description`.
 		return "CREATE TABLE {$table} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			dispute_id bigint(20) unsigned NOT NULL,
 			sender_id bigint(20) unsigned NOT NULL,
 			sender_role varchar(50) NOT NULL,
 			message text NOT NULL,
+			message_type varchar(20) NOT NULL DEFAULT 'text',
+			description text,
 			attachments longtext,
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
-			KEY idx_dispute (dispute_id)
+			KEY idx_dispute (dispute_id),
+			KEY idx_dispute_created (dispute_id, created_at)
 		) {$charset_collate};";
 	}
 

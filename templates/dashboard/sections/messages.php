@@ -26,8 +26,38 @@ defined( 'ABSPATH' ) || exit;
 do_action( 'wpss_dashboard_section_before', 'messages', $user_id );
 
 $conversation_repo = new ConversationRepository();
-$conversations     = $conversation_repo->get_conversation_summary( $user_id, 20 );
-$unread_count      = $conversation_repo->count_unread_for_user( $user_id );
+
+/**
+ * Filter how many conversations one page of the messages list shows.
+ *
+ * @since 1.6.0
+ *
+ * @param int $per_page Conversations per page.
+ * @param int $user_id  Current user ID.
+ */
+$conversations_per_page = max( 1, (int) apply_filters( 'wpss_messages_per_page', 20, $user_id ) );
+
+// Paginated, with a real total. This used to be a hardcoded LIMIT 20 with no
+// OFFSET, no COUNT and no navigation, while the unread banner below counted
+// EVERY conversation — so a vendor with more than twenty threads saw a banner
+// that could not be reconciled with the rows on screen, and had no route to the
+// rest of them (Basecamp 10208075268).
+// Read from our OWN query arg, not `paged`.
+//
+// The dashboard is a singular page with section routing (/dashboard/messages/),
+// so WordPress does not populate `paged` here and the pretty form the default
+// paginator builds — /dashboard/messages/page/2/ — 404s. Verified in the browser
+// before choosing this. A dedicated arg also cannot collide with WP's own
+// singular-page pagination or trip redirect_canonical.
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only page number on a public list.
+$conversations_page  = isset( $_GET['wpss_paged'] ) ? max( 1, absint( wp_unslash( $_GET['wpss_paged'] ) ) ) : 1;
+$conversations_total = $conversation_repo->count_conversations_for_user( $user_id );
+$conversations       = $conversation_repo->get_conversation_summary(
+	$user_id,
+	$conversations_per_page,
+	( $conversations_page - 1 ) * $conversations_per_page
+);
+$unread_count        = $conversation_repo->count_unread_for_user( $user_id );
 
 // Check if viewing a specific conversation thread.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -75,44 +105,18 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				<?php else : ?>
 					<?php foreach ( $messages as $msg ) : ?>
 						<?php
-						$is_mine   = (int) $msg->sender_id === $user_id;
-						$sender    = get_userdata( (int) $msg->sender_id );
-						$msg_class = $is_mine ? 'wpss-message--mine' : 'wpss-message--theirs';
+						// The SAME renderer the order conversation, the REST endpoint and
+						// the AJAX handlers use. This template used to hand-roll its own
+						// message markup, which is why the dashboard thread had no image
+						// previews, lost the original filename on attachments, showed no
+						// read receipts, rendered system messages as ordinary ones, and
+						// let long URLs run out of the container - the shared renderer's
+						// .wpss-messaging__text carries the break-word rule
+						// (Basecamp #10159632931).
+						//
+						// Two renderers for one thing is how they drift; there is now one.
+						echo wpss_render_message_row( $msg, $user_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Renderer returns internally-escaped markup.
 						?>
-						<div class="wpss-message <?php echo esc_attr( $msg_class ); ?>">
-							<div class="wpss-message__avatar">
-								<?php echo get_avatar( (int) $msg->sender_id, 36 ); ?>
-							</div>
-							<div class="wpss-message__body">
-								<div class="wpss-message__meta">
-									<strong><?php echo esc_html( $sender ? $sender->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
-									<time>
-										<?php
-										$msg_ts = $msg->created_at instanceof DateTimeInterface ? $msg->created_at->getTimestamp() : strtotime( $msg->created_at . ' UTC' );
-										echo esc_html( human_time_diff( $msg_ts, time() ) );
-										?>
-										<?php esc_html_e( 'ago', 'wp-sell-services' ); ?>
-									</time>
-								</div>
-								<div class="wpss-message__content"><?php echo wp_kses_post( wpautop( $msg->content ) ); ?></div>
-								<?php if ( ! empty( $msg->attachments ) ) : ?>
-									<?php $atts = is_string( $msg->attachments ) ? json_decode( $msg->attachments, true ) : $msg->attachments; ?>
-									<?php if ( ! empty( $atts ) && is_array( $atts ) ) : ?>
-										<div class="wpss-message__attachments">
-											<?php foreach ( $atts as $att_id ) : ?>
-												<?php
-												$att_id  = is_array( $att_id ) ? ( $att_id['id'] ?? 0 ) : (int) $att_id;
-												$att_url = $att_id ? wp_get_attachment_url( $att_id ) : '';
-												?>
-												<?php if ( $att_url ) : ?>
-													<a href="<?php echo esc_url( $att_url ); ?>" target="_blank" class="wpss-attachment-link"><?php echo esc_html( basename( $att_url ) ); ?></a>
-												<?php endif; ?>
-											<?php endforeach; ?>
-										</div>
-									<?php endif; ?>
-								<?php endif; ?>
-							</div>
-						</div>
 					<?php endforeach; ?>
 				<?php endif; ?>
 			</div>
@@ -124,6 +128,15 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 					<div class="wpss-form-group">
 						<label for="wpss-reply-message" class="screen-reader-text"><?php esc_html_e( 'Message', 'wp-sell-services' ); ?></label>
 						<textarea name="message" id="wpss-reply-message" class="wpss-textarea" rows="3" placeholder="<?php esc_attr_e( 'Type your message...', 'wp-sell-services' ); ?>" required></textarea>
+					</div>
+					<div class="wpss-form-group">
+						<label for="wpss-reply-attachments" class="wpss-messaging__composer-action">
+							<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>
+							<span><?php esc_html_e( 'Attach files', 'wp-sell-services' ); ?></span>
+						</label>
+						<?php // Same accept list as the order composer - one answer to "what may be uploaded". ?>
+						<input type="file" name="attachments[]" id="wpss-reply-attachments" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt" style="display:none;">
+						<span class="wpss-messaging__composer-attachments" aria-live="polite"></span>
 					</div>
 					<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--sm"><?php esc_html_e( 'Send', 'wp-sell-services' ); ?></button>
 				</form>
@@ -154,7 +167,22 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 						$.ajax({
 							url: '<?php echo esc_url_raw( rest_url( 'wpss/v1/conversations/' ) ); ?>' + convId + '/messages',
 							method: 'POST',
-							data: { content: $textarea.val() },
+							// FormData, not a plain object: the endpoint already parses
+							// multipart attachments (wpss_handle_message_attachments),
+							// the dashboard form simply never sent any.
+							data: (function() {
+								var fd = new FormData();
+								fd.append('content', $textarea.val());
+								var files = $form.find('input[type="file"]')[0];
+								if (files && files.files) {
+									for (var i = 0; i < files.files.length; i++) {
+										fd.append('attachments[]', files.files[i]);
+									}
+								}
+								return fd;
+							})(),
+							processData: false,
+							contentType: false,
 							beforeSend: function(xhr) {
 								xhr.setRequestHeader('X-WP-Nonce', '<?php echo esc_js( wp_create_nonce( 'wp_rest' ) ); ?>');
 							},
@@ -170,6 +198,14 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 								$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Send', 'wp-sell-services' ) ); ?>');
 							}
 						});
+					});
+
+					// Name the files the moment they are picked - a file input that
+					// shows nothing back looks broken.
+					$('#wpss-reply-attachments').on('change', function() {
+						var names = [];
+						for (var i = 0; i < this.files.length; i++) { names.push(this.files[i].name); }
+						$(this).closest('.wpss-form-group').find('.wpss-messaging__composer-attachments').text(names.join(', '));
 					});
 
 					// Auto-scroll to bottom of messages.
@@ -227,9 +263,14 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 					$conv_url = wpss_get_order_url( (int) $conversation->order_id );
 				}
 
-				$unread_data       = $conversation->unread_counts ? json_decode( $conversation->unread_counts, true ) : array();
-				$my_unread         = (int) ( $unread_data[ $user_id ] ?? 0 );
-				$is_unread         = $my_unread > 0;
+				$unread_data = $conversation->unread_counts ? json_decode( $conversation->unread_counts, true ) : array();
+				$my_unread   = (int) ( $unread_data[ $user_id ] ?? 0 );
+
+				// A closed thread must not carry an unread badge. The banner's
+				// count_unread_for_user() excludes closed conversations, but this
+				// list does not filter them out (history stays visible), so
+				// without this the badges on screen and the banner disagreed.
+				$is_unread         = $my_unread > 0 && empty( $conversation->is_closed );
 				$last_message_time = ! empty( $conversation->last_message_at ) ? strtotime( $conversation->last_message_at . ' UTC' ) : false;
 				$time_ago          = $last_message_time ? human_time_diff( $last_message_time, time() ) : '';
 
@@ -319,7 +360,41 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 							</div>
 						<?php endif; ?>
 						<?php if ( $is_unread ) : ?>
-							<span class="wpss-conversation-card__badge"><?php echo esc_html( $my_unread ); ?></span>
+							<?php
+							/*
+							 * The preview line below can legitimately show YOUR last
+							 * message - the newest message in a thread that still has
+							 * older unread ones from the other party. Until 1.6.0 the
+							 * badge beside it rendered as a bare DOT: the stylesheet
+							 * pushed the count off screen with text-indent: -999999px,
+							 * so the template wrote a number nobody could see. The row
+							 * therefore read as "your own message is unread", with no
+							 * figure anywhere to correct it - which is exactly what was
+							 * reported (Basecamp 10208075268). The count was always
+							 * right; it was invisible.
+							 *
+							 * The number is shown now, capped so a very busy thread
+							 * cannot stretch the bubble, and labelled so it is explicit
+							 * whose messages it counts.
+							 */
+							$unread_display = $my_unread > 99 ? '99+' : (string) $my_unread;
+							$unread_label   = $other_user
+								? sprintf(
+									/* translators: 1: number of unread messages, 2: other participant's name */
+									_n( '%1$d unread message from %2$s', '%1$d unread messages from %2$s', $my_unread, 'wp-sell-services' ),
+									$my_unread,
+									$other_user->display_name
+								)
+								: sprintf(
+									/* translators: %d: number of unread messages */
+									_n( '%d unread message', '%d unread messages', $my_unread, 'wp-sell-services' ),
+									$my_unread
+								);
+							?>
+							<span class="wpss-conversation-card__badge" title="<?php echo esc_attr( $unread_label ); ?>">
+								<span aria-hidden="true"><?php echo esc_html( $unread_display ); ?></span>
+								<span class="screen-reader-text"><?php echo esc_html( $unread_label ); ?></span>
+							</span>
 						<?php endif; ?>
 					</div>
 					<div class="wpss-conversation-card__content">
@@ -368,6 +443,21 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				</a>
 			<?php endforeach; ?>
 		</div>
+
+		<?php
+		// The route to conversation 21+, which did not exist before. Same shared
+		// paginator the other custom-table surfaces use, but with an explicit
+		// base: its default builds a pretty /page/2/ URL, which 404s on this
+		// section-routed dashboard page.
+		wpss_render_pagination(
+			(int) ceil( $conversations_total / $conversations_per_page ),
+			array(
+				'base'    => add_query_arg( 'wpss_paged', '%#%', wpss_get_dashboard_url( 'messages' ) ),
+				'format'  => '',
+				'current' => $conversations_page,
+			)
+		);
+		?>
 	<?php endif; ?>
 
 <?php endif; // End conversation list vs detail view. ?>

@@ -236,10 +236,16 @@ class ServiceOrder {
 	 * refund, less for a partial one — which is what lets the vendor's
 	 * proportional share be computed (see wpss_get_refund_vendor_share()).
 	 *
+	 * Typed ?float, like every other money column on this model. It was ?string
+	 * purely to mirror what $wpdb hands back, which pushed the coercion out to
+	 * every reader - OrderWorkflowManager and CommissionService each re-cast it.
+	 * The NULL sentinel above is unaffected: null stays null and still means
+	 * "full refund"; only a recorded number becomes a float.
+	 *
 	 * @since 1.2.3
-	 * @var string|null
+	 * @var float|null
 	 */
-	public ?string $refunded_amount = null;
+	public ?float $refunded_amount = null;
 
 	/**
 	 * Billing address as it stood when the order was paid.
@@ -346,6 +352,7 @@ class ServiceOrder {
 	 *     @type int    $customer_id Filter by customer.
 	 *     @type int    $user_id     Filter where user is vendor OR customer.
 	 *     @type string $status      Filter by status.
+	 *     @type array  $status__not_in Exclude these statuses.
 	 *     @type int    $service_id  Filter by service.
 	 *     @type string $orderby     Column to sort by. Default 'created_at'.
 	 *     @type string $order       ASC or DESC. Default 'DESC'.
@@ -436,6 +443,27 @@ class ServiceOrder {
 		if ( ! empty( $args['status'] ) ) {
 			$conditions[] = 'status = %s';
 			$params[]     = $args['status'];
+		}
+
+		/*
+		 * Exclusion by status, which account deletion needs and single-value
+		 * `status` cannot express: "does this member have anything still in
+		 * flight?" is a question about every status EXCEPT a short settled set.
+		 *
+		 * Asked this way round on purpose. Listing the settled statuses and
+		 * excluding them means a status added later counts as in-flight until
+		 * someone says otherwise, so the failure direction is a member who
+		 * cannot delete yet rather than one who vanishes mid-order.
+		 */
+		if ( ! empty( $args['status__not_in'] ) ) {
+			$excluded = array_values( array_unique( array_map( 'strval', (array) $args['status__not_in'] ) ) );
+
+			$placeholders = implode( ', ', array_fill( 0, count( $excluded ), '%s' ) );
+			$conditions[] = "status NOT IN ( {$placeholders} )";
+
+			foreach ( $excluded as $status ) {
+				$params[] = $status;
+			}
 		}
 
 		if ( ! empty( $args['service_id'] ) ) {
@@ -564,8 +592,10 @@ class ServiceOrder {
 		$order->payment_status    = $row->payment_status;
 		$order->transaction_id    = $row->transaction_id;
 		// Null-coalesced: rows read before the 1.4.9 migration ran, or from a
-		// partial SELECT, simply have no refund recorded.
-		$order->refunded_amount = $row->refunded_amount ?? null;
+		// partial SELECT, simply have no refund recorded. NULL is load-bearing
+		// (it means "fully refunded" - see wpss_get_order_refunded_amount()), so
+		// it must survive the cast rather than collapse to 0.0.
+		$order->refunded_amount = isset( $row->refunded_amount ) ? (float) $row->refunded_amount : null;
 		// Cast before decode: the column is nullable and this class runs under
 		// strict_types, where json_decode( null ) is a fatal TypeError.
 		$billing                   = json_decode( (string) ( $row->billing_address ?? '' ), true );
@@ -702,11 +732,31 @@ class ServiceOrder {
 	/**
 	 * Get service.
 	 *
-	 * @return Service|null
+	 * Guards the ID before asking WordPress for the post, because
+	 * `get_post( 0 )` does NOT return null — it returns the global `$post`.
+	 * Orders that legitimately carry `service_id = 0` (proposal/buyer-request
+	 * orders and every sub-order: tips, extensions, milestones) therefore
+	 * resolved their "service" to whatever page happened to be rendering. On
+	 * the checkout page that meant a proposal order reported the checkout page
+	 * as its service: the line title read "Service Checkout", the form posted
+	 * the page's ID as `service_id`, and every `if ( ! $service )` fallback in
+	 * the plugin was unreachable dead code (Basecamp 10208094640 / 10208199238).
+	 *
+	 * The post-type check matters for the same reason: without it any post ID
+	 * that happens to collide resolves as a "service".
+	 *
+	 * @since 1.6.0 Guards `service_id <= 0` and verifies the post type.
+	 *
+	 * @return Service|null Null when the order has no service post.
 	 */
 	public function get_service(): ?Service {
+		if ( $this->service_id <= 0 ) {
+			return null;
+		}
+
 		$post = get_post( $this->service_id );
-		return $post ? Service::from_post( $post ) : null;
+
+		return ( $post && 'wpss_service' === $post->post_type ) ? Service::from_post( $post ) : null;
 	}
 
 	/**

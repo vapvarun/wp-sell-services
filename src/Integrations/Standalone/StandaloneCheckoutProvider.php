@@ -741,7 +741,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 			/* Guarantee badges — horizontal bar below layout */
 			.wpss-co-guarantees-bar {
-				display: flex; justify-content: space-around; gap: var(--wpss-space-6);
+				/*
+				 * wrap, because three badges on one line do not fit a phone.
+				 * Without it this bar forced 401px of content into a 390px
+				 * viewport and the whole checkout scrolled sideways - the buyer
+				 * had to pan to read the total (Basecamp 10208392848).
+				 */
+				display: flex; flex-wrap: wrap; justify-content: space-around; gap: var(--wpss-space-6);
 				padding: var(--wpss-space-6);
 				background: var(--wpss-bg-subtle); border-radius: var(--wpss-radius-lg);
 				margin-top: var(--wpss-space-6);
@@ -818,7 +824,18 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				</span>
 			</div>
 
-			<?php if ( ! is_user_logged_in() ) : ?>
+			<?php
+			/*
+			 * The sign-in wall, shown only when the owner has NOT enabled
+			 * account-at-checkout. With it enabled the form renders normally for a
+			 * logged-out buyer: the billing block already collects first name, last
+			 * name and email — the three locked billing fields — and the checkout
+			 * script creates the account from them before paying, so `customer_id`
+			 * is a real user from the first moment. See
+			 * wpss_checkout_creates_accounts().
+			 */
+			?>
+			<?php if ( ! is_user_logged_in() && ! wpss_checkout_creates_accounts() ) : ?>
 				<!-- Login required -->
 				<div class="wpss-card wpss-co-login">
 					<div class="wpss-empty__icon" aria-hidden="true">&#128100;</div>
@@ -982,8 +999,21 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							// rendered by Stripe would not exist for PayPal,
 							// Razorpay or Woo buyers, and carries no company or
 							// GST field for the invoice.
+							//
+							// A logged-out buyer is told what is about to happen
+							// before the fields, not after. An account appearing
+							// without warning is worse than a sign-up step.
+							if ( ! is_user_logged_in() && wpss_checkout_creates_accounts() ) :
+								?>
+								<div class="wpss-notice wpss-notice--info wpss-co-account-note">
+									<?php esc_html_e( 'We will create your account from the name and email below, so you can send the seller your requirements and follow your order. You will get an email to choose a password.', 'wp-sell-services' ); ?>
+								</div>
+								<?php
+							endif;
+
 							wpss_get_template_part( 'partials/billing', 'fields' );
 							?>
+
 
 							<!-- Payment methods -->
 							<div class="wpss-card">
@@ -1067,6 +1097,22 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 										<span><?php echo esc_html( wpss_format_price( $total, $currency ) ); ?></span>
 									</div>
 								</div>
+
+								<?php
+								/**
+								 * Fires after the payable total, before the Pay button.
+								 *
+								 * Placed where the pay-order and normal branches rejoin, so a
+								 * consumer runs once on either path. Same hook the cart summary
+								 * fires — see templates/cart/cart.php.
+								 *
+								 * @since 1.5.1
+								 *
+								 * @param float  $total   Payable total in the store base currency.
+								 * @param string $context Surface identifier ('cart', 'checkout').
+								 */
+								do_action( 'wpss_payable_total_after', (float) $total, 'checkout' );
+								?>
 
 								<div class="wpss-card__footer" style="flex-direction:column;align-items:stretch;">
 									<!-- CTA button -->
@@ -1256,6 +1302,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					var originalText = submitBtnText.textContent;
 					var noticeEl = document.getElementById('wpss-checkout-notice');
 
+					// Server-rendered, so the client never decides policy: true only
+					// when the visitor is logged out AND the owner enabled
+					// account-at-checkout.
+					var needsAccount = <?php echo ( ! is_user_logged_in() && wpss_checkout_creates_accounts() ) ? 'true' : 'false'; ?>;
+
 					function showNotice(msg, type) {
 						noticeEl.className = 'wpss-notice wpss-notice--' + (type || 'error');
 						noticeEl.textContent = msg;
@@ -1321,39 +1372,116 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						submitBtn.disabled = true;
 						submitBtnText.textContent = '<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>';
 
-						var formData = new FormData(form);
-						formData.append('action', 'wpss_' + paymentMethod.value + '_process_payment');
-						// Use gateway-specific nonce if available (e.g., wpss_test_nonce), otherwise checkout nonce.
-						var gatewayNonce = form.querySelector('[name="wpss_' + paymentMethod.value + '_nonce"]');
-						if (gatewayNonce) {
-							formData.append('nonce', gatewayNonce.value);
-						} else {
-							formData.append('nonce', form.querySelector('[name="wpss_checkout_nonce"]').value);
-						}
-
-						fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
-							method: 'POST',
-							body: formData,
-							credentials: 'same-origin'
-						})
-						.then(function(response) { return response.json(); })
-						.then(function(data) {
-							if (data.success && data.data && data.data.redirect_url) {
-								window.location.href = data.data.redirect_url;
-							} else if (data.success && data.data && data.data.redirect) {
-								window.location.href = data.data.redirect;
-							} else {
-								var msg = (data.data && data.data.message) ? data.data.message : '<?php echo esc_js( __( 'Payment failed. Please try again.', 'wp-sell-services' ) ); ?>';
-								showNotice(msg);
-								submitBtn.disabled = false;
-								submitBtnText.textContent = originalText;
-							}
-						})
-						.catch(function(error) {
-							console.error('Checkout error:', error);
-							showNotice('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>');
+						function restoreButton() {
 							submitBtn.disabled = false;
 							submitBtnText.textContent = originalText;
+						}
+
+						/*
+						 * Create the buyer's account BEFORE paying, when they are
+						 * logged out and the owner has enabled account-at-checkout.
+						 *
+						 * The order matters. Every gateway handler requires a
+						 * logged-in user and the order row needs a real customer_id,
+						 * so the account has to exist first — not after a successful
+						 * charge, which would leave money taken against nobody if
+						 * creation then failed.
+						 *
+						 * The fresh nonce also matters: WordPress nonces are bound to
+						 * the user, so the checkout nonce rendered for a logged-out
+						 * visitor stops verifying the instant they are signed in.
+						 * Without swapping it, the payment request would fail its own
+						 * security check with the account already created.
+						 */
+						function ensureAccount() {
+							if (!needsAccount) {
+								return Promise.resolve();
+							}
+
+							var accountData = new FormData();
+							accountData.append('action', 'wpss_checkout_create_account');
+							accountData.append('nonce', form.querySelector('[name="wpss_checkout_nonce"]').value);
+							accountData.append('checkout_url', window.location.href);
+
+							['billing_first_name', 'billing_last_name', 'billing_email'].forEach(function(name) {
+								var field = form.querySelector('[name="' + name + '"]');
+								accountData.append(name, field ? field.value : '');
+							});
+
+							return fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
+								method: 'POST',
+								body: accountData,
+								credentials: 'same-origin'
+							})
+							.then(function(response) { return response.json(); })
+							.then(function(data) {
+								if (data.success && data.data && data.data.checkout_nonce) {
+									form.querySelector('[name="wpss_checkout_nonce"]').value = data.data.checkout_nonce;
+									needsAccount = false;
+									return;
+								}
+
+								var payload = data.data || {};
+
+								if (payload.code === 'account_exists' && payload.login_url) {
+									// A link, not a redirect: bouncing the buyer away
+									// from a filled-in checkout without asking is worse
+									// than telling them what to do next.
+									noticeEl.className = 'wpss-notice wpss-notice--error';
+									noticeEl.textContent = payload.message + ' ';
+									var link = document.createElement('a');
+									link.href = payload.login_url;
+									link.textContent = '<?php echo esc_js( __( 'Log in', 'wp-sell-services' ) ); ?>';
+									noticeEl.appendChild(link);
+									noticeEl.style.display = 'flex';
+									noticeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+									throw new Error('wpss_account_handled');
+								}
+
+								showNotice(payload.message || '<?php echo esc_js( __( 'We could not create your account. Please check your details.', 'wp-sell-services' ) ); ?>');
+								throw new Error('wpss_account_handled');
+							});
+						}
+
+						ensureAccount().then(function() {
+							var formData = new FormData(form);
+							formData.append('action', 'wpss_' + paymentMethod.value + '_process_payment');
+							// Use gateway-specific nonce if available (e.g., wpss_test_nonce), otherwise checkout nonce.
+							var gatewayNonce = form.querySelector('[name="wpss_' + paymentMethod.value + '_nonce"]');
+							if (gatewayNonce) {
+								formData.append('nonce', gatewayNonce.value);
+							} else {
+								formData.append('nonce', form.querySelector('[name="wpss_checkout_nonce"]').value);
+							}
+
+							return fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
+								method: 'POST',
+								body: formData,
+								credentials: 'same-origin'
+							})
+							.then(function(response) { return response.json(); })
+							.then(function(data) {
+								if (data.success && data.data && data.data.redirect_url) {
+									window.location.href = data.data.redirect_url;
+								} else if (data.success && data.data && data.data.redirect) {
+									window.location.href = data.data.redirect;
+								} else {
+									var msg = (data.data && data.data.message) ? data.data.message : '<?php echo esc_js( __( 'Payment failed. Please try again.', 'wp-sell-services' ) ); ?>';
+									showNotice(msg);
+									restoreButton();
+								}
+							});
+						})
+						.catch(function(error) {
+							// The account step shows its own message; do not talk over
+							// it with a generic payment error.
+							if (error && 'wpss_account_handled' === error.message) {
+								restoreButton();
+								return;
+							}
+							console.error('Checkout error:', error);
+							showNotice('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>');
+							restoreButton();
 						});
 					});
 				})();
@@ -1609,6 +1737,18 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				</span>
 			</div>
 
+			<?php
+			/*
+			 * Deliberately NOT gated on wpss_checkout_creates_accounts().
+			 *
+			 * This is the multi-item cart checkout, and a logged-out visitor cannot
+			 * have a cart: `_wpss_cart` is user meta and add-to-cart requires login.
+			 * So there is nothing here for them to buy, and offering the
+			 * account-at-checkout form would be a route to an empty purchase. The
+			 * single-service checkout is the one a logged-out buyer can reach, and
+			 * that is where the flow lives.
+			 */
+			?>
 			<?php if ( ! is_user_logged_in() ) : ?>
 				<div class="wpss-card wpss-co-login" style="text-align:center;padding:var(--wpss-space-10) var(--wpss-space-6);">
 					<div class="wpss-empty__icon" aria-hidden="true">&#128100;</div>
@@ -1719,6 +1859,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							// GST field for the invoice.
 							wpss_get_template_part( 'partials/billing', 'fields' );
 							?>
+
 
 							<!-- Payment methods -->
 							<div class="wpss-card">

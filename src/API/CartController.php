@@ -54,7 +54,7 @@ class CartController extends RestController {
 							'required'    => true,
 						),
 						'package_id' => array(
-							'description' => __( 'Package index/ID.', 'wp-sell-services' ),
+							'description' => __( 'Stable package id from GET /services/{id}/packages. A legacy array index is still accepted for older clients.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'required'    => true,
 						),
@@ -143,14 +143,27 @@ class CartController extends RestController {
 			return new WP_Error( 'service_paused', __( 'This service is not accepting orders right now.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		// Get package.
-		$packages = get_post_meta( $service_id, '_wpss_packages', true );
-		if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) ) {
+		// Get package, by STABLE ID or by legacy index.
+		//
+		// GET /services/{id}/packages now publishes a stable `id`, but shipped
+		// clients still send the array index and saved carts may hold either.
+		// The resolver tries the stable id first and falls back to the index, so
+		// old and new clients both work during the transition
+		// (Basecamp #10154919857).
+		$resolved = wpss_resolve_service_package( $service_id, $package_id );
+
+		if ( null === $resolved ) {
 			return new WP_Error( 'invalid_package', __( 'Package not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		$package = $packages[ $package_id ];
+		$package = $resolved['package'];
 		$total   = (float) $package['price'];
+
+		// Store the POSITION, because that is what the rest of the order
+		// pipeline and every historical row still mean by package_id. The stable
+		// id is how the client NAMES a package; converting it here keeps that
+		// change at the edge instead of rewriting the storage format mid-release.
+		$package_id = $resolved['index'];
 
 		// Calculate addon totals.
 		$selected_addons = array();
@@ -271,14 +284,45 @@ class CartController extends RestController {
 					}
 				}
 
+				// Report the package the way /services/{id} does.
+				//
+				// The cart ACCEPTS a stable id, then stored and returned the
+				// array position, so a client that round-tripped what we handed
+				// back was sending a positional value: fine today, wrong the
+				// moment a vendor reorders their tiers. Service detail taught
+				// the stable id and cart taught the index.
+				//
+				// Only the RESPONSE changes. The stored value stays positional
+				// because the pipeline genuinely still means position -- notably
+				// CheckoutIntentService does `$packages[ (int) $item['package_id'] ]`,
+				// a direct positional lookup that would fall through to
+				// reset($packages) and silently charge the FIRST tier if this
+				// were switched underneath it. Migrating storage is a separate,
+				// larger change; misreporting the contract is the bug here.
+				$stable_id = 0;
+				if ( isset( $item['package']['id'] ) ) {
+					$stable_id = (int) $item['package']['id'];
+				} else {
+					$service_packages = get_post_meta( $item['service_id'], '_wpss_packages', true );
+					if ( is_array( $service_packages ) && isset( $service_packages[ $item['package_id'] ]['id'] ) ) {
+						$stable_id = (int) $service_packages[ $item['package_id'] ]['id'];
+					}
+				}
+
 				$items[] = array(
-					'key'          => $key,
-					'service_id'   => $item['service_id'],
-					'service'      => $service ? $service->post_title : '',
-					'package_id'   => $item['package_id'],
-					'package_name' => $package_name,
-					'addons'       => $item['addons'] ?? array(),
-					'total'        => (float) $item['total'],
+					'key'           => $key,
+					'service_id'    => $item['service_id'],
+					'service'       => $service ? $service->post_title : '',
+					// Stable id when the service has one; falls back to the
+					// position for a service whose packages predate ids, so this
+					// never reports an id that cannot be resolved.
+					'package_id'    => $stable_id ?: (int) $item['package_id'],
+					// The positional value, named for what it is. Published so
+					// the transition is visible rather than implied.
+					'package_index' => (int) $item['package_id'],
+					'package_name'  => $package_name,
+					'addons'        => $item['addons'] ?? array(),
+					'total'         => (float) $item['total'],
 				);
 
 				$cart_total += (float) $item['total'];

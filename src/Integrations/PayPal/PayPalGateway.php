@@ -635,13 +635,6 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		$order_provider = wpss_get_order_provider();
 
-		if ( ! $order_provider ) {
-			return array(
-				'success' => false,
-				'error'   => __( 'No order provider available.', 'wp-sell-services' ),
-			);
-		}
-
 		$order = $order_provider->create_order(
 			array(
 				'service_id'     => $service_id,
@@ -907,16 +900,6 @@ class PayPalGateway implements PaymentGatewayInterface {
 			$customer_id    = (int) ( $metadata['customer_id'] ?? get_current_user_id() );
 			$order_provider = wpss_get_order_provider();
 
-			if ( ! $order_provider ) {
-				if ( wp_doing_ajax() ) {
-					wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
-					return;
-				} else {
-					wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
-					exit;
-				}
-			}
-
 			$cart = get_user_meta( $customer_id, '_wpss_cart', true );
 			$cart = is_array( $cart ) ? $cart : array();
 
@@ -976,9 +959,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 			if ( $pay_order && (int) $pay_order->customer_id === get_current_user_id() ) {
 				$order_provider = wpss_get_order_provider();
-				if ( $order_provider ) {
-					$order_provider->mark_as_paid( $pay_order_id, $payment['transaction_id'], 'paypal' );
-				}
+				$order_provider->mark_as_paid( $pay_order_id, $payment['transaction_id'], 'paypal' );
 
 				$redirect_url = wpss_get_order_requirements_url( $pay_order_id );
 
@@ -999,16 +980,6 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		// Create service order.
 		$order_provider = wpss_get_order_provider();
-
-		if ( ! $order_provider ) {
-			if ( wp_doing_ajax() ) {
-				wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
-				return;
-			} else {
-				wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
-				exit;
-			}
-		}
 
 		$order = $order_provider->create_order(
 			array(
@@ -1064,10 +1035,10 @@ class PayPalGateway implements PaymentGatewayInterface {
 	/**
 	 * Handle order approved webhook.
 	 *
-	 * @param array $resource Order resource.
-	 * @return array
+	 * @param array<string, mixed> $resource_data Order resource from the webhook payload.
+	 * @return array{success: bool, message: string}
 	 */
-	private function handle_order_approved( array $resource ): array {
+	private function handle_order_approved( array $resource_data ): array {
 		// Order approved, ready to capture - usually handled client-side.
 		return array(
 			'success' => true,
@@ -1078,23 +1049,21 @@ class PayPalGateway implements PaymentGatewayInterface {
 	/**
 	 * Handle capture completed webhook.
 	 *
-	 * @param array $resource Capture resource.
-	 * @return array
+	 * @param array<string, mixed> $resource_data Capture resource from the webhook payload.
+	 * @return array{success: bool, message: string}
 	 */
-	private function handle_capture_completed( array $resource ): array {
-		$custom_id = $resource['custom_id'] ?? '';
+	private function handle_capture_completed( array $resource_data ): array {
+		$custom_id = $resource_data['custom_id'] ?? '';
 		$metadata  = json_decode( $custom_id, true ) ?: array();
 
 		if ( ! empty( $metadata['order_id'] ) ) {
 			$order_provider = wpss_get_order_provider();
 
-			if ( $order_provider ) {
-				$order_provider->mark_as_paid(
-					(int) $metadata['order_id'],
-					$resource['id'],
-					'paypal'
-				);
-			}
+			$order_provider->mark_as_paid(
+				(int) $metadata['order_id'],
+				$resource_data['id'],
+				'paypal'
+			);
 		}
 
 		return array(
@@ -1106,17 +1075,17 @@ class PayPalGateway implements PaymentGatewayInterface {
 	/**
 	 * Handle refund completed webhook.
 	 *
-	 * @param array $resource Refund resource.
-	 * @return array
+	 * @param array<string, mixed> $resource_data Refund resource from the webhook payload.
+	 * @return array{success: bool, message: string}
 	 */
-	private function handle_refund_completed( array $resource ): array {
+	private function handle_refund_completed( array $resource_data ): array {
 		/**
 		 * Fires when a PayPal refund is processed.
 		 *
 		 * @param string $capture_id Capture ID.
-		 * @param array  $resource   Refund resource.
+		 * @param array  $resource_data Refund resource.
 		 */
-		do_action( 'wpss_paypal_refund_processed', $resource['links'][0]['href'] ?? '', $resource );
+		do_action( 'wpss_paypal_refund_processed', $resource_data['links'][0]['href'] ?? '', $resource_data );
 
 		return array(
 			'success' => true,

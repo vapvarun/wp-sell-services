@@ -449,7 +449,9 @@ class PortfolioController extends RestController {
 			return new WP_Error( 'wpss_not_vendor', __( 'Only vendors can manage portfolio items.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
-		return true;
+		// Portfolio is how a vendor advertises. A suspended one does not get to
+		// keep publishing work samples. See wpss_vendor_status_block().
+		return wpss_vendor_status_block() ?? true;
 	}
 
 	/**
@@ -528,7 +530,7 @@ class PortfolioController extends RestController {
 			'external_url' => $item['external_url'] ?? '',
 			'is_featured'  => (bool) ( $item['is_featured'] ?? false ),
 			'sort_order'   => (int) ( $item['sort_order'] ?? 0 ),
-			'created_at'   => $item['created_at'] ?? '',
+			'created_at'   => $this->format_datetime( $item['created_at'] ?? null ),
 		);
 	}
 }

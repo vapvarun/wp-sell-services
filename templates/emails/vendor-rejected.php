@@ -10,7 +10,7 @@
  * yourtheme/wp-sell-services/emails/vendor-rejected.php
  *
  * @package WPSellServices\Templates\Emails
- * @since   1.5.0
+ * @since   1.2.0
  *
  * @var string  $rejection_reason Reason the application was rejected (optional).
  * @var string  $site_url         Site home URL.
@@ -25,7 +25,7 @@ $base_color = $base_color ?? '#7f54b3';
 /**
  * Fires before the email content for the vendor rejected email.
  *
- * @since 1.5.0
+ * @since 1.2.0
  *
  * @param string  $type      Email type identifier.
  * @param WP_User $recipient Recipient user object.
@@ -76,7 +76,7 @@ do_action( 'wpss_email_content_before', 'vendor_rejected', $recipient ?? null );
 	/**
 	 * Filters the button URL for the vendor rejected email.
 	 *
-	 * @since 1.5.0
+	 * @since 1.2.0
 	 *
 	 * @param string $button_url Default button URL.
 	 * @param string $type       Email type identifier.
@@ -86,7 +86,7 @@ do_action( 'wpss_email_content_before', 'vendor_rejected', $recipient ?? null );
 	/**
 	 * Filters the button text for the vendor rejected email.
 	 *
-	 * @since 1.5.0
+	 * @since 1.2.0
 	 *
 	 * @param string $button_text Default button text.
 	 * @param string $type        Email type identifier.
@@ -104,7 +104,7 @@ do_action( 'wpss_email_content_before', 'vendor_rejected', $recipient ?? null );
 /**
  * Fires after the email content for the vendor rejected email.
  *
- * @since 1.5.0
+ * @since 1.2.0
  *
  * @param string  $type      Email type identifier.
  * @param WP_User $recipient Recipient user object.

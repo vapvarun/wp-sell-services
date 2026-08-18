@@ -25,8 +25,9 @@ class SetupWizardPage {
 	/**
 	 * Admin page hook suffix returned by add_submenu_page().
 	 *
-	 * Empty once setup is complete, because the submenu stops being
-	 * registered — see enqueue_styles() for why that case still needs styling.
+	 * Always set now: the page is registered whether or not it appears in the
+	 * menu, so its assets can still be enqueued when an owner reaches it
+	 * directly after setup is complete.
 	 *
 	 * @var string
 	 */
@@ -55,19 +56,49 @@ class SetupWizardPage {
 	 * @return void
 	 */
 	public function add_menu_page(): void {
-		if ( $this->should_show_in_menu() ) {
-			$hook = add_submenu_page(
-				'wp-sell-services',
-				__( 'Setup Wizard', 'wp-sell-services' ),
-				__( 'Setup Wizard', 'wp-sell-services' ),
-				'manage_options',
-				'wpss-setup-wizard',
-				array( $this, 'render' )
-			);
+		// Registered ALWAYS, listed only while it is worth listing.
+		//
+		// Menu visibility and page accessibility are different questions, and
+		// tying them together made the wizard unreachable the moment setup was
+		// marked complete: admin.php?page=wpss-setup-wizard answered 403, so an
+		// owner could never re-run it, revisit a step, or follow an old link or
+		// a support instruction to it.
+		//
+		// Passing a null parent registers the page without putting it in any
+		// menu, which is the standard way to keep a screen addressable. The
+		// capability check is unchanged, so this grants nobody new access.
+		$parent = $this->should_show_in_menu() ? 'wp-sell-services' : null;
 
-			if ( $hook ) {
-				$this->hook_suffix = $hook;
-			}
+		$hook = add_submenu_page(
+			$parent,
+			__( 'Setup Wizard', 'wp-sell-services' ),
+			__( 'Setup Wizard', 'wp-sell-services' ),
+			'manage_options',
+			'wpss-setup-wizard',
+			array( $this, 'render' )
+		);
+
+		if ( $hook ) {
+			$this->hook_suffix = $hook;
+
+			// Give core a title to work with.
+			//
+			// A null parent (above) is what keeps this screen addressable, but it
+			// also means the page is in no $submenu, so core's
+			// get_admin_page_title() cannot match it and leaves $GLOBALS['title']
+			// null. admin-header.php then runs strip_tags( null ), which is a
+			// PHP 8.1+ deprecation, and the browser tab renders as a bare
+			// "<separator> Site Name" with no page name at all.
+			//
+			// The fix belongs here rather than in the menu: keep the screen
+			// reachable AND name it. `load-{$hook}` fires before admin-header.php
+			// is included, so the title is set by the time core reads it.
+			add_action(
+				'load-' . $hook,
+				static function (): void {
+					$GLOBALS['title'] = __( 'Setup Wizard', 'wp-sell-services' );
+				}
+			);
 		}
 	}
 
@@ -79,7 +110,7 @@ class SetupWizardPage {
 	 * no hook suffix — but the screen stays reachable by direct URL and by the
 	 * "Re-Run Setup Wizard" button in Settings, and it must still be styled.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 *
 	 * @param string $hook Current admin page hook suffix.
 	 * @return void
@@ -92,10 +123,14 @@ class SetupWizardPage {
 			return;
 		}
 
+		// The wizard renders standalone (no admin chrome), so it cannot rely on
+		// another screen's enqueue having run. Register the tokens explicitly.
+		wpss_register_design_system( true );
+
 		wp_enqueue_style(
 			'wpss-admin-wizard',
 			\WPSS_PLUGIN_URL . 'assets/css/admin-wizard.css',
-			array(),
+			array( 'wpss-design-system' ),
 			\WPSS_VERSION
 		);
 		wp_style_add_data( 'wpss-admin-wizard', 'rtl', 'replace' );
@@ -136,18 +171,69 @@ class SetupWizardPage {
 	/**
 	 * Whether to show the wizard link in the admin menu.
 	 *
-	 * Visible when wizard hasn't been completed or no services exist.
+	 * Visible while setup is unfinished, and again afterwards if the site still
+	 * has no published services - a marketplace with nothing to sell is not
+	 * really set up, so the nudge stays.
+	 *
+	 * The completion flag is written in ONE place: step 5 of the wizard. An
+	 * owner who set the site up and left before reaching that step - or who
+	 * clicked Exit Wizard, which goes to Settings without marking anything -
+	 * never got the flag, so the menu entry stayed forever. Measured on a site
+	 * with 6 mapped pages and 52 published services: the flag was still false
+	 * and "Setup Wizard" was still in the menu.
+	 *
+	 * The check below was already written to notice a configured site; it was
+	 * simply unreachable, because the early return above it fired first
+	 * whenever the flag was empty - which is exactly the case it needed to
+	 * catch. Reordering makes it work, and recording the result means the
+	 * question is asked once rather than on every admin page load.
 	 *
 	 * @return bool
 	 */
 	private function should_show_in_menu(): bool {
-		if ( ! get_option( 'wpss_setup_wizard_completed' ) ) {
+		$completed = (bool) get_option( 'wpss_setup_wizard_completed' );
+
+		if ( ! $completed && $this->site_is_configured() ) {
+			// Self-heal rather than nag. Deliberately not autoloaded: it is read
+			// on admin screens only.
+			update_option( 'wpss_setup_wizard_completed', time(), false );
+			$completed = true;
+		}
+
+		if ( ! $completed ) {
 			return true;
 		}
 
 		$service_count = wp_count_posts( 'wpss_service' );
 
 		return ! $service_count || 0 === (int) ( $service_count->publish ?? 0 );
+	}
+
+	/**
+	 * Whether the site plainly has been set up already.
+	 *
+	 * Both halves are required. Pages alone are not enough - the installer
+	 * creates those on activation, so every site has them from minute one and
+	 * treating that as "configured" would suppress the wizard for the very
+	 * owners who need it. A published service is the signal that a human has
+	 * actually used the thing.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @return bool
+	 */
+	private function site_is_configured(): bool {
+		$pages = (array) get_option( 'wpss_pages', array() );
+
+		$has_core_pages = ! empty( $pages['services_page'] ) && ! empty( $pages['dashboard'] );
+
+		if ( ! $has_core_pages ) {
+			return false;
+		}
+
+		$service_count = wp_count_posts( 'wpss_service' );
+
+		return $service_count && (int) ( $service_count->publish ?? 0 ) > 0;
 	}
 
 	/**
@@ -326,12 +412,7 @@ class SetupWizardPage {
 		}
 
 		// Validate that all required pages exist before completing.
-		$required_pages = array(
-			'services_page' => __( 'Services', 'wp-sell-services' ),
-			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
-			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
-			'checkout'      => __( 'Service Checkout', 'wp-sell-services' ),
-		);
+		$required_pages = wpss_get_required_pages();
 
 		$pages   = get_option( 'wpss_pages', array() );
 		$missing = array();
@@ -384,12 +465,11 @@ class SetupWizardPage {
 		$max_services        = $vendor['max_services_per_vendor'] ?? 20;
 		$require_moderation  = ! empty( $vendor['require_service_moderation'] );
 
-		$page_fields = array(
-			'services_page' => __( 'Services', 'wp-sell-services' ),
-			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
-			'become_vendor' => __( 'Vendor Registration', 'wp-sell-services' ),
-			'checkout'      => __( 'Checkout', 'wp-sell-services' ),
-		);
+		// The wizard's Create buttons post these titles, so they must be the
+		// registry's titles: "Checkout" here (against the installer's "Service
+		// Checkout") is how sites running WooCommerce ended up with the WPSS
+		// page on /checkout-2/ instead of /service-checkout/.
+		$page_fields = wpss_get_required_pages();
 		?>
 		<div id="wpss-wizard-wrap">
 			<!-- Header -->

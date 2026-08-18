@@ -6,6 +6,8 @@ A complete Fiverr-style service marketplace platform for WordPress. Vendors list
 
 [Try Live Demo](https://app.instawp.io/launch?s=wp-sell-services&d=v2) | [Product Page](https://store.wbcomdesigns.com/wp-sell-services/) | [Documentation](https://store.wbcomdesigns.com/wp-sell-services/docs/)
 
+**For the team:** [`CAPABILITIES.md`](CAPABILITIES.md) answers "can it do X" for buyers. [`APP-COVERAGE.md`](APP-COVERAGE.md) tracks what the mobile app reaches of this REST surface — 183 paths, 76 called, 58 real gaps, regenerated from the running site rather than edited by hand.
+
 ## Features
 
 ### Marketplace Core
@@ -15,7 +17,7 @@ A complete Fiverr-style service marketplace platform for WordPress. Vendors list
 - Category and tag organization
 
 ### Order Workflow
-- 11 distinct order statuses with complete lifecycle management
+- 18 distinct order statuses with complete lifecycle management
 - Requirements collection, file delivery, revision requests
 - Built-in messaging per order with file attachments
 - Deadline extensions and cancellation flow

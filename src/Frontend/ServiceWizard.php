@@ -462,23 +462,16 @@ class ServiceWizard {
 	 * @return void
 	 */
 	private function render_step_basic( ?\WP_Post $_service ): void {
-		$categories = get_terms(
-			array(
-				'taxonomy'   => 'wpss_service_category',
-				'hide_empty' => false,
-			)
-		);
+		$categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 
 		// Build categories data for JavaScript subcategory filtering.
 		$categories_data = array();
-		if ( ! is_wp_error( $categories ) ) {
-			foreach ( $categories as $cat ) {
-				$categories_data[] = array(
-					'id'     => (int) $cat->term_id,
-					'name'   => $cat->name,
-					'parent' => (int) $cat->parent,
-				);
-			}
+		foreach ( $categories as $cat ) {
+			$categories_data[] = array(
+				'id'     => (int) $cat->term_id,
+				'name'   => $cat->name,
+				'parent' => (int) $cat->parent,
+			);
 		}
 		?>
 		<script>
@@ -528,9 +521,7 @@ class ServiceWizard {
 					required>
 					<option value=""><?php esc_html_e( 'Select a category', 'wp-sell-services' ); ?></option>
 					<?php
-					if ( ! is_wp_error( $categories ) ) :
-						$this->render_category_options( $categories );
-					endif;
+					$this->render_category_options( $categories );
 					?>
 				</select>
 				<p id="service_category-error" class="wpss-form-error" hidden></p>
@@ -1151,30 +1142,57 @@ class ServiceWizard {
 				<div class="wpss-review-section">
 					<h4 class="wpss-review-section__title"><?php esc_html_e( 'Completion Checklist', 'wp-sell-services' ); ?></h4>
 					<?php
-					// Packet H: Alpine checklist uses :data-lucide binding. Lucide
-					// replaces the <i> on each createIcons() call; after a :data-lucide
-					// flips, x-effect dispatches wpss:icons:refresh to re-render.
+					/*
+					 * Two STATIC icons per row, toggled with x-show - not one icon
+					 * whose :data-lucide flips (Basecamp 10208086929).
+					 *
+					 * The old markup bound :data-lucide and then relied on an
+					 * x-effect to dispatch wpss:icons:refresh so Lucide would
+					 * repaint. The binding worked; the repaint did not. That
+					 * x-effect read
+					 *
+					 *   data.title || data.category || ... || isPackageValid
+					 *
+					 * which fails three ways at once: `||` SHORT-CIRCUITS, so once
+					 * a title existed Alpine subscribed to nothing after it;
+					 * `isPackageValid` was referenced and never called, so
+					 * data.packages was never a dependency at all; and `data.gallery`
+					 * subscribes to the object, while the media picker mutates
+					 * data.gallery.main inside it. The three rows that appeared to
+					 * work did so only because a title change happens to repaint
+					 * every icon in the list.
+					 *
+					 * Both icons are now plain <i data-lucide> with no binding, so
+					 * Lucide draws each exactly once at boot and Alpine owns which
+					 * one is visible. There is no refresh event to miss and no
+					 * dependency list to get wrong. This was the only dynamic
+					 * :data-lucide binding in the plugin.
+					 */
 					?>
-					<ul class="wpss-review-checklist"
-						x-effect="data.title || data.category || data.description || data.gallery || isPackageValid; $nextTick(() => { try { document.dispatchEvent(new CustomEvent('wpss:icons:refresh')); } catch(e){} })">
+					<ul class="wpss-review-checklist">
 						<li :class="{ 'completed': data.title?.length >= 10 }">
-							<i class="wpss-icon" aria-hidden="true" :data-lucide="data.title?.length >= 10 ? 'check-circle-2' : 'circle'"></i>
+							<span class="wpss-icon" aria-hidden="true" x-show="data.title?.length >= 10" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(data.title?.length >= 10)"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Service title (10+ characters)', 'wp-sell-services' ); ?>
 						</li>
 						<li :class="{ 'completed': data.category }">
-							<i class="wpss-icon" aria-hidden="true" :data-lucide="data.category ? 'check-circle-2' : 'circle'"></i>
+							<span class="wpss-icon" aria-hidden="true" x-show="data.category" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(data.category)"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Category selected', 'wp-sell-services' ); ?>
 						</li>
 						<li :class="{ 'completed': data.description?.length >= 120 }">
-							<i class="wpss-icon" aria-hidden="true" :data-lucide="data.description?.length >= 120 ? 'check-circle-2' : 'circle'"></i>
+							<span class="wpss-icon" aria-hidden="true" x-show="data.description?.length >= 120" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(data.description?.length >= 120)"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Description (120+ characters)', 'wp-sell-services' ); ?>
 						</li>
 						<li :class="{ 'completed': isPackageValid('basic') }">
-							<i class="wpss-icon" aria-hidden="true" :data-lucide="isPackageValid('basic') ? 'check-circle-2' : 'circle'"></i>
+							<span class="wpss-icon" aria-hidden="true" x-show="isPackageValid('basic')" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(isPackageValid('basic'))"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Basic package pricing complete', 'wp-sell-services' ); ?>
 						</li>
 						<li :class="{ 'completed': data.gallery.main }">
-							<i class="wpss-icon" aria-hidden="true" :data-lucide="data.gallery.main ? 'check-circle-2' : 'circle'"></i>
+							<span class="wpss-icon" aria-hidden="true" x-show="data.gallery.main" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(data.gallery.main)"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Main image uploaded', 'wp-sell-services' ); ?>
 						</li>
 					</ul>
@@ -1212,23 +1230,38 @@ class ServiceWizard {
 	 * Render category options recursively.
 	 *
 	 * @param array $categories Categories array.
-	 * @param int   $parent Parent term ID.
+	 * @param int   $parent_id Parent term ID.
 	 * @param int   $depth Current depth.
 	 * @return void
 	 */
-	private function render_category_options( array $categories, int $parent = 0, int $depth = 0 ): void {
+	private function render_category_options( array $categories, int $parent_id = 0, int $depth = 0 ): void {
+		unset( $depth );
+
+		/*
+		 * TOP LEVEL ONLY (Basecamp 10208080926).
+		 *
+		 * This used to recurse, so the Category dropdown listed children too,
+		 * prefixed with a dash. A vendor could pick "Logo Design" there - and
+		 * then the Subcategory dropdown sat enabled and empty, because
+		 * getSubcategories() looks up the children of the selected term and a
+		 * child has none. The service saved with a child in the category field
+		 * and its parent never assigned.
+		 *
+		 * Note what is NOT changed: the $categories array still holds every
+		 * term, because window.wpssCategories is built from the same fetch and
+		 * the subcategory dropdown needs the children. Filtering the query to
+		 * parent => 0 - the obvious-looking fix - would leave that dropdown
+		 * permanently empty.
+		 */
 		foreach ( $categories as $category ) {
-			if ( (int) $category->parent !== $parent ) {
+			if ( (int) $category->parent !== $parent_id ) {
 				continue;
 			}
-
-			$indent = str_repeat( '&mdash; ', $depth );
 			?>
 			<option value="<?php echo esc_attr( $category->term_id ); ?>">
-				<?php echo $indent . esc_html( $category->name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<?php echo esc_html( $category->name ); ?>
 			</option>
 			<?php
-			$this->render_category_options( $categories, $category->term_id, $depth + 1 );
 		}
 	}
 

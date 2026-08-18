@@ -337,33 +337,33 @@ class RankMathIntegration {
 	 *
 	 * @param array  $entry Sitemap entry.
 	 * @param string $type  Entry type.
-	 * @param object $object Object.
+	 * @param object $object_data Object.
 	 * @return array
 	 */
-	public function modify_sitemap_entry( $entry, $type, $object ): array {
-		if ( 'post' !== $type || 'wpss_service' !== ( $object->post_type ?? '' ) ) {
+	public function modify_sitemap_entry( $entry, $type, $object_data ): array {
+		if ( 'post' !== $type || 'wpss_service' !== ( $object_data->post_type ?? '' ) ) {
 			return $entry;
 		}
 
 		// Add images.
 		$images = array();
 
-		$thumb_url = get_the_post_thumbnail_url( $object->ID, 'full' );
+		$thumb_url = get_the_post_thumbnail_url( $object_data->ID, 'full' );
 		if ( $thumb_url ) {
 			$images[] = array(
 				'src'   => $thumb_url,
-				'title' => $object->post_title,
+				'title' => $object_data->post_title,
 			);
 		}
 
-		$gallery_raw = get_post_meta( $object->ID, '_wpss_gallery', true );
+		$gallery_raw = get_post_meta( $object_data->ID, '_wpss_gallery', true );
 		$gallery_ids = wpss_get_gallery_ids( $gallery_raw );
 		foreach ( $gallery_ids as $image_id ) {
 			$url = wp_get_attachment_image_url( $image_id, 'full' );
 			if ( $url ) {
 				$images[] = array(
 					'src'   => $url,
-					'title' => $object->post_title,
+					'title' => $object_data->post_title,
 				);
 			}
 		}

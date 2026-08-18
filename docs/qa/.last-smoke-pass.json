@@ -1,0 +1,38 @@
+{
+  "_note": "Gate C evidence for the 1.6.0 release. This plugin verifies runtime behaviour through audit/journeys/ rather than an AGENT_SMOKE_RUNBOOK, so the journeys were the smoke rather than scaffolding a second system for the same job.",
+  "recorded": "2026-08-18",
+  "commit": "def11c1",
+  "environment": "wss.local, BuddyX 5.0.1, Free+Pro 1.6.0 both active",
+  "frontend_surfaces": {
+    "services archive": 200,
+    "single service": 200,
+    "vendors": 200,
+    "dashboard": 200,
+    "cart": 200,
+    "_all": "no fatal, no WSOD, no unrendered [wpss_*] shortcode"
+  },
+  "admin_screens": {
+    "WPSS dashboard": 200,
+    "Orders": 200,
+    "Settings": 200,
+    "Vendors": 200,
+    "Plugins": 200,
+    "_notices": "0 error notices attributable to this plugin; both plugins listed active at 1.6.0"
+  },
+  "debug_log": "108 lines produced, 0 attributable to wpss (all from third-party woo-order-test). No Fatal, Uncaught, class-not-found or _load_textdomain_just_in_time.",
+  "rest": "186 routes; only /wpss/v1 (WordPress's own namespace index) lacks a permission_callback. 66 parameterless GETs dispatched: 65x200, 1x400, zero 5xx. wp wpss rest:contract 10/10.",
+  "activation": "deactivate + reactivate both plugins: zero fatals",
+  "preflight": "wp wpss preflight 104/104",
+  "not_covered": "EDD and FluentCart purchase flows - neither plugin is installed on this sandbox, and both rails were substantially reworked this cycle. Push notifications on a real handset.",
+  "pristine_docker_install": {
+    "_note": "Step 8 of the release pipeline - installed from the BUILT ZIPS, not the dev tree.",
+    "stack": "bn-docker-smoke, WordPress 7.0.2, http://localhost:8896",
+    "1_activation": "both plugins installed from zip and activated; wp plugin list shows 1.6.0 active for each",
+    "2_frontend": "homepage 200, wp-admin 302 (login redirect), REST /wpss/v1/settings 200",
+    "3_classes": "Core\\Plugin, CLI\\ApiShapeCommand, Demo\\MarketplaceSeeder, Pro\\Core\\Pro, Pro\\VendorSubscriptions\\PlanEnforcer all load; wpss_member_bypasses_limits() and wpss_rest_service_card() both present; WPSS_VERSION and WPSS_PRO_VERSION both 1.6.0",
+    "4_debug_log": "EMPTY - zero lines after install, activation and page loads",
+    "5_browser": "plugins.php shows both active with no error notice and no 'could not be loaded'; WPSS admin dashboard renders its full menu, stat cards, quick actions and onboarding tour, 60 wpss-* elements, zero error notices. Screenshots in ~/Documents/work-artifacts/screenshots/2026-08/",
+    "6_degrade": "libs/edd-sl-sdk/src renamed away: homepage still 200, admin still 302, zero fatals in the log. Restored, 17 php files back.",
+    "bundled_sdk": "libs/edd-sl-sdk present in both the zip (63 files) and the installed copy (17 php under src/) - the exact packaging regression this step exists to catch"
+  }
+}

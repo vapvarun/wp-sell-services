@@ -76,6 +76,12 @@ class VendorProfileRepository extends AbstractRepository {
 
 			if ( $success ) {
 				self::flush_avatar_map_cache();
+				// VendorProfile::get_by_user_id() memoises for the request; drop
+				// this user's entry so a read after this write is not stale.
+				// Every other writer (update_stats, set_vacation_mode,
+				// set_availability, update_verification_tier) routes through
+				// here, so this one call covers all of them.
+				\WPSellServices\Models\VendorProfile::flush_memo( $user_id );
 			}
 
 			return $success ? $existing->id : false;
@@ -86,6 +92,7 @@ class VendorProfileRepository extends AbstractRepository {
 
 		if ( $inserted ) {
 			self::flush_avatar_map_cache();
+			\WPSellServices\Models\VendorProfile::flush_memo( $user_id );
 		}
 
 		return $inserted;

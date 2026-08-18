@@ -155,10 +155,13 @@ class BlocksManager {
 			]
 		);
 
+		// The editor iframe gets no frontend enqueue, so register the tokens here.
+		wpss_register_design_system();
+
 		wp_enqueue_style(
 			'wpss-blocks-editor',
 			\WPSS_PLUGIN_URL . 'assets/css/blocks-editor.css',
-			[ 'wp-edit-blocks' ],
+			[ 'wp-edit-blocks', 'wpss-design-system' ],
 			\WPSS_VERSION
 		);
 		wp_style_add_data( 'wpss-blocks-editor', 'rtl', 'replace' );
@@ -230,24 +233,28 @@ class BlocksManager {
 	 * @return array
 	 */
 	private function get_service_categories(): array {
-		$terms = get_terms(
-			[
-				'taxonomy'   => 'wpss_service_category',
-				'hide_empty' => false,
-			]
-		);
-
-		if ( is_wp_error( $terms ) ) {
-			return [];
-		}
+		// wpss_get_category_terms() already returns an array on WP_Error, so the
+		// is_wp_error() branch that used to be here could never be taken.
+		$terms = wpss_get_category_terms( [ 'hide_empty' => false ] );
 
 		$categories = [];
 
-		foreach ( $terms as $term ) {
+		// The control takes a flat value/label list, so a child can only be
+		// distinguished by its label. Without this a subcategory looked exactly
+		// like a top-level category in the block sidebar (Basecamp 10208080926).
+		foreach ( wpss_group_category_terms( $terms ) as $group ) {
 			$categories[] = [
-				'value' => $term->term_id,
-				'label' => $term->name,
+				'value' => $group['term']->term_id,
+				'label' => $group['term']->name,
 			];
+
+			foreach ( $group['children'] as $child ) {
+				$categories[] = [
+					'value' => $child->term_id,
+					/* translators: %s: subcategory name, indented under its parent. */
+					'label' => sprintf( __( '— %s', 'wp-sell-services' ), $child->name ),
+				];
+			}
 		}
 
 		return $categories;

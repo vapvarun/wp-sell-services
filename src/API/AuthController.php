@@ -80,9 +80,14 @@ class AuthController extends RestController {
 					'callback'            => array( $this, 'register' ),
 					'permission_callback' => '__return_true',
 					'args'                => array(
+						// Username and password are OPTIONAL as of 1.6.0, so the app
+						// can offer the same low-friction signup the web checkout
+						// does: the username is derived from the email and, with no
+						// password, the buyer gets a set-password email instead of
+						// being asked to invent one mid-purchase. Email is the only
+						// thing genuinely required.
 						'username'     => array(
-							'type'     => 'string',
-							'required' => true,
+							'type' => 'string',
 						),
 						'email'        => array(
 							'type'     => 'string',
@@ -90,10 +95,15 @@ class AuthController extends RestController {
 							'required' => true,
 						),
 						'password'     => array(
-							'type'     => 'string',
-							'required' => true,
+							'type' => 'string',
 						),
 						'display_name' => array(
+							'type' => 'string',
+						),
+						'first_name'   => array(
+							'type' => 'string',
+						),
+						'last_name'    => array(
 							'type' => 'string',
 						),
 						'role'         => array(
@@ -241,6 +251,166 @@ class AuthController extends RestController {
 				),
 			)
 		);
+
+		/*
+		 * GET /auth/sessions - the member's active sign-ins.
+		 * DELETE /auth/sessions/{uuid} - revoke one of them.
+		 *
+		 * Deliberately NOT hung off /auth/devices. That path already exists and
+		 * means something else entirely: PUSH NOTIFICATION tokens, stored in
+		 * _wpss_push_devices. Reading the route list, "devices" looks like it
+		 * answers "where am I signed in?" and it does not - which is how this
+		 * card came to be filed with a devices endpoint already shipped
+		 * (Basecamp 10154918753). A session is not a device; one phone can hold
+		 * both, and revoking a push token must not sign anybody out.
+		 */
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/sessions',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_sessions' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/sessions/(?P<uuid>[a-zA-Z0-9\-]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'revoke_session' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+					'args'                => array(
+						'uuid' => array(
+							'description'       => __( 'Session identifier from GET /auth/sessions.', 'wp-sell-services' ),
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * List the member's active app sign-ins.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_sessions( WP_REST_Request $request ): WP_REST_Response {
+		unset( $request );
+
+		$user_id  = get_current_user_id();
+		$sessions = array();
+
+		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
+			return new WP_REST_Response( $sessions );
+		}
+
+		// Which one is making THIS request, so a client can mark it "this
+		// device" and avoid offering to revoke the session it is using.
+		$current = function_exists( 'rest_get_authenticated_app_password' )
+			? (string) rest_get_authenticated_app_password()
+			: '';
+
+		foreach ( (array) WP_Application_Passwords::get_user_application_passwords( $user_id ) as $item ) {
+			// Only sign-ins this plugin issued. An application password the
+			// member created by hand in their WordPress profile belongs to
+			// whatever script they built with it, and is not ours to list as a
+			// "sign-in" or to offer for revocation here.
+			if ( ! str_starts_with( (string) ( $item['name'] ?? '' ), 'WPSS' ) ) {
+				continue;
+			}
+
+			$expires_at = wpss_app_token_expires_at( $item );
+
+			$sessions[] = array(
+				'uuid'       => (string) ( $item['uuid'] ?? '' ),
+				// The name is stored as "WPSS <device>"; give back the device.
+				'device'     => trim( substr( (string) ( $item['name'] ?? '' ), 4 ) ),
+				'created'    => wpss_rest_date( gmdate( 'Y-m-d H:i:s', (int) ( $item['created'] ?? 0 ) ) ),
+				'last_used'  => ! empty( $item['last_used'] )
+					? wpss_rest_date( gmdate( 'Y-m-d H:i:s', (int) $item['last_used'] ) )
+					: null,
+				'last_ip'    => (string) ( $item['last_ip'] ?? '' ),
+				'expires'    => null !== $expires_at ? wpss_rest_date( gmdate( 'Y-m-d H:i:s', $expires_at ) ) : null,
+				'expired'    => wpss_app_token_is_expired( $item ),
+				'is_current' => '' !== $current && $current === (string) ( $item['uuid'] ?? '' ),
+			);
+		}
+
+		return new WP_REST_Response( $sessions );
+	}
+
+	/**
+	 * Revoke one app sign-in.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function revoke_session( WP_REST_Request $request ) {
+		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
+			return new WP_Error(
+				'wpss_sessions_unavailable',
+				__( 'Application passwords are not available on this site.', 'wp-sell-services' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$user_id = get_current_user_id();
+		$uuid    = (string) $request->get_param( 'uuid' );
+
+		// Look the session up on THIS member before touching it. Without this
+		// the uuid alone would decide what gets deleted, and one member could
+		// revoke another's sign-in by guessing it.
+		$match = null;
+
+		foreach ( (array) WP_Application_Passwords::get_user_application_passwords( $user_id ) as $item ) {
+			if ( (string) ( $item['uuid'] ?? '' ) === $uuid && str_starts_with( (string) ( $item['name'] ?? '' ), 'WPSS' ) ) {
+				$match = $item;
+				break;
+			}
+		}
+
+		if ( null === $match ) {
+			return new WP_Error(
+				'wpss_session_not_found',
+				__( 'That sign-in was not found. It may already have been revoked.', 'wp-sell-services' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$deleted = WP_Application_Passwords::delete_application_password( $user_id, $uuid );
+
+		if ( is_wp_error( $deleted ) || ! $deleted ) {
+			return new WP_Error(
+				'wpss_session_revoke_failed',
+				__( 'Could not revoke that sign-in. Please try again.', 'wp-sell-services' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		/**
+		 * Fires after a single app sign-in is revoked.
+		 *
+		 * @since 1.6.0
+		 *
+		 * @param int    $user_id Member whose session was revoked.
+		 * @param string $uuid    Session identifier.
+		 */
+		do_action( 'wpss_app_session_revoked', $user_id, $uuid );
+
+		return new WP_REST_Response( array( 'revoked' => true ) );
 	}
 
 	/**
@@ -294,6 +464,28 @@ class AuthController extends RestController {
 			);
 		}
 
+		/*
+		 * A token must not be able to mint more tokens (Basecamp 10154918753).
+		 *
+		 * WordPress authenticates application passwords through this same
+		 * wp_authenticate() chain, so passing a previously issued token as the
+		 * `password` succeeded here and was handed a brand new one - verified
+		 * over HTTP returning 200. Whoever stole one token had an unlimited
+		 * supply, and revoking the original changed nothing.
+		 *
+		 * Checked AFTER wp_authenticate() rather than by calling
+		 * wp_authenticate_username_password() directly: bypassing the chain
+		 * would also bypass any two-factor or SSO plugin on the site, trading
+		 * this hole for a worse one.
+		 */
+		if ( wpss_password_is_app_token( $user, (string) $password ) ) {
+			return new WP_Error(
+				'wpss_token_cannot_mint',
+				__( 'Sign in with your account password. An existing app sign-in cannot be used to create another one.', 'wp-sell-services' ),
+				array( 'status' => 401 )
+			);
+		}
+
 		$device_name = sanitize_text_field( $request->get_param( 'device_name' ) );
 		$app_pass    = $this->create_app_password( $user, $device_name );
 
@@ -301,11 +493,19 @@ class AuthController extends RestController {
 			return $app_pass;
 		}
 
+		// `expires` was hardcoded null and the server enforced nothing, so a
+		// token was valid forever. It is now the real deadline, enforced at
+		// authentication by AppTokenGuard - see wpss_app_token_lifetime().
+		// Still nullable, because a site can switch expiry off with that
+		// filter, and a client must read null as "no expiry" rather than
+		// assuming a number is always there.
+		$expires_at = wpss_app_token_expires_at( $app_pass['item'] );
+
 		return new WP_REST_Response(
 			array(
-				'token'   => base64_encode( $user->user_login . ':' . $app_pass ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+				'token'   => base64_encode( $user->user_login . ':' . $app_pass['password'] ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 				'user'    => $this->format_user( $user ),
-				'expires' => null,
+				'expires' => null !== $expires_at ? wpss_rest_date( gmdate( 'Y-m-d H:i:s', $expires_at ) ) : null,
 			)
 		);
 	}
@@ -322,50 +522,79 @@ class AuthController extends RestController {
 			return $rate_check;
 		}
 
-		if ( ! get_option( 'users_can_register' ) ) {
+		/*
+		 * Either WordPress registration is open, or the owner has switched on
+		 * account-at-checkout - which is itself a decision that buyers may create
+		 * accounts. Without the second clause the app and the web would disagree:
+		 * a site with WP registration off but checkout account creation on would
+		 * let a browser buyer sign up mid-purchase and refuse the same buyer in the
+		 * app, for the same purchase.
+		 */
+		if ( ! get_option( 'users_can_register' ) && ! wpss_checkout_creates_accounts() ) {
 			return new WP_Error( 'registration_disabled', __( 'User registration is disabled.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
-		$username     = sanitize_user( $request->get_param( 'username' ) );
-		$email        = sanitize_email( $request->get_param( 'email' ) );
-		$password     = $request->get_param( 'password' );
-		$display_name = sanitize_text_field( $request->get_param( 'display_name' ) ?: $username );
+		$username     = sanitize_user( (string) $request->get_param( 'username' ) );
+		$email        = sanitize_email( (string) $request->get_param( 'email' ) );
+		$password     = (string) $request->get_param( 'password' );
+		$display_name = sanitize_text_field( (string) ( $request->get_param( 'display_name' ) ?: $username ) );
 		$role         = $request->get_param( 'role' );
 
-		if ( username_exists( $username ) ) {
+		if ( '' !== $username && username_exists( $username ) ) {
 			return new WP_Error( 'username_exists', __( 'Username already exists.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		if ( email_exists( $email ) ) {
-			return new WP_Error( 'email_exists', __( 'Email already exists.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		if ( strlen( $password ) < 8 ) {
+		// A password is optional now, matching the web flow: omit it and the buyer
+		// gets a set-password email instead of being asked to invent one. Supply
+		// one and it still has to be strong.
+		if ( '' !== $password && strlen( $password ) < 8 ) {
 			return new WP_Error( 'weak_password', __( 'Password must be at least 8 characters.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		$user_id = wp_insert_user(
+		/*
+		 * Creation goes through the ONE account path.
+		 *
+		 * This method used to run its own wp_insert_user(), which meant the app
+		 * created users differently from the web: no first/last name, no
+		 * show_admin_bar_front, no wpss_public_signup_complete for Pro to hook,
+		 * and a username that had to be supplied rather than derived. Two ways to
+		 * make a user is precisely the shape that produced most of 1.6.0's bugs.
+		 *
+		 * email_exists() is checked inside create_account(), which returns
+		 * wpss_email_exists - mapped below so the app keeps the code it expects.
+		 */
+		$user_id = \WPSellServices\Frontend\PublicSignup::create_account(
 			array(
-				'user_login'   => $username,
-				'user_email'   => $email,
-				'user_pass'    => $password,
+				'email'        => $email,
+				'password'     => $password,
 				'display_name' => $display_name,
-				'role'         => get_option( 'default_role', 'subscriber' ),
+				'first_name'   => sanitize_text_field( (string) $request->get_param( 'first_name' ) ),
+				'last_name'    => sanitize_text_field( (string) $request->get_param( 'last_name' ) ),
+				'intent'       => 'vendor' === $role ? 'vendor' : 'buyer',
 			)
 		);
 
 		if ( is_wp_error( $user_id ) ) {
+			// Keep the documented error codes the app already branches on.
+			$map = array(
+				'wpss_email_exists'  => array( 'email_exists', 400 ),
+				'wpss_invalid_email' => array( 'invalid_email', 400 ),
+			);
+
+			$code = $user_id->get_error_code();
+
+			if ( isset( $map[ $code ] ) ) {
+				return new WP_Error( $map[ $code ][0], $user_id->get_error_message(), array( 'status' => $map[ $code ][1] ) );
+			}
+
 			return $user_id;
 		}
 
-		if ( 'vendor' === $role ) {
-			// Register the vendor through the canonical service so they receive
-			// the wpss_vendor role, capabilities, a vendor_profiles record, and a
-			// status that honours the site's vendor_registration mode
-			// (open/approval/closed) — instead of an ad-hoc, capability-less,
-			// permanently-"pending" meta flag that no other surface recognises.
-			( new \WPSellServices\Services\VendorService() )->register( $user_id, array( 'display_name' => $display_name ) );
-		}
+		// Vendor promotion is NOT repeated here: create_account() was given the
+		// intent above and the signup path already routes it through
+		// VendorService::register(), which honours the site's
+		// open/approval/closed vendor_registration mode. Calling it twice would
+		// re-run that decision.
 
 		$user = get_user_by( 'ID', $user_id );
 
@@ -390,10 +619,16 @@ class AuthController extends RestController {
 			);
 		}
 
+		// Registration hands back a token too, so it carries the same expiry
+		// contract as /auth/login - a client should not have to learn that one
+		// entry point expires and the other does not.
+		$expires_at = wpss_app_token_expires_at( $app_pass['item'] );
+
 		return new WP_REST_Response(
 			array(
-				'token' => base64_encode( $user->user_login . ':' . $app_pass ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-				'user'  => $this->format_user( $user ),
+				'token'   => base64_encode( $user->user_login . ':' . $app_pass['password'] ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+				'user'    => $this->format_user( $user ),
+				'expires' => null !== $expires_at ? wpss_rest_date( gmdate( 'Y-m-d H:i:s', $expires_at ) ) : null,
 			),
 			201
 		);
@@ -408,19 +643,12 @@ class AuthController extends RestController {
 	public function logout( WP_REST_Request $request ): WP_REST_Response {
 		$user_id = get_current_user_id();
 
-		// Revoke all WPSS app passwords for this user.
-		if ( class_exists( 'WP_Application_Passwords' ) ) {
-			$app_passwords = WP_Application_Passwords::get_user_application_passwords( $user_id );
-
-			foreach ( $app_passwords as $app_password ) {
-				if ( str_starts_with( $app_password['name'], 'WPSS' ) ) {
-					WP_Application_Passwords::delete_application_password( $user_id, $app_password['uuid'] );
-				}
-			}
-		}
-
-		// Remove push notification devices.
-		delete_user_meta( $user_id, '_wpss_push_devices' );
+		// Revoke every WPSS app password and forget the push devices.
+		//
+		// Shared with account deletion, which needs the identical operation.
+		// See wpss_revoke_app_sessions() for why the WPSS name prefix decides
+		// what gets revoked and what is left alone.
+		wpss_revoke_app_sessions( $user_id );
 
 		return new WP_REST_Response( array( 'logged_out' => true ) );
 	}
@@ -622,7 +850,7 @@ class AuthController extends RestController {
 	 *
 	 * @param WP_User $user        User object.
 	 * @param string  $device_name Device name.
-	 * @return string|WP_Error
+	 * @return array{password: string, item: array<string, mixed>}|WP_Error
 	 */
 	private function create_app_password( WP_User $user, string $device_name ) {
 		if ( ! class_exists( 'WP_Application_Passwords' ) ) {
@@ -658,7 +886,13 @@ class AuthController extends RestController {
 			return $result;
 		}
 
-		return $result[0]; // The unhashed password.
+		// Both halves: the unhashed password, which is the only moment it is
+		// ever readable, and the stored record, which carries the `created`
+		// timestamp the expiry deadline is computed from.
+		return array(
+			'password' => $result[0],
+			'item'     => (array) $result[1],
+		);
 	}
 
 	/**
@@ -684,7 +918,11 @@ class AuthController extends RestController {
 			// Canonical profile status — _wpss_vendor_status was never written.
 			'vendor_status' => $is_vendor ? ( wpss_get_vendor_status( $user->ID ) ?: 'active' ) : null,
 			'is_admin'      => $user->has_cap( 'manage_options' ),
-			'registered'    => $user->user_registered,
+			// user_registered is site-local MySQL with no zone. Every other date
+			// in the API is ISO-8601 with an offset (Basecamp 10154919636), and
+			// this one was missed on the first pass because the audit probed
+			// collection endpoints, not /auth/login and /me.
+			'registered'    => wpss_rest_date( $user->user_registered ),
 			// /me and this endpoint both answer "who is the current user?" but
 			// returned different shapes, so a client had two contracts for one
 			// question and had to know which endpoint it had called. Both are

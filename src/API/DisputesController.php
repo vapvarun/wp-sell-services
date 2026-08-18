@@ -605,6 +605,23 @@ class DisputesController extends RestController {
 		$dispute_id = (int) $request->get_param( 'id' );
 		$timeline   = $this->workflow_manager->get_timeline( $dispute_id );
 
+		/*
+		 * The workflow manager returns raw table rows, so its dates arrive as
+		 * MySQL datetimes. Converted at the REST boundary - the wire format is
+		 * this layer's concern (Basecamp 10154919636).
+		 */
+		foreach ( $timeline as $index => $entry ) {
+			$entry = (array) $entry;
+
+			foreach ( array( 'created_at', 'updated_at' ) as $date_key ) {
+				if ( array_key_exists( $date_key, $entry ) ) {
+					$entry[ $date_key ] = wpss_rest_date( $entry[ $date_key ] );
+				}
+			}
+
+			$timeline[ $index ] = $entry;
+		}
+
 		return new WP_REST_Response( $timeline );
 	}
 
@@ -721,6 +738,11 @@ class DisputesController extends RestController {
 			array(
 				'statuses'         => DisputeService::get_statuses(),
 				'resolution_types' => DisputeService::get_resolution_types(),
+				// Why a buyer opens one. Published so a client renders the
+				// site's list instead of inventing its own — the `reason` arg
+				// on POST /orders/{id}/dispute is a free string with no enum,
+				// so without this every client guessed.
+				'reasons'          => wpss_get_dispute_reasons(),
 			)
 		);
 	}
@@ -733,7 +755,17 @@ class DisputesController extends RestController {
 	 * @return array
 	 */
 	private function prepare_dispute_for_response( object $dispute, bool $detailed = false ): array {
-		$initiator = get_userdata( $dispute->initiated_by );
+		/*
+		 * DisputeService returns hydrated Dispute models, so the column names are
+		 * the model's (initiated_by -> initiator_id, resolution -> resolution_type)
+		 * and timestamps are ?DateTimeImmutable.
+		 *
+		 * A THIRD date implementation used to live here, formatting to
+		 * 'Y-m-d H:i:s' while /services and /orders emitted ISO-8601 - so a client
+		 * needed two parsers and had to guess the zone for this one (Basecamp
+		 * 10154919636). RestController::format_datetime() is the one formatter.
+		 */
+		$format_date = fn( $value ): ?string => $this->format_datetime( $value );
 
 		$data = array(
 			'id'           => (int) $dispute->id,
@@ -741,29 +773,27 @@ class DisputesController extends RestController {
 			'reason'       => $dispute->reason,
 			'status'       => $dispute->status,
 			'status_label' => DisputeService::get_statuses()[ $dispute->status ] ?? $dispute->status,
-			'initiated_by' => array(
-				'id'     => (int) $dispute->initiated_by,
-				'name'   => $initiator ? $initiator->display_name : '',
-				'avatar' => get_avatar_url( $dispute->initiated_by, array( 'size' => 48 ) ),
-			),
-			'created_at'   => $dispute->created_at,
-			'updated_at'   => $dispute->updated_at,
+			// The shared actor shape. Same id/name/avatar keys as before, plus
+			// `deleted` - a dispute outlives the people in it, so a client needs
+			// to tell "this member is gone" from "no member acted".
+			'initiated_by' => wpss_rest_user( (int) $dispute->initiator_id ),
+			'created_at'   => $format_date( $dispute->created_at ),
+			'updated_at'   => $format_date( $dispute->updated_at ),
 		);
 
 		if ( $detailed ) {
 			$data['description']       = $dispute->description;
 			$data['evidence']          = $dispute->evidence ?? array();
-			$data['response_deadline'] = $dispute->response_deadline ?? null;
-			$data['resolved_at']       = $dispute->resolved_at ?? null;
-			$data['resolution']        = $dispute->resolution ?? null;
+			$data['response_deadline'] = $format_date( $dispute->response_deadline );
+			$data['resolved_at']       = $format_date( $dispute->resolved_at );
+			$data['resolution']        = $dispute->resolution_type ?? null;
 			$data['resolution_notes']  = $dispute->resolution_notes ?? null;
 
 			// Get resolver if resolved.
 			if ( ! empty( $dispute->resolved_by ) ) {
-				$resolver            = get_userdata( $dispute->resolved_by );
 				$data['resolved_by'] = array(
 					'id'   => (int) $dispute->resolved_by,
-					'name' => $resolver ? $resolver->display_name : '',
+					'name' => wpss_get_member_display_name( (int) $dispute->resolved_by ),
 				);
 			}
 		}
@@ -781,19 +811,14 @@ class DisputesController extends RestController {
 	 */
 	private function prepare_evidence_for_response( array $evidence ): array {
 		$user_id = (int) ( $evidence['user_id'] ?? 0 );
-		$user    = $user_id ? get_userdata( $user_id ) : null;
 
 		return array(
 			'id'          => $evidence['id'] ?? '',
 			'type'        => $evidence['type'] ?? '',
 			'content'     => $evidence['content'] ?? '',
 			'description' => $evidence['description'] ?? '',
-			'user'        => array(
-				'id'     => $user_id,
-				'name'   => $user ? $user->display_name : '',
-				'avatar' => get_avatar_url( $user_id, array( 'size' => 48 ) ),
-			),
-			'created_at'  => $evidence['created_at'] ?? '',
+			'user'        => wpss_rest_user( (int) $user_id ),
+			'created_at'  => $this->format_datetime( $evidence['created_at'] ?? null ),
 		);
 	}
 

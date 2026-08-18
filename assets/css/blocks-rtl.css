@@ -10,8 +10,8 @@
    ========================================================================== */
 
 :root {
-	--wpss-block-primary: var(--wpss-vendor-green, #1dbf73);
-	--wpss-block-primary-dark: var(--wpss-vendor-green-dark, #19a463);
+	--wpss-block-primary: var(--wpss-vendor-green, var(--wpss-primary, #4f46e5));
+	--wpss-block-primary-dark: var(--wpss-vendor-green-dark, var(--wpss-primary-dark, #4338ca));
 	--wpss-block-text: var(--wpss-gray-700, #404145);
 	--wpss-block-text-light: var(--wpss-gray-500, #74767e);
 	--wpss-block-border: var(--wpss-border, #e4e5e7);

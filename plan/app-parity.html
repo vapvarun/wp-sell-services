@@ -1,0 +1,299 @@
+<title>WP Sell Services — functionality catalog</title>
+
+<style>
+  :root{
+    --paper:#fbfbfd; --surface:#ffffff; --surface-2:#f4f6fa;
+    --ink:#14161c; --muted:#5b6373; --line:#e3e6ec;
+    --accent:#2f5fd8; --accent-soft:#eaf0ff;
+    --ok:#12704a; --ok-bg:#e6f4ed;
+    --warn:#8a5510; --warn-bg:#fdf1de;
+    --miss:#a5322f; --miss-bg:#fceceb;
+    --nil:#6b7280; --nil-bg:#eef0f3;
+    --display:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0e1014; --surface:#161a21; --surface-2:#1c212a;
+      --ink:#e6e9ef; --muted:#98a0ae; --line:#262c37;
+      --accent:#7ea2ff; --accent-soft:#1b2440;
+      --ok:#5cc793; --ok-bg:#12291f;
+      --warn:#dfae5c; --warn-bg:#2b2213;
+      --miss:#ef8a86; --miss-bg:#2e1917;
+      --nil:#8d95a3; --nil-bg:#1e232c;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0e1014; --surface:#161a21; --surface-2:#1c212a;
+    --ink:#e6e9ef; --muted:#98a0ae; --line:#262c37;
+    --accent:#7ea2ff; --accent-soft:#1b2440;
+    --ok:#5cc793; --ok-bg:#12291f;
+    --warn:#dfae5c; --warn-bg:#2b2213;
+    --miss:#ef8a86; --miss-bg:#2e1917;
+    --nil:#8d95a3; --nil-bg:#1e232c;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--body); font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px; margin:0 auto; padding:clamp(1.5rem,4vw,3.5rem) clamp(1rem,4vw,2rem) 5rem}
+
+  header.masthead{border-bottom:2px solid var(--ink); padding-bottom:1.5rem; margin-bottom:2.5rem}
+  .eyebrow{
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); margin:0 0 .75rem
+  }
+  h1{
+    font-family:var(--display); font-weight:600; font-size:clamp(2rem,5vw,3.1rem);
+    line-height:1.08; margin:0 0 .6rem; text-wrap:balance; letter-spacing:-.01em
+  }
+  .standfirst{font-size:clamp(1rem,2.2vw,1.14rem); color:var(--muted); margin:0; max-width:62ch}
+
+  .stats{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:1px; background:var(--line); border:1px solid var(--line);
+    border-radius:10px; overflow:hidden; margin:2rem 0 2.5rem
+  }
+  .stat{background:var(--surface); padding:1rem 1.1rem}
+  .stat b{
+    display:block; font-family:var(--display); font-size:2rem; line-height:1;
+    font-variant-numeric:tabular-nums; margin-bottom:.3rem
+  }
+  .stat span{font-size:.8rem; color:var(--muted); display:block; line-height:1.4}
+
+  h2{
+    font-family:var(--display); font-size:clamp(1.35rem,3vw,1.75rem); font-weight:600;
+    margin:3.5rem 0 .5rem; letter-spacing:-.01em; text-wrap:balance
+  }
+  h3{font-size:1rem; font-weight:650; margin:2rem 0 .6rem; letter-spacing:.01em}
+  p{margin:0 0 1rem; max-width:70ch}
+  .lede{color:var(--muted); margin-bottom:1.5rem; max-width:70ch}
+
+  .bar{display:flex; height:34px; border-radius:7px; overflow:hidden; border:1px solid var(--line); margin:1.25rem 0 .75rem}
+  .bar div{display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:650; color:#fff; min-width:0}
+  .legend{display:flex; flex-wrap:wrap; gap:.35rem 1.25rem; font-size:.82rem; color:var(--muted); margin-bottom:1rem}
+  .legend i{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:.4rem}
+
+  .scroll{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface); margin:1rem 0 1.5rem}
+  table{border-collapse:collapse; width:100%; min-width:640px; font-size:.9rem}
+  th,td{text-align:left; padding:.62rem .85rem; border-bottom:1px solid var(--line); vertical-align:top}
+  thead th{
+    background:var(--surface-2); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); font-weight:650; white-space:nowrap
+  }
+  tbody tr:last-child td{border-bottom:none}
+  td.cap{font-weight:600}
+  td.note{color:var(--muted); font-size:.85rem}
+  code{font-family:var(--mono); font-size:.82em; background:var(--surface-2); padding:.1em .38em; border-radius:4px; word-break:break-word}
+
+  .pill{
+    display:inline-block; font-size:.7rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+    padding:.2rem .5rem; border-radius:20px; white-space:nowrap
+  }
+  .p-done{background:var(--ok-bg); color:var(--ok)}
+  .p-part{background:var(--warn-bg); color:var(--warn)}
+  .p-miss{background:var(--miss-bg); color:var(--miss)}
+  .p-nil{background:var(--nil-bg); color:var(--nil)}
+
+  .callout{
+    border-left:3px solid var(--accent); background:var(--accent-soft);
+    padding:1rem 1.15rem; border-radius:0 8px 8px 0; margin:1.5rem 0
+  }
+  .callout.alert{border-left-color:var(--miss); background:var(--miss-bg)}
+  .callout p:last-child{margin-bottom:0}
+
+  ul.gaps{list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(255px,1fr)); gap:.4rem}
+  ul.gaps li{
+    background:var(--surface); border:1px solid var(--line); border-radius:7px;
+    padding:.5rem .7rem; font-size:.85rem
+  }
+  ul.gaps li b{display:block; font-size:.8rem; margin-bottom:.15rem}
+  ul.gaps li span{color:var(--muted); font-size:.76rem; font-family:var(--mono)}
+
+  footer{margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--line); color:var(--muted); font-size:.83rem}
+  @media (max-width:560px){ .stat b{font-size:1.6rem} }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">WP Sell Services · Free + Pro + mobile app</p>
+  <h1>Functionality catalog</h1>
+  <p class="standfirst">
+    What the two plugins do, what the app has reached, and what is still missing —
+    measured from the running code rather than from the last time anyone wrote it down.
+  </p>
+</header>
+
+<div class="stats">
+  <div class="stat"><b>183</b><span>REST paths registered<br>260 method endpoints</span></div>
+  <div class="stat"><b>76</b><span>paths the app calls<br>41% of the surface</span></div>
+  <div class="stat"><b>58</b><span>genuine gaps<br>member-facing, missing</span></div>
+  <div class="stat"><b>26</b><span>database tables<br>19 free · 7 pro</span></div>
+  <div class="stat"><b>23</b><span>app screens<br>13 API modules</span></div>
+</div>
+
+<h2>How these numbers were produced</h2>
+<p class="lede">
+  Route counts come from asking WordPress itself — <code>rest_get_server()-&gt;get_routes()</code>
+  with both plugins active — not from counting <code>register_rest_route</code> calls, which
+  undercounts because one call can carry several methods. The app's side is every
+  <code>client.&lt;verb&gt;()</code> literal in <code>api/</code>, normalised and matched against those
+  routes. All 87 call sites matched a real route with a method that exists, so the app
+  currently calls nothing that isn't there.
+</p>
+
+<div class="callout">
+  <p>
+    <strong>183 has not moved this session, and that is correct.</strong> Account deletion added
+    <code>DELETE</code> to the existing <code>/me</code> path rather than creating a new path.
+    Counting paths hides that; counting distinct path+method pairs (260) shows it. Both are quoted
+    above so neither number can be mistaken for the whole story.
+  </p>
+</div>
+
+<h2>Where the 183 actually go</h2>
+
+<div class="bar" role="img" aria-label="76 called by the app, 25 owner-only, 12 payment rail, 12 alias infrastructure or web-only, 58 gaps">
+  <div style="flex:76;background:#12704a">76</div>
+  <div style="flex:25;background:#5b6373">25</div>
+  <div style="flex:12;background:#2f5fd8">12</div>
+  <div style="flex:12;background:#8a8f9b">12</div>
+  <div style="flex:58;background:#a5322f">58</div>
+</div>
+<div class="legend">
+  <span><i style="background:#12704a"></i>76 called by the app</span>
+  <span><i style="background:#5b6373"></i>25 owner-only</span>
+  <span><i style="background:#2f5fd8"></i>12 payment rail</span>
+  <span><i style="background:#8a8f9b"></i>12 alias · infra · web-only</span>
+  <span><i style="background:#a5322f"></i>58 gaps</span>
+</div>
+<p class="lede">
+  Only the last band is a problem. The 25 owner routes are moderation queues, commission rules,
+  the audit log, white-label and payout runs — a member's phone has no business calling them. The
+  12 payment routes are skipped deliberately: the app opens the marketplace's own checkout rather
+  than embedding a card form, which is also what keeps it outside In-App Purchase. The remaining
+  12 are duplicate paths the app reaches under another name, the namespace index, the batch
+  endpoint, and three web-dashboard-only routes.
+</p>
+
+<h2>Free plugin — capability by capability</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Capability</th><th>App</th><th>What is or isn't there</th></tr></thead>
+  <tbody>
+    <tr><td class="cap">Service catalog &amp; search</td><td><span class="pill p-done">Done</span></td><td class="note">Browse, search, categories, detail, packages, FAQs, reviews.</td></tr>
+    <tr><td class="cap">Service add-ons</td><td><span class="pill p-miss">Missing</span></td><td class="note">Add-ons exist on every service and the app never reads or offers them, so a buyer cannot select paid extras.</td></tr>
+    <tr><td class="cap">Create a service</td><td><span class="pill p-part">Partial</span></td><td class="note">Create only. No edit, no gallery upload, no add-on management.</td></tr>
+    <tr><td class="cap">Buyer requests</td><td><span class="pill p-done">Done</span></td><td class="note">Browse, post, own requests, detail.</td></tr>
+    <tr><td class="cap">Proposals</td><td><span class="pill p-done">Done</span></td><td class="note">Submit, accept, reject, withdraw.</td></tr>
+    <tr><td class="cap">Order lifecycle · 18 statuses</td><td><span class="pill p-done">Done</span></td><td class="note">List, detail, timeline, status actions. Labels come from the server's vocabulary, never mapped client-side.</td></tr>
+    <tr><td class="cap">Requirements</td><td><span class="pill p-part">Partial</span></td><td class="note">Submit and skip. Cannot remove a file already uploaded.</td></tr>
+    <tr><td class="cap">Deliveries &amp; revisions</td><td><span class="pill p-done">Done</span></td><td class="note">Fetch and submit deliverables; revision states handled.</td></tr>
+    <tr><td class="cap">Milestone contracts</td><td><span class="pill p-done">Done</span></td><td class="note">List, pay, submit, approve, decline. Lock-step enforced server-side.</td></tr>
+    <tr><td class="cap">Paid extensions</td><td><span class="pill p-done">Done</span></td><td class="note">List, request, decline. Accepting is paying.</td></tr>
+    <tr><td class="cap">Tipping</td><td><span class="pill p-done">Done</span></td><td class="note">Read and send.</td></tr>
+    <tr><td class="cap">Messaging</td><td><span class="pill p-part">Partial</span></td><td class="note">Threads, messages, read receipts, unread counts — but <strong>no attachments</strong>, because the media routes are never called.</td></tr>
+    <tr><td class="cap">Reviews</td><td><span class="pill p-part">Partial</span></td><td class="note">Read and leave. A seller cannot reply, and nobody can mark one helpful.</td></tr>
+    <tr><td class="cap">Disputes</td><td><span class="pill p-miss">Read-only</span></td><td class="note"><strong>Cannot be opened from the app.</strong> Read, respond and reasons only — no create, no evidence, no escalate, no cancel.</td></tr>
+    <tr><td class="cap">Vendor directory &amp; profiles</td><td><span class="pill p-done">Done</span></td><td class="note">Paginated directory, seller page, their services and portfolio.</td></tr>
+    <tr><td class="cap">Portfolio management</td><td><span class="pill p-miss">Missing</span></td><td class="note">A seller can be seen but cannot add, reorder or feature their own work.</td></tr>
+    <tr><td class="cap">Seller levels</td><td><span class="pill p-part">Partial</span></td><td class="note">Own level only. The ladder itself — what the next level needs — is never fetched.</td></tr>
+    <tr><td class="cap">Vacation mode</td><td><span class="pill p-done">Done</span></td><td class="note">Toggle from the app.</td></tr>
+    <tr><td class="cap">Favorites</td><td><span class="pill p-done">Done</span></td><td class="note">List, add, remove.</td></tr>
+    <tr><td class="cap">Notifications</td><td><span class="pill p-part">Partial</span></td><td class="note">List, read, read-all, counts. Cannot delete one.</td></tr>
+    <tr><td class="cap">Cart &amp; checkout</td><td><span class="pill p-done">Done</span></td><td class="note">Cart in-app, payment handed to the site's own checkout.</td></tr>
+    <tr><td class="cap">Earnings &amp; withdrawals</td><td><span class="pill p-part">Partial</span></td><td class="note">Summary, history, methods, request. No single-withdrawal detail view.</td></tr>
+    <tr><td class="cap">Report &amp; block members</td><td><span class="pill p-done">Done</span></td><td class="note">Report a listing or a person; block, unblock, and a managed blocked list.</td></tr>
+    <tr><td class="cap">Delete your account</td><td><span class="pill p-done">Done</span></td><td class="note">Password-confirmed, two-step, with a preview of what it costs. Personal data erased; shared records kept as “Deleted member”.</td></tr>
+    <tr><td class="cap">Account standing</td><td><span class="pill p-nil">Server</span></td><td class="note">Suspension and closure gate the API. No app surface needed or wanted.</td></tr>
+    <tr><td class="cap">Moderation · audit log · manual orders</td><td><span class="pill p-nil">Owner</span></td><td class="note">Admin surfaces. Correctly absent from a member app.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="lede" style="font-size:.88rem">
+  Free also ships 19 shortcodes, 8 blocks, 5 WP-CLI commands, 37 email templates and a
+  Pusher-compatible realtime layer (off by default) — all web-side, none of which the app needs.
+</p>
+
+<h2>Pro plugin — capability by capability</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Capability</th><th>App</th><th>What is or isn't there</th></tr></thead>
+  <tbody>
+    <tr><td class="cap">Vendor analytics</td><td><span class="pill p-miss">Missing</span></td><td class="note">Four routes, no screen. A seller cannot read their own overview, revenue, orders or per-service numbers. The largest single gap.</td></tr>
+    <tr><td class="cap">Wallet</td><td><span class="pill p-miss">Missing</span></td><td class="note">Balance, transactions, providers, withdraw — none reached, across four wallet providers.</td></tr>
+    <tr><td class="cap">Recurring services</td><td><span class="pill p-miss">Missing</span></td><td class="note">Seven routes. A buyer cannot see, pause, resume or cancel a subscription they are being billed for.</td></tr>
+    <tr><td class="cap">Stripe Connect · seller</td><td><span class="pill p-miss">Missing</span></td><td class="note">Onboard, status, disconnect. A seller cannot connect the account they get paid into.</td></tr>
+    <tr><td class="cap">Vendor subscription plans</td><td><span class="pill p-miss">Missing</span></td><td class="note">Browse plans, subscribe, see own subscription.</td></tr>
+    <tr><td class="cap">PayPal payout profile</td><td><span class="pill p-miss">Missing</span></td><td class="note">The seller's own payout details. Batch runs are owner-side and correctly excluded.</td></tr>
+    <tr><td class="cap">Cloud storage</td><td><span class="pill p-miss">Missing</span></td><td class="note">S3 / GCS / DO Spaces upload. Tied to the attachment gap above.</td></tr>
+    <tr><td class="cap">Cart adapters · Woo, EDD, FluentCart, SureCart</td><td><span class="pill p-nil">Server</span></td><td class="note">Chooses which rail owns payment. The app follows whatever the site publishes.</td></tr>
+    <tr><td class="cap">Gateways · Stripe, PayPal, Razorpay</td><td><span class="pill p-nil">By design</span></td><td class="note">Hosted checkout rather than an in-app card form — which is also what keeps this outside In-App Purchase.</td></tr>
+    <tr><td class="cap">Admin analytics · commission rules · white label · ledger export</td><td><span class="pill p-nil">Owner</span></td><td class="note">Owner surfaces. Correctly absent.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout alert">
+  <p><strong>A correction to an earlier summary.</strong> I previously reported that a buyer
+  “can open a dispute” from the app. That is wrong. The app fetches the site's dispute reasons and
+  can read and respond to an existing case, but <code>POST /orders/{id}/dispute</code> is never
+  called — so a dispute can still only be started on the web. The reasons work shipped the
+  vocabulary correctly; the create flow was never wired.</p>
+</div>
+
+<h2>The 58 gaps, grouped</h2>
+<p class="lede">Every one is a member-facing capability the plugins already serve and the app does not reach.</p>
+<ul class="gaps">
+  <li><b>Vendor analytics · 4</b><span>/analytics/vendor/*</span></li>
+  <li><b>Recurring subscriptions · 7</b><span>/recurring-services/*</span></li>
+  <li><b>Vendor detail &amp; stats · 7</b><span>/vendors/me · {id}/level|reviews|stats|tips</span></li>
+  <li><b>Wallet · 5</b><span>/wallet/*</span></li>
+  <li><b>Portfolio management · 4</b><span>/portfolio · {id} · reorder · featured</span></li>
+  <li><b>Dispute actions · 4</b><span>orders/{id}/dispute · evidence · escalate · cancel</span></li>
+  <li><b>Cloud storage &amp; media · 5</b><span>/storage/* · /media · /media/{id}</span></li>
+  <li><b>Stripe Connect · 3</b><span>onboard · status · disconnect</span></li>
+  <li><b>Subscription plans · 3</b><span>list · subscribe · my-subscription</span></li>
+  <li><b>Reviews · 3</b><span>/reviews/{id} · helpful · reply</span></li>
+  <li><b>Seller levels · 2</b><span>/seller-levels · /seller-levels/{id}</span></li>
+  <li><b>Service add-ons · 2</b><span>/services/{id}/addons</span></li>
+  <li><b>Proposals · 2</b><span>/proposals/{id} · /proposals/stats</span></li>
+  <li><b>Odds and ends · 7</b><span>tags · sub-orders · milestone detail · notification delete · requirement file delete · withdrawal detail · paypal profile</span></li>
+</ul>
+
+<h2>What shipped this session</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Change</th><th>Where</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td class="cap">Account deletion</td><td>Free · Pro · App</td><td class="note">Apple 5.1.1(v). Personal data erased, shared records kept and attributed to “Deleted member”. Password checked against the real hash, so a stolen app token cannot delete an account.</td></tr>
+    <tr><td class="cap">Deleted-member display</td><td>Free</td><td class="note">A resolver that existed with zero callers, now used by 16 REST payloads that shipped empty names, plus 3 unguarded reads a visitor could hit and one real TypeError.</td></tr>
+    <tr><td class="cap">Pro data hygiene</td><td>Pro</td><td class="note">Own tables cleared on deletion, registered above the licence gate. Recurring subscriptions cancelled at Stripe, not merely marked cancelled locally.</td></tr>
+    <tr><td class="cap">Dispute reasons published</td><td>Free</td><td class="note">Moved out of a template into a filterable server vocabulary.</td></tr>
+    <tr><td class="cap">Vendor registration 500</td><td>Free</td><td class="note">A hook fired with the wrong argument type killed the request <em>after</em> the vendor was created — so it worked and looked like it hadn't.</td></tr>
+    <tr><td class="cap">Static analysis</td><td>Free · Pro</td><td class="note">PHPStan run for the first time across this work. Free clean at level 6. Pro's 39 findings are all EDD calls on a machine without EDD installed.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>What has never been verified</h2>
+<p class="lede">
+  Stated plainly, because an unverified thing and a working thing look identical in a table.
+  No run on a real device. No run on a localised site — which is the entire point of the
+  status-label and vocabulary work. No run on the EDD, FluentCart or SureCart rails, where four
+  features are supposed to disappear from the app. No dark-mode pass. What verification has
+  happened is browser rendering at 390px against a seeded local site, plus route-level checks.
+</p>
+
+<footer>
+  Measured against the running plugins on a local site with Free and Pro both active. Counts will
+  differ where different plugins are enabled — the four <code>wpss-pro/v1</code> cart-adapter routes
+  only exist when SureCart or FluentCart is installed, and were not counted here.
+</footer>
+
+</div>

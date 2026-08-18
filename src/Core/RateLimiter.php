@@ -30,55 +30,72 @@ class RateLimiter {
 	 * @var array<string, array{requests: int, window: int}>
 	 */
 	private const DEFAULT_LIMITS = array(
-		'message'         => array(
+		'message'          => array(
 			'requests' => 30,
 			'window'   => 60,
 		), // 30 messages per minute.
-		'review'          => array(
+		'review'           => array(
 			'requests' => 5,
 			'window'   => 3600,
 		), // 5 reviews per hour.
-		'dispute'         => array(
+		'dispute'          => array(
 			'requests' => 3,
 			'window'   => 3600,
 		), // 3 disputes per hour.
-		'service_create'  => array(
+		'service_create'   => array(
 			'requests' => 10,
 			'window'   => 3600,
 		), // 10 services per hour.
-		'vendor_register' => array(
+		'vendor_register'  => array(
 			'requests' => 3,
 			'window'   => 86400,
 		), // 3 attempts per day.
-		'file_upload'     => array(
+		// Account creation during checkout. Unauthenticated and it creates users,
+		// so it has to have a ceiling — but the key is the IP, and behind CGNAT
+		// or an office NAT that IP can be a whole town, which is exactly the
+		// customer this flow was asked for (a marketplace selling across Africa).
+		// 20/hour is far above any genuine buyer's behaviour and still a real
+		// ceiling on scripted abuse; raise it with the wpss_rate_limits filter on
+		// a high-traffic site.
+		'checkout_account' => array(
+			'requests' => 20,
+			'window'   => 3600,
+		),
+		// 5 WRONG passwords per hour on DELETE /me. Only failures are charged,
+		// so this is a guessing ceiling, not a budget an honest member spends.
+		'account_delete'   => array(
+			'requests' => 5,
+			'window'   => 3600,
+		),
+		'file_upload'      => array(
 			'requests' => 50,
 			'window'   => 3600,
 		), // 50 uploads per hour.
-		'helpful_vote'    => array(
+		'helpful_vote'     => array(
 			'requests' => 20,
 			'window'   => 60,
 		), // 20 votes per minute.
-		'live_search'     => array(
+		'live_search'      => array(
 			'requests' => 30,
 			'window'   => 60,
 		), // 30 live-search queries per minute (per IP for guests, per user for logged-in).
-		'contact'         => array(
+		'contact'          => array(
 			'requests' => 5,
 			'window'   => 300,
 		), // 5 contact requests per 5 minutes.
-		'order_action'    => array(
+		'order_action'     => array(
 			'requests' => 30,
 			'window'   => 60,
 		), // 30 order actions per minute.
-		'requirements'    => array(
+		'requirements'     => array(
 			'requests' => 10,
 			'window'   => 60,
 		), // 10 requirement submissions per minute.
-		'delivery'        => array(
+		'delivery'         => array(
 			'requests' => 10,
 			'window'   => 3600,
 		), // 10 deliveries per hour.
-		'default'         => array(
+		'default'          => array(
 			'requests' => 60,
 			'window'   => 60,
 		), // 60 requests per minute default.

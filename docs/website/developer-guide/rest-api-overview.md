@@ -69,6 +69,169 @@ fetch('/wp-json/wpss/v1/services', {
 });
 ```
 
+### App sign-in and sessions
+
+`POST /auth/login` is the entry point for a mobile or desktop client. It takes
+the member's **account password** and returns a token to use as Basic auth.
+
+```json
+{
+  "token": "base64(user_login:app_password)",
+  "user":  { "id": 42, "name": "Sofia Rossi", "...": "..." },
+  "expires": "2026-11-16T20:13:40+00:00"
+}
+```
+
+**`expires` is real and enforced.** Before 1.6.0 it was always `null` and the
+server enforced nothing, so a stolen token worked forever. A token now dies
+**30 days after it was last used** or **90 days after it was issued**, whichever
+comes first — a daily user is never interrupted, and an abandoned token is gone
+in a month. Both limits are filterable via `wpss_app_token_lifetime`.
+
+Treat `expires` as advisory and the 401 as authoritative: on
+`401 wpss_token_expired`, discard the token and sign in again.
+
+**A token cannot mint another token.** `POST /auth/login` refuses a request whose
+`password` is an app token rather than the account password, with
+`401 wpss_token_cannot_mint`. Without that, whoever stole one token had an
+unlimited supply and revoking the original changed nothing.
+
+**Signing in still works with a dead token attached.** WordPress answers 401 for
+the *whole request* when an application password fails, so a client that attaches
+its stored token to every request would be unable to reach the login route to
+replace it. `/auth/login`, `/auth/register` and `/auth/forgot-password` are
+therefore reachable with an expired token in the header — they take their
+credentials from the body and grant nothing on their own. Every other route
+still refuses it.
+
+**Listing and revoking sessions**:
+
+```
+GET    /wpss/v1/auth/sessions           # uuid, device, created, last_used, expires, is_current
+DELETE /wpss/v1/auth/sessions/{uuid}    # revoke one device
+```
+
+`is_current` marks the session making the call, so a client can avoid offering
+to sign itself out. A uuid is resolved against the current member, so it cannot
+be used to sign anybody else out.
+
+Note this is **`/auth/sessions`**, not `/auth/devices`. The latter exists and
+manages **push notification tokens** — revoking one of those must not sign
+anyone out.
+
+Only sign-ins this plugin issued are expired or listed. An application password
+a member created by hand in their WordPress profile belongs to whatever script
+they built with it and is left alone.
+
+## Payload conventions
+
+Four shapes are the same everywhere in this API. They were not always, and the
+inconsistencies were the most-reported problem from client developers: each one
+becomes an adapter in the client that never goes away.
+
+### Dates are ISO-8601 with an offset
+
+Every timestamp, on every endpoint, in every nested object:
+
+```json
+"created_at": "2026-08-17T07:36:09+00:00"
+```
+
+Never a bare `2026-08-17 07:36:09`. A MySQL datetime carries no timezone, so a
+client has to guess - and until 1.6.0 roughly half the API guessed differently
+from the other half. If you find one, it is a bug; report it with the route.
+
+Dates inside free-form blobs - a notification's `data` object, whose shape the
+producing feature owns - are normalised on the way out for keys that name a
+date. Everything else is passed through exactly as stored.
+
+### A person is always the same object
+
+```json
+"vendor": { "id": 42, "name": "Sofia Rossi", "avatar": "https://...", "deleted": false }
+```
+
+Wherever the API describes a member - `vendor`, `customer`, `author`,
+`initiated_by`, `other_user`, `sender`, `reviewer` - it is this object. Write one
+renderer and use it everywhere.
+
+`deleted` matters more than it looks. Orders and conversations outlive the people
+in them, so a client needs to tell *"this member's account is gone"* from *"no
+member acted"*. A `sender` of `{ "id": 0, "name": "System" }` is the system
+speaking, not a deleted user.
+
+Some endpoints also carry **flat** legacy keys beside the object - `vendor_id`,
+`vendor_name`, `vendor_avatar` and the `customer_*` equivalents on order detail.
+Those are a compatibility surface for clients that predate the object. Prefer the
+object in new code; the flat keys will be retired on a stated version, never
+silently.
+
+### A service card is always the same object
+
+`GET /services` and `GET /favorites` return the same keys for a service: `id`,
+`title`, `slug`, `description`, `excerpt`, `status`, `link`, `vendor`,
+`pricing`, `delivery`, `images`, `categories`, `tags`, `rating`, `created_at`,
+`updated_at`.
+
+`/favorites` additionally carries the flat `thumbnail`, `price`, `price_minor`
+and `currency` it has always returned. One exception is deliberate and
+documented: on `/favorites`, `rating` is a **float** where the canonical shape is
+`{ average, count }`. Changing the type of an existing field is a breaking
+change, so it waits for a contract bump.
+
+### Money carries minor units
+
+Every money value ships alongside an integer in the currency's minor unit, so a
+client never does float arithmetic on a price:
+
+```json
+"pricing": { "base_price": 79.99, "base_price_minor": 7999, "currency": "USD" }
+```
+
+## Trimming a response
+
+Server-rendered HTML is included on a few endpoints for the plugin's own
+progressive-enhancement surfaces - `messages[].html`, `reviews[].review_html`,
+`created_human` and friends. A native client does not want them.
+
+Use WordPress core's `_fields`:
+
+```
+GET /wpss/v1/reviews?_fields=id,rating,review,created_at
+```
+
+Measured on a real install, that takes `/reviews` from 8547 bytes to 1825 (79%
+smaller) and `/conversations/{id}/messages` from 26867 to 6829 (75%). The HTML
+keys stay in the payload by default because removing a field is a breaking
+change, but no client has to receive them.
+
+**`_fields` only works over HTTP.** It is applied in `rest_post_dispatch`, which
+`rest_do_request()` does not run - so testing it through `wp eval` shows no
+reduction and looks broken.
+
+## The contract version
+
+`GET /settings` returns a `contract_version`. It is bumped when a field changes
+**shape or meaning**, never when a value changes, because clients refuse a
+contract newer than the one they understand - a spurious bump bricks every build
+already shipped.
+
+Adding a key is not a bump. Changing a date's format is not a bump. Changing
+`rating` from a number to an object would be.
+
+## Checking the conventions yourself
+
+They are enforced by a committed command rather than by review:
+
+```
+wp wpss api:shapes            # every GET route
+wp wpss api:shapes --verbose  # also names the routes it could not reach
+```
+
+It walks the whole route table, fills parameterised routes from real rows, and
+fails on a MySQL date or an actor missing `deleted`. If you add an endpoint, run
+it.
+
 ## Error codes
 
 Branch on `code`, never on the message — messages are translated and will not

@@ -65,6 +65,31 @@ wp wpss test:flow      # end-to-end data flow tests
 where a flow breaks. It is the fastest way to confirm a fresh install actually
 works end to end.
 
+## API payload contract
+
+```bash
+wp wpss api:shapes                        # audit every GET route
+wp wpss api:shapes --verbose              # also list routes it could not reach
+wp wpss api:shapes --route=conversations  # narrow to one area
+wp wpss api:shapes --user=diego           # audit as a vendor, not an admin
+```
+
+Walks every registered GET route in both namespaces, fills parameterised routes
+from real rows in the database, and inspects each response for the two
+conventions a client depends on: dates are ISO-8601 with an offset, and any
+object describing a person carries `deleted`. Exits non-zero on a breach, so it
+can gate a build.
+
+Run it after adding or changing an endpoint. It exists because the same class of
+inconsistency was reported three times, and twice the fix was verified against a
+hand-picked sample of endpoints and reported as if it covered the API.
+
+Read the **"Not audited"** count as part of the result. Those are routes with no
+matching row on the current dataset, or not readable as the chosen user -- an
+unaudited route is exactly where the last gaps hid, so the command names them
+rather than passing over them silently. Seeding the missing data, or re-running
+with `--user`, shrinks the list.
+
 ## Scale benchmarking
 
 For verifying the marketplace holds up at production shape -- 10k vendors with

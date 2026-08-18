@@ -70,20 +70,29 @@ class NotificationService {
 			$email_message  = $message;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$result = $wpdb->insert(
-			$table,
-			array(
-				'user_id'    => $user_id,
-				'type'       => $type,
-				'title'      => $title,
-				'message'    => $stored_message,
-				'data'       => wp_json_encode( $data ),
-				'is_read'    => 0,
-				'created_at' => current_time( 'mysql' ),
-			),
-			array( '%d', '%s', '%s', '%s', '%s', '%d', '%s' )
+		$row = array(
+			'user_id'    => $user_id,
+			'type'       => $type,
+			'title'      => $title,
+			'message'    => $stored_message,
+			'data'       => wp_json_encode( $data ),
+			'is_read'    => 0,
+			'created_at' => current_time( 'mysql' ),
 		);
+
+		$formats = array( '%d', '%s', '%s', '%s', '%s', '%d', '%s' );
+
+		// `action_url` has been a column since the first schema, is read back
+		// into the model and published in the REST payload — and nothing ever
+		// wrote it, so every notification arrived with nowhere to go. Callers
+		// pass it in $data; this is the one place it is persisted.
+		if ( ! empty( $data['action_url'] ) ) {
+			$row['action_url'] = esc_url_raw( (string) $data['action_url'] );
+			$formats[]         = '%s';
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$result = $wpdb->insert( $table, $row, $formats );
 
 		if ( ! $result ) {
 			wpss_log( "Failed to create notification (type: {$type}) for user {$user_id}: " . $wpdb->last_error, 'error' );
@@ -318,7 +327,7 @@ class NotificationService {
 				$order_number
 			)
 			->line(
-				/* translators: %s: order amount */
+				/* translators: %s: formatted monetary amount */
 				__( 'Amount: %s', 'wp-sell-services' ),
 				$amount
 			)
@@ -357,7 +366,7 @@ class NotificationService {
 				$order_number
 			)
 			->line(
-				/* translators: %s: order amount */
+				/* translators: %s: formatted monetary amount */
 				__( 'Amount: %s', 'wp-sell-services' ),
 				$amount
 			)
@@ -1231,6 +1240,57 @@ class NotificationService {
 				}
 				break;
 
+			// The three proposal types were declared on the Notification model
+			// (constant, icon and label) but had no case here, so the one that
+			// did get sent — proposal_accepted, from convert_to_order() — fell
+			// through to the default below and reached the vendor as
+			// "Notification / You have a new notification."
+			case 'proposal_received':
+				$title  = __( 'New proposal received', 'wp-sell-services' );
+				$vendor = get_user_by( 'id', $data['vendor_id'] ?? 0 );
+				$message->line(
+					/* translators: 1: vendor name, 2: request title */
+					__( '%1$s sent a proposal on your request "%2$s".', 'wp-sell-services' ),
+					NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'A seller', 'wp-sell-services' ) ),
+					(string) ( $data['request_title'] ?? '' )
+				);
+				if ( ! empty( $data['bid_amount'] ) ) {
+					$message->block()->field(
+						__( 'Their price:', 'wp-sell-services' ),
+						function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) $data['bid_amount'] ) : (string) $data['bid_amount']
+					);
+				}
+				$message->paragraph( __( 'Open the request to compare proposals and hire when you are ready.', 'wp-sell-services' ) );
+				break;
+
+			case 'proposal_accepted':
+				$title = __( 'Your proposal was accepted', 'wp-sell-services' );
+				$message->line(
+					/* translators: %s: request title */
+					__( 'The buyer accepted your proposal on "%s" and the order is now open.', 'wp-sell-services' ),
+					(string) ( $data['request_title'] ?? '' )
+				);
+				$message->paragraph(
+					/* translators: %s: order number */
+					__( 'Order #%s is yours — open it to see the brief and start work.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
+				);
+				break;
+
+			case 'proposal_rejected':
+				$title  = __( 'Proposal not selected', 'wp-sell-services' );
+				$reason = trim( (string) ( $data['reason'] ?? '' ) );
+				$message->line(
+					/* translators: %s: request title */
+					__( 'The buyer went with another seller on "%s".', 'wp-sell-services' ),
+					(string) ( $data['request_title'] ?? '' )
+				);
+				if ( '' !== $reason ) {
+					$message->block()->field( __( 'Their note:', 'wp-sell-services' ), $reason );
+				}
+				$message->paragraph( __( 'Nothing is wrong with your account — browse open requests and send another proposal.', 'wp-sell-services' ) );
+				break;
+
 			default:
 				$title = __( 'Notification', 'wp-sell-services' );
 				$message->line( __( 'You have a new notification. Please check your dashboard for details.', 'wp-sell-services' ) );
@@ -1632,8 +1692,14 @@ class NotificationService {
 			self::TYPE_NEW_MESSAGE        => 'notify_new_message',
 			self::TYPE_REVIEW_RECEIVED    => 'notify_new_review',
 			// Types used by OrderWorkflowManager and status notifications.
+			//
+			// Only the ones with NO constant above. 'order_created',
+			// 'revision_requested', 'dispute_opened' and 'dispute_resolved' used to
+			// be repeated here as literals, but each is exactly the value of the
+			// constant already keyed above and mapped to the same setting, so PHP
+			// silently overwrote one with an identical entry. Harmless, but it read
+			// as though the constant and the literal were different types.
 			'new_order'                   => 'notify_new_order',
-			'order_created'               => 'notify_new_order',
 			'order_confirmation'          => 'notify_new_order',
 			'order_started'               => 'notify_new_order',
 			'order_in_progress'           => 'notify_new_order',
@@ -1643,13 +1709,10 @@ class NotificationService {
 			'order_auto_completed'        => 'notify_order_completed',
 			'order_cancelled'             => 'notify_order_cancelled',
 			'delivery_received'           => 'notify_delivery_submitted',
-			'revision_requested'          => 'notify_revision_requested',
 			'order_late'                  => 'notify_new_order',
 			'deadline_reminder'           => 'notify_new_order',
 			// Dispute types used by DisputeWorkflowManager.
-			'dispute_opened'              => 'notify_dispute_opened',
 			'dispute_response_received'   => 'notify_dispute_opened',
-			'dispute_resolved'            => 'notify_dispute_opened',
 			'dispute_reminder'            => 'notify_dispute_opened',
 			// Cancellation types.
 			'cancellation_requested'      => 'notify_order_cancelled',
@@ -1704,9 +1767,10 @@ class NotificationService {
 			self::TYPE_DISPUTE_RESOLVED,
 			self::TYPE_DEADLINE_WARNING,
 			self::TYPE_VENDOR_REGISTERED,
-			// OrderWorkflowManager types and status notifications.
+			// OrderWorkflowManager types and status notifications. Again only the
+			// ones without a constant above - this is an in_array() haystack, so the
+			// duplicates were inert, just misleading.
 			'new_order',
-			'order_created',
 			'order_confirmation',
 			'order_started',
 			'order_in_progress',
@@ -1716,13 +1780,10 @@ class NotificationService {
 			'order_auto_completed',
 			'order_cancelled',
 			'delivery_received',
-			'revision_requested',
 			'order_late',
 			'deadline_reminder',
 			// Dispute types used by DisputeWorkflowManager.
-			'dispute_opened',
 			'dispute_response_received',
-			'dispute_resolved',
 			'dispute_reminder',
 			// Cancellation types.
 			'cancellation_requested',
@@ -2010,10 +2071,14 @@ class NotificationService {
 		}
 
 		// Map notification types to WPSS WC email class keys.
+		//
+		// Literals here are only the types that have NO constant. The four that
+		// did ('order_created', 'revision_requested', 'dispute_opened',
+		// 'dispute_resolved') were listed twice, each time resolving to the same
+		// class as its constant, so PHP kept one and discarded an identical twin.
 		$type_to_wc_class = array(
 			self::TYPE_ORDER_CREATED      => 'WPSS_Email_New_Order',
 			'new_order'                   => 'WPSS_Email_New_Order',
-			'order_created'               => 'WPSS_Email_New_Order',
 			'order_confirmation'          => 'WPSS_Email_New_Order',
 			'order_started'               => 'WPSS_Email_Order_In_Progress',
 			'order_in_progress'           => 'WPSS_Email_Order_In_Progress',
@@ -2025,12 +2090,9 @@ class NotificationService {
 			'order_auto_completed'        => 'WPSS_Email_Order_Completed',
 			'order_cancelled'             => 'WPSS_Email_Order_Cancelled',
 			self::TYPE_REVISION_REQUESTED => 'WPSS_Email_Revision_Requested',
-			'revision_requested'          => 'WPSS_Email_Revision_Requested',
 			self::TYPE_DISPUTE_OPENED     => 'WPSS_Email_Dispute_Opened',
-			'dispute_opened'              => 'WPSS_Email_Dispute_Opened',
 			self::TYPE_DISPUTE_RESOLVED   => 'WPSS_Email_Dispute_Opened',
 			'dispute_response_received'   => 'WPSS_Email_Dispute_Opened',
-			'dispute_resolved'            => 'WPSS_Email_Dispute_Opened',
 			self::TYPE_NEW_MESSAGE        => 'WPSS_Email_New_Message',
 		);
 
@@ -2110,6 +2172,13 @@ class NotificationService {
 			self::TYPE_DELIVERY_SUBMITTED,
 			'delivery_received',
 			self::TYPE_NEW_MESSAGE,
+			// Proposals. EmailService has hooked wpss_proposal_submitted /
+			// _accepted / _rejected with branded templates since 1.0.0, so the
+			// in-app rows must NOT email as well — the same person would get
+			// the branded mail and a plain duplicate for one event.
+			'proposal_received',
+			'proposal_accepted',
+			'proposal_rejected',
 		);
 
 		return in_array( $type, $covered_types, true );

@@ -420,7 +420,15 @@ class MilestonesUpworkFlowTest extends TestCase {
 			array( 'id' => $milestone_id )
 		);
 
-		do_action( 'wpss_order_paid', $milestone_id );
+		/*
+		 * TWO arguments, matching production. StandaloneOrderProvider fires
+		 * `do_action( 'wpss_order_paid', $order_id, $transaction_id )`, and
+		 * Pro's ConnectPaymentProcessor::record_connect_settlement() requires
+		 * both. Firing one argument here raised an ArgumentCountError that read
+		 * as a Pro defect when the test was simply not driving the same
+		 * contract production does.
+		 */
+		do_action( 'wpss_order_paid', $milestone_id, 'txn_test_' . $milestone_id );
 	}
 
 	/**

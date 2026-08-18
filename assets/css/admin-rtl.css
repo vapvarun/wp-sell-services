@@ -10,8 +10,8 @@
    ========================================================================== */
 
 :root {
-	--wpss-admin-primary: var(--wpss-vendor-green, #1dbf73);
-	--wpss-admin-primary-dark: var(--wpss-vendor-green-dark, #19a463);
+	--wpss-admin-primary: var(--wpss-vendor-green);
+	--wpss-admin-primary-dark: var(--wpss-vendor-green-dark);
 	--wpss-admin-secondary: var(--wpss-gray-700, #404145);
 	--wpss-admin-text: var(--wpss-gray-800, #1e1e1e);
 	--wpss-admin-text-light: var(--wpss-text-muted, #757575);
@@ -518,6 +518,24 @@
 	color: var(--wpss-admin-primary);
 }
 
+/* Stat-icon semantics. These three carried inline hex colours in the markup,
+   which put a literal #1dbf73 on the revenue icon and kept the retired accent
+   alive on the dashboard no matter what the tokens said. Colour belongs to the
+   status, not to the element: amber for work in flight, green for a completed
+   outcome (a genuine success signal, not the brand accent), and the accent
+   itself for revenue. */
+.wpss-stat-icon--pending {
+	color: var(--wpss-warning, #dba617);
+}
+
+.wpss-stat-icon--success {
+	color: var(--wpss-success, #10b981);
+}
+
+.wpss-stat-icon--revenue {
+	color: var(--wpss-primary, #4f46e5);
+}
+
 .wpss-stat-info {
 	display: flex;
 	flex-direction: column;
@@ -967,7 +985,7 @@
 	margin: 15px 0 0;
 	padding: 10px 12px;
 	background: var(--wpss-info-light, #f0f6fc);
-	border-right: 3px solid var(--wpss-admin-primary, #1dbf73);
+	border-right: 3px solid var(--wpss-admin-primary);
 	border-radius: 4px 0 0 4px;
 	color: var(--wpss-text-secondary, #555);
 	font-size: 13px;
@@ -977,7 +995,7 @@
 }
 
 .wpss-details-note .dashicons {
-	color: var(--wpss-admin-primary, #1dbf73);
+	color: var(--wpss-admin-primary);
 	font-size: 16px;
 	width: 16px;
 	height: 16px;
@@ -1747,7 +1765,7 @@
 
 .wpss-addon-toggle:hover {
 	color: var(--wpss-admin-primary);
-	background: rgba(29, 191, 115, 0.1);
+	background: var(--wpss-primary-50);
 }
 
 .wpss-remove-addon:hover {
@@ -2675,7 +2693,7 @@
 	height: 72px;
 	margin: 0 auto 20px;
 	border-radius: 50%;
-	background: rgba(29, 191, 115, 0.08);
+	background: var(--wpss-primary-50);
 	color: var(--wpss-admin-primary);
 }
 
@@ -3240,3 +3258,130 @@
 .wpss-billing-summary__gst { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; margin: 10px 0 0; padding-top: 8px; border-top: 1px solid #dcdcde; font-size: 13px; }
 .wpss-billing-summary__gst-label { color: #646970; }
 .wpss-billing-summary__gst-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ==========================================================================
+   Reports queue
+   ========================================================================== */
+
+/* Each row action is its own nonce-protected <form> (they change state, so a
+   GET link would be followable by a prefetcher). Forms are block-level, so
+   without this the four actions stack vertically and triple the row height. */
+.wpss-inline-form {
+	display: inline-block;
+	margin: 0 0 var(--wpss-space-1, 4px) var(--wpss-space-1, 4px);
+}
+
+/* The shared filter row uses space-between, which is right for pages that put
+   a filter group left and a control right. This page has only the one group,
+   so left-align it rather than flinging three buttons across the card. */
+.wpss-reports-page .wpss-list-card__filters {
+	justify-content: flex-start;
+	gap: var(--wpss-space-2, 8px);
+}
+
+.wpss-reports-table__actions {
+	white-space: normal;
+	min-width: 260px;
+}
+
+/* Logical property, not margin-right: this page has to read correctly in RTL
+   and the actions column is the one place inline spacing is directional. */
+.wpss-reports-table__actions .wpss-inline-form {
+	margin-inline-end: var(--wpss-space-1, 4px);
+}
+
+.wpss-reports-table .wpss-badge {
+	display: inline-block;
+	padding: 2px var(--wpss-space-2, 8px);
+	border-radius: 3px;
+	background: var(--wpss-bg-subtle, #f0f0f1);
+	color: var(--wpss-text-muted, #50575e);
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+.wpss-reports-table .wpss-badge--warning {
+	background: #fcf0e4;
+	color: #8a4b08;
+}
+
+/* Under 782px the six columns compress to mid-word breaks ("Repor ted",
+   "Membe r") and the actions column clips off the right edge — a data table
+   this wide cannot survive a phone by shrinking. Each row becomes a card
+   instead, with the column name carried by data-label, so a moderator can
+   actually work the queue on the device they get the notification on. */
+@media screen and (max-width: 782px) {
+	.wpss-reports-table,
+	.wpss-reports-table tbody,
+	.wpss-reports-table tr,
+	.wpss-reports-table td {
+		display: block;
+		width: auto;
+	}
+
+	.wpss-reports-table thead {
+		/* Hidden visually; the labels move into each cell below. Not
+		   display:none on the table itself, so the markup stays a real table
+		   for anyone reading it with a screen reader in table mode. */
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	.wpss-reports-table tr {
+		padding: var(--wpss-space-3, 12px) 0;
+		border-bottom: 1px solid var(--wpss-admin-border, #dcdcde);
+	}
+
+	.wpss-reports-table td {
+		display: flex;
+		gap: var(--wpss-space-3, 12px);
+		align-items: baseline;
+		padding: var(--wpss-space-1, 4px) var(--wpss-space-4, 16px);
+		border: 0;
+	}
+
+	/* No data-label prefix on the stacked layout. The reading order —
+	   member, reason, what, who filed it, when — is self-evident once each
+	   row is a card, and a 84px label column on a 390px screen spent a fifth
+	   of the width restating the obvious. data-label stays in the markup for
+	   anyone who wants it back. */
+
+	.wpss-reports-table td code {
+		/* #56 was breaking across lines as "#5 / 6". */
+		white-space: nowrap;
+	}
+
+	/* Actions wrap onto their own line and get full-width tap targets — 40px
+	   minimum, per the responsive contract. */
+	.wpss-reports-table__actions {
+		flex-wrap: wrap;
+	}
+
+	.wpss-reports-table__actions .wpss-inline-form {
+		flex: 1 1 auto;
+	}
+
+	.wpss-reports-table__actions .button {
+		width: 100%;
+		min-height: 40px;
+	}
+
+	.wpss-reports-page .wpss-list-card__filters .button {
+		flex: 1 1 auto;
+		min-height: 40px;
+	}
+}
+
+/* .wp-list-table carries table-layout: fixed, so a min-width on the cell is
+   ignored — the header cell's width is what governs. Without this the four
+   actions wrap one-per-line and every row is ~190px tall, which is a lot of
+   scrolling for a queue meant to be worked top to bottom. */
+.wpss-reports-table th:last-child,
+.wpss-reports-table td:last-child {
+	width: 280px;
+}

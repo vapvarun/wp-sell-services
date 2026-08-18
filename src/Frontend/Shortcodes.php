@@ -17,7 +17,6 @@ defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Services\SearchService;
 use WPSellServices\Services\VendorService;
-use WPSellServices\Services\BuyerRequestService;
 
 /**
  * Handles all shortcode registrations and rendering.
@@ -42,6 +41,7 @@ class Shortcodes {
 		add_shortcode( 'wpss_vendors', array( $this, 'vendors_grid' ) );
 		add_shortcode( 'wpss_vendor_profile', array( $this, 'vendor_profile' ) );
 		add_shortcode( 'wpss_top_vendors', array( $this, 'top_vendors' ) );
+		add_shortcode( 'wpss_seller_card', array( $this, 'seller_card' ) );
 
 		// Buyer request shortcodes.
 		add_shortcode( 'wpss_buyer_requests', array( $this, 'buyer_requests' ) );
@@ -93,84 +93,38 @@ class Shortcodes {
 			'wpss_services'
 		);
 
-		$args = array(
-			'post_type'      => 'wpss_service',
-			'post_status'    => 'publish',
-			'posts_per_page' => absint( $atts['limit'] ),
-			'orderby'        => $atts['orderby'],
-			'order'          => $atts['order'],
+		// ONE grid implementation.
+		//
+		// This method used to build its own WP_Query and render through a
+		// private render_service_card(), while the wpss/service-grid block built
+		// a second query with its own inline markup, and wpss_render_services_grid()
+		// - the only one that renders the theme-overridable
+		// templates/content-service-card.php, fires the wpss_service_card_*
+		// hooks and shows the favourites toggle - was reachable only from REST
+		// and one AJAX handler. Three implementations of the same grid, and the
+		// two a visitor actually saw were the two missing those features.
+		//
+		// The shortcode keeps its documented attribute names; they are mapped
+		// onto the shared renderer's vocabulary here.
+		$grid = wpss_render_services_grid(
+			array(
+				'postsPerPage' => absint( $atts['limit'] ),
+				'orderBy'      => $atts['orderby'],
+				'order'        => $atts['order'],
+				'category'     => $atts['category'],
+				'tag'          => $atts['tag'],
+				'vendor'       => $atts['vendor'],
+				'featured'     => $atts['featured'],
+			),
+			max( 1, (int) get_query_var( 'paged' ) )
 		);
 
-		// Category filter.
-		if ( $atts['category'] ) {
-			$args['tax_query'] = array(
-				array(
-					'taxonomy' => 'wpss_service_category',
-					'field'    => is_numeric( $atts['category'] ) ? 'term_id' : 'slug',
-					'terms'    => $atts['category'],
-				),
-			);
-		}
-
-		// Tag filter.
-		if ( $atts['tag'] ) {
-			$args['tax_query'][] = array(
-				'taxonomy' => 'wpss_service_tag',
-				'field'    => is_numeric( $atts['tag'] ) ? 'term_id' : 'slug',
-				'terms'    => $atts['tag'],
-			);
-		}
-
-		// Vendor filter.
-		if ( $atts['vendor'] ) {
-			$args['author'] = absint( $atts['vendor'] );
-		}
-
-		// Featured filter.
-		if ( 'true' === $atts['featured'] || '1' === $atts['featured'] ) {
-			// The written meta key is `_wpss_featured` (MarketplaceSeeder, CLI,
-			// ServiceGrid + the FeaturedServices block all use it). `_wpss_is_featured`
-			// was an orphan that matched nothing, so [wpss_featured_services]
-			// returned no featured items.
-			$args['meta_query'] = array(
-				array(
-					'key'   => '_wpss_featured',
-					'value' => '1',
-				),
-			);
-		}
-
-		// Custom ordering.
-		if ( 'rating' === $atts['orderby'] ) {
-			$args['orderby']  = 'meta_value_num';
-			$args['meta_key'] = '_wpss_rating_average';
-		} elseif ( 'sales' === $atts['orderby'] ) {
-			$args['orderby']  = 'meta_value_num';
-			$args['meta_key'] = '_wpss_total_sales';
-		} elseif ( 'price' === $atts['orderby'] ) {
-			$args['orderby']  = 'meta_value_num';
-			$args['meta_key'] = '_wpss_starting_price';
-		}
-
-		$query = new \WP_Query( $args );
-
-		ob_start();
-		?>
-		<div class="wpss-services-grid wpss-columns-<?php echo esc_attr( $atts['columns'] ); ?>">
-			<?php
-			if ( $query->have_posts() ) :
-				while ( $query->have_posts() ) :
-					$query->the_post();
-					$this->render_service_card( get_the_ID() );
-				endwhile;
-				wp_reset_postdata();
-			else :
-				?>
-				<p class="wpss-no-results"><?php esc_html_e( 'No services found.', 'wp-sell-services' ); ?></p>
-			<?php endif; ?>
-		</div>
-		<?php
-		return ob_get_clean();
+		return sprintf(
+			'<div class="wpss-services-grid wpss-columns-%s">%s</div>%s',
+			esc_attr( (string) $atts['columns'] ),
+			$grid['html'],
+			$grid['pagination']
+		);
 	}
 
 	/**
@@ -186,61 +140,36 @@ class Shortcodes {
 
 		$atts = shortcode_atts(
 			array(
-				'placeholder'     => __( 'Search services...', 'wp-sell-services' ),
+				'placeholder'     => '',
 				'show_categories' => 'true',
-				'button_text'     => __( 'Search', 'wp-sell-services' ),
+				'button_text'     => '',
 				'action'          => '',
 			),
 			$atts,
 			'wpss_service_search'
 		);
 
-		$action = $atts['action'] ?: get_post_type_archive_link( 'wpss_service' );
-
-		ob_start();
-		?>
-		<?php
-		// Match the contract ServiceArchiveView::modify_archive_query reads:
-		// `search` (text) and `category` (term_id). The old form posted `s` +
-		// `post_type=wpss_service` + `service_category` (slug), which is WP core
-		// search — the archive query returns early, so moderation filtering,
-		// vacation-vendor exclusion and the category dropdown were all ignored
-		// (Basecamp #10110742943). This is the same contract the block uses.
-		$wpss_current_search = isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public search form.
-		$wpss_current_cat    = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public search form.
-		?>
-		<form class="wpss-search-form" action="<?php echo esc_url( $action ); ?>" method="get">
-			<div class="wpss-search-fields">
-				<input type="text" name="search" class="wpss-search-input" placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>" value="<?php echo esc_attr( $wpss_current_search ); ?>" aria-label="<?php esc_attr_e( 'Search services', 'wp-sell-services' ); ?>">
-
-				<?php if ( 'true' === $atts['show_categories'] ) : ?>
-					<select name="category" class="wpss-search-category" aria-label="<?php esc_attr_e( 'Filter by category', 'wp-sell-services' ); ?>">
-						<option value=""><?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?></option>
-						<?php
-						$categories = get_terms(
-							array(
-								'taxonomy'   => 'wpss_service_category',
-								'hide_empty' => true,
-								'parent'     => 0,
-							)
-						);
-
-						if ( ! is_wp_error( $categories ) ) :
-							foreach ( $categories as $category ) :
-								?>
-								<option value="<?php echo esc_attr( $category->term_id ); ?>" <?php selected( $wpss_current_cat, $category->term_id ); ?>><?php echo esc_html( $category->name ); ?></option>
-								<?php
-							endforeach;
-						endif;
-						?>
-					</select>
-				<?php endif; ?>
-
-				<button type="submit" class="wpss-search-button"><?php echo esc_html( $atts['button_text'] ); ?></button>
-			</div>
-		</form>
-		<?php
-		return ob_get_clean();
+		// ONE search form.
+		//
+		// The shortcode and the wpss/service-search block rendered two forms
+		// with the same field contract (name="search", name="category") but
+		// different class vocabularies - wpss-search-category here against
+		// wpss-category-select-wrap / wpss-category-select in the block - so
+		// the stylesheet had to carry both, and the block's search icon and
+		// input wrapper never appeared on the shortcode. Delegating leaves one
+		// markup to style and one place to change.
+		//
+		// Empty placeholder/button_text are passed through deliberately: the
+		// block substitutes its own translated defaults, so the copy is defined
+		// once rather than differing per surface as it did.
+		return ( new \WPSellServices\Blocks\ServiceSearch() )->render(
+			array(
+				'placeholder'        => (string) $atts['placeholder'],
+				'buttonText'         => (string) $atts['button_text'],
+				'showCategoryFilter' => filter_var( $atts['show_categories'], FILTER_VALIDATE_BOOLEAN ),
+				'action'             => (string) $atts['action'],
+			)
+		);
 	}
 
 	/**
@@ -296,38 +225,37 @@ class Shortcodes {
 			return '<p class="wpss-no-results">' . esc_html__( 'No categories found.', 'wp-sell-services' ) . '</p>';
 		}
 
+		// One query for the whole grid; the card falls back to its own lookup only
+		// when a caller does not prime.
+		$service_counts = wpss_get_category_service_counts( wp_list_pluck( $categories, 'term_id' ) );
+
 		ob_start();
 		?>
 		<div class="wpss-categories-grid wpss-columns-<?php echo esc_attr( $atts['columns'] ); ?>">
-			<?php foreach ( $categories as $category ) : ?>
-				<?php
-				$icon  = get_term_meta( $category->term_id, '_wpss_icon', true );
-				$image = get_term_meta( $category->term_id, '_wpss_image', true );
-				?>
-				<a href="<?php echo esc_url( get_term_link( $category ) ); ?>" class="wpss-category-card">
-					<?php if ( $image ) : ?>
-						<div class="wpss-category-image">
-							<?php echo wp_get_attachment_image( $image, 'medium' ); ?>
-						</div>
-					<?php elseif ( $icon ) : ?>
-						<div class="wpss-category-icon">
-							<span class="<?php echo esc_attr( $icon ); ?>"></span>
-						</div>
-					<?php endif; ?>
-					<h3 class="wpss-category-name"><?php echo esc_html( $category->name ); ?></h3>
-					<?php if ( 'true' === $atts['show_count'] ) : ?>
-						<span class="wpss-category-count">
-							<?php
-							printf(
-								/* translators: %d: number of services */
-								esc_html( _n( '%d service', '%d services', $category->count, 'wp-sell-services' ) ),
-								(int) $category->count
-							);
-							?>
-						</span>
-					<?php endif; ?>
-				</a>
-			<?php endforeach; ?>
+			<?php
+			foreach ( $categories as $category ) :
+				// ONE category card, the theme-overridable partial.
+				//
+				// This used to emit its own markup, and the wpss/service-categories
+				// block emitted a second version: <h3> with a bare
+				// <span class="{icon}"> here against <h4>, a dashicons-prefixed
+				// span, a Lucide folder fallback and a lazy-loaded image there. The
+				// card CSS lives in blocks.css and targets .wpss-category-name /
+				// .wpss-category-content, so the block's structure was the one the
+				// stylesheet was written for - the shortcode was the odd one out.
+				wpss_get_template_part(
+					'partials/category-card',
+					'',
+					array(
+						'category'       => $category,
+						'show_count'     => 'true' === $atts['show_count'],
+						'show_icon'      => true,
+						'show_image'     => true,
+						'service_counts' => $service_counts,
+					)
+				);
+			endforeach;
+			?>
 		</div>
 		<?php
 		return ob_get_clean();
@@ -343,6 +271,25 @@ class Shortcodes {
 	 */
 	public function vendors_grid( array $atts = array() ): string {
 		wpss_enqueue_frontend_assets();
+
+		// wpss_get_vendor_url() points every vendor link on the site at
+		// `{vendors page}?vendor={nicename}` whenever a vendors page exists, but
+		// this grid never read that parameter — so following any vendor link
+		// landed you back on the full directory instead of the profile you
+		// clicked. Renders the profile through the existing shortcode rather
+		// than a second copy of that markup.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public link.
+		$requested_vendor = isset( $_GET['vendor'] ) ? sanitize_title( wp_unslash( $_GET['vendor'] ) ) : '';
+
+		if ( '' !== $requested_vendor ) {
+			$vendor_user = get_user_by( 'slug', $requested_vendor );
+
+			// Fall through to the directory for an unknown slug: a stale link
+			// should show the list, not an error page.
+			if ( $vendor_user && wpss_is_vendor( (int) $vendor_user->ID ) ) {
+				return $this->vendor_profile( array( 'id' => (int) $vendor_user->ID ) );
+			}
+		}
 
 		$atts = shortcode_atts(
 			array(
@@ -364,13 +311,30 @@ class Shortcodes {
 			)
 		);
 
+		// Four queries for the whole grid instead of four PER CARD.
+		wpss_prime_vendor_card_caches(
+			array_map( static fn ( $vendor ) => (int) $vendor->user_id, $vendors )
+		);
+
 		ob_start();
 		?>
 		<div class="wpss-vendors-grid wpss-columns-<?php echo esc_attr( $atts['columns'] ); ?>">
 			<?php
 			if ( ! empty( $vendors ) ) :
 				foreach ( $vendors as $vendor ) :
-					$this->render_vendor_card( $vendor );
+					// ONE vendor card, the theme-overridable partial.
+					//
+					// This used to call a private render_vendor_card() that
+					// duplicated templates/partials/vendor-card.php - same class
+					// vocabulary, different markup, and neither fired the card's
+					// hooks or honoured a theme override. The partial derives
+					// everything it needs from the vendor id, so nothing has to
+					// be reshaped for it here.
+					wpss_get_template_part(
+						'partials/vendor-card',
+						'',
+						array( 'vendor_id' => (int) $vendor->user_id )
+					);
 				endforeach;
 			else :
 				?>
@@ -423,7 +387,7 @@ class Shortcodes {
 		}
 
 		$vendor_service = new VendorService();
-		$profile        = $vendor_service->get_vendor_profile( $vendor_id );
+		$profile        = $vendor_service->get_profile( $vendor_id );
 
 		if ( ! $profile ) {
 			return '<p class="wpss-error">' . esc_html__( 'Vendor not found.', 'wp-sell-services' ) . '</p>';
@@ -441,6 +405,74 @@ class Shortcodes {
 			$this->render_vendor_profile_fallback( $profile, $vendor_id );
 		}
 		return ob_get_clean();
+	}
+
+	/**
+	 * Seller card shortcode.
+	 *
+	 * [wpss_seller_card user_id="12" show_bio="true" layout="vertical"]
+	 *
+	 * The wpss/seller-card block existed with no shortcode equivalent, so a
+	 * classic-editor or page-builder site had no way to place a single seller
+	 * card - the only routes to one were the block or the single-service
+	 * sidebar. This is a wrapper around that block, not a second renderer.
+	 *
+	 * Defaults to the vendor whose profile is being viewed, so
+	 * [wpss_seller_card] with no attributes works inside a vendor template.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param array<string, mixed> $atts Shortcode attributes.
+	 * @return string
+	 */
+	public function seller_card( array $atts = array() ): string {
+		wpss_enqueue_frontend_assets();
+
+		$atts = shortcode_atts(
+			array(
+				'user_id'       => 0,
+				'show_bio'      => 'true',
+				'show_stats'    => 'true',
+				'show_rating'   => 'true',
+				'show_services' => 'true',
+				'show_button'   => 'true',
+				'layout'        => 'vertical',
+			),
+			$atts,
+			'wpss_seller_card'
+		);
+
+		$user_id = absint( $atts['user_id'] );
+
+		if ( ! $user_id ) {
+			$user_id = (int) get_query_var( 'author' );
+		}
+
+		if ( ! $user_id ) {
+			$user_id = get_current_user_id();
+		}
+
+		if ( ! $user_id ) {
+			return '';
+		}
+
+		$block = \WPSellServices\Blocks\BlocksManager::instance()->get_block( 'seller-card' );
+
+		if ( ! $block instanceof \WPSellServices\Blocks\AbstractBlock ) {
+			return '';
+		}
+
+		return $block->render(
+			array(
+				'userId'       => $user_id,
+				'showBio'      => filter_var( $atts['show_bio'], FILTER_VALIDATE_BOOLEAN ),
+				'showStats'    => filter_var( $atts['show_stats'], FILTER_VALIDATE_BOOLEAN ),
+				'showRating'   => filter_var( $atts['show_rating'], FILTER_VALIDATE_BOOLEAN ),
+				'showServices' => filter_var( $atts['show_services'], FILTER_VALIDATE_BOOLEAN ),
+				'showButton'   => filter_var( $atts['show_button'], FILTER_VALIDATE_BOOLEAN ),
+				'layout'       => sanitize_key( (string) $atts['layout'] ),
+			)
+		);
 	}
 
 	/**
@@ -465,42 +497,32 @@ class Shortcodes {
 			'wpss_buyer_requests'
 		);
 
-		$request_service = new BuyerRequestService();
-		$args            = array(
-			'posts_per_page' => absint( $atts['limit'] ),
+		// The shortcode is a wrapper around the block, not a second renderer.
+		//
+		// It used to run its own get_open() call and its own card markup, which
+		// is how the two surfaces drifted: the block showed expired requests,
+		// and only the shortcode's card was currency-aware. Rendering through
+		// the block means one query, one card template (content-request-card.php,
+		// so a theme override applies to both), and one set of hooks.
+		//
+		// The shortcode's own attribute names are kept - `limit`, `budget_min`,
+		// `budget_max` are the published API - and mapped onto the block's.
+		$block = \WPSellServices\Blocks\BlocksManager::instance()->get_block( 'buyer-requests' );
+
+		if ( ! $block instanceof \WPSellServices\Blocks\AbstractBlock ) {
+			return '';
+		}
+
+		$output = $block->render(
+			array(
+				'perPage'   => absint( $atts['limit'] ),
+				'category'  => absint( $atts['category'] ),
+				'budgetMin' => (float) $atts['budget_min'],
+				'budgetMax' => (float) $atts['budget_max'],
+			)
 		);
 
-		if ( $atts['category'] ) {
-			$args['category_id'] = absint( $atts['category'] );
-		}
-
-		if ( $atts['budget_min'] ) {
-			$args['budget_min'] = floatval( $atts['budget_min'] );
-		}
-
-		if ( $atts['budget_max'] ) {
-			$args['budget_max'] = floatval( $atts['budget_max'] );
-		}
-
-		$requests = $request_service->get_open( $args );
-
-		ob_start();
-		?>
-		<div class="wpss-app-shell"><div class="wpss-app-shell__container">
-		<div class="wpss-buyer-requests">
-			<?php
-			if ( ! empty( $requests ) ) :
-				foreach ( $requests as $request ) :
-					$this->render_request_card( $request );
-				endforeach;
-			else :
-				?>
-				<p class="wpss-no-results"><?php esc_html_e( 'No buyer requests found.', 'wp-sell-services' ); ?></p>
-			<?php endif; ?>
-		</div>
-		</div></div>
-		<?php
-		return ob_get_clean();
+		return '<div class="wpss-app-shell"><div class="wpss-app-shell__container">' . $output . '</div></div>';
 	}
 
 	/**
@@ -657,37 +679,44 @@ class Shortcodes {
 			'wpss_my_orders'
 		);
 
-		global $wpdb;
+		$user_id        = get_current_user_id();
+		$is_vendor_view = 'vendor' === $atts['type'];
+		$status         = sanitize_key( (string) $atts['status'] );
+		$per_page       = max( 1, absint( $atts['limit'] ) );
+		$paged          = max( 1, (int) get_query_var( 'paged', 1 ) );
 
-		$user_id      = get_current_user_id();
-		$orders_table = $wpdb->prefix . 'wpss_orders';
+		// Paginated, counted, and hydrated - none of which this did before.
+		//
+		// It ran its own raw $wpdb SELECT with `LIMIT 20` and no OFFSET, no
+		// COUNT(*) and no navigation, so a buyer with more than 20 orders saw
+		// the first 20 and had no route to the rest. It also duplicated a query
+		// wpss_get_user_orders()/wpss_get_vendor_orders() already own - and
+		// those return hydrated ServiceOrder models, so the raw-row reads below
+		// become model reads.
+		$total = $is_vendor_view
+			? wpss_count_vendor_orders( $user_id, $status )
+			: wpss_count_user_orders( $user_id, $status );
 
-		$where  = array();
-		$params = array();
-
-		if ( 'vendor' === $atts['type'] ) {
-			$where[] = 'vendor_id = %d';
-		} else {
-			$where[] = 'customer_id = %d';
-		}
-		$params[] = $user_id;
-
-		if ( $atts['status'] ) {
-			$where[]  = 'status = %s';
-			$params[] = $atts['status'];
-		}
-
-		$params[] = absint( $atts['limit'] );
-
-		$orders = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$orders_table}
-				WHERE " . implode( ' AND ', $where ) . '
-				ORDER BY created_at DESC
-				LIMIT %d',
-				$params
-			)
+		$query_args = array(
+			'limit'  => $per_page,
+			'offset' => ( $paged - 1 ) * $per_page,
+			'status' => $status,
 		);
+
+		$orders = $is_vendor_view
+			? wpss_get_vendor_orders( $user_id, $query_args )
+			: wpss_get_user_orders( $user_id, $query_args );
+
+		// One query for every service title on the page instead of one per row.
+		// get_the_title() in the loop below was an N+1: 20 rows meant 20 extra
+		// post lookups.
+		$service_ids = array_values(
+			array_filter( array_map( static fn ( $order ) => (int) $order->service_id, $orders ) )
+		);
+
+		if ( $service_ids ) {
+			_prime_post_caches( $service_ids, false, false );
+		}
 
 		ob_start();
 		?>
@@ -711,12 +740,26 @@ class Shortcodes {
 								<td><?php echo esc_html( get_the_title( $order->service_id ) ); ?></td>
 								<td><?php echo wp_kses_post( function_exists( 'wpss_format_currency' ) ? wpss_format_currency( (float) $order->total, $order->currency ) : '$' . number_format( (float) $order->total, 2 ) ); ?></td>
 								<td><span class="wpss-status wpss-status-<?php echo esc_attr( $order->status ); ?>"><?php echo esc_html( ucwords( str_replace( '_', ' ', $order->status ) ) ); ?></span></td>
-								<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $order->created_at ) ) ); ?></td>
+								<td>
+									<?php
+									// ServiceOrder hydrates created_at to a DateTimeImmutable, so
+									// strtotime() - which this used while it read raw $wpdb rows -
+									// throws a TypeError. Same accessor the admin order screen uses.
+									echo $order->created_at
+										? esc_html( wp_date( get_option( 'date_format' ), $order->created_at->getTimestamp() ) )
+										: '&mdash;';
+									?>
+								</td>
 								<td><a href="<?php echo esc_url( wpss_get_dashboard_url( 'orders' ) ? add_query_arg( 'order_id', $order->id, wpss_get_dashboard_url() ) : '#' ); ?>" class="button button-small"><?php esc_html_e( 'View', 'wp-sell-services' ); ?></a></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+
+				<?php
+				// The route to orders 21+, which did not exist before.
+				wpss_render_pagination( (int) ceil( $total / $per_page ) );
+				?>
 			<?php else : ?>
 				<div class="wpss-empty-state">
 					<div class="wpss-empty-state__icon">
@@ -890,148 +933,37 @@ class Shortcodes {
 	}
 
 	/**
-	 * Render service card.
-	 *
-	 * @param int $service_id Service post ID.
-	 * @return void
-	 */
-	private function render_service_card( int $service_id ): void {
-		$template = locate_template( 'wp-sell-services/content-service-card.php' );
-		if ( ! $template ) {
-			$template = WPSS_PLUGIN_DIR . 'templates/content-service-card.php';
-		}
-
-		if ( file_exists( $template ) ) {
-			include $template;
-		} else {
-			// Fallback rendering.
-			$price  = get_post_meta( $service_id, '_wpss_starting_price', true );
-			$rating = get_post_meta( $service_id, '_wpss_rating_average', true );
-			$vendor = get_userdata( get_post_field( 'post_author', $service_id ) );
-			?>
-			<div class="wpss-service-card">
-				<?php if ( has_post_thumbnail( $service_id ) ) : ?>
-					<a href="<?php echo esc_url( get_permalink( $service_id ) ); ?>" class="wpss-service-thumbnail">
-						<?php echo get_the_post_thumbnail( $service_id, 'medium' ); ?>
-					</a>
-				<?php endif; ?>
-				<div class="wpss-service-info">
-					<div class="wpss-service-vendor">
-						<?php echo get_avatar( $vendor->ID, 24 ); ?>
-						<span><?php echo esc_html( $vendor->display_name ); ?></span>
-					</div>
-					<h3 class="wpss-service-title">
-						<a href="<?php echo esc_url( get_permalink( $service_id ) ); ?>"><?php echo esc_html( get_the_title( $service_id ) ); ?></a>
-					</h3>
-					<div class="wpss-service-meta">
-						<?php if ( $rating ) : ?>
-							<span class="wpss-service-rating"><?php echo esc_html( number_format( (float) $rating, 1 ) ); ?> ★</span>
-						<?php endif; ?>
-						<span class="wpss-service-price"><?php esc_html_e( 'From', 'wp-sell-services' ); ?> <?php echo wp_kses_post( function_exists( 'wpss_format_currency' ) ? wpss_format_currency( (float) $price ) : '$' . number_format( (float) $price, 2 ) ); ?></span>
-					</div>
-				</div>
-			</div>
-			<?php
-		}
-	}
-
-	/**
-	 * Render vendor card.
-	 *
-	 * @param array $vendor Vendor data.
-	 * @return void
-	 */
-	private function render_vendor_card( array $vendor ): void {
-		?>
-		<div class="wpss-vendor-card">
-			<div class="wpss-vendor-avatar">
-				<?php echo get_avatar( $vendor['id'], 80 ); ?>
-			</div>
-			<div class="wpss-vendor-info">
-				<h3 class="wpss-vendor-name">
-					<a href="<?php echo esc_url( wpss_get_vendor_url( $vendor['id'] ) ); ?>">
-						<?php echo esc_html( $vendor['display_name'] ); ?>
-					</a>
-				</h3>
-				<?php if ( ! empty( $vendor['tagline'] ) ) : ?>
-					<p class="wpss-vendor-tagline"><?php echo esc_html( $vendor['tagline'] ); ?></p>
-				<?php endif; ?>
-				<div class="wpss-vendor-meta">
-					<?php if ( $vendor['rating'] ) : ?>
-						<span class="wpss-vendor-rating"><?php echo esc_html( number_format( (float) $vendor['rating'], 1 ) ); ?> ★ (<?php echo esc_html( $vendor['review_count'] ); ?>)</span>
-					<?php endif; ?>
-				</div>
-			</div>
-		</div>
-		<?php
-	}
-
-	/**
-	 * Render request card.
-	 *
-	 * @param object $request Request data.
-	 * @return void
-	 */
-	private function render_request_card( object $request ): void {
-		$buyer = get_userdata( $request->author_id ?? $request->post_author ?? 0 );
-		?>
-		<div class="wpss-request-card">
-			<div class="wpss-request-header">
-				<div class="wpss-request-buyer">
-					<?php echo get_avatar( $buyer->ID, 40 ); ?>
-					<span><?php echo esc_html( $buyer->display_name ); ?></span>
-				</div>
-				<span class="wpss-request-date"><?php echo esc_html( human_time_diff( strtotime( ( $request->created_at ?? $request->post_date ) . ' UTC' ), time() ) ); ?> <?php esc_html_e( 'ago', 'wp-sell-services' ); ?></span>
-			</div>
-			<h3 class="wpss-request-title">
-				<a href="<?php echo esc_url( get_permalink( $request->ID ?? $request->id ?? 0 ) ); ?>">
-					<?php echo esc_html( $request->title ?? $request->post_title ); ?>
-				</a>
-			</h3>
-			<p class="wpss-request-excerpt"><?php echo esc_html( wp_trim_words( $request->description ?? $request->post_content, 30 ) ); ?></p>
-			<div class="wpss-request-meta">
-				<span class="wpss-request-budget">
-					<?php
-					$min = $request->budget_min ?? 0;
-					$max = $request->budget_max ?? 0;
-					if ( $min && $max ) {
-						// Currency-aware, not a hardcoded $ — non-USD marketplaces
-						// were showing dollar budgets (Basecamp #10110742943).
-						echo esc_html( sprintf( '%s - %s', wpss_format_price( (float) $min ), wpss_format_price( (float) $max ) ) );
-					} elseif ( $max ) {
-						/* translators: %s: maximum budget amount. */
-						echo esc_html( sprintf( __( 'Up to %s', 'wp-sell-services' ), wpss_format_price( (float) $max ) ) );
-					} else {
-						esc_html_e( 'Open budget', 'wp-sell-services' );
-					}
-					?>
-				</span>
-				<span class="wpss-request-proposals"><?php echo esc_html( $request->proposal_count ?? 0 ); ?> <?php esc_html_e( 'proposals', 'wp-sell-services' ); ?></span>
-			</div>
-		</div>
-		<?php
-	}
-
-	/**
 	 * Render vendor profile fallback.
 	 *
-	 * @param array $profile Vendor profile data.
-	 * @param int   $vendor_id Vendor ID.
+	 * Takes the profile ROW as VendorService::get_profile() returns it - an
+	 * object. It previously declared `array`, matching a get_vendor_profile()
+	 * method that never existed, so this could only ever have been reached by
+	 * code that already fataled one line earlier.
+	 *
+	 * `display_name` is not a column on wpss_vendor_profiles; it belongs to the
+	 * WP user, so it is resolved through the shared accessor rather than read
+	 * off the row.
+	 *
+	 * @param object $profile   Vendor profile row.
+	 * @param int    $vendor_id Vendor ID.
 	 * @return void
 	 */
-	private function render_vendor_profile_fallback( array $profile, int $vendor_id ): void {
+	private function render_vendor_profile_fallback( object $profile, int $vendor_id ): void {
+		$display_name = wpss_get_member_display_name( $vendor_id );
+		$tagline      = (string) ( $profile->tagline ?? '' );
+		$bio          = (string) ( $profile->bio ?? '' );
 		?>
 		<div class="wpss-app-shell"><div class="wpss-app-shell__container">
 		<div class="wpss-vendor-profile">
 			<div class="wpss-vendor-header">
 				<?php echo get_avatar( $vendor_id, 120 ); ?>
-				<h1><?php echo esc_html( $profile['display_name'] ); ?></h1>
-				<?php if ( ! empty( $profile['tagline'] ) ) : ?>
-					<p class="wpss-vendor-tagline"><?php echo esc_html( $profile['tagline'] ); ?></p>
+				<h1><?php echo esc_html( $display_name ); ?></h1>
+				<?php if ( '' !== $tagline ) : ?>
+					<p class="wpss-vendor-tagline"><?php echo esc_html( $tagline ); ?></p>
 				<?php endif; ?>
 			</div>
-			<?php if ( ! empty( $profile['bio'] ) ) : ?>
-				<div class="wpss-vendor-bio"><?php echo wp_kses_post( $profile['bio'] ); ?></div>
+			<?php if ( '' !== $bio ) : ?>
+				<div class="wpss-vendor-bio"><?php echo wp_kses_post( $bio ); ?></div>
 			<?php endif; ?>
 		</div>
 		</div></div>
@@ -1131,8 +1063,20 @@ class Shortcodes {
 			return ob_get_clean();
 		}
 
-		$user_id   = get_current_user_id();
-		$is_vendor = get_user_meta( $user_id, '_wpss_is_vendor', true );
+		$user_id = get_current_user_id();
+
+		// Canonical check, not the raw `_wpss_is_vendor` meta.
+		//
+		// That meta is a LEGACY marker. Vendors created by role assignment, by an
+		// admin, by the demo seeder, or by anything that grants the wpss_vendor
+		// role do not carry it — on a normal install that is every vendor. Reading
+		// the meta directly therefore answered "not a vendor" for real sellers, and
+		// this page offered them "Register as Vendor" while their dashboard,
+		// services and earnings all worked (Basecamp 10208142467).
+		//
+		// wpss_is_vendor() is the one answer: capability, then role, then the
+		// legacy meta, then the wpss_is_vendor filter.
+		$is_vendor = wpss_is_vendor( $user_id );
 
 		if ( $is_vendor ) {
 			$dashboard_url = wpss_get_page_url( 'dashboard' );
@@ -1446,7 +1390,8 @@ class Shortcodes {
 					exit;
 				}
 
-				return '<div class="wpss-cart-redirect"><p>'
+				return self::cart_heading()
+					. '<div class="wpss-cart-redirect"><p>'
 					. wp_kses_post(
 						sprintf(
 							/* translators: %s: cart page link */
@@ -1459,7 +1404,8 @@ class Shortcodes {
 		}
 
 		if ( ! is_user_logged_in() ) {
-			return '<p class="wpss-alert">' . esc_html__( 'Please log in to view your cart.', 'wp-sell-services' ) . '</p>';
+			return self::cart_heading()
+				. '<p class="wpss-alert">' . esc_html__( 'Please log in to view your cart.', 'wp-sell-services' ) . '</p>';
 		}
 
 		$cart_items = get_user_meta( get_current_user_id(), '_wpss_cart', true );
@@ -1470,6 +1416,32 @@ class Shortcodes {
 		ob_start();
 		wpss_get_template( 'cart/cart.php', array( 'cart_items' => $cart_items ) );
 		return ob_get_clean();
+	}
+
+	/**
+	 * The cart page's heading, for the branches that render no template.
+	 *
+	 * The cart page is a plugin-shell surface, which means ShellHeader suppresses
+	 * the theme's own <h1> in favour of the plugin's. templates/cart/cart.php
+	 * prints one - but the logged-out branch and the "another rail owns the cart"
+	 * branch return before it, so those two ended up with NO heading at all once
+	 * suppression started working. A page with zero H1s is worse than the
+	 * duplicate that was reported (Basecamp 10208511245).
+	 *
+	 * Same wording as the template's heading, so the page reads identically
+	 * whichever branch runs.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return string Header markup.
+	 */
+	private static function cart_heading(): string {
+		return \WPSellServices\Frontend\ShellHeader::render(
+			array(
+				'title' => __( 'Your Cart', 'wp-sell-services' ),
+				'echo'  => false,
+			)
+		);
 	}
 
 	/**

@@ -113,7 +113,7 @@ class Settings {
 	 * missed the sidebar, which promptly badged two free tabs as "Pro" — so it
 	 * is defined once here and read everywhere.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 *
 	 * @return array<int, string> Core tab slugs.
 	 */
@@ -295,6 +295,22 @@ class Settings {
 			wp_send_json_error( array( 'message' => __( 'Missing required data.', 'wp-sell-services' ) ) );
 		}
 
+		// The registry, not the browser, decides what a known page is called and
+		// where it lives. This handler used to take the posted title and let
+		// WordPress derive a slug from it, so creating the cart page on a site
+		// running WooCommerce found `cart` taken and silently produced
+		// `/cart-2/`, `/cart-3/` … while the installer's `service-cart` slug was
+		// never used. A key the registry does not know (added through the
+		// wpss_page_definitions filter) still honours the posted title.
+		$definitions = wpss_get_page_definitions();
+		$definition  = $definitions[ $field ] ?? null;
+		$slug        = '';
+
+		if ( is_array( $definition ) ) {
+			$title = $definition['title'];
+			$slug  = $definition['slug'];
+		}
+
 		// Check if a page with this shortcode already exists.
 		$page_content     = $this->get_page_content( $field );
 		$existing_page_id = $this->find_existing_page( $field, $page_content );
@@ -318,14 +334,18 @@ class Settings {
 		}
 
 		// Create the page.
-		$page_id = wp_insert_post(
-			array(
-				'post_title'   => $title,
-				'post_content' => $page_content,
-				'post_status'  => 'publish',
-				'post_type'    => 'page',
-			)
+		$new_page = array(
+			'post_title'   => $title,
+			'post_content' => $page_content,
+			'post_status'  => 'publish',
+			'post_type'    => 'page',
 		);
+
+		if ( '' !== $slug ) {
+			$new_page['post_name'] = $slug;
+		}
+
+		$page_id = wp_insert_post( $new_page );
 
 		if ( is_wp_error( $page_id ) ) {
 			wp_send_json_error( array( 'message' => $page_id->get_error_message() ) );
@@ -349,7 +369,7 @@ class Settings {
 	/**
 	 * AJAX handler to send a test email.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -437,16 +457,9 @@ class Settings {
 	 * @return string Page content.
 	 */
 	private function get_page_content( string $field ): string {
-		$shortcodes = array(
-			'services_page' => '[wpss_services]',
-			'vendors_page'  => '[wpss_vendors]',
-			'dashboard'     => '[wpss_dashboard]',
-			'become_vendor' => '[wpss_vendor_registration]',
-			'cart'          => '[wpss_cart]',
-			'checkout'      => '[wpss_checkout]',
-		);
+		$definitions = wpss_get_page_definitions();
 
-		return $shortcodes[ $field ] ?? '';
+		return $definitions[ $field ]['shortcode'] ?? '';
 	}
 
 	/**
@@ -547,6 +560,39 @@ class Settings {
 				'field'       => 'checkout_badges_enabled',
 				'label'       => __( 'Display a short row of reassurance items on the checkout page.', 'wp-sell-services' ),
 				'default'     => true,
+			)
+		);
+
+		// Only worth showing when a second cart actually exists to be confused
+		// with — on a site without WooCommerce there is only one cart and the
+		// option would be noise.
+		if ( class_exists( 'WooCommerce' ) ) {
+			add_settings_field(
+				'use_marketplace_cart_link',
+				__( 'Site cart link', 'wp-sell-services' ),
+				array( $this, 'render_checkbox_field' ),
+				'wpss_general',
+				'wpss_checkout_badges_section',
+				array(
+					'option_name' => 'wpss_general',
+					'field'       => 'use_marketplace_cart_link',
+					'label'       => __( 'Point the theme\'s cart link at the marketplace cart. Turn this on for a marketplace-only site; leave it off if you also sell WooCommerce products, or their cart link will send buyers to the wrong place.', 'wp-sell-services' ),
+					'default'     => false,
+				)
+			);
+		}
+
+		add_settings_field(
+			'checkout_account_creation',
+			__( 'Account at checkout', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_general',
+			'wpss_checkout_badges_section',
+			array(
+				'option_name' => 'wpss_general',
+				'field'       => 'checkout_account_creation',
+				'label'       => __( 'Let a logged-out buyer complete checkout. Their account is created from the billing name and email they enter, and they are signed in before the order is placed, so they can submit requirements and message the seller straight away. Off by default: it changes who can transact on your site.', 'wp-sell-services' ),
+				'default'     => false,
 			)
 		);
 
@@ -917,6 +963,21 @@ class Settings {
 			)
 		);
 
+		// Checkout billing fields. Owner picks which of the twelve are collected
+		// (Basecamp #10159633185).
+		register_setting(
+			'wpss_orders',
+			'wpss_billing_field_settings',
+			array( $this, 'sanitize_billing_field_settings' )
+		);
+
+		// Offline payment proof (Basecamp #10194890682).
+		register_setting(
+			'wpss_orders',
+			'wpss_offline_receipt_settings',
+			array( $this, 'sanitize_offline_receipt_settings' )
+		);
+
 		// Order settings.
 		register_setting(
 			'wpss_orders',
@@ -944,6 +1005,29 @@ class Settings {
 				'max'         => 30,
 				'default'     => 3,
 				'description' => __( 'Days after vendor submits delivery before the order auto-completes if buyer does not respond. Set to 0 to require buyer action.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'wpss_billing_fields',
+			__( 'Checkout Billing Fields', 'wp-sell-services' ),
+			array( $this, 'render_billing_fields_field' ),
+			'wpss_orders',
+			'wpss_orders_section'
+		);
+
+		add_settings_field(
+			'wpss_offline_receipts',
+			__( 'Offline Payment Proof', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_orders',
+			'wpss_orders_section',
+			array(
+				'option_name' => 'wpss_offline_receipt_settings',
+				'field'       => 'enabled',
+				'label'       => __( 'Let buyers upload proof of an offline payment for an admin to verify', 'wp-sell-services' ),
+				'default'     => false,
+				'description' => __( 'A buyer paying by bank transfer can attach a receipt to their order. An admin reviews it and either approves it — which marks the order paid — or rejects it with a reason so the buyer can try again. Off by default: a marketplace taking only card payments should not see an upload box it will never use.', 'wp-sell-services' ),
 			)
 		);
 
@@ -1133,22 +1217,33 @@ class Settings {
 		// could never be set by anyone) and the cart page was seeded by the
 		// installer but missing from the save whitelist, so the first save of
 		// this panel deleted it with no way to put it back.
-		$pages = array(
+		// The panel iterates the page registry, so a key added through the
+		// wpss_page_definitions filter gets a mapping field automatically
+		// instead of being creatable but unmappable.
+		//
+		// The field label describes the mapping ("Services Page"); the page
+		// title is what the page will actually be called ("Services"). Where
+		// the two differ the label is overridden below -- anything else falls
+		// back to the registry title.
+		$page_definitions = wpss_get_page_definitions();
+
+		$page_labels = array(
 			'services_page' => __( 'Services Page', 'wp-sell-services' ),
 			'vendors_page'  => __( 'Vendors Directory', 'wp-sell-services' ),
-			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
-			'cart'          => __( 'Service Cart', 'wp-sell-services' ),
-			'checkout'      => __( 'Service Checkout', 'wp-sell-services' ),
 		);
 
-		// Only show "Become a Vendor" page option when vendor registration is not closed.
+		$pages = array();
+
+		foreach ( $page_definitions as $page_key => $page_definition ) {
+			$pages[ $page_key ] = $page_labels[ $page_key ] ?? $page_definition['title'];
+		}
+
+		// Hide the "Become a Vendor" mapping when vendor registration is closed.
 		$pages_vendor_settings   = get_option( 'wpss_vendor', array() );
 		$pages_registration_mode = $pages_vendor_settings['vendor_registration'] ?? 'open';
-		if ( 'closed' !== $pages_registration_mode ) {
-			// Insert after 'dashboard' to maintain original order.
-			$pages = array_slice( $pages, 0, 3, true )
-				+ array( 'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ) )
-				+ array_slice( $pages, 3, null, true );
+
+		if ( 'closed' === $pages_registration_mode ) {
+			unset( $pages['become_vendor'] );
 		}
 
 		foreach ( $pages as $key => $label ) {
@@ -1161,7 +1256,7 @@ class Settings {
 				array(
 					'option_name' => 'wpss_pages',
 					'field'       => $key,
-					'page_title'  => $label,
+					'page_title'  => $page_definitions[ $key ]['title'] ?? $label,
 				)
 			);
 		}
@@ -1652,7 +1747,7 @@ class Settings {
 	/**
 	 * Render the Commission &amp; Tax tab — what the platform KEEPS.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 * @return void
 	 */
 	private function render_commission_tab(): void {
@@ -1685,7 +1780,7 @@ class Settings {
 	 * buried inside "Payments", so an owner looking for payout configuration
 	 * had to guess it lived under the tab about taking payments.
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 * @return void
 	 */
 	private function render_payouts_tab(): void {
@@ -2050,6 +2145,112 @@ class Settings {
 	}
 
 	/**
+	 * Render the checkout billing-field toggles.
+	 *
+	 * Twelve fields, most of them required, is a physical-goods checkout. A
+	 * marketplace selling logo design has no use for street address, apartment,
+	 * city, state or postcode, and each one is a reason to abandon
+	 * (Basecamp #10159633185).
+	 *
+	 * Name and email cannot be switched off - an order has to be attributable to
+	 * someone who can be contacted about it - so those render as disabled,
+	 * checked boxes rather than being hidden, which would look like an omission.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return void
+	 */
+	public function render_billing_fields_field(): void {
+		// The unfiltered definitions, so a field the owner has already switched
+		// off still appears here to be switched back on.
+		$all      = wpss_get_all_billing_field_definitions();
+		$settings = get_option( 'wpss_billing_field_settings', array() );
+		$enabled  = isset( $settings['enabled'] ) && is_array( $settings['enabled'] )
+			? array_map( 'strval', $settings['enabled'] )
+			: array_map( 'strval', array_keys( $all ) );
+
+		$locked = wpss_get_required_billing_fields();
+		$preset = wpss_get_digital_billing_field_preset();
+
+		echo '<fieldset class="wpss-billing-fields-toggles">';
+		echo '<legend class="screen-reader-text">' . esc_html__( 'Checkout billing fields', 'wp-sell-services' ) . '</legend>';
+
+		foreach ( $all as $key => $definition ) {
+			$is_locked  = in_array( $key, $locked, true );
+			$is_checked = $is_locked || in_array( (string) $key, $enabled, true );
+
+			printf(
+				'<label style="display:block;margin-bottom:6px;"><input type="checkbox" name="wpss_billing_field_settings[enabled][]" value="%1$s"%2$s%3$s> %4$s%5$s</label>',
+				esc_attr( (string) $key ),
+				checked( $is_checked, true, false ),
+				$is_locked ? ' disabled' : '',
+				esc_html( (string) ( $definition['label'] ?? $key ) ),
+				$is_locked
+					? ' <em>' . esc_html__( '(always collected)', 'wp-sell-services' ) . '</em>'
+					: ''
+			);
+
+			// A disabled checkbox submits nothing, so post the locked keys
+			// explicitly - otherwise saving the form would try to drop them and
+			// the sanitiser would have to guess.
+			if ( $is_locked ) {
+				printf(
+					'<input type="hidden" name="wpss_billing_field_settings[enabled][]" value="%s">',
+					esc_attr( (string) $key )
+				);
+			}
+		}
+
+		echo '</fieldset>';
+
+		printf(
+			'<p class="description">%s</p>',
+			esc_html__( 'Uncheck what your marketplace does not need. Address fields suit physical goods; a digital service rarely needs more than a name, an email and a country.', 'wp-sell-services' )
+		);
+
+		printf(
+			'<p class="description">%s <code>%s</code></p>',
+			esc_html__( 'Suggested set for digital services:', 'wp-sell-services' ),
+			esc_html( implode( ', ', $preset ) )
+		);
+	}
+
+	/**
+	 * Sanitize the offline payment proof settings.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param mixed $input Raw option value.
+	 * @return array<string, bool> Clean value.
+	 */
+	public function sanitize_offline_receipt_settings( $input ): array {
+		return array( 'enabled' => ! empty( $input['enabled'] ) );
+	}
+
+	/**
+	 * Sanitize the billing-field toggles.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param mixed $input Raw option value.
+	 * @return array<string, array<int, string>> Clean value.
+	 */
+	public function sanitize_billing_field_settings( $input ): array {
+		$all   = array_keys( wpss_get_all_billing_field_definitions() );
+		$given = is_array( $input ) && isset( $input['enabled'] ) && is_array( $input['enabled'] )
+			? array_map( 'sanitize_key', $input['enabled'] )
+			: array();
+
+		// Only real field keys, and never without the ones an order cannot do
+		// without - a hand-crafted POST must not be able to strip the buyer's
+		// name and email off checkout.
+		$clean = array_values( array_intersect( $all, $given ) );
+		$clean = array_values( array_unique( array_merge( $clean, wpss_get_required_billing_fields() ) ) );
+
+		return array( 'enabled' => $clean );
+	}
+
+	/**
 	 * Render notifications section description.
 	 *
 	 * @return void
@@ -2254,7 +2455,7 @@ class Settings {
 	/**
 	 * Render the test email section in the Emails tab.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -2558,7 +2759,7 @@ class Settings {
 	 * Keeps whole numbers whole — `min="0"`, not `min="0.0"` — while preserving
 	 * a genuine decimal bound (a 2.5 % rate stays 2.5).
 	 *
-	 * @since 1.5.1
+	 * @since 1.3.0
 	 *
 	 * @param float $bound Bound value.
 	 * @return string Attribute-ready value.
@@ -2893,6 +3094,17 @@ class Settings {
 	}
 
 	/**
+	 * Build the walker that disambiguates same-titled pages in a dropdown.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @return PageDropdownWalker
+	 */
+	private function page_dropdown_walker(): PageDropdownWalker {
+		return new PageDropdownWalker( get_pages( array( 'post_status' => 'publish' ) ) ?: array() );
+	}
+
+	/**
 	 * Render a page dropdown for a standalone option.
 	 *
 	 * @param array<string, mixed> $args Field arguments (option, description).
@@ -2909,6 +3121,8 @@ class Settings {
 				'show_option_none'  => esc_html__( '— Not set —', 'wp-sell-services' ),
 				'option_none_value' => '0',
 				'echo'              => 0,
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- A Walker OBJECT passed as an argument, not output. The sniff sees `$this` inside a function call that can echo.
+				'walker'            => $this->page_dropdown_walker(),
 			)
 		);
 
@@ -3014,7 +3228,7 @@ class Settings {
 
 		printf(
 			'<p class="description">%s</p>',
-			esc_html__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD, FluentCart, and SureCart.', 'wp-sell-services' )
+			esc_html__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD and FluentCart.', 'wp-sell-services' )
 		);
 	}
 
@@ -3039,6 +3253,8 @@ class Settings {
 				'option_none_value' => '',
 				'selected'          => esc_attr( $value ),
 				'class'             => 'wpss-page-dropdown',
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- A Walker OBJECT passed as an argument, not output. The sniff sees `$this` inside a function call that can echo.
+				'walker'            => $this->page_dropdown_walker(),
 			)
 		);
 
@@ -3085,14 +3301,40 @@ class Settings {
 		$existing  = is_array( $existing ) ? $existing : array();
 		$sanitized = $existing;
 
-		// Platform name defaults to site name if empty.
-		$platform_name              = sanitize_text_field( $input['platform_name'] ?? '' );
-		$sanitized['platform_name'] = ! empty( $platform_name ) ? $platform_name : get_bloginfo( 'name' );
+		/*
+		 * ABSENT IS NOT EMPTY.
+		 *
+		 * register_setting() hangs this sanitizer on sanitize_option_wpss_general,
+		 * so it runs for EVERY update_option( 'wpss_general', ... ) - not just a
+		 * settings-form submit. `wp option patch`, a migration, a Pro feature or a
+		 * unit test all pass a PARTIAL array, and defaulting an absent key
+		 * overwrites a stored value nobody asked to change.
+		 *
+		 * For `ecommerce_platform` that is not cosmetic: absent became 'auto',
+		 * which resolves to whichever cart plugin is detected first, so a
+		 * one-key patch silently moved the site's PAYMENT RAIL. Reproduced by
+		 * accident here - `wp option patch insert wpss_general
+		 * checkout_account_creation 1` flipped a standalone site to EDD, changing
+		 * who takes the money, with nothing in the UI to show it.
+		 *
+		 * The guard below is the same one the `use_marketplace_cart_link` block
+		 * further down already carries; these three keys never got it.
+		 */
+		if ( array_key_exists( 'platform_name', $input ) ) {
+			// Platform name defaults to site name if empty.
+			$platform_name              = sanitize_text_field( (string) $input['platform_name'] );
+			$sanitized['platform_name'] = '' !== $platform_name ? $platform_name : get_bloginfo( 'name' );
+		}
 
-		$sanitized['currency'] = sanitize_text_field( $input['currency'] ?? 'USD' );
+		if ( array_key_exists( 'currency', $input ) ) {
+			$sanitized['currency'] = sanitize_text_field( (string) $input['currency'] );
+		}
 
-		$previous                        = (string) ( $existing['ecommerce_platform'] ?? 'auto' );
-		$sanitized['ecommerce_platform'] = sanitize_key( $input['ecommerce_platform'] ?? 'auto' );
+		$previous = (string) ( $existing['ecommerce_platform'] ?? 'auto' );
+
+		if ( array_key_exists( 'ecommerce_platform', $input ) ) {
+			$sanitized['ecommerce_platform'] = sanitize_key( (string) $input['ecommerce_platform'] );
+		}
 
 		// Changing the rail changes which rewrite rules exist. The standalone
 		// adapter owns /wpss-payment/{gateway}/callback - the URL every gateway
@@ -3106,13 +3348,26 @@ class Settings {
 		// flushed inline, because this runs during option save - before the new
 		// rail's adapter has registered its rules, so an inline flush would
 		// persist the OLD rail's rule set again.
-		if ( $previous !== $sanitized['ecommerce_platform'] ) {
+		if ( $previous !== (string) ( $sanitized['ecommerce_platform'] ?? 'auto' ) ) {
 			set_transient( 'wpss_flush_rewrite_rules', true, MINUTE_IN_SECONDS );
 		}
 
 		// Checkout reassurance badges. Owner-authored text for a public page,
 		// so it is sanitised as plain text - no markup, no shortcodes.
-		$sanitized['checkout_badges_enabled'] = ! empty( $input['checkout_badges_enabled'] );
+		if ( array_key_exists( 'checkout_badges_enabled', $input ) ) {
+			$sanitized['checkout_badges_enabled'] = ! empty( $input['checkout_badges_enabled'] );
+		}
+
+		// The field only renders when WooCommerce is active, so an absent key
+		// must not clear a stored preference on a site that has since
+		// deactivated Woo — same trap that once wiped wpss_pages['cart'].
+		if ( array_key_exists( 'use_marketplace_cart_link', $input ) || class_exists( 'WooCommerce' ) ) {
+			$sanitized['use_marketplace_cart_link'] = ! empty( $input['use_marketplace_cart_link'] );
+		}
+
+		if ( array_key_exists( 'checkout_account_creation', $input ) ) {
+			$sanitized['checkout_account_creation'] = ! empty( $input['checkout_account_creation'] );
+		}
 
 		$badges = array();
 
@@ -3304,14 +3559,11 @@ class Settings {
 	public function sanitize_pages_settings( ?array $input ): array {
 		$input = $input ?? array();
 
-		$page_keys = array(
-			'services_page',
-			'vendors_page',
-			'dashboard',
-			'become_vendor',
-			'cart',
-			'checkout',
-		);
+		// Derived from the page registry, not listed again here. This list
+		// having to be kept in step by hand is what dropped `cart` (seeded by
+		// the installer, absent from the whitelist) on the first save of this
+		// panel; a registry key can no longer go missing from it.
+		$page_keys = array_keys( wpss_get_page_definitions() );
 
 		// Preserve the stored value for any key the submitted form did not
 		// contain, instead of zeroing it.
@@ -3453,7 +3705,7 @@ class Settings {
 	 * @param mixed  $default Default value.
 	 * @return mixed Setting value.
 	 */
-	public static function get( string $group, string $key, mixed $default = null ): mixed {
+	public static function get( string $group, string $key, mixed $default = null ): mixed { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound -- Public API; renaming is a named-argument BC break.
 		$options = get_option( 'wpss_' . $group, array() );
 		return $options[ $key ] ?? $default;
 	}

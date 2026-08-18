@@ -22,15 +22,15 @@
 	font-size: 16px !important;
 	padding: 8px 32px !important;
 	height: auto !important;
-	background: var(--wpss-vendor-green, #1dbf73) !important;
-	border-color: var(--wpss-vendor-green, #1dbf73) !important;
+	background: var(--wpss-vendor-green) !important;
+	border-color: var(--wpss-vendor-green) !important;
 	color: #fff !important;
 }
 
 .wpss-upgrade-cta:hover,
 .wpss-upgrade-cta:focus {
-	background: var(--wpss-vendor-green-dark, #19a463) !important;
-	border-color: var(--wpss-vendor-green-dark, #19a463) !important;
+	background: var(--wpss-vendor-green-dark) !important;
+	border-color: var(--wpss-vendor-green-dark) !important;
 }
 
 .wpss-upgrade-docs {

@@ -49,7 +49,7 @@ class ServicePostType {
 	 * Guarded so it runs at most once and never overwrites an owner's own
 	 * categories: if any term already exists, it just marks the job done.
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function maybe_seed_default_categories(): void {
@@ -82,7 +82,7 @@ class ServicePostType {
 	 * Separated from maybe_seed_default_categories() so it is directly testable
 	 * and reusable (e.g. from the setup wizard's "skip categories" path).
 	 *
-	 * @since 1.5.2
+	 * @since 1.3.0
 	 * @return int[] Created term IDs.
 	 */
 	public function seed_default_categories(): array {
@@ -214,6 +214,10 @@ class ServicePostType {
 			// Packet H: data-URL Lucide `shopping-cart` glyph (house-style icons).
 			// `menu_icon` requires an SVG URL or dashicon class; we inline the
 			// Lucide shopping-cart SVG so WordPress renders it in the admin menu.
+			// Not obfuscation: WordPress's `menu_icon` API accepts a dashicon
+			// class or an SVG data URL, and a data URL must be base64. The SVG
+			// source is inline and readable directly above/below.
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required encoding for an SVG data URL.
 			'menu_icon'          => 'data:image/svg+xml;base64,' . base64_encode( '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>' ),
 			'supports'           => [
 				'title',
@@ -332,10 +336,17 @@ class ServicePostType {
 			2  => __( 'Custom field updated.', 'wp-sell-services' ),
 			3  => __( 'Custom field deleted.', 'wp-sell-services' ),
 			4  => __( 'Service updated.', 'wp-sell-services' ),
+			// The `revision` parameter is supplied by WordPress core's own redirect
+			// after a revision restore, and this whole array is core's
+			// `post_updated_messages` pattern - core reads $_GET the same way here.
+			// It renders one admin notice and changes no state, so there is no
+			// action for a nonce to protect. Cast to int on use.
+			// phpcs:disable WordPress.Security.NonceVerification.Recommended
 			5  => isset( $_GET['revision'] )
 				/* translators: %s: date and time of the revision */
 				? sprintf( __( 'Service restored to revision from %s', 'wp-sell-services' ), wp_post_revision_title( (int) $_GET['revision'], false ) )
 				: false,
+			// phpcs:enable WordPress.Security.NonceVerification.Recommended
 			/* translators: %s: post permalink */
 			6  => sprintf( __( 'Service published. <a href="%s">View Service</a>', 'wp-sell-services' ), esc_url( $permalink ) ),
 			7  => __( 'Service saved.', 'wp-sell-services' ),

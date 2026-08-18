@@ -341,42 +341,16 @@ class Activator {
 	/**
 	 * Create required pages with shortcodes on activation.
 	 *
-	 * Creates Services, Dashboard, Become a Vendor, and Service Checkout pages
-	 * if they don't already exist. Maps page IDs in the wpss_pages option.
+	 * Page titles, shortcodes and slugs come from wpss_get_page_definitions() —
+	 * the one registry every creator reads, so the installer, the setup wizard
+	 * and the Pages panel cannot disagree about what a page is called or where
+	 * it lives. Maps page IDs in the wpss_pages option.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 * @return void
 	 */
 	public static function create_pages(): void {
-		$pages = array(
-			'services_page' => array(
-				'title'     => __( 'Services', 'wp-sell-services' ),
-				'shortcode' => '[wpss_services]',
-			),
-			'dashboard'     => array(
-				'title'     => __( 'Dashboard', 'wp-sell-services' ),
-				'shortcode' => '[wpss_dashboard]',
-			),
-			'become_vendor' => array(
-				'title'     => __( 'Become a Vendor', 'wp-sell-services' ),
-				'shortcode' => '[wpss_vendor_registration]',
-			),
-			// Both carry an explicit service-* slug. These pages are only the
-			// standalone rail; when WooCommerce or EDD runs the store, that
-			// plugin owns /cart/ and /checkout/. Letting the slug fall out of
-			// the title took the generic slug first, so WooCommerce activated
-			// into /cart-2/ and shipped that ugly URL to customers.
-			'checkout'      => array(
-				'title'     => __( 'Service Checkout', 'wp-sell-services' ),
-				'shortcode' => '[wpss_checkout]',
-				'slug'      => 'service-checkout',
-			),
-			'cart'          => array(
-				'title'     => __( 'Service Cart', 'wp-sell-services' ),
-				'shortcode' => '[wpss_cart]',
-				'slug'      => 'service-cart',
-			),
-		);
+		$pages = wpss_get_page_definitions();
 
 		$saved_pages = get_option( 'wpss_pages', array() );
 

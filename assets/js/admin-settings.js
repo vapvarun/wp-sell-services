@@ -18,8 +18,8 @@
 			window.wpssSettingsSecret ) ||
 		{};
 
-	var labelReveal = i18n.reveal || 'Reveal';
-	var labelHide = i18n.hide || 'Hide';
+	var labelReveal = i18n.reveal;
+	var labelHide = i18n.hide;
 
 	/**
 	 * Wire a single masked secret field.

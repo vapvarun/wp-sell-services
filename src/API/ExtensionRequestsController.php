@@ -359,7 +359,6 @@ class ExtensionRequestsController extends RestController {
 	 * @return array
 	 */
 	private function format_item( array $item, string $currency = '' ): array {
-		$requester = get_user_by( 'id', (int) $item['requested_by'] );
 		$responder = ! empty( $item['responded_by'] ) ? get_user_by( 'id', (int) $item['responded_by'] ) : null;
 		$currency  = '' !== $currency ? $currency : wpss_get_currency();
 		$amount    = isset( $item['amount'] ) ? (float) $item['amount'] : null;
@@ -370,7 +369,7 @@ class ExtensionRequestsController extends RestController {
 			'pay_order_id'      => isset( $item['pay_order_id'] ) ? (int) $item['pay_order_id'] : null,
 			'requested_by'      => array(
 				'id'   => (int) $item['requested_by'],
-				'name' => $requester ? $requester->display_name : __( 'Unknown', 'wp-sell-services' ),
+				'name' => wpss_get_member_display_name( (int) $item['requested_by'] ),
 			),
 			'extra_days'        => (int) $item['extra_days'],
 			// Nullable money, so the minor units are added directly - the

@@ -240,7 +240,7 @@
 	   pre-dated the indigo palette switch. color-mix() tints the primary; the
 	   hex fallback covers browsers without color-mix support. */
 	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 1800%, transparent);
 	outline: none;
 }
 
@@ -277,7 +277,7 @@
 	   covers browsers without color-mix(). Replaces the bare outline:none so a
 	   keyboard user always sees where focus is (WCAG 2.4.7). */
 	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 1800%, transparent);
 }
 
 /* ==========================================================================
@@ -580,7 +580,7 @@ body.wpss-sidebar-open::after {
 	/* Match the search/filter focus ring so keyboard focus is unmistakable on
 	   the price-range fields too (WCAG 2.4.7). */
 	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 18%, transparent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--wpss-primary) 1800%, transparent);
 }
 
 .wpss-price-separator {

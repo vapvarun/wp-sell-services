@@ -167,6 +167,10 @@ class ServiceCategories extends AbstractBlock {
 			return $this->end_render();
 		}
 
+		// One query for the whole grid (see the card partial for why the term's
+		// own count cannot be used).
+		$service_counts = wpss_get_category_service_counts( wp_list_pluck( $categories, 'term_id' ) );
+
 		$wrapper_classes = [
 			'wpss-categories-' . $attributes['layout'],
 			'wpss-grid-cols-' . $attributes['columns'],
@@ -174,66 +178,30 @@ class ServiceCategories extends AbstractBlock {
 		?>
 		<div <?php echo $this->get_wrapper_attributes( $attributes, $wrapper_classes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() returns safe markup. ?>>
 			<div class="wpss-categories-list">
-				<?php foreach ( $categories as $category ) : ?>
-					<?php $this->render_category_card( $category, $attributes ); ?>
-				<?php endforeach; ?>
+				<?php
+				foreach ( $categories as $category ) :
+					// ONE category card, the theme-overridable partial - the same one
+					// [wpss_service_categories] renders. This block owned a private
+					// render_category_card() and the shortcode owned different inline
+					// markup, so a theme override applied to neither and the two drifted
+					// in heading level, icon markup and image handling.
+					wpss_get_template_part(
+						'partials/category-card',
+						'',
+						[
+							'category'       => $category,
+							'show_count'     => (bool) $attributes['showCount'],
+							'show_icon'      => (bool) $attributes['showIcon'],
+							'show_image'     => (bool) $attributes['showImage'],
+							'service_counts' => $service_counts,
+						]
+					);
+				endforeach;
+				?>
 			</div>
 		</div>
 		<?php
 
 		return $this->end_render();
-	}
-
-	/**
-	 * Render a single category card.
-	 *
-	 * @param \WP_Term $category   Category term.
-	 * @param array    $attributes Block attributes.
-	 * @return void
-	 */
-	private function render_category_card( \WP_Term $category, array $attributes ): void {
-		// The archive reader filters on `category` (see ServiceArchiveView);
-		// `wpss_category` was ignored, so clicking a category card did nothing.
-		$link     = add_query_arg(
-			'category',
-			$category->term_id,
-			get_post_type_archive_link( 'wpss_service' )
-		);
-		$icon     = get_term_meta( $category->term_id, '_wpss_icon', true );
-		$image_id = get_term_meta( $category->term_id, '_wpss_image', true );
-		$image    = $image_id ? wp_get_attachment_image_url( (int) $image_id, 'medium' ) : '';
-		?>
-		<a href="<?php echo esc_url( $link ); ?>" class="wpss-category-card">
-			<?php if ( $attributes['showImage'] && $image ) : ?>
-				<div class="wpss-category-image">
-					<img src="<?php echo esc_url( $image ); ?>" alt="<?php echo esc_attr( $category->name ); ?>" loading="lazy">
-				</div>
-			<?php elseif ( $attributes['showIcon'] ) : ?>
-				<div class="wpss-category-icon">
-					<?php if ( $icon ) : ?>
-						<span class="dashicons <?php echo esc_attr( $icon ); ?>"></span>
-					<?php else : ?>
-						<i data-lucide="folder" class="wpss-icon" aria-hidden="true"></i>
-					<?php endif; ?>
-				</div>
-			<?php endif; ?>
-
-			<div class="wpss-category-content">
-				<h4 class="wpss-category-name"><?php echo esc_html( $category->name ); ?></h4>
-
-				<?php if ( $attributes['showCount'] ) : ?>
-					<span class="wpss-category-count">
-						<?php
-						printf(
-							/* translators: %d: number of services */
-							esc_html( _n( '%d service', '%d services', $category->count, 'wp-sell-services' ) ),
-							absint( $category->count )
-						);
-						?>
-					</span>
-				<?php endif; ?>
-			</div>
-		</a>
-		<?php
 	}
 }

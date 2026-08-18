@@ -13,7 +13,7 @@
  * Plugin Name:       WP Sell Services
  * Plugin URI:        https://wbcomdesigns.com/downloads/wp-sell-services/
  * Description:       A complete Fiverr-style service marketplace platform for WordPress. Create a service marketplace with built-in standalone checkout, order management, messaging, reviews, and more.
- * Version:           1.4.0
+ * Version:           1.6.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Wbcom Designs
@@ -39,7 +39,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @var string
  */
-define( 'WPSS_VERSION', '1.4.0' );
+define( 'WPSS_VERSION', '1.6.0' );
 
 /**
  * Plugin file path.
@@ -444,6 +444,16 @@ function wpss_activate(): void {
 			array( 'back_link' => true )
 		);
 	}
+
+	// Activation runs on a request where this plugin was not yet active, so
+	// wpss_init() never fired and the global helpers in src/functions.php are
+	// NOT loaded. Activator::create_pages() reads the page registry from
+	// there, so load it explicitly rather than relying on a bootstrap that has
+	// not run — otherwise activation fatals with "Call to undefined function
+	// wpss_get_page_definitions()" and the plugin silently stays inactive.
+	// Every file it pulls in is require_once and side-effect free, so this is
+	// safe alongside the normal load path.
+	require_once WPSS_PLUGIN_DIR . 'src/functions.php';
 
 	// Run activator.
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Activator.php';

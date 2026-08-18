@@ -71,12 +71,12 @@
 							window.location.reload();
 						}
 					} else {
-						showError(response.data && response.data.message ? response.data.message : wpss_ajax.i18n.submit_error || 'Failed to submit requirements.');
+						showError(response.data && response.data.message ? response.data.message : wpss_ajax.i18n.submit_error);
 						resetButton();
 					}
 				},
 				error: function() {
-					showError(wpss_ajax.i18n.ajax_error || 'An error occurred. Please try again.');
+					showError(wpss_ajax.i18n.ajax_error);
 					resetButton();
 				}
 			});

@@ -205,7 +205,63 @@
     ]
   },
   "settings": {
-    "_note": "Stored under various wpss_* options. Settings page in src/Admin/Settings.php (2346 lines). Tabs: General, Vendor, Orders, Earnings, Reviews, Disputes, Pages, Emails, Gateways, Advanced. Advanced tab includes the Real-time (WebSockets) card storing wpss_realtime_settings (enabled, app_id, key, secret, host, cluster, port, use_tls — secret uses the masked-field keep-on-blank contract)."
+    "_note": "Stored under various wpss_* options. Settings page in src/Admin/Settings.php (2346 lines). Tabs: General, Vendor, Orders, Earnings, Reviews, Disputes, Pages, Emails, Gateways, Advanced. Advanced tab includes the Real-time (WebSockets) card storing wpss_realtime_settings (enabled, app_id, key, secret, host, cluster, port, use_tls — secret uses the masked-field keep-on-blank contract).",
+    "pages": {
+      "_note": "Option `wpss_pages` maps page keys -> post IDs. `wpss_get_page_definitions()` (src/functions/urls.php) is the SINGLE registry of title + shortcode + slug + required; read it before adding a page, a label list or a shortcode map. Consumers: Activator::create_pages() (installer + upgrade path), Settings::ajax_create_page() (the creator the wizard and Pages panel call), Settings pages panel + sanitize_pages_settings() whitelist, SetupWizardPage, Admin::check_page_setup_notice(), PreflightCommand, wpss_get_default_page_slugs(). This registry replaced 8 hardcoded copies that had drifted -- the wizard offered 'Checkout' where the installer said 'Service Checkout', and the AJAX creator set no slug at all, which is how sites running WooCommerce collected /cart-2/ ... /cart-16/. Adoption rule: a published page already carrying the shortcode is adopted, never duplicated. Filter: wpss_page_definitions.",
+      "option": "wpss_pages",
+      "writer": "WPSellServices\\Core\\Activator::create_pages",
+      "mapping_ui": "src/Admin/Settings.php (Pages tab)",
+      "keys": {
+        "services_page": {
+          "title": "Services",
+          "shortcode": "[wpss_services]",
+          "slug": "services",
+          "required": true
+        },
+        "vendors_page": {
+          "title": "Vendors",
+          "shortcode": "[wpss_vendors]",
+          "resolver": "wpss_get_vendors_page_id()",
+          "since": "1.6.0",
+          "slug": "vendors",
+          "required": false
+        },
+        "dashboard": {
+          "title": "Dashboard",
+          "shortcode": "[wpss_dashboard]",
+          "slug": "dashboard",
+          "required": true
+        },
+        "become_vendor": {
+          "title": "Become a Vendor",
+          "shortcode": "[wpss_vendor_registration]",
+          "slug": "become-vendor",
+          "required": true
+        },
+        "checkout": {
+          "title": "Service Checkout",
+          "shortcode": "[wpss_checkout]",
+          "slug": "service-checkout",
+          "required": true
+        },
+        "cart": {
+          "title": "Service Cart",
+          "shortcode": "[wpss_cart]",
+          "slug": "service-cart",
+          "required": false
+        }
+      },
+      "registry": "wpss_get_page_definitions",
+      "required_helper": "wpss_get_required_pages",
+      "filter": "wpss_page_definitions",
+      "writers": [
+        "WPSellServices\\Core\\Activator::create_pages",
+        "WPSellServices\\Admin\\Settings::ajax_create_page"
+      ]
+    },
+    "_routing": "Sidebar + hash since 1.3.0: every section renders at once and assets/js/admin-settings-nav.js shows one based on location.hash. `?tab=<section>` is the PRE-1.3.0 addressing and is read by nothing server-side, so thirteen call sites across Free and Pro were silently dropping the admin on General (Basecamp 10208211769). The JS now honours ?tab= as a legacy fallback when there is no hash and rewrites it to a hash, because that arg survives in published docs, support replies and admins' bookmarks - places a code fix cannot reach. hashchange is also handled, so browser back/forward between sections works.",
+    "_url_builder": "wpss_get_settings_url( string $section = '' ) in src/functions/urls.php -- THE only way to link into settings. Validates against wpss_get_settings_sections() (filter: wpss_settings_sections) and drops unknown sections rather than emitting a hash that goes nowhere; 'gateways' was linked twice and has never been a section id (the tab is 'payments'). Pro declares its own sections through the filter (Pro::add_settings_sections adds 'branding'); adding a tab to the sidebar via wpss_settings_tabs is NOT enough.",
+    "_section_ids": "general, pages, payments (Payment Gateways), commission (Commission & Tax), payouts, vendor (Vendors), orders (Orders & Disputes), emails, advanced, + branding from Pro"
   },
   "shortcodes": {
     "count": 19,
@@ -572,9 +628,19 @@
         "name": "wpss_dashboard_section_before",
         "type": "action",
         "purpose": "Fires inside a dashboard section wrapper before its body renders; receives the section key"
+      },
+      {
+        "name": "wpss_catalog_price_html",
+        "type": "filter",
+        "purpose": "Catalog price HTML (service card, package tiers). Wraps the base amount in a .wpss-price span carrying data-wbcom-amount so a display-currency add-on can render an approximate price IN THE BROWSER. Deliberately separate from wpss_format_price, which serves settlement surfaces (orders, wallet, earnings, payouts) and must never carry a hint."
+      },
+      {
+        "name": "wpss_payable_total_after",
+        "type": "action",
+        "purpose": "Fires wherever a payable total is shown, before its pay/continue CTA - cart summary and standalone checkout, with (float $total, string $context). The last surface WPSS owns before payment hands off. Args are base currency; consumers state the charge, never replace it. NOT fired on a host platform's own checkout by design (see ecommerce_adapter_boundary)."
       }
     ],
-    "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 237 hook firings."
+    "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 237 hook firings. 1.6.0: wpss_offline_order_created now fires from BOTH offline entry points (cart checkout and pay-an-existing-order), so listeners no longer need to know which one the buyer used."
   },
   "frontend_assets": {
     "js_count_unminified": 23,
@@ -700,7 +766,7 @@
     "scan_path": ".",
     "php_file_count": 266,
     "_note": "Streamlined mode — produces summary-level manifest sufficient for CLAUDE.md auto-load context. Full enumeration of 138 REST endpoints, 106 AJAX handlers, 232 hooks deferred to a future refresh+rebuild pass. Coverage gates per sub-category not enforced. wppqa baseline + PCP scan results captured. graph.html, local-CI scaffold, scale benchmark, paired-plugin contract artefacts deferred.",
-    "refresh_note": "1.3.1 refresh (hand-edited; manifest_refresh: agent-enumeration-only — do NOT run write-manifest.mjs against this plugin, it undercounts REST 138->7 and clobbers the file). Deltas this cycle: (1) Payment ownership is exclusive — PaymentController registers only when wpss_uses_standalone_payments() (src/API/PaymentController.php:55), so /payments/* is absent whenever a cart adapter is active; switching rails never rewrites past orders. (2) New pay-order seam: helper wpss_get_pay_order_url() + filter wpss_pay_order_url (src/functions.php:3375/3391), the single source for 'pay THIS order' across tips, milestone phases, extensions, accepted proposals, order templates, REST checkout_url and emails. Only Pro's WCPayOrderResolver implements it; EDD/FluentCart/SureCart have no pay-order rail. (3) Minor-unit integers beside every money float. (4) Notification bodies plain text; HTML composed only for email. (5) REST: added GET /orders/{id}/timeline, GET /auth/devices, POST /reviews (alias), GET /portfolio, GET /media; REMOVED the dead accept|reject order actions from the /orders/{id}/{action} enum and with them the hooks wpss_order_accepted, wpss_order_rejected, wpss_order_delivered; deliver now routes through DeliveryService. (6) REST auth answers 401 vs 403 correctly via wpss_rest_require_login()/wpss_rest_require_admin() with one wpss_not_vendor code (bare boolean permission callbacks made anonymous callers read as rest_forbidden). (7) i18n build generates .mo/.json catalogs with a CI gate. Docs: docs-audit.py extended to scan docs/architecture, docs/qa and docs/decisions, to check 'Sell Services > X' menu paths as well as 'Settings > X' tabs, and to name the retired tab/menu labels explicitly."
+    "refresh_note": "1.3.1 refresh (hand-edited; manifest_refresh: agent-enumeration-only — do NOT run write-manifest.mjs against this plugin, it undercounts REST 138->7 and clobbers the file). Deltas this cycle: (1) Payment ownership is exclusive — PaymentController registers only when wpss_uses_standalone_payments() (src/API/PaymentController.php:55), so /payments/* is absent whenever a cart adapter is active; switching rails never rewrites past orders. (2) New pay-order seam: helper wpss_get_pay_order_url() + filter wpss_pay_order_url (src/functions.php:3375/3391), the single source for 'pay THIS order' across tips, milestone phases, extensions, accepted proposals, order templates, REST checkout_url and emails. Only Pro's WCPayOrderResolver implements it; EDD/FluentCart/SureCart have no pay-order rail. (3) Minor-unit integers beside every money float. (4) Notification bodies plain text; HTML composed only for email. (5) REST: added GET /orders/{id}/timeline, GET /auth/devices, POST /reviews (alias), GET /portfolio, GET /media; REMOVED the dead accept|reject order actions from the /orders/{id}/{action} enum and with them the hooks wpss_order_accepted, wpss_order_rejected, wpss_order_delivered; deliver now routes through DeliveryService. (6) REST auth answers 401 vs 403 correctly via wpss_rest_require_login()/wpss_rest_require_admin() with one wpss_not_vendor code (bare boolean permission callbacks made anonymous callers read as rest_forbidden). (7) i18n build generates .mo/.json catalogs with a CI gate. Docs: docs-audit.py extended to scan docs/architecture, docs/qa and docs/decisions, to check 'Sell Services > X' menu paths as well as 'Settings > X' tabs, and to name the retired tab/menu labels explicitly. || 1.6.0 delta (cards 10208094640 + 10208199238): ServiceOrder::get_service() guards service_id <= 0 and post_type (get_post(0) returned the global post, so proposal/sub-orders resolved their service to the rendering page); new wpss_get_order_subject() is the single resolver for an order's subject line across the admin list, admin order detail, admin dashboard and frontend order view; new wpss_record_pending_payment_method() records the chosen rail on an unsettled order and is called by both offline entry points (AJAX checkout + REST /payments/create-intent), which previously left payment_method NULL and made the order impossible to confirm. No REST routes added or removed; PaymentController::create_offline_order can now answer 500 wpss_payment_method_not_recorded. || 1.6.0 delta (cards 10208211608 + 10208142348, one shape: a guard hid a CTA and nothing replaced it): admin order detail now surfaces the order's dispute via DisputeService::get_by_order() (loud while unresolved, quiet once closed, with an explicit warning when a Completed order still carries a live dispute); the order page's review block now renders the submitted review instead of nothing, gates the CTA and the modal on the single ReviewService::can_review() authority so the review window is respected, and explains itself when the CTA is withheld. New shared partial templates/partials/review-body.php renders a Review model and is used by both the order page and the public reviews list, which previously had its own inline copy reading raw columns. || 1.6.0 delta (card 10208211769): new wpss_get_settings_url() + wpss_get_settings_sections() (filter wpss_settings_sections); all 13 `&tab=` settings deep links in Free and Pro converted to hash routing, and FIVE of them additionally pointed at the wrong section - verified against each feature's real settings render hook, not the old link (Stripe Connect and Razorpay named 'gateways' which never existed -> payments; PayPal Payouts payments -> payouts; Tiered Commission payments -> commission; Recurring Services vendor -> orders). admin-settings-nav.js gained legacy ?tab= support and hashchange handling; .min rebuilt. || 1.6.0 delta (card 10208142467): Become a Vendor now gates on wpss_is_vendor() instead of the raw _wpss_is_vendor meta, which was falsy for every role-granted vendor; VendorService::is_vendor() delegates to the same helper instead of re-deriving role-then-meta (it was missing the capability path and the wpss_is_vendor filter); a dead raw-meta read removed from AjaxHandlers::save_profile. || 1.6.0 delta (card 10208075268): the unread COUNT was correct and invisible - the badge's text-indent: -999999px rendered it as a bare dot, so it now shows the number (capped at 99+) with a title/screen-reader label naming whose messages it counts; badge suppressed on closed threads so the badges sum to the banner; the messages list is paginated via new count_conversations_for_user() + the wpss_messages_per_page filter, using an explicit wpss_paged arg because the default pretty base 404s on the section-routed dashboard; dead ConversationRepository::create_conversation()/add_message() removed, eliminating a second participants shape and an array_keys() iterator that would have credited unread to users 0 and 1. || 1.6.0 delta (card 10208199338): the leftover published /create-service/ page - a virtual route that older installs materialised as a real, empty page - now 302s to the dashboard create section where the wizard actually lives, and is de-indexed and dropped from the sitemap. Implemented by generalising the existing dormant-page mechanism (get_dormant_store_page_ids -> get_dormant_page_ids, now memoised) rather than adding a second redirect path; a page the owner has mapped in Settings > Pages is exempt. || 1.6.0 delta (card 10207973462): new WPSS.syncStickyTop() measures the real pinned chrome (admin bar + theme header, which stack) into --wpss-sticky-top instead of assuming admin-bar-only, as a floor over the CSS value so no-theme-header sites are unchanged; recomputed on resize/scroll/load; new wpss_sticky_top_offset PHP filter for headers the measurement cannot see. || 1.6.0: losing-bidder emails suppressed for the hire-someone-else path (in-app only, owner decision); explicit rejections still email. Verified live: hiring 1 of 3 proposals produced 2 in-app 'Proposal not selected' notifications, 1 acceptance notification and exactly 1 email (the winner's); an explicit reject produced 1 email + 1 notification. || 1.6.0 delta (card 10138985537): new js-fallback check in bin/i18n-verify.py (both plugins, byte-identical) catching a localized-key fallback whose PHP key no longer exists; new jsFallbackAllowedKeys config; Pro's CI now runs the i18n gate it already shipped but never executed; Pro POT regenerated. || 1.6.0 delta (card 10208511245): dual H1 on cart and dashboard fixed - `cart` added to ShellHeader's shell surfaces and the in_the_loop() requirement dropped from the_title suppression (BuddyX renders its entry-title outside the loop); new restore_nav_menu_item_title() repairs the one nav-menu label suppression would blank; the cart shortcode's logged-out and rail-redirect branches and the dashboard's login prompt now render ShellHeader::render(), since adding a page to the shell means it must have its own H1 in EVERY branch. checkout/become_vendor/vendors_page deliberately NOT added - they have only the theme's H1. || 1.6.0 RFD card 10163575694: account-at-checkout (setting wpss_general[checkout_account_creation], OFF by default). New wp_ajax_nopriv_wpss_checkout_create_account; PublicSignup::create_account() is now the single account path and REST /auth/register delegates to it with username/password optional; RateLimiter gains 'checkout_account'. ALSO FIXED, found while testing: sanitize_general() defaulted absent keys, so ANY partial update_option('wpss_general') silently reset platform_name, currency, checkout_badges_enabled and - critically - ecommerce_platform to 'auto', moving the site's PAYMENT RAIL. Reproduced by a one-key `wp option patch`, which flipped a standalone site to EDD."
   },
   "portfolio_standards": {
     "account_billing_layer": "~/.claude/workflows/wbcom-account-billing-standard.md — LOCKED 2026-07-22. Applies to EVERY Wbcom plugin that takes money, not just this one. Billing identity lives on the USER via WooCommerce's billing_* meta keys (plus billing_gst, which Woo lacks), so one address is shared across Learnomy, Eventonomy, WP Sell Services, Career Board, Listora and BuddyNext with no cross-plugin dependency. Orders snapshot the address at payment so invoices cannot be rewritten by a later profile edit. Gateways CONSUME the values, never render or own them. Country and currency lists must be COMPLETE and come from one helper each — a partial list silently excludes customers rather than failing visibly. This plugin is the reference implementation.",
@@ -710,9 +776,217 @@
   "hooks": {
     "actions_fired": 128,
     "filters_exposed": 152,
-    "_note": "Unique do_action()/apply_filters() literals in src/. Enumerated by hand for 1.3.1."
+    "_note": "Unique do_action()/apply_filters() literals in src/. Counts enumerated by hand for 1.3.1 and NOT re-counted since; treat as indicative, not exact. key_extension_hooks below is maintained per-change and is authoritative for documented seams."
   },
   "cli": {
-    "command_count": 6
+    "command_count": 6,
+    "api_shapes_command": "wp wpss api:shapes - audits every registered GET route for ISO dates and the shared actor shape; exits non-zero. See api_shapes.scanner.",
+    "demo_marketplace_flags": "The synopsis declares [--images] (default true), NOT [--no-images]. WP-CLI strips the no- prefix while parsing and then looks for an `images` parameter, so declaring the negative form made the documented `--no-images` example fail with 'unknown --images parameter' from the day it shipped (Basecamp 10212618689). Declaring the positive flag is what makes the negative spelling work."
+  },
+  "notifications": {
+    "_note": "In-app notifications live in {prefix}wpss_notifications. NotificationService::create() is the ONE writer (it also persists action_url, the deep link) and NotificationService::send() maps a type to its title/body copy -- add a `case` there for any new type or it silently renders the generic 'You have a new notification.' fallback. Domain event -> notification wiring lives in Plugin::define_notification_hooks(). A type that emails via EmailService MUST also be listed in NotificationService::is_email_service_handling()'s $covered_types, or the recipient gets the branded mail plus a plain duplicate.",
+    "table": "{prefix}wpss_notifications",
+    "writer": "WPSellServices\\Services\\NotificationService::create",
+    "copy_registry": "WPSellServices\\Services\\NotificationService::send",
+    "event_wiring": "WPSellServices\\Core\\Plugin::define_notification_hooks",
+    "duplicate_email_guard": "WPSellServices\\Services\\NotificationService::is_email_service_handling",
+    "render_partial": "templates/partials/notifications-list.php",
+    "deep_link_column": "action_url (written by create() from $data['action_url'], rendered as the row title link)",
+    "known_drift": "Notification::get_icon() is keyed on TYPE_* constants ('order_new', 'message_new') that are largely never written; the live icon map is in the render partial. Unifying them is an open item.",
+    "losing_bidder_policy": "Owner decision 2026-08-17: a seller who loses because someone else was hired gets an IN-APP notification and NO email. Before 1.6.0 reject_other_proposals() bulk-UPDATEd their rows and fired nothing, so they were told nothing at all; fixing that meant hiring on a request with 200 proposals would fire 199 notifications AND 199 emails inside the buyer's single click - enough to time the request out and to trip a host's mail limit. ProposalService::reject_other_proposals() sets `wpss_not_selected = true` on the proposal it passes to wpss_proposal_rejected, and EmailService::send_proposal_rejected() returns early on it. NotificationService does not, so every loser is still told. An EXPLICIT rejection (ProposalService::reject(), where the buyer picked that seller and usually wrote a reason) still emails - one message, not a burst. Deliberately a property rather than a second action name: wpss_proposal_rejected has been the event since 1.0.0 and Pro / customer listeners must keep firing, and a fourth argument would not reach EmailService, whose handler is registered with three."
+  },
+  "disputes": {
+    "_note": "A dispute conversation is ONE store: {prefix}wpss_dispute_messages. It used to be two -- the opening statement and admin replies in that table, member evidence in the disputes row's `evidence` JSON -- and each surface read only one, so members saw 'No messages yet' on a thread the admin could read in full, and admins never saw member evidence. DisputeService::add_evidence() writes the table; get_evidence() reads it and is the single reader (DisputeWorkflowManager::get_timeline() consumes it rather than querying again, or every message would appear twice). The `evidence` column now holds ONLY status_note entries written by update_status() -- dispute status history, not conversation. Legacy rows are moved by DisputeService::migrate_evidence_to_messages(), gated on the wpss_dispute_evidence_migrated option.",
+    "conversation_table": "{prefix}wpss_dispute_messages",
+    "writer": "WPSellServices\\Services\\DisputeService::add_evidence",
+    "reader": "WPSellServices\\Services\\DisputeService::get_evidence",
+    "timeline": "WPSellServices\\Services\\DisputeWorkflowManager::get_timeline",
+    "backfill": "WPSellServices\\Services\\DisputeService::migrate_evidence_to_messages (option wpss_dispute_evidence_migrated)",
+    "legacy_evidence_column": "wpss_disputes.evidence — status_note entries only after 1.6.0",
+    "schema_version": "DB_VERSION 1.6.1 adds message_type + description + idx_dispute_created",
+    "surfaces": [
+      "templates/dashboard/sections/disputes.php (member thread + reply form)",
+      "src/Admin/Admin.php (admin detail)",
+      "src/API/DisputesController.php (evidence endpoints)",
+      "src/Admin/Admin.php (admin ORDER detail banner)"
+    ],
+    "order_surface": "src/Admin/Admin.php::render_order_detail -- dispute banner on the order itself (notice-error while open/pending_review/escalated, notice-info once resolved/closed), via DisputeService::get_by_order(). A dispute does NOT force the order's status, so a Completed order can carry an open dispute; this screen previously showed status, messages, deliveries and refund controls with no mention of it (Basecamp 10208211608).",
+    "reason_column_is_free_text": "wpss_disputes.reason holds free text on real installs ('Quality issue', 'rft'), not only the Dispute::REASON_* keys. Any label lookup MUST fall through to the raw value -- confirmed against sandbox rows, which contradicted the enum the code implies."
+  },
+  "orders": {
+    "_note": "An order does not always point at a service post. Buyer-request orders are sold off a proposal and every sub-order (tip, extension, milestone) hangs off a parent, so all of them carry service_id = 0 BY DESIGN. get_post( 0 ) returns the GLOBAL $post rather than null, so ServiceOrder::get_service() used to resolve those orders' \"service\" to whatever page was rendering -- on the checkout page a proposal order reported the checkout page as its service (title \"Service Checkout\", form posting the page ID as service_id), and in wp-admin, where there is no global post, the same orders read \"Deleted\". Every `if ( ! $service )` fallback in the plugin was therefore unreachable. get_service() now guards service_id <= 0 and checks post_type, and one resolver -- wpss_get_order_subject() -- answers \"what is this order for\" for all four surfaces that used to answer it differently.",
+    "service_resolver": "WPSellServices\\Models\\ServiceOrder::get_service (returns null for service_id <= 0; requires post_type wpss_service)",
+    "subject_resolver": "wpss_get_order_subject( object $order, string $context = 'public'|'admin' ) in src/functions/orders.php",
+    "subject_resolution_order": [
+      "sub-order (tip/extension/milestone) -> parent order relationship",
+      "platform 'request' -> the wpss_request post, else meta.proposal_snapshot.request_title, else 'Buyer request'",
+      "service_id <= 0 on a catalog order -> 'No service linked' (data integrity, not a deletion)",
+      "service post missing -> 'Deleted service #N'",
+      "otherwise -> the service post"
+    ],
+    "subject_surfaces": [
+      "src/Admin/Tables/OrdersListTable.php::column_service (admin list)",
+      "src/Admin/Admin.php (admin order detail + admin dashboard Recent Orders)",
+      "templates/order/order-view.php (frontend order detail)"
+    ],
+    "subject_known_drift": "templates/dashboard/sections/orders.php and sales.php still build their own card title. They are correct (they guard service_id before get_post and fall back to the request post) and add milestone phase titles the resolver does not own, so they were left alone -- but they remain a second implementation of the same label.",
+    "pending_payment_method_writer": "wpss_record_pending_payment_method( int $order_id, string $method ) in src/functions/payments.php",
+    "pending_payment_method_note": "Gateways normally write payment_method as a side effect of mark_as_paid(). Offline does not settle in-request, so both of its pay-an-existing-order entry points (OfflineGateway::ajax_create_order and PaymentController::create_offline_order) go through this one guarded, idempotent writer. Leaving it NULL was a dead end, not a cosmetic gap: OfflineGateway::render_admin_order_actions(), PaymentReceiptService::can_submit() and the payment instructions all key off payment_method === 'offline', so the order could never be confirmed by anyone.",
+    "payment_settlement_authority": "StandaloneOrderProvider::mark_as_paid -- the only writer of payment_status/paid_at; wpss_record_pending_payment_method never touches them",
+    "earnings_credit_timing": "CommissionService::record() on transition to completed, not at payment (escrow model)"
+  },
+  "reviews": {
+    "_note": "The order page's review block was `if ( ! $review_exists )` with no else, so the moment a buyer submitted a review the order went silent about it - the buyer's own review was invisible to the buyer on the only page they would look for it. The same seven lines also ran a raw $wpdb query for a question ReviewService already owns, and gated the CTA WITHOUT the review window, so after the window closed the button still invited a review the server would then refuse. can_review() is now the single authority on both the CTA and the modal, and its `reason` string is rendered when the CTA is withheld.",
+    "gate_authority": "WPSellServices\\Services\\ReviewService::can_review( int $order_id, int $reviewer_id ): array{can_review: bool, reason: string} -- enforces completed + ownership + no-existing-review + within window",
+    "reader": "WPSellServices\\Services\\ReviewService::get_by_order",
+    "window": "wpss_orders[review_window_days], default 30, 0 = unlimited; filter wpss_review_window_days",
+    "shared_partial": "templates/partials/review-body.php -- author/stars/date header + content + seller response, takes a Review MODEL",
+    "shared_partial_consumers": [
+      "templates/order/order-view.php (buyer sees 'Your Review', vendor sees 'Buyer Review')",
+      "templates/partials/service-reviews.php (public list; wraps raw rows with Review::from_db and keeps its own Helpful control)"
+    ],
+    "model_shape_note": "The reviews table columns and the model properties differ by name: review -> content, vendor_reply -> response, vendor_reply_at -> response_at, reviewee_id -> reviewed_id. There is NO title column. The public list used to read raw columns and used customer_id for the avatar while gating Helpful on reviewer_id - two names for one author on one screen. Everything now goes through Review::from_db()."
+  },
+  "vendor_identity": {
+    "_note": "`_wpss_is_vendor` user meta is a LEGACY marker, not the answer to 'is this a vendor'. Vendors created by role assignment, by an admin, by the demo seeder, or by anything granting the wpss_vendor role do not carry it - on this sandbox that is EVERY vendor (all hold the role, none hold the meta). Reading the meta directly therefore answers 'not a vendor' for real sellers. The Become a Vendor page did exactly that and offered active sellers 'Register as Vendor' while their dashboard, services and earnings all worked (Basecamp 10208142467).",
+    "canonical_check": "wpss_is_vendor( ?int $user_id = null ) in src/functions/vendors.php -- capability wpss_vendor, then the wpss_vendor role, then the legacy meta, then the wpss_is_vendor filter",
+    "service_wrapper": "VendorService::is_vendor() delegates to wpss_is_vendor() as of 1.6.0. It previously checked role-then-meta itself, missing the capability path and the filter, so a capability-only vendor was a vendor everywhere except the dashboard and the service wizard.",
+    "legitimate_meta_writers": [
+      "VendorService::register() / approve paths (write both role and meta)",
+      "Admin::… vendor creation",
+      "Plugin.php admin self-heal (_wpss_vendor_checked fast path)"
+    ],
+    "rule": "Never read `_wpss_is_vendor` to gate a surface. Read it only when repairing or writing it."
+  },
+  "messaging": {
+    "_note": "The reported symptom (Basecamp 10208075268) was 'unread banner inflated; threads show own outbound as unread'. The COUNT was never wrong: Sofia's 15 was 9 + 6, and both were verified against sender_id counts to be messages from the other party. What was wrong was that the count was INVISIBLE - assets/css/unified-dashboard.css rendered the badge as a 12px dot with text-indent: -999999px, so the template wrote a number the stylesheet threw away. A dot beside a preview of your own last message reads as 'your own message is unread'.",
+    "participants_shape": "ONE shape: a flat JSON list of user ids, [24,13]. Written by ConversationService::create_for_order() and create_direct().",
+    "unread_writer": "ConversationService::send_message() - increments unread_counts for every participant except the sender",
+    "unread_readers": [
+      "ConversationRepository::count_unread_for_user (banner; excludes is_closed = 1)",
+      "ConversationRepository::count_unread_for_order",
+      "Conversation::get_unread_count"
+    ],
+    "mark_read": "ConversationRepository::mark_read - zeroes the user's unread_counts entry and stamps read_by on each message not sent by them",
+    "removed_in_1_6_0": "ConversationRepository::create_conversation() and ::add_message() are GONE. Both had zero callers and between them held a second, incompatible participants shape (a MAP keyed by user id, array_fill_keys(...)) plus an iterator built on it: add_message() used foreach ( array_keys( $participants ) ), which on the real LIST shape yields the indices 0 and 1 - so if anything had ever called it, unread would have been credited to users 0 and 1 forever and never to the recipient. count_unread_for_user()'s docblock advertised the dual format and has been corrected.",
+    "pagination": "count_conversations_for_user() + get_conversation_summary( $user_id, $limit, $offset ). The dashboard list was a hardcoded LIMIT 20 with no OFFSET, COUNT or navigation while the banner counted every conversation - one way a correct banner reads as inflated. Per page is filterable via wpss_messages_per_page (default 20).",
+    "pagination_query_arg": "wpss_paged, NOT paged. The dashboard is a singular page with section routing (/dashboard/messages/), so WordPress does not populate `paged` and wpss_render_pagination()'s default pretty base (/dashboard/messages/page/2/) 404s - confirmed in the browser. The messages list passes an explicit base + format. NOTE: [wpss_my_orders] (src/Frontend/Shortcodes.php) still uses get_query_var('paged') with the default base and very likely has the same 404 when hosted on a page; not touched by this card.",
+    "closed_conversations": "Shown in the list (history stays reachable) but never carry an unread badge, because count_unread_for_user() excludes them. Without that suppression the badges on screen and the banner disagreed."
+  },
+  "dormant_pages": {
+    "_note": "WPSS pages that are published but have nothing behind them. Never unpublished - old bookmarks, emailed ?pay_order=N links and the pages' own IDs still have to resolve - so they are 302'd to the live target, marked noindex and dropped from the WP core sitemap. A page an owner has MAPPED in Settings > Pages is never treated as dormant.",
+    "resolver": "WPSellServices\\Core\\Plugin::get_dormant_page_ids (memoised per request; was get_dormant_store_page_ids, renamed in 1.6.0 when it stopped being cart/checkout-only)",
+    "hooks": [
+      "template_redirect:1 -> redirect_dormant_store_pages",
+      "wp_robots -> filter_dormant_store_page_robots",
+      "wp_sitemaps_posts_query_args -> exclude_dormant_store_pages_from_sitemap"
+    ],
+    "causes": {
+      "cart + checkout": "Seeded by the installer for the standalone rail and never removed, so they sit empty whenever WooCommerce/EDD/FluentCart/SureCart owns payment. Dormant ONLY on a non-standalone rail. Checkout resolves ?pay_order=N through wpss_get_pay_order_url() first so an emailed link reaches that order's real payment page.",
+      "create_service": "`create_service` is a VIRTUAL route: the dashboard renders it and it is deliberately absent from wpss_get_page_definitions(), so no current install creates a page. Installs upgraded from a version that DID create one keep a published, empty, unmapped page rendering no wizard (Basecamp 10208199338). Dormant on EVERY rail, and redirected to wpss_get_create_service_url() = the dashboard's create section."
+    },
+    "loop_guard": "url_to_postid( $target ) === current page aborts the redirect, so a misconfiguration cannot loop."
+  },
+  "sticky_offset": {
+    "_note": "--wpss-sticky-top was admin-bar-only (32 / 64 / 78px) and knew nothing about the THEME's header, so every sticky WPSS surface pinned underneath a fixed theme header. Measured on BuddyX with its sticky header (which is ON by default, and becomes fixed once scrolled): header fixed at top 32px, 79px tall, occupying 32-111px, while the service sidebar pinned at 64px - 47px of it, including the package tabs, sat behind the header (Basecamp 10207973462).",
+    "mechanism": "WPSS.syncStickyTop() in assets/js/frontend.js measures every fixed/sticky top bar and writes the total into --wpss-sticky-top on <body>.",
+    "why_not_css": "The offset depends on a third party's header: it varies per theme, per breakpoint, and usually only becomes fixed (or changes height) on scroll. A selector cannot ask for it.",
+    "design_rules": [
+      "Bars STACK: on an admin-bar site a fixed theme header sits at top: 32px, not 0. The measurement walks bars sorted by top and grows the region only while each starts where the last ended. A naive 'is it at the very top' test missed the header entirely - that was the first attempt, caught in the browser.",
+      "The result is a FLOOR over the CSS value, never a replacement, so a site with no theme header keeps exactly today's offset (verified: 64px, no inline override written).",
+      "Written to <body>, not :root - `.admin-bar` declares the variable on body, and a property on a descendant beats one on the ancestor.",
+      "WPSS's own sticky surfaces (STICKY_SURFACES) are excluded or the sidebar would measure itself and walk down the page.",
+      "Overlays, drawers and full-screen menus are excluded by height (> 40% of the viewport) and width (< 50%).",
+      "Recomputed on resize, scroll (rAF-throttled) and load, because themes shrink their header on scroll and a header measured before its webfont loads is short."
+    ],
+    "gap": "16px of breathing room is added below the measured chrome.",
+    "filter": "wpss_sticky_top_offset (PHP, int px, default 0) - localized as wpssData.stickyTopOffset and ADDED to the measurement. The escape hatch for headers JS cannot see: positioned by transform, inside a shadow root, or another plugin's floating toolbar.",
+    "consumers": "design-system.css .wpss-sticky, single-service.css, orders.css, vendor-dashboard.css, buyer-request.css, messaging.css (viewport-height maths), frontend.css"
+  },
+  "i18n": {
+    "_note": "Translation-READINESS (every user-facing string extractable and loadable), not shipped locales - shipping .po/.mo packs is out of scope. Basecamp 10138985537.",
+    "gate": "bin/i18n-verify.py, byte-identical in Free and Pro, driven by .i18n-config.json in each plugin root",
+    "checks": {
+      "version-drift": "plugin header / POT Project-Id-Version / package.json / readme Stable tag must agree",
+      "stale-pot": "POT regenerated and diffed against source strings",
+      "text-domain": "every gettext call uses this plugin's domain",
+      "script-i18n": "every registered script handle has wp_set_script_translations",
+      "js-fallback": "NEW in 1.6.0: a JS `l10n.key || 'English'` whose key nothing localizes. The pattern is correct and deliberate - PHP owns the string, JS keeps a literal so a missing payload does not render `undefined`. It becomes permanent untranslatable English the moment the PHP key is renamed or dropped, and nothing looks broken. 54 had accumulated by 1.6.0 and were removed by hand; this is the check that stops them returning. Allowlist: jsFallbackAllowedKeys."
+    },
+    "ci": "Free: project-gates job. Pro: i18n-gate job, ADDED in 1.6.0 - Pro shipped the identical script in bin/ and never ran it, so its POT could go stale and its versions drift with a green build.",
+    "js_string_strategy": "JS strings come from PHP via wp_localize_script (wpssData.i18n, wpssStripe.i18n, wpssRazorpay.i18n, ...), so they translate from the .mo with NO .json catalog needed. wp.i18n is used directly only in blocks.js/blocks-frontend.js. languages/*.json is generated by grunt i18n:json from .po files; with no shipped locales there are none to convert, which is the correct state, not a gap.",
+    "pro_script_pattern": "Every Pro script with strings goes through Assets\\ScriptRegistry::register/enqueue, which pairs wp_register_script with wp_set_script_translations atomically. Only third-party vendor libraries (lucide, chartjs, razorpay-checkout) are registered raw - they carry no translatable strings. Pro registers the FREE plugin's `wpss-icons` handle through FREE's registrar, so those strings resolve against the free domain.",
+    "verified_2026_08_17": "Compiled a de_DE .mo for each plugin from its own POT and forced the locale. PHP: review CTA rendered '[de] Bewerten Sie Ihre Erfahrung' / '[de] Bewertung schreiben'. JS: wpssData.i18n.loading came back '[de] Wird geladen...', proving the PHP-localized JS path translates without JSON catalogs. Pro: the welcome page's Recurring Services badge rendered '[de] Demnaechst verfuegbar'. All scaffolding removed afterwards."
+  },
+  "shell_header": {
+    "_note": "One <h1> per plugin surface. The theme prints the WP page title as <h1 class=\"entry-title\">; several plugin templates print their own. ShellHeader suppresses the theme's on surfaces where the plugin owns the heading (Basecamp 10208511245).",
+    "class": "WPSellServices\\Frontend\\ShellHeader, booted from Frontend::__construct on front-end requests",
+    "shell_surfaces": "wpss_is_page() for dashboard, services_page, cart -- ONLY pages that print their own H1 -- plus singular/archive wpss_service, its two taxonomies, singular/archive wpss_request, and the wpss_vendor query var.",
+    "precondition": "A page may only be added to the shell list once it renders its OWN heading. checkout, become_vendor and vendors_page are deliberately EXCLUDED: each has a single correct H1 today and it is the theme's, so suppressing it would leave the page with none. The card asked for all four to be added; three of them would have been a regression.",
+    "auth_states_matter": "The precondition must hold in EVERY branch, not just the happy path. Adding `cart` exposed two headingless pages: the cart shortcode's logged-out and rail-redirect branches returned before the template's H1, and UnifiedDashboard::render_login_prompt() only had an H2. Both now render ShellHeader::render().",
+    "suppression": "the_title filter. Guarded on is_main_query() + the id matching get_queried_object_id(). It does NOT require in_the_loop(): BuddyX renders its entry-title from a template part OUTSIDE the loop (probed: the_title fired 4x for the queried page, 3 of them with in_the_loop() false, and the heading that reached the screen was one of those).",
+    "nav_menu_repair": "ShellHeader::restore_nav_menu_item_title on wp_setup_nav_menu_item. wp_setup_nav_menu_item() builds a page item's label with get_the_title( $object_id ) -- same id, same filter -- so suppression made the menu's own 'Dashboard' item render as '#153 (no title)' while on the dashboard. The label is restored from the RAW post_title, only for the item pointing at the queried page, and only when the item carries no hand-written label of its own (read from the nav_menu_item post, since core may already have overwritten post_title with its placeholder).",
+    "rejected_approaches": [
+      "A flag set around wp_nav_menu() to exempt menus: depends on when a theme renders its menu relative to its title. On BuddyX the flag was still set when the entry-title rendered, so the duplicate H1 returned. Measured, then abandoned.",
+      "Hiding .entry-title with CSS on the wpss-plugin-shell body class: leaves both headings in the accessibility tree, which is the actual defect."
+    ],
+    "unaffected": "Document <title> and BuddyX's breadcrumb current-page label both come from single_post_title(), which does not run through the_title. Breadcrumb ancestors, related-service cards and widgets carry other post ids and are guarded by the id match. All verified.",
+    "filter": "wpss_suppress_theme_title (bool) -- every return path in is_shell_surface() goes through it via filter_shell_surface(), so an early return cannot skip a site's override.",
+    "verified_2026_08_17": "7 surfaces x logged-in and anonymous = 14 renders, each with exactly ONE h1, menu labels intact and no '(no title)' anywhere: cart 'Your Cart' (both states), checkout/become-a-vendor/vendors theme H1 untouched, dashboard 'Sales Orders' signed in and 'Access Your Dashboard' anonymous, services archive 'All Services', single service its own title."
+  },
+  "checkout_account_creation": {
+    "_note": "Basecamp 10163575694. There is NO guest order, by decision: after paying, a buyer must submit requirements, message the seller, review a delivery, request revisions and possibly open a dispute - all of which need an identity. An order with customer_id = 0 could not be fulfilled, and order access is checked as customer_id === get_current_user_id(), so a logged-out visitor IS user 0 and such an order would be readable by every logged-out visitor. Instead the sign-in WALL is removed and the account is created from the billing details the form already collects.",
+    "setting": "wpss_general['checkout_account_creation'], default OFF; helper wpss_checkout_creates_accounts(); filter of the same name",
+    "no_new_fields": "billing_first_name, billing_last_name and billing_email are the three LOCKED billing fields (wpss_get_required_billing_fields) - locked precisely because an order must be attributable to someone contactable. Checkout therefore gains no new inputs; the account is built from what the buyer was already typing.",
+    "account_path": "WPSellServices\\Frontend\\PublicSignup::create_account() - THE single account-creation path. The inline signup form, the checkout step and REST /auth/register all call it. AuthController::register() had its own wp_insert_user (no first/last name, no show_admin_bar_front, no wpss_public_signup_complete for Pro) and now delegates.",
+    "endpoint": "wp_ajax_nopriv_wpss_checkout_create_account -> PublicSignup::ajax_checkout_account(). Called by the checkout form BEFORE the payment request, so the order is inserted against a real customer_id.",
+    "session_token_trap": "wp_set_auth_cookie() only sends Set-Cookie; it does not touch $_COOKIE. wp_create_nonce() hashes wp_get_session_token(), which reads the logged-in cookie FROM $_COOKIE - so a nonce minted straight after signing in is built against an empty token while the browser's next request carries a real one, and the nonce fails. Hit on the first run: account created, fresh nonce returned, payment died on 'Security check failed'. create_account() now creates the session token explicitly, passes it to wp_set_auth_cookie() and writes $_COOKIE[LOGGED_IN_COOKIE].",
+    "nonce_swap": "The endpoint returns a fresh wpss_checkout nonce and the client swaps it before paying: WP nonces are user-bound, so the one rendered for a logged-out visitor stops verifying the instant they are signed in.",
+    "email_collision": "email_exists() -> 409 with code account_exists, a message and a login_url. No account, no order, NO charge. Attaching the order to the existing account would let anyone who knows an email drop an order into that person's history. The login URL is validated same-host, and the buyer gets a link rather than a redirect so a filled-in checkout is not thrown away. Owner-approved default.",
+    "rate_limit": "RateLimiter 'checkout_account', 20/hour keyed by IP. Deliberately generous: the key is an IP and behind CGNAT that can be a whole town, which is the customer this was asked for. Raise via wpss_rate_limits.",
+    "scope": "Single-service checkout ONLY. The multi-item cart checkout keeps its sign-in wall because a logged-out visitor cannot have a cart at all: _wpss_cart is user meta and add-to-cart requires login.",
+    "password": "Never asked for. create_account() generates one and wp_new_user_notification() sends WordPress's own set-password mail - core's, because it carries a single-use key and re-implementing that is how resets get broken.",
+    "verified_2026_08_17": "Logged-out purchase of service 544 with the offline rail: account created (display name from billing first+last), signed in, order 3171 inserted with customer_id = 71, payment_method recorded, order visible in the buyer's own dashboard with payment instructions, billing + first_name/last_name meta persisted, role subscriber, set-password mail sent. Collision: same email again stayed on checkout with the login link, no duplicate user, no order, no charge. Setting OFF: wall returns and the endpoint answers 403. Rate limit blocks attempt 21. REST /auth/register works with email only and returns an app-password token. 390px: note and fields full-width, no horizontal scroll."
+  },
+  "api_shapes": {
+    "_note": "Basecamp 10154919636. The API described the same thing differently depending on which endpoint you asked, so a client could not write one parser. Three shapes were in play: an actor, a date, and a service card. Every fix here is ADDITIVE - no key was removed or retyped - because src/API/API.php's contract_version rule is explicit that bumping bricks every build already shipped.",
+    "user_shape": "wpss_rest_user() - one actor shape {id,name,avatar,deleted} everywhere. Routed in 8d8b4cd (services[].vendor, order vendor/customer) and extended here.",
+    "date_shape": "RestController::format_datetime() for controllers, wpss_rest_date() for the global shape helpers. Both emit ISO-8601 with offset. Ten emissions across NotificationsController, ReviewsController, DisputesController, BuyerRequestsController, ProposalsController and VendorsController were emitting bare 'Y-m-d H:i:s' with no zone, so a client needed two parsers and had to GUESS the timezone for half the API. DisputesController carried a third implementation of its own (a local $format_date closure) - removed. Second pass: /me and /auth/me emitted user_registered raw (API.php, AuthController::format_user) - missed first time because the audit probed collection endpoints only. Both now ISO.",
+    "card_shape": "wpss_rest_service_card() in src/functions/rest.php - THE service card. ServicesController::prepare_item_for_response() used to write this inline, which is why FavoritesController could not reuse it: the pieces were PRIVATE methods on the controller, so /favorites invented a `thumbnail` string, a flat `price` and a flat `rating` float instead. The three private methods (get_service_images, get_service_rating, prepare_terms_for_response) are now global (wpss_rest_service_images, wpss_rest_service_rating, wpss_prepare_term_for_rest) and the controller delegates. Verified byte-identical: /services returns the same 16 keys with the same sub-shapes as before the extraction. /favorites now returns all 16 canonical keys, with its legacy thumbnail/price/price_minor/currency merged ON TOP so nothing shipped breaks.",
+    "contract_version": "NOT bumped. Per src/API/API.php: bump when a FIELD changes shape or meaning, never for a value change. An ISO date in a field that already held a date is a value change. Clients refuse a contract newer than the one they understand, so a bump would brick shipped builds.",
+    "residual_difference": "ONE key could not be unified: /favorites `rating` is a float where the canonical shape is {average,count}. Same name, different TYPE - the one case where additive is impossible, since a client calling rating.toFixed() would crash on an object. Stays a float until the next contract_version bump; deleting the four lines in FavoritesController is the whole fix. It also reads the cached _wpss_rating_average meta where the canonical shape counts approved reviews live, so the two can disagree. Second, smaller: /favorites `excerpt` stays trimmed to 20 words where /services returns it whole - lengthening text a shipped app already lays out is not a silent change.",
+    "html_in_json": "KEPT, not removed - reviews.review_html/created_human/vendor_reply_html/vendor_reply_human and messages.html. Removing a key is a shape change and would brick shipped builds. Not needed anyway: core's _fields query arg already trims them, measured over real HTTP at 8547->1825 bytes on /reviews (79% smaller) and 26867->6829 on /conversations/{id}/messages (75%). NOTE _fields is applied in rest_post_dispatch, which rest_do_request does NOT run - testing it through wp eval-file shows no reduction and is a false negative. Test over HTTP.",
+    "qa_bounce_2026_08_18": "QA failed the first pass and was right on both counts. (1) DATES: two more routes still emitted MySQL - /earnings/history completed_at and /withdrawals created_at/processed_at, both named in the card body. The root cause of the miss was the AUDIT SET, not the fix: it probed 9 collection endpoints. Re-done as an exhaustive scan of all 115 registered GET routes over real HTTP, which found NINE routes still emitting MySQL, not two: audit-log, earnings/history, milestones/{id}, moderation/pending, orders/{id}/timeline, portfolio, vendors/{id}/portfolio, wallet/withdrawals (Pro) and withdrawals. All converted; re-scan reports 0. (2) ACTORS: the claim 'all seven spellings route through wpss_rest_user()' was an overclaim - only services/orders did. /reviews had flat vendor_id/vendor_name with no vendor_avatar (the exact gap the card names), and disputes/buyer-requests/proposals/conversations/moderation built inline {id,name,avatar} arrays with no `deleted`. All seven now route through the helper; the scan also checks for any actor-shaped object missing `deleted` and reports 0. Reviews keeps its flat keys and GAINS the missing vendor_avatar, so nothing shipped breaks.",
+    "audit_method": "Scan every registered GET route over HTTP and walk the JSON recursively, rather than sampling endpoints or grepping source. Grep cannot tell a response emission from a DB write - 44 candidate lines matched a date-field pattern and most were writes - and a sample set is how both this card's misses happened. The scanner substitutes real ids into parameterised routes and flags (a) any string matching Y-m-d H:i:s and (b) any object with id+name+avatar but no `deleted`.",
+    "scanner": "wp wpss api:shapes (src/CLI/ApiShapeCommand.php). Walks EVERY registered GET route in both namespaces, fills parameterised routes from real rows in the database, and recursively inspects each payload for (a) any string matching Y-m-d H:i:s and (b) any object with id+name+avatar but no `deleted`. Exits non-zero on a breach, so CI can gate on it. Routes it cannot reach are REPORTED as not-audited rather than passed over silently - the previous two rounds of this card both failed because a hand-picked sample was reported as if it covered the API. Committed deliberately: the round-2 commit claimed 'the next hand-built actor fails the check' while the checker existed only in a terminal, and it had already missed conversations messages `sender`. On first run in-repo it immediately found two more emissions that both my HTTP sweep and QA's 23-route sweep had missed: /disputes/{id}/timeline created_at and /notifications data.response_deadline. Currently 105 routes audited green, 10 unreachable and named.",
+    "qa_bounce_round3": "QA round 3 found /conversations/{id}/messages `sender` still hand-built without `deleted` - in the same file whose other_user had been routed six lines away. Now routed through wpss_rest_user(), with the sender_id 0 System branch kept explicitly since the helper returns null for id 0 and a thread needs an object either way. Also flagged, correctly, that the scanner was not in the repo; that is what src/CLI/ApiShapeCommand.php answers. New helper wpss_rest_normalise_dates() converts date-named keys inside free-form blobs such as a notification's `data` column, which the API does not own the shape of.",
+    "round4_dates": "Two more MySQL emissions, both on routes the scanner could not reach for lack of a live row and which therefore sat in its not-audited count: GET /orders/{id}/requirements submitted_at (OrdersController), and GET /subscription-plans/my-subscription (Pro) - where the subscription object AND the plan object riding in the same payload each carried raw dates. Seed the row first, confirm the route is actually audited, then fix: a green run whose not-audited count is unread is not a green run."
+  },
+  "app_auth": {
+    "_note": "Basecamp 10154918753. POST /auth/login returned expires:null and meant it - WordPress application passwords have no expiry, so a stolen token worked forever. Worse, WP authenticates app passwords through the same wp_authenticate() chain as the account password, so passing a stolen TOKEN as the `password` was accepted and minted another one: whoever had one token had an unlimited supply, and revoking the original changed nothing. Reproduced over HTTP at 200 before the fix.",
+    "expiry": "Two limits, both filterable via wpss_app_token_lifetime(): idle 30 days (from last_used, falling back to created) and absolute 90 days (from created), whichever comes first. Idle alone lets an actively-used stolen token live forever; absolute alone logs a daily user out for no gain. Enforced at AUTHENTICATION by API\\AppTokenGuard on core's wp_authenticate_application_password_errors action - not by a cron sweep, which would leave a window and would stop enforcing silently if cron stopped firing.",
+    "mint_guard": "wpss_password_is_app_token() in functions/misc.php; login() rejects with 401 wpss_token_cannot_mint. Checked AFTER wp_authenticate() rather than by calling wp_authenticate_username_password() directly - bypassing the chain would also bypass any 2FA/SSO plugin, trading this hole for a worse one.",
+    "hash_verification": "MUST verify with WP_Application_Passwords::check_password(), NOT wp_check_password(). WP 6.8 moved app passwords onto fast hashes with their own checker; wp_check_password() returns false for a valid token, which fails OPEN - the guard reports 'not a token' and waves the request through. The first implementation had this bug and the HTTP re-test caught it. method_exists() fallback retained because the plugin supports WP 6.4+ and the method arrived in 6.8.",
+    "sessions": "GET /auth/sessions and DELETE /auth/sessions/{uuid}. Deliberately NOT /auth/devices: that path already existed and means PUSH NOTIFICATION tokens in _wpss_push_devices. The name collision is why this card was filed with a devices endpoint already shipped - it looked like it answered 'where am I signed in?' and did not. A session is not a device; revoking a push token must not sign anyone out. Revoke looks the uuid up on the CURRENT user first, so one member cannot revoke another's session by guessing a uuid (verified: 404).",
+    "scoping": "Only sign-ins named 'WPSS *' - the ones this plugin issued - are expired, listed or revoked. An application password a member created by hand in their WordPress profile drives whatever script they built with it and is not ours to kill (verified: a 400-day-old non-WPSS password still authenticates). Note the prefix check is case-sensitive.",
+    "still_open": "Logout still revokes EVERY session, not just the current one. Left as-is deliberately: per-device revoke now exists, which is what the card required, and narrowing logout's blast radius is a behaviour change a shipped app may depend on. Worth its own card.",
+    "recovery": "CRITICAL companion to expiry, found by tracing the flow rather than testing behaviours in isolation. WordPress 401s the WHOLE request on a failed application password, so POST /auth/login with a stale token in the Authorization header never reaches the handler even when the body carries the right password. Mobile clients attach the stored token to every request from one interceptor, so an app just told 'expired, sign in again' sends the expired token WITH the sign-in attempt and gets 401 forever - unrecoverable without clearing app storage. The behaviour predates this plugin (a garbage token always did the same) but expiry is what makes a correct client hit it. AppTokenGuard::allow_anonymous_auth_routes() on rest_authentication_errors priority 100 clears the auth error for /auth/login, /auth/register and /auth/forgot-password only - filter wpss_token_recovery_routes. Those three take credentials from the body and grant nothing, so running them anonymously is correct. Verified: expired token still 401s on /me, /orders, /notifications, /auth/sessions, /auth/logout, /auth/change-password; login RECOVERS at 200; and login with a wrong body password still 401s, so the dead token authenticates nothing."
+  },
+  "plan_limits": {
+    "_note": "Basecamp 10212521285. An administrator met their own paywall: the create-service wizard refused them and POST /services answered 403. TWO gates hang off wpss_vendor_can_create_service - this plugin's per-profile maximum (Core/Plugin.php, priority 10) and Pro's PlanEnforcer (priority 20) - and neither checked capability. Fixing only Pro, which is what the card proposed, would have left owners blocked by the gate that runs FIRST; this sandbox reproduced the block with Pro's subscriptions feature switched off entirely.",
+    "seam": "wpss_member_bypasses_limits( int $user_id ) in functions/vendors.php - one definition, called by both gates. Filterable, because metering admins is a legitimate product choice but has to be deliberate. Checked against the member being tested, not the current user, so an admin acting for someone else does not lift that person's limit.",
+    "verification": "Test through the FILTER, not the class: PlanEnforcer::can_create_service() returned true for the admin while apply_filters('wpss_vendor_can_create_service', ...) still answered false. Verifying the class in isolation would have shipped this looking fixed."
+  },
+  "demo_data": {
+    "_note": "Basecamp 10212520711. Demo data was five flat parent categories and zero children, so the entire subcategory surface shipped untested - the wizard's Subcategory dropdown, getSubcategories(), the archive optgroup rendering and all five callers of wpss_group_category_terms() only execute when a child term exists. That is how the mixed parent/child dropdown in 10208080926 reached a customer.",
+    "hierarchy": "MarketplaceSeeder::$child_category_names - Logo Design + Banner Design under Graphics & Design, WordPress Development + Mobile Apps under Programming & Tech. TWO parents deliberately: a single hierarchy can be satisfied by code that assumes every child shares a parent.",
+    "population": "Creating terms is only half. The archive filter uses hide_empty, so a child with no services never renders and the optgroup path stays untested anyway. pick_child_category() files every third service in a parent that has children under one, alternating. The parent is kept alongside the child, matching what a vendor picking a subcategory actually produces.",
+    "trap": "$category_ids now carries child names too, and the service loop rotated over array_keys() of it - left alone, services would have been filed under children at random and the parent distribution would have changed silently. The rotation is pinned to $category_names.",
+    "principle": "Demo data is test coverage. A code path the seeded dataset never reaches is a path nobody has run."
+  },
+  "journeys": {
+    "_note": "audit/journeys/ - eight end-to-end walks, each written AFTER a defect it would have caught. Not speculative coverage.",
+    "added_2026_08_18": "05-vendor-creates-a-service (wizard categories, checklist icons, admin access), 06-standalone-checkout (theme container, 390px, guest account, offline payment_method), 07-service-page-media (gallery order, embed survival, no render-time writes), 08-mobile-app-session (token expiry, mint guard, session revoke, payload contract).",
+    "environment_warning": "Journey 08 is walked over real HTTP, not wp eval. rest_do_request() neither defines REST_REQUEST nor runs rest_post_dispatch, so application-password authentication and _fields filtering both behave differently there - two security findings were verified as safe from WP-CLI and were not."
   }
 }

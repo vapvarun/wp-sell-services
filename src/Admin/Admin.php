@@ -15,9 +15,10 @@ defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Admin\Metaboxes\ServiceMetabox;
 use WPSellServices\Admin\Metaboxes\BuyerRequestMetabox;
-use WPSellServices\Admin\Metaboxes\OrderMetabox;
+use WPSellServices\Admin\OrderScreen;
 use WPSellServices\Admin\Pages\ManualOrderPage;
 use WPSellServices\Admin\Pages\VendorsPage;
+use WPSellServices\Admin\Pages\ReportsPage;
 use WPSellServices\Admin\Pages\ServiceModerationPage;
 use WPSellServices\Admin\Pages\ReviewModerationPage;
 use WPSellServices\Admin\Pages\WithdrawalsPage;
@@ -66,6 +67,13 @@ class Admin {
 	 * @var ServiceModerationPage
 	 */
 	private ServiceModerationPage $moderation_page;
+
+	/**
+	 * Reports queue page.
+	 *
+	 * @var ReportsPage
+	 */
+	private ReportsPage $reports_page;
 
 	/**
 	 * Review moderation page instance.
@@ -121,6 +129,7 @@ class Admin {
 		$this->withdrawals_page       = new WithdrawalsPage();
 		$this->notifications_page     = new NotificationsPage();
 		$this->audit_log_page         = new AuditLogPage();
+		$this->reports_page           = new ReportsPage();
 		$this->setup_wizard_page      = new SetupWizardPage();
 
 		if ( ! $this->is_pro_active() ) {
@@ -369,8 +378,8 @@ class Admin {
 		$request_metabox = new BuyerRequestMetabox();
 		$request_metabox->init();
 
-		$order_metabox = new OrderMetabox();
-		$order_metabox->init();
+		$order_screen = new OrderScreen();
+		$order_screen->init();
 	}
 
 	/**
@@ -386,8 +395,11 @@ class Admin {
 		$this->withdrawals_page->init();
 		$this->notifications_page->init();
 		$this->audit_log_page->init();
-		$this->review_moderation_page->init();
-		$this->notifications_page->init();
+		$this->reports_page->init();
+		// review_moderation_page and notifications_page were each init()ed a
+		// second time here. Harmless — WordPress keys callbacks by identity, so
+		// the repeat replaced rather than duplicated the registration — but it
+		// read as though those two pages needed something the others did not.
 		$this->setup_wizard_page->init();
 
 		if ( $this->upgrade_page ) {
@@ -477,7 +489,7 @@ class Admin {
 	 * Lists missing pages and links to the setup wizard or settings page.
 	 * Dismissible via user meta so it does not persist after dismissal.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 * @return void
 	 */
 	public function check_page_setup_notice(): void {
@@ -490,12 +502,7 @@ class Admin {
 			return;
 		}
 
-		$required_pages = array(
-			'services_page' => __( 'Services', 'wp-sell-services' ),
-			'dashboard'     => __( 'Dashboard', 'wp-sell-services' ),
-			'become_vendor' => __( 'Become a Vendor', 'wp-sell-services' ),
-			'checkout'      => __( 'Service Checkout', 'wp-sell-services' ),
-		);
+		$required_pages = wpss_get_required_pages();
 
 		$pages   = get_option( 'wpss_pages', array() );
 		$missing = array();
@@ -511,7 +518,7 @@ class Admin {
 			return;
 		}
 
-		$settings_url = admin_url( 'admin.php?page=wpss-settings&tab=pages' );
+		$settings_url = wpss_get_settings_url( 'pages' );
 		$wizard_url   = admin_url( 'admin.php?page=wpss-setup-wizard' );
 
 		printf(
@@ -535,7 +542,7 @@ class Admin {
 	/**
 	 * AJAX handler to dismiss the pages setup notice.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 * @return void
 	 */
 	public function ajax_dismiss_pages_notice(): void {
@@ -764,10 +771,17 @@ class Admin {
 			return;
 		}
 
+		// Design-system tokens. Until 1.6.1 these were registered ONLY on the
+		// frontend, so in admin --wpss-primary and the --wpss-vendor-green alias
+		// were undefined and every `var( --wpss-vendor-green, #1dbf73 )` fell
+		// through to its hardcoded fallback -- the whole admin kept rendering the
+		// retired green accent the 1.6.0 work was meant to end.
+		wpss_register_design_system( true );
+
 		wp_enqueue_style(
 			'wpss-admin',
 			\WPSS_PLUGIN_URL . 'assets/css/admin.css',
-			array(),
+			array( 'wpss-design-system' ),
 			\WPSS_VERSION
 		);
 		wp_style_add_data( 'wpss-admin', 'rtl', 'replace' );
@@ -887,12 +901,24 @@ class Admin {
 		);
 		wp_set_script_translations( 'wpss-admin-icons', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
+		// Reports queue: confirm before suspending or closing an account.
+		if ( 'sell-services_page_wpss-reports' === $hook ) {
+			wp_enqueue_script(
+				'wpss-admin-reports',
+				\WPSS_PLUGIN_URL . 'assets/js/admin-reports.js',
+				array( 'wpss-ui' ),
+				\WPSS_VERSION,
+				true
+			);
+			wp_set_script_translations( 'wpss-admin-reports', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
+		}
+
 		// Settings page scripts.
 		if ( $this->is_settings_page( $hook ) ) {
 			wp_enqueue_script(
 				'wpss-admin-settings-nav',
 				\WPSS_PLUGIN_URL . 'assets/js/admin-settings-nav.js',
-				array( 'wpss-ui' ),
+				array( 'wpss-ui', 'wp-i18n' ),
 				\WPSS_VERSION,
 				true
 			);
@@ -1001,6 +1027,10 @@ class Admin {
 		// Packet H: use a data-URL Lucide `store` glyph (instead of a legacy
 		// dashicon class) so the admin-menu entry carries the house-style
 		// icon consistently with the rest of the plugin.
+		// Not obfuscation: WordPress's `menu_icon` API accepts a dashicon
+		// class or an SVG data URL, and a data URL must be base64. The SVG
+		// source is inline and readable directly above/below.
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Required encoding for an SVG data URL.
 		$menu_icon = 'data:image/svg+xml;base64,' . base64_encode(
 			'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg>'
 		);
@@ -1110,6 +1140,11 @@ class Admin {
 			'sell-services_page_wpss-settings',
 			'sell-services_page_wpss-notifications',
 			'sell-services_page_wpss-audit-log',
+			// A new admin page that is not listed here still renders — it just
+			// renders with no plugin CSS at all, which looks like a styling bug
+			// rather than a missing registration. Add the hook suffix in the
+			// same commit that adds the page.
+			'sell-services_page_wpss-reports',
 			'admin_page_wpss-create-order',
 			'admin_page_wpss-setup-wizard',
 			'sell-services_page_wpss-upgrade',
@@ -1265,7 +1300,7 @@ class Admin {
 					</div>
 
 					<div class="wpss-stat-card">
-						<i data-lucide="clock" class="wpss-icon wpss-stat-icon" style="color: #dba617;" aria-hidden="true"></i>
+						<i data-lucide="clock" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->in_progress ?? 0 ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'In Progress', 'wp-sell-services' ); ?></span>
@@ -1273,7 +1308,7 @@ class Admin {
 					</div>
 
 					<div class="wpss-stat-card">
-						<i data-lucide="check-circle-2" class="wpss-icon wpss-stat-icon" style="color: #00a32a;" aria-hidden="true"></i>
+						<i data-lucide="check-circle-2" class="wpss-icon wpss-stat-icon wpss-stat-icon--success" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->completed ?? 0 ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
@@ -1281,7 +1316,7 @@ class Admin {
 					</div>
 
 					<div class="wpss-stat-card">
-						<i data-lucide="banknote" class="wpss-icon wpss-stat-icon" style="color: #1dbf73;" aria-hidden="true"></i>
+						<i data-lucide="banknote" class="wpss-icon wpss-stat-icon wpss-stat-icon--revenue" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( wpss_format_price( (float) ( $revenue ?? 0 ) ) ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Total Revenue', 'wp-sell-services' ); ?></span>
@@ -1365,14 +1400,14 @@ class Admin {
 							</thead>
 							<tbody>
 								<?php foreach ( $recent_orders as $order ) : ?>
-									<?php $service = get_post( $order->service_id ); ?>
+									<?php $wpss_subject = wpss_get_order_subject( $order, 'admin' ); ?>
 									<tr>
 										<td>
 											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $order->id ) ); ?>">
 												#<?php echo esc_html( $order->order_number ); ?>
 											</a>
 										</td>
-										<td><?php echo esc_html( $service ? $service->post_title : __( 'Deleted', 'wp-sell-services' ) ); ?></td>
+										<td><?php echo esc_html( $wpss_subject['label'] ); ?></td>
 										<td><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></td>
 										<td>
 											<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
@@ -1575,18 +1610,20 @@ class Admin {
 	 */
 	private function render_order_detail( int $order_id ): void {
 		global $wpdb;
-		$orders_table        = $wpdb->prefix . 'wpss_orders';
 		$conversations_table = $wpdb->prefix . 'wpss_conversations';
 		$deliveries_table    = $wpdb->prefix . 'wpss_deliveries';
 
-		// Get order.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$order = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT * FROM {$orders_table} WHERE id = %d",
-				$order_id
-			)
-		);
+		// Hydrate the MODEL, never a raw row.
+		//
+		// This screen renders model methods (get_package_name(), get_requirements())
+		// and treats timestamps as objects. A raw $wpdb->get_row() is a plain
+		// stdClass, so `$order->get_package_name()` was a hard fatal that killed
+		// the screen for EVERY order, on every rail - the card renders "There has
+		// been a critical error" and everything below it is lost. $wpdb also
+		// returns every column as a string, which breaks the typed helpers this
+		// screen passes values into. ServiceOrder::find() does the coercion once,
+		// in one place.
+		$order = \WPSellServices\Models\ServiceOrder::find( $order_id );
 
 		if ( ! $order ) {
 			echo '<div class="wrap"><div class="notice notice-error"><p>' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</p></div></div>';
@@ -1599,8 +1636,11 @@ class Admin {
 			return;
 		}
 
-		// Get service.
-		$service = get_post( $order->service_id );
+		// What the order is FOR. Resolved through the shared helper rather than
+		// get_post( $order->service_id ): request orders and sub-orders carry
+		// service_id = 0 by design, and this screen used to render them all as
+		// an italic "Deleted" (Basecamp 10208199238).
+		$subject = wpss_get_order_subject( $order, 'admin' );
 		$vendor  = get_userdata( $order->vendor_id );
 		$buyer   = get_userdata( $order->customer_id );
 
@@ -1652,6 +1692,79 @@ class Admin {
 			</a>
 			<hr class="wp-header-end">
 
+			<?php
+			/*
+			 * An order's dispute, surfaced ON the order.
+			 *
+			 * A dispute does not force the order's status: an order can be
+			 * Completed and still carry an open dispute, which is exactly the
+			 * case support most needs to see. This screen showed status,
+			 * messages, deliveries and the refund controls with no mention of
+			 * the dispute at all, so an admin could read the whole order,
+			 * process a refund, and never learn a conflict was live on it
+			 * (Basecamp 10208211608).
+			 *
+			 * Resolved disputes are shown too, quieter: "how did that end?" is
+			 * asked from the order, and the answer drives whether a refund is
+			 * appropriate. Same reasoning as the buyer-facing order view, which
+			 * uses the same reader.
+			 */
+			$wpss_order_dispute = ( new \WPSellServices\Services\DisputeService() )->get_by_order( $order_id );
+
+			if ( $wpss_order_dispute ) :
+				$wpss_dispute_statuses = \WPSellServices\Models\Dispute::get_statuses();
+				$wpss_dispute_reasons  = \WPSellServices\Models\Dispute::get_reasons();
+				$wpss_dispute_live     = in_array(
+					$wpss_order_dispute->status,
+					array(
+						\WPSellServices\Models\Dispute::STATUS_OPEN,
+						\WPSellServices\Models\Dispute::STATUS_PENDING,
+						\WPSellServices\Models\Dispute::STATUS_ESCALATED,
+					),
+					true
+				);
+				$wpss_dispute_url      = admin_url(
+					'admin.php?page=wpss-disputes&action=view&dispute_id=' . (int) $wpss_order_dispute->id
+				);
+				?>
+				<div class="notice <?php echo $wpss_dispute_live ? 'notice-error' : 'notice-info'; ?> wpss-order-dispute-notice" style="margin-top: 20px;">
+					<p>
+						<strong>
+							<?php
+							if ( $wpss_dispute_live ) {
+								printf(
+									/* translators: %s: dispute status label, e.g. Open or Escalated */
+									esc_html__( 'Active dispute on this order (%s)', 'wp-sell-services' ),
+									esc_html( $wpss_dispute_statuses[ $wpss_order_dispute->status ] ?? $wpss_order_dispute->status )
+								);
+							} else {
+								printf(
+									/* translators: %s: dispute status label, e.g. Resolved or Closed */
+									esc_html__( 'Dispute history on this order (%s)', 'wp-sell-services' ),
+									esc_html( $wpss_dispute_statuses[ $wpss_order_dispute->status ] ?? $wpss_order_dispute->status )
+								);
+							}
+							?>
+						</strong>
+						&mdash;
+						<?php echo esc_html( $wpss_dispute_reasons[ $wpss_order_dispute->reason ] ?? $wpss_order_dispute->reason ); ?>
+						<?php if ( ! empty( $wpss_order_dispute->dispute_number ) ) : ?>
+							(<?php echo esc_html( $wpss_order_dispute->dispute_number ); ?>)
+						<?php endif; ?>
+						<a href="<?php echo esc_url( $wpss_dispute_url ); ?>" class="button button-small" style="margin-inline-start: 8px;">
+							<?php esc_html_e( 'Open dispute', 'wp-sell-services' ); ?>
+						</a>
+					</p>
+					<?php if ( $wpss_dispute_live && 'completed' === $order->status ) : ?>
+						<p>
+							<?php esc_html_e( 'This order is marked completed while the dispute is still unresolved. Resolve the dispute before treating the order as settled.', 'wp-sell-services' ); ?>
+						</p>
+					<?php endif; ?>
+				</div>
+				<?php
+			endif;
+			?>
+
 			<div class="wpss-order-layout" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
 				<div class="wpss-order-main" style="flex: 2;">
 					<!-- Order Info -->
@@ -1670,12 +1783,12 @@ class Admin {
 								<tr>
 									<th><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
 									<td>
-										<?php if ( $service ) : ?>
-											<a href="<?php echo esc_url( get_edit_post_link( $service->ID ) ); ?>">
-												<?php echo esc_html( $service->post_title ); ?>
+										<?php if ( '' !== $subject['url'] ) : ?>
+											<a href="<?php echo esc_url( $subject['url'] ); ?>">
+												<?php echo esc_html( $subject['label'] ); ?>
 											</a>
 										<?php else : ?>
-											<em><?php esc_html_e( 'Deleted', 'wp-sell-services' ); ?></em>
+											<em><?php echo esc_html( $subject['label'] ); ?></em>
 										<?php endif; ?>
 									</td>
 								</tr>
@@ -1695,10 +1808,9 @@ class Admin {
 										<th><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></th>
 										<td>
 										<?php
-										$deadline_timestamp = $order->delivery_deadline instanceof \DateTimeInterface
-											? $order->delivery_deadline->getTimestamp()
-											: strtotime( $order->delivery_deadline );
-										echo esc_html( wp_date( get_option( 'date_format' ), $deadline_timestamp ) );
+										// ServiceOrder::from_db() guarantees a DateTimeImmutable here,
+										// so the old string/object dual handling is now dead.
+										echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) );
 										?>
 										</td>
 									</tr>
@@ -1708,10 +1820,8 @@ class Admin {
 									<td>
 									<?php
 									if ( $order->created_at ) {
-										$created_timestamp = $order->created_at instanceof \DateTimeInterface
-											? $order->created_at->getTimestamp()
-											: strtotime( $order->created_at );
-										echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $created_timestamp ) );
+										// Always a DateTimeImmutable via the model hydrator.
+										echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) );
 									}
 									?>
 									</td>
@@ -1733,7 +1843,7 @@ class Admin {
 										<th><?php esc_html_e( 'WooCommerce Order', 'wp-sell-services' ); ?></th>
 										<td>
 											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-orders&action=edit&id=' . $order->platform_order_id ) ); ?>">
-												#<?php echo esc_html( $order->platform_order_id ); ?>
+												#<?php echo esc_html( (string) $order->platform_order_id ); ?>
 											</a>
 										</td>
 									</tr>
@@ -1745,22 +1855,25 @@ class Admin {
 					</div>
 
 					<!-- Requirements -->
-					<?php if ( ! empty( $order->requirements ) ) : ?>
+					<?php
+					// Requirements live in the wpss_order_requirements table, NOT on
+					// the orders row. This block previously read `$order->requirements`,
+					// a column that does not exist, so the panel never rendered for
+					// any order. get_requirements() is the canonical accessor and is
+					// what the buyer-facing surfaces already use.
+					$wpss_requirements = $order->get_requirements();
+					?>
+					<?php if ( ! empty( $wpss_requirements ) ) : ?>
 						<div class="postbox">
 							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Requirements', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<?php
-								$requirements = maybe_unserialize( $order->requirements );
-								if ( is_array( $requirements ) ) {
-									echo '<dl>';
-									foreach ( $requirements as $key => $value ) {
-										echo '<dt><strong>' . esc_html( $key ) . '</strong></dt>';
-										echo '<dd>' . esc_html( is_array( $value ) ? implode( ', ', $value ) : $value ) . '</dd>';
-									}
-									echo '</dl>';
-								} else {
-									echo wp_kses_post( wpautop( $requirements ) );
+								echo '<dl>';
+								foreach ( $wpss_requirements as $wpss_req_key => $wpss_req_value ) {
+									echo '<dt><strong>' . esc_html( (string) $wpss_req_key ) . '</strong></dt>';
+									echo '<dd>' . esc_html( is_array( $wpss_req_value ) ? implode( ', ', $wpss_req_value ) : (string) $wpss_req_value ) . '</dd>';
 								}
+								echo '</dl>';
 								?>
 							</div>
 						</div>
@@ -1918,6 +2031,49 @@ class Admin {
 							</div>
 						</div>
 					<?php endif; ?>
+
+					<?php
+					// Gateway-specific admin actions.
+					//
+					// `wpss_admin_order_actions` used to fire ONLY from
+					// OrderMetabox::render_actions_metabox(), and that metabox is
+					// registered against post type `wpss_orders` - which is not a
+					// registered post type, so the screen does not exist and the
+					// hook never ran. OfflineGateway is its only listener, and it
+					// renders the "Mark as Paid" control for offline orders
+					// awaiting payment. The net effect was that an offline order
+					// could NOT be marked paid from the admin at all: the button
+					// existed, on a screen no one could reach.
+					//
+					// Firing it here puts it on the screen admins actually use.
+					// Buffered so the postbox wrapper only appears when a gateway
+					// has something to contribute - an order with no listener
+					// output must not render an empty box.
+					ob_start();
+
+					/**
+					 * Fires in the admin order actions area for gateway-specific actions.
+					 *
+					 * @since 1.0.0
+					 *
+					 * @param \WPSellServices\Models\ServiceOrder $order  The order.
+					 * @param string                             $status Current order status.
+					 */
+					do_action( 'wpss_admin_order_actions', $order, $order->status );
+
+					$wpss_gateway_actions = trim( (string) ob_get_clean() );
+
+					if ( '' !== $wpss_gateway_actions ) :
+						?>
+						<div class="postbox">
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Payment Actions', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<?php echo $wpss_gateway_actions; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Listener output; each gateway escapes its own markup. ?>
+							</div>
+						</div>
+						<?php
+					endif;
+					?>
 
 					<?php
 					// Billing address as recorded when the order was paid — the
@@ -2439,17 +2595,17 @@ class Admin {
 		require_once $cli_file;
 		$commands = new \WPSellServices\CLI\ServiceCommands();
 
-		// Use reflection to access the private templates and create_service method.
+		/*
+		 * Reflection reaches the private templates and the create_service
+		 * method. No setAccessible( true ) calls: they have done nothing since
+		 * PHP 8.1, which is this plugin's minimum, and PHP 8.5 deprecates them.
+		 */
 		$ref_class     = new \ReflectionClass( $commands );
 		$ref_templates = $ref_class->getProperty( 'service_templates' );
-		$ref_templates->setAccessible( true );
-		$templates = $ref_templates->getValue( $commands );
+		$templates     = $ref_templates->getValue( $commands );
 
-		$ref_create = $ref_class->getMethod( 'create_service' );
-		$ref_create->setAccessible( true );
-
+		$ref_create    = $ref_class->getMethod( 'create_service' );
 		$ref_variation = $ref_class->getMethod( 'apply_variation' );
-		$ref_variation->setAccessible( true );
 
 		// Create categories first.
 		$categories = array_unique( array_column( $templates, 'category' ) );

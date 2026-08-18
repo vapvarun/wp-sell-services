@@ -3,7 +3,7 @@
 The canonical list of what WP Sell Services does, and which tier it is in. If a
 feature is not on this page, treat it as not shipping.
 
-**Version**: 1.4.0 · **Last verified**: 2026-08-01
+**Version**: 1.5.1 · **Last verified**: 2026-08-07
 
 Free and Pro documentation both live in this folder — the Free plugin's
 `docs/website/` is the single source of truth. There is no separate Pro docs
@@ -44,10 +44,16 @@ Legend: **Yes** ships and is exercised · **Partial** ships with a stated limit 
 | Paid extensions on catalog orders | Yes | Yes |
 | Milestone contracts on buyer-request orders | Yes | Yes |
 | Refunds, including partial | Yes | Yes |
+| Display currency (approximate price in the shopper's currency) | — | Yes |
 
 **Paying a single existing amount** — a tip, a milestone phase, a paid
 extension — is supported on **Standalone** and **WooCommerce**. If your
 marketplace needs those, run it on one of those two.
+
+**Display currency is presentation only.** The shopper's currency is detected
+from their timezone and shown as an approximate figure beside the real price;
+every order, payout and refund is still settled in your base currency, and the
+charge currency is stated at checkout. It is not multi-currency settlement.
 
 ## Marketplace surfaces
 
@@ -87,5 +93,5 @@ Entries are added only after the feature has been exercised, not when the code
 lands. A row here is a promise; an owner reads it before buying.
 
 Related: [Free vs Pro](getting-started/free-vs-pro.md) ·
-[Capabilities](../../CAPABILITIES.md) · `audit/FEATURE_AUDIT.md` for the
+[Capabilities](https://github.com/vapvarun/wp-sell-services/blob/1.6.0/CAPABILITIES.md) · `audit/FEATURE_AUDIT.md` for the
 developer-side inventory.

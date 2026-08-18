@@ -269,9 +269,7 @@ class TestGateway implements PaymentGatewayInterface {
 			}
 			$transaction_id = 'test_' . wp_generate_uuid4();
 			$order_provider = wpss_get_order_provider();
-			if ( $order_provider ) {
-				$order_provider->mark_as_paid( $order->id, $transaction_id, 'test' );
-			}
+			$order_provider->mark_as_paid( $order->id, $transaction_id, 'test' );
 			wp_send_json_success(
 				array(
 					'order_id'     => $order->id,
@@ -289,11 +287,6 @@ class TestGateway implements PaymentGatewayInterface {
 			$customer_id    = get_current_user_id();
 			$cart           = get_user_meta( $customer_id, '_wpss_cart', true ) ?: array();
 			$order_provider = wpss_get_order_provider();
-
-			if ( empty( $cart ) || ! $order_provider ) {
-				wp_send_json_error( array( 'message' => __( 'Cart is empty.', 'wp-sell-services' ) ) );
-				return;
-			}
 
 			$transaction_id = 'test_' . wp_generate_uuid4();
 			$order_ids      = $order_provider->create_orders_from_cart( $cart, 'test', $transaction_id, $customer_id );
@@ -372,11 +365,6 @@ class TestGateway implements PaymentGatewayInterface {
 
 		// Get order provider.
 		$order_provider = wpss_get_order_provider();
-
-		if ( ! $order_provider ) {
-			wp_send_json_error( array( 'message' => __( 'No order provider available.', 'wp-sell-services' ) ) );
-			return;
-		}
 
 		// Generate test transaction ID.
 		$transaction_id = 'test_' . wp_generate_uuid4();

@@ -306,7 +306,7 @@ class EarningsController extends RestController {
 				'vendor_earnings_minor' => wpss_amount_to_minor_units( (float) $order['vendor_earnings'], $row_currency ),
 				'commission_minor'      => wpss_amount_to_minor_units( (float) $order['platform_fee'], $row_currency ),
 				'currency'              => $row_currency,
-				'completed_at'          => $order['completed_at'],
+				'completed_at'          => $this->format_datetime( $order['completed_at'] ),
 			);
 		}
 
@@ -575,8 +575,8 @@ class EarningsController extends RestController {
 				'details'      => json_decode( $item['details'] ?? '{}', true ),
 				'status'       => $item['status'],
 				'notes'        => $item['admin_note'] ?? '',
-				'processed_at' => $item['processed_at'] ?? null,
-				'created_at'   => $item['created_at'],
+				'processed_at' => $this->format_datetime( $item['processed_at'] ?? null ),
+				'created_at'   => $this->format_datetime( $item['created_at'] ),
 			);
 
 			if ( $is_admin ) {
@@ -667,15 +667,12 @@ class EarningsController extends RestController {
 			return new WP_Error( 'wpss_not_vendor', __( 'Only vendors can access earnings.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
 
-		// Prevent pending vendors from accessing earnings. Reads the canonical
-		// profile status — this used to read _wpss_vendor_status user meta,
-		// which nothing ever wrote, so the gate never fired and a pending
-		// vendor could reach every earnings endpoint.
-		$vendor_status = wpss_get_vendor_status( get_current_user_id() );
-		if ( 'pending' === $vendor_status ) {
-			return new WP_Error( 'wpss_vendor_pending', __( 'Your vendor account is pending approval.', 'wp-sell-services' ), array( 'status' => 403 ) );
-		}
-
-		return true;
+		// Account status gate. This used to read `_wpss_vendor_status` user
+		// meta, which nothing ever wrote, so it never fired at all; it was then
+		// fixed to read the canonical profile status but still caught only
+		// `pending` — leaving a SUSPENDED vendor able to read earnings and
+		// request a payout. Both cases now route through the shared rule, so
+		// the list of blocking statuses lives in one place.
+		return wpss_vendor_status_block() ?? true;
 	}
 }

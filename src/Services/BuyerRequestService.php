@@ -260,12 +260,87 @@ class BuyerRequestService {
 	}
 
 	/**
+	 * THE definition of "a request a buyer can still be offered on".
+	 *
+	 * Open AND not past its expiry (a request with no expiry never expires).
+	 *
+	 * It lives here because it was previously expressed twice: this service had
+	 * the full rule, while the wpss/buyer-requests block re-implemented it with
+	 * the status clause only. The block therefore listed EXPIRED requests that
+	 * [wpss_buyer_requests] correctly hid - a seller could open one and pitch
+	 * for work that had already closed. Any surface listing open requests asks
+	 * this instead of writing the clause again.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @return array<mixed> meta_query fragment.
+	 */
+	public static function open_meta_query(): array {
+		return array(
+			'relation' => 'AND',
+			array(
+				'key'     => '_wpss_status',
+				'value'   => self::STATUS_OPEN,
+				'compare' => '=',
+			),
+			array(
+				'relation' => 'OR',
+				array(
+					'key'     => '_wpss_expires_at',
+					'value'   => current_time( 'mysql' ),
+					'compare' => '>',
+					'type'    => 'DATETIME',
+				),
+				array(
+					'key'     => '_wpss_expires_at',
+					'compare' => 'NOT EXISTS',
+				),
+			),
+		);
+	}
+
+	/**
 	 * Get open requests.
 	 *
 	 * @param array<string, mixed> $args Query arguments.
 	 * @return array<object> Array of requests.
 	 */
 	public function get_open( array $args = array() ): array {
+		$query = new \WP_Query( self::open_query_args( $args ) );
+
+		$requests = array();
+		foreach ( $query->posts as $post ) {
+			$requests[] = $this->format_request( $post );
+		}
+
+		return $requests;
+	}
+
+	/**
+	 * THE query that lists open requests, as WP_Query arguments.
+	 *
+	 * Where open_meta_query() above settles what "open" MEANS, this settles how the
+	 * list is actually built - paging, category, budget bounds, ordering - so
+	 * that a caller needing the WP_Query itself (to run a loop, to read
+	 * max_num_pages) does not have to restate any of it.
+	 *
+	 * Why this exists as well: get_open() returns flattened objects from
+	 * format_request(), which is what [wpss_buyer_requests] wanted, but the
+	 * shared content-request-card.php template is loop-based and needs real
+	 * posts. Without this, the block had to rebuild the query by hand - and it
+	 * did, which is precisely how it came to omit the expiry half of the rule.
+	 * Both surfaces now build from this one definition.
+	 *
+	 * Ordering is sanitised HERE rather than at each call site: `order` is
+	 * allow-listed to ASC/DESC and `orderby` passed through sanitize_key(),
+	 * because both surfaces previously handed user input straight to WP_Query.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param array<string, mixed> $args Query arguments.
+	 * @return array<string, mixed> WP_Query arguments.
+	 */
+	public static function open_query_args( array $args = array() ): array {
 		$defaults = array(
 			'posts_per_page' => 20,
 			'paged'          => 1,
@@ -278,34 +353,19 @@ class BuyerRequestService {
 
 		$args = wp_parse_args( $args, $defaults );
 
+		$order = strtoupper( (string) $args['order'] );
+		if ( ! in_array( $order, array( 'ASC', 'DESC' ), true ) ) {
+			$order = 'DESC';
+		}
+
 		$query_args = array(
 			'post_type'      => BuyerRequestPostType::POST_TYPE,
 			'post_status'    => 'publish',
-			'posts_per_page' => $args['posts_per_page'],
-			'paged'          => $args['paged'],
-			'orderby'        => $args['order_by'],
-			'order'          => $args['order'],
-			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				'relation' => 'AND',
-				array(
-					'key'     => '_wpss_status',
-					'value'   => self::STATUS_OPEN,
-					'compare' => '=',
-				),
-				array(
-					'relation' => 'OR',
-					array(
-						'key'     => '_wpss_expires_at',
-						'value'   => current_time( 'mysql' ),
-						'compare' => '>',
-						'type'    => 'DATETIME',
-					),
-					array(
-						'key'     => '_wpss_expires_at',
-						'compare' => 'NOT EXISTS',
-					),
-				),
-			),
+			'posts_per_page' => (int) $args['posts_per_page'],
+			'paged'          => max( 1, (int) $args['paged'] ),
+			'orderby'        => sanitize_key( (string) $args['order_by'] ),
+			'order'          => $order,
+			'meta_query'     => self::open_meta_query(), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		);
 
 		// Filter by category.
@@ -338,14 +398,7 @@ class BuyerRequestService {
 			);
 		}
 
-		$query = new \WP_Query( $query_args );
-
-		$requests = array();
-		foreach ( $query->posts as $post ) {
-			$requests[] = $this->format_request( $post );
-		}
-
-		return $requests;
+		return $query_args;
 	}
 
 	/**
@@ -807,8 +860,13 @@ class BuyerRequestService {
 			$proposal->vendor_id,
 			'proposal_accepted',
 			array(
-				'order_id'   => $order_id,
-				'request_id' => $request_id,
+				'order_id'      => $order_id,
+				'request_id'    => $request_id,
+				'proposal_id'   => $proposal_id,
+				'request_title' => $request->title ?? ( $wp_request ? $wp_request->post_title : '' ),
+				// Same destination as the proposal-accepted email: the seller's
+				// sales list, where the new order is waiting.
+				'action_url'    => wpss_get_page_url( 'dashboard' ) ? add_query_arg( 'section', 'sales', wpss_get_page_url( 'dashboard' ) ) : '',
 			)
 		);
 

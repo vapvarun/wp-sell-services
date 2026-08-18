@@ -301,10 +301,10 @@
 			e.preventDefault();
 
 			var frame = wp.media({
-				title: wpssAdmin.i18n.selectImages || 'Select Gallery Images',
+				title: wpssAdmin.i18n.selectImages,
 				multiple: true,
 				library: { type: 'image' },
-				button: { text: wpssAdmin.i18n.useImage || 'Add to Gallery' }
+				button: { text: wpssAdmin.i18n.useImage }
 			});
 
 			frame.on('select', function() {
@@ -414,10 +414,10 @@
 			var $removeBtn = $button.siblings('.wpss-remove-image');
 
 			var frame = wp.media({
-				title: wpssAdmin.i18n.selectImage || 'Select Image',
+				title: wpssAdmin.i18n.selectImage,
 				multiple: false,
 				library: { type: 'image' },
-				button: { text: wpssAdmin.i18n.useImage || 'Use Image' }
+				button: { text: wpssAdmin.i18n.useImage }
 			});
 
 			frame.on('select', function() {

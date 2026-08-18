@@ -38,9 +38,13 @@ class ExtensionRequestRepository extends AbstractRepository {
 	 * @return ExtensionRequest|null
 	 */
 	public function find( int $id ): ?ExtensionRequest {
-		$row = $this->find_by_id( $id );
+		// parent::find(), NOT $this->find() - this method OVERRIDES the parent's
+		// find(), so calling it on $this would recurse until the stack blew.
+		// The original called find_by_id(), which AbstractRepository does not
+		// define at all, so this threw "Call to undefined method" on every call.
+		$row = parent::find( $id );
 
-		return $row ? ExtensionRequest::from_row( $row ) : null;
+		return $row ? ExtensionRequest::from_db( $row ) : null;
 	}
 
 	/**
@@ -59,7 +63,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ ExtensionRequest::class, 'from_row' ], $results );
+		return array_map( [ ExtensionRequest::class, 'from_db' ], $results );
 	}
 
 	/**
@@ -81,7 +85,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 			)
 		);
 
-		return $row ? ExtensionRequest::from_row( $row ) : null;
+		return $row ? ExtensionRequest::from_db( $row ) : null;
 	}
 
 	/**
@@ -111,7 +115,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ ExtensionRequest::class, 'from_row' ], $results );
+		return array_map( [ ExtensionRequest::class, 'from_db' ], $results );
 	}
 
 	/**
@@ -138,7 +142,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 			)
 		);
 
-		return array_map( [ ExtensionRequest::class, 'from_row' ], $results );
+		return array_map( [ ExtensionRequest::class, 'from_db' ], $results );
 	}
 
 	/**

@@ -341,7 +341,60 @@ final class Plugin {
 			);
 		}
 
-		if ( version_compare( $installed_version, WPSS_VERSION, '<' ) ) {
+		// Dispute evidence used to live in the disputes row's `evidence` JSON
+		// while the opening statement and admin replies lived in
+		// wpss_dispute_messages, and each surface read only one of them. The
+		// table is now the single store, so existing evidence has to move
+		// there or those disputes lose their history. Own flag rather than the
+		// version gate, for the same reason as the ledger reconciliation
+		// above: a release that forgets to bump the version cannot skip it.
+		// Idempotent — see migrate_evidence_to_messages().
+		if ( ! get_option( 'wpss_dispute_evidence_migrated', false ) ) {
+			add_action(
+				'init',
+				static function (): void {
+					( new \WPSellServices\Services\DisputeService() )->migrate_evidence_to_messages();
+					update_option( 'wpss_dispute_evidence_migrated', 1, false );
+				},
+				20
+			);
+		}
+
+		// The schema has its OWN version, and it moves independently of the
+		// plugin version — a release can add a table without changing
+		// WPSS_VERSION. Gating the installer on the plugin version alone meant
+		// such a release silently never ran: 1.5.1 shipped DB_VERSION 1.5.3 and
+		// the wpss_reports table, but every site already on 1.5.1 saw
+		// wpss_version === WPSS_VERSION, returned here, and never created it.
+		// Abuse reports then wrote to a table that did not exist.
+		//
+		// Compared as an autoloaded option rather than by calling
+		// SchemaManager::needs_update(), which falls through to a SHOW TABLES
+		// probe when the version matches — that is the common case, so asking it
+		// here would add a query to every request to catch a once-per-release
+		// event. Activator::install() still runs the full check, including
+		// missing tables, once we know something is stale.
+		$schema_installed = get_option( SchemaManager::VERSION_OPTION, '0.0.0' );
+		$schema_is_stale  = version_compare( $schema_installed, SchemaManager::DB_VERSION, '<' );
+
+		// The option comparison above catches a release that bumps DB_VERSION,
+		// which is the case that broke reports. It does NOT catch a table that
+		// vanished while the version option stayed current — a manual drop, a
+		// half-restored backup, a migration that died midway. needs_update()
+		// does catch that, by probing for missing tables, but the probe is a
+		// SHOW TABLES query and the version-matches case is every normal
+		// request, so asking it on the front end would buy a once-in-a-lifetime
+		// recovery at the cost of a query on every page view.
+		//
+		// Admin requests are a small fraction of traffic and already do far more
+		// work, so the expensive question is asked only there. A site with a
+		// dropped table self-heals the next time an admin loads a page, rather
+		// than never.
+		if ( ! $schema_is_stale && is_admin() ) {
+			$schema_is_stale = ( new SchemaManager() )->needs_update();
+		}
+
+		if ( version_compare( $installed_version, WPSS_VERSION, '<' ) || $schema_is_stale ) {
 			// DB, roles, settings — safe on plugins_loaded.
 			Activator::install();
 
@@ -449,6 +502,37 @@ final class Plugin {
 		// enabling the rest of it is a behaviour change that belongs in its own
 		// release, not a quiet side effect of this fix.
 		$this->loader->add_filter( 'rest_post_dispatch', $api, 'clarify_method_not_allowed', 10, 3 );
+
+		// Enforce app-token expiry at authentication. Application passwords do
+		// not expire on their own, so `expires` on a login response was purely
+		// decorative and a stolen token worked forever (Basecamp 10154918753).
+		//
+		// Registered here, not on rest_api_init: authentication runs before
+		// that fires, so a hook added there would never see the request it is
+		// supposed to reject.
+		$token_guard = new \WPSellServices\API\AppTokenGuard();
+
+		$this->loader->add_action(
+			'wp_authenticate_application_password_errors',
+			$token_guard,
+			'reject_expired_token',
+			10,
+			4
+		);
+
+		// A dead token must not block the route that replaces it. WordPress
+		// 401s the WHOLE request on a failed application password, so
+		// POST /auth/login with a stale token in the header never reaches the
+		// handler - and a mobile client that attaches its stored token to every
+		// request can never sign in again. Late priority so this runs after
+		// core has had its say.
+		$this->loader->add_filter(
+			'rest_authentication_errors',
+			$token_guard,
+			'allow_anonymous_auth_routes',
+			100,
+			1
+		);
 	}
 
 	/**
@@ -674,7 +758,7 @@ final class Plugin {
 	 * site) is deliberately left alone so the renderer can explain the gap.
 	 *
 	 * @since 1.2.0
-	 * @since 1.6.1 Validates and aliases the slug instead of trusting it.
+	 * @since 1.6.0 Validates and aliases the slug instead of trusting it.
 	 *
 	 * @return void
 	 */
@@ -748,43 +832,107 @@ final class Plugin {
 	}
 
 	/**
-	 * The standalone cart/checkout page IDs that the active rail has made dormant.
+	 * Memoised dormant page IDs for this request.
 	 *
-	 * The installer seeds `/service-cart/` and `/service-checkout/` for the
-	 * standalone rail and NEVER removes them, so on a site that runs WooCommerce
-	 * (or EDD, or any other adapter) those two pages sit published with nothing
-	 * behind them. They must not be unpublished — old bookmarks, emailed
-	 * `?pay_order=N` links and the pages' own IDs still have to resolve — so
-	 * they are redirected and de-indexed instead.
-	 *
-	 * Returns an empty array on a standalone site, where both pages are live.
-	 *
-	 * @since 1.6.1
-	 *
-	 * @return array<string, int> Page key (`cart`/`checkout`) => page ID.
+	 * @var array<string, int>|null
 	 */
-	private function get_dormant_store_page_ids(): array {
+	private ?array $dormant_page_ids = null;
+
+	/**
+	 * WPSS pages that are published but have nothing behind them.
+	 *
+	 * Two separate causes, one treatment:
+	 *
+	 * 1. **Cart / checkout on a non-standalone rail.** The installer seeds
+	 *    `/service-cart/` and `/service-checkout/` for the standalone rail and
+	 *    NEVER removes them, so on a site running WooCommerce (or EDD, or any
+	 *    other adapter) those two sit published with nothing behind them.
+	 *
+	 * 2. **The legacy `/create-service/` page.** `create_service` is a VIRTUAL
+	 *    route — the dashboard renders it, and it is deliberately absent from
+	 *    `wpss_get_page_definitions()`, so no current install creates a page for
+	 *    it. Installs that upgraded from a version which DID create one are left
+	 *    with a published, empty, unmapped page that renders no wizard and is
+	 *    reachable by anyone (Basecamp 10208199338). Same shape as the orphan
+	 *    `cart-N` pages.
+	 *
+	 * None of them may be unpublished — old bookmarks, emailed `?pay_order=N`
+	 * links and the pages' own IDs still have to resolve — so they are
+	 * redirected, de-indexed and dropped from the sitemap instead.
+	 *
+	 * A page an owner has deliberately MAPPED in Settings → Pages is never
+	 * treated as dormant: that is them telling us it is in use.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return array<string, int> Page key (`cart`/`checkout`/`create_service`) => page ID.
+	 */
+	private function get_dormant_page_ids(): array {
+		if ( null !== $this->dormant_page_ids ) {
+			return $this->dormant_page_ids;
+		}
+
 		if ( ! function_exists( 'wpss_get_active_adapter' ) || ! function_exists( 'wpss_get_page_id' ) ) {
 			return array();
 		}
 
+		$ids     = array();
 		$adapter = wpss_get_active_adapter();
 
-		if ( ! $adapter || 'standalone' === $adapter->get_id() ) {
-			return array();
-		}
+		// Cause 1 — only when another rail owns payment.
+		if ( $adapter && 'standalone' !== $adapter->get_id() ) {
+			foreach ( array( 'cart', 'checkout' ) as $key ) {
+				$page_id = wpss_get_page_id( $key );
 
-		$ids = array();
-
-		foreach ( array( 'cart', 'checkout' ) as $key ) {
-			$page_id = wpss_get_page_id( $key );
-
-			if ( $page_id > 0 ) {
-				$ids[ $key ] = $page_id;
+				if ( $page_id > 0 ) {
+					$ids[ $key ] = $page_id;
+				}
 			}
 		}
 
+		// Cause 2 — always, on every rail: the route is virtual regardless.
+		$legacy_create = $this->find_legacy_create_service_page();
+
+		if ( $legacy_create > 0 ) {
+			$ids['create_service'] = $legacy_create;
+		}
+
+		$this->dormant_page_ids = $ids;
+
 		return $ids;
+	}
+
+	/**
+	 * Find a leftover published page sitting on the virtual `create-service` slug.
+	 *
+	 * Returns 0 when there is none, or when the page an owner has mapped in
+	 * Settings → Pages happens to live there — a mapped page is in use by
+	 * definition and must be left alone.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return int Page ID, or 0.
+	 */
+	private function find_legacy_create_service_page(): int {
+		if ( ! function_exists( 'wpss_get_default_page_slugs' ) ) {
+			return 0;
+		}
+
+		$slug = wpss_get_default_page_slugs()['create_service'] ?? '';
+
+		if ( '' === $slug ) {
+			return 0;
+		}
+
+		$page = get_page_by_path( $slug );
+
+		if ( ! $page || 'publish' !== $page->post_status ) {
+			return 0;
+		}
+
+		$mapped = array_map( 'intval', array_values( (array) get_option( 'wpss_pages', array() ) ) );
+
+		return in_array( (int) $page->ID, $mapped, true ) ? 0 : (int) $page->ID;
 	}
 
 	/**
@@ -801,7 +949,7 @@ final class Plugin {
 	 * The shortcode guards stay in place as defence-in-depth for the case where
 	 * an owner has pasted the shortcode onto some OTHER page.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @return void
 	 */
@@ -810,7 +958,7 @@ final class Plugin {
 			return;
 		}
 
-		$dormant = $this->get_dormant_store_page_ids();
+		$dormant = $this->get_dormant_page_ids();
 
 		if ( empty( $dormant ) ) {
 			return;
@@ -824,7 +972,13 @@ final class Plugin {
 
 		$key = (string) array_search( $current, $dormant, true );
 
-		if ( 'cart' === $key ) {
+		if ( 'create_service' === $key ) {
+			// The wizard lives on the dashboard's create section — the virtual
+			// route this leftover page was named after. Sending the visitor there
+			// is what the page was always meant to do; it just never carried
+			// anything (Basecamp 10208199338).
+			$target = function_exists( 'wpss_get_create_service_url' ) ? wpss_get_create_service_url() : '';
+		} elseif ( 'cart' === $key ) {
 			$target = function_exists( 'wpss_get_cart_url' ) ? wpss_get_cart_url() : '';
 		} else {
 			// `?pay_order=N` is how the standalone rail pays ONE order, and we
@@ -860,13 +1014,13 @@ final class Plugin {
 	 * crawler can be pointed at, and they were sitting in the WP core sitemap
 	 * next to WooCommerce's real cart and checkout.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @param array<string, mixed> $robots Robots directives.
 	 * @return array<string, mixed>
 	 */
 	public function filter_dormant_store_page_robots( array $robots ): array {
-		$dormant = $this->get_dormant_store_page_ids();
+		$dormant = $this->get_dormant_page_ids();
 
 		if ( empty( $dormant ) ) {
 			return $robots;
@@ -885,7 +1039,7 @@ final class Plugin {
 	/**
 	 * Drop the dormant cart/checkout pages from the WP core sitemap.
 	 *
-	 * @since 1.6.1
+	 * @since 1.6.0
 	 *
 	 * @param array<string, mixed> $args      Query args.
 	 * @param string               $post_type Post type being listed.
@@ -896,7 +1050,7 @@ final class Plugin {
 			return $args;
 		}
 
-		$dormant = $this->get_dormant_store_page_ids();
+		$dormant = $this->get_dormant_page_ids();
 
 		if ( empty( $dormant ) ) {
 			return $args;
@@ -915,6 +1069,38 @@ final class Plugin {
 	 * @return void
 	 */
 	private function define_notification_hooks(): void {
+		// Record presence, so "is this person online" can ever be true.
+		//
+		// VendorService::update_last_active() has always existed and was never
+		// hooked to anything, so `_wpss_last_active` was never written. Every
+		// reader of it therefore answered "offline" for everybody: the
+		// skip-the-email-when-they-are-here behaviour could not fire, and the
+		// SellerCard online dot could not light. A store with no writer.
+		//
+		// Throttled to one write per 5 minutes per user. The readers use a
+		// 15-minute window, so 5 minutes is precise enough while keeping this
+		// off the hot path -- an unthrottled usermeta write on every page load
+		// is exactly the kind of per-request cost this codebase has been
+		// removing elsewhere.
+		$this->loader->add_action(
+			'init',
+			static function (): void {
+				$user_id = get_current_user_id();
+
+				if ( ! $user_id ) {
+					return;
+				}
+
+				$last = get_user_meta( $user_id, '_wpss_last_active', true );
+
+				if ( $last && ( time() - (int) strtotime( (string) $last ) ) < 5 * MINUTE_IN_SECONDS ) {
+					return;
+				}
+
+				update_user_meta( $user_id, '_wpss_last_active', current_time( 'mysql' ) );
+			}
+		);
+
 		$notification_service = new NotificationService();
 		// Sub-order email dispatcher shared by every milestone / extension /
 		// tip listener below — declared up front so closures further down
@@ -984,6 +1170,78 @@ final class Plugin {
 			null,
 			10,
 			2
+		);
+
+		// Proposal notifications.
+		//
+		// EmailService has listened to these three events since 1.0.0, so the
+		// buyer got an email when a seller proposed — but no in-app row was
+		// ever written, and the marketplace dashboard is where buyers actually
+		// live. Notification::TYPE_PROPOSAL_RECEIVED existed with an icon and a
+		// label the whole time; nothing produced one.
+		$this->loader->add_action(
+			'wpss_proposal_submitted',
+			function ( int $proposal_id, int $request_id, int $vendor_id, array $proposal_data ) use ( $notification_service ): void {
+				$request = get_post( $request_id );
+
+				if ( ! $request ) {
+					return;
+				}
+
+				$buyer_id = (int) $request->post_author;
+
+				// A seller proposing on their own request has nobody to tell.
+				if ( ! $buyer_id || $buyer_id === $vendor_id ) {
+					return;
+				}
+
+				$notification_service->send(
+					$buyer_id,
+					'proposal_received',
+					array(
+						'proposal_id'   => $proposal_id,
+						'request_id'    => $request_id,
+						'request_title' => $request->post_title,
+						'vendor_id'     => $vendor_id,
+						// ProposalService::submit() passes its insert row to this
+						// hook, so the price key is `proposed_price`.
+						'bid_amount'    => $proposal_data['proposed_price'] ?? 0,
+						'action_url'    => get_permalink( $request_id ),
+					)
+				);
+			},
+			null,
+			10,
+			4
+		);
+
+		$this->loader->add_action(
+			'wpss_proposal_rejected',
+			function ( int $proposal_id, $proposal, string $reason = '' ) use ( $notification_service ): void {
+				$vendor_id = (int) ( $proposal->vendor_id ?? 0 );
+
+				if ( ! $vendor_id ) {
+					return;
+				}
+
+				$request_id = (int) ( $proposal->request_id ?? 0 );
+				$request    = $request_id ? get_post( $request_id ) : null;
+
+				$notification_service->send(
+					$vendor_id,
+					'proposal_rejected',
+					array(
+						'proposal_id'   => $proposal_id,
+						'request_id'    => $request_id,
+						'request_title' => $request ? $request->post_title : '',
+						'reason'        => $reason,
+						'action_url'    => $request_id ? get_permalink( $request_id ) : '',
+					)
+				);
+			},
+			null,
+			10,
+			3
 		);
 
 		// Review created notification + email.
@@ -1392,7 +1650,7 @@ final class Plugin {
 		// Connect vendor registration open/closed filter to settings.
 		add_filter(
 			'wpss_vendor_registration_open',
-			function ( bool $default ): bool {
+			function ( bool $default_value ): bool {
 				$vendor_settings   = get_option( 'wpss_vendor', array() );
 				$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
 				return 'closed' !== $registration_mode;
@@ -1402,7 +1660,7 @@ final class Plugin {
 		// Connect auto-approve vendors filter to settings.
 		add_filter(
 			'wpss_auto_approve_vendors',
-			function ( bool $default ): bool {
+			function ( bool $default_value ): bool {
 				$vendor_settings   = get_option( 'wpss_vendor', array() );
 				$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
 				return 'open' === $registration_mode;
@@ -1412,7 +1670,7 @@ final class Plugin {
 		// Connect service moderation filter to settings.
 		add_filter(
 			'wpss_require_service_moderation',
-			function ( bool $default ): bool {
+			function ( bool $default_value ): bool {
 				$vendor_settings = get_option( 'wpss_vendor', array() );
 				return ! empty( $vendor_settings['require_service_moderation'] );
 			}
@@ -1424,6 +1682,13 @@ final class Plugin {
 			function ( bool $can_create, int $vendor_id ): bool {
 				if ( ! $can_create ) {
 					return false;
+				}
+
+				// The site owner is not bound by the marketplace's own selling
+				// limits. Shared with Pro's plan enforcer, which gates the same
+				// filter at priority 20 (Basecamp 10212521285).
+				if ( wpss_member_bypasses_limits( $vendor_id ) ) {
+					return true;
 				}
 
 				$vendor_profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
@@ -1632,7 +1897,27 @@ final class Plugin {
 	private function define_integration_hooks(): void {
 		$this->integration_manager = new IntegrationManager();
 
-		$this->loader->add_action( 'init', $this->integration_manager, 'init' );
+		// Priority 1, NOT the default 10.
+		//
+		// Cart plugins dispatch their own form handlers on `init` at priority
+		// 10 -- EDD routes every checkout POST through edd_post_actions, which
+		// is added on `init` at file-load time. Because EDD's plugin file loads
+		// before ours, its callback was registered first and therefore ran
+		// first, completing the whole purchase (payment created, marked
+		// complete, edd_complete_purchase fired) BEFORE this line had
+		// registered a single adapter.
+		//
+		// The effect was silent and total: on the checkout POST the adapter
+		// list was empty, so our edd_complete_purchase handler was never
+		// attached, no WPSS order was created and no vendor was credited --
+		// while EDD reported a completed payment and the buyer saw a
+		// confirmation page. Every other request looked healthy, which is why
+		// this survived a hook audit: the hooks were right, they just fired on
+		// a request where our integration did not exist yet.
+		//
+		// Found by driving a real EDD checkout; no amount of code reading
+		// surfaced it, because nothing is wrong with the code that runs.
+		$this->loader->add_action( 'init', $this->integration_manager, 'init', 1 );
 	}
 
 	/**
@@ -2111,6 +2396,37 @@ final class Plugin {
 			3
 		);
 
+		// Offline payment proof: tell the people who need to act
+		// (Basecamp #10194890682). The service fires these three; the emails
+		// route through EmailService so they honour the member's own
+		// preferences rather than sending regardless.
+		add_action(
+			'wpss_payment_receipt_submitted',
+			static function ( int $receipt_id, int $order_id ): void {
+				( new \WPSellServices\Services\EmailService() )->send_receipt_submitted( $receipt_id, $order_id );
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'wpss_payment_receipt_verified',
+			static function ( int $receipt_id, int $order_id ): void {
+				( new \WPSellServices\Services\EmailService() )->send_receipt_verified( $receipt_id, $order_id );
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'wpss_payment_receipt_rejected',
+			static function ( int $receipt_id, int $order_id, int $reviewer_id, string $reason = '' ): void {
+				( new \WPSellServices\Services\EmailService() )->send_receipt_rejected( $receipt_id, $order_id, $reason );
+			},
+			10,
+			4
+		);
+
 		// Payment hooks.
 		add_action(
 			'wpss_order_paid',
@@ -2119,6 +2435,37 @@ final class Plugin {
 			},
 			10,
 			2
+		);
+
+		// Freeze what was bought, at the moment money changes hands.
+		//
+		// `package_id` is a POSITIONAL index into the service's _wpss_packages
+		// meta, not a stable key. Reorder or delete a tier and every order
+		// carrying that index silently re-resolves to a different package - an
+		// order placed for "Premium" starts reading as "Basic" (Basecamp
+		// #10154919857).
+		//
+		// A snapshot makes the order self-describing, so the index stops
+		// mattering for anything already sold. StandaloneOrderProvider took one
+		// at creation, but the cart rails never did, and
+		// wpss_capture_order_package_snapshot() - written for exactly this - was
+		// never called from anywhere.
+		//
+		// Priority 5 so it runs BEFORE the workflow, milestone, extension and
+		// tipping listeners: those can change the order's state, and the point
+		// of the snapshot is to record what was bought at the moment of payment.
+		//
+		// wpss_order_paid is the right seam because, since the 1.6.0 rail work,
+		// EVERY rail reaches it - WooCommerce, EDD, FluentCart, SureCart and
+		// standalone all route through mark_as_paid(). One listener covers all
+		// five. The function is idempotent and skips sub-orders itself.
+		add_action(
+			'wpss_order_paid',
+			static function ( int $order_id ): void {
+				wpss_capture_order_package_snapshot( $order_id );
+			},
+			5,
+			1
 		);
 
 		// Set delivery deadline when requirements are submitted.
@@ -2216,6 +2563,10 @@ final class Plugin {
 		}
 
 		// Register EarningsService cron schedules early so they are available during activation.
+		// The sniff wants a literal interval at the add_filter() site and cannot
+		// follow into a class callback. The interval IS defined, in
+		// EarningsService::add_cron_schedules(): 'biweekly' => 14 * DAY_IN_SECONDS.
+		// phpcs:ignore WordPress.WP.CronInterval.ChangeDetected -- Interval defined in EarningsService::add_cron_schedules().
 		add_filter( 'cron_schedules', array( \WPSellServices\Services\EarningsService::class, 'add_cron_schedules' ) );
 
 		// Auto-withdrawal processing.
@@ -2234,7 +2585,7 @@ final class Plugin {
 	 * Ensures plugin data in custom tables is cleaned up when
 	 * services, buyer requests, or users are permanently deleted.
 	 *
-	 * @since 1.5.0
+	 * @since 1.0.0
 	 * @return void
 	 */
 	private function define_cascade_hooks(): void {

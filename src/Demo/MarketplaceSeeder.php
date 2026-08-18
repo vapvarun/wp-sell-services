@@ -166,6 +166,27 @@ class MarketplaceSeeder {
 	);
 
 	/**
+	 * Child categories, as parent name => child names.
+	 *
+	 * Demo data used to be five FLAT parents and nothing else, which meant the
+	 * entire subcategory surface shipped untested: the wizard's Subcategory
+	 * dropdown, getSubcategories() in the wizard JS, the archive optgroup
+	 * rendering and every caller of wpss_group_category_terms() only run when a
+	 * child term exists. A local QA pass walked straight past all of it, which
+	 * is how a mixed parent/child dropdown reached a customer (Basecamp
+	 * 10208080926, then 10212520711).
+	 *
+	 * Two parents get children deliberately, not one: a single hierarchy can be
+	 * satisfied by code that assumes every child belongs to the same parent.
+	 *
+	 * @var array<string, array<int, string>>
+	 */
+	private array $child_category_names = array(
+		'Graphics & Design'  => array( 'Logo Design', 'Banner Design' ),
+		'Programming & Tech' => array( 'WordPress Development', 'Mobile Apps' ),
+	);
+
+	/**
 	 * Sample review bodies reused across seeded reviews.
 	 *
 	 * @var array<int, string>
@@ -351,7 +372,60 @@ class MarketplaceSeeder {
 			}
 		}
 
+		foreach ( $this->child_category_names as $parent_name => $children ) {
+			if ( empty( $ids[ $parent_name ] ) ) {
+				continue;
+			}
+
+			foreach ( $children as $child_name ) {
+				$term = get_term_by( 'name', $child_name, 'wpss_service_category' );
+
+				if ( $term instanceof \WP_Term ) {
+					$ids[ $child_name ] = (int) $term->term_id;
+					continue;
+				}
+
+				$created = wp_insert_term(
+					$child_name,
+					'wpss_service_category',
+					array( 'parent' => $ids[ $parent_name ] )
+				);
+
+				if ( ! is_wp_error( $created ) ) {
+					$ids[ $child_name ] = (int) $created['term_id'];
+				}
+			}
+		}
+
 		return $ids;
+	}
+
+	/**
+	 * The child term a demo service should also carry, if any.
+	 *
+	 * Creating child TERMS is only half of it. The archive filter uses
+	 * hide_empty, so a child with no services attached is invisible there and
+	 * the optgroup path still never renders - which was the second half of
+	 * Basecamp 10212520711.
+	 *
+	 * Every third service in a parent that has children is filed under one, so
+	 * the parents keep most of their catalogue and the children are populated
+	 * but not dominant, which is how a real marketplace looks.
+	 *
+	 * @param string             $parent_name  Parent category name.
+	 * @param int                $index        Index of this service within its category.
+	 * @param array<string, int> $category_ids Name => term id.
+	 * @return int Child term id, or 0 for none.
+	 */
+	private function pick_child_category( string $parent_name, int $index, array $category_ids ): int {
+		if ( empty( $this->child_category_names[ $parent_name ] ) || 0 !== $index % 3 ) {
+			return 0;
+		}
+
+		$children = $this->child_category_names[ $parent_name ];
+		$child    = $children[ intdiv( $index, 3 ) % count( $children ) ];
+
+		return (int) ( $category_ids[ $child ] ?? 0 );
 	}
 
 	/**
@@ -467,7 +541,13 @@ class MarketplaceSeeder {
 			return array();
 		}
 
-		$category_keys = array_keys( $category_ids );
+		/*
+		 * PARENTS only. $category_ids now also carries the child terms, and
+		 * rotating over all of them would file services under children at
+		 * random and quietly change how the parents are populated. Children are
+		 * assigned deliberately, below, by pick_child_category().
+		 */
+		$category_keys = $this->category_names;
 		$titles        = array(
 			'I will design a modern, memorable logo for your brand',
 			'I will build a custom WordPress plugin to spec',
@@ -511,7 +591,24 @@ class MarketplaceSeeder {
 				}
 
 				if ( isset( $category_ids[ $category ] ) ) {
-					wp_set_object_terms( $post_id, array( $category_ids[ $category ] ), 'wpss_service_category' );
+					/*
+					 * Some services also land in a child term. Creating the child
+					 * terms is only half the job - the archive filter uses
+					 * hide_empty, so a child with nothing in it never renders and
+					 * the optgroup path stays untested (Basecamp 10212520711).
+					 *
+					 * The parent is kept alongside the child, which is what a
+					 * vendor picking "Logo Design" under "Graphics & Design"
+					 * actually produces.
+					 */
+					$terms = array( $category_ids[ $category ] );
+					$child = $this->pick_child_category( $category, $v_index + $s, $category_ids );
+
+					if ( $child > 0 ) {
+						$terms[] = $child;
+					}
+
+					wp_set_object_terms( $post_id, $terms, 'wpss_service_category' );
 				}
 
 				$prices    = wp_list_pluck( $packages, 'price' );
@@ -1060,6 +1157,21 @@ class MarketplaceSeeder {
 			return $balances;
 		}
 
+		// Idempotency. This never removed anything, so a second seeder run
+		// credited every completed order AGAIN - doubling each vendor's ledger
+		// and leaving balance_after values that no longer matched the running
+		// total. Scoped precisely to the ledger rows this method writes
+		// (reference_type 'order' for the orders being seeded), so a real
+		// site's tips, milestones, adjustments and debits are untouched.
+		$id_placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from a count; ids bound via prepare().
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$table} WHERE type = 'order_earning' AND reference_type = 'order' AND reference_id IN ( {$id_placeholders} )",
+				...$order_ids
+			)
+		);
+
 		// Pull the recorded vendor earnings for the completed orders in one read.
 		$orders_table = $wpdb->prefix . 'wpss_orders';
 		$placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
@@ -1072,6 +1184,23 @@ class MarketplaceSeeder {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
+		// Earnings credited inside the clearance window are NOT withdrawable, and
+		// EarningsService subtracts them: available = ledger - pending - in_clearance.
+		// This method used to return the GROSS credited total, so seed_withdrawals()
+		// sized requests against money the vendor could not actually draw and the
+		// Earnings screen then showed a withdrawal larger than the available
+		// balance. Tracked separately: $balances is what was credited (used for
+		// balance_after), $withdrawable is what has cleared (what is returned).
+		$clearance_days = EarningsService::get_clearance_days();
+		// strtotime() with no base uses the same clock strtotime( $created_at )
+		// will use below, so the two sides of the comparison agree. current_time(
+		// 'timestamp' ) is explicitly discouraged - it does not return a real
+		// Unix timestamp - and would have skewed the cut-off by the site's offset.
+		$clearance_cut = $clearance_days > 0
+			? strtotime( '-' . $clearance_days . ' days' )
+			: PHP_INT_MAX;
+		$withdrawable  = array();
+
 		foreach ( (array) $rows as $row ) {
 			$vendor_id = (int) $row->vendor_id;
 			$earnings  = round( (float) $row->vendor_earnings, 2 );
@@ -1081,6 +1210,11 @@ class MarketplaceSeeder {
 
 			$balances[ $vendor_id ] = round( ( $balances[ $vendor_id ] ?? 0 ) + $earnings, 2 );
 			$created_at             = $row->completed_at ? $row->completed_at : current_time( 'mysql' );
+
+			// Only credits OLDER than the clearance window count as withdrawable.
+			if ( PHP_INT_MAX === $clearance_cut || strtotime( $created_at ) <= $clearance_cut ) {
+				$withdrawable[ $vendor_id ] = round( ( $withdrawable[ $vendor_id ] ?? 0 ) + $earnings, 2 );
+			}
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->insert(
@@ -1102,7 +1236,10 @@ class MarketplaceSeeder {
 			);
 		}
 
-		return $balances;
+		// Deliberately the CLEARED total, not $balances. Callers use this to size
+		// withdrawals, and a withdrawal must be funded by money that has actually
+		// cleared or the Earnings screen reserves against nothing.
+		return $withdrawable;
 	}
 
 	/**
@@ -1349,11 +1486,11 @@ class MarketplaceSeeder {
 	 * @param string $seed   Deterministic seed that varies which bundled file is picked.
 	 * @param int    $width  Intended width (square => avatar pool; used for the placeholder fallback).
 	 * @param int    $height Intended height (used for the placeholder fallback).
-	 * @param int    $parent Parent post ID to attach to (0 for none).
+	 * @param int    $parent_id Parent post ID to attach to (0 for none).
 	 * @param string $label  Human label used for alt text + placeholder fallback.
 	 * @return int Attachment ID, or 0 when images are disabled or all paths fail.
 	 */
-	private function sideload_image( string $seed, int $width, int $height, int $parent, string $label ): int {
+	private function sideload_image( string $seed, int $width, int $height, int $parent_id, string $label ): int {
 		if ( ! $this->seed_images ) {
 			return 0;
 		}
@@ -1375,7 +1512,7 @@ class MarketplaceSeeder {
 					'name'     => sanitize_file_name( basename( $source ) ),
 					'tmp_name' => $tmp,
 				);
-				$attachment_id = media_handle_sideload( $file, $parent, $label );
+				$attachment_id = media_handle_sideload( $file, $parent_id, $label );
 				if ( is_wp_error( $attachment_id ) ) {
 					if ( file_exists( $tmp ) ) {
 						wp_delete_file( $tmp );
@@ -1387,7 +1524,7 @@ class MarketplaceSeeder {
 		}
 
 		// Bundled media missing - guarantee an image via a generated placeholder.
-		return $this->generate_placeholder_image( $label, $width, $height, $parent );
+		return $this->generate_placeholder_image( $label, $width, $height, $parent_id );
 	}
 
 	/**
@@ -1399,10 +1536,10 @@ class MarketplaceSeeder {
 	 * @param string $label  Label drawn on the placeholder + used as alt text.
 	 * @param int    $width  Image width in pixels.
 	 * @param int    $height Image height in pixels.
-	 * @param int    $parent Parent post ID to attach to (0 for none).
+	 * @param int    $parent_id Parent post ID to attach to (0 for none).
 	 * @return int Attachment ID, or 0 when GD is unavailable / insertion fails.
 	 */
-	private function generate_placeholder_image( string $label, int $width, int $height, int $parent ): int {
+	private function generate_placeholder_image( string $label, int $width, int $height, int $parent_id ): int {
 		if ( ! function_exists( 'imagecreatetruecolor' ) ) {
 			return 0;
 		}
@@ -1436,7 +1573,7 @@ class MarketplaceSeeder {
 			'post_status'    => 'inherit',
 		);
 
-		$attachment_id = wp_insert_attachment( $attachment, $path, $parent );
+		$attachment_id = wp_insert_attachment( $attachment, $path, $parent_id );
 		if ( is_wp_error( $attachment_id ) || ! $attachment_id ) {
 			return 0;
 		}

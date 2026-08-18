@@ -307,7 +307,10 @@ class OrderTimelineService {
 	private function event( string $type, string $created_at, int $actor_id, string $message, array $data = array() ): array {
 		return array(
 			'type'       => $type,
-			'created_at' => $created_at,
+			// ISO-8601 like every other date on the wire. The callers below all
+			// hand over raw MySQL columns, so converting once here covers every
+			// event type rather than each producer remembering to.
+			'created_at' => wpss_rest_date( $created_at ),
 			'actor'      => $this->actor( $actor_id ),
 			'message'    => $message,
 			'data'       => $data,

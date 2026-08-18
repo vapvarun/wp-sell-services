@@ -64,5 +64,7 @@
 		"ScriptRegistry::register_ui",
 		"ScriptRegistry::enqueue_ui"
 	],
+	"_jsFallbackAllowedKeys_comment": "Keys a JS `l10n.key || 'English'` may reference that this plugin does not localize itself - e.g. Pro reading a payload the FREE plugin provides. Keep it empty unless there is a real cross-plugin read; an entry here is a permanent English string nobody can translate if it turns out to be wrong.",
+	"jsFallbackAllowedKeys": [],
 	"allowedDomains": []
 }

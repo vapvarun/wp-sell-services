@@ -127,12 +127,7 @@ class ServiceArchiveView {
 	 * @return void
 	 */
 	public function render_filters_bar(): void {
-		$categories = get_terms(
-			array(
-				'taxonomy'   => 'wpss_service_category',
-				'hide_empty' => true,
-			)
-		);
+		$categories = wpss_get_category_terms();
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_sort = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : 'default';
@@ -176,16 +171,37 @@ class ServiceArchiveView {
 			</form>
 
 			<div class="wpss-filters-bar-controls">
-				<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
+				<?php if ( ! empty( $categories ) ) : ?>
 					<select class="wpss-category-filter wpss-url-select">
 						<option value="<?php echo esc_url( add_query_arg( $base_args, $base_url ) ); ?>">
 							<?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?>
 						</option>
-						<?php foreach ( $categories as $category ) : ?>
-							<option value="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'category' => $category->term_id ) ), $base_url ) ); ?>"
-								<?php selected( $current_category, $category->term_id ); ?>>
-								<?php echo esc_html( $category->name ); ?>
+						<?php
+						/*
+						 * Grouped, not flat (Basecamp 10208080926). A child term
+						 * used to appear alphabetically between parents with
+						 * nothing marking it as a subcategory, so "Logo Design"
+						 * read as a peer of "Graphics & Design". Children stay
+						 * selectable - a buyer filtering by a subcategory is the
+						 * whole point - they are just shown where they belong.
+						 */
+						foreach ( wpss_group_category_terms( $categories ) as $wpss_group ) :
+							$wpss_parent = $wpss_group['term'];
+							?>
+							<option value="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'category' => $wpss_parent->term_id ) ), $base_url ) ); ?>"
+								<?php selected( $current_category, $wpss_parent->term_id ); ?>>
+								<?php echo esc_html( $wpss_parent->name ); ?>
 							</option>
+							<?php if ( ! empty( $wpss_group['children'] ) ) : ?>
+								<optgroup label="<?php echo esc_attr( $wpss_parent->name ); ?>">
+									<?php foreach ( $wpss_group['children'] as $wpss_child ) : ?>
+										<option value="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'category' => $wpss_child->term_id ) ), $base_url ) ); ?>"
+											<?php selected( $current_category, $wpss_child->term_id ); ?>>
+											<?php echo esc_html( $wpss_child->name ); ?>
+										</option>
+									<?php endforeach; ?>
+								</optgroup>
+							<?php endif; ?>
 						<?php endforeach; ?>
 					</select>
 				<?php endif; ?>
@@ -277,23 +293,16 @@ class ServiceArchiveView {
 	 */
 	public function render_sidebar(): void {
 		// Fetch all categories in one query to avoid N+1.
-		$all_categories = get_terms(
-			array(
-				'taxonomy'   => 'wpss_service_category',
-				'hide_empty' => true,
-			)
-		);
+		$all_categories = wpss_get_category_terms();
 
 		// Group by parent for efficient lookup.
 		$categories         = array();
 		$children_by_parent = array();
-		if ( ! is_wp_error( $all_categories ) ) {
-			foreach ( $all_categories as $term ) {
-				if ( 0 === $term->parent ) {
-					$categories[] = $term;
-				} else {
-					$children_by_parent[ $term->parent ][] = $term;
-				}
+		foreach ( $all_categories as $term ) {
+			if ( 0 === $term->parent ) {
+				$categories[] = $term;
+			} else {
+				$children_by_parent[ $term->parent ][] = $term;
 			}
 		}
 
@@ -354,7 +363,25 @@ class ServiceArchiveView {
 				<?php endif; ?>
 
 				<!-- Categories -->
-				<?php if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) : ?>
+				<?php
+				// Service-only counts, in ONE query for the whole sidebar.
+				//
+				// $category->count cannot be used: wpss_service_category is
+				// registered for wpss_service AND wpss_request, and WordPress
+				// counts every object in the term, so a category with 6 services
+				// and 3 buyer requests reported 9 - right next to a result list
+				// that showed 6.
+				$wpss_service_counts = wpss_get_category_service_counts(
+					array_merge(
+						wp_list_pluck( $categories, 'term_id' ),
+						array_map(
+							static fn ( $child ) => (int) $child->term_id,
+							array_merge( array(), ...array_values( $children_by_parent ) )
+						)
+					)
+				);
+				?>
+				<?php if ( ! empty( $categories ) ) : ?>
 					<div class="wpss-filter-section">
 						<h4><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></h4>
 						<ul class="wpss-category-list">
@@ -377,7 +404,7 @@ class ServiceArchiveView {
 										class="wpss-category-link<?php echo $is_active ? ' is-active' : ''; ?>"
 										<?php echo $is_active ? ' aria-current="true"' : ''; ?>>
 										<?php echo esc_html( $category->name ); ?>
-										<span class="wpss-count">(<?php echo esc_html( $category->count ); ?>)</span>
+										<span class="wpss-count">(<?php echo esc_html( $wpss_service_counts[ $category->term_id ] ?? 0 ); ?>)</span>
 									</a>
 									<?php if ( ! empty( $children ) ) : ?>
 										<ul class="wpss-subcategory-list">
@@ -387,7 +414,7 @@ class ServiceArchiveView {
 														class="<?php echo $active_category_id === $child->term_id ? 'is-active' : ''; ?>"
 														<?php echo $active_category_id === $child->term_id ? ' aria-current="true"' : ''; ?>>
 														<?php echo esc_html( $child->name ); ?>
-														<span class="wpss-count">(<?php echo esc_html( $child->count ); ?>)</span>
+														<span class="wpss-count">(<?php echo esc_html( $wpss_service_counts[ $child->term_id ] ?? 0 ); ?>)</span>
 													</a>
 												</li>
 											<?php endforeach; ?>
@@ -603,6 +630,21 @@ class ServiceArchiveView {
 		if ( ! $is_services_page && ! $query->is_post_type_archive( 'wpss_service' ) && ! $query->is_tax( 'wpss_service_category' ) && ! $query->is_tax( 'wpss_service_tag' ) ) {
 			return;
 		}
+
+		// Every surface that reaches here is a SERVICES surface, so constrain the
+		// post type for all of them - not just the mapped-page branch below.
+		//
+		// wpss_service_category and wpss_service_tag are registered for BOTH
+		// wpss_service and wpss_request. A taxonomy archive therefore queries
+		// every object type of that taxonomy, so /service-category/<slug>/ listed
+		// buyer REQUESTS alongside services and counted them in "N services
+		// found": the SQL carried `post_type IN ('wpss_request','wpss_service')`.
+		// Measured on graphics-design - 9 results for a term with 6 services,
+		// the extra three being requests 436, 441 and 272.
+		//
+		// The ?category= route was always correct because it sets post_type
+		// explicitly further down; this makes the two routes agree.
+		$query->set( 'post_type', 'wpss_service' );
 
 		// Convert the mapped services page query to fetch services.
 		if ( $is_services_page ) {

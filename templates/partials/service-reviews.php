@@ -125,46 +125,15 @@ do_action( 'wpss_before_service_reviews', $service_id );
 		<div class="wpss-reviews-list">
 			<?php foreach ( $reviews as $review ) : ?>
 				<?php
-				$reviewer_name = wpss_get_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null );
-				$service_post  = get_post( $review->service_id );
+				// Through the model, so this surface and the order page agree on
+				// what a review IS. This block used to read the raw columns
+				// directly and used $review->customer_id for the avatar while
+				// gating "Helpful" on $review->reviewer_id - two names for the
+				// review's author on one screen.
+				$wpss_review = \WPSellServices\Models\Review::from_db( $review );
 				?>
 				<div class="wpss-review">
-					<div class="wpss-review-header">
-						<img src="<?php echo esc_url( get_avatar_url( $review->customer_id, [ 'size' => 48 ] ) ); ?>"
-							alt="<?php echo esc_attr( $reviewer_name ); ?>"
-							class="wpss-review-avatar">
-						<div class="wpss-review-info">
-							<strong class="wpss-review-author">
-								<?php echo esc_html( $reviewer_name ); ?>
-							</strong>
-							<div class="wpss-review-rating">
-								<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-									<span class="wpss-star <?php echo $i <= $review->rating ? 'filled' : ''; ?>">★</span>
-								<?php endfor; ?>
-							</div>
-						</div>
-						<span class="wpss-review-date">
-							<?php echo esc_html( wpss_time_ago( $review->created_at ) ); ?>
-						</span>
-					</div>
-
-					<div class="wpss-review-content">
-						<?php echo wp_kses_post( wpautop( $review->review ) ); ?>
-					</div>
-
-					<?php if ( ! empty( $review->vendor_reply ) ) : ?>
-						<div class="wpss-review-reply">
-							<div class="wpss-reply-header">
-								<strong><?php esc_html_e( 'Seller Response:', 'wp-sell-services' ); ?></strong>
-								<?php if ( ! empty( $review->vendor_reply_at ) ) : ?>
-									<span class="wpss-reply-date">
-										<?php echo esc_html( wpss_time_ago( $review->vendor_reply_at ) ); ?>
-									</span>
-								<?php endif; ?>
-							</div>
-							<?php echo wp_kses_post( wpautop( $review->vendor_reply ) ); ?>
-						</div>
-					<?php endif; ?>
+					<?php require WPSS_PLUGIN_DIR . 'templates/partials/review-body.php'; ?>
 
 					<div class="wpss-review-helpful">
 						<?php if ( is_user_logged_in() && (int) ( $review->reviewer_id ?? 0 ) !== get_current_user_id() ) : ?>

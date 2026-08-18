@@ -11,6 +11,7 @@
 namespace WPSellServices\Services;
 
 use WPSellServices\Database\Repositories\OrderRepository;
+use WPSellServices\Models\Dispute;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Services\OrderService;
 
@@ -211,6 +212,27 @@ class DisputeService {
 		if ( $result ) {
 			$dispute_id = (int) $wpdb->insert_id;
 
+			// Record the pre-dispute status BEFORE overwriting it.
+			//
+			// This used to be done by DisputeWorkflowManager::on_dispute_opened(),
+			// which runs on `wpss_dispute_opened` - i.e. AFTER the update_status()
+			// call below. It therefore read the status as `disputed` and stored
+			// status_before_dispute = 'disputed'. Cancelling or resolving the
+			// dispute then faithfully "restored" the order to `disputed`, so the
+			// order could never be released and stayed stuck forever. $order was
+			// loaded above, before any status change, so it holds the real one.
+			$order_meta                          = is_string( $order->meta ?? null ) ? ( json_decode( $order->meta, true ) ?: array() ) : ( (array) ( $order->meta ?? array() ) );
+			$order_meta['status_before_dispute'] = $order->status;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$wpdb->prefix . 'wpss_orders',
+				array( 'meta' => wp_json_encode( $order_meta ) ),
+				array( 'id' => $order_id ),
+				array( '%s' ),
+				array( '%d' )
+			);
+
 			// Update order status via OrderService to fire hooks (notifications, emails).
 			$this->order_service->update_status( $order_id, ServiceOrder::STATUS_DISPUTED );
 
@@ -235,54 +257,50 @@ class DisputeService {
 	 * Get dispute by ID.
 	 *
 	 * @param int $dispute_id Dispute ID.
-	 * @return object|null Dispute object or null.
+	 * @return Dispute|null Dispute model or null.
 	 */
-	public function get( int $dispute_id ): ?object {
+	public function get( int $dispute_id ): ?Dispute {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$dispute = $wpdb->get_row(
+		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$this->table} WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$dispute_id
 			)
 		);
 
-		if ( $dispute ) {
-			if ( ! empty( $dispute->evidence ) ) {
-				$dispute->evidence = json_decode( $dispute->evidence, true );
-			}
-			$dispute->meta = json_decode( $dispute->meta ?: '[]', true ) ?: [];
-		}
-
-		return $dispute;
+		// Hydrate the MODEL, never hand back a raw row.
+		//
+		// $wpdb returns every column as a string. Consumers of this method run
+		// under strict_types and pass these values into int-typed helpers, so a
+		// raw row threw `Argument #1 ($order_id) must be of type int, string
+		// given` in DisputeWorkflowManager::restore_order_status() - AFTER the
+		// dispute status had already been written, leaving the dispute closed
+		// while its order stayed `disputed` with no open dispute to resolve it.
+		// from_db() also decodes evidence/meta and maps the column names.
+		return $row ? Dispute::from_db( $row ) : null;
 	}
 
 	/**
 	 * Get dispute by order ID.
 	 *
 	 * @param int $order_id Order ID.
-	 * @return object|null Dispute object or null.
+	 * @return Dispute|null Dispute model or null.
 	 */
-	public function get_by_order( int $order_id ): ?object {
+	public function get_by_order( int $order_id ): ?Dispute {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$dispute = $wpdb->get_row(
+		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$this->table} WHERE order_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$order_id
 			)
 		);
 
-		if ( $dispute ) {
-			if ( ! empty( $dispute->evidence ) ) {
-				$dispute->evidence = json_decode( $dispute->evidence, true );
-			}
-			$dispute->meta = json_decode( $dispute->meta ?: '[]', true ) ?: [];
-		}
-
-		return $dispute;
+		// Same contract as get() - hydrate, never return a raw row.
+		return $row ? Dispute::from_db( $row ) : null;
 	}
 
 	/**
@@ -306,9 +324,6 @@ class DisputeService {
 			return false;
 		}
 
-		// Get existing evidence or initialize empty array.
-		$evidence = is_array( $dispute->evidence ) ? $dispute->evidence : array();
-
 		// Sanitize content based on evidence type. image/file/link all carry a
 		// URL (the AJAX handler stores the wp_handle_upload() URL, not an
 		// attachment ID) — absint() here silently zeroed every uploaded file,
@@ -319,25 +334,44 @@ class DisputeService {
 			default                 => sanitize_textarea_field( $content ),
 		};
 
-		// Add new evidence item.
-		$evidence[] = array(
-			'id'          => uniqid( 'ev_' ),
-			'user_id'     => $user_id,
-			'type'        => $sanitized_type,
-			'content'     => $sanitized_content,
-			'description' => sanitize_textarea_field( $description ),
-			'created_at'  => current_time( 'mysql' ),
-		);
+		// Written to the messages table, NOT to the disputes row's `evidence`
+		// JSON. Those were two stores for one conversation: this method fed the
+		// JSON, the opening statement and admin replies fed the table, and each
+		// surface read only its own — so members saw "No messages yet" on a
+		// dispute the admin could read in full. One store now.
+		$sender_role = 'response';
+
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			$sender_role = 'admin_response';
+		} elseif ( (int) $dispute->initiator_id === $user_id ) {
+			$sender_role = 'opener_response';
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update(
-			$this->table,
+		$result = $wpdb->insert(
+			$this->messages_table,
 			array(
-				'evidence'   => wp_json_encode( $evidence ),
-				'updated_at' => current_time( 'mysql' ),
+				'dispute_id'   => $dispute_id,
+				'sender_id'    => $user_id,
+				'sender_role'  => $sender_role,
+				'message'      => $sanitized_content,
+				'message_type' => $sanitized_type,
+				'description'  => sanitize_textarea_field( $description ),
+				'created_at'   => current_time( 'mysql' ),
 			),
-			array( 'id' => $dispute_id )
+			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s' )
 		);
+
+		// Keep the dispute row's timestamp moving so "last activity" sorting
+		// still reflects the conversation.
+		if ( false !== $result ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$this->table,
+				array( 'updated_at' => current_time( 'mysql' ) ),
+				array( 'id' => $dispute_id )
+			);
+		}
 
 		if ( false !== $result ) {
 			/**
@@ -356,19 +390,176 @@ class DisputeService {
 	}
 
 	/**
-	 * Get evidence for a dispute.
+	 * Move legacy evidence out of the disputes row's JSON and into the
+	 * messages table, so no existing dispute loses its history.
+	 *
+	 * Idempotent: a dispute is only migrated once, and the JSON column is
+	 * cleared as each one is done, so re-running cannot duplicate rows. Rows
+	 * are matched on the sender + timestamp + content already present, which
+	 * also covers a half-finished run.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @return int Number of evidence items moved.
+	 */
+	public function migrate_evidence_to_messages(): int {
+		global $wpdb;
+
+		// Column is `initiated_by`; the model exposes it as initiator_id.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			"SELECT id, initiated_by, evidence FROM {$this->table}
+			 WHERE evidence IS NOT NULL AND evidence != '' AND evidence != '[]'"
+		);
+
+		if ( ! $rows ) {
+			return 0;
+		}
+
+		$moved = 0;
+
+		foreach ( $rows as $row ) {
+			$items = json_decode( (string) $row->evidence, true );
+
+			if ( ! is_array( $items ) ) {
+				continue;
+			}
+
+			// Status notes are dispute STATUS history written by
+			// update_status(), not conversation, and they share this column.
+			// They stay put — clearing the column wholesale would delete them.
+			$keep = array();
+
+			foreach ( $items as $item ) {
+				// Oldest rows are bare filename strings rather than objects.
+				// They are still evidence someone attached, so carry them over
+				// as files instead of dropping them on the floor.
+				if ( is_string( $item ) ) {
+					$item = array(
+						'user_id'     => 0,
+						'type'        => 'file',
+						'content'     => $item,
+						'description' => '',
+						'created_at'  => current_time( 'mysql' ),
+					);
+				}
+
+				if ( ! is_array( $item ) ) {
+					continue;
+				}
+
+				if ( 'status_note' === ( $item['type'] ?? '' ) ) {
+					$keep[] = $item;
+					continue;
+				}
+
+				$user_id    = (int) ( $item['user_id'] ?? 0 );
+				$content    = (string) ( $item['content'] ?? '' );
+				$created_at = (string) ( $item['created_at'] ?? current_time( 'mysql' ) );
+
+				// Already carried over by an earlier partial run.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$exists = (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COUNT(*) FROM {$this->messages_table}
+						 WHERE dispute_id = %d AND sender_id = %d AND created_at = %s AND message = %s",
+						(int) $row->id,
+						$user_id,
+						$created_at,
+						$content
+					)
+				);
+
+				if ( $exists ) {
+					continue;
+				}
+
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$inserted = $wpdb->insert(
+					$this->messages_table,
+					array(
+						'dispute_id'   => (int) $row->id,
+						'sender_id'    => $user_id,
+						'sender_role'  => $user_id === (int) $row->initiated_by ? 'opener_response' : 'response',
+						'message'      => $content,
+						'message_type' => (string) ( $item['type'] ?? 'text' ),
+						'description'  => (string) ( $item['description'] ?? '' ),
+						'created_at'   => $created_at,
+					),
+					array( '%d', '%d', '%s', '%s', '%s', '%s', '%s' )
+				);
+
+				if ( $inserted ) {
+					++$moved;
+				}
+			}
+
+			// Rewritten only after its items are in the table, so an
+			// interrupted run resumes instead of losing the remainder. Keeps
+			// the status notes, which were never conversation.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$this->table,
+				// $keep is appended to with [], so it is already a list and
+				// encodes as a JSON array.
+				array( 'evidence' => wp_json_encode( $keep ) ),
+				array( 'id' => (int) $row->id )
+			);
+		}
+
+		return $moved;
+	}
+
+	/**
+	 * Get the dispute conversation: every message and piece of evidence.
+	 *
+	 * Reads the messages table, which is the single store. This used to return
+	 * the disputes row's `evidence` JSON, which held only what members posted
+	 * through add_evidence() — never the opening statement or admin replies,
+	 * which have always gone to the table. The member-facing thread therefore
+	 * announced "No messages yet" on disputes the admin could read in full.
+	 *
+	 * Shape is unchanged for callers: id / user_id / type / content /
+	 * description / created_at, plus attachments.
 	 *
 	 * @param int $dispute_id Dispute ID.
-	 * @return array<array<string, mixed>> Array of evidence items.
+	 * @return array<array<string, mixed>> Conversation items, oldest first.
 	 */
 	public function get_evidence( int $dispute_id ): array {
-		$dispute = $this->get( $dispute_id );
+		global $wpdb;
 
-		if ( ! $dispute ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$this->messages_table} WHERE dispute_id = %d ORDER BY created_at ASC, id ASC",
+				$dispute_id
+			),
+			ARRAY_A
+		);
+
+		if ( ! $rows ) {
 			return array();
 		}
 
-		return is_array( $dispute->evidence ) ? $dispute->evidence : array();
+		$items = array();
+
+		foreach ( $rows as $row ) {
+			$attachments = ! empty( $row['attachments'] ) ? json_decode( (string) $row['attachments'], true ) : array();
+
+			$items[] = array(
+				'id'          => (int) $row['id'],
+				'user_id'     => (int) $row['sender_id'],
+				'sender_role' => (string) ( $row['sender_role'] ?? '' ),
+				// Rows written before the columns existed are plain messages.
+				'type'        => (string) ( $row['message_type'] ?? '' ) ?: 'text',
+				'content'     => (string) $row['message'],
+				'description' => (string) ( $row['description'] ?? '' ),
+				'attachments' => is_array( $attachments ) ? $attachments : array(),
+				'created_at'  => (string) $row['created_at'],
+			);
+		}
+
+		return $items;
 	}
 
 	/**
@@ -406,7 +597,7 @@ class DisputeService {
 
 		// Store status note in evidence JSON if provided.
 		if ( $note && $dispute ) {
-			$evidence         = is_array( $dispute->evidence ) ? $dispute->evidence : array();
+			$evidence         = $dispute->evidence;
 			$evidence[]       = array(
 				'id'         => uniqid( 'note_' ),
 				'type'       => 'status_note',
@@ -461,7 +652,7 @@ class DisputeService {
 		}
 
 		// Store refund amount in evidence JSON if applicable.
-		$evidence = is_array( $dispute->evidence ) ? $dispute->evidence : array();
+		$evidence = $dispute->evidence;
 		if ( $refund_amount > 0 ) {
 			$evidence[] = array(
 				'id'            => uniqid( 'refund_' ),
@@ -600,7 +791,16 @@ class DisputeService {
 		);
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql produced by $wpdb->prepare() above; static analyser can't trace through the local var.
-		return $wpdb->get_results( $sql );
+		$rows = $wpdb->get_results( $sql );
+
+		// Hydrate so every read method on this service returns the SAME shape.
+		// Previously get()/get_by_order() returned decoded rows while these two
+		// returned raw JOINed rows with evidence/meta still JSON strings - and
+		// all four feed DisputesController::prepare_dispute_for_response().
+		// The JOINed o.customer_id/o.vendor_id/o.service_id columns are not read
+		// by any consumer of these two methods (verified: DisputesController is
+		// the only caller, and DisputesListTable runs its own queries).
+		return array_map( array( Dispute::class, 'from_db' ), $rows ?: array() );
 	}
 
 	/**
@@ -653,7 +853,16 @@ class DisputeService {
 		);
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql produced by $wpdb->prepare() above; static analyser can't trace through the local var.
-		return $wpdb->get_results( $sql );
+		$rows = $wpdb->get_results( $sql );
+
+		// Hydrate so every read method on this service returns the SAME shape.
+		// Previously get()/get_by_order() returned decoded rows while these two
+		// returned raw JOINed rows with evidence/meta still JSON strings - and
+		// all four feed DisputesController::prepare_dispute_for_response().
+		// The JOINed o.customer_id/o.vendor_id/o.service_id columns are not read
+		// by any consumer of these two methods (verified: DisputesController is
+		// the only caller, and DisputesListTable runs its own queries).
+		return array_map( array( Dispute::class, 'from_db' ), $rows ?: array() );
 	}
 
 	/**
