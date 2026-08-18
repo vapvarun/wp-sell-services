@@ -191,6 +191,25 @@ class Service {
 		$service->faqs         = get_post_meta( $post->ID, '_wpss_faqs', true ) ?: array();
 		$service->platform_ids = get_post_meta( $post->ID, '_wpss_platform_ids', true ) ?: array();
 
+		/*
+		 * Packages. This property existed, was typed, and was never filled in by
+		 * either construction path, so get_starting_price() and
+		 * get_fastest_delivery() - which short-circuit on an empty packages
+		 * array - returned 0.0 and 0 for EVERY service, while
+		 * _wpss_starting_price sat beside them holding the right number.
+		 *
+		 * A reader with no writer, the shape this release keeps turning up. It
+		 * reached no customer only by luck: both live callers had already gone
+		 * dead, and Pro's EDD provider works around it by assigning
+		 * $service->packages itself before calling either method - a workaround
+		 * that reads as inexplicable until you know the property is never
+		 * otherwise populated.
+		 *
+		 * Read from _wpss_packages, which save_packages() mirrors precisely
+		 * because it is the canonical read path for the rest of the codebase.
+		 */
+		$service->packages = self::hydrate_packages( get_post_meta( $post->ID, '_wpss_packages', true ) );
+
 		// Stats.
 		$service->rating           = (float) get_post_meta( $post->ID, '_wpss_rating_average', true );
 		$service->review_count     = (int) get_post_meta( $post->ID, '_wpss_review_count', true );
@@ -210,6 +229,38 @@ class Service {
 	 */
 	private static function normalize_gallery_ids( $raw ): array {
 		return wpss_get_gallery_ids( $raw );
+	}
+
+	/**
+	 * Build ServicePackage models from stored package meta.
+	 *
+	 * Rows are skipped rather than guessed at when they are not arrays: a
+	 * malformed package should not become a package priced at zero, because
+	 * zero is a price the rest of the code will happily act on.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param mixed $raw Stored _wpss_packages meta.
+	 * @return array<int, ServicePackage>
+	 */
+	private static function hydrate_packages( $raw ): array {
+		$raw = maybe_unserialize( $raw );
+
+		if ( ! is_array( $raw ) ) {
+			return array();
+		}
+
+		$packages = array();
+
+		foreach ( $raw as $row ) {
+			if ( is_array( $row ) ) {
+				$packages[] = ServicePackage::from_array( $row );
+			} elseif ( $row instanceof ServicePackage ) {
+				$packages[] = $row;
+			}
+		}
+
+		return $packages;
 	}
 
 	/**

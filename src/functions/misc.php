@@ -590,3 +590,36 @@ function wpss_password_is_app_token( \WP_User $user, string $password ): bool {
 
 	return false;
 }
+
+/**
+ * Render a submit button that works outside wp-admin.
+ *
+ * `submit_button()` lives in wp-admin/includes/template.php, which is only
+ * loaded on admin requests. Settings sections render through the
+ * `wpss_settings_sections_*` actions, and anything may fire those - so a
+ * section calling submit_button() directly fatals with "undefined function"
+ * the moment it is drawn anywhere else. Free's menu-visibility section and
+ * Pro's display-currency section both did.
+ *
+ * Admin screens keep using core's function; only the fallback markup is ours.
+ *
+ * @since 1.6.0
+ *
+ * @param string $text Button label.
+ * @param string $type Button type passed through to submit_button().
+ * @param string $name Button name attribute.
+ * @return void
+ */
+function wpss_submit_button( string $text, string $type = 'primary', string $name = 'submit' ): void {
+	if ( function_exists( 'submit_button' ) ) {
+		submit_button( $text, $type, $name, false );
+		return;
+	}
+
+	printf(
+		'<button type="submit" name="%1$s" id="%1$s" class="button button-%2$s">%3$s</button>',
+		esc_attr( $name ),
+		esc_attr( $type ),
+		esc_html( $text )
+	);
+}

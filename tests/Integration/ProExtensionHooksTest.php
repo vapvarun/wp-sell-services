@@ -70,7 +70,24 @@ class ProExtensionHooksTest extends TestCase {
 			3
 		);
 
-		do_action( 'wpss_stripe_webhook_received', 'payment_intent.succeeded', array( 'id' => 'pi_123' ), '{}' );
+		/*
+		 * The third argument is the DECODED payload, an array. This test used to
+		 * pass the raw JSON string '{}', which does not match what production
+		 * fires - StripeGateway::handle_webhook() takes array $payload and
+		 * passes that same array straight through - and Pro's
+		 * ConnectWebhookHandler::handle_webhook() types it as array. With a
+		 * string the action fataled with a TypeError on a MONEY path, and the
+		 * error looked like a Pro bug rather than a wrong test.
+		 */
+		do_action(
+			'wpss_stripe_webhook_received',
+			'payment_intent.succeeded',
+			array( 'id' => 'pi_123' ),
+			array(
+				'type' => 'payment_intent.succeeded',
+				'data' => array( 'object' => array( 'id' => 'pi_123' ) ),
+			)
+		);
 
 		$this->assertNotNull( $received );
 		$this->assertSame( 'payment_intent.succeeded', $received['event_type'] );

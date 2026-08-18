@@ -43,7 +43,12 @@ class SchemaValidator {
 	 *
 	 * Maps model class names to their database tables and property mappings.
 	 *
-	 * @var array<string, array{table: string, mappings: array<string, string>}>
+	 * The Service entry is a custom post type rather than a table, so it carries
+ * `is_cpt` and no `mappings`. Both keys are therefore optional - the previous
+ * declaration claimed every entry had `mappings`, which was never true and was
+ * silenced with a baseline entry rather than corrected.
+ *
+ * @var array<string, array{table: string, mappings?: array<string, string>, is_cpt?: bool}>
 	 */
 	private array $model_mappings = [
 		'WPSellServices\\Models\\ServiceOrder'  => [
@@ -54,13 +59,17 @@ class SchemaValidator {
 			'table'    => 'vendor_profiles',
 			'mappings' => [
 				// Model property => DB column (when different).
-				'title'         => 'tagline',
-				'cover_id'      => 'cover_image_id',
-				'response_time' => 'response_time_hours',
-				'delivery_rate' => 'on_time_delivery_rate',
-				'tier'          => 'verification_tier',
-				'rating'        => 'avg_rating',
-				'review_count'  => 'total_reviews',
+				'title'            => 'tagline',
+				'cover_id'         => 'cover_image_id',
+				'response_time'    => 'response_time_hours',
+				'delivery_rate'    => 'on_time_delivery_rate',
+				'tier'             => 'verification_tier',
+				'rating'           => 'avg_rating',
+				'review_count'     => 'total_reviews',
+				// The model reads this from `completed_orders` in from_db(); the
+				// mapping was simply never declared here, so the validator
+				// reported a mismatch that does not exist in the code.
+				'orders_completed' => 'completed_orders',
 			],
 		],
 		'WPSellServices\\Models\\Service'       => [
@@ -73,11 +82,29 @@ class SchemaValidator {
 		],
 		'WPSellServices\\Models\\Dispute'       => [
 			'table'    => 'disputes',
-			'mappings' => [],
+			// Model property => DB column. Taken from Dispute::from_db(), not
+			// guessed: the model deliberately reads better than the columns do.
+			'mappings' => [
+				'initiator_id'    => 'initiated_by',
+				'assigned_to'     => 'assigned_admin',
+				'resolution_type' => 'resolution',
+			],
 		],
 		'WPSellServices\\Models\\Review'        => [
 			'table'    => 'reviews',
-			'mappings' => [],
+			// Model property => DB column, read off Review::from_db(). Note
+			// `title` is not in this list: the model sets it to '' outright
+			// because the reviews table has never had such a column, so it is
+			// declared computed below rather than mapped to nothing.
+			'mappings' => [
+				'reviewed_id'          => 'reviewee_id',
+				'rating_communication' => 'communication_rating',
+				'rating_quality'       => 'quality_rating',
+				'rating_value'         => 'delivery_rating',
+				'content'              => 'review',
+				'response'             => 'vendor_reply',
+				'response_at'          => 'vendor_reply_at',
+			],
 		],
 	];
 
@@ -98,6 +125,20 @@ class SchemaValidator {
 		'vacation_until', // Computed from vacation_mode.
 		'is_verified',    // Computed from verification_tier.
 		'original_deadline',
+		/*
+		 * Supplied by a JOIN, not by the conversations table.
+		 * Conversation::from_db() hydrates these only when the query provides
+		 * them, which is why they are conditional there. Verified against the
+		 * live API: GET /conversations returns last_message populated with
+		 * content, sender_id and created_at, so the model is right and the
+		 * every-property-is-a-column rule is what does not fit.
+		 */
+		'last_message',
+		'last_message_sender_id',
+		'last_message_created_at',
+		// Review::from_db() assigns '' to this unconditionally - the reviews
+		// table has no title column and never has.
+		'title',
 	];
 
 	/**

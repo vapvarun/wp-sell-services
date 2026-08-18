@@ -1208,11 +1208,6 @@ parameters:
 			count: 1
 			path: src/Core/Plugin.php
 
-		-
-			message: '#^Property WPSellServices\\Core\\SchemaValidator\:\:\$model_mappings \(array\<string, array\{table\: string, mappings\: array\<string, string\>\}\>\) does not accept default value of type array\{WPSellServices\\Models\\ServiceOrder\: array\{table\: ''orders'', mappings\: array\{\}\}, WPSellServices\\Models\\VendorProfile\: array\{table\: ''vendor_profiles'', mappings\: array\{title\: ''tagline'', cover_id\: ''cover_image_id'', response_time\: ''response_time_hours'', delivery_rate\: ''on_time_delivery…'', tier\: ''verification_tier'', rating\: ''avg_rating'', review_count\: ''total_reviews''\}\}, WPSellServices\\Models\\Service\: array\{table\: ''services'', is_cpt\: true\}, WPSellServices\\Models\\Conversation\: array\{table\: ''conversations'', mappings\: array\{\}\}, WPSellServices\\Models\\Dispute\: array\{table\: ''disputes'', mappings\: array\{\}\}, WPSellServices\\Models\\Review\: array\{table\: ''reviews'', mappings\: array\{\}\}\}\.$#'
-			identifier: property.defaultValue
-			count: 1
-			path: src/Core/SchemaValidator.php
 
 		-
 			message: '#^Property WPSellServices\\Core\\SchemaValidator\:\:\$schema is never read, only written\.$#'
