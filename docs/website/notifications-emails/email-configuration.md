@@ -23,6 +23,41 @@ All toggles are enabled by default. Changes take effect immediately after saving
 
 ---
 
+## What Members Can Turn Off Themselves
+
+You control which emails the site sends. Each member controls which of those
+they want to receive, from **Dashboard > Profile > Email Preferences**.
+
+The categories a member sees depend on what they actually do on your
+marketplace. A buyer is offered the five that apply to them - orders, messages,
+deliveries, reviews and disputes. Someone who also sells sees eight, adding the
+seller-side categories: sales, earnings and withdrawals, and buyer requests or
+proposals.
+
+That matters more than it sounds. Before 1.6.0 every member was offered the
+seller list, so a buyer who unticked things they did not recognise could
+accidentally mute notifications about their own orders.
+
+**Two things a member cannot turn off**, by design:
+
+- Anything about money moving - a payment taken, a refund issued, a withdrawal
+  paid.
+- Anything about account security.
+
+Those arrive regardless, because a marketplace that lets someone opt out of
+being told their money moved is not one people can trust.
+
+## Not Emailing Someone Who Is Already Reading
+
+By default the plugin does not email a member about a new message while they are
+actively using the site - they are already looking at it, and the email arrives
+as noise a few seconds later.
+
+There is no setting screen for this. It is on unless a developer turns it off,
+and the behaviour is adjustable with the `wpss_skip_message_email_when_online`
+and `wpss_presence_window` filters - see the
+[Hooks & Filters reference](../developer-guide/hooks-filters.md).
+
 ## Send Test Email
 
 Use the test email feature to verify that your site can successfully send emails.

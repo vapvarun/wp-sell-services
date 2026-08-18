@@ -1000,3 +1000,98 @@ buyer there for a sub-order lands them on an empty cart, because a sub-order was
 never added to one. That is the trap the filter above exists to avoid, and the
 reason browser Pay never reaches `StandaloneCheckoutProvider::render_pay_order_checkout()`
 on a cart rail.
+
+## Mobile Session and Selling Limits (1.6.0)
+
+### Token lifetime
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_app_token_lifetime` | `array{idle:int, absolute:int} $lifetime` | `functions/misc.php` |
+| `wpss_token_recovery_routes` | `array<int,string> $routes` | `API/AppTokenGuard.php` |
+
+App tokens expire 30 days after last use or 90 days after issue, whichever comes
+first. Returning `0` for either key disables that limit; disabling both restores
+the pre-1.6.0 behaviour of tokens that never expire, which is what that release
+was filed to end.
+
+```php
+// A 7-day idle window for a high-security marketplace.
+add_filter( 'wpss_app_token_lifetime', function ( array $lifetime ): array {
+    $lifetime['idle'] = 7 * DAY_IN_SECONDS;
+    return $lifetime;
+} );
+```
+
+`wpss_token_recovery_routes` lists the routes reachable with an **expired** token
+in the Authorization header - by default `/auth/login`, `/auth/register` and
+`/auth/forgot-password`.
+
+Do not add a route that reads the current user. WordPress 401s the whole request
+on a failed application password, so without this carve-out an app that attaches
+its stored token to every request could never reach the login route to replace
+it. These three take their credentials from the request body and grant nothing
+on their own, which is what makes them safe to open.
+
+### Selling limits
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_member_bypasses_limits` | `bool $bypasses, int $user_id` | `functions/vendors.php` |
+| `wpss_vendor_can_create_service` | `bool $can_create, int $vendor_id` | two gates, see below |
+
+Administrators bypass vendor selling limits by default, so a site owner seeding
+demo content or building services for a client does not meet their own paywall.
+
+```php
+// Meter administrators too.
+add_filter( 'wpss_member_bypasses_limits', '__return_false' );
+```
+
+**`wpss_vendor_can_create_service` has TWO gates on it**, and this catches
+people out: this plugin enforces a per-profile maximum at priority 10, and Pro's
+plan enforcer runs at priority 20. If you are testing whether a member may
+create a service, run the **filter** - calling either class directly can return
+`true` while the filter answers `false`.
+
+## Presence and Messaging (1.6.0)
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_skip_message_email_when_online` | `bool $skip, int $recipient_id, bool $enabled` | `functions/notifications.php` |
+| `wpss_presence_window` | `int $seconds` | `functions/notifications.php` |
+| `wpss_messages_per_page` | `int $per_page` | `templates/dashboard/sections/messages.php` |
+
+There is no settings screen for the presence behaviour - it is on by default and
+adjusted here.
+
+## Gallery and Layout (1.6.0)
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_video_thumbnail_cache_ttl` | `int $ttl, string $video_url` | `functions/services.php` |
+| `wpss_gallery_image_size` | `string $size, int $service_id` | `partials/service-gallery.php` |
+| `wpss_sticky_top_offset` | `int $offset` | `Frontend/Frontend.php` |
+
+A video thumb uses the embed provider's own poster frame, fetched through oEmbed
+and cached for a week. That call is an HTTP request to the provider, so if you
+shorten the TTL, shorten it deliberately - an uncached lookup puts a third-party
+round trip in front of every visitor.
+
+Use `wpss_sticky_top_offset` when a theme has its own sticky header that the
+plugin's measurement cannot see.
+
+## Categories (1.6.0)
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_category_terms_limit` | `int $limit` | `functions/services.php` |
+
+Category choosers cap at 200 terms. The helper `wpss_group_category_terms()`
+turns a flat term list into parents each carrying their children, and is what
+every single-dropdown chooser in the plugin uses - reuse it rather than grouping
+by hand, or the two will drift as they did before 1.6.0.
+
+Orphans - a child whose parent is missing because `hide_empty` dropped it - are
+promoted to top level rather than discarded, so a category with services in it
+always stays reachable.

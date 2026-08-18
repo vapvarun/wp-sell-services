@@ -9,7 +9,6 @@ WP Sell Services Pro supports several e-commerce platforms beyond WooCommerce, s
 | **WooCommerce** | Full-featured stores with 100+ payment gateways | Pro |
 | **Easy Digital Downloads** | Lightweight digital-focused marketplaces | Pro |
 | **FluentCart** | Fast, modern single-page checkouts | Pro |
-| **SureCart** | Subscription services with built-in tax automation | Pro |
 | **Standalone** | Pure service marketplaces, no extra plugins needed | Free + Pro |
 
 ## Easy Digital Downloads (EDD) **[PRO]**
@@ -42,19 +41,23 @@ FluentCart is a newer, lightweight checkout plugin that focuses on speed and sim
 
 FluentCart provides a single-page checkout experience with Stripe and PayPal built in.
 
-## SureCart **[PRO]**
+## What happened to SureCart?
 
-SureCart is ideal if you need subscription billing or automated tax calculation. It has a modern interface and handles tax compliance through its TaxJar integration.
+**SureCart support was removed in 1.6.0.**
 
-**How to set it up:**
+Every platform on this page has to behave the same way: it owns the checkout,
+takes the money, and tells the marketplace an order was paid so the vendor can
+be credited. SureCart hosts its catalogue on its own service rather than in your
+WordPress site, which means it cannot act as that kind of rail without the
+marketplace guessing at what was bought.
 
-1. Install SureCart and create a free account at SureCart.com
-2. Connect your Stripe account through SureCart settings
-3. Go to **Sell Services > Settings > General**
-4. Select **SureCart** as your e-commerce platform
-5. Click **Save Changes**
+It had been shipping as though it could. Rather than leave an integration in
+place that could take a payment without reliably starting an order, it was
+removed.
 
-SureCart includes Apple Pay, Google Pay, and automatic tax calculation out of the box.
+If you were using it, move to one of the platforms above, or to standalone mode.
+Orders already placed are unaffected - switching platforms never rewrites past
+orders.
 
 ## Which Platform Should You Choose?
 
@@ -64,7 +67,7 @@ Here is a practical guide:
 - **Want the simplest setup?** Use standalone mode. No extra plugins, no dependencies.
 - **Selling only digital services?** EDD is purpose-built for this.
 - **Need the fastest checkout?** FluentCart or standalone mode are your best bets.
-- **Need subscription billing or tax automation?** SureCart handles both beautifully.
+- **Need subscription billing?** Use WooCommerce with a subscriptions extension, or the recurring services feature in Pro.
 
 ## Switching Between Platforms
 

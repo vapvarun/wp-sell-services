@@ -54,6 +54,25 @@ fields, which is exactly what an account needs.
 WordPress user account, which is a decision for the site owner rather than
 something to inherit silently.
 
+## Choosing Which Billing Fields Checkout Asks For
+
+**Sell Services > Settings > Orders & Disputes > Checkout Billing Fields**
+
+Address fields make sense when something is being shipped. For a marketplace
+selling design work or code, asking a buyer for a street address before they can
+pay is friction with nothing behind it, and every extra field costs you some
+buyers.
+
+Turn off the ones you do not need. Three stay on and cannot be removed:
+
+- **First name**
+- **Last name**
+- **Email**
+
+Those are locked because an order has to be attributable to somebody you can
+contact. They are also exactly what an account needs, which is why creating
+accounts at checkout adds no new fields to the form.
+
 ## Setting Up Standalone Mode
 
 1. Go to **Sell Services > Settings > General**

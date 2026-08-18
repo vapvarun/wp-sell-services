@@ -372,7 +372,7 @@
           "order": 1
         },
         {
-          "title": "EDD, FluentCart & SureCart [PRO]",
+          "title": "EDD & FluentCart [PRO]",
           "slug": "alternative-platforms-wpss",
           "file": "payments-checkout/alternative-platforms.md",
           "order": 2
@@ -412,6 +412,12 @@
           "slug": "display-currency-wpss",
           "file": "payments-checkout/display-currency.md",
           "order": 8
+        },
+        {
+          "title": "Offline Payment Proof & Receipts",
+          "slug": "offline-payment-proof-wpss",
+          "file": "payments-checkout/offline-payment-proof.md",
+          "order": 9
         }
       ]
     },
