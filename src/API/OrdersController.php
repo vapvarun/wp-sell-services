@@ -1047,7 +1047,7 @@ class OrdersController extends RestController {
 				'template'     => $requirements,
 				'submitted'    => $submitted,
 				'status'       => empty( $submitted ) ? 'pending' : 'submitted',
-				'submitted_at' => $row->submitted_at ?? null,
+				'submitted_at' => $this->format_datetime( $row->submitted_at ?? null ),
 			)
 		);
 	}
