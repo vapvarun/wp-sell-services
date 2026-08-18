@@ -876,6 +876,42 @@ article.wpss-service-card:hover {
 	border-color: var(--wpss-primary);
 }
 
+/* Video thumb: same tile as an image, with a play badge over it so it reads as
+   a video rather than a duplicate of the poster image. */
+.wpss-gallery-thumb--video {
+	position: relative;
+}
+
+.wpss-gallery-thumb__play {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--wpss-white);
+	background: rgb(0 0 0 / 45%);
+	pointer-events: none;
+}
+
+.wpss-gallery-thumb__play svg,
+.wpss-gallery-thumb__play i {
+	width: 22px;
+	height: 22px;
+}
+
+/* The main area holds the image and the video in the same box; whichever is
+   hidden must take no space, including against a theme that sets img{display}. */
+.wpss-gallery-active [hidden] {
+	display: none !important;
+}
+
+.wpss-gallery-video iframe,
+.wpss-gallery-video video {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	border: 0;
+}
+
 .wpss-gallery-thumb img {
 	width: 100%;
 	height: 100%;

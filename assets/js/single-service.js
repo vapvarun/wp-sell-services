@@ -65,17 +65,41 @@
 
                 const $thumb = $(this);
                 const $active = $gallery.find('.wpss-gallery-active');
+                const $video = $active.find('.wpss-gallery-video');
+                const $image = $active.find('.wpss-gallery-image');
                 const src = $thumb.data('src');
 
                 // Update active state.
                 $gallery.find('.wpss-gallery-thumb').removeClass('active');
                 $thumb.addClass('active');
 
-                // If main area has a video, replace it with an image element.
-                if ($active.find('.wpss-gallery-video').length) {
-                    $active.html('<img src="' + src + '" alt="" class="wpss-gallery-image">');
-                } else {
-                    $active.find('img').attr('src', src);
+                /*
+                 * Toggle between the image and the video. This used to do
+                 * $active.html('<img>'), which DELETED the embed from the DOM -
+                 * so the first click on any image thumb lost the video for good
+                 * and only a page reload brought it back.
+                 *
+                 * The embed is cloned out of its <template> on first use and
+                 * then kept, so switching back and forth neither re-requests it
+                 * from the provider nor restarts playback from zero.
+                 */
+                if ($thumb.data('video')) {
+                    if ($video.length && !$video.children().length) {
+                        const tpl = $active.find('.wpss-gallery-video-embed')[0];
+                        if (tpl && tpl.content) {
+                            $video[0].appendChild(document.importNode(tpl.content, true));
+                        }
+                    }
+                    $image.attr('hidden', 'hidden');
+                    $video.removeAttr('hidden');
+                    return;
+                }
+
+                $video.attr('hidden', 'hidden');
+                $image.removeAttr('hidden');
+
+                if (src) {
+                    $image.attr('src', src);
                 }
             });
 

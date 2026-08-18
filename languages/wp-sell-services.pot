@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-18T06:01:24+00:00\n"
+"POT-Creation-Date: 2026-08-18T06:18:50+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -20515,6 +20515,10 @@ msgid "%d star out of 5"
 msgid_plural "%d stars out of 5"
 msgstr[0] ""
 msgstr[1] ""
+
+#: templates/partials/service-gallery.php:147
+msgid "Play the service video"
+msgstr ""
 
 #. translators: %d: number of days
 #: templates/partials/service-packages.php:138
