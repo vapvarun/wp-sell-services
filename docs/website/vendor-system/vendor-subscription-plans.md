@@ -64,6 +64,25 @@ selling.
 A vendor on a 3-service plan who tries to publish a 4th is stopped in the wizard,
 with an explanation and a link to upgrade -- not a silent failure.
 
+### Administrators are not metered
+
+**Since 1.6.0**, anyone who can manage your site bypasses these limits entirely.
+You are not one of your own subscribers, and an owner seeding demo content,
+importing a catalogue or building services on behalf of a client should not meet
+their own paywall.
+
+Before this, an administrator hit the same wall as any vendor: the create-service
+wizard refused them with "You have reached your service limit", and the REST API
+answered 403, with nothing on the admin side explaining why.
+
+The exemption applies to both the wizard and the API, and it is checked against
+the member being tested rather than whoever is browsing - so an administrator
+acting on someone else's behalf does not lift *that person's* limit.
+
+If you genuinely want administrators metered too, a developer can restore that
+with the `wpss_member_bypasses_limits` filter. It is a deliberate choice rather
+than the accidental default it used to be.
+
 ## Customer experience
 
 Vendors manage their membership from **My Subscriptions** in their dashboard:

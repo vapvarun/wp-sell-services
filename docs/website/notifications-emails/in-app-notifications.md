@@ -80,6 +80,43 @@ Disabling an email notification type does not affect in-app notifications. Users
 
 ---
 
+## Push Notifications to Phones **[PRO]**
+
+A member with your mobile app installed can be notified on their phone for the
+same events they already receive in the app. Nothing new to decide about *what*
+gets sent - push follows the notifications you already have.
+
+**Off by default**, and it needs credentials before it will send anything.
+
+### Setting it up
+
+1. Create a Firebase project at console.firebase.google.com and generate a
+   **service account key** - a JSON file Google gives you once.
+2. Go to **Sell Services > Settings > Advanced**.
+3. Paste the JSON into the push notification credentials field and enable it.
+4. Save.
+
+Firebase relays to Apple's service for iOS, so one credential covers Android,
+iOS and web. You do not need a separate Apple key.
+
+### What to expect
+
+- A member's device registers itself when they sign in on the app. Nothing for
+  them to configure.
+- A device that uninstalls the app or rotates its token is dropped
+  automatically, so you are not paying for delivery attempts to phones that no
+  longer exist.
+- The credential is stored masked. Re-saving settings without retyping it keeps
+  the existing one rather than blanking it.
+
+### Before you rely on it
+
+Push has been verified as far as the request this plugin sends. **What Google
+does with a valid-looking request has not been tested against a real handset.**
+Send yourself a test on a real phone before telling members the feature exists.
+
+---
+
 ## Tips
 
 - **Check notifications regularly.** The dashboard bell is the quickest way to stay on top of orders, messages, and reviews.
