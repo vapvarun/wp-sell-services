@@ -98,7 +98,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 * Built-in checkout system — no WooCommerce or other e-commerce plugin required
 * Offline payment gateway with admin confirmation workflow
-* Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce, EDD, FluentCart, and SureCart checkout integrations.
+* Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce, EDD and FluentCart checkout integrations.
 * Milestone, tip and extension payments are supported on Standalone and WooCommerce
 
 **Developer Ready**
@@ -134,7 +134,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 Upgrade to [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-services-pro/) for additional capabilities:
 
-* **E-commerce Platforms**: WooCommerce, Easy Digital Downloads, FluentCart, SureCart
+* **E-commerce Platforms**: WooCommerce, Easy Digital Downloads, FluentCart
 * **Additional Payment Gateway**: Razorpay (UPI, cards, netbanking)
 * **Tiered Commission Rules**: Category, volume, and seller-level based commission rates
 * **White-Label Branding**: Rebrand the entire marketplace with custom name and styling
@@ -196,7 +196,7 @@ Full documentation at [wbcomdesigns.com/docs/wp-sell-services](https://wbcomdesi
 
 = Is WooCommerce required? =
 
-No. WP Sell Services includes a built-in standalone checkout system with Stripe, PayPal, and Offline payment gateways. Your marketplace is fully functional out of the box — service listings, vendor management, order workflow, messaging, reviews, dispute resolution, and checkout all work without any additional plugins. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, EDD, FluentCart, and SureCart integrations for sites that prefer those platforms.
+No. WP Sell Services includes a built-in standalone checkout system with Stripe, PayPal, and Offline payment gateways. Your marketplace is fully functional out of the box — service listings, vendor management, order workflow, messaging, reviews, dispute resolution, and checkout all work without any additional plugins. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, EDD and FluentCart integrations for sites that prefer those platforms.
 
 = Does this work with my WordPress theme? =
 
@@ -216,7 +216,7 @@ Yes. Buyers can post project requests with budget range, description, and deadli
 
 = What payment gateways are supported? =
 
-The free version includes a standalone checkout with Stripe, PayPal, and Offline payment gateways — no e-commerce plugin required. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, Easy Digital Downloads, FluentCart, and SureCart checkout integrations for sites already using those platforms.
+The free version includes a standalone checkout with Stripe, PayPal, and Offline payment gateways — no e-commerce plugin required. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, Easy Digital Downloads and FluentCart checkout integrations for sites already using those platforms.
 
 One difference worth knowing: paying a single existing amount (a milestone phase, a tip, a paid extension) is supported on Standalone and WooCommerce. If your marketplace needs milestones, tipping or paid extensions, run it on one of those two.
 
@@ -265,7 +265,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 = 1.6.0 - August 2026 =
 
-Fixes for screens that could white-screen or silently do nothing, a marketplace that credits vendors on every payment platform, and a large cut in the queries the marketplace pages run.
+Security fixes for the mobile sign-in, a marketplace that credits vendors on every payment platform, fixes for screens that could white-screen or silently do nothing, and a large cut in the queries the marketplace pages run.
 
 * New      - Buyers can upload proof of an offline payment and an admin can approve or reject it, which marks the order paid and credits the vendor through the same path as a card payment. Off by default.
 * New      - A paid order has a printable receipt the buyer can save as a PDF.
@@ -278,6 +278,10 @@ Fixes for screens that could white-screen or silently do nothing, a marketplace 
 * New      - Catalog prices carry their base amount in the markup, so a display-currency add-on can show an approximate price in the shopper's own currency without changing what is charged.
 * New      - The order modal total now carries the same information, so the estimate follows the price as extras and quantity change.
 * New      - New action wpss_payable_total_after fires wherever a payable total is shown, on both the cart summary and the checkout, so an add-on can state the charge currency at the last screen before payment.
+* New      - Buyers can create their account during checkout instead of meeting a sign-in wall before they can pay. Off by default.
+* New      - Members can see every device they are signed in on and revoke any one of them, without signing out everywhere.
+* New      - Owners can point the site's header cart link at the marketplace cart, for sites running WooCommerce beside the built-in checkout. Off by default.
+* New      - A Vendors directory page is created at install, so the Pages setting is no longer a mapping with nothing behind it.
 * Improve  - An order now records the package the buyer actually bought, so editing or reordering a service later never changes what an existing order says was purchased.
 * Improve  - Packages carry a stable id that does not shift when packages are reordered, and the REST API publishes it.
 * Improve  - Every payment platform reports order status through one shared map, replacing three separate maps that disagreed with each other.
@@ -289,6 +293,10 @@ Fixes for screens that could white-screen or silently do nothing, a marketplace 
 * Improve  - Category choosers no longer load every category on the site. The limit is 200 and filterable with wpss_category_terms_limit.
 * Improve  - Shortcodes and blocks that show the same thing now share one renderer and one template, so a theme override applies to both and they cannot drift apart again.
 * Improve  - Prices are marked up identically for every visitor, so a page cache can never serve one shopper's currency to another.
+* Improve  - Saving a vendor profile confirms with the same toast used everywhere else, rather than a banner above the fold the member was not looking at.
+* Improve  - Losing bidders on a buyer request are told in the app rather than by email, so deciding a busy request no longer sends a burst of rejections.
+* Improve  - The dashboard messages list is paginated, so a member with many conversations no longer loads all of them at once.
+* Improve  - SureCart is no longer advertised in Settings or on the Upgrade page, which described an integration Pro does not include.
 * Fix      - Orders placed before this release could show the wrong package name and price once a service was edited. Existing orders are repaired on update using what the buyer actually paid.
 * Fix      - The category archive listed buyer requests alongside services.
 * Fix      - Pages with the same title could not be told apart in the Pages settings dropdowns.
@@ -304,6 +312,31 @@ Fixes for screens that could white-screen or silently do nothing, a marketplace 
 * Fix      - The disputes table was unreadable on phones, with values pushed to the right against blank labels.
 * Fix      - Demo data sized vendor withdrawals against earnings still inside the clearance window, leaving negative available balances, and re-running the seeder credited every order again.
 * Fix      - Docblocks across the plugin cited @since versions that were never released; every one now names the version it actually shipped in.
+* Fix      - On a site running Easy Digital Downloads, a checkout could complete and mark itself paid before the marketplace had loaded, so no order was created and no vendor was credited.
+* Fix      - Accepting a proposal created an order whose service resolved to whichever page happened to be rendering, so the order showed the wrong title.
+* Fix      - Paying for an existing order offline never recorded the payment method, leaving an order no admin could confirm and no buyer could send proof for.
+* Fix      - Proposals produced no in-app notification at all; the notification types had existed since the first release and nothing ever wrote one.
+* Fix      - A dispute conversation was stored in two places, so each screen showed only half of it.
+* Fix      - A completed order with an open dispute showed no sign of that dispute on the admin order screen.
+* Fix      - A completed order hid the review prompt but never showed the review the buyer had already written.
+* Fix      - Vendor links across the site landed on the directory instead of the vendor's own profile.
+* Fix      - The Become a Vendor page offered registration to members who were already vendors.
+* Fix      - The messages unread count was hidden by a stylesheet rule, so a correct number rendered as a bare dot.
+* Fix      - Settings deep links used a query argument the settings screen no longer reads, and five of them pointed at the wrong section.
+* Fix      - The Create Service page was published but empty; it now sends the member to the service wizard.
+* Fix      - The cart page took the generic /cart/ slug and accumulated orphaned duplicates on sites that already had one.
+* Fix      - The admin screens never loaded the design tokens, so the retired green palette survived in every colour fallback.
+* Fix      - The single service sidebar did not stick at all when a theme clipped overflow, so the price and Order button scrolled out of reach.
+* Fix      - The sticky offset assumed the WordPress admin bar was the only fixed bar on the page and ignored a theme's own sticky header.
+* Fix      - Mapped pages rendered two headings, the theme's and the plugin's.
+* Fix      - The earnings banner offered a withdrawal to vendors whose balance was negative, because it counted money from orders still in progress.
+* Fix      - Ten JavaScript strings were never sent for translation, so every message the favourites feature shows a buyer appeared in English in all locales.
+* Fix      - The skip-email-when-online setting could never fire, because the code that records when a member was last active was never hooked to anything.
+* Fix      - The cart accepted a stable package id and returned an array position, so a client could not match a cart line back to the package it bought.
+* Fix      - The setup wizard rendered an empty browser tab title once setup was complete.
+* Security - Mobile app tokens now expire, 30 days after last use or 90 days after they are issued, and are rejected at authentication instead of staying valid forever.
+* Security - An app token can no longer be presented in place of the account password to mint further tokens.
+* Security - The public vendor search no longer matches WordPress login names, which allowed usernames to be discovered one letter at a time.
 * Dev      - GET /orders/{id} answers 404 for an order that does not exist, rather than 403.
 * Dev      - An admin-only denial answers wpss_not_admin instead of reusing the ownership code.
 * Dev      - The REST error codes are documented, with a committed contract smoke that checks them across anonymous, buyer, vendor and admin callers.
@@ -316,6 +349,16 @@ Fixes for screens that could white-screen or silently do nothing, a marketplace 
 * Dev      - Hardcoded English fallbacks removed from JavaScript across both plugins, so every message shown to a user is translatable.
 * Dev      - The translation check now fails when the plugin version and the translation template disagree, which is how a template for the previous version shipped before.
 
+* Dev      - One actor shape across the API: every endpoint describes a person as id, name, avatar and deleted.
+* Dev      - One date format across the API: every timestamp is ISO-8601 with an offset, replacing a mix of that and MySQL datetimes carrying no timezone.
+* Dev      - One service card shape: /services and /favorites return the same keys from a single shared builder.
+* Dev      - Every API change this release is additive, so the REST contract version is unchanged and existing clients keep working.
+* Dev      - New GET /auth/sessions and DELETE /auth/sessions/{uuid} list and revoke a member's app sign-ins.
+* Dev      - New filters wpss_app_token_lifetime and wpss_token_recovery_routes control how long a token lives and which routes stay reachable with an expired one.
+* Dev      - New filter wpss_sticky_top_offset lets a theme declare the height of its own sticky header.
+* Dev      - New filter wpss_messages_per_page sets the dashboard conversation page size.
+* Dev      - wp wpss preflight now asks Action Scheduler, which the plugin actually uses, instead of reporting every job as unscheduled.
+* Dev      - Static analysis and the full test suite run in CI; both had been failing to run at all.
 = 1.4.0 - August 2026 =
 
 Payment ownership is now unambiguous, milestone and tip payments work on WooCommerce, and the REST API tells clients the truth.
