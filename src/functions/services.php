@@ -689,6 +689,65 @@ function wpss_get_category_terms( array $args = array() ): array {
 }
 
 /**
+ * Group category terms into parents each carrying their children.
+ *
+ * Every single-dropdown category chooser in the plugin was rendering a FLAT
+ * list, so "Logo Design" sat between "Graphics & Design" and "Programming &
+ * Tech" looking like a top-level category of its own (Basecamp 10208080926).
+ * A buyer could not tell a subcategory from a category.
+ *
+ * The grouping lives here rather than in each caller because there are five of
+ * them and they had already drifted - one passed parent => 0, the rest did not.
+ * Markup stays with the caller: an archive filter's option values are URLs, the
+ * wizard's are term ids, and a block control wants a plain array.
+ *
+ * Orphans - a child whose parent is missing from $terms, which happens whenever
+ * hide_empty drops an empty parent - are promoted to top level rather than
+ * dropped, because a category that exists and has services must remain
+ * reachable.
+ *
+ * @since 1.6.0
+ *
+ * @param \WP_Term[] $terms Terms, in any order.
+ * @return array<int, array{term: \WP_Term, children: \WP_Term[]}> Parents in
+ *                                                                the given order.
+ */
+function wpss_group_category_terms( array $terms ): array {
+	$by_id    = array();
+	$children = array();
+
+	foreach ( $terms as $term ) {
+		if ( $term instanceof \WP_Term ) {
+			$by_id[ (int) $term->term_id ] = $term;
+		}
+	}
+
+	foreach ( $by_id as $term ) {
+		$parent = (int) $term->parent;
+
+		if ( $parent > 0 && isset( $by_id[ $parent ] ) ) {
+			$children[ $parent ][] = $term;
+		}
+	}
+
+	$grouped = array();
+
+	foreach ( $by_id as $id => $term ) {
+		$parent = (int) $term->parent;
+
+		// Top level, or an orphan whose parent this query did not return.
+		if ( 0 === $parent || ! isset( $by_id[ $parent ] ) ) {
+			$grouped[] = array(
+				'term'     => $term,
+				'children' => $children[ $id ] ?? array(),
+			);
+		}
+	}
+
+	return $grouped;
+}
+
+/**
  * Count PUBLISHED SERVICES per category term, in one query.
  *
  * A term's own `count` is not the answer. wpss_service_category is registered

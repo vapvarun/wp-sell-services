@@ -1208,18 +1208,33 @@ class ServiceWizard {
 	 * @return void
 	 */
 	private function render_category_options( array $categories, int $parent_id = 0, int $depth = 0 ): void {
+		unset( $depth );
+
+		/*
+		 * TOP LEVEL ONLY (Basecamp 10208080926).
+		 *
+		 * This used to recurse, so the Category dropdown listed children too,
+		 * prefixed with a dash. A vendor could pick "Logo Design" there - and
+		 * then the Subcategory dropdown sat enabled and empty, because
+		 * getSubcategories() looks up the children of the selected term and a
+		 * child has none. The service saved with a child in the category field
+		 * and its parent never assigned.
+		 *
+		 * Note what is NOT changed: the $categories array still holds every
+		 * term, because window.wpssCategories is built from the same fetch and
+		 * the subcategory dropdown needs the children. Filtering the query to
+		 * parent => 0 - the obvious-looking fix - would leave that dropdown
+		 * permanently empty.
+		 */
 		foreach ( $categories as $category ) {
 			if ( (int) $category->parent !== $parent_id ) {
 				continue;
 			}
-
-			$indent = str_repeat( '&mdash; ', $depth );
 			?>
 			<option value="<?php echo esc_attr( $category->term_id ); ?>">
-				<?php echo $indent . esc_html( $category->name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<?php echo esc_html( $category->name ); ?>
 			</option>
 			<?php
-			$this->render_category_options( $categories, $category->term_id, $depth + 1 );
 		}
 	}
 

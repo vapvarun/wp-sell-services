@@ -44,11 +44,11 @@ class SchemaValidator {
 	 * Maps model class names to their database tables and property mappings.
 	 *
 	 * The Service entry is a custom post type rather than a table, so it carries
- * `is_cpt` and no `mappings`. Both keys are therefore optional - the previous
- * declaration claimed every entry had `mappings`, which was never true and was
- * silenced with a baseline entry rather than corrected.
- *
- * @var array<string, array{table: string, mappings?: array<string, string>, is_cpt?: bool}>
+	 * `is_cpt` and no `mappings`. Both keys are therefore optional - the previous
+	 * declaration claimed every entry had `mappings`, which was never true and was
+	 * silenced with a baseline entry rather than corrected.
+	 *
+	 * @var array<string, array{table: string, mappings?: array<string, string>, is_cpt?: bool}>
 	 */
 	private array $model_mappings = [
 		'WPSellServices\\Models\\ServiceOrder'  => [

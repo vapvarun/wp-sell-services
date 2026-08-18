@@ -176,11 +176,32 @@ class ServiceArchiveView {
 						<option value="<?php echo esc_url( add_query_arg( $base_args, $base_url ) ); ?>">
 							<?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?>
 						</option>
-						<?php foreach ( $categories as $category ) : ?>
-							<option value="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'category' => $category->term_id ) ), $base_url ) ); ?>"
-								<?php selected( $current_category, $category->term_id ); ?>>
-								<?php echo esc_html( $category->name ); ?>
+						<?php
+						/*
+						 * Grouped, not flat (Basecamp 10208080926). A child term
+						 * used to appear alphabetically between parents with
+						 * nothing marking it as a subcategory, so "Logo Design"
+						 * read as a peer of "Graphics & Design". Children stay
+						 * selectable - a buyer filtering by a subcategory is the
+						 * whole point - they are just shown where they belong.
+						 */
+						foreach ( wpss_group_category_terms( $categories ) as $wpss_group ) :
+							$wpss_parent = $wpss_group['term'];
+							?>
+							<option value="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'category' => $wpss_parent->term_id ) ), $base_url ) ); ?>"
+								<?php selected( $current_category, $wpss_parent->term_id ); ?>>
+								<?php echo esc_html( $wpss_parent->name ); ?>
 							</option>
+							<?php if ( ! empty( $wpss_group['children'] ) ) : ?>
+								<optgroup label="<?php echo esc_attr( $wpss_parent->name ); ?>">
+									<?php foreach ( $wpss_group['children'] as $wpss_child ) : ?>
+										<option value="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'category' => $wpss_child->term_id ) ), $base_url ) ); ?>"
+											<?php selected( $current_category, $wpss_child->term_id ); ?>>
+											<?php echo esc_html( $wpss_child->name ); ?>
+										</option>
+									<?php endforeach; ?>
+								</optgroup>
+							<?php endif; ?>
 						<?php endforeach; ?>
 					</select>
 				<?php endif; ?>

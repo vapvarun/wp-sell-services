@@ -239,11 +239,22 @@ class BlocksManager {
 
 		$categories = [];
 
-		foreach ( $terms as $term ) {
+		// The control takes a flat value/label list, so a child can only be
+		// distinguished by its label. Without this a subcategory looked exactly
+		// like a top-level category in the block sidebar (Basecamp 10208080926).
+		foreach ( wpss_group_category_terms( $terms ) as $group ) {
 			$categories[] = [
-				'value' => $term->term_id,
-				'label' => $term->name,
+				'value' => $group['term']->term_id,
+				'label' => $group['term']->name,
 			];
+
+			foreach ( $group['children'] as $child ) {
+				$categories[] = [
+					'value' => $child->term_id,
+					/* translators: %s: subcategory name, indented under its parent. */
+					'label' => sprintf( __( '— %s', 'wp-sell-services' ), $child->name ),
+				];
+			}
 		}
 
 		return $categories;

@@ -233,11 +233,26 @@ class BuyerRequestArchiveView {
 						<option value="<?php echo esc_url( remove_query_arg( 'category' ) ); ?>">
 							<?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?>
 						</option>
-						<?php foreach ( $categories as $category ) : ?>
-							<option value="<?php echo esc_url( add_query_arg( 'category', $category->term_id ) ); ?>"
-								<?php selected( $current_category, $category->term_id ); ?>>
-								<?php echo esc_html( $category->name ); ?>
+						<?php
+						// Grouped so a subcategory is not mistaken for a category
+						// (Basecamp 10208080926).
+						foreach ( wpss_group_category_terms( $categories ) as $wpss_group ) :
+							$wpss_parent = $wpss_group['term'];
+							?>
+							<option value="<?php echo esc_url( add_query_arg( 'category', $wpss_parent->term_id ) ); ?>"
+								<?php selected( $current_category, $wpss_parent->term_id ); ?>>
+								<?php echo esc_html( $wpss_parent->name ); ?>
 							</option>
+							<?php if ( ! empty( $wpss_group['children'] ) ) : ?>
+								<optgroup label="<?php echo esc_attr( $wpss_parent->name ); ?>">
+									<?php foreach ( $wpss_group['children'] as $wpss_child ) : ?>
+										<option value="<?php echo esc_url( add_query_arg( 'category', $wpss_child->term_id ) ); ?>"
+											<?php selected( $current_category, $wpss_child->term_id ); ?>>
+											<?php echo esc_html( $wpss_child->name ); ?>
+										</option>
+									<?php endforeach; ?>
+								</optgroup>
+							<?php endif; ?>
 						<?php endforeach; ?>
 					</select>
 				<?php endif; ?>
