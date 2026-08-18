@@ -18,7 +18,9 @@ payouts. WooCommerce is optional, not required.
 
 ## Can I use my existing ecommerce plugin?
 
-**YES (Pro)** for WooCommerce, Easy Digital Downloads, FluentCart and SureCart.
+**YES (Pro)** for WooCommerce, Easy Digital Downloads and FluentCart. SureCart
+was removed in 1.6.0: a hosted catalogue cannot act as a payment rail the way the
+others do, and shipping it as though it could was worse than not shipping it.
 One rail is active at a time and it owns payment entirely — the plugin never
 offers its own gateways alongside your platform's, because two checkouts for one
 button confuses buyers and splits your reporting.
