@@ -1142,30 +1142,57 @@ class ServiceWizard {
 				<div class="wpss-review-section">
 					<h4 class="wpss-review-section__title"><?php esc_html_e( 'Completion Checklist', 'wp-sell-services' ); ?></h4>
 					<?php
-					// Packet H: Alpine checklist uses :data-lucide binding. Lucide
-					// replaces the <i> on each createIcons() call; after a :data-lucide
-					// flips, x-effect dispatches wpss:icons:refresh to re-render.
+					/*
+					 * Two STATIC icons per row, toggled with x-show - not one icon
+					 * whose :data-lucide flips (Basecamp 10208086929).
+					 *
+					 * The old markup bound :data-lucide and then relied on an
+					 * x-effect to dispatch wpss:icons:refresh so Lucide would
+					 * repaint. The binding worked; the repaint did not. That
+					 * x-effect read
+					 *
+					 *   data.title || data.category || ... || isPackageValid
+					 *
+					 * which fails three ways at once: `||` SHORT-CIRCUITS, so once
+					 * a title existed Alpine subscribed to nothing after it;
+					 * `isPackageValid` was referenced and never called, so
+					 * data.packages was never a dependency at all; and `data.gallery`
+					 * subscribes to the object, while the media picker mutates
+					 * data.gallery.main inside it. The three rows that appeared to
+					 * work did so only because a title change happens to repaint
+					 * every icon in the list.
+					 *
+					 * Both icons are now plain <i data-lucide> with no binding, so
+					 * Lucide draws each exactly once at boot and Alpine owns which
+					 * one is visible. There is no refresh event to miss and no
+					 * dependency list to get wrong. This was the only dynamic
+					 * :data-lucide binding in the plugin.
+					 */
 					?>
-					<ul class="wpss-review-checklist"
-						x-effect="data.title || data.category || data.description || data.gallery || isPackageValid; $nextTick(() => { try { document.dispatchEvent(new CustomEvent('wpss:icons:refresh')); } catch(e){} })">
+					<ul class="wpss-review-checklist">
 						<li :class="{ 'completed': data.title?.length >= 10 }">
-							<i class="wpss-icon" aria-hidden="true" :data-lucide="data.title?.length >= 10 ? 'check-circle-2' : 'circle'"></i>
+							<span class="wpss-icon" aria-hidden="true" x-show="data.title?.length >= 10" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(data.title?.length >= 10)"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Service title (10+ characters)', 'wp-sell-services' ); ?>
 						</li>
 						<li :class="{ 'completed': data.category }">
-							<i class="wpss-icon" aria-hidden="true" :data-lucide="data.category ? 'check-circle-2' : 'circle'"></i>
+							<span class="wpss-icon" aria-hidden="true" x-show="data.category" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(data.category)"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Category selected', 'wp-sell-services' ); ?>
 						</li>
 						<li :class="{ 'completed': data.description?.length >= 120 }">
-							<i class="wpss-icon" aria-hidden="true" :data-lucide="data.description?.length >= 120 ? 'check-circle-2' : 'circle'"></i>
+							<span class="wpss-icon" aria-hidden="true" x-show="data.description?.length >= 120" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(data.description?.length >= 120)"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Description (120+ characters)', 'wp-sell-services' ); ?>
 						</li>
 						<li :class="{ 'completed': isPackageValid('basic') }">
-							<i class="wpss-icon" aria-hidden="true" :data-lucide="isPackageValid('basic') ? 'check-circle-2' : 'circle'"></i>
+							<span class="wpss-icon" aria-hidden="true" x-show="isPackageValid('basic')" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(isPackageValid('basic'))"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Basic package pricing complete', 'wp-sell-services' ); ?>
 						</li>
 						<li :class="{ 'completed': data.gallery.main }">
-							<i class="wpss-icon" aria-hidden="true" :data-lucide="data.gallery.main ? 'check-circle-2' : 'circle'"></i>
+							<span class="wpss-icon" aria-hidden="true" x-show="data.gallery.main" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(data.gallery.main)"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Main image uploaded', 'wp-sell-services' ); ?>
 						</li>
 					</ul>
