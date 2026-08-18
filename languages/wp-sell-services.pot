@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-18T09:11:57+00:00\n"
+"POT-Creation-Date: 2026-08-18T11:50:13+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -4335,7 +4335,7 @@ msgstr ""
 #: templates/emails/withdrawal-rejected.php:50
 #: templates/order/order-view.php:1666
 #: templates/order/order-view.php:1822
-#: templates/single-request.php:627
+#: templates/single-request.php:644
 msgid "Amount"
 msgstr ""
 
@@ -4718,7 +4718,7 @@ msgstr ""
 #: templates/order/order-view.php:2199
 #: templates/order/order-view.php:2251
 #: templates/order/order-view.php:3290
-#: templates/single-request.php:641
+#: templates/single-request.php:658
 msgid "Cancel"
 msgstr ""
 
@@ -8112,7 +8112,7 @@ msgstr ""
 
 #: src/Core/AbilitiesRegistrar.php:577
 #: templates/single-request.php:463
-#: templates/single-request.php:644
+#: templates/single-request.php:661
 msgid "Submit Proposal"
 msgstr ""
 
@@ -10572,7 +10572,7 @@ msgid "Day"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:146
-#: templates/single-request.php:631
+#: templates/single-request.php:648
 msgid "Days"
 msgstr ""
 
@@ -20686,19 +20686,19 @@ msgstr ""
 msgid "Total time:"
 msgstr ""
 
-#: templates/single-request.php:621
+#: templates/single-request.php:638
 msgid "Phase title (e.g. Wireframes)"
 msgstr ""
 
-#: templates/single-request.php:622
+#: templates/single-request.php:639
 msgid "Remove phase"
 msgstr ""
 
-#: templates/single-request.php:624
+#: templates/single-request.php:641
 msgid "What the buyer is paying for in this phase"
 msgstr ""
 
-#: templates/single-request.php:635
+#: templates/single-request.php:652
 msgid "Deliverables (optional, e.g. Figma file + 2 mockups)"
 msgstr ""
 
