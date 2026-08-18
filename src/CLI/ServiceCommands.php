@@ -218,10 +218,13 @@ class ServiceCommands extends WP_CLI_Command {
 	 * default: 55
 	 * ---
 	 *
-	 * [--no-images]
-	 * : Skip attaching demo images (service galleries, portfolio items, vendor
-	 * avatars). Images are sideloaded by default so the marketplace looks
-	 * complete for demos/screenshots; pass this for a faster, text-only seed.
+	 * [--images]
+	 * : Attach demo images - service galleries, portfolio items, vendor
+	 * avatars. On by default so the marketplace looks complete for demos and
+	 * screenshots. Pass `--no-images` for a faster, text-only seed.
+	 * ---
+	 * default: true
+	 * ---
 	 *
 	 * ## EXAMPLES
 	 *
@@ -240,8 +243,23 @@ class ServiceCommands extends WP_CLI_Command {
 	 * @param array<string, string> $assoc_args Associative arguments.
 	 */
 	public function marketplace( array $args, array $assoc_args ): void {
-		$min_orders  = (int) ( $assoc_args['orders'] ?? 55 );
-		$with_images = ! isset( $assoc_args['no-images'] );
+		$min_orders = (int) ( $assoc_args['orders'] ?? 55 );
+
+		/*
+		 * The synopsis declares `--images`, not `--no-images`, and that is not a
+		 * cosmetic difference: WP-CLI strips the `no-` prefix while parsing and
+		 * then looks for an `images` parameter. Declaring `[--no-images]` meant
+		 * the documented example - `wp wpss demo marketplace --no-images` -
+		 * failed with "unknown --images parameter" before the seeder ran, from
+		 * the day the flag shipped (Basecamp 10212618689). Declaring `[--images]`
+		 * is what makes `--no-images` work.
+		 */
+		$with_images = (bool) ( $assoc_args['images'] ?? true );
+
+		// Anything still passing the old spelling explicitly keeps working.
+		if ( isset( $assoc_args['no-images'] ) ) {
+			$with_images = false;
+		}
 
 		WP_CLI::log( 'Seeding demo marketplace' . ( $with_images ? ' (with images)...' : ' (no images)...' ) );
 		WP_CLI::log( '' );
