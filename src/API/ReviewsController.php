@@ -1010,11 +1010,22 @@ class ReviewsController extends RestController {
 			'order_id'           => (int) $review->order_id,
 			'service_id'         => (int) $review->service_id,
 			'service_title'      => $service ? $service->post_title : '',
+			// Flat keys kept - the app reads them today, and removing a key is a
+			// contract change. `vendor_avatar` is NEW: the card called out that
+			// reviews were the one flat surface missing it, so the flat set is
+			// now symmetrical with the customer_* set beside it.
 			'vendor_id'          => (int) $review->vendor_id,
 			'vendor_name'        => wpss_get_member_display_name( (int) $review->vendor_id ),
+			'vendor_avatar'      => get_avatar_url( (int) $review->vendor_id, array( 'size' => 48 ) ),
 			'customer_id'        => (int) $review->customer_id,
 			'customer_name'      => Review::resolve_reviewer_name( (int) $review->customer_id, $review->reviewer_name ?? null ),
 			'customer_avatar'    => get_avatar_url( (int) $review->customer_id, array( 'size' => 48 ) ),
+			// The canonical actor objects, added alongside. A client can now
+			// read a person out of a review with the same code it uses on an
+			// order or a service. `customer` rather than `reviewer` because the
+			// flat keys beside it already say customer.
+			'vendor'             => wpss_rest_user( (int) $review->vendor_id ),
+			'customer'           => wpss_rest_user( (int) $review->customer_id ),
 			'rating'             => (int) $review->rating,
 			'review'             => $review->review,
 			'status'             => $review->status,

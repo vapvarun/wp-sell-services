@@ -756,11 +756,10 @@ class DisputesController extends RestController {
 			'reason'       => $dispute->reason,
 			'status'       => $dispute->status,
 			'status_label' => DisputeService::get_statuses()[ $dispute->status ] ?? $dispute->status,
-			'initiated_by' => array(
-				'id'     => (int) $dispute->initiator_id,
-				'name'   => wpss_get_member_display_name( (int) $dispute->initiator_id ),
-				'avatar' => get_avatar_url( $dispute->initiator_id, array( 'size' => 48 ) ),
-			),
+			// The shared actor shape. Same id/name/avatar keys as before, plus
+			// `deleted` - a dispute outlives the people in it, so a client needs
+			// to tell "this member is gone" from "no member acted".
+			'initiated_by' => wpss_rest_user( (int) $dispute->initiator_id ),
 			'created_at'   => $format_date( $dispute->created_at ),
 			'updated_at'   => $format_date( $dispute->updated_at ),
 		);
@@ -801,11 +800,7 @@ class DisputesController extends RestController {
 			'type'        => $evidence['type'] ?? '',
 			'content'     => $evidence['content'] ?? '',
 			'description' => $evidence['description'] ?? '',
-			'user'        => array(
-				'id'     => $user_id,
-				'name'   => wpss_get_member_display_name( (int) $user_id ),
-				'avatar' => get_avatar_url( $user_id, array( 'size' => 48 ) ),
-			),
+			'user'        => wpss_rest_user( (int) $user_id ),
 			'created_at'  => $this->format_datetime( $evidence['created_at'] ?? null ),
 		);
 	}

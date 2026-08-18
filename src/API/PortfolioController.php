@@ -530,7 +530,7 @@ class PortfolioController extends RestController {
 			'external_url' => $item['external_url'] ?? '',
 			'is_featured'  => (bool) ( $item['is_featured'] ?? false ),
 			'sort_order'   => (int) ( $item['sort_order'] ?? 0 ),
-			'created_at'   => $item['created_at'] ?? '',
+			'created_at'   => $this->format_datetime( $item['created_at'] ?? null ),
 		);
 	}
 }

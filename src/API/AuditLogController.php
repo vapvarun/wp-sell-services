@@ -176,7 +176,7 @@ class AuditLogController extends RestController {
 			'to_value'    => $row->to_value,
 			'is_forced'   => (bool) $row->is_forced,
 			'context'     => $row->context ? json_decode( $row->context, true ) : null,
-			'created_at'  => $row->created_at,
+			'created_at'  => $this->format_datetime( $row->created_at ),
 		);
 	}
 }

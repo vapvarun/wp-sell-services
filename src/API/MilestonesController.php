@@ -204,7 +204,7 @@ class MilestonesController extends RestController {
 		return new WP_REST_Response(
 			array(
 				'order_id'   => $order_id,
-				'milestones' => $milestones,
+				'milestones' => array_map( array( $this, 'normalise_dates' ), $milestones ),
 				'count'      => count( $milestones ),
 			),
 			200
@@ -231,7 +231,7 @@ class MilestonesController extends RestController {
 
 		foreach ( $this->milestones->get_for_parent( (int) $sub->platform_order_id ) as $row ) {
 			if ( (int) $row['id'] === $milestone_id ) {
-				return new WP_REST_Response( $row, 200 );
+				return new WP_REST_Response( $this->normalise_dates( $row ), 200 );
 			}
 		}
 
@@ -598,5 +598,28 @@ class MilestonesController extends RestController {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Put a milestone row's dates on the wire as ISO-8601.
+	 *
+	 * MilestoneService returns raw table rows, so these arrive as MySQL
+	 * datetimes with no timezone - the format the rest of the API stopped
+	 * emitting. Converted at the REST boundary because the wire format is this
+	 * layer's concern, not the service's.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param array<string, mixed> $row Milestone row.
+	 * @return array<string, mixed>
+	 */
+	private function normalise_dates( array $row ): array {
+		foreach ( array( 'created_at', 'updated_at', 'delivery_deadline', 'completed_at', 'paid_at', 'started_at' ) as $key ) {
+			if ( array_key_exists( $key, $row ) ) {
+				$row[ $key ] = wpss_rest_date( $row[ $key ] );
+			}
+		}
+
+		return $row;
 	}
 }

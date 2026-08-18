@@ -306,7 +306,7 @@ class EarningsController extends RestController {
 				'vendor_earnings_minor' => wpss_amount_to_minor_units( (float) $order['vendor_earnings'], $row_currency ),
 				'commission_minor'      => wpss_amount_to_minor_units( (float) $order['platform_fee'], $row_currency ),
 				'currency'              => $row_currency,
-				'completed_at'          => $order['completed_at'],
+				'completed_at'          => $this->format_datetime( $order['completed_at'] ),
 			);
 		}
 
@@ -575,8 +575,8 @@ class EarningsController extends RestController {
 				'details'      => json_decode( $item['details'] ?? '{}', true ),
 				'status'       => $item['status'],
 				'notes'        => $item['admin_note'] ?? '',
-				'processed_at' => $item['processed_at'] ?? null,
-				'created_at'   => $item['created_at'],
+				'processed_at' => $this->format_datetime( $item['processed_at'] ?? null ),
+				'created_at'   => $this->format_datetime( $item['created_at'] ),
 			);
 
 			if ( $is_admin ) {

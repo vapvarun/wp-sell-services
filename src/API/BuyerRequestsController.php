@@ -771,11 +771,7 @@ class BuyerRequestsController extends RestController {
 			'deadline'         => $buyer_request->deadline ?? null,
 			'category'         => $buyer_request->category ?? null,
 			'proposal_count'   => (int) ( $buyer_request->proposal_count ?? 0 ),
-			'author'           => [
-				'id'     => (int) $author_id,
-				'name'   => wpss_get_member_display_name( (int) $author_id ),
-				'avatar' => get_avatar_url( $author_id, [ 'size' => 48 ] ),
-			],
+			'author'           => wpss_rest_user( (int) $author_id ),
 			// ISO-8601 through the shared formatter (Basecamp 10154919636).
 			'created_at'       => $this->format_datetime( $buyer_request->created_at ?? $buyer_request->post_date ?? null ),
 		];
@@ -799,11 +795,7 @@ class BuyerRequestsController extends RestController {
 		return array_merge(
 			[
 				'id'           => (int) $proposal->id,
-				'vendor'       => [
-					'id'     => (int) $proposal->vendor_id,
-					'name'   => wpss_get_member_display_name( (int) $proposal->vendor_id ),
-					'avatar' => get_avatar_url( $proposal->vendor_id, [ 'size' => 48 ] ),
-				],
+				'vendor'       => wpss_rest_user( (int) $proposal->vendor_id ),
 				'cover_letter' => $proposal->cover_letter,
 			],
 			// DB columns are proposed_price / proposed_days; the old code read

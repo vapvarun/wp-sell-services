@@ -564,11 +564,7 @@ class ProposalsController extends RestController {
 				'id'            => (int) $proposal->id,
 				'request_id'    => (int) $proposal->request_id,
 				'request_title' => $request ? $request->post_title : '',
-				'vendor'        => [
-					'id'     => (int) $proposal->vendor_id,
-					'name'   => wpss_get_member_display_name( (int) $proposal->vendor_id ),
-					'avatar' => get_avatar_url( $proposal->vendor_id, [ 'size' => 48 ] ),
-				],
+				'vendor'        => wpss_rest_user( (int) $proposal->vendor_id ),
 			],
 			// The proposals table has no currency column - a proposal is
 			// priced in the store currency, the helper's default.

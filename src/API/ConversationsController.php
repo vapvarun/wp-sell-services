@@ -625,11 +625,7 @@ class ConversationsController extends RestController {
 			'subject'       => $conversation->subject ?? '',
 			'service_id'    => $service_id,
 			'service_title' => $service_id ? get_the_title( $service_id ) : '',
-			'other_user'    => array(
-				'id'     => $other_user_id,
-				'name'   => wpss_get_member_display_name( (int) $other_user_id ),
-				'avatar' => get_avatar_url( $other_user_id, array( 'size' => 48 ) ),
-			),
+			'other_user'    => wpss_rest_user( (int) $other_user_id ),
 			'last_message'  => $last_message ? array(
 				'content'    => wp_trim_words( wp_strip_all_tags( $last_message->content ), 10 ),
 				'sender_id'  => (int) $last_message->sender_id,
