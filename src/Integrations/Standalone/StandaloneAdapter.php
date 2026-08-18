@@ -296,14 +296,43 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		get_header();
 		?>
 		<main id="primary" class="site-main">
-			<article class="wpss-standalone-page">
-				<header class="entry-header">
-					<h1 class="entry-title"><?php echo esc_html( $title ); ?></h1>
-				</header>
-				<div class="entry-content">
-					<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Content is escaped in provider. ?>
-				</div>
-			</article>
+			<?php
+			/*
+			 * OUR container, not the theme's (Basecamp 10208392848).
+			 *
+			 * get_header() prints whatever the theme puts in header.php and
+			 * nothing more. Some themes happen to open their content wrapper
+			 * there - BuddyX free does, which is why this route looked fine on
+			 * it - but plenty open it inside the page template instead, via a
+			 * hook this route never reaches. Those get a checkout spanning the
+			 * whole viewport: reproduced at 1790px on BuddyX Pro by QA and on
+			 * stock Twenty Twenty-Four here, so it is not one theme's quirk.
+			 *
+			 * Firing a theme's own before-content hook would fix the two themes
+			 * we happened to test and leave every other one broken. Constraining
+			 * it ourselves works everywhere, and .wpss-container is the width
+			 * the rest of the plugin already uses - one definition, not a second
+			 * one invented for this route.
+			 *
+			 * Where a theme DOES provide a container this nests inside it, which
+			 * costs one extra gutter: measured on BuddyX free, content goes from
+			 * 1170px to 1100px at desktop and carries 70px of total gutter at
+			 * 390px rather than 30px. That is a real but small cost, and it buys
+			 * a checkout that cannot go full-bleed on any theme. Left as the
+			 * trade-off rather than trying to detect an ancestor container,
+			 * which CSS cannot ask for and which would guess wrong somewhere.
+			 */
+			?>
+			<div class="wpss-container">
+				<article class="wpss-standalone-page">
+					<header class="entry-header">
+						<h1 class="entry-title"><?php echo esc_html( $title ); ?></h1>
+					</header>
+					<div class="entry-content">
+						<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Content is escaped in provider. ?>
+					</div>
+				</article>
+			</div>
 		</main>
 		<?php
 		get_footer();

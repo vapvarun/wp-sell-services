@@ -741,7 +741,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 			/* Guarantee badges — horizontal bar below layout */
 			.wpss-co-guarantees-bar {
-				display: flex; justify-content: space-around; gap: var(--wpss-space-6);
+				/*
+				 * wrap, because three badges on one line do not fit a phone.
+				 * Without it this bar forced 401px of content into a 390px
+				 * viewport and the whole checkout scrolled sideways - the buyer
+				 * had to pan to read the total (Basecamp 10208392848).
+				 */
+				display: flex; flex-wrap: wrap; justify-content: space-around; gap: var(--wpss-space-6);
 				padding: var(--wpss-space-6);
 				background: var(--wpss-bg-subtle); border-radius: var(--wpss-radius-lg);
 				margin-top: var(--wpss-space-6);
