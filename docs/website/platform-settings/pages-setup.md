@@ -122,7 +122,7 @@ six, using a block or shortcode on any page you like:
 | **Top Vendors** | Your highest-rated sellers |
 | **Buyer Requests** | The request board with a "Post a Request" form |
 
-See [Shortcodes Reference](/docs/marketplace-display/shortcodes-reference/) for
+See [Shortcodes Reference](../marketplace-display/shortcodes-reference.md) for
 the full list, including `[wpss_vendors]` if you want a second vendor directory
 somewhere other than the Vendors page.
 
