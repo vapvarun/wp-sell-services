@@ -42,7 +42,7 @@ Vendors build their requirements form when creating or editing a service. Four q
 
 - **Text** -- Short answers like a website URL, company name, or social media handle.
 - **Textarea** -- Longer descriptions like project overview, design preferences, or feature requirements.
-- **File Upload** -- Reference materials, brand logos, content documents, or design mockups. Supports images, documents, archives, media files, and design files up to 50MB per file.
+- **File Upload** -- Reference materials, brand logos, content documents, or design mockups. The accepted formats and the size cap are set by the site owner under **Settings > Advanced** (defaults: `jpg, jpeg, png, gif, pdf, doc, docx`, 10 MB).
 - **Dropdown** -- A single choice from predefined options, like preferred style or package type.
 
 Each question can be marked as required or optional, and vendors can add helpful placeholder text and instructions.

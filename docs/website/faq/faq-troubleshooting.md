@@ -88,7 +88,7 @@ Request expiration runs on WordPress cron, which requires site traffic to trigge
 
 ### Delivery files not uploading
 
-1. **Check file size limits** -- The default max is 50MB. Increase in **Settings > Advanced** if needed
+1. **Check file size limits** -- The default max is 10 MB. Increase in **Settings > Advanced** if needed
 2. **Check allowed file types** -- Make sure the file extension is permitted
 3. **Check server limits** -- Your hosting may have lower PHP upload limits than the plugin setting
 4. **Verify disk space** -- Make sure your server has available storage

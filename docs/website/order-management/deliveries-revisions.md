@@ -65,11 +65,11 @@ The vendor can always offer additional revisions as a goodwill gesture, even aft
 
 ## Delivery File Access
 
-Delivery files are private and secure:
+Delivery attachments are stored with WordPress's `private` status and tagged with the order, so they do not appear in public listings or the media library for other users.
 
-- Only the buyer, vendor, and admin can access them.
-- Files require login to download.
+- The download links shown in the order are for the buyer, vendor and admin.
 - All versions are kept -- nothing is deleted when a new delivery is submitted.
+- The file itself lives in the normal uploads folder. Its URL is unlisted rather than secret, so treat a leaked link as a leaked file.
 
 ## Settings That Affect Deliveries
 
