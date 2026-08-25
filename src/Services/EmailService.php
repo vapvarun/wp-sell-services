@@ -2275,6 +2275,7 @@ class EmailService {
 			'moderation_rejected'             => 'notify_moderation',
 			'moderation_pending'              => 'notify_moderation',
 			'dispute_admin'                   => 'notify_dispute_opened',
+			self::TYPE_REVIEW_RECEIVED        => 'notify_new_review',
 			self::TYPE_VENDOR_CONTACT         => 'notify_vendor_contact',
 			self::TYPE_TIP_RECEIVED           => 'notify_tip_received',
 			self::TYPE_MILESTONE_PROPOSED     => 'notify_milestone_proposed',

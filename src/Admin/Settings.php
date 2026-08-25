@@ -1146,34 +1146,7 @@ class Settings {
 		 *
 		 * @param array $types Associative array of notification_key => label.
 		 */
-		$notification_types = apply_filters(
-			'wpss_notification_types',
-			array(
-				'new_order'              => __( 'New Order', 'wp-sell-services' ),
-				'order_completed'        => __( 'Order Completed', 'wp-sell-services' ),
-				'order_cancelled'        => __( 'Order Cancelled', 'wp-sell-services' ),
-				'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
-				'delivery_submitted'     => __( 'Delivery Submitted', 'wp-sell-services' ),
-				'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
-				'new_message'            => __( 'New Message', 'wp-sell-services' ),
-				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
-				'new_review'             => __( 'New Review', 'wp-sell-services' ),
-				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
-				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
-				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
-				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
-				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
-				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
-				'tip_received'           => __( 'Tip Received', 'wp-sell-services' ),
-				'milestone_proposed'     => __( 'Milestone Proposed', 'wp-sell-services' ),
-				'milestone_paid'         => __( 'Milestone Paid', 'wp-sell-services' ),
-				'milestone_submitted'    => __( 'Milestone Delivered', 'wp-sell-services' ),
-				'milestone_approved'     => __( 'Milestone Approved', 'wp-sell-services' ),
-				'extension_proposed'     => __( 'Extension Proposed', 'wp-sell-services' ),
-				'extension_approved'     => __( 'Extension Approved', 'wp-sell-services' ),
-				'extension_declined'     => __( 'Extension Declined', 'wp-sell-services' ),
-			)
-		);
+		$notification_types = $this->get_notification_types();
 
 		foreach ( $notification_types as $key => $label ) {
 			add_settings_field(
@@ -3513,34 +3486,7 @@ class Settings {
 		$sanitized = array();
 
 		// Build keys dynamically from the same filter used to render the UI.
-		$notification_types = apply_filters(
-			'wpss_notification_types',
-			array(
-				'new_order'              => __( 'New Order', 'wp-sell-services' ),
-				'order_completed'        => __( 'Order Completed', 'wp-sell-services' ),
-				'order_cancelled'        => __( 'Order Cancelled', 'wp-sell-services' ),
-				'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
-				'delivery_submitted'     => __( 'Delivery Submitted', 'wp-sell-services' ),
-				'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
-				'new_message'            => __( 'New Message', 'wp-sell-services' ),
-				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
-				'new_review'             => __( 'New Review', 'wp-sell-services' ),
-				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
-				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
-				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
-				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
-				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
-				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
-				'tip_received'           => __( 'Tip Received', 'wp-sell-services' ),
-				'milestone_proposed'     => __( 'Milestone Proposed', 'wp-sell-services' ),
-				'milestone_paid'         => __( 'Milestone Paid', 'wp-sell-services' ),
-				'milestone_submitted'    => __( 'Milestone Delivered', 'wp-sell-services' ),
-				'milestone_approved'     => __( 'Milestone Approved', 'wp-sell-services' ),
-				'extension_proposed'     => __( 'Extension Proposed', 'wp-sell-services' ),
-				'extension_approved'     => __( 'Extension Approved', 'wp-sell-services' ),
-				'extension_declined'     => __( 'Extension Declined', 'wp-sell-services' ),
-			)
-		);
+		$notification_types = $this->get_notification_types();
 
 		foreach ( array_keys( $notification_types ) as $type_key ) {
 			$key               = 'notify_' . $type_key;
@@ -3708,5 +3654,58 @@ class Settings {
 	public static function get( string $group, string $key, mixed $default = null ): mixed { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound -- Public API; renaming is a named-argument BC break.
 		$options = get_option( 'wpss_' . $group, array() );
 		return $options[ $key ] ?? $default;
+	}
+
+	/**
+	 * The switchable notification types.
+	 *
+	 * One list. This literal was written twice - once to render the checkboxes,
+	 * once to sanitize them - and the copies were free to drift. EmailService
+	 * gates three moderation emails on `notify_moderation`, a key neither copy
+	 * carried, so no control could ever write it and those emails could not be
+	 * turned off. A key the sanitizer will not persist is a key that can be
+	 * read forever without existing.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return array<string, string> notification_key => label.
+	 */
+	public function get_notification_types(): array {
+		/**
+		 * Filter the switchable notification types.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param array $types Associative array of notification_key => label.
+		 */
+		return apply_filters(
+			'wpss_notification_types',
+			array(
+				'new_order'              => __( 'New Order', 'wp-sell-services' ),
+				'order_completed'        => __( 'Order Completed', 'wp-sell-services' ),
+				'order_cancelled'        => __( 'Order Cancelled', 'wp-sell-services' ),
+				'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
+				'delivery_submitted'     => __( 'Delivery Submitted', 'wp-sell-services' ),
+				'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
+				'new_message'            => __( 'New Message', 'wp-sell-services' ),
+				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
+				'new_review'             => __( 'New Review', 'wp-sell-services' ),
+				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
+				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
+				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
+				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
+				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
+				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
+				'tip_received'           => __( 'Tip Received', 'wp-sell-services' ),
+				'milestone_proposed'     => __( 'Milestone Proposed', 'wp-sell-services' ),
+				'milestone_paid'         => __( 'Milestone Paid', 'wp-sell-services' ),
+				'milestone_submitted'    => __( 'Milestone Delivered', 'wp-sell-services' ),
+				'milestone_approved'     => __( 'Milestone Approved', 'wp-sell-services' ),
+				'extension_proposed'     => __( 'Extension Proposed', 'wp-sell-services' ),
+				'extension_approved'     => __( 'Extension Approved', 'wp-sell-services' ),
+				'extension_declined'     => __( 'Extension Declined', 'wp-sell-services' ),
+				'moderation'             => __( 'Service Moderation', 'wp-sell-services' ),
+			)
+		);
 	}
 }
