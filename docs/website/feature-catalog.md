@@ -26,7 +26,7 @@ Legend: **Yes** ships and is exercised · **Partial** ships with a stated limit 
 | Reviews and ratings | Yes | Yes |
 | Disputes with frontend messaging | Yes | Yes |
 | Favourites | Yes | Yes |
-| Services per vendor | Limited | Unlimited |
+| Services per vendor | Configurable, default 20 (set 0 for unlimited) | Same |
 
 ## Money
 

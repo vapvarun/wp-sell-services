@@ -57,7 +57,7 @@ Revision limits are **not** here -- vendors set those per package.
 
 - [ ] **Settings > Emails** -- send the **deliverability test** first. If it does not arrive, no notification will
 - [ ] Install an SMTP plugin if the test fails. WordPress's default mail is unreliable on most hosts
-- [ ] Review the 23 notification types [all on] and switch off any you do not want
+- [ ] Review the 24 notification types [all on] and switch off any you do not want
 
 ## 7. Branding and display
 

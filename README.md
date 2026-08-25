@@ -175,7 +175,7 @@ Batch endpoint: `POST /wpss/v1/batch` (up to 25 sub-requests per call)
 - Cloud storage (S3, GCS, DigitalOcean Spaces)
 - Advanced analytics with Chart.js
 - Tiered commissions, White-label, Stripe Connect, PayPal Payouts
-- Vendor subscription plans, Recurring services
+- Vendor subscription plans
 - 10 additional REST API controllers
 
 ## License

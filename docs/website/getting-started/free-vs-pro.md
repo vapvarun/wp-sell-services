@@ -30,7 +30,7 @@ All of these are fully available in both versions -- nothing is held back:
 - Delivery management with revisions and deadline extensions
 - 5-star reviews, dispute resolution, and buyer requests with proposals
 - Vendor and buyer dashboards, 4 seller levels (New Seller, Rising Seller, Top Rated, Pro Seller), portfolios, vacation mode
-- Tipping system, in-app notifications, and 23 switchable email notification types
+- Tipping system, in-app notifications, and 24 switchable email notification types
 - 6 page-building blocks, mobile-responsive templates, and theme customization
 
 ### Service Creation Limits

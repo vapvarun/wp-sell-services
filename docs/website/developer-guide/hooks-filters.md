@@ -324,12 +324,17 @@ ids: `$milestone_id` is the sub-order, `$order_id` is the parent. See
 | `wpss_extension_request_created` | `int $request_id, int $order_id, array $data` (`requested_by`, `extra_days`, `reason`) | `ExtensionRequestService.php:249` |
 | `wpss_extension_request_approved` | `int $request_id, object $request` | `ExtensionRequestService.php:371` |
 | `wpss_extension_request_rejected` | `int $request_id, object $request` | `ExtensionRequestService.php:455` |
+| `wpss_extension_approved` | `int $pay_order_id, int $parent_order_id, int $vendor_id, int $customer_id, float $vendor_earnings, int $extra_days, int $request_id` | Paid extension approved and the vendor credited. NET earnings, not gross. `ExtensionOrderService.php` |
 
 > **Renamed in 1.3.0.** The milestone lifecycle uses *proposed* and *declined*,
 > not *created* and *rejected* -- see [Milestone terminology](https://github.com/vapvarun/wp-sell-services/blob/main/docs/decisions/milestone-terminology.md).
-> `wpss_milestone_created`, `wpss_milestone_rejected`, `wpss_extension_requested`
-> and `wpss_extension_approved` were listed in earlier docs but are **not fired
-> by the plugin**. Callbacks bound to those names never run. Note also that
+> `wpss_milestone_created`, `wpss_milestone_rejected` and
+> `wpss_extension_requested` were listed in earlier docs but are **not fired by
+> the plugin**. Callbacks bound to those names never run.
+>
+> `wpss_extension_approved` is a different case: it **does** fire, with seven
+> arguments, when a paid extension is approved and the vendor is credited. It
+> was wrongly grouped with the three above. See the extensions table. Note also that
 > `wpss_milestone_approved` passes `$vendor_id` as its third argument, not an
 > amount -- if you need the money, read it from the sub-order or hook
 > `wpss_milestone_paid`.

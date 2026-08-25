@@ -88,9 +88,11 @@ Configure this at **Sell Services > Settings > General**.
 
 Hide dashboard sections from specific roles. The **Menu Visibility** card is a
 grid: dashboard sections down the side, every role on your site across the top.
-Tick a box to hide that section from that role.
+**A ticked box means that role can see that section.**
 
-Leave everything unticked -- the default -- and every role sees every section.
+Everything starts ticked, so every role sees every section. **Untick** a box to
+hide that section from that role. If you untick every box for a role, that role
+sees nothing.
 
 Sections you can hide: My Orders, Favorites, Buyer Requests, My Services, Sales
 Orders, Earnings & Payouts, Portfolio, Analytics, Messages, Notifications,
