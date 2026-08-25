@@ -105,7 +105,14 @@ function wpss_get_dashboard_url( string $section = '' ): string {
 function wpss_append_dashboard_section( string $base_url, string $section ): string {
 	$section = sanitize_key( $section );
 
-	if ( '' === $section || 'orders' === $section ) {
+	// 'orders' used to be dropped here as "the default section, so leave it
+	// implicit". That stopped being true in 1.2.0, when the landing section
+	// became role-aware: an active vendor lands on `sales`, a buyer on `orders`.
+	// From then on the Buying > My Orders link pointed at the bare dashboard
+	// URL, and a member who both buys and sells clicked it and landed on Sales
+	// Orders - reading "No sales yet" as "you have never bought anything".
+	// A link now always names the section it means, whatever the default is.
+	if ( '' === $section ) {
 		return $base_url;
 	}
 
