@@ -2068,6 +2068,22 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
 		}
 
+		// Match how deliveries are stored. A requirement upload is a buyer
+		// handing over a brief, a brand asset or a document, and it was landing
+		// as a public attachment listed in everyone's media library while the
+		// docs told them it was private. Deliveries have used `private` since
+		// 1.0 - the same rule applies to what the buyer sends the other way.
+		//
+		// This hides it from the library and from public listings. The file
+		// itself still sits in the uploads tree, so treat its URL as unlisted
+		// rather than secret; protecting the path is tracked separately.
+		wp_update_post(
+			array(
+				'ID'          => $attachment_id,
+				'post_status' => 'private',
+			)
+		);
+
 		wp_send_json_success(
 			array(
 				'attachment_id' => $attachment_id,

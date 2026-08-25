@@ -2134,6 +2134,12 @@ final class Plugin {
 			null,
 			20 // After wpss_loaded fires so Pro can register first.
 		);
+
+		// Marketplace data reaches Tools > Export Personal Data and Erase
+		// Personal Data. Registering nothing here meant a site owner answering a
+		// subject-access request handed over core WordPress data and nothing
+		// this plugin stores - an export that looked complete and was not.
+		( new \WPSellServices\Privacy\PersonalData() )->register();
 	}
 
 
