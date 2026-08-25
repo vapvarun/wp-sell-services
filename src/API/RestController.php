@@ -87,6 +87,35 @@ abstract class RestController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Check the caller is a vendor in good standing.
+	 *
+	 * Lives here because five controllers had rolled their own copy - one in
+	 * free, four in Pro - and they had drifted. Three different denial codes
+	 * were in use for the same condition (`wpss_not_vendor`, `rest_forbidden`,
+	 * `wpss_not_admin`), so a client could not branch on it, and Pro's analytics
+	 * copy returned true instead of consulting wpss_vendor_status_block(),
+	 * which let a SUSPENDED vendor keep reading their analytics.
+	 *
+	 * One code for one condition: `wpss_not_vendor`, 403.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool|WP_Error
+	 */
+	public function check_vendor_permissions( WP_REST_Request $request ) {
+		$logged_in = $this->check_permissions( $request );
+		if ( is_wp_error( $logged_in ) ) {
+			return $logged_in;
+		}
+
+		// Role and account status come from the canonical helper, so this class
+		// and wpss_rest_require_vendor() can never answer differently. Login and
+		// write rate-limiting are handled above by check_permissions().
+		return wpss_rest_require_vendor();
+	}
+
+	/**
 	 * Check if user can manage (admin).
 	 *
 	 * @param WP_REST_Request $request Request object.
