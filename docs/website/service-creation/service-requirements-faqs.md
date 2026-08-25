@@ -46,18 +46,14 @@ For each requirement, vendors provide:
 
 ### File Upload Details
 
-When a requirement uses the file upload type, buyers can upload a wide range of file formats:
+When a requirement uses the file upload type, the accepted formats and size are **set by the site owner**, not fixed by the plugin.
 
-- **Images:** JPG, PNG, GIF, WebP
-- **Documents:** PDF, DOC, DOCX, TXT, RTF, CSV
-- **Spreadsheets:** XLS, XLSX
-- **Presentations:** PPT, PPTX
-- **Archives:** ZIP, RAR, 7Z
-- **Audio:** MP3, WAV
-- **Video:** MP4, MOV, AVI
-- **Design files:** PSD, AI, EPS, SVG
+- **Allowed types** -- Settings > Advanced > Allowed File Types. Default: `jpg, jpeg, png, gif, pdf, doc, docx`.
+- **Maximum size** -- Settings > Advanced > Max File Size. Default: 10 MB.
 
-Maximum file size: 50MB per file. All uploaded files are private and only accessible to the buyer, vendor, and admin.
+Add the formats your vendors need before launch; a buyer cannot upload a ZIP or a PSD on the default list.
+
+Uploaded files go to the site's normal WordPress media library. Treat their URLs as unlisted rather than secret, and do not ask buyers for documents that must be access-controlled.
 
 ### Tips for Writing Good Requirements
 

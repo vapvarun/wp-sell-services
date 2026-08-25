@@ -110,7 +110,9 @@ Both parties have negotiated a solution that works for them. You formalize and e
 - A custom arrangement fits better than the standard resolution types.
 - Neither full refund nor full payment is appropriate.
 
-**Order status becomes:** Completed (or Refunded, depending on the agreement)
+**Order status becomes:** Completed.
+
+Mutual Agreement does **not** refund the buyer -- it takes the same path as Favor Vendor, so the vendor keeps their earnings. If the compromise involves money going back, choose **Partial Refund** and enter the agreed amount instead.
 
 ## How to Resolve a Dispute
 
@@ -123,7 +125,9 @@ Both parties have negotiated a solution that works for them. You formalize and e
 
 Both parties are notified of the outcome by email.
 
-**Important:** For refunds, you may also need to process the actual payment refund through your payment gateway (WooCommerce, Stripe, PayPal, etc.) separately. The dispute resolution updates the order status and records, but the money transfer may require manual action depending on your setup.
+**Do not refund again in your payment gateway.** Resolving the dispute settles the money automatically: the buyer is refunded through the gateway that took the payment, and the vendor's earnings are reversed off their wallet in the same step. Refunding a second time in Stripe, PayPal or WooCommerce pays the buyer twice.
+
+If the gateway refund fails, the order still records the refund and the vendor's earnings are still reversed, leaving the vendor in debt against future earnings. Check the order after resolving so you catch a failed gateway call.
 
 ## Writing Good Resolution Notes
 

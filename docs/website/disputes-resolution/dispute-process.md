@@ -109,7 +109,7 @@ When the admin resolves a dispute, the order status is updated automatically:
 
 Once a dispute is resolved and closed:
 
-- Any refunds are processed (the admin may need to handle this separately through the payment system).
+- Any refund is processed automatically -- the buyer is refunded through the original gateway and the vendor's earnings are reversed. The admin does not refund again by hand.
 - The vendor's dispute history is tracked. Multiple disputes can affect a vendor's standing on the marketplace.
 - Both parties can leave reviews (if they have not already).
 - Life goes on. Learn from the experience and move forward.
