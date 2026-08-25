@@ -74,7 +74,7 @@ charge currency is stated at checkout. It is not multi-currency settlement.
 |---|---|---|
 | Admin order, vendor, dispute, withdrawal management | Yes | Yes |
 | Moderation queues | Yes | Yes |
-| Analytics | Basic stats | Full dashboards with export |
+| Analytics | Basic stats | Full dashboards; CSV export on the admin screen |
 | File storage | Your server | + S3, Google Cloud, DigitalOcean Spaces |
 | Audit log | Yes | Yes |
 | REST API | Yes | Yes |

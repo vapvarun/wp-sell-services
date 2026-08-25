@@ -76,6 +76,18 @@ A timeline showing the vendor's most recent events: new orders, completed orders
 
 ---
 
+## Exporting your numbers
+
+The Analytics section is charts and totals; it has no export button.
+
+To export your own figures, use **Earnings & Payouts > Export CSV**. That is the
+wallet ledger - every credit and debit with date, type, reference and running
+balance - which is what you need for bookkeeping or a tax return.
+
+Marketplace-wide analytics export (CSV) is an owner tool and lives on the admin
+Analytics screen. It covers every vendor, so it is not exposed to individual
+vendors.
+
 ## Data Export
 
 Vendors can export their earnings data as a CSV file for accounting and tax purposes. The export includes order dates, service names, amounts, commission rates, and net earnings.

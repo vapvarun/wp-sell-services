@@ -12,7 +12,7 @@ The free version of WP Sell Services is a complete, production-ready marketplace
 | **Checkout** | Built-in standalone (no other plugins needed) | + WooCommerce, EDD, FluentCart |
 | **Payment gateways** | Stripe, PayPal, Offline | + Razorpay |
 | **Service creation limits** | Conservative (see below) | Unlimited |
-| **Analytics** | Basic stats | Full dashboards with export |
+| **Analytics** | Basic stats | Full dashboards; CSV export on the admin screen |
 | **File storage** | Your server | + Amazon S3, Google Cloud, DigitalOcean Spaces |
 | **Wallet integrations** | Built-in earnings tracking | + TeraWallet, WooWallet, MyCred |
 

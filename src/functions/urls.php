@@ -417,6 +417,32 @@ function wpss_get_required_pages(): array {
 }
 
 /**
+ * Every mapped page, with the optional ones marked.
+ *
+ * The setup wizard used wpss_get_required_pages() and so listed four, under
+ * copy saying those were the pages the marketplace needs - while Settings >
+ * Pages listed six. Nothing was ever missing (activation creates all six), but
+ * two screens disagreed about what "the pages" means, which is enough to make
+ * an owner go hunting.
+ *
+ * @since 1.7.0
+ *
+ * @return array<string, array{title:string,required:bool}>
+ */
+function wpss_get_setup_pages(): array {
+	$pages = array();
+
+	foreach ( wpss_get_page_definitions() as $key => $definition ) {
+		$pages[ $key ] = array(
+			'title'    => $definition['title'],
+			'required' => ! empty( $definition['required'] ),
+		);
+	}
+
+	return $pages;
+}
+
+/**
  * Get default page slugs for standalone mode.
  *
  * These are used as fallbacks when no page is mapped in Settings → Pages.

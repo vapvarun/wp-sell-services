@@ -85,7 +85,7 @@ class Settings {
 			'commission' => __( 'Commission &amp; Tax', 'wp-sell-services' ),
 			'payouts'    => __( 'Payouts', 'wp-sell-services' ),
 			// Marketplace.
-			'vendor'     => __( 'Vendors', 'wp-sell-services' ),
+			'vendor'     => __( 'Vendor Settings', 'wp-sell-services' ),
 			'orders'     => __( 'Orders &amp; Disputes', 'wp-sell-services' ),
 			'emails'     => __( 'Emails', 'wp-sell-services' ),
 			// System (Pro tabs inserted before this via filter).
