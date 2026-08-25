@@ -81,7 +81,7 @@ These are limitations of the software, not of the writing. They are called out
 where a reader will hit them:
 
 - **Milestone, tip and extension payments work on Standalone and WooCommerce
-  only.** EDD, FluentCart and SureCart have no pay-order flow, so those links
+  only.** EDD and FluentCart have no pay-order flow, so those links
   are a dead end there. See
   [WooCommerce Checkout](../payments-checkout/woocommerce-checkout.md#platform-support----read-this-before-promising-it).
 - **Lock-step milestone payment is a workflow rail, not a security control.**

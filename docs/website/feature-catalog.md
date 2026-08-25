@@ -3,7 +3,7 @@
 The canonical list of what WP Sell Services does, and which tier it is in. If a
 feature is not on this page, treat it as not shipping.
 
-**Version**: 1.5.1 · **Last verified**: 2026-08-07
+**Version**: 1.6.0 · **Last verified**: 2026-08-25
 
 Free and Pro documentation both live in this folder — the Free plugin's
 `docs/website/` is the single source of truth. There is no separate Pro docs
@@ -34,7 +34,7 @@ Legend: **Yes** ships and is exercised · **Partial** ships with a stated limit 
 |---|---|---|
 | Standalone checkout (no other plugin needed) | Yes | Yes |
 | Payment gateways | Stripe, PayPal, Offline | + Razorpay |
-| Ecommerce integrations | — | WooCommerce, EDD, FluentCart, SureCart |
+| Ecommerce integrations | — | WooCommerce, EDD, FluentCart |
 | Commission, per-vendor rates | Yes | + tiered rules |
 | Vendor wallet and withdrawals | Yes | + TeraWallet, WooWallet, MyCred |
 | Manual payouts (mark paid, CSV export) | Yes | Yes |
@@ -65,6 +65,7 @@ charge currency is stated at checkout. It is not multi-currency settlement.
 | Gutenberg blocks and shortcodes | Yes | Yes |
 | Email notifications | Yes | + white-label branding |
 | In-app notifications | Yes | Yes |
+| Push notifications to phones (Firebase) | — | Yes |
 | Realtime messaging (Pusher-protocol) | Yes | Yes |
 
 ## Operations
@@ -93,5 +94,5 @@ Entries are added only after the feature has been exercised, not when the code
 lands. A row here is a promise; an owner reads it before buying.
 
 Related: [Free vs Pro](getting-started/free-vs-pro.md) ·
-[Capabilities](https://github.com/vapvarun/wp-sell-services/blob/1.6.0/CAPABILITIES.md) · `audit/FEATURE_AUDIT.md` for the
+[Capabilities](https://github.com/vapvarun/wp-sell-services/blob/main/CAPABILITIES.md) · `audit/FEATURE_AUDIT.md` for the
 developer-side inventory.

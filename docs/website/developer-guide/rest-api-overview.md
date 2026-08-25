@@ -559,7 +559,7 @@ rest_not_logged_in`; a logged-in caller who lacks the right is `403`, and the
 vendor case has one code, `wpss_not_vendor`, instead of several spellings.
 
 **There is no error code for "a cart plugin owns payments."** When WooCommerce,
-EDD, FluentCart or SureCart is enabled, the `/payments/*` routes are simply not
+EDD or FluentCart is enabled, the `/payments/*` routes are simply not
 registered, so the answer is WordPress core's `404 rest_no_route`. Detect the
 rail from `GET /settings` rather than probing a payment route and interpreting
 the 404.

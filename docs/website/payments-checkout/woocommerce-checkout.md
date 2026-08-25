@@ -257,15 +257,14 @@ The pay-order rail is **WooCommerce-only**. It is not a general capability of
 | **WooCommerce** | Yes -- `WCPayOrderResolver` **[PRO]** | Opens a WooCommerce order-pay page. Works from email. |
 | **EDD** | **No** | Falls back to `?pay_order=N` on the EDD checkout, which EDD does not understand. **Dead end.** |
 | **FluentCart** | **No** | Same. **Dead end.** |
-| **SureCart** | **No** | Same. **Dead end.** |
 
 Exactly one implementation of the `wpss_pay_order_url` filter exists in the
-whole codebase, and it is the WooCommerce one. EDD, FluentCart and SureCart
+whole codebase, and it is the WooCommerce one. EDD and FluentCart
 register no equivalent.
 
 **Practical consequence:** if your marketplace relies on milestone contracts,
 tipping, or paid extensions, run it on **WooCommerce or standalone**. On EDD,
-FluentCart or SureCart the initial service purchase works, but every follow-on
+FluentCart the initial service purchase works, but every follow-on
 payment link is a dead end for the buyer. This is a known gap, not a
 configuration mistake -- there is nothing to switch on.
 
@@ -411,6 +410,6 @@ See [Building Custom Integrations](../developer-guide/custom-integrations.md) fo
 ## Related Docs
 
 - [Standalone Mode](standalone-mode.md) -- Built-in checkout without WooCommerce
-- [Alternative Platforms](alternative-platforms.md) **[PRO]** -- EDD, FluentCart, SureCart
+- [Alternative Platforms](alternative-platforms.md) **[PRO]** -- EDD, FluentCart
 - [Currency and Tax](currency-tax-config.md) -- Financial settings
 - [Building Custom Integrations](../developer-guide/custom-integrations.md) -- Adapter interfaces and developer guide

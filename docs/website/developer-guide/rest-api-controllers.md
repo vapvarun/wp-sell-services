@@ -30,8 +30,6 @@ The four `wpss-pro/v1` routes are:
 
 | Method | Route | Present when |
 |--------|-------|--------------|
-| POST | `/wpss-pro/v1/surecart/sync-products` | SureCart is active |
-| GET | `/wpss-pro/v1/surecart/orders` | SureCart is active |
 | GET | `/wpss-pro/v1/fluentcart/products` | FluentCart is active |
 | GET | `/wpss-pro/v1/fluentcart/orders` | FluentCart is active |
 
@@ -45,7 +43,7 @@ assume:
 
 - **The active e-commerce rail.** `/payments/*` -- in free *and* Pro -- registers
   only when `wpss_uses_standalone_payments()` is true, i.e. no cart plugin has
-  claimed payments. Activate WooCommerce, EDD, FluentCart or SureCart and those
+  claimed payments. Activate WooCommerce, EDD or FluentCart and those
   routes stop registering entirely; a call to them answers `404 rest_no_route`
   from WordPress core. That is by design: when a cart plugin is enabled it owns
   all payment, and the plugin does not offer a second way in.
@@ -194,7 +192,7 @@ lock-step guard while doing so.
 > On the **standalone** rail it is `…/checkout/?pay_order={id}` and nothing is
 > created.
 >
-> **EDD, FluentCart and SureCart have no pay-order rail at all.** They do not
+> **EDD and FluentCart have no pay-order rail at all.** They do not
 > hook the filter, so `checkout_url` falls back to the standalone
 > `?pay_order=N` URL, which those checkouts do not understand -- the buyer
 > lands on an empty cart. See
@@ -341,7 +339,7 @@ replaces them with a wider, gateway-specific set -- see [Payments (Pro)](#paymen
 > **These routes do not exist on every site.** As of 1.4.0 the whole controller
 > is skipped unless `wpss_uses_standalone_payments()` is true
 > (`src/API/PaymentController.php`). With WooCommerce, EDD, FluentCart or
-> SureCart enabled, that rail owns **all** payment and these routes are never
+> FluentCart enabled, that rail owns **all** payment and these routes are never
 > registered -- a client calling them gets `404 rest_no_route`. Do not treat
 > that as an error to retry: check `GET /wpss/v1` (or `GET /settings`) and send
 > the buyer to the rail's own checkout instead.

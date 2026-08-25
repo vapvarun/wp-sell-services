@@ -143,7 +143,7 @@ class ServiceWizard {
 			 * Max video URLs.
 			 *
 			 * Free: 1
-			 * Pro: 3
+			 * Pro: 1 (not raised — Pro lifts gallery, extras, FAQ and requirements only)
 			 *
 			 * @param int $max Maximum videos.
 			 */

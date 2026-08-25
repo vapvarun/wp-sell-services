@@ -9,7 +9,7 @@ REST), see [Hooks and Filters](hooks-filters.md).
 
 - Pro boots **after** Free (later priority on `plugins_loaded`) and requires Free to be active.
 - Pro consumes Free's services and seams rather than calling WordPress APIs directly. Money helpers, the ledger debit-type list, and the display-price seam (`wpss_catalog_price_html`) all live in Free; Pro builds on them, so there is one settlement source of truth.
-- E-commerce integrations (WooCommerce, EDD, SureCart, FluentCart) are a **payment rail only** -- they move money. They never supply the marketplace's amounts, currency, or delivery deadline. Those are WP Sell Services-internal and set by the order provider.
+- E-commerce integrations (WooCommerce, EDD, FluentCart) are a **payment rail only** -- they move money. They never supply the marketplace's amounts, currency, or delivery deadline. Those are WP Sell Services-internal and set by the order provider.
 
 That last point matters when you write an integration. If you source a price or a
 due date from the cart plugin, you will disagree with the ledger the moment
@@ -94,7 +94,7 @@ events without coupling to the rail.
 **FluentCart** exposes parallel hooks (`wpss_fluentcart_adapter_init`,
 `wpss_fluentcart_order_created`, and so on).
 
-**SureCart was removed in 1.6.1** and fires nothing.
+**SureCart was removed in 1.6.0** and fires nothing.
 
 **WooCommerce is the exception.** The WooCommerce adapter does not fire its own
 namespaced lifecycle hooks -- it reuses the core `wpss_order_created` and

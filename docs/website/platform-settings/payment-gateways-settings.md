@@ -17,7 +17,7 @@ switch and its own Save button.
 
 These gateways power the **standalone** checkout only.
 
-If WooCommerce, Easy Digital Downloads, FluentCart or SureCart is active, that
+If WooCommerce, Easy Digital Downloads or FluentCart is active, that
 platform owns checkout and payment end to end. Buyers pay through *its* gateways
 and never see these. Configuring Stripe here on a WooCommerce site changes
 nothing, and the screen will not warn you -- there is no "WooCommerce owns

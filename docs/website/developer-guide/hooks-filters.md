@@ -545,7 +545,6 @@ is exactly what every tip, milestone and extension link did in Woo mode before
 | WooCommerce | **Yes** -- `WCPayOrderResolver` (Pro) | A native WC order-pay URL |
 | EDD | No | The unfiltered default -> empty cart |
 | FluentCart | No | The unfiltered default -> empty cart |
-| SureCart | No | The unfiltered default -> empty cart |
 
 **Two things to know before you hook it:**
 
@@ -629,7 +628,7 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 
 | Filter | File | Default |
 |--------|------|---------|
-| `wpss_ecommerce_adapters` | `IntegrationManager.php:67` | Standalone only (Pro adds WooCommerce, EDD, FluentCart, SureCart) |
+| `wpss_ecommerce_adapters` | `IntegrationManager.php:67` | Standalone only (Pro adds WooCommerce, EDD, FluentCart) |
 | `wpss_payment_gateways` | `Plugin.php:813` | Test gateway (debug) |
 | `wpss_wallet_providers` **[PRO]** | `Plugin.php:825` | Empty |
 | `wpss_storage_providers` **[PRO]** | `Plugin.php:837` | Empty |
@@ -832,7 +831,7 @@ These hooks are fired exclusively by the Pro plugin and require an active Pro li
 
 ### WooCommerce Integration Actions
 
-Unlike the EDD, FluentCart, and SureCart adapters, the WooCommerce adapter does
+Unlike the EDD and FluentCart adapters, the WooCommerce adapter does
 not fire its own namespaced lifecycle hooks. It reuses the **core order hooks**
 instead, so code written against `wpss_order_created` /
 `wpss_order_status_changed` works identically whether the sale came through
@@ -873,7 +872,7 @@ WooCommerce or standalone checkout.
 > products, so there is no creation event to fire. A service is linked to an
 > existing FluentCart product instead.
 
-> **SureCart integration removed in 1.6.1.** Its four namespaced hooks
+> **SureCart integration removed in 1.6.0.** Its four namespaced hooks
 > (`wpss_surecart_adapter_init`, `wpss_surecart_order_created`,
 > `wpss_surecart_product_created`, `wpss_surecart_order_detail`) no longer
 > exist. SureCart keeps products and prices as objects in its own cloud and

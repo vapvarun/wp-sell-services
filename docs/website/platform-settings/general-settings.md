@@ -69,7 +69,6 @@ Choose which system handles your marketplace checkout and payments.
 | **WooCommerce** | **[PRO]** |
 | **Easy Digital Downloads** | **[PRO]** |
 | **FluentCart** | **[PRO]** |
-| **SureCart** | **[PRO]** |
 
 ### Auto-Detect (Recommended)
 
@@ -84,7 +83,7 @@ The free version includes a complete built-in checkout system with Stripe, PayPa
 
 ### WooCommerce and Other Platforms **[PRO]**
 
-The Pro version lets you plug into WooCommerce, Easy Digital Downloads, FluentCart, or SureCart. This is useful if you already have an online store and want your marketplace orders to flow through the same checkout and payment system.
+The Pro version lets you plug into WooCommerce, Easy Digital Downloads or FluentCart. This is useful if you already have an online store and want your marketplace orders to flow through the same checkout and payment system.
 
 ### Switching Platforms
 

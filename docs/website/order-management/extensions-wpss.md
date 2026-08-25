@@ -11,8 +11,8 @@ on the extension itself — it's a simple mid-order add-on.
 ## When to use a paid extension
 
 Paid extensions live on **catalog orders** — orders that came through
-the normal service checkout (Standalone, WooCommerce, EDD, FluentCart,
-SureCart). These are fixed-price jobs where the buyer already paid the
+the normal service checkout (Standalone, WooCommerce, EDD,
+FluentCart). These are fixed-price jobs where the buyer already paid the
 full amount upfront.
 
 If the order is a custom project that started from a buyer request, use

@@ -3,7 +3,7 @@
 Buyer-level truth for the store listing and for anyone deciding whether this
 plugin fits. Written to be read before purchase, not after.
 
-**Version**: 1.3.1 · **Last verified**: 2026-08-01
+**Version**: 1.6.0 · **Last verified**: 2026-08-25
 
 `YES` — ships and is exercised · `PARTIAL` — ships with a stated limit ·
 `NO` — does not ship, whatever a roadmap says.
@@ -56,6 +56,12 @@ companion app, and what a GDPR erasure request needs.
 
 **NO.** Recurring billing exists in the Pro codebase but ships behind a
 default-off flag with its UI hidden. Do not buy Pro for recurring billing.
+
+## Can members get push notifications on their phone?
+
+**YES (Pro)**, for the events they already receive in the app. You supply
+Firebase credentials under Advanced; it is off until you do. The companion
+app is what receives them — the events themselves are Free.
 
 ## Can I take a commission?
 

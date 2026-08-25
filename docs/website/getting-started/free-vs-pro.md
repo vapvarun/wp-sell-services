@@ -9,7 +9,7 @@ The free version of WP Sell Services is a complete, production-ready marketplace
 | | Free | Pro |
 |-|------|-----|
 | **Marketplace** | Complete -- services, orders, messaging, reviews, disputes | Everything in Free |
-| **Checkout** | Built-in standalone (no other plugins needed) | + WooCommerce, EDD, FluentCart, SureCart |
+| **Checkout** | Built-in standalone (no other plugins needed) | + WooCommerce, EDD, FluentCart |
 | **Payment gateways** | Stripe, PayPal, Offline | + Razorpay |
 | **Service creation limits** | Conservative (see below) | Unlimited |
 | **Analytics** | Basic stats | Full dashboards with export |
@@ -53,7 +53,6 @@ All of these are fully available in both versions -- nothing is held back:
 | WooCommerce | -- | **[PRO]** |
 | Easy Digital Downloads (EDD) | -- | **[PRO]** |
 | FluentCart | -- | **[PRO]** |
-| SureCart | -- | **[PRO]** |
 
 ### Payment Gateways
 
@@ -125,7 +124,7 @@ same six-step flow either way; Pro simply stops capping how much they can add.
 
 > Earlier versions of this page listed AI title suggestions, service templates,
 > bulk image upload, direct video upload, custom package fields, and scheduled
-> publishing as Pro wizard features. **They do not ship in 1.3.0** -- they are
+> publishing as Pro wizard features. **They do not ship in 1.6.0** -- they are
 > deferred to a future release and are not enabled in the plugin. They are listed
 > here only so nobody buys Pro expecting them.
 
@@ -139,9 +138,10 @@ same six-step flow either way; Pro simply stops capping how much they can add.
 | Tiered Commission Rules (category/volume/level-based rates) | -- | **[PRO]** |
 | White-Label Branding (rebrand the marketplace) | -- | **[PRO]** |
 | Display Currency (show prices in the shopper's currency) | -- | **[PRO]** |
-| Recurring Services (subscription billing for services) | -- | Not enabled in 1.3.0 |
+| Push notifications to members' phones (Firebase) | -- | **[PRO]** |
+| Recurring Services (subscription billing for services) | -- | Not enabled in 1.6.0 |
 
-**Recurring Services** ships behind a default-off feature flag in 1.3.0 and its
+**Recurring Services** ships behind a default-off feature flag in 1.6.0 and its
 UI is hidden. Do not buy Pro for recurring billing yet -- see
 [Recurring Services](../order-management/recurring-services.md).
 
@@ -161,7 +161,7 @@ The free version is a strong choice if you are:
 Pro makes sense when you need:
 
 - **Unlimited service media and add-ons** -- Your vendors need more gallery images, videos, FAQs, or extras
-- **WooCommerce or other e-commerce integration** -- You already use WooCommerce, EDD, FluentCart, or SureCart
+- **WooCommerce or other e-commerce integration** -- You already use WooCommerce, EDD or FluentCart
 - **Razorpay payments** -- Popular for marketplaces in India and Southeast Asia
 - **Wallet-based payouts** -- Integrate with TeraWallet, WooWallet, or MyCred for vendor balances
 - **Detailed analytics** -- Revenue charts, performance dashboards, and data export
