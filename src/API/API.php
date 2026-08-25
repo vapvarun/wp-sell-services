@@ -1097,17 +1097,7 @@ class API {
 				)
 			);
 
-			$services_count = count(
-				get_posts(
-					[
-						'post_type'      => 'wpss_service',
-						'author'         => $user_id,
-						'posts_per_page' => -1,
-						'fields'         => 'ids',
-						'post_status'    => 'any',
-					]
-				)
-			);
+			$services_count = wpss_count_vendor_services( (int) $user_id, 'any' );
 
 			$data['as_vendor'] = [
 				'services_count'   => $services_count,

@@ -101,6 +101,11 @@ class OrdersController extends RestController {
 							'default'     => 1,
 							'minimum'     => 1,
 						),
+						'status__not_in' => array(
+							'description' => __( 'Exclude orders in these statuses. Repeatable.', 'wp-sell-services' ),
+							'type'        => 'array',
+							'items'       => array( 'type' => 'string' ),
+						),
 						'per_page' => array(
 							'description' => __( 'Items per page.', 'wp-sell-services' ),
 							'type'        => 'integer',
@@ -393,6 +398,22 @@ class OrdersController extends RestController {
 		$status = $request->get_param( 'status' );
 		if ( $status ) {
 			$args['status'] = $status;
+		}
+
+		// Exclusion filter.
+		//
+		// A seller queue is defined by what it is NOT - everything except
+		// completed and cancelled - and the only way to express that was to
+		// fetch a page and filter client-side. That drops rows silently: a
+		// seeded seller with 24 orders had 5 needing action and the app showed
+		// 3, losing the two oldest, because the exclusion happened after
+		// pagination rather than before it.
+		//
+		// ServiceOrder has supported status__not_in since account deletion
+		// needed it; it was simply never exposed.
+		$exclude = $request->get_param( 'status__not_in' );
+		if ( ! empty( $exclude ) ) {
+			$args['status__not_in'] = array_values( array_filter( array_map( 'sanitize_key', (array) $exclude ) ) );
 		}
 
 		// Service filter.

@@ -75,8 +75,11 @@ class ExtensionRequestsController extends RestController {
 			)
 		);
 
-		// POST /orders/{order_id}/extension — vendor creates the quote
-		// (singular path mirrors the verb the mobile app is calling).
+		// POST /orders/{order_id}/extension — DEPRECATED alias of the plural
+		// route below it. Two public names for one action, kept because the
+		// mobile app calls this one; deleting it in a point release would break
+		// shipped clients. New clients should use /extensions. Both land on the
+		// same handler, so behaviour cannot drift between them.
 		register_rest_route(
 			$this->namespace,
 			'/orders/(?P<order_id>[\d]+)/extension',
@@ -390,6 +393,42 @@ class ExtensionRequestsController extends RestController {
 			'original_due_date' => $item['original_due_date'] ?? null,
 			'new_due_date'      => $item['new_due_date'] ?? null,
 			'created_at'        => $item['created_at'],
+			// Where the buyer goes to pay this, if it is still payable.
+			//
+			// The URL used to be returned only by the create call, so a vendor
+			// who raised the quote on the website left every client that loaded
+			// the order later holding an extension it could not offer a way to
+			// pay. Milestones expose a pay route; extensions did not, and the
+			// app refused to synthesise ?pay_order={id} by hand - correctly, it
+			// is not the client's business to know that shape.
+			//
+			// A row already carries pay_order_id, so this is a lookup rather
+			// than a new route. Null once the quote is no longer pending.
+			'checkout_url'      => $this->pay_url_for( $item ),
 		);
+	}
+
+	/**
+	 * The pay URL for a pending extension, or null.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param array<string, mixed> $item Extension request row.
+	 * @return string|null
+	 */
+	private function pay_url_for( array $item ): ?string {
+		if ( ExtensionRequestService::STATUS_PENDING !== ( $item['status'] ?? '' ) ) {
+			return null;
+		}
+
+		$pay_order_id = isset( $item['pay_order_id'] ) ? (int) $item['pay_order_id'] : 0;
+
+		if ( $pay_order_id <= 0 || ! function_exists( 'wpss_get_pay_order_url' ) ) {
+			return null;
+		}
+
+		$url = wpss_get_pay_order_url( $pay_order_id );
+
+		return $url ? $url : null;
 	}
 }

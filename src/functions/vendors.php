@@ -652,3 +652,38 @@ function wpss_member_bypasses_limits( int $user_id ): bool {
 	 */
 	return (bool) apply_filters( 'wpss_member_bypasses_limits', $bypasses, $user_id );
 }
+
+/**
+ * Count a vendor's services without loading them.
+ *
+ * Two callers were doing `count( get_posts( [ 'posts_per_page' => -1 ] ) )`
+ * purely to produce a number - one of them on `/me`, which the app calls at
+ * launch. That loads every id a vendor has ever published to discard all of
+ * them, which is the scan the big-site checklist exists to stop.
+ *
+ * @since 1.7.0
+ *
+ * @param int              $vendor_id   Vendor user ID.
+ * @param string|string[]  $post_status Status(es) to count. Default 'publish'.
+ * @return int
+ */
+function wpss_count_vendor_services( int $vendor_id, $post_status = 'publish' ): int {
+	if ( $vendor_id <= 0 ) {
+		return 0;
+	}
+
+	$query = new \WP_Query(
+		array(
+			'post_type'              => 'wpss_service',
+			'post_status'            => $post_status,
+			'author'                 => $vendor_id,
+			'posts_per_page'         => 1,
+			'fields'                 => 'ids',
+			'no_found_rows'          => false,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+
+	return (int) $query->found_posts;
+}

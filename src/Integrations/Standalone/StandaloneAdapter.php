@@ -145,14 +145,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
 		add_action( 'template_redirect', [ $this, 'handle_template_redirect' ] );
 
-		// On a site that runs WooCommerce alongside the standalone rail there
-		// are genuinely two carts, and the theme's header shows Woo's. Whether
-		// that is wrong depends on the business: a marketplace-only site where
-		// Woo is installed for something else wants one cart link, while a site
-		// actually selling Woo products would be broken by us pointing its cart
-		// somewhere else. So it is the owner's switch, off by default — we do
-		// not silently redirect another plugin's checkout path.
-		if ( ! empty( get_option( 'wpss_general', array() )['use_marketplace_cart_link'] ) ) {
+		if ( self::should_use_marketplace_cart_link() ) {
 			add_filter( 'woocommerce_get_cart_url', [ $this, 'filter_cart_url' ], 20 );
 		}
 
@@ -162,6 +155,54 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		 * @since 1.0.0
 		 */
 		do_action( 'wpss_standalone_adapter_init', $this );
+	}
+
+	/**
+	 * Whether the theme's cart link should point at the marketplace cart.
+	 *
+	 * Two carts exist on purpose: /service-cart/ was created so the marketplace
+	 * does not fight WooCommerce for /cart/. What was wrong was which one the
+	 * theme's cart icon pointed at. With the standalone rail taking payment, a
+	 * buyer with a service in their cart clicked that icon and was told their
+	 * cart was empty, because the icon is hardcoded to Woo's page.
+	 *
+	 * This used to be a checkbox that was off by default, so the common case
+	 * shipped broken and the owner had to know to go and find the switch. It is
+	 * derived now, and the checkbox overrides the derivation either way:
+	 *
+	 *  - Woo owns checkout      -> leave Woo's cart alone. It holds the order.
+	 *  - Standalone, no Woo products -> point at the marketplace cart. Woo is
+	 *    installed for something else and its cart is always empty.
+	 *  - Standalone, Woo products exist -> leave it alone. Two real shops; only
+	 *    the owner knows which cart the header should serve.
+	 *
+	 * The last case is why this is a link filter and never a redirect on
+	 * /cart/ - taking over another plugin's URL is exactly the collision the
+	 * separate page exists to avoid.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return bool
+	 */
+	public static function should_use_marketplace_cart_link(): bool {
+		$general = get_option( 'wpss_general', array() );
+
+		// An explicit choice always wins, in both directions.
+		if ( array_key_exists( 'use_marketplace_cart_link', $general ) && '' !== $general['use_marketplace_cart_link'] ) {
+			return ! empty( $general['use_marketplace_cart_link'] );
+		}
+
+		if ( ! function_exists( 'wpss_uses_standalone_payments' ) || ! wpss_uses_standalone_payments() ) {
+			return false;
+		}
+
+		if ( ! function_exists( 'wp_count_posts' ) || ! post_type_exists( 'product' ) ) {
+			return false;
+		}
+
+		$products = wp_count_posts( 'product' );
+
+		return empty( $products->publish );
 	}
 
 	/**
