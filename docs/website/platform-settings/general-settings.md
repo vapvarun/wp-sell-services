@@ -96,6 +96,32 @@ You can change platforms at any time under **Settings > General**. Keep in mind:
 
 ---
 
+## Site cart link
+
+Only appears when WooCommerce is active, because it only means anything then.
+
+With WooCommerce installed there are genuinely two carts: WooCommerce's `/cart/`
+and the marketplace's `/service-cart/`. That split is deliberate -- the
+marketplace does not take over WooCommerce's cart page. The question this
+setting answers is which one your **theme's cart icon** points at.
+
+**You usually do not need to touch it.** The default is worked out for you:
+
+| Your setup | Where the theme's cart link goes |
+|---|---|
+| WooCommerce is handling checkout | WooCommerce's cart -- it holds the order |
+| Marketplace checkout, and you sell no WooCommerce products | The marketplace cart |
+| Marketplace checkout, and you *do* sell WooCommerce products | WooCommerce's cart -- two real shops, so you decide |
+
+Tick or untick it to override that in either direction. The third row is the one
+worth knowing about: if you sell both services and WooCommerce products, only
+you can say which cart the header should serve, so the plugin leaves it alone.
+
+If buyers report adding a service and then finding an empty cart, this is the
+setting -- turn it on.
+
+---
+
 ## Troubleshooting
 
 **Platform name not updating everywhere?**
