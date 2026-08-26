@@ -1132,6 +1132,58 @@ class Settings {
 			array( $this, 'sanitize_notification_settings' )
 		);
 
+		// Delivery behaviour, as opposed to which types are switched on.
+		//
+		// This option was read by wpss_should_skip_message_email() and by the
+		// message-email delay, and registered nowhere - so neither could be
+		// changed from the screen. A setting nothing can write is a setting
+		// nobody has.
+		register_setting(
+			'wpss_notifications',
+			'wpss_notification_settings',
+			array( $this, 'sanitize_notification_delivery_settings' )
+		);
+
+		add_settings_section(
+			'wpss_notification_delivery_section',
+			__( 'Message Email Delivery', 'wp-sell-services' ),
+			static function (): void {
+				echo '<p>' . esc_html__( 'Message emails are the most frequent mail the marketplace sends - one per message on every active order. These two settings cut the ones nobody needed.', 'wp-sell-services' ) . '</p>';
+			},
+			'wpss_notifications'
+		);
+
+		add_settings_field(
+			'skip_message_email_when_online',
+			__( 'Skip when they are already here', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_notifications',
+			'wpss_notification_delivery_section',
+			array(
+				'option_name' => 'wpss_notification_settings',
+				'field'       => 'skip_message_email_when_online',
+				'label'       => __( 'Do not email a message to someone who is browsing the site right now', 'wp-sell-services' ),
+				'default'     => true,
+				'description' => __( 'Presence is read from recent activity. On a quiet site where that is sparse, turn this off if members report missing message emails.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'message_email_delay_minutes',
+			__( 'Hold message emails for', 'wp-sell-services' ),
+			array( $this, 'render_number_field' ),
+			'wpss_notifications',
+			'wpss_notification_delivery_section',
+			array(
+				'option_name' => 'wpss_notification_settings',
+				'field'       => 'message_email_delay_minutes',
+				'default'     => 0,
+				'min'         => 0,
+				'max'         => 120,
+				'description' => __( 'Minutes to wait before sending. When the wait is over the email is sent only if the conversation is still unread. Set to 0 to send immediately.', 'wp-sell-services' ),
+			)
+		);
+
 		add_settings_section(
 			'wpss_notifications_section',
 			__( 'Email Notifications', 'wp-sell-services' ),
@@ -3481,6 +3533,26 @@ class Settings {
 	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
 	 * @return array<string, mixed> Sanitized input.
 	 */
+	/**
+	 * Sanitize message-email delivery settings.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param array<string, mixed>|null $input Raw input.
+	 * @return array<string, mixed>
+	 */
+	public function sanitize_notification_delivery_settings( ?array $input ): array {
+		$input = $input ?? array();
+
+		return array(
+			// Checkbox: absent means unticked, so an explicit false is stored
+			// rather than the key going missing - the reader treats a missing
+			// key as "on", which is how this defaulted unreachable before.
+			'skip_message_email_when_online' => ! empty( $input['skip_message_email_when_online'] ),
+			'message_email_delay_minutes'    => min( 120, max( 0, absint( $input['message_email_delay_minutes'] ?? 0 ) ) ),
+		);
+	}
+
 	public function sanitize_notification_settings( ?array $input ): array {
 		$input     = $input ?? array();
 		$sanitized = array();
