@@ -40,8 +40,7 @@ $format = static function ( float $amount ) use ( $currency ): string {
 };
 
 $platform_fee = max( 0.0, $gross_amount - $net_amount );
-$dashboard    = wpss_get_dashboard_url() ?: home_url( '/dashboard/' );
-$earnings_url = add_query_arg( 'section', 'wallet', $dashboard );
+$earnings_url = wpss_get_dashboard_url( 'wallet' ) ?: ( wpss_get_dashboard_url() ?: home_url( '/dashboard/' ) );
 ?>
 
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">

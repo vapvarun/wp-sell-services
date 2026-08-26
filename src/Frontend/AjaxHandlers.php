@@ -1793,7 +1793,7 @@ class AjaxHandlers {
 			// timeline + Pay-phase-1 button live.
 			$is_milestone_contract = ProposalService::CONTRACT_TYPE_MILESTONE === ( $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED );
 			if ( $is_milestone_contract ) {
-				$redirect_url = add_query_arg( 'order_id', $result['order_id'], wpss_get_dashboard_url() );
+				$redirect_url = wpss_get_order_url( (int) $result['order_id'] );
 				$message      = __( 'Proposal accepted — your project is set up. Opening the order…', 'wp-sell-services' );
 			} else {
 				$redirect_url = wpss_get_pay_order_url( (int) $result['order_id'] );

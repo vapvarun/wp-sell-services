@@ -750,7 +750,7 @@ class Shortcodes {
 										: '&mdash;';
 									?>
 								</td>
-								<td><a href="<?php echo esc_url( wpss_get_dashboard_url( 'orders' ) ? add_query_arg( 'order_id', $order->id, wpss_get_dashboard_url() ) : '#' ); ?>" class="button button-small"><?php esc_html_e( 'View', 'wp-sell-services' ); ?></a></td>
+								<td><a href="<?php echo esc_url( wpss_get_order_url( (int) $order->id ) ?: '#' ); ?>" class="button button-small"><?php esc_html_e( 'View', 'wp-sell-services' ); ?></a></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
@@ -803,7 +803,7 @@ class Shortcodes {
 			) . '</div>';
 		}
 
-		$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$order_id = function_exists( 'wpss_resolve_request_order_id' ) ? wpss_resolve_request_order_id() : 0;
 
 		if ( ! $order_id ) {
 			return '<div class="wpss-error">' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</div>';

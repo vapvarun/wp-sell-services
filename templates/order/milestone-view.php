@@ -30,7 +30,7 @@ $gross      = (float) $current_order->total;
 $net_vendor = (float) ( $current_order->vendor_earnings ?? $gross );
 $platform_f = (float) ( $current_order->platform_fee ?? 0 );
 $parent_id  = (int) ( $current_order->platform_order_id ?? 0 );
-$parent_url = $parent_id ? add_query_arg( 'order_id', $parent_id, remove_query_arg( 'order_id' ) ) : '';
+$parent_url = $parent_id ? wpss_get_order_url( $parent_id ) : '';
 
 $meta         = $current_order->meta ?? '';
 $meta         = is_string( $meta ) ? json_decode( $meta, true ) : ( is_array( $meta ) ? $meta : array() );

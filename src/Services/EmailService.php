@@ -634,7 +634,7 @@ class EmailService {
 					__( 'We have checked your receipt and confirmed payment for order #%s. Your order is now underway.', 'wp-sell-services' ),
 					$order->order_number
 				),
-				'button_url'    => wpss_get_dashboard_url( 'orders' ) . '?order_id=' . $order_id,
+				'button_url'    => wpss_get_order_url( $order_id ),
 				'button_text'   => __( 'View your order', 'wp-sell-services' ),
 				'receipt_id'    => $receipt_id,
 				'order'         => $order,
@@ -693,7 +693,7 @@ class EmailService {
 				'recipient'     => $buyer,
 				'email_heading' => __( 'We could not confirm your payment', 'wp-sell-services' ),
 				'content'       => $content,
-				'button_url'    => wpss_get_dashboard_url( 'orders' ) . '?order_id=' . $order_id,
+				'button_url'    => wpss_get_order_url( $order_id ),
 				'button_text'   => __( 'Upload a new receipt', 'wp-sell-services' ),
 				'receipt_id'    => $receipt_id,
 				'order'         => $order,
@@ -1669,7 +1669,7 @@ class EmailService {
 				$sender->display_name
 			);
 
-		$dashboard_url = add_query_arg( 'section', 'messages', wpss_get_dashboard_url() );
+		$dashboard_url = wpss_get_dashboard_url( 'messages' );
 
 		$template_vars = array(
 			'recipient'      => $vendor,
@@ -1730,7 +1730,7 @@ class EmailService {
 			'withdrawal_id' => $withdrawal_id,
 			'status'        => $status,
 			'admin_note'    => $withdrawal->admin_note ?? '',
-			'dashboard_url' => add_query_arg( 'section', 'earnings', wpss_get_dashboard_url() ),
+			'dashboard_url' => wpss_get_dashboard_url( 'earnings' ),
 		);
 
 		return $this->send( $vendor->user_email, $subject, $type, $template_vars );
@@ -1816,7 +1816,7 @@ class EmailService {
 				$buyer->display_name,
 				$request->post_title
 			),
-			'button_url'     => wpss_get_page_url( 'dashboard' ) ? add_query_arg( 'section', 'sales', wpss_get_page_url( 'dashboard' ) ) : '',
+			'button_url'     => wpss_get_dashboard_url( 'sales' ),
 			'button_text'    => __( 'View Orders', 'wp-sell-services' ),
 			'reply_to_email' => $buyer->user_email,
 			'reply_to_name'  => $buyer->display_name,

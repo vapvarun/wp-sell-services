@@ -288,7 +288,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 	 * @return string
 	 */
 	public function get_orders_url(): string {
-		return add_query_arg( 'section', 'orders', wpss_get_page_url( 'dashboard' ) );
+		return wpss_get_dashboard_url( 'orders' );
 	}
 
 	/**

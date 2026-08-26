@@ -253,8 +253,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		// Check if paying for an existing order (from proposal acceptance).
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$pay_order_id = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0;
+		$pay_order_id = (int) get_query_var( 'wpss_pay_order', 0 );
+		if ( ! $pay_order_id ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$pay_order_id = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0;
+		}
 
 		if ( $pay_order_id ) {
 			return $this->render_pay_order_checkout( $pay_order_id );
@@ -370,7 +373,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		$parent_order_id = ! empty( $order->platform_order_id ) ? (int) $order->platform_order_id : (int) $order->id;
-		$back_to_order   = add_query_arg( 'order_id', $parent_order_id, wpss_get_dashboard_url() );
+		$back_to_order   = wpss_get_order_url( $parent_order_id );
 
 		// Only pending_payment orders can be paid.
 		if ( 'pending_payment' !== $order->status ) {

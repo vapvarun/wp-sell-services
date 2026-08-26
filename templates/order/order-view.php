@@ -274,7 +274,7 @@ do_action( 'wpss_before_order_view', $order );
 				// enough — a pending_requirements order never has a completed brief.
 				// The $has_submitted_requirements flag is computed further down.
 				if ( 'pending_requirements' === $order->status ) {
-					$requirements_url        = add_query_arg( 'action', 'requirements', wpss_get_order_url( $order_id ) );
+					$requirements_url        = wpss_get_order_requirements_url( $order_id );
 					$actions['requirements'] = array(
 						'label' => __( 'Submit Requirements', 'wp-sell-services' ),
 						'class' => 'wpss-btn wpss-btn--primary',
@@ -1514,7 +1514,7 @@ do_action( 'wpss_before_order_view', $order );
 						foreach ( $milestones as $index => $m ) :
 							$ms_status      = $m['status'];
 							$ms_sub_id      = (int) $m['id'];
-							$ms_sub_url     = add_query_arg( 'order_id', $ms_sub_id, remove_query_arg( 'order_id' ) );
+							$ms_sub_url     = wpss_get_order_url( $ms_sub_id );
 							$ms_pay_url     = wpss_get_pay_order_url( $ms_sub_id );
 							$ms_state_label = '';
 							$ms_state_class = 'wpss-ms-state--' . sanitize_html_class( $ms_status );

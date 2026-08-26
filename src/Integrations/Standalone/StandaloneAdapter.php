@@ -218,6 +218,29 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 			'top'
 		);
 
+		// Pretty pay-one-order: /{checkout}/pay/{id}/.
+		// Prefer the mapped checkout page path so a renamed slug still matches.
+		$checkout_id   = function_exists( 'wpss_get_page_id' ) ? (int) wpss_get_page_id( 'checkout' ) : 0;
+		$checkout_path = '';
+		if ( $checkout_id ) {
+			$uri = get_page_uri( $checkout_id );
+			if ( is_string( $uri ) && '' !== $uri ) {
+				$checkout_path = trim( $uri, '/' );
+			}
+		}
+		if ( '' === $checkout_path ) {
+			$checkout_path = $checkout_slug;
+		}
+
+		$segments  = array_map( 'preg_quote', explode( '/', $checkout_path ) );
+		$path_re   = implode( '/', $segments );
+		$pay_regex = '^' . $path_re . '/pay/([0-9]+)/?$';
+		$pay_query = $checkout_id
+			? 'index.php?page_id=' . $checkout_id . '&wpss_pay_order=$matches[1]'
+			: 'index.php?wpss_checkout=1&wpss_pay_order=$matches[1]';
+
+		add_rewrite_rule( $pay_regex, $pay_query, 'top' );
+
 		// Note: /service-order/{id}/ is handled by Plugin::register_rewrite_rules()
 		// via the wpss_service_order query var → TemplateLoader → order-view.php.
 
@@ -234,6 +257,17 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 			'index.php?wpss_payment_callback=1&wpss_gateway=$matches[1]',
 			'top'
 		);
+
+		// Self-heal when the pay rule is missing from the live option.
+		$live_rules = get_option( 'rewrite_rules' );
+		if ( ! is_array( $live_rules ) || ! isset( $live_rules[ $pay_regex ] ) ) {
+			add_action(
+				'wp_loaded',
+				static function (): void {
+					flush_rewrite_rules( false );
+				}
+			);
+		}
 	}
 
 	/**
@@ -268,6 +302,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		$vars[] = 'wpss_account_page';
 		$vars[] = 'wpss_payment_callback';
 		$vars[] = 'wpss_gateway';
+		$vars[] = 'wpss_pay_order';
 
 		return $vars;
 	}
