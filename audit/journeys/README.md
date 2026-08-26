@@ -4,6 +4,11 @@ A journey is one end-to-end path through the product, walked in a real browser
 as a real role. Not a unit test — the point is the seams *between* correct
 units, which is where this plugin's defects have actually lived.
 
+**Framing:** [`../../docs/qa/TESTING-GUIDELINE.md`](../../docs/qa/TESTING-GUIDELINE.md)
+covers *how to decide what to check* — the expectation-first approach, the
+code-flow contract questions, and reading the documentation as part of the flow.
+Read it once, then work from the journeys here.
+
 ## Why these exist
 
 Every journey here was written **after** a defect it would have caught. They are

@@ -159,7 +159,51 @@ function wpss_user_can_view_order( int $order_id, ?int $user_id = null ): bool {
 }
 
 /**
+ * Resolve the order ID named by the current request.
+ *
+ * Prefers the pretty-permalink query var (`wpss_order_id`) and falls back to
+ * the legacy `?order_id=` query arg so old bookmarks and emailed links keep
+ * working until they are 301'd.
+ *
+ * @since 1.7.0
+ *
+ * @return int Order ID, or 0 when the request names no order.
+ */
+function wpss_resolve_request_order_id(): int {
+	$order_id = (int) get_query_var( 'wpss_order_id', 0 );
+
+	if ( $order_id > 0 ) {
+		return $order_id;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing.
+	return isset( $_GET['order_id'] ) ? absint( wp_unslash( $_GET['order_id'] ) ) : 0;
+}
+
+/**
+ * Resolve the order action named by the current request (e.g. requirements).
+ *
+ * @since 1.7.0
+ *
+ * @return string Sanitized action slug, or empty string.
+ */
+function wpss_resolve_request_order_action(): string {
+	$action = (string) get_query_var( 'wpss_order_action', '' );
+
+	if ( '' !== $action ) {
+		return sanitize_key( $action );
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing.
+	return isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
+}
+
+/**
  * Get order view URL.
+ *
+ * Pretty shape (when permalinks are on): `/{dashboard}/{section}/{id}/`
+ * e.g. `/dashboard/orders/3407/` or `/dashboard/sales/3407/`.
+ * Plain permalinks keep the `?order_id=` query form.
  *
  * @param int    $order_id Order ID.
  * @param string $section  Dashboard section (e.g. 'sales' for vendor orders).
@@ -172,18 +216,26 @@ function wpss_get_order_url( int $order_id, string $section = '' ): string {
 		return '';
 	}
 
+	// Empty section means the buyer-side address. Callers that mean the vendor
+	// sales view pass 'sales' explicitly (see sales list "View" links).
+	if ( '' === $section ) {
+		$section = 'orders';
+	}
+
 	$dashboard_url = wpss_get_dashboard_url( $section );
 
 	if ( $dashboard_url ) {
-		return add_query_arg( 'order_id', $order_id, $dashboard_url );
+		return wpss_append_dashboard_order( $dashboard_url, $order_id );
 	}
 
 	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
-	return home_url( '/' . $order_slug . '/' . $order->order_number . '/' );
+	return home_url( '/' . $order_slug . '/' . $order_id . '/' );
 }
 
 /**
  * Get order requirements URL.
+ *
+ * Pretty shape: `/{dashboard}/orders/{id}/requirements/`.
  *
  * @param int $order_id Order ID.
  * @return string
@@ -195,21 +247,14 @@ function wpss_get_order_requirements_url( int $order_id ): string {
 		return '';
 	}
 
-	// Orders is the default section, so no section parameter needed.
-	$dashboard_url = wpss_get_dashboard_url();
+	$dashboard_url = wpss_get_dashboard_url( 'orders' );
 
 	if ( $dashboard_url ) {
-		return add_query_arg(
-			array(
-				'order_id' => $order_id,
-				'action'   => 'requirements',
-			),
-			$dashboard_url
-		);
+		return wpss_append_dashboard_order( $dashboard_url, $order_id, 'requirements' );
 	}
 
 	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
-	return home_url( '/' . $order_slug . '/' . $order->order_number . '/requirements/' );
+	return home_url( '/' . $order_slug . '/' . $order_id . '/requirements/' );
 }
 
 /**
@@ -312,6 +357,10 @@ function wpss_get_order_requirements( int $order_id ): array {
 /**
  * Get order confirmation URL (thank you page).
  *
+ * Custom confirmation pages keep a single `?order_id=` arg (one-shot thank-you
+ * pages are not worth nested rewrites). When unset, the pretty dashboard order
+ * URL is the confirmation surface.
+ *
  * @param int $order_id Order ID.
  * @return string
  */
@@ -325,17 +374,20 @@ function wpss_get_order_confirmation_url( int $order_id ): string {
 	$confirmation_page = (int) get_option( 'wpss_order_confirmation_page' );
 
 	if ( $confirmation_page ) {
-		return add_query_arg( 'order_id', $order_id, get_permalink( $confirmation_page ) );
+		$permalink = get_permalink( $confirmation_page );
+		if ( $permalink ) {
+			return add_query_arg( 'order_id', $order_id, $permalink );
+		}
 	}
 
-	// Fall back to dashboard order view.
-	$dashboard_url = wpss_get_dashboard_url();
-	if ( $dashboard_url ) {
-		return add_query_arg( 'order_id', $order_id, $dashboard_url );
+	// Fall back to the pretty dashboard order view.
+	$url = wpss_get_order_url( $order_id );
+	if ( $url ) {
+		return $url;
 	}
 
 	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
-	return home_url( '/' . $order_slug . '/' . $order->order_number . '/confirmation/' );
+	return home_url( '/' . $order_slug . '/' . $order_id . '/confirmation/' );
 }
 
 /**
