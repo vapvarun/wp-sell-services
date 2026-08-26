@@ -143,6 +143,12 @@ to find out what is on offer, then "it renders in the modal" is not a pass.
 5. **Does a control that saves successfully actually do something?** Storage
    settings, connection test green, no effect.
 
+### Rails in scope
+
+Standalone and WooCommerce. EDD and FluentCart still ship and are still
+documented, but are out of QA scope for this round — do not test them, and do not
+file against them.
+
 ### Roles to walk, not just "a user"
 
 | Role | The thing that only breaks for them |

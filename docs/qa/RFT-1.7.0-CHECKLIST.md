@@ -8,6 +8,21 @@ Read [`TESTING-GUIDELINE.md`](TESTING-GUIDELINE.md) first. This page is the
 coverage list — it says *what* to walk. The guideline says *how* to judge what
 you see, and the walks themselves are in [`../../audit/journeys/`](../../audit/journeys/).
 
+## Rail scope for this round
+
+**Test Standalone and WooCommerce only.** Those are the two rails the product is
+focused on right now.
+
+EDD and FluentCart still ship, are still selectable under
+**Settings > General > E-Commerce Platform**, and are still documented — they are
+simply not verified this round. If you hit one by accident, note it and move on
+rather than filing against it.
+
+Where a card below says "the rail that owns checkout", read that as Standalone or
+WooCommerce.
+
+---
+
 **Each line below is the expectation, not the defect.** If the line is true when
 you finish, the card passes. Card numbers are Basecamp ids.
 
