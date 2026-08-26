@@ -1,6 +1,16 @@
 # Cloud Storage **[PRO]**
 
-Offload delivery files from your WordPress server to a dedicated cloud storage provider for better performance, unlimited scalability, and faster downloads worldwide.
+> **Not yet connected to deliveries.** The S3, Google Cloud and DigitalOcean
+> drivers work and the connection test really does reach your bucket, but nothing
+> routes a delivery file through them -- deliveries are still stored in the
+> WordPress media library. The bucket is currently reachable only through the
+> REST API, for custom integrations.
+>
+> Set this up now if you are building against the API. If you want delivery
+> storage offloaded, wait for that rather than configuring it here. This page
+> describes the intended behaviour once it is connected.
+
+Cloud storage is intended to move delivery files off your WordPress server onto a dedicated provider, for better performance and faster downloads worldwide.
 
 ---
 
@@ -25,7 +35,7 @@ Cloud storage solves all of these by moving files to a specialized service desig
 | Limited by your hosting storage plan | Virtually unlimited storage |
 | Bandwidth counts against hosting | Separate, affordable bandwidth |
 
-The upload experience stays the same for vendors -- they upload through the familiar WordPress interface. The plugin automatically transfers files to your cloud provider behind the scenes.
+The upload experience stays the same for vendors either way -- they upload through the familiar WordPress interface.
 
 ---
 
@@ -47,14 +57,16 @@ S3-compatible storage with simple, predictable pricing: $5/month for 250GB stora
 
 ## How File Delivery Works
 
-When cloud storage is enabled:
+**Today**, a vendor uploads a delivery through the order page and it is stored in the WordPress media library, whatever provider you have configured. Cloud storage does not enter into it.
+
+**Once it is connected**, the intended flow is:
 
 1. A vendor uploads their delivery files through the order page (same as usual)
 2. The plugin transfers the files to your cloud storage bucket
-3. When the buyer downloads, the file is served from the cloud provider (with CDN acceleration)
-4. Access is controlled through secure, time-limited download links -- only the buyer with the right order can download
+3. When the buyer downloads, the file is served from the cloud provider
+4. Access is controlled through signed, time-limited download links
 
-If your cloud storage is ever misconfigured or unreachable, the plugin falls back to local storage automatically.
+Only the third-party upload endpoint (`POST /wpss-pro/v1/storage/upload`) writes to a bucket at present, and nothing in the plugin calls it.
 
 ---
 

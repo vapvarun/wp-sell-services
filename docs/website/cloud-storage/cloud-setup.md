@@ -97,18 +97,29 @@ You will need:
 
 ## After Setup
 
-Once connected, new delivery uploads are automatically sent to your cloud provider. Existing files on your server continue to work -- they are served locally until you optionally migrate them.
+**Saving credentials does not move delivery files.** Deliveries are still stored
+in the WordPress media library. What you have connected is the bucket the REST
+endpoint `POST /wpss-pro/v1/storage/upload` writes to, for your own
+integrations -- nothing in the plugin calls it yet.
 
 ### Test It
 
-1. Create a test order
-2. Upload a delivery file as a vendor
-3. Download it as the buyer
-4. Confirm the file downloads quickly from the cloud
+Do not test by uploading a delivery: it will land locally and that is expected,
+not a misconfiguration.
+
+To confirm the credentials are good, use **Test Connection** on the settings
+card. That really does reach your bucket, and a pass means the credentials,
+region and permissions are right.
 
 ### Fallback Behavior
 
-If your cloud storage credentials become invalid or the service is temporarily unavailable, the plugin automatically falls back to local storage. Files upload to your server instead, and you will see a warning in the admin dashboard. Fix the credentials and new uploads will resume going to the cloud.
+The upload endpoint falls back to the media library when the provider is set to
+Local or is not registered. If a **configured** provider fails -- bad
+credentials, network error -- it returns an error rather than silently writing
+locally, so a broken bucket cannot look like a working one.
+
+There is no admin warning for a failing provider today. Watch for it in your own
+integration's error handling.
 
 ---
 

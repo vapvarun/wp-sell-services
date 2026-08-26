@@ -13,8 +13,8 @@ The free version of WP Sell Services is a complete, production-ready marketplace
 | **Payment gateways** | Stripe, PayPal, Offline | + Razorpay |
 | **Service creation limits** | Conservative (see below) | Unlimited |
 | **Analytics** | Basic stats | Full dashboards; CSV export on the admin screen |
-| **File storage** | Your server | + Amazon S3, Google Cloud, DigitalOcean Spaces |
-| **Wallet integrations** | Built-in earnings tracking | + TeraWallet, WooWallet, MyCred |
+| **File storage** | Your server | Your server. Cloud buckets can be configured but do not yet receive delivery files |
+| **Wallet integrations** | Built-in wallet, earnings and withdrawals | Same, plus the option to hold balances in TeraWallet or MyCred instead |
 
 ---
 
@@ -88,7 +88,7 @@ An owner can therefore pay every vendor with **zero integrations** using Free al
 | Provider | Free | Pro |
 |----------|------|-----|
 | Built-in earnings and withdrawals | Yes | Yes |
-| Internal Wallet | -- | **[PRO]** |
+| Built-in wallet (earnings, balances, withdrawals) | Yes | Yes |
 | TeraWallet | -- | **[PRO]** |
 | WooWallet | -- | **[PRO]** |
 | MyCred | -- | **[PRO]** |
@@ -105,12 +105,17 @@ An owner can therefore pay every vendor with **zero integrations** using Free al
 
 ### Cloud Storage
 
+> **Not yet connected to deliveries.** These drivers exist and their connection
+> test really does reach your bucket, but delivery files are still stored in the
+> WordPress media library. The bucket is currently reachable only through the
+> REST API. Do not upgrade for this alone.
+
 | Provider | Free | Pro |
 |----------|------|-----|
 | Local server storage | Yes | Yes |
-| Amazon S3 | -- | **[PRO]** |
-| Google Cloud Storage | -- | **[PRO]** |
-| DigitalOcean Spaces | -- | **[PRO]** |
+| Amazon S3 | -- | **[PRO]**, API only |
+| Google Cloud Storage | -- | **[PRO]**, API only |
+| DigitalOcean Spaces | -- | **[PRO]**, API only |
 
 ### Service Wizard
 
@@ -122,11 +127,11 @@ An owner can therefore pay every vendor with **zero integrations** using Free al
 What Pro changes in the wizard is the **limits**, not the steps. Vendors get the
 same six-step flow either way; Pro simply stops capping how much they can add.
 
-> Earlier versions of this page listed AI title suggestions, service templates,
-> bulk image upload, direct video upload, custom package fields, and scheduled
-> publishing as Pro wizard features. **They do not ship in 1.6.0** -- they are
-> deferred to a future release and are not enabled in the plugin. They are listed
-> here only so nobody buys Pro expecting them.
+> AI title suggestions, service templates, bulk image upload, direct video
+> upload, custom package fields and scheduled publishing have been listed as Pro
+> wizard features in the past. **None of them exist.** The placeholder flags were
+> removed from the plugin in 1.7.0, so there is nothing to enable and no filter
+> to look for.
 
 ### Advanced Pro Features
 
@@ -165,7 +170,7 @@ Pro makes sense when you need:
 - **Razorpay payments** -- Popular for marketplaces in India and Southeast Asia
 - **Wallet-based payouts** -- Integrate with TeraWallet, WooWallet, or MyCred for vendor balances
 - **Detailed analytics** -- Revenue charts, performance dashboards, and data export
-- **Cloud file storage** -- Store deliverables on Amazon S3, Google Cloud, or DigitalOcean Spaces
+- **Cloud file storage** -- configurable for S3, Google Cloud or DigitalOcean, but **not yet connected to deliveries**. Do not upgrade for this alone.
 
 ## Upgrading from Free to Pro
 

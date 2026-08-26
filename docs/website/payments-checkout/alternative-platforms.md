@@ -67,7 +67,7 @@ Here is a practical guide:
 - **Want the simplest setup?** Use standalone mode. No extra plugins, no dependencies.
 - **Selling only digital services?** EDD is purpose-built for this.
 - **Need the fastest checkout?** FluentCart or standalone mode are your best bets.
-- **Need subscription billing?** Use WooCommerce with a subscriptions extension, or the recurring services feature in Pro.
+- **Need subscription billing?** Use WooCommerce with a subscriptions extension. Pro's own recurring services are not available -- every surface is switched off and there is no setting to turn them on.
 
 ## Switching Between Platforms
 

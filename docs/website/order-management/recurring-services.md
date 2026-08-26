@@ -4,7 +4,7 @@ Sell services that bill on a schedule: weekly, monthly, quarterly, or yearly. Th
 
 > ## Not switched on in 1.3.0
 >
-> **Recurring services are behind a default-off feature flag and their settings, wizard section, and admin page are hidden.** If you have installed Pro 1.3.0 and cannot find any of the screens below, nothing is broken -- the feature is not enabled yet.
+> **Recurring services are switched off in the plugin and there is no setting to turn them on.** Their settings, wizard section and admin page are all hidden. If you cannot find any of the screens below, nothing is broken and nothing you can change will reveal them -- the feature is not finished. This page describes the intended behaviour.
 >
 > The code ships (including its REST routes and Stripe webhook handling) so the feature can be finished and turned on without a migration, but it is **not supported for production use** and we do not recommend selling recurring services on 1.3.0.
 >
