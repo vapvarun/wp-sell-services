@@ -147,5 +147,38 @@ if [ -n "$STAGED_AUTOLOAD" ]; then
 fi
 
 echo ""
+
+# ---------------------------------------------------------------------------
+# 5. Docs must describe the plugin that exists.
+#
+# Only when a doc or a PHP file is staged - the audit reads both sides, so a
+# code change can break a docs citation without touching a .md.
+#
+# It catches hooks documented but never fired, and hook citations pointing at a
+# line that does not fire them. 196 of 222 citations were stale before this ran:
+# functions.php was split into src/functions/*.php and every citation kept
+# naming the old file, so they had been decorative for releases. Twice this
+# cycle a deleted hook stayed documented for a developer to bind to.
+# ---------------------------------------------------------------------------
+STAGED_DOCS_OR_PHP=$(git diff --cached --name-only | grep -E "\.(md|php)$" || true)
+
+if [ -n "$STAGED_DOCS_OR_PHP" ]; then
+    if command -v python3 >/dev/null 2>&1; then
+        if python3 bin/docs-audit.py --quiet; then
+            echo "✓ Docs audit passed"
+        else
+            echo ""
+            echo "✗ BLOCKED: the docs no longer match the code."
+            echo ""
+            echo "  Run for the full report:"
+            echo "    python3 bin/docs-audit.py"
+            exit 1
+        fi
+    else
+        echo "⚠️  python3 not found, skipping docs audit"
+    fi
+fi
+
+echo ""
 echo "✓ All pre-commit checks passed!"
 exit 0

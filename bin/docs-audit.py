@@ -196,6 +196,83 @@ if fired and os.path.exists(hooks_doc):
     if not phantom:
         ok("hooks", f"all {len(documented)} tabled hooks are fired in source")
 
+# --- 4b. hook citations point at the right place ------------------------------
+# The reference table cites `file.php:NNN` beside each hook. Line numbers move on
+# every edit and the 6,187-line functions.php was split into src/functions/*.php
+# in db27f79, so 21 rows still cited a file that is now a 43-line loader - the
+# citation was decorative long before anyone noticed.
+#
+# This does NOT regenerate the page. The prose around these tables carries real
+# judgement - which hooks are behavioural, which are template slots, which are
+# internal and may change - and a generator would flatten all of it. It only
+# asserts that a citation, where one is given, resolves to a line that really
+# fires that hook.
+def hook_line_index(*roots):
+    """hook name -> set of "relpath:line" where it is fired."""
+    pat = re.compile(r"(?:do_action|apply_filters)\s*\(\s*(?:\n\s*)?'([a-z0-9_]+)'")
+    index = {}
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        base = os.path.dirname(root)
+        for r, _, fs in os.walk(root):
+            if "vendor" in r or "node_modules" in r or "/dist/" in r:
+                continue
+            for n in fs:
+                if not n.endswith(".php"):
+                    continue
+                path = os.path.join(r, n)
+                rel = os.path.relpath(path, base)
+                try:
+                    lines = open(path, errors="ignore").read().splitlines()
+                except OSError:
+                    continue
+                for i, line in enumerate(lines, 1):
+                    # Multi-line do_action(): the name may sit on the next line.
+                    window = line
+                    if i < len(lines):
+                        window = line + "\n" + lines[i]
+                    for hook in pat.findall(window):
+                        index.setdefault(hook, set()).add(f"{rel}:{i}")
+    return index
+
+
+if os.path.exists(hooks_doc):
+    cite_re = re.compile(
+        r"^\|\s*`(wpss_[a-z0-9_]+)`[^|]*\|[^|]*\|\s*`([A-Za-z0-9_/.-]+\.php):(\d+)`",
+        re.M,
+    )
+    index = hook_line_index(
+        os.path.join(FREE, "src"), os.path.join(FREE, "templates"),
+        os.path.join(PRO, "src"), os.path.join(PRO, "templates"),
+    )
+    text = open(hooks_doc).read()
+    cited = list(cite_re.finditer(text))
+    stale = []
+
+    for m in cited:
+        hook, cited_file, cited_line = m.group(1), m.group(2), m.group(3)
+        real = index.get(hook, set())
+
+        if not real:
+            continue  # phantom hooks are check 4's job, not this one.
+
+        # A citation is right when SOME firing site ends with the cited
+        # file:line. Paths in the doc are written relative to the plugin root
+        # with the src/ prefix dropped on some rows, so match on the suffix.
+        if any(site.endswith(f"{cited_file}:{cited_line}") or site.endswith(f"/{cited_file}:{cited_line}")
+               for site in real):
+            continue
+
+        stale.append((hook, f"{cited_file}:{cited_line}", sorted(real)[0]))
+
+    for hook, was, now in stale:
+        fail("hook-citations", f"{hook} cites {was}; it is fired at {now}")
+
+    if not stale:
+        ok("hook-citations", f"all {len(cited)} hook citations resolve to a real firing site")
+
+
 # --- 5. stale admin paths -----------------------------------------------------
 # Both separators are in use across the docs: "Settings > X" in the customer
 # pages, "Settings -> X" (an arrow) in the architecture and QA notes. Checking
@@ -261,7 +338,12 @@ if not stale:
 WRONG_LABELS = {
     "Dashboard > My Requests": "Dashboard > Buyer Requests",
     "Wallet & Earnings": "Earnings & Payouts",
-    "Delivery Submitted": "Pending Approval (status) / 'delivery submitted' (the notification)",
+    # "Delivery Submitted" was on this list and should not have been: Settings.php
+    # renders exactly that string as the label for the delivery_submitted
+    # notification type, so a docs page naming it is right. The entry banned a
+    # label the plugin itself shows, and email-types.md failed this gate for it.
+    # If the STATUS ever gets described that way, catch it with the status name
+    # rather than a substring that also matches the notification.
     "Recurring Subscriptions page": "the Subscriptions page",
 }
 drift = 0

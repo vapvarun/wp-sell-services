@@ -53,7 +53,7 @@ access to every money route and no card had caught it.
 |---|---|---|
 | B1 | 10235851469 | With Woo active and Standalone as the rail, the buyer never sees an empty cart while a badge says 1. One cart answers for the service. |
 | B2 | 10236389213 | The site cart link points at whichever rail owns checkout, without the owner being asked to choose. **Still unverified on a licensed install where the Woo adapter genuinely owns checkout — that configuration is the point of the card.** |
-| B3 | 10235853234 | Settings → Pages dropdowns make it impossible to map the wrong Checkout/Cart/Dashboard. Foreign pages are labelled with who owns them. |
+| B3 | 10235853234 | The page-mapping dropdowns under **Settings → Pages** make it impossible to map the wrong Checkout/Cart/Dashboard. Foreign pages are labelled with who owns them. |
 
 ## Group C — First install and setup
 
