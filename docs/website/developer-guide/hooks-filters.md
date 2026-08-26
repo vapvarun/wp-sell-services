@@ -650,7 +650,6 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | `wpss_service_max_extras` | `ServiceWizard.php:146` | 3 |
 | `wpss_service_max_faq` | `ServiceWizard.php:156` | 5 |
 | `wpss_service_max_requirements` | `ServiceWizard.php:166` | 5 |
-| `wpss_service_wizard_features` | `ServiceWizard.php:175` | All false |
 
 ### Data Filters
 

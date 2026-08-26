@@ -3,7 +3,7 @@
 The canonical list of what WP Sell Services does, and which tier it is in. If a
 feature is not on this page, treat it as not shipping.
 
-**Version**: 1.6.0 · **Last verified**: 2026-08-25
+**Version**: 1.7.0-dev · **Last verified**: 2026-08-26 — every row checked against source
 
 Free and Pro documentation both live in this folder — the Free plugin's
 `docs/website/` is the single source of truth. There is no separate Pro docs

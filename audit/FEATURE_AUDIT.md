@@ -1,9 +1,9 @@
 # WP Sell Services — Feature Audit Report
 
-**Generated**: 2026-05-08 · **last refreshed** 2026-08-25 (branch `1.7.0`)
-**Version**: 1.6.0
+**Generated**: 2026-05-08 · **last refreshed** 2026-08-26 (branch `1.7.0`)
+**Version**: 1.7.0-dev
 **Source**: [`audit/manifest.json`](manifest.json)
-**Counts**: 211 PHP files in `src/` · 151 `register_rest_route` calls (26 controllers) · 119 AJAX handlers · 9 WP-CLI command files · 375 hook firings (165 do_actions + 210 apply_filters)
+**Counts**: 208 PHP files in `src/` · 151 `register_rest_route` calls (26 controllers) · 119 AJAX handlers · 20 custom DB tables · 9 WP-CLI command files · 377 hook firings (165 do_actions + 212 apply_filters) · 6 blocks · 20 shortcodes · 37 HTML + 14 plain email templates · 24 switchable notification types. Re-measured after the 1.7.0 dead-code sweep (-1,299 lines).
 
 > Counts are enumerated by hand, not by `write-manifest.mjs` — the generator undercounts REST
 > because controllers register through an array wrapper. See `audit/manifest.json`.
