@@ -2360,6 +2360,21 @@ final class Plugin {
 			);
 		}
 
+		// Held message emails. Takes args, so it is not one of the no-arg cron
+		// handlers above.
+		add_action(
+			'wpss_send_delayed_message_email',
+			static function ( $order_id = 0, $sender_id = 0, $message = '' ): void {
+				( new \WPSellServices\Services\EmailService() )->send_delayed_message_email(
+					(int) $order_id,
+					(int) $sender_id,
+					(string) $message
+				);
+			},
+			10,
+			3
+		);
+
 		// Status change hooks.
 		$status_hooks = array(
 			'wpss_order_status_changed'                => array( 'handle_status_change', 10, 3 ),
