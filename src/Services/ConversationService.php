@@ -488,26 +488,6 @@ class ConversationService {
 		return ! $has_failure;
 	}
 
-	/**
-	 * Close conversation.
-	 *
-	 * @param int $conversation_id Conversation ID.
-	 * @return bool
-	 */
-	public function close( int $conversation_id ): bool {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_conversations';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (bool) $wpdb->update(
-			$table,
-			array(
-				'is_closed'  => 1,
-				'updated_at' => current_time( 'mysql' ),
-			),
-			array( 'id' => $conversation_id )
-		);
-	}
 
 	/**
 	 * Get user's unread message count.

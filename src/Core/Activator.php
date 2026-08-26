@@ -173,7 +173,6 @@ class Activator {
 			'wpss_vendor'        => array(
 				'vendor_registration'        => 'open',
 				'max_services_per_vendor'    => 20,
-				'require_verification'       => false,
 				// Publish-and-sell by default so a new marketplace isn't empty on
 				// launch day (first vendor listings would otherwise stay hidden
 				// until an admin approves each one). Consistent with the open

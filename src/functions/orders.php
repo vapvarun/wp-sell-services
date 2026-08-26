@@ -79,17 +79,6 @@ function wpss_generate_order_number(): string {
 	return $prefix . strtoupper( wp_generate_password( 8, false ) ) . '-' . time();
 }
 
-/**
- * Generate unique dispute number.
- *
- * @return string
- */
-function wpss_generate_dispute_number(): string {
-	$prefix = apply_filters( 'wpss_dispute_number_prefix', 'DSP-' );
-	$number = wp_rand( 10000, 99999 );
-
-	return $prefix . $number . '-' . time();
-}
 
 /**
  * Get order status label.

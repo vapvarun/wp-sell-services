@@ -44,9 +44,7 @@ class Dispute {
 	 */
 	public const RESOLUTION_REFUND         = 'refund';
 	public const RESOLUTION_PARTIAL_REFUND = 'partial_refund';
-	public const RESOLUTION_REVISION       = 'revision';
 	public const RESOLUTION_FAVOR_BUYER    = 'favor_buyer';
-	public const RESOLUTION_FAVOR_SELLER   = 'favor_seller';
 	public const RESOLUTION_MUTUAL         = 'mutual';
 
 	/**
@@ -255,21 +253,6 @@ class Dispute {
 		];
 	}
 
-	/**
-	 * Get all resolution types.
-	 *
-	 * @return array<string, string>
-	 */
-	public static function get_resolution_types(): array {
-		return [
-			self::RESOLUTION_REFUND         => __( 'Full Refund', 'wp-sell-services' ),
-			self::RESOLUTION_PARTIAL_REFUND => __( 'Partial Refund', 'wp-sell-services' ),
-			self::RESOLUTION_REVISION       => __( 'Revision Required', 'wp-sell-services' ),
-			self::RESOLUTION_FAVOR_BUYER    => __( 'Resolved in Buyer Favor', 'wp-sell-services' ),
-			self::RESOLUTION_FAVOR_SELLER   => __( 'Resolved in Seller Favor', 'wp-sell-services' ),
-			self::RESOLUTION_MUTUAL         => __( 'Mutual Agreement', 'wp-sell-services' ),
-		];
-	}
 
 	/**
 	 * Get status label.
