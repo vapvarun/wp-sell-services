@@ -8,8 +8,9 @@ Started 2026-07-23. **This is a skeleton with one flow completed.** Flows marked
 `NOT AUDITED` have not been checked — that label means *unknown*, not *fine*.
 Do not read an unaudited row as working.
 
-Money detail lives in `MONEY-FLOW-PLAN.md`; rules in
-`../docs/architecture/MONEY-FLOW.md`. This file must not restate them.
+Money rules live in `../docs/architecture/MONEY-FLOW.md`. This file must not
+restate them. (The old `MONEY-FLOW-PLAN.md` is archived — every task in it was
+done.)
 
 ---
 
@@ -63,9 +64,12 @@ on a theme we do not ship, and record have/expect/gap.
 
 ## C. Carried forward — NOT yet triaged
 
-**`TASKS.md` holds 38 open items, including P0s.** They predate this sprint and
-have not been re-checked against current code. Several may already be fixed;
-several are almost certainly still live. Highest-signal, unverified:
+**`TASKS.md` was triaged and archived on 2026-08-26.** It was a branch-1.2.2
+sprint list — its own final item was "before tagging 1.2.2" — and its headline
+open items had since been fixed: the Stripe inline-duplicate in 1.2.2, the
+PayPal payout double-pay in 1.4.0. The remaining unverified items were carried
+onto the Basecamp board, which is where open work lives now. Kept for history at
+`archive/TASKS.md`; do not plan from it. The items it listed were:
 
 - ~~**(P0) PayPal and Razorpay hit the unregistered-gateway-action wall**~~ —
   **REFUTED 2026-07-23.** The Stripe bug was a *mismatch*: the checkout JS posted

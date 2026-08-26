@@ -44,6 +44,23 @@ larger, separate effort.
 Order of remaining work + the "one partial, every surface `require`s it" pattern
 are in the sections below.
 
+
+---
+
+## Re-run 2026-08-26 (1.7.0 sweep)
+
+Two more of the same class on the UI side, both fixed.
+
+| Flow | The split | What it cost | Resolution |
+|---|---|---|---|
+| "Which dashboard section is the default?" | `wpss_append_dashboard_section()` dropped `orders` as implicit, while `resolve_current_section()` picked the landing section by role | The two disagreed from 1.2.0, when landing became role-aware. A member who both buys and sells clicked **My Orders** and landed on **Sales Orders** — reading "No sales yet" as "you have never bought anything", with 12 real orders one URL away | A link always names its section, so it does not depend on what the default is |
+| "Where does the cart link point?" | Two carts exist on purpose (`/cart/` and `/service-cart/`), but which one the theme's icon pointed at was a checkbox that shipped off | A buyer with a service in their cart clicked the header icon and was told the cart was empty — with the cart badge showing 1 on the same page | Derived from the rail that owns checkout; the checkbox now overrides rather than decides |
+
+**Deliberately NOT collapsed:** `/cart/` and `/service-cart/` stay separate.
+The split exists so the marketplace does not fight WooCommerce for that URL, and
+a future reader who sees two carts and "simplifies" them will reintroduce the
+collision. Recorded on card #10236389213.
+
 ---
 
 ## 1. ✅ FIXED — Standalone account orders: fatal + 4 implementations
