@@ -647,6 +647,7 @@ final class Plugin {
 		// Send the standalone cart/checkout pages to the active rail's own
 		// pages before ANY output is produced.
 		add_action( 'template_redirect', array( $this, 'redirect_dormant_store_pages' ), 1 );
+		add_action( 'template_redirect', array( $this, 'redirect_legacy_vendor_slug' ), 1 );
 
 		// Keep those dormant pages out of search results and the sitemap.
 		add_filter( 'wp_robots', array( $this, 'filter_dormant_store_page_robots' ) );
@@ -1058,6 +1059,43 @@ final class Plugin {
 		$mapped = array_map( 'intval', array_values( (array) get_option( 'wpss_pages', array() ) ) );
 
 		return in_array( (int) $page->ID, $mapped, true ) ? 0 : (int) $page->ID;
+	}
+
+	/**
+	 * Send either become-vendor spelling to whichever page this site actually has.
+	 *
+	 * The registry used to create `become-vendor` while shipped installs carry
+	 * `become-a-vendor`, so which URL 404'd depended on when the site was
+	 * installed - and the one a member would guess was as likely to fail as not
+	 * (Basecamp 10235849842). Rather than pick a winner and strand the other
+	 * half of installs, both spellings resolve to the mapped page.
+	 *
+	 * Only fires on a 404, so a site that legitimately has a page at either slug
+	 * is never touched.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return void
+	 */
+	public function redirect_legacy_vendor_slug(): void {
+		if ( is_admin() || wp_doing_ajax() || ! is_404() ) {
+			return;
+		}
+
+		$path = trim( (string) wp_parse_url( add_query_arg( array() ), PHP_URL_PATH ), '/' );
+
+		if ( ! in_array( $path, array( 'become-vendor', 'become-a-vendor' ), true ) ) {
+			return;
+		}
+
+		$target = function_exists( 'wpss_get_page_url' ) ? wpss_get_page_url( 'become_vendor' ) : '';
+
+		if ( ! $target || untrailingslashit( $target ) === untrailingslashit( home_url( $path ) ) ) {
+			return;
+		}
+
+		wp_safe_redirect( $target, 301 );
+		exit;
 	}
 
 	/**

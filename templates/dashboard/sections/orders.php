@@ -91,6 +91,8 @@ $stats           = $order_repo->get_customer_stats( $user_id );
 $active_count    = (int) ( $stats['active_orders'] ?? 0 );
 $completed_count = (int) ( $stats['completed_orders'] ?? 0 );
 $total_count     = (int) ( $stats['total_orders'] ?? 0 );
+$awaiting_count  = (int) ( $stats['awaiting_payment_orders'] ?? 0 );
+$disputed_count  = (int) ( $stats['disputed_orders'] ?? 0 );
 ?>
 
 <div class="wpss-section wpss-section--orders wpss-card">
@@ -107,6 +109,23 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 			<span class="wpss-stat-card__value"><?php echo esc_html( $completed_count ); ?></span>
 			<span class="wpss-stat-card__label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
 		</div>
+		<?php
+		// Only shown when they exist. A buyer with nothing awaiting payment and
+		// no dispute should not be handed two zeros to worry about; a buyer who
+		// has either needs to see it, because both are waiting on them.
+		?>
+		<?php if ( $awaiting_count > 0 ) : ?>
+			<div class="wpss-stat-card">
+				<span class="wpss-stat-card__value"><?php echo esc_html( $awaiting_count ); ?></span>
+				<span class="wpss-stat-card__label"><?php esc_html_e( 'Awaiting Payment', 'wp-sell-services' ); ?></span>
+			</div>
+		<?php endif; ?>
+		<?php if ( $disputed_count > 0 ) : ?>
+			<div class="wpss-stat-card">
+				<span class="wpss-stat-card__value"><?php echo esc_html( $disputed_count ); ?></span>
+				<span class="wpss-stat-card__label"><?php esc_html_e( 'Disputed', 'wp-sell-services' ); ?></span>
+			</div>
+		<?php endif; ?>
 	</div>
 
 	<?php

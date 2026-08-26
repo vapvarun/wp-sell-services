@@ -159,7 +159,12 @@ do_action( 'wpss_before_order_view', $order );
 			// sees how many revisions they have left to use; vendor sees the
 			// scope they're committed to. Hidden only for completed/cancelled
 			// orders where revisions no longer matter.
-			$show_revision_badge = ! in_array( $order->status, array( 'cancelled', 'refunded' ), true )
+			//
+			// pending_payment added 1.7.0 (Basecamp 10240019215): neither party
+			// has committed to anything until the money moves, so "5 of 5
+			// revisions left" on an unpaid order describes a promise nobody has
+			// made yet. The badge earns its place from the moment payment does.
+			$show_revision_badge = ! in_array( $order->status, array( 'pending_payment', 'cancelled', 'refunded' ), true )
 				&& ( (int) $order->revisions_included > 0 || -1 === (int) $order->revisions_included );
 			if ( $show_revision_badge ) :
 				$rev_used      = (int) $order->revisions_used;

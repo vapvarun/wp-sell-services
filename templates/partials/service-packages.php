@@ -355,9 +355,9 @@ do_action( 'wpss_before_service_packages', $service_id );
 				<span class="wpss-fav-toggle__label"><?php echo esc_html( $wpss_pkg_fav_label ); ?></span>
 			</button>
 			<div class="wpss-contact-seller">
-				<a href="#" class="wpss-contact-link" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
+				<button type="button" class="wpss-contact-link" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
 					<?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?>
-				</a>
+				</button>
 			</div>
 		</div>
 	<?php endif; ?>

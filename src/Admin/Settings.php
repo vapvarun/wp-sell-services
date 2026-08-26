@@ -496,7 +496,7 @@ class Settings {
 			array(
 				'option_name' => 'wpss_general',
 				'field'       => 'platform_name',
-				'description' => __( 'Name displayed to users.', 'wp-sell-services' ),
+				'description' => __( 'Used in emails and notifications. Defaults to your site title - if you rename the site later, update this too or your emails will keep the old name.', 'wp-sell-services' ),
 				'default'     => get_bloginfo( 'name' ),
 			)
 		);

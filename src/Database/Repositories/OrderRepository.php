@@ -677,10 +677,18 @@ class OrderRepository extends AbstractRepository {
 
 		$stats = $this->wpdb->get_row(
 			$this->wpdb->prepare(
+				// awaiting_payment and disputed are counted separately because
+				// they are neither active nor completed: a buyer with 14 orders
+				// saw "2 Active / 0 Completed" and no account of the other 12,
+				// three of which were waiting on him to pay (Basecamp
+				// 10240019463). These are the two states that need the buyer to
+				// act, so they are the two worth surfacing.
 				"SELECT
 					COUNT(*) as total_orders,
 					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
 					SUM(CASE WHEN status IN ('in_progress', 'pending_approval', 'pending_requirements') THEN 1 ELSE 0 END) as active_orders,
+					SUM(CASE WHEN status = 'pending_payment' THEN 1 ELSE 0 END) as awaiting_payment_orders,
+					SUM(CASE WHEN status = 'disputed' THEN 1 ELSE 0 END) as disputed_orders,
 					SUM(total) as total_spent
 				FROM {$this->table}
 				WHERE customer_id = %d AND platform != %s",
@@ -691,10 +699,12 @@ class OrderRepository extends AbstractRepository {
 		);
 
 		return $stats ?: array(
-			'total_orders'     => 0,
-			'completed_orders' => 0,
-			'active_orders'    => 0,
-			'total_spent'      => 0,
+			'total_orders'            => 0,
+			'completed_orders'        => 0,
+			'active_orders'           => 0,
+			'awaiting_payment_orders' => 0,
+			'disputed_orders'         => 0,
+			'total_spent'             => 0,
 		);
 	}
 

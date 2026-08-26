@@ -409,10 +409,16 @@ function wpss_get_page_definitions(): array {
 			'slug'      => 'dashboard',
 			'required'  => true,
 		),
+		// Canonical slug is become-a-vendor: it matches the page title, it is
+		// what shipped installs and the support docs already use, and it is the
+		// URL a member guesses. New installs created become-vendor while older
+		// ones carry become-a-vendor, so whichever a person typed 404'd
+		// depending on when the site was installed (Basecamp 10235849842).
+		// wpss_redirect_legacy_vendor_slug() sends the other form here.
 		'become_vendor' => array(
 			'title'     => __( 'Become a Vendor', 'wp-sell-services' ),
 			'shortcode' => '[wpss_vendor_registration]',
-			'slug'      => 'become-vendor',
+			'slug'      => 'become-a-vendor',
 			'required'  => true,
 		),
 		// Both carry an explicit service-* slug. These pages are only the

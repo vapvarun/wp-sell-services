@@ -2491,13 +2491,29 @@ article.wpss-service-card:hover {
 	margin-top: 20px;
 }
 
-.wpss-view-all a {
+.wpss-view-all a,
+.wpss-view-all button {
 	color: var(--wpss-primary-accent);
 	font-weight: 600;
 	text-decoration: none;
 }
 
-.wpss-view-all a:hover {
+/* The reviews control opens a panel rather than navigating, so it is a button
+   that has to keep reading as the link it always looked like. */
+.wpss-view-all button {
+	background: none;
+	border: 0;
+	padding: 0;
+	/* Not `font: inherit` - the shorthand resets font-weight and silently
+	   dropped the 600 the rule above sets. */
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
+	cursor: pointer;
+}
+
+.wpss-view-all a:hover,
+.wpss-view-all button:hover {
 	text-decoration: underline;
 }
 
