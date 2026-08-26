@@ -10,6 +10,9 @@ Active docs live one level up. Start at `../HANDOFF.md`.
 | `CODE_FLOWS.md` | Flow maps, 2026-05-08 | Pre-1.2.x. Superseded by `../docs/architecture/MONEY-FLOW.md` for money and by the manifest for structure. |
 | `FEATURE_AUDIT.md` | Feature inventory, 2026-05-08 | Snapshot of a much older feature set. |
 | `ROLE_MATRIX.md` | Role/capability matrix, 2026-05-08 | Predates role-granted vendors and the current capability set. |
+| `REFUND-PLAN.md` | Refund plan, 2026-07-21 | **The work shipped in 1.2.3.** The document still says "PLAN — not implemented", which is now the opposite of the truth: `OrderWorkflowManager::settle_refund()` refunds at the gateway and reverses vendor earnings on every refund path. Read the code, not this. |
+| `wppqa-baseline-2026-05-08/` | QA baseline | Superseded by `wppqa-baseline-2026-06-10/`. |
+| `wppqa-baseline-2026-06-06/` | QA baseline | Superseded by `wppqa-baseline-2026-06-10/`. |
 | `AUDIT-VERDICT.md` | 1.2.0 cycle verdict, 2026-06-08 | That cycle shipped. |
 | `journey-audit-2026-07-19.md` | Journey audit | Findings were consumed into `REMEDIATION-PLAN.md` → `TASKS.md`. |
 | `usability-audit-2026-07-19.md` | Usability / template flow audit | Same. |

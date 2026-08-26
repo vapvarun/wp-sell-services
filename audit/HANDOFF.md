@@ -1,6 +1,6 @@
 # HANDOFF — 2026-07-23
 
-Resume document. Read this first, then `audit/REFUND-PLAN.md` for detail.
+Resume document. Read this first. The refund plan it used to point at is archived — the work shipped in 1.2.3, so read `OrderWorkflowManager::settle_refund()` for how refunds behave now.
 Previous session's handoff archived as `HANDOFF-2026-07-20.md`.
 
 ---
@@ -127,7 +127,7 @@ vendored extension classes — pre-existing, not from this change); WPCS works.
 3. **`audit/MONEY-FLOW-PLAN.md`** — all money work, stage by stage.
 4. **`audit/FLOW-AUDIT.md`** — what we have vs what users expect, per flow.
    Most flows are marked NOT AUDITED, which means unknown, not fine.
-5. **`audit/REFUND-PLAN.md`** — Parts I-IX: refund sprint history.
+5. **`audit/archive/REFUND-PLAN.md`** — Parts I-IX: refund sprint history. Archived; describes the work as unbuilt when it shipped in 1.2.3.
 
 Nine superseded audits moved to `audit/archive/` (see its README). **`TASKS.md`
 is NOT archived** — it still holds 38 open items including P0s that have not

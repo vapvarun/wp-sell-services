@@ -1,5 +1,13 @@
 # Catalog / first-install issue log — 2026-08-25
 
+> **Before acting on this, reconcile it against the Basecamp board.** Two of its
+> findings (ISS-002 `/become-vendor/` and ISS-004 seller-level dropdown) were
+> re-filed as new cards on 2026-08-25 when both were already triaged — one was
+> fixed, the other did not reproduce on a clean install. A third of the findings
+> here were addressed during the 1.7.0 sweep. Re-running this audit without
+> checking existing cards will regenerate work that is already done.
+
+
 **Scope:** Find-only. UX issues, functionality gaps, UX gaps, API gaps, security/privacy/legal issues.  
 **No fixes in this pass.** Development tracks work via Basecamp **Bugs**.  
 **Site:** `http://wss.local` · Free **1.6.0** + Pro **1.6.0** · WooCommerce active · WPSS rail **standalone**  
