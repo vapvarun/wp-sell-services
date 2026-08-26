@@ -196,6 +196,154 @@ class OfflineGateway implements PaymentGatewayInterface {
 	 *
 	 * @return array Settings fields configuration.
 	 */
+	/**
+	 * The offline methods an owner has defined.
+	 *
+	 * One generic "Offline Payment" meant a buyer could not say which route
+	 * they used, the owner had to cram bank details, cash and UPI into a single
+	 * instructions block, and every order landed as `payment_method = offline`
+	 * so reporting could not tell them apart.
+	 *
+	 * Falls back to a single method built from the legacy title/instructions
+	 * fields, so a site that never touches this keeps exactly what it had.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param bool $enabled_only Only methods the owner has left enabled.
+	 * @return array<int, array{id:string,label:string,instructions:string,enabled:bool}>
+	 */
+	/**
+	 * Freeze the chosen offline method onto an order.
+	 *
+	 * `payment_method` stays 'offline' on every one of these, untouched. Live
+	 * sites already carry a mix of `offline` and `bacs` in that column, and
+	 * reinterpreting it would relabel orders that were paid years ago. The
+	 * named method lives beside it in `meta`, the same way a package snapshot
+	 * does, so history keeps saying what actually happened.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param int    $order_id  Order ID.
+	 * @param string $method_id Method the buyer chose.
+	 * @return void
+	 */
+	private function record_order_method( int $order_id, string $method_id ): void {
+		$method_id = sanitize_key( $method_id );
+
+		if ( $order_id <= 0 || '' === $method_id ) {
+			return;
+		}
+
+		foreach ( self::get_methods( false ) as $method ) {
+			if ( $method['id'] !== $method_id ) {
+				continue;
+			}
+
+			$order = wpss_get_order( $order_id );
+
+			if ( ! $order ) {
+				return;
+			}
+
+			$meta                     = is_array( $order->meta ?? null ) ? $order->meta : array();
+			$meta['offline_method']   = array(
+				'id'           => $method['id'],
+				'label'        => $method['label'],
+				'instructions' => $method['instructions'],
+			);
+
+			global $wpdb;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$wpdb->prefix . 'wpss_orders',
+				array( 'meta' => wp_json_encode( $meta ) ),
+				array( 'id' => $order_id )
+			);
+
+			return;
+		}
+	}
+
+	public static function get_methods( bool $enabled_only = true ): array {
+		$settings = get_option( 'wpss_offline_settings', array() );
+		$methods  = $settings['methods'] ?? array();
+
+		if ( ! is_array( $methods ) || ! $methods ) {
+			// Legacy shape: one unnamed method. Keep the owner's own wording.
+			$methods = array(
+				array(
+					'id'           => 'offline',
+					'label'        => $settings['title'] ?? __( 'Offline Payment', 'wp-sell-services' ),
+					'instructions' => $settings['instructions'] ?? '',
+					'enabled'      => true,
+				),
+			);
+		}
+
+		$clean = array();
+
+		foreach ( $methods as $method ) {
+			$id = sanitize_key( $method['id'] ?? '' );
+
+			if ( '' === $id ) {
+				continue;
+			}
+
+			$enabled = ! isset( $method['enabled'] ) || ! empty( $method['enabled'] );
+
+			if ( $enabled_only && ! $enabled ) {
+				continue;
+			}
+
+			$clean[] = array(
+				'id'           => $id,
+				'label'        => (string) ( $method['label'] ?? $id ),
+				'instructions' => (string) ( $method['instructions'] ?? '' ),
+				'enabled'      => $enabled,
+			);
+		}
+
+		/**
+		 * Filter the offline payment methods.
+		 *
+		 * @since 1.7.0
+		 *
+		 * @param array $clean        Methods.
+		 * @param bool  $enabled_only Whether disabled methods were filtered out.
+		 */
+		return apply_filters( 'wpss_offline_methods', $clean, $enabled_only );
+	}
+
+	/**
+	 * What to show for the method an order was actually paid with.
+	 *
+	 * Reads the snapshot frozen on the order, exactly as package details are
+	 * frozen at purchase. Renaming or deleting a method later must not rewrite
+	 * what an old receipt says the buyer chose.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param \WPSellServices\Models\ServiceOrder|object $order Order.
+	 * @return array{id:string,label:string,instructions:string}|null
+	 */
+	public static function get_order_method( $order ): ?array {
+		$meta = is_array( $order->meta ?? null ) ? $order->meta : array();
+		$snap = $meta['offline_method'] ?? null;
+
+		if ( is_array( $snap ) && ! empty( $snap['id'] ) ) {
+			return array(
+				'id'           => (string) $snap['id'],
+				'label'        => (string) ( $snap['label'] ?? $snap['id'] ),
+				'instructions' => (string) ( $snap['instructions'] ?? '' ),
+			);
+		}
+
+		// Orders placed before named methods existed, including the `bacs` rows
+		// some sites carry. Nothing is rewritten - they are simply unnamed.
+		return null;
+	}
+
 	public function get_settings_fields(): array {
 		return array(
 			'enabled'         => array(
@@ -255,6 +403,42 @@ class OfflineGateway implements PaymentGatewayInterface {
 					<?php echo esc_html( $description ); ?>
 				</p>
 			</div>
+			<?php
+			$offline_methods = self::get_methods();
+
+			// Only ask when there is a choice to make. One method - which is
+			// every site that has not configured any - stays a single hidden
+			// field, so nothing changes for them.
+			if ( count( $offline_methods ) > 1 ) :
+				?>
+				<fieldset class="wpss-offline-methods" style="border:0;padding:0;margin:0 0 16px;">
+					<legend style="font-weight:600;margin-bottom:8px;">
+						<?php esc_html_e( 'How will you pay?', 'wp-sell-services' ); ?>
+					</legend>
+					<?php foreach ( $offline_methods as $index => $offline_method ) : ?>
+						<label style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;">
+							<input
+								type="radio"
+								name="offline_method"
+								value="<?php echo esc_attr( $offline_method['id'] ); ?>"
+								<?php checked( 0, $index ); ?>
+								required
+							>
+							<span>
+								<strong><?php echo esc_html( $offline_method['label'] ); ?></strong>
+								<?php if ( '' !== $offline_method['instructions'] ) : ?>
+									<span style="display:block;color:#555;font-size:.9em;">
+										<?php echo esc_html( wp_strip_all_tags( $offline_method['instructions'] ) ); ?>
+									</span>
+								<?php endif; ?>
+							</span>
+						</label>
+					<?php endforeach; ?>
+				</fieldset>
+			<?php else : ?>
+				<input type="hidden" name="offline_method" value="<?php echo esc_attr( $offline_methods[0]['id'] ?? 'offline' ); ?>">
+			<?php endif; ?>
+
 			<input type="hidden" name="wpss_gateway" value="offline">
 			<input type="hidden" name="wpss_offline_nonce" value="<?php echo esc_attr( wp_create_nonce( 'wpss_offline_payment' ) ); ?>">
 		</div>
@@ -275,7 +459,13 @@ class OfflineGateway implements PaymentGatewayInterface {
 			return '';
 		}
 
-		$instructions = $this->settings['instructions'] ?? '';
+		// The buyer gets the instructions for the method they actually picked,
+		// not the one generic block. Falls back to the global instructions for
+		// orders placed before named methods existed.
+		$order_method = self::get_order_method( $order );
+		$instructions = ( $order_method && '' !== $order_method['instructions'] )
+			? $order_method['instructions']
+			: ( $this->settings['instructions'] ?? '' );
 
 		// Replace placeholders in instructions.
 		$replacements = array(
@@ -430,6 +620,12 @@ class OfflineGateway implements PaymentGatewayInterface {
 				return;
 			}
 
+			$chosen_method = sanitize_key( wp_unslash( $_POST['offline_method'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the calling handler.
+
+			foreach ( $order_ids as $created_order_id ) {
+				$this->record_order_method( (int) $created_order_id, $chosen_method );
+			}
+
 			/**
 			 * Fires after multi-service offline orders are created.
 			 *
@@ -521,6 +717,11 @@ class OfflineGateway implements PaymentGatewayInterface {
 			wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
 			return;
 		}
+
+		$this->record_order_method(
+			(int) ( is_object( $order ) ? ( $order->id ?? 0 ) : (int) $order ),
+			sanitize_key( wp_unslash( $_POST['offline_method'] ?? '' ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the calling handler.
+		);
 
 		/**
 		 * Fires when an offline order is created.
