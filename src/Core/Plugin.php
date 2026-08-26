@@ -649,6 +649,10 @@ final class Plugin {
 		add_action( 'template_redirect', array( $this, 'redirect_dormant_store_pages' ), 1 );
 		add_action( 'template_redirect', array( $this, 'redirect_legacy_vendor_slug' ), 1 );
 
+		// Order files are never linked directly, so this is the only way to read
+		// one. Logged-in only: no nopriv twin.
+		add_action( 'admin_post_wpss_order_file', 'wpss_serve_order_file' );
+
 		// Keep those dormant pages out of search results and the sitemap.
 		add_filter( 'wp_robots', array( $this, 'filter_dormant_store_page_robots' ) );
 		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'exclude_dormant_store_pages_from_sitemap' ), 10, 2 );

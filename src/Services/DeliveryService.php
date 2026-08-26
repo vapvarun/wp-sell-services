@@ -293,63 +293,20 @@ class DeliveryService {
 	 * @return array|null Processed file data.
 	 */
 	private function process_file( array $file, int $order_id ): ?array {
-		if ( empty( $file['tmp_name'] ) || ! is_uploaded_file( $file['tmp_name'] ) ) {
+		// Everything this used to do by hand - type check, wp_handle_upload(),
+		// an attachment post, a stored public URL - now lives in
+		// wpss_store_order_file(), which also pushes to the configured cloud
+		// provider and keeps the file out of the web root. Deliveries were the
+		// reason cloud storage existed and never received a single file
+		// (Basecamp 10239805812).
+		$allowed = $this->get_allowed_file_types();
+		$checked = wp_check_filetype( (string) ( $file['name'] ?? '' ) );
+
+		if ( empty( $checked['ext'] ) || ! in_array( $checked['ext'], $allowed, true ) ) {
 			return null;
 		}
 
-		// Verify file type.
-		$allowed_types = $this->get_allowed_file_types();
-		$file_type     = wp_check_filetype( $file['name'] );
-
-		if ( ! in_array( $file_type['ext'], $allowed_types, true ) ) {
-			return null;
-		}
-
-		// Use WordPress media handling.
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		require_once ABSPATH . 'wp-admin/includes/media.php';
-		require_once ABSPATH . 'wp-admin/includes/image.php';
-
-		$upload_overrides = array(
-			'test_form' => false,
-		);
-
-		$uploaded = wp_handle_upload( $file, $upload_overrides );
-
-		if ( isset( $uploaded['error'] ) ) {
-			wpss_log( 'File upload error: ' . $uploaded['error'], 'error' );
-			return null;
-		}
-
-		// Create attachment.
-		$attachment_id = wp_insert_attachment(
-			array(
-				'post_title'     => sanitize_file_name( $file['name'] ),
-				'post_mime_type' => $uploaded['type'],
-				'post_status'    => 'private',
-				'post_content'   => '',
-			),
-			$uploaded['file']
-		);
-
-		if ( is_wp_error( $attachment_id ) ) {
-			return null;
-		}
-
-		// Generate attachment metadata.
-		$metadata = wp_generate_attachment_metadata( $attachment_id, $uploaded['file'] );
-		wp_update_attachment_metadata( $attachment_id, $metadata );
-
-		// Store order reference.
-		update_post_meta( $attachment_id, '_wpss_order_id', $order_id );
-
-		return array(
-			'id'   => $attachment_id,
-			'name' => $file['name'],
-			'url'  => $uploaded['url'],
-			'type' => $uploaded['type'],
-			'size' => $file['size'],
-		);
+		return wpss_store_order_file( $file, $order_id, 'delivery' );
 	}
 
 	/**

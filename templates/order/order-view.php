@@ -1257,11 +1257,22 @@ do_action( 'wpss_before_order_view', $order );
 							<div class="wpss-delivery-item__files">
 								<?php foreach ( $files as $file ) : ?>
 									<?php
-									// Support both formats: array with id/name/url keys, or plain attachment ID.
+									// Three formats now: a 1.7.0 record addressed by id, a
+									// pre-1.7.0 record carrying a stored public URL, or a bare
+									// attachment ID from further back still. Only the first is
+									// permission-checked; the older two are already public and
+									// keep working, because breaking a delivered file to tighten
+									// history would punish the buyer for our bug.
 									if ( is_array( $file ) ) {
+										$file['order_id'] = $file['order_id'] ?? $order_id;
+
 										$att_id    = $file['id'] ?? 0;
-										$file_url  = $file['url'] ?? wp_get_attachment_url( $att_id );
+										$file_url  = wpss_get_order_file_url( $file );
 										$file_name = $file['name'] ?? get_the_title( $att_id );
+
+										if ( '' === $file_url ) {
+											$file_url = wp_get_attachment_url( $att_id );
+										}
 									} else {
 										$file_url  = wp_get_attachment_url( (int) $file );
 										$file_name = get_the_title( (int) $file );
