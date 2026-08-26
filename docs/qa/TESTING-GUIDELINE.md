@@ -3,10 +3,15 @@
 **Written 2026-08-26**, from the 1.7.0 sweep: 36 cards, 12 product defects and a
 107-page documentation audit.
 
-This is the framing document. The runnable walks live in
-[`../../audit/journeys/`](../../audit/journeys/); the release gate lives in
-[`PRE_RELEASE_SMOKE.md`](PRE_RELEASE_SMOKE.md) where present. Read this once,
-then work from the journeys.
+This is the framing document — it says *how* to judge what you see.
+
+- **What to test right now**: [`RFT-1.7.0-CHECKLIST.md`](RFT-1.7.0-CHECKLIST.md)
+  — all 45 cards in Ready for Testing, grouped by surface, each written as the
+  expectation that has to be true for the card to pass.
+- **How to walk it**: [`../../audit/journeys/`](../../audit/journeys/).
+- **Release gate**: [`PRE_RELEASE_SMOKE.md`](PRE_RELEASE_SMOKE.md) where present.
+
+Read this page once, then work from the checklist.
 
 ---
 
