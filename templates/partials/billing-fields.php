@@ -62,6 +62,10 @@ $wpss_summary_addr = array_filter(
 				<span class="wpss-billing__company"><?php echo esc_html( $wpss_billing['billing_company'] ); ?></span>
 			<?php endif; ?>
 			<span class="wpss-billing__address"><?php echo esc_html( implode( ', ', $wpss_summary_addr ) ); ?></span>
+			<?php if ( ! empty( $wpss_billing['billing_email'] ) ) : ?>
+				<?php // The receipt goes here. Collapsed, this was the one field the buyer could not see before paying, and billing-summary.php has always shown it (Basecamp 10240017373). ?>
+				<span class="wpss-billing__contact"><?php echo esc_html( $wpss_billing['billing_email'] ); ?></span>
+			<?php endif; ?>
 			<?php if ( ! empty( $wpss_billing['billing_gst'] ) ) : ?>
 				<span class="wpss-billing__gst">
 					<?php

@@ -3056,7 +3056,7 @@ class Settings {
 		// Pages: confirmation + terms mapping.
 		foreach ( array(
 			'wpss_order_confirmation_page' => array( __( 'Order Confirmation Page', 'wp-sell-services' ), __( 'Custom thank-you page buyers land on after checkout. Leave unset to use the default order view.', 'wp-sell-services' ) ),
-			'wpss_terms_page'              => array( __( 'Terms & Conditions Page', 'wp-sell-services' ), __( 'Linked from checkout and exposed to API clients.', 'wp-sell-services' ) ),
+			'wpss_terms_page'              => array( __( 'Terms & Conditions Page', 'wp-sell-services' ), __( 'Map your own page - we never publish one. Linked from checkout and exposed to API clients. Privacy Policy comes from Settings > Privacy.', 'wp-sell-services' ) ),
 		) as $option => $labels ) {
 			register_setting( 'wpss_pages', $option, array( 'sanitize_callback' => 'absint' ) );
 			add_settings_field(

@@ -1129,6 +1129,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									</button>
 
 									<!-- Trust section -->
+									<?php wpss_get_template_part( 'partials/legal', 'links' ); ?>
+
 									<div class="wpss-co-trust">
 										<div class="wpss-co-trust__item">
 											<span class="wpss-co-trust__icon" aria-hidden="true">&#128274;</span>
@@ -1930,6 +1932,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 											?>
 										</span>
 									</button>
+
+									<?php wpss_get_template_part( 'partials/legal', 'links' ); ?>
 
 									<div class="wpss-co-trust">
 										<div class="wpss-co-trust__item">

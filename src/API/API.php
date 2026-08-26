@@ -672,6 +672,7 @@ class API {
 	 */
 	private function get_app_contract( array $pages_settings ): array {
 		$page_urls = $this->get_page_urls( $pages_settings );
+		$legal     = wpss_get_legal_links();
 
 		$branding = array(
 			'brand_name'    => get_bloginfo( 'name' ),
@@ -762,8 +763,10 @@ class API {
 			'branding'         => (array) apply_filters( 'wpss_app_branding', $branding ),
 
 			'legal'            => array(
-				'privacy_policy_url'  => get_privacy_policy_url() ?: null,
-				'terms_url'           => $page_urls['terms'] ?? null,
+				// Shared with checkout via wpss_get_legal_links() so the app and
+				// the storefront can never disagree about which pages are set.
+				'privacy_policy_url'  => $legal['privacy_policy_url'],
+				'terms_url'           => $legal['terms_url'],
 
 				/*
 				 * Deliberately NOT defaulted to admin_email. This endpoint is

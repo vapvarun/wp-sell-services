@@ -890,3 +890,33 @@ function wpss_get_settings_url( string $section = '' ): string {
 
 	return $url . '#' . $section;
 }
+
+/**
+ * Legal page links the buyer is entitled to see.
+ *
+ * Terms is a mapping the owner points at their OWN page; Privacy is core's
+ * `wp_page_for_privacy_policy`. We create neither — publishing our own copy
+ * would be the plugin talking over the owner, and core already owns privacy.
+ *
+ * Both entries are null when unmapped, so a caller renders nothing rather than
+ * an empty link. Settings has promised since 1.4.0 that Terms is "linked from
+ * checkout"; it was only ever read by the app config endpoint, so an owner who
+ * mapped their page saw no change on the storefront (Basecamp 10240020620).
+ *
+ * @since 1.7.0
+ *
+ * @return array{terms_url: string|null, privacy_policy_url: string|null}
+ */
+function wpss_get_legal_links(): array {
+	$terms_id = (int) get_option( 'wpss_terms_page' );
+	$terms    = ( $terms_id > 0 && 'publish' === get_post_status( $terms_id ) )
+		? (string) get_permalink( $terms_id )
+		: '';
+
+	$privacy = (string) get_privacy_policy_url();
+
+	return array(
+		'terms_url'          => '' !== $terms ? $terms : null,
+		'privacy_policy_url' => '' !== $privacy ? $privacy : null,
+	);
+}

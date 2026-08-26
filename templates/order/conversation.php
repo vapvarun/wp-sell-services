@@ -186,10 +186,17 @@ do_action( 'wpss_before_conversation', $order );
 				<h3 class="wpss-messaging__empty-title"><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></h3>
 				<p class="wpss-messaging__empty-text">
 					<?php
-					if ( in_array( $order->status, array( 'completed', 'cancelled', 'refunded' ), true ) ) {
-						esc_html_e( 'No messages were exchanged during this order.', 'wp-sell-services' );
-					} else {
+					// $can_message is the single authority on whether this person
+					// may send. The invite used to branch on its own status list,
+					// so pending_payment fell through to "Start the conversation"
+					// directly above the composer's "Messaging is not available
+					// for this order status" (Basecamp 10240019323). When sending
+					// is blocked the composer states the reason; the empty state
+					// must not contradict it by inviting.
+					if ( $can_message ) {
 						esc_html_e( 'Start the conversation by sending a message!', 'wp-sell-services' );
+					} elseif ( in_array( $order->status, array( 'completed', 'cancelled', 'refunded' ), true ) ) {
+						esc_html_e( 'No messages were exchanged during this order.', 'wp-sell-services' );
 					}
 					?>
 				</p>
