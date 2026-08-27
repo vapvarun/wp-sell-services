@@ -1749,7 +1749,7 @@ class Admin {
 
 			if ( $wpss_order_dispute ) :
 				$wpss_dispute_statuses = \WPSellServices\Models\Dispute::get_statuses();
-				$wpss_dispute_reasons  = \WPSellServices\Models\Dispute::get_reasons();
+				$wpss_dispute_reasons  = wpss_get_dispute_reasons();
 				$wpss_dispute_live     = in_array(
 					$wpss_order_dispute->status,
 					array(
@@ -2440,7 +2440,7 @@ class Admin {
 
 		$resolutions = DisputeService::get_resolution_types();
 
-		$reasons = Dispute::get_reasons();
+		$reasons = wpss_get_dispute_reasons();
 		?>
 		<div class="wrap wpss-dispute-detail">
 			<h1 class="wp-heading-inline">

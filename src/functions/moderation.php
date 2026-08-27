@@ -79,13 +79,22 @@ function wpss_get_report_reasons(): array {
  * @return array<string,string> Reason key => translated label.
  */
 function wpss_get_dispute_reasons(): array {
+	// THE list. Dispute::get_reasons() was a second copy with no filter, and the
+	// two disagreed: this one had `deadline`, that one had `late_delivery`, and
+	// `not_delivered` was labelled differently in each. The API read this list
+	// and every web surface read the other, so a dispute opened in the app
+	// rendered on the website as the raw key (Basecamp 10184068444).
+	//
+	// `late_delivery` wins because it is what exists: 40 rows carry it and none
+	// ever carried `deadline`. Keys come from the model's REASON_* constants so
+	// there is one vocabulary rather than two spellings of it.
 	$reasons = array(
-		'not_delivered'    => __( 'Work not delivered', 'wp-sell-services' ),
-		'poor_quality'     => __( 'Poor quality work', 'wp-sell-services' ),
-		'not_as_described' => __( 'Not as described', 'wp-sell-services' ),
-		'communication'    => __( 'Communication issues', 'wp-sell-services' ),
-		'deadline'         => __( 'Missed deadline', 'wp-sell-services' ),
-		'other'            => __( 'Other', 'wp-sell-services' ),
+		\WPSellServices\Models\Dispute::REASON_NOT_DELIVERED => __( 'Work not delivered', 'wp-sell-services' ),
+		\WPSellServices\Models\Dispute::REASON_POOR_QUALITY => __( 'Poor quality work', 'wp-sell-services' ),
+		\WPSellServices\Models\Dispute::REASON_NOT_AS_DESCRIBED => __( 'Not as described', 'wp-sell-services' ),
+		\WPSellServices\Models\Dispute::REASON_COMMUNICATION => __( 'Communication issues', 'wp-sell-services' ),
+		\WPSellServices\Models\Dispute::REASON_LATE_DELIVERY => __( 'Late delivery', 'wp-sell-services' ),
+		\WPSellServices\Models\Dispute::REASON_OTHER => __( 'Other', 'wp-sell-services' ),
 	);
 
 	/**

@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
 // Reason labels come from the model, which already owns the map. This template
 // printed the raw column instead, so members were shown machine slugs like
 // "not_as_described" where the open-dispute form offers "Not as described".
-$wpss_dispute_reasons = Dispute::get_reasons();
+$wpss_dispute_reasons = wpss_get_dispute_reasons();
 
 do_action( 'wpss_dashboard_section_before', 'disputes', $user_id );
 

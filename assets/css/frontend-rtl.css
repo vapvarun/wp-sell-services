@@ -4051,3 +4051,14 @@ body.wpss-modal-active {
 	background: var(--wpss-primary, #4f46e5);
 	color: #fff;
 }
+
+/* Add-ons availability note on the package panel. Says extras exist before the
+   buyer opens the order modal, which is where they actually pick them. */
+.wpss-package-extras-note {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 12px;
+	font-size: 13px;
+	color: var(--wpss-text-muted, #757575);
+}

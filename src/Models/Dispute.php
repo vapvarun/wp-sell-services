@@ -242,16 +242,6 @@ class Dispute {
 	 *
 	 * @return array<string, string>
 	 */
-	public static function get_reasons(): array {
-		return [
-			self::REASON_NOT_DELIVERED    => __( 'Order not delivered', 'wp-sell-services' ),
-			self::REASON_NOT_AS_DESCRIBED => __( 'Not as described', 'wp-sell-services' ),
-			self::REASON_POOR_QUALITY     => __( 'Poor quality work', 'wp-sell-services' ),
-			self::REASON_LATE_DELIVERY    => __( 'Late delivery', 'wp-sell-services' ),
-			self::REASON_COMMUNICATION    => __( 'Communication issues', 'wp-sell-services' ),
-			self::REASON_OTHER            => __( 'Other', 'wp-sell-services' ),
-		];
-	}
 
 
 	/**
@@ -270,7 +260,7 @@ class Dispute {
 	 * @return string
 	 */
 	public function get_reason_label(): string {
-		$reasons = self::get_reasons();
+		$reasons = wpss_get_dispute_reasons();
 		return $reasons[ $this->reason ] ?? $this->reason;
 	}
 

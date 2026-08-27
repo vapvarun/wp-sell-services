@@ -182,7 +182,7 @@ class DisputesListTable extends \WP_List_Table {
 	 * @return string
 	 */
 	public function column_reason( $item ): string {
-		$reasons = Dispute::get_reasons();
+		$reasons = wpss_get_dispute_reasons();
 
 		return esc_html( $reasons[ $item->reason ] ?? ucwords( str_replace( '_', ' ', $item->reason ) ) );
 	}
