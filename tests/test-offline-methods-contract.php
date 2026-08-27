@@ -104,4 +104,78 @@ $check( 'the editor still shows the disabled one', 2 === count( OfflineGateway::
 
 update_option( 'wpss_offline_settings', $original );
 
+/*
+ * ---------------------------------------------------------------------------
+ * Added 27 Aug while running the card's own test checklist (10239806715).
+ *
+ * Two gaps the model half shipped with. Neither was visible from the code -
+ * both needed an order walked end to end.
+ * ---------------------------------------------------------------------------
+ */
+
+echo "\nSnapshot reach\n\n";
+
+$gw_src = file_get_contents( dirname( __DIR__ ) . '/src/Integrations/Gateways/OfflineGateway.php' );
+
+/*
+ * 1. Every path onto the offline rail must freeze WHICH method was chosen.
+ *
+ * record_order_method() had two callers, both order-CREATION paths. The
+ * pay-an-existing-order branch - proposals, milestone phases, tips, extensions,
+ * anything through /checkout/pay/{id}/ - wrote no snapshot at all, so that
+ * whole population silently lost the guarantee the snapshot exists to make.
+ */
+$pay_branch = substr( $gw_src, strpos( $gw_src, '$pay_order_id = isset( $_POST[' ) );
+$pay_branch = substr( $pay_branch, 0, strpos( $pay_branch, 'wpss_offline_order_created' ) );
+
+$check( 'the pay-an-existing-order path freezes the chosen method, not just the gateway', false !== strpos( $pay_branch, 'record_order_method' ) );
+$check( 'all offline entry points record the method', substr_count( $gw_src, '$this->record_order_method(' ) >= 3 );
+
+/*
+ * 2. The snapshot has to be READ, or freezing it is theatre.
+ *
+ * get_order_method() existed with a careful docblock and ZERO callers, while
+ * display_order_payment_instructions() read the legacy global key - which the
+ * sanitizer deliberately deletes once named methods exist. Together, defining
+ * methods left offline buyers with no payment instructions at all, and an
+ * offline buyer with no instructions cannot pay.
+ */
+$check( 'buyer instructions read the frozen snapshot first', false !== strpos( $gw_src, 'self::get_order_method( $order );' ) );
+
+$display = substr( $gw_src, strpos( $gw_src, 'public function display_order_payment_instructions' ) );
+$display = substr( $display, 0, strpos( $display, "\n\t}\n" ) );
+
+$check( 'it still falls back to the legacy block for orders predating named methods', false !== strpos( $display, "settings['instructions']" ) );
+
+// 3. Live behaviour, not just source: a frozen order survives its method being
+//    renamed and then deleted.
+$frozen = (object) array(
+	'meta' => array(
+		'offline_method' => array(
+			'id'           => 'probe_method',
+			'label'        => 'Probe Method',
+			'instructions' => 'Probe instructions.',
+		),
+	),
+);
+
+$save(
+	array(
+		'enabled' => '1',
+		'methods' => array(
+			array( 'label' => 'RENAMED', 'instructions' => 'REWRITTEN', 'enabled' => '1' ),
+		),
+	)
+);
+
+$read = OfflineGateway::get_order_method( $frozen );
+$check( 'renaming a method does not rewrite an order that used it', 'Probe Method' === ( $read['label'] ?? '' ) );
+$check( 'renaming does not rewrite the instructions either', 'Probe instructions.' === ( $read['instructions'] ?? '' ) );
+
+$save( array( 'enabled' => '1', 'methods' => array() ) );
+$read = OfflineGateway::get_order_method( $frozen );
+$check( 'deleting a method does not break an order that used it', 'Probe Method' === ( $read['label'] ?? '' ) );
+
+$check( 'an order predating named methods reports no method rather than inventing one', null === OfflineGateway::get_order_method( (object) array( 'meta' => array() ) ) );
+
 echo $fails ? "\n{$fails} FAILED\n" : "\nall passed\n";

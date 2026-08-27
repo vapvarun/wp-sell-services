@@ -591,6 +591,22 @@ class OfflineGateway implements PaymentGatewayInterface {
 				return;
 			}
 
+			// Freeze WHICH offline method they picked, not just that it was
+			// offline.
+			//
+			// Both other callers of record_order_method() are order-CREATION
+			// paths, so this branch - proposals, milestone phases, tips,
+			// extensions, and anything else paid through /checkout/pay/{id}/ -
+			// was writing no snapshot at all. Those buyers then read the
+			// current global instructions instead of the method they chose,
+			// and renaming or deleting that method rewrote what their order
+			// said afterwards. That is precisely the guarantee the snapshot
+			// exists to make, missing for an entire population.
+			$this->record_order_method(
+				(int) $order->id,
+				sanitize_key( wp_unslash( $_POST['offline_method'] ?? '' ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked at the top of this handler.
+			);
+
 			/**
 			 * Fires when an existing order is put on the offline rail.
 			 *
@@ -1134,7 +1150,40 @@ class OfflineGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		$instructions = $this->settings['instructions'] ?? '';
+		/*
+		 * Read the method the buyer actually chose, then fall back.
+		 *
+		 * This used to read $this->settings['instructions'] - the LEGACY global
+		 * block - and nothing else. The sanitizer drops that key the moment an
+		 * owner defines named methods, deliberately, so one setting does not
+		 * have two homes. The two together meant that defining methods silently
+		 * left every offline buyer with NO payment instructions: the global key
+		 * was gone, this read found nothing, and the early return below hid the
+		 * whole section. An offline buyer with no instructions cannot pay.
+		 *
+		 * get_order_method() existed for exactly this and had no callers - the
+		 * snapshot was being written and never read.
+		 */
+		$method       = self::get_order_method( $order );
+		$instructions = $method['instructions'] ?? '';
+
+		if ( '' === $instructions ) {
+			// Orders placed before named methods existed, and sites that never
+			// opened the editor.
+			$instructions = $this->settings['instructions'] ?? '';
+		}
+
+		if ( '' === $instructions ) {
+			// Nothing on the order and nothing global - but the owner may still
+			// have named methods, in which case show the one the order is on.
+			foreach ( self::get_methods( false ) as $configured ) {
+				if ( isset( $method['id'] ) && $configured['id'] === $method['id'] ) {
+					$instructions = $configured['instructions'];
+					break;
+				}
+			}
+		}
+
 		if ( empty( $instructions ) ) {
 			return;
 		}
@@ -1159,7 +1208,17 @@ class OfflineGateway implements PaymentGatewayInterface {
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
 					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Payment Instructions', 'wp-sell-services' ); ?>
+					<?php
+					if ( ! empty( $method['label'] ) ) {
+						printf(
+							/* translators: %s: the offline payment method the buyer chose, e.g. Bank Transfer */
+							esc_html__( 'How to pay by %s', 'wp-sell-services' ),
+							esc_html( $method['label'] )
+						);
+					} else {
+						esc_html_e( 'Payment Instructions', 'wp-sell-services' );
+					}
+					?>
 				</h2>
 			</div>
 			<div class="wpss-order-section__body">
