@@ -437,6 +437,17 @@ function wpss_get_page_definitions(): array {
 			'slug'      => 'service-checkout',
 			'required'  => true,
 		),
+		// Not required: an owner running SSO, a membership plugin, or plain
+		// WordPress registration should not be nagged about a page they do not
+		// want. When it IS mapped, wpss_marketplace_register_url() points every
+		// Register link on the site at it - ours and the theme's - because they
+		// all resolve through core's wp_registration_url().
+		'registration'  => array(
+			'title'     => __( 'Create Account', 'wp-sell-services' ),
+			'shortcode' => '[wpss_register]',
+			'slug'      => 'create-account',
+			'required'  => false,
+		),
 	);
 
 	/**
@@ -687,6 +698,48 @@ function wpss_get_service_checkout_url( int $service_id, int $package_id = 0, ar
 
 	return $url;
 }
+
+/**
+ * Point Register at the marketplace's own signup page when one is mapped.
+ *
+ * The header Register button sent buyers to wp-login.php?action=register -
+ * stock WordPress chrome as the first impression of a branded marketplace
+ * (Basecamp 10240020415). That button belongs to the theme, not to us, so
+ * there was nothing of ours to edit.
+ *
+ * Filtering core's `register_url` fixes it everywhere at once instead: BuddyX
+ * falls back to wp_registration_url() when it has no page of its own, and so do
+ * all five of our own Register links. One filter, every surface, no template
+ * edits and nothing to keep in sync.
+ *
+ * Returns the original URL untouched when no page is mapped, so a site using
+ * SSO or plain WordPress registration is unaffected. Deliberately does NOT
+ * check users_can_register: our signup page renders its own "registration is
+ * disabled" notice, and core already hides the links when it is off.
+ *
+ * @since 1.7.0
+ *
+ * @param string $url Default registration URL.
+ * @return string
+ */
+function wpss_marketplace_register_url( string $url ): string {
+	// Resolved from the mapping and confirmed published - NOT via
+	// wpss_get_page_url(), which falls back to the default slug whether or not
+	// a page lives there. Using that helper here sent every site with no
+	// registration page to /create-account/ and a 404, which is worse than the
+	// stock login screen this replaces. Caught by
+	// tests/test-registration-page-contract.php.
+	$page_id = wpss_get_page_id( 'registration' );
+
+	if ( ! $page_id || 'publish' !== get_post_status( $page_id ) ) {
+		return $url;
+	}
+
+	$page_url = get_permalink( $page_id );
+
+	return $page_url ? $page_url : $url;
+}
+add_filter( 'register_url', 'wpss_marketplace_register_url' );
 
 /**
  * Get the base checkout URL (without service ID).

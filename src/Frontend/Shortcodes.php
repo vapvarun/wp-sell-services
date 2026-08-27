@@ -899,35 +899,29 @@ class Shortcodes {
 			return '<div class="wpss-error">' . esc_html__( 'Registration is currently disabled.', 'wp-sell-services' ) . '</div>';
 		}
 
+		/*
+		 * This used to render its own form: username / email / password, a
+		 * wpss_register nonce, method="post" and no action. Nothing anywhere
+		 * handled that nonce, and no script bound the form - so submitting it
+		 * posted the page back to itself and silently did nothing. It looked
+		 * like a working signup and was not.
+		 *
+		 * PublicSignup::render_form() is the real one. It posts to
+		 * wpss_public_signup (registered for nopriv), validates, creates the
+		 * user, signs them in and fires wpss_public_signup_complete for Pro -
+		 * and it carries its own submit script, so it works wherever it is
+		 * rendered. The 'buyer' intent existed from the start and had never
+		 * been used: [wpss_vendor_registration] only ever asked for 'vendor'.
+		 */
 		ob_start();
 		?>
-		<form id="wpss-register-form" class="wpss-form" method="post">
-			<?php wp_nonce_field( 'wpss_register', 'wpss_register_nonce' ); ?>
-
-			<div class="wpss-form-row">
-				<label for="register_username"><?php esc_html_e( 'Username', 'wp-sell-services' ); ?> <span class="required">*</span></label>
-				<input type="text" name="username" id="register_username" required>
-			</div>
-
-			<div class="wpss-form-row">
-				<label for="register_email"><?php esc_html_e( 'Email', 'wp-sell-services' ); ?> <span class="required">*</span></label>
-				<input type="email" name="email" id="register_email" required>
-			</div>
-
-			<div class="wpss-form-row">
-				<label for="register_password"><?php esc_html_e( 'Password', 'wp-sell-services' ); ?> <span class="required">*</span></label>
-				<input type="password" name="password" id="register_password" required minlength="8">
-			</div>
-
-			<div class="wpss-form-actions">
-				<button type="submit" class="button button-primary"><?php esc_html_e( 'Register', 'wp-sell-services' ); ?></button>
-			</div>
-
-			<p class="wpss-form-link">
-				<?php esc_html_e( 'Already have an account?', 'wp-sell-services' ); ?>
-				<a href="<?php echo esc_url( wp_login_url() ); ?>"><?php esc_html_e( 'Log in', 'wp-sell-services' ); ?></a>
+		<div class="wpss-card wpss-signup-card">
+			<h2 class="wpss-heading-2"><?php esc_html_e( 'Create your account', 'wp-sell-services' ); ?></h2>
+			<p class="wpss-caption">
+				<?php esc_html_e( 'Buy services, message sellers, and follow your orders.', 'wp-sell-services' ); ?>
 			</p>
-		</form>
+			<?php ( new \WPSellServices\Frontend\PublicSignup() )->render_form( 'buyer' ); ?>
+		</div>
 		<?php
 		return ob_get_clean();
 	}

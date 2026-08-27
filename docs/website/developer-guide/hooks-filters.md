@@ -516,7 +516,7 @@ add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2563` |
-| `wpss_pay_order_url` | `string $url, int $order_id` | `src/functions/urls.php:785` |
+| `wpss_pay_order_url` | `string $url, int $order_id` | `src/functions/urls.php:838` |
 
 ### `wpss_pay_order_url` -- the payment-handoff seam
 
