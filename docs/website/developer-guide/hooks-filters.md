@@ -80,12 +80,12 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |--------|-----------|------|
 | `wpss_pre_create_order` | `array $order_data` | `StandaloneOrderProvider.php` |
 | `wpss_pre_order_status_change` | `bool $allow, int $order_id, string $new_status, string $old_status` | `OrderService.php` |
-| `wpss_order_started` | `int $order_id` | `src/API/OrdersController.php:796` |
+| `wpss_order_started` | `int $order_id` | `src/API/OrdersController.php:791` |
 | `wpss_order_completed` | `int $order_id, object $order` | `src/Services/OrderWorkflowManager.php:633` |
 | `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `src/Services/OrderWorkflowManager.php:710` |
-| `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:964` |
-| `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:628` |
-| `wpss_order_requirements_submitted` | `int $order_id, array $requirements` | `src/API/OrdersController.php:1170` |
+| `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:959` |
+| `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:623` |
+| `wpss_order_requirements_submitted` | `int $order_id, array $requirements` | `src/API/OrdersController.php:1165` |
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderWorkflowManager.php:601` |
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:367` |
 | `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `src/Services/OrderWorkflowManager.php:501` |

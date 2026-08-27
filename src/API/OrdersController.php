@@ -101,11 +101,6 @@ class OrdersController extends RestController {
 							'default'     => 1,
 							'minimum'     => 1,
 						),
-						'status__not_in' => array(
-							'description' => __( 'Exclude orders in these statuses. Repeatable.', 'wp-sell-services' ),
-							'type'        => 'array',
-							'items'       => array( 'type' => 'string' ),
-						),
 						'per_page' => array(
 							'description' => __( 'Items per page.', 'wp-sell-services' ),
 							'type'        => 'integer',
@@ -2073,31 +2068,50 @@ class OrdersController extends RestController {
 	 */
 	public function get_collection_params(): array {
 		return array(
-			'page'       => array(
+			'page'           => array(
 				'description' => __( 'Current page of the collection.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'default'     => 1,
 				'minimum'     => 1,
 			),
-			'per_page'   => array(
+			'per_page'       => array(
 				'description' => __( 'Maximum number of items per page.', 'wp-sell-services' ),
 				'type'        => 'integer',
 				'default'     => 10,
 				'minimum'     => 1,
 				'maximum'     => 100,
 			),
-			'role'       => array(
+			'role'           => array(
 				'description' => __( 'Filter by user role (vendor or customer).', 'wp-sell-services' ),
 				'type'        => 'string',
 				'enum'        => array( 'vendor', 'customer' ),
 			),
-			'status'     => array(
+			'status'         => array(
 				'description' => __( 'Filter by order status.', 'wp-sell-services' ),
 				'type'        => 'string',
 			),
-			'service_id' => array(
+			'service_id'     => array(
 				'description' => __( 'Filter by service ID.', 'wp-sell-services' ),
 				'type'        => 'integer',
+			),
+
+			/*
+			 * get_items() has read this since account deletion shipped, but the
+			 * declaration was sitting in the args of GET /orders/{id}/messages,
+			 * where get_messages() never looks at it.
+			 *
+			 * Nothing was broken - WordPress hands undeclared query params to
+			 * get_param() anyway and the handler sanitises them itself - but the
+			 * public schema at GET /wp-json/wpss/v1 listed the filter on the
+			 * route that ignores it and not on the route that honours it. An app
+			 * developer reading the index would find it in exactly the wrong
+			 * place. Declaring it here also gets it type-checked as an array of
+			 * strings instead of arriving unvalidated.
+			 */
+			'status__not_in' => array(
+				'description' => __( 'Exclude orders in these statuses. Repeatable.', 'wp-sell-services' ),
+				'type'        => 'array',
+				'items'       => array( 'type' => 'string' ),
 			),
 		);
 	}
