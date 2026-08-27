@@ -496,7 +496,22 @@ class Settings {
 			array(
 				'option_name' => 'wpss_general',
 				'field'       => 'platform_name',
-				'description' => __( 'Used in emails and notifications. Defaults to your site title - if you rename the site later, update this too or your emails will keep the old name.', 'wp-sell-services' ),
+
+				/*
+				 * Names the site title explicitly and says how to get back to
+				 * it. Basecamp 10240020765 asked for a one-click "Use site
+				 * title" button; clearing the field already does exactly that,
+				 * because wpss_get_platform_name() falls back to the site name
+				 * when the value is empty. Documenting the behaviour that
+				 * exists beats shipping a button that duplicates it - and it
+				 * tells the owner which name their emails are actually using,
+				 * which is the thing they came to this field to find out.
+				 */
+				'description' => sprintf(
+					/* translators: %s: the site title */
+					__( 'Used in emails and notifications. Leave empty to use your site title (%s). If you rename the site later, update this too or your emails will keep the old name.', 'wp-sell-services' ),
+					get_bloginfo( 'name' )
+				),
 				'default'     => get_bloginfo( 'name' ),
 			)
 		);
@@ -3563,6 +3578,19 @@ class Settings {
 		);
 	}
 
+	/**
+	 * Sanitize the notification settings group.
+	 *
+	 * The keys are built from get_notification_types(), the same registry the
+	 * checkboxes render from, so a type added there is saved without a second
+	 * edit here - which is how notify_moderation ended up gated on by
+	 * EmailService and written by nothing.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param array<string, mixed>|null $input Raw submitted values.
+	 * @return array<string, bool> Sanitized values.
+	 */
 	public function sanitize_notification_settings( ?array $input ): array {
 		$input     = $input ?? array();
 		$sanitized = array();

@@ -24,6 +24,9 @@ import re
 import sys
 
 QUIET = "--quiet" in sys.argv
+# --fix rewrites stale hook line numbers in place. Only line numbers: a
+# citation pointing at the wrong FILE is a real doc error and stays a failure.
+FIX = "--fix" in sys.argv
 FREE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PRO = os.path.join(os.path.dirname(FREE), "wp-sell-services-pro")
 DOCS = os.path.join(FREE, "docs", "website")
@@ -265,6 +268,31 @@ if os.path.exists(hooks_doc):
             continue
 
         stale.append((hook, f"{cited_file}:{cited_line}", sorted(real)[0]))
+
+    # Line numbers in prose are stale the moment anyone inserts a line above
+    # the hook, and that is not a documentation error - the doc still points at
+    # the right hook in the right file. Three commits in one afternoon were
+    # blocked purely by this, which trains people to reach for --no-verify.
+    #
+    # --fix repairs the number when the FILE still matches. A citation naming
+    # the wrong file is a genuine mistake and is never auto-corrected.
+    if FIX and stale:
+        fixed = 0
+        for hook, was, now in stale:
+            was_file, _, _was_line = was.rpartition(":")
+            now_file, _, now_line = now.rpartition(":")
+
+            if not now_file.endswith(was_file):
+                continue
+
+            pattern = re.compile(r"(`" + re.escape(hook) + r"`[^|\n]*\|[^|\n]*\|\s*`" + re.escape(was_file) + r"):\d+`")
+            text, n = pattern.subn(lambda mo: mo.group(1) + ":" + now_line + "`", text)
+            fixed += n
+
+        if fixed:
+            open(hooks_doc, "w").write(text)
+            print(f"  FIXED {fixed} hook citation line number(s) in {os.path.relpath(hooks_doc, FREE)}")
+            stale = []
 
     for hook, was, now in stale:
         fail("hook-citations", f"{hook} cites {was}; it is fired at {now}")

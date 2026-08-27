@@ -413,6 +413,8 @@ class Admin {
 		// Demo payments notice. Deliberately NOT dismissible - see the method.
 		add_action( 'admin_notices', array( $this, 'demo_payments_notice' ) );
 		add_action( 'admin_notices', array( $this, 'order_files_public_notice' ) );
+		add_action( 'admin_notices', array( $this, 'missing_terms_notice' ) );
+		add_action( 'wp_ajax_wpss_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
 	}
 
@@ -461,6 +463,123 @@ class Admin {
 			esc_html__( 'This server could not store them outside the web root, and it is ignoring the deny rule we wrote alongside them. Requirement briefs and delivered work are readable by anyone who guesses the address.', 'wp-sell-services' ),
 			esc_html__( 'Ask your host to block direct access to the wpss-order-files directory, or to make the folder above WordPress writable so the files can be moved out of the web root entirely.', 'wp-sell-services' )
 		);
+	}
+
+	/**
+	 * Tell the owner their marketplace is taking money with no Terms page.
+	 *
+	 * Gated on wpss_has_live_gateway() rather than on the plugin being active,
+	 * because that is the point at which this stops being a setup step and
+	 * starts being a live risk: buyers are paying and there is nothing telling
+	 * them what they agreed to. A site still being built is left alone.
+	 *
+	 * Dismissible, unlike demo_payments_notice(): an owner may have decided
+	 * against publishing terms, and nagging them forever teaches people to
+	 * ignore our notices - which costs us the one that matters. The dismissal
+	 * records WHICH gateways were live at the time, so turning on another one
+	 * later asks the question again against the new configuration.
+	 *
+	 * @since 1.7.0
+	 * @return void
+	 */
+	public function missing_terms_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'wpss_has_live_gateway' ) ) {
+			return;
+		}
+
+		// Our own screens only. An owner writing a post does not need to be
+		// interrupted about a settings page.
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+			return;
+		}
+
+		$terms_id = (int) get_option( 'wpss_terms_page' );
+
+		if ( $terms_id && 'publish' === get_post_status( $terms_id ) ) {
+			return;
+		}
+
+		if ( ! wpss_has_live_gateway() ) {
+			return;
+		}
+
+		$signature = $this->live_gateway_signature();
+
+		if ( get_user_meta( get_current_user_id(), '_wpss_terms_notice_dismissed', true ) === $signature ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning is-dismissible wpss-dismissible-notice" data-notice="terms" data-signature="%s" data-nonce="%s"><p><strong>%s</strong> %s</p><p><a class="button" href="%s">%s</a></p></div>',
+			esc_attr( $signature ),
+			esc_attr( wp_create_nonce( 'wpss_dismiss_notice' ) ),
+			esc_html__( 'Buyers are paying on this site, but no Terms page is mapped.', 'wp-sell-services' ),
+			esc_html__( 'Checkout has nothing to link to, so buyers agree to nothing in writing - which is the gap owners usually find out about during a dispute. Map a page you have written; we never publish one for you.', 'wp-sell-services' ),
+			esc_url( wpss_get_settings_url( 'pages' ) ),
+			esc_html__( 'Map a Terms page', 'wp-sell-services' )
+		);
+	}
+
+	/**
+	 * Identify the currently live gateway set.
+	 *
+	 * Used so a dismissal applies to the configuration it was made against.
+	 * Enabling a second gateway is a new decision about taking money, and the
+	 * Terms question deserves asking again.
+	 *
+	 * @since 1.7.0
+	 * @return string Short stable hash of the live gateway ids.
+	 */
+	private function live_gateway_signature(): string {
+		$ids = array();
+
+		foreach ( wpss()->get_payment_gateways() as $id => $gateway ) {
+			if ( 'test' === $id ) {
+				continue;
+			}
+			if ( $gateway instanceof \WPSellServices\Integrations\Contracts\PaymentGatewayInterface && $gateway->is_enabled() ) {
+				$ids[] = (string) $id;
+			}
+		}
+
+		sort( $ids );
+
+		return substr( md5( implode( ',', $ids ) ), 0, 12 );
+	}
+
+	/**
+	 * Dismiss one of the plugin's dismissible admin notices.
+	 *
+	 * Generic on purpose. check_page_setup_notice() shipped with its own
+	 * action and its own handler; a second notice doing the same would have
+	 * made a second pair, and a third a third. The notice key is whitelisted,
+	 * so this cannot be used to write arbitrary user meta.
+	 *
+	 * @since 1.7.0
+	 * @return void
+	 */
+	public function ajax_dismiss_notice(): void {
+		check_ajax_referer( 'wpss_dismiss_notice', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error();
+		}
+
+		$allowed = array( 'terms' => '_wpss_terms_notice_dismissed' );
+		$notice  = isset( $_POST['notice'] ) ? sanitize_key( wp_unslash( $_POST['notice'] ) ) : '';
+
+		if ( ! isset( $allowed[ $notice ] ) ) {
+			wp_send_json_error();
+		}
+
+		// The signature is stored rather than a bare true, so the notice
+		// returns if the gateway configuration changes underneath it.
+		$signature = isset( $_POST['signature'] ) ? sanitize_key( wp_unslash( $_POST['signature'] ) ) : '1';
+
+		update_user_meta( get_current_user_id(), $allowed[ $notice ], $signature );
+		wp_send_json_success();
 	}
 
 	/**

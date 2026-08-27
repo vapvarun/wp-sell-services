@@ -218,6 +218,11 @@ if [ -n "$STAGED_DOCS_OR_PHP" ]; then
             echo ""
             echo "  Run for the full report:"
             echo "    python3 bin/docs-audit.py"
+            echo ""
+            echo "  If the only failures are hook citations pointing at the right"
+            echo "  file but the wrong LINE - which is what happens whenever you"
+            echo "  insert code above a hook - this repairs them:"
+            echo "    python3 bin/docs-audit.py --fix && git add docs/"
             exit 1
         fi
     else

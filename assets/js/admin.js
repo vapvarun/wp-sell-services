@@ -499,6 +499,29 @@
 		});
 	});
 
+	/*
+	 * Every other dismissible notice we render, through one handler.
+	 *
+	 * The pages notice above has its own action and its own PHP handler; a
+	 * second notice copying that shape would have meant a second pair, and a
+	 * third a third. New notices only need
+	 * class="wpss-dismissible-notice" plus data-notice / data-nonce.
+	 *
+	 * data-signature lets a notice say WHAT was dismissed, not just that it
+	 * was - the Terms notice sends the live gateway set, so turning on another
+	 * gateway asks again rather than staying silent forever.
+	 */
+	$(document).on('click', '.wpss-dismissible-notice .notice-dismiss', function () {
+		var $notice = $(this).closest('.wpss-dismissible-notice');
+
+		$.post(ajaxurl, {
+			action: 'wpss_dismiss_notice',
+			notice: $notice.data('notice'),
+			signature: $notice.data('signature'),
+			nonce: $notice.data('nonce')
+		});
+	});
+
 	/**
 	 * Dispute metabox: the resolution fields only apply when resolving.
 	 *
