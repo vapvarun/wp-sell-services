@@ -1013,35 +1013,12 @@ class Shortcodes {
 					<h2 class="wpss-vr__title"><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></h2>
 					<p class="wpss-vr__desc"><?php esc_html_e( 'Create your vendor account in seconds. No credit card required.', 'wp-sell-services' ); ?></p>
 
-					<div class="wpss-vr__features">
-						<div class="wpss-vr__feature">
-							<span class="wpss-vr__feature-icon">
-								<i data-lucide="palette" class="wpss-icon" aria-hidden="true"></i>
-							</span>
-							<div>
-								<strong><?php esc_html_e( 'Create Services', 'wp-sell-services' ); ?></strong>
-								<span><?php esc_html_e( 'Build unlimited service listings with custom packages', 'wp-sell-services' ); ?></span>
-							</div>
-						</div>
-						<div class="wpss-vr__feature">
-							<span class="wpss-vr__feature-icon">
-								<i data-lucide="wallet" class="wpss-icon" aria-hidden="true"></i>
-							</span>
-							<div>
-								<strong><?php esc_html_e( 'Get Paid', 'wp-sell-services' ); ?></strong>
-								<span><?php esc_html_e( 'Secure payments with flexible withdrawal options', 'wp-sell-services' ); ?></span>
-							</div>
-						</div>
-						<div class="wpss-vr__feature">
-							<span class="wpss-vr__feature-icon">
-								<i data-lucide="trending-up" class="wpss-icon" aria-hidden="true"></i>
-							</span>
-							<div>
-								<strong><?php esc_html_e( 'Grow Your Business', 'wp-sell-services' ); ?></strong>
-								<span><?php esc_html_e( 'Analytics dashboard to track performance and revenue', 'wp-sell-services' ); ?></span>
-							</div>
-						</div>
-					</div>
+					<?php
+					// One partial, both branches. These bullets used to be written out
+					// here and again below, so a copy correction had to be made twice or
+					// the page told two different stories depending on who was reading it.
+					require WPSS_PLUGIN_DIR . 'templates/partials/vendor-benefits.php';
+					?>
 
 					<?php
 					// B1 (baseline-2026-04-25.md): inline signup form replaces the
@@ -1122,35 +1099,12 @@ class Shortcodes {
 				<h2 class="wpss-vr__title"><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></h2>
 				<p class="wpss-vr__desc"><?php esc_html_e( 'Join our marketplace and turn your skills into income. Create listings, set your rates, and connect with clients worldwide.', 'wp-sell-services' ); ?></p>
 
-				<div class="wpss-vr__features">
-					<div class="wpss-vr__feature">
-						<span class="wpss-vr__feature-icon">
-							<i data-lucide="palette" class="wpss-icon" aria-hidden="true"></i>
-						</span>
-						<div>
-							<strong><?php esc_html_e( 'Create Services', 'wp-sell-services' ); ?></strong>
-							<span><?php esc_html_e( 'Build unlimited service listings with custom packages', 'wp-sell-services' ); ?></span>
-						</div>
-					</div>
-					<div class="wpss-vr__feature">
-						<span class="wpss-vr__feature-icon">
-							<i data-lucide="wallet" class="wpss-icon" aria-hidden="true"></i>
-						</span>
-						<div>
-							<strong><?php esc_html_e( 'Get Paid', 'wp-sell-services' ); ?></strong>
-							<span><?php esc_html_e( 'Secure payments with flexible withdrawal options', 'wp-sell-services' ); ?></span>
-						</div>
-					</div>
-					<div class="wpss-vr__feature">
-						<span class="wpss-vr__feature-icon">
-							<i data-lucide="trending-up" class="wpss-icon" aria-hidden="true"></i>
-						</span>
-						<div>
-							<strong><?php esc_html_e( 'Grow Your Business', 'wp-sell-services' ); ?></strong>
-							<span><?php esc_html_e( 'Analytics dashboard to track performance and revenue', 'wp-sell-services' ); ?></span>
-						</div>
-					</div>
-				</div>
+					<?php
+					// One partial, both branches. These bullets used to be written out
+					// here and again below, so a copy correction had to be made twice or
+					// the page told two different stories depending on who was reading it.
+					require WPSS_PLUGIN_DIR . 'templates/partials/vendor-benefits.php';
+					?>
 
 				<?php if ( $approval_required ) : ?>
 					<p class="wpss-vr__note">
