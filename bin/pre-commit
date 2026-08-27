@@ -158,6 +158,43 @@ fi
 echo ""
 
 # ---------------------------------------------------------------------------
+# 4b. A source asset edit must be accompanied by its rebuilt .min.
+#
+# Assets.php rewrites asset URLs to .min when the file is present, so editing
+# assets/js/foo.js or assets/css/foo.css and not rebuilding foo.min.* ships a
+# change that is INERT on every site. Nothing errors, nothing looks wrong in
+# the diff, and the fix simply does not happen. CLAUDE.md has warned about this
+# for releases; a warning nobody can forget beats a warning everybody can.
+#
+# Compares mtimes rather than content: a stale .min is exactly a .min older
+# than its source.
+# ---------------------------------------------------------------------------
+STAGED_ASSETS=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^assets/(js|css)/[^/]+\.(js|css)$" | grep -v "\.min\." || true)
+
+STALE_MIN=""
+for SRC in $STAGED_ASSETS; do
+    EXT="${SRC##*.}"
+    MIN="${SRC%.$EXT}.min.$EXT"
+    if [ -f "$MIN" ] && [ "$SRC" -nt "$MIN" ]; then
+        STALE_MIN="$STALE_MIN $MIN"
+    fi
+done
+
+if [ -n "$STALE_MIN" ]; then
+    echo ""
+    echo "=== Minified Asset Check ==="
+    echo "❌ Source edited but its .min is older - the change will be inert:"
+    for M in $STALE_MIN; do
+        echo "   - $M"
+    done
+    echo ""
+    echo "Rebuild it, then stage it:"
+    echo "   npx terser assets/js/FILE.js -c -m -o assets/js/FILE.min.js"
+    echo "   npx clean-css-cli -o assets/css/FILE.min.css assets/css/FILE.css"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
 # 5. Docs must describe the plugin that exists.
 #
 # Only when a doc or a PHP file is staged - the audit reads both sides, so a

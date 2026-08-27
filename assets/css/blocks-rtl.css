@@ -329,6 +329,16 @@
 	box-shadow: none;
 }
 
+/* The placeholder is a block attribute an owner can set to anything, and the
+   block renders in a 260px sidebar as readily as a full-width hero. Without
+   this it clipped mid-glyph - "What service are you lookin" - which reads as a
+   broken input rather than a truncated one. */
+.wpss-search-fields .wpss-search-input::placeholder {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
 /* The search input and category select are transparent/borderless inside the
    bordered container, so focus is shown as a ring on the container — keyboard
    users always get a visible focus indicator (WCAG 2.4.7). */
