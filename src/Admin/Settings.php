@@ -767,7 +767,7 @@ class Settings {
 			array(
 				'option_name' => 'wpss_payouts',
 				'field'       => 'auto_withdrawal_enabled',
-				'label'       => __( 'Automatically process withdrawals for high-earning vendors', 'wp-sell-services' ),
+				'label'       => __( 'Automatically create withdrawal requests for high-earning vendors', 'wp-sell-services' ),
 				'default'     => false,
 			)
 		);
@@ -785,7 +785,7 @@ class Settings {
 				'max'         => 10000,
 				'step'        => 50,
 				'default'     => 500,
-				'description' => __( 'Vendors with available balance above this amount are automatically paid on the schedule below. Set to 0 to disable auto-withdrawals.', 'wp-sell-services' ),
+				'description' => __( 'A withdrawal request is created for any vendor whose available balance is above this amount, on the schedule below. You still approve and pay each request - no money leaves your account on its own. Set to 0 to disable.', 'wp-sell-services' ),
 			)
 		);
 
@@ -2139,7 +2139,7 @@ class Settings {
 	 * @return void
 	 */
 	public function render_auto_withdrawal_section(): void {
-		echo '<p>' . esc_html__( 'Configure automatic withdrawals for high-earning vendors. When enabled, the system will automatically create and process withdrawal requests for vendors who meet the threshold.', 'wp-sell-services' ) . '</p>';
+		echo '<p>' . esc_html__( 'Save yourself checking who has crossed the payout threshold: when enabled, a withdrawal request is raised automatically for every vendor who has. Approving and paying them stays with you, on the Withdrawals screen.', 'wp-sell-services' ) . '</p>';
 	}
 
 	/**
@@ -2864,7 +2864,16 @@ class Settings {
 				<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $selected, $id ); ?>><?php echo esc_html( $label ); ?></option>
 			<?php endforeach; ?>
 		</select>
-		<p class="description"><?php esc_html_e( 'Which wallet integration funds and receives marketplace wallet operations. Providers appear here when their plugin is active.', 'wp-sell-services' ); ?></p>
+		<?php
+		// Says what the free plugin already does BEFORE describing what a
+		// provider adds. The old wording opened with "wallet integration" and
+		// "when their plugin is active", which read as "vendors have no wallet
+		// until I install something" - so owners bought Pro for a balance they
+		// already had (Basecamp 10235851532).
+		?>
+		<p class="description">
+			<?php esc_html_e( 'Vendor earnings, balances and withdrawals already work with no wallet plugin installed - that is the Internal Wallet below. A provider does not add the wallet; it changes where the balance is held, so it can sit alongside one you already run. Each appears here only while its plugin is active.', 'wp-sell-services' ); ?>
+		</p>
 		<?php
 	}
 

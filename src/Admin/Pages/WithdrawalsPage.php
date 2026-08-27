@@ -651,6 +651,18 @@ class WithdrawalsPage {
 			</td>
 			<td class="column-method" data-colname="<?php esc_attr_e( 'Method', 'wp-sell-services' ); ?>">
 				<?php echo esc_html( $methods[ $withdrawal->method ] ?? ucfirst( $withdrawal->method ) ); ?>
+				<?php if ( ! empty( $withdrawal->is_auto ) ) : ?>
+					<?php
+					// is_auto was stored, and changed behaviour - a vendor cannot
+					// cancel an automatic withdrawal - but was shown nowhere, so
+					// an admin asked "why can't I cancel this?" had no way to
+					// tell which ones were automatic. The docs had claimed this
+					// badge existed for some time (Basecamp 10235851403).
+					?>
+					<span class="wpss-badge wpss-badge--default" title="<?php esc_attr_e( 'Raised automatically because the vendor passed the payout threshold. The vendor cannot cancel it.', 'wp-sell-services' ); ?>">
+						<?php esc_html_e( 'Auto', 'wp-sell-services' ); ?>
+					</span>
+				<?php endif; ?>
 				<?php if ( ! empty( $details ) ) : ?>
 					<div class="wpss-withdrawal-details">
 						<?php
