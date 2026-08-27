@@ -163,36 +163,39 @@ class PreflightCommand {
 
 		global $wpdb;
 
-		$required_tables = array(
-			'wpss_service_packages',
-			'wpss_service_addons',
-			'wpss_orders',
-			'wpss_order_requirements',
-			'wpss_conversations',
-			'wpss_messages',
-			'wpss_deliveries',
-			'wpss_extension_requests',
-			'wpss_reviews',
-			'wpss_disputes',
-			'wpss_dispute_messages',
-			'wpss_proposals',
-			'wpss_vendor_profiles',
-			'wpss_portfolio_items',
-			'wpss_notifications',
-			'wpss_wallet_transactions',
-			'wpss_withdrawals',
-		);
+		$schema = new \WPSellServices\Database\SchemaManager();
 
+		// Read from SchemaManager rather than a list of its own. This method
+		// used to carry a hardcoded 17 names while CORE_TABLES held 20, so
+		// audit_log, reports and payment_receipts could go missing on a site
+		// and preflight would report a clean bill of health. Same fix as
+		// check_pages(): one source, no second list to drift.
 		$existing = $wpdb->get_col( 'SHOW TABLES' );
 
-		foreach ( $required_tables as $table ) {
-			$full_name = $wpdb->prefix . $table;
+		foreach ( $schema->get_tables() as $short => $full_name ) {
 			if ( in_array( $full_name, $existing, true ) ) {
 				$cols = $wpdb->get_results( "DESCRIBE `{$full_name}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$this->record( 'DB', $table, 'pass', count( $cols ) . ' columns' );
+				$this->record( 'DB', 'wpss_' . $short, 'pass', count( $cols ) . ' columns' );
 			} else {
-				$this->record( 'DB', $table, 'fail', 'Table missing' );
+				$this->record( 'DB', 'wpss_' . $short, 'fail', 'Table missing' );
 			}
+		}
+
+		// Tables we stopped creating but never dropped. Reported as a note, not
+		// a failure - nothing is broken by their presence. They are surfaced
+		// because reading one and believing it is what produced a confidently
+		// wrong root cause on Basecamp 10236358969.
+		foreach ( $schema->get_retired_tables() as $short => $info ) {
+			$this->record(
+				'DB',
+				'wpss_' . $short,
+				'warn',
+				sprintf(
+					'Retired table, %d row(s), nothing reads it. Live data: %s',
+					$info['rows'],
+					$info['data_now']
+				)
+			);
 		}
 
 		WP_CLI::log( '' );

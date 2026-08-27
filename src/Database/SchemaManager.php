@@ -106,6 +106,93 @@ class SchemaManager {
 	);
 
 	/**
+	 * Tables this plugin used to create and no longer does.
+	 *
+	 * They are NOT in CORE_TABLES, so no install made since each feature moved
+	 * has them - but nothing ever dropped them either, so every upgraded site
+	 * still carries them holding whatever rows they held on the day the feature
+	 * moved.
+	 *
+	 * This list exists because stale tables that look authoritative actively
+	 * mislead. A developer debugging buyer requests on a long-lived site reads
+	 * wpss_buyer_requests, believes it, and reasons from frozen data - that
+	 * produced one confidently wrong root cause on Basecamp 10236358969, where
+	 * the UI was right and the table was abandoned.
+	 *
+	 * So: before treating any wpss_* table as truth, check it is in CORE_TABLES.
+	 * If it is here instead, the value on the right says where the live data is.
+	 *
+	 * @since 1.7.0
+	 * @var array<string, string>
+	 */
+	private const RETIRED_TABLES = array(
+		'buyer_requests'       => 'wpss_request posts plus post meta',
+		'service_faqs'         => '_wpss_faqs post meta on the service',
+		'service_requirements' => '_wpss_requirements post meta on the service',
+		'service_platform_map' => 'the platform_order_ref column on wpss_orders',
+		'analytics_events'     => 'derived from wpss_orders at query time (Pro)',
+	);
+
+	/**
+	 * Report which retired tables physically survive on this install.
+	 *
+	 * Deliberately reports rather than drops. Dropping is destructive and
+	 * irreversible, and a plugin update runs unattended on sites whose data
+	 * nobody has looked at - the rows are stale copies of what now lives in
+	 * posts and meta on every install checked, but "every install checked" is
+	 * not "every install". Cleanup is offered explicitly (WP-CLI, or the
+	 * delete-data-on-uninstall option) rather than performed silently.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return array<string, array{table: string, rows: int, data_now: string}>
+	 */
+	public function get_retired_tables(): array {
+		$found = array();
+
+		foreach ( self::RETIRED_TABLES as $name => $data_now ) {
+			$full = $this->prefix . $name;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema inspection, not cacheable state.
+			if ( ! $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $full ) ) ) {
+				continue;
+			}
+
+			$found[ $name ] = array(
+				'table'    => $full,
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- table name comes from a private const.
+				'rows'     => (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM `{$full}`" ),
+				'data_now' => $data_now,
+			);
+		}
+
+		return $found;
+	}
+
+	/**
+	 * Drop the retired tables.
+	 *
+	 * Only ever called from uninstall, where dropping is what the owner asked
+	 * for. Never from an upgrade routine.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return string[] Names of the tables actually dropped.
+	 */
+	public function drop_retired_tables(): array {
+		$dropped = array();
+
+		foreach ( array_keys( $this->get_retired_tables() ) as $name ) {
+			$full = $this->prefix . $name;
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- table name comes from a private const.
+			$this->wpdb->query( "DROP TABLE IF EXISTS `{$full}`" );
+			$dropped[] = $full;
+		}
+
+		return $dropped;
+	}
+
+	/**
 	 * Check if schema needs update.
 	 *
 	 * Returns true when the stored DB version is older than the code
@@ -1314,6 +1401,12 @@ class SchemaManager {
 			$table_name = $this->get_table_name( $table );
 			$this->wpdb->query( "DROP TABLE IF EXISTS {$table_name}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		}
+
+		// Tables we stopped creating but never removed. Uninstall is the one
+		// place dropping them is unambiguously right: the owner has ticked
+		// delete-data-on-uninstall, so leaving our old tables behind would be
+		// the surprise, not removing them.
+		$this->drop_retired_tables();
 
 		delete_option( self::VERSION_OPTION );
 	}
