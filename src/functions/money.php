@@ -363,7 +363,14 @@ function wpss_get_ledger_balance( int $user_id, bool $lock = false ): float {
 	// the free helper did not, which would have been a second silent divergence.)
 	$debit_types = wpss_get_ledger_debit_types_sql();
 
-	$sql = "SELECT COALESCE( SUM( CASE WHEN type IN ( {$debit_types} ) THEN -amount ELSE amount END ), 0 )
+	// -ABS(), not -amount. The convention is that a debit row stores a
+	// POSITIVE amount and the sign is applied here - but one legacy row was
+	// written negative, and `-amount` turned that into `-(-50)` = +50, so a
+	// withdrawal ADDED fifty dollars to the vendor's balance. It overstated
+	// that vendor by 100.00. ABS() makes the balance correct whatever sign a
+	// row carries, which matters because this is the only place the sign is
+	// applied and the rows outlive any writer we fix.
+	$sql = "SELECT COALESCE( SUM( CASE WHEN type IN ( {$debit_types} ) THEN -ABS( amount ) ELSE amount END ), 0 )
 		FROM {$table}
 		WHERE user_id = %d AND status = 'completed'";
 

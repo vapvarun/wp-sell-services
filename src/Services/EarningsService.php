@@ -380,7 +380,10 @@ class EarningsService {
 			array(
 				'user_id'        => $vendor_id,
 				'type'           => 'withdrawal',
-				'amount'         => $amount,
+				// abs() enforces the convention the comment above states rather
+				// than trusting the caller. A negative withdrawal row is not a
+				// smaller withdrawal, it is a credit.
+				'amount'         => abs( $amount ),
 				'balance_after'  => $current_balance - $amount,
 				'currency'       => $withdrawal->currency ?? wpss_get_currency(),
 				'description'    => sprintf(
