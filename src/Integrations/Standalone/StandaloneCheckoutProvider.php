@@ -303,6 +303,33 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		if ( ! $service_id ) {
+			/*
+			 * Last line of defence for the pay-one-order route.
+			 *
+			 * A buyer following /{checkout}/pay/{id}/ is answered by
+			 * render_pay_order_checkout() above, which has no path to the empty
+			 * state below - every failure it has returns a specific message. But
+			 * that depends on the rewrite rule resolving, and if the rule is
+			 * missing or stale the request lands here instead, where the buyer
+			 * is told their cart is empty while they are trying to pay a
+			 * specific invoice (Basecamp 10240017271).
+			 *
+			 * The rule self-heals in StandaloneAdapter and I could not reproduce
+			 * the report on current code, so this should be unreachable. It is
+			 * cheap, and "your cart is empty" in front of someone holding a bill
+			 * is the kind of thing that costs a sale rather than a bug report.
+			 */
+			$pay_path_id = 0;
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+			if ( $request_uri && preg_match( '#/pay/([0-9]+)/?(?:\?|$)#', $request_uri, $m ) ) {
+				$pay_path_id = (int) $m[1];
+			}
+
+			if ( $pay_path_id > 0 ) {
+				return $this->render_pay_order_checkout( $pay_path_id );
+			}
+
 			// Reaching checkout with an empty cart is an ordinary state, not a
 			// failure: a red "No service selected." error alert blamed the buyer
 			// for something that had not gone wrong and offered no way forward.

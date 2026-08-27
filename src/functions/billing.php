@@ -605,14 +605,45 @@ function wpss_get_billing_address( int $user_id = 0 ): array {
 
 	$address = array();
 
+	$user = null;
+
 	foreach ( array_keys( wpss_get_billing_fields() ) as $key ) {
 		$value = get_user_meta( $user_id, $key, true );
 
-		// Fall back to the account email so a first-time buyer does not retype
-		// something we already know.
-		if ( '' === $value && 'billing_email' === $key ) {
-			$user  = get_userdata( $user_id );
-			$value = $user ? $user->user_email : '';
+		/*
+		 * Fall back to what WordPress already knows about this person, so a
+		 * signed-in buyer is never asked to retype it.
+		 *
+		 * The email fallback shipped first and the name fields were left out,
+		 * which is why the checkout screenshot on Basecamp 10240017373 shows an
+		 * empty email and the same screen today shows an empty first and last
+		 * name: same defect, different fields. Handling all three here rather
+		 * than in the checkout template means the account screen and the
+		 * pay-order checkout get it too, instead of three prefill rules
+		 * drifting apart.
+		 */
+		if ( '' === $value ) {
+			if ( null === $user ) {
+				$user = get_userdata( $user_id );
+			}
+
+			if ( $user ) {
+				if ( 'billing_email' === $key ) {
+					$value = $user->user_email;
+				} elseif ( 'billing_first_name' === $key || 'billing_last_name' === $key ) {
+					$meta = get_user_meta( $user_id, str_replace( 'billing_', '', $key ), true );
+
+					// display_name is the last resort and is split on the first
+					// space only: "Maria del Carmen Ruiz" keeps everything after
+					// the first token as the surname rather than losing it.
+					if ( '' === $meta && '' !== (string) $user->display_name ) {
+						$parts = explode( ' ', trim( (string) $user->display_name ), 2 );
+						$meta  = 'billing_first_name' === $key ? $parts[0] : ( $parts[1] ?? '' );
+					}
+
+					$value = $meta;
+				}
+			}
 		}
 
 		$address[ $key ] = is_string( $value ) ? $value : '';
