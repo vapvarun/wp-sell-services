@@ -217,173 +217,187 @@ do_action( 'wpss_before_order_view', $order );
 		do_action( 'wpss_order_view_header', $order );
 		?>
 
-		<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'in_progress', 'pending_approval', 'pending_requirements', 'pending_payment', 'revision_requested', 'late', 'cancellation_requested', 'completed' ), true ) ) : ?>
-			<?php
+		<?php
+		// No status whitelist here any more.
+		//
+		// There used to be one wrapping this whole block, and every action below
+		// ALSO carries its own status condition - so the outer list did nothing
+		// except silently veto actions whose own guard said yes. It cost us two
+		// defects: `disputed` was not on it, so View Dispute could never render
+		// on the one status it exists for (Basecamp 10236358753), and
+		// `requirements_submitted` was not on it either, so a vendor could never
+		// press Start Working after a buyer submitted requirements.
+		//
+		// Both were invisible because the actions read correct in isolation. An
+		// action is now shown exactly when its own condition says so, which is
+		// the only rule that can be reasoned about from the action itself.
+		?>
+		<?php
 			// Build actions array for filtering.
 			$actions = array();
 
-			if ( $is_vendor ) {
-				// No Accept / Decline buttons here. They only ever rendered for
-				// status 'pending', which nothing in the plugin writes - orders
-				// go pending_payment -> pending_requirements -> in_progress - so
-				// they were unreachable, and the REST verbs behind them have been
-				// removed. This product is payment-first: there is no vendor
-				// acceptance step to offer.
+		if ( $is_vendor ) {
+			// No Accept / Decline buttons here. They only ever rendered for
+			// status 'pending', which nothing in the plugin writes - orders
+			// go pending_payment -> pending_requirements -> in_progress - so
+			// they were unreachable, and the REST verbs behind them have been
+			// removed. This product is payment-first: there is no vendor
+			// acceptance step to offer.
 
-				if ( in_array( $order->status, array( 'accepted', 'requirements_submitted' ), true ) ) {
-					$actions['start'] = array(
-						'label' => __( 'Start Working', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--primary wpss-order-action',
-						'attrs' => 'data-action="start" data-order="' . esc_attr( $order_id ) . '"',
-					);
-				}
+			if ( in_array( $order->status, array( 'accepted', 'requirements_submitted' ), true ) ) {
+				$actions['start'] = array(
+					'label' => __( 'Start Working', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--primary wpss-order-action',
+					'attrs' => 'data-action="start" data-order="' . esc_attr( $order_id ) . '"',
+				);
+			}
 
-				if ( in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) {
-					$actions['deliver'] = array(
-						'label' => 'revision_requested' === $order->status ? __( 'Deliver Revision', 'wp-sell-services' ) : __( 'Deliver Work', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--success wpss-deliver-btn',
+			if ( in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) {
+				$actions['deliver'] = array(
+					'label' => 'revision_requested' === $order->status ? __( 'Deliver Revision', 'wp-sell-services' ) : __( 'Deliver Work', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--success wpss-deliver-btn',
+					'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+				);
+			}
+		}
+
+		if ( $is_customer ) {
+			// Pay Now button for unpaid orders (e.g., from accepted proposals).
+			if ( 'pending_payment' === $order->status ) {
+				// Through the seam, so the button is right on whichever rail
+				// the site runs. Building ?pay_order=N inline is correct only
+				// on standalone; on WooCommerce it lands on the store cart.
+				$pay_url        = wpss_get_pay_order_url( (int) $order_id );
+				$actions['pay'] = array(
+					'label' => sprintf(
+						/* translators: %s: formatted price */
+						__( 'Pay %s', 'wp-sell-services' ),
+						wpss_format_price( $order->total )
+					),
+					'class' => 'wpss-btn wpss-btn--success',
+					'attrs' => 'onclick="window.location.href=\'' . esc_url( $pay_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
+				);
+			}
+
+			// Submit Requirements CTA. A paid order sits in pending_requirements
+			// until the buyer provides their brief. The inline requirements
+			// FORM further down only renders when the SERVICE defined custom
+			// fields; for the (common) service with none, the buyer's order
+			// view otherwise showed only "Cancel Order" and no way to proceed
+			// — they could reach the working generic form ONLY via the
+			// post-payment redirect's `action=requirements` URL, so anyone who
+			// navigated back to the order later was stranded. This button
+			// always links there, so requirements can be submitted regardless
+			// of whether the service configured fields. Submitting advances the
+			// order out of pending_requirements, so the status check alone is
+			// enough — a pending_requirements order never has a completed brief.
+			// The $has_submitted_requirements flag is computed further down.
+			if ( 'pending_requirements' === $order->status ) {
+				$requirements_url        = wpss_get_order_requirements_url( $order_id );
+				$actions['requirements'] = array(
+					'label' => __( 'Submit Requirements', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--primary',
+					'attrs' => 'onclick="window.location.href=\'' . esc_url( $requirements_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
+				);
+			}
+
+			if ( 'pending_approval' === $order->status ) {
+				$actions['complete'] = array(
+					'label' => __( 'Accept & Complete', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--success wpss-order-action',
+					'attrs' => 'data-action="complete" data-order="' . esc_attr( $order_id ) . '"',
+				);
+
+				if ( $order->can_request_revision() ) {
+					$remaining = $order->get_remaining_revisions();
+					$rev_label = -1 === $remaining
+						? __( 'Request Revision', 'wp-sell-services' )
+						/* translators: %d: number of revisions remaining */
+						: sprintf( __( 'Request Revision (%d left)', 'wp-sell-services' ), $remaining );
+
+					$actions['revision'] = array(
+						'label' => $rev_label,
+						'class' => 'wpss-btn wpss-btn--secondary wpss-revision-btn',
 						'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
 					);
 				}
 			}
 
-			if ( $is_customer ) {
-				// Pay Now button for unpaid orders (e.g., from accepted proposals).
-				if ( 'pending_payment' === $order->status ) {
-					// Through the seam, so the button is right on whichever rail
-					// the site runs. Building ?pay_order=N inline is correct only
-					// on standalone; on WooCommerce it lands on the store cart.
-					$pay_url        = wpss_get_pay_order_url( (int) $order_id );
-					$actions['pay'] = array(
-						'label' => sprintf(
-							/* translators: %s: formatted price */
-							__( 'Pay %s', 'wp-sell-services' ),
-							wpss_format_price( $order->total )
-						),
-						'class' => 'wpss-btn wpss-btn--success',
-						'attrs' => 'onclick="window.location.href=\'' . esc_url( $pay_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
-					);
-				}
+			if ( 'revision_requested' === $order->status ) {
+				$actions['revision_notice'] = array(
+					'label' => __( 'Waiting for Revised Delivery', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
+					'attrs' => 'disabled="disabled" title="' . esc_attr__( 'The vendor is working on your requested revision.', 'wp-sell-services' ) . '"',
+				);
+			}
 
-				// Submit Requirements CTA. A paid order sits in pending_requirements
-				// until the buyer provides their brief. The inline requirements
-				// FORM further down only renders when the SERVICE defined custom
-				// fields; for the (common) service with none, the buyer's order
-				// view otherwise showed only "Cancel Order" and no way to proceed
-				// — they could reach the working generic form ONLY via the
-				// post-payment redirect's `action=requirements` URL, so anyone who
-				// navigated back to the order later was stranded. This button
-				// always links there, so requirements can be submitted regardless
-				// of whether the service configured fields. Submitting advances the
-				// order out of pending_requirements, so the status check alone is
-				// enough — a pending_requirements order never has a completed brief.
-				// The $has_submitted_requirements flag is computed further down.
-				if ( 'pending_requirements' === $order->status ) {
-					$requirements_url        = wpss_get_order_requirements_url( $order_id );
-					$actions['requirements'] = array(
-						'label' => __( 'Submit Requirements', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--primary',
-						'attrs' => 'onclick="window.location.href=\'' . esc_url( $requirements_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
-					);
-				}
+			if ( 'cancellation_requested' === $order->status ) {
+				$actions['cancel_pending_notice'] = array(
+					'label' => __( 'Cancellation Pending', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
+					'attrs' => 'disabled="disabled" title="' . esc_attr__( 'Waiting for vendor response to your cancellation request.', 'wp-sell-services' ) . '"',
+				);
+			}
 
-				if ( 'pending_approval' === $order->status ) {
-					$actions['complete'] = array(
-						'label' => __( 'Accept & Complete', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--success wpss-order-action',
-						'attrs' => 'data-action="complete" data-order="' . esc_attr( $order_id ) . '"',
-					);
+			// Immediate cancel for pre-work statuses.
+			$buyer_cancel_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted' );
+			if ( in_array( $order->status, $buyer_cancel_statuses, true ) ) {
+				$actions['cancel'] = array(
+					'label' => __( 'Cancel Order', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
+					'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+				);
+			}
 
-					if ( $order->can_request_revision() ) {
-						$remaining = $order->get_remaining_revisions();
-						$rev_label = -1 === $remaining
-							? __( 'Request Revision', 'wp-sell-services' )
-							/* translators: %d: number of revisions remaining */
-							: sprintf( __( 'Request Revision (%d left)', 'wp-sell-services' ), $remaining );
+			// In-progress cancel (requires 24h window + no delivery).
+			if ( 'in_progress' === $order->status && $order->started_at ) {
+				$hours_since_start = ( time() - $order->started_at->getTimestamp() ) / 3600;
+				$has_deliveries    = ! empty( $deliveries );
 
-						$actions['revision'] = array(
-							'label' => $rev_label,
-							'class' => 'wpss-btn wpss-btn--secondary wpss-revision-btn',
-							'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
-						);
-					}
-				}
-
-				if ( 'revision_requested' === $order->status ) {
-					$actions['revision_notice'] = array(
-						'label' => __( 'Waiting for Revised Delivery', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
-						'attrs' => 'disabled="disabled" title="' . esc_attr__( 'The vendor is working on your requested revision.', 'wp-sell-services' ) . '"',
-					);
-				}
-
-				if ( 'cancellation_requested' === $order->status ) {
-					$actions['cancel_pending_notice'] = array(
-						'label' => __( 'Cancellation Pending', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
-						'attrs' => 'disabled="disabled" title="' . esc_attr__( 'Waiting for vendor response to your cancellation request.', 'wp-sell-services' ) . '"',
-					);
-				}
-
-				// Immediate cancel for pre-work statuses.
-				$buyer_cancel_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted' );
-				if ( in_array( $order->status, $buyer_cancel_statuses, true ) ) {
+				if ( $hours_since_start <= 24 && ! $has_deliveries ) {
 					$actions['cancel'] = array(
-						'label' => __( 'Cancel Order', 'wp-sell-services' ),
+						'label' => __( 'Request Cancellation', 'wp-sell-services' ),
 						'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
 						'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
 					);
 				}
-
-				// In-progress cancel (requires 24h window + no delivery).
-				if ( 'in_progress' === $order->status && $order->started_at ) {
-					$hours_since_start = ( time() - $order->started_at->getTimestamp() ) / 3600;
-					$has_deliveries    = ! empty( $deliveries );
-
-					if ( $hours_since_start <= 24 && ! $has_deliveries ) {
-						$actions['cancel'] = array(
-							'label' => __( 'Request Cancellation', 'wp-sell-services' ),
-							'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
-							'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
-						);
-					}
-				}
 			}
+		}
 
 			// Vendor: accept/reject cancellation.
-			if ( $is_vendor && 'cancellation_requested' === $order->status ) {
-				$actions['accept-cancellation'] = array(
-					'label' => __( 'Accept Cancellation', 'wp-sell-services' ),
-					'class' => 'wpss-btn wpss-btn--success wpss-order-action',
-					'attrs' => 'data-action="accept-cancellation" data-order="' . esc_attr( $order_id ) . '"',
-				);
-				$actions['reject-cancellation'] = array(
-					'label' => __( 'Dispute Cancellation', 'wp-sell-services' ),
-					'class' => 'wpss-btn wpss-btn--danger-outline wpss-order-action',
-					'attrs' => 'data-action="reject-cancellation" data-order="' . esc_attr( $order_id ) . '"',
-				);
-			}
+		if ( $is_vendor && 'cancellation_requested' === $order->status ) {
+			$actions['accept-cancellation'] = array(
+				'label' => __( 'Accept Cancellation', 'wp-sell-services' ),
+				'class' => 'wpss-btn wpss-btn--success wpss-order-action',
+				'attrs' => 'data-action="accept-cancellation" data-order="' . esc_attr( $order_id ) . '"',
+			);
+			$actions['reject-cancellation'] = array(
+				'label' => __( 'Dispute Cancellation', 'wp-sell-services' ),
+				'class' => 'wpss-btn wpss-btn--danger-outline wpss-order-action',
+				'attrs' => 'data-action="reject-cancellation" data-order="' . esc_attr( $order_id ) . '"',
+			);
+		}
 
 			$order_settings = get_option( 'wpss_orders', array() );
-			if ( $can_open_dispute && ( $is_customer || $is_vendor ) ) {
-				$actions['dispute'] = array(
-					'label' => __( 'Open Dispute', 'wp-sell-services' ),
-					'class' => 'wpss-btn wpss-btn--danger-outline wpss-dispute-btn',
-					'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
-				);
-			} elseif ( $order_dispute && ( $is_customer || $is_vendor ) ) {
-				// Mutually exclusive with Open Dispute by definition: one exists,
-				// so the action is to go and read it.
-				$dispute_url = wpss_get_dashboard_url( 'disputes' );
+		if ( $can_open_dispute && ( $is_customer || $is_vendor ) ) {
+			$actions['dispute'] = array(
+				'label' => __( 'Open Dispute', 'wp-sell-services' ),
+				'class' => 'wpss-btn wpss-btn--danger-outline wpss-dispute-btn',
+				'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+			);
+		} elseif ( $order_dispute && ( $is_customer || $is_vendor ) ) {
+			// Mutually exclusive with Open Dispute by definition: one exists,
+			// so the action is to go and read it.
+			$dispute_url = wpss_get_dashboard_url( 'disputes' );
 
-				if ( $dispute_url ) {
-					$actions['view-dispute'] = array(
-						'label' => __( 'View Dispute', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--danger-outline',
-						'url'   => add_query_arg( 'dispute', (int) $order_dispute->id, $dispute_url ),
-					);
-				}
+			if ( $dispute_url ) {
+				$actions['view-dispute'] = array(
+					'label' => __( 'View Dispute', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--danger-outline',
+					'url'   => add_query_arg( 'dispute', (int) $order_dispute->id, $dispute_url ),
+				);
 			}
+		}
 
 			/**
 			 * Filter: wpss_order_actions
@@ -396,7 +410,7 @@ do_action( 'wpss_before_order_view', $order );
 			 * @param object $order   Order object.
 			 */
 			$actions = apply_filters( 'wpss_order_actions', $actions, $order );
-			?>
+		?>
 
 			<?php if ( ! empty( $actions ) ) : ?>
 				<div class="wpss-order-view__actions">
@@ -435,7 +449,6 @@ do_action( 'wpss_before_order_view', $order );
 					?>
 				</div>
 			<?php endif; ?>
-		<?php endif; ?>
 	</div>
 
 	<!-- Order Summary Section -->
