@@ -4210,3 +4210,94 @@ body.wpss-modal-active {
 	font-size: 13px;
 	color: var(--wpss-text-muted, #757575);
 }
+
+/* ==========================================================================
+   Order filter chips (Basecamp 10240019463)
+   ==========================================================================
+   A buyer with 149 orders, 106 of them cancelled, could not find the one
+   waiting on them to pay. The chips scope the list; nothing is hidden by
+   default, so the Total stat and the visible rows still agree.
+
+   Logical properties throughout so RTL needs no overrides, and every colour
+   is a token so the row follows the host theme's dark mode.
+   ========================================================================== */
+
+.wpss-order-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--wpss-space-2, 8px);
+	margin-block-end: var(--wpss-space-4, 16px);
+}
+
+.wpss-order-filter {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 8px);
+	padding: var(--wpss-space-2, 8px) var(--wpss-space-3, 12px);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: var(--wpss-radius-full, 999px);
+	background: var(--wpss-background, #fff);
+	color: var(--wpss-text-secondary, #4b5563);
+	font-size: 0.8125rem;
+	font-weight: 500;
+	line-height: 1.2;
+	text-decoration: none;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/* Themes restyle bare <a>, so hover/focus/visited are all stated explicitly -
+   otherwise the chip changes colour on a visited filter. */
+.wpss-order-filter:visited {
+	color: var(--wpss-text-secondary, #4b5563);
+}
+
+.wpss-order-filter:hover,
+.wpss-order-filter:focus-visible {
+	border-color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary, #4f46e5);
+	text-decoration: none;
+}
+
+.wpss-order-filter:focus-visible {
+	outline: 2px solid var(--wpss-primary, #4f46e5);
+	outline-offset: 2px;
+}
+
+.wpss-order-filter.is-active,
+.wpss-order-filter.is-active:visited,
+.wpss-order-filter.is-active:hover {
+	border-color: var(--wpss-primary, #4f46e5);
+	background: var(--wpss-primary, #4f46e5);
+	color: #fff;
+}
+
+.wpss-order-filter__count {
+	display: inline-block;
+	min-width: 1.5em;
+	padding-inline: var(--wpss-space-1, 4px);
+	border-radius: var(--wpss-radius-full, 999px);
+	background: var(--wpss-surface-muted, #f3f4f6);
+	color: var(--wpss-text-muted, #6b7280);
+	font-size: 0.75rem;
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+}
+
+.wpss-order-filter.is-active .wpss-order-filter__count {
+	background: rgba(255, 255, 255, 0.22);
+	color: #fff;
+}
+
+/* The row scrolls rather than stacking into six lines on a phone. */
+@media (max-width: 480px) {
+	.wpss-order-filters {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		padding-block-end: var(--wpss-space-1, 4px);
+		scrollbar-width: thin;
+	}
+
+	.wpss-order-filter {
+		flex: 0 0 auto;
+	}
+}

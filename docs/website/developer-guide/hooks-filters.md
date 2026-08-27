@@ -72,7 +72,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderService.php:427` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:570` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:730` |
 
 ### Order Filters
 

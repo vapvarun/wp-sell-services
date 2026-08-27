@@ -425,6 +425,166 @@ function wpss_get_order_status_labels(): array {
 }
 
 /**
+ * Group every order status into the handful of buckets a buyer thinks in.
+ *
+ * A buyer with 149 orders does not scan eighteen statuses; they want to know
+ * what needs them, what is running, and what is over. This is the single
+ * definition of those buckets - the filter chips, the query behind them and
+ * the per-chip counts all read it, so a status cannot end up in a chip that
+ * does not select it (Basecamp 10240019463).
+ *
+ * Order matters: it is the order the chips render in, and the order the list
+ * sorts by when no chip is chosen, so the rows that need the buyer come first.
+ * `all` deliberately carries no statuses - it means "no WHERE clause", not
+ * "every status", so a status added later still appears under All without
+ * being added here first.
+ *
+ * Every status ServiceOrder declares belongs to exactly one bucket. That is
+ * asserted in tests/test-order-filters-contract.php rather than trusted.
+ *
+ * @since 1.7.0
+ *
+ * @return array<string, array{label: string, statuses: string[]}>
+ */
+function wpss_get_order_status_groups(): array {
+	$groups = array(
+		'all'       => array(
+			'label'    => __( 'All', 'wp-sell-services' ),
+			'statuses' => array(),
+		),
+		'awaiting'  => array(
+			'label'    => __( 'Awaiting payment', 'wp-sell-services' ),
+			'statuses' => array( 'pending_payment', 'pending' ),
+		),
+		'active'    => array(
+			'label'    => __( 'Active', 'wp-sell-services' ),
+			'statuses' => array(
+				'pending_requirements',
+				'requirements_submitted',
+				'accepted',
+				'in_progress',
+				'revision_requested',
+				'delivered',
+				'pending_approval',
+				'on_hold',
+				'late',
+			),
+		),
+		'disputed'  => array(
+			'label'    => __( 'Needs attention', 'wp-sell-services' ),
+			'statuses' => array( 'disputed', 'cancellation_requested' ),
+		),
+		'completed' => array(
+			'label'    => __( 'Completed', 'wp-sell-services' ),
+			'statuses' => array( 'completed' ),
+		),
+		'closed'    => array(
+			'label'    => __( 'Cancelled', 'wp-sell-services' ),
+			'statuses' => array( 'cancelled', 'rejected', 'refunded', 'partially_refunded' ),
+		),
+	);
+
+	/**
+	 * Filter the order status groups used by the dashboard filter chips.
+	 *
+	 * A group whose statuses are removed disappears from the chip row; adding
+	 * a status to a group makes it selectable there. Keep the buckets mutually
+	 * exclusive - a status in two groups is counted twice.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param array<string, array{label: string, statuses: string[]}> $groups Status groups.
+	 */
+	return apply_filters( 'wpss_order_status_groups', $groups );
+}
+
+/**
+ * Resolve a group key from the request into the statuses it selects.
+ *
+ * Returns an empty array for `all` and for anything unrecognised, which the
+ * repository reads as "no status filter" - so a hand-edited query arg widens
+ * the list rather than emptying it.
+ *
+ * @since 1.7.0
+ *
+ * @param string $group_key Group key.
+ * @return string[] Statuses, empty for no filter.
+ */
+function wpss_resolve_order_status_group( string $group_key ): array {
+	$groups = wpss_get_order_status_groups();
+
+	return isset( $groups[ $group_key ] ) ? $groups[ $group_key ]['statuses'] : array();
+}
+
+/**
+ * Statuses present in the data that no group claims.
+ *
+ * The buckets are built from ServiceOrder's declared statuses, but the column
+ * is a plain varchar and the database has been written by more than one
+ * release. This install carries an order whose status is `pending_review` -
+ * a DISPUTE status, not an order status, so it is in no bucket and the chips
+ * summed to 14 against a real total of 15. One order the buyer could not reach
+ * from any filter.
+ *
+ * Rather than name that one value and wait for the next one, anything the
+ * groups do not claim is collected here and offered as its own chip. The chips
+ * then always add up to the list, whatever ends up in the column.
+ *
+ * @since 1.7.0
+ *
+ * @param array<string, int> $status_counts Status => count, from count_by_customer_grouped().
+ * @return string[] Statuses no group claims and that actually have rows.
+ */
+function wpss_resolve_ungrouped_statuses( array $status_counts ): array {
+	$claimed = array();
+
+	foreach ( wpss_get_order_status_groups() as $key => $group ) {
+		if ( 'all' === $key ) {
+			continue;
+		}
+		foreach ( $group['statuses'] as $status ) {
+			$claimed[ $status ] = true;
+		}
+	}
+
+	$ungrouped = array();
+
+	foreach ( $status_counts as $status => $count ) {
+		if ( $count > 0 && ! isset( $claimed[ $status ] ) ) {
+			$ungrouped[] = (string) $status;
+		}
+	}
+
+	return $ungrouped;
+}
+
+/**
+ * Statuses in the order a buyer should meet them, most actionable first.
+ *
+ * Flattened from the group order above so the default list surfaces the orders
+ * waiting on the buyer before the ones that are finished, without hiding
+ * anything. Used to build the ORDER BY.
+ *
+ * @since 1.7.0
+ *
+ * @return string[]
+ */
+function wpss_get_order_status_priority(): array {
+	$priority = array();
+
+	foreach ( wpss_get_order_status_groups() as $key => $group ) {
+		if ( 'all' === $key ) {
+			continue;
+		}
+		foreach ( $group['statuses'] as $status ) {
+			$priority[] = $status;
+		}
+	}
+
+	return $priority;
+}
+
+/**
  * Platform slugs that mark an order as a sub-order of another order.
  *
  * Sub-orders (tips, extras, revisions) hang off a parent order, so they must
