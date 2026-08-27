@@ -27,7 +27,7 @@ run of `bin/docs-audit.py`.
 | **Selling** | Service wizard, pricing and packages, add-ons, media, requirements and FAQs, editing and pausing, publishing and moderation |
 | **Buyer requests** | Posting a request, submitting proposals, managing requests, fixed vs milestone proposal contracts |
 | **Orders** | The 11-status lifecycle, requirements collection, messaging, deliveries and revisions, **milestone contracts**, **paid extensions**, tipping, recurring services, order settings |
-| **Payments and checkout** | Standalone mode, Stripe, **WooCommerce (including the pay-order handoff)** **[PRO]**, alternative platforms (EDD / FluentCart / SureCart) **[PRO]**, other gateways, Stripe Connect **[PRO]**, currency and tax, display currency |
+| **Payments and checkout** | Standalone mode, Stripe, **WooCommerce (including the pay-order handoff)** **[PRO]**, alternative platforms (EDD / FluentCart) **[PRO]**, other gateways, Stripe Connect **[PRO]**, currency and tax, display currency |
 | **Earnings and payouts** | Wallet, earnings dashboard, commission system, tiered commission **[PRO]**, withdrawals, vendor payouts, automated payouts **[PRO]**, the ledger and CSV export |
 | **Vendors** | Becoming a vendor, vendor dashboard, profile and portfolio, seller levels, vacation mode, vendor settings, vendor subscription plans **[PRO]** |
 | **Reviews** | Review system, reputation and moderation |

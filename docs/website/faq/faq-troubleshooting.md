@@ -8,7 +8,7 @@ Answers to the most common questions about WP Sell Services, plus solutions for 
 
 ### Do I need WooCommerce to use this plugin?
 
-No. WP Sell Services works completely standalone with its own built-in checkout, Stripe, PayPal, and Offline payment support. You do not need WooCommerce or any other e-commerce plugin. The Pro version optionally adds WooCommerce, EDD, FluentCart, and SureCart as alternative checkout platforms if you want them.
+No. WP Sell Services works completely standalone with its own built-in checkout, Stripe, PayPal, and Offline payment support. You do not need WooCommerce or any other e-commerce plugin. The Pro version optionally adds WooCommerce, EDD, and FluentCart as alternative checkout platforms if you want them.
 
 ### How do I change the commission rate?
 
@@ -40,7 +40,7 @@ Yes. The Buyer Requests feature lets buyers post detailed project descriptions w
 
 ### What payment gateways are supported?
 
-The free version includes Stripe, PayPal, and Offline (manual) payment gateways, all built into the standalone checkout. **[PRO]** The Pro version adds Razorpay and integrates with payment gateways from WooCommerce, EDD, FluentCart, and SureCart.
+The free version includes Stripe, PayPal, and Offline (manual) payment gateways, all built into the standalone checkout. **[PRO]** The Pro version adds Razorpay and integrates with payment gateways from WooCommerce, EDD, and FluentCart.
 
 ### Can I run multiple marketplaces on a multisite network?
 

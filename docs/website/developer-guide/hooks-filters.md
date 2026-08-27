@@ -70,7 +70,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderService.php:398` |
+| `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderService.php:427` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
 | `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:570` |
 
@@ -121,7 +121,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_delivery_accepted` | `int $order_id` | `src/Services/DeliveryService.php:197` |
 | `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:263` |
 | `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:543` |
-| `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:893` |
+| `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:922` |
 | `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1228` |
 | `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` | `src/Services/ConversationService.php:351` |
 
@@ -345,7 +345,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2061` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2097` |
 | `wpss_admin_requirements_submitted` | `int $order_id, array $field_data` | `src/Admin/OrderScreen.php:316` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1914` |
 
@@ -677,7 +677,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1363` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:160` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:488` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3714` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3723` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:835` |
 
 **`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
@@ -742,7 +742,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:598` |
+| `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:627` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:320` |
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:713` |
 | `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:929` |

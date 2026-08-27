@@ -618,7 +618,7 @@ Directory plugins are everywhere, but most lack actual transaction features. I n
 Integrates with WooCommerce for checkout and payments. Access to all WooCommerce payment gateways.
 
 **Pro version:**
-Additional e-commerce platforms (EDD, FluentCart, SureCart, Standalone), direct payment gateways (Stripe, PayPal, Razorpay), cloud storage (S3, Google Cloud, DigitalOcean), advanced analytics.
+Additional e-commerce platforms (EDD, FluentCart, Standalone), direct payment gateways (Stripe, PayPal, Razorpay), cloud storage (S3, Google Cloud, DigitalOcean), advanced analytics.
 
 **Use cases:**
 - Freelance platforms

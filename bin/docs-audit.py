@@ -273,6 +273,87 @@ if os.path.exists(hooks_doc):
         ok("hook-citations", f"all {len(cited)} hook citations resolve to a real firing site")
 
 
+# --- 4c. removed capabilities must not still be sold ---------------------------
+# marketing/ was never scanned by this file, and that is exactly where the worst
+# claims survived: SureCart was still sold on the Pro sales page and in the
+# customer email sequences MONTHS after 1.6.0 removed it, and five wizard
+# capabilities deliberately deleted from Pro's code in 1.7.0 were still listed as
+# PRO features across five files - including the two highest-stakes surfaces the
+# product has, the upgrade page and the emails a prospect receives.
+#
+# The docs tree carried a correct disclaimer the whole time. Nobody swept the
+# marketing tree with it, because nothing checked.
+#
+# Pages that RECORD a removal are the point of the exercise, not a violation, so
+# a hit is only a failure when the surrounding text is selling rather than
+# retiring.
+RETIRED_CAPABILITIES = {
+    "surecart": "SureCart support was removed in 1.6.0",
+    "ai title": "the AI title flag was removed from Pro in 1.7.0",
+    "service template": "the templates flag was removed from Pro in 1.7.0",
+    "scheduled publishing": "the scheduled-publish flag was removed from Pro in 1.7.0",
+    "bulk image upload": "the bulk-upload flag was removed from Pro in 1.7.0",
+}
+
+# Wording that marks a mention as a removal note rather than a sales claim.
+RETIRED_OK = (
+    "removed", "no longer", "does not exist", "do not exist", "none of them",
+    "was retired", "deprecated", "not shipped", "never shipped",
+)
+
+SELLING_ROOTS = [
+    os.path.join(FREE, "marketing"),
+    os.path.join(FREE, "docs", "website"),
+]
+
+sold = 0
+scanned_selling = 0
+
+for root in SELLING_ROOTS:
+    if not os.path.isdir(root):
+        continue
+    for r, _, fs in os.walk(root):
+        for n in fs:
+            if not n.endswith((".md", ".html")):
+                continue
+            path = os.path.join(r, n)
+            rel = os.path.relpath(path, FREE)
+            scanned_selling += 1
+            try:
+                lines = open(path, errors="ignore").read().splitlines()
+            except OSError:
+                continue
+            # Judged per DOCUMENT, not per line or section. A page that says
+            # anywhere that a capability was removed is explaining it, not
+            # selling it - "What happened to SureCart?" spends a paragraph on
+            # why it cannot work, and the Upgrading section of a release note
+            # tells owners who ran it what to do instead. Both are the point.
+            #
+            # The failure this needs to catch is the opposite shape: a sales
+            # page, comparison table or marketing email that names the
+            # capability and never mentions it is gone. Those pages contain no
+            # retirement wording at all, so a whole-document rule still catches
+            # every one of them.
+            body = "\n".join(lines).lower()
+
+            for term, why in RETIRED_CAPABILITIES.items():
+                if term not in body:
+                    continue
+
+                if any(okw in body for okw in RETIRED_OK):
+                    continue
+
+                first = next(
+                    (n for n, line in enumerate(lines, 1) if term in line.lower()),
+                    0,
+                )
+                fail("retired", f"{rel}:{first} still sells '{term}' - {why}")
+                sold += 1
+
+if not sold:
+    ok("retired", f"no removed capability is still being sold ({scanned_selling} pages in marketing/ and docs/website)")
+
+
 # --- 5. stale admin paths -----------------------------------------------------
 # Both separators are in use across the docs: "Settings > X" in the customer
 # pages, "Settings -> X" (an arrow) in the architecture and QA notes. Checking

@@ -285,7 +285,7 @@ Everything you need to run a professional service marketplace:
 - No transaction fees from us
 
 **Pro Version Available** - Unlock advanced features:
-- WooCommerce, Easy Digital Downloads, FluentCart, SureCart adapters
+- WooCommerce, Easy Digital Downloads, FluentCart adapters
 - Razorpay payment gateway
 - Wallet integrations (TeraWallet, WooWallet, MyCred)
 - Advanced analytics dashboards with data export
@@ -301,7 +301,7 @@ Everything you need to run a professional service marketplace:
 ## Frequently Asked Questions
 
 ### Is WooCommerce required?
-No. WP Sell Services includes a complete built-in checkout system with Stripe, PayPal, and offline payment gateways. No WooCommerce or any other e-commerce plugin is needed. Your marketplace is fully functional out of the box for service listings, vendor management, order workflow, payments, messaging, reviews, and dispute resolution. The Pro version optionally adds WooCommerce, EDD, FluentCart, and SureCart adapters if you prefer to use an existing e-commerce setup.
+No. WP Sell Services includes a complete built-in checkout system with Stripe, PayPal, and offline payment gateways. No WooCommerce or any other e-commerce plugin is needed. Your marketplace is fully functional out of the box for service listings, vendor management, order workflow, payments, messaging, reviews, and dispute resolution. The Pro version optionally adds WooCommerce, EDD, and FluentCart adapters if you prefer to use an existing e-commerce setup.
 
 ### Can I run a multi-vendor marketplace?
 Yes. Any registered WordPress user can apply to become a vendor. You control vendor approval, set commission rates (global or per-vendor), moderate services, and oversee the entire marketplace.
@@ -310,7 +310,7 @@ Yes. Any registered WordPress user can apply to become a vendor. You control ven
 Set a global commission percentage (0-50%) in settings. When an order completes, commission is automatically calculated and split. Vendors see their available balance and request withdrawals. You can also set custom commission rates for individual vendors.
 
 ### What payment gateways are supported?
-The free version includes three built-in payment gateways: Stripe (credit cards, Apple Pay, Google Pay with 3D Secure), PayPal (PayPal Commerce Platform), and Offline payments (bank transfer, cash with proof upload). The Pro version adds Razorpay and optionally connects to WooCommerce, EDD, FluentCart, or SureCart for access to their payment gateway ecosystems.
+The free version includes three built-in payment gateways: Stripe (credit cards, Apple Pay, Google Pay with 3D Secure), PayPal (PayPal Commerce Platform), and Offline payments (bank transfer, cash with proof upload). The Pro version adds Razorpay and optionally connects to WooCommerce, EDD, or FluentCart for access to their payment gateway ecosystems.
 
 ### Can buyers post job requests?
 Yes. Buyers can post project requests with budget range, description, and deadline. Vendors browse these requests and submit custom proposals with pricing and delivery time. Buyers review proposals and accept the one they prefer.

@@ -66,7 +66,6 @@ Both plugins are architecturally solid and feature-complete at ~95%. The code qu
 | **WooCommerce** | 6 classes | Uses WC tables | N/A | Auto-detect | Order hooks |
 | **EDD** | 5 classes | Uses EDD tables | N/A | Auto-detect | Order hooks |
 | **FluentCart** | 5 classes | Uses FC tables | REST endpoints | Settings tab | Order hooks |
-| **SureCart** | 5 classes | Uses SC tables | N/A | Auto-detect | Order hooks |
 | **Razorpay** | 1 class (comprehensive) | N/A | Checkout flow | Settings section | Payment verification |
 | **Analytics** | 8 classes | Via collectors | 2 controllers | Chart.js dashboard | N/A |
 | **Wallets** | 5 classes (Manager + 4 providers) | Internal wallet table | WalletController | Auto-detect | N/A |
@@ -84,7 +83,7 @@ Both plugins are architecturally solid and feature-complete at ~95%. The code qu
 
 #### Strong Value Propositions (Users Will Pay For These)
 
-1. **WooCommerce/EDD/FluentCart/SureCart adapters** — If you already use one of these, Pro connects seamlessly. Access to hundreds of payment gateways.
+1. **WooCommerce/EDD/FluentCart adapters** — If you already use one of these, Pro connects seamlessly. Access to hundreds of payment gateways.
 
 2. **Stripe Connect (auto-payouts)** — Vendors get paid automatically when orders complete. No manual withdrawal approvals. This alone justifies Pro for serious marketplaces.
 
@@ -188,7 +187,7 @@ Based on what's actually implemented:
 ### What Pro Adds (Clear Upgrade Path)
 
 **Tier 1: Marketplace Owner** — For people running the platform
-- WooCommerce/EDD/FluentCart/SureCart adapters
+- WooCommerce/EDD/FluentCart adapters
 - Razorpay gateway
 - Analytics dashboard with Chart.js
 - Tiered commission rules

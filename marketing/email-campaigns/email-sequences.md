@@ -279,7 +279,6 @@ The free version of WP Sell Services is a complete marketplace platform. Pro ext
 Free version integrates with WooCommerce when available. Pro adds 4 alternatives:
 - Easy Digital Downloads (lightweight digital products platform)
 - FluentCart (modern, conversion-optimized checkout)
-- SureCart (cloud-hosted checkout with built-in PCI compliance)
 - Standalone mode (no e-commerce plugin required)
 
 **Direct payment gateways**
@@ -315,9 +314,9 @@ Free version stores files on your WordPress server. Pro adds cloud storage provi
 - Google Cloud Storage
 - DigitalOcean Spaces
 
-**Service wizard enhancements**
+**Service wizard limits removed**
 
-AI title suggestions, service templates, bulk image upload, direct video upload, custom fields in packages, and scheduled publishing.
+Unlimited gallery images, add-ons, FAQ entries and requirement questions per service. Free caps them at 4, 3, 5 and 5.
 
 **4 additional REST API controllers**
 
@@ -362,13 +361,13 @@ Your vendors need wallet-based earnings management
 
 **What Pro adds:**
 
-E-commerce platforms: EDD, FluentCart, SureCart, Standalone mode
+E-commerce platforms: EDD, FluentCart, Standalone mode
 Unlimited service creation limits (images, videos, add-ons, FAQs)
 Direct payment gateways: Stripe, PayPal, Razorpay, Offline
 Wallet integrations: Internal, TeraWallet, WooWallet, MyCred
 Advanced analytics dashboards with data export
 Cloud storage: Amazon S3, Google Cloud Storage, DigitalOcean Spaces
-Service wizard enhancements: AI title suggestions, templates, bulk upload
+Service wizard limits removed: unlimited gallery images, add-ons, FAQs and requirements
 4 additional REST API controllers for advanced integrations
 
 **Your data stays intact:**
@@ -406,7 +405,7 @@ Includes buyer request system (vendors submit proposals), 5-star review system, 
 
 Developer-friendly with 20 REST API controllers, 100+ hooks and filters, template override system, and batch endpoint for mobile apps.
 
-Free version works with WooCommerce. Pro version adds EDD, FluentCart, SureCart, Standalone mode, direct payment gateways (Stripe, PayPal, Razorpay), wallet integrations, advanced analytics, and cloud storage.
+Free version works with WooCommerce. Pro version adds EDD, FluentCart, Standalone mode, direct payment gateways (Stripe, PayPal, Razorpay), wallet integrations, advanced analytics, and cloud storage.
 
 Download free: [link]
 
