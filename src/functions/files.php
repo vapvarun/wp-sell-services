@@ -96,7 +96,9 @@ function wpss_get_order_files_dir(): string {
 	$is_outside_root = 0 !== strpos( $outside, trailingslashit( ABSPATH ) );
 
 	if ( $is_outside_root && ( is_dir( $outside ) || wp_mkdir_p( $outside ) ) && wp_is_writable( $outside ) ) {
-		wpss_guard_files_dir( $outside );
+		// No guard file here on purpose: nothing serves this directory, so a
+		// deny rule would be decoration. The guards below exist because the
+		// fallback IS served.
 		return $outside;
 	}
 
@@ -372,6 +374,8 @@ function wpss_get_order_file_url( array $record ): string {
 function wpss_find_order_file( int $order_id, string $file_id ): ?array {
 	global $wpdb;
 
+	// Both tables, because the endpoint is handed an id and nothing else - the
+	// link in an email does not say which kind of file it points at.
 	$sets = array(
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->get_col( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_deliveries WHERE order_id = %d", $order_id ) ),

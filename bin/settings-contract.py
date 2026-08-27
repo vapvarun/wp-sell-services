@@ -25,6 +25,7 @@ import re
 import sys
 
 QUIET = "--quiet" in sys.argv
+LEADS = "--leads" in sys.argv  # also print the lower-confidence list
 FREE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PRO = os.path.join(os.path.dirname(FREE), "wp-sell-services-pro")
 
@@ -166,10 +167,15 @@ def main():
         for key in no_reader:
             print(f"  NO READER   {key:<32} written at {sorted(writes[key])[0]}")
 
-    if likely:
+    # Behind a flag. Printing 29 unverified leads on every run is how a check
+    # earns a reputation for noise and stops being read - and the three
+    # CONFIRMED lines are the ones worth acting on today.
+    if likely and LEADS:
         print("\nLIKELY - read as $settings['key'], verify the write shape")
         for key in likely:
             print(f"  NO WRITER   {key:<32} read at {sorted(reads[key])[0]}")
+    elif likely and not QUIET:
+        print(f"\n  {len(likely)} lower-confidence lead(s); --leads to list them.")
 
     hard = len(confirmed) + len(no_reader)
 

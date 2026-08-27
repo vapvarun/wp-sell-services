@@ -412,7 +412,55 @@ class Admin {
 
 		// Demo payments notice. Deliberately NOT dismissible - see the method.
 		add_action( 'admin_notices', array( $this, 'demo_payments_notice' ) );
+		add_action( 'admin_notices', array( $this, 'order_files_public_notice' ) );
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
+	}
+
+	/**
+	 * Warn when order files are reachable straight from the browser.
+	 *
+	 * Order files are written outside the document root wherever the parent of
+	 * ABSPATH is writable, which is most hosts. Where it is not - shared hosting,
+	 * typically - they fall back to a guarded directory inside uploads, and the
+	 * guard is a .htaccess that Apache reads and nginx ignores entirely.
+	 *
+	 * That is not hypothetical: the first host this was tested against served a
+	 * file from that directory at HTTP 200 with its contents, deny file present.
+	 * The paths are guessable (order id, then filename), so on such a host a
+	 * buyer's brief is public and nothing says so.
+	 *
+	 * wpss_order_files_are_public() answers by writing a canary and asking the
+	 * web server for it - the only way to know, since whether a deny rule is
+	 * honoured depends on configuration PHP cannot read. It caches for a week,
+	 * so this costs one HTTP round trip per week per site.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return void
+	 */
+	public function order_files_public_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'wpss_order_files_are_public' ) ) {
+			return;
+		}
+
+		// Only on our own screens: this is an owner's problem to fix, not
+		// something to shout about while they are writing a post.
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+			return;
+		}
+
+		if ( true !== wpss_order_files_are_public() ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-error"><p><strong>%s</strong> %s</p><p>%s</p></div>',
+			esc_html__( 'Order files can be downloaded by anyone.', 'wp-sell-services' ),
+			esc_html__( 'This server could not store them outside the web root, and it is ignoring the deny rule we wrote alongside them. Requirement briefs and delivered work are readable by anyone who guesses the address.', 'wp-sell-services' ),
+			esc_html__( 'Ask your host to block direct access to the wpss-order-files directory, or to make the folder above WordPress writable so the files can be moved out of the web root entirely.', 'wp-sell-services' )
+		);
 	}
 
 	/**
