@@ -675,6 +675,10 @@ class PayPalGateway implements PaymentGatewayInterface {
 	public function ajax_create_order(): void {
 		check_ajax_referer( 'wpss_paypal', 'nonce' );
 
+		// A disabled gateway does not start new money. Refunds and webhooks
+		// stay registered for historical orders; this does not.
+		wpss_gateway_require_enabled( $this );
+
 		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
 			return; // Explicit return for defensive coding.
@@ -827,6 +831,10 @@ class PayPalGateway implements PaymentGatewayInterface {
 		// Handle both GET (return URL) and POST (AJAX).
 		$nonce           = sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$paypal_order_id = sanitize_text_field( wp_unslash( $_REQUEST['token'] ?? $_REQUEST['paypal_order_id'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		// A disabled gateway does not start new money. Refunds and webhooks
+		// stay registered for historical orders; this does not.
+		wpss_gateway_require_enabled( $this );
 
 		if ( ! wp_verify_nonce( $nonce, 'wpss_paypal_capture' ) && ! wp_verify_nonce( $nonce, 'wpss_paypal' ) ) {
 			if ( wp_doing_ajax() ) {

@@ -534,6 +534,10 @@ class OfflineGateway implements PaymentGatewayInterface {
 			return;
 		}
 
+		// A disabled gateway does not start new money. Refunds and webhooks
+		// stay registered for historical orders; this does not.
+		wpss_gateway_require_enabled( $this );
+
 		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
 			return;
