@@ -262,6 +262,35 @@ class OrderService {
 		$table = $wpdb->prefix . 'wpss_orders';
 		$total = (float) $order->total;
 
+		// A partial refund with no usable amount is refused, not promoted.
+		//
+		// This clamp reads `null`/0/over-total as "refund everything", which is
+		// right for a FULL refund - null is how callers say "the total". For a
+		// partial it was catastrophic: the dispute screen never collected an
+		// amount, passed 0.0, and every Partial Refund returned the buyer 100%
+		// of the order while recording it as partially_refunded - and clawed
+		// back the vendor's whole earning with it (Basecamp 10240143362).
+		//
+		// Refusing here rather than only fixing the dispute form is deliberate:
+		// this is the one place every refund path routes through, so no future
+		// caller can reintroduce it. A partial refund of nothing is never a real
+		// instruction, and one for the full total is a full refund - the caller
+		// should say so, rather than leave a row that claims both.
+		if ( ServiceOrder::STATUS_PARTIALLY_REFUNDED === $status
+			&& ( null === $amount || $amount <= 0 || $amount >= $total ) ) {
+			wpss_log(
+				sprintf(
+					'Refused a partial refund on order %d: amount %s is not between 0 and the order total %s.',
+					$order_id,
+					null === $amount ? 'null' : (string) $amount,
+					(string) $total
+				),
+				'error'
+			);
+
+			return false;
+		}
+
 		// A partial larger than the order is clamped rather than trusted — it
 		// would otherwise claw back more from the vendor than they ever earned.
 		// This clamp used to live in DisputeService and applied to disputes

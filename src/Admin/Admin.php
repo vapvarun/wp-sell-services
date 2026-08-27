@@ -709,7 +709,43 @@ class Admin {
 				// If resolving, require a resolution type.
 				wp_die( esc_html__( 'Please select a resolution type when resolving a dispute.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
 			}
-			$result = $dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id() );
+
+			// Cast IS the sanitisation for a money field - there is no
+			// sanitize_* that returns a float. Nonce verified above. Same
+			// pattern as OrderScreen's refund box.
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$refund_amount = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
+
+			// A Partial Refund with no amount used to reach resolve() as 0.0,
+			// which apply_refund_status() read as "refund everything" - so the
+			// buyer got 100% back on an order recorded as partially refunded
+			// (Basecamp 10240143362). Validated here so the admin gets a
+			// sentence rather than a silently refused transition.
+			if ( DisputeService::RESOLUTION_PARTIAL_REFUND === $resolution ) {
+				$dispute = $dispute_service->get( $dispute_id );
+				$order   = $dispute ? wpss_get_order( (int) $dispute->order_id ) : null;
+				$total   = $order ? (float) $order->total : 0.0;
+
+				if ( $refund_amount <= 0 ) {
+					wp_die( esc_html__( 'Enter the amount to refund. A partial refund needs a number greater than zero.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+				}
+
+				if ( $total > 0 && $refund_amount >= $total ) {
+					wp_die(
+						esc_html(
+							sprintf(
+								/* translators: %s: formatted order total. */
+								__( 'A partial refund must be less than the %s order total. Choose Full Refund to return all of it.', 'wp-sell-services' ),
+								wpss_format_price( $total, $order->currency ?? '' )
+							)
+						),
+						'',
+						array( 'back_link' => true )
+					);
+				}
+			}
+
+			$result = $dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id(), $refund_amount );
 		} else {
 			$result = $dispute_service->update_status( $dispute_id, $status, $notes );
 
@@ -2238,6 +2274,98 @@ class Admin {
 	}
 
 	/**
+	 * Resolution type + refund amount, for the dispute resolution forms.
+	 *
+	 * ONE renderer for both. The detail screen carries two of these forms and
+	 * they were byte-near copies, which is how the refund-amount field could be
+	 * added to one and missed on the other.
+	 *
+	 * The amount field is the fix for Basecamp 10240143362: there was nowhere to
+	 * type a partial refund, so Admin passed 0.0 and every Partial Refund
+	 * returned the buyer the entire order total. Shown only for Partial Refund,
+	 * because that is the one resolution where the number is not implied.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param object               $dispute     Dispute row.
+	 * @param object|null          $order       Order the dispute is on, when resolvable.
+	 * @param array<string,string> $resolutions Resolution type => label.
+	 * @param string               $id          Unique id prefix for this form's fields.
+	 * @return void
+	 */
+	private function render_dispute_resolution_fields( object $dispute, ?object $order, array $resolutions, string $id ): void {
+		$selected = (string) ( $dispute->resolution ?? '' );
+		$total    = $order ? (float) $order->total : 0.0;
+		$decimals = function_exists( 'wpss_get_currency_decimals' ) ? wpss_get_currency_decimals( $order->currency ?? '' ) : 2;
+		$step     = $decimals > 0 ? '0.' . str_repeat( '0', $decimals - 1 ) . '1' : '1';
+		$existing = isset( $dispute->refund_amount ) ? (float) $dispute->refund_amount : 0.0;
+		$partial  = DisputeService::RESOLUTION_PARTIAL_REFUND;
+		?>
+		<p>
+			<label for="<?php echo esc_attr( $id ); ?>"><strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong></label><br>
+			<select name="resolution" id="<?php echo esc_attr( $id ); ?>" class="wpss-dispute-resolution" style="width: 100%;">
+				<option value=""><?php esc_html_e( '— Select Resolution —', 'wp-sell-services' ); ?></option>
+				<?php foreach ( $resolutions as $value => $label ) : ?>
+					<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $selected, $value ); ?>>
+						<?php echo esc_html( $label ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+		</p>
+
+		<p class="wpss-dispute-refund-amount" data-wpss-partial="<?php echo esc_attr( $partial ); ?>"
+			style="<?php echo $partial === $selected ? '' : 'display:none;'; ?>">
+			<label for="<?php echo esc_attr( $id ); ?>_amount">
+				<strong><?php esc_html_e( 'Refund Amount:', 'wp-sell-services' ); ?></strong>
+			</label><br>
+			<input
+				type="number"
+				name="refund_amount"
+				id="<?php echo esc_attr( $id ); ?>_amount"
+				value="<?php echo $existing > 0 ? esc_attr( (string) $existing ) : ''; ?>"
+				min="<?php echo esc_attr( $step ); ?>"
+				max="<?php echo esc_attr( (string) $total ); ?>"
+				step="<?php echo esc_attr( $step ); ?>"
+				style="width: 100%;"
+			>
+			<span class="description">
+				<?php
+				if ( $order ) {
+					printf(
+						/* translators: %s: formatted order total. */
+						esc_html__( 'How much of the %s order total goes back to the buyer. The vendor keeps the rest.', 'wp-sell-services' ),
+						esc_html( wpss_format_price( $total, $order->currency ?? '' ) )
+					);
+				} else {
+					esc_html_e( 'How much goes back to the buyer. The vendor keeps the rest.', 'wp-sell-services' );
+				}
+				?>
+			</span>
+		</p>
+
+		<script>
+			( function () {
+				var select = document.getElementById( <?php echo wp_json_encode( $id ); ?> );
+
+				if ( ! select ) {
+					return;
+				}
+
+				var row = select.closest( 'form' ).querySelector( '.wpss-dispute-refund-amount' );
+
+				if ( ! row ) {
+					return;
+				}
+
+				select.addEventListener( 'change', function () {
+					row.style.display = select.value === row.dataset.wpssPartial ? '' : 'none';
+				} );
+			}() );
+		</script>
+		<?php
+	}
+
+	/**
 	 * Render dispute detail view.
 	 *
 	 * @param int $dispute_id Dispute ID.
@@ -2468,17 +2596,7 @@ class Admin {
 									</p>
 
 									<div id="wpss-resolution-fields" style="<?php echo 'resolved' === $dispute->status ? '' : 'display:none;'; ?>">
-										<p>
-											<label for="resolution"><strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong></label><br>
-											<select name="resolution" id="resolution" style="width: 100%;">
-												<option value=""><?php esc_html_e( '— Select Resolution —', 'wp-sell-services' ); ?></option>
-												<?php foreach ( $resolutions as $value => $label ) : ?>
-													<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $dispute->resolution ?? '', $value ); ?>>
-														<?php echo esc_html( $label ); ?>
-													</option>
-												<?php endforeach; ?>
-											</select>
-										</p>
+										<?php $this->render_dispute_resolution_fields( $dispute, $order, $resolutions, 'resolution' ); ?>
 									</div>
 
 									<p>
@@ -2520,17 +2638,7 @@ class Admin {
 										<input type="hidden" name="dispute_id" value="<?php echo esc_attr( (string) $dispute_id ); ?>">
 										<input type="hidden" name="dispute_status" value="resolved">
 
-										<p>
-											<label for="resolution_update"><strong><?php esc_html_e( 'Resolution Type:', 'wp-sell-services' ); ?></strong></label><br>
-											<select name="resolution" id="resolution_update" style="width: 100%;">
-												<option value=""><?php esc_html_e( '-- Select Resolution --', 'wp-sell-services' ); ?></option>
-												<?php foreach ( $resolutions as $value => $label ) : ?>
-													<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $dispute->resolution ?? '', $value ); ?>>
-														<?php echo esc_html( $label ); ?>
-													</option>
-												<?php endforeach; ?>
-											</select>
-										</p>
+										<?php $this->render_dispute_resolution_fields( $dispute, $order, $resolutions, 'resolution_update' ); ?>
 
 										<p>
 											<label for="admin_notes_update"><strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong></label><br>
