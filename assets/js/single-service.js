@@ -664,6 +664,16 @@
                 data: data,
                 success: function(response) {
                     if (response.success) {
+                        // A logged-out buyer has no cart. The server hands back
+                        // the checkout URL carrying their selection so the
+                        // account step happens on our checkout screen instead of
+                        // wp-login.php — go straight there rather than flashing
+                        // "Added" at someone whose cart does not exist.
+                        if (response.data && response.data.guest_checkout && response.data.checkout_url) {
+                            window.location.href = response.data.checkout_url;
+                            return;
+                        }
+
                         $btn.text(wpssService.i18n.added);
 
                         // Store checkout URL from response (includes service_id).

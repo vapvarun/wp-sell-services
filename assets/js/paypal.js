@@ -96,6 +96,22 @@
 				createOrder: async () => {
 					this.hideError();
 
+					// Same reason as stripe.js: none of the wpss_paypal_* AJAX
+					// actions register a nopriv handler, so a logged-out buyer on
+					// an account-at-checkout site would get a bare 0 back. The
+					// generic checkout handler stands down for PayPal
+					// (data-wpss-own-submit) and publishes its account step, so we
+					// await that one instead of writing a second. No-op when the
+					// buyer is already signed in.
+					if (typeof window.wpssEnsureCheckoutAccount === 'function') {
+						try {
+							await window.wpssEnsureCheckoutAccount();
+						} catch (e) {
+							// The account step has already shown the buyer why.
+							return Promise.reject(new Error('wpss_account_required'));
+						}
+					}
+
 					const amount = parseFloat(document.querySelector('input[name="amount"]')?.value || 0);
 					const currency = document.querySelector('input[name="currency"]')?.value || 'USD';
 					const serviceId = document.querySelector('input[name="service_id"]')?.value || 0;

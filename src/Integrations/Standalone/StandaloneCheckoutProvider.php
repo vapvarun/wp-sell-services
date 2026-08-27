@@ -1323,6 +1323,80 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						noticeEl.style.display = 'none';
 					}
 
+					/*
+					 * Create the buyer's account BEFORE paying, when they are
+					 * logged out and the owner has enabled account-at-checkout.
+					 *
+					 * The order matters. Every gateway handler requires a
+					 * logged-in user and the order row needs a real customer_id,
+					 * so the account has to exist first — not after a successful
+					 * charge, which would leave money taken against nobody if
+					 * creation then failed.
+					 *
+					 * The fresh nonce also matters: WordPress nonces are bound to
+					 * the user, so the checkout nonce rendered for a logged-out
+					 * visitor stops verifying the instant they are signed in.
+					 * Without swapping it, the payment request would fail its own
+					 * security check with the account already created.
+					 */
+					function ensureAccount() {
+						if (!needsAccount) {
+							return Promise.resolve();
+						}
+
+						var accountData = new FormData();
+						accountData.append('action', 'wpss_checkout_create_account');
+						accountData.append('nonce', form.querySelector('[name="wpss_checkout_nonce"]').value);
+						accountData.append('checkout_url', window.location.href);
+
+						['billing_first_name', 'billing_last_name', 'billing_email'].forEach(function(name) {
+							var field = form.querySelector('[name="' + name + '"]');
+							accountData.append(name, field ? field.value : '');
+						});
+
+						return fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
+							method: 'POST',
+							body: accountData,
+							credentials: 'same-origin'
+						})
+						.then(function(response) { return response.json(); })
+						.then(function(data) {
+							if (data.success && data.data && data.data.checkout_nonce) {
+								form.querySelector('[name="wpss_checkout_nonce"]').value = data.data.checkout_nonce;
+								needsAccount = false;
+								return;
+							}
+
+							var payload = data.data || {};
+
+							if (payload.code === 'account_exists' && payload.login_url) {
+								// A link, not a redirect: bouncing the buyer away
+								// from a filled-in checkout without asking is worse
+								// than telling them what to do next.
+								noticeEl.className = 'wpss-notice wpss-notice--error';
+								noticeEl.textContent = payload.message + ' ';
+								var link = document.createElement('a');
+								link.href = payload.login_url;
+								link.textContent = '<?php echo esc_js( __( 'Log in', 'wp-sell-services' ) ); ?>';
+								noticeEl.appendChild(link);
+								noticeEl.style.display = 'flex';
+								noticeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+								throw new Error('wpss_account_handled');
+							}
+
+							showNotice(payload.message || '<?php echo esc_js( __( 'We could not create your account. Please check your details.', 'wp-sell-services' ) ); ?>');
+							throw new Error('wpss_account_handled');
+						});
+					}
+
+					// Published so gateways that own their own submit (Stripe,
+					// PayPal) can await the same account step instead of each
+					// re-implementing it. Assigned at IIFE scope, not inside the
+					// submit handler — that handler returns early for exactly
+					// those gateways, so publishing from in there would define the
+					// seam only for the buyers who never need it.
+					window.wpssEnsureCheckoutAccount = ensureAccount;
+
 					// Show/hide gateway forms + active state on radio change.
 					document.querySelectorAll('input[name="payment_method"]').forEach(function(radio) {
 						radio.addEventListener('change', function() {
@@ -1369,6 +1443,14 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						// the PSP before an order is created, so this generic handler
 						// stands down — otherwise it races them and posts an
 						// unconfirmed payment intent (card never charged).
+						//
+						// Standing down does NOT mean skipping the account step. A
+						// logged-out buyer paying by Stripe or PayPal still needs an
+						// account before their gateway posts, so the seam is
+						// published on window and those scripts await it themselves
+						// (see WPSS.ensureCheckoutAccount below). Returning here
+						// without it is what left guest + Stripe dead-ending on a
+						// handler that has no nopriv registration.
 						var ownSubmit = form.querySelector('.wpss-gateway-form[data-gateway="' + paymentMethod.value + '"] [data-wpss-own-submit], [data-gateway="' + paymentMethod.value + '"][data-wpss-own-submit]');
 						if (ownSubmit) {
 							return;
@@ -1380,72 +1462,6 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						function restoreButton() {
 							submitBtn.disabled = false;
 							submitBtnText.textContent = originalText;
-						}
-
-						/*
-						 * Create the buyer's account BEFORE paying, when they are
-						 * logged out and the owner has enabled account-at-checkout.
-						 *
-						 * The order matters. Every gateway handler requires a
-						 * logged-in user and the order row needs a real customer_id,
-						 * so the account has to exist first — not after a successful
-						 * charge, which would leave money taken against nobody if
-						 * creation then failed.
-						 *
-						 * The fresh nonce also matters: WordPress nonces are bound to
-						 * the user, so the checkout nonce rendered for a logged-out
-						 * visitor stops verifying the instant they are signed in.
-						 * Without swapping it, the payment request would fail its own
-						 * security check with the account already created.
-						 */
-						function ensureAccount() {
-							if (!needsAccount) {
-								return Promise.resolve();
-							}
-
-							var accountData = new FormData();
-							accountData.append('action', 'wpss_checkout_create_account');
-							accountData.append('nonce', form.querySelector('[name="wpss_checkout_nonce"]').value);
-							accountData.append('checkout_url', window.location.href);
-
-							['billing_first_name', 'billing_last_name', 'billing_email'].forEach(function(name) {
-								var field = form.querySelector('[name="' + name + '"]');
-								accountData.append(name, field ? field.value : '');
-							});
-
-							return fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
-								method: 'POST',
-								body: accountData,
-								credentials: 'same-origin'
-							})
-							.then(function(response) { return response.json(); })
-							.then(function(data) {
-								if (data.success && data.data && data.data.checkout_nonce) {
-									form.querySelector('[name="wpss_checkout_nonce"]').value = data.data.checkout_nonce;
-									needsAccount = false;
-									return;
-								}
-
-								var payload = data.data || {};
-
-								if (payload.code === 'account_exists' && payload.login_url) {
-									// A link, not a redirect: bouncing the buyer away
-									// from a filled-in checkout without asking is worse
-									// than telling them what to do next.
-									noticeEl.className = 'wpss-notice wpss-notice--error';
-									noticeEl.textContent = payload.message + ' ';
-									var link = document.createElement('a');
-									link.href = payload.login_url;
-									link.textContent = '<?php echo esc_js( __( 'Log in', 'wp-sell-services' ) ); ?>';
-									noticeEl.appendChild(link);
-									noticeEl.style.display = 'flex';
-									noticeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-									throw new Error('wpss_account_handled');
-								}
-
-								showNotice(payload.message || '<?php echo esc_js( __( 'We could not create your account. Please check your details.', 'wp-sell-services' ) ); ?>');
-								throw new Error('wpss_account_handled');
-							});
 						}
 
 						ensureAccount().then(function() {
