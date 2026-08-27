@@ -18,9 +18,15 @@ echo "Running pre-commit checks..."
 # Get list of staged PHP files
 STAGED_PHP_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.php$' || true)
 
+# No early exit. The docs audit at the end of this file reads BOTH sides - a
+# hook citation breaks when the PHP moves, and a removed capability is caught in
+# a .md - so bailing out here skipped exactly the commits that check exists for.
+# It let through a commit of 18 stale citations this hook was meant to refuse.
+#
+# The PHP loops below iterate $STAGED_PHP_FILES, so they no-op on their own when
+# nothing PHP is staged. Nothing needs guarding.
 if [ -z "$STAGED_PHP_FILES" ]; then
-    echo "No PHP files staged, skipping checks."
-    exit 0
+    echo "No PHP files staged; running the docs checks only."
 fi
 
 echo "Checking ${#STAGED_PHP_FILES[@]} PHP file(s)..."

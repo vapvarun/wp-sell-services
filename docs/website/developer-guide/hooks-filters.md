@@ -144,22 +144,22 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_offline_multi_orders_created` | `array $order_ids, int $customer_id` | `src/Integrations/Gateways/OfflineGateway.php:650` |
-| `wpss_offline_order_created` | `int $order_id, object $order` | `src/Integrations/Gateways/OfflineGateway.php:600` |
-| `wpss_offline_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Gateways/OfflineGateway.php:819` |
+| `wpss_offline_multi_orders_created` | `array $order_ids, int $customer_id` | `src/Integrations/Gateways/OfflineGateway.php:654` |
+| `wpss_offline_order_created` | `int $order_id, object $order` | `src/Integrations/Gateways/OfflineGateway.php:604` |
+| `wpss_offline_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Gateways/OfflineGateway.php:823` |
 
 ### Stripe Gateway
 
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_stripe_webhook_received` | `string $event_type, object $data, string $payload` | `src/Integrations/Stripe/StripeGateway.php:646` |
-| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1484` |
+| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1492` |
 
 ### PayPal Gateway
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_paypal_refund_processed` | `string $url, array $resource` | `src/Integrations/PayPal/PayPalGateway.php:1087` |
+| `wpss_paypal_refund_processed` | `string $url, array $resource` | `src/Integrations/PayPal/PayPalGateway.php:1095` |
 
 ### Payment REST API
 
@@ -252,9 +252,9 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_commission_recorded` | `int $order_id, array $commission, int $vendor_id` | `src/Services/CommissionService.php:255` |
-| `wpss_withdrawal_requested` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:693` |
-| `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `src/Services/EarningsService.php:495` |
-| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:1314` |
+| `wpss_withdrawal_requested` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:696` |
+| `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `src/Services/EarningsService.php:498` |
+| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:1317` |
 | `wpss_tip_order_created` | `int $tip_order_id, int $parent_order_id, int $customer_id, float $amount` | `TippingService.php:280` |
 | `wpss_tip_sent` | `int $tip_txn_id, int $parent_order_id, int $vendor_id, int $customer_id, float $vendor_earnings, string $vendor_notes` | `TippingService.php:482` |
 
@@ -345,7 +345,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2097` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2145` |
 | `wpss_admin_requirements_submitted` | `int $order_id, array $field_data` | `src/Admin/OrderScreen.php:316` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1914` |
 
@@ -656,17 +656,17 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:56` |
-| `wpss_currency` | `$currency` | `src/functions/money.php:527` |
+| `wpss_currency` | `$currency` | `src/functions/money.php:534` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/misc.php:55` |
 | `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:105` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:92` |
-| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:562` |
-| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:589` |
-| `wpss_currencies` | `$currencies` | `src/functions/money.php:1384` |
+| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:569` |
+| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:596` |
+| `wpss_currencies` | `$currencies` | `src/functions/money.php:1391` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:126` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:146` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:410` |
-| `wpss_wallet_manager` | `null` | `src/functions/money.php:1406` |
+| `wpss_wallet_manager` | `null` | `src/functions/money.php:1413` |
 
 ### Currency System Filters (1.2.1)
 
@@ -674,9 +674,9 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1363` |
+| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1370` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:160` |
-| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:488` |
+| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:495` |
 | `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3723` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:835` |
 
@@ -765,7 +765,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:112` |
 | `wpss_delivery_allowed_file_types` | `$types` | `src/Services/DeliveryService.php:359` |
 | `wpss_requirements_allowed_file_types` | `$types` | `src/Services/RequirementsService.php:493` |
-| `wpss_withdrawal_methods` | `$methods` | `src/Services/EarningsService.php:976` |
+| `wpss_withdrawal_methods` | `$methods` | `src/Services/EarningsService.php:979` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:522` |
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:816` |
@@ -897,7 +897,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `src/Integrations/Razorpay/RazorpayGateway.php:855` |
+| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `src/Integrations/Razorpay/RazorpayGateway.php:863` |
 
 ### Stripe Connect Actions
 
