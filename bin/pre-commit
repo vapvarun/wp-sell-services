@@ -58,7 +58,10 @@ echo "=== Model Consistency Check ==="
 FROM_ROW_FILES=""
 for FILE in $STAGED_PHP_FILES; do
     if [ -f "$FILE" ]; then
-        if grep -q "from_row\s*(" "$FILE" 2>/dev/null; then
+        # Tokenise rather than grep: this check blocked a commit whose only
+        # "from_row" was the word inside a code comment. A gate that fails on
+        # prose gets bypassed with --no-verify, which costs more than it saves.
+        if php -r '$c=0; foreach (token_get_all(file_get_contents($argv[1])) as $t) { if (is_array($t) && T_STRING === $t[0] && "from_row" === $t[1]) { $c++; } } exit($c > 0 ? 0 : 1);' "$FILE" 2>/dev/null; then
             FROM_ROW_FILES="$FROM_ROW_FILES $FILE"
         fi
     fi
@@ -68,7 +71,7 @@ if [ -n "$FROM_ROW_FILES" ]; then
     echo "❌ Found deprecated from_row() usage in:"
     for FILE in $FROM_ROW_FILES; do
         echo "   - $FILE"
-        grep -n "from_row\s*(" "$FILE" | head -3
+        grep -n "from_row\s*(" "$FILE" | head -3   # location hint only
     done
     echo ""
     echo "Use from_db() instead of from_row()"

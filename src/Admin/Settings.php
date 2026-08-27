@@ -686,8 +686,9 @@ class Settings {
 		);
 
 		// Wallet provider lives as a standalone option (single canonical key
-		// read by free Plugin::get_active_wallet_provider() and Pro's
-		// WalletManager — Basecamp #9985173976).
+		// read by Pro's WalletManager and this select — Basecamp #9985173976).
+		// Free has no reader: the free plugin's own accessor was a second copy
+		// of the same fall-through with zero callers, deleted in 1.7.0.
 		register_setting(
 			'wpss_payouts',
 			'wpss_wallet_provider',

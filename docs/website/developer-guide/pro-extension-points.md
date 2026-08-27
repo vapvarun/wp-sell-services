@@ -52,12 +52,19 @@ See [Tiered Commission Rules](../earnings-wallet/tiered-commission.md).
 | Hook | Parameters |
 |------|-----------|
 | `wpss_wallet_providers` | `array $providers` |
-| `wpss_wallet_credited` | `int $user_id, float $amount, string $description, string $provider_id` |
-| `wpss_wallet_debited` | `int $user_id, float $amount, string $description, string $provider_id` |
-| `wpss_vendor_payout_processed` | `int $order_id, int $vendor_id, float $amount` |
 
 Register `wpss_wallet_providers` to add your own wallet backend alongside the
 built-in Internal Wallet, TeraWallet, WooWallet, and MyCred providers.
+
+The provider layer is read-only. It answers what a vendor holds; it does not
+move money. Earnings are credited by the free plugin's `CommissionService` on
+`wpss_order_paid`, and withdrawals are debited by its `EarningsService` - hook
+those if you need to react to a balance change.
+
+`wpss_wallet_credited`, `wpss_wallet_debited` and `wpss_vendor_payout_processed`
+were removed in 1.7.0 along with the payout path that fired them. That path was
+gated on an option nothing ever wrote, so the three actions never fired on any
+install and nothing can have been listening.
 
 ## Storage
 

@@ -347,7 +347,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 |------|-----------|------|
 | `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2145` |
 | `wpss_admin_requirements_submitted` | `int $order_id, array $field_data` | `src/Admin/OrderScreen.php:316` |
-| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1914` |
+| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1915` |
 
 ### Admin Filters
 
@@ -625,7 +625,7 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | `wpss_addon_updated` | `int $addon_id, array $update_data` | `src/Services/ServiceAddonService.php:231` |
 | `wpss_addon_deleted` | `int $addon_id, object $addon` | `src/Services/ServiceAddonService.php:355` |
 | `wpss_settings_tab_{tab}` | *(none)* | `Settings.php:985` |
-| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2042` |
+| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2043` |
 
 ## Filters
 
@@ -677,7 +677,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1370` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:160` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:495` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3723` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3724` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:835` |
 
 **`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
@@ -887,9 +887,6 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_wallet_credited` | `int $user_id, float $amount, string $description, string $provider_id` | `src/Integrations/Wallets/WalletManager.php:261` |
-| `wpss_wallet_debited` | `int $user_id, float $amount, string $description, string $provider_id` | `src/Integrations/Wallets/WalletManager.php:300` |
-| `wpss_vendor_payout_processed` | `int $order_id, int $vendor_id, float $amount` | `src/Integrations/Wallets/WalletManager.php:431` |
 | `wpss_terawallet_recharged` | `int $transaction_id, float $amount` | `TeraWalletProvider.php:203` |
 | `wpss_mycred_balance_changed` | `int $user_id, float $amount, string $reference` | `MyCredProvider.php:253` |
 

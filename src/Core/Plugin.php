@@ -2950,25 +2950,6 @@ final class Plugin {
 	}
 
 	/**
-	 * Get active wallet provider.
-	 *
-	 * Returns the wallet provider configured in settings, or null if none.
-	 *
-	 * @since 1.1.0
-	 * @return object|null
-	 */
-	public function get_active_wallet_provider(): ?object {
-		$active_id = get_option( 'wpss_wallet_provider', '' );
-
-		if ( empty( $active_id ) || ! isset( $this->wallet_providers[ $active_id ] ) ) {
-			// Return first available provider if configured one not found.
-			return ! empty( $this->wallet_providers ) ? reset( $this->wallet_providers ) : null;
-		}
-
-		return $this->wallet_providers[ $active_id ];
-	}
-
-	/**
 	 * Get registered storage providers.
 	 *
 	 * @since 1.1.0
