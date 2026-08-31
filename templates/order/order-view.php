@@ -116,9 +116,27 @@ do_action( 'wpss_before_order_view', $order );
 <div class="wpss-order-view">
 	<!-- Header with Back Button -->
 	<div class="wpss-order-view__header">
-		<a href="<?php echo esc_url( wpss_get_dashboard_url( 'orders' ) ); ?>" class="wpss-order-view__back">
+		<?php
+		/*
+		 * Back to where they came from.
+		 *
+		 * This sent everyone to the buyer's My Orders, so a seller viewing a
+		 * sale was returned to a list their order was not in (Basecamp
+		 * 10254444118). $is_vendor was already resolved above; the link simply
+		 * was not using it.
+		 *
+		 * A dual-role member viewing an order they BOUGHT is a customer here,
+		 * so the customer check wins - $is_vendor is only true when they are
+		 * the seller on this order.
+		 */
+		$back_section = ( $is_vendor && ! $is_customer ) ? 'sales' : 'orders';
+		$back_label   = 'sales' === $back_section
+			? __( 'Back to Sales Orders', 'wp-sell-services' )
+			: __( 'Back to Orders', 'wp-sell-services' );
+		?>
+		<a href="<?php echo esc_url( wpss_get_dashboard_url( $back_section ) ); ?>" class="wpss-order-view__back">
 			<i data-lucide="arrow-left" class="wpss-icon" aria-hidden="true"></i>
-			<?php esc_html_e( 'Back to Orders', 'wp-sell-services' ); ?>
+			<?php echo esc_html( $back_label ); ?>
 		</a>
 	</div>
 
@@ -909,6 +927,99 @@ do_action( 'wpss_before_order_view', $order );
 						</div>
 					</div>
 				<?php endforeach; ?>
+
+				<?php
+				/*
+				 * Anything the buyer submitted that no configured question claims.
+				 *
+				 * The loop above walks the SERVICE's questions and looks each
+				 * answer up by question text. A service with no configured
+				 * questions therefore rendered nothing at all, even though the
+				 * buyer had written a brief and the row was sitting in
+				 * field_data - so the vendor opened the order and could not read
+				 * what they had been asked to build (Basecamp 10254444197).
+				 *
+				 * Keying answers by question text has a second failure with the
+				 * same shape: edit or delete a question after submission and its
+				 * answer silently disappears too. Both are covered by rendering
+				 * whatever is left over rather than by special-casing
+				 * 'description'.
+				 */
+				$rendered_keys = array();
+				foreach ( $service_requirements as $requirement ) {
+					$rendered_keys[] = (string) ( $requirement['question'] ?? '' );
+				}
+
+				$orphan_answers = array();
+				foreach ( (array) $submitted_data as $key => $value ) {
+					if ( in_array( (string) $key, $rendered_keys, true ) ) {
+						continue;
+					}
+					if ( '' === trim( (string) ( is_scalar( $value ) ? $value : wp_json_encode( $value ) ) ) ) {
+						continue;
+					}
+					$orphan_answers[ $key ] = $value;
+				}
+				?>
+
+				<?php foreach ( $orphan_answers as $orphan_key => $orphan_value ) : ?>
+					<?php
+					// 'description' is the freeform brief the form always offers,
+					// so it gets a real label rather than its raw key.
+					$orphan_label = 'description' === $orphan_key
+						? __( 'What the buyer asked for', 'wp-sell-services' )
+						: ucfirst( str_replace( array( '_', '-' ), ' ', (string) $orphan_key ) );
+
+					$orphan_text = is_scalar( $orphan_value )
+						? (string) $orphan_value
+						: wp_json_encode( $orphan_value );
+
+					$orphan_long = strlen( $orphan_text ) > 300;
+					?>
+					<div class="wpss-requirement-view <?php echo $orphan_long ? 'wpss-requirement-view--expandable' : ''; ?>">
+						<h4 class="wpss-requirement-view__question"><?php echo esc_html( $orphan_label ); ?></h4>
+						<div class="wpss-requirement-view__answer <?php echo $orphan_long ? 'wpss-requirement-view__answer--collapsed' : ''; ?>">
+							<?php echo wp_kses_post( wpautop( $orphan_text ) ); ?>
+						</div>
+					</div>
+				<?php endforeach; ?>
+
+				<?php
+				// Attachments the buyer uploaded that no configured file question
+				// claims. Same reasoning: a delivered brief must not vanish
+				// because the question it answered was removed.
+				$orphan_attachments = array();
+				foreach ( (array) $submitted_attachments as $att ) {
+					if ( ! empty( $att['key'] ) && in_array( (string) $att['key'], $rendered_keys, true ) ) {
+						continue;
+					}
+					$orphan_attachments[] = $att;
+				}
+				?>
+
+				<?php if ( $orphan_attachments ) : ?>
+					<div class="wpss-requirement-view">
+						<h4 class="wpss-requirement-view__question"><?php esc_html_e( 'Files the buyer attached', 'wp-sell-services' ); ?></h4>
+						<div class="wpss-requirement-view__answer">
+							<ul class="wpss-requirement-view__files">
+								<?php foreach ( $orphan_attachments as $orphan_att ) : ?>
+									<?php
+									$orphan_att['order_id'] = $order_id;
+									$orphan_url             = function_exists( 'wpss_get_order_file_url' ) ? wpss_get_order_file_url( $orphan_att ) : '';
+									$orphan_name            = (string) ( $orphan_att['name'] ?? __( 'Attachment', 'wp-sell-services' ) );
+									?>
+									<li>
+										<?php if ( $orphan_url ) : ?>
+											<a href="<?php echo esc_url( $orphan_url ); ?>" rel="nofollow"><?php echo esc_html( $orphan_name ); ?></a>
+										<?php else : ?>
+											<?php echo esc_html( $orphan_name ); ?>
+										<?php endif; ?>
+									</li>
+								<?php endforeach; ?>
+							</ul>
+						</div>
+					</div>
+				<?php endif; ?>
 			</div>
 		</section>
 	<?php endif; ?>
