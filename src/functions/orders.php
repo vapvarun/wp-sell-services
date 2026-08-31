@@ -233,6 +233,39 @@ function wpss_get_order_url( int $order_id, string $section = '' ): string {
 }
 
 /**
+ * Human label for a submitted requirement key.
+ *
+ * The buyer's freeform brief is stored under the key `description`, and both
+ * the order view and the admin order screen had to decide what to call it.
+ * Only the order view did: admin printed the raw key, so the site owner read
+ * "description" where the buyer and seller read "What the buyer asked for"
+ * (Basecamp 10254444197). One flow, two labels.
+ *
+ * Any other key is a question the owner configured, so it is titled from its
+ * own text rather than renamed.
+ *
+ * @since 1.7.0
+ *
+ * @param string $key Submitted field key.
+ * @return string Label to show.
+ */
+function wpss_requirement_field_label( string $key ): string {
+	$label = 'description' === $key
+		? __( 'What the buyer asked for', 'wp-sell-services' )
+		: ucfirst( str_replace( array( '_', '-' ), ' ', $key ) );
+
+	/**
+	 * Filter the label shown for a submitted requirement field.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param string $label Resolved label.
+	 * @param string $key   Raw field key.
+	 */
+	return (string) apply_filters( 'wpss_requirement_field_label', $label, $key );
+}
+
+/**
  * Get order requirements URL.
  *
  * Pretty shape: `/{dashboard}/orders/{id}/requirements/`.

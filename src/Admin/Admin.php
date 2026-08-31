@@ -2073,7 +2073,9 @@ class Admin {
 								<?php
 								echo '<dl>';
 								foreach ( $wpss_requirements as $wpss_req_key => $wpss_req_value ) {
-									echo '<dt><strong>' . esc_html( (string) $wpss_req_key ) . '</strong></dt>';
+									// Shared with the buyer/seller order view, which is why
+									// the owner no longer reads a raw 'description' key.
+									echo '<dt><strong>' . esc_html( wpss_requirement_field_label( (string) $wpss_req_key ) ) . '</strong></dt>';
 									echo '<dd>' . esc_html( is_array( $wpss_req_value ) ? implode( ', ', $wpss_req_value ) : (string) $wpss_req_value ) . '</dd>';
 								}
 								echo '</dl>';

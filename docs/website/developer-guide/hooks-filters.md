@@ -72,7 +72,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderService.php:427` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:746` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:779` |
 
 ### Order Filters
 
@@ -345,7 +345,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2264` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2266` |
 | `wpss_admin_requirements_submitted` | `int $order_id, array $field_data` | `src/Admin/OrderScreen.php:316` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1930` |
 
@@ -665,7 +665,7 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | `wpss_currencies` | `$currencies` | `src/functions/money.php:1510` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:126` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:146` |
-| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:426` |
+| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:459` |
 | `wpss_wallet_manager` | `null` | `src/functions/money.php:1532` |
 
 ### Currency System Filters (1.2.1)

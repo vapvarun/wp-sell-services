@@ -1139,11 +1139,9 @@ do_action( 'wpss_before_order_view', $order );
 
 				<?php foreach ( $orphan_answers as $orphan_key => $orphan_value ) : ?>
 					<?php
-					// 'description' is the freeform brief the form always offers,
-					// so it gets a real label rather than its raw key.
-					$orphan_label = 'description' === $orphan_key
-						? __( 'What the buyer asked for', 'wp-sell-services' )
-						: ucfirst( str_replace( array( '_', '-' ), ' ', (string) $orphan_key ) );
+					// One label helper, shared with the admin order screen, which
+					// used to print the raw key instead.
+					$orphan_label = wpss_requirement_field_label( (string) $orphan_key );
 
 					$orphan_text = is_scalar( $orphan_value )
 						? (string) $orphan_value

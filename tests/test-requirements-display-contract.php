@@ -96,9 +96,42 @@ wpss_t( empty( $rendered ), 'blank submitted values do not render empty blocks' 
 $tpl = file_get_contents( dirname( __DIR__ ) . '/templates/order/order-view.php' );
 wpss_t( false !== strpos( $tpl, '$orphan_answers' ), 'the template renders answers no question claims' );
 wpss_t( false !== strpos( $tpl, '$orphan_attachments' ), 'the template renders attachments no question claims' );
+// The label moved into wpss_requirement_field_label() so the admin screen
+// could share it, so assert the behaviour rather than the old inline literal.
 wpss_t(
-	false !== strpos( $tpl, "'description' === \$orphan_key" ),
+	false !== strpos( $tpl, 'wpss_requirement_field_label(' )
+		&& 'What the buyer asked for' === wpss_requirement_field_label( 'description' ),
 	'the freeform description is labelled rather than special-cased away'
+);
+
+// All three surfaces, not just the one the card named.
+//
+// The brief reached the buyer view and the seller view but the ADMIN order
+// screen printed the raw storage key, so the site owner read "description"
+// where the other two read "What the buyer asked for". Same flow, two labels.
+wpss_t(
+	'What the buyer asked for' === wpss_requirement_field_label( 'description' ),
+	'the freeform brief has a human label'
+);
+wpss_t(
+	'Brand colour' === wpss_requirement_field_label( 'brand_colour' ),
+	'a configured question is titled from its own key, not renamed'
+);
+
+$admin = (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/Admin/Admin.php' );
+wpss_t(
+	false !== strpos( $admin, 'wpss_requirement_field_label( (string) $wpss_req_key )' ),
+	'the admin order screen uses the shared label helper'
+);
+wpss_t(
+	false === strpos( $admin, "esc_html( (string) \$wpss_req_key )" ),
+	'the admin order screen no longer prints the raw storage key'
+);
+
+$view = (string) file_get_contents( WPSS_PLUGIN_DIR . 'templates/order/order-view.php' );
+wpss_t(
+	false !== strpos( $view, 'wpss_requirement_field_label(' ),
+	'the order view uses the same helper, so the label cannot drift between surfaces'
 );
 
 echo "\n{$GLOBALS['wpss_pass']} passed, {$GLOBALS['wpss_fail']} failed\n";
