@@ -95,7 +95,7 @@ Both plugins are architecturally solid and feature-complete at ~95%. The code qu
 
 6. **Vendor Subscriptions** — Charge vendors monthly/yearly to sell on your platform. Revenue model for marketplace owners.
 
-7. **Recurring Services** — Stripe billing for subscription-based services (monthly coaching, weekly tutoring). Opens a whole new service type.
+7. **Recurring Services** — *Deferred, do not promote.* The code ships but `RecurringSettingsRenderer::is_feature_available()` returns false: a recurring order creates a Stripe subscription with no saved payment method, so renewals never charge. Every surface is hidden behind that switch. It becomes a value proposition when renewals work, not before.
 
 #### Weak Value Propositions (Need Enhancement)
 
@@ -197,7 +197,7 @@ Based on what's actually implemented:
 - Stripe Connect (auto-payouts)
 - PayPal Payouts (batch processing)
 - Vendor subscriptions (monetize vendor access)
-- Recurring services (subscription billing)
+- ~~Recurring services (subscription billing)~~ — deferred, renewals do not charge yet
 - Cloud storage (S3/GCS/DO)
 - Wallet integrations
 

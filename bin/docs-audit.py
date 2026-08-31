@@ -373,25 +373,31 @@ RETIRED_CAPABILITIES = {
     "service template": "the templates flag was removed from Pro in 1.7.0",
     "scheduled publishing": "the scheduled-publish flag was removed from Pro in 1.7.0",
     "bulk image upload": "the bulk-upload flag was removed from Pro in 1.7.0",
+    # Present but switched off, which is its own hazard: a buyer can be told
+    # they have recurring billing, switch it on, and find nothing renews.
+    # Pro's RecurringSettingsRenderer::is_feature_available() returns false
+    # because a recurring order creates a Stripe subscription with no saved
+    # payment method.
+    #
+    # Most pages mentioning it were already warning about exactly this - the
+    # RETIRED_OK list above now recognises their wording, so they pass. What
+    # this catches is a page that names the capability and says nothing about
+    # its state.
+    "recurring service": "recurring billing is deferred - renewals never charge, see RecurringSettingsRenderer::is_feature_available()",
+    "recurring billing": "recurring billing is deferred - renewals never charge, see RecurringSettingsRenderer::is_feature_available()",
 }
-
-# NOT yet listed above, deliberately: "recurring service" / "recurring billing".
-#
-# Pro's RecurringSettingsRenderer::is_feature_available() returns false - a
-# recurring order creates a Stripe subscription with no saved payment method,
-# so renewals never charge, and the whole feature sits behind that kill switch.
-# Seven pages currently sell it, including docs/website/order-management/
-# recurring-services.md, which is an entire page about the feature.
-#
-# Adding the terms here would fail the build on all seven and block every
-# commit until someone decides whether to finish the feature or withdraw the
-# pages. That is a product call, not a docs fix, so it is carded rather than
-# forced. Add the two lines back the moment it is resolved.
 
 # Wording that marks a mention as a removal note rather than a sales claim.
 RETIRED_OK = (
     "removed", "no longer", "does not exist", "do not exist", "none of them",
     "was retired", "deprecated", "not shipped", "never shipped",
+    # A capability can also be present-but-off rather than removed, and the
+    # docs already say so in their own words. Without these, pages that warn
+    # "switched off", "not yet" or "do not buy Pro for this" were flagged as
+    # SELLING the thing they are warning about - which would have had me delete
+    # a page whose whole job is the warning.
+    "switched off", "not yet", "deferred", "not finished", "not supported",
+    "do not buy", "do not plan", "do not promote", "off by default",
 )
 
 SELLING_ROOTS = [
