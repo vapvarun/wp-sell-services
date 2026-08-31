@@ -794,7 +794,20 @@ do_action( 'wpss_before_order_view', $order );
 						<?php endif; ?>
 					</h3>
 					<p class="wpss-service-info__price">
-						<?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?>
+						<?php
+						// A milestone parent deliberately carries total = 0 - the money
+						// lives on the phases. Printing that raw made the service line
+						// read "$0.00", which is the second half of the defect the
+						// Order Summary fix addressed (Basecamp 10254487153): the
+						// summary was corrected and this line was left saying the
+						// order was free. Reuses the phase figures computed above
+						// rather than summing them a second time.
+						echo esc_html(
+							$show_phase_total
+								? wpss_format_price( $phase_total, $order->currency )
+								: wpss_format_price( (float) $order->total, $order->currency )
+						);
+						?>
 					</p>
 				</div>
 			</div>

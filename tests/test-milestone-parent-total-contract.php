@@ -132,4 +132,26 @@ if ( class_exists( '\WPSellServices\Services\MilestoneService' ) ) {
 	}
 }
 
+// The service line, not just the summary.
+//
+// The card reported "TOTAL AMOUNT $0.00 AND service line $0.00". The first
+// round fixed the summary and left the service line printing $order->total
+// raw - which is deliberately 0 on a milestone parent - so the page still
+// carried a bare $0.00 that read as a free order, and QA bounced it on
+// exactly that. One template, two places showing the same money.
+$view = (string) file_get_contents( WPSS_PLUGIN_DIR . 'templates/order/order-view.php' );
+
+wpss_t(
+	false === strpos(
+		$view,
+		"<p class=\"wpss-service-info__price\">\n\t\t\t\t\t\t<?php echo esc_html( wpss_format_price( (float) \$order->total, \$order->currency ) ); ?>"
+	),
+	'the service line no longer prints the parent total raw'
+);
+
+wpss_t(
+	false !== strpos( $view, '$show_phase_total' ) && substr_count( $view, '$show_phase_total' ) >= 3,
+	'the service line reuses the phase figures rather than summing them again'
+);
+
 echo "\n{$GLOBALS['wpss_pass']} passed, {$GLOBALS['wpss_fail']} failed\n";
