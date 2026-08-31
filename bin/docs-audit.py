@@ -375,6 +375,19 @@ RETIRED_CAPABILITIES = {
     "bulk image upload": "the bulk-upload flag was removed from Pro in 1.7.0",
 }
 
+# NOT yet listed above, deliberately: "recurring service" / "recurring billing".
+#
+# Pro's RecurringSettingsRenderer::is_feature_available() returns false - a
+# recurring order creates a Stripe subscription with no saved payment method,
+# so renewals never charge, and the whole feature sits behind that kill switch.
+# Seven pages currently sell it, including docs/website/order-management/
+# recurring-services.md, which is an entire page about the feature.
+#
+# Adding the terms here would fail the build on all seven and block every
+# commit until someone decides whether to finish the feature or withdraw the
+# pages. That is a product call, not a docs fix, so it is carded rather than
+# forced. Add the two lines back the moment it is resolved.
+
 # Wording that marks a mention as a removal note rather than a sales claim.
 RETIRED_OK = (
     "removed", "no longer", "does not exist", "do not exist", "none of them",

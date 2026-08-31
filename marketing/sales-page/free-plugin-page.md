@@ -290,7 +290,7 @@ Everything you need to run a professional service marketplace:
 - Wallet integrations (TeraWallet, WooWallet, MyCred)
 - Advanced analytics dashboards with data export
 - Cloud storage (Amazon S3, Google Cloud, DigitalOcean Spaces)
-- Tiered commission, vendor subscriptions, recurring services
+- Tiered commission and vendor subscription plans
 - White-label branding
 - Priority support
 
