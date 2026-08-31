@@ -133,6 +133,16 @@ function wpss_guard_files_dir( string $dir ): void {
 	if ( ! file_exists( $dir . 'index.php' ) ) {
 		file_put_contents( $dir . 'index.php', "<?php\n// Silence is golden.\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 	}
+
+	// IIS honours none of the above. Without this a Windows host had no
+	// directory denial at all - the .htaccess is inert there, and the guard
+	// only ever covered Apache.
+	if ( ! file_exists( $dir . 'web.config' ) ) {
+		file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+			$dir . 'web.config',
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<configuration>\n\t<system.webServer>\n\t\t<authorization>\n\t\t\t<deny users=\"*\" />\n\t\t</authorization>\n\t</system.webServer>\n</configuration>\n"
+		);
+	}
 }
 
 /**

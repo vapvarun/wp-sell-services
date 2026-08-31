@@ -34,6 +34,15 @@ $uploads = wp_upload_dir();
 $check( 'order files live outside the uploads URL tree', false === strpos( $dir, trailingslashit( $uploads['basedir'] ) . 'wpss-order-files/x' ) && is_dir( $dir ) );
 $check( 'directory carries an .htaccess deny', file_exists( $dir . '.htaccess' ) );
 $check( 'directory carries an index.php', file_exists( $dir . 'index.php' ) );
+// IIS honours neither of the above. The private store sits outside the webroot
+// on a normal install, so this is defence in depth - but plenty of sites keep
+// uploads inside it, and the guard only ever wrote Apache rules.
+$check( 'directory carries a web.config for IIS', file_exists( $dir . 'web.config' ) );
+$check(
+	'the IIS guard actually denies rather than just existing',
+	file_exists( $dir . 'web.config' )
+		&& false !== strpos( (string) file_get_contents( $dir . 'web.config' ), 'deny users="*"' )
+);
 
 // --- Access control -------------------------------------------------------
 $check( 'buyer may read their own order files', wpss_can_read_order_files( $order_id, (int) $order->customer_id ) );
@@ -109,3 +118,4 @@ $check( 'missing provider resolves to null, never a substitute', null === wpss_g
 update_option( 'wpss_active_storage_provider', false === $original ? '' : $original );
 
 echo $fails ? "\n{$fails} FAILED\n" : "\nall passed\n";
+
