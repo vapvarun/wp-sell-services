@@ -131,9 +131,29 @@ wpss_t(
 	'resubmitting returns the phase to the buyer for approval'
 );
 
-// Restore.
+// Restore. The reason lands in a REAL conversation, so the message this test
+// posts is cleaned up too - the first run left one in a demo thread where it
+// read like genuine buyer feedback.
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 $wpdb->update( $orders, $restore, array( 'id' => $phase_id ) );
-echo "\n  (phase #{$phase_id} restored to {$restore['status']})\n";
+
+$removed = 0;
+$parent  = (int) $phase->platform_order_id;
+if ( $parent > 0 ) {
+	$conversation = ( new \WPSellServices\Services\ConversationService() )->get_by_order( $parent );
+	if ( $conversation ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$removed = (int) $wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->prefix}wpss_messages
+				WHERE conversation_id = %d AND type = 'revision' AND content LIKE %s",
+				(int) $conversation->id,
+				'%' . $wpdb->esc_like( 'Logo should sit left of the wordmark.' ) . '%'
+			)
+		);
+	}
+}
+
+echo "\n  (phase #{$phase_id} restored to {$restore['status']}; {$removed} test message(s) removed)\n";
 
 echo "\n{$GLOBALS['wpss_pass']} passed, {$GLOBALS['wpss_fail']} failed\n";

@@ -772,11 +772,6 @@ class OrderRepository extends AbstractRepository {
 	 * @return array<string, mixed> Statistics.
 	 */
 	public function get_customer_stats( int $customer_id ): array {
-		// Exclude tip sub-orders for the same reason as get_vendor_stats() —
-		// they are payment receipts, not orders in the "things I bought"
-		// sense. Tips are retrievable separately via the tipping service.
-		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
-
 		/*
 		 * The status lists come from wpss_get_order_status_groups(), the same
 		 * definition the dashboard filter chips use.
@@ -809,13 +804,11 @@ class OrderRepository extends AbstractRepository {
 			$active_statuses,
 			$awaiting_statuses,
 			$attention_statuses,
-			array( $customer_id, $tip_platform )
+			array( $customer_id )
 		);
 
-		$stats = $this->wpdb->get_row(
-			$this->wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the interpolated parts are %s placeholder lists built from a fixed status map.
-				"SELECT
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the interpolated parts are %s placeholder lists built from a fixed status map.
+		$sql = "SELECT
 					COUNT(*) as total_orders,
 					SUM(CASE WHEN status IN {$completed_sql} THEN 1 ELSE 0 END) as completed_orders,
 					SUM(CASE WHEN status IN {$active_sql} THEN 1 ELSE 0 END) as active_orders,
@@ -823,7 +816,26 @@ class OrderRepository extends AbstractRepository {
 					SUM(CASE WHEN status IN {$attention_sql} THEN 1 ELSE 0 END) as disputed_orders,
 					SUM(total) as total_spent
 				FROM {$this->table}
-				WHERE customer_id = %d AND platform != %s",
+				WHERE customer_id = %d";
+
+		/*
+		 * The SAME exclusion the chips use, not a second one written here.
+		 *
+		 * This read `platform != 'tip'`, which was wrong twice over. It let
+		 * milestone phases and paid extensions count as orders the buyer
+		 * placed, while count_by_customer_grouped() excluded all three - so
+		 * the Completed card read 9 above a Completed chip showing 4. And in
+		 * SQL `NULL != 'tip'` is NULL, so every catalog order with no platform
+		 * set was dropped from the stats entirely.
+		 *
+		 * Unifying the status lists (Basecamp 10240019463) was only half the
+		 * job: the two numbers also have to agree on WHICH ROWS are orders.
+		 */
+		$sql = $this->exclude_sub_orders( $sql, $params, array() );
+
+		$stats = $this->wpdb->get_row(
+			$this->wpdb->prepare(
+				$sql, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 				...$params
 			),
 			ARRAY_A

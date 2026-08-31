@@ -469,6 +469,81 @@ do_action( 'wpss_before_order_view', $order );
 			<?php endif; ?>
 	</div>
 
+	<?php
+	// Milestones are reserved for custom buyer-posted projects. Fixed-
+	// price catalog orders use Extensions; the server-side guards back
+	// this up, this just keeps the CTA from appearing where it doesn't
+	// apply so the seller never has to ask 'which one do I use?'.
+	//
+	// Resolved HERE, above the fold, because the wrap-up banner below is the
+	// answer to "is this project finished?" and it used to render after the
+	// conversation and the review card - so the loudest post-completion cue on
+	// the page was the tip CTA, near the bottom (Basecamp 10254720270). The
+	// milestone SECTION itself still renders in place, further down.
+	$is_request_order          = 'request' === ( $order->platform ?? '' );
+	$milestone_service         = new \WPSellServices\Services\MilestoneService();
+	$milestones                = $is_request_order ? $milestone_service->get_for_parent( (int) $order_id ) : array();
+	$milestone_active_statuses = array(
+		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_REQUIREMENTS,
+		\WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS,
+		\WPSellServices\Models\ServiceOrder::STATUS_LATE,
+		\WPSellServices\Models\ServiceOrder::STATUS_REVISION_REQUESTED,
+		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_APPROVAL,
+	);
+	$can_propose_milestone     = $is_vendor && $is_request_order && in_array( $order->status, $milestone_active_statuses, true );
+	$show_milestone_section    = $is_request_order && ( ! empty( $milestones ) || $can_propose_milestone );
+	$milestone_currency        = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+
+	$ms_approved_count  = 0;
+	$ms_total_paid      = 0.0;
+	$ms_all_done_banner = false;
+
+	if ( $show_milestone_section ) {
+		foreach ( $milestones as $_m ) {
+			if ( 'completed' === $_m['status'] ) {
+				++$ms_approved_count;
+				$ms_total_paid += (float) $_m['amount'];
+			}
+		}
+		$ms_all_done_banner = ! empty( $milestones ) && $ms_approved_count === count( $milestones ) && 'completed' === $order->status;
+	}
+	?>
+
+	<?php if ( $ms_all_done_banner ) : ?>
+		<section class="wpss-order-section wpss-order-section--milestone-wrap">
+			<div class="wpss-milestone-wrap">
+				<div class="wpss-milestone-wrap__icon" aria-hidden="true">
+					<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
+				</div>
+				<div>
+					<h3 class="wpss-milestone-wrap__title"><?php esc_html_e( 'Project complete', 'wp-sell-services' ); ?></h3>
+					<p class="wpss-milestone-wrap__body">
+						<?php
+						printf(
+							/* translators: 1: approved phase count, 2: total paid */
+							esc_html__( 'All %1$d phases approved. Total paid: %2$s.', 'wp-sell-services' ),
+							(int) $ms_approved_count,
+							esc_html( wpss_format_price( $ms_total_paid, $milestone_currency ) )
+						);
+
+						// The date the work actually finished. Read from the order
+						// rather than "now", so re-opening the page a month later
+						// still tells the truth.
+						if ( ! empty( $order->completed_at ) ) {
+							echo ' ';
+							printf(
+								/* translators: %s: completion date */
+								esc_html__( 'Finished %s.', 'wp-sell-services' ),
+								esc_html( wp_date( get_option( 'date_format' ), $order->completed_at->getTimestamp() ) )
+							);
+						}
+						?>
+					</p>
+				</div>
+			</div>
+		</section>
+	<?php endif; ?>
+
 	<!-- Order Summary Section -->
 	<section class="wpss-order-section">
 		<div class="wpss-order-section__header">
@@ -1654,58 +1729,7 @@ do_action( 'wpss_before_order_view', $order );
 	<?php endif; ?>
 
 	<!-- Milestones timeline (parent order only — request-mode orders) -->
-	<?php
-	// Milestones are reserved for custom buyer-posted projects. Fixed-
-	// price catalog orders use Extensions; the server-side guards back
-	// this up, this just keeps the CTA from appearing where it doesn't
-	// apply so the seller never has to ask 'which one do I use?'.
-	$is_request_order          = 'request' === ( $order->platform ?? '' );
-	$milestone_service         = new \WPSellServices\Services\MilestoneService();
-	$milestones                = $is_request_order ? $milestone_service->get_for_parent( (int) $order_id ) : array();
-	$milestone_active_statuses = array(
-		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_REQUIREMENTS,
-		\WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS,
-		\WPSellServices\Models\ServiceOrder::STATUS_LATE,
-		\WPSellServices\Models\ServiceOrder::STATUS_REVISION_REQUESTED,
-		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_APPROVAL,
-	);
-	$can_propose_milestone     = $is_vendor && $is_request_order && in_array( $order->status, $milestone_active_statuses, true );
-	$show_milestone_section    = $is_request_order && ( ! empty( $milestones ) || $can_propose_milestone );
-	$milestone_currency        = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
-
-	if ( $show_milestone_section ) :
-		$ms_approved_count = 0;
-		$ms_total_paid     = 0.0;
-		foreach ( $milestones as $_m ) {
-			if ( 'completed' === $_m['status'] ) {
-				++$ms_approved_count;
-				$ms_total_paid += (float) $_m['amount'];
-			}
-		}
-		$ms_all_done_banner = ! empty( $milestones ) && $ms_approved_count === count( $milestones ) && 'completed' === $order->status;
-		?>
-		<?php if ( $ms_all_done_banner ) : ?>
-			<section class="wpss-order-section wpss-order-section--milestone-wrap">
-				<div class="wpss-milestone-wrap">
-					<div class="wpss-milestone-wrap__icon" aria-hidden="true">
-						<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
-					</div>
-					<div>
-						<h3 class="wpss-milestone-wrap__title"><?php esc_html_e( 'Project complete', 'wp-sell-services' ); ?></h3>
-						<p class="wpss-milestone-wrap__body">
-							<?php
-							printf(
-								/* translators: 1: approved phase count, 2: total paid */
-								esc_html__( 'All %1$d phases approved. Total paid: %2$s.', 'wp-sell-services' ),
-								(int) $ms_approved_count,
-								esc_html( wpss_format_price( $ms_total_paid, $milestone_currency ) )
-							);
-							?>
-						</p>
-					</div>
-				</div>
-			</section>
-		<?php endif; ?>
+	<?php if ( $show_milestone_section ) : ?>
 		<section class="wpss-order-section wpss-order-section--milestones">
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">

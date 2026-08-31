@@ -1649,6 +1649,15 @@ article.wpss-service-card:hover {
 	border-bottom: none;
 }
 
+/* The wrap-up banner is its own card, so it takes neither the section's
+   bottom padding nor its divider - together they left a bare strip under the
+   green box. Unnoticeable while this rendered near the bottom of the page;
+   obvious now that it leads a completed order. */
+.wpss-order-section--milestone-wrap {
+	padding-bottom: 0;
+	border-bottom: 0;
+}
+
 .wpss-order-section h3 {
 	margin: 0 0 15px;
 	font-size: 16px;
