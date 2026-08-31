@@ -174,7 +174,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | `wpss_stripe_payment_intent_args` | `array $params, int $order_id, int $vendor_id` | `src/Integrations/Stripe/StripeGateway.php:302` |
 | `wpss_rest_create_payment_intent` | `null, object $gateway, float $amount, string $currency, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:267` |
 | `wpss_rest_confirm_payment` | `null, object $gateway, string $payment_id, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:316` |
-| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:417` |
+| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:422` |
 
 **`wpss_stripe_payment_intent_args`** lets you modify Stripe PaymentIntent parameters before creation:
 
@@ -387,7 +387,7 @@ add_filter( 'wpss_can_access_dashboard_section', function( $can, $section, $user
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_catalog_price_html` | `string $html, float $amount, string $context` | `src/functions/money.php:120` |
+| `wpss_catalog_price_html` | `string $html, float $amount, string $context` | `src/functions/money.php:125` |
 
 _`wpss_catalog_price_html` (added 1.3.0) is the single seam for catalog price display. Base currency is authoritative for all stored amounts; this filter is where an add-on (such as the Pro display-currency hint) injects a converted, visitor-facing price without changing the stored value._
 
@@ -656,17 +656,17 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:56` |
-| `wpss_currency` | `$currency` | `src/functions/money.php:648` |
+| `wpss_currency` | `$currency` | `src/functions/money.php:653` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/misc.php:55` |
 | `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:105` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:92` |
-| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:683` |
-| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:710` |
-| `wpss_currencies` | `$currencies` | `src/functions/money.php:1505` |
+| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:688` |
+| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:715` |
+| `wpss_currencies` | `$currencies` | `src/functions/money.php:1510` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:126` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:146` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:426` |
-| `wpss_wallet_manager` | `null` | `src/functions/money.php:1527` |
+| `wpss_wallet_manager` | `null` | `src/functions/money.php:1532` |
 
 ### Currency System Filters (1.2.1)
 
@@ -674,9 +674,9 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1484` |
-| `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:160` |
-| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:609` |
+| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1489` |
+| `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:165` |
+| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:614` |
 | `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3752` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:835` |
 

@@ -86,11 +86,16 @@ $active_count = count(
 
 				$budget_display = '';
 				if ( $budget_min > 0 && $budget_max > 0 && $budget_min !== $budget_max ) {
-					$budget_display = wpss_format_price( $budget_min ) . ' – ' . wpss_format_price( $budget_max );
+					// Budget is a pre-purchase estimate, so it goes through
+					// wpss_catalog_price_html() - the wrapper carrying
+					// data-wbcom-amount that lets the display-currency switcher
+					// convert it in the browser. HTML from here, hence
+					// wp_kses_post() rather than esc_html() at the echo.
+					$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' ) . ' – ' . wpss_catalog_price_html( (float) $budget_max, 'request-budget' );
 				} elseif ( $budget_max > 0 ) {
-					$budget_display = wpss_format_price( $budget_max );
+					$budget_display = wpss_catalog_price_html( (float) $budget_max, 'request-budget' );
 				} elseif ( $budget_min > 0 ) {
-					$budget_display = wpss_format_price( $budget_min );
+					$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' );
 				}
 				// Query actual proposal count from DB instead of potentially stale meta.
 				global $wpdb;
@@ -113,7 +118,7 @@ $active_count = count(
 									printf(
 										/* translators: %s: budget amount or range */
 										esc_html__( 'Budget: %s', 'wp-sell-services' ),
-										esc_html( $budget_display )
+										wp_kses_post( $budget_display )
 									);
 									?>
 								</span>

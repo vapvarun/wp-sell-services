@@ -77,9 +77,14 @@ function wpss_format_price( float $price, string $currency = '' ): string {
  *
  * @param float  $amount  Catalog amount in the store base currency.
  * @param string $context Where it is shown ('card', 'package', 'single', …).
+ * @param string $currency Currency code the amount is in. Defaults to the store
+ *                         currency. Present so this is a genuine drop-in for
+ *                         wpss_format_price() on rows that carry their own
+ *                         currency - without it, swapping a call over silently
+ *                         relabelled a foreign-currency order in store currency.
  * @return string Base-price HTML, with a display hint appended if one is hooked.
  */
-function wpss_catalog_price_html( float $amount, string $context = '' ): string {
+function wpss_catalog_price_html( float $amount, string $context = '', string $currency = '' ): string {
 	// The base amount travels with the markup so a display-currency add-on can
 	// render its hint IN THE BROWSER instead of forking the server response.
 	// That distinction is the whole point: this HTML is identical for every
@@ -97,7 +102,7 @@ function wpss_catalog_price_html( float $amount, string $context = '' ): string 
 	$html = sprintf(
 		'<span class="wpss-price wbcom-price" data-wbcom-amount="%s">%s</span>',
 		esc_attr( sprintf( '%.4F', $amount ) ),
-		wpss_format_price( $amount )
+		wpss_format_price( $amount, $currency )
 	);
 
 	/**

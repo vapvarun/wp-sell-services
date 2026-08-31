@@ -381,7 +381,7 @@ defined( 'ABSPATH' ) || exit;
 									</span>
 								<?php endif; ?>
 								<span class="wpss-cart-item__price">
-									<?php echo esc_html( wpss_format_price( $item_total ) ); ?>
+									<?php echo wp_kses_post( wpss_catalog_price_html( (float) $item_total, 'cart-item' ) ); ?>
 								</span>
 							</div>
 
@@ -398,7 +398,7 @@ defined( 'ABSPATH' ) || exit;
 										<div class="wpss-cart-item__addon">
 											<span><?php echo esc_html( $addon_title ); ?></span>
 											<span class="wpss-cart-item__addon-price">
-												+<?php echo esc_html( wpss_format_price( $addon_price ) ); ?>
+												+<?php echo wp_kses_post( wpss_catalog_price_html( $addon_price, 'cart-addon' ) ); ?>
 											</span>
 										</div>
 									<?php endforeach; ?>
@@ -435,12 +435,12 @@ defined( 'ABSPATH' ) || exit;
 						);
 						?>
 					</span>
-					<span><?php echo esc_html( wpss_format_price( $subtotal ) ); ?></span>
+					<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $subtotal, 'cart-subtotal' ) ); ?></span>
 				</div>
 
 				<div class="wpss-cart-summary__total">
 					<span><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></span>
-					<span><?php echo esc_html( wpss_format_price( $subtotal ) ); ?></span>
+					<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $subtotal, 'cart-total' ) ); ?></span>
 				</div>
 
 				<?php

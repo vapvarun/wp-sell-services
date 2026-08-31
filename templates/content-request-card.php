@@ -43,12 +43,17 @@ $categories         = wp_get_post_terms( $request_id, 'wpss_service_category', a
 $card_classes = apply_filters( 'wpss_request_card_classes', array( 'wpss-request-card' ), $request_id );
 
 // Format budget display.
+// Budget is a pre-purchase estimate, so it goes through
+// wpss_catalog_price_html() - the wrapper that carries data-wbcom-amount and
+// lets the display-currency switcher convert it in the browser. Built as HTML
+// from here on, so the 'Negotiable' fallback is escaped at assignment and the
+// echo sites pass it through wp_kses_post() instead of esc_html().
 if ( 'range' === $budget_type && $budget_min && $budget_max ) {
-	$budget_display = wpss_format_price( $budget_min ) . ' - ' . wpss_format_price( $budget_max );
+	$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' ) . ' - ' . wpss_catalog_price_html( (float) $budget_max, 'request-budget' );
 } elseif ( $budget_min ) {
-	$budget_display = wpss_format_price( $budget_min );
+	$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' );
 } else {
-	$budget_display = __( 'Negotiable', 'wp-sell-services' );
+	$budget_display = esc_html__( 'Negotiable', 'wp-sell-services' );
 }
 
 // Calculate time remaining.
@@ -194,7 +199,7 @@ do_action( 'wpss_before_request_card', $request_id );
 		<div class="wpss-request-card__meta">
 			<div class="wpss-request-card__meta-item">
 				<span class="wpss-request-card__meta-label"><?php esc_html_e( 'Budget', 'wp-sell-services' ); ?></span>
-				<span class="wpss-request-card__meta-value"><?php echo esc_html( $budget_display ); ?></span>
+				<span class="wpss-request-card__meta-value"><?php echo wp_kses_post( $budget_display ); ?></span>
 			</div>
 
 			<?php if ( $delivery_days ) : ?>

@@ -104,24 +104,24 @@ do_action( 'wpss_before_order_confirmation', $order );
 					<?php endif; ?>
 				</div>
 				<div class="wpss-order-confirmation__item-price">
-					<?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?>
+					<?php echo wp_kses_post( wpss_catalog_price_html( (float) $order->total, 'order-confirmation', (string) $order->currency ) ); ?>
 				</div>
 			</div>
 
 			<div class="wpss-order-confirmation__totals">
 				<div class="wpss-order-confirmation__total-row">
 					<span><?php esc_html_e( 'Subtotal', 'wp-sell-services' ); ?></span>
-					<span><?php echo esc_html( wpss_format_price( (float) $order->subtotal, $order->currency ) ); ?></span>
+					<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $order->subtotal, 'order-confirmation', (string) $order->currency ) ); ?></span>
 				</div>
 				<?php if ( $order->addons_total > 0 ) : ?>
 					<div class="wpss-order-confirmation__total-row">
 						<span><?php esc_html_e( 'Add-ons', 'wp-sell-services' ); ?></span>
-						<span><?php echo esc_html( wpss_format_price( (float) $order->addons_total, $order->currency ) ); ?></span>
+						<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $order->addons_total, 'order-confirmation', (string) $order->currency ) ); ?></span>
 					</div>
 				<?php endif; ?>
 				<div class="wpss-order-confirmation__total-row wpss-order-confirmation__total-row--grand">
 					<span><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></span>
-					<span><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></span>
+					<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $order->total, 'order-confirmation', (string) $order->currency ) ); ?></span>
 				</div>
 			</div>
 		</div>
