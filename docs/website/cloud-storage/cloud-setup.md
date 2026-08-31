@@ -97,19 +97,22 @@ You will need:
 
 ## After Setup
 
-**Saving credentials does not move delivery files.** Deliveries are still stored
-in the WordPress media library. What you have connected is the bucket the REST
-endpoint `POST /wpss-pro/v1/storage/upload` writes to, for your own
-integrations -- nothing in the plugin calls it yet.
+**Deliveries go to your bucket once a provider is active.** A delivery or
+requirement file uploads to the provider you selected, and the local copy is
+removed afterwards so you are not paying for the bucket and the disk both.
+
+Buyers and sellers never get a bucket URL. They download through a
+permission-checked link on the order, which hands out a short-lived signed URL
+after confirming they are a party to that order.
 
 ### Test It
 
-Do not test by uploading a delivery: it will land locally and that is expected,
-not a misconfiguration.
+Upload a delivery on a real order, then check your bucket: the file appears
+under `wpss/{order_id}/delivery/`. That is the end-to-end check.
 
-To confirm the credentials are good, use **Test Connection** on the settings
-card. That really does reach your bucket, and a pass means the credentials,
-region and permissions are right.
+**Test Connection** on the settings card verifies credentials, region and
+permissions on their own, which is the faster check when you are first
+setting up.
 
 ### Fallback Behavior
 

@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Free Version**: Full standalone marketplace with built-in checkout, offline payments, milestone contracts, paid extensions, tipping, and vendor intro videos.
 - **Pro Version**: WooCommerce, EDD and FluentCart adapters; Razorpay gateway; Stripe Connect and PayPal batch payouts; tiered commission; vendor subscription plans; wallet providers (TeraWallet, MyCred); white label; display currency; push notifications; analytics with admin CSV export. It **raises exactly four wizard limits** - gallery, add-ons, FAQs, requirements - and not packages or videos.
-  - Not shipping despite being present: **recurring services** (switched off, no setting enables it) and **cloud storage** (drivers work and the connection test passes, but `DeliveryService` never routes a file to them - REST-only today). SureCart was removed in 1.6.0.
+  - Not shipping despite being present: **recurring services** (switched off, no setting enables it). **Cloud storage now ships**: `DeliveryService::process_file()` routes through `wpss_store_order_file()`, which uploads to the active provider, deletes the local copy on success and keeps it on failure - verified end to end against a stub provider registered via `wpss_storage_providers`. SureCart was removed in 1.6.0.
 
 ## Recent Changes
 
