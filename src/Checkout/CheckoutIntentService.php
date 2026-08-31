@@ -194,6 +194,24 @@ class CheckoutIntentService {
 		$addons_total = (float) ( $addon_data['addons_total'] ?? 0 );
 		$amount      += $addons_total;
 
+		/*
+		 * Charge what the buyer was shown.
+		 *
+		 * This built its amount from package price plus add-ons and stopped
+		 * there. The checkout template computed tax, displayed it, and put the
+		 * taxed figure on the Pay button; the order row recorded the taxed
+		 * total; and the gateway charged THIS number, untaxed. A buyer saw
+		 * $100.30 and was charged $85.00, and the 18% was never collected from
+		 * anybody (Basecamp 10254444011).
+		 *
+		 * wpss_calculate_tax() is the same helper the display and the order row
+		 * now use, so the three cannot disagree again. Commission is unaffected:
+		 * CommissionService works from $order->subtotal + addons_total, the
+		 * PRE-tax base, because tax is not revenue to split.
+		 */
+		$tax    = wpss_calculate_tax( $amount, (int) $service->post_author, $service_id );
+		$amount = (float) $tax['total'];
+
 		return CheckoutIntent::single(
 			$service_id,
 			$package_id,

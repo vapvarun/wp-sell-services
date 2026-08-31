@@ -383,6 +383,62 @@ function wpss_get_ledger_balance( int $user_id, bool $lock = false ): float {
 }
 
 /**
+ * The one tax calculation.
+ *
+ * Tax was written out inline in four places and MISSING from a fifth, which is
+ * how a buyer came to be shown $100.30 and charged $85.00: the checkout
+ * template computed and displayed tax, the order row recorded a taxed total,
+ * and CheckoutIntentService - the figure the gateway actually charges - built
+ * its amount from package price plus add-ons and never applied any tax at all
+ * (Basecamp 10254444011).
+ *
+ * Tax is not revenue to split. Commission stays on the pre-tax base, which is
+ * what CommissionService already does via $order->subtotal + addons_total, so
+ * this returns the base back separately rather than folding it in.
+ *
+ * The inclusive branch is the one worth reading twice: when a price already
+ * contains tax, the tax is extracted from it and the total is unchanged. Get
+ * that backwards and every inclusive-tax site over-charges by the rate.
+ *
+ * @since 1.7.0
+ *
+ * @param float $base       Pre-tax amount (package price plus add-ons).
+ * @param int   $vendor_id  Vendor user ID, for the rate filter.
+ * @param int   $service_id Service post ID, for the rate filter.
+ * @return array{rate: float, amount: float, base: float, total: float, included: bool, label: string, enabled: bool}
+ */
+function wpss_calculate_tax( float $base, int $vendor_id = 0, int $service_id = 0 ): array {
+	$settings = get_option( 'wpss_tax', array() );
+	$enabled  = ! empty( $settings['enable_tax'] );
+	$included = ! empty( $settings['tax_included'] );
+	$label    = (string) ( $settings['tax_label'] ?? __( 'Tax', 'wp-sell-services' ) );
+	$rate     = $enabled ? (float) ( $settings['tax_rate'] ?? 0 ) : 0.0;
+
+	/** This filter is documented in StandaloneOrderProvider::create_order() */
+	$rate = (float) apply_filters( 'wpss_checkout_tax_rate', $rate, $vendor_id, $service_id );
+
+	$amount = 0.0;
+
+	if ( $rate > 0 && $base > 0 ) {
+		$amount = $included
+			? $base - ( $base / ( 1 + $rate / 100 ) )
+			: $base * ( $rate / 100 );
+	}
+
+	return array(
+		'enabled'  => $enabled,
+		'included' => $included,
+		'label'    => $label,
+		'rate'     => $rate,
+		'base'     => $base,
+		'amount'   => $amount,
+		// Inclusive: the tax is already inside the price, so the buyer pays the
+		// base. Exclusive: it is added on top.
+		'total'    => $included ? $base : $base + $amount,
+	);
+}
+
+/**
  * Ledger holders whose balance has gone below zero, in ONE query.
  *
  * A vendor ends up here when a past payout exceeded what they had actually

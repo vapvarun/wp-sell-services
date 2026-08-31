@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**499 hooks** across **712** firing sites.
+**499 hooks** across **710** firing sites.
 
 ## Actions (277)
 
@@ -158,21 +158,21 @@ guide; this is the complete index.
 | `wpss_order_created` | 2 | `src/functions/orders.php:731` | Fires after a service order is created, on every e-commerce rail. |
 | `wpss_order_disputed` | 3 | `src/API/OrdersController.php:960` *(+1 more)* |  |
 | `wpss_order_message_created` | 3 | `src/API/OrdersController.php:624` |  |
-| `wpss_order_paid` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php:413` | Fires when an order is marked as paid. |
+| `wpss_order_paid` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php:405` | Fires when an order is marked as paid. |
 | `wpss_order_partially_refunded` | 2 | `src/Services/OrderWorkflowManager.php:779` | Fires when an order is partially refunded. |
 | `wpss_order_refund_processed` | 3 | `src/Services/OrderWorkflowManager.php:1189` | Fires after the gateway has processed a refund, with its raw result. |
 | `wpss_order_refunded` | 2 | `src/Services/OrderWorkflowManager.php:746` | Fires when an order is refunded. |
 | `wpss_order_requirements_submitted` | 2 | `src/API/OrdersController.php:1166` |  |
 | `wpss_order_started` | 1 | `src/API/OrdersController.php:792` |  |
 | `wpss_order_status_changed` | 3 | `src/Admin/Pages/ManualOrderPage.php:779` *(+6 more)* |  |
-| `wpss_order_status_pending_requirements` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php:404` |  |
+| `wpss_order_status_pending_requirements` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php:396` |  |
 | `wpss_order_view_actions` | 1 | `templates/order/order-view.php:427` | Hook: wpss_order_view_actions |
 | `wpss_order_view_details` | 1 | `templates/order/order-view.php:588` | Hook: wpss_order_view_details |
 | `wpss_order_view_header` | 1 | `templates/order/order-view.php:217` | Hook: wpss_order_view_header |
 | `wpss_order_view_sidebar` | 1 | `templates/order/order-view.php:1320` | Hook: wpss_order_view_sidebar |
 | `wpss_orders_filters` | 1 | `templates/dashboard/sections/orders.php:190` | Fires in the orders filter area. |
 | `wpss_package_features` | 3 | `templates/partials/service-packages.php:190` | Fires inside the package features list. |
-| `wpss_payable_total_after` | 2 | `src/Integrations/Standalone/StandaloneCheckoutProvider.php:1144` *(+1 more)* | Fires after the payable total, before the Pay button. |
+| `wpss_payable_total_after` | 2 | `src/Integrations/Standalone/StandaloneCheckoutProvider.php:1133` *(+1 more)* | Fires after the payable total, before the Pay button. |
 | `wpss_payment_callback` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php:336` | Fires when a payment callback is received. |
 | `wpss_payment_receipt_rejected` | 4 | `src/Services/PaymentReceiptService.php:259` | Fires when an admin rejects proof of an offline payment. |
 | `wpss_payment_receipt_submitted` | 3 | `src/Services/PaymentReceiptService.php:162` | Fires when a buyer submits proof of an offline payment. |
@@ -255,7 +255,7 @@ guide; this is the complete index.
 | `wpss_single_service_sidebar` | 1 | `templates/single-service.php:176` | Hook: wpss_single_service_sidebar |
 | `wpss_standalone_adapter_init` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php:157` | Fires after standalone adapter is initialized. |
 | `wpss_standalone_checkout_processed` | 2 | `src/Integrations/Standalone/StandaloneCheckoutProvider.php:134` | Fires after standalone checkout processing. |
-| `wpss_standalone_order_complete` | 1 | `src/Integrations/Standalone/StandaloneOrderProvider.php:717` | Fires when a standalone order is completed. |
+| `wpss_standalone_order_complete` | 1 | `src/Integrations/Standalone/StandaloneOrderProvider.php:709` | Fires when a standalone order is completed. |
 | `wpss_stripe_refund_processed` | 2 | `src/Integrations/Stripe/StripeGateway.php:1493` | Fires when a Stripe refund is processed. |
 | `wpss_stripe_webhook_received` | 3 | `src/Integrations/Stripe/StripeGateway.php:647` *(+1 more)* | Fires when a Stripe webhook event is received. |
 | `wpss_terawallet_recharged` | 2 | `src/Integrations/Wallets/TeraWalletProvider.php:203` **[PRO]** | Fires when TeraWallet recharge is complete. |
@@ -335,17 +335,17 @@ guide; this is the complete index.
 | `wpss_checkout_badges` | 2 | `src/functions/payments.php:174` | Filter the checkout reassurance badges. |
 | `wpss_checkout_creates_accounts` | 1 | `src/functions/billing.php:827` | Filter whether checkout creates an account for a logged-out buyer. |
 | `wpss_checkout_slug` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php:48` | Filter the checkout URL slug. |
-| `wpss_checkout_tax_rate` | 3 | `src/Integrations/Standalone/StandaloneCheckoutProvider.php:585` *(+2 more)* |  |
+| `wpss_checkout_tax_rate` | 3 | `src/functions/money.php:418` |  |
 | `wpss_commission_base_amount` | 3 | `src/Services/CommissionService.php:130` | Filters the base amount used for commission calculation. |
 | `wpss_commission_fee` | 4 | `src/Services/CommissionService.php:156` | Filters the platform fee AMOUNT for an order. |
 | `wpss_commission_rate` | 4 | `src/Services/CommissionService.php:320` *(+1 more)* | Filter the commission rate for a specific order. |
 | `wpss_countries` | 1 | `src/functions/billing.php:520` | Filter the billing country list. |
-| `wpss_currencies` | 1 | `src/functions/money.php:1450` | Filter supported currencies. |
-| `wpss_currency` | 1 | `src/functions/money.php:593` | Filter the default currency. |
+| `wpss_currencies` | 1 | `src/functions/money.php:1506` | Filter supported currencies. |
+| `wpss_currency` | 1 | `src/functions/money.php:649` | Filter the default currency. |
 | `wpss_currency_decimals` | 2 | `src/functions/money.php:161` | Filter the number of decimal places for a currency. |
-| `wpss_currency_format` | 3 | `src/functions/money.php:655` | Filter the currency format string. |
-| `wpss_currency_registry` | 1 | `src/functions/money.php:1429` | Filter the canonical currency registry. |
-| `wpss_currency_symbols` | 1 | `src/functions/money.php:628` | Filter currency symbols. |
+| `wpss_currency_format` | 3 | `src/functions/money.php:711` | Filter the currency format string. |
+| `wpss_currency_registry` | 1 | `src/functions/money.php:1485` | Filter the canonical currency registry. |
+| `wpss_currency_symbols` | 1 | `src/functions/money.php:684` | Filter currency symbols. |
 | `wpss_dashboard_asset_shortcodes` | 1 | `src/Frontend/UnifiedDashboard.php:236` | Filters the shortcodes that make a page load the dashboard assets. |
 | `wpss_dashboard_default_section` | 2 | `src/Frontend/UnifiedDashboard.php:396` | Filter the dashboard's default landing section. |
 | `wpss_dashboard_section_aliases` | 1 | `src/functions/urls.php:303` | Filter the dashboard section alias map. |
@@ -416,7 +416,7 @@ guide; this is the complete index.
 | `wpss_payout_banner_state` | 4 | `templates/dashboard/sections/earnings.php:86` | Filters the payout banner state shown on the earnings section. |
 | `wpss_person_schema` | 2 | `src/SEO/SchemaMarkup.php:341` |  |
 | `wpss_platform_name` | 1 | `src/functions/misc.php:56` | Filter the platform name. |
-| `wpss_pre_create_order` | 1 | `src/Integrations/Standalone/StandaloneOrderProvider.php:115` | Filters order data before database insertion. |
+| `wpss_pre_create_order` | 1 | `src/Integrations/Standalone/StandaloneOrderProvider.php:107` | Filters order data before database insertion. |
 | `wpss_pre_create_review` | 2 | `src/Services/ReviewService.php:77` | Filters review data before database insertion. |
 | `wpss_pre_create_service` | 1 | `src/Services/ServiceManager.php:108` | Filters service data before creation. |
 | `wpss_pre_open_dispute` | 2 | `src/Services/DisputeService.php:208` | Filter dispute data before saving to the database. |
@@ -490,7 +490,7 @@ guide; this is the complete index.
 | `wpss_suppress_theme_title` | 1 | `src/Frontend/ShellHeader.php:178` | Filter whether the active theme's entry-title is suppressed on the current plugin-shell surface. |
 | `wpss_template_args` | 2 | `src/functions/templates.php:96` *(+1 more)* |  |
 | `wpss_terms_page_slugs` | 1 | `src/Core/Activator.php:433` | Filters the slugs searched when auto-mapping an existing terms page. |
-| `wpss_three_decimal_currencies` | 1 | `src/functions/money.php:465` | Filter the list of three-decimal currency codes. |
+| `wpss_three_decimal_currencies` | 1 | `src/functions/money.php:521` | Filter the list of three-decimal currency codes. |
 | `wpss_tip_commission_rate` | 3 | `src/Services/TippingService.php:372` | Filter the commission rate applied to a tip. |
 | `wpss_tip_quick_amounts` | 2 | `templates/order/order-view.php:2013` |  |
 | `wpss_token_recovery_routes` | 1 | `src/API/AppTokenGuard.php:136` | Filter the routes reachable without a valid token. |
@@ -514,9 +514,9 @@ guide; this is the complete index.
 | `wpss_vendors_page_id` | 1 | `src/functions/vendors.php:196` | Filter the resolved vendor-directory page ID. |
 | `wpss_vendors_url` | 2 | `src/functions/vendors.php:268` | Filter the vendor-directory URL. |
 | `wpss_video_thumbnail_cache_ttl` | 2 | `src/functions/services.php:853` | Filter how long a video's poster URL is cached. |
-| `wpss_wallet_manager` | 1 | `src/functions/money.php:1472` | Filter the wallet manager instance. |
+| `wpss_wallet_manager` | 1 | `src/functions/money.php:1528` | Filter the wallet manager instance. |
 | `wpss_wallet_providers` | 1 | `src/Core/Plugin.php:2380` *(+2 more)* | Filter the registered wallet providers. |
 | `wpss_withdrawal_methods` | 1 | `src/API/EarningsController.php:651` *(+1 more)* | Filter available withdrawal methods. |
 | `wpss_wizard_sanitize_service_data` | 2 | `src/Frontend/ServiceWizard.php:1913` | Filter the sanitized wizard payload. |
 | `wpss_wizard_service_data` | 2 | `src/Frontend/ServiceWizard.php:1303` | Filter the wizard's Alpine seed data for an existing service. |
-| `wpss_zero_decimal_currencies` | 1 | `src/functions/money.php:554` | Filter the list of zero-decimal currency codes. |
+| `wpss_zero_decimal_currencies` | 1 | `src/functions/money.php:610` | Filter the list of zero-decimal currency codes. |

@@ -574,25 +574,14 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$price   += $addons_total;
 			$currency = wpss_get_currency();
 
-			// Calculate tax.
-			$tax_settings = get_option( 'wpss_tax', [] );
-			$tax_enabled  = ! empty( $tax_settings['enable_tax'] );
-			$tax_rate     = $tax_enabled ? (float) ( $tax_settings['tax_rate'] ?? 0 ) : 0;
-			$tax_included = ! empty( $tax_settings['tax_included'] );
-			$tax_label    = $tax_settings['tax_label'] ?? __( 'Tax', 'wp-sell-services' );
+			// Tax through the shared helper, so the figure on the Pay button is
+			// the same arithmetic the gateway charges and the order row records.
+			$tax = wpss_calculate_tax( (float) $price, (int) $service->vendor_id, (int) $service->id );
 
-			/** This filter is documented in StandaloneOrderProvider::create_order() */
-			$tax_rate = (float) apply_filters( 'wpss_checkout_tax_rate', $tax_rate, $service->vendor_id, $service->id );
-
-			$tax_amount = 0;
-			if ( $tax_rate > 0 ) {
-				if ( $tax_included ) {
-					$tax_amount = $price - ( $price / ( 1 + $tax_rate / 100 ) );
-				} else {
-					$tax_amount = $price * ( $tax_rate / 100 );
-				}
-			}
-			$total       = $tax_included ? $price : $price + $tax_amount;
+			$tax_rate    = (float) $tax['rate'];
+			$tax_amount  = (float) $tax['amount'];
+			$tax_label   = (string) $tax['label'];
+			$total       = (float) $tax['total'];
 			$vendor_name = '';
 		}
 
@@ -1595,19 +1584,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 			$line_total = $line_price + $addons_total;
 
-			// Per-item tax rate may be filtered.
-			/** This filter is documented in StandaloneOrderProvider::create_order() */
-			$item_tax_rate = (float) apply_filters( 'wpss_checkout_tax_rate', $tax_rate, $service->vendor_id, $service->id );
-			$item_tax      = 0.0;
-
-			if ( $item_tax_rate > 0 ) {
-				if ( $tax_included ) {
-					$item_tax = $line_total - ( $line_total / ( 1 + $item_tax_rate / 100 ) );
-				} else {
-					$item_tax    = $line_total * ( $item_tax_rate / 100 );
-					$line_total += $item_tax;
-				}
-			}
+			// Per item, through the same helper - the rate filter is applied
+			// inside it, so a per-vendor rate still works here.
+			$item_tax_data = wpss_calculate_tax( (float) $line_total, (int) $service->vendor_id, (int) $service->id );
+			$item_tax      = (float) $item_tax_data['amount'];
+			$line_total    = (float) $item_tax_data['total'];
 
 			$tax_amount += $item_tax;
 

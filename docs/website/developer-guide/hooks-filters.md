@@ -135,9 +135,9 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 |------|-----------|------|
 | `wpss_standalone_adapter_init` | `StandaloneAdapter $adapter` | `src/Integrations/Standalone/StandaloneAdapter.php:156` |
 | `wpss_standalone_checkout_processed` | `int $order_id, array $order_data` | `StandaloneCheckoutProvider.php:133` |
-| `wpss_standalone_order_complete` | `object $order` | `src/Integrations/Standalone/StandaloneOrderProvider.php:716` |
-| `wpss_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Standalone/StandaloneOrderProvider.php:412` |
-| `wpss_order_status_pending_requirements` | `int $order_id, string $old_status` | `src/Integrations/Standalone/StandaloneOrderProvider.php:403` |
+| `wpss_standalone_order_complete` | `object $order` | `src/Integrations/Standalone/StandaloneOrderProvider.php:708` |
+| `wpss_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Standalone/StandaloneOrderProvider.php:404` |
+| `wpss_order_status_pending_requirements` | `int $order_id, string $old_status` | `src/Integrations/Standalone/StandaloneOrderProvider.php:395` |
 | `wpss_payment_callback` | `string $gateway_id` | `src/Integrations/Standalone/StandaloneAdapter.php:335` |
 
 ### Offline Gateway
@@ -174,7 +174,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | `wpss_stripe_payment_intent_args` | `array $params, int $order_id, int $vendor_id` | `src/Integrations/Stripe/StripeGateway.php:302` |
 | `wpss_rest_create_payment_intent` | `null, object $gateway, float $amount, string $currency, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:267` |
 | `wpss_rest_confirm_payment` | `null, object $gateway, string $payment_id, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:316` |
-| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/Integrations/Standalone/StandaloneCheckoutProvider.php:585` |
+| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:417` |
 
 **`wpss_stripe_payment_intent_args`** lets you modify Stripe PaymentIntent parameters before creation:
 
@@ -656,17 +656,17 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:56` |
-| `wpss_currency` | `$currency` | `src/functions/money.php:592` |
+| `wpss_currency` | `$currency` | `src/functions/money.php:648` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/misc.php:55` |
 | `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:105` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:92` |
-| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:627` |
-| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:654` |
-| `wpss_currencies` | `$currencies` | `src/functions/money.php:1449` |
+| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:683` |
+| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:710` |
+| `wpss_currencies` | `$currencies` | `src/functions/money.php:1505` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:126` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:146` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:410` |
-| `wpss_wallet_manager` | `null` | `src/functions/money.php:1471` |
+| `wpss_wallet_manager` | `null` | `src/functions/money.php:1527` |
 
 ### Currency System Filters (1.2.1)
 
@@ -674,9 +674,9 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1428` |
+| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1484` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:160` |
-| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:553` |
+| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:609` |
 | `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3752` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:835` |
 
