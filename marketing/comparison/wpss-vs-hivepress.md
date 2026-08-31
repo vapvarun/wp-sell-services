@@ -56,7 +56,7 @@ Choosing between WP Sell Services and HivePress (with the TaskHive theme) for yo
 | **Revision management** | Yes - per-package limits | No structured system |
 | **Deadline extensions** | Yes - request and approve | No |
 | **Auto-complete** | Yes - configurable timer via cron | No |
-| **Tipping** | Yes - commission-free | No |
+| **Tipping** | Yes - commission configurable, 0% optional | No |
 | **Order messaging** | Yes - per-order with file attachments | Yes |
 
 This is WPSS's strongest advantage. HivePress was designed as a directory/listing platform, not an order management system. Its marketplace features are more transactional (buy a listing service) than workflow-oriented (manage a project through delivery). WP Sell Services has a production-grade order workflow comparable to Fiverr.
@@ -197,7 +197,7 @@ HivePress has Stripe Connect built-in for automated vendor payouts - a strong fe
 - 4 automatic seller levels
 - Portfolio for vendors
 - Vacation mode
-- Commission-free tipping
+- Tipping with a configurable commission (0% optional)
 - 5 dispute resolution types (vs basic complaints)
 - 20 REST API controllers (vs limited listing/user endpoints)
 - Batch endpoint (25 sub-requests)

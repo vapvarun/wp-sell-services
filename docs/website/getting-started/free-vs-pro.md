@@ -144,9 +144,9 @@ same six-step flow either way; Pro simply stops capping how much they can add.
 | White-Label Branding (rebrand the marketplace) | -- | **[PRO]** |
 | Display Currency (show prices in the shopper's currency) | -- | **[PRO]** |
 | Push notifications to members' phones (Firebase) | -- | **[PRO]** |
-| Recurring Services (subscription billing for services) | -- | Not enabled in 1.6.0 |
+| Recurring Services (subscription billing for services) | -- | Not enabled in 1.7.0 |
 
-**Recurring Services** ships behind a default-off feature flag in 1.6.0 and its
+**Recurring Services** ships behind a default-off feature flag in 1.7.0 and its
 UI is hidden. Do not buy Pro for recurring billing yet -- see
 [Recurring Services](../order-management/recurring-services.md).
 

@@ -55,7 +55,7 @@ This is the single most important difference between WP Sell Services and Workre
 | **Deadline extensions** | Yes - request and approve | No |
 | **Auto-complete** | Yes - configurable timer via cron | No |
 | **Revision management** | Yes - per-package limits | Basic |
-| **Tipping** | Yes - commission-free | No |
+| **Tipping** | Yes - commission configurable, 0% optional | No |
 
 WP Sell Services handles the details that professional marketplaces need: collecting project requirements before work begins, allowing deadline extensions, and automatically completing orders when buyers don't respond. Workreap's workflow is more basic.
 
@@ -152,7 +152,7 @@ For agencies and developers, WP Sell Services is dramatically more extensible. 2
 - WP-CLI commands
 - 170+ documented hooks
 - PSR-4 modern PHP architecture
-- Commission-free tipping
+- Tipping with a configurable commission (0% optional)
 - 17 custom database tables (faster than WC post meta)
 
 ---

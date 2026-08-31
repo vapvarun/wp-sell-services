@@ -90,7 +90,7 @@ These features are identical in Free and Pro:
 ### Commission and Earnings
 - Global commission rate (0-50%, default 10%)
 - Per-vendor custom commission rates
-- Commission-free tipping
+- Tipping with a configurable commission (0% optional)
 - Earnings dashboard with balance tracking
 - Withdrawal request system
 - Automated withdrawal scheduling (weekly, bi-weekly, monthly)
@@ -244,7 +244,7 @@ Both Free and Pro include the same commission features:
 |---------|------|-----|
 | **Global Commission Rate** | 0-50% (default 10%) | Same |
 | **Per-Vendor Custom Rates** | Included | Same |
-| **Commission on Tips** | Tips are commission-free | Same |
+| **Commission on Tips** | Follows the main rate by default; set Tip Commission Rate to 0 to give vendors 100% | Same |
 | **Commission Calculation** | Automatic on order completion | Same |
 
 **Important:** Per-vendor commission rates are NOT a Pro-only feature. The free version includes this capability. Admins can override the global rate for individual vendors through vendor profile settings.

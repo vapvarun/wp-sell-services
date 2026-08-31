@@ -84,7 +84,7 @@ Set a global commission rate (0-50%) or custom rates per vendor. When orders com
 ### Commission and Earnings
 - **Global Commission Rate** - Set percentage (0-50%) for all vendors
 - **Per-Vendor Custom Rates** - Override global rate for specific vendors
-- **Commission-Free Tipping** - Tips go 100% to vendors
+- **Tipping** - Set the tip commission rate to 0 and tips go 100% to vendors
 - **Withdrawal System** - Vendors request payouts, admins approve
 - **Automated Scheduling** - Weekly, bi-weekly, or monthly auto-withdrawals
 - **Minimum Thresholds** - Set minimum withdrawal amounts and clearance periods
@@ -188,7 +188,7 @@ These features exist only in WP Sell Services:
 - **11 order statuses** - Most complete workflow available
 - **Plugin + no WC dependency** - Works with any theme, no WooCommerce overhead
 - **Deadline extension requests** - Vendors and buyers negotiate delivery changes
-- **Commission-free tipping** - Buyers reward exceptional work
+- **Tipping** - Buyers reward exceptional work; you choose the commission, including none
 
 ---
 

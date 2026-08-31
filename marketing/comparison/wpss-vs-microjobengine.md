@@ -55,7 +55,7 @@ MicrojobEngine was built in a different era of WordPress development. WP Sell Se
 | **Deadline extensions** | Yes - request and approve | No |
 | **Auto-complete** | Yes - configurable timer via cron | No |
 | **Revision management** | Yes - per-package limits | Basic |
-| **Tipping** | Yes - commission-free | No |
+| **Tipping** | Yes - commission configurable, 0% optional | No |
 | **Custom orders** | Via buyer requests | Yes (direct buyer-to-seller) |
 
 WP Sell Services has nearly twice the order statuses and several workflow features MicrojobEngine doesn't offer: requirements collection, milestone payments, deadline extensions, and auto-complete.
@@ -173,7 +173,7 @@ Both platforms avoid the WooCommerce dependency. WP Sell Services includes Strip
 - Deadline extension requests
 - Auto-complete via cron
 - 5 dispute resolution types
-- Commission-free tipping
+- Tipping with a configurable commission (0% optional)
 - Account-level vacation mode
 - Per-vendor commission rates
 - 170+ documented action/filter hooks
