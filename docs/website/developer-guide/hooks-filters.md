@@ -72,7 +72,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderService.php:427` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:730` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:746` |
 
 ### Order Filters
 
@@ -665,7 +665,7 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | `wpss_currencies` | `$currencies` | `src/functions/money.php:1505` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:126` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:146` |
-| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:410` |
+| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:426` |
 | `wpss_wallet_manager` | `null` | `src/functions/money.php:1527` |
 
 ### Currency System Filters (1.2.1)

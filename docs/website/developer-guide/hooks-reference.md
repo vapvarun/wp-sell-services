@@ -155,7 +155,7 @@ guide; this is the complete index.
 | `wpss_order_cancelled` | 2 | `src/Services/OrderWorkflowManager.php:711` | Fires when order is cancelled. |
 | `wpss_order_completed` | 2 | `src/Services/OrderWorkflowManager.php:634` | Fires when order is completed. |
 | `wpss_order_confirmation_details` | 1 | `templates/order/order-confirmation.php:250` | Hook: wpss_order_confirmation_details |
-| `wpss_order_created` | 2 | `src/functions/orders.php:731` | Fires after a service order is created, on every e-commerce rail. |
+| `wpss_order_created` | 2 | `src/functions/orders.php:747` | Fires after a service order is created, on every e-commerce rail. |
 | `wpss_order_disputed` | 3 | `src/API/OrdersController.php:960` *(+1 more)* |  |
 | `wpss_order_message_created` | 3 | `src/API/OrdersController.php:624` |  |
 | `wpss_order_paid` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php:405` | Fires when an order is marked as paid. |
@@ -305,7 +305,7 @@ guide; this is the complete index.
 | `wpss_admin_notification_email` | 1 | `src/Services/EmailService.php:571` | Tell the site owner a buyer has sent proof of an offline payment. |
 | `wpss_admin_vendor_notification_content` | 2 | `src/Services/NotificationService.php:1519` | Filter admin vendor notification email content. |
 | `wpss_after_become_vendor_redirect` | 2 | `src/Frontend/UnifiedDashboard.php:1112` | Filter the redirect URL after a vendor successfully registers. |
-| `wpss_allow_late_requirements_submission` | 1 | `src/functions/orders.php:411` *(+1 more)* | Filter whether late requirements submission is allowed. |
+| `wpss_allow_late_requirements_submission` | 1 | `src/functions/orders.php:427` *(+1 more)* | Filter whether late requirements submission is allowed. |
 | `wpss_analytics_widgets` | 1 | `src/Core/Plugin.php:2416` *(+1 more)* | Filter the registered analytics widgets. |
 | `wpss_api_controllers` | 1 | `src/API/API.php:184` | Filter registered API controllers. |
 | `wpss_api_cors_origins` | 0 | `src/API/API.php:1336` | Filter allowed CORS origins. |
@@ -399,8 +399,8 @@ guide; this is the complete index.
 | `wpss_order_actions` | 2 | `templates/order/order-view.php:430` | Filter: wpss_order_actions |
 | `wpss_order_is_refundable` | 2 | `src/functions/money.php:303` | Filter whether an order may be refunded. |
 | `wpss_order_number_prefix` | 1 | `src/Database/Repositories/OrderRepository.php:93` *(+1 more)* | Generate a unique order number. |
-| `wpss_order_payment_reference` | 2 | `src/functions/orders.php:823` | Filter the payment-rail receipt reference shown on an order. |
-| `wpss_order_status_groups` | 1 | `src/functions/orders.php:498` | Filter the order status groups used by the dashboard filter chips. |
+| `wpss_order_payment_reference` | 2 | `src/functions/orders.php:839` | Filter the payment-rail receipt reference shown on an order. |
+| `wpss_order_status_groups` | 1 | `src/functions/orders.php:514` | Filter the order status groups used by the dashboard filter chips. |
 | `wpss_order_status_label` | 3 | `templates/order/order-view.php:168` | Filter: wpss_order_status_label |
 | `wpss_order_status_transitions` | 3 | `src/Services/OrderService.php:628` | Filter allowed status transitions. |
 | `wpss_order_statuses` | 1 | `src/functions/orders.php:127` | Filter order statuses. |
@@ -432,7 +432,7 @@ guide; this is the complete index.
 | `wpss_pro_recurring_feature_available` | 1 | `src/RecurringServices/RecurringSettingsRenderer.php:279` **[PRO]** | Whether the recurring-services feature is available in this version. |
 | `wpss_pro_upgrade_url` | 1 | `src/Frontend/ServiceWizard.php:934` *(+3 more)* |  |
 | `wpss_proposal_order_revisions` | 3 | `src/Services/BuyerRequestService.php:714` |  |
-| `wpss_rail_status_map` | 2 | `src/functions/orders.php:1245` | Filters the rail status map. |
+| `wpss_rail_status_map` | 2 | `src/functions/orders.php:1261` | Filters the rail status map. |
 | `wpss_rate_limits` | 2 | `src/Core/RateLimiter.php:267` | Filter rate limits for a specific action. |
 | `wpss_realtime_settings` | 1 | `src/Services/RealtimeService.php:65` | Filter the realtime (Pusher-protocol) connection settings. |
 | `wpss_related_services_args` | 2 | `src/Frontend/SingleServiceView.php:817` | Filter related services query args. |

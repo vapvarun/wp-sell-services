@@ -237,6 +237,16 @@ function wpss_get_order_url( int $order_id, string $section = '' ): string {
  *
  * Pretty shape: `/{dashboard}/orders/{id}/requirements/`.
  *
+ * A SUB-ORDER has no requirements step. A tip, a paid extension and a
+ * milestone phase are all payments against work that already has its brief, so
+ * sending the buyer to `/requirements/` gave them a URL and a page heading that
+ * described something the screen was not - the content underneath is a tip
+ * receipt or a phase receipt, and correct. Those land on the order itself.
+ *
+ * Every gateway routes its post-payment redirect through here, so fixing it in
+ * one place covers Stripe, PayPal, offline and the intent service rather than
+ * four separate redirects that would drift.
+ *
  * @param int $order_id Order ID.
  * @return string
  */
@@ -245,6 +255,12 @@ function wpss_get_order_requirements_url( int $order_id ): string {
 
 	if ( ! $order ) {
 		return '';
+	}
+
+	$sub_order_platforms = function_exists( 'wpss_get_sub_order_platforms' ) ? wpss_get_sub_order_platforms() : array();
+
+	if ( in_array( (string) ( $order->platform ?? '' ), $sub_order_platforms, true ) ) {
+		return wpss_get_order_url( $order_id );
 	}
 
 	$dashboard_url = wpss_get_dashboard_url( 'orders' );
