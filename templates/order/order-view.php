@@ -520,10 +520,97 @@ do_action( 'wpss_before_order_view', $order );
 						<span class="wpss-order-detail-item__value"><?php echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) ); ?></span>
 					</div>
 				<?php endif; ?>
+				<?php
+				/*
+				 * A milestone contract keeps its money on the PHASES, not on the
+				 * parent, so the parent legitimately carries total = 0. That is
+				 * correct accounting and a terrible thing to show a buyer: they
+				 * agreed $200, paid $200 across two phases, and the order they
+				 * are looking at says $0.00 as though it were free or broken
+				 * (Basecamp 10254487153).
+				 *
+				 * So when the parent has phases, the figure comes from them:
+				 * what was contracted, and how much of it has been paid.
+				 */
+				$phase_orders = array();
+				$phase_total  = 0.0;
+				$phase_paid   = 0.0;
+				$phase_count  = 0;
+
+				// A cancelled or declined phase has been withdrawn from the
+				// contract, so counting it would overstate what was agreed - a
+				// contract with two live phases worth $500 and two cancelled
+				// ones read "$675" until this excluded them.
+				$dropped_statuses = array( 'cancelled', 'rejected' );
+
+				// Money the buyer has actually parted with. Refunded is
+				// deliberately not here: it was paid and came back, so it is
+				// still contracted but no longer paid.
+				$unpaid_statuses = array( 'pending_payment', 'refunded' );
+
+				if ( class_exists( '\WPSellServices\Services\MilestoneService' ) ) {
+					$phase_orders = ( new \WPSellServices\Services\MilestoneService() )->get_for_parent( $order_id );
+
+					// get_for_parent() returns decorated ARRAYS keyed `amount`,
+					// not order objects with `total`. Reading ->total gave 0 on
+					// every phase, which silently left the parent showing $0.00 -
+					// the very thing this block exists to fix.
+					foreach ( $phase_orders as $phase ) {
+						$phase        = (array) $phase;
+						$phase_status = (string) ( $phase['status'] ?? '' );
+						$phase_amount = (float) ( $phase['amount'] ?? 0 );
+
+						if ( in_array( $phase_status, $dropped_statuses, true ) ) {
+							continue;
+						}
+
+						++$phase_count;
+						$phase_total += $phase_amount;
+
+						if ( ! in_array( $phase_status, $unpaid_statuses, true ) ) {
+							$phase_paid += $phase_amount;
+						}
+					}
+				}
+
+				$show_phase_total = $phase_count > 0 && $phase_total > 0;
+				?>
 				<div class="wpss-order-detail-item wpss-order-detail-item--highlight">
-					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Total Amount', 'wp-sell-services' ); ?></span>
-					<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></span>
+					<span class="wpss-order-detail-item__label">
+						<?php
+						if ( $show_phase_total ) {
+							esc_html_e( 'Contract Total', 'wp-sell-services' );
+						} else {
+							esc_html_e( 'Total Amount', 'wp-sell-services' );
+						}
+						?>
+					</span>
+					<span class="wpss-order-detail-item__value">
+						<?php
+						if ( $show_phase_total ) {
+							echo esc_html( wpss_format_price( $phase_total, $order->currency ) );
+						} else {
+							echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) );
+						}
+						?>
+					</span>
 				</div>
+				<?php if ( $show_phase_total ) : ?>
+					<div class="wpss-order-detail-item">
+						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Paid So Far', 'wp-sell-services' ); ?></span>
+						<span class="wpss-order-detail-item__value">
+							<?php
+							printf(
+								/* translators: 1: amount paid, 2: contracted total, 3: number of phases. */
+								esc_html( _n( '%1$s of %2$s across %3$d phase', '%1$s of %2$s across %3$d phases', $phase_count, 'wp-sell-services' ) ),
+								esc_html( wpss_format_price( $phase_paid, $order->currency ) ),
+								esc_html( wpss_format_price( $phase_total, $order->currency ) ),
+								$phase_count
+							);
+							?>
+						</span>
+					</div>
+				<?php endif; ?>
 				<?php
 				// Refunded amount. Without this the order reads "Partially
 				// Refunded — Total $100.00" and neither party can tell how much
