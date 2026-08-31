@@ -54,6 +54,8 @@ $wpss_listing_copy = apply_filters(
 	$wpss_max_services
 );
 ?>
+<section class="wpss-vr__benefits">
+<h2 class="wpss-vr__section-title"><?php esc_html_e( 'What you get', 'wp-sell-services' ); ?></h2>
 <div class="wpss-vr__features">
 	<div class="wpss-vr__feature">
 		<span class="wpss-vr__feature-icon">
@@ -83,3 +85,4 @@ $wpss_listing_copy = apply_filters(
 		</div>
 	</div>
 </div>
+</section>

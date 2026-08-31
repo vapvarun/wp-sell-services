@@ -103,4 +103,48 @@ wpss_t(
 	'no branch still carries its own inline copy of the bullets'
 );
 
+// 4. Pitch stats. Every number on the hero has to be one this marketplace can
+//    stand behind - a thin site advertising "2 sellers already here" argues
+//    against itself, and the commission line must read the real setting rather
+//    than a number someone typed into copy.
+$saved_commission = get_option( 'wpss_commission', array() );
+
+$stats  = wpss_get_vendor_pitch_stats();
+$labels = wp_list_pluck( $stats, 'label' );
+wpss_t(
+	in_array( 'of every order is yours', $labels, true ),
+	'the commission-kept line is always shown, whatever the counts are'
+);
+
+update_option( 'wpss_commission', array( 'commission_rate' => 25 ) );
+$kept = '';
+foreach ( wpss_get_vendor_pitch_stats() as $stat ) {
+	if ( 'of every order is yours' === $stat['label'] ) {
+		$kept = $stat['value'];
+	}
+}
+wpss_t( '75%' === $kept, 'a 25% commission advertises 75% kept, not a hardcoded 90%' );
+
+update_option( 'wpss_commission', $saved_commission );
+
+// A count under the threshold is dropped, not printed. Asserted against the
+// source, because the alternative is deleting real vendor rows to test copy.
+$vendors_src = file_get_contents( WPSS_PLUGIN_DIR . 'src/functions/vendors.php' );
+wpss_t(
+	false !== strpos( $vendors_src, '$vendors >= 5' ) && false !== strpos( $vendors_src, '$services >= 5' ),
+	'counts below 5 are dropped rather than advertised as an empty room'
+);
+
+// 5. Both branches render the same pitch layout. The whole point of the
+//    redesign is that a visitor and a signed-in buyer see one page, not two.
+wpss_t(
+	2 === substr_count( $shortcodes, '$this->render_vendor_pitch_hero();' )
+		&& 2 === substr_count( $shortcodes, '$this->render_vendor_pitch_steps();' ),
+	'both branches render the hero and the steps'
+);
+wpss_t(
+	2 === substr_count( $shortcodes, 'class="wpss-vr wpss-vr--pitch"' ),
+	'both branches opt into the wide pitch layout'
+);
+
 echo "\n{$GLOBALS['wpss_pass']} passed, {$GLOBALS['wpss_fail']} failed\n";

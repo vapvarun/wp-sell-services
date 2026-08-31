@@ -999,35 +999,43 @@ class Shortcodes {
 	 */
 	public function vendor_registration( $atts ): string {
 		wpss_enqueue_frontend_assets();
+		// Provides window.wpssToast for the become-vendor error path below.
+		\WPSellServices\Assets\ScriptRegistry::enqueue_ui();
 
 		ob_start();
 		$this->render_vendor_registration_styles();
 
 		if ( ! is_user_logged_in() ) {
 			?>
-			<div class="wpss-vr">
-				<div class="wpss-vr__card wpss-vr__card--wide">
-					<div class="wpss-vr__hero-icon">
-						<i data-lucide="rocket" class="wpss-icon" aria-hidden="true"></i>
+			<div class="wpss-vr wpss-vr--pitch">
+				<?php $this->render_vendor_pitch_hero(); ?>
+
+				<div class="wpss-vr__body">
+					<div class="wpss-vr__pitch">
+
+						<?php
+						// One partial, both branches. These bullets used to be
+						// written out here and again below, so a copy correction
+						// had to be made twice or the page told two different
+						// stories depending on who was reading it.
+						require WPSS_PLUGIN_DIR . 'templates/partials/vendor-benefits.php';
+
+						$this->render_vendor_pitch_steps();
+						?>
 					</div>
-					<h2 class="wpss-vr__title"><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></h2>
-					<p class="wpss-vr__desc"><?php esc_html_e( 'Create your vendor account in seconds. No credit card required.', 'wp-sell-services' ); ?></p>
 
-					<?php
-					// One partial, both branches. These bullets used to be written out
-					// here and again below, so a copy correction had to be made twice or
-					// the page told two different stories depending on who was reading it.
-					require WPSS_PLUGIN_DIR . 'templates/partials/vendor-benefits.php';
-					?>
-
-					<?php
-					// B1 (baseline-2026-04-25.md): inline signup form replaces the
-					// previous "Log In / Create Account" buttons that punted visitors
-					// to the bare wp-login.php screen. Brand-new visitors can now
-					// become vendors in one form, on one page, without leaving the
-					// marketplace experience.
-					( new \WPSellServices\Frontend\PublicSignup() )->render_form( 'vendor' );
-					?>
+					<aside class="wpss-vr__action">
+						<div class="wpss-vr__card">
+							<h2 class="wpss-vr__card-title"><?php esc_html_e( 'Create your seller account', 'wp-sell-services' ); ?></h2>
+							<p class="wpss-vr__card-sub"><?php esc_html_e( 'Takes a minute. No card, no listing fee.', 'wp-sell-services' ); ?></p>
+							<?php
+							// B1 (baseline-2026-04-25.md): inline signup form replaces
+							// the previous "Log In / Create Account" buttons that
+							// punted visitors to the bare wp-login.php screen.
+							( new \WPSellServices\Frontend\PublicSignup() )->render_form( 'vendor' );
+							?>
+						</div>
+					</aside>
 				</div>
 			</div>
 			<?php
@@ -1091,32 +1099,42 @@ class Shortcodes {
 
 		$approval_required = 'approval' === $registration_mode;
 		?>
-		<div class="wpss-vr">
-			<div class="wpss-vr__card wpss-vr__card--wide">
-				<div class="wpss-vr__hero-icon">
-					<i data-lucide="rocket" class="wpss-icon" aria-hidden="true"></i>
-				</div>
-				<h2 class="wpss-vr__title"><?php esc_html_e( 'Start selling your services', 'wp-sell-services' ); ?></h2>
-				<p class="wpss-vr__desc"><?php esc_html_e( 'Join our marketplace and turn your skills into income. Create listings, set your rates, and connect with clients worldwide.', 'wp-sell-services' ); ?></p>
+		<div class="wpss-vr wpss-vr--pitch">
+			<?php $this->render_vendor_pitch_hero(); ?>
 
+			<div class="wpss-vr__body">
+				<div class="wpss-vr__pitch">
 					<?php
-					// One partial, both branches. These bullets used to be written out
-					// here and again below, so a copy correction had to be made twice or
-					// the page told two different stories depending on who was reading it.
+					// One partial, both branches. These bullets used to be written
+					// out here and again above, so a copy correction had to be made
+					// twice or the page told two different stories depending on who
+					// was reading it.
 					require WPSS_PLUGIN_DIR . 'templates/partials/vendor-benefits.php';
+
+					$this->render_vendor_pitch_steps();
 					?>
-
-				<?php if ( $approval_required ) : ?>
-					<p class="wpss-vr__note">
-						<?php esc_html_e( 'Applications are reviewed by our team. You\'ll be notified once approved.', 'wp-sell-services' ); ?>
-					</p>
-				<?php endif; ?>
-
-				<div class="wpss-vr__actions">
-					<button type="button" class="wpss-vr__btn wpss-vr__btn--primary wpss-vr__btn--lg" data-action="become-vendor">
-						<?php esc_html_e( 'Register as Vendor', 'wp-sell-services' ); ?>
-					</button>
 				</div>
+
+				<aside class="wpss-vr__action">
+					<div class="wpss-vr__card">
+						<h2 class="wpss-vr__card-title"><?php esc_html_e( 'Start selling', 'wp-sell-services' ); ?></h2>
+						<p class="wpss-vr__card-sub">
+							<?php
+							if ( $approval_required ) {
+								esc_html_e( 'Applications are reviewed by our team. You will be notified once approved.', 'wp-sell-services' );
+							} else {
+								esc_html_e( 'You are signed in already, so this is one click.', 'wp-sell-services' );
+							}
+							?>
+						</p>
+
+						<div class="wpss-vr__actions">
+							<button type="button" class="wpss-vr__btn wpss-vr__btn--primary wpss-vr__btn--lg" data-action="become-vendor">
+								<?php esc_html_e( 'Register as Vendor', 'wp-sell-services' ); ?>
+							</button>
+						</div>
+					</div>
+				</aside>
 			</div>
 		</div>
 		<script>
@@ -1124,16 +1142,13 @@ class Shortcodes {
 			var btn = document.querySelector('[data-action="become-vendor"]');
 			if ( ! btn ) return;
 			var dashboardUrl = <?php echo wp_json_encode( wpss_get_page_url( 'dashboard' ) ?: home_url() ); ?>;
-			var card = btn.closest('.wpss-vr__card');
 
+			// window.wpssToast is the canonical notice surface (assets/js/wpss-ui.js),
+			// enqueued for this page above. The hand-rolled version this replaced
+			// painted its own hex colours inline, so it stayed light-mode red on a
+			// dark page.
 			function showMessage(msg, type) {
-				var el = document.createElement('div');
-				el.style.cssText = 'padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;';
-				el.style.background = type === 'error' ? '#fef2f2' : '#f0fdf4';
-				el.style.color = type === 'error' ? '#991b1b' : '#166534';
-				el.style.border = '1px solid ' + (type === 'error' ? '#fecaca' : '#bbf7d0');
-				el.textContent = msg;
-				card.insertBefore(el, card.firstChild);
+				window.wpssToast(msg, type);
 			}
 
 			btn.addEventListener('click', function() {
@@ -1164,6 +1179,102 @@ class Shortcodes {
 		</script>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Hero band for the Become a Vendor page.
+	 *
+	 * This page has one job - persuade somebody to sell here - and it used to
+	 * do it with a ~520px card marooned in a full-width layout: no hero, no
+	 * proof, no "what happens next". The hero opens with this marketplace's own
+	 * numbers, which is the only social proof we actually have.
+	 *
+	 * Stats come from wpss_get_vendor_pitch_stats(), which drops any figure
+	 * that would argue against us - a new site must not advertise "0 sellers".
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return void
+	 */
+	private function render_vendor_pitch_hero(): void {
+		$stats = wpss_get_vendor_pitch_stats();
+		?>
+		<section class="wpss-vr__hero">
+			<p class="wpss-vr__eyebrow"><?php esc_html_e( 'Sell on this marketplace', 'wp-sell-services' ); ?></p>
+			<h1 class="wpss-vr__hero-title"><?php esc_html_e( 'Turn what you are good at into income', 'wp-sell-services' ); ?></h1>
+			<p class="wpss-vr__hero-sub">
+				<?php esc_html_e( 'List a service, set your own prices and delivery times, and get paid once the work is approved. You choose what you take on.', 'wp-sell-services' ); ?>
+			</p>
+			<?php if ( $stats ) : ?>
+				<ul class="wpss-vr__stats">
+					<?php foreach ( $stats as $stat ) : ?>
+						<li class="wpss-vr__stat">
+							<span class="wpss-vr__stat-value"><?php echo esc_html( $stat['value'] ); ?></span>
+							<span class="wpss-vr__stat-label"><?php echo esc_html( $stat['label'] ); ?></span>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			<?php endif; ?>
+		</section>
+		<?php
+	}
+
+	/**
+	 * "How it works" steps.
+	 *
+	 * Somebody deciding whether to sell here wants to know what happens after
+	 * they click, and the page answered that with nothing. Numbered because it
+	 * genuinely is a sequence, which is the one case where numbering carries
+	 * information rather than decoration.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return void
+	 */
+	private function render_vendor_pitch_steps(): void {
+		$steps = array(
+			array(
+				'title' => __( 'Create your seller profile', 'wp-sell-services' ),
+				'text'  => __( 'Say who you are and what you do. It is what buyers read before they order.', 'wp-sell-services' ),
+			),
+			array(
+				'title' => __( 'Publish your first service', 'wp-sell-services' ),
+				'text'  => __( 'Describe the work, set your packages and delivery time, and ask for anything you need from the buyer up front.', 'wp-sell-services' ),
+			),
+			array(
+				'title' => __( 'Deliver and get paid', 'wp-sell-services' ),
+				'text'  => __( 'Talk to the buyer on the order, deliver your work, and withdraw your earnings once it is approved.', 'wp-sell-services' ),
+			),
+		);
+
+		/**
+		 * Filter the "how it works" steps on the vendor registration page.
+		 *
+		 * @since 1.7.0
+		 *
+		 * @param array $steps Ordered steps, each with a `title` and `text`.
+		 */
+		$steps = (array) apply_filters( 'wpss_vendor_pitch_steps', $steps );
+
+		if ( ! $steps ) {
+			return;
+		}
+		?>
+		<section class="wpss-vr__steps">
+			<h2 class="wpss-vr__section-title"><?php esc_html_e( 'How it works', 'wp-sell-services' ); ?></h2>
+			<ol class="wpss-vr__step-list">
+				<?php foreach ( array_values( $steps ) as $index => $step ) : ?>
+					<li class="wpss-vr__step">
+						<span class="wpss-vr__step-num" aria-hidden="true"><?php echo esc_html( number_format_i18n( $index + 1 ) ); ?></span>
+						<span class="wpss-vr__step-body">
+							<strong><?php echo esc_html( $step['title'] ); ?></strong>
+							<span><?php echo esc_html( $step['text'] ); ?></span>
+						</span>
+					</li>
+				<?php endforeach; ?>
+			</ol>
+		</section>
+		<?php
 	}
 
 	/**
@@ -1292,10 +1403,80 @@ class Shortcodes {
 		.wpss-signup-form__signin a { color: var(--wpss-primary, #4f46e5); font-weight: 600; text-decoration: none; }
 		.wpss-signup-form__signin a:hover { text-decoration: underline; }
 
+		/* Pitch layout: hero + two columns. The narrow single-card branches
+			(already a vendor, registration closed) keep the 560px width above. */
+		.wpss-vr--pitch { max-width: 1080px; }
+		.wpss-vr__hero { text-align: center; margin-bottom: 40px; }
+		.wpss-vr__eyebrow {
+			font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+			color: var(--wpss-primary, #4f46e5); margin: 0 0 12px;
+		}
+		.wpss-vr__hero-title {
+			font-size: clamp(28px, 4vw, 42px); font-weight: 700; line-height: 1.15;
+			color: var(--wpss-text, #111827); margin: 0 0 16px; text-wrap: balance;
+		}
+		.wpss-vr__hero-sub {
+			font-size: 17px; line-height: 1.6; color: var(--wpss-text-muted, #6b7280);
+			max-width: 620px; margin: 0 auto;
+		}
+		.wpss-vr__stats {
+			display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+			list-style: none; margin: 32px 0 0; padding: 0;
+		}
+		.wpss-vr__stat {
+			display: flex; flex-direction: column; gap: 4px;
+			flex: 1 1 180px; max-width: 260px;
+			padding: 18px 20px; border-radius: 12px;
+			background: var(--wpss-bg-subtle, #f9fafb);
+			border: 1px solid var(--wpss-border, #e5e7eb);
+		}
+		.wpss-vr__stat-value {
+			font-size: 24px; font-weight: 700; color: var(--wpss-text, #111827);
+			font-variant-numeric: tabular-nums;
+		}
+		.wpss-vr__stat-label { font-size: 13px; color: var(--wpss-text-muted, #6b7280); line-height: 1.4; }
+
+		.wpss-vr__body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 400px); gap: 32px; align-items: start; }
+		.wpss-vr__pitch { display: flex; flex-direction: column; gap: 32px; }
+		/* The shared benefits partial centres itself in the narrow branches. */
+		.wpss-vr__pitch .wpss-vr__features { margin-bottom: 0; }
+		.wpss-vr__section-title {
+			font-size: 18px; font-weight: 700; color: var(--wpss-text, #111827); margin: 0 0 16px;
+		}
+		.wpss-vr__step-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 20px; }
+		.wpss-vr__step { display: flex; align-items: flex-start; gap: 14px; }
+		.wpss-vr__step-num {
+			display: inline-flex; align-items: center; justify-content: center;
+			width: 32px; height: 32px; flex-shrink: 0;
+			border-radius: 50%; font-size: 14px; font-weight: 700;
+			background: var(--wpss-primary-light, #eef2ff); color: var(--wpss-primary, #4f46e5);
+			font-variant-numeric: tabular-nums;
+		}
+		.wpss-vr__step-body { display: flex; flex-direction: column; gap: 2px; }
+		.wpss-vr__step-body strong { font-size: 15px; font-weight: 600; color: var(--wpss-text, #111827); }
+		.wpss-vr__step-body span { font-size: 14px; color: var(--wpss-text-muted, #6b7280); line-height: 1.5; }
+
+		.wpss-vr__action { position: sticky; top: 24px; }
+		.wpss-vr--pitch .wpss-vr__card { padding: 32px 28px; text-align: start; }
+		.wpss-vr__card-title { font-size: 20px; font-weight: 700; color: var(--wpss-text, #111827); margin: 0 0 6px; }
+		.wpss-vr__card-sub { font-size: 14px; color: var(--wpss-text-muted, #6b7280); line-height: 1.5; margin: 0 0 24px; }
+		.wpss-vr--pitch .wpss-signup-form { max-width: none; }
+		.wpss-vr--pitch .wpss-vr__actions { justify-content: stretch; }
+		.wpss-vr--pitch .wpss-vr__actions .wpss-vr__btn { width: 100%; }
+
+		@media (max-width: 900px) {
+			.wpss-vr__body { grid-template-columns: minmax(0, 1fr); }
+			/* Sticky is pointless once stacked - and the sign-up card leads,
+				because stacked behind the full pitch it sat below three
+				screenfuls of scroll. */
+			.wpss-vr__action { position: static; order: -1; }
+		}
+
 		@media (max-width: 480px) {
 			.wpss-vr__card { padding: 32px 24px; }
 			.wpss-vr__actions { flex-direction: column; }
 			.wpss-vr__btn { width: 100%; }
+			.wpss-vr__stat { flex-basis: 100%; max-width: none; }
 		}
 		</style>
 		<?php

@@ -687,3 +687,66 @@ function wpss_count_vendor_services( int $vendor_id, $post_status = 'publish' ):
 
 	return (int) $query->found_posts;
 }
+
+/**
+ * Proof points for the Become a Vendor page.
+ *
+ * Real figures, read from this marketplace rather than invented, and each one
+ * is dropped when it would work against us: a brand-new site advertising
+ * "0 sellers, 0 orders" is worse than saying nothing, because it tells the
+ * visitor they would be first with none of the reassurance that usually comes
+ * with that.
+ *
+ * The commission line is the exception - it is always shown, because what a
+ * seller keeps is the question they came to the page with, and it is true on
+ * day one.
+ *
+ * @since 1.7.0
+ *
+ * @return array<int,array{value:string,label:string}> Ordered, ready to render.
+ */
+function wpss_get_vendor_pitch_stats(): array {
+	global $wpdb;
+
+	$stats = array();
+
+	$vendors = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wpss_vendor_profiles WHERE status = 'active'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+	// A handful of sellers is not proof of anything; below this it reads as an
+	// empty room rather than a marketplace.
+	if ( $vendors >= 5 ) {
+		$stats[] = array(
+			'value' => number_format_i18n( $vendors ),
+			'label' => __( 'sellers already here', 'wp-sell-services' ),
+		);
+	}
+
+	$services = (int) wp_count_posts( 'wpss_service' )->publish;
+
+	if ( $services >= 5 ) {
+		$stats[] = array(
+			'value' => number_format_i18n( $services ),
+			'label' => __( 'services on offer', 'wp-sell-services' ),
+		);
+	}
+
+	// What the seller keeps. Always shown, and taken from the real setting so a
+	// site running 5% or 20% does not advertise someone else's number.
+	$rate = (float) ( get_option( 'wpss_commission', array() )['commission_rate'] ?? 10 );
+	$keep = max( 0, min( 100, 100 - $rate ) );
+
+	$stats[] = array(
+		/* translators: %s: percentage of each order the seller keeps. */
+		'value' => sprintf( __( '%s%%', 'wp-sell-services' ), number_format_i18n( $keep ) ),
+		'label' => __( 'of every order is yours', 'wp-sell-services' ),
+	);
+
+	/**
+	 * Filter the proof points on the Become a Vendor page.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param array $stats Ordered stats, each with `value` and `label`.
+	 */
+	return apply_filters( 'wpss_vendor_pitch_stats', $stats );
+}

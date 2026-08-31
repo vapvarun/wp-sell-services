@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**499 hooks** across **710** firing sites.
+**501 hooks** across **712** firing sites.
 
 ## Actions (277)
 
@@ -294,7 +294,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php:760` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php:2238` | Fires after the wizard persists service meta. |
 
-## Filters (222)
+## Filters (224)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -504,6 +504,8 @@ guide; this is the complete index.
 | `wpss_vendor_is_on_vacation` | 2 | `src/Models/VendorProfile.php:519` | Check if vendor is on vacation. |
 | `wpss_vendor_page_schema` | 2 | `src/SEO/SchemaMarkup.php:388` |  |
 | `wpss_vendor_pending_email_content` | 3 | `src/Services/NotificationService.php:1464` | Filter vendor pending review email content. |
+| `wpss_vendor_pitch_stats` | 1 | `src/functions/vendors.php:751` | Filter the proof points on the Become a Vendor page. |
+| `wpss_vendor_pitch_steps` | 1 | `src/Frontend/Shortcodes.php:1257` | Filter the "how it works" steps on the vendor registration page. |
 | `wpss_vendor_profile_allowed_fields` | 1 | `src/Services/VendorService.php:477` | Filter the list of allowed vendor profile fields for update. |
 | `wpss_vendor_profile_fields` | 2 | `templates/vendor/profile.php:560` | Filter additional vendor profile fields. |
 | `wpss_vendor_registration_open` | 1 | `src/API/VendorsController.php:616` |  |
