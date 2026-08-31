@@ -209,8 +209,9 @@ class CheckoutIntentService {
 		 * CommissionService works from $order->subtotal + addons_total, the
 		 * PRE-tax base, because tax is not revenue to split.
 		 */
-		$tax    = wpss_calculate_tax( $amount, (int) $service->post_author, $service_id );
-		$amount = (float) $tax['total'];
+		$taxable_base = $amount;
+		$tax          = wpss_calculate_tax( $taxable_base, (int) $service->post_author, $service_id );
+		$amount       = (float) $tax['total'];
 
 		return CheckoutIntent::single(
 			$service_id,
@@ -224,7 +225,8 @@ class CheckoutIntentService {
 				'service_id'  => $service_id,
 				'package_id'  => $package_id,
 				'customer_id' => $buyer_id,
-			)
+			),
+			$taxable_base
 		);
 	}
 
@@ -342,7 +344,20 @@ class CheckoutIntentService {
 				'service_id'     => $intent->service_id,
 				'package_id'     => $intent->package_id,
 				'customer_id'    => $intent->buyer_id,
-				'subtotal'       => $charged_amount - $intent->addons_total,
+				/*
+				 * PRE-TAX subtotal, deliberately not $charged_amount.
+				 *
+				 * create_order() applies tax itself and CommissionService takes
+				 * its cut from subtotal + addons_total. Passing the charged
+				 * amount here - which now includes tax - taxed the order a
+				 * SECOND time (Pay $88.50, order total $104.43) and billed
+				 * commission on the tax as well (Basecamp 10254561978).
+				 *
+				 * $charged_amount is still what the gateway reports it took, and
+				 * is checked against the intent below; it is simply not the
+				 * number the order row is built from.
+				 */
+				'subtotal'       => max( 0, $intent->taxable_base - $intent->addons_total ),
 				'addons'         => $intent->addons,
 				'addons_total'   => $intent->addons_total,
 				'currency'       => $charged_currency,

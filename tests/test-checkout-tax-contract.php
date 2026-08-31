@@ -100,6 +100,95 @@ $charge = $intent_amount();
 wpss_t( 0.0 === (float) $off['amount'], 'no tax is applied when tax is switched off' );
 wpss_t( null !== $charge && abs( $charge - $price ) < 0.01, 'the charge is the bare price when tax is off' );
 
+/*
+ * --- Tax is applied ONCE, end to end ---------------------------------------
+ *
+ * Making the intent carry the taxed amount fixed the charge and broke the
+ * order: settle_single() passed that figure through as the subtotal, and
+ * create_order() taxed it a SECOND time. Pay $88.50, order total $104.43, and
+ * commission billed on the tax as well (Basecamp 10254561978).
+ *
+ * The intent now carries both numbers - $amount is what the gateway charges,
+ * $taxable_base is what the order row is built from - so this asserts they are
+ * different in the right direction and that the difference is exactly one tax
+ * pass.
+ */
+update_option(
+	'wpss_tax',
+	array( 'enable_tax' => true, 'tax_rate' => 18, 'tax_included' => false, 'tax_label' => 'Tax' )
+);
+
+$svc = new \WPSellServices\Checkout\CheckoutIntentService();
+$ref = new ReflectionMethod( $svc, 'resolve_single' );
+$ref->setAccessible( true );
+$intent = $ref->invoke( $svc, array( 'service_id' => $service_id, 'package_id' => 0 ), 1 );
+
+if ( ! is_wp_error( $intent ) ) {
+	wpss_t( abs( $intent->taxable_base - $price ) < 0.01, sprintf( 'the intent carries the PRE-tax base (%.2f)', $intent->taxable_base ) );
+	wpss_t( $intent->amount > $intent->taxable_base, 'the charge is the taxed figure, the base is not' );
+
+	// The order row is built from the base, then taxed once. Taxing the CHARGE
+	// instead is the regression, and it shows up as total > charge.
+	$order_total = wpss_calculate_tax( $intent->taxable_base, 0, $service_id )['total'];
+	wpss_t( abs( $order_total - $intent->amount ) < 0.01, sprintf( 'the order total equals the charge, not charge x 1.18 (%.2f)', $order_total ) );
+
+	$double = wpss_calculate_tax( $intent->amount, 0, $service_id )['total'];
+	wpss_t( abs( $order_total - $double ) > 0.01, sprintf( 'a second tax pass would have produced %.2f, and does not', $double ) );
+
+	// Commission must come off the pre-tax base, so the platform never takes a
+	// cut of the tax it is holding for someone else.
+	wpss_t(
+		abs( ( $intent->taxable_base - $intent->addons_total ) - $price ) < 0.01,
+		'the subtotal handed to the order row is the pre-tax price'
+	);
+
+	/*
+	 * Drive settle_single() for real.
+	 *
+	 * The assertions above check the INGREDIENTS - the intent carries the right
+	 * two numbers and the helper does the right arithmetic. They all passed
+	 * while settle_single() was still passing $charged_amount through as the
+	 * subtotal, so they did not catch the regression they were written for.
+	 *
+	 * Only creating an order catches it, so that is what this does, and it
+	 * removes the row afterwards.
+	 */
+	$provider = function_exists( 'wpss_get_order_provider' ) ? wpss_get_order_provider() : null;
+
+	if ( $provider ) {
+		$settle = new ReflectionMethod( $svc, 'settle_single' );
+		$settle->setAccessible( true );
+		$result = $settle->invoke( $svc, $intent, $provider, 'test', 'txn_tax_contract_probe', $intent->amount, $intent->currency );
+
+		if ( ! empty( $result['success'] ) ) {
+			global $wpdb;
+			$row = $wpdb->get_row(
+				$wpdb->prepare(
+					"SELECT subtotal, total, platform_fee FROM {$wpdb->prefix}wpss_orders WHERE id = %d",
+					(int) $result['order_id']
+				)
+			);
+
+			wpss_t( $row && abs( (float) $row->total - $intent->amount ) < 0.01, sprintf( 'THE ORDER TOTAL EQUALS THE AMOUNT CHARGED (%.2f vs %.2f)', $row ? (float) $row->total : 0, $intent->amount ) );
+			wpss_t( $row && abs( (float) $row->subtotal - $price ) < 0.01, sprintf( 'the stored subtotal is the pre-tax price (%.2f)', $row ? (float) $row->subtotal : 0 ) );
+
+			$rate = (float) ( get_option( 'wpss_commission', array() )['commission_rate'] ?? 10 );
+			wpss_t(
+				$row && abs( (float) $row->platform_fee - ( $price * $rate / 100 ) ) < 0.02,
+				sprintf( 'commission is taken on the pre-tax price, not on the tax (%.2f)', $row ? (float) $row->platform_fee : 0 )
+			);
+
+			// Leave nothing behind.
+			$wpdb->delete( $wpdb->prefix . 'wpss_orders', array( 'id' => (int) $result['order_id'] ) );
+			$wpdb->delete( $wpdb->prefix . 'wpss_wallet_transactions', array( 'reference_id' => (int) $result['order_id'] ) );
+		} else {
+			echo "  SKIP  settle_single() did not create an order here\n";
+		}
+	}
+}
+
+update_option( 'wpss_tax', $saved );
+
 // --- One implementation ---------------------------------------------------
 update_option( 'wpss_tax', $saved );
 
