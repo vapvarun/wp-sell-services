@@ -117,23 +117,41 @@ wpss_t( is_string( $sig ) && 12 === strlen( $sig ), 'the dismissal is scoped to 
  * it is the request lifecycle. A fresh process is what a real admin page load
  * looks like, and it is the only honest way to assert this.
  */
-$stripe  = get_option( 'wpss_stripe_settings', array() );
-$restore = $stripe;
-$stripe['enabled']              = 1;
-$stripe['test_mode']            = 1;
-$stripe['test_secret_key']      = 'sk_test_probe';
-$stripe['test_publishable_key'] = 'pk_test_probe';
-update_option( 'wpss_stripe_settings', $stripe );
+$restore = get_option( 'wpss_stripe_settings', array() );
 
-$cmd = 'wp eval \'$a = new \\WPSellServices\\Admin\\Admin(); $r = new ReflectionMethod( $a, "live_gateway_signature" ); $r->setAccessible(true); echo $r->invoke( $a );\' --path=' . escapeshellarg( ABSPATH ) . ' 2>/dev/null';
-$sig2 = trim( (string) shell_exec( $cmd ) );
+/*
+ * Drive BOTH states rather than assuming one.
+ *
+ * This first read the signature as the site happened to be configured and then
+ * enabled Stripe - which silently became a no-op the day somebody configured
+ * real Stripe test keys on the sandbox, because it was then comparing enabled
+ * against enabled. A test whose result depends on what a shared environment
+ * looked like that morning is not testing anything.
+ */
+$probe_sig = static function () {
+	$cmd = 'wp eval \'$a = new \\WPSellServices\\Admin\\Admin(); $r = new ReflectionMethod( $a, "live_gateway_signature" ); $r->setAccessible(true); echo $r->invoke( $a );\' --path=' . escapeshellarg( ABSPATH ) . ' 2>/dev/null';
+	return trim( (string) shell_exec( $cmd ) );
+};
+
+$off = $restore;
+$off['enabled'] = '';
+update_option( 'wpss_stripe_settings', $off );
+$sig_off = $probe_sig();
+
+$on                          = $restore;
+$on['enabled']               = 1;
+$on['test_mode']             = 1;
+$on['test_secret_key']       = $restore['test_secret_key'] ?: 'sk_test_probe';
+$on['test_publishable_key']  = $restore['test_publishable_key'] ?: 'pk_test_probe';
+update_option( 'wpss_stripe_settings', $on );
+$sig_on = $probe_sig();
 
 update_option( 'wpss_stripe_settings', $restore );
 
-if ( '' === $sig2 ) {
+if ( '' === $sig_off || '' === $sig_on ) {
 	echo "  SKIP  could not run the subprocess check (wp-cli unavailable in this context)\n";
 } else {
-	wpss_t( $sig !== $sig2, sprintf( 'enabling another gateway changes the signature, so the notice returns (%s -> %s)', $sig, $sig2 ) );
+	wpss_t( $sig_off !== $sig_on, sprintf( 'enabling another gateway changes the signature, so the notice returns (%s -> %s)', $sig_off, $sig_on ) );
 }
 
 // The dismiss handler must not be a write-anything primitive.
