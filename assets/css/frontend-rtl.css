@@ -4153,3 +4153,39 @@ body.wpss-modal-active {
 		flex: 0 0 auto;
 	}
 }
+
+/* Negative earnings balance (Basecamp 10244795017)
+   ==========================================================================
+   A vendor whose past payout exceeded their earnings sees a minus figure. The
+   card is tinted so it does not read as an ordinary stat, and the explanation
+   above it says what it means - a bare minus sign sends people straight to
+   support. Semantic colour, separate from the accent, and token-driven so it
+   follows the theme's dark mode. */
+
+.wpss-stat-card--negative .wpss-stat-card__value {
+	color: var(--wpss-danger, #ef4444);
+}
+
+/* .wpss-notice is a flex ROW built for one line of text plus an icon. This
+   notice is a heading and two paragraphs, so inheriting that laid it out as
+   three columns with "Your balance is below zero" squeezed into the first.
+   Stack it. */
+.wpss-earnings-debt {
+	display: block;
+	margin-block-end: var(--wpss-space-4, 16px);
+}
+
+.wpss-earnings-debt p {
+	margin: 0 0 var(--wpss-space-2, 8px);
+	max-width: 68ch;
+}
+
+.wpss-earnings-debt p:last-child {
+	margin-block-end: 0;
+}
+
+.wpss-earnings-debt__title {
+	margin: 0 0 var(--wpss-space-2, 8px);
+	font-size: 1rem;
+	font-weight: 600;
+}

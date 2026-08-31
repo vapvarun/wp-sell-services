@@ -235,8 +235,8 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_tier_changed` | `int $user_id, string $tier` | `src/Services/VendorService.php:586` |
 | `wpss_vendor_level_promoted` | `int $user_id, string $new_level, string $current_level` | `src/Services/OrderWorkflowManager.php:572` |
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:285` |
-| `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Admin/Pages/VendorsPage.php:1078` |
-| `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1477` |
+| `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Admin/Pages/VendorsPage.php:1151` |
+| `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1550` |
 | `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2377` |
 | `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:373` |
 | `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:427` |
@@ -656,17 +656,17 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:56` |
-| `wpss_currency` | `$currency` | `src/functions/money.php:534` |
+| `wpss_currency` | `$currency` | `src/functions/money.php:592` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/misc.php:55` |
 | `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:105` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:92` |
-| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:569` |
-| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:596` |
-| `wpss_currencies` | `$currencies` | `src/functions/money.php:1391` |
+| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:627` |
+| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:654` |
+| `wpss_currencies` | `$currencies` | `src/functions/money.php:1449` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:126` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:146` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:410` |
-| `wpss_wallet_manager` | `null` | `src/functions/money.php:1413` |
+| `wpss_wallet_manager` | `null` | `src/functions/money.php:1471` |
 
 ### Currency System Filters (1.2.1)
 
@@ -674,9 +674,9 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1370` |
+| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1428` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:160` |
-| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:495` |
+| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:553` |
 | `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3752` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:835` |
 

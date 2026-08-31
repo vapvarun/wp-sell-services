@@ -383,6 +383,64 @@ function wpss_get_ledger_balance( int $user_id, bool $lock = false ): float {
 }
 
 /**
+ * Ledger holders whose balance has gone below zero, in ONE query.
+ *
+ * A vendor ends up here when a past payout exceeded what they had actually
+ * earned. On this install that came from the pre-1.7.0 ledger bug: `-amount`
+ * turned one negatively-stored withdrawal row into a credit, the balance was
+ * overstated, and the vendor was paid against the inflated figure. The -ABS()
+ * fix made the sum correct, and the correct sum shows the hole.
+ *
+ * The site owner needs to find these before a vendor opens a ticket about a
+ * minus sign, so this is surfaced on the Vendors screen. Deliberately one
+ * GROUP BY with a HAVING rather than looping vendors and calling
+ * wpss_get_ledger_balance() each time - that is the N+1 this codebase keeps
+ * being bitten by, and it would scale with the vendor count.
+ *
+ * Uses the same debit-type list and the same -ABS() convention as
+ * wpss_get_ledger_balance(), so the two can never disagree about what a
+ * balance is.
+ *
+ * @since 1.7.0
+ *
+ * @param int $limit Maximum rows to return.
+ * @return array<int,array{user_id:int,balance:float}> Most negative first.
+ */
+function wpss_get_negative_ledger_balances( int $limit = 50 ): array {
+	global $wpdb;
+
+	$table       = $wpdb->prefix . 'wpss_wallet_transactions';
+	$debit_types = wpss_get_ledger_debit_types_sql();
+	$limit       = max( 1, min( 500, $limit ) );
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- debit types are a fixed internal list; limit is clamped above.
+	$rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT user_id,
+				COALESCE( SUM( CASE WHEN type IN ( {$debit_types} ) THEN -ABS( amount ) ELSE amount END ), 0 ) AS balance
+			FROM {$table}
+			WHERE status = 'completed'
+			GROUP BY user_id
+			HAVING balance < 0
+			ORDER BY balance ASC
+			LIMIT %d",
+			$limit
+		)
+	);
+
+	$out = array();
+
+	foreach ( (array) $rows as $row ) {
+		$out[] = array(
+			'user_id' => (int) $row->user_id,
+			'balance' => (float) $row->balance,
+		);
+	}
+
+	return $out;
+}
+
+/**
  * Get the list of three-decimal currency codes (ISO 4217).
  *
  * These are charged in thousandths, not hundredths — a 10.000 BHD charge is

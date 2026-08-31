@@ -132,11 +132,53 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 		</div>
 	<?php endif; ?>
 
+	<?php if ( $available_balance < 0 ) : ?>
+		<?php
+		/*
+		 * A bare "-$134.04" under "Available for Withdrawal" tells a vendor
+		 * nothing except that something is wrong, and the first thing they do
+		 * is open a ticket (Basecamp 10244795017).
+		 *
+		 * It means a past payout exceeded what they had actually earned - on
+		 * this install because a ledger bug overstated balances before the
+		 * -ABS() fix, and the corrected sum now shows the hole. The money is
+		 * gone; nothing is being taken from them now, and future earnings clear
+		 * it before anything becomes withdrawable. Say that, rather than
+		 * leaving them to guess at a minus sign.
+		 */
+		?>
+		<div class="wpss-notice wpss-notice--warning wpss-earnings-debt">
+			<h3 class="wpss-earnings-debt__title"><?php esc_html_e( 'Your balance is below zero', 'wp-sell-services' ); ?></h3>
+			<p>
+				<?php
+				printf(
+					/* translators: %s: the amount the vendor is short, formatted. */
+					esc_html__( 'A previous payout came to %s more than your earnings covered. Nothing is being taken from you now - your next earnings clear this first, and anything above it becomes available to withdraw as usual.', 'wp-sell-services' ),
+					esc_html( wpss_format_price( abs( $available_balance ) ) )
+				);
+				?>
+			</p>
+			<p class="wpss-caption">
+				<?php esc_html_e( 'If that does not look right, contact the site owner with your order history - they can see every entry behind this figure.', 'wp-sell-services' ); ?>
+			</p>
+		</div>
+	<?php endif; ?>
+
 	<!-- Earnings Summary Cards -->
 	<div class="wpss-stats-grid wpss-stats-grid--4">
-		<div class="wpss-stat-card wpss-stat-card--highlight">
+		<div class="wpss-stat-card wpss-stat-card--highlight<?php echo $available_balance < 0 ? ' wpss-stat-card--negative' : ''; ?>">
 			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $earnings['available_balance'] ) ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Available for Withdrawal', 'wp-sell-services' ); ?></span>
+			<span class="wpss-stat-card__label">
+				<?php
+				// The label has to match the number. "Available for Withdrawal:
+				// -$134.04" is a contradiction - nothing negative is available.
+				if ( $available_balance < 0 ) {
+					esc_html_e( 'Balance to clear', 'wp-sell-services' );
+				} else {
+					esc_html_e( 'Available for Withdrawal', 'wp-sell-services' );
+				}
+				?>
+			</span>
 		</div>
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $earnings['pending_clearance'] ) ); ?></span>
