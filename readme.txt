@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.6.0
+Stable tag: 1.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -262,6 +262,45 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.7.0 - August 2026 =
+
+Order files are now served through a permission check instead of an unlisted URL, a partial refund no longer returns the whole order total, and a withdrawal can no longer add to a vendor's balance. Several screens that contradicted themselves now say one thing.
+
+* New      - Offline payments can have several named methods, each with its own instructions and its own on/off switch, edited from Settings > Payment Gateways.
+* New      - The method a buyer chose is recorded on the order, so renaming or removing a method later never changes what a past order says.
+* New      - My Orders has status filter chips. Nothing is hidden by default; the list is ordered so the orders needing the buyer come first.
+* New      - A marketplace Create Account page, mapped like the other pages. Register links across the site point at it instead of the WordPress login screen.
+* New      - A logged-out buyer reaches checkout with their package and add-ons intact and creates their account there, rather than meeting wp-login.php with their selection lost.
+* New      - The owner is warned when payments are live and no Terms page is mapped. Dismissible, and it returns if another gateway is enabled.
+* New      - Marketplace data reaches the WordPress privacy tools: orders, messages, reviews, profile and earnings are exported and erased with the account.
+* New      - Message emails can be held for a few minutes and re-checked before sending, so a reply read on site does not also arrive by email.
+* New      - Pretty URLs for viewing an order and for paying one.
+* Improve  - Order files are stored outside the web root and served through a link that checks the caller is the buyer, the seller or an admin.
+* Improve  - Files uploaded before this release move into the protected store the first time someone opens them, so existing links keep working and stop being public as they are used.
+* Improve  - Checkout prefills a signed-in buyer's name and email from their account instead of asking for what the site already knows.
+* Improve  - The vendors directory lays out correctly beside a sidebar: avatars are round, metadata lines up across cards, and the column count yields when tiles get too narrow.
+* Improve  - A vendor whose balance is below zero is told what it means and what clears it, rather than shown a bare minus figure labelled Available for Withdrawal.
+* Improve  - The owner is shown which vendors hold a negative balance, on the Vendors screen.
+* Improve  - The Become a Vendor page states the real service limit for the site rather than promising unlimited listings, and no longer promises a Pro analytics dashboard.
+* Improve  - The conversation panel on an unpaid order says when messaging opens instead of inviting a message it will refuse.
+* Improve  - The Payouts screen describes what the plugin does with the money rather than implying automatic payment.
+* Fix      - A partial refund returned the buyer the entire order total. The admin screen had no amount field and the refund ran with no amount, which was read as everything.
+* Fix      - A withdrawal could ADD to a vendor's balance. One legacy row stored a negative amount and the sign was applied again, overstating one vendor by 100.00.
+* Fix      - A disabled payment gateway could still start a payment if a stale checkout page was submitted.
+* Fix      - Buyer-request and milestone orders no longer report as revenue for a deleted service in Top Services.
+* Fix      - Paying an existing order by an offline method recorded the gateway but not which method, so those orders showed the wrong instructions.
+* Fix      - Defining named offline methods left buyers with no payment instructions at all, because the instructions were read from the setting the migration removes.
+* Fix      - Service add-ons saved in the admin did not appear on the single service page.
+* Fix      - A disputed order had no link to its dispute; it could only be reached from the Disputes menu.
+* Fix      - Eleven order actions were vetoed by a status list that had drifted from the actions themselves.
+* Fix      - status__not_in on GET /orders is declared in the API schema, on the route that reads it rather than one that ignores it.
+* Fix      - Several screens named the same thing two different ways, and a dashboard link named a section it did not open.
+* Security - A suspended vendor kept full access to the money REST surface. Reads were login-only while writes were vendor-gated, and the vendor gate never consulted the suspension check.
+* Dev      - New filters wpss_order_status_groups, wpss_offline_methods, wpss_offline_method_slots and wpss_vendor_benefit_listings_copy.
+* Dev      - A generated hook reference covering every hook in both plugins, regenerated from source and checked on every commit.
+* Dev      - Five tables that no install has created for several releases are named in the schema with a pointer to where their data lives now, and reported by wp wpss preflight.
+* Compat   - Requires WP Sell Services Pro 1.7.0. Install both updates together.
 
 = 1.6.0 - August 2026 =
 
