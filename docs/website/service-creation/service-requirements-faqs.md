@@ -53,7 +53,13 @@ When a requirement uses the file upload type, the accepted formats and size are 
 
 Add the formats your vendors need before launch; a buyer cannot upload a ZIP or a PSD on the default list.
 
-Uploaded files go to the site's normal WordPress media library. Treat their URLs as unlisted rather than secret, and do not ask buyers for documents that must be access-controlled.
+Uploaded files are stored **outside the public web root** and served through a
+permission-checked link, so only the buyer, the seller and an administrator can
+open one. Someone who is handed the link but is not on the order gets nothing.
+
+Files uploaded before version 1.7.0 were stored in the media library instead.
+They are moved into the protected store the first time someone opens them, and
+the old public address stops working at that point.
 
 ### Tips for Writing Good Requirements
 

@@ -65,11 +65,21 @@ The vendor can always offer additional revisions as a goodwill gesture, even aft
 
 ## Delivery File Access
 
-Delivery attachments are stored with WordPress's `private` status and tagged with the order, so they do not appear in public listings or the media library for other users.
+Delivery files are stored **outside the public web root** and served through a
+permission-checked download link. Only the buyer, the seller and an
+administrator can fetch one - anyone else gets a "file not found", including
+someone holding the exact link.
 
 - The download links shown in the order are for the buyer, vendor and admin.
 - All versions are kept -- nothing is deleted when a new delivery is submitted.
-- The file itself lives in the normal uploads folder. Its URL is unlisted rather than secret, so treat a leaked link as a leaked file.
+- **Files delivered before version 1.7.0** were stored in the normal uploads
+  folder, where the URL was unlisted rather than secret. Those files are moved
+  into the protected store automatically the first time someone opens them, and
+  the old public address stops working at that moment. Until a file is opened
+  it stays where it was, so a link shared long ago keeps working - but treat any
+  such link as a leaked file until then.
+- When cloud storage is configured the same rules apply: the download link is a
+  short-lived signed URL, not a permanent public one.
 
 ## Settings That Affect Deliveries
 

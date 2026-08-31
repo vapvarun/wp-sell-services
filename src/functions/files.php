@@ -342,11 +342,30 @@ function wpss_get_order_file_url( array $record ): string {
 	// to the endpoint would 404 every file delivered before this release.
 	$is_stored = ! empty( $record['path'] ) || ! empty( $record['remote_path'] );
 
-	if ( ! $is_stored || '' === $id || $order_id <= 0 ) {
-		// Pre-1.7.0 rows stored a bare URL. Serve what they have - those files
-		// are already public, and breaking a delivered file to tighten history
-		// would punish the buyer for our bug.
+	if ( '' === $id || $order_id <= 0 ) {
+		// Nothing addressable - all we can do is hand back whatever it has.
 		return (string) ( $record['url'] ?? '' );
+	}
+
+	if ( ! $is_stored ) {
+		/*
+		 * A pre-1.7.0 row, still sitting in wp-content/uploads with no check in
+		 * front of it. It is addressable (it has an id and an order), so it goes
+		 * through the endpoint like everything else - and the endpoint moves it
+		 * into the private store on the way past.
+		 *
+		 * This used to return the bare public URL, on the reasoning that
+		 * breaking a delivered file to tighten history would punish the buyer.
+		 * That reasoning was right about the buyer and wrong about the outcome:
+		 * it left every brief and deliverable ever uploaded fetchable by anyone
+		 * holding the link, permanently. Migrating as people open their own
+		 * files keeps the link working AND closes the hole.
+		 */
+		if ( ! wpss_can_read_order_files( $order_id ) ) {
+			// Not this person's file. Do not hand back the public URL just
+			// because the record is old.
+			return '';
+		}
 	}
 
 	return add_query_arg(
@@ -404,6 +423,217 @@ function wpss_find_order_file( int $order_id, string $file_id ): ?array {
 }
 
 /**
+ * Move a pre-1.7.0 order file into the private store, the first time it is opened.
+ *
+ * Files uploaded before this release live in wp-content/uploads with no check
+ * in front of them: the URL is unlisted, not secret, and anyone holding the
+ * link can fetch it forever. Order requirements are where buyers hand over
+ * briefs, contracts and occasionally identity documents, so that is a real
+ * exposure, not a tidiness problem.
+ *
+ * Migrating on access rather than in bulk was a deliberate choice (Basecamp
+ * 10239807824). A bulk move breaks every link already sitting in somebody's
+ * inbox; doing nothing leaves history public forever. Moving a file the moment
+ * someone with permission opens it means old links keep working, the exposure
+ * closes as people actually touch their files, and no owner has to know to run
+ * anything.
+ *
+ * Failure is non-fatal by design: if anything goes wrong the record is left
+ * exactly as it was and the caller serves the original URL. A buyer trying to
+ * download their own deliverable must never be handed an error because our
+ * migration had a bad day.
+ *
+ * @since 1.7.0
+ *
+ * @param array $record   File record as stored, carrying `url` and no `path`.
+ * @param int   $order_id Order the file belongs to.
+ * @return array|null Rewritten record, or null when it could not be migrated.
+ */
+function wpss_migrate_legacy_order_file( array $record, int $order_id ): ?array {
+	global $wpdb;
+
+	$file_id = (string) ( $record['id'] ?? '' );
+	$url     = (string) ( $record['url'] ?? '' );
+
+	if ( '' === $file_id || '' === $url || $order_id <= 0 ) {
+		return null;
+	}
+
+	// Already private - nothing to do.
+	if ( ! empty( $record['path'] ) || ! empty( $record['remote_path'] ) ) {
+		return null;
+	}
+
+	// Two people opening the same old file at once must not both migrate it.
+	$lock = 'wpss_migrating_file_' . md5( $file_id );
+
+	if ( get_transient( $lock ) ) {
+		return null;
+	}
+
+	set_transient( $lock, 1, MINUTE_IN_SECONDS );
+
+	$source = wpss_resolve_local_path_from_url( $url );
+
+	if ( ! $source || ! is_readable( $source ) ) {
+		// Already gone, or served from somewhere we cannot reach on disk (a CDN
+		// rewrite, an offloaded bucket). Leave it alone.
+		delete_transient( $lock );
+		return null;
+	}
+
+	$dir = wpss_get_order_files_dir() . $order_id . '/';
+
+	if ( ! is_dir( $dir ) ) {
+		wp_mkdir_p( $dir );
+	}
+
+	$filename = wp_unique_filename( $dir, sanitize_file_name( basename( $source ) ) );
+	$target   = $dir . $filename;
+
+	// COPY, not rename: if the record rewrite below fails we must still have a
+	// readable file at the original URL.
+	if ( ! @copy( $source, $target ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_copy
+		wpss_log( sprintf( 'Could not copy legacy order file %s for order %d', $file_id, $order_id ), 'error' );
+		delete_transient( $lock );
+		return null;
+	}
+
+	@chmod( $target, 0640 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_chmod
+
+	$updated             = $record;
+	$updated['path']     = $filename;
+	$updated['order_id'] = $order_id;
+	$updated['migrated'] = gmdate( 'c' );
+	// `url` is dropped: leaving it would give the file two addresses, and the
+	// public one would keep winning wherever something reads it directly.
+	unset( $updated['url'] );
+
+	if ( ! wpss_rewrite_order_file_record( $order_id, $file_id, $updated ) ) {
+		// Roll back the copy so we do not leave an orphan behind.
+		wp_delete_file( $target );
+		delete_transient( $lock );
+		return null;
+	}
+
+	// Only now is the public copy safe to remove - the record points at the
+	// private one and the bytes are there.
+	wp_delete_file( $source );
+
+	// If the id was an attachment post, drop it too. Leaving it behind means a
+	// media-library row pointing at a file that is no longer there.
+	if ( ctype_digit( $file_id ) && 'attachment' === get_post_type( (int) $file_id ) ) {
+		wp_delete_attachment( (int) $file_id, true );
+	}
+
+	delete_transient( $lock );
+
+	wpss_log( sprintf( 'Migrated legacy order file %s (order %d) into the private store', $file_id, $order_id ), 'info' );
+
+	return $updated;
+}
+
+/**
+ * Resolve an uploads URL to a path on disk, refusing anything outside uploads.
+ *
+ * @since 1.7.0
+ *
+ * @param string $url File URL.
+ * @return string|null Absolute path, or null when it is not a local upload.
+ */
+function wpss_resolve_local_path_from_url( string $url ): ?string {
+	$uploads = wp_get_upload_dir();
+
+	if ( empty( $uploads['baseurl'] ) || empty( $uploads['basedir'] ) ) {
+		return null;
+	}
+
+	// Compare without scheme so http/https and protocol-relative all match.
+	$strip   = static function ( string $v ): string {
+		return preg_replace( '#^https?:#', '', $v );
+	};
+	$baseurl = $strip( $uploads['baseurl'] );
+	$target  = $strip( $url );
+
+	if ( 0 !== strpos( $target, $baseurl ) ) {
+		return null;
+	}
+
+	$relative = ltrim( substr( $target, strlen( $baseurl ) ), '/' );
+
+	// No traversal out of the uploads tree.
+	if ( '' === $relative || false !== strpos( $relative, '..' ) ) {
+		return null;
+	}
+
+	$path = trailingslashit( $uploads['basedir'] ) . $relative;
+	$real = realpath( $path );
+	$base = realpath( $uploads['basedir'] );
+
+	if ( ! $real || ! $base || 0 !== strpos( $real, $base ) ) {
+		return null;
+	}
+
+	return $real;
+}
+
+/**
+ * Replace one file record inside whichever row currently holds it.
+ *
+ * @since 1.7.0
+ *
+ * @param int    $order_id Order id.
+ * @param string $file_id  File id to replace.
+ * @param array  $updated  Replacement record.
+ * @return bool True when a row was rewritten.
+ */
+function wpss_rewrite_order_file_record( int $order_id, string $file_id, array $updated ): bool {
+	global $wpdb;
+
+	$tables = array(
+		$wpdb->prefix . 'wpss_deliveries',
+		$wpdb->prefix . 'wpss_order_requirements',
+	);
+
+	foreach ( $tables as $table ) {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- table name from a fixed list.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, attachments FROM {$table} WHERE order_id = %d", $order_id ) );
+
+		foreach ( (array) $rows as $row ) {
+			$decoded = json_decode( (string) $row->attachments, true );
+
+			if ( ! is_array( $decoded ) ) {
+				continue;
+			}
+
+			$changed = false;
+
+			foreach ( $decoded as $i => $entry ) {
+				if ( is_array( $entry ) && isset( $entry['id'] ) && (string) $entry['id'] === $file_id ) {
+					$decoded[ $i ] = $updated;
+					$changed       = true;
+				}
+			}
+
+			if ( ! $changed ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$ok = $wpdb->update(
+				$table,
+				array( 'attachments' => wp_json_encode( $decoded ) ),
+				array( 'id' => (int) $row->id )
+			);
+
+			return false !== $ok;
+		}
+	}
+
+	return false;
+}
+
+/**
  * Serve an order file to someone entitled to read it.
  *
  * Hooked on admin_post_ rather than REST because this is followed by a plain
@@ -432,6 +662,26 @@ function wpss_serve_order_file(): void {
 
 	if ( ! $record ) {
 		wp_die( esc_html__( 'File not found.', 'wp-sell-services' ), '', array( 'response' => 404 ) );
+	}
+
+	/*
+	 * A legacy record reaching this point belongs to someone who is allowed to
+	 * read it - wpss_can_read_order_files() ran above. Move it into the private
+	 * store now, then serve the migrated copy.
+	 *
+	 * If the migration cannot complete the record is untouched and we fall
+	 * through to serving the original file, so the download never fails because
+	 * of housekeeping.
+	 */
+	if ( empty( $record['path'] ) && empty( $record['remote_path'] ) ) {
+		$migrated = wpss_migrate_legacy_order_file( $record, $order_id );
+
+		if ( $migrated ) {
+			$record = $migrated;
+		} elseif ( ! empty( $record['url'] ) ) {
+			wp_redirect( (string) $record['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- the file's own historical location on this site.
+			exit;
+		}
 	}
 
 	// In a bucket: hand over a short-lived signed URL rather than streaming the
