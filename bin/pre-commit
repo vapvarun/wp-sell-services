@@ -223,6 +223,9 @@ if [ -n "$STAGED_DOCS_OR_PHP" ]; then
             echo "  file but the wrong LINE - which is what happens whenever you"
             echo "  insert code above a hook - this repairs them:"
             echo "    python3 bin/docs-audit.py --fix && git add docs/"
+            echo ""
+            echo "  If it is the generated hook reference, regenerate it:"
+            echo "    python3 bin/generate-hook-reference.py && git add docs/"
             exit 1
         fi
     else

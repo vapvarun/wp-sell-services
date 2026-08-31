@@ -1,6 +1,6 @@
 # REST API Controllers Reference
 
-WP Sell Services registers **23 REST controllers** plus a set of generic utility
+WP Sell Services registers **25 REST controllers** plus a set of generic utility
 routes. WP Sell Services Pro adds **10 more**. Everything lives under one
 namespace:
 
@@ -23,7 +23,7 @@ There are two namespaces, and the split is not the one the names suggest.
 
 | Namespace | What is on it |
 |---|---|
-| `wpss/v1` | **Everything.** All 23 free controllers *and* all 10 Pro controllers. Pro extends the API; it does not run a parallel one. |
+| `wpss/v1` | **Everything.** All 25 free controllers *and* all 10 Pro controllers. Pro extends the API; it does not run a parallel one. |
 | `wpss-pro/v1` | Exactly **four** cart-adapter routes, and only while the matching cart plugin is active. |
 
 The four `wpss-pro/v1` routes are:

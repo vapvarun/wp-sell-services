@@ -240,6 +240,58 @@ def hook_line_index(*roots):
     return index
 
 
+# ---------------------------------------------------------------------------
+# The documented REST controller count must match the code.
+#
+# The doc claimed 23 while API.php registered 25 (Basecamp 10239807296). Counted
+# from the `new XController()` lines in the registration array rather than from
+# files on disk, because src/API also holds RestController, the base class - and
+# because CLAUDE.md records that counting REST any other way undercounts, since
+# controllers register through this wrapper rather than individually.
+#
+# Not a generated document: the route tables in it carry real explanation that a
+# generator cannot write. This gate just stops the headline number drifting.
+# ---------------------------------------------------------------------------
+api_php = os.path.join(FREE, "src/API/API.php")
+rest_doc = os.path.join(FREE, "docs/website/developer-guide/rest-api-controllers.md")
+
+if os.path.exists(api_php) and os.path.exists(rest_doc):
+    registered = len(re.findall(r"new\s+[A-Za-z]+Controller\s*\(\s*\)", open(api_php).read()))
+    claimed = set(int(n) for n in re.findall(r"\*\*(\d+) REST controllers\*\*|All (\d+) free controllers", open(rest_doc).read()) for n in n if n)
+
+    if not claimed:
+        ok("rest-count", "no controller count claimed in the REST doc")
+    elif claimed == {registered}:
+        ok("rest-count", f"the REST doc's controller count matches API.php ({registered})")
+    else:
+        fail("rest-count", f"the REST doc claims {sorted(claimed)} controllers; API.php registers {registered}")
+
+# ---------------------------------------------------------------------------
+# The generated hook reference must be current.
+#
+# hooks-filters.md is curated and gated above for phantom entries and stale
+# citations. hooks-reference.md is the complete index and is GENERATED - which
+# only helps if it is regenerated. Without this check it goes stale exactly the
+# way the hand-maintained citations did, and a stale generated file is worse
+# than a stale hand-written one because it looks authoritative.
+# ---------------------------------------------------------------------------
+generator = os.path.join(FREE, "bin/generate-hook-reference.py")
+
+if os.path.exists(generator):
+    import subprocess
+
+    result = subprocess.run(
+        [sys.executable, generator, "--check"],
+        capture_output=True,
+        text=True,
+        cwd=FREE,
+    )
+
+    if result.returncode == 0:
+        ok("hook-reference", "the generated hook reference matches source")
+    else:
+        fail("hook-reference", (result.stdout or result.stderr).strip() or "hooks-reference.md is out of date")
+
 if os.path.exists(hooks_doc):
     cite_re = re.compile(
         r"^\|\s*`(wpss_[a-z0-9_]+)`[^|]*\|[^|]*\|\s*`([A-Za-z0-9_/.-]+\.php):(\d+)`",
