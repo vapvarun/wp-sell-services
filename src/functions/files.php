@@ -361,6 +361,13 @@ function wpss_get_order_file_url( array $record ): string {
 		 * holding the link, permanently. Migrating as people open their own
 		 * files keeps the link working AND closes the hole.
 		 */
+		if ( empty( $record['url'] ) ) {
+			// No path, no bucket, no url - there is no file anywhere. Handing
+			// back an endpoint link here would be a link that 404s, which is
+			// worse than showing nothing.
+			return '';
+		}
+
 		if ( ! wpss_can_read_order_files( $order_id ) ) {
 			// Not this person's file. Do not hand back the public URL just
 			// because the record is old.

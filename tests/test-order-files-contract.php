@@ -61,15 +61,38 @@ $url = wpss_get_order_file_url( $modern );
 $check( '1.7.0 record resolves to the checked endpoint', false !== strpos( $url, 'action=wpss_order_file' ) && false !== strpos( $url, 'order=' . $order_id ) );
 $check( '1.7.0 record URL is not a filesystem path', false === strpos( $url, '/uploads/' ) );
 
-// The case that nearly broke: an OLD record carries an attachment id in `id`
-// and no path. It must keep its stored URL, not be routed to the endpoint.
+/*
+ * An OLD record carries an attachment id in `id` and no path.
+ *
+ * This assertion used to require that such a record kept its stored public URL
+ * - the reasoning being that routing it to the endpoint would 404 files
+ * delivered before 1.7.0. That was the right worry and the wrong answer: it
+ * meant every file ever uploaded stayed fetchable by anyone holding the link,
+ * permanently (Basecamp 10239807824).
+ *
+ * A legacy record is now routed through the endpoint like any other, and the
+ * endpoint moves it into the private store on the way past - so the link keeps
+ * working AND the file stops being public. Which means the contract flipped,
+ * and it flips on WHO IS ASKING.
+ */
 $legacy = array(
 	'id'       => 4321,
 	'order_id' => $order_id,
 	'name'     => 'old.pdf',
 	'url'      => 'https://example.test/wp-content/uploads/2025/01/old.pdf',
 );
-$check( 'pre-1.7.0 record keeps its stored URL', 'https://example.test/wp-content/uploads/2025/01/old.pdf' === wpss_get_order_file_url( $legacy ) );
+
+$viewer = get_current_user_id();
+
+// A stranger must not be handed the public URL just because the record is old.
+wp_set_current_user( 0 );
+$check( 'pre-1.7.0 record is refused to someone with no claim on the order', '' === wpss_get_order_file_url( $legacy ) );
+
+// Someone entitled to it gets the checked endpoint, which migrates on access.
+wp_set_current_user( $viewer ?: 1 );
+$legacy_url = wpss_get_order_file_url( $legacy );
+$check( 'pre-1.7.0 record routes an entitled viewer through the endpoint', false !== strpos( $legacy_url, 'action=wpss_order_file' ) );
+$check( 'pre-1.7.0 record no longer leaks the raw uploads path', false === strpos( $legacy_url, '/uploads/' ) );
 
 $bare = array( 'id' => 99, 'order_id' => $order_id, 'name' => 'x.pdf' );
 $check( 'record with neither path nor url yields empty, not a broken link', '' === wpss_get_order_file_url( $bare ) );
