@@ -108,6 +108,7 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_propose_milestone', array( $this, 'ajax_propose_milestone' ) );
 		add_action( 'wp_ajax_wpss_submit_milestone', array( $this, 'ajax_submit_milestone' ) );
 		add_action( 'wp_ajax_wpss_approve_milestone', array( $this, 'ajax_approve_milestone' ) );
+		add_action( 'wp_ajax_wpss_request_milestone_revision', array( $this, 'ajax_request_milestone_revision' ) );
 		add_action( 'wp_ajax_wpss_decline_milestone', array( $this, 'ajax_decline_milestone' ) );
 		add_action( 'wp_ajax_wpss_delete_milestone', array( $this, 'ajax_delete_milestone' ) );
 
@@ -4080,6 +4081,32 @@ class AjaxHandlers {
 
 		$service = new \WPSellServices\Services\MilestoneService();
 		$result  = $service->approve( $milestone_id, get_current_user_id() );
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+		wp_send_json_success( array( 'message' => $result['message'] ) );
+	}
+
+	/**
+	 * AJAX: Buyer sends a submitted phase back for changes.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return void
+	 */
+	public function ajax_request_milestone_revision(): void {
+		check_ajax_referer( 'wpss_milestone_action' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+		}
+
+		$milestone_id = isset( $_POST['milestone_id'] ) ? absint( wp_unslash( $_POST['milestone_id'] ) ) : 0;
+		$reason       = isset( $_POST['reason'] ) ? sanitize_textarea_field( wp_unslash( $_POST['reason'] ) ) : '';
+
+		$service = new \WPSellServices\Services\MilestoneService();
+		$result  = $service->request_revision( $milestone_id, get_current_user_id(), $reason );
 
 		if ( ! $result['success'] ) {
 			wp_send_json_error( array( 'message' => $result['message'] ) );

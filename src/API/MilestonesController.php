@@ -155,6 +155,25 @@ class MilestonesController extends RestController {
 			)
 		);
 
+		// Buyer sends a submitted phase back for changes.
+		register_rest_route(
+			$this->namespace,
+			'/milestones/(?P<id>[\d]+)/request-revision',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'request_milestone_revision' ),
+					'permission_callback' => array( $this, 'check_buyer_milestone_access' ),
+					'args'                => array(
+						'reason' => array(
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_textarea_field',
+						),
+					),
+				),
+			)
+		);
+
 		// Buyer declines a pending_payment milestone (dedicated route).
 		register_rest_route(
 			$this->namespace,
@@ -323,6 +342,38 @@ class MilestonesController extends RestController {
 
 		if ( ! $result['success'] ) {
 			return $this->error( 'wpss_milestone_approve_failed', $result['message'], 400 );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => $result['message'],
+			),
+			200
+		);
+	}
+
+	/**
+	 * POST /milestones/{id}/request-revision
+	 *
+	 * Buyer asks for changes on a submitted phase — flips the sub-order back
+	 * to revision_requested, which submit() has always accepted as a valid
+	 * from-state. The reason is posted into the parent contract's thread.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function request_milestone_revision( WP_REST_Request $request ) {
+		$result = $this->milestones->request_revision(
+			(int) $request->get_param( 'id' ),
+			get_current_user_id(),
+			(string) ( $request->get_param( 'reason' ) ?? '' )
+		);
+
+		if ( ! $result['success'] ) {
+			return $this->error( 'wpss_milestone_revision_failed', $result['message'], 400 );
 		}
 
 		return new WP_REST_Response(
