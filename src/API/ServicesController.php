@@ -104,6 +104,26 @@ class ServicesController extends RestController {
 			)
 		);
 
+		// GET /services/limits - what one service may contain.
+		//
+		// The app needs these before it can render a create-service screen: how
+		// many gallery images the vendor may add, how many packages, add-ons,
+		// FAQs and buyer requirements. They were previously reachable only as a
+		// template var inside the web wizard, so a client had to discover each
+		// ceiling by being rejected. Public read - a limit is not a secret, and
+		// the web wizard already prints the same numbers to anyone loading it.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/limits',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_limits' ),
+					'permission_callback' => '__return_true',
+				),
+			)
+		);
+
 		// GET /services/{id} - Get single service.
 		register_rest_route(
 			$this->namespace,
@@ -1451,5 +1471,22 @@ class ServicesController extends RestController {
 				)
 			),
 		);
+	}
+
+	/**
+	 * Return the limits that govern how much one service may contain.
+	 *
+	 * Reads the same wpss_get_service_limits() the web wizard reads, so the two
+	 * surfaces cannot drift. -1 means unlimited.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response Limits keyed by limit name.
+	 */
+	public function get_limits( $request ) {
+		unset( $request );
+
+		return rest_ensure_response( wpss_get_service_limits() );
 	}
 }

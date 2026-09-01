@@ -118,68 +118,7 @@ class ServiceWizard {
 	 * @return void
 	 */
 	private function init_limits(): void {
-		$this->limits = array(
-			/**
-			 * Max pricing packages (tiers).
-			 *
-			 * Free: 3 (Basic, Standard, Premium)
-			 * Pro: 3 (same, but more flexibility)
-			 *
-			 * @param int $max Maximum packages.
-			 */
-			'max_packages'     => apply_filters( 'wpss_service_max_packages', 3 ),
-
-			/**
-			 * Max gallery images (additional, not including main).
-			 *
-			 * Free: 4
-			 * Pro: Unlimited (-1)
-			 *
-			 * @param int $max Maximum gallery images. -1 for unlimited.
-			 */
-			'max_gallery'      => apply_filters( 'wpss_service_max_gallery', 4 ),
-
-			/**
-			 * Max video URLs.
-			 *
-			 * Free: 1
-			 * Pro: 1 (not raised — Pro lifts gallery, extras, FAQ and requirements only)
-			 *
-			 * @param int $max Maximum videos.
-			 */
-			'max_videos'       => apply_filters( 'wpss_service_max_videos', 1 ),
-
-			/**
-			 * Max service extras (add-ons).
-			 *
-			 * Free: 3
-			 * Pro: Unlimited (-1)
-			 *
-			 * @param int $max Maximum extras. -1 for unlimited.
-			 */
-			'max_extras'       => apply_filters( 'wpss_service_max_extras', 3 ),
-
-			/**
-			 * Max FAQs.
-			 *
-			 * Free: 5
-			 * Pro: Unlimited (-1)
-			 *
-			 * @param int $max Maximum FAQs. -1 for unlimited.
-			 */
-			'max_faq'          => apply_filters( 'wpss_service_max_faq', 5 ),
-
-			/**
-			 * Max buyer requirements.
-			 *
-			 * Free: 5
-			 * Pro: Unlimited (-1)
-			 *
-			 * @param int $max Maximum requirements. -1 for unlimited.
-			 */
-			'max_requirements' => apply_filters( 'wpss_service_max_requirements', 5 ),
-
-		);
+		$this->limits = wpss_get_service_limits();
 	}
 
 	/**

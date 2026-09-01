@@ -52,8 +52,19 @@ def php_files(*roots):
 WRITE_RES = [
     re.compile(r"\$sanitized\[\s*'([a-z0-9_]+)'\s*\]\s*="),
     re.compile(r"'field'\s*=>\s*'([a-z0-9_]+)'"),
-    re.compile(r"add_settings_field\(\s*'([a-z0-9_]+)'"),
+    # register_setting( 'group', 'option' ) - a standalone option, not a member
+    # of a settings array. \s* spans the newlines the multi-line calls use.
+    re.compile(r"register_setting\(\s*'[a-z0-9_]+'\s*,\s*'([a-z0-9_]+)'"),
 ]
+
+# NOT a write: add_settings_field()'s first argument is the field's DOM id, which
+# by WordPress convention is prefixed and bears no relation to the stored key -
+# 'wpss_offline_receipts' renders a checkbox whose actual key is 'enabled' inside
+# the wpss_offline_receipt_settings option, which PaymentReceiptService reads.
+# Capturing it invented four keys that nothing could ever read, and a checker that
+# reports keys nobody can fix is one people learn to skip. Real standalone options
+# are caught by the register_setting() pattern above; keys inside a settings array
+# are caught by 'field' => and $sanitized[...].
 
 # Files whose sanitize_* handles a FORM SUBMISSION rather than a settings page.
 # Their $sanitized[...] keys are request fields, not stored settings, so they

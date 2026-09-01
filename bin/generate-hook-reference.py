@@ -27,8 +27,15 @@ OUT = os.path.join(FREE, "docs/website/developer-guide/hooks-reference.md")
 # do_action / apply_filters with a literal wpss_ name. Deliberately literal
 # only: a hook built from a variable cannot be documented by name, and guessing
 # is how phantom entries get into a reference.
+# The trailing argument text is captured in a LOOKAHEAD so the match itself ends
+# at the hook name. It used to be a plain greedy ([^;]*) group, which consumed
+# everything up to the next semicolon - and since several hooks are fired inside
+# a single `return array( ... );`, the first one in that statement swallowed all
+# the rest, so finditer resumed past them. Four filters in API.php were absent
+# from the generated reference for exactly this reason. arg_count() still reads
+# the same text; it just is not eaten any more.
 CALL = re.compile(
-    r"\b(do_action|apply_filters)(?:_ref_array|_deprecated)?\s*\(\s*['\"](wpss_[a-z0-9_]+)['\"]([^;]*)",
+    r"\b(do_action|apply_filters)(?:_ref_array|_deprecated)?\s*\(\s*['\"](wpss_[a-z0-9_]+)['\"](?=([^;]*))",
     re.S,
 )
 

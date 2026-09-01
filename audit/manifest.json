@@ -13,7 +13,7 @@
   },
   "rest": {
     "namespace": "wpss/v1",
-    "endpoint_count": 152,
+    "endpoint_count": 153,
     "controllers": [
       {
         "class": "API",
@@ -141,7 +141,16 @@
         "purpose": "Vendor list, profile, stats"
       }
     ],
-    "endpoints_detail_at": "Counted by agent enumeration of register_rest_route( calls, not by write-manifest.mjs - the generator undercounts because controllers are registered through an array wrapper. 142 = 134 across 23 *Controller.php files + 7 generic routes in API.php + 1 in Frontend/Tour.php. RestController.php is the shared base class and registers none."
+    "endpoints_detail_at": "Counted by agent enumeration of register_rest_route( calls, not by write-manifest.mjs - the generator undercounts because controllers are registered through an array wrapper. 142 = 134 across 23 *Controller.php files + 7 generic routes in API.php + 1 in Frontend/Tour.php. RestController.php is the shared base class and registers none.",
+    "recent_additions": [
+      {
+        "route": "/wpss/v1/services/limits",
+        "method": "GET",
+        "auth": "public",
+        "since": "1.7.1",
+        "why": "Service ceilings (packages, gallery, videos, extras, FAQs, requirements) were reachable only as a template var inside the web wizard, so an app discovered each one by being rejected. Reads wpss_get_service_limits(), the same helper the wizard reads."
+      }
+    ]
   },
   "ajax": {
     "handler_count": 121,
@@ -995,7 +1004,7 @@
     "why_not_generated": "write-manifest.mjs undercounts REST on this plugin - routes are registered through a controller-array wrapper in src/API/API.php - so running it would silently clobber these counts. See CLAUDE.md.",
     "measured": {
       "php_files_in_src": 209,
-      "register_rest_route_calls": 152,
+      "register_rest_route_calls": 153,
       "rest_controllers": 26,
       "ajax_handlers": 121,
       "do_action_firings": 184,

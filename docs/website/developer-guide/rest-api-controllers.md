@@ -75,6 +75,7 @@ Registered by the API bootstrap rather than a dedicated controller.
 |--------|-------|
 | GET, POST | `/services` |
 | GET | `/services/grid` |
+| GET | `/services/limits` |
 | GET, POST/PUT/PATCH, DELETE | `/services/(?P<id>[\d]+)` |
 | GET | `/services/(?P<id>[\d]+)/packages` |
 | GET | `/services/(?P<id>[\d]+)/faqs` |
@@ -84,6 +85,27 @@ Registered by the API bootstrap rather than a dedicated controller.
 
 `/services/grid` returns the lighter payload used by the catalog grid. Prefer it
 over `/services` when you only need cards.
+
+`/services/limits` returns the ceilings a single service may not exceed, so a
+client can build its create-service form without discovering each one by being
+rejected. Public read; no authentication needed.
+
+```json
+{
+  "max_packages": 3,
+  "max_gallery": 4,
+  "max_videos": 1,
+  "max_extras": 3,
+  "max_faq": 5,
+  "max_requirements": 5
+}
+```
+
+`-1` means unlimited. The numbers above are the Free defaults; Pro raises
+`max_gallery`, `max_extras`, `max_faq` and `max_requirements` to `-1` and leaves
+`max_packages` and `max_videos` where they are. Each value passes through its own
+`wpss_service_max_*` filter, so a site can set its own ceilings - read the route
+rather than hard-coding these numbers.
 
 ### Orders
 

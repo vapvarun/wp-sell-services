@@ -9041,6 +9041,29 @@
                 }
             }
         },
+        "/wpss/v1/services/limits": {
+            "get": {
+                "tags": [
+                    "Services"
+                ],
+                "operationId": "get_wpss_v1_services_limits",
+                "security": [],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                }
+            }
+        },
         "/wpss/v1/services/{id}": {
             "get": {
                 "tags": [

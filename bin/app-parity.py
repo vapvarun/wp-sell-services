@@ -91,6 +91,11 @@ CONFIG = {
         # Push devices are registered through Free's AuthController:
         # GET + POST /auth/devices. Firebase is the transport behind it.
         "push notifications": ["auth"],
+        # GET /services/limits. Added in 1.7.1 - before that the ceilings were a
+        # template var in the web wizard, so an app discovered them by being
+        # rejected. This entry is honest only while that route exists; the
+        # stale-mapping check below fails if it is ever removed.
+        "service limits": ["services"],
     },
 }
 

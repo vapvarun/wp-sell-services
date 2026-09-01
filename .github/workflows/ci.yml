@@ -187,6 +187,13 @@ jobs:
       - name: App parity
         run: python3 bin/app-parity.py
 
+      # Fails on a settings key read but never written, or written but never
+      # read. The script existed and was never wired here, so it caught nothing
+      # for the whole of 1.7.0 - including general/enable_disputes, which meant
+      # the app was told disputes were on for owners who had switched them off.
+      - name: Settings contract
+        run: python3 bin/settings-contract.py
+
   # audit/manifest.json is the canonical inventory that every task is supposed
   # to read BEFORE adding a hook, route or helper. It is only useful while it is
   # true, and today nothing noticed when it went stale.
@@ -213,7 +220,22 @@ jobs:
           CHANGED=$(git diff --name-only "$BASE" HEAD)
 
           # Surfaces that define the plugin's public contract.
-          CONTRACT=$(echo "$CHANGED" | grep -E '^src/(API/.*Controller\.php|Database/SchemaManager\.php|CLI/.*\.php)$' || true)
+          TOUCHED=$(echo "$CHANGED" | grep -E '^src/(API/.*Controller\.php|Database/SchemaManager\.php|CLI/.*\.php)$' || true)
+
+          # A contract file being *touched* is not a contract *change*. Reflowing
+          # a comment, or inserting the blank line WPCS asks for before a block
+          # comment, alters no route, no schema and no command. Demanding a
+          # manifest edit for that teaches people to touch audit/manifest.json
+          # meaninglessly, which is how a freshness gate stops meaning anything.
+          # Re-diff each candidate ignoring whitespace and blank lines; only a
+          # file that still shows a patch has really changed the contract. A real
+          # change always survives the filter, because it is never blank lines
+          # alone.
+          CONTRACT=$(for FILE in $TOUCHED; do
+            if [ -n "$(git diff -w --ignore-blank-lines "$BASE" HEAD -- "$FILE")" ]; then
+              printf '%s\n' "$FILE"
+            fi
+          done)
 
           if [ -n "$CONTRACT" ] && ! echo "$CHANGED" | grep -q '^audit/manifest\.json$'; then
             echo "::error::Contract files changed without updating audit/manifest.json:"
