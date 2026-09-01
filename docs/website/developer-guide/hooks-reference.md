@@ -149,9 +149,9 @@ guide; this is the complete index.
 | `wpss_no_requests_content` | 0 | `templates/content-no-requests.php:51` | Hook: wpss_no_requests_content |
 | `wpss_no_services_content` | 0 | `templates/content-no-services.php:55` | Hook: wpss_no_services_content |
 | `wpss_notification_created` | 4 | `src/Services/NotificationService.php:112` | Fires when notification is created. |
-| `wpss_offline_multi_orders_created` | 2 | `src/Integrations/Gateways/OfflineGateway.php:670` | Fires after multi-service offline orders are created. |
-| `wpss_offline_order_created` | 2 | `src/Integrations/Gateways/OfflineGateway.php:620` *(+1 more)* | Fires when an existing order is put on the offline rail. |
-| `wpss_offline_order_paid` | 2 | `src/Integrations/Gateways/OfflineGateway.php:839` | Fires when an offline order is marked as paid. |
+| `wpss_offline_multi_orders_created` | 2 | `src/Integrations/Gateways/OfflineGateway.php:696` | Fires after multi-service offline orders are created. |
+| `wpss_offline_order_created` | 2 | `src/Integrations/Gateways/OfflineGateway.php:646` *(+1 more)* | Fires when an existing order is put on the offline rail. |
+| `wpss_offline_order_paid` | 2 | `src/Integrations/Gateways/OfflineGateway.php:865` | Fires when an offline order is marked as paid. |
 | `wpss_order_auto_refunded` | 3 | `src/Services/OrderWorkflowManager.php:1229` | Fires when an auto-refund is processed successfully. |
 | `wpss_order_cancelled` | 2 | `src/Services/OrderWorkflowManager.php:711` | Fires when order is cancelled. |
 | `wpss_order_completed` | 2 | `src/Services/OrderWorkflowManager.php:634` | Fires when order is completed. |
@@ -398,7 +398,7 @@ guide; this is the complete index.
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php:33` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php:1943` | Filter email content before sending. |
 | `wpss_notification_types` | 1 | `src/Admin/Settings.php:3791` | Filter the switchable notification types. |
-| `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php:1637` | Named offline methods. |
+| `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php:1663` | Named offline methods. |
 | `wpss_offline_methods` | 2 | `src/Integrations/Gateways/OfflineGateway.php:327` | Filter the offline payment methods. |
 | `wpss_open_graph_data` | 2 | `src/SEO/SEO.php:260` |  |
 | `wpss_order_actions` | 2 | `templates/order/order-view.php:430` | Filter: wpss_order_actions |

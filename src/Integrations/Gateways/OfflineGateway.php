@@ -422,9 +422,25 @@ class OfflineGateway implements PaymentGatewayInterface {
 			<?php
 			$offline_methods = self::get_methods();
 
-			// Only ask when there is a choice to make. One method - which is
-			// every site that has not configured any - stays a single hidden
-			// field, so nothing changes for them.
+			/*
+			 * Only ask when there is a choice to make - but "one method" covers
+			 * two different sites, and counting alone cannot tell them apart.
+			 *
+			 * A site that configured nothing gets one SYNTHESISED method from
+			 * the legacy fallback, and has nothing to show beyond the generic
+			 * description above. A site that deliberately named a single method
+			 * has a label and instructions the buyer needs: "Bank Transfer -
+			 * send to ACC 123" is the whole point of enabling it. Hiding that
+			 * behind a count is why an owner configured a manual method, saw it
+			 * enabled in the backend, and had customers tell them it was not
+			 * there.
+			 *
+			 * So: the radio group still appears only for a real choice, and a
+			 * lone CONFIGURED method renders its name and instructions instead
+			 * of disappearing into a hidden field.
+			 */
+			$configured = ! empty( get_option( self::OPTION_NAME, array() )['methods'] );
+
 			if ( count( $offline_methods ) > 1 ) :
 				?>
 				<fieldset class="wpss-offline-methods" style="border:0;padding:0;margin:0 0 16px;">
@@ -451,6 +467,16 @@ class OfflineGateway implements PaymentGatewayInterface {
 						</label>
 					<?php endforeach; ?>
 				</fieldset>
+			<?php elseif ( $configured && $offline_methods ) : ?>
+				<div class="wpss-offline-methods wpss-offline-methods--single" style="margin:0 0 16px;">
+					<strong><?php echo esc_html( $offline_methods[0]['label'] ); ?></strong>
+					<?php if ( '' !== $offline_methods[0]['instructions'] ) : ?>
+						<span style="display:block;color:#555;font-size:.9em;margin-top:4px;">
+							<?php echo esc_html( wp_strip_all_tags( $offline_methods[0]['instructions'] ) ); ?>
+						</span>
+					<?php endif; ?>
+				</div>
+				<input type="hidden" name="offline_method" value="<?php echo esc_attr( $offline_methods[0]['id'] ); ?>">
 			<?php else : ?>
 				<input type="hidden" name="offline_method" value="<?php echo esc_attr( $offline_methods[0]['id'] ?? 'offline' ); ?>">
 			<?php endif; ?>
