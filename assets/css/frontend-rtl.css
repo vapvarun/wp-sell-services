@@ -3855,9 +3855,29 @@ body.wpss-modal-active {
 	align-items: stretch;
 }
 
-.wpss-vendors-grid.wpss-columns-2 { grid-template-columns: repeat(2, 1fr); }
-.wpss-vendors-grid.wpss-columns-3 { grid-template-columns: repeat(3, 1fr); }
-.wpss-vendors-grid.wpss-columns-4 { grid-template-columns: repeat(4, 1fr); }
+/* The owner's column count is a MAXIMUM, not a promise.
+   repeat(4, 1fr) took it literally, so /vendors/ - which renders the grid
+   beside a 260px sidebar - squeezed four tiles into ~870px and every card was
+   ~160px wide. At that width the metadata labels ellipsed to "F...", "Membe..."
+   and "Las...", which is the misalignment in the report; the CSS was doing
+   exactly what it was told.
+   max(220px, calc(...)) reads as "the Nth of the row, but never below 220px":
+   on a wide container the calc wins and you get exactly N columns, and on a
+   narrow one 220px wins and auto-fill drops to as many as genuinely fit. No
+   container query needed, and it reacts to the CONTAINER rather than the
+   viewport - which is the whole problem here, since the viewport is 1280 while
+   the grid only has 870. */
+.wpss-vendors-grid.wpss-columns-2 {
+	grid-template-columns: repeat(auto-fill, minmax(max(220px, calc((100% - 1 * var(--wpss-space-5, 24px)) / 2)), 1fr));
+}
+
+.wpss-vendors-grid.wpss-columns-3 {
+	grid-template-columns: repeat(auto-fill, minmax(max(220px, calc((100% - 2 * var(--wpss-space-5, 24px)) / 3)), 1fr));
+}
+
+.wpss-vendors-grid.wpss-columns-4 {
+	grid-template-columns: repeat(auto-fill, minmax(max(220px, calc((100% - 3 * var(--wpss-space-5, 24px)) / 4)), 1fr));
+}
 
 .wpss-vendors-grid .wpss-vendor-card {
 	display: flex;
@@ -3870,25 +3890,119 @@ body.wpss-modal-active {
 	background: var(--wpss-background, #fff);
 }
 
+/* In the sidebar the tagline sits beside the avatar and there is room for it.
+   In a tile that leaves it ~100px, so "Brand & logo designer with 10+ years
+   crafting identities" wrapped to six lines and blew the card's height out -
+   the "uneven card density" in the report.
+   A grid lets the tagline drop to its own full-width row without touching the
+   shared markup: display:contents promotes .wpss-vendor-info's children into
+   this grid so the name can sit next to the avatar while the tagline spans. */
 .wpss-vendors-grid .wpss-vendor-header {
-	display: flex;
+	display: grid;
+	grid-template-columns: 48px minmax(0, 1fr);
 	align-items: center;
-	gap: var(--wpss-space-3, 12px);
+	gap: var(--wpss-space-2, 8px) var(--wpss-space-3, 12px);
+}
+
+.wpss-vendors-grid .wpss-vendor-info {
+	display: contents;
+}
+
+.wpss-vendors-grid .wpss-vendor-name {
+	grid-column: 2;
+	margin: 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--wpss-space-2, 8px);
+}
+
+/* Two lines for every card, so tiles in a row end up the same height whatever
+   the seller wrote. */
+.wpss-vendors-grid .wpss-vendor-tagline {
+	grid-column: 1 / -1;
+	margin: 0;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	min-height: calc(2 * 1.4em);
+	color: var(--wpss-text-secondary, #4b5563);
+}
+
+/* flex-shrink:0 is the whole fix for the "squished avatars" report. The header
+   is a flex row, so a 48px declared width is only a HINT - the avatar was being
+   compressed to 21x48 to make room for a long tagline, which reads as a
+   stretched image. object-fit was already cover; that was never the problem.
+   It has to go on the WRAPPER, which is the actual flex child - pinning only
+   the <img> leaves the wrapper to collapse and drag the image with it, which
+   is exactly what my first attempt did. */
+.wpss-vendors-grid .wpss-vendor-avatar-wrapper {
+	position: relative;
+	flex: 0 0 48px;
+	width: 48px;
+	height: 48px;
+}
+
+/* Both badges are position:static on this surface - the rules that pin them to
+   the avatar corner live in single-service.css. Left alone they flow BELOW the
+   avatar and land on top of the tagline, which is the blue check sitting in
+   Maya Chen's bio text. Pinned here, scoped to the grid. */
+.wpss-vendors-grid .wpss-verified-badge,
+.wpss-vendors-grid .wpss-online-indicator {
+	position: absolute;
+	inset-block-end: -2px;
+	inset-inline-end: -2px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	border-radius: var(--wpss-radius-full, 999px);
+	background: var(--wpss-background, #fff);
+	line-height: 1;
+}
+
+.wpss-vendors-grid .wpss-online-indicator {
+	background: var(--wpss-success, #10b981);
+	box-shadow: 0 0 0 2px var(--wpss-background, #fff);
+}
+
+.wpss-vendors-grid .wpss-verified-badge .wpss-icon {
+	width: 14px;
+	height: 14px;
 }
 
 .wpss-vendors-grid .wpss-vendor-avatar {
+	flex: 0 0 48px;
 	width: 48px;
 	height: 48px;
+	object-fit: cover;
 	border-radius: var(--wpss-radius-full, 999px);
 }
 
 /* The stat block is a headline figure in the sidebar; in a tile it has to sit
-   inline or it dwarfs the card. */
+   inline or it dwarfs the card. The container was already a flex row, but each
+   .wpss-stat inside it stayed display:block, so "Orders" and its count stacked
+   into a lonely headline number instead of reading as one stat. */
 .wpss-vendors-grid .wpss-vendor-stats {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--wpss-space-3, 12px);
 	font-size: 0.875rem;
+}
+
+.wpss-vendors-grid .wpss-vendor-stats .wpss-stat {
+	display: inline-flex;
+	align-items: baseline;
+	gap: var(--wpss-space-1, 4px);
+}
+
+.wpss-vendors-grid .wpss-vendor-stats .wpss-stat-value {
+	font-weight: 600;
 }
 
 .wpss-vendors-grid .wpss-vendor-details {
@@ -3898,10 +4012,44 @@ body.wpss-modal-active {
 	font-size: 0.8125rem;
 }
 
+/* One row = icon | label | value, on a grid so the three columns line up
+   ACROSS cards rather than each row packing to its own content width.
+   .wpss-detail-label carries flex:1 1 0% from the single-service sidebar,
+   where the row is wide and stretching the label is right. In a ~160px tile
+   that same rule stretched the label, pushed the value to the far edge, and
+   wrapped "Member since" and "Last Delivery" onto two lines - which is the
+   "labels and values float with huge gaps" in the report. Both cells are held
+   to one line here and the label ellipses rather than wrapping, so every tile
+   has the same number of rows and the same height. */
 .wpss-vendors-grid .wpss-vendor-details li {
-	display: flex;
+	display: grid;
+	grid-template-columns: auto auto minmax(0, 1fr);
 	align-items: center;
 	gap: var(--wpss-space-2, 8px);
+	min-height: 22px;
+}
+
+.wpss-vendors-grid .wpss-vendor-details .wpss-detail-icon {
+	display: inline-flex;
+	flex: 0 0 auto;
+}
+
+/* The label is the thing the eye scans down a column of cards, so it is never
+   truncated - it sizes to content and stays on one line. The value takes the
+   remaining space and ellipses if it has to, because "United State..." is a
+   far smaller loss than "Membe...". */
+.wpss-vendors-grid .wpss-vendor-details .wpss-detail-label {
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+
+.wpss-vendors-grid .wpss-vendor-details .wpss-detail-value {
+	justify-self: end;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-weight: 500;
 }
 
 /* Push the action to the bottom so every tile's button lines up. */

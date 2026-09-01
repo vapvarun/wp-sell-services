@@ -94,8 +94,19 @@
     "Full exhaustive GET 5xx sweep across all 186 REST routes - only the 112 GET routes the reachability script dispatches were confirmed non-5xx (matches script's own scope)."
   ],
   "pristine_docker_install": {
-    "status": "pending",
-    "note": "Gate 8 of the release skill - run separately against the built zips"
+    "status": "PASS",
+    "ran": "2026-09-01",
+    "stack": "docker-smoke (WP 7.1, php8.3-apache, mariadb:11) at http://localhost:8896",
+    "note": "Installed from the BUILT ZIPS on a WordPress that had not even been through core install - genuinely pristine, not a reset of a dirty box.",
+    "checks": {
+      "1_activation_no_fatal": "both active at 1.7.0 from the zips",
+      "2_frontend_up": "HTTP 200",
+      "3_bundled_sdk_loads": "libs/edd-sl-sdk/src present in the installed copy; wpss functions loaded; WPSS_PRO_VERSION 1.7.0",
+      "4_debug_log_clean": "0 lines for the entire run - no fatal, no uncaught, no class-not-found, no _load_textdomain_just_in_time",
+      "5_browser_level": "logged in as admin; plugins.php shows both rows with no error notice; WPSS Settings renders with the full menu, the Terms launch notice and the Pro license notice - screenshot docker-pristine-settings.png",
+      "6_degrade_check": "renamed libs/edd-sl-sdk/src: frontend stayed 200 and zero fatals; restored, 11 files back"
+    },
+    "clean_install_schema": "27 wpss tables created, db_version 1.6.1, 187 wpss/v1 REST routes; the five retired tables were correctly NOT created"
   },
   "debug_log_issues": [],
   "debug_log_noise": [
