@@ -344,6 +344,7 @@ class CheckoutIntentService {
 				'service_id'     => $intent->service_id,
 				'package_id'     => $intent->package_id,
 				'customer_id'    => $intent->buyer_id,
+
 				/*
 				 * PRE-TAX subtotal, deliberately not $charged_amount.
 				 *

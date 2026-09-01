@@ -53,6 +53,14 @@ CONFIG = {
         "standalone checkout (no other plugin needed)": "Web checkout handoff by design.",
         "payment gateways": "Reached via the checkout handoff, not a client-rendered screen.",
     },
+    # Gaps that are REAL and are not yet closed. Listing one here keeps the
+    # check gating - a NEW gap still fails - without pretending the known one is
+    # something other than a gap. This is deliberately not part of
+    # not_api_surfaces, because that list means "an app does not need this" and
+    # saying so here would be false. Close them or keep the reason current.
+    "known_gaps": {
+        "analytics": "Free advertises Basic stats but registers no analytics route; the numbers are read from OrderRepository and VendorProfileRepository and rendered server-side, so a Free-only install has nothing for an app to call. Pro's VendorAnalyticsController serves /analytics, which is why this only shows when Pro is absent.",
+    },
     # Feature keyword -> the FIRST PATH SEGMENT of routes that serve it. Declared
     # once; the script verifies each base still resolves, so drift surfaces as a
     # failure rather than as a stale document nobody re-read.
@@ -85,6 +93,17 @@ CONFIG = {
         "in-app notifications": ["notifications"],
         "realtime messaging": ["realtime"],
         "analytics": ["analytics"],
+        # Pro's SubscriptionPlanController registers /subscription-plans/*; the
+        # feature was reported as a gap only because it had no mapping entry.
+        "vendor subscription plans": ["subscription-plans"],
+        # Push devices are registered through Free's AuthController:
+        # GET + POST /auth/devices. Firebase is the transport behind it.
+        "push notifications": ["auth"],
+        # GET /services/limits. Added in 1.7.1 - before that the ceilings were a
+        # template var in the web wizard, so an app discovered them by being
+        # rejected. This entry is honest only while that route exists; the
+        # stale-mapping check below fails if it is ever removed.
+        "service limits": ["services"],
     },
 }
 
@@ -205,6 +224,27 @@ def main():
     known = {first_segment(r) for r in all_routes}
     stale = sorted({b for bases in cfg["feature_routes"].values() for b in bases} - known)
 
+    # Pro is a private repo and is not checked out beside Free in Free's own CI,
+    # so its route bases resolve to nothing there and every run announced five
+    # rotted mappings that were not rotted at all. A warning that fires on every
+    # run is one people stop reading, which is the whole reason the comment above
+    # argues against a matcher that lies. Only claim rot when both halves are
+    # present to be judged.
+    pro_missing = not os.path.isdir(os.path.join(pro, "src"))
+    if pro_missing:
+        stale = []
+        # Same reasoning for the gaps themselves: a Pro-only feature - one the
+        # catalog marks as absent from Free - is served by a route in Pro's
+        # tree, so it cannot be found here and is not evidence of anything.
+        # Free-owned features are still asserted, so the check keeps its teeth
+        # on the half of the codebase it can actually see.
+        skipped_pro = [g for g in gaps if g["free"].strip() in ("-", "\u2014", "")]
+        if skipped_pro:
+            gaps = [g for g in gaps if g not in skipped_pro]
+            for g in skipped_pro:
+                g["status"] = "pro-not-present"
+            print(f"Pro not checked out; {len(skipped_pro)} Pro-only feature(s) not asserted here.\n")
+
     if "--json" in sys.argv:
         print(json.dumps({"routes_found": len(all_routes), "features": rows, "gaps": gaps, "stale_mappings": stale}, indent=2))
     else:
@@ -216,7 +256,12 @@ def main():
             if r["section"] != section:
                 section = r["section"]
                 print(f"\n## {section}")
-            mark = {"ok": "  OK ", "not-an-api-surface": "  -- ", "GAP": " GAP "}[r["status"]]
+            mark = {
+                "ok": "  OK ",
+                "not-an-api-surface": "  -- ",
+                "GAP": " GAP ",
+                "pro-not-present": "  ?? ",
+            }[r["status"]]
             detail = ", ".join(r["routes"][:3]) if r["routes"] else r["note"]
             print(f"{mark}{r['feature'][:52]:54} {detail[:70]}")
         print(f"\n{len(gaps)} feature(s) with no reachable REST route.")
@@ -227,7 +272,17 @@ def main():
             for b in stale:
                 print(f"  - {b}")
 
-    if "--check" in sys.argv and (gaps or stale):
+    known = cfg.get("known_gaps", {})
+    unexpected = [g for g in gaps if not any(k in g["feature"].lower() for k in known)]
+    if gaps and len(unexpected) < len(gaps):
+        print(f"\n{len(gaps) - len(unexpected)} declared known gap(s), not failing the check:")
+        for g in gaps:
+            if g not in unexpected:
+                for k, why in known.items():
+                    if k in g["feature"].lower():
+                        print(f"  - {g['feature']}: {why}")
+
+    if "--check" in sys.argv and (unexpected or stale):
         return 1
     return 0
 

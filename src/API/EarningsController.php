@@ -650,5 +650,4 @@ class EarningsController extends RestController {
 		 */
 		return new WP_REST_Response( apply_filters( 'wpss_withdrawal_methods', $methods ) );
 	}
-
 }

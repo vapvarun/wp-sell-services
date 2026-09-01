@@ -680,7 +680,7 @@ do_action( 'wpss_before_order_view', $order );
 								esc_html( _n( '%1$s of %2$s across %3$d phase', '%1$s of %2$s across %3$d phases', $phase_count, 'wp-sell-services' ) ),
 								esc_html( wpss_format_price( $phase_paid, $order->currency ) ),
 								esc_html( wpss_format_price( $phase_total, $order->currency ) ),
-								$phase_count
+								absint( $phase_count )
 							);
 							?>
 						</span>

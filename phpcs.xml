@@ -26,6 +26,14 @@
          so PHPStan knows they exist. Dev tooling, never shipped, and the
          plugin-prefix rule does not apply to core constants. -->
     <exclude-pattern>/phpstan-bootstrap.php</exclude-pattern>
+    <!--
+      bin/ is build/CI tooling run from the shell (`wp eval-file`, grunt, CI),
+      never loaded by WordPress and never shipped - Gruntfile excludes `bin/**`
+      from the zip. The WP_Filesystem and wp_remote_get sniffs exist to stop
+      runtime code touching the disk or network directly; neither applies to a
+      generator that runs on a developer's machine and writes docs/api/.
+    -->
+    <exclude-pattern>/bin/*</exclude-pattern>
     <exclude-pattern>*.min.js</exclude-pattern>
     <exclude-pattern>*.min.css</exclude-pattern>
 

@@ -731,11 +731,23 @@ class API {
 		 */
 		$can_pay_single_order = wpss_uses_standalone_payments() || has_filter( 'wpss_pay_order_url' );
 
-		// Milestone contracts only exist on buyer-request orders, so an owner who
-		// turns buyer requests off has turned milestones off whether they meant
-		// to or not. Better the app hears that here than discovers it by
-		// rendering a control nobody can reach.
-		$buyer_requests = (bool) wpss_get_option( 'general', 'enable_buyer_requests', true );
+		/*
+		 * Milestone contracts only exist on buyer-request orders, so whatever
+		 * answer this gives has to gate both flags below or the app renders a
+		 * milestone control on a marketplace with nothing to attach it to.
+		 *
+		 * The answer is an unconditional true, because buyer requests cannot be
+		 * switched off: this used to read general/enable_buyer_requests, a key
+		 * no settings field registers and no sanitizer writes, so the read only
+		 * ever returned its own default while looking like it honoured an
+		 * owner's choice. Reading a setting that does not exist is worse than
+		 * not reading one - it invites the next person to "fix" the toggle
+		 * rather than build it. Sites that need the feature hidden filter
+		 * wpss_app_features below, which wraps this whole array. If buyer
+		 * requests ever earn a real switch, it should be registered the way
+		 * allow_disputes is, in wpss_orders, and read here in its place.
+		 */
+		$buyer_requests = true;
 
 		return array(
 
@@ -787,7 +799,19 @@ class API {
 				'wpss_app_features',
 				array(
 					'buyer_requests' => $buyer_requests,
-					'disputes'       => (bool) wpss_get_option( 'general', 'enable_disputes', true ),
+
+					/*
+					 * orders/allow_disputes, not general/enable_disputes. The
+					 * latter is written by nothing - no setting registers it - so
+					 * this always answered true and the app kept offering "open a
+					 * dispute" on a site whose owner had switched disputes off,
+					 * where DisputesController then refused the request. The key
+					 * the owner actually sets is allow_disputes in wpss_orders,
+					 * which AjaxHandlers, DisputesController and DisputeService
+					 * all already read; this is the fourth reader agreeing with
+					 * them instead of the one disagreeing.
+					 */
+					'disputes'       => (bool) wpss_get_option( 'orders', 'allow_disputes', true ),
 					'realtime'       => ! empty( ( new \WPSellServices\Services\RealtimeService() )->get_client_config()['enabled'] ),
 
 					/*
@@ -797,8 +821,16 @@ class API {
 					 * payment screen — and a dead end an owner cannot see is how
 					 * this arrives as "the app is broken" instead of "this rail
 					 * does not support that yet".
+					 *
+					 * Milestones additionally require buyer requests, since a
+					 * milestone contract only exists on a buyer-request order.
+					 * That condition is vacuous while $buyer_requests is an
+					 * unconditional true, and writing it as an && only bought a
+					 * static-analysis error saying so. If buyer requests ever
+					 * gain a real switch, restore the conjunction here at the
+					 * same time.
 					 */
-					'milestones'     => $buyer_requests && $can_pay_single_order,
+					'milestones'     => $can_pay_single_order,
 					'tips'           => $can_pay_single_order,
 					'extensions'     => $can_pay_single_order,
 

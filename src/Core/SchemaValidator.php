@@ -125,6 +125,7 @@ class SchemaValidator {
 		'vacation_until', // Computed from vacation_mode.
 		'is_verified',    // Computed from verification_tier.
 		'original_deadline',
+
 		/*
 		 * Supplied by a JOIN, not by the conversations table.
 		 * Conversation::from_db() hydrates these only when the query provides

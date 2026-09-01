@@ -856,3 +856,84 @@ function wpss_get_video_thumbnail_url( string $video_url ): string {
 
 	return $thumbnail;
 }
+
+/**
+ * The limits that govern how much a vendor can put on one service.
+ *
+ * Single source of truth. These used to live inside ServiceWizard, which meant
+ * they reached the web wizard as a template var and reached nothing else - an
+ * app building a create-service screen had no way to learn max_gallery before
+ * the server rejected the eighth image. Defining them here lets the wizard and
+ * the REST route read the same array instead of drifting apart, which is the
+ * failure this codebase keeps paying for.
+ *
+ * Free ships conservative numbers; Pro raises them through the filters below.
+ * -1 means unlimited.
+ *
+ * @since 1.7.1
+ *
+ * @return array<string,int> Limit key => maximum, or -1 for unlimited.
+ */
+function wpss_get_service_limits(): array {
+	return array(
+		/**
+		 * Max pricing packages (tiers).
+		 *
+		 * Free: 3 (Basic, Standard, Premium)
+		 * Pro: 3 (same, but more flexibility)
+		 *
+		 * @param int $max Maximum packages.
+		 */
+		'max_packages'     => apply_filters( 'wpss_service_max_packages', 3 ),
+
+		/**
+		 * Max gallery images (additional, not including main).
+		 *
+		 * Free: 4
+		 * Pro: Unlimited (-1)
+		 *
+		 * @param int $max Maximum gallery images. -1 for unlimited.
+		 */
+		'max_gallery'      => apply_filters( 'wpss_service_max_gallery', 4 ),
+
+		/**
+		 * Max video URLs.
+		 *
+		 * Free: 1
+		 * Pro: 1 (not raised — Pro lifts gallery, extras, FAQ and requirements only)
+		 *
+		 * @param int $max Maximum videos.
+		 */
+		'max_videos'       => apply_filters( 'wpss_service_max_videos', 1 ),
+
+		/**
+		 * Max service extras (add-ons).
+		 *
+		 * Free: 3
+		 * Pro: Unlimited (-1)
+		 *
+		 * @param int $max Maximum extras. -1 for unlimited.
+		 */
+		'max_extras'       => apply_filters( 'wpss_service_max_extras', 3 ),
+
+		/**
+		 * Max FAQs.
+		 *
+		 * Free: 5
+		 * Pro: Unlimited (-1)
+		 *
+		 * @param int $max Maximum FAQs. -1 for unlimited.
+		 */
+		'max_faq'          => apply_filters( 'wpss_service_max_faq', 5 ),
+
+		/**
+		 * Max buyer requirements.
+		 *
+		 * Free: 5
+		 * Pro: Unlimited (-1)
+		 *
+		 * @param int $max Maximum requirements. -1 for unlimited.
+		 */
+		'max_requirements' => apply_filters( 'wpss_service_max_requirements', 5 ),
+	);
+}

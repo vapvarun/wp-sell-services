@@ -250,4 +250,96 @@ if ( ! function_exists( 'apply_filters' ) ) {
 	}
 }
 
+/*
+ * Options and transients, backed by one in-process array.
+ *
+ * Pro's unit tests exercise settings behaviour, so they call update_option and
+ * delete_option 15 times each; without these the whole Pro unit suite died with
+ * 102 "Call to undefined function" errors the moment its bootstrap stopped
+ * failing earlier for a different reason. They live here rather than in Pro
+ * because Pro's bootstrap already loads this file, and a second copy of a stub
+ * set is the same drift this codebase keeps paying for.
+ *
+ * Deliberately not persistent: each process starts empty, so a test that needs
+ * a value sets it, and no test can inherit state from another.
+ */
+if ( ! function_exists( 'wpss_test_option_store' ) ) {
+	function &wpss_test_option_store(): array {
+		static $store = array();
+		return $store;
+	}
+}
+
+if ( ! function_exists( 'get_option' ) ) {
+	function get_option( string $option, mixed $default_value = false ): mixed {
+		$store = &wpss_test_option_store();
+		return array_key_exists( $option, $store ) ? $store[ $option ] : $default_value;
+	}
+}
+
+if ( ! function_exists( 'update_option' ) ) {
+	function update_option( string $option, mixed $value, mixed $autoload = null ): bool {
+		$store             = &wpss_test_option_store();
+		$store[ $option ] = $value;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'add_option' ) ) {
+	function add_option( string $option, mixed $value = '', string $deprecated = '', mixed $autoload = null ): bool {
+		$store = &wpss_test_option_store();
+		if ( array_key_exists( $option, $store ) ) {
+			return false;
+		}
+		$store[ $option ] = $value;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'delete_option' ) ) {
+	function delete_option( string $option ): bool {
+		$store = &wpss_test_option_store();
+		if ( ! array_key_exists( $option, $store ) ) {
+			return false;
+		}
+		unset( $store[ $option ] );
+		return true;
+	}
+}
+
+/*
+ * Transients ride the same store under a prefix. Expiry is accepted and
+ * ignored: a unit test that wants an expired transient should delete it, and
+ * pretending to honour a TTL here would make time part of the test suite.
+ */
+if ( ! function_exists( 'get_transient' ) ) {
+	function get_transient( string $transient ): mixed {
+		return get_option( '_transient_' . $transient, false );
+	}
+}
+
+if ( ! function_exists( 'set_transient' ) ) {
+	function set_transient( string $transient, mixed $value, int $expiration = 0 ): bool {
+		return update_option( '_transient_' . $transient, $value );
+	}
+}
+
+if ( ! function_exists( 'delete_transient' ) ) {
+	function delete_transient( string $transient ): bool {
+		return delete_option( '_transient_' . $transient );
+	}
+}
+
+if ( ! function_exists( 'current_time' ) ) {
+	function current_time( string $type = 'timestamp', int|bool $gmt = 0 ): mixed {
+		if ( 'timestamp' === $type || 'U' === $type ) {
+			return time();
+		}
+		if ( 'mysql' === $type ) {
+			return gmdate( 'Y-m-d H:i:s' );
+		}
+		return gmdate( $type );
+	}
+}
+
 // phpcs:enable

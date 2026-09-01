@@ -21,6 +21,7 @@ already have most of these in place. See [Pages Setup](../platform-settings/page
 | `[wpss_vendors]` | Vendor directory grid |
 | `[wpss_top_vendors]` | Highest-rated vendors |
 | `[wpss_vendor_profile]` | One vendor's full profile |
+| `[wpss_seller_card]` | One seller's card (avatar, rating, stats) |
 | `[wpss_buyer_requests]` | Open buyer requests board |
 | `[wpss_post_request]` | Form to submit a buyer request |
 | `[wpss_dashboard]` | Unified buyer/vendor dashboard |
@@ -81,6 +82,32 @@ or above your services grid.
 ```
 [wpss_service_search placeholder="What do you need?" button_text="Find a pro"]
 ```
+
+
+### `[wpss_seller_card]` -- One seller's card
+
+Renders a single seller card: avatar, name, rating, stats and a link through to
+their profile. It wraps the `wpss/seller-card` block rather than re-rendering the
+markup, so the block and the shortcode cannot drift apart.
+
+With no attributes it uses the vendor whose profile is being viewed, which makes
+it drop-in inside a vendor template. Pass `user_id` to pin it to someone
+specific.
+
+```
+[wpss_seller_card]
+[wpss_seller_card user_id="12" layout="horizontal" show_bio="false"]
+```
+
+| Attribute | Default | What it does |
+|-----------|---------|--------------|
+| `user_id` | `0` | Whose card to show. `0` uses the vendor being viewed. |
+| `layout` | `vertical` | `vertical` or `horizontal`. |
+| `show_bio` | `true` | Show the seller's short bio. |
+| `show_stats` | `true` | Show order and completion stats. |
+| `show_rating` | `true` | Show the star rating. |
+| `show_services` | `true` | Show a count of their live services. |
+| `show_button` | `true` | Show the button through to the full profile. |
 
 ### `[wpss_service_categories]` -- Category grid
 

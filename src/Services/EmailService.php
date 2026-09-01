@@ -1211,6 +1211,16 @@ class EmailService {
 		$this->is_deferred_message_send = false;
 	}
 
+	/**
+	 * Send the new-message notification email for an order conversation.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int    $order_id  Order ID.
+	 * @param int    $sender_id Sender user ID.
+	 * @param string $message   Message body.
+	 * @return bool True when the mail was handed to wp_mail().
+	 */
 	public function send_new_message( int $order_id, int $sender_id, string $message ): bool {
 
 		$order = wpss_get_order( $order_id );

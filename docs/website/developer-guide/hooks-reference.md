@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**503 hooks** across **714** firing sites.
+**512 hooks** across **724** firing sites.
 
 ## Actions (278)
 
@@ -214,9 +214,9 @@ guide; this is the complete index.
 | `wpss_requirements_submitted` | 3 | `src/Services/RequirementsService.php:544` | Fires after requirements are submitted. |
 | `wpss_requirements_timeout` | 2 | `src/Services/OrderWorkflowManager.php:502` | Fires when a requirements timeout action is taken. |
 | `wpss_rest_offline_order_created` | 3 | `src/API/PaymentController.php:475` | Fires when an offline order is created via REST API. |
-| `wpss_rest_service_created` | 2 | `src/API/ServicesController.php:672` | Fires after a service is created via REST API. |
-| `wpss_rest_service_deleted` | 2 | `src/API/ServicesController.php:799` | Fires after a service is deleted via REST API. |
-| `wpss_rest_service_updated` | 2 | `src/API/ServicesController.php:754` | Fires after a service is updated via REST API. |
+| `wpss_rest_service_created` | 2 | `src/API/ServicesController.php:692` | Fires after a service is created via REST API. |
+| `wpss_rest_service_deleted` | 2 | `src/API/ServicesController.php:819` | Fires after a service is deleted via REST API. |
+| `wpss_rest_service_updated` | 2 | `src/API/ServicesController.php:774` | Fires after a service is updated via REST API. |
 | `wpss_review_created` | 2 | `src/API/ReviewsController.php:462` *(+1 more)* |  |
 | `wpss_review_moderated` | 2 | `src/Admin/Pages/ReviewModerationPage.php:727` | Fires after an admin moderates a review from the queue. |
 | `wpss_review_reply_created` | 1 | `src/API/ReviewsController.php:627` |  |
@@ -233,10 +233,10 @@ guide; this is the complete index.
 | `wpss_service_meta_saved` | 2 | `src/Admin/Metaboxes/ServiceMetabox.php:938` | Fires after service meta is saved. |
 | `wpss_service_orders_after` | 1 | `templates/myaccount/service-orders.php:171` | Fires after the service orders content. |
 | `wpss_service_orders_before` | 1 | `templates/myaccount/service-orders.php:29` | Fires before the service orders content. |
-| `wpss_service_pending_moderation` | 1 | `src/Frontend/ServiceWizard.php:1782` *(+1 more)* |  |
+| `wpss_service_pending_moderation` | 1 | `src/Frontend/ServiceWizard.php:1721` *(+1 more)* |  |
 | `wpss_service_rejected` | 2 | `src/Admin/Pages/ServiceModerationPage.php:734` *(+4 more)* | Fires when a service is rejected. |
 | `wpss_service_updated` | 2 | `src/Services/ServiceManager.php:288` | Fires after a service is updated. |
-| `wpss_service_wizard_saved` | 2 | `src/Frontend/ServiceWizard.php:1770` | Fires after a service is saved via the wizard. |
+| `wpss_service_wizard_saved` | 2 | `src/Frontend/ServiceWizard.php:1709` | Fires after a service is saved via the wizard. |
 | `wpss_services_list_actions` | 1 | `templates/dashboard/sections/services.php:166` | Fires in the services list area for bulk actions or filters. |
 | `wpss_settings_sections_gateways` | 0 | `src/Admin/Settings.php:1941` | Unified gateway sections hook. |
 | `wpss_settings_sections_payments` | 1 | `src/Admin/Settings.php:1785` | Legacy payments-sections hook. |
@@ -292,10 +292,10 @@ guide; this is the complete index.
 | `wpss_vendor_vacation_mode_changed` | 4 | `src/Services/VendorService.php:546` | Fires when vacation mode is toggled. |
 | `wpss_withdrawal_processed` | 3 | `src/Services/EarningsService.php:499` *(+1 more)* |  |
 | `wpss_withdrawal_requested` | 3 | `src/Services/EarningsService.php:697` | Fires when withdrawal is requested. |
-| `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php:760` | Fires after the pricing tiers in the wizard's Pricing step. |
-| `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php:2238` | Fires after the wizard persists service meta. |
+| `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php:699` | Fires after the pricing tiers in the wizard's Pricing step. |
+| `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php:2177` | Fires after the wizard persists service meta. |
 
-## Filters (225)
+## Filters (234)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -309,15 +309,19 @@ guide; this is the complete index.
 | `wpss_allow_late_requirements_submission` | 1 | `src/functions/orders.php:460` *(+1 more)* | Filter whether late requirements submission is allowed. |
 | `wpss_analytics_widgets` | 1 | `src/Core/Plugin.php:2416` *(+1 more)* | Filter the registered analytics widgets. |
 | `wpss_api_controllers` | 1 | `src/API/API.php:184` | Filter registered API controllers. |
-| `wpss_api_cors_origins` | 0 | `src/API/API.php:1336` | Filter allowed CORS origins. |
+| `wpss_api_cors_origins` | 0 | `src/API/API.php:1368` | Filter allowed CORS origins. |
 | `wpss_api_public_settings` | 1 | `src/API/API.php:648` | Filter public API settings. |
-| `wpss_app_min_version` | 1 | `src/API/API.php:754` |  |
+| `wpss_app_abuse_contact` | 1 | `src/API/API.php:790` |  |
+| `wpss_app_branding` | 1 | `src/API/API.php:775` | Public subset only. Pro's white label supplies the real values. |
+| `wpss_app_enabled` | 1 | `src/API/API.php:772` |  |
+| `wpss_app_features` | 1 | `src/API/API.php:798` |  |
+| `wpss_app_min_version` | 1 | `src/API/API.php:766` |  |
 | `wpss_app_token_lifetime` | 1 | `src/functions/misc.php:484` | Filter how long a mobile app token stays valid. |
 | `wpss_archive_request_columns` | 1 | `templates/archive-request.php:62` | Filter: wpss_archive_request_columns |
 | `wpss_archive_service_columns` | 1 | `templates/archive-service.php:61` | Filter: wpss_archive_service_columns |
 | `wpss_auto_approve_reviews` | 1 | `src/API/ReviewsController.php:426` |  |
 | `wpss_auto_approve_vendors` | 1 | `src/Services/VendorService.php:113` | Filter whether new vendors are auto-approved. |
-| `wpss_batch_max_requests` | 1 | `src/API/API.php:1263` | Handle batch requests for mobile efficiency. |
+| `wpss_batch_max_requests` | 1 | `src/API/API.php:1295` | Handle batch requests for mobile efficiency. |
 | `wpss_billing_address` | 2 | `src/functions/billing.php:660` | Filter a user's billing address after it is read. |
 | `wpss_billing_fields` | 1 | `src/functions/billing.php:58` | Filter the billing address fields. |
 | `wpss_blocks` | 1 | `src/Blocks/BlocksManager.php:96` | Filter registered blocks. |
@@ -363,14 +367,14 @@ guide; this is the complete index.
 | `wpss_edd_cart_item_data` | 3 | `src/Integrations/EDD/EDDCheckoutProvider.php:56` **[PRO]** | Filter cart item data for services. |
 | `wpss_edd_thankyou_redirect` | 2 | `src/Integrations/EDD/EDDCheckoutProvider.php:250` **[PRO]** | Filter the thank you redirect URL for service orders. |
 | `wpss_edd_validate_add_to_cart` | 3 | `src/Integrations/EDD/EDDCheckoutProvider.php:97` **[PRO]** | Filter whether a service can be added to cart. |
-| `wpss_email_before_send` | 2 | `src/Services/EmailService.php:2029` | Filter email before sending. |
+| `wpss_email_before_send` | 2 | `src/Services/EmailService.php:2039` | Filter email before sending. |
 | `wpss_email_button_text` | 2 | `templates/emails/cancellation-requested.php:126` *(+19 more)* |  |
 | `wpss_email_button_url` | 3 | `templates/emails/cancellation-requested.php:125` *(+19 more)* |  |
-| `wpss_email_from_name` | 1 | `src/Services/EmailService.php:2009` *(+1 more)* | Filter the email "from" name for white-labelling. |
-| `wpss_email_header_vars` | 2 | `src/Services/EmailService.php:1993` *(+1 more)* | Filter email header/template variables for white-labelling. |
+| `wpss_email_from_name` | 1 | `src/Services/EmailService.php:2019` *(+1 more)* | Filter the email "from" name for white-labelling. |
+| `wpss_email_header_vars` | 2 | `src/Services/EmailService.php:2003` *(+1 more)* | Filter email header/template variables for white-labelling. |
 | `wpss_email_preference_categories` | 3 | `src/functions/notifications.php:120` | Filters the email preference categories offered to a user. |
 | `wpss_email_providers` | 1 | `src/Core/Plugin.php:2404` | Filter the registered email providers. |
-| `wpss_email_subject` | 3 | `src/Services/EmailService.php:1978` *(+1 more)* | Filters the email subject line before sending. |
+| `wpss_email_subject` | 3 | `src/Services/EmailService.php:1988` *(+1 more)* | Filters the email subject line before sending. |
 | `wpss_foreign_page_map` | 1 | `src/Admin/PageDropdownWalker.php:81` | Filter the pages shown as belonging to another plugin. |
 | `wpss_format_price` | 3 | `src/functions/money.php:56` |  |
 | `wpss_fullwidth_page_keys` | 1 | `src/Frontend/TemplateLoader.php:291` | Filter which mapped plugin pages render full-width. |
@@ -389,7 +393,7 @@ guide; this is the complete index.
 | `wpss_member_display_name` | 3 | `src/functions/vendors.php:577` *(+1 more)* | This filter is documented below. |
 | `wpss_message_email_delay_minutes` | 1 | `src/Services/EmailService.php:1173` | Filter the message-email delay. |
 | `wpss_messages_per_page` | 2 | `templates/dashboard/sections/messages.php:38` | Filter how many conversations one page of the messages list shows. |
-| `wpss_min_service_price` | 1 | `src/Frontend/ServiceWizard.php:1445` *(+1 more)* |  |
+| `wpss_min_service_price` | 1 | `src/Frontend/ServiceWizard.php:1384` *(+2 more)* |  |
 | `wpss_no_requests_message` | 1 | `templates/content-no-requests.php:26` | Template: No Requests Found |
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php:33` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php:1943` | Filter email content before sending. |
@@ -431,7 +435,7 @@ guide; this is the complete index.
 | `wpss_pro_push_provider` | 2 | `src/Push/PushNotificationService.php:137` **[PRO]** | Filter the push provider. |
 | `wpss_pro_push_should_send` | 5 | `src/Push/PushNotificationService.php:179` **[PRO]** | Filter whether a push is sent for this notification. |
 | `wpss_pro_recurring_feature_available` | 1 | `src/RecurringServices/RecurringSettingsRenderer.php:279` **[PRO]** | Whether the recurring-services feature is available in this version. |
-| `wpss_pro_upgrade_url` | 1 | `src/Frontend/ServiceWizard.php:934` *(+3 more)* |  |
+| `wpss_pro_upgrade_url` | 1 | `src/Frontend/ServiceWizard.php:873` *(+3 more)* |  |
 | `wpss_proposal_order_revisions` | 3 | `src/Services/BuyerRequestService.php:714` |  |
 | `wpss_rail_status_map` | 2 | `src/functions/orders.php:1294` | Filters the rail status map. |
 | `wpss_rate_limits` | 2 | `src/Core/RateLimiter.php:267` | Filter rate limits for a specific action. |
@@ -450,7 +454,7 @@ guide; this is the complete index.
 | `wpss_rest_create_payment_intent` | 7 | `src/API/PaymentController.php:268` | Filter to handle custom payment gateway intent creation via REST. |
 | `wpss_rest_order_data` | 3 | `src/API/OrdersController.php:1859` | Filters the order data returned in REST API responses. |
 | `wpss_rest_review_data` | 3 | `src/API/ReviewsController.php:1056` | Filters the review data returned in REST API responses. |
-| `wpss_rest_service_data` | 3 | `src/API/ServicesController.php:1215` | Filter service REST response data. |
+| `wpss_rest_service_data` | 3 | `src/API/ServicesController.php:1235` | Filter service REST response data. |
 | `wpss_rest_vendor_data` | 3 | `src/API/VendorsController.php:917` | Filters the vendor data returned in REST API responses. |
 | `wpss_review_window_days` | 1 | `src/Services/ReviewService.php:430` | Filter the review time window in days. |
 | `wpss_reviews_per_page` | 2 | `templates/partials/service-reviews.php:54` | Filters the number of reviews to display per page. |
@@ -462,9 +466,14 @@ guide; this is the complete index.
 | `wpss_service_card_classes` | 2 | `templates/content-service-card.php:42` |  |
 | `wpss_service_card_thumbnail_size` | 2 | `templates/content-service-card.php:73` | Hook: wpss_before_service_card |
 | `wpss_service_category_taxonomy_args` | 1 | `src/Taxonomies/ServiceCategoryTaxonomy.php:118` | Filter service category taxonomy arguments. |
-| `wpss_service_limit_error_message` | 1 | `src/Frontend/ServiceWizard.php:292` *(+3 more)* | Filter the error message shown when a vendor cannot create more services. |
+| `wpss_service_limit_error_message` | 1 | `src/Frontend/ServiceWizard.php:231` *(+3 more)* | Filter the error message shown when a vendor cannot create more services. |
 | `wpss_service_list_schema` | 1 | `src/SEO/SchemaMarkup.php:229` |  |
-| `wpss_service_max_packages` | 1 | `src/Frontend/ServiceWizard.php:130` | Max pricing packages (tiers). |
+| `wpss_service_max_extras` | 1 | `src/functions/services.php:917` | Max service extras (add-ons). |
+| `wpss_service_max_faq` | 1 | `src/functions/services.php:927` | Max FAQs. |
+| `wpss_service_max_gallery` | 1 | `src/functions/services.php:897` | Max gallery images (additional, not including main). |
+| `wpss_service_max_packages` | 1 | `src/functions/services.php:887` | Max pricing packages (tiers). |
+| `wpss_service_max_requirements` | 1 | `src/functions/services.php:937` | Max buyer requirements. |
+| `wpss_service_max_videos` | 1 | `src/functions/services.php:907` | Max video URLs. |
 | `wpss_service_meta_fields` | 2 | `src/Admin/Metaboxes/ServiceMetabox.php:228` | Filter additional service meta fields rendered in the metabox. |
 | `wpss_service_order_slug` | 1 | `src/Core/Plugin.php:585` *(+3 more)* | Filter the service order URL slug. |
 | `wpss_service_post_type_args` | 1 | `src/PostTypes/ServicePostType.php:240` | Filter service post type arguments. |
@@ -502,7 +511,7 @@ guide; this is the complete index.
 | `wpss_validate_add_to_cart` | 4 | `src/API/CartController.php:209` | Validates whether a service can be added to the cart. |
 | `wpss_vendor_approved_email_content` | 3 | `src/Services/NotificationService.php:1597` | Filter vendor approval email content. |
 | `wpss_vendor_benefit_listings_copy` | 2 | `templates/partials/vendor-benefits.php:40` | Filter the service-count promise on the Become a Vendor page. |
-| `wpss_vendor_can_create_service` | 2 | `src/Frontend/ServiceWizard.php:280` *(+4 more)* |  |
+| `wpss_vendor_can_create_service` | 2 | `src/Frontend/ServiceWizard.php:219` *(+4 more)* |  |
 | `wpss_vendor_is_on_vacation` | 2 | `src/Models/VendorProfile.php:519` | Check if vendor is on vacation. |
 | `wpss_vendor_page_schema` | 2 | `src/SEO/SchemaMarkup.php:388` |  |
 | `wpss_vendor_pending_email_content` | 3 | `src/Services/NotificationService.php:1464` | Filter vendor pending review email content. |
@@ -521,6 +530,6 @@ guide; this is the complete index.
 | `wpss_wallet_manager` | 1 | `src/functions/money.php:1533` | Filter the wallet manager instance. |
 | `wpss_wallet_providers` | 1 | `src/Core/Plugin.php:2380` *(+2 more)* | Filter the registered wallet providers. |
 | `wpss_withdrawal_methods` | 1 | `src/API/EarningsController.php:651` *(+1 more)* | Filter available withdrawal methods. |
-| `wpss_wizard_sanitize_service_data` | 2 | `src/Frontend/ServiceWizard.php:1913` | Filter the sanitized wizard payload. |
-| `wpss_wizard_service_data` | 2 | `src/Frontend/ServiceWizard.php:1303` | Filter the wizard's Alpine seed data for an existing service. |
+| `wpss_wizard_sanitize_service_data` | 2 | `src/Frontend/ServiceWizard.php:1852` | Filter the sanitized wizard payload. |
+| `wpss_wizard_service_data` | 2 | `src/Frontend/ServiceWizard.php:1242` | Filter the wizard's Alpine seed data for an existing service. |
 | `wpss_zero_decimal_currencies` | 1 | `src/functions/money.php:615` | Filter the list of zero-decimal currency codes. |

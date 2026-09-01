@@ -27,9 +27,11 @@ STAGED_PHP_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.php
 # nothing PHP is staged. Nothing needs guarding.
 if [ -z "$STAGED_PHP_FILES" ]; then
     echo "No PHP files staged; running the docs checks only."
+else
+    # Counted inside the else because printf '%s\n' "" still emits one line,
+    # so an unguarded count reports 1 for an empty staging area.
+    echo "Checking $(printf '%s\n' "$STAGED_PHP_FILES" | wc -l | tr -d ' ') PHP file(s)..."
 fi
-
-echo "Checking ${#STAGED_PHP_FILES[@]} PHP file(s)..."
 
 # 1. PHP Syntax Check
 echo ""
@@ -133,7 +135,14 @@ echo ""
 STAGED_AUTOLOAD=$(git diff --cached --name-only | grep -E "vendor/composer/autoload_(static|real|files)\.php" || true)
 
 if [ -n "$STAGED_AUTOLOAD" ]; then
-    if git diff --cached vendor/composer/autoload_static.php 2>/dev/null | grep -qE "^\+.*(PHPUnit|PHPStan|DeepCopy|Yoast\\\\PHPUnitPolyfills)"; then
+    # Matched case-sensitively against a short list, so it saw the capitalised
+    # namespace entries but not the lowercase vendor paths - szepeviktor and
+    # squizlabs would have walked straight through. Same check Pro carries.
+    AUTOLOAD_DIFF=$(git diff --cached vendor/composer/autoload_static.php 2>/dev/null || true)
+
+    if printf '%s\n' "$AUTOLOAD_DIFF" \
+        | grep -iE "^\+.*(phpunit|phpstan|deepcopy|szepeviktor|wp-coding-standards|squizlabs|phpcsstandards|php-stubs|sebastian/|myclabs|phar-io|theseer)" \
+        > /dev/null 2>&1; then
         echo "✗ BLOCKED: a DEV Composer autoloader is staged."
         echo ""
         echo "  vendor/composer/autoload_static.php contains dev-only packages."

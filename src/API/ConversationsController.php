@@ -682,6 +682,7 @@ class ConversationsController extends RestController {
 		return array(
 			'id'          => (int) $message->id,
 			'type'        => $message->type ?? 'text',
+
 			/*
 			 * The shared actor shape for a real sender, and the System shape kept
 			 * for sender_id 0 - wpss_rest_user() returns null there, and a client

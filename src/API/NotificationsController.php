@@ -287,6 +287,7 @@ class NotificationsController extends RestController {
 			'type'       => $notification['type'],
 			'title'      => NotificationMessage::to_plain( (string) ( $notification['title'] ?? '' ) ),
 			'message'    => NotificationMessage::to_plain( (string) ( $notification['message'] ?? '' ) ),
+
 			/*
 			 * `data` is whatever the producer stored, so it carries raw MySQL
 			 * datetimes - a dispute notification ships response_deadline. A

@@ -571,6 +571,7 @@ function wpss_password_is_app_token( \WP_User $user, string $password ): bool {
 		 * waves the request through. It was caught only because the fix was
 		 * re-run against the live HTTP endpoint rather than assumed.
 		 */
+
 		/*
 		 * The method_exists() guard is NOT redundant, whatever the analyser
 		 * says: it is stubbed against current WordPress, where the method
