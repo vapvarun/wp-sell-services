@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-01T12:04:46+00:00\n"
+"POT-Creation-Date: 2026-09-01T12:14:03+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -6243,24 +6243,24 @@ msgstr ""
 msgid "Current page of the results."
 msgstr ""
 
-#: src/API/API.php:1005
+#: src/API/API.php:1013
 #: src/Services/AccountDeletionService.php:178
 msgid "That account no longer exists."
 msgstr ""
 
-#: src/API/API.php:1025
+#: src/API/API.php:1033
 msgid "Too many attempts. Please wait a few minutes and try again."
 msgstr ""
 
-#: src/API/API.php:1037
+#: src/API/API.php:1045
 msgid "That password is not correct."
 msgstr ""
 
-#: src/API/API.php:1069
+#: src/API/API.php:1077
 msgid "Your account and personal data have been deleted."
 msgstr ""
 
-#: src/API/API.php:1158
+#: src/API/API.php:1166
 #: src/API/EarningsController.php:297
 #: src/Services/EarningsService.php:599
 #: templates/dashboard/sections/orders.php:342
@@ -6269,12 +6269,12 @@ msgid "Deleted Service"
 msgstr ""
 
 #. translators: %d: maximum number of batch requests
-#: src/API/API.php:1295
+#: src/API/API.php:1303
 #, php-format
 msgid "Batch requests limited to %d operations."
 msgstr ""
 
-#: src/API/API.php:1314
+#: src/API/API.php:1322
 msgid "Path must start with /wpss/v1/"
 msgstr ""
 

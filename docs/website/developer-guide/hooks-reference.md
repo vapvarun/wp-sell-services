@@ -309,7 +309,7 @@ guide; this is the complete index.
 | `wpss_allow_late_requirements_submission` | 1 | `src/functions/orders.php:460` *(+1 more)* | Filter whether late requirements submission is allowed. |
 | `wpss_analytics_widgets` | 1 | `src/Core/Plugin.php:2416` *(+1 more)* | Filter the registered analytics widgets. |
 | `wpss_api_controllers` | 1 | `src/API/API.php:184` | Filter registered API controllers. |
-| `wpss_api_cors_origins` | 0 | `src/API/API.php:1360` | Filter allowed CORS origins. |
+| `wpss_api_cors_origins` | 0 | `src/API/API.php:1368` | Filter allowed CORS origins. |
 | `wpss_api_public_settings` | 1 | `src/API/API.php:648` | Filter public API settings. |
 | `wpss_app_abuse_contact` | 1 | `src/API/API.php:790` |  |
 | `wpss_app_branding` | 1 | `src/API/API.php:775` | Public subset only. Pro's white label supplies the real values. |
@@ -321,7 +321,7 @@ guide; this is the complete index.
 | `wpss_archive_service_columns` | 1 | `templates/archive-service.php:61` | Filter: wpss_archive_service_columns |
 | `wpss_auto_approve_reviews` | 1 | `src/API/ReviewsController.php:426` |  |
 | `wpss_auto_approve_vendors` | 1 | `src/Services/VendorService.php:113` | Filter whether new vendors are auto-approved. |
-| `wpss_batch_max_requests` | 1 | `src/API/API.php:1287` | Handle batch requests for mobile efficiency. |
+| `wpss_batch_max_requests` | 1 | `src/API/API.php:1295` | Handle batch requests for mobile efficiency. |
 | `wpss_billing_address` | 2 | `src/functions/billing.php:660` | Filter a user's billing address after it is read. |
 | `wpss_billing_fields` | 1 | `src/functions/billing.php:58` | Filter the billing address fields. |
 | `wpss_blocks` | 1 | `src/Blocks/BlocksManager.php:96` | Filter registered blocks. |

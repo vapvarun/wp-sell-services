@@ -821,8 +821,16 @@ class API {
 					 * payment screen — and a dead end an owner cannot see is how
 					 * this arrives as "the app is broken" instead of "this rail
 					 * does not support that yet".
+					 *
+					 * Milestones additionally require buyer requests, since a
+					 * milestone contract only exists on a buyer-request order.
+					 * That condition is vacuous while $buyer_requests is an
+					 * unconditional true, and writing it as an && only bought a
+					 * static-analysis error saying so. If buyer requests ever
+					 * gain a real switch, restore the conjunction here at the
+					 * same time.
 					 */
-					'milestones'     => $buyer_requests && $can_pay_single_order,
+					'milestones'     => $can_pay_single_order,
 					'tips'           => $can_pay_single_order,
 					'extensions'     => $can_pay_single_order,
 

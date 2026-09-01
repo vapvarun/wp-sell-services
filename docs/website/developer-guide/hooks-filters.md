@@ -752,8 +752,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:929` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:183` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:647` |
-| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1286` |
-| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1359` |
+| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1294` |
+| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1367` |
 | `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:224` |
 | `wpss_blocks` | `$blocks` | `src/Blocks/BlocksManager.php:95` |
 | `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:266` |
