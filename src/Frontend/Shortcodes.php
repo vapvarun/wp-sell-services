@@ -386,8 +386,12 @@ class Shortcodes {
 			return '<p class="wpss-error">' . esc_html__( 'Vendor not found.', 'wp-sell-services' ) . '</p>';
 		}
 
-		$vendor_service = new VendorService();
-		$profile        = $vendor_service->get_profile( $vendor_id );
+		// "No profile row" is not "no such vendor". A member can hold the vendor
+		// role with no row at all - granted by an admin, promoted by a filter, or
+		// seeded - and this used to tell a visitor the seller did not exist.
+		// wpss_is_vendor() is the canonical answer; a missing row is an empty
+		// profile, which the template already renders empty states for.
+		$profile = wpss_get_vendor_profile_or_default( $vendor_id );
 
 		if ( ! $profile ) {
 			return '<p class="wpss-error">' . esc_html__( 'Vendor not found.', 'wp-sell-services' ) . '</p>';

@@ -149,9 +149,9 @@ guide; this is the complete index.
 | `wpss_no_requests_content` | 0 | `templates/content-no-requests.php:51` | Hook: wpss_no_requests_content |
 | `wpss_no_services_content` | 0 | `templates/content-no-services.php:55` | Hook: wpss_no_services_content |
 | `wpss_notification_created` | 4 | `src/Services/NotificationService.php:112` | Fires when notification is created. |
-| `wpss_offline_multi_orders_created` | 2 | `src/Integrations/Gateways/OfflineGateway.php:671` | Fires after multi-service offline orders are created. |
-| `wpss_offline_order_created` | 2 | `src/Integrations/Gateways/OfflineGateway.php:621` *(+1 more)* | Fires when an existing order is put on the offline rail. |
-| `wpss_offline_order_paid` | 2 | `src/Integrations/Gateways/OfflineGateway.php:840` | Fires when an offline order is marked as paid. |
+| `wpss_offline_multi_orders_created` | 2 | `src/Integrations/Gateways/OfflineGateway.php:670` | Fires after multi-service offline orders are created. |
+| `wpss_offline_order_created` | 2 | `src/Integrations/Gateways/OfflineGateway.php:620` *(+1 more)* | Fires when an existing order is put on the offline rail. |
+| `wpss_offline_order_paid` | 2 | `src/Integrations/Gateways/OfflineGateway.php:839` | Fires when an offline order is marked as paid. |
 | `wpss_order_auto_refunded` | 3 | `src/Services/OrderWorkflowManager.php:1229` | Fires when an auto-refund is processed successfully. |
 | `wpss_order_cancelled` | 2 | `src/Services/OrderWorkflowManager.php:711` | Fires when order is cancelled. |
 | `wpss_order_completed` | 2 | `src/Services/OrderWorkflowManager.php:634` | Fires when order is completed. |
@@ -377,7 +377,7 @@ guide; this is the complete index.
 | `wpss_gallery_image_size` | 2 | `templates/partials/service-gallery.php:79` | Filters the gallery image size. |
 | `wpss_get_template` | 3 | `src/functions/templates.php:142` | Filter the template file path. |
 | `wpss_get_template_part` | 3 | `src/functions/templates.php:91` | Filter the template file path. |
-| `wpss_is_vendor` | 2 | `src/functions/vendors.php:106` | Filter whether user is a vendor. |
+| `wpss_is_vendor` | 2 | `src/functions/vendors.php:156` | Filter whether user is a vendor. |
 | `wpss_known_dashboard_sections` | 1 | `src/functions/urls.php:254` | Filter the set of known dashboard section slugs. |
 | `wpss_ledger_debit_types` | 1 | `src/functions/money.php:193` | Filter the ledger transaction types treated as debits. |
 | `wpss_locate_template` | 3 | `src/Frontend/TemplateLoader.php:520` |  |
@@ -385,8 +385,8 @@ guide; this is the complete index.
 | `wpss_manual_order_currencies` | 1 | `src/Admin/Pages/ManualOrderPage.php:836` | Filter the currencies available on the Manual Order page dropdown. |
 | `wpss_max_order_quantity` | 2 | `src/Frontend/SingleServiceView.php:930` *(+1 more)* | Filters the maximum order quantity for a service. |
 | `wpss_max_upload_size` | 1 | `src/functions/misc.php:147` | Filter the max upload size for requirements files. |
-| `wpss_member_bypasses_limits` | 2 | `src/functions/vendors.php:653` | Filter whether a member is exempt from vendor selling limits. |
-| `wpss_member_display_name` | 3 | `src/functions/vendors.php:527` *(+1 more)* | This filter is documented below. |
+| `wpss_member_bypasses_limits` | 2 | `src/functions/vendors.php:703` | Filter whether a member is exempt from vendor selling limits. |
+| `wpss_member_display_name` | 3 | `src/functions/vendors.php:577` *(+1 more)* | This filter is documented below. |
 | `wpss_message_email_delay_minutes` | 1 | `src/Services/EmailService.php:1173` | Filter the message-email delay. |
 | `wpss_messages_per_page` | 2 | `templates/dashboard/sections/messages.php:38` | Filter how many conversations one page of the messages list shows. |
 | `wpss_min_service_price` | 1 | `src/Frontend/ServiceWizard.php:1445` *(+1 more)* |  |
@@ -394,7 +394,7 @@ guide; this is the complete index.
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php:33` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php:1943` | Filter email content before sending. |
 | `wpss_notification_types` | 1 | `src/Admin/Settings.php:3791` | Filter the switchable notification types. |
-| `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php:1638` | Named offline methods. |
+| `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php:1637` | Named offline methods. |
 | `wpss_offline_methods` | 2 | `src/Integrations/Gateways/OfflineGateway.php:327` | Filter the offline payment methods. |
 | `wpss_open_graph_data` | 2 | `src/SEO/SEO.php:260` |  |
 | `wpss_order_actions` | 2 | `templates/order/order-view.php:430` | Filter: wpss_order_actions |
@@ -506,8 +506,8 @@ guide; this is the complete index.
 | `wpss_vendor_is_on_vacation` | 2 | `src/Models/VendorProfile.php:519` | Check if vendor is on vacation. |
 | `wpss_vendor_page_schema` | 2 | `src/SEO/SchemaMarkup.php:388` |  |
 | `wpss_vendor_pending_email_content` | 3 | `src/Services/NotificationService.php:1464` | Filter vendor pending review email content. |
-| `wpss_vendor_pitch_stats` | 1 | `src/functions/vendors.php:751` | Filter the proof points on the Become a Vendor page. |
-| `wpss_vendor_pitch_steps` | 1 | `src/Frontend/Shortcodes.php:1257` | Filter the "how it works" steps on the vendor registration page. |
+| `wpss_vendor_pitch_stats` | 1 | `src/functions/vendors.php:801` | Filter the proof points on the Become a Vendor page. |
+| `wpss_vendor_pitch_steps` | 1 | `src/Frontend/Shortcodes.php:1261` | Filter the "how it works" steps on the vendor registration page. |
 | `wpss_vendor_profile_allowed_fields` | 1 | `src/Services/VendorService.php:477` | Filter the list of allowed vendor profile fields for update. |
 | `wpss_vendor_profile_fields` | 2 | `templates/vendor/profile.php:560` | Filter additional vendor profile fields. |
 | `wpss_vendor_registration_open` | 1 | `src/API/VendorsController.php:616` |  |
@@ -515,8 +515,8 @@ guide; this is the complete index.
 | `wpss_vendor_slug` | 1 | `src/Core/Plugin.php:577` *(+1 more)* | Filter the vendor profile URL slug. |
 | `wpss_vendor_status_email_vars` | 3 | `src/Services/VendorService.php:774` | Filters the template variables for a vendor status-change email. |
 | `wpss_vendor_welcome_email_content` | 3 | `src/Services/NotificationService.php:1415` | Filter vendor welcome email content. |
-| `wpss_vendors_page_id` | 1 | `src/functions/vendors.php:196` | Filter the resolved vendor-directory page ID. |
-| `wpss_vendors_url` | 2 | `src/functions/vendors.php:268` | Filter the vendor-directory URL. |
+| `wpss_vendors_page_id` | 1 | `src/functions/vendors.php:246` | Filter the resolved vendor-directory page ID. |
+| `wpss_vendors_url` | 2 | `src/functions/vendors.php:318` | Filter the vendor-directory URL. |
 | `wpss_video_thumbnail_cache_ttl` | 2 | `src/functions/services.php:853` | Filter how long a video's poster URL is cached. |
 | `wpss_wallet_manager` | 1 | `src/functions/money.php:1533` | Filter the wallet manager instance. |
 | `wpss_wallet_providers` | 1 | `src/Core/Plugin.php:2380` *(+2 more)* | Filter the registered wallet providers. |

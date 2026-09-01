@@ -14,6 +14,56 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
+ * A vendor's profile, defaulted when they have no row yet.
+ *
+ * `wpss_get_vendor()` answers "is there a profile row", which is not the same
+ * question as "is this a vendor". A member can hold the vendor role with no row
+ * at all - granted by an admin, promoted by a filter, or created by the demo
+ * seeder - and on those accounts the profile page rendered "Vendor not found."
+ * about somebody the plugin's own `wpss_is_vendor()` says is a seller.
+ *
+ * This is the same lesson as Basecamp 10208142467, where the Become a Vendor
+ * page offered "Register as Vendor" to people who were already vendors: the
+ * canonical answer is `wpss_is_vendor()`, and a missing row is an empty profile,
+ * not a missing person.
+ *
+ * Returns null only when the user genuinely is not a vendor - callers that need
+ * to know whether a row exists should keep using `wpss_get_vendor()`.
+ *
+ * @since 1.7.0
+ *
+ * @param int $user_id User ID.
+ * @return \WPSellServices\Models\VendorProfile|null Profile, a defaulted one, or null.
+ */
+function wpss_get_vendor_profile_or_default( int $user_id ): ?\WPSellServices\Models\VendorProfile {
+	$profile = wpss_get_vendor( $user_id );
+
+	if ( $profile ) {
+		return $profile;
+	}
+
+	if ( ! wpss_is_vendor( $user_id ) ) {
+		return null;
+	}
+
+	$user = get_userdata( $user_id );
+
+	if ( ! $user ) {
+		return null;
+	}
+
+	// Built through from_db() rather than by setting twenty properties by hand:
+	// it already defaults every column it does not find, so a new field added to
+	// the model is defaulted here too instead of being silently unset.
+	return \WPSellServices\Models\VendorProfile::from_db(
+		(object) array(
+			'user_id'      => $user_id,
+			'display_name' => $user->display_name,
+		)
+	);
+}
+
+/**
  * Get vendor profile by user ID.
  *
  * @param int $user_id WordPress user ID.
@@ -663,8 +713,8 @@ function wpss_member_bypasses_limits( int $user_id ): bool {
  *
  * @since 1.7.0
  *
- * @param int              $vendor_id   Vendor user ID.
- * @param string|string[]  $post_status Status(es) to count. Default 'publish'.
+ * @param int             $vendor_id   Vendor user ID.
+ * @param string|string[] $post_status Status(es) to count. Default 'publish'.
  * @return int
  */
 function wpss_count_vendor_services( int $vendor_id, $post_status = 'publish' ): int {

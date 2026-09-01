@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-01T09:14:54+00:00\n"
+"POT-Creation-Date: 2026-09-01T10:23:18+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -154,7 +154,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:3752
 #: src/Frontend/AjaxHandlers.php:3798
 #: src/Frontend/AjaxHandlers.php:3867
-#: src/Integrations/Gateways/OfflineGateway.php:793
+#: src/Integrations/Gateways/OfflineGateway.php:792
 msgid "Permission denied."
 msgstr ""
 
@@ -177,8 +177,8 @@ msgstr ""
 #: src/Admin/Admin.php:856
 #: src/Frontend/AjaxHandlers.php:615
 #: src/Frontend/AjaxHandlers.php:3126
-#: src/Integrations/Gateways/OfflineGateway.php:533
-#: src/Integrations/Gateways/TestGateway.php:242
+#: src/Integrations/Gateways/OfflineGateway.php:532
+#: src/Integrations/Gateways/TestGateway.php:241
 #: src/Integrations/Stripe/StripeGateway.php:1092
 msgid "Security check failed."
 msgstr ""
@@ -291,7 +291,7 @@ msgstr ""
 #: src/Frontend/Frontend.php:271
 #: src/Frontend/Frontend.php:275
 #: src/Frontend/ServiceWizard.php:1453
-#: src/Frontend/Shortcodes.php:1171
+#: src/Frontend/Shortcodes.php:1175
 #: src/Frontend/UnifiedDashboard.php:178
 #: src/Integrations/PayPal/PayPalGateway.php:566
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1520
@@ -316,7 +316,7 @@ msgid "Send Test Email"
 msgstr ""
 
 #: src/Admin/Admin.php:1174
-#: src/Integrations/Gateways/OfflineGateway.php:941
+#: src/Integrations/Gateways/OfflineGateway.php:940
 msgid "Request failed. Please try again."
 msgstr ""
 
@@ -591,8 +591,8 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:52
 #: src/Admin/Tables/OrdersListTable.php:51
 #: src/Blocks/BlocksManager.php:149
-#: src/Frontend/Shortcodes.php:728
-#: src/Integrations/Gateways/OfflineGateway.php:1411
+#: src/Frontend/Shortcodes.php:732
+#: src/Integrations/Gateways/OfflineGateway.php:1410
 #: templates/dashboard/sections/disputes.php:250
 #: templates/dashboard/sections/disputes.php:289
 #: templates/emails/requirements-reminder.php:68
@@ -614,7 +614,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:1788
 #: src/Admin/Pages/VendorsPage.php:1942
 #: src/Admin/Tables/OrdersListTable.php:52
-#: src/Frontend/Shortcodes.php:729
+#: src/Frontend/Shortcodes.php:733
 #: src/functions/moderation.php:127
 #: src/Services/NotificationService.php:303
 #: src/Services/NotificationService.php:425
@@ -685,7 +685,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:684
 #: src/Admin/Tables/DisputesListTable.php:55
 #: src/Admin/Tables/OrdersListTable.php:56
-#: src/Frontend/Shortcodes.php:731
+#: src/Frontend/Shortcodes.php:735
 #: src/Privacy/PersonalData.php:278
 #: templates/dashboard/sections/disputes.php:252
 #: templates/dashboard/sections/disputes.php:292
@@ -725,7 +725,7 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:56
 #: src/Admin/Tables/OrdersListTable.php:57
 #: src/CustomFields/Fields/DateField.php:38
-#: src/Frontend/Shortcodes.php:732
+#: src/Frontend/Shortcodes.php:736
 #: src/Frontend/UnifiedDashboard.php:154
 #: src/Privacy/PersonalData.php:455
 #: templates/dashboard/sections/earnings.php:430
@@ -799,9 +799,9 @@ msgstr[1] ""
 #: src/Frontend/AjaxHandlers.php:930
 #: src/Frontend/AjaxHandlers.php:1375
 #: src/Frontend/AjaxHandlers.php:3141
-#: src/Frontend/Shortcodes.php:809
-#: src/Frontend/Shortcodes.php:822
-#: src/Integrations/Gateways/OfflineGateway.php:809
+#: src/Frontend/Shortcodes.php:813
+#: src/Frontend/Shortcodes.php:826
+#: src/Integrations/Gateways/OfflineGateway.php:808
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:394
 #: src/Services/ExtensionOrderService.php:157
 #: src/Services/ExtensionRequestService.php:132
@@ -819,7 +819,7 @@ msgid "Order not found."
 msgstr ""
 
 #: src/Admin/Admin.php:1838
-#: src/Frontend/Shortcodes.php:829
+#: src/Frontend/Shortcodes.php:833
 #: src/Frontend/TemplateLoader.php:380
 msgid "You do not have permission to view this order."
 msgstr ""
@@ -881,7 +881,7 @@ msgstr ""
 
 #. translators: %s: order number
 #: src/Admin/Admin.php:1888
-#: src/Frontend/Shortcodes.php:978
+#: src/Frontend/Shortcodes.php:982
 #: templates/dashboard/sections/messages.php:332
 #: templates/emails/cancellation-requested.php:69
 #: templates/emails/delivery-ready.php:63
@@ -1299,7 +1299,7 @@ msgstr ""
 #: src/CustomFields/Fields/AbstractField.php:110
 #: src/Frontend/ServiceWizard.php:526
 #: src/Frontend/ServiceWizard.php:1006
-#: src/Frontend/Shortcodes.php:575
+#: src/Frontend/Shortcodes.php:579
 #: src/Frontend/UnifiedDashboard.php:156
 #: src/Integrations/Gateways/OfflineGateway.php:384
 #: src/Privacy/PersonalData.php:467
@@ -1413,7 +1413,7 @@ msgid "Expires On"
 msgstr ""
 
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:147
-#: src/Frontend/Shortcodes.php:621
+#: src/Frontend/Shortcodes.php:625
 #: templates/dashboard/sections/create-request.php:152
 #: templates/dashboard/sections/edit-request.php:205
 msgid "Required Skills"
@@ -1855,7 +1855,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:631
 #: src/Admin/Metaboxes/ServiceMetabox.php:1516
 #: src/Admin/Pages/VendorsPage.php:2466
-#: src/Frontend/Shortcodes.php:569
+#: src/Frontend/Shortcodes.php:573
 #: src/Integrations/Gateways/OfflineGateway.php:378
 #: templates/dashboard/sections/create-request.php:41
 #: templates/dashboard/sections/edit-request.php:91
@@ -2108,8 +2108,8 @@ msgstr ""
 #: src/API/ServicesController.php:772
 #: src/Frontend/AjaxHandlers.php:2488
 #: src/Frontend/ServiceWizard.php:306
-#: src/Integrations/Gateways/OfflineGateway.php:709
-#: src/Integrations/Gateways/TestGateway.php:342
+#: src/Integrations/Gateways/OfflineGateway.php:708
+#: src/Integrations/Gateways/TestGateway.php:341
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:357
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:451
 #: src/Integrations/Stripe/StripeGateway.php:1000
@@ -2325,8 +2325,8 @@ msgstr ""
 #: src/Admin/Pages/ManualOrderPage.php:740
 #: src/API/PaymentController.php:465
 #: src/Checkout/CheckoutIntentService.php:372
-#: src/Integrations/Gateways/OfflineGateway.php:753
-#: src/Integrations/Gateways/TestGateway.php:388
+#: src/Integrations/Gateways/OfflineGateway.php:752
+#: src/Integrations/Gateways/TestGateway.php:387
 #: src/Integrations/PayPal/PayPalGateway.php:653
 #: src/Integrations/PayPal/PayPalGateway.php:1010
 #: src/Integrations/Stripe/StripeGateway.php:931
@@ -2488,7 +2488,7 @@ msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:366
 #: src/API/EarningsController.php:642
-#: src/Integrations/Gateways/OfflineGateway.php:1673
+#: src/Integrations/Gateways/OfflineGateway.php:1672
 #: src/Services/EarningsService.php:972
 msgid "Bank Transfer"
 msgstr ""
@@ -2581,8 +2581,8 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:1121
 #: src/Frontend/AjaxHandlers.php:2476
 #: src/Frontend/AjaxHandlers.php:2743
-#: src/Integrations/Gateways/OfflineGateway.php:694
-#: src/Integrations/Gateways/TestGateway.php:327
+#: src/Integrations/Gateways/OfflineGateway.php:693
+#: src/Integrations/Gateways/TestGateway.php:326
 #: src/Integrations/PayPal/PayPalGateway.php:775
 msgid "Invalid service."
 msgstr ""
@@ -2789,7 +2789,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:2470
 #: src/Admin/Pages/WithdrawalsPage.php:516
 #: src/Admin/Pages/WithdrawalsPage.php:535
-#: src/Frontend/Shortcodes.php:733
+#: src/Frontend/Shortcodes.php:737
 #: templates/dashboard/sections/disputes.php:254
 #: templates/myaccount/service-orders.php:73
 #: templates/myaccount/service-orders.php:143
@@ -2798,7 +2798,7 @@ msgstr ""
 
 #: src/Admin/Pages/ReportsPage.php:342
 #: src/Admin/Pages/ReportsPage.php:361
-#: src/functions/vendors.php:532
+#: src/functions/vendors.php:582
 msgid "Deleted member"
 msgstr ""
 
@@ -2855,7 +2855,7 @@ msgstr ""
 
 #: src/Admin/Pages/ReportsPage.php:511
 #: src/Admin/Pages/ReportsPage.php:554
-#: src/Integrations/Gateways/OfflineGateway.php:1097
+#: src/Integrations/Gateways/OfflineGateway.php:1096
 msgid "You do not have permission to do that."
 msgstr ""
 
@@ -3016,7 +3016,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:186
 #: src/Admin/Pages/WithdrawalsPage.php:497
 #: src/Admin/Pages/WithdrawalsPage.php:730
-#: src/Integrations/Gateways/OfflineGateway.php:1035
+#: src/Integrations/Gateways/OfflineGateway.php:1034
 msgid "Reject"
 msgstr ""
 
@@ -3083,9 +3083,9 @@ msgstr ""
 
 #: src/Admin/Pages/ServiceModerationPage.php:252
 #: src/Frontend/Frontend.php:280
-#: src/Frontend/Shortcodes.php:1156
+#: src/Frontend/Shortcodes.php:1160
 #: src/Frontend/UnifiedDashboard.php:162
-#: src/Integrations/Gateways/OfflineGateway.php:925
+#: src/Integrations/Gateways/OfflineGateway.php:924
 #: src/Integrations/PayPal/PayPalGateway.php:565
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1476
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2045
@@ -3159,7 +3159,7 @@ msgstr ""
 #: src/Frontend/BuyerRequestArchiveView.php:363
 #: src/Frontend/ServiceArchiveView.php:386
 #: src/Frontend/ServiceWizard.php:496
-#: src/Frontend/Shortcodes.php:581
+#: src/Frontend/Shortcodes.php:585
 #: templates/dashboard/sections/create-request.php:73
 #: templates/dashboard/sections/edit-request.php:120
 #: assets/js/blocks.js:89
@@ -3185,7 +3185,7 @@ msgstr ""
 #: src/Admin/Settings.php:3329
 #: src/Admin/Tables/DisputesListTable.php:117
 #: src/Admin/Tables/OrdersListTable.php:119
-#: src/Frontend/Shortcodes.php:753
+#: src/Frontend/Shortcodes.php:757
 #: templates/dashboard/sections/disputes.php:300
 #: templates/dashboard/sections/orders.php:402
 #: templates/dashboard/sections/sales.php:370
@@ -4012,7 +4012,7 @@ msgstr ""
 #: src/API/VendorsController.php:363
 #: src/Frontend/AjaxHandlers.php:2205
 #: src/Frontend/Shortcodes.php:386
-#: src/Frontend/Shortcodes.php:393
+#: src/Frontend/Shortcodes.php:397
 msgid "Vendor not found."
 msgstr ""
 
@@ -4413,7 +4413,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:512
 #: src/Admin/Pages/WithdrawalsPage.php:531
 #: src/Admin/Pages/WithdrawalsPage.php:649
-#: src/Frontend/Shortcodes.php:730
+#: src/Frontend/Shortcodes.php:734
 #: src/Frontend/UnifiedDashboard.php:157
 #: src/Privacy/PersonalData.php:463
 #: templates/dashboard/sections/earnings.php:232
@@ -4431,7 +4431,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:513
 #: src/Admin/Pages/WithdrawalsPage.php:532
 #: src/Admin/Pages/WithdrawalsPage.php:652
-#: src/Integrations/Gateways/OfflineGateway.php:1419
+#: src/Integrations/Gateways/OfflineGateway.php:1418
 #: templates/dashboard/sections/earnings.php:432
 msgid "Method"
 msgstr ""
@@ -4719,9 +4719,9 @@ msgid "Approve Withdrawal"
 msgstr ""
 
 #: src/Admin/Pages/WithdrawalsPage.php:190
-#: src/Integrations/Gateways/OfflineGateway.php:900
-#: src/Integrations/Gateways/OfflineGateway.php:938
-#: src/Integrations/Gateways/OfflineGateway.php:942
+#: src/Integrations/Gateways/OfflineGateway.php:899
+#: src/Integrations/Gateways/OfflineGateway.php:937
+#: src/Integrations/Gateways/OfflineGateway.php:941
 msgid "Mark as Paid"
 msgstr ""
 
@@ -6168,7 +6168,7 @@ msgid "All order types"
 msgstr ""
 
 #: src/Admin/Tables/OrdersListTable.php:620
-#: src/Frontend/Shortcodes.php:777
+#: src/Frontend/Shortcodes.php:781
 #: templates/dashboard/sections/orders.php:254
 msgid "No orders yet"
 msgstr ""
@@ -6543,8 +6543,8 @@ msgstr ""
 #: src/API/PaymentController.php:219
 #: src/Frontend/AjaxHandlers.php:2493
 #: src/Frontend/AjaxHandlers.php:2749
-#: src/Integrations/Gateways/OfflineGateway.php:701
-#: src/Integrations/Gateways/TestGateway.php:334
+#: src/Integrations/Gateways/OfflineGateway.php:700
+#: src/Integrations/Gateways/TestGateway.php:333
 #: src/Integrations/PayPal/PayPalGateway.php:781
 msgid "You cannot purchase your own service."
 msgstr ""
@@ -7177,17 +7177,17 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:627
 #: src/Frontend/AjaxHandlers.php:752
 #: src/Frontend/AjaxHandlers.php:922
-#: src/Integrations/Gateways/OfflineGateway.php:568
-#: src/Integrations/Gateways/OfflineGateway.php:802
-#: src/Integrations/Gateways/TestGateway.php:263
+#: src/Integrations/Gateways/OfflineGateway.php:567
+#: src/Integrations/Gateways/OfflineGateway.php:801
+#: src/Integrations/Gateways/TestGateway.php:262
 #: src/Integrations/PayPal/PayPalGateway.php:745
 msgid "Invalid order."
 msgstr ""
 
 #: src/API/PaymentController.php:206
 #: src/Checkout/CheckoutIntentService.php:79
-#: src/Integrations/Gateways/OfflineGateway.php:572
-#: src/Integrations/Gateways/TestGateway.php:267
+#: src/Integrations/Gateways/OfflineGateway.php:571
+#: src/Integrations/Gateways/TestGateway.php:266
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:409
 msgid "This order has already been paid."
 msgstr ""
@@ -7983,8 +7983,8 @@ msgstr ""
 #: src/Checkout/CheckoutIntentService.php:47
 #: src/Frontend/ServiceWizard.php:1501
 #: src/Frontend/ServiceWizard.php:1621
-#: src/Integrations/Gateways/OfflineGateway.php:542
-#: src/Integrations/Gateways/TestGateway.php:247
+#: src/Integrations/Gateways/OfflineGateway.php:541
+#: src/Integrations/Gateways/TestGateway.php:246
 #: src/Integrations/PayPal/PayPalGateway.php:683
 #: src/Integrations/Stripe/StripeGateway.php:1051
 #: src/Integrations/Stripe/StripeGateway.php:1101
@@ -7996,7 +7996,7 @@ msgid "This phase is locked. Pay the previous phase first."
 msgstr ""
 
 #: src/Checkout/CheckoutIntentService.php:126
-#: src/Integrations/Gateways/OfflineGateway.php:645
+#: src/Integrations/Gateways/OfflineGateway.php:644
 #: src/Integrations/PayPal/PayPalGateway.php:917
 msgid "Your cart is empty."
 msgstr ""
@@ -9844,7 +9844,7 @@ msgid "characters"
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:504
-#: src/Frontend/Shortcodes.php:583
+#: src/Frontend/Shortcodes.php:587
 msgid "Select a category"
 msgstr ""
 
@@ -10400,29 +10400,29 @@ msgid "No vendors found."
 msgstr ""
 
 #. translators: %s: login URL
-#: src/Frontend/Shortcodes.php:542
+#: src/Frontend/Shortcodes.php:546
 #, php-format
 msgid "Please <a href=\"%s\">log in</a> to post a request."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:570
+#: src/Frontend/Shortcodes.php:574
 #: templates/dashboard/sections/create-request.php:51
 msgid "e.g., I need a WordPress website designed"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:576
+#: src/Frontend/Shortcodes.php:580
 msgid "Describe what you need in detail..."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:605
+#: src/Frontend/Shortcodes.php:609
 msgid "Budget Min"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:609
+#: src/Frontend/Shortcodes.php:613
 msgid "Budget Max"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:616
+#: src/Frontend/Shortcodes.php:620
 #: templates/dashboard/sections/create-request.php:140
 #: templates/dashboard/sections/edit-request.php:194
 #: templates/myaccount/service-orders.php:72
@@ -10431,74 +10431,74 @@ msgstr ""
 msgid "Deadline"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:622
+#: src/Frontend/Shortcodes.php:626
 #: templates/dashboard/sections/create-request.php:158
 #: templates/dashboard/sections/edit-request.php:212
 msgid "e.g., WordPress, PHP, JavaScript (comma-separated)"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:623
+#: src/Frontend/Shortcodes.php:627
 #: templates/dashboard/sections/create-request.php:160
 msgid "Separate multiple skills with commas."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:627
+#: src/Frontend/Shortcodes.php:631
 #: src/Frontend/UnifiedDashboard.php:716
 #: templates/dashboard/sections/create-request.php:168
 msgid "Post Request"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:644
+#: src/Frontend/Shortcodes.php:648
 msgid "Request posted"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:645
+#: src/Frontend/Shortcodes.php:649
 msgid "Your request is now live. Vendors can browse it and send you proposals."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:646
+#: src/Frontend/Shortcodes.php:650
 msgid "View buyer requests"
 msgstr ""
 
 #. translators: %s: login URL
-#: src/Frontend/Shortcodes.php:667
+#: src/Frontend/Shortcodes.php:671
 #, php-format
 msgid "Please <a href=\"%s\">log in</a> to view your orders."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:778
+#: src/Frontend/Shortcodes.php:782
 msgid "Your orders will show here once you purchase a service."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:779
+#: src/Frontend/Shortcodes.php:783
 #: templates/dashboard/sections/favorites.php:62
 msgid "Browse services"
 msgstr ""
 
 #. translators: %s: login URL
-#: src/Frontend/Shortcodes.php:801
+#: src/Frontend/Shortcodes.php:805
 #, php-format
 msgid "Please <a href=\"%s\">log in</a> to view order details."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:862
-#: src/Frontend/Shortcodes.php:895
+#: src/Frontend/Shortcodes.php:866
+#: src/Frontend/Shortcodes.php:899
 msgid "You are already logged in."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:899
+#: src/Frontend/Shortcodes.php:903
 msgid "Registration is currently disabled."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:919
+#: src/Frontend/Shortcodes.php:923
 msgid "Create your account"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:921
+#: src/Frontend/Shortcodes.php:925
 msgid "Buy services, message sellers, and follow your orders."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:983
+#: src/Frontend/Shortcodes.php:987
 #: src/Services/NotificationService.php:451
 #: src/Services/NotificationService.php:471
 #: src/Services/NotificationService.php:494
@@ -10518,133 +10518,133 @@ msgstr ""
 msgid "Service:"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:984
+#: src/Frontend/Shortcodes.php:988
 #: src/Frontend/SingleServiceView.php:964
 msgid "Total:"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:985
+#: src/Frontend/Shortcodes.php:989
 msgid "Date:"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1029
+#: src/Frontend/Shortcodes.php:1033
 msgid "Create your seller account"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1030
+#: src/Frontend/Shortcodes.php:1034
 msgid "Takes a minute. No card, no listing fee."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1068
+#: src/Frontend/Shortcodes.php:1072
 msgid "You're already a vendor"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1069
+#: src/Frontend/Shortcodes.php:1073
 msgid "Your vendor account is active. Head to your dashboard to manage services, view orders, and track earnings."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1072
+#: src/Frontend/Shortcodes.php:1076
 msgid "Go to Dashboard"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1092
+#: src/Frontend/Shortcodes.php:1096
 msgid "Registration is closed"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1093
+#: src/Frontend/Shortcodes.php:1097
 msgid "We're not accepting new vendors at the moment. Please check back later."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1120
+#: src/Frontend/Shortcodes.php:1124
 msgid "Start selling"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1124
+#: src/Frontend/Shortcodes.php:1128
 msgid "Applications are reviewed by our team. You will be notified once approved."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1126
+#: src/Frontend/Shortcodes.php:1130
 msgid "You are signed in already, so this is one click."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1133
-#: src/Frontend/Shortcodes.php:1168
-#: src/Frontend/Shortcodes.php:1173
+#: src/Frontend/Shortcodes.php:1137
+#: src/Frontend/Shortcodes.php:1172
+#: src/Frontend/Shortcodes.php:1177
 msgid "Register as Vendor"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1166
+#: src/Frontend/Shortcodes.php:1170
 #: src/Frontend/SingleServiceView.php:156
 #: src/Frontend/UnifiedDashboard.php:177
-#: src/Integrations/Gateways/OfflineGateway.php:937
+#: src/Integrations/Gateways/OfflineGateway.php:936
 #: templates/dashboard/sections/create-request.php:232
 #: templates/dashboard/sections/earnings.php:524
 #: templates/dashboard/sections/edit-request.php:279
 msgid "An error occurred."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1203
+#: src/Frontend/Shortcodes.php:1207
 msgid "Sell on this marketplace"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1204
+#: src/Frontend/Shortcodes.php:1208
 msgid "Turn what you are good at into income"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1206
+#: src/Frontend/Shortcodes.php:1210
 msgid "List a service, set your own prices and delivery times, and get paid once the work is approved. You choose what you take on."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1237
+#: src/Frontend/Shortcodes.php:1241
 msgid "Create your seller profile"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1238
+#: src/Frontend/Shortcodes.php:1242
 msgid "Say who you are and what you do. It is what buyers read before they order."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1241
+#: src/Frontend/Shortcodes.php:1245
 msgid "Publish your first service"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1242
+#: src/Frontend/Shortcodes.php:1246
 msgid "Describe the work, set your packages and delivery time, and ask for anything you need from the buyer up front."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1245
+#: src/Frontend/Shortcodes.php:1249
 msgid "Deliver and get paid"
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1246
+#: src/Frontend/Shortcodes.php:1250
 msgid "Talk to the buyer on the order, deliver your work, and withdraw your earnings once it is approved."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1264
+#: src/Frontend/Shortcodes.php:1268
 msgid "How it works"
 msgstr ""
 
 #. translators: %s: cart page link
-#: src/Frontend/Shortcodes.php:1527
+#: src/Frontend/Shortcodes.php:1531
 #, php-format
 msgid "Your cart is handled by the store. <a href=\"%s\">Go to cart</a>."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1537
+#: src/Frontend/Shortcodes.php:1541
 msgid "Please log in to view your cart."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1570
+#: src/Frontend/Shortcodes.php:1574
 #: templates/cart/cart.php:292
 msgid "Your Cart"
 msgstr ""
 
 #. translators: %s: checkout page link
-#: src/Frontend/Shortcodes.php:1623
+#: src/Frontend/Shortcodes.php:1627
 #, php-format
 msgid "Checkout is handled by the store. <a href=\"%s\">Go to checkout</a>."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1633
+#: src/Frontend/Shortcodes.php:1637
 msgid "Checkout is not available. Please configure an e-commerce platform in settings."
 msgstr ""
 
@@ -13225,37 +13225,37 @@ msgstr ""
 msgid "Create Account"
 msgstr ""
 
-#: src/functions/vendors.php:359
+#: src/functions/vendors.php:409
 msgid "Your vendor account is pending approval."
 msgstr ""
 
-#: src/functions/vendors.php:363
+#: src/functions/vendors.php:413
 msgid "Your vendor account is suspended."
 msgstr ""
 
-#: src/functions/vendors.php:367
+#: src/functions/vendors.php:417
 msgid "Your vendor account was not approved."
 msgstr ""
 
-#: src/functions/vendors.php:376
+#: src/functions/vendors.php:426
 msgid "Your vendor account is not active."
 msgstr ""
 
-#: src/functions/vendors.php:720
+#: src/functions/vendors.php:770
 msgid "sellers already here"
 msgstr ""
 
-#: src/functions/vendors.php:729
+#: src/functions/vendors.php:779
 msgid "services on offer"
 msgstr ""
 
 #. translators: %s: percentage of each order the seller keeps.
-#: src/functions/vendors.php:740
+#: src/functions/vendors.php:790
 #, php-format
 msgid "%s%%"
 msgstr ""
 
-#: src/functions/vendors.php:741
+#: src/functions/vendors.php:791
 msgid "of every order is yours"
 msgstr ""
 
@@ -13300,240 +13300,240 @@ msgstr ""
 msgid "How will you pay?"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:504
-#: src/Integrations/Gateways/OfflineGateway.php:1219
+#: src/Integrations/Gateways/OfflineGateway.php:503
+#: src/Integrations/Gateways/OfflineGateway.php:1218
 msgid "Payment Instructions"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:510
-#: src/Integrations/Gateways/OfflineGateway.php:1231
+#: src/Integrations/Gateways/OfflineGateway.php:509
+#: src/Integrations/Gateways/OfflineGateway.php:1230
 msgid "Order Reference:"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:514
-#: src/Integrations/Gateways/OfflineGateway.php:1235
+#: src/Integrations/Gateways/OfflineGateway.php:513
+#: src/Integrations/Gateways/OfflineGateway.php:1234
 msgid "Amount Due:"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:590
+#: src/Integrations/Gateways/OfflineGateway.php:589
 msgid "Could not record your payment method. Please try again."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:629
+#: src/Integrations/Gateways/OfflineGateway.php:628
 msgid "Please complete your payment using the instructions below. Your order will be activated once payment is confirmed."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:655
+#: src/Integrations/Gateways/OfflineGateway.php:654
 msgid "Failed to create orders. Please try again."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:680
+#: src/Integrations/Gateways/OfflineGateway.php:679
 msgid "Your orders have been placed. Please complete your payment using the instructions for each order."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:815
+#: src/Integrations/Gateways/OfflineGateway.php:814
 msgid "Order is not awaiting payment."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:830
+#: src/Integrations/Gateways/OfflineGateway.php:829
 msgid "Failed to mark order as paid."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:844
+#: src/Integrations/Gateways/OfflineGateway.php:843
 msgid "Order marked as paid successfully."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:867
+#: src/Integrations/Gateways/OfflineGateway.php:866
 msgid "Offline Payment - Awaiting Confirmation"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:870
+#: src/Integrations/Gateways/OfflineGateway.php:869
 msgid "This order is awaiting offline payment. Mark it as paid once you receive the payment."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:888
+#: src/Integrations/Gateways/OfflineGateway.php:887
 msgid "Transaction ID (optional)"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:893
+#: src/Integrations/Gateways/OfflineGateway.php:892
 msgid "Bank ref, receipt #, etc."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:921
+#: src/Integrations/Gateways/OfflineGateway.php:920
 msgid "Are you sure you want to mark this order as paid?"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:972
+#: src/Integrations/Gateways/OfflineGateway.php:971
 msgid "The buyer has not uploaded proof of payment yet."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:980
-#: src/Integrations/Gateways/OfflineGateway.php:1010
+#: src/Integrations/Gateways/OfflineGateway.php:979
+#: src/Integrations/Gateways/OfflineGateway.php:1009
 msgid "Payment proof"
 msgstr ""
 
 #. translators: 1: uploader name, 2: date
-#: src/Integrations/Gateways/OfflineGateway.php:995
+#: src/Integrations/Gateways/OfflineGateway.php:994
 #, php-format
 msgid "uploaded by %1$s on %2$s"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:996
+#: src/Integrations/Gateways/OfflineGateway.php:995
 msgid "a buyer"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1016
+#: src/Integrations/Gateways/OfflineGateway.php:1015
 msgid "Open the uploaded file"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1025
+#: src/Integrations/Gateways/OfflineGateway.php:1024
 msgid "Note to buyer (required to reject)"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1031
+#: src/Integrations/Gateways/OfflineGateway.php:1030
 msgid "Approve + mark paid"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1059
+#: src/Integrations/Gateways/OfflineGateway.php:1058
 msgid "Give the buyer a reason so they know what to send instead."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1073
-#: src/Integrations/Gateways/OfflineGateway.php:1077
+#: src/Integrations/Gateways/OfflineGateway.php:1072
+#: src/Integrations/Gateways/OfflineGateway.php:1076
 msgid "Could not record that decision."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1105
+#: src/Integrations/Gateways/OfflineGateway.php:1104
 msgid "Unknown decision."
 msgstr ""
 
 #. translators: %s: the offline payment method the buyer chose, e.g. Bank Transfer
-#: src/Integrations/Gateways/OfflineGateway.php:1215
+#: src/Integrations/Gateways/OfflineGateway.php:1214
 #, php-format
 msgid "How to pay by %s"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1270
+#: src/Integrations/Gateways/OfflineGateway.php:1269
 msgid "Proof of payment"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1276
+#: src/Integrations/Gateways/OfflineGateway.php:1275
 msgid "Your receipt has been sent and is waiting to be checked. We will email you once it has been reviewed."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1281
+#: src/Integrations/Gateways/OfflineGateway.php:1280
 msgid "Your last receipt was not accepted."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1285
+#: src/Integrations/Gateways/OfflineGateway.php:1284
 msgid "Please upload a clearer copy below."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1288
+#: src/Integrations/Gateways/OfflineGateway.php:1287
 msgid "Paid by bank transfer or another offline method? Upload your receipt and we will confirm your order once it is checked."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1295
+#: src/Integrations/Gateways/OfflineGateway.php:1294
 msgid "Receipt or screenshot"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1299
+#: src/Integrations/Gateways/OfflineGateway.php:1298
 msgid "Reference number (optional)"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1300
+#: src/Integrations/Gateways/OfflineGateway.php:1299
 msgid "Bank reference, transaction id…"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1302
+#: src/Integrations/Gateways/OfflineGateway.php:1301
 msgid "Send receipt"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1320
+#: src/Integrations/Gateways/OfflineGateway.php:1319
 msgid "Could not send that receipt."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1397
+#: src/Integrations/Gateways/OfflineGateway.php:1396
 msgid "Payment receipt"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1400
+#: src/Integrations/Gateways/OfflineGateway.php:1399
 msgid "Print or save as PDF"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1407
+#: src/Integrations/Gateways/OfflineGateway.php:1406
 msgid "Receipt for"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1415
+#: src/Integrations/Gateways/OfflineGateway.php:1414
 msgid "Amount paid"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1420
+#: src/Integrations/Gateways/OfflineGateway.php:1419
 msgid "Offline payment"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1424
+#: src/Integrations/Gateways/OfflineGateway.php:1423
 msgid "Reference"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1430
+#: src/Integrations/Gateways/OfflineGateway.php:1429
 msgid "Paid on"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1444
+#: src/Integrations/Gateways/OfflineGateway.php:1443
 msgid "Verified on"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1606
+#: src/Integrations/Gateways/OfflineGateway.php:1605
 msgid "Available Placeholders for Instructions"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1608
+#: src/Integrations/Gateways/OfflineGateway.php:1607
 msgid "You can use these placeholders in the Payment Instructions:"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1611
+#: src/Integrations/Gateways/OfflineGateway.php:1610
 msgid "Order reference number"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1612
+#: src/Integrations/Gateways/OfflineGateway.php:1611
 #: templates/emails/dispute-escalated.php:54
 msgid "Order ID"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1613
+#: src/Integrations/Gateways/OfflineGateway.php:1612
 msgid "Formatted order total with currency"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1614
+#: src/Integrations/Gateways/OfflineGateway.php:1613
 msgid "Currency code"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1641
+#: src/Integrations/Gateways/OfflineGateway.php:1640
 #: src/Integrations/Stripe/StripeGateway.php:1682
 msgid "Payment Methods"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1643
+#: src/Integrations/Gateways/OfflineGateway.php:1642
 msgid "Name each way a buyer can pay you offline. Leave a slot blank to skip it. Buyers choose from the enabled ones at checkout, and the method they picked is recorded on the order, so renaming or removing one later never changes what a past order says."
 msgstr ""
 
 #. translators: %d: method slot number.
-#: src/Integrations/Gateways/OfflineGateway.php:1661
+#: src/Integrations/Gateways/OfflineGateway.php:1660
 #, php-format
 msgid "Method %d"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1678
+#: src/Integrations/Gateways/OfflineGateway.php:1677
 msgid "Payment instructions"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1685
+#: src/Integrations/Gateways/OfflineGateway.php:1684
 msgid "Account name, sort code, account number, and the reference to quote."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1696
+#: src/Integrations/Gateways/OfflineGateway.php:1695
 msgid "Offer this method at checkout"
 msgstr ""
 
@@ -13557,23 +13557,23 @@ msgstr ""
 msgid "This is a test payment. No real charges will be made."
 msgstr ""
 
-#: src/Integrations/Gateways/TestGateway.php:253
+#: src/Integrations/Gateways/TestGateway.php:252
 msgid "Test gateway is only available in debug mode."
 msgstr ""
 
-#: src/Integrations/Gateways/TestGateway.php:295
+#: src/Integrations/Gateways/TestGateway.php:294
 msgid "Failed to create orders."
 msgstr ""
 
-#: src/Integrations/Gateways/TestGateway.php:491
+#: src/Integrations/Gateways/TestGateway.php:490
 msgid "Development Only"
 msgstr ""
 
-#: src/Integrations/Gateways/TestGateway.php:494
+#: src/Integrations/Gateways/TestGateway.php:493
 msgid "This gateway is only available when WP_DEBUG is enabled. It should never be used in production."
 msgstr ""
 
-#: src/Integrations/Gateways/TestGateway.php:514
+#: src/Integrations/Gateways/TestGateway.php:513
 msgid "WP_DEBUG is currently disabled. Enable it in wp-config.php to use this gateway."
 msgstr ""
 
