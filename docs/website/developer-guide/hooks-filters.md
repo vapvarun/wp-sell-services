@@ -145,9 +145,9 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_offline_multi_orders_created` | `array $order_ids, int $customer_id` | `src/Integrations/Gateways/OfflineGateway.php:670` |
-| `wpss_offline_order_created` | `int $order_id, object $order` | `src/Integrations/Gateways/OfflineGateway.php:620` |
-| `wpss_offline_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Gateways/OfflineGateway.php:839` |
+| `wpss_offline_multi_orders_created` | `array $order_ids, int $customer_id` | `src/Integrations/Gateways/OfflineGateway.php:695` |
+| `wpss_offline_order_created` | `int $order_id, object $order` | `src/Integrations/Gateways/OfflineGateway.php:645` |
+| `wpss_offline_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Gateways/OfflineGateway.php:864` |
 
 ### Stripe Gateway
 
