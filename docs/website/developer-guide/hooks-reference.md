@@ -358,7 +358,7 @@ guide; this is the complete index.
 | `wpss_delivery_allowed_file_types` | 1 | `src/Services/DeliveryService.php:360` | Filter allowed file types for delivery. |
 | `wpss_dispute_reasons` | 1 | `src/functions/moderation.php:107` | Filter the reasons a buyer may give for opening a dispute. |
 | `wpss_docs_url` | 1 | `src/Admin/Pages/UpgradePage.php:348` | Filters the documentation URL shown on the upgrade screen. |
-| `wpss_ecommerce_adapters` | 1 | `src/CLI/PreflightCommand.php:631` *(+1 more)* |  |
+| `wpss_ecommerce_adapters` | 1 | `src/CLI/PreflightCommand.php:663` *(+1 more)* |  |
 | `wpss_edd_can_access_vendor_dashboard` | 2 | `src/Integrations/EDD/EDDAccountProvider.php:484` **[PRO]** | Filter whether user can access vendor dashboard. |
 | `wpss_edd_cart_item_data` | 3 | `src/Integrations/EDD/EDDCheckoutProvider.php:56` **[PRO]** | Filter cart item data for services. |
 | `wpss_edd_thankyou_redirect` | 2 | `src/Integrations/EDD/EDDCheckoutProvider.php:250` **[PRO]** | Filter the thank you redirect URL for service orders. |

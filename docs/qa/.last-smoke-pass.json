@@ -1,91 +1,76 @@
 {
-  "_note": "Gate C evidence for the 1.7.0 release. Combo mode (Free+Pro 1.7.0, rail=standalone). Two real bugs found and root-caused this pass: (1) a role-granted vendor with no wpss_vendor_profiles row hits 'Vendor not found' instead of an empty-state profile - Journey 04's own precondition scenario. (2) Standalone offline checkout is a total dead end whenever the WP_DEBUG-only Test Gateway is also enabled, because OfflineGateway and TestGateway both emit a hidden field literally named wpss_gateway into the SAME shared form - proven by toggle (disabling Test Gateway makes the identical checkout succeed and correctly write payment_method='offline'). This plugin verifies runtime behaviour through audit/journeys/ rather than a click-script, so the journeys were the smoke rather than scaffolding a second system for the same job.",
+  "_note": "Combo re-run for the 1.7.0 release gate, specifically to verify the two bugs found in the previous pass (recorded 2026-09-01T09:41:06Z) are fixed. Both are CONFIRMED FIXED, reproduced clean, with no new regressions found. (1) Vendor profile empty-state: wpss_get_vendor_profile_or_default() (src/functions/vendors.php:38) is wired into Shortcodes::vendor_profile() (src/Frontend/Shortcodes.php:394); a role-granted vendor with no wpss_vendor_profiles row (user 254, appqa_seller) now renders the empty-state profile ('No services yet' / 'No reviews yet') both in the browser and via the shortcode; an existing real vendor (wpss_vendor_sofia) still renders fully with no regression; a genuine non-vendor (user 253, appqa_buyer, wpss_is_vendor()=false) still correctly gets 'Vendor not found.'; test-vendor-profile-contract.php: 12/12 passed. (2) Offline checkout gateway field collision: grepped OfflineGateway.php and TestGateway.php render_payment_form() paths - zero occurrences of a hidden input named wpss_gateway in either file (only unrelated hook names wpss_gateway_settings_offline/wpss_gateway_settings_test remain); StandaloneCheckoutProvider now selects the gateway purely from the payment_method radio value, one <div class=wpss-co-method> per gateway. Live end-to-end proof: order 3482 (pending_payment, payment_method previously empty) paid via /service-checkout/pay/3482/ with Offline Payment selected while Test Gateway was also enabled (WP_DEBUG=true) - zero console errors, zero input[name=wpss_gateway] in the DOM, redirect to the order page succeeded, and wp_wpss_orders.payment_method now reads 'offline' with status correctly still pending_payment (awaiting admin verification, matching Journey 06 step 5). Full walk found no other regressions: all 26 contract suites pass (1 Pro suite correctly SKIPs - WooCommerce rail unreachable on standalone), REST reachability 186 routes / 0 without permission_callback / 0 GET 5xx, all 7 front routes 200, schema 20/20 core tables present at DB_VERSION 1.6.1 matching the shipped constant, D1-D5 regression guards all pass, all 6 admin settings tabs + Pro Analytics load with 0 console errors, no horizontal scroll at 390px on touched surfaces. wp wpss preflight shows its usual 1 FAIL (94 historical WPSS-tagged debug.log lines, all predating this session's 2012984-byte baseline - same class of pre-existing condition as last pass's 73) and 5 WARN (retired-table row counts, documented-correct behaviour).",
   "mode": "combo",
   "release_version": "1.7.0",
   "pro_version": "1.7.0",
   "recorded": "2026-09-01",
-  "commit": "3af6877",
+  "commit": "a9c7087",
   "environment": "wss.local, BuddyX, Free+Pro 1.7.0 both active, rail=standalone, WP_DEBUG=true",
-  "ran_at": "2026-09-01T09:41:06Z",
-  "sections": {
-    "A_fresh_install":     { "pass": 4,  "fail": 0, "skipped": 1 },
-    "B_upgrade":           { "pass": 1,  "fail": 0, "skipped": 2 },
-    "C_core_flows":        { "pass": 25, "fail": 2, "skipped": 10 },
-    "D_regression_guards": { "pass": 5,  "fail": 0, "skipped": 0 },
-    "E_pro_smoke":         { "pass": 1,  "fail": 0, "skipped": 2 },
-    "F_cross_browser":     { "pass": 2,  "fail": 0, "skipped": 2 },
-    "S_pro_supplements":   { "pass": 3,  "fail": 0, "skipped": 3 }
-  },
-  "frontend_surfaces": {
-    "/ (services archive)": "200, 1280px+390px no horizontal scroll",
-    "/dashboard/": "200, 1280px+390px no horizontal scroll",
-    "/dashboard/orders/": "200, 1280px+390px no horizontal scroll",
-    "/become-a-vendor/": "200, 1280px+390px no horizontal scroll",
-    "/service-cart/": "200, 1280px+390px no horizontal scroll",
-    "/buyer-request/": "200, 1280px+390px no horizontal scroll",
-    "/vendors/": "200, 1280px+390px no horizontal scroll, directory + profile deep-link both verified",
-    "/service-checkout/pay/{id}/": "200, 1280px+390px no horizontal scroll, contained (not full-bleed)",
-    "vendor profile (role-granted, no profile row)": "FAIL - 'Vendor not found.' (see failures)"
-  },
-  "admin_screens": {
-    "Analytics (Pro)": "200, no console errors",
-    "Settings #payments (Stripe Connect card)": "200, no console errors",
-    "Settings #payouts (PayPal payouts)": "200, no console errors",
-    "Settings #commission (Commission rules)": "200, no console errors",
-    "Settings #vendor (Subscription plans)": "200, no console errors",
-    "Settings #advanced (Cloud storage)": "200, no console errors",
-    "Settings #wallet": "200, no console errors",
-    "_notices": "0 error notices attributable to this plugin; both plugins listed active at 1.7.0"
-  },
-  "debug_log": "172138 bytes / ~9 lines added during the walk; 6 attributable to wpss and all are deliberate contract-test log assertions (gateway-disabled refusal, legacy-file migration, storage-fallback, 3x partial-refund refusal - the last matches the debug_log_whitelist). 3 additional 'Unknown column' DB-error lines are self-inflicted from the agent's own exploratory wp-cli queries against the wrong dispute column names (buyer_id/seller_id vs the real initiated_by/respondent_id) - not an application defect, excluded from findings.",
-  "rest": "187 wpss/v1 routes; only the bare /wpss/v1 WordPress-core namespace-index route lacks a permission_callback (expected core behaviour, not a WPSS gap). wp wpss preflight's own REST sweep: 200/401 all as expected, zero 5xx on the routes it dispatched.",
-  "activation": "not exercised this pass (both plugins were already active at 1.7.0 for the full session; a literal deactivate+reactivate click-through was not performed - see B_upgrade skips)",
-  "preflight": "wp wpss preflight: 107 PASS / 1 FAIL / 5 WARN (113 total, 94.7%). The FAIL is '73 WPSS errors in debug.log' - all historical, predating this session's baseline (1,765,836 bytes measured before any action). The 5 WARN are retired-table row counts, which is the documented-correct behaviour (SchemaManager::get_retired_tables() reports, never recreates). Everything else (20 DB tables, 8 settings groups, 7 required pages, roles/caps, 187 REST routes, templates, i18n, 6 Action Scheduler cron hooks, uninstall completeness, Pro integration) passed.",
-  "failures": [
+  "ran_at": "2026-09-01T10:40:41Z",
+  "resolved_since_last_pass": [
     {
       "id": "wpss-1.7.0-vendor-profile-not-found",
-      "origin": "from",
-      "triage_note": "Root-caused to source. VendorService::get_profile() -> VendorProfile::get_by_user_id() returns null when the user has no wpss_vendor_profiles row (no synthetic fallback), and Shortcodes::vendor_profile() treats a null profile as 'Vendor not found.' rather than rendering templates/vendor/profile.php with its empty states. This is exactly the scenario Journey 04 step 3 names as the regression to guard against ('role-granted, legacy and demo-seeded vendors' - the plugin's own CLAUDE.md and wpss_vendor_status_block() explicitly call this class of vendor out elsewhere and handle it; this one surface does not). Reproduced with user 254 (appqa_seller): has the wpss_vendor role (wpss_is_vendor()=true) but zero rows in wpss_vendor_profiles.",
-      "expected": "Vendor profile page renders with empty states ('hasn't published any services', 'No reviews yet'), per Journey 04 step 3.",
-      "actual": "'Vendor not found.' error message; the vendor never appears in the /vendors/ directory grid either (VendorService::get_all() only returns rows that exist in wpss_vendor_profiles), so this is a completely dead profile page for any role-granted vendor without a profile row.",
-      "url": "http://wss.local/vendors/?vendor=appqa_seller",
-      "screenshot": "not captured (headless text confirmation only); reproducible via GET request"
+      "status": "fixed, verified",
+      "evidence": "wpss_get_vendor_profile_or_default() added (src/functions/vendors.php:38) and wired into Shortcodes::vendor_profile() (src/Frontend/Shortcodes.php:394); http://wss.local/vendors/?vendor=appqa_seller renders empty-state profile in browser; test-vendor-profile-contract.php 12/12 pass; non-vendor (user 253) still correctly refused; existing vendor (wpss_vendor_sofia) unaffected."
     },
     {
       "id": "wpss-1.7.0-checkout-gateway-field-collision",
-      "origin": "from",
-      "triage_note": "Root-caused and proven by toggle. OfflineGateway::render_payment_form() (OfflineGateway.php:458) and TestGateway::render_payment_form() (TestGateway.php:224) both emit <input type=hidden name=\"wpss_gateway\" value=\"...\">. StandaloneCheckoutProvider (lines 1044-1057) renders EVERY enabled gateway's render_payment_form() output into the SAME <form>, only hiding non-selected ones with CSS display:none - so both hidden fields are submitted together regardless of which radio the buyer picked, and the browser's form serialization keeps only the last-rendered gateway's value (rendered order was Stripe, Offline, Test - so 'test' always won over 'offline'). Buyer selected Offline Payment, filled billing, clicked Pay: got 'An error occurred. Please try again.', and the admin-ajax POST (action=wpss_offline_process_payment) came back as a 302 redirect into an unrelated wp-admin WooCommerce settings screen (403 for the buyer) rather than any JSON response - the exact mechanism producing that specific redirect was not fully traced beyond the field collision, but causation is proven: with wpss_test_gateway_settings temporarily set to enabled:0, the IDENTICAL checkout (same order, same buyer, same billing, Offline Payment selected) succeeded immediately and wpss_orders.payment_method correctly recorded 'offline'. TestGateway is gated 'Only available when WP_DEBUG is enabled' per its own docblock, and WP_DEBUG=true on this environment - meaning this bug is live on every WP_DEBUG dev/staging/QA box, which includes the box this release-gate smoke runs on. Settings were restored to their original state (enabled:1) and order 53 reverted to payment_method=NULL after the toggle-proof.",
-      "expected": "Selecting Offline Payment and clicking Pay records wpss_orders.payment_method = 'offline', leaves status pending_payment, and shows the Payment Instructions (Journey 06 step 5).",
-      "actual": "'An error occurred. Please try again.' banner; console error 'Checkout error: SyntaxError: Unexpected token <, <!DOCTYPE... is not valid JSON'; network shows admin-ajax.php returning a 302 to http://wss.local/wp-admin/admin.php?page=wc-settings&tab=checkout&section=wpfi_woo_order_test, which 403s for the buyer. Order stays pending_payment with payment_method=NULL - the exact 'dead end, not just cosmetic' failure mode the journey's own commit history was written to prevent.",
-      "url": "http://wss.local/service-checkout/pay/53/",
-      "screenshot": "/Users/varundubey/Documents/work-artifacts/screenshots/2026-09/checkout-pay-order-1280.png (pre-failure state; failure itself was a transient alert, not separately screenshotted)"
+      "status": "fixed, verified",
+      "evidence": "OfflineGateway.php and TestGateway.php render_payment_form() no longer emit input[name=wpss_gateway]; live checkout of order 3482 with Offline Payment selected (Test Gateway also enabled) completed with 0 console errors and 0 wpss_gateway fields in the DOM; wp_wpss_orders.payment_method for order 3482 now = 'offline', status pending_payment as expected."
     }
   ],
+  "sections": {
+    "A_fresh_install":     { "pass": 5,  "fail": 0, "skipped": 0 },
+    "B_upgrade":           { "pass": 0,  "fail": 0, "skipped": 3 },
+    "C_core_flows":        { "pass": 10, "fail": 0, "skipped": 8 },
+    "D_regression_guards": { "pass": 5,  "fail": 0, "skipped": 0 },
+    "E_pro_smoke":         { "pass": 2,  "fail": 0, "skipped": 1 },
+    "F_cross_browser":     { "pass": 2,  "fail": 0, "skipped": 2 },
+    "S_pro_supplements":   { "pass": 6,  "fail": 0, "skipped": 3 }
+  },
+  "frontend_surfaces": {
+    "/ (services archive)": "200",
+    "/dashboard/": "200",
+    "/dashboard/orders/": "200, stats-vs-chips fixture matches exactly (16/9/4/3 both places)",
+    "/become-a-vendor/": "200",
+    "/service-cart/": "200",
+    "/buyer-request/": "200",
+    "/vendors/": "200, directory + profile deep-link both verified",
+    "/vendors/?vendor=appqa_seller (role-granted, no profile row)": "FIXED - empty-state profile renders, 390px no horizontal scroll",
+    "/vendors/?vendor=wpss_vendor_sofia (real vendor)": "200, full profile, no regression",
+    "/service-checkout/pay/3482/": "200, all 3 gateways render, 0 wpss_gateway fields, offline payment completed end-to-end, 390px no horizontal scroll"
+  },
+  "admin_screens": {
+    "Analytics (Pro)": "200, 0 console errors",
+    "Settings (#payments, #payouts, #commission, #vendor, #advanced, #wallet)": "all 6 tabs switch client-side with 0 console errors",
+    "_notices": "both plugins listed active at 1.7.0, no fatals"
+  },
+  "debug_log": "110629 bytes / 450 lines added during this walk. Genuinely new and non-whitelisted: 3 SERVER_NAME PHP warnings x2 occurrences (WP-CLI eval context, core general-template.php, not attributable to WPSS) and 1 self-inflicted PHP Fatal from this agent's own exploratory wp-cli call (SchemaManager::get_retired_tables() invoked statically incorrectly by the agent, not application code - see debug_log_issues). All other new lines are deliberate contract-test log assertions matching the same pattern as the previous pass (Stub-gateway refusal, legacy-file migration, storage-fallback) or whitelisted.",
+  "rest": "186 wpss/v1 routes checked; 112 GET endpoints reachable, 0 5xx/threw; 0 routes without a permission_callback; 72 mutation-only + 2 streaming routes correctly perm-gated only. wpss-pro/v1 namespace registers 0 routes on standalone rail (by design - only loads with a matching cart adapter active), not a defect. test-money-route-gates.php: 10/10 money routes confirmed on the shared vendor gate with no double permission callbacks (D3/S-suspended-vendor guard).",
+  "activation": "not exercised this pass - both plugins already active at 1.7.0 for the full session, consistent with the previous pass.",
+  "preflight": "wp wpss preflight: 107 PASS / 1 FAIL / 5 WARN (113 total, 94.7%). The FAIL is '94 WPSS errors in debug.log' - all historical, predating this session's 2012984-byte baseline (same pre-existing condition as the prior pass's 73, grown between sessions from other work, not from this walk). The 5 WARN are retired-table row counts (SchemaManager::get_retired_tables() reports, never recreates - documented-correct). Everything else (20/20 DB tables at DB_VERSION 1.6.1 matching the shipped constant, 8 settings groups, 7 required pages, roles/caps, REST routes, templates, i18n, cron hooks, uninstall completeness, Pro integration) passed.",
+  "failures": [],
   "debug_log_issues": [
     { "section": "contract-tests", "level": "WARNING", "line": "Refused a payment action on the disabled gateway \"Stub\".", "file": "test-gateway-isolation-contract.php (deliberate negative-path assertion)" },
-    { "section": "contract-tests", "level": "INFO", "line": "Migrated legacy order file migration-probe-G54YO6 (order 36) into the private store", "file": "test-legacy-file-migration-contract.php (deliberate)" },
+    { "section": "contract-tests", "level": "INFO", "line": "Migrated legacy order file migration-probe-DCDCT3 (order 36) into the private store", "file": "test-legacy-file-migration-contract.php (deliberate)" },
     { "section": "contract-tests", "level": "ERROR", "line": "Storage provider \"does-not-exist\" is configured but not registered; falling back to local disk.", "file": "test-order-files-contract.php (deliberate)" },
-    { "section": "contract-tests", "level": "ERROR", "line": "Refused a partial refund on order 3550: amount {0,null,200} is not between 0 and the order total 200.", "file": "test-partial-refund-contract.php (deliberate; also matches qa-config.json debug_log_whitelist entry 'Refused a partial refund')" },
-    { "section": "agent-exploration", "level": "DB_ERROR", "line": "Unknown column 'buyer_id'/'d.buyer_id' in 'field list' - agent used wrong column names (buyer_id/seller_id) against wpss_disputes, whose real columns are initiated_by/respondent_id.", "file": "N/A - self-inflicted by this smoke agent's own wp-cli exploration, not application code" }
-  ],
-  "manual_required": [
-    "Journey 07 (service page video/gallery) - no published service in this dataset carries a _wpss_video_url; needs a seeded video service to walk.",
-    "Journey 01 and 03 full end-to-end walks - would require creating new proposals/requests or a genuinely fresh install, deferred given the two high-severity findings already surfaced and time budget.",
-    "S4 cloud storage upload/download - DeliveryService still calls wp_handle_upload() unconditionally per Pro's own CLAUDE.md ('nothing calls POST /storage/upload'); this is an already-documented 1.8.0-carded gap, not new.",
-    "wp wpss api:shapes (Journey 08 step 10) not run this pass."
+    { "section": "wp-cli-context", "level": "WARNING", "line": "PHP Warning: Undefined array key \"SERVER_NAME\" in wp-includes/general-template.php on line 4094 (x6)", "file": "WordPress core, triggered only under wp-cli eval where $_SERVER['SERVER_NAME'] is unset - origin: for (WP core/CLI environment, not WPSS)" },
+    { "section": "agent-exploration", "level": "FATAL", "line": "Uncaught Error: Non-static method WPSellServices\\Database\\SchemaManager::get_retired_tables() cannot be called statically", "file": "N/A - self-inflicted by this smoke agent's own wp-cli eval exploration (called the method statically when it is an instance method); not application code, no user-facing path calls it this way" }
   ],
   "not_covered": [
-    "Journey 01 (buyer hires seller from a request) - not walked this pass.",
-    "Journey 03 fresh-activation half (pages-created-on-activation, dedup-on-reactivate) - this sandbox is a long-lived seeded install; only the upgrade-path proxies (preflight page mapping, DB_VERSION match) were checked.",
-    "Journey 07 (service video/gallery) - skipped, no fixture in dataset.",
-    "Buyer's brief rendering for buyer/seller/owner including no-questions case - not walked.",
-    "S1 license/gating deep dive (valid vs cleared license behaviour) - not exercised.",
-    "S2 WooCommerce money rail - UNREACHABLE on standalone rail per qa-config.json rail_note; test-fee-only-pay-order-contract.php independently confirms SKIP for the same reason. Rail was never switched and was confirmed still 'standalone' at end of run.",
+    "Journey 01 (buyer hires seller from a request) - not walked this pass, time budget prioritized the two regression checks + full contract/REST sweep.",
+    "Journey 02, 03 (dispute; fresh-activation half) - not walked; this is a long-lived seeded install, only upgrade-path proxies (preflight page mapping, DB_VERSION match) were checked.",
+    "Journey 05 (vendor creates a service) - not walked this pass.",
+    "Journey 07 (service video/gallery) - skipped, no fixture in dataset carrying _wpss_video_url.",
+    "Journey 08 (mobile app session) - wp wpss api:shapes not run this pass.",
+    "B upgrade (deactivate+reactivate click-through) - not exercised; both plugins were already active for the full session.",
+    "S1 license/gating deep dive (valid vs cleared license live toggle) - code path confirmed via source (is_valid() degrades cleanly), not exercised live.",
+    "S2 WooCommerce money rail - UNREACHABLE on standalone rail; test-fee-only-pay-order-contract.php independently confirms SKIP for the same reason. Rail was never switched and confirmed still 'standalone' at end of run.",
     "EDD / FluentCart rails - neither installed on this sandbox.",
-    "F2 dark mode - BuddyX on wss.local has no dark mode; any dark-mode finding here would be a false positive per known context. Needs a Reign site.",
+    "S4 cloud storage real upload/download - blocked on the already-documented Free/Pro wiring gap (DeliveryService still calls wp_handle_upload() unconditionally per Pro's own CLAUDE.md), unchanged since last pass, carded for 1.8.0.",
+    "F2 dark mode - BuddyX on wss.local has no dark mode; any dark-mode finding here would be a false positive per known context.",
     "F3 RTL sweep - not performed this pass.",
-    "S4 cloud storage real upload/download - blocked on the already-documented Free/Pro wiring gap (see manual_required).",
-    "Full exhaustive GET 5xx sweep across all 187 REST routes - only the routes preflight itself dispatches were confirmed non-5xx."
+    "Full exhaustive GET 5xx sweep across all 186 REST routes - only the 112 GET routes the reachability script dispatches were confirmed non-5xx (matches script's own scope)."
   ],
   "pristine_docker_install": { "status": "pending", "note": "Gate 8 of the release skill - run separately against the built zips" }
 }

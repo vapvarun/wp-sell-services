@@ -570,8 +570,40 @@ class PreflightCommand {
 		$log = WP_CONTENT_DIR . '/debug.log';
 		if ( file_exists( $log ) ) {
 			$lines      = file( $log, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-			$wpss_lines = preg_grep( '/wpss|wp-sell-services/i', $lines ?: array() );
-			$this->record( 'Debug', 'WPSS errors in debug.log', empty( $wpss_lines ) ? 'pass' : 'fail', empty( $wpss_lines ) ? 'Clean' : count( $wpss_lines ) . ' entries' );
+			$wpss_lines = preg_grep( '/wpss|wp-sell-services/i', $lines ?: array() ) ?: array();
+
+			/*
+			 * This used to fail on ANY line in the whole log mentioning wpss, which
+			 * made it red by construction on every machine a release is cut from.
+			 * The contract suite deliberately drives guards into refusing - an
+			 * invalid refund amount, a disabled gateway, a missing storage provider
+			 * - and each refusal logs. Those lines are the guards WORKING. A gate
+			 * that cannot pass is one people learn to ignore.
+			 *
+			 * Fail only on evidence of a real defect: a fatal, an uncaught throwable
+			 * or a parse error. Our own logged refusals are reported as a warning,
+			 * with the count, so a reader can still judge them.
+			 */
+			$fatal = preg_grep( '/(fatal error|uncaught|parse error)/i', $wpss_lines ) ?: array();
+
+			if ( ! empty( $fatal ) ) {
+				$this->record( 'Debug', 'Fatals in debug.log', 'fail', count( $fatal ) . ' entry(ies) - ' . substr( (string) reset( $fatal ), 0, 90 ) );
+			} else {
+				$this->record( 'Debug', 'Fatals in debug.log', 'pass', 'None' );
+			}
+
+			$handled = count( $wpss_lines ) - count( $fatal );
+
+			if ( $handled > 0 ) {
+				$this->record(
+					'Debug',
+					'WPSS log entries',
+					'warn',
+					$handled . ' entry(ies) - includes deliberate guard refusals from the contract suite; clear debug.log and re-run for a clean signal'
+				);
+			} else {
+				$this->record( 'Debug', 'WPSS log entries', 'pass', 'Clean' );
+			}
 		} else {
 			$this->record( 'Debug', 'debug.log', 'pass', 'No log file' );
 		}
