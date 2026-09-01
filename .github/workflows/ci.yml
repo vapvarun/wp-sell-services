@@ -158,11 +158,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # wp-cli is required: i18n-verify.py shells out to `wp i18n make-pot` to
+      # check POT freshness and exits 2 when `wp` is absent. Without it this job
+      # failed on every run for an environment reason, never a code one.
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          tools: composer
+          tools: composer, wp-cli
 
       - name: Setup Python
         uses: actions/setup-python@v5

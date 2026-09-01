@@ -496,13 +496,13 @@ class PersonalData {
 		}
 
 		$fields = array(
-			'tagline'         => __( 'Tagline', 'wp-sell-services' ),
-			'bio'             => __( 'Bio', 'wp-sell-services' ),
-			'country'         => __( 'Country', 'wp-sell-services' ),
-			'city'            => __( 'City', 'wp-sell-services' ),
-			'website'         => __( 'Website', 'wp-sell-services' ),
-			'social_links'    => __( 'Social links', 'wp-sell-services' ),
-			'created_at'      => __( 'Seller since', 'wp-sell-services' ),
+			'tagline'      => __( 'Tagline', 'wp-sell-services' ),
+			'bio'          => __( 'Bio', 'wp-sell-services' ),
+			'country'      => __( 'Country', 'wp-sell-services' ),
+			'city'         => __( 'City', 'wp-sell-services' ),
+			'website'      => __( 'Website', 'wp-sell-services' ),
+			'social_links' => __( 'Social links', 'wp-sell-services' ),
+			'created_at'   => __( 'Seller since', 'wp-sell-services' ),
 		);
 
 		$data = array();

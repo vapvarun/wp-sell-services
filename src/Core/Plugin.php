@@ -749,7 +749,7 @@ final class Plugin {
 		// any plugin/user action that rebuilt the option without our rule -
 		// the rule itself re-registers on every request, so a flush here is
 		// always safe). Flush once whenever the live option lacks our rule.
-		$live_rules = get_option( 'rewrite_rules' );
+		$live_rules  = get_option( 'rewrite_rules' );
 		$needs_flush = ! is_array( $live_rules )
 			|| ! isset( $live_rules[ $rule_regex ] )
 			|| ! isset( $live_rules[ $order_regex ] )
@@ -944,8 +944,8 @@ final class Plugin {
 		}
 
 		// Preserve unrelated query args (utm_*, etc.).
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization.
 		$extra = array_diff_key(
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization.
 			wp_unslash( $_GET ),
 			array(
 				'order_id' => true,

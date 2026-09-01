@@ -197,6 +197,7 @@ class FavoritesController extends RestController {
 				// default.
 				wpss_rest_money( 'price', (float) get_post_meta( $service->ID, '_wpss_starting_price', true ) ),
 				array(
+
 					/*
 					 * THE ONE KEY THAT COULD NOT BE UNIFIED.
 					 *

@@ -363,14 +363,14 @@ guide; this is the complete index.
 | `wpss_edd_cart_item_data` | 3 | `src/Integrations/EDD/EDDCheckoutProvider.php:56` **[PRO]** | Filter cart item data for services. |
 | `wpss_edd_thankyou_redirect` | 2 | `src/Integrations/EDD/EDDCheckoutProvider.php:250` **[PRO]** | Filter the thank you redirect URL for service orders. |
 | `wpss_edd_validate_add_to_cart` | 3 | `src/Integrations/EDD/EDDCheckoutProvider.php:97` **[PRO]** | Filter whether a service can be added to cart. |
-| `wpss_email_before_send` | 2 | `src/Services/EmailService.php:2029` | Filter email before sending. |
+| `wpss_email_before_send` | 2 | `src/Services/EmailService.php:2039` | Filter email before sending. |
 | `wpss_email_button_text` | 2 | `templates/emails/cancellation-requested.php:126` *(+19 more)* |  |
 | `wpss_email_button_url` | 3 | `templates/emails/cancellation-requested.php:125` *(+19 more)* |  |
-| `wpss_email_from_name` | 1 | `src/Services/EmailService.php:2009` *(+1 more)* | Filter the email "from" name for white-labelling. |
-| `wpss_email_header_vars` | 2 | `src/Services/EmailService.php:1993` *(+1 more)* | Filter email header/template variables for white-labelling. |
+| `wpss_email_from_name` | 1 | `src/Services/EmailService.php:2019` *(+1 more)* | Filter the email "from" name for white-labelling. |
+| `wpss_email_header_vars` | 2 | `src/Services/EmailService.php:2003` *(+1 more)* | Filter email header/template variables for white-labelling. |
 | `wpss_email_preference_categories` | 3 | `src/functions/notifications.php:120` | Filters the email preference categories offered to a user. |
 | `wpss_email_providers` | 1 | `src/Core/Plugin.php:2404` | Filter the registered email providers. |
-| `wpss_email_subject` | 3 | `src/Services/EmailService.php:1978` *(+1 more)* | Filters the email subject line before sending. |
+| `wpss_email_subject` | 3 | `src/Services/EmailService.php:1988` *(+1 more)* | Filters the email subject line before sending. |
 | `wpss_foreign_page_map` | 1 | `src/Admin/PageDropdownWalker.php:81` | Filter the pages shown as belonging to another plugin. |
 | `wpss_format_price` | 3 | `src/functions/money.php:56` |  |
 | `wpss_fullwidth_page_keys` | 1 | `src/Frontend/TemplateLoader.php:291` | Filter which mapped plugin pages render full-width. |

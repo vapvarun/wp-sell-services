@@ -85,6 +85,12 @@ CONFIG = {
         "in-app notifications": ["notifications"],
         "realtime messaging": ["realtime"],
         "analytics": ["analytics"],
+        # Pro's SubscriptionPlanController registers /subscription-plans/*; the
+        # feature was reported as a gap only because it had no mapping entry.
+        "vendor subscription plans": ["subscription-plans"],
+        # Push devices are registered through Free's AuthController:
+        # GET + POST /auth/devices. Firebase is the transport behind it.
+        "push notifications": ["auth"],
     },
 }
 
