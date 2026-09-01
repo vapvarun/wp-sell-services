@@ -1,0 +1,78 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "jquery": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "script"
+  },
+  "globals": {
+    "wp": "readonly",
+    "wpss": "readonly",
+    "wpssData": "readonly",
+    "ajaxurl": "readonly",
+    "Alpine": "readonly",
+    "Shepherd": "readonly",
+    "Stripe": "readonly",
+    "paypal": "readonly",
+    "Pusher": "readonly",
+    "lucide": "readonly",
+    "WPSS": "readonly",
+    "WPSSBlocks": "readonly",
+    "wpssUnifiedDashboard": "readonly",
+    "wpssService": "readonly",
+    "wpssServiceEdit": "readonly",
+    "wpssVendors": "readonly",
+    "wpssWizard": "readonly",
+    "wpssStripe": "readonly",
+    "wpssPayPal": "readonly",
+    "wpssAdmin": "readonly",
+    "wpssBlocks": "readonly",
+    "wpssBlocksFrontend": "readonly",
+    "wpss_ajax": "readonly",
+    "wpssToast": "readonly",
+    "wpssConfirm": "readonly",
+    "wpssCategories": "readonly",
+    "i18n": "readonly",
+    "lightbox": "readonly"
+  },
+  "ignorePatterns": [
+    "**/*.min.js",
+    "assets/js/vendor/**",
+    "node_modules/**",
+    "vendor/**",
+    "dist/**"
+  ],
+  "rules": {
+    "no-undef": "error",
+    "no-unused-vars": [
+      "warn",
+      {
+        "args": "none"
+      }
+    ],
+    "no-dupe-keys": "error",
+    "no-dupe-else-if": "error",
+    "no-duplicate-case": "error",
+    "no-unreachable": "error",
+    "no-cond-assign": "error",
+    "no-constant-condition": "error",
+    "no-empty": [
+      "error",
+      {
+        "allowEmptyCatch": true
+      }
+    ],
+    "no-redeclare": [
+      "error",
+      {
+        "builtinGlobals": false
+      }
+    ],
+    "use-isnan": "error",
+    "valid-typeof": "error"
+  }
+}
