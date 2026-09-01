@@ -94,7 +94,7 @@ Manage services, orders, vendors, and commissions from the command line for bulk
 
 WP Sell Services works independently without any e-commerce plugin — your marketplace is fully functional for browsing, vendor management, messaging, and dispute resolution out of the box. When WooCommerce is installed, the plugin automatically enables checkout and payment processing with access to hundreds of payment gateways including Stripe, PayPal, Square, and bank transfer.
 
-WP Sell Services Pro adds four alternative e-commerce platforms (Easy Digital Downloads, Fluent Cart, SureCart, Standalone mode) and direct payment gateway integrations for even more flexibility.
+WP Sell Services Pro adds three alternative e-commerce platforms (Easy Digital Downloads, Fluent Cart, Standalone mode) and direct payment gateway integrations for even more flexibility.
 
 ## Getting Started
 
@@ -145,14 +145,12 @@ Use the service creation wizard to publish your first offering. Each step includ
 
 WP Sell Services Pro removes service creation limits and adds:
 
-- Four alternative e-commerce platforms (EDD, Fluent Cart, SureCart, Standalone)
+- Three alternative e-commerce platforms (EDD, Fluent Cart, Standalone)
 - Direct payment gateways (Stripe, PayPal, Razorpay, Offline)
 - Wallet integrations (Internal Wallet, TeraWallet, WooWallet, MyCred)
 - Advanced analytics dashboards with data export
 - Cloud storage (Amazon S3, Google Cloud Storage, DigitalOcean Spaces)
 - Unlimited gallery images, FAQs, add-ons, and requirements per service
-- AI title suggestions and service templates
-- Scheduled service publishing
 
 ## Documentation and Support
 

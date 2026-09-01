@@ -24,6 +24,9 @@ import re
 import sys
 
 QUIET = "--quiet" in sys.argv
+# --fix rewrites stale hook line numbers in place. Only line numbers: a
+# citation pointing at the wrong FILE is a real doc error and stays a failure.
+FIX = "--fix" in sys.argv
 FREE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PRO = os.path.join(os.path.dirname(FREE), "wp-sell-services-pro")
 DOCS = os.path.join(FREE, "docs", "website")
@@ -196,6 +199,260 @@ if fired and os.path.exists(hooks_doc):
     if not phantom:
         ok("hooks", f"all {len(documented)} tabled hooks are fired in source")
 
+# --- 4b. hook citations point at the right place ------------------------------
+# The reference table cites `file.php:NNN` beside each hook. Line numbers move on
+# every edit and the 6,187-line functions.php was split into src/functions/*.php
+# in db27f79, so 21 rows still cited a file that is now a 43-line loader - the
+# citation was decorative long before anyone noticed.
+#
+# This does NOT regenerate the page. The prose around these tables carries real
+# judgement - which hooks are behavioural, which are template slots, which are
+# internal and may change - and a generator would flatten all of it. It only
+# asserts that a citation, where one is given, resolves to a line that really
+# fires that hook.
+def hook_line_index(*roots):
+    """hook name -> set of "relpath:line" where it is fired."""
+    pat = re.compile(r"(?:do_action|apply_filters)\s*\(\s*(?:\n\s*)?'([a-z0-9_]+)'")
+    index = {}
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        base = os.path.dirname(root)
+        for r, _, fs in os.walk(root):
+            if "vendor" in r or "node_modules" in r or "/dist/" in r:
+                continue
+            for n in fs:
+                if not n.endswith(".php"):
+                    continue
+                path = os.path.join(r, n)
+                rel = os.path.relpath(path, base)
+                try:
+                    lines = open(path, errors="ignore").read().splitlines()
+                except OSError:
+                    continue
+                for i, line in enumerate(lines, 1):
+                    # Multi-line do_action(): the name may sit on the next line.
+                    window = line
+                    if i < len(lines):
+                        window = line + "\n" + lines[i]
+                    for hook in pat.findall(window):
+                        index.setdefault(hook, set()).add(f"{rel}:{i}")
+    return index
+
+
+# ---------------------------------------------------------------------------
+# The documented REST controller count must match the code.
+#
+# The doc claimed 23 while API.php registered 25 (Basecamp 10239807296). Counted
+# from the `new XController()` lines in the registration array rather than from
+# files on disk, because src/API also holds RestController, the base class - and
+# because CLAUDE.md records that counting REST any other way undercounts, since
+# controllers register through this wrapper rather than individually.
+#
+# Not a generated document: the route tables in it carry real explanation that a
+# generator cannot write. This gate just stops the headline number drifting.
+# ---------------------------------------------------------------------------
+api_php = os.path.join(FREE, "src/API/API.php")
+rest_doc = os.path.join(FREE, "docs/website/developer-guide/rest-api-controllers.md")
+
+if os.path.exists(api_php) and os.path.exists(rest_doc):
+    registered = len(re.findall(r"new\s+[A-Za-z]+Controller\s*\(\s*\)", open(api_php).read()))
+    claimed = set(int(n) for n in re.findall(r"\*\*(\d+) REST controllers\*\*|All (\d+) free controllers", open(rest_doc).read()) for n in n if n)
+
+    if not claimed:
+        ok("rest-count", "no controller count claimed in the REST doc")
+    elif claimed == {registered}:
+        ok("rest-count", f"the REST doc's controller count matches API.php ({registered})")
+    else:
+        fail("rest-count", f"the REST doc claims {sorted(claimed)} controllers; API.php registers {registered}")
+
+# ---------------------------------------------------------------------------
+# The generated hook reference must be current.
+#
+# hooks-filters.md is curated and gated above for phantom entries and stale
+# citations. hooks-reference.md is the complete index and is GENERATED - which
+# only helps if it is regenerated. Without this check it goes stale exactly the
+# way the hand-maintained citations did, and a stale generated file is worse
+# than a stale hand-written one because it looks authoritative.
+# ---------------------------------------------------------------------------
+generator = os.path.join(FREE, "bin/generate-hook-reference.py")
+
+if os.path.exists(generator):
+    import subprocess
+
+    result = subprocess.run(
+        [sys.executable, generator, "--check"],
+        capture_output=True,
+        text=True,
+        cwd=FREE,
+    )
+
+    if result.returncode == 0:
+        ok("hook-reference", "the generated hook reference matches source")
+    else:
+        fail("hook-reference", (result.stdout or result.stderr).strip() or "hooks-reference.md is out of date")
+
+if os.path.exists(hooks_doc):
+    cite_re = re.compile(
+        r"^\|\s*`(wpss_[a-z0-9_]+)`[^|]*\|[^|]*\|\s*`([A-Za-z0-9_/.-]+\.php):(\d+)`",
+        re.M,
+    )
+    index = hook_line_index(
+        os.path.join(FREE, "src"), os.path.join(FREE, "templates"),
+        os.path.join(PRO, "src"), os.path.join(PRO, "templates"),
+    )
+    text = open(hooks_doc).read()
+    cited = list(cite_re.finditer(text))
+    stale = []
+
+    for m in cited:
+        hook, cited_file, cited_line = m.group(1), m.group(2), m.group(3)
+        real = index.get(hook, set())
+
+        if not real:
+            continue  # phantom hooks are check 4's job, not this one.
+
+        # A citation is right when SOME firing site ends with the cited
+        # file:line. Paths in the doc are written relative to the plugin root
+        # with the src/ prefix dropped on some rows, so match on the suffix.
+        if any(site.endswith(f"{cited_file}:{cited_line}") or site.endswith(f"/{cited_file}:{cited_line}")
+               for site in real):
+            continue
+
+        stale.append((hook, f"{cited_file}:{cited_line}", sorted(real)[0]))
+
+    # Line numbers in prose are stale the moment anyone inserts a line above
+    # the hook, and that is not a documentation error - the doc still points at
+    # the right hook in the right file. Three commits in one afternoon were
+    # blocked purely by this, which trains people to reach for --no-verify.
+    #
+    # --fix repairs the number when the FILE still matches. A citation naming
+    # the wrong file is a genuine mistake and is never auto-corrected.
+    if FIX and stale:
+        fixed = 0
+        for hook, was, now in stale:
+            was_file, _, _was_line = was.rpartition(":")
+            now_file, _, now_line = now.rpartition(":")
+
+            if not now_file.endswith(was_file):
+                continue
+
+            pattern = re.compile(r"(`" + re.escape(hook) + r"`[^|\n]*\|[^|\n]*\|\s*`" + re.escape(was_file) + r"):\d+`")
+            text, n = pattern.subn(lambda mo: mo.group(1) + ":" + now_line + "`", text)
+            fixed += n
+
+        if fixed:
+            open(hooks_doc, "w").write(text)
+            print(f"  FIXED {fixed} hook citation line number(s) in {os.path.relpath(hooks_doc, FREE)}")
+            stale = []
+
+    for hook, was, now in stale:
+        fail("hook-citations", f"{hook} cites {was}; it is fired at {now}")
+
+    if not stale:
+        ok("hook-citations", f"all {len(cited)} hook citations resolve to a real firing site")
+
+
+# --- 4c. removed capabilities must not still be sold ---------------------------
+# marketing/ was never scanned by this file, and that is exactly where the worst
+# claims survived: SureCart was still sold on the Pro sales page and in the
+# customer email sequences MONTHS after 1.6.0 removed it, and five wizard
+# capabilities deliberately deleted from Pro's code in 1.7.0 were still listed as
+# PRO features across five files - including the two highest-stakes surfaces the
+# product has, the upgrade page and the emails a prospect receives.
+#
+# The docs tree carried a correct disclaimer the whole time. Nobody swept the
+# marketing tree with it, because nothing checked.
+#
+# Pages that RECORD a removal are the point of the exercise, not a violation, so
+# a hit is only a failure when the surrounding text is selling rather than
+# retiring.
+RETIRED_CAPABILITIES = {
+    "surecart": "SureCart support was removed in 1.6.0",
+    "ai title": "the AI title flag was removed from Pro in 1.7.0",
+    "service template": "the templates flag was removed from Pro in 1.7.0",
+    "scheduled publishing": "the scheduled-publish flag was removed from Pro in 1.7.0",
+    "bulk image upload": "the bulk-upload flag was removed from Pro in 1.7.0",
+    # Present but switched off, which is its own hazard: a buyer can be told
+    # they have recurring billing, switch it on, and find nothing renews.
+    # Pro's RecurringSettingsRenderer::is_feature_available() returns false
+    # because a recurring order creates a Stripe subscription with no saved
+    # payment method.
+    #
+    # Most pages mentioning it were already warning about exactly this - the
+    # RETIRED_OK list above now recognises their wording, so they pass. What
+    # this catches is a page that names the capability and says nothing about
+    # its state.
+    "recurring service": "recurring billing is deferred - renewals never charge, see RecurringSettingsRenderer::is_feature_available()",
+    "recurring billing": "recurring billing is deferred - renewals never charge, see RecurringSettingsRenderer::is_feature_available()",
+}
+
+# Wording that marks a mention as a removal note rather than a sales claim.
+RETIRED_OK = (
+    "removed", "no longer", "does not exist", "do not exist", "none of them",
+    "was retired", "deprecated", "not shipped", "never shipped",
+    # A capability can also be present-but-off rather than removed, and the
+    # docs already say so in their own words. Without these, pages that warn
+    # "switched off", "not yet" or "do not buy Pro for this" were flagged as
+    # SELLING the thing they are warning about - which would have had me delete
+    # a page whose whole job is the warning.
+    "switched off", "not yet", "deferred", "not finished", "not supported",
+    "do not buy", "do not plan", "do not promote", "off by default",
+)
+
+SELLING_ROOTS = [
+    os.path.join(FREE, "marketing"),
+    os.path.join(FREE, "docs", "website"),
+]
+
+sold = 0
+scanned_selling = 0
+
+for root in SELLING_ROOTS:
+    if not os.path.isdir(root):
+        continue
+    for r, _, fs in os.walk(root):
+        for n in fs:
+            if not n.endswith((".md", ".html")):
+                continue
+            path = os.path.join(r, n)
+            rel = os.path.relpath(path, FREE)
+            scanned_selling += 1
+            try:
+                lines = open(path, errors="ignore").read().splitlines()
+            except OSError:
+                continue
+            # Judged per DOCUMENT, not per line or section. A page that says
+            # anywhere that a capability was removed is explaining it, not
+            # selling it - "What happened to SureCart?" spends a paragraph on
+            # why it cannot work, and the Upgrading section of a release note
+            # tells owners who ran it what to do instead. Both are the point.
+            #
+            # The failure this needs to catch is the opposite shape: a sales
+            # page, comparison table or marketing email that names the
+            # capability and never mentions it is gone. Those pages contain no
+            # retirement wording at all, so a whole-document rule still catches
+            # every one of them.
+            body = "\n".join(lines).lower()
+
+            for term, why in RETIRED_CAPABILITIES.items():
+                if term not in body:
+                    continue
+
+                if any(okw in body for okw in RETIRED_OK):
+                    continue
+
+                first = next(
+                    (n for n, line in enumerate(lines, 1) if term in line.lower()),
+                    0,
+                )
+                fail("retired", f"{rel}:{first} still sells '{term}' - {why}")
+                sold += 1
+
+if not sold:
+    ok("retired", f"no removed capability is still being sold ({scanned_selling} pages in marketing/ and docs/website)")
+
+
 # --- 5. stale admin paths -----------------------------------------------------
 # Both separators are in use across the docs: "Settings > X" in the customer
 # pages, "Settings -> X" (an arrow) in the architecture and QA notes. Checking
@@ -261,7 +518,12 @@ if not stale:
 WRONG_LABELS = {
     "Dashboard > My Requests": "Dashboard > Buyer Requests",
     "Wallet & Earnings": "Earnings & Payouts",
-    "Delivery Submitted": "Pending Approval (status) / 'delivery submitted' (the notification)",
+    # "Delivery Submitted" was on this list and should not have been: Settings.php
+    # renders exactly that string as the label for the delivery_submitted
+    # notification type, so a docs page naming it is right. The entry banned a
+    # label the plugin itself shows, and email-types.md failed this gate for it.
+    # If the STATUS ever gets described that way, catch it with the status name
+    # rather than a substring that also matches the notification.
     "Recurring Subscriptions page": "the Subscriptions page",
 }
 drift = 0

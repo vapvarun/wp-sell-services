@@ -42,7 +42,7 @@ Vendors build their requirements form when creating or editing a service. Four q
 
 - **Text** -- Short answers like a website URL, company name, or social media handle.
 - **Textarea** -- Longer descriptions like project overview, design preferences, or feature requirements.
-- **File Upload** -- Reference materials, brand logos, content documents, or design mockups. Supports images, documents, archives, media files, and design files up to 50MB per file.
+- **File Upload** -- Reference materials, brand logos, content documents, or design mockups. The accepted formats and the size cap are set by the site owner under **Settings > Advanced** (defaults: `jpg, jpeg, png, gif, pdf, doc, docx`, 10 MB).
 - **Dropdown** -- A single choice from predefined options, like preferred style or package type.
 
 Each question can be marked as required or optional, and vendors can add helpful placeholder text and instructions.
@@ -74,6 +74,20 @@ You can control what happens if a buyer never submits their requirements. Go to 
 ![Completed requirements view showing all submitted information](../images/frontend-requirements-completed.png)
 
 **Admins** can view requirements from the order detail page in **Sell Services > Orders**.
+
+The buyer, the vendor and the site owner all see the same thing, worded the
+same way.
+
+### When the service has no questions
+
+A buyer can always write a freeform brief, even on a service whose vendor set
+up no questions at all. It is shown to everyone under **What the buyer asked
+for**, so a vendor is never left with an empty Requirements panel and nothing
+to work from.
+
+The same applies to an answer whose question was edited or deleted after the
+buyer submitted it: the answer is still shown rather than disappearing with the
+question. Rename the heading with the `wpss_requirement_field_label` filter.
 
 ## Tips
 

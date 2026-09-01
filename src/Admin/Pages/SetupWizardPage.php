@@ -469,7 +469,7 @@ class SetupWizardPage {
 		// registry's titles: "Checkout" here (against the installer's "Service
 		// Checkout") is how sites running WooCommerce ended up with the WPSS
 		// page on /checkout-2/ instead of /service-checkout/.
-		$page_fields = wpss_get_required_pages();
+		$page_fields = wpss_get_setup_pages();
 		?>
 		<div id="wpss-wizard-wrap">
 			<!-- Header -->
@@ -526,11 +526,18 @@ class SetupWizardPage {
 				<p class="wpss-wizard-desc"><?php esc_html_e( 'These pages are required for your marketplace to work. We\'ll create them with the right shortcodes.', 'wp-sell-services' ); ?></p>
 
 				<div class="wpss-wizard-pages-list">
-					<?php foreach ( $page_fields as $field => $label ) : ?>
-						<?php $page_id = $pages[ $field ] ?? 0; ?>
+					<?php foreach ( $page_fields as $field => $page_def ) : ?>
+						<?php
+						$label    = $page_def['title'];
+						$optional = empty( $page_def['required'] );
+						$page_id  = $pages[ $field ] ?? 0;
+						?>
 						<div class="wpss-wizard-page-row" data-field="<?php echo esc_attr( $field ); ?>">
 							<div class="wpss-wizard-page-info">
 								<strong><?php echo esc_html( $label ); ?></strong>
+								<?php if ( $optional ) : ?>
+									<span class="wpss-wizard-badge"><?php esc_html_e( 'Optional', 'wp-sell-services' ); ?></span>
+								<?php endif; ?>
 								<?php if ( $page_id && get_post( $page_id ) ) : ?>
 									<span class="wpss-wizard-badge wpss-badge-success"><?php esc_html_e( 'Created', 'wp-sell-services' ); ?></span>
 								<?php else : ?>

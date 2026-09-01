@@ -25,8 +25,7 @@ defined( 'ABSPATH' ) || exit;
 do_action( 'wpss_dashboard_section_before', 'orders', $user_id );
 
 // Check if viewing a specific order.
-// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display, access controlled by order ownership.
-$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
+$order_id = function_exists( 'wpss_resolve_request_order_id' ) ? wpss_resolve_request_order_id() : 0;
 
 if ( $order_id ) {
 	// Verify user has access to this order (buyer or vendor).
@@ -56,8 +55,7 @@ if ( $order_id ) {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing, no data processing.
-		$order_action = isset( $_GET['action'] ) ? sanitize_key( $_GET['action'] ) : '';
+		$order_action = function_exists( 'wpss_resolve_request_order_action' ) ? wpss_resolve_request_order_action() : '';
 
 		switch ( $order_action ) {
 			case 'requirements':
@@ -76,15 +74,64 @@ $order_repo = new OrderRepository();
 // Paginated so the buyer's order list doesn't hard-cap at 20 (and doesn't try
 // to render an unbounded list on big accounts).
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination param.
-$orders_page  = isset( $_GET['orders_page'] ) ? max( 1, absint( $_GET['orders_page'] ) ) : 1;
-$orders_per   = 20;
-$orders_total = $order_repo->count_by_customer( $user_id );
+$orders_page = isset( $_GET['orders_page'] ) ? max( 1, absint( $_GET['orders_page'] ) ) : 1;
+$orders_per  = 20;
+
+/*
+ * Filter chips (Basecamp 10240019463). A buyer with 149 orders, 106 of them
+ * cancelled, could not find the one waiting on them to pay.
+ *
+ * Nothing is hidden by default: `all` is the landing view, and the list is
+ * only REORDERED so the orders that need the buyer come first. Hiding
+ * cancelled by default would have made the Total stat disagree with the rows
+ * on screen, which is the other half of the same complaint.
+ */
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only filter param.
+$orders_group  = isset( $_GET['orders_status'] ) ? sanitize_key( wp_unslash( $_GET['orders_status'] ) ) : 'all';
+$status_groups = wpss_get_order_status_groups();
+
+
+// One GROUP BY for every chip count, rather than a count query per chip.
+$status_counts = $order_repo->count_by_customer_grouped( $user_id );
+
+/*
+ * Anything the groups do not claim gets its own chip, so the chips always add
+ * up to the list. Without this, one order on this install - carrying
+ * 'pending_review', a dispute status written onto an order - was reachable from
+ * no filter at all, and the chip counts summed to 14 against a real 15.
+ * Appended rather than inserted, so a stray status never outranks a real one.
+ */
+$ungrouped_statuses = wpss_resolve_ungrouped_statuses( $status_counts );
+
+if ( $ungrouped_statuses ) {
+	$status_groups['other'] = array(
+		'label'    => __( 'Other', 'wp-sell-services' ),
+		'statuses' => $ungrouped_statuses,
+	);
+}
+
+// An unknown key falls back to All rather than to an empty list: a mistyped or
+// stale URL should show the buyer everything, never nothing. Resolved against
+// $status_groups rather than the helper so the runtime 'other' group is
+// selectable too.
+if ( ! isset( $status_groups[ $orders_group ] ) ) {
+	$orders_group = 'all';
+}
+
+$group_statuses = $status_groups[ $orders_group ]['statuses'];
+
+$orders_total = $order_repo->count_by_customer(
+	$user_id,
+	array( 'status__in' => $group_statuses )
+);
 $orders_pages = max( 1, (int) ceil( $orders_total / $orders_per ) );
 $orders       = $order_repo->get_by_customer(
 	$user_id,
 	array(
-		'limit'  => $orders_per,
-		'offset' => ( $orders_page - 1 ) * $orders_per,
+		'status__in'       => $group_statuses,
+		'actionable_first' => true,
+		'limit'            => $orders_per,
+		'offset'           => ( $orders_page - 1 ) * $orders_per,
 	)
 );
 
@@ -93,6 +140,8 @@ $stats           = $order_repo->get_customer_stats( $user_id );
 $active_count    = (int) ( $stats['active_orders'] ?? 0 );
 $completed_count = (int) ( $stats['completed_orders'] ?? 0 );
 $total_count     = (int) ( $stats['total_orders'] ?? 0 );
+$awaiting_count  = (int) ( $stats['awaiting_payment_orders'] ?? 0 );
+$disputed_count  = (int) ( $stats['disputed_orders'] ?? 0 );
 ?>
 
 <div class="wpss-section wpss-section--orders wpss-card">
@@ -109,6 +158,23 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 			<span class="wpss-stat-card__value"><?php echo esc_html( $completed_count ); ?></span>
 			<span class="wpss-stat-card__label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
 		</div>
+		<?php
+		// Only shown when they exist. A buyer with nothing awaiting payment and
+		// no dispute should not be handed two zeros to worry about; a buyer who
+		// has either needs to see it, because both are waiting on them.
+		?>
+		<?php if ( $awaiting_count > 0 ) : ?>
+			<div class="wpss-stat-card">
+				<span class="wpss-stat-card__value"><?php echo esc_html( $awaiting_count ); ?></span>
+				<span class="wpss-stat-card__label"><?php esc_html_e( 'Awaiting Payment', 'wp-sell-services' ); ?></span>
+			</div>
+		<?php endif; ?>
+		<?php if ( $disputed_count > 0 ) : ?>
+			<div class="wpss-stat-card">
+				<span class="wpss-stat-card__value"><?php echo esc_html( $disputed_count ); ?></span>
+				<span class="wpss-stat-card__label"><?php esc_html_e( 'Disputed', 'wp-sell-services' ); ?></span>
+			</div>
+		<?php endif; ?>
 	</div>
 
 	<?php
@@ -124,13 +190,70 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 	do_action( 'wpss_orders_filters', $user_id );
 	?>
 
+	<?php
+	// Counts come from the one GROUP BY above. A chip with nothing in it is not
+	// rendered - a buyer who has never had a dispute should not be shown a
+	// "Needs attention 0" tab to wonder about. `all` always renders.
+	$chip_url = static function ( string $group ): string {
+		$url = 'all' === $group ? remove_query_arg( 'orders_status' ) : add_query_arg( 'orders_status', $group );
+
+		// Any filter change returns to page 1; keeping the old page number can
+		// land the buyer on an empty page of a much shorter list.
+		return remove_query_arg( 'orders_page', $url );
+	};
+	?>
+	<nav class="wpss-order-filters" aria-label="<?php esc_attr_e( 'Filter orders by status', 'wp-sell-services' ); ?>">
+		<?php
+		foreach ( $status_groups as $group_key => $group ) :
+			if ( 'all' === $group_key ) {
+				$group_count = array_sum( $status_counts );
+			} else {
+				$group_count = 0;
+				foreach ( $group['statuses'] as $group_status ) {
+					$group_count += (int) ( $status_counts[ $group_status ] ?? 0 );
+				}
+
+				if ( $group_count < 1 ) {
+					continue;
+				}
+			}
+
+			$is_current = ( $group_key === $orders_group );
+			?>
+			<a href="<?php echo esc_url( $chip_url( $group_key ) ); ?>"
+				class="wpss-order-filter<?php echo $is_current ? ' is-active' : ''; ?>"
+				<?php echo $is_current ? 'aria-current="page"' : ''; ?>>
+				<?php echo esc_html( $group['label'] ); ?>
+				<span class="wpss-order-filter__count"><?php echo esc_html( number_format_i18n( $group_count ) ); ?></span>
+			</a>
+		<?php endforeach; ?>
+	</nav>
+
 	<?php if ( empty( $orders ) ) : ?>
 		<div class="wpss-empty-state">
 			<div class="wpss-empty-state__icon">
 				<i data-lucide="shopping-bag" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 			</div>
-			<h3><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h3>
-			<p><?php esc_html_e( 'Browse our marketplace to find the perfect service for your needs.', 'wp-sell-services' ); ?></p>
+			<?php if ( 'all' !== $orders_group ) : ?>
+				<h3><?php esc_html_e( 'Nothing in this filter', 'wp-sell-services' ); ?></h3>
+				<p>
+					<?php
+					printf(
+						/* translators: %s: filter name, e.g. Completed */
+						esc_html__( 'You have no orders under %s right now.', 'wp-sell-services' ),
+						esc_html( $status_groups[ $orders_group ]['label'] )
+					);
+					?>
+				</p>
+				<p>
+					<a href="<?php echo esc_url( $chip_url( 'all' ) ); ?>" class="wpss-btn wpss-btn--secondary">
+						<?php esc_html_e( 'Show all orders', 'wp-sell-services' ); ?>
+					</a>
+				</p>
+			<?php else : ?>
+				<h3><?php esc_html_e( 'No orders yet', 'wp-sell-services' ); ?></h3>
+				<p><?php esc_html_e( 'Browse our marketplace to find the perfect service for your needs.', 'wp-sell-services' ); ?></p>
+			<?php endif; ?>
 			<a href="<?php echo esc_url( wpss_get_page_url( 'services_page' ) ); ?>" class="wpss-btn wpss-btn--primary">
 				<?php esc_html_e( 'Browse Services', 'wp-sell-services' ); ?>
 			</a>
@@ -290,6 +413,9 @@ $total_count     = (int) ( $stats['total_orders'] ?? 0 );
 				// this section regardless of how it's routed (pretty path vs default
 				// dashboard). Rebuilding the URL from the page slug dropped the
 				// section and landed the user back on the default view.
+				// add_query_arg() with no URL builds from the CURRENT request, so
+				// the active orders_status survives paging without being passed
+				// in explicitly.
 				$orders_page_url = static function ( int $page ): string {
 					return $page > 1 ? add_query_arg( 'orders_page', $page ) : remove_query_arg( 'orders_page' );
 				};

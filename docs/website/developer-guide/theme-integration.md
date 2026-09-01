@@ -79,7 +79,6 @@ Order URLs route as: `/service-order/{id}/` (view), `/service-order/{id}/require
 | `myaccount/service-orders.php` | Service orders in WooCommerce My Account |
 | `myaccount/vendor-dashboard.php` | Vendor dashboard in My Account |
 | `myaccount/vendor-services.php` | Vendor services list |
-| `myaccount/service-disputes.php` | Disputes tab |
 | `myaccount/notifications.php` | Notifications tab |
 
 ### Cart Templates (`templates/cart/`)
@@ -91,7 +90,6 @@ Order URLs route as: `/service-order/{id}/` (view), `/service-order/{id}/require
 ### Other Templates
 
 - **Vendor**: `vendor/profile.php` -- Public vendor profile page (served at `/provider/{username}/` by default, customizable via the `wpss_vendor_slug` filter)
-- **Disputes**: `disputes/dispute-view.php` -- Dispute details view
 
 ### Email Templates (`templates/emails/`)
 
@@ -192,11 +190,12 @@ The `SingleServiceView` class (`src/Frontend/SingleServiceView.php`) renders eac
 | `wpss_single_service_header` | `render_meta` | 15 |
 | `wpss_single_service_gallery` | `render_gallery` | 10 |
 | `wpss_single_service_content` | `render_description` | 10 |
+| `wpss_single_service_content` | `render_vacation_notice` | 1 |
 | `wpss_single_service_content` | `render_about_vendor` | 20 |
 | `wpss_single_service_faqs` | `render_faqs` | 10 |
 | `wpss_single_service_reviews` | `render_reviews` | 10 |
 | `wpss_single_service_sidebar` | `render_packages` | 10 |
-| `wpss_single_service_sidebar` | `render_vendor_card` | 20 |
+| `wpss_single_service_portfolio` | `render_portfolio` | 10 |
 | `wpss_single_service_related` | `render_related_services` | 10 |
 | `wpss_after_single_service` | `render_order_modal` | 10 |
 | `wpss_after_single_service` | `render_contact_modal` | 20 |
@@ -214,10 +213,12 @@ add_action( 'wpss_single_service_header', function( $service ) {
 // Remove FAQ section
 remove_action( 'wpss_single_service_faqs', [ wpss()->get_single_service_view(), 'render_faqs' ], 10 );
 
-// Show vendor card before packages (move from priority 20 to 5)
+// Move the packages block later so your own content can sit above it.
+// Match the priority in the table exactly - remove_action() is a no-op if the
+// priority is wrong, and you will end up with the section rendered twice.
 $view = wpss()->get_single_service_view();
-remove_action( 'wpss_single_service_sidebar', [ $view, 'render_vendor_card' ], 20 );
-add_action( 'wpss_single_service_sidebar', [ $view, 'render_vendor_card' ], 5 );
+remove_action( 'wpss_single_service_sidebar', [ $view, 'render_packages' ], 10 );
+add_action( 'wpss_single_service_sidebar', [ $view, 'render_packages' ], 20 );
 ```
 
 ## Dashboard Customization

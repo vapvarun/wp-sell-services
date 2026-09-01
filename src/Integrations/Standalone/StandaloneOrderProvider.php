@@ -46,32 +46,24 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		$addons_total = (float) ( $order_data['addons_total'] ?? 0 );
 		$total        = $subtotal + $addons_total;
 
-		// Apply tax.
-		$tax_settings = get_option( 'wpss_tax', [] );
-		$tax_enabled  = ! empty( $tax_settings['enable_tax'] );
-		$tax_rate     = $tax_enabled ? (float) ( $tax_settings['tax_rate'] ?? 0 ) : 0;
-		$tax_included = ! empty( $tax_settings['tax_included'] );
-
-		/**
-		 * Filters the tax rate applied at checkout.
+		/*
+		 * Apply tax through the shared helper.
 		 *
-		 * @since 1.1.0
+		 * This block used to compute it inline, as did the checkout display and
+		 * the multi-item checkout, while CheckoutIntentService - the amount the
+		 * gateway actually charges - applied none at all. Four sites, one of
+		 * them silently missing, which is how a buyer was shown $100.30 and
+		 * charged $85.00 (Basecamp 10254444011).
 		 *
-		 * @param float $tax_rate   Site-wide tax rate from settings.
-		 * @param int   $vendor_id  Vendor user ID.
-		 * @param int   $service_id Service post ID.
+		 * The filter and both branches live in wpss_calculate_tax() now, so the
+		 * displayed total, the charged amount and this order row are the same
+		 * arithmetic by construction.
 		 */
-		$tax_rate   = (float) apply_filters( 'wpss_checkout_tax_rate', $tax_rate, $service->vendor_id, $service->id );
-		$tax_amount = 0;
+		$tax = wpss_calculate_tax( (float) $total, (int) $service->vendor_id, (int) $service->id );
 
-		if ( $tax_rate > 0 ) {
-			if ( $tax_included ) {
-				$tax_amount = $total - ( $total / ( 1 + $tax_rate / 100 ) );
-			} else {
-				$tax_amount = $total * ( $tax_rate / 100 );
-				$total     += $tax_amount;
-			}
-		}
+		$tax_rate   = (float) $tax['rate'];
+		$tax_amount = (float) $tax['amount'];
+		$total      = (float) $tax['total'];
 
 		// Get delivery info.
 		$delivery_days = (int) ( $order_data['delivery_days'] ?? 7 );
@@ -288,7 +280,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 	 * @return string
 	 */
 	public function get_orders_url(): string {
-		return add_query_arg( 'section', 'orders', wpss_get_page_url( 'dashboard' ) );
+		return wpss_get_dashboard_url( 'orders' );
 	}
 
 	/**

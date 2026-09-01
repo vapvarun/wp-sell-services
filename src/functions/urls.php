@@ -105,7 +105,14 @@ function wpss_get_dashboard_url( string $section = '' ): string {
 function wpss_append_dashboard_section( string $base_url, string $section ): string {
 	$section = sanitize_key( $section );
 
-	if ( '' === $section || 'orders' === $section ) {
+	// 'orders' used to be dropped here as "the default section, so leave it
+	// implicit". That stopped being true in 1.2.0, when the landing section
+	// became role-aware: an active vendor lands on `sales`, a buyer on `orders`.
+	// From then on the Buying > My Orders link pointed at the bare dashboard
+	// URL, and a member who both buys and sells clicked it and landed on Sales
+	// Orders - reading "No sales yet" as "you have never bought anything".
+	// A link now always names the section it means, whatever the default is.
+	if ( '' === $section ) {
 		return $base_url;
 	}
 
@@ -132,6 +139,62 @@ function wpss_append_dashboard_section( string $base_url, string $section ): str
 	}
 
 	$path = trailingslashit( $base_url ) . $section . '/';
+
+	return $path . $query . $fragment;
+}
+
+/**
+ * Append an order detail (and optional action) onto a dashboard section URL.
+ *
+ * Pretty: `/{dashboard}/{section}/{order_id}/` or
+ * `/{dashboard}/{section}/{order_id}/{action}/`.
+ * Plain permalinks keep `?order_id=` (+ `?action=`).
+ *
+ * `$base_url` must already include the section path (pass the result of
+ * `wpss_get_dashboard_url( 'orders' )` / `'sales'`), not the bare dashboard.
+ *
+ * @since 1.7.0
+ *
+ * @param string $base_url Dashboard section URL.
+ * @param int    $order_id Order ID.
+ * @param string $action   Optional action slug (e.g. 'requirements').
+ * @return string
+ */
+function wpss_append_dashboard_order( string $base_url, int $order_id, string $action = '' ): string {
+	if ( $order_id <= 0 || '' === $base_url ) {
+		return $base_url;
+	}
+
+	$action = sanitize_key( $action );
+
+	// Plain permalinks: query-arg form is the canonical shape.
+	if ( ! get_option( 'permalink_structure' ) ) {
+		$args = array( 'order_id' => $order_id );
+		if ( '' !== $action ) {
+			$args['action'] = $action;
+		}
+		return add_query_arg( $args, $base_url );
+	}
+
+	$query    = '';
+	$fragment = '';
+
+	$hash_pos = strpos( $base_url, '#' );
+	if ( false !== $hash_pos ) {
+		$fragment = substr( $base_url, $hash_pos );
+		$base_url = substr( $base_url, 0, $hash_pos );
+	}
+
+	$query_pos = strpos( $base_url, '?' );
+	if ( false !== $query_pos ) {
+		$query    = substr( $base_url, $query_pos );
+		$base_url = substr( $base_url, 0, $query_pos );
+	}
+
+	$path = trailingslashit( $base_url ) . $order_id . '/';
+	if ( '' !== $action ) {
+		$path .= $action . '/';
+	}
 
 	return $path . $query . $fragment;
 }
@@ -346,10 +409,16 @@ function wpss_get_page_definitions(): array {
 			'slug'      => 'dashboard',
 			'required'  => true,
 		),
+		// Canonical slug is become-a-vendor: it matches the page title, it is
+		// what shipped installs and the support docs already use, and it is the
+		// URL a member guesses. New installs created become-vendor while older
+		// ones carry become-a-vendor, so whichever a person typed 404'd
+		// depending on when the site was installed (Basecamp 10235849842).
+		// wpss_redirect_legacy_vendor_slug() sends the other form here.
 		'become_vendor' => array(
 			'title'     => __( 'Become a Vendor', 'wp-sell-services' ),
 			'shortcode' => '[wpss_vendor_registration]',
-			'slug'      => 'become-vendor',
+			'slug'      => 'become-a-vendor',
 			'required'  => true,
 		),
 		// Both carry an explicit service-* slug. These pages are only the
@@ -367,6 +436,17 @@ function wpss_get_page_definitions(): array {
 			'shortcode' => '[wpss_checkout]',
 			'slug'      => 'service-checkout',
 			'required'  => true,
+		),
+		// Not required: an owner running SSO, a membership plugin, or plain
+		// WordPress registration should not be nagged about a page they do not
+		// want. When it IS mapped, wpss_marketplace_register_url() points every
+		// Register link on the site at it - ours and the theme's - because they
+		// all resolve through core's wp_registration_url().
+		'registration'  => array(
+			'title'     => __( 'Create Account', 'wp-sell-services' ),
+			'shortcode' => '[wpss_register]',
+			'slug'      => 'create-account',
+			'required'  => false,
 		),
 	);
 
@@ -407,6 +487,32 @@ function wpss_get_required_pages(): array {
 	}
 
 	return $required;
+}
+
+/**
+ * Every mapped page, with the optional ones marked.
+ *
+ * The setup wizard used wpss_get_required_pages() and so listed four, under
+ * copy saying those were the pages the marketplace needs - while Settings >
+ * Pages listed six. Nothing was ever missing (activation creates all six), but
+ * two screens disagreed about what "the pages" means, which is enough to make
+ * an owner go hunting.
+ *
+ * @since 1.7.0
+ *
+ * @return array<string, array{title:string,required:bool}>
+ */
+function wpss_get_setup_pages(): array {
+	$pages = array();
+
+	foreach ( wpss_get_page_definitions() as $key => $definition ) {
+		$pages[ $key ] = array(
+			'title'    => $definition['title'],
+			'required' => ! empty( $definition['required'] ),
+		);
+	}
+
+	return $pages;
 }
 
 /**
@@ -594,6 +700,48 @@ function wpss_get_service_checkout_url( int $service_id, int $package_id = 0, ar
 }
 
 /**
+ * Point Register at the marketplace's own signup page when one is mapped.
+ *
+ * The header Register button sent buyers to wp-login.php?action=register -
+ * stock WordPress chrome as the first impression of a branded marketplace
+ * (Basecamp 10240020415). That button belongs to the theme, not to us, so
+ * there was nothing of ours to edit.
+ *
+ * Filtering core's `register_url` fixes it everywhere at once instead: BuddyX
+ * falls back to wp_registration_url() when it has no page of its own, and so do
+ * all five of our own Register links. One filter, every surface, no template
+ * edits and nothing to keep in sync.
+ *
+ * Returns the original URL untouched when no page is mapped, so a site using
+ * SSO or plain WordPress registration is unaffected. Deliberately does NOT
+ * check users_can_register: our signup page renders its own "registration is
+ * disabled" notice, and core already hides the links when it is off.
+ *
+ * @since 1.7.0
+ *
+ * @param string $url Default registration URL.
+ * @return string
+ */
+function wpss_marketplace_register_url( string $url ): string {
+	// Resolved from the mapping and confirmed published - NOT via
+	// wpss_get_page_url(), which falls back to the default slug whether or not
+	// a page lives there. Using that helper here sent every site with no
+	// registration page to /create-account/ and a 404, which is worse than the
+	// stock login screen this replaces. Caught by
+	// tests/test-registration-page-contract.php.
+	$page_id = wpss_get_page_id( 'registration' );
+
+	if ( ! $page_id || 'publish' !== get_post_status( $page_id ) ) {
+		return $url;
+	}
+
+	$page_url = get_permalink( $page_id );
+
+	return $page_url ? $page_url : $url;
+}
+add_filter( 'register_url', 'wpss_marketplace_register_url' );
+
+/**
  * Get the base checkout URL (without service ID).
  *
  * Uses the mapped checkout page URL, or builds from the adapter's checkout slug.
@@ -640,12 +788,10 @@ function wpss_get_checkout_base_url(): string {
  * order" — tips, milestones, extensions and accepted proposals all resolve
  * through here, including the links we put in emails.
  *
- * The standalone checkout understands `?pay_order=N` and renders that order.
- * A cart-based rail (WooCommerce, EDD) does not: appending the query arg to
- * its checkout URL lands the buyer on an empty cart with no way to pay, so
- * those rails hook `wpss_pay_order_url` and return a URL on their own
- * payment flow instead. Never rebuild this URL inline — a caller that does
- * is correct only on standalone.
+ * Standalone pretty shape: `/{checkout}/pay/{id}/`. Legacy `?pay_order=N` is
+ * still accepted and 301'd when pretty permalinks are on.
+ * A cart-based rail (WooCommerce, EDD) hooks `wpss_pay_order_url` and returns
+ * a URL on their own payment flow instead.
  *
  * @since 1.4.0
  *
@@ -653,7 +799,29 @@ function wpss_get_checkout_base_url(): string {
  * @return string Payment URL for the active e-commerce rail.
  */
 function wpss_get_pay_order_url( int $order_id ): string {
-	$url = add_query_arg( 'pay_order', $order_id, wpss_get_checkout_base_url() );
+	$base = wpss_get_checkout_base_url();
+
+	if ( $order_id > 0 && $base && get_option( 'permalink_structure' ) ) {
+		$query    = '';
+		$fragment = '';
+		$url      = $base;
+
+		$hash_pos = strpos( $url, '#' );
+		if ( false !== $hash_pos ) {
+			$fragment = substr( $url, $hash_pos );
+			$url      = substr( $url, 0, $hash_pos );
+		}
+
+		$query_pos = strpos( $url, '?' );
+		if ( false !== $query_pos ) {
+			$query = substr( $url, $query_pos );
+			$url   = substr( $url, 0, $query_pos );
+		}
+
+		$url = trailingslashit( $url ) . 'pay/' . $order_id . '/' . $query . $fragment;
+	} else {
+		$url = add_query_arg( 'pay_order', $order_id, $base );
+	}
 
 	/**
 	 * Filter the URL a buyer is sent to in order to pay a single order.
@@ -780,4 +948,34 @@ function wpss_get_settings_url( string $section = '' ): string {
 	}
 
 	return $url . '#' . $section;
+}
+
+/**
+ * Legal page links the buyer is entitled to see.
+ *
+ * Terms is a mapping the owner points at their OWN page; Privacy is core's
+ * `wp_page_for_privacy_policy`. We create neither — publishing our own copy
+ * would be the plugin talking over the owner, and core already owns privacy.
+ *
+ * Both entries are null when unmapped, so a caller renders nothing rather than
+ * an empty link. Settings has promised since 1.4.0 that Terms is "linked from
+ * checkout"; it was only ever read by the app config endpoint, so an owner who
+ * mapped their page saw no change on the storefront (Basecamp 10240020620).
+ *
+ * @since 1.7.0
+ *
+ * @return array{terms_url: string|null, privacy_policy_url: string|null}
+ */
+function wpss_get_legal_links(): array {
+	$terms_id = (int) get_option( 'wpss_terms_page' );
+	$terms    = ( $terms_id > 0 && 'publish' === get_post_status( $terms_id ) )
+		? (string) get_permalink( $terms_id )
+		: '';
+
+	$privacy = (string) get_privacy_policy_url();
+
+	return array(
+		'terms_url'          => '' !== $terms ? $terms : null,
+		'privacy_policy_url' => '' !== $privacy ? $privacy : null,
+	);
 }

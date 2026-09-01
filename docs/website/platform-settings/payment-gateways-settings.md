@@ -17,7 +17,7 @@ switch and its own Save button.
 
 These gateways power the **standalone** checkout only.
 
-If WooCommerce, Easy Digital Downloads, FluentCart or SureCart is active, that
+If WooCommerce, Easy Digital Downloads or FluentCart is active, that
 platform owns checkout and payment end to end. Buyers pay through *its* gateways
 and never see these. Configuring Stripe here on a WooCommerce site changes
 nothing, and the screen will not warn you -- there is no "WooCommerce owns
@@ -100,12 +100,40 @@ with no gateway account. (Upgrades are never re-enabled.)
 | Enable Offline Payment | Checkbox | **On** for new installs | |
 | Title | Text | "Manual / Offline Payment" | What the buyer sees at checkout |
 | Description | Textarea | "Pay via bank transfer, cash, or other offline methods..." | Short line under the title |
-| Payment Instructions | Rich text | Seeded placeholder | Shown **after** the order is placed. This is where your bank details go |
+| Payment Instructions | Rich text | Seeded placeholder | Shown **after** the order is placed. Used while you have not named any methods below |
 | Auto-Cancel (Hours) | Number, 0-720 | `0` | Cancels unpaid orders after N hours. `0` disables |
 
 **Payment Instructions supports placeholders:** `{order_number}`, `{order_id}`,
 `{total}`, `{currency}`. Use them so the buyer can quote a reference on the
 transfer.
+
+### Naming your payment methods
+
+Under the offline card there are four **Method** slots. Fill in as many as you
+take payment by - bank transfer, cash, UPI, cheque - each with its own
+instructions and its own on/off switch. Leave a slot blank to skip it.
+
+| Field | Notes |
+|---|---|
+| Method name | What the buyer picks at checkout, e.g. "Bank Transfer" |
+| Instructions | Everything they need to pay you by that method. Supports the same placeholders |
+| Offer this method at checkout | Untick to keep a method without offering it |
+
+Buyers choose from the enabled methods at checkout. When only one is enabled
+they are not asked to choose - it is used automatically.
+
+**What you name a method is recorded on each order that uses it.** Rename a
+method later, or delete it, and orders already placed keep showing the name and
+the instructions that were live when the buyer paid. You can correct your bank
+details for future orders without changing what a past order told someone.
+
+**The first time you fill these in, slot 1 arrives pre-filled** with your
+existing Payment Instructions, so your own wording carries over. Saving moves
+you onto named methods and the single Payment Instructions box above stops
+being used for new orders.
+
+If you never open this editor, nothing changes: buyers see one offline option
+using the Payment Instructions box, exactly as before.
 
 **Offline has no webhook and no automatic confirmation.** Nothing tells the site
 the money arrived -- you mark the order paid yourself from the Orders screen.

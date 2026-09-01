@@ -77,9 +77,14 @@ function wpss_format_price( float $price, string $currency = '' ): string {
  *
  * @param float  $amount  Catalog amount in the store base currency.
  * @param string $context Where it is shown ('card', 'package', 'single', …).
+ * @param string $currency Currency code the amount is in. Defaults to the store
+ *                         currency. Present so this is a genuine drop-in for
+ *                         wpss_format_price() on rows that carry their own
+ *                         currency - without it, swapping a call over silently
+ *                         relabelled a foreign-currency order in store currency.
  * @return string Base-price HTML, with a display hint appended if one is hooked.
  */
-function wpss_catalog_price_html( float $amount, string $context = '' ): string {
+function wpss_catalog_price_html( float $amount, string $context = '', string $currency = '' ): string {
 	// The base amount travels with the markup so a display-currency add-on can
 	// render its hint IN THE BROWSER instead of forking the server response.
 	// That distinction is the whole point: this HTML is identical for every
@@ -97,7 +102,7 @@ function wpss_catalog_price_html( float $amount, string $context = '' ): string 
 	$html = sprintf(
 		'<span class="wpss-price wbcom-price" data-wbcom-amount="%s">%s</span>',
 		esc_attr( sprintf( '%.4F', $amount ) ),
-		wpss_format_price( $amount )
+		wpss_format_price( $amount, $currency )
 	);
 
 	/**
@@ -363,7 +368,14 @@ function wpss_get_ledger_balance( int $user_id, bool $lock = false ): float {
 	// the free helper did not, which would have been a second silent divergence.)
 	$debit_types = wpss_get_ledger_debit_types_sql();
 
-	$sql = "SELECT COALESCE( SUM( CASE WHEN type IN ( {$debit_types} ) THEN -amount ELSE amount END ), 0 )
+	// -ABS(), not -amount. The convention is that a debit row stores a
+	// POSITIVE amount and the sign is applied here - but one legacy row was
+	// written negative, and `-amount` turned that into `-(-50)` = +50, so a
+	// withdrawal ADDED fifty dollars to the vendor's balance. It overstated
+	// that vendor by 100.00. ABS() makes the balance correct whatever sign a
+	// row carries, which matters because this is the only place the sign is
+	// applied and the rows outlive any writer we fix.
+	$sql = "SELECT COALESCE( SUM( CASE WHEN type IN ( {$debit_types} ) THEN -ABS( amount ) ELSE amount END ), 0 )
 		FROM {$table}
 		WHERE user_id = %d AND status = 'completed'";
 
@@ -373,6 +385,120 @@ function wpss_get_ledger_balance( int $user_id, bool $lock = false ): float {
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	return (float) $wpdb->get_var( $wpdb->prepare( $sql, $user_id ) );
+}
+
+/**
+ * The one tax calculation.
+ *
+ * Tax was written out inline in four places and MISSING from a fifth, which is
+ * how a buyer came to be shown $100.30 and charged $85.00: the checkout
+ * template computed and displayed tax, the order row recorded a taxed total,
+ * and CheckoutIntentService - the figure the gateway actually charges - built
+ * its amount from package price plus add-ons and never applied any tax at all
+ * (Basecamp 10254444011).
+ *
+ * Tax is not revenue to split. Commission stays on the pre-tax base, which is
+ * what CommissionService already does via $order->subtotal + addons_total, so
+ * this returns the base back separately rather than folding it in.
+ *
+ * The inclusive branch is the one worth reading twice: when a price already
+ * contains tax, the tax is extracted from it and the total is unchanged. Get
+ * that backwards and every inclusive-tax site over-charges by the rate.
+ *
+ * @since 1.7.0
+ *
+ * @param float $base       Pre-tax amount (package price plus add-ons).
+ * @param int   $vendor_id  Vendor user ID, for the rate filter.
+ * @param int   $service_id Service post ID, for the rate filter.
+ * @return array{rate: float, amount: float, base: float, total: float, included: bool, label: string, enabled: bool}
+ */
+function wpss_calculate_tax( float $base, int $vendor_id = 0, int $service_id = 0 ): array {
+	$settings = get_option( 'wpss_tax', array() );
+	$enabled  = ! empty( $settings['enable_tax'] );
+	$included = ! empty( $settings['tax_included'] );
+	$label    = (string) ( $settings['tax_label'] ?? __( 'Tax', 'wp-sell-services' ) );
+	$rate     = $enabled ? (float) ( $settings['tax_rate'] ?? 0 ) : 0.0;
+
+	/** This filter is documented in StandaloneOrderProvider::create_order() */
+	$rate = (float) apply_filters( 'wpss_checkout_tax_rate', $rate, $vendor_id, $service_id );
+
+	$amount = 0.0;
+
+	if ( $rate > 0 && $base > 0 ) {
+		$amount = $included
+			? $base - ( $base / ( 1 + $rate / 100 ) )
+			: $base * ( $rate / 100 );
+	}
+
+	return array(
+		'enabled'  => $enabled,
+		'included' => $included,
+		'label'    => $label,
+		'rate'     => $rate,
+		'base'     => $base,
+		'amount'   => $amount,
+		// Inclusive: the tax is already inside the price, so the buyer pays the
+		// base. Exclusive: it is added on top.
+		'total'    => $included ? $base : $base + $amount,
+	);
+}
+
+/**
+ * Ledger holders whose balance has gone below zero, in ONE query.
+ *
+ * A vendor ends up here when a past payout exceeded what they had actually
+ * earned. On this install that came from the pre-1.7.0 ledger bug: `-amount`
+ * turned one negatively-stored withdrawal row into a credit, the balance was
+ * overstated, and the vendor was paid against the inflated figure. The -ABS()
+ * fix made the sum correct, and the correct sum shows the hole.
+ *
+ * The site owner needs to find these before a vendor opens a ticket about a
+ * minus sign, so this is surfaced on the Vendors screen. Deliberately one
+ * GROUP BY with a HAVING rather than looping vendors and calling
+ * wpss_get_ledger_balance() each time - that is the N+1 this codebase keeps
+ * being bitten by, and it would scale with the vendor count.
+ *
+ * Uses the same debit-type list and the same -ABS() convention as
+ * wpss_get_ledger_balance(), so the two can never disagree about what a
+ * balance is.
+ *
+ * @since 1.7.0
+ *
+ * @param int $limit Maximum rows to return.
+ * @return array<int,array{user_id:int,balance:float}> Most negative first.
+ */
+function wpss_get_negative_ledger_balances( int $limit = 50 ): array {
+	global $wpdb;
+
+	$table       = $wpdb->prefix . 'wpss_wallet_transactions';
+	$debit_types = wpss_get_ledger_debit_types_sql();
+	$limit       = max( 1, min( 500, $limit ) );
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- debit types are a fixed internal list; limit is clamped above.
+	$rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT user_id,
+				COALESCE( SUM( CASE WHEN type IN ( {$debit_types} ) THEN -ABS( amount ) ELSE amount END ), 0 ) AS balance
+			FROM {$table}
+			WHERE status = 'completed'
+			GROUP BY user_id
+			HAVING balance < 0
+			ORDER BY balance ASC
+			LIMIT %d",
+			$limit
+		)
+	);
+
+	$out = array();
+
+	foreach ( (array) $rows as $row ) {
+		$out[] = array(
+			'user_id' => (int) $row->user_id,
+			'balance' => (float) $row->balance,
+		);
+	}
+
+	return $out;
 }
 
 /**

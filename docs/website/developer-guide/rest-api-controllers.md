@@ -1,6 +1,6 @@
 # REST API Controllers Reference
 
-WP Sell Services registers **23 REST controllers** plus a set of generic utility
+WP Sell Services registers **25 REST controllers** plus a set of generic utility
 routes. WP Sell Services Pro adds **10 more**. Everything lives under one
 namespace:
 
@@ -23,15 +23,13 @@ There are two namespaces, and the split is not the one the names suggest.
 
 | Namespace | What is on it |
 |---|---|
-| `wpss/v1` | **Everything.** All 23 free controllers *and* all 10 Pro controllers. Pro extends the API; it does not run a parallel one. |
+| `wpss/v1` | **Everything.** All 25 free controllers *and* all 10 Pro controllers. Pro extends the API; it does not run a parallel one. |
 | `wpss-pro/v1` | Exactly **four** cart-adapter routes, and only while the matching cart plugin is active. |
 
 The four `wpss-pro/v1` routes are:
 
 | Method | Route | Present when |
 |--------|-------|--------------|
-| POST | `/wpss-pro/v1/surecart/sync-products` | SureCart is active |
-| GET | `/wpss-pro/v1/surecart/orders` | SureCart is active |
 | GET | `/wpss-pro/v1/fluentcart/products` | FluentCart is active |
 | GET | `/wpss-pro/v1/fluentcart/orders` | FluentCart is active |
 
@@ -45,7 +43,7 @@ assume:
 
 - **The active e-commerce rail.** `/payments/*` -- in free *and* Pro -- registers
   only when `wpss_uses_standalone_payments()` is true, i.e. no cart plugin has
-  claimed payments. Activate WooCommerce, EDD, FluentCart or SureCart and those
+  claimed payments. Activate WooCommerce, EDD or FluentCart and those
   routes stop registering entirely; a call to them answers `404 rest_no_route`
   from WordPress core. That is by design: when a cart plugin is enabled it owns
   all payment, and the plugin does not offer a second way in.
@@ -100,6 +98,7 @@ over `/services` when you only need cards.
 | POST | `/orders/(?P<id>[\d]+)/requirements/skip` |
 | DELETE | `/orders/(?P<id>[\d]+)/requirements/files/(?P<file_id>[\d]+)` |
 | GET | `/orders/(?P<id>[\d]+)/sub-orders` |
+| GET | `/orders/(?P<id>[\d]+)/receipts` |
 | GET | `/orders/(?P<id>[\d]+)/timeline` |
 | POST | `/orders/(?P<id>[\d]+)/pay` |
 
@@ -194,7 +193,7 @@ lock-step guard while doing so.
 > On the **standalone** rail it is `…/checkout/?pay_order={id}` and nothing is
 > created.
 >
-> **EDD, FluentCart and SureCart have no pay-order rail at all.** They do not
+> **EDD and FluentCart have no pay-order rail at all.** They do not
 > hook the filter, so `checkout_url` falls back to the standalone
 > `?pay_order=N` URL, which those checkouts do not understand -- the buyer
 > lands on an empty cart. See
@@ -211,9 +210,16 @@ lock-step guard while doing so.
 | POST | `/milestones/(?P<id>[\d]+)/submit` |
 | POST | `/milestones/(?P<id>[\d]+)/approve` |
 | POST | `/milestones/(?P<id>[\d]+)/decline` |
+| POST | `/milestones/(?P<id>[\d]+)/request-revision` |
 
 The terminal actions are **approve** and **decline** (not "reject") -- the same
 vocabulary as the milestone hooks.
+
+`request-revision` is the buyer's third option on a submitted phase: it takes a
+`reason`, returns the phase to `revision_requested` so the seller can resubmit,
+and posts the reason into the parent contract's conversation. A phase has no
+conversation of its own. Only the buyer may call it, and only while the phase
+is `pending_approval`.
 
 ### Extensions and tips
 
@@ -341,7 +347,7 @@ replaces them with a wider, gateway-specific set -- see [Payments (Pro)](#paymen
 > **These routes do not exist on every site.** As of 1.4.0 the whole controller
 > is skipped unless `wpss_uses_standalone_payments()` is true
 > (`src/API/PaymentController.php`). With WooCommerce, EDD, FluentCart or
-> SureCart enabled, that rail owns **all** payment and these routes are never
+> FluentCart enabled, that rail owns **all** payment and these routes are never
 > registered -- a client calling them gets `404 rest_no_route`. Do not treat
 > that as an error to retry: check `GET /wpss/v1` (or `GET /settings`) and send
 > the buyer to the rail's own checkout instead.
@@ -375,9 +381,16 @@ Authentication ships in the **free** plugin, not Pro.
 | POST | `/auth/change-password` |
 | GET, POST | `/auth/devices` |
 | DELETE | `/auth/devices/(?P<device_id>[a-zA-Z0-9_-]+)` |
+| GET, DELETE | `/auth/sessions` |
+| DELETE | `/auth/sessions/(?P<uuid>[a-zA-Z0-9\-]+)` |
 
 `/auth/devices` registers a device for push notifications -- what a mobile
 client calls after login.
+
+`/auth/sessions` is a different thing and deliberately a separate route: it
+lists and revokes the app tokens a member holds. `DELETE /auth/sessions` ends
+them all; the `{uuid}` form ends one. They are not on `/auth/devices` because
+that route already means push tokens.
 
 ### Favorites, media, notifications, moderation, audit log
 
@@ -399,6 +412,29 @@ client calls after login.
 | POST | `/moderation/(?P<service_id>[\d]+)/approve` |
 | POST | `/moderation/(?P<service_id>[\d]+)/reject` |
 | GET | `/audit-log` |
+
+### Reporting and blocking
+
+Both ship in the **free** plugin. A store submitting a marketplace app needs
+them: App Store Guideline 1.2 asks for a way to report content and a way to
+block the person who posted it.
+
+| Method | Route |
+|--------|-------|
+| GET, POST | `/reports` |
+| POST | `/reports/(?P<id>[\d]+)/resolve` |
+| GET | `/blocks` |
+| POST, DELETE | `/blocks/(?P<user_id>[\d]+)` |
+
+`POST /reports` files a report against any target type; the vocabulary of
+target types is filterable, so the same controller serves services, orders,
+vendors and messages. `GET /reports` is the owner's queue and is admin-only.
+
+Reporting asks the owner to act. **Blocking lets a member act immediately**,
+which is the one that actually ends a bad interaction, so the two are separate
+routes rather than one moderation surface. Blocks are stored in user meta, and
+enforcement lives at the points where two members can reach each other rather
+than in the controller.
 
 ### Realtime
 

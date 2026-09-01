@@ -1,6 +1,6 @@
 # Documentation Coverage
 
-**As of WP Sell Services 1.4.0 and WP Sell Services Pro 1.4.0.**
+**As of WP Sell Services 1.7.0 and WP Sell Services Pro 1.7.0.** Last full source-to-docs resync: **2026-08-26**, when all 107 pages were checked against the code rather than against each other.
 
 This page exists so you never have to guess whether something is missing or you
 just cannot find it. It states what is documented, and -- more usefully -- what
@@ -27,7 +27,7 @@ run of `bin/docs-audit.py`.
 | **Selling** | Service wizard, pricing and packages, add-ons, media, requirements and FAQs, editing and pausing, publishing and moderation |
 | **Buyer requests** | Posting a request, submitting proposals, managing requests, fixed vs milestone proposal contracts |
 | **Orders** | The 11-status lifecycle, requirements collection, messaging, deliveries and revisions, **milestone contracts**, **paid extensions**, tipping, recurring services, order settings |
-| **Payments and checkout** | Standalone mode, Stripe, **WooCommerce (including the pay-order handoff)** **[PRO]**, alternative platforms (EDD / FluentCart / SureCart) **[PRO]**, other gateways, Stripe Connect **[PRO]**, currency and tax, display currency |
+| **Payments and checkout** | Standalone mode, Stripe, **WooCommerce (including the pay-order handoff)** **[PRO]**, alternative platforms (EDD / FluentCart) **[PRO]**, other gateways, Stripe Connect **[PRO]**, currency and tax, display currency |
 | **Earnings and payouts** | Wallet, earnings dashboard, commission system, tiered commission **[PRO]**, withdrawals, vendor payouts, automated payouts **[PRO]**, the ledger and CSV export |
 | **Vendors** | Becoming a vendor, vendor dashboard, profile and portfolio, seller levels, vacation mode, vendor settings, vendor subscription plans **[PRO]** |
 | **Reviews** | Review system, reputation and moderation |
@@ -64,11 +64,28 @@ Stated plainly, because a gap you know about costs less than one you discover.
 | **Per-jurisdiction tax** | The plugin has one tax rate, full stop. There is no VAT MOSS, no per-country table, no digital-services handling, so there is nothing to document. Run checkout on WooCommerce and use its tax tables if you need this. |
 | **Third-party gateway configuration** | We document what to paste where, not how to obtain a Stripe restricted key or a PayPal live app. Those belong to the gateway and change on their schedule, not ours. |
 
-### Known gaps, not yet written
+### What the 2026-08-26 resync changed
+
+All 107 pages were read against the code. Roughly three quarters carried at
+least one claim the source contradicted. The corrections that matter most to a
+site owner:
+
+- **Refunds settle automatically.** Two dispute pages told admins to refund
+  again in their payment gateway, which pays the buyer twice.
+- **The plugin does not add marketplace data to the WordPress privacy tools**
+  -- it does now, but the docs had claimed it for some time before it was true.
+- **Uploaded order files are not private.** The claim is gone; the honest limit
+  is stated.
+- **Menu Visibility instructions were inverted** -- a ticked box means visible.
+- **Cloud storage is not connected to deliveries**, despite four pages
+  describing an automatic transfer.
+- Four Pro features that do not ship were being advertised.
+
+## Known gaps, not yet written
 
 | Not covered | Status |
 |---|---|
-| **A "What's New in 1.4.0" page** | The newest What's New page is 1.3.0. The 1.4.0 changes are in both plugins' `readme.txt` changelogs and in the pages they affect, but there is no single narrative page for the release yet. |
+| **What's New pages for 1.4.0 and 1.5.x** | 1.3.0 and 1.6.0 have narrative pages. The releases between them are covered by both plugins' `readme.txt` changelogs and by the pages they affect, but have no single narrative page. |
 | **A dedicated Audit Log page** | **Sell Services > Audit Log** is mentioned where it is relevant, and `GET /audit-log` is in the REST reference, but there is no page explaining what is recorded, retention, or how to read an entry. |
 | **The Vendors, Orders & Disputes, and Emails settings tabs** | These are documented by *feature*, not by *tab*: see [Vendor Settings](../vendor-system/vendor-settings.md), [Order Settings](../order-management/order-settings.md) and [Email Configuration](../notifications-emails/email-configuration.md). The Platform Settings section does not yet have a page per tab for these three, so a reader looking tab-by-tab will not find them where they expect. |
 | **Migration between e-commerce rails** | Switching rails is safe (past orders are never rewritten, old gateway webhooks keep working) and that is stated in the REST and WooCommerce pages, but there is no step-by-step migration guide. |
@@ -81,7 +98,7 @@ These are limitations of the software, not of the writing. They are called out
 where a reader will hit them:
 
 - **Milestone, tip and extension payments work on Standalone and WooCommerce
-  only.** EDD, FluentCart and SureCart have no pay-order flow, so those links
+  only.** EDD and FluentCart have no pay-order flow, so those links
   are a dead end there. See
   [WooCommerce Checkout](../payments-checkout/woocommerce-checkout.md#platform-support----read-this-before-promising-it).
 - **Lock-step milestone payment is a workflow rail, not a security control.**
@@ -110,4 +127,4 @@ where a reader will hit them:
 It does not, and cannot, check whether prose is *true*. That is what code
 citations and the per-release resync pass are for. If you find a page that
 contradicts the plugin, that is a bug worth reporting -- the last full
-source-to-docs resync was **2026-08-01, against 1.4.0**.
+source-to-docs resync was **2026-08-26, against 1.7.0** - every page checked against source, not against another page.

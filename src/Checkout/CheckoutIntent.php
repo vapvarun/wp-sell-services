@@ -125,6 +125,24 @@ final class CheckoutIntent {
 	public float $addons_total = 0.0;
 
 	/**
+	 * Pre-tax amount: package price plus add-ons, before any tax.
+	 *
+	 * `$amount` is what the GATEWAY CHARGES and therefore includes tax.
+	 * `$taxable_base` is what the ORDER ROW is built from, because
+	 * StandaloneOrderProvider::create_order() applies tax itself and
+	 * CommissionService takes its cut from the pre-tax figure.
+	 *
+	 * These were the same number until tax was added to the charge, at which
+	 * point passing $amount through as the subtotal taxed it a second time and
+	 * billed commission on the tax (Basecamp 10254561978). Keeping both means
+	 * neither consumer has to guess which one it is holding.
+	 *
+	 * @since 1.7.0
+	 * @var float
+	 */
+	public float $taxable_base = 0.0;
+
+	/**
 	 * Private constructor — use the named factories.
 	 *
 	 * @since 1.3.0
@@ -196,12 +214,15 @@ final class CheckoutIntent {
 	 * @param array<string, mixed> $metadata     Gateway metadata.
 	 * @return self
 	 */
-	public static function single( int $service_id, int $package_id, array $addons, float $addons_total, float $amount, string $currency, int $buyer_id, array $metadata ): self {
+	public static function single( int $service_id, int $package_id, array $addons, float $addons_total, float $amount, string $currency, int $buyer_id, array $metadata, ?float $taxable_base = null ): self {
 		$intent               = new self( self::KIND_SINGLE, $amount, $currency, $buyer_id, $metadata );
 		$intent->service_id   = $service_id;
 		$intent->package_id   = $package_id;
 		$intent->addons       = $addons;
 		$intent->addons_total = $addons_total;
+		// Defaults to the charge, so any caller that has not been taught about
+		// tax behaves exactly as it did before.
+		$intent->taxable_base = null === $taxable_base ? $amount : $taxable_base;
 
 		return $intent;
 	}

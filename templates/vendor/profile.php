@@ -254,10 +254,10 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 
 				<div class="wpss-profile-actions">
 					<?php if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) : ?>
-						<a href="#" class="wpss-btn wpss-btn-primary wpss-contact-btn"
+						<button type="button" class="wpss-btn wpss-btn-primary wpss-contact-btn"
 							data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
 							<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
-						</a>
+						</button>
 					<?php elseif ( ! is_user_logged_in() ) : ?>
 						<a href="<?php echo esc_url( wp_login_url( wpss_get_vendor_url( $vendor_id ) ) ); ?>" class="wpss-btn wpss-btn-primary">
 							<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
@@ -450,9 +450,9 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 
 						<?php if ( $rating_count > 10 ) : ?>
 							<p class="wpss-view-all">
-								<a href="#" class="wpss-load-more-reviews" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
+								<button type="button" class="wpss-load-more-reviews" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
 									<?php esc_html_e( 'View all reviews', 'wp-sell-services' ); ?> &rarr;
-								</a>
+								</button>
 							</p>
 						<?php endif; ?>
 					<?php else : ?>

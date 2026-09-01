@@ -52,10 +52,16 @@
           "order": 7
         },
         {
+          "title": "What's New in 1.6.0",
+          "slug": "whats-new-1-6-0-wpss",
+          "file": "getting-started/whats-new-1-6-0.md",
+          "order": 8
+        },
+        {
           "title": "What's New in 1.3.0",
           "slug": "whats-new-1-3-0-wpss",
           "file": "getting-started/whats-new-1-3-0.md",
-          "order": 8
+          "order": 9
         },
         {
           "title": "Launch Checklist",
@@ -698,64 +704,70 @@
           "order": 3
         },
         {
+          "title": "Hook Reference (complete)",
+          "slug": "hooks-reference-wpss",
+          "file": "developer-guide/hooks-reference.md",
+          "order": 3
+        },
+        {
           "title": "Building Custom Integrations",
           "slug": "custom-integrations-wpss",
           "file": "developer-guide/custom-integrations.md",
-          "order": 4
+          "order": 5
         },
         {
           "title": "Theme Integration Guide",
           "slug": "theme-integration-wpss",
           "file": "developer-guide/theme-integration.md",
-          "order": 5
+          "order": 6
         },
         {
           "title": "Email Customization for Developers",
           "slug": "email-customization-wpss",
           "file": "developer-guide/email-customization.md",
-          "order": 6
+          "order": 7
         },
         {
           "title": "Action Scheduler Integration",
           "slug": "action-scheduler-wpss",
           "file": "developer-guide/action-scheduler.md",
-          "order": 7
+          "order": 8
         },
         {
           "title": "WP-CLI Commands",
           "slug": "wp-cli-commands-wpss",
           "file": "developer-guide/wp-cli-commands.md",
-          "order": 8
+          "order": 9
         },
         {
           "title": "Pro Extension Points [PRO]",
           "slug": "pro-extension-points-wpss",
           "file": "developer-guide/pro-extension-points.md",
-          "order": 9
+          "order": 10
         },
         {
           "title": "Database Schema",
           "slug": "database-schema-wpss",
           "file": "developer-guide/database-schema.md",
-          "order": 10
+          "order": 11
         },
         {
           "title": "Capabilities & Roles",
           "slug": "capabilities-wpss",
           "file": "developer-guide/capabilities.md",
-          "order": 11
+          "order": 12
         },
         {
           "title": "Abilities API",
           "slug": "abilities-api-wpss",
           "file": "developer-guide/abilities-api.md",
-          "order": 12
+          "order": 13
         },
         {
           "title": "REST Error Codes",
           "slug": "rest-error-codes-wpss",
           "file": "developer-guide/rest-error-codes.md",
-          "order": 13
+          "order": 14
         }
       ]
     },

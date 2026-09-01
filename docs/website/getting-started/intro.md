@@ -42,14 +42,12 @@ Here are some real-world examples of what people are building:
 | Gallery images per service | Up to 4 | Unlimited **[PRO]** |
 | Service add-ons | Up to 3 | Unlimited **[PRO]** |
 | FAQs per service | Up to 5 | Unlimited **[PRO]** |
-| Video embeds | 1 | 3 **[PRO]** |
-| WooCommerce, EDD, FluentCart, SureCart | -- | **[PRO]** |
+| Video embeds | 1 | 1 |
+| WooCommerce, EDD, FluentCart | -- | **[PRO]** |
 | Razorpay payment gateway | -- | **[PRO]** |
 | Wallet integrations (TeraWallet, MyCred, etc.) | -- | **[PRO]** |
-| Analytics dashboards with export | -- | **[PRO]** |
+| Analytics dashboards (CSV export on the admin screen) | -- | **[PRO]** |
 | Cloud storage (Amazon S3, Google Cloud, DO) | -- | **[PRO]** |
-| AI title suggestions, service templates | -- | **[PRO]** |
-| Scheduled publishing | -- | **[PRO]** |
 
 ## What You Can Build
 

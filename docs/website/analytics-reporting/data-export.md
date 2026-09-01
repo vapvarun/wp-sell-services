@@ -35,11 +35,7 @@ Filter your export to any date range: last 7 days, last 30 days, a specific mont
 
 ## Current Alternatives (Free Version)
 
-The free version does not include a built-in export feature. However, you can still get your data out:
-
-### WordPress Privacy Export
-
-WordPress has a built-in personal data export tool at **Tools > Export Personal Data**. It generates a ZIP file containing a user's orders, messages, reviews, and profile data. This is useful for GDPR compliance and individual user requests.
+The free version has one built-in export: **Export CSV** on the Withdrawals admin screen. For anything else:
 
 ### Database Tools
 
@@ -51,11 +47,11 @@ Plugins like **WP All Export Pro** can export custom post types and custom table
 
 ---
 
-## GDPR Compliance
+## GDPR and subject-access requests
 
-WP Sell Services integrates with the WordPress privacy tools. When a user requests their data (under GDPR or similar regulations), the export includes their marketplace activity: orders, messages, reviews, and profile information.
+**The plugin does not add marketplace data to the WordPress privacy tools.** It registers no personal-data exporter or eraser, so **Tools > Export Personal Data** and **Tools > Erase Personal Data** return WordPress core data only -- no orders, messages, reviews, wallet ledger or vendor profile.
 
-Use **Tools > Export Personal Data** to generate the export, or **Tools > Erase Personal Data** for deletion requests.
+To answer a subject-access or erasure request, export the marketplace tables yourself with the database tools above.
 
 ---
 

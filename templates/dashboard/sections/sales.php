@@ -25,8 +25,7 @@ defined( 'ABSPATH' ) || exit;
 do_action( 'wpss_dashboard_section_before', 'sales', $user_id );
 
 // Check if viewing a specific order.
-// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display, access controlled by order ownership.
-$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
+$order_id = function_exists( 'wpss_resolve_request_order_id' ) ? wpss_resolve_request_order_id() : 0;
 
 if ( $order_id ) {
 	// Verify user has access to this order (buyer or vendor).
@@ -56,8 +55,7 @@ if ( $order_id ) {
 			return;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing, no data processing.
-		$order_action = isset( $_GET['action'] ) ? sanitize_key( $_GET['action'] ) : '';
+		$order_action = function_exists( 'wpss_resolve_request_order_action' ) ? wpss_resolve_request_order_action() : '';
 
 		switch ( $order_action ) {
 			case 'requirements':

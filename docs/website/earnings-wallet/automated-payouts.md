@@ -38,13 +38,21 @@ This is the minimum available balance a vendor must have for an auto-payout to t
 
 ### Schedule Options
 
-| Schedule | Runs On | Example |
-|----------|---------|---------|
-| **Weekly** | Every Monday at 2 AM | Jan 6, Jan 13, Jan 20, Jan 27 |
-| **Bi-weekly** | 1st and 15th of each month at 2 AM | Jan 1, Jan 15, Feb 1, Feb 15 |
-| **Monthly** | 1st of each month at 2 AM | Feb 1, Mar 1, Apr 1, May 1 |
+| Schedule | First run | Then every |
+|----------|-----------|------------|
+| **Weekly** | Next Monday | 7 days |
+| **Bi-weekly** | Next 1st or 15th | 14 days |
+| **Monthly** | Next 1st | 30 days |
 
-Processing runs automatically in the background using WordPress cron.
+**The schedule is an interval, not a calendar date.** Only the first run lands on
+the day in the middle column. After that each run is the fixed interval later, so
+a monthly schedule that starts on 1 February next runs on 3 March, then 2 April,
+and drifts off the 1st permanently. If you need payouts on an exact date, run
+them manually from the Withdrawals screen.
+
+Processing runs on **Action Scheduler**, not WP-Cron. To check whether a run is
+queued, go to **Tools > Scheduled Actions** and filter by the `wpss` group -- the
+WP-Cron viewers will not show it.
 
 ## What Vendors Need to Do
 

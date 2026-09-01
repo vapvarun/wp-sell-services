@@ -380,7 +380,10 @@ class EarningsService {
 			array(
 				'user_id'        => $vendor_id,
 				'type'           => 'withdrawal',
-				'amount'         => $amount,
+				// abs() enforces the convention the comment above states rather
+				// than trusting the caller. A negative withdrawal row is not a
+				// smaller withdrawal, it is a credit.
+				'amount'         => abs( $amount ),
 				'balance_after'  => $current_balance - $amount,
 				'currency'       => $withdrawal->currency ?? wpss_get_currency(),
 				'description'    => sprintf(
@@ -606,65 +609,6 @@ class EarningsService {
 		);
 	}
 
-	/**
-	 * Get earnings by period.
-	 *
-	 * @param int    $vendor_id Vendor user ID.
-	 * @param string $period    Period (day, week, month, year).
-	 * @param int    $count     Number of periods.
-	 * @return array Earnings by period.
-	 */
-	public function get_by_period( int $vendor_id, string $period = self::PERIOD_MONTH, int $count = 12 ): array {
-		global $wpdb;
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-
-		$format = match ( $period ) {
-			self::PERIOD_DAY   => '%Y-%m-%d',
-			self::PERIOD_WEEK  => '%Y-%u',
-			self::PERIOD_MONTH => '%Y-%m',
-			self::PERIOD_YEAR  => '%Y',
-			default            => '%Y-%m',
-		};
-
-		$interval = match ( $period ) {
-			self::PERIOD_DAY   => 'DAY',
-			self::PERIOD_WEEK  => 'WEEK',
-			self::PERIOD_MONTH => 'MONTH',
-			self::PERIOD_YEAR  => 'YEAR',
-			default            => 'MONTH',
-		};
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT
-					DATE_FORMAT(completed_at, %s) as period,
-					COUNT(*) as orders,
-					COALESCE(SUM(COALESCE(vendor_earnings, 0)), 0) as earnings
-				FROM {$orders_table}
-				WHERE vendor_id = %d
-				AND status = %s
-				AND completed_at >= DATE_SUB(NOW(), INTERVAL %d {$interval})
-				GROUP BY period
-				ORDER BY period DESC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$format,
-				$vendor_id,
-				ServiceOrder::STATUS_COMPLETED,
-				$count
-			)
-		);
-
-		return array_map(
-			function ( $row ) {
-				return array(
-					'period'   => $row->period,
-					'orders'   => (int) $row->orders,
-					'earnings' => (float) $row->earnings,
-				);
-			},
-			$results
-		);
-	}
 
 	/**
 	 * Request withdrawal.

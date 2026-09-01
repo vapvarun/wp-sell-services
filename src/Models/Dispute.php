@@ -44,9 +44,7 @@ class Dispute {
 	 */
 	public const RESOLUTION_REFUND         = 'refund';
 	public const RESOLUTION_PARTIAL_REFUND = 'partial_refund';
-	public const RESOLUTION_REVISION       = 'revision';
 	public const RESOLUTION_FAVOR_BUYER    = 'favor_buyer';
-	public const RESOLUTION_FAVOR_SELLER   = 'favor_seller';
 	public const RESOLUTION_MUTUAL         = 'mutual';
 
 	/**
@@ -244,32 +242,7 @@ class Dispute {
 	 *
 	 * @return array<string, string>
 	 */
-	public static function get_reasons(): array {
-		return [
-			self::REASON_NOT_DELIVERED    => __( 'Order not delivered', 'wp-sell-services' ),
-			self::REASON_NOT_AS_DESCRIBED => __( 'Not as described', 'wp-sell-services' ),
-			self::REASON_POOR_QUALITY     => __( 'Poor quality work', 'wp-sell-services' ),
-			self::REASON_LATE_DELIVERY    => __( 'Late delivery', 'wp-sell-services' ),
-			self::REASON_COMMUNICATION    => __( 'Communication issues', 'wp-sell-services' ),
-			self::REASON_OTHER            => __( 'Other', 'wp-sell-services' ),
-		];
-	}
 
-	/**
-	 * Get all resolution types.
-	 *
-	 * @return array<string, string>
-	 */
-	public static function get_resolution_types(): array {
-		return [
-			self::RESOLUTION_REFUND         => __( 'Full Refund', 'wp-sell-services' ),
-			self::RESOLUTION_PARTIAL_REFUND => __( 'Partial Refund', 'wp-sell-services' ),
-			self::RESOLUTION_REVISION       => __( 'Revision Required', 'wp-sell-services' ),
-			self::RESOLUTION_FAVOR_BUYER    => __( 'Resolved in Buyer Favor', 'wp-sell-services' ),
-			self::RESOLUTION_FAVOR_SELLER   => __( 'Resolved in Seller Favor', 'wp-sell-services' ),
-			self::RESOLUTION_MUTUAL         => __( 'Mutual Agreement', 'wp-sell-services' ),
-		];
-	}
 
 	/**
 	 * Get status label.
@@ -287,7 +260,7 @@ class Dispute {
 	 * @return string
 	 */
 	public function get_reason_label(): string {
-		$reasons = self::get_reasons();
+		$reasons = wpss_get_dispute_reasons();
 		return $reasons[ $this->reason ] ?? $this->reason;
 	}
 
@@ -301,7 +274,12 @@ class Dispute {
 			return '';
 		}
 
-		$types = self::get_resolution_types();
+		// The map lives on DisputeService, not on this model - self:: here was
+		// a call to a method that does not exist, so this accessor fatalled on
+		// any dispute that had been resolved. It had no callers, which is the
+		// only reason nobody hit it. Every other reader of this map already
+		// goes through DisputeService.
+		$types = \WPSellServices\Services\DisputeService::get_resolution_types();
 		return $types[ $this->resolution_type ] ?? $this->resolution_type;
 	}
 

@@ -306,7 +306,9 @@
 	}
 
 	.wpss-service-tabs li a {
-		border-bottom: none;
+		/* border-bottom is set twice below on purpose no longer: the `none`
+		   reset was dead - the 3px rule two lines down always won, so the
+		   tab read as borderless while rendering a transparent 3px edge. */
 		border-right: none;
 		border-bottom: 3px solid transparent;
 		white-space: nowrap;

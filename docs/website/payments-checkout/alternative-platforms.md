@@ -67,7 +67,7 @@ Here is a practical guide:
 - **Want the simplest setup?** Use standalone mode. No extra plugins, no dependencies.
 - **Selling only digital services?** EDD is purpose-built for this.
 - **Need the fastest checkout?** FluentCart or standalone mode are your best bets.
-- **Need subscription billing?** Use WooCommerce with a subscriptions extension, or the recurring services feature in Pro.
+- **Need subscription billing?** Use WooCommerce with a subscriptions extension. Pro's own recurring services are not available -- every surface is switched off and there is no setting to turn them on.
 
 ## Switching Between Platforms
 
@@ -83,13 +83,13 @@ Existing orders remain accessible -- they stay in the system they were created i
 
 ## Platform Comparison
 
-| Feature | WooCommerce | EDD | FluentCart | SureCart | Standalone |
-|---------|-------------|-----|------------|----------|------------|
-| Payment gateways | 100+ | 20+ | Stripe, PayPal | Stripe, PayPal | 4 built-in |
-| Performance impact | Medium | Low | Low | Low | Minimal |
-| Tax automation | Via extensions | Basic | No | Yes (TaxJar) | Basic |
-| Physical products | Yes | No | No | Yes | No |
-| Setup effort | Medium | Medium | Easy | Easy | Easiest |
+| Feature | WooCommerce | EDD | FluentCart | Standalone |
+|---------|-------------|-----|------------|------------|
+| Payment gateways | 100+ | 20+ | Stripe, PayPal | 4 built-in |
+| Performance impact | Medium | Low | Low | Minimal |
+| Tax automation | Via extensions | Basic | No | Basic |
+| Physical products | Yes | No | No | No |
+| Setup effort | Medium | Medium | Easy | Easiest |
 
 ## Related Docs
 

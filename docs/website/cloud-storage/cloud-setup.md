@@ -97,18 +97,32 @@ You will need:
 
 ## After Setup
 
-Once connected, new delivery uploads are automatically sent to your cloud provider. Existing files on your server continue to work -- they are served locally until you optionally migrate them.
+**Deliveries go to your bucket once a provider is active.** A delivery or
+requirement file uploads to the provider you selected, and the local copy is
+removed afterwards so you are not paying for the bucket and the disk both.
+
+Buyers and sellers never get a bucket URL. They download through a
+permission-checked link on the order, which hands out a short-lived signed URL
+after confirming they are a party to that order.
 
 ### Test It
 
-1. Create a test order
-2. Upload a delivery file as a vendor
-3. Download it as the buyer
-4. Confirm the file downloads quickly from the cloud
+Upload a delivery on a real order, then check your bucket: the file appears
+under `wpss/{order_id}/delivery/`. That is the end-to-end check.
+
+**Test Connection** on the settings card verifies credentials, region and
+permissions on their own, which is the faster check when you are first
+setting up.
 
 ### Fallback Behavior
 
-If your cloud storage credentials become invalid or the service is temporarily unavailable, the plugin automatically falls back to local storage. Files upload to your server instead, and you will see a warning in the admin dashboard. Fix the credentials and new uploads will resume going to the cloud.
+The upload endpoint falls back to the media library when the provider is set to
+Local or is not registered. If a **configured** provider fails -- bad
+credentials, network error -- it returns an error rather than silently writing
+locally, so a broken bucket cannot look like a working one.
+
+There is no admin warning for a failing provider today. Watch for it in your own
+integration's error handling.
 
 ---
 

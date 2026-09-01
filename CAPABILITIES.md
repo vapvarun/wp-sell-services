@@ -3,7 +3,7 @@
 Buyer-level truth for the store listing and for anyone deciding whether this
 plugin fits. Written to be read before purchase, not after.
 
-**Version**: 1.3.1 · **Last verified**: 2026-08-01
+**Version**: 1.7.0-dev · **Last verified**: 2026-08-26 (every row checked against source)
 
 `YES` — ships and is exercised · `PARTIAL` — ships with a stated limit ·
 `NO` — does not ship, whatever a roadmap says.
@@ -55,7 +55,28 @@ companion app, and what a GDPR erasure request needs.
 ## Can I charge subscriptions for a service?
 
 **NO.** Recurring billing exists in the Pro codebase but ships behind a
-default-off flag with its UI hidden. Do not buy Pro for recurring billing.
+flag with no setting to enable it. Do not buy Pro for recurring billing.
+
+## Can members get push notifications on their phone?
+
+**YES (Pro)**, for the events they already receive in the app. You supply
+Firebase credentials under Advanced; it is off until you do. The companion
+app is what receives them — the events themselves are Free.
+
+## Can a member get their data, or have it erased?
+
+**YES.** Marketplace data now reaches the standard WordPress privacy tools, so
+**Tools > Export Personal Data** returns a member's orders, messages, reviews,
+seller profile and earnings ledger alongside core WordPress data.
+
+**Tools > Erase Personal Data** removes their personal records and reports what
+was kept. It refuses while an order is in flight or a payout is mid-transfer,
+because erasing then would strand the person on the other side of that order.
+Completed orders, reviews and messages stay, attributed to a deleted member --
+they belong to the other party too, and you need them for your accounting.
+
+Added in 1.7.0. Before that the plugin registered nothing, so an export looked
+complete while containing no marketplace data at all.
 
 ## Can I take a commission?
 

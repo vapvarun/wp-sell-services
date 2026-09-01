@@ -10,7 +10,7 @@
  *   - Buyer, pending_payment    → Accept & Pay / Decline
  *   - Vendor, pending_payment   → Cancel the proposal
  *   - Vendor, in_progress       → Submit Delivery
- *   - Buyer, pending_approval   → Approve / Request revision in chat
+ *   - Buyer, pending_approval   → Approve / Request changes
  *   - Either, completed         → Read-only receipt with commission split
  *
  * @package WPSellServices\Templates
@@ -30,7 +30,7 @@ $gross      = (float) $current_order->total;
 $net_vendor = (float) ( $current_order->vendor_earnings ?? $gross );
 $platform_f = (float) ( $current_order->platform_fee ?? 0 );
 $parent_id  = (int) ( $current_order->platform_order_id ?? 0 );
-$parent_url = $parent_id ? add_query_arg( 'order_id', $parent_id, remove_query_arg( 'order_id' ) ) : '';
+$parent_url = $parent_id ? wpss_get_order_url( $parent_id ) : '';
 
 $meta         = $current_order->meta ?? '';
 $meta         = is_string( $meta ) ? json_decode( $meta, true ) : ( is_array( $meta ) ? $meta : array() );
@@ -43,6 +43,11 @@ $status       = (string) $current_order->status;
 $is_unpaid    = 'pending_payment' === $status;
 $is_working   = 'in_progress' === $status;
 $is_submitted = 'pending_approval' === $status;
+// A phase the buyer sent back. submit() has always accepted this as a
+// from-state; until 1.7.0 nothing could put a phase into it, so the template
+// had no branch and the page rendered with no heading at all.
+$in_revision  = 'revision_requested' === $status;
+$revision_ask = (string) ( $meta['revision_reason'] ?? '' );
 $is_completed = 'completed' === $status;
 $is_cancelled = 'cancelled' === $status;
 
@@ -105,6 +110,8 @@ do_action( 'wpss_before_milestone_view', $current_order );
 					esc_html_e( 'Phase approved', 'wp-sell-services' );
 				} elseif ( $is_submitted ) {
 					esc_html_e( 'Delivery submitted — awaiting buyer', 'wp-sell-services' );
+				} elseif ( $in_revision ) {
+					esc_html_e( 'Changes requested — over to you', 'wp-sell-services' );
 				} elseif ( $is_working ) {
 					esc_html_e( 'Paid — ready for delivery', 'wp-sell-services' );
 				} elseif ( $is_unpaid ) {
@@ -120,6 +127,8 @@ do_action( 'wpss_before_milestone_view', $current_order );
 					esc_html_e( 'Phase approved', 'wp-sell-services' );
 				} elseif ( $is_submitted ) {
 					esc_html_e( 'Delivery ready for your review', 'wp-sell-services' );
+				} elseif ( $in_revision ) {
+					esc_html_e( 'Sent back to your seller', 'wp-sell-services' );
 				} elseif ( $is_working ) {
 					esc_html_e( 'Paid — seller working', 'wp-sell-services' );
 				} elseif ( $is_unpaid ) {
@@ -185,10 +194,17 @@ do_action( 'wpss_before_milestone_view', $current_order );
 				</div>
 			<?php endif; ?>
 
-			<?php if ( '' !== $submit_note && ( $is_submitted || $is_completed ) ) : ?>
+			<?php if ( '' !== $submit_note && ( $is_submitted || $is_completed || $in_revision ) ) : ?>
 				<div class="wpss-tip-view__message">
 					<dt><?php esc_html_e( 'Delivery note', 'wp-sell-services' ); ?></dt>
 					<dd><?php echo esc_html( $submit_note ); ?></dd>
+				</div>
+			<?php endif; ?>
+
+			<?php if ( '' !== $revision_ask && $in_revision ) : ?>
+				<div class="wpss-tip-view__message">
+					<dt><?php esc_html_e( 'Changes requested', 'wp-sell-services' ); ?></dt>
+					<dd><?php echo esc_html( $revision_ask ); ?></dd>
 				</div>
 			<?php endif; ?>
 		</dl>
@@ -217,10 +233,10 @@ do_action( 'wpss_before_milestone_view', $current_order );
 				</button>
 			<?php endif; ?>
 
-			<?php if ( $is_vendor && ( $is_working || $is_submitted ) ) : ?>
+			<?php if ( $is_vendor && ( $is_working || $is_submitted || $in_revision ) ) : ?>
 				<button type="button" class="wpss-btn wpss-btn--primary wpss-milestone-submit-btn"
 					data-milestone="<?php echo esc_attr( (int) $current_order->id ); ?>">
-					<?php echo esc_html( $is_submitted ? __( 'Resubmit delivery', 'wp-sell-services' ) : __( 'Submit delivery', 'wp-sell-services' ) ); ?>
+					<?php echo esc_html( ( $is_submitted || $in_revision ) ? __( 'Resubmit delivery', 'wp-sell-services' ) : __( 'Submit delivery', 'wp-sell-services' ) ); ?>
 				</button>
 			<?php endif; ?>
 
@@ -230,25 +246,18 @@ do_action( 'wpss_before_milestone_view', $current_order );
 					<?php esc_html_e( 'Approve delivery', 'wp-sell-services' ); ?>
 				</button>
 				<?php
-				// Revision request is a chat thread interaction by design —
-				// per the product decision, milestones don't have a separate
-				// reject status. This button routes the buyer back to the
-				// parent order's conversation panel with the phase title
-				// pre-loaded via a hash + localStorage hand-off, so the
-				// seller can see exactly which phase is being discussed
-				// without the buyer having to hunt for the chat.
-				// Anchor to the composer textarea so the browser scrolls
-				// straight to where the buyer needs to type. #wpss-message-input
-				// is rendered by conversation.php inside the parent order view.
-				$revision_url = $parent_url ? $parent_url . '#wpss-message-input' : '';
-				if ( $revision_url ) :
-					?>
-					<a href="<?php echo esc_url( $revision_url ); ?>"
-						class="wpss-btn wpss-btn--outline wpss-milestone-revision-link"
-						data-phase-title="<?php echo esc_attr( $phase_title ); ?>">
-						<?php esc_html_e( 'Request revision in chat', 'wp-sell-services' ); ?>
-					</a>
-				<?php endif; ?>
+				// A real action, not a link into the chat. Sending the phase
+				// back is a state change the seller has to act on, and
+				// submit() has always accepted revision_requested as a valid
+				// from-state - nothing ever put a phase INTO it, so the buyer's
+				// only route was a message the seller could miss
+				// (Basecamp 10254720173). The reason still lands in the parent
+				// thread, which is where the conversation lives.
+				?>
+				<button type="button" class="wpss-btn wpss-btn--outline wpss-milestone-revision-btn"
+					data-milestone="<?php echo esc_attr( (int) $current_order->id ); ?>">
+					<?php esc_html_e( 'Request changes', 'wp-sell-services' ); ?>
+				</button>
 			<?php endif; ?>
 
 			<?php if ( $parent_url ) : ?>
@@ -260,7 +269,7 @@ do_action( 'wpss_before_milestone_view', $current_order );
 	</div>
 </div>
 
-<?php if ( $is_vendor && ( $is_working || $is_submitted ) ) : ?>
+<?php if ( $is_vendor && ( $is_working || $is_submitted || $in_revision ) ) : ?>
 	<!-- Submit delivery modal (vendor only) -->
 	<div class="wpss-modal wpss-extension-modal" id="wpss-milestone-submit-modal" role="dialog" aria-modal="true" aria-labelledby="wpss-ms-submit-title" hidden>
 		<div class="wpss-modal__backdrop"></div>
@@ -272,7 +281,7 @@ do_action( 'wpss_before_milestone_view', $current_order );
 				</button>
 			</div>
 			<div class="wpss-modal__body">
-				<p class="wpss-modal__intro"><?php esc_html_e( 'Tell the buyer what you delivered. They will review and approve, or ask for changes in chat.', 'wp-sell-services' ); ?></p>
+				<p class="wpss-modal__intro"><?php esc_html_e( 'Tell the buyer what you delivered. They will review and approve, or send it back with notes.', 'wp-sell-services' ); ?></p>
 				<form class="wpss-milestone-submit-form" data-milestone="<?php echo esc_attr( (int) $current_order->id ); ?>">
 					<div class="wpss-form-row">
 						<label for="wpss-ms-note"><?php esc_html_e( 'Delivery note', 'wp-sell-services' ); ?></label>
@@ -282,6 +291,35 @@ do_action( 'wpss_before_milestone_view', $current_order );
 					<div class="wpss-modal__footer">
 						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
 						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Submit delivery', 'wp-sell-services' ); ?></button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+<?php endif; ?>
+
+<?php if ( $is_buyer && $is_submitted ) : ?>
+	<!-- Request changes modal (buyer only) -->
+	<div class="wpss-modal wpss-extension-modal" id="wpss-milestone-revision-modal" role="dialog" aria-modal="true" aria-labelledby="wpss-ms-revision-title" hidden>
+		<div class="wpss-modal__backdrop"></div>
+		<div class="wpss-modal__dialog">
+			<div class="wpss-modal__header">
+				<h3 id="wpss-ms-revision-title" class="wpss-modal__title"><?php esc_html_e( 'Request changes', 'wp-sell-services' ); ?></h3>
+				<button type="button" class="wpss-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">
+					<i data-lucide="x" class="wpss-icon" aria-hidden="true"></i>
+				</button>
+			</div>
+			<div class="wpss-modal__body">
+				<p class="wpss-modal__intro"><?php esc_html_e( 'Tell the seller what needs changing. The phase goes back to them and your notes are posted in the order conversation.', 'wp-sell-services' ); ?></p>
+				<form class="wpss-milestone-revision-form" data-milestone="<?php echo esc_attr( (int) $current_order->id ); ?>">
+					<div class="wpss-form-row">
+						<label for="wpss-ms-reason"><?php esc_html_e( 'What needs changing?', 'wp-sell-services' ); ?></label>
+						<textarea id="wpss-ms-reason" name="reason" rows="4" class="wpss-textarea" required placeholder="<?php esc_attr_e( 'e.g. The second concept is close - can the logo sit left of the wordmark instead of above it?', 'wp-sell-services' ); ?>"></textarea>
+					</div>
+					<div class="wpss-modal__feedback" role="status" aria-live="polite" hidden></div>
+					<div class="wpss-modal__footer">
+						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
+						<button type="submit" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Send back to seller', 'wp-sell-services' ); ?></button>
 					</div>
 				</form>
 			</div>
@@ -312,17 +350,6 @@ do_action( 'wpss_after_milestone_view', $current_order );
 		Object.keys(payload).forEach(function (k) { data.append(k, payload[k]); });
 		return fetch(ajaxurl, { method: 'POST', credentials: 'include', body: data }).then(function (r) { return r.json(); });
 	}
-
-	// Stash the phase title so the parent order-view can prefill the
-	// chat box when the buyer lands on it — keeps the reference crisp
-	// without cluttering the URL with long query strings.
-	document.querySelectorAll('.wpss-milestone-revision-link').forEach(function (btn) {
-		btn.addEventListener('click', function () {
-			try {
-				sessionStorage.setItem('wpss_revision_prefill', btn.dataset.phaseTitle || '');
-			} catch (e) { /* storage disabled — silently continue, link still navigates */ }
-		});
-	});
 
 	// Confirm via the design-system modal (wpssConfirm), never native confirm()/
 	// alert() — matches the rest of the plugin (portfolio/request delete, admin
@@ -378,39 +405,52 @@ do_action( 'wpss_after_milestone_view', $current_order );
 		});
 	});
 
-	var submitModal = document.getElementById('wpss-milestone-submit-modal');
-	if (submitModal) {
-		var submitForm = submitModal.querySelector('.wpss-milestone-submit-form');
-		var feedback = submitModal.querySelector('.wpss-modal__feedback');
+	// One wiring, two modals. The seller's Submit delivery and the buyer's
+	// Request changes are the same interaction with a different verb, and
+	// the second was about to be a copy of the first.
+	function wireModal(modalId, formClass, openerClass, action, field) {
+		var modal = document.getElementById(modalId);
+		if (!modal) return;
 
-		document.querySelectorAll('.wpss-milestone-submit-btn').forEach(function (btn) {
-			btn.addEventListener('click', function () { submitModal.hidden = false; submitModal.classList.add('wpss-modal-open'); });
+		var form = modal.querySelector('.' + formClass);
+		var feedback = modal.querySelector('.wpss-modal__feedback');
+
+		function close() { modal.hidden = true; modal.classList.remove('wpss-modal-open'); }
+
+		document.querySelectorAll('.' + openerClass).forEach(function (btn) {
+			btn.addEventListener('click', function () {
+				modal.hidden = false;
+				modal.classList.add('wpss-modal-open');
+				var input = form.querySelector('[name=' + field + ']');
+				if (input) input.focus();
+			});
 		});
-		submitModal.querySelectorAll('.wpss-modal__close, .wpss-modal__cancel, .wpss-modal__backdrop').forEach(function (el) {
-			el.addEventListener('click', function () { submitModal.hidden = true; submitModal.classList.remove('wpss-modal-open'); });
+		modal.querySelectorAll('.wpss-modal__close, .wpss-modal__cancel, .wpss-modal__backdrop').forEach(function (el) {
+			el.addEventListener('click', close);
 		});
 
-		submitForm.addEventListener('submit', function (e) {
+		form.addEventListener('submit', function (e) {
 			e.preventDefault();
-			var submitBtn = submitForm.querySelector('button[type=submit]');
+			var submitBtn = form.querySelector('button[type=submit]');
+			var payload = { milestone_id: form.dataset.milestone };
+			payload[field] = form.querySelector('[name=' + field + ']').value;
 			submitBtn.disabled = true;
-			post('wpss_submit_milestone', {
-				milestone_id: submitForm.dataset.milestone,
-				note: submitForm.querySelector('[name=note]').value,
-			}).then(function (res) {
+			post(action, payload).then(function (res) {
 				submitBtn.disabled = false;
+				feedback.hidden = false;
 				if (res && res.success) {
-					feedback.hidden = false;
 					feedback.className = 'wpss-modal__feedback wpss-modal__feedback--success';
-					feedback.textContent = (res.data && res.data.message) || 'Submitted';
+					feedback.textContent = (res.data && res.data.message) || 'Done';
 					setTimeout(function () { window.location.reload(); }, 700);
 				} else {
-					feedback.hidden = false;
 					feedback.className = 'wpss-modal__feedback wpss-modal__feedback--error';
 					feedback.textContent = (res && res.data && res.data.message) || 'Error';
 				}
 			});
 		});
 	}
+
+	wireModal('wpss-milestone-submit-modal', 'wpss-milestone-submit-form', 'wpss-milestone-submit-btn', 'wpss_submit_milestone', 'note');
+	wireModal('wpss-milestone-revision-modal', 'wpss-milestone-revision-form', 'wpss-milestone-revision-btn', 'wpss_request_milestone_revision', 'reason');
 }());
 </script>

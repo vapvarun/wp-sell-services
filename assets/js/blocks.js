@@ -193,7 +193,7 @@
 							label: __('Placeholder text', 'wp-sell-services'),
 							value: attributes.placeholder,
 							onChange: (value) => setAttributes({ placeholder: value }),
-							placeholder: __('What service are you looking for?', 'wp-sell-services')
+							placeholder: __('Search services...', 'wp-sell-services')
 						}),
 						el(TextControl, {
 							label: __('Button text', 'wp-sell-services'),

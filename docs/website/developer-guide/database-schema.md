@@ -159,7 +159,7 @@ license lapses, so nothing is lost on reactivation.
 | `wpss_pro_paypal_payout_items` | Payouts in a batch | `batch_id`, `vendor_id`, `paypal_email`, `amount`, `payout_item_id`, `transaction_id`, `status`, `error_message` |
 | `wpss_pro_subscription_plans` | Vendor plans | `name`, `slug`, `price`, `billing_period`, `max_services`, `max_featured`, `commission_override`, `stripe_price_id`, `is_active` |
 | `wpss_pro_vendor_subscriptions` | Who is on a plan | `vendor_id`, `plan_id`, `stripe_subscription_id`, `status`, `current_period_start`, `current_period_end`, `cancelled_at` |
-| `wpss_pro_recurring_subscriptions` | Recurring services | `customer_id`, `vendor_id`, `service_id`, `original_order_id`, `stripe_subscription_id`, `billing_interval`, `amount`, `status`, `next_billing_date` |
+| `wpss_pro_recurring_subscriptions` | Recurring services -- **table exists, feature is deferred and switched off**; renewals never charge, so expect this table to be empty | `customer_id`, `vendor_id`, `service_id`, `original_order_id`, `stripe_subscription_id`, `billing_interval`, `amount`, `status`, `next_billing_date` |
 
 `commission_rules.priority` is ascending -- lowest number is evaluated first and
 the first match wins. See [Tiered Commission](../earnings-wallet/tiered-commission.md).

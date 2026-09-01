@@ -196,6 +196,176 @@ class OfflineGateway implements PaymentGatewayInterface {
 	 *
 	 * @return array Settings fields configuration.
 	 */
+	/**
+	 * The offline methods an owner has defined.
+	 *
+	 * One generic "Offline Payment" meant a buyer could not say which route
+	 * they used, the owner had to cram bank details, cash and UPI into a single
+	 * instructions block, and every order landed as `payment_method = offline`
+	 * so reporting could not tell them apart.
+	 *
+	 * Falls back to a single method built from the legacy title/instructions
+	 * fields, so a site that never touches this keeps exactly what it had.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param bool $enabled_only Only methods the owner has left enabled.
+	 * @return array<int, array{id:string,label:string,instructions:string,enabled:bool}>
+	 */
+	/**
+	 * Freeze the chosen offline method onto an order.
+	 *
+	 * `payment_method` stays 'offline' on every one of these, untouched. Live
+	 * sites already carry a mix of `offline` and `bacs` in that column, and
+	 * reinterpreting it would relabel orders that were paid years ago. The
+	 * named method lives beside it in `meta`, the same way a package snapshot
+	 * does, so history keeps saying what actually happened.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param int    $order_id  Order ID.
+	 * @param string $method_id Method the buyer chose.
+	 * @return void
+	 */
+	private function record_order_method( int $order_id, string $method_id ): void {
+		$method_id = sanitize_key( $method_id );
+
+		if ( $order_id <= 0 || '' === $method_id ) {
+			return;
+		}
+
+		foreach ( self::get_methods( false ) as $method ) {
+			if ( $method['id'] !== $method_id ) {
+				continue;
+			}
+
+			$order = wpss_get_order( $order_id );
+
+			if ( ! $order ) {
+				return;
+			}
+
+			$meta                   = $order->meta;
+			$meta['offline_method'] = array(
+				'id'           => $method['id'],
+				'label'        => $method['label'],
+				'instructions' => $method['instructions'],
+			);
+
+			global $wpdb;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->update(
+				$wpdb->prefix . 'wpss_orders',
+				array( 'meta' => wp_json_encode( $meta ) ),
+				array( 'id' => $order_id )
+			);
+
+			return;
+		}
+	}
+
+	/**
+	 * The offline payment methods this site offers.
+	 *
+	 * Falls back to the legacy single unnamed method (title + instructions) on a
+	 * site that has never opened the editor, so the owner's own wording keeps
+	 * working and seeds row one when they do.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param bool $enabled_only Exclude methods the owner has switched off.
+	 * @return array<int,array<string,mixed>> Methods with id, label, instructions, enabled.
+	 */
+	public static function get_methods( bool $enabled_only = true ): array {
+		$settings = get_option( 'wpss_offline_settings', array() );
+		$methods  = $settings['methods'] ?? array();
+
+		if ( ! is_array( $methods ) || ! $methods ) {
+			// Legacy shape: one unnamed method. Keep the owner's own wording.
+			$methods = array(
+				array(
+					'id'           => 'offline',
+					'label'        => $settings['title'] ?? __( 'Offline Payment', 'wp-sell-services' ),
+					'instructions' => $settings['instructions'] ?? '',
+					'enabled'      => true,
+				),
+			);
+		}
+
+		$clean = array();
+
+		foreach ( $methods as $method ) {
+			$id = sanitize_key( $method['id'] ?? '' );
+
+			if ( '' === $id ) {
+				continue;
+			}
+
+			$enabled = ! isset( $method['enabled'] ) || ! empty( $method['enabled'] );
+
+			if ( $enabled_only && ! $enabled ) {
+				continue;
+			}
+
+			$clean[] = array(
+				'id'           => $id,
+				'label'        => (string) ( $method['label'] ?? $id ),
+				'instructions' => (string) ( $method['instructions'] ?? '' ),
+				'enabled'      => $enabled,
+			);
+		}
+
+		/**
+		 * Filter the offline payment methods.
+		 *
+		 * @since 1.7.0
+		 *
+		 * @param array $clean        Methods.
+		 * @param bool  $enabled_only Whether disabled methods were filtered out.
+		 */
+		return apply_filters( 'wpss_offline_methods', $clean, $enabled_only );
+	}
+
+	/**
+	 * What to show for the method an order was actually paid with.
+	 *
+	 * Reads the snapshot frozen on the order, exactly as package details are
+	 * frozen at purchase. Renaming or deleting a method later must not rewrite
+	 * what an old receipt says the buyer chose.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param \WPSellServices\Models\ServiceOrder|object $order Order.
+	 * @return array{id:string,label:string,instructions:string}|null
+	 */
+	public static function get_order_method( $order ): ?array {
+		$meta = is_array( $order->meta ?? null ) ? $order->meta : array();
+		$snap = $meta['offline_method'] ?? null;
+
+		if ( is_array( $snap ) && ! empty( $snap['id'] ) ) {
+			return array(
+				'id'           => (string) $snap['id'],
+				'label'        => (string) ( $snap['label'] ?? $snap['id'] ),
+				'instructions' => (string) ( $snap['instructions'] ?? '' ),
+			);
+		}
+
+		// Orders placed before named methods existed, including the `bacs` rows
+		// some sites carry. Nothing is rewritten - they are simply unnamed.
+		return null;
+	}
+
+	/**
+	 * Field definitions for the gateway's own accordion.
+	 *
+	 * Per-method instructions are NOT here - they live on each method in
+	 * render_methods_editor(). `title` is the heading the methods sit under.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string,array<string,mixed>> Field key => config.
+	 */
 	public function get_settings_fields(): array {
 		return array(
 			'enabled'         => array(
@@ -206,7 +376,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 			'title'           => array(
 				'type'        => 'text',
 				'label'       => __( 'Title', 'wp-sell-services' ),
-				'description' => __( 'Payment method title shown to buyers.', 'wp-sell-services' ),
+				'description' => __( 'Heading shown above the offline options at checkout.', 'wp-sell-services' ),
 				'default'     => __( 'Offline Payment', 'wp-sell-services' ),
 			),
 			'description'     => array(
@@ -214,12 +384,6 @@ class OfflineGateway implements PaymentGatewayInterface {
 				'label'       => __( 'Description', 'wp-sell-services' ),
 				'description' => __( 'Brief description shown on checkout page.', 'wp-sell-services' ),
 				'default'     => __( 'Pay via bank transfer, cash, or other offline methods. Your order will be processed after payment is confirmed.', 'wp-sell-services' ),
-			),
-			'instructions'    => array(
-				'type'        => 'editor',
-				'label'       => __( 'Payment Instructions', 'wp-sell-services' ),
-				'description' => __( 'Detailed instructions shown after order is placed (bank account details, etc.).', 'wp-sell-services' ),
-				'default'     => '',
 			),
 			'auto_hold_hours' => array(
 				'type'        => 'number',
@@ -255,7 +419,42 @@ class OfflineGateway implements PaymentGatewayInterface {
 					<?php echo esc_html( $description ); ?>
 				</p>
 			</div>
-			<input type="hidden" name="wpss_gateway" value="offline">
+			<?php
+			$offline_methods = self::get_methods();
+
+			// Only ask when there is a choice to make. One method - which is
+			// every site that has not configured any - stays a single hidden
+			// field, so nothing changes for them.
+			if ( count( $offline_methods ) > 1 ) :
+				?>
+				<fieldset class="wpss-offline-methods" style="border:0;padding:0;margin:0 0 16px;">
+					<legend style="font-weight:600;margin-bottom:8px;">
+						<?php esc_html_e( 'How will you pay?', 'wp-sell-services' ); ?>
+					</legend>
+					<?php foreach ( $offline_methods as $index => $offline_method ) : ?>
+						<label style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;">
+							<input
+								type="radio"
+								name="offline_method"
+								value="<?php echo esc_attr( $offline_method['id'] ); ?>"
+								<?php checked( 0, $index ); ?>
+								required
+							>
+							<span>
+								<strong><?php echo esc_html( $offline_method['label'] ); ?></strong>
+								<?php if ( '' !== $offline_method['instructions'] ) : ?>
+									<span style="display:block;color:#555;font-size:.9em;">
+										<?php echo esc_html( wp_strip_all_tags( $offline_method['instructions'] ) ); ?>
+									</span>
+								<?php endif; ?>
+							</span>
+						</label>
+					<?php endforeach; ?>
+				</fieldset>
+			<?php else : ?>
+				<input type="hidden" name="offline_method" value="<?php echo esc_attr( $offline_methods[0]['id'] ?? 'offline' ); ?>">
+			<?php endif; ?>
+
 			<input type="hidden" name="wpss_offline_nonce" value="<?php echo esc_attr( wp_create_nonce( 'wpss_offline_payment' ) ); ?>">
 		</div>
 		<?php
@@ -275,7 +474,13 @@ class OfflineGateway implements PaymentGatewayInterface {
 			return '';
 		}
 
-		$instructions = $this->settings['instructions'] ?? '';
+		// The buyer gets the instructions for the method they actually picked,
+		// not the one generic block. Falls back to the global instructions for
+		// orders placed before named methods existed.
+		$order_method = self::get_order_method( $order );
+		$instructions = ( $order_method && '' !== $order_method['instructions'] )
+			? $order_method['instructions']
+			: ( $this->settings['instructions'] ?? '' );
 
 		// Replace placeholders in instructions.
 		$replacements = array(
@@ -327,6 +532,10 @@ class OfflineGateway implements PaymentGatewayInterface {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
 			return;
 		}
+
+		// A disabled gateway does not start new money. Refunds and webhooks
+		// stay registered for historical orders; this does not.
+		wpss_gateway_require_enabled( $this );
 
 		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
@@ -381,6 +590,22 @@ class OfflineGateway implements PaymentGatewayInterface {
 				return;
 			}
 
+			// Freeze WHICH offline method they picked, not just that it was
+			// offline.
+			//
+			// Both other callers of record_order_method() are order-CREATION
+			// paths, so this branch - proposals, milestone phases, tips,
+			// extensions, and anything else paid through /checkout/pay/{id}/ -
+			// was writing no snapshot at all. Those buyers then read the
+			// current global instructions instead of the method they chose,
+			// and renaming or deleting that method rewrote what their order
+			// said afterwards. That is precisely the guarantee the snapshot
+			// exists to make, missing for an entire population.
+			$this->record_order_method(
+				(int) $order->id,
+				sanitize_key( wp_unslash( $_POST['offline_method'] ?? '' ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked at the top of this handler.
+			);
+
 			/**
 			 * Fires when an existing order is put on the offline rail.
 			 *
@@ -428,6 +653,12 @@ class OfflineGateway implements PaymentGatewayInterface {
 			if ( empty( $order_ids ) ) {
 				wp_send_json_error( array( 'message' => __( 'Failed to create orders. Please try again.', 'wp-sell-services' ) ) );
 				return;
+			}
+
+			$chosen_method = sanitize_key( wp_unslash( $_POST['offline_method'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the calling handler.
+
+			foreach ( $order_ids as $created_order_id ) {
+				$this->record_order_method( (int) $created_order_id, $chosen_method );
 			}
 
 			/**
@@ -521,6 +752,11 @@ class OfflineGateway implements PaymentGatewayInterface {
 			wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
 			return;
 		}
+
+		$this->record_order_method(
+			(int) ( is_object( $order ) ? ( $order->id ?? 0 ) : (int) $order ),
+			sanitize_key( wp_unslash( $_POST['offline_method'] ?? '' ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the calling handler.
+		);
 
 		/**
 		 * Fires when an offline order is created.
@@ -913,7 +1149,40 @@ class OfflineGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		$instructions = $this->settings['instructions'] ?? '';
+		/*
+		 * Read the method the buyer actually chose, then fall back.
+		 *
+		 * This used to read $this->settings['instructions'] - the LEGACY global
+		 * block - and nothing else. The sanitizer drops that key the moment an
+		 * owner defines named methods, deliberately, so one setting does not
+		 * have two homes. The two together meant that defining methods silently
+		 * left every offline buyer with NO payment instructions: the global key
+		 * was gone, this read found nothing, and the early return below hid the
+		 * whole section. An offline buyer with no instructions cannot pay.
+		 *
+		 * get_order_method() existed for exactly this and had no callers - the
+		 * snapshot was being written and never read.
+		 */
+		$method       = self::get_order_method( $order );
+		$instructions = $method['instructions'] ?? '';
+
+		if ( '' === $instructions ) {
+			// Orders placed before named methods existed, and sites that never
+			// opened the editor.
+			$instructions = $this->settings['instructions'] ?? '';
+		}
+
+		if ( '' === $instructions ) {
+			// Nothing on the order and nothing global - but the owner may still
+			// have named methods, in which case show the one the order is on.
+			foreach ( self::get_methods( false ) as $configured ) {
+				if ( isset( $method['id'] ) && $configured['id'] === $method['id'] ) {
+					$instructions = $configured['instructions'];
+					break;
+				}
+			}
+		}
+
 		if ( empty( $instructions ) ) {
 			return;
 		}
@@ -938,7 +1207,17 @@ class OfflineGateway implements PaymentGatewayInterface {
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
 					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Payment Instructions', 'wp-sell-services' ); ?>
+					<?php
+					if ( ! empty( $method['label'] ) ) {
+						printf(
+							/* translators: %s: the offline payment method the buyer chose, e.g. Bank Transfer */
+							esc_html__( 'How to pay by %s', 'wp-sell-services' ),
+							esc_html( $method['label'] )
+						);
+					} else {
+						esc_html_e( 'Payment Instructions', 'wp-sell-services' );
+					}
+					?>
 				</h2>
 			</div>
 			<div class="wpss-order-section__body">
@@ -1211,10 +1490,92 @@ class OfflineGateway implements PaymentGatewayInterface {
 		$sanitized['enabled']         = ! empty( $input['enabled'] ) ? '1' : '';
 		$sanitized['title']           = sanitize_text_field( $input['title'] ?? '' );
 		$sanitized['description']     = sanitize_textarea_field( $input['description'] ?? '' );
-		$sanitized['instructions']    = wp_kses_post( $input['instructions'] ?? '' );
 		$sanitized['auto_hold_hours'] = absint( $input['auto_hold_hours'] ?? 0 );
 
+		$methods = $this->sanitize_methods( (array) ( $input['methods'] ?? array() ) );
+
+		if ( $methods ) {
+			$sanitized['methods'] = $methods;
+
+			// Migrated. The legacy single-method key is deliberately NOT carried
+			// forward: leaving it would give one setting two homes, which is how
+			// a value ends up written to one key and read from another.
+			// get_methods() only falls back to it while methods[] is absent.
+			return $sanitized;
+		}
+
+		// No methods named yet - keep the legacy shape intact so an owner who
+		// saves the tab before filling the editor does not lose their
+		// instructions.
+		$sanitized['instructions'] = wp_kses_post( $input['instructions'] ?? '' );
+
 		return $sanitized;
+	}
+
+	/**
+	 * Sanitize the posted method rows.
+	 *
+	 * Ids are derived from the label once and then frozen: renaming "Bank
+	 * Transfer" to "Wire Transfer" keeps bank_transfer, so nothing holding the
+	 * id sees a rename as a different method. Rows are fixed and cannot be
+	 * reordered, so the row index is a stable place to carry that id forward.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param array<int|string,mixed> $rows Raw method rows, straight off the settings POST.
+	 * @return array<int,array<string,mixed>> Clean methods, blank rows dropped.
+	 */
+	private function sanitize_methods( array $rows ): array {
+		$existing = (array) ( get_option( self::OPTION_NAME, array() )['methods'] ?? array() );
+		$clean    = array();
+		$used     = array();
+
+		foreach ( array_values( $rows ) as $index => $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+
+			$label = sanitize_text_field( (string) ( $row['label'] ?? '' ) );
+
+			// A row with no name is an empty slot, not a method.
+			if ( '' === $label ) {
+				continue;
+			}
+
+			$id = sanitize_key( (string) ( $existing[ $index ]['id'] ?? '' ) );
+
+			if ( '' === $id ) {
+				// sanitize_title() first: sanitize_key() alone DELETES the space
+				// rather than replacing it, so "Bank Transfer" became
+				// "banktransfer". Ids are frozen the moment they are assigned, so
+				// getting this right matters only before the first save.
+				$id = sanitize_key( sanitize_title( $label ) );
+			}
+
+			if ( '' === $id ) {
+				$id = 'method_' . ( $index + 1 );
+			}
+
+			// Two methods called the same thing would otherwise share an id, and
+			// the order snapshot would point at whichever came first.
+			$base = $id;
+			$n    = 2;
+
+			while ( in_array( $id, $used, true ) ) {
+				$id = $base . '_' . $n;
+				++$n;
+			}
+
+			$used[]  = $id;
+			$clean[] = array(
+				'id'           => $id,
+				'label'        => $label,
+				'instructions' => wp_kses_post( (string) ( $row['instructions'] ?? '' ) ),
+				'enabled'      => ! empty( $row['enabled'] ),
+			);
+		}
+
+		return $clean;
 	}
 
 	/**
@@ -1239,6 +1600,8 @@ class OfflineGateway implements PaymentGatewayInterface {
 			<?php endforeach; ?>
 		</table>
 
+		<?php $this->render_methods_editor(); ?>
+
 		<h4><?php esc_html_e( 'Available Placeholders for Instructions', 'wp-sell-services' ); ?></h4>
 		<p class="description">
 			<?php esc_html_e( 'You can use these placeholders in the Payment Instructions:', 'wp-sell-services' ); ?>
@@ -1249,6 +1612,93 @@ class OfflineGateway implements PaymentGatewayInterface {
 			<li><code>{total}</code> - <?php esc_html_e( 'Formatted order total with currency', 'wp-sell-services' ); ?></li>
 			<li><code>{currency}</code> - <?php esc_html_e( 'Currency code', 'wp-sell-services' ); ?></li>
 		</ul>
+		<?php
+	}
+
+	/**
+	 * Named offline methods.
+	 *
+	 * Fixed slots rather than a JavaScript repeater. Free has no repeater
+	 * anywhere in its admin, and a marketplace that takes bank transfer, cheque
+	 * and cash has three methods, not thirty - so the ceiling buys nothing that
+	 * the JS, the CSS and a variable-length sanitizer would cost. Blank rows are
+	 * dropped on save. Raise WPSS_OFFLINE_METHOD_SLOTS if a site ever needs more.
+	 *
+	 * Row one arrives pre-filled on a site that has only ever had the single
+	 * unnamed method, because get_methods() falls back to the legacy title and
+	 * instructions - so the owner sees their own wording and saving migrates it.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return void
+	 */
+	private function render_methods_editor(): void {
+		$methods = self::get_methods( false );
+		$slots   = (int) apply_filters( 'wpss_offline_method_slots', 4 );
+		$slots   = max( count( $methods ), max( 1, $slots ) );
+		?>
+		<h4><?php esc_html_e( 'Payment Methods', 'wp-sell-services' ); ?></h4>
+		<p class="description">
+			<?php esc_html_e( 'Name each way a buyer can pay you offline. Leave a slot blank to skip it. Buyers choose from the enabled ones at checkout, and the method they picked is recorded on the order, so renaming or removing one later never changes what a past order says.', 'wp-sell-services' ); ?>
+		</p>
+
+		<table class="form-table wpss-offline-methods-editor">
+			<?php for ( $i = 0; $i < $slots; $i++ ) : ?>
+				<?php
+				$method   = $methods[ $i ] ?? array();
+				$label    = (string) ( $method['label'] ?? '' );
+				$instr    = (string) ( $method['instructions'] ?? '' );
+				$on       = ! isset( $method['enabled'] ) || ! empty( $method['enabled'] );
+				$name     = self::OPTION_NAME . '[methods][' . $i . ']';
+				$field_id = 'wpss-offline-method-' . $i;
+				?>
+				<tr>
+					<th scope="row">
+						<label for="<?php echo esc_attr( $field_id ); ?>">
+							<?php
+							/* translators: %d: method slot number. */
+							printf( esc_html__( 'Method %d', 'wp-sell-services' ), (int) ( $i + 1 ) );
+							?>
+						</label>
+					</th>
+					<td>
+						<p>
+							<input
+								type="text"
+								id="<?php echo esc_attr( $field_id ); ?>"
+								name="<?php echo esc_attr( $name ); ?>[label]"
+								value="<?php echo esc_attr( $label ); ?>"
+								class="regular-text"
+								placeholder="<?php esc_attr_e( 'Bank Transfer', 'wp-sell-services' ); ?>"
+							>
+						</p>
+						<p>
+							<label for="<?php echo esc_attr( $field_id ); ?>-instructions" class="screen-reader-text">
+								<?php esc_html_e( 'Payment instructions', 'wp-sell-services' ); ?>
+							</label>
+							<textarea
+								id="<?php echo esc_attr( $field_id ); ?>-instructions"
+								name="<?php echo esc_attr( $name ); ?>[instructions]"
+								rows="4"
+								class="large-text code"
+								placeholder="<?php esc_attr_e( 'Account name, sort code, account number, and the reference to quote.', 'wp-sell-services' ); ?>"
+							><?php echo esc_textarea( $instr ); ?></textarea>
+						</p>
+						<p>
+							<label>
+								<input
+									type="checkbox"
+									name="<?php echo esc_attr( $name ); ?>[enabled]"
+									value="1"
+									<?php checked( $on ); ?>
+								>
+								<?php esc_html_e( 'Offer this method at checkout', 'wp-sell-services' ); ?>
+							</label>
+						</p>
+					</td>
+				</tr>
+			<?php endfor; ?>
+		</table>
 		<?php
 	}
 

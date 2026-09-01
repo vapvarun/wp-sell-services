@@ -43,11 +43,6 @@ Modern, conversion-optimized checkout experience. Fast performance with streamli
 
 **When to use:** Want higher conversion rates with cleaner checkout flow.
 
-#### SureCart
-Cloud-hosted checkout solution with built-in PCI compliance. Offload payment security to their servers.
-
-**When to use:** Need PCI compliance without server-side payment processing.
-
 #### Standalone Mode
 No e-commerce plugin required. Built-in checkout system with direct payment gateway integration.
 
@@ -328,40 +323,17 @@ Export all reports to CSV or Excel format for external analysis.
 
 ## Pro Enhancement Features
 
-### Service Wizard Enhancements
+### Service Wizard Limits Removed
 
-Beyond removing limits, Pro adds new wizard capabilities:
+Pro does not change the wizard's steps - vendors get the same flow either way.
+What it removes is the caps on how much they can put into a service:
 
-#### AI Title Suggestions
-Generate service title ideas based on category and keywords. Click to insert suggested title into form.
-
-**Powered by:** OpenAI integration (API key required)
-
-#### Service Templates
-Pre-filled templates for common service types (logo design, WordPress development, content writing). One-click to populate wizard with template data.
-
-**Includes:** 20+ professional templates across categories
-
-#### Bulk Image Upload
-Drag and drop multiple images at once instead of uploading one by one.
-
-**Supports:** Up to 20 images in single upload
-
-#### Direct Video Upload
-Upload video files directly instead of only YouTube/Vimeo embeds.
-
-**File types:** MP4, MOV, AVI
-**Max size:** 100MB per video
-
-#### Custom Package Fields
-Add custom fields to pricing packages (e.g., "Number of pages", "Delivery format", "Commercial license").
-
-**Field types:** Text, number, dropdown, checkbox
-
-#### Scheduled Publishing
-Set future publish dates for services instead of only "draft" or "publish immediately".
-
-**Options:** Specific date/time or relative (e.g., "publish in 3 days")
+| | Free | Pro |
+|---|---|---|
+| Gallery images | 4 | Unlimited |
+| Add-ons per service | 3 | Unlimited |
+| FAQ entries | 5 | Unlimited |
+| Requirement questions | 5 | Unlimited |
 
 ---
 
@@ -418,7 +390,7 @@ Pro is an extension, not a replacement. Everything from the free version remains
 Yes. WP Sell Services Pro extends the free plugin. Both must be installed and active. Pro does not replace Free - it adds features via WordPress hooks.
 
 ### Do I still need WooCommerce with Pro?
-No. Pro includes Standalone mode that runs without any e-commerce plugin. You can also use Easy Digital Downloads, FluentCart, or SureCart instead of WooCommerce.
+No. Pro includes Standalone mode that runs without any e-commerce plugin. You can also use Easy Digital Downloads or FluentCart instead of WooCommerce.
 
 ### How does licensing work?
 After purchase, you receive a license key. Enter it in **WP Sell Services > Settings > License** to activate Pro features and receive automatic updates. One license is valid for one site (or multiple sites with multi-site licenses).
@@ -432,7 +404,7 @@ Yes. Install Pro at any time alongside the free version. All existing services, 
 ### Which payment gateways work best?
 **If using WooCommerce:** Any WooCommerce gateway (free or pro).
 **If using Standalone mode:** Direct Stripe, PayPal, Razorpay, or Offline payments (Pro only).
-**If using EDD/FluentCart/SureCart:** Their native payment gateways work automatically.
+**If using EDD/FluentCart:** Their native payment gateways work automatically.
 
 ### How does the wallet system work?
 When an order completes, vendor earnings (after commission) automatically credit to their chosen wallet. Vendors view balance, transaction history, and request withdrawals. You can use the built-in internal wallet or integrate with TeraWallet, WooWallet, or MyCred.
@@ -482,7 +454,7 @@ Buy WP Sell Services Pro from [wbcomdesigns.com](#) and receive your license key
 You've validated your marketplace with the free version. Now you need unlimited service limits, better analytics, and automated payouts as vendor count increases.
 
 ### You Don't Use WooCommerce
-You prefer Easy Digital Downloads, FluentCart, SureCart, or want to run completely standalone without any e-commerce plugin.
+You prefer Easy Digital Downloads, FluentCart, or want to run completely standalone without any e-commerce plugin.
 
 ### You Need Direct Payment Control
 You want direct Stripe/PayPal/Razorpay integration instead of routing payments through WooCommerce. Lower per-transaction costs with direct gateways.

@@ -1,9 +1,9 @@
 # WP Sell Services — Feature Audit Report
 
-**Generated**: 2026-05-08 · **last refreshed** 2026-08-01 (branch `1.3.1`)
-**Version**: 1.3.1
+**Generated**: 2026-05-08 · **last refreshed** 2026-08-26 (branch `1.7.0`)
+**Version**: 1.7.0-dev
 **Source**: [`audit/manifest.json`](manifest.json)
-**Counts**: 189 PHP files in `src/` · 142 REST endpoints (23 controllers + 7 generic + 1 tour) · 111 AJAX handlers · 6 WP-CLI commands · 280 hook firings (128 do_actions + 152 apply_filters)
+**Counts**: 208 PHP files in `src/` · 151 `register_rest_route` calls (26 controllers) · 119 AJAX handlers · 20 custom DB tables · 9 WP-CLI command files · 377 hook firings (165 do_actions + 212 apply_filters) · 6 blocks · 20 shortcodes · 37 HTML + 14 plain email templates · 24 switchable notification types. Re-measured after the 1.7.0 dead-code sweep (-1,299 lines).
 
 > Counts are enumerated by hand, not by `write-manifest.mjs` — the generator undercounts REST
 > because controllers register through an array wrapper. See `audit/manifest.json`.
@@ -161,7 +161,7 @@ No custom capability slugs registered. Plugin uses standard WP capabilities (`ed
 
 ## Known issues surfaced by audit
 
-See `audit/wppqa-baseline-2026-05-08/SUMMARY.md`:
+See `audit/archive/wppqa-baseline-2026-05-08/SUMMARY.md` (archived; the current baseline is `audit/wppqa-baseline-2026-06-10/`):
 - 5 `alert()`/`confirm()` calls in admin JS (admin-ux Rule 10) — replace with toast
 - 3 `$_POST/$_GET` iteration patterns (security.md) — read explicit keys
 - ~13 nonce-without-current_user_can findings (some valid object-ownership patterns; 3-5 in `Admin.php`/`ServiceModerationPage.php` may be real gaps)

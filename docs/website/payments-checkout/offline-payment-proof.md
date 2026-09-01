@@ -23,6 +23,11 @@ You also need at least one offline payment method enabled under
 That text is what the buyer sees after ordering, so put everything they need to
 pay you in it.
 
+You can name several methods there - bank transfer, cash, UPI - each with its
+own instructions. The buyer picks one at checkout, and the order records which
+one they chose, so the instructions they were given never change afterwards
+even if you rename or remove that method.
+
 ## How it works for the buyer
 
 1. They order and choose the offline payment method at checkout.

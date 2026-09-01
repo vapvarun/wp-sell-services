@@ -36,7 +36,7 @@ That includes:
 - Analytics and data export
 - Display currency
 - The raised service limits (gallery, add-ons, FAQs, requirements)
-- WooCommerce, EDD, FluentCart, SureCart, and Razorpay integrations
+- WooCommerce, EDD, FluentCart, and Razorpay integrations
 
 **Your data is not deleted.** Commission rules, subscriptions, wallet balances,
 and connected Stripe accounts all stay in the database, and reactivating the

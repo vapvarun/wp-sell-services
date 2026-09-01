@@ -57,6 +57,23 @@ If rates cannot be fetched at all, the hint simply does not render -- shoppers
 still see correct base-currency prices. The feature degrades quietly rather than
 showing a wrong number.
 
+## Where the hint appears
+
+Buyer-facing prices carry it:
+
+- service cards and the package tiers on a service page
+- buyer request budgets, on the request archive, the single request, and the
+  buyer's own dashboard list
+- proposal prices, milestone phase amounts, and a proposal's project total
+- cart line items, add-on prices, the cart subtotal and total
+- the order confirmation totals
+
+Deliberately left in base currency: **vendor earnings and sales screens, admin
+screens, and every email**. Those show money that has already moved, or is owed
+to a vendor in your base currency. A converted figure there reads as though the
+amount itself changed, which is the opposite of helpful when someone is
+checking what they were paid.
+
 ## Things to know
 
 - Changing the currency list or App ID flushes the rate cache immediately.

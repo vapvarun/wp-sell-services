@@ -377,3 +377,46 @@ function wpss_record_pending_payment_method( int $order_id, string $method ): bo
 
 	return $order && $method === (string) ( $order->payment_method ?? '' );
 }
+
+/**
+ * Refuse an AJAX action on a gateway the owner has switched off.
+ *
+ * A gateway's init() registers its hooks unconditionally, and deliberately so:
+ * an order paid through Stripe last month must still be refundable after the
+ * owner disables Stripe, and a webhook for it must still land. Refunds and
+ * callbacks therefore stay registered for the life of the install.
+ *
+ * Starting NEW money is the opposite case, and it was not gated anywhere. Every
+ * gateway already asks is_enabled() before enqueuing its scripts - so the
+ * visible half was guarded and the reachable half was not, and a logged-in
+ * caller could invoke create-payment on a gateway with no credentials at all.
+ *
+ * One helper rather than eight copies of the same three lines: this is the
+ * boundary that decides whether a gateway can take money, and it should read
+ * identically in all of them.
+ *
+ * @since 1.7.0
+ *
+ * @param object $gateway Gateway exposing is_enabled() and get_name().
+ * @return void Sends a JSON error and exits when the gateway is off.
+ */
+function wpss_gateway_require_enabled( object $gateway ): void {
+	if ( method_exists( $gateway, 'is_enabled' ) && $gateway->is_enabled() ) {
+		return;
+	}
+
+	$name = method_exists( $gateway, 'get_name' ) ? $gateway->get_name() : '';
+
+	wpss_log(
+		sprintf( 'Refused a payment action on the disabled gateway "%s".', $name ),
+		'warning'
+	);
+
+	wp_send_json_error(
+		array(
+			'code'    => 'wpss_gateway_disabled',
+			'message' => __( 'This payment method is not available. Choose another at checkout.', 'wp-sell-services' ),
+		),
+		403
+	);
+}

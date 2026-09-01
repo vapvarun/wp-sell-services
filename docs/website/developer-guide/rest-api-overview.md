@@ -559,7 +559,7 @@ rest_not_logged_in`; a logged-in caller who lacks the right is `403`, and the
 vendor case has one code, `wpss_not_vendor`, instead of several spellings.
 
 **There is no error code for "a cart plugin owns payments."** When WooCommerce,
-EDD, FluentCart or SureCart is enabled, the `/payments/*` routes are simply not
+EDD or FluentCart is enabled, the `/payments/*` routes are simply not
 registered, so the answer is WordPress core's `404 rest_no_route`. Detect the
 rail from `GET /settings` rather than probing a payment route and interpreting
 the 404.
@@ -703,21 +703,25 @@ add_filter( 'wpss_api_cors_origins', function( $origins ) {
 } );
 ```
 
-## Rate Limiting **[PRO]**
+## Rate Limiting
 
-API rate limiting protects against abuse.
+Rate limiting ships in the **free** plugin. It is applied per action, not per
+user per hour, and it guards specific write paths -- opening a dispute, marking a
+review helpful, and similar -- rather than the API as a whole.
 
-**Limits**:
-- Authenticated users: 300 requests/hour
-- Application passwords: 1000 requests/hour
-- Administrators: Unlimited
+Budgets live in `Core\RateLimiter` and are filterable:
 
-**Rate Limit Headers**:
+```php
+add_filter( 'wpss_rate_limits', function ( array $limits, string $action ) {
+    if ( 'dispute' === $action ) {
+        $limits['max'] = 10; // allow 10 in the window instead of the default
+    }
+    return $limits;
+}, 10, 2 );
 ```
-X-RateLimit-Limit: 300
-X-RateLimit-Remaining: 245
-X-RateLimit-Reset: 1706785200
-```
+
+A refused request returns HTTP **429**. There are **no** `X-RateLimit-*`
+response headers -- do not build a client that waits on them.
 
 ## Extending the API
 

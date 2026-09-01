@@ -1,6 +1,6 @@
 # WP Sell Services — Capabilities & Roles
 
-**Version**: 1.3.1 · **Enumerated**: 2026-08-01 (branch `1.3.1`)
+**Version**: 1.7.0-dev · **Enumerated**: 2026-08-26 (branch `1.7.0`)
 
 Enumerated from source, not generated. Every entry below was verified against an
 actual `current_user_can()` / `add_cap()` call — a capability that exists only in

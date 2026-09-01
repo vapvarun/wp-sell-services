@@ -12,7 +12,7 @@ For a feature-by-feature breakdown, see [Free vs Pro](free-vs-pro.md).
 | **Commission** | Tiered commission rules and subscription-plan overrides on top of Free's flat rate; the split is computed once and persisted per order across every payment rail. |
 | **Vendor subscriptions** | Sell vendor membership plans billed through hosted Stripe Checkout, with plan switching and enforcement. |
 | **Currency** | Display-only multi-currency hint so shoppers see prices in their currency while your base currency stays authoritative. |
-| **Analytics** | Sales, earnings, and payout analytics with export. |
+| **Analytics** | Sales, earnings and payout dashboards. CSV export on the admin screen. |
 | **Storage** | DigitalOcean Spaces / S3-compatible delivery storage. |
 | **White label** | Rebrand the marketplace admin surfaces. |
 

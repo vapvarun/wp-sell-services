@@ -4,11 +4,11 @@ Extend WP Sell Services with custom e-commerce platforms, payment gateways, REST
 
 ## Extension Architecture
 
-WP Sell Services provides six contract interfaces in `src/Integrations/Contracts/` and several filter-based registration points. The free version ships with standalone checkout, Stripe, and PayPal. The Pro version adds WooCommerce, EDD, FluentCart, SureCart, and Razorpay.
+WP Sell Services provides six contract interfaces in `src/Integrations/Contracts/` and several filter-based registration points. The free version ships with standalone checkout, Stripe, and PayPal. The Pro version adds WooCommerce, EDD, FluentCart, and Razorpay.
 
 | Extension Type | Interface/Filter | Free | Pro |
 |---------------|-----------------|------|-----|
-| E-commerce Platform | `EcommerceAdapterInterface` | Standalone (built-in) | WooCommerce, EDD, FluentCart, SureCart **[PRO]** |
+| E-commerce Platform | `EcommerceAdapterInterface` | Standalone (built-in) | WooCommerce, EDD, FluentCart **[PRO]** |
 | Payment Gateway | `PaymentGatewayInterface` | Stripe, PayPal, Offline | Razorpay **[PRO]** |
 | Storage Provider | `wpss_storage_providers` | Local uploads | S3, GCS, DigitalOcean Spaces **[PRO]** |
 | Email Provider | `wpss_email_providers` | WordPress mail | SendGrid, Mailgun, SES |
@@ -271,9 +271,8 @@ The Pro plugin hooks into `wpss_loaded` to register all extensions:
 | Gallery images | `wpss_service_max_gallery` | 4 | -1 (unlimited) |
 | Service extras | `wpss_service_max_extras` | 3 | -1 (unlimited) |
 | FAQ items | `wpss_service_max_faq` | 5 | -1 (unlimited) |
-| Video URLs | `wpss_service_max_videos` | 1 | 3 |
+| Video URLs | `wpss_service_max_videos` | 1 | 1 (Pro does not filter this) |
 | Requirements | `wpss_service_max_requirements` | 5 | -1 (unlimited) |
-| Wizard features | `wpss_service_wizard_features` | All false | AI titles, templates |
 
 ## Vendor Capabilities
 

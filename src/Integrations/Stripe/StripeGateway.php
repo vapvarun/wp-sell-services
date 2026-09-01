@@ -1043,6 +1043,10 @@ class StripeGateway implements PaymentGatewayInterface {
 	public function ajax_create_payment_intent(): void {
 		check_ajax_referer( 'wpss_stripe', 'nonce' );
 
+		// A disabled gateway does not start new money. Refunds and webhooks
+		// stay registered for historical orders; this does not.
+		wpss_gateway_require_enabled( $this );
+
 		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );
 			return; // Explicit return for defensive coding.
@@ -1088,6 +1092,10 @@ class StripeGateway implements PaymentGatewayInterface {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
 			return;
 		}
+
+		// A disabled gateway does not start new money. Refunds and webhooks
+		// stay registered for historical orders; this does not.
+		wpss_gateway_require_enabled( $this );
 
 		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in to continue.', 'wp-sell-services' ) ) );

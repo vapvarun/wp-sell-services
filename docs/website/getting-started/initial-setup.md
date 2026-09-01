@@ -86,7 +86,7 @@ Go to **Sell Services > Settings > Orders & Disputes**:
 Revision limits are not a global setting -- vendors set them per package when they build a service. See [Pricing Packages](../service-creation/pricing-packages.md).
 
 ### Email Notifications
-Go to **Sell Services > Settings > Emails**. There are **23 notification types**, each with its own on/off switch, and all are enabled by default. The ones you will see most:
+Go to **Sell Services > Settings > Emails**. There are **24 notification types**, each with its own on/off switch, and all are enabled by default. The ones you will see most:
 
 - New order placed (sent to vendor)
 - Order completed, cancelled (sent to both)

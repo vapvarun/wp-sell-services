@@ -114,7 +114,11 @@ class ServiceSearch extends AbstractBlock {
 		$this->start_render();
 
 		$defaults = [
-			'placeholder'        => __( 'What service are you looking for?', 'wp-sell-services' ),
+			// Short enough to fit a sidebar as well as a full-width hero. The
+			// long form ("What service are you looking for?") clipped at 260px,
+			// and this is a block attribute, so an owner who has the width can
+			// still set whatever copy they like per instance.
+			'placeholder'        => __( 'Search services...', 'wp-sell-services' ),
 			'showCategoryFilter' => true,
 			'buttonText'         => __( 'Search', 'wp-sell-services' ),
 			'style'              => 'default',

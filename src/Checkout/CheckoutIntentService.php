@@ -194,6 +194,25 @@ class CheckoutIntentService {
 		$addons_total = (float) ( $addon_data['addons_total'] ?? 0 );
 		$amount      += $addons_total;
 
+		/*
+		 * Charge what the buyer was shown.
+		 *
+		 * This built its amount from package price plus add-ons and stopped
+		 * there. The checkout template computed tax, displayed it, and put the
+		 * taxed figure on the Pay button; the order row recorded the taxed
+		 * total; and the gateway charged THIS number, untaxed. A buyer saw
+		 * $100.30 and was charged $85.00, and the 18% was never collected from
+		 * anybody (Basecamp 10254444011).
+		 *
+		 * wpss_calculate_tax() is the same helper the display and the order row
+		 * now use, so the three cannot disagree again. Commission is unaffected:
+		 * CommissionService works from $order->subtotal + addons_total, the
+		 * PRE-tax base, because tax is not revenue to split.
+		 */
+		$taxable_base = $amount;
+		$tax          = wpss_calculate_tax( $taxable_base, (int) $service->post_author, $service_id );
+		$amount       = (float) $tax['total'];
+
 		return CheckoutIntent::single(
 			$service_id,
 			$package_id,
@@ -206,7 +225,8 @@ class CheckoutIntentService {
 				'service_id'  => $service_id,
 				'package_id'  => $package_id,
 				'customer_id' => $buyer_id,
-			)
+			),
+			$taxable_base
 		);
 	}
 
@@ -324,7 +344,20 @@ class CheckoutIntentService {
 				'service_id'     => $intent->service_id,
 				'package_id'     => $intent->package_id,
 				'customer_id'    => $intent->buyer_id,
-				'subtotal'       => $charged_amount - $intent->addons_total,
+				/*
+				 * PRE-TAX subtotal, deliberately not $charged_amount.
+				 *
+				 * create_order() applies tax itself and CommissionService takes
+				 * its cut from subtotal + addons_total. Passing the charged
+				 * amount here - which now includes tax - taxed the order a
+				 * SECOND time (Pay $88.50, order total $104.43) and billed
+				 * commission on the tax as well (Basecamp 10254561978).
+				 *
+				 * $charged_amount is still what the gateway reports it took, and
+				 * is checked against the intent below; it is simply not the
+				 * number the order row is built from.
+				 */
+				'subtotal'       => max( 0, $intent->taxable_base - $intent->addons_total ),
 				'addons'         => $intent->addons,
 				'addons_total'   => $intent->addons_total,
 				'currency'       => $charged_currency,

@@ -364,6 +364,8 @@ class RequirementsService {
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 
+		$files = self::flatten_file_inputs( $files );
+
 		foreach ( $files as $key => $file ) {
 			if ( empty( $file['name'] ) || UPLOAD_ERR_OK !== $file['error'] ) {
 				continue;
@@ -383,42 +385,69 @@ class RequirementsService {
 				continue;
 			}
 
-			// Upload file.
-			$upload = wp_handle_upload( $file, array( 'test_form' => false ) );
+			// A buyer's brief is private by any reasonable reading, and the docs
+			// say so - but post_status 'private' hides the attachment ROW while
+			// wp_handle_upload() had already written the bytes into the public
+			// uploads tree, so anyone holding the URL could read it forever
+			// (Basecamp 10239807824). wpss_store_order_file() writes outside the
+			// web root and hands back an id, not a URL.
+			$stored = wpss_store_order_file( $file, $order_id, 'requirement' );
 
-			if ( isset( $upload['error'] ) ) {
-				continue;
-			}
-
-			// Create attachment.
-			$attachment_id = wp_insert_attachment(
-				array(
-					'post_mime_type' => $upload['type'],
-					'post_title'     => sanitize_file_name( $file['name'] ),
-					'post_content'   => '',
-					'post_status'    => 'private',
-				),
-				$upload['file']
-			);
-
-			if ( ! is_wp_error( $attachment_id ) ) {
-				wp_update_attachment_metadata(
-					$attachment_id,
-					wp_generate_attachment_metadata( $attachment_id, $upload['file'] )
-				);
-
-				$attachments[] = array(
-					'id'   => $attachment_id,
-					'key'  => $key,
-					'name' => $file['name'],
-					'url'  => $upload['url'],
-					'type' => $upload['type'],
-					'size' => $file['size'],
-				);
+			if ( $stored ) {
+				$stored['key'] = $key;
+				$attachments[] = $stored;
 			}
 		}
 
 		return $attachments;
+	}
+
+	/**
+	 * Normalise PHP's multi-file $_FILES shape into one entry per file.
+	 *
+	 * The requirements template has always rendered `name="requirements_files[]"`,
+	 * which makes PHP hand over ONE entry whose every key is an array:
+	 * `['name' => ['a.pdf'], 'error' => [0], ...]`. The loop below reads
+	 * `$file['error']` expecting an int, so `UPLOAD_ERR_OK !== $file['error']`
+	 * compared an int to an array, was always true, and skipped every attachment
+	 * without a word. Requirement files have therefore never been saved from
+	 * that form - the buyer picks a file, sees the success message, and nothing
+	 * is stored.
+	 *
+	 * Single-file entries pass through untouched.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param array<string,mixed> $files Raw $_FILES subset.
+	 * @return array<int|string,array<string,mixed>> One entry per uploaded file.
+	 */
+	private static function flatten_file_inputs( array $files ): array {
+		$flat = array();
+
+		foreach ( $files as $key => $file ) {
+			if ( ! is_array( $file ) || ! isset( $file['name'] ) ) {
+				continue;
+			}
+
+			if ( ! is_array( $file['name'] ) ) {
+				$flat[ $key ] = $file;
+				continue;
+			}
+
+			foreach ( array_keys( $file['name'] ) as $i ) {
+				$single = array();
+
+				foreach ( array( 'name', 'type', 'tmp_name', 'error', 'size' ) as $prop ) {
+					$single[ $prop ] = $file[ $prop ][ $i ] ?? null;
+				}
+
+				if ( ! empty( $single['name'] ) ) {
+					$flat[ $key . '_' . $i ] = $single;
+				}
+			}
+		}
+
+		return $flat;
 	}
 
 	/**

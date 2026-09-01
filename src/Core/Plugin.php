@@ -631,6 +631,8 @@ final class Plugin {
 				$vars[] = 'wpss_service_order';
 				$vars[] = 'wpss_order_action';
 				$vars[] = 'wpss_section';
+				$vars[] = 'wpss_order_id';
+				$vars[] = 'wpss_pay_order';
 				return $vars;
 			}
 		);
@@ -639,9 +641,17 @@ final class Plugin {
 		// unknown-slug fallback, legacy ?section= -> pretty endpoint).
 		add_action( 'template_redirect', array( $this, 'redirect_legacy_section_url' ) );
 
+		// Legacy ?order_id= / ?pay_order= → pretty paths.
+		add_action( 'template_redirect', array( $this, 'redirect_legacy_order_urls' ), 5 );
+
 		// Send the standalone cart/checkout pages to the active rail's own
 		// pages before ANY output is produced.
 		add_action( 'template_redirect', array( $this, 'redirect_dormant_store_pages' ), 1 );
+		add_action( 'template_redirect', array( $this, 'redirect_legacy_vendor_slug' ), 1 );
+
+		// Order files are never linked directly, so this is the only way to read
+		// one. Logged-in only: no nopriv twin.
+		add_action( 'admin_post_wpss_order_file', 'wpss_serve_order_file' );
 
 		// Keep those dormant pages out of search results and the sitemap.
 		add_filter( 'wp_robots', array( $this, 'filter_dormant_store_page_robots' ) );
@@ -709,7 +719,23 @@ final class Plugin {
 		$segments  = array_map( 'preg_quote', explode( '/', $page_path ) );
 		$path_re   = implode( '/', $segments );
 
-		$rule_regex = '^' . $path_re . '/([^/]+)/?$';
+		// More-specific order rules first so /dashboard/orders/3407/requirements/
+		// is not swallowed by the bare /dashboard/{section}/ rule.
+		$order_action_regex = '^' . $path_re . '/(orders|sales)/([0-9]+)/([^/]+)/?$';
+		$order_regex        = '^' . $path_re . '/(orders|sales)/([0-9]+)/?$';
+		$rule_regex         = '^' . $path_re . '/([^/]+)/?$';
+
+		add_rewrite_rule(
+			$order_action_regex,
+			'index.php?page_id=' . $dashboard_id . '&wpss_section=$matches[1]&wpss_order_id=$matches[2]&wpss_order_action=$matches[3]',
+			'top'
+		);
+
+		add_rewrite_rule(
+			$order_regex,
+			'index.php?page_id=' . $dashboard_id . '&wpss_section=$matches[1]&wpss_order_id=$matches[2]',
+			'top'
+		);
 
 		add_rewrite_rule(
 			$rule_regex,
@@ -724,7 +750,12 @@ final class Plugin {
 		// the rule itself re-registers on every request, so a flush here is
 		// always safe). Flush once whenever the live option lacks our rule.
 		$live_rules = get_option( 'rewrite_rules' );
-		if ( is_array( $live_rules ) && ! isset( $live_rules[ $rule_regex ] ) ) {
+		$needs_flush = ! is_array( $live_rules )
+			|| ! isset( $live_rules[ $rule_regex ] )
+			|| ! isset( $live_rules[ $order_regex ] )
+			|| ! isset( $live_rules[ $order_action_regex ] );
+
+		if ( $needs_flush ) {
 			add_action(
 				'wp_loaded',
 				static function (): void {
@@ -820,9 +851,108 @@ final class Plugin {
 			return;
 		}
 
-		// Carry over any sibling query args (order_id, action, etc.), minus `section`.
+		// Carry over sibling query args, minus `section`. Order detail args are
+		// lifted into the pretty path instead of staying as ?order_id=.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization of a public URL.
-		$extra = array_diff_key( wp_unslash( $_GET ), array( 'section' => '' ) );
+		$extra = array_diff_key( wp_unslash( $_GET ), array( 'section' => true ) );
+
+		$order_id = isset( $extra['order_id'] ) ? absint( $extra['order_id'] ) : 0;
+		$action   = isset( $extra['action'] ) ? sanitize_key( (string) $extra['action'] ) : '';
+		unset( $extra['order_id'], $extra['action'] );
+
+		if ( $order_id > 0 && in_array( $canonical, array( 'orders', 'sales' ), true ) ) {
+			$target = wpss_append_dashboard_order( $target, $order_id, $action );
+		}
+
+		if ( ! empty( $extra ) ) {
+			$target = add_query_arg( array_map( 'sanitize_text_field', $extra ), $target );
+		}
+
+		wp_safe_redirect( $target, 301 );
+		exit;
+	}
+
+	/**
+	 * 301 legacy query-arg order URLs onto pretty dashboard / checkout paths.
+	 *
+	 * - `/{dashboard}/?order_id=N` → `/{dashboard}/orders/N/`
+	 * - `/{dashboard}/orders/?order_id=N` → `/{dashboard}/orders/N/`
+	 * - `/{checkout}/?pay_order=N` → `/{checkout}/pay/N/`
+	 *
+	 * Plain permalink sites keep the query form as canonical.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return void
+	 */
+	public function redirect_legacy_order_urls(): void {
+		if ( ! get_option( 'permalink_structure' ) ) {
+			return;
+		}
+
+		if ( ! function_exists( 'wpss_is_page' ) || ! function_exists( 'wpss_get_order_url' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization.
+		$order_id = isset( $_GET['order_id'] ) ? absint( wp_unslash( $_GET['order_id'] ) ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization.
+		$pay_order = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization.
+		$action = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
+
+		// Already on a pretty order path — nothing to do.
+		if ( (int) get_query_var( 'wpss_order_id', 0 ) > 0 || (int) get_query_var( 'wpss_pay_order', 0 ) > 0 ) {
+			return;
+		}
+
+		if ( $pay_order > 0 && wpss_is_page( 'checkout' ) && function_exists( 'wpss_get_pay_order_url' ) ) {
+			$target = wpss_get_pay_order_url( $pay_order );
+			if ( $target && false === strpos( $target, 'pay_order=' ) ) {
+				wp_safe_redirect( $target, 301 );
+				exit;
+			}
+		}
+
+		if ( $order_id <= 0 || ! wpss_is_page( 'dashboard' ) ) {
+			return;
+		}
+
+		$section = (string) get_query_var( 'wpss_section', '' );
+		if ( '' === $section ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization.
+			$section = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( $_GET['section'] ) ) : '';
+		}
+
+		if ( function_exists( 'wpss_normalize_dashboard_section' ) ) {
+			$normalized = wpss_normalize_dashboard_section( $section );
+			if ( '' !== $normalized ) {
+				$section = $normalized;
+			}
+		}
+
+		if ( ! in_array( $section, array( 'orders', 'sales' ), true ) ) {
+			$section = 'orders';
+		}
+
+		$target = ( 'requirements' === $action && function_exists( 'wpss_get_order_requirements_url' ) )
+			? wpss_get_order_requirements_url( $order_id )
+			: wpss_get_order_url( $order_id, $section );
+
+		if ( ! $target || false !== strpos( $target, 'order_id=' ) ) {
+			return;
+		}
+
+		// Preserve unrelated query args (utm_*, etc.).
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only canonicalization.
+		$extra = array_diff_key(
+			wp_unslash( $_GET ),
+			array(
+				'order_id' => true,
+				'action'   => true,
+				'section'  => true,
+			)
+		);
 		if ( ! empty( $extra ) ) {
 			$target = add_query_arg( array_map( 'sanitize_text_field', $extra ), $target );
 		}
@@ -933,6 +1063,43 @@ final class Plugin {
 		$mapped = array_map( 'intval', array_values( (array) get_option( 'wpss_pages', array() ) ) );
 
 		return in_array( (int) $page->ID, $mapped, true ) ? 0 : (int) $page->ID;
+	}
+
+	/**
+	 * Send either become-vendor spelling to whichever page this site actually has.
+	 *
+	 * The registry used to create `become-vendor` while shipped installs carry
+	 * `become-a-vendor`, so which URL 404'd depended on when the site was
+	 * installed - and the one a member would guess was as likely to fail as not
+	 * (Basecamp 10235849842). Rather than pick a winner and strand the other
+	 * half of installs, both spellings resolve to the mapped page.
+	 *
+	 * Only fires on a 404, so a site that legitimately has a page at either slug
+	 * is never touched.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return void
+	 */
+	public function redirect_legacy_vendor_slug(): void {
+		if ( is_admin() || wp_doing_ajax() || ! is_404() ) {
+			return;
+		}
+
+		$path = trim( (string) wp_parse_url( add_query_arg( array() ), PHP_URL_PATH ), '/' );
+
+		if ( ! in_array( $path, array( 'become-vendor', 'become-a-vendor' ), true ) ) {
+			return;
+		}
+
+		$target = function_exists( 'wpss_get_page_url' ) ? wpss_get_page_url( 'become_vendor' ) : '';
+
+		if ( ! $target || untrailingslashit( $target ) === untrailingslashit( home_url( $path ) ) ) {
+			return;
+		}
+
+		wp_safe_redirect( $target, 301 );
+		exit;
 	}
 
 	/**
@@ -2134,6 +2301,12 @@ final class Plugin {
 			null,
 			20 // After wpss_loaded fires so Pro can register first.
 		);
+
+		// Marketplace data reaches Tools > Export Personal Data and Erase
+		// Personal Data. Registering nothing here meant a site owner answering a
+		// subject-access request handed over core WordPress data and nothing
+		// this plugin stores - an export that looked complete and was not.
+		( new \WPSellServices\Privacy\PersonalData() )->register();
 	}
 
 
@@ -2353,6 +2526,21 @@ final class Plugin {
 				}
 			);
 		}
+
+		// Held message emails. Takes args, so it is not one of the no-arg cron
+		// handlers above.
+		add_action(
+			'wpss_send_delayed_message_email',
+			static function ( $order_id = 0, $sender_id = 0, $message = '' ): void {
+				( new \WPSellServices\Services\EmailService() )->send_delayed_message_email(
+					(int) $order_id,
+					(int) $sender_id,
+					(string) $message
+				);
+			},
+			10,
+			3
+		);
 
 		// Status change hooks.
 		$status_hooks = array(
@@ -2759,25 +2947,6 @@ final class Plugin {
 	 */
 	public function get_wallet_providers(): array {
 		return $this->wallet_providers;
-	}
-
-	/**
-	 * Get active wallet provider.
-	 *
-	 * Returns the wallet provider configured in settings, or null if none.
-	 *
-	 * @since 1.1.0
-	 * @return object|null
-	 */
-	public function get_active_wallet_provider(): ?object {
-		$active_id = get_option( 'wpss_wallet_provider', '' );
-
-		if ( empty( $active_id ) || ! isset( $this->wallet_providers[ $active_id ] ) ) {
-			// Return first available provider if configured one not found.
-			return ! empty( $this->wallet_providers ) ? reset( $this->wallet_providers ) : null;
-		}
-
-		return $this->wallet_providers[ $active_id ];
 	}
 
 	/**

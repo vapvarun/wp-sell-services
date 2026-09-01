@@ -139,15 +139,19 @@ function wpss_rest_require_vendor() {
 		return $logged_in;
 	}
 
-	if ( wpss_is_vendor( get_current_user_id() ) ) {
-		return true;
+	if ( ! wpss_is_vendor( get_current_user_id() ) ) {
+		return new WP_Error(
+			'wpss_not_vendor',
+			__( 'Only vendors can access this endpoint.', 'wp-sell-services' ),
+			array( 'status' => 403 )
+		);
 	}
 
-	return new WP_Error(
-		'wpss_not_vendor',
-		__( 'Only vendors can access this endpoint.', 'wp-sell-services' ),
-		array( 'status' => 403 )
-	);
+	// Pending, suspended and banned vendors are blocked here too. This helper
+	// used to stop at the role check, so a suspended vendor kept full access
+	// through every caller that used it - while EarningsController's private
+	// copy did consult the status rule. Same question, two answers.
+	return wpss_vendor_status_block() ?? true;
 }
 
 /**

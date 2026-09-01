@@ -253,8 +253,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		// Check if paying for an existing order (from proposal acceptance).
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$pay_order_id = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0;
+		$pay_order_id = (int) get_query_var( 'wpss_pay_order', 0 );
+		if ( ! $pay_order_id ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$pay_order_id = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0;
+		}
 
 		if ( $pay_order_id ) {
 			return $this->render_pay_order_checkout( $pay_order_id );
@@ -300,6 +303,33 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		if ( ! $service_id ) {
+			/*
+			 * Last line of defence for the pay-one-order route.
+			 *
+			 * A buyer following /{checkout}/pay/{id}/ is answered by
+			 * render_pay_order_checkout() above, which has no path to the empty
+			 * state below - every failure it has returns a specific message. But
+			 * that depends on the rewrite rule resolving, and if the rule is
+			 * missing or stale the request lands here instead, where the buyer
+			 * is told their cart is empty while they are trying to pay a
+			 * specific invoice (Basecamp 10240017271).
+			 *
+			 * The rule self-heals in StandaloneAdapter and I could not reproduce
+			 * the report on current code, so this should be unreachable. It is
+			 * cheap, and "your cart is empty" in front of someone holding a bill
+			 * is the kind of thing that costs a sale rather than a bug report.
+			 */
+			$pay_path_id = 0;
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+			if ( $request_uri && preg_match( '#/pay/([0-9]+)/?(?:\?|$)#', $request_uri, $m ) ) {
+				$pay_path_id = (int) $m[1];
+			}
+
+			if ( $pay_path_id > 0 ) {
+				return $this->render_pay_order_checkout( $pay_path_id );
+			}
+
 			// Reaching checkout with an empty cart is an ordinary state, not a
 			// failure: a red "No service selected." error alert blamed the buyer
 			// for something that had not gone wrong and offered no way forward.
@@ -370,7 +400,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		}
 
 		$parent_order_id = ! empty( $order->platform_order_id ) ? (int) $order->platform_order_id : (int) $order->id;
-		$back_to_order   = add_query_arg( 'order_id', $parent_order_id, wpss_get_dashboard_url() );
+		$back_to_order   = wpss_get_order_url( $parent_order_id );
 
 		// Only pending_payment orders can be paid.
 		if ( 'pending_payment' !== $order->status ) {
@@ -544,25 +574,14 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$price   += $addons_total;
 			$currency = wpss_get_currency();
 
-			// Calculate tax.
-			$tax_settings = get_option( 'wpss_tax', [] );
-			$tax_enabled  = ! empty( $tax_settings['enable_tax'] );
-			$tax_rate     = $tax_enabled ? (float) ( $tax_settings['tax_rate'] ?? 0 ) : 0;
-			$tax_included = ! empty( $tax_settings['tax_included'] );
-			$tax_label    = $tax_settings['tax_label'] ?? __( 'Tax', 'wp-sell-services' );
+			// Tax through the shared helper, so the figure on the Pay button is
+			// the same arithmetic the gateway charges and the order row records.
+			$tax = wpss_calculate_tax( (float) $price, (int) $service->vendor_id, (int) $service->id );
 
-			/** This filter is documented in StandaloneOrderProvider::create_order() */
-			$tax_rate = (float) apply_filters( 'wpss_checkout_tax_rate', $tax_rate, $service->vendor_id, $service->id );
-
-			$tax_amount = 0;
-			if ( $tax_rate > 0 ) {
-				if ( $tax_included ) {
-					$tax_amount = $price - ( $price / ( 1 + $tax_rate / 100 ) );
-				} else {
-					$tax_amount = $price * ( $tax_rate / 100 );
-				}
-			}
-			$total       = $tax_included ? $price : $price + $tax_amount;
+			$tax_rate    = (float) $tax['rate'];
+			$tax_amount  = (float) $tax['amount'];
+			$tax_label   = (string) $tax['label'];
+			$total       = (float) $tax['total'];
 			$vendor_name = '';
 		}
 
@@ -1126,6 +1145,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 									</button>
 
 									<!-- Trust section -->
+									<?php wpss_get_template_part( 'partials/legal', 'links' ); ?>
+
 									<div class="wpss-co-trust">
 										<div class="wpss-co-trust__item">
 											<span class="wpss-co-trust__icon" aria-hidden="true">&#128274;</span>
@@ -1318,6 +1339,80 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						noticeEl.style.display = 'none';
 					}
 
+					/*
+					 * Create the buyer's account BEFORE paying, when they are
+					 * logged out and the owner has enabled account-at-checkout.
+					 *
+					 * The order matters. Every gateway handler requires a
+					 * logged-in user and the order row needs a real customer_id,
+					 * so the account has to exist first — not after a successful
+					 * charge, which would leave money taken against nobody if
+					 * creation then failed.
+					 *
+					 * The fresh nonce also matters: WordPress nonces are bound to
+					 * the user, so the checkout nonce rendered for a logged-out
+					 * visitor stops verifying the instant they are signed in.
+					 * Without swapping it, the payment request would fail its own
+					 * security check with the account already created.
+					 */
+					function ensureAccount() {
+						if (!needsAccount) {
+							return Promise.resolve();
+						}
+
+						var accountData = new FormData();
+						accountData.append('action', 'wpss_checkout_create_account');
+						accountData.append('nonce', form.querySelector('[name="wpss_checkout_nonce"]').value);
+						accountData.append('checkout_url', window.location.href);
+
+						['billing_first_name', 'billing_last_name', 'billing_email'].forEach(function(name) {
+							var field = form.querySelector('[name="' + name + '"]');
+							accountData.append(name, field ? field.value : '');
+						});
+
+						return fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
+							method: 'POST',
+							body: accountData,
+							credentials: 'same-origin'
+						})
+						.then(function(response) { return response.json(); })
+						.then(function(data) {
+							if (data.success && data.data && data.data.checkout_nonce) {
+								form.querySelector('[name="wpss_checkout_nonce"]').value = data.data.checkout_nonce;
+								needsAccount = false;
+								return;
+							}
+
+							var payload = data.data || {};
+
+							if (payload.code === 'account_exists' && payload.login_url) {
+								// A link, not a redirect: bouncing the buyer away
+								// from a filled-in checkout without asking is worse
+								// than telling them what to do next.
+								noticeEl.className = 'wpss-notice wpss-notice--error';
+								noticeEl.textContent = payload.message + ' ';
+								var link = document.createElement('a');
+								link.href = payload.login_url;
+								link.textContent = '<?php echo esc_js( __( 'Log in', 'wp-sell-services' ) ); ?>';
+								noticeEl.appendChild(link);
+								noticeEl.style.display = 'flex';
+								noticeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+								throw new Error('wpss_account_handled');
+							}
+
+							showNotice(payload.message || '<?php echo esc_js( __( 'We could not create your account. Please check your details.', 'wp-sell-services' ) ); ?>');
+							throw new Error('wpss_account_handled');
+						});
+					}
+
+					// Published so gateways that own their own submit (Stripe,
+					// PayPal) can await the same account step instead of each
+					// re-implementing it. Assigned at IIFE scope, not inside the
+					// submit handler — that handler returns early for exactly
+					// those gateways, so publishing from in there would define the
+					// seam only for the buyers who never need it.
+					window.wpssEnsureCheckoutAccount = ensureAccount;
+
 					// Show/hide gateway forms + active state on radio change.
 					document.querySelectorAll('input[name="payment_method"]').forEach(function(radio) {
 						radio.addEventListener('change', function() {
@@ -1364,6 +1459,14 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						// the PSP before an order is created, so this generic handler
 						// stands down — otherwise it races them and posts an
 						// unconfirmed payment intent (card never charged).
+						//
+						// Standing down does NOT mean skipping the account step. A
+						// logged-out buyer paying by Stripe or PayPal still needs an
+						// account before their gateway posts, so the seam is
+						// published on window and those scripts await it themselves
+						// (see WPSS.ensureCheckoutAccount below). Returning here
+						// without it is what left guest + Stripe dead-ending on a
+						// handler that has no nopriv registration.
 						var ownSubmit = form.querySelector('.wpss-gateway-form[data-gateway="' + paymentMethod.value + '"] [data-wpss-own-submit], [data-gateway="' + paymentMethod.value + '"][data-wpss-own-submit]');
 						if (ownSubmit) {
 							return;
@@ -1375,72 +1478,6 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						function restoreButton() {
 							submitBtn.disabled = false;
 							submitBtnText.textContent = originalText;
-						}
-
-						/*
-						 * Create the buyer's account BEFORE paying, when they are
-						 * logged out and the owner has enabled account-at-checkout.
-						 *
-						 * The order matters. Every gateway handler requires a
-						 * logged-in user and the order row needs a real customer_id,
-						 * so the account has to exist first — not after a successful
-						 * charge, which would leave money taken against nobody if
-						 * creation then failed.
-						 *
-						 * The fresh nonce also matters: WordPress nonces are bound to
-						 * the user, so the checkout nonce rendered for a logged-out
-						 * visitor stops verifying the instant they are signed in.
-						 * Without swapping it, the payment request would fail its own
-						 * security check with the account already created.
-						 */
-						function ensureAccount() {
-							if (!needsAccount) {
-								return Promise.resolve();
-							}
-
-							var accountData = new FormData();
-							accountData.append('action', 'wpss_checkout_create_account');
-							accountData.append('nonce', form.querySelector('[name="wpss_checkout_nonce"]').value);
-							accountData.append('checkout_url', window.location.href);
-
-							['billing_first_name', 'billing_last_name', 'billing_email'].forEach(function(name) {
-								var field = form.querySelector('[name="' + name + '"]');
-								accountData.append(name, field ? field.value : '');
-							});
-
-							return fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
-								method: 'POST',
-								body: accountData,
-								credentials: 'same-origin'
-							})
-							.then(function(response) { return response.json(); })
-							.then(function(data) {
-								if (data.success && data.data && data.data.checkout_nonce) {
-									form.querySelector('[name="wpss_checkout_nonce"]').value = data.data.checkout_nonce;
-									needsAccount = false;
-									return;
-								}
-
-								var payload = data.data || {};
-
-								if (payload.code === 'account_exists' && payload.login_url) {
-									// A link, not a redirect: bouncing the buyer away
-									// from a filled-in checkout without asking is worse
-									// than telling them what to do next.
-									noticeEl.className = 'wpss-notice wpss-notice--error';
-									noticeEl.textContent = payload.message + ' ';
-									var link = document.createElement('a');
-									link.href = payload.login_url;
-									link.textContent = '<?php echo esc_js( __( 'Log in', 'wp-sell-services' ) ); ?>';
-									noticeEl.appendChild(link);
-									noticeEl.style.display = 'flex';
-									noticeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-									throw new Error('wpss_account_handled');
-								}
-
-								showNotice(payload.message || '<?php echo esc_js( __( 'We could not create your account. Please check your details.', 'wp-sell-services' ) ); ?>');
-								throw new Error('wpss_account_handled');
-							});
 						}
 
 						ensureAccount().then(function() {
@@ -1547,19 +1584,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 			$line_total = $line_price + $addons_total;
 
-			// Per-item tax rate may be filtered.
-			/** This filter is documented in StandaloneOrderProvider::create_order() */
-			$item_tax_rate = (float) apply_filters( 'wpss_checkout_tax_rate', $tax_rate, $service->vendor_id, $service->id );
-			$item_tax      = 0.0;
-
-			if ( $item_tax_rate > 0 ) {
-				if ( $tax_included ) {
-					$item_tax = $line_total - ( $line_total / ( 1 + $item_tax_rate / 100 ) );
-				} else {
-					$item_tax    = $line_total * ( $item_tax_rate / 100 );
-					$line_total += $item_tax;
-				}
-			}
+			// Per item, through the same helper - the rate filter is applied
+			// inside it, so a per-vendor rate still works here.
+			$item_tax_data = wpss_calculate_tax( (float) $line_total, (int) $service->vendor_id, (int) $service->id );
+			$item_tax      = (float) $item_tax_data['amount'];
+			$line_total    = (float) $item_tax_data['total'];
 
 			$tax_amount += $item_tax;
 
@@ -1927,6 +1956,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 											?>
 										</span>
 									</button>
+
+									<?php wpss_get_template_part( 'partials/legal', 'links' ); ?>
 
 									<div class="wpss-co-trust">
 										<div class="wpss-co-trust__item">

@@ -50,7 +50,7 @@ Review system with multi-criteria ratings evaluates teaching quality, communicat
 Extension requests accommodate schedule changes. Student can't make a session? Tutor requests deadline extension with new date proposal.
 
 **Revenue Model:**
-Platform takes percentage of session fees. Tutors offer recurring services, building steady student base with repeat bookings.
+Platform takes percentage of session fees. Tutors build a steady student base through repeat bookings.
 
 ## 3. Consulting Marketplace
 
@@ -150,7 +150,7 @@ Revision workflow handles quality assurance. Client tests implementation in stag
 REST API enables automation. Technical clients integrate marketplace into existing workflows, automate service purchases, and track order status programmatically.
 
 **Revenue Model:**
-Recurring technical services (monitoring, maintenance, support) provide subscription-style revenue through repeat orders. High retention when quality consistent.
+Ongoing technical work (monitoring, maintenance, support) provides subscription-style revenue through repeat orders. High retention when quality consistent.
 
 ## Common Success Factors
 

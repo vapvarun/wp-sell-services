@@ -16,7 +16,19 @@ A wallet plugin adds advanced features on top of that. Consider one if you want:
 
 If you just need vendors to earn and withdraw, the built-in system is simpler and faster.
 
-## Supported Wallet Plugins
+## Choosing a wallet provider
+
+**Sell Services > Settings > Payouts > Wallet Provider.**
+
+### Internal Wallet (default)
+
+The built-in ledger. Every install uses this unless you pick something else, and
+it is what powers vendor earnings, balances and withdrawals out of the box. You
+do not need any third-party wallet plugin for vendors to earn and get paid.
+
+The providers below replace that ledger with a wallet plugin you already run, so
+vendor balances live alongside your existing wallet rather than beside it. Each
+one only appears in the dropdown when its plugin is active.
 
 ### TeraWallet
 

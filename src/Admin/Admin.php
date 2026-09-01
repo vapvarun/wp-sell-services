@@ -412,7 +412,174 @@ class Admin {
 
 		// Demo payments notice. Deliberately NOT dismissible - see the method.
 		add_action( 'admin_notices', array( $this, 'demo_payments_notice' ) );
+		add_action( 'admin_notices', array( $this, 'order_files_public_notice' ) );
+		add_action( 'admin_notices', array( $this, 'missing_terms_notice' ) );
+		add_action( 'wp_ajax_wpss_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
+	}
+
+	/**
+	 * Warn when order files are reachable straight from the browser.
+	 *
+	 * Order files are written outside the document root wherever the parent of
+	 * ABSPATH is writable, which is most hosts. Where it is not - shared hosting,
+	 * typically - they fall back to a guarded directory inside uploads, and the
+	 * guard is a .htaccess that Apache reads and nginx ignores entirely.
+	 *
+	 * That is not hypothetical: the first host this was tested against served a
+	 * file from that directory at HTTP 200 with its contents, deny file present.
+	 * The paths are guessable (order id, then filename), so on such a host a
+	 * buyer's brief is public and nothing says so.
+	 *
+	 * wpss_order_files_are_public() answers by writing a canary and asking the
+	 * web server for it - the only way to know, since whether a deny rule is
+	 * honoured depends on configuration PHP cannot read. It caches for a week,
+	 * so this costs one HTTP round trip per week per site.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return void
+	 */
+	public function order_files_public_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'wpss_order_files_are_public' ) ) {
+			return;
+		}
+
+		// Only on our own screens: this is an owner's problem to fix, not
+		// something to shout about while they are writing a post.
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+			return;
+		}
+
+		if ( true !== wpss_order_files_are_public() ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-error"><p><strong>%s</strong> %s</p><p>%s</p></div>',
+			esc_html__( 'Order files can be downloaded by anyone.', 'wp-sell-services' ),
+			esc_html__( 'This server could not store them outside the web root, and it is ignoring the deny rule we wrote alongside them. Requirement briefs and delivered work are readable by anyone who guesses the address.', 'wp-sell-services' ),
+			esc_html__( 'Ask your host to block direct access to the wpss-order-files directory, or to make the folder above WordPress writable so the files can be moved out of the web root entirely.', 'wp-sell-services' )
+		);
+	}
+
+	/**
+	 * Tell the owner their marketplace is taking money with no Terms page.
+	 *
+	 * Gated on wpss_has_live_gateway() rather than on the plugin being active,
+	 * because that is the point at which this stops being a setup step and
+	 * starts being a live risk: buyers are paying and there is nothing telling
+	 * them what they agreed to. A site still being built is left alone.
+	 *
+	 * Dismissible, unlike demo_payments_notice(): an owner may have decided
+	 * against publishing terms, and nagging them forever teaches people to
+	 * ignore our notices - which costs us the one that matters. The dismissal
+	 * records WHICH gateways were live at the time, so turning on another one
+	 * later asks the question again against the new configuration.
+	 *
+	 * @since 1.7.0
+	 * @return void
+	 */
+	public function missing_terms_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'wpss_has_live_gateway' ) ) {
+			return;
+		}
+
+		// Our own screens only. An owner writing a post does not need to be
+		// interrupted about a settings page.
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+			return;
+		}
+
+		$terms_id = (int) get_option( 'wpss_terms_page' );
+
+		if ( $terms_id && 'publish' === get_post_status( $terms_id ) ) {
+			return;
+		}
+
+		if ( ! wpss_has_live_gateway() ) {
+			return;
+		}
+
+		$signature = $this->live_gateway_signature();
+
+		if ( get_user_meta( get_current_user_id(), '_wpss_terms_notice_dismissed', true ) === $signature ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning is-dismissible wpss-dismissible-notice" data-notice="terms" data-signature="%s" data-nonce="%s"><p><strong>%s</strong> %s</p><p><a class="button" href="%s">%s</a></p></div>',
+			esc_attr( $signature ),
+			esc_attr( wp_create_nonce( 'wpss_dismiss_notice' ) ),
+			esc_html__( 'Buyers are paying on this site, but no Terms page is mapped.', 'wp-sell-services' ),
+			esc_html__( 'Checkout has nothing to link to, so buyers agree to nothing in writing - which is the gap owners usually find out about during a dispute. Map a page you have written; we never publish one for you.', 'wp-sell-services' ),
+			esc_url( wpss_get_settings_url( 'pages' ) ),
+			esc_html__( 'Map a Terms page', 'wp-sell-services' )
+		);
+	}
+
+	/**
+	 * Identify the currently live gateway set.
+	 *
+	 * Used so a dismissal applies to the configuration it was made against.
+	 * Enabling a second gateway is a new decision about taking money, and the
+	 * Terms question deserves asking again.
+	 *
+	 * @since 1.7.0
+	 * @return string Short stable hash of the live gateway ids.
+	 */
+	private function live_gateway_signature(): string {
+		$ids = array();
+
+		foreach ( wpss()->get_payment_gateways() as $id => $gateway ) {
+			if ( 'test' === $id ) {
+				continue;
+			}
+			if ( $gateway instanceof \WPSellServices\Integrations\Contracts\PaymentGatewayInterface && $gateway->is_enabled() ) {
+				$ids[] = (string) $id;
+			}
+		}
+
+		sort( $ids );
+
+		return substr( md5( implode( ',', $ids ) ), 0, 12 );
+	}
+
+	/**
+	 * Dismiss one of the plugin's dismissible admin notices.
+	 *
+	 * Generic on purpose. check_page_setup_notice() shipped with its own
+	 * action and its own handler; a second notice doing the same would have
+	 * made a second pair, and a third a third. The notice key is whitelisted,
+	 * so this cannot be used to write arbitrary user meta.
+	 *
+	 * @since 1.7.0
+	 * @return void
+	 */
+	public function ajax_dismiss_notice(): void {
+		check_ajax_referer( 'wpss_dismiss_notice', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error();
+		}
+
+		$allowed = array( 'terms' => '_wpss_terms_notice_dismissed' );
+		$notice  = isset( $_POST['notice'] ) ? sanitize_key( wp_unslash( $_POST['notice'] ) ) : '';
+
+		if ( ! isset( $allowed[ $notice ] ) ) {
+			wp_send_json_error();
+		}
+
+		// The signature is stored rather than a bare true, so the notice
+		// returns if the gateway configuration changes underneath it.
+		$signature = isset( $_POST['signature'] ) ? sanitize_key( wp_unslash( $_POST['signature'] ) ) : '1';
+
+		update_user_meta( get_current_user_id(), $allowed[ $notice ], $signature );
+		wp_send_json_success();
 	}
 
 	/**
@@ -709,7 +876,43 @@ class Admin {
 				// If resolving, require a resolution type.
 				wp_die( esc_html__( 'Please select a resolution type when resolving a dispute.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
 			}
-			$result = $dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id() );
+
+			// Cast IS the sanitisation for a money field - there is no
+			// sanitize_* that returns a float. Nonce verified above. Same
+			// pattern as OrderScreen's refund box.
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$refund_amount = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
+
+			// A Partial Refund with no amount used to reach resolve() as 0.0,
+			// which apply_refund_status() read as "refund everything" - so the
+			// buyer got 100% back on an order recorded as partially refunded
+			// (Basecamp 10240143362). Validated here so the admin gets a
+			// sentence rather than a silently refused transition.
+			if ( DisputeService::RESOLUTION_PARTIAL_REFUND === $resolution ) {
+				$dispute = $dispute_service->get( $dispute_id );
+				$order   = $dispute ? wpss_get_order( (int) $dispute->order_id ) : null;
+				$total   = $order ? (float) $order->total : 0.0;
+
+				if ( $refund_amount <= 0 ) {
+					wp_die( esc_html__( 'Enter the amount to refund. A partial refund needs a number greater than zero.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+				}
+
+				if ( $total > 0 && $refund_amount >= $total ) {
+					wp_die(
+						esc_html(
+							sprintf(
+								/* translators: %s: formatted order total. */
+								__( 'A partial refund must be less than the %s order total. Choose Full Refund to return all of it.', 'wp-sell-services' ),
+								wpss_format_price( $total, $order->currency ?? '' )
+							)
+						),
+						'',
+						array( 'back_link' => true )
+					);
+				}
+			}
+
+			$result = $dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id(), $refund_amount );
 		} else {
 			$result = $dispute_service->update_status( $dispute_id, $status, $notes );
 
@@ -1713,7 +1916,7 @@ class Admin {
 
 			if ( $wpss_order_dispute ) :
 				$wpss_dispute_statuses = \WPSellServices\Models\Dispute::get_statuses();
-				$wpss_dispute_reasons  = \WPSellServices\Models\Dispute::get_reasons();
+				$wpss_dispute_reasons  = wpss_get_dispute_reasons();
 				$wpss_dispute_live     = in_array(
 					$wpss_order_dispute->status,
 					array(
@@ -1870,7 +2073,9 @@ class Admin {
 								<?php
 								echo '<dl>';
 								foreach ( $wpss_requirements as $wpss_req_key => $wpss_req_value ) {
-									echo '<dt><strong>' . esc_html( (string) $wpss_req_key ) . '</strong></dt>';
+									// Shared with the buyer/seller order view, which is why
+									// the owner no longer reads a raw 'description' key.
+									echo '<dt><strong>' . esc_html( wpss_requirement_field_label( (string) $wpss_req_key ) ) . '</strong></dt>';
 									echo '<dd>' . esc_html( is_array( $wpss_req_value ) ? implode( ', ', $wpss_req_value ) : (string) $wpss_req_value ) . '</dd>';
 								}
 								echo '</dl>';
@@ -2238,6 +2443,98 @@ class Admin {
 	}
 
 	/**
+	 * Resolution type + refund amount, for the dispute resolution forms.
+	 *
+	 * ONE renderer for both. The detail screen carries two of these forms and
+	 * they were byte-near copies, which is how the refund-amount field could be
+	 * added to one and missed on the other.
+	 *
+	 * The amount field is the fix for Basecamp 10240143362: there was nowhere to
+	 * type a partial refund, so Admin passed 0.0 and every Partial Refund
+	 * returned the buyer the entire order total. Shown only for Partial Refund,
+	 * because that is the one resolution where the number is not implied.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param object               $dispute     Dispute row.
+	 * @param object|null          $order       Order the dispute is on, when resolvable.
+	 * @param array<string,string> $resolutions Resolution type => label.
+	 * @param string               $id          Unique id prefix for this form's fields.
+	 * @return void
+	 */
+	private function render_dispute_resolution_fields( object $dispute, ?object $order, array $resolutions, string $id ): void {
+		$selected = (string) ( $dispute->resolution ?? '' );
+		$total    = $order ? (float) $order->total : 0.0;
+		$decimals = function_exists( 'wpss_get_currency_decimals' ) ? wpss_get_currency_decimals( $order->currency ?? '' ) : 2;
+		$step     = $decimals > 0 ? '0.' . str_repeat( '0', $decimals - 1 ) . '1' : '1';
+		$existing = isset( $dispute->refund_amount ) ? (float) $dispute->refund_amount : 0.0;
+		$partial  = DisputeService::RESOLUTION_PARTIAL_REFUND;
+		?>
+		<p>
+			<label for="<?php echo esc_attr( $id ); ?>"><strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong></label><br>
+			<select name="resolution" id="<?php echo esc_attr( $id ); ?>" class="wpss-dispute-resolution" style="width: 100%;">
+				<option value=""><?php esc_html_e( '— Select Resolution —', 'wp-sell-services' ); ?></option>
+				<?php foreach ( $resolutions as $value => $label ) : ?>
+					<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $selected, $value ); ?>>
+						<?php echo esc_html( $label ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+		</p>
+
+		<p class="wpss-dispute-refund-amount" data-wpss-partial="<?php echo esc_attr( $partial ); ?>"
+			style="<?php echo $partial === $selected ? '' : 'display:none;'; ?>">
+			<label for="<?php echo esc_attr( $id ); ?>_amount">
+				<strong><?php esc_html_e( 'Refund Amount:', 'wp-sell-services' ); ?></strong>
+			</label><br>
+			<input
+				type="number"
+				name="refund_amount"
+				id="<?php echo esc_attr( $id ); ?>_amount"
+				value="<?php echo $existing > 0 ? esc_attr( (string) $existing ) : ''; ?>"
+				min="<?php echo esc_attr( $step ); ?>"
+				max="<?php echo esc_attr( (string) $total ); ?>"
+				step="<?php echo esc_attr( $step ); ?>"
+				style="width: 100%;"
+			>
+			<span class="description">
+				<?php
+				if ( $order ) {
+					printf(
+						/* translators: %s: formatted order total. */
+						esc_html__( 'How much of the %s order total goes back to the buyer. The vendor keeps the rest.', 'wp-sell-services' ),
+						esc_html( wpss_format_price( $total, $order->currency ?? '' ) )
+					);
+				} else {
+					esc_html_e( 'How much goes back to the buyer. The vendor keeps the rest.', 'wp-sell-services' );
+				}
+				?>
+			</span>
+		</p>
+
+		<script>
+			( function () {
+				var select = document.getElementById( <?php echo wp_json_encode( $id ); ?> );
+
+				if ( ! select ) {
+					return;
+				}
+
+				var row = select.closest( 'form' ).querySelector( '.wpss-dispute-refund-amount' );
+
+				if ( ! row ) {
+					return;
+				}
+
+				select.addEventListener( 'change', function () {
+					row.style.display = select.value === row.dataset.wpssPartial ? '' : 'none';
+				} );
+			}() );
+		</script>
+		<?php
+	}
+
+	/**
 	 * Render dispute detail view.
 	 *
 	 * @param int $dispute_id Dispute ID.
@@ -2312,7 +2609,7 @@ class Admin {
 
 		$resolutions = DisputeService::get_resolution_types();
 
-		$reasons = Dispute::get_reasons();
+		$reasons = wpss_get_dispute_reasons();
 		?>
 		<div class="wrap wpss-dispute-detail">
 			<h1 class="wp-heading-inline">
@@ -2468,17 +2765,7 @@ class Admin {
 									</p>
 
 									<div id="wpss-resolution-fields" style="<?php echo 'resolved' === $dispute->status ? '' : 'display:none;'; ?>">
-										<p>
-											<label for="resolution"><strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong></label><br>
-											<select name="resolution" id="resolution" style="width: 100%;">
-												<option value=""><?php esc_html_e( '— Select Resolution —', 'wp-sell-services' ); ?></option>
-												<?php foreach ( $resolutions as $value => $label ) : ?>
-													<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $dispute->resolution ?? '', $value ); ?>>
-														<?php echo esc_html( $label ); ?>
-													</option>
-												<?php endforeach; ?>
-											</select>
-										</p>
+										<?php $this->render_dispute_resolution_fields( $dispute, $order, $resolutions, 'resolution' ); ?>
 									</div>
 
 									<p>
@@ -2520,17 +2807,7 @@ class Admin {
 										<input type="hidden" name="dispute_id" value="<?php echo esc_attr( (string) $dispute_id ); ?>">
 										<input type="hidden" name="dispute_status" value="resolved">
 
-										<p>
-											<label for="resolution_update"><strong><?php esc_html_e( 'Resolution Type:', 'wp-sell-services' ); ?></strong></label><br>
-											<select name="resolution" id="resolution_update" style="width: 100%;">
-												<option value=""><?php esc_html_e( '-- Select Resolution --', 'wp-sell-services' ); ?></option>
-												<?php foreach ( $resolutions as $value => $label ) : ?>
-													<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $dispute->resolution ?? '', $value ); ?>>
-														<?php echo esc_html( $label ); ?>
-													</option>
-												<?php endforeach; ?>
-											</select>
-										</p>
+										<?php $this->render_dispute_resolution_fields( $dispute, $order, $resolutions, 'resolution_update' ); ?>
 
 										<p>
 											<label for="admin_notes_update"><strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong></label><br>

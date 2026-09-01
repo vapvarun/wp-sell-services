@@ -169,13 +169,13 @@ Batch endpoint: `POST /wpss/v1/batch` (up to 25 sub-requests per call)
 
 [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-services-pro/) adds:
 
-- E-commerce adapters (WooCommerce, EDD, FluentCart, SureCart)
+- E-commerce adapters (WooCommerce, EDD, FluentCart)
 - Additional payment gateway (Razorpay) — Stripe, PayPal, and Offline are included free
 - Wallet integrations (Internal, TeraWallet, WooWallet, MyCred)
 - Cloud storage (S3, GCS, DigitalOcean Spaces)
 - Advanced analytics with Chart.js
 - Tiered commissions, White-label, Stripe Connect, PayPal Payouts
-- Vendor subscription plans, Recurring services
+- Vendor subscription plans
 - 10 additional REST API controllers
 
 ## License

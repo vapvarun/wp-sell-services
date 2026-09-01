@@ -11,6 +11,27 @@ hand-rolled fee math ×2 remaining.
 
 ---
 
+## Re-run 2026-08-26 (1.7.0 sweep)
+
+Four more families of the same bug class, all found and fixed this cycle. Logged
+here because this file is the standing record and CLAUDE.md requires the sweep
+before a release.
+
+| Flow | Copies found | What it cost | Resolution |
+|---|---|---|---|
+| "Is this caller a vendor?" | **8** — one in free's EarningsController and PortfolioController, four in Pro, plus the canonical helper and an ownership check wearing the same name | Three different denial codes for one condition, reads login-only while writes were gated, and `wpss_rest_require_vendor()` never called `wpss_vendor_status_block()` — so a **suspended vendor kept full access to every money route** | One `RestController::check_vendor_permissions()` delegating to the canonical helper. Six copies deleted. `tests/test-money-route-gates.php` fails if the surface drifts again |
+| Switchable notification types | **2** — the same 23-entry literal written once to render and once to sanitize | The copies drifted: `notify_moderation` was gated on by EmailService and written by neither, so moderation emails could not be switched off | One `Settings::get_notification_types()`. `tests/test-notification-toggle-contract.php` asserts both directions |
+| `PaymentGatewayInterface` | **2** — free's and an identical one in Pro | Razorpay implemented one contract while the other four gateways implemented the other, all registering into the same filter. Both auth and payload shape depended on load order | Pro's deleted; Razorpay uses free's |
+| `GET /payments/methods` | **2 registrations** — free's authenticated one and a Pro duplicate with `__return_true` | Two permission callbacks and two handlers returning different shapes on one route | Pro's registration and its orphaned handler removed |
+
+**Still open, logged not fixed:** `TeraWalletProvider` and `WooWalletProvider`
+both detect and call the same `woo_wallet()` runtime, so a site with TeraWallet
+installed sees two dropdown entries that do the same thing. Carded as
+#10239808430 — collapsing them changes a stored option value and needs a
+read-time alias.
+
+---
+
 ## 1. CRITICAL — Vendor wallet balance: two incompatible formulas
 
 9 credit implementations, and **two different definitions of "balance"**:

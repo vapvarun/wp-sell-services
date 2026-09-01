@@ -41,11 +41,54 @@ class PageDropdownWalker extends \Walker_PageDropdown {
 	private array $ambiguous = array();
 
 	/**
+	 * Page IDs another plugin already uses, mapped to that plugin's name.
+	 *
+	 * Same-titled pages were handled; differently-titled ones that do the same
+	 * job were not. With WooCommerce active the list carries Cart and Service
+	 * Cart, Checkout and Service Checkout, and nothing says which belongs to
+	 * which - so an owner maps Service Cart to Woo's Cart, and buyers land on a
+	 * cart that is always empty.
+	 *
+	 * @var array<int, string>
+	 */
+	private array $owned = array();
+
+	/**
+	 * Pages claimed by other plugins we can ask.
+	 *
+	 * @return array<int, string>
+	 */
+	private function foreign_page_map(): array {
+		$map = array();
+
+		if ( function_exists( 'wc_get_page_id' ) ) {
+			foreach ( array( 'cart', 'checkout', 'shop', 'myaccount', 'terms' ) as $key ) {
+				$id = (int) wc_get_page_id( $key );
+
+				if ( $id > 0 ) {
+					$map[ $id ] = __( 'WooCommerce', 'wp-sell-services' );
+				}
+			}
+		}
+
+		/**
+		 * Filter the pages shown as belonging to another plugin.
+		 *
+		 * @since 1.7.0
+		 *
+		 * @param array<int, string> $map Page ID => owning plugin name.
+		 */
+		return apply_filters( 'wpss_foreign_page_map', $map );
+	}
+
+	/**
 	 * Build the ambiguous-title index once.
 	 *
 	 * @param array<int, \WP_Post> $pages Pages the dropdown will render.
 	 */
 	public function __construct( array $pages = array() ) {
+		$this->owned = $this->foreign_page_map();
+
 		$seen = array();
 
 		foreach ( $pages as $page ) {
@@ -92,6 +135,15 @@ class PageDropdownWalker extends \Walker_PageDropdown {
 				$title,
 				$data_object->post_name ? $data_object->post_name : __( 'no slug', 'wp-sell-services' ),
 				$data_object->ID
+			);
+		}
+
+		if ( isset( $this->owned[ (int) $data_object->ID ] ) ) {
+			$title = sprintf(
+				/* translators: 1: page title, 2: name of the plugin that uses the page */
+				__( '%1$s - used by %2$s', 'wp-sell-services' ),
+				$title,
+				$this->owned[ (int) $data_object->ID ]
 			);
 		}
 

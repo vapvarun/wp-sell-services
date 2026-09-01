@@ -85,7 +85,7 @@ class Settings {
 			'commission' => __( 'Commission &amp; Tax', 'wp-sell-services' ),
 			'payouts'    => __( 'Payouts', 'wp-sell-services' ),
 			// Marketplace.
-			'vendor'     => __( 'Vendors', 'wp-sell-services' ),
+			'vendor'     => __( 'Vendor Settings', 'wp-sell-services' ),
 			'orders'     => __( 'Orders &amp; Disputes', 'wp-sell-services' ),
 			'emails'     => __( 'Emails', 'wp-sell-services' ),
 			// System (Pro tabs inserted before this via filter).
@@ -496,7 +496,22 @@ class Settings {
 			array(
 				'option_name' => 'wpss_general',
 				'field'       => 'platform_name',
-				'description' => __( 'Name displayed to users.', 'wp-sell-services' ),
+
+				/*
+				 * Names the site title explicitly and says how to get back to
+				 * it. Basecamp 10240020765 asked for a one-click "Use site
+				 * title" button; clearing the field already does exactly that,
+				 * because wpss_get_platform_name() falls back to the site name
+				 * when the value is empty. Documenting the behaviour that
+				 * exists beats shipping a button that duplicates it - and it
+				 * tells the owner which name their emails are actually using,
+				 * which is the thing they came to this field to find out.
+				 */
+				'description' => sprintf(
+					/* translators: %s: the site title */
+					__( 'Used in emails and notifications. Leave empty to use your site title (%s). If you rename the site later, update this too or your emails will keep the old name.', 'wp-sell-services' ),
+					get_bloginfo( 'name' )
+				),
 				'default'     => get_bloginfo( 'name' ),
 			)
 		);
@@ -686,8 +701,9 @@ class Settings {
 		);
 
 		// Wallet provider lives as a standalone option (single canonical key
-		// read by free Plugin::get_active_wallet_provider() and Pro's
-		// WalletManager — Basecamp #9985173976).
+		// read by Pro's WalletManager and this select — Basecamp #9985173976).
+		// Free has no reader: the free plugin's own accessor was a second copy
+		// of the same fall-through with zero callers, deleted in 1.7.0.
 		register_setting(
 			'wpss_payouts',
 			'wpss_wallet_provider',
@@ -767,7 +783,7 @@ class Settings {
 			array(
 				'option_name' => 'wpss_payouts',
 				'field'       => 'auto_withdrawal_enabled',
-				'label'       => __( 'Automatically process withdrawals for high-earning vendors', 'wp-sell-services' ),
+				'label'       => __( 'Automatically create withdrawal requests for high-earning vendors', 'wp-sell-services' ),
 				'default'     => false,
 			)
 		);
@@ -785,7 +801,7 @@ class Settings {
 				'max'         => 10000,
 				'step'        => 50,
 				'default'     => 500,
-				'description' => __( 'Vendors with available balance above this amount are automatically paid on the schedule below. Set to 0 to disable auto-withdrawals.', 'wp-sell-services' ),
+				'description' => __( 'A withdrawal request is created for any vendor whose available balance is above this amount, on the schedule below. You still approve and pay each request - no money leaves your account on its own. Set to 0 to disable.', 'wp-sell-services' ),
 			)
 		);
 
@@ -1132,6 +1148,58 @@ class Settings {
 			array( $this, 'sanitize_notification_settings' )
 		);
 
+		// Delivery behaviour, as opposed to which types are switched on.
+		//
+		// This option was read by wpss_should_skip_message_email() and by the
+		// message-email delay, and registered nowhere - so neither could be
+		// changed from the screen. A setting nothing can write is a setting
+		// nobody has.
+		register_setting(
+			'wpss_notifications',
+			'wpss_notification_settings',
+			array( $this, 'sanitize_notification_delivery_settings' )
+		);
+
+		add_settings_section(
+			'wpss_notification_delivery_section',
+			__( 'Message Email Delivery', 'wp-sell-services' ),
+			static function (): void {
+				echo '<p>' . esc_html__( 'Message emails are the most frequent mail the marketplace sends - one per message on every active order. These two settings cut the ones nobody needed.', 'wp-sell-services' ) . '</p>';
+			},
+			'wpss_notifications'
+		);
+
+		add_settings_field(
+			'skip_message_email_when_online',
+			__( 'Skip when they are already here', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_notifications',
+			'wpss_notification_delivery_section',
+			array(
+				'option_name' => 'wpss_notification_settings',
+				'field'       => 'skip_message_email_when_online',
+				'label'       => __( 'Do not email a message to someone who is browsing the site right now', 'wp-sell-services' ),
+				'default'     => true,
+				'description' => __( 'Presence is read from recent activity. On a quiet site where that is sparse, turn this off if members report missing message emails.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'message_email_delay_minutes',
+			__( 'Hold message emails for', 'wp-sell-services' ),
+			array( $this, 'render_number_field' ),
+			'wpss_notifications',
+			'wpss_notification_delivery_section',
+			array(
+				'option_name' => 'wpss_notification_settings',
+				'field'       => 'message_email_delay_minutes',
+				'default'     => 0,
+				'min'         => 0,
+				'max'         => 120,
+				'description' => __( 'Minutes to wait before sending. When the wait is over the email is sent only if the conversation is still unread. Set to 0 to send immediately.', 'wp-sell-services' ),
+			)
+		);
+
 		add_settings_section(
 			'wpss_notifications_section',
 			__( 'Email Notifications', 'wp-sell-services' ),
@@ -1146,34 +1214,7 @@ class Settings {
 		 *
 		 * @param array $types Associative array of notification_key => label.
 		 */
-		$notification_types = apply_filters(
-			'wpss_notification_types',
-			array(
-				'new_order'              => __( 'New Order', 'wp-sell-services' ),
-				'order_completed'        => __( 'Order Completed', 'wp-sell-services' ),
-				'order_cancelled'        => __( 'Order Cancelled', 'wp-sell-services' ),
-				'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
-				'delivery_submitted'     => __( 'Delivery Submitted', 'wp-sell-services' ),
-				'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
-				'new_message'            => __( 'New Message', 'wp-sell-services' ),
-				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
-				'new_review'             => __( 'New Review', 'wp-sell-services' ),
-				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
-				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
-				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
-				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
-				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
-				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
-				'tip_received'           => __( 'Tip Received', 'wp-sell-services' ),
-				'milestone_proposed'     => __( 'Milestone Proposed', 'wp-sell-services' ),
-				'milestone_paid'         => __( 'Milestone Paid', 'wp-sell-services' ),
-				'milestone_submitted'    => __( 'Milestone Delivered', 'wp-sell-services' ),
-				'milestone_approved'     => __( 'Milestone Approved', 'wp-sell-services' ),
-				'extension_proposed'     => __( 'Extension Proposed', 'wp-sell-services' ),
-				'extension_approved'     => __( 'Extension Approved', 'wp-sell-services' ),
-				'extension_declined'     => __( 'Extension Declined', 'wp-sell-services' ),
-			)
-		);
+		$notification_types = $this->get_notification_types();
 
 		foreach ( $notification_types as $key => $label ) {
 			add_settings_field(
@@ -2114,7 +2155,7 @@ class Settings {
 	 * @return void
 	 */
 	public function render_auto_withdrawal_section(): void {
-		echo '<p>' . esc_html__( 'Configure automatic withdrawals for high-earning vendors. When enabled, the system will automatically create and process withdrawal requests for vendors who meet the threshold.', 'wp-sell-services' ) . '</p>';
+		echo '<p>' . esc_html__( 'Save yourself checking who has crossed the payout threshold: when enabled, a withdrawal request is raised automatically for every vendor who has. Approving and paying them stays with you, on the Withdrawals screen.', 'wp-sell-services' ) . '</p>';
 	}
 
 	/**
@@ -2839,7 +2880,16 @@ class Settings {
 				<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $selected, $id ); ?>><?php echo esc_html( $label ); ?></option>
 			<?php endforeach; ?>
 		</select>
-		<p class="description"><?php esc_html_e( 'Which wallet integration funds and receives marketplace wallet operations. Providers appear here when their plugin is active.', 'wp-sell-services' ); ?></p>
+		<?php
+		// Says what the free plugin already does BEFORE describing what a
+		// provider adds. The old wording opened with "wallet integration" and
+		// "when their plugin is active", which read as "vendors have no wallet
+		// until I install something" - so owners bought Pro for a balance they
+		// already had (Basecamp 10235851532).
+		?>
+		<p class="description">
+			<?php esc_html_e( 'Vendor earnings, balances and withdrawals already work with no wallet plugin installed - that is the Internal Wallet below. A provider does not add the wallet; it changes where the balance is held, so it can sit alongside one you already run. Each appears here only while its plugin is active.', 'wp-sell-services' ); ?>
+		</p>
 		<?php
 	}
 
@@ -3031,7 +3081,7 @@ class Settings {
 		// Pages: confirmation + terms mapping.
 		foreach ( array(
 			'wpss_order_confirmation_page' => array( __( 'Order Confirmation Page', 'wp-sell-services' ), __( 'Custom thank-you page buyers land on after checkout. Leave unset to use the default order view.', 'wp-sell-services' ) ),
-			'wpss_terms_page'              => array( __( 'Terms & Conditions Page', 'wp-sell-services' ), __( 'Linked from checkout and exposed to API clients.', 'wp-sell-services' ) ),
+			'wpss_terms_page'              => array( __( 'Terms & Conditions Page', 'wp-sell-services' ), __( 'Map your own page - we never publish one. Linked from checkout and exposed to API clients. Privacy Policy comes from Settings > Privacy.', 'wp-sell-services' ) ),
 		) as $option => $labels ) {
 			register_setting( 'wpss_pages', $option, array( 'sanitize_callback' => 'absint' ) );
 			add_settings_field(
@@ -3508,39 +3558,45 @@ class Settings {
 	 * @param array<string, mixed>|null $input Raw input (null when all checkboxes unchecked).
 	 * @return array<string, mixed> Sanitized input.
 	 */
+	/**
+	 * Sanitize message-email delivery settings.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param array<string, mixed>|null $input Raw input.
+	 * @return array<string, mixed>
+	 */
+	public function sanitize_notification_delivery_settings( ?array $input ): array {
+		$input = $input ?? array();
+
+		return array(
+			// Checkbox: absent means unticked, so an explicit false is stored
+			// rather than the key going missing - the reader treats a missing
+			// key as "on", which is how this defaulted unreachable before.
+			'skip_message_email_when_online' => ! empty( $input['skip_message_email_when_online'] ),
+			'message_email_delay_minutes'    => min( 120, max( 0, absint( $input['message_email_delay_minutes'] ?? 0 ) ) ),
+		);
+	}
+
+	/**
+	 * Sanitize the notification settings group.
+	 *
+	 * The keys are built from get_notification_types(), the same registry the
+	 * checkboxes render from, so a type added there is saved without a second
+	 * edit here - which is how notify_moderation ended up gated on by
+	 * EmailService and written by nothing.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param array<string, mixed>|null $input Raw submitted values.
+	 * @return array<string, bool> Sanitized values.
+	 */
 	public function sanitize_notification_settings( ?array $input ): array {
 		$input     = $input ?? array();
 		$sanitized = array();
 
 		// Build keys dynamically from the same filter used to render the UI.
-		$notification_types = apply_filters(
-			'wpss_notification_types',
-			array(
-				'new_order'              => __( 'New Order', 'wp-sell-services' ),
-				'order_completed'        => __( 'Order Completed', 'wp-sell-services' ),
-				'order_cancelled'        => __( 'Order Cancelled', 'wp-sell-services' ),
-				'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
-				'delivery_submitted'     => __( 'Delivery Submitted', 'wp-sell-services' ),
-				'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
-				'new_message'            => __( 'New Message', 'wp-sell-services' ),
-				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
-				'new_review'             => __( 'New Review', 'wp-sell-services' ),
-				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
-				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
-				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
-				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
-				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
-				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
-				'tip_received'           => __( 'Tip Received', 'wp-sell-services' ),
-				'milestone_proposed'     => __( 'Milestone Proposed', 'wp-sell-services' ),
-				'milestone_paid'         => __( 'Milestone Paid', 'wp-sell-services' ),
-				'milestone_submitted'    => __( 'Milestone Delivered', 'wp-sell-services' ),
-				'milestone_approved'     => __( 'Milestone Approved', 'wp-sell-services' ),
-				'extension_proposed'     => __( 'Extension Proposed', 'wp-sell-services' ),
-				'extension_approved'     => __( 'Extension Approved', 'wp-sell-services' ),
-				'extension_declined'     => __( 'Extension Declined', 'wp-sell-services' ),
-			)
-		);
+		$notification_types = $this->get_notification_types();
 
 		foreach ( array_keys( $notification_types ) as $type_key ) {
 			$key               = 'notify_' . $type_key;
@@ -3708,5 +3764,58 @@ class Settings {
 	public static function get( string $group, string $key, mixed $default = null ): mixed { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound -- Public API; renaming is a named-argument BC break.
 		$options = get_option( 'wpss_' . $group, array() );
 		return $options[ $key ] ?? $default;
+	}
+
+	/**
+	 * The switchable notification types.
+	 *
+	 * One list. This literal was written twice - once to render the checkboxes,
+	 * once to sanitize them - and the copies were free to drift. EmailService
+	 * gates three moderation emails on `notify_moderation`, a key neither copy
+	 * carried, so no control could ever write it and those emails could not be
+	 * turned off. A key the sanitizer will not persist is a key that can be
+	 * read forever without existing.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return array<string, string> notification_key => label.
+	 */
+	public function get_notification_types(): array {
+		/**
+		 * Filter the switchable notification types.
+		 *
+		 * @since 1.1.0
+		 *
+		 * @param array $types Associative array of notification_key => label.
+		 */
+		return apply_filters(
+			'wpss_notification_types',
+			array(
+				'new_order'              => __( 'New Order', 'wp-sell-services' ),
+				'order_completed'        => __( 'Order Completed', 'wp-sell-services' ),
+				'order_cancelled'        => __( 'Order Cancelled', 'wp-sell-services' ),
+				'cancellation_requested' => __( 'Cancellation Requested', 'wp-sell-services' ),
+				'delivery_submitted'     => __( 'Delivery Submitted', 'wp-sell-services' ),
+				'revision_requested'     => __( 'Revision Requested', 'wp-sell-services' ),
+				'new_message'            => __( 'New Message', 'wp-sell-services' ),
+				'vendor_contact'         => __( 'Vendor Direct Message', 'wp-sell-services' ),
+				'new_review'             => __( 'New Review', 'wp-sell-services' ),
+				'dispute_opened'         => __( 'Dispute Opened', 'wp-sell-services' ),
+				'withdrawal_requested'   => __( 'Withdrawal Requested', 'wp-sell-services' ),
+				'withdrawal_approved'    => __( 'Withdrawal Approved', 'wp-sell-services' ),
+				'withdrawal_rejected'    => __( 'Withdrawal Rejected', 'wp-sell-services' ),
+				'proposal_submitted'     => __( 'Proposal Submitted', 'wp-sell-services' ),
+				'proposal_accepted'      => __( 'Proposal Accepted', 'wp-sell-services' ),
+				'tip_received'           => __( 'Tip Received', 'wp-sell-services' ),
+				'milestone_proposed'     => __( 'Milestone Proposed', 'wp-sell-services' ),
+				'milestone_paid'         => __( 'Milestone Paid', 'wp-sell-services' ),
+				'milestone_submitted'    => __( 'Milestone Delivered', 'wp-sell-services' ),
+				'milestone_approved'     => __( 'Milestone Approved', 'wp-sell-services' ),
+				'extension_proposed'     => __( 'Extension Proposed', 'wp-sell-services' ),
+				'extension_approved'     => __( 'Extension Approved', 'wp-sell-services' ),
+				'extension_declined'     => __( 'Extension Declined', 'wp-sell-services' ),
+				'moderation'             => __( 'Service Moderation', 'wp-sell-services' ),
+			)
+		);
 	}
 }

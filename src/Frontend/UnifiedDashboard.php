@@ -327,14 +327,9 @@ class UnifiedDashboard {
 	 * @return int Order ID, or 0 when the URL names no order.
 	 */
 	private function resolve_requested_order_id(): int {
-		$order_id = (int) get_query_var( 'wpss_order_id', 0 );
-
-		if ( ! $order_id ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Section routing, no data processing.
-			$order_id = isset( $_GET['order_id'] ) ? absint( wp_unslash( $_GET['order_id'] ) ) : 0;
-		}
-
-		return $order_id;
+		return function_exists( 'wpss_resolve_request_order_id' )
+			? wpss_resolve_request_order_id()
+			: 0;
 	}
 
 	/**

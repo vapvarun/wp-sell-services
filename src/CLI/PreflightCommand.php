@@ -163,36 +163,39 @@ class PreflightCommand {
 
 		global $wpdb;
 
-		$required_tables = array(
-			'wpss_service_packages',
-			'wpss_service_addons',
-			'wpss_orders',
-			'wpss_order_requirements',
-			'wpss_conversations',
-			'wpss_messages',
-			'wpss_deliveries',
-			'wpss_extension_requests',
-			'wpss_reviews',
-			'wpss_disputes',
-			'wpss_dispute_messages',
-			'wpss_proposals',
-			'wpss_vendor_profiles',
-			'wpss_portfolio_items',
-			'wpss_notifications',
-			'wpss_wallet_transactions',
-			'wpss_withdrawals',
-		);
+		$schema = new \WPSellServices\Database\SchemaManager();
 
+		// Read from SchemaManager rather than a list of its own. This method
+		// used to carry a hardcoded 17 names while CORE_TABLES held 20, so
+		// audit_log, reports and payment_receipts could go missing on a site
+		// and preflight would report a clean bill of health. Same fix as
+		// check_pages(): one source, no second list to drift.
 		$existing = $wpdb->get_col( 'SHOW TABLES' );
 
-		foreach ( $required_tables as $table ) {
-			$full_name = $wpdb->prefix . $table;
+		foreach ( $schema->get_tables() as $short => $full_name ) {
 			if ( in_array( $full_name, $existing, true ) ) {
 				$cols = $wpdb->get_results( "DESCRIBE `{$full_name}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$this->record( 'DB', $table, 'pass', count( $cols ) . ' columns' );
+				$this->record( 'DB', 'wpss_' . $short, 'pass', count( $cols ) . ' columns' );
 			} else {
-				$this->record( 'DB', $table, 'fail', 'Table missing' );
+				$this->record( 'DB', 'wpss_' . $short, 'fail', 'Table missing' );
 			}
+		}
+
+		// Tables we stopped creating but never dropped. Reported as a note, not
+		// a failure - nothing is broken by their presence. They are surfaced
+		// because reading one and believing it is what produced a confidently
+		// wrong root cause on Basecamp 10236358969.
+		foreach ( $schema->get_retired_tables() as $short => $info ) {
+			$this->record(
+				'DB',
+				'wpss_' . $short,
+				'warn',
+				sprintf(
+					'Retired table, %d row(s), nothing reads it. Live data: %s',
+					$info['rows'],
+					$info['data_now']
+				)
+			);
 		}
 
 		WP_CLI::log( '' );
@@ -567,8 +570,40 @@ class PreflightCommand {
 		$log = WP_CONTENT_DIR . '/debug.log';
 		if ( file_exists( $log ) ) {
 			$lines      = file( $log, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-			$wpss_lines = preg_grep( '/wpss|wp-sell-services/i', $lines ?: array() );
-			$this->record( 'Debug', 'WPSS errors in debug.log', empty( $wpss_lines ) ? 'pass' : 'fail', empty( $wpss_lines ) ? 'Clean' : count( $wpss_lines ) . ' entries' );
+			$wpss_lines = preg_grep( '/wpss|wp-sell-services/i', $lines ?: array() ) ?: array();
+
+			/*
+			 * This used to fail on ANY line in the whole log mentioning wpss, which
+			 * made it red by construction on every machine a release is cut from.
+			 * The contract suite deliberately drives guards into refusing - an
+			 * invalid refund amount, a disabled gateway, a missing storage provider
+			 * - and each refusal logs. Those lines are the guards WORKING. A gate
+			 * that cannot pass is one people learn to ignore.
+			 *
+			 * Fail only on evidence of a real defect: a fatal, an uncaught throwable
+			 * or a parse error. Our own logged refusals are reported as a warning,
+			 * with the count, so a reader can still judge them.
+			 */
+			$fatal = preg_grep( '/(fatal error|uncaught|parse error)/i', $wpss_lines ) ?: array();
+
+			if ( ! empty( $fatal ) ) {
+				$this->record( 'Debug', 'Fatals in debug.log', 'fail', count( $fatal ) . ' entry(ies) - ' . substr( (string) reset( $fatal ), 0, 90 ) );
+			} else {
+				$this->record( 'Debug', 'Fatals in debug.log', 'pass', 'None' );
+			}
+
+			$handled = count( $wpss_lines ) - count( $fatal );
+
+			if ( $handled > 0 ) {
+				$this->record(
+					'Debug',
+					'WPSS log entries',
+					'warn',
+					$handled . ' entry(ies) - includes deliberate guard refusals from the contract suite; clear debug.log and re-run for a clean signal'
+				);
+			} else {
+				$this->record( 'Debug', 'WPSS log entries', 'pass', 'Clean' );
+			}
 		} else {
 			$this->record( 'Debug', 'debug.log', 'pass', 'No log file' );
 		}

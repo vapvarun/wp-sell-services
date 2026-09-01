@@ -108,6 +108,7 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_propose_milestone', array( $this, 'ajax_propose_milestone' ) );
 		add_action( 'wp_ajax_wpss_submit_milestone', array( $this, 'ajax_submit_milestone' ) );
 		add_action( 'wp_ajax_wpss_approve_milestone', array( $this, 'ajax_approve_milestone' ) );
+		add_action( 'wp_ajax_wpss_request_milestone_revision', array( $this, 'ajax_request_milestone_revision' ) );
 		add_action( 'wp_ajax_wpss_decline_milestone', array( $this, 'ajax_decline_milestone' ) );
 		add_action( 'wp_ajax_wpss_delete_milestone', array( $this, 'ajax_delete_milestone' ) );
 
@@ -1793,7 +1794,7 @@ class AjaxHandlers {
 			// timeline + Pay-phase-1 button live.
 			$is_milestone_contract = ProposalService::CONTRACT_TYPE_MILESTONE === ( $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED );
 			if ( $is_milestone_contract ) {
-				$redirect_url = add_query_arg( 'order_id', $result['order_id'], wpss_get_dashboard_url() );
+				$redirect_url = wpss_get_order_url( (int) $result['order_id'] );
 				$message      = __( 'Proposal accepted — your project is set up. Opening the order…', 'wp-sell-services' );
 			} else {
 				$redirect_url = wpss_get_pay_order_url( (int) $result['order_id'] );
@@ -2067,6 +2068,22 @@ class AjaxHandlers {
 		if ( is_wp_error( $attachment_id ) ) {
 			wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
 		}
+
+		// Match how deliveries are stored. A requirement upload is a buyer
+		// handing over a brief, a brand asset or a document, and it was landing
+		// as a public attachment listed in everyone's media library while the
+		// docs told them it was private. Deliveries have used `private` since
+		// 1.0 - the same rule applies to what the buyer sends the other way.
+		//
+		// This hides it from the library and from public listings. The file
+		// itself still sits in the uploads tree, so treat its URL as unlisted
+		// rather than secret; protecting the path is tracked separately.
+		wp_update_post(
+			array(
+				'ID'          => $attachment_id,
+				'post_status' => 'private',
+			)
+		);
 
 		wp_send_json_success(
 			array(
@@ -2365,6 +2382,76 @@ class AjaxHandlers {
 	}
 
 	/**
+	 * Decide what happens when a logged-out buyer presses Continue to Checkout.
+	 *
+	 * The cart is user meta, so a guest genuinely cannot have one - that part of
+	 * the old guard was right. What was wrong was where it sent them: straight to
+	 * wp-login.php with redirect_to pointing at the SERVICE page, which threw away
+	 * the package and add-ons they had just chosen. They logged in, landed back on
+	 * the pricing table, and had to pick everything again.
+	 *
+	 * The single-service checkout does not need a cart. It takes the service,
+	 * package and add-ons from the URL, and when the owner has enabled
+	 * account-at-checkout it already collects the buyer's name and email and
+	 * creates their account before the order row is inserted
+	 * ({@see wpss_checkout_creates_accounts()}). So the account step is one screen
+	 * further along, inside our own chrome, and the buyer never needs to see
+	 * wp-login.php at all.
+	 *
+	 * When account-at-checkout is off the owner has said buyers must already have
+	 * an account, so the login gate stays - but it now returns to CHECKOUT with the
+	 * selection intact rather than to the service page.
+	 *
+	 * Always exits.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return void
+	 */
+	private function handle_guest_checkout_intent(): void {
+		// Verified before any posted selection is trusted, exactly as the
+		// logged-in path does. The nonce was minted for user 0 on a page
+		// rendered to a guest, so it verifies for a guest.
+		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
+
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$package_id = absint( $_POST['package_index'] ?? 0 );
+		$quantity   = max( 1, absint( $_POST['quantity'] ?? 1 ) );
+		// Both keys are accepted here for the same reason as below: 'extras' is
+		// the legacy name and single-service.js posts 'addons'.
+		$addons_raw = wp_unslash( $_POST['extras'] ?? $_POST['addons'] ?? array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- values are sanitized with absint() on the next line.
+		$addons     = ! empty( $addons_raw ) ? array_map( 'absint', (array) $addons_raw ) : array();
+
+		$checkout_url = '';
+		if ( $service_id && 'publish' === get_post_status( $service_id ) ) {
+			$checkout_url = wpss_get_service_checkout_url( $service_id, $package_id, $addons );
+
+			if ( $checkout_url && $quantity > 1 ) {
+				$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
+			}
+		}
+
+		if ( $checkout_url && wpss_checkout_creates_accounts() ) {
+			wp_send_json_success(
+				array(
+					'checkout_url'   => $checkout_url,
+					// Tells the client nothing was added to a cart, so it
+					// navigates instead of flashing "Added" at someone whose
+					// cart does not exist.
+					'guest_checkout' => true,
+				)
+			);
+		}
+
+		wp_send_json_error(
+			array(
+				'message'   => __( 'Please log in to continue to checkout.', 'wp-sell-services' ),
+				'login_url' => wp_login_url( $checkout_url ?: ( wp_get_referer() ?: home_url() ) ),
+			)
+		);
+	}
+
+	/**
 	 * Add service to cart.
 	 *
 	 * Handles adding a service with selected package and extras to the standalone cart.
@@ -2373,12 +2460,7 @@ class AjaxHandlers {
 	 */
 	public function add_service_to_cart(): void {
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error(
-				array(
-					'message'   => __( 'Please log in to add services to your cart.', 'wp-sell-services' ),
-					'login_url' => wp_login_url( wp_get_referer() ?: home_url() ),
-				)
-			);
+			$this->handle_guest_checkout_intent();
 		}
 
 		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
@@ -3999,6 +4081,32 @@ class AjaxHandlers {
 
 		$service = new \WPSellServices\Services\MilestoneService();
 		$result  = $service->approve( $milestone_id, get_current_user_id() );
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+		wp_send_json_success( array( 'message' => $result['message'] ) );
+	}
+
+	/**
+	 * AJAX: Buyer sends a submitted phase back for changes.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return void
+	 */
+	public function ajax_request_milestone_revision(): void {
+		check_ajax_referer( 'wpss_milestone_action' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ), 401 );
+		}
+
+		$milestone_id = isset( $_POST['milestone_id'] ) ? absint( wp_unslash( $_POST['milestone_id'] ) ) : 0;
+		$reason       = isset( $_POST['reason'] ) ? sanitize_textarea_field( wp_unslash( $_POST['reason'] ) ) : '';
+
+		$service = new \WPSellServices\Services\MilestoneService();
+		$result  = $service->request_revision( $milestone_id, get_current_user_id(), $reason );
 
 		if ( ! $result['success'] ) {
 			wp_send_json_error( array( 'message' => $result['message'] ) );

@@ -184,15 +184,32 @@ do_action( 'wpss_before_conversation', $order );
 					<i data-lucide="message-square" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 				</div>
 				<h3 class="wpss-messaging__empty-title"><?php esc_html_e( 'No messages yet', 'wp-sell-services' ); ?></h3>
-				<p class="wpss-messaging__empty-text">
-					<?php
-					if ( in_array( $order->status, array( 'completed', 'cancelled', 'refunded' ), true ) ) {
-						esc_html_e( 'No messages were exchanged during this order.', 'wp-sell-services' );
-					} else {
-						esc_html_e( 'Start the conversation by sending a message!', 'wp-sell-services' );
-					}
+				<?php
+				// $can_message is the single authority on whether this person may
+				// send. The invite used to branch on its own status list, so
+				// pending_payment fell through to "Start the conversation"
+				// directly above the composer's "Messaging is not available for
+				// this order status" (Basecamp 10240019323). When sending is
+				// blocked the closed notice below states the reason; the empty
+				// state must not contradict it by inviting.
+				//
+				// Built as a string first so the paragraph is not emitted at all
+				// when there is nothing to put in it. It used to render an empty
+				// <p> under the heading on every blocked non-terminal status,
+				// which reads as a half-loaded panel.
+				$wpss_empty_text = '';
+				if ( $can_message ) {
+					$wpss_empty_text = __( 'Start the conversation by sending a message!', 'wp-sell-services' );
+				} elseif ( in_array( $order->status, array( 'completed', 'cancelled', 'refunded' ), true ) ) {
+					$wpss_empty_text = __( 'No messages were exchanged during this order.', 'wp-sell-services' );
+				}
+
+				if ( '' !== $wpss_empty_text ) :
 					?>
-				</p>
+					<p class="wpss-messaging__empty-text"><?php echo esc_html( $wpss_empty_text ); ?></p>
+					<?php
+				endif;
+				?>
 			</div>
 		<?php else : ?>
 			<?php
@@ -342,6 +359,22 @@ do_action( 'wpss_before_conversation', $order );
 					} else {
 						esc_html_e( 'This order has been partially refunded.', 'wp-sell-services' );
 					}
+				} elseif ( in_array( $order->status, array( 'pending_payment', 'pending' ), true ) ) {
+					// "Not available for this order status" told the buyer it was
+					// shut without saying it would ever open, which reads as a
+					// broken feature rather than a sequence. They are one step
+					// away from being able to message; say which step.
+					//
+					// 'pending' is covered here because ServiceOrder declares and
+					// labels it while nothing sets it - there are zero rows in it
+					// on any install checked. Naming it costs one word and keeps
+					// the coverage assertion in
+					// tests/test-conversation-states-contract.php strict, so a
+					// status added later cannot fall silently into the bare
+					// "not available for this order status" line.
+					esc_html_e( 'You can message this seller once the order is paid.', 'wp-sell-services' );
+				} elseif ( 'rejected' === $order->status ) {
+					esc_html_e( 'This order was declined, so messaging is closed.', 'wp-sell-services' );
 				} else {
 					esc_html_e( 'Messaging is not available for this order status.', 'wp-sell-services' );
 				}
@@ -393,26 +426,6 @@ document.addEventListener('DOMContentLoaded', function() {
 		$messagesContainer.scrollTop($messagesContainer[0].scrollHeight);
 	}
 	scrollToBottom();
-
-	// Milestone "Request revision in chat" hand-off: when the buyer
-	// clicks the revision link on a milestone receipt, we stash the
-	// phase title in sessionStorage and navigate here. Read it once,
-	// prefill the composer with a referenced template, focus the
-	// field, and clear the stash so reload doesn't re-prefill.
-	try {
-		var prefillPhase = sessionStorage.getItem('wpss_revision_prefill');
-		if (prefillPhase && $messageInput.length) {
-			var template = 'Re: "' + prefillPhase + '" — ';
-			if (!$messageInput.val()) {
-				$messageInput.val(template).trigger('input');
-				$messageInput.focus();
-				// Move caret to end.
-				var el = $messageInput[0];
-				el.setSelectionRange(el.value.length, el.value.length);
-			}
-			sessionStorage.removeItem('wpss_revision_prefill');
-		}
-	} catch (e) { /* storage disabled */ }
 
 	// Auto-resize textarea.
 	$messageInput.on('input', function() {

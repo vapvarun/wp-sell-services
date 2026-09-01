@@ -465,6 +465,55 @@ module.exports = function ( grunt ) {
 		grunt.log.ok( 'dist autoloader contains no dev-package references.' );
 	} );
 
+	// verify:smoke-gate — refuse to build a release zip unless a browser smoke
+	// run has passed against THIS version. Without it, a release can be cut on
+	// evidence from an earlier version and nobody notices; the 1.7.0 pipeline
+	// found the last record on file was from 1.6.0, three weeks stale.
+	grunt.registerTask( 'verify:smoke-gate', 'Assert a smoke pass exists for this version', function () {
+		const fs = require( 'fs' );
+		const report = 'docs/qa/.last-smoke-pass.json';
+
+		if ( ! fs.existsSync( report ) ) {
+			grunt.fail.warn(
+				'verify:smoke-gate — no ' + report + '.\n' +
+				'Run the wp-plugin-smoke skill before building a release.'
+			);
+			return;
+		}
+
+		let data;
+		try {
+			data = JSON.parse( fs.readFileSync( report, 'utf8' ) );
+		} catch ( e ) {
+			grunt.fail.warn( 'verify:smoke-gate — ' + report + ' is not valid JSON: ' + e.message );
+			return;
+		}
+
+		if ( data.release_version !== pkg.version ) {
+			grunt.fail.warn(
+				'verify:smoke-gate — smoke evidence is for ' +
+				( data.release_version || 'an unrecorded version' ) +
+				', building ' + pkg.version + '.\n' +
+				'Re-run the smoke walk against this version before releasing.'
+			);
+			return;
+		}
+
+		const failures = Array.isArray( data.failures ) ? data.failures.length : 0;
+		const logIssues = Array.isArray( data.debug_log_issues ) ? data.debug_log_issues.length : 0;
+
+		if ( failures || logIssues ) {
+			grunt.fail.warn(
+				'verify:smoke-gate — the smoke run for ' + pkg.version + ' is not clean: ' +
+				failures + ' failure(s), ' + logIssues + ' debug-log issue(s).\n' +
+				'Fix them, re-run the smoke, then build.'
+			);
+			return;
+		}
+
+		grunt.log.ok( 'smoke pass on file for ' + pkg.version + ' (recorded ' + ( data.recorded || '?' ) + ').' );
+	} );
+
 	// Release: Full build → POT regen → RTL CSS → minify → strip dev deps
 	// → copy → verify autoloader → zip → restore dev deps.
 	//
@@ -475,6 +524,7 @@ module.exports = function ( grunt ) {
 	//   so a regression fails the build BEFORE we publish a broken ZIP.
 	// - composer:dev runs last to leave the working tree in a usable state.
 	grunt.registerTask( 'release', [
+		'verify:smoke-gate',
 		'i18n',
 		'rtl',
 		'min',

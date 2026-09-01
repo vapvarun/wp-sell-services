@@ -79,17 +79,6 @@ function wpss_generate_order_number(): string {
 	return $prefix . strtoupper( wp_generate_password( 8, false ) ) . '-' . time();
 }
 
-/**
- * Generate unique dispute number.
- *
- * @return string
- */
-function wpss_generate_dispute_number(): string {
-	$prefix = apply_filters( 'wpss_dispute_number_prefix', 'DSP-' );
-	$number = wp_rand( 10000, 99999 );
-
-	return $prefix . $number . '-' . time();
-}
 
 /**
  * Get order status label.
@@ -170,7 +159,51 @@ function wpss_user_can_view_order( int $order_id, ?int $user_id = null ): bool {
 }
 
 /**
+ * Resolve the order ID named by the current request.
+ *
+ * Prefers the pretty-permalink query var (`wpss_order_id`) and falls back to
+ * the legacy `?order_id=` query arg so old bookmarks and emailed links keep
+ * working until they are 301'd.
+ *
+ * @since 1.7.0
+ *
+ * @return int Order ID, or 0 when the request names no order.
+ */
+function wpss_resolve_request_order_id(): int {
+	$order_id = (int) get_query_var( 'wpss_order_id', 0 );
+
+	if ( $order_id > 0 ) {
+		return $order_id;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing.
+	return isset( $_GET['order_id'] ) ? absint( wp_unslash( $_GET['order_id'] ) ) : 0;
+}
+
+/**
+ * Resolve the order action named by the current request (e.g. requirements).
+ *
+ * @since 1.7.0
+ *
+ * @return string Sanitized action slug, or empty string.
+ */
+function wpss_resolve_request_order_action(): string {
+	$action = (string) get_query_var( 'wpss_order_action', '' );
+
+	if ( '' !== $action ) {
+		return sanitize_key( $action );
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing.
+	return isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
+}
+
+/**
  * Get order view URL.
+ *
+ * Pretty shape (when permalinks are on): `/{dashboard}/{section}/{id}/`
+ * e.g. `/dashboard/orders/3407/` or `/dashboard/sales/3407/`.
+ * Plain permalinks keep the `?order_id=` query form.
  *
  * @param int    $order_id Order ID.
  * @param string $section  Dashboard section (e.g. 'sales' for vendor orders).
@@ -183,18 +216,69 @@ function wpss_get_order_url( int $order_id, string $section = '' ): string {
 		return '';
 	}
 
+	// Empty section means the buyer-side address. Callers that mean the vendor
+	// sales view pass 'sales' explicitly (see sales list "View" links).
+	if ( '' === $section ) {
+		$section = 'orders';
+	}
+
 	$dashboard_url = wpss_get_dashboard_url( $section );
 
 	if ( $dashboard_url ) {
-		return add_query_arg( 'order_id', $order_id, $dashboard_url );
+		return wpss_append_dashboard_order( $dashboard_url, $order_id );
 	}
 
 	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
-	return home_url( '/' . $order_slug . '/' . $order->order_number . '/' );
+	return home_url( '/' . $order_slug . '/' . $order_id . '/' );
+}
+
+/**
+ * Human label for a submitted requirement key.
+ *
+ * The buyer's freeform brief is stored under the key `description`, and both
+ * the order view and the admin order screen had to decide what to call it.
+ * Only the order view did: admin printed the raw key, so the site owner read
+ * "description" where the buyer and seller read "What the buyer asked for"
+ * (Basecamp 10254444197). One flow, two labels.
+ *
+ * Any other key is a question the owner configured, so it is titled from its
+ * own text rather than renamed.
+ *
+ * @since 1.7.0
+ *
+ * @param string $key Submitted field key.
+ * @return string Label to show.
+ */
+function wpss_requirement_field_label( string $key ): string {
+	$label = 'description' === $key
+		? __( 'What the buyer asked for', 'wp-sell-services' )
+		: ucfirst( str_replace( array( '_', '-' ), ' ', $key ) );
+
+	/**
+	 * Filter the label shown for a submitted requirement field.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param string $label Resolved label.
+	 * @param string $key   Raw field key.
+	 */
+	return (string) apply_filters( 'wpss_requirement_field_label', $label, $key );
 }
 
 /**
  * Get order requirements URL.
+ *
+ * Pretty shape: `/{dashboard}/orders/{id}/requirements/`.
+ *
+ * A SUB-ORDER has no requirements step. A tip, a paid extension and a
+ * milestone phase are all payments against work that already has its brief, so
+ * sending the buyer to `/requirements/` gave them a URL and a page heading that
+ * described something the screen was not - the content underneath is a tip
+ * receipt or a phase receipt, and correct. Those land on the order itself.
+ *
+ * Every gateway routes its post-payment redirect through here, so fixing it in
+ * one place covers Stripe, PayPal, offline and the intent service rather than
+ * four separate redirects that would drift.
  *
  * @param int $order_id Order ID.
  * @return string
@@ -206,21 +290,20 @@ function wpss_get_order_requirements_url( int $order_id ): string {
 		return '';
 	}
 
-	// Orders is the default section, so no section parameter needed.
-	$dashboard_url = wpss_get_dashboard_url();
+	$sub_order_platforms = function_exists( 'wpss_get_sub_order_platforms' ) ? wpss_get_sub_order_platforms() : array();
+
+	if ( in_array( (string) ( $order->platform ?? '' ), $sub_order_platforms, true ) ) {
+		return wpss_get_order_url( $order_id );
+	}
+
+	$dashboard_url = wpss_get_dashboard_url( 'orders' );
 
 	if ( $dashboard_url ) {
-		return add_query_arg(
-			array(
-				'order_id' => $order_id,
-				'action'   => 'requirements',
-			),
-			$dashboard_url
-		);
+		return wpss_append_dashboard_order( $dashboard_url, $order_id, 'requirements' );
 	}
 
 	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
-	return home_url( '/' . $order_slug . '/' . $order->order_number . '/requirements/' );
+	return home_url( '/' . $order_slug . '/' . $order_id . '/requirements/' );
 }
 
 /**
@@ -323,6 +406,10 @@ function wpss_get_order_requirements( int $order_id ): array {
 /**
  * Get order confirmation URL (thank you page).
  *
+ * Custom confirmation pages keep a single `?order_id=` arg (one-shot thank-you
+ * pages are not worth nested rewrites). When unset, the pretty dashboard order
+ * URL is the confirmation surface.
+ *
  * @param int $order_id Order ID.
  * @return string
  */
@@ -336,17 +423,20 @@ function wpss_get_order_confirmation_url( int $order_id ): string {
 	$confirmation_page = (int) get_option( 'wpss_order_confirmation_page' );
 
 	if ( $confirmation_page ) {
-		return add_query_arg( 'order_id', $order_id, get_permalink( $confirmation_page ) );
+		$permalink = get_permalink( $confirmation_page );
+		if ( $permalink ) {
+			return add_query_arg( 'order_id', $order_id, $permalink );
+		}
 	}
 
-	// Fall back to dashboard order view.
-	$dashboard_url = wpss_get_dashboard_url();
-	if ( $dashboard_url ) {
-		return add_query_arg( 'order_id', $order_id, $dashboard_url );
+	// Fall back to the pretty dashboard order view.
+	$url = wpss_get_order_url( $order_id );
+	if ( $url ) {
+		return $url;
 	}
 
 	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
-	return home_url( '/' . $order_slug . '/' . $order->order_number . '/confirmation/' );
+	return home_url( '/' . $order_slug . '/' . $order_id . '/confirmation/' );
 }
 
 /**
@@ -381,6 +471,166 @@ function wpss_allow_late_requirements_submission(): bool {
  */
 function wpss_get_order_status_labels(): array {
 	return wpss_get_order_statuses();
+}
+
+/**
+ * Group every order status into the handful of buckets a buyer thinks in.
+ *
+ * A buyer with 149 orders does not scan eighteen statuses; they want to know
+ * what needs them, what is running, and what is over. This is the single
+ * definition of those buckets - the filter chips, the query behind them and
+ * the per-chip counts all read it, so a status cannot end up in a chip that
+ * does not select it (Basecamp 10240019463).
+ *
+ * Order matters: it is the order the chips render in, and the order the list
+ * sorts by when no chip is chosen, so the rows that need the buyer come first.
+ * `all` deliberately carries no statuses - it means "no WHERE clause", not
+ * "every status", so a status added later still appears under All without
+ * being added here first.
+ *
+ * Every status ServiceOrder declares belongs to exactly one bucket. That is
+ * asserted in tests/test-order-filters-contract.php rather than trusted.
+ *
+ * @since 1.7.0
+ *
+ * @return array<string, array{label: string, statuses: string[]}>
+ */
+function wpss_get_order_status_groups(): array {
+	$groups = array(
+		'all'       => array(
+			'label'    => __( 'All', 'wp-sell-services' ),
+			'statuses' => array(),
+		),
+		'awaiting'  => array(
+			'label'    => __( 'Awaiting payment', 'wp-sell-services' ),
+			'statuses' => array( 'pending_payment', 'pending' ),
+		),
+		'active'    => array(
+			'label'    => __( 'Active', 'wp-sell-services' ),
+			'statuses' => array(
+				'pending_requirements',
+				'requirements_submitted',
+				'accepted',
+				'in_progress',
+				'revision_requested',
+				'delivered',
+				'pending_approval',
+				'on_hold',
+				'late',
+			),
+		),
+		'disputed'  => array(
+			'label'    => __( 'Needs attention', 'wp-sell-services' ),
+			'statuses' => array( 'disputed', 'cancellation_requested' ),
+		),
+		'completed' => array(
+			'label'    => __( 'Completed', 'wp-sell-services' ),
+			'statuses' => array( 'completed' ),
+		),
+		'closed'    => array(
+			'label'    => __( 'Cancelled', 'wp-sell-services' ),
+			'statuses' => array( 'cancelled', 'rejected', 'refunded', 'partially_refunded' ),
+		),
+	);
+
+	/**
+	 * Filter the order status groups used by the dashboard filter chips.
+	 *
+	 * A group whose statuses are removed disappears from the chip row; adding
+	 * a status to a group makes it selectable there. Keep the buckets mutually
+	 * exclusive - a status in two groups is counted twice.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param array<string, array{label: string, statuses: string[]}> $groups Status groups.
+	 */
+	return apply_filters( 'wpss_order_status_groups', $groups );
+}
+
+/**
+ * Resolve a group key from the request into the statuses it selects.
+ *
+ * Returns an empty array for `all` and for anything unrecognised, which the
+ * repository reads as "no status filter" - so a hand-edited query arg widens
+ * the list rather than emptying it.
+ *
+ * @since 1.7.0
+ *
+ * @param string $group_key Group key.
+ * @return string[] Statuses, empty for no filter.
+ */
+function wpss_resolve_order_status_group( string $group_key ): array {
+	$groups = wpss_get_order_status_groups();
+
+	return isset( $groups[ $group_key ] ) ? $groups[ $group_key ]['statuses'] : array();
+}
+
+/**
+ * Statuses present in the data that no group claims.
+ *
+ * The buckets are built from ServiceOrder's declared statuses, but the column
+ * is a plain varchar and the database has been written by more than one
+ * release. This install carries an order whose status is `pending_review` -
+ * a DISPUTE status, not an order status, so it is in no bucket and the chips
+ * summed to 14 against a real total of 15. One order the buyer could not reach
+ * from any filter.
+ *
+ * Rather than name that one value and wait for the next one, anything the
+ * groups do not claim is collected here and offered as its own chip. The chips
+ * then always add up to the list, whatever ends up in the column.
+ *
+ * @since 1.7.0
+ *
+ * @param array<string, int> $status_counts Status => count, from count_by_customer_grouped().
+ * @return string[] Statuses no group claims and that actually have rows.
+ */
+function wpss_resolve_ungrouped_statuses( array $status_counts ): array {
+	$claimed = array();
+
+	foreach ( wpss_get_order_status_groups() as $key => $group ) {
+		if ( 'all' === $key ) {
+			continue;
+		}
+		foreach ( $group['statuses'] as $status ) {
+			$claimed[ $status ] = true;
+		}
+	}
+
+	$ungrouped = array();
+
+	foreach ( $status_counts as $status => $count ) {
+		if ( $count > 0 && ! isset( $claimed[ $status ] ) ) {
+			$ungrouped[] = (string) $status;
+		}
+	}
+
+	return $ungrouped;
+}
+
+/**
+ * Statuses in the order a buyer should meet them, most actionable first.
+ *
+ * Flattened from the group order above so the default list surfaces the orders
+ * waiting on the buyer before the ones that are finished, without hiding
+ * anything. Used to build the ORDER BY.
+ *
+ * @since 1.7.0
+ *
+ * @return string[]
+ */
+function wpss_get_order_status_priority(): array {
+	$priority = array();
+
+	foreach ( wpss_get_order_status_groups() as $key => $group ) {
+		if ( 'all' === $key ) {
+			continue;
+		}
+		foreach ( $group['statuses'] as $status ) {
+			$priority[] = $status;
+		}
+	}
+
+	return $priority;
 }
 
 /**

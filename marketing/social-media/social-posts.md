@@ -347,7 +347,7 @@ Direct communication with vendor per order. File attachments supported. Message 
 Save services to favorites for later. Build a wishlist of vendors for future projects.
 
 **Optional Tipping**
-Exceptional work deserves recognition. Buyers can tip vendors after completion. Tips are commission-free.
+Exceptional work deserves recognition. Buyers can tip vendors after completion, and you choose the commission on tips - set it to zero and vendors keep every penny.
 
 **Unified Dashboard**
 Buyers get their own dashboard showing:
@@ -618,7 +618,7 @@ Directory plugins are everywhere, but most lack actual transaction features. I n
 Integrates with WooCommerce for checkout and payments. Access to all WooCommerce payment gateways.
 
 **Pro version:**
-Additional e-commerce platforms (EDD, FluentCart, SureCart, Standalone), direct payment gateways (Stripe, PayPal, Razorpay), cloud storage (S3, Google Cloud, DigitalOcean), advanced analytics.
+Additional e-commerce platforms (EDD, FluentCart, Standalone), direct payment gateways (Stripe, PayPal, Razorpay), cloud storage (S3, Google Cloud, DigitalOcean), advanced analytics.
 
 **Use cases:**
 - Freelance platforms

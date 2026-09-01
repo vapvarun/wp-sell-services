@@ -58,6 +58,31 @@ A $100 service with 7% tax charges $107 at checkout. The buyer sees the tax adde
 **Prices include tax (common in the EU):**
 A E120 service with 20% VAT shows E120 at checkout. The tax (E20) is already baked into the displayed price, so the buyer pays what they see.
 
+### What tax applies to
+
+Tax is applied to a **catalog service purchase** -- the package price plus any
+add-ons the buyer selected. That is what the buyer approves at checkout and
+what the gateway charges.
+
+It is **not** currently applied to:
+
+- tips
+- paid extensions on an existing order
+- milestone phase payments
+- accepting a fixed-price proposal on a buyer request
+
+Those are charged at their face amount. If you operate somewhere that expects
+tax on all of them, take that into account before switching tax on, and tell
+us -- whether a tip should be taxable is a question with a different answer in
+different places, and we would rather ask than guess.
+
+### Tax and your commission
+
+Commission is calculated on the **pre-tax** amount. Tax is money you are
+holding on someone else's behalf, not revenue to split, so a $100 service at
+7% tax with 10% commission charges $107, takes $10 (not $10.70), and leaves
+the vendor $90.
+
 ### Tax on Commission
 
 This setting controls how tax interacts with your platform fee:

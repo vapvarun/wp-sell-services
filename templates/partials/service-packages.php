@@ -343,6 +343,44 @@ do_action( 'wpss_before_service_packages', $service_id );
 			? __( 'Saved to favorites', 'wp-sell-services' )
 			: __( 'Save to favorites', 'wp-sell-services' );
 		?>
+		<?php
+		// Add-ons render only inside the order modal, one click past the point
+		// where a browsing buyer decides whether this service does what they
+		// need - so extras existed and nobody knew (Basecamp 10236358463). This
+		// says they are there; the modal still does the choosing.
+		$wpss_pkg_extras = wpss_get_service_extras( $service_id );
+
+		if ( $wpss_pkg_extras ) :
+			$wpss_pkg_extra_prices = array_filter(
+				array_map(
+					static function ( $wpss_extra ) {
+						return (float) ( $wpss_extra['price'] ?? 0 );
+					},
+					$wpss_pkg_extras
+				)
+			);
+			?>
+			<p class="wpss-package-extras-note">
+				<i data-lucide="plus-circle" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
+				<?php
+				if ( $wpss_pkg_extra_prices ) {
+					printf(
+						/* translators: 1: number of add-ons, 2: formatted lowest add-on price. */
+						esc_html( _n( '%1$d add-on available from %2$s', '%1$d add-ons available from %2$s', count( $wpss_pkg_extras ), 'wp-sell-services' ) ),
+						count( $wpss_pkg_extras ),
+						esc_html( wpss_format_price( min( $wpss_pkg_extra_prices ) ) )
+					);
+				} else {
+					printf(
+						/* translators: %d: number of add-ons. */
+						esc_html( _n( '%d add-on available', '%d add-ons available', count( $wpss_pkg_extras ), 'wp-sell-services' ) ),
+						count( $wpss_pkg_extras )
+					);
+				}
+				?>
+			</p>
+		<?php endif; ?>
+
 		<div class="wpss-package-actions">
 			<button
 				type="button"
@@ -355,9 +393,9 @@ do_action( 'wpss_before_service_packages', $service_id );
 				<span class="wpss-fav-toggle__label"><?php echo esc_html( $wpss_pkg_fav_label ); ?></span>
 			</button>
 			<div class="wpss-contact-seller">
-				<a href="#" class="wpss-contact-link" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
+				<button type="button" class="wpss-contact-link" data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
 					<?php esc_html_e( 'Contact Seller', 'wp-sell-services' ); ?>
-				</a>
+				</button>
 			</div>
 		</div>
 	<?php endif; ?>

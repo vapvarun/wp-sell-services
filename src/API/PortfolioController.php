@@ -430,29 +430,6 @@ class PortfolioController extends RestController {
 		return new WP_REST_Response( array( 'success' => true ) );
 	}
 
-	/**
-	 * Check vendor permissions.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return bool|WP_Error
-	 */
-	public function check_vendor_permissions( WP_REST_Request $request ) {
-		$perm_check = $this->check_permissions( $request );
-		if ( is_wp_error( $perm_check ) ) {
-			return $perm_check;
-		}
-
-		// Canonical vendor check (capability/role + legacy meta) so role-based
-		// and demo-seeded vendors — who never carry the _wpss_is_vendor meta —
-		// are not wrongly 403'd.
-		if ( ! wpss_is_vendor() ) {
-			return new WP_Error( 'wpss_not_vendor', __( 'Only vendors can manage portfolio items.', 'wp-sell-services' ), array( 'status' => 403 ) );
-		}
-
-		// Portfolio is how a vendor advertises. A suspended one does not get to
-		// keep publishing work samples. See wpss_vendor_status_block().
-		return wpss_vendor_status_block() ?? true;
-	}
 
 	/**
 	 * Check owner permissions.

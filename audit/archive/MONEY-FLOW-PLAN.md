@@ -5,7 +5,7 @@ payout, refund, dispute, reconciliation. Payout is one stage of this, not a
 separate project.
 
 - Rules that govern the code: `docs/architecture/MONEY-FLOW.md`
-- Refund sprint detail and history: `audit/REFUND-PLAN.md`
+- Refund sprint history: `audit/archive/REFUND-PLAN.md` (archived — the work shipped in 1.2.3 and that document still says it did not; read `OrderWorkflowManager::settle_refund()` instead)
 - HANDOFF.md restates none of this; it links here. **If docs disagree, this
   file wins.**
 

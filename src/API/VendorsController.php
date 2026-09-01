@@ -788,17 +788,7 @@ class VendorsController extends RestController {
 
 		// Services count.
 		$services_count  = (int) wp_count_posts( 'wpss_service' )->publish;
-		$vendor_services = count(
-			get_posts(
-				array(
-					'post_type'      => 'wpss_service',
-					'post_status'    => 'publish',
-					'author'         => $vendor_id,
-					'posts_per_page' => -1,
-					'fields'         => 'ids',
-				)
-			)
-		);
+		$vendor_services = wpss_count_vendor_services( (int) $vendor_id );
 
 		// Orders stats.
 		$orders_table = $wpdb->prefix . 'wpss_orders';

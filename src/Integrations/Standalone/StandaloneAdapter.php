@@ -145,14 +145,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
 		add_action( 'template_redirect', [ $this, 'handle_template_redirect' ] );
 
-		// On a site that runs WooCommerce alongside the standalone rail there
-		// are genuinely two carts, and the theme's header shows Woo's. Whether
-		// that is wrong depends on the business: a marketplace-only site where
-		// Woo is installed for something else wants one cart link, while a site
-		// actually selling Woo products would be broken by us pointing its cart
-		// somewhere else. So it is the owner's switch, off by default — we do
-		// not silently redirect another plugin's checkout path.
-		if ( ! empty( get_option( 'wpss_general', array() )['use_marketplace_cart_link'] ) ) {
+		if ( self::should_use_marketplace_cart_link() ) {
 			add_filter( 'woocommerce_get_cart_url', [ $this, 'filter_cart_url' ], 20 );
 		}
 
@@ -162,6 +155,54 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		 * @since 1.0.0
 		 */
 		do_action( 'wpss_standalone_adapter_init', $this );
+	}
+
+	/**
+	 * Whether the theme's cart link should point at the marketplace cart.
+	 *
+	 * Two carts exist on purpose: /service-cart/ was created so the marketplace
+	 * does not fight WooCommerce for /cart/. What was wrong was which one the
+	 * theme's cart icon pointed at. With the standalone rail taking payment, a
+	 * buyer with a service in their cart clicked that icon and was told their
+	 * cart was empty, because the icon is hardcoded to Woo's page.
+	 *
+	 * This used to be a checkbox that was off by default, so the common case
+	 * shipped broken and the owner had to know to go and find the switch. It is
+	 * derived now, and the checkbox overrides the derivation either way:
+	 *
+	 *  - Woo owns checkout      -> leave Woo's cart alone. It holds the order.
+	 *  - Standalone, no Woo products -> point at the marketplace cart. Woo is
+	 *    installed for something else and its cart is always empty.
+	 *  - Standalone, Woo products exist -> leave it alone. Two real shops; only
+	 *    the owner knows which cart the header should serve.
+	 *
+	 * The last case is why this is a link filter and never a redirect on
+	 * /cart/ - taking over another plugin's URL is exactly the collision the
+	 * separate page exists to avoid.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return bool
+	 */
+	public static function should_use_marketplace_cart_link(): bool {
+		$general = get_option( 'wpss_general', array() );
+
+		// An explicit choice always wins, in both directions.
+		if ( array_key_exists( 'use_marketplace_cart_link', $general ) && '' !== $general['use_marketplace_cart_link'] ) {
+			return ! empty( $general['use_marketplace_cart_link'] );
+		}
+
+		if ( ! function_exists( 'wpss_uses_standalone_payments' ) || ! wpss_uses_standalone_payments() ) {
+			return false;
+		}
+
+		if ( ! function_exists( 'wp_count_posts' ) || ! post_type_exists( 'product' ) ) {
+			return false;
+		}
+
+		$products = wp_count_posts( 'product' );
+
+		return empty( $products->publish );
 	}
 
 	/**
@@ -176,6 +217,29 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 			'index.php?wpss_checkout=1&wpss_service_id=$matches[1]',
 			'top'
 		);
+
+		// Pretty pay-one-order: /{checkout}/pay/{id}/.
+		// Prefer the mapped checkout page path so a renamed slug still matches.
+		$checkout_id   = function_exists( 'wpss_get_page_id' ) ? (int) wpss_get_page_id( 'checkout' ) : 0;
+		$checkout_path = '';
+		if ( $checkout_id ) {
+			$uri = get_page_uri( $checkout_id );
+			if ( is_string( $uri ) && '' !== $uri ) {
+				$checkout_path = trim( $uri, '/' );
+			}
+		}
+		if ( '' === $checkout_path ) {
+			$checkout_path = $checkout_slug;
+		}
+
+		$segments  = array_map( 'preg_quote', explode( '/', $checkout_path ) );
+		$path_re   = implode( '/', $segments );
+		$pay_regex = '^' . $path_re . '/pay/([0-9]+)/?$';
+		$pay_query = $checkout_id
+			? 'index.php?page_id=' . $checkout_id . '&wpss_pay_order=$matches[1]'
+			: 'index.php?wpss_checkout=1&wpss_pay_order=$matches[1]';
+
+		add_rewrite_rule( $pay_regex, $pay_query, 'top' );
 
 		// Note: /service-order/{id}/ is handled by Plugin::register_rewrite_rules()
 		// via the wpss_service_order query var → TemplateLoader → order-view.php.
@@ -193,6 +257,17 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 			'index.php?wpss_payment_callback=1&wpss_gateway=$matches[1]',
 			'top'
 		);
+
+		// Self-heal when the pay rule is missing from the live option.
+		$live_rules = get_option( 'rewrite_rules' );
+		if ( ! is_array( $live_rules ) || ! isset( $live_rules[ $pay_regex ] ) ) {
+			add_action(
+				'wp_loaded',
+				static function (): void {
+					flush_rewrite_rules( false );
+				}
+			);
+		}
 	}
 
 	/**
@@ -227,6 +302,7 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		$vars[] = 'wpss_account_page';
 		$vars[] = 'wpss_payment_callback';
 		$vars[] = 'wpss_gateway';
+		$vars[] = 'wpss_pay_order';
 
 		return $vars;
 	}

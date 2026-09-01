@@ -45,7 +45,7 @@ Choosing between WP Sell Services and Taskbot for your WordPress service marketp
 | **Deadline extensions** | Yes - request and approve | No |
 | **Auto-complete** | Yes - configurable timer via cron | No |
 | **Revision management** | Yes - per-package revision limits | Basic |
-| **Tipping** | Yes - commission-free | No |
+| **Tipping** | Yes - commission configurable, 0% optional | No |
 | **Order messaging** | Yes - per-order with file attachments | Yes |
 
 WP Sell Services has the most complete order workflow of any WordPress marketplace solution. Requirements collection before work begins, deadline extension requests, and automatic completion via cron are features you'll find on Fiverr but not in Taskbot.
@@ -165,7 +165,7 @@ WP Sell Services outputs JSON-LD structured data for services and reviews, helpi
 - WP-CLI commands
 - 170+ action/filter hooks
 - PSR-4 modern PHP architecture
-- Commission-free tipping
+- Tipping with a configurable commission (0% optional)
 
 ---
 

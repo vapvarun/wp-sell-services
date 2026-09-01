@@ -40,6 +40,7 @@ namespace WPSellServices\Services;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Models\Message;
 use WPSellServices\Models\ServiceOrder;
 
 /**
@@ -537,6 +538,125 @@ class MilestoneService {
 		return array(
 			'success' => true,
 			'message' => __( 'Phase approved.', 'wp-sell-services' ),
+		);
+	}
+
+	/**
+	 * Buyer asks for changes on a submitted phase.
+	 *
+	 * The mirror of approve(). Flips the phase back to revision_requested so
+	 * the seller can work on it again - a state submit() has ALWAYS accepted
+	 * as a valid from-state, which is the tell: the workflow was built to be
+	 * entered and nothing ever entered it, so the buyer's only route was a
+	 * link into the parent chat (Basecamp 10254720173).
+	 *
+	 * The reason goes into the PARENT conversation, because a phase has no
+	 * thread of its own - that is where the seller is already reading, and it
+	 * keeps one conversation per contract rather than one per phase.
+	 *
+	 * No revision counter: a phase carries no revisions_included, so counting
+	 * down would invent a limit the buyer was never sold. Catalog orders keep
+	 * theirs.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param int    $milestone_id Sub-order ID.
+	 * @param int    $customer_id  Buyer user ID (must own the phase).
+	 * @param string $reason       What the buyer wants changed.
+	 * @return array{success: bool, message: string}
+	 */
+	public function request_revision( int $milestone_id, int $customer_id, string $reason = '' ): array {
+		global $wpdb;
+
+		$sub = wpss_get_order( $milestone_id );
+		if ( ! $sub || self::ORDER_TYPE !== ( $sub->platform ?? '' ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Phase not found.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( $customer_id !== (int) $sub->customer_id ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Only the buyer can ask for changes on this phase.', 'wp-sell-services' ),
+			);
+		}
+
+		if ( ServiceOrder::STATUS_PENDING_APPROVAL !== $sub->status ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Only a submitted phase can be sent back for changes.', 'wp-sell-services' ),
+			);
+		}
+
+		$reason = sanitize_textarea_field( $reason );
+
+		$meta                          = $this->decode_meta( $sub );
+		$meta['revision_reason']       = $reason;
+		$meta['revision_requested_at'] = current_time( 'mysql' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$updated = $wpdb->update(
+			$wpdb->prefix . 'wpss_orders',
+			array(
+				'status'     => ServiceOrder::STATUS_REVISION_REQUESTED,
+				'meta'       => wp_json_encode( $meta ),
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $milestone_id )
+		);
+
+		if ( false === $updated ) {
+			wpss_log( "Milestone revision request failed: could not update phase {$milestone_id}.", 'error' );
+			return array(
+				'success' => false,
+				'message' => __( 'Could not send this phase back. Please try again.', 'wp-sell-services' ),
+			);
+		}
+
+		$parent_id = (int) $sub->platform_order_id;
+
+		// Post into the parent thread so the seller reads it where they
+		// already are. Labelled with the phase, because one thread now
+		// carries messages about several of them.
+		if ( '' !== $reason && $parent_id > 0 ) {
+			$conversations = new ConversationService();
+			$conversation  = $conversations->get_by_order( $parent_id );
+
+			if ( $conversation ) {
+				$phase_title = (string) ( $meta['title'] ?? '' );
+				$body        = $phase_title
+					/* translators: 1: phase title, 2: what the buyer wants changed */
+					? sprintf( __( 'Changes requested on %1$s: %2$s', 'wp-sell-services' ), $phase_title, $reason )
+					: $reason;
+
+				$conversations->send_message(
+					$conversation->id,
+					$customer_id,
+					$body,
+					array(),
+					Message::TYPE_REVISION
+				);
+			}
+		}
+
+		/**
+		 * Fires when a buyer sends a milestone phase back for changes.
+		 *
+		 * @since 1.7.0
+		 *
+		 * @param int    $milestone_id Phase sub-order ID.
+		 * @param int    $parent_id    Parent contract order ID.
+		 * @param int    $vendor_id    Seller who must act.
+		 * @param int    $customer_id  Buyer who asked.
+		 * @param string $reason       What the buyer wants changed.
+		 */
+		do_action( 'wpss_milestone_revision_requested', $milestone_id, $parent_id, (int) $sub->vendor_id, $customer_id, $reason );
+
+		return array(
+			'success' => true,
+			'message' => __( 'Sent back to the seller with your notes.', 'wp-sell-services' ),
 		);
 	}
 

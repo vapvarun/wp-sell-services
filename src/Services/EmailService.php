@@ -634,7 +634,7 @@ class EmailService {
 					__( 'We have checked your receipt and confirmed payment for order #%s. Your order is now underway.', 'wp-sell-services' ),
 					$order->order_number
 				),
-				'button_url'    => wpss_get_dashboard_url( 'orders' ) . '?order_id=' . $order_id,
+				'button_url'    => wpss_get_order_url( $order_id ),
 				'button_text'   => __( 'View your order', 'wp-sell-services' ),
 				'receipt_id'    => $receipt_id,
 				'order'         => $order,
@@ -693,7 +693,7 @@ class EmailService {
 				'recipient'     => $buyer,
 				'email_heading' => __( 'We could not confirm your payment', 'wp-sell-services' ),
 				'content'       => $content,
-				'button_url'    => wpss_get_dashboard_url( 'orders' ) . '?order_id=' . $order_id,
+				'button_url'    => wpss_get_order_url( $order_id ),
 				'button_text'   => __( 'Upload a new receipt', 'wp-sell-services' ),
 				'receipt_id'    => $receipt_id,
 				'order'         => $order,
@@ -1145,6 +1145,72 @@ class EmailService {
 	 * @param string $message   Message content.
 	 * @return bool
 	 */
+	/**
+	 * True while running the deferred send, so it does not re-schedule itself.
+	 *
+	 * @var bool
+	 */
+	private bool $is_deferred_message_send = false;
+
+	/**
+	 * How long to hold a message email, in minutes. 0 disables the delay.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return int
+	 */
+	public static function message_email_delay_minutes(): int {
+		$settings = get_option( 'wpss_notification_settings', array() );
+		$minutes  = (int) ( $settings['message_email_delay_minutes'] ?? 0 );
+
+		/**
+		 * Filter the message-email delay.
+		 *
+		 * @since 1.7.0
+		 *
+		 * @param int $minutes Minutes to hold the email. 0 sends immediately.
+		 */
+		return max( 0, (int) apply_filters( 'wpss_message_email_delay_minutes', $minutes ) );
+	}
+
+	/**
+	 * Send a held message email, if it is still wanted.
+	 *
+	 * Asks two questions the immediate path cannot: has the recipient read the
+	 * conversation since, and are they online now. Either one means the email
+	 * has been overtaken by events.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param int    $order_id  Order ID.
+	 * @param int    $sender_id Sender user ID.
+	 * @param string $message   Message body.
+	 * @return void
+	 */
+	public function send_delayed_message_email( int $order_id, int $sender_id, string $message ): void {
+		$order = wpss_get_order( $order_id );
+
+		if ( ! $order ) {
+			return;
+		}
+
+		$recipient_id = ( (int) $sender_id === (int) $order->vendor_id )
+			? (int) $order->customer_id
+			: (int) $order->vendor_id;
+
+		// Read it already? Then the email would be telling them something they
+		// know. This is the whole point of the delay.
+		$conversation = \WPSellServices\Models\Conversation::get_by_order( $order_id );
+
+		if ( $conversation && 0 === $conversation->get_unread_count( $recipient_id ) ) {
+			return;
+		}
+
+		$this->is_deferred_message_send = true;
+		$this->send_new_message( $order_id, $sender_id, $message );
+		$this->is_deferred_message_send = false;
+	}
+
 	public function send_new_message( int $order_id, int $sender_id, string $message ): bool {
 
 		$order = wpss_get_order( $order_id );
@@ -1159,6 +1225,30 @@ class EmailService {
 
 		if ( ! $recipient || ! $sender ) {
 			return false;
+		}
+
+		// Hold the email for a bit, if the owner asked for that.
+		//
+		// Part 2 of #10159633576. Part 1 skips the email when the recipient is
+		// online right now; this covers the person who closed the tab a minute
+		// ago, gets the mail, and opens the app to find they had already seen
+		// it. The email is scheduled instead of sent, and at fire time we ask
+		// again whether it is still needed.
+		//
+		// NOTHING CANCELS THE JOB. Reading the conversation does not have to
+		// find and unschedule anything - the job re-checks and quietly does
+		// nothing. That is what keeps this small: no cancellation bookkeeping,
+		// no stale-job cleanup, and no way for the two to disagree.
+		$delay = self::message_email_delay_minutes();
+
+		if ( $delay > 0 && ! $this->is_deferred_message_send ) {
+			\WPSellServices\Services\Scheduler::schedule_single(
+				'wpss_send_delayed_message_email',
+				time() + ( $delay * MINUTE_IN_SECONDS ),
+				array( $order_id, $sender_id, $message )
+			);
+
+			return true;
 		}
 
 		// Do not email someone who is reading the message on screen.
@@ -1579,7 +1669,7 @@ class EmailService {
 				$sender->display_name
 			);
 
-		$dashboard_url = add_query_arg( 'section', 'messages', wpss_get_dashboard_url() );
+		$dashboard_url = wpss_get_dashboard_url( 'messages' );
 
 		$template_vars = array(
 			'recipient'      => $vendor,
@@ -1640,7 +1730,7 @@ class EmailService {
 			'withdrawal_id' => $withdrawal_id,
 			'status'        => $status,
 			'admin_note'    => $withdrawal->admin_note ?? '',
-			'dashboard_url' => add_query_arg( 'section', 'earnings', wpss_get_dashboard_url() ),
+			'dashboard_url' => wpss_get_dashboard_url( 'earnings' ),
 		);
 
 		return $this->send( $vendor->user_email, $subject, $type, $template_vars );
@@ -1726,7 +1816,7 @@ class EmailService {
 				$buyer->display_name,
 				$request->post_title
 			),
-			'button_url'     => wpss_get_page_url( 'dashboard' ) ? add_query_arg( 'section', 'sales', wpss_get_page_url( 'dashboard' ) ) : '',
+			'button_url'     => wpss_get_dashboard_url( 'sales' ),
 			'button_text'    => __( 'View Orders', 'wp-sell-services' ),
 			'reply_to_email' => $buyer->user_email,
 			'reply_to_name'  => $buyer->display_name,
@@ -2275,6 +2365,7 @@ class EmailService {
 			'moderation_rejected'             => 'notify_moderation',
 			'moderation_pending'              => 'notify_moderation',
 			'dispute_admin'                   => 'notify_dispute_opened',
+			self::TYPE_REVIEW_RECEIVED        => 'notify_new_review',
 			self::TYPE_VENDOR_CONTACT         => 'notify_vendor_contact',
 			self::TYPE_TIP_RECEIVED           => 'notify_tip_received',
 			self::TYPE_MILESTONE_PROPOSED     => 'notify_milestone_proposed',

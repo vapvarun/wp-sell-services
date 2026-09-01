@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wp-sell-services",
     "name": "WP Sell Services",
-    "version": "1.3.1",
+    "version": "1.7.0",
     "namespace": "WPSellServices",
     "main_file": "wp-sell-services.php",
     "text_domain": "wp-sell-services",
@@ -13,7 +13,7 @@
   },
   "rest": {
     "namespace": "wpss/v1",
-    "endpoint_count": 142,
+    "endpoint_count": 152,
     "controllers": [
       {
         "class": "API",
@@ -144,7 +144,7 @@
     "endpoints_detail_at": "Counted by agent enumeration of register_rest_route( calls, not by write-manifest.mjs - the generator undercounts because controllers are registered through an array wrapper. 142 = 134 across 23 *Controller.php files + 7 generic routes in API.php + 1 in Frontend/Tour.php. RestController.php is the shared base class and registers none."
   },
   "ajax": {
-    "handler_count": 111,
+    "handler_count": 121,
     "handlers_file": "src/Frontend/AjaxHandlers.php plus a small number registered by feature classes; 111 unique wp_ajax_ actions in total (nopriv variants counted once).",
     "handlers_outside_ajaxhandlers": [
       {
@@ -988,5 +988,21 @@
     "_note": "audit/journeys/ - eight end-to-end walks, each written AFTER a defect it would have caught. Not speculative coverage.",
     "added_2026_08_18": "05-vendor-creates-a-service (wizard categories, checklist icons, admin access), 06-standalone-checkout (theme container, 390px, guest account, offline payment_method), 07-service-page-media (gallery order, embed survival, no render-time writes), 08-mobile-app-session (token expiry, mint guard, session revoke, payload contract).",
     "environment_warning": "Journey 08 is walked over real HTTP, not wp eval. rest_do_request() neither defines REST_REQUEST nor runs rest_post_dispatch, so application-password authentication and _fields filtering both behave differently there - two security findings were verified as safe from WP-CLI and were not."
+  },
+  "_refreshed": {
+    "date": "2026-09-01",
+    "method": "agent enumeration (measured from source)",
+    "why_not_generated": "write-manifest.mjs undercounts REST on this plugin - routes are registered through a controller-array wrapper in src/API/API.php - so running it would silently clobber these counts. See CLAUDE.md.",
+    "measured": {
+      "php_files_in_src": 209,
+      "register_rest_route_calls": 152,
+      "rest_controllers": 26,
+      "ajax_handlers": 121,
+      "do_action_firings": 184,
+      "apply_filters_firings": 233,
+      "shortcodes": 20,
+      "cli_command_files": 9,
+      "block_files": 8
+    }
   }
 }

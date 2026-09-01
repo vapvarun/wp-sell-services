@@ -190,6 +190,24 @@
 			this.setLoading(true);
 			this.hideError();
 
+			// A logged-out buyer on an account-at-checkout site has no account
+			// yet, and none of the wpss_stripe_* AJAX actions register a nopriv
+			// handler — so without this the request returns "0" and checkout
+			// dead-ends. The generic checkout handler stands down for Stripe
+			// (data-wpss-own-submit) and publishes its account step instead of
+			// running it, so we await the same one rather than writing a second.
+			// No-op when the buyer is already signed in.
+			if (typeof window.wpssEnsureCheckoutAccount === 'function') {
+				try {
+					await window.wpssEnsureCheckoutAccount();
+				} catch (e) {
+					// The account step has already told the buyer what went wrong
+					// (email taken, invalid details). Stop before charging.
+					this.setLoading(false);
+					return;
+				}
+			}
+
 			try {
 				// Collect billing name + address (required by Stripe for export
 				// charges on India-registered accounts). Validate before charging

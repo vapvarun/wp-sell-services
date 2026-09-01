@@ -29,6 +29,7 @@ $wpss_function_files = array(
 	'urls',
 	'rest',
 	'billing',
+	'files',
 	'moderation',
 	'notifications',
 	'payments',

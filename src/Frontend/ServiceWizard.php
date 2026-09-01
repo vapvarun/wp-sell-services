@@ -143,7 +143,7 @@ class ServiceWizard {
 			 * Max video URLs.
 			 *
 			 * Free: 1
-			 * Pro: 3
+			 * Pro: 1 (not raised — Pro lifts gallery, extras, FAQ and requirements only)
 			 *
 			 * @param int $max Maximum videos.
 			 */
@@ -179,24 +179,6 @@ class ServiceWizard {
 			 */
 			'max_requirements' => apply_filters( 'wpss_service_max_requirements', 5 ),
 
-			/**
-			 * Wizard features enabled.
-			 *
-			 * Pro can add features like AI title suggestions, templates, etc.
-			 *
-			 * @param array $features Array of enabled features.
-			 */
-			'features'         => apply_filters(
-				'wpss_service_wizard_features',
-				array(
-					'ai_title'          => false, // AI-powered title suggestions.
-					'templates'         => false, // Service templates.
-					'bulk_upload'       => false, // Bulk image upload.
-					'video_upload'      => false, // Direct video upload (vs URL only).
-					'custom_fields'     => false, // Custom fields in packages.
-					'scheduled_publish' => false, // Schedule service publishing.
-				)
-			),
 		);
 	}
 

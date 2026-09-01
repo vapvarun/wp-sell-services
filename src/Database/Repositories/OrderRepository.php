@@ -120,12 +120,19 @@ class OrderRepository extends AbstractRepository {
 	 */
 	public function get_by_customer( int $customer_id, array $args = array() ): array {
 		$defaults = array(
-			'status'   => '',
-			'platform' => '',
-			'orderby'  => 'created_at',
-			'order'    => 'DESC',
-			'limit'    => 20,
-			'offset'   => 0,
+			'status'           => '',
+			// A group of statuses, for the dashboard filter chips. Single
+			// 'status' stays for every existing caller.
+			'status__in'       => array(),
+			'platform'         => '',
+			'orderby'          => 'created_at',
+			'order'            => 'DESC',
+			// Sort the buyer's own list so the orders waiting on THEM come
+			// first, instead of newest-wins burying an unpaid invoice under a
+			// year of cancellations. Nothing is hidden - only reordered.
+			'actionable_first' => false,
+			'limit'            => 20,
+			'offset'           => 0,
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -142,6 +149,15 @@ class OrderRepository extends AbstractRepository {
 			$params[] = $args['status'];
 		}
 
+		if ( ! empty( $args['status__in'] ) ) {
+			$in_statuses = array_values( array_filter( array_map( 'sanitize_key', (array) $args['status__in'] ) ) );
+
+			if ( $in_statuses ) {
+				$sql   .= ' AND status IN ( ' . implode( ', ', array_fill( 0, count( $in_statuses ), '%s' ) ) . ' )';
+				$params = array_merge( $params, $in_statuses );
+			}
+		}
+
 		if ( ! empty( $args['platform'] ) ) {
 			$sql     .= ' AND platform = %s';
 			$params[] = $args['platform'];
@@ -149,7 +165,22 @@ class OrderRepository extends AbstractRepository {
 
 		$sql = $this->exclude_sub_orders( $sql, $params, $args );
 
-		$sql .= " ORDER BY {$orderby} {$order}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( ! empty( $args['actionable_first'] ) && function_exists( 'wpss_get_order_status_priority' ) ) {
+			// FIELD() returns the 1-based position of status in the list and 0
+			// for anything absent, so ordering by it ascending would put the
+			// unlisted statuses FIRST. Sorting descending on the negated value
+			// keeps unknown statuses last without a CASE.
+			$priority = array_values( array_filter( array_map( 'sanitize_key', wpss_get_order_status_priority() ) ) );
+
+			if ( $priority ) {
+				$sql   .= ' ORDER BY FIELD( status, ' . implode( ', ', array_fill( 0, count( $priority ), '%s' ) ) . ' ) = 0, FIELD( status, ' . implode( ', ', array_fill( 0, count( $priority ), '%s' ) ) . ' ) ASC, created_at DESC';
+				$params = array_merge( $params, $priority, $priority );
+			} else {
+				$sql .= " ORDER BY {$orderby} {$order}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			}
+		} else {
+			$sql .= " ORDER BY {$orderby} {$order}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		}
 
 		if ( $args['limit'] > 0 ) {
 			$sql     .= ' LIMIT %d OFFSET %d';
@@ -279,8 +310,9 @@ class OrderRepository extends AbstractRepository {
 	 */
 	public function count_by_customer( int $customer_id, array $args = array() ): int {
 		$defaults = array(
-			'status'   => '',
-			'platform' => '',
+			'status'     => '',
+			'status__in' => array(),
+			'platform'   => '',
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -293,6 +325,15 @@ class OrderRepository extends AbstractRepository {
 			$params[] = $args['status'];
 		}
 
+		if ( ! empty( $args['status__in'] ) ) {
+			$in_statuses = array_values( array_filter( array_map( 'sanitize_key', (array) $args['status__in'] ) ) );
+
+			if ( $in_statuses ) {
+				$sql   .= ' AND status IN ( ' . implode( ', ', array_fill( 0, count( $in_statuses ), '%s' ) ) . ' )';
+				$params = array_merge( $params, $in_statuses );
+			}
+		}
+
 		if ( ! empty( $args['platform'] ) ) {
 			$sql     .= ' AND platform = %s';
 			$params[] = $args['platform'];
@@ -303,6 +344,46 @@ class OrderRepository extends AbstractRepository {
 		return (int) $this->wpdb->get_var(
 			$this->wpdb->prepare( $sql, ...$params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		);
+	}
+
+	/**
+	 * Count a customer's orders per status, in ONE query.
+	 *
+	 * The filter chips each need a count. Asking count_by_customer() once per
+	 * chip is six queries that grow with the chip row; this is one GROUP BY
+	 * that the caller buckets in PHP.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param int                  $customer_id Customer user ID.
+	 * @param array<string, mixed> $args        Query arguments (platform, include_sub_orders).
+	 * @return array<string, int> Status => count.
+	 */
+	public function count_by_customer_grouped( int $customer_id, array $args = array() ): array {
+		$args = wp_parse_args( $args, array( 'platform' => '' ) );
+
+		$sql    = "SELECT status, COUNT(*) AS c FROM {$this->table} WHERE customer_id = %d";
+		$params = array( $customer_id );
+
+		if ( ! empty( $args['platform'] ) ) {
+			$sql     .= ' AND platform = %s';
+			$params[] = $args['platform'];
+		}
+
+		$sql = $this->exclude_sub_orders( $sql, $params, $args );
+
+		$sql .= ' GROUP BY status';
+
+		$rows = $this->wpdb->get_results(
+			$this->wpdb->prepare( $sql, ...$params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		);
+
+		$out = array();
+		foreach ( (array) $rows as $row ) {
+			$out[ (string) $row->status ] = (int) $row->c;
+		}
+
+		return $out;
 	}
 
 	/**
@@ -664,37 +745,109 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Build a parenthesised %s placeholder list for an IN clause.
+	 *
+	 * Never returns an empty (), which is a MySQL syntax error - an empty
+	 * status list becomes a condition that matches nothing instead.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param string[] $statuses Statuses, by reference so an empty list is normalised.
+	 * @return string Placeholder list, e.g. "( %s, %s )".
+	 */
+	private function status_in_placeholders( array &$statuses ): string {
+		$statuses = array_values( array_filter( array_map( 'sanitize_key', $statuses ) ) );
+
+		if ( ! $statuses ) {
+			$statuses = array( '__wpss_no_status__' );
+		}
+
+		return '( ' . implode( ', ', array_fill( 0, count( $statuses ), '%s' ) ) . ' )';
+	}
+
+	/**
 	 * Get customer order statistics.
 	 *
 	 * @param int $customer_id Customer user ID.
 	 * @return array<string, mixed> Statistics.
 	 */
 	public function get_customer_stats( int $customer_id ): array {
-		// Exclude tip sub-orders for the same reason as get_vendor_stats() —
-		// they are payment receipts, not orders in the "things I bought"
-		// sense. Tips are retrievable separately via the tipping service.
-		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
+		/*
+		 * The status lists come from wpss_get_order_status_groups(), the same
+		 * definition the dashboard filter chips use.
+		 *
+		 * They used to be written out here by hand, and they had drifted: the
+		 * stat counted 'in_progress, pending_approval, pending_requirements' as
+		 * Active while the list showed nine statuses as active work, so a buyer
+		 * read "0 Active" above three visibly active orders. That is the second
+		 * half of Basecamp 10240019463 - the stats disagreeing with the rows
+		 * underneath them - and it can only be fixed for good by the card and
+		 * the chip reading one definition.
+		 *
+		 * awaiting_payment and disputed stay broken out because they are the
+		 * two states that need the BUYER to act.
+		 */
+		$groups = function_exists( 'wpss_get_order_status_groups' ) ? wpss_get_order_status_groups() : array();
+
+		$active_statuses    = $groups['active']['statuses'] ?? array( 'in_progress', 'pending_approval', 'pending_requirements' );
+		$awaiting_statuses  = $groups['awaiting']['statuses'] ?? array( 'pending_payment' );
+		$attention_statuses = $groups['disputed']['statuses'] ?? array( 'disputed' );
+		$completed_statuses = $groups['completed']['statuses'] ?? array( 'completed' );
+
+		$active_sql    = $this->status_in_placeholders( $active_statuses );
+		$awaiting_sql  = $this->status_in_placeholders( $awaiting_statuses );
+		$attention_sql = $this->status_in_placeholders( $attention_statuses );
+		$completed_sql = $this->status_in_placeholders( $completed_statuses );
+
+		$params = array_merge(
+			$completed_statuses,
+			$active_statuses,
+			$awaiting_statuses,
+			$attention_statuses,
+			array( $customer_id )
+		);
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the interpolated parts are %s placeholder lists built from a fixed status map.
+		$sql = "SELECT
+					COUNT(*) as total_orders,
+					SUM(CASE WHEN status IN {$completed_sql} THEN 1 ELSE 0 END) as completed_orders,
+					SUM(CASE WHEN status IN {$active_sql} THEN 1 ELSE 0 END) as active_orders,
+					SUM(CASE WHEN status IN {$awaiting_sql} THEN 1 ELSE 0 END) as awaiting_payment_orders,
+					SUM(CASE WHEN status IN {$attention_sql} THEN 1 ELSE 0 END) as disputed_orders,
+					SUM(total) as total_spent
+				FROM {$this->table}
+				WHERE customer_id = %d";
+
+		/*
+		 * The SAME exclusion the chips use, not a second one written here.
+		 *
+		 * This read `platform != 'tip'`, which was wrong twice over. It let
+		 * milestone phases and paid extensions count as orders the buyer
+		 * placed, while count_by_customer_grouped() excluded all three - so
+		 * the Completed card read 9 above a Completed chip showing 4. And in
+		 * SQL `NULL != 'tip'` is NULL, so every catalog order with no platform
+		 * set was dropped from the stats entirely.
+		 *
+		 * Unifying the status lists (Basecamp 10240019463) was only half the
+		 * job: the two numbers also have to agree on WHICH ROWS are orders.
+		 */
+		$sql = $this->exclude_sub_orders( $sql, $params, array() );
 
 		$stats = $this->wpdb->get_row(
 			$this->wpdb->prepare(
-				"SELECT
-					COUNT(*) as total_orders,
-					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
-					SUM(CASE WHEN status IN ('in_progress', 'pending_approval', 'pending_requirements') THEN 1 ELSE 0 END) as active_orders,
-					SUM(total) as total_spent
-				FROM {$this->table}
-				WHERE customer_id = %d AND platform != %s",
-				$customer_id,
-				$tip_platform
+				$sql, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				...$params
 			),
 			ARRAY_A
 		);
 
 		return $stats ?: array(
-			'total_orders'     => 0,
-			'completed_orders' => 0,
-			'active_orders'    => 0,
-			'total_spent'      => 0,
+			'total_orders'            => 0,
+			'completed_orders'        => 0,
+			'active_orders'           => 0,
+			'awaiting_payment_orders' => 0,
+			'disputed_orders'         => 0,
+			'total_spent'             => 0,
 		);
 	}
 

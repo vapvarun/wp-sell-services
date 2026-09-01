@@ -70,7 +70,6 @@ class ServiceMetabox {
 			'select'         => __( 'Dropdown', 'wp-sell-services' ),
 			'radio'          => __( 'Multiple Choice', 'wp-sell-services' ),
 			'file'           => __( 'File Upload', 'wp-sell-services' ),
-			'multiple_files' => __( 'Multiple Files', 'wp-sell-services' ),
 			'date'           => __( 'Date', 'wp-sell-services' ),
 		);
 	}

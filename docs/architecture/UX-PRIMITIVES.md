@@ -2,7 +2,7 @@
 
 > **Stable, reusable building blocks for every form and page in the plugin.** Use these instead of writing one-off error toasts, status pills, or page wrappers. One pattern, one bug surface, one set of accessibility guarantees.
 
-**Introduced:** 1.1.0 — see `docs/audits/baseline-2026-04-25.md` for the friction findings that motivated each primitive.
+**Introduced:** 1.1.0 — see `docs/archive/baseline-2026-04-25.md` for the friction findings that motivated each primitive.
 
 **Three primitives:**
 

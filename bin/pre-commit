@@ -18,9 +18,15 @@ echo "Running pre-commit checks..."
 # Get list of staged PHP files
 STAGED_PHP_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.php$' || true)
 
+# No early exit. The docs audit at the end of this file reads BOTH sides - a
+# hook citation breaks when the PHP moves, and a removed capability is caught in
+# a .md - so bailing out here skipped exactly the commits that check exists for.
+# It let through a commit of 18 stale citations this hook was meant to refuse.
+#
+# The PHP loops below iterate $STAGED_PHP_FILES, so they no-op on their own when
+# nothing PHP is staged. Nothing needs guarding.
 if [ -z "$STAGED_PHP_FILES" ]; then
-    echo "No PHP files staged, skipping checks."
-    exit 0
+    echo "No PHP files staged; running the docs checks only."
 fi
 
 echo "Checking ${#STAGED_PHP_FILES[@]} PHP file(s)..."
@@ -52,7 +58,10 @@ echo "=== Model Consistency Check ==="
 FROM_ROW_FILES=""
 for FILE in $STAGED_PHP_FILES; do
     if [ -f "$FILE" ]; then
-        if grep -q "from_row\s*(" "$FILE" 2>/dev/null; then
+        # Tokenise rather than grep: this check blocked a commit whose only
+        # "from_row" was the word inside a code comment. A gate that fails on
+        # prose gets bypassed with --no-verify, which costs more than it saves.
+        if php -r '$c=0; foreach (token_get_all(file_get_contents($argv[1])) as $t) { if (is_array($t) && T_STRING === $t[0] && "from_row" === $t[1]) { $c++; } } exit($c > 0 ? 0 : 1);' "$FILE" 2>/dev/null; then
             FROM_ROW_FILES="$FROM_ROW_FILES $FILE"
         fi
     fi
@@ -62,7 +71,7 @@ if [ -n "$FROM_ROW_FILES" ]; then
     echo "❌ Found deprecated from_row() usage in:"
     for FILE in $FROM_ROW_FILES; do
         echo "   - $FILE"
-        grep -n "from_row\s*(" "$FILE" | head -3
+        grep -n "from_row\s*(" "$FILE" | head -3   # location hint only
     done
     echo ""
     echo "Use from_db() instead of from_row()"
@@ -144,6 +153,84 @@ if [ -n "$STAGED_AUTOLOAD" ]; then
     fi
 
     echo "✓ Composer autoloader is a prod build"
+fi
+
+echo ""
+
+# ---------------------------------------------------------------------------
+# 4b. A source asset edit must be accompanied by its rebuilt .min.
+#
+# Assets.php rewrites asset URLs to .min when the file is present, so editing
+# assets/js/foo.js or assets/css/foo.css and not rebuilding foo.min.* ships a
+# change that is INERT on every site. Nothing errors, nothing looks wrong in
+# the diff, and the fix simply does not happen. CLAUDE.md has warned about this
+# for releases; a warning nobody can forget beats a warning everybody can.
+#
+# Compares mtimes rather than content: a stale .min is exactly a .min older
+# than its source.
+# ---------------------------------------------------------------------------
+STAGED_ASSETS=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^assets/(js|css)/[^/]+\.(js|css)$" | grep -v "\.min\." || true)
+
+STALE_MIN=""
+for SRC in $STAGED_ASSETS; do
+    EXT="${SRC##*.}"
+    MIN="${SRC%.$EXT}.min.$EXT"
+    if [ -f "$MIN" ] && [ "$SRC" -nt "$MIN" ]; then
+        STALE_MIN="$STALE_MIN $MIN"
+    fi
+done
+
+if [ -n "$STALE_MIN" ]; then
+    echo ""
+    echo "=== Minified Asset Check ==="
+    echo "❌ Source edited but its .min is older - the change will be inert:"
+    for M in $STALE_MIN; do
+        echo "   - $M"
+    done
+    echo ""
+    echo "Rebuild it, then stage it:"
+    echo "   npx terser assets/js/FILE.js -c -m -o assets/js/FILE.min.js"
+    echo "   npx clean-css-cli -o assets/css/FILE.min.css assets/css/FILE.css"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# 5. Docs must describe the plugin that exists.
+#
+# Only when a doc or a PHP file is staged - the audit reads both sides, so a
+# code change can break a docs citation without touching a .md.
+#
+# It catches hooks documented but never fired, and hook citations pointing at a
+# line that does not fire them. 196 of 222 citations were stale before this ran:
+# functions.php was split into src/functions/*.php and every citation kept
+# naming the old file, so they had been decorative for releases. Twice this
+# cycle a deleted hook stayed documented for a developer to bind to.
+# ---------------------------------------------------------------------------
+STAGED_DOCS_OR_PHP=$(git diff --cached --name-only | grep -E "\.(md|php)$" || true)
+
+if [ -n "$STAGED_DOCS_OR_PHP" ]; then
+    if command -v python3 >/dev/null 2>&1; then
+        if python3 bin/docs-audit.py --quiet; then
+            echo "✓ Docs audit passed"
+        else
+            echo ""
+            echo "✗ BLOCKED: the docs no longer match the code."
+            echo ""
+            echo "  Run for the full report:"
+            echo "    python3 bin/docs-audit.py"
+            echo ""
+            echo "  If the only failures are hook citations pointing at the right"
+            echo "  file but the wrong LINE - which is what happens whenever you"
+            echo "  insert code above a hook - this repairs them:"
+            echo "    python3 bin/docs-audit.py --fix && git add docs/"
+            echo ""
+            echo "  If it is the generated hook reference, regenerate it:"
+            echo "    python3 bin/generate-hook-reference.py && git add docs/"
+            exit 1
+        fi
+    else
+        echo "⚠️  python3 not found, skipping docs audit"
+    fi
 fi
 
 echo ""

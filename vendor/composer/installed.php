@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'wbcomdesigns/wp-sell-services',
-        'pretty_version' => '1.2.2.x-dev',
-        'version' => '1.2.2.9999999-dev',
-        'reference' => '5eeea5d14dfc06ebbd49674ffaf28d06c11994d2',
+        'pretty_version' => '1.7.0.x-dev',
+        'version' => '1.7.0.9999999-dev',
+        'reference' => '862124774761ae4eecad5e4912599048adce786a',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -335,9 +335,9 @@
             'dev_requirement' => true,
         ),
         'wbcomdesigns/wp-sell-services' => array(
-            'pretty_version' => '1.2.2.x-dev',
-            'version' => '1.2.2.9999999-dev',
-            'reference' => '5eeea5d14dfc06ebbd49674ffaf28d06c11994d2',
+            'pretty_version' => '1.7.0.x-dev',
+            'version' => '1.7.0.9999999-dev',
+            'reference' => '862124774761ae4eecad5e4912599048adce786a',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

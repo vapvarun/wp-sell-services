@@ -95,11 +95,16 @@ $proposal_count = $is_buyer ? count( $proposals ) : count( $proposal_service->ge
 
 // Format budget display.
 if ( 'range' === $budget_type && $budget_min && $budget_max ) {
-	$budget_display = wpss_format_price( $budget_min ) . ' - ' . wpss_format_price( $budget_max );
+	// Budget is a pre-purchase estimate, so it goes through
+	// wpss_catalog_price_html() - the wrapper that carries data-wbcom-amount and
+	// lets the display-currency switcher convert it in the browser. Built as HTML
+	// from here on, so the 'Negotiable' fallback is escaped at assignment and the
+	// echo sites pass it through wp_kses_post() instead of esc_html().
+	$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' ) . ' - ' . wpss_catalog_price_html( (float) $budget_max, 'request-budget' );
 } elseif ( $budget_min ) {
-	$budget_display = wpss_format_price( $budget_min );
+	$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' );
 } else {
-	$budget_display = __( 'Negotiable', 'wp-sell-services' );
+	$budget_display = esc_html__( 'Negotiable', 'wp-sell-services' );
 }
 
 // Check if request is still open.
@@ -304,7 +309,7 @@ do_action( 'wpss_before_single_request', $request_id );
 
 											<div class="wpss-proposal-meta">
 												<div class="wpss-proposal-price">
-													<?php echo esc_html( wpss_format_price( (float) ( $proposal->proposed_price ?? 0.0 ) ) ); ?>
+													<?php echo wp_kses_post( wpss_catalog_price_html( (float) ( $proposal->proposed_price ?? 0.0 ), 'proposal' ) ); ?>
 												</div>
 												<div class="wpss-proposal-delivery">
 													<?php
@@ -350,7 +355,7 @@ do_action( 'wpss_before_single_request', $request_id );
 														<li class="wpss-proposal-milestone-list__item">
 															<div class="wpss-proposal-milestone-list__head">
 																<strong><?php echo esc_html( (string) ( $ms['title'] ?? '' ) ); ?></strong>
-																<span><?php echo esc_html( wpss_format_price( (float) ( $ms['amount'] ?? 0 ) ) ); ?> &middot;
+																<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) ( $ms['amount'] ?? 0 ), 'proposal-phase' ) ); ?> &middot;
 																	<?php
 																	$row_days = (int) ( $ms['days'] ?? 0 );
 																	printf(
@@ -372,7 +377,7 @@ do_action( 'wpss_before_single_request', $request_id );
 												</ol>
 												<p class="wpss-proposal-milestone-list__total">
 													<?php esc_html_e( 'Project total:', 'wp-sell-services' ); ?>
-													<strong><?php echo esc_html( wpss_format_price( (float) ( $proposal->proposed_price ?? 0 ) ) ); ?></strong>
+													<strong><?php echo wp_kses_post( wpss_catalog_price_html( (float) ( $proposal->proposed_price ?? 0 ), 'proposal' ) ); ?></strong>
 												</p>
 											</details>
 										<?php endif; ?>
@@ -414,7 +419,7 @@ do_action( 'wpss_before_single_request', $request_id );
 						<div class="wpss-details-list">
 							<div class="wpss-detail-item">
 								<span class="wpss-detail-label"><?php esc_html_e( 'Budget', 'wp-sell-services' ); ?></span>
-								<span class="wpss-detail-value wpss-detail-budget"><?php echo esc_html( $budget_display ); ?></span>
+								<span class="wpss-detail-value wpss-detail-budget"><?php echo wp_kses_post( $budget_display ); ?></span>
 							</div>
 
 							<?php if ( $delivery_days ) : ?>
@@ -577,7 +582,7 @@ do_action( 'wpss_before_single_request', $request_id );
 									printf(
 										/* translators: %s: budget amount or range */
 										esc_html__( 'Budget: %s', 'wp-sell-services' ),
-										esc_html( $budget_display )
+										wp_kses_post( $budget_display )
 									);
 									?>
 								</p>

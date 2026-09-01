@@ -491,6 +491,79 @@ class VendorsPage {
 			// the version you can click. Only the two totals that appear nowhere
 			// else are kept.
 			?>
+			<?php
+			/*
+			 * Negative balances, surfaced where the owner will see them.
+			 *
+			 * A vendor whose past payout exceeded their earnings has a minus
+			 * balance. The vendor sees an explanation on their own earnings
+			 * screen, but the owner is the only one who can actually resolve it,
+			 * and until now nothing told them it had happened - they would find
+			 * out from a support ticket (Basecamp 10244795017).
+			 *
+			 * A notice rather than a fourth stat card: the cards above were
+			 * deliberately cut back to the two totals that appear nowhere else,
+			 * and this is an exception that needs reading, not a number.
+			 */
+			$wpss_negative = function_exists( 'wpss_get_negative_ledger_balances' )
+				? wpss_get_negative_ledger_balances( 20 )
+				: array();
+
+			if ( $wpss_negative ) :
+				$wpss_owed = 0.0;
+				foreach ( $wpss_negative as $wpss_row ) {
+					$wpss_owed += abs( $wpss_row['balance'] );
+				}
+				?>
+				<div class="notice notice-warning wpss-negative-balances">
+					<p>
+						<strong>
+							<?php
+							printf(
+								/* translators: 1: number of vendors, 2: total amount, formatted. */
+								esc_html( _n( '%1$d vendor has been paid more than they earned (%2$s).', '%1$d vendors have been paid more than they earned (%2$s).', count( $wpss_negative ), 'wp-sell-services' ) ),
+								count( $wpss_negative ),
+								esc_html( wpss_format_price( $wpss_owed ) )
+							);
+							?>
+						</strong>
+					</p>
+					<p>
+						<?php esc_html_e( 'Their balance is below zero, so they cannot withdraw until new earnings clear it. Nothing is being deducted from them. Review the entries before deciding whether to carry the balance or write it off.', 'wp-sell-services' ); ?>
+					</p>
+					<ul class="wpss-negative-balances__list">
+						<?php foreach ( $wpss_negative as $wpss_row ) : ?>
+							<?php
+							$wpss_user = get_userdata( $wpss_row['user_id'] );
+							$wpss_name = $wpss_user ? $wpss_user->display_name : sprintf(
+								/* translators: %d: user ID of a deleted account. */
+								__( 'Deleted user #%d', 'wp-sell-services' ),
+								$wpss_row['user_id']
+							);
+							?>
+							<li>
+								<?php
+								// Printed without newlines between the name and the
+								// figure: the template's own indentation was landing
+								// inside the link text and rendering as "Sarah
+								// Mitchell -$134.04" with a stray gap.
+								if ( $wpss_user ) {
+									printf(
+										'<a href="%s">%s</a>',
+										esc_url( admin_url( 'admin.php?page=wpss-vendors&vendor_id=' . $wpss_row['user_id'] ) ),
+										esc_html( $wpss_name )
+									);
+								} else {
+									echo esc_html( $wpss_name );
+								}
+								printf( ' <strong>%s</strong>', esc_html( wpss_format_price( $wpss_row['balance'] ) ) );
+								?>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				</div>
+			<?php endif; ?>
+
 			<div class="wpss-listing-stats wpss-vendor-stats">
 				<div class="wpss-stat-card">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['total'] ) ); ?></span>

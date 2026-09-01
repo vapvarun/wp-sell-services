@@ -10,7 +10,7 @@ Complete breakdown of what's included in the free version versus Pro upgrade.
 Complete, production-ready marketplace with service management, order workflow, vendor system, reviews, disputes, buyer requests, commission system, and built-in standalone checkout with Stripe, PayPal, and Offline payment gateways. Everything needed to launch and run a professional service marketplace — **no WooCommerce required.**
 
 **Pro Version:**
-Everything in Free, plus unlimited service creation limits, four additional e-commerce platforms (WooCommerce, EDD, Fluent Cart, SureCart), Razorpay gateway, wallet integrations, advanced analytics dashboards with data export, cloud storage providers, and REST API extensions.
+Everything in Free, plus unlimited service creation limits, three additional e-commerce platforms (WooCommerce, EDD, Fluent Cart), Razorpay gateway, wallet integrations, advanced analytics dashboards with data export, cloud storage providers, and REST API extensions.
 
 ---
 
@@ -90,7 +90,7 @@ These features are identical in Free and Pro:
 ### Commission and Earnings
 - Global commission rate (0-50%, default 10%)
 - Per-vendor custom commission rates
-- Commission-free tipping
+- Tipping with a configurable commission (0% optional)
 - Earnings dashboard with balance tracking
 - Withdrawal request system
 - Automated withdrawal scheduling (weekly, bi-weekly, monthly)
@@ -158,7 +158,6 @@ Choose how you handle checkout and payments.
 | **WooCommerce** | -- | **PRO** |
 | **Easy Digital Downloads** | -- | **PRO** |
 | **Fluent Cart** | -- | **PRO** |
-| **SureCart** | -- | **PRO** |
 
 ### Free Version: Standalone Checkout
 
@@ -174,7 +173,6 @@ Built-in checkout system with direct payment gateway integration. **No WooCommer
 
 **Fluent Cart** - Modern checkout experience with conversion optimization built in.
 
-**SureCart** - Cloud-hosted checkout with built-in PCI compliance.
 
 **Platform Selection:** Choose in Settings > General > E-Commerce Platform. "Auto-detect" mode selects the first active platform automatically.
 
@@ -246,7 +244,7 @@ Both Free and Pro include the same commission features:
 |---------|------|-----|
 | **Global Commission Rate** | 0-50% (default 10%) | Same |
 | **Per-Vendor Custom Rates** | Included | Same |
-| **Commission on Tips** | Tips are commission-free | Same |
+| **Commission on Tips** | Follows the main rate by default; set Tip Commission Rate to 0 to give vendors 100% | Same |
 | **Commission Calculation** | Automatic on order completion | Same |
 
 **Important:** Per-vendor commission rates are NOT a Pro-only feature. The free version includes this capability. Admins can override the global rate for individual vendors through vendor profile settings.
@@ -353,14 +351,12 @@ Beyond removing limits, Pro adds wizard features:
 |---------|------|-----|
 | **Multi-step Wizard** | Included | Included |
 | **Live Preview** | Included | Included |
-| **AI Title Suggestions** | -- | **PRO** |
-| **Service Templates** | -- | **PRO** |
-| **Bulk Image Upload** | -- | **PRO** |
-| **Direct Video Upload** | -- | **PRO** |
-| **Custom Package Fields** | -- | **PRO** |
-| **Scheduled Publishing** | -- | **PRO** |
+| **Gallery images** | 4 | Unlimited |
+| **Add-ons per service** | 3 | Unlimited |
+| **FAQ entries** | 5 | Unlimited |
+| **Requirement questions** | 5 | Unlimited |
 
-Pro wizard features register through `wpss_service_wizard_features` filter, enabling additional UI elements and functionality in the service creation process.
+What Pro changes in the wizard is the **limits**, not the steps. Vendors get the same flow either way; Pro stops capping how much they can add to a service.
 
 ---
 
@@ -464,7 +460,6 @@ Premium features for growing marketplaces:
 - WooCommerce adapter (access hundreds of WC gateways)
 - Easy Digital Downloads adapter
 - Fluent Cart adapter
-- SureCart adapter
 
 **Additional Payment Gateways:**
 - Razorpay direct integration (popular in India and Southeast Asia)
@@ -488,13 +483,11 @@ Premium features for growing marketplaces:
 - Google Cloud Storage integration
 - DigitalOcean Spaces integration
 
-**Wizard Enhancements:**
-- AI title suggestions
-- Service templates
-- Bulk image upload
-- Direct video upload
-- Custom package fields
-- Scheduled publishing
+**Wizard Limits Removed:**
+- Unlimited gallery images (Free caps at 4)
+- Unlimited add-ons per service (Free caps at 3)
+- Unlimited FAQ entries (Free caps at 5)
+- Unlimited requirement questions (Free caps at 5)
 
 **API Extensions:**
 - WalletController
@@ -502,7 +495,7 @@ Premium features for growing marketplaces:
 - VendorAnalyticsController
 - StorageController
 
-**Best For:** Growing marketplaces needing WooCommerce/EDD/FluentCart/SureCart integration, Razorpay payments, automated wallet payouts, detailed analytics, or vendors requiring unlimited service media and add-ons.
+**Best For:** Growing marketplaces needing WooCommerce/EDD/FluentCart integration, Razorpay payments, automated wallet payouts, detailed analytics, or vendors requiring unlimited service media and add-ons.
 
 ---
 
@@ -533,13 +526,13 @@ No migration required. Both plugins run simultaneously - Pro extends Free throug
 Yes. Install Pro alongside Free at any time. All services, orders, vendors, and settings are preserved.
 
 **Do I need WooCommerce?**
-No. The free version includes a built-in standalone checkout with Stripe, PayPal, and Offline gateways. WooCommerce is optional and available as a Pro adapter alongside EDD, Fluent Cart, and SureCart.
+No. The free version includes a built-in standalone checkout with Stripe, PayPal, and Offline gateways. WooCommerce is optional and available as a Pro adapter alongside EDD and Fluent Cart.
 
 **Is per-vendor commission a Pro feature?**
 No. Per-vendor commission rates are available in the free version.
 
 **What happens if my Pro license expires?**
-Your site continues working with all Pro features. You won't receive updates or support until you renew.
+Your site keeps running and your data is untouched, but Pro features stop loading until you activate again: Stripe Connect, wallet providers, tiered commission, vendor subscriptions, white label, cloud storage, analytics, display currency, and the raised service limits. The free marketplace - services, orders, messaging, reviews, disputes, earnings and withdrawals - carries on as normal.
 
 **What are the actual free version limits?**
 4 gallery images, 1 video, 3 add-ons, 5 FAQs, 5 buyer requirements per service. Three pricing packages in both versions.
@@ -557,7 +550,7 @@ Your site continues working with all Pro features. You won't receive updates or 
 - Local file storage works fine
 
 **Choose Pro If:**
-- Need WooCommerce, EDD, FluentCart, or SureCart integration
+- Need WooCommerce, EDD, or FluentCart integration
 - Need Razorpay gateway
 - Require unlimited service media and add-ons
 - Need advanced analytics dashboards

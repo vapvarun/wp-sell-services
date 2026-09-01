@@ -1,6 +1,6 @@
 # Email Notifications
 
-WP Sell Services emails buyers, vendors, and admins at every stage of an order. **23 notification types have their own on/off switch** in **Sell Services > Settings > Emails**, and all 23 are on by default. A handful of operational emails (requirement reminders, seller-level promotions, proposal rejections) send automatically and are not individually switchable. Every email has both an HTML and a plain text version.
+WP Sell Services emails buyers, vendors, and admins at every stage of an order. **24 notification types have their own on/off switch** in **Sell Services > Settings > Emails**, and all 23 are on by default. A handful of operational emails (requirement reminders, seller-level promotions, proposal rejections) send automatically and are not individually switchable. Every email has both an HTML and a plain text version.
 
 ![Email Notification Settings](../images/settings-emails-tab.png)
 
@@ -71,6 +71,48 @@ Every email type can be turned on or off individually.
 When you disable an email type, no emails of that type are sent to anyone. In-app notifications are still created regardless of email settings, so users will still see alerts in their dashboard.
 
 All email types are enabled by default when you first activate the plugin.
+
+### The full list of switchable types
+
+These are the 24 checkboxes on that screen, in the order they appear. The name in
+bold is the label you will see.
+
+| Checkbox | Sent when |
+|---|---|
+| **New Order** | An order is placed. Also gates the requirements-submitted, order-in-progress and requirements-reminder emails -- unticking this silences all four. |
+| **Order Completed** | An order is marked complete |
+| **Order Cancelled** | An order is cancelled |
+| **Cancellation Requested** | A buyer asks to cancel an order in progress |
+| **Delivery Submitted** | A vendor delivers work |
+| **Revision Requested** | A buyer asks for a revision |
+| **New Message** | A message is sent on an order |
+| **Vendor Direct Message** | A buyer contacts a vendor outside an order |
+| **New Review** | A buyer leaves a review |
+| **Dispute Opened** | A dispute is opened on an order |
+| **Withdrawal Requested** | A vendor requests a payout |
+| **Withdrawal Approved** | You approve a payout request |
+| **Withdrawal Rejected** | You reject a payout request |
+| **Proposal Submitted** | A vendor proposes on a buyer request |
+| **Proposal Accepted** | A buyer accepts a proposal |
+| **Tip Received** | A buyer tips a vendor |
+| **Milestone Proposed** | A vendor proposes a milestone phase |
+| **Milestone Paid** | A buyer pays a phase |
+| **Milestone Delivered** | A vendor delivers a phase |
+| **Milestone Approved** | A buyer approves a phase |
+| **Extension Proposed** | A vendor quotes a paid extension |
+| **Extension Approved** | A buyer accepts an extension |
+| **Extension Declined** | A buyer declines an extension |
+| **Service Moderation** | A service is approved, rejected, or queued for review |
+
+### Emails that are always sent
+
+A few are deliberately not switchable, because turning them off would leave
+someone waiting on information nobody else will give them:
+
+- **Seller level promotion** -- a vendor reaching a new level
+- **Proposal rejected** -- so the vendor stops waiting
+- **Offline payment receipt** submitted, verified and rejected -- the buyer needs
+  to know whether their proof was accepted
 
 ---
 

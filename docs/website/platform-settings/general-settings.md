@@ -69,7 +69,6 @@ Choose which system handles your marketplace checkout and payments.
 | **WooCommerce** | **[PRO]** |
 | **Easy Digital Downloads** | **[PRO]** |
 | **FluentCart** | **[PRO]** |
-| **SureCart** | **[PRO]** |
 
 ### Auto-Detect (Recommended)
 
@@ -84,7 +83,7 @@ The free version includes a complete built-in checkout system with Stripe, PayPa
 
 ### WooCommerce and Other Platforms **[PRO]**
 
-The Pro version lets you plug into WooCommerce, Easy Digital Downloads, FluentCart, or SureCart. This is useful if you already have an online store and want your marketplace orders to flow through the same checkout and payment system.
+The Pro version lets you plug into WooCommerce, Easy Digital Downloads or FluentCart. This is useful if you already have an online store and want your marketplace orders to flow through the same checkout and payment system.
 
 ### Switching Platforms
 
@@ -94,6 +93,32 @@ You can change platforms at any time under **Settings > General**. Keep in mind:
 - New orders use the new platform
 - Payment gateway settings may need reconfiguration
 - Test the checkout flow on a staging site before switching on a live marketplace
+
+---
+
+## Site cart link
+
+Only appears when WooCommerce is active, because it only means anything then.
+
+With WooCommerce installed there are genuinely two carts: WooCommerce's `/cart/`
+and the marketplace's `/service-cart/`. That split is deliberate -- the
+marketplace does not take over WooCommerce's cart page. The question this
+setting answers is which one your **theme's cart icon** points at.
+
+**You usually do not need to touch it.** The default is worked out for you:
+
+| Your setup | Where the theme's cart link goes |
+|---|---|
+| WooCommerce is handling checkout | WooCommerce's cart -- it holds the order |
+| Marketplace checkout, and you sell no WooCommerce products | The marketplace cart |
+| Marketplace checkout, and you *do* sell WooCommerce products | WooCommerce's cart -- two real shops, so you decide |
+
+Tick or untick it to override that in either direction. The third row is the one
+worth knowing about: if you sell both services and WooCommerce products, only
+you can say which cart the header should serve, so the plugin leaves it alone.
+
+If buyers report adding a service and then finding an empty cart, this is the
+setting -- turn it on.
 
 ---
 

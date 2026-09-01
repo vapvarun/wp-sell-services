@@ -125,7 +125,7 @@ Modify email content programmatically without overriding template files. These f
 |--------|-----------|---------|
 | `wpss_email_subject` | `string $subject, string $type, string $to` | Change the email subject line |
 | `wpss_email_from_name` | `string $from_name` | Change the sender display name |
-| `wpss_email_data` | `array $email` | Modify the entire email data array before sending |
+| `wpss_email_before_send` | `array $email, string $type` | Modify the whole payload (`to`, `subject`, `message`, `headers`, `attachments`) immediately before `wp_mail()` |
 | `wpss_notification_email_content` | `string $content, string $subject, int $user_id, array $data` | Modify any notification email content |
 
 ### Vendor-Specific Email Filters

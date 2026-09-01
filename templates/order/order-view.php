@@ -116,9 +116,27 @@ do_action( 'wpss_before_order_view', $order );
 <div class="wpss-order-view">
 	<!-- Header with Back Button -->
 	<div class="wpss-order-view__header">
-		<a href="<?php echo esc_url( wpss_get_dashboard_url( 'orders' ) ); ?>" class="wpss-order-view__back">
+		<?php
+		/*
+		 * Back to where they came from.
+		 *
+		 * This sent everyone to the buyer's My Orders, so a seller viewing a
+		 * sale was returned to a list their order was not in (Basecamp
+		 * 10254444118). $is_vendor was already resolved above; the link simply
+		 * was not using it.
+		 *
+		 * A dual-role member viewing an order they BOUGHT is a customer here,
+		 * so the customer check wins - $is_vendor is only true when they are
+		 * the seller on this order.
+		 */
+		$back_section = ( $is_vendor && ! $is_customer ) ? 'sales' : 'orders';
+		$back_label   = 'sales' === $back_section
+			? __( 'Back to Sales Orders', 'wp-sell-services' )
+			: __( 'Back to Orders', 'wp-sell-services' );
+		?>
+		<a href="<?php echo esc_url( wpss_get_dashboard_url( $back_section ) ); ?>" class="wpss-order-view__back">
 			<i data-lucide="arrow-left" class="wpss-icon" aria-hidden="true"></i>
-			<?php esc_html_e( 'Back to Orders', 'wp-sell-services' ); ?>
+			<?php echo esc_html( $back_label ); ?>
 		</a>
 	</div>
 
@@ -159,7 +177,12 @@ do_action( 'wpss_before_order_view', $order );
 			// sees how many revisions they have left to use; vendor sees the
 			// scope they're committed to. Hidden only for completed/cancelled
 			// orders where revisions no longer matter.
-			$show_revision_badge = ! in_array( $order->status, array( 'cancelled', 'refunded' ), true )
+			//
+			// pending_payment added 1.7.0 (Basecamp 10240019215): neither party
+			// has committed to anything until the money moves, so "5 of 5
+			// revisions left" on an unpaid order describes a promise nobody has
+			// made yet. The badge earns its place from the moment payment does.
+			$show_revision_badge = ! in_array( $order->status, array( 'pending_payment', 'cancelled', 'refunded' ), true )
 				&& ( (int) $order->revisions_included > 0 || -1 === (int) $order->revisions_included );
 			if ( $show_revision_badge ) :
 				$rev_used      = (int) $order->revisions_used;
@@ -212,173 +235,187 @@ do_action( 'wpss_before_order_view', $order );
 		do_action( 'wpss_order_view_header', $order );
 		?>
 
-		<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'in_progress', 'pending_approval', 'pending_requirements', 'pending_payment', 'revision_requested', 'late', 'cancellation_requested', 'completed' ), true ) ) : ?>
-			<?php
+		<?php
+		// No status whitelist here any more.
+		//
+		// There used to be one wrapping this whole block, and every action below
+		// ALSO carries its own status condition - so the outer list did nothing
+		// except silently veto actions whose own guard said yes. It cost us two
+		// defects: `disputed` was not on it, so View Dispute could never render
+		// on the one status it exists for (Basecamp 10236358753), and
+		// `requirements_submitted` was not on it either, so a vendor could never
+		// press Start Working after a buyer submitted requirements.
+		//
+		// Both were invisible because the actions read correct in isolation. An
+		// action is now shown exactly when its own condition says so, which is
+		// the only rule that can be reasoned about from the action itself.
+		?>
+		<?php
 			// Build actions array for filtering.
 			$actions = array();
 
-			if ( $is_vendor ) {
-				// No Accept / Decline buttons here. They only ever rendered for
-				// status 'pending', which nothing in the plugin writes - orders
-				// go pending_payment -> pending_requirements -> in_progress - so
-				// they were unreachable, and the REST verbs behind them have been
-				// removed. This product is payment-first: there is no vendor
-				// acceptance step to offer.
+		if ( $is_vendor ) {
+			// No Accept / Decline buttons here. They only ever rendered for
+			// status 'pending', which nothing in the plugin writes - orders
+			// go pending_payment -> pending_requirements -> in_progress - so
+			// they were unreachable, and the REST verbs behind them have been
+			// removed. This product is payment-first: there is no vendor
+			// acceptance step to offer.
 
-				if ( in_array( $order->status, array( 'accepted', 'requirements_submitted' ), true ) ) {
-					$actions['start'] = array(
-						'label' => __( 'Start Working', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--primary wpss-order-action',
-						'attrs' => 'data-action="start" data-order="' . esc_attr( $order_id ) . '"',
-					);
-				}
+			if ( in_array( $order->status, array( 'accepted', 'requirements_submitted' ), true ) ) {
+				$actions['start'] = array(
+					'label' => __( 'Start Working', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--primary wpss-order-action',
+					'attrs' => 'data-action="start" data-order="' . esc_attr( $order_id ) . '"',
+				);
+			}
 
-				if ( in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) {
-					$actions['deliver'] = array(
-						'label' => 'revision_requested' === $order->status ? __( 'Deliver Revision', 'wp-sell-services' ) : __( 'Deliver Work', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--success wpss-deliver-btn',
+			if ( in_array( $order->status, array( 'in_progress', 'revision_requested', 'late' ), true ) ) {
+				$actions['deliver'] = array(
+					'label' => 'revision_requested' === $order->status ? __( 'Deliver Revision', 'wp-sell-services' ) : __( 'Deliver Work', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--success wpss-deliver-btn',
+					'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+				);
+			}
+		}
+
+		if ( $is_customer ) {
+			// Pay Now button for unpaid orders (e.g., from accepted proposals).
+			if ( 'pending_payment' === $order->status ) {
+				// Through the seam, so the button is right on whichever rail
+				// the site runs. Building ?pay_order=N inline is correct only
+				// on standalone; on WooCommerce it lands on the store cart.
+				$pay_url        = wpss_get_pay_order_url( (int) $order_id );
+				$actions['pay'] = array(
+					'label' => sprintf(
+						/* translators: %s: formatted price */
+						__( 'Pay %s', 'wp-sell-services' ),
+						wpss_format_price( $order->total )
+					),
+					'class' => 'wpss-btn wpss-btn--success',
+					'attrs' => 'onclick="window.location.href=\'' . esc_url( $pay_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
+				);
+			}
+
+			// Submit Requirements CTA. A paid order sits in pending_requirements
+			// until the buyer provides their brief. The inline requirements
+			// FORM further down only renders when the SERVICE defined custom
+			// fields; for the (common) service with none, the buyer's order
+			// view otherwise showed only "Cancel Order" and no way to proceed
+			// — they could reach the working generic form ONLY via the
+			// post-payment redirect's `action=requirements` URL, so anyone who
+			// navigated back to the order later was stranded. This button
+			// always links there, so requirements can be submitted regardless
+			// of whether the service configured fields. Submitting advances the
+			// order out of pending_requirements, so the status check alone is
+			// enough — a pending_requirements order never has a completed brief.
+			// The $has_submitted_requirements flag is computed further down.
+			if ( 'pending_requirements' === $order->status ) {
+				$requirements_url        = wpss_get_order_requirements_url( $order_id );
+				$actions['requirements'] = array(
+					'label' => __( 'Submit Requirements', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--primary',
+					'attrs' => 'onclick="window.location.href=\'' . esc_url( $requirements_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
+				);
+			}
+
+			if ( 'pending_approval' === $order->status ) {
+				$actions['complete'] = array(
+					'label' => __( 'Accept & Complete', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--success wpss-order-action',
+					'attrs' => 'data-action="complete" data-order="' . esc_attr( $order_id ) . '"',
+				);
+
+				if ( $order->can_request_revision() ) {
+					$remaining = $order->get_remaining_revisions();
+					$rev_label = -1 === $remaining
+						? __( 'Request Revision', 'wp-sell-services' )
+						/* translators: %d: number of revisions remaining */
+						: sprintf( __( 'Request Revision (%d left)', 'wp-sell-services' ), $remaining );
+
+					$actions['revision'] = array(
+						'label' => $rev_label,
+						'class' => 'wpss-btn wpss-btn--secondary wpss-revision-btn',
 						'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
 					);
 				}
 			}
 
-			if ( $is_customer ) {
-				// Pay Now button for unpaid orders (e.g., from accepted proposals).
-				if ( 'pending_payment' === $order->status ) {
-					// Through the seam, so the button is right on whichever rail
-					// the site runs. Building ?pay_order=N inline is correct only
-					// on standalone; on WooCommerce it lands on the store cart.
-					$pay_url        = wpss_get_pay_order_url( (int) $order_id );
-					$actions['pay'] = array(
-						'label' => sprintf(
-							/* translators: %s: formatted price */
-							__( 'Pay %s', 'wp-sell-services' ),
-							wpss_format_price( $order->total )
-						),
-						'class' => 'wpss-btn wpss-btn--success',
-						'attrs' => 'onclick="window.location.href=\'' . esc_url( $pay_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
-					);
-				}
+			if ( 'revision_requested' === $order->status ) {
+				$actions['revision_notice'] = array(
+					'label' => __( 'Waiting for Revised Delivery', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
+					'attrs' => 'disabled="disabled" title="' . esc_attr__( 'The vendor is working on your requested revision.', 'wp-sell-services' ) . '"',
+				);
+			}
 
-				// Submit Requirements CTA. A paid order sits in pending_requirements
-				// until the buyer provides their brief. The inline requirements
-				// FORM further down only renders when the SERVICE defined custom
-				// fields; for the (common) service with none, the buyer's order
-				// view otherwise showed only "Cancel Order" and no way to proceed
-				// — they could reach the working generic form ONLY via the
-				// post-payment redirect's `action=requirements` URL, so anyone who
-				// navigated back to the order later was stranded. This button
-				// always links there, so requirements can be submitted regardless
-				// of whether the service configured fields. Submitting advances the
-				// order out of pending_requirements, so the status check alone is
-				// enough — a pending_requirements order never has a completed brief.
-				// The $has_submitted_requirements flag is computed further down.
-				if ( 'pending_requirements' === $order->status ) {
-					$requirements_url        = add_query_arg( 'action', 'requirements', wpss_get_order_url( $order_id ) );
-					$actions['requirements'] = array(
-						'label' => __( 'Submit Requirements', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--primary',
-						'attrs' => 'onclick="window.location.href=\'' . esc_url( $requirements_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
-					);
-				}
+			if ( 'cancellation_requested' === $order->status ) {
+				$actions['cancel_pending_notice'] = array(
+					'label' => __( 'Cancellation Pending', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
+					'attrs' => 'disabled="disabled" title="' . esc_attr__( 'Waiting for vendor response to your cancellation request.', 'wp-sell-services' ) . '"',
+				);
+			}
 
-				if ( 'pending_approval' === $order->status ) {
-					$actions['complete'] = array(
-						'label' => __( 'Accept & Complete', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--success wpss-order-action',
-						'attrs' => 'data-action="complete" data-order="' . esc_attr( $order_id ) . '"',
-					);
+			// Immediate cancel for pre-work statuses.
+			$buyer_cancel_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted' );
+			if ( in_array( $order->status, $buyer_cancel_statuses, true ) ) {
+				$actions['cancel'] = array(
+					'label' => __( 'Cancel Order', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
+					'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+				);
+			}
 
-					if ( $order->can_request_revision() ) {
-						$remaining = $order->get_remaining_revisions();
-						$rev_label = -1 === $remaining
-							? __( 'Request Revision', 'wp-sell-services' )
-							/* translators: %d: number of revisions remaining */
-							: sprintf( __( 'Request Revision (%d left)', 'wp-sell-services' ), $remaining );
+			// In-progress cancel (requires 24h window + no delivery).
+			if ( 'in_progress' === $order->status && $order->started_at ) {
+				$hours_since_start = ( time() - $order->started_at->getTimestamp() ) / 3600;
+				$has_deliveries    = ! empty( $deliveries );
 
-						$actions['revision'] = array(
-							'label' => $rev_label,
-							'class' => 'wpss-btn wpss-btn--secondary wpss-revision-btn',
-							'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
-						);
-					}
-				}
-
-				if ( 'revision_requested' === $order->status ) {
-					$actions['revision_notice'] = array(
-						'label' => __( 'Waiting for Revised Delivery', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
-						'attrs' => 'disabled="disabled" title="' . esc_attr__( 'The vendor is working on your requested revision.', 'wp-sell-services' ) . '"',
-					);
-				}
-
-				if ( 'cancellation_requested' === $order->status ) {
-					$actions['cancel_pending_notice'] = array(
-						'label' => __( 'Cancellation Pending', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--secondary wpss-btn--disabled',
-						'attrs' => 'disabled="disabled" title="' . esc_attr__( 'Waiting for vendor response to your cancellation request.', 'wp-sell-services' ) . '"',
-					);
-				}
-
-				// Immediate cancel for pre-work statuses.
-				$buyer_cancel_statuses = array( 'pending_payment', 'pending_requirements', 'pending', 'accepted' );
-				if ( in_array( $order->status, $buyer_cancel_statuses, true ) ) {
+				if ( $hours_since_start <= 24 && ! $has_deliveries ) {
 					$actions['cancel'] = array(
-						'label' => __( 'Cancel Order', 'wp-sell-services' ),
+						'label' => __( 'Request Cancellation', 'wp-sell-services' ),
 						'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
 						'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
 					);
 				}
-
-				// In-progress cancel (requires 24h window + no delivery).
-				if ( 'in_progress' === $order->status && $order->started_at ) {
-					$hours_since_start = ( time() - $order->started_at->getTimestamp() ) / 3600;
-					$has_deliveries    = ! empty( $deliveries );
-
-					if ( $hours_since_start <= 24 && ! $has_deliveries ) {
-						$actions['cancel'] = array(
-							'label' => __( 'Request Cancellation', 'wp-sell-services' ),
-							'class' => 'wpss-btn wpss-btn--secondary wpss-cancel-btn',
-							'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
-						);
-					}
-				}
 			}
+		}
 
 			// Vendor: accept/reject cancellation.
-			if ( $is_vendor && 'cancellation_requested' === $order->status ) {
-				$actions['accept-cancellation'] = array(
-					'label' => __( 'Accept Cancellation', 'wp-sell-services' ),
-					'class' => 'wpss-btn wpss-btn--success wpss-order-action',
-					'attrs' => 'data-action="accept-cancellation" data-order="' . esc_attr( $order_id ) . '"',
-				);
-				$actions['reject-cancellation'] = array(
-					'label' => __( 'Dispute Cancellation', 'wp-sell-services' ),
-					'class' => 'wpss-btn wpss-btn--danger-outline wpss-order-action',
-					'attrs' => 'data-action="reject-cancellation" data-order="' . esc_attr( $order_id ) . '"',
-				);
-			}
+		if ( $is_vendor && 'cancellation_requested' === $order->status ) {
+			$actions['accept-cancellation'] = array(
+				'label' => __( 'Accept Cancellation', 'wp-sell-services' ),
+				'class' => 'wpss-btn wpss-btn--success wpss-order-action',
+				'attrs' => 'data-action="accept-cancellation" data-order="' . esc_attr( $order_id ) . '"',
+			);
+			$actions['reject-cancellation'] = array(
+				'label' => __( 'Dispute Cancellation', 'wp-sell-services' ),
+				'class' => 'wpss-btn wpss-btn--danger-outline wpss-order-action',
+				'attrs' => 'data-action="reject-cancellation" data-order="' . esc_attr( $order_id ) . '"',
+			);
+		}
 
 			$order_settings = get_option( 'wpss_orders', array() );
-			if ( $can_open_dispute && ( $is_customer || $is_vendor ) ) {
-				$actions['dispute'] = array(
-					'label' => __( 'Open Dispute', 'wp-sell-services' ),
-					'class' => 'wpss-btn wpss-btn--danger-outline wpss-dispute-btn',
-					'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
-				);
-			} elseif ( $order_dispute && ( $is_customer || $is_vendor ) ) {
-				// Mutually exclusive with Open Dispute by definition: one exists,
-				// so the action is to go and read it.
-				$dispute_url = wpss_get_dashboard_url( 'disputes' );
+		if ( $can_open_dispute && ( $is_customer || $is_vendor ) ) {
+			$actions['dispute'] = array(
+				'label' => __( 'Open Dispute', 'wp-sell-services' ),
+				'class' => 'wpss-btn wpss-btn--danger-outline wpss-dispute-btn',
+				'attrs' => 'data-order="' . esc_attr( $order_id ) . '"',
+			);
+		} elseif ( $order_dispute && ( $is_customer || $is_vendor ) ) {
+			// Mutually exclusive with Open Dispute by definition: one exists,
+			// so the action is to go and read it.
+			$dispute_url = wpss_get_dashboard_url( 'disputes' );
 
-				if ( $dispute_url ) {
-					$actions['view-dispute'] = array(
-						'label' => __( 'View Dispute', 'wp-sell-services' ),
-						'class' => 'wpss-btn wpss-btn--danger-outline',
-						'url'   => add_query_arg( 'dispute', (int) $order_dispute->id, $dispute_url ),
-					);
-				}
+			if ( $dispute_url ) {
+				$actions['view-dispute'] = array(
+					'label' => __( 'View Dispute', 'wp-sell-services' ),
+					'class' => 'wpss-btn wpss-btn--danger-outline',
+					'url'   => add_query_arg( 'dispute', (int) $order_dispute->id, $dispute_url ),
+				);
 			}
+		}
 
 			/**
 			 * Filter: wpss_order_actions
@@ -391,7 +428,7 @@ do_action( 'wpss_before_order_view', $order );
 			 * @param object $order   Order object.
 			 */
 			$actions = apply_filters( 'wpss_order_actions', $actions, $order );
-			?>
+		?>
 
 			<?php if ( ! empty( $actions ) ) : ?>
 				<div class="wpss-order-view__actions">
@@ -430,8 +467,82 @@ do_action( 'wpss_before_order_view', $order );
 					?>
 				</div>
 			<?php endif; ?>
-		<?php endif; ?>
 	</div>
+
+	<?php
+	// Milestones are reserved for custom buyer-posted projects. Fixed-
+	// price catalog orders use Extensions; the server-side guards back
+	// this up, this just keeps the CTA from appearing where it doesn't
+	// apply so the seller never has to ask 'which one do I use?'.
+	//
+	// Resolved HERE, above the fold, because the wrap-up banner below is the
+	// answer to "is this project finished?" and it used to render after the
+	// conversation and the review card - so the loudest post-completion cue on
+	// the page was the tip CTA, near the bottom (Basecamp 10254720270). The
+	// milestone SECTION itself still renders in place, further down.
+	$is_request_order          = 'request' === ( $order->platform ?? '' );
+	$milestone_service         = new \WPSellServices\Services\MilestoneService();
+	$milestones                = $is_request_order ? $milestone_service->get_for_parent( (int) $order_id ) : array();
+	$milestone_active_statuses = array(
+		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_REQUIREMENTS,
+		\WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS,
+		\WPSellServices\Models\ServiceOrder::STATUS_LATE,
+		\WPSellServices\Models\ServiceOrder::STATUS_REVISION_REQUESTED,
+		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_APPROVAL,
+	);
+	$can_propose_milestone     = $is_vendor && $is_request_order && in_array( $order->status, $milestone_active_statuses, true );
+	$show_milestone_section    = $is_request_order && ( ! empty( $milestones ) || $can_propose_milestone );
+	$milestone_currency        = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+
+	$ms_approved_count  = 0;
+	$ms_total_paid      = 0.0;
+	$ms_all_done_banner = false;
+
+	if ( $show_milestone_section ) {
+		foreach ( $milestones as $_m ) {
+			if ( 'completed' === $_m['status'] ) {
+				++$ms_approved_count;
+				$ms_total_paid += (float) $_m['amount'];
+			}
+		}
+		$ms_all_done_banner = ! empty( $milestones ) && $ms_approved_count === count( $milestones ) && 'completed' === $order->status;
+	}
+	?>
+
+	<?php if ( $ms_all_done_banner ) : ?>
+		<section class="wpss-order-section wpss-order-section--milestone-wrap">
+			<div class="wpss-milestone-wrap">
+				<div class="wpss-milestone-wrap__icon" aria-hidden="true">
+					<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
+				</div>
+				<div>
+					<h3 class="wpss-milestone-wrap__title"><?php esc_html_e( 'Project complete', 'wp-sell-services' ); ?></h3>
+					<p class="wpss-milestone-wrap__body">
+						<?php
+						printf(
+							/* translators: 1: approved phase count, 2: total paid */
+							esc_html__( 'All %1$d phases approved. Total paid: %2$s.', 'wp-sell-services' ),
+							(int) $ms_approved_count,
+							esc_html( wpss_format_price( $ms_total_paid, $milestone_currency ) )
+						);
+
+						// The date the work actually finished. Read from the order
+						// rather than "now", so re-opening the page a month later
+						// still tells the truth.
+						if ( ! empty( $order->completed_at ) ) {
+							echo ' ';
+							printf(
+								/* translators: %s: completion date */
+								esc_html__( 'Finished %s.', 'wp-sell-services' ),
+								esc_html( wp_date( get_option( 'date_format' ), $order->completed_at->getTimestamp() ) )
+							);
+						}
+						?>
+					</p>
+				</div>
+			</div>
+		</section>
+	<?php endif; ?>
 
 	<!-- Order Summary Section -->
 	<section class="wpss-order-section">
@@ -484,10 +595,97 @@ do_action( 'wpss_before_order_view', $order );
 						<span class="wpss-order-detail-item__value"><?php echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) ); ?></span>
 					</div>
 				<?php endif; ?>
+				<?php
+				/*
+				 * A milestone contract keeps its money on the PHASES, not on the
+				 * parent, so the parent legitimately carries total = 0. That is
+				 * correct accounting and a terrible thing to show a buyer: they
+				 * agreed $200, paid $200 across two phases, and the order they
+				 * are looking at says $0.00 as though it were free or broken
+				 * (Basecamp 10254487153).
+				 *
+				 * So when the parent has phases, the figure comes from them:
+				 * what was contracted, and how much of it has been paid.
+				 */
+				$phase_orders = array();
+				$phase_total  = 0.0;
+				$phase_paid   = 0.0;
+				$phase_count  = 0;
+
+				// A cancelled or declined phase has been withdrawn from the
+				// contract, so counting it would overstate what was agreed - a
+				// contract with two live phases worth $500 and two cancelled
+				// ones read "$675" until this excluded them.
+				$dropped_statuses = array( 'cancelled', 'rejected' );
+
+				// Money the buyer has actually parted with. Refunded is
+				// deliberately not here: it was paid and came back, so it is
+				// still contracted but no longer paid.
+				$unpaid_statuses = array( 'pending_payment', 'refunded' );
+
+				if ( class_exists( '\WPSellServices\Services\MilestoneService' ) ) {
+					$phase_orders = ( new \WPSellServices\Services\MilestoneService() )->get_for_parent( $order_id );
+
+					// get_for_parent() returns decorated ARRAYS keyed `amount`,
+					// not order objects with `total`. Reading ->total gave 0 on
+					// every phase, which silently left the parent showing $0.00 -
+					// the very thing this block exists to fix.
+					foreach ( $phase_orders as $phase ) {
+						$phase        = (array) $phase;
+						$phase_status = (string) ( $phase['status'] ?? '' );
+						$phase_amount = (float) ( $phase['amount'] ?? 0 );
+
+						if ( in_array( $phase_status, $dropped_statuses, true ) ) {
+							continue;
+						}
+
+						++$phase_count;
+						$phase_total += $phase_amount;
+
+						if ( ! in_array( $phase_status, $unpaid_statuses, true ) ) {
+							$phase_paid += $phase_amount;
+						}
+					}
+				}
+
+				$show_phase_total = $phase_count > 0 && $phase_total > 0;
+				?>
 				<div class="wpss-order-detail-item wpss-order-detail-item--highlight">
-					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Total Amount', 'wp-sell-services' ); ?></span>
-					<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></span>
+					<span class="wpss-order-detail-item__label">
+						<?php
+						if ( $show_phase_total ) {
+							esc_html_e( 'Contract Total', 'wp-sell-services' );
+						} else {
+							esc_html_e( 'Total Amount', 'wp-sell-services' );
+						}
+						?>
+					</span>
+					<span class="wpss-order-detail-item__value">
+						<?php
+						if ( $show_phase_total ) {
+							echo esc_html( wpss_format_price( $phase_total, $order->currency ) );
+						} else {
+							echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) );
+						}
+						?>
+					</span>
 				</div>
+				<?php if ( $show_phase_total ) : ?>
+					<div class="wpss-order-detail-item">
+						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Paid So Far', 'wp-sell-services' ); ?></span>
+						<span class="wpss-order-detail-item__value">
+							<?php
+							printf(
+								/* translators: 1: amount paid, 2: contracted total, 3: number of phases. */
+								esc_html( _n( '%1$s of %2$s across %3$d phase', '%1$s of %2$s across %3$d phases', $phase_count, 'wp-sell-services' ) ),
+								esc_html( wpss_format_price( $phase_paid, $order->currency ) ),
+								esc_html( wpss_format_price( $phase_total, $order->currency ) ),
+								$phase_count
+							);
+							?>
+						</span>
+					</div>
+				<?php endif; ?>
 				<?php
 				// Refunded amount. Without this the order reads "Partially
 				// Refunded — Total $100.00" and neither party can tell how much
@@ -596,7 +794,20 @@ do_action( 'wpss_before_order_view', $order );
 						<?php endif; ?>
 					</h3>
 					<p class="wpss-service-info__price">
-						<?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?>
+						<?php
+						// A milestone parent deliberately carries total = 0 - the money
+						// lives on the phases. Printing that raw made the service line
+						// read "$0.00", which is the second half of the defect the
+						// Order Summary fix addressed (Basecamp 10254487153): the
+						// summary was corrected and this line was left saying the
+						// order was free. Reuses the phase figures computed above
+						// rather than summing them a second time.
+						echo esc_html(
+							$show_phase_total
+								? wpss_format_price( $phase_total, $order->currency )
+								: wpss_format_price( (float) $order->total, $order->currency )
+						);
+						?>
 					</p>
 				</div>
 			</div>
@@ -891,6 +1102,97 @@ do_action( 'wpss_before_order_view', $order );
 						</div>
 					</div>
 				<?php endforeach; ?>
+
+				<?php
+				/*
+				 * Anything the buyer submitted that no configured question claims.
+				 *
+				 * The loop above walks the SERVICE's questions and looks each
+				 * answer up by question text. A service with no configured
+				 * questions therefore rendered nothing at all, even though the
+				 * buyer had written a brief and the row was sitting in
+				 * field_data - so the vendor opened the order and could not read
+				 * what they had been asked to build (Basecamp 10254444197).
+				 *
+				 * Keying answers by question text has a second failure with the
+				 * same shape: edit or delete a question after submission and its
+				 * answer silently disappears too. Both are covered by rendering
+				 * whatever is left over rather than by special-casing
+				 * 'description'.
+				 */
+				$rendered_keys = array();
+				foreach ( $service_requirements as $requirement ) {
+					$rendered_keys[] = (string) ( $requirement['question'] ?? '' );
+				}
+
+				$orphan_answers = array();
+				foreach ( (array) $submitted_data as $key => $value ) {
+					if ( in_array( (string) $key, $rendered_keys, true ) ) {
+						continue;
+					}
+					if ( '' === trim( (string) ( is_scalar( $value ) ? $value : wp_json_encode( $value ) ) ) ) {
+						continue;
+					}
+					$orphan_answers[ $key ] = $value;
+				}
+				?>
+
+				<?php foreach ( $orphan_answers as $orphan_key => $orphan_value ) : ?>
+					<?php
+					// One label helper, shared with the admin order screen, which
+					// used to print the raw key instead.
+					$orphan_label = wpss_requirement_field_label( (string) $orphan_key );
+
+					$orphan_text = is_scalar( $orphan_value )
+						? (string) $orphan_value
+						: wp_json_encode( $orphan_value );
+
+					$orphan_long = strlen( $orphan_text ) > 300;
+					?>
+					<div class="wpss-requirement-view <?php echo $orphan_long ? 'wpss-requirement-view--expandable' : ''; ?>">
+						<h4 class="wpss-requirement-view__question"><?php echo esc_html( $orphan_label ); ?></h4>
+						<div class="wpss-requirement-view__answer <?php echo $orphan_long ? 'wpss-requirement-view__answer--collapsed' : ''; ?>">
+							<?php echo wp_kses_post( wpautop( $orphan_text ) ); ?>
+						</div>
+					</div>
+				<?php endforeach; ?>
+
+				<?php
+				// Attachments the buyer uploaded that no configured file question
+				// claims. Same reasoning: a delivered brief must not vanish
+				// because the question it answered was removed.
+				$orphan_attachments = array();
+				foreach ( (array) $submitted_attachments as $att ) {
+					if ( ! empty( $att['key'] ) && in_array( (string) $att['key'], $rendered_keys, true ) ) {
+						continue;
+					}
+					$orphan_attachments[] = $att;
+				}
+				?>
+
+				<?php if ( $orphan_attachments ) : ?>
+					<div class="wpss-requirement-view">
+						<h4 class="wpss-requirement-view__question"><?php esc_html_e( 'Files the buyer attached', 'wp-sell-services' ); ?></h4>
+						<div class="wpss-requirement-view__answer">
+							<ul class="wpss-requirement-view__files">
+								<?php foreach ( $orphan_attachments as $orphan_att ) : ?>
+									<?php
+									$orphan_att['order_id'] = $order_id;
+									$orphan_url             = function_exists( 'wpss_get_order_file_url' ) ? wpss_get_order_file_url( $orphan_att ) : '';
+									$orphan_name            = (string) ( $orphan_att['name'] ?? __( 'Attachment', 'wp-sell-services' ) );
+									?>
+									<li>
+										<?php if ( $orphan_url ) : ?>
+											<a href="<?php echo esc_url( $orphan_url ); ?>" rel="nofollow"><?php echo esc_html( $orphan_name ); ?></a>
+										<?php else : ?>
+											<?php echo esc_html( $orphan_name ); ?>
+										<?php endif; ?>
+									</li>
+								<?php endforeach; ?>
+							</ul>
+						</div>
+					</div>
+				<?php endif; ?>
 			</div>
 		</section>
 	<?php endif; ?>
@@ -1252,11 +1554,22 @@ do_action( 'wpss_before_order_view', $order );
 							<div class="wpss-delivery-item__files">
 								<?php foreach ( $files as $file ) : ?>
 									<?php
-									// Support both formats: array with id/name/url keys, or plain attachment ID.
+									// Three formats now: a 1.7.0 record addressed by id, a
+									// pre-1.7.0 record carrying a stored public URL, or a bare
+									// attachment ID from further back still. Only the first is
+									// permission-checked; the older two are already public and
+									// keep working, because breaking a delivered file to tighten
+									// history would punish the buyer for our bug.
 									if ( is_array( $file ) ) {
+										$file['order_id'] = $file['order_id'] ?? $order_id;
+
 										$att_id    = $file['id'] ?? 0;
-										$file_url  = $file['url'] ?? wp_get_attachment_url( $att_id );
+										$file_url  = wpss_get_order_file_url( $file );
 										$file_name = $file['name'] ?? get_the_title( $att_id );
+
+										if ( '' === $file_url ) {
+											$file_url = wp_get_attachment_url( $att_id );
+										}
 									} else {
 										$file_url  = wp_get_attachment_url( (int) $file );
 										$file_name = get_the_title( (int) $file );
@@ -1427,58 +1740,7 @@ do_action( 'wpss_before_order_view', $order );
 	<?php endif; ?>
 
 	<!-- Milestones timeline (parent order only — request-mode orders) -->
-	<?php
-	// Milestones are reserved for custom buyer-posted projects. Fixed-
-	// price catalog orders use Extensions; the server-side guards back
-	// this up, this just keeps the CTA from appearing where it doesn't
-	// apply so the seller never has to ask 'which one do I use?'.
-	$is_request_order          = 'request' === ( $order->platform ?? '' );
-	$milestone_service         = new \WPSellServices\Services\MilestoneService();
-	$milestones                = $is_request_order ? $milestone_service->get_for_parent( (int) $order_id ) : array();
-	$milestone_active_statuses = array(
-		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_REQUIREMENTS,
-		\WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS,
-		\WPSellServices\Models\ServiceOrder::STATUS_LATE,
-		\WPSellServices\Models\ServiceOrder::STATUS_REVISION_REQUESTED,
-		\WPSellServices\Models\ServiceOrder::STATUS_PENDING_APPROVAL,
-	);
-	$can_propose_milestone     = $is_vendor && $is_request_order && in_array( $order->status, $milestone_active_statuses, true );
-	$show_milestone_section    = $is_request_order && ( ! empty( $milestones ) || $can_propose_milestone );
-	$milestone_currency        = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
-
-	if ( $show_milestone_section ) :
-		$ms_approved_count = 0;
-		$ms_total_paid     = 0.0;
-		foreach ( $milestones as $_m ) {
-			if ( 'completed' === $_m['status'] ) {
-				++$ms_approved_count;
-				$ms_total_paid += (float) $_m['amount'];
-			}
-		}
-		$ms_all_done_banner = ! empty( $milestones ) && $ms_approved_count === count( $milestones ) && 'completed' === $order->status;
-		?>
-		<?php if ( $ms_all_done_banner ) : ?>
-			<section class="wpss-order-section wpss-order-section--milestone-wrap">
-				<div class="wpss-milestone-wrap">
-					<div class="wpss-milestone-wrap__icon" aria-hidden="true">
-						<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
-					</div>
-					<div>
-						<h3 class="wpss-milestone-wrap__title"><?php esc_html_e( 'Project complete', 'wp-sell-services' ); ?></h3>
-						<p class="wpss-milestone-wrap__body">
-							<?php
-							printf(
-								/* translators: 1: approved phase count, 2: total paid */
-								esc_html__( 'All %1$d phases approved. Total paid: %2$s.', 'wp-sell-services' ),
-								(int) $ms_approved_count,
-								esc_html( wpss_format_price( $ms_total_paid, $milestone_currency ) )
-							);
-							?>
-						</p>
-					</div>
-				</div>
-			</section>
-		<?php endif; ?>
+	<?php if ( $show_milestone_section ) : ?>
 		<section class="wpss-order-section wpss-order-section--milestones">
 			<div class="wpss-order-section__header">
 				<h2 class="wpss-order-section__title">
@@ -1514,7 +1776,7 @@ do_action( 'wpss_before_order_view', $order );
 						foreach ( $milestones as $index => $m ) :
 							$ms_status      = $m['status'];
 							$ms_sub_id      = (int) $m['id'];
-							$ms_sub_url     = add_query_arg( 'order_id', $ms_sub_id, remove_query_arg( 'order_id' ) );
+							$ms_sub_url     = wpss_get_order_url( $ms_sub_id );
 							$ms_pay_url     = wpss_get_pay_order_url( $ms_sub_id );
 							$ms_state_label = '';
 							$ms_state_class = 'wpss-ms-state--' . sanitize_html_class( $ms_status );

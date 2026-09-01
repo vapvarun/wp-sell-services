@@ -151,7 +151,7 @@ class EarningsController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_withdrawals' ),
-					'permission_callback' => array( $this, 'check_permissions' ),
+					'permission_callback' => array( $this, 'check_vendor_permissions' ),
 					'args'                => array(
 						'page'     => array(
 							'type'    => 'integer',
@@ -205,7 +205,7 @@ class EarningsController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_withdrawal_methods' ),
-					'permission_callback' => array( $this, 'check_permissions' ),
+					'permission_callback' => array( $this, 'check_vendor_permissions' ),
 				),
 			)
 		);
@@ -651,28 +651,4 @@ class EarningsController extends RestController {
 		return new WP_REST_Response( apply_filters( 'wpss_withdrawal_methods', $methods ) );
 	}
 
-	/**
-	 * Check vendor permissions.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return bool|WP_Error
-	 */
-	public function check_vendor_permissions( WP_REST_Request $request ) {
-		$perm_check = $this->check_permissions( $request );
-		if ( is_wp_error( $perm_check ) ) {
-			return $perm_check;
-		}
-
-		if ( ! wpss_is_vendor( get_current_user_id() ) ) {
-			return new WP_Error( 'wpss_not_vendor', __( 'Only vendors can access earnings.', 'wp-sell-services' ), array( 'status' => 403 ) );
-		}
-
-		// Account status gate. This used to read `_wpss_vendor_status` user
-		// meta, which nothing ever wrote, so it never fired at all; it was then
-		// fixed to read the canonical profile status but still caught only
-		// `pending` — leaving a SUSPENDED vendor able to read earnings and
-		// request a payout. Both cases now route through the shared rule, so
-		// the list of blocking statuses lives in one place.
-		return wpss_vendor_status_block() ?? true;
-	}
 }

@@ -14,6 +14,56 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
+ * A vendor's profile, defaulted when they have no row yet.
+ *
+ * `wpss_get_vendor()` answers "is there a profile row", which is not the same
+ * question as "is this a vendor". A member can hold the vendor role with no row
+ * at all - granted by an admin, promoted by a filter, or created by the demo
+ * seeder - and on those accounts the profile page rendered "Vendor not found."
+ * about somebody the plugin's own `wpss_is_vendor()` says is a seller.
+ *
+ * This is the same lesson as Basecamp 10208142467, where the Become a Vendor
+ * page offered "Register as Vendor" to people who were already vendors: the
+ * canonical answer is `wpss_is_vendor()`, and a missing row is an empty profile,
+ * not a missing person.
+ *
+ * Returns null only when the user genuinely is not a vendor - callers that need
+ * to know whether a row exists should keep using `wpss_get_vendor()`.
+ *
+ * @since 1.7.0
+ *
+ * @param int $user_id User ID.
+ * @return \WPSellServices\Models\VendorProfile|null Profile, a defaulted one, or null.
+ */
+function wpss_get_vendor_profile_or_default( int $user_id ): ?\WPSellServices\Models\VendorProfile {
+	$profile = wpss_get_vendor( $user_id );
+
+	if ( $profile ) {
+		return $profile;
+	}
+
+	if ( ! wpss_is_vendor( $user_id ) ) {
+		return null;
+	}
+
+	$user = get_userdata( $user_id );
+
+	if ( ! $user ) {
+		return null;
+	}
+
+	// Built through from_db() rather than by setting twenty properties by hand:
+	// it already defaults every column it does not find, so a new field added to
+	// the model is defaulted here too instead of being silently unset.
+	return \WPSellServices\Models\VendorProfile::from_db(
+		(object) array(
+			'user_id'      => $user_id,
+			'display_name' => $user->display_name,
+		)
+	);
+}
+
+/**
  * Get vendor profile by user ID.
  *
  * @param int $user_id WordPress user ID.
@@ -651,4 +701,102 @@ function wpss_member_bypasses_limits( int $user_id ): bool {
 	 * @param int  $user_id  Member being checked.
 	 */
 	return (bool) apply_filters( 'wpss_member_bypasses_limits', $bypasses, $user_id );
+}
+
+/**
+ * Count a vendor's services without loading them.
+ *
+ * Two callers were doing `count( get_posts( [ 'posts_per_page' => -1 ] ) )`
+ * purely to produce a number - one of them on `/me`, which the app calls at
+ * launch. That loads every id a vendor has ever published to discard all of
+ * them, which is the scan the big-site checklist exists to stop.
+ *
+ * @since 1.7.0
+ *
+ * @param int             $vendor_id   Vendor user ID.
+ * @param string|string[] $post_status Status(es) to count. Default 'publish'.
+ * @return int
+ */
+function wpss_count_vendor_services( int $vendor_id, $post_status = 'publish' ): int {
+	if ( $vendor_id <= 0 ) {
+		return 0;
+	}
+
+	$query = new \WP_Query(
+		array(
+			'post_type'              => 'wpss_service',
+			'post_status'            => $post_status,
+			'author'                 => $vendor_id,
+			'posts_per_page'         => 1,
+			'fields'                 => 'ids',
+			'no_found_rows'          => false,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+
+	return (int) $query->found_posts;
+}
+
+/**
+ * Proof points for the Become a Vendor page.
+ *
+ * Real figures, read from this marketplace rather than invented, and each one
+ * is dropped when it would work against us: a brand-new site advertising
+ * "0 sellers, 0 orders" is worse than saying nothing, because it tells the
+ * visitor they would be first with none of the reassurance that usually comes
+ * with that.
+ *
+ * The commission line is the exception - it is always shown, because what a
+ * seller keeps is the question they came to the page with, and it is true on
+ * day one.
+ *
+ * @since 1.7.0
+ *
+ * @return array<int,array{value:string,label:string}> Ordered, ready to render.
+ */
+function wpss_get_vendor_pitch_stats(): array {
+	global $wpdb;
+
+	$stats = array();
+
+	$vendors = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wpss_vendor_profiles WHERE status = 'active'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+	// A handful of sellers is not proof of anything; below this it reads as an
+	// empty room rather than a marketplace.
+	if ( $vendors >= 5 ) {
+		$stats[] = array(
+			'value' => number_format_i18n( $vendors ),
+			'label' => __( 'sellers already here', 'wp-sell-services' ),
+		);
+	}
+
+	$services = (int) wp_count_posts( 'wpss_service' )->publish;
+
+	if ( $services >= 5 ) {
+		$stats[] = array(
+			'value' => number_format_i18n( $services ),
+			'label' => __( 'services on offer', 'wp-sell-services' ),
+		);
+	}
+
+	// What the seller keeps. Always shown, and taken from the real setting so a
+	// site running 5% or 20% does not advertise someone else's number.
+	$rate = (float) ( get_option( 'wpss_commission', array() )['commission_rate'] ?? 10 );
+	$keep = max( 0, min( 100, 100 - $rate ) );
+
+	$stats[] = array(
+		/* translators: %s: percentage of each order the seller keeps. */
+		'value' => sprintf( __( '%s%%', 'wp-sell-services' ), number_format_i18n( $keep ) ),
+		'label' => __( 'of every order is yours', 'wp-sell-services' ),
+	);
+
+	/**
+	 * Filter the proof points on the Become a Vendor page.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param array $stats Ordered stats, each with `value` and `label`.
+	 */
+	return apply_filters( 'wpss_vendor_pitch_stats', $stats );
 }

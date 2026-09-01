@@ -87,7 +87,7 @@ See [Tiered Commission](../earnings-wallet/tiered-commission.md).
 
 ### These settings apply to the standalone checkout only
 
-If WooCommerce, EDD, FluentCart or SureCart runs your checkout, **that platform
+If WooCommerce, EDD or FluentCart runs your checkout, **that platform
 calculates tax** using its own tax configuration, and everything in this card is
 ignored. On WooCommerce, configure tax under **WooCommerce > Settings > Tax**.
 

@@ -493,10 +493,11 @@ class SingleServiceView {
 						</div>
 					</div>
 
-					<a href="#" class="wpss-btn wpss-btn-outline wpss-contact-btn"
+					<?php // Opens a modal, it does not navigate - so a button, not an anchor with href="#" (Basecamp 10240020534). ?>
+					<button type="button" class="wpss-btn wpss-btn-outline wpss-contact-btn"
 						data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
 						<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
-					</a>
+					</button>
 				</div>
 
 				<?php if ( $bio ) : ?>

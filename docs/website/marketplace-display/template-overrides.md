@@ -104,7 +104,6 @@ Each section of the unified dashboard is its own template under
 | Template | Controls |
 |----------|----------|
 | `cart/cart.php` | Shopping cart |
-| `disputes/dispute-view.php` | Dispute detail screen |
 | `myaccount/vendor-dashboard.php` | Legacy account-area vendor dashboard |
 | `myaccount/vendor-services.php` | Legacy account-area service list |
 | `myaccount/service-orders.php` | Legacy account-area order list |
