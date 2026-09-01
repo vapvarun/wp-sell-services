@@ -73,10 +73,14 @@ When the buyer pays a phase:
    delivery, it doesn't trigger the payout (payment happened when the
    buyer paid the phase).
 
-If the buyer wants changes, they ask in the order chat and you
-re-submit. Revisions aren't counted against the main order's revision
-limit and there's no separate reject button — conversations happen in
-chat.
+If the buyer wants changes, the phase comes back to you marked
+**Changes requested — over to you**, with their notes on the phase and in
+the order conversation. Fix the work and use **Resubmit delivery**; the
+phase returns to awaiting approval.
+
+Revisions on a phase aren't counted against the main order's revision
+limit — a phase carries no revision allowance of its own, so there is no
+counter to run down.
 
 ## The buyer journey
 
@@ -141,12 +145,19 @@ order can pay it, on every rail.)
 
 ### Approving deliveries & requesting revisions
 
-When the vendor submits a phase, you see a **Review & Approve** action
-on that row. If the delivery is right, approve it and the next phase
-unlocks. If you want changes, click **Request revision in chat** — it
-drops you into the order conversation with a reference to that phase so
-the vendor knows what you're talking about. There's no separate reject
-status; revisions are a conversation.
+When the vendor submits a phase you get two actions on it: **Approve
+delivery** and **Request changes**.
+
+Approve it and the next phase unlocks. Choose **Request changes** and you
+are asked what needs changing; the phase goes back to the seller marked
+**Sent back to your seller**, your notes appear on the phase, and the same
+notes are posted into the order conversation labelled with the phase name.
+A phase has no conversation of its own, which is why they land on the
+parent contract's thread — where the seller is already reading.
+
+Only you can send a phase back, and only while it is awaiting your
+approval. An approved phase is final; if something is wrong after that,
+open a dispute.
 
 ## Where you actually click
 

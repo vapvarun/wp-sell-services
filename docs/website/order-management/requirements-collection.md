@@ -75,6 +75,20 @@ You can control what happens if a buyer never submits their requirements. Go to 
 
 **Admins** can view requirements from the order detail page in **Sell Services > Orders**.
 
+The buyer, the vendor and the site owner all see the same thing, worded the
+same way.
+
+### When the service has no questions
+
+A buyer can always write a freeform brief, even on a service whose vendor set
+up no questions at all. It is shown to everyone under **What the buyer asked
+for**, so a vendor is never left with an empty Requirements panel and nothing
+to work from.
+
+The same applies to an answer whose question was edited or deleted after the
+buyer submitted it: the answer is still shown rather than disappearing with the
+question. Rename the heading with the `wpss_requirement_field_label` filter.
+
 ## Tips
 
 **For Vendors:** Keep your requirements form focused -- only ask for what you truly need. Use clear questions, add helpful placeholder text, and only mark fields as required if you genuinely cannot work without them.

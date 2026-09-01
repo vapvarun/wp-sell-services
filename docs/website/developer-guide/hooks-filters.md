@@ -86,6 +86,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:959` |
 | `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:623` |
 | `wpss_order_requirements_submitted` | `int $order_id, array $requirements` | `src/API/OrdersController.php:1165` |
+| `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/orders.php:265` |
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderWorkflowManager.php:601` |
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:367` |
 | `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `src/Services/OrderWorkflowManager.php:501` |
@@ -226,6 +227,8 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 |--------|-----------|------|
 | `wpss_pre_vendor_register` | `array $profile_data, int $user_id` | `VendorService.php` |
 | `wpss_vendor_profile_allowed_fields` | `array $allowed_fields` | `VendorService.php` |
+| `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:751` |
+| `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1257` |
 
 | Hook | Parameters | File |
 |------|-----------|------|
@@ -321,6 +324,7 @@ ids: `$milestone_id` is the sub-order, `$order_id` is the parent. See
 | `wpss_milestone_submitted` | `int $milestone_id, int $order_id, int $vendor_id, int $customer_id` | `src/Services/MilestoneService.php:482` |
 | `wpss_milestone_approved` | `int $milestone_id, int $order_id, int $vendor_id, int $customer_id` | `src/Services/MilestoneService.php:535` |
 | `wpss_milestone_declined` | `int $milestone_id, int $order_id, int $customer_id` | `src/Services/MilestoneService.php:709` |
+| `wpss_milestone_revision_requested` | `int $milestone_id, int $parent_id, int $vendor_id, int $customer_id, string $reason` | `src/Services/MilestoneService.php:655` |
 | `wpss_extension_request_created` | `int $request_id, int $order_id, array $data` (`requested_by`, `extra_days`, `reason`) | `ExtensionRequestService.php:249` |
 | `wpss_extension_request_approved` | `int $request_id, object $request` | `ExtensionRequestService.php:371` |
 | `wpss_extension_request_rejected` | `int $request_id, object $request` | `ExtensionRequestService.php:455` |

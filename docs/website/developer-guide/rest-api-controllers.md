@@ -98,6 +98,7 @@ over `/services` when you only need cards.
 | POST | `/orders/(?P<id>[\d]+)/requirements/skip` |
 | DELETE | `/orders/(?P<id>[\d]+)/requirements/files/(?P<file_id>[\d]+)` |
 | GET | `/orders/(?P<id>[\d]+)/sub-orders` |
+| GET | `/orders/(?P<id>[\d]+)/receipts` |
 | GET | `/orders/(?P<id>[\d]+)/timeline` |
 | POST | `/orders/(?P<id>[\d]+)/pay` |
 
@@ -209,9 +210,16 @@ lock-step guard while doing so.
 | POST | `/milestones/(?P<id>[\d]+)/submit` |
 | POST | `/milestones/(?P<id>[\d]+)/approve` |
 | POST | `/milestones/(?P<id>[\d]+)/decline` |
+| POST | `/milestones/(?P<id>[\d]+)/request-revision` |
 
 The terminal actions are **approve** and **decline** (not "reject") -- the same
 vocabulary as the milestone hooks.
+
+`request-revision` is the buyer's third option on a submitted phase: it takes a
+`reason`, returns the phase to `revision_requested` so the seller can resubmit,
+and posts the reason into the parent contract's conversation. A phase has no
+conversation of its own. Only the buyer may call it, and only while the phase
+is `pending_approval`.
 
 ### Extensions and tips
 
@@ -373,9 +381,16 @@ Authentication ships in the **free** plugin, not Pro.
 | POST | `/auth/change-password` |
 | GET, POST | `/auth/devices` |
 | DELETE | `/auth/devices/(?P<device_id>[a-zA-Z0-9_-]+)` |
+| GET, DELETE | `/auth/sessions` |
+| DELETE | `/auth/sessions/(?P<uuid>[a-zA-Z0-9\-]+)` |
 
 `/auth/devices` registers a device for push notifications -- what a mobile
 client calls after login.
+
+`/auth/sessions` is a different thing and deliberately a separate route: it
+lists and revokes the app tokens a member holds. `DELETE /auth/sessions` ends
+them all; the `{uuid}` form ends one. They are not on `/auth/devices` because
+that route already means push tokens.
 
 ### Favorites, media, notifications, moderation, audit log
 
@@ -397,6 +412,29 @@ client calls after login.
 | POST | `/moderation/(?P<service_id>[\d]+)/approve` |
 | POST | `/moderation/(?P<service_id>[\d]+)/reject` |
 | GET | `/audit-log` |
+
+### Reporting and blocking
+
+Both ship in the **free** plugin. A store submitting a marketplace app needs
+them: App Store Guideline 1.2 asks for a way to report content and a way to
+block the person who posted it.
+
+| Method | Route |
+|--------|-------|
+| GET, POST | `/reports` |
+| POST | `/reports/(?P<id>[\d]+)/resolve` |
+| GET | `/blocks` |
+| POST, DELETE | `/blocks/(?P<user_id>[\d]+)` |
+
+`POST /reports` files a report against any target type; the vocabulary of
+target types is filterable, so the same controller serves services, orders,
+vendors and messages. `GET /reports` is the owner's queue and is admin-only.
+
+Reporting asks the owner to act. **Blocking lets a member act immediately**,
+which is the one that actually ends a bad interaction, so the two are separate
+routes rather than one moderation surface. Blocks are stored in user meta, and
+enforcement lives at the points where two members can reach each other rather
+than in the controller.
 
 ### Realtime
 

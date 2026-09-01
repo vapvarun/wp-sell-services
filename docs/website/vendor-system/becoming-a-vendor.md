@@ -24,15 +24,30 @@ The registration form is hidden from the public. Only you (the admin) can create
 
 ## The Registration Form
 
-When registration is open or requires approval, users see a registration form on your "Become a Vendor" page. They fill in:
+When registration is open or requires approval, your "Become a Vendor" page
+opens with what your marketplace offers -- how many sellers and services you
+already have, and how much of each order a seller keeps -- followed by how
+selling works, with the sign-up card beside it.
 
-- **Display Name** -- Their public vendor name.
-- **Professional Tagline** -- A one-line description of what they do.
-- **About You** -- Their background and experience.
-- **Skills** -- A list of their areas of expertise.
-- **Terms Agreement** -- They must accept your marketplace terms.
+A visitor who is not signed in creates their account there and then. The form
+asks only for what an account needs:
 
-If a user already has a buyer account, they can upgrade to a vendor account from this page without creating a new account.
+- **Your name** -- their public vendor name.
+- **Email**
+- **Password** -- at least 8 characters.
+
+Profile details -- tagline, bio, skills, country, social links -- come
+afterwards in the profile editor, so nobody is asked to write a bio before they
+have decided to sign up.
+
+If a user is already signed in with a buyer account, the card offers a single
+**Register as Vendor** button instead: they upgrade in one click without
+creating a second account.
+
+The figures in the header come from your own site, and any that would not
+flatter it are left out -- a new marketplace does not advertise "0 sellers".
+Filter them with `wpss_vendor_pitch_stats`, and the "How it works" steps with
+`wpss_vendor_pitch_steps`.
 
 ![Vendor registration and profile editor form](../images/vendor-profile-editor.png)
 
