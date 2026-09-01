@@ -455,7 +455,6 @@ class OfflineGateway implements PaymentGatewayInterface {
 				<input type="hidden" name="offline_method" value="<?php echo esc_attr( $offline_methods[0]['id'] ?? 'offline' ); ?>">
 			<?php endif; ?>
 
-			<input type="hidden" name="wpss_gateway" value="offline">
 			<input type="hidden" name="wpss_offline_nonce" value="<?php echo esc_attr( wp_create_nonce( 'wpss_offline_payment' ) ); ?>">
 		</div>
 		<?php

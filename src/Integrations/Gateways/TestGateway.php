@@ -221,7 +221,6 @@ class TestGateway implements PaymentGatewayInterface {
 					<?php esc_html_e( 'This is a test payment. No real charges will be made.', 'wp-sell-services' ); ?>
 				</p>
 			</div>
-			<input type="hidden" name="wpss_gateway" value="test">
 			<input type="hidden" name="wpss_test_nonce" value="<?php echo esc_attr( wp_create_nonce( 'wpss_test_payment' ) ); ?>">
 		</div>
 		<?php
