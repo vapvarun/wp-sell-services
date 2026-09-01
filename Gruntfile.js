@@ -502,6 +502,52 @@ module.exports = function ( grunt ) {
 		const failures = Array.isArray( data.failures ) ? data.failures.length : 0;
 		const logIssues = Array.isArray( data.debug_log_issues ) ? data.debug_log_issues.length : 0;
 
+		/*
+		 * Coverage, not just failures.
+		 *
+		 * This gate counted failures and debug-log issues and nothing else, so a
+		 * walk that stalled after eight checks and skipped thirty-one reported
+		 * zero failures and passed - a smoke run that barely started is
+		 * indistinguishable here from one that swept the product. That happened
+		 * on 1.7.0: the agent stalled in section C, wrote an honest report whose
+		 * own recommendation was "do not treat this as a release-gate green
+		 * light", and this gate would still have waved the build through.
+		 *
+		 * A section with zero passes did not run. That is the assertion: every
+		 * section must have gotten through at least one check, and a run cannot
+		 * skip more than it passed. Neither is a quality bar - they only catch a
+		 * walk that did not happen, which is the failure this gate kept missing.
+		 */
+		const sections = data.sections && typeof data.sections === 'object' ? data.sections : {};
+		const totals = Object.values( sections ).reduce(
+			( acc, s ) => ( {
+				pass: acc.pass + ( s.pass || 0 ),
+				skipped: acc.skipped + ( s.skipped || 0 ),
+			} ),
+			{ pass: 0, skipped: 0 }
+		);
+		const unrun = Object.keys( sections ).filter(
+			( name ) => ! sections[ name ].pass && sections[ name ].skipped
+		);
+
+		if ( unrun.length ) {
+			grunt.fail.warn(
+				'verify:smoke-gate — ' + unrun.length + ' section(s) never ran: ' + unrun.join( ', ' ) +
+				'.\nZero passes with skips recorded means the walk did not reach them. ' +
+				'Re-run the smoke before building.'
+			);
+			return;
+		}
+
+		if ( totals.skipped > totals.pass ) {
+			grunt.fail.warn(
+				'verify:smoke-gate — the smoke skipped more than it verified (' +
+				totals.skipped + ' skipped vs ' + totals.pass + ' passed).\n' +
+				'Re-run the smoke, or record why this coverage is acceptable and re-run this gate.'
+			);
+			return;
+		}
+
 		if ( failures || logIssues ) {
 			grunt.fail.warn(
 				'verify:smoke-gate — the smoke run for ' + pkg.version + ' is not clean: ' +
