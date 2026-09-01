@@ -193,7 +193,26 @@ if fired and os.path.exists(hooks_doc):
     # explicitly flags a removed name is allowed to mention it.
     documented = set(re.findall(r"^\|\s*`(wpss_[a-z0-9_]+)`", text, re.M))
     dynamic = re.compile(r"_\{|\{status\}")
-    phantom = sorted(h for h in documented - fired if not dynamic.search(h))
+
+    # Pro's hooks are documented in Free's tables but fired from Pro's tree, so
+    # when Pro is not checked out beside Free - which is every run of Free's own
+    # CI, since Pro is a private repo - every one of them looks phantom. The
+    # generated reference marks them [PRO], so use that to skip exactly those
+    # and keep asserting the Free ones. Skipping the whole check when Pro is
+    # absent would have turned this into a gate that passes by being blind,
+    # which is the failure mode this file exists to catch elsewhere.
+    pro_only = set()
+    if not os.path.isdir(os.path.join(PRO, "src")):
+        ref = os.path.join(DOCS, "developer-guide", "hooks-reference.md")
+        if os.path.exists(ref):
+            pro_only = set(
+                re.findall(r"^\|\s*`(wpss_[a-z0-9_]+)`.*\*\*\[PRO\]\*\*", open(ref).read(), re.M)
+            )
+            ok("hooks", f"Pro not checked out; {len(pro_only)} Pro-owned hook(s) not asserted here")
+
+    phantom = sorted(
+        h for h in documented - fired if not dynamic.search(h) and h not in pro_only
+    )
     for h in phantom:
         fail("hooks", f"documented in a table but never fired: {h}")
     if not phantom:
@@ -277,7 +296,17 @@ if os.path.exists(api_php) and os.path.exists(rest_doc):
 # ---------------------------------------------------------------------------
 generator = os.path.join(FREE, "bin/generate-hook-reference.py")
 
-if os.path.exists(generator):
+# The generator indexes Free AND Pro, so the committed file legitimately lists
+# Pro's hooks. Regenerating without Pro checked out produces a shorter file and
+# reports the committed one as stale - a false alarm on every run of Free's own
+# CI, where Pro is a private repo that is not present. Freshness is asserted
+# wherever both halves are available, which is any developer machine and Pro's
+# own CI, since that one checks Free out beside it.
+if not os.path.isdir(os.path.join(PRO, "src")):
+    ok("hook-reference", "Pro not checked out; freshness asserted where both halves are present")
+    generator = ""
+
+if generator and os.path.exists(generator):
     import subprocess
 
     result = subprocess.run(

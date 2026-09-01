@@ -184,8 +184,11 @@ jobs:
 
       # Fails when a feature has no reachable REST route - this plugin is
       # mobile-app ready by contract, so an unreachable feature is a defect.
+      # --check, not a bare run: without the flag the script prints its findings
+      # and exits 0, so this step reported gaps and passed anyway. It has been
+      # decorative for as long as it has been here.
       - name: App parity
-        run: python3 bin/app-parity.py
+        run: python3 bin/app-parity.py --check
 
       # Fails on a settings key read but never written, or written but never
       # read. The script existed and was never wired here, so it caught nothing
