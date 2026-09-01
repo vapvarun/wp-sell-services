@@ -165,16 +165,9 @@
    single owner now flows through. No surface-specific override is needed here,
    so the block is deleted rather than re-scoped. */
 
-/* The app shell's `contain: layout` (design-system.css) turns the shell into
-   the containing block for positioned descendants, which stops the sidebar's
-   position: sticky from ever engaging against the viewport (verified in
-   Chrome: sidebar scrolls away as static content). Lift layout containment
-   on single-service pages only — the shell's stacking-context isolation
-   (position: relative + isolation: isolate) is untouched, so the B2
-   duplicate-header fix is preserved (Basecamp #9983376083). */
-.wpss-app-shell:has(.wpss-single-service) {
-	contain: none;
-}
+/* The `contain: layout` that stopped this sidebar's position: sticky from
+   engaging (#9983376083) is gone from .wpss-app-shell itself now, so the
+   per-surface override that used to live here is redundant and deleted. */
 
 .wpss-service-layout {
 	display: grid;
