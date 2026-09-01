@@ -245,7 +245,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 				return;
 			}
 
-			$meta                   = is_array( $order->meta ?? null ) ? $order->meta : array();
+			$meta                   = $order->meta;
 			$meta['offline_method'] = array(
 				'id'           => $method['id'],
 				'label'        => $method['label'],
@@ -1523,7 +1523,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 	 *
 	 * @since 1.7.0
 	 *
-	 * @param array $rows Raw method rows.
+	 * @param array<int|string,mixed> $rows Raw method rows, straight off the settings POST.
 	 * @return array<int,array<string,mixed>> Clean methods, blank rows dropped.
 	 */
 	private function sanitize_methods( array $rows ): array {

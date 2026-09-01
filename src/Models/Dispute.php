@@ -274,7 +274,12 @@ class Dispute {
 			return '';
 		}
 
-		$types = self::get_resolution_types();
+		// The map lives on DisputeService, not on this model - self:: here was
+		// a call to a method that does not exist, so this accessor fatalled on
+		// any dispute that had been resolved. It had no callers, which is the
+		// only reason nobody hit it. Every other reader of this map already
+		// goes through DisputeService.
+		$types = \WPSellServices\Services\DisputeService::get_resolution_types();
 		return $types[ $this->resolution_type ] ?? $this->resolution_type;
 	}
 

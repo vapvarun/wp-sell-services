@@ -219,7 +219,7 @@ function wpss_order_files_are_public( bool $force = false ): ?bool {
  *
  * @since 1.7.0
  *
- * @param array  $file     One entry from $_FILES.
+ * @param array<string,mixed> $file One entry from $_FILES.
  * @param int    $order_id Order the file belongs to.
  * @param string $kind     'delivery' or 'requirement' - used only for grouping.
  * @return array<string,mixed>|null Record, or null when the upload is rejected.
@@ -462,9 +462,9 @@ function wpss_find_order_file( int $order_id, string $file_id ): ?array {
  *
  * @since 1.7.0
  *
- * @param array $record   File record as stored, carrying `url` and no `path`.
- * @param int   $order_id Order the file belongs to.
- * @return array|null Rewritten record, or null when it could not be migrated.
+ * @param array<string,mixed> $record   File record as stored, carrying `url` and no `path`.
+ * @param int                 $order_id Order the file belongs to.
+ * @return array<string,mixed>|null Rewritten record, or null when it could not be migrated.
  */
 function wpss_migrate_legacy_order_file( array $record, int $order_id ): ?array {
 	global $wpdb;
@@ -601,7 +601,7 @@ function wpss_resolve_local_path_from_url( string $url ): ?string {
  *
  * @param int    $order_id Order id.
  * @param string $file_id  File id to replace.
- * @param array  $updated  Replacement record.
+ * @param array<string,mixed> $updated Replacement record.
  * @return bool True when a row was rewritten.
  */
 function wpss_rewrite_order_file_record( int $order_id, string $file_id, array $updated ): bool {
