@@ -1065,13 +1065,24 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
    - position: relative + isolation: isolate creates a new stacking context
      so sticky/fixed elements inside the host theme can NOT bleed into our UI
    - max-width + margin auto centers consistently regardless of theme width
-   - contain: layout isolates layout calculations from the page
+   - contain was REMOVED: `contain: layout` makes the shell the containing
+     block for fixed and absolutely positioned descendants, so every
+     `position: fixed` modal inside it sized itself against the shell (3030px
+     on a long order page) instead of the viewport and centred in the middle
+     of the PAGE. Measured on the Deliver Work modal: wrapper 3030px tall
+     starting 713px above the viewport, dialog 402->1203 in a 900px window,
+     the footer and its Cancel button unreachable. It had already broken the
+     single-service sticky sidebar the same way (#9983376083), which was
+     patched per-surface; one more surface-specific escape hatch would have
+     been the third. The stacking-context isolation is what the B2
+     duplicate-header fix actually needs, and that is position: relative +
+     isolation: isolate, both untouched.
 
    This single class fixes the duplicate-header rendering bug seen across all
    wizard / dashboard screens (B2 in baseline-2026-04-25.md).
    ========================================================================== */
 
-.wpss-app-shell { position: relative; isolation: isolate; contain: layout; width: 100%; max-width: 100%; }
+.wpss-app-shell { position: relative; isolation: isolate; width: 100%; max-width: 100%; }
 
 /* F5: the shell owns ONE top-spacing token used by every surface. Bottom
    padding stays comfortable; horizontal gutters use the shared container pad

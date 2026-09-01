@@ -3258,8 +3258,16 @@ body.wpss-modal-active {
 	color: var(--wpss-secondary-accent);
 }
 
-.wpss-modal__close,
-.wpss-modal__close-btn {
+/* Only `__close` - the icon in the corner. `__close-btn` was grouped in here
+   and it is not an icon: every one of its seven uses is a footer button,
+   `<button class="wpss-btn wpss-btn--secondary wpss-modal__close-btn">Cancel</button>`
+   in the deliver, tip, extension, revision and portfolio modals. This rule
+   pulled each of them out of the footer with position:absolute, parked them at
+   top:1rem right:1rem on top of the real close icon, squashed them to 32x32 and
+   pushed the word "Cancel" 99999px off-screen with text-indent. The buttons were
+   in the DOM, styled, and invisible. They keep their `.wpss-btn` styling now,
+   which is what the markup already asked for. */
+.wpss-modal__close {
 	position: absolute;
 	top: 1rem;
 	right: 1rem;
@@ -3278,8 +3286,7 @@ body.wpss-modal-active {
 	text-indent: -99999px;
 }
 
-.wpss-modal__close:hover,
-.wpss-modal__close-btn:hover {
+.wpss-modal__close:hover {
 	background: none;
 	color: var(--wpss-text);
 	border: none;
