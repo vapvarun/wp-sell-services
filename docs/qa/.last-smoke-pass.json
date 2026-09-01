@@ -106,7 +106,23 @@
       "5_browser_level": "logged in as admin; plugins.php shows both rows with no error notice; WPSS Settings renders with the full menu, the Terms launch notice and the Pro license notice - screenshot docker-pristine-settings.png",
       "6_degrade_check": "renamed libs/edd-sl-sdk/src: frontend stayed 200 and zero fatals; restored, 11 files back"
     },
-    "clean_install_schema": "27 wpss tables created, db_version 1.6.1, 187 wpss/v1 REST routes; the five retired tables were correctly NOT created"
+    "clean_install_schema": "27 wpss tables created, db_version 1.6.1, 187 wpss/v1 REST routes; the five retired tables were correctly NOT created",
+    "rerun_against_published_artifacts": {
+      "status": "PASS",
+      "why": "The first pristine run used the locally built zips. Pro was then REBUILT to stop shipping bin/, so the artifact actually published was not the one that had been installed. The rule is never publish a zip you have not installed fresh, so the run was repeated against the zips downloaded back from the GitHub releases.",
+      "integrity": "sha256 of both downloaded release assets is identical to the local builds",
+      "method": "both plugins deleted from the Docker WP, debug.log truncated, then installed from the downloaded release zips",
+      "checks": {
+        "activation": "both active at 1.7.0",
+        "frontend": "HTTP 200",
+        "bundled_sdk": "libs/edd-sl-sdk/src present, WPSS_PRO_VERSION 1.7.0",
+        "debug_log": "0 lines, 0 fatal-class entries",
+        "browser": "plugins.php shows both rows with 0 error notices; WPSS Settings renders in full (docker-published-zips-settings.png)",
+        "degrade": "SDK src renamed: frontend stayed 200, 0 fatals, restored",
+        "bin_excluded": "wp-sell-services-pro/bin absent in the installed copy, which is the change that forced this rerun",
+        "schema": "27 tables, db_version 1.6.1, 187 wpss/v1 routes"
+      }
+    }
   },
   "debug_log_issues": [],
   "debug_log_noise": [
