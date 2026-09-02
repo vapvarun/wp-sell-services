@@ -75,9 +75,16 @@ wpss_t( false !== strpos( $out, 'Publish up to 1 service listing with' ), 'a cap
 $out = wpss_render_benefits( 0 );
 wpss_t( false !== strpos( $out, 'unlimited service listings' ), 'a cap of 0 genuinely is unlimited' );
 
-// An install that never set the key must not claim a cap it does not have.
-$out = wpss_render_benefits( null );
-wpss_t( false !== strpos( $out, 'unlimited service listings' ), 'an unset cap reads as unlimited rather than inventing a number' );
+// An install that never set the key states the seeded default - the same
+// number the Settings screen renders and VendorProfile enforces (both read
+// wpss_settings_defaults() since 1.7.1). Saying "unlimited" here while the
+// vendor is walled at 20 is the original defect all over again.
+$wpss_default_cap = absint( wpss_settings_defaults()['wpss_vendor']['max_services_per_vendor'] );
+$out              = wpss_render_benefits( null );
+wpss_t(
+	$wpss_default_cap > 0 && false !== strpos( $out, 'Publish up to ' . number_format_i18n( $wpss_default_cap ) . ' service listings' ),
+	'an unset cap states the seeded default, the same cap enforcement uses'
+);
 
 update_option( 'wpss_vendor', $saved );
 
