@@ -3853,6 +3853,11 @@ class Settings {
 				'extension_approved'     => __( 'Extension Approved', 'wp-sell-services' ),
 				'extension_declined'     => __( 'Extension Declined', 'wp-sell-services' ),
 				'moderation'             => __( 'Service Moderation', 'wp-sell-services' ),
+				'review_reply'           => __( 'Review Reply', 'wp-sell-services' ),
+				'request_expired'        => __( 'Request Expired', 'wp-sell-services' ),
+				'dispute_escalated'      => __( 'Dispute Escalated', 'wp-sell-services' ),
+				'dispute_cancelled'      => __( 'Dispute Cancelled', 'wp-sell-services' ),
+				'tip_receipt'            => __( 'Tip Receipt', 'wp-sell-services' ),
 			)
 		);
 	}

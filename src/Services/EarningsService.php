@@ -684,8 +684,17 @@ class EarningsService {
 
 		$withdrawal_id = (int) $wpdb->insert_id;
 
-		// Notify admin (respects email settings).
+		// Notify admin (respects email settings) and give the vendor a row.
 		( new EmailService() )->send_withdrawal_notification( $vendor_id, $amount, $withdrawal_id );
+		( new NotificationService() )->send(
+			$vendor_id,
+			'withdrawal_requested',
+			array(
+				'withdrawal_id' => $withdrawal_id,
+				'amount'        => $amount,
+				'action_url'    => wpss_get_dashboard_url( 'earnings' ),
+			)
+		);
 
 		/**
 		 * Fires when withdrawal is requested.

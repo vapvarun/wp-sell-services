@@ -863,19 +863,89 @@ class DisputeWorkflowManager {
 			$reason
 		);
 
-		if ( EmailService::is_type_enabled( 'dispute_admin' ) ) {
-			( new EmailService() )->send(
-				$admin_email,
-				$subject,
-				EmailService::TYPE_DISPUTE_ESCALATED,
+		( new EmailService() )->send(
+			$admin_email,
+			$subject,
+			EmailService::TYPE_DISPUTE_ESCALATED,
+			array(
+				'recipient'  => get_user_by( 'email', $admin_email ),
+				'dispute_id' => $dispute_id,
+				'order_id'   => $dispute->order_id,
+				'reason'     => $reason,
+			)
+		);
+	}
+
+	/**
+	 * Both parties learn a dispute went to the marketplace team.
+	 *
+	 * Bound to `wpss_dispute_escalated`. The admin mail is sent by
+	 * {@see self::notify_admins_of_escalation()} from escalate() itself.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int    $dispute_id   Dispute ID.
+	 * @param string $reason       Escalation reason.
+	 * @param int    $escalated_by User ID.
+	 * @return void
+	 */
+	public function on_dispute_escalated( int $dispute_id, string $reason, int $escalated_by ): void {
+		unset( $escalated_by );
+		foreach ( $this->dispute_parties( $dispute_id ) as $user_id ) {
+			$this->notification_service->send(
+				$user_id,
+				'dispute_escalated',
 				array(
-					'recipient'  => get_user_by( 'email', $admin_email ),
 					'dispute_id' => $dispute_id,
-					'order_id'   => $dispute->order_id,
+					'order_id'   => $this->dispute_service->get( $dispute_id )->order_id ?? 0,
 					'reason'     => $reason,
 				)
 			);
 		}
+	}
+
+	/**
+	 * The other party learns a dispute was withdrawn.
+	 *
+	 * Bound to `wpss_dispute_cancelled`.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int    $dispute_id Dispute ID.
+	 * @param int    $user_id    Who cancelled.
+	 * @param string $reason     Cancellation reason.
+	 * @return void
+	 */
+	public function on_dispute_cancelled( int $dispute_id, int $user_id, string $reason ): void {
+		$dispute = $this->dispute_service->get( $dispute_id );
+		foreach ( $this->dispute_parties( $dispute_id ) as $party ) {
+			if ( $party === $user_id ) {
+				continue;
+			}
+			$this->notification_service->send(
+				$party,
+				'dispute_cancelled',
+				array(
+					'dispute_id'   => $dispute_id,
+					'order_id'     => $dispute ? $dispute->order_id : 0,
+					'cancelled_by' => $user_id,
+					'reason'       => $reason,
+				)
+			);
+		}
+	}
+
+	/**
+	 * Buyer and vendor of a dispute's order.
+	 *
+	 * @param int $dispute_id Dispute ID.
+	 * @return int[] User IDs, empty when the dispute or order is gone.
+	 */
+	private function dispute_parties( int $dispute_id ): array {
+		$dispute = $this->dispute_service->get( $dispute_id );
+		$order   = $dispute ? wpss_get_order( (int) $dispute->order_id ) : null;
+
+		return $order ? array_filter( array( (int) $order->customer_id, (int) $order->vendor_id ) ) : array();
 	}
 
 	/**
@@ -934,22 +1004,22 @@ class DisputeWorkflowManager {
 				array( '%d' )
 			);
 
-			// Notify the other party.
-			$notify_user = (int) $opened_by === (int) $order->customer_id
-				? (int) $order->vendor_id
-				: (int) $order->customer_id;
-
-			$this->notification_service->send(
-				$notify_user,
-				'dispute_opened',
-				array(
-					'dispute_id'        => $dispute_id,
-					'order_id'          => $order_id,
-					'opened_by'         => $opened_by,
-					'reason'            => $data['reason'] ?? '',
-					'response_deadline' => $deadline,
-				)
-			);
+			// One row per party. The other party gets the deadline; the opener
+			// gets a confirmation. (notify_order_status() no longer writes its
+			// own "disputed" rows, which doubled these.)
+			foreach ( array( (int) $order->customer_id, (int) $order->vendor_id ) as $party ) {
+				$this->notification_service->send(
+					$party,
+					'dispute_opened',
+					array(
+						'dispute_id'        => $dispute_id,
+						'order_id'          => $order_id,
+						'opened_by'         => $opened_by,
+						'reason'            => $data['reason'] ?? '',
+						'response_deadline' => $party === (int) $opened_by ? '' : $deadline,
+					)
+				);
+			}
 		}
 	}
 

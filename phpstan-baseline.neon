@@ -3562,12 +3562,6 @@ parameters:
 			path: src/Services/ModerationService.php
 
 		-
-			message: '#^Method WPSellServices\\Services\\NotificationService\:\:build_email_content\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/NotificationService.php
-
-		-
 			message: '#^Method WPSellServices\\Services\\NotificationService\:\:create\(\) has parameter \$data with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

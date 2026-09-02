@@ -190,9 +190,6 @@ class ModerationService {
 		 */
 		do_action( 'wpss_service_approved', $service_id, $notes );
 
-		// Send notification to vendor.
-		$this->send_approval_notification( $service_id );
-
 		return true;
 	}
 
@@ -241,9 +238,6 @@ class ModerationService {
 		 * @param string $reason     Rejection reason.
 		 */
 		do_action( 'wpss_service_rejected', $service_id, $reason );
-
-		// Send notification to vendor.
-		$this->send_rejection_notification( $service_id, $reason );
 
 		return true;
 	}
@@ -304,12 +298,15 @@ class ModerationService {
 	}
 
 	/**
-	 * Send approval notification to vendor.
+	 * Tell the vendor their service was approved: branded mail plus in-app row.
+	 *
+	 * Bound to `wpss_service_approved` in Plugin.php, so every surface that
+	 * approves a service reaches this once.
 	 *
 	 * @param int $service_id Service post ID.
 	 * @return void
 	 */
-	private function send_approval_notification( int $service_id ): void {
+	public function notify_approved( int $service_id ): void {
 		$post = get_post( $service_id );
 		if ( ! $post ) {
 			return;
@@ -343,18 +340,16 @@ Thank you for being a valued seller on our platform.',
 			get_permalink( $service_id )
 		);
 
-		if ( EmailService::is_type_enabled( 'moderation_approved' ) ) {
-			( new EmailService() )->send(
-				$vendor->user_email,
-				$subject,
-				EmailService::TYPE_MODERATION_APPROVED,
-				array(
-					'recipient'     => $vendor,
-					'service_title' => $post->post_title,
-					'service_url'   => get_permalink( $service_id ),
-				)
-			);
-		}
+		( new EmailService() )->send(
+			$vendor->user_email,
+			$subject,
+			EmailService::TYPE_MODERATION_APPROVED,
+			array(
+				'recipient'     => $vendor,
+				'service_title' => $post->post_title,
+				'service_url'   => get_permalink( $service_id ),
+			)
+		);
 
 		// Also add platform notification.
 		if ( function_exists( 'wpss_add_notification' ) ) {
@@ -375,13 +370,15 @@ Thank you for being a valued seller on our platform.',
 	}
 
 	/**
-	 * Send rejection notification to vendor.
+	 * Tell the vendor their service needs changes: branded mail plus in-app row.
+	 *
+	 * Bound to `wpss_service_rejected` in Plugin.php.
 	 *
 	 * @param int    $service_id Service post ID.
 	 * @param string $reason     Rejection reason.
 	 * @return void
 	 */
-	private function send_rejection_notification( int $service_id, string $reason ): void {
+	public function notify_rejected( int $service_id, string $reason ): void {
 		$post = get_post( $service_id );
 		if ( ! $post ) {
 			return;
@@ -431,19 +428,17 @@ If you have any questions, please contact our support team.',
 			$edit_url
 		);
 
-		if ( EmailService::is_type_enabled( 'moderation_rejected' ) ) {
-			( new EmailService() )->send(
-				$vendor->user_email,
-				$subject,
-				EmailService::TYPE_MODERATION_REJECTED,
-				array(
-					'recipient'        => $vendor,
-					'service_title'    => $post->post_title,
-					'rejection_reason' => $reason,
-					'edit_url'         => $edit_url,
-				)
-			);
-		}
+		( new EmailService() )->send(
+			$vendor->user_email,
+			$subject,
+			EmailService::TYPE_MODERATION_REJECTED,
+			array(
+				'recipient'        => $vendor,
+				'service_title'    => $post->post_title,
+				'rejection_reason' => $reason,
+				'edit_url'         => $edit_url,
+			)
+		);
 
 		// Also add platform notification.
 		if ( function_exists( 'wpss_add_notification' ) ) {

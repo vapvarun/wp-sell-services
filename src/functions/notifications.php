@@ -209,3 +209,27 @@ function wpss_should_skip_message_email( int $recipient_id ): bool {
 	 */
 	return (bool) apply_filters( 'wpss_skip_message_email_when_online', $skip, $recipient_id, $enabled );
 }
+
+/**
+ * Whether an admin notification toggle is on.
+ *
+ * ONE reading of `wpss_notifications`, shared by EmailService and
+ * NotificationService. The two used to disagree - EmailService read a missing
+ * key as enabled, NotificationService read it as disabled - so a type added to
+ * the registry after a site had saved its settings sent branded mail and
+ * withheld plain mail for the same event. A key nobody has unticked is on.
+ *
+ * @since 1.7.1
+ *
+ * @param string $setting_key Setting key, e.g. `notify_new_order`.
+ * @return bool True unless the owner has explicitly unticked the box.
+ */
+function wpss_notification_type_enabled( string $setting_key ): bool {
+	$settings = get_option( 'wpss_notifications' );
+
+	if ( ! is_array( $settings ) || ! array_key_exists( $setting_key, $settings ) ) {
+		return true;
+	}
+
+	return ! empty( $settings[ $setting_key ] );
+}

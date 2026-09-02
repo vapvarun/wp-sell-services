@@ -126,7 +126,7 @@ Modify email content programmatically without overriding template files. These f
 | `wpss_email_subject` | `string $subject, string $type, string $to` | Change the email subject line |
 | `wpss_email_from_name` | `string $from_name` | Change the sender display name |
 | `wpss_email_before_send` | `array $email, string $type` | Modify the whole payload (`to`, `subject`, `message`, `headers`, `attachments`) immediately before `wp_mail()` |
-| `wpss_notification_email_content` | `string $content, string $subject, int $user_id, array $data` | Modify any notification email content |
+| `wpss_notification_email_content` | `string $content, string $subject, int $user_id, array $data` | Modify the body of any notification email (the HTML fragment rendered inside `generic.php`) |
 
 ### Vendor-Specific Email Filters
 
@@ -134,8 +134,6 @@ Modify email content programmatically without overriding template files. These f
 |--------|-----------|---------|
 | `wpss_vendor_welcome_email_content` | `string $content, object $user, string $platform_name` | Customize the welcome email for new vendors |
 | `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | Customize the "application pending" email |
-| `wpss_vendor_approved_email_content` | `string $content, object $user, string $platform_name` | Customize the vendor approval email |
-| `wpss_vendor_rejected_email_content` | `string $content, object $user, string $platform_name` | Customize the vendor rejection email |
 | `wpss_admin_vendor_notification_content` | `string $content, object $user` | Customize the admin notification when a new vendor registers |
 
 ---
@@ -186,15 +184,12 @@ add_filter( 'wpss_notification_email_content', function( $content, $subject, $us
 
 ### Customize the Vendor Rejection Email
 
-```php
-add_filter( 'wpss_vendor_rejected_email_content', function( $content, $user, $platform ) {
-    // Replace the default content entirely
-    $content  = '<p>Hi ' . esc_html( $user->display_name ) . ',</p>';
-    $content .= '<p>Your application to sell on ' . esc_html( $platform ) . ' was not approved at this time.</p>';
-    $content .= '<p>Common reasons include incomplete profile information or services that do not match our marketplace categories.</p>';
-    $content .= '<p>You are welcome to reapply after updating your profile.</p>';
-    return $content;
-}, 10, 3 );
+The vendor approval, rejection and suspension emails render from templates
+(`vendor-approved.php`, `vendor-rejected.php`, `vendor-suspended.php`), so
+override the template in your theme rather than filtering the body:
+
+```
+yourtheme/wp-sell-services/emails/vendor-rejected.php
 ```
 
 ---

@@ -1423,8 +1423,7 @@ class OrderWorkflowManager {
 				)
 			);
 
-			$this->notification_service->create(
-				0,
+			$this->notification_service->notify_admins(
 				'refund_pending',
 				__( 'Manual Refund Required', 'wp-sell-services' ),
 				sprintf(
@@ -1498,9 +1497,8 @@ class OrderWorkflowManager {
 			)
 		);
 
-		// Notify admin of failed refund so they can process manually.
-		$this->notification_service->create(
-			0, // Admin notification (user_id 0 = site admin).
+		// Tell every administrator so someone processes it by hand.
+		$this->notification_service->notify_admins(
 			'refund_failed',
 			__( 'Auto-Refund Failed', 'wp-sell-services' ),
 			sprintf(
