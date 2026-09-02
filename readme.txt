@@ -263,6 +263,10 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 == Changelog ==
 
+= 1.7.1 - September 2026 =
+
+* Fix      - A repeated payment webhook no longer resets a paid order or resends its notifications.
+
 = 1.7.0 - August 2026 =
 
 Tax shown at checkout is now actually charged, order files are served through a permission check instead of an unlisted URL, and a partial refund no longer returns the whole order total. Several screens that contradicted themselves now say one thing.
