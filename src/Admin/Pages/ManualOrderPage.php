@@ -663,8 +663,8 @@ class ManualOrderPage {
 			'vendor_earnings'    => $vendor_earnings,
 			'revisions_included' => $revisions_included,
 			'revisions_used'     => 0,
-			'created_at'         => current_time( 'mysql', true ),
-			'updated_at'         => current_time( 'mysql', true ),
+			'created_at'         => current_time( 'mysql' ),
+			'updated_at'         => current_time( 'mysql' ),
 		);
 		$format = array(
 			'%s', // order_number.

@@ -703,18 +703,19 @@ class WithdrawalsPage {
 			<td class="column-actions">
 				<div class="wpss-withdrawal-actions">
 					<?php if ( in_array( $status, array( 'pending', 'approved' ), true ) ) : ?>
-						<?php // Mark paid is THE terminal step of the manual rail — offered on ?>
-						<?php // pending too, so the batch flow (export → pay offline → mark paid) ?>
-						<?php // does not force a pointless approve click per row. ?>
-						<button type="button" class="button button-primary wpss-process-withdrawal"
-								data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>"
-								data-action="complete"
-								data-amount="<?php echo esc_attr( wpss_format_price( (float) $withdrawal->amount ) ); ?>"
-								data-vendor="<?php echo esc_attr( $withdrawal->vendor_name ); ?>">
-							<?php esc_html_e( 'Mark paid', 'wp-sell-services' ); ?>
-						</button>
-						<?php if ( 'pending' === $status ) : ?>
-							<button type="button" class="button wpss-process-withdrawal"
+						<?php // Mark paid is THE terminal step of the manual rail and only an ?>
+						<?php // approved request can take it (mark_paid() refuses pending): ?>
+						<?php // approve, pay offline, then mark paid. ?>
+						<?php if ( 'approved' === $status ) : ?>
+							<button type="button" class="button button-primary wpss-process-withdrawal"
+									data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>"
+									data-action="complete"
+									data-amount="<?php echo esc_attr( wpss_format_price( (float) $withdrawal->amount ) ); ?>"
+									data-vendor="<?php echo esc_attr( $withdrawal->vendor_name ); ?>">
+								<?php esc_html_e( 'Mark paid', 'wp-sell-services' ); ?>
+							</button>
+						<?php else : ?>
+							<button type="button" class="button button-primary wpss-process-withdrawal"
 									data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>"
 									data-action="approve"
 									data-amount="<?php echo esc_attr( wpss_format_price( (float) $withdrawal->amount ) ); ?>"

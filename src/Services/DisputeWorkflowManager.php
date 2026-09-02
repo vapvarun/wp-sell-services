@@ -475,7 +475,10 @@ class DisputeWorkflowManager {
 			DisputeService::STATUS_CLOSED,
 			array(
 				'note'   => $reason,
-				'fields' => array( 'meta' => wp_json_encode( $meta ) ),
+				'fields' => array(
+					'meta'             => wp_json_encode( $meta ),
+					'resolution_notes' => sanitize_textarea_field( $reason ),
+				),
 			)
 		);
 
