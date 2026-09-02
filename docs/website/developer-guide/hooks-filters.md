@@ -81,15 +81,15 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_pre_create_order` | `array $order_data` | `StandaloneOrderProvider.php` |
 | `wpss_pre_order_status_change` | `bool $allow, int $order_id, string $new_status, string $old_status` | `OrderService.php` |
 | `wpss_order_started` | `int $order_id` | `src/API/OrdersController.php:791` |
-| `wpss_order_completed` | `int $order_id, object $order` | `src/Services/OrderWorkflowManager.php:640` |
-| `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `src/Services/OrderWorkflowManager.php:717` |
+| `wpss_order_completed` | `int $order_id, object $order` | `src/Services/OrderWorkflowManager.php:674` |
+| `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `src/Services/OrderWorkflowManager.php:751` |
 | `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:959` |
 | `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:623` |
 | `wpss_order_requirements_submitted` | `int $order_id, array $requirements` | `src/API/OrdersController.php:1165` |
 | `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/orders.php:298` |
-| `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderWorkflowManager.php:601` |
-| `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:367` |
-| `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `src/Services/OrderWorkflowManager.php:501` |
+| `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderWorkflowManager.php:635` |
+| `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:401` |
+| `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `src/Services/OrderWorkflowManager.php:535` |
 
 > **Removed in 1.4.0: `wpss_order_accepted`, `wpss_order_rejected`,
 > `wpss_order_delivered`.** The first two went when the dead `accept` / `reject`
@@ -123,7 +123,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:263` |
 | `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:543` |
 | `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:930` |
-| `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1235` |
+| `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1480` |
 | `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` | `src/Services/ConversationService.php:351` |
 
 ## Payment and Gateway Actions
@@ -145,22 +145,22 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_offline_multi_orders_created` | `array $order_ids, int $customer_id` | `src/Integrations/Gateways/OfflineGateway.php:695` |
-| `wpss_offline_order_created` | `int $order_id, object $order` | `src/Integrations/Gateways/OfflineGateway.php:645` |
-| `wpss_offline_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Gateways/OfflineGateway.php:864` |
+| `wpss_offline_multi_orders_created` | `array $order_ids, int $customer_id` | `src/Integrations/Gateways/OfflineGateway.php:699` |
+| `wpss_offline_order_created` | `int $order_id, object $order` | `src/Integrations/Gateways/OfflineGateway.php:649` |
+| `wpss_offline_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Gateways/OfflineGateway.php:868` |
 
 ### Stripe Gateway
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_stripe_webhook_received` | `string $event_type, object $data, string $payload` | `src/Integrations/Stripe/StripeGateway.php:646` |
+| `wpss_stripe_webhook_received` | `string $event_type, object $data, string $payload` | `src/Integrations/Stripe/StripeGateway.php:649` |
 | `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1492` |
 
 ### PayPal Gateway
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_paypal_refund_processed` | `string $url, array $resource` | `src/Integrations/PayPal/PayPalGateway.php:889` |
+| `wpss_paypal_refund_processed` | `string $url, array $resource` | `src/Integrations/PayPal/PayPalGateway.php:938` |
 
 ### Payment REST API
 
@@ -175,7 +175,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | `wpss_stripe_payment_intent_args` | `array $params, int $order_id, int $vendor_id` | `src/Integrations/Stripe/StripeGateway.php:302` |
 | `wpss_rest_create_payment_intent` | `null, object $gateway, float $amount, string $currency, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:267` |
 | `wpss_rest_confirm_payment` | `null, object $gateway, string $payment_id, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:316` |
-| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:422` |
+| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:464` |
 
 **`wpss_stripe_payment_intent_args`** lets you modify Stripe PaymentIntent parameters before creation:
 
@@ -236,7 +236,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_profile_updated` | `int $user_id, array $filtered_data` | `src/Services/VendorService.php:494` |
 | `wpss_vendor_vacation_mode_changed` | `int $user_id, bool $enabled, string $message` | `src/Services/VendorService.php:545` |
 | `wpss_vendor_tier_changed` | `int $user_id, string $tier` | `src/Services/VendorService.php:586` |
-| `wpss_vendor_level_promoted` | `int $user_id, string $new_level, string $current_level` | `src/Services/OrderWorkflowManager.php:572` |
+| `wpss_vendor_level_promoted` | `int $user_id, string $new_level, string $current_level` | `src/Services/OrderWorkflowManager.php:606` |
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:285` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Admin/Pages/VendorsPage.php:1151` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1550` |
@@ -349,8 +349,8 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2233` |
-| `wpss_admin_requirements_submitted` | `int $order_id, array $field_data` | `src/Admin/OrderScreen.php:316` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2394` |
+| `wpss_admin_requirements_submitted` | `int $order_id, array $field_data` | `src/Admin/OrderScreen.php:335` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1945` |
 
 ### Admin Filters
@@ -660,17 +660,17 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:56` |
-| `wpss_currency` | `$currency` | `src/functions/money.php:653` |
+| `wpss_currency` | `$currency` | `src/functions/money.php:695` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/misc.php:55` |
 | `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:147` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:92` |
-| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:688` |
-| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:715` |
-| `wpss_currencies` | `$currencies` | `src/functions/money.php:1510` |
+| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:730` |
+| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:757` |
+| `wpss_currencies` | `$currencies` | `src/functions/money.php:1552` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:126` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:146` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:493` |
-| `wpss_wallet_manager` | `null` | `src/functions/money.php:1532` |
+| `wpss_wallet_manager` | `null` | `src/functions/money.php:1574` |
 
 ### Currency System Filters (1.2.1)
 
@@ -678,9 +678,9 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1489` |
+| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1531` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:165` |
-| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:614` |
+| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:656` |
 | `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3768` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:835` |
 

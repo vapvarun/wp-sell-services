@@ -112,6 +112,37 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Every order settled against any of the given gateway transaction ids.
+	 *
+	 * A multi-item cart stamps ONE transaction id on every order it creates,
+	 * so a gateway refund can map to several orders. Callers that only ever
+	 * took the first row applied the whole charge's refund to one order.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<int, string> $transaction_ids Gateway transaction / intent / charge ids.
+	 * @return array<int, object> Matching order rows, oldest first.
+	 */
+	public function get_by_transaction_ids( array $transaction_ids ): array {
+		$transaction_ids = array_values( array_filter( array_map( 'strval', $transaction_ids ) ) );
+
+		if ( empty( $transaction_ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ', ', array_fill( 0, count( $transaction_ids ), '%s' ) );
+
+		$rows = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT * FROM {$this->table} WHERE transaction_id IN ({$placeholders}) ORDER BY id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				...$transaction_ids
+			)
+		);
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * Get orders by customer ID.
 	 *
 	 * @param int                  $customer_id Customer user ID.

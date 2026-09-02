@@ -160,12 +160,16 @@ class TestGateway implements PaymentGatewayInterface {
 	 * @return array Refund result.
 	 */
 	public function process_refund( string $transaction_id, ?float $amount = null, string $reason = '' ): array {
-		wpss_log( sprintf( 'Test refund processed: %s, amount: %s, reason: %s', $transaction_id, $amount ?? 'full', $reason ), 'info' );
+		wpss_log( sprintf( 'Test refund noted: %s, amount: %s, reason: %s. No money moved.', $transaction_id, $amount ?? 'full', $reason ), 'info' );
 
+		// Nothing was charged, so nothing can be sent back: report it as a
+		// manual refund like the offline gateway rather than a completed one.
 		return array(
-			'success'   => true,
-			'refund_id' => 'test_refund_' . wp_generate_uuid4(),
-			'status'    => 'completed',
+			'success'        => true,
+			'manual'         => true,
+			'transaction_id' => 'test_refund_' . wp_generate_uuid4(),
+			'status'         => 'manual_refund',
+			'message'        => __( 'Demo payments are not real; no refund was sent.', 'wp-sell-services' ),
 		);
 	}
 
