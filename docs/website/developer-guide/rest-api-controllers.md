@@ -1,7 +1,7 @@
 # REST API Controllers Reference
 
 WP Sell Services registers **25 REST controllers** plus a set of generic utility
-routes. WP Sell Services Pro adds **10 more**. Everything lives under one
+routes. WP Sell Services Pro adds **9 more**. Everything lives under one
 namespace:
 
 ```
@@ -618,18 +618,6 @@ unlicensed call answers `403 wpss_pro_license_required` rather than
 `404 rest_no_route`, so a client can tell "you need a license" apart from "this
 build does not have that endpoint". Anonymous callers get `401 rest_not_logged_in`;
 a logged-in non-admin gets `403`.
-
-### Cloud storage
-
-| Method | Route |
-|--------|-------|
-| POST | `/storage/upload` |
-| GET | `/storage/(?P<file_id>[\d]+)/url` |
-| DELETE | `/storage/(?P<file_id>[\d]+)` |
-| GET | `/storage/providers` |
-
-`/storage/{file_id}/url` returns a time-limited signed URL. Do not cache it past
-its expiry.
 
 ### White label
 
