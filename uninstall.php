@@ -36,6 +36,21 @@ use WPSellServices\Database\SchemaManager;
 $schema = new SchemaManager();
 $schema->uninstall();
 
+// Order files live on disk, not in the tables, in whichever of the two
+// locations wpss_get_order_files_dir() chose for this host.
+if ( ! function_exists( 'wpss_rmdir_recursive' ) ) {
+	require_once __DIR__ . '/src/functions/files.php';
+}
+
+$uploads = wp_upload_dir();
+
+foreach ( array(
+	trailingslashit( dirname( untrailingslashit( ABSPATH ) ) ) . 'wpss-order-files/',
+	trailingslashit( $uploads['basedir'] ) . 'wpss-order-files/',
+) as $order_files_dir ) {
+	wpss_rmdir_recursive( $order_files_dir );
+}
+
 // Delete custom post types and their data.
 $post_types = array( 'wpss_service', 'wpss_request' );
 

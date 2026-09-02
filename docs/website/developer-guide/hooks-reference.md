@@ -332,7 +332,7 @@ guide; this is the complete index.
 | `wpss_can_access_dashboard_section` | 3 | `src/Frontend/UnifiedDashboard.php:432` | Filter whether user can access a dashboard section. |
 | `wpss_cart_checkout` | 4 | `src/API/CartController.php:388` | Filter to create order from cart during standalone checkout. |
 | `wpss_cart_item_data` | 3 | `src/API/CartController.php:241` | Filters cart item data before it is saved. |
-| `wpss_cascade_preserve_shared_records` | 2 | `src/Services/DataCascadeHandler.php:205` | Filter whether records shared with another member survive this cascade. |
+| `wpss_cascade_preserve_shared_records` | 2 | `src/Services/DataCascadeHandler.php:210` | Filter whether records shared with another member survive this cascade. Defaults to true since 1.7.1; return false only for throwaway data. |
 | `wpss_catalog_price_html` | 3 | `src/functions/money.php:126` | Filter catalog price HTML to append a display-currency hint. |
 | `wpss_category_card_classes` | 2 | `templates/partials/category-card.php:82` | Filters the category card CSS classes. |
 | `wpss_category_card_link` | 2 | `templates/partials/category-card.php:66` | Filters the category card's link target. |

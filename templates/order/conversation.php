@@ -44,7 +44,7 @@ $is_customer = $is_customer ?? ( (int) $order->customer_id === $user_id );
 $vendor     = get_userdata( $order->vendor_id );
 $customer   = get_userdata( $order->customer_id );
 $other_user = $is_vendor ? $customer : $vendor;
-$other_name = $other_user ? $other_user->display_name : __( 'Deleted User', 'wp-sell-services' );
+$other_name = wpss_get_member_display_name( (int) ( $is_vendor ? $order->customer_id : $order->vendor_id ) );
 $other_id   = $other_user ? $other_user->ID : 0;
 
 // Get conversation for this order.

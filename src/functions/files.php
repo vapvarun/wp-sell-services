@@ -432,16 +432,37 @@ function wpss_get_order_file_url( array $record ): string {
  * @return array<string,mixed>|null
  */
 function wpss_find_order_file( int $order_id, string $file_id ): ?array {
+	foreach ( wpss_get_order_file_records( $order_id ) as $record ) {
+		if ( (string) $record['id'] === $file_id ) {
+			return $record;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Every file record attached to an order.
+ *
+ * Reads both tables, because the endpoint is handed an id and nothing else -
+ * the link in an email does not say which kind of file it points at.
+ *
+ * @since 1.7.1
+ *
+ * @param int $order_id Order ID.
+ * @return array<int,array<string,mixed>> Records as stored, each with `order_id` set.
+ */
+function wpss_get_order_file_records( int $order_id ): array {
 	global $wpdb;
 
-	// Both tables, because the endpoint is handed an id and nothing else - the
-	// link in an email does not say which kind of file it points at.
 	$sets = array(
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->get_col( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_deliveries WHERE order_id = %d", $order_id ) ),
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->get_col( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_order_requirements WHERE order_id = %d", $order_id ) ),
 	);
+
+	$records = array();
 
 	foreach ( $sets as $rows ) {
 		foreach ( (array) $rows as $raw ) {
@@ -452,15 +473,94 @@ function wpss_find_order_file( int $order_id, string $file_id ): ?array {
 			}
 
 			foreach ( $decoded as $record ) {
-				if ( is_array( $record ) && isset( $record['id'] ) && (string) $record['id'] === $file_id ) {
+				if ( is_array( $record ) && isset( $record['id'] ) ) {
 					$record['order_id'] = $order_id;
-					return $record;
+					$records[]          = $record;
 				}
 			}
 		}
 	}
 
-	return null;
+	return $records;
+}
+
+/**
+ * Remove every file attached to an order, on disk and in the bucket.
+ *
+ * Called when the order row itself is deleted (service cascade, uninstall).
+ * Before 1.7.1 nothing removed these on any path, so a deleted order left its
+ * buyer's brief and the seller's deliverables readable on disk forever.
+ *
+ * A remote object the provider cannot delete is logged, not retried: the row
+ * that named it is about to go, so this log line is the owner's only pointer.
+ *
+ * @since 1.7.1
+ *
+ * @param int $order_id Order ID.
+ * @return void
+ */
+function wpss_delete_order_files( int $order_id ): void {
+	if ( $order_id <= 0 ) {
+		return;
+	}
+
+	foreach ( wpss_get_order_file_records( $order_id ) as $record ) {
+		if ( empty( $record['remote_path'] ) ) {
+			continue;
+		}
+
+		$provider_id = (string) ( $record['provider'] ?? '' );
+		$provider    = '' !== $provider_id ? wpss_get_storage_provider( $provider_id ) : wpss_get_active_storage_provider();
+
+		if ( $provider && method_exists( $provider, 'delete' ) && $provider->delete( (string) $record['remote_path'] ) ) {
+			continue;
+		}
+
+		wpss_log(
+			sprintf(
+				'Could not delete remote file %s for order %d from storage provider "%s"; remove it from the bucket by hand.',
+				(string) $record['remote_path'],
+				$order_id,
+				'' !== $provider_id ? $provider_id : (string) get_option( 'wpss_active_storage_provider', '' )
+			),
+			'error'
+		);
+	}
+
+	wpss_rmdir_recursive( wpss_get_order_files_dir() . $order_id . '/' );
+}
+
+/**
+ * Delete a directory and everything under it.
+ *
+ * Plain PHP rather than WP_Filesystem: the order-file store is written with
+ * plain PHP too, and this also runs from uninstall.php where no credentials
+ * prompt is possible.
+ *
+ * @since 1.7.1
+ *
+ * @param string $dir Absolute path.
+ * @return void
+ */
+function wpss_rmdir_recursive( string $dir ): void {
+	if ( ! is_dir( $dir ) ) {
+		return;
+	}
+
+	$items = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ),
+		RecursiveIteratorIterator::CHILD_FIRST
+	);
+
+	foreach ( $items as $item ) {
+		if ( $item->isDir() ) {
+			rmdir( $item->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+		} else {
+			wp_delete_file( $item->getPathname() );
+		}
+	}
+
+	rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
 }
 
 /**

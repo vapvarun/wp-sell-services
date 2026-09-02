@@ -335,11 +335,9 @@ class ReportsPage {
 						<tbody>
 						<?php foreach ( $rows as $row ) : ?>
 							<?php
-							$reported  = get_userdata( (int) $row->reported_user_id );
-							$reporter  = get_userdata( (int) $row->reporter_id );
 							$standing  = wpss_get_account_status( (int) $row->reported_user_id );
 							$is_open   = 'open' === $row->status;
-							$row_label = $reported ? $reported->display_name : __( 'Deleted member', 'wp-sell-services' );
+							$row_label = wpss_get_member_display_name( (int) $row->reported_user_id );
 							?>
 							<tr>
 								<td data-label="<?php esc_attr_e( 'Reported', 'wp-sell-services' ); ?>">
@@ -358,7 +356,7 @@ class ReportsPage {
 										<p class="description"><?php echo esc_html( wp_trim_words( (string) $row->details, 24 ) ); ?></p>
 									<?php endif; ?>
 								</td>
-								<td data-label="<?php esc_attr_e( 'Filed by', 'wp-sell-services' ); ?>"><?php echo esc_html( $reporter ? $reporter->display_name : __( 'Deleted member', 'wp-sell-services' ) ); ?></td>
+								<td data-label="<?php esc_attr_e( 'Filed by', 'wp-sell-services' ); ?>"><?php echo esc_html( wpss_get_member_display_name( (int) $row->reporter_id ) ); ?></td>
 								<td data-label="<?php esc_attr_e( 'When', 'wp-sell-services' ); ?>">
 									<?php
 									// created_at is stored in site-local time, so it is

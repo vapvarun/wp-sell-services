@@ -268,6 +268,8 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Refunds made in the PayPal or Razorpay dashboard now update the order and reverse the vendor credit.
 * Fix      - A Stripe payment webhook arriving before checkout finishes no longer creates a duplicate order, and cart refunds land on the right order.
 * Fix      - Offline and manual gateway refunds are marked as pending manual payment instead of being reported as sent.
+* Fix      - Deleting a user keeps and anonymises the other party's orders, ledger and reviews instead of deleting them; order files are removed when an order is deleted.
+* Improve  - Personal data export now covers disputes, deliveries, requirements, withdrawals, proposals, reports and notifications.
 * Dev      - Stored files record which storage provider holds them.
 
 = 1.7.0 - August 2026 =

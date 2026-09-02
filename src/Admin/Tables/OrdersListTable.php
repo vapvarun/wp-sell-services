@@ -213,7 +213,7 @@ class OrdersListTable extends \WP_List_Table {
 		$user = get_userdata( $item->customer_id );
 
 		if ( ! $user ) {
-			return '<em>' . esc_html__( 'Unknown', 'wp-sell-services' ) . '</em>';
+			return '<em>' . esc_html( wpss_get_member_display_name( (int) $item->customer_id ) ) . '</em>';
 		}
 
 		return sprintf(
@@ -234,7 +234,7 @@ class OrdersListTable extends \WP_List_Table {
 		$user = get_userdata( $item->vendor_id );
 
 		if ( ! $user ) {
-			return '<em>' . esc_html__( 'Unknown', 'wp-sell-services' ) . '</em>';
+			return '<em>' . esc_html( wpss_get_member_display_name( (int) $item->vendor_id ) ) . '</em>';
 		}
 
 		return sprintf(

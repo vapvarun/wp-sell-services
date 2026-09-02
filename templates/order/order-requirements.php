@@ -89,7 +89,7 @@ do_action( 'wpss_before_requirements_form', $order );
 			printf(
 				/* translators: %s: vendor name */
 				esc_html__( 'Please provide the information %s needs to start working on your order.', 'wp-sell-services' ),
-				esc_html( $vendor ? $vendor->display_name : __( 'the seller', 'wp-sell-services' ) )
+				esc_html( wpss_get_member_display_name( (int) $order->vendor_id ) )
 			);
 			?>
 		</p>
@@ -325,14 +325,14 @@ do_action( 'wpss_before_requirements_form', $order );
 					</div>
 					<div class="wpss-order-card__body">
 						<div class="wpss-order-card__user">
-							<img src="<?php echo esc_url( get_avatar_url( $vendor->ID, array( 'size' => 60 ) ) ); ?>"
-								alt="<?php echo esc_attr( $vendor->display_name ); ?>"
+							<img src="<?php echo esc_url( (string) get_avatar_url( (int) $order->vendor_id, array( 'size' => 60 ) ) ); ?>"
+								alt="<?php echo esc_attr( wpss_get_member_display_name( (int) $order->vendor_id ) ); ?>"
 								class="wpss-order-card__avatar">
 							<div class="wpss-order-card__user-info">
-								<strong><?php echo esc_html( $vendor->display_name ); ?></strong>
+								<strong><?php echo esc_html( wpss_get_member_display_name( (int) $order->vendor_id ) ); ?></strong>
 								<?php
-								$vendor_rating = (float) get_user_meta( $vendor->ID, '_wpss_rating_average', true );
-								$vendor_count  = (int) get_user_meta( $vendor->ID, '_wpss_rating_count', true );
+								$vendor_rating = (float) get_user_meta( (int) $order->vendor_id, '_wpss_rating_average', true );
+								$vendor_count  = (int) get_user_meta( (int) $order->vendor_id, '_wpss_rating_count', true );
 								?>
 								<?php if ( $vendor_count > 0 ) : ?>
 									<span class="wpss-order-card__rating">
