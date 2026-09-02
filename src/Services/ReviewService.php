@@ -261,6 +261,25 @@ class ReviewService {
 	}
 
 	/**
+	 * Count a vendor's reviews, for the dashboard paginator.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int    $vendor_id Vendor user ID.
+	 * @param string $status    Review status to count.
+	 * @return int
+	 */
+	public function count_vendor_reviews( int $vendor_id, string $status = Review::STATUS_APPROVED ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_reviews';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND status = %s", $vendor_id, $status )
+		);
+	}
+
+	/**
 	 * Add vendor response to review.
 	 *
 	 * @param int    $review_id Review ID.

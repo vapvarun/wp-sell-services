@@ -265,6 +265,8 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 = 1.7.1 - September 2026 =
 
+* New      - Vendors get Proposals and Reviews sections in the dashboard, with review replies and declined-proposal status.
+* Improve  - Dispute pages show the outcome, refund amount and admin note to both parties; the link after posting a request opens the request list.
 * Fix      - Refunds made in the PayPal or Razorpay dashboard now update the order and reverse the vendor credit.
 * Fix      - A Stripe payment webhook arriving before checkout finishes no longer creates a duplicate order, and cart refunds land on the right order.
 * Fix      - Offline and manual gateway refunds are marked as pending manual payment instead of being reported as sent.

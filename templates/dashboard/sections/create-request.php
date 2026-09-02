@@ -223,7 +223,7 @@ function wpssShowNotice(msg, type) {
 							'</div>' +
 							'<h3><?php echo esc_js( __( 'Request Posted!', 'wp-sell-services' ) ); ?></h3>' +
 							'<p><?php echo esc_js( __( 'Your request is now live. Sellers will be able to send you proposals.', 'wp-sell-services' ) ); ?></p>' +
-							'<a href="' + (response.data.redirect || '?section=requests') + '" class="wpss-btn wpss-btn--primary">' +
+							'<a href="' + (response.data.redirect || '<?php echo esc_url( wpss_get_dashboard_url( 'requests' ) ); ?>') + '" class="wpss-btn wpss-btn--primary">' +
 								'<?php echo esc_js( __( 'View My Requests', 'wp-sell-services' ) ); ?>' +
 							'</a>' +
 						'</div>'
