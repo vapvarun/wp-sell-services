@@ -45,9 +45,9 @@ function wpss_get_active_storage_provider(): ?object {
 		return null;
 	}
 
-	$providers = (array) apply_filters( 'wpss_storage_providers', array() );
+	$provider = wpss_get_storage_provider( $active_id );
 
-	if ( ! isset( $providers[ $active_id ] ) ) {
+	if ( ! $provider ) {
 		wpss_log(
 			sprintf( 'Storage provider "%s" is configured but not registered; falling back to local disk.', $active_id ),
 			'error'
@@ -55,9 +55,7 @@ function wpss_get_active_storage_provider(): ?object {
 		return null;
 	}
 
-	$provider = $providers[ $active_id ];
-
-	if ( ! is_object( $provider ) || ! method_exists( $provider, 'is_configured' ) || ! $provider->is_configured() ) {
+	if ( ! method_exists( $provider, 'is_configured' ) || ! $provider->is_configured() ) {
 		wpss_log(
 			sprintf( 'Storage provider "%s" is registered but not configured; falling back to local disk.', $active_id ),
 			'error'
@@ -66,6 +64,29 @@ function wpss_get_active_storage_provider(): ?object {
 	}
 
 	return $provider;
+}
+
+/**
+ * Look up one registered storage provider by id.
+ *
+ * A pure registry read, deliberately separate from the ACTIVE provider: a
+ * file record names the provider that holds it, and that provider must keep
+ * resolving after the owner switches buckets - the file did not move.
+ *
+ * @since 1.7.1
+ *
+ * @param string $id Provider id as registered on `wpss_storage_providers` ('s3', 'gcs', 'do', ...).
+ * @return object|null Provider implementing StorageProviderInterface, or null when not registered.
+ */
+function wpss_get_storage_provider( string $id ): ?object {
+	if ( '' === $id || 'local' === $id ) {
+		return null;
+	}
+
+	$providers = (array) apply_filters( 'wpss_storage_providers', array() );
+	$provider  = $providers[ $id ] ?? null;
+
+	return is_object( $provider ) ? $provider : null;
 }
 
 /**
@@ -214,7 +235,8 @@ function wpss_order_files_are_public( bool $force = false ): ?bool {
  * one, and returns a record addressed by id rather than by URL.
  *
  * The returned array keeps the `id`, `name`, `type` and `size` keys the old
- * shape had so stored rows stay readable, and adds `path` and `remote_path`.
+ * shape had so stored rows stay readable, and adds `path`, `remote_path` and
+ * `provider` (the storage provider id holding `remote_path`).
  * It deliberately omits `url`: see wpss_get_order_file_url().
  *
  * @since 1.7.0
@@ -266,6 +288,7 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 		'order_id'    => $order_id,
 		'kind'        => $kind,
 		'remote_path' => null,
+		'provider'    => null,
 	);
 
 	$provider = wpss_get_active_storage_provider();
@@ -274,8 +297,9 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 		$remote = sprintf( 'wpss/%d/%s/%s', $order_id, $kind, $filename );
 		$result = $provider->upload( $target, $remote );
 
-		if ( ! empty( $result['success'] ) ) {
-			$record['remote_path'] = $remote;
+		if ( ! is_wp_error( $result ) && ! empty( $result['key'] ) ) {
+			$record['remote_path'] = (string) $result['key'];
+			$record['provider']    = (string) get_option( 'wpss_active_storage_provider', '' );
 
 			// The local copy has served its purpose. Keeping it would mean the
 			// owner pays for the bucket and the disk both, which is the whole
@@ -289,7 +313,7 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 					'Cloud upload failed for order %d (%s); keeping the local copy. %s',
 					$order_id,
 					$filename,
-					isset( $result['error'] ) ? (string) $result['error'] : ''
+					is_wp_error( $result ) ? $result->get_error_message() : 'no key returned'
 				),
 				'error'
 			);
@@ -702,9 +726,12 @@ function wpss_serve_order_file(): void {
 	}
 
 	// In a bucket: hand over a short-lived signed URL rather than streaming the
-	// bytes through PHP.
+	// bytes through PHP. The record names the provider that holds it; only
+	// rows written before 1.7.1 lack one, and for those the active provider
+	// is the only candidate.
 	if ( ! empty( $record['remote_path'] ) ) {
-		$provider = wpss_get_active_storage_provider();
+		$provider_id = (string) ( $record['provider'] ?? '' );
+		$provider    = '' !== $provider_id ? wpss_get_storage_provider( $provider_id ) : wpss_get_active_storage_provider();
 
 		if ( $provider && method_exists( $provider, 'get_signed_url' ) ) {
 			$signed = $provider->get_signed_url( (string) $record['remote_path'], 5 * MINUTE_IN_SECONDS );
@@ -714,6 +741,16 @@ function wpss_serve_order_file(): void {
 				exit;
 			}
 		}
+
+		wpss_log(
+			sprintf(
+				'Storage provider "%s" holds file %s for order %d but is not registered or cannot sign URLs; download refused with 503.',
+				'' !== $provider_id ? $provider_id : (string) get_option( 'wpss_active_storage_provider', '' ),
+				(string) ( $record['id'] ?? '' ),
+				$order_id
+			),
+			'error'
+		);
 
 		wp_die( esc_html__( 'This file is stored remotely and the storage provider is unavailable. Try again shortly.', 'wp-sell-services' ), '', array( 'response' => 503 ) );
 	}

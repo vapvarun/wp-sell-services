@@ -57,16 +57,14 @@ S3-compatible storage with simple, predictable pricing: $5/month for 250GB stora
 
 ## How File Delivery Works
 
-**Today**, a vendor uploads a delivery through the order page and it is stored in the WordPress media library, whatever provider you have configured. Cloud storage does not enter into it.
-
-**Once it is connected**, the intended flow is:
+With a provider active, the flow is:
 
 1. A vendor uploads their delivery files through the order page (same as usual)
 2. The plugin transfers the files to your cloud storage bucket
 3. When the buyer downloads, the file is served from the cloud provider
 4. Access is controlled through signed, time-limited download links
 
-Only the third-party upload endpoint (`POST /wpss-pro/v1/storage/upload`) writes to a bucket at present, and nothing in the plugin calls it.
+Each stored file records which provider holds it, so files uploaded before you switch providers keep downloading from their original bucket.
 
 ---
 
