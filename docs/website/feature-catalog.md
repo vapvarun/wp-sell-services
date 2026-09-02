@@ -34,7 +34,7 @@ Legend: **Yes** ships and is exercised · **Partial** ships with a stated limit 
 |---|---|---|
 | Standalone checkout (no other plugin needed) | Yes | Yes |
 | Payment gateways | Stripe, PayPal, Offline | + Razorpay |
-| Ecommerce integrations | — | WooCommerce, EDD, FluentCart |
+| Ecommerce integrations | — | WooCommerce; EDD and FluentCart (beta, enabled with the `wpss_pro_beta_rails` filter) |
 | Commission, per-vendor rates | Yes | + tiered rules |
 | Vendor subscription plans (charge vendors to sell) | — | Yes, off until you enable it |
 | Service limits: gallery images, add-ons, FAQs, buyer requirements | 4 / 3 / 5 / 5 | Unlimited |

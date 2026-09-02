@@ -725,11 +725,9 @@ class API {
 		 * and SureCart implement neither, so the link falls back to a standalone
 		 * checkout that is not the active rail — a dead end for the buyer.
 		 *
-		 * Asked as "has anyone implemented the seam?" rather than by naming
-		 * rails, so an integration added later turns the capability on by
-		 * implementing it, instead of by someone remembering to edit this list.
+		 * One answer for the app and the PHP templates: wpss_can_pay_single_order().
 		 */
-		$can_pay_single_order = wpss_uses_standalone_payments() || has_filter( 'wpss_pay_order_url' );
+		$can_pay_single_order = wpss_can_pay_single_order();
 
 		/*
 		 * Milestone contracts only exist on buyer-request orders, so whatever

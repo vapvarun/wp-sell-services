@@ -166,7 +166,7 @@ do_action( 'wpss_before_extension_view', $current_order );
 		</dl>
 
 		<div class="wpss-tip-view__actions">
-			<?php if ( $is_buyer && $is_pending ) : ?>
+			<?php if ( $is_buyer && $is_pending && '' !== $pay_url ) : ?>
 				<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php
 					printf(

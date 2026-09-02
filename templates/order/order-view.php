@@ -281,11 +281,10 @@ do_action( 'wpss_before_order_view', $order );
 
 		if ( $is_customer ) {
 			// Pay Now button for unpaid orders (e.g., from accepted proposals).
-			if ( 'pending_payment' === $order->status ) {
-				// Through the seam, so the button is right on whichever rail
-				// the site runs. Building ?pay_order=N inline is correct only
-				// on standalone; on WooCommerce it lands on the store cart.
-				$pay_url        = wpss_get_pay_order_url( (int) $order_id );
+			// Through the seam, so the button is right on whichever rail the
+			// site runs, and absent ('') on a rail that cannot pay one order.
+			$pay_url = 'pending_payment' === $order->status ? wpss_get_pay_order_url( (int) $order_id ) : '';
+			if ( '' !== $pay_url ) {
 				$actions['pay'] = array(
 					'label' => sprintf(
 						/* translators: %s: formatted price */
@@ -1858,7 +1857,7 @@ do_action( 'wpss_before_order_view', $order );
 												</span>
 												<?php esc_html_e( 'Locked — finish the earlier phase first', 'wp-sell-services' ); ?>
 											</span>
-										<?php else : ?>
+										<?php elseif ( '' !== $ms_pay_url ) : ?>
 											<a href="<?php echo esc_url( $ms_pay_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
 												<?php
 												printf(
@@ -2157,9 +2156,9 @@ do_action( 'wpss_before_order_view', $order );
 		</section>
 	<?php endif; ?>
 
-	<!-- Tip CTA (for completed orders, buyer only, once per order) -->
+	<!-- Tip CTA (for completed orders, buyer only, once per order, on a rail that can take the payment) -->
 	<?php
-	if ( 'completed' === $order->status && $is_customer ) :
+	if ( 'completed' === $order->status && $is_customer && wpss_can_pay_single_order() ) :
 		$tipping_service = new \WPSellServices\Services\TippingService();
 		$already_tipped  = $tipping_service->has_tipped( $order_id, get_current_user_id() );
 		$currency        = get_option( 'wpss_general', array() )['currency'] ?? 'USD';

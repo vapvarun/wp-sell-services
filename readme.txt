@@ -268,6 +268,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Refunds made in the PayPal or Razorpay dashboard now update the order and reverse the vendor credit.
 * Fix      - A Stripe payment webhook arriving before checkout finishes no longer creates a duplicate order, and cart refunds land on the right order.
 * Fix      - Offline and manual gateway refunds are marked as pending manual payment instead of being reported as sent.
+* Fix      - Pay buttons for tips, milestones, extensions and proposals are hidden on a store rail that cannot take a single-order payment instead of linking to a page it ignores.
 * Dev      - Stored files record which storage provider holds them.
 
 = 1.7.0 - August 2026 =

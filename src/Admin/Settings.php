@@ -3291,10 +3291,21 @@ class Settings {
 			);
 		}
 
-		printf(
-			'<p class="description">%s</p>',
-			esc_html__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD and FluentCart.', 'wp-sell-services' )
+		/**
+		 * Filter the platform field description.
+		 *
+		 * Pro appends why a rail is missing from the list (beta rails).
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param string $description Field description, plain text.
+		 */
+		$description = apply_filters(
+			'wpss_ecommerce_platform_description',
+			__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD and FluentCart.', 'wp-sell-services' )
 		);
+
+		printf( '<p class="description">%s</p>', esc_html( $description ) );
 	}
 
 	/**
