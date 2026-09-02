@@ -659,6 +659,32 @@ function wpss_resolve_order_status_group( string $group_key ): array {
 }
 
 /**
+ * Status groups for a dashboard list, plus an `Other` chip for any status the
+ * data holds that no group claims (see wpss_resolve_ungrouped_statuses()).
+ *
+ * Appended rather than inserted, so a stray status never outranks a real one.
+ * Buyer and seller lists both resolve their chips through here.
+ *
+ * @since 1.7.1
+ *
+ * @param array<string, int> $status_counts Status => count, from a *_grouped() repository count.
+ * @return array<string, array{label: string, statuses: string[]}> Groups keyed by chip.
+ */
+function wpss_get_order_filter_groups( array $status_counts ): array {
+	$groups    = wpss_get_order_status_groups();
+	$ungrouped = wpss_resolve_ungrouped_statuses( $status_counts );
+
+	if ( $ungrouped ) {
+		$groups['other'] = array(
+			'label'    => __( 'Other', 'wp-sell-services' ),
+			'statuses' => $ungrouped,
+		);
+	}
+
+	return $groups;
+}
+
+/**
  * Statuses present in the data that no group claims.
  *
  * The buckets are built from ServiceOrder's declared statuses, but the column

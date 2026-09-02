@@ -70,8 +70,35 @@
 			// Wallet ledger — load the next page of transactions.
 			$(document).on('click', '#wpss-wallet-load-more', this.handleWalletLoadMore.bind(this));
 
+			// Collapsed nav (under 480px): Menu opens the list, picking a section closes it.
+			$(document).on('click', '.wpss-dashboard__nav-toggle', this.handleNavToggle);
+			$(document).on('click', '.wpss-dashboard__nav-item', this.closeNav);
+
 			// Reviews section: vendor reply, through the same REST route the app uses.
 			$(document).on('submit', '.wpss-review-reply-form', this.handleReviewReply.bind(this));
+		},
+
+		/**
+		 * Toggle the collapsed dashboard nav.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleNavToggle: function (e) {
+			var $btn = $(e.currentTarget);
+			var open = $btn.attr('aria-expanded') !== 'true';
+
+			$btn.attr('aria-expanded', open ? 'true' : 'false');
+			$btn.closest('.wpss-dashboard__sidebar').toggleClass('wpss-dashboard__sidebar--open', open);
+		},
+
+		/**
+		 * Close the collapsed dashboard nav.
+		 */
+		closeNav: function () {
+			$('.wpss-dashboard__sidebar--open')
+				.removeClass('wpss-dashboard__sidebar--open')
+				.find('.wpss-dashboard__nav-toggle')
+				.attr('aria-expanded', 'false');
 		},
 
 		// Current page already loaded into the wallet ledger.

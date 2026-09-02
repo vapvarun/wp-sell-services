@@ -2071,6 +2071,33 @@ select.wpss-input option,
    Responsive
    ========================================================================== */
 
+/* Under 480px the sidebar collapses to one bar - current section title plus a
+   Menu toggle - so the section content is the first thing on screen instead of
+   a dozen nav links (F27). The toggle flips .wpss-dashboard__sidebar--open;
+   nothing animates, so prefers-reduced-motion needs no override. */
+.wpss-dashboard__nav-bar {
+	display: none;
+}
+
+@media (max-width: 480px) {
+	.wpss-dashboard__nav-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--wpss-space-3);
+		padding: var(--wpss-space-3) var(--wpss-space-4);
+	}
+
+	.wpss-dashboard__nav-bar-title {
+		font-weight: 600;
+		color: var(--wpss-gray-900);
+	}
+
+	.wpss-dashboard__sidebar:not(.wpss-dashboard__sidebar--open) > :not(.wpss-dashboard__nav-bar) {
+		display: none;
+	}
+}
+
 @media (max-width: 768px) {
 	.wpss-dashboard {
 		flex-direction: column;

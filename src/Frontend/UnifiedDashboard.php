@@ -601,6 +601,18 @@ class UnifiedDashboard {
 			<div class="wpss-app-shell__container">
 				<div class="wpss-dashboard">
 					<aside class="wpss-dashboard__sidebar">
+				<?php
+				// Under 480px the sidebar collapses to this bar (see the CSS), so
+				// the section content is the first thing on screen; the toggle
+				// reveals the nav below it. Hidden on wider viewports.
+				?>
+				<div class="wpss-dashboard__nav-bar">
+					<span class="wpss-dashboard__nav-bar-title"><?php echo esc_html( $section_data['title'] ); ?></span>
+					<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-dashboard__nav-toggle" aria-expanded="false" aria-controls="wpss-dashboard-nav">
+						<?php $this->render_icon( 'menu' ); ?>
+						<span><?php esc_html_e( 'Menu', 'wp-sell-services' ); ?></span>
+					</button>
+				</div>
 				<div class="wpss-dashboard__user">
 					<?php echo get_avatar( $user_id, 48, '', '', array( 'class' => 'wpss-dashboard__avatar' ) ); ?>
 					<div class="wpss-dashboard__user-info">
@@ -613,7 +625,7 @@ class UnifiedDashboard {
 					</div>
 				</div>
 
-				<nav class="wpss-dashboard__nav">
+				<nav id="wpss-dashboard-nav" class="wpss-dashboard__nav">
 					<?php
 					foreach ( $this->sections as $group_key => $group ) :
 						// Drop items the current user's role cannot access (vendor-only

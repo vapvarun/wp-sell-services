@@ -77,6 +77,8 @@ $order_repo = new OrderRepository();
 // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only display filters.
 $sales_period = isset( $_GET['sales_period'] ) ? sanitize_key( wp_unslash( $_GET['sales_period'] ) ) : 'all';
 $sales_page   = isset( $_GET['sales_page'] ) ? max( 1, absint( wp_unslash( $_GET['sales_page'] ) ) ) : 1;
+$sales_group  = isset( $_GET['sales_status'] ) ? sanitize_key( wp_unslash( $_GET['sales_status'] ) ) : 'all';
+$sales_search = isset( $_GET['sales_search'] ) ? sanitize_text_field( wp_unslash( $_GET['sales_search'] ) ) : '';
 // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 $valid_periods = array(
@@ -107,18 +109,30 @@ if ( $valid_periods[ $sales_period ]['days'] > 0 ) {
 	$date_from = gmdate( 'Y-m-d H:i:s', time() - ( $valid_periods[ $sales_period ]['days'] * DAY_IN_SECONDS ) );
 }
 
-$query_args = array(
-	'limit'     => $per_page,
-	'offset'    => ( $sales_page - 1 ) * $per_page,
-	'date_from' => $date_from,
+// Status chips + order-number search: the same filter the buyer list has,
+// from the same status groups (F27). An unknown chip key widens to All.
+$status_counts = $order_repo->count_by_vendor_grouped( $user_id );
+$status_groups = wpss_get_order_filter_groups( $status_counts );
+if ( ! isset( $status_groups[ $sales_group ] ) ) {
+	$sales_group = 'all';
+}
+
+$filter_args = array(
+	'date_from'  => $date_from,
+	'status__in' => $status_groups[ $sales_group ]['statuses'],
+	'search'     => $sales_search,
 );
 
-$orders          = $order_repo->get_by_vendor( $user_id, $query_args );
-$total_in_period = $order_repo->count_by_vendor(
+$orders          = $order_repo->get_by_vendor(
 	$user_id,
-	array( 'date_from' => $date_from )
+	$filter_args + array(
+		'limit'  => $per_page,
+		'offset' => ( $sales_page - 1 ) * $per_page,
+	)
 );
+$total_in_period = $order_repo->count_by_vendor( $user_id, $filter_args );
 $total_pages     = max( 1, (int) ceil( $total_in_period / $per_page ) );
+$sales_filtered  = 'all' !== $sales_period || 'all' !== $sales_group || '' !== $sales_search;
 
 // Get order stats from vendor stats (lifetime totals — not affected by date filter).
 $stats           = $order_repo->get_vendor_stats( $user_id );
@@ -151,16 +165,20 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 	<?php
 	// VS10 — date-range filter (always visible if vendor has any lifetime orders).
 	if ( $total_count > 0 ) :
-		$base_url = add_query_arg(
-			array(
-				'section' => 'sales',
-			),
-			get_permalink()
-		);
+		$filter_prefix = 'sales';
+		$filter_group  = $sales_group;
+		$filter_search = $sales_search;
+		require WPSS_PLUGIN_DIR . 'templates/dashboard/partials/order-filters.php';
 		?>
 		<div class="wpss-sales-filter">
 			<form method="get" class="wpss-sales-filter__form">
 				<input type="hidden" name="section" value="sales">
+				<?php if ( 'all' !== $sales_group ) : ?>
+					<input type="hidden" name="sales_status" value="<?php echo esc_attr( $sales_group ); ?>">
+				<?php endif; ?>
+				<?php if ( '' !== $sales_search ) : ?>
+					<input type="hidden" name="sales_search" value="<?php echo esc_attr( $sales_search ); ?>">
+				<?php endif; ?>
 				<label for="wpss-sales-period" class="wpss-sales-filter__label">
 					<?php esc_html_e( 'Show:', 'wp-sell-services' ); ?>
 				</label>
@@ -197,41 +215,29 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 			</div>
 			<h3>
 				<?php
-				if ( 'all' === $sales_period ) {
-					esc_html_e( 'No sales yet', 'wp-sell-services' );
+				if ( $sales_filtered ) {
+					esc_html_e( 'No sales match this filter', 'wp-sell-services' );
 				} else {
-					esc_html_e( 'No sales in this period', 'wp-sell-services' );
+					esc_html_e( 'No sales yet', 'wp-sell-services' );
 				}
 				?>
 			</h3>
 			<p>
 				<?php
-				if ( 'all' === $sales_period ) {
-					esc_html_e( 'When someone orders your service, it will appear here.', 'wp-sell-services' );
+				if ( $sales_filtered ) {
+					esc_html_e( 'Try a wider date range or clear the status and search filters.', 'wp-sell-services' );
 				} else {
-					esc_html_e( 'Try a wider date range to see more orders.', 'wp-sell-services' );
+					esc_html_e( 'When someone orders your service, it will appear here.', 'wp-sell-services' );
 				}
 				?>
 			</p>
-			<?php if ( 'all' === $sales_period ) : ?>
-				<a href="<?php echo esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'services' ) ); ?>" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'View My Services', 'wp-sell-services' ); ?>
+			<?php if ( $sales_filtered ) : ?>
+				<a href="<?php echo esc_url( remove_query_arg( array( 'sales_period', 'sales_status', 'sales_search', 'sales_page' ) ) ); ?>" class="wpss-btn wpss-btn--primary">
+					<?php esc_html_e( 'Show all orders', 'wp-sell-services' ); ?>
 				</a>
 			<?php else : ?>
-				<a href="
-				<?php
-				echo esc_url(
-					add_query_arg(
-						array(
-							'section'      => 'sales',
-							'sales_period' => 'all',
-						),
-						get_permalink()
-					)
-				);
-				?>
-							" class="wpss-btn wpss-btn--primary">
-					<?php esc_html_e( 'Show all orders', 'wp-sell-services' ); ?>
+				<a href="<?php echo esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'services' ) ); ?>" class="wpss-btn wpss-btn--primary">
+					<?php esc_html_e( 'View My Services', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>
 		</div>
@@ -377,16 +383,10 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 		<?php if ( $total_pages > 1 ) : ?>
 			<nav class="wpss-pagination" aria-label="<?php esc_attr_e( 'Sales pages', 'wp-sell-services' ); ?>">
 				<?php
-				$page_base_args = array( 'section' => 'sales' );
-				if ( 'all' !== $sales_period ) {
-					$page_base_args['sales_period'] = $sales_period;
-				}
-				$page_url = static function ( int $page ) use ( $page_base_args ): string {
-					$args = $page_base_args;
-					if ( $page > 1 ) {
-						$args['sales_page'] = $page;
-					}
-					return add_query_arg( $args, get_permalink() );
+				// Built from the CURRENT request so the period, chip and search
+				// all survive paging (same rule as the buyer list).
+				$page_url = static function ( int $page ): string {
+					return $page > 1 ? add_query_arg( 'sales_page', $page ) : remove_query_arg( 'sales_page' );
 				};
 	?>
 				<?php if ( $sales_page > 1 ) : ?>

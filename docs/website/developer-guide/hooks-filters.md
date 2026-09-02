@@ -62,7 +62,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_service_approved` | `int $service_id, string $notes` | `src/Services/ModerationService.php:184` |
+| `wpss_service_approved` | `int $service_id, string $notes` | `src/API/ModerationController.php:223` |
 | `wpss_service_rejected` | `int $service_id, string $reason` | `src/API/ModerationController.php:264` |
 | `wpss_service_pending_moderation` | `int $service_id` | `src/Frontend/ServiceWizard.php:1720` |
 
@@ -72,7 +72,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:778` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:872` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:898` |
 
 ### Order Filters
 
@@ -489,7 +489,7 @@ add_action( 'wpss_wizard_save_service_meta', function( $service_id, $data ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:908` |
+| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:921` |
 
 ### Dashboard Filters
 
@@ -589,8 +589,6 @@ These filters let you customize outgoing email content without modifying templat
 | `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2047` |
 | `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2031` |
 | `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1576` |
-| `wpss_vendor_approved_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1596` |
-| `wpss_vendor_rejected_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1664` |
 
 ```php
 // Change the "From" name on all marketplace emails
@@ -725,7 +723,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_get_template_part` | `$template, $slug, $name` | `src/functions/templates.php:90` |
 | `wpss_get_template` | `$template, $template_name, $args` | `src/functions/templates.php:141` |
 | `wpss_locate_template` | `$template, $template_name, $template_path` | `src/Frontend/TemplateLoader.php:519` |
-| `wpss_dashboard_section_template` | `$template_path, $section` | `src/Frontend/UnifiedDashboard.php:883` |
+| `wpss_dashboard_section_template` | `$template_path, $section` | `src/Frontend/UnifiedDashboard.php:896` |
 
 ### URL and Taxonomy Filters
 
@@ -779,9 +777,9 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
-| `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:443` |
-| `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:542` |
-| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:832` |
+| `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:444` |
+| `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:543` |
+| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:845` |
 
 **`wpss_realtime_settings`** — filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
 
@@ -920,7 +918,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_analytics_init` | `AnalyticsManager $manager` | `AnalyticsManager.php:103` |
+| `wpss_analytics_init` | `AnalyticsManager $manager` | `src/Analytics/AnalyticsManager.php:103` |
 
 ### Gateway Settings Actions
 
