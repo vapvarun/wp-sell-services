@@ -406,18 +406,26 @@ function wpss_normalize_requirement_choices( array $req ): array {
 function wpss_get_order_requirements( int $order_id ): array {
 	global $wpdb;
 
-	$table = $wpdb->prefix . 'wpss_order_requirements';
+	// Primed by wpss_prime_order_requirements() for a list; consumed once so a
+	// write later in the same request is never answered from here.
+	$primed = wpss_prime_order_requirements();
 
-	// Check if table exists.
-	$table_exists = $wpdb->get_var(
-		$wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
-	);
+	if ( array_key_exists( $order_id, $primed ) ) {
+		$value = $primed[ $order_id ];
+		wpss_prime_order_requirements( array(), $order_id );
+		return $value;
+	}
 
-	if ( ! $table_exists ) {
+	// The table is created by the installer, and the installed schema version
+	// is an autoloaded option: reading it costs nothing, where the SHOW TABLES
+	// this used to run cost one query per order on every list.
+	if ( '0.0.0' === (string) get_option( \WPSellServices\Database\SchemaManager::VERSION_OPTION, '0.0.0' ) ) {
 		// Fall back to order meta.
 		$requirements = get_metadata( 'wpss_order', $order_id, '_requirements', true );
 		return is_array( $requirements ) ? $requirements : array();
 	}
+
+	$table = $wpdb->prefix . 'wpss_order_requirements';
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$row = $wpdb->get_row(
@@ -435,6 +443,58 @@ function wpss_get_order_requirements( int $order_id ): array {
 	$decoded = json_decode( $row['field_data'], true );
 
 	return is_array( $decoded ) ? $decoded : array();
+}
+
+/**
+ * Load the submitted requirements for a page of orders in one query.
+ *
+ * GET /orders ran wpss_get_order_requirements() per row - two queries each,
+ * one of them a SHOW TABLES. Priming here turns that into one SELECT for the
+ * page. Each primed value is handed out ONCE by wpss_get_order_requirements()
+ * and then forgotten, so a submission written later in the same request reads
+ * fresh from the table rather than from a stale prime.
+ *
+ * @since 1.7.1
+ *
+ * @param int[]    $order_ids Orders about to be shaped. Empty to only read the store.
+ * @param int|null $forget    Internal: drop one primed id after it has been read.
+ * @return array<int,array<string,mixed>> The current primed map.
+ */
+function wpss_prime_order_requirements( array $order_ids = array(), ?int $forget = null ): array {
+	static $primed = array();
+
+	if ( null !== $forget ) {
+		unset( $primed[ $forget ] );
+		return $primed;
+	}
+
+	$order_ids = array_values( array_unique( array_filter( array_map( 'intval', $order_ids ) ) ) );
+
+	if ( empty( $order_ids ) || '0.0.0' === (string) get_option( \WPSellServices\Database\SchemaManager::VERSION_OPTION, '0.0.0' ) ) {
+		return $primed;
+	}
+
+	global $wpdb;
+
+	$table        = $wpdb->prefix . 'wpss_order_requirements';
+	$placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
+
+	// Ascending id so the newest row for an order overwrites the older ones -
+	// the same "ORDER BY id DESC LIMIT 1" the single read uses.
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT order_id, field_data FROM {$table} WHERE order_id IN ({$placeholders}) ORDER BY id ASC", $order_ids ), ARRAY_A );
+
+	foreach ( $order_ids as $order_id ) {
+		$primed[ $order_id ] = array();
+	}
+
+	foreach ( (array) $rows as $row ) {
+		$decoded = json_decode( (string) $row['field_data'], true );
+
+		$primed[ (int) $row['order_id'] ] = is_array( $decoded ) ? $decoded : array();
+	}
+
+	return $primed;
 }
 
 /**

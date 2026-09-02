@@ -862,7 +862,7 @@
                     }
                 },
                 "requestBody": {
-                    "required": true,
+                    "required": false,
                     "content": {
                         "application/json": {
                             "schema": {
@@ -871,11 +871,11 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email"
+                                    },
+                                    "user_login": {
+                                        "type": "string"
                                     }
-                                },
-                                "required": [
-                                    "email"
-                                ]
+                                }
                             }
                         }
                     }
@@ -5663,6 +5663,58 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/wpss/v1/orders/{id}/files/{file_id}": {
+            "x-wpss-tier": "free",
+            "get": {
+                "tags": [
+                    "Orders"
+                ],
+                "operationId": "get_wpss_v1_orders_id_files_file_id",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": ""
+                    },
+                    {
+                        "name": "file_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": ""
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
                     }
                 }
             }

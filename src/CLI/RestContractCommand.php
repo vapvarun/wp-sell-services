@@ -143,6 +143,7 @@ class RestContractCommand {
 			// one a client's re-auth rule actually keys off.
 			array( 'GET', '/wpss/v1/me', 'anon', 401, 'rest_not_logged_in' ),
 			array( 'GET', '/wpss/v1/orders', 'anon', 401, 'rest_not_logged_in' ),
+			array( 'GET', '/wpss/v1/orders/999999999/files/no-such-file', 'anon', 401, 'rest_not_logged_in' ),
 			array( 'GET', '/wpss/v1/moderation/pending', 'anon', 401, 'rest_not_logged_in' ),
 
 			// Authenticated but lacking the capability must be 403 with the
@@ -156,6 +157,10 @@ class RestContractCommand {
 
 			// A missing resource is 404 with our code, not a bare rest_no_route.
 			array( 'GET', '/wpss/v1/orders/999999999', 'admin', 404, 'wpss_order_not_found' ),
+			// The file route runs wpss_can_read_order_files(), and an admin may
+			// read any order's files - so a missing file is 404 with the file
+			// code, never a 403 that hides whether the order exists.
+			array( 'GET', '/wpss/v1/orders/999999999/files/no-such-file', 'admin', 404, 'wpss_file_not_found' ),
 
 			// An unknown path is core's 404.
 			array( 'GET', '/wpss/v1/no-such-route', 'anon', 404, 'rest_no_route' ),

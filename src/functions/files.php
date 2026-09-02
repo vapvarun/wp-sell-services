@@ -775,6 +775,127 @@ function wpss_rewrite_order_file_record( int $order_id, string $file_id, array $
 }
 
 /**
+ * Resolve an order file into something a caller who is entitled to it can be served.
+ *
+ * Authorisation is NOT done here - the two callers (the admin-post link and
+ * the REST route) each run wpss_can_read_order_files() first, because they
+ * answer a refusal differently. Everything after that decision is shared: find
+ * the record, migrate a pre-1.7.0 file into the private store on the way past,
+ * hand back a short-lived signed URL when a bucket holds the bytes, or the
+ * readable local path when this server does.
+ *
+ * @since 1.7.1
+ *
+ * @param int    $order_id Order ID.
+ * @param string $file_id  Record id.
+ * @return array{record:array<string,mixed>,path?:string,url?:string,expires_in?:int}|WP_Error
+ *         `path` is a readable local file; `url` is a signed bucket URL (with
+ *         `expires_in` seconds) or, for a legacy record that could not be
+ *         migrated, its historical public location.
+ */
+function wpss_locate_order_file( int $order_id, string $file_id ) {
+	$record = wpss_find_order_file( $order_id, $file_id );
+
+	if ( ! $record ) {
+		return new WP_Error( 'wpss_file_not_found', __( 'File not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+	}
+
+	/*
+	 * A legacy record reaching this point belongs to someone who is allowed to
+	 * read it - the caller checked. Move it into the private store now, then
+	 * serve the migrated copy.
+	 *
+	 * If the migration cannot complete the record is untouched and we fall
+	 * through to serving the original file, so the download never fails because
+	 * of housekeeping.
+	 */
+	if ( empty( $record['path'] ) && empty( $record['remote_path'] ) ) {
+		$migrated = wpss_migrate_legacy_order_file( $record, $order_id );
+
+		if ( $migrated ) {
+			$record = $migrated;
+		} elseif ( ! empty( $record['url'] ) ) {
+			return array(
+				'record' => $record,
+				'url'    => (string) $record['url'],
+			);
+		}
+	}
+
+	// In a bucket: hand over a short-lived signed URL rather than streaming the
+	// bytes through PHP. The record names the provider that holds it; only
+	// rows written before 1.7.1 lack one, and for those the active provider
+	// is the only candidate.
+	if ( ! empty( $record['remote_path'] ) ) {
+		$provider_id = (string) ( $record['provider'] ?? '' );
+		$provider    = '' !== $provider_id ? wpss_get_storage_provider( $provider_id ) : wpss_get_active_storage_provider();
+		$ttl         = 5 * MINUTE_IN_SECONDS;
+
+		if ( $provider && method_exists( $provider, 'get_signed_url' ) ) {
+			$signed = $provider->get_signed_url( (string) $record['remote_path'], $ttl );
+
+			if ( $signed ) {
+				return array(
+					'record'     => $record,
+					'url'        => (string) $signed,
+					'expires_in' => $ttl,
+				);
+			}
+		}
+
+		wpss_log(
+			sprintf(
+				'Storage provider "%s" holds file %s for order %d but is not registered or cannot sign URLs; download refused with 503.',
+				'' !== $provider_id ? $provider_id : (string) get_option( 'wpss_active_storage_provider', '' ),
+				(string) ( $record['id'] ?? '' ),
+				$order_id
+			),
+			'error'
+		);
+
+		return new WP_Error(
+			'wpss_storage_unavailable',
+			__( 'This file is stored remotely and the storage provider is unavailable. Try again shortly.', 'wp-sell-services' ),
+			array( 'status' => 503 )
+		);
+	}
+
+	$path = wpss_get_order_files_dir() . $order_id . '/' . basename( (string) ( $record['path'] ?? '' ) );
+
+	if ( ! is_readable( $path ) ) {
+		return new WP_Error( 'wpss_file_not_found', __( 'File not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+	}
+
+	return array(
+		'record' => $record,
+		'path'   => $path,
+	);
+}
+
+/**
+ * Write a local order file to the response as a download.
+ *
+ * Headers and bytes only; the caller has already authorised and located it,
+ * and decides whether to exit afterwards.
+ *
+ * @since 1.7.1
+ *
+ * @param array<string,mixed> $record File record, for the name and MIME type.
+ * @param string              $path   Readable local path from wpss_locate_order_file().
+ * @return void
+ */
+function wpss_stream_order_file( array $record, string $path ): void {
+	nocache_headers();
+	$mime = ( ! empty( $record['type'] ) ) ? (string) $record['type'] : 'application/octet-stream';
+	header( 'Content-Type: ' . $mime );
+	header( 'Content-Length: ' . filesize( $path ) );
+	header( 'Content-Disposition: attachment; filename="' . rawurlencode( (string) ( $record['name'] ?? basename( $path ) ) ) . '"' );
+	header( 'X-Content-Type-Options: nosniff' );
+
+	readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+}
+
+/**
  * Serve an order file to someone entitled to read it.
  *
  * Hooked on admin_post_ rather than REST because this is followed by a plain
@@ -782,6 +903,10 @@ function wpss_rewrite_order_file_record( int $order_id, string $file_id, array $
  * link the buyer might bookmark expires in a day. admin-post.php authenticates
  * from the session cookie alone, so the link keeps working for exactly as long
  * as the person is entitled to it - which is the rule we actually want.
+ *
+ * App clients, which hold a token and no cookie, use GET
+ * /wpss/v1/orders/{id}/files/{file} instead; both run the same
+ * wpss_locate_order_file() underneath.
  *
  * @since 1.7.0
  *
@@ -799,75 +924,18 @@ function wpss_serve_order_file(): void {
 		wp_die( esc_html__( 'File not found.', 'wp-sell-services' ), '', array( 'response' => 404 ) );
 	}
 
-	$record = wpss_find_order_file( $order_id, $file_id );
+	$located = wpss_locate_order_file( $order_id, $file_id );
 
-	if ( ! $record ) {
-		wp_die( esc_html__( 'File not found.', 'wp-sell-services' ), '', array( 'response' => 404 ) );
+	if ( is_wp_error( $located ) ) {
+		$data = (array) $located->get_error_data();
+		wp_die( esc_html( $located->get_error_message() ), '', array( 'response' => (int) ( $data['status'] ?? 404 ) ) );
 	}
 
-	/*
-	 * A legacy record reaching this point belongs to someone who is allowed to
-	 * read it - wpss_can_read_order_files() ran above. Move it into the private
-	 * store now, then serve the migrated copy.
-	 *
-	 * If the migration cannot complete the record is untouched and we fall
-	 * through to serving the original file, so the download never fails because
-	 * of housekeeping.
-	 */
-	if ( empty( $record['path'] ) && empty( $record['remote_path'] ) ) {
-		$migrated = wpss_migrate_legacy_order_file( $record, $order_id );
-
-		if ( $migrated ) {
-			$record = $migrated;
-		} elseif ( ! empty( $record['url'] ) ) {
-			wp_redirect( (string) $record['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- the file's own historical location on this site.
-			exit;
-		}
+	if ( isset( $located['url'] ) ) {
+		wp_redirect( $located['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- deliberately offsite: the configured bucket, or the file's own historical location on this site.
+		exit;
 	}
 
-	// In a bucket: hand over a short-lived signed URL rather than streaming the
-	// bytes through PHP. The record names the provider that holds it; only
-	// rows written before 1.7.1 lack one, and for those the active provider
-	// is the only candidate.
-	if ( ! empty( $record['remote_path'] ) ) {
-		$provider_id = (string) ( $record['provider'] ?? '' );
-		$provider    = '' !== $provider_id ? wpss_get_storage_provider( $provider_id ) : wpss_get_active_storage_provider();
-
-		if ( $provider && method_exists( $provider, 'get_signed_url' ) ) {
-			$signed = $provider->get_signed_url( (string) $record['remote_path'], 5 * MINUTE_IN_SECONDS );
-
-			if ( $signed ) {
-				wp_redirect( $signed ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- deliberately offsite: the configured bucket.
-				exit;
-			}
-		}
-
-		wpss_log(
-			sprintf(
-				'Storage provider "%s" holds file %s for order %d but is not registered or cannot sign URLs; download refused with 503.',
-				'' !== $provider_id ? $provider_id : (string) get_option( 'wpss_active_storage_provider', '' ),
-				(string) ( $record['id'] ?? '' ),
-				$order_id
-			),
-			'error'
-		);
-
-		wp_die( esc_html__( 'This file is stored remotely and the storage provider is unavailable. Try again shortly.', 'wp-sell-services' ), '', array( 'response' => 503 ) );
-	}
-
-	$path = wpss_get_order_files_dir() . $order_id . '/' . basename( (string) ( $record['path'] ?? '' ) );
-
-	if ( ! is_readable( $path ) ) {
-		wp_die( esc_html__( 'File not found.', 'wp-sell-services' ), '', array( 'response' => 404 ) );
-	}
-
-	nocache_headers();
-	$mime = ( ! empty( $record['type'] ) ) ? (string) $record['type'] : 'application/octet-stream';
-	header( 'Content-Type: ' . $mime );
-	header( 'Content-Length: ' . filesize( $path ) );
-	header( 'Content-Disposition: attachment; filename="' . rawurlencode( (string) ( $record['name'] ?? basename( $path ) ) ) . '"' );
-	header( 'X-Content-Type-Options: nosniff' );
-
-	readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+	wpss_stream_order_file( $located['record'], $located['path'] );
 	exit;
 }
