@@ -735,7 +735,16 @@ class BuyerRequestService {
 		// Claim the proposal inside the transaction so the row the next caller
 		// reads under its lock is already accepted.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update( $this->proposals_table, array( 'status' => ProposalService::STATUS_ACCEPTED ), array( 'id' => $proposal_id ), array( '%s' ), array( '%d' ) );
+		$wpdb->update(
+			$this->proposals_table,
+			array(
+				'status'     => ProposalService::STATUS_ACCEPTED,
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $proposal_id ),
+			array( '%s', '%s' ),
+			array( '%d' )
+		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
@@ -777,7 +786,10 @@ class BuyerRequestService {
 					)
 				),
 			),
-			array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' )
+			// One format per column, in column order. A 27th entry here once
+			// shifted created_at onto a %d and every proposal order was born
+			// with created_at 0000-00-00 00:00:00.
+			array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' )
 		);
 
 		if ( ! $result ) {

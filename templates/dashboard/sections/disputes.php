@@ -17,6 +17,7 @@
 use WPSellServices\Models\Dispute;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\DisputeWorkflowManager;
+use WPSellServices\Services\OrderWorkflowManager;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -91,18 +92,31 @@ if ( $view_dispute_id ) {
 		if ( in_array( $wpss_resolution, array( DisputeService::RESOLUTION_REFUND, DisputeService::RESOLUTION_FAVOR_BUYER ), true ) ) {
 			$wpss_refund = (float) $dispute_order->total;
 		}
-		$wpss_outcome_copy = '';
+		// An offline payment cannot be refunded by the gateway: the ruling parks
+		// the amount on the order for the site owner to send by hand, and until
+		// they clear it the buyer must not read that the money already arrived.
+		$wpss_refund_pending = $wpss_refund > 0 && (float) wpss_get_order_provider()->get_item_meta( (int) $dispute_order->id, OrderWorkflowManager::REFUND_PENDING_META ) > 0;
+		$wpss_outcome_copy   = '';
 		if ( 'resolved' === $status_key ) {
 			if ( $wpss_refund > 0 && $wpss_refund < (float) $dispute_order->total ) {
-				$wpss_outcome_copy = $wpss_is_vendor_party
+				if ( $wpss_is_vendor_party ) {
 					/* translators: %s: refunded amount */
-					? sprintf( __( '%s was refunded to the buyer. The rest of the order amount stays in your earnings.', 'wp-sell-services' ), wpss_format_price( $wpss_refund, $wpss_currency ) )
+					$wpss_outcome_copy = sprintf( __( '%s was refunded to the buyer. The rest of the order amount stays in your earnings.', 'wp-sell-services' ), wpss_format_price( $wpss_refund, $wpss_currency ) );
+				} elseif ( $wpss_refund_pending ) {
 					/* translators: %s: refunded amount */
-					: sprintf( __( '%s was refunded to you.', 'wp-sell-services' ), wpss_format_price( $wpss_refund, $wpss_currency ) );
+					$wpss_outcome_copy = sprintf( __( '%s is being refunded to you. The refund is sent manually, outside the site, and is on its way.', 'wp-sell-services' ), wpss_format_price( $wpss_refund, $wpss_currency ) );
+				} else {
+					/* translators: %s: refunded amount */
+					$wpss_outcome_copy = sprintf( __( '%s was refunded to you.', 'wp-sell-services' ), wpss_format_price( $wpss_refund, $wpss_currency ) );
+				}
 			} elseif ( $wpss_refund > 0 ) {
-				$wpss_outcome_copy = $wpss_is_vendor_party
-					? __( 'The full order amount was refunded to the buyer. No earnings were released for this order.', 'wp-sell-services' )
-					: __( 'The full order amount was refunded to you.', 'wp-sell-services' );
+				if ( $wpss_is_vendor_party ) {
+					$wpss_outcome_copy = __( 'The full order amount was refunded to the buyer. No earnings were released for this order.', 'wp-sell-services' );
+				} elseif ( $wpss_refund_pending ) {
+					$wpss_outcome_copy = __( 'The full order amount is being refunded to you. The refund is sent manually, outside the site, and is on its way.', 'wp-sell-services' );
+				} else {
+					$wpss_outcome_copy = __( 'The full order amount was refunded to you.', 'wp-sell-services' );
+				}
 			} else {
 				$wpss_outcome_copy = $wpss_is_vendor_party
 					? __( 'The order was marked completed and your earnings were released as usual.', 'wp-sell-services' )

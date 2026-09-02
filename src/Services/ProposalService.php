@@ -345,6 +345,10 @@ class ProposalService {
 			$update_data['attachments'] = wp_json_encode( $data['attachments'] );
 		}
 
+		// Site clock, like created_at. Left to the column's ON UPDATE default
+		// the row carries a UTC updated_at next to a site-local created_at.
+		$update_data['updated_at'] = current_time( 'mysql' );
+
 		$result = $wpdb->update(
 			$this->table,
 			$update_data,
@@ -436,7 +440,10 @@ class ProposalService {
 
 		$result = $wpdb->update(
 			$this->table,
-			array( 'status' => self::STATUS_REJECTED ),
+			array(
+				'status'     => self::STATUS_REJECTED,
+				'updated_at' => current_time( 'mysql' ),
+			),
 			array( 'id' => $proposal_id )
 		);
 
@@ -479,7 +486,10 @@ class ProposalService {
 
 		$result = $wpdb->update(
 			$this->table,
-			array( 'status' => self::STATUS_WITHDRAWN ),
+			array(
+				'status'     => self::STATUS_WITHDRAWN,
+				'updated_at' => current_time( 'mysql' ),
+			),
 			array( 'id' => $proposal_id )
 		);
 
@@ -528,9 +538,12 @@ class ProposalService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$this->table,
-			array( 'order_id' => $order_id ),
+			array(
+				'order_id'   => $order_id,
+				'updated_at' => current_time( 'mysql' ),
+			),
 			array( 'id' => $proposal_id ),
-			array( '%d' ),
+			array( '%d', '%s' ),
 			array( '%d' )
 		);
 
@@ -562,7 +575,10 @@ class ProposalService {
 
 		$result = $wpdb->update(
 			$this->table,
-			array( 'status' => $status ),
+			array(
+				'status'     => $status,
+				'updated_at' => current_time( 'mysql' ),
+			),
 			array( 'id' => $proposal_id )
 		);
 
@@ -609,7 +625,10 @@ class ProposalService {
 
 		$wpdb->update(
 			$this->table,
-			array( 'status' => self::STATUS_REJECTED ),
+			array(
+				'status'     => self::STATUS_REJECTED,
+				'updated_at' => current_time( 'mysql' ),
+			),
 			array(
 				'request_id' => $request_id,
 				'status'     => self::STATUS_PENDING,
@@ -619,7 +638,10 @@ class ProposalService {
 		// The accepted one might have been updated, restore it.
 		$wpdb->update(
 			$this->table,
-			array( 'status' => self::STATUS_ACCEPTED ),
+			array(
+				'status'     => self::STATUS_ACCEPTED,
+				'updated_at' => current_time( 'mysql' ),
+			),
 			array( 'id' => $except_id )
 		);
 

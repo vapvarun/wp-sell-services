@@ -660,6 +660,10 @@ final class Plugin {
 			}
 		);
 
+		// The archive filter form on a services page that is ALSO the static
+		// front page must not knock the request over to the blog.
+		add_filter( 'request', array( $this, 'drop_front_page_filter_vars' ) );
+
 		// Validate + canonicalize the requested dashboard section (aliases,
 		// unknown-slug fallback, legacy ?section= -> pretty endpoint).
 		add_action( 'template_redirect', array( $this, 'redirect_legacy_section_url' ) );
@@ -1123,6 +1127,39 @@ final class Plugin {
 
 		wp_safe_redirect( $target, 301 );
 		exit;
+	}
+
+	/**
+	 * Keep the services archive filters off the main query on the front page.
+	 *
+	 * WooCommerce registers `min_price` / `max_price` as public query vars and
+	 * core registers `search`. WP_Query treats ANY public var in the query
+	 * string - even an empty one - as "not the static front page" and renders
+	 * the blog instead. When the mapped services page is the front page the
+	 * archive filter form emits exactly those keys (the browser sends the empty
+	 * ones too), so submitting it showed the blog. The archive view reads every
+	 * filter from $_GET; the main query never needs them, so they are dropped
+	 * here - only when the services page is the front page and the request is
+	 * otherwise the front page, so WooCommerce's own price filter is untouched.
+	 *
+	 * @param array<string,mixed> $query_vars Parsed public query vars.
+	 * @return array<string,mixed>
+	 */
+	public function drop_front_page_filter_vars( array $query_vars ): array {
+		$filters = array( 'search', 'min_price', 'max_price' );
+		$front   = 'page' === get_option( 'show_on_front' ) ? (int) get_option( 'page_on_front' ) : 0;
+
+		if ( $front <= 0 || ! function_exists( 'wpss_get_page_id' ) || wpss_get_page_id( 'services_page' ) !== $front ) {
+			return $query_vars;
+		}
+
+		// Anything else in the query (a real page, a search, a feed) is not the
+		// front page - WP_Query's own allow-list, kept in sync with it.
+		if ( array_diff( array_keys( $query_vars ), $filters, array( 'preview', 'page', 'paged', 'cpage' ) ) ) {
+			return $query_vars;
+		}
+
+		return array_diff_key( $query_vars, array_flip( $filters ) );
 	}
 
 	/**

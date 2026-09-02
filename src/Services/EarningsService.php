@@ -433,7 +433,19 @@ class EarningsService {
 			);
 		}
 
-		if ( self::WITHDRAWAL_PENDING !== $withdrawal->status && self::WITHDRAWAL_APPROVED !== $withdrawal->status ) {
+		// Only an approved request can be paid: approve first (the review
+		// step), pay offline, then mark paid. A pending request is refused so
+		// nobody pays out a request that was never looked at.
+		if ( self::WITHDRAWAL_PENDING === $withdrawal->status ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'message' => __( 'Approve this withdrawal before marking it paid.', 'wp-sell-services' ),
+				'code'    => 'not_approved',
+			);
+		}
+
+		if ( self::WITHDRAWAL_APPROVED !== $withdrawal->status ) {
 			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,

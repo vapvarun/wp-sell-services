@@ -961,18 +961,27 @@ do_action( 'wpss_before_order_view', $order );
 						<div class="wpss-requirement-view__answer <?php echo $is_long_text ? 'wpss-requirement-view__answer--collapsed' : ''; ?>">
 							<?php if ( 'file' === $type && $field_attachment ) : ?>
 								<?php
-								// Check if it's an image for preview.
-								$is_image = in_array( strtolower( pathinfo( $field_attachment['name'], PATHINFO_EXTENSION ) ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ), true );
+								// Private records (1.7.0+) carry a path, not a url: the ONE
+								// resolver hands back the guarded endpoint, or '' when the
+								// file is not addressable - same as the orphan list below.
+								$field_attachment['order_id'] = $order_id;
+								$field_file_url               = wpss_get_order_file_url( $field_attachment );
+								$field_file_name              = (string) ( $field_attachment['name'] ?? __( 'Attachment', 'wp-sell-services' ) );
+								$is_image                     = '' !== $field_file_url && in_array( strtolower( pathinfo( $field_file_name, PATHINFO_EXTENSION ) ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ), true );
 								?>
 								<?php if ( $is_image ) : ?>
 									<div class="wpss-requirement-view__image-preview">
-										<img src="<?php echo esc_url( $field_attachment['url'] ); ?>" alt="<?php echo esc_attr( $field_attachment['name'] ); ?>" class="wpss-requirement-view__thumbnail" loading="lazy">
+										<img src="<?php echo esc_url( $field_file_url ); ?>" alt="<?php echo esc_attr( $field_file_name ); ?>" class="wpss-requirement-view__thumbnail" loading="lazy">
 									</div>
 								<?php endif; ?>
-								<a href="<?php echo esc_url( $field_attachment['url'] ); ?>" class="wpss-file-link" target="_blank" download>
-									<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
-									<?php echo esc_html( $field_attachment['name'] ); ?>
-								</a>
+								<?php if ( '' !== $field_file_url ) : ?>
+									<a href="<?php echo esc_url( $field_file_url ); ?>" class="wpss-file-link" target="_blank" download>
+										<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
+										<?php echo esc_html( $field_file_name ); ?>
+									</a>
+								<?php else : ?>
+									<?php echo esc_html( $field_file_name ); ?>
+								<?php endif; ?>
 							<?php elseif ( $response_value ) : ?>
 								<div class="wpss-requirement-view__text-content">
 									<?php echo wp_kses_post( wpautop( $response_value ) ); ?>

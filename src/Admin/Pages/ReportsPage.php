@@ -381,7 +381,7 @@ class ReportsPage {
 										<span class="wpss-badge"><?php echo esc_html( (string) $row->resolution ); ?></span>
 									<?php endif; ?>
 
-									<?php if ( $reported ) : ?>
+									<?php if ( get_userdata( (int) $row->reported_user_id ) ) : ?>
 										<?php if ( 'active' === $standing ) : ?>
 											<?php $this->status_button( (int) $row->reported_user_id, 'suspended', __( 'Suspend member', 'wp-sell-services' ) ); ?>
 											<?php $this->status_button( (int) $row->reported_user_id, 'banned', __( 'Close account', 'wp-sell-services' ) ); ?>
