@@ -312,6 +312,14 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			return false;
 		}
 
+		// Gateways retry webhooks. A second mark-as-paid on an already-paid
+		// order must not reset paid_at / transaction_id, re-fire the status
+		// hooks, or resend the "new order" notifications.
+		if ( 'paid' === ( $order->payment_status ?? '' ) ) {
+			wpss_log( sprintf( 'mark_as_paid ignored for order #%d: already paid (incoming transaction %s)', $order_id, $transaction_id ) );
+			return true;
+		}
+
 		// Sub-order platforms (tip, extension, milestone) do NOT go through
 		// the requirements workflow — they have their own service handler
 		// wired to `wpss_order_paid` which credits the vendor wallet and
