@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace WPSellServices\Admin\Pages;
 
-use WPSellServices\Services\EmailService;
 use WPSellServices\Services\ModerationService;
 
 defined( 'ABSPATH' ) || exit;
@@ -679,9 +678,6 @@ class ServiceModerationPage {
 		 */
 		do_action( 'wpss_service_approved', $service_id );
 
-		// Notify vendor.
-		$this->notify_vendor( $service_id, 'approved' );
-
 		wp_send_json_success( array( 'message' => __( 'Service approved.', 'wp-sell-services' ) ) );
 	}
 
@@ -733,9 +729,6 @@ class ServiceModerationPage {
 		 */
 		do_action( 'wpss_service_rejected', $service_id, $reason );
 
-		// Notify vendor.
-		$this->notify_vendor( $service_id, 'rejected', $reason );
-
 		wp_send_json_success( array( 'message' => __( 'Service rejected.', 'wp-sell-services' ) ) );
 	}
 
@@ -776,7 +769,6 @@ class ServiceModerationPage {
 					)
 				);
 				do_action( 'wpss_service_approved', $service_id );
-				$this->notify_vendor( $service_id, 'approved' );
 			} elseif ( 'reject' === $bulk_action ) {
 				update_post_meta( $service_id, self::META_KEY, self::STATUS_REJECTED );
 				if ( $reason ) {
@@ -794,7 +786,6 @@ class ServiceModerationPage {
 					);
 				}
 				do_action( 'wpss_service_rejected', $service_id, $reason );
-				$this->notify_vendor( $service_id, 'rejected', $reason );
 			}
 
 			++$processed;
@@ -806,58 +797,6 @@ class ServiceModerationPage {
 				'message' => sprintf( __( '%d services processed.', 'wp-sell-services' ), $processed ),
 			)
 		);
-	}
-
-	/**
-	 * Notify vendor about moderation decision.
-	 *
-	 * @param int    $service_id The service ID.
-	 * @param string $status     The moderation status.
-	 * @param string $reason     Optional rejection reason.
-	 * @return void
-	 */
-	private function notify_vendor( int $service_id, string $status, string $reason = '' ): void {
-		$service = get_post( $service_id );
-		if ( ! $service ) {
-			return;
-		}
-
-		$vendor = get_user_by( 'ID', $service->post_author );
-		if ( ! $vendor ) {
-			return;
-		}
-
-		$subject = 'approved' === $status
-			? __( 'Your service has been approved', 'wp-sell-services' )
-			: __( 'Your service was not approved', 'wp-sell-services' );
-
-		// The service wizard lives at the `create` section and reads `?id=`.
-		// This link used to name a section (`edit-service`) that has no
-		// template and an argument (`service_id`) the wizard does not read, so
-		// a vendor who followed a moderation email hit "Section Not Available"
-		// with no way back to the service they were asked to change.
-		$edit_url = add_query_arg(
-			'id',
-			$service_id,
-			wpss_get_dashboard_url( 'create' )
-		);
-
-		$email_type = 'approved' === $status ? 'moderation_approved' : 'moderation_rejected';
-		if ( EmailService::is_type_enabled( $email_type ) ) {
-			( new EmailService() )->send(
-				$vendor->user_email,
-				$subject,
-				EmailService::TYPE_MODERATION_RESPONSE,
-				array(
-					'recipient'     => $vendor,
-					'service_title' => $service->post_title,
-					'status'        => $status,
-					'message'       => $reason,
-					'service_url'   => get_permalink( $service_id ),
-					'edit_url'      => $edit_url,
-				)
-			);
-		}
 	}
 
 	/**

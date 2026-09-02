@@ -1353,8 +1353,10 @@ final class Plugin {
 			function ( int $vendor_id, string $status ) use ( $notification_service ): void {
 				if ( 'active' === $status ) {
 					$notification_service->notify_vendor_approved( $vendor_id );
-				} elseif ( in_array( $status, array( 'rejected', 'suspended' ), true ) ) {
+				} elseif ( 'rejected' === $status ) {
 					$notification_service->notify_vendor_rejected( $vendor_id );
+				} elseif ( 'suspended' === $status ) {
+					$notification_service->notify_vendor_suspended( $vendor_id );
 				}
 			},
 			null,
@@ -1459,10 +1461,92 @@ final class Plugin {
 					$review_id,
 					(int) $review->vendor_id,
 					(int) $review->rating,
-					(string) ( $review->comment ?? '' ),
+					(string) ( $review->review ?? '' ),
 					$buyer_name,
 					(int) $review->service_id
 				);
+			},
+			null,
+			10,
+			2
+		);
+
+		// Vendor replied to a review: tell the reviewer. Guest reviews
+		// (customer_id 0) have nobody to tell.
+		$this->loader->add_action(
+			'wpss_review_reply_created',
+			function ( int $review_id ) use ( $notification_service ): void {
+				global $wpdb;
+				$review = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}wpss_reviews WHERE id = %d", $review_id )
+				);
+				if ( ! $review || (int) $review->customer_id <= 0 ) {
+					return;
+				}
+				$vendor  = get_user_by( 'id', (int) $review->vendor_id );
+				$service = get_post( (int) $review->service_id );
+				$notification_service->send(
+					(int) $review->customer_id,
+					'review_reply',
+					array(
+						'review_id'     => $review_id,
+						'order_id'      => (int) $review->order_id,
+						'service_id'    => (int) $review->service_id,
+						'vendor_id'     => (int) $review->vendor_id,
+						'vendor_name'   => $vendor ? $vendor->display_name : '',
+						'service_title' => $service ? $service->post_title : '',
+						'reply'         => (string) ( $review->vendor_reply ?? '' ),
+						'action_url'    => $service ? (string) get_permalink( $service ) : '',
+					)
+				);
+			},
+			null,
+			10,
+			1
+		);
+
+		// A buyer request reached its closing date.
+		$this->loader->add_action(
+			'wpss_buyer_request_status_changed',
+			function ( int $request_id, string $status ) use ( $notification_service ): void {
+				if ( \WPSellServices\Services\BuyerRequestService::STATUS_EXPIRED !== $status ) {
+					return;
+				}
+				$request = get_post( $request_id );
+				if ( ! $request || (int) $request->post_author <= 0 ) {
+					return;
+				}
+				$notification_service->send(
+					(int) $request->post_author,
+					'request_expired',
+					array(
+						'request_id'    => $request_id,
+						'request_title' => $request->post_title,
+						'action_url'    => (string) get_permalink( $request ),
+					)
+				);
+			},
+			null,
+			10,
+			2
+		);
+
+		// Service moderation decisions. Three surfaces fire these actions
+		// (ModerationService, the admin moderation page, the REST controller);
+		// the vendor is told from here, once, whichever one it was.
+		$this->loader->add_action(
+			'wpss_service_approved',
+			static function ( int $service_id ): void {
+				( new \WPSellServices\Services\ModerationService() )->notify_approved( $service_id );
+			},
+			null,
+			10,
+			1
+		);
+		$this->loader->add_action(
+			'wpss_service_rejected',
+			static function ( int $service_id, string $reason = '' ): void {
+				( new \WPSellServices\Services\ModerationService() )->notify_rejected( $service_id, $reason );
 			},
 			null,
 			10,
@@ -2724,6 +2808,10 @@ final class Plugin {
 			);
 		}
 
+		// A send that fails is logged to the audit log and retried once.
+		add_action( 'wp_mail_failed', array( \WPSellServices\Services\EmailService::class, 'on_mail_failed' ) );
+		add_action( \WPSellServices\Services\EmailService::RETRY_HOOK, array( \WPSellServices\Services\EmailService::class, 'retry' ), 10, 4 );
+
 		// --- DisputeWorkflowManager: lazy-init on first hook fire ---
 		$get_dispute_workflow = static function (): \WPSellServices\Services\DisputeWorkflowManager {
 			static $instance;
@@ -2754,6 +2842,8 @@ final class Plugin {
 			'wpss_dispute_opened'             => array( 'on_dispute_opened', 10, 4 ),
 			'wpss_dispute_response_submitted' => array( 'on_response_submitted', 10, 3 ),
 			'wpss_dispute_evidence_added'     => array( 'on_evidence_added', 10, 2 ),
+			'wpss_dispute_escalated'          => array( 'on_dispute_escalated', 10, 3 ),
+			'wpss_dispute_cancelled'          => array( 'on_dispute_cancelled', 10, 3 ),
 			// NOTE: 'wpss_dispute_resolved' is deliberately NOT wired here.
 			// NotificationService::notify_dispute_resolved() (wired above, ~:818)
 			// already notifies both parties with resolution-aware copy. Listening

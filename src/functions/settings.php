@@ -107,6 +107,11 @@ function wpss_settings_defaults(): array {
 			'notify_extension_proposed'     => true,
 			'notify_extension_approved'     => true,
 			'notify_extension_declined'     => true,
+			'notify_review_reply'           => true,
+			'notify_request_expired'        => true,
+			'notify_dispute_escalated'      => true,
+			'notify_dispute_cancelled'      => true,
+			'notify_tip_receipt'            => true,
 		),
 		'wpss_advanced'      => array(
 			'delete_data_on_uninstall' => false,

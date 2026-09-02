@@ -36,6 +36,7 @@ class NotificationService {
 	public const TYPE_VENDOR_REGISTERED  = 'vendor_registered';
 	public const TYPE_VENDOR_APPROVED    = 'vendor_approved';
 	public const TYPE_VENDOR_REJECTED    = 'vendor_rejected';
+	public const TYPE_VENDOR_SUSPENDED   = 'vendor_suspended';
 	public const TYPE_TIP_RECEIVED       = 'tip_received';
 
 	/**
@@ -268,6 +269,33 @@ class NotificationService {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (bool) $wpdb->delete( $table, array( 'id' => $notification_id ) );
+	}
+
+	/**
+	 * Write one notification to every administrator.
+	 *
+	 * Alerts that need a human - a refund the gateway could not make, a manual
+	 * refund to send - were written to user 0, which no dashboard ever reads.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string                     $type    Notification type.
+	 * @param string                     $title   Title.
+	 * @param string|NotificationMessage $message Body.
+	 * @param array<string, mixed>       $data    Additional data.
+	 * @return void
+	 */
+	public function notify_admins( string $type, string $title, string|NotificationMessage $message, array $data = array() ): void {
+		$admin_ids = get_users(
+			array(
+				'capability' => 'manage_options',
+				'fields'     => 'ID',
+			)
+		);
+
+		foreach ( $admin_ids as $admin_id ) {
+			$this->create( (int) $admin_id, $type, $title, $message, $data );
+		}
 	}
 
 	/**
@@ -663,41 +691,62 @@ class NotificationService {
 				break;
 
 			case 'disputed':
-				// Notify both parties about dispute.
+				// DisputeWorkflowManager::on_dispute_opened() writes one row per
+				// party with the reason and the response deadline. Writing a
+				// second, thinner "dispute opened" row here gave the other party
+				// two entries for one event.
+				break;
+
+			case 'refunded':
+				// The generic "status updated to Refunded" line said nothing about
+				// money. Both parties get the amount: what was refunded when the
+				// gateway has already answered, the order total otherwise.
+				$refunded = (float) ( $order->refunded_amount ?? 0 ) > 0
+					? (float) $order->refunded_amount
+					: (float) ( $order->total ?? 0 );
+				$amount   = wpss_format_price( $refunded, (string) ( $order->currency ?? '' ) );
+
 				$this->create(
 					$order->customer_id,
-					self::TYPE_DISPUTE_OPENED,
-					__( 'Dispute Opened', 'wp-sell-services' ),
+					self::TYPE_ORDER_STATUS,
+					__( 'Order Refunded', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
-							/* translators: %s: order number */
-							__( 'A dispute has been opened for Order #%s.', 'wp-sell-services' ),
-							$order_number
+							/* translators: 1: order number, 2: amount */
+							__( 'Order #%1$s has been refunded. %2$s is on its way back to your original payment method.', 'wp-sell-services' ),
+							$order_number,
+							NotificationMessage::strong( $amount )
 						)
 						->block()
 						->field( __( 'Service:', 'wp-sell-services' ), $service_name )
-						->paragraph( __( 'Our support team will review the case and get back to you soon.', 'wp-sell-services' ) ),
+						->field( __( 'Refund Amount:', 'wp-sell-services' ), $amount ),
 					array(
-						'order_id'     => $order_id,
-						'order_number' => $order_number,
+						'order_id'      => $order_id,
+						'order_number'  => $order_number,
+						'new_status'    => $new_status,
+						'refund_amount' => $refunded,
 					)
 				);
 				$this->create(
 					$order->vendor_id,
-					self::TYPE_DISPUTE_OPENED,
-					__( 'Dispute Opened', 'wp-sell-services' ),
+					self::TYPE_ORDER_STATUS,
+					__( 'Order Refunded', 'wp-sell-services' ),
 					NotificationMessage::make()
 						->line(
-							/* translators: %s: order number */
-							__( 'A dispute has been opened for Order #%s.', 'wp-sell-services' ),
-							$order_number
+							/* translators: 1: order number, 2: buyer name, 3: amount */
+							__( 'Order #%1$s from %2$s has been refunded (%3$s).', 'wp-sell-services' ),
+							$order_number,
+							$buyer_name,
+							NotificationMessage::strong( $amount )
 						)
 						->block()
 						->field( __( 'Service:', 'wp-sell-services' ), $service_name )
-						->paragraph( __( 'Our support team will review the case and get back to you soon. Please prepare any relevant information.', 'wp-sell-services' ) ),
+						->field( __( 'Refund Amount:', 'wp-sell-services' ), $amount ),
 					array(
-						'order_id'     => $order_id,
-						'order_number' => $order_number,
+						'order_id'      => $order_id,
+						'order_number'  => $order_number,
+						'new_status'    => $new_status,
+						'refund_amount' => $refunded,
 					)
 				);
 				break;
@@ -871,10 +920,10 @@ class NotificationService {
 				)
 			);
 
-		if ( ! empty( $review->comment ) ) {
+		if ( ! empty( $review->review ) ) {
 			$message->quote(
 				__( 'Review:', 'wp-sell-services' ),
-				wp_trim_words( $review->comment, 50 )
+				wp_trim_words( $review->review, 50 )
 			);
 		}
 
@@ -971,6 +1020,30 @@ class NotificationService {
 		if ( $tip_order ) {
 			( new EmailService() )->send_tip_received( $tip_order, $gross, $net_amount, $note );
 		}
+
+		// The buyer's receipt. Plain path: in-app row plus the generic mail.
+		$vendor       = get_user_by( 'id', $vendor_id );
+		$gross_amount = function_exists( 'wpss_format_price' )
+			? wpss_format_price( $gross, $currency )
+			: number_format_i18n( $gross, 2 ) . ' ' . $currency;
+		$this->create(
+			$customer_id,
+			'tip_receipt',
+			__( 'Tip sent', 'wp-sell-services' ),
+			NotificationMessage::make()->line(
+				/* translators: 1: amount, 2: vendor name, 3: order number */
+				__( 'Your tip of %1$s to %2$s on Order #%3$s has been paid.', 'wp-sell-services' ),
+				NotificationMessage::strong( $gross_amount ),
+				NotificationMessage::strong( $vendor ? $vendor->display_name : __( 'your seller', 'wp-sell-services' ) ),
+				$this->order_ref( $parent_order_id )
+			),
+			array(
+				'order_id'     => $parent_order_id,
+				'tip_order_id' => $tip_order ? $tip_order->id : 0,
+				'amount'       => $gross,
+				'vendor_id'    => $vendor_id,
+			)
+		);
 	}
 
 	/**
@@ -1291,6 +1364,63 @@ class NotificationService {
 				$message->paragraph( __( 'Nothing is wrong with your account — browse open requests and send another proposal.', 'wp-sell-services' ) );
 				break;
 
+			case 'review_reply':
+				$title = __( 'Your review got a reply', 'wp-sell-services' );
+				$message->line(
+					/* translators: 1: vendor name, 2: service name */
+					__( '%1$s replied to your review of "%2$s".', 'wp-sell-services' ),
+					NotificationMessage::strong( (string) ( $data['vendor_name'] ?? '' ) ),
+					(string) ( $data['service_title'] ?? '' )
+				);
+				if ( ! empty( $data['reply'] ) ) {
+					$message->quote( __( 'Reply:', 'wp-sell-services' ), wp_trim_words( (string) $data['reply'], 50 ) );
+				}
+				break;
+
+			case 'request_expired':
+				$title = __( 'Your request has expired', 'wp-sell-services' );
+				$message->line(
+					/* translators: %s: request title */
+					__( 'Your request "%s" reached its closing date and is no longer open to proposals.', 'wp-sell-services' ),
+					(string) ( $data['request_title'] ?? '' )
+				);
+				$message->paragraph( __( 'Post it again if you still need the work done.', 'wp-sell-services' ) );
+				break;
+
+			case 'dispute_escalated':
+				$title = __( 'Dispute Escalated', 'wp-sell-services' );
+				$message->line(
+					/* translators: %s: order number */
+					__( 'The dispute for Order #%s has been escalated to the marketplace team for a decision.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
+				);
+				if ( ! empty( $data['reason'] ) ) {
+					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), (string) $data['reason'] );
+				}
+				$message->paragraph( __( 'A member of the team will review the case and both parties will be told the outcome.', 'wp-sell-services' ) );
+				break;
+
+			case 'dispute_cancelled':
+				$title = __( 'Dispute Cancelled', 'wp-sell-services' );
+				$message->line(
+					/* translators: %s: order number */
+					__( 'The dispute for Order #%s has been withdrawn and the order is back to where it was.', 'wp-sell-services' ),
+					$this->order_ref( $data['order_id'] ?? 0 )
+				);
+				if ( ! empty( $data['reason'] ) ) {
+					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), (string) $data['reason'] );
+				}
+				break;
+
+			case 'withdrawal_requested':
+				$title = __( 'Withdrawal Requested', 'wp-sell-services' );
+				$message->line(
+					/* translators: %s: amount */
+					__( 'Your withdrawal request for %s has been received and is waiting for review.', 'wp-sell-services' ),
+					NotificationMessage::strong( wpss_format_price( (float) ( $data['amount'] ?? 0 ) ) )
+				);
+				break;
+
 			default:
 				$title = __( 'Notification', 'wp-sell-services' );
 				$message->line( __( 'You have a new notification. Please check your dashboard for details.', 'wp-sell-services' ) );
@@ -1378,17 +1508,7 @@ class NotificationService {
 			$platform_name
 		);
 
-		$dashboard_url = wpss_get_dashboard_url();
-
-		$content  = '<html><body>';
-		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
-		$content .= '<h2 style="color: #333;">' . esc_html( $platform_name ) . '</h2>';
-		$content .= '<p>' . sprintf(
-			/* translators: %s: recipient display name */
-			esc_html__( 'Hello %s,', 'wp-sell-services' ),
-			esc_html( $display_name )
-		) . '</p>';
-		$content .= '<p>' . esc_html__( 'Congratulations! Your vendor account has been successfully created.', 'wp-sell-services' ) . '</p>';
+		$content  = '<p>' . esc_html__( 'Congratulations! Your vendor account has been successfully created.', 'wp-sell-services' ) . '</p>';
 		$content .= '<p>' . esc_html__( 'You can now:', 'wp-sell-services' ) . '</p>';
 		$content .= '<ul>';
 		$content .= '<li>' . esc_html__( 'Create and publish services', 'wp-sell-services' ) . '</li>';
@@ -1396,14 +1516,7 @@ class NotificationService {
 		$content .= '<li>' . esc_html__( 'Communicate with customers', 'wp-sell-services' ) . '</li>';
 		$content .= '<li>' . esc_html__( 'Track your earnings', 'wp-sell-services' ) . '</li>';
 		$content .= '</ul>';
-		$content .= '<p><a href="' . esc_url( $dashboard_url ) . '" style="display: inline-block; background: #0073aa; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px;">';
-		$content .= esc_html__( 'Go to Your Dashboard', 'wp-sell-services' );
-		$content .= '</a></p>';
-		$content .= '<p style="color: #666; font-size: 14px;">' . esc_html__( 'If you have any questions, please don\'t hesitate to contact us.', 'wp-sell-services' ) . '</p>';
-		$content .= '</div>';
-		$content .= '</body></html>';
-
-		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		$content .= '<p>' . esc_html__( 'If you have any questions, please don\'t hesitate to contact us.', 'wp-sell-services' ) . '</p>';
 
 		/**
 		 * Filter vendor welcome email content.
@@ -1414,7 +1527,19 @@ class NotificationService {
 		 */
 		$content = apply_filters( 'wpss_vendor_welcome_email_content', $content, $user, $platform_name );
 
-		return wp_mail( $user->user_email, $subject, $content, $headers );
+		return ( new EmailService() )->send(
+			$user->user_email,
+			$subject,
+			self::TYPE_VENDOR_REGISTERED,
+			array(
+				'recipient'     => $user,
+				'email_heading' => __( 'Welcome aboard', 'wp-sell-services' ),
+				'content'       => $content,
+				'button_url'    => wpss_get_dashboard_url(),
+				'button_text'   => __( 'Go to Your Dashboard', 'wp-sell-services' ),
+				'template'      => 'generic',
+			)
+		);
 	}
 
 	/**
@@ -1432,15 +1557,7 @@ class NotificationService {
 			$platform_name
 		);
 
-		$content  = '<html><body>';
-		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
-		$content .= '<h2 style="color: #333;">' . esc_html( $platform_name ) . '</h2>';
-		$content .= '<p>' . sprintf(
-			/* translators: %s: recipient display name */
-			esc_html__( 'Hello %s,', 'wp-sell-services' ),
-			esc_html( $display_name )
-		) . '</p>';
-		$content .= '<p>' . esc_html__( 'Thank you for registering as a vendor on our marketplace!', 'wp-sell-services' ) . '</p>';
+		$content  = '<p>' . esc_html__( 'Thank you for registering as a vendor on our marketplace!', 'wp-sell-services' ) . '</p>';
 		$content .= '<p>' . esc_html__( 'Your application has been received and is currently under review by our team. We will carefully review your profile and get back to you as soon as possible.', 'wp-sell-services' ) . '</p>';
 		$content .= '<p><strong>' . esc_html__( 'What happens next?', 'wp-sell-services' ) . '</strong></p>';
 		$content .= '<ul>';
@@ -1448,11 +1565,7 @@ class NotificationService {
 		$content .= '<li>' . esc_html__( 'You will receive an email once a decision has been made', 'wp-sell-services' ) . '</li>';
 		$content .= '<li>' . esc_html__( 'If approved, you can start creating services immediately', 'wp-sell-services' ) . '</li>';
 		$content .= '</ul>';
-		$content .= '<p style="color: #666; font-size: 14px;">' . esc_html__( 'If you have any questions in the meantime, please don\'t hesitate to contact us.', 'wp-sell-services' ) . '</p>';
-		$content .= '</div>';
-		$content .= '</body></html>';
-
-		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		$content .= '<p>' . esc_html__( 'If you have any questions in the meantime, please don\'t hesitate to contact us.', 'wp-sell-services' ) . '</p>';
 
 		/**
 		 * Filter vendor pending review email content.
@@ -1463,7 +1576,17 @@ class NotificationService {
 		 */
 		$content = apply_filters( 'wpss_vendor_pending_email_content', $content, $user, $platform_name );
 
-		return wp_mail( $user->user_email, $subject, $content, $headers );
+		return ( new EmailService() )->send(
+			$user->user_email,
+			$subject,
+			self::TYPE_VENDOR_REGISTERED,
+			array(
+				'recipient'     => $user,
+				'email_heading' => __( 'Application received', 'wp-sell-services' ),
+				'content'       => $content,
+				'template'      => 'generic',
+			)
+		);
 	}
 
 	/**
@@ -1486,12 +1609,7 @@ class NotificationService {
 			$display_name
 		);
 
-		$vendors_url = admin_url( 'admin.php?page=wpss-vendors' );
-
-		$content  = '<html><body>';
-		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
-		$content .= '<h2 style="color: #333;">' . esc_html__( 'New Vendor Registration', 'wp-sell-services' ) . '</h2>';
-		$content .= '<p>' . esc_html__( 'A new vendor has registered on your marketplace.', 'wp-sell-services' ) . '</p>';
+		$content  = '<p>' . esc_html__( 'A new vendor has registered on your marketplace.', 'wp-sell-services' ) . '</p>';
 		$content .= '<table style="border-collapse: collapse; width: 100%; margin: 20px 0;">';
 		$content .= '<tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>' . esc_html__( 'Display Name', 'wp-sell-services' ) . '</strong></td>';
 		$content .= '<td style="padding: 8px; border: 1px solid #ddd;">' . esc_html( $display_name ) . '</td></tr>';
@@ -1502,13 +1620,6 @@ class NotificationService {
 		$content .= '<tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>' . esc_html__( 'Registration Date', 'wp-sell-services' ) . '</strong></td>';
 		$content .= '<td style="padding: 8px; border: 1px solid #ddd;">' . esc_html( current_time( 'F j, Y g:i a' ) ) . '</td></tr>';
 		$content .= '</table>';
-		$content .= '<p><a href="' . esc_url( $vendors_url ) . '" style="display: inline-block; background: #0073aa; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px;">';
-		$content .= esc_html__( 'View All Vendors', 'wp-sell-services' );
-		$content .= '</a></p>';
-		$content .= '</div>';
-		$content .= '</body></html>';
-
-		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 
 		/**
 		 * Filter admin vendor notification email content.
@@ -1518,7 +1629,19 @@ class NotificationService {
 		 */
 		$content = apply_filters( 'wpss_admin_vendor_notification_content', $content, $user );
 
-		return wp_mail( $admin_email, $subject, $content, $headers );
+		return ( new EmailService() )->send(
+			$admin_email,
+			$subject,
+			self::TYPE_VENDOR_REGISTERED,
+			array(
+				'recipient'     => get_user_by( 'email', $admin_email ),
+				'email_heading' => __( 'New Vendor Registration', 'wp-sell-services' ),
+				'content'       => $content,
+				'button_url'    => admin_url( 'admin.php?page=wpss-vendors' ),
+				'button_text'   => __( 'View All Vendors', 'wp-sell-services' ),
+				'template'      => 'generic',
+			)
+		);
 	}
 
 	/**
@@ -1536,10 +1659,9 @@ class NotificationService {
 			return;
 		}
 
-		$platform_name = wpss_get_option( 'general', 'platform_name', get_bloginfo( 'name' ) );
+		$platform_name = wpss_get_platform_name();
 		$dashboard_url = wpss_get_dashboard_url();
 
-		// Create in-app notification.
 		$this->create(
 			$user_id,
 			self::TYPE_VENDOR_APPROVED,
@@ -1552,51 +1674,24 @@ class NotificationService {
 			array(
 				'user_id'       => $user_id,
 				'dashboard_url' => $dashboard_url,
+				'action_url'    => $dashboard_url,
 			)
 		);
 
-		// Send approval email.
-		$subject = sprintf(
-			/* translators: %s: platform name */
-			__( 'Your Vendor Application Has Been Approved - %s', 'wp-sell-services' ),
-			$platform_name
+		( new EmailService() )->send(
+			$user->user_email,
+			sprintf(
+				/* translators: %s: platform name */
+				__( 'Your Vendor Application Has Been Approved - %s', 'wp-sell-services' ),
+				$platform_name
+			),
+			EmailService::TYPE_VENDOR_APPROVED,
+			array(
+				'recipient'     => $user,
+				'email_heading' => __( 'Application approved', 'wp-sell-services' ),
+				'dashboard_url' => $dashboard_url,
+			)
 		);
-
-		$content  = '<html><body>';
-		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
-		$content .= '<h2 style="color: #333;">' . esc_html( $platform_name ) . '</h2>';
-		$content .= '<p>' . sprintf(
-			/* translators: %s: recipient display name */
-			esc_html__( 'Hello %s,', 'wp-sell-services' ),
-			esc_html( $user->display_name )
-		) . '</p>';
-		$content .= '<p>' . esc_html__( 'Great news! Your vendor application has been approved.', 'wp-sell-services' ) . '</p>';
-		$content .= '<p>' . esc_html__( 'You can now:', 'wp-sell-services' ) . '</p>';
-		$content .= '<ul>';
-		$content .= '<li>' . esc_html__( 'Create and publish services', 'wp-sell-services' ) . '</li>';
-		$content .= '<li>' . esc_html__( 'Receive and manage orders', 'wp-sell-services' ) . '</li>';
-		$content .= '<li>' . esc_html__( 'Communicate with customers', 'wp-sell-services' ) . '</li>';
-		$content .= '<li>' . esc_html__( 'Track your earnings', 'wp-sell-services' ) . '</li>';
-		$content .= '</ul>';
-		$content .= '<p><a href="' . esc_url( $dashboard_url ) . '" style="display: inline-block; background: #0073aa; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px;">';
-		$content .= esc_html__( 'Go to Your Dashboard', 'wp-sell-services' );
-		$content .= '</a></p>';
-		$content .= '<p style="color: #666; font-size: 14px;">' . esc_html__( 'If you have any questions, please don\'t hesitate to contact us.', 'wp-sell-services' ) . '</p>';
-		$content .= '</div>';
-		$content .= '</body></html>';
-
-		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
-
-		/**
-		 * Filter vendor approval email content.
-		 *
-		 * @param string   $content  Email content.
-		 * @param \WP_User $user     User object.
-		 * @param string   $platform Platform name.
-		 */
-		$content = apply_filters( 'wpss_vendor_approved_email_content', $content, $user, $platform_name );
-
-		wp_mail( $user->user_email, $subject, $content, $headers );
 	}
 
 	/**
@@ -1604,19 +1699,19 @@ class NotificationService {
 	 *
 	 * Sends in-app notification and email to the vendor.
 	 *
-	 * @param int $user_id User ID.
+	 * @param int    $user_id User ID.
+	 * @param string $reason  Reason given by the reviewer, if any.
 	 * @return void
 	 */
-	public function notify_vendor_rejected( int $user_id ): void {
+	public function notify_vendor_rejected( int $user_id, string $reason = '' ): void {
 		$user = get_user_by( 'id', $user_id );
 
 		if ( ! $user ) {
 			return;
 		}
 
-		$platform_name = wpss_get_option( 'general', 'platform_name', get_bloginfo( 'name' ) );
+		$platform_name = wpss_get_platform_name();
 
-		// Create in-app notification.
 		$this->create(
 			$user_id,
 			self::TYPE_VENDOR_REJECTED,
@@ -1626,45 +1721,72 @@ class NotificationService {
 				__( 'Your vendor application on %s was not approved at this time.', 'wp-sell-services' ),
 				$platform_name
 			),
+			array( 'user_id' => $user_id )
+		);
+
+		( new EmailService() )->send(
+			$user->user_email,
+			sprintf(
+				/* translators: %s: platform name */
+				__( 'Vendor Application Update - %s', 'wp-sell-services' ),
+				$platform_name
+			),
+			EmailService::TYPE_VENDOR_REJECTED,
 			array(
-				'user_id' => $user_id,
+				'recipient'        => $user,
+				'email_heading'    => __( 'Application not approved', 'wp-sell-services' ),
+				'rejection_reason' => $reason,
 			)
 		);
+	}
 
-		// Send rejection email.
-		$subject = sprintf(
-			/* translators: %s: platform name */
-			__( 'Vendor Application Update - %s', 'wp-sell-services' ),
-			$platform_name
+	/**
+	 * Notify a vendor that their account has been suspended.
+	 *
+	 * A suspended vendor used to get the rejection wording - "we are unable to
+	 * approve your application" - for an account that had been selling.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $reason  Reason given by the admin, if any.
+	 * @return void
+	 */
+	public function notify_vendor_suspended( int $user_id, string $reason = '' ): void {
+		$user = get_user_by( 'id', $user_id );
+
+		if ( ! $user ) {
+			return;
+		}
+
+		$platform_name = wpss_get_platform_name();
+
+		$this->create(
+			$user_id,
+			self::TYPE_VENDOR_SUSPENDED,
+			__( 'Vendor Account Suspended', 'wp-sell-services' ),
+			sprintf(
+				/* translators: %s: platform name */
+				__( 'Your vendor account on %s has been suspended. Your services are hidden and you cannot take new orders until it is reinstated.', 'wp-sell-services' ),
+				$platform_name
+			),
+			array( 'user_id' => $user_id )
 		);
 
-		$content  = '<html><body>';
-		$content .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">';
-		$content .= '<h2 style="color: #333;">' . esc_html( $platform_name ) . '</h2>';
-		$content .= '<p>' . sprintf(
-			/* translators: %s: recipient display name */
-			esc_html__( 'Hello %s,', 'wp-sell-services' ),
-			esc_html( $user->display_name )
-		) . '</p>';
-		$content .= '<p>' . esc_html__( 'Thank you for your interest in becoming a vendor on our marketplace.', 'wp-sell-services' ) . '</p>';
-		$content .= '<p>' . esc_html__( 'After reviewing your application, we are unable to approve it at this time.', 'wp-sell-services' ) . '</p>';
-		$content .= '<p>' . esc_html__( 'If you have any questions or would like to reapply in the future, please don\'t hesitate to contact us.', 'wp-sell-services' ) . '</p>';
-		$content .= '<p style="color: #666; font-size: 14px;">' . esc_html__( 'Thank you for your understanding.', 'wp-sell-services' ) . '</p>';
-		$content .= '</div>';
-		$content .= '</body></html>';
-
-		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
-
-		/**
-		 * Filter vendor rejection email content.
-		 *
-		 * @param string   $content  Email content.
-		 * @param \WP_User $user     User object.
-		 * @param string   $platform Platform name.
-		 */
-		$content = apply_filters( 'wpss_vendor_rejected_email_content', $content, $user, $platform_name );
-
-		wp_mail( $user->user_email, $subject, $content, $headers );
+		( new EmailService() )->send(
+			$user->user_email,
+			sprintf(
+				/* translators: %s: platform name */
+				__( 'Your Vendor Account Has Been Suspended - %s', 'wp-sell-services' ),
+				$platform_name
+			),
+			EmailService::TYPE_VENDOR_SUSPENDED,
+			array(
+				'recipient'         => $user,
+				'email_heading'     => __( 'Account suspended', 'wp-sell-services' ),
+				'suspension_reason' => $reason,
+			)
+		);
 	}
 
 	/**
@@ -1675,9 +1797,6 @@ class NotificationService {
 	 * @return bool
 	 */
 	private function should_send_email( int $user_id, string $type ): bool {
-		// First check admin notification settings (global toggle).
-		$notification_settings = get_option( 'wpss_notifications' );
-
 		// Map notification types to admin setting keys.
 		// Includes both constants and types used by OrderWorkflowManager.
 		$type_to_setting = array(
@@ -1718,26 +1837,18 @@ class NotificationService {
 			'cancellation_requested'      => 'notify_order_cancelled',
 			'cancellation_submitted'      => 'notify_order_cancelled',
 			'cancellation_auto_approved'  => 'notify_order_cancelled',
+			// Events added in 1.7.1, each with its own toggle.
+			'review_reply'                => 'notify_review_reply',
+			'request_expired'             => 'notify_request_expired',
+			'dispute_escalated'           => 'notify_dispute_escalated',
+			'dispute_cancelled'           => 'notify_dispute_cancelled',
+			'tip_receipt'                 => 'notify_tip_receipt',
 		);
 
-		// Check if admin has disabled this notification type globally.
-		if ( isset( $type_to_setting[ $type ] ) ) {
-			$setting_key = $type_to_setting[ $type ];
-
-			// Option never saved (fresh install) → allow sending (fall through to user prefs).
-			if ( false !== $notification_settings ) {
-				// Option was saved but is corrupted or not an array → allow sending.
-				if ( is_array( $notification_settings ) ) {
-					// Option was saved — missing key means unchecked (disabled).
-					if ( ! array_key_exists( $setting_key, $notification_settings ) ) {
-						return false;
-					}
-
-					if ( empty( $notification_settings[ $setting_key ] ) ) {
-						return false;
-					}
-				}
-			}
+		// Admin toggle. A key nobody has unticked is on - the same reading
+		// EmailService uses, through the same helper.
+		if ( isset( $type_to_setting[ $type ] ) && ! wpss_notification_type_enabled( $type_to_setting[ $type ] ) ) {
+			return false;
 		}
 
 		// Check user preferences. Saved by the dashboard profile form as a
@@ -1766,7 +1877,8 @@ class NotificationService {
 			self::TYPE_DISPUTE_OPENED,
 			self::TYPE_DISPUTE_RESOLVED,
 			self::TYPE_DEADLINE_WARNING,
-			self::TYPE_VENDOR_REGISTERED,
+			// TYPE_VENDOR_REGISTERED is not here: notify_vendor_registered()
+			// sends the welcome / pending mail itself, so the row must not.
 			// OrderWorkflowManager types and status notifications. Again only the
 			// ones without a constant above - this is an in_array() haystack, so the
 			// duplicates were inert, just misleading.
@@ -1789,6 +1901,12 @@ class NotificationService {
 			'cancellation_requested',
 			'cancellation_submitted',
 			'cancellation_auto_approved',
+			// Events added in 1.7.1.
+			'review_reply',
+			'request_expired',
+			'dispute_escalated',
+			'dispute_cancelled',
+			'tip_receipt',
 		);
 
 		return in_array( $type, $important_types, true );
@@ -1838,6 +1956,9 @@ class NotificationService {
 			'dispute_response_received'   => 'disputes',
 			'dispute_reminder'            => 'disputes',
 			self::TYPE_TIP_RECEIVED       => 'tips',
+			'review_reply'                => 'completion',
+			'dispute_escalated'           => 'disputes',
+			'dispute_cancelled'           => 'disputes',
 		);
 
 		return $type_to_category[ $type ] ?? null;
@@ -1911,13 +2032,21 @@ class NotificationService {
 	}
 
 	/**
-	 * Send email notification.
+	 * Send the email for an in-app row.
+	 *
+	 * ONE send path. This used to build its own HTML document and call
+	 * wp_mail() directly, beside EmailService doing the same with templates;
+	 * now every mail leaves through {@see EmailService::send()}, so the
+	 * subject / header / from-name filters, the failure log and the retry apply
+	 * to all of it. The row's type is the email type, so the admin toggle and
+	 * the recipient's preferences are read the same way for both surfaces; the
+	 * body renders through generic.php.
 	 *
 	 * @param int    $user_id User ID.
 	 * @param string $subject Email subject.
-	 * @param string $message Email message.
+	 * @param string $message Email message (HTML).
 	 * @param array  $data    Additional data.
-	 * @param string $type    Notification type (passed to branding filters).
+	 * @param string $type    Notification type.
 	 * @return bool
 	 */
 	private function send_email( int $user_id, string $subject, string $message, array $data = array(), string $type = '' ): bool {
@@ -1927,132 +2056,39 @@ class NotificationService {
 			return false;
 		}
 
-		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
-
-		// Build email content.
-		$email_content = $this->build_email_content( $message, $data, $type );
-
 		/**
 		 * Filter email content before sending.
 		 *
-		 * @param string $email_content Email content.
-		 * @param string $subject       Email subject.
-		 * @param int    $user_id       User ID.
-		 * @param array  $data          Additional data.
+		 * @param string $message Email body (HTML fragment).
+		 * @param string $subject Email subject.
+		 * @param int    $user_id User ID.
+		 * @param array  $data    Additional data.
 		 */
-		$email_content = apply_filters( 'wpss_notification_email_content', $email_content, $subject, $user_id, $data );
+		$message = apply_filters( 'wpss_notification_email_content', $message, $subject, $user_id, $data );
 
-		return wp_mail( $user->user_email, $subject, $email_content, $headers );
-	}
-
-	/**
-	 * Build email content.
-	 *
-	 * Header/footer variables (site name, logo, base color, footer text) run
-	 * through the same `wpss_email_header_vars` filter the EmailService
-	 * templates use, so white-label branding (Pro) applies to notification
-	 * emails too.
-	 *
-	 * @param string $message Message.
-	 * @param array  $data    Additional data.
-	 * @param string $type    Notification type (passed to branding filters).
-	 * @return string
-	 */
-	private function build_email_content( string $message, array $data = array(), string $type = '' ): string {
-		$vars = array(
-			'site_name'    => wpss_get_platform_name(),
-			'site_url'     => home_url(),
-			'header_image' => '',
-			'footer_text'  => '',
-			'base_color'   => '#1e3a5f',
-		);
-
-		/** This filter is documented in src/Services/EmailService.php */
-		$vars = apply_filters( 'wpss_email_header_vars', $vars, $type );
-
-		$site_name    = (string) ( $vars['site_name'] ?? wpss_get_platform_name() );
-		$site_url     = (string) ( $vars['site_url'] ?? home_url() );
-		$header_image = (string) ( $vars['header_image'] ?? '' );
-		$footer_text  = (string) ( $vars['footer_text'] ?? '' );
-		$base_color   = sanitize_hex_color( (string) ( $vars['base_color'] ?? '' ) );
-
-		if ( ! $base_color ) {
-			$base_color = '#1e3a5f';
-		}
-
-		// Branded logo when configured; plain site-name heading otherwise.
-		if ( '' !== $header_image ) {
-			$header_inner = '<img src="' . esc_url( $header_image ) . '" alt="' . esc_attr( $site_name ) . '" style="max-height: 60px; max-width: 100%; display: inline-block;">';
-		} else {
-			$header_inner = '<h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">' . esc_html( $site_name ) . '</h1>';
-		}
-
-		// Professional email template.
-		$content = '<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, sans-serif; background-color: #f5f5f5;">
-	<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
-		<tr>
-			<td align="center">
-				<table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-					<!-- Header -->
-					<tr>
-						<td style="background-color: ' . esc_attr( $base_color ) . '; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-							' . $header_inner . '
-						</td>
-					</tr>
-					<!-- Content -->
-					<tr>
-						<td style="padding: 40px 30px;">
-							<div style="color: #333333; font-size: 16px; line-height: 1.6;">
-								' . wp_kses_post( $message ) . '
-							</div>';
-
-		// Add action button if order ID is available.
+		$button_url  = '';
+		$button_text = '';
 		if ( ! empty( $data['order_id'] ) ) {
-			$order_url = wpss_get_order_url( (int) $data['order_id'] );
-			$content  .= '
-							<div style="text-align: center; margin-top: 30px;">
-								<a href="' . esc_url( $order_url ) . '" style="display: inline-block; background-color: ' . esc_attr( $base_color ) . '; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Order Details</a>
-							</div>';
+			$button_url  = wpss_get_order_url( (int) $data['order_id'] );
+			$button_text = __( 'View Order Details', 'wp-sell-services' );
+		} elseif ( ! empty( $data['action_url'] ) ) {
+			$button_url  = (string) $data['action_url'];
+			$button_text = __( 'View Details', 'wp-sell-services' );
 		}
 
-		$content .= '
-						</td>
-					</tr>
-					<!-- Footer -->
-					<tr>
-						<td style="background-color: #f8f9fa; padding: 25px 30px; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;">
-							<p style="color: #6c757d; font-size: 14px; margin: 0 0 10px 0; text-align: center;">
-								This email was sent from <a href="' . esc_url( $site_url ) . '" style="color: ' . esc_attr( $base_color ) . '; text-decoration: none;">' . esc_html( $site_name ) . '</a>
-							</p>
-							<p style="color: #adb5bd; font-size: 12px; margin: 0; text-align: center;">
-								If you have any questions, please contact our support team.
-							</p>';
-
-		// Custom footer text (white-label) appended as its own line.
-		if ( '' !== $footer_text ) {
-			$content .= '
-							<p style="color: #adb5bd; font-size: 12px; margin: 10px 0 0 0; text-align: center;">
-								' . wp_kses_post( $footer_text ) . '
-							</p>';
-		}
-
-		$content .= '
-						</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
-</body>
-</html>';
-
-		return $content;
+		return ( new EmailService() )->send(
+			$user->user_email,
+			$subject,
+			$type,
+			array(
+				'recipient'     => $user,
+				'email_heading' => $subject,
+				'content'       => $message,
+				'button_url'    => $button_url,
+				'button_text'   => $button_text,
+				'template'      => 'generic',
+			)
+		);
 	}
 
 	/**
@@ -2121,33 +2157,11 @@ class NotificationService {
 	 * @return bool True if EmailService covers this type.
 	 */
 	private function is_email_service_handling( string $type ): bool {
-		// EmailService hooks into wpss_order_status_changed at priority 20.
-		// If it is not hooked, it is not active — allow NotificationService emails.
-		if ( ! has_action( 'wpss_order_status_changed', array( 'WPSellServices\Services\EmailService', 'handle_status_change' ) ) ) {
-			// EmailService registers an instance method, so check by inspecting all callbacks.
-			global $wp_filter;
-
-			$is_email_service_active = false;
-
-			if ( isset( $wp_filter['wpss_order_status_changed'] ) ) {
-				foreach ( $wp_filter['wpss_order_status_changed']->callbacks as $priority => $callbacks ) {
-					foreach ( $callbacks as $callback ) {
-						if ( is_array( $callback['function'] )
-							&& is_object( $callback['function'][0] )
-							&& $callback['function'][0] instanceof EmailService
-						) {
-							$is_email_service_active = true;
-							break 2;
-						}
-					}
-				}
-			}
-
-			if ( ! $is_email_service_active ) {
-				return false;
-			}
-		}
-
+		// EmailService is wired unconditionally in Plugin.php (closures, not
+		// array callables). The old "is it hooked?" probe looked for array
+		// callables, never found one, and answered false for every type - so
+		// this guard never guarded anything and the plain mail went out beside
+		// the branded one.
 		// Notification types that EmailService covers with branded templates.
 		$covered_types = array(
 			// Order status change types (EmailService::handle_status_change).
@@ -2179,6 +2193,9 @@ class NotificationService {
 			'proposal_received',
 			'proposal_accepted',
 			'proposal_rejected',
+			// Reviews: Plugin.php calls EmailService::send_review_received()
+			// on wpss_review_created; the row must not mail a second time.
+			self::TYPE_REVIEW_RECEIVED,
 		);
 
 		return in_array( $type, $covered_types, true );

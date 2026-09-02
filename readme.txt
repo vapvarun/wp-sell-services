@@ -291,6 +291,9 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Uninstall with delete data now removes scheduled jobs, order files and every plugin user meta.
 * Fix      - Usage tracking is no longer switched on without the owner opting in.
 * Security - Message, contact and dispute attachments are stored privately like deliveries, dispute evidence checks ownership, and vendor payout details are encrypted at rest.
+* New      - Notifications for review replies, expired requests, dispute escalation and cancellation, withdrawal progress, service moderation decisions and tip receipts, each with an admin toggle.
+* Fix      - Order, payment and moderation emails are never dropped by the message cooldown, review and requirement mails are sent once, and failed sends are logged and retried.
+* Fix      - Suspended vendors receive a suspension notice instead of the rejection wording.
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Payment intents carry the vendor id for every order type.
 * Dev      - New wpss_auth_login_challenge filter for two-factor plugins.
