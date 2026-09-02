@@ -103,7 +103,10 @@ class ReviewService {
 		$review_id = (int) $wpdb->insert_id;
 
 		if ( ! $review_id ) {
-			return null;
+			// UNIQUE (order_id, review_type) since 1.7.1: a double submit that
+			// slipped past has_review() is refused by the database, and the
+			// review the buyer wanted already exists.
+			return false !== stripos( (string) $wpdb->last_error, 'Duplicate entry' ) ? $this->get_by_order( $order_id ) : null;
 		}
 
 		// Update service and vendor ratings.

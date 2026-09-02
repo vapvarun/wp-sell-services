@@ -45,7 +45,43 @@ class CommissionService {
 		// Use pre-tax base (subtotal + addons) for commission calculation.
 		$commission_base = (float) $order->subtotal + (float) $order->addons_total;
 
+		// Commission is LOCKED when the order is created / paid. A row that
+		// already carries its rate and split keeps them: a rate change in
+		// Settings, a new tiered rule or a vendor override between payment and
+		// completion must not rewrite an order whose Stripe Connect fee was
+		// already taken at the old rate (Basecamp F10). Only the kept share is
+		// applied, exactly as compute_breakdown() does for a fresh row, so a
+		// partial refund before completion still credits the netted figure.
+		// Rows from before 1.2.2 have no rate and are computed as before.
+		if ( null !== $order->commission_rate && null !== $order->vendor_earnings ) {
+			return self::net_locked_breakdown( $order, $commission_base );
+		}
+
 		return self::compute_breakdown( $commission_base, $order );
+	}
+
+	/**
+	 * The persisted commission split, scaled to the share the buyer kept.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param object $order Order exposing commission_rate, platform_fee,
+	 *                      vendor_earnings, total, refunded_amount, currency.
+	 * @param float  $base  Pre-tax base (subtotal + addons).
+	 * @return array{order_total: float, commission_rate: float, platform_fee: float, vendor_earnings: float}
+	 */
+	private static function net_locked_breakdown( object $order, float $base ): array {
+		$decimals = wpss_get_currency_decimals( (string) ( $order->currency ?? '' ) );
+		$total    = (float) ( $order->total ?? 0 );
+		$refunded = (float) ( $order->refunded_amount ?? 0 );
+		$kept     = ( $refunded > 0 && $total > 0 ) ? 1 - ( min( $refunded, $total ) / $total ) : 1.0;
+
+		return array(
+			'order_total'     => round( $base * $kept, $decimals ),
+			'commission_rate' => (float) $order->commission_rate,
+			'platform_fee'    => round( (float) ( $order->platform_fee ?? 0 ) * $kept, $decimals ),
+			'vendor_earnings' => round( (float) $order->vendor_earnings * $kept, $decimals ),
+		);
 	}
 
 	/**
@@ -232,10 +268,8 @@ class CommissionService {
 			return false;
 		}
 
-		// Update vendor profile earnings.
-		$this->update_vendor_earnings( $order->vendor_id, $commission );
-
-		// Create wallet transaction for vendor earnings.
+		// Create wallet transaction for vendor earnings. The vendor profile's
+		// cached totals are recomputed from the ledger by the insert helper.
 		$this->create_earnings_transaction( $order_id, $order->vendor_id, $commission );
 
 		/**
@@ -327,37 +361,6 @@ class CommissionService {
 	}
 
 	/**
-	 * Update vendor profile with earnings.
-	 *
-	 * @param int   $vendor_id  Vendor user ID.
-	 * @param array $commission Commission breakdown.
-	 * @return void
-	 */
-	private function update_vendor_earnings( int $vendor_id, array $commission ): void {
-		global $wpdb;
-
-		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$profiles_table}
-				SET
-					total_earnings = total_earnings + %f,
-					net_earnings = net_earnings + %f,
-					total_commission = total_commission + %f,
-					updated_at = %s
-				WHERE user_id = %d",
-				$commission['order_total'],
-				$commission['vendor_earnings'],
-				$commission['platform_fee'],
-				current_time( 'mysql' ),
-				$vendor_id
-			)
-		);
-	}
-
-	/**
 	 * Create wallet transaction for vendor earnings.
 	 *
 	 * @param int   $order_id   Order ID.
@@ -368,25 +371,18 @@ class CommissionService {
 	private function create_earnings_transaction( int $order_id, int $vendor_id, array $commission ): void {
 		global $wpdb;
 
-		$transactions_table = $wpdb->prefix . 'wpss_wallet_transactions';
-
 		// Lock the vendor's wallet transactions to prevent balance race conditions.
 		$wpdb->query( 'START TRANSACTION' );
 
 		// Get current balance with row lock.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$current_balance = (float) wpss_get_ledger_balance( (int) $vendor_id, true );
 
-		$new_balance = $current_balance + $commission['vendor_earnings'];
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$inserted = $wpdb->insert(
-			$transactions_table,
+		$inserted = wpss_insert_ledger_row(
 			array(
 				'user_id'        => $vendor_id,
 				'type'           => 'order_earning',
 				'amount'         => $commission['vendor_earnings'],
-				'balance_after'  => $new_balance,
+				'balance_after'  => $current_balance + $commission['vendor_earnings'],
 				'currency'       => wpss_get_currency(),
 				'description'    => sprintf(
 					/* translators: 1: order ID, 2: order total, 3: commission rate */
@@ -399,8 +395,7 @@ class CommissionService {
 				'reference_id'   => $order_id,
 				'status'         => 'completed',
 				'created_at'     => current_time( 'mysql' ),
-			),
-			array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
+			)
 		);
 
 		if ( ! $inserted ) {
@@ -410,7 +405,6 @@ class CommissionService {
 
 		$wpdb->query( 'COMMIT' );
 	}
-
 
 	/**
 	 * Get order commission details.

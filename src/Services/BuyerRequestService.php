@@ -10,6 +10,8 @@
 
 namespace WPSellServices\Services;
 
+use WPSellServices\Checkout\CheckoutIntentService;
+
 use WPSellServices\PostTypes\BuyerRequestPostType;
 use WPSellServices\Taxonomies\ServiceCategoryTaxonomy;
 
@@ -677,7 +679,23 @@ class BuyerRequestService {
 		// through the standard pay_order checkout.
 		$is_milestone_contract = isset( $proposal->contract_type ) && ProposalService::CONTRACT_TYPE_MILESTONE === $proposal->contract_type;
 
-		$parent_total          = $is_milestone_contract ? 0.0 : (float) $proposal->proposed_price;
+		// Priced and split the way a catalog order is: tax through the checkout
+		// intent's line pricing, commission locked at creation through the one
+		// breakdown authority. Both used to be skipped here, so a proposal
+		// order carried no tax and took whatever rate applied at completion.
+		$parent_subtotal = $is_milestone_contract ? 0.0 : (float) $proposal->proposed_price;
+		$parent_service  = isset( $proposal->service_id ) ? (int) $proposal->service_id : 0;
+		$line            = CheckoutIntentService::price_line( $parent_service, $parent_subtotal, 0.0, (int) $proposal->vendor_id );
+		$breakdown       = CommissionService::compute_breakdown(
+			$parent_subtotal,
+			(object) array(
+				'id'         => 0,
+				'vendor_id'  => (int) $proposal->vendor_id,
+				'service_id' => $parent_service,
+			)
+		);
+		$parent_total    = $line['total'];
+
 		$parent_status         = $is_milestone_contract ? 'in_progress' : 'pending_payment';
 		$parent_payment_status = $is_milestone_contract ? 'paid' : 'pending';
 		$parent_paid_at        = $is_milestone_contract ? current_time( 'mysql' ) : null;
@@ -723,15 +741,18 @@ class BuyerRequestService {
 				'order_number'       => $order_number,
 				'customer_id'        => $request->author_id,
 				'vendor_id'          => $proposal->vendor_id,
-				'service_id'         => isset( $proposal->service_id ) ? (int) $proposal->service_id : 0,
+				'service_id'         => $parent_service,
 				'package_id'         => null,
 				'addons'             => wp_json_encode( array() ),
 				'platform'           => 'request',
 				'platform_order_id'  => $request_id,
-				'subtotal'           => $parent_total,
+				'subtotal'           => $parent_subtotal,
 				'addons_total'       => 0,
 				'total'              => $parent_total,
 				'currency'           => wpss_get_currency(),
+				'commission_rate'    => $breakdown['commission_rate'],
+				'platform_fee'       => $breakdown['platform_fee'],
+				'vendor_earnings'    => $breakdown['vendor_earnings'],
 				'status'             => $parent_status,
 				'delivery_deadline'  => $deadline,
 				'original_deadline'  => $deadline,
@@ -747,11 +768,13 @@ class BuyerRequestService {
 						[
 							'proposal_snapshot' => $proposal_snapshot,
 							'contract_type'     => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
+							'tax_rate'          => $line['tax_rate'],
+							'tax_amount'        => $line['tax'],
 						]
 					)
 				),
 			),
-			array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' )
+			array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' )
 		);
 
 		if ( ! $result ) {

@@ -186,7 +186,6 @@
 								'<th>' + (i18n.walletColType) + '</th>' +
 								'<th>' + (i18n.walletColDescription) + '</th>' +
 								'<th class="wpss-wallet__amount-col">' + (i18n.walletColAmount) + '</th>' +
-								'<th class="wpss-wallet__amount-col">' + (i18n.walletColBalance) + '</th>' +
 							'</tr></thead>' +
 							'<tbody></tbody>' +
 						'</table>' +
@@ -267,10 +266,6 @@
 			$('<td>')
 				.addClass('wpss-wallet__amount-col wpss-wallet__amount')
 				.text(symbol + Math.abs(amount).toFixed(txnDecimals) + ' ' + (txn.currency || ''))
-				.appendTo($row);
-			$('<td>')
-				.addClass('wpss-wallet__amount-col')
-				.text((parseFloat(txn.balance_after) || 0).toFixed(txnDecimals) + ' ' + (txn.currency || ''))
 				.appendTo($row);
 
 			return $row;

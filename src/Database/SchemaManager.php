@@ -244,11 +244,107 @@ class SchemaManager {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
+		$this->dedupe_for_unique_keys();
 		$this->create_tables();
 		$this->run_column_migrations();
 		$this->run_precision_migrations();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
+	}
+
+	/**
+	 * Remove the duplicate rows that would block the 1.7.1 unique keys.
+	 *
+	 * Ledger idempotency and one-review-per-order were read-then-insert with
+	 * no key, so a replayed webhook or a double submit could leave two rows.
+	 * dbDelta() adds UNIQUE (reference_type, reference_id, type) on the ledger
+	 * and UNIQUE (order_id, review_type) on reviews, and silently fails while
+	 * duplicates exist - so they are removed first, lowest id kept, every
+	 * removed row written to the audit log. Ledger rows are removed only when
+	 * they are exact copies (same user, amount, key); a same-key row with a
+	 * different amount is a bookkeeping question, not a duplicate, and is
+	 * logged for a human instead. Idempotent: nothing to remove on a clean or
+	 * fresh install.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	private function dedupe_for_unique_keys(): void {
+		$ledger  = $this->get_table_name( 'wallet_transactions' );
+		$reviews = $this->get_table_name( 'reviews' );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin-controlled table names; no user input.
+		if ( $ledger === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $ledger ) ) ) {
+			$exact = $this->wpdb->get_results(
+				"SELECT d.id, d.user_id, d.type, d.amount, d.reference_type, d.reference_id, k.id AS kept_id
+				FROM {$ledger} d
+				JOIN {$ledger} k ON k.reference_type = d.reference_type AND k.reference_id = d.reference_id AND k.type = d.type
+					AND k.user_id = d.user_id AND k.amount = d.amount AND k.id < d.id
+				WHERE d.reference_id IS NOT NULL"
+			);
+			$this->remove_duplicates( $ledger, 'ledger.duplicate_removed', 'wallet_transaction', (array) $exact );
+
+			$conflicts = $this->wpdb->get_results(
+				"SELECT reference_type, reference_id, type, COUNT(*) AS n, GROUP_CONCAT(id) AS ids
+				FROM {$ledger} WHERE reference_id IS NOT NULL
+				GROUP BY reference_type, reference_id, type HAVING n > 1"
+			);
+			foreach ( (array) $conflicts as $c ) {
+				wpss_log( sprintf( 'Schema 1.7.1: ledger rows %s share %s#%d/%s with different amounts; left in place, reconcile by hand before the unique key can be added.', $c->ids, $c->reference_type, $c->reference_id, $c->type ), 'error' );
+			}
+		}
+
+		if ( $reviews === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $reviews ) ) ) {
+			$dupes = $this->wpdb->get_results(
+				"SELECT d.id, d.order_id, d.review_type, d.rating, d.reviewer_id, k.id AS kept_id
+				FROM {$reviews} d
+				JOIN {$reviews} k ON k.order_id = d.order_id AND k.review_type = d.review_type AND k.id < d.id"
+			);
+			$this->remove_duplicates( $reviews, 'review.duplicate_removed', 'review', (array) $dupes );
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+	}
+
+	/**
+	 * Delete duplicate rows, one audit row each.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string        $table       Full table name.
+	 * @param string        $event       Audit event type.
+	 * @param string        $object_type Audit object type.
+	 * @param array<object> $rows        Rows to delete; each exposes id and kept_id.
+	 * @return void
+	 */
+	private function remove_duplicates( string $table, string $event, string $object_type, array $rows ): void {
+		if ( empty( $rows ) ) {
+			return;
+		}
+
+		$audit = new \WPSellServices\Services\AuditLogService();
+
+		foreach ( $rows as $row ) {
+			$audit->log(
+				$event,
+				$object_type,
+				(int) $row->id,
+				array(
+					'action'  => 'delete',
+					'context' => array( 'kept_id' => (int) $row->kept_id ) + array_diff_key(
+						(array) $row,
+						array(
+							'id'      => 1,
+							'kept_id' => 1,
+						)
+					),
+				)
+			);
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$this->wpdb->delete( $table, array( 'id' => (int) $row->id ), array( '%d' ) );
+		}
+
+		wpss_log( sprintf( 'Schema 1.7.1: removed %d duplicate %s row(s); see the audit log for ids.', count( $rows ), $object_type ) );
 	}
 
 	/**
@@ -965,7 +1061,8 @@ class SchemaManager {
 			KEY idx_vendor_status (vendor_id,status),
 			KEY idx_platform (platform,platform_order_id),
 			KEY idx_platform_ref (platform,platform_order_ref),
-			KEY idx_deadline (delivery_deadline)
+			KEY idx_deadline (delivery_deadline),
+			KEY idx_transaction (transaction_id(191))
 		) {$charset_collate};";
 	}
 
@@ -1140,7 +1237,8 @@ class SchemaManager {
 			KEY idx_service (service_id),
 			KEY idx_customer (customer_id),
 			KEY idx_vendor (vendor_id),
-			KEY idx_vendor_status (vendor_id,status)
+			KEY idx_vendor_status (vendor_id,status),
+			UNIQUE KEY uniq_order_review (order_id,review_type)
 		) {$charset_collate};";
 	}
 
@@ -1374,7 +1472,8 @@ class SchemaManager {
 			KEY idx_type (type),
 			KEY idx_user_created (user_id,created_at,id),
 			KEY idx_user_type_created (user_id,type,created_at),
-			KEY idx_reference (reference_type,reference_id)
+			KEY idx_reference (reference_type,reference_id),
+			UNIQUE KEY uniq_reference (reference_type,reference_id,type)
 		) {$charset_collate};";
 	}
 
@@ -1423,6 +1522,7 @@ class SchemaManager {
 	public function sync(): void {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
+		$this->dedupe_for_unique_keys();
 		$this->create_tables();
 		$this->run_column_migrations();
 		$this->run_precision_migrations();

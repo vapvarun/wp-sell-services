@@ -374,30 +374,39 @@ function wpss_get_pending_manual_refunds(): array {
  * Vendor's share of a refund.
  *
  * THE single proportional formula. A refund gives the buyer back some or all of
- * what they paid; the vendor gives back the same proportion of what they earned,
- * and the platform gives back the same proportion of its fee. A full refund is
- * simply the case where $refunded equals the order total, so one formula covers
- * both and there is no separate "partial" path to drift.
+ * what they still had paid; the vendor gives back the same proportion of what
+ * they still hold, and the platform gives back the same proportion of its fee.
+ *
+ * Refunds accumulate (1.7.1): each event is sized against what was LEFT before
+ * it, because the order's vendor_earnings is reduced by every earlier partial.
+ * Total 100, earnings 90: a 10 refund returns 9 (90 x 10/100); a later 15
+ * returns 13.50 (81 x 15/90); refunding the remaining 75 returns 67.50 (67.5 x
+ * 75/75). A full refund is simply the case where $refunded equals the
+ * remainder, so one formula covers both and there is no separate "partial"
+ * path to drift.
  *
  * @since 1.2.3
+ * @since 1.7.1 Added $previously_refunded so a second partial is sized against the remainder.
  *
- * @param object $order    Order exposing total and vendor_earnings.
- * @param float  $refunded Amount refunded to the buyer.
- * @return float Vendor's share, never negative, never more than they earned.
+ * @param object $order               Order exposing total, currency and vendor_earnings (as they stand now).
+ * @param float  $refunded            Amount going back to the buyer in THIS event.
+ * @param float  $previously_refunded Amount already refunded before this event.
+ * @return float Vendor's share, never negative, never more than they still hold.
  */
-function wpss_get_refund_vendor_share( object $order, float $refunded ): float {
+function wpss_get_refund_vendor_share( object $order, float $refunded, float $previously_refunded = 0.0 ): float {
 	$total    = (float) ( $order->total ?? 0 );
 	$earnings = (float) ( $order->vendor_earnings ?? 0 );
+	$left     = $total - max( 0.0, $previously_refunded );
 
-	if ( $total <= 0 || $earnings <= 0 || $refunded <= 0 ) {
+	if ( $left <= 0 || $earnings <= 0 || $refunded <= 0 ) {
 		return 0.0;
 	}
 
-	// Clamp: refunding more than the order total would otherwise claw back more
-	// than the vendor ever earned.
-	$refunded = min( $refunded, $total );
+	// Clamp: refunding more than is left would otherwise claw back more than
+	// the vendor still holds.
+	$refunded = min( $refunded, $left );
 
-	return round( $earnings * ( $refunded / $total ), 2 );
+	return round( $earnings * ( $refunded / $left ), wpss_get_currency_decimals( (string) ( $order->currency ?? '' ) ) );
 }
 
 /**
@@ -447,6 +456,119 @@ function wpss_get_ledger_balance( int $user_id, bool $lock = false ): float {
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	return (float) $wpdb->get_var( $wpdb->prepare( $sql, $user_id ) );
+}
+
+/**
+ * Everything a vendor has ever been credited, net of reversals.
+ *
+ * The "Total Earned" figure. Debit rows (withdrawal / debit / dispute_refund)
+ * are excluded so this reads as money earned rather than a running balance;
+ * reversal rows are negative credits and do count, so a refunded order is not
+ * "earned". One formula: the Earnings page header, the vendor profile row and
+ * the admin vendor list all read it from here.
+ *
+ * @since 1.7.1
+ *
+ * @param int $user_id Vendor user ID.
+ * @return float
+ */
+function wpss_get_ledger_total_earned( int $user_id ): float {
+	global $wpdb;
+
+	$debit_types = wpss_get_ledger_debit_types_sql();
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	return (float) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COALESCE( SUM( amount ), 0 ) FROM {$wpdb->prefix}wpss_wallet_transactions
+			WHERE user_id = %d AND status = 'completed' AND type NOT IN ({$debit_types})",
+			$user_id
+		)
+	);
+}
+
+/**
+ * Write one wallet ledger row.
+ *
+ * THE insert path for the ledger. Every credit (order earning, tip, milestone,
+ * extension), reversal and withdrawal debit goes through here so three things
+ * cannot drift: the column list, the duplicate handling and the vendor
+ * profile's cached totals.
+ *
+ * The ledger carries UNIQUE (reference_type, reference_id, type) since 1.7.1.
+ * A retried cron, a replayed webhook or a double-clicked button that reaches
+ * this insert a second time is refused by the database, not by a
+ * read-then-insert race; that refusal is reported as success because the row
+ * the caller wanted already exists. Any other failure is reported as failure.
+ *
+ * After a write the vendor profile's total_earnings / net_earnings are
+ * recomputed from the ledger (two SUMs), so the profile row, the Earnings page
+ * and the ledger say one number. Runs inside whatever transaction the caller
+ * has open, so a rollback undoes the recompute too.
+ *
+ * @since 1.7.1
+ *
+ * @param array<string, mixed> $row Column => value. balance_after defaults to
+ *                                  the ledger balance after this row, status
+ *                                  to 'completed', currency to the store's.
+ * @return bool True when the row exists after the call (inserted or already
+ *              there), false on a real database error.
+ */
+function wpss_insert_ledger_row( array $row ): bool {
+	global $wpdb;
+
+	$user_id = (int) ( $row['user_id'] ?? 0 );
+	$amount  = (float) ( $row['amount'] ?? 0 );
+
+	if ( $user_id <= 0 ) {
+		return false;
+	}
+
+	$is_debit = in_array( (string) ( $row['type'] ?? '' ), wpss_get_ledger_debit_types(), true );
+
+	$row += array(
+		'balance_after' => wpss_get_ledger_balance( $user_id ) + ( $is_debit ? -abs( $amount ) : $amount ),
+		'currency'      => wpss_get_currency(),
+		'status'        => 'completed',
+		'created_at'    => current_time( 'mysql' ),
+	);
+
+	$formats = array(
+		'user_id'        => '%d',
+		'type'           => '%s',
+		'amount'         => '%f',
+		'balance_after'  => '%f',
+		'currency'       => '%s',
+		'description'    => '%s',
+		'reference_type' => '%s',
+		'reference_id'   => '%d',
+		'status'         => '%s',
+		'created_at'     => '%s',
+	);
+	$row     = array_intersect_key( $row, $formats );
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+	$inserted = $wpdb->insert( $wpdb->prefix . 'wpss_wallet_transactions', $row, array_values( array_intersect_key( $formats, $row ) ) );
+
+	if ( false === $inserted ) {
+		if ( false === stripos( (string) $wpdb->last_error, 'Duplicate entry' ) ) {
+			return false;
+		}
+
+		wpss_log(
+			sprintf(
+				'Ledger row %s %s#%s for user %d already exists; the duplicate insert was ignored.',
+				(string) ( $row['type'] ?? '' ),
+				(string) ( $row['reference_type'] ?? '' ),
+				(string) ( $row['reference_id'] ?? '' ),
+				$user_id
+			)
+		);
+	}
+
+	( new \WPSellServices\Database\Repositories\VendorProfileRepository() )->sync_ledger_totals( $user_id );
+
+	return true;
 }
 
 /**

@@ -367,9 +367,7 @@ class ExtensionOrderService {
 			$parent_order_id
 		);
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$inserted = $wpdb->insert(
-			$txn_table,
+		$inserted = wpss_insert_ledger_row(
 			array(
 				'user_id'        => (int) $sub->vendor_id,
 				'type'           => self::TYPE_EXTENSION,
@@ -382,7 +380,6 @@ class ExtensionOrderService {
 				'status'         => 'completed',
 				'created_at'     => current_time( 'mysql' ),
 			),
-			array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
 		);
 
 		if ( ! $inserted ) {

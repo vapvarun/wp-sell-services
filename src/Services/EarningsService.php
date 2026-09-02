@@ -84,20 +84,11 @@ class EarningsService {
 			)
 		);
 
-		// Gross lifetime credits, for display. Debit rows (withdrawal / debit /
-		// dispute_refund) are excluded so this reads as "money ever earned"
-		// rather than a running balance.
-		$txn_table   = $wpdb->prefix . 'wpss_wallet_transactions';
-		$debit_types = wpss_get_ledger_debit_types_sql();
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$total_earned = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$txn_table}
-				WHERE user_id = %d AND status = 'completed'
-				AND type NOT IN ({$debit_types})",
-				$vendor_id
-			)
-		);
+		// Lifetime credits net of reversals, for display: the same SUM the
+		// vendor profile row caches, so the two cannot disagree.
+		$txn_table    = $wpdb->prefix . 'wpss_wallet_transactions';
+		$debit_types  = wpss_get_ledger_debit_types_sql();
+		$total_earned = wpss_get_ledger_total_earned( $vendor_id );
 
 		// Credits still inside the clearance window are not withdrawable yet.
 		// Derived from the ledger (not from orders' completed_at) so that tips,
@@ -374,9 +365,7 @@ class EarningsService {
 
 		// Amount is stored POSITIVE; the sign is applied on read by
 		// wpss_get_ledger_balance(), which treats 'withdrawal' as a debit.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$inserted = $wpdb->insert(
-			$txn_table,
+		$inserted = wpss_insert_ledger_row(
 			array(
 				'user_id'        => $vendor_id,
 				'type'           => 'withdrawal',
@@ -396,7 +385,6 @@ class EarningsService {
 				'status'         => 'completed',
 				'created_at'     => current_time( 'mysql' ),
 			),
-			array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
 		);
 
 		if ( false === $inserted ) {

@@ -74,4 +74,42 @@ $bad = (int) $wpdb->get_var(
 );
 $check( sprintf( 'no debit row is stored negative (found %d)', $bad ), 0 === $bad );
 
+// --- 1.7.1 (F10 / F23): the database enforces idempotency; the profile follows the ledger ---
+$index_names = static fn( string $t ): array => array_unique( array_column( (array) $wpdb->get_results( "SHOW INDEX FROM {$wpdb->prefix}wpss_{$t}", ARRAY_A ), 'Key_name' ) );
+$check( 'wallet_transactions has UNIQUE uniq_reference (reference_type, reference_id, type)', in_array( 'uniq_reference', $index_names( 'wallet_transactions' ), true ) );
+$check( 'reviews has UNIQUE uniq_order_review (order_id, review_type)', in_array( 'uniq_order_review', $index_names( 'reviews' ), true ) );
+$check( 'orders has KEY idx_transaction (transaction_id)', in_array( 'idx_transaction', $index_names( 'orders' ), true ) );
+
+$insert = static fn(): bool => function_exists( 'wpss_insert_ledger_row' ) && wpss_insert_ledger_row(
+	array(
+		'user_id'        => $user,
+		'type'           => 'order_earning',
+		'amount'         => 25.0,
+		'reference_type' => 'order',
+		'reference_id'   => 987654321,
+	)
+);
+$check( 'ledger insert helper writes a row', $insert() );
+$check( 'the same row inserted again is idempotent success', $insert() );
+$check( '  and there is exactly one row', 1 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND reference_id = 987654321", $user ) ) );
+
+// The vendor profile's cached money columns follow every ledger write.
+$profiles = $wpdb->prefix . 'wpss_vendor_profiles';
+$wpdb->delete( $profiles, array( 'user_id' => $user ) );
+$wpdb->insert( $profiles, array( 'user_id' => $user, 'display_name' => 'contract', 'total_earnings' => 12345.0, 'net_earnings' => 12345.0, 'created_at' => current_time( 'mysql' ), 'updated_at' => current_time( 'mysql' ) ) );
+
+if ( function_exists( 'wpss_insert_ledger_row' ) ) {
+	wpss_insert_ledger_row( array( 'user_id' => $user, 'type' => 'withdrawal', 'amount' => 5.0, 'reference_type' => 'withdrawal', 'reference_id' => 987654321 ) );
+}
+$profile = $wpdb->get_row( $wpdb->prepare( "SELECT total_earnings, net_earnings FROM {$profiles} WHERE user_id = %d", $user ) );
+$earned  = function_exists( 'wpss_get_ledger_total_earned' ) ? wpss_get_ledger_total_earned( $user ) : -1.0;
+$check( 'profile total_earnings equals the ledger total earned after a write (25.00)', $profile && abs( (float) $profile->total_earnings - $earned ) < 0.0001 && abs( $earned - 25.0 ) < 0.0001 );
+$check( 'profile net_earnings equals the ledger balance after a write (20.00)', $profile && abs( (float) $profile->net_earnings - wpss_get_ledger_balance( $user ) ) < 0.0001 && abs( wpss_get_ledger_balance( $user ) - 20.0 ) < 0.0001 );
+
+$wpdb->delete( $profiles, array( 'user_id' => $user ) );
+$wpdb->delete( $table, array( 'user_id' => $user ) );
+
 echo $fails ? "\n{$fails} FAILED\n" : "\nall passed\n";
+if ( $fails ) {
+	exit( 1 );
+}
