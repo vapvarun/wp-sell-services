@@ -143,6 +143,14 @@ final class CheckoutIntent {
 	public float $taxable_base = 0.0;
 
 	/**
+	 * Tax included in `$amount` (0 when tax is off or already inside the price).
+	 *
+	 * @since 1.7.1
+	 * @var float
+	 */
+	public float $tax = 0.0;
+
+	/**
 	 * Private constructor — use the named factories.
 	 *
 	 * @since 1.3.0

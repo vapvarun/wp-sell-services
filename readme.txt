@@ -266,6 +266,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 = 1.7.1 - September 2026 =
 
 * Fix      - Closing a dispute from the admin restores the order, a dispute cannot be resolved twice, and disputes cannot be opened on unpaid orders.
+* Fix      - Tax is charged on multi-item cart checkout and on PayPal checkout, matching the single-service total.
 
 = 1.7.0 - August 2026 =
 

@@ -387,6 +387,7 @@ class PaymentController extends RestController {
 				'currency'   => $currency,
 				'service_id' => $service_id,
 				'package_id' => $package_id,
+				'pay_order'  => $pay_order,
 			)
 		);
 
