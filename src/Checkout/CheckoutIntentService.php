@@ -110,8 +110,10 @@ class CheckoutIntentService {
 	/**
 	 * Resolve a multi-item cart intent, pricing the total from the SERVER cart.
 	 *
-	 * Mirrors StandaloneOrderProvider::create_orders_from_cart() exactly, so the
-	 * amount charged equals the sum of the orders that settle() will create.
+	 * Each line is priced and taxed exactly as create_order() will price and tax
+	 * its order row, and the priced numbers travel on the intent so settle_cart()
+	 * writes the rows from them. A two-item cart was charged untaxed while every
+	 * row it produced stored a taxed total (Basecamp 10264284228).
 	 *
 	 * @since 1.3.0
 	 *
@@ -126,8 +128,15 @@ class CheckoutIntentService {
 			return new \WP_Error( 'wpss_empty_cart', __( 'Your cart is empty.', 'wp-sell-services' ) );
 		}
 
-		$total = 0.0;
-		foreach ( $cart as $item ) {
+		$lines  = array();
+		$totals = array(
+			'subtotal'     => 0.0,
+			'addons_total' => 0.0,
+			'tax'          => 0.0,
+			'total'        => 0.0,
+		);
+
+		foreach ( $cart as $key => $item ) {
 			$service_id = (int) ( $item['service_id'] ?? 0 );
 			if ( ! $service_id ) {
 				continue;
@@ -141,24 +150,66 @@ class CheckoutIntentService {
 				continue;
 			}
 
-			$total += (float) ( $pkg['price'] ?? 0 ) * $quantity;
-			$total += (float) array_reduce(
-				$item['addons'] ?? array(),
-				static fn( float $carry, array $addon ) => $carry + (float) ( $addon['price'] ?? 0 ),
-				0.0
+			$line = $this->price_line(
+				$service_id,
+				(float) ( $pkg['price'] ?? 0 ) * $quantity,
+				(float) array_reduce(
+					$item['addons'] ?? array(),
+					static fn( float $carry, array $addon ) => $carry + (float) ( $addon['price'] ?? 0 ),
+					0.0
+				)
 			);
+
+			foreach ( $totals as $k => $v ) {
+				$totals[ $k ] = $v + $line[ $k ];
+			}
+
+			$lines[ $key ] = $item + $line;
 		}
 
-		if ( $total <= 0 ) {
+		if ( $totals['total'] <= 0 ) {
 			return new \WP_Error( 'wpss_invalid_amount', __( 'Invalid amount.', 'wp-sell-services' ) );
 		}
 
-		return CheckoutIntent::cart(
-			$cart,
-			$total,
+		$intent = CheckoutIntent::cart(
+			$lines,
+			$totals['total'],
 			wpss_get_currency(),
 			$buyer_id,
-			array( 'customer_id' => $buyer_id )
+			array(
+				'is_multi_checkout' => 1,
+				'customer_id'       => $buyer_id,
+			)
+		);
+
+		$intent->addons_total = $totals['addons_total'];
+		$intent->taxable_base = $totals['subtotal'] + $totals['addons_total'];
+		$intent->tax          = $totals['tax'];
+
+		return $intent;
+	}
+
+	/**
+	 * Price one line the way StandaloneOrderProvider::create_order() prices its
+	 * row: subtotal plus add-ons is the taxable base, tax through the shared
+	 * helper. Both callers (single and cart) and the order row are the same
+	 * arithmetic by construction.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int   $service_id   Service ID.
+	 * @param float $subtotal     Package price (times quantity).
+	 * @param float $addons_total Add-ons total.
+	 * @return array{subtotal:float,addons_total:float,tax:float,total:float}
+	 */
+	private function price_line( int $service_id, float $subtotal, float $addons_total ): array {
+		$tax = wpss_calculate_tax( $subtotal + $addons_total, (int) get_post_field( 'post_author', $service_id ), $service_id );
+
+		return array(
+			'subtotal'     => $subtotal,
+			'addons_total' => $addons_total,
+			'tax'          => (float) $tax['amount'],
+			'total'        => (float) $tax['total'],
 		);
 	}
 
@@ -185,40 +236,40 @@ class CheckoutIntentService {
 			return new \WP_Error( 'wpss_invalid_package', __( 'Invalid package.', 'wp-sell-services' ) );
 		}
 
-		$amount = (float) ( $packages[ $package_id ]['price'] ?? 0 );
-		if ( $amount <= 0 ) {
+		// Nobody buys from themselves; every rail used to check this on its own
+		// (or, on Stripe, not at all).
+		if ( (int) $service->post_author === $buyer_id ) {
+			return new \WP_Error( 'wpss_own_service', __( 'You cannot purchase your own service.', 'wp-sell-services' ) );
+		}
+
+		$price = (float) ( $packages[ $package_id ]['price'] ?? 0 );
+		if ( $price <= 0 ) {
 			return new \WP_Error( 'wpss_invalid_amount', __( 'Invalid amount.', 'wp-sell-services' ) );
 		}
 
-		$addon_data   = wpss_resolve_checkout_addons( $service_id );
-		$addons_total = (float) ( $addon_data['addons_total'] ?? 0 );
-		$amount      += $addons_total;
+		// Add-ons come from the request (the checkout form) or, on a gateway
+		// return leg where the form is long gone, from the ids the gateway
+		// carried in its own metadata.
+		$addon_data = wpss_resolve_checkout_addons( $service_id, (string) ( $request['addon_ids'] ?? '' ) );
 
 		/*
 		 * Charge what the buyer was shown.
 		 *
-		 * This built its amount from package price plus add-ons and stopped
-		 * there. The checkout template computed tax, displayed it, and put the
-		 * taxed figure on the Pay button; the order row recorded the taxed
-		 * total; and the gateway charged THIS number, untaxed. A buyer saw
-		 * $100.30 and was charged $85.00, and the 18% was never collected from
-		 * anybody (Basecamp 10254444011).
-		 *
-		 * wpss_calculate_tax() is the same helper the display and the order row
-		 * now use, so the three cannot disagree again. Commission is unaffected:
-		 * CommissionService works from $order->subtotal + addons_total, the
-		 * PRE-tax base, because tax is not revenue to split.
+		 * The checkout template computes tax and puts the taxed figure on the
+		 * Pay button; the order row records the taxed total; the gateway must
+		 * charge THAT number. A buyer saw $100.30 and was charged $85.00, and
+		 * the 18% was never collected from anybody (Basecamp 10254444011).
+		 * Commission is unaffected: CommissionService works from the PRE-tax
+		 * base, because tax is not revenue to split.
 		 */
-		$taxable_base = $amount;
-		$tax          = wpss_calculate_tax( $taxable_base, (int) $service->post_author, $service_id );
-		$amount       = (float) $tax['total'];
+		$line = $this->price_line( $service_id, $price, (float) ( $addon_data['addons_total'] ?? 0 ) );
 
-		return CheckoutIntent::single(
+		$intent = CheckoutIntent::single(
 			$service_id,
 			$package_id,
 			(array) ( $addon_data['addons'] ?? array() ),
-			$addons_total,
-			$amount,
+			$line['addons_total'],
+			$line['total'],
 			wpss_get_currency(),
 			$buyer_id,
 			array(
@@ -226,8 +277,12 @@ class CheckoutIntentService {
 				'package_id'  => $package_id,
 				'customer_id' => $buyer_id,
 			),
-			$taxable_base
+			$line['subtotal'] + $line['addons_total']
 		);
+
+		$intent->tax = $line['tax'];
+
+		return $intent;
 	}
 
 	/**
@@ -303,7 +358,30 @@ class CheckoutIntentService {
 	 * @return array<string,mixed>
 	 */
 	private function settle_cart( CheckoutIntent $intent, $provider, string $gateway, string $txn ): array {
-		$order_ids = $provider->create_orders_from_cart( $intent->cart, $gateway, $txn, $intent->buyer_id );
+		// Rows are written from the numbers the intent priced and the gateway
+		// charged - not re-priced here - so the charge and the sum of the rows
+		// cannot drift. create_order() applies tax to the pre-tax subtotal.
+		$order_ids = array();
+		foreach ( $intent->cart as $line ) {
+			$order = $provider->create_order(
+				array(
+					'service_id'     => (int) ( $line['service_id'] ?? 0 ),
+					'package_id'     => (int) ( $line['package_id'] ?? 0 ),
+					'quantity'       => max( 1, (int) ( $line['quantity'] ?? 1 ) ),
+					'customer_id'    => $intent->buyer_id,
+					'subtotal'       => (float) ( $line['subtotal'] ?? 0 ),
+					'addons'         => $line['addons'] ?? array(),
+					'addons_total'   => (float) ( $line['addons_total'] ?? 0 ),
+					'currency'       => $intent->currency,
+					'payment_method' => $gateway,
+					'transaction_id' => $txn,
+				)
+			);
+
+			if ( $order ) {
+				$order_ids[] = (int) $order->id;
+			}
+		}
 
 		if ( empty( $order_ids ) ) {
 			return array(

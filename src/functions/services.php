@@ -396,10 +396,11 @@ function wpss_get_service_revisions( int $service_id ): int {
  *
  * @since 1.1.0
  *
- * @param int $service_id Service post ID.
+ * @param int    $service_id Service post ID.
+ * @param string $addon_ids  Optional. Comma-separated add-on indices; overrides the request.
  * @return array{addons: array, addons_total: float, delivery_days_extra: int}
  */
-function wpss_resolve_checkout_addons( int $service_id ): array {
+function wpss_resolve_checkout_addons( int $service_id, string $addon_ids = '' ): array {
 	$result = array(
 		'addons'              => array(),
 		'addons_total'        => 0,
@@ -407,8 +408,10 @@ function wpss_resolve_checkout_addons( int $service_id ): array {
 	);
 
 	// Try pre-resolved addons_data first (sent by checkout form as JSON).
+	// Skipped when the caller names the ids itself (a gateway return leg
+	// re-resolving from its own metadata): those are priced from post meta.
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
-	$addons_json = isset( $_POST['addons_data'] ) ? sanitize_text_field( wp_unslash( $_POST['addons_data'] ) ) : '';
+	$addons_json = ( '' === $addon_ids && isset( $_POST['addons_data'] ) ) ? sanitize_text_field( wp_unslash( $_POST['addons_data'] ) ) : '';
 	if ( $addons_json ) {
 		$addons_array = json_decode( $addons_json, true );
 		if ( is_array( $addons_array ) ) {
@@ -430,7 +433,7 @@ function wpss_resolve_checkout_addons( int $service_id ): array {
 
 	// Fallback: resolve from addon_ids (indices into _wpss_extras post meta).
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
-	$addon_ids_raw = isset( $_POST['addon_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_ids'] ) ) : '';
+	$addon_ids_raw = '' !== $addon_ids ? $addon_ids : ( isset( $_POST['addon_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_ids'] ) ) : '' );
 
 	if ( ! $addon_ids_raw ) {
 		return $result;
