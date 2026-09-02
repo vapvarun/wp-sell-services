@@ -277,8 +277,11 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Pay buttons for tips, milestones, extensions and proposals are hidden on a store rail that cannot take a single-order payment instead of linking to a page it ignores.
 * Fix      - Orders left without requirements now auto-start by default instead of being cancelled after the timeout.
 * Fix      - Price decimals and currency position settings are applied; minimum and maximum order amounts are enforced at checkout.
+* Fix      - Password reset over REST accepts a username as well as an email, private order files can be downloaded by app clients, and repeated failed logins lock the account temporarily.
+* Improve  - The orders API loads a page of orders with a fixed number of queries.
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Payment intents carry the vendor id for every order type.
+* Dev      - New wpss_auth_login_challenge filter for two-factor plugins.
 
 = 1.7.0 - August 2026 =
 

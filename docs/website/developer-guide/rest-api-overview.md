@@ -123,6 +123,69 @@ Only sign-ins this plugin issued are expired or listed. An application password
 a member created by hand in their WordPress profile belongs to whatever script
 they built with it and is left alone.
 
+**Repeated wrong passwords lock the account.** Five failed sign-ins for one
+account within 15 minutes lock it for 15 minutes, answered with
+`423 wpss_account_locked`. The counter is per account, not per address - it
+does not matter how many IPs the attempts came from - and it sits alongside
+the per-IP limiter (`429 rate_limit_exceeded`, 5 attempts per 5 minutes). A
+successful sign-in clears the counter. Show the message and stop; retrying
+will not help.
+
+**A second factor plugs in after the password.** Once the password and the
+lockout have both passed, `wpss_auth_login_challenge` runs before a token is
+issued:
+
+```php
+add_filter( 'wpss_auth_login_challenge', function ( $challenge, WP_User $user, WP_REST_Request $request ) {
+    if ( ! my_2fa_enabled_for( $user ) ) {
+        return null; // issue the token as normal
+    }
+    $code = (string) $request->get_param( 'otp' );
+    if ( '' === $code ) {
+        return new WP_Error( 'wpss_2fa_required', 'Enter the code from your authenticator app.', array( 'status' => 401 ) );
+    }
+    return my_2fa_verify( $user, $code ) ? null : new WP_Error( 'wpss_2fa_invalid', 'That code is not valid.', array( 'status' => 401 ) );
+}, 10, 3 );
+```
+
+A `WP_Error` returned here is sent to the client as-is, so the plugin chooses
+the status, the code and any challenge data. The filter never runs for a wrong
+password, so it cannot be used to tell whether one was right.
+
+**Password reset takes either identifier.** `POST /auth/forgot-password`
+accepts `user_login` or `email` (one is required). The answer is the same
+`200` whether or not an account matched, so it cannot be used to enumerate
+accounts.
+
+### Order files
+
+A file attached to an order - a delivery, a brief - is private to the buyer,
+the vendor and administrators, and lives outside the web root. The web UI
+links to it through `admin-post.php`, which authenticates from the session
+cookie; an app holding a token has no cookie, so it uses the REST route
+instead:
+
+```
+GET /wpss/v1/orders/{id}/files/{file}
+```
+
+`{file}` is the `id` of an entry in `deliverables[].files[]`, and that entry's
+`url` already points here. The gate is the same one the web link runs
+(`wpss_can_read_order_files()`): anonymous is `401`, someone with no claim on
+the order is `403 wpss_not_owner`, an unknown file is `404 wpss_file_not_found`.
+
+What comes back depends on where the bytes are:
+
+- **Stored on the site**: the file itself, streamed with `Content-Type` and a
+  `Content-Disposition: attachment` header. Save the body.
+- **Stored in a cloud bucket**: JSON with a signed `url` and `expires_in`
+  (seconds, currently 300). Fetch the URL directly; do not attach the token to
+  that request. `503 wpss_storage_unavailable` means the bucket's provider
+  could not sign a URL - retry later.
+
+Calling the route through `POST /batch` always returns the JSON form, with
+`url` null for a locally stored file - a batch cannot carry bytes.
+
 ## Payload conventions
 
 Four shapes are the same everywhere in this API. They were not always, and the
