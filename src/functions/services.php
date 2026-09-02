@@ -940,3 +940,52 @@ function wpss_get_service_limits(): array {
 		'max_requirements' => apply_filters( 'wpss_service_max_requirements', 5 ),
 	);
 }
+
+/**
+ * Truncate a service's lists to wpss_get_service_limits().
+ *
+ * The one enforcer for every save path (wizard, REST, admin metabox,
+ * ServiceManager). Pass whichever of the keyed lists the caller has; each is
+ * cut to its cap and reported back so the caller can tell the user.
+ *
+ * @since 1.7.1
+ *
+ * @param array<string,mixed> $meta Any of packages, gallery, extras, faqs, requirements => list.
+ * @return array{meta: array<string,mixed>, truncated: array<string,string>} The capped lists and, per cut key, a user-facing sentence.
+ */
+function wpss_enforce_service_limits( array $meta ): array {
+	$limits = wpss_get_service_limits();
+	$rules  = array(
+		'packages'     => array( 'max_packages', __( 'packages', 'wp-sell-services' ) ),
+		'gallery'      => array( 'max_gallery', __( 'additional gallery images', 'wp-sell-services' ) ),
+		'extras'       => array( 'max_extras', __( 'extras', 'wp-sell-services' ) ),
+		'faqs'         => array( 'max_faq', __( 'FAQs', 'wp-sell-services' ) ),
+		'requirements' => array( 'max_requirements', __( 'requirements', 'wp-sell-services' ) ),
+	);
+
+	$truncated = array();
+
+	foreach ( $rules as $key => [ $limit_key, $label ] ) {
+		$max = (int) ( $limits[ $limit_key ] ?? -1 );
+		// Every save path stores the main image as the first gallery entry and
+		// max_gallery counts the additional ones, so the list may hold one more.
+		$cap = 'gallery' === $key ? $max + 1 : $max;
+
+		if ( $max < 0 || empty( $meta[ $key ] ) || ! is_array( $meta[ $key ] ) || count( $meta[ $key ] ) <= $cap ) {
+			continue;
+		}
+
+		$meta[ $key ]      = array_slice( $meta[ $key ], 0, $cap, true );
+		$truncated[ $key ] = sprintf(
+			/* translators: 1: maximum count, 2: list name (packages, gallery images, extras, FAQs, requirements) */
+			__( 'A service can have at most %1$d %2$s; the extra entries were not saved.', 'wp-sell-services' ),
+			$max,
+			$label
+		);
+	}
+
+	return array(
+		'meta'      => $meta,
+		'truncated' => $truncated,
+	);
+}

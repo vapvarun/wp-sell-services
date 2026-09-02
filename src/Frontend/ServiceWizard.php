@@ -1935,11 +1935,6 @@ class ServiceWizard {
 	 * @return array Sanitized requirements.
 	 */
 	private function sanitize_requirements( array $requirements ): array {
-		$max = $this->get_limit( 'max_requirements' );
-		if ( -1 !== $max ) {
-			$requirements = array_slice( $requirements, 0, $max );
-		}
-
 		$sanitized = array();
 
 		foreach ( $requirements as $req ) {
@@ -1965,11 +1960,6 @@ class ServiceWizard {
 	 * @return array Sanitized extras.
 	 */
 	private function sanitize_extras( array $extras ): array {
-		$max = $this->get_limit( 'max_extras' );
-		if ( -1 !== $max ) {
-			$extras = array_slice( $extras, 0, $max );
-		}
-
 		$sanitized = array();
 
 		foreach ( $extras as $extra ) {
@@ -1995,11 +1985,6 @@ class ServiceWizard {
 	 * @return array Sanitized FAQs.
 	 */
 	private function sanitize_faqs( array $faqs ): array {
-		$max = $this->get_limit( 'max_faq' );
-		if ( -1 !== $max ) {
-			$faqs = array_slice( $faqs, 0, $max );
-		}
-
 		$sanitized = array();
 
 		foreach ( $faqs as $faq ) {
@@ -2136,12 +2121,16 @@ class ServiceWizard {
 			array_unshift( $all_gallery_ids, $thumbnail_id );
 		}
 
+		// The client hides the add buttons at the cap; the server is the enforcer.
+		$video = $data['gallery']['video'] ?? '';
+		$data  = wpss_enforce_service_limits( array_merge( $data, array( 'gallery' => $all_gallery_ids ) ) )['meta'];
+
 		update_post_meta(
 			$service_id,
 			'_wpss_gallery',
 			array(
-				'images' => $all_gallery_ids,
-				'video'  => $data['gallery']['video'] ?? '',
+				'images' => $data['gallery'],
+				'video'  => $video,
 			)
 		);
 
