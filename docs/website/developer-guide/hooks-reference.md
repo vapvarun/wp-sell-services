@@ -159,14 +159,14 @@ guide; this is the complete index.
 | `wpss_order_created` | 2 | `src/functions/orders.php:780` | Fires after a service order is created, on every e-commerce rail. |
 | `wpss_order_disputed` | 3 | `src/API/OrdersController.php:960` *(+1 more)* |  |
 | `wpss_order_message_created` | 3 | `src/API/OrdersController.php:624` |  |
-| `wpss_order_paid` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php:405` | Fires when an order is marked as paid. |
+| `wpss_order_paid` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php:413` | Fires when an order is marked as paid. |
 | `wpss_order_partially_refunded` | 2 | `src/Services/OrderWorkflowManager.php:779` | Fires when an order is partially refunded. |
 | `wpss_order_refund_processed` | 3 | `src/Services/OrderWorkflowManager.php:1189` | Fires after the gateway has processed a refund, with its raw result. |
 | `wpss_order_refunded` | 2 | `src/Services/OrderWorkflowManager.php:746` | Fires when an order is refunded. |
 | `wpss_order_requirements_submitted` | 2 | `src/API/OrdersController.php:1166` |  |
 | `wpss_order_started` | 1 | `src/API/OrdersController.php:792` |  |
 | `wpss_order_status_changed` | 3 | `src/Admin/Pages/ManualOrderPage.php:779` *(+6 more)* |  |
-| `wpss_order_status_pending_requirements` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php:396` |  |
+| `wpss_order_status_pending_requirements` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php:404` |  |
 | `wpss_order_view_actions` | 1 | `templates/order/order-view.php:445` | Hook: wpss_order_view_actions |
 | `wpss_order_view_details` | 1 | `templates/order/order-view.php:768` | Hook: wpss_order_view_details |
 | `wpss_order_view_header` | 1 | `templates/order/order-view.php:235` | Hook: wpss_order_view_header |
@@ -256,7 +256,7 @@ guide; this is the complete index.
 | `wpss_single_service_sidebar` | 1 | `templates/single-service.php:176` | Hook: wpss_single_service_sidebar |
 | `wpss_standalone_adapter_init` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php:157` | Fires after standalone adapter is initialized. |
 | `wpss_standalone_checkout_processed` | 2 | `src/Integrations/Standalone/StandaloneCheckoutProvider.php:134` | Fires after standalone checkout processing. |
-| `wpss_standalone_order_complete` | 1 | `src/Integrations/Standalone/StandaloneOrderProvider.php:709` | Fires when a standalone order is completed. |
+| `wpss_standalone_order_complete` | 1 | `src/Integrations/Standalone/StandaloneOrderProvider.php:717` | Fires when a standalone order is completed. |
 | `wpss_stripe_refund_processed` | 2 | `src/Integrations/Stripe/StripeGateway.php:1493` | Fires when a Stripe refund is processed. |
 | `wpss_stripe_webhook_received` | 3 | `src/Integrations/Stripe/StripeGateway.php:647` *(+1 more)* | Fires when a Stripe webhook event is received. |
 | `wpss_terawallet_recharged` | 2 | `src/Integrations/Wallets/TeraWalletProvider.php:203` **[PRO]** | Fires when TeraWallet recharge is complete. |

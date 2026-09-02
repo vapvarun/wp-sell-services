@@ -146,6 +146,78 @@ jobs:
         env:
           WP_TESTS_DIR: /tmp/wordpress-tests-lib
 
+  # The unit suite above runs against tests/stubs - no database, no WordPress.
+  # The integration suite (93 tests), the REST suite and the tests/test-*.php
+  # contract scripts all need a real install: tests/bootstrap.php loads
+  # wp-load.php three directories up, and the contract scripts run through
+  # `wp eval-file`. Until this job existed none of them ran anywhere but a
+  # developer's laptop, so a money fix could ship with its contract script red.
+  # One PHP/WP combo is enough here; the matrix above covers version drift.
+  integration:
+    name: Integration / REST / contract scripts
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp_tests
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      PLUGIN_DIR: wp/wp-content/plugins/wp-sell-services
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: plugin
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli
+          tools: composer, wp-cli
+
+      # A real WordPress with the plugin at wp-content/plugins/wp-sell-services,
+      # which is the layout tests/bootstrap.php and the contract scripts expect.
+      - name: Install WordPress
+        run: |
+          wp core download --path=wp
+          wp config create --path=wp --dbname=wp_tests --dbuser=root --dbpass=root --dbhost=127.0.0.1
+          wp core install --path=wp --url=http://localhost --title=CI --admin_user=admin --admin_password=admin --admin_email=admin@example.com --skip-email
+          mv plugin "$PLUGIN_DIR"
+          wp plugin activate wp-sell-services --path=wp
+
+      - name: Install dependencies
+        working-directory: ${{ env.PLUGIN_DIR }}
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Run PHPUnit (integration tests)
+        working-directory: ${{ env.PLUGIN_DIR }}
+        run: vendor/bin/phpunit --testsuite integration --no-coverage
+
+      - name: Run PHPUnit (REST tests)
+        working-directory: ${{ env.PLUGIN_DIR }}
+        run: vendor/bin/phpunit --testsuite rest --no-coverage
+
+      # Every script exits non-zero on a failed assertion. Run them all before
+      # failing so one red script does not hide the others.
+      - name: Contract scripts (wp eval-file)
+        working-directory: ${{ env.PLUGIN_DIR }}
+        run: |
+          FAIL=0
+          for SCRIPT in tests/test-*.php; do
+            echo "::group::$SCRIPT"
+            wp eval-file "$SCRIPT" || { echo "::error::$SCRIPT failed"; FAIL=1; }
+            echo "::endgroup::"
+          done
+          exit $FAIL
+
   # The three python gates below already existed in bin/ and already exit
   # non-zero on failure, but nothing ran them automatically - they fired only
   # when a developer remembered. i18n-verify is the one that catches version
