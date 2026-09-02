@@ -1608,8 +1608,8 @@ class Shortcodes {
 			// real payment page instead of a generic (empty) checkout.
 			$pay_order = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect of a public link.
 
-			$target = $pay_order > 0 && function_exists( 'wpss_get_pay_order_url' )
-				? wpss_get_pay_order_url( $pay_order )
+			$target = $pay_order > 0 && function_exists( 'wpss_ensure_pay_order' )
+				? wpss_ensure_pay_order( $pay_order )
 				: wpss_get_checkout_base_url();
 
 			// Never bounce a page at itself — see cart_page().

@@ -44,8 +44,8 @@ function wpss_get_active_adapter(): ?\WPSellServices\Integrations\Contracts\Ecom
  * affected by the switch.
  *
  * Sub-order payments (tips, milestones, extensions) do not consult this: they
- * resolve through wpss_get_pay_order_url(), which hands off to whichever rail
- * is active.
+ * resolve through the pay-order seam (wpss_get_pay_order_url() to read,
+ * wpss_ensure_pay_order() to pay), which hands off to whichever rail is active.
  *
  * @since 1.4.0
  *
@@ -61,10 +61,12 @@ function wpss_uses_standalone_payments(): bool {
  * Whether the active rail can take a payment for ONE existing order.
  *
  * Tips, milestones, extensions and accepted proposals all need this. Standalone
- * pays them on its own checkout; a store rail has to implement the
- * wpss_pay_order_url seam (WooCommerce and FluentCart do in Pro). A rail that
- * does neither has nowhere to send the buyer, so every Pay button and link
- * checks here before rendering instead of pointing at a page the rail ignores.
+ * pays them on its own checkout; a store rail has to implement the pay-order
+ * seam - `wpss_ensure_pay_order` to create its store order on click and,
+ * optionally, `wpss_pay_order_url_lookup` to hand back a URL it already knows
+ * (WooCommerce and FluentCart do both in Pro). A rail that does neither has
+ * nowhere to send the buyer, so every Pay button and link checks here before
+ * rendering instead of pointing at a page the rail ignores.
  *
  * Asked as "has anyone implemented the seam?" rather than by naming rails, so
  * an integration turns the capability on by implementing it.
@@ -74,7 +76,9 @@ function wpss_uses_standalone_payments(): bool {
  * @return bool
  */
 function wpss_can_pay_single_order(): bool {
-	return wpss_uses_standalone_payments() || has_filter( 'wpss_pay_order_url' );
+	return wpss_uses_standalone_payments()
+		|| has_filter( 'wpss_ensure_pay_order' )
+		|| has_filter( 'wpss_pay_order_url_lookup' );
 }
 
 /**

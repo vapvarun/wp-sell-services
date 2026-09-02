@@ -291,6 +291,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Payment intents carry the vendor id for every order type.
 * Dev      - New wpss_auth_login_challenge filter for two-factor plugins.
+* Dev      - Pay-order URLs are read-only; rails create store orders through the new wpss_ensure_pay_order seam.
 
 = 1.7.0 - August 2026 =
 

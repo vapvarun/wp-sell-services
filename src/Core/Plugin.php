@@ -1156,15 +1156,16 @@ final class Plugin {
 		} elseif ( 'cart' === $key ) {
 			$target = function_exists( 'wpss_get_cart_url' ) ? wpss_get_cart_url() : '';
 		} else {
-			// `?pay_order=N` is how the standalone rail pays ONE order, and we
-			// have already emailed those links. Resolve through the shared seam
-			// so an old link lands on that order's real payment page instead of
-			// a generic (empty) checkout.
+			// `?pay_order=N` is how a buyer pays ONE order: every Pay button and
+			// emailed link on a store rail lands here. This click is where the
+			// rail creates its store order (wpss_ensure_pay_order), so the
+			// buyer lands on that order's real payment page instead of a
+			// generic (empty) checkout.
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect of a public link.
 			$pay_order = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0;
 
-			$target = ( $pay_order > 0 && function_exists( 'wpss_get_pay_order_url' ) )
-				? wpss_get_pay_order_url( $pay_order )
+			$target = ( $pay_order > 0 && function_exists( 'wpss_ensure_pay_order' ) )
+				? wpss_ensure_pay_order( $pay_order )
 				: ( function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : '' );
 		}
 

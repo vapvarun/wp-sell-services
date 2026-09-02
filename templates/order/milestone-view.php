@@ -56,7 +56,7 @@ $is_cancelled = 'cancelled' === $status;
 // bounces the buyer away - which is why "Accept & Pay" did nothing on Woo
 // sites while the same phase paid fine from the notification email, which
 // does use the seam.
-$pay_url = wpss_get_pay_order_url( (int) $current_order->id );
+$pay_url = wpss_get_pay_order_url( (int) $current_order->id, $current_order );
 
 $counterparty_id = $is_buyer ? (int) $current_order->vendor_id : (int) $current_order->customer_id;
 $counterparty    = get_userdata( $counterparty_id );

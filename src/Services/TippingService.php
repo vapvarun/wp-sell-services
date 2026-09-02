@@ -265,7 +265,7 @@ class TippingService {
 		// Resolve through the shared seam so a cart-based rail (WooCommerce)
 		// can hand back its own order-pay URL instead of a query arg only the
 		// standalone checkout understands.
-		$checkout_url = wpss_get_pay_order_url( $tip_order_id );
+		$checkout_url = wpss_ensure_pay_order( $tip_order_id );
 
 		/**
 		 * Fires when a pending-payment tip order is created and awaits the buyer's gateway charge.

@@ -1666,7 +1666,7 @@ class OrdersController extends RestController {
 			}
 		}
 
-		$checkout_url = wpss_get_pay_order_url( $order_id );
+		$checkout_url = wpss_ensure_pay_order( $order_id );
 
 		return new WP_REST_Response(
 			array(
@@ -1924,11 +1924,8 @@ class OrdersController extends RestController {
 			return null;
 		}
 
-		if ( ! function_exists( 'wpss_get_pay_order_url' ) ) {
-			return null;
-		}
-
-		return wpss_get_pay_order_url( (int) $order->id );
+		// Pass the row we already hold: a read, once per listed order.
+		return wpss_get_pay_order_url( (int) $order->id, $order );
 	}
 
 	/**
