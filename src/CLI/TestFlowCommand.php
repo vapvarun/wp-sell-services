@@ -86,6 +86,12 @@ class TestFlowCommand extends WP_CLI_Command {
 	 * [--no-cleanup]
 	 * : Leave seeded data in the DB after the run (for manual inspection).
 	 *
+	 * [--yes]
+	 * : Skip the confirmation prompt.
+	 *
+	 * [--force]
+	 * : Run on a production site (wp_get_environment_type() === 'production').
+	 *
 	 * @param array<int, string>    $args       Positional arguments.
 	 * @param array<string, string> $assoc_args Associative arguments.
 	 */
@@ -107,6 +113,12 @@ class TestFlowCommand extends WP_CLI_Command {
 				WP_CLI::error( "Unknown flow: {$name}" );
 			}
 		}
+
+		Guard::writes(
+			'test flows, each writing real users, services, orders and ledger rows' . ( $cleanup ? ' (removed afterwards)' : ' (kept: --no-cleanup)' ),
+			count( $to_run ),
+			$assoc_args
+		);
 
 		$exit_code = 0;
 

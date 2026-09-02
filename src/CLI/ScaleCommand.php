@@ -125,6 +125,12 @@ class ScaleCommand extends WP_CLI_Command {
 	 * default: 12
 	 * ---
 	 *
+	 * [--yes]
+	 * : Skip the confirmation prompt.
+	 *
+	 * [--force]
+	 * : Seed on a production site (wp_get_environment_type() === 'production').
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     $ wp wpss scale seed --vendors=10000
@@ -138,6 +144,8 @@ class ScaleCommand extends WP_CLI_Command {
 	public function seed( array $args, array $assoc_args ): void {
 		$vendors = max( 1, (int) ( $assoc_args['vendors'] ?? 10000 ) );
 		$per     = max( 1, (int) ( $assoc_args['orders-per-vendor'] ?? 12 ) );
+
+		Guard::writes( "benchmark orders across {$vendors} synthetic vendors, plus ledger rows", $vendors * $per, $assoc_args );
 
 		WP_CLI::log( 'Ensuring schema/indexes are current...' );
 		( new SchemaManager() )->sync();
@@ -171,6 +179,12 @@ class ScaleCommand extends WP_CLI_Command {
 	 * [--teardown]
 	 * : Remove the dataset after benching.
 	 *
+	 * [--yes]
+	 * : Skip the seed confirmation prompt (with --seed).
+	 *
+	 * [--force]
+	 * : Seed on a production site (with --seed).
+	 *
 	 * [--format=<format>]
 	 * : Output format.
 	 * ---
@@ -198,7 +212,7 @@ class ScaleCommand extends WP_CLI_Command {
 		$format      = (string) ( $assoc_args['format'] ?? 'table' );
 
 		if ( $do_seed ) {
-			$this->seed( array(), array() );
+			$this->seed( array(), $assoc_args );
 		} else {
 			// Bench still needs the indexes present; sync is idempotent.
 			( new SchemaManager() )->sync();

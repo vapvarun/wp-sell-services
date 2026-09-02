@@ -16,6 +16,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_CLI;
 use WP_CLI_Command;
 use WPSellServices\Demo\MarketplaceSeeder;
+use WPSellServices\PostTypes\BuyerRequestPostType;
 
 /**
  * Manage WP Sell Services from the command line.
@@ -25,7 +26,7 @@ use WPSellServices\Demo\MarketplaceSeeder;
  *     # Create 20 demo services
  *     $ wp wpss demo create --count=20
  *
- *     # Delete all services
+ *     # Delete demo content (services, requests and attachments marked _wpss_demo_content)
  *     $ wp wpss demo delete --yes
  *
  *     # List all services with stats
@@ -69,6 +70,12 @@ class ServiceCommands extends WP_CLI_Command {
 	 * default: 5
 	 * ---
 	 *
+	 * [--yes]
+	 * : Skip the confirmation prompt.
+	 *
+	 * [--force]
+	 * : Write on a production site (wp_get_environment_type() === 'production').
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Create 20 demo services
@@ -102,6 +109,8 @@ class ServiceCommands extends WP_CLI_Command {
 		// Ensure we have enough templates.
 		$templates      = array_values( $templates );
 		$template_count = count( $templates );
+
+		Guard::writes( 'demo services', $count, $assoc_args );
 
 		WP_CLI::log( "Creating {$count} demo services..." );
 		WP_CLI::log( '' );
@@ -147,56 +156,86 @@ class ServiceCommands extends WP_CLI_Command {
 	}
 
 	/**
-	 * Delete all demo/test services.
+	 * Delete demo content.
+	 *
+	 * By default removes only posts carrying the `_wpss_demo_content` marker:
+	 * the services, buyer requests and attachments written by `demo create`,
+	 * `demo marketplace` and the admin demo importer. Real content is never
+	 * selected.
 	 *
 	 * ## OPTIONS
 	 *
-	 * [--yes]
-	 * : Skip confirmation prompt.
-	 *
 	 * [--all]
-	 * : Delete ALL services (not just demos).
+	 * : Delete EVERY service on the site, demo or not. Requires --yes to
+	 * acknowledge, and the site-wide count is still confirmed interactively.
+	 *
+	 * [--yes]
+	 * : Skip the confirmation prompt (with --all: acknowledge the scope).
+	 *
+	 * [--force]
+	 * : Delete on a production site (wp_get_environment_type() === 'production').
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     # Delete all services with confirmation
+	 *     # Delete demo content with confirmation
 	 *     $ wp wpss demo delete
 	 *
-	 *     # Delete without confirmation
+	 *     # Delete demo content without confirmation
 	 *     $ wp wpss demo delete --yes
+	 *
+	 *     # Delete every service on the site (always confirmed)
+	 *     $ wp wpss demo delete --all --yes
 	 *
 	 * @param array $args       Positional arguments.
 	 * @param array $assoc_args Associative arguments.
 	 */
 	public function delete( array $args, array $assoc_args ): void {
-		$services = get_posts(
-			array(
-				'post_type'      => 'wpss_service',
-				'posts_per_page' => -1,
-				'post_status'    => 'any',
-				'fields'         => 'ids',
-			)
+		$all = ! empty( $assoc_args['all'] );
+
+		if ( $all && empty( $assoc_args['yes'] ) ) {
+			WP_CLI::error( '--all deletes every service on the site, demo or not. Pass --yes to acknowledge it; the count is still confirmed before anything is deleted.' );
+		}
+
+		$query = array(
+			'post_type'      => 'wpss_service',
+			'posts_per_page' => -1,
+			'post_status'    => 'any',
+			'fields'         => 'ids',
 		);
 
-		$count = count( $services );
+		if ( ! $all ) {
+			// The same marker the admin importer and the marketplace seeder write.
+			$query['post_type']  = array( 'wpss_service', BuyerRequestPostType::POST_TYPE, 'attachment' );
+			$query['meta_key']   = '_wpss_demo_content'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			$query['meta_value'] = '1'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+		}
+
+		$posts = get_posts( $query );
+		$count = count( $posts );
 
 		if ( 0 === $count ) {
-			WP_CLI::success( 'No services to delete.' );
+			WP_CLI::success( $all ? 'No services to delete.' : 'No demo content to delete (no post carries _wpss_demo_content).' );
 			return;
 		}
 
-		WP_CLI::confirm( "Delete {$count} services?", $assoc_args );
+		// --all is acknowledged with --yes but never skips the prompt: the
+		// site-wide count is always shown before the first delete.
+		Guard::writes(
+			$all ? 'services (EVERY service on the site, --all)' : 'demo posts (services, requests and attachments marked _wpss_demo_content)',
+			$count,
+			$all ? array_diff_key( $assoc_args, array( 'yes' => true ) ) : $assoc_args
+		);
 
-		$progress = \WP_CLI\Utils\make_progress_bar( 'Deleting services', $count );
+		$progress = \WP_CLI\Utils\make_progress_bar( 'Deleting', $count );
 
-		foreach ( $services as $post_id ) {
+		foreach ( $posts as $post_id ) {
 			wp_delete_post( $post_id, true );
 			$progress->tick();
 		}
 
 		$progress->finish();
 
-		WP_CLI::success( "Deleted {$count} services." );
+		WP_CLI::success( "Deleted {$count} " . ( $all ? 'services.' : 'demo posts.' ) );
 	}
 
 	/**
@@ -225,6 +264,12 @@ class ServiceCommands extends WP_CLI_Command {
 	 * ---
 	 * default: true
 	 * ---
+	 *
+	 * [--yes]
+	 * : Skip the confirmation prompt.
+	 *
+	 * [--force]
+	 * : Seed on a production site (wp_get_environment_type() === 'production').
 	 *
 	 * ## EXAMPLES
 	 *
@@ -260,6 +305,8 @@ class ServiceCommands extends WP_CLI_Command {
 		if ( isset( $assoc_args['no-images'] ) ) {
 			$with_images = false;
 		}
+
+		Guard::writes( 'demo orders at minimum, plus vendors, buyers, services, reviews and ledger rows', max( 50, $min_orders ), $assoc_args );
 
 		WP_CLI::log( 'Seeding demo marketplace' . ( $with_images ? ' (with images)...' : ' (no images)...' ) );
 		WP_CLI::log( '' );
@@ -465,6 +512,9 @@ class ServiceCommands extends WP_CLI_Command {
 		if ( is_wp_error( $post_id ) ) {
 			return $post_id;
 		}
+
+		// The marker `wp wpss demo delete` scopes to by default.
+		update_post_meta( $post_id, '_wpss_demo_content', 1 );
 
 		// Assign category.
 		$cat = get_term_by( 'name', $data['category'], 'wpss_service_category' );
@@ -690,6 +740,14 @@ class ServiceCommands extends WP_CLI_Command {
 	 * Recalculates _wpss_starting_price, _wpss_fastest_delivery, and
 	 * _wpss_max_revisions from package data.
 	 *
+	 * ## OPTIONS
+	 *
+	 * [--yes]
+	 * : Skip the confirmation prompt.
+	 *
+	 * [--force]
+	 * : Write on a production site (wp_get_environment_type() === 'production').
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     $ wp wpss service regenerate-meta
@@ -714,6 +772,8 @@ class ServiceCommands extends WP_CLI_Command {
 			WP_CLI::log( 'No services found.' );
 			return;
 		}
+
+		Guard::writes( "services' computed price, delivery and revision meta", $count, $assoc_args );
 
 		WP_CLI::log( "Regenerating meta for {$count} services..." );
 

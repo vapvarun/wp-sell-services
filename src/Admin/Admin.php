@@ -3020,10 +3020,9 @@ class Admin {
 				++$featured;
 			}
 
+			// create_service() marks the post _wpss_demo_content for cleanup.
 			$result = $ref_create->invoke( $commands, $service_data );
 			if ( ! is_wp_error( $result ) ) {
-				// Mark as demo content for easy cleanup.
-				update_post_meta( $result, '_wpss_demo_content', 1 );
 				++$created;
 			}
 		}

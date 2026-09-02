@@ -26,7 +26,8 @@ wp wpss demo marketplace                      # seed a FULL demo marketplace
 wp wpss demo list                             # list services with stats
 wp wpss demo stats                            # marketplace statistics summary
 wp wpss demo regenerate-meta                  # rebuild computed service meta
-wp wpss demo delete --yes                     # remove all demo/test content
+wp wpss demo delete --yes                     # remove demo content only
+wp wpss demo delete --all --yes               # remove EVERY service (always confirmed)
 ```
 
 **`create` and `marketplace` are not the same thing.** `create` seeds service
@@ -36,8 +37,14 @@ buyer requests with proposals, and conversations. Use `marketplace` for staging
 sites, theme testing, and client demos; use `create` when you just need catalog
 volume.
 
-Demo content is flagged internally, so `demo delete` never touches real customer
-data. `delete` prompts for confirmation -- pass `--yes` in scripts.
+Demo content is flagged internally (`_wpss_demo_content`), so `demo delete` never
+touches real customer data unless you pass `--all`, which also requires `--yes`
+and still confirms the site-wide count. Every command that writes rows (`create`,
+`marketplace`, `regenerate-meta`, `delete`, `scale seed`, `test:flow`) prompts
+with the count -- pass `--yes` in scripts -- and refuses outright when
+`wp_get_environment_type()` is `production` unless you pass `--force`.
+`marketplace` no longer changes the homepage; it prints the `wp option update`
+commands to do that yourself.
 
 ## Health checks
 
