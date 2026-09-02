@@ -3675,15 +3675,16 @@
                                         ]
                                     },
                                     "content": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "default": "",
+                                        "description": "Text or link. Optional when a multipart `file` is sent."
                                     },
                                     "description": {
                                         "type": "string"
                                     }
                                 },
                                 "required": [
-                                    "type",
-                                    "content"
+                                    "type"
                                 ]
                             }
                         }
@@ -3822,8 +3823,9 @@
                                         "type": "array",
                                         "default": [],
                                         "items": {
-                                            "type": "integer"
-                                        }
+                                            "type": "string"
+                                        },
+                                        "description": "Ids of files you already uploaded to this order (evidence, requirement or delivery records)."
                                     }
                                 },
                                 "required": [
@@ -4340,6 +4342,25 @@
                     },
                     "404": {
                         "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "context": {
+                                        "type": "string",
+                                        "description": "What the file is for: avatar, portfolio, service or profile. Order files (deliveries, requirements, messages, disputes) are uploaded on their own order routes."
+                                    }
+                                },
+                                "required": [
+                                    "context"
+                                ]
+                            }
+                        }
                     }
                 }
             }
