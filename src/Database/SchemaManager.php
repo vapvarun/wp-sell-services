@@ -247,8 +247,55 @@ class SchemaManager {
 		$this->create_tables();
 		$this->run_column_migrations();
 		$this->run_precision_migrations();
+		$this->add_1_7_1_indexes();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
+	}
+
+	/**
+	 * Indexes for the surfaces that filter on unindexed columns (1.7.1).
+	 *
+	 * Review moderation lists by (status, created_at); the vendor directory
+	 * filters on availability and country; the buyer's order list filters by
+	 * (customer_id, status) and sorts by created_at. Each ADD KEY is guarded by
+	 * SHOW INDEX so this is safe to run on every install()/sync().
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	private function add_1_7_1_indexes(): void {
+		$this->maybe_add_index( 'reviews', 'status_created', 'status, created_at' );
+		$this->maybe_add_index( 'vendor_profiles', 'availability', 'is_available, vacation_mode' );
+		$this->maybe_add_index( 'vendor_profiles', 'country', 'country' );
+		$this->maybe_add_index( 'orders', 'customer_status_created', 'customer_id, status, created_at' );
+	}
+
+	/**
+	 * Add a secondary index when the table has no key of that name.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $table   Table name without prefix.
+	 * @param string $name    Key name.
+	 * @param string $columns Comma-separated column list (plugin-controlled).
+	 * @return void
+	 */
+	private function maybe_add_index( string $table, string $name, string $columns ): void {
+		$full_table = $this->get_table_name( $table );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$exists = $this->wpdb->get_var(
+			$this->wpdb->prepare( "SHOW INDEX FROM `{$full_table}` WHERE Key_name = %s", $name )
+		);
+
+		if ( null !== $exists ) {
+			return;
+		}
+
+		// Identifiers are plugin-controlled constants; no data is interpolated.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$this->wpdb->query( "ALTER TABLE `{$full_table}` ADD KEY `{$name}` ({$columns})" );
 	}
 
 	/**
@@ -1426,6 +1473,7 @@ class SchemaManager {
 		$this->create_tables();
 		$this->run_column_migrations();
 		$this->run_precision_migrations();
+		$this->add_1_7_1_indexes();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
 	}

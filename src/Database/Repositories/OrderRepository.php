@@ -985,6 +985,35 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Marketplace-wide order aggregates for the admin dashboard, in one scan.
+	 *
+	 * Cached by wpss_get_order_aggregates(); call that, not this, from UI code.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float}
+	 */
+	public function get_aggregates(): object {
+		$row = $this->wpdb->get_row(
+			"SELECT
+				COUNT(*) AS total,
+				SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS in_progress,
+				SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
+				SUM(CASE WHEN status IN ('pending_payment', 'pending_requirements') THEN 1 ELSE 0 END) AS pending,
+				SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END) AS revenue
+			FROM {$this->table}"
+		);
+
+		return (object) array(
+			'total'       => (int) ( $row->total ?? 0 ),
+			'in_progress' => (int) ( $row->in_progress ?? 0 ),
+			'completed'   => (int) ( $row->completed ?? 0 ),
+			'pending'     => (int) ( $row->pending ?? 0 ),
+			'revenue'     => (float) ( $row->revenue ?? 0 ),
+		);
+	}
+
+	/**
 	 * Count orders by status.
 	 *
 	 * @return array<string, int> Status counts.

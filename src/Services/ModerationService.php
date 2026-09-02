@@ -137,14 +137,7 @@ class ModerationService {
 	 * @return int
 	 */
 	public function get_pending_count(): int {
-		$posts = $this->get_pending_services(
-			array(
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-			)
-		);
-
-		return count( $posts );
+		return wpss_count_pending_services();
 	}
 
 	/**

@@ -130,6 +130,89 @@ class VendorProfileRepository extends AbstractRepository {
 	}
 
 	/**
+	 * One page of the public vendor directory.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string, mixed> $args Filters: status (default 'active', '' for any),
+	 *                                   available (bool: taking orders and not on vacation),
+	 *                                   country, plus orderby/order/limit/offset.
+	 * @return array<object>
+	 */
+	public function get_directory( array $args = array() ): array {
+		$args    = wp_parse_args(
+			$args,
+			array(
+				'orderby' => 'avg_rating',
+				'order'   => 'DESC',
+				'limit'   => 12,
+				'offset'  => 0,
+			)
+		);
+		$orderby = $this->validate_orderby( (string) $args['orderby'] );
+		$order   = $this->validate_order( (string) $args['order'] );
+		$where   = $this->directory_where( $args );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- $where is prepared below; identifiers are allow-listed.
+		return $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT * FROM {$this->table} {$where} ORDER BY {$orderby} {$order}, id DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				max( 1, (int) $args['limit'] ),
+				max( 0, (int) $args['offset'] )
+			)
+		);
+	}
+
+	/**
+	 * Total rows behind get_directory() for the same filters.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string, mixed> $args See get_directory().
+	 * @return int
+	 */
+	public function count_directory( array $args = array() ): int {
+		$where = $this->directory_where( $args );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- $where is prepared; the table name is plugin-controlled.
+		return (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$this->table} {$where}" );
+	}
+
+	/**
+	 * Prepared WHERE clause shared by get_directory() and count_directory().
+	 *
+	 * @param array<string, mixed> $args Directory filters.
+	 * @return string '' or a prepared ' WHERE ...' fragment.
+	 */
+	private function directory_where( array $args ): string {
+		$status  = (string) ( $args['status'] ?? 'active' );
+		$country = (string) ( $args['country'] ?? '' );
+		$clauses = array();
+		$values  = array();
+
+		if ( '' !== $status ) {
+			$clauses[] = 'status = %s';
+			$values[]  = $status;
+		}
+		if ( ! empty( $args['available'] ) ) {
+			$clauses[] = 'is_available = 1 AND vacation_mode = 0';
+		}
+		if ( '' !== $country ) {
+			$clauses[] = 'country = %s';
+			$values[]  = $country;
+		}
+
+		if ( empty( $clauses ) ) {
+			return '';
+		}
+
+		$where = ' WHERE ' . implode( ' AND ', $clauses );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only; values bound here.
+		return empty( $values ) ? $where : (string) $this->wpdb->prepare( $where, ...$values );
+	}
+
+	/**
 	 * Get verified vendors.
 	 *
 	 * @param array<string, mixed> $args Query arguments.

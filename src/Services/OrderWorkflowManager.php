@@ -51,6 +51,13 @@ class OrderWorkflowManager {
 	public const REFUND_PENDING_META = '_wpss_refund_pending';
 
 	/**
+	 * Rows a cron sweep handles per run; the next tick takes the rest.
+	 *
+	 * @since 1.7.1
+	 */
+	public const SWEEP_BATCH = 200;
+
+	/**
 	 * Gateway outcome of the last refund attempted per order, this request.
 	 *
 	 * The bool from apply_refund_status() stays for compatibility, so the caller
@@ -205,9 +212,12 @@ class OrderWorkflowManager {
 			$wpdb->prepare(
 				"SELECT id, vendor_id, customer_id FROM {$table}
 				WHERE status = %s
-				AND delivery_deadline < %s",
+				AND delivery_deadline < %s
+				ORDER BY delivery_deadline ASC
+				LIMIT %d",
 				ServiceOrder::STATUS_IN_PROGRESS,
-				current_time( 'mysql' )
+				current_time( 'mysql' ),
+				self::SWEEP_BATCH
 			)
 		);
 
@@ -264,11 +274,14 @@ class OrderWorkflowManager {
 				WHERE o.status IN (%s, %s)
 				AND d.status = 'pending'
 				AND d.created_at < DATE_SUB(%s, INTERVAL %d DAY)
-				GROUP BY o.id",
+				GROUP BY o.id
+				ORDER BY o.id ASC
+				LIMIT %d",
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_DELIVERED,
 				current_time( 'mysql' ),
-				$auto_complete_days
+				$auto_complete_days,
+				self::SWEEP_BATCH
 			)
 		);
 

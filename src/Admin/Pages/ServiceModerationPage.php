@@ -266,23 +266,7 @@ class ServiceModerationPage {
 	 * @return int
 	 */
 	public function get_pending_count(): int {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$count = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(DISTINCT p.ID)
-				FROM {$wpdb->posts} p
-				INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = %s
-				WHERE p.post_type = 'wpss_service'
-				AND p.post_status IN ('pending', 'publish')
-				AND pm.meta_value = %s",
-				self::META_KEY,
-				self::STATUS_PENDING
-			)
-		);
-
-		return absint( $count );
+		return wpss_count_pending_services();
 	}
 
 	/**

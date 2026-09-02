@@ -277,6 +277,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Pay buttons for tips, milestones, extensions and proposals are hidden on a store rail that cannot take a single-order payment instead of linking to a page it ignores.
 * Fix      - Orders left without requirements now auto-start by default instead of being cancelled after the timeout.
 * Fix      - Price decimals and currency position settings are applied; minimum and maximum order amounts are enforced at checkout.
+* Improve  - Dashboard lists, favourites and the vendor directory are paginated, the vendor directory can be sorted and filtered, admin counts are cached, and new indexes keep review moderation and the vendor directory fast on large sites.
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Payment intents carry the vendor id for every order type.
 
