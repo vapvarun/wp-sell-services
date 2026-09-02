@@ -954,17 +954,29 @@ class StripeGateway implements PaymentGatewayInterface {
 			);
 		}
 
+		$service_id = (int) ( $params['service_id'] ?? 0 );
+		$order_id   = (int) ( $params['order_id'] ?? 0 );
+
+		// The vendor the charge is for, the same way CheckoutIntentService
+		// names it on the AJAX path: the order's vendor when paying an existing
+		// order, else the service author. A split rail (Pro Connect) reads it
+		// from wpss_stripe_payment_intent_args.
+		$vendor_id = $order_id
+			? (int) ( wpss_get_order( $order_id )->vendor_id ?? 0 )
+			: (int) get_post_field( 'post_author', $service_id );
+
 		return $this->create_payment(
 			$amount,
 			$currency,
 			array(
-				'service_id'  => (int) ( $params['service_id'] ?? 0 ),
+				'service_id'  => $service_id,
 				'package_id'  => (int) ( $params['package_id'] ?? 0 ),
 				// Carried through to the intent's metadata so a succeeded
 				// payment can be matched back to the order it paid. Dropping it
 				// here is how a charged card left an order at pending_payment.
-				'order_id'    => (int) ( $params['order_id'] ?? 0 ),
+				'order_id'    => $order_id,
 				'customer_id' => (int) ( $params['customer_id'] ?? get_current_user_id() ),
+				'vendor_id'   => $vendor_id,
 			)
 		);
 	}
