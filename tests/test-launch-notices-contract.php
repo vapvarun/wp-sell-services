@@ -154,11 +154,49 @@ if ( '' === $sig_off || '' === $sig_on ) {
 	wpss_t( $sig_off !== $sig_on, sprintf( 'enabling another gateway changes the signature, so the notice returns (%s -> %s)', $sig_off, $sig_on ) );
 }
 
-// The dismiss handler must not be a write-anything primitive.
-wpss_t(
-	false !== strpos( $admin_src, "\$allowed = array( 'terms' => '_wpss_terms_notice_dismissed' );" ),
-	'the dismiss handler whitelists the notice key rather than trusting the request'
+/*
+ * The dismiss handler must not be a write-anything primitive.
+ *
+ * Asserted by driving it, not by grepping for the whitelist literal: the set
+ * of dismissible notices grows (1.7.1 added the setup-health one) and a
+ * source-level match broke on the first legitimate addition. wp_send_json_*
+ * and a failed nonce both end in wp_die(), so the AJAX die handler is swapped
+ * for a throw so the process survives both outcomes.
+ */
+if ( ! defined( 'DOING_AJAX' ) ) {
+	define( 'DOING_AJAX', true );
+}
+add_filter(
+	'wp_die_ajax_handler',
+	static function () {
+		return static function () {
+			throw new RuntimeException( 'wp_die' );
+		};
+	},
+	PHP_INT_MAX
 );
+
+$probe_dismiss = static function ( $notice ) use ( $admin ) {
+	wp_set_current_user( 1 );
+	delete_user_meta( 1, '_wpss_terms_notice_dismissed' );
+	$nonce               = wp_create_nonce( 'wpss_dismiss_notice' );
+	$_REQUEST['nonce']   = $nonce;
+	$_POST['nonce']      = $nonce;
+	$_POST['notice']     = $notice;
+	$_POST['signature']  = 'probe';
+	ob_start();
+	try {
+		$admin->ajax_dismiss_notice();
+	} catch ( RuntimeException $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+	}
+	ob_end_clean();
+	$stored = get_user_meta( 1, '_wpss_terms_notice_dismissed', true );
+	delete_user_meta( 1, '_wpss_terms_notice_dismissed' );
+	return $stored;
+};
+
+wpss_t( '' === $probe_dismiss( 'terms_notice_dismissed' ), 'the dismiss handler refuses a notice key it does not know' );
+wpss_t( 'probe' === $probe_dismiss( 'terms' ), 'the dismiss handler honours a known notice key' );
 
 // And the JS must be rebuilt, or the dismiss silently does nothing.
 $min = file_get_contents( dirname( __DIR__ ) . '/assets/js/admin.min.js' );
