@@ -504,7 +504,10 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 						<div class="wpss-messaging__attachments">
 							<?php foreach ( $attachments as $attachment ) : ?>
 								<?php
-								$file_url  = $attachment['url'] ?? '';
+								// Stored records have no URL; the gated endpoint link is
+								// built at render time. Legacy rows still carry one and
+								// get it back unchanged.
+								$file_url  = wpss_get_order_file_url( (array) $attachment );
 								$file_name = $attachment['name'] ?? ( $attachment['filename'] ?? basename( (string) $file_url ) );
 								$file_type = $attachment['type'] ?? '';
 								$is_image  = 0 === strpos( (string) $file_type, 'image/' );

@@ -382,14 +382,15 @@ class DisputeService {
 	 *
 	 * Evidence is stored in the dispute's evidence JSON column.
 	 *
-	 * @param int    $dispute_id Dispute ID.
-	 * @param int    $user_id User ID submitting evidence.
-	 * @param string $type Evidence type (text, image, file, link).
-	 * @param string $content Evidence content.
-	 * @param string $description Evidence description.
+	 * @param int                            $dispute_id Dispute ID.
+	 * @param int                            $user_id User ID submitting evidence.
+	 * @param string                         $type Evidence type (text, image, file, link).
+	 * @param string                         $content Evidence content.
+	 * @param string                         $description Evidence description.
+	 * @param array<int,array<string,mixed>> $attachments Stored file records from wpss_store_order_file() (1.7.1).
 	 * @return bool True on success, false on failure.
 	 */
-	public function add_evidence( int $dispute_id, int $user_id, string $type, string $content, string $description = '' ): bool {
+	public function add_evidence( int $dispute_id, int $user_id, string $type, string $content, string $description = '', array $attachments = array() ): bool {
 		global $wpdb;
 
 		$dispute = $this->get( $dispute_id );
@@ -431,9 +432,10 @@ class DisputeService {
 				'message'      => $sanitized_content,
 				'message_type' => $sanitized_type,
 				'description'  => sanitize_textarea_field( $description ),
+				'attachments'  => $attachments ? wp_json_encode( $attachments ) : null,
 				'created_at'   => current_time( 'mysql' ),
 			),
-			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s' )
+			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
 
 		// Keep the dispute row's timestamp moving so "last activity" sorting
@@ -619,6 +621,14 @@ class DisputeService {
 
 		foreach ( $rows as $row ) {
 			$attachments = ! empty( $row['attachments'] ) ? json_decode( (string) $row['attachments'], true ) : array();
+			$attachments = is_array( $attachments ) ? $attachments : array();
+			$content     = (string) $row['message'];
+
+			// A 1.7.1 upload keeps no URL in `message`; the gated link is built
+			// for whoever is asking, at read time.
+			if ( '' === $content && isset( $attachments[0] ) && is_array( $attachments[0] ) ) {
+				$content = wpss_get_order_file_url( $attachments[0] );
+			}
 
 			$items[] = array(
 				'id'          => (int) $row['id'],
@@ -626,9 +636,9 @@ class DisputeService {
 				'sender_role' => (string) ( $row['sender_role'] ?? '' ),
 				// Rows written before the columns existed are plain messages.
 				'type'        => (string) ( $row['message_type'] ?? '' ) ?: 'text',
-				'content'     => (string) $row['message'],
+				'content'     => $content,
 				'description' => (string) ( $row['description'] ?? '' ),
-				'attachments' => is_array( $attachments ) ? $attachments : array(),
+				'attachments' => $attachments,
 				'created_at'  => (string) $row['created_at'],
 			);
 		}

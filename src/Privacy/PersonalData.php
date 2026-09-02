@@ -301,7 +301,7 @@ class PersonalData {
 				'fields' => array(
 					'amount'     => __( 'Amount', 'wp-sell-services' ),
 					'method'     => __( 'Method', 'wp-sell-services' ),
-					'details'    => array( __( 'Payout details', 'wp-sell-services' ), $mask ),
+					'details'    => array( __( 'Payout details', 'wp-sell-services' ), fn( string $v ): string => $this->mask( wpss_decrypt_secret( $v ) ) ),
 					'status'     => __( 'Status', 'wp-sell-services' ),
 					'created_at' => __( 'Requested', 'wp-sell-services' ),
 				),

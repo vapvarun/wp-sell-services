@@ -274,6 +274,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Improve  - Personal data export now covers disputes, deliveries, requirements, withdrawals, proposals, reports and notifications.
 * Fix      - Demo delete removes only demo content, and every writing CLI command asks for confirmation and refuses on production without --force.
 * Fix      - Pay buttons for tips, milestones, extensions and proposals are hidden on a store rail that cannot take a single-order payment instead of linking to a page it ignores.
+* Security - Message, contact and dispute attachments are stored privately like deliveries, dispute evidence checks ownership, and vendor payout details are encrypted at rest.
 * Dev      - Stored files record which storage provider holds them.
 
 = 1.7.0 - August 2026 =

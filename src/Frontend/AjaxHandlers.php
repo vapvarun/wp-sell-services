@@ -720,7 +720,7 @@ class AjaxHandlers {
 		$skipped_files    = array();
 		if ( ! empty( $_FILES['attachments'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES group is validated/sanitized inside wpss_handle_message_attachments().
-			$uploaded         = wpss_handle_message_attachments( (array) $_FILES['attachments'] );
+			$uploaded         = wpss_handle_message_attachments( (array) $_FILES['attachments'], $order_id, 'message' );
 			$attachments_data = $uploaded['attachments'];
 			$skipped_files    = $uploaded['skipped'];
 		}
@@ -1319,43 +1319,27 @@ class AjaxHandlers {
 		$evidence_type    = 'text';
 		$evidence_content = $description;
 
+		$evidence_files = array();
+
 		if ( ! empty( $_FILES['evidence_file'] ) && ! empty( $_FILES['evidence_file']['name'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-			$file = $_FILES['evidence_file'];
+			$file    = $_FILES['evidence_file'];
+			$refused = wpss_check_upload( $file );
 
-			// Verify file upload.
-			if ( ! function_exists( 'wp_handle_upload' ) ) {
-				require_once ABSPATH . 'wp-admin/includes/file.php';
+			if ( $refused ) {
+				wp_send_json_error( array( 'message' => $refused->get_error_message() ) );
 			}
 
-			$upload_overrides = array(
-				'test_form' => false,
-				'mimes'     => array(
-					'jpg|jpeg' => 'image/jpeg',
-					'png'      => 'image/png',
-					'gif'      => 'image/gif',
-					'pdf'      => 'application/pdf',
-					'doc'      => 'application/msword',
-					'docx'     => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-					'zip'      => 'application/zip',
-					'txt'      => 'text/plain',
-				),
-			);
+			// Same private store and read gate as a delivery; no URL is kept.
+			$record = wpss_store_order_file( $file, (int) $order->id, 'dispute' );
 
-			$uploaded = wp_handle_upload( $file, $upload_overrides );
-
-			if ( isset( $uploaded['error'] ) ) {
-				wp_send_json_error( array( 'message' => $uploaded['error'] ) );
+			if ( ! $record ) {
+				wp_send_json_error( array( 'message' => __( 'Could not store the file.', 'wp-sell-services' ) ) );
 			}
 
-			$evidence_content = $uploaded['url'];
-			$file_type        = wp_check_filetype( $uploaded['file'] );
-
-			if ( strpos( $file_type['type'], 'image/' ) === 0 ) {
-				$evidence_type = 'image';
-			} else {
-				$evidence_type = 'file';
-			}
+			$evidence_files   = array( $record );
+			$evidence_content = wpss_get_order_file_url( $record );
+			$evidence_type    = 0 === strpos( (string) $record['type'], 'image/' ) ? 'image' : 'file';
 		}
 
 		// Must have either description or file.
@@ -1368,8 +1352,9 @@ class AjaxHandlers {
 			$dispute_id,
 			$user_id,
 			$evidence_type,
-			$evidence_content,
-			$evidence_type !== 'text' ? $description : ''
+			$evidence_files ? '' : $evidence_content,
+			$evidence_type !== 'text' ? $description : '',
+			$evidence_files
 		);
 
 		if ( ! $evidence_id ) {
@@ -1402,7 +1387,7 @@ class AjaxHandlers {
 						<div class="wpss-evidence-file">
 							<a href="<?php echo esc_url( $evidence_content ); ?>" target="_blank" class="wpss-file-link">
 								<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-								<span><?php echo esc_html( basename( $evidence_content ) ); ?></span>
+								<span><?php echo esc_html( $evidence_files ? (string) $evidence_files[0]['name'] : basename( $evidence_content ) ); ?></span>
 							</a>
 						</div>
 					<?php endif; ?>
@@ -1964,35 +1949,12 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'No file uploaded.', 'wp-sell-services' ) ) );
 		}
 
-		$file = $_FILES['file']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- passed directly to wp_handle_upload().
+		$file = $_FILES['file']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- validated by wpss_check_upload(), stored by media_handle_upload().
 
-		// Check file size.
-		$max_size = (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024;
-		if ( $file['size'] > $max_size ) {
-			wp_send_json_error(
-				array(
-					'message' => sprintf(
-					/* translators: %s: max file size */
-						__( 'File size exceeds maximum allowed (%s MB).', 'wp-sell-services' ),
-						get_option( 'wpss_max_file_size', 10 )
-					),
-				)
-			);
-		}
+		$refused = wpss_check_upload( $file );
 
-		// Verify MIME type matches extension (prevent extension spoofing).
-		$filetype = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
-
-		if ( ! $filetype['ext'] || ! $filetype['type'] ) {
-			wp_send_json_error( array( 'message' => __( 'File type could not be verified.', 'wp-sell-services' ) ) );
-		}
-
-		// Check file type against allowed list.
-		$allowed_types = explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) );
-		$ext           = strtolower( $filetype['ext'] );
-
-		if ( ! in_array( $ext, $allowed_types, true ) ) {
-			wp_send_json_error( array( 'message' => __( 'File type not allowed.', 'wp-sell-services' ) ) );
+		if ( $refused ) {
+			wp_send_json_error( array( 'message' => $refused->get_error_message() ) );
 		}
 
 		require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -2150,81 +2112,12 @@ class AjaxHandlers {
 			}
 		}
 
-		// Handle file attachments.
+		// Pre-sale: there is no order yet, so the shared helper keeps these in
+		// the media library (private) rather than the order store.
 		$attachments = array();
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- File uploads validated below.
 		if ( ! empty( $_FILES['attachments'] ) ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-			require_once ABSPATH . 'wp-admin/includes/image.php';
-			require_once ABSPATH . 'wp-admin/includes/media.php';
-
-			// Allowed file types for contact attachments.
-			$allowed_types = array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'zip', 'txt' );
-			$allowed_mimes = array(
-				'image/jpeg',
-				'image/png',
-				'image/gif',
-				'image/webp',
-				'application/pdf',
-				'application/msword',
-				'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-				'application/zip',
-				'text/plain',
-			);
-			$max_size      = 10 * 1024 * 1024; // 10MB per file.
-
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			$files = $_FILES['attachments'];
-
-			// Handle multiple files.
-			if ( is_array( $files['name'] ) ) {
-				$file_count = count( $files['name'] );
-				$max_files  = 5;
-				$limit      = min( $file_count, $max_files );
-
-				for ( $i = 0; $i < $limit; $i++ ) {
-					if ( empty( $files['name'][ $i ] ) || UPLOAD_ERR_OK !== $files['error'][ $i ] ) {
-						continue;
-					}
-
-					$file = array(
-						'name'     => $files['name'][ $i ],
-						'type'     => $files['type'][ $i ],
-						'tmp_name' => $files['tmp_name'][ $i ],
-						'error'    => $files['error'][ $i ],
-						'size'     => $files['size'][ $i ],
-					);
-
-					// Validate file extension.
-					$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
-					if ( ! in_array( $ext, $allowed_types, true ) ) {
-						continue; // Skip invalid file types.
-					}
-
-					// Validate MIME type to prevent extension spoofing.
-					$file_info = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
-					$mime_type = $file_info['type'] ?? '';
-					if ( ! in_array( $mime_type, $allowed_mimes, true ) ) {
-						continue; // Skip invalid MIME types.
-					}
-
-					// Validate file size.
-					if ( $file['size'] > $max_size ) {
-						continue; // Skip files that are too large.
-					}
-
-					$_FILES['upload_file'] = $file;
-					$attachment_id         = media_handle_upload( 'upload_file', 0 );
-
-					if ( ! is_wp_error( $attachment_id ) ) {
-						$attachments[] = array(
-							'id'   => $attachment_id,
-							'url'  => wp_get_attachment_url( $attachment_id ),
-							'name' => $files['name'][ $i ],
-						);
-					}
-				}
-			}
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES group is validated/sanitized inside wpss_handle_message_attachments().
+			$attachments = array_slice( wpss_handle_message_attachments( (array) $_FILES['attachments'], 0, 'contact' )['attachments'], 0, 5 );
 		}
 
 		// Get sender info.
@@ -2294,13 +2187,7 @@ class AjaxHandlers {
 		$conversation = $conversation_service->create_direct( $user_id, $vendor_id, $conv_subject, $service_id );
 
 		if ( $conversation ) {
-			$attachment_ids = array_map(
-				function ( $att ) {
-					return $att['id'];
-				},
-				$attachments
-			);
-			$conversation_service->send_message( $conversation->id, $user_id, $message, $attachment_ids );
+			$conversation_service->send_message( $conversation->id, $user_id, $message, $attachments );
 		}
 
 		/**
