@@ -549,10 +549,10 @@ class ServiceCommands extends WP_CLI_Command {
 			update_post_meta( $post_id, '_wpss_faqs', $data['faqs'] );
 		}
 		if ( ! empty( $data['requirements'] ) ) {
-			update_post_meta( $post_id, '_wpss_requirements', $data['requirements'] );
+			wpss_save_service_requirements( $post_id, (array) $data['requirements'] );
 		}
 		if ( ! empty( $data['addons'] ) ) {
-			update_post_meta( $post_id, '_wpss_addons', $data['addons'] );
+			wpss_save_service_addons( $post_id, (array) $data['addons'] );
 		}
 
 		// Save stats.

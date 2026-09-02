@@ -29,7 +29,6 @@ add_filter( 'wpss_review_window_days', fn( $days ) => 14 );
 |------|-----------|------|
 | `wpss_loaded` | `Plugin $plugin` | `src/Core/Plugin.php:293` |
 | `wpss_adapter_initialized` | `EcommerceAdapterInterface $adapter` | `src/Integrations/IntegrationManager.php:136` |
-| `wpss_register_field_types` | `FieldManager $manager` | `src/CustomFields/FieldManager.php:61` |
 
 **`wpss_loaded`** is the primary extension hook. All Pro features register here:
 
@@ -53,7 +52,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_pre_create_service` | `array $data` | `ServiceManager.php` |
 | `wpss_pre_update_service` | `array $data, int $service_id` | `ServiceManager.php` |
 | `wpss_before_service_deleted` | `int $service_id` | `src/Services/ServiceManager.php:323` |
-| `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:969` |
+| `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:884` |
 | `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:691` |
 | `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:777` |
 | `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:826` |
@@ -72,7 +71,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderService.php:429` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:813` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:912` |
 
 ### Order Filters
 
@@ -85,7 +84,6 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `src/Services/OrderWorkflowManager.php:751` |
 | `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:959` |
 | `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:623` |
-| `wpss_order_requirements_submitted` | `int $order_id, array $requirements` | `src/API/OrdersController.php:1165` |
 | `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/orders.php:298` |
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderWorkflowManager.php:635` |
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:401` |
@@ -121,7 +119,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_delivery_submitted` | `int $delivery_id, int $order_id` | `src/Services/DeliveryService.php:151` |
 | `wpss_delivery_accepted` | `int $order_id` | `src/Services/DeliveryService.php:197` |
 | `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:251` |
-| `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:543` |
+| `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:552` |
 | `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:945` |
 | `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1480` |
 | `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` | `src/Services/ConversationService.php:351` |
@@ -205,11 +203,11 @@ These hooks fire when services, requests, or users are deleted and related data 
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_before_cascade_delete_service` | `int $service_id` | `DataCascadeHandler.php:101` |
-| `wpss_after_cascade_delete_service` | `int $service_id` | `DataCascadeHandler.php:139` |
-| `wpss_before_cascade_delete_request` | `int $request_id` | `DataCascadeHandler.php:155` |
-| `wpss_after_cascade_delete_request` | `int $request_id` | `DataCascadeHandler.php:166` |
-| `wpss_before_cascade_delete_user` | `int $user_id` | `DataCascadeHandler.php:182` |
-| `wpss_after_cascade_delete_user` | `int $user_id` | `src/Services/DataCascadeHandler.php:260` |
+| `wpss_after_cascade_delete_service` | `int $service_id` | `DataCascadeHandler.php:135` |
+| `wpss_before_cascade_delete_request` | `int $request_id` | `DataCascadeHandler.php:151` |
+| `wpss_after_cascade_delete_request` | `int $request_id` | `DataCascadeHandler.php:162` |
+| `wpss_before_cascade_delete_user` | `int $user_id` | `DataCascadeHandler.php:178` |
+| `wpss_after_cascade_delete_user` | `int $user_id` | `src/Services/DataCascadeHandler.php:257` |
 
 ```php
 // Clean up custom data when a service is deleted
@@ -240,7 +238,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:285` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Admin/Pages/VendorsPage.php:1151` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1550` |
-| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2314` |
+| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2279` |
 | `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:373` |
 | `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:427` |
 
@@ -350,7 +348,6 @@ These hooks fire in the WordPress admin area for order management, service meta,
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2394` |
-| `wpss_admin_requirements_submitted` | `int $order_id, array $field_data` | `src/Admin/OrderScreen.php:335` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1945` |
 
 ### Admin Filters
@@ -411,7 +408,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_service_wizard_saved` | `int $service_id, array $sanitized_data` | `src/Frontend/ServiceWizard.php:1708` |
+| `wpss_service_wizard_saved` | `int $service_id, array $sanitized_data` | `src/Frontend/ServiceWizard.php:1711` |
 | `wpss_wizard_pricing_after` | `WP_Post\|null $service` | `ServiceWizard.php` |
 | `wpss_wizard_save_service_meta` | `int $service_id, array $data` | `ServiceWizard.php` |
 
@@ -419,7 +416,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1126` |
+| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1077` |
 | `wpss_services_per_page` | `int $per_page` (default 12) | `src/Frontend/ServiceArchiveView.php:653` |
 | `wpss_wizard_service_data` | `array $data, int $service_id` | `ServiceWizard.php` |
 | `wpss_wizard_sanitize_service_data` | `array $sanitized, array $raw` | `ServiceWizard.php` |
@@ -519,7 +516,7 @@ add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2500` |
+| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2465` |
 | `wpss_pay_order_url` | `string $url, int $order_id` | `src/functions/urls.php:845` |
 
 ### `wpss_pay_order_url` -- the payment-handoff seam
@@ -625,9 +622,6 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | `wpss_portfolio_item_created` | `int $item_id, int $vendor_id, array $data` | `src/Services/PortfolioService.php:199` |
 | `wpss_portfolio_item_updated` | `int $item_id, array $data` | `src/Services/PortfolioService.php:294` |
 | `wpss_portfolio_item_deleted` | `int $item_id, object $item` | `src/Services/PortfolioService.php:344` |
-| `wpss_addon_created` | `int $addon_id, int $service_id, array $addon_data` | `src/Services/ServiceAddonService.php:145` |
-| `wpss_addon_updated` | `int $addon_id, array $update_data` | `src/Services/ServiceAddonService.php:231` |
-| `wpss_addon_deleted` | `int $addon_id, object $addon` | `src/Services/ServiceAddonService.php:355` |
 | `wpss_settings_tab_{tab}` | *(none)* | `Settings.php:985` |
 | `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2073` |
 
@@ -669,7 +663,7 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | `wpss_currencies` | `$currencies` | `src/functions/money.php:1552` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:126` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:146` |
-| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:493` |
+| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:592` |
 | `wpss_wallet_manager` | `null` | `src/functions/money.php:1574` |
 
 ### Currency System Filters (1.2.1)
@@ -682,7 +676,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:165` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:656` |
 | `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3779` |
-| `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:835` |
+| `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:823` |
 
 **`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
 
@@ -749,7 +743,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:636` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:320` |
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:740` |
-| `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:929` |
+| `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:925` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:183` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:647` |
 | `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1291` |
@@ -768,14 +762,14 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:615` |
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:112` |
 | `wpss_delivery_allowed_file_types` | `$types` | `src/Services/DeliveryService.php:346` |
-| `wpss_requirements_allowed_file_types` | `$types` | `src/Services/RequirementsService.php:493` |
+| `wpss_requirements_allowed_file_types` | `$types` | `src/Services/RequirementsService.php:502` |
 | `wpss_withdrawal_methods` | `$methods` | `src/Services/EarningsService.php:979` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:522` |
-| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:816` |
-| `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:387` |
+| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:812` |
+| `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:382` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:266` |
-| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1242` |
+| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1193` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
@@ -904,9 +898,9 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_pro_connect_payout_paid` | `string $payout_id, string $account_id, float $amount, string $currency` | `src/StripeConnect/ConnectWebhookHandler.php:233` |
-| `wpss_pro_connect_payout_failed` | `string $payout_id, string $account_id, string $failure_code, string $failure_message` | `src/StripeConnect/ConnectWebhookHandler.php:274` |
-| `wpss_pro_connect_transfer_created` | `string $transfer_id, string $account_id, float $amount, string $currency` | `src/StripeConnect/ConnectWebhookHandler.php:315` |
+| `wpss_pro_connect_payout_paid` | `string $payout_id, string $account_id, float $amount, string $currency` | `src/StripeConnect/ConnectWebhookHandler.php:253` |
+| `wpss_pro_connect_payout_failed` | `string $payout_id, string $account_id, string $failure_code, string $failure_message` | `src/StripeConnect/ConnectWebhookHandler.php:294` |
+| `wpss_pro_connect_transfer_created` | `string $transfer_id, string $account_id, float $amount, string $currency` | `src/StripeConnect/ConnectWebhookHandler.php:335` |
 
 ### Recurring Services Actions
 
@@ -920,7 +914,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_analytics_init` | `AnalyticsManager $manager` | `AnalyticsManager.php:93` |
+| `wpss_analytics_init` | `AnalyticsManager $manager` | `AnalyticsManager.php:103` |
 
 ### Gateway Settings Actions
 

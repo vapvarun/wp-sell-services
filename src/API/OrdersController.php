@@ -18,10 +18,10 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use WPSellServices\Models\ServiceOrder;
-use WPSellServices\CustomFields\FieldValidator;
 use WPSellServices\Services\ConversationService;
 use WPSellServices\Services\DeliveryService;
 use WPSellServices\Services\OrderService;
+use WPSellServices\Services\RequirementsService;
 
 /**
  * REST API controller for orders.
@@ -1035,9 +1035,7 @@ class OrdersController extends RestController {
 			);
 		}
 
-		// Get service requirements template.
-		$service_id   = $order->service_id;
-		$requirements = get_post_meta( $service_id, '_wpss_requirements', true ) ?: array();
+		$requirements = wpss_get_service_requirements( (int) $order->service_id );
 
 		// Get submitted requirements from database table.
 		global $wpdb;
@@ -1094,82 +1092,27 @@ class OrdersController extends RestController {
 			);
 		}
 
-		// Get requirements template.
-		$template = get_post_meta( $order->service_id, '_wpss_requirements', true ) ?: array();
+		// One validator, one writer: the same service the buyer form posts to.
+		// Answers are keyed by requirement id (see GET /requirements template).
+		$result = ( new RequirementsService() )->submit( $order_id, $requirements, array(), array_map( 'absint', $attachments ) );
 
-		// Validate using FieldValidator for type-aware validation.
-		$validator         = new FieldValidator();
-		$validation_result = $validator->validate_all( $template, $requirements );
-
-		if ( is_wp_error( $validation_result ) ) {
+		if ( empty( $result['success'] ) ) {
 			return new WP_Error(
 				'rest_validation_failed',
-				implode( ' ', $validation_result->get_error_messages() ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// Sanitize requirements using type-aware sanitization.
-		$sanitized_requirements = $validator->sanitize_all( $template, $requirements );
-
-		// Save sanitized requirements to database table.
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_order_requirements';
-
-		// Check if requirements already exist for this order.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$existing = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT id FROM {$table} WHERE order_id = %d LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
-				$order_id
-			)
-		);
-
-		$now = current_time( 'mysql' );
-
-		if ( $existing ) {
-			// Update existing requirements.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$table,
+				trim( $result['message'] . ' ' . implode( ' ', (array) ( $result['errors'] ?? array() ) ) ),
 				array(
-					'field_data'   => wp_json_encode( $sanitized_requirements ),
-					'attachments'  => wp_json_encode( array_map( 'absint', $attachments ) ),
-					'submitted_at' => $now,
-				),
-				array( 'id' => $existing ),
-				array( '%s', '%s', '%s' ),
-				array( '%d' )
-			);
-		} else {
-			// Insert new requirements.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$wpdb->insert(
-				$table,
-				array(
-					'order_id'     => $order_id,
-					'field_data'   => wp_json_encode( $sanitized_requirements ),
-					'attachments'  => wp_json_encode( array_map( 'absint', $attachments ) ),
-					'submitted_at' => $now,
-				),
-				array( '%d', '%s', '%s', '%s' )
+					'status' => 400,
+					'errors' => $result['errors'] ?? array(),
+				)
 			);
 		}
-
-		// Update order status if pending or awaiting requirements.
-		if ( in_array( $order->status, array( 'pending', 'accepted', 'pending_requirements' ), true ) ) {
-			$req_order_service = new OrderService();
-			$req_order_service->update_status( $order_id, ServiceOrder::STATUS_REQUIREMENTS_SUBMITTED );
-		}
-
-		do_action( 'wpss_order_requirements_submitted', $order_id, $sanitized_requirements );
 
 		return new WP_REST_Response(
 			array(
 				'success'      => true,
-				'message'      => __( 'Requirements submitted successfully.', 'wp-sell-services' ),
-				'submitted'    => $sanitized_requirements,
-				'submitted_at' => $now,
+				'message'      => $result['message'],
+				'submitted'    => $result['submitted'],
+				'submitted_at' => current_time( 'mysql' ),
 			)
 		);
 	}

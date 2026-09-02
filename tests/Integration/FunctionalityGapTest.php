@@ -291,7 +291,6 @@ class FunctionalityGapTest extends TestCase {
 		$required_tables = array(
 			'wpss_orders'           => 'Service orders storage',
 			'wpss_service_packages' => 'Service pricing packages',
-			'wpss_service_addons'   => 'Service add-ons/extras',
 			'wpss_conversations'    => 'Order messaging (includes individual messages)',
 			'wpss_deliveries'       => 'Order deliveries',
 			'wpss_reviews'          => 'Service reviews',
@@ -370,11 +369,6 @@ class FunctionalityGapTest extends TestCase {
 				'class'   => 'WPSellServices\\Models\\ServicePackage',
 				'method'  => null,
 				'feature' => 'Tiered pricing (Basic/Standard/Premium)',
-			),
-			array(
-				'class'   => 'WPSellServices\\Models\\ServiceAddon',
-				'method'  => null,
-				'feature' => 'Gig extras/add-ons',
 			),
 
 			// Order workflow.

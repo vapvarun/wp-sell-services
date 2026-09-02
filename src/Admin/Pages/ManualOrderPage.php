@@ -18,7 +18,6 @@ defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\ConversationService;
-use WPSellServices\Services\ServiceAddonService;
 use WPSellServices\Assets\ScriptRegistry;
 
 /**
@@ -466,23 +465,14 @@ class ManualOrderPage {
 			wp_send_json_error( array( 'message' => __( 'Invalid service ID.', 'wp-sell-services' ) ) );
 		}
 
-		$addon_service = new ServiceAddonService();
-		$addons        = $addon_service->get_service_addons( $service_id );
-
 		$formatted = array();
-		foreach ( $addons as $addon ) {
-			$formatted[] = array(
-				'id'                  => (int) $addon->id,
-				'title'               => $addon->title,
-				'description'         => $addon->description ?? '',
-				'field_type'          => $addon->field_type,
-				'price'               => $addon->price,
-				'formatted_price'     => wpss_format_price( $addon->price ),
-				'price_type'          => $addon->price_type,
-				'min_quantity'        => $addon->min_quantity,
-				'max_quantity'        => $addon->max_quantity,
-				'is_required'         => $addon->is_required,
-				'delivery_days_extra' => $addon->delivery_days_extra,
+		foreach ( wpss_get_service_extras( $service_id ) as $index => $addon ) {
+			$formatted[] = array_merge(
+				$addon,
+				array(
+					'id'              => $index,
+					'formatted_price' => wpss_format_price( $addon['price'] ),
+				)
 			);
 		}
 
@@ -564,28 +554,27 @@ class ManualOrderPage {
 			$subtotal = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
 		}
 
-		// --- 5. Process addons ---
-		$addon_service   = new ServiceAddonService();
+		// --- 5. Process addons (ids are indices into the service's add-on list) ---
+		$all_addons      = wpss_get_service_extras( $service_id );
 		$selected_addons = array();
 		$addons_total    = 0;
 
 		foreach ( $addons_raw as $addon_id => $addon_data ) {
 			$addon_id = absint( $addon_id );
-			if ( empty( $addon_data['selected'] ) ) {
+			$addon    = $all_addons[ $addon_id ] ?? null;
+			if ( empty( $addon_data['selected'] ) || ! $addon ) {
 				continue;
 			}
 
-			$addon = $addon_service->get( $addon_id );
-			if ( ! $addon ) {
-				continue;
+			$quantity    = max( 1, absint( $addon_data['quantity'] ?? 1 ) );
+			$addon_price = 'percentage' === $addon['price_type'] ? $subtotal * $addon['price'] / 100 : (float) $addon['price'];
+			if ( 'quantity' === $addon['field_type'] ) {
+				$addon_price *= $quantity;
 			}
-
-			$quantity    = absint( $addon_data['quantity'] ?? 1 );
-			$addon_price = $addon_service->calculate_price( $addon, $subtotal, $quantity );
 
 			$selected_addons[] = array(
 				'id'       => $addon_id,
-				'title'    => $addon->title,
+				'title'    => $addon['title'],
 				'price'    => $addon_price,
 				'quantity' => $quantity,
 			);
@@ -632,8 +621,7 @@ class ManualOrderPage {
 		$vendor_earnings = $manual_breakdown['vendor_earnings'];
 
 		// --- 8. Smart status ---
-		$service_requirements     = get_post_meta( $service_id, '_wpss_requirements', true );
-		$service_has_requirements = ! empty( $service_requirements ) && is_array( $service_requirements );
+		$service_has_requirements = ! empty( wpss_get_service_requirements( $service_id ) );
 
 		$requirements_skipped = false;
 		if ( 'pending_requirements' === $status && ! $service_has_requirements ) {

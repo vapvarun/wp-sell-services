@@ -103,9 +103,6 @@ class DataCascadeHandler {
 		// Delete service packages.
 		$this->delete_where( 'service_packages', 'service_id', $service_id );
 
-		// Delete service addons.
-		$this->delete_where( 'service_addons', 'service_id', $service_id );
-
 		// Delete reviews for this service.
 		$this->delete_where( 'reviews', 'service_id', $service_id );
 

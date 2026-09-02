@@ -370,7 +370,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						'id'                  => $addon_index,
 						'title'               => $extra['title'] ?? '',
 						'price'               => (float) ( $extra['price'] ?? 0 ),
-						'delivery_days_extra' => (int) ( $extra['delivery_time'] ?? 0 ),
+						'delivery_days_extra' => (int) $extra['delivery_days_extra'],
 					];
 				}
 			}
@@ -567,7 +567,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					'id'                  => (int) $addon->id,
 					'name'                => $addon->title ?? $addon->name ?? '',
 					'price'               => $addon_price,
-					'delivery_days_extra' => (int) ( $addon->delivery_days_extra ?? $addon->extra_days ?? 0 ),
+					'delivery_days_extra' => (int) ( $addon->delivery_days_extra ?? 0 ),
 				);
 			}
 

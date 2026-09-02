@@ -827,7 +827,7 @@ class ServiceWizard {
 								<label class="wpss-form-label"><?php esc_html_e( 'Question', 'wp-sell-services' ); ?></label>
 								<input type="text"
 									class="wpss-form-input"
-									x-model="data.requirements[index].question"
+									x-model="data.requirements[index].label"
 									placeholder="<?php esc_attr_e( 'What do you need from the buyer?', 'wp-sell-services' ); ?>">
 							</div>
 							<div class="wpss-form-row wpss-form-row--2col">
@@ -936,7 +936,7 @@ class ServiceWizard {
 										<label class="wpss-form-label"><?php esc_html_e( 'Extra Days', 'wp-sell-services' ); ?></label>
 										<input type="number"
 											class="wpss-form-input"
-											x-model="data.extras[index].extra_days"
+											x-model="data.extras[index].delivery_days_extra"
 											min="0"
 											placeholder="0">
 									</div>
@@ -1203,8 +1203,11 @@ class ServiceWizard {
 		$packages     = ! empty( $packages ) ? $packages : array();
 		$gallery      = get_post_meta( $service_id, '_wpss_gallery', true );
 		$gallery      = ! empty( $gallery ) ? $gallery : array();
-		$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
-		$requirements = ! empty( $requirements ) ? $requirements : array();
+		// The Alpine model edits options as one comma-separated string.
+		$requirements = array_map(
+			static fn( array $req ) => array_merge( $req, array( 'options' => implode( ', ', $req['options'] ) ) ),
+			wpss_get_service_requirements( $service_id )
+		);
 		$extras       = wpss_get_service_extras( $service_id );
 		$faqs         = get_post_meta( $service_id, '_wpss_faqs', true );
 		$faqs         = ! empty( $faqs ) ? $faqs : array();
@@ -1935,22 +1938,7 @@ class ServiceWizard {
 	 * @return array Sanitized requirements.
 	 */
 	private function sanitize_requirements( array $requirements ): array {
-		$sanitized = array();
-
-		foreach ( $requirements as $req ) {
-			if ( empty( $req['question'] ) ) {
-				continue;
-			}
-
-			$sanitized[] = array(
-				'question' => sanitize_text_field( $req['question'] ),
-				'type'     => in_array( $req['type'] ?? 'text', array( 'text', 'textarea', 'file', 'select' ), true ) ? $req['type'] : 'text',
-				'required' => ! empty( $req['required'] ),
-				'options'  => sanitize_text_field( $req['options'] ?? '' ),
-			);
-		}
-
-		return $sanitized;
+		return wpss_normalize_service_requirements( $requirements );
 	}
 
 	/**
@@ -1960,22 +1948,7 @@ class ServiceWizard {
 	 * @return array Sanitized extras.
 	 */
 	private function sanitize_extras( array $extras ): array {
-		$sanitized = array();
-
-		foreach ( $extras as $extra ) {
-			if ( empty( $extra['title'] ) ) {
-				continue;
-			}
-
-			$sanitized[] = array(
-				'title'       => sanitize_text_field( $extra['title'] ),
-				'description' => sanitize_textarea_field( $extra['description'] ?? '' ),
-				'price'       => floatval( $extra['price'] ?? 0 ),
-				'extra_days'  => absint( $extra['extra_days'] ?? 0 ),
-			);
-		}
-
-		return $sanitized;
+		return wpss_normalize_service_addons( $extras );
 	}
 
 	/**
@@ -2141,11 +2114,8 @@ class ServiceWizard {
 			update_post_meta( $service_id, '_thumbnail_id', $thumbnail_id );
 		}
 
-		// Save requirements.
-		update_post_meta( $service_id, '_wpss_requirements', $data['requirements'] );
-
-		// Save extras.
-		update_post_meta( $service_id, '_wpss_extras', $data['extras'] );
+		wpss_save_service_requirements( $service_id, $data['requirements'] );
+		wpss_save_service_addons( $service_id, $data['extras'] );
 
 		// Save FAQs.
 		update_post_meta( $service_id, '_wpss_faqs', $data['faqs'] );

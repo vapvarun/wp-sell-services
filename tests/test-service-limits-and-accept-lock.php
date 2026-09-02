@@ -96,7 +96,7 @@ $save->invoke(
 	)
 );
 $wizard_gallery = get_post_meta( $wizard_id, '_wpss_gallery', true );
-foreach ( array( '_wpss_faqs' => 5, '_wpss_requirements' => 5, '_wpss_extras' => 3 ) as $meta_key => $expected ) {
+foreach ( array( '_wpss_faqs' => 5, '_wpss_requirements' => 5, '_wpss_addons' => 3 ) as $meta_key => $expected ) {
 	$stored = count( (array) get_post_meta( $wizard_id, $meta_key, true ) );
 	if ( $expected !== $stored ) {
 		$failures[] = "Wizard stored {$stored} {$meta_key} - expected {$expected}.";

@@ -536,8 +536,6 @@ class AjaxHandlers {
 	/**
 	 * Submit requirements.
 	 *
-	 * Handles both legacy format (field_*) and new format (requirements[index]).
-	 *
 	 * @return void
 	 */
 	public function submit_requirements(): void {
@@ -566,76 +564,43 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to submit requirements.', 'wp-sell-services' ) ) );
 		}
 
-		// Get service requirements to map indices to questions.
+		// The form posts requirements[index]; answers are stored keyed by the
+		// requirement id, which is what the service validates against.
 		$service      = $order->get_service();
-		$requirements = $service ? get_post_meta( $service->id, '_wpss_requirements', true ) : array();
-		if ( ! is_array( $requirements ) ) {
-			$requirements = array();
-		}
+		$requirements = $service ? wpss_get_service_requirements( $service->id ) : array();
 
-		// Collect field data - support both formats.
 		$field_data = array();
-
-		// New format: requirements[index] => value.
-		// Handles both numeric indices (custom requirements) and string keys (default/special fields).
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- nonce verified above, individual values sanitized in the loop below.
-		$posted_requirements = isset( $_POST['requirements'] ) ? $_POST['requirements'] : array();
-		if ( ! empty( $posted_requirements ) && is_array( $posted_requirements ) ) {
-			foreach ( $posted_requirements as $index => $value ) {
-				$sanitized_value = is_array( $value )
-					? array_map( 'sanitize_textarea_field', array_map( 'wp_unslash', $value ) )
-					: sanitize_textarea_field( wp_unslash( $value ) );
-
-				if ( is_numeric( $index ) ) {
-					// Numeric index: map to requirement definition by array position.
-					$index = absint( $index );
-					if ( isset( $requirements[ $index ] ) ) {
-						$question                = $requirements[ $index ]['question'] ?? "field_{$index}";
-						$field_data[ $question ] = $sanitized_value;
-					}
-				} else {
-					// String key (e.g. 'description', 'additional_notes'): use directly.
-					$field_data[ sanitize_key( $index ) ] = $sanitized_value;
-				}
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- nonce verified above; RequirementsService::sanitize() sanitises every value by field type.
+		$posted = isset( $_POST['requirements'] ) && is_array( $_POST['requirements'] ) ? wp_unslash( $_POST['requirements'] ) : array();
+		foreach ( $posted as $index => $value ) {
+			// Numeric index: a configured question. String key ('description',
+			// 'additional_notes'): the default form's freeform fields.
+			$key = is_numeric( $index ) ? ( $requirements[ (int) $index ]['id'] ?? '' ) : sanitize_key( (string) $index );
+			if ( '' !== $key ) {
+				$field_data[ $key ] = $value;
 			}
 		}
 
-		// Legacy format: field_{index} keys.
-		// Read each known requirement index explicitly instead of iterating the
-		// entire $_POST superglobal — only the indices that exist in the service
-		// requirement definitions are ever valid legacy keys.
-		foreach ( array_keys( $requirements ) as $req_index ) {
-			$legacy_key = 'field_' . $req_index;
-			if ( ! isset( $_POST[ $legacy_key ] ) ) {
-				continue;
-			}
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- nonce verified above, value sanitized on the next line.
-			$legacy_value             = wp_unslash( $_POST[ $legacy_key ] );
-			$field_data[ $req_index ] = is_array( $legacy_value )
-				? array_map( 'sanitize_text_field', $legacy_value )
-				: sanitize_text_field( $legacy_value );
-		}
-
-		// Handle file uploads.
-		// Read explicit, known file input keys rather than iterating the whole
-		// $_FILES superglobal.
+		// Per-requirement file inputs. PHP folds name="requirements[3]" into
+		// $_FILES['requirements'][prop][3], so each question's file is sliced
+		// back out and keyed by the requirement id like its answer.
 		$files = array();
-
-		// Per-requirement file inputs in the requirements[index] format.
-		foreach ( array_keys( $requirements ) as $req_index ) {
-			$file_key = 'requirements[' . $req_index . ']';
-			if ( ! isset( $_FILES[ $file_key ] ) ) {
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES entries are validated (type, size, MIME) and sanitized by wp_handle_upload()/wp_check_filetype() inside RequirementsService::process_uploads().
+		$posted_files = isset( $_FILES['requirements'] ) && is_array( $_FILES['requirements']['name'] ?? null ) ? $_FILES['requirements'] : array();
+		foreach ( $requirements as $index => $requirement ) {
+			if ( empty( $posted_files['name'][ $index ] ) ) {
 				continue;
 			}
-			$question = $requirements[ $req_index ]['question'] ?? "field_{$req_index}";
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES entry is validated (type, size, MIME) and sanitized by wp_handle_upload()/wp_check_filetype() inside RequirementsService::process_uploads().
-			$files[ $question ] = $_FILES[ $file_key ];
+			$files[ $requirement['id'] ] = array();
+			foreach ( array( 'name', 'type', 'tmp_name', 'error', 'size' ) as $prop ) {
+				$files[ $requirement['id'] ][ $prop ] = $posted_files[ $prop ][ $index ] ?? null;
+			}
 		}
 
 		// Named file inputs used by the requirements templates.
 		$named_file_inputs = apply_filters(
 			'wpss_requirements_file_inputs',
-			array( 'requirement_files', 'requirements_files', 'requirements' ),
+			array( 'requirement_files', 'requirements_files' ),
 			$order_id
 		);
 		foreach ( $named_file_inputs as $file_key ) {
@@ -2462,7 +2427,7 @@ class AjaxHandlers {
 		foreach ( $extras as $extra_index ) {
 			if ( isset( $all_extras[ $extra_index ] ) ) {
 				$extras_price     += (float) ( $all_extras[ $extra_index ]['price'] ?? 0 );
-				$extras_days      += (int) ( $all_extras[ $extra_index ]['delivery_time'] ?? 0 );
+				$extras_days      += (int) $all_extras[ $extra_index ]['delivery_days_extra'];
 				$selected_extras[] = array(
 					'id'    => $extra_index,
 					'title' => $all_extras[ $extra_index ]['title'] ?? '',

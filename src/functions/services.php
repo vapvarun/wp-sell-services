@@ -308,28 +308,92 @@ function wpss_get_create_service_url(): string {
 }
 
 /**
- * Get a service's add-ons with the legacy meta-key fallback.
+ * Normalise an add-on list into the one shape every surface reads.
  *
- * Add-ons live under `_wpss_extras` (the frontend Service Wizard's key) but
- * the admin metabox and CLI commands write to `_wpss_addons`. Every place
- * that resolves add-on indices MUST use this helper so admin / CLI-seeded
- * services surface their add-ons in the order modal, cart, checkout, and
- * orders alike. A full meta-key consolidation is parked for 1.2 — see
- * plans/future-features/from-1.1.0-audit.md.
+ * Add-ons lived in three places with three names for the extra delivery
+ * days: the wizard's `_wpss_extras` meta (extra_days), the admin metabox's
+ * `_wpss_addons` meta (delivery_days_extra) and the wpss_service_addons table
+ * (delivery_days_extra) that REST wrote and the order modal never read
+ * (Basecamp 10264294443). Post meta `_wpss_addons` is now the only store and
+ * this is the only shape.
+ *
+ * @since 1.7.1
+ *
+ * @param array<int|string, mixed> $raw Add-on rows in any historical shape.
+ * @return array<int, array<string, mixed>> Rows: title, description, price, delivery_days_extra, field_type, price_type, min_quantity, max_quantity, options, is_required.
+ */
+function wpss_normalize_service_addons( array $raw ): array {
+	$out = array();
+
+	foreach ( $raw as $addon ) {
+		if ( ! is_array( $addon ) ) {
+			continue;
+		}
+
+		$title = sanitize_text_field( (string) ( $addon['title'] ?? $addon['name'] ?? '' ) );
+		if ( '' === $title ) {
+			continue;
+		}
+
+		$field_type = sanitize_key( (string) ( $addon['field_type'] ?? 'checkbox' ) );
+		$price_type = sanitize_key( (string) ( $addon['price_type'] ?? 'flat' ) );
+
+		$out[] = array(
+			'title'               => $title,
+			'description'         => sanitize_textarea_field( (string) ( $addon['description'] ?? '' ) ),
+			'price'               => (float) ( $addon['price'] ?? 0 ),
+			'delivery_days_extra' => absint( $addon['delivery_days_extra'] ?? $addon['extra_days'] ?? $addon['delivery_time'] ?? 0 ),
+			'field_type'          => in_array( $field_type, array( 'checkbox', 'quantity', 'dropdown', 'text' ), true ) ? $field_type : 'checkbox',
+			'price_type'          => in_array( $price_type, array( 'flat', 'percentage', 'quantity_based' ), true ) ? $price_type : 'flat',
+			'min_quantity'        => max( 1, absint( $addon['min_quantity'] ?? 1 ) ),
+			'max_quantity'        => max( 1, absint( $addon['max_quantity'] ?? 10 ) ),
+			'options'             => sanitize_text_field( is_array( $addon['options'] ?? null ) ? implode( ', ', $addon['options'] ) : (string) ( $addon['options'] ?? '' ) ),
+			'is_required'         => ! empty( $addon['is_required'] ),
+		);
+	}
+
+	return $out;
+}
+
+/**
+ * Get a service's add-ons, normalised.
+ *
+ * The one reader of `_wpss_addons`. Every place that resolves add-on indices
+ * (order modal, cart, checkout, orders, REST, admin) reads through here, so
+ * the index a buyer picked means the same row on every surface.
  *
  * @since 1.2.0
  *
  * @param int $service_id Service post ID.
- * @return array<int, array<string, mixed>> Add-on rows (title, price, delivery_time), keyed by index.
+ * @return array<int, array<string, mixed>> Add-on rows keyed by index.
  */
 function wpss_get_service_extras( int $service_id ): array {
-	$extras = get_post_meta( $service_id, '_wpss_extras', true ) ?: array();
+	$addons = get_post_meta( $service_id, '_wpss_addons', true );
 
-	if ( empty( $extras ) ) {
-		$extras = get_post_meta( $service_id, '_wpss_addons', true ) ?: array();
+	return wpss_normalize_service_addons( is_array( $addons ) ? $addons : array() );
+}
+
+/**
+ * Save a service's add-ons, normalised.
+ *
+ * The one writer. Callers cap the list with wpss_enforce_service_limits()
+ * first.
+ *
+ * @since 1.7.1
+ *
+ * @param int                      $service_id Service post ID.
+ * @param array<int|string, mixed> $addons     Add-on rows in any shape.
+ * @return void
+ */
+function wpss_save_service_addons( int $service_id, array $addons ): void {
+	$addons = wpss_normalize_service_addons( $addons );
+
+	if ( empty( $addons ) ) {
+		delete_post_meta( $service_id, '_wpss_addons' );
+		return;
 	}
 
-	return is_array( $extras ) ? $extras : array();
+	update_post_meta( $service_id, '_wpss_addons', $addons );
 }
 
 /**
@@ -431,7 +495,7 @@ function wpss_resolve_checkout_addons( int $service_id, string $addon_ids = '' )
 		}
 	}
 
-	// Fallback: resolve from addon_ids (indices into _wpss_extras post meta).
+	// Fallback: resolve from addon_ids (indices into _wpss_addons post meta).
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
 	$addon_ids_raw = '' !== $addon_ids ? $addon_ids : ( isset( $_POST['addon_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_ids'] ) ) : '' );
 
@@ -448,7 +512,7 @@ function wpss_resolve_checkout_addons( int $service_id, string $addon_ids = '' )
 		}
 		$extra                          = $all_extras[ $index ];
 		$addon_price                    = (float) ( $extra['price'] ?? 0 );
-		$extra_days                     = (int) ( $extra['delivery_time'] ?? $extra['delivery_days_extra'] ?? 0 );
+		$extra_days                     = (int) $extra['delivery_days_extra'];
 		$result['addons_total']        += $addon_price;
 		$result['delivery_days_extra'] += $extra_days;
 		$result['addons'][]             = array(

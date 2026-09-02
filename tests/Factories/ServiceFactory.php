@@ -11,7 +11,6 @@ namespace WPSellServices\Tests\Factories;
 
 use WPSellServices\Models\Service;
 use WPSellServices\Models\ServicePackage;
-use WPSellServices\Models\ServiceAddon;
 use WPSellServices\Services\ServiceManager;
 
 /**

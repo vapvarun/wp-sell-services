@@ -35,19 +35,6 @@ wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', arra
 // Enqueue frontend assets to ensure wpssData is available.
 wpss_enqueue_frontend_assets();
 
-// Enqueue requirements form script.
-\WPSellServices\Assets\ScriptRegistry::enqueue( 'wpss-requirements-form', 'assets/js/requirements-form.js', array( 'jquery' ) );
-wp_localize_script(
-	'wpss-requirements-form',
-	'wpss_ajax',
-	array(
-		'ajax_url' => admin_url( 'admin-ajax.php' ),
-		'i18n'     => array(
-			'submit_error' => __( 'Failed to submit requirements.', 'wp-sell-services' ),
-			'ajax_error'   => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-		),
-	)
-);
 
 // Localize REST API data for inline JS.
 wp_enqueue_script( 'wp-api-fetch' );
@@ -853,10 +840,7 @@ do_action( 'wpss_before_order_view', $order );
 	$submitted_attachments = array();
 	$submitted_at          = null;
 	if ( $service ) {
-		$service_requirements = get_post_meta( $service->ID, '_wpss_requirements', true );
-		if ( ! is_array( $service_requirements ) ) {
-			$service_requirements = array();
-		}
+		$service_requirements = wpss_get_service_requirements( (int) $service->ID );
 	}
 
 	// Get submitted requirements from database.
@@ -920,104 +904,9 @@ do_action( 'wpss_before_order_view', $order );
 				<?php endif; ?>
 
 				<?php
-				// CB2 (plans/ORDER-FLOW-AUDIT.md): count required fields once for the
-				// progress bar. The bar updates live as the buyer fills the form.
-				$req_required_count = 0;
-				foreach ( $service_requirements as $req_check ) {
-					if ( ! empty( $req_check['required'] ) ) {
-						++$req_required_count;
-					}
-				}
+				$late_submission = $show_late_requirements_form;
+				include WPSS_PLUGIN_DIR . 'templates/order/requirements-form.php';
 				?>
-				<form id="wpss-requirements-form"
-						class="wpss-requirements-form"
-						enctype="multipart/form-data"
-						data-required-count="<?php echo esc_attr( (string) $req_required_count ); ?>">
-					<?php wp_nonce_field( 'wpss_submit_requirements', 'wpss_requirements_nonce' ); ?>
-					<input type="hidden" name="action" value="wpss_submit_requirements">
-					<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
-					<?php if ( $show_late_requirements_form ) : ?>
-						<input type="hidden" name="late_submission" value="1">
-					<?php endif; ?>
-
-					<?php if ( $req_required_count > 0 ) : ?>
-						<div class="wpss-requirements-form__progress" data-wpss-req-progress>
-							<div class="wpss-requirements-form__progress-text">
-								<span data-wpss-req-progress-label>
-									<?php
-									printf(
-										/* translators: 1: filled count, 2: total required */
-										esc_html__( '%1$d of %2$d required answered', 'wp-sell-services' ),
-										0,
-										(int) $req_required_count
-									);
-									?>
-								</span>
-							</div>
-							<div class="wpss-requirements-form__progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="<?php echo esc_attr( (string) $req_required_count ); ?>" aria-valuenow="0">
-								<div class="wpss-requirements-form__progress-fill" data-wpss-req-progress-fill style="width: 0%;"></div>
-							</div>
-						</div>
-					<?php endif; ?>
-
-					<?php foreach ( $service_requirements as $index => $requirement ) : ?>
-						<?php
-						$question    = $requirement['question'] ?? '';
-						$type        = $requirement['type'] ?? 'textarea';
-						$is_required = ! empty( $requirement['required'] );
-						$field_name  = 'requirements[' . $index . ']';
-						$field_id    = 'requirement-' . $index;
-						?>
-						<div class="wpss-form-group wpss-requirements-form__field" data-index="<?php echo esc_attr( $index ); ?>">
-							<label for="<?php echo esc_attr( $field_id ); ?>" class="wpss-label wpss-requirements-form__label">
-								<?php echo esc_html( $question ); ?>
-								<?php if ( $is_required ) : ?>
-									<span class="wpss-required">*</span>
-								<?php endif; ?>
-							</label>
-
-							<?php if ( 'file' === $type ) : ?>
-								<div class="wpss-file-upload wpss-requirements-form__upload" data-max-files="1">
-									<input type="file"
-											name="<?php echo esc_attr( $field_name ); ?>"
-											id="<?php echo esc_attr( $field_id ); ?>"
-											class="wpss-file-input wpss-requirements-form__upload-input"
-											<?php echo $is_required ? 'required' : ''; ?>>
-									<label for="<?php echo esc_attr( $field_id ); ?>" class="wpss-file-upload__label wpss-requirements-form__upload-label">
-										<i data-lucide="upload" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
-										<span class="wpss-file-upload__text"><?php esc_html_e( 'Choose a file or drag it here', 'wp-sell-services' ); ?></span>
-									</label>
-									<div class="wpss-requirements-form__file-list"></div>
-								</div>
-							<?php elseif ( 'text' === $type ) : ?>
-								<input type="text"
-										name="<?php echo esc_attr( $field_name ); ?>"
-										id="<?php echo esc_attr( $field_id ); ?>"
-										class="wpss-input wpss-requirements-form__input"
-										<?php echo $is_required ? 'required' : ''; ?>>
-							<?php else : ?>
-								<textarea name="<?php echo esc_attr( $field_name ); ?>"
-											id="<?php echo esc_attr( $field_id ); ?>"
-											class="wpss-textarea wpss-requirements-form__textarea"
-											rows="4"
-											<?php echo $is_required ? 'required' : ''; ?>></textarea>
-							<?php endif; ?>
-						</div>
-					<?php endforeach; ?>
-
-					<div class="wpss-form-actions">
-						<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-requirements-form__submit-btn">
-							<span class="wpss-requirements-form__submit-text">
-								<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-								<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
-							</span>
-							<span class="wpss-requirements-form__submit-loading" style="display: none;">
-								<i data-lucide="loader-2" class="wpss-icon wpss-spinner" aria-hidden="true"></i>
-								<?php esc_html_e( 'Submitting...', 'wp-sell-services' ); ?>
-							</span>
-						</button>
-					</div>
-				</form>
 			</div>
 		</section>
 	<?php endif; ?>
@@ -1045,16 +934,20 @@ do_action( 'wpss_before_order_view', $order );
 			<div class="wpss-order-section__body">
 				<?php foreach ( $service_requirements as $index => $requirement ) : ?>
 					<?php
-					$question       = $requirement['question'] ?? '';
-					$type           = $requirement['type'] ?? 'textarea';
-					$field_key      = $question; // Data is keyed by question.
-					$response_value = $submitted_data[ $field_key ] ?? '';
+					$question       = $requirement['label'];
+					$type           = $requirement['type'];
+					$response_value = wpss_requirement_answer( $requirement, $submitted_data );
+					if ( is_array( $response_value ) ) {
+						$response_value = implode( ', ', array_map( 'strval', $response_value ) );
+					}
 
-					// Find attachment for this field (if file type).
+					// Find attachment for this field (if file type). Answers and
+					// attachments are keyed by requirement id; pre-1.7.1 rows by
+					// question text.
 					$field_attachment = null;
 					if ( 'file' === $type && ! empty( $submitted_attachments ) ) {
 						foreach ( $submitted_attachments as $att ) {
-							if ( isset( $att['key'] ) && $att['key'] === $field_key ) {
+							if ( isset( $att['key'] ) && in_array( $att['key'], array( $requirement['id'], $question ), true ) ) {
 								$field_attachment = $att;
 								break;
 							}
@@ -1121,7 +1014,8 @@ do_action( 'wpss_before_order_view', $order );
 				 */
 				$rendered_keys = array();
 				foreach ( $service_requirements as $requirement ) {
-					$rendered_keys[] = (string) ( $requirement['question'] ?? '' );
+					$rendered_keys[] = $requirement['id'];
+					$rendered_keys[] = $requirement['label'];
 				}
 
 				$orphan_answers = array();
@@ -1214,9 +1108,8 @@ do_action( 'wpss_before_order_view', $order );
 				</div>
 				<?php foreach ( $service_requirements as $index => $requirement ) : ?>
 					<?php
-					$question = $requirement['question'] ?? '';
-					$type     = $requirement['type'] ?? 'textarea';
-					$required = ! empty( $requirement['required'] );
+					$question = $requirement['label'];
+					$required = $requirement['required'];
 					?>
 					<div class="wpss-requirement-view">
 						<h4 class="wpss-requirement-view__question">
@@ -3322,80 +3215,9 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	}
 }
 
-/* CB2 (plans/ORDER-FLOW-AUDIT.md) requirements progress bar */
-.wpss-requirements-form__progress {
-	margin-bottom: 24px;
-	padding: 12px 16px;
-	background: var(--wpss-bg-subtle, #f9fafb);
-	border: 1px solid var(--wpss-border, #e5e7eb);
-	border-radius: 8px;
-}
-.wpss-requirements-form__progress-text {
-	font-size: 13px;
-	font-weight: 600;
-	color: var(--wpss-text-secondary, #374151);
-	margin-bottom: 8px;
-}
-.wpss-requirements-form__progress-bar {
-	width: 100%;
-	height: 6px;
-	background: var(--wpss-border, #e5e7eb);
-	border-radius: 9999px;
-	overflow: hidden;
-}
-.wpss-requirements-form__progress-fill {
-	height: 100%;
-	background: linear-gradient( 90deg, var(--wpss-primary, #4f46e5), var(--wpss-primary, #7c3aed) );
-	border-radius: 9999px;
-	transition: width 0.3s ease;
-}
-.wpss-requirements-form__progress--complete .wpss-requirements-form__progress-fill {
-	background: linear-gradient( 90deg, var(--wpss-success, #10b981), var(--wpss-success, #059669) );
-}
-.wpss-requirements-form__progress--complete .wpss-requirements-form__progress-text {
-	color: var(--wpss-success-dark, #047857);
-}
 </style>
 
 <script>
-(function() {
-	// CB2 (plans/ORDER-FLOW-AUDIT.md): live progress bar for the requirements
-	// form so the buyer always knows how many required questions remain.
-	var reqForm = document.getElementById( 'wpss-requirements-form' );
-	if ( reqForm && parseInt( reqForm.dataset.requiredCount || '0', 10 ) > 0 ) {
-		var totalReq = parseInt( reqForm.dataset.requiredCount, 10 );
-		var label    = reqForm.querySelector( '[data-wpss-req-progress-label]' );
-		var fill     = reqForm.querySelector( '[data-wpss-req-progress-fill]' );
-		var bar      = reqForm.querySelector( '.wpss-requirements-form__progress-bar' );
-		var wrap     = reqForm.querySelector( '[data-wpss-req-progress]' );
-		var labelTpl = '%1$d of %2$d required answered';
-		function reqUpdate() {
-			var fields = reqForm.querySelectorAll( '[required]' );
-			var seen   = {};
-			var filled = 0;
-			fields.forEach( function ( f ) {
-				if ( f.type === 'checkbox' || f.type === 'radio' ) {
-					if ( seen[ f.name ] ) { return; }
-					seen[ f.name ] = true;
-					if ( reqForm.querySelectorAll( 'input[name="' + f.name + '"]:checked' ).length > 0 ) { filled++; }
-				} else if ( f.type === 'file' ) {
-					if ( f.files && f.files.length > 0 ) { filled++; }
-				} else if ( ( f.value || '' ).trim() !== '' ) {
-					filled++;
-				}
-			} );
-			var capped = Math.min( filled, totalReq );
-			fill.style.width = Math.round( ( capped / totalReq ) * 100 ) + '%';
-			label.textContent = labelTpl.replace( '%1$d', String( capped ) ).replace( '%2$d', String( totalReq ) );
-			bar.setAttribute( 'aria-valuenow', String( capped ) );
-			wrap.classList.toggle( 'wpss-requirements-form__progress--complete', capped >= totalReq );
-		}
-		reqForm.addEventListener( 'input', reqUpdate );
-		reqForm.addEventListener( 'change', reqUpdate );
-		reqUpdate();
-	}
-})();
-
 (function() {
 	'use strict';
 

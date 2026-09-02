@@ -920,38 +920,44 @@ class ServicesController extends RestController {
 	/**
 	 * Get service addons.
 	 *
+	 * Add-ons live in `_wpss_addons` post meta and are addressed by index -
+	 * the same index the order modal, cart and checkout use.
+	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_addons( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_service_addons';
-
-		$addons = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE service_id = %d ORDER BY id ASC",
-				$service_id
-			)
-		);
-
 		$data = array();
-		foreach ( $addons as $addon ) {
-			// Addons have no currency column - they are always priced in the
-			// store currency, so the helper's default is the right one.
-			$data[] = array_merge(
-				array(
-					'id'          => (int) $addon->id,
-					'service_id'  => (int) $addon->service_id,
-					'title'       => $addon->title,
-					'description' => $addon->description ?? '',
-				),
-				wpss_rest_money( 'price', (float) $addon->price )
-			);
+		foreach ( wpss_get_service_extras( $service_id ) as $index => $addon ) {
+			$data[] = $this->format_addon( $service_id, $index, $addon );
 		}
 
 		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * One add-on in the REST shape.
+	 *
+	 * @param int                  $service_id Service ID.
+	 * @param int                  $index      Add-on index.
+	 * @param array<string, mixed> $addon      Normalised add-on row.
+	 * @return array<string, mixed>
+	 */
+	private function format_addon( int $service_id, int $index, array $addon ): array {
+		// Addons have no currency of their own - they are always priced in the
+		// store currency, so the helper's default is the right one.
+		return array_merge(
+			array(
+				'id'                  => $index,
+				'service_id'          => $service_id,
+				'title'               => $addon['title'],
+				'description'         => $addon['description'],
+				'delivery_days_extra' => $addon['delivery_days_extra'],
+			),
+			wpss_rest_money( 'price', (float) $addon['price'] )
+		);
 	}
 
 	/**
@@ -962,37 +968,28 @@ class ServicesController extends RestController {
 	 */
 	public function create_addon( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
-
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_service_addons';
-
-		$inserted = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$table,
-			array(
-				'service_id'  => $service_id,
-				'title'       => sanitize_text_field( $request->get_param( 'title' ) ),
-				'description' => sanitize_textarea_field( $request->get_param( 'description' ) ?? '' ),
-				'price'       => (float) $request->get_param( 'price' ),
-			),
-			array( '%d', '%s', '%s', '%f' )
+		$addons     = wpss_get_service_extras( $service_id );
+		$addons[]   = array(
+			'title'               => $request->get_param( 'title' ),
+			'description'         => $request->get_param( 'description' ),
+			'price'               => $request->get_param( 'price' ),
+			'delivery_days_extra' => $request->get_param( 'delivery_days_extra' ),
 		);
 
-		if ( ! $inserted ) {
-			return new WP_Error( 'addon_create_failed', __( 'Failed to create addon.', 'wp-sell-services' ), array( 'status' => 500 ) );
+		$capped = wpss_enforce_service_limits( array( 'extras' => $addons ) );
+		if ( ! empty( $capped['truncated'] ) ) {
+			return new WP_Error( 'wpss_service_limit', implode( ' ', $capped['truncated'] ), array( 'status' => 400 ) );
 		}
 
-		return new WP_REST_Response(
-			array_merge(
-				array(
-					'id'          => (int) $wpdb->insert_id,
-					'service_id'  => $service_id,
-					'title'       => sanitize_text_field( $request->get_param( 'title' ) ),
-					'description' => sanitize_textarea_field( $request->get_param( 'description' ) ?? '' ),
-				),
-				wpss_rest_money( 'price', (float) $request->get_param( 'price' ) )
-			),
-			201
-		);
+		wpss_save_service_addons( $service_id, $addons );
+		$saved = wpss_get_service_extras( $service_id );
+		$index = count( $saved ) - 1;
+
+		if ( $index < 0 ) {
+			return new WP_Error( 'addon_create_failed', __( 'Failed to create addon.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		return new WP_REST_Response( $this->format_addon( $service_id, $index, $saved[ $index ] ), 201 );
 	}
 
 	/**
@@ -1003,65 +1000,23 @@ class ServicesController extends RestController {
 	 */
 	public function update_addon( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
-		$addon_id   = (int) $request->get_param( 'addon_id' );
+		$index      = (int) $request->get_param( 'addon_id' );
+		$addons     = wpss_get_service_extras( $service_id );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_service_addons';
-
-		// Verify addon belongs to service.
-		$addon = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE id = %d AND service_id = %d",
-				$addon_id,
-				$service_id
-			)
-		);
-
-		if ( ! $addon ) {
+		if ( ! isset( $addons[ $index ] ) ) {
 			return new WP_Error( 'addon_not_found', __( 'Addon not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		$updates = array();
-		$formats = array();
-
-		if ( $request->has_param( 'title' ) ) {
-			$updates['title'] = sanitize_text_field( $request->get_param( 'title' ) );
-			$formats[]        = '%s';
+		foreach ( array( 'title', 'description', 'price', 'delivery_days_extra' ) as $key ) {
+			if ( $request->has_param( $key ) ) {
+				$addons[ $index ][ $key ] = $request->get_param( $key );
+			}
 		}
 
-		if ( $request->has_param( 'description' ) ) {
-			$updates['description'] = sanitize_textarea_field( $request->get_param( 'description' ) );
-			$formats[]              = '%s';
-		}
+		wpss_save_service_addons( $service_id, $addons );
+		$saved = wpss_get_service_extras( $service_id );
 
-		if ( $request->has_param( 'price' ) ) {
-			$updates['price'] = (float) $request->get_param( 'price' );
-			$formats[]        = '%f';
-		}
-
-		if ( ! empty( $updates ) ) {
-			$wpdb->update( $table, $updates, array( 'id' => $addon_id ), $formats, array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		}
-
-		// Return updated addon.
-		$updated = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE id = %d",
-				$addon_id
-			)
-		);
-
-		return new WP_REST_Response(
-			array_merge(
-				array(
-					'id'          => (int) $updated->id,
-					'service_id'  => (int) $updated->service_id,
-					'title'       => $updated->title,
-					'description' => $updated->description ?? '',
-				),
-				wpss_rest_money( 'price', (float) $updated->price )
-			)
-		);
+		return new WP_REST_Response( $this->format_addon( $service_id, $index, $saved[ $index ] ) );
 	}
 
 	/**
@@ -1071,24 +1026,20 @@ class ServicesController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function delete_addon( $request ) {
+		// ponytail: add-ons are addressed by index, so deleting one renumbers
+		// those after it - the same rule the cart and checkout already live by.
+		// Give add-ons a stable id like packages got in 1.6.0 if a client needs
+		// to hold a reference across edits.
 		$service_id = (int) $request->get_param( 'id' );
-		$addon_id   = (int) $request->get_param( 'addon_id' );
+		$index      = (int) $request->get_param( 'addon_id' );
+		$addons     = wpss_get_service_extras( $service_id );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_service_addons';
-
-		$deleted = $wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$table,
-			array(
-				'id'         => $addon_id,
-				'service_id' => $service_id,
-			),
-			array( '%d', '%d' )
-		);
-
-		if ( ! $deleted ) {
+		if ( ! isset( $addons[ $index ] ) ) {
 			return new WP_Error( 'addon_not_found', __( 'Addon not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
+
+		unset( $addons[ $index ] );
+		wpss_save_service_addons( $service_id, array_values( $addons ) );
 
 		return new WP_REST_Response( array( 'deleted' => true ) );
 	}
@@ -1261,8 +1212,8 @@ class ServicesController extends RestController {
 			array(
 				'packages'     => $request->get_param( 'packages' ),
 				'gallery'      => $request->get_param( 'gallery' ),
-				'extras'       => $request->get_param( 'addons' ),
-				'requirements' => $request->get_param( 'requirements' ),
+				'extras'       => wpss_normalize_service_addons( (array) $request->get_param( 'addons' ) ),
+				'requirements' => wpss_normalize_service_requirements( (array) $request->get_param( 'requirements' ) ),
 			)
 		);
 
@@ -1311,62 +1262,14 @@ class ServicesController extends RestController {
 			update_post_meta( $service_id, '_wpss_gallery', $gallery_ids );
 		}
 
-		// Save addons (array of addon objects).
+		// Add-ons and requirements replace the stored list wholesale; both
+		// are normalised above, so what is saved is what every surface reads.
 		if ( $request->has_param( 'addons' ) ) {
-			// ponytail: caps the submitted list only; rows already in the
-			// addons table are not counted, so repeated PUTs can accumulate.
-			$raw_addons = $capped['meta']['extras'];
-			if ( is_array( $raw_addons ) ) {
-				global $wpdb;
-				$addons_table = $wpdb->prefix . 'wpss_service_addons';
-
-				foreach ( $raw_addons as $addon_data ) {
-					$addon_insert = array(
-						'service_id'  => $service_id,
-						'title'       => sanitize_text_field( $addon_data['title'] ?? '' ),
-						'description' => sanitize_textarea_field( $addon_data['description'] ?? '' ),
-						'price'       => (float) ( $addon_data['price'] ?? 0 ),
-					);
-
-					if ( ! empty( $addon_data['id'] ) ) {
-						// Update existing addon.
-						$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-							$addons_table,
-							$addon_insert,
-							array(
-								'id'         => (int) $addon_data['id'],
-								'service_id' => $service_id,
-							),
-							array( '%d', '%s', '%s', '%f' ),
-							array( '%d', '%d' )
-						);
-					} else {
-						// Insert new addon.
-						$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-							$addons_table,
-							$addon_insert,
-							array( '%d', '%s', '%s', '%f' )
-						);
-					}
-				}
-			}
+			wpss_save_service_addons( $service_id, $capped['meta']['extras'] );
 		}
 
 		if ( $request->has_param( 'requirements' ) ) {
-			$raw_reqs     = $capped['meta']['requirements'];
-			$requirements = array();
-			if ( is_array( $raw_reqs ) ) {
-				foreach ( $raw_reqs as $req ) {
-					$requirements[] = array(
-						'field_type'  => sanitize_key( $req['field_type'] ?? 'text' ),
-						'label'       => sanitize_text_field( $req['label'] ?? '' ),
-						'description' => sanitize_textarea_field( $req['description'] ?? '' ),
-						'required'    => ! empty( $req['required'] ),
-						'options'     => isset( $req['options'] ) && is_array( $req['options'] ) ? array_map( 'sanitize_text_field', $req['options'] ) : array(),
-					);
-				}
-			}
-			update_post_meta( $service_id, '_wpss_requirements', $requirements );
+			wpss_save_service_requirements( $service_id, $capped['meta']['requirements'] );
 		}
 
 		if ( empty( $capped['truncated'] ) ) {
