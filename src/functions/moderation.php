@@ -262,3 +262,62 @@ function wpss_is_blocked_between( int $user_a, int $user_b ): bool {
 	return in_array( $user_b, wpss_get_blocked_users( $user_a ), true )
 		|| in_array( $user_a, wpss_get_blocked_users( $user_b ), true );
 }
+
+/**
+ * Count services awaiting moderation review.
+ *
+ * One COUNT (found_posts on a 1-row query) cached in a transient, instead of
+ * loading every pending id on every admin screen. The transient is dropped on
+ * every service save, delete and moderation decision below, so the menu badge
+ * and the admin notice never lag a status change.
+ *
+ * @since 1.7.1
+ *
+ * @return int
+ */
+function wpss_count_pending_services(): int {
+	$count = get_transient( 'wpss_pending_services_count' );
+
+	if ( false !== $count ) {
+		return (int) $count;
+	}
+
+	$query = new \WP_Query(
+		array(
+			'post_type'              => 'wpss_service',
+			'post_status'            => array( 'pending', 'publish' ),
+			'posts_per_page'         => 1,
+			'fields'                 => 'ids',
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one key, result cached.
+				array(
+					'key'   => '_wpss_moderation_status',
+					'value' => 'pending',
+				),
+			),
+		)
+	);
+
+	$count = (int) $query->found_posts;
+	set_transient( 'wpss_pending_services_count', $count, HOUR_IN_SECONDS );
+
+	return $count;
+}
+
+/**
+ * Drop the cached pending-services count.
+ *
+ * @since 1.7.1
+ *
+ * @return void
+ */
+function wpss_flush_pending_services_count(): void {
+	delete_transient( 'wpss_pending_services_count' );
+}
+
+foreach ( array( 'save_post_wpss_service', 'deleted_post', 'wpss_service_approved', 'wpss_service_rejected', 'wpss_service_pending_moderation' ) as $wpss_pending_hook ) {
+	// Priority 99 so the moderation meta written on save_post (priority 10) is already there.
+	add_action( $wpss_pending_hook, 'wpss_flush_pending_services_count', 99 );
+}
+unset( $wpss_pending_hook );

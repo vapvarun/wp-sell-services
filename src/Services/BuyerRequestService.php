@@ -524,7 +524,10 @@ class BuyerRequestService {
 		$args = array(
 			'post_type'      => BuyerRequestPostType::POST_TYPE,
 			'post_status'    => 'publish',
-			'posts_per_page' => -1,
+			// Bounded per run; the next cron tick picks up the rest.
+			'posts_per_page' => 200,
+			'orderby'        => 'ID',
+			'order'          => 'ASC',
 			'fields'         => 'ids',
 			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				'relation' => 'AND',

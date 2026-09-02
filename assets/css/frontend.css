@@ -2454,6 +2454,51 @@ article.wpss-service-card:hover {
 }
 
 /* ==========================================================================
+   Vendor directory toolbar ([wpss_vendors] sort / filter row)
+   ========================================================================== */
+
+.wpss-vendors-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--wpss-space-3);
+	margin-bottom: var(--wpss-space-5);
+}
+
+.wpss-vendors-toolbar__count {
+	margin: 0;
+	color: var(--wpss-text-light);
+}
+
+.wpss-vendors-toolbar__controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--wpss-space-3);
+}
+
+.wpss-vendors-toolbar__controls select {
+	min-height: 40px;
+	padding: 0 var(--wpss-space-3);
+	background: var(--wpss-surface);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	color: var(--wpss-text);
+}
+
+@media (max-width: 640px) {
+	.wpss-vendors-toolbar,
+	.wpss-vendors-toolbar__controls {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-vendors-toolbar__controls select {
+		width: 100%;
+	}
+}
+
+/* ==========================================================================
    Pagination
    ========================================================================== */
 

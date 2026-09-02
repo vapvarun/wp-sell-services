@@ -104,17 +104,7 @@ $services = get_posts(
 );
 
 // Total published service count (for sidebar stats and "View all" link).
-$total_services = count(
-	get_posts(
-		[
-			'post_type'      => 'wpss_service',
-			'post_status'    => 'publish',
-			'author'         => $vendor_id,
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-		]
-	)
-);
+$total_services = wpss_count_vendor_services( (int) $vendor_id );
 
 // Get reviews.
 global $wpdb;

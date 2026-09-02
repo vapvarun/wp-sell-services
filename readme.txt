@@ -294,6 +294,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * New      - Notifications for review replies, expired requests, dispute escalation and cancellation, withdrawal progress, service moderation decisions and tip receipts, each with an admin toggle.
 * Fix      - Order, payment and moderation emails are never dropped by the message cooldown, review and requirement mails are sent once, and failed sends are logged and retried.
 * Fix      - Suspended vendors receive a suspension notice instead of the rejection wording.
+* Improve  - Dashboard lists, favourites and the vendor directory are paginated, the vendor directory can be sorted and filtered, admin counts are cached, and new indexes keep review moderation and the vendor directory fast on large sites.
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Payment intents carry the vendor id for every order type.
 * Dev      - New wpss_auth_login_challenge filter for two-factor plugins.

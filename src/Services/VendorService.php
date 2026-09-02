@@ -613,13 +613,26 @@ class VendorService {
 			'orders'  => 'completed_orders',
 			'sales'   => 'completed_orders',
 			'recent'  => 'created_at',
+			'newest'  => 'created_at',
 		);
 
 		$orderby = (string) ( $args['orderby'] ?? 'avg_rating' );
 
 		$args['orderby'] = $orderby_map[ $orderby ] ?? $orderby;
 
-		return $this->profile_repo->get_all( $args );
+		return $this->profile_repo->get_directory( $args );
+	}
+
+	/**
+	 * Total vendors behind get_all() for the same filters.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string, mixed> $args See VendorProfileRepository::get_directory().
+	 * @return int
+	 */
+	public function count_all( array $args = array() ): int {
+		return $this->profile_repo->count_directory( $args );
 	}
 
 	/**

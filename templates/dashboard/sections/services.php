@@ -60,53 +60,24 @@ if ( $services->have_posts() ) {
 	}
 }
 
-// Get stats.
-$published_count = count(
-	get_posts(
-		array(
-			'post_type'   => 'wpss_service',
-			'author'      => $user_id,
-			'post_status' => 'publish',
-			'numberposts' => -1,
-			'fields'      => 'ids',
-		)
-	)
-);
+// Stats are COUNT queries, not loaded id lists.
+$published_count = wpss_count_vendor_services( $user_id, 'publish' );
+$pending_count   = wpss_count_vendor_services( $user_id, 'pending' );
 
 // Draft count excludes rejected services (which also have draft post_status).
-$all_draft_ids = get_posts(
+$rejected_count = wpss_count_vendor_services(
+	$user_id,
+	'draft',
 	array(
-		'post_type'   => 'wpss_service',
-		'author'      => $user_id,
-		'post_status' => 'draft',
-		'numberposts' => -1,
-		'fields'      => 'ids',
+		'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed key, bounded by one author.
+			array(
+				'key'   => '_wpss_moderation_status',
+				'value' => 'rejected',
+			),
+		),
 	)
 );
-
-$rejected_count = 0;
-$draft_count    = 0;
-
-foreach ( $all_draft_ids as $draft_id ) {
-	$mod_status = get_post_meta( $draft_id, '_wpss_moderation_status', true );
-	if ( 'rejected' === $mod_status ) {
-		++$rejected_count;
-	} else {
-		++$draft_count;
-	}
-}
-
-$pending_count = count(
-	get_posts(
-		array(
-			'post_type'   => 'wpss_service',
-			'author'      => $user_id,
-			'post_status' => 'pending',
-			'numberposts' => -1,
-			'fields'      => 'ids',
-		)
-	)
-);
+$draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rejected_count );
 ?>
 
 <div class="wpss-section wpss-section--services wpss-card">

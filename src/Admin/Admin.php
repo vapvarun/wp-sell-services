@@ -1519,20 +1519,9 @@ class Admin {
 		$services_count = wp_count_posts( 'wpss_service' );
 		$requests_count = wp_count_posts( 'wpss_request' );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$order_stats = $wpdb->get_row(
-			"SELECT
-				COUNT(*) as total,
-				SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
-				SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-				SUM(CASE WHEN status IN ('pending_payment', 'pending_requirements') THEN 1 ELSE 0 END) as pending
-			FROM {$orders_table}"
-		);
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$revenue = $wpdb->get_var(
-			"SELECT SUM(total) FROM {$orders_table} WHERE status = 'completed'"
-		);
+		// One cached scan for every order tile (see wpss_get_order_aggregates()).
+		$order_stats = wpss_get_order_aggregates();
+		$revenue     = $order_stats->revenue;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$recent_orders = $wpdb->get_results(
@@ -1618,7 +1607,7 @@ class Admin {
 					<div class="wpss-stat-card">
 						<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->total ?? 0 ); ?></span>
+							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->total ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
@@ -1626,7 +1615,7 @@ class Admin {
 					<div class="wpss-stat-card">
 						<i data-lucide="clock" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->in_progress ?? 0 ); ?></span>
+							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->in_progress ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'In Progress', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
@@ -1634,7 +1623,7 @@ class Admin {
 					<div class="wpss-stat-card">
 						<i data-lucide="check-circle-2" class="wpss-icon wpss-stat-icon wpss-stat-icon--success" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->completed ?? 0 ); ?></span>
+							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->completed ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
@@ -1700,7 +1689,7 @@ class Admin {
 							</li>
 							<li>
 								<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&status=pending_payment' ) ); ?>">
-									<span class="count"><?php echo esc_html( $order_stats->pending ?? 0 ); ?></span>
+									<span class="count"><?php echo esc_html( (string) $order_stats->pending ); ?></span>
 									<?php esc_html_e( 'Pending Orders', 'wp-sell-services' ); ?>
 								</a>
 							</li>

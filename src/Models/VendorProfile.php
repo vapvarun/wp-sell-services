@@ -634,17 +634,7 @@ class VendorProfile {
 	 * @return int Number of services.
 	 */
 	public function get_service_count(): int {
-		$services = get_posts(
-			array(
-				'post_type'   => 'wpss_service',
-				'author'      => $this->user_id,
-				'post_status' => array( 'publish', 'pending' ),
-				'numberposts' => -1,
-				'fields'      => 'ids',
-			)
-		);
-
-		return count( $services );
+		return wpss_count_vendor_services( (int) $this->user_id, array( 'publish', 'pending' ) );
 	}
 
 	/**

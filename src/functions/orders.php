@@ -1397,3 +1397,43 @@ function wpss_map_rail_status( string $platform, string $rail_status ): ?string 
 	// which then had no label, no filter entry and no transition rules.
 	return array_key_exists( $mapped, wpss_get_order_statuses() ) ? $mapped : null;
 }
+
+/**
+ * Marketplace-wide order aggregates for the admin dashboard.
+ *
+ * One full-table scan cached for five minutes; dropped the moment an order is
+ * created, paid or changes status so the tiles never show a stale count for
+ * longer than it takes to reload the page.
+ *
+ * @since 1.7.1
+ *
+ * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float}
+ */
+function wpss_get_order_aggregates(): object {
+	$cached = get_transient( 'wpss_order_aggregates' );
+
+	if ( is_object( $cached ) ) {
+		return $cached;
+	}
+
+	$aggregates = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_aggregates();
+	set_transient( 'wpss_order_aggregates', $aggregates, 5 * MINUTE_IN_SECONDS );
+
+	return $aggregates;
+}
+
+/**
+ * Drop the cached admin order aggregates.
+ *
+ * @since 1.7.1
+ *
+ * @return void
+ */
+function wpss_flush_order_aggregates(): void {
+	delete_transient( 'wpss_order_aggregates' );
+}
+
+foreach ( array( 'wpss_order_created', 'wpss_order_paid', 'wpss_order_status_changed' ) as $wpss_aggregates_hook ) {
+	add_action( $wpss_aggregates_hook, 'wpss_flush_order_aggregates' );
+}
+unset( $wpss_aggregates_hook );

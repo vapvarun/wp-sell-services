@@ -120,45 +120,27 @@ class FavoritesController extends RestController {
 
 		// Count what the client will actually receive, not what the meta holds.
 		// The stored ID list can name services that were since deleted or
-		// unpublished, while the body below is filtered to published ones — so
-		// the total described a different set than the items, and a single
+		// unpublished, while the body is filtered to published ones — so the
+		// total described a different set than the items, and a single
 		// orphaned ID produced a "Favorites (1)" badge over an empty list.
-		//
-		// Bounded by one user's own favourites, so the unbounded query is the
-		// size of their list, not the catalogue.
-		$favorites = get_posts(
+		// One paged query: the page of rows plus SQL_CALC_FOUND_ROWS, never the
+		// whole list.
+		$query    = new \WP_Query(
 			array(
 				'post_type'      => 'wpss_service',
 				'post_status'    => 'publish',
 				'post__in'       => array_map( 'intval', $favorites ),
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
+				'posts_per_page' => $pagination['per_page'],
+				'paged'          => $pagination['page'],
 				'orderby'        => 'post__in',
 			)
 		);
+		$services = $query->posts;
+		$total    = (int) $query->found_posts;
 
-		if ( empty( $favorites ) ) {
-			return $this->paginated_response( array(), 0, $pagination['page'], $pagination['per_page'] );
-		}
-
-		$total = count( $favorites );
-
-		// Paginate the favorites.
-		$paged_ids = array_slice( $favorites, $pagination['offset'], $pagination['per_page'] );
-
-		if ( empty( $paged_ids ) ) {
+		if ( empty( $services ) ) {
 			return $this->paginated_response( array(), $total, $pagination['page'], $pagination['per_page'] );
 		}
-
-		$services = get_posts(
-			array(
-				'post_type'      => 'wpss_service',
-				'post_status'    => 'publish',
-				'post__in'       => array_map( 'intval', $paged_ids ),
-				'posts_per_page' => count( $paged_ids ),
-				'orderby'        => 'post__in',
-			)
-		);
 
 		$items = array();
 
