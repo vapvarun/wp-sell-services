@@ -210,8 +210,7 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	public function auto_complete_orders(): void {
-		$orders_settings    = get_option( 'wpss_orders', array() );
-		$auto_complete_days = (int) ( $orders_settings['auto_complete_days'] ?? 3 );
+		$auto_complete_days = (int) wpss_get_option( 'orders', 'auto_complete_days' );
 
 		if ( $auto_complete_days <= 0 ) {
 			return;
@@ -393,14 +392,13 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	public function check_requirements_timeout(): void {
-		$order_settings = get_option( 'wpss_orders', [] );
-		$timeout_days   = (int) ( $order_settings['requirements_timeout_days'] ?? 0 );
+		$timeout_days = (int) wpss_get_option( 'orders', 'requirements_timeout_days' );
 
 		if ( $timeout_days <= 0 ) {
 			return;
 		}
 
-		$auto_start = ! empty( $order_settings['auto_start_on_timeout'] );
+		$auto_start = (bool) wpss_get_option( 'orders', 'auto_start_on_timeout' );
 
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';

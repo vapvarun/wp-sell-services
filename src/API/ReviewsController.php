@@ -378,8 +378,7 @@ class ReviewsController extends RestController {
 		}
 
 		// Enforce review window (default 30 days after completion).
-		$order_settings = get_option( 'wpss_orders', array() );
-		$review_window  = (int) ( $order_settings['review_window_days'] ?? 30 );
+		$review_window = (int) wpss_get_option( 'orders', 'review_window_days' );
 		if ( $review_window > 0 && ! empty( $order->completed_at ) ) {
 			$completed_time = strtotime( $order->completed_at );
 			$deadline       = $completed_time + ( $review_window * DAY_IN_SECONDS );
@@ -422,7 +421,7 @@ class ReviewsController extends RestController {
 		// Auto-approve unless the site owner turned on review moderation
 		// (wpss_vendor['moderate_reviews']). Previously hard-defaulted to true,
 		// so REST-created reviews went live even with moderation enabled.
-		$moderate_reviews = ! empty( get_option( 'wpss_vendor', array() )['moderate_reviews'] );
+		$moderate_reviews = (bool) wpss_get_option( 'vendor', 'moderate_reviews' );
 		$auto_approve     = apply_filters( 'wpss_auto_approve_reviews', ! $moderate_reviews );
 		$status           = $auto_approve ? 'approved' : 'pending';
 

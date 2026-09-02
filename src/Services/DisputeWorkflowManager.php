@@ -626,9 +626,8 @@ class DisputeWorkflowManager {
 	 * @return void
 	 */
 	public function auto_open_disputes_for_late_orders(): void {
-		$order_settings    = get_option( 'wpss_orders', array() );
-		$allow_disputes    = $order_settings['allow_disputes'] ?? true;
-		$auto_dispute_days = (int) ( $order_settings['auto_dispute_late_days'] ?? 3 );
+		$allow_disputes    = (bool) wpss_get_option( 'orders', 'allow_disputes' );
+		$auto_dispute_days = (int) wpss_get_option( 'orders', 'auto_dispute_late_days' );
 
 		// Bail if disputes are disabled or auto-dispute is turned off (0 = disabled).
 		if ( ! $allow_disputes || $auto_dispute_days <= 0 ) {

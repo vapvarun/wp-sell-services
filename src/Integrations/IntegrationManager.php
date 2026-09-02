@@ -87,8 +87,7 @@ class IntegrationManager {
 	 */
 	private function detect_active_adapter(): void {
 		// Get configured adapter from settings.
-		$settings           = get_option( 'wpss_general', array() );
-		$configured_adapter = $settings['ecommerce_platform'] ?? 'auto';
+		$configured_adapter = (string) wpss_get_option( 'general', 'ecommerce_platform' );
 
 		if ( 'auto' !== $configured_adapter && isset( $this->adapters[ $configured_adapter ] ) ) {
 			$adapter = $this->adapters[ $configured_adapter ];

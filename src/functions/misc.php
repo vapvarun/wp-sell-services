@@ -14,23 +14,6 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Get a plugin option value.
- *
- * Retrieves a setting from one of the plugin's option groups.
- *
- * @param string $group   Option group name (e.g., 'general', 'vendors', 'orders').
- * @param string $key     Option key within the group.
- * @param mixed  $default Default value if option doesn't exist.
- * @return mixed
- */
-function wpss_get_option( string $group, string $key, $default = null ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound -- Public documented helper; renaming breaks `default:` named-argument callers.
-	$option_name = 'wpss_' . $group;
-	$options     = get_option( $option_name, array() );
-
-	return $options[ $key ] ?? $default;
-}
-
-/**
  * Get the platform name.
  *
  * @since 1.1.0
@@ -38,9 +21,7 @@ function wpss_get_option( string $group, string $key, $default = null ) { // php
  * @return string Platform name or site name as fallback.
  */
 function wpss_get_platform_name(): string {
-	// Read from wpss_general settings array.
-	$general_settings = get_option( 'wpss_general', array() );
-	$platform_name    = $general_settings['platform_name'] ?? '';
+	$platform_name = (string) wpss_get_option( 'general', 'platform_name' );
 
 	// Fall back to site name if empty.
 	if ( empty( $platform_name ) ) {
@@ -109,8 +90,7 @@ function wpss_sanitize_html( string $content ): string {
  * @return void
  */
 function wpss_log( $message, string $level = 'info' ): void {
-	$advanced_settings = get_option( 'wpss_advanced', array() );
-	$plugin_debug      = ! empty( $advanced_settings['enable_debug_mode'] );
+	$plugin_debug = (bool) wpss_get_option( 'advanced', 'enable_debug_mode' );
 
 	if ( ! $plugin_debug && ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) ) {
 		return;

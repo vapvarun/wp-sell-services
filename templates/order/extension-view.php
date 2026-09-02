@@ -22,7 +22,7 @@ $is_buyer   = (int) $current_order->customer_id === $user_id;
 $is_vendor  = (int) $current_order->vendor_id === $user_id;
 $is_paid    = 'completed' === $current_order->status;
 $is_pending = 'pending_payment' === $current_order->status;
-$currency   = $current_order->currency ?: ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+$currency   = $current_order->currency ?: wpss_get_currency();
 $gross      = (float) $current_order->total;
 $net_vendor = (float) ( $current_order->vendor_earnings ?? $gross );
 $platform_f = (float) ( $current_order->platform_fee ?? 0 );

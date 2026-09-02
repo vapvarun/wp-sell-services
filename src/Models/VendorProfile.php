@@ -614,10 +614,7 @@ class VendorProfile {
 	 * @return bool True if the vendor has reached or exceeded the limit.
 	 */
 	public function has_reached_service_limit(): bool {
-		$vendor_settings = get_option( 'wpss_vendor', array() );
-		$max_services    = isset( $vendor_settings['max_services_per_vendor'] )
-			? absint( $vendor_settings['max_services_per_vendor'] )
-			: 0;
+		$max_services = absint( wpss_get_option( 'vendor', 'max_services_per_vendor' ) );
 
 		// 0 means unlimited.
 		if ( 0 === $max_services ) {
@@ -656,11 +653,7 @@ class VendorProfile {
 	 * @return int Maximum services. 0 means unlimited.
 	 */
 	public function get_max_services(): int {
-		$vendor_settings = get_option( 'wpss_vendor', array() );
-
-		return isset( $vendor_settings['max_services_per_vendor'] )
-			? absint( $vendor_settings['max_services_per_vendor'] )
-			: 0;
+		return absint( wpss_get_option( 'vendor', 'max_services_per_vendor' ) );
 	}
 
 	/**

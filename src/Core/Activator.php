@@ -202,6 +202,37 @@ class Activator {
 	}
 
 	/**
+	 * One-time 1.7.1 upgrade: fold the Advanced tab's standalone copies back
+	 * into wpss_advanced and drop them.
+	 *
+	 * The Advanced sanitizer wrote max_file_size, allowed_file_types
+	 * and currency_position twice - into the array and as standalone
+	 * options - and the readers only ever looked at the standalone copy. The
+	 * array is now the only store. The standalone copy wins: both were written
+	 * from one save so they never differ, and install() has already merged the
+	 * defaults into the array by the time this runs, so "array lacks the key"
+	 * would never be true.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	public static function migrate_advanced_standalone_keys(): void {
+		$advanced = get_option( 'wpss_advanced', array() );
+		$advanced = is_array( $advanced ) ? $advanced : array();
+
+		foreach ( array( 'max_file_size', 'allowed_file_types', 'currency_position' ) as $key ) {
+			$standalone = get_option( 'wpss_' . $key, null );
+			if ( null !== $standalone ) {
+				$advanced[ $key ] = $standalone;
+			}
+			delete_option( 'wpss_' . $key );
+		}
+
+		update_option( 'wpss_advanced', $advanced );
+	}
+
+	/**
 	 * Set default plugin options.
 	 *
 	 * Option names must match those registered in Settings.php.
@@ -209,91 +240,7 @@ class Activator {
 	 * @return void
 	 */
 	private static function set_default_options(): void {
-		$defaults = array(
-			// General settings - matches Settings.php wpss_general.
-			'wpss_general'       => array(
-				'platform_name'      => get_bloginfo( 'name' ),
-				'currency'           => self::detect_currency_from_locale(),
-				'ecommerce_platform' => 'auto',
-			),
-			// Commission settings - matches Settings.php wpss_commission.
-			'wpss_commission'    => array(
-				'commission_rate'     => 10,
-				'enable_vendor_rates' => true,
-			),
-			// Payouts settings - matches Settings.php wpss_payouts.
-			'wpss_payouts'       => array(
-				'min_withdrawal'            => 25,
-				// 0 = no hold; the owner opts into a refund window if they want
-				// one. See Settings.php clearance_days for the rationale.
-				'clearance_days'            => 0,
-				'auto_withdrawal_enabled'   => false,
-				'auto_withdrawal_threshold' => 500,
-				'auto_withdrawal_schedule'  => 'monthly',
-			),
-			// Tax settings - matches Settings.php wpss_tax.
-			'wpss_tax'           => array(
-				'enable_tax'   => false,
-				'tax_label'    => 'Tax',
-				'tax_rate'     => 0,
-				'tax_included' => false,
-			),
-			// Vendor settings - matches Settings.php wpss_vendor.
-			'wpss_vendor'        => array(
-				'vendor_registration'        => 'open',
-				'max_services_per_vendor'    => 20,
-				// Publish-and-sell by default so a new marketplace isn't empty on
-				// launch day (first vendor listings would otherwise stay hidden
-				// until an admin approves each one). Consistent with the open
-				// registration + no-verification defaults above. Owners who want
-				// to review listings first can enable moderation in the setup
-				// wizard or Vendor settings.
-				'require_service_moderation' => false,
-			),
-			// Order settings - matches Settings.php wpss_orders.
-			// Revision limits are defined per-package in service packages, not as a global setting.
-			'wpss_orders'        => array(
-				'auto_complete_days'        => 3,
-				'allow_disputes'            => true,
-				'allow_vendor_refunds'      => false,
-				'dispute_window_days'       => 14,
-				'auto_dispute_late_days'    => 3,
-				'requirements_timeout_days' => 7,
-			),
-			// Notification settings - matches Settings.php wpss_notifications.
-			// ALL email types enabled by default — site owner can disable individually.
-			'wpss_notifications' => array(
-				'notify_new_order'              => true,
-				'notify_order_completed'        => true,
-				'notify_order_cancelled'        => true,
-				'notify_cancellation_requested' => true,
-				'notify_delivery_submitted'     => true,
-				'notify_revision_requested'     => true,
-				'notify_new_message'            => true,
-				'notify_vendor_contact'         => true,
-				'notify_new_review'             => true,
-				'notify_dispute_opened'         => true,
-				'notify_withdrawal_requested'   => true,
-				'notify_withdrawal_approved'    => true,
-				'notify_withdrawal_rejected'    => true,
-				'notify_proposal_submitted'     => true,
-				'notify_proposal_accepted'      => true,
-				'notify_moderation'             => true,
-				'notify_tip_received'           => true,
-				'notify_milestone_proposed'     => true,
-				'notify_milestone_paid'         => true,
-				'notify_milestone_submitted'    => true,
-				'notify_milestone_approved'     => true,
-				'notify_extension_proposed'     => true,
-				'notify_extension_approved'     => true,
-				'notify_extension_declined'     => true,
-			),
-			// Advanced settings - matches Settings.php wpss_advanced.
-			'wpss_advanced'      => array(
-				'delete_data_on_uninstall' => false,
-				'enable_debug_mode'        => false,
-			),
-		);
+		$defaults = wpss_settings_defaults();
 
 		foreach ( $defaults as $option_name => $default_values ) {
 			$current = get_option( $option_name, false );
@@ -516,33 +463,6 @@ class Activator {
 
 		// No terms page on this site. The setting stays empty and the API reports
 		// terms: null, which is the honest answer - not 0, which no client can open.
-	}
-
-	/**
-	 * Detect currency from WordPress locale.
-	 *
-	 * @return string Currency code (ISO 4217).
-	 */
-	private static function detect_currency_from_locale(): string {
-		$locale = get_locale();
-		$map    = array(
-			'en_GB' => 'GBP',
-			'en_AU' => 'AUD',
-			'en_CA' => 'CAD',
-			'de_DE' => 'EUR',
-			'fr_FR' => 'EUR',
-			'es_ES' => 'EUR',
-			'it_IT' => 'EUR',
-			'nl_NL' => 'EUR',
-			'pt_PT' => 'EUR',
-			'pt_BR' => 'BRL',
-			'ja'    => 'JPY',
-			'zh_CN' => 'CNY',
-			'hi_IN' => 'INR',
-			'es_MX' => 'MXN',
-		);
-
-		return $map[ $locale ] ?? 'USD';
 	}
 
 	/**

@@ -1234,8 +1234,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_open_dispute', 'wpss_dispute_nonce' );
 
 		// Check if disputes are enabled in settings.
-		$order_settings = get_option( 'wpss_orders', array() );
-		if ( empty( $order_settings['allow_disputes'] ) ) {
+		if ( ! wpss_get_option( 'orders', 'allow_disputes' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Disputes are not enabled on this platform.', 'wp-sell-services' ) ) );
 		}
 
@@ -1967,14 +1966,14 @@ class AjaxHandlers {
 		$file = $_FILES['file']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- passed directly to wp_handle_upload().
 
 		// Check file size.
-		$max_size = (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024;
+		$max_size = (int) wpss_get_option( 'advanced', 'max_file_size' ) * 1024 * 1024;
 		if ( $file['size'] > $max_size ) {
 			wp_send_json_error(
 				array(
 					'message' => sprintf(
 					/* translators: %s: max file size */
 						__( 'File size exceeds maximum allowed (%s MB).', 'wp-sell-services' ),
-						get_option( 'wpss_max_file_size', 10 )
+						wpss_get_option( 'advanced', 'max_file_size' )
 					),
 				)
 			);
@@ -1988,7 +1987,7 @@ class AjaxHandlers {
 		}
 
 		// Check file type against allowed list.
-		$allowed_types = explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) );
+		$allowed_types = explode( ',', (string) wpss_get_option( 'advanced', 'allowed_file_types' ) );
 		$ext           = strtolower( $filetype['ext'] );
 
 		if ( ! in_array( $ext, $allowed_types, true ) ) {
@@ -3083,13 +3082,12 @@ class AjaxHandlers {
 		// reversing their own credit. Refunds are the owner's call unless the
 		// site explicitly lets vendors issue them; buyers cancel only before
 		// work starts (vendors use the cancellation-request flow instead).
-		$actor          = wpss_order_actor_role( $order, $user_id );
-		$order_settings = get_option( 'wpss_orders', array() );
-		$allowed        = array(
+		$actor   = wpss_order_actor_role( $order, $user_id );
+		$allowed = array(
 			'start'               => array( array( 'vendor' ), ServiceOrder::STATUS_IN_PROGRESS ),
 			'cancel'              => array( array( 'buyer', 'admin' ), ServiceOrder::STATUS_CANCELLED ),
 			'refund'              => array(
-				empty( $order_settings['allow_vendor_refunds'] ) ? array( 'admin' ) : array( 'admin', 'vendor' ),
+				wpss_get_option( 'orders', 'allow_vendor_refunds' ) ? array( 'admin', 'vendor' ) : array( 'admin' ),
 				ServiceOrder::STATUS_REFUNDED,
 			),
 			'accept-cancellation' => array( array( 'vendor' ), ServiceOrder::STATUS_CANCELLED ),

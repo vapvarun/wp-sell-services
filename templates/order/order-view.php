@@ -396,7 +396,6 @@ do_action( 'wpss_before_order_view', $order );
 			);
 		}
 
-			$order_settings = get_option( 'wpss_orders', array() );
 		if ( $can_open_dispute && ( $is_customer || $is_vendor ) ) {
 			$actions['dispute'] = array(
 				'label' => __( 'Open Dispute', 'wp-sell-services' ),
@@ -492,7 +491,7 @@ do_action( 'wpss_before_order_view', $order );
 	);
 	$can_propose_milestone     = $is_vendor && $is_request_order && in_array( $order->status, $milestone_active_statuses, true );
 	$show_milestone_section    = $is_request_order && ( ! empty( $milestones ) || $can_propose_milestone );
-	$milestone_currency        = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+	$milestone_currency        = $order->currency ?? wpss_get_currency();
 
 	$ms_approved_count  = 0;
 	$ms_total_paid      = 0.0;
@@ -2068,7 +2067,7 @@ do_action( 'wpss_before_order_view', $order );
 		$ext_pay_url  = $pending_extension->pay_order_id
 			? wpss_get_pay_order_url( (int) $pending_extension->pay_order_id )
 			: '';
-		$ext_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+		$ext_currency = $order->currency ?? wpss_get_currency();
 		?>
 		<section class="wpss-order-section">
 			<div class="wpss-extension-pending-card">
@@ -2130,7 +2129,7 @@ do_action( 'wpss_before_order_view', $order );
 				</h3>
 				<p class="wpss-extension-pending-card__body">
 					<?php
-					$ext_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+					$ext_currency = $order->currency ?? wpss_get_currency();
 					printf(
 						/* translators: 1: amount, 2: days */
 						esc_html__( 'You requested %1$s / %2$s. Buyer has not responded yet.', 'wp-sell-services' ),
@@ -2162,7 +2161,7 @@ do_action( 'wpss_before_order_view', $order );
 	if ( 'completed' === $order->status && $is_customer ) :
 		$tipping_service = new \WPSellServices\Services\TippingService();
 		$already_tipped  = $tipping_service->has_tipped( $order_id, get_current_user_id() );
-		$currency        = get_option( 'wpss_general', array() )['currency'] ?? 'USD';
+		$currency        = wpss_get_currency();
 
 		// Buyer-facing receipt should show the gross amount the buyer paid
 		// (tip order total), not the net the vendor received. Fetch the

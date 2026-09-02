@@ -1035,20 +1035,7 @@ class EarningsService {
 	 * @return float Minimum withdrawal amount.
 	 */
 	public static function get_min_withdrawal_amount(): float {
-		// Primary location: wpss_payouts (new structure).
-		$payouts_settings = get_option( 'wpss_payouts', array() );
-		if ( isset( $payouts_settings['min_withdrawal'] ) ) {
-			return (float) $payouts_settings['min_withdrawal'];
-		}
-
-		// Fallback: wpss_vendor (old structure for backward compatibility).
-		$vendor_settings = get_option( 'wpss_vendor', array() );
-		if ( isset( $vendor_settings['min_payout_amount'] ) ) {
-			return (float) $vendor_settings['min_payout_amount'];
-		}
-
-		// Default.
-		return 50.0;
+		return (float) wpss_get_option( 'payouts', 'min_withdrawal' );
 	}
 
 	/**
@@ -1075,9 +1062,7 @@ class EarningsService {
 	 * @return int Days to hold earnings. 0 means no hold.
 	 */
 	public static function get_clearance_days(): int {
-		$payouts_settings = get_option( 'wpss_payouts', array() );
-
-		return max( 0, (int) ( $payouts_settings['clearance_days'] ?? 0 ) );
+		return max( 0, (int) wpss_get_option( 'payouts', 'clearance_days' ) );
 	}
 
 	/**
@@ -1086,8 +1071,7 @@ class EarningsService {
 	 * @return bool True if auto withdrawal is enabled.
 	 */
 	public static function is_auto_withdrawal_enabled(): bool {
-		$payouts_settings = get_option( 'wpss_payouts', array() );
-		return ! empty( $payouts_settings['auto_withdrawal_enabled'] );
+		return (bool) wpss_get_option( 'payouts', 'auto_withdrawal_enabled' );
 	}
 
 	/**
@@ -1096,8 +1080,7 @@ class EarningsService {
 	 * @return float Threshold amount.
 	 */
 	public static function get_auto_withdrawal_threshold(): float {
-		$payouts_settings = get_option( 'wpss_payouts', array() );
-		return (float) ( $payouts_settings['auto_withdrawal_threshold'] ?? 500 );
+		return (float) wpss_get_option( 'payouts', 'auto_withdrawal_threshold' );
 	}
 
 	/**
@@ -1106,8 +1089,7 @@ class EarningsService {
 	 * @return string Schedule (weekly, biweekly, or monthly).
 	 */
 	public static function get_auto_withdrawal_schedule(): string {
-		$payouts_settings = get_option( 'wpss_payouts', array() );
-		$schedule         = $payouts_settings['auto_withdrawal_schedule'] ?? 'monthly';
+		$schedule = wpss_get_option( 'payouts', 'auto_withdrawal_schedule' );
 		return in_array( $schedule, array( 'weekly', 'biweekly', 'monthly' ), true ) ? $schedule : 'monthly';
 	}
 

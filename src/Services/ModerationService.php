@@ -90,8 +90,6 @@ class ModerationService {
 	 * @return bool
 	 */
 	public static function is_enabled(): bool {
-		$settings = get_option( 'wpss_vendor', array() );
-
 		/**
 		 * Filter whether new/updated services require moderation.
 		 *
@@ -103,7 +101,7 @@ class ModerationService {
 		 *
 		 * @param bool $require Whether services land as pending for review.
 		 */
-		return (bool) apply_filters( 'wpss_require_service_moderation', ! empty( $settings['require_service_moderation'] ) );
+		return (bool) apply_filters( 'wpss_require_service_moderation', (bool) wpss_get_option( 'vendor', 'require_service_moderation' ) );
 	}
 
 	/**

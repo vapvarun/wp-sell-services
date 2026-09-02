@@ -366,9 +366,7 @@ class ReviewService {
 		// Stored in the wpss_vendor settings array beside the service
 		// moderation toggle - the old standalone wpss_moderate_reviews
 		// option never had a writer (Basecamp #9985174862).
-		$vendor_settings = get_option( 'wpss_vendor', array() );
-
-		return ! empty( $vendor_settings['moderate_reviews'] );
+		return (bool) wpss_get_option( 'vendor', 'moderate_reviews' );
 	}
 
 	/**
@@ -419,8 +417,7 @@ class ReviewService {
 	 * @return int Number of days. 0 = unlimited.
 	 */
 	public function get_review_window_days(): int {
-		$settings = get_option( 'wpss_orders', array() );
-		$days     = (int) ( $settings['review_window_days'] ?? 30 );
+		$days = (int) wpss_get_option( 'orders', 'review_window_days' );
 
 		/**
 		 * Filter the review time window in days.

@@ -153,9 +153,7 @@ class DisputeService {
 	 * @return bool
 	 */
 	public function can_open_dispute( object $order ): bool {
-		$order_settings = get_option( 'wpss_orders', array() );
-
-		if ( empty( $order_settings['allow_disputes'] ) ) {
+		if ( ! wpss_get_option( 'orders', 'allow_disputes' ) ) {
 			return false;
 		}
 
@@ -183,8 +181,7 @@ class DisputeService {
 		}
 
 		if ( ServiceOrder::STATUS_COMPLETED === $order->status && ! empty( $order->completed_at ) ) {
-			$order_settings      = get_option( 'wpss_orders', array() );
-			$dispute_window_days = (int) ( $order_settings['dispute_window_days'] ?? 14 );
+			$dispute_window_days = (int) wpss_get_option( 'orders', 'dispute_window_days' );
 
 			if ( $dispute_window_days <= 0 ) {
 				return __( 'Disputes cannot be opened on completed orders.', 'wp-sell-services' );

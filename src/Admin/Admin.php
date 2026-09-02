@@ -1386,8 +1386,7 @@ class Admin {
 		$disputes_table    = $wpdb->prefix . 'wpss_disputes';
 		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
 		$vendor_profiles   = $wpdb->prefix . 'wpss_vendor_profiles';
-		$vendor_settings   = get_option( 'wpss_vendor', array() );
-		$is_approval_mode  = isset( $vendor_settings['vendor_registration'] ) && 'approval' === $vendor_settings['vendor_registration'];
+		$is_approval_mode  = 'approval' === wpss_get_option( 'vendor', 'vendor_registration' );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$open_disputes = (int) $wpdb->get_var(
