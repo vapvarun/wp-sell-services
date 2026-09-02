@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**514 hooks** across **723** firing sites.
+**515 hooks** across **724** firing sites.
 
 ## Actions (279)
 
@@ -34,7 +34,7 @@ guide; this is the complete index.
 | `wpss_after_message` | 2 | `templates/order/conversation.php:274` | Hook: wpss_after_message |
 | `wpss_after_milestone_view` | 1 | `templates/order/milestone-view.php:338` | Fires after the milestone sub-order view content. |
 | `wpss_after_order_confirmation` | 1 | `templates/order/order-confirmation.php:269` | Hook: wpss_after_order_confirmation |
-| `wpss_after_order_view` | 1 | `templates/order/order-view.php:3670` | Hook: wpss_after_order_view |
+| `wpss_after_order_view` | 1 | `templates/order/order-view.php:3669` | Hook: wpss_after_order_view |
 | `wpss_after_package_tab` | 3 | `templates/partials/service-packages.php:325` | Fires after a single package tab. |
 | `wpss_after_request_archive` | 0 | `templates/archive-request.php:142` | Hook: wpss_after_request_archive |
 | `wpss_after_request_card` | 1 | `templates/content-request-card.php:250` | Hook: wpss_after_request_card |
@@ -168,10 +168,10 @@ guide; this is the complete index.
 | `wpss_order_started` | 1 | `src/API/OrdersController.php:792` |  |
 | `wpss_order_status_changed` | 3 | `src/Admin/Pages/ManualOrderPage.php:779` *(+5 more)* |  |
 | `wpss_order_status_pending_requirements` | 2 | `src/Integrations/Standalone/StandaloneOrderProvider.php:407` |  |
-| `wpss_order_view_actions` | 1 | `templates/order/order-view.php:445` | Hook: wpss_order_view_actions |
-| `wpss_order_view_details` | 1 | `templates/order/order-view.php:768` | Hook: wpss_order_view_details |
+| `wpss_order_view_actions` | 1 | `templates/order/order-view.php:444` | Hook: wpss_order_view_actions |
+| `wpss_order_view_details` | 1 | `templates/order/order-view.php:767` | Hook: wpss_order_view_details |
 | `wpss_order_view_header` | 1 | `templates/order/order-view.php:235` | Hook: wpss_order_view_header |
-| `wpss_order_view_sidebar` | 1 | `templates/order/order-view.php:1608` | Hook: wpss_order_view_sidebar |
+| `wpss_order_view_sidebar` | 1 | `templates/order/order-view.php:1607` | Hook: wpss_order_view_sidebar |
 | `wpss_orders_filters` | 1 | `templates/dashboard/sections/orders.php:190` | Fires in the orders filter area. |
 | `wpss_package_features` | 3 | `templates/partials/service-packages.php:190` | Fires inside the package features list. |
 | `wpss_payable_total_after` | 2 | `src/Integrations/Standalone/StandaloneCheckoutProvider.php:1133` *(+1 more)* | Fires after the payable total, before the Pay button. |
@@ -296,7 +296,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php:699` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php:2166` | Fires after the wizard persists service meta. |
 
-## Filters (235)
+## Filters (236)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -310,19 +310,19 @@ guide; this is the complete index.
 | `wpss_allow_late_requirements_submission` | 1 | `src/functions/orders.php:494` *(+1 more)* | Filter whether late requirements submission is allowed. |
 | `wpss_analytics_widgets` | 1 | `src/Core/Plugin.php:2423` *(+1 more)* | Filter the registered analytics widgets. |
 | `wpss_api_controllers` | 1 | `src/API/API.php:184` | Filter registered API controllers. |
-| `wpss_api_cors_origins` | 0 | `src/API/API.php:1367` | Filter allowed CORS origins. |
+| `wpss_api_cors_origins` | 0 | `src/API/API.php:1365` | Filter allowed CORS origins. |
 | `wpss_api_public_settings` | 1 | `src/API/API.php:648` | Filter public API settings. |
-| `wpss_app_abuse_contact` | 1 | `src/API/API.php:790` |  |
-| `wpss_app_branding` | 1 | `src/API/API.php:775` | Public subset only. Pro's white label supplies the real values. |
-| `wpss_app_enabled` | 1 | `src/API/API.php:772` |  |
-| `wpss_app_features` | 1 | `src/API/API.php:798` |  |
-| `wpss_app_min_version` | 1 | `src/API/API.php:766` |  |
+| `wpss_app_abuse_contact` | 1 | `src/API/API.php:788` |  |
+| `wpss_app_branding` | 1 | `src/API/API.php:773` | Public subset only. Pro's white label supplies the real values. |
+| `wpss_app_enabled` | 1 | `src/API/API.php:770` |  |
+| `wpss_app_features` | 1 | `src/API/API.php:796` |  |
+| `wpss_app_min_version` | 1 | `src/API/API.php:764` |  |
 | `wpss_app_token_lifetime` | 1 | `src/functions/misc.php:484` | Filter how long a mobile app token stays valid. |
 | `wpss_archive_request_columns` | 1 | `templates/archive-request.php:62` | Filter: wpss_archive_request_columns |
 | `wpss_archive_service_columns` | 1 | `templates/archive-service.php:61` | Filter: wpss_archive_service_columns |
 | `wpss_auto_approve_reviews` | 1 | `src/API/ReviewsController.php:426` |  |
 | `wpss_auto_approve_vendors` | 1 | `src/Services/VendorService.php:113` | Filter whether new vendors are auto-approved. |
-| `wpss_batch_max_requests` | 1 | `src/API/API.php:1294` | Handle batch requests for mobile efficiency. |
+| `wpss_batch_max_requests` | 1 | `src/API/API.php:1292` | Handle batch requests for mobile efficiency. |
 | `wpss_billing_address` | 2 | `src/functions/billing.php:660` | Filter a user's billing address after it is read. |
 | `wpss_billing_fields` | 1 | `src/functions/billing.php:58` | Filter the billing address fields. |
 | `wpss_blocks` | 1 | `src/Blocks/BlocksManager.php:96` | Filter registered blocks. |
@@ -338,7 +338,7 @@ guide; this is the complete index.
 | `wpss_category_card_link` | 2 | `templates/partials/category-card.php:66` | Filters the category card's link target. |
 | `wpss_category_schema` | 2 | `src/SEO/SchemaMarkup.php:288` |  |
 | `wpss_category_terms_limit` | 1 | `src/functions/services.php:686` | Filter the maximum number of category terms a chooser will render. |
-| `wpss_checkout_badges` | 2 | `src/functions/payments.php:174` | Filter the checkout reassurance badges. |
+| `wpss_checkout_badges` | 2 | `src/functions/payments.php:194` | Filter the checkout reassurance badges. |
 | `wpss_checkout_creates_accounts` | 1 | `src/functions/billing.php:827` | Filter whether checkout creates an account for a logged-out buyer. |
 | `wpss_checkout_slug` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php:48` | Filter the checkout URL slug. |
 | `wpss_checkout_tax_rate` | 3 | `src/functions/money.php:465` |  |
@@ -364,6 +364,7 @@ guide; this is the complete index.
 | `wpss_dispute_reasons` | 1 | `src/functions/moderation.php:107` | Filter the reasons a buyer may give for opening a dispute. |
 | `wpss_docs_url` | 1 | `src/Admin/Pages/UpgradePage.php:348` | Filters the documentation URL shown on the upgrade screen. |
 | `wpss_ecommerce_adapters` | 1 | `src/CLI/PreflightCommand.php:663` *(+1 more)* |  |
+| `wpss_ecommerce_platform_description` | 1 | `src/Admin/Settings.php:3303` | Filter the platform field description. |
 | `wpss_edd_can_access_vendor_dashboard` | 2 | `src/Integrations/EDD/EDDAccountProvider.php:484` **[PRO]** | Filter whether user can access vendor dashboard. |
 | `wpss_edd_cart_item_data` | 3 | `src/Integrations/EDD/EDDCheckoutProvider.php:56` **[PRO]** | Filter cart item data for services. |
 | `wpss_edd_thankyou_redirect` | 2 | `src/Integrations/EDD/EDDCheckoutProvider.php:250` **[PRO]** | Filter the thank you redirect URL for service orders. |
@@ -398,11 +399,11 @@ guide; this is the complete index.
 | `wpss_no_requests_message` | 1 | `templates/content-no-requests.php:26` | Template: No Requests Found |
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php:33` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php:1943` | Filter email content before sending. |
-| `wpss_notification_types` | 1 | `src/Admin/Settings.php:3807` | Filter the switchable notification types. |
+| `wpss_notification_types` | 1 | `src/Admin/Settings.php:3818` | Filter the switchable notification types. |
 | `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php:1667` | Named offline methods. |
 | `wpss_offline_methods` | 2 | `src/Integrations/Gateways/OfflineGateway.php:331` | Filter the offline payment methods. |
 | `wpss_open_graph_data` | 2 | `src/SEO/SEO.php:260` |  |
-| `wpss_order_actions` | 2 | `templates/order/order-view.php:430` | Filter: wpss_order_actions |
+| `wpss_order_actions` | 2 | `templates/order/order-view.php:429` | Filter: wpss_order_actions |
 | `wpss_order_is_refundable` | 2 | `src/functions/money.php:308` | Filter whether an order may be refunded. |
 | `wpss_order_number_prefix` | 1 | `src/Database/Repositories/OrderRepository.php:93` *(+1 more)* | Generate a unique order number. |
 | `wpss_order_payment_reference` | 2 | `src/functions/orders.php:906` | Filter the payment-rail receipt reference shown on an order. |
@@ -415,7 +416,7 @@ guide; this is the complete index.
 | `wpss_package_id_base` | 2 | `src/functions/services.php:123` |  |
 | `wpss_package_price_html` | 3 | `templates/partials/service-packages.php:109` | Filters the package price HTML. |
 | `wpss_page_definitions` | 1 | `src/functions/urls.php:465` | Filter the page registry. |
-| `wpss_pay_order_url` | 2 | `src/functions/urls.php:839` | Filter the URL a buyer is sent to in order to pay a single order. |
+| `wpss_pay_order_url` | 2 | `src/functions/urls.php:846` | Filter the URL a buyer is sent to in order to pay a single order. |
 | `wpss_payment_action_required_message` | 3 | `src/Integrations/Stripe/StripeGateway.php:416` | Filters the message shown when a payment still needs a buyer step (typically 3D Secure authentication). |
 | `wpss_payment_declined_message` | 3 | `src/Integrations/Stripe/StripeGateway.php:393` | Filters the message shown to a buyer whose card was declined. |
 | `wpss_payment_gateways` | 1 | `src/Core/Plugin.php:2368` *(+4 more)* | Filter the registered payment gateways. |
@@ -484,8 +485,8 @@ guide; this is the complete index.
 | `wpss_service_tag_args` | 1 | `src/PostTypes/ServicePostType.php:305` | Filter service tag taxonomy arguments. |
 | `wpss_service_tag_taxonomy_args` | 1 | `src/Taxonomies/ServiceTagTaxonomy.php:103` | Filter service tag taxonomy arguments. |
 | `wpss_services_per_page` | 1 | `src/Frontend/ServiceArchiveView.php:654` *(+1 more)* |  |
-| `wpss_settings_currencies` | 1 | `src/Admin/Settings.php:3769` | Filter the currencies available in the Settings currency dropdown. |
-| `wpss_settings_sections` | 1 | `src/functions/urls.php:910` | Filter the known admin settings sections. |
+| `wpss_settings_currencies` | 1 | `src/Admin/Settings.php:3780` | Filter the currencies available in the Settings currency dropdown. |
+| `wpss_settings_sections` | 1 | `src/functions/urls.php:917` | Filter the known admin settings sections. |
 | `wpss_settings_tabs` | 1 | `src/Admin/Settings.php:225` | Filter the settings tabs. |
 | `wpss_should_reverse_vendor_earnings` | 2 | `src/Services/OrderWorkflowManager.php:1090` | Filters whether the vendor's wallet earnings should be reversed. |
 | `wpss_show_powered_by` | 1 | `src/Frontend/UnifiedDashboard.php:754` | Filters whether the "Powered by WP Sell Services" footer credit is rendered on the frontend dashboard. |
@@ -505,7 +506,7 @@ guide; this is the complete index.
 | `wpss_terms_page_slugs` | 1 | `src/Core/Activator.php:503` | Filters the slugs searched when auto-mapping an existing terms page. |
 | `wpss_three_decimal_currencies` | 1 | `src/functions/money.php:568` | Filter the list of three-decimal currency codes. |
 | `wpss_tip_commission_rate` | 3 | `src/Services/TippingService.php:372` | Filter the commission rate applied to a tip. |
-| `wpss_tip_quick_amounts` | 2 | `templates/order/order-view.php:2250` |  |
+| `wpss_tip_quick_amounts` | 2 | `templates/order/order-view.php:2249` |  |
 | `wpss_token_recovery_routes` | 1 | `src/API/AppTokenGuard.php:136` | Filter the routes reachable without a valid token. |
 | `wpss_tour_should_enqueue` | 1 | `src/Frontend/Tour.php:213` | Filter whether WPSS tour assets load on the current request. |
 | `wpss_tour_steps` | 1 | `src/Frontend/Tour.php:268` | Filter the steps array handed to Shepherd. |

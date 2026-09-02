@@ -520,7 +520,7 @@ add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2500` |
-| `wpss_pay_order_url` | `string $url, int $order_id` | `src/functions/urls.php:838` |
+| `wpss_pay_order_url` | `string $url, int $order_id` | `src/functions/urls.php:845` |
 
 ### `wpss_pay_order_url` -- the payment-handoff seam
 
@@ -681,7 +681,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1531` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:165` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:656` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3768` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3779` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:835` |
 
 **`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
@@ -752,8 +752,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:929` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:183` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:647` |
-| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1294` |
-| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1367` |
+| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1291` |
+| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1364` |
 | `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:224` |
 | `wpss_blocks` | `$blocks` | `src/Blocks/BlocksManager.php:95` |
 | `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:266` |

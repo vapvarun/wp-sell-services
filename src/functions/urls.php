@@ -790,8 +790,9 @@ function wpss_get_checkout_base_url(): string {
  *
  * Standalone pretty shape: `/{checkout}/pay/{id}/`. Legacy `?pay_order=N` is
  * still accepted and 301'd when pretty permalinks are on.
- * A cart-based rail (WooCommerce, EDD) hooks `wpss_pay_order_url` and returns
- * a URL on their own payment flow instead.
+ * A cart-based rail (WooCommerce, FluentCart) hooks `wpss_pay_order_url` and
+ * returns a URL on its own payment flow instead; a rail that does not hook it
+ * gets '' (see wpss_can_pay_single_order()).
  *
  * @since 1.4.0
  *
@@ -799,6 +800,12 @@ function wpss_get_checkout_base_url(): string {
  * @return string Payment URL for the active e-commerce rail.
  */
 function wpss_get_pay_order_url( int $order_id ): string {
+	// No rail can pay one order here: return nothing rather than a standalone
+	// URL the active store ignores. Every caller treats '' as "no button".
+	if ( ! wpss_can_pay_single_order() ) {
+		return '';
+	}
+
 	$base = wpss_get_checkout_base_url();
 
 	if ( $order_id > 0 && $base && get_option( 'permalink_structure' ) ) {

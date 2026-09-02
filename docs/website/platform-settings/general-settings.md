@@ -67,8 +67,8 @@ Choose which system handles your marketplace checkout and payments.
 |----------|-------------|
 | **Standalone** (built-in checkout) | Free -- no extra plugins needed |
 | **WooCommerce** | **[PRO]** |
-| **Easy Digital Downloads** | **[PRO]** |
-| **FluentCart** | **[PRO]** |
+| **Easy Digital Downloads** | **[PRO]** beta, listed only when the `wpss_pro_beta_rails` filter returns true |
+| **FluentCart** | **[PRO]** beta, listed only when the `wpss_pro_beta_rails` filter returns true |
 
 ### Auto-Detect (Recommended)
 

@@ -7,8 +7,8 @@ WP Sell Services Pro supports several e-commerce platforms beyond WooCommerce, s
 | Platform | Best For | Included In |
 |----------|----------|-------------|
 | **WooCommerce** | Full-featured stores with 100+ payment gateways | Pro |
-| **Easy Digital Downloads** | Lightweight digital-focused marketplaces | Pro |
-| **FluentCart** | Fast, modern single-page checkouts | Pro |
+| **Easy Digital Downloads** | Lightweight digital-focused marketplaces | Pro (beta, enable with the `wpss_pro_beta_rails` filter) |
+| **FluentCart** | Fast, modern single-page checkouts | Pro (beta, enable with the `wpss_pro_beta_rails` filter) |
 | **Standalone** | Pure service marketplaces, no extra plugins needed | Free + Pro |
 
 ## Easy Digital Downloads (EDD) **[PRO]**
