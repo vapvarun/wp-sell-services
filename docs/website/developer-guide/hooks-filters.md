@@ -227,7 +227,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 |--------|-----------|------|
 | `wpss_pre_vendor_register` | `array $profile_data, int $user_id` | `VendorService.php` |
 | `wpss_vendor_profile_allowed_fields` | `array $allowed_fields` | `VendorService.php` |
-| `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:800` |
+| `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:793` |
 | `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1260` |
 
 | Hook | Parameters | File |
@@ -349,7 +349,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2393` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2424` |
 | `wpss_admin_requirements_submitted` | `int $order_id, array $field_data` | `src/Admin/OrderScreen.php:335` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1945` |
 
@@ -520,7 +520,7 @@ add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2500` |
-| `wpss_pay_order_url` | `string $url, int $order_id` | `src/functions/urls.php:845` |
+| `wpss_pay_order_url` | `string $url, int $order_id` | `src/functions/urls.php:851` |
 
 ### `wpss_pay_order_url` -- the payment-handoff seam
 
