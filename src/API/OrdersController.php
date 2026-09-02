@@ -1830,6 +1830,7 @@ class OrdersController extends RestController {
 			'revisions_included'  => (int) ( $order->revisions_included ?? 0 ),
 			'revisions_used'      => (int) ( $order->revisions_used ?? 0 ),
 			'revisions_remaining' => max( 0, (int) ( $order->revisions_included ?? 0 ) - (int) ( $order->revisions_used ?? 0 ) ),
+			'revision_reason'     => $order->get_revision_reason(),
 			// The package the buyer actually bought, frozen onto the order in
 			// 1.6.0. Read from the snapshot, NOT from the service -- the service
 			// may have been edited or re-priced since, and what the buyer paid

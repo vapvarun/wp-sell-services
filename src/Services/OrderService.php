@@ -15,6 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Models\Service;
+use WPSellServices\Models\Message;
 
 /**
  * Handles service order business logic.
@@ -771,6 +772,20 @@ class OrderService {
 				$order_id
 			)
 		);
+
+		// The reason is a revision message on the order conversation: the one
+		// store both order views, the vendor email and the REST order read from
+		// (ServiceOrder::get_revision_reason()). Written here so the REST
+		// action and the dashboard AJAX record it alike. Conversations are
+		// created lazily, so a first revision on an order nobody had messaged
+		// on used to drop the note on the floor.
+		if ( '' !== $reason ) {
+			$conversation_service = new ConversationService();
+			$conversation         = $conversation_service->get_by_order( $order_id ) ?: $conversation_service->create_for_order( $order_id );
+			if ( $conversation ) {
+				$conversation_service->send_message( $conversation->id, $order->customer_id, $reason, array(), Message::TYPE_REVISION );
+			}
+		}
 
 		return $this->update_status( $order_id, ServiceOrder::STATUS_REVISION_REQUESTED, $reason );
 	}
