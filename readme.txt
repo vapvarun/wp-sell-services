@@ -265,8 +265,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 = 1.7.1 - September 2026 =
 
-* Fix      - A repeated payment webhook no longer resets a paid order or resends its notifications.
-* Dev      - CI now runs the integration, REST and contract suites; run-tests.sh works on a fresh clone; OpenAPI marks Pro-only routes.
+* Fix      - Closing a dispute from the admin restores the order, a dispute cannot be resolved twice, and disputes cannot be opened on unpaid orders.
 
 = 1.7.0 - August 2026 =
 
