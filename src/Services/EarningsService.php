@@ -665,7 +665,7 @@ class EarningsService {
 				'vendor_id'  => $vendor_id,
 				'amount'     => $amount,
 				'method'     => sanitize_key( $method ),
-				'details'    => wp_json_encode( $details ),
+				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
 				'status'     => self::WITHDRAWAL_PENDING,
 				'created_at' => current_time( 'mysql' ),
 			),
@@ -785,7 +785,7 @@ class EarningsService {
 					'method'       => $row->method,
 					// Cast: the column is nullable, and under strict_types a NULL here
 					// is a TypeError that fatals the whole earnings page.
-					'details'      => json_decode( (string) ( $row->details ?? '' ), true ) ?: array(),
+					'details'      => json_decode( wpss_decrypt_secret( (string) ( $row->details ?? '' ) ), true ) ?: array(),
 					'status'       => $row->status,
 					'admin_note'   => $row->admin_note ?? '',
 					'processed_at' => $row->processed_at,
@@ -950,7 +950,7 @@ class EarningsService {
 					'method'       => $row->method,
 					// Cast: the column is nullable, and under strict_types a NULL here
 					// is a TypeError that fatals the whole earnings page.
-					'details'      => json_decode( (string) ( $row->details ?? '' ), true ) ?: array(),
+					'details'      => json_decode( wpss_decrypt_secret( (string) ( $row->details ?? '' ) ), true ) ?: array(),
 					'status'       => $row->status,
 					'admin_note'   => $row->admin_note ?? '',
 					'processed_at' => $row->processed_at,
@@ -1256,7 +1256,7 @@ class EarningsService {
 				'vendor_id'  => $vendor_id,
 				'amount'     => $amount,
 				'method'     => sanitize_key( $method ),
-				'details'    => wp_json_encode( $details ),
+				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
 				'status'     => self::WITHDRAWAL_PENDING,
 				'is_auto'    => 1,
 				'created_at' => current_time( 'mysql' ),

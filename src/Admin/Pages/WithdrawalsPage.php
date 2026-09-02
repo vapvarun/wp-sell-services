@@ -611,7 +611,7 @@ class WithdrawalsPage {
 	 */
 	private function render_withdrawal_row( object $withdrawal, array $statuses, array $methods ): void {
 		$avatar  = get_avatar_url( $withdrawal->vendor_id, array( 'size' => 64 ) );
-		$details = json_decode( $withdrawal->details ?? '{}', true ) ?: array();
+		$details = json_decode( wpss_decrypt_secret( (string) ( $withdrawal->details ?? '' ) ), true ) ?: array();
 		$status  = $withdrawal->status ?? 'pending';
 		?>
 		<tr data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>">
@@ -963,7 +963,7 @@ class WithdrawalsPage {
 
 			foreach ( $rows as $row ) {
 				$last_id = (int) $row->id;
-				$details = json_decode( (string) ( $row->details ?? '' ), true ) ?: array();
+				$details = json_decode( wpss_decrypt_secret( (string) ( $row->details ?? '' ) ), true ) ?: array();
 
 				fputcsv(
 					$out,

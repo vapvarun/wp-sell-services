@@ -228,6 +228,47 @@ function wpss_order_files_are_public( bool $force = false ): ?bool {
 }
 
 /**
+ * Validate an upload against the plugin's size and type settings.
+ *
+ * ONE reading of `wpss_max_file_size` and `wpss_allowed_file_types`. Message,
+ * contact and dispute uploads each carried a private copy of these limits
+ * (and dispute evidence had no size cap at all), so the owner's settings
+ * governed some uploads and not others (Basecamp 10264291163).
+ *
+ * @since 1.7.1
+ *
+ * @param array<string,mixed> $file One entry from $_FILES.
+ * @return WP_Error|null Error describing the refusal, or null when acceptable.
+ */
+function wpss_check_upload( array $file ): ?WP_Error {
+	$max_mb = (int) wpss_get_option( 'advanced', 'max_file_size' );
+
+	if ( (int) ( $file['size'] ?? 0 ) > $max_mb * MB_IN_BYTES ) {
+		return new WP_Error(
+			'file_too_large',
+			/* translators: %s: maximum file size */
+			sprintf( __( 'File size exceeds the maximum of %s.', 'wp-sell-services' ), size_format( $max_mb * MB_IN_BYTES ) ),
+			array( 'status' => 400 )
+		);
+	}
+
+	// Real bytes, not the client-supplied extension or mime.
+	$checked = wp_check_filetype_and_ext( (string) ( $file['tmp_name'] ?? '' ), (string) ( $file['name'] ?? '' ) );
+
+	if ( empty( $checked['ext'] ) || empty( $checked['type'] ) ) {
+		return new WP_Error( 'invalid_type', __( 'File type could not be verified.', 'wp-sell-services' ), array( 'status' => 400 ) );
+	}
+
+	$allowed = array_map( 'trim', explode( ',', strtolower( (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ) ) );
+
+	if ( ! in_array( strtolower( (string) $checked['ext'] ), $allowed, true ) ) {
+		return new WP_Error( 'invalid_type', __( 'File type not allowed.', 'wp-sell-services' ), array( 'status' => 400 ) );
+	}
+
+	return null;
+}
+
+/**
  * Store one uploaded file against an order.
  *
  * Replaces the bare wp_handle_upload() that each caller used to run. Writes
@@ -235,15 +276,16 @@ function wpss_order_files_are_public( bool $force = false ): ?bool {
  * one, and returns a record addressed by id rather than by URL.
  *
  * The returned array keeps the `id`, `name`, `type` and `size` keys the old
- * shape had so stored rows stay readable, and adds `path`, `remote_path` and
- * `provider` (the storage provider id holding `remote_path`).
+ * shape had so stored rows stay readable, and adds `path`, `remote_path`,
+ * `provider` (the storage provider id holding `remote_path`) and `user_id`
+ * (who uploaded it - what lets a dispute reply prove a file is its own).
  * It deliberately omits `url`: see wpss_get_order_file_url().
  *
  * @since 1.7.0
  *
  * @param array<string,mixed> $file One entry from $_FILES.
  * @param int                 $order_id Order the file belongs to.
- * @param string              $kind     'delivery' or 'requirement' - used only for grouping.
+ * @param string              $kind     delivery|requirement|message|dispute|contact - used only for grouping.
  * @return array<string,mixed>|null Record, or null when the upload is rejected.
  */
 function wpss_store_order_file( array $file, int $order_id, string $kind = 'delivery' ): ?array {
@@ -257,8 +299,14 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 		return null;
 	}
 
+	// Size is enforced here for every kind; the type allow-list is the
+	// caller's (deliveries keep their own, wider, filterable list).
+	if ( (int) ( $file['size'] ?? 0 ) > (int) wpss_get_option( 'advanced', 'max_file_size' ) * MB_IN_BYTES ) {
+		return null;
+	}
+
 	$order_id = max( 0, $order_id );
-	$kind     = in_array( $kind, array( 'delivery', 'requirement' ), true ) ? $kind : 'delivery';
+	$kind     = in_array( $kind, array( 'delivery', 'requirement', 'message', 'dispute', 'contact' ), true ) ? $kind : 'delivery';
 
 	// wp_unique_filename() against the target directory, so two buyers uploading
 	// brief.pdf to the same order cannot overwrite each other.
@@ -287,6 +335,7 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 		'path'        => $filename,
 		'order_id'    => $order_id,
 		'kind'        => $kind,
+		'user_id'     => get_current_user_id(),
 		'remote_path' => null,
 		'provider'    => null,
 	);
@@ -444,8 +493,11 @@ function wpss_find_order_file( int $order_id, string $file_id ): ?array {
 /**
  * Every file record attached to an order.
  *
- * Reads both tables, because the endpoint is handed an id and nothing else -
- * the link in an email does not say which kind of file it points at.
+ * Reads every table that holds one, because the endpoint is handed an id and
+ * nothing else - the link in an email does not say which kind of file it
+ * points at. Conversation and dispute rows are keyed by order through their
+ * parent, so message and dispute attachments answer to the same read gate as
+ * deliveries (Basecamp 10264291163).
  *
  * @since 1.7.1
  *
@@ -460,6 +512,10 @@ function wpss_get_order_file_records( int $order_id ): array {
 		$wpdb->get_col( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_deliveries WHERE order_id = %d", $order_id ) ),
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->get_col( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_order_requirements WHERE order_id = %d", $order_id ) ),
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->get_col( $wpdb->prepare( "SELECT m.attachments FROM {$wpdb->prefix}wpss_messages m INNER JOIN {$wpdb->prefix}wpss_conversations c ON c.id = m.conversation_id WHERE c.order_id = %d", $order_id ) ),
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->get_col( $wpdb->prepare( "SELECT dm.attachments FROM {$wpdb->prefix}wpss_dispute_messages dm INNER JOIN {$wpdb->prefix}wpss_disputes d ON d.id = dm.dispute_id WHERE d.order_id = %d", $order_id ) ),
 	);
 
 	$records = array();

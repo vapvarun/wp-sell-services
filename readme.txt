@@ -288,6 +288,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Improve  - One setup notice tells the owner when a mapped page is missing, no payment method is enabled, or the selected store plugin is inactive; links to unpublished pages are hidden.
 * Fix      - Uninstall with delete data now removes scheduled jobs, order files and every plugin user meta.
 * Fix      - Usage tracking is no longer switched on without the owner opting in.
+* Security - Message, contact and dispute attachments are stored privately like deliveries, dispute evidence checks ownership, and vendor payout details are encrypted at rest.
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Payment intents carry the vendor id for every order type.
 * Dev      - New wpss_auth_login_challenge filter for two-factor plugins.

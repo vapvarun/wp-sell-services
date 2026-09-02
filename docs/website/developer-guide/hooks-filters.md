@@ -62,9 +62,9 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_service_approved` | `int $service_id, string $notes` | `src/Services/ModerationService.php:191` |
-| `wpss_service_rejected` | `int $service_id, string $reason` | `src/Services/ModerationService.php:243` |
-| `wpss_service_pending_moderation` | `int $service_id` | `src/Services/ModerationService.php:283` |
+| `wpss_service_approved` | `int $service_id, string $notes` | `src/API/ModerationController.php:223` |
+| `wpss_service_rejected` | `int $service_id, string $reason` | `src/API/ModerationController.php:264` |
+| `wpss_service_pending_moderation` | `int $service_id` | `src/Frontend/ServiceWizard.php:1720` |
 
 ## Order Actions
 
@@ -88,7 +88,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_order_requirements_submitted` | `int $order_id, array $requirements` | `src/API/OrdersController.php:1293` |
 | `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/orders.php:298` |
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderWorkflowManager.php:633` |
-| `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:400` |
+| `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:401` |
 | `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `src/Services/OrderWorkflowManager.php:533` |
 
 > **Removed in 1.4.0: `wpss_order_accepted`, `wpss_order_rejected`,
@@ -240,7 +240,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:285` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Admin/Pages/VendorsPage.php:1151` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1550` |
-| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2314` |
+| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2200` |
 | `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:371` |
 | `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:425` |
 
@@ -278,12 +278,12 @@ tip. Tips are excluded from commission by default, so the two usually match.
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_dispute_opened` | `int $dispute_id, int $order_id, int $opened_by, array $data` | `src/Services/DisputeService.php:321` |
-| `wpss_dispute_evidence_added` | `int $dispute_id, int $user_id` | `src/Services/DisputeService.php:454` |
-| `wpss_dispute_status_changed` | `int $dispute_id, string $status, string $old_status` | `src/Services/DisputeService.php:720` |
-| `wpss_dispute_resolved` | `int $dispute_id, string $resolution, object $dispute, float $refund_amount` | `src/Services/DisputeService.php:846` |
-| `wpss_dispute_response_submitted` | `int $message_id, int $dispute_id, int $user_id` | `src/Services/DisputeWorkflowManager.php:183` |
-| `wpss_dispute_escalated` | `int $dispute_id, string $reason, int $escalated_by` | `src/Services/DisputeWorkflowManager.php:310` |
-| `wpss_dispute_cancelled` | `int $dispute_id, int $user_id, string $reason` | `src/Services/DisputeWorkflowManager.php:473` |
+| `wpss_dispute_evidence_added` | `int $dispute_id, int $user_id` | `src/Services/DisputeService.php:456` |
+| `wpss_dispute_status_changed` | `int $dispute_id, string $status, string $old_status` | `src/Services/DisputeService.php:730` |
+| `wpss_dispute_resolved` | `int $dispute_id, string $resolution, object $dispute, float $refund_amount` | `src/Services/DisputeService.php:856` |
+| `wpss_dispute_response_submitted` | `int $message_id, int $dispute_id, int $user_id` | `src/Services/DisputeWorkflowManager.php:208` |
+| `wpss_dispute_escalated` | `int $dispute_id, string $reason, int $escalated_by` | `src/Services/DisputeWorkflowManager.php:335` |
+| `wpss_dispute_cancelled` | `int $dispute_id, int $user_id, string $reason` | `src/Services/DisputeWorkflowManager.php:498` |
 
 ## Review, Request, and Proposal Actions
 
@@ -519,7 +519,7 @@ add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2500` |
+| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2386` |
 | `wpss_pay_order_url` | `string $url, int $order_id` | `src/functions/urls.php:855` |
 
 ### `wpss_pay_order_url` -- the payment-handoff seam
@@ -752,8 +752,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:929` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:183` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:647` |
-| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1290` |
-| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1363` |
+| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1291` |
+| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1364` |
 | `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:224` |
 | `wpss_blocks` | `$blocks` | `src/Blocks/BlocksManager.php:95` |
 | `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:266` |
@@ -920,7 +920,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_analytics_init` | `AnalyticsManager $manager` | `AnalyticsManager.php:93` |
+| `wpss_analytics_init` | `AnalyticsManager $manager` | `src/Analytics/AnalyticsManager.php:103` |
 
 ### Gateway Settings Actions
 

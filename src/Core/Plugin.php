@@ -360,6 +360,21 @@ final class Plugin {
 			);
 		}
 
+		// Withdrawal payout details were plaintext JSON until 1.7.1. Same
+		// own-flag pattern as above: exactly once, cannot be skipped by a
+		// forgotten version bump, idempotent (rows already prefixed are not
+		// selected).
+		if ( ! get_option( 'wpss_withdrawal_details_encrypted', false ) ) {
+			add_action(
+				'init',
+				static function (): void {
+					wpss_encrypt_legacy_withdrawal_details();
+					update_option( 'wpss_withdrawal_details_encrypted', 1, false );
+				},
+				20
+			);
+		}
+
 		// The schema has its OWN version, and it moves independently of the
 		// plugin version — a release can add a table without changing
 		// WPSS_VERSION. Gating the installer on the plugin version alone meant

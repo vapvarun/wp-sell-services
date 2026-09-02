@@ -95,7 +95,7 @@ class DisputeWorkflowManager {
 	 * @param int    $dispute_id Dispute ID.
 	 * @param int    $user_id Responder user ID.
 	 * @param string $response Response text.
-	 * @param array  $attachments Attachment IDs.
+	 * @param array  $attachments Ids of files the responder already uploaded to this order.
 	 * @return array Result with success status.
 	 */
 	public function submit_response( int $dispute_id, int $user_id, string $response, array $attachments = array() ): array {
@@ -132,6 +132,31 @@ class DisputeWorkflowManager {
 				'success' => false,
 				'message' => __( 'You are not authorized to respond to this dispute.', 'wp-sell-services' ),
 			);
+		}
+
+		// An attachment id must name a file THIS user put on THIS order. Before
+		// this, any attachment id on the site was accepted and rendered into
+		// the other party's dispute view (Basecamp 10264291163).
+		if ( $attachments ) {
+			$own = array();
+
+			foreach ( wpss_get_order_file_records( (int) $dispute->order_id ) as $record ) {
+				if ( (int) ( $record['user_id'] ?? 0 ) === $user_id ) {
+					$own[ (string) $record['id'] ] = $record;
+				}
+			}
+
+			foreach ( $attachments as $i => $file_id ) {
+				if ( ! isset( $own[ (string) $file_id ] ) ) {
+					return array(
+						'success' => false,
+						'code'    => 'forbidden',
+						'message' => __( 'One of the attachments is not a file you uploaded to this order.', 'wp-sell-services' ),
+					);
+				}
+
+				$attachments[ $i ] = $own[ (string) $file_id ];
+			}
 		}
 
 		// Determine response type.
