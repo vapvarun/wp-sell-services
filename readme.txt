@@ -284,6 +284,8 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Orders left without requirements now auto-start by default instead of being cancelled after the timeout.
 * Fix      - Price decimals and currency position settings are applied; minimum and maximum order amounts are enforced at checkout.
 * Fix      - Password reset over REST accepts a username as well as an email, private order files can be downloaded by app clients, and repeated failed logins lock the account temporarily.
+* Fix      - Commission is locked when the order is paid, partial refunds can be issued more than once and each reverses the right vendor share, and orders created from proposals are taxed.
+* Fix      - Vendor earnings totals are computed from the ledger everywhere, so the profile, earnings page and ledger agree.
 * Improve  - The orders API loads a page of orders with a fixed number of queries.
 * Improve  - One setup notice tells the owner when a mapped page is missing, no payment method is enabled, or the selected store plugin is inactive; links to unpublished pages are hidden.
 * Fix      - Uninstall with delete data now removes scheduled jobs, order files and every plugin user meta.
@@ -292,6 +294,8 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Payment intents carry the vendor id for every order type.
 * Dev      - New wpss_auth_login_challenge filter for two-factor plugins.
+* Dev      - Stored files record which storage provider holds them.
+* Dev      - Unique keys on wallet transactions and reviews, and an index on order transaction ids.
 
 = 1.7.0 - August 2026 =
 

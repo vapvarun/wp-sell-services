@@ -165,7 +165,6 @@ class UnifiedDashboard {
 					'walletColType'          => __( 'Type', 'wp-sell-services' ),
 					'walletColDescription'   => __( 'Description', 'wp-sell-services' ),
 					'walletColAmount'        => __( 'Amount', 'wp-sell-services' ),
-					'walletColBalance'       => __( 'Balance', 'wp-sell-services' ),
 					'walletEmpty'            => __( 'No wallet transactions yet.', 'wp-sell-services' ),
 					'walletLoadFailed'       => __( 'Could not load transactions. Please try again.', 'wp-sell-services' ),
 					'walletTypeUnknown'      => __( 'Other', 'wp-sell-services' ),

@@ -153,7 +153,7 @@ class CheckoutIntentService {
 
 			$vendors[ (int) get_post_field( 'post_author', $service_id ) ] = true;
 
-			$line = $this->price_line(
+			$line = self::price_line(
 				$service_id,
 				(float) ( $pkg['price'] ?? 0 ) * $quantity,
 				(float) array_reduce(
@@ -243,23 +243,28 @@ class CheckoutIntentService {
 	/**
 	 * Price one line the way StandaloneOrderProvider::create_order() prices its
 	 * row: subtotal plus add-ons is the taxable base, tax through the shared
-	 * helper. Both callers (single and cart) and the order row are the same
-	 * arithmetic by construction.
+	 * helper. Every caller (single, cart, and an order created from an
+	 * accepted proposal) and the order row are the same arithmetic by
+	 * construction - a proposal order used to be inserted untaxed while
+	 * catalog checkout charged the configured rate (Basecamp F23).
 	 *
 	 * @since 1.7.1
 	 *
-	 * @param int   $service_id   Service ID.
-	 * @param float $subtotal     Package price (times quantity).
+	 * @param int   $service_id   Service ID (0 for a custom request with none).
+	 * @param float $subtotal     Package / proposal price (times quantity).
 	 * @param float $addons_total Add-ons total.
-	 * @return array{subtotal:float,addons_total:float,tax:float,total:float}
+	 * @param int   $vendor_id    Vendor, when the service cannot say (proposals).
+	 * @return array{subtotal:float,addons_total:float,tax:float,tax_rate:float,total:float}
 	 */
-	private function price_line( int $service_id, float $subtotal, float $addons_total ): array {
-		$tax = wpss_calculate_tax( $subtotal + $addons_total, (int) get_post_field( 'post_author', $service_id ), $service_id );
+	public static function price_line( int $service_id, float $subtotal, float $addons_total, int $vendor_id = 0 ): array {
+		$vendor_id = $vendor_id > 0 ? $vendor_id : (int) get_post_field( 'post_author', $service_id );
+		$tax       = wpss_calculate_tax( $subtotal + $addons_total, $vendor_id, $service_id );
 
 		return array(
 			'subtotal'     => $subtotal,
 			'addons_total' => $addons_total,
 			'tax'          => (float) $tax['amount'],
+			'tax_rate'     => (float) $tax['rate'],
 			'total'        => (float) $tax['total'],
 		);
 	}
@@ -313,7 +318,7 @@ class CheckoutIntentService {
 		 * Commission is unaffected: CommissionService works from the PRE-tax
 		 * base, because tax is not revenue to split.
 		 */
-		$line = $this->price_line( $service_id, $price, (float) ( $addon_data['addons_total'] ?? 0 ) );
+		$line = self::price_line( $service_id, $price, (float) ( $addon_data['addons_total'] ?? 0 ) );
 
 		$intent = CheckoutIntent::single(
 			$service_id,

@@ -3016,12 +3016,6 @@ parameters:
 			path: src/Services/CommissionService.php
 
 		-
-			message: '#^Method WPSellServices\\Services\\CommissionService\:\:update_vendor_earnings\(\) has parameter \$commission with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/CommissionService.php
-
-		-
 			message: '#^Method WPSellServices\\Services\\ConversationService\:\:add_system_message\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

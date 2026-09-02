@@ -2195,7 +2195,6 @@ class VendorsPage {
 
 		$limit = 50;
 
-		// Current balance = balance_after on the latest transaction.
 		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
 
 		$total = (int) $wpdb->get_var(
@@ -2208,7 +2207,7 @@ class VendorsPage {
 		// Most recent transactions (read-only audit view).
 		$transactions = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, type, amount, balance_after, currency, description, reference_type, reference_id, status, created_at
+				"SELECT id, type, amount, currency, description, reference_type, reference_id, status, created_at
 				FROM {$wpdb->prefix}wpss_wallet_transactions
 				WHERE user_id = %d
 				ORDER BY created_at DESC, id DESC
@@ -2259,7 +2258,6 @@ class VendorsPage {
 							<th><?php esc_html_e( 'Type', 'wp-sell-services' ); ?></th>
 							<th><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></th>
 							<th><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></th>
-							<th><?php esc_html_e( 'Balance', 'wp-sell-services' ); ?></th>
 							<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
 						</tr>
 					</thead>
@@ -2270,7 +2268,6 @@ class VendorsPage {
 								<td><?php echo esc_html( ucwords( str_replace( '_', ' ', (string) $txn->type ) ) ); ?></td>
 								<td><?php echo esc_html( (string) ( $txn->description ?? '' ) ); ?></td>
 								<td><?php echo esc_html( wpss_format_price( (float) $txn->amount ) ); ?></td>
-								<td><?php echo esc_html( wpss_format_price( (float) $txn->balance_after ) ); ?></td>
 								<td>
 									<span class="<?php echo esc_attr( wpss_status_class( $txn->status ) ); ?>">
 										<?php echo esc_html( ucfirst( (string) $txn->status ) ); ?>

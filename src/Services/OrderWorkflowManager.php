@@ -930,11 +930,9 @@ class OrderWorkflowManager {
 				? ServiceOrder::STATUS_REFUNDED
 				: ServiceOrder::STATUS_PARTIALLY_REFUNDED;
 
-			// ponytail: a second partial on an already partially refunded
-			// order bumps refunded_amount but cannot reverse more earnings —
-			// the reversal is one row per order. Extend reverse_order_earnings
-			// to a running total when that becomes a real case.
-			$moved = $service->apply_refund_status( $oid, $target, $status, true );
+			// apply_refund_status() accumulates: hand it this event's slice,
+			// not the running total. Each slice reverses its own vendor share.
+			$moved = $service->apply_refund_status( $oid, round( $target - $already, $decimals ), $status, true );
 
 			if ( $moved && '' !== $refund_id ) {
 				$seen[] = $refund_id;
@@ -977,7 +975,12 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	private function settle_refund( int $order_id, ServiceOrder $order ): void {
-		$refunded = null === $order->refunded_amount ? null : (float) $order->refunded_amount;
+		// This event's slice. Refunds accumulate, so `refunded_amount` on the
+		// row is the running total; apply_refund_status() registers the slice
+		// for the duration of the transition. A hook that fired outside it
+		// (legacy direct status writes) falls back to the row as before.
+		$refunded = OrderService::get_refund_delta( $order_id )
+			?? ( null === $order->refunded_amount ? null : (float) $order->refunded_amount );
 
 		// 1. Buyer's money back, for the refunded amount only.
 		$this->attempt_payment_refund( $order, $refunded );
@@ -1047,20 +1050,27 @@ class OrderWorkflowManager {
 		$order_total  = (float) $order->total;
 		$platform_fee = (float) ( $order->platform_fee ?? 0 );
 		$currency     = $order->currency ? $order->currency : wpss_get_currency();
+		$decimals     = wpss_get_currency_decimals( (string) $currency );
 
-		// A partial refund claws back the same proportion the buyer got back.
-		// NULL means "reverse everything", which is also what a full refund
-		// resolves to — one formula, no separate partial path.
-		$full_earnings   = (float) $order->vendor_earnings;
-		$is_partial      = null !== $refund_amount && $refund_amount < $order_total;
+		// A refund claws back the same proportion of what the vendor STILL
+		// holds as the buyer gets back of what they still had paid. Refunds
+		// accumulate, so the row's refunded_amount already includes this
+		// event; what was refunded before it is the difference. NULL means
+		// "reverse everything left", which is also what a full refund resolves
+		// to - one formula, no separate partial path.
+		$full_earnings = (float) $order->vendor_earnings;
+		$previous      = null === $refund_amount ? 0.0 : max( 0.0, (float) ( $order->refunded_amount ?? 0 ) - (float) $refund_amount );
+		$remaining     = $order_total - $previous;
+		$is_partial    = null !== $refund_amount && $refund_amount < $remaining;
+
 		$vendor_earnings = $is_partial
-			? wpss_get_refund_vendor_share( $order, (float) $refund_amount )
+			? wpss_get_refund_vendor_share( $order, (float) $refund_amount, $previous )
 			: $full_earnings;
 
 		// Reverse the platform's cut in the same proportion, so platform revenue
 		// reporting stays honest on partial refunds.
-		if ( $is_partial && $order_total > 0 ) {
-			$platform_fee = round( $platform_fee * ( (float) $refund_amount / $order_total ), 2 );
+		if ( $is_partial && $remaining > 0 ) {
+			$platform_fee = round( $platform_fee * ( (float) $refund_amount / $remaining ), $decimals );
 		}
 
 		// Skip zero-amount reversals.
@@ -1096,35 +1106,22 @@ class OrderWorkflowManager {
 		}
 
 		$transactions_table = $wpdb->prefix . 'wpss_wallet_transactions';
-		$profiles_table     = $wpdb->prefix . 'wpss_vendor_profiles';
 		$orders_table       = $wpdb->prefix . 'wpss_orders';
 
-		// Idempotency: check if reversal already exists for this order.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$existing_reversal = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$transactions_table} WHERE reference_type = 'order' AND reference_id = %d AND type IN ('order_reversal', 'refund')",
-				$order_id
-			)
-		);
-
-		if ( $existing_reversal > 0 ) {
-			return true;
-		}
-
 		// Never debit a vendor for money they were never credited. The order may
-		// carry vendor_earnings and even an inflated profile total while its
-		// wallet credit was never written — CommissionService::record() sets the
-		// order fields and the profile in writes that commit BEFORE its own
-		// create_earnings_transaction() transaction, so a rolled-back credit
-		// leaves exactly this "paid but uncredited" state. Inserting a reversal
-		// debit against a credit that never existed would invent a negative
-		// balance (the vendor goes to -X for money they never received). The
-		// ledger is the authority: if it holds no completed credit for this
-		// order, there is nothing to claw back — skip the reversal and flag it
-		// for manual reconciliation rather than fabricate debt. Connect orders,
-		// settled outside the wallet, are already short-circuited above by the
-		// wpss_should_reverse_vendor_earnings filter and never reach here.
+		// carry vendor_earnings while its wallet credit was never written —
+		// CommissionService::record() sets the order fields in a write that
+		// commits BEFORE its own create_earnings_transaction() transaction, so
+		// a rolled-back credit leaves exactly this "paid but uncredited" state,
+		// and a paid order refunded before completion has no credit at all.
+		// Inserting a reversal against a credit that never existed would invent
+		// a negative balance. The ledger is the authority: if it holds no
+		// completed credit for this order, there is nothing to claw back — skip
+		// the reversal (the row's vendor_earnings stays, and the credit at
+		// completion nets the refund via CommissionService::calculate()).
+		// Connect orders, settled outside the wallet, are already
+		// short-circuited above by the wpss_should_reverse_vendor_earnings
+		// filter and never reach here.
 		$debit_types_sql = wpss_get_ledger_debit_types_sql();
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix; debit types are sanitize_key()'d; order_id is prepared.
 		$credited = (int) $wpdb->get_var(
@@ -1136,12 +1133,25 @@ class OrderWorkflowManager {
 				$order_id
 			)
 		);
+
+		// One reversal row per refund EVENT. The ledger is UNIQUE on
+		// (reference_type, reference_id, type), so the event ordinal rides on
+		// reference_type: the first reversal keeps 'order' (every existing row
+		// and reader), later ones are 'order_refund_2', 'order_refund_3'.
+		// reference_id stays the order id on all of them, so a ledger row
+		// always resolves to its order.
+		$event = 1 + (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$transactions_table} WHERE reference_id = %d AND type = 'order_reversal'",
+				$order_id
+			)
+		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( 0 === $credited ) {
 			wpss_log(
 				sprintf(
-					'Order %d refund: no completed wallet credit found for the vendor, so the earnings reversal is skipped — a reversal here would debit money never credited. If vendor_profiles shows earnings for this order they are a stale cache from an interrupted credit and need manual reconciliation.',
+					'Order %d refund: no completed wallet credit found for the vendor, so the earnings reversal is skipped — a reversal here would debit money never credited. The credit written at completion is netted by the refunded amount instead.',
 					$order_id
 				),
 				'warning'
@@ -1153,49 +1163,17 @@ class OrderWorkflowManager {
 		$wpdb->query( 'START TRANSACTION' );
 
 		try {
-			// 1. Update vendor profile earnings (verify profile exists).
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$profile_updated = $wpdb->query(
-				$wpdb->prepare(
-					"UPDATE {$profiles_table}
-					SET
-						total_earnings = GREATEST(0, total_earnings - %f),
-						net_earnings = GREATEST(0, net_earnings - %f),
-						total_commission = GREATEST(0, total_commission - %f),
-						updated_at = %s
-					WHERE user_id = %d",
-					$order_total,
-					$vendor_earnings,
-					$platform_fee,
-					current_time( 'mysql' ),
-					$vendor_id
-				)
-			);
-
-			if ( false === $profile_updated ) {
-				throw new \RuntimeException(
-					sprintf( 'UPDATE vendor_profiles failed: %s', $wpdb->last_error )
-				);
-			}
-
-			if ( 0 === $profile_updated ) {
-				wpss_log( "Earnings reversal: vendor profile not found for user {$vendor_id}, order {$order_id}.", 'warning' );
-			}
-
-			// 2. Look up current wallet balance for the reversal transaction row.
+			// 1. Look up current wallet balance for the reversal transaction row.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$current_balance = (float) wpss_get_ledger_balance( (int) $vendor_id, true );
 
 			// Not clamped: if the vendor already withdrew this money the running
 			// balance genuinely goes negative, and the statement should say so.
-			// Clamping here made balance_after disagree with the actual ledger
-			// SUM on exactly the rows where the truth matters most.
 			$new_balance = $current_balance - $vendor_earnings;
 
-			// 3. Create reversal wallet transaction.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$insert_result = $wpdb->insert(
-				$transactions_table,
+			// 2. Create the reversal wallet transaction. The vendor profile's
+			// cached totals are recomputed from the ledger by the insert helper.
+			$inserted = wpss_insert_ledger_row(
 				array(
 					'user_id'        => $vendor_id,
 					'type'           => 'order_reversal',
@@ -1203,25 +1181,25 @@ class OrderWorkflowManager {
 					'balance_after'  => $new_balance,
 					'currency'       => $currency,
 					'description'    => sprintf(
-						/* translators: %d: order ID */
-						__( 'Earnings reversed for cancelled order #%d', 'wp-sell-services' ),
-						$order_id
+						/* translators: 1: order ID, 2: amount refunded to the buyer in this event */
+						__( 'Earnings reversed for order #%1$d (%2$s refunded)', 'wp-sell-services' ),
+						$order_id,
+						wpss_format_price( null === $refund_amount ? $remaining : (float) $refund_amount, (string) $currency )
 					),
-					'reference_type' => 'order',
+					'reference_type' => 1 === $event ? 'order' : "order_refund_{$event}",
 					'reference_id'   => $order_id,
 					'status'         => 'completed',
 					'created_at'     => current_time( 'mysql' ),
-				),
-				array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
+				)
 			);
 
-			if ( false === $insert_result ) {
+			if ( ! $inserted ) {
 				throw new \RuntimeException(
 					sprintf( 'INSERT wallet_transactions failed: %s', $wpdb->last_error )
 				);
 			}
 
-			// 4. Settle the order's commission fields.
+			// 3. Settle the order's commission fields.
 			//
 			// Full reversal clears them, which also prevents a double-reversal.
 			// A PARTIAL refund must NOT clear them: the vendor genuinely kept
@@ -1230,8 +1208,8 @@ class OrderWorkflowManager {
 			// would erase real earnings from every report.
 			$commission_fields = $is_partial
 				? array(
-					'vendor_earnings' => round( $full_earnings - $vendor_earnings, 2 ),
-					'platform_fee'    => round( (float) ( $order->platform_fee ?? 0 ) - $platform_fee, 2 ),
+					'vendor_earnings' => round( $full_earnings - $vendor_earnings, $decimals ),
+					'platform_fee'    => round( (float) ( $order->platform_fee ?? 0 ) - $platform_fee, $decimals ),
 				)
 				: array(
 					'vendor_earnings' => null,
@@ -1322,11 +1300,17 @@ class OrderWorkflowManager {
 			return null;
 		}
 
+		// Size against what the buyer still has paid, not the order total: a
+		// refund after an earlier partial returns the remainder. "Partial"
+		// means the order is not fully refunded once this event lands, which
+		// is what decides whether the payment closes below.
 		$order_total   = (float) $order->total;
-		$refund_amount = ( null === $amount || $amount <= 0 || $amount > $order_total )
-			? $order_total
+		$cumulative    = wpss_get_order_refunded_amount( $order );
+		$remaining     = null === $amount ? $order_total : $order_total - max( 0.0, $cumulative - $amount );
+		$refund_amount = ( null === $amount || $amount <= 0 || $amount > $remaining )
+			? $remaining
 			: $amount;
-		$is_partial    = $refund_amount < $order_total;
+		$is_partial    = null !== $amount && $cumulative < $order_total;
 
 		/**
 		 * Short-circuit the gateway refund.
