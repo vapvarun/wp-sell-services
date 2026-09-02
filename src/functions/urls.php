@@ -220,6 +220,8 @@ function wpss_get_known_dashboard_sections(): array {
 		// Selling.
 		'services',
 		'sales',
+		'proposals',
+		'reviews',
 		'earnings',
 		'wallet',
 		'portfolio',
@@ -282,6 +284,8 @@ function wpss_get_dashboard_section_aliases(): array {
 		'my-favorites'   => 'favorites',
 		'my-portfolio'   => 'portfolio',
 		'my-earnings'    => 'earnings',
+		'my-proposals'   => 'proposals',
+		'my-reviews'     => 'reviews',
 		'buyer-requests' => 'requests',
 		'my-profile'     => 'profile',
 		'become_vendor'  => 'become-vendor',

@@ -1721,7 +1721,7 @@ do_action( 'wpss_before_order_view', $order );
 				<?php endif; ?>
 				<?php if ( $is_vendor && '' === $wpss_order_review->response ) : ?>
 					<p class="wpss-text-muted wpss-review-respond-hint">
-						<?php esc_html_e( 'You can respond to this review from your Reviews section.', 'wp-sell-services' ); ?>
+						<a href="<?php echo esc_url( wpss_get_dashboard_url( 'reviews' ) ); ?>"><?php esc_html_e( 'Respond to this review from your Reviews section.', 'wp-sell-services' ); ?></a>
 					</p>
 				<?php endif; ?>
 			</div>

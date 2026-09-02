@@ -787,6 +787,7 @@ class DisputesController extends RestController {
 			$data['resolved_at']       = $format_date( $dispute->resolved_at );
 			$data['resolution']        = $dispute->resolution_type ?? null;
 			$data['resolution_notes']  = $dispute->resolution_notes ?? null;
+			$data['refund_amount']     = $dispute->refund_amount ?? null;
 
 			// Get resolver if resolved.
 			if ( ! empty( $dispute->resolved_by ) ) {

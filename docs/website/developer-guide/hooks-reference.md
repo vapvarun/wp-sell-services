@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**516 hooks** across **725** firing sites.
+**516 hooks** across **729** firing sites.
 
 ## Actions (279)
 
@@ -101,10 +101,10 @@ guide; this is the complete index.
 | `wpss_conversation_form` | 1 | `templates/order/conversation.php:293` | Hook: wpss_conversation_form |
 | `wpss_conversation_header` | 1 | `templates/order/conversation.php:176` | Hook: wpss_conversation_header |
 | `wpss_cron_daily` | 0 | `src/Core/Plugin.php:2723` |  |
-| `wpss_dashboard_header` | 0 | `src/Frontend/UnifiedDashboard.php:687` *(+1 more)* | Fires at the start of the unified dashboard header. |
-| `wpss_dashboard_section_after` | 2 | `templates/dashboard/sections/create-request.php:258` *(+11 more)* | Fires after the create request dashboard section content. |
-| `wpss_dashboard_section_before` | 2 | `templates/dashboard/sections/create-request.php:25` *(+13 more)* | Fires before the create request dashboard section content. |
-| `wpss_dashboard_section_before_content` | 2 | `src/Frontend/UnifiedDashboard.php:887` | Fires before the dashboard section content is rendered. |
+| `wpss_dashboard_header` | 0 | `src/Frontend/UnifiedDashboard.php:708` *(+1 more)* | Fires at the start of the unified dashboard header. |
+| `wpss_dashboard_section_after` | 2 | `templates/dashboard/sections/create-request.php:258` *(+13 more)* | Fires after the create request dashboard section content. |
+| `wpss_dashboard_section_before` | 2 | `templates/dashboard/sections/create-request.php:25` *(+15 more)* | Fires before the create request dashboard section content. |
+| `wpss_dashboard_section_before_content` | 2 | `src/Frontend/UnifiedDashboard.php:910` | Fires before the dashboard section content is rendered. |
 | `wpss_delivery_accepted` | 1 | `src/Services/DeliveryService.php:198` | Fires when delivery is accepted. |
 | `wpss_delivery_submitted` | 2 | `src/Services/DeliveryService.php:152` | Fires when a delivery is submitted. |
 | `wpss_dispute_cancelled` | 3 | `src/Services/DisputeWorkflowManager.php:474` | Fires when a dispute is cancelled. |
@@ -306,7 +306,7 @@ guide; this is the complete index.
 | `wpss_admin_menu_label` | 1 | `src/Admin/Admin.php:1319` | Filter the admin menu label for white-labelling. |
 | `wpss_admin_notification_email` | 1 | `src/Services/EmailService.php:571` | Tell the site owner a buyer has sent proof of an offline payment. |
 | `wpss_admin_vendor_notification_content` | 2 | `src/Services/NotificationService.php:1519` | Filter admin vendor notification email content. |
-| `wpss_after_become_vendor_redirect` | 2 | `src/Frontend/UnifiedDashboard.php:1108` | Filter the redirect URL after a vendor successfully registers. |
+| `wpss_after_become_vendor_redirect` | 2 | `src/Frontend/UnifiedDashboard.php:1131` | Filter the redirect URL after a vendor successfully registers. |
 | `wpss_allow_late_requirements_submission` | 1 | `src/functions/orders.php:553` *(+1 more)* | Filter whether late requirements submission is allowed. |
 | `wpss_analytics_widgets` | 1 | `src/Core/Plugin.php:2421` *(+1 more)* | Filter the registered analytics widgets. |
 | `wpss_api_controllers` | 1 | `src/API/API.php:184` | Filter registered API controllers. |
@@ -330,7 +330,7 @@ guide; this is the complete index.
 | `wpss_breadcrumbs` | 2 | `src/SEO/SEO.php:390` |  |
 | `wpss_buyer_request_post_type_args` | 1 | `src/PostTypes/BuyerRequestPostType.php:99` | Filter buyer request post type arguments. |
 | `wpss_buyer_request_slug` | 1 | `src/PostTypes/BuyerRequestPostType.php:115` | Filter the buyer request post type slug. |
-| `wpss_can_access_dashboard_section` | 3 | `src/Frontend/UnifiedDashboard.php:432` | Filter whether user can access a dashboard section. |
+| `wpss_can_access_dashboard_section` | 3 | `src/Frontend/UnifiedDashboard.php:445` | Filter whether user can access a dashboard section. |
 | `wpss_cart_checkout` | 4 | `src/API/CartController.php:388` | Filter to create order from cart during standalone checkout. |
 | `wpss_cart_item_data` | 3 | `src/API/CartController.php:241` | Filters cart item data before it is saved. |
 | `wpss_cascade_preserve_shared_records` | 2 | `src/Services/DataCascadeHandler.php:210` | Filter whether records shared with another member survive this cascade. |
@@ -353,13 +353,13 @@ guide; this is the complete index.
 | `wpss_currency_format` | 3 | `src/functions/money.php:777` | Filter the currency format string. |
 | `wpss_currency_registry` | 1 | `src/functions/money.php:1551` | Filter the canonical currency registry. |
 | `wpss_currency_symbols` | 1 | `src/functions/money.php:750` | Filter currency symbols. |
-| `wpss_dashboard_asset_shortcodes` | 1 | `src/Frontend/UnifiedDashboard.php:236` | Filters the shortcodes that make a page load the dashboard assets. |
-| `wpss_dashboard_default_section` | 2 | `src/Frontend/UnifiedDashboard.php:396` | Filter the dashboard's default landing section. |
-| `wpss_dashboard_section_aliases` | 1 | `src/functions/urls.php:303` | Filter the dashboard section alias map. |
-| `wpss_dashboard_section_template` | 2 | `src/Frontend/UnifiedDashboard.php:862` *(+1 more)* | Filter the template path for a dashboard section. |
-| `wpss_dashboard_section_titles` | 1 | `src/Frontend/UnifiedDashboard.php:811` | Filter dashboard section titles. |
-| `wpss_dashboard_sections` | 3 | `src/Frontend/UnifiedDashboard.php:523` | Filter dashboard sections. |
-| `wpss_default_page_slugs` | 1 | `src/functions/urls.php:549` | Filter default page slugs. |
+| `wpss_dashboard_asset_shortcodes` | 1 | `src/Frontend/UnifiedDashboard.php:249` | Filters the shortcodes that make a page load the dashboard assets. |
+| `wpss_dashboard_default_section` | 2 | `src/Frontend/UnifiedDashboard.php:409` | Filter the dashboard's default landing section. |
+| `wpss_dashboard_section_aliases` | 1 | `src/functions/urls.php:307` | Filter the dashboard section alias map. |
+| `wpss_dashboard_section_template` | 2 | `src/Frontend/UnifiedDashboard.php:885` *(+1 more)* | Filter the template path for a dashboard section. |
+| `wpss_dashboard_section_titles` | 1 | `src/Frontend/UnifiedDashboard.php:834` | Filter dashboard section titles. |
+| `wpss_dashboard_sections` | 3 | `src/Frontend/UnifiedDashboard.php:544` | Filter dashboard sections. |
+| `wpss_default_page_slugs` | 1 | `src/functions/urls.php:553` | Filter default page slugs. |
 | `wpss_default_service_categories` | 1 | `src/PostTypes/ServicePostType.php:89` | Insert the default service categories. Returns the created term IDs. |
 | `wpss_delivery_allowed_file_types` | 1 | `src/Services/DeliveryService.php:347` | Filter allowed file types for delivery. |
 | `wpss_dispute_reasons` | 1 | `src/functions/moderation.php:107` | Filter the reasons a buyer may give for opening a dispute. |
@@ -385,7 +385,7 @@ guide; this is the complete index.
 | `wpss_get_template` | 3 | `src/functions/templates.php:142` | Filter the template file path. |
 | `wpss_get_template_part` | 3 | `src/functions/templates.php:91` | Filter the template file path. |
 | `wpss_is_vendor` | 2 | `src/functions/vendors.php:148` | Filter whether user is a vendor. |
-| `wpss_known_dashboard_sections` | 1 | `src/functions/urls.php:254` | Filter the set of known dashboard section slugs. |
+| `wpss_known_dashboard_sections` | 1 | `src/functions/urls.php:256` | Filter the set of known dashboard section slugs. |
 | `wpss_ledger_debit_types` | 1 | `src/functions/money.php:213` | Filter the ledger transaction types treated as debits. |
 | `wpss_locate_template` | 3 | `src/Frontend/TemplateLoader.php:520` |  |
 | `wpss_locked_billing_fields` | 1 | `src/functions/billing.php:171` | Filters the billing fields that cannot be disabled. |
@@ -416,8 +416,8 @@ guide; this is the complete index.
 | `wpss_package_button_text` | 2 | `templates/partials/service-packages.php:232` | Filters the package button text. |
 | `wpss_package_id_base` | 2 | `src/functions/services.php:123` |  |
 | `wpss_package_price_html` | 3 | `templates/partials/service-packages.php:109` | Filters the package price HTML. |
-| `wpss_page_definitions` | 1 | `src/functions/urls.php:465` | Filter the page registry. |
-| `wpss_pay_order_url` | 2 | `src/functions/urls.php:846` | Filter the URL a buyer is sent to in order to pay a single order. |
+| `wpss_page_definitions` | 1 | `src/functions/urls.php:469` | Filter the page registry. |
+| `wpss_pay_order_url` | 2 | `src/functions/urls.php:850` | Filter the URL a buyer is sent to in order to pay a single order. |
 | `wpss_payment_action_required_message` | 3 | `src/Integrations/Stripe/StripeGateway.php:416` | Filters the message shown when a payment still needs a buyer step (typically 3D Secure authentication). |
 | `wpss_payment_declined_message` | 3 | `src/Integrations/Stripe/StripeGateway.php:393` | Filters the message shown to a buyer whose card was declined. |
 | `wpss_payment_gateways` | 1 | `src/Core/Plugin.php:2366` *(+4 more)* | Filter the registered payment gateways. |
@@ -460,7 +460,7 @@ guide; this is the complete index.
 | `wpss_rest_review_data` | 3 | `src/API/ReviewsController.php:1055` | Filters the review data returned in REST API responses. |
 | `wpss_rest_service_data` | 3 | `src/API/ServicesController.php:1243` | Filter service REST response data. |
 | `wpss_rest_vendor_data` | 3 | `src/API/VendorsController.php:917` | Filters the vendor data returned in REST API responses. |
-| `wpss_review_window_days` | 1 | `src/Services/ReviewService.php:427` | Filter the review time window in days. |
+| `wpss_review_window_days` | 1 | `src/Services/ReviewService.php:446` | Filter the review time window in days. |
 | `wpss_reviews_per_page` | 2 | `templates/partials/service-reviews.php:54` | Filters the number of reviews to display per page. |
 | `wpss_search_categories_limit` | 1 | `src/Blocks/ServiceSearch.php:180` |  |
 | `wpss_search_query_args` | 2 | `src/Services/SearchService.php:247` | Filter the WP_Query arguments for service search. |
@@ -487,10 +487,10 @@ guide; this is the complete index.
 | `wpss_service_tag_taxonomy_args` | 1 | `src/Taxonomies/ServiceTagTaxonomy.php:103` | Filter service tag taxonomy arguments. |
 | `wpss_services_per_page` | 1 | `src/Frontend/ServiceArchiveView.php:654` *(+1 more)* |  |
 | `wpss_settings_currencies` | 1 | `src/Admin/Settings.php:3791` | Filter the currencies available in the Settings currency dropdown. |
-| `wpss_settings_sections` | 1 | `src/functions/urls.php:917` | Filter the known admin settings sections. |
+| `wpss_settings_sections` | 1 | `src/functions/urls.php:921` | Filter the known admin settings sections. |
 | `wpss_settings_tabs` | 1 | `src/Admin/Settings.php:225` | Filter the settings tabs. |
 | `wpss_should_reverse_vendor_earnings` | 2 | `src/Services/OrderWorkflowManager.php:1088` | Filters whether the vendor's wallet earnings should be reversed. |
-| `wpss_show_powered_by` | 1 | `src/Frontend/UnifiedDashboard.php:753` | Filters whether the "Powered by WP Sell Services" footer credit is rendered on the frontend dashboard. |
+| `wpss_show_powered_by` | 1 | `src/Frontend/UnifiedDashboard.php:774` | Filters whether the "Powered by WP Sell Services" footer credit is rendered on the frontend dashboard. |
 | `wpss_single_request_layout` | 2 | `templates/single-request.php:126` | Filter: wpss_single_request_layout |
 | `wpss_single_service_layout` | 2 | `templates/single-service.php:95` | Filter: wpss_single_service_layout |
 | `wpss_sitemap_post_types` | 1 | `src/SEO/SEO.php:324` | Add service post type to sitemap. |

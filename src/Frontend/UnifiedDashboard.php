@@ -27,6 +27,16 @@ defined( 'ABSPATH' ) || exit;
 class UnifiedDashboard {
 
 	/**
+	 * Sections only an active vendor may open.
+	 *
+	 * One list. It used to be copied into three methods, which is how a new
+	 * selling section could be gated in one place and left open in another.
+	 *
+	 * @var string[]
+	 */
+	private const VENDOR_SECTIONS = array( 'services', 'sales', 'proposals', 'reviews', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
+
+	/**
 	 * Vendor service instance.
 	 *
 	 * @var VendorService
@@ -201,6 +211,9 @@ class UnifiedDashboard {
 					'selectPortfolioImages'  => __( 'Select Portfolio Images', 'wp-sell-services' ),
 					'addToPortfolio'         => __( 'Add to Portfolio', 'wp-sell-services' ),
 					'remove'                 => __( 'Remove', 'wp-sell-services' ),
+					'reviewReplySent'        => __( 'Your reply has been posted.', 'wp-sell-services' ),
+					'reviewReplyFailed'      => __( 'Could not post your reply. Please try again.', 'wp-sell-services' ),
+					'sellerResponse'         => __( 'Seller Response:', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -406,7 +419,7 @@ class UnifiedDashboard {
 	 * @return bool True if accessible.
 	 */
 	private function can_access_section( string $section ): bool {
-		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
+		$vendor_only_sections = self::VENDOR_SECTIONS;
 		$user_id              = get_current_user_id();
 
 		// A vendor-only section requires an active (approved) vendor — pending
@@ -477,6 +490,14 @@ class UnifiedDashboard {
 					'sales'     => array(
 						'icon'  => 'receipt',
 						'label' => __( 'Sales Orders', 'wp-sell-services' ),
+					),
+					'proposals' => array(
+						'icon'  => 'send',
+						'label' => __( 'Proposals', 'wp-sell-services' ),
+					),
+					'reviews'   => array(
+						'icon'  => 'star',
+						'label' => __( 'Reviews', 'wp-sell-services' ),
 					),
 					'earnings'  => array(
 						'icon'  => 'wallet',
@@ -784,6 +805,8 @@ class UnifiedDashboard {
 			'requests'       => __( 'Buyer Requests', 'wp-sell-services' ),
 			'services'       => __( 'My Services', 'wp-sell-services' ),
 			'sales'          => __( 'Sales Orders', 'wp-sell-services' ),
+			'proposals'      => __( 'Proposals', 'wp-sell-services' ),
+			'reviews'        => __( 'Reviews', 'wp-sell-services' ),
 			'earnings'       => __( 'Earnings & Payouts', 'wp-sell-services' ),
 			'wallet'         => __( 'Earnings & Payouts', 'wp-sell-services' ),
 			'analytics'      => __( 'Analytics', 'wp-sell-services' ),
@@ -866,7 +889,7 @@ class UnifiedDashboard {
 		$is_vendor      = $vendor_service->is_vendor( $user_id );
 
 		// Check access: vendor-only sections require vendor status.
-		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
+		$vendor_only_sections = self::VENDOR_SECTIONS;
 		if ( ! $is_vendor && in_array( $section, $vendor_only_sections, true ) ) {
 			$this->render_section_fallback( $section );
 			return;
@@ -907,7 +930,7 @@ class UnifiedDashboard {
 		$registration_is_open = 'closed' !== $fb_registration_mode;
 
 		// Vendor-only sections: show a CTA to become a vendor.
-		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
+		$vendor_only_sections = self::VENDOR_SECTIONS;
 
 		if ( 'become-vendor' === $section && ! $is_vendor && $registration_is_open ) {
 			// The become-vendor section should show the vendor onboarding prompt, not an error.

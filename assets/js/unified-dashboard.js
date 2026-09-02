@@ -69,6 +69,9 @@
 
 			// Wallet ledger — load the next page of transactions.
 			$(document).on('click', '#wpss-wallet-load-more', this.handleWalletLoadMore.bind(this));
+
+			// Reviews section: vendor reply, through the same REST route the app uses.
+			$(document).on('submit', '.wpss-review-reply-form', this.handleReviewReply.bind(this));
 		},
 
 		// Current page already loaded into the wallet ledger.
@@ -985,6 +988,46 @@
 			}.bind(this));
 
 			this.portfolioMediaFrame.open();
+		},
+
+		/**
+		 * Post a vendor reply to a review (POST /wpss/v1/reviews/{id}/reply)
+		 * and swap the form for the stored response.
+		 *
+		 * @param {Event} e Submit event.
+		 */
+		handleReviewReply: function (e) {
+			e.preventDefault();
+			var $form = $(e.currentTarget);
+			var $button = $form.find('button[type="submit"]');
+			var i18n = wpssUnifiedDashboard.i18n;
+			var reply = $.trim($form.find('textarea[name="reply"]').val());
+
+			if (!reply) {
+				return;
+			}
+
+			$button.prop('disabled', true);
+
+			$.ajax({
+				url: wpssUnifiedDashboard.restUrl + 'reviews/' + $form.data('review-id') + '/reply',
+				type: 'POST',
+				data: { reply: reply },
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
+				}
+			}).done(function (review) {
+				var $reply = $('<div class="wpss-review-reply"><div class="wpss-reply-header"><strong></strong><span class="wpss-reply-date"></span></div></div>');
+				$reply.find('strong').text(i18n.sellerResponse);
+				$reply.find('.wpss-reply-date').text(review.vendor_reply_human || '');
+				$reply.append(review.vendor_reply_html || $('<p>').text(reply));
+				$form.replaceWith($reply);
+				WPSS.showNotification(i18n.reviewReplySent, 'success');
+			}).fail(function (xhr) {
+				var message = (xhr.responseJSON && xhr.responseJSON.message) || i18n.reviewReplyFailed;
+				WPSS.showNotification(message, 'error');
+				$button.prop('disabled', false);
+			});
 		},
 
 		/**
