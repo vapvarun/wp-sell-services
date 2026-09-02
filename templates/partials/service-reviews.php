@@ -88,9 +88,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 			<div class="wpss-reviews-average">
 				<span class="wpss-average-number"><?php echo esc_html( number_format( $rating_avg, 1 ) ); ?></span>
 				<div class="wpss-average-stars">
-					<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-						<span class="wpss-star <?php echo $i <= round( $rating_avg ) ? 'filled' : ''; ?>">★</span>
-					<?php endfor; ?>
+					<?php echo wpss_star_rating( (float) $rating_avg ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the helper. ?>
 				</div>
 				<span class="wpss-average-count">
 					<?php
@@ -110,7 +108,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 					$percentage = $rating_count > 0 ? ( $count / $rating_count ) * 100 : 0;
 					?>
 					<div class="wpss-breakdown-row">
-						<span class="wpss-breakdown-label"><?php echo esc_html( $star ); ?> <span class="wpss-star filled">★</span></span>
+						<span class="wpss-breakdown-label"><?php echo esc_html( $star ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i></span>
 						<div class="wpss-breakdown-bar">
 							<div class="wpss-breakdown-fill" style="width: <?php echo esc_attr( $percentage ); ?>%"></div>
 						</div>

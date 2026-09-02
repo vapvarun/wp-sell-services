@@ -97,8 +97,7 @@ if ( $view_dispute_id ) {
 				<ul class="wpss-dispute-timeline">
 					<?php
 					foreach ( $timeline as $entry ) :
-						$entry_user  = ! empty( $entry['user_id'] ) ? get_userdata( (int) $entry['user_id'] ) : null;
-						$entry_name  = $entry_user ? $entry_user->display_name : __( 'System', 'wp-sell-services' );
+						$entry_name  = ! empty( $entry['user_id'] ) ? wpss_get_member_display_name( (int) $entry['user_id'] ) : __( 'System', 'wp-sell-services' );
 						$entry_when  = ! empty( $entry['created_at'] ) ? mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $entry['created_at'] ) : '';
 						$entry_text  = (string) ( $entry['content'] ?? '' );
 						$entry_class = 'wpss-dispute-timeline__item wpss-dispute-timeline__item--' . sanitize_html_class( (string) ( $entry['type'] ?? 'event' ) );
@@ -138,8 +137,7 @@ if ( $view_dispute_id ) {
 					<?php
 					foreach ( $evidence_items as $item ) :
 						$ev_user_id = (int) ( $item['user_id'] ?? 0 );
-						$ev_user    = $ev_user_id ? get_userdata( $ev_user_id ) : null;
-						$ev_name    = $ev_user ? $ev_user->display_name : __( 'System', 'wp-sell-services' );
+						$ev_name    = $ev_user_id ? wpss_get_member_display_name( $ev_user_id ) : __( 'System', 'wp-sell-services' );
 						$ev_own     = $ev_user_id === $user_id;
 						$ev_type    = (string) ( $item['type'] ?? 'text' );
 						$ev_content = (string) ( $item['content'] ?? '' );

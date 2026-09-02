@@ -290,7 +290,7 @@ do_action( 'wpss_before_single_request', $request_id );
 													<div class="wpss-vendor-stats">
 														<?php if ( $vendor_rating > 0 ) : ?>
 															<span class="wpss-vendor-rating">
-																<span class="wpss-star">&#9733;</span>
+																<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 																<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
 															</span>
 														<?php endif; ?>

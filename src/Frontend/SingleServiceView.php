@@ -301,7 +301,7 @@ class SingleServiceView {
 			<?php if ( $rating_count > 0 ) : ?>
 				<div class="wpss-meta-item wpss-meta-rating">
 					<a href="#reviews" class="wpss-rating-link">
-						<span class="wpss-star filled">★</span>
+						<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 						<span class="wpss-rating-value"><?php echo esc_html( number_format( $rating_avg, 1 ) ); ?></span>
 						<span class="wpss-rating-count">(<?php echo esc_html( $rating_count ); ?>)</span>
 					</a>
@@ -472,7 +472,7 @@ class SingleServiceView {
 								// "No reviews yet" in the Reviews section below.
 								?>
 								<span class="wpss-quick-stat" title="<?php esc_attr_e( 'Overall seller rating across all their services', 'wp-sell-services' ); ?>">
-									<span class="wpss-star filled">★</span>
+									<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 									<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
 									(<?php echo esc_html( $rating_count ); ?>)
 									<span class="wpss-quick-stat__note"><?php esc_html_e( 'seller rating', 'wp-sell-services' ); ?></span>

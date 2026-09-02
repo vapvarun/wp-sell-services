@@ -555,7 +555,18 @@ class SetupWizardPage {
 				</div>
 
 				<div style="margin-top: 16px;">
-					<button type="button" class="button" id="wpss-wizard-create-all-pages"><?php esc_html_e( 'Create All Pages', 'wp-sell-services' ); ?></button>
+					<?php
+					$wpss_all_created = true;
+					foreach ( array_keys( $page_fields ) as $wpss_field ) {
+						if ( ! ( ( $pages[ $wpss_field ] ?? 0 ) && get_post( (int) $pages[ $wpss_field ] ) ) ) {
+							$wpss_all_created = false;
+							break;
+						}
+					}
+					?>
+					<button type="button" class="button" id="wpss-wizard-create-all-pages" <?php disabled( $wpss_all_created ); ?>>
+						<?php echo $wpss_all_created ? esc_html__( 'All Pages Created', 'wp-sell-services' ) : esc_html__( 'Create All Pages', 'wp-sell-services' ); ?>
+					</button>
 				</div>
 
 				<div class="wpss-wizard-actions">

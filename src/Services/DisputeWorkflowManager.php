@@ -1049,8 +1049,7 @@ class DisputeWorkflowManager {
 
 		// Enrich with user data.
 		foreach ( $timeline as &$event ) {
-			$user                 = get_userdata( $event['user_id'] );
-			$event['user_name']   = $user ? $user->display_name : __( 'System', 'wp-sell-services' );
+			$event['user_name']   = $event['user_id'] ? wpss_get_member_display_name( (int) $event['user_id'] ) : __( 'System', 'wp-sell-services' );
 			$event['user_avatar'] = get_avatar_url( $event['user_id'], array( 'size' => 48 ) );
 		}
 

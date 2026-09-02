@@ -891,7 +891,7 @@ class VendorsPage {
 			<td class="column-rating" data-colname="<?php esc_attr_e( 'Rating', 'wp-sell-services' ); ?>">
 				<?php if ( $reviews > 0 ) : ?>
 					<span class="wpss-rating-stars">
-						<?php echo esc_html( number_format( $rating, 1 ) ); ?> ★
+						<?php echo esc_html( number_format( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 					</span>
 					<span class="wpss-rating-count">
 						(<?php echo esc_html( number_format_i18n( $reviews ) ); ?>)
@@ -1034,7 +1034,7 @@ class VendorsPage {
 				<div class="wpss-detail-stat-card">
 					<span class="wpss-detail-stat-number">
 						<?php if ( $reviews > 0 ) : ?>
-							<?php echo esc_html( number_format( $rating, 1 ) ); ?> ★
+							<?php echo esc_html( number_format( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 						<?php else : ?>
 							-
 						<?php endif; ?>
@@ -1337,7 +1337,13 @@ class VendorsPage {
 					<?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?>
 				</div>
 				<div class="wpss-vendor-stat">
-					<strong><?php echo esc_html( $vendor->avg_rating ? number_format( (float) $vendor->avg_rating, 1 ) . ' ★' : '-' ); ?></strong>
+					<strong>
+						<?php if ( $vendor->avg_rating ) : ?>
+							<?php echo esc_html( number_format( (float) $vendor->avg_rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
+						<?php else : ?>
+							-
+						<?php endif; ?>
+					</strong>
 					<?php esc_html_e( 'Rating', 'wp-sell-services' ); ?>
 				</div>
 				<div class="wpss-vendor-stat">
@@ -2350,7 +2356,7 @@ class VendorsPage {
 					$percent = $total > 0 ? ( $count / $total ) * 100 : 0;
 					?>
 					<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-						<span style="width: 60px;"><?php echo esc_html( $i ); ?> ★</span>
+						<span style="width: 60px;"><?php echo esc_html( $i ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i></span>
 						<div style="flex: 1; height: 20px; background: #dcdcde; border-radius: 3px; overflow: hidden;">
 							<div style="width: <?php echo esc_attr( $percent ); ?>%; height: 100%; background: #ffb900;"></div>
 						</div>
@@ -2371,8 +2377,7 @@ class VendorsPage {
 							<div class="wpss-review-header">
 								<div>
 									<span class="wpss-review-rating">
-										<?php echo esc_html( str_repeat( '★', (int) $review->rating ) ); ?>
-										<?php echo esc_html( str_repeat( '☆', 5 - (int) $review->rating ) ); ?>
+										<?php echo wpss_star_rating( (float) $review->rating ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the helper. ?>
 									</span>
 									<strong><?php echo esc_html( $review->reviewer_display_name ?? __( 'Anonymous', 'wp-sell-services' ) ); ?></strong>
 								</div>

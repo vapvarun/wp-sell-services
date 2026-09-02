@@ -286,6 +286,11 @@ class DisputeService {
 
 		$dispute_id = (int) $wpdb->insert_id;
 
+		// The human-readable number needs the row id, so it is written right
+		// after the insert. Never populated before 1.7.1.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update( $this->table, array( 'dispute_number' => sprintf( 'DSP-%06d', $dispute_id ) ), array( 'id' => $dispute_id ), array( '%s' ), array( '%d' ) );
+
 		// Record the pre-dispute status BEFORE overwriting it. $order was loaded
 		// above, before any status change, so it holds the real one; cancel()
 		// restores the order to it.

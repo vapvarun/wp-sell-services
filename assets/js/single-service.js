@@ -183,8 +183,8 @@
                 const packageIndex = $(this).data('package');
 
                 // Update tabs.
-                $packages.find('.wpss-package-tab').removeClass('active');
-                $(this).addClass('active');
+                $packages.find('.wpss-package-tab').removeClass('active').attr({ 'aria-selected': 'false', tabindex: '-1' });
+                $(this).addClass('active').attr({ 'aria-selected': 'true', tabindex: '0' });
 
                 // Update content.
                 $packages.find('.wpss-package').removeClass('active');
@@ -197,6 +197,20 @@
                 if ($(self.config.orderModal).hasClass('active')) {
                     self.updateOrderSummary();
                 }
+            });
+
+            // Arrow keys move between tabs (WAI-ARIA tabs pattern).
+            $packages.on('keydown', '.wpss-package-tab', function(e) {
+                const keys = { ArrowLeft: -1, ArrowRight: 1, Home: 0, End: 0 };
+                if (!(e.key in keys)) {
+                    return;
+                }
+                e.preventDefault();
+                const $tabs = $packages.find('.wpss-package-tab');
+                let index = $tabs.index(this) + keys[e.key];
+                if (e.key === 'Home') { index = 0; }
+                if (e.key === 'End') { index = $tabs.length - 1; }
+                $tabs.eq((index + $tabs.length) % $tabs.length).trigger('click').trigger('focus');
             });
 
             // Order button click.
@@ -366,10 +380,11 @@
             const avatar = review.customer_avatar || '';
             const rating = parseInt(review.rating, 10) || 0;
 
-            let stars = '';
+            let stars = '<span class="wpss-stars">';
             for (let i = 1; i <= 5; i++) {
-                stars += '<span class="wpss-star ' + (i <= rating ? 'filled' : '') + '">★</span>';
+                stars += '<i data-lucide="star" class="wpss-icon wpss-star' + (i <= rating ? ' filled' : '') + '" aria-hidden="true"></i>';
             }
+            stars += '<span class="screen-reader-text">' + rating + ' / 5</span></span>';
 
             let reply = '';
             if (review.vendor_reply_html) {

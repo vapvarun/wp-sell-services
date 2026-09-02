@@ -768,6 +768,7 @@ class DisputesController extends RestController {
 
 		$data = array(
 			'id'           => (int) $dispute->id,
+			'number'       => (string) $dispute->dispute_number,
 			'order_id'     => (int) $dispute->order_id,
 			'reason'       => $dispute->reason,
 			'status'       => $dispute->status,

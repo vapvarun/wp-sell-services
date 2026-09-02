@@ -2253,7 +2253,7 @@ class Admin {
 								<strong><?php esc_html_e( 'Buyer:', 'wp-sell-services' ); ?></strong><br>
 								<?php if ( $buyer ) : ?>
 									<a href="<?php echo esc_url( get_edit_user_link( $buyer->ID ) ); ?>">
-										<?php echo esc_html( $buyer->display_name ); ?>
+										<?php echo esc_html( wpss_get_member_display_name( (int) $buyer->ID ) ); ?>
 									</a>
 									<br><small><?php echo esc_html( $buyer->user_email ); ?></small>
 								<?php else : ?>
@@ -2264,7 +2264,7 @@ class Admin {
 								<strong><?php esc_html_e( 'Vendor:', 'wp-sell-services' ); ?></strong><br>
 								<?php if ( $vendor ) : ?>
 									<a href="<?php echo esc_url( get_edit_user_link( $vendor->ID ) ); ?>">
-										<?php echo esc_html( $vendor->display_name ); ?>
+										<?php echo esc_html( wpss_get_member_display_name( (int) $vendor->ID ) ); ?>
 									</a>
 									<br><small><?php echo esc_html( $vendor->user_email ); ?></small>
 								<?php else : ?>
@@ -2846,7 +2846,7 @@ class Admin {
 								<strong><?php esc_html_e( 'Buyer:', 'wp-sell-services' ); ?></strong><br>
 								<?php if ( $customer ) : ?>
 									<a href="<?php echo esc_url( get_edit_user_link( $customer->ID ) ); ?>">
-										<?php echo esc_html( $customer->display_name ); ?>
+										<?php echo esc_html( wpss_get_member_display_name( (int) $customer->ID ) ); ?>
 									</a>
 								<?php else : ?>
 									<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
@@ -2856,7 +2856,7 @@ class Admin {
 								<strong><?php esc_html_e( 'Vendor:', 'wp-sell-services' ); ?></strong><br>
 								<?php if ( $vendor ) : ?>
 									<a href="<?php echo esc_url( get_edit_user_link( $vendor->ID ) ); ?>">
-										<?php echo esc_html( $vendor->display_name ); ?>
+										<?php echo esc_html( wpss_get_member_display_name( (int) $vendor->ID ) ); ?>
 									</a>
 								<?php else : ?>
 									<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
