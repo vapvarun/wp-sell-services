@@ -786,7 +786,7 @@ class Admin {
 		$order_id   = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
 		$has_access = current_user_can( 'manage_options' );
 
-		if ( ! $has_access && current_user_can( 'wpss_manage_orders' ) && $order_id ) {
+		if ( ! $has_access && current_user_can( 'wpss_vendor_orders' ) && $order_id ) {
 			// Vendors can only update orders they are the vendor on.
 			$check_order = wpss_get_order( $order_id );
 			if ( $check_order && (int) $check_order->vendor_id === get_current_user_id() ) {

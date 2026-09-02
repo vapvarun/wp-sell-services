@@ -951,12 +951,11 @@ class API {
 			'is_admin'     => current_user_can( 'manage_options' ),
 			'capabilities' => [
 				'can_create_services' => current_user_can( 'wpss_manage_services' ) && wpss_is_vendor( $user_id ),
-				// The capability the vendor role actually grants, not the admin
-				// one. Every vendor holds wpss_manage_orders and manages their
-				// own orders daily, but this reported false for all of them —
-				// so a client gating its order screens on it hid the seller's
-				// core workflow. Admins keep access through manage_options.
-				'can_manage_orders'   => current_user_can( 'wpss_manage_orders' ) || current_user_can( 'manage_options' ),
+				// The capability the vendor role actually grants
+				// (wpss_vendor_orders), not the admin one. A client gating its
+				// order screens on the admin cap hid the seller's core workflow.
+				// Staff keep access through wpss_manage_orders.
+				'can_manage_orders'   => current_user_can( 'wpss_vendor_orders' ) || current_user_can( 'wpss_manage_orders' ),
 			],
 		];
 

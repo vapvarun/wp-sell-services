@@ -406,6 +406,13 @@ final class Plugin {
 				self::clear_legacy_wpcron_hooks();
 			}
 
+			// 1.7.1 split wpss_manage_orders (admin) from wpss_vendor_orders
+			// (vendor). create_roles() fixed the roles above; this fixes the
+			// per-user grants existing vendors carry.
+			if ( $installed_version && version_compare( $installed_version, '1.7.1', '<' ) ) {
+				Activator::migrate_vendor_user_caps();
+			}
+
 			// Note: the wallet-ledger reconciliation is NOT here. It runs off its
 			// own wpss_ledger_reconciled flag at the top of this method, so it
 			// cannot be missed by a release that forgets to bump the version.

@@ -669,6 +669,10 @@ class BuyerRequestsController extends RestController {
 
 		$result = $this->proposal_service->submit( $request_id, $vendor_id, $data );
 
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
 		if ( false === $result ) {
 			return new WP_Error(
 				'proposal_failed',

@@ -439,8 +439,9 @@ class OrderService {
 	 * @return bool
 	 */
 	public function can_transition( string $from, string $to ): bool {
-		// Admins and vendors with order management capability can force any
-		// status transition. The forcing is audited downstream via
+		// Only site staff (wpss_manage_orders is admin-side; vendors hold
+		// wpss_vendor_orders, which never reaches here) can force a status
+		// transition. The forcing is audited downstream via
 		// can_transition_naturally() → log_status_change()/AuditLogService so
 		// forensics can tell a natural transition from a cap-bypass.
 		if ( current_user_can( 'manage_options' ) || current_user_can( 'wpss_manage_orders' ) ) {

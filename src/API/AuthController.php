@@ -930,7 +930,7 @@ class AuthController extends RestController {
 			// dropping anything, so neither existing consumer breaks.
 			'capabilities'  => array(
 				'can_create_services' => current_user_can( 'wpss_manage_services' ) && $is_vendor,
-				'can_manage_orders'   => current_user_can( 'wpss_manage_orders' ) || current_user_can( 'manage_options' ),
+				'can_manage_orders'   => current_user_can( 'wpss_vendor_orders' ) || current_user_can( 'wpss_manage_orders' ),
 			),
 			// Same meta keys /me reads, so the two endpoints cannot report
 			// different numbers for the same user.

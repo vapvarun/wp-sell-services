@@ -95,9 +95,10 @@ class ProposalService {
 	 * @param int                  $request_id Buyer request ID.
 	 * @param int                  $vendor_id Vendor user ID.
 	 * @param array<string, mixed> $data Proposal data.
-	 * @return int|false Proposal ID or false on failure.
+	 * @return int|false|\WP_Error Proposal ID, false on failure, or a WP_Error
+	 *                            (status 400) when the vendor authored the request.
 	 */
-	public function submit( int $request_id, int $vendor_id, array $data ): int|false {
+	public function submit( int $request_id, int $vendor_id, array $data ): int|false|\WP_Error {
 		global $wpdb;
 
 		// Check if request exists and is open.
@@ -106,6 +107,18 @@ class ProposalService {
 
 		if ( ! $request || $request->status !== BuyerRequestService::STATUS_OPEN ) {
 			return false;
+		}
+
+		// A seller is still a buyer and may post requests; bidding on their own
+		// is self-dealing (it notifies nobody and can convert to an order with
+		// one party). Refused with a message rather than a bare false so the
+		// AJAX and REST callers can say why.
+		if ( $vendor_id === (int) get_post_field( 'post_author', $request_id ) ) {
+			return new \WP_Error(
+				'wpss_proposal_own_request',
+				__( 'You cannot submit a proposal on your own request.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
 		}
 
 		// Check if vendor already submitted a proposal.

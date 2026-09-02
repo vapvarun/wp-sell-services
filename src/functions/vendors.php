@@ -115,9 +115,15 @@ function wpss_get_vendor_last_delivery( int $vendor_id ): ?string {
 /**
  * Check if user is a vendor.
  *
- * Checks the wpss_vendor capability first, then falls back to checking
- * the user's role and vendor meta for backward compatibility with users
- * registered before the wpss_vendor capability was added to the role.
+ * A vendor is a user with an ACTIVE wpss_vendor_profiles row - the record the
+ * application, approval and admin screens all write. The role and the
+ * wpss_vendor capability are hints, not proof: an admin can hand out the role
+ * with no profile behind it, and up to 1.7.0 every blog author carried the
+ * capability, so both answered "vendor" for users who had never applied and
+ * had nothing to sell from. The profile lookup is memoised per request by
+ * VendorProfile::get_by_user_id(), so this stays one query per user.
+ *
+ * @since 1.7.1 Reads the profile row instead of the capability/role/meta.
  *
  * @param int|null $user_id User ID. Defaults to current user.
  * @return bool
@@ -131,21 +137,7 @@ function wpss_is_vendor( ?int $user_id = null ): bool {
 		return false;
 	}
 
-	// Primary check: wpss_vendor capability.
-	$is_vendor = user_can( $user_id, 'wpss_vendor' );
-
-	// Fallback: check if user has the wpss_vendor role directly.
-	if ( ! $is_vendor ) {
-		$user = get_userdata( $user_id );
-		if ( $user && in_array( 'wpss_vendor', (array) $user->roles, true ) ) {
-			$is_vendor = true;
-		}
-	}
-
-	// Fallback: check vendor meta for legacy vendors.
-	if ( ! $is_vendor ) {
-		$is_vendor = (bool) get_user_meta( $user_id, '_wpss_is_vendor', true );
-	}
+	$is_vendor = 'active' === wpss_get_vendor_status( $user_id );
 
 	/**
 	 * Filter whether user is a vendor.
@@ -362,11 +354,11 @@ function wpss_get_vendor_url( int $user_id ): string {
  * strand paid work with no way to finish it, so delivery paths deliberately do
  * not call this. Refunding a stranded order is the owner's tool for that case.
  *
- * An empty status means the user has no `wpss_vendor_profiles` row at all —
- * role-granted, legacy and demo-seeded vendors. Those are treated as active,
- * matching every other read site (`wpss_get_vendor_status( $id ) ?: 'active'`).
- * Failing closed there would lock out every vendor created before the profile
- * table existed.
+ * An empty status means the user has no `wpss_vendor_profiles` row at all: a
+ * role handed out with no application behind it. That is not a vendor, so it
+ * is refused with its own code and the dashboard's "Start selling" panel is
+ * the way forward. Every real vendor path (register, approve, demo seeders)
+ * writes the row.
  *
  * Administrators are never blocked: they act on vendors' behalf.
  *
@@ -396,8 +388,16 @@ function wpss_vendor_status_block( int $user_id = 0 ) {
 
 	$status = wpss_get_vendor_status( $user_id );
 
-	if ( '' === $status || 'active' === $status ) {
+	if ( 'active' === $status ) {
 		return null;
+	}
+
+	if ( '' === $status ) {
+		return new WP_Error(
+			'wpss_not_vendor',
+			__( 'You are not registered as a vendor.', 'wp-sell-services' ),
+			array( 'status' => 403 )
+		);
 	}
 
 	// One code per condition so a client can word its own message. Reuses the

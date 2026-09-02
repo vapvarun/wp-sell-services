@@ -302,7 +302,7 @@ class PreflightCommand {
 			return;
 		}
 
-		$required_caps = array( 'wpss_vendor', 'wpss_manage_services', 'wpss_manage_orders', 'wpss_view_analytics', 'wpss_respond_to_requests', 'upload_files', 'edit_posts', 'read' );
+		$required_caps = array( 'wpss_vendor', 'wpss_manage_services', 'wpss_vendor_orders', 'wpss_view_analytics', 'wpss_respond_to_requests', 'upload_files', 'edit_wpss_services', 'read' );
 		$missing       = array_filter( $required_caps, fn( $cap ) => ! $role->has_cap( $cap ) );
 
 		if ( empty( $missing ) ) {

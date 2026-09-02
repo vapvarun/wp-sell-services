@@ -312,11 +312,11 @@
 	WPSS.performOrderAction = function(orderId, action, reason) {
 		// Map frontend action keys to the wpss/v1 order-lifecycle REST action
 		// segments (POST /orders/{id}/{action}). The legacy admin-ajax handlers
-		// (wpss_accept_order, wpss_start_work, ...) remain registered as thin
+		// (wpss_start_work, wpss_deliver_order, ...) remain registered as thin
 		// delegates for backward compatibility; the frontend now drives the
 		// REST twin, which routes through the same OrderService transitions.
-		// No accept/reject entries: those verbs gated on a status nothing
-		// writes, so they could only ever fail, and the routes are gone.
+		// No accept/reject entries: this product is payment-first, so those
+		// verbs and their handlers are gone.
 		const restActionMap = {
 			start: 'start',
 			deliver: 'deliver',

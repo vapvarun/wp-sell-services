@@ -263,6 +263,12 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 == Changelog ==
 
+= 1.7.1 - September 2026 =
+
+* New      - Setting to allow vendor-initiated refunds, off by default.
+* Fix      - Vendor detection now requires an approved seller profile; the author role no longer receives seller capabilities.
+* Security - Buyers and vendors can no longer refund or cancel orders outside their allowed steps; retired accept and decline actions removed.
+
 = 1.7.0 - August 2026 =
 
 Tax shown at checkout is now actually charged, order files are served through a permission check instead of an unlisted URL, and a partial refund no longer returns the whole order total. Several screens that contradicted themselves now say one thing.

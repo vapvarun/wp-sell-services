@@ -258,8 +258,8 @@ class TestFlowCommand extends WP_CLI_Command {
 			)
 		);
 
-		if ( ! $proposal_id ) {
-			$this->fail( 'ProposalService::submit returned false' );
+		if ( ! $proposal_id || is_wp_error( $proposal_id ) ) {
+			$this->fail( 'ProposalService::submit did not return a proposal ID' );
 			return;
 		}
 		$this->created['proposals'][] = (int) $proposal_id;
