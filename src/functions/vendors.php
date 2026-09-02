@@ -579,7 +579,7 @@ function wpss_get_member_display_name( int $user_id, string $fallback = '' ): st
 	}
 
 	if ( '' === $fallback ) {
-		$fallback = __( 'Deleted member', 'wp-sell-services' );
+		$fallback = __( 'Deleted user', 'wp-sell-services' );
 	}
 
 	/**

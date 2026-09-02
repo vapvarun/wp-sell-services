@@ -209,7 +209,7 @@ These hooks fire when services, requests, or users are deleted and related data 
 | `wpss_before_cascade_delete_request` | `int $request_id` | `DataCascadeHandler.php:155` |
 | `wpss_after_cascade_delete_request` | `int $request_id` | `DataCascadeHandler.php:166` |
 | `wpss_before_cascade_delete_user` | `int $user_id` | `DataCascadeHandler.php:182` |
-| `wpss_after_cascade_delete_user` | `int $user_id` | `src/Services/DataCascadeHandler.php:266` |
+| `wpss_after_cascade_delete_user` | `int $user_id` | `src/Services/DataCascadeHandler.php:260` |
 
 ```php
 // Clean up custom data when a service is deleted

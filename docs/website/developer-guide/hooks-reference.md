@@ -24,10 +24,10 @@ guide; this is the complete index.
 | `wpss_admin_order_actions` | 2 | `src/Admin/Admin.php:2395` | Fires in the admin order actions area for gateway-specific actions. |
 | `wpss_admin_requirements_submitted` | 2 | `src/Admin/OrderScreen.php:336` | Fires after admin submits requirements on behalf of buyer. |
 | `wpss_advanced_settings_sections` | 0 | `src/Admin/Settings.php:2074` |  |
-| `wpss_after_account_deletion` | 1 | `src/Services/AccountDeletionService.php:270` | Fires after a member's account has been deleted. |
+| `wpss_after_account_deletion` | 1 | `src/Services/AccountDeletionService.php:265` | Fires after a member's account has been deleted. |
 | `wpss_after_cascade_delete_request` | 1 | `src/Services/DataCascadeHandler.php:166` | Fires after buyer request cascade data is deleted. |
 | `wpss_after_cascade_delete_service` | 1 | `src/Services/DataCascadeHandler.php:139` | Fires after service cascade data is deleted. |
-| `wpss_after_cascade_delete_user` | 1 | `src/Services/DataCascadeHandler.php:267` | Fires after user cascade data is deleted. |
+| `wpss_after_cascade_delete_user` | 1 | `src/Services/DataCascadeHandler.php:261` | Fires after user cascade data is deleted. |
 | `wpss_after_category_card` | 1 | `templates/partials/category-card.php:142` | Fires after the category card. |
 | `wpss_after_conversation` | 1 | `templates/order/conversation.php:397` | Hook: wpss_after_conversation |
 | `wpss_after_extension_view` | 1 | `templates/order/extension-view.php:203` | Fires after the extension sub-order view content. |
@@ -332,7 +332,7 @@ guide; this is the complete index.
 | `wpss_can_access_dashboard_section` | 3 | `src/Frontend/UnifiedDashboard.php:432` | Filter whether user can access a dashboard section. |
 | `wpss_cart_checkout` | 4 | `src/API/CartController.php:388` | Filter to create order from cart during standalone checkout. |
 | `wpss_cart_item_data` | 3 | `src/API/CartController.php:241` | Filters cart item data before it is saved. |
-| `wpss_cascade_preserve_shared_records` | 2 | `src/Services/DataCascadeHandler.php:205` | Filter whether records shared with another member survive this cascade. |
+| `wpss_cascade_preserve_shared_records` | 2 | `src/Services/DataCascadeHandler.php:210` | Filter whether records shared with another member survive this cascade. |
 | `wpss_catalog_price_html` | 3 | `src/functions/money.php:126` | Filter catalog price HTML to append a display-currency hint. |
 | `wpss_category_card_classes` | 2 | `templates/partials/category-card.php:82` | Filters the category card CSS classes. |
 | `wpss_category_card_link` | 2 | `templates/partials/category-card.php:66` | Filters the category card's link target. |

@@ -83,8 +83,8 @@ $vendor       = get_userdata( $order->vendor_id );
 $customer     = get_userdata( $order->customer_id );
 
 // Handle deleted users gracefully.
-$vendor_name   = $vendor ? $vendor->display_name : __( 'Deleted User', 'wp-sell-services' );
-$customer_name = $customer ? $customer->display_name : __( 'Deleted User', 'wp-sell-services' );
+$vendor_name   = wpss_get_member_display_name( (int) $order->vendor_id );
+$customer_name = wpss_get_member_display_name( (int) $order->customer_id );
 
 // Get deliveries via service layer.
 $delivery_service = new DeliveryService();

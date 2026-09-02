@@ -270,6 +270,8 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Offline and manual gateway refunds are marked as pending manual payment instead of being reported as sent.
 * Fix      - Service content limits apply on every save path, and a proposal can only be accepted once.
 * Fix      - New orders carry the package's revision count, so buyers can request revisions and vendors see the revision notes.
+* Fix      - Deleting a user keeps and anonymises the other party's orders, ledger and reviews instead of deleting them; order files are removed when an order is deleted.
+* Improve  - Personal data export now covers disputes, deliveries, requirements, withdrawals, proposals, reports and notifications.
 * Dev      - Stored files record which storage provider holds them.
 
 = 1.7.0 - August 2026 =

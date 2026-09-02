@@ -231,14 +231,10 @@ class AccountDeletionService {
 		// 2. Take their listings out of circulation.
 		$this->trash_listings( $user_id );
 
-		// 3. Delete the user, preserving records shared with a counterparty.
+		// 3. Delete the user. The `delete_user` cascade (DataCascadeHandler)
+		// keeps and anonymises every record shared with a counterparty on
+		// every path, so nothing has to be forced here.
 		//
-		// The filter is added only for the duration of this call. It changes
-		// what the `delete_user` cascade in Plugin.php does, and leaving it in
-		// place would silently change what an ADMIN deleting a user does too.
-		$preserve = static fn(): bool => true;
-		add_filter( 'wpss_cascade_preserve_shared_records', $preserve, 10, 0 );
-
 		// Keep core's hands off the listings we just trashed, or it force-deletes
 		// them and fires the very cascade the trash was chosen to avoid.
 		$previous_flags = $this->set_delete_with_user( false );
@@ -247,7 +243,6 @@ class AccountDeletionService {
 		$deleted = wp_delete_user( $user_id );
 
 		$this->restore_delete_with_user( $previous_flags );
-		remove_filter( 'wpss_cascade_preserve_shared_records', $preserve, 10 );
 
 		if ( ! $deleted ) {
 			return new WP_Error(
