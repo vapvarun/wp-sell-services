@@ -870,81 +870,43 @@ class Admin {
 		}
 
 		$dispute_service = new DisputeService();
+		$error           = '';
 
-		if ( 'resolved' === $status ) {
-			if ( ! $resolution ) {
-				// If resolving, require a resolution type.
-				wp_die( esc_html__( 'Please select a resolution type when resolving a dispute.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
-			}
-
+		// Three doors, one state machine. Validation (resolution type, partial
+		// amount) lives in resolve(); closing goes through the workflow so the
+		// order is restored; everything else is a plain transition.
+		if ( DisputeService::STATUS_RESOLVED === $status ) {
 			// Cast IS the sanitisation for a money field - there is no
-			// sanitize_* that returns a float. Nonce verified above. Same
-			// pattern as OrderScreen's refund box.
+			// sanitize_* that returns a float. Nonce verified above.
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$refund_amount = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
 
-			// A Partial Refund with no amount used to reach resolve() as 0.0,
-			// which apply_refund_status() read as "refund everything" - so the
-			// buyer got 100% back on an order recorded as partially refunded
-			// (Basecamp 10240143362). Validated here so the admin gets a
-			// sentence rather than a silently refused transition.
-			if ( DisputeService::RESOLUTION_PARTIAL_REFUND === $resolution ) {
-				$dispute = $dispute_service->get( $dispute_id );
-				$order   = $dispute ? wpss_get_order( (int) $dispute->order_id ) : null;
-				$total   = $order ? (float) $order->total : 0.0;
-
-				if ( $refund_amount <= 0 ) {
-					wp_die( esc_html__( 'Enter the amount to refund. A partial refund needs a number greater than zero.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
-				}
-
-				if ( $total > 0 && $refund_amount >= $total ) {
-					wp_die(
-						esc_html(
-							sprintf(
-								/* translators: %s: formatted order total. */
-								__( 'A partial refund must be less than the %s order total. Choose Full Refund to return all of it.', 'wp-sell-services' ),
-								wpss_format_price( $total, $order->currency ?? '' )
-							)
-						),
-						'',
-						array( 'back_link' => true )
-					);
-				}
-			}
-
 			$result = $dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id(), $refund_amount );
+			$error  = $result ? '' : $dispute_service->last_error();
+		} elseif ( DisputeService::STATUS_CLOSED === $status ) {
+			$closed = ( new \WPSellServices\Services\DisputeWorkflowManager() )->cancel( $dispute_id, get_current_user_id(), $notes );
+			$result = ! empty( $closed['success'] );
+			$error  = $result ? '' : (string) $closed['message'];
 		} else {
-			$result = $dispute_service->update_status( $dispute_id, $status, $notes );
-
-			// Also save resolution and notes if provided with a non-resolved status.
-			if ( $result && ( $resolution || $notes ) ) {
-				global $wpdb;
-				$update_data = array( 'updated_at' => current_time( 'mysql' ) );
-
-				if ( $resolution ) {
-					$update_data['resolution'] = sanitize_key( $resolution );
-				}
-				if ( $notes ) {
-					$update_data['resolution_notes'] = sanitize_textarea_field( $notes );
-				}
-
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$wpdb->update(
-					$wpdb->prefix . 'wpss_disputes',
-					$update_data,
-					array( 'id' => $dispute_id )
-				);
-			}
+			$fields = $resolution ? array( 'resolution' => $resolution ) : array();
+			$result = $dispute_service->transition(
+				$dispute_id,
+				$status,
+				array(
+					'note'   => $notes,
+					'fields' => $fields,
+				)
+			);
+			$error  = $result ? '' : $dispute_service->last_error();
 		}
-
-		$updated = ( false !== $result && ! is_wp_error( $result ) ) ? '1' : '0';
 
 		$redirect_url = add_query_arg(
 			array(
 				'page'       => 'wpss-disputes',
 				'action'     => 'view',
 				'dispute_id' => $dispute_id,
-				'updated'    => $updated,
+				'updated'    => $result ? '1' : '0',
+				'wpss_error' => $error ? $error : false,
 			),
 			admin_url( 'admin.php' )
 		);
@@ -1786,7 +1748,12 @@ class Admin {
 		$updated         = 0;
 
 		foreach ( $dispute_ids as $dispute_id ) {
-			if ( $dispute_service->update_status( $dispute_id, $new_status ) ) {
+			// Close restores the order, so it goes through the workflow.
+			$ok = DisputeService::STATUS_CLOSED === $new_status
+				? ! empty( ( new \WPSellServices\Services\DisputeWorkflowManager() )->cancel( $dispute_id, get_current_user_id() )['success'] )
+				: $dispute_service->transition( $dispute_id, $new_status );
+
+			if ( $ok ) {
 				++$updated;
 			}
 		}
@@ -2554,7 +2521,8 @@ class Admin {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$notice_msg = '1' === $_GET['updated']
 				? __( 'Dispute updated successfully.', 'wp-sell-services' )
-				: __( 'Failed to update dispute.', 'wp-sell-services' );
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				: ( isset( $_GET['wpss_error'] ) ? sanitize_text_field( wp_unslash( $_GET['wpss_error'] ) ) : __( 'Failed to update dispute.', 'wp-sell-services' ) );
 
 			printf(
 				'<div class="notice %s is-dismissible"><p>%s</p></div>',
@@ -2797,26 +2765,7 @@ class Admin {
 										<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dispute->resolved_at ) ) ); ?>
 									</p>
 								<?php endif; ?>
-								<!-- Allow admin to update resolution on already-resolved disputes -->
-								<hr style="margin: 15px 0;">
-								<details>
-									<summary style="cursor: pointer; font-weight: 600;"><?php esc_html_e( 'Update Resolution', 'wp-sell-services' ); ?></summary>
-									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top: 10px;">
-										<?php wp_nonce_field( 'wpss_resolve_dispute', 'wpss_dispute_nonce' ); ?>
-										<input type="hidden" name="action" value="wpss_resolve_dispute">
-										<input type="hidden" name="dispute_id" value="<?php echo esc_attr( (string) $dispute_id ); ?>">
-										<input type="hidden" name="dispute_status" value="resolved">
-
-										<?php $this->render_dispute_resolution_fields( $dispute, $order, $resolutions, 'resolution_update' ); ?>
-
-										<p>
-											<label for="admin_notes_update"><strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong></label><br>
-											<textarea name="admin_notes" id="admin_notes_update" rows="4" style="width: 100%;"><?php echo esc_textarea( $dispute->resolution_notes ?? '' ); ?></textarea>
-										</p>
-
-										<?php submit_button( __( 'Update Resolution', 'wp-sell-services' ), 'secondary', 'submit', false ); ?>
-									</form>
-								</details>
+								<p class="description"><?php esc_html_e( 'A resolved or closed dispute is final: the order has already moved, and money moves once.', 'wp-sell-services' ); ?></p>
 							</div>
 						</div>
 					<?php endif; ?>

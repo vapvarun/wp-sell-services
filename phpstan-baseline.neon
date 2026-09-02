@@ -297,12 +297,6 @@ parameters:
 			path: src/API/VendorsController.php
 
 		-
-			message: '#^Call to function is_wp_error\(\) with true will always evaluate to false\.$#'
-			identifier: function.impossibleType
-			count: 1
-			path: src/Admin/Admin.php
-
-		-
 			message: '#^Parameter \#1 \$text of function esc_attr expects string, int given\.$#'
 			identifier: argument.type
 			count: 3

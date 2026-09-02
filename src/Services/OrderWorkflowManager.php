@@ -610,6 +610,13 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	public function handle_order_completed( int $order_id, string $old_status ): void {
+		// A dispute closed without a ruling hands a completed order back to
+		// completed. Its commission was recorded and wpss_order_completed fired
+		// the first time; running them again would credit the vendor twice.
+		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) ) {
+			return;
+		}
+
 		$order = $this->order_service->get( $order_id );
 
 		if ( ! $order ) {
