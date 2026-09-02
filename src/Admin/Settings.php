@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace WPSellServices\Admin;
 
+use WPSellServices\Services\AuditLogService;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -3085,7 +3087,7 @@ class Settings {
 			'wpss_advanced_section',
 			__( 'Audit Log Retention (Days)', 'wp-sell-services' ),
 			array(
-				'default'     => 0,
+				'default'     => AuditLogService::RETENTION_DEFAULT,
 				'min'         => 0,
 				'max'         => 3650,
 				'description' => __( 'Audit log entries older than this are pruned. 0 keeps entries forever.', 'wp-sell-services' ),

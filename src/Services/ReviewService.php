@@ -129,6 +129,61 @@ class ReviewService {
 	}
 
 	/**
+	 * Moderate a review. The one writer of reviews.status for admin decisions.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int    $review_id  Review ID.
+	 * @param string $new_status Review::STATUS_APPROVED or Review::STATUS_REJECTED.
+	 * @return bool True when the row was updated.
+	 */
+	public function moderate( int $review_id, string $new_status ): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_reviews';
+
+		if ( ! in_array( $new_status, array( Review::STATUS_APPROVED, Review::STATUS_REJECTED ), true ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$old = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$table} WHERE id = %d", $review_id ) );
+
+		if ( null === $old ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$updated = $wpdb->update( $table, array( 'status' => $new_status ), array( 'id' => $review_id ), array( '%s' ), array( '%d' ) );
+
+		if ( false === $updated ) {
+			return false;
+		}
+
+		( new AuditLogService() )->log(
+			'review.' . $new_status,
+			'review',
+			$review_id,
+			array(
+				'action'     => Review::STATUS_APPROVED === $new_status ? 'approve' : 'reject',
+				'from_value' => (string) $old,
+				'to_value'   => $new_status,
+			)
+		);
+
+		/**
+		 * Fires after an admin moderates a review from the queue.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param int    $review_id  Moderated review ID.
+		 * @param string $new_status New review status.
+		 */
+		do_action( 'wpss_review_moderated', $review_id, $new_status );
+
+		return true;
+	}
+
+	/**
 	 * Get review by ID.
 	 *
 	 * @param int $review_id Review ID.

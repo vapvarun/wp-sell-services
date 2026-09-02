@@ -1120,36 +1120,9 @@ class VendorsPage {
 			wp_send_json_error( array( 'message' => __( 'Invalid status.', 'wp-sell-services' ) ) );
 		}
 
-		global $wpdb;
-		$result = $wpdb->update(
-			$wpdb->prefix . 'wpss_vendor_profiles',
-			array(
-				'status'     => $status,
-				'updated_at' => current_time( 'mysql', true ),
-			),
-			array( 'user_id' => $vendor_id ),
-			array( '%s', '%s' ),
-			array( '%d' )
-		);
-
-		if ( false === $result ) {
+		if ( ! $this->vendor_service->set_status( $vendor_id, $status ) ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to update vendor status.', 'wp-sell-services' ) ) );
 		}
-
-		// Grant or revoke vendor access based on new status.
-		if ( 'active' === $status ) {
-			$this->vendor_service->grant_vendor_access( $vendor_id );
-		} elseif ( in_array( $status, array( 'suspended', 'rejected' ), true ) ) {
-			$this->vendor_service->revoke_vendor_access( $vendor_id );
-		}
-
-		/**
-		 * Fires when vendor status is updated.
-		 *
-		 * @param int    $vendor_id Vendor user ID.
-		 * @param string $status    New status.
-		 */
-		do_action( 'wpss_vendor_status_updated', $vendor_id, $status );
 
 		wp_send_json_success( array( 'message' => __( 'Vendor status updated successfully.', 'wp-sell-services' ) ) );
 	}
@@ -1160,9 +1133,8 @@ class VendorsPage {
 	 * Admin actions: `approve` (sets pending → active and grants vendor
 	 * access), `suspend` (active → suspended and revokes access),
 	 * `reactivate` (suspended → active and re-grants access). Routes each
-	 * id through the same DB write + grant/revoke + `wpss_vendor_status_updated`
-	 * action used by the per-row handler above so side-effects stay
-	 * identical. Reports per-id success/failure counts back.
+	 * id through VendorService::set_status() like the per-row handler above
+	 * so side-effects stay identical. Reports per-id success/failure counts.
 	 *
 	 * @return void
 	 */
@@ -1196,30 +1168,12 @@ class VendorsPage {
 		$success = 0;
 		$failed  = array();
 
-		global $wpdb;
 		foreach ( $ids as $vendor_id ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Vendor profile mutations bypass the object cache by design; mirrors ajax_update_vendor_status().
-			$result = $wpdb->update(
-				$wpdb->prefix . 'wpss_vendor_profiles',
-				array(
-					'status'     => $status,
-					'updated_at' => current_time( 'mysql', true ),
-				),
-				array( 'user_id' => $vendor_id ),
-				array( '%s', '%s' ),
-				array( '%d' )
-			);
-			if ( false === $result ) {
+			if ( $this->vendor_service->set_status( $vendor_id, $status ) ) {
+				++$success;
+			} else {
 				$failed[] = sprintf( '#%d', $vendor_id );
-				continue;
 			}
-			if ( 'active' === $status ) {
-				$this->vendor_service->grant_vendor_access( $vendor_id );
-			} elseif ( 'suspended' === $status ) {
-				$this->vendor_service->revoke_vendor_access( $vendor_id );
-			}
-			do_action( 'wpss_vendor_status_updated', $vendor_id, $status );
-			++$success;
 		}
 
 		$message = sprintf(

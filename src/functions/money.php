@@ -566,6 +566,26 @@ function wpss_insert_ledger_row( array $row ): bool {
 		);
 	}
 
+	if ( $inserted ) {
+		( new \WPSellServices\Services\AuditLogService() )->log(
+			'ledger.insert',
+			'ledger',
+			(int) $wpdb->insert_id,
+			array(
+				'action'   => (string) ( $row['type'] ?? '' ),
+				'to_value' => (string) $amount,
+				'context'  => array(
+					'user_id'        => $user_id,
+					'type'           => (string) ( $row['type'] ?? '' ),
+					'amount'         => $amount,
+					'reference_type' => (string) ( $row['reference_type'] ?? '' ),
+					'reference_id'   => (int) ( $row['reference_id'] ?? 0 ),
+					'description'    => (string) ( $row['description'] ?? '' ),
+				),
+			)
+		);
+	}
+
 	( new \WPSellServices\Database\Repositories\VendorProfileRepository() )->sync_ledger_totals( $user_id );
 
 	return true;
