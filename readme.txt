@@ -198,6 +198,10 @@ Full documentation at [wbcomdesigns.com/docs/wp-sell-services](https://wbcomdesi
 
 No. WP Sell Services includes a built-in standalone checkout system with Stripe, PayPal, and Offline payment gateways. Your marketplace is fully functional out of the box — service listings, vendor management, order workflow, messaging, reviews, dispute resolution, and checkout all work without any additional plugins. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, EDD and FluentCart integrations for sites that prefer those platforms.
 
+= Does it work on multisite? =
+
+Yes. Activate it on individual sites, or network-activate it and it installs its tables, roles and pages on every site in the network. Each site keeps its own settings, vendors and orders.
+
 = Does this work with my WordPress theme? =
 
 Yes. WP Sell Services is designed to work with any well-coded WordPress theme. All frontend templates can be overridden by copying them to your theme's `wp-sell-services/` directory for customization.
@@ -281,6 +285,9 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Price decimals and currency position settings are applied; minimum and maximum order amounts are enforced at checkout.
 * Fix      - Password reset over REST accepts a username as well as an email, private order files can be downloaded by app clients, and repeated failed logins lock the account temporarily.
 * Improve  - The orders API loads a page of orders with a fixed number of queries.
+* Improve  - One setup notice tells the owner when a mapped page is missing, no payment method is enabled, or the selected store plugin is inactive; links to unpublished pages are hidden.
+* Fix      - Uninstall with delete data now removes scheduled jobs, order files and every plugin user meta.
+* Fix      - Usage tracking is no longer switched on without the owner opting in.
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Payment intents carry the vendor id for every order type.
 * Dev      - New wpss_auth_login_challenge filter for two-factor plugins.

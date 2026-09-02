@@ -201,20 +201,13 @@ function wpss_get_vendors_page_id(): int {
 
 	$pages   = get_option( 'wpss_pages', array() );
 	$pages   = is_array( $pages ) ? $pages : array();
-	$page_id = (int) ( $pages['vendors_page'] ?? 0 );
+	$page_id = wpss_get_page_id( 'vendors_page' );
 
 	// Legacy standalone option, for sites mapped before the page map existed.
+	// A page that has since been deleted or trashed is not an answer.
 	if ( ! $page_id ) {
 		$page_id = (int) get_option( 'wpss_vendors_page' );
-	}
-
-	// A mapped page that has since been deleted or trashed is not an answer.
-	if ( $page_id ) {
-		$post = get_post( $page_id );
-
-		if ( ! $post || 'page' !== $post->post_type || 'publish' !== $post->post_status ) {
-			$page_id = 0;
-		}
+		$page_id = 'publish' === get_post_status( $page_id ) ? $page_id : 0;
 	}
 
 	if ( ! $page_id ) {

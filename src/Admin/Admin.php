@@ -409,12 +409,8 @@ class Admin {
 			$this->upgrade_page->init();
 		}
 
-		// Page setup admin notice.
-		add_action( 'admin_notices', array( $this, 'check_page_setup_notice' ) );
-		add_action( 'wp_ajax_wpss_dismiss_pages_notice', array( $this, 'ajax_dismiss_pages_notice' ) );
-
-		// Demo payments notice. Deliberately NOT dismissible - see the method.
-		add_action( 'admin_notices', array( $this, 'demo_payments_notice' ) );
+		// Missing pages, no gateway, demo payments, inactive rail plugin.
+		add_action( 'admin_notices', array( $this, 'setup_health_notice' ) );
 		add_action( 'admin_notices', array( $this, 'order_files_public_notice' ) );
 		add_action( 'admin_notices', array( $this, 'missing_terms_notice' ) );
 		add_action( 'admin_notices', array( $this, 'pending_manual_refunds_notice' ) );
@@ -602,7 +598,7 @@ class Admin {
 	 * starts being a live risk: buyers are paying and there is nothing telling
 	 * them what they agreed to. A site still being built is left alone.
 	 *
-	 * Dismissible, unlike demo_payments_notice(): an owner may have decided
+	 * Dismissible, unlike the demo-payments notice: an owner may have decided
 	 * against publishing terms, and nagging them forever teaches people to
 	 * ignore our notices - which costs us the one that matters. The dismissal
 	 * records WHICH gateways were live at the time, so turning on another one
@@ -681,9 +677,9 @@ class Admin {
 	/**
 	 * Dismiss one of the plugin's dismissible admin notices.
 	 *
-	 * Generic on purpose. check_page_setup_notice() shipped with its own
-	 * action and its own handler; a second notice doing the same would have
-	 * made a second pair, and a third a third. The notice key is whitelisted,
+	 * Generic on purpose. The pages notice once shipped with its own action
+	 * and its own handler; a second notice doing the same would have made a
+	 * second pair, and a third a third. The notice key is whitelisted,
 	 * so this cannot be used to write arbitrary user meta.
 	 *
 	 * @since 1.7.0
@@ -696,7 +692,10 @@ class Admin {
 			wp_send_json_error();
 		}
 
-		$allowed = array( 'terms' => '_wpss_terms_notice_dismissed' );
+		$allowed = array(
+			'terms' => '_wpss_terms_notice_dismissed',
+			'pages' => '_wpss_pages_notice_dismissed',
+		);
 		$notice  = isset( $_POST['notice'] ) ? sanitize_key( wp_unslash( $_POST['notice'] ) ) : '';
 
 		if ( ! isset( $allowed[ $notice ] ) ) {
@@ -712,48 +711,153 @@ class Admin {
 	}
 
 	/**
-	 * Warn, on every admin screen, while payments are simulated.
+	 * Everything that stops this marketplace working, in one list.
 	 *
-	 * A fresh install registers the Test gateway so the marketplace works end
-	 * to end before any gateway credentials exist. That is the right default -
-	 * an owner can take a service from listing to paid order on day one - but
-	 * it must never be quiet, because the failure mode is a real store selling
-	 * to real buyers and settling nothing.
+	 * Three notices used to answer three of these questions separately, and a
+	 * fourth (no enabled gateway) was never asked: with demo payments on but
+	 * WP_DEBUG off the Test gateway registers yet never enables, so the owner
+	 * read "checkout is simulated" while buyers read "no payment methods".
+	 * A selected store rail whose plugin was deactivated fell back to
+	 * Standalone without a word. Public so the contract test can read it.
 	 *
-	 * No dismiss control, on purpose. The notice goes away by fixing its cause:
-	 * configure a gateway, and wpss_demo_payments_enabled() is false on the
-	 * next request.
+	 * @since 1.7.1
 	 *
-	 * @since 1.4.0
+	 * @return array<string, array{text: string, url: string, label: string, dismiss?: string}>
+	 *         Keyed by problem; `dismiss` is a signature a dismissal is stored against.
+	 */
+	public function get_setup_health_problems(): array {
+		$problems = array();
+
+		// Pages: every registry page, since links to an unpublished one either
+		// 404 or vanish, and only the owner can say which they meant.
+		$missing = array();
+
+		foreach ( wpss_get_page_definitions() as $key => $definition ) {
+			if ( wpss_get_page_id( $key ) ) {
+				continue;
+			}
+
+			$missing[ $key ] = empty( $definition['required'] )
+				/* translators: %s: page title */
+				? sprintf( __( 'Optional page %s is missing or unpublished; links to it are hidden.', 'wp-sell-services' ), $definition['title'] )
+				/* translators: %s: page title */
+				: sprintf( __( 'Required page %s is missing or unpublished.', 'wp-sell-services' ), $definition['title'] );
+		}
+
+		if ( $missing ) {
+			$problems['pages'] = array(
+				'text'    => implode( ' ', $missing ),
+				'url'     => wpss_get_settings_url( 'pages' ),
+				'label'   => __( 'Map pages', 'wp-sell-services' ),
+				'dismiss' => substr( md5( implode( ',', array_keys( $missing ) ) ), 0, 12 ),
+			);
+		}
+
+		// Rail: the setting names a store plugin that is not running.
+		$manager    = wpss()->get_integration_manager();
+		$active     = $manager ? $manager->get_active_adapter() : null;
+		$configured = (string) wpss_get_option( 'wpss_general', 'ecommerce_platform', 'auto' );
+
+		if ( $active && 'auto' !== $configured && $configured !== $active->get_id() ) {
+			$wanted            = $manager->get_adapter( $configured );
+			$problems['rail'] = array(
+				'text'  => sprintf(
+					/* translators: 1: selected store plugin, 2: the rail checkout is actually using */
+					__( 'Settings say %1$s but that plugin is not active; checkout is running on %2$s.', 'wp-sell-services' ),
+					$wanted ? $wanted->get_name() : ucfirst( $configured ),
+					$active->get_name()
+				),
+				'url'   => wpss_get_settings_url( 'general' ),
+				'label' => __( 'Review store setting', 'wp-sell-services' ),
+			);
+		}
+
+		// Gateways: only where our own checkout takes the money.
+		if ( wpss_uses_standalone_payments() ) {
+			$enabled = array();
+
+			foreach ( wpss()->get_payment_gateways() as $id => $gateway ) {
+				if ( $gateway instanceof \WPSellServices\Integrations\Contracts\PaymentGatewayInterface && $gateway->is_enabled() ) {
+					$enabled[] = (string) $id;
+				}
+			}
+
+			if ( ! $enabled ) {
+				$problems['gateway'] = array(
+					'text'  => __( 'No payment method is enabled. Buyers cannot check out.', 'wp-sell-services' ),
+					'url'   => wpss_get_settings_url( 'payments' ),
+					'label' => __( 'Set up payments', 'wp-sell-services' ),
+				);
+			} elseif ( array( 'test' ) === $enabled ) {
+				$problems['demo'] = array(
+					'text'  => __( 'Demo payments are on. Checkout is simulated so you can test the whole buying flow - no money moves and no card is charged. Configure a payment gateway before taking real orders; this notice clears itself once one is ready.', 'wp-sell-services' ),
+					'url'   => wpss_get_settings_url( 'payments' ),
+					'label' => __( 'Set up payments', 'wp-sell-services' ),
+				);
+			}
+		}
+
+		return $problems;
+	}
+
+	/**
+	 * Print the setup-health problems on the plugin's own screens.
+	 *
+	 * Pages is dismissible against the set of missing pages, so trashing
+	 * another one asks again. The rest are not: a store that cannot take
+	 * money is not something to hide, and each clears by fixing its cause.
+	 *
+	 * @since 1.7.1
 	 * @return void
 	 */
-	public function demo_payments_notice(): void {
-		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'wpss_demo_payments_enabled' ) ) {
+	public function setup_health_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
-		if ( ! wpss_demo_payments_enabled() ) {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || ! $this->is_plugin_page( (string) $screen->id ) ) {
 			return;
 		}
 
-		// The opt-out link is what makes wpss_demo_payments reachable. Without
-		// it the option is read but never written, so an owner running a live
-		// standalone store before configuring a gateway had no way to stop a
-		// simulated checkout appearing to their buyers.
-		$turn_off = wp_nonce_url(
-			admin_url( 'admin-post.php?action=wpss_disable_demo_payments' ),
-			'wpss_disable_demo_payments'
-		);
+		foreach ( $this->get_setup_health_problems() as $key => $problem ) {
+			$attrs = '';
 
-		printf(
-			'<div class="notice notice-warning"><p><strong>%s</strong> %s</p><p><a href="%s" class="button button-primary">%s</a> <a href="%s" class="button">%s</a></p></div>',
-			esc_html__( 'Demo payments are on.', 'wp-sell-services' ),
-			esc_html__( 'Checkout is simulated so you can test the whole buying flow - no money moves and no card is charged. Configure a payment gateway before taking real orders; this notice clears itself once one is ready.', 'wp-sell-services' ),
-			esc_url( admin_url( 'admin.php?page=wpss-settings#payments' ) ),
-			esc_html__( 'Set up payments', 'wp-sell-services' ),
-			esc_url( $turn_off ),
-			esc_html__( 'Turn demo payments off', 'wp-sell-services' )
-		);
+			if ( isset( $problem['dismiss'] ) ) {
+				if ( get_user_meta( get_current_user_id(), '_wpss_pages_notice_dismissed', true ) === $problem['dismiss'] ) {
+					continue;
+				}
+
+				$attrs = sprintf(
+					' is-dismissible wpss-dismissible-notice" data-notice="%s" data-signature="%s" data-nonce="%s',
+					esc_attr( $key ),
+					esc_attr( $problem['dismiss'] ),
+					esc_attr( wp_create_nonce( 'wpss_dismiss_notice' ) )
+				);
+			}
+
+			$buttons = sprintf( '<a href="%s" class="button button-primary">%s</a>', esc_url( $problem['url'] ), esc_html( $problem['label'] ) );
+
+			// The opt-out link is what makes wpss_demo_payments reachable, so
+			// an owner can run a live store with no gateway yet rather than a
+			// simulated checkout.
+			if ( 'demo' === $key ) {
+				$buttons .= sprintf(
+					' <a href="%s" class="button">%s</a>',
+					esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=wpss_disable_demo_payments' ), 'wpss_disable_demo_payments' ) ),
+					esc_html__( 'Turn demo payments off', 'wp-sell-services' )
+				);
+			}
+
+			printf(
+				'<div class="notice notice-warning%s"><p><strong>%s</strong> %s</p><p>%s</p></div>',
+				$attrs, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each attribute escaped above.
+				esc_html__( 'WP Sell Services:', 'wp-sell-services' ),
+				esc_html( $problem['text'] ),
+				$buttons // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+			);
+		}
 	}
 
 	/**
@@ -777,79 +881,6 @@ class Admin {
 
 		wp_safe_redirect( wp_get_referer() ? wp_get_referer() : admin_url() );
 		exit;
-	}
-
-	/**
-	 * Show an admin notice when required pages are unmapped.
-	 *
-	 * Lists missing pages and links to the setup wizard or settings page.
-	 * Dismissible via user meta so it does not persist after dismissal.
-	 *
-	 * @since 1.0.0
-	 * @return void
-	 */
-	public function check_page_setup_notice(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		// Don't show if dismissed.
-		if ( get_user_meta( get_current_user_id(), '_wpss_pages_notice_dismissed', true ) ) {
-			return;
-		}
-
-		$required_pages = wpss_get_required_pages();
-
-		$pages   = get_option( 'wpss_pages', array() );
-		$missing = array();
-
-		foreach ( $required_pages as $key => $label ) {
-			$page_id = (int) ( $pages[ $key ] ?? 0 );
-			if ( ! $page_id || ! get_post( $page_id ) || 'publish' !== get_post_status( $page_id ) ) {
-				$missing[] = $label;
-			}
-		}
-
-		if ( empty( $missing ) ) {
-			return;
-		}
-
-		$settings_url = wpss_get_settings_url( 'pages' );
-		$wizard_url   = admin_url( 'admin.php?page=wpss-setup-wizard' );
-
-		printf(
-			'<div class="notice notice-warning is-dismissible wpss-pages-notice" data-nonce="%s"><p><strong>%s</strong> %s: <em>%s</em>. <a href="%s">%s</a> %s <a href="%s">%s</a>.</p></div>',
-			esc_attr( wp_create_nonce( 'wpss_dismiss_pages_notice' ) ),
-			esc_html__( 'WP Sell Services:', 'wp-sell-services' ),
-			esc_html__( 'The following pages need to be set up', 'wp-sell-services' ),
-			esc_html( implode( ', ', $missing ) ),
-			esc_url( $wizard_url ),
-			esc_html__( 'Run Setup Wizard', 'wp-sell-services' ),
-			esc_html__( 'or', 'wp-sell-services' ),
-			esc_url( $settings_url ),
-			esc_html__( 'configure pages manually', 'wp-sell-services' )
-		);
-
-		// Inline script to handle dismiss via AJAX.
-		?>
-		<?php
-	}
-
-	/**
-	 * AJAX handler to dismiss the pages setup notice.
-	 *
-	 * @since 1.0.0
-	 * @return void
-	 */
-	public function ajax_dismiss_pages_notice(): void {
-		check_ajax_referer( 'wpss_dismiss_pages_notice', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error();
-		}
-
-		update_user_meta( get_current_user_id(), '_wpss_pages_notice_dismissed', true );
-		wp_send_json_success();
 	}
 
 	/**

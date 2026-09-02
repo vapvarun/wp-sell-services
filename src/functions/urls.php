@@ -566,8 +566,7 @@ function wpss_get_default_page_slugs(): array {
  * @return string Page URL or empty string.
  */
 function wpss_get_page_url( string $page_key ): string {
-	$pages   = get_option( 'wpss_pages', array() );
-	$page_id = (int) ( $pages[ $page_key ] ?? 0 );
+	$page_id = wpss_get_page_id( $page_key );
 
 	if ( $page_id ) {
 		$url = get_permalink( $page_id );
@@ -588,14 +587,21 @@ function wpss_get_page_url( string $page_key ): string {
 /**
  * Get the mapped page ID for a given page key.
  *
+ * A mapped page that is trashed, drafted or deleted counts as unmapped: its
+ * permalink is ?page_id=N, which 404s, so every link built from it broke while
+ * the setting still said the page was there. Callers already treat 0 as "no
+ * page", so answering 0 here fixes every link and the setup notice at once.
+ *
  * @since 1.1.0
  *
  * @param string $page_key Page settings key (e.g., 'services_page', 'dashboard').
  * @return int Page ID or 0.
  */
 function wpss_get_page_id( string $page_key ): int {
-	$pages = get_option( 'wpss_pages', array() );
-	return (int) ( $pages[ $page_key ] ?? 0 );
+	$pages   = get_option( 'wpss_pages', array() );
+	$page_id = (int) ( $pages[ $page_key ] ?? 0 );
+
+	return $page_id && 'publish' === get_post_status( $page_id ) ? $page_id : 0;
 }
 
 /**

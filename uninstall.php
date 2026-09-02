@@ -108,8 +108,10 @@ foreach ( $options as $option ) {
 // Delete all options with wpss_ prefix.
 $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'wpss\_%'" );
 
-// Delete user meta.
+// Delete user meta. Both spellings are in use: private keys (_wpss_tour...)
+// and plain ones (wpss_payout_details, wpss_blocked_users, wpss_account_status).
 $wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE '_wpss\_%'" );
+$wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE 'wpss\_%'" );
 
 // Delete post meta.
 $wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_wpss\_%'" );
@@ -143,7 +145,22 @@ remove_role( 'wpss_vendor' );
 $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_wpss\_%'" );
 $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_wpss\_%'" );
 
-// Clear scheduled cron events.
+// Every recurring job the plugin owns runs under the `wpss` Action Scheduler
+// group. Deactivation sweeps it too, but a site uninstalled from WP-CLI or
+// with a stale schedule still had 16 pending actions left behind. The API
+// is only present when another active plugin loaded Action Scheduler, so
+// fall back to its tables directly.
+if ( function_exists( 'as_unschedule_all_actions' ) ) {
+	as_unschedule_all_actions( '', array(), 'wpss' );
+} elseif ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . 'actionscheduler_actions' ) ) ) {
+	$wpdb->query(
+		"DELETE a FROM {$wpdb->prefix}actionscheduler_actions a
+		INNER JOIN {$wpdb->prefix}actionscheduler_groups g ON g.group_id = a.group_id
+		WHERE g.slug = 'wpss'"
+	);
+}
+
+// Legacy WP-Cron names from pre-1.1.0 installs.
 $cron_hooks = array(
 	'wpss_check_late_orders',
 	'wpss_auto_complete_orders',
