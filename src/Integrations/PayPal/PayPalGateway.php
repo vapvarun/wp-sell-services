@@ -303,10 +303,13 @@ class PayPalGateway implements PaymentGatewayInterface {
 		}
 
 		return array(
-			'success'   => true,
-			'refund_id' => $response['id'],
-			'status'    => strtolower( $response['status'] ?? 'completed' ),
-			'amount'    => (float) ( $response['amount']['value'] ?? $amount ),
+			'success'        => true,
+			'manual'         => false,
+			'refund_id'      => $response['id'],
+			'transaction_id' => (string) $response['id'],
+			'status'         => strtolower( $response['status'] ?? 'completed' ),
+			'message'        => '',
+			'amount'         => (float) ( $response['amount']['value'] ?? $amount ),
 		);
 	}
 
@@ -881,13 +884,59 @@ class PayPalGateway implements PaymentGatewayInterface {
 	 * @return array{success: bool, message: string}
 	 */
 	private function handle_refund_completed( array $resource_data ): array {
+		// The refund resource points back at the capture it reverses through
+		// its "up" link; orders were marked paid with that capture id.
+		$capture_id = '';
+
+		foreach ( (array) ( $resource_data['links'] ?? array() ) as $link ) {
+			if ( 'up' === ( $link['rel'] ?? '' ) && preg_match( '#/captures/([A-Za-z0-9]+)#', (string) ( $link['href'] ?? '' ), $m ) ) {
+				$capture_id = $m[1];
+				break;
+			}
+		}
+
+		$metadata = json_decode( (string) ( $resource_data['custom_id'] ?? '' ), true ) ?: array();
+		$amount   = (float) ( $resource_data['amount']['value'] ?? 0 );
+
+		if ( '' === $capture_id && empty( $metadata['order_id'] ) ) {
+			return array(
+				'success' => true,
+				'message' => 'Refund had no capture to resolve.',
+			);
+		}
+
+		/**
+		 * Fires when a refund happened at the payment rail.
+		 *
+		 * Handled by OrderWorkflowManager::handle_gateway_refund(), which
+		 * records it on the order(s) and reverses the vendor's share.
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param string $gateway        Gateway slug.
+		 * @param string $transaction_id Capture id the order was paid with.
+		 * @param float  $amount         Amount of this refund, major units.
+		 * @param array  $context        refund_id, currency, order_id.
+		 */
+		do_action(
+			'wpss_gateway_refund_received',
+			'paypal',
+			$capture_id,
+			$amount,
+			array(
+				'refund_id' => (string) ( $resource_data['id'] ?? '' ),
+				'currency'  => (string) ( $resource_data['amount']['currency_code'] ?? '' ),
+				'order_id'  => (int) ( $metadata['order_id'] ?? 0 ),
+			)
+		);
+
 		/**
 		 * Fires when a PayPal refund is processed.
 		 *
 		 * @param string $capture_id Capture ID.
 		 * @param array  $resource_data Refund resource.
 		 */
-		do_action( 'wpss_paypal_refund_processed', $resource_data['links'][0]['href'] ?? '', $resource_data );
+		do_action( 'wpss_paypal_refund_processed', $capture_id, $resource_data );
 
 		return array(
 			'success' => true,

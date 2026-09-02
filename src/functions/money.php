@@ -309,6 +309,48 @@ function wpss_order_is_refundable( $order ): bool {
 }
 
 /**
+ * Orders whose refund still has to be sent by hand, with the amount owed.
+ *
+ * Written by OrderWorkflowManager when an offline / test gateway is asked to
+ * refund (no money can move there), cleared by "Mark refund sent" on the
+ * admin order view. Drives the admin notice and the order-view box.
+ *
+ * @since 1.7.1
+ *
+ * @return array<int, float> order_id => amount, oldest first.
+ */
+function wpss_get_pending_manual_refunds(): array {
+	global $wpdb;
+
+	// The meta table is created lazily by the first item-meta write
+	// (StandaloneOrderProvider::maybe_create_meta_table); before that there
+	// is nothing pending.
+	if ( '1.0' !== get_option( 'wpss_order_meta_table_version' ) ) {
+		return array();
+	}
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT order_id, meta_value FROM {$wpdb->prefix}wpss_order_meta WHERE meta_key = %s ORDER BY order_id ASC",
+			\WPSellServices\Services\OrderWorkflowManager::REFUND_PENDING_META
+		)
+	);
+
+	$pending = array();
+
+	foreach ( (array) $rows as $row ) {
+		$amount = (float) maybe_unserialize( (string) $row->meta_value );
+
+		if ( $amount > 0 ) {
+			$pending[ (int) $row->order_id ] = $amount;
+		}
+	}
+
+	return $pending;
+}
+
+/**
  * Vendor's share of a refund.
  *
  * THE single proportional formula. A refund gives the buyer back some or all of

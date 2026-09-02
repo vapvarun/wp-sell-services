@@ -29,8 +29,11 @@ use WPSellServices\Admin\Pages\UpgradePage;
 use WPSellServices\Admin\Tables\OrdersListTable;
 use WPSellServices\Admin\Tables\DisputesListTable;
 use WPSellServices\Models\Dispute;
+use WPSellServices\Models\ServiceOrder;
+use WPSellServices\Services\AuditLogService;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\OrderService;
+use WPSellServices\Services\OrderWorkflowManager;
 use WPSellServices\Assets\ScriptRegistry;
 
 /**
@@ -414,8 +417,10 @@ class Admin {
 		add_action( 'admin_notices', array( $this, 'demo_payments_notice' ) );
 		add_action( 'admin_notices', array( $this, 'order_files_public_notice' ) );
 		add_action( 'admin_notices', array( $this, 'missing_terms_notice' ) );
+		add_action( 'admin_notices', array( $this, 'pending_manual_refunds_notice' ) );
 		add_action( 'wp_ajax_wpss_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
+		add_action( 'admin_post_wpss_mark_refund_sent', array( $this, 'handle_mark_refund_sent' ) );
 	}
 
 	/**
@@ -463,6 +468,130 @@ class Admin {
 			esc_html__( 'This server could not store them outside the web root, and it is ignoring the deny rule we wrote alongside them. Requirement briefs and delivered work are readable by anyone who guesses the address.', 'wp-sell-services' ),
 			esc_html__( 'Ask your host to block direct access to the wpss-order-files directory, or to make the folder above WordPress writable so the files can be moved out of the web root entirely.', 'wp-sell-services' )
 		);
+	}
+
+	/**
+	 * List orders whose refund the owner still has to send by hand.
+	 *
+	 * Offline / test gateways cannot move money, so a refund on one of their
+	 * orders only flags the amount (see OrderWorkflowManager). Until it is
+	 * marked sent from the order view, the buyer has not been refunded.
+	 *
+	 * @since 1.7.1
+	 * @return void
+	 */
+	public function pending_manual_refunds_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+			return;
+		}
+
+		$pending = wpss_get_pending_manual_refunds();
+
+		if ( empty( $pending ) ) {
+			return;
+		}
+
+		$items = array();
+
+		foreach ( $pending as $order_id => $amount ) {
+			$order   = wpss_get_order( (int) $order_id );
+			$items[] = sprintf(
+				'<li><a href="%1$s">%2$s</a>: %3$s</li>',
+				esc_url(
+					add_query_arg(
+						array(
+							'page' => 'wpss-orders',
+							'action' => 'view',
+							'order_id' => (int) $order_id,
+						),
+						admin_url( 'admin.php' )
+					)
+				),
+				/* translators: %d: order ID */
+				esc_html( sprintf( __( 'Order #%d', 'wp-sell-services' ), (int) $order_id ) ),
+				/* translators: %s: amount */
+				esc_html( sprintf( __( 'send %s to the buyer manually', 'wp-sell-services' ), wpss_format_price( $amount, (string) ( $order->currency ?? '' ) ) ) )
+			);
+		}
+
+		printf(
+			'<div class="notice notice-warning"><p><strong>%s</strong> %s</p><ul style="list-style: disc; margin-inline-start: 1.5em;">%s</ul></div>',
+			esc_html( _n( 'A refund is waiting to be sent manually.', 'Refunds are waiting to be sent manually.', count( $items ), 'wp-sell-services' ) ),
+			esc_html__( 'These orders were paid through a gateway that cannot refund automatically. Send the money, then open the order and mark the refund as sent.', 'wp-sell-services' ),
+			implode( '', $items ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each item escaped above.
+		);
+	}
+
+	/**
+	 * Admin confirmed a manual refund went out: clear the pending flag.
+	 *
+	 * @since 1.7.1
+	 * @return void
+	 */
+	public function handle_mark_refund_sent(): void {
+		$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+
+		if ( ! isset( $_POST['wpss_refund_sent_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_refund_sent_nonce'] ) ), 'wpss_mark_refund_sent_' . $order_id ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		$order   = $order_id ? wpss_get_order( $order_id ) : null;
+		$pending = $order ? (float) wpss_get_order_provider()->get_item_meta( $order_id, OrderWorkflowManager::REFUND_PENDING_META ) : 0.0;
+
+		if ( ! $order || $pending <= 0 ) {
+			wp_die( esc_html__( 'This order has no manual refund pending.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		wpss_get_order_provider()->update_item_meta( $order_id, OrderWorkflowManager::REFUND_PENDING_META, 0 );
+
+		// A full manual refund closes the payment the same way a gateway
+		// refund would; a partial leaves the rest of the payment in place.
+		if ( ServiceOrder::STATUS_REFUNDED === $order->status ) {
+			$order->update( array( 'payment_status' => 'refunded' ) );
+		}
+
+		( new AuditLogService() )->log(
+			'order.refund',
+			'order',
+			$order_id,
+			array(
+				'action'  => 'refund',
+				'context' => array(
+					'gateway' => (string) $order->payment_method,
+					'amount'  => $pending,
+					'result'  => array(
+						'success' => true,
+						'manual' => true,
+						'message' => 'Marked as sent by admin.',
+					),
+				),
+			)
+		);
+
+		wpss_log( "Manual refund of {$pending} for order {$order_id} marked as sent by user " . get_current_user_id() . '.' );
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page' => 'wpss-orders',
+					'action' => 'view',
+					'order_id' => $order_id,
+					'updated' => '1',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
 	}
 
 	/**
@@ -2200,6 +2329,38 @@ class Admin {
 								<p class="description">
 									<?php esc_html_e( 'Leave the amount blank for a full refund. A smaller amount issues a partial refund and claws back the vendor\'s proportional share. The gateway payment is refunded where supported.', 'wp-sell-services' ); ?>
 								</p>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<?php
+					// A refund this gateway could not send (offline / demo): the
+					// admin pays the buyer by hand and confirms here.
+					$wpss_refund_pending = current_user_can( 'manage_options' )
+						? (float) wpss_get_order_provider()->get_item_meta( $order_id, OrderWorkflowManager::REFUND_PENDING_META )
+						: 0.0;
+
+					if ( $wpss_refund_pending > 0 ) :
+						?>
+						<div class="postbox wpss-refund-pending">
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Manual refund pending', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<p>
+									<?php
+									printf(
+										/* translators: 1: amount, 2: payment method */
+										esc_html__( 'Send %1$s to the buyer manually. This order was paid via %2$s, which cannot refund automatically. The buyer has not been refunded yet.', 'wp-sell-services' ),
+										'<strong>' . esc_html( wpss_format_price( $wpss_refund_pending, (string) $order->currency ) ) . '</strong>',
+										esc_html( (string) $order->payment_method )
+									);
+									?>
+								</p>
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+									<input type="hidden" name="action" value="wpss_mark_refund_sent">
+									<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order_id ); ?>">
+									<?php wp_nonce_field( 'wpss_mark_refund_sent_' . $order_id, 'wpss_refund_sent_nonce' ); ?>
+									<?php submit_button( __( 'Mark refund sent', 'wp-sell-services' ), 'secondary', 'submit', false ); ?>
+								</form>
 							</div>
 						</div>
 					<?php endif; ?>

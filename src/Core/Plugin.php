@@ -2557,6 +2557,9 @@ final class Plugin {
 			'wpss_order_status_refunded'               => array( 'handle_order_refunded', 10, 2 ),
 			'wpss_order_status_partially_refunded'     => array( 'handle_order_partially_refunded', 10, 2 ),
 			'wpss_order_status_cancellation_requested' => array( 'handle_cancellation_requested', 10, 2 ),
+			// Refunds that happened AT the rail (Stripe / PayPal / Razorpay /
+			// Woo webhooks). One listener; no gateway applies refunds inline.
+			'wpss_gateway_refund_received'             => array( 'handle_gateway_refund', 10, 4 ),
 		);
 
 		foreach ( $status_hooks as $hook => $config ) {

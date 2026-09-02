@@ -171,10 +171,14 @@ class OfflineGateway implements PaymentGatewayInterface {
 	 * @return array Refund result.
 	 */
 	public function process_refund( string $transaction_id, ?float $amount = null, string $reason = '' ): array {
+		// No money moves here. `manual` tells OrderWorkflowManager to flag the
+		// amount for the admin instead of logging a refund that never happened.
 		return array(
-			'success' => true,
-			'status'  => 'manual_refund',
-			'message' => __( 'Offline payments must be refunded manually outside of this system.', 'wp-sell-services' ),
+			'success'        => true,
+			'manual'         => true,
+			'transaction_id' => $transaction_id,
+			'status'         => 'manual_refund',
+			'message'        => __( 'Offline payments must be refunded manually outside of this system.', 'wp-sell-services' ),
 		);
 	}
 
