@@ -2632,12 +2632,6 @@ parameters:
 			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
 
 		-
-			message: '#^Left side of && is always true\.$#'
-			identifier: booleanAnd.leftAlwaysTrue
-			count: 1
-			path: src/Integrations/Standalone/StandaloneOrderProvider.php
-
-		-
 			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneOrderProvider\:\:create_order\(\) has parameter \$order_data with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

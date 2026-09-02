@@ -26,11 +26,12 @@ class SchemaManager {
 	 * numbered release still has to bump this, or install() short-circuits on
 	 * needs_update() and the new columns are never added. 1.6.1 adds
 	 * message_type + description to wpss_dispute_messages, which makes that
-	 * table the single store for a dispute conversation.
+	 * table the single store for a dispute conversation. 1.7.1 backfills
+	 * revisions_included on standalone orders from their package snapshot.
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.6.1';
+	const DB_VERSION = '1.7.1';
 
 	/**
 	 * Option name for storing DB version.
@@ -386,6 +387,51 @@ class SchemaManager {
 		$this->backfill_platform_order_ref();
 		$this->backfill_package_snapshots();
 		$this->backfill_package_ids();
+		$this->backfill_revisions_included();
+	}
+
+	/**
+	 * Give standalone orders the revision count of the package they bought.
+	 *
+	 * Checkout never passed revisions to create_order(), so every standalone
+	 * order stored 0 while its package snapshot said 2 (or -1, unlimited) and
+	 * the buyer could not request one (Basecamp 10264292240). Only rows still
+	 * at 0 whose snapshot disagrees are touched, so it is idempotent; orders
+	 * whose package really includes no revisions stay at 0.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	private function backfill_revisions_included(): void {
+		$table = $this->get_table_name( 'orders' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $this->wpdb->get_results(
+			"SELECT id, meta FROM `{$table}`
+			WHERE platform = 'standalone'
+			  AND revisions_included = 0
+			  AND meta LIKE '%package_snapshot%'
+			ORDER BY id ASC
+			LIMIT 500"
+		);
+
+		$fixed = 0;
+		foreach ( (array) $rows as $row ) {
+			$meta      = json_decode( (string) $row->meta, true );
+			$revisions = (int) ( $meta['package_snapshot']['revisions'] ?? 0 );
+			if ( 0 === $revisions ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$this->wpdb->update( $table, array( 'revisions_included' => $revisions ), array( 'id' => (int) $row->id ), array( '%d' ), array( '%d' ) );
+			++$fixed;
+		}
+
+		if ( $fixed > 0 && function_exists( 'wpss_log' ) ) {
+			wpss_log( "Schema 1.7.1: set revisions_included from the package snapshot on {$fixed} standalone order(s)." );
+		}
 	}
 
 	/**

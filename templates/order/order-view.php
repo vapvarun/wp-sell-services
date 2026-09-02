@@ -1458,6 +1458,10 @@ do_action( 'wpss_before_order_view', $order );
 						<div class="wpss-timeline__content">
 							<span class="wpss-timeline__title"><?php esc_html_e( 'Revision Requested', 'wp-sell-services' ); ?></span>
 							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
+							<?php $revision_reason = $order->get_revision_reason(); ?>
+							<?php if ( '' !== $revision_reason ) : ?>
+								<p class="wpss-timeline__note wpss-revision-reason"><?php echo esc_html( $revision_reason ); ?></p>
+							<?php endif; ?>
 						</div>
 					</div>
 
@@ -2898,6 +2902,17 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 .wpss-timeline__date {
 	font-size: 0.875rem;
 	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-timeline__note {
+	margin: var(--wpss-space-2, 0.5rem) 0 0;
+	padding: var(--wpss-space-2, 0.5rem) var(--wpss-space-3, 0.75rem);
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border-inline-start: 3px solid var(--wpss-warning, #f59e0b);
+	border-radius: 4px;
+	font-size: 0.875rem;
+	white-space: pre-line;
+	overflow-wrap: anywhere;
 }
 
 /* Delivery Items */

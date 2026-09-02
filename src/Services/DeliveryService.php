@@ -232,21 +232,8 @@ class DeliveryService {
 			)
 		);
 
-		// Add revision message to conversation.
-		$conversation_service = new ConversationService();
-		$conversation         = $conversation_service->get_by_order( $order_id );
-
-		if ( $conversation ) {
-			$conversation_service->send_message(
-				$conversation->id,
-				$order->customer_id,
-				$reason,
-				array(),
-				Message::TYPE_REVISION
-			);
-		}
-
-		// Update order status - must succeed for revision to be valid.
+		// Update order status - must succeed for revision to be valid. It also
+		// records the reason on the conversation.
 		$order_service  = new OrderService();
 		$status_updated = $order_service->request_revision( $order_id, $reason );
 

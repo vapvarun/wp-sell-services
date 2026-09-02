@@ -269,6 +269,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - A Stripe payment webhook arriving before checkout finishes no longer creates a duplicate order, and cart refunds land on the right order.
 * Fix      - Offline and manual gateway refunds are marked as pending manual payment instead of being reported as sent.
 * Fix      - Service content limits apply on every save path, and a proposal can only be accepted once.
+* Fix      - New orders carry the package's revision count, so buyers can request revisions and vendors see the revision notes.
 * Dev      - Stored files record which storage provider holds them.
 
 = 1.7.0 - August 2026 =
