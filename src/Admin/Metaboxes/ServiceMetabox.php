@@ -33,6 +33,24 @@ class ServiceMetabox {
 		add_action( 'add_meta_boxes', array( $this, 'register_metaboxes' ) );
 		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'save_meta' ), 10, 2 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_action( 'admin_notices', array( $this, 'limit_notice' ) );
+	}
+
+	/**
+	 * Tell the editor which lists were cut to the service limits on the last save.
+	 *
+	 * @return void
+	 */
+	public function limit_notice(): void {
+		$key      = 'wpss_service_limit_notice_' . get_current_user_id();
+		$messages = get_transient( $key );
+
+		if ( ! is_array( $messages ) ) {
+			return;
+		}
+
+		delete_transient( $key );
+		echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html( implode( ' ', $messages ) ) . '</p></div>';
 	}
 
 	/**
@@ -733,6 +751,24 @@ class ServiceMetabox {
 			return;
 		}
 
+		// The metabox JS caps the rows; the server is the enforcer (wp-admin
+		// post-new is reachable by any vendor holding edit_posts).
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each list is sanitised where it is saved below.
+		$capped = wpss_enforce_service_limits(
+			array(
+				'packages'     => isset( $_POST['wpss_packages'] ) ? wp_unslash( $_POST['wpss_packages'] ) : array(),
+				'faqs'         => isset( $_POST['wpss_faqs'] ) ? wp_unslash( $_POST['wpss_faqs'] ) : array(),
+				'requirements' => isset( $_POST['wpss_requirements'] ) ? wp_unslash( $_POST['wpss_requirements'] ) : array(),
+				'extras'       => isset( $_POST['wpss_addons'] ) ? wp_unslash( $_POST['wpss_addons'] ) : array(),
+				'gallery'      => isset( $_POST['wpss_gallery'] ) ? wp_unslash( $_POST['wpss_gallery'] ) : array(),
+			)
+		);
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		if ( ! empty( $capped['truncated'] ) ) {
+			set_transient( 'wpss_service_limit_notice_' . get_current_user_id(), array_values( $capped['truncated'] ), MINUTE_IN_SECONDS );
+		}
+
 		// Save status field.
 		// Note: Delivery time and revisions are now per-package only (see packages below).
 		if ( isset( $_POST['wpss_status'] ) ) {
@@ -740,8 +776,7 @@ class ServiceMetabox {
 		}
 
 		// Save packages (indexed array format).
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized below.
-		$packages_data = isset( $_POST['wpss_packages'] ) ? wp_unslash( $_POST['wpss_packages'] ) : array();
+		$packages_data = $capped['meta']['packages'];
 		if ( is_array( $packages_data ) && ! empty( $packages_data ) ) {
 			$packages = array();
 			foreach ( $packages_data as $package ) {
@@ -793,8 +828,7 @@ class ServiceMetabox {
 		}
 
 		// Save FAQs.
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized below.
-		$faqs_data = isset( $_POST['wpss_faqs'] ) ? wp_unslash( $_POST['wpss_faqs'] ) : array();
+		$faqs_data = $capped['meta']['faqs'];
 		if ( is_array( $faqs_data ) && ! empty( $faqs_data ) ) {
 			$faqs = array();
 			foreach ( $faqs_data as $faq ) {
@@ -814,8 +848,7 @@ class ServiceMetabox {
 		}
 
 		// Save requirements.
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized below.
-		$requirements_data = isset( $_POST['wpss_requirements'] ) ? wp_unslash( $_POST['wpss_requirements'] ) : array();
+		$requirements_data = $capped['meta']['requirements'];
 		if ( is_array( $requirements_data ) && ! empty( $requirements_data ) ) {
 			$requirements = array();
 			$valid_types  = array_keys( $this->get_requirement_types() );
@@ -846,8 +879,7 @@ class ServiceMetabox {
 		}
 
 		// Save addons.
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized below.
-		$addons_data = isset( $_POST['wpss_addons'] ) ? wp_unslash( $_POST['wpss_addons'] ) : array();
+		$addons_data = $capped['meta']['extras'];
 		if ( is_array( $addons_data ) && ! empty( $addons_data ) ) {
 			$addons      = array();
 			$valid_types = array_keys( $this->get_addon_field_types() );
@@ -898,7 +930,7 @@ class ServiceMetabox {
 		if ( isset( $_POST['wpss_gallery_present'] ) ) {
 			// Read the explicit key into a local before iterating (no direct superglobal iteration);
 			// values are attachment IDs, so unslash + absint fully sanitises each entry.
-			$gallery_raw = isset( $_POST['wpss_gallery'] ) ? wp_unslash( $_POST['wpss_gallery'] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via absint below.
+			$gallery_raw = isset( $_POST['wpss_gallery'] ) ? $capped['meta']['gallery'] : null;
 			if ( is_array( $gallery_raw ) ) {
 				$gallery_ids = array_filter( array_map( 'absint', $gallery_raw ) );
 

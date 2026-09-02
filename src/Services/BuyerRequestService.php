@@ -689,6 +689,33 @@ class BuyerRequestService {
 		// project that is missing some of its predefined phases.
 		$wpdb->query( 'START TRANSACTION' );
 
+		// Lock every proposal on this request so a second accept (same
+		// proposal double-clicked, or a rival proposal from another tab) waits
+		// here, then re-check under the lock. The checks above ran on a stale
+		// read; only this one decides.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$locked = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, status FROM {$this->proposals_table} WHERE request_id = %d FOR UPDATE",
+				$request_id
+			)
+		);
+		$mine   = array_values( array_filter( $locked, static fn( $row ) => (int) $row->id === $proposal_id ) );
+		$taken  = array_filter( $locked, static fn( $row ) => ProposalService::STATUS_ACCEPTED === $row->status );
+
+		if ( empty( $mine ) || ProposalService::STATUS_PENDING !== $mine[0]->status || ! empty( $taken ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'message' => __( 'This proposal has already been processed.', 'wp-sell-services' ),
+			);
+		}
+
+		// Claim the proposal inside the transaction so the row the next caller
+		// reads under its lock is already accepted.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update( $this->proposals_table, array( 'status' => ProposalService::STATUS_ACCEPTED ), array( 'id' => $proposal_id ), array( '%s' ), array( '%d' ) );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
 			$orders_table,
@@ -799,10 +826,11 @@ class BuyerRequestService {
 			}
 		}
 
-		// Accept the proposal, and record WHICH order it produced. The column is
+		// The proposal was claimed inside the transaction; announce it now that
+		// the rows exist, and record WHICH order it produced. The column is
 		// published in every proposal REST response and was never written, so
 		// nothing could get from an accepted proposal to its order.
-		$proposal_service->update_status( $proposal_id, ProposalService::STATUS_ACCEPTED );
+		do_action( 'wpss_proposal_status_updated', $proposal_id, ProposalService::STATUS_ACCEPTED );
 		$proposal_service->link_order( $proposal_id, $order_id );
 
 		// Reject other proposals for this request.

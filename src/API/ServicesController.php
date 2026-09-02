@@ -671,7 +671,7 @@ class ServicesController extends RestController {
 		}
 
 		// Save meta.
-		$this->save_service_meta( $service_id, $request );
+		$limit_error = $this->save_service_meta( $service_id, $request );
 
 		wp_set_object_terms( $service_id, $requested_categories, 'wpss_service_category' );
 
@@ -690,6 +690,10 @@ class ServicesController extends RestController {
 		 * @param WP_REST_Request $request    Request object.
 		 */
 		do_action( 'wpss_rest_service_created', $service_id, $request );
+
+		if ( $limit_error ) {
+			return $limit_error;
+		}
 
 		return new WP_REST_Response(
 			$this->prepare_item_for_response( $service, $request )->get_data(),
@@ -753,7 +757,7 @@ class ServicesController extends RestController {
 		}
 
 		// Update meta.
-		$this->save_service_meta( $service_id, $request );
+		$limit_error = $this->save_service_meta( $service_id, $request );
 
 		// Update categories.
 		if ( $request->has_param( 'categories' ) ) {
@@ -772,6 +776,10 @@ class ServicesController extends RestController {
 		 * @param WP_REST_Request $request    Request object.
 		 */
 		do_action( 'wpss_rest_service_updated', $service_id, $request );
+
+		if ( $limit_error ) {
+			return $limit_error;
+		}
 
 		return $this->prepare_item_for_response( get_post( $service_id ), $request );
 	}
@@ -1240,14 +1248,27 @@ class ServicesController extends RestController {
 	/**
 	 * Save service meta from request.
 	 *
+	 * Lists over wpss_get_service_limits() are cut to the cap before they are
+	 * stored and the call returns a 400 naming the limit, so an app learns the
+	 * rule the same way the web wizard shows it.
+	 *
 	 * @param int             $service_id Service ID.
 	 * @param WP_REST_Request $request    Request object.
-	 * @return void
+	 * @return WP_Error|null Error when any list was over its limit.
 	 */
-	private function save_service_meta( int $service_id, WP_REST_Request $request ): void {
+	private function save_service_meta( int $service_id, WP_REST_Request $request ): ?WP_Error {
+		$capped = wpss_enforce_service_limits(
+			array(
+				'packages'     => $request->get_param( 'packages' ),
+				'gallery'      => $request->get_param( 'gallery' ),
+				'extras'       => $request->get_param( 'addons' ),
+				'requirements' => $request->get_param( 'requirements' ),
+			)
+		);
+
 		// Save packages (primary source of truth).
 		if ( $request->has_param( 'packages' ) ) {
-			$raw_packages = $request->get_param( 'packages' );
+			$raw_packages = $capped['meta']['packages'];
 			$packages     = array();
 			if ( is_array( $raw_packages ) ) {
 				foreach ( $raw_packages as $pkg ) {
@@ -1286,13 +1307,15 @@ class ServicesController extends RestController {
 
 		// Save gallery (array of media IDs).
 		if ( $request->has_param( 'gallery' ) ) {
-			$gallery_ids = array_map( 'absint', (array) $request->get_param( 'gallery' ) );
+			$gallery_ids = array_map( 'absint', (array) $capped['meta']['gallery'] );
 			update_post_meta( $service_id, '_wpss_gallery', $gallery_ids );
 		}
 
 		// Save addons (array of addon objects).
 		if ( $request->has_param( 'addons' ) ) {
-			$raw_addons = $request->get_param( 'addons' );
+			// ponytail: caps the submitted list only; rows already in the
+			// addons table are not counted, so repeated PUTs can accumulate.
+			$raw_addons = $capped['meta']['extras'];
 			if ( is_array( $raw_addons ) ) {
 				global $wpdb;
 				$addons_table = $wpdb->prefix . 'wpss_service_addons';
@@ -1330,7 +1353,7 @@ class ServicesController extends RestController {
 		}
 
 		if ( $request->has_param( 'requirements' ) ) {
-			$raw_reqs     = $request->get_param( 'requirements' );
+			$raw_reqs     = $capped['meta']['requirements'];
 			$requirements = array();
 			if ( is_array( $raw_reqs ) ) {
 				foreach ( $raw_reqs as $req ) {
@@ -1345,6 +1368,20 @@ class ServicesController extends RestController {
 			}
 			update_post_meta( $service_id, '_wpss_requirements', $requirements );
 		}
+
+		if ( empty( $capped['truncated'] ) ) {
+			return null;
+		}
+
+		return new WP_Error(
+			'wpss_service_limit',
+			implode( ' ', $capped['truncated'] ),
+			array(
+				'status'     => 400,
+				'service_id' => $service_id,
+				'limits'     => wpss_get_service_limits(),
+			)
+		);
 	}
 
 	/**

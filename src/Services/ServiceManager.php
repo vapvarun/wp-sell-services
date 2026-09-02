@@ -81,6 +81,7 @@ class ServiceManager {
 		);
 
 		$data = wp_parse_args( $data, $defaults );
+		$data = wpss_enforce_service_limits( $data )['meta'];
 
 		// Validate required fields.
 		if ( empty( $data['title'] ) ) {
@@ -204,6 +205,7 @@ class ServiceManager {
 		 * @param int   $service_id Service post ID.
 		 */
 		$data = apply_filters( 'wpss_pre_update_service', $data, $service_id );
+		$data = wpss_enforce_service_limits( $data )['meta'];
 
 		$post_data = array( 'ID' => $service_id );
 
