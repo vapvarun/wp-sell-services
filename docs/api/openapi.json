@@ -120,9 +120,6 @@
             "name": "Settings"
         },
         {
-            "name": "Storage"
-        },
-        {
             "name": "Stripe-connect"
         },
         {
@@ -7475,19 +7472,27 @@
                                     "razorpay_signature": {
                                         "type": "string"
                                     },
+                                    "pay_order": {
+                                        "type": "integer",
+                                        "default": 0
+                                    },
+                                    "is_multi_checkout": {
+                                        "type": "boolean",
+                                        "default": false
+                                    },
                                     "service_id": {
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "default": 0
                                     },
                                     "package_id": {
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "default": 0
                                     }
                                 },
                                 "required": [
                                     "razorpay_order_id",
                                     "razorpay_payment_id",
-                                    "razorpay_signature",
-                                    "service_id",
-                                    "package_id"
+                                    "razorpay_signature"
                                 ]
                             }
                         }
@@ -11554,176 +11559,6 @@
                 ],
                 "operationId": "get_wpss_v1_settings",
                 "security": [],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "401": {
-                        "description": "Authentication required or invalid."
-                    },
-                    "403": {
-                        "description": "Not permitted."
-                    },
-                    "404": {
-                        "description": "Not found."
-                    }
-                }
-            }
-        },
-        "/wpss/v1/storage/providers": {
-            "x-wpss-tier": "pro",
-            "get": {
-                "tags": [
-                    "Storage"
-                ],
-                "operationId": "get_wpss_v1_storage_providers",
-                "security": [
-                    {
-                        "basicAuth": []
-                    },
-                    {
-                        "cookieAuth": [],
-                        "wpNonce": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "401": {
-                        "description": "Authentication required or invalid."
-                    },
-                    "403": {
-                        "description": "Not permitted."
-                    },
-                    "404": {
-                        "description": "Not found."
-                    }
-                }
-            }
-        },
-        "/wpss/v1/storage/upload": {
-            "x-wpss-tier": "pro",
-            "post": {
-                "tags": [
-                    "Storage"
-                ],
-                "operationId": "post_wpss_v1_storage_upload",
-                "security": [
-                    {
-                        "basicAuth": []
-                    },
-                    {
-                        "cookieAuth": [],
-                        "wpNonce": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "401": {
-                        "description": "Authentication required or invalid."
-                    },
-                    "403": {
-                        "description": "Not permitted."
-                    },
-                    "404": {
-                        "description": "Not found."
-                    }
-                },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "context": {
-                                        "type": "string",
-                                        "description": "Upload context (delivery, portfolio)."
-                                    },
-                                    "order_id": {
-                                        "type": "integer",
-                                        "description": "Related order ID."
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/wpss/v1/storage/{file_id}": {
-            "x-wpss-tier": "pro",
-            "delete": {
-                "tags": [
-                    "Storage"
-                ],
-                "operationId": "delete_wpss_v1_storage_file_id",
-                "security": [
-                    {
-                        "basicAuth": []
-                    },
-                    {
-                        "cookieAuth": [],
-                        "wpNonce": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "file_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": ""
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "401": {
-                        "description": "Authentication required or invalid."
-                    },
-                    "403": {
-                        "description": "Not permitted."
-                    },
-                    "404": {
-                        "description": "Not found."
-                    }
-                }
-            }
-        },
-        "/wpss/v1/storage/{file_id}/url": {
-            "x-wpss-tier": "pro",
-            "get": {
-                "tags": [
-                    "Storage"
-                ],
-                "operationId": "get_wpss_v1_storage_file_id_url",
-                "security": [
-                    {
-                        "basicAuth": []
-                    },
-                    {
-                        "cookieAuth": [],
-                        "wpNonce": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "file_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": ""
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "Success"
