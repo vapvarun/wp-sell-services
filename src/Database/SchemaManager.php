@@ -254,7 +254,6 @@ class SchemaManager {
 	}
 
 	/**
-<<<<<<< HEAD
 	 * Remove the duplicate rows that would block the 1.7.1 unique keys.
 	 *
 	 * Ledger idempotency and one-review-per-order were read-then-insert with
@@ -267,20 +266,17 @@ class SchemaManager {
 	 * different amount is a bookkeeping question, not a duplicate, and is
 	 * logged for a human instead. Idempotent: nothing to remove on a clean or
 	 * fresh install.
-=======
 	 * Indexes for the surfaces that filter on unindexed columns (1.7.1).
 	 *
 	 * Review moderation lists by (status, created_at); the vendor directory
 	 * filters on availability and country; the buyer's order list filters by
 	 * (customer_id, status) and sorts by created_at. Each ADD KEY is guarded by
 	 * SHOW INDEX so this is safe to run on every install()/sync().
->>>>>>> 1.7.1-F16
 	 *
 	 * @since 1.7.1
 	 *
 	 * @return void
 	 */
-<<<<<<< HEAD
 	private function dedupe_for_unique_keys(): void {
 		$ledger  = $this->get_table_name( 'wallet_transactions' );
 		$reviews = $this->get_table_name( 'reviews' );
@@ -356,7 +352,6 @@ class SchemaManager {
 		}
 
 		wpss_log( sprintf( 'Schema 1.7.1: removed %d duplicate %s row(s); see the audit log for ids.', count( $rows ), $object_type ) );
-=======
 	private function add_1_7_1_indexes(): void {
 		$this->maybe_add_index( 'reviews', 'status_created', 'status, created_at' );
 		$this->maybe_add_index( 'vendor_profiles', 'availability', 'is_available, vacation_mode' );
@@ -389,7 +384,6 @@ class SchemaManager {
 		// Identifiers are plugin-controlled constants; no data is interpolated.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$this->wpdb->query( "ALTER TABLE `{$full_table}` ADD KEY `{$name}` ({$columns})" );
->>>>>>> 1.7.1-F16
 	}
 
 	/**
