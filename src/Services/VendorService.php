@@ -91,8 +91,7 @@ class VendorService {
 		}
 
 		// Determine vendor status based on registration mode setting.
-		$vendor_settings   = get_option( 'wpss_vendor', array() );
-		$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
 		// If registration is closed, reject immediately.
 		if ( 'closed' === $registration_mode ) {
@@ -208,8 +207,7 @@ class VendorService {
 		}
 
 		// Check if registration is closed.
-		$vendor_settings   = get_option( 'wpss_vendor', array() );
-		$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
 		if ( 'closed' === $registration_mode ) {
 			return array(

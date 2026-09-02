@@ -265,7 +265,7 @@ JS;
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'wp-sell-services' ) );
 		}
 
-		$is_enabled    = ! empty( get_option( 'wpss_vendor', array() )['moderate_reviews'] ?? '' );
+		$is_enabled    = (bool) wpss_get_option( 'vendor', 'moderate_reviews' );
 		$status_filter = $this->read_status_filter();
 		$current_page  = $this->read_paged();
 		$search        = $this->read_search();

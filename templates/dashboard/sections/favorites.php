@@ -79,7 +79,7 @@ if ( ! empty( $favorite_ids ) ) {
 			<?php
 			foreach ( $services as $service ) :
 				$price_cents = (int) get_post_meta( $service->ID, '_wpss_starting_price', true );
-				$currency    = get_option( 'wpss_general', array() )['currency'] ?? 'USD';
+				$currency    = wpss_get_currency();
 				$vendor_id   = (int) $service->post_author;
 				$vendor      = get_userdata( $vendor_id );
 				$thumbnail   = get_the_post_thumbnail_url( $service->ID, 'medium_large' );

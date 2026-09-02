@@ -1083,8 +1083,7 @@ class Shortcodes {
 		}
 
 		// Check if registration is open.
-		$vendor_settings   = get_option( 'wpss_vendor', array() );
-		$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
 		if ( 'closed' === $registration_mode ) {
 			?>

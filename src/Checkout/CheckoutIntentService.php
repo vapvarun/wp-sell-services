@@ -186,7 +186,42 @@ class CheckoutIntentService {
 		$intent->taxable_base = $totals['subtotal'] + $totals['addons_total'];
 		$intent->tax          = $totals['tax'];
 
-		return $intent;
+		return $this->check_order_limits( $totals['total'] ) ?? $intent;
+	}
+
+	/**
+	 * Enforce the owner's minimum / maximum order amount.
+	 *
+	 * Both are standalone options from Settings > General. 0 means no limit on
+	 * that side. Applies to new purchases only - paying a phase of an existing
+	 * order is a partial amount the limits were never meant to cover.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param float $total Checkout total, tax included.
+	 * @return \WP_Error|null Error when outside the range, null when fine.
+	 */
+	private function check_order_limits( float $total ): ?\WP_Error {
+		$min = (float) get_option( 'wpss_min_order_amount', 0 );
+		$max = (float) get_option( 'wpss_max_order_amount', 0 );
+
+		if ( $min > 0 && $total < $min ) {
+			return new \WP_Error(
+				'wpss_below_minimum',
+				/* translators: %s: formatted minimum order amount */
+				sprintf( __( 'The minimum order amount is %s.', 'wp-sell-services' ), wpss_format_price( $min ) )
+			);
+		}
+
+		if ( $max > 0 && $total > $max ) {
+			return new \WP_Error(
+				'wpss_above_maximum',
+				/* translators: %s: formatted maximum order amount */
+				sprintf( __( 'The maximum order amount is %s.', 'wp-sell-services' ), wpss_format_price( $max ) )
+			);
+		}
+
+		return null;
 	}
 
 	/**
@@ -282,7 +317,7 @@ class CheckoutIntentService {
 
 		$intent->tax = $line['tax'];
 
-		return $intent;
+		return $this->check_order_limits( $line['total'] ) ?? $intent;
 	}
 
 	/**

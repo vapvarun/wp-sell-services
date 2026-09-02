@@ -411,6 +411,7 @@ final class Plugin {
 			// per-user grants existing vendors carry.
 			if ( $installed_version && version_compare( $installed_version, '1.7.1', '<' ) ) {
 				Activator::migrate_vendor_user_caps();
+				Activator::migrate_advanced_standalone_keys();
 			}
 
 			// Note: the wallet-ledger reconciliation is NOT here. It runs off its
@@ -1825,8 +1826,7 @@ final class Plugin {
 		add_filter(
 			'wpss_vendor_registration_open',
 			function ( bool $default_value ): bool {
-				$vendor_settings   = get_option( 'wpss_vendor', array() );
-				$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+				$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 				return 'closed' !== $registration_mode;
 			}
 		);
@@ -1835,8 +1835,7 @@ final class Plugin {
 		add_filter(
 			'wpss_auto_approve_vendors',
 			function ( bool $default_value ): bool {
-				$vendor_settings   = get_option( 'wpss_vendor', array() );
-				$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+				$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 				return 'open' === $registration_mode;
 			}
 		);
@@ -1845,8 +1844,7 @@ final class Plugin {
 		add_filter(
 			'wpss_require_service_moderation',
 			function ( bool $default_value ): bool {
-				$vendor_settings = get_option( 'wpss_vendor', array() );
-				return ! empty( $vendor_settings['require_service_moderation'] );
+				return (bool) wpss_get_option( 'vendor', 'require_service_moderation' );
 			}
 		);
 

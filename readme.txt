@@ -265,6 +265,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 = 1.7.1 - September 2026 =
 
+* New      - Review window setting.
 * Fix      - Refunds made in the PayPal or Razorpay dashboard now update the order and reverse the vendor credit.
 * Fix      - A Stripe payment webhook arriving before checkout finishes no longer creates a duplicate order, and cart refunds land on the right order.
 * Fix      - Offline and manual gateway refunds are marked as pending manual payment instead of being reported as sent.
@@ -274,6 +275,8 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Improve  - Personal data export now covers disputes, deliveries, requirements, withdrawals, proposals, reports and notifications.
 * Fix      - Demo delete removes only demo content, and every writing CLI command asks for confirmation and refuses on production without --force.
 * Fix      - Pay buttons for tips, milestones, extensions and proposals are hidden on a store rail that cannot take a single-order payment instead of linking to a page it ignores.
+* Fix      - Orders left without requirements now auto-start by default instead of being cancelled after the timeout.
+* Fix      - Price decimals and currency position settings are applied; minimum and maximum order amounts are enforced at checkout.
 * Dev      - Stored files record which storage provider holds them.
 
 = 1.7.0 - August 2026 =

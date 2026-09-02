@@ -24,10 +24,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$wpss_vendor_settings = get_option( 'wpss_vendor', array() );
-$wpss_max_services    = isset( $wpss_vendor_settings['max_services_per_vendor'] )
-	? absint( $wpss_vendor_settings['max_services_per_vendor'] )
-	: 0;
+$wpss_max_services = absint( wpss_get_option( 'vendor', 'max_services_per_vendor' ) );
 
 /**
  * Filter the service-count promise on the Become a Vendor page.

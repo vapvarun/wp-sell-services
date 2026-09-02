@@ -609,21 +609,20 @@ class API {
 	 * @return \WP_REST_Response
 	 */
 	public function get_public_settings(): \WP_REST_Response {
-		$vendor_settings = get_option( 'wpss_vendor', array() );
-		$pages_settings  = get_option( 'wpss_pages', array() );
+		$pages_settings = get_option( 'wpss_pages', array() );
 
 		$settings = [
 			'currency'            => wpss_get_currency(),
 			'currency_symbol'     => wpss_get_currency_symbol(),
-			'currency_position'   => get_option( 'wpss_currency_position', 'before' ),
-			'decimal_places'      => (int) get_option( 'wpss_decimal_places', 2 ),
+			'currency_position'   => wpss_get_option( 'advanced', 'currency_position' ),
+			'decimal_places'      => wpss_get_decimal_places(),
 			'min_order_amount'    => (float) get_option( 'wpss_min_order_amount', 5 ),
 			'max_order_amount'    => (float) get_option( 'wpss_max_order_amount', 10000 ),
-			'vendor_registration' => $vendor_settings['vendor_registration'] ?? 'open',
-			'service_moderation'  => ! empty( $vendor_settings['require_service_moderation'] ),
-			'review_moderation'   => ! empty( $vendor_settings['moderate_reviews'] ),
-			'max_file_size'       => (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024, // MB to bytes.
-			'allowed_file_types'  => explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) ),
+			'vendor_registration' => wpss_get_option( 'vendor', 'vendor_registration' ),
+			'service_moderation'  => (bool) wpss_get_option( 'vendor', 'require_service_moderation' ),
+			'review_moderation'   => (bool) wpss_get_option( 'vendor', 'moderate_reviews' ),
+			'max_file_size'       => (int) wpss_get_option( 'advanced', 'max_file_size' ) * 1024 * 1024, // MB to bytes.
+			'allowed_file_types'  => explode( ',', (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ),
 			// Page IDs, or NULL where the site has no published page for that
 			// key. `vendors` and `terms` are never created by the installer, so
 			// they are null on a stock install until the owner maps them —
@@ -809,7 +808,7 @@ class API {
 					 * all already read; this is the fourth reader agreeing with
 					 * them instead of the one disagreeing.
 					 */
-					'disputes'       => (bool) wpss_get_option( 'orders', 'allow_disputes', true ),
+					'disputes'       => (bool) wpss_get_option( 'orders', 'allow_disputes' ),
 					'realtime'       => ! empty( ( new \WPSellServices\Services\RealtimeService() )->get_client_config()['enabled'] ),
 
 					/*

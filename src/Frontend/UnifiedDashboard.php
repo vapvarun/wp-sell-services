@@ -652,8 +652,7 @@ class UnifiedDashboard {
 					</div>
 					<?php
 				elseif ( ! $is_vendor && ! $is_pending ) :
-					$sb_vendor_settings   = get_option( 'wpss_vendor', array() );
-					$sb_registration_mode = $sb_vendor_settings['vendor_registration'] ?? 'open';
+					$sb_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 					if ( 'closed' !== $sb_registration_mode ) :
 						?>
 					<div class="wpss-dashboard__become-vendor">
@@ -904,8 +903,7 @@ class UnifiedDashboard {
 		$is_vendor = $this->vendor_service->is_vendor( $user_id );
 
 		// Check if vendor registration is open.
-		$fb_vendor_settings   = get_option( 'wpss_vendor', array() );
-		$fb_registration_mode = $fb_vendor_settings['vendor_registration'] ?? 'open';
+		$fb_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 		$registration_is_open = 'closed' !== $fb_registration_mode;
 
 		// Vendor-only sections: show a CTA to become a vendor.
@@ -1065,8 +1063,7 @@ class UnifiedDashboard {
 		}
 
 		// Reject if vendor registration is closed.
-		$ajax_vendor_settings   = get_option( 'wpss_vendor', array() );
-		$ajax_registration_mode = $ajax_vendor_settings['vendor_registration'] ?? 'open';
+		$ajax_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 		if ( 'closed' === $ajax_registration_mode ) {
 			wp_send_json_error( array( 'message' => __( 'Vendor registration is currently closed.', 'wp-sell-services' ) ) );
 		}
@@ -1086,8 +1083,7 @@ class UnifiedDashboard {
 
 		if ( $result ) {
 			// Check if approval is required (vendor will be in pending state).
-			$vendor_settings   = get_option( 'wpss_vendor', array() );
-			$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+			$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
 			if ( 'approval' === $registration_mode ) {
 				wp_send_json_success(

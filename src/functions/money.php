@@ -33,7 +33,7 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 	if ( $symbol === $currency ) {
 		$symbol .= ' ';
 	}
-	$decimals = wpss_get_currency_decimals( $currency );
+	$decimals = wpss_get_decimal_places( $currency );
 
 	/**
 	 * Filter the formatted price.
@@ -47,7 +47,8 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 	// the latter, which reads as a typo — and negatives became reachable in the
 	// UI once refunds started driving vendor balances below zero.
 	$is_negative = $price < 0;
-	$formatted   = $symbol . number_format( abs( $price ), $decimals );
+	$number      = number_format( abs( $price ), $decimals );
+	$formatted   = 'after' === wpss_get_option( 'advanced', 'currency_position' ) ? $number . $symbol : $symbol . $number;
 
 	if ( $is_negative ) {
 		$formatted = '-' . $formatted;
@@ -59,6 +60,25 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 		$price,
 		$currency
 	);
+}
+
+/**
+ * Decimal places to DISPLAY a price with.
+ *
+ * The owner's "Price Decimal Places" setting when it has been saved, else the
+ * currency's own minor-unit count. Display only: minor-unit conversion for
+ * gateways keeps using wpss_get_currency_decimals(), because a JPY charge is
+ * still in whole yen whatever the site shows.
+ *
+ * @since 1.7.1
+ *
+ * @param string $currency Currency code. Defaults to the store currency.
+ * @return int
+ */
+function wpss_get_decimal_places( string $currency = '' ): int {
+	$saved = get_option( 'wpss_decimal_places', null );
+
+	return null === $saved ? wpss_get_currency_decimals( $currency ) : (int) $saved;
 }
 
 /**
@@ -685,8 +705,7 @@ function wpss_get_price_input_attrs( string $currency = '' ): array {
  */
 function wpss_get_currency(): string {
 	// Read from wpss_general settings array.
-	$general_settings = get_option( 'wpss_general', array() );
-	$currency         = $general_settings['currency'] ?? 'USD';
+	$currency = (string) wpss_get_option( 'general', 'currency' );
 
 	/**
 	 * Filter the default currency.

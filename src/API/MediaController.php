@@ -119,7 +119,7 @@ class MediaController extends RestController {
 		$file = $files['file'];
 
 		// Validate file size.
-		$max_size = (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024;
+		$max_size = (int) wpss_get_option( 'advanced', 'max_file_size' ) * 1024 * 1024;
 		if ( $file['size'] > $max_size ) {
 			return new WP_Error(
 				'file_too_large',
@@ -136,7 +136,7 @@ class MediaController extends RestController {
 		}
 
 		// Validate file type against allowed list using the verified extension.
-		$allowed_types = explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) );
+		$allowed_types = explode( ',', (string) wpss_get_option( 'advanced', 'allowed_file_types' ) );
 		$file_ext      = strtolower( $filetype['ext'] );
 
 		if ( ! in_array( $file_ext, $allowed_types, true ) ) {

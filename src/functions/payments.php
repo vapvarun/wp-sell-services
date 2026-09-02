@@ -130,13 +130,12 @@ function wpss_get_checkout_badge_defaults(): array {
  * @return array<int, array<string, string>> Renderable badges.
  */
 function wpss_get_checkout_badges( array $package ): array {
-	$settings = get_option( 'wpss_general', array() );
-
-	if ( isset( $settings['checkout_badges_enabled'] ) && ! $settings['checkout_badges_enabled'] ) {
+	if ( ! wpss_get_option( 'general', 'checkout_badges_enabled' ) ) {
 		return array();
 	}
 
-	$owner    = isset( $settings['checkout_badges'] ) && is_array( $settings['checkout_badges'] ) ? $settings['checkout_badges'] : array();
+	$owner    = wpss_get_option( 'general', 'checkout_badges' );
+	$owner    = is_array( $owner ) ? $owner : array();
 	$defaults = wpss_get_checkout_badge_defaults();
 
 	$days      = isset( $package['delivery_days'] ) ? (int) $package['delivery_days'] : 0;
