@@ -128,8 +128,9 @@ class CheckoutIntentService {
 			return new \WP_Error( 'wpss_empty_cart', __( 'Your cart is empty.', 'wp-sell-services' ) );
 		}
 
-		$lines  = array();
-		$totals = array(
+		$lines   = array();
+		$vendors = array();
+		$totals  = array(
 			'subtotal'     => 0.0,
 			'addons_total' => 0.0,
 			'tax'          => 0.0,
@@ -149,6 +150,8 @@ class CheckoutIntentService {
 			if ( ! $pkg ) {
 				continue;
 			}
+
+			$vendors[ (int) get_post_field( 'post_author', $service_id ) ] = true;
 
 			$line = $this->price_line(
 				$service_id,
@@ -171,15 +174,28 @@ class CheckoutIntentService {
 			return new \WP_Error( 'wpss_invalid_amount', __( 'Invalid amount.', 'wp-sell-services' ) );
 		}
 
+		// A rail that splits at charge time (Pro's Stripe Connect) needs ONE
+		// vendor on the intent. A cart from a single vendor carries vendor_id
+		// like a single purchase does; a cart spanning vendors carries the
+		// list, and the rail keeps the whole charge on the platform - the
+		// wallet settles each vendor on completion as it always has.
+		$vendor_ids = array_keys( $vendors );
+		$metadata   = array(
+			'is_multi_checkout' => 1,
+			'customer_id'       => $buyer_id,
+		);
+		if ( 1 === count( $vendor_ids ) ) {
+			$metadata['vendor_id'] = $vendor_ids[0];
+		} else {
+			$metadata['vendor_ids'] = implode( ',', $vendor_ids );
+		}
+
 		$intent = CheckoutIntent::cart(
 			$lines,
 			$totals['total'],
 			wpss_get_currency(),
 			$buyer_id,
-			array(
-				'is_multi_checkout' => 1,
-				'customer_id'       => $buyer_id,
-			)
+			$metadata
 		);
 
 		$intent->addons_total = $totals['addons_total'];
@@ -311,6 +327,10 @@ class CheckoutIntentService {
 				'service_id'  => $service_id,
 				'package_id'  => $package_id,
 				'customer_id' => $buyer_id,
+				// Every order type names its vendor. Without this only
+				// pay-order intents did, so a split rail (Pro Connect) never
+				// split a catalog purchase.
+				'vendor_id'   => (int) $service->post_author,
 			),
 			$line['subtotal'] + $line['addons_total']
 		);

@@ -278,6 +278,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Orders left without requirements now auto-start by default instead of being cancelled after the timeout.
 * Fix      - Price decimals and currency position settings are applied; minimum and maximum order amounts are enforced at checkout.
 * Dev      - Stored files record which storage provider holds them.
+* Dev      - Payment intents carry the vendor id for every order type.
 
 = 1.7.0 - August 2026 =
 
