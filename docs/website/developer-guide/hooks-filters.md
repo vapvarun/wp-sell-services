@@ -173,7 +173,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | `wpss_stripe_payment_intent_args` | `array $params, int $order_id, int $vendor_id` | `src/Integrations/Stripe/StripeGateway.php:302` |
 | `wpss_rest_create_payment_intent` | `null, object $gateway, float $amount, string $currency, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:267` |
 | `wpss_rest_confirm_payment` | `null, object $gateway, string $payment_id, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:316` |
-| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:606` |
+| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:626` |
 
 **`wpss_stripe_payment_intent_args`** lets you modify Stripe PaymentIntent parameters before creation:
 
@@ -231,16 +231,16 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_vendor_registered` | `int $user_id, array $profile_data` | `src/Services/VendorService.php:182` |
-| `wpss_vendor_profile_updated` | `int $user_id, array $filtered_data` | `src/Services/VendorService.php:492` |
-| `wpss_vendor_vacation_mode_changed` | `int $user_id, bool $enabled, string $message` | `src/Services/VendorService.php:543` |
-| `wpss_vendor_tier_changed` | `int $user_id, string $tier` | `src/Services/VendorService.php:584` |
+| `wpss_vendor_profile_updated` | `int $user_id, array $filtered_data` | `src/Services/VendorService.php:558` |
+| `wpss_vendor_vacation_mode_changed` | `int $user_id, bool $enabled, string $message` | `src/Services/VendorService.php:609` |
+| `wpss_vendor_tier_changed` | `int $user_id, string $tier` | `src/Services/VendorService.php:650` |
 | `wpss_vendor_level_promoted` | `int $user_id, string $new_level, string $current_level` | `src/Services/OrderWorkflowManager.php:617` |
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:285` |
-| `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Admin/Pages/VendorsPage.php:1151` |
-| `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1556` |
+| `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:377` |
+| `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1510` |
 | `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2134` |
-| `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:371` |
-| `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:425` |
+| `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:437` |
+| `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:491` |
 
 ## Financial Actions
 
@@ -275,10 +275,10 @@ tip. Tips are excluded from commission by default, so the two usually match.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_dispute_opened` | `int $dispute_id, int $order_id, int $opened_by, array $data` | `src/Services/DisputeService.php:326` |
-| `wpss_dispute_evidence_added` | `int $dispute_id, int $user_id` | `src/Services/DisputeService.php:461` |
-| `wpss_dispute_status_changed` | `int $dispute_id, string $status, string $old_status` | `src/Services/DisputeService.php:735` |
-| `wpss_dispute_resolved` | `int $dispute_id, string $resolution, object $dispute, float $refund_amount` | `src/Services/DisputeService.php:861` |
+| `wpss_dispute_opened` | `int $dispute_id, int $order_id, int $opened_by, array $data` | `src/Services/DisputeService.php:327` |
+| `wpss_dispute_evidence_added` | `int $dispute_id, int $user_id` | `src/Services/DisputeService.php:462` |
+| `wpss_dispute_status_changed` | `int $dispute_id, string $status, string $old_status` | `src/Services/DisputeService.php:758` |
+| `wpss_dispute_resolved` | `int $dispute_id, string $resolution, object $dispute, float $refund_amount` | `src/Services/DisputeService.php:884` |
 | `wpss_dispute_response_submitted` | `int $message_id, int $dispute_id, int $user_id` | `src/Services/DisputeWorkflowManager.php:208` |
 | `wpss_dispute_escalated` | `int $dispute_id, string $reason, int $escalated_by` | `src/Services/DisputeWorkflowManager.php:335` |
 | `wpss_dispute_cancelled` | `int $dispute_id, int $user_id, string $reason` | `src/Services/DisputeWorkflowManager.php:498` |
@@ -348,7 +348,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2413` |
-| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1945` |
+| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1946` |
 
 ### Admin Filters
 
@@ -634,7 +634,7 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | `wpss_portfolio_item_updated` | `int $item_id, array $data` | `src/Services/PortfolioService.php:294` |
 | `wpss_portfolio_item_deleted` | `int $item_id, object $item` | `src/Services/PortfolioService.php:344` |
 | `wpss_settings_tab_{tab}` | *(none)* | `Settings.php:985` |
-| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2073` |
+| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2074` |
 
 ## Filters
 
@@ -665,17 +665,17 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:57` |
-| `wpss_currency` | `$currency` | `src/functions/money.php:836` |
+| `wpss_currency` | `$currency` | `src/functions/money.php:856` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/misc.php:36` |
 | `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:147` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:92` |
-| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:871` |
-| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:898` |
-| `wpss_currencies` | `$currencies` | `src/functions/money.php:1693` |
+| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:891` |
+| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:918` |
+| `wpss_currencies` | `$currencies` | `src/functions/money.php:1713` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:126` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:126` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:651` |
-| `wpss_wallet_manager` | `null` | `src/functions/money.php:1715` |
+| `wpss_wallet_manager` | `null` | `src/functions/money.php:1735` |
 
 ### Currency System Filters (1.2.1)
 
@@ -683,10 +683,10 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1672` |
+| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1692` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:185` |
-| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:798` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3790` |
+| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:818` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3792` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:823` |
 
 **`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
@@ -759,7 +759,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:647` |
 | `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1290` |
 | `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1363` |
-| `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:224` |
+| `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:226` |
 | `wpss_blocks` | `$blocks` | `src/Blocks/BlocksManager.php:95` |
 | `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:266` |
 
@@ -768,7 +768,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_realtime_settings` | `array $settings` | `RealtimeService.php` |
-| `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:448` |
+| `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:503` |
 | `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/API/ReviewsController.php:425` |
 | `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:615` |
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:112` |

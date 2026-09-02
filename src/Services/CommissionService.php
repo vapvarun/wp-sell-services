@@ -568,6 +568,8 @@ class CommissionService {
 			return false;
 		}
 
+		$old = $this->get_vendor_commission_rate( $vendor_id );
+
 		if ( null === $rate ) {
 			// Reset to global: set column to SQL NULL.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -589,6 +591,20 @@ class CommissionService {
 				array( 'user_id' => $vendor_id ),
 				array( '%f', '%s' ),
 				array( '%d' )
+			);
+		}
+
+		if ( false !== $result && $old !== $rate ) {
+			( new AuditLogService() )->log(
+				'commission.rate_changed',
+				'vendor',
+				$vendor_id,
+				array(
+					'action'     => 'update',
+					'from_value' => null === $old ? 'global' : (string) $old,
+					'to_value'   => null === $rate ? 'global' : (string) $rate,
+					'context'    => array( 'scope' => 'vendor' ),
+				)
 			);
 		}
 

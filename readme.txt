@@ -269,6 +269,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 = 1.7.1 - September 2026 =
 
+* Improve  - The audit log now records withdrawals, dispute outcomes, vendor status changes, commission changes, moderation decisions, payments and every ledger entry; retention defaults to one year.
 * New      - Review window setting.
 * New      - Vendors get Proposals and Reviews sections in the dashboard, with review replies and declined-proposal status.
 * Improve  - Dispute pages show the outcome, refund amount and admin note to both parties; the link after posting a request opens the request list.

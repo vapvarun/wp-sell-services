@@ -13,6 +13,7 @@ namespace WPSellServices\Services;
 use WPSellServices\Database\Repositories\OrderRepository;
 use WPSellServices\Models\Dispute;
 use WPSellServices\Models\ServiceOrder;
+use WPSellServices\Services\AuditLogService;
 use WPSellServices\Services\OrderService;
 
 defined( 'ABSPATH' ) || exit;
@@ -725,6 +726,28 @@ class DisputeService {
 		}
 
 		if ( ! $no_op ) {
+			$fields = (array) ( $context['fields'] ?? array() );
+			( new AuditLogService() )->log(
+				'dispute.transition',
+				'dispute',
+				$dispute_id,
+				array(
+					'action'     => $to,
+					'from_value' => $from,
+					'to_value'   => $to,
+					'context'    => array_filter(
+						array(
+							'order_id'      => (int) $dispute->order_id,
+							'resolution'    => $fields['resolution'] ?? null,
+							'refund_amount' => $fields['refund_amount'] ?? null,
+							'resolved_by'   => $fields['resolved_by'] ?? null,
+							'note'          => '' !== $note ? $note : null,
+						),
+						static fn( $value ) => null !== $value
+					),
+				)
+			);
+
 			/**
 			 * Fires when dispute status changes.
 			 *

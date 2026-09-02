@@ -31,13 +31,53 @@ class AuditLogService {
 	/**
 	 * Option name holding the retention period in days.
 	 *
-	 * A value of 0 (default) means "never delete". Any positive integer
-	 * activates the daily cleanup cron which deletes rows older than N days.
+	 * A value of 0 means "never delete". Any positive integer activates the
+	 * daily cleanup cron which deletes rows older than N days.
 	 *
 	 * @since 1.1.0
 	 * @var string
 	 */
 	public const RETENTION_OPTION = 'wpss_audit_log_retention_days';
+
+	/**
+	 * Retention applied when the option was never saved: one year.
+	 *
+	 * @since 1.7.1
+	 * @var int
+	 */
+	public const RETENTION_DEFAULT = 365;
+
+	/**
+	 * Every event type the plugin writes. The admin filter lists these;
+	 * add the name here when adding a log() call.
+	 *
+	 * @since 1.7.1
+	 * @var string[]
+	 */
+	public const EVENT_TYPES = array(
+		'order.status_change',
+		'order.paid',
+		'order.cancel',
+		'order.refund',
+		'order.refund_pending',
+		'order.refund_failed',
+		'order.earnings_reversal_failed',
+		'withdrawal.requested',
+		'withdrawal.approved',
+		'withdrawal.rejected',
+		'withdrawal.paid',
+		'dispute.transition',
+		'vendor.approved',
+		'vendor.rejected',
+		'vendor.suspended',
+		'vendor.pending',
+		'commission.rate_changed',
+		'service.approved',
+		'service.rejected',
+		'review.approved',
+		'review.rejected',
+		'ledger.insert',
+	);
 
 	/**
 	 * Daily cron hook name used for the retention cleanup job.
@@ -63,13 +103,18 @@ class AuditLogService {
 	}
 
 	/**
-	 * Bind the retention-cleanup handler to its scheduled cron event.
+	 * Bind the retention-cleanup handler to its cron event and subscribe to
+	 * the domain actions that are the single seam for their decision.
 	 *
-	 * Called from the plugin bootstrap (mirrors TippingService/MilestoneService/
-	 * ExtensionOrderService). Activator::schedule_cron_events() schedules
-	 * {@see self::CLEANUP_HOOK}; without this binding the event fired with no
-	 * handler, so `wpss_audit_log_retention_days` never actually pruned anything
-	 * and the audit table grew unbounded.
+	 * Called from the plugin bootstrap. Activator::schedule_cron_events()
+	 * schedules {@see self::CLEANUP_HOOK}; without this binding the event
+	 * fired with no handler and the audit table grew unbounded.
+	 *
+	 * Decisions whose only shared point is an action (service moderation is
+	 * fired from eight writers, order payment from every rail) are logged
+	 * here rather than at each writer. Seams that are one function
+	 * (dispute transition, ledger insert, vendor status, commission rate,
+	 * review moderation) call log() directly with their before/after.
 	 *
 	 * @since 1.2.2
 	 *
@@ -81,6 +126,142 @@ class AuditLogService {
 			function (): void {
 				$this->cleanup_expired();
 			}
+		);
+
+		add_action(
+			'wpss_withdrawal_requested',
+			function ( int $withdrawal_id, int $vendor_id, float $amount ): void {
+				$this->log(
+					'withdrawal.requested',
+					'withdrawal',
+					$withdrawal_id,
+					array(
+						'action'   => 'request',
+						'to_value' => 'pending',
+						'context'  => array(
+							'vendor_id' => $vendor_id,
+							'amount'    => $amount,
+						),
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_withdrawal_processed',
+			function ( int $withdrawal_id, string $status, object $withdrawal ): void {
+				$events = array(
+					'approved'  => 'withdrawal.approved',
+					'rejected'  => 'withdrawal.rejected',
+					'completed' => 'withdrawal.paid',
+				);
+				if ( ! isset( $events[ $status ] ) ) {
+					return;
+				}
+				$this->log(
+					$events[ $status ],
+					'withdrawal',
+					$withdrawal_id,
+					array(
+						'action'     => 'completed' === $status ? 'pay' : $status,
+						'from_value' => (string) ( $withdrawal->status ?? '' ),
+						'to_value'   => $status,
+						'context'    => array(
+							'vendor_id' => (int) ( $withdrawal->vendor_id ?? 0 ),
+							'amount'    => (float) ( $withdrawal->amount ?? 0 ),
+							'method'    => (string) ( $withdrawal->method ?? '' ),
+						),
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		add_action(
+			'wpss_order_paid',
+			function ( int $order_id, string $transaction_id ): void {
+				$order = wpss_get_order( $order_id );
+				$this->log(
+					'order.paid',
+					'order',
+					$order_id,
+					array(
+						'action'     => 'pay',
+						'from_value' => 'pending',
+						'to_value'   => 'paid',
+						'context'    => array(
+							'gateway'        => (string) ( $order->payment_method ?? '' ),
+							'transaction_id' => $transaction_id,
+							'amount'         => (float) ( $order->total ?? 0 ),
+							'currency'       => (string) ( $order->currency ?? '' ),
+						),
+					)
+				);
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'wpss_service_approved',
+			function ( int $service_id, string $notes = '' ): void {
+				$this->log(
+					'service.approved',
+					'service',
+					$service_id,
+					array(
+						'action'   => 'approve',
+						'to_value' => 'approved',
+						'context'  => array( 'notes' => $notes ),
+					)
+				);
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'wpss_service_rejected',
+			function ( int $service_id, string $reason = '' ): void {
+				$this->log(
+					'service.rejected',
+					'service',
+					$service_id,
+					array(
+						'action'   => 'reject',
+						'to_value' => 'rejected',
+						'context'  => array( 'reason' => $reason ),
+					)
+				);
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'update_option_wpss_commission',
+			function ( $old, $new ): void {
+				$from = (string) ( is_array( $old ) ? ( $old['commission_rate'] ?? '' ) : '' );
+				$to   = (string) ( is_array( $new ) ? ( $new['commission_rate'] ?? '' ) : '' );
+				if ( $from !== $to ) {
+					$this->log(
+						'commission.rate_changed',
+						'settings',
+						0,
+						array(
+							'action'     => 'update',
+							'from_value' => $from,
+							'to_value'   => $to,
+							'context'    => array( 'scope' => 'global' ),
+						)
+					);
+				}
+			},
+			10,
+			2
 		);
 	}
 
@@ -278,8 +459,8 @@ class AuditLogService {
 	/**
 	 * Delete audit rows older than the configured retention period.
 	 *
-	 * Invoked by the `wpss_audit_log_cleanup` daily cron. A retention value
-	 * of 0 (the default) means "never delete" and is a no-op.
+	 * Invoked by the `wpss_audit_log_cleanup` daily cron. A saved value of 0
+	 * means "never delete" and is a no-op; an unsaved option keeps one year.
 	 *
 	 * @since 1.1.0
 	 *
@@ -288,7 +469,7 @@ class AuditLogService {
 	public function cleanup_expired(): int {
 		global $wpdb;
 
-		$retention_days = (int) get_option( self::RETENTION_OPTION, 0 );
+		$retention_days = (int) get_option( self::RETENTION_OPTION, self::RETENTION_DEFAULT );
 
 		if ( $retention_days <= 0 ) {
 			return 0;

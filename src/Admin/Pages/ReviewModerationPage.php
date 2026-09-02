@@ -26,6 +26,7 @@ namespace WPSellServices\Admin\Pages;
 
 use WPSellServices\Models\Review;
 use WPSellServices\Services\Icon;
+use WPSellServices\Services\ReviewService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -700,31 +701,9 @@ JS;
 			wp_send_json_error( array( 'message' => __( 'Invalid review.', 'wp-sell-services' ) ), 400 );
 		}
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_reviews';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$updated = $wpdb->update(
-			$table,
-			array( 'status' => $new_status ),
-			array( 'id' => $review_id ),
-			array( '%s' ),
-			array( '%d' )
-		);
-
-		if ( false === $updated ) {
+		if ( ! ( new ReviewService() )->moderate( $review_id, $new_status ) ) {
 			wp_send_json_error( array( 'message' => __( 'Could not update the review.', 'wp-sell-services' ) ), 500 );
 		}
-
-		/**
-		 * Fires after an admin moderates a review from the queue.
-		 *
-		 * @since 1.2.0
-		 *
-		 * @param int    $review_id  Moderated review ID.
-		 * @param string $new_status New review status.
-		 */
-		do_action( 'wpss_review_moderated', $review_id, $new_status );
 
 		wp_send_json_success(
 			array(
