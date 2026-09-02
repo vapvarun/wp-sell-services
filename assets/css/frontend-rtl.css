@@ -443,6 +443,7 @@ article.wpss-service-card:hover {
 
 .wpss-star.filled {
 	color: var(--wpss-star);
+	fill: currentColor;
 }
 
 .wpss-rating-count {

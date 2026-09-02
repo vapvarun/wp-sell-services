@@ -53,6 +53,41 @@ function wpss_status_class( string $status ): string {
 }
 
 /**
+ * Render a five-star rating row.
+ *
+ * The ONE star renderer. Every surface that showed a rating used to draw its
+ * own row of text glyphs (a literal star character in fourteen templates plus
+ * two JS copies), which read to a screen reader as five identical characters
+ * and could not be recoloured or sized with the icon system. This emits Lucide
+ * star icons, hidden from assistive tech, followed by one screen-reader label.
+ *
+ * Output is escaped; echo it directly.
+ *
+ * @since 1.7.1
+ *
+ * @param float  $rating Rating out of five. Rounded to the nearest star.
+ * @param string $label  Screen-reader label. Defaults to "N out of 5".
+ * @return string
+ */
+function wpss_star_rating( float $rating, string $label = '' ): string {
+	$rating = max( 0, min( 5, $rating ) );
+	$filled = (int) round( $rating );
+
+	if ( '' === $label ) {
+		/* translators: %s: rating out of five, e.g. 4.5 */
+		$label = sprintf( __( '%s out of 5', 'wp-sell-services' ), number_format_i18n( $rating, 1 ) );
+	}
+
+	$html = '<span class="wpss-stars">';
+
+	for ( $i = 1; $i <= 5; $i++ ) {
+		$html .= \WPSellServices\Services\Icon::render( 'star', array( 'class' => 'wpss-star' . ( $i <= $filled ? ' filled' : '' ) ) );
+	}
+
+	return $html . '<span class="screen-reader-text">' . esc_html( $label ) . '</span></span>';
+}
+
+/**
  * Get template part.
  *
  * @param string $slug Template slug.

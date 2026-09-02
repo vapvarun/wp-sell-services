@@ -1035,45 +1035,14 @@ class AjaxHandlers {
 		// Generate HTML for reviews.
 		ob_start();
 		foreach ( $reviews as $review ) {
-			$reviewer_name = $review->get_reviewer_name();
 			?>
 			<div class="wpss-review">
-				<div class="wpss-review-header">
-					<img src="<?php echo esc_url( get_avatar_url( $review->reviewer_id, array( 'size' => 48 ) ) ); ?>"
-						alt="<?php echo esc_attr( $reviewer_name ); ?>"
-						class="wpss-review-avatar">
-					<div class="wpss-review-info">
-						<strong class="wpss-review-author">
-							<?php echo esc_html( $reviewer_name ); ?>
-						</strong>
-						<div class="wpss-review-rating">
-							<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-								<span class="wpss-star <?php echo $i <= $review->rating ? 'filled' : ''; ?>">★</span>
-							<?php endfor; ?>
-						</div>
-					</div>
-					<span class="wpss-review-date">
-						<?php echo esc_html( wpss_time_ago( $review->created_at->format( 'Y-m-d H:i:s' ) ) ); ?>
-					</span>
-				</div>
-
-				<div class="wpss-review-content">
-					<?php echo wp_kses_post( wpautop( $review->content ) ); ?>
-				</div>
-
-				<?php if ( ! empty( $review->response ) ) : ?>
-					<div class="wpss-review-reply">
-						<div class="wpss-reply-header">
-							<strong><?php esc_html_e( 'Seller Response:', 'wp-sell-services' ); ?></strong>
-							<?php if ( $review->response_at ) : ?>
-								<span class="wpss-reply-date">
-									<?php echo esc_html( wpss_time_ago( $review->response_at->format( 'Y-m-d H:i:s' ) ) ); ?>
-								</span>
-							<?php endif; ?>
-						</div>
-						<?php echo wp_kses_post( wpautop( $review->response ) ); ?>
-					</div>
-				<?php endif; ?>
+				<?php
+				// Same partial as the initial page render, so page two of the
+				// reviews list cannot drift from page one.
+				$wpss_review = $review;
+				require WPSS_PLUGIN_DIR . 'templates/partials/review-body.php';
+				?>
 
 				<div class="wpss-review-actions">
 					<button type="button" class="wpss-review-helpful-btn" data-review="<?php echo esc_attr( $review->id ); ?>">

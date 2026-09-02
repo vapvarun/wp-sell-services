@@ -273,13 +273,14 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * New      - Vendors get Proposals and Reviews sections in the dashboard, with review replies and declined-proposal status.
 * Improve  - Dispute pages show the outcome, refund amount and admin note to both parties; the link after posting a request opens the request list.
 * Improve  - The dashboard menu collapses on small screens so content comes first, and the vendor sales list can be filtered by status and searched.
+* Improve  - Personal data export now covers disputes, deliveries, requirements, withdrawals, proposals, reports and notifications.
+* Improve  - Replaced emoji and text stars with icons, fixed status labels and plural copy, and added accessible names and tab roles on the service page.
 * Fix      - Refunds made in the PayPal or Razorpay dashboard now update the order and reverse the vendor credit.
 * Fix      - A Stripe payment webhook arriving before checkout finishes no longer creates a duplicate order, and cart refunds land on the right order.
 * Fix      - Offline and manual gateway refunds are marked as pending manual payment instead of being reported as sent.
 * Fix      - Service content limits apply on every save path, and a proposal can only be accepted once.
 * Fix      - New orders carry the package's revision count, so buyers can request revisions and vendors see the revision notes.
 * Fix      - Deleting a user keeps and anonymises the other party's orders, ledger and reviews instead of deleting them; order files are removed when an order is deleted.
-* Improve  - Personal data export now covers disputes, deliveries, requirements, withdrawals, proposals, reports and notifications.
 * Fix      - Demo delete removes only demo content, and every writing CLI command asks for confirmation and refuses on production without --force.
 * Fix      - Pay buttons for tips, milestones, extensions and proposals are hidden on a store rail that cannot take a single-order payment instead of linking to a page it ignores.
 * Fix      - Orders left without requirements now auto-start by default instead of being cancelled after the timeout.
@@ -296,6 +297,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Order, payment and moderation emails are never dropped by the message cooldown, review and requirement mails are sent once, and failed sends are logged and retried.
 * Fix      - Suspended vendors receive a suspension notice instead of the rejection wording.
 * Improve  - Dashboard lists, favourites and the vendor directory are paginated, the vendor directory can be sorted and filtered, admin counts are cached, and new indexes keep review moderation and the vendor directory fast on large sites.
+* Fix      - Dispute numbers are generated, the vendor profile page carries the vendor's name in its title, and several PHP notices on email and admin pages are gone.
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Payment intents carry the vendor id for every order type.
 * Dev      - New wpss_auth_login_challenge filter for two-factor plugins.

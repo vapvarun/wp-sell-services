@@ -1298,7 +1298,14 @@ do_action( 'wpss_before_order_view', $order );
 							<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $order->completed_at->getTimestamp() ) ); ?></span>
 						</div>
 					</div>
-				<?php elseif ( in_array( $order->status, array( 'cancelled', 'refunded', 'partially_refunded' ), true ) ) : ?>
+				<?php endif; ?>
+
+				<?php
+				// Own `if`, not an `elseif` of completed_at: an order that was
+				// completed and THEN refunded or cancelled keeps its Completed
+				// entry and also shows what happened to it afterwards.
+				?>
+				<?php if ( in_array( $order->status, array( 'cancelled', 'refunded', 'partially_refunded' ), true ) ) : ?>
 					<div class="wpss-timeline__item wpss-timeline__item--completed">
 						<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
 						<div class="wpss-timeline__content">
@@ -1432,7 +1439,7 @@ do_action( 'wpss_before_order_view', $order );
 								<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $delivery->created_at ) ) ); ?>
 							</span>
 							<span class="<?php echo esc_attr( wpss_status_class( $delivery->status ) ); ?>">
-								<?php echo esc_html( ucfirst( $delivery->status ) ); ?>
+								<?php echo esc_html( wpss_get_order_status_label( (string) $delivery->status ) ); ?>
 							</span>
 						</div>
 						<div class="wpss-delivery-item__content">
@@ -2257,7 +2264,15 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 						</label>
 						<div class="wpss-file-list" id="deliver-file-list"></div>
 					</div>
-					<p class="wpss-form-help"><?php esc_html_e( 'Max file size: 50MB. Supported: images, documents, archives.', 'wp-sell-services' ); ?></p>
+					<p class="wpss-form-help">
+						<?php
+						printf(
+							/* translators: %d: maximum upload size in megabytes */
+							esc_html__( 'Max file size: %dMB. Supported: images, documents, archives.', 'wp-sell-services' ),
+							(int) wpss_get_option( 'advanced', 'max_file_size' )
+						);
+						?>
+					</p>
 				</div>
 			</div>
 
@@ -2296,7 +2311,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					<div class="wpss-star-rating" role="group" aria-label="<?php esc_attr_e( 'Rating', 'wp-sell-services' ); ?>">
 						<?php for ( $i = 5; $i >= 1; $i-- ) : ?>
 							<input type="radio" name="rating" id="star-<?php echo esc_attr( $i ); ?>" value="<?php echo esc_attr( $i ); ?>" required>
-							<label for="star-<?php echo esc_attr( $i ); ?>" title="<?php echo esc_attr( $i ); ?> <?php esc_attr_e( 'stars', 'wp-sell-services' ); ?>">
+							<label for="star-<?php echo esc_attr( $i ); ?>" title="<?php echo esc_attr( sprintf( /* translators: %d: star count */ _n( '%d star', '%d stars', $i, 'wp-sell-services' ), $i ) ); ?>">
 								<i data-lucide="star" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 							</label>
 						<?php endfor; ?>

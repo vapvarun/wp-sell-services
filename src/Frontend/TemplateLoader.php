@@ -162,6 +162,16 @@ class TemplateLoader {
 				// Track profile view (skip own views and duplicate sessions).
 				$this->track_profile_view( $user->ID );
 
+				// This route matches no post, so the document title fell back to
+				// the bare site name. Name the tab after the vendor.
+				add_filter(
+					'document_title_parts',
+					static function ( array $parts ) use ( $user ): array {
+						$parts['title'] = wpss_get_member_display_name( (int) $user->ID );
+						return $parts;
+					}
+				);
+
 				$custom = $this->locate_template( 'vendor/profile.php' );
 				if ( $custom ) {
 					return $custom;

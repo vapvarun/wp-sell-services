@@ -282,7 +282,7 @@ class FeaturedServices extends AbstractBlock {
 
 						<?php if ( $attributes['showRating'] && $rating ) : ?>
 							<div class="wpss-featured-rating">
-								<span class="wpss-star">&#9733;</span>
+								<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 								<span class="wpss-rating-value"><?php echo esc_html( number_format( (float) $rating, 1 ) ); ?></span>
 								<span class="wpss-review-count">(<?php echo esc_html( $review_count ?: 0 ); ?>)</span>
 							</div>

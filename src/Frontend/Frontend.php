@@ -400,6 +400,7 @@ class Frontend {
 		<div id="wpss-mini-cart" class="wpss-mini-cart"<?php echo $hidden; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 			<a href="<?php echo esc_url( $checkout_url ); ?>" class="wpss-mini-cart-link" title="<?php esc_attr_e( 'View Cart', 'wp-sell-services' ); ?>">
 				<i data-lucide="shopping-cart" class="wpss-icon wpss-icon--lg wpss-mini-cart-icon" aria-hidden="true"></i>
+				<span class="screen-reader-text"><?php esc_html_e( 'View cart, items:', 'wp-sell-services' ); ?></span>
 				<span class="wpss-cart-count"><?php echo esc_html( (string) $cart_count ); ?></span>
 			</a>
 		</div>

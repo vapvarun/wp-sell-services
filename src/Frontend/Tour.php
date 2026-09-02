@@ -198,7 +198,11 @@ final class Tour {
 			}
 		} elseif ( ! is_admin() ) {
 			global $post;
-			if ( $post instanceof \WP_Post && has_shortcode( (string) $post->post_content, 'wpss_dashboard' ) ) {
+			// The dashboard root only. An order URL is still the dashboard page,
+			// and the welcome tour used to open on top of a just-placed order.
+			if ( $post instanceof \WP_Post
+				&& has_shortcode( (string) $post->post_content, 'wpss_dashboard' )
+				&& 0 === wpss_resolve_request_order_id() ) {
 				$should = true;
 			}
 		}

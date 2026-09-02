@@ -412,6 +412,9 @@
 						response.forEach(function(review) {
 							$list.append(WPSS.renderReview(review));
 						});
+						if (window.lucide && typeof window.lucide.createIcons === 'function') {
+							window.lucide.createIcons();
+						}
 
 						if (response.length < 10) {
 							$btn.hide();
@@ -518,10 +521,11 @@
 	 * Render review HTML.
 	 */
 	WPSS.renderReview = function(review) {
-		let starsHtml = '';
+		let starsHtml = '<span class="wpss-stars">';
 		for (let i = 1; i <= 5; i++) {
-			starsHtml += `<span class="wpss-star ${i <= review.rating ? 'filled' : ''}">★</span>`;
+			starsHtml += `<i data-lucide="star" class="wpss-icon wpss-star${i <= review.rating ? ' filled' : ''}" aria-hidden="true"></i>`;
 		}
+		starsHtml += `<span class="screen-reader-text">${review.rating} / 5</span></span>`;
 
 		let replyHtml = '';
 		if (review.vendor_reply) {

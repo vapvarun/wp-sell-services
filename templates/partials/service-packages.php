@@ -62,9 +62,14 @@ do_action( 'wpss_before_service_packages', $service_id );
 
 <div class="wpss-packages-widget">
 	<?php if ( count( $packages ) > 1 ) : ?>
-		<div class="wpss-packages-tabs">
+		<div class="wpss-packages-tabs" role="tablist" aria-label="<?php esc_attr_e( 'Packages', 'wp-sell-services' ); ?>">
 			<?php foreach ( $packages as $index => $package ) : ?>
 				<button type="button"
+						role="tab"
+						id="wpss-package-tab-<?php echo esc_attr( $index ); ?>"
+						aria-controls="wpss-package-<?php echo esc_attr( $index ); ?>"
+						aria-selected="<?php echo $first_package_key === $index ? 'true' : 'false'; ?>"
+						tabindex="<?php echo $first_package_key === $index ? '0' : '-1'; ?>"
 						class="wpss-package-tab <?php echo $first_package_key === $index ? 'active' : ''; ?>"
 						data-package="<?php echo esc_attr( $index ); ?>">
 					<?php echo esc_html( $package['name'] ?? __( 'Package', 'wp-sell-services' ) ); ?>
@@ -89,6 +94,9 @@ do_action( 'wpss_before_service_packages', $service_id );
 			?>
 
 			<div class="wpss-package <?php echo $first_package_key === $index ? 'active' : ''; ?>"
+				<?php if ( count( $packages ) > 1 ) : ?>
+					role="tabpanel" id="wpss-package-<?php echo esc_attr( $index ); ?>" aria-labelledby="wpss-package-tab-<?php echo esc_attr( $index ); ?>"
+				<?php endif; ?>
 				data-package="<?php echo esc_attr( $index ); ?>">
 
 				<div class="wpss-package-header">
