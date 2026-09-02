@@ -9,6 +9,10 @@
  * that plugin's spec. Because it reads only the namespaces in the config, the
  * output NEVER contains routes from other plugins on the same install.
  *
+ * Each path carries `x-wpss-tier: free|pro` so a Free-only site knows which
+ * routes it will not find; Pro is detected by the handler's file living outside
+ * the Free plugin directory.
+ *
  * RUN:   wp eval-file wp-content/plugins/wp-sell-services/bin/gen-openapi.php
  *        (run on a COMBO install so both wpss/v1 + wpss-pro/v1 register,
  *        with EVERY Pro extension ENABLED — a disabled extension never boots,
@@ -99,6 +103,27 @@ $tag_for = static function ( string $ns, string $route ) use ( $config ): string
 	return $config['tags'][ $seg ] ?? ( ucfirst( $seg ) ?: 'General' );
 };
 
+/**
+ * Free or Pro, decided by where the handler's code lives: anything outside the
+ * loaded Free plugin directory is Pro. Pro registers most of its routes under
+ * the Free namespace (wpss/v1), so the namespace alone cannot tell them apart.
+ */
+$free_dir = wp_normalize_path( WPSS_PLUGIN_DIR );
+$tier_for = static function ( $callback ) use ( $free_dir ): string {
+	try {
+		if ( is_array( $callback ) ) {
+			$file = ( new \ReflectionClass( $callback[0] ) )->getFileName();
+		} elseif ( $callback instanceof \Closure || is_string( $callback ) ) {
+			$file = ( new \ReflectionFunction( $callback ) )->getFileName();
+		} else {
+			return 'free';
+		}
+	} catch ( \ReflectionException $e ) {
+		return 'free';
+	}
+	return $file && 0 === strpos( wp_normalize_path( $file ), $free_dir ) ? 'free' : 'pro';
+};
+
 $server = rest_get_server();
 $paths  = array();
 $tagset = array();
@@ -130,6 +155,12 @@ foreach ( $config['namespaces'] as $ns ) {
 				}
 			}
 			$args = is_array( $handler['args'] ?? null ) ? $handler['args'] : array();
+			$tier = $tier_for( $handler['callback'] ?? null );
+
+			// A path is Free as soon as any handler on it is Free; Pro only adds.
+			if ( ! isset( $paths[ $oapi_path ]['x-wpss-tier'] ) || 'free' === $tier ) {
+				$paths[ $oapi_path ]['x-wpss-tier'] = $tier;
+			}
 
 			// Public when the permission callback is the literal __return_true;
 			// anything else (a real gate or a closure we can't introspect) is

@@ -22,7 +22,7 @@ $plugin_dir = dirname( __DIR__ );
 // Load Composer autoloader.
 $autoloader = $plugin_dir . '/vendor/autoload.php';
 if ( ! file_exists( $autoloader ) ) {
-	echo "Composer autoloader not found. Run 'composer install' first.\n";
+	echo "Composer autoloader not found. Run ./run-tests.sh, which installs the dev packages.\n";
 	exit( 1 );
 }
 require_once $autoloader;
