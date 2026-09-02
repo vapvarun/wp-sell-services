@@ -1,17 +1,31 @@
 # Role matrix
 
 Verified 2026-08-17 against a live site (`wp_roles()`), not transcribed from
-code comments.
+code comments. Updated 2026-09-02 for the 1.7.1 capability split.
 
 ## Roles and WPSS capabilities
 
 | Role | Slug | WPSS capabilities |
 |---|---|---|
-| Administrator | `administrator` | `wpss_manage_disputes`, `wpss_manage_orders`, `wpss_manage_services`, `wpss_manage_settings`, `wpss_manage_vendors`, `wpss_respond_to_requests`, `wpss_vendor`, `wpss_view_analytics` |
-| Vendor | `wpss_vendor` | `wpss_manage_orders`, `wpss_manage_services`, `wpss_respond_to_requests`, `wpss_vendor`, `wpss_view_analytics` |
+| Administrator | `administrator` | `wpss_manage_disputes`, `wpss_manage_orders`, `wpss_manage_services`, `wpss_manage_settings`, `wpss_manage_vendors`, `wpss_respond_to_requests`, `wpss_vendor`, `wpss_vendor_orders`, `wpss_view_analytics`, plus every `*_wpss_services` cap |
+| Shop manager | `shop_manager` | `wpss_manage_orders`, `wpss_manage_services`, `wpss_respond_to_requests`, `wpss_vendor`, `wpss_vendor_orders`, `wpss_view_analytics`, plus every `*_wpss_services` cap |
+| Vendor | `wpss_vendor` | `wpss_manage_services`, `wpss_respond_to_requests`, `wpss_vendor`, `wpss_vendor_orders`, `wpss_view_analytics`, `edit_wpss_services`, `edit_published_wpss_services`, `publish_wpss_services`, `delete_wpss_services`, `delete_published_wpss_services` |
+| Author | `author` | **none** (held the whole vendor set up to 1.7.0; stripped on upgrade) |
 | Buyer | `subscriber` | **none** |
 
-Roles are granted in `Activator::create_roles()`.
+Roles are granted in `Activator::create_roles()`. Services use their own
+capability type (`wpss_service`), so `edit_posts` no longer opens the service
+editor and vendors no longer receive `edit_posts`.
+
+## `wpss_manage_orders` is admin-side, `wpss_vendor_orders` is vendor-side
+
+`OrderService::can_transition()` lets `manage_options` or `wpss_manage_orders`
+force any status. Vendors hold `wpss_vendor_orders` only, so they are bound to
+the natural transition map. Dashboard order verbs go through
+`wpss_order_actor_role()` plus the allow map in `AjaxHandlers::order_action()`:
+refund is admin-only (vendor when `wpss_orders[allow_vendor_refunds]` is on),
+cancel is buyer-before-work or admin, start and the cancellation replies are
+vendor-only.
 
 ## The thing to understand about buyers
 
@@ -45,16 +59,19 @@ still a buyer. Two consequences that have caused real bugs:
 - A seller can hold a request of their own. Guard against self-dealing
   explicitly — e.g. a seller proposing on their own request notifies nobody.
 
-`wpss_is_vendor()` is the shared check. It reads the capability first, then
-falls back to the role, then to legacy `_wpss_is_vendor` meta. Do not read the
-meta key directly; it is the least reliable of the three and was the source of
-role-granted vendors 404ing on `GET /vendors/{id}`.
+`wpss_is_vendor()` is the shared check. Since 1.7.1 it is true only for a user
+with an **active** `wpss_vendor_profiles` row. The role, the `wpss_vendor`
+capability and the legacy `_wpss_is_vendor` meta are hints, not proof: a role
+handed out in wp-admin with no profile behind it is not a vendor, and the
+dashboard shows that user the same "Start selling" panel a subscriber gets.
+`wpss_vendor_status_block()` refuses a no-row user with `wpss_not_vendor`.
 
-## Admin holds `wpss_vendor` too
+## Admin holds `wpss_vendor` but is not automatically a seller
 
-Administrators carry `wpss_vendor`, so `wpss_is_vendor( $admin_id )` is
-**true**. Anywhere "is this the seller on this order?" matters, compare
-`vendor_id` — do not infer it from the capability.
+Administrators carry `wpss_vendor`, but `wpss_is_vendor( $admin_id )` is only
+true once they have an active profile row. Anywhere "is this the seller on
+this order?" matters, compare `vendor_id` — do not infer it from the
+capability.
 
 ## Vendor account status is separate from role
 

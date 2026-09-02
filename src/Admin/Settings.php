@@ -1064,6 +1064,21 @@ class Settings {
 		);
 
 		add_settings_field(
+			'allow_vendor_refunds',
+			__( 'Vendor Refunds', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_orders',
+			'wpss_orders_section',
+			array(
+				'option_name' => 'wpss_orders',
+				'field'       => 'allow_vendor_refunds',
+				'label'       => __( 'Let vendors refund their own orders from the dashboard', 'wp-sell-services' ),
+				'default'     => false,
+				'description' => __( 'Off by default: refunds reverse the vendor\'s credit and return money to the buyer, so only an administrator can issue them unless you enable this.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
 			'dispute_window_days',
 			__( 'Dispute Window (Days)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
@@ -3543,6 +3558,7 @@ class Settings {
 		$sanitized['auto_complete_days'] = absint( $input['auto_complete_days'] ?? 3 );
 		// Revision limits are defined per-package in service packages, not as a global setting.
 		$sanitized['allow_disputes']            = ! empty( $input['allow_disputes'] );
+		$sanitized['allow_vendor_refunds']      = ! empty( $input['allow_vendor_refunds'] );
 		$sanitized['dispute_window_days']       = absint( $input['dispute_window_days'] ?? 14 );
 		$sanitized['auto_dispute_late_days']    = absint( $input['auto_dispute_late_days'] ?? 3 );
 		$sanitized['allow_late_requirements']   = ! empty( $input['allow_late_requirements'] );

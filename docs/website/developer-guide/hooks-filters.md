@@ -72,7 +72,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderService.php:427` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:779` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:813` |
 
 ### Order Filters
 
@@ -86,7 +86,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:959` |
 | `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:623` |
 | `wpss_order_requirements_submitted` | `int $order_id, array $requirements` | `src/API/OrdersController.php:1165` |
-| `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/orders.php:265` |
+| `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/orders.php:298` |
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderWorkflowManager.php:601` |
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:367` |
 | `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `src/Services/OrderWorkflowManager.php:501` |
@@ -122,8 +122,13 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_delivery_accepted` | `int $order_id` | `src/Services/DeliveryService.php:197` |
 | `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:263` |
 | `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:543` |
-| `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:929` |
+<<<<<<< HEAD
+| `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:930` |
 | `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1235` |
+=======
+| `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:930` |
+| `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1235` |
+>>>>>>> 1.7.1-F1F2
 | `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` | `src/Services/ConversationService.php:351` |
 
 ## Payment and Gateway Actions
@@ -240,7 +245,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:285` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Admin/Pages/VendorsPage.php:1151` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1550` |
-| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2378` |
+| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2314` |
 | `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:373` |
 | `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:427` |
 
@@ -301,13 +306,13 @@ tip. Tips are excluded from commission by default, so the two usually match.
 | `wpss_buyer_request_updated` | `int $request_id, array $data` | `BuyerRequestService.php:164` |
 | `wpss_buyer_request_status_changed` | `int $request_id, string $status, string $old_status` | `src/Services/BuyerRequestService.php:478` |
 | `wpss_request_converted_to_order` | `int $order_id, int $request_id, int $proposal_id, object $request, object $proposal` | `src/Services/BuyerRequestService.php:882` |
-| `wpss_proposal_submitted` | `int $proposal_id, int $request_id, int $vendor_id, array $proposal_data` | `src/Services/ProposalService.php:174` |
-| `wpss_proposal_updated` | `int $proposal_id, array $update_data` | `src/Services/ProposalService.php:348` |
+| `wpss_proposal_submitted` | `int $proposal_id, int $request_id, int $vendor_id, array $proposal_data` | `src/Services/ProposalService.php:187` |
+| `wpss_proposal_updated` | `int $proposal_id, array $update_data` | `src/Services/ProposalService.php:361` |
 | `wpss_proposal_accepted` | `int $proposal_id, object $proposal, object $request` | `src/Services/BuyerRequestService.php:824` |
-| `wpss_proposal_rejected` | `int $proposal_id, object $proposal, string $reason` | `src/Services/ProposalService.php:438` |
-| `wpss_proposal_withdrawn` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:480` |
-| `wpss_proposal_deleted` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:860` |
-| `wpss_proposal_status_updated` | `int $proposal_id, string $status` | `src/Services/ProposalService.php:563` |
+| `wpss_proposal_rejected` | `int $proposal_id, object $proposal, string $reason` | `src/Services/ProposalService.php:451` |
+| `wpss_proposal_withdrawn` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:493` |
+| `wpss_proposal_deleted` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:873` |
+| `wpss_proposal_status_updated` | `int $proposal_id, string $status` | `src/Services/ProposalService.php:576` |
 | `wpss_buyer_request_deleted` | `int $request_id` | `src/Services/BuyerRequestService.php:1042` |
 | `wpss_buyer_request_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/BuyerRequestMetabox.php:349` |
 
@@ -351,7 +356,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 |------|-----------|------|
 | `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2233` |
 | `wpss_admin_requirements_submitted` | `int $order_id, array $field_data` | `src/Admin/OrderScreen.php:316` |
-| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1930` |
+| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1945` |
 
 ### Admin Filters
 
@@ -519,7 +524,7 @@ add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2564` |
+| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2500` |
 | `wpss_pay_order_url` | `string $url, int $order_id` | `src/functions/urls.php:838` |
 
 ### `wpss_pay_order_url` -- the payment-handoff seam
@@ -629,7 +634,7 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | `wpss_addon_updated` | `int $addon_id, array $update_data` | `src/Services/ServiceAddonService.php:231` |
 | `wpss_addon_deleted` | `int $addon_id, object $addon` | `src/Services/ServiceAddonService.php:355` |
 | `wpss_settings_tab_{tab}` | *(none)* | `Settings.php:985` |
-| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2058` |
+| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2073` |
 
 ## Filters
 
@@ -662,14 +667,14 @@ add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $pl
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:56` |
 | `wpss_currency` | `$currency` | `src/functions/money.php:653` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/misc.php:55` |
-| `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:155` |
+| `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:147` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:92` |
 | `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:688` |
 | `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:715` |
 | `wpss_currencies` | `$currencies` | `src/functions/money.php:1510` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:126` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:146` |
-| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:459` |
+| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:493` |
 | `wpss_wallet_manager` | `null` | `src/functions/money.php:1532` |
 
 ### Currency System Filters (1.2.1)
@@ -681,7 +686,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1489` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:165` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:614` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3752` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3768` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:835` |
 
 **`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
@@ -734,10 +739,10 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_vendor_slug` | `$slug` (default `'provider'`) | `Plugin.php`, `functions.php` |
 | `wpss_service_order_slug` | `$slug` (default `'service-order'`) | `Plugin.php`, `functions.php` |
 | `wpss_checkout_slug` | `$slug` (default `'service-checkout'`) | `StandaloneAdapter.php` |
-| `wpss_service_slug` | `$slug` (default `'service'`) | `src/PostTypes/ServicePostType.php:317` |
+| `wpss_service_slug` | `$slug` (default `'service'`) | `src/PostTypes/ServicePostType.php:320` |
 | `wpss_buyer_request_slug` | `$slug` (default `'buyer-request'`) | `src/PostTypes/BuyerRequestPostType.php:114` |
-| `wpss_service_post_type_args` | `$args` | `src/PostTypes/ServicePostType.php:239` |
-| `wpss_service_tag_args` | `$args` | `src/PostTypes/ServicePostType.php:301` |
+| `wpss_service_post_type_args` | `$args` | `src/PostTypes/ServicePostType.php:242` |
+| `wpss_service_tag_args` | `$args` | `src/PostTypes/ServicePostType.php:304` |
 | `wpss_service_category_taxonomy_args` | `$args` | `ServiceCategoryTaxonomy.php:118` |
 | `wpss_service_tag_taxonomy_args` | `$args` | `ServiceTagTaxonomy.php:103` |
 | `wpss_buyer_request_post_type_args` | `$args` | `src/PostTypes/BuyerRequestPostType.php:98` |
@@ -746,7 +751,11 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:634` |
+<<<<<<< HEAD
+| `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:635` |
+=======
+| `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:635` |
+>>>>>>> 1.7.1-F1F2
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:320` |
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:713` |
 | `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:929` |

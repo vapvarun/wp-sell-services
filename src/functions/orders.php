@@ -159,6 +159,40 @@ function wpss_user_can_view_order( int $order_id, ?int $user_id = null ): bool {
 }
 
 /**
+ * Resolve which side of an order a user is acting from.
+ *
+ * Order verbs are allowed per side, not per capability: a buyer is a plain
+ * subscriber and a vendor is whoever the row names, so both are ownership
+ * checks. Admin is answered first because an administrator who also sells
+ * acts with the owner's authority on any order.
+ *
+ * @since 1.7.1
+ *
+ * @param object $order   Order with customer_id and vendor_id.
+ * @param int    $user_id Acting user ID.
+ * @return string 'admin', 'vendor', 'buyer', or '' for a stranger.
+ */
+function wpss_order_actor_role( object $order, int $user_id ): string {
+	if ( ! $user_id ) {
+		return '';
+	}
+
+	if ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'wpss_manage_orders' ) ) {
+		return 'admin';
+	}
+
+	if ( (int) $order->vendor_id === $user_id ) {
+		return 'vendor';
+	}
+
+	if ( (int) $order->customer_id === $user_id ) {
+		return 'buyer';
+	}
+
+	return '';
+}
+
+/**
  * Resolve the order ID named by the current request.
  *
  * Prefers the pretty-permalink query var (`wpss_order_id`) and falls back to

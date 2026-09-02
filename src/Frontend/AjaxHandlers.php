@@ -112,9 +112,9 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_decline_milestone', array( $this, 'ajax_decline_milestone' ) );
 		add_action( 'wp_ajax_wpss_delete_milestone', array( $this, 'ajax_delete_milestone' ) );
 
-		// Order actions.
-		add_action( 'wp_ajax_wpss_accept_order', array( $this, 'accept_order' ) );
-		add_action( 'wp_ajax_wpss_decline_order', array( $this, 'decline_order' ) );
+		// Order actions. No accept/decline: this product is payment-first, so
+		// there is no acceptance step; those verbs only ever wrote legacy
+		// statuses onto orders that had already moved past them.
 		add_action( 'wp_ajax_wpss_start_work', array( $this, 'start_work' ) );
 		add_action( 'wp_ajax_wpss_deliver_order', array( $this, 'deliver_order' ) );
 		add_action( 'wp_ajax_wpss_request_revision', array( $this, 'request_revision' ) );
@@ -227,42 +227,6 @@ class AjaxHandlers {
 	}
 
 	/**
-	 * Accept order (vendor).
-	 *
-	 * @return void
-	 */
-	public function accept_order(): void {
-		check_ajax_referer( 'wpss_order_action', 'nonce' );
-
-		// Rate limiting.
-		if ( RateLimiter::check_and_track( 'order_action', get_current_user_id() ) ) {
-			RateLimiter::send_error( 'order_action' );
-		}
-
-		$order_id = absint( $_POST['order_id'] ?? 0 );
-		$user_id  = get_current_user_id();
-
-		if ( ! $order_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-		}
-
-		$order_service = new OrderService();
-		$order         = $order_service->get( $order_id );
-
-		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to accept this order.', 'wp-sell-services' ) ) );
-		}
-
-		$result = $order_service->update_status( $order_id, 'accepted' );
-
-		if ( $result ) {
-			wp_send_json_success( array( 'message' => __( 'Order accepted successfully.', 'wp-sell-services' ) ) );
-		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to accept order.', 'wp-sell-services' ) ) );
-		}
-	}
-
-	/**
 	 * Start working on order (vendor).
 	 *
 	 * @return void
@@ -301,38 +265,6 @@ class AjaxHandlers {
 			wp_send_json_success( array( 'message' => __( 'Work started! Delivery deadline has been set.', 'wp-sell-services' ) ) );
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Failed to start work on order.', 'wp-sell-services' ) ) );
-		}
-	}
-
-	/**
-	 * Decline order (vendor).
-	 *
-	 * @return void
-	 */
-	public function decline_order(): void {
-		check_ajax_referer( 'wpss_order_action', 'nonce' );
-
-		$order_id = absint( $_POST['order_id'] ?? 0 );
-		$reason   = sanitize_textarea_field( wp_unslash( $_POST['reason'] ?? '' ) );
-		$user_id  = get_current_user_id();
-
-		if ( ! $order_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-		}
-
-		$order_service = new OrderService();
-		$order         = $order_service->get( $order_id );
-
-		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to decline this order.', 'wp-sell-services' ) ) );
-		}
-
-		$result = $order_service->update_status( $order_id, 'rejected' );
-
-		if ( $result ) {
-			wp_send_json_success( array( 'message' => __( 'Order declined.', 'wp-sell-services' ) ) );
-		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to decline order.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -1740,6 +1672,10 @@ class AjaxHandlers {
 			)
 		);
 
+		if ( is_wp_error( $proposal_id ) ) {
+			wp_send_json_error( array( 'message' => $proposal_id->get_error_message() ) );
+		}
+
 		if ( $proposal_id ) {
 			wp_send_json_success(
 				array(
@@ -3141,22 +3077,57 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
 		}
 
-		// Verify user is part of order or is admin.
-		if ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+		// One allow map for every verb: who may say it, and which status it
+		// moves the order to. Being a participant is not enough - a buyer
+		// could refund themselves and a vendor could cancel a completed order,
+		// reversing their own credit. Refunds are the owner's call unless the
+		// site explicitly lets vendors issue them; buyers cancel only before
+		// work starts (vendors use the cancellation-request flow instead).
+		$actor          = wpss_order_actor_role( $order, $user_id );
+		$order_settings = get_option( 'wpss_orders', array() );
+		$allowed        = array(
+			'start'               => array( array( 'vendor' ), ServiceOrder::STATUS_IN_PROGRESS ),
+			'cancel'              => array( array( 'buyer', 'admin' ), ServiceOrder::STATUS_CANCELLED ),
+			'refund'              => array(
+				empty( $order_settings['allow_vendor_refunds'] ) ? array( 'admin' ) : array( 'admin', 'vendor' ),
+				ServiceOrder::STATUS_REFUNDED,
+			),
+			'accept-cancellation' => array( array( 'vendor' ), ServiceOrder::STATUS_CANCELLED ),
+			'reject-cancellation' => array( array( 'vendor' ), ServiceOrder::STATUS_DISPUTED ),
+		);
+
+		if ( ! isset( $allowed[ $action ] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unknown action.', 'wp-sell-services' ) ) );
+		}
+
+		list( $actor_roles, $target_status ) = $allowed[ $action ];
+
+		if ( ! in_array( $actor, $actor_roles, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		// Admins may force a transition (can_transition() honours the cap and
+		// audits it); everyone else needs the natural map, and a buyer's cancel
+		// is narrower still - only while nothing has been started.
+		if ( 'buyer' === $actor && 'cancel' === $action ) {
+			$status_ok = in_array(
+				$order->status,
+				array( ServiceOrder::STATUS_PENDING_PAYMENT, ServiceOrder::STATUS_PENDING_REQUIREMENTS, ServiceOrder::STATUS_REQUIREMENTS_SUBMITTED ),
+				true
+			);
+		} else {
+			$status_ok = 'admin' === $actor || $order_service->can_transition_naturally( $order->status, $target_status );
+		}
+
+		if ( ! $status_ok ) {
+			wp_send_json_error( array( 'message' => __( 'This action is not available in the order\'s current status.', 'wp-sell-services' ) ) );
 		}
 
 		$result = array( 'success' => false );
 
 		switch ( $action ) {
-			// No 'accept' case. It wrote status 'accepted', which only the
-			// removed accept verb ever produced and which no template renders.
-			// This product is payment-first - there is no acceptance step.
-
 			case 'start':
-				if ( (int) $order->vendor_id === $user_id ) {
-					$result['success'] = $order_service->start_work( $order_id );
-				}
+				$result['success'] = $order_service->start_work( $order_id );
 				break;
 
 			case 'cancel':
@@ -3187,7 +3158,7 @@ class AjaxHandlers {
 					// whenever the transition was refused; apply_refund_status()
 					// owns that ordering and undoes the write if the order does
 					// not actually move.
-					$result = $order_service->apply_refund_status(
+					$result['success'] = $order_service->apply_refund_status(
 						$order_id,
 						$wpss_is_partial ? round( $wpss_refund_amount, wpss_get_currency_decimals( $order->currency ?? '' ) ) : $wpss_order_total,
 						$wpss_is_partial ? 'partially_refunded' : 'refunded'
@@ -3198,7 +3169,7 @@ class AjaxHandlers {
 				break;
 
 			case 'accept-cancellation':
-				if ( (int) $order->vendor_id === $user_id && 'cancellation_requested' === $order->status ) {
+				if ( 'cancellation_requested' === $order->status ) {
 					$result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
 				} else {
 					wp_send_json_error( array( 'message' => __( 'Cannot accept cancellation.', 'wp-sell-services' ) ) );
@@ -3206,7 +3177,7 @@ class AjaxHandlers {
 				break;
 
 			case 'reject-cancellation':
-				if ( (int) $order->vendor_id === $user_id && 'cancellation_requested' === $order->status ) {
+				if ( 'cancellation_requested' === $order->status ) {
 					$dispute_service = new DisputeService();
 					$dispute_result  = $dispute_service->open(
 						$order_id,
@@ -3222,9 +3193,6 @@ class AjaxHandlers {
 					wp_send_json_error( array( 'message' => __( 'Cannot dispute cancellation.', 'wp-sell-services' ) ) );
 				}
 				break;
-
-			default:
-				wp_send_json_error( array( 'message' => __( 'Unknown action.', 'wp-sell-services' ) ) );
 		}
 
 		if ( ! empty( $result['success'] ) ) {

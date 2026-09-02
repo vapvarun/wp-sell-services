@@ -84,17 +84,29 @@ class Activator {
 	 * @return void
 	 */
 	private static function create_roles(): void {
-		// Vendor capabilities.
+		// Vendor capabilities. wpss_vendor_orders is the vendor-side order cap;
+		// wpss_manage_orders is admin-only and is what can_transition() honours
+		// as "force any status" - vendors never hold it. Services carry their
+		// own capability type (edit_wpss_services...) rather than edit_posts, so
+		// holding the vendor role does not also mean writing blog posts, and
+		// holding edit_posts (every author) does not mean listing services.
 		$vendor_caps = array(
-			'wpss_vendor'              => true,
-			'wpss_manage_services'     => true,
-			'wpss_manage_orders'       => true,
-			'wpss_view_analytics'      => true,
-			'wpss_respond_to_requests' => true,
-			'read'                     => true, // Basic WordPress capability.
-			'upload_files'             => true,
-			'edit_posts'               => true,
+			'wpss_vendor'                    => true,
+			'wpss_manage_services'           => true,
+			'wpss_vendor_orders'             => true,
+			'wpss_view_analytics'            => true,
+			'wpss_respond_to_requests'       => true,
+			'read'                           => true, // Basic WordPress capability.
+			'upload_files'                   => true,
+			'edit_wpss_services'             => true,
+			'edit_published_wpss_services'   => true,
+			'publish_wpss_services'          => true,
+			'delete_wpss_services'           => true,
+			'delete_published_wpss_services' => true,
 		);
+
+		// Granted to vendors before 1.7.1; removed on upgrade.
+		$retired_vendor_caps = array( 'wpss_manage_orders', 'edit_posts' );
 
 		// Create the vendor role if it doesn't exist.
 		if ( ! get_role( 'wpss_vendor' ) ) {
@@ -104,23 +116,49 @@ class Activator {
 				$vendor_caps
 			);
 		} else {
-			// Role exists, ensure it has all capabilities.
+			// Role exists, ensure it has exactly these capabilities.
 			$vendor_role = get_role( 'wpss_vendor' );
 			foreach ( $vendor_caps as $cap => $grant ) {
 				$vendor_role->add_cap( $cap, $grant );
 			}
+			foreach ( $retired_vendor_caps as $cap ) {
+				$vendor_role->remove_cap( $cap );
+			}
 		}
 
-		// Add vendor capabilities to existing roles that should have them.
-		$roles_with_vendor_caps = array( 'administrator', 'shop_manager', 'author' );
+		// Site staff hold the vendor set plus the admin-side order cap and the
+		// others_/private_ service caps so they can moderate every listing.
+		$staff_caps = array_merge(
+			$vendor_caps,
+			array(
+				'wpss_manage_orders'           => true,
+				'edit_others_wpss_services'    => true,
+				'edit_private_wpss_services'   => true,
+				'read_private_wpss_services'   => true,
+				'delete_others_wpss_services'  => true,
+				'delete_private_wpss_services' => true,
+			)
+		);
 
-		foreach ( $roles_with_vendor_caps as $role_name ) {
+		foreach ( array( 'administrator', 'shop_manager' ) as $role_name ) {
 			$role = get_role( $role_name );
 			if ( $role ) {
-				foreach ( $vendor_caps as $cap => $grant ) {
+				foreach ( $staff_caps as $cap => $grant ) {
 					$role->add_cap( $cap, $grant );
 				}
 			}
+		}
+
+		// Authors were granted the whole vendor set up to 1.7.0, which made every
+		// blog author a seller with no application. They get nothing now.
+		$author_role = get_role( 'author' );
+		if ( $author_role ) {
+			foreach ( array_keys( $vendor_caps ) as $cap ) {
+				if ( 0 === strpos( $cap, 'wpss_' ) ) {
+					$author_role->remove_cap( $cap );
+				}
+			}
+			$author_role->remove_cap( 'wpss_manage_orders' );
 		}
 
 		// Admin-only capabilities.
@@ -129,6 +167,37 @@ class Activator {
 			$admin_role->add_cap( 'wpss_manage_settings', true );
 			$admin_role->add_cap( 'wpss_manage_disputes', true );
 			$admin_role->add_cap( 'wpss_manage_vendors', true );
+		}
+	}
+
+	/**
+	 * One-time 1.7.1 upgrade: strip the retired caps from vendor USERS.
+	 *
+	 * VendorService::add_vendor_capabilities() also wrote wpss_manage_orders
+	 * and edit_posts onto each vendor's own capability map, so fixing the role
+	 * alone would leave every existing vendor able to force transitions.
+	 *
+	 * ponytail: full scan of the vendor role, once per site on upgrade; batch
+	 * by user_id if a site with tens of thousands of vendors times out.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	public static function migrate_vendor_user_caps(): void {
+		$vendor_ids = get_users(
+			array(
+				'role'   => 'wpss_vendor',
+				'fields' => 'ID',
+				'number' => -1,
+			)
+		);
+
+		foreach ( $vendor_ids as $vendor_id ) {
+			$user = new \WP_User( (int) $vendor_id );
+			$user->remove_cap( 'wpss_manage_orders' );
+			$user->remove_cap( 'edit_posts' );
+			$user->add_cap( 'wpss_vendor_orders' );
 		}
 	}
 
@@ -186,6 +255,7 @@ class Activator {
 			'wpss_orders'        => array(
 				'auto_complete_days'        => 3,
 				'allow_disputes'            => true,
+				'allow_vendor_refunds'      => false,
 				'dispute_window_days'       => 14,
 				'auto_dispute_late_days'    => 3,
 				'requirements_timeout_days' => 7,

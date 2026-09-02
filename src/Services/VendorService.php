@@ -398,7 +398,7 @@ class VendorService {
 		$capabilities = array(
 			'wpss_vendor',
 			'wpss_manage_services',
-			'wpss_manage_orders',
+			'wpss_vendor_orders',
 			'wpss_view_analytics',
 			'wpss_respond_to_requests',
 		);
@@ -846,11 +846,10 @@ class VendorService {
 		$capabilities = array(
 			'wpss_vendor',
 			'wpss_manage_services',
-			'wpss_manage_orders',
+			'wpss_vendor_orders',
 			'wpss_view_analytics',
 			'wpss_respond_to_requests',
 			'upload_files',
-			'edit_posts',
 		);
 
 		foreach ( $capabilities as $cap ) {

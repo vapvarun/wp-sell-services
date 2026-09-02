@@ -122,6 +122,29 @@ Keyed on `(reference_type, reference_id)` in the ledger, and on an
 Idempotency-Key at the gateway. A retried cron, a double-clicked button and a
 replayed webhook must each produce exactly one row and one transfer.
 
+### 2.11 Rail-side refunds enter through one seam
+
+A refund that happened AT the gateway (Stripe / PayPal / Razorpay dashboard,
+a Woo refund) reaches us as a webhook. Every webhook fires
+`wpss_gateway_refund_received( $gateway, $transaction_id, $amount, $context )`
+and nothing else; `OrderWorkflowManager::handle_gateway_refund()` is the only
+listener. It resolves every order paid with that transaction (a cart stamps
+one id on several orders), splits an unnamed amount by order total, skips a
+refund id it has already seen, and records each share through
+`apply_refund_status( …, settled_at_rail = true )` so the vendor share is
+reversed and the gateway is never called back. No gateway applies a refund
+inline.
+
+Store-side refunds run the other way: `attempt_payment_refund()` first offers
+`wpss_pre_process_gateway_refund` (a rail that owns the money settles it and
+returns the seam-3 array), then calls the order's gateway. Every
+`process_refund()` returns `{success, transaction_id, message, manual}`. A
+gateway that cannot move money (offline, test) returns `manual = true`: the
+order gets `_wpss_refund_pending` = amount, the admin sees a notice and a
+"Mark refund sent" button on the order, and nothing is ever logged as a
+successful refund. `OrderWorkflowManager::get_last_refund_result()` hands the
+real gateway outcome back to whoever moved the status.
+
 ---
 
 ## 3. Where credit happens (a common misreading)

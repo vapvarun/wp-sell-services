@@ -213,6 +213,7 @@
         <properties>
             <property name="custom_capabilities" type="array">
                 <element value="wpss_manage_orders"/>
+                <element value="wpss_vendor_orders"/>
                 <element value="wpss_manage_services"/>
                 <element value="wpss_view_analytics"/>
                 <element value="wpss_manage_disputes"/>

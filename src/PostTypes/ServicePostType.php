@@ -206,7 +206,10 @@ class ServicePostType {
 				'slug'       => $this->get_slug(),
 				'with_front' => false,
 			],
-			'capability_type'    => 'post',
+			// Own capability set (edit_wpss_services...) so listing a service
+			// needs the vendor role or site staff, not merely edit_posts - which
+			// every author holds. Granted in Activator::create_roles().
+			'capability_type'    => array( 'wpss_service', 'wpss_services' ),
 			'map_meta_cap'       => true,
 			'has_archive'        => true,
 			'hierarchical'       => false,
