@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**508 hooks** across **724** firing sites.
+**508 hooks** across **723** firing sites.
 
 ## Actions (273)
 
@@ -19,7 +19,7 @@ guide; this is the complete index.
 | `wpss_account_status_changed` | 2 | `src/Admin/Pages/ReportsPage.php:160` *(+1 more)* |  |
 | `wpss_adapter_initialized` | 1 | `src/Integrations/IntegrationManager.php:136` | Fires after the active e-commerce adapter is initialized. |
 | `wpss_admin_order_actions` | 2 | `src/Admin/Admin.php:2414` | Fires in the admin order actions area for gateway-specific actions. |
-| `wpss_advanced_settings_sections` | 0 | `src/Admin/Settings.php:2073` |  |
+| `wpss_advanced_settings_sections` | 0 | `src/Admin/Settings.php:2075` |  |
 | `wpss_after_account_deletion` | 1 | `src/Services/AccountDeletionService.php:265` | Fires after a member's account has been deleted. |
 | `wpss_after_cascade_delete_request` | 1 | `src/Services/DataCascadeHandler.php:163` | Fires after buyer request cascade data is deleted. |
 | `wpss_after_cascade_delete_service` | 1 | `src/Services/DataCascadeHandler.php:136` | Fires after service cascade data is deleted. |
@@ -105,11 +105,11 @@ guide; this is the complete index.
 | `wpss_delivery_submitted` | 2 | `src/Services/DeliveryService.php:152` | Fires when a delivery is submitted. |
 | `wpss_dispute_cancelled` | 3 | `src/Services/DisputeWorkflowManager.php:499` | Fires when a dispute is cancelled. |
 | `wpss_dispute_escalated` | 3 | `src/Services/DisputeWorkflowManager.php:336` | Fires when a dispute is escalated. |
-| `wpss_dispute_evidence_added` | 2 | `src/Services/DisputeService.php:462` | Fires when evidence is added to a dispute. |
-| `wpss_dispute_opened` | 4 | `src/Services/DisputeService.php:327` | Fires when a dispute is opened. |
-| `wpss_dispute_resolved` | 4 | `src/Services/DisputeService.php:862` | Fires when a dispute is resolved. |
+| `wpss_dispute_evidence_added` | 2 | `src/Services/DisputeService.php:463` | Fires when evidence is added to a dispute. |
+| `wpss_dispute_opened` | 4 | `src/Services/DisputeService.php:328` | Fires when a dispute is opened. |
+| `wpss_dispute_resolved` | 4 | `src/Services/DisputeService.php:885` | Fires when a dispute is resolved. |
 | `wpss_dispute_response_submitted` | 3 | `src/Services/DisputeWorkflowManager.php:209` | Fires when a dispute response is submitted. |
-| `wpss_dispute_status_changed` | 3 | `src/Services/DisputeService.php:736` | Fires when dispute status changes. |
+| `wpss_dispute_status_changed` | 3 | `src/Services/DisputeService.php:759` | Fires when dispute status changes. |
 | `wpss_earnings_ledger_actions` | 1 | `templates/dashboard/sections/earnings.php:397` | Fires in the wallet ledger header, for ledger controls. |
 | `wpss_earnings_summary` | 1 | `templates/dashboard/sections/earnings.php:219` | Fires after earnings summary stats. |
 | `wpss_edd_adapter_init` | 1 | `src/Integrations/EDD/EDDAdapter.php:167` **[PRO]** | Fires after EDD adapter is initialized. |
@@ -130,9 +130,9 @@ guide; this is the complete index.
 | `wpss_fluentcart_adapter_init` | 1 | `src/Integrations/FluentCart/FluentCartAdapter.php:214` **[PRO]** | Fires after Fluent Cart adapter is initialized. |
 | `wpss_fluentcart_order_created` | 3 | `src/Integrations/FluentCart/FluentCartOrderProvider.php:111` **[PRO]** | Fires when a WPSS order is created from Fluent Cart. |
 | `wpss_fluentcart_order_detail` | 1 | `src/Integrations/FluentCart/FluentCartAccountProvider.php:367` **[PRO]** | Fires after order detail content. |
-| `wpss_gateway_cards` | 1 | `src/Admin/Settings.php:1945` | Fires after core gateways, before Offline. |
+| `wpss_gateway_cards` | 1 | `src/Admin/Settings.php:1947` | Fires after core gateways, before Offline. |
 | `wpss_gateway_refund_received` | 4 | `src/Integrations/PayPal/PayPalGateway.php:921` *(+3 more)* | Fires when a refund happened at the payment rail. |
-| `wpss_gateway_settings_owned_by_rail` | 1 | `src/Admin/Settings.php:1907` | Fires instead of the gateway cards when a cart rail owns payment. |
+| `wpss_gateway_settings_owned_by_rail` | 1 | `src/Admin/Settings.php:1909` | Fires instead of the gateway cards when a cart rail owns payment. |
 | `wpss_loaded` | 1 | `src/Core/Plugin.php:294` | Fires after the plugin is fully loaded. |
 | `wpss_message_sent` | 2 | `src/Services/ConversationService.php:343` | Fires when a message is sent. |
 | `wpss_milestone_approved` | 4 | `src/Services/MilestoneService.php:533` |  |
@@ -178,7 +178,7 @@ guide; this is the complete index.
 | `wpss_paypal_refund_processed` | 2 | `src/Integrations/PayPal/PayPalGateway.php:939` | Fires when a PayPal refund is processed. |
 | `wpss_portfolio_item_created` | 3 | `src/Services/PortfolioService.php:200` | Fires when portfolio item is created. |
 | `wpss_portfolio_item_deleted` | 2 | `src/Services/PortfolioService.php:345` | Fires when portfolio item is deleted. |
-| `wpss_portfolio_item_moderated` | 3 | `src/Admin/Pages/VendorsPage.php:2893` | Fires after an admin moderates a vendor portfolio item from the drawer. |
+| `wpss_portfolio_item_moderated` | 3 | `src/Admin/Pages/VendorsPage.php:2847` | Fires after an admin moderates a vendor portfolio item from the drawer. |
 | `wpss_portfolio_item_updated` | 2 | `src/Services/PortfolioService.php:295` | Fires when portfolio item is updated. |
 | `wpss_pro_connect_payout_failed` | 4 | `src/StripeConnect/ConnectWebhookHandler.php:295` **[PRO]** | Fires when a payout to a connected vendor account fails. |
 | `wpss_pro_connect_payout_paid` | 4 | `src/StripeConnect/ConnectWebhookHandler.php:254` **[PRO]** | Fires when a payout to a connected vendor account succeeds. |
@@ -197,7 +197,7 @@ guide; this is the complete index.
 | `wpss_recurring_payment_failed` | 2 | `src/RecurringServices/RecurringWebhookHandler.php:191` **[PRO]** | Fires after a recurring subscription is marked past_due due to a failed payment. |
 | `wpss_recurring_renewal_order_created` | 3 | `src/RecurringServices/RecurringOrderFactory.php:140` **[PRO]** | Fires after a recurring renewal order is created. |
 | `wpss_recurring_subscription_cancelled` | 2 | `src/RecurringServices/RecurringWebhookHandler.php:229` **[PRO]** | Fires after a recurring subscription is cancelled via Stripe webhook. |
-| `wpss_render_secret_field` | 1 | `src/Admin/Settings.php:235` *(+3 more)* |  |
+| `wpss_render_secret_field` | 1 | `src/Admin/Settings.php:237` *(+3 more)* |  |
 | `wpss_report_filed` | 4 | `src/API/ReportsController.php:245` | Fires when a member files a report. |
 | `wpss_request_archive_header` | 0 | `templates/archive-request.php:90` | Hook: wpss_request_archive_header |
 | `wpss_request_archive_sidebar` | 0 | `templates/archive-request.php:133` | Hook: wpss_request_archive_sidebar |
@@ -213,7 +213,7 @@ guide; this is the complete index.
 | `wpss_rest_service_deleted` | 2 | `src/API/ServicesController.php:827` | Fires after a service is deleted via REST API. |
 | `wpss_rest_service_updated` | 2 | `src/API/ServicesController.php:778` | Fires after a service is updated via REST API. |
 | `wpss_review_created` | 2 | `src/API/ReviewsController.php:461` *(+1 more)* |  |
-| `wpss_review_moderated` | 2 | `src/Admin/Pages/ReviewModerationPage.php:727` | Fires after an admin moderates a review from the queue. |
+| `wpss_review_moderated` | 2 | `src/Services/ReviewService.php:181` | Fires after an admin moderates a review from the queue. |
 | `wpss_review_reply_created` | 1 | `src/API/ReviewsController.php:626` |  |
 | `wpss_revision_requested` | 2 | `src/API/OrdersController.php:972` *(+1 more)* |  |
 | `wpss_send_requirements_reminder_email` | 3 | `src/Services/OrderWorkflowManager.php:414` |  |
@@ -233,9 +233,9 @@ guide; this is the complete index.
 | `wpss_service_updated` | 2 | `src/Services/ServiceManager.php:290` | Fires after a service is updated. |
 | `wpss_service_wizard_saved` | 2 | `src/Frontend/ServiceWizard.php:1712` | Fires after a service is saved via the wizard. |
 | `wpss_services_list_actions` | 1 | `templates/dashboard/sections/services.php:137` | Fires in the services list area for bulk actions or filters. |
-| `wpss_settings_sections_gateways` | 0 | `src/Admin/Settings.php:1955` | Unified gateway sections hook. |
-| `wpss_settings_sections_payments` | 1 | `src/Admin/Settings.php:1799` | Legacy payments-sections hook. |
-| `wpss_settings_tab_` | 0 | `src/Admin/Settings.php:1680` | Fires when rendering a custom settings tab added by Pro or extensions. |
+| `wpss_settings_sections_gateways` | 0 | `src/Admin/Settings.php:1957` | Unified gateway sections hook. |
+| `wpss_settings_sections_payments` | 1 | `src/Admin/Settings.php:1801` | Legacy payments-sections hook. |
+| `wpss_settings_tab_` | 0 | `src/Admin/Settings.php:1682` | Fires when rendering a custom settings tab added by Pro or extensions. |
 | `wpss_single_request_content` | 1 | `templates/single-request.php:238` | Hook: wpss_single_request_content |
 | `wpss_single_request_header` | 1 | `templates/single-request.php:150` | Hook: wpss_single_request_header |
 | `wpss_single_request_proposals` | 1 | `templates/single-request.php:253` | Hook: wpss_single_request_proposals |
@@ -260,10 +260,10 @@ guide; this is the complete index.
 | `wpss_updated` | 2 | `src/Core/Plugin.php:453` | Fires after the plugin has been installed or upgraded. |
 | `wpss_user_blocked` | 2 | `src/API/BlocksController.php:164` | Fires when one member blocks another. |
 | `wpss_user_unblocked` | 2 | `src/API/BlocksController.php:196` | Fires when one member unblocks another. |
-| `wpss_vendor_access_granted` | 1 | `src/Services/VendorService.php:372` | Fires when vendor access is granted (after admin approval). |
-| `wpss_vendor_access_revoked` | 1 | `src/Services/VendorService.php:426` | Fires when vendor access is revoked (suspended/rejected). |
+| `wpss_vendor_access_granted` | 1 | `src/Services/VendorService.php:438` | Fires when vendor access is granted (after admin approval). |
+| `wpss_vendor_access_revoked` | 1 | `src/Services/VendorService.php:492` | Fires when vendor access is revoked (suspended/rejected). |
 | `wpss_vendor_card_meta` | 1 | `templates/partials/vendor-card.php:129` | Fires inside the vendor card meta area for custom badges/icons. |
-| `wpss_vendor_commission_updated` | 2 | `src/Admin/Pages/VendorsPage.php:1557` | Fires when vendor commission rate is updated. |
+| `wpss_vendor_commission_updated` | 2 | `src/Admin/Pages/VendorsPage.php:1511` | Fires when vendor commission rate is updated. |
 | `wpss_vendor_contacted` | 5 | `src/Frontend/AjaxHandlers.php:2135` | Fires after a vendor contact message is sent. |
 | `wpss_vendor_dashboard_actions` | 1 | `templates/myaccount/vendor-dashboard.php:234` | Fires at the end of vendor dashboard body for custom actions. |
 | `wpss_vendor_dashboard_after` | 1 | `templates/myaccount/vendor-dashboard.php:262` | Fires after the vendor dashboard content. |
@@ -278,13 +278,13 @@ guide; this is the complete index.
 | `wpss_vendor_profile_services` | 1 | `templates/vendor/profile.php:313` | Hook: wpss_vendor_profile_services |
 | `wpss_vendor_profile_sidebar` | 1 | `templates/vendor/profile.php:598` | Hook: wpss_vendor_profile_sidebar |
 | `wpss_vendor_profile_stats` | 1 | `templates/vendor/profile.php:470` | Hook: wpss_vendor_profile_stats |
-| `wpss_vendor_profile_updated` | 2 | `src/Services/VendorService.php:493` | Fires when a vendor profile is updated. |
+| `wpss_vendor_profile_updated` | 2 | `src/Services/VendorService.php:559` | Fires when a vendor profile is updated. |
 | `wpss_vendor_registered` | 2 | `src/Services/VendorService.php:182` | Fires when a new vendor is registered. |
 | `wpss_vendor_services_after` | 1 | `templates/myaccount/vendor-services.php:105` | Fires after the vendor services content. |
 | `wpss_vendor_services_before` | 1 | `templates/myaccount/vendor-services.php:21` | Fires before the vendor services content. |
-| `wpss_vendor_status_updated` | 2 | `src/Admin/Pages/VendorsPage.php:1152` *(+1 more)* | Fires when vendor status is updated. |
-| `wpss_vendor_tier_changed` | 2 | `src/Services/VendorService.php:585` | Fires when vendor verification tier changes. |
-| `wpss_vendor_vacation_mode_changed` | 4 | `src/Services/VendorService.php:544` | Fires when vacation mode is toggled. |
+| `wpss_vendor_status_updated` | 2 | `src/Services/VendorService.php:377` | Fires when vendor status is updated. |
+| `wpss_vendor_tier_changed` | 2 | `src/Services/VendorService.php:651` | Fires when vendor verification tier changes. |
+| `wpss_vendor_vacation_mode_changed` | 4 | `src/Services/VendorService.php:610` | Fires when vacation mode is toggled. |
 | `wpss_withdrawal_processed` | 3 | `src/Services/EarningsService.php:487` *(+1 more)* |  |
 | `wpss_withdrawal_requested` | 3 | `src/Services/EarningsService.php:694` | Fires when withdrawal is requested. |
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php:699` | Fires after the pricing tiers in the wizard's Pricing step. |
@@ -336,17 +336,17 @@ guide; this is the complete index.
 | `wpss_checkout_badges` | 2 | `src/functions/payments.php:197` | Filter the checkout reassurance badges. |
 | `wpss_checkout_creates_accounts` | 1 | `src/functions/billing.php:826` | Filter whether checkout creates an account for a logged-out buyer. |
 | `wpss_checkout_slug` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php:48` | Filter the checkout URL slug. |
-| `wpss_checkout_tax_rate` | 3 | `src/functions/money.php:607` |  |
+| `wpss_checkout_tax_rate` | 3 | `src/functions/money.php:627` |  |
 | `wpss_commission_base_amount` | 3 | `src/Services/CommissionService.php:166` | Filters the base amount used for commission calculation. |
 | `wpss_commission_fee` | 4 | `src/Services/CommissionService.php:192` | Filters the platform fee AMOUNT for an order. |
 | `wpss_commission_rate` | 4 | `src/Services/CommissionService.php:354` *(+1 more)* | Filter the commission rate for a specific order. |
 | `wpss_countries` | 1 | `src/functions/billing.php:520` | Filter the billing country list. |
-| `wpss_currencies` | 1 | `src/functions/money.php:1694` | Filter supported currencies. |
-| `wpss_currency` | 1 | `src/functions/money.php:837` | Filter the default currency. |
+| `wpss_currencies` | 1 | `src/functions/money.php:1714` | Filter supported currencies. |
+| `wpss_currency` | 1 | `src/functions/money.php:857` | Filter the default currency. |
 | `wpss_currency_decimals` | 2 | `src/functions/money.php:186` | Filter the number of decimal places for a currency. |
-| `wpss_currency_format` | 3 | `src/functions/money.php:899` | Filter the currency format string. |
-| `wpss_currency_registry` | 1 | `src/functions/money.php:1673` | Filter the canonical currency registry. |
-| `wpss_currency_symbols` | 1 | `src/functions/money.php:872` | Filter currency symbols. |
+| `wpss_currency_format` | 3 | `src/functions/money.php:919` | Filter the currency format string. |
+| `wpss_currency_registry` | 1 | `src/functions/money.php:1693` | Filter the canonical currency registry. |
+| `wpss_currency_symbols` | 1 | `src/functions/money.php:892` | Filter currency symbols. |
 | `wpss_dashboard_asset_shortcodes` | 1 | `src/Frontend/UnifiedDashboard.php:248` | Filters the shortcodes that make a page load the dashboard assets. |
 | `wpss_dashboard_default_section` | 2 | `src/Frontend/UnifiedDashboard.php:408` | Filter the dashboard's default landing section. |
 | `wpss_dashboard_section_aliases` | 1 | `src/functions/urls.php:307` | Filter the dashboard section alias map. |
@@ -359,7 +359,7 @@ guide; this is the complete index.
 | `wpss_dispute_reasons` | 1 | `src/functions/moderation.php:107` | Filter the reasons a buyer may give for opening a dispute. |
 | `wpss_docs_url` | 1 | `src/Admin/Pages/UpgradePage.php:348` | Filters the documentation URL shown on the upgrade screen. |
 | `wpss_ecommerce_adapters` | 1 | `src/CLI/PreflightCommand.php:663` *(+1 more)* |  |
-| `wpss_ecommerce_platform_description` | 1 | `src/Admin/Settings.php:3319` | Filter the platform field description. |
+| `wpss_ecommerce_platform_description` | 1 | `src/Admin/Settings.php:3321` | Filter the platform field description. |
 | `wpss_edd_can_access_vendor_dashboard` | 2 | `src/Integrations/EDD/EDDAccountProvider.php:484` **[PRO]** | Filter whether user can access vendor dashboard. |
 | `wpss_edd_cart_item_data` | 3 | `src/Integrations/EDD/EDDCheckoutProvider.php:56` **[PRO]** | Filter cart item data for services. |
 | `wpss_edd_thankyou_redirect` | 2 | `src/Integrations/EDD/EDDCheckoutProvider.php:250` **[PRO]** | Filter the thank you redirect URL for service orders. |
@@ -395,7 +395,7 @@ guide; this is the complete index.
 | `wpss_no_requests_message` | 1 | `templates/content-no-requests.php:26` | Template: No Requests Found |
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php:33` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php:2067` | Filter email content before sending. |
-| `wpss_notification_types` | 1 | `src/Admin/Settings.php:3829` | Filter the switchable notification types. |
+| `wpss_notification_types` | 1 | `src/Admin/Settings.php:3831` | Filter the switchable notification types. |
 | `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php:1667` | Named offline methods. |
 | `wpss_offline_methods` | 2 | `src/Integrations/Gateways/OfflineGateway.php:331` | Filter the offline payment methods. |
 | `wpss_open_graph_data` | 2 | `src/SEO/SEO.php:260` |  |
@@ -422,7 +422,7 @@ guide; this is the complete index.
 | `wpss_pre_create_order` | 1 | `src/Integrations/Standalone/StandaloneOrderProvider.php:110` | Filters order data before database insertion. |
 | `wpss_pre_create_review` | 2 | `src/Services/ReviewService.php:77` | Filters review data before database insertion. |
 | `wpss_pre_create_service` | 1 | `src/Services/ServiceManager.php:109` | Filters service data before creation. |
-| `wpss_pre_open_dispute` | 2 | `src/Services/DisputeService.php:273` | Filter dispute data before saving to the database. |
+| `wpss_pre_open_dispute` | 2 | `src/Services/DisputeService.php:274` | Filter dispute data before saving to the database. |
 | `wpss_pre_order_status_change` | 4 | `src/Services/OrderService.php:442` | Filter whether an order status change should proceed. |
 | `wpss_pre_process_gateway_refund` | 4 | `src/Services/OrderWorkflowManager.php:1343` | Short-circuit the gateway refund. |
 | `wpss_pre_send_message` | 2 | `src/Services/ConversationService.php:274` | Filter message data before saving to the database. |
@@ -454,7 +454,7 @@ guide; this is the complete index.
 | `wpss_rest_review_data` | 3 | `src/API/ReviewsController.php:1055` | Filters the review data returned in REST API responses. |
 | `wpss_rest_service_data` | 3 | `src/API/ServicesController.php:1194` | Filter service REST response data. |
 | `wpss_rest_vendor_data` | 3 | `src/API/VendorsController.php:917` | Filters the vendor data returned in REST API responses. |
-| `wpss_review_window_days` | 1 | `src/Services/ReviewService.php:449` | Filter the review time window in days. |
+| `wpss_review_window_days` | 1 | `src/Services/ReviewService.php:504` | Filter the review time window in days. |
 | `wpss_reviews_per_page` | 2 | `templates/partials/service-reviews.php:54` | Filters the number of reviews to display per page. |
 | `wpss_search_categories_limit` | 1 | `src/Blocks/ServiceSearch.php:180` |  |
 | `wpss_search_query_args` | 2 | `src/Services/SearchService.php:247` | Filter the WP_Query arguments for service search. |
@@ -480,9 +480,9 @@ guide; this is the complete index.
 | `wpss_service_tag_args` | 1 | `src/PostTypes/ServicePostType.php:305` | Filter service tag taxonomy arguments. |
 | `wpss_service_tag_taxonomy_args` | 1 | `src/Taxonomies/ServiceTagTaxonomy.php:103` | Filter service tag taxonomy arguments. |
 | `wpss_services_per_page` | 1 | `src/Frontend/ServiceArchiveView.php:651` *(+1 more)* |  |
-| `wpss_settings_currencies` | 1 | `src/Admin/Settings.php:3791` | Filter the currencies available in the Settings currency dropdown. |
+| `wpss_settings_currencies` | 1 | `src/Admin/Settings.php:3793` | Filter the currencies available in the Settings currency dropdown. |
 | `wpss_settings_sections` | 1 | `src/functions/urls.php:986` | Filter the known admin settings sections. |
-| `wpss_settings_tabs` | 1 | `src/Admin/Settings.php:225` | Filter the settings tabs. |
+| `wpss_settings_tabs` | 1 | `src/Admin/Settings.php:227` | Filter the settings tabs. |
 | `wpss_should_reverse_vendor_earnings` | 2 | `src/Services/OrderWorkflowManager.php:1111` | Filters whether the vendor's wallet earnings should be reversed. |
 | `wpss_show_powered_by` | 1 | `src/Frontend/UnifiedDashboard.php:785` | Filters whether the "Powered by WP Sell Services" footer credit is rendered on the frontend dashboard. |
 | `wpss_single_request_layout` | 2 | `templates/single-request.php:126` | Filter: wpss_single_request_layout |
@@ -499,7 +499,7 @@ guide; this is the complete index.
 | `wpss_suppress_theme_title` | 1 | `src/Frontend/ShellHeader.php:178` | Filter whether the active theme's entry-title is suppressed on the current plugin-shell surface. |
 | `wpss_template_args` | 2 | `src/functions/templates.php:131` *(+1 more)* |  |
 | `wpss_terms_page_slugs` | 1 | `src/Core/Activator.php:450` | Filters the slugs searched when auto-mapping an existing terms page. |
-| `wpss_three_decimal_currencies` | 1 | `src/functions/money.php:710` | Filter the list of three-decimal currency codes. |
+| `wpss_three_decimal_currencies` | 1 | `src/functions/money.php:730` | Filter the list of three-decimal currency codes. |
 | `wpss_tip_commission_rate` | 3 | `src/Services/TippingService.php:372` | Filter the commission rate applied to a tip. |
 | `wpss_tip_quick_amounts` | 2 | `templates/order/order-view.php:2150` |  |
 | `wpss_token_recovery_routes` | 1 | `src/API/AppTokenGuard.php:136` | Filter the routes reachable without a valid token. |
@@ -514,18 +514,18 @@ guide; this is the complete index.
 | `wpss_vendor_pending_email_content` | 3 | `src/Services/NotificationService.php:1577` | Filter vendor pending review email content. |
 | `wpss_vendor_pitch_stats` | 1 | `src/functions/vendors.php:798` | Filter the proof points on the Become a Vendor page. |
 | `wpss_vendor_pitch_steps` | 1 | `src/Frontend/Shortcodes.php:1364` | Filter the "how it works" steps on the vendor registration page. |
-| `wpss_vendor_profile_allowed_fields` | 1 | `src/Services/VendorService.php:475` | Filter the list of allowed vendor profile fields for update. |
+| `wpss_vendor_profile_allowed_fields` | 1 | `src/Services/VendorService.php:541` | Filter the list of allowed vendor profile fields for update. |
 | `wpss_vendor_profile_fields` | 2 | `templates/vendor/profile.php:548` | Filter additional vendor profile fields. |
 | `wpss_vendor_registration_open` | 1 | `src/API/VendorsController.php:616` |  |
 | `wpss_vendor_slug` | 1 | `src/Core/Plugin.php:600` *(+1 more)* | Filter the vendor profile URL slug. |
-| `wpss_vendor_status_email_vars` | 3 | `src/Services/VendorService.php:785` | Filters the template variables for a vendor status-change email. |
+| `wpss_vendor_status_email_vars` | 3 | `src/Services/VendorService.php:851` | Filters the template variables for a vendor status-change email. |
 | `wpss_vendor_welcome_email_content` | 3 | `src/Services/NotificationService.php:1528` | Filter vendor welcome email content. |
 | `wpss_vendors_page_id` | 1 | `src/functions/vendors.php:231` | Filter the resolved vendor-directory page ID. |
 | `wpss_vendors_url` | 2 | `src/functions/vendors.php:303` | Filter the vendor-directory URL. |
 | `wpss_video_thumbnail_cache_ttl` | 2 | `src/functions/services.php:920` | Filter how long a video's poster URL is cached. |
-| `wpss_wallet_manager` | 1 | `src/functions/money.php:1716` | Filter the wallet manager instance. |
+| `wpss_wallet_manager` | 1 | `src/functions/money.php:1736` | Filter the wallet manager instance. |
 | `wpss_wallet_providers` | 1 | `src/Core/Plugin.php:2485` *(+2 more)* | Filter the registered wallet providers. |
 | `wpss_withdrawal_methods` | 1 | `src/API/EarningsController.php:650` *(+1 more)* | Filter available withdrawal methods. |
 | `wpss_wizard_sanitize_service_data` | 2 | `src/Frontend/ServiceWizard.php:1855` | Filter the sanitized wizard payload. |
 | `wpss_wizard_service_data` | 2 | `src/Frontend/ServiceWizard.php:1245` | Filter the wizard's Alpine seed data for an existing service. |
-| `wpss_zero_decimal_currencies` | 1 | `src/functions/money.php:799` | Filter the list of zero-decimal currency codes. |
+| `wpss_zero_decimal_currencies` | 1 | `src/functions/money.php:819` | Filter the list of zero-decimal currency codes. |
