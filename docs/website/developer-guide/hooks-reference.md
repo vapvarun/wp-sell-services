@@ -258,7 +258,7 @@ guide; this is the complete index.
 | `wpss_standalone_adapter_init` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php:157` | Fires after standalone adapter is initialized. |
 | `wpss_standalone_checkout_processed` | 2 | `src/Integrations/Standalone/StandaloneCheckoutProvider.php:134` | Fires after standalone checkout processing. |
 | `wpss_standalone_order_complete` | 1 | `src/Integrations/Standalone/StandaloneOrderProvider.php:720` | Fires when a standalone order is completed. |
-| `wpss_stripe_refund_processed` | 2 | `src/Integrations/Stripe/StripeGateway.php:1492` | Fires when a Stripe refund is processed. |
+| `wpss_stripe_refund_processed` | 2 | `src/Integrations/Stripe/StripeGateway.php:1504` | Fires when a Stripe refund is processed. |
 | `wpss_stripe_webhook_received` | 3 | `src/Integrations/Stripe/StripeGateway.php:650` *(+1 more)* | Fires when a Stripe webhook event is received. |
 | `wpss_terawallet_recharged` | 2 | `src/Integrations/Wallets/TeraWalletProvider.php:203` **[PRO]** | Fires when TeraWallet recharge is complete. |
 | `wpss_tip_order_created` | 4 | `src/Services/TippingService.php:280` | Fires when a pending-payment tip order is created and awaits the buyer's gateway charge. |
