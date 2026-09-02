@@ -904,9 +904,9 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_pro_connect_payout_paid` | `string $payout_id, string $account_id, float $amount, string $currency` | `src/StripeConnect/ConnectWebhookHandler.php:233` |
-| `wpss_pro_connect_payout_failed` | `string $payout_id, string $account_id, string $failure_code, string $failure_message` | `src/StripeConnect/ConnectWebhookHandler.php:274` |
-| `wpss_pro_connect_transfer_created` | `string $transfer_id, string $account_id, float $amount, string $currency` | `src/StripeConnect/ConnectWebhookHandler.php:315` |
+| `wpss_pro_connect_payout_paid` | `string $payout_id, string $account_id, float $amount, string $currency` | `src/StripeConnect/ConnectWebhookHandler.php:253` |
+| `wpss_pro_connect_payout_failed` | `string $payout_id, string $account_id, string $failure_code, string $failure_message` | `src/StripeConnect/ConnectWebhookHandler.php:294` |
+| `wpss_pro_connect_transfer_created` | `string $transfer_id, string $account_id, float $amount, string $currency` | `src/StripeConnect/ConnectWebhookHandler.php:335` |
 
 ### Recurring Services Actions
 
