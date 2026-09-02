@@ -507,7 +507,7 @@ class DisputesController extends RestController {
 		if ( ! $dispute_id ) {
 			return new WP_Error(
 				'dispute_create_failed',
-				__( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' ),
+				$this->dispute_service->last_error() ?: __( 'Failed to open dispute.', 'wp-sell-services' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -691,7 +691,7 @@ class DisputesController extends RestController {
 		if ( ! $result ) {
 			return new WP_Error(
 				'resolve_failed',
-				__( 'Failed to resolve dispute.', 'wp-sell-services' ),
+				$this->dispute_service->last_error() ?: __( 'Failed to resolve dispute.', 'wp-sell-services' ),
 				array( 'status' => 400 )
 			);
 		}

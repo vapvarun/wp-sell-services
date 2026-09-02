@@ -967,8 +967,6 @@ class OrdersController extends RestController {
 			case 'dispute':
 				if ( ! $is_customer && ! $is_vendor ) {
 					$error = __( 'Only order participants can open disputes.', 'wp-sell-services' );
-				} elseif ( ! in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested', 'delivered' ), true ) ) {
-					$error = __( 'Disputes can only be opened for active orders.', 'wp-sell-services' );
 				} elseif ( empty( $reason ) ) {
 					$error = __( 'Reason is required for disputes.', 'wp-sell-services' );
 				} else {
@@ -987,7 +985,8 @@ class OrdersController extends RestController {
 						$result = true;
 						do_action( 'wpss_order_disputed', $order_id, $opened_by, $reason );
 					} else {
-						$error = __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' );
+						// Order-status and one-per-order guards live in open().
+						$error = $dispute_service->last_error() ?: __( 'Failed to open dispute.', 'wp-sell-services' );
 					}
 				}
 				break;

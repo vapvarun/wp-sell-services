@@ -535,11 +535,18 @@ class OrderService {
 				ServiceOrder::STATUS_DISPUTED,
 				ServiceOrder::STATUS_IN_PROGRESS,
 			),
-			ServiceOrder::STATUS_DISPUTED               => array(
-				ServiceOrder::STATUS_COMPLETED,
-				ServiceOrder::STATUS_CANCELLED,
-				ServiceOrder::STATUS_REFUNDED,
-				ServiceOrder::STATUS_PARTIALLY_REFUNDED,
+			// The four rulings, plus every status a dispute can be opened from:
+			// a dispute closed without a ruling hands the order back to where
+			// it was (DisputeWorkflowManager::cancel()), and the opener may do
+			// that without admin rights.
+			ServiceOrder::STATUS_DISPUTED               => array_merge(
+				array(
+					ServiceOrder::STATUS_COMPLETED,
+					ServiceOrder::STATUS_CANCELLED,
+					ServiceOrder::STATUS_REFUNDED,
+					ServiceOrder::STATUS_PARTIALLY_REFUNDED,
+				),
+				DisputeService::DISPUTABLE_ORDER_STATUSES
 			),
 			// A PARTIAL refund is a money fact, not the end of the job: the
 			// buyer got some of it back and the vendor is still owed the rest.

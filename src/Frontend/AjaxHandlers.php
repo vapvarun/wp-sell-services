@@ -1336,7 +1336,7 @@ class AjaxHandlers {
 				)
 			);
 		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => $dispute_service->last_error() ?: __( 'Failed to open dispute.', 'wp-sell-services' ) ) );
 		}
 	}
 

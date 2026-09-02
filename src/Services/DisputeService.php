@@ -43,6 +43,46 @@ class DisputeService {
 	public const RESOLUTION_MUTUAL         = 'mutual_agreement';
 
 	/**
+	 * The dispute state machine. Key: current status; value: statuses it may
+	 * move to. transition() is the only writer of disputes.status and refuses
+	 * anything not listed here, so resolved and closed are terminal everywhere -
+	 * admin select, bulk action, REST and cron alike.
+	 *
+	 * @since 1.7.1
+	 */
+	private const TRANSITIONS = array(
+		self::STATUS_OPEN      => array( self::STATUS_PENDING, self::STATUS_ESCALATED, self::STATUS_RESOLVED, self::STATUS_CLOSED ),
+		self::STATUS_PENDING   => array( self::STATUS_ESCALATED, self::STATUS_RESOLVED, self::STATUS_CLOSED ),
+		self::STATUS_ESCALATED => array( self::STATUS_RESOLVED, self::STATUS_CLOSED ),
+		self::STATUS_RESOLVED  => array(),
+		self::STATUS_CLOSED    => array(),
+	);
+
+	/**
+	 * Order statuses a dispute may be opened from: paid, work under way or
+	 * delivered. Completed is allowed too, inside the dispute window (see
+	 * open_guard()). Also the statuses a cancelled dispute may restore the
+	 * order to, so OrderService's natural map reads this list.
+	 *
+	 * @since 1.7.1
+	 */
+	public const DISPUTABLE_ORDER_STATUSES = array(
+		ServiceOrder::STATUS_IN_PROGRESS,
+		ServiceOrder::STATUS_PENDING_APPROVAL,
+		ServiceOrder::STATUS_REVISION_REQUESTED,
+		ServiceOrder::STATUS_LATE,
+		ServiceOrder::STATUS_DELIVERED,
+		ServiceOrder::STATUS_CANCELLATION_REQUESTED,
+	);
+
+	/**
+	 * Why the last open()/transition()/resolve() call returned false.
+	 *
+	 * @var string
+	 */
+	private string $last_error = '';
+
+	/**
 	 * Database table name.
 	 *
 	 * @var string
@@ -82,100 +122,128 @@ class DisputeService {
 	}
 
 	/**
+	 * Why the last open(), transition() or resolve() call was refused.
+	 *
+	 * @since 1.7.1
+	 * @return string Translated sentence, empty when the last call succeeded.
+	 */
+	public function last_error(): string {
+		return $this->last_error;
+	}
+
+	/**
+	 * Whether a dispute may move from one status to another.
+	 *
+	 * @since 1.7.1
+	 * @param string $from Current status.
+	 * @param string $to   Target status.
+	 * @return bool
+	 */
+	public function can_transition( string $from, string $to ): bool {
+		return in_array( $to, self::TRANSITIONS[ $from ] ?? array(), true );
+	}
+
+	/**
 	 * Check whether a dispute can be opened for a given order.
 	 *
 	 * Used by templates to decide whether to show the "Open Dispute" button.
+	 * Same guard as open(), so the button never shows when submit would fail.
 	 *
 	 * @param object $order Order object (ServiceOrder or raw DB row).
 	 * @return bool
 	 */
 	public function can_open_dispute( object $order ): bool {
-		global $wpdb;
+		$order_settings = get_option( 'wpss_orders', array() );
 
-		$order_settings   = get_option( 'wpss_orders', array() );
-		$disputes_allowed = ! empty( $order_settings['allow_disputes'] );
-
-		if ( ! $disputes_allowed ) {
+		if ( empty( $order_settings['allow_disputes'] ) ) {
 			return false;
 		}
 
-		// Check if an unresolved dispute already exists.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$existing_status = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT status FROM {$this->table} WHERE order_id = %d LIMIT 1",
-				$order->id
-			)
-		);
-		if ( $existing_status && ! in_array( $existing_status, array( 'resolved', 'closed' ), true ) ) {
-			return false;
+		return null === $this->open_guard( $order );
+	}
+
+	/**
+	 * The one reason a dispute cannot be opened on this order, or null.
+	 *
+	 * Shared by can_open_dispute() (button) and open() (submit) so the two
+	 * cannot drift. Product rule (docs/website/disputes-resolution): one
+	 * dispute per order, ever - a resolved or closed one is final.
+	 *
+	 * @since 1.7.1
+	 * @param object $order Order object (ServiceOrder or raw DB row).
+	 * @return string|null Translated refusal, or null when a dispute may be opened.
+	 */
+	private function open_guard( object $order ): ?string {
+		if ( $this->get_by_order( (int) $order->id ) ) {
+			return __( 'A dispute already exists for this order.', 'wp-sell-services' );
 		}
 
-		// Allow disputes for active order statuses.
-		$active_statuses = array( 'in_progress', 'pending_approval', 'revision_requested', 'late' );
-		if ( in_array( $order->status, $active_statuses, true ) ) {
-			return true;
+		if ( in_array( $order->status, self::DISPUTABLE_ORDER_STATUSES, true ) ) {
+			return null;
 		}
 
-		// For completed orders, enforce dispute window.
-		if ( 'completed' === $order->status && ! empty( $order->completed_at ) ) {
+		if ( ServiceOrder::STATUS_COMPLETED === $order->status && ! empty( $order->completed_at ) ) {
+			$order_settings      = get_option( 'wpss_orders', array() );
 			$dispute_window_days = (int) ( $order_settings['dispute_window_days'] ?? 14 );
-			if ( $dispute_window_days > 0 ) {
-				if ( is_object( $order->completed_at ) && method_exists( $order->completed_at, 'getTimestamp' ) ) {
-					$completed_time = $order->completed_at->getTimestamp();
-				} else {
-					$completed_time = strtotime( (string) $order->completed_at );
-				}
-				$deadline = $completed_time + ( $dispute_window_days * DAY_IN_SECONDS );
-				return time() <= $deadline;
+
+			if ( $dispute_window_days <= 0 ) {
+				return __( 'Disputes cannot be opened on completed orders.', 'wp-sell-services' );
 			}
+
+			$completed_time = $order->completed_at instanceof \DateTimeInterface
+				? $order->completed_at->getTimestamp()
+				: strtotime( (string) $order->completed_at );
+
+			if ( time() > $completed_time + ( $dispute_window_days * DAY_IN_SECONDS ) ) {
+				return sprintf(
+					/* translators: %d: number of days after completion a dispute may be opened. */
+					__( 'The %d-day dispute window for this order has passed.', 'wp-sell-services' ),
+					$dispute_window_days
+				);
+			}
+
+			return null;
 		}
 
-		return false;
+		return __( 'Disputes can only be opened on paid orders that are in progress, delivered, or recently completed.', 'wp-sell-services' );
 	}
 
 	/**
 	 * Open a dispute.
+	 *
+	 * The dispute row and the order's move to `disputed` are one unit of work:
+	 * either both land or neither does, so a refused order transition can no
+	 * longer leave a dispute row on an order that never moved.
 	 *
 	 * @param int                  $order_id Order ID.
 	 * @param int                  $opened_by User ID who opened dispute.
 	 * @param string               $reason Dispute reason.
 	 * @param string               $description Detailed description.
 	 * @param array<string, mixed> $meta Additional metadata.
-	 * @return int|false Dispute ID or false on failure.
+	 * @return int|false Dispute ID, or false with the reason in last_error().
 	 */
 	public function open( int $order_id, int $opened_by, string $reason, string $description, array $meta = array() ): int|false {
 		global $wpdb;
 
-		// Check if order exists.
-		$order = $this->order_repo->find( $order_id );
+		$this->last_error = '';
+		$order            = $this->order_repo->find( $order_id );
 
 		if ( ! $order ) {
+			$this->last_error = __( 'Order not found.', 'wp-sell-services' );
 			return false;
 		}
 
-		// Check if user is part of the order.
 		// Cast to int since database returns string values.
 		if ( (int) $order->customer_id !== $opened_by && (int) $order->vendor_id !== $opened_by ) {
+			$this->last_error = __( 'Only the buyer or the vendor on this order can open a dispute.', 'wp-sell-services' );
 			return false;
 		}
 
-		// Check if dispute already exists for this order.
-		if ( $this->get_by_order( $order_id ) ) {
-			return false;
-		}
+		$refusal = $this->open_guard( $order );
 
-		// Enforce dispute window (only for completed orders).
-		if ( 'completed' === $order->status && ! empty( $order->completed_at ) ) {
-			$order_settings      = get_option( 'wpss_orders', array() );
-			$dispute_window_days = (int) ( $order_settings['dispute_window_days'] ?? 14 );
-			if ( $dispute_window_days > 0 ) {
-				$completed_time = strtotime( $order->completed_at );
-				$deadline       = $completed_time + ( $dispute_window_days * DAY_IN_SECONDS );
-				if ( time() > $deadline ) {
-					return false;
-				}
-			}
+		if ( null !== $refusal ) {
+			$this->last_error = $refusal;
+			return false;
 		}
 
 		// Determine the respondent (the other party on the order).
@@ -207,50 +275,56 @@ class DisputeService {
 		 */
 		$dispute_data = apply_filters( 'wpss_pre_open_dispute', $dispute_data, $order_id );
 
+		$wpdb->query( 'START TRANSACTION' );
+
+		// The row goes in first: the `disputed` status mail reads the dispute
+		// by order, so it must exist when update_status() fires the hooks.
 		$result = $wpdb->insert( $this->table, $dispute_data );
 
-		if ( $result ) {
-			$dispute_id = (int) $wpdb->insert_id;
-
-			// Record the pre-dispute status BEFORE overwriting it.
-			//
-			// This used to be done by DisputeWorkflowManager::on_dispute_opened(),
-			// which runs on `wpss_dispute_opened` - i.e. AFTER the update_status()
-			// call below. It therefore read the status as `disputed` and stored
-			// status_before_dispute = 'disputed'. Cancelling or resolving the
-			// dispute then faithfully "restored" the order to `disputed`, so the
-			// order could never be released and stayed stuck forever. $order was
-			// loaded above, before any status change, so it holds the real one.
-			$order_meta                          = is_string( $order->meta ?? null ) ? ( json_decode( $order->meta, true ) ?: array() ) : ( (array) ( $order->meta ?? array() ) );
-			$order_meta['status_before_dispute'] = $order->status;
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$wpdb->prefix . 'wpss_orders',
-				array( 'meta' => wp_json_encode( $order_meta ) ),
-				array( 'id' => $order_id ),
-				array( '%s' ),
-				array( '%d' )
-			);
-
-			// Update order status via OrderService to fire hooks (notifications, emails).
-			$this->order_service->update_status( $order_id, ServiceOrder::STATUS_DISPUTED );
-
-			/**
-			 * Fires when a dispute is opened.
-			 *
-			 * @since 1.0.0
-			 * @param int   $dispute_id Dispute ID.
-			 * @param int   $order_id   Order ID.
-			 * @param int   $opened_by  User ID.
-			 * @param array $dispute_data Dispute data.
-			 */
-			do_action( 'wpss_dispute_opened', $dispute_id, $order_id, $opened_by, $dispute_data );
-
-			return $dispute_id;
+		if ( ! $result ) {
+			$wpdb->query( 'ROLLBACK' );
+			$this->last_error = __( 'Failed to open dispute.', 'wp-sell-services' );
+			return false;
 		}
 
-		return false;
+		$dispute_id = (int) $wpdb->insert_id;
+
+		// Record the pre-dispute status BEFORE overwriting it. $order was loaded
+		// above, before any status change, so it holds the real one; cancel()
+		// restores the order to it.
+		$order_meta                          = is_string( $order->meta ?? null ) ? ( json_decode( $order->meta, true ) ?: array() ) : ( (array) ( $order->meta ?? array() ) );
+		$order_meta['status_before_dispute'] = $order->status;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update(
+			$wpdb->prefix . 'wpss_orders',
+			array( 'meta' => wp_json_encode( $order_meta ) ),
+			array( 'id' => $order_id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+
+		// Via OrderService so the order hooks (notifications, emails) fire.
+		if ( ! $this->order_service->update_status( $order_id, ServiceOrder::STATUS_DISPUTED ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			$this->last_error = __( 'This order cannot be moved into dispute from its current status.', 'wp-sell-services' );
+			return false;
+		}
+
+		$wpdb->query( 'COMMIT' );
+
+		/**
+		 * Fires when a dispute is opened.
+		 *
+		 * @since 1.0.0
+		 * @param int   $dispute_id Dispute ID.
+		 * @param int   $order_id   Order ID.
+		 * @param int   $opened_by  User ID.
+		 * @param array $dispute_data Dispute data.
+		 */
+		do_action( 'wpss_dispute_opened', $dispute_id, $order_id, $opened_by, $dispute_data );
+
+		return $dispute_id;
 	}
 
 	/**
@@ -563,59 +637,82 @@ class DisputeService {
 	}
 
 	/**
-	 * Update dispute status.
+	 * Move a dispute to a new status. The ONLY writer of disputes.status.
 	 *
-	 * Notes are stored in the evidence JSON column with type 'status_note'.
+	 * Refuses anything outside self::TRANSITIONS and says why in last_error().
+	 * Re-submitting the current (non-terminal) status is a no-op that still
+	 * records the note, so the admin form can save a note without moving.
 	 *
-	 * @param int    $dispute_id Dispute ID.
-	 * @param string $status New status.
-	 * @param string $note Optional note.
-	 * @return bool True on success.
+	 * Callers that need the order moved too (closing restores it, resolving
+	 * moves money) do that in their own transaction around this call:
+	 * DisputeWorkflowManager::cancel() and self::resolve().
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int                  $dispute_id Dispute ID.
+	 * @param string               $to         Target status.
+	 * @param array<string, mixed> $context    Optional. `note` (string) is stored as a
+	 *                                         status_note in the evidence JSON;
+	 *                                         `fields` (array) are extra columns
+	 *                                         written in the same UPDATE.
+	 * @return bool True when the row moved (or the no-op note was saved).
 	 */
-	public function update_status( int $dispute_id, string $status, string $note = '' ): bool {
+	public function transition( int $dispute_id, string $to, array $context = array() ): bool {
 		global $wpdb;
 
-		$valid_statuses = array(
-			self::STATUS_OPEN,
-			self::STATUS_PENDING,
-			self::STATUS_RESOLVED,
-			self::STATUS_ESCALATED,
-			self::STATUS_CLOSED,
-		);
+		$this->last_error = '';
+		$dispute          = $this->get( $dispute_id );
 
-		if ( ! in_array( $status, $valid_statuses, true ) ) {
+		if ( ! $dispute ) {
+			$this->last_error = __( 'Dispute not found.', 'wp-sell-services' );
 			return false;
 		}
 
-		$dispute    = $this->get( $dispute_id );
-		$old_status = $dispute ? $dispute->status : '';
+		$from  = (string) $dispute->status;
+		$no_op = $to === $from && ! empty( self::TRANSITIONS[ $from ] );
 
-		$data = array(
-			'status'     => $status,
-			'updated_at' => current_time( 'mysql' ),
+		if ( ! $no_op && ! $this->can_transition( $from, $to ) ) {
+			$labels           = self::get_statuses();
+			$this->last_error = sprintf(
+				/* translators: 1: current dispute status label, 2: requested status label. */
+				__( 'A dispute that is %1$s cannot be moved to %2$s.', 'wp-sell-services' ),
+				$labels[ $from ] ?? $from,
+				$labels[ $to ] ?? $to
+			);
+			return false;
+		}
+
+		$data = array_merge(
+			(array) ( $context['fields'] ?? array() ),
+			array(
+				'status'     => $to,
+				'updated_at' => current_time( 'mysql' ),
+			)
 		);
 
-		// Store status note in evidence JSON if provided.
-		if ( $note && $dispute ) {
+		$note = (string) ( $context['note'] ?? '' );
+
+		if ( '' !== $note ) {
 			$evidence         = $dispute->evidence;
 			$evidence[]       = array(
 				'id'         => uniqid( 'note_' ),
 				'type'       => 'status_note',
 				'note'       => sanitize_textarea_field( $note ),
-				'status'     => $status,
+				'status'     => $to,
 				'created_at' => current_time( 'mysql' ),
 			);
 			$data['evidence'] = wp_json_encode( $evidence );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update(
-			$this->table,
-			$data,
-			array( 'id' => $dispute_id )
-		);
+		$result = $wpdb->update( $this->table, $data, array( 'id' => $dispute_id ) );
 
-		if ( false !== $result ) {
+		if ( false === $result ) {
+			$this->last_error = __( 'Failed to update dispute.', 'wp-sell-services' );
+			return false;
+		}
+
+		if ( ! $no_op ) {
 			/**
 			 * Fires when dispute status changes.
 			 *
@@ -624,16 +721,21 @@ class DisputeService {
 			 * @param string $status     New status.
 			 * @param string $old_status Old status.
 			 */
-			do_action( 'wpss_dispute_status_changed', $dispute_id, $status, $old_status );
-
-			return true;
+			do_action( 'wpss_dispute_status_changed', $dispute_id, $to, $from );
 		}
 
-		return false;
+		return true;
 	}
 
 	/**
 	 * Resolve a dispute.
+	 *
+	 * Money first, status second, both in one transaction: the refund or
+	 * completion runs through OrderService and only when the order actually
+	 * moved is the dispute written `resolved`. A refused money move rolls
+	 * everything back and returns false with the reason in last_error(). A
+	 * resolved or closed dispute is refused outright, so money cannot move
+	 * twice from any surface.
 	 *
 	 * @param int    $dispute_id Dispute ID.
 	 * @param string $resolution Resolution type.
@@ -645,14 +747,52 @@ class DisputeService {
 	public function resolve( int $dispute_id, string $resolution, string $notes, int $resolved_by, float $refund_amount = 0.0 ): bool {
 		global $wpdb;
 
-		$dispute = $this->get( $dispute_id );
+		$this->last_error = '';
+		$dispute          = $this->get( $dispute_id );
 
 		if ( ! $dispute ) {
+			$this->last_error = __( 'Dispute not found.', 'wp-sell-services' );
 			return false;
 		}
 
-		// Store refund amount in evidence JSON if applicable.
+		if ( ! $this->can_transition( (string) $dispute->status, self::STATUS_RESOLVED ) ) {
+			$this->last_error = __( 'This dispute has already been resolved or closed.', 'wp-sell-services' );
+			return false;
+		}
+
+		$resolution = sanitize_key( $resolution );
+
+		if ( ! isset( self::get_resolution_types()[ $resolution ] ) ) {
+			$this->last_error = __( 'Please select a resolution type when resolving a dispute.', 'wp-sell-services' );
+			return false;
+		}
+
+		// A Partial Refund with no amount used to reach apply_refund_status()
+		// as 0.0, which it read as "refund everything" (Basecamp 10240143362).
+		// Validated here, once, for the admin form and REST alike.
+		if ( self::RESOLUTION_PARTIAL_REFUND === $resolution ) {
+			$order = $this->order_service->get( (int) $dispute->order_id );
+			$total = $order ? (float) $order->total : 0.0;
+
+			if ( $refund_amount <= 0 ) {
+				$this->last_error = __( 'Enter the amount to refund. A partial refund needs a number greater than zero.', 'wp-sell-services' );
+				return false;
+			}
+
+			if ( $total > 0 && $refund_amount >= $total ) {
+				$this->last_error = sprintf(
+					/* translators: %s: formatted order total. */
+					__( 'A partial refund must be less than the %s order total. Choose Full Refund to return all of it.', 'wp-sell-services' ),
+					wpss_format_price( $total, $order->currency ?? '' )
+				);
+				return false;
+			}
+		} else {
+			$refund_amount = 0.0;
+		}
+
 		$evidence = $dispute->evidence;
+
 		if ( $refund_amount > 0 ) {
 			$evidence[] = array(
 				'id'            => uniqid( 'refund_' ),
@@ -662,79 +802,85 @@ class DisputeService {
 			);
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update(
-			$this->table,
-			array(
-				'status'           => self::STATUS_RESOLVED,
-				'resolution'       => sanitize_key( $resolution ),
-				'resolution_notes' => sanitize_textarea_field( $notes ),
-				// The dedicated column, which nothing wrote until 1.2.3 — the
-				// amount was only ever tucked into the evidence JSON above, so
-				// the dispute record could not report its own outcome and the
-				// column read as NULL on every resolved dispute.
-				'refund_amount'    => $refund_amount > 0 ? round( $refund_amount, 2 ) : null,
-				'resolved_by'      => $resolved_by,
-				'resolved_at'      => current_time( 'mysql' ),
-				'evidence'         => wp_json_encode( $evidence ),
-				'updated_at'       => current_time( 'mysql' ),
-			),
-			array( 'id' => $dispute_id )
-		);
+		$wpdb->query( 'START TRANSACTION' );
 
-		if ( false !== $result ) {
-			// Handle resolution actions.
-			$this->handle_resolution( $dispute, $resolution, $refund_amount );
-
-			/**
-			 * Fires when a dispute is resolved.
-			 *
-			 * @since 1.0.0
-			 * @param int    $dispute_id    Dispute ID.
-			 * @param string $resolution    Resolution type.
-			 * @param object $dispute       Dispute object.
-			 * @param float  $refund_amount Refund amount.
-			 */
-			do_action( 'wpss_dispute_resolved', $dispute_id, $resolution, $dispute, $refund_amount );
-
-			return true;
+		try {
+			$moved = $this->handle_resolution( $dispute, $resolution, $refund_amount );
+		} catch ( \Throwable $e ) {
+			$moved = false;
 		}
 
-		return false;
+		if ( ! $moved ) {
+			$wpdb->query( 'ROLLBACK' );
+			$this->last_error = __( 'The order could not be moved for this resolution, so the dispute stays open. Check the order status and try again.', 'wp-sell-services' );
+			return false;
+		}
+
+		$resolved = $this->transition(
+			$dispute_id,
+			self::STATUS_RESOLVED,
+			array(
+				'fields' => array(
+					'resolution'       => $resolution,
+					'resolution_notes' => sanitize_textarea_field( $notes ),
+					'refund_amount'    => $refund_amount > 0 ? round( $refund_amount, 2 ) : null,
+					'resolved_by'      => $resolved_by,
+					'resolved_at'      => current_time( 'mysql' ),
+					'evidence'         => wp_json_encode( $evidence ),
+				),
+			)
+		);
+
+		if ( ! $resolved ) {
+			$wpdb->query( 'ROLLBACK' );
+			return false;
+		}
+
+		$wpdb->query( 'COMMIT' );
+
+		/**
+		 * Fires when a dispute is resolved.
+		 *
+		 * @since 1.0.0
+		 * @param int    $dispute_id    Dispute ID.
+		 * @param string $resolution    Resolution type.
+		 * @param object $dispute       Dispute object.
+		 * @param float  $refund_amount Refund amount.
+		 */
+		do_action( 'wpss_dispute_resolved', $dispute_id, $resolution, $dispute, $refund_amount );
+
+		return true;
 	}
 
 	/**
-	 * Handle resolution actions.
+	 * Move the order for a resolution. Every path goes through OrderService so
+	 * the hooks (refund, commission, emails) fire, and every path reports
+	 * whether the order actually moved.
 	 *
 	 * @param object $dispute Dispute object.
 	 * @param string $resolution Resolution type.
 	 * @param float  $refund_amount Refund amount.
-	 * @return void
+	 * @return bool True when the order moved.
 	 */
-	private function handle_resolution( object $dispute, string $resolution, float $refund_amount ): void {
+	private function handle_resolution( object $dispute, string $resolution, float $refund_amount ): bool {
 		$order_id = (int) $dispute->order_id;
 
-		// Use OrderService::update_status() to fire hooks (notifications, commission, emails).
 		switch ( $resolution ) {
 			case self::RESOLUTION_REFUND:
 			case self::RESOLUTION_FAVOR_BUYER:
 				// Ruling for the buyer returns everything they paid; NULL asks
 				// apply_refund_status() to resolve that to the order total.
-				$this->order_service->apply_refund_status( $order_id, null, ServiceOrder::STATUS_REFUNDED );
-				break;
+				return $this->order_service->apply_refund_status( $order_id, null, ServiceOrder::STATUS_REFUNDED );
 
 			case self::RESOLUTION_PARTIAL_REFUND:
-				// Through apply_refund_status(), never a persist-then-transition
-				// pair: a refused transition used to leave the order claiming a
-				// refund that never happened.
-				$this->order_service->apply_refund_status( $order_id, $refund_amount, ServiceOrder::STATUS_PARTIALLY_REFUNDED );
-				break;
+				return $this->order_service->apply_refund_status( $order_id, $refund_amount, ServiceOrder::STATUS_PARTIALLY_REFUNDED );
 
 			case self::RESOLUTION_FAVOR_VENDOR:
 			case self::RESOLUTION_MUTUAL:
-				$this->order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
-				break;
+				return $this->order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
 		}
+
+		return false;
 	}
 
 	/**
