@@ -238,16 +238,6 @@ add_action( 'wpss_settings_tab_my_integration', function() {
 } );
 ```
 
-## Custom Field Types
-
-Register custom field types for service requirements via the `wpss_register_field_types` action (`FieldManager.php:59`). Default types: Text, Textarea, Select, MultiSelect, Radio, Checkbox, FileUpload, Date, Number.
-
-```php
-add_action( 'wpss_register_field_types', function( $manager ) {
-    $manager->register( new \MyPlugin\ColorPickerField() );
-} );
-```
-
 ## Gutenberg Blocks
 
 Register custom blocks via `wpss_blocks` filter (`BlocksManager.php:93`):

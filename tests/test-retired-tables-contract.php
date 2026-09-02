@@ -2,7 +2,7 @@
 /**
  * Retired tables contract.
  *
- * Five tables survive on upgraded sites that no clean install has and nothing
+ * Tables survive on upgraded sites that no clean install has and nothing
  * reads. They are not broken - they are misleading, which is worse: reading one
  * and believing it produced a confidently wrong root cause on Basecamp
  * 10236358969, where the UI was right and the table had been abandoned.
@@ -101,18 +101,26 @@ foreach ( $found as $name => $info ) {
 	);
 }
 
-// 5. The important one. Dropping is destructive and irreversible, and a plugin
-//    update runs unattended. It must be reachable ONLY from uninstall.
-$src      = file_get_contents( $free . '/src/Database/SchemaManager.php' );
-$upgrade  = substr( $src, strpos( $src, 'public function upgrade' ) );
-$upgrade  = substr( $upgrade, 0, strpos( $upgrade, "\n\t}\n" ) );
+// 5. Dropping is destructive and irreversible, and a plugin update runs
+//    unattended, so the general rule stands: upgrades report, uninstall drops.
+//    The one exception is the 1.7.2 step that copies wpss_service_requirements
+//    and wpss_service_addons into post meta and drops just those two - it
+//    must copy before it drops, and must never reach for the blanket drop.
+$src     = file_get_contents( $free . '/src/Database/SchemaManager.php' );
+$migrate = substr( $src, strpos( $src, 'private function retire_requirement_and_addon_tables' ) );
+$migrate = substr( $migrate, 0, strpos( $migrate, "\n\t}\n" ) );
 wpss_t(
-	false === strpos( $upgrade, 'drop_retired_tables' ),
-	'the upgrade routine never drops them - cleanup is the owner\'s call'
+	strpos( $migrate, '$saver( $service_id, $service_rows )' ) < strpos( $migrate, 'DROP TABLE' ),
+	'the requirements/add-ons step copies rows into meta before it drops the table'
 );
 wpss_t(
-	false !== strpos( $src, "\$this->drop_retired_tables();" ),
-	'uninstall does drop them, which is where dropping belongs'
+	1 === substr_count( $src, 'drop_retired_tables();' ) && false !== strpos( $src, "\$this->drop_retired_tables();" ),
+	'the blanket drop is reachable from uninstall only'
+);
+$upgrade = substr( $src, strpos( $src, 'public function install' ), strpos( $src, 'public function uninstall' ) - strpos( $src, 'public function install' ) );
+wpss_t(
+	false === strpos( $upgrade, 'drop_retired_tables' ),
+	'no upgrade routine calls the blanket drop - cleanup of the other orphans is the owner\'s call'
 );
 
 echo "\n{$GLOBALS['wpss_pass']} passed, {$GLOBALS['wpss_fail']} failed\n";

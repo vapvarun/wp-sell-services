@@ -28,10 +28,12 @@ class SchemaManager {
 	 * message_type + description to wpss_dispute_messages, which makes that
 	 * table the single store for a dispute conversation. 1.7.1 backfills
 	 * revisions_included on standalone orders from their package snapshot.
+	 * 1.7.2 moves the last rows out of wpss_service_requirements and
+	 * wpss_service_addons into post meta and drops both tables.
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.7.1';
+	const DB_VERSION = '1.7.2';
 
 	/**
 	 * Option name for storing DB version.
@@ -85,7 +87,6 @@ class SchemaManager {
 	 */
 	private const CORE_TABLES = array(
 		'service_packages',
-		'service_addons',
 		'orders',
 		'order_requirements',
 		'conversations',
@@ -130,6 +131,7 @@ class SchemaManager {
 		'buyer_requests'       => 'wpss_request posts plus post meta',
 		'service_faqs'         => '_wpss_faqs post meta on the service',
 		'service_requirements' => '_wpss_requirements post meta on the service',
+		'service_addons'       => '_wpss_addons post meta on the service',
 		'service_platform_map' => 'the platform_order_ref column on wpss_orders',
 		'analytics_events'     => 'derived from wpss_orders at query time (Pro)',
 	);
@@ -142,7 +144,9 @@ class SchemaManager {
 	 * nobody has looked at - the rows are stale copies of what now lives in
 	 * posts and meta on every install checked, but "every install checked" is
 	 * not "every install". Cleanup is offered explicitly (WP-CLI, or the
-	 * delete-data-on-uninstall option) rather than performed silently.
+	 * delete-data-on-uninstall option) rather than performed silently. The one
+	 * exception is {@see retire_requirement_and_addon_tables()}, which copies
+	 * every row into meta before it drops, so nothing is lost.
 	 *
 	 * @since 1.7.0
 	 *
@@ -531,6 +535,80 @@ class SchemaManager {
 		$this->backfill_package_snapshots();
 		$this->backfill_package_ids();
 		$this->backfill_revisions_included();
+		$this->retire_requirement_and_addon_tables();
+	}
+
+	/**
+	 * Move requirements and add-ons into post meta and drop their tables.
+	 *
+	 * Both lived in two stores that disagreed: wpss_service_requirements was
+	 * written by nothing and read by nothing while the buyer form read
+	 * `_wpss_requirements`; REST wrote add-ons to wpss_service_addons while
+	 * the order modal, cart and checkout read `_wpss_addons` (Basecamp
+	 * 10264288662, 10264294443). Post meta is the one store from 1.7.1.
+	 *
+	 * Rows are copied only into services whose meta is empty - a service the
+	 * vendor has since edited keeps what they saved. The copy runs through the
+	 * canonical normalisers, and every existing `_wpss_requirements` value is
+	 * rewritten through the same normaliser so the stored shape is the one
+	 * every surface reads. Then, and only then, the tables are dropped.
+	 * Idempotent: a missing table is skipped, and a second run finds nothing.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	private function retire_requirement_and_addon_tables(): void {
+		if ( ! function_exists( 'wpss_save_service_requirements' ) ) {
+			return;
+		}
+
+		$copies = array(
+			'service_requirements' => array( '_wpss_requirements', 'wpss_save_service_requirements', 'sort_order ASC, id ASC' ),
+			'service_addons'       => array( '_wpss_addons', 'wpss_save_service_addons', 'sort_order ASC, id ASC' ),
+		);
+
+		foreach ( $copies as $name => [ $meta_key, $saver, $order_by ] ) {
+			$table = $this->prefix . $name;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema inspection.
+			if ( ! $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from a private const; a retired table is small by definition.
+			$rows = $this->wpdb->get_results( "SELECT * FROM `{$table}` ORDER BY service_id ASC, {$order_by}", ARRAY_A );
+
+			$by_service = array();
+			foreach ( (array) $rows as $row ) {
+				$by_service[ (int) $row['service_id'] ][] = $row;
+			}
+
+			$copied = 0;
+			foreach ( $by_service as $service_id => $service_rows ) {
+				if ( ! empty( get_post_meta( $service_id, $meta_key, true ) ) || 'wpss_service' !== get_post_type( $service_id ) ) {
+					continue;
+				}
+				$saver( $service_id, $service_rows );
+				++$copied;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- rows are in post meta now.
+			$this->wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
+
+			if ( function_exists( 'wpss_log' ) ) {
+				wpss_log( "Schema 1.7.2: copied {$name} rows into {$meta_key} on {$copied} service(s) and dropped the table." );
+			}
+		}
+
+		// Rewrite every stored requirement list into the canonical shape.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		$service_ids = $this->wpdb->get_col(
+			"SELECT post_id FROM `{$this->wpdb->postmeta}` WHERE meta_key = '_wpss_requirements' AND meta_value NOT IN ( '', 'a:0:{}' ) LIMIT 2000"
+		);
+		foreach ( (array) $service_ids as $service_id ) {
+			wpss_save_service_requirements( (int) $service_id, (array) get_post_meta( (int) $service_id, '_wpss_requirements', true ) );
+		}
 	}
 
 	/**
@@ -1014,42 +1092,6 @@ class SchemaManager {
 			PRIMARY KEY (id),
 			KEY idx_service (service_id),
 			KEY idx_service_order (service_id, sort_order)
-		) {$charset_collate};";
-	}
-
-	/**
-	 * Get service addons table SQL.
-	 *
-	 * Field types: checkbox, quantity, dropdown, text.
-	 * Price types: flat, percentage, quantity_based.
-	 *
-	 * @param string $charset_collate Charset collation.
-	 * @return string SQL statement.
-	 */
-	private function get_service_addons_table( string $charset_collate ): string {
-		$table = $this->get_table_name( 'service_addons' );
-
-		return "CREATE TABLE {$table} (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			service_id bigint(20) unsigned NOT NULL,
-			title varchar(255) NOT NULL,
-			description text,
-			field_type varchar(50) DEFAULT 'checkbox',
-			price decimal(10,2) NOT NULL DEFAULT 0,
-			price_type varchar(50) DEFAULT 'flat',
-			min_quantity int(11) DEFAULT 1,
-			max_quantity int(11) DEFAULT 10,
-			is_required tinyint(1) DEFAULT 0,
-			options longtext,
-			delivery_days_extra int(11) DEFAULT 0,
-			applies_to longtext,
-			is_active tinyint(1) DEFAULT 1,
-			sort_order int(11) DEFAULT 0,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_service (service_id),
-			KEY idx_active (service_id, is_active)
 		) {$charset_collate};";
 	}
 

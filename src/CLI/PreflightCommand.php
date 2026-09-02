@@ -694,7 +694,6 @@ class PreflightCommand {
 		// Core features.
 		$features = array(
 			'Service packages'       => 'wpss_service_packages',
-			'Service add-ons'        => 'wpss_service_addons',
 			'Order workflow'         => 'wpss_orders',
 			'Messaging'              => 'wpss_conversations',
 			'File delivery'          => 'wpss_deliveries',

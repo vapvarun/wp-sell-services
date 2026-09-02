@@ -301,6 +301,9 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Dev      - New wpss_auth_login_challenge filter for two-factor plugins.
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Unique keys on wallet transactions and reviews, and an index on order transaction ids.
+* Fix      - Order requirements use one schema on every surface, so requirement forms show the vendor's questions and REST submissions validate correctly.
+* Dev      - Stored files record which storage provider holds them.
+* Dev      - Retired the unused service requirements and add-ons tables; post meta is the single store.
 
 = 1.7.0 - August 2026 =
 

@@ -341,60 +341,159 @@ function wpss_get_order_requirements_url( int $order_id ): string {
 }
 
 /**
- * Get service requirements (questions buyer must answer).
+ * Requirement field types a service may ask a buyer for.
  *
- * @param int $service_id Service ID.
- * @return array
+ * @since 1.7.1
+ *
+ * @return string[]
  */
-function wpss_get_service_requirements( int $service_id ): array {
-	$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
-	$requirements = is_array( $requirements ) ? $requirements : array();
-
-	return array_map( 'wpss_normalize_requirement_choices', $requirements );
+function wpss_requirement_types(): array {
+	return array( 'text', 'textarea', 'number', 'checkbox', 'select', 'multiselect', 'radio', 'file', 'date', 'url', 'email' );
 }
 
 /**
- * Normalize a requirement's choice list into one canonical shape.
+ * Normalise a requirement list into the one schema every surface reads.
  *
- * Choice-type requirements (select / radio / multiple) were saved under two
- * different keys and types — the frontend wizard wrote `options` (comma string),
- * the admin metabox wrote `choices` (comma string) — while the buyer form reads
- * `options` as a value=>label ARRAY and validation reads `choices`. That mismatch
- * left dropdowns empty and choice validation broken (BC 10134408650).
+ * Four shapes shared the `_wpss_requirements` key: the wizard wrote
+ * question/type/options-string, the admin metabox question/type/choices, REST
+ * and ServiceManager field_type/label/description/options-array/is_required,
+ * and the REST validator looked for an `id` nothing wrote. Every reader
+ * picked one shape, so requirements saved on one surface came up blank on
+ * another and REST submissions failed on every field (Basecamp 10264288662).
  *
- * This makes every consumer agree: it sets BOTH
- *   - `choices` : canonical comma STRING  (admin field + RequirementsService validation)
- *   - `options` : value=>label ARRAY      (buyer requirements form)
- * derived from whichever key/type was stored. Non-choice fields are untouched.
+ * Output rows are exactly {id, label, type, required, options, description}.
+ * The id is stable: it is kept when present and otherwise derived from the
+ * label and position, so answers keyed by id survive a label edit.
  *
- * @since 1.3.0
+ * @since 1.7.1
  *
- * @param array<string,mixed> $req A single requirement definition.
- * @return array<string,mixed>
+ * @param array<int|string, mixed> $raw Requirement rows in any historical shape.
+ * @return array<int, array{id: string, label: string, type: string, required: bool, options: string[], description: string}>
  */
-function wpss_normalize_requirement_choices( array $req ): array {
-	$raw = $req['options'] ?? $req['choices'] ?? '';
+function wpss_normalize_service_requirements( array $raw ): array {
+	$types   = wpss_requirement_types();
+	$aliases = array(
+		'multiple' => 'multiselect',
+		'dropdown' => 'select',
+		'upload'   => 'file',
+	);
+	$choice  = array( 'select', 'multiselect', 'radio', 'checkbox' );
+	$out     = array();
+	$seen    = array();
 
-	if ( is_array( $raw ) ) {
-		// Already an array — could be a plain list or a value=>label map.
-		$list = array();
-		foreach ( $raw as $key => $value ) {
-			$list[] = is_string( $value ) && '' !== trim( $value ) ? trim( $value ) : trim( (string) $key );
+	foreach ( array_values( $raw ) as $index => $req ) {
+		if ( ! is_array( $req ) ) {
+			continue;
 		}
-	} else {
-		$list = array_map( 'trim', explode( ',', (string) $raw ) );
+
+		$label = sanitize_text_field( (string) ( $req['label'] ?? $req['question'] ?? '' ) );
+		if ( '' === $label ) {
+			continue;
+		}
+
+		$type = sanitize_key( (string) ( $req['type'] ?? $req['field_type'] ?? 'text' ) );
+		$type = $aliases[ $type ] ?? $type;
+		if ( ! in_array( $type, $types, true ) ) {
+			$type = 'text';
+		}
+
+		$options = array();
+		if ( in_array( $type, $choice, true ) ) {
+			$raw_options = $req['options'] ?? $req['choices'] ?? array();
+			if ( is_string( $raw_options ) ) {
+				// A comma list from the wizard / metabox, or JSON from the retired table.
+				$raw_options = str_starts_with( ltrim( $raw_options ), '[' ) ? (array) json_decode( $raw_options, true ) : explode( ',', $raw_options );
+			}
+			foreach ( (array) $raw_options as $key => $value ) {
+				// Lists of strings, and the older value => label map, both land here.
+				$value = is_scalar( $value ) ? trim( (string) $value ) : '';
+				if ( '' === $value && is_string( $key ) ) {
+					$value = trim( $key );
+				}
+				if ( '' !== $value ) {
+					$options[] = sanitize_text_field( $value );
+				}
+			}
+			$options = array_values( array_unique( $options ) );
+		}
+
+		// A bare number is a row id from the retired table, not a name.
+		$id = sanitize_key( (string) ( $req['id'] ?? '' ) );
+		if ( '' === $id || ctype_digit( $id ) ) {
+			$id = sanitize_key( sanitize_title( $label ) );
+			$id = ( '' === $id ? 'req' : $id ) . '-' . $index;
+		}
+		if ( isset( $seen[ $id ] ) ) {
+			$id .= '-' . $index;
+		}
+		$seen[ $id ] = true;
+
+		$out[] = array(
+			'id'          => $id,
+			'label'       => $label,
+			'type'        => $type,
+			'required'    => ! empty( $req['required'] ) || ! empty( $req['is_required'] ),
+			'options'     => $options,
+			'description' => sanitize_textarea_field( (string) ( $req['description'] ?? '' ) ),
+		);
 	}
 
-	$list = array_values( array_unique( array_filter( $list, static fn( $v ) => '' !== $v ) ) );
+	return $out;
+}
 
-	if ( empty( $list ) ) {
-		return $req; // Not a choice field (or no choices) — leave as-is.
+/**
+ * Get service requirements (questions buyer must answer), normalised.
+ *
+ * The one reader. Rows are in the shape wpss_normalize_service_requirements()
+ * produces whichever surface saved them.
+ *
+ * @param int $service_id Service ID.
+ * @return array<int, array{id: string, label: string, type: string, required: bool, options: string[], description: string}>
+ */
+function wpss_get_service_requirements( int $service_id ): array {
+	$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
+
+	return wpss_normalize_service_requirements( is_array( $requirements ) ? $requirements : array() );
+}
+
+/**
+ * Save a service's requirements, normalised.
+ *
+ * The one writer. Callers cap the list with wpss_enforce_service_limits()
+ * first; this stores what is left in the canonical shape, or clears the key
+ * when nothing is left.
+ *
+ * @since 1.7.1
+ *
+ * @param int                      $service_id   Service ID.
+ * @param array<int|string, mixed> $requirements Requirement rows in any shape.
+ * @return void
+ */
+function wpss_save_service_requirements( int $service_id, array $requirements ): void {
+	$requirements = wpss_normalize_service_requirements( $requirements );
+
+	if ( empty( $requirements ) ) {
+		delete_post_meta( $service_id, '_wpss_requirements' );
+		return;
 	}
 
-	$req['choices'] = implode( ', ', $list );
-	$req['options'] = array_combine( $list, $list );
+	update_post_meta( $service_id, '_wpss_requirements', $requirements );
+}
 
-	return $req;
+/**
+ * The buyer's answer to one requirement.
+ *
+ * Answers are keyed by the requirement id. Orders submitted before 1.7.1 were
+ * keyed by the question text, so that is read as the fallback.
+ *
+ * @since 1.7.1
+ *
+ * @param array<string, mixed> $requirement Normalised requirement row.
+ * @param array<string, mixed> $answers     Submitted field_data.
+ * @return mixed Answer, '' when none.
+ */
+function wpss_requirement_answer( array $requirement, array $answers ) {
+	return $answers[ $requirement['id'] ] ?? $answers[ $requirement['label'] ] ?? '';
 }
 
 /**

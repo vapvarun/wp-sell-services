@@ -168,24 +168,19 @@ class CartController extends RestController {
 		// Calculate addon totals.
 		$selected_addons = array();
 		if ( ! empty( $addon_ids ) ) {
-			global $wpdb;
-			$addons_table = $wpdb->prefix . 'wpss_service_addons';
+			// Add-on ids are indices into the service's `_wpss_addons` meta, the
+			// same ones the order modal and checkout use.
+			$all_addons = wpss_get_service_extras( $service_id );
 
 			foreach ( $addon_ids as $addon_id ) {
-				$addon = $wpdb->get_row(
-					$wpdb->prepare(
-						"SELECT * FROM {$addons_table} WHERE id = %d AND service_id = %d",
-						(int) $addon_id,
-						$service_id
-					)
-				);
+				$addon = $all_addons[ (int) $addon_id ] ?? null;
 
 				if ( $addon ) {
-					$total            += (float) $addon->price;
+					$total            += (float) $addon['price'];
 					$selected_addons[] = array(
-						'id'    => (int) $addon->id,
-						'title' => $addon->title,
-						'price' => (float) $addon->price,
+						'id'    => (int) $addon_id,
+						'title' => $addon['title'],
+						'price' => (float) $addon['price'],
 					);
 				}
 			}

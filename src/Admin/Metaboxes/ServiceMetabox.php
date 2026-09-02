@@ -459,7 +459,7 @@ class ServiceMetabox {
 	 * @return void
 	 */
 	private function render_requirement_item( int $index, array $req ): void {
-		$type         = $req['type'] ?? 'text';
+		$type         = $req['type'];
 		$show_choices = in_array( $type, $this->get_choice_requirement_types(), true );
 		?>
 		<div class="wpss-requirement-item" data-index="<?php echo esc_attr( (string) $index ); ?>">
@@ -467,8 +467,9 @@ class ServiceMetabox {
 				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 				<div class="wpss-requirement-fields">
 					<div class="wpss-requirement-main">
-						<input type="text" name="wpss_requirements[<?php echo esc_attr( (string) $index ); ?>][question]"
-								value="<?php echo esc_attr( $req['question'] ?? '' ); ?>"
+						<input type="hidden" name="wpss_requirements[<?php echo esc_attr( (string) $index ); ?>][id]" value="<?php echo esc_attr( $req['id'] ); ?>">
+						<input type="text" name="wpss_requirements[<?php echo esc_attr( (string) $index ); ?>][label]"
+								value="<?php echo esc_attr( $req['label'] ); ?>"
 								aria-label="<?php esc_attr_e( 'Requirement question', 'wp-sell-services' ); ?>"
 								placeholder="<?php esc_attr_e( 'Enter your question...', 'wp-sell-services' ); ?>" class="widefat">
 					</div>
@@ -489,8 +490,8 @@ class ServiceMetabox {
 						</button>
 					</div>
 					<div class="wpss-requirement-choices" <?php echo $show_choices ? '' : 'style="display:none;"'; ?>>
-						<input type="text" name="wpss_requirements[<?php echo esc_attr( (string) $index ); ?>][choices]"
-								value="<?php echo esc_attr( $req['choices'] ?? '' ); ?>"
+						<input type="text" name="wpss_requirements[<?php echo esc_attr( (string) $index ); ?>][options]"
+								value="<?php echo esc_attr( implode( ', ', $req['options'] ) ); ?>"
 								aria-label="<?php esc_attr_e( 'Requirement choices', 'wp-sell-services' ); ?>"
 								placeholder="<?php esc_attr_e( 'Enter choices separated by comma (e.g., Option 1, Option 2, Option 3)', 'wp-sell-services' ); ?>" class="widefat">
 					</div>
@@ -583,36 +584,6 @@ class ServiceMetabox {
 		<?php
 	}
 
-
-	/**
-	 * Get add-ons for the admin editor with the wizard meta-key fallback.
-	 *
-	 * Reads through wpss_get_service_extras() (`_wpss_extras` first, then
-	 * `_wpss_addons`) so wizard-created services surface their add-ons in the
-	 * metabox. Wizard rows store the extra delivery days as `extra_days`
-	 * (legacy rows as `delivery_time`) while the metabox fields use
-	 * `delivery_days_extra`, so the value is mapped with the same coalesce
-	 * wpss_resolve_checkout_addons() already uses. The remaining metabox-only
-	 * fields (field_type, price_type, quantities, options, is_required) fall
-	 * back to the render defaults.
-	 *
-	 * @param int $post_id Service post ID.
-	 * @return array<int, array<string, mixed>> Add-on rows in the metabox field shape.
-	 */
-	private function get_addons_for_editor( int $post_id ): array {
-		$addons = wpss_get_service_extras( $post_id );
-
-		$normalized = array();
-		foreach ( $addons as $addon ) {
-			if ( ! is_array( $addon ) ) {
-				continue;
-			}
-			$addon['delivery_days_extra'] = (int) ( $addon['delivery_days_extra'] ?? $addon['extra_days'] ?? $addon['delivery_time'] ?? 0 );
-			$normalized[]                 = $addon;
-		}
-
-		return $normalized;
-	}
 
 	/**
 	 * Render a single addon item.
@@ -847,30 +818,10 @@ class ServiceMetabox {
 			delete_post_meta( $post_id, '_wpss_faqs' );
 		}
 
-		// Save requirements.
-		$requirements_data = $capped['meta']['requirements'];
-		if ( is_array( $requirements_data ) && ! empty( $requirements_data ) ) {
-			$requirements = array();
-			$valid_types  = array_keys( $this->get_requirement_types() );
-			foreach ( $requirements_data as $req ) {
-				if ( ! empty( $req['question'] ) ) {
-					$type = sanitize_key( $req['type'] ?? 'text' );
-					if ( ! in_array( $type, $valid_types, true ) ) {
-						$type = 'text';
-					}
-					$requirement = array(
-						'question' => sanitize_text_field( $req['question'] ),
-						'type'     => $type,
-						'required' => ! empty( $req['required'] ),
-					);
-					// Save choices for select and radio types.
-					if ( in_array( $type, $this->get_choice_requirement_types(), true ) && ! empty( $req['choices'] ) ) {
-						$requirement['choices'] = sanitize_text_field( $req['choices'] );
-					}
-					$requirements[] = $requirement;
-				}
-			}
-			update_post_meta( $post_id, '_wpss_requirements', $requirements );
+		// Save requirements. The metabox lists a subset of the requirement
+		// types; wpss_normalize_service_requirements() is the one sanitiser.
+		if ( is_array( $capped['meta']['requirements'] ) && ! empty( $capped['meta']['requirements'] ) ) {
+			wpss_save_service_requirements( $post_id, $capped['meta']['requirements'] );
 		} elseif ( isset( $_POST['wpss_requirements_present'] ) ) {
 			// The requirements panel was on the form and submitted zero rows:
 			// the admin removed every requirement, so clear the meta (same
@@ -878,51 +829,15 @@ class ServiceMetabox {
 			delete_post_meta( $post_id, '_wpss_requirements' );
 		}
 
-		// Save addons.
-		$addons_data = $capped['meta']['extras'];
-		if ( is_array( $addons_data ) && ! empty( $addons_data ) ) {
-			$addons      = array();
-			$valid_types = array_keys( $this->get_addon_field_types() );
-			$valid_price = array_keys( $this->get_addon_price_types() );
-
-			foreach ( $addons_data as $addon ) {
-				if ( ! empty( $addon['title'] ) ) {
-					$field_type = sanitize_key( $addon['field_type'] ?? 'checkbox' );
-					$price_type = sanitize_key( $addon['price_type'] ?? 'flat' );
-
-					if ( ! in_array( $field_type, $valid_types, true ) ) {
-						$field_type = 'checkbox';
-					}
-					if ( ! in_array( $price_type, $valid_price, true ) ) {
-						$price_type = 'flat';
-					}
-
-					$addons[] = array(
-						'title'               => sanitize_text_field( $addon['title'] ),
-						'description'         => sanitize_textarea_field( $addon['description'] ?? '' ),
-						'field_type'          => $field_type,
-						'price_type'          => $price_type,
-						'price'               => (float) ( $addon['price'] ?? 0 ),
-						'min_quantity'        => absint( $addon['min_quantity'] ?? 1 ),
-						'max_quantity'        => absint( $addon['max_quantity'] ?? 10 ),
-						'options'             => sanitize_text_field( $addon['options'] ?? '' ),
-						'delivery_days_extra' => absint( $addon['delivery_days_extra'] ?? 0 ),
-						'is_required'         => ! empty( $addon['is_required'] ),
-					);
-				}
-			}
-			update_post_meta( $post_id, '_wpss_addons', $addons );
-			// Admin data wins from now on: drop the wizard key so
-			// wpss_get_service_extras() resolves to the rows just saved
-			// instead of preferring stale `_wpss_extras` wizard data.
-			delete_post_meta( $post_id, '_wpss_extras' );
+		// Save add-ons; `_wpss_addons` is the one store.
+		if ( is_array( $capped['meta']['extras'] ) && ! empty( $capped['meta']['extras'] ) ) {
+			wpss_save_service_addons( $post_id, $capped['meta']['extras'] );
 		} elseif ( isset( $_POST['wpss_addons_present'] ) ) {
 			// The add-ons UI was rendered on this form and submitted zero
-			// rows: the admin removed every add-on, so clear both keys.
-			// Without the sentinel guard, save paths that never render the
-			// add-ons panel would silently wipe wizard-created add-ons.
+			// rows: the admin removed every add-on, so clear the key. Without
+			// the sentinel guard, save paths that never render the add-ons
+			// panel would silently wipe wizard-created add-ons.
 			delete_post_meta( $post_id, '_wpss_addons' );
-			delete_post_meta( $post_id, '_wpss_extras' );
 		}
 
 		// Save gallery -- only process if the gallery metabox was rendered on this page.
@@ -1326,7 +1241,7 @@ class ServiceMetabox {
 	 * @return void
 	 */
 	private function render_addons_content( \WP_Post $post ): void {
-		$addons = $this->get_addons_for_editor( $post->ID );
+		$addons = wpss_get_service_extras( $post->ID );
 
 		$field_types = $this->get_addon_field_types();
 		$price_types = $this->get_addon_price_types();
@@ -1361,8 +1276,7 @@ class ServiceMetabox {
 	 * @return void
 	 */
 	private function render_requirements_content( \WP_Post $post ): void {
-		$requirements = get_post_meta( $post->ID, '_wpss_requirements', true );
-		$requirements = ! empty( $requirements ) ? $requirements : array();
+		$requirements = wpss_get_service_requirements( $post->ID );
 		?>
 		<h3 class="wpss-panel-title"><?php esc_html_e( 'Buyer Requirements', 'wp-sell-services' ); ?></h3>
 
@@ -1635,7 +1549,7 @@ class ServiceMetabox {
 				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 				<div class="wpss-requirement-fields">
 					<div class="wpss-requirement-main">
-						<input type="text" name="wpss_requirements[{{data.index}}][question]"
+						<input type="text" name="wpss_requirements[{{data.index}}][label]"
 								aria-label="<?php esc_attr_e( 'Requirement question', 'wp-sell-services' ); ?>"
 								placeholder="<?php esc_attr_e( 'Enter your question...', 'wp-sell-services' ); ?>" class="widefat">
 					</div>
@@ -1655,7 +1569,7 @@ class ServiceMetabox {
 						</button>
 					</div>
 					<div class="wpss-requirement-choices" style="display:none;">
-						<input type="text" name="wpss_requirements[{{data.index}}][choices]"
+						<input type="text" name="wpss_requirements[{{data.index}}][options]"
 								aria-label="<?php esc_attr_e( 'Requirement choices', 'wp-sell-services' ); ?>"
 								placeholder="<?php esc_attr_e( 'Enter choices separated by comma (e.g., Option 1, Option 2, Option 3)', 'wp-sell-services' ); ?>" class="widefat">
 					</div>

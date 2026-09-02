@@ -384,7 +384,6 @@ class SingleServiceView {
 	 * @return void
 	 */
 	private function render_requirements( Service $service ): void {
-		// Canonical getter → choice fields normalized (options array + choices string).
 		$requirements = wpss_get_service_requirements( $service->id );
 
 		if ( empty( $requirements ) ) {
@@ -400,10 +399,7 @@ class SingleServiceView {
 				<?php
 				echo '<ul class="wpss-requirements-list">';
 				foreach ( $requirements as $req ) {
-					$text = is_array( $req ) ? ( $req['question'] ?? $req['text'] ?? '' ) : $req;
-					if ( ! empty( $text ) ) {
-						echo '<li>' . esc_html( $text ) . '</li>';
-					}
+					echo '<li>' . esc_html( $req['label'] ) . '</li>';
 				}
 				echo '</ul>';
 				?>
@@ -892,8 +888,8 @@ class SingleServiceView {
 										<input type="checkbox"
 												name="extras[]"
 												value="<?php echo esc_attr( $index ); ?>"
-												data-price="<?php echo esc_attr( $extra['price'] ?? 0 ); ?>"
-												data-time="<?php echo esc_attr( $extra['delivery_time'] ?? 0 ); ?>">
+												data-price="<?php echo esc_attr( $extra['price'] ); ?>"
+												data-time="<?php echo esc_attr( $extra['delivery_days_extra'] ); ?>">
 										<span class="wpss-extra-info">
 											<span class="wpss-extra-title"><?php echo esc_html( $extra['title'] ?? '' ); ?></span>
 											<?php if ( ! empty( $extra['description'] ) ) : ?>
@@ -902,9 +898,9 @@ class SingleServiceView {
 										</span>
 										<span class="wpss-extra-price">
 											+<?php echo esc_html( wpss_format_price( (float) ( $extra['price'] ?? 0 ) ) ); ?>
-											<?php if ( ! empty( $extra['delivery_time'] ) ) : ?>
+											<?php if ( ! empty( $extra['delivery_days_extra'] ) ) : ?>
 												<span class="wpss-extra-time">
-													(+<?php echo esc_html( $extra['delivery_time'] ); ?> <?php esc_html_e( 'days', 'wp-sell-services' ); ?>)
+													(+<?php echo esc_html( $extra['delivery_days_extra'] ); ?> <?php esc_html_e( 'days', 'wp-sell-services' ); ?>)
 												</span>
 											<?php endif; ?>
 										</span>

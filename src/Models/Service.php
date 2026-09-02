@@ -91,9 +91,9 @@ class Service {
 	public array $packages = array();
 
 	/**
-	 * Service add-ons.
+	 * Service add-ons (wpss_get_service_extras() rows).
 	 *
-	 * @var ServiceAddon[]
+	 * @var array<int, array<string, mixed>>
 	 */
 	public array $addons = array();
 
@@ -187,7 +187,7 @@ class Service {
 
 		// Load meta.
 		$service->gallery      = self::normalize_gallery_ids( get_post_meta( $post->ID, '_wpss_gallery', true ) );
-		$service->requirements = get_post_meta( $post->ID, '_wpss_requirements', true ) ?: array();
+		$service->requirements = wpss_get_service_requirements( $post->ID );
 		$service->faqs         = get_post_meta( $post->ID, '_wpss_faqs', true ) ?: array();
 		$service->platform_ids = get_post_meta( $post->ID, '_wpss_platform_ids', true ) ?: array();
 

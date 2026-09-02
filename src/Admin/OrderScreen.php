@@ -11,9 +11,10 @@
  *
  * Its AJAX handlers, by contrast, are what the live admin order screen runs on:
  * assets/js/admin-order.js posts wpss_admin_update_order_status (status changes
- * AND the Process Refund button), wpss_admin_add_order_note and
- * wpss_admin_submit_requirements. Deleting the class wholesale - as the audit
- * plan originally said to - would have taken those with it.
+ * AND the Process Refund button) and wpss_admin_add_order_note. Deleting the
+ * class wholesale - as the audit plan originally said to - would have taken
+ * those with it. (A submit-requirements-on-behalf handler lived here too, for
+ * a form nothing rendered; requirements have one writer, RequirementsService.)
  *
  * So the dead half is gone, the live half is here under a name that says what
  * it does, and `wpss_admin_order_actions` now fires from
@@ -76,7 +77,6 @@ class OrderScreen {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'wp_ajax_wpss_admin_update_order_status', array( $this, 'ajax_update_status' ) );
 		add_action( 'wp_ajax_wpss_admin_add_order_note', array( $this, 'ajax_add_note' ) );
-		add_action( 'wp_ajax_wpss_admin_submit_requirements', array( $this, 'ajax_submit_requirements' ) );
 	}
 
 	/**
@@ -229,117 +229,6 @@ class OrderScreen {
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Failed to update status.', 'wp-sell-services' ) ) );
 		}
-	}
-
-	/**
-	 * AJAX: Submit requirements on behalf of buyer.
-	 *
-	 * @return void
-	 */
-	public function ajax_submit_requirements(): void {
-		check_ajax_referer( 'wpss_order_admin', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
-		}
-
-		$order_id   = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
-		$field_data = isset( $_POST['field_data'] ) ? array_map( 'sanitize_textarea_field', wp_unslash( (array) $_POST['field_data'] ) ) : array();
-
-		if ( ! $order_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid order ID.', 'wp-sell-services' ) ) );
-		}
-
-		$row = $this->order_repo->find( $order_id );
-
-		if ( ! $row ) {
-			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
-		}
-
-		$order = ServiceOrder::from_db( $row );
-
-		// Get service requirements fields.
-		$service = $order->get_service();
-		if ( ! $service ) {
-			wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
-		}
-
-		$requirements_service = new \WPSellServices\Services\RequirementsService();
-		$fields               = $requirements_service->get_service_fields( $service->id );
-
-		if ( empty( $fields ) ) {
-			wp_send_json_error( array( 'message' => __( 'This service has no requirements defined.', 'wp-sell-services' ) ) );
-		}
-
-		// Validate required fields.
-		$errors = array();
-		foreach ( $fields as $field ) {
-			$field_key = $field['label'] ?? $field['question'] ?? '';
-			$value     = $field_data[ $field_key ] ?? '';
-			$required  = ! empty( $field['required'] );
-
-			if ( $required && '' === $value ) {
-				$errors[ $field_key ] = sprintf(
-					/* translators: %s: field label */
-					__( '%s is required.', 'wp-sell-services' ),
-					$field_key
-				);
-			}
-		}
-
-		if ( ! empty( $errors ) ) {
-			wp_send_json_error(
-				array(
-					'message' => __( 'Please fix the following errors:', 'wp-sell-services' ),
-					'errors'  => $errors,
-				)
-			);
-		}
-
-		// Save requirements directly to database (bypass status check for admin).
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_order_requirements';
-
-		// Delete existing requirements if any.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->delete( $table, array( 'order_id' => $order_id ) );
-
-		// Insert new requirements.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->insert(
-			$table,
-			array(
-				'order_id'     => $order_id,
-				'field_data'   => wp_json_encode( $field_data ),
-				'attachments'  => wp_json_encode( array() ),
-				'submitted_at' => current_time( 'mysql' ),
-			),
-			array( '%d', '%s', '%s', '%s' )
-		);
-
-		if ( ! $result ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to save requirements.', 'wp-sell-services' ) ) );
-		}
-
-		// Transition order status if needed (uses OrderService for hooks + timestamps).
-		$status = $order->get_status();
-		if ( 'pending_requirements' === $status ) {
-			$this->order_service->update_status( $order_id, 'in_progress' );
-		}
-
-		/**
-		 * Fires after admin submits requirements on behalf of buyer.
-		 *
-		 * @param int   $order_id   Order ID.
-		 * @param array $field_data Submitted data.
-		 */
-		do_action( 'wpss_admin_requirements_submitted', $order_id, $field_data );
-
-		wp_send_json_success(
-			array(
-				'message' => __( 'Requirements saved successfully.', 'wp-sell-services' ),
-			)
-		);
 	}
 
 	/**
