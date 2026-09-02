@@ -720,8 +720,8 @@ class API {
 		 * Milestones, tips and paid extensions all reach the buyer the same way:
 		 * a link to pay a single already-created order. Standalone answers it
 		 * with `?pay_order=N`, and WooCommerce replaces the URL with a real
-		 * order-pay link through the `wpss_pay_order_url` seam. EDD, FluentCart
-		 * and SureCart implement neither, so the link falls back to a standalone
+		 * order-pay link through the pay-order seam (wpss_ensure_pay_order).
+		 * EDD and SureCart implement neither, so the link falls back to a standalone
 		 * checkout that is not the active rail — a dead end for the buyer.
 		 *
 		 * One answer for the app and the PHP templates: wpss_can_pay_single_order().

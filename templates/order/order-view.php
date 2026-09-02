@@ -270,7 +270,7 @@ do_action( 'wpss_before_order_view', $order );
 			// Pay Now button for unpaid orders (e.g., from accepted proposals).
 			// Through the seam, so the button is right on whichever rail the
 			// site runs, and absent ('') on a rail that cannot pay one order.
-			$pay_url = 'pending_payment' === $order->status ? wpss_get_pay_order_url( (int) $order_id ) : '';
+			$pay_url = 'pending_payment' === $order->status ? wpss_get_pay_order_url( (int) $order_id, $order ) : '';
 			if ( '' !== $pay_url ) {
 				$actions['pay'] = array(
 					'label' => sprintf(
@@ -1679,7 +1679,9 @@ do_action( 'wpss_before_order_view', $order );
 							$ms_status      = $m['status'];
 							$ms_sub_id      = (int) $m['id'];
 							$ms_sub_url     = wpss_get_order_url( $ms_sub_id );
-							$ms_pay_url     = wpss_get_pay_order_url( $ms_sub_id );
+							// Only a phase the buyer can pay right now gets a URL: a read
+							// per payable row, nothing for paid or locked ones.
+							$ms_pay_url     = 'pending_payment' === $ms_status && empty( $m['is_locked'] ) ? wpss_get_pay_order_url( $ms_sub_id ) : '';
 							$ms_state_label = '';
 							$ms_state_class = 'wpss-ms-state--' . sanitize_html_class( $ms_status );
 

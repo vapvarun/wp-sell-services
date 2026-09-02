@@ -710,7 +710,7 @@ class BuyerRequestsController extends RestController {
 			);
 		}
 
-		$checkout_url = wpss_get_pay_order_url( (int) $result['order_id'] );
+		$checkout_url = wpss_ensure_pay_order( (int) $result['order_id'] );
 
 		return new WP_REST_Response(
 			[

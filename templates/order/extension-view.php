@@ -32,7 +32,7 @@ $parent_url = $parent_id ? wpss_get_order_url( $parent_id ) : '';
 // payment page only on the standalone rail. On WooCommerce it lands on the
 // store cart and bounces the buyer away, so this button was dead on every
 // Woo site. wpss_get_pay_order_url() returns an order-pay URL there instead.
-$pay_url = wpss_get_pay_order_url( (int) $current_order->id );
+$pay_url = wpss_get_pay_order_url( (int) $current_order->id, $current_order );
 
 // Extension metadata lives on the sub-order's `meta` JSON plus the linked
 // wpss_extension_requests row. Prefer the JSON for extra_days and reason

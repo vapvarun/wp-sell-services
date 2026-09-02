@@ -306,6 +306,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Order requirements use one schema on every surface, so requirement forms show the vendor's questions and REST submissions validate correctly.
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Retired the unused service requirements and add-ons tables; post meta is the single store.
+* Dev      - Pay-order URLs are read-only; rails create store orders through the new wpss_ensure_pay_order seam.
 
 = 1.7.0 - August 2026 =
 

@@ -397,7 +397,7 @@ class CartController extends RestController {
 		//
 		// So the WPSS order is created first and is the canonical record on
 		// every rail, and the URL where the buyer pays is resolved through
-		// wpss_get_pay_order_url() — the one seam tips, milestones and
+		// wpss_ensure_pay_order() — the one seam tips, milestones and
 		// extensions already use. On Woo that filter returns a real order-pay
 		// URL carrying its own key, which needs no session; on standalone it
 		// stays the local pay page. One checkout, one contract, whatever the
@@ -430,7 +430,7 @@ class CartController extends RestController {
 					'currency'     => (string) ( $order->currency ?? wpss_get_currency() ),
 					// Where the buyer actually pays. Resolved through the shared
 					// seam, so it is right on whichever rail the site runs.
-					'checkout_url' => wpss_get_pay_order_url( (int) $order_id ),
+					'checkout_url' => wpss_ensure_pay_order( (int) $order_id ),
 				);
 			}
 

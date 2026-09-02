@@ -518,7 +518,7 @@ class MilestonesController extends RestController {
 			);
 		}
 
-		$checkout_url = wpss_get_pay_order_url( $milestone_id );
+		$checkout_url = wpss_ensure_pay_order( $milestone_id );
 
 		return new WP_REST_Response(
 			array(

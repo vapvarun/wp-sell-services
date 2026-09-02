@@ -266,7 +266,7 @@ class ExtensionOrderService {
 
 		$wpdb->query( 'COMMIT' );
 
-		$checkout_url = wpss_get_pay_order_url( (int) $pay_order_id );
+		$checkout_url = wpss_ensure_pay_order( (int) $pay_order_id );
 
 		/**
 		 * Fires after an extension sub-order has been created and is awaiting

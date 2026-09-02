@@ -246,7 +246,7 @@ class MilestoneService {
 		}
 
 		$milestone_id = (int) $wpdb->insert_id;
-		$checkout_url = wpss_get_pay_order_url( $milestone_id );
+		$checkout_url = wpss_ensure_pay_order( $milestone_id );
 
 		/**
 		 * Fires when a milestone sub-order has been created and is awaiting

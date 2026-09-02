@@ -1651,7 +1651,7 @@ class AjaxHandlers {
 				$redirect_url = wpss_get_order_url( (int) $result['order_id'] );
 				$message      = __( 'Proposal accepted — your project is set up. Opening the order…', 'wp-sell-services' );
 			} else {
-				$redirect_url = wpss_get_pay_order_url( (int) $result['order_id'] );
+				$redirect_url = wpss_ensure_pay_order( (int) $result['order_id'] );
 				$message      = __( 'Proposal accepted! Redirecting to payment…', 'wp-sell-services' );
 			}
 

@@ -517,9 +517,10 @@ add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2320` |
-| `wpss_pay_order_url` | `string $url, int $order_id` | `src/functions/urls.php:855` |
+| `wpss_pay_order_url_lookup` | `string $url, int $order_id, ?object $order` | `src/functions/urls.php` |
+| `wpss_ensure_pay_order` | `string $url, int $order_id` | `src/functions/urls.php` |
 
-### `wpss_pay_order_url` -- the payment-handoff seam
+### The pay-order seam: `wpss_pay_order_url_lookup` + `wpss_ensure_pay_order`
 
 This is the one seam for **"send the buyer somewhere they can pay THIS
 order."** Every tip, milestone phase, paid extension and accepted proposal
@@ -530,12 +531,17 @@ Never rebuild that URL inline. Code that does is correct on the standalone rail
 and broken on every other one.
 
 ```php
-// The helper. Call this; do not re-author it.
-$url = wpss_get_pay_order_url( $order_id );   // src/functions.php:3375
+// Read: where the buyer will pay. Safe once per row on any list or page.
+$url = wpss_get_pay_order_url( $order_id );            // src/functions/urls.php
+// Write: the buyer is paying now. The rail creates its store order here.
+$url = wpss_ensure_pay_order( $order_id );              // src/functions/urls.php
 ```
 
-**Default (unfiltered):** `<checkout page>?pay_order={id}`. The standalone
-checkout understands that query arg and renders the single order.
+**Default (unfiltered):** `/<checkout page>/pay/{id}/` on the standalone rail
+(`?pay_order={id}` without pretty permalinks). On a store rail the read helper
+returns `<WPSS checkout page>?pay_order={id}`, a dormant page that resolves
+through `wpss_ensure_pay_order()` on `template_redirect` - so the store order
+is created when the buyer clicks, not when a list is rendered.
 
 **Why it needs a filter at all:** a cart-based rail has no concept of "pay this
 existing order." Appending `?pay_order=N` to a WooCommerce checkout URL lands
@@ -547,30 +553,37 @@ is exactly what every tip, milestone and extension link did in Woo mode before
 
 | Rail | Hooks it? | What the buyer gets |
 |---|---|---|
-| Standalone | n/a (the default) | `?pay_order=N` on the plugin's own checkout |
+| Standalone | n/a (the default) | `/pay/N/` on the plugin's own checkout |
 | WooCommerce | **Yes** -- `WCPayOrderResolver` (Pro) | A native WC order-pay URL |
-| EDD | No | The unfiltered default -> empty cart |
-| FluentCart | No | The unfiltered default -> empty cart |
+| FluentCart | **Yes** -- `FluentCartPayOrderResolver` (Pro, beta) | FluentCart's checkout for the order |
+| EDD | No | No Pay button (`wpss_can_pay_single_order()` is false) |
 
 **Two things to know before you hook it:**
 
-1. **It is called speculatively.** Rendering the order page asks for a pay URL
-   for every unpaid phase, and `MilestoneService::propose()` asks for one when
-   the phase is created. A resolver that has side effects (Woo's creates a WC
-   order) will have them at render time, not at click time -- so make yours
-   idempotent, as `WCPayOrderResolver` is.
+1. **The read filter must not write.** `wpss_get_pay_order_url()` runs once
+   per unpaid row on every order list, order page, REST shape and email.
+   `wpss_pay_order_url_lookup` may only return a URL the rail already knows
+   (Pro stores the WC order id and key on the WPSS row when it creates the
+   order). Creating the store order belongs in `wpss_ensure_pay_order`, which
+   runs on click and on the writes that create a tip, phase or extension.
+   Make it idempotent, as `WCPayOrderResolver` is.
 2. **It is not a security gate.** The milestone lock-step guard lives on the
-   *checkout* side, not here. Returning a URL for a locked phase is possible and
-   the plugin's own Woo resolver does it.
+   *checkout* side, not here. `wpss_can_pay_single_order()` is true when a
+   rail hooks either filter.
 
 ```php
 // Point a custom rail at its own pay page.
-add_filter( 'wpss_pay_order_url', function ( string $url, int $order_id ): string {
+add_filter( 'wpss_pay_order_url_lookup', function ( string $url, int $order_id, ?object $order ): string {
+    $known = $order->meta['my_gateway_invoice'] ?? '';
+    return $known ? my_gateway_pay_page_url( $known ) : $url;   // read only
+}, 10, 3 );
+
+add_filter( 'wpss_ensure_pay_order', function ( string $url, int $order_id ): string {
     $order = wpss_get_order( $order_id );
     if ( ! $order || 'paid' === ( $order->payment_status ?? '' ) ) {
         return $url;
     }
-    return my_gateway_build_pay_page( $order_id, (float) $order->total );
+    return my_gateway_create_or_reuse_invoice( $order );         // the write
 }, 10, 2 );
 ```
 
@@ -771,8 +784,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
-| `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:443` |
-| `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:542` |
+| `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:444` |
+| `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:543` |
 | `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:844` |
 
 **`wpss_realtime_settings`** — filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
@@ -962,29 +975,32 @@ it. Never build a `?pay_order=` link by hand; it is correct only on one rail.
 $url = wpss_get_pay_order_url( $order_id );
 ```
 
-### `wpss_pay_order_url` (filter)
+### `wpss_pay_order_url_lookup` and `wpss_ensure_pay_order` (filters)
 
 ```php
-apply_filters( 'wpss_pay_order_url', string $url, int $order_id );
+apply_filters( 'wpss_pay_order_url_lookup', string $url, int $order_id, ?object $order ); // read
+apply_filters( 'wpss_ensure_pay_order', string $url, int $order_id );                     // write
 ```
 
 A cart-based rail replaces the URL entirely. Pro's WooCommerce implementation
 (`WCPayOrderResolver`) creates — or reuses — a real WooCommerce order for the
-sub-order and returns its native order-pay URL, so the link works from an email
-days later with no cart session.
+sub-order in `wpss_ensure_pay_order` and returns its native order-pay URL, so
+the link works from an email days later with no cart session. Its
+`wpss_pay_order_url_lookup` rebuilds that URL from the id and key stored on
+the WPSS row, so lists and pages never load or create a WooCommerce order.
 
 ### Supported rails
 
 | `ecommerce_platform` | Sub-order Pay | How |
 |---|---|---|
-| `standalone` | Supported | `?pay_order=N` on the WPSS checkout page |
-| `woocommerce` | Supported | Real WC order + native order-pay URL (Pro) |
+| `standalone` | Supported | `/pay/N/` on the WPSS checkout page |
+| `woocommerce` | Supported | Real WC order created on click + native order-pay URL (Pro) |
 
 These are the two rails the sub-order payment path is built and tested against.
 
-A platform that has not implemented `wpss_pay_order_url` inherits the standalone
-URL, which is not the checkout that rail owns — so implement the filter for any
-new platform the way `WCPayOrderResolver` does. Do **not** solve it by
+A platform that has not implemented `wpss_ensure_pay_order` gets no Pay button
+at all (`wpss_can_pay_single_order()` is false) — so implement the filters for
+any new platform the way `WCPayOrderResolver` does. Do **not** solve it by
 re-enabling WPSS gateways alongside the platform's own, which would break the
 one-rail contract.
 
