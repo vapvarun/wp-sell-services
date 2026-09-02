@@ -639,13 +639,13 @@ class PreflightCommand {
 		$this->record( 'Pro', 'Pro DB tables (7)', empty( $missing ) ? 'pass' : 'fail', empty( $missing ) ? 'All present' : 'Missing: ' . implode( ', ', $missing ) );
 
 		// Pro settings.
-		$pro_opts = array( 'wpss_razorpay_settings', 'wpss_s3_settings', 'wpss_gcs_settings', 'wpss_do_settings', 'wpss_white_label', 'wpss_active_storage_provider' );
+		$pro_opts = array( 'wpss_razorpay_settings', 'wpss_s3_settings', 'wpss_gcs_settings', 'wpss_do_spaces_settings', 'wpss_white_label', 'wpss_active_storage_provider' );
 		$missing  = array_filter( $pro_opts, fn( $o ) => false === get_option( $o ) );
 		$this->record( 'Pro', 'Pro settings defaults', empty( $missing ) ? 'pass' : 'fail', empty( $missing ) ? count( $pro_opts ) . ' set' : 'Missing: ' . implode( ', ', $missing ) );
 
 		// Pro routes.
 		$routes       = rest_get_server()->get_routes();
-		$pro_prefixes = array( '/wpss/v1/wallet', '/wpss/v1/analytics', '/wpss/v1/commission-rules', '/wpss/v1/stripe-connect', '/wpss/v1/paypal-payouts', '/wpss/v1/subscription-plans', '/wpss/v1/recurring-services', '/wpss/v1/storage', '/wpss/v1/white-label' );
+		$pro_prefixes = array( '/wpss/v1/wallet', '/wpss/v1/analytics', '/wpss/v1/commission-rules', '/wpss/v1/stripe-connect', '/wpss/v1/paypal-payouts', '/wpss/v1/subscription-plans', '/wpss/v1/recurring-services', '/wpss/v1/white-label' );
 		$missing_rt   = array_filter(
 			$pro_prefixes,
 			function ( $prefix ) use ( $routes ) {
