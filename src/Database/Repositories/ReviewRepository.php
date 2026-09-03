@@ -263,23 +263,6 @@ class ReviewRepository extends AbstractRepository {
 	}
 
 	/**
-	 * Add vendor reply to a review.
-	 *
-	 * @param int    $review_id Review ID.
-	 * @param string $reply     Reply text.
-	 * @return bool True on success.
-	 */
-	public function add_vendor_reply( int $review_id, string $reply ): bool {
-		return $this->update(
-			$review_id,
-			array(
-				'vendor_reply'    => $reply,
-				'vendor_reply_at' => current_time( 'mysql' ),
-			)
-		);
-	}
-
-	/**
 	 * Get reviews pending moderation.
 	 *
 	 * @param array<string, mixed> $args Query arguments.

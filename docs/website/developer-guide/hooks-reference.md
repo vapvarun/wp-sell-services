@@ -212,9 +212,9 @@ guide; this is the complete index.
 | `wpss_rest_service_created` | 2 | `src/API/ServicesController.php:692` | Fires after a service is created via REST API. |
 | `wpss_rest_service_deleted` | 2 | `src/API/ServicesController.php:827` | Fires after a service is deleted via REST API. |
 | `wpss_rest_service_updated` | 2 | `src/API/ServicesController.php:778` | Fires after a service is updated via REST API. |
-| `wpss_review_created` | 2 | `src/API/ReviewsController.php:461` *(+1 more)* |  |
+| `wpss_review_created` | 2 | `src/API/ReviewsController.php:463` *(+1 more)* |  |
 | `wpss_review_moderated` | 2 | `src/Services/ReviewService.php:181` | Fires after an admin moderates a review from the queue. |
-| `wpss_review_reply_created` | 1 | `src/API/ReviewsController.php:626` |  |
+| `wpss_review_reply_created` | 1 | `src/API/ReviewsController.php:622` |  |
 | `wpss_revision_requested` | 2 | `src/API/OrdersController.php:972` *(+1 more)* |  |
 | `wpss_send_requirements_reminder_email` | 3 | `src/Services/OrderWorkflowManager.php:414` |  |
 | `wpss_service_approved` | 1 | `src/Admin/Pages/ServiceModerationPage.php:663` *(+4 more)* | Fires when a service is approved. |
@@ -315,7 +315,7 @@ guide; this is the complete index.
 | `wpss_archive_request_columns` | 1 | `templates/archive-request.php:62` | Filter: wpss_archive_request_columns |
 | `wpss_archive_service_columns` | 1 | `templates/archive-service.php:61` | Filter: wpss_archive_service_columns |
 | `wpss_auth_login_challenge` | 3 | `src/API/AuthController.php:537` | Filter a successful password check before a token is issued. |
-| `wpss_auto_approve_reviews` | 1 | `src/API/ReviewsController.php:425` |  |
+| `wpss_auto_approve_reviews` | 1 | `src/API/ReviewsController.php:427` |  |
 | `wpss_auto_approve_vendors` | 1 | `src/Services/VendorService.php:112` | Filter whether new vendors are auto-approved. |
 | `wpss_batch_max_requests` | 1 | `src/API/API.php:1291` | Handle batch requests for mobile efficiency. |
 | `wpss_billing_address` | 2 | `src/functions/billing.php:660` | Filter a user's billing address after it is read. |
@@ -451,7 +451,7 @@ guide; this is the complete index.
 | `wpss_rest_confirm_payment` | 6 | `src/API/PaymentController.php:317` | Filter to handle custom payment gateway confirmation via REST. |
 | `wpss_rest_create_payment_intent` | 7 | `src/API/PaymentController.php:268` | Filter to handle custom payment gateway intent creation via REST. |
 | `wpss_rest_order_data` | 3 | `src/API/OrdersController.php:1957` | Filters the order data returned in REST API responses. |
-| `wpss_rest_review_data` | 3 | `src/API/ReviewsController.php:1055` | Filters the review data returned in REST API responses. |
+| `wpss_rest_review_data` | 3 | `src/API/ReviewsController.php:1070` | Filters the review data returned in REST API responses. |
 | `wpss_rest_service_data` | 3 | `src/API/ServicesController.php:1194` | Filter service REST response data. |
 | `wpss_rest_vendor_data` | 3 | `src/API/VendorsController.php:917` | Filters the vendor data returned in REST API responses. |
 | `wpss_review_window_days` | 1 | `src/Services/ReviewService.php:504` | Filter the review time window in days. |

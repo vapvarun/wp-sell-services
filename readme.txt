@@ -300,6 +300,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Suspended vendors receive a suspension notice instead of the rejection wording.
 * Fix      - Dispute numbers are generated, the vendor profile page carries the vendor's name in its title, and several PHP notices on email and admin pages are gone.
 * Fix      - Order requirements use one schema on every surface, so requirement forms show the vendor's questions and REST submissions validate correctly.
+* Fix      - The review window filter is honoured by the API as well as the website, and review replies go through one writer.
 * Fix      - Vendor detection now requires an approved seller profile; the author role no longer receives seller capabilities.
 * Fix      - A repeated payment webhook no longer resets a paid order or resends its notifications.
 * Fix      - Tax is charged on multi-item cart checkout and on PayPal checkout, matching the single-service total.
