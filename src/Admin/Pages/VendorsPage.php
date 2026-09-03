@@ -258,7 +258,14 @@ class VendorsPage {
 		$where  = array( '1=1' );
 		$values = array();
 
-		if ( $args['status'] ) {
+		// "migrated" is not a profile status - those vendors are active. It is
+		// the set the 1.7.1 upgrade preserved (see
+		// Activator::migrate_existing_sellers), marked by user meta, and it
+		// rides the status filter so the screen keeps one filter mechanism.
+		if ( 'migrated' === $args['status'] ) {
+			$where[]  = "EXISTS ( SELECT 1 FROM {$wpdb->usermeta} um WHERE um.user_id = vp.user_id AND um.meta_key = %s )";
+			$values[] = \WPSellServices\Core\Activator::MIGRATED_SELLER_META;
+		} elseif ( $args['status'] ) {
 			$where[]  = 'vp.status = %s';
 			$values[] = $args['status'];
 		}
@@ -418,11 +425,29 @@ class VendorsPage {
 			AND wt.user_id IN ( SELECT user_id FROM {$wpdb->prefix}wpss_vendor_profiles )"
 		);
 
+		// Only asked on a site the upgrade actually migrated somebody on - the
+		// option is absent everywhere else, so no site pays for this query to
+		// learn the answer is zero.
+		$migrated = (int) get_option( \WPSellServices\Core\Activator::MIGRATED_SELLERS_OPTION, 0 );
+
+		if ( $migrated > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$migrated = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*)
+					FROM {$wpdb->prefix}wpss_vendor_profiles vp
+					INNER JOIN {$wpdb->usermeta} um ON um.user_id = vp.user_id AND um.meta_key = %s",
+					\WPSellServices\Core\Activator::MIGRATED_SELLER_META
+				)
+			);
+		}
+
 		return array(
 			'total'          => (int) ( $stats->total_vendors ?? 0 ),
 			'active'         => (int) ( $stats->active_vendors ?? 0 ),
 			'pending'        => (int) ( $stats->pending_vendors ?? 0 ),
 			'suspended'      => (int) ( $stats->suspended_vendors ?? 0 ),
+			'migrated'       => $migrated,
 			'avg_rating'     => round( (float) ( $stats->avg_rating ?? 0 ), 2 ),
 			'total_earnings' => $total_earned,
 		);
@@ -605,8 +630,17 @@ class VendorsPage {
 								class="<?php echo $status === 'suspended' ? 'current' : ''; ?>">
 								<?php esc_html_e( 'Suspended', 'wp-sell-services' ); ?>
 								<span class="count">(<?php echo esc_html( $stats['suspended'] ); ?>)</span>
-							</a>
+							</a><?php echo $stats['migrated'] ? ' |' : ''; ?>
 						</li>
+						<?php if ( $stats['migrated'] ) : ?>
+							<li>
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=migrated' ) ); ?>"
+									class="<?php echo $status === 'migrated' ? 'current' : ''; ?>">
+									<?php esc_html_e( 'Migrated', 'wp-sell-services' ); ?>
+									<span class="count">(<?php echo esc_html( $stats['migrated'] ); ?>)</span>
+								</a>
+							</li>
+						<?php endif; ?>
 					</ul>
 
 					<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="search-box">

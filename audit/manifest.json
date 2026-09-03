@@ -864,7 +864,8 @@
     "legitimate_meta_writers": [
       "VendorService::register() / approve paths (write both role and meta)",
       "Admin::… vendor creation",
-      "Plugin.php admin self-heal (_wpss_vendor_checked fast path)"
+      "Plugin.php admin self-heal (_wpss_vendor_checked fast path)",
+      "Activator::migrate_existing_sellers() (1.7.1 upgrade: gives a profile row, the vendor role and this meta to anyone who was already selling without one; marks them with `_wpss_migrated_seller` and records the total in the `wpss_migrated_sellers` option)"
     ],
     "rule": "Never read `_wpss_is_vendor` to gate a surface. Read it only when repairing or writing it."
   },

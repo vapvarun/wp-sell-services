@@ -424,9 +424,12 @@ final class Plugin {
 
 			// 1.7.1 split wpss_manage_orders (admin) from wpss_vendor_orders
 			// (vendor). create_roles() fixed the roles above; this fixes the
-			// per-user grants existing vendors carry.
+			// per-user grants existing vendors carry. The same release made an
+			// active profile row the definition of a vendor, so anyone who was
+			// selling without one gets the row rather than the door.
 			if ( $installed_version && version_compare( $installed_version, '1.7.1', '<' ) ) {
 				Activator::migrate_vendor_user_caps();
+				Activator::migrate_existing_sellers();
 				Activator::migrate_advanced_standalone_keys();
 			}
 

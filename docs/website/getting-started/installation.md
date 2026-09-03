@@ -44,6 +44,12 @@ When you activate the plugin, everything sets up automatically:
 
 You do not need to touch any database settings or configure anything technical.
 
+## Updating from Version 1.7.0 or Earlier
+
+From 1.7.1, selling requires an approved vendor profile -- the record created when someone registers as a vendor and you approve them. Earlier versions also let anyone with the WordPress **Author** role sell, which is why the update no longer gives that role selling permissions.
+
+To protect people who were already trading, the update creates an approved vendor profile for every user who has a service, an order or a proposal on your site. Their access, their listings and their in-progress orders carry on exactly as before, and nobody else is given selling access. You will see a notice on the plugin screens telling you how many were kept; open **Sell Services > Vendors** and use the **Migrated** filter to review them, and suspend any account that should not be selling.
+
 ## Installing the Pro Version **[PRO]**
 
 The Pro version adds premium features on top of the free plugin. Both run together.
