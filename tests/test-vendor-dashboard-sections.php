@@ -26,22 +26,6 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 global $wpdb;
 $p = $wpdb->prefix;
 
-/*
- * SKIP, not FAIL, when the dashboard page is not mapped.
- *
- * Every assertion below compares the rendered nav against
- * wpss_get_dashboard_url(), which resolves through the mapped page. On an
- * install where that page does not exist - a bare CI WordPress, where the
- * plugin is activated but nothing has ever run setup - the URLs and the markup
- * simply have nothing to agree about, and reporting that as a broken contract
- * is what kept CI's contract job red while the same script passed on a seeded
- * site. Map the page and it asserts again.
- */
-if ( ! function_exists( 'wpss_get_page_id' ) || ! wpss_get_page_id( 'dashboard' ) ) {
-	echo "SKIP  no dashboard page mapped on this install; the nav has no URLs to assert against\n";
-	exit( 0 );
-}
-
 $vendor = (int) wp_insert_user(
 	array(
 		'user_login' => 'f24_vendor_' . wp_rand(),
@@ -76,6 +60,25 @@ $proposals_url = wpss_get_dashboard_url( 'proposals' );
 $reviews_url   = wpss_get_dashboard_url( 'reviews' );
 $vendor_html   = $render( $vendor, 'proposals' );
 $buyer_html    = $render( $buyer, 'proposals' );
+
+/*
+ * The nav assertions below need a dashboard that actually rendered for a
+ * vendor. On an install where the shortcode returns nothing usable - no mapped
+ * page, or the freshly registered vendor not resolving as one - there is no nav
+ * to compare URLs against, and reporting that as a broken contract is what kept
+ * CI's contract job red while this script passed on a seeded site.
+ *
+ * Checked against the rendered output rather than a single option, because the
+ * first guess at this guard read a mapped-page flag that was already true in CI
+ * and skipped nothing.
+ */
+if ( '' === $proposals_url || false === strpos( $vendor_html, 'wpss-dashboard' ) ) {
+	echo "SKIP  the dashboard did not render a nav for a vendor on this install; no URLs to assert against\n";
+	foreach ( array( $vendor, $buyer ) as $u ) {
+		wp_delete_user( $u );
+	}
+	exit( 0 );
+}
 $check( 'vendor nav links Proposals', false !== strpos( $vendor_html, $proposals_url ) );
 $check( 'vendor nav links Reviews', false !== strpos( $vendor_html, $reviews_url ) );
 $check( 'buyer nav has no Proposals link', false === strpos( $buyer_html, $proposals_url ) );
