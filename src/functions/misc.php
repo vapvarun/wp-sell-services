@@ -662,6 +662,133 @@ function wpss_password_is_app_token( \WP_User $user, string $password ): bool {
 }
 
 /**
+ * The transient key a sign-in attempt counts against.
+ *
+ * Resolved to the account, not to what was typed, so "sofia" and
+ * "sofia@example.com" share one budget. Hashed, so the failed logins people
+ * try - which are often somebody's real password typed in the wrong box - are
+ * never written to the options table in the clear.
+ *
+ * An unknown login is hashed and counted exactly like a known one. Skipping
+ * unknown logins would be cheaper, but then the sixth attempt answers
+ * "locked" for a real account and "invalid" for one that does not exist,
+ * which turns the lockout into an account-enumeration oracle. Counting is the
+ * safer of the two; the cost is bounded by the 15-minute expiry.
+ *
+ * @since 1.7.1
+ *
+ * @param string $login Login or email address as submitted.
+ * @return string
+ */
+function wpss_login_lock_key( string $login ): string {
+	$login = trim( $login );
+	$user  = get_user_by( 'login', $login ) ?: get_user_by( 'email', $login );
+
+	return md5( strtolower( $user instanceof \WP_User ? $user->user_login : $login ) );
+}
+
+/**
+ * Whether an account is currently locked out of signing in.
+ *
+ * Impure by nature: it reads a transient that a failed sign-in between two
+ * calls will have changed, which is exactly how the REST route asks again
+ * after wp_authenticate().
+ *
+ * @since 1.7.1
+ *
+ * @phpstan-impure
+ *
+ * @param string $login Login or email address as submitted.
+ * @return bool
+ */
+function wpss_login_is_locked( string $login ): bool {
+	if ( '' === trim( $login ) ) {
+		return false;
+	}
+
+	return (bool) get_transient( 'wpss_login_lock_' . wpss_login_lock_key( $login ) );
+}
+
+/**
+ * Count one wrong password against an account.
+ *
+ * @since 1.7.1
+ *
+ * @param string $login Login or email address as submitted.
+ * @return bool Whether the account is locked as of this failure.
+ */
+function wpss_login_record_failure( string $login ): bool {
+	if ( '' === trim( $login ) ) {
+		return false;
+	}
+
+	$key = wpss_login_lock_key( $login );
+
+	/*
+	 * An already-locked account is not counted again.
+	 *
+	 * Refusing a locked sign-in fires wp_login_failed a second time, and
+	 * counting that would push the expiry out on every attempt - an attacker
+	 * could hold an administrator out of their own site indefinitely by
+	 * knocking on the door. The 15 minutes always runs down.
+	 */
+	if ( get_transient( 'wpss_login_lock_' . $key ) ) {
+		return true;
+	}
+
+	$fails = (int) get_transient( 'wpss_login_fails_' . $key ) + 1;
+
+	if ( $fails >= 5 ) {
+		set_transient( 'wpss_login_lock_' . $key, time(), 15 * MINUTE_IN_SECONDS );
+		delete_transient( 'wpss_login_fails_' . $key );
+
+		return true;
+	}
+
+	set_transient( 'wpss_login_fails_' . $key, $fails, 15 * MINUTE_IN_SECONDS );
+
+	return false;
+}
+
+/**
+ * Forget an account's failures and any lock on it.
+ *
+ * @since 1.7.1
+ *
+ * @param string $login Login or email address as submitted.
+ * @return void
+ */
+function wpss_login_clear_failures( string $login ): void {
+	if ( '' === trim( $login ) ) {
+		return;
+	}
+
+	$key = wpss_login_lock_key( $login );
+
+	delete_transient( 'wpss_login_lock_' . $key );
+	delete_transient( 'wpss_login_fails_' . $key );
+}
+
+/**
+ * The error a locked account answers with, on the website and over REST.
+ *
+ * 423 Locked rather than 429: the client did nothing too fast, the account is
+ * refusing sign-ins for a while, and the client should say so rather than back
+ * off and retry. wp-login.php ignores the status and prints the message.
+ *
+ * @since 1.7.1
+ *
+ * @return \WP_Error
+ */
+function wpss_login_lock_error(): \WP_Error {
+	return new \WP_Error(
+		'wpss_account_locked',
+		__( 'Too many failed sign-ins. This account is locked for 15 minutes.', 'wp-sell-services' ),
+		array( 'status' => 423 )
+	);
+}
+
+/**
  * Render a submit button that works outside wp-admin.
  *
  * `submit_button()` lives in wp-admin/includes/template.php, which is only

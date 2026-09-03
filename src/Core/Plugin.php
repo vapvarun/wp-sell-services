@@ -234,6 +234,7 @@ final class Plugin {
 		$this->maybe_run_install();
 		$this->set_locale();
 		$this->define_vendor_settings_filters();
+		$this->define_login_lock_hooks();
 		$this->define_avatar_filter();
 		$this->register_post_types();
 		$this->register_rewrite_rules();
@@ -1946,6 +1947,68 @@ final class Plugin {
 					dirname( \WPSS_PLUGIN_BASENAME ) . '/languages'
 				);
 			}
+		);
+	}
+
+	/**
+	 * Bind the account lockout to every sign-in, not just the REST route.
+	 *
+	 * 1.7.1 added the lockout inside POST /auth/login only, so six wrong
+	 * passwords in the app locked the account while six wrong passwords at
+	 * wp-login.php were waved through - and the account the plugin reported as
+	 * locked signed in perfectly well in a browser (Basecamp 10267994010).
+	 *
+	 * Counting hangs off wp_login_failed, which core fires from
+	 * wp_authenticate() itself, so the REST route and the login form feed the
+	 * same counter. Refusal hangs off `authenticate` at a late priority so it
+	 * outranks the password check and covers anything else that authenticates
+	 * a username and password.
+	 *
+	 * Signed-in sessions are validated by cookie, which never reaches
+	 * `authenticate`, so a locked account does not throw an administrator out
+	 * of a session they already have.
+	 *
+	 * @since 1.7.1
+	 * @return void
+	 */
+	private function define_login_lock_hooks(): void {
+		add_action(
+			'wp_login_failed',
+			static function ( $username ): void {
+				wpss_login_record_failure( (string) $username );
+			}
+		);
+
+		add_action(
+			'wp_login',
+			static function ( $user_login ): void {
+				wpss_login_clear_failures( (string) $user_login );
+			}
+		);
+
+		add_filter(
+			'authenticate',
+			static function ( $user, $username ) {
+				/**
+				 * Filter whether the website sign-in form honours the lockout.
+				 *
+				 * Return false on a site whose security plugin already limits
+				 * failed sign-ins, to leave wp-login.php entirely to it. The
+				 * counter keeps running either way, so the app's own lockout
+				 * (423 `wpss_account_locked`) is unaffected.
+				 *
+				 * @since 1.7.1
+				 *
+				 * @param bool $enabled Whether to refuse a locked account here.
+				 */
+				if ( ! apply_filters( 'wpss_web_login_lock', true ) ) {
+					return $user;
+				}
+
+				return wpss_login_is_locked( (string) $username ) ? wpss_login_lock_error() : $user;
+			},
+			100,
+			2
 		);
 	}
 
