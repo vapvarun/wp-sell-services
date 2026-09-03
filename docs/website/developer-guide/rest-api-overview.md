@@ -131,6 +131,14 @@ the per-IP limiter (`429 rate_limit_exceeded`, 5 attempts per 5 minutes). A
 successful sign-in clears the counter. Show the message and stop; retrying
 will not help.
 
+**The website counts against the same total.** Wrong passwords at
+`wp-login.php` and wrong passwords at `/auth/login` feed one counter, so five
+of either - or a mix - lock the account on both rails, and a correct password
+is refused in a browser while the app reports it locked. A site whose security
+plugin already limits failed sign-ins can hand the login form back to it with
+`add_filter( 'wpss_web_login_lock', '__return_false' )`; the API lockout above
+is unaffected.
+
 **A second factor plugs in after the password.** Once the password and the
 lockout have both passed, `wpss_auth_login_challenge` runs before a token is
 issued:

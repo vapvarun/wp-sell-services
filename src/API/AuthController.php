@@ -419,37 +419,6 @@ class AuthController extends RestController {
 	}
 
 	/**
-	 * Wrong passwords for one account before it is locked.
-	 *
-	 * @var int
-	 */
-	private const LOCKOUT_FAILS = 5;
-
-	/**
-	 * How long a lockout (and the failure window) lasts, in seconds.
-	 *
-	 * @var int
-	 */
-	private const LOCKOUT_SECONDS = 15 * MINUTE_IN_SECONDS;
-
-	/**
-	 * The error a locked account answers with.
-	 *
-	 * 423 Locked rather than 429: the client did nothing too fast, the account
-	 * is refusing sign-ins for a while, and the client should say so rather
-	 * than back off and retry.
-	 *
-	 * @return WP_Error
-	 */
-	private function account_locked(): WP_Error {
-		return new WP_Error(
-			'wpss_account_locked',
-			__( 'Too many failed sign-ins. This account is locked for 15 minutes.', 'wp-sell-services' ),
-			array( 'status' => 423 )
-		);
-	}
-
-	/**
 	 * Check rate limit for an action.
 	 *
 	 * @param string $action  Action identifier (e.g. 'login', 'register').
@@ -498,26 +467,23 @@ class AuthController extends RestController {
 		 * on the resolved login so "sofia" and "sofia@example.com" share one
 		 * budget, and it is checked before wp_authenticate() so a locked
 		 * account is not even verified.
+		 *
+		 * The counting itself is NOT done here. wp_authenticate() fires
+		 * wp_login_failed, which Plugin.php binds to wpss_login_record_failure()
+		 * - one counter for this route and for wp-login.php alike, because the
+		 * two rails disagreeing is the bug this replaced (Basecamp 10267994010).
+		 * Only the answer is chosen here, so the app keeps its 423.
 		 */
-		$account  = get_user_by( 'login', $username ) ?: get_user_by( 'email', $username );
-		$lock_key = md5( strtolower( $account instanceof WP_User ? $account->user_login : $username ) );
-
-		if ( get_transient( 'wpss_login_lock_' . $lock_key ) ) {
-			return $this->account_locked();
+		if ( wpss_login_is_locked( $username ) ) {
+			return wpss_login_lock_error();
 		}
 
 		$user = wp_authenticate( $username, $password );
 
 		if ( is_wp_error( $user ) ) {
-			$fails = (int) get_transient( 'wpss_login_fails_' . $lock_key ) + 1;
-
-			if ( $fails >= self::LOCKOUT_FAILS ) {
-				set_transient( 'wpss_login_lock_' . $lock_key, time(), self::LOCKOUT_SECONDS );
-				delete_transient( 'wpss_login_fails_' . $lock_key );
-				return $this->account_locked();
+			if ( wpss_login_is_locked( $username ) ) {
+				return wpss_login_lock_error();
 			}
-
-			set_transient( 'wpss_login_fails_' . $lock_key, $fails, self::LOCKOUT_SECONDS );
 
 			return new WP_Error(
 				'invalid_credentials',
@@ -526,7 +492,9 @@ class AuthController extends RestController {
 			);
 		}
 
-		delete_transient( 'wpss_login_fails_' . $lock_key );
+		// wp_authenticate() does not fire wp_login - only wp_signon() does - so
+		// a correct password over REST clears the counter here.
+		wpss_login_clear_failures( $user->user_login );
 
 		/*
 		 * A token must not be able to mint more tokens (Basecamp 10154918753).

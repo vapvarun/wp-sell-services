@@ -27,7 +27,7 @@ add_filter( 'wpss_review_window_days', fn( $days ) => 14 );
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_loaded` | `Plugin $plugin` | `src/Core/Plugin.php:293` |
+| `wpss_loaded` | `Plugin $plugin` | `src/Core/Plugin.php:294` |
 | `wpss_adapter_initialized` | `EcommerceAdapterInterface $adapter` | `src/Integrations/IntegrationManager.php:136` |
 
 **`wpss_loaded`** is the primary extension hook. All Pro features register here:
@@ -1043,6 +1043,27 @@ on a failed application password, so without this carve-out an app that attaches
 its stored token to every request could never reach the login route to replace
 it. These three take their credentials from the request body and grant nothing
 on their own, which is what makes them safe to open.
+
+### Sign-in lockout (1.7.1)
+
+| Filter | Parameters | File |
+|--------|-----------|------|
+| `wpss_web_login_lock` | `bool $enabled` | `Core/Plugin.php` |
+
+Five wrong passwords for one account inside 15 minutes lock it for 15 minutes,
+on the website sign-in form and on `POST /auth/login` alike - one counter, keyed
+on the resolved account rather than on the address the attempts came from. A
+successful sign-in clears it, and the 15 minutes always runs down, so an
+administrator cannot be held out indefinitely.
+
+Return `false` to leave `wp-login.php` alone on a site whose security plugin
+already limits failed sign-ins. The counter keeps running either way, so the
+app's own lockout - `423 wpss_account_locked` - is unaffected.
+
+```php
+// A dedicated security plugin owns the login form on this site.
+add_filter( 'wpss_web_login_lock', '__return_false' );
+```
 
 ### Selling limits
 
