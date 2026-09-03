@@ -315,7 +315,8 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 				max-width: 400px;
 				margin: 40px auto;
 				padding: 30px;
-				background: var(--wpss-white, #fff);
+				/* Surface token, not the literal white - see design-system.css. */
+				background: var(--wpss-surface, #fff);
 				border: 1px solid var(--wpss-border, #e5e5e5);
 				border-radius: 8px;
 			}

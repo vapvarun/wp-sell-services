@@ -1729,18 +1729,10 @@
 	white-space: nowrap;
 }
 
-/* .wpss-btn--primary: see design-system.css (single owner) */
-.wpss-btn--outline {
-	background: var(--wpss-surface, #fff);
-	color: var(--wpss-gray-700);
-	border: 1px solid var(--wpss-gray-300);
-}
-
-.wpss-btn--outline:hover {
-	background: var(--wpss-gray-50);
-	color: var(--wpss-gray-900);
-	border-color: var(--wpss-gray-400);
-}
+/* .wpss-btn--primary and .wpss-btn--outline: see design-system.css (single
+   owner). The copy that used to live here painted the button --wpss-gray-700
+   on --wpss-gray-300, neither of which flips for dark mode, and it won on the
+   live page purely by enqueue order. */
 
 .wpss-btn--ghost {
 	background: transparent;

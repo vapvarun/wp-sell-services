@@ -912,16 +912,9 @@ select.wpss-form-input::-ms-expand {
 	background: var(--wpss-success-dark, #059669);
 }
 
-.wpss-btn--outline {
-	color: var(--wpss-text, #1f2937);
-	background: var(--wpss-surface, #fff);
-	border: 1px solid var(--wpss-border, #e5e7eb) !important;
-}
-
-.wpss-btn--outline:hover:not(:disabled) {
-	border-color: var(--wpss-primary, #4f46e5) !important;
-	color: var(--wpss-primary-accent, #4f46e5);
-}
+/* .wpss-btn--outline: see design-system.css (single owner). The copy removed
+   from here carried !important on its border, so it also outranked the owner
+   anywhere both loaded. */
 
 .wpss-btn--ghost {
 	color: var(--wpss-text-muted, #6b7280);

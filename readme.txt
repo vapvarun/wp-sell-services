@@ -316,6 +316,9 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - The Active count on the Sales and Orders screens matches the Active filter beside it.
 * Fix      - The service gallery lightbox opens, zooms and moves between images, and a tall image no longer stretches the page.
 * Fix      - A service page no longer blanks its own title: search-engine structured data, the social share title, the breadcrumb and the gallery image alt text all carry the service name again.
+* Fix      - The cart page follows the theme's dark mode. Every colour on it referenced a token that did not exist, so it was locked to light.
+* Fix      - The become a vendor card and the standalone account panel no longer stay white when the theme goes dark, which had made their headings unreadable.
+* Fix      - Outline buttons take their colours from the design system again, so they follow the theme instead of a fixed grey.
 * Security - Message, contact and dispute attachments are stored privately like deliveries, dispute evidence checks ownership, and vendor payout details are encrypted at rest.
 * Security - Payment receipts are stored privately like deliveries instead of in the media library.
 * Security - Buyers and vendors can no longer refund or cancel orders outside their allowed steps; retired accept and decline actions removed.

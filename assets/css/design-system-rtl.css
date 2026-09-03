@@ -475,8 +475,14 @@
 .wpss-btn--primary:hover { background: var(--wpss-primary-hover); border-color: var(--wpss-primary-hover); color: var(--wpss-white, #fff); }
 .wpss-btn--secondary { background: var(--wpss-bg-muted); color: var(--wpss-text-secondary); }
 .wpss-btn--secondary:hover { background: var(--wpss-border); color: var(--wpss-text); }
-.wpss-btn--outline { background: transparent; color: var(--wpss-text-secondary); border-color: var(--wpss-border); }
-.wpss-btn--outline:hover { border-color: var(--wpss-text-muted); color: var(--wpss-text); }
+/* Two classes, and the full border shorthand, on purpose. `.wpss-btn` is
+   declared in four stylesheets - here, frontend.css, unified-dashboard.css and
+   Pro's dashboard.css - and two of those say `border: none`. At one class each
+   the base wins on load order alone, so a single-class modifier here could
+   never paint a border. Consolidating those four is 1.8.0 work; until then this
+   is what makes the owner actually own the component. */
+.wpss-btn.wpss-btn--outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border); }
+.wpss-btn.wpss-btn--outline:hover { border-color: var(--wpss-text-muted); color: var(--wpss-text); }
 .wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
 .wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
 

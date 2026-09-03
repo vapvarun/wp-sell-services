@@ -1407,7 +1407,10 @@ class Shortcodes {
 		.wpss-vr { max-width: 560px; margin: 40px auto; padding: 0 20px; position: relative; isolation: isolate; contain: layout; }
 		.wpss-vr__card--wide { max-width: 640px; }
 		.wpss-vr__card {
-			background: var(--wpss-white, #fff);
+			/* --wpss-surface, never --wpss-white. The literal white cannot flip,
+			so this card stayed white while --wpss-text went light and the
+			heading became invisible. See design-system.css. */
+			background: var(--wpss-surface, #fff);
 			border: 1px solid var(--wpss-border, #e5e7eb);
 			border-radius: 16px;
 			padding: 48px 40px;
@@ -1483,7 +1486,7 @@ class Shortcodes {
 		.wpss-signup-form .wpss-form-input {
 			width: 100%; padding: 10px 14px; font-size: 14px;
 			border: 1px solid var(--wpss-gray-300, #d1d5db); border-radius: 8px;
-			background: var(--wpss-white, #fff); color: var(--wpss-text, #111827);
+			background: var(--wpss-surface, #fff); color: var(--wpss-text, #111827);
 			transition: border-color 0.15s ease, box-shadow 0.15s ease;
 			box-sizing: border-box;
 		}
