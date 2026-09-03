@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-03T09:18:15+00:00\n"
+"POT-Creation-Date: 2026-09-03T10:28:11+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -10542,27 +10542,27 @@ msgid "How it works"
 msgstr ""
 
 #. translators: %s: cart page link
-#: src/Frontend/Shortcodes.php:1634
+#: src/Frontend/Shortcodes.php:1637
 #, php-format
 msgid "Your cart is handled by the store. <a href=\"%s\">Go to cart</a>."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1644
+#: src/Frontend/Shortcodes.php:1647
 msgid "Please log in to view your cart."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1677
+#: src/Frontend/Shortcodes.php:1680
 #: templates/cart/cart.php:292
 msgid "Your Cart"
 msgstr ""
 
 #. translators: %s: checkout page link
-#: src/Frontend/Shortcodes.php:1730
+#: src/Frontend/Shortcodes.php:1733
 #, php-format
 msgid "Checkout is handled by the store. <a href=\"%s\">Go to checkout</a>."
 msgstr ""
 
-#: src/Frontend/Shortcodes.php:1740
+#: src/Frontend/Shortcodes.php:1743
 msgid "Checkout is not available. Please configure an e-commerce platform in settings."
 msgstr ""
 
