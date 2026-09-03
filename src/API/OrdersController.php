@@ -1493,7 +1493,10 @@ class OrdersController extends RestController {
 					'status'      => (string) $receipt->status,
 					'note'        => (string) ( $receipt->note ?? '' ),
 					'admin_note'  => (string) ( $receipt->admin_note ?? '' ),
-					'file_url'    => $receipt->attachment_id ? wp_get_attachment_url( (int) $receipt->attachment_id ) : '',
+					// The permission-checked endpoint, never the uploads path:
+					// a receipt is the buyer's bank detail, not public media
+					// (Basecamp 10267994010).
+					'file_url'    => wpss_get_receipt_file( $receipt )['url'],
 					'uploaded_by' => (int) $receipt->uploaded_by,
 					'created_at'  => (string) $receipt->created_at,
 					'verified_at' => $receipt->verified_at ? (string) $receipt->verified_at : null,

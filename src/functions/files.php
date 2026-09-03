@@ -285,7 +285,7 @@ function wpss_check_upload( array $file ): ?WP_Error {
  *
  * @param array<string,mixed> $file One entry from $_FILES.
  * @param int                 $order_id Order the file belongs to.
- * @param string              $kind     delivery|requirement|message|dispute|contact - used only for grouping.
+ * @param string              $kind     delivery|requirement|message|dispute|contact|receipt - used only for grouping.
  * @return array<string,mixed>|null Record, or null when the upload is rejected.
  */
 function wpss_store_order_file( array $file, int $order_id, string $kind = 'delivery' ): ?array {
@@ -306,7 +306,7 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 	}
 
 	$order_id = max( 0, $order_id );
-	$kind     = in_array( $kind, array( 'delivery', 'requirement', 'message', 'dispute', 'contact' ), true ) ? $kind : 'delivery';
+	$kind     = in_array( $kind, array( 'delivery', 'requirement', 'message', 'dispute', 'contact', 'receipt' ), true ) ? $kind : 'delivery';
 
 	// wp_unique_filename() against the target directory, so two buyers uploading
 	// brief.pdf to the same order cannot overwrite each other.
@@ -497,7 +497,8 @@ function wpss_find_order_file( int $order_id, string $file_id ): ?array {
  * nothing else - the link in an email does not say which kind of file it
  * points at. Conversation and dispute rows are keyed by order through their
  * parent, so message and dispute attachments answer to the same read gate as
- * deliveries (Basecamp 10264291163).
+ * deliveries (Basecamp 10264291163), and so does a buyer's proof of payment
+ * (Basecamp 10267994010).
  *
  * @since 1.7.1
  *
@@ -516,6 +517,8 @@ function wpss_get_order_file_records( int $order_id ): array {
 		$wpdb->get_col( $wpdb->prepare( "SELECT m.attachments FROM {$wpdb->prefix}wpss_messages m INNER JOIN {$wpdb->prefix}wpss_conversations c ON c.id = m.conversation_id WHERE c.order_id = %d", $order_id ) ),
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->get_col( $wpdb->prepare( "SELECT dm.attachments FROM {$wpdb->prefix}wpss_dispute_messages dm INNER JOIN {$wpdb->prefix}wpss_disputes d ON d.id = dm.dispute_id WHERE d.order_id = %d", $order_id ) ),
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->get_col( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_payment_receipts WHERE order_id = %d", $order_id ) ),
 	);
 
 	$records = array();
@@ -790,6 +793,7 @@ function wpss_rewrite_order_file_record( int $order_id, string $file_id, array $
 	$tables = array(
 		$wpdb->prefix . 'wpss_deliveries',
 		$wpdb->prefix . 'wpss_order_requirements',
+		$wpdb->prefix . 'wpss_payment_receipts',
 	);
 
 	foreach ( $tables as $table ) {
@@ -828,6 +832,107 @@ function wpss_rewrite_order_file_record( int $order_id, string $file_id, array $
 	}
 
 	return false;
+}
+
+/**
+ * The gated link to a receipt's proof of payment, and enough about it to render.
+ *
+ * ONE reading of a receipt row's file for both surfaces that show it - the
+ * admin review box and GET /orders/{id}/receipts. Both used to emit
+ * wp_get_attachment_url(), which is a public wp-content/uploads link: a
+ * stranger holding it downloaded a stranger's bank transfer slip (Basecamp
+ * 10267994010).
+ *
+ * @since 1.7.1
+ *
+ * @param object $receipt Receipt row.
+ * @return array{url:string,is_image:bool,name:string} `url` is '' when there is nothing this user may open.
+ */
+function wpss_get_receipt_file( object $receipt ): array {
+	$decoded = json_decode( (string) ( $receipt->attachments ?? '' ), true );
+	$record  = ( is_array( $decoded ) && isset( $decoded[0] ) && is_array( $decoded[0] ) ) ? $decoded[0] : null;
+
+	if ( ! $record && (int) ( $receipt->attachment_id ?? 0 ) > 0 ) {
+		// A row the upgrade pass has not reached yet. Adopt it now rather than
+		// hand back the public URL for one more render.
+		$record = wpss_adopt_legacy_receipt_file( $receipt );
+	}
+
+	if ( ! $record ) {
+		return array(
+			'url'      => '',
+			'is_image' => false,
+			'name'     => '',
+		);
+	}
+
+	$record['order_id'] = (int) ( $receipt->order_id ?? 0 );
+
+	return array(
+		'url'      => wpss_get_order_file_url( $record ),
+		'is_image' => 0 === strpos( (string) ( $record['type'] ?? '' ), 'image/' ),
+		'name'     => (string) ( $record['name'] ?? '' ),
+	);
+}
+
+/**
+ * Move a pre-1.7.1 receipt out of the media library and into the order store.
+ *
+ * Receipts written before this release are media-library attachments: the row
+ * holds `attachment_id` and the file sits in wp-content/uploads with nothing in
+ * front of it. This writes the file record the rest of the order-file seam
+ * expects, then hands the move itself to wpss_migrate_legacy_order_file() -
+ * the same copy/rewrite/delete that every other legacy order file goes through.
+ *
+ * The record is written to the row BEFORE the move, because that migrator
+ * rewrites the row it finds; and it is returned even when the move fails (a
+ * file already deleted, an offloaded bucket), because a record carrying only
+ * `url` still routes through the permission-checked endpoint, where a bare
+ * attachment id would 404.
+ *
+ * Called from the upgrade pass for every legacy row, and from
+ * wpss_get_receipt_file() for anything that pass missed.
+ *
+ * @since 1.7.1
+ *
+ * @param object $receipt Receipt row carrying `id`, `order_id` and `attachment_id`.
+ * @return array<string,mixed>|null File record, or null when there is nothing to adopt.
+ */
+function wpss_adopt_legacy_receipt_file( object $receipt ): ?array {
+	global $wpdb;
+
+	$receipt_id    = (int) ( $receipt->id ?? 0 );
+	$order_id      = (int) ( $receipt->order_id ?? 0 );
+	$attachment_id = (int) ( $receipt->attachment_id ?? 0 );
+	$url           = $attachment_id > 0 ? (string) wp_get_attachment_url( $attachment_id ) : '';
+
+	if ( $receipt_id <= 0 || $order_id <= 0 || '' === $url ) {
+		return null;
+	}
+
+	$file = (string) get_attached_file( $attachment_id );
+
+	$record = array(
+		'id'       => (string) $attachment_id,
+		'name'     => '' !== $file ? basename( $file ) : (string) $attachment_id,
+		'type'     => (string) get_post_mime_type( $attachment_id ),
+		'size'     => ( '' !== $file && is_readable( $file ) ) ? (int) filesize( $file ) : 0,
+		'url'      => $url,
+		'order_id' => $order_id,
+		'kind'     => 'receipt',
+		'user_id'  => (int) ( $receipt->uploaded_by ?? 0 ),
+	);
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$wpdb->update(
+		$wpdb->prefix . 'wpss_payment_receipts',
+		array( 'attachments' => wp_json_encode( array( $record ) ) ),
+		array( 'id' => $receipt_id )
+	);
+
+	$moved = wpss_migrate_legacy_order_file( $record, $order_id );
+
+	return $moved ? $moved : $record;
 }
 
 /**

@@ -1009,8 +1009,9 @@ class OfflineGateway implements PaymentGatewayInterface {
 		printf( '<h4 style="margin:0 0 8px;">%s</h4>', esc_html__( 'Payment proof', 'wp-sell-services' ) );
 
 		foreach ( $receipts as $receipt ) {
-			$url    = $receipt->attachment_id ? wp_get_attachment_url( (int) $receipt->attachment_id ) : '';
-			$is_img = $receipt->attachment_id && wp_attachment_is_image( (int) $receipt->attachment_id );
+			$file   = wpss_get_receipt_file( $receipt );
+			$url    = $file['url'];
+			$is_img = $file['is_image'];
 			$who    = get_userdata( (int) $receipt->uploaded_by );
 
 			echo '<div class="wpss-receipt-review__item" style="border-top:1px solid #eee;padding:10px 0;">';

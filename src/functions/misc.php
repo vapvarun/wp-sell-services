@@ -223,7 +223,7 @@ function wpss_get_user_notifications( int $user_id, array $args = array() ): arr
  * @param array<string, mixed> $files    A single $_FILES['attachments'] entry (PHP's grouped
  *                                       multi-file shape: name[], type[], tmp_name[], etc.).
  * @param int                  $order_id Order the conversation belongs to, 0 for none.
- * @param string               $kind     message|contact|dispute - grouping only.
+ * @param string               $kind     message|contact|dispute|receipt - grouping only.
  * @return array{attachments: array<int, array<string,mixed>>, skipped: array<int,string>}
  */
 function wpss_handle_message_attachments( array $files, int $order_id = 0, string $kind = 'message' ): array {

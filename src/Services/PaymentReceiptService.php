@@ -95,7 +95,15 @@ class PaymentReceiptService {
 	 * attacker-supplied files from any logged-in buyer, so a third upload path
 	 * with its own idea of what is safe is exactly what not to build.
 	 *
+	 * WITH the order id: without it that helper defaults to 0, skips the order
+	 * store and drops the file in the public media library, so a bank transfer
+	 * slip was readable by anyone holding the URL (Basecamp 10267994010). The
+	 * record is stored on the row the way message and dispute attachments are,
+	 * so wpss_get_order_file_records() finds it and the order read gate serves
+	 * it. `attachment_id` stays 0 on new rows; it is kept for pre-1.7.1 ones.
+	 *
 	 * @since 1.6.0
+	 * @since 1.7.1 Files go to the private order store, not the media library.
 	 *
 	 * @param int                  $order_id Order ID.
 	 * @param int                  $user_id  Uploading user.
@@ -118,7 +126,7 @@ class PaymentReceiptService {
 			return new \WP_Error( 'wpss_receipt_pending', __( 'A receipt is already awaiting review on this order.', 'wp-sell-services' ), array( 'status' => 409 ) );
 		}
 
-		$result      = wpss_handle_message_attachments( $files );
+		$result      = wpss_handle_message_attachments( $files, $order_id, 'receipt' );
 		$attachments = $result['attachments'] ?? array();
 
 		if ( empty( $attachments ) ) {
@@ -139,7 +147,8 @@ class PaymentReceiptService {
 			array(
 				'order_id'      => $order_id,
 				'uploaded_by'   => $user_id,
-				'attachment_id' => (int) ( $first['id'] ?? 0 ),
+				'attachment_id' => 0,
+				'attachments'   => (string) wp_json_encode( array( $first ) ),
 				'note'          => $note,
 				'status'        => 'submitted',
 				'created_at'    => current_time( 'mysql' ),
