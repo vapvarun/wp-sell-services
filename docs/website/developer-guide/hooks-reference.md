@@ -171,9 +171,9 @@ guide; this is the complete index.
 | `wpss_package_features` | 3 | `templates/partials/service-packages.php:198` | Fires inside the package features list. |
 | `wpss_payable_total_after` | 2 | `src/Integrations/Standalone/StandaloneCheckoutProvider.php:1133` *(+1 more)* | Fires after the payable total, before the Pay button. |
 | `wpss_payment_callback` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php:336` | Fires when a payment callback is received. |
-| `wpss_payment_receipt_rejected` | 4 | `src/Services/PaymentReceiptService.php:259` | Fires when an admin rejects proof of an offline payment. |
-| `wpss_payment_receipt_submitted` | 3 | `src/Services/PaymentReceiptService.php:162` | Fires when a buyer submits proof of an offline payment. |
-| `wpss_payment_receipt_verified` | 3 | `src/Services/PaymentReceiptService.php:216` | Fires when an admin verifies proof of an offline payment. |
+| `wpss_payment_receipt_rejected` | 4 | `src/Services/PaymentReceiptService.php:268` | Fires when an admin rejects proof of an offline payment. |
+| `wpss_payment_receipt_submitted` | 3 | `src/Services/PaymentReceiptService.php:171` | Fires when a buyer submits proof of an offline payment. |
+| `wpss_payment_receipt_verified` | 3 | `src/Services/PaymentReceiptService.php:225` | Fires when an admin verifies proof of an offline payment. |
 | `wpss_payout_methods` | 2 | `templates/dashboard/sections/earnings.php:373` *(+1 more)* |  |
 | `wpss_paypal_refund_processed` | 2 | `src/Integrations/PayPal/PayPalGateway.php:939` | Fires when a PayPal refund is processed. |
 | `wpss_portfolio_item_created` | 3 | `src/Services/PortfolioService.php:200` | Fires when portfolio item is created. |
@@ -396,7 +396,7 @@ guide; this is the complete index.
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php:33` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php:2067` | Filter email content before sending. |
 | `wpss_notification_types` | 1 | `src/Admin/Settings.php:3831` | Filter the switchable notification types. |
-| `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php:1667` | Named offline methods. |
+| `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php:1668` | Named offline methods. |
 | `wpss_offline_methods` | 2 | `src/Integrations/Gateways/OfflineGateway.php:331` | Filter the offline payment methods. |
 | `wpss_open_graph_data` | 2 | `src/SEO/SEO.php:260` |  |
 | `wpss_order_actions` | 2 | `templates/order/order-view.php:415` | Filter: wpss_order_actions |
@@ -450,7 +450,7 @@ guide; this is the complete index.
 | `wpss_requirements_file_inputs` | 2 | `src/Frontend/AjaxHandlers.php:601` |  |
 | `wpss_rest_confirm_payment` | 6 | `src/API/PaymentController.php:317` | Filter to handle custom payment gateway confirmation via REST. |
 | `wpss_rest_create_payment_intent` | 7 | `src/API/PaymentController.php:268` | Filter to handle custom payment gateway intent creation via REST. |
-| `wpss_rest_order_data` | 3 | `src/API/OrdersController.php:1957` | Filters the order data returned in REST API responses. |
+| `wpss_rest_order_data` | 3 | `src/API/OrdersController.php:1960` | Filters the order data returned in REST API responses. |
 | `wpss_rest_review_data` | 3 | `src/API/ReviewsController.php:1070` | Filters the review data returned in REST API responses. |
 | `wpss_rest_service_data` | 3 | `src/API/ServicesController.php:1194` | Filter service REST response data. |
 | `wpss_rest_vendor_data` | 3 | `src/API/VendorsController.php:917` | Filters the vendor data returned in REST API responses. |
