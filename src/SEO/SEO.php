@@ -391,9 +391,11 @@ class SEO {
 			];
 		}
 
-		// Add service.
+		// Add service. Raw title: `the_title` is blanked for the queried object
+		// on shell surfaces, so get_the_title() empties this crumb for anyone
+		// consuming the `wpss_breadcrumbs` filter on a single-service page.
 		$breadcrumbs[] = [
-			'name' => get_the_title( $service_id ),
+			'name' => (string) get_post_field( 'post_title', $service_id ),
 			'url'  => get_permalink( $service_id ),
 		];
 
