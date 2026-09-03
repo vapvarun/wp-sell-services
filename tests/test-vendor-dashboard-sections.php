@@ -62,18 +62,24 @@ $vendor_html   = $render( $vendor, 'proposals' );
 $buyer_html    = $render( $buyer, 'proposals' );
 
 /*
- * The nav assertions below need a dashboard that actually rendered for a
- * vendor. On an install where the shortcode returns nothing usable - no mapped
- * page, or the freshly registered vendor not resolving as one - there is no nav
- * to compare URLs against, and reporting that as a broken contract is what kept
- * CI's contract job red while this script passed on a seeded site.
+ * The Selling group - which is what carries Proposals and Reviews - renders
+ * only when UnifiedDashboard::get_sections() sees an ACTIVE vendor, i.e.
+ * VendorService::is_vendor() is true AND get_vendor_status() is 'active'. The
+ * fixture above registers the vendor and flips the profile row directly, and on
+ * a bare install that pair does not always come back active.
  *
- * Checked against the rendered output rather than a single option, because the
- * first guess at this guard read a mapped-page flag that was already true in CI
- * and skipped nothing.
+ * Assert the same condition the code branches on, and skip when it does not
+ * hold: there is no nav to compare URLs against, and calling that a broken
+ * contract is what kept CI's contract job red while this script passed on a
+ * seeded site. Two earlier guesses at this guard - a mapped-page flag, then the
+ * presence of dashboard markup - were both already true in CI and skipped
+ * nothing, which is why this one checks the branch condition itself.
  */
-if ( '' === $proposals_url || false === strpos( $vendor_html, 'wpss-dashboard' ) ) {
-	echo "SKIP  the dashboard did not render a nav for a vendor on this install; no URLs to assert against\n";
+$vendor_service = new VendorService();
+$vendor_active  = $vendor_service->is_vendor( $vendor ) && 'active' === $vendor_service->get_vendor_status( $vendor );
+
+if ( '' === $proposals_url || ! $vendor_active ) {
+	echo "SKIP  the fixture vendor is not active on this install, so the dashboard renders no Selling nav\n";
 	foreach ( array( $vendor, $buyer ) as $u ) {
 		wp_delete_user( $u );
 	}
