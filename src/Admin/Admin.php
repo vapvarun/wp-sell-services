@@ -503,8 +503,8 @@ class Admin {
 				esc_url(
 					add_query_arg(
 						array(
-							'page' => 'wpss-orders',
-							'action' => 'view',
+							'page'     => 'wpss-orders',
+							'action'   => 'view',
 							'order_id' => (int) $order_id,
 						),
 						admin_url( 'admin.php' )
@@ -568,7 +568,7 @@ class Admin {
 					'amount'  => $pending,
 					'result'  => array(
 						'success' => true,
-						'manual' => true,
+						'manual'  => true,
 						'message' => 'Marked as sent by admin.',
 					),
 				),
@@ -580,10 +580,10 @@ class Admin {
 		wp_safe_redirect(
 			add_query_arg(
 				array(
-					'page' => 'wpss-orders',
-					'action' => 'view',
+					'page'     => 'wpss-orders',
+					'action'   => 'view',
 					'order_id' => $order_id,
-					'updated' => '1',
+					'updated'  => '1',
 				),
 				admin_url( 'admin.php' )
 			)
@@ -822,7 +822,7 @@ class Admin {
 		$configured = (string) wpss_get_option( 'wpss_general', 'ecommerce_platform', 'auto' );
 
 		if ( $active && 'auto' !== $configured && $configured !== $active->get_id() ) {
-			$wanted            = $manager->get_adapter( $configured );
+			$wanted           = $manager->get_adapter( $configured );
 			$problems['rail'] = array(
 				'text'  => sprintf(
 					/* translators: 1: selected store plugin, 2: the rail checkout is actually using */

@@ -1199,10 +1199,10 @@ class ServiceWizard {
 			return array();
 		}
 
-		$packages     = get_post_meta( $service_id, '_wpss_packages', true );
-		$packages     = ! empty( $packages ) ? $packages : array();
-		$gallery      = get_post_meta( $service_id, '_wpss_gallery', true );
-		$gallery      = ! empty( $gallery ) ? $gallery : array();
+		$packages = get_post_meta( $service_id, '_wpss_packages', true );
+		$packages = ! empty( $packages ) ? $packages : array();
+		$gallery  = get_post_meta( $service_id, '_wpss_gallery', true );
+		$gallery  = ! empty( $gallery ) ? $gallery : array();
 		// The Alpine model edits options as one comma-separated string.
 		$requirements = array_map(
 			static fn( array $req ) => array_merge( $req, array( 'options' => implode( ', ', $req['options'] ) ) ),

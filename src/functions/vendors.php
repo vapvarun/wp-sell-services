@@ -732,9 +732,9 @@ function wpss_member_bypasses_limits( int $user_id ): bool {
  *
  * @since 1.7.0
  *
- * @param int             $vendor_id   Vendor user ID.
- * @param string|string[] $post_status Status(es) to count. Default 'publish'.
- * @param array<string, mixed> $extra  Extra WP_Query args (e.g. a meta_query).
+ * @param int                  $vendor_id   Vendor user ID.
+ * @param string|string[]      $post_status Status(es) to count. Default 'publish'.
+ * @param array<string, mixed> $extra       Extra WP_Query args (e.g. a meta_query).
  * @return int
  */
 function wpss_count_vendor_services( int $vendor_id, $post_status = 'publish', array $extra = array() ): int {

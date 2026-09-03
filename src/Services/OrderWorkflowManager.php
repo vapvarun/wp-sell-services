@@ -904,12 +904,12 @@ class OrderWorkflowManager {
 			$last_id   = array_key_last( $orders );
 
 			foreach ( $orders as $oid => $order ) {
-				$share         = $oid === $last_id || $sum <= 0
+				$share          = $oid === $last_id || $sum <= 0
 					? round( $amount - $allocated, $decimals )
 					: round( $amount * (float) $order->total / $sum, $decimals );
-				$share         = min( $share, (float) $order->total );
+				$share          = min( $share, (float) $order->total );
 				$shares[ $oid ] = $share;
-				$allocated    += $share;
+				$allocated     += $share;
 			}
 		}
 
@@ -1415,7 +1415,7 @@ class OrderWorkflowManager {
 				'order',
 				(int) $order->id,
 				array(
-					'action' => 'refund',
+					'action'  => 'refund',
 					'context' => $context,
 				)
 			);
@@ -1489,7 +1489,7 @@ class OrderWorkflowManager {
 			'order',
 			(int) $order->id,
 			array(
-				'action' => 'refund',
+				'action'  => 'refund',
 				'context' => $context,
 			)
 		);

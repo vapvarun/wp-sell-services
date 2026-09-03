@@ -1685,9 +1685,9 @@ do_action( 'wpss_before_order_view', $order );
 					<ol class="wpss-milestone-list">
 						<?php
 						foreach ( $milestones as $index => $m ) :
-							$ms_status      = $m['status'];
-							$ms_sub_id      = (int) $m['id'];
-							$ms_sub_url     = wpss_get_order_url( $ms_sub_id );
+							$ms_status  = $m['status'];
+							$ms_sub_id  = (int) $m['id'];
+							$ms_sub_url = wpss_get_order_url( $ms_sub_id );
 							// Only a phase the buyer can pay right now gets a URL: a read
 							// per payable row, nothing for paid or locked ones.
 							$ms_pay_url     = 'pending_payment' === $ms_status && empty( $m['is_locked'] ) ? wpss_get_pay_order_url( $ms_sub_id ) : '';
