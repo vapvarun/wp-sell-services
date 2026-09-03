@@ -2449,60 +2449,21 @@ class EmailService {
 	}
 
 	/**
-	 * Check whether an email-type constant is enabled in the global
-	 * `wpss_notifications` admin setting.
+	 * Check whether an email type is enabled in the global `wpss_notifications`
+	 * admin setting.
 	 *
-	 * Maps internal `TYPE_*` constants onto the admin checkbox keys and
-	 * returns the boolean. Unknown types default to enabled so newly-added
-	 * email types ship live until an admin toggles them off.
+	 * The type => setting map lives in wpss_notification_type_settings(), shared
+	 * with NotificationService. It used to be duplicated here, and the copies
+	 * disagreed: `cancellation_requested` was gated on
+	 * `notify_cancellation_requested` here and on `notify_order_cancelled` there,
+	 * so one event answered to two checkboxes and each checkbox silenced half of
+	 * it (Basecamp #10268056021). Unknown types stay enabled, so a newly-added
+	 * email ships live until an owner is given a control for it.
 	 *
 	 * @param string $type One of the EmailService::TYPE_* constants.
 	 * @return bool True when the type is enabled, false when disabled.
 	 */
 	private function is_email_type_enabled( string $type ): bool {
-		// Map EmailService type constants to admin setting keys.
-		$type_to_setting = array(
-			self::TYPE_NEW_ORDER              => 'notify_new_order',
-			self::TYPE_REQUIREMENTS_SUBMITTED => 'notify_new_order',
-			self::TYPE_ORDER_IN_PROGRESS      => 'notify_new_order',
-			self::TYPE_DELIVERY_READY         => 'notify_delivery_submitted',
-			self::TYPE_ORDER_COMPLETED        => 'notify_order_completed',
-			self::TYPE_REVISION_REQUESTED     => 'notify_revision_requested',
-			self::TYPE_NEW_MESSAGE            => 'notify_new_message',
-			self::TYPE_ORDER_CANCELLED        => 'notify_order_cancelled',
-			self::TYPE_DISPUTE_OPENED         => 'notify_dispute_opened',
-			self::TYPE_REQUIREMENTS_REMINDER  => 'notify_new_order',
-			self::TYPE_CANCELLATION_REQUESTED => 'notify_cancellation_requested',
-			// TYPE_SELLER_LEVEL_PROMOTION is unmapped — always enabled (important vendor milestone).
-			self::TYPE_WITHDRAWAL_REQUESTED   => 'notify_withdrawal_requested',
-			self::TYPE_WITHDRAWAL_AUTO        => 'notify_withdrawal_requested',
-			self::TYPE_WITHDRAWAL_APPROVED    => 'notify_withdrawal_approved',
-			self::TYPE_WITHDRAWAL_REJECTED    => 'notify_withdrawal_rejected',
-			self::TYPE_PROPOSAL_SUBMITTED     => 'notify_proposal_submitted',
-			self::TYPE_PROPOSAL_ACCEPTED      => 'notify_proposal_accepted',
-			'moderation_approved'             => 'notify_moderation',
-			'moderation_rejected'             => 'notify_moderation',
-			'moderation_pending'              => 'notify_moderation',
-			'dispute_admin'                   => 'notify_dispute_opened',
-			self::TYPE_REVIEW_RECEIVED        => 'notify_new_review',
-			self::TYPE_VENDOR_CONTACT         => 'notify_vendor_contact',
-			self::TYPE_TIP_RECEIVED           => 'notify_tip_received',
-			self::TYPE_MILESTONE_PROPOSED     => 'notify_milestone_proposed',
-			self::TYPE_MILESTONE_PAID         => 'notify_milestone_paid',
-			self::TYPE_MILESTONE_SUBMITTED    => 'notify_milestone_submitted',
-			self::TYPE_MILESTONE_APPROVED     => 'notify_milestone_approved',
-			self::TYPE_EXTENSION_PROPOSED     => 'notify_extension_proposed',
-			self::TYPE_EXTENSION_APPROVED     => 'notify_extension_approved',
-			self::TYPE_EXTENSION_DECLINED     => 'notify_extension_declined',
-			self::TYPE_DISPUTE_ESCALATED      => 'notify_dispute_escalated',
-			// Plain (generic-template) types NotificationService sends.
-			'review_reply'                    => 'notify_review_reply',
-			'request_expired'                 => 'notify_request_expired',
-			'dispute_cancelled'               => 'notify_dispute_cancelled',
-			'tip_receipt'                     => 'notify_tip_receipt',
-		);
-
-		// Unknown type: allow sending (do not block unrecognized types).
-		return ! isset( $type_to_setting[ $type ] ) || wpss_notification_type_enabled( $type_to_setting[ $type ] );
+		return wpss_notification_type_allowed( $type );
 	}
 }

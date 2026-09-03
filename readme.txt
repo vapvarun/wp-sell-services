@@ -298,6 +298,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Uninstall with delete data now removes scheduled jobs, order files and every plugin user meta.
 * Fix      - Usage tracking is no longer switched on without the owner opting in.
 * Fix      - Order, payment and moderation emails are never dropped by the message cooldown, review and requirement mails are sent once, and failed sends are logged and retried.
+* Fix      - Notification checkboxes control the event named on the label, so turning off cancellation notices no longer silences a different event.
 * Fix      - Suspended vendors receive a suspension notice instead of the rejection wording.
 * Fix      - Dispute numbers are generated, the vendor profile page carries the vendor's name in its title, and several PHP notices on email and admin pages are gone.
 * Fix      - Order requirements use one schema on every surface, so requirement forms show the vendor's questions and REST submissions validate correctly.

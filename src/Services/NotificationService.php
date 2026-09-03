@@ -1797,57 +1797,10 @@ class NotificationService {
 	 * @return bool
 	 */
 	private function should_send_email( int $user_id, string $type ): bool {
-		// Map notification types to admin setting keys.
-		// Includes both constants and types used by OrderWorkflowManager.
-		$type_to_setting = array(
-			// NotificationService constants.
-			self::TYPE_ORDER_CREATED      => 'notify_new_order',
-			self::TYPE_ORDER_STATUS       => 'notify_new_order',
-			self::TYPE_DELIVERY_SUBMITTED => 'notify_delivery_submitted',
-			self::TYPE_DELIVERY_ACCEPTED  => 'notify_order_completed',
-			self::TYPE_DISPUTE_OPENED     => 'notify_dispute_opened',
-			self::TYPE_DISPUTE_RESOLVED   => 'notify_dispute_opened',
-			self::TYPE_REVISION_REQUESTED => 'notify_revision_requested',
-			self::TYPE_NEW_MESSAGE        => 'notify_new_message',
-			self::TYPE_REVIEW_RECEIVED    => 'notify_new_review',
-			// Types used by OrderWorkflowManager and status notifications.
-			//
-			// Only the ones with NO constant above. 'order_created',
-			// 'revision_requested', 'dispute_opened' and 'dispute_resolved' used to
-			// be repeated here as literals, but each is exactly the value of the
-			// constant already keyed above and mapped to the same setting, so PHP
-			// silently overwrote one with an identical entry. Harmless, but it read
-			// as though the constant and the literal were different types.
-			'new_order'                   => 'notify_new_order',
-			'order_confirmation'          => 'notify_new_order',
-			'order_started'               => 'notify_new_order',
-			'order_in_progress'           => 'notify_new_order',
-			'submit_requirements'         => 'notify_new_order',
-			'order_completed'             => 'notify_order_completed',
-			'order_completed_vendor'      => 'notify_order_completed',
-			'order_auto_completed'        => 'notify_order_completed',
-			'order_cancelled'             => 'notify_order_cancelled',
-			'delivery_received'           => 'notify_delivery_submitted',
-			'order_late'                  => 'notify_new_order',
-			'deadline_reminder'           => 'notify_new_order',
-			// Dispute types used by DisputeWorkflowManager.
-			'dispute_response_received'   => 'notify_dispute_opened',
-			'dispute_reminder'            => 'notify_dispute_opened',
-			// Cancellation types.
-			'cancellation_requested'      => 'notify_order_cancelled',
-			'cancellation_submitted'      => 'notify_order_cancelled',
-			'cancellation_auto_approved'  => 'notify_order_cancelled',
-			// Events added in 1.7.1, each with its own toggle.
-			'review_reply'                => 'notify_review_reply',
-			'request_expired'             => 'notify_request_expired',
-			'dispute_escalated'           => 'notify_dispute_escalated',
-			'dispute_cancelled'           => 'notify_dispute_cancelled',
-			'tip_receipt'                 => 'notify_tip_receipt',
-		);
-
-		// Admin toggle. A key nobody has unticked is on - the same reading
-		// EmailService uses, through the same helper.
-		if ( isset( $type_to_setting[ $type ] ) && ! wpss_notification_type_enabled( $type_to_setting[ $type ] ) ) {
+		// Admin toggle. ONE type => setting map, shared with EmailService, so the
+		// branded mail and the plain mail can never answer differently for the
+		// same event. A key nobody has unticked is on.
+		if ( ! wpss_notification_type_allowed( $type ) ) {
 			return false;
 		}
 
