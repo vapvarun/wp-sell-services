@@ -7,7 +7,9 @@
  * on the site (the documented --all flag was never read), `demo marketplace`
  * rewrote the homepage setting, and `scale seed` / `test:flow` wrote users,
  * orders and ledger rows into live tables with no prompt and no environment
- * check (Basecamp 10264284996).
+ * check (Basecamp 10264284996). `scale teardown` then prompted without a count
+ * and never checked the environment, and `scale bench --teardown` hardcoded the
+ * answer so it deleted without asking at all (Basecamp 10268057471).
  *
  * Run: wp eval-file tests/test-cli-guards.php
  *
@@ -52,7 +54,11 @@ $counts = static function () use ( $wpdb ): array {
 $run = static function ( string $args, string $env_type ) use ( $wp_bin ): array {
 	$cmd   = $wp_bin . ' ' . $args
 		. ' --path=' . escapeshellarg( ABSPATH )
-		. ' --exec=' . escapeshellarg( "define( 'WP_ENVIRONMENT_TYPE', '{$env_type}' );" )
+		// WP_PLUGIN_DIR is passed through so the subprocess loads the same
+		// plugin code this process did, which is what lets the contract be run
+		// against a worktree. On a normal run it is the value WordPress would
+		// have picked anyway.
+		. ' --exec=' . escapeshellarg( "define( 'WP_ENVIRONMENT_TYPE', '{$env_type}' ); define( 'WP_PLUGIN_DIR', '" . WP_PLUGIN_DIR . "' );" )
 		. ' --no-color';
 	$spec  = array(
 		0 => array( 'pipe', 'r' ),
@@ -150,6 +156,40 @@ $check( 'regenerate-meta refuses on production', 'wpss service regenerate-meta',
 $check( 'scale seed refuses on production', 'wpss scale seed --vendors=1 --orders-per-vendor=1', 'production', array( 'nonzero' => true ) );
 $check( 'test:flow refuses on production', 'wpss test:flow service-purchase', 'production', array( 'nonzero' => true ) );
 
+$check( 'scale teardown refuses on production', 'wpss scale teardown', 'production', array( 'nonzero' => true, 'contains' => 'production' ) );
+$check( 'scale teardown names the row count', 'wpss scale teardown', 'local', array( 'zero' => true, 'contains' => 'scale-benchmark rows' ) );
+
+// bench --teardown used to hardcode the answer, so it deleted without asking
+// even on production. It now asks the same question a human-run teardown asks.
+$check( 'scale bench --teardown asks before deleting', 'wpss scale bench --teardown', 'local', array( 'zero' => true, 'contains' => 'scale-benchmark rows' ) );
+
+// Read-only commands must be untouched by the guard: no refusal, whatever they
+// report. Exit codes are theirs to decide (preflight and rest:contract fail the
+// build on a real problem), so only the refusal is asserted.
+foreach ( array(
+	'service list --format=count',
+	'service stats',
+	'validate',
+	'preflight',
+	'rest:contract',
+	'api:shapes',
+) as $read_only ) {
+	$check( "{$read_only} is not gated", 'wpss ' . $read_only, 'production', array( 'lacks' => 'Refusing on a production site' ) );
+}
+
+// Every writing command documents the override, so `wp help` shows it.
+foreach ( array(
+	'wpss demo create',
+	'wpss demo delete',
+	'wpss demo marketplace',
+	'wpss service regenerate-meta',
+	'wpss scale seed',
+	'wpss scale teardown',
+	'wpss test:flow',
+) as $writer ) {
+	$check( "help {$writer} documents --force", 'help ' . $writer, 'local', array( 'zero' => true, 'contains' => '--force' ) );
+}
+
 // The positive case: --yes on a dev site deletes the marked fixture and nothing else.
 $before             = $counts();
 list( $code, $out ) = $run( 'wpss demo delete --yes', 'local' );
@@ -174,4 +214,4 @@ if ( $failures ) {
 	WP_CLI::error( count( $failures ) . ' CLI guard check(s) failed.' );
 }
 
-WP_CLI::success( 'CLI guard contract holds: 11 checks, nothing but the fixture written or deleted.' );
+WP_CLI::success( 'CLI guard contract holds: 27 checks, nothing but the fixture written or deleted.' );

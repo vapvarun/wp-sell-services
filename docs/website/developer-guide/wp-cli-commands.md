@@ -40,9 +40,10 @@ volume.
 Demo content is flagged internally (`_wpss_demo_content`), so `demo delete` never
 touches real customer data unless you pass `--all`, which also requires `--yes`
 and still confirms the site-wide count. Every command that writes rows (`create`,
-`marketplace`, `regenerate-meta`, `delete`, `scale seed`, `test:flow`) prompts
-with the count -- pass `--yes` in scripts -- and refuses outright when
-`wp_get_environment_type()` is `production` unless you pass `--force`.
+`marketplace`, `regenerate-meta`, `delete`, `scale seed`, `scale teardown`,
+`test:flow`) prompts with the count -- pass `--yes` in scripts -- and refuses
+outright when `wp_get_environment_type()` is `production` unless you pass
+`--force`.
 `marketplace` no longer changes the homepage; it prints the `wp option update`
 commands to do that yourself.
 
@@ -105,8 +106,8 @@ orders and wallet transactions.
 ```bash
 wp wpss scale seed                    # seed a production-shape dataset
 wp wpss scale bench                   # time every hot-path query vs its budget
-wp wpss scale bench --seed --teardown # seed, bench, teardown in one shot (CI gate)
-wp wpss scale teardown --yes          # remove all benchmark data
+wp wpss scale bench --seed --teardown --yes # seed, bench, teardown on a disposable CI site
+wp wpss scale teardown                # remove all benchmark data (count confirmed first)
 ```
 
 Every seeded row carries a sentinel (a `description` / `vendor_notes` prefix plus

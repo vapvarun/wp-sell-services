@@ -675,9 +675,29 @@
     "notes": "All recurring jobs migrated from WP-Cron to Action Scheduler in 1.1.0. Legacy WP-Cron sweep on version bump."
   },
   "wp_cli": {
-    "count": 5,
+    "count": 16,
     "registered_in": "src/CLI/",
-    "_note": "WP-CLI commands available when WP_CLI is defined."
+    "guard": "src/CLI/Guard.php - Guard::writes( $what, $count, $assoc_args ) refuses when wp_get_environment_type() === 'production' unless --force, then confirms the row count unless --yes. Every command marked writes:true routes through it and documents --force and --yes in its synopsis. A stale count in this block is what let `scale teardown`, `scale bench --teardown` and both Pro writers ship ungated (Basecamp 10268057471), so add the command here in the same commit that registers it.",
+    "commands": {
+      "wp wpss demo create": { "writes": true },
+      "wp wpss demo delete": { "writes": true },
+      "wp wpss demo marketplace": { "writes": true },
+      "wp wpss service list": { "writes": false },
+      "wp wpss service stats": { "writes": false },
+      "wp wpss service regenerate-meta": { "writes": true },
+      "wp wpss validate schema": { "writes": false },
+      "wp wpss validate models": { "writes": false },
+      "wp wpss validate all": { "writes": false },
+      "wp wpss preflight": { "writes": false },
+      "wp wpss test:flow": { "writes": true },
+      "wp wpss scale seed": { "writes": true },
+      "wp wpss scale bench": { "writes": false, "_note": "Read-only on its own; --seed and --teardown call seed() and teardown(), which guard themselves." },
+      "wp wpss scale teardown": { "writes": true },
+      "wp wpss rest:contract": { "writes": false },
+      "wp wpss api:shapes": { "writes": false }
+    },
+    "contract_test": "tests/test-cli-guards.php - `wp eval-file tests/test-cli-guards.php` asserts every writes:true command refuses with the environment forced to production, every writes:false one is untouched, and `wp help` names --force for each writer.",
+    "_note": "WP-CLI commands available when WP_CLI is defined. Pro registers two more of its own; see wp-sell-services-pro/audit/manifest.json."
   },
   "storage_drivers": [],
   "security": {
@@ -788,7 +808,7 @@
     "_note": "Unique do_action()/apply_filters() literals in src/. Counts enumerated by hand for 1.3.1 and NOT re-counted since; treat as indicative, not exact. key_extension_hooks below is maintained per-change and is authoritative for documented seams."
   },
   "cli": {
-    "command_count": 6,
+    "command_count": 16,
     "api_shapes_command": "wp wpss api:shapes - audits every registered GET route for ISO dates and the shared actor shape; exits non-zero. See api_shapes.scanner.",
     "demo_marketplace_flags": "The synopsis declares [--images] (default true), NOT [--no-images]. WP-CLI strips the no- prefix while parsing and then looks for an `images` parameter, so declaring the negative form made the documented `--no-images` example fail with 'unknown --images parameter' from the day it shipped (Basecamp 10212618689). Declaring the positive flag is what makes the negative spelling work."
   },
