@@ -9,7 +9,8 @@
     "text_domain": "wp-sell-services",
     "extends": null,
     "extension_hook_consumed": null,
-    "extension_hook_fired": "wpss_loaded"
+    "extension_hook_fired": "wpss_loaded",
+    "refresh_note": "1.7.1 refresh. Verified surface-neutral: this cycle changed no hook, REST route, AJAX action, admin page, setting, capability, cron event, CLI command, table or asset handle, so every section below still describes the code. What changed was internal to existing surfaces. (1) Eight reads of the post title switched from get_the_title() to the raw post_title - ShellHeader::maybe_suppress_theme_title() blanks the_title for the queried object on plugin-shell surfaces, which was emptying the plugin's own Service/Product schema name, both JSON-LD and on-screen breadcrumbs, the wpss_breadcrumbs filter payload, og:title and twitter:title, the gallery alt text, and the services archive heading. Contract: tests/test-title-suppression-scope.php. (2) One lightbox implementation: single-service.js carried a second one under frontend.css's .wpss-lightbox class and never set the --visible modifier, so the overlay opened invisible. The opener now lives in frontend.js with two callers, and its trigger is a real <button> so the keyboard can reach it. Contract: tests/test-gallery-lightbox.php. (3) Theme tokens: templates/cart/cart.php used a --wpss-color-* namespace defined nowhere, so the whole page was locked to light; three surfaces painted themselves with the literal --wpss-white instead of --wpss-surface; .wpss-btn--outline and .wpss-contact-link each had duplicate definitions whose winner was decided by enqueue order. Contract: tests/test-design-token-integrity.php, which also baselines 24 further undefined tokens (Basecamp 10268606549). (4) Removed marketing/sales-page/ - hand-maintained .md and .html twins that had drifted, referenced by nothing."
   },
   "rest": {
     "namespace": "wpss/v1",
@@ -18,7 +19,7 @@
       {
         "class": "API",
         "file": "src/API/API.php",
-        "purpose": "Generic endpoints \u2014 categories, tags, settings, /me, /dashboard, /search, /batch"
+        "purpose": "Generic endpoints — categories, tags, settings, /me, /dashboard, /search, /batch"
       },
       {
         "class": "AuditLogController",
@@ -108,12 +109,12 @@
       {
         "class": "RealtimeController",
         "file": "src/API/RealtimeController.php",
-        "purpose": "POST /realtime/auth \u2014 Pusher private-channel authorization (private-wpss-user-{id} own-user only; private-wpss-order-{id} customer/vendor/admin)"
+        "purpose": "POST /realtime/auth — Pusher private-channel authorization (private-wpss-user-{id} own-user only; private-wpss-order-{id} customer/vendor/admin)"
       },
       {
         "class": "RestController",
         "file": "src/API/RestController.php",
-        "purpose": "Base controller \u2014 permissions, pagination helpers"
+        "purpose": "Base controller — permissions, pagination helpers"
       },
       {
         "class": "ReviewsController",
@@ -160,10 +161,10 @@
         "action": "wpss_stripe_process_payment",
         "registered_in": "src/Integrations/Stripe/StripeGateway.php:150",
         "callback": "StripeGateway::ajax_confirm_payment",
-        "note": "Logged-in only (no nopriv). Added 1.2.2 \u2014 the checkout JS had always posted this action but nothing was listening, so Pay returned a bare `0`. Confirms the PaymentIntent server-side; the client no longer confirms."
+        "note": "Logged-in only (no nopriv). Added 1.2.2 — the checkout JS had always posted this action but nothing was listening, so Pay returned a bare `0`. Confirms the PaymentIntent server-side; the client no longer confirms."
       }
     ],
-    "_note": "Per-handler enumeration deferred to refresh-with-rebuild. Audit conclusions: nonces present on all (verified). Capability/ownership checks via three patterns: inline current_user_can, service-class delegation, WHERE clause user_id scoping. See audit/wppqa-baseline-2026-05-08/SUMMARY.md for findings (13 nonce-no-cap warnings \u2014 most are valid object-ownership patterns the regex doesn't credit; 3-5 in Admin.php / ServiceModerationPage.php may be real gaps)."
+    "_note": "Per-handler enumeration deferred to refresh-with-rebuild. Audit conclusions: nonces present on all (verified). Capability/ownership checks via three patterns: inline current_user_can, service-class delegation, WHERE clause user_id scoping. See audit/wppqa-baseline-2026-05-08/SUMMARY.md for findings (13 nonce-no-cap warnings — most are valid object-ownership patterns the regex doesn't credit; 3-5 in Admin.php / ServiceModerationPage.php may be real gaps)."
   },
   "admin_pages": {
     "count": 25,
@@ -214,7 +215,7 @@
     ]
   },
   "settings": {
-    "_note": "Stored under various wpss_* options. Settings page in src/Admin/Settings.php (2346 lines). Tabs: General, Vendor, Orders, Earnings, Reviews, Disputes, Pages, Emails, Gateways, Advanced. Advanced tab includes the Real-time (WebSockets) card storing wpss_realtime_settings (enabled, app_id, key, secret, host, cluster, port, use_tls \u2014 secret uses the masked-field keep-on-blank contract).",
+    "_note": "Stored under various wpss_* options. Settings page in src/Admin/Settings.php (2346 lines). Tabs: General, Vendor, Orders, Earnings, Reviews, Disputes, Pages, Emails, Gateways, Advanced. Advanced tab includes the Real-time (WebSockets) card storing wpss_realtime_settings (enabled, app_id, key, secret, host, cluster, port, use_tls — secret uses the masked-field keep-on-blank contract).",
     "pages": {
       "_note": "Option `wpss_pages` maps page keys -> post IDs. `wpss_get_page_definitions()` (src/functions/urls.php) is the SINGLE registry of title + shortcode + slug + required; read it before adding a page, a label list or a shortcode map. Consumers: Activator::create_pages() (installer + upgrade path), Settings::ajax_create_page() (the creator the wizard and Pages panel call), Settings pages panel + sanitize_pages_settings() whitelist, SetupWizardPage, Admin::check_page_setup_notice(), PreflightCommand, wpss_get_default_page_slugs(). This registry replaced 8 hardcoded copies that had drifted -- the wizard offered 'Checkout' where the installer said 'Service Checkout', and the AJAX creator set no slug at all, which is how sites running WooCommerce collected /cart-2/ ... /cart-16/. Adoption rule: a published page already carrying the shortcode is adopted, never duplicated. Filter: wpss_page_definitions.",
       "option": "wpss_pages",
@@ -413,7 +414,7 @@
     },
     {
       "name": "{prefix}wpss_wallet_transactions",
-      "purpose": "Wallet ledger entries \u2014 THE authority for wallet balance as of 1.2.2. Read only via wpss_get_ledger_balance(); never SUM this table inline. Rows with status 'pending' are excluded from balance. CAVEAT: the balance_after column is written but no longer read by any balance path; it is a denormalised trail whose retirement is an OPEN DECISION (see audit/HANDOFF.md)."
+      "purpose": "Wallet ledger entries — THE authority for wallet balance as of 1.2.2. Read only via wpss_get_ledger_balance(); never SUM this table inline. Rows with status 'pending' are excluded from balance. CAVEAT: the balance_after column is written but no longer read by any balance path; it is a denormalised trail whose retirement is an OPEN DECISION (see audit/HANDOFF.md)."
     },
     {
       "name": "{prefix}wpss_withdrawals",
@@ -425,61 +426,61 @@
     }
   ],
   "ecommerce_adapter_boundary": {
-    "principle": "LOCKED 2026-07-20 (owner). We support WooCommerce PRECISELY SO the site owner can run any payment gateway, any coupon plugin, any currency plugin, any tax plugin \u2014 without us knowing or caring. From an adapter, exactly ONE fact matters: is the platform order COMPLETE or not.",
+    "principle": "LOCKED 2026-07-20 (owner). We support WooCommerce PRECISELY SO the site owner can run any payment gateway, any coupon plugin, any currency plugin, any tax plugin — without us knowing or caring. From an adapter, exactly ONE fact matters: is the platform order COMPLETE or not.",
     "what_we_read_from_the_platform": "Completion status (paid / refunded, and how much was refunded). The platform order id, for reference. That is the contract surface.",
-    "they_are_payment_RAILS_not_platforms": "LOCKED 2026-07-21 (owner): 'Woo is just a payment gateway for us like Stripe or PayPal.' WooCommerce, EDD, SureCart and FluentCart are payment RAILS, exactly like Stripe and PayPal \u2014 they report whether money moved, and we own the order semantics. They do NOT get their own status vocabulary that we translate: Stripe does not tell us to call an order 'cancelled', it tells us a refund succeeded and WE decide the order is 'refunded'. Woo gets identical treatment. Consequence: status MAPS are the wrong shape \u2014 see the refunded->cancelled map at Pro WCOrderProvider.php:487, scheduled for retirement in audit/REFUND-PLAN.md D4.",
-    "the_rail_never_changes_the_numbers": "LOCKED 2026-07-21 (owner): the gateway 'should not impact how we are calculating earning and refunds.' The rail decides only WHETHER money moved and HOW MUCH the buyer got back; it never influences arithmetic. Order total comes from our service/package price (never the rail's line total); platform_fee and vendor_earnings from CommissionService::compute_breakdown(); the vendor share of a refund from wpss_get_refund_vendor_share(); ledger rows from reverse_order_earnings(); amounts stored in base currency. A $49 service refunded in full reverses the same vendor share whether the buyer paid via Woo, Stripe, PayPal, EDD or SureCart. If swapping the rail changes any persisted number, that is the bug \u2014 not a configuration difference. This is why Pro must own no reverse_* or fee math of its own: per-rail money logic is exactly how the numbers drift apart.",
+    "they_are_payment_RAILS_not_platforms": "LOCKED 2026-07-21 (owner): 'Woo is just a payment gateway for us like Stripe or PayPal.' WooCommerce, EDD, SureCart and FluentCart are payment RAILS, exactly like Stripe and PayPal — they report whether money moved, and we own the order semantics. They do NOT get their own status vocabulary that we translate: Stripe does not tell us to call an order 'cancelled', it tells us a refund succeeded and WE decide the order is 'refunded'. Woo gets identical treatment. Consequence: status MAPS are the wrong shape — see the refunded->cancelled map at Pro WCOrderProvider.php:487, scheduled for retirement in audit/REFUND-PLAN.md D4.",
+    "the_rail_never_changes_the_numbers": "LOCKED 2026-07-21 (owner): the gateway 'should not impact how we are calculating earning and refunds.' The rail decides only WHETHER money moved and HOW MUCH the buyer got back; it never influences arithmetic. Order total comes from our service/package price (never the rail's line total); platform_fee and vendor_earnings from CommissionService::compute_breakdown(); the vendor share of a refund from wpss_get_refund_vendor_share(); ledger rows from reverse_order_earnings(); amounts stored in base currency. A $49 service refunded in full reverses the same vendor share whether the buyer paid via Woo, Stripe, PayPal, EDD or SureCart. If swapping the rail changes any persisted number, that is the bug — not a configuration difference. This is why Pro must own no reverse_* or fee math of its own: per-rail money logic is exactly how the numbers drift apart.",
     "what_we_do_NOT_read": "Charged amount, currency, coupon/discount, tax, gateway, fees. Reading any of those couples us to whatever plugin the owner installed and puts foreign values into our order rows, our commission split and our ledger.",
-    "what_we_price_from": "OUR OWN service/package price, always. A $49 service is a $49 order \u2014 completed is completed. Vendor earnings and the commission split are computed from our list price and never move because a buyer used a coupon, switched currency, or paid through a different gateway.",
-    "consequence_owner_accepted": "Discounts and FX differences are absorbed by the PLATFORM OWNER, not the vendor. The vendor is still paid on the list price they set. This is not a tradeoff under the current model \u2014 ONLY THE ADMIN can issue a discount (e.g. a 10% special offer); vendors have no coupon capability. The party running the promotion is therefore the party funding it, which is correct by construction. It also keeps vendor earnings predictable and the ledger in one unit.",
+    "what_we_price_from": "OUR OWN service/package price, always. A $49 service is a $49 order — completed is completed. Vendor earnings and the commission split are computed from our list price and never move because a buyer used a coupon, switched currency, or paid through a different gateway.",
+    "consequence_owner_accepted": "Discounts and FX differences are absorbed by the PLATFORM OWNER, not the vendor. The vendor is still paid on the list price they set. This is not a tradeoff under the current model — ONLY THE ADMIN can issue a discount (e.g. a 10% special offer); vendors have no coupon capability. The party running the promotion is therefore the party funding it, which is correct by construction. It also keeps vendor earnings predictable and the ledger in one unit.",
     "REVISIT_IF": "Vendor-level coupons are ever introduced. At that point 'owner absorbs the discount' stops being obviously correct: a vendor's own promotion should reduce that vendor's earnings, not the owner's margin, which means the adapter would need to distinguish an admin discount from a vendor discount. Until then, do not read discounts from the platform at all. Anyone reading this and thinking 'the vendor is overpaid on discounted orders' has found the intended behaviour, not a bug.",
-    "why_services_are_not_products": "The underlying reason this model differs from normal ecommerce: we sell SERVICES, not physical stock. A service price is a vendor's rate for their own labour and delivery commitment \u2014 not a retail SKU price subject to margin, inventory or promotional dynamics. Discounting a service does not make the work smaller, so the vendor's side of the transaction is fixed at their listed rate and the discount is a platform-side marketing cost. Reasoning about this code as if it were a product store is the main way people get it wrong.",
+    "why_services_are_not_products": "The underlying reason this model differs from normal ecommerce: we sell SERVICES, not physical stock. A service price is a vendor's rate for their own labour and delivery commitment — not a retail SKU price subject to margin, inventory or promotional dynamics. Discounting a service does not make the work smaller, so the vendor's side of the transaction is fixed at their listed rate and the discount is a platform-side marketing cost. Reasoning about this code as if it were a product store is the main way people get it wrong.",
     "why_this_is_the_right_seam": "It is also why the adapter layer exists at all (wpss_ecommerce_adapters). Every time an adapter reaches past 'is it complete?' into the platform's money, it re-couples us to that platform's plugin ecosystem and imports a class of bugs we cannot test against. See money_authorities.currency_storage.KNOWN_GAP_woo_path_contradicts_this for a live instance.",
     "applies_to": "WooCommerce, EDD, SureCart, FluentCart adapters equally."
   },
   "money_authorities": {
-    "_note": "READ THIS BEFORE TOUCHING ANY MONEY PATH. There is exactly one authority per concept \u2014 plus one UNRESOLVED split flagged below. See also ecommerce_adapter_boundary, which governs what an adapter may read from the host platform at all.",
+    "_note": "READ THIS BEFORE TOUCHING ANY MONEY PATH. There is exactly one authority per concept — plus one UNRESOLVED split flagged below. See also ecommerce_adapter_boundary, which governs what an adapter may read from the host platform at all.",
     "commission": {
       "authority": "WPSellServices\\Services\\CommissionService::compute_breakdown()",
       "rule": "Never compute a fee inline. Free (ManualOrderPage, OrderWorkflowManager) and Pro (TieredCommission flat rules, SubscriptionManager plan override, Stripe Connect split, EDD orders, subscription renewals) all route through it; the Connect split reads the PERSISTED fee and never recomputes.",
       "extension_points": "wpss_commission_fee (amount) / wpss_commission_rate (percent) / wpss_commission_base_amount (base)"
     },
     "wallet_balance": {
-      "authority": "wpss_get_ledger_balance( int $user_id, bool $lock = false ) \u2014 src/functions.php:128",
+      "authority": "wpss_get_ledger_balance( int $user_id, bool $lock = false ) — src/functions.php:128",
       "rule": "SUM over {prefix}wpss_wallet_transactions, 'pending' rows excluded. Never SUM the table inline; pass $lock = true inside a credit/debit transaction to take FOR UPDATE. Replaced the stale vendor_profiles balance column (free) and three divergent SUM copies (Pro) in 1.2.2.",
       "callers": "free: VendorsPage x3, CommissionService, OrderWorkflowManager, MilestoneService, ExtensionOrderService, TippingService; pro: InternalWalletProvider x3"
     },
     "payout_terminal": {
-      "authority": "WPSellServices\\Services\\EarningsService::mark_paid( int $withdrawal_id, string $note = '' ) \u2014 added 1.5.1 (T1)",
-      "rule": "THE terminal step of every payout rail (MONEY-FLOW.md rule 2.3). Row-locks the withdrawal (SELECT \u2026 FOR UPDATE), enforces the terminal-state guard, flips status to completed and writes the wallet-ledger debit in ONE transaction via the private insert_withdrawal_debit() core. Idempotent: marking twice debits once. process_withdrawal('completed'), the admin Withdrawals page (single + bulk) and REST PUT /wpss/v1/withdrawals/{id} all route through it \u2014 no rail may keep its own bookkeeping. record_withdrawal_debit() remains the transactional wrapper for the wpss_withdrawal_processed hook listener and the 1.2.3 backfill, both idempotent on (reference_type='withdrawal', reference_id).",
-      "export_rule": "CSV export (WithdrawalsPage::export_csv via admin_post_wpss_export_withdrawals) NEVER mutates status (rule 2.4) \u2014 SELECT-only, keyset-batched at 500 rows."
+      "authority": "WPSellServices\\Services\\EarningsService::mark_paid( int $withdrawal_id, string $note = '' ) — added 1.5.1 (T1)",
+      "rule": "THE terminal step of every payout rail (MONEY-FLOW.md rule 2.3). Row-locks the withdrawal (SELECT … FOR UPDATE), enforces the terminal-state guard, flips status to completed and writes the wallet-ledger debit in ONE transaction via the private insert_withdrawal_debit() core. Idempotent: marking twice debits once. process_withdrawal('completed'), the admin Withdrawals page (single + bulk) and REST PUT /wpss/v1/withdrawals/{id} all route through it — no rail may keep its own bookkeeping. record_withdrawal_debit() remains the transactional wrapper for the wpss_withdrawal_processed hook listener and the 1.2.3 backfill, both idempotent on (reference_type='withdrawal', reference_id).",
+      "export_rule": "CSV export (WithdrawalsPage::export_csv via admin_post_wpss_export_withdrawals) NEVER mutates status (rule 2.4) — SELECT-only, keyset-batched at 500 rows."
     },
     "currency_storage": {
       "decision": "LOCKED 2026-07-20 (owner). Every amount this plugin persists is a SINGLE value in the store's BASE currency. Full stop.",
       "rule": "wpss_orders (total, platform_fee, vendor_earnings) and wpss_wallet_transactions.amount are always base currency. We do NOT store a second shopper-currency amount, and we do NOT persist an exchange rate. There is no dual-currency order row.",
-      "boundary": "Converting is the MULTI-CURRENCY PLUGIN's responsibility (CURCY / Aelia / WCML) \u2014 exactly as it already is for WooCommerce. Those plugins do not rewrite Woo's storage; they hook Woo's price filters and hand Woo converted values. We are a consumer on the same terms: whatever reaches our storage is already base currency, and display conversion is theirs.",
+      "boundary": "Converting is the MULTI-CURRENCY PLUGIN's responsibility (CURCY / Aelia / WCML) — exactly as it already is for WooCommerce. Those plugins do not rewrite Woo's storage; they hook Woo's price filters and hand Woo converted values. We are a consumer on the same terms: whatever reaches our storage is already base currency, and display conversion is theirs.",
       "integration_seam": "The actionable consequence: WPSS price reads need filter seams equivalent to Woo's price filters, so a multi-currency plugin can hook us the same way it hooks Woo, rather than needing WPSS-specific support. Service and package prices currently come straight out of post meta (_wpss_packages price, _wpss_starting_price) with no filter, which is precisely why card 10110476797 reports a base number wearing a converted symbol. Add the seam; do not add conversion logic of our own.",
-      "why": "The ledger and vendor payouts aggregate across many orders; that only works in one stable unit. Storing shopper-currency amounts would make wpss_get_ledger_balance() sum mixed units, and would force every payout, withdrawal and Connect split to become currency-aware. Woo core is itself single-currency (one currency column on the order, no rate anywhere in core) \u2014 multi-currency is plugin territory there too, so this keeps the boundary where Woo already draws it.",
-      "consequence": "wpss_wallet_transactions.currency is expected to hold ONE value per install (the base currency). wpss_get_ledger_balance() sums without a currency filter, which is correct under this contract and only correct under this contract \u2014 if mixed currencies ever appear in that table, the balance is arithmetic nonsense and the bug is upstream, at whatever wrote a non-base row.",
+      "why": "The ledger and vendor payouts aggregate across many orders; that only works in one stable unit. Storing shopper-currency amounts would make wpss_get_ledger_balance() sum mixed units, and would force every payout, withdrawal and Connect split to become currency-aware. Woo core is itself single-currency (one currency column on the order, no rate anywhere in core) — multi-currency is plugin territory there too, so this keeps the boundary where Woo already draws it.",
+      "consequence": "wpss_wallet_transactions.currency is expected to hold ONE value per install (the base currency). wpss_get_ledger_balance() sums without a currency filter, which is correct under this contract and only correct under this contract — if mixed currencies ever appear in that table, the balance is arithmetic nonsense and the bug is upstream, at whatever wrote a non-base row.",
       "rejected": "The card's original proposal (store base currency + the rate used, convert for display) and the store-both variant were both considered and rejected as more machinery than this plugin needs.",
-      "worked_example": "A $49 service is a $49 order, always. Whatever the shopper actually paid on the Woo store, in whatever currency, is Woo's business \u2014 our order row, our commission split and our ledger all read $49. A vendor's earnings on a service never change because a buyer switched currency.",
-      "card": "Basecamp 10110476797 \u2014 item 3 of that card is now answered; items 1 and 2 reduce to exposing price filter seams, and item 4 (persist the refund rate) is dropped entirely under this contract.",
-      "RESOLVED_woo_path": "FIXED 2026-07-22 (Pro 4a48c11). WCOrderProvider used to build the order from Woo's amounts \u2014 $item->get_total() / _line_total for the price and $order->get_currency() for the currency \u2014 so the vendor's earnings depended on how the buyer paid and shopper-currency amounts flowed into a ledger that sums without a currency filter. Now reads OUR _wpss_packages price via get_package_price_by_id() and stores the base currency from the raw woocommerce_currency option. Deliberately NOT wpss_get_currency(), which Pro 1.2.2 made defer to get_woocommerce_currency() \u2014 the value CURCY/Aelia filter to the shopper's currency. Verified: a Woo line charging 31.75 EUR against our 50.00 package yields 50.00, and with woocommerce_currency filtered to EUR the stored currency stays USD."
+      "worked_example": "A $49 service is a $49 order, always. Whatever the shopper actually paid on the Woo store, in whatever currency, is Woo's business — our order row, our commission split and our ledger all read $49. A vendor's earnings on a service never change because a buyer switched currency.",
+      "card": "Basecamp 10110476797 — item 3 of that card is now answered; items 1 and 2 reduce to exposing price filter seams, and item 4 (persist the refund rate) is dropped entirely under this contract.",
+      "RESOLVED_woo_path": "FIXED 2026-07-22 (Pro 4a48c11). WCOrderProvider used to build the order from Woo's amounts — $item->get_total() / _line_total for the price and $order->get_currency() for the currency — so the vendor's earnings depended on how the buyer paid and shopper-currency amounts flowed into a ledger that sums without a currency filter. Now reads OUR _wpss_packages price via get_package_price_by_id() and stores the base currency from the raw woocommerce_currency option. Deliberately NOT wpss_get_currency(), which Pro 1.2.2 made defer to get_woocommerce_currency() — the value CURCY/Aelia filter to the shopper's currency. Verified: a Woo line charging 31.75 EUR against our 50.00 package yields 50.00, and with woocommerce_currency filtered to EUR the stored currency stays USD."
     },
     "currency_conversion": {
-      "authority": "wpss_amount_to_minor_units() / wpss_amount_from_minor_units() / wpss_amounts_match() \u2014 src/functions.php",
+      "authority": "wpss_amount_to_minor_units() / wpss_amount_from_minor_units() / wpss_amounts_match() — src/functions.php",
       "rule": "Never multiply by 100 inline when talking to a gateway, and never compare gateway amounts with a hardcoded epsilon. Zero-decimal (JPY) and 3-decimal (BHD/JOD/KWD/OMR/TND) currencies both break the naive form."
     },
     "withdrawable_balance": {
-      "authority": "EarningsService::get_summary()['available_balance'] \u2014 and it derives from the wallet ledger.",
+      "authority": "EarningsService::get_summary()['available_balance'] — and it derives from the wallet ledger.",
       "formula": "available = wpss_get_ledger_balance() - pending_withdrawal - in_clearance. The ledger is ALREADY net of completed withdrawals, so completed payouts must never be subtracted again. 'pending_withdrawal' covers still-open requests (pending + approved) that have not reached the ledger yet. 'in_clearance' is the sum of ledger CREDIT rows inside the clearance window.",
       "rule": "Never re-derive a balance inline. Both prior inline copies are gone: EarningsController::get_summary (REST) and the withdrawal-request gate in EarningsController::create_withdrawal now both call EarningsService::get_summary().",
-      "history": "Until 1.2.3 this was a SECOND authority \u2014 it summed vendor_earnings over completed orders and never consulted the ledger, so any ledger entry with no matching order row (manual adjustment, tip credit, order reversal) moved one number and not the other. A vendor was shown one balance and gated on another. Resolved 2026-07-20 (ledger wins).",
+      "history": "Until 1.2.3 this was a SECOND authority — it summed vendor_earnings over completed orders and never consulted the ledger, so any ledger entry with no matching order row (manual adjustment, tip credit, order reversal) moved one number and not the other. A vendor was shown one balance and gated on another. Resolved 2026-07-20 (ledger wins).",
       "withdrawal_debits": "Completed withdrawals are debited into the ledger by EarningsService::record_withdrawal_debit(), wired to wpss_withdrawal_processed in FREE (Plugin.php). It used to live only in Pro's WalletManager, so a free-only site paid vendors out without ever debiting them and the same install grew a different balance depending on whether Pro was active. Pro's listener is now removed to avoid a double debit; idempotency matches on (reference_type='withdrawal', reference_id) so Pro's existing type='debit' rows are recognised.",
       "upgrade_migration": "EarningsService::backfill_withdrawal_debits() runs once on upgrade to 1.2.3 (Plugin::maybe_run_install). Without it, installs that never wrote withdrawal debits would read HIGH by everything already paid out and vendors could withdraw it twice. Idempotent and safe to re-run.",
-      "clearance_note": "Clearance is now derived from ledger row created_at rather than orders.completed_at, so tips, milestone and extension credits observe the clearance window too \u2014 the orders-derived version exempted all three.",
-      "also_dead": "{prefix}wpss_vendor_profiles.available_balance / .pending_balance are mutated by a raw UPDATE at src/Frontend/AjaxHandlers.php:3405 but read by NO balance path. Write-only columns \u2014 safe to retire.",
-      "also_note": "wpss_wallet_transactions.balance_after IS still read \u2014 Pro's LedgerExporter (src/Services/LedgerExporter.php) selects it for statement CSVs. Retiring the column requires giving the exporter a running-balance computation first."
+      "clearance_note": "Clearance is now derived from ledger row created_at rather than orders.completed_at, so tips, milestone and extension credits observe the clearance window too — the orders-derived version exempted all three.",
+      "also_dead": "{prefix}wpss_vendor_profiles.available_balance / .pending_balance are mutated by a raw UPDATE at src/Frontend/AjaxHandlers.php:3405 but read by NO balance path. Write-only columns — safe to retire.",
+      "also_note": "wpss_wallet_transactions.balance_after IS still read — Pro's LedgerExporter (src/Services/LedgerExporter.php) selects it for statement CSVs. Retiring the column requires giving the exporter a running-balance computation first."
     },
     "refunded_amount_display": "wpss_get_order_refunded_amount( object $order ): float in src/functions.php is THE ONLY way a display, invoice or export surface may ask how much was refunded. wpss_orders.refunded_amount stores a SENTINEL, not a plain number: NULL means 'fully refunded', a value means 'this much was refunded'. That sentinel is load-bearing for the money layer (OrderWorkflowManager::settle_refund reads NULL as 'reverse everything', DisputeService::persist_refunded_amount writes NULL for full refunds) and MUST NOT be changed to store the total. The hazard is read-side: templates/order/order-view.php read the raw column and tested `> 0`, which silently dropped every FULL refund - the buyer saw the status 'Refunded' with no amount beside it, while a PARTIAL refund correctly showed one. Its own is_full_refund branch was dead code. The helper disambiguates 'full refund' from 'no refund' via order status and returns 0.0 when nothing was refunded. Never read the column directly from a template. Commit 2dc698b."
   },
@@ -496,7 +497,7 @@
       {
         "name": "wpss_loaded",
         "type": "action",
-        "purpose": "Pro plugin entry point \u2014 Pro hooks here"
+        "purpose": "Pro plugin entry point — Pro hooks here"
       },
       {
         "name": "wpss_ecommerce_adapters",
@@ -576,7 +577,7 @@
       {
         "name": "wpss_wizard_save_service_meta",
         "type": "action",
-        "purpose": "Persist extension meta after a wizard save \u2014 fires on BOTH save-draft and publish"
+        "purpose": "Persist extension meta after a wizard save — fires on BOTH save-draft and publish"
       },
       {
         "name": "wpss_use_fullwidth_template",
@@ -591,7 +592,7 @@
       {
         "name": "wpss_dashboard_default_section",
         "type": "filter",
-        "purpose": "Role-aware dashboard landing section (active vendors \u2192 sales, buyers \u2192 orders)"
+        "purpose": "Role-aware dashboard landing section (active vendors → sales, buyers → orders)"
       },
       {
         "name": "wpss_show_powered_by",
@@ -626,7 +627,7 @@
       {
         "name": "wpss_three_decimal_currencies",
         "type": "filter",
-        "purpose": "List of 3-decimal currencies (BHD, JOD, KWD, OMR, TND) whose gateway minor-unit conversion is x1000, not x100. Consumed by wpss_amount_to_minor_units()/wpss_amount_from_minor_units() \u2014 pairs with wpss_zero_decimal_currencies."
+        "purpose": "List of 3-decimal currencies (BHD, JOD, KWD, OMR, TND) whose gateway minor-unit conversion is x1000, not x100. Consumed by wpss_amount_to_minor_units()/wpss_amount_from_minor_units() — pairs with wpss_zero_decimal_currencies."
       },
       {
         "name": "wpss_stripe_payment_description",
@@ -679,22 +680,55 @@
     "registered_in": "src/CLI/",
     "guard": "src/CLI/Guard.php - Guard::writes( $what, $count, $assoc_args ) refuses when wp_get_environment_type() === 'production' unless --force, then confirms the row count unless --yes. Every command marked writes:true routes through it and documents --force and --yes in its synopsis. A stale count in this block is what let `scale teardown`, `scale bench --teardown` and both Pro writers ship ungated (Basecamp 10268057471), so add the command here in the same commit that registers it.",
     "commands": {
-      "wp wpss demo create": { "writes": true },
-      "wp wpss demo delete": { "writes": true },
-      "wp wpss demo marketplace": { "writes": true },
-      "wp wpss service list": { "writes": false },
-      "wp wpss service stats": { "writes": false },
-      "wp wpss service regenerate-meta": { "writes": true },
-      "wp wpss validate schema": { "writes": false },
-      "wp wpss validate models": { "writes": false },
-      "wp wpss validate all": { "writes": false },
-      "wp wpss preflight": { "writes": false },
-      "wp wpss test:flow": { "writes": true },
-      "wp wpss scale seed": { "writes": true },
-      "wp wpss scale bench": { "writes": false, "_note": "Read-only on its own; --seed and --teardown call seed() and teardown(), which guard themselves." },
-      "wp wpss scale teardown": { "writes": true },
-      "wp wpss rest:contract": { "writes": false },
-      "wp wpss api:shapes": { "writes": false }
+      "wp wpss demo create": {
+        "writes": true
+      },
+      "wp wpss demo delete": {
+        "writes": true
+      },
+      "wp wpss demo marketplace": {
+        "writes": true
+      },
+      "wp wpss service list": {
+        "writes": false
+      },
+      "wp wpss service stats": {
+        "writes": false
+      },
+      "wp wpss service regenerate-meta": {
+        "writes": true
+      },
+      "wp wpss validate schema": {
+        "writes": false
+      },
+      "wp wpss validate models": {
+        "writes": false
+      },
+      "wp wpss validate all": {
+        "writes": false
+      },
+      "wp wpss preflight": {
+        "writes": false
+      },
+      "wp wpss test:flow": {
+        "writes": true
+      },
+      "wp wpss scale seed": {
+        "writes": true
+      },
+      "wp wpss scale bench": {
+        "writes": false,
+        "_note": "Read-only on its own; --seed and --teardown call seed() and teardown(), which guard themselves."
+      },
+      "wp wpss scale teardown": {
+        "writes": true
+      },
+      "wp wpss rest:contract": {
+        "writes": false
+      },
+      "wp wpss api:shapes": {
+        "writes": false
+      }
     },
     "contract_test": "tests/test-cli-guards.php - `wp eval-file tests/test-cli-guards.php` asserts every writes:true command refuses with the environment forced to production, every writes:false one is untouched, and `wp help` names --force for each writer.",
     "_note": "WP-CLI commands available when WP_CLI is defined. Pro registers two more of its own; see wp-sell-services-pro/audit/manifest.json."
@@ -713,10 +747,10 @@
   "ci_guards": {
     "phpcs": "phpcs.xml.dist (WordPress ruleset, PHP 8.1+)",
     "phpstan": "phpstan.neon level 5 with WordPress stubs",
-    "phpunit": ".github/workflows/ci.yml \u2014 PHP 8.1/8.2/8.3/8.4 \u00d7 WP 6.7/6.8/latest"
+    "phpunit": ".github/workflows/ci.yml — PHP 8.1/8.2/8.3/8.4 × WP 6.7/6.8/latest"
   },
   "build_commands": {
-    "release": "grunt release (runs i18n \u2192 rtl \u2192 min \u2192 composer:nodev \u2192 clean:dist \u2192 copy:dist \u2192 verify:dist-autoloader \u2192 compress:dist \u2192 composer:dev)",
+    "release": "grunt release (runs i18n → rtl → min → composer:nodev → clean:dist → copy:dist → verify:dist-autoloader → compress:dist → composer:dev)",
     "dev": "npm run dev (watch CSS/JS)",
     "test": "composer test"
   },
@@ -769,7 +803,7 @@
     ]
   },
   "static_analysis": {
-    "_note": "Streamlined onboarding mode \u2014 full Phase 2.5 sub-checks (1-14) deferred. Findings to date:",
+    "_note": "Streamlined onboarding mode — full Phase 2.5 sub-checks (1-14) deferred. Findings to date:",
     "wppqa_2026_05_08": {
       "rest_js_contract_pass": 32,
       "rest_js_contract_fail": 0,
@@ -783,24 +817,24 @@
       "escape_errors_in_our_code": 0,
       "sql_injection_errors_in_our_code": 0,
       "register_setting_missing_callback": 0,
-      "remaining_errors": "Vendored EDD_SL_Plugin_Updater.php (suppressed via phpcs:ignoreFile) + WP-org submission heuristics (plugin_updater_detected \u2014 irrelevant since FREE distributes via Wbcom store, not wp.org)"
+      "remaining_errors": "Vendored EDD_SL_Plugin_Updater.php (suppressed via phpcs:ignoreFile) + WP-org submission heuristics (plugin_updater_detected — irrelevant since FREE distributes via Wbcom store, not wp.org)"
     }
   },
   "generated": {
     "at": "2026-08-01T00:00:00Z",
-    "from": "hand-edited (agent enumeration) \u2014 see manifest_refresh note",
+    "from": "hand-edited (agent enumeration) — see manifest_refresh note",
     "branch": "1.3.1",
     "schema_version": "v2.2-streamlined",
     "scan_scope": "distignore",
     "scan_path": ".",
     "php_file_count": 266,
-    "_note": "Streamlined mode \u2014 produces summary-level manifest sufficient for CLAUDE.md auto-load context. Full enumeration of 138 REST endpoints, 106 AJAX handlers, 232 hooks deferred to a future refresh+rebuild pass. Coverage gates per sub-category not enforced. wppqa baseline + PCP scan results captured. graph.html, local-CI scaffold, scale benchmark, paired-plugin contract artefacts deferred.",
-    "refresh_note": "1.3.1 refresh (hand-edited; manifest_refresh: agent-enumeration-only \u2014 do NOT run write-manifest.mjs against this plugin, it undercounts REST 138->7 and clobbers the file). Deltas this cycle: (1) Payment ownership is exclusive \u2014 PaymentController registers only when wpss_uses_standalone_payments() (src/API/PaymentController.php:55), so /payments/* is absent whenever a cart adapter is active; switching rails never rewrites past orders. (2) New pay-order seam: helper wpss_get_pay_order_url() + filter wpss_pay_order_url (src/functions.php:3375/3391), the single source for 'pay THIS order' across tips, milestone phases, extensions, accepted proposals, order templates, REST checkout_url and emails. Only Pro's WCPayOrderResolver implements it; EDD/FluentCart/SureCart have no pay-order rail. (3) Minor-unit integers beside every money float. (4) Notification bodies plain text; HTML composed only for email. (5) REST: added GET /orders/{id}/timeline, GET /auth/devices, POST /reviews (alias), GET /portfolio, GET /media; REMOVED the dead accept|reject order actions from the /orders/{id}/{action} enum and with them the hooks wpss_order_accepted, wpss_order_rejected, wpss_order_delivered; deliver now routes through DeliveryService. (6) REST auth answers 401 vs 403 correctly via wpss_rest_require_login()/wpss_rest_require_admin() with one wpss_not_vendor code (bare boolean permission callbacks made anonymous callers read as rest_forbidden). (7) i18n build generates .mo/.json catalogs with a CI gate. Docs: docs-audit.py extended to scan docs/architecture, docs/qa and docs/decisions, to check 'Sell Services > X' menu paths as well as 'Settings > X' tabs, and to name the retired tab/menu labels explicitly. || 1.6.0 delta (cards 10208094640 + 10208199238): ServiceOrder::get_service() guards service_id <= 0 and post_type (get_post(0) returned the global post, so proposal/sub-orders resolved their service to the rendering page); new wpss_get_order_subject() is the single resolver for an order's subject line across the admin list, admin order detail, admin dashboard and frontend order view; new wpss_record_pending_payment_method() records the chosen rail on an unsettled order and is called by both offline entry points (AJAX checkout + REST /payments/create-intent), which previously left payment_method NULL and made the order impossible to confirm. No REST routes added or removed; PaymentController::create_offline_order can now answer 500 wpss_payment_method_not_recorded. || 1.6.0 delta (cards 10208211608 + 10208142348, one shape: a guard hid a CTA and nothing replaced it): admin order detail now surfaces the order's dispute via DisputeService::get_by_order() (loud while unresolved, quiet once closed, with an explicit warning when a Completed order still carries a live dispute); the order page's review block now renders the submitted review instead of nothing, gates the CTA and the modal on the single ReviewService::can_review() authority so the review window is respected, and explains itself when the CTA is withheld. New shared partial templates/partials/review-body.php renders a Review model and is used by both the order page and the public reviews list, which previously had its own inline copy reading raw columns. || 1.6.0 delta (card 10208211769): new wpss_get_settings_url() + wpss_get_settings_sections() (filter wpss_settings_sections); all 13 `&tab=` settings deep links in Free and Pro converted to hash routing, and FIVE of them additionally pointed at the wrong section - verified against each feature's real settings render hook, not the old link (Stripe Connect and Razorpay named 'gateways' which never existed -> payments; PayPal Payouts payments -> payouts; Tiered Commission payments -> commission; Recurring Services vendor -> orders). admin-settings-nav.js gained legacy ?tab= support and hashchange handling; .min rebuilt. || 1.6.0 delta (card 10208142467): Become a Vendor now gates on wpss_is_vendor() instead of the raw _wpss_is_vendor meta, which was falsy for every role-granted vendor; VendorService::is_vendor() delegates to the same helper instead of re-deriving role-then-meta (it was missing the capability path and the wpss_is_vendor filter); a dead raw-meta read removed from AjaxHandlers::save_profile. || 1.6.0 delta (card 10208075268): the unread COUNT was correct and invisible - the badge's text-indent: -999999px rendered it as a bare dot, so it now shows the number (capped at 99+) with a title/screen-reader label naming whose messages it counts; badge suppressed on closed threads so the badges sum to the banner; the messages list is paginated via new count_conversations_for_user() + the wpss_messages_per_page filter, using an explicit wpss_paged arg because the default pretty base 404s on the section-routed dashboard; dead ConversationRepository::create_conversation()/add_message() removed, eliminating a second participants shape and an array_keys() iterator that would have credited unread to users 0 and 1. || 1.6.0 delta (card 10208199338): the leftover published /create-service/ page - a virtual route that older installs materialised as a real, empty page - now 302s to the dashboard create section where the wizard actually lives, and is de-indexed and dropped from the sitemap. Implemented by generalising the existing dormant-page mechanism (get_dormant_store_page_ids -> get_dormant_page_ids, now memoised) rather than adding a second redirect path; a page the owner has mapped in Settings > Pages is exempt. || 1.6.0 delta (card 10207973462): new WPSS.syncStickyTop() measures the real pinned chrome (admin bar + theme header, which stack) into --wpss-sticky-top instead of assuming admin-bar-only, as a floor over the CSS value so no-theme-header sites are unchanged; recomputed on resize/scroll/load; new wpss_sticky_top_offset PHP filter for headers the measurement cannot see. || 1.6.0: losing-bidder emails suppressed for the hire-someone-else path (in-app only, owner decision); explicit rejections still email. Verified live: hiring 1 of 3 proposals produced 2 in-app 'Proposal not selected' notifications, 1 acceptance notification and exactly 1 email (the winner's); an explicit reject produced 1 email + 1 notification. || 1.6.0 delta (card 10138985537): new js-fallback check in bin/i18n-verify.py (both plugins, byte-identical) catching a localized-key fallback whose PHP key no longer exists; new jsFallbackAllowedKeys config; Pro's CI now runs the i18n gate it already shipped but never executed; Pro POT regenerated. || 1.6.0 delta (card 10208511245): dual H1 on cart and dashboard fixed - `cart` added to ShellHeader's shell surfaces and the in_the_loop() requirement dropped from the_title suppression (BuddyX renders its entry-title outside the loop); new restore_nav_menu_item_title() repairs the one nav-menu label suppression would blank; the cart shortcode's logged-out and rail-redirect branches and the dashboard's login prompt now render ShellHeader::render(), since adding a page to the shell means it must have its own H1 in EVERY branch. checkout/become_vendor/vendors_page deliberately NOT added - they have only the theme's H1. || 1.6.0 RFD card 10163575694: account-at-checkout (setting wpss_general[checkout_account_creation], OFF by default). New wp_ajax_nopriv_wpss_checkout_create_account; PublicSignup::create_account() is now the single account path and REST /auth/register delegates to it with username/password optional; RateLimiter gains 'checkout_account'. ALSO FIXED, found while testing: sanitize_general() defaulted absent keys, so ANY partial update_option('wpss_general') silently reset platform_name, currency, checkout_badges_enabled and - critically - ecommerce_platform to 'auto', moving the site's PAYMENT RAIL. Reproduced by a one-key `wp option patch`, which flipped a standalone site to EDD. || 1.7.1 delta (card 10264551109): the pay-order seam is split into a read and a write. wpss_get_pay_order_url( $order_id, ?object $order = null ) is a pure read: standalone builds /{checkout}/pay/{id}/, a store rail gets the dormant WPSS checkout page with ?pay_order=N, and the only filter it applies is wpss_pay_order_url_lookup( $url, $order_id, $order_row ) for a URL the rail already knows from row meta. New wpss_ensure_pay_order( $order_id ) applies filter wpss_ensure_pay_order( $url, $order_id ), where a rail creates or reuses its store order; called by the ?pay_order=N landing (Plugin::redirect_dormant_store_pages, Shortcodes::checkout_fallback), the REST pay endpoints (OrdersController, MilestonesController, BuyerRequestsController, CartController), AjaxHandlers proposal accept, and the services that create tips, phases and extensions plus the emails they send. The filter wpss_pay_order_url is retired. wpss_can_pay_single_order() is true when a rail hooks either new filter. Order-view's milestone loop asks for a URL only for pending, unlocked phases."
+    "_note": "Streamlined mode — produces summary-level manifest sufficient for CLAUDE.md auto-load context. Full enumeration of 138 REST endpoints, 106 AJAX handlers, 232 hooks deferred to a future refresh+rebuild pass. Coverage gates per sub-category not enforced. wppqa baseline + PCP scan results captured. graph.html, local-CI scaffold, scale benchmark, paired-plugin contract artefacts deferred.",
+    "refresh_note": "1.3.1 refresh (hand-edited; manifest_refresh: agent-enumeration-only — do NOT run write-manifest.mjs against this plugin, it undercounts REST 138->7 and clobbers the file). Deltas this cycle: (1) Payment ownership is exclusive — PaymentController registers only when wpss_uses_standalone_payments() (src/API/PaymentController.php:55), so /payments/* is absent whenever a cart adapter is active; switching rails never rewrites past orders. (2) New pay-order seam: helper wpss_get_pay_order_url() + filter wpss_pay_order_url (src/functions.php:3375/3391), the single source for 'pay THIS order' across tips, milestone phases, extensions, accepted proposals, order templates, REST checkout_url and emails. Only Pro's WCPayOrderResolver implements it; EDD/FluentCart/SureCart have no pay-order rail. (3) Minor-unit integers beside every money float. (4) Notification bodies plain text; HTML composed only for email. (5) REST: added GET /orders/{id}/timeline, GET /auth/devices, POST /reviews (alias), GET /portfolio, GET /media; REMOVED the dead accept|reject order actions from the /orders/{id}/{action} enum and with them the hooks wpss_order_accepted, wpss_order_rejected, wpss_order_delivered; deliver now routes through DeliveryService. (6) REST auth answers 401 vs 403 correctly via wpss_rest_require_login()/wpss_rest_require_admin() with one wpss_not_vendor code (bare boolean permission callbacks made anonymous callers read as rest_forbidden). (7) i18n build generates .mo/.json catalogs with a CI gate. Docs: docs-audit.py extended to scan docs/architecture, docs/qa and docs/decisions, to check 'Sell Services > X' menu paths as well as 'Settings > X' tabs, and to name the retired tab/menu labels explicitly. || 1.6.0 delta (cards 10208094640 + 10208199238): ServiceOrder::get_service() guards service_id <= 0 and post_type (get_post(0) returned the global post, so proposal/sub-orders resolved their service to the rendering page); new wpss_get_order_subject() is the single resolver for an order's subject line across the admin list, admin order detail, admin dashboard and frontend order view; new wpss_record_pending_payment_method() records the chosen rail on an unsettled order and is called by both offline entry points (AJAX checkout + REST /payments/create-intent), which previously left payment_method NULL and made the order impossible to confirm. No REST routes added or removed; PaymentController::create_offline_order can now answer 500 wpss_payment_method_not_recorded. || 1.6.0 delta (cards 10208211608 + 10208142348, one shape: a guard hid a CTA and nothing replaced it): admin order detail now surfaces the order's dispute via DisputeService::get_by_order() (loud while unresolved, quiet once closed, with an explicit warning when a Completed order still carries a live dispute); the order page's review block now renders the submitted review instead of nothing, gates the CTA and the modal on the single ReviewService::can_review() authority so the review window is respected, and explains itself when the CTA is withheld. New shared partial templates/partials/review-body.php renders a Review model and is used by both the order page and the public reviews list, which previously had its own inline copy reading raw columns. || 1.6.0 delta (card 10208211769): new wpss_get_settings_url() + wpss_get_settings_sections() (filter wpss_settings_sections); all 13 `&tab=` settings deep links in Free and Pro converted to hash routing, and FIVE of them additionally pointed at the wrong section - verified against each feature's real settings render hook, not the old link (Stripe Connect and Razorpay named 'gateways' which never existed -> payments; PayPal Payouts payments -> payouts; Tiered Commission payments -> commission; Recurring Services vendor -> orders). admin-settings-nav.js gained legacy ?tab= support and hashchange handling; .min rebuilt. || 1.6.0 delta (card 10208142467): Become a Vendor now gates on wpss_is_vendor() instead of the raw _wpss_is_vendor meta, which was falsy for every role-granted vendor; VendorService::is_vendor() delegates to the same helper instead of re-deriving role-then-meta (it was missing the capability path and the wpss_is_vendor filter); a dead raw-meta read removed from AjaxHandlers::save_profile. || 1.6.0 delta (card 10208075268): the unread COUNT was correct and invisible - the badge's text-indent: -999999px rendered it as a bare dot, so it now shows the number (capped at 99+) with a title/screen-reader label naming whose messages it counts; badge suppressed on closed threads so the badges sum to the banner; the messages list is paginated via new count_conversations_for_user() + the wpss_messages_per_page filter, using an explicit wpss_paged arg because the default pretty base 404s on the section-routed dashboard; dead ConversationRepository::create_conversation()/add_message() removed, eliminating a second participants shape and an array_keys() iterator that would have credited unread to users 0 and 1. || 1.6.0 delta (card 10208199338): the leftover published /create-service/ page - a virtual route that older installs materialised as a real, empty page - now 302s to the dashboard create section where the wizard actually lives, and is de-indexed and dropped from the sitemap. Implemented by generalising the existing dormant-page mechanism (get_dormant_store_page_ids -> get_dormant_page_ids, now memoised) rather than adding a second redirect path; a page the owner has mapped in Settings > Pages is exempt. || 1.6.0 delta (card 10207973462): new WPSS.syncStickyTop() measures the real pinned chrome (admin bar + theme header, which stack) into --wpss-sticky-top instead of assuming admin-bar-only, as a floor over the CSS value so no-theme-header sites are unchanged; recomputed on resize/scroll/load; new wpss_sticky_top_offset PHP filter for headers the measurement cannot see. || 1.6.0: losing-bidder emails suppressed for the hire-someone-else path (in-app only, owner decision); explicit rejections still email. Verified live: hiring 1 of 3 proposals produced 2 in-app 'Proposal not selected' notifications, 1 acceptance notification and exactly 1 email (the winner's); an explicit reject produced 1 email + 1 notification. || 1.6.0 delta (card 10138985537): new js-fallback check in bin/i18n-verify.py (both plugins, byte-identical) catching a localized-key fallback whose PHP key no longer exists; new jsFallbackAllowedKeys config; Pro's CI now runs the i18n gate it already shipped but never executed; Pro POT regenerated. || 1.6.0 delta (card 10208511245): dual H1 on cart and dashboard fixed - `cart` added to ShellHeader's shell surfaces and the in_the_loop() requirement dropped from the_title suppression (BuddyX renders its entry-title outside the loop); new restore_nav_menu_item_title() repairs the one nav-menu label suppression would blank; the cart shortcode's logged-out and rail-redirect branches and the dashboard's login prompt now render ShellHeader::render(), since adding a page to the shell means it must have its own H1 in EVERY branch. checkout/become_vendor/vendors_page deliberately NOT added - they have only the theme's H1. || 1.6.0 RFD card 10163575694: account-at-checkout (setting wpss_general[checkout_account_creation], OFF by default). New wp_ajax_nopriv_wpss_checkout_create_account; PublicSignup::create_account() is now the single account path and REST /auth/register delegates to it with username/password optional; RateLimiter gains 'checkout_account'. ALSO FIXED, found while testing: sanitize_general() defaulted absent keys, so ANY partial update_option('wpss_general') silently reset platform_name, currency, checkout_badges_enabled and - critically - ecommerce_platform to 'auto', moving the site's PAYMENT RAIL. Reproduced by a one-key `wp option patch`, which flipped a standalone site to EDD. || 1.7.1 delta (card 10264551109): the pay-order seam is split into a read and a write. wpss_get_pay_order_url( $order_id, ?object $order = null ) is a pure read: standalone builds /{checkout}/pay/{id}/, a store rail gets the dormant WPSS checkout page with ?pay_order=N, and the only filter it applies is wpss_pay_order_url_lookup( $url, $order_id, $order_row ) for a URL the rail already knows from row meta. New wpss_ensure_pay_order( $order_id ) applies filter wpss_ensure_pay_order( $url, $order_id ), where a rail creates or reuses its store order; called by the ?pay_order=N landing (Plugin::redirect_dormant_store_pages, Shortcodes::checkout_fallback), the REST pay endpoints (OrdersController, MilestonesController, BuyerRequestsController, CartController), AjaxHandlers proposal accept, and the services that create tips, phases and extensions plus the emails they send. The filter wpss_pay_order_url is retired. wpss_can_pay_single_order() is true when a rail hooks either new filter. Order-view's milestone loop asks for a URL only for pending, unlocked phases."
   },
   "portfolio_standards": {
-    "account_billing_layer": "~/.claude/workflows/wbcom-account-billing-standard.md \u2014 LOCKED 2026-07-22. Applies to EVERY Wbcom plugin that takes money, not just this one. Billing identity lives on the USER via WooCommerce's billing_* meta keys (plus billing_gst, which Woo lacks), so one address is shared across Learnomy, Eventonomy, WP Sell Services, Career Board, Listora and BuddyNext with no cross-plugin dependency. Orders snapshot the address at payment so invoices cannot be rewritten by a later profile edit. Gateways CONSUME the values, never render or own them. Country and currency lists must be COMPLETE and come from one helper each \u2014 a partial list silently excludes customers rather than failing visibly. This plugin is the reference implementation.",
+    "account_billing_layer": "~/.claude/workflows/wbcom-account-billing-standard.md — LOCKED 2026-07-22. Applies to EVERY Wbcom plugin that takes money, not just this one. Billing identity lives on the USER via WooCommerce's billing_* meta keys (plus billing_gst, which Woo lacks), so one address is shared across Learnomy, Eventonomy, WP Sell Services, Career Board, Listora and BuddyNext with no cross-plugin dependency. Orders snapshot the address at payment so invoices cannot be rewritten by a later profile edit. Gateways CONSUME the values, never render or own them. Country and currency lists must be COMPLETE and come from one helper each — a partial list silently excludes customers rather than failing visibly. This plugin is the reference implementation.",
     "reference_implementation": "wpss_get_billing_fields() / wpss_get_billing_address() / wpss_save_billing_address() / wpss_is_billing_address_complete() / wpss_get_countries() / wpss_get_currency_registry() in src/functions.php; wpss_orders.billing_address JSON snapshot; templates/partials/billing-fields.php. Commits a86b867, 7655e99, d97f1f0, b6d18c4.",
-    "billing_display_authority": "templates/partials/billing-summary.php is THE ONLY read-only billing renderer \u2014 buyer order view (templates/order/order-view.php), admin order screen (Admin::render_order_detail) and any future invoice/export all include this one partial, so the customer and the admin can never be shown different invoice detail. It accepts BOTH shapes billing_address arrives in (ServiceOrder decodes to array; admin passes a raw $wpdb row where it is still a JSON string) rather than forcing callers to hydrate a model. It reads the ORDER SNAPSHOT only and never falls back to the live profile \u2014 a fallback would show an address the buyer was not billed under. Pre-1.5.0 orders have no snapshot and render nothing. Editable counterpart is billing-fields.php; the two must stay in step. Styled in design-system.css AND admin.css because design-system.css is not enqueued in wp-admin. Commit 894161d."
+    "billing_display_authority": "templates/partials/billing-summary.php is THE ONLY read-only billing renderer — buyer order view (templates/order/order-view.php), admin order screen (Admin::render_order_detail) and any future invoice/export all include this one partial, so the customer and the admin can never be shown different invoice detail. It accepts BOTH shapes billing_address arrives in (ServiceOrder decodes to array; admin passes a raw $wpdb row where it is still a JSON string) rather than forcing callers to hydrate a model. It reads the ORDER SNAPSHOT only and never falls back to the live profile — a fallback would show an address the buyer was not billed under. Pre-1.5.0 orders have no snapshot and render nothing. Editable counterpart is billing-fields.php; the two must stay in step. Styled in design-system.css AND admin.css because design-system.css is not enqueued in wp-admin. Commit 894161d."
   },
   "hooks": {
     "actions_fired": 128,
@@ -832,7 +866,7 @@
     "reader": "WPSellServices\\Services\\DisputeService::get_evidence",
     "timeline": "WPSellServices\\Services\\DisputeWorkflowManager::get_timeline",
     "backfill": "WPSellServices\\Services\\DisputeService::migrate_evidence_to_messages (option wpss_dispute_evidence_migrated)",
-    "legacy_evidence_column": "wpss_disputes.evidence \u2014 status_note entries only after 1.6.0",
+    "legacy_evidence_column": "wpss_disputes.evidence — status_note entries only after 1.6.0",
     "schema_version": "DB_VERSION 1.6.1 adds message_type + description + idx_dispute_created",
     "surfaces": [
       "templates/dashboard/sections/disputes.php (member thread + reply form)",
@@ -883,7 +917,7 @@
     "service_wrapper": "VendorService::is_vendor() delegates to wpss_is_vendor() as of 1.6.0. It previously checked role-then-meta itself, missing the capability path and the filter, so a capability-only vendor was a vendor everywhere except the dashboard and the service wizard.",
     "legitimate_meta_writers": [
       "VendorService::register() / approve paths (write both role and meta)",
-      "Admin::\u2026 vendor creation",
+      "Admin::… vendor creation",
       "Plugin.php admin self-heal (_wpss_vendor_checked fast path)",
       "Activator::migrate_existing_sellers() (1.7.1 upgrade: gives a profile row, the vendor role and this meta to anyone who was already selling without one; marks them with `_wpss_migrated_seller` and records the total in the `wpss_migrated_sellers` option)"
     ],
