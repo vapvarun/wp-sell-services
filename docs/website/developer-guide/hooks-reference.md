@@ -88,7 +88,7 @@ guide; this is the complete index.
 | `wpss_before_vendor_profile` | 1 | `templates/vendor/profile.php:131` | Hook: wpss_before_vendor_profile |
 | `wpss_billing_address_saved` | 2 | `src/functions/billing.php:715` | Fires after a user's billing address is saved. |
 | `wpss_buyer_request_created` | 2 | `src/Services/BuyerRequestService.php:114` | Fires when a buyer request is created. |
-| `wpss_buyer_request_deleted` | 1 | `src/Services/BuyerRequestService.php:1109` | Fires when a buyer request is deleted. |
+| `wpss_buyer_request_deleted` | 1 | `src/Services/BuyerRequestService.php:1117` | Fires when a buyer request is deleted. |
 | `wpss_buyer_request_meta_saved` | 2 | `src/Admin/Metaboxes/BuyerRequestMetabox.php:350` | Fires after buyer request meta is saved. |
 | `wpss_buyer_request_status_changed` | 3 | `src/Services/BuyerRequestService.php:481` | Fires when request status changes. |
 | `wpss_buyer_request_updated` | 2 | `src/Services/BuyerRequestService.php:167` | Fires when a buyer request is updated. |
@@ -138,7 +138,7 @@ guide; this is the complete index.
 | `wpss_milestone_approved` | 4 | `src/Services/MilestoneService.php:533` |  |
 | `wpss_milestone_declined` | 3 | `src/Services/MilestoneService.php:707` |  |
 | `wpss_milestone_paid` | 5 | `src/Services/MilestoneService.php:408` | Fires after a milestone payment has cleared and the vendor has been credited. Milestone is now in_progress. |
-| `wpss_milestone_proposed` | 3 | `src/Services/BuyerRequestService.php:863` *(+1 more)* |  |
+| `wpss_milestone_proposed` | 3 | `src/Services/BuyerRequestService.php:871` *(+1 more)* |  |
 | `wpss_milestone_revision_requested` | 5 | `src/Services/MilestoneService.php:652` | Fires when a buyer sends a milestone phase back for changes. |
 | `wpss_milestone_submitted` | 4 | `src/Services/MilestoneService.php:480` |  |
 | `wpss_mycred_balance_changed` | 3 | `src/Integrations/Wallets/MyCredProvider.php:253` **[PRO]** | Fires after MyCred balance changes for WPSS. |
@@ -186,10 +186,10 @@ guide; this is the complete index.
 | `wpss_pro_connect_transfer_reversed` | 3 | `src/StripeConnect/ConnectWebhookHandler.php:155` **[PRO]** | Fires when a Connect transfer reversal is confirmed by Stripe. |
 | `wpss_pro_loaded` | 1 | `wp-sell-services-pro.php:262` **[PRO]** | Fires after WP Sell Services Pro is fully loaded. |
 | `wpss_profile_form_fields` | 1 | `templates/dashboard/sections/profile.php:231` | Fires in the profile form before the submit button. |
-| `wpss_proposal_accepted` | 3 | `src/Services/BuyerRequestService.php:891` | Fires when a proposal is accepted via order conversion. |
+| `wpss_proposal_accepted` | 3 | `src/Services/BuyerRequestService.php:899` | Fires when a proposal is accepted via order conversion. |
 | `wpss_proposal_deleted` | 2 | `src/Services/ProposalService.php:896` | Fires when a proposal is deleted. |
 | `wpss_proposal_rejected` | 3 | `src/Services/ProposalService.php:459` *(+1 more)* | Fires when a proposal is rejected. |
-| `wpss_proposal_status_updated` | 2 | `src/Services/BuyerRequestService.php:871` *(+1 more)* |  |
+| `wpss_proposal_status_updated` | 2 | `src/Services/BuyerRequestService.php:879` *(+1 more)* |  |
 | `wpss_proposal_submitted` | 4 | `src/Services/ProposalService.php:188` | Fires when a proposal is submitted. |
 | `wpss_proposal_updated` | 2 | `src/Services/ProposalService.php:366` | Fires when a proposal is updated. |
 | `wpss_proposal_withdrawn` | 2 | `src/Services/ProposalService.php:504` | Fires when a proposal is withdrawn. |
@@ -205,7 +205,7 @@ guide; this is the complete index.
 | `wpss_request_card_footer` | 1 | `templates/content-request-card.php:197` | Hook: wpss_request_card_footer |
 | `wpss_request_card_header` | 1 | `templates/content-request-card.php:140` | Hook: wpss_request_card_header |
 | `wpss_request_card_meta` | 1 | `templates/content-request-card.php:182` | Hook: wpss_request_card_meta |
-| `wpss_request_converted_to_order` | 5 | `src/Services/BuyerRequestService.php:949` | Fires when a buyer request is converted to an order. |
+| `wpss_request_converted_to_order` | 5 | `src/Services/BuyerRequestService.php:957` | Fires when a buyer request is converted to an order. |
 | `wpss_requirements_form_fields` | 1 | `templates/order/requirements-form.php:299` | Fires after the configured requirement fields, before the notes field. |
 | `wpss_requirements_submitted` | 3 | `src/Services/RequirementsService.php:553` | Fires after requirements are submitted. |
 | `wpss_requirements_timeout` | 2 | `src/Services/OrderWorkflowManager.php:547` | Fires when a requirements timeout action is taken. |
@@ -439,7 +439,7 @@ guide; this is the complete index.
 | `wpss_pro_push_should_send` | 5 | `src/Push/PushNotificationService.php:179` **[PRO]** | Filter whether a push is sent for this notification. |
 | `wpss_pro_recurring_feature_available` | 1 | `src/RecurringServices/RecurringSettingsRenderer.php:279` **[PRO]** | Whether the recurring-services feature is available in this version. |
 | `wpss_pro_upgrade_url` | 1 | `src/Frontend/ServiceWizard.php:873` *(+3 more)* |  |
-| `wpss_proposal_order_revisions` | 3 | `src/Services/BuyerRequestService.php:774` |  |
+| `wpss_proposal_order_revisions` | 3 | `src/Services/BuyerRequestService.php:782` |  |
 | `wpss_rail_status_map` | 2 | `src/functions/orders.php:1512` | Filters the rail status map. |
 | `wpss_rate_limits` | 2 | `src/Core/RateLimiter.php:267` | Filter rate limits for a specific action. |
 | `wpss_realtime_settings` | 1 | `src/Services/RealtimeService.php:65` | Filter the realtime (Pusher-protocol) connection settings. |

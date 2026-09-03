@@ -524,8 +524,16 @@ class BuyerRequestService {
 		$args = array(
 			'post_type'      => BuyerRequestPostType::POST_TYPE,
 			'post_status'    => 'publish',
-			// Bounded per run; the next cron tick picks up the rest.
-			'posts_per_page' => 200,
+
+			/*
+			 * Bounded per run; the next cron tick picks up the rest.
+			 *
+			 * The sniff exists to stop a page render asking for an unbounded set.
+			 * This is a cron sweep whose whole job is to walk old rows in batches,
+			 * and 200 with `fields => ids` is the batch size, not a page size - a
+			 * smaller number would just mean more ticks to drain the same backlog.
+			 */
+			'posts_per_page' => 200, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- Cron batch size, not a query for display.
 			'orderby'        => 'ID',
 			'order'          => 'ASC',
 			'fields'         => 'ids',

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-03T11:40:03+00:00\n"
+"POT-Creation-Date: 2026-09-03T12:44:37+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -909,7 +909,7 @@ msgstr ""
 #: src/functions/orders.php:116
 #: src/functions/orders.php:723
 #: src/Models/ServiceOrder.php:638
-#: src/Services/BuyerRequestService.php:1126
+#: src/Services/BuyerRequestService.php:1134
 #: templates/emails/order-cancelled.php:66
 #: templates/order/order-view.php:1328
 #: templates/order/order-view.php:1718
@@ -1269,7 +1269,7 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:288
 #: src/Models/BuyerRequest.php:270
 #: src/Models/Dispute.php:232
-#: src/Services/BuyerRequestService.php:1122
+#: src/Services/BuyerRequestService.php:1130
 #: src/Services/DisputeService.php:1085
 msgid "Open"
 msgstr ""
@@ -6513,7 +6513,7 @@ msgstr ""
 #: src/API/BuyerRequestsController.php:359
 #: src/API/BuyerRequestsController.php:483
 #: src/API/ProposalsController.php:328
-#: src/Services/BuyerRequestService.php:617
+#: src/Services/BuyerRequestService.php:625
 msgid "Buyer request not found."
 msgstr ""
 
@@ -7424,7 +7424,7 @@ msgstr ""
 #: src/API/ProposalsController.php:268
 #: src/Frontend/AjaxHandlers.php:1629
 #: src/Frontend/AjaxHandlers.php:1693
-#: src/Services/BuyerRequestService.php:636
+#: src/Services/BuyerRequestService.php:644
 msgid "Proposal not found."
 msgstr ""
 
@@ -8782,7 +8782,7 @@ msgid "Proposal accepted! Redirecting to payment…"
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:1667
-#: src/Services/BuyerRequestService.php:799
+#: src/Services/BuyerRequestService.php:807
 msgid "Failed to create order. Please try again."
 msgstr ""
 
@@ -9603,7 +9603,7 @@ msgid "Service navigation"
 msgstr ""
 
 #: src/Frontend/ServiceArchiveView.php:431
-#: src/Services/BuyerRequestService.php:1138
+#: src/Services/BuyerRequestService.php:1146
 msgid "Price Range"
 msgstr ""
 
@@ -14327,14 +14327,14 @@ msgid "Open budget"
 msgstr ""
 
 #: src/Models/BuyerRequest.php:272
-#: src/Services/BuyerRequestService.php:1124
+#: src/Services/BuyerRequestService.php:1132
 msgid "Hired"
 msgstr ""
 
 #: src/Models/BuyerRequest.php:273
 #: src/Models/ExtensionRequest.php:245
 #: src/Models/ExtensionRequest.php:285
-#: src/Services/BuyerRequestService.php:1125
+#: src/Services/BuyerRequestService.php:1133
 #: templates/content-request-card.php:86
 msgid "Expired"
 msgstr ""
@@ -15190,43 +15190,43 @@ msgid_plural "You have %d withdrawals being processed. Please wait for them to c
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Services/BuyerRequestService.php:625
+#: src/Services/BuyerRequestService.php:633
 #: templates/single-request.php:486
 msgid "This request is no longer accepting proposals."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:644
+#: src/Services/BuyerRequestService.php:652
 msgid "Proposal does not belong to this request."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:652
-#: src/Services/BuyerRequestService.php:731
+#: src/Services/BuyerRequestService.php:660
+#: src/Services/BuyerRequestService.php:739
 msgid "This proposal has already been processed."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:815
+#: src/Services/BuyerRequestService.php:823
 msgid "This phased proposal has no phases defined."
 msgstr ""
 
 #. translators: 1: phase title, 2: error message
-#: src/Services/BuyerRequestService.php:846
+#: src/Services/BuyerRequestService.php:854
 #, php-format
 msgid "Could not create phase \"%1$s\": %2$s"
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:916
+#: src/Services/BuyerRequestService.php:924
 msgid "Order requirements could not be saved. Please contact support."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:953
+#: src/Services/BuyerRequestService.php:961
 msgid "Order created successfully. Proceed to payment."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1123
+#: src/Services/BuyerRequestService.php:1131
 msgid "In Review"
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1137
+#: src/Services/BuyerRequestService.php:1145
 msgid "Fixed Price"
 msgstr ""
 
