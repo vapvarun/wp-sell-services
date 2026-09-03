@@ -288,7 +288,8 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Service content limits apply on every save path, and a proposal can only be accepted once.
 * Fix      - New orders carry the package's revision count, so buyers can request revisions and vendors see the revision notes.
 * Fix      - Deleting a user keeps and anonymises the other party's orders, ledger and reviews instead of deleting them; order files are removed when an order is deleted.
-* Fix      - Demo delete removes only demo content, and every writing CLI command asks for confirmation and refuses on production without --force.
+* Fix      - Demo delete removes only demo content.
+* Fix      - Every command that writes or deletes data now asks first and refuses on a production site without --force.
 * Fix      - Pay buttons for tips, milestones, extensions and proposals are hidden on a store rail that cannot take a single-order payment instead of linking to a page it ignores.
 * Fix      - Orders left without requirements now auto-start by default instead of being cancelled after the timeout.
 * Fix      - Price decimals and currency position settings are applied; minimum and maximum order amounts are enforced at checkout.
