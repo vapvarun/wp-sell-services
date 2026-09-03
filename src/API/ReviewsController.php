@@ -18,6 +18,8 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use WPSellServices\Models\Review;
+use WPSellServices\Models\ServiceOrder;
+use WPSellServices\Services\ReviewService;
 
 /**
  * REST API controller for reviews.
@@ -377,19 +379,19 @@ class ReviewsController extends RestController {
 			);
 		}
 
-		// Enforce review window (default 30 days after completion).
-		$review_window = (int) wpss_get_option( 'orders', 'review_window_days' );
-		if ( $review_window > 0 && ! empty( $order->completed_at ) ) {
-			$completed_time = strtotime( $order->completed_at );
-			$deadline       = $completed_time + ( $review_window * DAY_IN_SECONDS );
-			if ( time() > $deadline ) {
-				return new WP_Error(
-					'rest_review_window_expired',
-					/* translators: %d: number of days */
-					sprintf( __( 'The review window of %d days has expired.', 'wp-sell-services' ), $review_window ),
-					array( 'status' => 400 )
-				);
-			}
+		// Enforce review window (default 30 days after completion). The service
+		// owns both the number and the deadline maths - reading the option
+		// straight here skipped the wpss_review_window_days filter, so a site
+		// that widened the window had the website take the review and this
+		// endpoint refuse it (Basecamp 10267994010).
+		$review_service = new ReviewService();
+		if ( ! empty( $order->completed_at ) && ! $review_service->is_within_review_window( ServiceOrder::from_db( $order ) ) ) {
+			return new WP_Error(
+				'rest_review_window_expired',
+				/* translators: %d: number of days */
+				sprintf( __( 'The review window of %d days has expired.', 'wp-sell-services' ), $review_service->get_review_window_days() ),
+				array( 'status' => 400 )
+			);
 		}
 
 		// Check if already reviewed.
@@ -590,8 +592,6 @@ class ReviewsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_reply( $request ) {
-		global $wpdb;
-
 		$review_id = (int) $request->get_param( 'id' );
 		$reply     = sanitize_textarea_field( $request->get_param( 'reply' ) );
 		$review    = $this->get_review( $review_id );
@@ -612,18 +612,15 @@ class ReviewsController extends RestController {
 			);
 		}
 
-		$wpdb->update(
-			$wpdb->prefix . 'wpss_reviews',
-			array(
-				'vendor_reply'    => $reply,
-				'vendor_reply_at' => current_time( 'mysql' ),
-			),
-			array( 'id' => $review_id ),
-			array( '%s', '%s' ),
-			array( '%d' )
-		);
+		// One writer: ReviewService::add_response owns reviews.vendor_reply and
+		// re-checks ownership on the same column this endpoint's gate used
+		// (Review::reviewed_id). An admin replying under manage_options acts as
+		// the review's own vendor, which is what the inline write here did.
+		$actor_id = current_user_can( 'manage_options' ) ? $this->get_reply_owner_id( $review_id ) : get_current_user_id();
 
-		do_action( 'wpss_review_reply_created', $review_id );
+		if ( ( new ReviewService() )->add_response( $review_id, $actor_id, $reply ) ) {
+			do_action( 'wpss_review_reply_created', $review_id );
+		}
 
 		$updated_review = $this->get_review( $review_id );
 
@@ -981,9 +978,7 @@ class ReviewsController extends RestController {
 			return true;
 		}
 
-		$review = $this->get_review( (int) $request->get_param( 'id' ) );
-
-		if ( ! $review || (int) $review->vendor_id !== get_current_user_id() ) {
+		if ( $this->get_reply_owner_id( (int) $request->get_param( 'id' ) ) !== get_current_user_id() ) {
 			return new WP_Error(
 				'wpss_not_vendor',
 				__( 'Only the vendor can reply to reviews.', 'wp-sell-services' ),
@@ -992,6 +987,26 @@ class ReviewsController extends RestController {
 		}
 
 		return true;
+	}
+
+	/**
+	 * The user who owns a review's reply, for both the gate and the write.
+	 *
+	 * Review::reviewed_id, which is reviews.reviewee_id falling back to
+	 * reviews.vendor_id so rows written before reviewee_id existed still
+	 * resolve. The gate used to read vendor_id off the raw row while the
+	 * service checked reviewed_id, so on a row where the two disagree each
+	 * one let a different user through (Basecamp 10267994010).
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int $review_id Review ID.
+	 * @return int Owner user ID, 0 when the review is gone.
+	 */
+	private function get_reply_owner_id( int $review_id ): int {
+		$review = ( new ReviewService() )->get( $review_id );
+
+		return $review ? $review->reviewed_id : 0;
 	}
 
 	/**
