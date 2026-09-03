@@ -394,12 +394,16 @@ class Activator {
 				continue;
 			}
 
-			// Create the page.
+			// Create the page. The marker goes only on pages WE publish, never
+			// on the adopted ones above: wpss_pages is a mix of both, and
+			// without something telling them apart no release can ever offer to
+			// clean up its own pages without risking a page the owner wrote.
 			$new_page = array(
 				'post_title'   => $page_data['title'],
 				'post_content' => $page_data['shortcode'],
 				'post_status'  => 'publish',
 				'post_type'    => 'page',
+				'meta_input'   => array( '_wpss_created_page' => $key ),
 			);
 
 			if ( ! empty( $page_data['slug'] ) ) {

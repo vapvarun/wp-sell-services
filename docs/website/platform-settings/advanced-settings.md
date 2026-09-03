@@ -26,6 +26,7 @@ By default, uninstalling the plugin keeps all your marketplace data intact. If y
 
 Even with this option enabled, some things are not removed:
 - WordPress user accounts (buyers and vendors remain as WP users)
+- The pages mapped under **Settings > Pages** (Services, Dashboard, Become a Vendor and the rest), because the plugin adopts any page you already had that carries the shortcode and cannot tell those apart from the ones it published; delete them by hand if you no longer want them
 - Uploaded media files (images, documents in your media library)
 - Payment records held by your payment processor (Stripe, PayPal, etc.)
 

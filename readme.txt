@@ -281,6 +281,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Improve  - The orders API loads a page of orders with a fixed number of queries.
 * Improve  - One setup notice tells the owner when a mapped page is missing, no payment method is enabled, or the selected store plugin is inactive; links to unpublished pages are hidden.
 * Improve  - Dashboard lists, favourites and the vendor directory are paginated, the vendor directory can be sorted and filtered, admin counts are cached, and new indexes keep review moderation and the vendor directory fast on large sites.
+* Improve  - The delete-data setting now says that mapped pages are left in place, and pages the plugin creates are marked so a future release can offer to remove them.
 * Fix      - Refunds made in the PayPal or Razorpay dashboard now update the order and reverse the vendor credit.
 * Fix      - A Stripe payment webhook arriving before checkout finishes no longer creates a duplicate order, and cart refunds land on the right order.
 * Fix      - Offline and manual gateway refunds are marked as pending manual payment instead of being reported as sent.
