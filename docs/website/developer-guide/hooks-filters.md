@@ -549,14 +549,24 @@ the buyer on an **empty cart with no way to pay and no error message** -- which
 is exactly what every tip, milestone and extension link did in Woo mode before
 1.4.0.
 
-**Who hooks it:**
+#### Pay-order support by rail
 
-| Rail | Hooks it? | What the buyer gets |
-|---|---|---|
-| Standalone | n/a (the default) | `/pay/N/` on the plugin's own checkout |
-| WooCommerce | **Yes** -- `WCPayOrderResolver` (Pro) | A native WC order-pay URL |
-| FluentCart | **Yes** -- `FluentCartPayOrderResolver` (Pro, beta) | FluentCart's checkout for the order |
-| EDD | No | No Pay button (`wpss_can_pay_single_order()` is false) |
+**This table is the single source of truth for which rails can pay one
+existing order.** Every other page links here rather than restating it -- the
+copies that used to live in the REST, WooCommerce and coverage pages each
+drifted separately, and three of them were still saying FluentCart had no
+pay-order rail after it gained one.
+
+| Rail | Can pay one existing order? | Resolver | Caveats |
+|---|---|---|---|
+| Standalone | **Yes**, natively | none needed -- `/pay/N/` on the plugin's own checkout | Lock-step milestone order is enforced here |
+| WooCommerce | **Yes** | `WCPayOrderResolver` **[PRO]** | Creates or reuses a `wc-pending` WC order; lock-step is *not* enforced on the WC order-pay URL |
+| FluentCart | **Yes** | `FluentCartPayOrderResolver` **[PRO]** | Beta rail, off until `wpss_pro_beta_rails` returns true; mints a FluentCart order carrying one fee line; lock-step is *not* enforced on its checkout URL |
+| EDD | **No** | none | No Pay button at all -- `wpss_can_pay_single_order()` is false, so tips, phases and extensions cannot be charged on this rail |
+
+Both Pro resolvers hook the read and the write half: `wpss_pay_order_url_lookup`
+rebuilds a URL from what the WPSS row already knows, `wpss_ensure_pay_order`
+creates the store order when the buyer clicks.
 
 **Two things to know before you hook it:**
 
@@ -588,7 +598,7 @@ add_filter( 'wpss_ensure_pay_order', function ( string $url, int $order_id ): st
 ```
 
 See [WooCommerce Checkout](../payments-checkout/woocommerce-checkout.md#paying-a-milestone-tip-or-extension)
-for the full WC implementation and the platform-support matrix.
+for the full WC implementation.
 
 ## Email Filters
 
@@ -606,9 +616,9 @@ add_filter( 'wpss_email_from_name', function( $name ) {
     return 'DesignHub Marketplace';
 } );
 
-// Customize the vendor approval email content
-add_filter( 'wpss_vendor_approved_email_content', function( $content, $user, $platform ) {
-    $content .= '<p>Welcome aboard! Here are some tips to get started...</p>';
+// Customize the "vendor application received" email content
+add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $platform ) {
+    $content .= '<p>We review applications within two business days.</p>';
     return $content;
 }, 10, 3 );
 ```
@@ -991,12 +1001,8 @@ the WPSS row, so lists and pages never load or create a WooCommerce order.
 
 ### Supported rails
 
-| `ecommerce_platform` | Sub-order Pay | How |
-|---|---|---|
-| `standalone` | Supported | `/pay/N/` on the WPSS checkout page |
-| `woocommerce` | Supported | Real WC order created on click + native order-pay URL (Pro) |
-
-These are the two rails the sub-order payment path is built and tested against.
+See [Pay-order support by rail](#pay-order-support-by-rail) above -- the one
+table, kept beside the filters it describes.
 
 A platform that has not implemented `wpss_ensure_pay_order` gets no Pay button
 at all (`wpss_can_pay_single_order()` is false) — so implement the filters for

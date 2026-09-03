@@ -473,7 +473,7 @@ On a WooCommerce or EDD install, `checkout` and `cart` resolve to that rail's
 pages, not the standalone ones - so a client always deep-links to the checkout
 the buyer will actually use.
 
-The `realtime` key carries the non-sensitive client config for the realtime (WebSocket) layer - see [Realtime controller](rest-api-controllers.md#21-realtime-realtime). The app secret is never included.
+The `realtime` key carries the non-sensitive client config for the realtime (WebSocket) layer - see [Realtime controller](rest-api-controllers.md#realtime). The app secret is never included.
 
 ### GET /me
 

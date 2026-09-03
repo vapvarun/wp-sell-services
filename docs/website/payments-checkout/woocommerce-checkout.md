@@ -153,14 +153,14 @@ something WooCommerce does not natively have.
 ### The seam
 
 ```
-wpss_get_pay_order_url( $wpss_order_id )      free — src/functions.php:3375
+wpss_ensure_pay_order( $wpss_order_id )       free — src/functions/urls.php
         │
         │  default: <checkout page>?pay_order=N     (standalone understands this)
         ▼
-apply_filters( 'wpss_pay_order_url', $url, $order_id )
+apply_filters( 'wpss_ensure_pay_order', $url, $order_id )
         │
         ▼
-WCPayOrderResolver::filter_pay_order_url()     Pro — Integrations/WooCommerce/
+WCPayOrderResolver::ensure_pay_order()         Pro — Integrations/WooCommerce/
         │
         ├─ reuse the linked WC order if it still needs payment
         └─ else create a NEW pending WC order for the amount owed
@@ -174,8 +174,9 @@ WCPayOrderResolver::filter_pay_order_url()     Pro — Integrations/WooCommerce/
 
 Every surface that offers a "pay this" link -- the order page, the milestone
 list, the extension quote, the REST `checkout_url` field, and the emails --
-calls `wpss_get_pay_order_url()`. None of them build the URL themselves. That
-is deliberate: a link built inline is correct only on standalone.
+calls `wpss_get_pay_order_url()` to read, and `wpss_ensure_pay_order()` at the
+moment the buyer pays. None of them build the URL themselves. That is
+deliberate: a link built inline is correct only on standalone.
 
 ### Why WooCommerce needs its own resolver
 
@@ -248,25 +249,23 @@ is clawed back through the single refund formula.
 
 ### Platform support -- read this before promising it
 
-The pay-order rail is **WooCommerce-only**. It is not a general capability of
-"Pro e-commerce integrations."
+The pay-order rail is not a general capability of "Pro e-commerce
+integrations" -- each rail has to implement the seam itself, and one of them
+still does not.
 
-| Platform | Pay-order rail | What a milestone / tip / extension pay link does |
-|---|---|---|
-| **Standalone** | Yes (native) | Opens the plugin's own checkout for that one order. Lock-step guard enforced here. |
-| **WooCommerce** | Yes -- `WCPayOrderResolver` **[PRO]** | Opens a WooCommerce order-pay page. Works from email. |
-| **EDD** | **No** | Falls back to `?pay_order=N` on the EDD checkout, which EDD does not understand. **Dead end.** |
-| **FluentCart** | **No** | Same. **Dead end.** |
-
-Exactly one implementation of the `wpss_pay_order_url` filter exists in the
-whole codebase, and it is the WooCommerce one. EDD and FluentCart
-register no equivalent.
+**Which rails can pay a single order is stated in exactly one place:**
+[Pay-order support by rail](../developer-guide/hooks-filters.md#pay-order-support-by-rail),
+beside the filters that make it work. Read it there rather than trusting a copy;
+the copies on this page and two others drifted apart and stayed wrong about
+FluentCart for a release.
 
 **Practical consequence:** if your marketplace relies on milestone contracts,
-tipping, or paid extensions, run it on **WooCommerce or standalone**. On EDD,
-FluentCart the initial service purchase works, but every follow-on
-payment link is a dead end for the buyer. This is a known gap, not a
-configuration mistake -- there is nothing to switch on.
+tipping, or paid extensions, run it on **standalone, WooCommerce or FluentCart**
+(FluentCart is a beta rail, off until `wpss_pro_beta_rails` returns true). On
+**EDD** the initial service purchase works, but no follow-on payment can be
+taken at all -- `wpss_can_pay_single_order()` is false there, so the Pay button
+is not rendered. This is a known gap, not a configuration mistake -- there is
+nothing to switch on.
 
 ---
 
@@ -365,7 +364,7 @@ For developers building custom integrations or debugging the WC integration:
 | `WCProductProvider` | Implements `ProductProviderInterface` for WC |
 | `WCCheckoutProvider` | Handles cart item data, dynamic pricing, checkout processing |
 | `WCOrderProvider` | Splits WC orders into WPSS orders, handles status sync, marks sub-orders paid, apportions refunds |
-| `WCPayOrderResolver` | **The pay-order rail.** Hooks `wpss_pay_order_url`; creates or reuses a WC order so a milestone, tip, extension or accepted proposal can be paid individually |
+| `WCPayOrderResolver` | **The pay-order rail.** Hooks `wpss_pay_order_url_lookup` (read) and `wpss_ensure_pay_order` (write); creates or reuses a WC order so a milestone, tip, extension or accepted proposal can be paid individually |
 | `WCOrderBridge` | Cross-links the two systems for humans: "WooCommerce Order #N" on the WPSS order, a "what happens next" panel on the WC thank-you page, and links between the WC and WPSS order screens (front-end and admin). Also owns the forward/reverse lookup helpers |
 | `WooCommerceAdapter` | Main adapter class, registers all WC hooks |
 

@@ -196,8 +196,8 @@ lock-step guard while doing so.
 > ### `checkout_url` is a BROWSER url, not an API endpoint
 >
 > This is the single most common way to get this wrong. `checkout_url` is a
-> page for a human, resolved through the `wpss_pay_order_url` filter by whatever
-> e-commerce rail is active. **Do not fetch it, do not parse it, do not
+> page for a human, resolved through the `wpss_ensure_pay_order` filter by
+> whatever e-commerce rail is active. **Do not fetch it, do not parse it, do not
 > reconstruct it.** A native client must open it in a webview (or the system
 > browser) and watch for the return URL.
 >
@@ -216,12 +216,17 @@ lock-step guard while doing so.
 > On the **standalone** rail it is `…/checkout/?pay_order={id}` and nothing is
 > created.
 >
-> **EDD and FluentCart have no pay-order rail at all.** They do not
-> hook the filter, so `checkout_url` falls back to the standalone
-> `?pay_order=N` URL, which those checkouts do not understand -- the buyer
-> lands on an empty cart. See
-> [WooCommerce Checkout](../payments-checkout/woocommerce-checkout.md#paying-a-milestone-tip-or-extension)
-> for the support matrix.
+> On the **FluentCart** rail it is a FluentCart checkout URL for an order that
+> rail minted, with the same side effect and the same idempotence: Pro's
+> `FluentCartPayOrderResolver` creates or reuses one FluentCart order carrying a
+> single fee line. FluentCart is a beta rail, off until `wpss_pro_beta_rails`
+> returns true.
+>
+> **EDD has no pay-order rail.** It hooks neither half of the seam, so
+> `wpss_can_pay_single_order()` is false and `checkout_url` is an empty string --
+> there is no Pay button to offer. See
+> [Pay-order support by rail](hooks-filters.md#pay-order-support-by-rail)
+> for the one support table.
 
 ### Milestones
 

@@ -49,7 +49,7 @@ The replay uses `window.wpssTour.start()` under the hood, so you can also wire a
 Two good moments to nudge buyers/sellers toward the tour:
 
 1. **Post-registration email** — after a vendor is approved, link them to the dashboard with a line like "Not sure where to start? We'll walk you through it."
-2. **Empty-state CTA** — the buyer-orders empty state already has a Browse Services CTA; you can add a secondary "Take the tour" link via the `wpss_dashboard_empty_orders` filter.
+2. **Empty-state CTA** — the buyer-orders empty state already has a Browse Services CTA; you can add a secondary "Take the tour" link by overriding `templates/dashboard/sections/orders.php` in your theme.
 
 ## Resetting Completion
 
