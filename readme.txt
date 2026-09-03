@@ -315,6 +315,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Closing a dispute from the admin restores the order, a dispute cannot be resolved twice, and disputes cannot be opened on unpaid orders.
 * Fix      - The Active count on the Sales and Orders screens matches the Active filter beside it.
 * Fix      - The service gallery lightbox opens, zooms and moves between images, and a tall image no longer stretches the page.
+* Fix      - A service page no longer blanks its own title: search-engine structured data, the social share title, the breadcrumb and the gallery image alt text all carry the service name again.
 * Security - Message, contact and dispute attachments are stored privately like deliveries, dispute evidence checks ownership, and vendor payout details are encrypted at rest.
 * Security - Payment receipts are stored privately like deliveries instead of in the media library.
 * Security - Buyers and vendors can no longer refund or cancel orders outside their allowed steps; retired accept and decline actions removed.

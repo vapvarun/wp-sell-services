@@ -112,7 +112,18 @@ class SchemaMarkup {
 			'@context'    => 'https://schema.org',
 			'@type'       => array( 'Service', 'Product' ),
 			'@id'         => get_permalink( $service_id ) . '#service',
-			'name'        => get_the_title( $service_id ),
+			/*
+			 * Raw post_title, never get_the_title().
+			 *
+			 * ShellHeader::maybe_suppress_theme_title() blanks `the_title` for
+			 * the queried object on every plugin-shell surface, so the theme
+			 * stops printing a duplicate H1. It cannot tell who is asking, so
+			 * the plugin's OWN reads come back empty too - this line shipped
+			 * `"name":""` on every single-service page, leaving the product
+			 * with no name in structured data. Lines 276 and 379 below already
+			 * read post_title directly; this is the same rule.
+			 */
+			'name'        => $post->post_title,
 			'description' => wp_strip_all_tags( $post->post_excerpt ?: wp_trim_words( $post->post_content, 50 ) ),
 			'url'         => get_permalink( $service_id ),
 		);
@@ -211,7 +222,9 @@ class SchemaMarkup {
 					'item'     => array(
 						'@type' => 'Service',
 						'@id'   => get_permalink() . '#service',
-						'name'  => get_the_title(),
+						// Raw title: `the_title` is blanked for the queried
+						// object on shell surfaces (see the Service schema above).
+						'name'  => get_post_field( 'post_title', get_the_ID() ),
 						'url'   => get_permalink(),
 					),
 				);
@@ -449,7 +462,9 @@ class SchemaMarkup {
 			}
 
 			$breadcrumbs[] = array(
-				'name' => get_the_title(),
+				// Raw title: `the_title` is blanked for the queried object on
+				// shell surfaces, which emptied the current-page crumb.
+				'name' => get_post_field( 'post_title', get_the_ID() ),
 				'url'  => get_permalink(),
 			);
 		} elseif ( is_tax( 'wpss_service_category' ) ) {

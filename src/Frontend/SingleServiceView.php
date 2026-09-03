@@ -264,7 +264,11 @@ class SingleServiceView {
 					</li>
 				<?php endif; ?>
 				<li class="wpss-breadcrumb-item wpss-breadcrumb-current" aria-current="page">
-					<?php echo esc_html( get_the_title( $service_id ) ); ?>
+					<?php
+					// Raw title: `the_title` is blanked for the queried object on
+					// shell surfaces, which left this crumb visibly empty.
+					echo esc_html( (string) get_post_field( 'post_title', $service_id ) );
+					?>
 				</li>
 			</ol>
 		</nav>
