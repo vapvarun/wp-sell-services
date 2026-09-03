@@ -231,36 +231,30 @@ class VendorsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_items( $request ) {
-		global $wpdb;
 		$pagination = $this->get_pagination_args( $request );
 
-		// Identify vendors by EITHER the wpss_vendor role (matched via the
-		// capabilities meta, the same way WP_User_Query implements role queries)
-		// OR the legacy _wpss_is_vendor meta. Role-based and demo-seeded vendors
-		// never carry the legacy meta, so a meta-only clause hid them from the
-		// directory even though they show in the admin vendor list. Stays a
-		// SQL-paginated meta_query (big-site safe); AND-composes with the skill
-		// filter and the rating/orders sort JOIN below.
+		// This is a PUBLIC listing, so it lists exactly the vendors
+		// wpss_is_vendor() answers true for: an ACTIVE profile row. Role OR the
+		// legacy _wpss_is_vendor meta was wrong in both directions - it hid
+		// vendors created by role (wizard, admin screen, seeder never write that
+		// meta) and it published suspended vendors and bare role-holders with no
+		// profile behind them.
+		$active_vendor_ids = wpss_get_active_vendor_ids();
+
+		if ( empty( $active_vendor_ids ) ) {
+			// An empty `include` is ignored by WP_User_Query, which would list
+			// every user on the site.
+			return $this->paginated_response( array(), 0, $pagination['page'], $pagination['per_page'] );
+		}
+
 		$args = array(
-			'meta_query' => array(
-				'relation'      => 'AND',
-				'vendor_clause' => array(
-					'relation' => 'OR',
-					array(
-						'key'     => $wpdb->prefix . 'capabilities',
-						'value'   => '"' . \WPSellServices\Services\VendorService::ROLE . '"',
-						'compare' => 'LIKE',
-					),
-					array(
-						'key'   => '_wpss_is_vendor',
-						'value' => '1',
-					),
-				),
-			),
-			'number'     => $pagination['per_page'],
-			'offset'     => $pagination['offset'],
-			'orderby'    => 'registered',
-			'order'      => 'DESC',
+			// ponytail: an id list; swap for a pre_user_query JOIN on
+			// wpss_vendor_profiles if a marketplace outgrows it.
+			'include' => $active_vendor_ids,
+			'number'  => $pagination['per_page'],
+			'offset'  => $pagination['offset'],
+			'orderby' => 'registered',
+			'order'   => 'DESC',
 		);
 
 		// Search by name.
@@ -281,6 +275,8 @@ class VendorsController extends RestController {
 		// Filter by skill/category.
 		$skill = $request->get_param( 'skill' );
 		if ( $skill ) {
+			$args['meta_query'] = array();
+
 			$args['meta_query']['skill_clause'] = array(
 				'key'     => '_wpss_vendor_skills',
 				'value'   => $skill,

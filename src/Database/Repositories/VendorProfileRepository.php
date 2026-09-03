@@ -179,6 +179,34 @@ class VendorProfileRepository extends AbstractRepository {
 	}
 
 	/**
+	 * User IDs behind get_directory(), without the row bodies.
+	 *
+	 * Same WHERE as the directory (default: status = 'active'), so every
+	 * "who is a vendor" query answers with the one set wpss_is_vendor()
+	 * agrees with.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string, mixed> $args See get_directory(). 'limit' 0 returns every match.
+	 * @return array<int> Vendor user IDs, ascending.
+	 */
+	public function get_directory_user_ids( array $args = array() ): array {
+		$where = $this->directory_where( $args );
+		$limit = (int) ( $args['limit'] ?? 0 );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- $where is prepared; the table name is plugin-controlled.
+		$sql = "SELECT user_id FROM {$this->table} {$where} ORDER BY user_id ASC";
+
+		if ( $limit > 0 ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only.
+			$sql .= (string) $this->wpdb->prepare( ' LIMIT %d OFFSET %d', $limit, max( 0, (int) ( $args['offset'] ?? 0 ) ) );
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- prepared above.
+		return array_map( 'intval', (array) $this->wpdb->get_col( $sql ) );
+	}
+
+	/**
 	 * Prepared WHERE clause shared by get_directory() and count_directory().
 	 *
 	 * @param array<string, mixed> $args Directory filters.

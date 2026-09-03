@@ -2411,31 +2411,20 @@ final class Plugin {
 			return;
 		}
 
-		// Check if already has vendor meta.
-		$has_vendor_meta = get_user_meta( $user_id, '_wpss_is_vendor', true );
-
-		// Also check if actual vendor profile exists in database.
+		// The profile row is the record that decides who is a vendor, so it is
+		// the only thing worth checking here - the old `_wpss_is_vendor` read
+		// added a second, weaker answer to the same question and changed nothing
+		// about what this method does.
 		$vendor_service = new \WPSellServices\Services\VendorService();
-		$profile_exists = $vendor_service->get_profile( $user_id ) !== null;
 
-		// If both meta is set AND profile exists, we're done.
-		if ( $has_vendor_meta && $profile_exists ) {
-			update_user_meta( $user_id, '_wpss_vendor_checked', '1' );
-			return;
-		}
-
-		// Register as vendor (creates profile and sets meta).
 		// Note: VendorService::register() checks is_vendor() which might return true
 		// if role exists. Use ensure_vendor_profile() for just the profile.
-		if ( ! $profile_exists ) {
+		if ( null === $vendor_service->get_profile( $user_id ) ) {
 			$this->ensure_vendor_profile( $user_id );
 		}
 
-		// Ensure meta is set.
-		if ( ! $has_vendor_meta ) {
-			update_user_meta( $user_id, '_wpss_is_vendor', true );
-		}
-
+		// Still written for back-compat with anything reading the old flag.
+		update_user_meta( $user_id, '_wpss_is_vendor', true );
 		update_user_meta( $user_id, '_wpss_vendor_checked', '1' );
 	}
 
