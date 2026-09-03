@@ -85,9 +85,24 @@ if ( '' === $proposals_url || ! $vendor_active ) {
 	}
 	exit( 0 );
 }
-$check( 'vendor nav links Proposals', false !== strpos( $vendor_html, $proposals_url ) );
-$check( 'vendor nav links Reviews', false !== strpos( $vendor_html, $reviews_url ) );
-$check( 'buyer nav has no Proposals link', false === strpos( $buyer_html, $proposals_url ) );
+/*
+ * Compare against the ESCAPED url as well as the raw one.
+ *
+ * The markup goes through esc_url(), which encodes `&` as `&#038;`. With pretty
+ * permalinks the section url has no query string, so a raw strpos matches and
+ * this looked fine for as long as it has existed. A bare WordPress - CI - keeps
+ * plain permalinks, the url becomes `?page_id=N&section=proposals`, and the raw
+ * needle can never appear in the rendered html. The nav was correct on both;
+ * only the assertion was permalink-dependent, and it cost three wrong guesses
+ * at a skip guard before the cause turned out to be here.
+ */
+$links_to = static function ( string $html, string $url ): bool {
+	return '' !== $url && ( false !== strpos( $html, $url ) || false !== strpos( $html, esc_url( $url ) ) );
+};
+
+$check( 'vendor nav links Proposals', $links_to( $vendor_html, $proposals_url ) );
+$check( 'vendor nav links Reviews', $links_to( $vendor_html, $reviews_url ) );
+$check( 'buyer nav has no Proposals link', ! $links_to( $buyer_html, $proposals_url ) );
 $check( 'buyer asking for /proposals/ is not shown the section', false === strpos( $buyer_html, 'wpss-section--proposals' ) );
 
 // --- proposals list with the losing-vendor state ------------------------------
