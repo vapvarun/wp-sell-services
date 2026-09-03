@@ -394,7 +394,7 @@ guide; this is the complete index.
 | `wpss_min_service_price` | 1 | `src/Frontend/ServiceWizard.php:1387` *(+2 more)* |  |
 | `wpss_no_requests_message` | 1 | `templates/content-no-requests.php:26` | Template: No Requests Found |
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php:33` |  |
-| `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php:2067` | Filter email content before sending. |
+| `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php:2020` | Filter email content before sending. |
 | `wpss_notification_types` | 1 | `src/Admin/Settings.php:3833` | Filter the switchable notification types. |
 | `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php:1668` | Named offline methods. |
 | `wpss_offline_methods` | 2 | `src/Integrations/Gateways/OfflineGateway.php:331` | Filter the offline payment methods. |

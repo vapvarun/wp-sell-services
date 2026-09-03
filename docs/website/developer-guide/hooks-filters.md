@@ -833,7 +833,7 @@ add_filter( 'wpss_fullwidth_page_keys', function( $keys ) {
 | `wpss_open_graph_data` | `$data, $service_id` | `src/SEO/SEO.php:259` |
 | `wpss_sitemap_post_types` | `$post_types` | `src/SEO/SEO.php:323` |
 | `wpss_breadcrumbs` | `$breadcrumbs, $service_id` | `src/SEO/SEO.php:389` |
-| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2066` |
+| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2019` |
 | `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1527` |
 | `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1629` |
 
