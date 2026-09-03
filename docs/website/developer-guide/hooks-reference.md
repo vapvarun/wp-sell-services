@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**509 hooks** across **724** firing sites.
+**510 hooks** across **725** firing sites.
 
 ## Actions (273)
 
@@ -115,7 +115,7 @@ guide; this is the complete index.
 | `wpss_edd_adapter_init` | 1 | `src/Integrations/EDD/EDDAdapter.php:167` **[PRO]** | Fires after EDD adapter is initialized. |
 | `wpss_edd_order_record_created` | 3 | `src/Integrations/EDD/EDDOrderProvider.php:411` **[PRO]** | Fires after service order record is created. |
 | `wpss_edd_service_checkout_processed` | 4 | `src/Integrations/EDD/EDDCheckoutProvider.php:223` **[PRO]** | Fires when a service item is processed during checkout. |
-| `wpss_edd_service_meta_saved` | 1 | `src/Integrations/EDD/EDDProductProvider.php:240` **[PRO]** | Fires when service meta is saved for an EDD download. |
+| `wpss_edd_service_meta_saved` | 1 | `src/Integrations/EDD/EDDProductProvider.php:238` **[PRO]** | Fires when service meta is saved for an EDD download. |
 | `wpss_edd_service_purchased` | 2 | `src/Integrations/EDD/EDDOrderProvider.php:120` **[PRO]** | Fires when a service is purchased via EDD. |
 | `wpss_edd_services_processed` | 2 | `src/Integrations/EDD/EDDOrderProvider.php:150` **[PRO]** | Fires after all service items in an EDD payment are processed. |
 | `wpss_email_content_after` | 3 | `templates/emails/cancellation-requested.php:142` *(+35 more)* | Fires after the email content for the cancellation requested email. |
@@ -290,7 +290,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php:699` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php:2136` | Fires after the wizard persists service meta. |
 
-## Filters (236)
+## Filters (237)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -431,6 +431,7 @@ guide; this is the complete index.
 | `wpss_pre_vendor_register` | 2 | `src/Services/VendorService.php:155` | Filter vendor profile data before creating the vendor profile. |
 | `wpss_presence_window` | 2 | `src/functions/notifications.php:162` | Filters the presence window, in seconds. |
 | `wpss_pro_fcm_payload` | 3 | `src/Push/FcmProvider.php:208` **[PRO]** | Filter the FCM message body before it is sent. |
+| `wpss_pro_pause_license_recheck` | 2 | `src/License/Manager.php:182` **[PRO]** | Filter whether automatic license re-checks are paused. |
 | `wpss_pro_push_provider` | 2 | `src/Push/PushNotificationService.php:137` **[PRO]** | Filter the push provider. |
 | `wpss_pro_push_should_send` | 5 | `src/Push/PushNotificationService.php:179` **[PRO]** | Filter whether a push is sent for this notification. |
 | `wpss_pro_recurring_feature_available` | 1 | `src/RecurringServices/RecurringSettingsRenderer.php:279` **[PRO]** | Whether the recurring-services feature is available in this version. |
