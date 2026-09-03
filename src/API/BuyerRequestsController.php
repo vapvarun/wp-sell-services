@@ -669,6 +669,10 @@ class BuyerRequestsController extends RestController {
 
 		$result = $this->proposal_service->submit( $request_id, $vendor_id, $data );
 
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
 		if ( false === $result ) {
 			return new WP_Error(
 				'proposal_failed',
@@ -706,7 +710,7 @@ class BuyerRequestsController extends RestController {
 			);
 		}
 
-		$checkout_url = wpss_get_pay_order_url( (int) $result['order_id'] );
+		$checkout_url = wpss_ensure_pay_order( (int) $result['order_id'] );
 
 		return new WP_REST_Response(
 			[

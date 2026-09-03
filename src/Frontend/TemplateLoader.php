@@ -128,8 +128,21 @@ class TemplateLoader {
 			return $this->load_service_order_template( (int) $order_id );
 		}
 
-		// Check for vendor profile.
-		$vendor_slug = get_query_var( 'wpss_vendor' );
+		// Check for vendor profile: the /vendor/{slug}/ route, or ?vendor={slug}
+		// on the directory page (the link wpss_get_vendor_url() emits whenever a
+		// directory page exists). Both render through this ONE route so the
+		// query-var form gets the same document title, single h1, assets and
+		// view tracking as the pretty one. It used to fall through to the
+		// directory page template, which printed the profile inside the page
+		// under its own "Vendors" title and h1.
+		$vendor_slug    = get_query_var( 'wpss_vendor' );
+		$from_directory = false;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public link.
+		if ( ! $vendor_slug && isset( $_GET['vendor'] ) && function_exists( 'wpss_get_vendors_page_id' ) && wpss_get_vendors_page_id() && is_page( wpss_get_vendors_page_id() ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only public link.
+			$vendor_slug    = sanitize_title( wp_unslash( $_GET['vendor'] ) );
+			$from_directory = true;
+		}
 		if ( $vendor_slug ) {
 			// Look up user by nicename (URL slug).
 			$user = get_user_by( 'slug', sanitize_text_field( $vendor_slug ) );
@@ -162,11 +175,21 @@ class TemplateLoader {
 				// Track profile view (skip own views and duplicate sessions).
 				$this->track_profile_view( $user->ID );
 
+				// This route matches no post, so the document title fell back to
+				// the bare site name. Name the tab after the vendor.
+				add_filter(
+					'document_title_parts',
+					static function ( array $parts ) use ( $user ): array {
+						$parts['title'] = wpss_get_member_display_name( (int) $user->ID );
+						return $parts;
+					}
+				);
+
 				$custom = $this->locate_template( 'vendor/profile.php' );
 				if ( $custom ) {
 					return $custom;
 				}
-			} else {
+			} elseif ( ! $from_directory ) {
 				// Vendor not found - show 404.
 				global $wp_query;
 				$wp_query->set_404();
@@ -174,6 +197,8 @@ class TemplateLoader {
 				nocache_headers();
 				return get_query_template( '404' );
 			}
+			// An unknown slug on the directory page falls through to the
+			// directory: a stale link should show the list, not an error page.
 		}
 
 		// Mapped services page — use the archive template.

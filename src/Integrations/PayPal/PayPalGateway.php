@@ -177,7 +177,9 @@ class PayPalGateway implements PaymentGatewayInterface {
 						'value'         => number_format( $amount, 2, '.', '' ),
 					),
 					'description' => $metadata['description'] ?? __( 'Service Purchase', 'wp-sell-services' ),
-					'custom_id'   => wp_json_encode( $metadata ),
+					// custom_id is capped at 127 chars by PayPal; the description
+					// has its own field and would push a cart or add-on list over.
+					'custom_id'   => wp_json_encode( array_diff_key( $metadata, array( 'description' => 1 ) ) ),
 				),
 			),
 			'payment_source' => array(
@@ -301,10 +303,13 @@ class PayPalGateway implements PaymentGatewayInterface {
 		}
 
 		return array(
-			'success'   => true,
-			'refund_id' => $response['id'],
-			'status'    => strtolower( $response['status'] ?? 'completed' ),
-			'amount'    => (float) ( $response['amount']['value'] ?? $amount ),
+			'success'        => true,
+			'manual'         => false,
+			'refund_id'      => $response['id'],
+			'transaction_id' => (string) $response['id'],
+			'status'         => strtolower( $response['status'] ?? 'completed' ),
+			'message'        => '',
+			'amount'         => (float) ( $response['amount']['value'] ?? $amount ),
 		);
 	}
 
@@ -576,47 +581,84 @@ class PayPalGateway implements PaymentGatewayInterface {
 	/**
 	 * REST: Create PayPal order (called by PaymentController).
 	 *
-	 * @param array $params Validated request params (amount, currency, service_id, package_id).
+	 * The amount comes from CheckoutIntentService, never from $params.
+	 *
+	 * @param array $params Validated request params (service_id, package_id, pay_order).
 	 * @return array Result array.
 	 */
 	public function create_order( array $params ): array {
-		$amount   = (float) ( $params['amount'] ?? 0 );
-		$currency = sanitize_text_field( $params['currency'] ?? wpss_get_currency() );
+		$intent = ( new \WPSellServices\Checkout\CheckoutIntentService() )->resolve( $params );
 
-		if ( $amount <= 0 ) {
+		if ( is_wp_error( $intent ) ) {
 			return array(
 				'success' => false,
-				'error'   => __( 'Invalid amount.', 'wp-sell-services' ),
+				'error'   => $intent->get_error_message(),
 			);
 		}
 
-		return $this->create_payment(
-			$amount,
-			$currency,
-			array(
-				'service_id'  => (int) ( $params['service_id'] ?? 0 ),
-				'package_id'  => (int) ( $params['package_id'] ?? 0 ),
-				'customer_id' => get_current_user_id(),
-				'description' => sprintf(
-					/* translators: %d: Service ID */
-					__( 'Service #%d', 'wp-sell-services' ),
-					(int) ( $params['service_id'] ?? 0 )
-				),
-			)
-		);
+		return $this->create_payment( $intent->amount, $intent->currency, $this->paypal_metadata( $intent ) );
 	}
 
 	/**
 	 * REST: Capture PayPal order and create service order (called by PaymentController).
 	 *
-	 * @param array $params Validated request params (paypal_order_id, service_id, package_id).
+	 * @param array $params Validated request params (paypal_order_id).
 	 * @return array Result array.
 	 */
 	public function capture_order( array $params ): array {
-		$paypal_order_id = sanitize_text_field( $params['paypal_order_id'] ?? '' );
-		$service_id      = (int) ( $params['service_id'] ?? 0 );
-		$package_id      = (int) ( $params['package_id'] ?? 0 );
+		return $this->capture_and_settle( sanitize_text_field( $params['paypal_order_id'] ?? '' ) );
+	}
 
+	/**
+	 * Metadata for a PayPal order: the intent's own plus what capture needs to
+	 * re-resolve the same intent on the return leg, where the checkout form is
+	 * gone and the PayPal token is all that comes back.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param \WPSellServices\Checkout\CheckoutIntent $intent Resolved intent.
+	 * @return array<string,mixed>
+	 */
+	private function paypal_metadata( \WPSellServices\Checkout\CheckoutIntent $intent ): array {
+		$metadata = $intent->metadata;
+
+		if ( ! empty( $intent->addons ) ) {
+			$metadata['addon_ids'] = implode( ',', array_column( $intent->addons, 'id' ) );
+		}
+
+		switch ( $intent->kind ) {
+			case \WPSellServices\Checkout\CheckoutIntent::KIND_CART:
+				$metadata['description'] = __( 'Multi-service cart checkout', 'wp-sell-services' );
+				break;
+			case \WPSellServices\Checkout\CheckoutIntent::KIND_ORDER:
+				/* translators: %d: order ID */
+				$metadata['description'] = sprintf( __( 'Order #%d', 'wp-sell-services' ), $intent->order_id );
+				break;
+			default:
+				/* translators: %d: Service ID */
+				$metadata['description'] = sprintf( __( 'Service #%d', 'wp-sell-services' ), $intent->service_id );
+		}
+
+		return $metadata;
+	}
+
+	/**
+	 * Resolve the intent a PayPal order was created for, capture it, verify the
+	 * captured amount is the intent's amount, and settle.
+	 *
+	 * One path for the AJAX return leg and the REST confirm. The intent is
+	 * resolved BEFORE capture so a stale cart, a paid order or a foreign buyer
+	 * refuses with nothing to refund; a captured amount that is not the
+	 * intent's is refunded and logged. Before this the capture leg rebuilt the
+	 * order from the gateway figure (subtotal = amount - addons) with no tax
+	 * and no amount check (Basecamp 10264284228).
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $paypal_order_id PayPal order (token) ID.
+	 * @return array<string,mixed> settle() result, or { success:false, error:string }.
+	 */
+	private function capture_and_settle( string $paypal_order_id ): array {
 		if ( ! $paypal_order_id ) {
 			return array(
 				'success' => false,
@@ -624,47 +666,68 @@ class PayPalGateway implements PaymentGatewayInterface {
 			);
 		}
 
+		$order_details = $this->api_request( "v2/checkout/orders/{$paypal_order_id}", array(), 'GET' );
+		$metadata      = json_decode( (string) ( $order_details['purchase_units'][0]['custom_id'] ?? '' ), true ) ?: array();
+		$buyer_id      = (int) ( $metadata['customer_id'] ?? 0 );
+
+		if ( ! $buyer_id || $buyer_id !== get_current_user_id() ) {
+			return array(
+				'success' => false,
+				'error'   => __( 'Please log in to continue.', 'wp-sell-services' ),
+			);
+		}
+
+		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
+		$intent   = $checkout->resolve(
+			array(
+				'pay_order'         => (int) ( $metadata['order_id'] ?? 0 ),
+				'is_multi_checkout' => ! empty( $metadata['is_multi_checkout'] ),
+				'service_id'        => (int) ( $metadata['service_id'] ?? 0 ),
+				'package_id'        => (int) ( $metadata['package_id'] ?? 0 ),
+				'addon_ids'         => (string) ( $metadata['addon_ids'] ?? '' ),
+			),
+			$buyer_id
+		);
+
+		if ( is_wp_error( $intent ) ) {
+			return array(
+				'success' => false,
+				'error'   => $intent->get_error_message(),
+			);
+		}
+
 		$payment = $this->process_payment( $paypal_order_id );
 
-		if ( ! $payment['success'] ) {
+		if ( empty( $payment['success'] ) ) {
 			return array(
 				'success' => false,
 				'error'   => $payment['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ),
 			);
 		}
 
-		$order_provider = wpss_get_order_provider();
+		$txn = (string) $payment['transaction_id'];
 
-		$order = $order_provider->create_order(
-			array(
-				'service_id'     => $service_id,
-				'package_id'     => $package_id,
-				'customer_id'    => get_current_user_id(),
-				'subtotal'       => $payment['amount'],
-				'currency'       => $payment['currency'],
-				'payment_method' => 'paypal',
-			)
-		);
+		if ( strtoupper( (string) $payment['currency'] ) !== strtoupper( $intent->currency )
+			|| ! wpss_amounts_match( (float) $payment['amount'], $intent->amount, $intent->currency ) ) {
+			wpss_log( sprintf( 'PayPal capture %s took %s %s but the checkout intent is %s %s. Refunding.', $txn, $payment['currency'], $payment['amount'], $intent->currency, $intent->amount ), 'error' );
+			$this->process_refund( $txn );
 
-		if ( ! $order ) {
-			$this->process_refund( $payment['transaction_id'] );
 			return array(
 				'success' => false,
-				'error'   => __( 'Failed to create order.', 'wp-sell-services' ),
+				'error'   => __( 'The paid amount does not match the order total.', 'wp-sell-services' ),
 			);
 		}
 
-		$order_provider->mark_as_paid( $order->id, $payment['transaction_id'], 'paypal' );
+		$settle = $checkout->settle( $intent, 'paypal', $txn, (float) $payment['amount'], (string) $payment['currency'] );
 
-		// Clear cart after successful order creation.
-		delete_user_meta( get_current_user_id(), '_wpss_cart' );
+		if ( empty( $settle['success'] ) ) {
+			$refund = $this->process_refund( $txn );
+			if ( empty( $refund['success'] ) ) {
+				wpss_log( "CRITICAL: PayPal capture {$txn} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
+			}
+		}
 
-		return array(
-			'success'      => true,
-			'order_id'     => $order->id,
-			'order_number' => $order->order_number,
-			'redirect_url' => wpss_get_order_requirements_url( $order->id ),
-		);
+		return $settle;
 	}
 
 	/**
@@ -705,115 +768,17 @@ class PayPalGateway implements PaymentGatewayInterface {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		wpss_save_billing_from_request( $_POST );
 
-		$currency = sanitize_text_field( wp_unslash( $_POST['currency'] ?? wpss_get_currency() ) );
-
-		// Multi-service checkout: accept total directly from the form.
-		$is_multi = ! empty( $_POST['is_multi_checkout'] );
-		if ( $is_multi ) {
-			// Price the cart SERVER-SIDE via the shared seam — never trust the
-			// client amount (parity with Stripe; see CheckoutIntentService).
-			$intent = ( new \WPSellServices\Checkout\CheckoutIntentService() )->resolve( array( 'is_multi_checkout' => true ) );
-			if ( is_wp_error( $intent ) ) {
-				wp_send_json_error( array( 'message' => $intent->get_error_message() ) );
-				return;
-			}
-
-			$metadata = array(
-				'is_multi_checkout' => '1',
-				'customer_id'       => get_current_user_id(),
-				'description'       => __( 'Multi-service cart checkout', 'wp-sell-services' ),
-			);
-
-			$result = $this->create_payment( $intent->amount, $intent->currency, $metadata );
-
-			if ( $result['success'] ) {
-				wp_send_json_success( $result );
-			} else {
-				wp_send_json_error( array( 'message' => $result['error'] ) );
-			}
-			return;
-		}
-
-		$service_id   = absint( $_POST['service_id'] ?? 0 );
-		$package_id   = absint( $_POST['package_id'] ?? 0 );
-		$pay_order_id = absint( $_POST['pay_order'] ?? 0 );
-
-		// Pay-order flow: use existing order total (from proposal acceptance).
-		if ( $pay_order_id ) {
-			$pay_order = \WPSellServices\Models\ServiceOrder::find( $pay_order_id );
-			if ( ! $pay_order || (int) $pay_order->customer_id !== get_current_user_id() ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-				return;
-			}
-
-			$amount   = (float) $pay_order->total;
-			$currency = $pay_order->currency ?: $currency;
-			$metadata = array(
-				'pay_order'   => $pay_order_id,
-				'service_id'  => (int) $pay_order->service_id,
-				'customer_id' => get_current_user_id(),
-				'description' => sprintf(
-					/* translators: %d: order ID */
-					__( 'Order #%d', 'wp-sell-services' ),
-					$pay_order_id
-				),
-			);
-
-			$result = $this->create_payment( $amount, $currency, $metadata );
-
-			if ( $result['success'] ) {
-				wp_send_json_success( $result );
-			} else {
-				wp_send_json_error( array( 'message' => $result['error'] ) );
-			}
-			return;
-		}
-
-		// Verify amount server-side from package price.
-		$service = get_post( $service_id );
-		if ( ! $service || 'wpss_service' !== $service->post_type || 'publish' !== $service->post_status ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Cannot buy own service.
-		if ( (int) $service->post_author === get_current_user_id() ) {
-			wp_send_json_error( array( 'message' => __( 'You cannot purchase your own service.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		$packages = get_post_meta( $service_id, '_wpss_packages', true );
-		if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid package.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		$amount = (float) $packages[ $package_id ]['price'];
-		if ( $amount <= 0 ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid amount.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Include addon prices in the payment amount.
-		$addon_data = wpss_resolve_checkout_addons( $service_id );
-		$amount    += $addon_data['addons_total'];
-
-		// Store addon IDs in PayPal metadata so they survive the redirect flow.
-		$metadata = array(
-			'service_id'  => $service_id,
-			'package_id'  => $package_id,
-			'customer_id' => get_current_user_id(),
-			'description' => sprintf(
-				/* translators: %d: Service ID */
-				__( 'Service #%d', 'wp-sell-services' ),
-				$service_id
-			),
+		// Pricing + routing (single / multi-cart / pay-order) is resolved once,
+		// server-side, by CheckoutIntentService - the same call Stripe makes,
+		// so the two rails charge the same number for the same checkout.
+		$result = $this->create_order(
+			array(
+				'pay_order'         => absint( $_POST['pay_order'] ?? 0 ),
+				'is_multi_checkout' => ! empty( $_POST['is_multi_checkout'] ),
+				'service_id'        => absint( $_POST['service_id'] ?? 0 ),
+				'package_id'        => absint( $_POST['package_id'] ?? 0 ),
+			)
 		);
-		if ( ! empty( $addon_data['addons'] ) ) {
-			$metadata['addon_ids'] = implode( ',', array_column( $addon_data['addons'], 'id' ) );
-		}
-
-		$result = $this->create_payment( $amount, $currency, $metadata );
 
 		if ( $result['success'] ) {
 			wp_send_json_success( $result );
@@ -837,207 +802,39 @@ class PayPalGateway implements PaymentGatewayInterface {
 		wpss_gateway_require_enabled( $this );
 
 		if ( ! wp_verify_nonce( $nonce, 'wpss_paypal_capture' ) && ! wp_verify_nonce( $nonce, 'wpss_paypal' ) ) {
-			if ( wp_doing_ajax() ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
-				return; // Explicit return for defensive coding.
-			} else {
-				wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
-				exit;
-			}
+			$this->capture_fail( __( 'Invalid request.', 'wp-sell-services' ) );
 		}
 
-		if ( ! $paypal_order_id ) {
-			if ( wp_doing_ajax() ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid PayPal order.', 'wp-sell-services' ) ) );
-				return; // Explicit return for defensive coding.
-			} else {
-				wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
-				exit;
-			}
+		$settle = $this->capture_and_settle( $paypal_order_id );
+
+		if ( empty( $settle['success'] ) ) {
+			$this->capture_fail( $settle['error'] ?? __( 'Failed to create order.', 'wp-sell-services' ) );
 		}
-
-		// Capture the payment.
-		$payment = $this->process_payment( $paypal_order_id );
-
-		if ( ! $payment['success'] ) {
-			if ( wp_doing_ajax() ) {
-				wp_send_json_error( array( 'message' => $payment['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ) ) );
-				return; // Explicit return for defensive coding.
-			} else {
-				wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
-				exit;
-			}
-		}
-
-		// Get metadata from PayPal order.
-		$order_details = $this->api_request( "v2/checkout/orders/{$paypal_order_id}", array(), 'GET' );
-		$custom_id     = $order_details['purchase_units'][0]['custom_id'] ?? '{}';
-		$metadata      = json_decode( $custom_id, true ) ?: array();
-
-		$service_id    = (int) ( $metadata['service_id'] ?? 0 );
-		$package_id    = (int) ( $metadata['package_id'] ?? 0 );
-		$customer_id   = (int) ( $metadata['customer_id'] ?? get_current_user_id() );
-		$addon_ids_csv = $metadata['addon_ids'] ?? '';
-
-		// Resolve addons from PayPal metadata (survives redirect flow).
-		$addons       = array();
-		$addons_total = 0;
-		if ( $addon_ids_csv && $service_id ) {
-			$addon_ids     = array_map( 'absint', explode( ',', $addon_ids_csv ) );
-			$addon_ids     = array_filter( $addon_ids );
-			$addon_service = new \WPSellServices\Services\ServiceAddonService();
-
-			foreach ( $addon_ids as $addon_id ) {
-				$addon = $addon_service->get( $addon_id );
-				if ( $addon && (int) $addon->service_id === $service_id && ! empty( $addon->is_active ) ) {
-					$addon_price   = (float) $addon->price;
-					$addons_total += $addon_price;
-					$addons[]      = array(
-						'id'                  => (int) $addon->id,
-						'name'                => $addon->title ?? '',
-						'price'               => $addon_price,
-						'delivery_days_extra' => (int) ( $addon->delivery_days_extra ?? 0 ),
-					);
-				}
-			}
-		}
-
-		// Multi-service checkout: create one order per cart item.
-		$is_multi_checkout = ! empty( $metadata['is_multi_checkout'] );
-		if ( $is_multi_checkout ) {
-			$customer_id    = (int) ( $metadata['customer_id'] ?? get_current_user_id() );
-			$order_provider = wpss_get_order_provider();
-
-			$cart = get_user_meta( $customer_id, '_wpss_cart', true );
-			$cart = is_array( $cart ) ? $cart : array();
-
-			if ( empty( $cart ) ) {
-				$this->process_refund( $payment['transaction_id'] );
-				if ( wp_doing_ajax() ) {
-					wp_send_json_error( array( 'message' => __( 'Your cart is empty.', 'wp-sell-services' ) ) );
-					return;
-				} else {
-					wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
-					exit;
-				}
-			}
-
-			$order_ids = $order_provider->create_orders_from_cart( $cart, 'paypal', $payment['transaction_id'], $customer_id );
-
-			if ( empty( $order_ids ) ) {
-				$this->process_refund( $payment['transaction_id'] );
-				if ( wp_doing_ajax() ) {
-					wp_send_json_error( array( 'message' => __( 'Failed to create orders. Please contact support.', 'wp-sell-services' ) ) );
-					return;
-				} else {
-					wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
-					exit;
-				}
-			}
-
-			// Mark all orders as paid.
-			foreach ( $order_ids as $oid ) {
-				$order_provider->mark_as_paid( $oid, $payment['transaction_id'], 'paypal' );
-			}
-
-			// Clear entire cart.
-			delete_user_meta( $customer_id, '_wpss_cart' );
-
-			$redirect_url = add_query_arg( 'tab', 'orders', wpss_get_page_url( 'dashboard' ) );
-
-			if ( wp_doing_ajax() ) {
-				wp_send_json_success(
-					array(
-						'order_ids'    => $order_ids,
-						'redirect_url' => $redirect_url,
-					)
-				);
-			} else {
-				wp_safe_redirect( $redirect_url );
-				exit;
-			}
-			return; // Explicit return for defensive coding.
-		}
-
-		// Check for pay_order flow (proposal acceptance).
-		$pay_order_id = (int) ( $metadata['pay_order'] ?? 0 );
-
-		if ( $pay_order_id ) {
-			$pay_order = \WPSellServices\Models\ServiceOrder::find( $pay_order_id );
-
-			if ( $pay_order && (int) $pay_order->customer_id === get_current_user_id() ) {
-				$order_provider = wpss_get_order_provider();
-				$order_provider->mark_as_paid( $pay_order_id, $payment['transaction_id'], 'paypal' );
-
-				$redirect_url = wpss_get_order_requirements_url( $pay_order_id );
-
-				if ( wp_doing_ajax() ) {
-					wp_send_json_success(
-						array(
-							'order_id'     => $pay_order_id,
-							'redirect_url' => $redirect_url,
-						)
-					);
-				} else {
-					wp_safe_redirect( $redirect_url );
-					exit;
-				}
-				return; // Explicit return for defensive coding.
-			}
-		}
-
-		// Create service order.
-		$order_provider = wpss_get_order_provider();
-
-		$order = $order_provider->create_order(
-			array(
-				'service_id'     => $service_id,
-				'package_id'     => $package_id,
-				'customer_id'    => $customer_id,
-				'subtotal'       => $payment['amount'] - $addons_total,
-				'addons'         => $addons,
-				'addons_total'   => $addons_total,
-				'currency'       => $payment['currency'],
-				'payment_method' => 'paypal',
-			)
-		);
-
-		if ( ! $order ) {
-			// Refund if order creation fails.
-			$this->process_refund( $payment['transaction_id'] );
-
-			if ( wp_doing_ajax() ) {
-				wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
-				return; // Explicit return for defensive coding.
-			} else {
-				wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
-				exit;
-			}
-		}
-
-		// Mark as paid.
-		$order_provider->mark_as_paid( $order->id, $payment['transaction_id'], 'paypal' );
-
-		// Clear purchased item from cart.
-		$checkout_provider = wpss_get_ecommerce_adapter() ? wpss_get_ecommerce_adapter()->get_checkout_provider() : null;
-		if ( $checkout_provider && $service_id ) {
-			$checkout_provider->process_checkout( $order->id, array( 'service_id' => $service_id ) );
-		}
-
-		$redirect_url = wpss_get_order_requirements_url( $order->id );
 
 		if ( wp_doing_ajax() ) {
-			wp_send_json_success(
-				array(
-					'order_id'     => $order->id,
-					'order_number' => $order->order_number,
-					'redirect_url' => $redirect_url,
-				)
-			);
-		} else {
-			wp_safe_redirect( $redirect_url );
-			exit;
+			wp_send_json_success( $settle );
 		}
+
+		wp_safe_redirect( $settle['redirect_url'] );
+		exit;
+	}
+
+	/**
+	 * Fail the capture leg: a JSON error for AJAX, the checkout error step for
+	 * the PayPal return redirect.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $message Error message.
+	 * @return void
+	 */
+	private function capture_fail( string $message ): void {
+		if ( wp_doing_ajax() ) {
+			wp_send_json_error( array( 'message' => $message ) );
+		}
+
+		wp_safe_redirect( add_query_arg( 'step', 'error', wpss_get_page_url( 'checkout' ) ) );
+		exit;
 	}
 
 	/**
@@ -1087,13 +884,59 @@ class PayPalGateway implements PaymentGatewayInterface {
 	 * @return array{success: bool, message: string}
 	 */
 	private function handle_refund_completed( array $resource_data ): array {
+		// The refund resource points back at the capture it reverses through
+		// its "up" link; orders were marked paid with that capture id.
+		$capture_id = '';
+
+		foreach ( (array) ( $resource_data['links'] ?? array() ) as $link ) {
+			if ( 'up' === ( $link['rel'] ?? '' ) && preg_match( '#/captures/([A-Za-z0-9]+)#', (string) ( $link['href'] ?? '' ), $m ) ) {
+				$capture_id = $m[1];
+				break;
+			}
+		}
+
+		$metadata = json_decode( (string) ( $resource_data['custom_id'] ?? '' ), true ) ?: array();
+		$amount   = (float) ( $resource_data['amount']['value'] ?? 0 );
+
+		if ( '' === $capture_id && empty( $metadata['order_id'] ) ) {
+			return array(
+				'success' => true,
+				'message' => 'Refund had no capture to resolve.',
+			);
+		}
+
+		/**
+		 * Fires when a refund happened at the payment rail.
+		 *
+		 * Handled by OrderWorkflowManager::handle_gateway_refund(), which
+		 * records it on the order(s) and reverses the vendor's share.
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param string $gateway        Gateway slug.
+		 * @param string $transaction_id Capture id the order was paid with.
+		 * @param float  $amount         Amount of this refund, major units.
+		 * @param array  $context        refund_id, currency, order_id.
+		 */
+		do_action(
+			'wpss_gateway_refund_received',
+			'paypal',
+			$capture_id,
+			$amount,
+			array(
+				'refund_id' => (string) ( $resource_data['id'] ?? '' ),
+				'currency'  => (string) ( $resource_data['amount']['currency_code'] ?? '' ),
+				'order_id'  => (int) ( $metadata['order_id'] ?? 0 ),
+			)
+		);
+
 		/**
 		 * Fires when a PayPal refund is processed.
 		 *
 		 * @param string $capture_id Capture ID.
 		 * @param array  $resource_data Refund resource.
 		 */
-		do_action( 'wpss_paypal_refund_processed', $resource_data['links'][0]['href'] ?? '', $resource_data );
+		do_action( 'wpss_paypal_refund_processed', $capture_id, $resource_data );
 
 		return array(
 			'success' => true,

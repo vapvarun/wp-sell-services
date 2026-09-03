@@ -69,6 +69,36 @@
 
 			// Wallet ledger — load the next page of transactions.
 			$(document).on('click', '#wpss-wallet-load-more', this.handleWalletLoadMore.bind(this));
+
+			// Collapsed nav (under 480px): Menu opens the list, picking a section closes it.
+			$(document).on('click', '.wpss-dashboard__nav-toggle', this.handleNavToggle);
+			$(document).on('click', '.wpss-dashboard__nav-item', this.closeNav);
+
+			// Reviews section: vendor reply, through the same REST route the app uses.
+			$(document).on('submit', '.wpss-review-reply-form', this.handleReviewReply.bind(this));
+		},
+
+		/**
+		 * Toggle the collapsed dashboard nav.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleNavToggle: function (e) {
+			var $btn = $(e.currentTarget);
+			var open = $btn.attr('aria-expanded') !== 'true';
+
+			$btn.attr('aria-expanded', open ? 'true' : 'false');
+			$btn.closest('.wpss-dashboard__sidebar').toggleClass('wpss-dashboard__sidebar--open', open);
+		},
+
+		/**
+		 * Close the collapsed dashboard nav.
+		 */
+		closeNav: function () {
+			$('.wpss-dashboard__sidebar--open')
+				.removeClass('wpss-dashboard__sidebar--open')
+				.find('.wpss-dashboard__nav-toggle')
+				.attr('aria-expanded', 'false');
 		},
 
 		// Current page already loaded into the wallet ledger.
@@ -183,7 +213,6 @@
 								'<th>' + (i18n.walletColType) + '</th>' +
 								'<th>' + (i18n.walletColDescription) + '</th>' +
 								'<th class="wpss-wallet__amount-col">' + (i18n.walletColAmount) + '</th>' +
-								'<th class="wpss-wallet__amount-col">' + (i18n.walletColBalance) + '</th>' +
 							'</tr></thead>' +
 							'<tbody></tbody>' +
 						'</table>' +
@@ -264,10 +293,6 @@
 			$('<td>')
 				.addClass('wpss-wallet__amount-col wpss-wallet__amount')
 				.text(symbol + Math.abs(amount).toFixed(txnDecimals) + ' ' + (txn.currency || ''))
-				.appendTo($row);
-			$('<td>')
-				.addClass('wpss-wallet__amount-col')
-				.text((parseFloat(txn.balance_after) || 0).toFixed(txnDecimals) + ' ' + (txn.currency || ''))
 				.appendTo($row);
 
 			return $row;
@@ -985,6 +1010,46 @@
 			}.bind(this));
 
 			this.portfolioMediaFrame.open();
+		},
+
+		/**
+		 * Post a vendor reply to a review (POST /wpss/v1/reviews/{id}/reply)
+		 * and swap the form for the stored response.
+		 *
+		 * @param {Event} e Submit event.
+		 */
+		handleReviewReply: function (e) {
+			e.preventDefault();
+			var $form = $(e.currentTarget);
+			var $button = $form.find('button[type="submit"]');
+			var i18n = wpssUnifiedDashboard.i18n;
+			var reply = $.trim($form.find('textarea[name="reply"]').val());
+
+			if (!reply) {
+				return;
+			}
+
+			$button.prop('disabled', true);
+
+			$.ajax({
+				url: wpssUnifiedDashboard.restUrl + 'reviews/' + $form.data('review-id') + '/reply',
+				type: 'POST',
+				data: { reply: reply },
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
+				}
+			}).done(function (review) {
+				var $reply = $('<div class="wpss-review-reply"><div class="wpss-reply-header"><strong></strong><span class="wpss-reply-date"></span></div></div>');
+				$reply.find('strong').text(i18n.sellerResponse);
+				$reply.find('.wpss-reply-date').text(review.vendor_reply_human || '');
+				$reply.append(review.vendor_reply_html || $('<p>').text(reply));
+				$form.replaceWith($reply);
+				WPSS.showNotification(i18n.reviewReplySent, 'success');
+			}).fail(function (xhr) {
+				var message = (xhr.responseJSON && xhr.responseJSON.message) || i18n.reviewReplyFailed;
+				WPSS.showNotification(message, 'error');
+				$button.prop('disabled', false);
+			});
 		},
 
 		/**

@@ -506,9 +506,10 @@ class ConversationsController extends RestController {
 		$skipped     = array();
 		$file_params = $request->get_file_params();
 		if ( ! empty( $file_params['attachments'] ) ) {
-			$uploaded    = wpss_handle_message_attachments( (array) $file_params['attachments'] );
-			$attachments = array_merge( $attachments, $uploaded['attachments'] );
-			$skipped     = $uploaded['skipped'];
+			$conversation = $this->conversation_service->get( $conversation_id );
+			$uploaded     = wpss_handle_message_attachments( (array) $file_params['attachments'], $conversation ? (int) $conversation->order_id : 0, 'message' );
+			$attachments  = array_merge( $attachments, $uploaded['attachments'] );
+			$skipped      = $uploaded['skipped'];
 		}
 
 		// A message must carry text or at least one attachment.
@@ -658,6 +659,12 @@ class ConversationsController extends RestController {
 		foreach ( $attachment_data as $attachment ) {
 			// Support both attachment ID format and full object format.
 			if ( is_array( $attachment ) && isset( $attachment['id'] ) ) {
+				// A stored record carries no URL; hand the client the gated
+				// link and keep the storage internals off the wire.
+				if ( empty( $attachment['url'] ) ) {
+					$attachment['url'] = wpss_get_order_file_url( $attachment );
+				}
+				unset( $attachment['path'], $attachment['remote_path'], $attachment['provider'] );
 				$attachments[] = $attachment;
 			} elseif ( is_numeric( $attachment ) ) {
 				$id  = (int) $attachment;

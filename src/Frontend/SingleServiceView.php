@@ -264,7 +264,11 @@ class SingleServiceView {
 					</li>
 				<?php endif; ?>
 				<li class="wpss-breadcrumb-item wpss-breadcrumb-current" aria-current="page">
-					<?php echo esc_html( get_the_title( $service_id ) ); ?>
+					<?php
+					// Raw title: `the_title` is blanked for the queried object on
+					// shell surfaces, which left this crumb visibly empty.
+					echo esc_html( (string) get_post_field( 'post_title', $service_id ) );
+					?>
 				</li>
 			</ol>
 		</nav>
@@ -301,7 +305,7 @@ class SingleServiceView {
 			<?php if ( $rating_count > 0 ) : ?>
 				<div class="wpss-meta-item wpss-meta-rating">
 					<a href="#reviews" class="wpss-rating-link">
-						<span class="wpss-star filled">★</span>
+						<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 						<span class="wpss-rating-value"><?php echo esc_html( number_format( $rating_avg, 1 ) ); ?></span>
 						<span class="wpss-rating-count">(<?php echo esc_html( $rating_count ); ?>)</span>
 					</a>
@@ -384,7 +388,6 @@ class SingleServiceView {
 	 * @return void
 	 */
 	private function render_requirements( Service $service ): void {
-		// Canonical getter → choice fields normalized (options array + choices string).
 		$requirements = wpss_get_service_requirements( $service->id );
 
 		if ( empty( $requirements ) ) {
@@ -400,10 +403,7 @@ class SingleServiceView {
 				<?php
 				echo '<ul class="wpss-requirements-list">';
 				foreach ( $requirements as $req ) {
-					$text = is_array( $req ) ? ( $req['question'] ?? $req['text'] ?? '' ) : $req;
-					if ( ! empty( $text ) ) {
-						echo '<li>' . esc_html( $text ) . '</li>';
-					}
+					echo '<li>' . esc_html( $req['label'] ) . '</li>';
 				}
 				echo '</ul>';
 				?>
@@ -472,7 +472,7 @@ class SingleServiceView {
 								// "No reviews yet" in the Reviews section below.
 								?>
 								<span class="wpss-quick-stat" title="<?php esc_attr_e( 'Overall seller rating across all their services', 'wp-sell-services' ); ?>">
-									<span class="wpss-star filled">★</span>
+									<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 									<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
 									(<?php echo esc_html( $rating_count ); ?>)
 									<span class="wpss-quick-stat__note"><?php esc_html_e( 'seller rating', 'wp-sell-services' ); ?></span>
@@ -892,8 +892,8 @@ class SingleServiceView {
 										<input type="checkbox"
 												name="extras[]"
 												value="<?php echo esc_attr( $index ); ?>"
-												data-price="<?php echo esc_attr( $extra['price'] ?? 0 ); ?>"
-												data-time="<?php echo esc_attr( $extra['delivery_time'] ?? 0 ); ?>">
+												data-price="<?php echo esc_attr( $extra['price'] ); ?>"
+												data-time="<?php echo esc_attr( $extra['delivery_days_extra'] ); ?>">
 										<span class="wpss-extra-info">
 											<span class="wpss-extra-title"><?php echo esc_html( $extra['title'] ?? '' ); ?></span>
 											<?php if ( ! empty( $extra['description'] ) ) : ?>
@@ -902,9 +902,9 @@ class SingleServiceView {
 										</span>
 										<span class="wpss-extra-price">
 											+<?php echo esc_html( wpss_format_price( (float) ( $extra['price'] ?? 0 ) ) ); ?>
-											<?php if ( ! empty( $extra['delivery_time'] ) ) : ?>
+											<?php if ( ! empty( $extra['delivery_days_extra'] ) ) : ?>
 												<span class="wpss-extra-time">
-													(+<?php echo esc_html( $extra['delivery_time'] ); ?> <?php esc_html_e( 'days', 'wp-sell-services' ); ?>)
+													(+<?php echo esc_html( $extra['delivery_days_extra'] ); ?> <?php esc_html_e( 'days', 'wp-sell-services' ); ?>)
 												</span>
 											<?php endif; ?>
 										</span>

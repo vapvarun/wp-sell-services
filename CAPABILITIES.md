@@ -3,7 +3,7 @@
 Buyer-level truth for the store listing and for anyone deciding whether this
 plugin fits. Written to be read before purchase, not after.
 
-**Version**: 1.7.0-dev · **Last verified**: 2026-08-26 (every row checked against source)
+**Version**: 1.7.1-dev · **Last verified**: 2026-09-03 (every row checked against source)
 
 `YES` — ships and is exercised · `PARTIAL` — ships with a stated limit ·
 `NO` — does not ship, whatever a roadmap says.
@@ -18,10 +18,16 @@ payouts. WooCommerce is optional, not required.
 
 ## Can I use my existing ecommerce plugin?
 
-**YES (Pro)** for WooCommerce, Easy Digital Downloads and FluentCart. SureCart
-was removed in 1.6.0: a hosted catalogue cannot act as a payment rail the way the
-others do, and shipping it as though it could was worse than not shipping it.
-One rail is active at a time and it owns payment entirely — the plugin never
+**YES (Pro) for WooCommerce. NO, today, for Easy Digital Downloads and
+FluentCart.** Those two rails ship but are in beta and are not purchase-tested:
+neither can take a catalog checkout yet, so they are not offered in the platform
+list at all. A site owner who wants to work on them can turn them on with the
+`wpss_pro_beta_rails` filter, and the settings screen then labels them "Beta, not
+purchase-tested" rather than "Available". Finishing them is 1.8.0 work.
+
+SureCart was removed in 1.6.0: a hosted catalogue cannot act as a payment rail the
+way the others do, and shipping it as though it could was worse than not shipping
+it. One rail is active at a time and it owns payment entirely — the plugin never
 offers its own gateways alongside your platform's, because two checkouts for one
 button confuses buyers and splits your reporting.
 

@@ -215,14 +215,18 @@ class AuditLogPage {
 						>
 
 						<label for="wpss-audit-event-type" class="screen-reader-text"><?php esc_html_e( 'Filter by event type', 'wp-sell-services' ); ?></label>
-						<input
-							type="text"
-							id="wpss-audit-event-type"
-							name="event_type"
-							class="wpss-audit-filter"
-							value="<?php echo esc_attr( $filters['event_type'] ); ?>"
-							placeholder="<?php esc_attr_e( 'Event type (e.g. order.status_change)', 'wp-sell-services' ); ?>"
-						>
+						<select id="wpss-audit-event-type" name="event_type" class="wpss-audit-filter">
+							<option value=""><?php esc_html_e( 'All events', 'wp-sell-services' ); ?></option>
+							<?php
+							$event_types = AuditLogService::EVENT_TYPES;
+							if ( '' !== $filters['event_type'] && ! in_array( $filters['event_type'], $event_types, true ) ) {
+								$event_types[] = $filters['event_type'];
+							}
+							foreach ( $event_types as $type ) :
+								?>
+								<option value="<?php echo esc_attr( $type ); ?>"<?php selected( $filters['event_type'], $type ); ?>><?php echo esc_html( $type ); ?></option>
+							<?php endforeach; ?>
+						</select>
 
 						<label for="wpss-audit-actor" class="screen-reader-text"><?php esc_html_e( 'Filter by actor user ID', 'wp-sell-services' ); ?></label>
 						<input

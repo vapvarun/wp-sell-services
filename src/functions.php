@@ -21,6 +21,7 @@ defined( 'ABSPATH' ) || exit;
  * than back here; anything genuinely domain-less belongs on a class.
  */
 $wpss_function_files = array(
+	'settings',
 	'money',
 	'orders',
 	'vendors',

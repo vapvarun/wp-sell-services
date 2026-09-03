@@ -58,14 +58,16 @@ class UserFactory {
 			)
 		);
 
-		// Add vendor capabilities.
-		$user->add_cap( 'wpss_vendor', true );
-		$user->add_cap( 'wpss_manage_services', true );
-		$user->add_cap( 'wpss_manage_orders', true );
-		$user->add_cap( 'wpss_view_analytics', true );
-		$user->add_cap( 'wpss_respond_to_requests', true );
-		$user->add_cap( 'upload_files', true );
-		$user->add_cap( 'edit_posts', true );
+		// A vendor is an ACTIVE profile row, not a role (wpss_is_vendor() reads
+		// the row); the role already carries every vendor capability.
+		( new \WPSellServices\Database\Repositories\VendorProfileRepository() )->upsert(
+			$user->ID,
+			array(
+				'display_name'      => $user->display_name,
+				'status'            => 'active',
+				'verification_tier' => \WPSellServices\Models\VendorProfile::TIER_NEW,
+			)
+		);
 
 		return $user;
 	}

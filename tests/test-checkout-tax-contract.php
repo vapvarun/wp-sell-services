@@ -43,6 +43,7 @@ $service = get_posts(
 		'post_status'    => 'publish',
 		'posts_per_page' => 1,
 		'fields'         => 'ids',
+		'author__not_in' => array( 1 ), // The probe buys as user 1, who cannot buy their own service.
 	)
 );
 
@@ -187,7 +188,114 @@ if ( ! is_wp_error( $intent ) ) {
 	}
 }
 
-update_option( 'wpss_tax', $saved );
+/*
+ * --- The cart is taxed like the single path -------------------------------
+ *
+ * With tax on, a two-item cart (25 + 35) was charged 60.00 while the single
+ * path charged 29.50 for the same 25.00 service and every order row the cart
+ * produced stored a taxed total (Basecamp 10264284228). The cart intent must
+ * be the sum of the taxed rows it will settle into.
+ */
+update_option(
+	'wpss_tax',
+	array( 'enable_tax' => true, 'tax_rate' => 18, 'tax_included' => false, 'tax_label' => 'Tax' )
+);
+
+$two = get_posts(
+	array(
+		'post_type'      => 'wpss_service',
+		'post_status'    => 'publish',
+		'posts_per_page' => 2,
+		'fields'         => 'ids',
+		'author__not_in' => array( 1 ), // The probe buys as user 1, who cannot buy their own service.
+		'meta_key'       => '_wpss_packages', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+	)
+);
+$two = array_map( 'intval', $two );
+
+if ( count( $two ) < 1 ) {
+	echo "  SKIP  no service by another author for the cart probe\n";
+} else {
+	$cart = array();
+	foreach ( array_pad( $two, 2, $two[0] ) as $i => $sid ) {
+		$cart[ 'probe_' . $i ] = array(
+			'service_id' => $sid,
+			'package_id' => 0,
+			'quantity'   => 1,
+			'addons'     => array(),
+		);
+	}
+
+	$saved_cart = get_user_meta( 1, '_wpss_cart', true );
+	update_user_meta( 1, '_wpss_cart', $cart );
+
+	$untaxed  = 0.0;
+	$expected = 0.0;
+	foreach ( $cart as $line ) {
+		$p         = (float) ( get_post_meta( $line['service_id'], '_wpss_packages', true )[0]['price'] ?? 0 );
+		$untaxed  += $p;
+		$expected += (float) wpss_calculate_tax( $p, (int) get_post_field( 'post_author', $line['service_id'] ), $line['service_id'] )['total'];
+	}
+
+	$svc    = new \WPSellServices\Checkout\CheckoutIntentService();
+	$intent = $svc->resolve( array( 'is_multi_checkout' => true ), 1 );
+
+	if ( is_wp_error( $intent ) ) {
+		wpss_t( false, 'cart intent resolves: ' . $intent->get_error_message() );
+	} else {
+		wpss_t( abs( $intent->amount - $expected ) < 0.01, sprintf( 'THE CART CHARGE IS THE TAXED TOTAL (%.2f, untaxed %.2f)', $intent->amount, $untaxed ) );
+		wpss_t( $intent->amount > $untaxed, 'the cart charge is more than the pre-tax sum, i.e. tax is actually collected' );
+		wpss_t( isset( $intent->tax ) && abs( $intent->tax - ( $expected - $untaxed ) ) < 0.01, sprintf( 'the cart intent carries the tax it charges (%.2f)', (float) ( $intent->tax ?? 0 ) ) );
+		wpss_t( abs( $intent->taxable_base - $untaxed ) < 0.01, 'the cart intent carries the pre-tax base, like the single intent' );
+
+		$provider = function_exists( 'wpss_get_order_provider' ) ? wpss_get_order_provider() : null;
+		if ( $provider ) {
+			$settle = new ReflectionMethod( $svc, 'settle_cart' );
+			$settle->setAccessible( true );
+			$result = $settle->invoke( $svc, $intent, $provider, 'test', 'txn_tax_contract_cart_probe' );
+
+			if ( ! empty( $result['order_ids'] ) ) {
+				global $wpdb;
+				$ids  = implode( ',', array_map( 'intval', $result['order_ids'] ) );
+				$rows = (float) $wpdb->get_var( "SELECT SUM(total) FROM {$wpdb->prefix}wpss_orders WHERE id IN ({$ids})" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+				wpss_t( count( $result['order_ids'] ) === count( $cart ), 'one order row per cart line' );
+				wpss_t( abs( $rows - $intent->amount ) < 0.01, sprintf( 'THE SUM OF THE ORDER ROWS EQUALS THE CART CHARGE (%.2f vs %.2f)', $rows, $intent->amount ) );
+
+				$wpdb->query( "DELETE FROM {$wpdb->prefix}wpss_orders WHERE id IN ({$ids})" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wpdb->query( "DELETE FROM {$wpdb->prefix}wpss_wallet_transactions WHERE reference_id IN ({$ids})" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			} else {
+				echo "  SKIP  settle_cart() did not create orders here\n";
+			}
+		}
+	}
+
+	if ( is_array( $saved_cart ) && ! empty( $saved_cart ) ) {
+		update_user_meta( 1, '_wpss_cart', $saved_cart );
+	} else {
+		delete_user_meta( 1, '_wpss_cart' );
+	}
+}
+
+/*
+ * --- PayPal charges what Stripe charges ------------------------------------
+ *
+ * PayPalGateway priced single checkout itself (package + add-ons, no tax) and
+ * rebuilt the order subtotal from the gateway figure on capture. It cannot be
+ * driven without API keys, so this holds the property structurally: every
+ * PayPal amount comes out of CheckoutIntentService, capture verifies the
+ * captured amount against it and settles through it, and no gateway-side
+ * price arithmetic remains.
+ */
+$paypal_src = file_get_contents( dirname( __DIR__ ) . '/src/Integrations/PayPal/PayPalGateway.php' );
+$stripe_src = file_get_contents( dirname( __DIR__ ) . '/src/Integrations/Stripe/StripeGateway.php' );
+
+wpss_t( substr_count( $paypal_src, 'CheckoutIntentService' ) >= 2, 'PayPal resolves its amount through CheckoutIntentService, like Stripe' );
+wpss_t( false !== strpos( $paypal_src, '->settle( $intent' ), 'PayPal settles through CheckoutIntentService::settle(), like Stripe' );
+wpss_t( false !== strpos( $paypal_src, 'wpss_amounts_match(' ), 'PayPal capture verifies the captured amount against the intent' );
+wpss_t( false === strpos( $paypal_src, "_wpss_packages" ), 'PayPal does not read package prices itself' );
+wpss_t( false === strpos( $paypal_src, '- $addons_total' ), 'PayPal does not rebuild the subtotal from the gateway amount' );
+wpss_t( false === strpos( $paypal_src, '->create_orders_from_cart(' ) && false === strpos( $stripe_src, '->create_orders_from_cart(' ), 'neither card rail creates cart orders outside settle()' );
 
 // --- One implementation ---------------------------------------------------
 update_option( 'wpss_tax', $saved );

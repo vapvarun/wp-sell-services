@@ -90,15 +90,29 @@ to hand us base-currency values, exactly as they do for WooCommerce.
 
 One value, one currency, on the order. Display conversion is a display concern.
 
-### 2.7 Refund sizing has one formula
+### 2.7 Refund sizing has one formula, and refunds accumulate
 
 `wpss_get_refund_vendor_share()`. A refund returns some proportion of what the
-buyer paid; the vendor returns the same proportion of what they earned. A full
-refund is just the case where that proportion is 1 — there is no separate
-partial path to drift.
+buyer still had paid; the vendor returns the same proportion of what they still
+hold. A full refund is just the case where that proportion is 1 — there is no
+separate partial path to drift.
 
-A partial larger than the order total is clamped to the total. Otherwise the
-reversal claws back more than the vendor ever earned.
+Refunds accumulate: `refunded_amount` is a running total and every call to
+`apply_refund_status()` adds one event to it. A partial keeps `payment_status`
+`paid`; only reaching the total closes the payment. Each event writes its own
+reversal row (`order_reversal`, reference_id = order id; the first keeps
+`reference_type` `order`, later ones `order_refund_2`, `order_refund_3`) sized
+against what was left before it. A partial larger than the remainder is
+clamped to it. Otherwise the reversal claws back more than the vendor holds.
+
+### 2.7a Commission is locked at payment
+
+`commission_rate`, `platform_fee` and `vendor_earnings` are written when the
+order is created and never re-resolved. `CommissionService::calculate()` reads
+them back at completion and only scales them by the share the buyer kept after
+refunds; a rate change, a new tiered rule or a vendor override between payment
+and completion touches new orders only. Rows from before 1.2.2 carry no rate and
+are computed then.
 
 ### 2.8 refunded_amount is a sentinel — resolve it, never read it raw
 
@@ -118,9 +132,38 @@ the column and call `update_status()` itself.
 
 ### 2.10 Idempotency everywhere money moves
 
-Keyed on `(reference_type, reference_id)` in the ledger, and on an
-Idempotency-Key at the gateway. A retried cron, a double-clicked button and a
-replayed webhook must each produce exactly one row and one transfer.
+Enforced by the database: the ledger is UNIQUE on
+`(reference_type, reference_id, type)` and reviews on `(order_id, review_type)`.
+Every Free ledger write goes through `wpss_insert_ledger_row()`, which reports a
+duplicate-key refusal as success (the row exists) and recomputes the vendor
+profile's cached `total_earnings` / `net_earnings` from the ledger, so the
+profile row, the Earnings page and the ledger say one number. `balance_after`
+is still written but displayed nowhere. At the gateway, an Idempotency-Key. A
+retried cron, a double-clicked button and a replayed webhook must each produce
+exactly one row and one transfer.
+
+### 2.11 Rail-side refunds enter through one seam
+
+A refund that happened AT the gateway (Stripe / PayPal / Razorpay dashboard,
+a Woo refund) reaches us as a webhook. Every webhook fires
+`wpss_gateway_refund_received( $gateway, $transaction_id, $amount, $context )`
+and nothing else; `OrderWorkflowManager::handle_gateway_refund()` is the only
+listener. It resolves every order paid with that transaction (a cart stamps
+one id on several orders), splits an unnamed amount by order total, skips a
+refund id it has already seen, and records each share through
+`apply_refund_status( …, settled_at_rail = true )` so the vendor share is
+reversed and the gateway is never called back. No gateway applies a refund
+inline.
+
+Store-side refunds run the other way: `attempt_payment_refund()` first offers
+`wpss_pre_process_gateway_refund` (a rail that owns the money settles it and
+returns the seam-3 array), then calls the order's gateway. Every
+`process_refund()` returns `{success, transaction_id, message, manual}`. A
+gateway that cannot move money (offline, test) returns `manual = true`: the
+order gets `_wpss_refund_pending` = amount, the admin sees a notice and a
+"Mark refund sent" button on the order, and nothing is ever logged as a
+successful refund. `OrderWorkflowManager::get_last_refund_result()` hands the
+real gateway outcome back to whoever moved the status.
 
 ---
 

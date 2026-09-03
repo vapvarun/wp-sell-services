@@ -220,6 +220,8 @@ function wpss_get_known_dashboard_sections(): array {
 		// Selling.
 		'services',
 		'sales',
+		'proposals',
+		'reviews',
 		'earnings',
 		'wallet',
 		'portfolio',
@@ -282,6 +284,8 @@ function wpss_get_dashboard_section_aliases(): array {
 		'my-favorites'   => 'favorites',
 		'my-portfolio'   => 'portfolio',
 		'my-earnings'    => 'earnings',
+		'my-proposals'   => 'proposals',
+		'my-reviews'     => 'reviews',
 		'buyer-requests' => 'requests',
 		'my-profile'     => 'profile',
 		'become_vendor'  => 'become-vendor',
@@ -562,8 +566,7 @@ function wpss_get_default_page_slugs(): array {
  * @return string Page URL or empty string.
  */
 function wpss_get_page_url( string $page_key ): string {
-	$pages   = get_option( 'wpss_pages', array() );
-	$page_id = (int) ( $pages[ $page_key ] ?? 0 );
+	$page_id = wpss_get_page_id( $page_key );
 
 	if ( $page_id ) {
 		$url = get_permalink( $page_id );
@@ -584,14 +587,21 @@ function wpss_get_page_url( string $page_key ): string {
 /**
  * Get the mapped page ID for a given page key.
  *
+ * A mapped page that is trashed, drafted or deleted counts as unmapped: its
+ * permalink is ?page_id=N, which 404s, so every link built from it broke while
+ * the setting still said the page was there. Callers already treat 0 as "no
+ * page", so answering 0 here fixes every link and the setup notice at once.
+ *
  * @since 1.1.0
  *
  * @param string $page_key Page settings key (e.g., 'services_page', 'dashboard').
  * @return int Page ID or 0.
  */
 function wpss_get_page_id( string $page_key ): int {
-	$pages = get_option( 'wpss_pages', array() );
-	return (int) ( $pages[ $page_key ] ?? 0 );
+	$pages   = get_option( 'wpss_pages', array() );
+	$page_id = (int) ( $pages[ $page_key ] ?? 0 );
+
+	return $page_id && 'publish' === get_post_status( $page_id ) ? $page_id : 0;
 }
 
 /**
@@ -785,58 +795,124 @@ function wpss_get_checkout_base_url(): string {
  * Get the URL a buyer uses to pay one existing order.
  *
  * This is the single seam for "send the buyer somewhere they can pay THIS
- * order" — tips, milestones, extensions and accepted proposals all resolve
+ * order" - tips, milestones, extensions and accepted proposals all resolve
  * through here, including the links we put in emails.
  *
+ * A READ. Order lists, order pages, REST shapes and emails call this once per
+ * unpaid row, so it must never create anything: on the WooCommerce rail it
+ * used to mint a pending WC order for every unpaid row a buyer merely
+ * listed. A store rail may answer from what it already knows (the
+ * `wpss_pay_order_url_lookup` filter, reading the WPSS row meta); otherwise
+ * the buyer lands on the dormant WPSS checkout page, which is where
+ * wpss_ensure_pay_order() creates the store order - on click, not on view.
+ *
  * Standalone pretty shape: `/{checkout}/pay/{id}/`. Legacy `?pay_order=N` is
- * still accepted and 301'd when pretty permalinks are on.
- * A cart-based rail (WooCommerce, EDD) hooks `wpss_pay_order_url` and returns
- * a URL on their own payment flow instead.
+ * still accepted and 301'd when pretty permalinks are on. A rail that
+ * implements neither seam gets '' (see wpss_can_pay_single_order()).
  *
  * @since 1.4.0
+ * @since 1.7.1 Read-only; accepts the loaded row to save a query per row.
  *
- * @param int $order_id WPSS order ID to be paid.
+ * @param int         $order_id WPSS order ID to be paid.
+ * @param object|null $order    The order row when the caller already holds it.
  * @return string Payment URL for the active e-commerce rail.
  */
-function wpss_get_pay_order_url( int $order_id ): string {
-	$base = wpss_get_checkout_base_url();
+function wpss_get_pay_order_url( int $order_id, ?object $order = null ): string {
+	// No rail can pay one order here: return nothing rather than a standalone
+	// URL the active store ignores. Every caller treats '' as "no button".
+	if ( $order_id <= 0 || ! wpss_can_pay_single_order() ) {
+		return '';
+	}
 
-	if ( $order_id > 0 && $base && get_option( 'permalink_structure' ) ) {
-		$query    = '';
-		$fragment = '';
-		$url      = $base;
-
-		$hash_pos = strpos( $url, '#' );
-		if ( false !== $hash_pos ) {
-			$fragment = substr( $url, $hash_pos );
-			$url      = substr( $url, 0, $hash_pos );
-		}
-
-		$query_pos = strpos( $url, '?' );
-		if ( false !== $query_pos ) {
-			$query = substr( $url, $query_pos );
-			$url   = substr( $url, 0, $query_pos );
-		}
-
-		$url = trailingslashit( $url ) . 'pay/' . $order_id . '/' . $query . $fragment;
+	if ( ! wpss_uses_standalone_payments() ) {
+		// A store rail pays on its own order page, which may not exist yet.
+		// Land on the WPSS checkout page: it is dormant on a store rail and
+		// Plugin::redirect_dormant_store_pages() resolves `?pay_order=N`
+		// through wpss_ensure_pay_order() before a byte is sent.
+		$url = add_query_arg( 'pay_order', $order_id, wpss_get_page_url( 'checkout' ) );
 	} else {
-		$url = add_query_arg( 'pay_order', $order_id, $base );
+		$base = wpss_get_checkout_base_url();
+
+		if ( $base && get_option( 'permalink_structure' ) ) {
+			$query    = '';
+			$fragment = '';
+			$url      = $base;
+
+			$hash_pos = strpos( $url, '#' );
+			if ( false !== $hash_pos ) {
+				$fragment = substr( $url, $hash_pos );
+				$url      = substr( $url, 0, $hash_pos );
+			}
+
+			$query_pos = strpos( $url, '?' );
+			if ( false !== $query_pos ) {
+				$query = substr( $url, $query_pos );
+				$url   = substr( $url, 0, $query_pos );
+			}
+
+			$url = trailingslashit( $url ) . 'pay/' . $order_id . '/' . $query . $fragment;
+		} else {
+			$url = add_query_arg( 'pay_order', $order_id, $base );
+		}
+	}
+
+	if ( ! has_filter( 'wpss_pay_order_url_lookup' ) ) {
+		return $url;
 	}
 
 	/**
-	 * Filter the URL a buyer is sent to in order to pay a single order.
+	 * Filter the pay URL with one the rail already knows.
 	 *
-	 * Cart-based rails replace this entirely — see the WooCommerce
-	 * implementation in Pro, which creates (or reuses) a real WC order and
-	 * returns its native order-pay URL so the link works from an email with
-	 * no cart session.
+	 * Read-only. Return the store order's own pay URL when the WPSS row meta
+	 * already names a store order (Pro's WooCommerce and FluentCart resolvers
+	 * do), otherwise return $url unchanged. Never create or load a store
+	 * order here: this runs once per unpaid row on every list, page and
+	 * email. Creation is wpss_ensure_pay_order().
 	 *
-	 * @since 1.4.0
+	 * @since 1.7.1
 	 *
-	 * @param string $url      Default standalone pay URL.
+	 * @param string      $url      Free landing URL that resolves on click.
+	 * @param int         $order_id WPSS order ID being paid.
+	 * @param object|null $order    WPSS order row, null when it no longer exists.
+	 */
+	return (string) apply_filters( 'wpss_pay_order_url_lookup', $url, $order_id, $order ?? wpss_get_order( $order_id ) );
+}
+
+/**
+ * Make sure the active rail can take payment for one order, and get its URL.
+ *
+ * The WRITE half of the pay-order seam. A store rail creates (or reuses) its
+ * own order for the amount owed here and nowhere else. Call it from the
+ * paths where the buyer is about to pay - the click that lands on
+ * `?pay_order=N`, the REST "pay this order" endpoints, and the write that
+ * just created the tip, phase, extension or accepted proposal. Every
+ * read path (lists, order pages, REST shapes) uses wpss_get_pay_order_url().
+ *
+ * @since 1.7.1
+ *
+ * @param int $order_id WPSS order ID to be paid.
+ * @return string Payment URL, '' when no rail can pay a single order.
+ */
+function wpss_ensure_pay_order( int $order_id ): string {
+	$url = wpss_get_pay_order_url( $order_id );
+
+	if ( '' === $url ) {
+		return '';
+	}
+
+	/**
+	 * Filter the pay URL after the rail has made sure its store order exists.
+	 *
+	 * The only place a rail may create a store order on the buyer's behalf.
+	 * Return the store order's native pay URL; return $url unchanged when
+	 * the rail cannot serve it so the buyer falls back to the Free flow.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $url      Pay URL from wpss_get_pay_order_url().
 	 * @param int    $order_id WPSS order ID being paid.
 	 */
-	return (string) apply_filters( 'wpss_pay_order_url', $url, $order_id );
+	return (string) apply_filters( 'wpss_ensure_pay_order', $url, $order_id );
 }
 
 /**

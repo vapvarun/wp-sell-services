@@ -35,19 +35,6 @@ wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', arra
 // Enqueue frontend assets to ensure wpssData is available.
 wpss_enqueue_frontend_assets();
 
-// Enqueue requirements form script.
-\WPSellServices\Assets\ScriptRegistry::enqueue( 'wpss-requirements-form', 'assets/js/requirements-form.js', array( 'jquery' ) );
-wp_localize_script(
-	'wpss-requirements-form',
-	'wpss_ajax',
-	array(
-		'ajax_url' => admin_url( 'admin-ajax.php' ),
-		'i18n'     => array(
-			'submit_error' => __( 'Failed to submit requirements.', 'wp-sell-services' ),
-			'ajax_error'   => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-		),
-	)
-);
 
 // Localize REST API data for inline JS.
 wp_enqueue_script( 'wp-api-fetch' );
@@ -83,8 +70,8 @@ $vendor       = get_userdata( $order->vendor_id );
 $customer     = get_userdata( $order->customer_id );
 
 // Handle deleted users gracefully.
-$vendor_name   = $vendor ? $vendor->display_name : __( 'Deleted User', 'wp-sell-services' );
-$customer_name = $customer ? $customer->display_name : __( 'Deleted User', 'wp-sell-services' );
+$vendor_name   = wpss_get_member_display_name( (int) $order->vendor_id );
+$customer_name = wpss_get_member_display_name( (int) $order->customer_id );
 
 // Get deliveries via service layer.
 $delivery_service = new DeliveryService();
@@ -281,11 +268,10 @@ do_action( 'wpss_before_order_view', $order );
 
 		if ( $is_customer ) {
 			// Pay Now button for unpaid orders (e.g., from accepted proposals).
-			if ( 'pending_payment' === $order->status ) {
-				// Through the seam, so the button is right on whichever rail
-				// the site runs. Building ?pay_order=N inline is correct only
-				// on standalone; on WooCommerce it lands on the store cart.
-				$pay_url        = wpss_get_pay_order_url( (int) $order_id );
+			// Through the seam, so the button is right on whichever rail the
+			// site runs, and absent ('') on a rail that cannot pay one order.
+			$pay_url = 'pending_payment' === $order->status ? wpss_get_pay_order_url( (int) $order_id, $order ) : '';
+			if ( '' !== $pay_url ) {
 				$actions['pay'] = array(
 					'label' => sprintf(
 						/* translators: %s: formatted price */
@@ -396,7 +382,6 @@ do_action( 'wpss_before_order_view', $order );
 			);
 		}
 
-			$order_settings = get_option( 'wpss_orders', array() );
 		if ( $can_open_dispute && ( $is_customer || $is_vendor ) ) {
 			$actions['dispute'] = array(
 				'label' => __( 'Open Dispute', 'wp-sell-services' ),
@@ -492,7 +477,7 @@ do_action( 'wpss_before_order_view', $order );
 	);
 	$can_propose_milestone     = $is_vendor && $is_request_order && in_array( $order->status, $milestone_active_statuses, true );
 	$show_milestone_section    = $is_request_order && ( ! empty( $milestones ) || $can_propose_milestone );
-	$milestone_currency        = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+	$milestone_currency        = $order->currency ?? wpss_get_currency();
 
 	$ms_approved_count  = 0;
 	$ms_total_paid      = 0.0;
@@ -854,10 +839,7 @@ do_action( 'wpss_before_order_view', $order );
 	$submitted_attachments = array();
 	$submitted_at          = null;
 	if ( $service ) {
-		$service_requirements = get_post_meta( $service->ID, '_wpss_requirements', true );
-		if ( ! is_array( $service_requirements ) ) {
-			$service_requirements = array();
-		}
+		$service_requirements = wpss_get_service_requirements( (int) $service->ID );
 	}
 
 	// Get submitted requirements from database.
@@ -921,104 +903,9 @@ do_action( 'wpss_before_order_view', $order );
 				<?php endif; ?>
 
 				<?php
-				// CB2 (plans/ORDER-FLOW-AUDIT.md): count required fields once for the
-				// progress bar. The bar updates live as the buyer fills the form.
-				$req_required_count = 0;
-				foreach ( $service_requirements as $req_check ) {
-					if ( ! empty( $req_check['required'] ) ) {
-						++$req_required_count;
-					}
-				}
+				$late_submission = $show_late_requirements_form;
+				include WPSS_PLUGIN_DIR . 'templates/order/requirements-form.php';
 				?>
-				<form id="wpss-requirements-form"
-						class="wpss-requirements-form"
-						enctype="multipart/form-data"
-						data-required-count="<?php echo esc_attr( (string) $req_required_count ); ?>">
-					<?php wp_nonce_field( 'wpss_submit_requirements', 'wpss_requirements_nonce' ); ?>
-					<input type="hidden" name="action" value="wpss_submit_requirements">
-					<input type="hidden" name="order_id" value="<?php echo esc_attr( $order_id ); ?>">
-					<?php if ( $show_late_requirements_form ) : ?>
-						<input type="hidden" name="late_submission" value="1">
-					<?php endif; ?>
-
-					<?php if ( $req_required_count > 0 ) : ?>
-						<div class="wpss-requirements-form__progress" data-wpss-req-progress>
-							<div class="wpss-requirements-form__progress-text">
-								<span data-wpss-req-progress-label>
-									<?php
-									printf(
-										/* translators: 1: filled count, 2: total required */
-										esc_html__( '%1$d of %2$d required answered', 'wp-sell-services' ),
-										0,
-										(int) $req_required_count
-									);
-									?>
-								</span>
-							</div>
-							<div class="wpss-requirements-form__progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="<?php echo esc_attr( (string) $req_required_count ); ?>" aria-valuenow="0">
-								<div class="wpss-requirements-form__progress-fill" data-wpss-req-progress-fill style="width: 0%;"></div>
-							</div>
-						</div>
-					<?php endif; ?>
-
-					<?php foreach ( $service_requirements as $index => $requirement ) : ?>
-						<?php
-						$question    = $requirement['question'] ?? '';
-						$type        = $requirement['type'] ?? 'textarea';
-						$is_required = ! empty( $requirement['required'] );
-						$field_name  = 'requirements[' . $index . ']';
-						$field_id    = 'requirement-' . $index;
-						?>
-						<div class="wpss-form-group wpss-requirements-form__field" data-index="<?php echo esc_attr( $index ); ?>">
-							<label for="<?php echo esc_attr( $field_id ); ?>" class="wpss-label wpss-requirements-form__label">
-								<?php echo esc_html( $question ); ?>
-								<?php if ( $is_required ) : ?>
-									<span class="wpss-required">*</span>
-								<?php endif; ?>
-							</label>
-
-							<?php if ( 'file' === $type ) : ?>
-								<div class="wpss-file-upload wpss-requirements-form__upload" data-max-files="1">
-									<input type="file"
-											name="<?php echo esc_attr( $field_name ); ?>"
-											id="<?php echo esc_attr( $field_id ); ?>"
-											class="wpss-file-input wpss-requirements-form__upload-input"
-											<?php echo $is_required ? 'required' : ''; ?>>
-									<label for="<?php echo esc_attr( $field_id ); ?>" class="wpss-file-upload__label wpss-requirements-form__upload-label">
-										<i data-lucide="upload" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
-										<span class="wpss-file-upload__text"><?php esc_html_e( 'Choose a file or drag it here', 'wp-sell-services' ); ?></span>
-									</label>
-									<div class="wpss-requirements-form__file-list"></div>
-								</div>
-							<?php elseif ( 'text' === $type ) : ?>
-								<input type="text"
-										name="<?php echo esc_attr( $field_name ); ?>"
-										id="<?php echo esc_attr( $field_id ); ?>"
-										class="wpss-input wpss-requirements-form__input"
-										<?php echo $is_required ? 'required' : ''; ?>>
-							<?php else : ?>
-								<textarea name="<?php echo esc_attr( $field_name ); ?>"
-											id="<?php echo esc_attr( $field_id ); ?>"
-											class="wpss-textarea wpss-requirements-form__textarea"
-											rows="4"
-											<?php echo $is_required ? 'required' : ''; ?>></textarea>
-							<?php endif; ?>
-						</div>
-					<?php endforeach; ?>
-
-					<div class="wpss-form-actions">
-						<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-requirements-form__submit-btn">
-							<span class="wpss-requirements-form__submit-text">
-								<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-								<?php esc_html_e( 'Submit Requirements', 'wp-sell-services' ); ?>
-							</span>
-							<span class="wpss-requirements-form__submit-loading" style="display: none;">
-								<i data-lucide="loader-2" class="wpss-icon wpss-spinner" aria-hidden="true"></i>
-								<?php esc_html_e( 'Submitting...', 'wp-sell-services' ); ?>
-							</span>
-						</button>
-					</div>
-				</form>
 			</div>
 		</section>
 	<?php endif; ?>
@@ -1046,16 +933,20 @@ do_action( 'wpss_before_order_view', $order );
 			<div class="wpss-order-section__body">
 				<?php foreach ( $service_requirements as $index => $requirement ) : ?>
 					<?php
-					$question       = $requirement['question'] ?? '';
-					$type           = $requirement['type'] ?? 'textarea';
-					$field_key      = $question; // Data is keyed by question.
-					$response_value = $submitted_data[ $field_key ] ?? '';
+					$question       = $requirement['label'];
+					$type           = $requirement['type'];
+					$response_value = wpss_requirement_answer( $requirement, $submitted_data );
+					if ( is_array( $response_value ) ) {
+						$response_value = implode( ', ', array_map( 'strval', $response_value ) );
+					}
 
-					// Find attachment for this field (if file type).
+					// Find attachment for this field (if file type). Answers and
+					// attachments are keyed by requirement id; pre-1.7.1 rows by
+					// question text.
 					$field_attachment = null;
 					if ( 'file' === $type && ! empty( $submitted_attachments ) ) {
 						foreach ( $submitted_attachments as $att ) {
-							if ( isset( $att['key'] ) && $att['key'] === $field_key ) {
+							if ( isset( $att['key'] ) && in_array( $att['key'], array( $requirement['id'], $question ), true ) ) {
 								$field_attachment = $att;
 								break;
 							}
@@ -1070,18 +961,27 @@ do_action( 'wpss_before_order_view', $order );
 						<div class="wpss-requirement-view__answer <?php echo $is_long_text ? 'wpss-requirement-view__answer--collapsed' : ''; ?>">
 							<?php if ( 'file' === $type && $field_attachment ) : ?>
 								<?php
-								// Check if it's an image for preview.
-								$is_image = in_array( strtolower( pathinfo( $field_attachment['name'], PATHINFO_EXTENSION ) ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ), true );
+								// Private records (1.7.0+) carry a path, not a url: the ONE
+								// resolver hands back the guarded endpoint, or '' when the
+								// file is not addressable - same as the orphan list below.
+								$field_attachment['order_id'] = $order_id;
+								$field_file_url               = wpss_get_order_file_url( $field_attachment );
+								$field_file_name              = (string) ( $field_attachment['name'] ?? __( 'Attachment', 'wp-sell-services' ) );
+								$is_image                     = '' !== $field_file_url && in_array( strtolower( pathinfo( $field_file_name, PATHINFO_EXTENSION ) ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ), true );
 								?>
 								<?php if ( $is_image ) : ?>
 									<div class="wpss-requirement-view__image-preview">
-										<img src="<?php echo esc_url( $field_attachment['url'] ); ?>" alt="<?php echo esc_attr( $field_attachment['name'] ); ?>" class="wpss-requirement-view__thumbnail" loading="lazy">
+										<img src="<?php echo esc_url( $field_file_url ); ?>" alt="<?php echo esc_attr( $field_file_name ); ?>" class="wpss-requirement-view__thumbnail" loading="lazy">
 									</div>
 								<?php endif; ?>
-								<a href="<?php echo esc_url( $field_attachment['url'] ); ?>" class="wpss-file-link" target="_blank" download>
-									<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
-									<?php echo esc_html( $field_attachment['name'] ); ?>
-								</a>
+								<?php if ( '' !== $field_file_url ) : ?>
+									<a href="<?php echo esc_url( $field_file_url ); ?>" class="wpss-file-link" target="_blank" download>
+										<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
+										<?php echo esc_html( $field_file_name ); ?>
+									</a>
+								<?php else : ?>
+									<?php echo esc_html( $field_file_name ); ?>
+								<?php endif; ?>
 							<?php elseif ( $response_value ) : ?>
 								<div class="wpss-requirement-view__text-content">
 									<?php echo wp_kses_post( wpautop( $response_value ) ); ?>
@@ -1122,7 +1022,8 @@ do_action( 'wpss_before_order_view', $order );
 				 */
 				$rendered_keys = array();
 				foreach ( $service_requirements as $requirement ) {
-					$rendered_keys[] = (string) ( $requirement['question'] ?? '' );
+					$rendered_keys[] = $requirement['id'];
+					$rendered_keys[] = $requirement['label'];
 				}
 
 				$orphan_answers = array();
@@ -1215,9 +1116,8 @@ do_action( 'wpss_before_order_view', $order );
 				</div>
 				<?php foreach ( $service_requirements as $index => $requirement ) : ?>
 					<?php
-					$question = $requirement['question'] ?? '';
-					$type     = $requirement['type'] ?? 'textarea';
-					$required = ! empty( $requirement['required'] );
+					$question = $requirement['label'];
+					$required = $requirement['required'];
 					?>
 					<div class="wpss-requirement-view">
 						<h4 class="wpss-requirement-view__question">
@@ -1407,7 +1307,14 @@ do_action( 'wpss_before_order_view', $order );
 							<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $order->completed_at->getTimestamp() ) ); ?></span>
 						</div>
 					</div>
-				<?php elseif ( in_array( $order->status, array( 'cancelled', 'refunded', 'partially_refunded' ), true ) ) : ?>
+				<?php endif; ?>
+
+				<?php
+				// Own `if`, not an `elseif` of completed_at: an order that was
+				// completed and THEN refunded or cancelled keeps its Completed
+				// entry and also shows what happened to it afterwards.
+				?>
+				<?php if ( in_array( $order->status, array( 'cancelled', 'refunded', 'partially_refunded' ), true ) ) : ?>
 					<div class="wpss-timeline__item wpss-timeline__item--completed">
 						<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
 						<div class="wpss-timeline__content">
@@ -1458,6 +1365,10 @@ do_action( 'wpss_before_order_view', $order );
 						<div class="wpss-timeline__content">
 							<span class="wpss-timeline__title"><?php esc_html_e( 'Revision Requested', 'wp-sell-services' ); ?></span>
 							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
+							<?php $revision_reason = $order->get_revision_reason(); ?>
+							<?php if ( '' !== $revision_reason ) : ?>
+								<p class="wpss-timeline__note wpss-revision-reason"><?php echo esc_html( $revision_reason ); ?></p>
+							<?php endif; ?>
 						</div>
 					</div>
 
@@ -1537,7 +1448,7 @@ do_action( 'wpss_before_order_view', $order );
 								<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $delivery->created_at ) ) ); ?>
 							</span>
 							<span class="<?php echo esc_attr( wpss_status_class( $delivery->status ) ); ?>">
-								<?php echo esc_html( ucfirst( $delivery->status ) ); ?>
+								<?php echo esc_html( wpss_get_order_status_label( (string) $delivery->status ) ); ?>
 							</span>
 						</div>
 						<div class="wpss-delivery-item__content">
@@ -1719,7 +1630,7 @@ do_action( 'wpss_before_order_view', $order );
 				<?php endif; ?>
 				<?php if ( $is_vendor && '' === $wpss_order_review->response ) : ?>
 					<p class="wpss-text-muted wpss-review-respond-hint">
-						<?php esc_html_e( 'You can respond to this review from your Reviews section.', 'wp-sell-services' ); ?>
+						<a href="<?php echo esc_url( wpss_get_dashboard_url( 'reviews' ) ); ?>"><?php esc_html_e( 'Respond to this review from your Reviews section.', 'wp-sell-services' ); ?></a>
 					</p>
 				<?php endif; ?>
 			</div>
@@ -1774,10 +1685,12 @@ do_action( 'wpss_before_order_view', $order );
 					<ol class="wpss-milestone-list">
 						<?php
 						foreach ( $milestones as $index => $m ) :
-							$ms_status      = $m['status'];
-							$ms_sub_id      = (int) $m['id'];
-							$ms_sub_url     = wpss_get_order_url( $ms_sub_id );
-							$ms_pay_url     = wpss_get_pay_order_url( $ms_sub_id );
+							$ms_status  = $m['status'];
+							$ms_sub_id  = (int) $m['id'];
+							$ms_sub_url = wpss_get_order_url( $ms_sub_id );
+							// Only a phase the buyer can pay right now gets a URL: a read
+							// per payable row, nothing for paid or locked ones.
+							$ms_pay_url     = 'pending_payment' === $ms_status && empty( $m['is_locked'] ) ? wpss_get_pay_order_url( $ms_sub_id ) : '';
 							$ms_state_label = '';
 							$ms_state_class = 'wpss-ms-state--' . sanitize_html_class( $ms_status );
 
@@ -1858,7 +1771,7 @@ do_action( 'wpss_before_order_view', $order );
 												</span>
 												<?php esc_html_e( 'Locked — finish the earlier phase first', 'wp-sell-services' ); ?>
 											</span>
-										<?php else : ?>
+										<?php elseif ( '' !== $ms_pay_url ) : ?>
 											<a href="<?php echo esc_url( $ms_pay_url ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--sm">
 												<?php
 												printf(
@@ -2068,7 +1981,7 @@ do_action( 'wpss_before_order_view', $order );
 		$ext_pay_url  = $pending_extension->pay_order_id
 			? wpss_get_pay_order_url( (int) $pending_extension->pay_order_id )
 			: '';
-		$ext_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+		$ext_currency = $order->currency ?? wpss_get_currency();
 		?>
 		<section class="wpss-order-section">
 			<div class="wpss-extension-pending-card">
@@ -2130,7 +2043,7 @@ do_action( 'wpss_before_order_view', $order );
 				</h3>
 				<p class="wpss-extension-pending-card__body">
 					<?php
-					$ext_currency = $order->currency ?? ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+					$ext_currency = $order->currency ?? wpss_get_currency();
 					printf(
 						/* translators: 1: amount, 2: days */
 						esc_html__( 'You requested %1$s / %2$s. Buyer has not responded yet.', 'wp-sell-services' ),
@@ -2157,12 +2070,12 @@ do_action( 'wpss_before_order_view', $order );
 		</section>
 	<?php endif; ?>
 
-	<!-- Tip CTA (for completed orders, buyer only, once per order) -->
+	<!-- Tip CTA (for completed orders, buyer only, once per order, on a rail that can take the payment) -->
 	<?php
-	if ( 'completed' === $order->status && $is_customer ) :
+	if ( 'completed' === $order->status && $is_customer && wpss_can_pay_single_order() ) :
 		$tipping_service = new \WPSellServices\Services\TippingService();
 		$already_tipped  = $tipping_service->has_tipped( $order_id, get_current_user_id() );
-		$currency        = get_option( 'wpss_general', array() )['currency'] ?? 'USD';
+		$currency        = wpss_get_currency();
 
 		// Buyer-facing receipt should show the gross amount the buyer paid
 		// (tip order total), not the net the vendor received. Fetch the
@@ -2362,7 +2275,15 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 						</label>
 						<div class="wpss-file-list" id="deliver-file-list"></div>
 					</div>
-					<p class="wpss-form-help"><?php esc_html_e( 'Max file size: 50MB. Supported: images, documents, archives.', 'wp-sell-services' ); ?></p>
+					<p class="wpss-form-help">
+						<?php
+						printf(
+							/* translators: %d: maximum upload size in megabytes */
+							esc_html__( 'Max file size: %dMB. Supported: images, documents, archives.', 'wp-sell-services' ),
+							(int) wpss_get_option( 'advanced', 'max_file_size' )
+						);
+						?>
+					</p>
 				</div>
 			</div>
 
@@ -2401,7 +2322,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					<div class="wpss-star-rating" role="group" aria-label="<?php esc_attr_e( 'Rating', 'wp-sell-services' ); ?>">
 						<?php for ( $i = 5; $i >= 1; $i-- ) : ?>
 							<input type="radio" name="rating" id="star-<?php echo esc_attr( $i ); ?>" value="<?php echo esc_attr( $i ); ?>" required>
-							<label for="star-<?php echo esc_attr( $i ); ?>" title="<?php echo esc_attr( $i ); ?> <?php esc_attr_e( 'stars', 'wp-sell-services' ); ?>">
+							<label for="star-<?php echo esc_attr( $i ); ?>" title="<?php echo esc_attr( sprintf( /* translators: %d: star count */ _n( '%d star', '%d stars', $i, 'wp-sell-services' ), $i ) ); ?>">
 								<i data-lucide="star" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 							</label>
 						<?php endfor; ?>
@@ -2900,6 +2821,17 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	color: var(--wpss-text-muted, #6b7280);
 }
 
+.wpss-timeline__note {
+	margin: var(--wpss-space-2, 0.5rem) 0 0;
+	padding: var(--wpss-space-2, 0.5rem) var(--wpss-space-3, 0.75rem);
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border-inline-start: 3px solid var(--wpss-warning, #f59e0b);
+	border-radius: 4px;
+	font-size: 0.875rem;
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+}
+
 /* Delivery Items */
 .wpss-delivery-item {
 	padding: 1rem;
@@ -3308,80 +3240,9 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	}
 }
 
-/* CB2 (plans/ORDER-FLOW-AUDIT.md) requirements progress bar */
-.wpss-requirements-form__progress {
-	margin-bottom: 24px;
-	padding: 12px 16px;
-	background: var(--wpss-bg-subtle, #f9fafb);
-	border: 1px solid var(--wpss-border, #e5e7eb);
-	border-radius: 8px;
-}
-.wpss-requirements-form__progress-text {
-	font-size: 13px;
-	font-weight: 600;
-	color: var(--wpss-text-secondary, #374151);
-	margin-bottom: 8px;
-}
-.wpss-requirements-form__progress-bar {
-	width: 100%;
-	height: 6px;
-	background: var(--wpss-border, #e5e7eb);
-	border-radius: 9999px;
-	overflow: hidden;
-}
-.wpss-requirements-form__progress-fill {
-	height: 100%;
-	background: linear-gradient( 90deg, var(--wpss-primary, #4f46e5), var(--wpss-primary, #7c3aed) );
-	border-radius: 9999px;
-	transition: width 0.3s ease;
-}
-.wpss-requirements-form__progress--complete .wpss-requirements-form__progress-fill {
-	background: linear-gradient( 90deg, var(--wpss-success, #10b981), var(--wpss-success, #059669) );
-}
-.wpss-requirements-form__progress--complete .wpss-requirements-form__progress-text {
-	color: var(--wpss-success-dark, #047857);
-}
 </style>
 
 <script>
-(function() {
-	// CB2 (plans/ORDER-FLOW-AUDIT.md): live progress bar for the requirements
-	// form so the buyer always knows how many required questions remain.
-	var reqForm = document.getElementById( 'wpss-requirements-form' );
-	if ( reqForm && parseInt( reqForm.dataset.requiredCount || '0', 10 ) > 0 ) {
-		var totalReq = parseInt( reqForm.dataset.requiredCount, 10 );
-		var label    = reqForm.querySelector( '[data-wpss-req-progress-label]' );
-		var fill     = reqForm.querySelector( '[data-wpss-req-progress-fill]' );
-		var bar      = reqForm.querySelector( '.wpss-requirements-form__progress-bar' );
-		var wrap     = reqForm.querySelector( '[data-wpss-req-progress]' );
-		var labelTpl = '%1$d of %2$d required answered';
-		function reqUpdate() {
-			var fields = reqForm.querySelectorAll( '[required]' );
-			var seen   = {};
-			var filled = 0;
-			fields.forEach( function ( f ) {
-				if ( f.type === 'checkbox' || f.type === 'radio' ) {
-					if ( seen[ f.name ] ) { return; }
-					seen[ f.name ] = true;
-					if ( reqForm.querySelectorAll( 'input[name="' + f.name + '"]:checked' ).length > 0 ) { filled++; }
-				} else if ( f.type === 'file' ) {
-					if ( f.files && f.files.length > 0 ) { filled++; }
-				} else if ( ( f.value || '' ).trim() !== '' ) {
-					filled++;
-				}
-			} );
-			var capped = Math.min( filled, totalReq );
-			fill.style.width = Math.round( ( capped / totalReq ) * 100 ) + '%';
-			label.textContent = labelTpl.replace( '%1$d', String( capped ) ).replace( '%2$d', String( totalReq ) );
-			bar.setAttribute( 'aria-valuenow', String( capped ) );
-			wrap.classList.toggle( 'wpss-requirements-form__progress--complete', capped >= totalReq );
-		}
-		reqForm.addEventListener( 'input', reqUpdate );
-		reqForm.addEventListener( 'change', reqUpdate );
-		reqUpdate();
-	}
-})();
-
 (function() {
 	'use strict';
 

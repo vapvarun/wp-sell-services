@@ -90,15 +90,22 @@ def scan():
     roots = [
         ("Free", os.path.join(FREE, "src")),
         ("Free", os.path.join(FREE, "templates")),
+        ("Free", os.path.join(FREE, "wp-sell-services.php")),
         ("Pro", os.path.join(PRO, "src")),
         ("Pro", os.path.join(PRO, "templates")),
+        # The bootstrap is not a directory but it does fire hooks:
+        # wpss_pro_beta_rails gates the EDD and FluentCart rails from there, and
+        # was missing from this "complete" index because only src/ was scanned.
+        ("Pro", os.path.join(PRO, "wp-sell-services-pro.php")),
     ]
 
     for plugin, root in roots:
-        if not os.path.isdir(root):
+        if not os.path.isdir(root) and not os.path.isfile(root):
             continue
         base = FREE if plugin == "Free" else PRO
-        for dirpath, _, filenames in os.walk(root):
+        walked = ([(os.path.dirname(root), None, [os.path.basename(root)])]
+                  if os.path.isfile(root) else os.walk(root))
+        for dirpath, _, filenames in walked:
             for name in sorted(filenames):
                 if not name.endswith(".php"):
                     continue

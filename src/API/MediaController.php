@@ -72,6 +72,14 @@ class MediaController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'upload' ),
 					'permission_callback' => array( $this, 'check_permissions' ),
+					'args'                => array(
+						'context' => array(
+							'description'       => __( 'What the file is for: avatar, portfolio, service or profile. Order files (deliveries, requirements, messages, disputes) are uploaded on their own order routes.', 'wp-sell-services' ),
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_key',
+						),
+					),
 				),
 			)
 		);
@@ -110,37 +118,30 @@ class MediaController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function upload( WP_REST_Request $request ) {
+		$context = (string) $request->get_param( 'context' );
+
+		// This library is public by nature (an avatar or a portfolio image is
+		// meant to be seen). Anything that belongs to an order goes through
+		// the private order store on the order routes instead
+		// (Basecamp 10264291163).
+		if ( ! in_array( $context, array( 'avatar', 'portfolio', 'service', 'profile' ), true ) ) {
+			return new WP_Error(
+				'wpss_order_upload_context',
+				__( 'This route is for public profile media only. Upload order files on POST /orders/{id}/deliverables, /orders/{id}/requirements, /orders/{id}/messages or /disputes/{id}/evidence.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
+
 		$files = $request->get_file_params();
 
 		if ( empty( $files['file'] ) ) {
 			return new WP_Error( 'no_file', __( 'No file provided.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		$file = $files['file'];
+		$refused = wpss_check_upload( (array) $files['file'] );
 
-		// Validate file size.
-		$max_size = (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024;
-		if ( $file['size'] > $max_size ) {
-			return new WP_Error(
-				'file_too_large',
-				/* translators: %s: maximum file size */
-				sprintf( __( 'File size exceeds the maximum of %s.', 'wp-sell-services' ), size_format( $max_size ) ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// Verify MIME type matches extension to prevent disguised uploads.
-		$filetype = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
-		if ( ! $filetype['ext'] || ! $filetype['type'] ) {
-			return new WP_Error( 'invalid_type', __( 'File type could not be verified.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		// Validate file type against allowed list using the verified extension.
-		$allowed_types = explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) );
-		$file_ext      = strtolower( $filetype['ext'] );
-
-		if ( ! in_array( $file_ext, $allowed_types, true ) ) {
-			return new WP_Error( 'invalid_type', __( 'File type not allowed.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		if ( $refused ) {
+			return $refused;
 		}
 
 		// Use WordPress media handling.
@@ -162,10 +163,7 @@ class MediaController extends RestController {
 		update_post_meta( $attachment_id, '_wpss_upload', true );
 		update_post_meta( $attachment_id, '_wpss_uploader', get_current_user_id() );
 
-		$context = $request->get_param( 'context' );
-		if ( $context ) {
-			update_post_meta( $attachment_id, '_wpss_upload_context', sanitize_text_field( $context ) );
-		}
+		update_post_meta( $attachment_id, '_wpss_upload_context', $context );
 
 		return new WP_REST_Response( $this->format_attachment( $attachment_id ), 201 );
 	}

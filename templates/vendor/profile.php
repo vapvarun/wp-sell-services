@@ -104,17 +104,7 @@ $services = get_posts(
 );
 
 // Total published service count (for sidebar stats and "View all" link).
-$total_services = count(
-	get_posts(
-		[
-			'post_type'      => 'wpss_service',
-			'post_status'    => 'publish',
-			'author'         => $vendor_id,
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-		]
-	)
-);
+$total_services = wpss_count_vendor_services( (int) $vendor_id );
 
 // Get reviews.
 global $wpdb;
@@ -207,7 +197,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 					<div class="wpss-profile-meta">
 						<?php if ( $rating_count > 0 ) : ?>
 							<span class="wpss-meta-item wpss-rating">
-								<span class="wpss-star">★</span>
+								<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 								<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
 								<span class="wpss-rating-count">
 									<?php
@@ -392,7 +382,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 						<?php if ( $rating_count > 0 ) : ?>
 							<span class="wpss-section-meta">
 								<?php echo esc_html( number_format( $rating_avg, 1 ) ); ?>
-								<span class="wpss-star">★</span>
+								<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 								(<?php echo esc_html( $rating_count ); ?>)
 							</span>
 						<?php endif; ?>
@@ -430,9 +420,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 											</span>
 										</div>
 										<div class="wpss-review-rating">
-											<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-												<span class="wpss-star <?php echo $i <= $review->rating ? 'filled' : ''; ?>">★</span>
-											<?php endfor; ?>
+											<?php echo wpss_star_rating( (float) $review->rating ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the helper. ?>
 										</div>
 									</div>
 									<div class="wpss-review-content">

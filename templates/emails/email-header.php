@@ -21,10 +21,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$base_color = $base_color ?? '#7f54b3';
-$bg_color   = $bg_color ?? '#f7f7f7';
-$body_color = $body_color ?? '#ffffff';
-$text_color = $text_color ?? '#3c3c3c';
+$email_heading = $email_heading ?? '';
+$base_color    = $base_color ?? '#7f54b3';
+$bg_color      = $bg_color ?? '#f7f7f7';
+$body_color    = $body_color ?? '#ffffff';
+$text_color    = $text_color ?? '#3c3c3c';
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>

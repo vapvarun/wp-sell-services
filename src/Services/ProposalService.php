@@ -95,9 +95,10 @@ class ProposalService {
 	 * @param int                  $request_id Buyer request ID.
 	 * @param int                  $vendor_id Vendor user ID.
 	 * @param array<string, mixed> $data Proposal data.
-	 * @return int|false Proposal ID or false on failure.
+	 * @return int|false|\WP_Error Proposal ID, false on failure, or a WP_Error
+	 *                            (status 400) when the vendor authored the request.
 	 */
-	public function submit( int $request_id, int $vendor_id, array $data ): int|false {
+	public function submit( int $request_id, int $vendor_id, array $data ): int|false|\WP_Error {
 		global $wpdb;
 
 		// Check if request exists and is open.
@@ -106,6 +107,18 @@ class ProposalService {
 
 		if ( ! $request || $request->status !== BuyerRequestService::STATUS_OPEN ) {
 			return false;
+		}
+
+		// A seller is still a buyer and may post requests; bidding on their own
+		// is self-dealing (it notifies nobody and can convert to an order with
+		// one party). Refused with a message rather than a bare false so the
+		// AJAX and REST callers can say why.
+		if ( $vendor_id === (int) get_post_field( 'post_author', $request_id ) ) {
+			return new \WP_Error(
+				'wpss_proposal_own_request',
+				__( 'You cannot submit a proposal on your own request.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
 		}
 
 		// Check if vendor already submitted a proposal.
@@ -332,6 +345,10 @@ class ProposalService {
 			$update_data['attachments'] = wp_json_encode( $data['attachments'] );
 		}
 
+		// Site clock, like created_at. Left to the column's ON UPDATE default
+		// the row carries a UTC updated_at next to a site-local created_at.
+		$update_data['updated_at'] = current_time( 'mysql' );
+
 		$result = $wpdb->update(
 			$this->table,
 			$update_data,
@@ -423,7 +440,10 @@ class ProposalService {
 
 		$result = $wpdb->update(
 			$this->table,
-			array( 'status' => self::STATUS_REJECTED ),
+			array(
+				'status'     => self::STATUS_REJECTED,
+				'updated_at' => current_time( 'mysql' ),
+			),
 			array( 'id' => $proposal_id )
 		);
 
@@ -466,7 +486,10 @@ class ProposalService {
 
 		$result = $wpdb->update(
 			$this->table,
-			array( 'status' => self::STATUS_WITHDRAWN ),
+			array(
+				'status'     => self::STATUS_WITHDRAWN,
+				'updated_at' => current_time( 'mysql' ),
+			),
 			array( 'id' => $proposal_id )
 		);
 
@@ -515,9 +538,12 @@ class ProposalService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$this->table,
-			array( 'order_id' => $order_id ),
+			array(
+				'order_id'   => $order_id,
+				'updated_at' => current_time( 'mysql' ),
+			),
 			array( 'id' => $proposal_id ),
-			array( '%d' ),
+			array( '%d', '%s' ),
 			array( '%d' )
 		);
 
@@ -549,7 +575,10 @@ class ProposalService {
 
 		$result = $wpdb->update(
 			$this->table,
-			array( 'status' => $status ),
+			array(
+				'status'     => $status,
+				'updated_at' => current_time( 'mysql' ),
+			),
 			array( 'id' => $proposal_id )
 		);
 
@@ -596,7 +625,10 @@ class ProposalService {
 
 		$wpdb->update(
 			$this->table,
-			array( 'status' => self::STATUS_REJECTED ),
+			array(
+				'status'     => self::STATUS_REJECTED,
+				'updated_at' => current_time( 'mysql' ),
+			),
 			array(
 				'request_id' => $request_id,
 				'status'     => self::STATUS_PENDING,
@@ -606,7 +638,10 @@ class ProposalService {
 		// The accepted one might have been updated, restore it.
 		$wpdb->update(
 			$this->table,
-			array( 'status' => self::STATUS_ACCEPTED ),
+			array(
+				'status'     => self::STATUS_ACCEPTED,
+				'updated_at' => current_time( 'mysql' ),
+			),
 			array( 'id' => $except_id )
 		);
 

@@ -446,14 +446,11 @@ class ServiceArchiveView {
 							<label class="wpss-rating-option">
 								<input type="radio" name="rating" value="<?php echo esc_attr( $i ); ?>"
 									<?php checked( $min_rating, $i ); ?>>
-								<span class="wpss-stars">
-									<?php
-									for ( $s = 1; $s <= 5; $s++ ) {
-										echo $s <= $i ? '<span class="wpss-star filled">&#9733;</span>' : '<span class="wpss-star">&#9733;</span>';
-									}
-									?>
-								</span>
-								<span class="wpss-label"><?php esc_html_e( '& Up', 'wp-sell-services' ); ?></span>
+								<?php
+								/* translators: %d: minimum star rating */
+								echo wpss_star_rating( (float) $i, sprintf( _n( '%d star and up', '%d stars and up', $i, 'wp-sell-services' ), $i ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the helper.
+								?>
+								<span class="wpss-label" aria-hidden="true"><?php esc_html_e( '& Up', 'wp-sell-services' ); ?></span>
 							</label>
 						<?php endfor; ?>
 					</div>
@@ -534,7 +531,13 @@ class ServiceArchiveView {
 		if ( wpss_is_page( 'services_page' ) ) {
 			$page_id = wpss_get_page_id( 'services_page' );
 			if ( $page_id ) {
-				$page_title = get_the_title( $page_id );
+				/*
+				 * Raw title. On the mapped services page THIS id is the queried
+				 * object, so get_the_title() came back blank, the check below
+				 * failed, and the owner's own page name was replaced by the
+				 * generic "All Services" fallback.
+				 */
+				$page_title = (string) get_post_field( 'post_title', $page_id );
 				if ( $page_title ) {
 					return $page_title;
 				}

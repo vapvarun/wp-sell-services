@@ -37,18 +37,18 @@ $args          = array(
 
 $requests = new WP_Query( $args );
 
-// Get stats.
-$active_count = count(
-	get_posts(
-		array(
-			'post_type'   => 'wpss_request',
-			'author'      => $user_id,
-			'post_status' => 'publish',
-			'numberposts' => -1,
-			'fields'      => 'ids',
-		)
+// Stat is a COUNT (found_posts), not a loaded id list.
+$active_count = (int) ( new WP_Query(
+	array(
+		'post_type'              => 'wpss_request',
+		'author'                 => $user_id,
+		'post_status'            => 'publish',
+		'posts_per_page'         => 1,
+		'fields'                 => 'ids',
+		'update_post_meta_cache' => false,
+		'update_post_term_cache' => false,
 	)
-);
+) )->found_posts;
 ?>
 
 <div class="wpss-section wpss-section--requests wpss-card">

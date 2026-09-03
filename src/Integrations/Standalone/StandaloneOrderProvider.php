@@ -65,9 +65,22 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		$tax_amount = (float) $tax['amount'];
 		$total      = (float) $tax['total'];
 
-		// Get delivery info.
+		// Snapshot the package data at order creation time so it's immune to later edits.
+		$package_snapshot = null;
+		// package_id is an index, so 0 is a real package. isset(), not empty().
+		if ( isset( $order_data['package_id'] ) && '' !== $order_data['package_id'] ) {
+			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
+			if ( isset( $packages[ $order_data['package_id'] ] ) ) {
+				$package_snapshot = $packages[ $order_data['package_id'] ];
+			}
+		}
+
+		// Get delivery info. Revisions default to the package the buyer bought
+		// (-1 = unlimited): no checkout path passes them explicitly, so every
+		// standalone order stored 0 and the buyer could never request one
+		// (Basecamp 10264292240).
 		$delivery_days = (int) ( $order_data['delivery_days'] ?? 7 );
-		$revisions     = (int) ( $order_data['revisions'] ?? 0 );
+		$revisions     = (int) ( $order_data['revisions'] ?? ( $package_snapshot['revisions'] ?? 0 ) );
 
 		// Compute the commission breakdown through the single authority so the
 		// value PERSISTED here (read later by the Stripe Connect split at payment
@@ -84,16 +97,6 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		$commission_rate = $breakdown['commission_rate'];
 		$platform_fee    = $breakdown['platform_fee'];
 		$vendor_earnings = $breakdown['vendor_earnings'];
-
-		// Snapshot the package data at order creation time so it's immune to later edits.
-		$package_snapshot = null;
-		// package_id is an index, so 0 is a real package. isset(), not empty().
-		if ( $service && isset( $order_data['package_id'] ) && '' !== $order_data['package_id'] ) {
-			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
-			if ( isset( $packages[ $order_data['package_id'] ] ) ) {
-				$package_snapshot = $packages[ $order_data['package_id'] ];
-			}
-		}
 
 		/**
 		 * Filters order data before database insertion.
@@ -310,6 +313,14 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 
 		if ( ! $order ) {
 			return false;
+		}
+
+		// Gateways retry webhooks. A second mark-as-paid on an already-paid
+		// order must not reset paid_at / transaction_id, re-fire the status
+		// hooks, or resend the "new order" notifications.
+		if ( 'paid' === ( $order->payment_status ?? '' ) ) {
+			wpss_log( sprintf( 'mark_as_paid ignored for order #%d: already paid (incoming transaction %s)', $order_id, $transaction_id ) );
+			return true;
 		}
 
 		// Sub-order platforms (tip, extension, milestone) do NOT go through

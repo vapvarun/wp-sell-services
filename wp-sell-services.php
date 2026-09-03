@@ -13,7 +13,7 @@
  * Plugin Name:       WP Sell Services
  * Plugin URI:        https://wbcomdesigns.com/downloads/wp-sell-services/
  * Description:       A complete Fiverr-style service marketplace platform for WordPress. Create a service marketplace with built-in standalone checkout, order management, messaging, reviews, and more.
- * Version:           1.7.0
+ * Version:           1.7.1
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Wbcom Designs
@@ -39,7 +39,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @var string
  */
-define( 'WPSS_VERSION', '1.7.0' );
+define( 'WPSS_VERSION', '1.7.1' );
 
 /**
  * Plugin file path.
@@ -420,9 +420,10 @@ add_filter( 'plugin_action_links_' . WPSS_PLUGIN_BASENAME, __NAMESPACE__ . '\\wp
 /**
  * Plugin activation hook.
  *
+ * @param bool $network_wide Whether the plugin is being activated for the whole network.
  * @return void
  */
-function wpss_activate(): void {
+function wpss_activate( bool $network_wide = false ): void {
 	// Check requirements before activation.
 	if ( ! wpss_check_php_version() || ! wpss_check_wp_version() ) {
 		deactivate_plugins( plugin_basename( __FILE__ ) );
@@ -457,6 +458,30 @@ function wpss_activate(): void {
 
 	// Run activator.
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Activator.php';
+
+	// Everything Activator::activate() touches is per-site: tables under
+	// $wpdb->prefix, roles, options, pages, the rewrite flag. Network
+	// activation used to install on the main site only and say nothing.
+	// A site added later self-installs on its first request through
+	// Plugin::maybe_run_install(), so there is no new-site hook here.
+	// ponytail: one pass over every site; batch if a network with thousands
+	// of sites times out on activation.
+	if ( $network_wide && is_multisite() ) {
+		$site_ids = get_sites(
+			array(
+				'fields' => 'ids',
+				'number' => 0,
+			)
+		);
+
+		foreach ( $site_ids as $blog_id ) {
+			switch_to_blog( (int) $blog_id );
+			Core\Activator::activate();
+			restore_current_blog();
+		}
+		return;
+	}
+
 	Core\Activator::activate();
 }
 
@@ -487,17 +512,6 @@ function wpss_deactivate(): void {
 }
 
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\wpss_deactivate' );
-
-// Daily audit log retention cleanup. No-op unless the
-// wpss_audit_log_retention_days option is set to a positive value.
-add_action(
-	'wpss_audit_log_cleanup',
-	static function (): void {
-		if ( class_exists( Services\AuditLogService::class ) ) {
-			( new Services\AuditLogService() )->cleanup_expired();
-		}
-	}
-);
 
 // ---------------------------------------------------------------------------
 // EDD Software Licensing SDK — automatic updates for free and Pro.
@@ -614,14 +628,8 @@ add_action(
 		update_option( $activated, 1, false );
 		delete_transient( $attempted );
 
-		// Auto-enable usage tracking checkbox.
-		update_option(
-			'wpss_license_key_allow_tracking',
-			array(
-				'allowed'   => true,
-				'timestamp' => time(),
-			),
-			false
-		);
+		// Usage tracking is NOT switched on here. The SDK's own opt-in
+		// checkbox writes wpss_license_key_allow_tracking when the owner
+		// ticks it; absent, the SDK reads it as declined.
 	}
 );

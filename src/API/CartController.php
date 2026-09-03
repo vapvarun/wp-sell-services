@@ -168,24 +168,19 @@ class CartController extends RestController {
 		// Calculate addon totals.
 		$selected_addons = array();
 		if ( ! empty( $addon_ids ) ) {
-			global $wpdb;
-			$addons_table = $wpdb->prefix . 'wpss_service_addons';
+			// Add-on ids are indices into the service's `_wpss_addons` meta, the
+			// same ones the order modal and checkout use.
+			$all_addons = wpss_get_service_extras( $service_id );
 
 			foreach ( $addon_ids as $addon_id ) {
-				$addon = $wpdb->get_row(
-					$wpdb->prepare(
-						"SELECT * FROM {$addons_table} WHERE id = %d AND service_id = %d",
-						(int) $addon_id,
-						$service_id
-					)
-				);
+				$addon = $all_addons[ (int) $addon_id ] ?? null;
 
 				if ( $addon ) {
-					$total            += (float) $addon->price;
+					$total            += (float) $addon['price'];
 					$selected_addons[] = array(
-						'id'    => (int) $addon->id,
-						'title' => $addon->title,
-						'price' => (float) $addon->price,
+						'id'    => (int) $addon_id,
+						'title' => $addon['title'],
+						'price' => (float) $addon['price'],
 					);
 				}
 			}
@@ -402,7 +397,7 @@ class CartController extends RestController {
 		//
 		// So the WPSS order is created first and is the canonical record on
 		// every rail, and the URL where the buyer pays is resolved through
-		// wpss_get_pay_order_url() — the one seam tips, milestones and
+		// wpss_ensure_pay_order() — the one seam tips, milestones and
 		// extensions already use. On Woo that filter returns a real order-pay
 		// URL carrying its own key, which needs no session; on standalone it
 		// stays the local pay page. One checkout, one contract, whatever the
@@ -435,7 +430,7 @@ class CartController extends RestController {
 					'currency'     => (string) ( $order->currency ?? wpss_get_currency() ),
 					// Where the buyer actually pays. Resolved through the shared
 					// seam, so it is right on whichever rail the site runs.
-					'checkout_url' => wpss_get_pay_order_url( (int) $order_id ),
+					'checkout_url' => wpss_ensure_pay_order( (int) $order_id ),
 				);
 			}
 

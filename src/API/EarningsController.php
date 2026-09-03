@@ -345,7 +345,7 @@ class EarningsController extends RestController {
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, type, amount, balance_after, currency, description, reference_type, reference_id, status, created_at
+				"SELECT id, type, amount, currency, description, reference_type, reference_id, status, created_at
 				FROM {$txn_table}
 				WHERE {$where}
 				ORDER BY created_at DESC, id DESC
@@ -385,31 +385,30 @@ class EarningsController extends RestController {
 			}
 
 			$items[] = array(
-				'id'                  => (int) $row['id'],
-				'type'                => $row['type'],
-				'amount'              => (float) $row['amount'],
+				'id'              => (int) $row['id'],
+				'type'            => $row['type'],
+				'amount'          => (float) $row['amount'],
 				// Minor units alongside the float, as everywhere else money is
-				// returned. A ledger is the one screen where a client may sum
-				// rows and expect the total to match balance_after exactly.
-				'amount_minor'        => wpss_amount_to_minor_units( (float) $row['amount'], (string) $row['currency'] ),
-				'balance_after_minor' => wpss_amount_to_minor_units( (float) $row['balance_after'], (string) $row['currency'] ),
+				// returned. balance_after is not exposed: it is a stored running
+				// number that drifts from the ledger SUM; the balance comes from
+				// /earnings/summary.
+				'amount_minor'    => wpss_amount_to_minor_units( (float) $row['amount'], (string) $row['currency'] ),
 				// Whether this row REDUCES the balance. The client cannot infer
 				// it from the sign: debits are stored POSITIVE and the sign is
 				// applied on read from wpss_get_ledger_debit_types(), so a
 				// withdrawal rendered as "+90.00" — a payout looking like a
 				// credit. The server owns the debit-type list, so it answers
 				// here rather than the JS duplicating the rule.
-				'is_debit'            => in_array( $row['type'], wpss_get_ledger_debit_types(), true )
+				'is_debit'        => in_array( $row['type'], wpss_get_ledger_debit_types(), true )
 					|| (float) $row['amount'] < 0,
-				'balance_after'       => (float) $row['balance_after'],
-				'currency'            => $row['currency'],
-				'description'         => $row['description'],
-				'reference_type'      => $reference_type,
-				'reference_id'        => $reference_id,
-				'reference_label'     => $reference_label,
-				'reference_url'       => $reference_url,
-				'status'              => $row['status'],
-				'created_at'          => $this->format_datetime( $row['created_at'] ),
+				'currency'        => $row['currency'],
+				'description'     => $row['description'],
+				'reference_type'  => $reference_type,
+				'reference_id'    => $reference_id,
+				'reference_label' => $reference_label,
+				'reference_url'   => $reference_url,
+				'status'          => $row['status'],
+				'created_at'      => $this->format_datetime( $row['created_at'] ),
 			);
 		}
 
@@ -493,7 +492,7 @@ class EarningsController extends RestController {
 				'vendor_id'  => $vendor_id,
 				'amount'     => $amount,
 				'method'     => $method,
-				'details'    => wp_json_encode( $details ),
+				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
 				'status'     => 'pending',
 				'created_at' => current_time( 'mysql', true ),
 			),
@@ -572,7 +571,7 @@ class EarningsController extends RestController {
 				'amount_minor' => wpss_amount_to_minor_units( (float) $item['amount'], wpss_get_currency() ),
 				'currency'     => wpss_get_currency(),
 				'method'       => $item['method'],
-				'details'      => json_decode( $item['details'] ?? '{}', true ),
+				'details'      => json_decode( wpss_decrypt_secret( (string) ( $item['details'] ?? '' ) ), true ) ?: array(),
 				'status'       => $item['status'],
 				'notes'        => $item['admin_note'] ?? '',
 				'processed_at' => $this->format_datetime( $item['processed_at'] ?? null ),

@@ -26,6 +26,26 @@ use WPSellServices\Services\Scheduler;
 class Activator {
 
 	/**
+	 * User meta marking a seller whose access the 1.7.1 upgrade preserved.
+	 *
+	 * Written by {@see self::migrate_existing_sellers()}, read by the Vendors
+	 * screen's "Migrated" filter so the owner can review exactly that set.
+	 *
+	 * @since 1.7.1
+	 * @var string
+	 */
+	public const MIGRATED_SELLER_META = '_wpss_migrated_seller';
+
+	/**
+	 * How many sellers that migration preserved. 0 / absent on every site
+	 * where it found nobody, which is every fresh install.
+	 *
+	 * @since 1.7.1
+	 * @var string
+	 */
+	public const MIGRATED_SELLERS_OPTION = 'wpss_migrated_sellers';
+
+	/**
 	 * Run activation tasks (called from register_activation_hook).
 	 *
 	 * @return void
@@ -84,17 +104,29 @@ class Activator {
 	 * @return void
 	 */
 	private static function create_roles(): void {
-		// Vendor capabilities.
+		// Vendor capabilities. wpss_vendor_orders is the vendor-side order cap;
+		// wpss_manage_orders is admin-only and is what can_transition() honours
+		// as "force any status" - vendors never hold it. Services carry their
+		// own capability type (edit_wpss_services...) rather than edit_posts, so
+		// holding the vendor role does not also mean writing blog posts, and
+		// holding edit_posts (every author) does not mean listing services.
 		$vendor_caps = array(
-			'wpss_vendor'              => true,
-			'wpss_manage_services'     => true,
-			'wpss_manage_orders'       => true,
-			'wpss_view_analytics'      => true,
-			'wpss_respond_to_requests' => true,
-			'read'                     => true, // Basic WordPress capability.
-			'upload_files'             => true,
-			'edit_posts'               => true,
+			'wpss_vendor'                    => true,
+			'wpss_manage_services'           => true,
+			'wpss_vendor_orders'             => true,
+			'wpss_view_analytics'            => true,
+			'wpss_respond_to_requests'       => true,
+			'read'                           => true, // Basic WordPress capability.
+			'upload_files'                   => true,
+			'edit_wpss_services'             => true,
+			'edit_published_wpss_services'   => true,
+			'publish_wpss_services'          => true,
+			'delete_wpss_services'           => true,
+			'delete_published_wpss_services' => true,
 		);
+
+		// Granted to vendors before 1.7.1; removed on upgrade.
+		$retired_vendor_caps = array( 'wpss_manage_orders', 'edit_posts' );
 
 		// Create the vendor role if it doesn't exist.
 		if ( ! get_role( 'wpss_vendor' ) ) {
@@ -104,23 +136,49 @@ class Activator {
 				$vendor_caps
 			);
 		} else {
-			// Role exists, ensure it has all capabilities.
+			// Role exists, ensure it has exactly these capabilities.
 			$vendor_role = get_role( 'wpss_vendor' );
 			foreach ( $vendor_caps as $cap => $grant ) {
 				$vendor_role->add_cap( $cap, $grant );
 			}
+			foreach ( $retired_vendor_caps as $cap ) {
+				$vendor_role->remove_cap( $cap );
+			}
 		}
 
-		// Add vendor capabilities to existing roles that should have them.
-		$roles_with_vendor_caps = array( 'administrator', 'shop_manager', 'author' );
+		// Site staff hold the vendor set plus the admin-side order cap and the
+		// others_/private_ service caps so they can moderate every listing.
+		$staff_caps = array_merge(
+			$vendor_caps,
+			array(
+				'wpss_manage_orders'           => true,
+				'edit_others_wpss_services'    => true,
+				'edit_private_wpss_services'   => true,
+				'read_private_wpss_services'   => true,
+				'delete_others_wpss_services'  => true,
+				'delete_private_wpss_services' => true,
+			)
+		);
 
-		foreach ( $roles_with_vendor_caps as $role_name ) {
+		foreach ( array( 'administrator', 'shop_manager' ) as $role_name ) {
 			$role = get_role( $role_name );
 			if ( $role ) {
-				foreach ( $vendor_caps as $cap => $grant ) {
+				foreach ( $staff_caps as $cap => $grant ) {
 					$role->add_cap( $cap, $grant );
 				}
 			}
+		}
+
+		// Authors were granted the whole vendor set up to 1.7.0, which made every
+		// blog author a seller with no application. They get nothing now.
+		$author_role = get_role( 'author' );
+		if ( $author_role ) {
+			foreach ( array_keys( $vendor_caps ) as $cap ) {
+				if ( 0 === strpos( $cap, 'wpss_' ) ) {
+					$author_role->remove_cap( $cap );
+				}
+			}
+			$author_role->remove_cap( 'wpss_manage_orders' );
 		}
 
 		// Admin-only capabilities.
@@ -133,6 +191,186 @@ class Activator {
 	}
 
 	/**
+	 * One-time 1.7.1 upgrade: strip the retired caps from vendor USERS.
+	 *
+	 * VendorService::add_vendor_capabilities() also wrote wpss_manage_orders
+	 * and edit_posts onto each vendor's own capability map, so fixing the role
+	 * alone would leave every existing vendor able to force transitions.
+	 *
+	 * ponytail: full scan of the vendor role, once per site on upgrade; batch
+	 * by user_id if a site with tens of thousands of vendors times out.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	public static function migrate_vendor_user_caps(): void {
+		$vendor_ids = get_users(
+			array(
+				'role'   => 'wpss_vendor',
+				'fields' => 'ID',
+				'number' => -1,
+			)
+		);
+
+		foreach ( $vendor_ids as $vendor_id ) {
+			$user = new \WP_User( (int) $vendor_id );
+			$user->remove_cap( 'wpss_manage_orders' );
+			$user->remove_cap( 'edit_posts' );
+			$user->add_cap( 'wpss_vendor_orders' );
+		}
+	}
+
+	/**
+	 * One-time 1.7.1 upgrade: keep the people who were already selling.
+	 *
+	 * 1.7.1 made an ACTIVE wpss_vendor_profiles row the definition of a vendor
+	 * ({@see wpss_is_vendor()}) and took the seller capabilities off the author
+	 * role. Both are right for a new site and wrong for a live one: up to
+	 * 1.7.0 an author, a wpss_vendor role holder and anyone carrying the legacy
+	 * _wpss_is_vendor meta could all sell, and a missing profile row read as
+	 * active. Upgrading without this would lock every one of them out - people
+	 * with live orders included - until an admin approved each by hand, and
+	 * the owner would hear about it from their sellers rather than from us.
+	 *
+	 * So: whoever HELD that access and ACTUALLY sold with it gets the profile
+	 * row they were missing, at the status they effectively had. Selling is
+	 * evidence, not intent - a service on the site, an order taken, a proposal
+	 * sent. An author with none of the three is the case 1.7.1 exists to close
+	 * and is left alone.
+	 *
+	 * Anyone who already has a profile row is skipped whatever its status:
+	 * pending, suspended and rejected are the owner's own decisions and blocked
+	 * those users before this release too. That is also what makes a second run
+	 * a no-op and stops a since-suspended vendor coming back.
+	 *
+	 * Deliberately does NOT call VendorService::grant_vendor_access(): that
+	 * mails "your vendor application is approved" to people who never applied,
+	 * and fires the hook Pro uses to hand out a subscription plan. This
+	 * preserves access; it does not approve anyone and grants nothing new.
+	 *
+	 * ponytail: one table scan per site on upgrade; batch by user_id if a
+	 * marketplace with millions of orders times out.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return int Number of sellers migrated.
+	 */
+	public static function migrate_existing_sellers(): int {
+		global $wpdb;
+
+		$profiles  = $wpdb->prefix . 'wpss_vendor_profiles';
+		$orders    = $wpdb->prefix . 'wpss_orders';
+		$proposals = $wpdb->prefix . 'wpss_proposals';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- one-time upgrade scan; table names only, no user input.
+		$candidates = $wpdb->get_col(
+			"SELECT DISTINCT sellers.user_id FROM (
+				SELECT post_author AS user_id FROM {$wpdb->posts}
+					WHERE post_type = 'wpss_service' AND post_status IN ('publish', 'pending')
+				UNION SELECT vendor_id FROM {$orders}
+				UNION SELECT vendor_id FROM {$proposals}
+			) sellers
+			LEFT JOIN {$profiles} vp ON vp.user_id = sellers.user_id
+			WHERE sellers.user_id > 0 AND vp.id IS NULL"
+		);
+
+		$repo     = new \WPSellServices\Database\Repositories\VendorProfileRepository();
+		$audit    = new \WPSellServices\Services\AuditLogService();
+		$migrated = 0;
+
+		foreach ( $candidates as $candidate_id ) {
+			$user = get_userdata( (int) $candidate_id );
+
+			// Administrators are never blocked by the vendor gate, so they have
+			// nothing to preserve.
+			if ( ! $user instanceof \WP_User || $user->has_cap( 'manage_options' ) ) {
+				continue;
+			}
+
+			// Did they hold seller access before this upgrade? create_roles()
+			// has already stripped the author role by the time this runs, so
+			// that one is recognised by name; has_cap() still answers for the
+			// vendor role, a custom role and per-user grants.
+			$had_access = $user->has_cap( 'wpss_vendor' )
+				|| in_array( 'author', (array) $user->roles, true )
+				|| (bool) get_user_meta( $user->ID, '_wpss_is_vendor', true );
+
+			if ( ! $had_access ) {
+				continue;
+			}
+
+			$created = $repo->upsert(
+				$user->ID,
+				array(
+					'display_name' => $user->display_name,
+					'status'       => 'active',
+				)
+			);
+
+			if ( false === $created ) {
+				continue;
+			}
+
+			$user->add_role( \WPSellServices\Services\VendorService::ROLE );
+			update_user_meta( $user->ID, '_wpss_is_vendor', true );
+			update_user_meta( $user->ID, self::MIGRATED_SELLER_META, 1 );
+
+			$audit->log(
+				'vendor.migrated',
+				'vendor',
+				$user->ID,
+				array(
+					'action'   => 'migrated',
+					'to_value' => 'active',
+				)
+			);
+
+			++$migrated;
+		}
+
+		// Only ever written when someone was migrated, so a later re-run that
+		// finds nobody cannot wipe the number the owner was told.
+		if ( $migrated > 0 ) {
+			update_option( self::MIGRATED_SELLERS_OPTION, $migrated, false );
+			wpss_log( sprintf( 'Preserved seller access for %d existing seller(s) on the 1.7.1 upgrade.', $migrated ) );
+		}
+
+		return $migrated;
+	}
+
+	/**
+	 * One-time 1.7.1 upgrade: fold the Advanced tab's standalone copies back
+	 * into wpss_advanced and drop them.
+	 *
+	 * The Advanced sanitizer wrote max_file_size, allowed_file_types
+	 * and currency_position twice - into the array and as standalone
+	 * options - and the readers only ever looked at the standalone copy. The
+	 * array is now the only store. The standalone copy wins: both were written
+	 * from one save so they never differ, and install() has already merged the
+	 * defaults into the array by the time this runs, so "array lacks the key"
+	 * would never be true.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	public static function migrate_advanced_standalone_keys(): void {
+		$advanced = get_option( 'wpss_advanced', array() );
+		$advanced = is_array( $advanced ) ? $advanced : array();
+
+		foreach ( array( 'max_file_size', 'allowed_file_types', 'currency_position' ) as $key ) {
+			$standalone = get_option( 'wpss_' . $key, null );
+			if ( null !== $standalone ) {
+				$advanced[ $key ] = $standalone;
+			}
+			delete_option( 'wpss_' . $key );
+		}
+
+		update_option( 'wpss_advanced', $advanced );
+	}
+
+	/**
 	 * Set default plugin options.
 	 *
 	 * Option names must match those registered in Settings.php.
@@ -140,90 +378,7 @@ class Activator {
 	 * @return void
 	 */
 	private static function set_default_options(): void {
-		$defaults = array(
-			// General settings - matches Settings.php wpss_general.
-			'wpss_general'       => array(
-				'platform_name'      => get_bloginfo( 'name' ),
-				'currency'           => self::detect_currency_from_locale(),
-				'ecommerce_platform' => 'auto',
-			),
-			// Commission settings - matches Settings.php wpss_commission.
-			'wpss_commission'    => array(
-				'commission_rate'     => 10,
-				'enable_vendor_rates' => true,
-			),
-			// Payouts settings - matches Settings.php wpss_payouts.
-			'wpss_payouts'       => array(
-				'min_withdrawal'            => 25,
-				// 0 = no hold; the owner opts into a refund window if they want
-				// one. See Settings.php clearance_days for the rationale.
-				'clearance_days'            => 0,
-				'auto_withdrawal_enabled'   => false,
-				'auto_withdrawal_threshold' => 500,
-				'auto_withdrawal_schedule'  => 'monthly',
-			),
-			// Tax settings - matches Settings.php wpss_tax.
-			'wpss_tax'           => array(
-				'enable_tax'   => false,
-				'tax_label'    => 'Tax',
-				'tax_rate'     => 0,
-				'tax_included' => false,
-			),
-			// Vendor settings - matches Settings.php wpss_vendor.
-			'wpss_vendor'        => array(
-				'vendor_registration'        => 'open',
-				'max_services_per_vendor'    => 20,
-				// Publish-and-sell by default so a new marketplace isn't empty on
-				// launch day (first vendor listings would otherwise stay hidden
-				// until an admin approves each one). Consistent with the open
-				// registration + no-verification defaults above. Owners who want
-				// to review listings first can enable moderation in the setup
-				// wizard or Vendor settings.
-				'require_service_moderation' => false,
-			),
-			// Order settings - matches Settings.php wpss_orders.
-			// Revision limits are defined per-package in service packages, not as a global setting.
-			'wpss_orders'        => array(
-				'auto_complete_days'        => 3,
-				'allow_disputes'            => true,
-				'dispute_window_days'       => 14,
-				'auto_dispute_late_days'    => 3,
-				'requirements_timeout_days' => 7,
-			),
-			// Notification settings - matches Settings.php wpss_notifications.
-			// ALL email types enabled by default — site owner can disable individually.
-			'wpss_notifications' => array(
-				'notify_new_order'              => true,
-				'notify_order_completed'        => true,
-				'notify_order_cancelled'        => true,
-				'notify_cancellation_requested' => true,
-				'notify_delivery_submitted'     => true,
-				'notify_revision_requested'     => true,
-				'notify_new_message'            => true,
-				'notify_vendor_contact'         => true,
-				'notify_new_review'             => true,
-				'notify_dispute_opened'         => true,
-				'notify_withdrawal_requested'   => true,
-				'notify_withdrawal_approved'    => true,
-				'notify_withdrawal_rejected'    => true,
-				'notify_proposal_submitted'     => true,
-				'notify_proposal_accepted'      => true,
-				'notify_moderation'             => true,
-				'notify_tip_received'           => true,
-				'notify_milestone_proposed'     => true,
-				'notify_milestone_paid'         => true,
-				'notify_milestone_submitted'    => true,
-				'notify_milestone_approved'     => true,
-				'notify_extension_proposed'     => true,
-				'notify_extension_approved'     => true,
-				'notify_extension_declined'     => true,
-			),
-			// Advanced settings - matches Settings.php wpss_advanced.
-			'wpss_advanced'      => array(
-				'delete_data_on_uninstall' => false,
-				'enable_debug_mode'        => false,
-			),
-		);
+		$defaults = wpss_settings_defaults();
 
 		foreach ( $defaults as $option_name => $default_values ) {
 			$current = get_option( $option_name, false );
@@ -377,12 +532,16 @@ class Activator {
 				continue;
 			}
 
-			// Create the page.
+			// Create the page. The marker goes only on pages WE publish, never
+			// on the adopted ones above: wpss_pages is a mix of both, and
+			// without something telling them apart no release can ever offer to
+			// clean up its own pages without risking a page the owner wrote.
 			$new_page = array(
 				'post_title'   => $page_data['title'],
 				'post_content' => $page_data['shortcode'],
 				'post_status'  => 'publish',
 				'post_type'    => 'page',
+				'meta_input'   => array( '_wpss_created_page' => $key ),
 			);
 
 			if ( ! empty( $page_data['slug'] ) ) {
@@ -446,33 +605,6 @@ class Activator {
 
 		// No terms page on this site. The setting stays empty and the API reports
 		// terms: null, which is the honest answer - not 0, which no client can open.
-	}
-
-	/**
-	 * Detect currency from WordPress locale.
-	 *
-	 * @return string Currency code (ISO 4217).
-	 */
-	private static function detect_currency_from_locale(): string {
-		$locale = get_locale();
-		$map    = array(
-			'en_GB' => 'GBP',
-			'en_AU' => 'AUD',
-			'en_CA' => 'CAD',
-			'de_DE' => 'EUR',
-			'fr_FR' => 'EUR',
-			'es_ES' => 'EUR',
-			'it_IT' => 'EUR',
-			'nl_NL' => 'EUR',
-			'pt_PT' => 'EUR',
-			'pt_BR' => 'BRL',
-			'ja'    => 'JPY',
-			'zh_CN' => 'CNY',
-			'hi_IN' => 'INR',
-			'es_MX' => 'MXN',
-		);
-
-		return $map[ $locale ] ?? 'USD';
 	}
 
 	/**

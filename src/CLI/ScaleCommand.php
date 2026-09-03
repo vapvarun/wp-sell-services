@@ -38,11 +38,11 @@ use WPSellServices\Database\SchemaManager;
  *     # Time every hot-path query against its budget
  *     $ wp wpss scale bench
  *
- *     # Seed, bench, then teardown in one shot (CI gate)
- *     $ wp wpss scale bench --seed --teardown
+ *     # Seed, bench, then teardown in one shot on a disposable CI site
+ *     $ wp wpss scale bench --seed --teardown --yes
  *
- *     # Remove all benchmark data
- *     $ wp wpss scale teardown --yes
+ *     # Remove all benchmark data (the row count is confirmed first)
+ *     $ wp wpss scale teardown
  *
  * @since 1.4.4
  */
@@ -125,6 +125,12 @@ class ScaleCommand extends WP_CLI_Command {
 	 * default: 12
 	 * ---
 	 *
+	 * [--yes]
+	 * : Skip the confirmation prompt.
+	 *
+	 * [--force]
+	 * : Seed on a production site (wp_get_environment_type() === 'production').
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     $ wp wpss scale seed --vendors=10000
@@ -138,6 +144,8 @@ class ScaleCommand extends WP_CLI_Command {
 	public function seed( array $args, array $assoc_args ): void {
 		$vendors = max( 1, (int) ( $assoc_args['vendors'] ?? 10000 ) );
 		$per     = max( 1, (int) ( $assoc_args['orders-per-vendor'] ?? 12 ) );
+
+		Guard::writes( "benchmark orders across {$vendors} synthetic vendors, plus ledger rows", $vendors * $per, $assoc_args );
 
 		WP_CLI::log( 'Ensuring schema/indexes are current...' );
 		( new SchemaManager() )->sync();
@@ -171,6 +179,12 @@ class ScaleCommand extends WP_CLI_Command {
 	 * [--teardown]
 	 * : Remove the dataset after benching.
 	 *
+	 * [--yes]
+	 * : Skip the seed and teardown confirmation prompts.
+	 *
+	 * [--force]
+	 * : Seed or tear down on a production site (wp_get_environment_type() === 'production').
+	 *
 	 * [--format=<format>]
 	 * : Output format.
 	 * ---
@@ -184,7 +198,7 @@ class ScaleCommand extends WP_CLI_Command {
 	 * ## EXAMPLES
 	 *
 	 *     $ wp wpss scale bench
-	 *     $ wp wpss scale bench --seed --teardown --format=json
+	 *     $ wp wpss scale bench --seed --teardown --yes --format=json
 	 *
 	 * @subcommand bench
 	 *
@@ -198,7 +212,7 @@ class ScaleCommand extends WP_CLI_Command {
 		$format      = (string) ( $assoc_args['format'] ?? 'table' );
 
 		if ( $do_seed ) {
-			$this->seed( array(), array() );
+			$this->seed( array(), $assoc_args );
 		} else {
 			// Bench still needs the indexes present; sync is idempotent.
 			( new SchemaManager() )->sync();
@@ -229,7 +243,10 @@ class ScaleCommand extends WP_CLI_Command {
 		);
 
 		if ( $do_teardown ) {
-			$this->teardown( array(), array( 'yes' => true ) );
+			// The caller's flags, not a hardcoded 'yes': --teardown here deletes
+			// exactly what a human-run `scale teardown` deletes, so it asks the
+			// same question and refuses on production the same way.
+			$this->teardown( array(), $assoc_args );
 		}
 
 		if ( $failed > 0 ) {
@@ -247,9 +264,12 @@ class ScaleCommand extends WP_CLI_Command {
 	 * [--yes]
 	 * : Skip the confirmation prompt.
 	 *
+	 * [--force]
+	 * : Tear down on a production site (wp_get_environment_type() === 'production').
+	 *
 	 * ## EXAMPLES
 	 *
-	 *     $ wp wpss scale teardown --yes
+	 *     $ wp wpss scale teardown
 	 *
 	 * @subcommand teardown
 	 *
@@ -258,7 +278,7 @@ class ScaleCommand extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function teardown( array $args, array $assoc_args ): void {
-		WP_CLI::confirm( 'Delete all scale-benchmark data?', $assoc_args );
+		Guard::writes( 'scale-benchmark rows (vendor profiles, orders, wallet transactions, withdrawals)', $this->count_seeded(), $assoc_args );
 
 		$deleted = $this->run_teardown();
 
@@ -542,6 +562,36 @@ class ScaleCommand extends WP_CLI_Command {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Count the rows teardown would delete, using teardown's own predicates.
+	 *
+	 * The prompt is only useful if it names a real number, so this counts what
+	 * {@see run_teardown()} deletes rather than guessing from the seed defaults.
+	 *
+	 * @return int
+	 */
+	private function count_seeded(): int {
+		$total = 0;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- internal table names; values bound via prepare.
+		foreach ( array(
+			'wpss_vendor_profiles'     => array( 'user_id', 'vacation_message' ),
+			'wpss_orders'              => array( 'vendor_id', 'vendor_notes' ),
+			'wpss_wallet_transactions' => array( 'user_id', 'description' ),
+			'wpss_withdrawals'         => array( 'vendor_id', 'admin_note' ),
+		) as $table => $columns ) {
+			$full                                = $this->wpdb->prefix . $table;
+			list( $id_column, $sentinel_column ) = $columns;
+
+			$total += (int) $this->wpdb->get_var(
+				$this->wpdb->prepare( "SELECT COUNT(*) FROM {$full} WHERE {$id_column} >= %d AND {$sentinel_column} = %s", self::UID_BASE, self::SENTINEL )
+			);
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return $total;
 	}
 
 	/**

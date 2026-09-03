@@ -59,6 +59,13 @@ do_action( 'wpss_email_content_before', 'revision_requested', $order, $recipient
 	?>
 </p>
 
+<?php $revision_reason = $order->get_revision_reason(); ?>
+<?php if ( '' !== $revision_reason ) : ?>
+<blockquote style="margin: 0 0 20px 0; padding: 12px 16px; border-left: 4px solid <?php echo esc_attr( $base_color ); ?>; background-color: #f9f9f9; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
+	<?php echo nl2br( esc_html( $revision_reason ) ); ?>
+</blockquote>
+<?php endif; ?>
+
 <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #3c3c3c;">
 	<?php printf( esc_html__( 'Order #%s', 'wp-sell-services' ), esc_html( $order->order_number ) ); ?>
 </h2>

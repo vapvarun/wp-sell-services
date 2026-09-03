@@ -152,11 +152,16 @@ class AuthController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'forgot_password' ),
 					'permission_callback' => '__return_true',
+					// Either identifier. The app sends user_login (which is also
+					// what retrieve_password() takes), so requiring email here
+					// meant every reset from the app failed with 400.
 					'args'                => array(
-						'email' => array(
-							'type'     => 'string',
-							'format'   => 'email',
-							'required' => true,
+						'email'      => array(
+							'type'   => 'string',
+							'format' => 'email',
+						),
+						'user_login' => array(
+							'type' => 'string',
 						),
 					),
 				),
@@ -454,15 +459,42 @@ class AuthController extends RestController {
 		$username = sanitize_user( $request->get_param( 'username' ) );
 		$password = $request->get_param( 'password' );
 
+		/*
+		 * Per-ACCOUNT lockout, alongside the per-IP counter above.
+		 *
+		 * The IP limiter alone let one account be guessed at from as many
+		 * addresses as the attacker had, five tries each. The counter is keyed
+		 * on the resolved login so "sofia" and "sofia@example.com" share one
+		 * budget, and it is checked before wp_authenticate() so a locked
+		 * account is not even verified.
+		 *
+		 * The counting itself is NOT done here. wp_authenticate() fires
+		 * wp_login_failed, which Plugin.php binds to wpss_login_record_failure()
+		 * - one counter for this route and for wp-login.php alike, because the
+		 * two rails disagreeing is the bug this replaced (Basecamp 10267994010).
+		 * Only the answer is chosen here, so the app keeps its 423.
+		 */
+		if ( wpss_login_is_locked( $username ) ) {
+			return wpss_login_lock_error();
+		}
+
 		$user = wp_authenticate( $username, $password );
 
 		if ( is_wp_error( $user ) ) {
+			if ( wpss_login_is_locked( $username ) ) {
+				return wpss_login_lock_error();
+			}
+
 			return new WP_Error(
 				'invalid_credentials',
 				__( 'Invalid username or password.', 'wp-sell-services' ),
 				array( 'status' => 401 )
 			);
 		}
+
+		// wp_authenticate() does not fire wp_login - only wp_signon() does - so
+		// a correct password over REST clears the counter here.
+		wpss_login_clear_failures( $user->user_login );
 
 		/*
 		 * A token must not be able to mint more tokens (Basecamp 10154918753).
@@ -484,6 +516,28 @@ class AuthController extends RestController {
 				__( 'Sign in with your account password. An existing app sign-in cannot be used to create another one.', 'wp-sell-services' ),
 				array( 'status' => 401 )
 			);
+		}
+
+		/**
+		 * Filter a successful password check before a token is issued.
+		 *
+		 * The seam for a second factor. Return a WP_Error to refuse the sign-in
+		 * with that error (status and code of the plugin's choosing, e.g. a 401
+		 * carrying `wpss_2fa_required` and a challenge id in its data); return
+		 * null to issue the token as normal. Runs after the password and the
+		 * account lockout have both passed, so a challenge is never offered for
+		 * a wrong password.
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param WP_Error|null   $challenge Null to allow, WP_Error to refuse.
+		 * @param WP_User         $user      Member whose password just verified.
+		 * @param WP_REST_Request $request   The login request, for a code or challenge token in the body.
+		 */
+		$challenge = apply_filters( 'wpss_auth_login_challenge', null, $user, $request );
+
+		if ( is_wp_error( $challenge ) ) {
+			return $challenge;
 		}
 
 		$device_name = sanitize_text_field( $request->get_param( 'device_name' ) );
@@ -677,26 +731,29 @@ class AuthController extends RestController {
 			return $rate_check;
 		}
 
-		$email = sanitize_email( $request->get_param( 'email' ) );
-		$user  = get_user_by( 'email', $email );
+		$email = sanitize_email( (string) $request->get_param( 'email' ) );
+		$login = sanitize_user( (string) $request->get_param( 'user_login' ) );
 
-		// Always return success to prevent email enumeration.
-		if ( ! $user ) {
-			return new WP_REST_Response(
-				array( 'message' => __( 'If an account exists with that email, a password reset link has been sent.', 'wp-sell-services' ) )
+		if ( '' === $email && '' === $login ) {
+			return new WP_Error(
+				'wpss_missing_identifier',
+				__( 'Provide a username or an email address.', 'wp-sell-services' ),
+				array( 'status' => 400 )
 			);
 		}
 
-		$result = retrieve_password( $user->user_login );
+		$user = '' !== $email
+			? get_user_by( 'email', $email )
+			: ( get_user_by( 'login', $login ) ?: get_user_by( 'email', $login ) );
 
-		if ( is_wp_error( $result ) ) {
-			return new WP_REST_Response(
-				array( 'message' => __( 'If an account exists with that email, a password reset link has been sent.', 'wp-sell-services' ) )
-			);
+		// One answer whether or not the account exists, and whether or not the
+		// mail went out, so this cannot be used to enumerate accounts.
+		if ( $user ) {
+			retrieve_password( $user->user_login );
 		}
 
 		return new WP_REST_Response(
-			array( 'message' => __( 'If an account exists with that email, a password reset link has been sent.', 'wp-sell-services' ) )
+			array( 'message' => __( 'If an account matches, a password reset link has been sent.', 'wp-sell-services' ) )
 		);
 	}
 
@@ -930,7 +987,7 @@ class AuthController extends RestController {
 			// dropping anything, so neither existing consumer breaks.
 			'capabilities'  => array(
 				'can_create_services' => current_user_can( 'wpss_manage_services' ) && $is_vendor,
-				'can_manage_orders'   => current_user_can( 'wpss_manage_orders' ) || current_user_can( 'manage_options' ),
+				'can_manage_orders'   => current_user_can( 'wpss_vendor_orders' ) || current_user_can( 'wpss_manage_orders' ),
 			),
 			// Same meta keys /me reads, so the two endpoints cannot report
 			// different numbers for the same user.

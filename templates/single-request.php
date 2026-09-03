@@ -290,7 +290,7 @@ do_action( 'wpss_before_single_request', $request_id );
 													<div class="wpss-vendor-stats">
 														<?php if ( $vendor_rating > 0 ) : ?>
 															<span class="wpss-vendor-rating">
-																<span class="wpss-star">&#9733;</span>
+																<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 																<?php echo esc_html( number_format( $vendor_rating, 1 ) ); ?>
 															</span>
 														<?php endif; ?>
@@ -474,8 +474,7 @@ do_action( 'wpss_before_single_request', $request_id );
 							</a>
 							<?php
 						elseif ( ! $is_vendor && ! $is_buyer ) :
-							$tpl_vendor_settings   = get_option( 'wpss_vendor', array() );
-							$tpl_registration_mode = $tpl_vendor_settings['vendor_registration'] ?? 'open';
+							$tpl_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 							if ( 'closed' !== $tpl_registration_mode ) :
 								?>
 							<a href="<?php echo esc_url( wpss_get_become_vendor_url() ); ?>" class="wpss-btn wpss-btn-primary wpss-btn-block">

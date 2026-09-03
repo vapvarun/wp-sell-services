@@ -16,7 +16,6 @@ namespace WPSellServices\Services;
 defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Models\ServiceOrder;
-use WPSellServices\CustomFields\FieldValidator;
 
 /**
  * Manages order requirements submission.
@@ -33,18 +32,10 @@ class RequirementsService {
 	private OrderService $order_service;
 
 	/**
-	 * Field validator instance.
-	 *
-	 * @var FieldValidator
-	 */
-	private FieldValidator $validator;
-
-	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->order_service = new OrderService();
-		$this->validator     = new FieldValidator();
 	}
 
 	/**
@@ -85,26 +76,23 @@ class RequirementsService {
 	 * @return array
 	 */
 	public function get_service_fields( int $service_id ): array {
-		// Use the canonical getter so choice fields are normalized (both `choices`
-		// string and `options` array present) regardless of how they were saved.
-		$requirements = wpss_get_service_requirements( $service_id );
-
-		if ( empty( $requirements ) ) {
-			return array();
-		}
-
-		return $requirements;
+		return wpss_get_service_requirements( $service_id );
 	}
 
 	/**
 	 * Submit requirements for an order.
 	 *
-	 * @param int   $order_id   Order ID.
-	 * @param array $field_data Submitted field data.
-	 * @param array $files      Uploaded files.
-	 * @return array Result with success status and message.
+	 * The one path for the buyer form (AJAX), the app (REST) and anything
+	 * else: validates and sanitises against the service's requirement schema,
+	 * stores the answers keyed by requirement id, and starts the order.
+	 *
+	 * @param int                  $order_id    Order ID.
+	 * @param array<string, mixed> $field_data  Submitted answers keyed by requirement id.
+	 * @param array<string, mixed> $files       Uploaded files ($_FILES entries) keyed by requirement id.
+	 * @param array<int, mixed>    $attachments Files already stored (REST upload flow), appended as-is.
+	 * @return array{success: bool, message: string, errors?: array<string,string>, submitted?: array<string,mixed>, late_submission?: bool}
 	 */
-	public function submit( int $order_id, array $field_data, array $files = array() ): array {
+	public function submit( int $order_id, array $field_data, array $files = array(), array $attachments = array() ): array {
 		$order = $this->order_service->get( $order_id );
 
 		if ( ! $order ) {
@@ -142,16 +130,8 @@ class RequirementsService {
 		// For buyer request orders (platform='request'), skip service requirement validation
 		// Requirements were already collected in the proposal, so just save submitted data.
 		if ( ! $service && 'request' === $order->platform ) {
-			// Sanitize field data since we skip service-field validation.
-			$field_data = array_map(
-				function ( $value ) {
-					return is_string( $value ) ? sanitize_textarea_field( $value ) : $value;
-				},
-				$field_data
-			);
-
-			// Process file uploads.
-			$attachments = $this->process_uploads( $files, $order_id );
+			$field_data  = $this->sanitize( array(), $field_data );
+			$attachments = array_merge( $attachments, $this->process_uploads( $files, $order_id ) );
 
 			// Save requirements directly without service field validation.
 			$saved = $this->save( $order_id, $field_data, $attachments );
@@ -177,6 +157,7 @@ class RequirementsService {
 			return array(
 				'success'         => true,
 				'message'         => __( 'Requirements submitted successfully. The vendor will start working on your order.', 'wp-sell-services' ),
+				'submitted'       => $field_data,
 				'late_submission' => false,
 			);
 		}
@@ -201,10 +182,9 @@ class RequirementsService {
 			);
 		}
 
-		// Process file uploads.
-		$attachments = $this->process_uploads( $files, $order_id );
+		$field_data  = $this->sanitize( $fields, $field_data );
+		$attachments = array_merge( $attachments, $this->process_uploads( $files, $order_id ) );
 
-		// Save requirements.
 		$saved = $this->save( $order_id, $field_data, $attachments );
 
 		if ( ! $saved ) {
@@ -232,93 +212,87 @@ class RequirementsService {
 		return array(
 			'success'         => true,
 			'message'         => $success_message,
+			'submitted'       => $field_data,
 			'late_submission' => $is_late_submission,
 		);
 	}
 
 	/**
-	 * Validate submitted requirements.
+	 * Validate submitted requirements against the service's schema.
 	 *
-	 * @param array $fields     Service requirement fields.
-	 * @param array $field_data Submitted data.
-	 * @param array $files      Uploaded files.
-	 * @return array Validation result.
+	 * Answers are keyed by requirement id. A required field must be present
+	 * (a file, for file fields); a present value must fit its type.
+	 *
+	 * @param array<int, array<string, mixed>> $fields     Normalised requirement rows.
+	 * @param array<string, mixed>             $field_data Submitted answers keyed by requirement id.
+	 * @param array<string, mixed>             $files      Uploaded files keyed by requirement id.
+	 * @return array{valid: bool, errors: array<string, string>}
 	 */
 	public function validate( array $fields, array $field_data, array $files = array() ): array {
 		$errors = array();
 
-		foreach ( $fields as $index => $field ) {
-			// Use 'question' as the primary key since that is what the AJAX handler uses.
-			// Fall back to 'label' for backward compatibility with older field definitions.
-			$field_key   = $field['question'] ?? $field['label'] ?? "field_{$index}";
-			$field_label = $field['question'] ?? $field['label'] ?? "Field {$index}";
-			$value       = $field_data[ $field_key ] ?? '';
-			$required    = ! empty( $field['required'] );
-			$type        = $field['type'] ?? 'text';
+		foreach ( $fields as $field ) {
+			$id    = $field['id'];
+			$label = $field['label'];
+			$type  = $field['type'];
+			$value = $field_data[ $id ] ?? '';
+			$empty = '' === $value || ( is_array( $value ) && empty( $value ) );
 
-			// Check required fields.
-			if ( $required ) {
-				if ( 'file' === $type ) {
-					if ( empty( $files[ $field_key ] ) || empty( $files[ $field_key ]['name'] ) ) {
-						$errors[ $field_key ] = sprintf(
-							/* translators: %s: field label */
-							__( '%s is required.', 'wp-sell-services' ),
-							$field_label
-						);
-						continue;
-					}
-				} elseif ( '' === $value || ( is_array( $value ) && empty( $value ) ) ) {
-					$errors[ $field_key ] = sprintf(
-						/* translators: %s: field label */
-						__( '%s is required.', 'wp-sell-services' ),
-						$field_label
-					);
-					continue;
+			if ( 'file' === $type ) {
+				if ( ! empty( $field['required'] ) && empty( $files[ $id ]['name'] ) ) {
+					/* translators: %s: field label */
+					$errors[ $id ] = sprintf( __( '%s is required.', 'wp-sell-services' ), $label );
 				}
+				continue;
 			}
 
-			// Type-specific validation.
-			if ( '' !== $value ) {
-				switch ( $type ) {
-					case 'number':
-						if ( ! is_numeric( $value ) ) {
-							$errors[ $field_key ] = sprintf(
-								/* translators: %s: field label */
-								__( '%s must be a number.', 'wp-sell-services' ),
-								$field_label
-							);
-						}
-						break;
-
-					case 'select':
-					case 'radio':
-						$choices = $this->parse_choices( $field['choices'] ?? '' );
-						if ( ! in_array( $value, $choices, true ) ) {
-							$errors[ $field_key ] = sprintf(
-								/* translators: %s: field label */
-								__( 'Invalid selection for %s.', 'wp-sell-services' ),
-								$field_label
-							);
-						}
-						break;
-
-					case 'checkbox':
-						if ( ! empty( $field['choices'] ) ) {
-							$choices = $this->parse_choices( $field['choices'] );
-							$values  = is_array( $value ) ? $value : array( $value );
-							foreach ( $values as $v ) {
-								if ( ! in_array( $v, $choices, true ) ) {
-									$errors[ $field_key ] = sprintf(
-										/* translators: %s: field label */
-										__( 'Invalid selection for %s.', 'wp-sell-services' ),
-										$field_label
-									);
-									break;
-								}
-							}
-						}
-						break;
+			if ( $empty ) {
+				if ( ! empty( $field['required'] ) ) {
+					/* translators: %s: field label */
+					$errors[ $id ] = sprintf( __( '%s is required.', 'wp-sell-services' ), $label );
 				}
+				continue;
+			}
+
+			$multi = in_array( $type, array( 'multiselect', 'checkbox' ), true ) && ! empty( $field['options'] );
+
+			if ( is_array( $value ) !== $multi ) {
+				/* translators: %s: field label */
+				$errors[ $id ] = sprintf( __( 'Invalid value for %s.', 'wp-sell-services' ), $label );
+				continue;
+			}
+
+			$bad = false;
+			switch ( $type ) {
+				case 'number':
+					$bad = ! is_numeric( $value );
+					break;
+				case 'url':
+					$bad = false === filter_var( $value, FILTER_VALIDATE_URL );
+					break;
+				case 'email':
+					$bad = ! is_email( (string) $value );
+					break;
+				case 'date':
+					$bad = false === strtotime( (string) $value );
+					break;
+				case 'select':
+				case 'radio':
+					$bad = ! in_array( (string) $value, $field['options'], true );
+					break;
+				case 'multiselect':
+				case 'checkbox':
+					foreach ( (array) $value as $v ) {
+						if ( $multi && ! in_array( (string) $v, $field['options'], true ) ) {
+							$bad = true;
+						}
+					}
+					break;
+			}
+
+			if ( $bad ) {
+				/* translators: %s: field label */
+				$errors[ $id ] = sprintf( __( 'Invalid value for %s.', 'wp-sell-services' ), $label );
 			}
 		}
 
@@ -329,21 +303,56 @@ class RequirementsService {
 	}
 
 	/**
-	 * Parse choices from string or array.
+	 * Sanitise submitted answers by field type.
 	 *
-	 * @param string|array $choices Choices.
-	 * @return array
+	 * Keys that no requirement claims (the default form's `description` and
+	 * `additional_notes`) are kept as text, so a brief written against a
+	 * service with no questions still reaches the vendor.
+	 *
+	 * @param array<int, array<string, mixed>> $fields     Normalised requirement rows.
+	 * @param array<string, mixed>             $field_data Submitted answers keyed by requirement id.
+	 * @return array<string, mixed>
 	 */
-	private function parse_choices( $choices ): array {
-		if ( is_array( $choices ) ) {
-			return $choices;
+	public function sanitize( array $fields, array $field_data ): array {
+		$types = array();
+		foreach ( $fields as $field ) {
+			$types[ $field['id'] ] = $field['type'];
 		}
 
-		if ( empty( $choices ) ) {
-			return array();
+		$clean = array();
+		foreach ( $field_data as $key => $value ) {
+			$key  = sanitize_key( (string) $key );
+			$type = $types[ $key ] ?? 'textarea';
+
+			if ( '' === $key || 'file' === $type ) {
+				continue;
+			}
+
+			if ( is_array( $value ) ) {
+				$clean[ $key ] = array_values( array_map( 'sanitize_text_field', array_filter( $value, 'is_scalar' ) ) );
+				continue;
+			}
+
+			$value = (string) $value;
+			switch ( $type ) {
+				case 'number':
+					$clean[ $key ] = is_numeric( $value ) ? $value + 0 : '';
+					break;
+				case 'url':
+					$clean[ $key ] = esc_url_raw( $value );
+					break;
+				case 'email':
+					$clean[ $key ] = sanitize_email( $value );
+					break;
+				case 'textarea':
+					$clean[ $key ] = sanitize_textarea_field( $value );
+					break;
+				default:
+					$clean[ $key ] = sanitize_text_field( $value );
+			}
 		}
 
-		return array_map( 'trim', explode( ',', $choices ) );
+		return $clean;
 	}
 
 	/**
@@ -584,14 +593,10 @@ class RequirementsService {
 		$formatted = array();
 
 		foreach ( $fields as $field ) {
-			// Use 'question' as the primary key, matching what the AJAX handler stores.
-			$key   = $field['question'] ?? $field['label'] ?? '';
-			$value = $requirements['field_data'][ $key ] ?? '';
-
 			$formatted[] = array(
-				'label' => $field['question'] ?? $field['label'] ?? '',
-				'type'  => $field['type'] ?? 'text',
-				'value' => $this->format_value( $value, $field['type'] ?? 'text' ),
+				'label' => $field['label'],
+				'type'  => $field['type'],
+				'value' => $this->format_value( wpss_requirement_answer( $field, $requirements['field_data'] ), $field['type'] ),
 			);
 		}
 

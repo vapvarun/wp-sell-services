@@ -171,10 +171,14 @@ class OfflineGateway implements PaymentGatewayInterface {
 	 * @return array Refund result.
 	 */
 	public function process_refund( string $transaction_id, ?float $amount = null, string $reason = '' ): array {
+		// No money moves here. `manual` tells OrderWorkflowManager to flag the
+		// amount for the admin instead of logging a refund that never happened.
 		return array(
-			'success' => true,
-			'status'  => 'manual_refund',
-			'message' => __( 'Offline payments must be refunded manually outside of this system.', 'wp-sell-services' ),
+			'success'        => true,
+			'manual'         => true,
+			'transaction_id' => $transaction_id,
+			'status'         => 'manual_refund',
+			'message'        => __( 'Offline payments must be refunded manually outside of this system.', 'wp-sell-services' ),
 		);
 	}
 
@@ -1005,8 +1009,9 @@ class OfflineGateway implements PaymentGatewayInterface {
 		printf( '<h4 style="margin:0 0 8px;">%s</h4>', esc_html__( 'Payment proof', 'wp-sell-services' ) );
 
 		foreach ( $receipts as $receipt ) {
-			$url    = $receipt->attachment_id ? wp_get_attachment_url( (int) $receipt->attachment_id ) : '';
-			$is_img = $receipt->attachment_id && wp_attachment_is_image( (int) $receipt->attachment_id );
+			$file   = wpss_get_receipt_file( $receipt );
+			$url    = $file['url'];
+			$is_img = $file['is_image'];
 			$who    = get_userdata( (int) $receipt->uploaded_by );
 
 			echo '<div class="wpss-receipt-review__item" style="border-top:1px solid #eee;padding:10px 0;">';

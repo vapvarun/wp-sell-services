@@ -29,8 +29,11 @@ use WPSellServices\Admin\Pages\UpgradePage;
 use WPSellServices\Admin\Tables\OrdersListTable;
 use WPSellServices\Admin\Tables\DisputesListTable;
 use WPSellServices\Models\Dispute;
+use WPSellServices\Models\ServiceOrder;
+use WPSellServices\Services\AuditLogService;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\OrderService;
+use WPSellServices\Services\OrderWorkflowManager;
 use WPSellServices\Assets\ScriptRegistry;
 
 /**
@@ -406,16 +409,15 @@ class Admin {
 			$this->upgrade_page->init();
 		}
 
-		// Page setup admin notice.
-		add_action( 'admin_notices', array( $this, 'check_page_setup_notice' ) );
-		add_action( 'wp_ajax_wpss_dismiss_pages_notice', array( $this, 'ajax_dismiss_pages_notice' ) );
-
-		// Demo payments notice. Deliberately NOT dismissible - see the method.
-		add_action( 'admin_notices', array( $this, 'demo_payments_notice' ) );
+		// Missing pages, no gateway, demo payments, inactive rail plugin.
+		add_action( 'admin_notices', array( $this, 'setup_health_notice' ) );
 		add_action( 'admin_notices', array( $this, 'order_files_public_notice' ) );
 		add_action( 'admin_notices', array( $this, 'missing_terms_notice' ) );
+		add_action( 'admin_notices', array( $this, 'pending_manual_refunds_notice' ) );
+		add_action( 'admin_notices', array( $this, 'migrated_sellers_notice' ) );
 		add_action( 'wp_ajax_wpss_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
+		add_action( 'admin_post_wpss_mark_refund_sent', array( $this, 'handle_mark_refund_sent' ) );
 	}
 
 	/**
@@ -466,6 +468,130 @@ class Admin {
 	}
 
 	/**
+	 * List orders whose refund the owner still has to send by hand.
+	 *
+	 * Offline / test gateways cannot move money, so a refund on one of their
+	 * orders only flags the amount (see OrderWorkflowManager). Until it is
+	 * marked sent from the order view, the buyer has not been refunded.
+	 *
+	 * @since 1.7.1
+	 * @return void
+	 */
+	public function pending_manual_refunds_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+			return;
+		}
+
+		$pending = wpss_get_pending_manual_refunds();
+
+		if ( empty( $pending ) ) {
+			return;
+		}
+
+		$items = array();
+
+		foreach ( $pending as $order_id => $amount ) {
+			$order   = wpss_get_order( (int) $order_id );
+			$items[] = sprintf(
+				'<li><a href="%1$s">%2$s</a>: %3$s</li>',
+				esc_url(
+					add_query_arg(
+						array(
+							'page'     => 'wpss-orders',
+							'action'   => 'view',
+							'order_id' => (int) $order_id,
+						),
+						admin_url( 'admin.php' )
+					)
+				),
+				/* translators: %d: order ID */
+				esc_html( sprintf( __( 'Order #%d', 'wp-sell-services' ), (int) $order_id ) ),
+				/* translators: %s: amount */
+				esc_html( sprintf( __( 'send %s to the buyer manually', 'wp-sell-services' ), wpss_format_price( $amount, (string) ( $order->currency ?? '' ) ) ) )
+			);
+		}
+
+		printf(
+			'<div class="notice notice-warning"><p><strong>%s</strong> %s</p><ul style="list-style: disc; margin-inline-start: 1.5em;">%s</ul></div>',
+			esc_html( _n( 'A refund is waiting to be sent manually.', 'Refunds are waiting to be sent manually.', count( $items ), 'wp-sell-services' ) ),
+			esc_html__( 'These orders were paid through a gateway that cannot refund automatically. Send the money, then open the order and mark the refund as sent.', 'wp-sell-services' ),
+			implode( '', $items ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each item escaped above.
+		);
+	}
+
+	/**
+	 * Admin confirmed a manual refund went out: clear the pending flag.
+	 *
+	 * @since 1.7.1
+	 * @return void
+	 */
+	public function handle_mark_refund_sent(): void {
+		$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+
+		if ( ! isset( $_POST['wpss_refund_sent_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_refund_sent_nonce'] ) ), 'wpss_mark_refund_sent_' . $order_id ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		$order   = $order_id ? wpss_get_order( $order_id ) : null;
+		$pending = $order ? (float) wpss_get_order_provider()->get_item_meta( $order_id, OrderWorkflowManager::REFUND_PENDING_META ) : 0.0;
+
+		if ( ! $order || $pending <= 0 ) {
+			wp_die( esc_html__( 'This order has no manual refund pending.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		wpss_get_order_provider()->update_item_meta( $order_id, OrderWorkflowManager::REFUND_PENDING_META, 0 );
+
+		// A full manual refund closes the payment the same way a gateway
+		// refund would; a partial leaves the rest of the payment in place.
+		if ( ServiceOrder::STATUS_REFUNDED === $order->status ) {
+			$order->update( array( 'payment_status' => 'refunded' ) );
+		}
+
+		( new AuditLogService() )->log(
+			'order.refund',
+			'order',
+			$order_id,
+			array(
+				'action'  => 'refund',
+				'context' => array(
+					'gateway' => (string) $order->payment_method,
+					'amount'  => $pending,
+					'result'  => array(
+						'success' => true,
+						'manual'  => true,
+						'message' => 'Marked as sent by admin.',
+					),
+				),
+			)
+		);
+
+		wpss_log( "Manual refund of {$pending} for order {$order_id} marked as sent by user " . get_current_user_id() . '.' );
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'     => 'wpss-orders',
+					'action'   => 'view',
+					'order_id' => $order_id,
+					'updated'  => '1',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
 	 * Tell the owner their marketplace is taking money with no Terms page.
 	 *
 	 * Gated on wpss_has_live_gateway() rather than on the plugin being active,
@@ -473,7 +599,7 @@ class Admin {
 	 * starts being a live risk: buyers are paying and there is nothing telling
 	 * them what they agreed to. A site still being built is left alone.
 	 *
-	 * Dismissible, unlike demo_payments_notice(): an owner may have decided
+	 * Dismissible, unlike the demo-payments notice: an owner may have decided
 	 * against publishing terms, and nagging them forever teaches people to
 	 * ignore our notices - which costs us the one that matters. The dismissal
 	 * records WHICH gateways were live at the time, so turning on another one
@@ -523,6 +649,67 @@ class Admin {
 	}
 
 	/**
+	 * Tell the owner which of their sellers this update kept selling.
+	 *
+	 * 1.7.1 made an approved vendor profile the requirement for selling, and
+	 * {@see \WPSellServices\Core\Activator::migrate_existing_sellers()} gave a
+	 * profile to everyone who was already selling without one. That is a change
+	 * to accounts the owner did not make, so it is reported rather than done
+	 * quietly, with the filtered list to check it against.
+	 *
+	 * Dismissible against the count, which never changes again after the
+	 * one-time migration - so dismissing it once dismisses it for good.
+	 *
+	 * @since 1.7.1
+	 * @return void
+	 */
+	public function migrated_sellers_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Our own screens only, like every other notice here.
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+			return;
+		}
+
+		$count = (int) get_option( \WPSellServices\Core\Activator::MIGRATED_SELLERS_OPTION, 0 );
+
+		if ( $count < 1 ) {
+			return;
+		}
+
+		$signature = (string) $count;
+
+		if ( get_user_meta( get_current_user_id(), '_wpss_sellers_notice_dismissed', true ) === $signature ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-info is-dismissible wpss-dismissible-notice" data-notice="sellers" data-signature="%s" data-nonce="%s"><p><strong>%s</strong> %s</p><p><a class="button" href="%s">%s</a></p></div>',
+			esc_attr( $signature ),
+			esc_attr( wp_create_nonce( 'wpss_dismiss_notice' ) ),
+			esc_html(
+				sprintf(
+					/* translators: %s: number of sellers. */
+					_n(
+						'%s seller kept their selling access in this update.',
+						'%s sellers kept their selling access in this update.',
+						$count,
+						'wp-sell-services'
+					),
+					number_format_i18n( $count )
+				)
+			),
+			esc_html__( 'This update made an approved vendor profile the requirement for selling. These people were already selling before it - they have a service, an order or a proposal - so their access was preserved and nothing changed for their buyers. Nobody else was given access.', 'wp-sell-services' ),
+			esc_url( admin_url( 'admin.php?page=wpss-vendors&status=migrated' ) ),
+			esc_html__( 'Review these sellers', 'wp-sell-services' )
+		);
+	}
+
+	/**
 	 * Identify the currently live gateway set.
 	 *
 	 * Used so a dismissal applies to the configuration it was made against.
@@ -552,9 +739,9 @@ class Admin {
 	/**
 	 * Dismiss one of the plugin's dismissible admin notices.
 	 *
-	 * Generic on purpose. check_page_setup_notice() shipped with its own
-	 * action and its own handler; a second notice doing the same would have
-	 * made a second pair, and a third a third. The notice key is whitelisted,
+	 * Generic on purpose. The pages notice once shipped with its own action
+	 * and its own handler; a second notice doing the same would have made a
+	 * second pair, and a third a third. The notice key is whitelisted,
 	 * so this cannot be used to write arbitrary user meta.
 	 *
 	 * @since 1.7.0
@@ -567,7 +754,11 @@ class Admin {
 			wp_send_json_error();
 		}
 
-		$allowed = array( 'terms' => '_wpss_terms_notice_dismissed' );
+		$allowed = array(
+			'terms'   => '_wpss_terms_notice_dismissed',
+			'pages'   => '_wpss_pages_notice_dismissed',
+			'sellers' => '_wpss_sellers_notice_dismissed',
+		);
 		$notice  = isset( $_POST['notice'] ) ? sanitize_key( wp_unslash( $_POST['notice'] ) ) : '';
 
 		if ( ! isset( $allowed[ $notice ] ) ) {
@@ -583,48 +774,153 @@ class Admin {
 	}
 
 	/**
-	 * Warn, on every admin screen, while payments are simulated.
+	 * Everything that stops this marketplace working, in one list.
 	 *
-	 * A fresh install registers the Test gateway so the marketplace works end
-	 * to end before any gateway credentials exist. That is the right default -
-	 * an owner can take a service from listing to paid order on day one - but
-	 * it must never be quiet, because the failure mode is a real store selling
-	 * to real buyers and settling nothing.
+	 * Three notices used to answer three of these questions separately, and a
+	 * fourth (no enabled gateway) was never asked: with demo payments on but
+	 * WP_DEBUG off the Test gateway registers yet never enables, so the owner
+	 * read "checkout is simulated" while buyers read "no payment methods".
+	 * A selected store rail whose plugin was deactivated fell back to
+	 * Standalone without a word. Public so the contract test can read it.
 	 *
-	 * No dismiss control, on purpose. The notice goes away by fixing its cause:
-	 * configure a gateway, and wpss_demo_payments_enabled() is false on the
-	 * next request.
+	 * @since 1.7.1
 	 *
-	 * @since 1.4.0
+	 * @return array<string, array{text: string, url: string, label: string, dismiss?: string}>
+	 *         Keyed by problem; `dismiss` is a signature a dismissal is stored against.
+	 */
+	public function get_setup_health_problems(): array {
+		$problems = array();
+
+		// Pages: every registry page, since links to an unpublished one either
+		// 404 or vanish, and only the owner can say which they meant.
+		$missing = array();
+
+		foreach ( wpss_get_page_definitions() as $key => $definition ) {
+			if ( wpss_get_page_id( $key ) ) {
+				continue;
+			}
+
+			$missing[ $key ] = empty( $definition['required'] )
+				/* translators: %s: page title */
+				? sprintf( __( 'Optional page %s is missing or unpublished; links to it are hidden.', 'wp-sell-services' ), $definition['title'] )
+				/* translators: %s: page title */
+				: sprintf( __( 'Required page %s is missing or unpublished.', 'wp-sell-services' ), $definition['title'] );
+		}
+
+		if ( $missing ) {
+			$problems['pages'] = array(
+				'text'    => implode( ' ', $missing ),
+				'url'     => wpss_get_settings_url( 'pages' ),
+				'label'   => __( 'Map pages', 'wp-sell-services' ),
+				'dismiss' => substr( md5( implode( ',', array_keys( $missing ) ) ), 0, 12 ),
+			);
+		}
+
+		// Rail: the setting names a store plugin that is not running.
+		$manager    = wpss()->get_integration_manager();
+		$active     = $manager ? $manager->get_active_adapter() : null;
+		$configured = (string) wpss_get_option( 'wpss_general', 'ecommerce_platform', 'auto' );
+
+		if ( $active && 'auto' !== $configured && $configured !== $active->get_id() ) {
+			$wanted           = $manager->get_adapter( $configured );
+			$problems['rail'] = array(
+				'text'  => sprintf(
+					/* translators: 1: selected store plugin, 2: the rail checkout is actually using */
+					__( 'Settings say %1$s but that plugin is not active; checkout is running on %2$s.', 'wp-sell-services' ),
+					$wanted ? $wanted->get_name() : ucfirst( $configured ),
+					$active->get_name()
+				),
+				'url'   => wpss_get_settings_url( 'general' ),
+				'label' => __( 'Review store setting', 'wp-sell-services' ),
+			);
+		}
+
+		// Gateways: only where our own checkout takes the money.
+		if ( wpss_uses_standalone_payments() ) {
+			$enabled = array();
+
+			foreach ( wpss()->get_payment_gateways() as $id => $gateway ) {
+				if ( $gateway instanceof \WPSellServices\Integrations\Contracts\PaymentGatewayInterface && $gateway->is_enabled() ) {
+					$enabled[] = (string) $id;
+				}
+			}
+
+			if ( ! $enabled ) {
+				$problems['gateway'] = array(
+					'text'  => __( 'No payment method is enabled. Buyers cannot check out.', 'wp-sell-services' ),
+					'url'   => wpss_get_settings_url( 'payments' ),
+					'label' => __( 'Set up payments', 'wp-sell-services' ),
+				);
+			} elseif ( array( 'test' ) === $enabled ) {
+				$problems['demo'] = array(
+					'text'  => __( 'Demo payments are on. Checkout is simulated so you can test the whole buying flow - no money moves and no card is charged. Configure a payment gateway before taking real orders; this notice clears itself once one is ready.', 'wp-sell-services' ),
+					'url'   => wpss_get_settings_url( 'payments' ),
+					'label' => __( 'Set up payments', 'wp-sell-services' ),
+				);
+			}
+		}
+
+		return $problems;
+	}
+
+	/**
+	 * Print the setup-health problems on the plugin's own screens.
+	 *
+	 * Pages is dismissible against the set of missing pages, so trashing
+	 * another one asks again. The rest are not: a store that cannot take
+	 * money is not something to hide, and each clears by fixing its cause.
+	 *
+	 * @since 1.7.1
 	 * @return void
 	 */
-	public function demo_payments_notice(): void {
-		if ( ! current_user_can( 'manage_options' ) || ! function_exists( 'wpss_demo_payments_enabled' ) ) {
+	public function setup_health_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
-		if ( ! wpss_demo_payments_enabled() ) {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || ! $this->is_plugin_page( (string) $screen->id ) ) {
 			return;
 		}
 
-		// The opt-out link is what makes wpss_demo_payments reachable. Without
-		// it the option is read but never written, so an owner running a live
-		// standalone store before configuring a gateway had no way to stop a
-		// simulated checkout appearing to their buyers.
-		$turn_off = wp_nonce_url(
-			admin_url( 'admin-post.php?action=wpss_disable_demo_payments' ),
-			'wpss_disable_demo_payments'
-		);
+		foreach ( $this->get_setup_health_problems() as $key => $problem ) {
+			$attrs = '';
 
-		printf(
-			'<div class="notice notice-warning"><p><strong>%s</strong> %s</p><p><a href="%s" class="button button-primary">%s</a> <a href="%s" class="button">%s</a></p></div>',
-			esc_html__( 'Demo payments are on.', 'wp-sell-services' ),
-			esc_html__( 'Checkout is simulated so you can test the whole buying flow - no money moves and no card is charged. Configure a payment gateway before taking real orders; this notice clears itself once one is ready.', 'wp-sell-services' ),
-			esc_url( admin_url( 'admin.php?page=wpss-settings#payments' ) ),
-			esc_html__( 'Set up payments', 'wp-sell-services' ),
-			esc_url( $turn_off ),
-			esc_html__( 'Turn demo payments off', 'wp-sell-services' )
-		);
+			if ( isset( $problem['dismiss'] ) ) {
+				if ( get_user_meta( get_current_user_id(), '_wpss_pages_notice_dismissed', true ) === $problem['dismiss'] ) {
+					continue;
+				}
+
+				$attrs = sprintf(
+					' is-dismissible wpss-dismissible-notice" data-notice="%s" data-signature="%s" data-nonce="%s',
+					esc_attr( $key ),
+					esc_attr( $problem['dismiss'] ),
+					esc_attr( wp_create_nonce( 'wpss_dismiss_notice' ) )
+				);
+			}
+
+			$buttons = sprintf( '<a href="%s" class="button button-primary">%s</a>', esc_url( $problem['url'] ), esc_html( $problem['label'] ) );
+
+			// The opt-out link is what makes wpss_demo_payments reachable, so
+			// an owner can run a live store with no gateway yet rather than a
+			// simulated checkout.
+			if ( 'demo' === $key ) {
+				$buttons .= sprintf(
+					' <a href="%s" class="button">%s</a>',
+					esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=wpss_disable_demo_payments' ), 'wpss_disable_demo_payments' ) ),
+					esc_html__( 'Turn demo payments off', 'wp-sell-services' )
+				);
+			}
+
+			printf(
+				'<div class="notice notice-warning%s"><p><strong>%s</strong> %s</p><p>%s</p></div>',
+				$attrs, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each attribute escaped above.
+				esc_html__( 'WP Sell Services:', 'wp-sell-services' ),
+				esc_html( $problem['text'] ),
+				$buttons // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+			);
+		}
 	}
 
 	/**
@@ -648,79 +944,6 @@ class Admin {
 
 		wp_safe_redirect( wp_get_referer() ? wp_get_referer() : admin_url() );
 		exit;
-	}
-
-	/**
-	 * Show an admin notice when required pages are unmapped.
-	 *
-	 * Lists missing pages and links to the setup wizard or settings page.
-	 * Dismissible via user meta so it does not persist after dismissal.
-	 *
-	 * @since 1.0.0
-	 * @return void
-	 */
-	public function check_page_setup_notice(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		// Don't show if dismissed.
-		if ( get_user_meta( get_current_user_id(), '_wpss_pages_notice_dismissed', true ) ) {
-			return;
-		}
-
-		$required_pages = wpss_get_required_pages();
-
-		$pages   = get_option( 'wpss_pages', array() );
-		$missing = array();
-
-		foreach ( $required_pages as $key => $label ) {
-			$page_id = (int) ( $pages[ $key ] ?? 0 );
-			if ( ! $page_id || ! get_post( $page_id ) || 'publish' !== get_post_status( $page_id ) ) {
-				$missing[] = $label;
-			}
-		}
-
-		if ( empty( $missing ) ) {
-			return;
-		}
-
-		$settings_url = wpss_get_settings_url( 'pages' );
-		$wizard_url   = admin_url( 'admin.php?page=wpss-setup-wizard' );
-
-		printf(
-			'<div class="notice notice-warning is-dismissible wpss-pages-notice" data-nonce="%s"><p><strong>%s</strong> %s: <em>%s</em>. <a href="%s">%s</a> %s <a href="%s">%s</a>.</p></div>',
-			esc_attr( wp_create_nonce( 'wpss_dismiss_pages_notice' ) ),
-			esc_html__( 'WP Sell Services:', 'wp-sell-services' ),
-			esc_html__( 'The following pages need to be set up', 'wp-sell-services' ),
-			esc_html( implode( ', ', $missing ) ),
-			esc_url( $wizard_url ),
-			esc_html__( 'Run Setup Wizard', 'wp-sell-services' ),
-			esc_html__( 'or', 'wp-sell-services' ),
-			esc_url( $settings_url ),
-			esc_html__( 'configure pages manually', 'wp-sell-services' )
-		);
-
-		// Inline script to handle dismiss via AJAX.
-		?>
-		<?php
-	}
-
-	/**
-	 * AJAX handler to dismiss the pages setup notice.
-	 *
-	 * @since 1.0.0
-	 * @return void
-	 */
-	public function ajax_dismiss_pages_notice(): void {
-		check_ajax_referer( 'wpss_dismiss_pages_notice', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error();
-		}
-
-		update_user_meta( get_current_user_id(), '_wpss_pages_notice_dismissed', true );
-		wp_send_json_success();
 	}
 
 	/**
@@ -786,7 +1009,7 @@ class Admin {
 		$order_id   = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
 		$has_access = current_user_can( 'manage_options' );
 
-		if ( ! $has_access && current_user_can( 'wpss_manage_orders' ) && $order_id ) {
+		if ( ! $has_access && current_user_can( 'wpss_vendor_orders' ) && $order_id ) {
 			// Vendors can only update orders they are the vendor on.
 			$check_order = wpss_get_order( $order_id );
 			if ( $check_order && (int) $check_order->vendor_id === get_current_user_id() ) {
@@ -870,81 +1093,43 @@ class Admin {
 		}
 
 		$dispute_service = new DisputeService();
+		$error           = '';
 
-		if ( 'resolved' === $status ) {
-			if ( ! $resolution ) {
-				// If resolving, require a resolution type.
-				wp_die( esc_html__( 'Please select a resolution type when resolving a dispute.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
-			}
-
+		// Three doors, one state machine. Validation (resolution type, partial
+		// amount) lives in resolve(); closing goes through the workflow so the
+		// order is restored; everything else is a plain transition.
+		if ( DisputeService::STATUS_RESOLVED === $status ) {
 			// Cast IS the sanitisation for a money field - there is no
-			// sanitize_* that returns a float. Nonce verified above. Same
-			// pattern as OrderScreen's refund box.
+			// sanitize_* that returns a float. Nonce verified above.
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$refund_amount = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
 
-			// A Partial Refund with no amount used to reach resolve() as 0.0,
-			// which apply_refund_status() read as "refund everything" - so the
-			// buyer got 100% back on an order recorded as partially refunded
-			// (Basecamp 10240143362). Validated here so the admin gets a
-			// sentence rather than a silently refused transition.
-			if ( DisputeService::RESOLUTION_PARTIAL_REFUND === $resolution ) {
-				$dispute = $dispute_service->get( $dispute_id );
-				$order   = $dispute ? wpss_get_order( (int) $dispute->order_id ) : null;
-				$total   = $order ? (float) $order->total : 0.0;
-
-				if ( $refund_amount <= 0 ) {
-					wp_die( esc_html__( 'Enter the amount to refund. A partial refund needs a number greater than zero.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
-				}
-
-				if ( $total > 0 && $refund_amount >= $total ) {
-					wp_die(
-						esc_html(
-							sprintf(
-								/* translators: %s: formatted order total. */
-								__( 'A partial refund must be less than the %s order total. Choose Full Refund to return all of it.', 'wp-sell-services' ),
-								wpss_format_price( $total, $order->currency ?? '' )
-							)
-						),
-						'',
-						array( 'back_link' => true )
-					);
-				}
-			}
-
 			$result = $dispute_service->resolve( $dispute_id, $resolution, $notes, get_current_user_id(), $refund_amount );
+			$error  = $result ? '' : $dispute_service->last_error();
+		} elseif ( DisputeService::STATUS_CLOSED === $status ) {
+			$closed = ( new \WPSellServices\Services\DisputeWorkflowManager() )->cancel( $dispute_id, get_current_user_id(), $notes );
+			$result = ! empty( $closed['success'] );
+			$error  = $result ? '' : (string) $closed['message'];
 		} else {
-			$result = $dispute_service->update_status( $dispute_id, $status, $notes );
-
-			// Also save resolution and notes if provided with a non-resolved status.
-			if ( $result && ( $resolution || $notes ) ) {
-				global $wpdb;
-				$update_data = array( 'updated_at' => current_time( 'mysql' ) );
-
-				if ( $resolution ) {
-					$update_data['resolution'] = sanitize_key( $resolution );
-				}
-				if ( $notes ) {
-					$update_data['resolution_notes'] = sanitize_textarea_field( $notes );
-				}
-
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$wpdb->update(
-					$wpdb->prefix . 'wpss_disputes',
-					$update_data,
-					array( 'id' => $dispute_id )
-				);
-			}
+			$fields = $resolution ? array( 'resolution' => $resolution ) : array();
+			$result = $dispute_service->transition(
+				$dispute_id,
+				$status,
+				array(
+					'note'   => $notes,
+					'fields' => $fields,
+				)
+			);
+			$error  = $result ? '' : $dispute_service->last_error();
 		}
-
-		$updated = ( false !== $result && ! is_wp_error( $result ) ) ? '1' : '0';
 
 		$redirect_url = add_query_arg(
 			array(
 				'page'       => 'wpss-disputes',
 				'action'     => 'view',
 				'dispute_id' => $dispute_id,
-				'updated'    => $updated,
+				'updated'    => $result ? '1' : '0',
+				'wpss_error' => $error ? $error : false,
 			),
 			admin_url( 'admin.php' )
 		);
@@ -1397,20 +1582,9 @@ class Admin {
 		$services_count = wp_count_posts( 'wpss_service' );
 		$requests_count = wp_count_posts( 'wpss_request' );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$order_stats = $wpdb->get_row(
-			"SELECT
-				COUNT(*) as total,
-				SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
-				SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-				SUM(CASE WHEN status IN ('pending_payment', 'pending_requirements') THEN 1 ELSE 0 END) as pending
-			FROM {$orders_table}"
-		);
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$revenue = $wpdb->get_var(
-			"SELECT SUM(total) FROM {$orders_table} WHERE status = 'completed'"
-		);
+		// One cached scan for every order tile (see wpss_get_order_aggregates()).
+		$order_stats = wpss_get_order_aggregates();
+		$revenue     = $order_stats->revenue;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$recent_orders = $wpdb->get_results(
@@ -1424,8 +1598,7 @@ class Admin {
 		$disputes_table    = $wpdb->prefix . 'wpss_disputes';
 		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
 		$vendor_profiles   = $wpdb->prefix . 'wpss_vendor_profiles';
-		$vendor_settings   = get_option( 'wpss_vendor', array() );
-		$is_approval_mode  = isset( $vendor_settings['vendor_registration'] ) && 'approval' === $vendor_settings['vendor_registration'];
+		$is_approval_mode  = 'approval' === wpss_get_option( 'vendor', 'vendor_registration' );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$open_disputes = (int) $wpdb->get_var(
@@ -1497,7 +1670,7 @@ class Admin {
 					<div class="wpss-stat-card">
 						<i data-lucide="shopping-cart" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->total ?? 0 ); ?></span>
+							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->total ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
@@ -1505,7 +1678,7 @@ class Admin {
 					<div class="wpss-stat-card">
 						<i data-lucide="clock" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->in_progress ?? 0 ); ?></span>
+							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->in_progress ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'In Progress', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
@@ -1513,7 +1686,7 @@ class Admin {
 					<div class="wpss-stat-card">
 						<i data-lucide="check-circle-2" class="wpss-icon wpss-stat-icon wpss-stat-icon--success" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( $order_stats->completed ?? 0 ); ?></span>
+							<span class="wpss-stat-number"><?php echo esc_html( (string) $order_stats->completed ); ?></span>
 							<span class="wpss-stat-label"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
 						</div>
 					</div>
@@ -1579,7 +1752,7 @@ class Admin {
 							</li>
 							<li>
 								<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&status=pending_payment' ) ); ?>">
-									<span class="count"><?php echo esc_html( $order_stats->pending ?? 0 ); ?></span>
+									<span class="count"><?php echo esc_html( (string) $order_stats->pending ); ?></span>
 									<?php esc_html_e( 'Pending Orders', 'wp-sell-services' ); ?>
 								</a>
 							</li>
@@ -1786,7 +1959,12 @@ class Admin {
 		$updated         = 0;
 
 		foreach ( $dispute_ids as $dispute_id ) {
-			if ( $dispute_service->update_status( $dispute_id, $new_status ) ) {
+			// Close restores the order, so it goes through the workflow.
+			$ok = DisputeService::STATUS_CLOSED === $new_status
+				? ! empty( ( new \WPSellServices\Services\DisputeWorkflowManager() )->cancel( $dispute_id, get_current_user_id() )['success'] )
+				: $dispute_service->transition( $dispute_id, $new_status );
+
+			if ( $ok ) {
 				++$updated;
 			}
 		}
@@ -2158,7 +2336,7 @@ class Admin {
 								<strong><?php esc_html_e( 'Buyer:', 'wp-sell-services' ); ?></strong><br>
 								<?php if ( $buyer ) : ?>
 									<a href="<?php echo esc_url( get_edit_user_link( $buyer->ID ) ); ?>">
-										<?php echo esc_html( $buyer->display_name ); ?>
+										<?php echo esc_html( wpss_get_member_display_name( (int) $buyer->ID ) ); ?>
 									</a>
 									<br><small><?php echo esc_html( $buyer->user_email ); ?></small>
 								<?php else : ?>
@@ -2169,7 +2347,7 @@ class Admin {
 								<strong><?php esc_html_e( 'Vendor:', 'wp-sell-services' ); ?></strong><br>
 								<?php if ( $vendor ) : ?>
 									<a href="<?php echo esc_url( get_edit_user_link( $vendor->ID ) ); ?>">
-										<?php echo esc_html( $vendor->display_name ); ?>
+										<?php echo esc_html( wpss_get_member_display_name( (int) $vendor->ID ) ); ?>
 									</a>
 									<br><small><?php echo esc_html( $vendor->user_email ); ?></small>
 								<?php else : ?>
@@ -2233,6 +2411,38 @@ class Admin {
 								<p class="description">
 									<?php esc_html_e( 'Leave the amount blank for a full refund. A smaller amount issues a partial refund and claws back the vendor\'s proportional share. The gateway payment is refunded where supported.', 'wp-sell-services' ); ?>
 								</p>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<?php
+					// A refund this gateway could not send (offline / demo): the
+					// admin pays the buyer by hand and confirms here.
+					$wpss_refund_pending = current_user_can( 'manage_options' )
+						? (float) wpss_get_order_provider()->get_item_meta( $order_id, OrderWorkflowManager::REFUND_PENDING_META )
+						: 0.0;
+
+					if ( $wpss_refund_pending > 0 ) :
+						?>
+						<div class="postbox wpss-refund-pending">
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Manual refund pending', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<p>
+									<?php
+									printf(
+										/* translators: 1: amount, 2: payment method */
+										esc_html__( 'Send %1$s to the buyer manually. This order was paid via %2$s, which cannot refund automatically. The buyer has not been refunded yet.', 'wp-sell-services' ),
+										'<strong>' . esc_html( wpss_format_price( $wpss_refund_pending, (string) $order->currency ) ) . '</strong>',
+										esc_html( (string) $order->payment_method )
+									);
+									?>
+								</p>
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+									<input type="hidden" name="action" value="wpss_mark_refund_sent">
+									<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order_id ); ?>">
+									<?php wp_nonce_field( 'wpss_mark_refund_sent_' . $order_id, 'wpss_refund_sent_nonce' ); ?>
+									<?php submit_button( __( 'Mark refund sent', 'wp-sell-services' ), 'secondary', 'submit', false ); ?>
+								</form>
 							</div>
 						</div>
 					<?php endif; ?>
@@ -2554,7 +2764,8 @@ class Admin {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$notice_msg = '1' === $_GET['updated']
 				? __( 'Dispute updated successfully.', 'wp-sell-services' )
-				: __( 'Failed to update dispute.', 'wp-sell-services' );
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				: ( isset( $_GET['wpss_error'] ) ? sanitize_text_field( wp_unslash( $_GET['wpss_error'] ) ) : __( 'Failed to update dispute.', 'wp-sell-services' ) );
 
 			printf(
 				'<div class="notice %s is-dismissible"><p>%s</p></div>',
@@ -2718,7 +2929,7 @@ class Admin {
 								<strong><?php esc_html_e( 'Buyer:', 'wp-sell-services' ); ?></strong><br>
 								<?php if ( $customer ) : ?>
 									<a href="<?php echo esc_url( get_edit_user_link( $customer->ID ) ); ?>">
-										<?php echo esc_html( $customer->display_name ); ?>
+										<?php echo esc_html( wpss_get_member_display_name( (int) $customer->ID ) ); ?>
 									</a>
 								<?php else : ?>
 									<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
@@ -2728,7 +2939,7 @@ class Admin {
 								<strong><?php esc_html_e( 'Vendor:', 'wp-sell-services' ); ?></strong><br>
 								<?php if ( $vendor ) : ?>
 									<a href="<?php echo esc_url( get_edit_user_link( $vendor->ID ) ); ?>">
-										<?php echo esc_html( $vendor->display_name ); ?>
+										<?php echo esc_html( wpss_get_member_display_name( (int) $vendor->ID ) ); ?>
 									</a>
 								<?php else : ?>
 									<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
@@ -2797,26 +3008,7 @@ class Admin {
 										<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dispute->resolved_at ) ) ); ?>
 									</p>
 								<?php endif; ?>
-								<!-- Allow admin to update resolution on already-resolved disputes -->
-								<hr style="margin: 15px 0;">
-								<details>
-									<summary style="cursor: pointer; font-weight: 600;"><?php esc_html_e( 'Update Resolution', 'wp-sell-services' ); ?></summary>
-									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top: 10px;">
-										<?php wp_nonce_field( 'wpss_resolve_dispute', 'wpss_dispute_nonce' ); ?>
-										<input type="hidden" name="action" value="wpss_resolve_dispute">
-										<input type="hidden" name="dispute_id" value="<?php echo esc_attr( (string) $dispute_id ); ?>">
-										<input type="hidden" name="dispute_status" value="resolved">
-
-										<?php $this->render_dispute_resolution_fields( $dispute, $order, $resolutions, 'resolution_update' ); ?>
-
-										<p>
-											<label for="admin_notes_update"><strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong></label><br>
-											<textarea name="admin_notes" id="admin_notes_update" rows="4" style="width: 100%;"><?php echo esc_textarea( $dispute->resolution_notes ?? '' ); ?></textarea>
-										</p>
-
-										<?php submit_button( __( 'Update Resolution', 'wp-sell-services' ), 'secondary', 'submit', false ); ?>
-									</form>
-								</details>
+								<p class="description"><?php esc_html_e( 'A resolved or closed dispute is final: the order has already moved, and money moves once.', 'wp-sell-services' ); ?></p>
 							</div>
 						</div>
 					<?php endif; ?>
@@ -2910,10 +3102,9 @@ class Admin {
 				++$featured;
 			}
 
+			// create_service() marks the post _wpss_demo_content for cleanup.
 			$result = $ref_create->invoke( $commands, $service_data );
 			if ( ! is_wp_error( $result ) ) {
-				// Mark as demo content for easy cleanup.
-				update_post_meta( $result, '_wpss_demo_content', 1 );
 				++$created;
 			}
 		}

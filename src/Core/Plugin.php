@@ -234,6 +234,7 @@ final class Plugin {
 		$this->maybe_run_install();
 		$this->set_locale();
 		$this->define_vendor_settings_filters();
+		$this->define_login_lock_hooks();
 		$this->define_avatar_filter();
 		$this->register_post_types();
 		$this->register_rewrite_rules();
@@ -360,6 +361,21 @@ final class Plugin {
 			);
 		}
 
+		// Withdrawal payout details were plaintext JSON until 1.7.1. Same
+		// own-flag pattern as above: exactly once, cannot be skipped by a
+		// forgotten version bump, idempotent (rows already prefixed are not
+		// selected).
+		if ( ! get_option( 'wpss_withdrawal_details_encrypted', false ) ) {
+			add_action(
+				'init',
+				static function (): void {
+					wpss_encrypt_legacy_withdrawal_details();
+					update_option( 'wpss_withdrawal_details_encrypted', 1, false );
+				},
+				20
+			);
+		}
+
 		// The schema has its OWN version, and it moves independently of the
 		// plugin version — a release can add a table without changing
 		// WPSS_VERSION. Gating the installer on the plugin version alone meant
@@ -404,6 +420,17 @@ final class Plugin {
 			// (which Activator::schedule_cron_events() registers below).
 			if ( $installed_version && version_compare( $installed_version, '1.1.0', '<' ) ) {
 				self::clear_legacy_wpcron_hooks();
+			}
+
+			// 1.7.1 split wpss_manage_orders (admin) from wpss_vendor_orders
+			// (vendor). create_roles() fixed the roles above; this fixes the
+			// per-user grants existing vendors carry. The same release made an
+			// active profile row the definition of a vendor, so anyone who was
+			// selling without one gets the row rather than the door.
+			if ( $installed_version && version_compare( $installed_version, '1.7.1', '<' ) ) {
+				Activator::migrate_vendor_user_caps();
+				Activator::migrate_existing_sellers();
+				Activator::migrate_advanced_standalone_keys();
 			}
 
 			// Note: the wallet-ledger reconciliation is NOT here. It runs off its
@@ -636,6 +663,10 @@ final class Plugin {
 				return $vars;
 			}
 		);
+
+		// The archive filter form on a services page that is ALSO the static
+		// front page must not knock the request over to the blog.
+		add_filter( 'request', array( $this, 'drop_front_page_filter_vars' ) );
 
 		// Validate + canonicalize the requested dashboard section (aliases,
 		// unknown-slug fallback, legacy ?section= -> pretty endpoint).
@@ -1103,6 +1134,39 @@ final class Plugin {
 	}
 
 	/**
+	 * Keep the services archive filters off the main query on the front page.
+	 *
+	 * WooCommerce registers `min_price` / `max_price` as public query vars and
+	 * core registers `search`. WP_Query treats ANY public var in the query
+	 * string - even an empty one - as "not the static front page" and renders
+	 * the blog instead. When the mapped services page is the front page the
+	 * archive filter form emits exactly those keys (the browser sends the empty
+	 * ones too), so submitting it showed the blog. The archive view reads every
+	 * filter from $_GET; the main query never needs them, so they are dropped
+	 * here - only when the services page is the front page and the request is
+	 * otherwise the front page, so WooCommerce's own price filter is untouched.
+	 *
+	 * @param array<string,mixed> $query_vars Parsed public query vars.
+	 * @return array<string,mixed>
+	 */
+	public function drop_front_page_filter_vars( array $query_vars ): array {
+		$filters = array( 'search', 'min_price', 'max_price' );
+		$front   = 'page' === get_option( 'show_on_front' ) ? (int) get_option( 'page_on_front' ) : 0;
+
+		if ( $front <= 0 || ! function_exists( 'wpss_get_page_id' ) || wpss_get_page_id( 'services_page' ) !== $front ) {
+			return $query_vars;
+		}
+
+		// Anything else in the query (a real page, a search, a feed) is not the
+		// front page - WP_Query's own allow-list, kept in sync with it.
+		if ( array_diff( array_keys( $query_vars ), $filters, array( 'preview', 'page', 'paged', 'cpage' ) ) ) {
+			return $query_vars;
+		}
+
+		return array_diff_key( $query_vars, array_flip( $filters ) );
+	}
+
+	/**
 	 * Redirect the dormant standalone cart/checkout pages to the active rail.
 	 *
 	 * The guard used to live inside the `[wpss_cart]` / `[wpss_checkout]`
@@ -1148,15 +1212,16 @@ final class Plugin {
 		} elseif ( 'cart' === $key ) {
 			$target = function_exists( 'wpss_get_cart_url' ) ? wpss_get_cart_url() : '';
 		} else {
-			// `?pay_order=N` is how the standalone rail pays ONE order, and we
-			// have already emailed those links. Resolve through the shared seam
-			// so an old link lands on that order's real payment page instead of
-			// a generic (empty) checkout.
+			// `?pay_order=N` is how a buyer pays ONE order: every Pay button and
+			// emailed link on a store rail lands here. This click is where the
+			// rail creates its store order (wpss_ensure_pay_order), so the
+			// buyer lands on that order's real payment page instead of a
+			// generic (empty) checkout.
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect of a public link.
 			$pay_order = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0;
 
-			$target = ( $pay_order > 0 && function_exists( 'wpss_get_pay_order_url' ) )
-				? wpss_get_pay_order_url( $pay_order )
+			$target = ( $pay_order > 0 && function_exists( 'wpss_ensure_pay_order' ) )
+				? wpss_ensure_pay_order( $pay_order )
 				: ( function_exists( 'wpss_get_checkout_base_url' ) ? wpss_get_checkout_base_url() : '' );
 		}
 
@@ -1330,8 +1395,10 @@ final class Plugin {
 			function ( int $vendor_id, string $status ) use ( $notification_service ): void {
 				if ( 'active' === $status ) {
 					$notification_service->notify_vendor_approved( $vendor_id );
-				} elseif ( in_array( $status, array( 'rejected', 'suspended' ), true ) ) {
+				} elseif ( 'rejected' === $status ) {
 					$notification_service->notify_vendor_rejected( $vendor_id );
+				} elseif ( 'suspended' === $status ) {
+					$notification_service->notify_vendor_suspended( $vendor_id );
 				}
 			},
 			null,
@@ -1436,10 +1503,92 @@ final class Plugin {
 					$review_id,
 					(int) $review->vendor_id,
 					(int) $review->rating,
-					(string) ( $review->comment ?? '' ),
+					(string) ( $review->review ?? '' ),
 					$buyer_name,
 					(int) $review->service_id
 				);
+			},
+			null,
+			10,
+			2
+		);
+
+		// Vendor replied to a review: tell the reviewer. Guest reviews
+		// (customer_id 0) have nobody to tell.
+		$this->loader->add_action(
+			'wpss_review_reply_created',
+			function ( int $review_id ) use ( $notification_service ): void {
+				global $wpdb;
+				$review = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$wpdb->prepare( "SELECT * FROM {$wpdb->prefix}wpss_reviews WHERE id = %d", $review_id )
+				);
+				if ( ! $review || (int) $review->customer_id <= 0 ) {
+					return;
+				}
+				$vendor  = get_user_by( 'id', (int) $review->vendor_id );
+				$service = get_post( (int) $review->service_id );
+				$notification_service->send(
+					(int) $review->customer_id,
+					'review_reply',
+					array(
+						'review_id'     => $review_id,
+						'order_id'      => (int) $review->order_id,
+						'service_id'    => (int) $review->service_id,
+						'vendor_id'     => (int) $review->vendor_id,
+						'vendor_name'   => $vendor ? $vendor->display_name : '',
+						'service_title' => $service ? $service->post_title : '',
+						'reply'         => (string) ( $review->vendor_reply ?? '' ),
+						'action_url'    => $service ? (string) get_permalink( $service ) : '',
+					)
+				);
+			},
+			null,
+			10,
+			1
+		);
+
+		// A buyer request reached its closing date.
+		$this->loader->add_action(
+			'wpss_buyer_request_status_changed',
+			function ( int $request_id, string $status ) use ( $notification_service ): void {
+				if ( \WPSellServices\Services\BuyerRequestService::STATUS_EXPIRED !== $status ) {
+					return;
+				}
+				$request = get_post( $request_id );
+				if ( ! $request || (int) $request->post_author <= 0 ) {
+					return;
+				}
+				$notification_service->send(
+					(int) $request->post_author,
+					'request_expired',
+					array(
+						'request_id'    => $request_id,
+						'request_title' => $request->post_title,
+						'action_url'    => (string) get_permalink( $request ),
+					)
+				);
+			},
+			null,
+			10,
+			2
+		);
+
+		// Service moderation decisions. Three surfaces fire these actions
+		// (ModerationService, the admin moderation page, the REST controller);
+		// the vendor is told from here, once, whichever one it was.
+		$this->loader->add_action(
+			'wpss_service_approved',
+			static function ( int $service_id ): void {
+				( new \WPSellServices\Services\ModerationService() )->notify_approved( $service_id );
+			},
+			null,
+			10,
+			1
+		);
+		$this->loader->add_action(
+			'wpss_service_rejected',
+			static function ( int $service_id, string $reason = '' ): void {
+				( new \WPSellServices\Services\ModerationService() )->notify_rejected( $service_id, $reason );
 			},
 			null,
 			10,
@@ -1805,6 +1954,68 @@ final class Plugin {
 	}
 
 	/**
+	 * Bind the account lockout to every sign-in, not just the REST route.
+	 *
+	 * 1.7.1 added the lockout inside POST /auth/login only, so six wrong
+	 * passwords in the app locked the account while six wrong passwords at
+	 * wp-login.php were waved through - and the account the plugin reported as
+	 * locked signed in perfectly well in a browser (Basecamp 10267994010).
+	 *
+	 * Counting hangs off wp_login_failed, which core fires from
+	 * wp_authenticate() itself, so the REST route and the login form feed the
+	 * same counter. Refusal hangs off `authenticate` at a late priority so it
+	 * outranks the password check and covers anything else that authenticates
+	 * a username and password.
+	 *
+	 * Signed-in sessions are validated by cookie, which never reaches
+	 * `authenticate`, so a locked account does not throw an administrator out
+	 * of a session they already have.
+	 *
+	 * @since 1.7.1
+	 * @return void
+	 */
+	private function define_login_lock_hooks(): void {
+		add_action(
+			'wp_login_failed',
+			static function ( $username ): void {
+				wpss_login_record_failure( (string) $username );
+			}
+		);
+
+		add_action(
+			'wp_login',
+			static function ( $user_login ): void {
+				wpss_login_clear_failures( (string) $user_login );
+			}
+		);
+
+		add_filter(
+			'authenticate',
+			static function ( $user, $username ) {
+				/**
+				 * Filter whether the website sign-in form honours the lockout.
+				 *
+				 * Return false on a site whose security plugin already limits
+				 * failed sign-ins, to leave wp-login.php entirely to it. The
+				 * counter keeps running either way, so the app's own lockout
+				 * (423 `wpss_account_locked`) is unaffected.
+				 *
+				 * @since 1.7.1
+				 *
+				 * @param bool $enabled Whether to refuse a locked account here.
+				 */
+				if ( ! apply_filters( 'wpss_web_login_lock', true ) ) {
+					return $user;
+				}
+
+				return wpss_login_is_locked( (string) $username ) ? wpss_login_lock_error() : $user;
+			},
+			100,
+			2
+		);
+	}
+
+	/**
 	 * Define filters to connect vendor settings to their filters.
 	 *
 	 * This connects the wpss_vendor_registration_open and wpss_auto_approve_vendors
@@ -1818,8 +2029,7 @@ final class Plugin {
 		add_filter(
 			'wpss_vendor_registration_open',
 			function ( bool $default_value ): bool {
-				$vendor_settings   = get_option( 'wpss_vendor', array() );
-				$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+				$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 				return 'closed' !== $registration_mode;
 			}
 		);
@@ -1828,8 +2038,7 @@ final class Plugin {
 		add_filter(
 			'wpss_auto_approve_vendors',
 			function ( bool $default_value ): bool {
-				$vendor_settings   = get_option( 'wpss_vendor', array() );
-				$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+				$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 				return 'open' === $registration_mode;
 			}
 		);
@@ -1838,8 +2047,7 @@ final class Plugin {
 		add_filter(
 			'wpss_require_service_moderation',
 			function ( bool $default_value ): bool {
-				$vendor_settings = get_option( 'wpss_vendor', array() );
-				return ! empty( $vendor_settings['require_service_moderation'] );
+				return (bool) wpss_get_option( 'vendor', 'require_service_moderation' );
 			}
 		);
 
@@ -2206,31 +2414,20 @@ final class Plugin {
 			return;
 		}
 
-		// Check if already has vendor meta.
-		$has_vendor_meta = get_user_meta( $user_id, '_wpss_is_vendor', true );
-
-		// Also check if actual vendor profile exists in database.
+		// The profile row is the record that decides who is a vendor, so it is
+		// the only thing worth checking here - the old `_wpss_is_vendor` read
+		// added a second, weaker answer to the same question and changed nothing
+		// about what this method does.
 		$vendor_service = new \WPSellServices\Services\VendorService();
-		$profile_exists = $vendor_service->get_profile( $user_id ) !== null;
 
-		// If both meta is set AND profile exists, we're done.
-		if ( $has_vendor_meta && $profile_exists ) {
-			update_user_meta( $user_id, '_wpss_vendor_checked', '1' );
-			return;
-		}
-
-		// Register as vendor (creates profile and sets meta).
 		// Note: VendorService::register() checks is_vendor() which might return true
 		// if role exists. Use ensure_vendor_profile() for just the profile.
-		if ( ! $profile_exists ) {
+		if ( null === $vendor_service->get_profile( $user_id ) ) {
 			$this->ensure_vendor_profile( $user_id );
 		}
 
-		// Ensure meta is set.
-		if ( ! $has_vendor_meta ) {
-			update_user_meta( $user_id, '_wpss_is_vendor', true );
-		}
-
+		// Still written for back-compat with anything reading the old flag.
+		update_user_meta( $user_id, '_wpss_is_vendor', true );
 		update_user_meta( $user_id, '_wpss_vendor_checked', '1' );
 	}
 
@@ -2550,6 +2747,9 @@ final class Plugin {
 			'wpss_order_status_refunded'               => array( 'handle_order_refunded', 10, 2 ),
 			'wpss_order_status_partially_refunded'     => array( 'handle_order_partially_refunded', 10, 2 ),
 			'wpss_order_status_cancellation_requested' => array( 'handle_cancellation_requested', 10, 2 ),
+			// Refunds that happened AT the rail (Stripe / PayPal / Razorpay /
+			// Woo webhooks). One listener; no gateway applies refunds inline.
+			'wpss_gateway_refund_received'             => array( 'handle_gateway_refund', 10, 4 ),
 		);
 
 		foreach ( $status_hooks as $hook => $config ) {
@@ -2701,6 +2901,10 @@ final class Plugin {
 			);
 		}
 
+		// A send that fails is logged to the audit log and retried once.
+		add_action( 'wp_mail_failed', array( \WPSellServices\Services\EmailService::class, 'on_mail_failed' ) );
+		add_action( \WPSellServices\Services\EmailService::RETRY_HOOK, array( \WPSellServices\Services\EmailService::class, 'retry' ), 10, 4 );
+
 		// --- DisputeWorkflowManager: lazy-init on first hook fire ---
 		$get_dispute_workflow = static function (): \WPSellServices\Services\DisputeWorkflowManager {
 			static $instance;
@@ -2731,6 +2935,8 @@ final class Plugin {
 			'wpss_dispute_opened'             => array( 'on_dispute_opened', 10, 4 ),
 			'wpss_dispute_response_submitted' => array( 'on_response_submitted', 10, 3 ),
 			'wpss_dispute_evidence_added'     => array( 'on_evidence_added', 10, 2 ),
+			'wpss_dispute_escalated'          => array( 'on_dispute_escalated', 10, 3 ),
+			'wpss_dispute_cancelled'          => array( 'on_dispute_cancelled', 10, 3 ),
 			// NOTE: 'wpss_dispute_resolved' is deliberately NOT wired here.
 			// NotificationService::notify_dispute_resolved() (wired above, ~:818)
 			// already notifies both parties with resolution-aware copy. Listening

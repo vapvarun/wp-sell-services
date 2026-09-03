@@ -42,12 +42,6 @@ $badge_color = $level_colors[ $new_level ] ?? $base_color;
 do_action( 'wpss_email_content_before', 'seller_level_promotion', null, $recipient );
 ?>
 
-<div style="text-align: center; margin-bottom: 30px;">
-	<div style="display: inline-block; font-size: 60px; margin-bottom: 10px;">
-		<?php echo 'top_rated' === $new_level ? '&#127942;' : '&#127881;'; ?>
-	</div>
-</div>
-
 <p style="margin: 0 0 16px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php
 	printf(

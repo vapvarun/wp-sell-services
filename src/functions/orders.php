@@ -159,6 +159,40 @@ function wpss_user_can_view_order( int $order_id, ?int $user_id = null ): bool {
 }
 
 /**
+ * Resolve which side of an order a user is acting from.
+ *
+ * Order verbs are allowed per side, not per capability: a buyer is a plain
+ * subscriber and a vendor is whoever the row names, so both are ownership
+ * checks. Admin is answered first because an administrator who also sells
+ * acts with the owner's authority on any order.
+ *
+ * @since 1.7.1
+ *
+ * @param object $order   Order with customer_id and vendor_id.
+ * @param int    $user_id Acting user ID.
+ * @return string 'admin', 'vendor', 'buyer', or '' for a stranger.
+ */
+function wpss_order_actor_role( object $order, int $user_id ): string {
+	if ( ! $user_id ) {
+		return '';
+	}
+
+	if ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'wpss_manage_orders' ) ) {
+		return 'admin';
+	}
+
+	if ( (int) $order->vendor_id === $user_id ) {
+		return 'vendor';
+	}
+
+	if ( (int) $order->customer_id === $user_id ) {
+		return 'buyer';
+	}
+
+	return '';
+}
+
+/**
  * Resolve the order ID named by the current request.
  *
  * Prefers the pretty-permalink query var (`wpss_order_id`) and falls back to
@@ -307,60 +341,159 @@ function wpss_get_order_requirements_url( int $order_id ): string {
 }
 
 /**
- * Get service requirements (questions buyer must answer).
+ * Requirement field types a service may ask a buyer for.
  *
- * @param int $service_id Service ID.
- * @return array
+ * @since 1.7.1
+ *
+ * @return string[]
  */
-function wpss_get_service_requirements( int $service_id ): array {
-	$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
-	$requirements = is_array( $requirements ) ? $requirements : array();
-
-	return array_map( 'wpss_normalize_requirement_choices', $requirements );
+function wpss_requirement_types(): array {
+	return array( 'text', 'textarea', 'number', 'checkbox', 'select', 'multiselect', 'radio', 'file', 'date', 'url', 'email' );
 }
 
 /**
- * Normalize a requirement's choice list into one canonical shape.
+ * Normalise a requirement list into the one schema every surface reads.
  *
- * Choice-type requirements (select / radio / multiple) were saved under two
- * different keys and types — the frontend wizard wrote `options` (comma string),
- * the admin metabox wrote `choices` (comma string) — while the buyer form reads
- * `options` as a value=>label ARRAY and validation reads `choices`. That mismatch
- * left dropdowns empty and choice validation broken (BC 10134408650).
+ * Four shapes shared the `_wpss_requirements` key: the wizard wrote
+ * question/type/options-string, the admin metabox question/type/choices, REST
+ * and ServiceManager field_type/label/description/options-array/is_required,
+ * and the REST validator looked for an `id` nothing wrote. Every reader
+ * picked one shape, so requirements saved on one surface came up blank on
+ * another and REST submissions failed on every field (Basecamp 10264288662).
  *
- * This makes every consumer agree: it sets BOTH
- *   - `choices` : canonical comma STRING  (admin field + RequirementsService validation)
- *   - `options` : value=>label ARRAY      (buyer requirements form)
- * derived from whichever key/type was stored. Non-choice fields are untouched.
+ * Output rows are exactly {id, label, type, required, options, description}.
+ * The id is stable: it is kept when present and otherwise derived from the
+ * label and position, so answers keyed by id survive a label edit.
  *
- * @since 1.3.0
+ * @since 1.7.1
  *
- * @param array<string,mixed> $req A single requirement definition.
- * @return array<string,mixed>
+ * @param array<int|string, mixed> $raw Requirement rows in any historical shape.
+ * @return array<int, array{id: string, label: string, type: string, required: bool, options: string[], description: string}>
  */
-function wpss_normalize_requirement_choices( array $req ): array {
-	$raw = $req['options'] ?? $req['choices'] ?? '';
+function wpss_normalize_service_requirements( array $raw ): array {
+	$types   = wpss_requirement_types();
+	$aliases = array(
+		'multiple' => 'multiselect',
+		'dropdown' => 'select',
+		'upload'   => 'file',
+	);
+	$choice  = array( 'select', 'multiselect', 'radio', 'checkbox' );
+	$out     = array();
+	$seen    = array();
 
-	if ( is_array( $raw ) ) {
-		// Already an array — could be a plain list or a value=>label map.
-		$list = array();
-		foreach ( $raw as $key => $value ) {
-			$list[] = is_string( $value ) && '' !== trim( $value ) ? trim( $value ) : trim( (string) $key );
+	foreach ( array_values( $raw ) as $index => $req ) {
+		if ( ! is_array( $req ) ) {
+			continue;
 		}
-	} else {
-		$list = array_map( 'trim', explode( ',', (string) $raw ) );
+
+		$label = sanitize_text_field( (string) ( $req['label'] ?? $req['question'] ?? '' ) );
+		if ( '' === $label ) {
+			continue;
+		}
+
+		$type = sanitize_key( (string) ( $req['type'] ?? $req['field_type'] ?? 'text' ) );
+		$type = $aliases[ $type ] ?? $type;
+		if ( ! in_array( $type, $types, true ) ) {
+			$type = 'text';
+		}
+
+		$options = array();
+		if ( in_array( $type, $choice, true ) ) {
+			$raw_options = $req['options'] ?? $req['choices'] ?? array();
+			if ( is_string( $raw_options ) ) {
+				// A comma list from the wizard / metabox, or JSON from the retired table.
+				$raw_options = str_starts_with( ltrim( $raw_options ), '[' ) ? (array) json_decode( $raw_options, true ) : explode( ',', $raw_options );
+			}
+			foreach ( (array) $raw_options as $key => $value ) {
+				// Lists of strings, and the older value => label map, both land here.
+				$value = is_scalar( $value ) ? trim( (string) $value ) : '';
+				if ( '' === $value && is_string( $key ) ) {
+					$value = trim( $key );
+				}
+				if ( '' !== $value ) {
+					$options[] = sanitize_text_field( $value );
+				}
+			}
+			$options = array_values( array_unique( $options ) );
+		}
+
+		// A bare number is a row id from the retired table, not a name.
+		$id = sanitize_key( (string) ( $req['id'] ?? '' ) );
+		if ( '' === $id || ctype_digit( $id ) ) {
+			$id = sanitize_key( sanitize_title( $label ) );
+			$id = ( '' === $id ? 'req' : $id ) . '-' . $index;
+		}
+		if ( isset( $seen[ $id ] ) ) {
+			$id .= '-' . $index;
+		}
+		$seen[ $id ] = true;
+
+		$out[] = array(
+			'id'          => $id,
+			'label'       => $label,
+			'type'        => $type,
+			'required'    => ! empty( $req['required'] ) || ! empty( $req['is_required'] ),
+			'options'     => $options,
+			'description' => sanitize_textarea_field( (string) ( $req['description'] ?? '' ) ),
+		);
 	}
 
-	$list = array_values( array_unique( array_filter( $list, static fn( $v ) => '' !== $v ) ) );
+	return $out;
+}
 
-	if ( empty( $list ) ) {
-		return $req; // Not a choice field (or no choices) — leave as-is.
+/**
+ * Get service requirements (questions buyer must answer), normalised.
+ *
+ * The one reader. Rows are in the shape wpss_normalize_service_requirements()
+ * produces whichever surface saved them.
+ *
+ * @param int $service_id Service ID.
+ * @return array<int, array{id: string, label: string, type: string, required: bool, options: string[], description: string}>
+ */
+function wpss_get_service_requirements( int $service_id ): array {
+	$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
+
+	return wpss_normalize_service_requirements( is_array( $requirements ) ? $requirements : array() );
+}
+
+/**
+ * Save a service's requirements, normalised.
+ *
+ * The one writer. Callers cap the list with wpss_enforce_service_limits()
+ * first; this stores what is left in the canonical shape, or clears the key
+ * when nothing is left.
+ *
+ * @since 1.7.1
+ *
+ * @param int                      $service_id   Service ID.
+ * @param array<int|string, mixed> $requirements Requirement rows in any shape.
+ * @return void
+ */
+function wpss_save_service_requirements( int $service_id, array $requirements ): void {
+	$requirements = wpss_normalize_service_requirements( $requirements );
+
+	if ( empty( $requirements ) ) {
+		delete_post_meta( $service_id, '_wpss_requirements' );
+		return;
 	}
 
-	$req['choices'] = implode( ', ', $list );
-	$req['options'] = array_combine( $list, $list );
+	update_post_meta( $service_id, '_wpss_requirements', $requirements );
+}
 
-	return $req;
+/**
+ * The buyer's answer to one requirement.
+ *
+ * Answers are keyed by the requirement id. Orders submitted before 1.7.1 were
+ * keyed by the question text, so that is read as the fallback.
+ *
+ * @since 1.7.1
+ *
+ * @param array<string, mixed> $requirement Normalised requirement row.
+ * @param array<string, mixed> $answers     Submitted field_data.
+ * @return mixed Answer, '' when none.
+ */
+function wpss_requirement_answer( array $requirement, array $answers ) {
+	return $answers[ $requirement['id'] ] ?? $answers[ $requirement['label'] ] ?? '';
 }
 
 /**
@@ -372,18 +505,26 @@ function wpss_normalize_requirement_choices( array $req ): array {
 function wpss_get_order_requirements( int $order_id ): array {
 	global $wpdb;
 
-	$table = $wpdb->prefix . 'wpss_order_requirements';
+	// Primed by wpss_prime_order_requirements() for a list; consumed once so a
+	// write later in the same request is never answered from here.
+	$primed = wpss_prime_order_requirements();
 
-	// Check if table exists.
-	$table_exists = $wpdb->get_var(
-		$wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
-	);
+	if ( array_key_exists( $order_id, $primed ) ) {
+		$value = $primed[ $order_id ];
+		wpss_prime_order_requirements( array(), $order_id );
+		return $value;
+	}
 
-	if ( ! $table_exists ) {
+	// The table is created by the installer, and the installed schema version
+	// is an autoloaded option: reading it costs nothing, where the SHOW TABLES
+	// this used to run cost one query per order on every list.
+	if ( '0.0.0' === (string) get_option( \WPSellServices\Database\SchemaManager::VERSION_OPTION, '0.0.0' ) ) {
 		// Fall back to order meta.
 		$requirements = get_metadata( 'wpss_order', $order_id, '_requirements', true );
 		return is_array( $requirements ) ? $requirements : array();
 	}
+
+	$table = $wpdb->prefix . 'wpss_order_requirements';
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$row = $wpdb->get_row(
@@ -401,6 +542,58 @@ function wpss_get_order_requirements( int $order_id ): array {
 	$decoded = json_decode( $row['field_data'], true );
 
 	return is_array( $decoded ) ? $decoded : array();
+}
+
+/**
+ * Load the submitted requirements for a page of orders in one query.
+ *
+ * GET /orders ran wpss_get_order_requirements() per row - two queries each,
+ * one of them a SHOW TABLES. Priming here turns that into one SELECT for the
+ * page. Each primed value is handed out ONCE by wpss_get_order_requirements()
+ * and then forgotten, so a submission written later in the same request reads
+ * fresh from the table rather than from a stale prime.
+ *
+ * @since 1.7.1
+ *
+ * @param int[]    $order_ids Orders about to be shaped. Empty to only read the store.
+ * @param int|null $forget    Internal: drop one primed id after it has been read.
+ * @return array<int,array<string,mixed>> The current primed map.
+ */
+function wpss_prime_order_requirements( array $order_ids = array(), ?int $forget = null ): array {
+	static $primed = array();
+
+	if ( null !== $forget ) {
+		unset( $primed[ $forget ] );
+		return $primed;
+	}
+
+	$order_ids = array_values( array_unique( array_filter( array_map( 'intval', $order_ids ) ) ) );
+
+	if ( empty( $order_ids ) || '0.0.0' === (string) get_option( \WPSellServices\Database\SchemaManager::VERSION_OPTION, '0.0.0' ) ) {
+		return $primed;
+	}
+
+	global $wpdb;
+
+	$table        = $wpdb->prefix . 'wpss_order_requirements';
+	$placeholders = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
+
+	// Ascending id so the newest row for an order overwrites the older ones -
+	// the same "ORDER BY id DESC LIMIT 1" the single read uses.
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT order_id, field_data FROM {$table} WHERE order_id IN ({$placeholders}) ORDER BY id ASC", $order_ids ), ARRAY_A );
+
+	foreach ( $order_ids as $order_id ) {
+		$primed[ $order_id ] = array();
+	}
+
+	foreach ( (array) $rows as $row ) {
+		$decoded = json_decode( (string) $row['field_data'], true );
+
+		$primed[ (int) $row['order_id'] ] = is_array( $decoded ) ? $decoded : array();
+	}
+
+	return $primed;
 }
 
 /**
@@ -447,8 +640,7 @@ function wpss_get_order_confirmation_url( int $order_id ): string {
  * @return bool Whether late requirements submission is enabled.
  */
 function wpss_allow_late_requirements_submission(): bool {
-	$order_settings = get_option( 'wpss_orders', array() );
-	$allow_late     = ! empty( $order_settings['allow_late_requirements'] );
+	$allow_late = (bool) wpss_get_option( 'orders', 'allow_late_requirements' );
 
 	/**
 	 * Filter whether late requirements submission is allowed.
@@ -563,6 +755,32 @@ function wpss_resolve_order_status_group( string $group_key ): array {
 	$groups = wpss_get_order_status_groups();
 
 	return isset( $groups[ $group_key ] ) ? $groups[ $group_key ]['statuses'] : array();
+}
+
+/**
+ * Status groups for a dashboard list, plus an `Other` chip for any status the
+ * data holds that no group claims (see wpss_resolve_ungrouped_statuses()).
+ *
+ * Appended rather than inserted, so a stray status never outranks a real one.
+ * Buyer and seller lists both resolve their chips through here.
+ *
+ * @since 1.7.1
+ *
+ * @param array<string, int> $status_counts Status => count, from a *_grouped() repository count.
+ * @return array<string, array{label: string, statuses: string[]}> Groups keyed by chip.
+ */
+function wpss_get_order_filter_groups( array $status_counts ): array {
+	$groups    = wpss_get_order_status_groups();
+	$ungrouped = wpss_resolve_ungrouped_statuses( $status_counts );
+
+	if ( $ungrouped ) {
+		$groups['other'] = array(
+			'label'    => __( 'Other', 'wp-sell-services' ),
+			'statuses' => $ungrouped,
+		);
+	}
+
+	return $groups;
 }
 
 /**
@@ -1304,3 +1522,43 @@ function wpss_map_rail_status( string $platform, string $rail_status ): ?string 
 	// which then had no label, no filter entry and no transition rules.
 	return array_key_exists( $mapped, wpss_get_order_statuses() ) ? $mapped : null;
 }
+
+/**
+ * Marketplace-wide order aggregates for the admin dashboard.
+ *
+ * One full-table scan cached for five minutes; dropped the moment an order is
+ * created, paid or changes status so the tiles never show a stale count for
+ * longer than it takes to reload the page.
+ *
+ * @since 1.7.1
+ *
+ * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float}
+ */
+function wpss_get_order_aggregates(): object {
+	$cached = get_transient( 'wpss_order_aggregates' );
+
+	if ( is_object( $cached ) ) {
+		return $cached;
+	}
+
+	$aggregates = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_aggregates();
+	set_transient( 'wpss_order_aggregates', $aggregates, 5 * MINUTE_IN_SECONDS );
+
+	return $aggregates;
+}
+
+/**
+ * Drop the cached admin order aggregates.
+ *
+ * @since 1.7.1
+ *
+ * @return void
+ */
+function wpss_flush_order_aggregates(): void {
+	delete_transient( 'wpss_order_aggregates' );
+}
+
+foreach ( array( 'wpss_order_created', 'wpss_order_paid', 'wpss_order_status_changed' ) as $wpss_aggregates_hook ) {
+	add_action( $wpss_aggregates_hook, 'wpss_flush_order_aggregates' );
+}
+unset( $wpss_aggregates_hook );

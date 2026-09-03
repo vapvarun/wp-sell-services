@@ -81,6 +81,7 @@ class ServiceManager {
 		);
 
 		$data = wp_parse_args( $data, $defaults );
+		$data = wpss_enforce_service_limits( $data )['meta'];
 
 		// Validate required fields.
 		if ( empty( $data['title'] ) ) {
@@ -204,6 +205,7 @@ class ServiceManager {
 		 * @param int   $service_id Service post ID.
 		 */
 		$data = apply_filters( 'wpss_pre_update_service', $data, $service_id );
+		$data = wpss_enforce_service_limits( $data )['meta'];
 
 		$post_data = array( 'ID' => $service_id );
 
@@ -544,18 +546,7 @@ class ServiceManager {
 	 * @return void
 	 */
 	private function save_requirements( int $service_id, array $requirements ): void {
-		// Sanitize requirements before saving.
-		$sanitized_requirements = array();
-		foreach ( $requirements as $field ) {
-			$sanitized_requirements[] = array(
-				'field_type'  => sanitize_key( $field['field_type'] ?? 'text' ),
-				'label'       => sanitize_text_field( $field['label'] ?? '' ),
-				'description' => sanitize_textarea_field( $field['description'] ?? '' ),
-				'options'     => $field['options'] ?? array(),
-				'is_required' => ! empty( $field['is_required'] ),
-			);
-		}
-		update_post_meta( $service_id, '_wpss_requirements', $sanitized_requirements );
+		wpss_save_service_requirements( $service_id, $requirements );
 	}
 
 	/**

@@ -153,6 +153,18 @@ class PersonalData {
 			}
 		}
 
+		foreach ( $this->table_groups() as $group => $spec ) {
+			$rows = $this->export_group( $group, $spec, $user->ID, $offset );
+
+			if ( count( $rows ) >= self::PER_PAGE ) {
+				$more = true;
+			}
+
+			foreach ( $rows as $row ) {
+				$export[] = $row;
+			}
+		}
+
 		return array(
 			'data' => $export,
 			'done' => ! $more,
@@ -219,11 +231,236 @@ class PersonalData {
 			'items_removed'  => true,
 			'items_retained' => true,
 			'messages'       => array(
-				__( 'Marketplace personal data was removed: profile, seller profile, portfolio, listings, saved items, notifications and devices.', 'wp-sell-services' ),
-				__( 'Completed orders, reviews and messages were kept and attributed to a deleted member. They belong to the other party as well, and the marketplace owner needs them for accounting and tax records.', 'wp-sell-services' ),
+				__( 'Removed: the account, seller profile, portfolio, saved items, notifications, devices, app passwords and sessions, and abuse reports filed by or about this member. Listings were taken down.', 'wp-sell-services' ),
+				__( 'Kept and anonymised: orders, deliveries, requirement answers, messages, disputes, reviews, proposals, the earnings ledger and withdrawals. The member is shown on them as a deleted user, and their billing address, reviewer name, seller notes and payout details on those rows were blanked. They belong to the other party as well, and the marketplace owner needs them for accounting and tax records.', 'wp-sell-services' ),
 			),
 			'done'           => true,
 		);
+	}
+
+	/**
+	 * Export groups that are one table query each.
+	 *
+	 * Each spec is `label`, `sql` (SELECT ... WHERE ... ORDER BY ..., with
+	 * %d for the member's id), `params` (how many times the id appears), and
+	 * `fields` (column => label, or column => array( label, formatter )).
+	 * The four groups above predate this table and keep their own methods;
+	 * anything new belongs here.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	private function table_groups(): array {
+		global $wpdb;
+
+		$p       = $wpdb->prefix . 'wpss_';
+		$flatten = array( $this, 'flatten' );
+		$mask    = array( $this, 'mask' );
+
+		return array(
+			'disputes'         => array(
+				'label'  => __( 'Marketplace disputes', 'wp-sell-services' ),
+				'sql'    => "SELECT * FROM {$p}disputes WHERE initiated_by = %d OR respondent_id = %d ORDER BY id DESC",
+				'params' => 2,
+				'fields' => array(
+					'dispute_number' => __( 'Dispute number', 'wp-sell-services' ),
+					'reason'         => __( 'Reason', 'wp-sell-services' ),
+					'description'    => __( 'Description', 'wp-sell-services' ),
+					'status'         => __( 'Status', 'wp-sell-services' ),
+					'resolution'     => __( 'Resolution', 'wp-sell-services' ),
+					'created_at'     => __( 'Opened', 'wp-sell-services' ),
+				),
+			),
+			'deliveries'       => array(
+				'label'  => __( 'Marketplace deliveries', 'wp-sell-services' ),
+				'sql'    => "SELECT * FROM {$p}deliveries WHERE vendor_id = %d ORDER BY id DESC",
+				'params' => 1,
+				'fields' => array(
+					'order_id'   => __( 'Order', 'wp-sell-services' ),
+					'message'    => __( 'Message', 'wp-sell-services' ),
+					'version'    => __( 'Version', 'wp-sell-services' ),
+					'status'     => __( 'Status', 'wp-sell-services' ),
+					'created_at' => __( 'Delivered', 'wp-sell-services' ),
+				),
+			),
+			'requirements'     => array(
+				'label'  => __( 'Marketplace requirement answers', 'wp-sell-services' ),
+				'sql'    => "SELECT r.* FROM {$p}order_requirements r INNER JOIN {$p}orders o ON o.id = r.order_id WHERE o.customer_id = %d ORDER BY r.id DESC",
+				'params' => 1,
+				'fields' => array(
+					'order_id'     => __( 'Order', 'wp-sell-services' ),
+					'field_data'   => array( __( 'Answers', 'wp-sell-services' ), $flatten ),
+					'submitted_at' => __( 'Submitted', 'wp-sell-services' ),
+				),
+			),
+			'withdrawals'      => array(
+				'label'  => __( 'Marketplace withdrawals', 'wp-sell-services' ),
+				'sql'    => "SELECT * FROM {$p}withdrawals WHERE vendor_id = %d ORDER BY id DESC",
+				'params' => 1,
+				'fields' => array(
+					'amount'     => __( 'Amount', 'wp-sell-services' ),
+					'method'     => __( 'Method', 'wp-sell-services' ),
+					'details'    => array( __( 'Payout details', 'wp-sell-services' ), fn( string $v ): string => $this->mask( wpss_decrypt_secret( $v ) ) ),
+					'status'     => __( 'Status', 'wp-sell-services' ),
+					'created_at' => __( 'Requested', 'wp-sell-services' ),
+				),
+			),
+			'proposals'        => array(
+				'label'  => __( 'Marketplace proposals', 'wp-sell-services' ),
+				'sql'    => "SELECT * FROM {$p}proposals WHERE vendor_id = %d ORDER BY id DESC",
+				'params' => 1,
+				'fields' => array(
+					'cover_letter'   => __( 'Cover letter', 'wp-sell-services' ),
+					'proposed_price' => __( 'Proposed price', 'wp-sell-services' ),
+					'proposed_days'  => __( 'Proposed days', 'wp-sell-services' ),
+					'status'         => __( 'Status', 'wp-sell-services' ),
+					'created_at'     => __( 'Sent', 'wp-sell-services' ),
+				),
+			),
+			'reports'          => array(
+				'label'  => __( 'Marketplace reports filed', 'wp-sell-services' ),
+				'sql'    => "SELECT * FROM {$p}reports WHERE reporter_id = %d ORDER BY id DESC",
+				'params' => 1,
+				'fields' => array(
+					'target_type' => __( 'Reported', 'wp-sell-services' ),
+					'reason'      => __( 'Reason', 'wp-sell-services' ),
+					'details'     => __( 'Details', 'wp-sell-services' ),
+					'status'      => __( 'Status', 'wp-sell-services' ),
+					'created_at'  => __( 'Filed', 'wp-sell-services' ),
+				),
+			),
+			'notifications'    => array(
+				'label'  => __( 'Marketplace notifications', 'wp-sell-services' ),
+				'sql'    => "SELECT * FROM {$p}notifications WHERE user_id = %d ORDER BY id DESC",
+				'params' => 1,
+				'fields' => array(
+					'type'       => __( 'Type', 'wp-sell-services' ),
+					'title'      => __( 'Title', 'wp-sell-services' ),
+					'message'    => __( 'Message', 'wp-sell-services' ),
+					'created_at' => __( 'Sent', 'wp-sell-services' ),
+				),
+			),
+			'billing'          => array(
+				'label'  => __( 'Marketplace billing addresses', 'wp-sell-services' ),
+				'sql'    => "SELECT id, order_number, billing_address FROM {$p}orders WHERE customer_id = %d AND billing_address IS NOT NULL AND billing_address <> '' ORDER BY id DESC",
+				'params' => 1,
+				'fields' => array(
+					'order_number'    => __( 'Order number', 'wp-sell-services' ),
+					'billing_address' => array( __( 'Billing address', 'wp-sell-services' ), $flatten ),
+				),
+			),
+			'reviews-received' => array(
+				'label'  => __( 'Marketplace reviews received', 'wp-sell-services' ),
+				'sql'    => "SELECT * FROM {$p}reviews WHERE reviewee_id = %d ORDER BY id DESC",
+				'params' => 1,
+				'fields' => array(
+					'rating'     => __( 'Rating', 'wp-sell-services' ),
+					'review'     => __( 'Review', 'wp-sell-services' ),
+					'created_at' => __( 'Written', 'wp-sell-services' ),
+				),
+			),
+		);
+	}
+
+	/**
+	 * Run one table_groups() spec for one page.
+	 *
+	 * @param string               $group   Group key.
+	 * @param array<string, mixed> $spec    Spec from table_groups().
+	 * @param int                  $user_id User ID.
+	 * @param int                  $offset  Row offset.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function export_group( string $group, array $spec, int $user_id, int $offset ): array {
+		global $wpdb;
+
+		$params = array_merge( array_fill( 0, (int) $spec['params'], $user_id ), array( self::PER_PAGE, $offset ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		$rows = $wpdb->get_results( $wpdb->prepare( $spec['sql'] . ' LIMIT %d OFFSET %d', $params ), ARRAY_A );
+
+		$this->assert_no_db_error( $group );
+
+		$items = array();
+
+		foreach ( $rows ?: array() as $row ) {
+			$data = array();
+
+			foreach ( $spec['fields'] as $column => $label ) {
+				$value = (string) ( $row[ $column ] ?? '' );
+
+				if ( is_array( $label ) ) {
+					$value = (string) call_user_func( $label[1], $value );
+					$label = $label[0];
+				}
+
+				if ( '' === $value ) {
+					continue;
+				}
+
+				$data[] = array(
+					'name'  => $label,
+					'value' => $value,
+				);
+			}
+
+			$items[] = array(
+				'group_id'    => 'wpss-' . $group,
+				'group_label' => $spec['label'],
+				'item_id'     => 'wpss-' . $group . '-' . (int) $row['id'],
+				'data'        => $data,
+			);
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Render a stored JSON object as "key: value" lines.
+	 *
+	 * @param string $json Stored JSON, or plain text.
+	 * @return string
+	 */
+	public function flatten( string $json ): string {
+		$decoded = json_decode( $json, true );
+
+		if ( ! is_array( $decoded ) ) {
+			return $json;
+		}
+
+		$lines = array();
+
+		foreach ( $decoded as $key => $value ) {
+			$lines[] = $key . ': ' . ( is_scalar( $value ) ? (string) $value : (string) wp_json_encode( $value ) );
+		}
+
+		return implode( "\n", $lines );
+	}
+
+	/**
+	 * Like flatten(), keeping only the last four characters of each value.
+	 *
+	 * Payout details are bank and wallet identifiers. The member is entitled
+	 * to know which account is on file, not to have the full number written
+	 * into a downloadable zip that outlives the request.
+	 *
+	 * @param string $json Stored JSON.
+	 * @return string
+	 */
+	public function mask( string $json ): string {
+		$decoded = json_decode( $json, true );
+
+		if ( ! is_array( $decoded ) ) {
+			$decoded = array( 'value' => $json );
+		}
+
+		foreach ( $decoded as $key => $value ) {
+			$value           = is_scalar( $value ) ? (string) $value : (string) wp_json_encode( $value );
+			$decoded[ $key ] = str_repeat( '*', max( 0, strlen( $value ) - 4 ) ) . substr( $value, -4 );
+		}
+
+		return $this->flatten( (string) wp_json_encode( $decoded ) );
 	}
 
 	/**

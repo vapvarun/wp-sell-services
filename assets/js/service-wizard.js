@@ -437,7 +437,8 @@ function wpssServiceWizard(existingData = {}) {
 			}
 
 			this.data.requirements.push({
-				question: '',
+				id: '',
+				label: '',
 				type: 'text',
 				required: false,
 				options: ''
@@ -479,7 +480,7 @@ function wpssServiceWizard(existingData = {}) {
 				title: '',
 				description: '',
 				price: '',
-				extra_days: 0
+				delivery_days_extra: 0
 			});
 		},
 

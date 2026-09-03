@@ -246,7 +246,7 @@ class MilestoneService {
 		}
 
 		$milestone_id = (int) $wpdb->insert_id;
-		$checkout_url = wpss_get_pay_order_url( $milestone_id );
+		$checkout_url = wpss_ensure_pay_order( $milestone_id );
 
 		/**
 		 * Fires when a milestone sub-order has been created and is awaiting
@@ -341,9 +341,7 @@ class MilestoneService {
 			$sub->order_number
 		);
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$inserted = $wpdb->insert(
-			$txn_table,
+		$inserted = wpss_insert_ledger_row(
 			array(
 				'user_id'        => (int) $sub->vendor_id,
 				'type'           => self::TYPE_MILESTONE,
@@ -356,7 +354,6 @@ class MilestoneService {
 				'status'         => 'completed',
 				'created_at'     => current_time( 'mysql' ),
 			),
-			array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
 		);
 
 		if ( ! $inserted ) {

@@ -130,6 +130,117 @@ class VendorProfileRepository extends AbstractRepository {
 	}
 
 	/**
+	 * One page of the public vendor directory.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string, mixed> $args Filters: status (default 'active', '' for any),
+	 *                                   available (bool: taking orders and not on vacation),
+	 *                                   country, plus orderby/order/limit/offset.
+	 * @return array<object>
+	 */
+	public function get_directory( array $args = array() ): array {
+		$args    = wp_parse_args(
+			$args,
+			array(
+				'orderby' => 'avg_rating',
+				'order'   => 'DESC',
+				'limit'   => 12,
+				'offset'  => 0,
+			)
+		);
+		$orderby = $this->validate_orderby( (string) $args['orderby'] );
+		$order   = $this->validate_order( (string) $args['order'] );
+		$where   = $this->directory_where( $args );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- $where is prepared below; identifiers are allow-listed.
+		return $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT * FROM {$this->table} {$where} ORDER BY {$orderby} {$order}, id DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				max( 1, (int) $args['limit'] ),
+				max( 0, (int) $args['offset'] )
+			)
+		);
+	}
+
+	/**
+	 * Total rows behind get_directory() for the same filters.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string, mixed> $args See get_directory().
+	 * @return int
+	 */
+	public function count_directory( array $args = array() ): int {
+		$where = $this->directory_where( $args );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- $where is prepared; the table name is plugin-controlled.
+		return (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$this->table} {$where}" );
+	}
+
+	/**
+	 * User IDs behind get_directory(), without the row bodies.
+	 *
+	 * Same WHERE as the directory (default: status = 'active'), so every
+	 * "who is a vendor" query answers with the one set wpss_is_vendor()
+	 * agrees with.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string, mixed> $args See get_directory(). 'limit' 0 returns every match.
+	 * @return array<int> Vendor user IDs, ascending.
+	 */
+	public function get_directory_user_ids( array $args = array() ): array {
+		$where = $this->directory_where( $args );
+		$limit = (int) ( $args['limit'] ?? 0 );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- $where is prepared; the table name is plugin-controlled.
+		$sql = "SELECT user_id FROM {$this->table} {$where} ORDER BY user_id ASC";
+
+		if ( $limit > 0 ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only.
+			$sql .= (string) $this->wpdb->prepare( ' LIMIT %d OFFSET %d', $limit, max( 0, (int) ( $args['offset'] ?? 0 ) ) );
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- prepared above.
+		return array_map( 'intval', (array) $this->wpdb->get_col( $sql ) );
+	}
+
+	/**
+	 * Prepared WHERE clause shared by get_directory() and count_directory().
+	 *
+	 * @param array<string, mixed> $args Directory filters.
+	 * @return string '' or a prepared ' WHERE ...' fragment.
+	 */
+	private function directory_where( array $args ): string {
+		$status  = (string) ( $args['status'] ?? 'active' );
+		$country = (string) ( $args['country'] ?? '' );
+		$clauses = array();
+		$values  = array();
+
+		if ( '' !== $status ) {
+			$clauses[] = 'status = %s';
+			$values[]  = $status;
+		}
+		if ( ! empty( $args['available'] ) ) {
+			$clauses[] = 'is_available = 1 AND vacation_mode = 0';
+		}
+		if ( '' !== $country ) {
+			$clauses[] = 'country = %s';
+			$values[]  = $country;
+		}
+
+		if ( empty( $clauses ) ) {
+			return '';
+		}
+
+		$where = ' WHERE ' . implode( ' AND ', $clauses );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only; values bound here.
+		return empty( $values ) ? $where : (string) $this->wpdb->prepare( $where, ...$values );
+	}
+
+	/**
 	 * Get verified vendors.
 	 *
 	 * @param array<string, mixed> $args Query arguments.
@@ -225,14 +336,13 @@ class VendorProfileRepository extends AbstractRepository {
 		$orders_table  = $this->table_name( 'orders' );
 		$reviews_table = $this->table_name( 'reviews' );
 
-		// Calculate order stats.
+		// Order counts and the platform's cut come from orders; the vendor's
+		// money comes from the ledger (see ledger_totals()).
 		$order_stats = $this->wpdb->get_row(
 			$this->wpdb->prepare(
 				"SELECT
 					COUNT(*) as total_orders,
 					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
-					SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END) as total_earnings,
-					SUM(CASE WHEN status = 'completed' THEN COALESCE(vendor_earnings, total) ELSE 0 END) as net_earnings,
 					SUM(CASE WHEN status = 'completed' THEN COALESCE(platform_fee, 0) ELSE 0 END) as total_commission
 				FROM {$orders_table}
 				WHERE vendor_id = %d",
@@ -274,17 +384,64 @@ class VendorProfileRepository extends AbstractRepository {
 
 		return $this->upsert(
 			$user_id,
-			array(
+			$this->ledger_totals( $user_id ) + array(
 				'total_orders'          => (int) ( $order_stats['total_orders'] ?? 0 ),
 				'completed_orders'      => (int) ( $order_stats['completed_orders'] ?? 0 ),
-				'total_earnings'        => (float) ( $order_stats['total_earnings'] ?? 0 ),
-				'net_earnings'          => (float) ( $order_stats['net_earnings'] ?? 0 ),
 				'total_commission'      => (float) ( $order_stats['total_commission'] ?? 0 ),
 				'avg_rating'            => round( (float) ( $review_stats['avg_rating'] ?? 0 ), 2 ),
 				'total_reviews'         => (int) ( $review_stats['total_reviews'] ?? 0 ),
 				'on_time_delivery_rate' => round( $on_time_rate, 2 ),
 			)
 		) !== false;
+	}
+
+	/**
+	 * The vendor's cached money columns, read from the ledger.
+	 *
+	 * Column total_earnings is everything ever credited net of reversals (the
+	 * "Total Earned" figure); net_earnings is what the vendor holds now (after
+	 * withdrawals). Both are the same SUMs the Earnings page shows, so the
+	 * profile row can no longer disagree with it. The columns used to be
+	 * incremented and decremented by hand on every credit and reversal, and
+	 * one missed or double write left them wrong forever.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int $user_id User ID.
+	 * @return array{total_earnings: float, net_earnings: float}
+	 */
+	private function ledger_totals( int $user_id ): array {
+		return array(
+			'total_earnings' => wpss_get_ledger_total_earned( $user_id ),
+			'net_earnings'   => wpss_get_ledger_balance( $user_id ),
+		);
+	}
+
+	/**
+	 * Recompute the cached money columns after a ledger write.
+	 *
+	 * Called by wpss_insert_ledger_row() for every row written, so the profile
+	 * never waits for the stats cron to agree with the ledger. Updates an
+	 * existing row only: a ledger row for a user with no vendor profile (a
+	 * deleted vendor, a test user) must not conjure one.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int $user_id User ID.
+	 * @return void
+	 */
+	public function sync_ledger_totals( int $user_id ): void {
+		$updated = $this->wpdb->update(
+			$this->table,
+			$this->ledger_totals( $user_id ) + array( 'updated_at' => current_time( 'mysql' ) ),
+			array( 'user_id' => $user_id ),
+			array( '%f', '%f', '%s' ),
+			array( '%d' )
+		);
+
+		if ( $updated ) {
+			\WPSellServices\Models\VendorProfile::flush_memo( $user_id );
+		}
 	}
 
 	/**

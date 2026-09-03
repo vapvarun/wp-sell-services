@@ -15,6 +15,7 @@ namespace WPSellServices\Services;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Database\Repositories\OrderRepository;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Models\VendorProfile;
 
@@ -38,6 +39,46 @@ class OrderWorkflowManager {
 	 * @var NotificationService
 	 */
 	private NotificationService $notification_service;
+
+	/**
+	 * Order meta key holding the amount an admin still has to send by hand.
+	 *
+	 * Written when a gateway that cannot move money (offline, test) is asked
+	 * to refund; cleared by "Mark refund sent" on the admin order view.
+	 *
+	 * @since 1.7.1
+	 */
+	public const REFUND_PENDING_META = '_wpss_refund_pending';
+
+	/**
+	 * Rows a cron sweep handles per run; the next tick takes the rest.
+	 *
+	 * @since 1.7.1
+	 */
+	public const SWEEP_BATCH = 200;
+
+	/**
+	 * Gateway outcome of the last refund attempted per order, this request.
+	 *
+	 * The bool from apply_refund_status() stays for compatibility, so the caller
+	 * that moved the status reads the real gateway result from here.
+	 *
+	 * @since 1.7.1
+	 * @var array<int, array<string, mixed>>
+	 */
+	private static array $refund_results = array();
+
+	/**
+	 * Gateway result of the refund attempted on an order during this request.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int $order_id Order ID.
+	 * @return array<string, mixed>|null Seam-3 result array, or null when no gateway call was attempted.
+	 */
+	public static function get_last_refund_result( int $order_id ): ?array {
+		return self::$refund_results[ $order_id ] ?? null;
+	}
 
 	/**
 	 * Constructor.
@@ -171,9 +212,12 @@ class OrderWorkflowManager {
 			$wpdb->prepare(
 				"SELECT id, vendor_id, customer_id FROM {$table}
 				WHERE status = %s
-				AND delivery_deadline < %s",
+				AND delivery_deadline < %s
+				ORDER BY delivery_deadline ASC
+				LIMIT %d",
 				ServiceOrder::STATUS_IN_PROGRESS,
-				current_time( 'mysql' )
+				current_time( 'mysql' ),
+				self::SWEEP_BATCH
 			)
 		);
 
@@ -210,8 +254,7 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	public function auto_complete_orders(): void {
-		$orders_settings    = get_option( 'wpss_orders', array() );
-		$auto_complete_days = (int) ( $orders_settings['auto_complete_days'] ?? 3 );
+		$auto_complete_days = (int) wpss_get_option( 'orders', 'auto_complete_days' );
 
 		if ( $auto_complete_days <= 0 ) {
 			return;
@@ -231,11 +274,14 @@ class OrderWorkflowManager {
 				WHERE o.status IN (%s, %s)
 				AND d.status = 'pending'
 				AND d.created_at < DATE_SUB(%s, INTERVAL %d DAY)
-				GROUP BY o.id",
+				GROUP BY o.id
+				ORDER BY o.id ASC
+				LIMIT %d",
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_DELIVERED,
 				current_time( 'mysql' ),
-				$auto_complete_days
+				$auto_complete_days,
+				self::SWEEP_BATCH
 			)
 		);
 
@@ -393,14 +439,13 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	public function check_requirements_timeout(): void {
-		$order_settings = get_option( 'wpss_orders', [] );
-		$timeout_days   = (int) ( $order_settings['requirements_timeout_days'] ?? 0 );
+		$timeout_days = (int) wpss_get_option( 'orders', 'requirements_timeout_days' );
 
 		if ( $timeout_days <= 0 ) {
 			return;
 		}
 
-		$auto_start = ! empty( $order_settings['auto_start_on_timeout'] );
+		$auto_start = (bool) wpss_get_option( 'orders', 'auto_start_on_timeout' );
 
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
@@ -610,6 +655,13 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	public function handle_order_completed( int $order_id, string $old_status ): void {
+		// A dispute closed without a ruling hands a completed order back to
+		// completed. Its commission was recorded and wpss_order_completed fired
+		// the first time; running them again would credit the vendor twice.
+		if ( DisputeWorkflowManager::is_restoring_order( $order_id ) ) {
+			return;
+		}
+
 		$order = $this->order_service->get( $order_id );
 
 		if ( ! $order ) {
@@ -780,6 +832,143 @@ class OrderWorkflowManager {
 	}
 
 	/**
+	 * Record a refund that already happened at the payment rail.
+	 *
+	 * THE one listener for `wpss_gateway_refund_received`. Stripe, PayPal,
+	 * Razorpay and WooCommerce webhooks all fire that action instead of
+	 * touching orders themselves; until 1.7.1 only Stripe applied its refund
+	 * (inline) and the PayPal / Razorpay actions had no listener, so a
+	 * dashboard refund left the order paid and the vendor credited.
+	 *
+	 * A multi-item cart stamps one transaction id on every order it created,
+	 * so the amount is split across those orders in proportion to their
+	 * totals (oldest first) unless the gateway hands over per-order amounts
+	 * in `$context['amounts']`. Each order then goes through
+	 * OrderService::apply_refund_status() with settled_at_rail = true, which
+	 * reverses the vendor's share and skips the second gateway call.
+	 *
+	 * Idempotent: an order whose recorded refund already covers its share is
+	 * skipped, and a refund id seen before on that order is skipped.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string               $gateway        Gateway slug ('stripe', 'paypal', 'razorpay', 'woocommerce').
+	 * @param string               $transaction_id The transaction / intent / capture / payment id the orders were paid with.
+	 * @param float                $amount         Amount refunded, in major units of the order currency.
+	 * @param array<string, mixed> $context        Optional: order_id (int), amounts (order_id => amount),
+	 *                                             cumulative (bool: $amount is the running total on the
+	 *                                             transaction, as Stripe reports it), refund_id (string),
+	 *                                             charge_id (string), currency (string).
+	 * @return void
+	 */
+	public function handle_gateway_refund( string $gateway, string $transaction_id, float $amount, array $context = array() ): void {
+		$orders = array();
+
+		// A gateway that names the order (PayPal custom_id, Woo) knows exactly
+		// what was refunded; only an unnamed refund is spread over every order
+		// paid with the transaction.
+		$named = ! empty( $context['order_id'] ) ? ServiceOrder::find( (int) $context['order_id'] ) : null;
+
+		if ( $named ) {
+			$orders[ (int) $named->id ] = $named;
+		} else {
+			$rows = ( new OrderRepository() )->get_by_transaction_ids( array( $transaction_id, (string) ( $context['charge_id'] ?? '' ) ) );
+
+			foreach ( $rows as $row ) {
+				$orders[ (int) $row->id ] = ServiceOrder::from_db( $row );
+			}
+		}
+
+		if ( empty( $orders ) || $amount <= 0 ) {
+			wpss_log( sprintf( 'Gateway refund from "%s" for %s (%s) did not match a service order; nothing applied.', $gateway, $transaction_id, (string) $amount ), 'warning' );
+			return;
+		}
+
+		ksort( $orders );
+
+		$currency = (string) ( $context['currency'] ?? '' );
+		$decimals = wpss_get_currency_decimals( $currency );
+		$shares   = array();
+
+		if ( ! empty( $context['amounts'] ) && is_array( $context['amounts'] ) ) {
+			foreach ( $context['amounts'] as $oid => $share ) {
+				$shares[ (int) $oid ] = (float) $share;
+			}
+		} elseif ( 1 === count( $orders ) ) {
+			$shares[ array_key_first( $orders ) ] = $amount;
+		} else {
+			// Split by order total, last order takes the rounding remainder so
+			// the shares add up to exactly what the gateway refunded.
+			$sum       = array_sum( array_map( static fn( ServiceOrder $o ): float => (float) $o->total, $orders ) );
+			$allocated = 0.0;
+			$last_id   = array_key_last( $orders );
+
+			foreach ( $orders as $oid => $order ) {
+				$share          = $oid === $last_id || $sum <= 0
+					? round( $amount - $allocated, $decimals )
+					: round( $amount * (float) $order->total / $sum, $decimals );
+				$share          = min( $share, (float) $order->total );
+				$shares[ $oid ] = $share;
+				$allocated     += $share;
+			}
+		}
+
+		$cumulative = ! empty( $context['cumulative'] );
+		$refund_id  = (string) ( $context['refund_id'] ?? '' );
+		$provider   = wpss_get_order_provider();
+		$service    = new OrderService();
+
+		foreach ( $orders as $oid => $order ) {
+			$share = (float) ( $shares[ $oid ] ?? 0 );
+
+			if ( $share <= 0 ) {
+				continue;
+			}
+
+			$already = wpss_get_order_refunded_amount( $order );
+			$seen    = '' !== $refund_id ? (array) $provider->get_item_meta( $oid, '_wpss_gateway_refund_ids' ) : array();
+
+			// Non-cumulative gateways (PayPal, Razorpay) report each refund on
+			// its own, so the new running total is what was already back plus
+			// this event. Stripe reports the running total itself.
+			$target = $cumulative ? $share : round( $already + $share, $decimals );
+			$total  = (float) $order->total;
+
+			if ( ServiceOrder::STATUS_REFUNDED === $order->status || $target <= $already || in_array( $refund_id, $seen, true ) ) {
+				wpss_log( sprintf( 'Order %d: "%s" refund %s already recorded (%s of %s refunded); skipped.', $oid, $gateway, $refund_id, (string) $already, (string) $total ), 'info' );
+				continue;
+			}
+
+			$status = wpss_amounts_match( $target, $total, $currency ) || $target > $total
+				? ServiceOrder::STATUS_REFUNDED
+				: ServiceOrder::STATUS_PARTIALLY_REFUNDED;
+
+			// apply_refund_status() accumulates: hand it this event's slice,
+			// not the running total. Each slice reverses its own vendor share.
+			$moved = $service->apply_refund_status( $oid, round( $target - $already, $decimals ), $status, true );
+
+			if ( $moved && '' !== $refund_id ) {
+				$seen[] = $refund_id;
+				$provider->update_item_meta( $oid, '_wpss_gateway_refund_ids', $seen );
+			}
+
+			wpss_log(
+				sprintf(
+					'Order %d: "%s" refund of %s recorded from the rail (%s of %s now refunded, status %s%s).',
+					$oid,
+					$gateway,
+					(string) $share,
+					(string) $target,
+					(string) $total,
+					$status,
+					$moved ? '' : ' REFUSED'
+				),
+				$moved ? 'info' : 'error'
+			);
+		}
+	}
+
+	/**
 	 * Settle a refund: money back to the buyer, earnings back off the vendor.
 	 *
 	 * THE shared refund path. Both handle_order_refunded() and
@@ -799,7 +988,12 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	private function settle_refund( int $order_id, ServiceOrder $order ): void {
-		$refunded = null === $order->refunded_amount ? null : (float) $order->refunded_amount;
+		// This event's slice. Refunds accumulate, so `refunded_amount` on the
+		// row is the running total; apply_refund_status() registers the slice
+		// for the duration of the transition. A hook that fired outside it
+		// (legacy direct status writes) falls back to the row as before.
+		$refunded = OrderService::get_refund_delta( $order_id )
+			?? ( null === $order->refunded_amount ? null : (float) $order->refunded_amount );
 
 		// 1. Buyer's money back, for the refunded amount only.
 		$this->attempt_payment_refund( $order, $refunded );
@@ -869,20 +1063,27 @@ class OrderWorkflowManager {
 		$order_total  = (float) $order->total;
 		$platform_fee = (float) ( $order->platform_fee ?? 0 );
 		$currency     = $order->currency ? $order->currency : wpss_get_currency();
+		$decimals     = wpss_get_currency_decimals( (string) $currency );
 
-		// A partial refund claws back the same proportion the buyer got back.
-		// NULL means "reverse everything", which is also what a full refund
-		// resolves to — one formula, no separate partial path.
-		$full_earnings   = (float) $order->vendor_earnings;
-		$is_partial      = null !== $refund_amount && $refund_amount < $order_total;
+		// A refund claws back the same proportion of what the vendor STILL
+		// holds as the buyer gets back of what they still had paid. Refunds
+		// accumulate, so the row's refunded_amount already includes this
+		// event; what was refunded before it is the difference. NULL means
+		// "reverse everything left", which is also what a full refund resolves
+		// to - one formula, no separate partial path.
+		$full_earnings = (float) $order->vendor_earnings;
+		$previous      = null === $refund_amount ? 0.0 : max( 0.0, (float) ( $order->refunded_amount ?? 0 ) - (float) $refund_amount );
+		$remaining     = $order_total - $previous;
+		$is_partial    = null !== $refund_amount && $refund_amount < $remaining;
+
 		$vendor_earnings = $is_partial
-			? wpss_get_refund_vendor_share( $order, (float) $refund_amount )
+			? wpss_get_refund_vendor_share( $order, (float) $refund_amount, $previous )
 			: $full_earnings;
 
 		// Reverse the platform's cut in the same proportion, so platform revenue
 		// reporting stays honest on partial refunds.
-		if ( $is_partial && $order_total > 0 ) {
-			$platform_fee = round( $platform_fee * ( (float) $refund_amount / $order_total ), 2 );
+		if ( $is_partial && $remaining > 0 ) {
+			$platform_fee = round( $platform_fee * ( (float) $refund_amount / $remaining ), $decimals );
 		}
 
 		// Skip zero-amount reversals.
@@ -918,35 +1119,22 @@ class OrderWorkflowManager {
 		}
 
 		$transactions_table = $wpdb->prefix . 'wpss_wallet_transactions';
-		$profiles_table     = $wpdb->prefix . 'wpss_vendor_profiles';
 		$orders_table       = $wpdb->prefix . 'wpss_orders';
 
-		// Idempotency: check if reversal already exists for this order.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$existing_reversal = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$transactions_table} WHERE reference_type = 'order' AND reference_id = %d AND type IN ('order_reversal', 'refund')",
-				$order_id
-			)
-		);
-
-		if ( $existing_reversal > 0 ) {
-			return true;
-		}
-
 		// Never debit a vendor for money they were never credited. The order may
-		// carry vendor_earnings and even an inflated profile total while its
-		// wallet credit was never written — CommissionService::record() sets the
-		// order fields and the profile in writes that commit BEFORE its own
-		// create_earnings_transaction() transaction, so a rolled-back credit
-		// leaves exactly this "paid but uncredited" state. Inserting a reversal
-		// debit against a credit that never existed would invent a negative
-		// balance (the vendor goes to -X for money they never received). The
-		// ledger is the authority: if it holds no completed credit for this
-		// order, there is nothing to claw back — skip the reversal and flag it
-		// for manual reconciliation rather than fabricate debt. Connect orders,
-		// settled outside the wallet, are already short-circuited above by the
-		// wpss_should_reverse_vendor_earnings filter and never reach here.
+		// carry vendor_earnings while its wallet credit was never written —
+		// CommissionService::record() sets the order fields in a write that
+		// commits BEFORE its own create_earnings_transaction() transaction, so
+		// a rolled-back credit leaves exactly this "paid but uncredited" state,
+		// and a paid order refunded before completion has no credit at all.
+		// Inserting a reversal against a credit that never existed would invent
+		// a negative balance. The ledger is the authority: if it holds no
+		// completed credit for this order, there is nothing to claw back — skip
+		// the reversal (the row's vendor_earnings stays, and the credit at
+		// completion nets the refund via CommissionService::calculate()).
+		// Connect orders, settled outside the wallet, are already
+		// short-circuited above by the wpss_should_reverse_vendor_earnings
+		// filter and never reach here.
 		$debit_types_sql = wpss_get_ledger_debit_types_sql();
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix; debit types are sanitize_key()'d; order_id is prepared.
 		$credited = (int) $wpdb->get_var(
@@ -958,12 +1146,25 @@ class OrderWorkflowManager {
 				$order_id
 			)
 		);
+
+		// One reversal row per refund EVENT. The ledger is UNIQUE on
+		// (reference_type, reference_id, type), so the event ordinal rides on
+		// reference_type: the first reversal keeps 'order' (every existing row
+		// and reader), later ones are 'order_refund_2', 'order_refund_3'.
+		// reference_id stays the order id on all of them, so a ledger row
+		// always resolves to its order.
+		$event = 1 + (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$transactions_table} WHERE reference_id = %d AND type = 'order_reversal'",
+				$order_id
+			)
+		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( 0 === $credited ) {
 			wpss_log(
 				sprintf(
-					'Order %d refund: no completed wallet credit found for the vendor, so the earnings reversal is skipped — a reversal here would debit money never credited. If vendor_profiles shows earnings for this order they are a stale cache from an interrupted credit and need manual reconciliation.',
+					'Order %d refund: no completed wallet credit found for the vendor, so the earnings reversal is skipped — a reversal here would debit money never credited. The credit written at completion is netted by the refunded amount instead.',
 					$order_id
 				),
 				'warning'
@@ -975,49 +1176,17 @@ class OrderWorkflowManager {
 		$wpdb->query( 'START TRANSACTION' );
 
 		try {
-			// 1. Update vendor profile earnings (verify profile exists).
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$profile_updated = $wpdb->query(
-				$wpdb->prepare(
-					"UPDATE {$profiles_table}
-					SET
-						total_earnings = GREATEST(0, total_earnings - %f),
-						net_earnings = GREATEST(0, net_earnings - %f),
-						total_commission = GREATEST(0, total_commission - %f),
-						updated_at = %s
-					WHERE user_id = %d",
-					$order_total,
-					$vendor_earnings,
-					$platform_fee,
-					current_time( 'mysql' ),
-					$vendor_id
-				)
-			);
-
-			if ( false === $profile_updated ) {
-				throw new \RuntimeException(
-					sprintf( 'UPDATE vendor_profiles failed: %s', $wpdb->last_error )
-				);
-			}
-
-			if ( 0 === $profile_updated ) {
-				wpss_log( "Earnings reversal: vendor profile not found for user {$vendor_id}, order {$order_id}.", 'warning' );
-			}
-
-			// 2. Look up current wallet balance for the reversal transaction row.
+			// 1. Look up current wallet balance for the reversal transaction row.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$current_balance = (float) wpss_get_ledger_balance( (int) $vendor_id, true );
 
 			// Not clamped: if the vendor already withdrew this money the running
 			// balance genuinely goes negative, and the statement should say so.
-			// Clamping here made balance_after disagree with the actual ledger
-			// SUM on exactly the rows where the truth matters most.
 			$new_balance = $current_balance - $vendor_earnings;
 
-			// 3. Create reversal wallet transaction.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$insert_result = $wpdb->insert(
-				$transactions_table,
+			// 2. Create the reversal wallet transaction. The vendor profile's
+			// cached totals are recomputed from the ledger by the insert helper.
+			$inserted = wpss_insert_ledger_row(
 				array(
 					'user_id'        => $vendor_id,
 					'type'           => 'order_reversal',
@@ -1025,25 +1194,25 @@ class OrderWorkflowManager {
 					'balance_after'  => $new_balance,
 					'currency'       => $currency,
 					'description'    => sprintf(
-						/* translators: %d: order ID */
-						__( 'Earnings reversed for cancelled order #%d', 'wp-sell-services' ),
-						$order_id
+						/* translators: 1: order ID, 2: amount refunded to the buyer in this event */
+						__( 'Earnings reversed for order #%1$d (%2$s refunded)', 'wp-sell-services' ),
+						$order_id,
+						wpss_format_price( null === $refund_amount ? $remaining : (float) $refund_amount, (string) $currency )
 					),
-					'reference_type' => 'order',
+					'reference_type' => 1 === $event ? 'order' : "order_refund_{$event}",
 					'reference_id'   => $order_id,
 					'status'         => 'completed',
 					'created_at'     => current_time( 'mysql' ),
-				),
-				array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
+				)
 			);
 
-			if ( false === $insert_result ) {
+			if ( ! $inserted ) {
 				throw new \RuntimeException(
 					sprintf( 'INSERT wallet_transactions failed: %s', $wpdb->last_error )
 				);
 			}
 
-			// 4. Settle the order's commission fields.
+			// 3. Settle the order's commission fields.
 			//
 			// Full reversal clears them, which also prevents a double-reversal.
 			// A PARTIAL refund must NOT clear them: the vendor genuinely kept
@@ -1052,8 +1221,8 @@ class OrderWorkflowManager {
 			// would erase real earnings from every report.
 			$commission_fields = $is_partial
 				? array(
-					'vendor_earnings' => round( $full_earnings - $vendor_earnings, 2 ),
-					'platform_fee'    => round( (float) ( $order->platform_fee ?? 0 ) - $platform_fee, 2 ),
+					'vendor_earnings' => round( $full_earnings - $vendor_earnings, $decimals ),
+					'platform_fee'    => round( (float) ( $order->platform_fee ?? 0 ) - $platform_fee, $decimals ),
 				)
 				: array(
 					'vendor_earnings' => null,
@@ -1093,25 +1262,34 @@ class OrderWorkflowManager {
 	/**
 	 * Attempt to refund the buyer's original payment via the payment gateway.
 	 *
-	 * Only processes refunds for orders that have a transaction ID and a recognized
-	 * payment gateway with a process_refund() method. On success, updates the order's
-	 * payment_status to 'refunded'. On failure, logs the error for admin review.
+	 * Runs the `wpss_pre_process_gateway_refund` filter first so a rail that
+	 * owns the money (Pro's WooCommerce / EDD / FluentCart adapters) can settle
+	 * the refund itself; otherwise resolves the order's gateway and calls its
+	 * process_refund(). Every result is the seam-3 shape
+	 * {success, transaction_id, message, manual}. A `manual` result means the
+	 * gateway cannot move money (offline, test): the order is flagged with
+	 * REFUND_PENDING_META so the admin sends it by hand, and nothing is logged
+	 * as successful — until 1.7.1 a cancelled offline order logged
+	 * "Auto-refund successful" while no money moved.
+	 *
+	 * The result is kept per order (see get_last_refund_result()) so the
+	 * caller that moved the status can report the real outcome.
 	 *
 	 * @param ServiceOrder $order  Order object.
 	 * @param float|null   $amount Amount to refund. NULL refunds the full order
 	 *                             total. Every gateway already accepts a partial
 	 *                             amount via PaymentGatewayInterface, so no
 	 *                             gateway needed changing for partial refunds.
-	 * @return void
+	 * @return array<string, mixed>|null Seam-3 result, or null when no refund was attempted.
 	 */
-	private function attempt_payment_refund( ServiceOrder $order, ?float $amount = null ): void {
+	private function attempt_payment_refund( ServiceOrder $order, ?float $amount = null ): ?array {
 		// Skip if no payment was made (offline/pending orders, or already refunded).
 		if ( empty( $order->transaction_id ) || empty( $order->payment_method ) ) {
-			return;
+			return null;
 		}
 
 		if ( in_array( $order->payment_status, array( 'refunded', 'pending' ), true ) ) {
-			return;
+			return null;
 		}
 
 		// The refund started AT the rail — a Stripe dashboard refund arriving on
@@ -1132,40 +1310,68 @@ class OrderWorkflowManager {
 				),
 				'info'
 			);
-			return;
+			return null;
 		}
 
-		// Ask the plugin for its registered gateways, NOT the filter with an
-		// empty array. Free registers stripe/paypal/offline into
-		// Plugin::$payment_gateways and applies the filter to THAT array once
-		// at init; re-running the filter from scratch returns only what Pro or
-		// a third party adds. So this resolved 'stripe' to null and every
-		// auto-refund on a Stripe, PayPal or offline order was silently
-		// skipped — the buyer's money never went back.
-		//
-		// PaymentController already used get_payment_gateways(); this was the
-		// odd one out.
-		$gateways = function_exists( 'wpss' )
-			? wpss()->get_payment_gateways()
-			: apply_filters( 'wpss_payment_gateways', [] );
-
-		$gateway = $gateways[ $order->payment_method ] ?? null;
-
-		if ( ! $gateway || ! method_exists( $gateway, 'process_refund' ) ) {
-			// error, not warning: a refund that never reaches the gateway means
-			// the buyer's money did not go back. The standard requires a
-			// skipped money step to shout, not shrug (§6.5) — this logging at
-			// warning is how the gateway-lookup bug stayed invisible.
-			wpss_log( "Auto-refund FAILED for order {$order->id}: gateway '{$order->payment_method}' not available or missing process_refund(). The buyer has NOT been refunded.", 'error' );
-			return;
-		}
-
+		// Size against what the buyer still has paid, not the order total: a
+		// refund after an earlier partial returns the remainder. "Partial"
+		// means the order is not fully refunded once this event lands, which
+		// is what decides whether the payment closes below.
 		$order_total   = (float) $order->total;
-		$refund_amount = ( null === $amount || $amount <= 0 || $amount > $order_total )
-			? $order_total
+		$cumulative    = wpss_get_order_refunded_amount( $order );
+		$remaining     = null === $amount ? $order_total : $order_total - max( 0.0, $cumulative - $amount );
+		$refund_amount = ( null === $amount || $amount <= 0 || $amount > $remaining )
+			? $remaining
 			: $amount;
+		$is_partial    = null !== $amount && $cumulative < $order_total;
 
-		$refund_result = $gateway->process_refund( $order->transaction_id, $refund_amount );
+		/**
+		 * Short-circuit the gateway refund.
+		 *
+		 * Return a seam-3 array {success, transaction_id, message, manual} to
+		 * settle the refund yourself (a rail that owns the money, e.g. a
+		 * WooCommerce order refunded through wc_create_refund()); return null
+		 * to let the order's registered gateway handle it.
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param array<string, mixed>|null $handled    null to continue.
+		 * @param ServiceOrder              $order      Order being refunded.
+		 * @param float                     $amount     Amount to refund.
+		 * @param bool                      $is_partial Whether this is less than the order total.
+		 */
+		$refund_result = apply_filters( 'wpss_pre_process_gateway_refund', null, $order, $refund_amount, $is_partial );
+
+		if ( ! is_array( $refund_result ) ) {
+			// Ask the plugin for its registered gateways, NOT the filter with an
+			// empty array. Free registers stripe/paypal/offline into
+			// Plugin::$payment_gateways and applies the filter to THAT array once
+			// at init; re-running the filter from scratch returns only what Pro or
+			// a third party adds. So this resolved 'stripe' to null and every
+			// auto-refund on a Stripe, PayPal or offline order was silently
+			// skipped — the buyer's money never went back.
+			$gateways = function_exists( 'wpss' )
+				? wpss()->get_payment_gateways()
+				: apply_filters( 'wpss_payment_gateways', [] );
+
+			$gateway = $gateways[ $order->payment_method ] ?? null;
+
+			$refund_result = $gateway && method_exists( $gateway, 'process_refund' )
+				? (array) $gateway->process_refund( $order->transaction_id, $refund_amount )
+				: array(
+					'success' => false,
+					'error'   => sprintf( "gateway '%s' not available or missing process_refund()", $order->payment_method ),
+				);
+		}
+
+		$refund_result += array(
+			'success'        => false,
+			'transaction_id' => (string) ( $refund_result['refund_id'] ?? '' ),
+			'message'        => (string) ( $refund_result['error'] ?? '' ),
+			'manual'         => false,
+		);
+
+		self::$refund_results[ (int) $order->id ] = $refund_result;
 
 		/**
 		 * Fires after the gateway has processed a refund, with its raw result.
@@ -1188,18 +1394,62 @@ class OrderWorkflowManager {
 		 */
 		do_action( 'wpss_order_refund_processed', (int) $order->id, $refund_result, $order );
 
-		$audit = new AuditLogService();
+		$audit   = new AuditLogService();
+		$context = array(
+			'gateway'        => (string) $order->payment_method,
+			'transaction_id' => (string) $order->transaction_id,
+			'amount'         => (float) $refund_amount,
+			'result'         => array_intersect_key( $refund_result, array_flip( array( 'success', 'transaction_id', 'status', 'message', 'manual', 'transfer_reversed' ) ) ),
+		);
 
-		if ( ! empty( $refund_result['success'] ) ) {
-			global $wpdb;
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$wpdb->prefix . 'wpss_orders',
-				array( 'payment_status' => 'refunded' ),
-				array( 'id' => $order->id )
+		if ( ! empty( $refund_result['manual'] ) ) {
+			// No money moved. Flag the amount for the admin to send by hand;
+			// the admin notice and the order view read this meta, and "Mark
+			// refund sent" clears it.
+			wpss_get_order_provider()->update_item_meta( (int) $order->id, self::REFUND_PENDING_META, $refund_amount );
+
+			wpss_log( "Manual refund required for order {$order->id}: send {$refund_amount} {$order->currency} to the buyer via '{$order->payment_method}'. The buyer has NOT been refunded yet.", 'warning' );
+
+			$audit->log(
+				'order.refund_pending',
+				'order',
+				(int) $order->id,
+				array(
+					'action'  => 'refund',
+					'context' => $context,
+				)
 			);
 
-			wpss_log( "Auto-refund successful for order {$order->id}, transaction {$order->transaction_id}." );
+			$this->notification_service->notify_admins(
+				'refund_pending',
+				__( 'Manual Refund Required', 'wp-sell-services' ),
+				sprintf(
+					/* translators: 1: order ID, 2: amount, 3: payment method */
+					__( 'Order #%1$d was paid via %3$s, which cannot refund automatically. Send %2$s to the buyer and mark the refund as sent on the order.', 'wp-sell-services' ),
+					$order->id,
+					wpss_format_price( $refund_amount, (string) $order->currency ),
+					$order->payment_method
+				),
+				array( 'order_id' => $order->id )
+			);
+
+			return $refund_result;
+		}
+
+		if ( ! empty( $refund_result['success'] ) ) {
+			// A partial refund leaves the rest of the payment in place, so the
+			// payment stays 'paid' and the remainder can still be refunded.
+			if ( ! $is_partial ) {
+				global $wpdb;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->update(
+					$wpdb->prefix . 'wpss_orders',
+					array( 'payment_status' => 'refunded' ),
+					array( 'id' => $order->id )
+				);
+			}
+
+			wpss_log( "Auto-refund successful for order {$order->id}: {$refund_amount} of {$order_total} via '{$order->payment_method}', transaction {$order->transaction_id}, refund {$refund_result['transaction_id']}." );
 
 			$audit->log(
 				'order.refund',
@@ -1208,12 +1458,8 @@ class OrderWorkflowManager {
 				array(
 					'action'     => 'refund',
 					'from_value' => (string) $order->payment_status,
-					'to_value'   => 'refunded',
-					'context'    => array(
-						'gateway'        => (string) $order->payment_method,
-						'transaction_id' => (string) $order->transaction_id,
-						'amount'         => (float) $order->total,
-					),
+					'to_value'   => $is_partial ? 'paid' : 'refunded',
+					'context'    => $context,
 				)
 			);
 
@@ -1227,39 +1473,41 @@ class OrderWorkflowManager {
 			 * @param array        $result   Refund result from gateway.
 			 */
 			do_action( 'wpss_order_auto_refunded', $order->id, $order, $refund_result );
-		} else {
-			$error_msg = $refund_result['error'] ?? __( 'Unknown error', 'wp-sell-services' );
-			wpss_log( "Auto-refund FAILED for order {$order->id}: {$error_msg}", 'error' );
 
-			$audit->log(
-				'order.refund_failed',
-				'order',
-				(int) $order->id,
-				array(
-					'action'  => 'refund',
-					'context' => array(
-						'gateway'        => (string) $order->payment_method,
-						'transaction_id' => (string) $order->transaction_id,
-						'amount'         => (float) $order->total,
-						'error'          => (string) $error_msg,
-					),
-				)
-			);
-
-			// Notify admin of failed refund so they can process manually.
-			$this->notification_service->create(
-				0, // Admin notification (user_id 0 = site admin).
-				'refund_failed',
-				__( 'Auto-Refund Failed', 'wp-sell-services' ),
-				sprintf(
-					/* translators: 1: order ID, 2: error message */
-					__( 'Automatic refund failed for order #%1$d. Error: %2$s. Please process the refund manually via the payment gateway dashboard.', 'wp-sell-services' ),
-					$order->id,
-					$error_msg
-				),
-				array( 'order_id' => $order->id )
-			);
+			return $refund_result;
 		}
+
+		$error_msg = '' !== $refund_result['message'] ? $refund_result['message'] : __( 'Unknown error', 'wp-sell-services' );
+		// error, not warning: a refund that never reaches the gateway means
+		// the buyer's money did not go back. The standard requires a
+		// skipped money step to shout, not shrug (§6.5).
+		wpss_log( "Auto-refund FAILED for order {$order->id}: {$error_msg}. The buyer has NOT been refunded.", 'error' );
+
+		$context['error'] = (string) $error_msg;
+		$audit->log(
+			'order.refund_failed',
+			'order',
+			(int) $order->id,
+			array(
+				'action'  => 'refund',
+				'context' => $context,
+			)
+		);
+
+		// Tell every administrator so someone processes it by hand.
+		$this->notification_service->notify_admins(
+			'refund_failed',
+			__( 'Auto-Refund Failed', 'wp-sell-services' ),
+			sprintf(
+				/* translators: 1: order ID, 2: error message */
+				__( 'Automatic refund failed for order #%1$d. Error: %2$s. Please process the refund manually via the payment gateway dashboard.', 'wp-sell-services' ),
+				$order->id,
+				$error_msg
+			),
+			array( 'order_id' => $order->id )
+		);
+
+		return $refund_result;
 	}
 
 	/**
@@ -1463,17 +1711,26 @@ class OrderWorkflowManager {
 	 */
 	public function update_vendor_stats(): void {
 		$vendor_service = new \WPSellServices\Services\VendorService();
-		$vendors        = get_users(
-			array(
-				'meta_key'   => '_wpss_is_vendor', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				'meta_value' => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-				'fields'     => 'ID',
-			)
-		);
+		$offset         = 0;
 
-		foreach ( $vendors as $vendor_id ) {
-			$vendor_service->update_stats( (int) $vendor_id );
-		}
+		// Every ACTIVE vendor, not the `_wpss_is_vendor` meta: the wizard, the
+		// admin screen, role assignment and the seeder all create vendors
+		// without that meta, so a meta-keyed sweep left most sellers on stale
+		// or zero order counts, completion rate and response stats forever.
+		// ponytail: pages the whole list in one run (SWEEP_BATCH ids in memory at
+		// a time) rather than one batch per tick - a stats refresh has to reach
+		// every vendor, and a per-tick batch would starve the tail. Move to a
+		// stored cursor if a run ever outgrows the cron window.
+		do {
+			$vendor_ids = wpss_get_active_vendor_ids( self::SWEEP_BATCH, $offset );
+			$page_size  = count( $vendor_ids );
+
+			foreach ( $vendor_ids as $vendor_id ) {
+				$vendor_service->update_stats( $vendor_id );
+			}
+
+			$offset += self::SWEEP_BATCH;
+		} while ( self::SWEEP_BATCH === $page_size );
 	}
 
 	/**

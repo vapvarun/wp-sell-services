@@ -209,3 +209,150 @@ function wpss_should_skip_message_email( int $recipient_id ): bool {
 	 */
 	return (bool) apply_filters( 'wpss_skip_message_email_when_online', $skip, $recipient_id, $enabled );
 }
+
+/**
+ * Whether an admin notification toggle is on.
+ *
+ * ONE reading of `wpss_notifications`, shared by EmailService and
+ * NotificationService. The two used to disagree - EmailService read a missing
+ * key as enabled, NotificationService read it as disabled - so a type added to
+ * the registry after a site had saved its settings sent branded mail and
+ * withheld plain mail for the same event. A key nobody has unticked is on.
+ *
+ * @since 1.7.1
+ *
+ * @param string $setting_key Setting key, e.g. `notify_new_order`.
+ * @return bool True unless the owner has explicitly unticked the box.
+ */
+function wpss_notification_type_enabled( string $setting_key ): bool {
+	$settings = get_option( 'wpss_notifications' );
+
+	if ( ! is_array( $settings ) || ! array_key_exists( $setting_key, $settings ) ) {
+		return true;
+	}
+
+	return ! empty( $settings[ $setting_key ] );
+}
+
+/**
+ * Notification type => the Settings > Emails checkbox that governs it.
+ *
+ * ONE map. EmailService and NotificationService each kept their own, and the
+ * two disagreed about `cancellation_requested`: the branded mail was gated on
+ * `notify_cancellation_requested`, the plain mail on `notify_order_cancelled`.
+ * So unticking "Cancellation Requested" silenced half the event, and unticking
+ * "Order Cancelled" silenced the other half of an event the owner had not
+ * touched (Basecamp #10268056021). A checkbox must do what its label says, and
+ * it cannot while one type resolves to two settings.
+ *
+ * Keys are the type strings the senders pass - the values of
+ * EmailService::TYPE_* and NotificationService::TYPE_*, plus the raw workflow
+ * strings OrderWorkflowManager / DisputeWorkflowManager use. Literals rather
+ * than class constants so this file stays free of class loading.
+ *
+ * Values are `notify_` + a key from Settings::get_notification_types(), which
+ * is what renders the checkbox and what the sanitizer persists. A value with no
+ * checkbox behind it is a gate nobody can open; tests/test-notification-toggle-contract.php
+ * fails on that, and on any type that resolves to more than one setting.
+ *
+ * A type absent from this map is always sent - a new event ships live until an
+ * owner is given a control for it. Deliberate absences: `seller_level_promotion`
+ * (a milestone the vendor should always hear about), `test_email` (the owner
+ * asked for it), and `proposal_rejected` / the `receipt_*` and `vendor_*`
+ * account decisions, which have no checkbox of their own yet.
+ *
+ * @since 1.7.1
+ *
+ * @return array<string, string> Notification type => setting key.
+ */
+function wpss_notification_type_settings(): array {
+	return array(
+		// Orders: placing one, and everything up to work starting.
+		'new_order'                  => 'notify_new_order',
+		'order_created'              => 'notify_new_order',
+		'order_status'               => 'notify_new_order',
+		'order_confirmation'         => 'notify_new_order',
+		'order_started'              => 'notify_new_order',
+		'order_in_progress'          => 'notify_new_order',
+		'requirements_submitted'     => 'notify_new_order',
+		'submit_requirements'        => 'notify_new_order',
+		'requirements_reminder'      => 'notify_new_order',
+		'order_late'                 => 'notify_new_order',
+		'deadline_reminder'          => 'notify_new_order',
+		// Delivery.
+		'delivery_ready'             => 'notify_delivery_submitted',
+		'delivery_submitted'         => 'notify_delivery_submitted',
+		'delivery_received'          => 'notify_delivery_submitted',
+		'revision_requested'         => 'notify_revision_requested',
+		// Completion.
+		'order_completed'            => 'notify_order_completed',
+		'order_completed_vendor'     => 'notify_order_completed',
+		'order_auto_completed'       => 'notify_order_completed',
+		'delivery_accepted'          => 'notify_order_completed',
+		// Cancellation. The REQUEST and the CANCELLATION are two events with two
+		// checkboxes, and each type belongs to exactly one of them.
+		// `cancellation_submitted` is the buyer's copy of the request the vendor
+		// is told about, so it follows the request; `cancellation_auto_approved`
+		// is sent when the order is actually cancelled, so it follows that.
+		'cancellation_requested'     => 'notify_cancellation_requested',
+		'cancellation_submitted'     => 'notify_cancellation_requested',
+		'order_cancelled'            => 'notify_order_cancelled',
+		'cancellation_auto_approved' => 'notify_order_cancelled',
+		// Messages.
+		'new_message'                => 'notify_new_message',
+		'vendor_contact'             => 'notify_vendor_contact',
+		// Reviews.
+		'review_received'            => 'notify_new_review',
+		'review_reply'               => 'notify_review_reply',
+		// Disputes.
+		'dispute_opened'             => 'notify_dispute_opened',
+		'dispute_resolved'           => 'notify_dispute_opened',
+		'dispute_response_received'  => 'notify_dispute_opened',
+		'dispute_reminder'           => 'notify_dispute_opened',
+		'dispute_admin'              => 'notify_dispute_opened',
+		'dispute_escalated'          => 'notify_dispute_escalated',
+		'dispute_cancelled'          => 'notify_dispute_cancelled',
+		// Withdrawals.
+		'withdrawal_requested'       => 'notify_withdrawal_requested',
+		'withdrawal_auto'            => 'notify_withdrawal_requested',
+		'withdrawal_approved'        => 'notify_withdrawal_approved',
+		'withdrawal_rejected'        => 'notify_withdrawal_rejected',
+		// Proposals, milestones, extensions.
+		'proposal_submitted'         => 'notify_proposal_submitted',
+		'proposal_accepted'          => 'notify_proposal_accepted',
+		'milestone_proposed'         => 'notify_milestone_proposed',
+		'milestone_paid'             => 'notify_milestone_paid',
+		'milestone_submitted'        => 'notify_milestone_submitted',
+		'milestone_approved'         => 'notify_milestone_approved',
+		'extension_proposed'         => 'notify_extension_proposed',
+		'extension_approved'         => 'notify_extension_approved',
+		'extension_declined'         => 'notify_extension_declined',
+		// Tips.
+		'tip_received'               => 'notify_tip_received',
+		'tip_receipt'                => 'notify_tip_receipt',
+		// Service moderation.
+		'moderation_approved'        => 'notify_moderation',
+		'moderation_rejected'        => 'notify_moderation',
+		'moderation_pending'         => 'notify_moderation',
+		// Buyer requests.
+		'request_expired'            => 'notify_request_expired',
+	);
+}
+
+/**
+ * Whether a notification type may be sent at all.
+ *
+ * The one gate both senders ask, so the branded mail and the plain mail can
+ * never answer differently for the same event.
+ *
+ * @since 1.7.1
+ *
+ * @param string $type Notification type, e.g. `cancellation_requested`.
+ * @return bool True unless the owner has unticked the box that governs it.
+ */
+function wpss_notification_type_allowed( string $type ): bool {
+	$map = wpss_notification_type_settings();
+
+	// Unknown type: send. A new event ships live until it is given a control.
+	return ! isset( $map[ $type ] ) || wpss_notification_type_enabled( $map[ $type ] );
+}

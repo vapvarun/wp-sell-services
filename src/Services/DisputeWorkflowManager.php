@@ -95,7 +95,7 @@ class DisputeWorkflowManager {
 	 * @param int    $dispute_id Dispute ID.
 	 * @param int    $user_id Responder user ID.
 	 * @param string $response Response text.
-	 * @param array  $attachments Attachment IDs.
+	 * @param array  $attachments Ids of files the responder already uploaded to this order.
 	 * @return array Result with success status.
 	 */
 	public function submit_response( int $dispute_id, int $user_id, string $response, array $attachments = array() ): array {
@@ -132,6 +132,31 @@ class DisputeWorkflowManager {
 				'success' => false,
 				'message' => __( 'You are not authorized to respond to this dispute.', 'wp-sell-services' ),
 			);
+		}
+
+		// An attachment id must name a file THIS user put on THIS order. Before
+		// this, any attachment id on the site was accepted and rendered into
+		// the other party's dispute view (Basecamp 10264291163).
+		if ( $attachments ) {
+			$own = array();
+
+			foreach ( wpss_get_order_file_records( (int) $dispute->order_id ) as $record ) {
+				if ( (int) ( $record['user_id'] ?? 0 ) === $user_id ) {
+					$own[ (string) $record['id'] ] = $record;
+				}
+			}
+
+			foreach ( $attachments as $i => $file_id ) {
+				if ( ! isset( $own[ (string) $file_id ] ) ) {
+					return array(
+						'success' => false,
+						'code'    => 'forbidden',
+						'message' => __( 'One of the attachments is not a file you uploaded to this order.', 'wp-sell-services' ),
+					);
+				}
+
+				$attachments[ $i ] = $own[ (string) $file_id ];
+			}
 		}
 
 		// Determine response type.
@@ -171,7 +196,7 @@ class DisputeWorkflowManager {
 
 		// Update dispute status if it was awaiting response.
 		if ( DisputeService::STATUS_OPEN === $dispute->status && (int) $dispute->initiator_id !== $user_id ) {
-			$this->dispute_service->update_status( $dispute_id, DisputeService::STATUS_PENDING );
+			$this->dispute_service->transition( $dispute_id, DisputeService::STATUS_PENDING );
 		}
 
 		/**
@@ -277,16 +302,6 @@ class DisputeWorkflowManager {
 			);
 		}
 
-		if ( DisputeService::STATUS_ESCALATED === $dispute->status ) {
-			return array(
-				'success' => false,
-				'message' => __( 'This dispute is already escalated.', 'wp-sell-services' ),
-			);
-		}
-
-		// Update dispute meta with escalation info.
-		global $wpdb;
-
 		$meta               = $dispute->meta;
 		$meta['escalation'] = array(
 			'reason'       => sanitize_textarea_field( $reason ),
@@ -294,28 +309,19 @@ class DisputeWorkflowManager {
 			'escalated_at' => current_time( 'mysql' ),
 		);
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update(
-			$this->disputes_table,
-			array(
-				'status'     => DisputeService::STATUS_ESCALATED,
-				'meta'       => wp_json_encode( $meta ),
-				'updated_at' => current_time( 'mysql' ),
-			),
-			array( 'id' => $dispute_id ),
-			array( '%s', '%s', '%s' ),
-			array( '%d' )
+		// The state machine refuses escalated, resolved and closed disputes.
+		$moved = $this->dispute_service->transition(
+			$dispute_id,
+			DisputeService::STATUS_ESCALATED,
+			array( 'fields' => array( 'meta' => wp_json_encode( $meta ) ) )
 		);
 
-		if ( false === $result ) {
+		if ( ! $moved ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Failed to escalate dispute.', 'wp-sell-services' ),
+				'message' => $this->dispute_service->last_error(),
 			);
 		}
-
-		// Fire status change hook (consistent with DisputeService::update_status).
-		do_action( 'wpss_dispute_status_changed', $dispute_id, DisputeService::STATUS_ESCALATED, $dispute->status );
 
 		// Notify admins.
 		$this->notify_admins_of_escalation( $dispute_id, $dispute, $reason );
@@ -401,7 +407,13 @@ class DisputeWorkflowManager {
 	}
 
 	/**
-	 * Cancel a dispute (by opener only).
+	 * Close a dispute without a ruling and give the order back.
+	 *
+	 * Every close goes through here - the opener withdrawing over REST, the
+	 * admin picking Closed on the dispute screen, the bulk Close action - so
+	 * the order is always restored to its pre-dispute status. Closing the
+	 * dispute and releasing the order are ONE unit of work: either both land
+	 * or neither does.
 	 *
 	 * @param int    $dispute_id Dispute ID.
 	 * @param int    $user_id User ID.
@@ -426,11 +438,10 @@ class DisputeWorkflowManager {
 			);
 		}
 
-		// Can't cancel resolved disputes.
-		if ( DisputeService::STATUS_RESOLVED === $dispute->status ) {
+		if ( ! $this->dispute_service->can_transition( (string) $dispute->status, DisputeService::STATUS_CLOSED ) ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Resolved disputes cannot be cancelled.', 'wp-sell-services' ),
+				'message' => __( 'This dispute has already been resolved or closed.', 'wp-sell-services' ),
 			);
 		}
 
@@ -443,52 +454,43 @@ class DisputeWorkflowManager {
 			'cancelled_at' => current_time( 'mysql' ),
 		);
 
-		// Closing the dispute and releasing the order are ONE unit of work.
-		//
-		// Previously these were two unguarded statements: the status write
-		// committed, then restore_order_status() threw, and the caller got a 500
-		// while the data was left half-changed - dispute `closed` but the order
-		// still `disputed`, with no open dispute able to release it, so the order
-		// could never progress again. Either both land or neither does.
 		$wpdb->query( 'START TRANSACTION' );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update(
-			$this->disputes_table,
-			array(
-				'status'     => DisputeService::STATUS_CLOSED,
-				'meta'       => wp_json_encode( $meta ),
-				'updated_at' => current_time( 'mysql' ),
-			),
-			array( 'id' => $dispute_id ),
-			array( '%s', '%s', '%s' ),
-			array( '%d' )
-		);
+		try {
+			$restored = $this->restore_order_status( (int) $dispute->order_id );
+		} catch ( \Throwable $e ) {
+			$restored = false;
+		}
 
-		if ( false === $result ) {
+		if ( ! $restored ) {
 			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
-				'message' => __( 'Failed to cancel dispute.', 'wp-sell-services' ),
+				'message' => __( 'The order could not be restored, so the dispute stays open.', 'wp-sell-services' ),
 			);
 		}
 
-		try {
-			// Restore order status to previous state if possible.
-			$this->restore_order_status( $dispute->order_id );
-		} catch ( \Throwable $e ) {
+		$closed = $this->dispute_service->transition(
+			$dispute_id,
+			DisputeService::STATUS_CLOSED,
+			array(
+				'note'   => $reason,
+				'fields' => array(
+					'meta'             => wp_json_encode( $meta ),
+					'resolution_notes' => sanitize_textarea_field( $reason ),
+				),
+			)
+		);
+
+		if ( ! $closed ) {
 			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
-				'message' => __( 'Failed to cancel dispute.', 'wp-sell-services' ),
+				'message' => $this->dispute_service->last_error(),
 			);
 		}
 
 		$wpdb->query( 'COMMIT' );
-
-		// Fire status change hook AFTER commit - listeners must not observe, or
-		// act on, a state that could still be rolled back.
-		do_action( 'wpss_dispute_status_changed', $dispute_id, DisputeService::STATUS_CLOSED, $dispute->status );
 
 		/**
 		 * Fires when a dispute is cancelled.
@@ -652,9 +654,8 @@ class DisputeWorkflowManager {
 	 * @return void
 	 */
 	public function auto_open_disputes_for_late_orders(): void {
-		$order_settings    = get_option( 'wpss_orders', array() );
-		$allow_disputes    = $order_settings['allow_disputes'] ?? true;
-		$auto_dispute_days = (int) ( $order_settings['auto_dispute_late_days'] ?? 3 );
+		$allow_disputes    = (bool) wpss_get_option( 'orders', 'allow_disputes' );
+		$auto_dispute_days = (int) wpss_get_option( 'orders', 'auto_dispute_late_days' );
 
 		// Bail if disputes are disabled or auto-dispute is turned off (0 = disabled).
 		if ( ! $allow_disputes || $auto_dispute_days <= 0 ) {
@@ -774,15 +775,42 @@ class DisputeWorkflowManager {
 	}
 
 	/**
-	 * Restore order status after dispute cancellation.
+	 * Orders currently being handed back by cancel(), keyed by order ID.
+	 *
+	 * Read by OrderWorkflowManager::handle_order_completed(): an order that was
+	 * completed before the dispute already had its commission recorded and its
+	 * completion hooks fired, so restoring it to completed must not run them
+	 * again.
+	 *
+	 * @since 1.7.1
+	 * @var array<int, true>
+	 */
+	private static array $restoring = array();
+
+	/**
+	 * Whether this order is being restored from a cancelled dispute right now.
+	 *
+	 * @since 1.7.1
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public static function is_restoring_order( int $order_id ): bool {
+		return isset( self::$restoring[ $order_id ] );
+	}
+
+	/**
+	 * Restore the order to its pre-dispute status.
+	 *
+	 * Through OrderService::update_status() so the move is validated, logged
+	 * and announced like any other; disputed -> each disputable status is in
+	 * the natural map, so the opener can withdraw without admin rights.
 	 *
 	 * @param int $order_id Order ID.
-	 * @return void
+	 * @return bool True when the order is back on its pre-dispute status.
 	 */
-	private function restore_order_status( int $order_id ): void {
+	private function restore_order_status( int $order_id ): bool {
 		global $wpdb;
 
-		// Get order's previous status from meta if available.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$order = $wpdb->get_row(
 			$wpdb->prepare(
@@ -792,28 +820,24 @@ class DisputeWorkflowManager {
 		);
 
 		if ( ! $order ) {
-			return;
+			return false;
 		}
 
-			$meta            = $this->decode_json_array( $order->meta );
-			$previous_status = $meta['status_before_dispute'] ?? \WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS;
+		$meta            = $this->decode_json_array( $order->meta );
+		$previous_status = (string) ( $meta['status_before_dispute'] ?? '' );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update(
-			$wpdb->prefix . 'wpss_orders',
-			array(
-				'status'     => $previous_status,
-				'updated_at' => current_time( 'mysql' ),
-			),
-			array( 'id' => $order_id ),
-			array( '%s', '%s' ),
-			array( '%d' )
-		);
+		// Rows written by the pre-1.6 bug recorded `disputed` as the status to
+		// go back to; that would leave the order stuck, so treat it as unknown.
+		if ( '' === $previous_status || \WPSellServices\Models\ServiceOrder::STATUS_DISPUTED === $previous_status ) {
+			$previous_status = \WPSellServices\Models\ServiceOrder::STATUS_IN_PROGRESS;
+		}
 
-		// Fire status change hooks so notifications and workflows trigger.
-		if ( $result ) {
-			do_action( 'wpss_order_status_changed', $order_id, $previous_status, \WPSellServices\Models\ServiceOrder::STATUS_DISPUTED );
-			do_action( "wpss_order_status_{$previous_status}", $order_id, \WPSellServices\Models\ServiceOrder::STATUS_DISPUTED );
+		self::$restoring[ $order_id ] = true;
+
+		try {
+			return ( new OrderService() )->update_status( $order_id, $previous_status, __( 'Dispute closed; order restored.', 'wp-sell-services' ) );
+		} finally {
+			unset( self::$restoring[ $order_id ] );
 		}
 	}
 
@@ -842,19 +866,89 @@ class DisputeWorkflowManager {
 			$reason
 		);
 
-		if ( EmailService::is_type_enabled( 'dispute_admin' ) ) {
-			( new EmailService() )->send(
-				$admin_email,
-				$subject,
-				EmailService::TYPE_DISPUTE_ESCALATED,
+		( new EmailService() )->send(
+			$admin_email,
+			$subject,
+			EmailService::TYPE_DISPUTE_ESCALATED,
+			array(
+				'recipient'  => get_user_by( 'email', $admin_email ),
+				'dispute_id' => $dispute_id,
+				'order_id'   => $dispute->order_id,
+				'reason'     => $reason,
+			)
+		);
+	}
+
+	/**
+	 * Both parties learn a dispute went to the marketplace team.
+	 *
+	 * Bound to `wpss_dispute_escalated`. The admin mail is sent by
+	 * {@see self::notify_admins_of_escalation()} from escalate() itself.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int    $dispute_id   Dispute ID.
+	 * @param string $reason       Escalation reason.
+	 * @param int    $escalated_by User ID.
+	 * @return void
+	 */
+	public function on_dispute_escalated( int $dispute_id, string $reason, int $escalated_by ): void {
+		unset( $escalated_by );
+		foreach ( $this->dispute_parties( $dispute_id ) as $user_id ) {
+			$this->notification_service->send(
+				$user_id,
+				'dispute_escalated',
 				array(
-					'recipient'  => get_user_by( 'email', $admin_email ),
 					'dispute_id' => $dispute_id,
-					'order_id'   => $dispute->order_id,
+					'order_id'   => $this->dispute_service->get( $dispute_id )->order_id ?? 0,
 					'reason'     => $reason,
 				)
 			);
 		}
+	}
+
+	/**
+	 * The other party learns a dispute was withdrawn.
+	 *
+	 * Bound to `wpss_dispute_cancelled`.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int    $dispute_id Dispute ID.
+	 * @param int    $user_id    Who cancelled.
+	 * @param string $reason     Cancellation reason.
+	 * @return void
+	 */
+	public function on_dispute_cancelled( int $dispute_id, int $user_id, string $reason ): void {
+		$dispute = $this->dispute_service->get( $dispute_id );
+		foreach ( $this->dispute_parties( $dispute_id ) as $party ) {
+			if ( $party === $user_id ) {
+				continue;
+			}
+			$this->notification_service->send(
+				$party,
+				'dispute_cancelled',
+				array(
+					'dispute_id'   => $dispute_id,
+					'order_id'     => $dispute ? $dispute->order_id : 0,
+					'cancelled_by' => $user_id,
+					'reason'       => $reason,
+				)
+			);
+		}
+	}
+
+	/**
+	 * Buyer and vendor of a dispute's order.
+	 *
+	 * @param int $dispute_id Dispute ID.
+	 * @return int[] User IDs, empty when the dispute or order is gone.
+	 */
+	private function dispute_parties( int $dispute_id ): array {
+		$dispute = $this->dispute_service->get( $dispute_id );
+		$order   = $dispute ? wpss_get_order( (int) $dispute->order_id ) : null;
+
+		return $order ? array_filter( array( (int) $order->customer_id, (int) $order->vendor_id ) ) : array();
 	}
 
 	/**
@@ -913,22 +1007,22 @@ class DisputeWorkflowManager {
 				array( '%d' )
 			);
 
-			// Notify the other party.
-			$notify_user = (int) $opened_by === (int) $order->customer_id
-				? (int) $order->vendor_id
-				: (int) $order->customer_id;
-
-			$this->notification_service->send(
-				$notify_user,
-				'dispute_opened',
-				array(
-					'dispute_id'        => $dispute_id,
-					'order_id'          => $order_id,
-					'opened_by'         => $opened_by,
-					'reason'            => $data['reason'] ?? '',
-					'response_deadline' => $deadline,
-				)
-			);
+			// One row per party. The other party gets the deadline; the opener
+			// gets a confirmation. (notify_order_status() no longer writes its
+			// own "disputed" rows, which doubled these.)
+			foreach ( array( (int) $order->customer_id, (int) $order->vendor_id ) as $party ) {
+				$this->notification_service->send(
+					$party,
+					'dispute_opened',
+					array(
+						'dispute_id'        => $dispute_id,
+						'order_id'          => $order_id,
+						'opened_by'         => $opened_by,
+						'reason'            => $data['reason'] ?? '',
+						'response_deadline' => $party === (int) $opened_by ? '' : $deadline,
+					)
+				);
+			}
 		}
 	}
 
@@ -1053,8 +1147,7 @@ class DisputeWorkflowManager {
 
 		// Enrich with user data.
 		foreach ( $timeline as &$event ) {
-			$user                 = get_userdata( $event['user_id'] );
-			$event['user_name']   = $user ? $user->display_name : __( 'System', 'wp-sell-services' );
+			$event['user_name']   = $event['user_id'] ? wpss_get_member_display_name( (int) $event['user_id'] ) : __( 'System', 'wp-sell-services' );
 			$event['user_avatar'] = get_avatar_url( $event['user_id'], array( 'size' => 48 ) );
 		}
 

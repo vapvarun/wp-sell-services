@@ -270,7 +270,7 @@ function wpssShowNotice(msg, type) {
 								'<i data-lucide="check-circle-2" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>' +
 							'</div>' +
 							'<h3><?php echo esc_js( __( 'Request Updated!', 'wp-sell-services' ) ); ?></h3>' +
-							'<a href="?section=requests" class="wpss-btn wpss-btn--primary">' +
+							'<a href="<?php echo esc_url( wpss_get_dashboard_url( 'requests' ) ); ?>" class="wpss-btn wpss-btn--primary">' +
 								'<?php echo esc_js( __( 'View My Requests', 'wp-sell-services' ) ); ?>' +
 							'</a>' +
 						'</div>'

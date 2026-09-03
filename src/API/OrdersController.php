@@ -18,10 +18,10 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use WPSellServices\Models\ServiceOrder;
-use WPSellServices\CustomFields\FieldValidator;
 use WPSellServices\Services\ConversationService;
 use WPSellServices\Services\DeliveryService;
 use WPSellServices\Services\OrderService;
+use WPSellServices\Services\RequirementsService;
 
 /**
  * REST API controller for orders.
@@ -156,6 +156,25 @@ class OrdersController extends RestController {
 							'default'     => '',
 						),
 					),
+				),
+			)
+		);
+
+		// One order file, for clients that hold a token and no cookie.
+		//
+		// The admin-post link that wpss_get_order_file_url() builds authenticates
+		// from the session cookie, so an app sending Basic auth got 400 from it
+		// and deliverables[].url was false for every private record. This route
+		// runs the same wpss_can_read_order_files() gate and the same locate
+		// step, then streams the bytes (local) or returns a signed URL (bucket).
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/files/(?P<file_id>[A-Za-z0-9\-]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_file' ),
+					'permission_callback' => array( $this, 'check_file_permissions' ),
 				),
 			)
 		);
@@ -420,6 +439,25 @@ class OrdersController extends RestController {
 		$orders = ServiceOrder::query( $args );
 		$total  = ServiceOrder::count( $args );
 
+		// Everything prepare_item_for_response() reads per row, loaded once for
+		// the page: the two members (name, avatar), the service (title), the
+		// submitted requirements and the revision note. Measured at 152 queries
+		// for 36 rows before.
+		$member_ids  = array();
+		$service_ids = array();
+		$order_ids   = array();
+		foreach ( $orders as $order ) {
+			$member_ids[]  = (int) $order->vendor_id;
+			$member_ids[]  = (int) $order->customer_id;
+			$service_ids[] = (int) $order->service_id;
+			$order_ids[]   = (int) $order->id;
+		}
+		// Users, their meta, and the attachment behind a custom avatar.
+		wpss_prime_vendor_card_caches( $member_ids );
+		_prime_post_caches( array_values( array_unique( array_filter( $service_ids ) ) ), false, false );
+		wpss_prime_order_requirements( $order_ids );
+		ServiceOrder::prime_revision_reasons( $order_ids );
+
 		$data = array();
 		foreach ( $orders as $order ) {
 			$data[] = $this->prepare_item_for_response( $order, $request )->get_data();
@@ -659,13 +697,8 @@ class OrdersController extends RestController {
 			$file_data   = array();
 
 			if ( is_array( $attachments ) ) {
-				foreach ( $attachments as $attachment_id ) {
-					$file_data[] = array(
-						'id'   => $attachment_id,
-						'url'  => wp_get_attachment_url( $attachment_id ),
-						'name' => get_the_title( $attachment_id ),
-						'type' => get_post_mime_type( $attachment_id ),
-					);
+				foreach ( $attachments as $attachment ) {
+					$file_data[] = $this->prepare_file_for_response( $attachment, (int) $delivery->order_id );
 				}
 			}
 
@@ -679,6 +712,102 @@ class OrdersController extends RestController {
 				'response_message' => $delivery->response_message,
 				'responded_at'     => $delivery->responded_at,
 				'created_at'       => $delivery->created_at,
+			);
+		}
+
+		return new WP_REST_Response( $data );
+	}
+
+	/**
+	 * Shape one stored file for a payload.
+	 *
+	 * Since 1.7.0 an attachment is a record (id, name, type, size, path or
+	 * remote_path) rather than an attachment post id. This method treated every
+	 * entry as a post id, so a record came back with url false and a name of ''.
+	 * A record now points at GET /orders/{id}/files/{file}; a pre-1.7.0 integer
+	 * still resolves through the media library.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string,mixed>|int|string $attachment Stored entry.
+	 * @param int                            $order_id   Order the file belongs to.
+	 * @return array{id:string,url:string|null,name:string,type:string,size:int}
+	 */
+	private function prepare_file_for_response( $attachment, int $order_id ): array {
+		if ( ! is_array( $attachment ) ) {
+			$attachment_id = (int) $attachment;
+
+			return array(
+				'id'   => (string) $attachment_id,
+				'url'  => wp_get_attachment_url( $attachment_id ) ?: null,
+				'name' => get_the_title( $attachment_id ),
+				'type' => (string) get_post_mime_type( $attachment_id ),
+				'size' => 0,
+			);
+		}
+
+		$file_id = (string) ( $attachment['id'] ?? '' );
+
+		return array(
+			'id'   => $file_id,
+			'url'  => '' !== $file_id ? rest_url( sprintf( '%s/%s/%d/files/%s', $this->namespace, $this->rest_base, $order_id, rawurlencode( $file_id ) ) ) : null,
+			'name' => (string) ( $attachment['name'] ?? '' ),
+			'type' => (string) ( $attachment['type'] ?? '' ),
+			'size' => (int) ( $attachment['size'] ?? 0 ),
+		);
+	}
+
+	/**
+	 * GET /orders/{id}/files/{file_id}
+	 *
+	 * Over HTTP a locally stored file is streamed as the response body, with
+	 * Content-Disposition, in place of JSON. A file held in a bucket answers
+	 * JSON carrying a signed `url` good for `expires_in` seconds. In-process
+	 * callers (rest_do_request(), the batch route) always get the JSON.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_file( $request ) {
+		$order_id = (int) $request->get_param( 'id' );
+		$file_id  = sanitize_text_field( (string) $request->get_param( 'file_id' ) );
+
+		$located = wpss_locate_order_file( $order_id, $file_id );
+
+		if ( is_wp_error( $located ) ) {
+			return $located;
+		}
+
+		$record = $located['record'];
+		$data   = array(
+			'id'         => (string) ( $record['id'] ?? $file_id ),
+			'name'       => (string) ( $record['name'] ?? '' ),
+			'type'       => (string) ( $record['type'] ?? '' ),
+			'size'       => (int) ( $record['size'] ?? 0 ),
+			'url'        => $located['url'] ?? null,
+			'expires_in' => $located['expires_in'] ?? null,
+		);
+
+		if ( isset( $located['path'] ) ) {
+			$path = $located['path'];
+
+			add_filter(
+				'rest_pre_serve_request',
+				static function ( $served, $result, $served_request ) use ( $request, $record, $path ) {
+					// Only the request that located the file - never the outer
+					// request of a /batch that happened to include it.
+					if ( $served || $served_request !== $request ) {
+						return $served;
+					}
+
+					wpss_stream_order_file( $record, $path );
+
+					return true;
+				},
+				10,
+				3
 			);
 		}
 
@@ -967,8 +1096,6 @@ class OrdersController extends RestController {
 			case 'dispute':
 				if ( ! $is_customer && ! $is_vendor ) {
 					$error = __( 'Only order participants can open disputes.', 'wp-sell-services' );
-				} elseif ( ! in_array( $order->status, array( 'in_progress', 'pending_approval', 'revision_requested', 'delivered' ), true ) ) {
-					$error = __( 'Disputes can only be opened for active orders.', 'wp-sell-services' );
 				} elseif ( empty( $reason ) ) {
 					$error = __( 'Reason is required for disputes.', 'wp-sell-services' );
 				} else {
@@ -987,7 +1114,8 @@ class OrdersController extends RestController {
 						$result = true;
 						do_action( 'wpss_order_disputed', $order_id, $opened_by, $reason );
 					} else {
-						$error = __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' );
+						// Order-status and one-per-order guards live in open().
+						$error = $dispute_service->last_error() ?: __( 'Failed to open dispute.', 'wp-sell-services' );
 					}
 				}
 				break;
@@ -1036,9 +1164,7 @@ class OrdersController extends RestController {
 			);
 		}
 
-		// Get service requirements template.
-		$service_id   = $order->service_id;
-		$requirements = get_post_meta( $service_id, '_wpss_requirements', true ) ?: array();
+		$requirements = wpss_get_service_requirements( (int) $order->service_id );
 
 		// Get submitted requirements from database table.
 		global $wpdb;
@@ -1095,82 +1221,27 @@ class OrdersController extends RestController {
 			);
 		}
 
-		// Get requirements template.
-		$template = get_post_meta( $order->service_id, '_wpss_requirements', true ) ?: array();
+		// One validator, one writer: the same service the buyer form posts to.
+		// Answers are keyed by requirement id (see GET /requirements template).
+		$result = ( new RequirementsService() )->submit( $order_id, $requirements, array(), array_map( 'absint', $attachments ) );
 
-		// Validate using FieldValidator for type-aware validation.
-		$validator         = new FieldValidator();
-		$validation_result = $validator->validate_all( $template, $requirements );
-
-		if ( is_wp_error( $validation_result ) ) {
+		if ( empty( $result['success'] ) ) {
 			return new WP_Error(
 				'rest_validation_failed',
-				implode( ' ', $validation_result->get_error_messages() ),
-				array( 'status' => 400 )
-			);
-		}
-
-		// Sanitize requirements using type-aware sanitization.
-		$sanitized_requirements = $validator->sanitize_all( $template, $requirements );
-
-		// Save sanitized requirements to database table.
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_order_requirements';
-
-		// Check if requirements already exist for this order.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$existing = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT id FROM {$table} WHERE order_id = %d LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
-				$order_id
-			)
-		);
-
-		$now = current_time( 'mysql' );
-
-		if ( $existing ) {
-			// Update existing requirements.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update(
-				$table,
+				trim( $result['message'] . ' ' . implode( ' ', (array) ( $result['errors'] ?? array() ) ) ),
 				array(
-					'field_data'   => wp_json_encode( $sanitized_requirements ),
-					'attachments'  => wp_json_encode( array_map( 'absint', $attachments ) ),
-					'submitted_at' => $now,
-				),
-				array( 'id' => $existing ),
-				array( '%s', '%s', '%s' ),
-				array( '%d' )
-			);
-		} else {
-			// Insert new requirements.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$wpdb->insert(
-				$table,
-				array(
-					'order_id'     => $order_id,
-					'field_data'   => wp_json_encode( $sanitized_requirements ),
-					'attachments'  => wp_json_encode( array_map( 'absint', $attachments ) ),
-					'submitted_at' => $now,
-				),
-				array( '%d', '%s', '%s', '%s' )
+					'status' => 400,
+					'errors' => $result['errors'] ?? array(),
+				)
 			);
 		}
-
-		// Update order status if pending or awaiting requirements.
-		if ( in_array( $order->status, array( 'pending', 'accepted', 'pending_requirements' ), true ) ) {
-			$req_order_service = new OrderService();
-			$req_order_service->update_status( $order_id, ServiceOrder::STATUS_REQUIREMENTS_SUBMITTED );
-		}
-
-		do_action( 'wpss_order_requirements_submitted', $order_id, $sanitized_requirements );
 
 		return new WP_REST_Response(
 			array(
 				'success'      => true,
-				'message'      => __( 'Requirements submitted successfully.', 'wp-sell-services' ),
-				'submitted'    => $sanitized_requirements,
-				'submitted_at' => $now,
+				'message'      => $result['message'],
+				'submitted'    => $result['submitted'],
+				'submitted_at' => current_time( 'mysql' ),
 			)
 		);
 	}
@@ -1422,7 +1493,10 @@ class OrdersController extends RestController {
 					'status'      => (string) $receipt->status,
 					'note'        => (string) ( $receipt->note ?? '' ),
 					'admin_note'  => (string) ( $receipt->admin_note ?? '' ),
-					'file_url'    => $receipt->attachment_id ? wp_get_attachment_url( (int) $receipt->attachment_id ) : '',
+					// The permission-checked endpoint, never the uploads path:
+					// a receipt is the buyer's bank detail, not public media
+					// (Basecamp 10267994010).
+					'file_url'    => wpss_get_receipt_file( $receipt )['url'],
 					'uploaded_by' => (int) $receipt->uploaded_by,
 					'created_at'  => (string) $receipt->created_at,
 					'verified_at' => $receipt->verified_at ? (string) $receipt->verified_at : null,
@@ -1538,7 +1612,7 @@ class OrdersController extends RestController {
 			}
 		}
 
-		$checkout_url = wpss_get_pay_order_url( $order_id );
+		$checkout_url = wpss_ensure_pay_order( $order_id );
 
 		return new WP_REST_Response(
 			array(
@@ -1592,6 +1666,35 @@ class OrdersController extends RestController {
 		}
 
 		if ( ! $this->user_owns_resource( $order_id, 'order' ) ) {
+			return new WP_Error(
+				'wpss_not_owner',
+				__( 'You do not have permission to access this order.', 'wp-sell-services' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * May the caller read this order's files?
+	 *
+	 * The ONE rule for order files - wpss_can_read_order_files(), which the
+	 * admin-post link also runs - so a change there applies to app clients too.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool|WP_Error
+	 */
+	public function check_file_permissions( WP_REST_Request $request ) {
+		$permission = $this->check_permissions( $request );
+
+		if ( is_wp_error( $permission ) ) {
+			return $permission;
+		}
+
+		if ( ! wpss_can_read_order_files( (int) $request->get_param( 'id' ) ) ) {
 			return new WP_Error(
 				'wpss_not_owner',
 				__( 'You do not have permission to access this order.', 'wp-sell-services' ),
@@ -1767,11 +1870,8 @@ class OrdersController extends RestController {
 			return null;
 		}
 
-		if ( ! function_exists( 'wpss_get_pay_order_url' ) ) {
-			return null;
-		}
-
-		return wpss_get_pay_order_url( (int) $order->id );
+		// Pass the row we already hold: a read, once per listed order.
+		return wpss_get_pay_order_url( (int) $order->id, $order );
 	}
 
 	/**
@@ -1831,6 +1931,7 @@ class OrdersController extends RestController {
 			'revisions_included'  => (int) ( $order->revisions_included ?? 0 ),
 			'revisions_used'      => (int) ( $order->revisions_used ?? 0 ),
 			'revisions_remaining' => max( 0, (int) ( $order->revisions_included ?? 0 ) - (int) ( $order->revisions_used ?? 0 ) ),
+			'revision_reason'     => $order->get_revision_reason(),
 			// The package the buyer actually bought, frozen onto the order in
 			// 1.6.0. Read from the snapshot, NOT from the service -- the service
 			// may have been edited or re-priced since, and what the buyer paid

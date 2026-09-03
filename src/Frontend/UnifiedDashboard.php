@@ -27,6 +27,16 @@ defined( 'ABSPATH' ) || exit;
 class UnifiedDashboard {
 
 	/**
+	 * Sections only an active vendor may open.
+	 *
+	 * One list. It used to be copied into three methods, which is how a new
+	 * selling section could be gated in one place and left open in another.
+	 *
+	 * @var string[]
+	 */
+	private const VENDOR_SECTIONS = array( 'services', 'sales', 'proposals', 'reviews', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
+
+	/**
 	 * Vendor service instance.
 	 *
 	 * @var VendorService
@@ -155,7 +165,6 @@ class UnifiedDashboard {
 					'walletColType'          => __( 'Type', 'wp-sell-services' ),
 					'walletColDescription'   => __( 'Description', 'wp-sell-services' ),
 					'walletColAmount'        => __( 'Amount', 'wp-sell-services' ),
-					'walletColBalance'       => __( 'Balance', 'wp-sell-services' ),
 					'walletEmpty'            => __( 'No wallet transactions yet.', 'wp-sell-services' ),
 					'walletLoadFailed'       => __( 'Could not load transactions. Please try again.', 'wp-sell-services' ),
 					'walletTypeUnknown'      => __( 'Other', 'wp-sell-services' ),
@@ -201,6 +210,9 @@ class UnifiedDashboard {
 					'selectPortfolioImages'  => __( 'Select Portfolio Images', 'wp-sell-services' ),
 					'addToPortfolio'         => __( 'Add to Portfolio', 'wp-sell-services' ),
 					'remove'                 => __( 'Remove', 'wp-sell-services' ),
+					'reviewReplySent'        => __( 'Your reply has been posted.', 'wp-sell-services' ),
+					'reviewReplyFailed'      => __( 'Could not post your reply. Please try again.', 'wp-sell-services' ),
+					'sellerResponse'         => __( 'Seller Response:', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -406,7 +418,7 @@ class UnifiedDashboard {
 	 * @return bool True if accessible.
 	 */
 	private function can_access_section( string $section ): bool {
-		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
+		$vendor_only_sections = self::VENDOR_SECTIONS;
 		$user_id              = get_current_user_id();
 
 		// A vendor-only section requires an active (approved) vendor — pending
@@ -477,6 +489,14 @@ class UnifiedDashboard {
 					'sales'     => array(
 						'icon'  => 'receipt',
 						'label' => __( 'Sales Orders', 'wp-sell-services' ),
+					),
+					'proposals' => array(
+						'icon'  => 'send',
+						'label' => __( 'Proposals', 'wp-sell-services' ),
+					),
+					'reviews'   => array(
+						'icon'  => 'star',
+						'label' => __( 'Reviews', 'wp-sell-services' ),
 					),
 					'earnings'  => array(
 						'icon'  => 'wallet',
@@ -581,6 +601,18 @@ class UnifiedDashboard {
 			<div class="wpss-app-shell__container">
 				<div class="wpss-dashboard">
 					<aside class="wpss-dashboard__sidebar">
+				<?php
+				// Under 480px the sidebar collapses to this bar (see the CSS), so
+				// the section content is the first thing on screen; the toggle
+				// reveals the nav below it. Hidden on wider viewports.
+				?>
+				<div class="wpss-dashboard__nav-bar">
+					<span class="wpss-dashboard__nav-bar-title"><?php echo esc_html( $section_data['title'] ); ?></span>
+					<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-dashboard__nav-toggle" aria-expanded="false" aria-controls="wpss-dashboard-nav">
+						<?php $this->render_icon( 'menu' ); ?>
+						<span><?php esc_html_e( 'Menu', 'wp-sell-services' ); ?></span>
+					</button>
+				</div>
 				<div class="wpss-dashboard__user">
 					<?php echo get_avatar( $user_id, 48, '', '', array( 'class' => 'wpss-dashboard__avatar' ) ); ?>
 					<div class="wpss-dashboard__user-info">
@@ -593,7 +625,7 @@ class UnifiedDashboard {
 					</div>
 				</div>
 
-				<nav class="wpss-dashboard__nav">
+				<nav id="wpss-dashboard-nav" class="wpss-dashboard__nav">
 					<?php
 					foreach ( $this->sections as $group_key => $group ) :
 						// Drop items the current user's role cannot access (vendor-only
@@ -652,8 +684,7 @@ class UnifiedDashboard {
 					</div>
 					<?php
 				elseif ( ! $is_vendor && ! $is_pending ) :
-					$sb_vendor_settings   = get_option( 'wpss_vendor', array() );
-					$sb_registration_mode = $sb_vendor_settings['vendor_registration'] ?? 'open';
+					$sb_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 					if ( 'closed' !== $sb_registration_mode ) :
 						?>
 					<div class="wpss-dashboard__become-vendor">
@@ -785,6 +816,8 @@ class UnifiedDashboard {
 			'requests'       => __( 'Buyer Requests', 'wp-sell-services' ),
 			'services'       => __( 'My Services', 'wp-sell-services' ),
 			'sales'          => __( 'Sales Orders', 'wp-sell-services' ),
+			'proposals'      => __( 'Proposals', 'wp-sell-services' ),
+			'reviews'        => __( 'Reviews', 'wp-sell-services' ),
 			'earnings'       => __( 'Earnings & Payouts', 'wp-sell-services' ),
 			'wallet'         => __( 'Earnings & Payouts', 'wp-sell-services' ),
 			'analytics'      => __( 'Analytics', 'wp-sell-services' ),
@@ -867,7 +900,7 @@ class UnifiedDashboard {
 		$is_vendor      = $vendor_service->is_vendor( $user_id );
 
 		// Check access: vendor-only sections require vendor status.
-		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
+		$vendor_only_sections = self::VENDOR_SECTIONS;
 		if ( ! $is_vendor && in_array( $section, $vendor_only_sections, true ) ) {
 			$this->render_section_fallback( $section );
 			return;
@@ -904,12 +937,11 @@ class UnifiedDashboard {
 		$is_vendor = $this->vendor_service->is_vendor( $user_id );
 
 		// Check if vendor registration is open.
-		$fb_vendor_settings   = get_option( 'wpss_vendor', array() );
-		$fb_registration_mode = $fb_vendor_settings['vendor_registration'] ?? 'open';
+		$fb_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 		$registration_is_open = 'closed' !== $fb_registration_mode;
 
 		// Vendor-only sections: show a CTA to become a vendor.
-		$vendor_only_sections = array( 'services', 'sales', 'earnings', 'wallet', 'analytics', 'portfolio', 'create' );
+		$vendor_only_sections = self::VENDOR_SECTIONS;
 
 		if ( 'become-vendor' === $section && ! $is_vendor && $registration_is_open ) {
 			// The become-vendor section should show the vendor onboarding prompt, not an error.
@@ -1065,8 +1097,7 @@ class UnifiedDashboard {
 		}
 
 		// Reject if vendor registration is closed.
-		$ajax_vendor_settings   = get_option( 'wpss_vendor', array() );
-		$ajax_registration_mode = $ajax_vendor_settings['vendor_registration'] ?? 'open';
+		$ajax_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 		if ( 'closed' === $ajax_registration_mode ) {
 			wp_send_json_error( array( 'message' => __( 'Vendor registration is currently closed.', 'wp-sell-services' ) ) );
 		}
@@ -1086,8 +1117,7 @@ class UnifiedDashboard {
 
 		if ( $result ) {
 			// Check if approval is required (vendor will be in pending state).
-			$vendor_settings   = get_option( 'wpss_vendor', array() );
-			$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+			$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
 			if ( 'approval' === $registration_mode ) {
 				wp_send_json_success(

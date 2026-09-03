@@ -14,23 +14,6 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Get a plugin option value.
- *
- * Retrieves a setting from one of the plugin's option groups.
- *
- * @param string $group   Option group name (e.g., 'general', 'vendors', 'orders').
- * @param string $key     Option key within the group.
- * @param mixed  $default Default value if option doesn't exist.
- * @return mixed
- */
-function wpss_get_option( string $group, string $key, $default = null ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound -- Public documented helper; renaming breaks `default:` named-argument callers.
-	$option_name = 'wpss_' . $group;
-	$options     = get_option( $option_name, array() );
-
-	return $options[ $key ] ?? $default;
-}
-
-/**
  * Get the platform name.
  *
  * @since 1.1.0
@@ -38,9 +21,7 @@ function wpss_get_option( string $group, string $key, $default = null ) { // php
  * @return string Platform name or site name as fallback.
  */
 function wpss_get_platform_name(): string {
-	// Read from wpss_general settings array.
-	$general_settings = get_option( 'wpss_general', array() );
-	$platform_name    = $general_settings['platform_name'] ?? '';
+	$platform_name = (string) wpss_get_option( 'general', 'platform_name' );
 
 	// Fall back to site name if empty.
 	if ( empty( $platform_name ) ) {
@@ -109,8 +90,7 @@ function wpss_sanitize_html( string $content ): string {
  * @return void
  */
 function wpss_log( $message, string $level = 'info' ): void {
-	$advanced_settings = get_option( 'wpss_advanced', array() );
-	$plugin_debug      = ! empty( $advanced_settings['enable_debug_mode'] );
+	$plugin_debug = (bool) wpss_get_option( 'advanced', 'enable_debug_mode' );
 
 	if ( ! $plugin_debug && ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) ) {
 		return;
@@ -225,20 +205,28 @@ function wpss_get_user_notifications( int $user_id, array $args = array() ): arr
 }
 
 /**
- * Validate + upload conversation message file attachments.
+ * Validate + store conversation message file attachments.
  *
- * Single source of truth for message attachment handling. Used by both the
- * REST ConversationsController::send_message and the legacy admin-ajax
- * AjaxHandlers::send_message so the allow-list, MIME re-check, size cap, and
- * upload behaviour are identical across transports.
+ * Single source of truth for message, contact and dispute-reply attachments,
+ * used by REST and admin-ajax alike so the limits and the storage are the
+ * same on every transport.
+ *
+ * With an order id the file goes through wpss_store_order_file() - outside
+ * the web root, behind the order read gate, no URL stored - because a
+ * message on an order carries the same briefs and proofs a requirement does
+ * (Basecamp 10264291163). Without one (a pre-sale contact) there is no
+ * order to gate on, so it stays a media-library attachment marked private.
  *
  * @since 1.2.0
+ * @since 1.7.1 Order-scoped files use the private order store; limits come from settings.
  *
- * @param array<string, mixed> $files A single $_FILES['attachments'] entry (PHP's grouped
- *                     multi-file shape: name[], type[], tmp_name[], etc.).
- * @return array{attachments: array<int, array{id:int,url:string,name:string,type:string}>, skipped: array<int,string>}
+ * @param array<string, mixed> $files    A single $_FILES['attachments'] entry (PHP's grouped
+ *                                       multi-file shape: name[], type[], tmp_name[], etc.).
+ * @param int                  $order_id Order the conversation belongs to, 0 for none.
+ * @param string               $kind     message|contact|dispute|receipt - grouping only.
+ * @return array{attachments: array<int, array<string,mixed>>, skipped: array<int,string>}
  */
-function wpss_handle_message_attachments( array $files ): array {
+function wpss_handle_message_attachments( array $files, int $order_id = 0, string $kind = 'message' ): array {
 	$attachments = array();
 	$skipped     = array();
 
@@ -252,20 +240,6 @@ function wpss_handle_message_attachments( array $files ): array {
 	require_once ABSPATH . 'wp-admin/includes/file.php';
 	require_once ABSPATH . 'wp-admin/includes/image.php';
 	require_once ABSPATH . 'wp-admin/includes/media.php';
-
-	$allowed_types = array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'zip', 'txt' );
-	$allowed_mimes = array(
-		'image/jpeg',
-		'image/png',
-		'image/gif',
-		'image/webp',
-		'application/pdf',
-		'application/msword',
-		'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-		'application/zip',
-		'text/plain',
-	);
-	$max_size      = 10 * 1024 * 1024; // 10MB per file.
 
 	$file_count = count( $files['name'] );
 	for ( $i = 0; $i < $file_count; $i++ ) {
@@ -282,34 +256,36 @@ function wpss_handle_message_attachments( array $files ): array {
 		);
 
 		$file_name = sanitize_file_name( $file['name'] );
+		$refused   = wpss_check_upload( $file );
 
-		$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
-		if ( ! in_array( $ext, $allowed_types, true ) ) {
-			$skipped[] = $file_name . ': ' . __( 'unsupported file type', 'wp-sell-services' );
+		if ( $refused ) {
+			$skipped[] = $file_name . ': ' . $refused->get_error_message();
 			continue;
 		}
 
-		$file_info = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
-		$mime_type = $file_info['type'] ?? '';
-		if ( ! in_array( $mime_type, $allowed_mimes, true ) ) {
-			$skipped[] = $file_name . ': ' . __( 'invalid MIME type', 'wp-sell-services' );
+		if ( $order_id > 0 ) {
+			$record = wpss_store_order_file( $file, $order_id, $kind );
+
+			if ( $record ) {
+				$attachments[] = $record;
+			} else {
+				$skipped[] = $file_name . ': ' . __( 'upload failed', 'wp-sell-services' );
+			}
 			continue;
 		}
 
-		if ( $file['size'] > $max_size ) {
-			$skipped[] = $file_name . ': ' . __( 'file too large (max 10MB)', 'wp-sell-services' );
-			continue;
-		}
-
+		// ponytail: pre-sale contact files stay in the media library; the URL is
+		// unlisted, not gated. Move them behind a conversation read gate if
+		// pre-sale inquiries start carrying sensitive documents.
 		$_FILES['upload_file'] = $file;
-		$attachment_id         = media_handle_upload( 'upload_file', 0 );
+		$attachment_id         = media_handle_upload( 'upload_file', 0, array( 'post_status' => 'private' ) );
 
 		if ( ! is_wp_error( $attachment_id ) ) {
 			$attachments[] = array(
 				'id'   => $attachment_id,
 				'url'  => wp_get_attachment_url( $attachment_id ),
 				'name' => $files['name'][ $i ],
-				'type' => $mime_type, // Server-verified MIME, not client-provided.
+				'type' => (string) get_post_mime_type( $attachment_id ), // Server-verified MIME, not client-provided.
 			);
 		} else {
 			$skipped[] = $file_name . ': ' . $attachment_id->get_error_message();
@@ -320,6 +296,99 @@ function wpss_handle_message_attachments( array $files ): array {
 		'attachments' => $attachments,
 		'skipped'     => $skipped,
 	);
+}
+
+/**
+ * Encrypt a secret for storage at rest.
+ *
+ * AES-256-CBC under a key derived from the site's secure-auth salt, a fresh
+ * IV per value, base64, and an `enc:` prefix so wpss_decrypt_secret() can
+ * tell an encrypted value from a row written before 1.7.1.
+ *
+ * Rotating the salt makes existing values unreadable; that is the trade-off
+ * of keying on the salt instead of shipping a second secret to manage.
+ *
+ * @since 1.7.1
+ *
+ * @param string $plain Value to protect.
+ * @return string Encrypted value, or the input unchanged when OpenSSL is unavailable.
+ */
+function wpss_encrypt_secret( string $plain ): string {
+	if ( '' === $plain || ! function_exists( 'openssl_encrypt' ) ) {
+		return $plain;
+	}
+
+	$iv     = random_bytes( 16 );
+	$cipher = openssl_encrypt( $plain, 'aes-256-cbc', wpss_secret_key(), OPENSSL_RAW_DATA, $iv );
+
+	return false === $cipher ? $plain : 'enc:' . base64_encode( $iv . $cipher ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- binary-safe transport, not obfuscation.
+}
+
+/**
+ * Decrypt a value written by wpss_encrypt_secret().
+ *
+ * Anything without the `enc:` prefix is returned as-is, so legacy plaintext
+ * rows keep reading until the upgrade routine rewrites them.
+ *
+ * @since 1.7.1
+ *
+ * @param string $stored Stored value.
+ * @return string Plaintext, or '' when the value cannot be decrypted.
+ */
+function wpss_decrypt_secret( string $stored ): string {
+	if ( 0 !== strpos( $stored, 'enc:' ) ) {
+		return $stored;
+	}
+
+	$raw = base64_decode( substr( $stored, 4 ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- see wpss_encrypt_secret().
+
+	if ( false === $raw || strlen( $raw ) <= 16 || ! function_exists( 'openssl_decrypt' ) ) {
+		return '';
+	}
+
+	$plain = openssl_decrypt( substr( $raw, 16 ), 'aes-256-cbc', wpss_secret_key(), OPENSSL_RAW_DATA, substr( $raw, 0, 16 ) );
+
+	return false === $plain ? '' : $plain;
+}
+
+/**
+ * 32-byte key for wpss_encrypt_secret(), derived from the secure-auth salt.
+ *
+ * @since 1.7.1
+ *
+ * @return string Raw key bytes.
+ */
+function wpss_secret_key(): string {
+	return hash( 'sha256', wp_salt( 'secure_auth' ), true );
+}
+
+/**
+ * Encrypt every withdrawal `details` row still stored in plaintext.
+ *
+ * Runs once from the upgrade routine. Idempotent: rows already carrying the
+ * `enc:` prefix are not selected.
+ *
+ * @since 1.7.1
+ *
+ * @return int Rows rewritten.
+ */
+function wpss_encrypt_legacy_withdrawal_details(): int {
+	global $wpdb;
+
+	$table = $wpdb->prefix . 'wpss_withdrawals';
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$rows = $wpdb->get_results( "SELECT id, details FROM {$table} WHERE details IS NOT NULL AND details <> '' AND details NOT LIKE 'enc:%'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+
+	$done = 0;
+
+	foreach ( (array) $rows as $row ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$ok = $wpdb->update( $table, array( 'details' => wpss_encrypt_secret( (string) $row->details ) ), array( 'id' => (int) $row->id ) );
+
+		$done += false === $ok ? 0 : 1;
+	}
+
+	return $done;
 }
 
 /**
@@ -590,6 +659,133 @@ function wpss_password_is_app_token( \WP_User $user, string $password ): bool {
 	}
 
 	return false;
+}
+
+/**
+ * The transient key a sign-in attempt counts against.
+ *
+ * Resolved to the account, not to what was typed, so "sofia" and
+ * "sofia@example.com" share one budget. Hashed, so the failed logins people
+ * try - which are often somebody's real password typed in the wrong box - are
+ * never written to the options table in the clear.
+ *
+ * An unknown login is hashed and counted exactly like a known one. Skipping
+ * unknown logins would be cheaper, but then the sixth attempt answers
+ * "locked" for a real account and "invalid" for one that does not exist,
+ * which turns the lockout into an account-enumeration oracle. Counting is the
+ * safer of the two; the cost is bounded by the 15-minute expiry.
+ *
+ * @since 1.7.1
+ *
+ * @param string $login Login or email address as submitted.
+ * @return string
+ */
+function wpss_login_lock_key( string $login ): string {
+	$login = trim( $login );
+	$user  = get_user_by( 'login', $login ) ?: get_user_by( 'email', $login );
+
+	return md5( strtolower( $user instanceof \WP_User ? $user->user_login : $login ) );
+}
+
+/**
+ * Whether an account is currently locked out of signing in.
+ *
+ * Impure by nature: it reads a transient that a failed sign-in between two
+ * calls will have changed, which is exactly how the REST route asks again
+ * after wp_authenticate().
+ *
+ * @since 1.7.1
+ *
+ * @phpstan-impure
+ *
+ * @param string $login Login or email address as submitted.
+ * @return bool
+ */
+function wpss_login_is_locked( string $login ): bool {
+	if ( '' === trim( $login ) ) {
+		return false;
+	}
+
+	return (bool) get_transient( 'wpss_login_lock_' . wpss_login_lock_key( $login ) );
+}
+
+/**
+ * Count one wrong password against an account.
+ *
+ * @since 1.7.1
+ *
+ * @param string $login Login or email address as submitted.
+ * @return bool Whether the account is locked as of this failure.
+ */
+function wpss_login_record_failure( string $login ): bool {
+	if ( '' === trim( $login ) ) {
+		return false;
+	}
+
+	$key = wpss_login_lock_key( $login );
+
+	/*
+	 * An already-locked account is not counted again.
+	 *
+	 * Refusing a locked sign-in fires wp_login_failed a second time, and
+	 * counting that would push the expiry out on every attempt - an attacker
+	 * could hold an administrator out of their own site indefinitely by
+	 * knocking on the door. The 15 minutes always runs down.
+	 */
+	if ( get_transient( 'wpss_login_lock_' . $key ) ) {
+		return true;
+	}
+
+	$fails = (int) get_transient( 'wpss_login_fails_' . $key ) + 1;
+
+	if ( $fails >= 5 ) {
+		set_transient( 'wpss_login_lock_' . $key, time(), 15 * MINUTE_IN_SECONDS );
+		delete_transient( 'wpss_login_fails_' . $key );
+
+		return true;
+	}
+
+	set_transient( 'wpss_login_fails_' . $key, $fails, 15 * MINUTE_IN_SECONDS );
+
+	return false;
+}
+
+/**
+ * Forget an account's failures and any lock on it.
+ *
+ * @since 1.7.1
+ *
+ * @param string $login Login or email address as submitted.
+ * @return void
+ */
+function wpss_login_clear_failures( string $login ): void {
+	if ( '' === trim( $login ) ) {
+		return;
+	}
+
+	$key = wpss_login_lock_key( $login );
+
+	delete_transient( 'wpss_login_lock_' . $key );
+	delete_transient( 'wpss_login_fails_' . $key );
+}
+
+/**
+ * The error a locked account answers with, on the website and over REST.
+ *
+ * 423 Locked rather than 429: the client did nothing too fast, the account is
+ * refusing sign-ins for a while, and the client should say so rather than back
+ * off and retry. wp-login.php ignores the status and prints the message.
+ *
+ * @since 1.7.1
+ *
+ * @return \WP_Error
+ */
+function wpss_login_lock_error(): \WP_Error {
+	return new \WP_Error(
+		'wpss_account_locked',
+		__( 'Too many failed sign-ins. This account is locked for 15 minutes.', 'wp-sell-services' ),
+		array( 'status' => 423 )
+	);
 }
 
 /**

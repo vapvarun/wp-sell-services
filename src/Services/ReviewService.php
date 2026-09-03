@@ -103,7 +103,10 @@ class ReviewService {
 		$review_id = (int) $wpdb->insert_id;
 
 		if ( ! $review_id ) {
-			return null;
+			// UNIQUE (order_id, review_type) since 1.7.1: a double submit that
+			// slipped past has_review() is refused by the database, and the
+			// review the buyer wanted already exists.
+			return false !== stripos( (string) $wpdb->last_error, 'Duplicate entry' ) ? $this->get_by_order( $order_id ) : null;
 		}
 
 		// Update service and vendor ratings.
@@ -123,6 +126,61 @@ class ReviewService {
 		do_action( 'wpss_review_created', $review_id, $order_id );
 
 		return $this->get( $review_id );
+	}
+
+	/**
+	 * Moderate a review. The one writer of reviews.status for admin decisions.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int    $review_id  Review ID.
+	 * @param string $new_status Review::STATUS_APPROVED or Review::STATUS_REJECTED.
+	 * @return bool True when the row was updated.
+	 */
+	public function moderate( int $review_id, string $new_status ): bool {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_reviews';
+
+		if ( ! in_array( $new_status, array( Review::STATUS_APPROVED, Review::STATUS_REJECTED ), true ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$old = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$table} WHERE id = %d", $review_id ) );
+
+		if ( null === $old ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$updated = $wpdb->update( $table, array( 'status' => $new_status ), array( 'id' => $review_id ), array( '%s' ), array( '%d' ) );
+
+		if ( false === $updated ) {
+			return false;
+		}
+
+		( new AuditLogService() )->log(
+			'review.' . $new_status,
+			'review',
+			$review_id,
+			array(
+				'action'     => Review::STATUS_APPROVED === $new_status ? 'approve' : 'reject',
+				'from_value' => (string) $old,
+				'to_value'   => $new_status,
+			)
+		);
+
+		/**
+		 * Fires after an admin moderates a review from the queue.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param int    $review_id  Moderated review ID.
+		 * @param string $new_status New review status.
+		 */
+		do_action( 'wpss_review_moderated', $review_id, $new_status );
+
+		return true;
 	}
 
 	/**
@@ -261,6 +319,25 @@ class ReviewService {
 	}
 
 	/**
+	 * Count a vendor's reviews, for the dashboard paginator.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int    $vendor_id Vendor user ID.
+	 * @param string $status    Review status to count.
+	 * @return int
+	 */
+	public function count_vendor_reviews( int $vendor_id, string $status = Review::STATUS_APPROVED ): int {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_reviews';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND status = %s", $vendor_id, $status )
+		);
+	}
+
+	/**
 	 * Add vendor response to review.
 	 *
 	 * @param int    $review_id Review ID.
@@ -366,9 +443,7 @@ class ReviewService {
 		// Stored in the wpss_vendor settings array beside the service
 		// moderation toggle - the old standalone wpss_moderate_reviews
 		// option never had a writer (Basecamp #9985174862).
-		$vendor_settings = get_option( 'wpss_vendor', array() );
-
-		return ! empty( $vendor_settings['moderate_reviews'] );
+		return (bool) wpss_get_option( 'vendor', 'moderate_reviews' );
 	}
 
 	/**
@@ -419,8 +494,7 @@ class ReviewService {
 	 * @return int Number of days. 0 = unlimited.
 	 */
 	public function get_review_window_days(): int {
-		$settings = get_option( 'wpss_orders', array() );
-		$days     = (int) ( $settings['review_window_days'] ?? 30 );
+		$days = (int) wpss_get_option( 'orders', 'review_window_days' );
 
 		/**
 		 * Filter the review time window in days.

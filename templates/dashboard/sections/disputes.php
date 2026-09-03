@@ -17,6 +17,7 @@
 use WPSellServices\Models\Dispute;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\DisputeWorkflowManager;
+use WPSellServices\Services\OrderWorkflowManager;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -79,6 +80,76 @@ if ( $view_dispute_id ) {
 			</span>
 		</div>
 
+		<?php
+		// The outcome. Both parties used to see only the "Resolved" badge -
+		// no ruling, no amount, no note - and had to ask support what happened
+		// to the money (Basecamp 10264294123). The row already carries all of
+		// it since F7 made DisputeService the state machine.
+		$wpss_is_vendor_party = (int) $dispute_order->vendor_id === $user_id;
+		$wpss_resolution      = (string) ( $dispute->resolution_type ?? '' );
+		$wpss_refund          = (float) ( $dispute->refund_amount ?? 0 );
+		$wpss_currency        = (string) ( $dispute_order->currency ?? '' );
+		if ( in_array( $wpss_resolution, array( DisputeService::RESOLUTION_REFUND, DisputeService::RESOLUTION_FAVOR_BUYER ), true ) ) {
+			$wpss_refund = (float) $dispute_order->total;
+		}
+		// An offline payment cannot be refunded by the gateway: the ruling parks
+		// the amount on the order for the site owner to send by hand, and until
+		// they clear it the buyer must not read that the money already arrived.
+		$wpss_refund_pending = $wpss_refund > 0 && (float) wpss_get_order_provider()->get_item_meta( (int) $dispute_order->id, OrderWorkflowManager::REFUND_PENDING_META ) > 0;
+		$wpss_outcome_copy   = '';
+		if ( 'resolved' === $status_key ) {
+			if ( $wpss_refund > 0 && $wpss_refund < (float) $dispute_order->total ) {
+				if ( $wpss_is_vendor_party ) {
+					/* translators: %s: refunded amount */
+					$wpss_outcome_copy = sprintf( __( '%s was refunded to the buyer. The rest of the order amount stays in your earnings.', 'wp-sell-services' ), wpss_format_price( $wpss_refund, $wpss_currency ) );
+				} elseif ( $wpss_refund_pending ) {
+					/* translators: %s: refunded amount */
+					$wpss_outcome_copy = sprintf( __( '%s is being refunded to you. The refund is sent manually, outside the site, and is on its way.', 'wp-sell-services' ), wpss_format_price( $wpss_refund, $wpss_currency ) );
+				} else {
+					/* translators: %s: refunded amount */
+					$wpss_outcome_copy = sprintf( __( '%s was refunded to you.', 'wp-sell-services' ), wpss_format_price( $wpss_refund, $wpss_currency ) );
+				}
+			} elseif ( $wpss_refund > 0 ) {
+				if ( $wpss_is_vendor_party ) {
+					$wpss_outcome_copy = __( 'The full order amount was refunded to the buyer. No earnings were released for this order.', 'wp-sell-services' );
+				} elseif ( $wpss_refund_pending ) {
+					$wpss_outcome_copy = __( 'The full order amount is being refunded to you. The refund is sent manually, outside the site, and is on its way.', 'wp-sell-services' );
+				} else {
+					$wpss_outcome_copy = __( 'The full order amount was refunded to you.', 'wp-sell-services' );
+				}
+			} else {
+				$wpss_outcome_copy = $wpss_is_vendor_party
+					? __( 'The order was marked completed and your earnings were released as usual.', 'wp-sell-services' )
+					: __( 'The order was marked completed. No refund was issued.', 'wp-sell-services' );
+			}
+		} elseif ( 'closed' === $status_key ) {
+			$wpss_outcome_copy = __( 'This dispute was closed without a ruling and the order went back to where it was.', 'wp-sell-services' );
+		}
+		?>
+		<?php if ( '' !== $wpss_outcome_copy ) : ?>
+			<div class="wpss-dispute-detail__reason wpss-dispute-detail__outcome">
+				<h3><?php esc_html_e( 'Outcome', 'wp-sell-services' ); ?></h3>
+				<?php if ( '' !== $wpss_resolution ) : ?>
+					<p class="wpss-dispute-detail__reason-label"><strong><?php echo esc_html( $dispute->get_resolution_label() ); ?></strong></p>
+				<?php endif; ?>
+				<p><?php echo esc_html( $wpss_outcome_copy ); ?></p>
+				<?php if ( '' !== (string) $dispute->resolution_notes ) : ?>
+					<p><?php echo esc_html( $dispute->resolution_notes ); ?></p>
+				<?php endif; ?>
+				<?php if ( $dispute->resolved_at ) : ?>
+					<p class="wpss-text-muted">
+						<?php
+						printf(
+							/* translators: %s: date the dispute was resolved */
+							esc_html__( 'Resolved on %s', 'wp-sell-services' ),
+							esc_html( wp_date( get_option( 'date_format' ), $dispute->resolved_at->getTimestamp() ) )
+						);
+						?>
+					</p>
+				<?php endif; ?>
+			</div>
+		<?php endif; ?>
+
 		<?php if ( ! empty( $dispute->reason ) || ! empty( $dispute->description ) ) : ?>
 			<div class="wpss-dispute-detail__reason">
 				<h3><?php esc_html_e( 'Reason', 'wp-sell-services' ); ?></h3>
@@ -97,8 +168,7 @@ if ( $view_dispute_id ) {
 				<ul class="wpss-dispute-timeline">
 					<?php
 					foreach ( $timeline as $entry ) :
-						$entry_user  = ! empty( $entry['user_id'] ) ? get_userdata( (int) $entry['user_id'] ) : null;
-						$entry_name  = $entry_user ? $entry_user->display_name : __( 'System', 'wp-sell-services' );
+						$entry_name  = ! empty( $entry['user_id'] ) ? wpss_get_member_display_name( (int) $entry['user_id'] ) : __( 'System', 'wp-sell-services' );
 						$entry_when  = ! empty( $entry['created_at'] ) ? mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $entry['created_at'] ) : '';
 						$entry_text  = (string) ( $entry['content'] ?? '' );
 						$entry_class = 'wpss-dispute-timeline__item wpss-dispute-timeline__item--' . sanitize_html_class( (string) ( $entry['type'] ?? 'event' ) );
@@ -138,8 +208,7 @@ if ( $view_dispute_id ) {
 					<?php
 					foreach ( $evidence_items as $item ) :
 						$ev_user_id = (int) ( $item['user_id'] ?? 0 );
-						$ev_user    = $ev_user_id ? get_userdata( $ev_user_id ) : null;
-						$ev_name    = $ev_user ? $ev_user->display_name : __( 'System', 'wp-sell-services' );
+						$ev_name    = $ev_user_id ? wpss_get_member_display_name( $ev_user_id ) : __( 'System', 'wp-sell-services' );
 						$ev_own     = $ev_user_id === $user_id;
 						$ev_type    = (string) ( $item['type'] ?? 'text' );
 						$ev_content = (string) ( $item['content'] ?? '' );

@@ -26,19 +26,26 @@ do_action( 'wpss_dashboard_section_before', 'favorites', $user_id );
 
 $favorite_ids = \WPSellServices\Services\FavoritesService::get_ids( $user_id );
 
-$services = array();
+// Paginated (20 per page) so a long favourites list doesn't load every row.
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination param.
+$favorites_page  = isset( $_GET['favorites_page'] ) ? max( 1, absint( $_GET['favorites_page'] ) ) : 1;
+$favorites_query = null;
+$services        = array();
 if ( ! empty( $favorite_ids ) ) {
-	$services = get_posts(
+	$favorites_query = new WP_Query(
 		array(
 			'post_type'      => 'wpss_service',
 			'post_status'    => 'publish',
 			'post__in'       => $favorite_ids,
 			'orderby'        => 'post__in',
-			'posts_per_page' => -1,
-			'no_found_rows'  => true,
+			'posts_per_page' => 20,
+			'paged'          => $favorites_page,
 		)
 	);
+	$services        = $favorites_query->posts;
 }
+$favorites_total = $favorites_query ? (int) $favorites_query->found_posts : 0;
+$favorites_pages = $favorites_query ? (int) $favorites_query->max_num_pages : 0;
 ?>
 
 <div class="wpss-section wpss-section--favorites wpss-card wpss-favorites" data-wpss-favorites>
@@ -68,8 +75,8 @@ if ( ! empty( $favorite_ids ) ) {
 			echo esc_html(
 				sprintf(
 					/* translators: %d: number of saved services */
-					_n( '%d saved service', '%d saved services', count( $services ), 'wp-sell-services' ),
-					count( $services )
+					_n( '%d saved service', '%d saved services', $favorites_total, 'wp-sell-services' ),
+					$favorites_total
 				)
 			);
 			?>
@@ -79,7 +86,7 @@ if ( ! empty( $favorite_ids ) ) {
 			<?php
 			foreach ( $services as $service ) :
 				$price_cents = (int) get_post_meta( $service->ID, '_wpss_starting_price', true );
-				$currency    = get_option( 'wpss_general', array() )['currency'] ?? 'USD';
+				$currency    = wpss_get_currency();
 				$vendor_id   = (int) $service->post_author;
 				$vendor      = get_userdata( $vendor_id );
 				$thumbnail   = get_the_post_thumbnail_url( $service->ID, 'medium_large' );
@@ -127,6 +134,39 @@ if ( ! empty( $favorite_ids ) ) {
 				</article>
 			<?php endforeach; ?>
 		</div>
+
+		<?php if ( $favorites_pages > 1 ) : ?>
+			<nav class="wpss-pagination" aria-label="<?php esc_attr_e( 'Favorite pages', 'wp-sell-services' ); ?>">
+				<?php
+				// Paginate relative to the current section URL (see orders.php).
+				$favorites_page_url = static function ( int $page ): string {
+					return $page > 1 ? add_query_arg( 'favorites_page', $page ) : remove_query_arg( 'favorites_page' );
+				};
+	?>
+				<?php if ( $favorites_page > 1 ) : ?>
+					<a href="<?php echo esc_url( $favorites_page_url( $favorites_page - 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--prev">
+						<i data-lucide="chevron-left" class="wpss-icon" aria-hidden="true"></i>
+						<?php esc_html_e( 'Previous', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
+				<span class="wpss-pagination__current">
+					<?php
+					printf(
+						/* translators: 1: current page, 2: total pages */
+						esc_html__( 'Page %1$d of %2$d', 'wp-sell-services' ),
+						(int) $favorites_page,
+						(int) $favorites_pages
+					);
+					?>
+				</span>
+				<?php if ( $favorites_page < $favorites_pages ) : ?>
+					<a href="<?php echo esc_url( $favorites_page_url( $favorites_page + 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--next">
+						<?php esc_html_e( 'Next', 'wp-sell-services' ); ?>
+						<i data-lucide="chevron-right" class="wpss-icon" aria-hidden="true"></i>
+					</a>
+				<?php endif; ?>
+			</nav>
+		<?php endif; ?>
 	<?php endif; ?>
 </div>
 

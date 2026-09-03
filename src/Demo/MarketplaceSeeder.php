@@ -281,14 +281,12 @@ class MarketplaceSeeder {
 			'withdrawals'   => 0,
 		);
 
-		// Model-site shape: the marketplace IS the site, so the mapped
-		// services page becomes the static front page (matches how customers
-		// run marketplace homepages and keeps browse journeys reproducible).
+		// A seeder writes demo rows, not site settings: it used to flip
+		// show_on_front/page_on_front, which silently replaced a live homepage.
+		// Suggest the model-site shape instead and leave reading settings alone.
 		$services_page_id = (int) wpss_get_page_id( 'services_page' );
 		if ( $services_page_id ) {
-			update_option( 'show_on_front', 'page' );
-			update_option( 'page_on_front', $services_page_id );
-			$this->log( 'Front page set to the mapped services page (#' . $services_page_id . ').' );
+			$this->log( "Homepage unchanged. To make the marketplace the front page: wp option update show_on_front page && wp option update page_on_front {$services_page_id}" );
 		}
 
 		$category_ids          = $this->ensure_categories();
@@ -589,6 +587,9 @@ class MarketplaceSeeder {
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}
+
+				// The marker `wp wpss demo delete` scopes to by default.
+				update_post_meta( $post_id, '_wpss_demo_content', 1 );
 
 				if ( isset( $category_ids[ $category ] ) ) {
 					/*
@@ -1020,6 +1021,7 @@ class MarketplaceSeeder {
 				continue;
 			}
 
+			update_post_meta( $post_id, '_wpss_demo_content', 1 );
 			++$request_count;
 
 			$budget_min = 100 + ( $r_index * 50 );
@@ -1518,6 +1520,7 @@ class MarketplaceSeeder {
 						wp_delete_file( $tmp );
 					}
 				} else {
+					update_post_meta( (int) $attachment_id, '_wpss_demo_content', 1 );
 					return (int) $attachment_id;
 				}
 			}
@@ -1579,6 +1582,7 @@ class MarketplaceSeeder {
 		}
 
 		wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $path ) );
+		update_post_meta( (int) $attachment_id, '_wpss_demo_content', 1 );
 
 		return (int) $attachment_id;
 	}

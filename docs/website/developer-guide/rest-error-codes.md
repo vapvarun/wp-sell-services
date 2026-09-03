@@ -31,6 +31,9 @@ A client that treats 403 as "refresh and retry" loops forever; one that treats
 | Code | Status | Meaning |
 |---|---|---|
 | `rest_not_logged_in` | 401 | No authenticated user. Every protected route answers this when anonymous. |
+| `wpss_account_locked` | 423 | Five wrong passwords for this account in 15 minutes; locked for 15 minutes regardless of IP. Show the message, do not retry. |
+| `rate_limit_exceeded` | 429 | Too many auth attempts from this address. Back off. |
+| `wpss_missing_identifier` | 400 | `POST /auth/forgot-password` needs `user_login` or `email`. |
 
 ### Authorisation
 
@@ -51,6 +54,8 @@ isn't yours" from "you need admin" without reading the English message.
 |---|---|---|
 | `rest_no_route` | 404 | Unknown path. Also returned by WordPress core for a **known path with an unsupported method** - see the note below. |
 | `wpss_order_not_found` | 404 | The order does not exist, or is not visible to this caller. |
+| `wpss_file_not_found` | 404 | No such file on that order (`GET /orders/{id}/files/{file}`). |
+| `wpss_storage_unavailable` | 503 | The file is in a cloud bucket and its provider could not sign a URL. Retry later. |
 
 ### State
 

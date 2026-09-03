@@ -103,9 +103,6 @@ class DataCascadeHandler {
 		// Delete service packages.
 		$this->delete_where( 'service_packages', 'service_id', $service_id );
 
-		// Delete service addons.
-		$this->delete_where( 'service_addons', 'service_id', $service_id );
-
 		// Delete reviews for this service.
 		$this->delete_where( 'reviews', 'service_id', $service_id );
 
@@ -184,43 +181,36 @@ class DataCascadeHandler {
 		/**
 		 * Filter whether records shared with another member survive this cascade.
 		 *
-		 * An order, a review, a message and a dispute each belong to TWO people.
-		 * Deleting them because one of those people is going destroys the other
-		 * one's history: the seller's completed jobs and earnings, the buyer's
-		 * proof of what they bought, and the owner's revenue record for the sale.
+		 * An order, a review, a message, a dispute and the ledger line behind a
+		 * sale each belong to TWO people, and the owner needs them for their own
+		 * accounting. Deleting them because one of those people is going destroys
+		 * the other one's history: the seller's completed jobs and earnings, the
+		 * buyer's proof of what they bought, the owner's revenue record.
 		 *
-		 * Self-service account deletion turns this on, so the member's own data
-		 * goes and the counterparty's record stays, attributed to a deleted
-		 * member (see AccountDeletionService and wpss_get_member_display_name()).
+		 * So by default those rows are KEPT and anonymised: the departing member's
+		 * id columns become 0 (rendered by wpss_get_member_display_name() as a
+		 * deleted user) and the personal columns on those rows - billing address,
+		 * reviewer name, seller notes, payout details - are blanked. Only rows the
+		 * member owns alone are deleted.
 		 *
-		 * The default is false, which is the long-standing behaviour for an
-		 * administrator deleting a user outright and for the demo-data cleanup
-		 * that relies on seeded orders actually disappearing.
+		 * Return false to delete every row the member is party to instead. That
+		 * takes the counterparty's records with it, so it is for throwaway data
+		 * (seeded demos, test flows), never for a live marketplace.
 		 *
 		 * @since 1.5.2
+		 * @since 1.7.1 Defaults to true on every path, including an administrator
+		 *              deleting a user from wp-admin and the privacy eraser.
 		 *
 		 * @param bool $preserve Whether to keep shared records.
 		 * @param int  $user_id  User being deleted.
 		 */
-		$preserve_shared = (bool) apply_filters( 'wpss_cascade_preserve_shared_records', false, $user_id );
+		$preserve_shared = (bool) apply_filters( 'wpss_cascade_preserve_shared_records', true, $user_id );
 
-		// Delete vendor profile.
+		// Rows the member owns alone. Favourites, cart, push devices and app
+		// passwords are user meta, which wp_delete_user() removes itself.
 		$this->delete_where( 'vendor_profiles', 'user_id', $user_id );
-
-		// Delete portfolio items.
 		$this->delete_where( 'portfolio_items', 'vendor_id', $user_id );
-
-		// Delete notifications.
 		$this->delete_where( 'notifications', 'user_id', $user_id );
-
-		// Delete wallet transactions.
-		$this->delete_where( 'wallet_transactions', 'user_id', $user_id );
-
-		// Delete withdrawals.
-		$this->delete_where( 'withdrawals', 'vendor_id', $user_id );
-
-		// Delete proposals by this vendor.
-		$this->delete_where( 'proposals', 'vendor_id', $user_id );
 
 		/*
 		 * Abuse reports, both directions.
@@ -238,22 +228,23 @@ class DataCascadeHandler {
 		$this->delete_where( 'reports', 'reporter_id', $user_id );
 		$this->delete_where( 'reports', 'reported_user_id', $user_id );
 
-		if ( ! $preserve_shared ) {
-			// Get order IDs where user is customer or vendor.
+		if ( $preserve_shared ) {
+			$this->anonymise_user( $user_id );
+		} else {
+			$this->delete_where( 'wallet_transactions', 'user_id', $user_id );
+			$this->delete_where( 'withdrawals', 'vendor_id', $user_id );
+			$this->delete_where( 'proposals', 'vendor_id', $user_id );
+
 			$customer_order_ids = $this->get_column( 'orders', 'id', 'customer_id', $user_id );
 			$vendor_order_ids   = $this->get_column( 'orders', 'id', 'vendor_id', $user_id );
 			$order_ids          = array_unique( array_merge( $customer_order_ids, $vendor_order_ids ) );
 
-			// Delete order-related data.
 			foreach ( $order_ids as $order_id ) {
 				$this->delete_order_data( (int) $order_id );
 			}
 
-			// Delete orders where user is customer or vendor.
 			$this->delete_where( 'orders', 'customer_id', $user_id );
 			$this->delete_where( 'orders', 'vendor_id', $user_id );
-
-			// Delete reviews written by or about this user.
 			$this->delete_where( 'reviews', 'reviewer_id', $user_id );
 			$this->delete_where( 'reviews', 'reviewee_id', $user_id );
 		}
@@ -268,6 +259,61 @@ class DataCascadeHandler {
 	}
 
 	/**
+	 * Detach a member from every shared row without deleting the row.
+	 *
+	 * Each entry is table => ( id column => personal columns to blank on the
+	 * rows where that column named this member ). The id column becomes 0.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int $user_id User ID.
+	 * @return void
+	 */
+	private function anonymise_user( int $user_id ): void {
+		$shared = array(
+			'orders'              => array(
+				'customer_id' => array( 'billing_address' ),
+				'vendor_id'   => array( 'vendor_notes' ),
+			),
+			'reviews'             => array(
+				'reviewer_id' => array( 'reviewer_name' ),
+				'reviewee_id' => array(),
+				'customer_id' => array(),
+				'vendor_id'   => array(),
+			),
+			'wallet_transactions' => array( 'user_id' => array() ),
+			'withdrawals'         => array( 'vendor_id' => array( 'details' ) ),
+			'proposals'           => array( 'vendor_id' => array() ),
+			'deliveries'          => array( 'vendor_id' => array() ),
+			'messages'            => array( 'sender_id' => array() ),
+			'dispute_messages'    => array( 'sender_id' => array() ),
+			'disputes'            => array(
+				'initiated_by'     => array(),
+				'respondent_id'    => array(),
+				'last_response_by' => array(),
+				'resolved_by'      => array(),
+				'assigned_admin'   => array(),
+			),
+			'extension_requests'  => array(
+				'requested_by' => array(),
+				'responded_by' => array(),
+			),
+		);
+
+		foreach ( $shared as $table => $columns ) {
+			foreach ( $columns as $id_column => $pii_columns ) {
+				$data = array( $id_column => 0 );
+
+				foreach ( $pii_columns as $pii_column ) {
+					$data[ $pii_column ] = null;
+				}
+
+				$this->wpdb->update( $this->prefix . $table, $data, array( $id_column => $user_id ), null, array( '%d' ) );
+			}
+		}
+	}
+
+	/**
 	 * Delete all data related to an order.
 	 *
 	 * This is called as part of service or user cascade deletion.
@@ -276,6 +322,9 @@ class DataCascadeHandler {
 	 * @return void
 	 */
 	private function delete_order_data( int $order_id ): void {
+		// Files first: the records that say where they are go with the rows below.
+		wpss_delete_order_files( $order_id );
+
 		// Delete order requirements.
 		$this->delete_where( 'order_requirements', 'order_id', $order_id );
 

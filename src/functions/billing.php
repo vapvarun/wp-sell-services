@@ -814,8 +814,7 @@ function wpss_is_billing_address_complete( $user_or_address = 0 ): bool {
  * @return bool
  */
 function wpss_checkout_creates_accounts(): bool {
-	$settings = get_option( 'wpss_general', array() );
-	$enabled  = ! empty( $settings['checkout_account_creation'] );
+	$enabled = (bool) wpss_get_option( 'general', 'checkout_account_creation' );
 
 	/**
 	 * Filter whether checkout creates an account for a logged-out buyer.

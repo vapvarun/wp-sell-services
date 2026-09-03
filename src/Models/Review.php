@@ -326,27 +326,4 @@ class Review {
 	public function is_approved(): bool {
 		return self::STATUS_APPROVED === $this->status;
 	}
-
-	/**
-	 * Get star HTML.
-	 *
-	 * @param int $rating Rating value.
-	 * @return string
-	 */
-	public static function get_stars_html( int $rating ): string {
-		/* translators: %d: star rating out of 5 */
-		$html = '<span class="wpss-stars" aria-label="' . esc_attr( sprintf( __( '%d out of 5 stars', 'wp-sell-services' ), $rating ) ) . '">';
-
-		for ( $i = 1; $i <= 5; $i++ ) {
-			if ( $i <= $rating ) {
-				$html .= '<span class="wpss-star wpss-star--filled">★</span>';
-			} else {
-				$html .= '<span class="wpss-star wpss-star--empty">☆</span>';
-			}
-		}
-
-		$html .= '</span>';
-
-		return $html;
-	}
 }

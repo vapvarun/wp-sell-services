@@ -112,9 +112,9 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_decline_milestone', array( $this, 'ajax_decline_milestone' ) );
 		add_action( 'wp_ajax_wpss_delete_milestone', array( $this, 'ajax_delete_milestone' ) );
 
-		// Order actions.
-		add_action( 'wp_ajax_wpss_accept_order', array( $this, 'accept_order' ) );
-		add_action( 'wp_ajax_wpss_decline_order', array( $this, 'decline_order' ) );
+		// Order actions. No accept/decline: this product is payment-first, so
+		// there is no acceptance step; those verbs only ever wrote legacy
+		// statuses onto orders that had already moved past them.
 		add_action( 'wp_ajax_wpss_start_work', array( $this, 'start_work' ) );
 		add_action( 'wp_ajax_wpss_deliver_order', array( $this, 'deliver_order' ) );
 		add_action( 'wp_ajax_wpss_request_revision', array( $this, 'request_revision' ) );
@@ -227,42 +227,6 @@ class AjaxHandlers {
 	}
 
 	/**
-	 * Accept order (vendor).
-	 *
-	 * @return void
-	 */
-	public function accept_order(): void {
-		check_ajax_referer( 'wpss_order_action', 'nonce' );
-
-		// Rate limiting.
-		if ( RateLimiter::check_and_track( 'order_action', get_current_user_id() ) ) {
-			RateLimiter::send_error( 'order_action' );
-		}
-
-		$order_id = absint( $_POST['order_id'] ?? 0 );
-		$user_id  = get_current_user_id();
-
-		if ( ! $order_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-		}
-
-		$order_service = new OrderService();
-		$order         = $order_service->get( $order_id );
-
-		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to accept this order.', 'wp-sell-services' ) ) );
-		}
-
-		$result = $order_service->update_status( $order_id, 'accepted' );
-
-		if ( $result ) {
-			wp_send_json_success( array( 'message' => __( 'Order accepted successfully.', 'wp-sell-services' ) ) );
-		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to accept order.', 'wp-sell-services' ) ) );
-		}
-	}
-
-	/**
 	 * Start working on order (vendor).
 	 *
 	 * @return void
@@ -301,38 +265,6 @@ class AjaxHandlers {
 			wp_send_json_success( array( 'message' => __( 'Work started! Delivery deadline has been set.', 'wp-sell-services' ) ) );
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Failed to start work on order.', 'wp-sell-services' ) ) );
-		}
-	}
-
-	/**
-	 * Decline order (vendor).
-	 *
-	 * @return void
-	 */
-	public function decline_order(): void {
-		check_ajax_referer( 'wpss_order_action', 'nonce' );
-
-		$order_id = absint( $_POST['order_id'] ?? 0 );
-		$reason   = sanitize_textarea_field( wp_unslash( $_POST['reason'] ?? '' ) );
-		$user_id  = get_current_user_id();
-
-		if ( ! $order_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid order.', 'wp-sell-services' ) ) );
-		}
-
-		$order_service = new OrderService();
-		$order         = $order_service->get( $order_id );
-
-		if ( ! $order || (int) $order->vendor_id !== $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'You do not have permission to decline this order.', 'wp-sell-services' ) ) );
-		}
-
-		$result = $order_service->update_status( $order_id, 'rejected' );
-
-		if ( $result ) {
-			wp_send_json_success( array( 'message' => __( 'Order declined.', 'wp-sell-services' ) ) );
-		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to decline order.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -604,8 +536,6 @@ class AjaxHandlers {
 	/**
 	 * Submit requirements.
 	 *
-	 * Handles both legacy format (field_*) and new format (requirements[index]).
-	 *
 	 * @return void
 	 */
 	public function submit_requirements(): void {
@@ -634,76 +564,43 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You do not have permission to submit requirements.', 'wp-sell-services' ) ) );
 		}
 
-		// Get service requirements to map indices to questions.
+		// The form posts requirements[index]; answers are stored keyed by the
+		// requirement id, which is what the service validates against.
 		$service      = $order->get_service();
-		$requirements = $service ? get_post_meta( $service->id, '_wpss_requirements', true ) : array();
-		if ( ! is_array( $requirements ) ) {
-			$requirements = array();
-		}
+		$requirements = $service ? wpss_get_service_requirements( $service->id ) : array();
 
-		// Collect field data - support both formats.
 		$field_data = array();
-
-		// New format: requirements[index] => value.
-		// Handles both numeric indices (custom requirements) and string keys (default/special fields).
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- nonce verified above, individual values sanitized in the loop below.
-		$posted_requirements = isset( $_POST['requirements'] ) ? $_POST['requirements'] : array();
-		if ( ! empty( $posted_requirements ) && is_array( $posted_requirements ) ) {
-			foreach ( $posted_requirements as $index => $value ) {
-				$sanitized_value = is_array( $value )
-					? array_map( 'sanitize_textarea_field', array_map( 'wp_unslash', $value ) )
-					: sanitize_textarea_field( wp_unslash( $value ) );
-
-				if ( is_numeric( $index ) ) {
-					// Numeric index: map to requirement definition by array position.
-					$index = absint( $index );
-					if ( isset( $requirements[ $index ] ) ) {
-						$question                = $requirements[ $index ]['question'] ?? "field_{$index}";
-						$field_data[ $question ] = $sanitized_value;
-					}
-				} else {
-					// String key (e.g. 'description', 'additional_notes'): use directly.
-					$field_data[ sanitize_key( $index ) ] = $sanitized_value;
-				}
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- nonce verified above; RequirementsService::sanitize() sanitises every value by field type.
+		$posted = isset( $_POST['requirements'] ) && is_array( $_POST['requirements'] ) ? wp_unslash( $_POST['requirements'] ) : array();
+		foreach ( $posted as $index => $value ) {
+			// Numeric index: a configured question. String key ('description',
+			// 'additional_notes'): the default form's freeform fields.
+			$key = is_numeric( $index ) ? ( $requirements[ (int) $index ]['id'] ?? '' ) : sanitize_key( (string) $index );
+			if ( '' !== $key ) {
+				$field_data[ $key ] = $value;
 			}
 		}
 
-		// Legacy format: field_{index} keys.
-		// Read each known requirement index explicitly instead of iterating the
-		// entire $_POST superglobal — only the indices that exist in the service
-		// requirement definitions are ever valid legacy keys.
-		foreach ( array_keys( $requirements ) as $req_index ) {
-			$legacy_key = 'field_' . $req_index;
-			if ( ! isset( $_POST[ $legacy_key ] ) ) {
-				continue;
-			}
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- nonce verified above, value sanitized on the next line.
-			$legacy_value             = wp_unslash( $_POST[ $legacy_key ] );
-			$field_data[ $req_index ] = is_array( $legacy_value )
-				? array_map( 'sanitize_text_field', $legacy_value )
-				: sanitize_text_field( $legacy_value );
-		}
-
-		// Handle file uploads.
-		// Read explicit, known file input keys rather than iterating the whole
-		// $_FILES superglobal.
+		// Per-requirement file inputs. PHP folds name="requirements[3]" into
+		// $_FILES['requirements'][prop][3], so each question's file is sliced
+		// back out and keyed by the requirement id like its answer.
 		$files = array();
-
-		// Per-requirement file inputs in the requirements[index] format.
-		foreach ( array_keys( $requirements ) as $req_index ) {
-			$file_key = 'requirements[' . $req_index . ']';
-			if ( ! isset( $_FILES[ $file_key ] ) ) {
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES entries are validated (type, size, MIME) and sanitized by wp_handle_upload()/wp_check_filetype() inside RequirementsService::process_uploads().
+		$posted_files = isset( $_FILES['requirements'] ) && is_array( $_FILES['requirements']['name'] ?? null ) ? $_FILES['requirements'] : array();
+		foreach ( $requirements as $index => $requirement ) {
+			if ( empty( $posted_files['name'][ $index ] ) ) {
 				continue;
 			}
-			$question = $requirements[ $req_index ]['question'] ?? "field_{$req_index}";
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES entry is validated (type, size, MIME) and sanitized by wp_handle_upload()/wp_check_filetype() inside RequirementsService::process_uploads().
-			$files[ $question ] = $_FILES[ $file_key ];
+			$files[ $requirement['id'] ] = array();
+			foreach ( array( 'name', 'type', 'tmp_name', 'error', 'size' ) as $prop ) {
+				$files[ $requirement['id'] ][ $prop ] = $posted_files[ $prop ][ $index ] ?? null;
+			}
 		}
 
 		// Named file inputs used by the requirements templates.
 		$named_file_inputs = apply_filters(
 			'wpss_requirements_file_inputs',
-			array( 'requirement_files', 'requirements_files', 'requirements' ),
+			array( 'requirement_files', 'requirements_files' ),
 			$order_id
 		);
 		foreach ( $named_file_inputs as $file_key ) {
@@ -788,7 +685,7 @@ class AjaxHandlers {
 		$skipped_files    = array();
 		if ( ! empty( $_FILES['attachments'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES group is validated/sanitized inside wpss_handle_message_attachments().
-			$uploaded         = wpss_handle_message_attachments( (array) $_FILES['attachments'] );
+			$uploaded         = wpss_handle_message_attachments( (array) $_FILES['attachments'], $order_id, 'message' );
 			$attachments_data = $uploaded['attachments'];
 			$skipped_files    = $uploaded['skipped'];
 		}
@@ -1138,45 +1035,14 @@ class AjaxHandlers {
 		// Generate HTML for reviews.
 		ob_start();
 		foreach ( $reviews as $review ) {
-			$reviewer_name = $review->get_reviewer_name();
 			?>
 			<div class="wpss-review">
-				<div class="wpss-review-header">
-					<img src="<?php echo esc_url( get_avatar_url( $review->reviewer_id, array( 'size' => 48 ) ) ); ?>"
-						alt="<?php echo esc_attr( $reviewer_name ); ?>"
-						class="wpss-review-avatar">
-					<div class="wpss-review-info">
-						<strong class="wpss-review-author">
-							<?php echo esc_html( $reviewer_name ); ?>
-						</strong>
-						<div class="wpss-review-rating">
-							<?php for ( $i = 1; $i <= 5; $i++ ) : ?>
-								<span class="wpss-star <?php echo $i <= $review->rating ? 'filled' : ''; ?>">★</span>
-							<?php endfor; ?>
-						</div>
-					</div>
-					<span class="wpss-review-date">
-						<?php echo esc_html( wpss_time_ago( $review->created_at->format( 'Y-m-d H:i:s' ) ) ); ?>
-					</span>
-				</div>
-
-				<div class="wpss-review-content">
-					<?php echo wp_kses_post( wpautop( $review->content ) ); ?>
-				</div>
-
-				<?php if ( ! empty( $review->response ) ) : ?>
-					<div class="wpss-review-reply">
-						<div class="wpss-reply-header">
-							<strong><?php esc_html_e( 'Seller Response:', 'wp-sell-services' ); ?></strong>
-							<?php if ( $review->response_at ) : ?>
-								<span class="wpss-reply-date">
-									<?php echo esc_html( wpss_time_ago( $review->response_at->format( 'Y-m-d H:i:s' ) ) ); ?>
-								</span>
-							<?php endif; ?>
-						</div>
-						<?php echo wp_kses_post( wpautop( $review->response ) ); ?>
-					</div>
-				<?php endif; ?>
+				<?php
+				// Same partial as the initial page render, so page two of the
+				// reviews list cannot drift from page one.
+				$wpss_review = $review;
+				require WPSS_PLUGIN_DIR . 'templates/partials/review-body.php';
+				?>
 
 				<div class="wpss-review-actions">
 					<button type="button" class="wpss-review-helpful-btn" data-review="<?php echo esc_attr( $review->id ); ?>">
@@ -1302,8 +1168,7 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_open_dispute', 'wpss_dispute_nonce' );
 
 		// Check if disputes are enabled in settings.
-		$order_settings = get_option( 'wpss_orders', array() );
-		if ( empty( $order_settings['allow_disputes'] ) ) {
+		if ( ! wpss_get_option( 'orders', 'allow_disputes' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Disputes are not enabled on this platform.', 'wp-sell-services' ) ) );
 		}
 
@@ -1336,7 +1201,7 @@ class AjaxHandlers {
 				)
 			);
 		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' ) ) );
+			wp_send_json_error( array( 'message' => $dispute_service->last_error() ?: __( 'Failed to open dispute.', 'wp-sell-services' ) ) );
 		}
 	}
 
@@ -1387,43 +1252,27 @@ class AjaxHandlers {
 		$evidence_type    = 'text';
 		$evidence_content = $description;
 
+		$evidence_files = array();
+
 		if ( ! empty( $_FILES['evidence_file'] ) && ! empty( $_FILES['evidence_file']['name'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-			$file = $_FILES['evidence_file'];
+			$file    = $_FILES['evidence_file'];
+			$refused = wpss_check_upload( $file );
 
-			// Verify file upload.
-			if ( ! function_exists( 'wp_handle_upload' ) ) {
-				require_once ABSPATH . 'wp-admin/includes/file.php';
+			if ( $refused ) {
+				wp_send_json_error( array( 'message' => $refused->get_error_message() ) );
 			}
 
-			$upload_overrides = array(
-				'test_form' => false,
-				'mimes'     => array(
-					'jpg|jpeg' => 'image/jpeg',
-					'png'      => 'image/png',
-					'gif'      => 'image/gif',
-					'pdf'      => 'application/pdf',
-					'doc'      => 'application/msword',
-					'docx'     => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-					'zip'      => 'application/zip',
-					'txt'      => 'text/plain',
-				),
-			);
+			// Same private store and read gate as a delivery; no URL is kept.
+			$record = wpss_store_order_file( $file, (int) $order->id, 'dispute' );
 
-			$uploaded = wp_handle_upload( $file, $upload_overrides );
-
-			if ( isset( $uploaded['error'] ) ) {
-				wp_send_json_error( array( 'message' => $uploaded['error'] ) );
+			if ( ! $record ) {
+				wp_send_json_error( array( 'message' => __( 'Could not store the file.', 'wp-sell-services' ) ) );
 			}
 
-			$evidence_content = $uploaded['url'];
-			$file_type        = wp_check_filetype( $uploaded['file'] );
-
-			if ( strpos( $file_type['type'], 'image/' ) === 0 ) {
-				$evidence_type = 'image';
-			} else {
-				$evidence_type = 'file';
-			}
+			$evidence_files   = array( $record );
+			$evidence_content = wpss_get_order_file_url( $record );
+			$evidence_type    = 0 === strpos( (string) $record['type'], 'image/' ) ? 'image' : 'file';
 		}
 
 		// Must have either description or file.
@@ -1436,8 +1285,9 @@ class AjaxHandlers {
 			$dispute_id,
 			$user_id,
 			$evidence_type,
-			$evidence_content,
-			$evidence_type !== 'text' ? $description : ''
+			$evidence_files ? '' : $evidence_content,
+			$evidence_type !== 'text' ? $description : '',
+			$evidence_files
 		);
 
 		if ( ! $evidence_id ) {
@@ -1470,7 +1320,7 @@ class AjaxHandlers {
 						<div class="wpss-evidence-file">
 							<a href="<?php echo esc_url( $evidence_content ); ?>" target="_blank" class="wpss-file-link">
 								<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-								<span><?php echo esc_html( basename( $evidence_content ) ); ?></span>
+								<span><?php echo esc_html( $evidence_files ? (string) $evidence_files[0]['name'] : basename( $evidence_content ) ); ?></span>
 							</a>
 						</div>
 					<?php endif; ?>
@@ -1740,6 +1590,10 @@ class AjaxHandlers {
 			)
 		);
 
+		if ( is_wp_error( $proposal_id ) ) {
+			wp_send_json_error( array( 'message' => $proposal_id->get_error_message() ) );
+		}
+
 		if ( $proposal_id ) {
 			wp_send_json_success(
 				array(
@@ -1797,7 +1651,7 @@ class AjaxHandlers {
 				$redirect_url = wpss_get_order_url( (int) $result['order_id'] );
 				$message      = __( 'Proposal accepted — your project is set up. Opening the order…', 'wp-sell-services' );
 			} else {
-				$redirect_url = wpss_get_pay_order_url( (int) $result['order_id'] );
+				$redirect_url = wpss_ensure_pay_order( (int) $result['order_id'] );
 				$message      = __( 'Proposal accepted! Redirecting to payment…', 'wp-sell-services' );
 			}
 
@@ -2028,35 +1882,12 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'No file uploaded.', 'wp-sell-services' ) ) );
 		}
 
-		$file = $_FILES['file']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- passed directly to wp_handle_upload().
+		$file = $_FILES['file']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- validated by wpss_check_upload(), stored by media_handle_upload().
 
-		// Check file size.
-		$max_size = (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024;
-		if ( $file['size'] > $max_size ) {
-			wp_send_json_error(
-				array(
-					'message' => sprintf(
-					/* translators: %s: max file size */
-						__( 'File size exceeds maximum allowed (%s MB).', 'wp-sell-services' ),
-						get_option( 'wpss_max_file_size', 10 )
-					),
-				)
-			);
-		}
+		$refused = wpss_check_upload( $file );
 
-		// Verify MIME type matches extension (prevent extension spoofing).
-		$filetype = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
-
-		if ( ! $filetype['ext'] || ! $filetype['type'] ) {
-			wp_send_json_error( array( 'message' => __( 'File type could not be verified.', 'wp-sell-services' ) ) );
-		}
-
-		// Check file type against allowed list.
-		$allowed_types = explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) );
-		$ext           = strtolower( $filetype['ext'] );
-
-		if ( ! in_array( $ext, $allowed_types, true ) ) {
-			wp_send_json_error( array( 'message' => __( 'File type not allowed.', 'wp-sell-services' ) ) );
+		if ( $refused ) {
+			wp_send_json_error( array( 'message' => $refused->get_error_message() ) );
 		}
 
 		require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -2214,81 +2045,12 @@ class AjaxHandlers {
 			}
 		}
 
-		// Handle file attachments.
+		// Pre-sale: there is no order yet, so the shared helper keeps these in
+		// the media library (private) rather than the order store.
 		$attachments = array();
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- File uploads validated below.
 		if ( ! empty( $_FILES['attachments'] ) ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-			require_once ABSPATH . 'wp-admin/includes/image.php';
-			require_once ABSPATH . 'wp-admin/includes/media.php';
-
-			// Allowed file types for contact attachments.
-			$allowed_types = array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'zip', 'txt' );
-			$allowed_mimes = array(
-				'image/jpeg',
-				'image/png',
-				'image/gif',
-				'image/webp',
-				'application/pdf',
-				'application/msword',
-				'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-				'application/zip',
-				'text/plain',
-			);
-			$max_size      = 10 * 1024 * 1024; // 10MB per file.
-
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			$files = $_FILES['attachments'];
-
-			// Handle multiple files.
-			if ( is_array( $files['name'] ) ) {
-				$file_count = count( $files['name'] );
-				$max_files  = 5;
-				$limit      = min( $file_count, $max_files );
-
-				for ( $i = 0; $i < $limit; $i++ ) {
-					if ( empty( $files['name'][ $i ] ) || UPLOAD_ERR_OK !== $files['error'][ $i ] ) {
-						continue;
-					}
-
-					$file = array(
-						'name'     => $files['name'][ $i ],
-						'type'     => $files['type'][ $i ],
-						'tmp_name' => $files['tmp_name'][ $i ],
-						'error'    => $files['error'][ $i ],
-						'size'     => $files['size'][ $i ],
-					);
-
-					// Validate file extension.
-					$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
-					if ( ! in_array( $ext, $allowed_types, true ) ) {
-						continue; // Skip invalid file types.
-					}
-
-					// Validate MIME type to prevent extension spoofing.
-					$file_info = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
-					$mime_type = $file_info['type'] ?? '';
-					if ( ! in_array( $mime_type, $allowed_mimes, true ) ) {
-						continue; // Skip invalid MIME types.
-					}
-
-					// Validate file size.
-					if ( $file['size'] > $max_size ) {
-						continue; // Skip files that are too large.
-					}
-
-					$_FILES['upload_file'] = $file;
-					$attachment_id         = media_handle_upload( 'upload_file', 0 );
-
-					if ( ! is_wp_error( $attachment_id ) ) {
-						$attachments[] = array(
-							'id'   => $attachment_id,
-							'url'  => wp_get_attachment_url( $attachment_id ),
-							'name' => $files['name'][ $i ],
-						);
-					}
-				}
-			}
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw $_FILES group is validated/sanitized inside wpss_handle_message_attachments().
+			$attachments = array_slice( wpss_handle_message_attachments( (array) $_FILES['attachments'], 0, 'contact' )['attachments'], 0, 5 );
 		}
 
 		// Get sender info.
@@ -2358,13 +2120,7 @@ class AjaxHandlers {
 		$conversation = $conversation_service->create_direct( $user_id, $vendor_id, $conv_subject, $service_id );
 
 		if ( $conversation ) {
-			$attachment_ids = array_map(
-				function ( $att ) {
-					return $att['id'];
-				},
-				$attachments
-			);
-			$conversation_service->send_message( $conversation->id, $user_id, $message, $attachment_ids );
+			$conversation_service->send_message( $conversation->id, $user_id, $message, $attachments );
 		}
 
 		/**
@@ -2424,11 +2180,9 @@ class AjaxHandlers {
 
 		$checkout_url = '';
 		if ( $service_id && 'publish' === get_post_status( $service_id ) ) {
-			$checkout_url = wpss_get_service_checkout_url( $service_id, $package_id, $addons );
-
-			if ( $checkout_url && $quantity > 1 ) {
-				$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
-			}
+			// Exits with the honest refusal when the rail cannot check out, so
+			// the guest is told now rather than after a round trip to log in.
+			$checkout_url = $this->require_checkout_url( $service_id, $package_id, $addons, $quantity );
 		}
 
 		if ( $checkout_url && wpss_checkout_creates_accounts() ) {
@@ -2449,6 +2203,48 @@ class AjaxHandlers {
 				'login_url' => wp_login_url( $checkout_url ?: ( wp_get_referer() ?: home_url() ) ),
 			)
 		);
+	}
+
+	/**
+	 * The checkout URL for a selection, or refuse when the rail cannot build one.
+	 *
+	 * A store rail that has no catalog checkout returns an empty string from its
+	 * checkout provider. Carrying on regardless is what made the dead end silent:
+	 * the buyer got "Added to cart", a cart row, and a Checkout link with an
+	 * empty href, which reloaded the service page forever with no error anywhere
+	 * (Basecamp 10268056147, 10268056083).
+	 *
+	 * The refusal lives here, at the one seam every add-to-cart path goes
+	 * through, so a rail is honest by default rather than by special case.
+	 *
+	 * Exits when no URL can be built.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int             $service_id Service CPT ID.
+	 * @param int             $package_id Package index.
+	 * @param array<int, int> $addons     Selected addon indexes.
+	 * @param int             $quantity   Quantity, appended when above one.
+	 * @return string
+	 */
+	private function require_checkout_url( int $service_id, int $package_id, array $addons, int $quantity = 1 ): string {
+		$checkout_url = wpss_get_service_checkout_url( $service_id, $package_id, $addons );
+
+		if ( '' === $checkout_url ) {
+			$adapter = wpss_get_active_adapter();
+
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+						/* translators: %s: name of the active store platform, e.g. Fluent Cart */
+						__( 'Checkout is not available for this service on %s, so nothing was added to your cart. Please let the site owner know.', 'wp-sell-services' ),
+						$adapter ? $adapter->get_name() : __( 'this store platform', 'wp-sell-services' )
+					),
+				)
+			);
+		}
+
+		return $quantity > 1 ? add_query_arg( 'quantity', $quantity, $checkout_url ) : $checkout_url;
 	}
 
 	/**
@@ -2526,7 +2322,7 @@ class AjaxHandlers {
 		foreach ( $extras as $extra_index ) {
 			if ( isset( $all_extras[ $extra_index ] ) ) {
 				$extras_price     += (float) ( $all_extras[ $extra_index ]['price'] ?? 0 );
-				$extras_days      += (int) ( $all_extras[ $extra_index ]['delivery_time'] ?? 0 );
+				$extras_days      += (int) $all_extras[ $extra_index ]['delivery_days_extra'];
 				$selected_extras[] = array(
 					'id'    => $extra_index,
 					'title' => $all_extras[ $extra_index ]['title'] ?? '',
@@ -2562,6 +2358,11 @@ class AjaxHandlers {
 		 * @param array                                                     $cart_item Cart item data.
 		 * @param \WPSellServices\Integrations\Contracts\EcommerceAdapterInterface|null $adapter   Active adapter.
 		 */
+		// Resolved before anything is written to any cart: a rail that cannot
+		// check this service out refuses here instead of leaving the buyer with
+		// a cart row and a Checkout button that goes nowhere.
+		$checkout_url = $this->require_checkout_url( $service_id, (int) $package_index, $extras, $quantity );
+
 		$adapter_result = apply_filters( 'wpss_add_service_to_cart', false, $cart_item, $adapter );
 
 		if ( is_array( $adapter_result ) && ! empty( $adapter_result['handled'] ) ) {
@@ -2570,9 +2371,11 @@ class AjaxHandlers {
 				wp_send_json_error( array( 'message' => $adapter_result['error'] ) );
 			}
 
-			$checkout_url = $adapter_result['checkout_url'] ?? wpss_get_service_checkout_url( $service_id, (int) $package_index, $extras );
-			if ( $quantity > 1 ) {
-				$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
+			if ( ! empty( $adapter_result['checkout_url'] ) ) {
+				$checkout_url = (string) $adapter_result['checkout_url'];
+				if ( $quantity > 1 ) {
+					$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
+				}
 			}
 
 			wp_send_json_success(
@@ -2597,11 +2400,6 @@ class AjaxHandlers {
 		$cart[ $item_key ]     = $cart_item;
 
 		update_user_meta( $user_id, '_wpss_cart', $cart );
-
-		$checkout_url = wpss_get_service_checkout_url( $service_id, (int) $package_index, $extras );
-		if ( $quantity > 1 ) {
-			$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
-		}
 
 		wp_send_json_success(
 			array(
@@ -3141,22 +2939,56 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Order not found.', 'wp-sell-services' ) ) );
 		}
 
-		// Verify user is part of order or is admin.
-		if ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
+		// One allow map for every verb: who may say it, and which status it
+		// moves the order to. Being a participant is not enough - a buyer
+		// could refund themselves and a vendor could cancel a completed order,
+		// reversing their own credit. Refunds are the owner's call unless the
+		// site explicitly lets vendors issue them; buyers cancel only before
+		// work starts (vendors use the cancellation-request flow instead).
+		$actor   = wpss_order_actor_role( $order, $user_id );
+		$allowed = array(
+			'start'               => array( array( 'vendor' ), ServiceOrder::STATUS_IN_PROGRESS ),
+			'cancel'              => array( array( 'buyer', 'admin' ), ServiceOrder::STATUS_CANCELLED ),
+			'refund'              => array(
+				wpss_get_option( 'orders', 'allow_vendor_refunds' ) ? array( 'admin', 'vendor' ) : array( 'admin' ),
+				ServiceOrder::STATUS_REFUNDED,
+			),
+			'accept-cancellation' => array( array( 'vendor' ), ServiceOrder::STATUS_CANCELLED ),
+			'reject-cancellation' => array( array( 'vendor' ), ServiceOrder::STATUS_DISPUTED ),
+		);
+
+		if ( ! isset( $allowed[ $action ] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unknown action.', 'wp-sell-services' ) ) );
+		}
+
+		list( $actor_roles, $target_status ) = $allowed[ $action ];
+
+		if ( ! in_array( $actor, $actor_roles, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		// Admins may force a transition (can_transition() honours the cap and
+		// audits it); everyone else needs the natural map, and a buyer's cancel
+		// is narrower still - only while nothing has been started.
+		if ( 'buyer' === $actor && 'cancel' === $action ) {
+			$status_ok = in_array(
+				$order->status,
+				array( ServiceOrder::STATUS_PENDING_PAYMENT, ServiceOrder::STATUS_PENDING_REQUIREMENTS, ServiceOrder::STATUS_REQUIREMENTS_SUBMITTED ),
+				true
+			);
+		} else {
+			$status_ok = 'admin' === $actor || $order_service->can_transition_naturally( $order->status, $target_status );
+		}
+
+		if ( ! $status_ok ) {
+			wp_send_json_error( array( 'message' => __( 'This action is not available in the order\'s current status.', 'wp-sell-services' ) ) );
 		}
 
 		$result = array( 'success' => false );
 
 		switch ( $action ) {
-			// No 'accept' case. It wrote status 'accepted', which only the
-			// removed accept verb ever produced and which no template renders.
-			// This product is payment-first - there is no acceptance step.
-
 			case 'start':
-				if ( (int) $order->vendor_id === $user_id ) {
-					$result['success'] = $order_service->start_work( $order_id );
-				}
+				$result['success'] = $order_service->start_work( $order_id );
 				break;
 
 			case 'cancel':
@@ -3187,7 +3019,7 @@ class AjaxHandlers {
 					// whenever the transition was refused; apply_refund_status()
 					// owns that ordering and undoes the write if the order does
 					// not actually move.
-					$result = $order_service->apply_refund_status(
+					$result['success'] = $order_service->apply_refund_status(
 						$order_id,
 						$wpss_is_partial ? round( $wpss_refund_amount, wpss_get_currency_decimals( $order->currency ?? '' ) ) : $wpss_order_total,
 						$wpss_is_partial ? 'partially_refunded' : 'refunded'
@@ -3198,7 +3030,7 @@ class AjaxHandlers {
 				break;
 
 			case 'accept-cancellation':
-				if ( (int) $order->vendor_id === $user_id && 'cancellation_requested' === $order->status ) {
+				if ( 'cancellation_requested' === $order->status ) {
 					$result = $order_service->cancel( $order_id, $user_id, __( 'Vendor accepted cancellation request.', 'wp-sell-services' ) );
 				} else {
 					wp_send_json_error( array( 'message' => __( 'Cannot accept cancellation.', 'wp-sell-services' ) ) );
@@ -3206,7 +3038,7 @@ class AjaxHandlers {
 				break;
 
 			case 'reject-cancellation':
-				if ( (int) $order->vendor_id === $user_id && 'cancellation_requested' === $order->status ) {
+				if ( 'cancellation_requested' === $order->status ) {
 					$dispute_service = new DisputeService();
 					$dispute_result  = $dispute_service->open(
 						$order_id,
@@ -3222,9 +3054,6 @@ class AjaxHandlers {
 					wp_send_json_error( array( 'message' => __( 'Cannot dispute cancellation.', 'wp-sell-services' ) ) );
 				}
 				break;
-
-			default:
-				wp_send_json_error( array( 'message' => __( 'Unknown action.', 'wp-sell-services' ) ) );
 		}
 
 		if ( ! empty( $result['success'] ) ) {

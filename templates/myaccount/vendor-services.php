@@ -73,7 +73,7 @@ do_action( 'wpss_vendor_services_before', $user_id );
 							</span>
 							<span class="wpss-service-stats">
 								<?php if ( $service->rating > 0 ) : ?>
-									<span class="wpss-rating">★ <?php echo esc_html( number_format( $service->rating, 1 ) ); ?></span>
+									<span class="wpss-rating"><i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i> <?php echo esc_html( number_format( $service->rating, 1 ) ); ?></span>
 									<span class="wpss-reviews">(<?php echo esc_html( $service->review_count ); ?>)</span>
 								<?php endif; ?>
 								<span class="wpss-orders"><?php echo esc_html( $service->orders_completed ); ?> <?php esc_html_e( 'orders', 'wp-sell-services' ); ?></span>

@@ -15,6 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Models\Service;
+use WPSellServices\Models\Message;
 
 /**
  * Handles service order business logic.
@@ -90,6 +91,33 @@ class OrderService {
 	 */
 	public static function is_settled_at_rail( int $order_id ): bool {
 		return isset( self::$settled_at_rail[ $order_id ] );
+	}
+
+	/**
+	 * Amount going back to the buyer in the refund event currently being applied.
+	 *
+	 * Refunds accumulate (1.7.1): `refunded_amount` on the order is the running
+	 * total, and the handlers on the status hooks need THIS event's slice of it
+	 * to size the gateway call and the vendor reversal. Set by
+	 * apply_refund_status() for the duration of the transition, like
+	 * $settled_at_rail.
+	 *
+	 * @since 1.7.1
+	 * @var array<int, float>
+	 */
+	private static array $refund_deltas = array();
+
+	/**
+	 * This event's refund amount for an order mid-transition, or null when the
+	 * status hook fired outside apply_refund_status().
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int $order_id Order ID.
+	 * @return float|null
+	 */
+	public static function get_refund_delta( int $order_id ): ?float {
+		return self::$refund_deltas[ $order_id ] ?? null;
 	}
 
 	/**
@@ -259,22 +287,29 @@ class OrderService {
 			return false;
 		}
 
-		$table = $wpdb->prefix . 'wpss_orders';
-		$total = (float) $order->total;
+		$table    = $wpdb->prefix . 'wpss_orders';
+		$total    = (float) $order->total;
+		$decimals = wpss_get_currency_decimals( (string) ( $order->currency ?? '' ) );
+
+		// Refunds ACCUMULATE. `refunded_amount` is the running total; this call
+		// adds one event to it. What is left is what can still go back.
+		$previous  = ServiceOrder::STATUS_REFUNDED === $order->status ? $total : (float) ( $order->refunded_amount ?? 0 );
+		$remaining = round( $total - $previous, $decimals );
+
+		if ( $remaining <= 0 ) {
+			wpss_log( sprintf( 'Refused a refund on order %d: the full total %s is already refunded.', $order_id, (string) $total ), 'error' );
+			return false;
+		}
 
 		// A partial refund with no usable amount is refused, not promoted.
 		//
-		// This clamp reads `null`/0/over-total as "refund everything", which is
-		// right for a FULL refund - null is how callers say "the total". For a
-		// partial it was catastrophic: the dispute screen never collected an
-		// amount, passed 0.0, and every Partial Refund returned the buyer 100%
-		// of the order while recording it as partially_refunded - and clawed
-		// back the vendor's whole earning with it (Basecamp 10240143362).
-		//
-		// Refusing here rather than only fixing the dispute form is deliberate:
-		// this is the one place every refund path routes through, so no future
-		// caller can reintroduce it. A partial refund of nothing is never a real
-		// instruction, and one for the full total is a full refund - the caller
+		// null/0 is how callers say "the total", which is right for a FULL
+		// refund. For a partial it was catastrophic: the dispute screen never
+		// collected an amount, passed 0.0, and every Partial Refund returned the
+		// buyer 100% of the order (Basecamp 10240143362). Refusing here rather
+		// than only fixing the dispute form is deliberate: this is the one place
+		// every refund path routes through. A partial of nothing is never a real
+		// instruction, and one for the whole total is a full refund - the caller
 		// should say so, rather than leave a row that claims both.
 		if ( ServiceOrder::STATUS_PARTIALLY_REFUNDED === $status
 			&& ( null === $amount || $amount <= 0 || $amount >= $total ) ) {
@@ -291,40 +326,56 @@ class OrderService {
 			return false;
 		}
 
-		// A partial larger than the order is clamped rather than trusted — it
-		// would otherwise claw back more from the vendor than they ever earned.
-		// This clamp used to live in DisputeService and applied to disputes
-		// only; it belongs to every caller.
-		$refunded = ( null === $amount || $amount <= 0 || $amount >= $total )
-			? $total
-			: round( $amount, 2 );
+		// A partial that covers exactly what is left completes the refund and
+		// is recorded as one; a larger amount is clamped to what is left rather
+		// than trusted - it would otherwise claw back more from the vendor than
+		// they ever earned. NULL / 0 for a full refund means "the remainder".
+		$delta = ( null === $amount || $amount <= 0 || $amount >= $remaining )
+			? $remaining
+			: round( $amount, $decimals );
+
+		if ( $delta >= $remaining ) {
+			$status = ServiceOrder::STATUS_REFUNDED;
+		}
+
+		$cumulative = round( $previous + $delta, $decimals );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$previous = $wpdb->get_var( $wpdb->prepare( "SELECT refunded_amount FROM {$table} WHERE id = %d", $order_id ) );
+		$wpdb->update( $table, array( 'refunded_amount' => $cumulative ), array( 'id' => $order_id ), array( '%f' ), array( '%d' ) );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update( $table, array( 'refunded_amount' => $refunded ), array( 'id' => $order_id ), array( '%f' ), array( '%d' ) );
+		self::$refund_deltas[ $order_id ] = $delta;
 
 		if ( $settled_at_rail ) {
 			self::mark_settled_at_rail( $order_id );
 		}
 
 		try {
-			$moved = $this->update_status( $order_id, $status );
+			if ( $order->status === $status ) {
+				// A second partial on an already partially refunded order is
+				// not a transition, so update_status() would (rightly) do
+				// nothing. The money still moved: run the same handlers a
+				// transition would, once, with the new amount on the row.
+				do_action( "wpss_order_status_{$status}", $order_id, $order->status );
+				$moved = true;
+			} else {
+				$moved = $this->update_status( $order_id, $status, '', $order->status );
+			}
 		} finally {
+			unset( self::$refund_deltas[ $order_id ] );
+
 			if ( $settled_at_rail ) {
 				self::clear_settled_at_rail( $order_id );
 			}
 		}
 
 		if ( ! $moved ) {
-			// Put the column back exactly as it was — including NULL, which is
+			// Put the column back exactly as it was - including NULL, which is
 			// itself meaningful. Leaving the attempted amount behind would
 			// misreport a refund that never happened.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$table,
-				array( 'refunded_amount' => null === $previous ? null : (float) $previous ),
+				array( 'refunded_amount' => $order->refunded_amount ),
 				array( 'id' => $order_id ),
 				array( '%f' ),
 				array( '%d' )
@@ -342,12 +393,17 @@ class OrderService {
 	/**
 	 * Update order status.
 	 *
-	 * @param int    $order_id   Order ID.
-	 * @param string $new_status New status.
-	 * @param string $note       Optional status note.
+	 * @param int    $order_id      Order ID.
+	 * @param string $new_status    New status.
+	 * @param string $note          Optional status note.
+	 * @param string $expected_from Optional. The status the caller believes the
+	 *                              order is in. The UPDATE is conditioned on it
+	 *                              (defaults to the status read here), so two
+	 *                              concurrent writers cannot both succeed: the
+	 *                              second finds 0 rows and returns false.
 	 * @return bool
 	 */
-	public function update_status( int $order_id, string $new_status, string $note = '' ): bool {
+	public function update_status( int $order_id, string $new_status, string $note = '', string $expected_from = '' ): bool {
 		$order = $this->get( $order_id );
 
 		if ( ! $order ) {
@@ -355,6 +411,11 @@ class OrderService {
 		}
 
 		$old_status = $order->status;
+
+		if ( '' !== $expected_from && $expected_from !== $old_status ) {
+			wpss_log( sprintf( 'Order %d: expected status "%s" but found "%s"; "%s" not applied.', $order_id, $expected_from, $old_status, $new_status ), 'warning' );
+			return false;
+		}
 
 		// Skip if already in the target status (prevents duplicate system messages from cron re-runs).
 		if ( $old_status === $new_status ) {
@@ -401,10 +462,23 @@ class OrderService {
 			$data['completed_at'] = current_time( 'mysql' );
 		}
 
+		// Conditioned on the status just read: a concurrent writer that moved
+		// the order first leaves this UPDATE with 0 rows, and the hooks below
+		// must not fire for a transition that did not happen.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->update( $table, $data, array( 'id' => $order_id ) );
+		$result = $wpdb->update(
+			$table,
+			$data,
+			array(
+				'id'     => $order_id,
+				'status' => $old_status,
+			)
+		);
 
-		if ( false === $result ) {
+		if ( ! $result ) {
+			if ( 0 === $result ) {
+				wpss_log( sprintf( 'Order %d: status changed under us while moving "%s" to "%s"; not applied.', $order_id, $old_status, $new_status ), 'warning' );
+			}
 			return false;
 		}
 
@@ -439,8 +513,9 @@ class OrderService {
 	 * @return bool
 	 */
 	public function can_transition( string $from, string $to ): bool {
-		// Admins and vendors with order management capability can force any
-		// status transition. The forcing is audited downstream via
+		// Only site staff (wpss_manage_orders is admin-side; vendors hold
+		// wpss_vendor_orders, which never reaches here) can force a status
+		// transition. The forcing is audited downstream via
 		// can_transition_naturally() → log_status_change()/AuditLogService so
 		// forensics can tell a natural transition from a cap-bypass.
 		if ( current_user_can( 'manage_options' ) || current_user_can( 'wpss_manage_orders' ) ) {
@@ -535,11 +610,18 @@ class OrderService {
 				ServiceOrder::STATUS_DISPUTED,
 				ServiceOrder::STATUS_IN_PROGRESS,
 			),
-			ServiceOrder::STATUS_DISPUTED               => array(
-				ServiceOrder::STATUS_COMPLETED,
-				ServiceOrder::STATUS_CANCELLED,
-				ServiceOrder::STATUS_REFUNDED,
-				ServiceOrder::STATUS_PARTIALLY_REFUNDED,
+			// The four rulings, plus every status a dispute can be opened from:
+			// a dispute closed without a ruling hands the order back to where
+			// it was (DisputeWorkflowManager::cancel()), and the opener may do
+			// that without admin rights.
+			ServiceOrder::STATUS_DISPUTED               => array_merge(
+				array(
+					ServiceOrder::STATUS_COMPLETED,
+					ServiceOrder::STATUS_CANCELLED,
+					ServiceOrder::STATUS_REFUNDED,
+					ServiceOrder::STATUS_PARTIALLY_REFUNDED,
+				),
+				DisputeService::DISPUTABLE_ORDER_STATUSES
 			),
 			// A PARTIAL refund is a money fact, not the end of the job: the
 			// buyer got some of it back and the vendor is still owed the rest.
@@ -763,6 +845,20 @@ class OrderService {
 				$order_id
 			)
 		);
+
+		// The reason is a revision message on the order conversation: the one
+		// store both order views, the vendor email and the REST order read from
+		// (ServiceOrder::get_revision_reason()). Written here so the REST
+		// action and the dashboard AJAX record it alike. Conversations are
+		// created lazily, so a first revision on an order nobody had messaged
+		// on used to drop the note on the floor.
+		if ( '' !== $reason ) {
+			$conversation_service = new ConversationService();
+			$conversation         = $conversation_service->get_by_order( $order_id ) ?: $conversation_service->create_for_order( $order_id );
+			if ( $conversation ) {
+				$conversation_service->send_message( $conversation->id, $order->customer_id, $reason, array(), Message::TYPE_REVISION );
+			}
+		}
 
 		return $this->update_status( $order_id, ServiceOrder::STATUS_REVISION_REQUESTED, $reason );
 	}

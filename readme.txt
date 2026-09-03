@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -96,9 +96,11 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 **Standalone Checkout**
 
-* Built-in checkout system — no WooCommerce or other e-commerce plugin required
+* Built-in checkout system - no WooCommerce or other e-commerce plugin required
 * Offline payment gateway with admin confirmation workflow
 * Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce, EDD and FluentCart checkout integrations.
+* Milestone, tip and extension payments are supported on Standalone, WooCommerce and FluentCart
+* Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce checkout; the EDD and FluentCart rails are beta and cannot take a catalog purchase yet.
 * Milestone, tip and extension payments are supported on Standalone and WooCommerce
 
 **Developer Ready**
@@ -106,7 +108,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 * 6 Gutenberg blocks (Service Grid, Search, Categories, Featured Services, Seller Card, Buyer Requests)
 * 19 shortcodes for flexible page building
 * 21 REST API controllers with 125+ endpoints and full CRUD operations
-* 100% REST coverage for all user-facing features — fully mobile-app ready
+* 100% REST coverage for all user-facing features - fully mobile-app ready
 * Batch endpoint for mobile apps (up to 25 requests in single call)
 * Template override system compatible with any theme
 * 100+ action and filter hooks
@@ -134,7 +136,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 Upgrade to [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-services-pro/) for additional capabilities:
 
-* **E-commerce Platforms**: WooCommerce, Easy Digital Downloads, FluentCart
+* **E-commerce Platforms**: WooCommerce. Easy Digital Downloads and FluentCart are beta, off by default, and cannot take a catalog purchase yet
 * **Additional Payment Gateway**: Razorpay (UPI, cards, netbanking)
 * **Tiered Commission Rules**: Category, volume, and seller-level based commission rates
 * **White-Label Branding**: Rebrand the entire marketplace with custom name and styling
@@ -196,7 +198,11 @@ Full documentation at [wbcomdesigns.com/docs/wp-sell-services](https://wbcomdesi
 
 = Is WooCommerce required? =
 
-No. WP Sell Services includes a built-in standalone checkout system with Stripe, PayPal, and Offline payment gateways. Your marketplace is fully functional out of the box — service listings, vendor management, order workflow, messaging, reviews, dispute resolution, and checkout all work without any additional plugins. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, EDD and FluentCart integrations for sites that prefer those platforms.
+No. WP Sell Services includes a built-in standalone checkout system with Stripe, PayPal, and Offline payment gateways. Your marketplace is fully functional out of the box - service listings, vendor management, order workflow, messaging, reviews, dispute resolution, and checkout all work without any additional plugins. The Pro version adds Razorpay as an additional gateway, plus WooCommerce checkout for sites that prefer it. The EDD and FluentCart rails are beta, off by default, and cannot take a catalog purchase yet.
+
+= Does it work on multisite? =
+
+Yes. Activate it on individual sites, or network-activate it and it installs its tables, roles and pages on every site in the network. Each site keeps its own settings, vendors and orders.
 
 = Does this work with my WordPress theme? =
 
@@ -216,7 +222,7 @@ Yes. Buyers can post project requests with budget range, description, and deadli
 
 = What payment gateways are supported? =
 
-The free version includes a standalone checkout with Stripe, PayPal, and Offline payment gateways — no e-commerce plugin required. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, Easy Digital Downloads and FluentCart checkout integrations for sites already using those platforms.
+The free version includes a standalone checkout with Stripe, PayPal, and Offline payment gateways - no e-commerce plugin required. The Pro version adds Razorpay as an additional gateway, plus WooCommerce checkout for sites already using it. The Easy Digital Downloads and FluentCart rails are beta, off by default, and cannot take a catalog purchase yet.
 
 One difference worth knowing: paying a single existing amount (a milestone phase, a tip, a paid extension) is supported on Standalone and WooCommerce. If your marketplace needs milestones, tipping or paid extensions, run it on one of those two.
 
@@ -262,6 +268,72 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.7.1 - September 2026 =
+
+* New      - Review window setting.
+* New      - Vendors get Proposals and Reviews sections in the dashboard, with review replies and declined-proposal status.
+* New      - Notifications for review replies, expired requests, dispute escalation and cancellation, withdrawal progress, service moderation decisions and tip receipts, each with an admin toggle.
+* New      - Setting to allow vendor-initiated refunds, off by default.
+* Improve  - Upgrading preserves access for people who were already selling, including author-role sellers, and tells the owner who was migrated.
+* Improve  - The audit log now records withdrawals, dispute outcomes, vendor status changes, commission changes, moderation decisions, payments and every ledger entry; retention defaults to one year.
+* Improve  - Dispute pages show the outcome, refund amount and admin note to both parties; the link after posting a request opens the request list.
+* Improve  - The dashboard menu collapses on small screens so content comes first, and the vendor sales list can be filtered by status and searched.
+* Improve  - Personal data export now covers disputes, deliveries, requirements, withdrawals, proposals, reports and notifications.
+* Improve  - Replaced emoji and text stars with icons, fixed status labels and plural copy, and added accessible names and tab roles on the service page.
+* Improve  - The orders API loads a page of orders with a fixed number of queries.
+* Improve  - One setup notice tells the owner when a mapped page is missing, no payment method is enabled, or the selected store plugin is inactive; links to unpublished pages are hidden.
+* Improve  - Dashboard lists, favourites and the vendor directory are paginated, the vendor directory can be sorted and filtered, admin counts are cached, and new indexes keep review moderation and the vendor directory fast on large sites.
+* Improve  - The delete-data setting now says that mapped pages are left in place, and pages the plugin creates are marked so a future release can offer to remove them.
+* Fix      - Refunds made in the PayPal or Razorpay dashboard now update the order and reverse the vendor credit.
+* Fix      - A Stripe payment webhook arriving before checkout finishes no longer creates a duplicate order, and cart refunds land on the right order.
+* Fix      - Offline and manual gateway refunds are marked as pending manual payment instead of being reported as sent.
+* Fix      - Service content limits apply on every save path, and a proposal can only be accepted once.
+* Fix      - New orders carry the package's revision count, so buyers can request revisions and vendors see the revision notes.
+* Fix      - Deleting a user keeps and anonymises the other party's orders, ledger and reviews instead of deleting them; order files are removed when an order is deleted.
+* Fix      - Demo delete removes only demo content.
+* Fix      - Every command that writes or deletes data now asks first and refuses on a production site without --force.
+* Fix      - Pay buttons for tips, milestones, extensions and proposals are hidden on a store rail that cannot take a single-order payment instead of linking to a page it ignores.
+* Fix      - A store rail that cannot take a catalog purchase now says so instead of adding to the cart and looping.
+* Fix      - Orders left without requirements now auto-start by default instead of being cancelled after the timeout.
+* Fix      - Price decimals and currency position settings are applied; minimum and maximum order amounts are enforced at checkout.
+* Fix      - Password reset over REST accepts a username as well as an email, private order files can be downloaded by app clients, and repeated failed logins lock the account temporarily.
+* Fix      - Commission is locked when the order is paid, partial refunds can be issued more than once and each reverses the right vendor share, and orders created from proposals are taxed.
+* Fix      - Vendor earnings totals are computed from the ledger everywhere, so the profile, earnings page and ledger agree.
+* Fix      - Uninstall with delete data now removes scheduled jobs, order files and every plugin user meta.
+* Fix      - Usage tracking is no longer switched on without the owner opting in.
+* Fix      - Order, payment and moderation emails are never dropped by the message cooldown, review and requirement mails are sent once, and failed sends are logged and retried.
+* Fix      - Notification checkboxes control the event named on the label, so turning off cancellation notices no longer silences a different event.
+* Fix      - Suspended vendors receive a suspension notice instead of the rejection wording.
+* Fix      - Dispute numbers are generated, the vendor profile page carries the vendor's name in its title, and several PHP notices on email and admin pages are gone.
+* Fix      - Order requirements use one schema on every surface, so requirement forms show the vendor's questions and REST submissions validate correctly.
+* Fix      - The review window filter is honoured by the API as well as the website, and review replies go through one writer.
+* Fix      - Vendor detection now requires an approved seller profile; the author role no longer receives seller capabilities.
+* Fix      - Vendor statistics refresh for every approved seller, and marketplace search returns only active vendors.
+* Fix      - A repeated payment webhook no longer resets a paid order or resends its notifications.
+* Fix      - Tax is charged on multi-item cart checkout and on PayPal checkout, matching the single-service total.
+* Fix      - Closing a dispute from the admin restores the order, a dispute cannot be resolved twice, and disputes cannot be opened on unpaid orders.
+* Fix      - The Active count on the Sales and Orders screens matches the Active filter beside it.
+* Fix      - The service gallery lightbox opens, zooms and moves between images, and a tall image no longer stretches the page.
+* Fix      - A service page no longer blanks its own title: search-engine structured data, the social share title, the breadcrumb and the gallery image alt text all carry the service name again.
+* Fix      - The cart page follows the theme's dark mode. Every colour on it referenced a token that did not exist, so it was locked to light.
+* Fix      - The become a vendor card and the standalone account panel no longer stay white when the theme goes dark, which had made their headings unreadable.
+* Fix      - Outline buttons take their colours from the design system again, so they follow the theme instead of a fixed grey.
+* Fix      - The Contact Seller button no longer keeps the browser's default grey, which left it unreadable when the theme is dark.
+* Fix      - The Featured badge on portfolio items uses dark text on amber so the label is legible.
+* Security - Message, contact and dispute attachments are stored privately like deliveries, dispute evidence checks ownership, and vendor payout details are encrypted at rest.
+* Security - Payment receipts are stored privately like deliveries instead of in the media library.
+* Security - Buyers and vendors can no longer refund or cancel orders outside their allowed steps; retired accept and decline actions removed.
+* Security - Repeated failed sign-ins now lock the account on the website as well as the API.
+* Dev      - Stored files record which storage provider holds them.
+* Dev      - Payment intents carry the vendor id for every order type.
+* Dev      - New wpss_auth_login_challenge filter for two-factor plugins.
+* Dev      - Unique keys on wallet transactions and reviews, and an index on order transaction ids.
+* Dev      - Retired the unused service requirements and add-ons tables; post meta is the single store.
+* Dev      - Pay-order URLs are read-only; rails create store orders through the new wpss_ensure_pay_order seam.
+* Dev      - CI now runs the integration, REST and contract suites; run-tests.sh works on a fresh clone; OpenAPI marks Pro-only routes.
+* Dev      - The pay-order support matrix lives in one place and the docs check now validates link anchors and hook names.
+* Compat   - Requires WP Sell Services Pro 1.7.1. Install both updates together.
 
 = 1.7.0 - August 2026 =
 

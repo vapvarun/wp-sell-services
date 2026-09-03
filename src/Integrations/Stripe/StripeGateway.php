@@ -513,8 +513,11 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		return array(
 			'success'           => true,
+			'manual'            => false,
 			'refund_id'         => $response['id'],
+			'transaction_id'    => (string) $response['id'],
 			'status'            => $response['status'],
+			'message'           => '',
 			'amount'            => $this->parse_amount( $response['amount'], $response['currency'] ),
 			'transfer_reversed' => $transfer_reversed,
 		);
@@ -951,17 +954,29 @@ class StripeGateway implements PaymentGatewayInterface {
 			);
 		}
 
+		$service_id = (int) ( $params['service_id'] ?? 0 );
+		$order_id   = (int) ( $params['order_id'] ?? 0 );
+
+		// The vendor the charge is for, the same way CheckoutIntentService
+		// names it on the AJAX path: the order's vendor when paying an existing
+		// order, else the service author. A split rail (Pro Connect) reads it
+		// from wpss_stripe_payment_intent_args.
+		$vendor_id = $order_id
+			? (int) ( wpss_get_order( $order_id )->vendor_id ?? 0 )
+			: (int) get_post_field( 'post_author', $service_id );
+
 		return $this->create_payment(
 			$amount,
 			$currency,
 			array(
-				'service_id'  => (int) ( $params['service_id'] ?? 0 ),
+				'service_id'  => $service_id,
 				'package_id'  => (int) ( $params['package_id'] ?? 0 ),
 				// Carried through to the intent's metadata so a succeeded
 				// payment can be matched back to the order it paid. Dropping it
 				// here is how a charged card left an order at pending_payment.
-				'order_id'    => (int) ( $params['order_id'] ?? 0 ),
+				'order_id'    => $order_id,
 				'customer_id' => (int) ( $params['customer_id'] ?? get_current_user_id() ),
+				'vendor_id'   => $vendor_id,
 			)
 		);
 	}
@@ -1313,18 +1328,15 @@ class StripeGateway implements PaymentGatewayInterface {
 	 *
 	 * @since 1.4.0
 	 *
-	 * @param string $transaction_id Gateway transaction id.
-	 * @return int Order ID, or 0.
+	 * @param string $transaction_id Gateway transaction id (PaymentIntent id).
+	 * @param string $charge_id      Optional charge id; matched too, so an order
+	 *                               stamped either way is found.
+	 * @return int Oldest matching order ID, or 0.
 	 */
-	private function find_order_by_transaction( string $transaction_id ): int {
-		global $wpdb;
+	private function find_order_by_transaction( string $transaction_id, string $charge_id = '' ): int {
+		$rows = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_by_transaction_ids( array( $transaction_id, $charge_id ) );
 
-		$table = $wpdb->prefix . 'wpss_orders';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (int) $wpdb->get_var(
-			$wpdb->prepare( "SELECT id FROM {$table} WHERE transaction_id = %s ORDER BY id ASC LIMIT 1", $transaction_id )
-		);
+		return empty( $rows ) ? 0 : (int) $rows[0]->id;
 	}
 
 	/**
@@ -1336,6 +1348,19 @@ class StripeGateway implements PaymentGatewayInterface {
 	private function handle_payment_succeeded( array $payment_intent ): array {
 		$metadata       = $payment_intent['metadata'] ?? array();
 		$order_provider = wpss_get_order_provider();
+
+		// The browser confirm stamps order_id on the intent only AFTER settle,
+		// so a webhook that races it carries no order_id yet while the order
+		// already exists. Looking the intent (and its charge) up first keeps
+		// that race on Path 1; without it Path 2 created a second order for
+		// the same charge.
+		if ( empty( $metadata['order_id'] ) ) {
+			$existing = $this->find_order_by_transaction( (string) $payment_intent['id'], (string) ( $payment_intent['latest_charge'] ?? '' ) );
+
+			if ( $existing > 0 ) {
+				$metadata['order_id'] = $existing;
+			}
+		}
 
 		// Path 1: Order already created via AJAX — just confirm payment.
 		if ( ! empty( $metadata['order_id'] ) ) {
@@ -1435,29 +1460,10 @@ class StripeGateway implements PaymentGatewayInterface {
 			);
 		}
 
-		// Resolve the order this charge paid for. Orders store the intent id in
-		// transaction_id when they are marked paid.
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'wpss_orders';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$order_id = (int) $wpdb->get_var(
-			$wpdb->prepare( "SELECT id FROM {$table} WHERE transaction_id = %s LIMIT 1", $payment_intent_id )
-		);
-
-		if ( $order_id <= 0 ) {
-			return array(
-				'success' => true,
-				'message' => 'Refund did not match a service order.',
-			);
-		}
-
-		$order = wpss_get_order( $order_id );
-
 		// Stripe reports refunds in minor units, so convert with the currency's
 		// real precision rather than dividing by 100 - wrong for JPY and KWD.
-		$currency = (string) ( $charge['currency'] ?? ( $order->currency ?? '' ) );
+		// amount_refunded is the RUNNING total on the charge, hence cumulative.
+		$currency = strtoupper( (string) ( $charge['currency'] ?? '' ) );
 		$refunded = wpss_amount_from_minor_units( (int) ( $charge['amount_refunded'] ?? 0 ), $currency );
 
 		if ( $refunded <= 0 ) {
@@ -1467,22 +1473,27 @@ class StripeGateway implements PaymentGatewayInterface {
 			);
 		}
 
-		$total  = (float) ( $order->total ?? 0 );
-		$status = wpss_amounts_match( $refunded, $total, $currency ) || $refunded > $total
-			? 'refunded'
-			: 'partially_refunded';
+		$refunds   = (array) ( $charge['refunds']['data'] ?? array() );
+		$refund_id = (string) ( $refunds[0]['id'] ?? '' );
 
-		// Through the ONE routine that owns this. It clamps an over-refund,
-		// rolls the column back when the status will not move, and reverses the
-		// vendor's earning. This handler previously fired an action and
-		// returned success without touching the order - and nothing listened to
-		// that action, so a real Stripe refund returned the buyer's money and
-		// left the order marked paid with the vendor still credited. Verified
-		// against a live sandbox refund before this fix.
-		// $settled_at_rail = true: this refund HAPPENED at Stripe, we are only
-		// recording it. Without that flag the status change re-enters
-		// attempt_payment_refund() and refunds the buyer a second time.
-		( new \WPSellServices\Services\OrderService() )->apply_refund_status( $order_id, $refunded, $status, true );
+		// Through the ONE listener that owns rail-side refunds. It resolves
+		// every order paid with this intent (a cart stamps one intent on
+		// several orders), splits the amount across them and records each via
+		// apply_refund_status() with settled_at_rail = true, so the vendor's
+		// share is reversed and the buyer is not refunded a second time. This
+		// handler used to do that inline for the FIRST order only.
+		do_action(
+			'wpss_gateway_refund_received',
+			'stripe',
+			$payment_intent_id,
+			$refunded,
+			array(
+				'cumulative' => true,
+				'charge_id'  => (string) ( $charge['id'] ?? '' ),
+				'refund_id'  => $refund_id,
+				'currency'   => $currency,
+			)
+		);
 
 		/**
 		 * Fires when a Stripe refund is processed.
@@ -1494,7 +1505,7 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		return array(
 			'success' => true,
-			'message' => 'Refund applied to order #' . $order_id . '.',
+			'message' => 'Refund handed to the order workflow.',
 		);
 	}
 

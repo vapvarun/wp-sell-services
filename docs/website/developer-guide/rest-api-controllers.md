@@ -1,7 +1,7 @@
 # REST API Controllers Reference
 
 WP Sell Services registers **25 REST controllers** plus a set of generic utility
-routes. WP Sell Services Pro adds **10 more**. Everything lives under one
+routes. WP Sell Services Pro adds **9 more**. Everything lives under one
 namespace:
 
 ```
@@ -115,6 +115,7 @@ rather than hard-coding these numbers.
 | GET, POST/PUT/PATCH | `/orders/(?P<id>[\d]+)` |
 | GET, POST | `/orders/(?P<id>[\d]+)/messages` |
 | GET, POST | `/orders/(?P<id>[\d]+)/deliverables` |
+| GET | `/orders/(?P<id>[\d]+)/files/(?P<file_id>[A-Za-z0-9\-]+)` |
 | POST | `/orders/(?P<id>[\d]+)/(?P<action>…)` |
 | GET, POST | `/orders/(?P<id>[\d]+)/requirements` |
 | POST | `/orders/(?P<id>[\d]+)/requirements/skip` |
@@ -195,8 +196,8 @@ lock-step guard while doing so.
 > ### `checkout_url` is a BROWSER url, not an API endpoint
 >
 > This is the single most common way to get this wrong. `checkout_url` is a
-> page for a human, resolved through the `wpss_pay_order_url` filter by whatever
-> e-commerce rail is active. **Do not fetch it, do not parse it, do not
+> page for a human, resolved through the `wpss_ensure_pay_order` filter by
+> whatever e-commerce rail is active. **Do not fetch it, do not parse it, do not
 > reconstruct it.** A native client must open it in a webview (or the system
 > browser) and watch for the return URL.
 >
@@ -215,12 +216,17 @@ lock-step guard while doing so.
 > On the **standalone** rail it is `…/checkout/?pay_order={id}` and nothing is
 > created.
 >
-> **EDD and FluentCart have no pay-order rail at all.** They do not
-> hook the filter, so `checkout_url` falls back to the standalone
-> `?pay_order=N` URL, which those checkouts do not understand -- the buyer
-> lands on an empty cart. See
-> [WooCommerce Checkout](../payments-checkout/woocommerce-checkout.md#paying-a-milestone-tip-or-extension)
-> for the support matrix.
+> On the **FluentCart** rail it is a FluentCart checkout URL for an order that
+> rail minted, with the same side effect and the same idempotence: Pro's
+> `FluentCartPayOrderResolver` creates or reuses one FluentCart order carrying a
+> single fee line. FluentCart is a beta rail, off until `wpss_pro_beta_rails`
+> returns true.
+>
+> **EDD has no pay-order rail.** It hooks neither half of the seam, so
+> `wpss_can_pay_single_order()` is false and `checkout_url` is an empty string --
+> there is no Pay button to offer. See
+> [Pay-order support by rail](hooks-filters.md#pay-order-support-by-rail)
+> for the one support table.
 
 ### Milestones
 
@@ -618,18 +624,6 @@ unlicensed call answers `403 wpss_pro_license_required` rather than
 `404 rest_no_route`, so a client can tell "you need a license" apart from "this
 build does not have that endpoint". Anonymous callers get `401 rest_not_logged_in`;
 a logged-in non-admin gets `403`.
-
-### Cloud storage
-
-| Method | Route |
-|--------|-------|
-| POST | `/storage/upload` |
-| GET | `/storage/(?P<file_id>[\d]+)/url` |
-| DELETE | `/storage/(?P<file_id>[\d]+)` |
-| GET | `/storage/providers` |
-
-`/storage/{file_id}/url` returns a time-limited signed URL. Do not cache it past
-its expiry.
 
 ### White label
 

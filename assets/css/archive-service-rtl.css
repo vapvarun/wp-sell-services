@@ -618,6 +618,7 @@ body.wpss-sidebar-open::after {
 
 .wpss-rating-option .wpss-star.filled {
 	color: var(--wpss-star);
+	fill: currentColor;
 }
 
 .wpss-rating-option .wpss-label {

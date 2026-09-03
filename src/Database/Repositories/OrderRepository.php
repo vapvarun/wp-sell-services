@@ -112,6 +112,37 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Every order settled against any of the given gateway transaction ids.
+	 *
+	 * A multi-item cart stamps ONE transaction id on every order it creates,
+	 * so a gateway refund can map to several orders. Callers that only ever
+	 * took the first row applied the whole charge's refund to one order.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<int, string> $transaction_ids Gateway transaction / intent / charge ids.
+	 * @return array<int, object> Matching order rows, oldest first.
+	 */
+	public function get_by_transaction_ids( array $transaction_ids ): array {
+		$transaction_ids = array_values( array_filter( array_map( 'strval', $transaction_ids ) ) );
+
+		if ( empty( $transaction_ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ', ', array_fill( 0, count( $transaction_ids ), '%s' ) );
+
+		$rows = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT * FROM {$this->table} WHERE transaction_id IN ({$placeholders}) ORDER BY id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				...$transaction_ids
+			)
+		);
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * Get orders by customer ID.
 	 *
 	 * @param int                  $customer_id Customer user ID.
@@ -124,6 +155,7 @@ class OrderRepository extends AbstractRepository {
 			// A group of statuses, for the dashboard filter chips. Single
 			// 'status' stays for every existing caller.
 			'status__in'       => array(),
+			'search'           => '', // Order-number contains match (dashboard search box).
 			'platform'         => '',
 			'orderby'          => 'created_at',
 			'order'            => 'DESC',
@@ -144,26 +176,7 @@ class OrderRepository extends AbstractRepository {
 		$sql    = "SELECT * FROM {$this->table} WHERE customer_id = %d";
 		$params = array( $customer_id );
 
-		if ( ! empty( $args['status'] ) ) {
-			$sql     .= ' AND status = %s';
-			$params[] = $args['status'];
-		}
-
-		if ( ! empty( $args['status__in'] ) ) {
-			$in_statuses = array_values( array_filter( array_map( 'sanitize_key', (array) $args['status__in'] ) ) );
-
-			if ( $in_statuses ) {
-				$sql   .= ' AND status IN ( ' . implode( ', ', array_fill( 0, count( $in_statuses ), '%s' ) ) . ' )';
-				$params = array_merge( $params, $in_statuses );
-			}
-		}
-
-		if ( ! empty( $args['platform'] ) ) {
-			$sql     .= ' AND platform = %s';
-			$params[] = $args['platform'];
-		}
-
-		$sql = $this->exclude_sub_orders( $sql, $params, $args );
+		$sql = $this->filter_sql( $sql, $params, $args );
 
 		if ( ! empty( $args['actionable_first'] ) && function_exists( 'wpss_get_order_status_priority' ) ) {
 			// FIELD() returns the 1-based position of status in the list and 0
@@ -202,13 +215,15 @@ class OrderRepository extends AbstractRepository {
 	 */
 	public function get_by_vendor( int $vendor_id, array $args = array() ): array {
 		$defaults = array(
-			'status'    => '',
-			'platform'  => '',
-			'date_from' => '', // Y-m-d H:i:s — orders created at or after this timestamp (VS10 from plans/ORDER-FLOW-AUDIT.md).
-			'orderby'   => 'created_at',
-			'order'     => 'DESC',
-			'limit'     => 20,
-			'offset'    => 0,
+			'status'     => '',
+			'status__in' => array(),
+			'search'     => '',
+			'platform'   => '',
+			'date_from'  => '', // Y-m-d H:i:s — orders created at or after this timestamp (VS10 from plans/ORDER-FLOW-AUDIT.md).
+			'orderby'    => 'created_at',
+			'order'      => 'DESC',
+			'limit'      => 20,
+			'offset'     => 0,
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -220,22 +235,7 @@ class OrderRepository extends AbstractRepository {
 		$sql    = "SELECT * FROM {$this->table} WHERE vendor_id = %d";
 		$params = array( $vendor_id );
 
-		if ( ! empty( $args['status'] ) ) {
-			$sql     .= ' AND status = %s';
-			$params[] = $args['status'];
-		}
-
-		if ( ! empty( $args['platform'] ) ) {
-			$sql     .= ' AND platform = %s';
-			$params[] = $args['platform'];
-		}
-
-		if ( ! empty( $args['date_from'] ) ) {
-			$sql     .= ' AND created_at >= %s';
-			$params[] = $args['date_from'];
-		}
-
-		$sql = $this->exclude_sub_orders( $sql, $params, $args );
+		$sql = $this->filter_sql( $sql, $params, $args );
 
 		$sql .= " ORDER BY {$orderby} {$order}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
@@ -248,6 +248,53 @@ class OrderRepository extends AbstractRepository {
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare( $sql, ...$params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		);
+	}
+
+	/**
+	 * Append the shared list filters to a buyer or vendor query.
+	 *
+	 * One definition for the list, count and grouped-count paths on both sides
+	 * of the trade, so a filter the dashboard offers to buyers (status chips,
+	 * order-number search) is the same query for sellers.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string               $sql    SQL built so far.
+	 * @param array<int, mixed>    $params Prepare params, appended in place.
+	 * @param array<string, mixed> $args   status, status__in, platform, date_from, search, include_sub_orders.
+	 * @return string SQL with the filters applied.
+	 */
+	private function filter_sql( string $sql, array &$params, array $args ): string {
+		if ( ! empty( $args['status'] ) ) {
+			$sql     .= ' AND status = %s';
+			$params[] = $args['status'];
+		}
+
+		if ( ! empty( $args['status__in'] ) ) {
+			$in_statuses = array_values( array_filter( array_map( 'sanitize_key', (array) $args['status__in'] ) ) );
+
+			if ( $in_statuses ) {
+				$sql   .= ' AND status IN ( ' . implode( ', ', array_fill( 0, count( $in_statuses ), '%s' ) ) . ' )';
+				$params = array_merge( $params, $in_statuses );
+			}
+		}
+
+		if ( ! empty( $args['platform'] ) ) {
+			$sql     .= ' AND platform = %s';
+			$params[] = $args['platform'];
+		}
+
+		if ( ! empty( $args['date_from'] ) ) {
+			$sql     .= ' AND created_at >= %s';
+			$params[] = $args['date_from'];
+		}
+
+		if ( ! empty( $args['search'] ) ) {
+			$sql     .= ' AND order_number LIKE %s';
+			$params[] = '%' . $this->wpdb->esc_like( (string) $args['search'] ) . '%';
+		}
+
+		return $this->exclude_sub_orders( $sql, $params, $args );
 	}
 
 	/**
@@ -312,6 +359,7 @@ class OrderRepository extends AbstractRepository {
 		$defaults = array(
 			'status'     => '',
 			'status__in' => array(),
+			'search'     => '',
 			'platform'   => '',
 		);
 
@@ -320,26 +368,7 @@ class OrderRepository extends AbstractRepository {
 		$sql    = "SELECT COUNT(*) FROM {$this->table} WHERE customer_id = %d";
 		$params = array( $customer_id );
 
-		if ( ! empty( $args['status'] ) ) {
-			$sql     .= ' AND status = %s';
-			$params[] = $args['status'];
-		}
-
-		if ( ! empty( $args['status__in'] ) ) {
-			$in_statuses = array_values( array_filter( array_map( 'sanitize_key', (array) $args['status__in'] ) ) );
-
-			if ( $in_statuses ) {
-				$sql   .= ' AND status IN ( ' . implode( ', ', array_fill( 0, count( $in_statuses ), '%s' ) ) . ' )';
-				$params = array_merge( $params, $in_statuses );
-			}
-		}
-
-		if ( ! empty( $args['platform'] ) ) {
-			$sql     .= ' AND platform = %s';
-			$params[] = $args['platform'];
-		}
-
-		$sql = $this->exclude_sub_orders( $sql, $params, $args );
+		$sql = $this->filter_sql( $sql, $params, $args );
 
 		return (int) $this->wpdb->get_var(
 			$this->wpdb->prepare( $sql, ...$params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
@@ -360,17 +389,39 @@ class OrderRepository extends AbstractRepository {
 	 * @return array<string, int> Status => count.
 	 */
 	public function count_by_customer_grouped( int $customer_id, array $args = array() ): array {
+		return $this->count_grouped( 'customer_id', $customer_id, $args );
+	}
+
+	/**
+	 * Count a vendor's orders per status, in ONE query.
+	 *
+	 * Vendor-side twin of count_by_customer_grouped() for the sales filter chips.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int                  $vendor_id Vendor user ID.
+	 * @param array<string, mixed> $args      Query arguments (platform, include_sub_orders).
+	 * @return array<string, int> Status => count.
+	 */
+	public function count_by_vendor_grouped( int $vendor_id, array $args = array() ): array {
+		return $this->count_grouped( 'vendor_id', $vendor_id, $args );
+	}
+
+	/**
+	 * Per-status count for one side of the trade.
+	 *
+	 * @param string               $owner_column `customer_id` or `vendor_id`.
+	 * @param int                  $user_id      User ID.
+	 * @param array<string, mixed> $args         Query arguments (platform, include_sub_orders).
+	 * @return array<string, int> Status => count.
+	 */
+	private function count_grouped( string $owner_column, int $user_id, array $args ): array {
 		$args = wp_parse_args( $args, array( 'platform' => '' ) );
 
-		$sql    = "SELECT status, COUNT(*) AS c FROM {$this->table} WHERE customer_id = %d";
-		$params = array( $customer_id );
+		$sql    = "SELECT status, COUNT(*) AS c FROM {$this->table} WHERE {$owner_column} = %d";
+		$params = array( $user_id );
 
-		if ( ! empty( $args['platform'] ) ) {
-			$sql     .= ' AND platform = %s';
-			$params[] = $args['platform'];
-		}
-
-		$sql = $this->exclude_sub_orders( $sql, $params, $args );
+		$sql = $this->filter_sql( $sql, $params, $args );
 
 		$sql .= ' GROUP BY status';
 
@@ -395,14 +446,16 @@ class OrderRepository extends AbstractRepository {
 	 * @since 1.1.0
 	 *
 	 * @param int                  $vendor_id Vendor user ID.
-	 * @param array<string, mixed> $args      Filter arguments (status, platform, date_from).
+	 * @param array<string, mixed> $args      Filter arguments (status, status__in, search, platform, date_from).
 	 * @return int Total matching row count.
 	 */
 	public function count_by_vendor( int $vendor_id, array $args = array() ): int {
 		$defaults = array(
-			'status'    => '',
-			'platform'  => '',
-			'date_from' => '',
+			'status'     => '',
+			'status__in' => array(),
+			'search'     => '',
+			'platform'   => '',
+			'date_from'  => '',
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -410,22 +463,7 @@ class OrderRepository extends AbstractRepository {
 		$sql    = "SELECT COUNT(*) FROM {$this->table} WHERE vendor_id = %d";
 		$params = array( $vendor_id );
 
-		if ( ! empty( $args['status'] ) ) {
-			$sql     .= ' AND status = %s';
-			$params[] = $args['status'];
-		}
-
-		if ( ! empty( $args['platform'] ) ) {
-			$sql     .= ' AND platform = %s';
-			$params[] = $args['platform'];
-		}
-
-		if ( ! empty( $args['date_from'] ) ) {
-			$sql     .= ' AND created_at >= %s';
-			$params[] = $args['date_from'];
-		}
-
-		$sql = $this->exclude_sub_orders( $sql, $params, $args );
+		$sql = $this->filter_sql( $sql, $params, $args );
 
 		return (int) $this->wpdb->get_var(
 			$this->wpdb->prepare( $sql, ...$params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
@@ -540,46 +578,76 @@ class OrderRepository extends AbstractRepository {
 	 * @return array<string, mixed> Statistics.
 	 */
 	public function get_vendor_stats( int $vendor_id ): array {
-		// Sub-order platforms are counted differently from the row they
-		// represent:
-		// * Tips never count towards service stats — they live in
-		// get_vendor_tip_stats() so analytics can surface them separately.
-		// * Extensions are NOT separate orders (they top up an existing
-		// service order) but the extra money the vendor earned IS real
-		// revenue, so they are excluded from the counts but summed into
-		// total_earnings.
-		// Revenue uses vendor_earnings (NET, post-commission) so the number
-		// the seller sees matches what they can actually withdraw. Falls back
-		// to total for legacy rows written before CommissionService populated
-		// vendor_earnings.
-		$tip_platform       = \WPSellServices\Services\TippingService::ORDER_TYPE;
-		$extension_platform = \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE;
-		$milestone_platform = \WPSellServices\Services\MilestoneService::ORDER_TYPE;
+		/*
+		 * The status lists come from wpss_get_order_status_groups(), the same
+		 * definition the sales filter chips read - so the Active card and the
+		 * Active chip beside it cannot say different things.
+		 *
+		 * They had drifted: this counted 'in_progress, pending_approval' as
+		 * Active while the chip selected nine statuses, so a vendor with a
+		 * delivered order read "1 Active" next to an Active chip showing 2,
+		 * and clicking the chip listed 2 rows (Basecamp 10268055975). This is
+		 * the seller half of what get_customer_stats() fixed for buyers in
+		 * Basecamp 10240019463.
+		 *
+		 * Sub-order platforms are counted differently from the row they
+		 * represent:
+		 * * Tips never count towards service stats - they live in
+		 * get_vendor_tip_stats() so analytics can surface them separately.
+		 * * Extensions are NOT separate orders (they top up an existing
+		 * service order) but the extra money the vendor earned IS real
+		 * revenue, so they are excluded from the counts but summed into
+		 * total_earnings.
+		 * Revenue uses vendor_earnings (NET, post-commission) so the number
+		 * the seller sees matches what they can actually withdraw. Falls back
+		 * to total for legacy rows written before CommissionService populated
+		 * vendor_earnings.
+		 */
+		$groups = function_exists( 'wpss_get_order_status_groups' ) ? wpss_get_order_status_groups() : array();
+
+		$active_statuses    = $groups['active']['statuses'] ?? array( 'in_progress', 'pending_approval' );
+		$completed_statuses = $groups['completed']['statuses'] ?? array( 'completed' );
+
+		$active_sql    = $this->status_in_placeholders( $active_statuses );
+		$completed_sql = $this->status_in_placeholders( $completed_statuses );
+
+		// Which rows are orders, from the same list exclude_sub_orders() gives
+		// the chips - not a second one written here. COALESCE because in SQL
+		// `NULL NOT IN (...)` is NULL, which dropped every catalog order with
+		// no platform set out of the stats while the chips still counted it.
+		$sub_platforms = function_exists( 'wpss_get_sub_order_platforms' ) ? wpss_get_sub_order_platforms() : array();
+		$sub_sql       = $this->status_in_placeholders( $sub_platforms );
+		$is_order      = "COALESCE(platform, '') NOT IN {$sub_sql}";
+
+		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the interpolated parts are %s placeholder lists built from fixed status/platform maps.
+		$sql = "SELECT
+					SUM(CASE WHEN {$is_order} THEN 1 ELSE 0 END) as total_orders,
+					SUM(CASE WHEN {$is_order} AND status IN {$completed_sql} THEN 1 ELSE 0 END) as completed_orders,
+					SUM(CASE WHEN {$is_order} AND status IN {$active_sql} THEN 1 ELSE 0 END) as active_orders,
+					SUM(CASE WHEN COALESCE(platform, '') != %s AND status IN {$completed_sql} THEN COALESCE(vendor_earnings, total) ELSE 0 END) as total_earnings,
+					AVG(CASE WHEN {$is_order} AND status IN {$completed_sql} THEN TIMESTAMPDIFF(HOUR, started_at, completed_at) END) as avg_completion_hours
+				FROM {$this->table}
+				WHERE vendor_id = %d";
+
+		$params = array_merge(
+			$sub_platforms,
+			$sub_platforms,
+			$completed_statuses,
+			$sub_platforms,
+			$active_statuses,
+			array( $tip_platform ),
+			$completed_statuses,
+			$sub_platforms,
+			$completed_statuses,
+			array( $vendor_id )
+		);
 
 		$stats = $this->wpdb->get_row(
 			$this->wpdb->prepare(
-				"SELECT
-					SUM(CASE WHEN platform NOT IN (%s, %s, %s) THEN 1 ELSE 0 END) as total_orders,
-					SUM(CASE WHEN platform NOT IN (%s, %s, %s) AND status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
-					SUM(CASE WHEN platform NOT IN (%s, %s, %s) AND status IN ('in_progress', 'pending_approval') THEN 1 ELSE 0 END) as active_orders,
-					SUM(CASE WHEN platform != %s AND status = 'completed' THEN COALESCE(vendor_earnings, total) ELSE 0 END) as total_earnings,
-					AVG(CASE WHEN platform NOT IN (%s, %s, %s) AND status = 'completed' THEN TIMESTAMPDIFF(HOUR, started_at, completed_at) END) as avg_completion_hours
-				FROM {$this->table}
-				WHERE vendor_id = %d",
-				$tip_platform,
-				$extension_platform,
-				$milestone_platform,
-				$tip_platform,
-				$extension_platform,
-				$milestone_platform,
-				$tip_platform,
-				$extension_platform,
-				$milestone_platform,
-				$tip_platform,
-				$tip_platform,
-				$extension_platform,
-				$milestone_platform,
-				$vendor_id
+				$sql, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				...$params
 			),
 			ARRAY_A
 		);
@@ -750,9 +818,12 @@ class OrderRepository extends AbstractRepository {
 	 * Never returns an empty (), which is a MySQL syntax error - an empty
 	 * status list becomes a condition that matches nothing instead.
 	 *
+	 * Also used for the sub-order platform list, which is sanitised the same
+	 * way and needs the same empty-list guard.
+	 *
 	 * @since 1.7.0
 	 *
-	 * @param string[] $statuses Statuses, by reference so an empty list is normalised.
+	 * @param string[] $statuses Statuses (or platforms), by reference so an empty list is normalised.
 	 * @return string Placeholder list, e.g. "( %s, %s )".
 	 */
 	private function status_in_placeholders( array &$statuses ): string {
@@ -951,6 +1022,35 @@ class OrderRepository extends AbstractRepository {
 		);
 
 		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * Marketplace-wide order aggregates for the admin dashboard, in one scan.
+	 *
+	 * Cached by wpss_get_order_aggregates(); call that, not this, from UI code.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float}
+	 */
+	public function get_aggregates(): object {
+		$row = $this->wpdb->get_row(
+			"SELECT
+				COUNT(*) AS total,
+				SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS in_progress,
+				SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
+				SUM(CASE WHEN status IN ('pending_payment', 'pending_requirements') THEN 1 ELSE 0 END) AS pending,
+				SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END) AS revenue
+			FROM {$this->table}"
+		);
+
+		return (object) array(
+			'total'       => (int) ( $row->total ?? 0 ),
+			'in_progress' => (int) ( $row->in_progress ?? 0 ),
+			'completed'   => (int) ( $row->completed ?? 0 ),
+			'pending'     => (int) ( $row->pending ?? 0 ),
+			'revenue'     => (float) ( $row->revenue ?? 0 ),
+		);
 	}
 
 	/**

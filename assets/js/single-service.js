@@ -52,7 +52,6 @@
          * Initialize gallery functionality.
          */
         initGallery: function() {
-            const self = this;
             const $gallery = $(this.config.gallery);
 
             if (!$gallery.length) {
@@ -103,14 +102,49 @@
                 }
             });
 
-            // Lightbox for main image.
-            $gallery.on('click', '.wpss-gallery-image', function(e) {
+            /*
+             * Lightbox for the main image, opened through the ONE shared
+             * implementation in frontend.js. The whole strip goes with it, so
+             * the overlay can move between images.
+             */
+            // Bound to the BUTTON, not the image. Enter and Space fire a click
+            // on the button itself, so a handler on the <img> never sees them
+            // and the lightbox stayed mouse-only.
+            $gallery.on('click', '.wpss-gallery-zoom', function(e) {
                 e.preventDefault();
-                self.openLightbox($(this).attr('src'));
+
+                const $image = $(this).find('.wpss-gallery-image');
+                const $thumbs = $gallery.find('.wpss-gallery-thumb[data-src]');
+                const items = $thumbs.map(function() {
+                    const $thumb = $(this);
+                    return {
+                        src: $thumb.data('src'),
+                        alt: $thumb.find('img').attr('alt') || ''
+                    };
+                }).get();
+
+                // A one-image service renders no strip; the main image is the
+                // whole gallery.
+                if (!items.length) {
+                    WPSS.openLightbox([{ src: $image.attr('src'), alt: $image.attr('alt') || '' }], 0);
+                    return;
+                }
+
+                const active = $thumbs.index($thumbs.filter('.active'));
+                WPSS.openLightbox(items, active < 0 ? 0 : active);
             });
 
             // Keyboard navigation.
             $(document).on('keydown', function(e) {
+                /*
+                 * The overlay owns the arrow keys while it is open. Without
+                 * this, ArrowRight swapped the image BEHIND the overlay while
+                 * the overlay image stayed put.
+                 */
+                if (window.WPSS && WPSS.lightboxOpen) {
+                    return;
+                }
+
                 if (!$gallery.is(':visible')) {
                     return;
                 }
@@ -123,38 +157,6 @@
                     $thumbs.eq(currentIndex - 1).trigger('click');
                 } else if (e.key === 'ArrowRight' && currentIndex < $thumbs.length - 1) {
                     $thumbs.eq(currentIndex + 1).trigger('click');
-                }
-            });
-        },
-
-        /**
-         * Open lightbox.
-         */
-        openLightbox: function(src) {
-            // If using a lightbox library.
-            if (typeof lightbox !== 'undefined') {
-                lightbox.start($(this.config.gallery + ' .wpss-gallery-image'));
-                return;
-            }
-
-            // Simple lightbox fallback.
-            const $lightbox = $('<div class="wpss-lightbox">' +
-                '<button class="wpss-lightbox-close">&times;</button>' +
-                '<img src="' + src + '" alt="">' +
-                '</div>');
-
-            $('body').append($lightbox);
-
-            $lightbox.on('click', function(e) {
-                if ($(e.target).hasClass('wpss-lightbox') || $(e.target).hasClass('wpss-lightbox-close')) {
-                    $lightbox.remove();
-                }
-            });
-
-            $(document).on('keydown.lightbox', function(e) {
-                if (e.key === 'Escape') {
-                    $lightbox.remove();
-                    $(document).off('keydown.lightbox');
                 }
             });
         },
@@ -183,8 +185,8 @@
                 const packageIndex = $(this).data('package');
 
                 // Update tabs.
-                $packages.find('.wpss-package-tab').removeClass('active');
-                $(this).addClass('active');
+                $packages.find('.wpss-package-tab').removeClass('active').attr({ 'aria-selected': 'false', tabindex: '-1' });
+                $(this).addClass('active').attr({ 'aria-selected': 'true', tabindex: '0' });
 
                 // Update content.
                 $packages.find('.wpss-package').removeClass('active');
@@ -197,6 +199,20 @@
                 if ($(self.config.orderModal).hasClass('active')) {
                     self.updateOrderSummary();
                 }
+            });
+
+            // Arrow keys move between tabs (WAI-ARIA tabs pattern).
+            $packages.on('keydown', '.wpss-package-tab', function(e) {
+                const keys = { ArrowLeft: -1, ArrowRight: 1, Home: 0, End: 0 };
+                if (!(e.key in keys)) {
+                    return;
+                }
+                e.preventDefault();
+                const $tabs = $packages.find('.wpss-package-tab');
+                let index = $tabs.index(this) + keys[e.key];
+                if (e.key === 'Home') { index = 0; }
+                if (e.key === 'End') { index = $tabs.length - 1; }
+                $tabs.eq((index + $tabs.length) % $tabs.length).trigger('click').trigger('focus');
             });
 
             // Order button click.
@@ -366,10 +382,11 @@
             const avatar = review.customer_avatar || '';
             const rating = parseInt(review.rating, 10) || 0;
 
-            let stars = '';
+            let stars = '<span class="wpss-stars">';
             for (let i = 1; i <= 5; i++) {
-                stars += '<span class="wpss-star ' + (i <= rating ? 'filled' : '') + '">★</span>';
+                stars += '<i data-lucide="star" class="wpss-icon wpss-star' + (i <= rating ? ' filled' : '') + '" aria-hidden="true"></i>';
             }
+            stars += '<span class="screen-reader-text">' + rating + ' / 5</span></span>';
 
             let reply = '';
             if (review.vendor_reply_html) {
@@ -724,16 +741,26 @@
             const checkoutUrl = this.state.checkoutUrl || wpssService.checkoutUrl;
             const cartUrl = wpssService.cartUrl || checkoutUrl;
 
+            // A link with an empty href reloads this page, which is how the
+            // dead end used to loop. The server refuses before it gets here
+            // now, so this only ever drops a button it cannot point anywhere.
+            let actions = '';
+            if (cartUrl) {
+                actions += '<a href="' + cartUrl + '" class="wpss-btn wpss-btn-outline">' +
+                    wpssService.i18n.viewCart +
+                    '</a>';
+            }
+            if (checkoutUrl) {
+                actions += '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn-primary">' +
+                    wpssService.i18n.checkout +
+                    '</a>';
+            }
+
             $footer.html(
                 '<div class="wpss-cart-success">' +
                 '<p class="wpss-success-message">&#10003; ' + wpssService.i18n.added + '</p>' +
                 '<div class="wpss-cart-actions">' +
-                '<a href="' + cartUrl + '" class="wpss-btn wpss-btn-outline">' +
-                wpssService.i18n.viewCart +
-                '</a>' +
-                '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn-primary">' +
-                wpssService.i18n.checkout +
-                '</a>' +
+                actions +
                 '</div>' +
                 '</div>'
             );

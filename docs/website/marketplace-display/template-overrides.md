@@ -272,7 +272,6 @@ Change values without touching markup at all.
 | `wpss_order_actions` | -- | Buttons on the order screen |
 | `wpss_tip_quick_amounts` | `[5, 10, 20, 50]` | Tip preset buttons |
 | `wpss_allow_late_requirements_submission` | `false` | Accept requirements after the timeout |
-| `wpss_requirements_form_args` | -- | Requirements form config |
 | `wpss_vendor_profile_fields` | `[]` | Extra profile fields |
 | `wpss_single_service_layout` | `default` | Layout variant |
 | `wpss_single_request_layout` | `default` | Layout variant |

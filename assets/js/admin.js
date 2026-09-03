@@ -484,32 +484,15 @@
 		$form.find('.wpss-remove-image').hide();
 	});
 
-	/**
-	 * Dismissible "essential pages missing" notice.
-	 *
-	 * Moved out of an inline <script> in Admin.php (ux-audit F2). Delegated so
-	 * it also covers notices injected after load.
-	 */
-	$(document).on('click', '.wpss-pages-notice .notice-dismiss', function () {
-		var $notice = $(this).closest('.wpss-pages-notice');
-
-		$.post(ajaxurl, {
-			action: 'wpss_dismiss_pages_notice',
-			nonce: $notice.data('nonce')
-		});
-	});
-
 	/*
-	 * Every other dismissible notice we render, through one handler.
-	 *
-	 * The pages notice above has its own action and its own PHP handler; a
-	 * second notice copying that shape would have meant a second pair, and a
-	 * third a third. New notices only need
+	 * Every dismissible notice we render, through one handler. Delegated so
+	 * it also covers notices injected after load. New notices only need
 	 * class="wpss-dismissible-notice" plus data-notice / data-nonce.
 	 *
 	 * data-signature lets a notice say WHAT was dismissed, not just that it
-	 * was - the Terms notice sends the live gateway set, so turning on another
-	 * gateway asks again rather than staying silent forever.
+	 * was - the Terms notice sends the live gateway set and the pages notice
+	 * the missing page set, so a change asks again rather than staying silent
+	 * forever.
 	 */
 	$(document).on('click', '.wpss-dismissible-notice .notice-dismiss', function () {
 		var $notice = $(this).closest('.wpss-dismissible-notice');

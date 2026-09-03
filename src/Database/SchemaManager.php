@@ -26,11 +26,16 @@ class SchemaManager {
 	 * numbered release still has to bump this, or install() short-circuits on
 	 * needs_update() and the new columns are never added. 1.6.1 adds
 	 * message_type + description to wpss_dispute_messages, which makes that
-	 * table the single store for a dispute conversation.
+	 * table the single store for a dispute conversation. 1.7.1 backfills
+	 * revisions_included on standalone orders from their package snapshot.
+	 * 1.7.2 moves the last rows out of wpss_service_requirements and
+	 * wpss_service_addons into post meta and drops both tables. 1.7.3 gives
+	 * wpss_payment_receipts an `attachments` column and moves every existing
+	 * receipt out of the media library into the private order store.
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.6.1';
+	const DB_VERSION = '1.7.3';
 
 	/**
 	 * Option name for storing DB version.
@@ -84,7 +89,6 @@ class SchemaManager {
 	 */
 	private const CORE_TABLES = array(
 		'service_packages',
-		'service_addons',
 		'orders',
 		'order_requirements',
 		'conversations',
@@ -129,6 +133,7 @@ class SchemaManager {
 		'buyer_requests'       => 'wpss_request posts plus post meta',
 		'service_faqs'         => '_wpss_faqs post meta on the service',
 		'service_requirements' => '_wpss_requirements post meta on the service',
+		'service_addons'       => '_wpss_addons post meta on the service',
 		'service_platform_map' => 'the platform_order_ref column on wpss_orders',
 		'analytics_events'     => 'derived from wpss_orders at query time (Pro)',
 	);
@@ -141,7 +146,9 @@ class SchemaManager {
 	 * nobody has looked at - the rows are stale copies of what now lives in
 	 * posts and meta on every install checked, but "every install checked" is
 	 * not "every install". Cleanup is offered explicitly (WP-CLI, or the
-	 * delete-data-on-uninstall option) rather than performed silently.
+	 * delete-data-on-uninstall option) rather than performed silently. The one
+	 * exception is {@see retire_requirement_and_addon_tables()}, which copies
+	 * every row into meta before it drops, so nothing is lost.
 	 *
 	 * @since 1.7.0
 	 *
@@ -243,11 +250,154 @@ class SchemaManager {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
+		$this->dedupe_for_unique_keys();
 		$this->create_tables();
 		$this->run_column_migrations();
 		$this->run_precision_migrations();
+		$this->add_1_7_1_indexes();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
+	}
+
+	/**
+	 * Remove the duplicate rows that would block the 1.7.1 unique keys.
+	 *
+	 * Ledger idempotency and one-review-per-order were read-then-insert with
+	 * no key, so a replayed webhook or a double submit could leave two rows.
+	 * dbDelta() adds UNIQUE (reference_type, reference_id, type) on the ledger
+	 * and UNIQUE (order_id, review_type) on reviews, and silently fails while
+	 * duplicates exist - so they are removed first, lowest id kept, every
+	 * removed row written to the audit log. Ledger rows are removed only when
+	 * they are exact copies (same user, amount, key); a same-key row with a
+	 * different amount is a bookkeeping question, not a duplicate, and is
+	 * logged for a human instead. Idempotent: nothing to remove on a clean or
+	 * fresh install.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	private function dedupe_for_unique_keys(): void {
+		$ledger  = $this->get_table_name( 'wallet_transactions' );
+		$reviews = $this->get_table_name( 'reviews' );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin-controlled table names; no user input.
+		if ( $ledger === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $ledger ) ) ) {
+			$exact = $this->wpdb->get_results(
+				"SELECT d.id, d.user_id, d.type, d.amount, d.reference_type, d.reference_id, k.id AS kept_id
+				FROM {$ledger} d
+				JOIN {$ledger} k ON k.reference_type = d.reference_type AND k.reference_id = d.reference_id AND k.type = d.type
+					AND k.user_id = d.user_id AND k.amount = d.amount AND k.id < d.id
+				WHERE d.reference_id IS NOT NULL"
+			);
+			$this->remove_duplicates( $ledger, 'ledger.duplicate_removed', 'wallet_transaction', (array) $exact );
+
+			$conflicts = $this->wpdb->get_results(
+				"SELECT reference_type, reference_id, type, COUNT(*) AS n, GROUP_CONCAT(id) AS ids
+				FROM {$ledger} WHERE reference_id IS NOT NULL
+				GROUP BY reference_type, reference_id, type HAVING n > 1"
+			);
+			foreach ( (array) $conflicts as $c ) {
+				wpss_log( sprintf( 'Schema 1.7.1: ledger rows %s share %s#%d/%s with different amounts; left in place, reconcile by hand before the unique key can be added.', $c->ids, $c->reference_type, $c->reference_id, $c->type ), 'error' );
+			}
+		}
+
+		if ( $reviews === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $reviews ) ) ) {
+			$dupes = $this->wpdb->get_results(
+				"SELECT d.id, d.order_id, d.review_type, d.rating, d.reviewer_id, k.id AS kept_id
+				FROM {$reviews} d
+				JOIN {$reviews} k ON k.order_id = d.order_id AND k.review_type = d.review_type AND k.id < d.id"
+			);
+			$this->remove_duplicates( $reviews, 'review.duplicate_removed', 'review', (array) $dupes );
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+	}
+
+	/**
+	 * Delete duplicate rows, one audit row each.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string        $table       Full table name.
+	 * @param string        $event       Audit event type.
+	 * @param string        $object_type Audit object type.
+	 * @param array<object> $rows        Rows to delete; each exposes id and kept_id.
+	 * @return void
+	 */
+	private function remove_duplicates( string $table, string $event, string $object_type, array $rows ): void {
+		if ( empty( $rows ) ) {
+			return;
+		}
+
+		$audit = new \WPSellServices\Services\AuditLogService();
+
+		foreach ( $rows as $row ) {
+			$audit->log(
+				$event,
+				$object_type,
+				(int) $row->id,
+				array(
+					'action'  => 'delete',
+					'context' => array( 'kept_id' => (int) $row->kept_id ) + array_diff_key(
+						(array) $row,
+						array(
+							'id'      => 1,
+							'kept_id' => 1,
+						)
+					),
+				)
+			);
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$this->wpdb->delete( $table, array( 'id' => (int) $row->id ), array( '%d' ) );
+		}
+
+		wpss_log( sprintf( 'Schema 1.7.1: removed %d duplicate %s row(s); see the audit log for ids.', count( $rows ), $object_type ) );
+	}
+
+	/**
+	 * Indexes for the surfaces that filter on unindexed columns (1.7.1).
+	 *
+	 * Review moderation lists by (status, created_at); the vendor directory
+	 * filters on availability and country; the buyer's order list filters by
+	 * (customer_id, status) and sorts by created_at. Each ADD KEY is guarded by
+	 * SHOW INDEX so this is safe to run on every install()/sync().
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	private function add_1_7_1_indexes(): void {
+		$this->maybe_add_index( 'reviews', 'status_created', 'status, created_at' );
+		$this->maybe_add_index( 'vendor_profiles', 'availability', 'is_available, vacation_mode' );
+		$this->maybe_add_index( 'vendor_profiles', 'country', 'country' );
+		$this->maybe_add_index( 'orders', 'customer_status_created', 'customer_id, status, created_at' );
+	}
+
+	/**
+	 * Add a secondary index when the table has no key of that name.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $table   Table name without prefix.
+	 * @param string $name    Key name.
+	 * @param string $columns Comma-separated column list (plugin-controlled).
+	 * @return void
+	 */
+	private function maybe_add_index( string $table, string $name, string $columns ): void {
+		$full_table = $this->get_table_name( $table );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$exists = $this->wpdb->get_var(
+			$this->wpdb->prepare( "SHOW INDEX FROM `{$full_table}` WHERE Key_name = %s", $name )
+		);
+
+		if ( null !== $exists ) {
+			return;
+		}
+
+		// Identifiers are plugin-controlled constants; no data is interpolated.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$this->wpdb->query( "ALTER TABLE `{$full_table}` ADD KEY `{$name}` ({$columns})" );
 	}
 
 	/**
@@ -372,6 +522,16 @@ class SchemaManager {
 				'definition' => 'varchar(64) DEFAULT NULL',
 				'after'      => 'platform_order_id',
 			),
+			// Proof of payment as a private order-file record instead of a
+			// media-library attachment id, which was a public uploads URL
+			// (Basecamp 10267994010). Same column name and shape as every other
+			// table that holds order files, so one read gate covers them all.
+			array(
+				'table'      => 'payment_receipts',
+				'column'     => 'attachments',
+				'definition' => 'longtext',
+				'after'      => 'attachment_id',
+			),
 		);
 
 		foreach ( $migrations as $migration ) {
@@ -386,6 +546,190 @@ class SchemaManager {
 		$this->backfill_platform_order_ref();
 		$this->backfill_package_snapshots();
 		$this->backfill_package_ids();
+		$this->backfill_revisions_included();
+		$this->migrate_receipt_files();
+		$this->retire_requirement_and_addon_tables();
+	}
+
+	/**
+	 * Move pre-1.7.1 payment receipts out of the media library.
+	 *
+	 * Every receipt written before this release points at a media-library
+	 * attachment, which is a public wp-content/uploads URL: a stranger holding
+	 * the link downloaded a stranger's bank transfer slip (Basecamp
+	 * 10267994010). Fixing the upload path alone would close the hole for new
+	 * receipts and leave every existing one readable.
+	 *
+	 * Moved in bulk here rather than on access, which is what deliveries and
+	 * briefs do: a receipt link lives in an admin review box that is re-rendered
+	 * from the row every time, never in a buyer's inbox, so there is no
+	 * outstanding link to keep alive. wpss_get_receipt_file() adopts anything
+	 * this pass leaves behind (a row added while the batch cap was reached).
+	 *
+	 * Guarded by the column check, capped, and idempotent: an adopted row no
+	 * longer matches the WHERE.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	private function migrate_receipt_files(): void {
+		if ( ! function_exists( 'wpss_adopt_legacy_receipt_file' ) ) {
+			return;
+		}
+
+		$table = $this->get_table_name( 'payment_receipts' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$column_exists = $this->wpdb->get_var(
+			$this->wpdb->prepare(
+				'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+				WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+				DB_NAME,
+				$table,
+				'attachments'
+			)
+		);
+
+		if ( (int) $column_exists < 1 ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from a private const.
+		$rows = $this->wpdb->get_results(
+			"SELECT id, order_id, uploaded_by, attachment_id FROM `{$table}`
+			WHERE attachment_id > 0 AND ( attachments IS NULL OR attachments = '' )
+			LIMIT 500"
+		);
+
+		if ( ! $rows ) {
+			return;
+		}
+
+		foreach ( $rows as $row ) {
+			wpss_adopt_legacy_receipt_file( $row );
+		}
+
+		if ( function_exists( 'wpss_log' ) ) {
+			wpss_log( sprintf( 'Schema 1.7.3: moved %d payment receipt(s) out of the media library into the private order store.', count( $rows ) ) );
+		}
+	}
+
+	/**
+	 * Move requirements and add-ons into post meta and drop their tables.
+	 *
+	 * Both lived in two stores that disagreed: wpss_service_requirements was
+	 * written by nothing and read by nothing while the buyer form read
+	 * `_wpss_requirements`; REST wrote add-ons to wpss_service_addons while
+	 * the order modal, cart and checkout read `_wpss_addons` (Basecamp
+	 * 10264288662, 10264294443). Post meta is the one store from 1.7.1.
+	 *
+	 * Rows are copied only into services whose meta is empty - a service the
+	 * vendor has since edited keeps what they saved. The copy runs through the
+	 * canonical normalisers, and every existing `_wpss_requirements` value is
+	 * rewritten through the same normaliser so the stored shape is the one
+	 * every surface reads. Then, and only then, the tables are dropped.
+	 * Idempotent: a missing table is skipped, and a second run finds nothing.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	private function retire_requirement_and_addon_tables(): void {
+		if ( ! function_exists( 'wpss_save_service_requirements' ) ) {
+			return;
+		}
+
+		$copies = array(
+			'service_requirements' => array( '_wpss_requirements', 'wpss_save_service_requirements', 'sort_order ASC, id ASC' ),
+			'service_addons'       => array( '_wpss_addons', 'wpss_save_service_addons', 'sort_order ASC, id ASC' ),
+		);
+
+		foreach ( $copies as $name => [ $meta_key, $saver, $order_by ] ) {
+			$table = $this->prefix . $name;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- schema inspection.
+			if ( ! $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from a private const; a retired table is small by definition.
+			$rows = $this->wpdb->get_results( "SELECT * FROM `{$table}` ORDER BY service_id ASC, {$order_by}", ARRAY_A );
+
+			$by_service = array();
+			foreach ( (array) $rows as $row ) {
+				$by_service[ (int) $row['service_id'] ][] = $row;
+			}
+
+			$copied = 0;
+			foreach ( $by_service as $service_id => $service_rows ) {
+				if ( ! empty( get_post_meta( $service_id, $meta_key, true ) ) || 'wpss_service' !== get_post_type( $service_id ) ) {
+					continue;
+				}
+				$saver( $service_id, $service_rows );
+				++$copied;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- rows are in post meta now.
+			$this->wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
+
+			if ( function_exists( 'wpss_log' ) ) {
+				wpss_log( "Schema 1.7.2: copied {$name} rows into {$meta_key} on {$copied} service(s) and dropped the table." );
+			}
+		}
+
+		// Rewrite every stored requirement list into the canonical shape.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		$service_ids = $this->wpdb->get_col(
+			"SELECT post_id FROM `{$this->wpdb->postmeta}` WHERE meta_key = '_wpss_requirements' AND meta_value NOT IN ( '', 'a:0:{}' ) LIMIT 2000"
+		);
+		foreach ( (array) $service_ids as $service_id ) {
+			wpss_save_service_requirements( (int) $service_id, (array) get_post_meta( (int) $service_id, '_wpss_requirements', true ) );
+		}
+	}
+
+	/**
+	 * Give standalone orders the revision count of the package they bought.
+	 *
+	 * Checkout never passed revisions to create_order(), so every standalone
+	 * order stored 0 while its package snapshot said 2 (or -1, unlimited) and
+	 * the buyer could not request one (Basecamp 10264292240). Only rows still
+	 * at 0 whose snapshot disagrees are touched, so it is idempotent; orders
+	 * whose package really includes no revisions stay at 0.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	private function backfill_revisions_included(): void {
+		$table = $this->get_table_name( 'orders' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $this->wpdb->get_results(
+			"SELECT id, meta FROM `{$table}`
+			WHERE platform = 'standalone'
+			  AND revisions_included = 0
+			  AND meta LIKE '%package_snapshot%'
+			ORDER BY id ASC
+			LIMIT 500"
+		);
+
+		$fixed = 0;
+		foreach ( (array) $rows as $row ) {
+			$meta      = json_decode( (string) $row->meta, true );
+			$revisions = (int) ( $meta['package_snapshot']['revisions'] ?? 0 );
+			if ( 0 === $revisions ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$this->wpdb->update( $table, array( 'revisions_included' => $revisions ), array( 'id' => (int) $row->id ), array( '%d' ), array( '%d' ) );
+			++$fixed;
+		}
+
+		if ( $fixed > 0 && function_exists( 'wpss_log' ) ) {
+			wpss_log( "Schema 1.7.1: set revisions_included from the package snapshot on {$fixed} standalone order(s)." );
+		}
 	}
 
 	/**
@@ -728,6 +1072,12 @@ class SchemaManager {
 	 * Proof-of-payment a buyer uploads against an offline order, and the record
 	 * of who verified it (Basecamp #10194890682).
 	 *
+	 * The proof itself is a file record in `attachments`, the same column shape
+	 * deliveries and messages use, so it answers to the order read gate. It used
+	 * to be `attachment_id` - a media-library post, and therefore a public
+	 * wp-content/uploads URL (Basecamp 10267994010). That column stays for rows
+	 * written before 1.7.1; nothing writes it any more.
+	 *
 	 * A TABLE, not order meta, because the admin screen queries it BY STATUS
 	 * across orders - "show me everything awaiting verification" is the whole
 	 * job, and that is a query post meta cannot serve without scanning.
@@ -750,6 +1100,7 @@ class SchemaManager {
 			order_id bigint(20) unsigned NOT NULL,
 			uploaded_by bigint(20) unsigned NOT NULL DEFAULT 0,
 			attachment_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			attachments longtext DEFAULT NULL,
 			note text DEFAULT NULL,
 			status varchar(20) NOT NULL DEFAULT 'submitted',
 			verified_by bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -829,42 +1180,6 @@ class SchemaManager {
 	}
 
 	/**
-	 * Get service addons table SQL.
-	 *
-	 * Field types: checkbox, quantity, dropdown, text.
-	 * Price types: flat, percentage, quantity_based.
-	 *
-	 * @param string $charset_collate Charset collation.
-	 * @return string SQL statement.
-	 */
-	private function get_service_addons_table( string $charset_collate ): string {
-		$table = $this->get_table_name( 'service_addons' );
-
-		return "CREATE TABLE {$table} (
-			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			service_id bigint(20) unsigned NOT NULL,
-			title varchar(255) NOT NULL,
-			description text,
-			field_type varchar(50) DEFAULT 'checkbox',
-			price decimal(10,2) NOT NULL DEFAULT 0,
-			price_type varchar(50) DEFAULT 'flat',
-			min_quantity int(11) DEFAULT 1,
-			max_quantity int(11) DEFAULT 10,
-			is_required tinyint(1) DEFAULT 0,
-			options longtext,
-			delivery_days_extra int(11) DEFAULT 0,
-			applies_to longtext,
-			is_active tinyint(1) DEFAULT 1,
-			sort_order int(11) DEFAULT 0,
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY idx_service (service_id),
-			KEY idx_active (service_id, is_active)
-		) {$charset_collate};";
-	}
-
-	/**
 	 * Get orders table SQL.
 	 *
 	 * @param string $charset_collate Charset collation.
@@ -919,7 +1234,8 @@ class SchemaManager {
 			KEY idx_vendor_status (vendor_id,status),
 			KEY idx_platform (platform,platform_order_id),
 			KEY idx_platform_ref (platform,platform_order_ref),
-			KEY idx_deadline (delivery_deadline)
+			KEY idx_deadline (delivery_deadline),
+			KEY idx_transaction (transaction_id(191))
 		) {$charset_collate};";
 	}
 
@@ -1094,7 +1410,8 @@ class SchemaManager {
 			KEY idx_service (service_id),
 			KEY idx_customer (customer_id),
 			KEY idx_vendor (vendor_id),
-			KEY idx_vendor_status (vendor_id,status)
+			KEY idx_vendor_status (vendor_id,status),
+			UNIQUE KEY uniq_order_review (order_id,review_type)
 		) {$charset_collate};";
 	}
 
@@ -1328,7 +1645,8 @@ class SchemaManager {
 			KEY idx_type (type),
 			KEY idx_user_created (user_id,created_at,id),
 			KEY idx_user_type_created (user_id,type,created_at),
-			KEY idx_reference (reference_type,reference_id)
+			KEY idx_reference (reference_type,reference_id),
+			UNIQUE KEY uniq_reference (reference_type,reference_id,type)
 		) {$charset_collate};";
 	}
 
@@ -1377,9 +1695,11 @@ class SchemaManager {
 	public function sync(): void {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
+		$this->dedupe_for_unique_keys();
 		$this->create_tables();
 		$this->run_column_migrations();
 		$this->run_precision_migrations();
+		$this->add_1_7_1_indexes();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
 	}

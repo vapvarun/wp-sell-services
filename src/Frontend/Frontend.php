@@ -324,6 +324,11 @@ class Frontend {
 					'skipRequirementsConfirm'     => __( 'You can submit requirements later. Continue to checkout?', 'wp-sell-services' ),
 					'continue'                    => __( 'Continue', 'wp-sell-services' ),
 					'enterReason'                 => __( 'Enter your reason...', 'wp-sell-services' ),
+					// Image lightbox — the dialog label and its control names.
+					'imagePreview'                => __( 'Image preview', 'wp-sell-services' ),
+					'close'                       => __( 'Close', 'wp-sell-services' ),
+					'previousImage'               => __( 'Previous image', 'wp-sell-services' ),
+					'nextImage'                   => __( 'Next image', 'wp-sell-services' ),
 					// UX primitives — autosave indicator labels.
 					'autosaveSaving'              => __( 'Saving…', 'wp-sell-services' ),
 					'autosaveSaved'               => __( 'Saved', 'wp-sell-services' ),
@@ -400,6 +405,7 @@ class Frontend {
 		<div id="wpss-mini-cart" class="wpss-mini-cart"<?php echo $hidden; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 			<a href="<?php echo esc_url( $checkout_url ); ?>" class="wpss-mini-cart-link" title="<?php esc_attr_e( 'View Cart', 'wp-sell-services' ); ?>">
 				<i data-lucide="shopping-cart" class="wpss-icon wpss-icon--lg wpss-mini-cart-icon" aria-hidden="true"></i>
+				<span class="screen-reader-text"><?php esc_html_e( 'View cart, items:', 'wp-sell-services' ); ?></span>
 				<span class="wpss-cart-count"><?php echo esc_html( (string) $cart_count ); ?></span>
 			</a>
 		</div>

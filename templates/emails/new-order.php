@@ -26,7 +26,8 @@ if ( isset( $email ) && function_exists( 'WC' ) ) {
 $base_color    = $base_color ?? '#7f54b3';
 $customer      = get_user_by( 'id', $order->customer_id );
 $customer_name = $customer ? $customer->display_name : __( 'A customer', 'wp-sell-services' );
-$vendor        = isset( $recipient ) ? $recipient : get_user_by( 'id', $order->vendor_id );
+$recipient     = ( $recipient ?? null ) ?: get_user_by( 'id', $order->vendor_id );
+$vendor        = $recipient;
 
 /**
  * Fires before the email content for the new order email.

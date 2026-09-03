@@ -22,7 +22,7 @@ $is_buyer   = (int) $current_order->customer_id === $user_id;
 $is_vendor  = (int) $current_order->vendor_id === $user_id;
 $is_paid    = 'completed' === $current_order->status;
 $is_pending = 'pending_payment' === $current_order->status;
-$currency   = $current_order->currency ?: ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+$currency   = $current_order->currency ?: wpss_get_currency();
 $gross      = (float) $current_order->total;
 $net_vendor = (float) ( $current_order->vendor_earnings ?? $gross );
 $platform_f = (float) ( $current_order->platform_fee ?? 0 );
@@ -32,7 +32,7 @@ $parent_url = $parent_id ? wpss_get_order_url( $parent_id ) : '';
 // payment page only on the standalone rail. On WooCommerce it lands on the
 // store cart and bounces the buyer away, so this button was dead on every
 // Woo site. wpss_get_pay_order_url() returns an order-pay URL there instead.
-$pay_url = wpss_get_pay_order_url( (int) $current_order->id );
+$pay_url = wpss_get_pay_order_url( (int) $current_order->id, $current_order );
 
 // Extension metadata lives on the sub-order's `meta` JSON plus the linked
 // wpss_extension_requests row. Prefer the JSON for extra_days and reason
@@ -166,7 +166,7 @@ do_action( 'wpss_before_extension_view', $current_order );
 		</dl>
 
 		<div class="wpss-tip-view__actions">
-			<?php if ( $is_buyer && $is_pending ) : ?>
+			<?php if ( $is_buyer && $is_pending && '' !== $pay_url ) : ?>
 				<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php
 					printf(

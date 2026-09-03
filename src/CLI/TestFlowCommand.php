@@ -86,6 +86,12 @@ class TestFlowCommand extends WP_CLI_Command {
 	 * [--no-cleanup]
 	 * : Leave seeded data in the DB after the run (for manual inspection).
 	 *
+	 * [--yes]
+	 * : Skip the confirmation prompt.
+	 *
+	 * [--force]
+	 * : Run on a production site (wp_get_environment_type() === 'production').
+	 *
 	 * @param array<int, string>    $args       Positional arguments.
 	 * @param array<string, string> $assoc_args Associative arguments.
 	 */
@@ -107,6 +113,12 @@ class TestFlowCommand extends WP_CLI_Command {
 				WP_CLI::error( "Unknown flow: {$name}" );
 			}
 		}
+
+		Guard::writes(
+			'test flows, each writing real users, services, orders and ledger rows' . ( $cleanup ? ' (removed afterwards)' : ' (kept: --no-cleanup)' ),
+			count( $to_run ),
+			$assoc_args
+		);
 
 		$exit_code = 0;
 
@@ -258,8 +270,8 @@ class TestFlowCommand extends WP_CLI_Command {
 			)
 		);
 
-		if ( ! $proposal_id ) {
-			$this->fail( 'ProposalService::submit returned false' );
+		if ( ! $proposal_id || is_wp_error( $proposal_id ) ) {
+			$this->fail( 'ProposalService::submit did not return a proposal ID' );
 			return;
 		}
 		$this->created['proposals'][] = (int) $proposal_id;
@@ -356,6 +368,19 @@ class TestFlowCommand extends WP_CLI_Command {
 		$order_id                  = (int) $wpdb->insert_id;
 		$this->created['orders'][] = $order_id;
 
+		// The credit the reversal claws back. A reversal without a completed
+		// credit is refused (never debit money never credited).
+		wpss_insert_ledger_row(
+			array(
+				'user_id'        => $vendor_id,
+				'type'           => 'order_earning',
+				'amount'         => 80.0,
+				'reference_type' => 'order',
+				'reference_id'   => $order_id,
+			)
+		);
+		$this->created['wallet_txns'][] = (int) $wpdb->insert_id;
+
 		$order = wpss_get_order( $order_id );
 		$this->assert_true( $order instanceof ServiceOrder, 'seeded order loadable' );
 
@@ -393,9 +418,10 @@ class TestFlowCommand extends WP_CLI_Command {
 		$this->assert_true( $profile_after !== null, 'vendor profile still exists' );
 
 		if ( $profile_after ) {
-			$this->assert_eq( 400.0, (float) $profile_after->total_earnings, 'vendor total_earnings decremented by order total' );
-			$this->assert_eq( 320.0, (float) $profile_after->net_earnings, 'vendor net_earnings decremented by vendor_earnings' );
-			$this->assert_eq( 80.0, (float) $profile_after->total_commission, 'vendor total_commission decremented by platform_fee' );
+			// Profile money columns are recomputed from the ledger on every
+			// ledger write: 80 credited, 80 reversed.
+			$this->assert_eq( wpss_get_ledger_total_earned( $vendor_id ), (float) $profile_after->total_earnings, 'vendor total_earnings equals the ledger total earned' );
+			$this->assert_eq( wpss_get_ledger_balance( $vendor_id ), (float) $profile_after->net_earnings, 'vendor net_earnings equals the ledger balance' );
 		}
 
 		// Assert: order commission fields cleared.

@@ -74,7 +74,7 @@ All email types are enabled by default when you first activate the plugin.
 
 ### The full list of switchable types
 
-These are the 24 checkboxes on that screen, in the order they appear. The name in
+These are the 29 checkboxes on that screen, in the order they appear. The name in
 bold is the label you will see.
 
 | Checkbox | Sent when |
@@ -103,6 +103,11 @@ bold is the label you will see.
 | **Extension Approved** | A buyer accepts an extension |
 | **Extension Declined** | A buyer declines an extension |
 | **Service Moderation** | A service is approved, rejected, or queued for review |
+| **Review Reply** | A vendor replies to a buyer's review |
+| **Request Expired** | A buyer request reaches its closing date |
+| **Dispute Escalated** | A dispute goes to the marketplace team (buyer, vendor and admin) |
+| **Dispute Cancelled** | The party who opened a dispute withdraws it |
+| **Tip Receipt** | A buyer's tip is paid (sent to the buyer) |
 
 ### Emails that are always sent
 
@@ -129,6 +134,17 @@ Each email is professionally designed with:
 Emails are responsive and display well on both desktop and mobile email clients.
 
 ---
+
+### Throttling, failures and retries
+
+Only conversational mail (**New Message**, **Vendor Direct Message**) is
+throttled to one per recipient per five minutes. Order, payment, moderation,
+dispute and withdrawal mail is never throttled: two orders placed a minute
+apart send two New Order emails.
+
+A send the mail server refuses is written to the audit log as `email.failed`
+(recipient, type and the error) and retried once, ten minutes later, through
+Action Scheduler.
 
 ## How Emails Are Delivered
 

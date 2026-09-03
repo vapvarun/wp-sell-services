@@ -435,14 +435,23 @@ class ConversationService {
 		$messages_table      = $wpdb->prefix . 'wpss_messages';
 		$conversations_table = $wpdb->prefix . 'wpss_conversations';
 
-		// Get unread messages.
+		// One UPDATE for every unread message in the thread instead of a
+		// SELECT plus one UPDATE per row. read_by is a JSON object keyed by
+		// user id ({"5":true}); an empty/NULL/[] value is normalised to {}
+		// first so JSON_SET has an object to write into.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$unread_messages = $wpdb->get_results(
+		$result = $wpdb->query(
 			$wpdb->prepare(
-				"SELECT id, read_by FROM {$messages_table}
+				"UPDATE {$messages_table}
+				SET read_by = JSON_SET(
+					CASE WHEN read_by IS NULL OR read_by IN ('', '[]') THEN '{}' ELSE read_by END,
+					%s,
+					true
+				)
 				WHERE conversation_id = %d
 				AND sender_id != %d
 				AND (read_by NOT LIKE %s OR read_by IS NULL)",
+				'$."' . $user_id . '"',
 				$conversation_id,
 				$user_id,
 				'%"' . $user_id . '"%'
@@ -452,21 +461,9 @@ class ConversationService {
 
 		$has_failure = false;
 
-		foreach ( $unread_messages as $msg ) {
-			$read_by             = $msg->read_by ? json_decode( $msg->read_by, true ) : array();
-			$read_by[ $user_id ] = true;
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$result = $wpdb->update(
-				$messages_table,
-				array( 'read_by' => wp_json_encode( $read_by ) ),
-				array( 'id' => $msg->id )
-			);
-
-			if ( false === $result ) {
-				wpss_log( "Failed to mark message {$msg->id} as read for user {$user_id}: " . $wpdb->last_error, 'error' );
-				$has_failure = true;
-			}
+		if ( false === $result ) {
+			wpss_log( "Failed to mark conversation {$conversation_id} messages as read for user {$user_id}: " . $wpdb->last_error, 'error' );
+			$has_failure = true;
 		}
 
 		// Reset unread count.

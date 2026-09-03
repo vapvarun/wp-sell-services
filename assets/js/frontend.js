@@ -312,11 +312,11 @@
 	WPSS.performOrderAction = function(orderId, action, reason) {
 		// Map frontend action keys to the wpss/v1 order-lifecycle REST action
 		// segments (POST /orders/{id}/{action}). The legacy admin-ajax handlers
-		// (wpss_accept_order, wpss_start_work, ...) remain registered as thin
+		// (wpss_start_work, wpss_deliver_order, ...) remain registered as thin
 		// delegates for backward compatibility; the frontend now drives the
 		// REST twin, which routes through the same OrderService transitions.
-		// No accept/reject entries: those verbs gated on a status nothing
-		// writes, so they could only ever fail, and the routes are gone.
+		// No accept/reject entries: this product is payment-first, so those
+		// verbs and their handlers are gone.
 		const restActionMap = {
 			start: 'start',
 			deliver: 'deliver',
@@ -412,6 +412,9 @@
 						response.forEach(function(review) {
 							$list.append(WPSS.renderReview(review));
 						});
+						if (window.lucide && typeof window.lucide.createIcons === 'function') {
+							window.lucide.createIcons();
+						}
 
 						if (response.length < 10) {
 							$btn.hide();
@@ -518,10 +521,11 @@
 	 * Render review HTML.
 	 */
 	WPSS.renderReview = function(review) {
-		let starsHtml = '';
+		let starsHtml = '<span class="wpss-stars">';
 		for (let i = 1; i <= 5; i++) {
-			starsHtml += `<span class="wpss-star ${i <= review.rating ? 'filled' : ''}">★</span>`;
+			starsHtml += `<i data-lucide="star" class="wpss-icon wpss-star${i <= review.rating ? ' filled' : ''}" aria-hidden="true"></i>`;
 		}
+		starsHtml += `<span class="screen-reader-text">${review.rating} / 5</span></span>`;
 
 		let replyHtml = '';
 		if (review.vendor_reply) {
@@ -1953,47 +1957,136 @@
 			}
 		});
 
-		// Image preview lightbox (simple).
+		// Image preview lightbox — one item, so no prev/next renders.
 		$(document).on('click', '.wpss-requirement-view__thumbnail', function() {
-			const src = $(this).attr('src');
-			const alt = $(this).attr('alt') || '';
+			WPSS.openLightbox([{ src: $(this).attr('src'), alt: $(this).attr('alt') || '' }], 0);
+		});
+	};
 
-			// Create lightbox.
-			const $lightbox = $(`
-				<div class="wpss-lightbox">
-					<div class="wpss-lightbox__backdrop"></div>
-					<div class="wpss-lightbox__content">
-						<button type="button" class="wpss-lightbox__close">&times;</button>
-						<img src="${src}" alt="${WPSS.escapeHtml(alt)}">
-					</div>
-				</div>
-			`);
+	/**
+	 * Open the image lightbox.
+	 *
+	 * The ONE lightbox implementation in the plugin. single-service.js used to
+	 * carry a second one under the same `.wpss-lightbox` class name, and it
+	 * never set the `--visible` modifier that frontend.css requires — so every
+	 * click on a gallery image appended a node with opacity 0 / visibility
+	 * hidden and nothing appeared (Basecamp 10244564339).
+	 *
+	 * @param {Array}  items Items to show, as [{ src, alt }, ...].
+	 * @param {number} index Zero-based item to open on.
+	 */
+	WPSS.openLightbox = function(items, index) {
+		items = (items || []).filter(function(item) {
+			return item && item.src;
+		});
 
-			$('body').append($lightbox);
+		if (!items.length) {
+			return;
+		}
 
-			// Animate in.
+		var i18n = (window.wpssData && wpssData.i18n) || {};
+		var current = Math.min(Math.max(parseInt(index, 10) || 0, 0), items.length - 1);
+		var multiple = items.length > 1;
+		var opener = document.activeElement;
+
+		var $lightbox = $(
+			'<div class="wpss-lightbox" role="dialog" aria-modal="true" aria-label="' + WPSS.escapeHtml(i18n.imagePreview || 'Image preview') + '">' +
+				'<div class="wpss-lightbox__backdrop"></div>' +
+				'<div class="wpss-lightbox__content"><img src="" alt=""></div>' +
+				'<button type="button" class="wpss-lightbox__close" aria-label="' + WPSS.escapeHtml(i18n.close || 'Close') + '">&times;</button>' +
+				(multiple
+					? '<button type="button" class="wpss-lightbox__nav wpss-lightbox__nav--prev" aria-label="' + WPSS.escapeHtml(i18n.previousImage || 'Previous image') + '">&#8249;</button>' +
+					  '<button type="button" class="wpss-lightbox__nav wpss-lightbox__nav--next" aria-label="' + WPSS.escapeHtml(i18n.nextImage || 'Next image') + '">&#8250;</button>'
+					: '') +
+			'</div>'
+		);
+
+		var $content = $lightbox.find('.wpss-lightbox__content');
+		var $img = $content.find('img');
+
+		// Wraps, so prev from the first lands on the last.
+		var show = function(next) {
+			current = (next + items.length) % items.length;
+			$content.removeClass('wpss-lightbox__content--zoomed');
+			$img.attr('src', items[current].src).attr('alt', items[current].alt || '');
+		};
+
+		show(current);
+
+		$('body').append($lightbox).addClass('wpss-modal-active');
+
+		// Read by the single-service gallery so its own arrow keys stop driving
+		// the page image while the overlay owns them.
+		WPSS.lightboxOpen = true;
+
+		/*
+		 * Animate in, THEN move focus. The overlay starts at visibility:
+		 * hidden so the transition has something to animate from, and a
+		 * visibility:hidden element cannot take focus — focusing before the
+		 * modifier lands silently left focus on the page behind.
+		 */
+		setTimeout(function() {
+			$lightbox.addClass('wpss-lightbox--visible');
+
+			// Native focus(), not $.trigger('focus') — jQuery 3.7 dispatches a
+			// focus EVENT there, which does not move the caret.
+			$lightbox.find('.wpss-lightbox__close').get(0).focus();
+		}, 10);
+
+		var close = function() {
+			WPSS.lightboxOpen = false;
+			$(document).off('keydown.wpss-lightbox');
+			$lightbox.removeClass('wpss-lightbox--visible');
+			$('body').removeClass('wpss-modal-active');
 			setTimeout(function() {
-				$lightbox.addClass('wpss-lightbox--visible');
-			}, 10);
+				$lightbox.remove();
+			}, 300);
+			if (opener && typeof opener.focus === 'function') {
+				opener.focus();
+			}
+		};
 
-			// Close handlers.
-			$lightbox.on('click', '.wpss-lightbox__backdrop, .wpss-lightbox__close', function() {
-				$lightbox.removeClass('wpss-lightbox--visible');
-				setTimeout(function() {
-					$lightbox.remove();
-				}, 300);
-			});
+		$lightbox.on('click', '.wpss-lightbox__backdrop, .wpss-lightbox__close', close);
+		$lightbox.on('click', '.wpss-lightbox__nav--prev', function() {
+			show(current - 1);
+		});
+		$lightbox.on('click', '.wpss-lightbox__nav--next', function() {
+			show(current + 1);
+		});
 
-			// Close on escape.
-			$(document).on('keydown.lightbox', function(e) {
-				if (e.key === 'Escape') {
-					$lightbox.removeClass('wpss-lightbox--visible');
-					setTimeout(function() {
-						$lightbox.remove();
-					}, 300);
-					$(document).off('keydown.lightbox');
+		// Zoom. The cursor promises it and themes commonly ship
+		// maximum-scale=1, which kills native pinch on the whole page.
+		$img.on('click dblclick', function(e) {
+			e.preventDefault();
+			$content.toggleClass('wpss-lightbox__content--zoomed');
+		});
+
+		$(document).on('keydown.wpss-lightbox', function(e) {
+			if ('Escape' === e.key) {
+				e.preventDefault();
+				close();
+				return;
+			}
+
+			if (multiple && ('ArrowLeft' === e.key || 'ArrowRight' === e.key)) {
+				e.preventDefault();
+				show(current + ('ArrowLeft' === e.key ? -1 : 1));
+				return;
+			}
+
+			if ('Tab' === e.key) {
+				var $focusable = $lightbox.find('button');
+				var first = $focusable.get(0);
+				var last = $focusable.get($focusable.length - 1);
+
+				if (e.shiftKey && document.activeElement === first) {
+					e.preventDefault();
+					last.focus();
+				} else if (!e.shiftKey && document.activeElement === last) {
+					e.preventDefault();
+					first.focus();
 				}
-			});
+			}
 		});
 	};
 

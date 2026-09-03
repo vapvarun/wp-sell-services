@@ -827,7 +827,7 @@ class ServiceWizard {
 								<label class="wpss-form-label"><?php esc_html_e( 'Question', 'wp-sell-services' ); ?></label>
 								<input type="text"
 									class="wpss-form-input"
-									x-model="data.requirements[index].question"
+									x-model="data.requirements[index].label"
 									placeholder="<?php esc_attr_e( 'What do you need from the buyer?', 'wp-sell-services' ); ?>">
 							</div>
 							<div class="wpss-form-row wpss-form-row--2col">
@@ -936,7 +936,7 @@ class ServiceWizard {
 										<label class="wpss-form-label"><?php esc_html_e( 'Extra Days', 'wp-sell-services' ); ?></label>
 										<input type="number"
 											class="wpss-form-input"
-											x-model="data.extras[index].extra_days"
+											x-model="data.extras[index].delivery_days_extra"
 											min="0"
 											placeholder="0">
 									</div>
@@ -1199,12 +1199,15 @@ class ServiceWizard {
 			return array();
 		}
 
-		$packages     = get_post_meta( $service_id, '_wpss_packages', true );
-		$packages     = ! empty( $packages ) ? $packages : array();
-		$gallery      = get_post_meta( $service_id, '_wpss_gallery', true );
-		$gallery      = ! empty( $gallery ) ? $gallery : array();
-		$requirements = get_post_meta( $service_id, '_wpss_requirements', true );
-		$requirements = ! empty( $requirements ) ? $requirements : array();
+		$packages = get_post_meta( $service_id, '_wpss_packages', true );
+		$packages = ! empty( $packages ) ? $packages : array();
+		$gallery  = get_post_meta( $service_id, '_wpss_gallery', true );
+		$gallery  = ! empty( $gallery ) ? $gallery : array();
+		// The Alpine model edits options as one comma-separated string.
+		$requirements = array_map(
+			static fn( array $req ) => array_merge( $req, array( 'options' => implode( ', ', $req['options'] ) ) ),
+			wpss_get_service_requirements( $service_id )
+		);
 		$extras       = wpss_get_service_extras( $service_id );
 		$faqs         = get_post_meta( $service_id, '_wpss_faqs', true );
 		$faqs         = ! empty( $faqs ) ? $faqs : array();
@@ -1935,27 +1938,7 @@ class ServiceWizard {
 	 * @return array Sanitized requirements.
 	 */
 	private function sanitize_requirements( array $requirements ): array {
-		$max = $this->get_limit( 'max_requirements' );
-		if ( -1 !== $max ) {
-			$requirements = array_slice( $requirements, 0, $max );
-		}
-
-		$sanitized = array();
-
-		foreach ( $requirements as $req ) {
-			if ( empty( $req['question'] ) ) {
-				continue;
-			}
-
-			$sanitized[] = array(
-				'question' => sanitize_text_field( $req['question'] ),
-				'type'     => in_array( $req['type'] ?? 'text', array( 'text', 'textarea', 'file', 'select' ), true ) ? $req['type'] : 'text',
-				'required' => ! empty( $req['required'] ),
-				'options'  => sanitize_text_field( $req['options'] ?? '' ),
-			);
-		}
-
-		return $sanitized;
+		return wpss_normalize_service_requirements( $requirements );
 	}
 
 	/**
@@ -1965,27 +1948,7 @@ class ServiceWizard {
 	 * @return array Sanitized extras.
 	 */
 	private function sanitize_extras( array $extras ): array {
-		$max = $this->get_limit( 'max_extras' );
-		if ( -1 !== $max ) {
-			$extras = array_slice( $extras, 0, $max );
-		}
-
-		$sanitized = array();
-
-		foreach ( $extras as $extra ) {
-			if ( empty( $extra['title'] ) ) {
-				continue;
-			}
-
-			$sanitized[] = array(
-				'title'       => sanitize_text_field( $extra['title'] ),
-				'description' => sanitize_textarea_field( $extra['description'] ?? '' ),
-				'price'       => floatval( $extra['price'] ?? 0 ),
-				'extra_days'  => absint( $extra['extra_days'] ?? 0 ),
-			);
-		}
-
-		return $sanitized;
+		return wpss_normalize_service_addons( $extras );
 	}
 
 	/**
@@ -1995,11 +1958,6 @@ class ServiceWizard {
 	 * @return array Sanitized FAQs.
 	 */
 	private function sanitize_faqs( array $faqs ): array {
-		$max = $this->get_limit( 'max_faq' );
-		if ( -1 !== $max ) {
-			$faqs = array_slice( $faqs, 0, $max );
-		}
-
 		$sanitized = array();
 
 		foreach ( $faqs as $faq ) {
@@ -2136,12 +2094,16 @@ class ServiceWizard {
 			array_unshift( $all_gallery_ids, $thumbnail_id );
 		}
 
+		// The client hides the add buttons at the cap; the server is the enforcer.
+		$video = $data['gallery']['video'] ?? '';
+		$data  = wpss_enforce_service_limits( array_merge( $data, array( 'gallery' => $all_gallery_ids ) ) )['meta'];
+
 		update_post_meta(
 			$service_id,
 			'_wpss_gallery',
 			array(
-				'images' => $all_gallery_ids,
-				'video'  => $data['gallery']['video'] ?? '',
+				'images' => $data['gallery'],
+				'video'  => $video,
 			)
 		);
 
@@ -2152,11 +2114,8 @@ class ServiceWizard {
 			update_post_meta( $service_id, '_thumbnail_id', $thumbnail_id );
 		}
 
-		// Save requirements.
-		update_post_meta( $service_id, '_wpss_requirements', $data['requirements'] );
-
-		// Save extras.
-		update_post_meta( $service_id, '_wpss_extras', $data['extras'] );
+		wpss_save_service_requirements( $service_id, $data['requirements'] );
+		wpss_save_service_addons( $service_id, $data['extras'] );
 
 		// Save FAQs.
 		update_post_meta( $service_id, '_wpss_faqs', $data['faqs'] );
@@ -2194,8 +2153,7 @@ class ServiceWizard {
 	 * @return string Not vendor message HTML.
 	 */
 	private function render_not_vendor(): string {
-		$vendor_settings   = get_option( 'wpss_vendor', array() );
-		$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
 		$message = esc_html__( 'You need to be a registered vendor to create services.', 'wp-sell-services' );
 

@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
 .wpss-cart-page__heading {
 	font-size: 1.75rem;
 	font-weight: 700;
-	color: var(--wpss-color-text, #0f172a);
+	color: var(--wpss-text, #0f172a);
 	margin: 0 0 var(--wpss-space-6, 24px);
 }
 
@@ -48,8 +48,8 @@ defined( 'ABSPATH' ) || exit;
 }
 
 .wpss-cart-item {
-	background: var(--wpss-color-surface, #ffffff);
-	border: 1px solid var(--wpss-color-border, #e2e8f0);
+	background: var(--wpss-surface, #ffffff);
+	border: 1px solid var(--wpss-border, #e2e8f0);
 	border-radius: var(--wpss-radius-lg, 12px);
 	padding: var(--wpss-space-4, 16px);
 	display: grid;
@@ -76,9 +76,9 @@ defined( 'ABSPATH' ) || exit;
 .wpss-cart-item__image {
 	width: 88px;
 	height: 66px;
-	border-radius: var(--wpss-radius-md, 8px);
+	border-radius: var(--wpss-radius, 8px);
 	overflow: hidden;
-	background: var(--wpss-color-muted, #f1f5f9);
+	background: var(--wpss-bg-muted, #f1f5f9);
 	flex-shrink: 0;
 }
 
@@ -95,7 +95,7 @@ defined( 'ABSPATH' ) || exit;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: var(--wpss-color-text-muted, #94a3b8);
+	color: var(--wpss-text-muted, #94a3b8);
 }
 
 .wpss-cart-item__body {
@@ -105,7 +105,7 @@ defined( 'ABSPATH' ) || exit;
 .wpss-cart-item__title {
 	font-size: 1rem;
 	font-weight: 600;
-	color: var(--wpss-color-text, #0f172a);
+	color: var(--wpss-text, #0f172a);
 	margin: 0 0 4px;
 	line-height: 1.4;
 }
@@ -116,12 +116,12 @@ defined( 'ABSPATH' ) || exit;
 }
 
 .wpss-cart-item__title a:hover {
-	color: var(--wpss-color-primary, #7c3aed);
+	color: var(--wpss-primary, #7c3aed);
 }
 
 .wpss-cart-item__vendor {
 	font-size: 0.8125rem;
-	color: var(--wpss-color-text-muted, #64748b);
+	color: var(--wpss-text-muted, #64748b);
 	margin: 0 0 var(--wpss-space-2, 8px);
 }
 
@@ -137,8 +137,8 @@ defined( 'ABSPATH' ) || exit;
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	background: var(--wpss-color-primary-soft, #ede9fe);
-	color: var(--wpss-color-primary, #7c3aed);
+	background: var(--wpss-primary-light, #ede9fe);
+	color: var(--wpss-primary, #7c3aed);
 	font-size: 0.75rem;
 	font-weight: 600;
 	padding: 2px 10px;
@@ -148,19 +148,19 @@ defined( 'ABSPATH' ) || exit;
 .wpss-cart-item__price {
 	font-size: 1rem;
 	font-weight: 700;
-	color: var(--wpss-color-text, #0f172a);
+	color: var(--wpss-text, #0f172a);
 }
 
 .wpss-cart-item__addons {
 	margin-top: var(--wpss-space-2, 8px);
 	padding-top: var(--wpss-space-2, 8px);
-	border-top: 1px solid var(--wpss-color-border, #e2e8f0);
+	border-top: 1px solid var(--wpss-border, #e2e8f0);
 }
 
 .wpss-cart-item__addons-label {
 	font-size: 0.75rem;
 	font-weight: 600;
-	color: var(--wpss-color-text-muted, #64748b);
+	color: var(--wpss-text-muted, #64748b);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	margin-bottom: 4px;
@@ -171,13 +171,13 @@ defined( 'ABSPATH' ) || exit;
 	justify-content: space-between;
 	align-items: center;
 	font-size: 0.8125rem;
-	color: var(--wpss-color-text, #0f172a);
+	color: var(--wpss-text, #0f172a);
 	padding: 2px 0;
 }
 
 .wpss-cart-item__addon-price {
 	font-weight: 600;
-	color: var(--wpss-color-text-muted, #64748b);
+	color: var(--wpss-text-muted, #64748b);
 }
 
 .wpss-cart-item__remove {
@@ -192,22 +192,22 @@ defined( 'ABSPATH' ) || exit;
 	height: 32px;
 	border: none;
 	background: transparent;
-	color: var(--wpss-color-text-muted, #94a3b8);
-	border-radius: var(--wpss-radius-md, 8px);
+	color: var(--wpss-text-muted, #94a3b8);
+	border-radius: var(--wpss-radius, 8px);
 	cursor: pointer;
 	transition: background 0.15s, color 0.15s;
 	padding: 0;
 }
 
 .wpss-cart-item__remove-btn:hover {
-	background: var(--wpss-color-danger-soft, #fee2e2);
-	color: var(--wpss-color-danger, #dc2626);
+	background: var(--wpss-danger-light, #fee2e2);
+	color: var(--wpss-danger, #dc2626);
 }
 
 /* --- Totals Sidebar --- */
 .wpss-cart-summary {
-	background: var(--wpss-color-surface, #ffffff);
-	border: 1px solid var(--wpss-color-border, #e2e8f0);
+	background: var(--wpss-surface, #ffffff);
+	border: 1px solid var(--wpss-border, #e2e8f0);
 	border-radius: var(--wpss-radius-lg, 12px);
 	padding: var(--wpss-space-5, 20px);
 	position: sticky;
@@ -217,10 +217,10 @@ defined( 'ABSPATH' ) || exit;
 .wpss-cart-summary__heading {
 	font-size: 1rem;
 	font-weight: 700;
-	color: var(--wpss-color-text, #0f172a);
+	color: var(--wpss-text, #0f172a);
 	margin: 0 0 var(--wpss-space-4, 16px);
 	padding-bottom: var(--wpss-space-4, 16px);
-	border-bottom: 1px solid var(--wpss-color-border, #e2e8f0);
+	border-bottom: 1px solid var(--wpss-border, #e2e8f0);
 }
 
 .wpss-cart-summary__line {
@@ -228,7 +228,7 @@ defined( 'ABSPATH' ) || exit;
 	justify-content: space-between;
 	align-items: center;
 	font-size: 0.9375rem;
-	color: var(--wpss-color-text-muted, #64748b);
+	color: var(--wpss-text-muted, #64748b);
 	margin-bottom: var(--wpss-space-2, 8px);
 }
 
@@ -238,10 +238,10 @@ defined( 'ABSPATH' ) || exit;
 	align-items: center;
 	font-size: 1.125rem;
 	font-weight: 700;
-	color: var(--wpss-color-text, #0f172a);
+	color: var(--wpss-text, #0f172a);
 	padding-top: var(--wpss-space-4, 16px);
 	margin-top: var(--wpss-space-2, 8px);
-	border-top: 2px solid var(--wpss-color-border, #e2e8f0);
+	border-top: 2px solid var(--wpss-border, #e2e8f0);
 }
 
 .wpss-cart-summary__cta {
@@ -257,26 +257,26 @@ defined( 'ABSPATH' ) || exit;
 .wpss-cart-empty {
 	text-align: center;
 	padding: var(--wpss-space-12, 48px) var(--wpss-space-6, 24px);
-	background: var(--wpss-color-surface, #ffffff);
-	border: 1px solid var(--wpss-color-border, #e2e8f0);
+	background: var(--wpss-surface, #ffffff);
+	border: 1px solid var(--wpss-border, #e2e8f0);
 	border-radius: var(--wpss-radius-lg, 12px);
 }
 
 .wpss-cart-empty__icon {
-	color: var(--wpss-color-text-muted, #94a3b8);
+	color: var(--wpss-text-muted, #94a3b8);
 	margin-bottom: var(--wpss-space-4, 16px);
 }
 
 .wpss-cart-empty__title {
 	font-size: 1.25rem;
 	font-weight: 700;
-	color: var(--wpss-color-text, #0f172a);
+	color: var(--wpss-text, #0f172a);
 	margin: 0 0 var(--wpss-space-2, 8px);
 }
 
 .wpss-cart-empty__text {
 	font-size: 0.9375rem;
-	color: var(--wpss-color-text-muted, #64748b);
+	color: var(--wpss-text-muted, #64748b);
 	margin: 0 0 var(--wpss-space-5, 20px);
 }
 

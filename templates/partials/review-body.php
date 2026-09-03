@@ -34,22 +34,8 @@ $wpss_reviewer_name = $wpss_review->get_reviewer_name();
 		<strong class="wpss-review-author">
 			<?php echo esc_html( $wpss_reviewer_name ); ?>
 		</strong>
-		<div class="wpss-review-rating"
-			role="img"
-			aria-label="
-			<?php
-			echo esc_attr(
-				sprintf(
-					/* translators: %d: star rating out of five */
-					_n( '%d star out of 5', '%d stars out of 5', $wpss_review->rating, 'wp-sell-services' ),
-					$wpss_review->rating
-				)
-			);
-			?>
-			">
-			<?php for ( $wpss_star = 1; $wpss_star <= 5; $wpss_star++ ) : ?>
-				<span class="wpss-star <?php echo $wpss_star <= $wpss_review->rating ? 'filled' : ''; ?>" aria-hidden="true">&#9733;</span>
-			<?php endfor; ?>
+		<div class="wpss-review-rating">
+			<?php echo wpss_star_rating( (float) $wpss_review->rating ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the helper. ?>
 		</div>
 	</div>
 	<?php if ( $wpss_review->created_at ) : ?>

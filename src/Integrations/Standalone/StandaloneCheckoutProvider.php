@@ -370,7 +370,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						'id'                  => $addon_index,
 						'title'               => $extra['title'] ?? '',
 						'price'               => (float) ( $extra['price'] ?? 0 ),
-						'delivery_days_extra' => (int) ( $extra['delivery_time'] ?? 0 ),
+						'delivery_days_extra' => (int) $extra['delivery_days_extra'],
 					];
 				}
 			}
@@ -567,7 +567,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					'id'                  => (int) $addon->id,
 					'name'                => $addon->title ?? $addon->name ?? '',
 					'price'               => $addon_price,
-					'delivery_days_extra' => (int) ( $addon->delivery_days_extra ?? $addon->extra_days ?? 0 ),
+					'delivery_days_extra' => (int) ( $addon->delivery_days_extra ?? 0 ),
 				);
 			}
 
@@ -673,7 +673,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				font-size: var(--wpss-text-sm); color: var(--wpss-text-muted);
 			}
 			.wpss-co-meta__item { display: inline-flex; align-items: center; gap: var(--wpss-space-1); }
-			.wpss-co-stars { color: var(--wpss-star); letter-spacing: 1px; }
+			.wpss-co-stars { color: var(--wpss-star); fill: currentColor; }
 
 			/* Payment method cards */
 			.wpss-co-methods { display: flex; flex-direction: column; gap: var(--wpss-space-3); }
@@ -729,7 +729,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				display: flex; align-items: center; gap: var(--wpss-space-3);
 				font-size: var(--wpss-text-sm); color: var(--wpss-text-muted);
 			}
-			.wpss-co-trust__icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+			.wpss-co-trust__icon { width: 20px; flex-shrink: 0; }
 
 			/* Seller stats */
 			.wpss-co-seller-stats {
@@ -838,7 +838,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					<?php esc_html_e( 'Back to service', 'wp-sell-services' ); ?>
 				</a>
 				<span class="wpss-co-header__secure">
-					<span aria-hidden="true">&#128274;</span>
+					<i data-lucide="lock" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 					<?php esc_html_e( 'Secure Checkout', 'wp-sell-services' ); ?>
 				</span>
 			</div>
@@ -857,7 +857,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			<?php if ( ! is_user_logged_in() && ! wpss_checkout_creates_accounts() ) : ?>
 				<!-- Login required -->
 				<div class="wpss-card wpss-co-login">
-					<div class="wpss-empty__icon" aria-hidden="true">&#128100;</div>
+					<div class="wpss-empty__icon"><i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i></div>
 					<h3 class="wpss-heading-3"><?php esc_html_e( 'Sign in to continue', 'wp-sell-services' ); ?></h3>
 					<p class="wpss-caption" style="margin-top:var(--wpss-space-2);">
 						<?php esc_html_e( 'Please log in or create an account to complete your purchase.', 'wp-sell-services' ); ?>
@@ -970,7 +970,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 											<div class="wpss-co-meta">
 												<?php if ( $review_count > 0 ) : ?>
 													<span class="wpss-co-meta__item">
-														<span class="wpss-co-stars" aria-hidden="true">&#9733;</span>
+														<i data-lucide="star" class="wpss-icon wpss-icon--sm wpss-co-stars" aria-hidden="true"></i>
 														<strong><?php echo esc_html( number_format( $review_avg, 1 ) ); ?></strong>
 														<span>(<?php echo esc_html( $review_count ); ?>)</span>
 													</span>
@@ -983,7 +983,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 												<?php else : ?>
 													<?php if ( $delivery_days > 0 ) : ?>
 														<span class="wpss-co-meta__item">
-															<span aria-hidden="true">&#128337;</span>
+															<i data-lucide="clock" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 															<?php
 															/* translators: %d: number of days */
 															printf( esc_html__( '%d-day delivery', 'wp-sell-services' ), (int) $delivery_days );
@@ -993,7 +993,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 													<?php if ( $revisions > 0 ) : ?>
 														<span class="wpss-co-meta__item">
-															<span aria-hidden="true">&#128260;</span>
+															<i data-lucide="refresh-cw" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 															<?php
 															/* translators: %d: number of revisions */
 															printf( esc_html( _n( '%d revision', '%d revisions', (int) $revisions, 'wp-sell-services' ) ), (int) $revisions );
@@ -1149,11 +1149,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 									<div class="wpss-co-trust">
 										<div class="wpss-co-trust__item">
-											<span class="wpss-co-trust__icon" aria-hidden="true">&#128274;</span>
+											<i data-lucide="lock" class="wpss-icon wpss-co-trust__icon" aria-hidden="true"></i>
 											<span><?php esc_html_e( 'Secure payment', 'wp-sell-services' ); ?></span>
 										</div>
 										<div class="wpss-co-trust__item">
-											<span class="wpss-co-trust__icon" aria-hidden="true">&#128737;</span>
+											<i data-lucide="shield-check" class="wpss-icon wpss-co-trust__icon" aria-hidden="true"></i>
 											<span><?php esc_html_e( 'Order protection', 'wp-sell-services' ); ?></span>
 										</div>
 									</div>
@@ -1186,7 +1186,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 										<?php if ( $review_count > 0 ) : ?>
 										<div class="wpss-co-seller-stat">
 											<span class="wpss-co-seller-stat__value">
-												<span style="color: var(--wpss-star);" aria-hidden="true">&#9733;</span>
+												<i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 												<?php echo esc_html( number_format( $review_avg, 1 ) ); ?>
 											</span>
 											<span class="wpss-co-seller-stat__label">
@@ -1747,7 +1747,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				display: flex; align-items: center; gap: var(--wpss-space-3);
 				font-size: var(--wpss-text-sm); color: var(--wpss-text-muted);
 			}
-			.wpss-co-trust__icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+			.wpss-co-trust__icon { width: 20px; flex-shrink: 0; }
 			@media (max-width: 768px) {
 				.wpss-co-header { flex-direction: column; gap: var(--wpss-space-2); align-items: flex-start; }
 			}
@@ -1761,7 +1761,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 					<?php esc_html_e( 'Back to cart', 'wp-sell-services' ); ?>
 				</a>
 				<span class="wpss-co-header__secure">
-					<span aria-hidden="true">&#128274;</span>
+					<i data-lucide="lock" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 					<?php esc_html_e( 'Secure Checkout', 'wp-sell-services' ); ?>
 				</span>
 			</div>
@@ -1780,7 +1780,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			?>
 			<?php if ( ! is_user_logged_in() ) : ?>
 				<div class="wpss-card wpss-co-login" style="text-align:center;padding:var(--wpss-space-10) var(--wpss-space-6);">
-					<div class="wpss-empty__icon" aria-hidden="true">&#128100;</div>
+					<div class="wpss-empty__icon"><i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i></div>
 					<h3 class="wpss-heading-3"><?php esc_html_e( 'Sign in to continue', 'wp-sell-services' ); ?></h3>
 					<p class="wpss-caption" style="margin-top:var(--wpss-space-2);">
 						<?php esc_html_e( 'Please log in or create an account to complete your purchase.', 'wp-sell-services' ); ?>
@@ -1843,7 +1843,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 													src="<?php echo esc_url( $ei['service']->get_thumbnail_url( 'thumbnail' ) ); ?>"
 													alt="<?php echo esc_attr( $ei['service']->title ); ?>">
 											<?php else : ?>
-												<div class="wpss-co-multi-item__placeholder" aria-hidden="true">&#128230;</div>
+												<div class="wpss-co-multi-item__placeholder"><i data-lucide="package" class="wpss-icon" aria-hidden="true"></i></div>
 											<?php endif; ?>
 
 											<div class="wpss-co-multi-item__details">
@@ -1961,11 +1961,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 									<div class="wpss-co-trust">
 										<div class="wpss-co-trust__item">
-											<span class="wpss-co-trust__icon" aria-hidden="true">&#128274;</span>
+											<i data-lucide="lock" class="wpss-icon wpss-co-trust__icon" aria-hidden="true"></i>
 											<span><?php esc_html_e( 'Secure payment', 'wp-sell-services' ); ?></span>
 										</div>
 										<div class="wpss-co-trust__item">
-											<span class="wpss-co-trust__icon" aria-hidden="true">&#128737;</span>
+											<i data-lucide="shield-check" class="wpss-icon wpss-co-trust__icon" aria-hidden="true"></i>
 											<span><?php esc_html_e( 'Order protection', 'wp-sell-services' ); ?></span>
 										</div>
 									</div>

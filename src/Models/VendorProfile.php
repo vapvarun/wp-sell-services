@@ -614,10 +614,7 @@ class VendorProfile {
 	 * @return bool True if the vendor has reached or exceeded the limit.
 	 */
 	public function has_reached_service_limit(): bool {
-		$vendor_settings = get_option( 'wpss_vendor', array() );
-		$max_services    = isset( $vendor_settings['max_services_per_vendor'] )
-			? absint( $vendor_settings['max_services_per_vendor'] )
-			: 0;
+		$max_services = absint( wpss_get_option( 'vendor', 'max_services_per_vendor' ) );
 
 		// 0 means unlimited.
 		if ( 0 === $max_services ) {
@@ -637,17 +634,7 @@ class VendorProfile {
 	 * @return int Number of services.
 	 */
 	public function get_service_count(): int {
-		$services = get_posts(
-			array(
-				'post_type'   => 'wpss_service',
-				'author'      => $this->user_id,
-				'post_status' => array( 'publish', 'pending' ),
-				'numberposts' => -1,
-				'fields'      => 'ids',
-			)
-		);
-
-		return count( $services );
+		return wpss_count_vendor_services( (int) $this->user_id, array( 'publish', 'pending' ) );
 	}
 
 	/**
@@ -656,11 +643,7 @@ class VendorProfile {
 	 * @return int Maximum services. 0 means unlimited.
 	 */
 	public function get_max_services(): int {
-		$vendor_settings = get_option( 'wpss_vendor', array() );
-
-		return isset( $vendor_settings['max_services_per_vendor'] )
-			? absint( $vendor_settings['max_services_per_vendor'] )
-			: 0;
+		return absint( wpss_get_option( 'vendor', 'max_services_per_vendor' ) );
 	}
 
 	/**

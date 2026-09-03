@@ -75,6 +75,52 @@ class EmailService {
 	public const TYPE_RECEIPT_REJECTED  = 'receipt_rejected';
 
 	/**
+	 * Vendor account decisions: approved, rejected, suspended.
+	 *
+	 * @since 1.7.1
+	 * @var string
+	 */
+	public const TYPE_VENDOR_APPROVED  = 'vendor_approved';
+	public const TYPE_VENDOR_REJECTED  = 'vendor_rejected';
+	public const TYPE_VENDOR_SUSPENDED = 'vendor_suspended';
+
+	/**
+	 * Types that may be throttled to one mail per recipient per five minutes.
+	 *
+	 * Only conversational mail belongs here. The cooldown used to apply to
+	 * every type and silently dropped the second New Order, the second
+	 * withdrawal request and the second moderation decision inside the
+	 * window (Basecamp #10264287886). Transactional mail is never throttled.
+	 *
+	 * @since 1.7.1
+	 * @var string[]
+	 */
+	private const COOLDOWN_TYPES = array( self::TYPE_NEW_MESSAGE, self::TYPE_VENDOR_CONTACT );
+
+	/**
+	 * Hook a failed send is retried on, once, ten minutes later.
+	 *
+	 * @since 1.7.1
+	 * @var string
+	 */
+	public const RETRY_HOOK = 'wpss_email_retry';
+
+	/**
+	 * Type of the mail currently inside wp_mail(), for the failure listener.
+	 *
+	 * @var string
+	 */
+	private static string $sending_type = '';
+
+	/**
+	 * True while a scheduled retry is inside wp_mail(), so a second failure
+	 * is logged but not re-queued.
+	 *
+	 * @var bool
+	 */
+	private static bool $retrying = false;
+
+	/**
 	 * Default email settings. Lazily initialized to avoid early __() calls.
 	 *
 	 * @var array|null
@@ -723,7 +769,7 @@ class EmailService {
 		$parent_order = $parent_id ? wpss_get_order( $parent_id ) : null;
 		$meta         = $this->decode_order_meta( $milestone );
 
-		$pay_url = wpss_get_pay_order_url( (int) $milestone->id );
+		$pay_url = wpss_ensure_pay_order( (int) $milestone->id );
 
 		$subject = sprintf(
 			/* translators: 1: site name, 2: phase title */
@@ -918,7 +964,7 @@ class EmailService {
 		$vendor_name = $vendor ? $vendor->display_name : __( 'Your seller', 'wp-sell-services' );
 		$reason      = (string) ( $extension->vendor_notes ?? '' );
 
-		$pay_url = wpss_get_pay_order_url( (int) $extension->id );
+		$pay_url = wpss_ensure_pay_order( (int) $extension->id );
 
 		$subject = sprintf(
 			/* translators: %s: site name */
@@ -1950,31 +1996,14 @@ class EmailService {
 			return false;
 		}
 
-		// Rate limit — originally "one per type per recipient per 5 minutes"
-		// to throttle noisy things like chat-message notifications. That
-		// window silently dropped legitimate transaction-critical emails
-		// when a buyer paid two milestones back-to-back (second email was
-		// swallowed). The cooldown now keys on the sub-order id when the
-		// caller passed one in $template_vars, so each milestone / tip /
-		// extension gets its own mail even if they fire in quick succession,
-		// while chat / new-message type emails still rate-limit on
-		// recipient+type as before.
-		$cooldown_scope = $to . '|' . $type;
-		$sub_order_id   = 0;
-		foreach ( array( 'milestone', 'extension', 'tip_order' ) as $sub_key ) {
-			if ( isset( $template_vars[ $sub_key ] ) && is_object( $template_vars[ $sub_key ] ) ) {
-				$sub_order_id = (int) ( $template_vars[ $sub_key ]->id ?? 0 );
-				if ( $sub_order_id ) {
-					$cooldown_scope .= '|' . $sub_order_id;
-					break;
-				}
+		// Rate limit, conversational mail only (see COOLDOWN_TYPES).
+		if ( in_array( $type, self::COOLDOWN_TYPES, true ) ) {
+			$cooldown_key = 'wpss_email_cooldown_' . md5( $to . '|' . $type );
+			if ( get_transient( $cooldown_key ) ) {
+				return false;
 			}
+			set_transient( $cooldown_key, 1, 5 * MINUTE_IN_SECONDS );
 		}
-		$cooldown_key = 'wpss_email_cooldown_' . md5( $cooldown_scope );
-		if ( get_transient( $cooldown_key ) ) {
-			return false;
-		}
-		set_transient( $cooldown_key, 1, 5 * MINUTE_IN_SECONDS );
 
 		/**
 		 * Filters the email subject line before sending.
@@ -2047,7 +2076,79 @@ class EmailService {
 			$type
 		);
 
-		return wp_mail( $email['to'], $email['subject'], $email['content'], $email['headers'] );
+		self::$sending_type = $type;
+		$sent               = wp_mail( $email['to'], $email['subject'], $email['content'], $email['headers'] );
+		self::$sending_type = '';
+
+		if ( ! $sent ) {
+			wpss_log( sprintf( 'Email "%s" (%s) to %s was not sent.', $email['subject'], $type, $email['to'] ), 'error' );
+		}
+
+		return $sent;
+	}
+
+	/**
+	 * Record a failed send and queue one retry.
+	 *
+	 * Bound to `wp_mail_failed`. Every send in the plugin goes through
+	 * wp_mail(), so this sees the plugin's own mail and anything else on the
+	 * site; the audit row says which type it was when it was ours.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param \WP_Error $error Error raised by wp_mail().
+	 * @return void
+	 */
+	public static function on_mail_failed( \WP_Error $error ): void {
+		$data = (array) $error->get_error_data();
+		$to   = implode( ', ', (array) ( $data['to'] ?? array() ) );
+
+		( new AuditLogService() )->log(
+			'email.failed',
+			'email',
+			0,
+			array(
+				'action'  => self::$retrying ? 'retry' : 'send',
+				'context' => array(
+					'recipient' => $to,
+					'type'      => self::$sending_type,
+					'subject'   => (string) ( $data['subject'] ?? '' ),
+					'error'     => $error->get_error_message(),
+				),
+			)
+		);
+
+		if ( self::$retrying || '' === $to ) {
+			return;
+		}
+
+		Scheduler::schedule_single(
+			self::RETRY_HOOK,
+			time() + 10 * MINUTE_IN_SECONDS,
+			array(
+				$data['to'] ?? '',
+				(string) ( $data['subject'] ?? '' ),
+				(string) ( $data['message'] ?? '' ),
+				$data['headers'] ?? array(),
+			)
+		);
+	}
+
+	/**
+	 * Resend a mail that failed. Runs once from Action Scheduler.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string|string[] $to      Recipient(s).
+	 * @param string          $subject Subject.
+	 * @param string          $message Body.
+	 * @param string|string[] $headers Headers.
+	 * @return void
+	 */
+	public static function retry( $to, string $subject, string $message, $headers = array() ): void {
+		self::$retrying = true;
+		wp_mail( $to, $subject, $message, $headers );
+		self::$retrying = false;
 	}
 
 	/**
@@ -2058,7 +2159,10 @@ class EmailService {
 	 * @return string
 	 */
 	private function get_email_content( string $type, array $template_vars ): string {
-		$template_file = $this->get_template_file( $type );
+		// A caller may name a template explicitly (NotificationService sends
+		// every in-app row's mail through generic.php while keeping its own
+		// type for the subject / header / toggle filters).
+		$template_file = $this->get_template_file( (string) ( $template_vars['template'] ?? $type ) );
 
 		if ( ! $template_file ) {
 			return '';
@@ -2174,6 +2278,9 @@ class EmailService {
 			self::TYPE_RECEIPT_SUBMITTED      => 'generic.php',
 			self::TYPE_RECEIPT_VERIFIED       => 'generic.php',
 			self::TYPE_RECEIPT_REJECTED       => 'generic.php',
+			self::TYPE_VENDOR_APPROVED        => 'vendor-approved.php',
+			self::TYPE_VENDOR_REJECTED        => 'vendor-rejected.php',
+			self::TYPE_VENDOR_SUSPENDED       => 'vendor-suspended.php',
 		);
 
 		return $templates[ $type ] ?? 'generic.php';
@@ -2301,6 +2408,10 @@ class EmailService {
 			self::TYPE_RECEIPT_SUBMITTED      => 'orders',
 			self::TYPE_RECEIPT_VERIFIED       => 'orders',
 			self::TYPE_RECEIPT_REJECTED       => 'orders',
+			// Plain (generic-template) types NotificationService sends.
+			'review_reply'                    => 'completion',
+			'dispute_escalated'               => 'disputes',
+			'dispute_cancelled'               => 'disputes',
 		);
 		return $type_to_category[ $type ] ?? null;
 	}
@@ -2338,73 +2449,21 @@ class EmailService {
 	}
 
 	/**
-	 * Check whether an email-type constant is enabled in the global
-	 * `wpss_notifications` admin setting.
+	 * Check whether an email type is enabled in the global `wpss_notifications`
+	 * admin setting.
 	 *
-	 * Maps internal `TYPE_*` constants onto the admin checkbox keys and
-	 * returns the boolean. Unknown types default to enabled so newly-added
-	 * email types ship live until an admin toggles them off.
+	 * The type => setting map lives in wpss_notification_type_settings(), shared
+	 * with NotificationService. It used to be duplicated here, and the copies
+	 * disagreed: `cancellation_requested` was gated on
+	 * `notify_cancellation_requested` here and on `notify_order_cancelled` there,
+	 * so one event answered to two checkboxes and each checkbox silenced half of
+	 * it (Basecamp #10268056021). Unknown types stay enabled, so a newly-added
+	 * email ships live until an owner is given a control for it.
 	 *
 	 * @param string $type One of the EmailService::TYPE_* constants.
 	 * @return bool True when the type is enabled, false when disabled.
 	 */
 	private function is_email_type_enabled( string $type ): bool {
-		$notification_settings = get_option( 'wpss_notifications' );
-
-		// Map EmailService type constants to admin setting keys.
-		$type_to_setting = array(
-			self::TYPE_NEW_ORDER              => 'notify_new_order',
-			self::TYPE_REQUIREMENTS_SUBMITTED => 'notify_new_order',
-			self::TYPE_ORDER_IN_PROGRESS      => 'notify_new_order',
-			self::TYPE_DELIVERY_READY         => 'notify_delivery_submitted',
-			self::TYPE_ORDER_COMPLETED        => 'notify_order_completed',
-			self::TYPE_REVISION_REQUESTED     => 'notify_revision_requested',
-			self::TYPE_NEW_MESSAGE            => 'notify_new_message',
-			self::TYPE_ORDER_CANCELLED        => 'notify_order_cancelled',
-			self::TYPE_DISPUTE_OPENED         => 'notify_dispute_opened',
-			self::TYPE_REQUIREMENTS_REMINDER  => 'notify_new_order',
-			self::TYPE_CANCELLATION_REQUESTED => 'notify_cancellation_requested',
-			// TYPE_SELLER_LEVEL_PROMOTION is unmapped — always enabled (important vendor milestone).
-			self::TYPE_WITHDRAWAL_REQUESTED   => 'notify_withdrawal_requested',
-			self::TYPE_WITHDRAWAL_AUTO        => 'notify_withdrawal_requested',
-			self::TYPE_WITHDRAWAL_APPROVED    => 'notify_withdrawal_approved',
-			self::TYPE_WITHDRAWAL_REJECTED    => 'notify_withdrawal_rejected',
-			self::TYPE_PROPOSAL_SUBMITTED     => 'notify_proposal_submitted',
-			self::TYPE_PROPOSAL_ACCEPTED      => 'notify_proposal_accepted',
-			'moderation_approved'             => 'notify_moderation',
-			'moderation_rejected'             => 'notify_moderation',
-			'moderation_pending'              => 'notify_moderation',
-			'dispute_admin'                   => 'notify_dispute_opened',
-			self::TYPE_REVIEW_RECEIVED        => 'notify_new_review',
-			self::TYPE_VENDOR_CONTACT         => 'notify_vendor_contact',
-			self::TYPE_TIP_RECEIVED           => 'notify_tip_received',
-			self::TYPE_MILESTONE_PROPOSED     => 'notify_milestone_proposed',
-			self::TYPE_MILESTONE_PAID         => 'notify_milestone_paid',
-			self::TYPE_MILESTONE_SUBMITTED    => 'notify_milestone_submitted',
-			self::TYPE_MILESTONE_APPROVED     => 'notify_milestone_approved',
-			self::TYPE_EXTENSION_PROPOSED     => 'notify_extension_proposed',
-			self::TYPE_EXTENSION_APPROVED     => 'notify_extension_approved',
-			self::TYPE_EXTENSION_DECLINED     => 'notify_extension_declined',
-		);
-
-		if ( ! isset( $type_to_setting[ $type ] ) ) {
-			// Unknown type: allow sending (do not block unrecognized types).
-			return true;
-		}
-
-		$setting_key = $type_to_setting[ $type ];
-
-		// Option never saved (fresh install) or empty (broken save) → default to enabled.
-		if ( false === $notification_settings || ! is_array( $notification_settings ) || empty( $notification_settings ) ) {
-			return true;
-		}
-
-		// Missing key defaults to enabled — emails should work out of the box.
-		// Only explicitly set to false (unchecked checkbox) disables an email type.
-		if ( ! array_key_exists( $setting_key, $notification_settings ) ) {
-			return true;
-		}
-
-		return ! empty( $notification_settings[ $setting_key ] );
+		return wpss_notification_type_allowed( $type );
 	}
 }

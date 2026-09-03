@@ -84,20 +84,11 @@ class EarningsService {
 			)
 		);
 
-		// Gross lifetime credits, for display. Debit rows (withdrawal / debit /
-		// dispute_refund) are excluded so this reads as "money ever earned"
-		// rather than a running balance.
-		$txn_table   = $wpdb->prefix . 'wpss_wallet_transactions';
-		$debit_types = wpss_get_ledger_debit_types_sql();
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$total_earned = (float) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$txn_table}
-				WHERE user_id = %d AND status = 'completed'
-				AND type NOT IN ({$debit_types})",
-				$vendor_id
-			)
-		);
+		// Lifetime credits net of reversals, for display: the same SUM the
+		// vendor profile row caches, so the two cannot disagree.
+		$txn_table    = $wpdb->prefix . 'wpss_wallet_transactions';
+		$debit_types  = wpss_get_ledger_debit_types_sql();
+		$total_earned = wpss_get_ledger_total_earned( $vendor_id );
 
 		// Credits still inside the clearance window are not withdrawable yet.
 		// Derived from the ledger (not from orders' completed_at) so that tips,
@@ -374,9 +365,7 @@ class EarningsService {
 
 		// Amount is stored POSITIVE; the sign is applied on read by
 		// wpss_get_ledger_balance(), which treats 'withdrawal' as a debit.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$inserted = $wpdb->insert(
-			$txn_table,
+		$inserted = wpss_insert_ledger_row(
 			array(
 				'user_id'        => $vendor_id,
 				'type'           => 'withdrawal',
@@ -396,7 +385,6 @@ class EarningsService {
 				'status'         => 'completed',
 				'created_at'     => current_time( 'mysql' ),
 			),
-			array( '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%d', '%s', '%s' )
 		);
 
 		if ( false === $inserted ) {
@@ -445,7 +433,19 @@ class EarningsService {
 			);
 		}
 
-		if ( self::WITHDRAWAL_PENDING !== $withdrawal->status && self::WITHDRAWAL_APPROVED !== $withdrawal->status ) {
+		// Only an approved request can be paid: approve first (the review
+		// step), pay offline, then mark paid. A pending request is refused so
+		// nobody pays out a request that was never looked at.
+		if ( self::WITHDRAWAL_PENDING === $withdrawal->status ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'message' => __( 'Approve this withdrawal before marking it paid.', 'wp-sell-services' ),
+				'code'    => 'not_approved',
+			);
+		}
+
+		if ( self::WITHDRAWAL_APPROVED !== $withdrawal->status ) {
 			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
@@ -665,7 +665,7 @@ class EarningsService {
 				'vendor_id'  => $vendor_id,
 				'amount'     => $amount,
 				'method'     => sanitize_key( $method ),
-				'details'    => wp_json_encode( $details ),
+				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
 				'status'     => self::WITHDRAWAL_PENDING,
 				'created_at' => current_time( 'mysql' ),
 			),
@@ -684,8 +684,17 @@ class EarningsService {
 
 		$withdrawal_id = (int) $wpdb->insert_id;
 
-		// Notify admin (respects email settings).
+		// Notify admin (respects email settings) and give the vendor a row.
 		( new EmailService() )->send_withdrawal_notification( $vendor_id, $amount, $withdrawal_id );
+		( new NotificationService() )->send(
+			$vendor_id,
+			'withdrawal_requested',
+			array(
+				'withdrawal_id' => $withdrawal_id,
+				'amount'        => $amount,
+				'action_url'    => wpss_get_dashboard_url( 'earnings' ),
+			)
+		);
 
 		/**
 		 * Fires when withdrawal is requested.
@@ -785,7 +794,7 @@ class EarningsService {
 					'method'       => $row->method,
 					// Cast: the column is nullable, and under strict_types a NULL here
 					// is a TypeError that fatals the whole earnings page.
-					'details'      => json_decode( (string) ( $row->details ?? '' ), true ) ?: array(),
+					'details'      => json_decode( wpss_decrypt_secret( (string) ( $row->details ?? '' ) ), true ) ?: array(),
 					'status'       => $row->status,
 					'admin_note'   => $row->admin_note ?? '',
 					'processed_at' => $row->processed_at,
@@ -950,7 +959,7 @@ class EarningsService {
 					'method'       => $row->method,
 					// Cast: the column is nullable, and under strict_types a NULL here
 					// is a TypeError that fatals the whole earnings page.
-					'details'      => json_decode( (string) ( $row->details ?? '' ), true ) ?: array(),
+					'details'      => json_decode( wpss_decrypt_secret( (string) ( $row->details ?? '' ) ), true ) ?: array(),
 					'status'       => $row->status,
 					'admin_note'   => $row->admin_note ?? '',
 					'processed_at' => $row->processed_at,
@@ -1035,20 +1044,7 @@ class EarningsService {
 	 * @return float Minimum withdrawal amount.
 	 */
 	public static function get_min_withdrawal_amount(): float {
-		// Primary location: wpss_payouts (new structure).
-		$payouts_settings = get_option( 'wpss_payouts', array() );
-		if ( isset( $payouts_settings['min_withdrawal'] ) ) {
-			return (float) $payouts_settings['min_withdrawal'];
-		}
-
-		// Fallback: wpss_vendor (old structure for backward compatibility).
-		$vendor_settings = get_option( 'wpss_vendor', array() );
-		if ( isset( $vendor_settings['min_payout_amount'] ) ) {
-			return (float) $vendor_settings['min_payout_amount'];
-		}
-
-		// Default.
-		return 50.0;
+		return (float) wpss_get_option( 'payouts', 'min_withdrawal' );
 	}
 
 	/**
@@ -1075,9 +1071,7 @@ class EarningsService {
 	 * @return int Days to hold earnings. 0 means no hold.
 	 */
 	public static function get_clearance_days(): int {
-		$payouts_settings = get_option( 'wpss_payouts', array() );
-
-		return max( 0, (int) ( $payouts_settings['clearance_days'] ?? 0 ) );
+		return max( 0, (int) wpss_get_option( 'payouts', 'clearance_days' ) );
 	}
 
 	/**
@@ -1086,8 +1080,7 @@ class EarningsService {
 	 * @return bool True if auto withdrawal is enabled.
 	 */
 	public static function is_auto_withdrawal_enabled(): bool {
-		$payouts_settings = get_option( 'wpss_payouts', array() );
-		return ! empty( $payouts_settings['auto_withdrawal_enabled'] );
+		return (bool) wpss_get_option( 'payouts', 'auto_withdrawal_enabled' );
 	}
 
 	/**
@@ -1096,8 +1089,7 @@ class EarningsService {
 	 * @return float Threshold amount.
 	 */
 	public static function get_auto_withdrawal_threshold(): float {
-		$payouts_settings = get_option( 'wpss_payouts', array() );
-		return (float) ( $payouts_settings['auto_withdrawal_threshold'] ?? 500 );
+		return (float) wpss_get_option( 'payouts', 'auto_withdrawal_threshold' );
 	}
 
 	/**
@@ -1106,8 +1098,7 @@ class EarningsService {
 	 * @return string Schedule (weekly, biweekly, or monthly).
 	 */
 	public static function get_auto_withdrawal_schedule(): string {
-		$payouts_settings = get_option( 'wpss_payouts', array() );
-		$schedule         = $payouts_settings['auto_withdrawal_schedule'] ?? 'monthly';
+		$schedule = wpss_get_option( 'payouts', 'auto_withdrawal_schedule' );
 		return in_array( $schedule, array( 'weekly', 'biweekly', 'monthly' ), true ) ? $schedule : 'monthly';
 	}
 
@@ -1274,7 +1265,7 @@ class EarningsService {
 				'vendor_id'  => $vendor_id,
 				'amount'     => $amount,
 				'method'     => sanitize_key( $method ),
-				'details'    => wp_json_encode( $details ),
+				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
 				'status'     => self::WITHDRAWAL_PENDING,
 				'is_auto'    => 1,
 				'created_at' => current_time( 'mysql' ),

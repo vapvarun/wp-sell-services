@@ -45,9 +45,9 @@ function wpss_get_active_storage_provider(): ?object {
 		return null;
 	}
 
-	$providers = (array) apply_filters( 'wpss_storage_providers', array() );
+	$provider = wpss_get_storage_provider( $active_id );
 
-	if ( ! isset( $providers[ $active_id ] ) ) {
+	if ( ! $provider ) {
 		wpss_log(
 			sprintf( 'Storage provider "%s" is configured but not registered; falling back to local disk.', $active_id ),
 			'error'
@@ -55,9 +55,7 @@ function wpss_get_active_storage_provider(): ?object {
 		return null;
 	}
 
-	$provider = $providers[ $active_id ];
-
-	if ( ! is_object( $provider ) || ! method_exists( $provider, 'is_configured' ) || ! $provider->is_configured() ) {
+	if ( ! method_exists( $provider, 'is_configured' ) || ! $provider->is_configured() ) {
 		wpss_log(
 			sprintf( 'Storage provider "%s" is registered but not configured; falling back to local disk.', $active_id ),
 			'error'
@@ -66,6 +64,29 @@ function wpss_get_active_storage_provider(): ?object {
 	}
 
 	return $provider;
+}
+
+/**
+ * Look up one registered storage provider by id.
+ *
+ * A pure registry read, deliberately separate from the ACTIVE provider: a
+ * file record names the provider that holds it, and that provider must keep
+ * resolving after the owner switches buckets - the file did not move.
+ *
+ * @since 1.7.1
+ *
+ * @param string $id Provider id as registered on `wpss_storage_providers` ('s3', 'gcs', 'do', ...).
+ * @return object|null Provider implementing StorageProviderInterface, or null when not registered.
+ */
+function wpss_get_storage_provider( string $id ): ?object {
+	if ( '' === $id || 'local' === $id ) {
+		return null;
+	}
+
+	$providers = (array) apply_filters( 'wpss_storage_providers', array() );
+	$provider  = $providers[ $id ] ?? null;
+
+	return is_object( $provider ) ? $provider : null;
 }
 
 /**
@@ -207,6 +228,47 @@ function wpss_order_files_are_public( bool $force = false ): ?bool {
 }
 
 /**
+ * Validate an upload against the plugin's size and type settings.
+ *
+ * ONE reading of `wpss_max_file_size` and `wpss_allowed_file_types`. Message,
+ * contact and dispute uploads each carried a private copy of these limits
+ * (and dispute evidence had no size cap at all), so the owner's settings
+ * governed some uploads and not others (Basecamp 10264291163).
+ *
+ * @since 1.7.1
+ *
+ * @param array<string,mixed> $file One entry from $_FILES.
+ * @return WP_Error|null Error describing the refusal, or null when acceptable.
+ */
+function wpss_check_upload( array $file ): ?WP_Error {
+	$max_mb = (int) wpss_get_option( 'advanced', 'max_file_size' );
+
+	if ( (int) ( $file['size'] ?? 0 ) > $max_mb * MB_IN_BYTES ) {
+		return new WP_Error(
+			'file_too_large',
+			/* translators: %s: maximum file size */
+			sprintf( __( 'File size exceeds the maximum of %s.', 'wp-sell-services' ), size_format( $max_mb * MB_IN_BYTES ) ),
+			array( 'status' => 400 )
+		);
+	}
+
+	// Real bytes, not the client-supplied extension or mime.
+	$checked = wp_check_filetype_and_ext( (string) ( $file['tmp_name'] ?? '' ), (string) ( $file['name'] ?? '' ) );
+
+	if ( empty( $checked['ext'] ) || empty( $checked['type'] ) ) {
+		return new WP_Error( 'invalid_type', __( 'File type could not be verified.', 'wp-sell-services' ), array( 'status' => 400 ) );
+	}
+
+	$allowed = array_map( 'trim', explode( ',', strtolower( (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ) ) );
+
+	if ( ! in_array( strtolower( (string) $checked['ext'] ), $allowed, true ) ) {
+		return new WP_Error( 'invalid_type', __( 'File type not allowed.', 'wp-sell-services' ), array( 'status' => 400 ) );
+	}
+
+	return null;
+}
+
+/**
  * Store one uploaded file against an order.
  *
  * Replaces the bare wp_handle_upload() that each caller used to run. Writes
@@ -214,14 +276,16 @@ function wpss_order_files_are_public( bool $force = false ): ?bool {
  * one, and returns a record addressed by id rather than by URL.
  *
  * The returned array keeps the `id`, `name`, `type` and `size` keys the old
- * shape had so stored rows stay readable, and adds `path` and `remote_path`.
+ * shape had so stored rows stay readable, and adds `path`, `remote_path`,
+ * `provider` (the storage provider id holding `remote_path`) and `user_id`
+ * (who uploaded it - what lets a dispute reply prove a file is its own).
  * It deliberately omits `url`: see wpss_get_order_file_url().
  *
  * @since 1.7.0
  *
  * @param array<string,mixed> $file One entry from $_FILES.
  * @param int                 $order_id Order the file belongs to.
- * @param string              $kind     'delivery' or 'requirement' - used only for grouping.
+ * @param string              $kind     delivery|requirement|message|dispute|contact|receipt - used only for grouping.
  * @return array<string,mixed>|null Record, or null when the upload is rejected.
  */
 function wpss_store_order_file( array $file, int $order_id, string $kind = 'delivery' ): ?array {
@@ -235,8 +299,14 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 		return null;
 	}
 
+	// Size is enforced here for every kind; the type allow-list is the
+	// caller's (deliveries keep their own, wider, filterable list).
+	if ( (int) ( $file['size'] ?? 0 ) > (int) wpss_get_option( 'advanced', 'max_file_size' ) * MB_IN_BYTES ) {
+		return null;
+	}
+
 	$order_id = max( 0, $order_id );
-	$kind     = in_array( $kind, array( 'delivery', 'requirement' ), true ) ? $kind : 'delivery';
+	$kind     = in_array( $kind, array( 'delivery', 'requirement', 'message', 'dispute', 'contact', 'receipt' ), true ) ? $kind : 'delivery';
 
 	// wp_unique_filename() against the target directory, so two buyers uploading
 	// brief.pdf to the same order cannot overwrite each other.
@@ -265,7 +335,9 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 		'path'        => $filename,
 		'order_id'    => $order_id,
 		'kind'        => $kind,
+		'user_id'     => get_current_user_id(),
 		'remote_path' => null,
+		'provider'    => null,
 	);
 
 	$provider = wpss_get_active_storage_provider();
@@ -274,8 +346,9 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 		$remote = sprintf( 'wpss/%d/%s/%s', $order_id, $kind, $filename );
 		$result = $provider->upload( $target, $remote );
 
-		if ( ! empty( $result['success'] ) ) {
-			$record['remote_path'] = $remote;
+		if ( ! is_wp_error( $result ) && ! empty( $result['key'] ) ) {
+			$record['remote_path'] = (string) $result['key'];
+			$record['provider']    = (string) get_option( 'wpss_active_storage_provider', '' );
 
 			// The local copy has served its purpose. Keeping it would mean the
 			// owner pays for the bucket and the disk both, which is the whole
@@ -289,7 +362,7 @@ function wpss_store_order_file( array $file, int $order_id, string $kind = 'deli
 					'Cloud upload failed for order %d (%s); keeping the local copy. %s',
 					$order_id,
 					$filename,
-					isset( $result['error'] ) ? (string) $result['error'] : ''
+					is_wp_error( $result ) ? $result->get_error_message() : 'no key returned'
 				),
 				'error'
 			);
@@ -408,16 +481,47 @@ function wpss_get_order_file_url( array $record ): string {
  * @return array<string,mixed>|null
  */
 function wpss_find_order_file( int $order_id, string $file_id ): ?array {
+	foreach ( wpss_get_order_file_records( $order_id ) as $record ) {
+		if ( (string) $record['id'] === $file_id ) {
+			return $record;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Every file record attached to an order.
+ *
+ * Reads every table that holds one, because the endpoint is handed an id and
+ * nothing else - the link in an email does not say which kind of file it
+ * points at. Conversation and dispute rows are keyed by order through their
+ * parent, so message and dispute attachments answer to the same read gate as
+ * deliveries (Basecamp 10264291163), and so does a buyer's proof of payment
+ * (Basecamp 10267994010).
+ *
+ * @since 1.7.1
+ *
+ * @param int $order_id Order ID.
+ * @return array<int,array<string,mixed>> Records as stored, each with `order_id` set.
+ */
+function wpss_get_order_file_records( int $order_id ): array {
 	global $wpdb;
 
-	// Both tables, because the endpoint is handed an id and nothing else - the
-	// link in an email does not say which kind of file it points at.
 	$sets = array(
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->get_col( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_deliveries WHERE order_id = %d", $order_id ) ),
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->get_col( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_order_requirements WHERE order_id = %d", $order_id ) ),
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->get_col( $wpdb->prepare( "SELECT m.attachments FROM {$wpdb->prefix}wpss_messages m INNER JOIN {$wpdb->prefix}wpss_conversations c ON c.id = m.conversation_id WHERE c.order_id = %d", $order_id ) ),
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->get_col( $wpdb->prepare( "SELECT dm.attachments FROM {$wpdb->prefix}wpss_dispute_messages dm INNER JOIN {$wpdb->prefix}wpss_disputes d ON d.id = dm.dispute_id WHERE d.order_id = %d", $order_id ) ),
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->get_col( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_payment_receipts WHERE order_id = %d", $order_id ) ),
 	);
+
+	$records = array();
 
 	foreach ( $sets as $rows ) {
 		foreach ( (array) $rows as $raw ) {
@@ -428,15 +532,94 @@ function wpss_find_order_file( int $order_id, string $file_id ): ?array {
 			}
 
 			foreach ( $decoded as $record ) {
-				if ( is_array( $record ) && isset( $record['id'] ) && (string) $record['id'] === $file_id ) {
+				if ( is_array( $record ) && isset( $record['id'] ) ) {
 					$record['order_id'] = $order_id;
-					return $record;
+					$records[]          = $record;
 				}
 			}
 		}
 	}
 
-	return null;
+	return $records;
+}
+
+/**
+ * Remove every file attached to an order, on disk and in the bucket.
+ *
+ * Called when the order row itself is deleted (service cascade, uninstall).
+ * Before 1.7.1 nothing removed these on any path, so a deleted order left its
+ * buyer's brief and the seller's deliverables readable on disk forever.
+ *
+ * A remote object the provider cannot delete is logged, not retried: the row
+ * that named it is about to go, so this log line is the owner's only pointer.
+ *
+ * @since 1.7.1
+ *
+ * @param int $order_id Order ID.
+ * @return void
+ */
+function wpss_delete_order_files( int $order_id ): void {
+	if ( $order_id <= 0 ) {
+		return;
+	}
+
+	foreach ( wpss_get_order_file_records( $order_id ) as $record ) {
+		if ( empty( $record['remote_path'] ) ) {
+			continue;
+		}
+
+		$provider_id = (string) ( $record['provider'] ?? '' );
+		$provider    = '' !== $provider_id ? wpss_get_storage_provider( $provider_id ) : wpss_get_active_storage_provider();
+
+		if ( $provider && method_exists( $provider, 'delete' ) && $provider->delete( (string) $record['remote_path'] ) ) {
+			continue;
+		}
+
+		wpss_log(
+			sprintf(
+				'Could not delete remote file %s for order %d from storage provider "%s"; remove it from the bucket by hand.',
+				(string) $record['remote_path'],
+				$order_id,
+				'' !== $provider_id ? $provider_id : (string) get_option( 'wpss_active_storage_provider', '' )
+			),
+			'error'
+		);
+	}
+
+	wpss_rmdir_recursive( wpss_get_order_files_dir() . $order_id . '/' );
+}
+
+/**
+ * Delete a directory and everything under it.
+ *
+ * Plain PHP rather than WP_Filesystem: the order-file store is written with
+ * plain PHP too, and this also runs from uninstall.php where no credentials
+ * prompt is possible.
+ *
+ * @since 1.7.1
+ *
+ * @param string $dir Absolute path.
+ * @return void
+ */
+function wpss_rmdir_recursive( string $dir ): void {
+	if ( ! is_dir( $dir ) ) {
+		return;
+	}
+
+	$items = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ),
+		RecursiveIteratorIterator::CHILD_FIRST
+	);
+
+	foreach ( $items as $item ) {
+		if ( $item->isDir() ) {
+			rmdir( $item->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+		} else {
+			wp_delete_file( $item->getPathname() );
+		}
+	}
+
+	rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
 }
 
 /**
@@ -610,6 +793,7 @@ function wpss_rewrite_order_file_record( int $order_id, string $file_id, array $
 	$tables = array(
 		$wpdb->prefix . 'wpss_deliveries',
 		$wpdb->prefix . 'wpss_order_requirements',
+		$wpdb->prefix . 'wpss_payment_receipts',
 	);
 
 	foreach ( $tables as $table ) {
@@ -651,6 +835,228 @@ function wpss_rewrite_order_file_record( int $order_id, string $file_id, array $
 }
 
 /**
+ * The gated link to a receipt's proof of payment, and enough about it to render.
+ *
+ * ONE reading of a receipt row's file for both surfaces that show it - the
+ * admin review box and GET /orders/{id}/receipts. Both used to emit
+ * wp_get_attachment_url(), which is a public wp-content/uploads link: a
+ * stranger holding it downloaded a stranger's bank transfer slip (Basecamp
+ * 10267994010).
+ *
+ * @since 1.7.1
+ *
+ * @param object $receipt Receipt row.
+ * @return array{url:string,is_image:bool,name:string} `url` is '' when there is nothing this user may open.
+ */
+function wpss_get_receipt_file( object $receipt ): array {
+	$decoded = json_decode( (string) ( $receipt->attachments ?? '' ), true );
+	$record  = ( is_array( $decoded ) && isset( $decoded[0] ) && is_array( $decoded[0] ) ) ? $decoded[0] : null;
+
+	if ( ! $record && (int) ( $receipt->attachment_id ?? 0 ) > 0 ) {
+		// A row the upgrade pass has not reached yet. Adopt it now rather than
+		// hand back the public URL for one more render.
+		$record = wpss_adopt_legacy_receipt_file( $receipt );
+	}
+
+	if ( ! $record ) {
+		return array(
+			'url'      => '',
+			'is_image' => false,
+			'name'     => '',
+		);
+	}
+
+	$record['order_id'] = (int) ( $receipt->order_id ?? 0 );
+
+	return array(
+		'url'      => wpss_get_order_file_url( $record ),
+		'is_image' => 0 === strpos( (string) ( $record['type'] ?? '' ), 'image/' ),
+		'name'     => (string) ( $record['name'] ?? '' ),
+	);
+}
+
+/**
+ * Move a pre-1.7.1 receipt out of the media library and into the order store.
+ *
+ * Receipts written before this release are media-library attachments: the row
+ * holds `attachment_id` and the file sits in wp-content/uploads with nothing in
+ * front of it. This writes the file record the rest of the order-file seam
+ * expects, then hands the move itself to wpss_migrate_legacy_order_file() -
+ * the same copy/rewrite/delete that every other legacy order file goes through.
+ *
+ * The record is written to the row BEFORE the move, because that migrator
+ * rewrites the row it finds; and it is returned even when the move fails (a
+ * file already deleted, an offloaded bucket), because a record carrying only
+ * `url` still routes through the permission-checked endpoint, where a bare
+ * attachment id would 404.
+ *
+ * Called from the upgrade pass for every legacy row, and from
+ * wpss_get_receipt_file() for anything that pass missed.
+ *
+ * @since 1.7.1
+ *
+ * @param object $receipt Receipt row carrying `id`, `order_id` and `attachment_id`.
+ * @return array<string,mixed>|null File record, or null when there is nothing to adopt.
+ */
+function wpss_adopt_legacy_receipt_file( object $receipt ): ?array {
+	global $wpdb;
+
+	$receipt_id    = (int) ( $receipt->id ?? 0 );
+	$order_id      = (int) ( $receipt->order_id ?? 0 );
+	$attachment_id = (int) ( $receipt->attachment_id ?? 0 );
+	$url           = $attachment_id > 0 ? (string) wp_get_attachment_url( $attachment_id ) : '';
+
+	if ( $receipt_id <= 0 || $order_id <= 0 || '' === $url ) {
+		return null;
+	}
+
+	$file = (string) get_attached_file( $attachment_id );
+
+	$record = array(
+		'id'       => (string) $attachment_id,
+		'name'     => '' !== $file ? basename( $file ) : (string) $attachment_id,
+		'type'     => (string) get_post_mime_type( $attachment_id ),
+		'size'     => ( '' !== $file && is_readable( $file ) ) ? (int) filesize( $file ) : 0,
+		'url'      => $url,
+		'order_id' => $order_id,
+		'kind'     => 'receipt',
+		'user_id'  => (int) ( $receipt->uploaded_by ?? 0 ),
+	);
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$wpdb->update(
+		$wpdb->prefix . 'wpss_payment_receipts',
+		array( 'attachments' => wp_json_encode( array( $record ) ) ),
+		array( 'id' => $receipt_id )
+	);
+
+	$moved = wpss_migrate_legacy_order_file( $record, $order_id );
+
+	return $moved ? $moved : $record;
+}
+
+/**
+ * Resolve an order file into something a caller who is entitled to it can be served.
+ *
+ * Authorisation is NOT done here - the two callers (the admin-post link and
+ * the REST route) each run wpss_can_read_order_files() first, because they
+ * answer a refusal differently. Everything after that decision is shared: find
+ * the record, migrate a pre-1.7.0 file into the private store on the way past,
+ * hand back a short-lived signed URL when a bucket holds the bytes, or the
+ * readable local path when this server does.
+ *
+ * @since 1.7.1
+ *
+ * @param int    $order_id Order ID.
+ * @param string $file_id  Record id.
+ * @return array{record:array<string,mixed>,path?:string,url?:string,expires_in?:int}|WP_Error
+ *         `path` is a readable local file; `url` is a signed bucket URL (with
+ *         `expires_in` seconds) or, for a legacy record that could not be
+ *         migrated, its historical public location.
+ */
+function wpss_locate_order_file( int $order_id, string $file_id ) {
+	$record = wpss_find_order_file( $order_id, $file_id );
+
+	if ( ! $record ) {
+		return new WP_Error( 'wpss_file_not_found', __( 'File not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+	}
+
+	/*
+	 * A legacy record reaching this point belongs to someone who is allowed to
+	 * read it - the caller checked. Move it into the private store now, then
+	 * serve the migrated copy.
+	 *
+	 * If the migration cannot complete the record is untouched and we fall
+	 * through to serving the original file, so the download never fails because
+	 * of housekeeping.
+	 */
+	if ( empty( $record['path'] ) && empty( $record['remote_path'] ) ) {
+		$migrated = wpss_migrate_legacy_order_file( $record, $order_id );
+
+		if ( $migrated ) {
+			$record = $migrated;
+		} elseif ( ! empty( $record['url'] ) ) {
+			return array(
+				'record' => $record,
+				'url'    => (string) $record['url'],
+			);
+		}
+	}
+
+	// In a bucket: hand over a short-lived signed URL rather than streaming the
+	// bytes through PHP. The record names the provider that holds it; only
+	// rows written before 1.7.1 lack one, and for those the active provider
+	// is the only candidate.
+	if ( ! empty( $record['remote_path'] ) ) {
+		$provider_id = (string) ( $record['provider'] ?? '' );
+		$provider    = '' !== $provider_id ? wpss_get_storage_provider( $provider_id ) : wpss_get_active_storage_provider();
+		$ttl         = 5 * MINUTE_IN_SECONDS;
+
+		if ( $provider && method_exists( $provider, 'get_signed_url' ) ) {
+			$signed = $provider->get_signed_url( (string) $record['remote_path'], $ttl );
+
+			if ( $signed ) {
+				return array(
+					'record'     => $record,
+					'url'        => (string) $signed,
+					'expires_in' => $ttl,
+				);
+			}
+		}
+
+		wpss_log(
+			sprintf(
+				'Storage provider "%s" holds file %s for order %d but is not registered or cannot sign URLs; download refused with 503.',
+				'' !== $provider_id ? $provider_id : (string) get_option( 'wpss_active_storage_provider', '' ),
+				(string) ( $record['id'] ?? '' ),
+				$order_id
+			),
+			'error'
+		);
+
+		return new WP_Error(
+			'wpss_storage_unavailable',
+			__( 'This file is stored remotely and the storage provider is unavailable. Try again shortly.', 'wp-sell-services' ),
+			array( 'status' => 503 )
+		);
+	}
+
+	$path = wpss_get_order_files_dir() . $order_id . '/' . basename( (string) ( $record['path'] ?? '' ) );
+
+	if ( ! is_readable( $path ) ) {
+		return new WP_Error( 'wpss_file_not_found', __( 'File not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+	}
+
+	return array(
+		'record' => $record,
+		'path'   => $path,
+	);
+}
+
+/**
+ * Write a local order file to the response as a download.
+ *
+ * Headers and bytes only; the caller has already authorised and located it,
+ * and decides whether to exit afterwards.
+ *
+ * @since 1.7.1
+ *
+ * @param array<string,mixed> $record File record, for the name and MIME type.
+ * @param string              $path   Readable local path from wpss_locate_order_file().
+ * @return void
+ */
+function wpss_stream_order_file( array $record, string $path ): void {
+	nocache_headers();
+	$mime = ( ! empty( $record['type'] ) ) ? (string) $record['type'] : 'application/octet-stream';
+	header( 'Content-Type: ' . $mime );
+	header( 'Content-Length: ' . filesize( $path ) );
+	header( 'Content-Disposition: attachment; filename="' . rawurlencode( (string) ( $record['name'] ?? basename( $path ) ) ) . '"' );
+	header( 'X-Content-Type-Options: nosniff' );
+
+	readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+}
+
+/**
  * Serve an order file to someone entitled to read it.
  *
  * Hooked on admin_post_ rather than REST because this is followed by a plain
@@ -658,6 +1064,10 @@ function wpss_rewrite_order_file_record( int $order_id, string $file_id, array $
  * link the buyer might bookmark expires in a day. admin-post.php authenticates
  * from the session cookie alone, so the link keeps working for exactly as long
  * as the person is entitled to it - which is the rule we actually want.
+ *
+ * App clients, which hold a token and no cookie, use GET
+ * /wpss/v1/orders/{id}/files/{file} instead; both run the same
+ * wpss_locate_order_file() underneath.
  *
  * @since 1.7.0
  *
@@ -675,62 +1085,18 @@ function wpss_serve_order_file(): void {
 		wp_die( esc_html__( 'File not found.', 'wp-sell-services' ), '', array( 'response' => 404 ) );
 	}
 
-	$record = wpss_find_order_file( $order_id, $file_id );
+	$located = wpss_locate_order_file( $order_id, $file_id );
 
-	if ( ! $record ) {
-		wp_die( esc_html__( 'File not found.', 'wp-sell-services' ), '', array( 'response' => 404 ) );
+	if ( is_wp_error( $located ) ) {
+		$data = (array) $located->get_error_data();
+		wp_die( esc_html( $located->get_error_message() ), '', array( 'response' => (int) ( $data['status'] ?? 404 ) ) );
 	}
 
-	/*
-	 * A legacy record reaching this point belongs to someone who is allowed to
-	 * read it - wpss_can_read_order_files() ran above. Move it into the private
-	 * store now, then serve the migrated copy.
-	 *
-	 * If the migration cannot complete the record is untouched and we fall
-	 * through to serving the original file, so the download never fails because
-	 * of housekeeping.
-	 */
-	if ( empty( $record['path'] ) && empty( $record['remote_path'] ) ) {
-		$migrated = wpss_migrate_legacy_order_file( $record, $order_id );
-
-		if ( $migrated ) {
-			$record = $migrated;
-		} elseif ( ! empty( $record['url'] ) ) {
-			wp_redirect( (string) $record['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- the file's own historical location on this site.
-			exit;
-		}
+	if ( isset( $located['url'] ) ) {
+		wp_redirect( $located['url'] ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- deliberately offsite: the configured bucket, or the file's own historical location on this site.
+		exit;
 	}
 
-	// In a bucket: hand over a short-lived signed URL rather than streaming the
-	// bytes through PHP.
-	if ( ! empty( $record['remote_path'] ) ) {
-		$provider = wpss_get_active_storage_provider();
-
-		if ( $provider && method_exists( $provider, 'get_signed_url' ) ) {
-			$signed = $provider->get_signed_url( (string) $record['remote_path'], 5 * MINUTE_IN_SECONDS );
-
-			if ( $signed ) {
-				wp_redirect( $signed ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- deliberately offsite: the configured bucket.
-				exit;
-			}
-		}
-
-		wp_die( esc_html__( 'This file is stored remotely and the storage provider is unavailable. Try again shortly.', 'wp-sell-services' ), '', array( 'response' => 503 ) );
-	}
-
-	$path = wpss_get_order_files_dir() . $order_id . '/' . basename( (string) ( $record['path'] ?? '' ) );
-
-	if ( ! is_readable( $path ) ) {
-		wp_die( esc_html__( 'File not found.', 'wp-sell-services' ), '', array( 'response' => 404 ) );
-	}
-
-	nocache_headers();
-	$mime = ( ! empty( $record['type'] ) ) ? (string) $record['type'] : 'application/octet-stream';
-	header( 'Content-Type: ' . $mime );
-	header( 'Content-Length: ' . filesize( $path ) );
-	header( 'Content-Disposition: attachment; filename="' . rawurlencode( (string) ( $record['name'] ?? basename( $path ) ) ) . '"' );
-	header( 'X-Content-Type-Options: nosniff' );
-
-	readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+	wpss_stream_order_file( $located['record'], $located['path'] );
 	exit;
 }

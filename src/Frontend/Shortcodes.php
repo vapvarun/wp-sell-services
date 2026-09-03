@@ -293,20 +293,60 @@ class Shortcodes {
 
 		$atts = shortcode_atts(
 			array(
-				'limit'   => 12,
-				'columns' => 4,
-				'orderby' => 'rating',
-				'order'   => 'DESC',
+				'limit'     => 12, // Alias of per_page kept for existing shortcodes.
+				'per_page'  => 0,
+				'paged'     => 0,
+				'columns'   => 4,
+				'orderby'   => 'rating',
+				'order'     => 'DESC',
+				'available' => '',
+				'country'   => '',
+				'toolbar'   => 'true', // Sort/filter selects + pagination.
 			),
 			$atts,
 			'wpss_vendors'
 		);
 
+		$toolbar  = 'true' === (string) $atts['toolbar'];
+		$per_page = absint( $atts['per_page'] ) ?: absint( $atts['limit'] ) ?: 12;
+		$sorts    = array(
+			'rating' => __( 'Sort: Top rated', 'wp-sell-services' ),
+			'newest' => __( 'Sort: Newest', 'wp-sell-services' ),
+			'orders' => __( 'Sort: Most orders', 'wp-sell-services' ),
+		);
+
+		// The toolbar's selects and pagination links round-trip through the URL,
+		// so URL parameters win over attributes when the toolbar is shown.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only list filters.
+		$orderby   = (string) $atts['orderby'];
+		$available = 'true' === (string) $atts['available'];
+		$country   = (string) $atts['country'];
+		$paged     = max( 1, absint( $atts['paged'] ) );
+		if ( $toolbar ) {
+			$orderby   = isset( $_GET['sort'] ) ? sanitize_key( wp_unslash( $_GET['sort'] ) ) : $orderby;
+			$available = isset( $_GET['available'] ) ? '1' === sanitize_key( wp_unslash( $_GET['available'] ) ) : $available;
+			$country   = isset( $_GET['country'] ) ? sanitize_text_field( wp_unslash( $_GET['country'] ) ) : $country;
+			$paged     = max( $paged, absint( $_GET['vpage'] ?? 0 ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		if ( ! isset( $sorts[ $orderby ] ) ) {
+			$orderby = (string) $atts['orderby'];
+		}
+
+		$filters = array(
+			'available' => $available,
+			'country'   => $country,
+		);
+
 		$vendor_service = new VendorService();
+		$total          = $vendor_service->count_all( $filters );
+		$pages          = max( 1, (int) ceil( $total / $per_page ) );
+		$paged          = min( $paged, $pages );
 		$vendors        = $vendor_service->get_all(
-			array(
-				'limit'   => absint( $atts['limit'] ),
-				'orderby' => $atts['orderby'],
+			$filters + array(
+				'limit'   => $per_page,
+				'offset'  => ( $paged - 1 ) * $per_page,
+				'orderby' => $orderby,
 				'order'   => $atts['order'],
 			)
 		);
@@ -317,7 +357,52 @@ class Shortcodes {
 		);
 
 		ob_start();
-		?>
+		if ( $toolbar ) :
+			// Option values are URLs: .wpss-url-select navigates on change (frontend.js).
+			$link = static fn ( array $args ): string => add_query_arg( $args + array( 'vpage' => false ) );
+			?>
+			<div class="wpss-vendors-toolbar">
+				<p class="wpss-vendors-toolbar__count">
+					<?php
+					printf(
+						/* translators: %s: number of vendors */
+						esc_html( _n( '%s vendor found', '%s vendors found', $total, 'wp-sell-services' ) ),
+						esc_html( number_format_i18n( $total ) )
+					);
+					?>
+				</p>
+				<div class="wpss-vendors-toolbar__controls">
+					<select class="wpss-url-select" aria-label="<?php esc_attr_e( 'Sort vendors', 'wp-sell-services' ); ?>">
+						<?php foreach ( $sorts as $sort_key => $sort_label ) : ?>
+							<option value="<?php echo esc_url( $link( array( 'sort' => 'rating' === $sort_key ? false : $sort_key ) ) ); ?>" <?php selected( $orderby, $sort_key ); ?>>
+								<?php echo esc_html( $sort_label ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+					<select class="wpss-url-select" aria-label="<?php esc_attr_e( 'Filter by availability', 'wp-sell-services' ); ?>">
+						<option value="<?php echo esc_url( $link( array( 'available' => false ) ) ); ?>" <?php selected( $available, false ); ?>>
+							<?php esc_html_e( 'All vendors', 'wp-sell-services' ); ?>
+						</option>
+						<option value="<?php echo esc_url( $link( array( 'available' => '1' ) ) ); ?>" <?php selected( $available, true ); ?>>
+							<?php esc_html_e( 'Available now', 'wp-sell-services' ); ?>
+						</option>
+					</select>
+					<?php $countries = $vendor_service->get_countries(); ?>
+					<?php if ( ! empty( $countries ) ) : ?>
+						<select class="wpss-url-select" aria-label="<?php esc_attr_e( 'Filter by country', 'wp-sell-services' ); ?>">
+							<option value="<?php echo esc_url( $link( array( 'country' => false ) ) ); ?>" <?php selected( $country, '' ); ?>>
+								<?php esc_html_e( 'All countries', 'wp-sell-services' ); ?>
+							</option>
+							<?php foreach ( $countries as $country_code ) : ?>
+								<option value="<?php echo esc_url( $link( array( 'country' => $country_code ) ) ); ?>" <?php selected( $country, $country_code ); ?>>
+									<?php echo esc_html( wpss_get_country_name( (string) $country_code ) ); ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+					<?php endif; ?>
+				</div>
+			</div>
+		<?php endif; ?>
 		<div class="wpss-vendors-grid wpss-columns-<?php echo esc_attr( $atts['columns'] ); ?>">
 			<?php
 			if ( ! empty( $vendors ) ) :
@@ -341,6 +426,24 @@ class Shortcodes {
 				<p class="wpss-no-results"><?php esc_html_e( 'No vendors found.', 'wp-sell-services' ); ?></p>
 			<?php endif; ?>
 		</div>
+		<?php if ( $toolbar && $pages > 1 ) : ?>
+			<nav class="wpss-pagination" aria-label="<?php esc_attr_e( 'Vendor pages', 'wp-sell-services' ); ?>">
+				<?php
+				echo wp_kses_post(
+					(string) paginate_links(
+						array(
+							'base'      => str_replace( '999999999', '%#%', add_query_arg( 'vpage', 999999999 ) ),
+							'format'    => '',
+							'current'   => $paged,
+							'total'     => $pages,
+							'prev_text' => '&larr; ' . __( 'Previous', 'wp-sell-services' ),
+							'next_text' => __( 'Next', 'wp-sell-services' ) . ' &rarr;',
+						)
+					)
+				);
+				?>
+			</nav>
+		<?php endif; ?>
 		<?php
 		return ob_get_clean();
 	}
@@ -358,6 +461,7 @@ class Shortcodes {
 
 		$atts['orderby'] = 'rating';
 		$atts['order']   = 'DESC';
+		$atts['toolbar'] = 'false';
 		return $this->vendors_grid( $atts );
 	}
 
@@ -1083,8 +1187,7 @@ class Shortcodes {
 		}
 
 		// Check if registration is open.
-		$vendor_settings   = get_option( 'wpss_vendor', array() );
-		$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
 		if ( 'closed' === $registration_mode ) {
 			?>
@@ -1304,7 +1407,10 @@ class Shortcodes {
 		.wpss-vr { max-width: 560px; margin: 40px auto; padding: 0 20px; position: relative; isolation: isolate; contain: layout; }
 		.wpss-vr__card--wide { max-width: 640px; }
 		.wpss-vr__card {
-			background: var(--wpss-white, #fff);
+			/* --wpss-surface, never --wpss-white. The literal white cannot flip,
+			so this card stayed white while --wpss-text went light and the
+			heading became invisible. See design-system.css. */
+			background: var(--wpss-surface, #fff);
 			border: 1px solid var(--wpss-border, #e5e7eb);
 			border-radius: 16px;
 			padding: 48px 40px;
@@ -1380,7 +1486,7 @@ class Shortcodes {
 		.wpss-signup-form .wpss-form-input {
 			width: 100%; padding: 10px 14px; font-size: 14px;
 			border: 1px solid var(--wpss-gray-300, #d1d5db); border-radius: 8px;
-			background: var(--wpss-white, #fff); color: var(--wpss-text, #111827);
+			background: var(--wpss-surface, #fff); color: var(--wpss-text, #111827);
 			transition: border-color 0.15s ease, box-shadow 0.15s ease;
 			box-sizing: border-box;
 		}
@@ -1609,8 +1715,8 @@ class Shortcodes {
 			// real payment page instead of a generic (empty) checkout.
 			$pay_order = isset( $_GET['pay_order'] ) ? absint( wp_unslash( $_GET['pay_order'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect of a public link.
 
-			$target = $pay_order > 0 && function_exists( 'wpss_get_pay_order_url' )
-				? wpss_get_pay_order_url( $pay_order )
+			$target = $pay_order > 0 && function_exists( 'wpss_ensure_pay_order' )
+				? wpss_ensure_pay_order( $pay_order )
 				: wpss_get_checkout_base_url();
 
 			// Never bounce a page at itself — see cart_page().

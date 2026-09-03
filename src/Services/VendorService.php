@@ -91,8 +91,7 @@ class VendorService {
 		}
 
 		// Determine vendor status based on registration mode setting.
-		$vendor_settings   = get_option( 'wpss_vendor', array() );
-		$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
 		// If registration is closed, reject immediately.
 		if ( 'closed' === $registration_mode ) {
@@ -208,8 +207,7 @@ class VendorService {
 		}
 
 		// Check if registration is closed.
-		$vendor_settings   = get_option( 'wpss_vendor', array() );
-		$registration_mode = $vendor_settings['vendor_registration'] ?? 'open';
+		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 
 		if ( 'closed' === $registration_mode ) {
 			return array(
@@ -316,6 +314,72 @@ class VendorService {
 	}
 
 	/**
+	 * Change a vendor's account status. The one writer for admin decisions.
+	 *
+	 * Writes the profile row, grants or revokes vendor access to match, logs
+	 * the decision and fires `wpss_vendor_status_updated`.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $status  active, pending, suspended or rejected.
+	 * @return bool True when the profile row was updated.
+	 */
+	public function set_status( int $user_id, string $status ): bool {
+		$events = array(
+			'active'    => 'vendor.approved',
+			'pending'   => 'vendor.pending',
+			'suspended' => 'vendor.suspended',
+			'rejected'  => 'vendor.rejected',
+		);
+
+		$from = $this->get_vendor_status( $user_id );
+
+		if ( ! isset( $events[ $status ] ) || null === $from ) {
+			return false;
+		}
+
+		$updated = $this->profile_repo->upsert(
+			$user_id,
+			array(
+				'status'     => $status,
+				'updated_at' => current_time( 'mysql', true ),
+			)
+		);
+
+		if ( false === $updated ) {
+			return false;
+		}
+
+		if ( 'active' === $status ) {
+			$this->grant_vendor_access( $user_id );
+		} elseif ( in_array( $status, array( 'suspended', 'rejected' ), true ) ) {
+			$this->revoke_vendor_access( $user_id );
+		}
+
+		( new AuditLogService() )->log(
+			$events[ $status ],
+			'vendor',
+			$user_id,
+			array(
+				'action'     => $status,
+				'from_value' => $from,
+				'to_value'   => $status,
+			)
+		);
+
+		/**
+		 * Fires when vendor status is updated.
+		 *
+		 * @param int    $vendor_id Vendor user ID.
+		 * @param string $status    New status.
+		 */
+		do_action( 'wpss_vendor_status_updated', $user_id, $status );
+
+		return true;
+	}
+
+	/**
 	 * Check if user is an active (approved) vendor.
 	 *
 	 * Unlike is_vendor() which only checks role/meta, this method also verifies
@@ -398,7 +462,7 @@ class VendorService {
 		$capabilities = array(
 			'wpss_vendor',
 			'wpss_manage_services',
-			'wpss_manage_orders',
+			'wpss_vendor_orders',
 			'wpss_view_analytics',
 			'wpss_respond_to_requests',
 		);
@@ -615,13 +679,26 @@ class VendorService {
 			'orders'  => 'completed_orders',
 			'sales'   => 'completed_orders',
 			'recent'  => 'created_at',
+			'newest'  => 'created_at',
 		);
 
 		$orderby = (string) ( $args['orderby'] ?? 'avg_rating' );
 
 		$args['orderby'] = $orderby_map[ $orderby ] ?? $orderby;
 
-		return $this->profile_repo->get_all( $args );
+		return $this->profile_repo->get_directory( $args );
+	}
+
+	/**
+	 * Total vendors behind get_all() for the same filters.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string, mixed> $args See VendorProfileRepository::get_directory().
+	 * @return int
+	 */
+	public function count_all( array $args = array() ): int {
+		return $this->profile_repo->count_directory( $args );
 	}
 
 	/**
@@ -846,11 +923,10 @@ class VendorService {
 		$capabilities = array(
 			'wpss_vendor',
 			'wpss_manage_services',
-			'wpss_manage_orders',
+			'wpss_vendor_orders',
 			'wpss_view_analytics',
 			'wpss_respond_to_requests',
 			'upload_files',
-			'edit_posts',
 		);
 
 		foreach ( $capabilities as $cap ) {

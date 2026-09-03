@@ -258,7 +258,14 @@ class VendorsPage {
 		$where  = array( '1=1' );
 		$values = array();
 
-		if ( $args['status'] ) {
+		// "migrated" is not a profile status - those vendors are active. It is
+		// the set the 1.7.1 upgrade preserved (see
+		// Activator::migrate_existing_sellers), marked by user meta, and it
+		// rides the status filter so the screen keeps one filter mechanism.
+		if ( 'migrated' === $args['status'] ) {
+			$where[]  = "EXISTS ( SELECT 1 FROM {$wpdb->usermeta} um WHERE um.user_id = vp.user_id AND um.meta_key = %s )";
+			$values[] = \WPSellServices\Core\Activator::MIGRATED_SELLER_META;
+		} elseif ( $args['status'] ) {
 			$where[]  = 'vp.status = %s';
 			$values[] = $args['status'];
 		}
@@ -418,11 +425,29 @@ class VendorsPage {
 			AND wt.user_id IN ( SELECT user_id FROM {$wpdb->prefix}wpss_vendor_profiles )"
 		);
 
+		// Only asked on a site the upgrade actually migrated somebody on - the
+		// option is absent everywhere else, so no site pays for this query to
+		// learn the answer is zero.
+		$migrated = (int) get_option( \WPSellServices\Core\Activator::MIGRATED_SELLERS_OPTION, 0 );
+
+		if ( $migrated > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$migrated = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*)
+					FROM {$wpdb->prefix}wpss_vendor_profiles vp
+					INNER JOIN {$wpdb->usermeta} um ON um.user_id = vp.user_id AND um.meta_key = %s",
+					\WPSellServices\Core\Activator::MIGRATED_SELLER_META
+				)
+			);
+		}
+
 		return array(
 			'total'          => (int) ( $stats->total_vendors ?? 0 ),
 			'active'         => (int) ( $stats->active_vendors ?? 0 ),
 			'pending'        => (int) ( $stats->pending_vendors ?? 0 ),
 			'suspended'      => (int) ( $stats->suspended_vendors ?? 0 ),
+			'migrated'       => $migrated,
 			'avg_rating'     => round( (float) ( $stats->avg_rating ?? 0 ), 2 ),
 			'total_earnings' => $total_earned,
 		);
@@ -605,8 +630,17 @@ class VendorsPage {
 								class="<?php echo $status === 'suspended' ? 'current' : ''; ?>">
 								<?php esc_html_e( 'Suspended', 'wp-sell-services' ); ?>
 								<span class="count">(<?php echo esc_html( $stats['suspended'] ); ?>)</span>
-							</a>
+							</a><?php echo $stats['migrated'] ? ' |' : ''; ?>
 						</li>
+						<?php if ( $stats['migrated'] ) : ?>
+							<li>
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=migrated' ) ); ?>"
+									class="<?php echo $status === 'migrated' ? 'current' : ''; ?>">
+									<?php esc_html_e( 'Migrated', 'wp-sell-services' ); ?>
+									<span class="count">(<?php echo esc_html( $stats['migrated'] ); ?>)</span>
+								</a>
+							</li>
+						<?php endif; ?>
 					</ul>
 
 					<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="search-box">
@@ -891,7 +925,7 @@ class VendorsPage {
 			<td class="column-rating" data-colname="<?php esc_attr_e( 'Rating', 'wp-sell-services' ); ?>">
 				<?php if ( $reviews > 0 ) : ?>
 					<span class="wpss-rating-stars">
-						<?php echo esc_html( number_format( $rating, 1 ) ); ?> ★
+						<?php echo esc_html( number_format( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 					</span>
 					<span class="wpss-rating-count">
 						(<?php echo esc_html( number_format_i18n( $reviews ) ); ?>)
@@ -1034,7 +1068,7 @@ class VendorsPage {
 				<div class="wpss-detail-stat-card">
 					<span class="wpss-detail-stat-number">
 						<?php if ( $reviews > 0 ) : ?>
-							<?php echo esc_html( number_format( $rating, 1 ) ); ?> ★
+							<?php echo esc_html( number_format( $rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
 						<?php else : ?>
 							-
 						<?php endif; ?>
@@ -1120,36 +1154,9 @@ class VendorsPage {
 			wp_send_json_error( array( 'message' => __( 'Invalid status.', 'wp-sell-services' ) ) );
 		}
 
-		global $wpdb;
-		$result = $wpdb->update(
-			$wpdb->prefix . 'wpss_vendor_profiles',
-			array(
-				'status'     => $status,
-				'updated_at' => current_time( 'mysql', true ),
-			),
-			array( 'user_id' => $vendor_id ),
-			array( '%s', '%s' ),
-			array( '%d' )
-		);
-
-		if ( false === $result ) {
+		if ( ! $this->vendor_service->set_status( $vendor_id, $status ) ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to update vendor status.', 'wp-sell-services' ) ) );
 		}
-
-		// Grant or revoke vendor access based on new status.
-		if ( 'active' === $status ) {
-			$this->vendor_service->grant_vendor_access( $vendor_id );
-		} elseif ( in_array( $status, array( 'suspended', 'rejected' ), true ) ) {
-			$this->vendor_service->revoke_vendor_access( $vendor_id );
-		}
-
-		/**
-		 * Fires when vendor status is updated.
-		 *
-		 * @param int    $vendor_id Vendor user ID.
-		 * @param string $status    New status.
-		 */
-		do_action( 'wpss_vendor_status_updated', $vendor_id, $status );
 
 		wp_send_json_success( array( 'message' => __( 'Vendor status updated successfully.', 'wp-sell-services' ) ) );
 	}
@@ -1160,9 +1167,8 @@ class VendorsPage {
 	 * Admin actions: `approve` (sets pending → active and grants vendor
 	 * access), `suspend` (active → suspended and revokes access),
 	 * `reactivate` (suspended → active and re-grants access). Routes each
-	 * id through the same DB write + grant/revoke + `wpss_vendor_status_updated`
-	 * action used by the per-row handler above so side-effects stay
-	 * identical. Reports per-id success/failure counts back.
+	 * id through VendorService::set_status() like the per-row handler above
+	 * so side-effects stay identical. Reports per-id success/failure counts.
 	 *
 	 * @return void
 	 */
@@ -1196,30 +1202,12 @@ class VendorsPage {
 		$success = 0;
 		$failed  = array();
 
-		global $wpdb;
 		foreach ( $ids as $vendor_id ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Vendor profile mutations bypass the object cache by design; mirrors ajax_update_vendor_status().
-			$result = $wpdb->update(
-				$wpdb->prefix . 'wpss_vendor_profiles',
-				array(
-					'status'     => $status,
-					'updated_at' => current_time( 'mysql', true ),
-				),
-				array( 'user_id' => $vendor_id ),
-				array( '%s', '%s' ),
-				array( '%d' )
-			);
-			if ( false === $result ) {
+			if ( $this->vendor_service->set_status( $vendor_id, $status ) ) {
+				++$success;
+			} else {
 				$failed[] = sprintf( '#%d', $vendor_id );
-				continue;
 			}
-			if ( 'active' === $status ) {
-				$this->vendor_service->grant_vendor_access( $vendor_id );
-			} elseif ( 'suspended' === $status ) {
-				$this->vendor_service->revoke_vendor_access( $vendor_id );
-			}
-			do_action( 'wpss_vendor_status_updated', $vendor_id, $status );
-			++$success;
 		}
 
 		$message = sprintf(
@@ -1337,7 +1325,13 @@ class VendorsPage {
 					<?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?>
 				</div>
 				<div class="wpss-vendor-stat">
-					<strong><?php echo esc_html( $vendor->avg_rating ? number_format( (float) $vendor->avg_rating, 1 ) . ' ★' : '-' ); ?></strong>
+					<strong>
+						<?php if ( $vendor->avg_rating ) : ?>
+							<?php echo esc_html( number_format( (float) $vendor->avg_rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
+						<?php else : ?>
+							-
+						<?php endif; ?>
+					</strong>
 					<?php esc_html_e( 'Rating', 'wp-sell-services' ); ?>
 				</div>
 				<div class="wpss-vendor-stat">
@@ -2195,7 +2189,6 @@ class VendorsPage {
 
 		$limit = 50;
 
-		// Current balance = balance_after on the latest transaction.
 		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
 
 		$total = (int) $wpdb->get_var(
@@ -2208,7 +2201,7 @@ class VendorsPage {
 		// Most recent transactions (read-only audit view).
 		$transactions = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, type, amount, balance_after, currency, description, reference_type, reference_id, status, created_at
+				"SELECT id, type, amount, currency, description, reference_type, reference_id, status, created_at
 				FROM {$wpdb->prefix}wpss_wallet_transactions
 				WHERE user_id = %d
 				ORDER BY created_at DESC, id DESC
@@ -2259,7 +2252,6 @@ class VendorsPage {
 							<th><?php esc_html_e( 'Type', 'wp-sell-services' ); ?></th>
 							<th><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></th>
 							<th><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></th>
-							<th><?php esc_html_e( 'Balance', 'wp-sell-services' ); ?></th>
 							<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
 						</tr>
 					</thead>
@@ -2270,7 +2262,6 @@ class VendorsPage {
 								<td><?php echo esc_html( ucwords( str_replace( '_', ' ', (string) $txn->type ) ) ); ?></td>
 								<td><?php echo esc_html( (string) ( $txn->description ?? '' ) ); ?></td>
 								<td><?php echo esc_html( wpss_format_price( (float) $txn->amount ) ); ?></td>
-								<td><?php echo esc_html( wpss_format_price( (float) $txn->balance_after ) ); ?></td>
 								<td>
 									<span class="<?php echo esc_attr( wpss_status_class( $txn->status ) ); ?>">
 										<?php echo esc_html( ucfirst( (string) $txn->status ) ); ?>
@@ -2350,7 +2341,7 @@ class VendorsPage {
 					$percent = $total > 0 ? ( $count / $total ) * 100 : 0;
 					?>
 					<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-						<span style="width: 60px;"><?php echo esc_html( $i ); ?> ★</span>
+						<span style="width: 60px;"><?php echo esc_html( $i ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i></span>
 						<div style="flex: 1; height: 20px; background: #dcdcde; border-radius: 3px; overflow: hidden;">
 							<div style="width: <?php echo esc_attr( $percent ); ?>%; height: 100%; background: #ffb900;"></div>
 						</div>
@@ -2371,8 +2362,7 @@ class VendorsPage {
 							<div class="wpss-review-header">
 								<div>
 									<span class="wpss-review-rating">
-										<?php echo esc_html( str_repeat( '★', (int) $review->rating ) ); ?>
-										<?php echo esc_html( str_repeat( '☆', 5 - (int) $review->rating ) ); ?>
+										<?php echo wpss_star_rating( (float) $review->rating ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the helper. ?>
 									</span>
 									<strong><?php echo esc_html( $review->reviewer_display_name ?? __( 'Anonymous', 'wp-sell-services' ) ); ?></strong>
 								</div>

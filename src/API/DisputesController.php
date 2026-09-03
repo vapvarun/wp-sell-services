@@ -167,9 +167,10 @@ class DisputesController extends RestController {
 							'sanitize_callback' => 'wp_kses_post',
 						),
 						'attachments' => array(
-							'type'    => 'array',
-							'items'   => array( 'type' => 'integer' ),
-							'default' => array(),
+							'description' => __( 'Ids of files you already uploaded to this order (evidence, requirement or delivery records).', 'wp-sell-services' ),
+							'type'        => 'array',
+							'items'       => array( 'type' => 'string' ),
+							'default'     => array(),
 						),
 					),
 				),
@@ -205,8 +206,9 @@ class DisputesController extends RestController {
 							'enum'     => array( 'text', 'image', 'file', 'link' ),
 						),
 						'content'     => array(
-							'required'          => true,
+							'description'       => __( 'Text or link. Optional when a multipart `file` is sent.', 'wp-sell-services' ),
 							'type'              => 'string',
+							'default'           => '',
 							'sanitize_callback' => 'sanitize_textarea_field',
 						),
 						'description' => array(
@@ -488,8 +490,7 @@ class DisputesController extends RestController {
 	 */
 	public function create_item( $request ) {
 		// Check if disputes are enabled in settings.
-		$order_settings = get_option( 'wpss_orders', array() );
-		if ( empty( $order_settings['allow_disputes'] ) ) {
+		if ( ! wpss_get_option( 'orders', 'allow_disputes' ) ) {
 			return new WP_Error(
 				'disputes_disabled',
 				__( 'Disputes are not enabled on this platform.', 'wp-sell-services' ),
@@ -507,7 +508,7 @@ class DisputesController extends RestController {
 		if ( ! $dispute_id ) {
 			return new WP_Error(
 				'dispute_create_failed',
-				__( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' ),
+				$this->dispute_service->last_error() ?: __( 'Failed to open dispute.', 'wp-sell-services' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -535,13 +536,15 @@ class DisputesController extends RestController {
 		$response    = $request->get_param( 'response' );
 		$attachments = $request->get_param( 'attachments' );
 
-		$result = $this->workflow_manager->submit_response( $dispute_id, $user_id, $response, $attachments );
+		$result = $this->workflow_manager->submit_response( $dispute_id, $user_id, $response, (array) $attachments );
 
 		if ( ! $result['success'] ) {
+			$forbidden = 'forbidden' === ( $result['code'] ?? '' );
+
 			return new WP_Error(
-				'response_failed',
+				$forbidden ? 'wpss_not_owner' : 'response_failed',
 				$result['message'],
-				array( 'status' => 400 )
+				array( 'status' => $forbidden ? 403 : 400 )
 			);
 		}
 
@@ -573,10 +576,35 @@ class DisputesController extends RestController {
 		$dispute_id  = (int) $request->get_param( 'id' );
 		$user_id     = get_current_user_id();
 		$type        = $request->get_param( 'type' );
-		$content     = $request->get_param( 'content' );
+		$content     = (string) $request->get_param( 'content' );
 		$description = $request->get_param( 'description' ) ?? '';
+		$files       = $request->get_file_params();
+		$attachments = array();
 
-		$result = $this->dispute_service->add_evidence( $dispute_id, $user_id, $type, $content, $description );
+		// A multipart `file` goes through the one order-file seam, exactly as
+		// the dashboard form does; the record, not a URL, is what is kept.
+		if ( ! empty( $files['file'] ) ) {
+			$refused = wpss_check_upload( (array) $files['file'] );
+
+			if ( $refused ) {
+				return $refused;
+			}
+
+			$dispute = $this->dispute_service->get( $dispute_id );
+			$record  = $dispute ? wpss_store_order_file( (array) $files['file'], (int) $dispute->order_id, 'dispute' ) : null;
+
+			if ( ! $record ) {
+				return new WP_Error( 'upload_failed', __( 'Could not store the file.', 'wp-sell-services' ), array( 'status' => 500 ) );
+			}
+
+			$attachments = array( $record );
+			$content     = '';
+			$type        = 0 === strpos( (string) $record['type'], 'image/' ) ? 'image' : 'file';
+		} elseif ( '' === trim( $content ) ) {
+			return new WP_Error( 'rest_missing_callback_param', __( 'Please provide a message or attach a file.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		$result = $this->dispute_service->add_evidence( $dispute_id, $user_id, $type, $content, $description, $attachments );
 
 		if ( ! $result ) {
 			return new WP_Error(
@@ -691,7 +719,7 @@ class DisputesController extends RestController {
 		if ( ! $result ) {
 			return new WP_Error(
 				'resolve_failed',
-				__( 'Failed to resolve dispute.', 'wp-sell-services' ),
+				$this->dispute_service->last_error() ?: __( 'Failed to resolve dispute.', 'wp-sell-services' ),
 				array( 'status' => 400 )
 			);
 		}
@@ -769,6 +797,7 @@ class DisputesController extends RestController {
 
 		$data = array(
 			'id'           => (int) $dispute->id,
+			'number'       => (string) $dispute->dispute_number,
 			'order_id'     => (int) $dispute->order_id,
 			'reason'       => $dispute->reason,
 			'status'       => $dispute->status,
@@ -788,6 +817,7 @@ class DisputesController extends RestController {
 			$data['resolved_at']       = $format_date( $dispute->resolved_at );
 			$data['resolution']        = $dispute->resolution_type ?? null;
 			$data['resolution_notes']  = $dispute->resolution_notes ?? null;
+			$data['refund_amount']     = $dispute->refund_amount ?? null;
 
 			// Get resolver if resolved.
 			if ( ! empty( $dispute->resolved_by ) ) {

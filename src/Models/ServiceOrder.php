@@ -712,6 +712,86 @@ class ServiceOrder {
 	}
 
 	/**
+	 * Get the buyer's latest revision note.
+	 *
+	 * The note is the newest revision-type message on the order conversation,
+	 * written by OrderService::request_revision(). Empty when no revision has
+	 * been requested (or the order has no conversation).
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return string
+	 */
+	public function get_revision_reason(): string {
+		global $wpdb;
+
+		// Primed for a list by prime_revision_reasons(); handed out once so a
+		// revision written later in the same request is never answered stale.
+		if ( array_key_exists( (int) $this->id, self::$primed_revision_reasons ) ) {
+			$reason = self::$primed_revision_reasons[ (int) $this->id ];
+			unset( self::$primed_revision_reasons[ (int) $this->id ] );
+			return $reason;
+		}
+
+		$messages      = $wpdb->prefix . 'wpss_messages';
+		$conversations = $wpdb->prefix . 'wpss_conversations';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (string) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT m.content FROM {$messages} m INNER JOIN {$conversations} c ON c.id = m.conversation_id WHERE c.order_id = %d AND m.type = %s ORDER BY m.id DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$this->id,
+				Message::TYPE_REVISION
+			)
+		);
+	}
+
+	/**
+	 * Revision notes primed for a page of orders, keyed by order id.
+	 *
+	 * @var array<int,string>
+	 */
+	private static array $primed_revision_reasons = array();
+
+	/**
+	 * Load the latest revision note for a page of orders in one query.
+	 *
+	 * GET /orders called get_revision_reason() per row. Each primed value is
+	 * read ONCE by get_revision_reason() and then forgotten.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int[] $order_ids Orders about to be shaped.
+	 * @return void
+	 */
+	public static function prime_revision_reasons( array $order_ids ): void {
+		global $wpdb;
+
+		$order_ids = array_values( array_unique( array_filter( array_map( 'intval', $order_ids ) ) ) );
+
+		if ( empty( $order_ids ) ) {
+			return;
+		}
+
+		$messages      = $wpdb->prefix . 'wpss_messages';
+		$conversations = $wpdb->prefix . 'wpss_conversations';
+		$placeholders  = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
+
+		// Ascending id so the newest note for an order overwrites the older
+		// ones - the same "ORDER BY m.id DESC LIMIT 1" the single read uses.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT c.order_id, m.content FROM {$messages} m INNER JOIN {$conversations} c ON c.id = m.conversation_id WHERE c.order_id IN ({$placeholders}) AND m.type = %s ORDER BY m.id ASC", array_merge( $order_ids, array( Message::TYPE_REVISION ) ) ) );
+
+		foreach ( $order_ids as $order_id ) {
+			self::$primed_revision_reasons[ $order_id ] = '';
+		}
+
+		foreach ( (array) $rows as $row ) {
+			self::$primed_revision_reasons[ (int) $row->order_id ] = (string) $row->content;
+		}
+	}
+
+	/**
 	 * Get time remaining until deadline.
 	 *
 	 * @return \DateInterval|null

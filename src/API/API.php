@@ -609,21 +609,20 @@ class API {
 	 * @return \WP_REST_Response
 	 */
 	public function get_public_settings(): \WP_REST_Response {
-		$vendor_settings = get_option( 'wpss_vendor', array() );
-		$pages_settings  = get_option( 'wpss_pages', array() );
+		$pages_settings = get_option( 'wpss_pages', array() );
 
 		$settings = [
 			'currency'            => wpss_get_currency(),
 			'currency_symbol'     => wpss_get_currency_symbol(),
-			'currency_position'   => get_option( 'wpss_currency_position', 'before' ),
-			'decimal_places'      => (int) get_option( 'wpss_decimal_places', 2 ),
+			'currency_position'   => wpss_get_option( 'advanced', 'currency_position' ),
+			'decimal_places'      => wpss_get_decimal_places(),
 			'min_order_amount'    => (float) get_option( 'wpss_min_order_amount', 5 ),
 			'max_order_amount'    => (float) get_option( 'wpss_max_order_amount', 10000 ),
-			'vendor_registration' => $vendor_settings['vendor_registration'] ?? 'open',
-			'service_moderation'  => ! empty( $vendor_settings['require_service_moderation'] ),
-			'review_moderation'   => ! empty( $vendor_settings['moderate_reviews'] ),
-			'max_file_size'       => (int) get_option( 'wpss_max_file_size', 10 ) * 1024 * 1024, // MB to bytes.
-			'allowed_file_types'  => explode( ',', get_option( 'wpss_allowed_file_types', 'jpg,jpeg,png,gif,pdf,doc,docx' ) ),
+			'vendor_registration' => wpss_get_option( 'vendor', 'vendor_registration' ),
+			'service_moderation'  => (bool) wpss_get_option( 'vendor', 'require_service_moderation' ),
+			'review_moderation'   => (bool) wpss_get_option( 'vendor', 'moderate_reviews' ),
+			'max_file_size'       => (int) wpss_get_option( 'advanced', 'max_file_size' ) * 1024 * 1024, // MB to bytes.
+			'allowed_file_types'  => explode( ',', (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ),
 			// Page IDs, or NULL where the site has no published page for that
 			// key. `vendors` and `terms` are never created by the installer, so
 			// they are null on a stock install until the owner maps them —
@@ -721,15 +720,13 @@ class API {
 		 * Milestones, tips and paid extensions all reach the buyer the same way:
 		 * a link to pay a single already-created order. Standalone answers it
 		 * with `?pay_order=N`, and WooCommerce replaces the URL with a real
-		 * order-pay link through the `wpss_pay_order_url` seam. EDD, FluentCart
-		 * and SureCart implement neither, so the link falls back to a standalone
+		 * order-pay link through the pay-order seam (wpss_ensure_pay_order).
+		 * EDD and SureCart implement neither, so the link falls back to a standalone
 		 * checkout that is not the active rail — a dead end for the buyer.
 		 *
-		 * Asked as "has anyone implemented the seam?" rather than by naming
-		 * rails, so an integration added later turns the capability on by
-		 * implementing it, instead of by someone remembering to edit this list.
+		 * One answer for the app and the PHP templates: wpss_can_pay_single_order().
 		 */
-		$can_pay_single_order = wpss_uses_standalone_payments() || has_filter( 'wpss_pay_order_url' );
+		$can_pay_single_order = wpss_can_pay_single_order();
 
 		/*
 		 * Milestone contracts only exist on buyer-request orders, so whatever
@@ -811,7 +808,7 @@ class API {
 					 * all already read; this is the fourth reader agreeing with
 					 * them instead of the one disagreeing.
 					 */
-					'disputes'       => (bool) wpss_get_option( 'orders', 'allow_disputes', true ),
+					'disputes'       => (bool) wpss_get_option( 'orders', 'allow_disputes' ),
 					'realtime'       => ! empty( ( new \WPSellServices\Services\RealtimeService() )->get_client_config()['enabled'] ),
 
 					/*
@@ -951,12 +948,11 @@ class API {
 			'is_admin'     => current_user_can( 'manage_options' ),
 			'capabilities' => [
 				'can_create_services' => current_user_can( 'wpss_manage_services' ) && wpss_is_vendor( $user_id ),
-				// The capability the vendor role actually grants, not the admin
-				// one. Every vendor holds wpss_manage_orders and manages their
-				// own orders daily, but this reported false for all of them —
-				// so a client gating its order screens on it hid the seller's
-				// core workflow. Admins keep access through manage_options.
-				'can_manage_orders'   => current_user_can( 'wpss_manage_orders' ) || current_user_can( 'manage_options' ),
+				// The capability the vendor role actually grants
+				// (wpss_vendor_orders), not the admin one. A client gating its
+				// order screens on the admin cap hid the seller's core workflow.
+				// Staff keep access through wpss_manage_orders.
+				'can_manage_orders'   => current_user_can( 'wpss_vendor_orders' ) || current_user_can( 'wpss_manage_orders' ),
 			],
 		];
 
@@ -1227,36 +1223,31 @@ class API {
 
 		// Search vendors.
 		if ( 'all' === $type || 'vendors' === $type ) {
-			global $wpdb;
+			// Active vendors only, the same set wpss_is_vendor() answers for.
+			// Role OR the legacy meta matched neither end: it missed vendors
+			// created by role and it published suspended vendors and bare
+			// role-holders with no profile row on a public endpoint.
+			// ponytail: an id list in `include`; swap for a pre_user_query JOIN
+			// on wpss_vendor_profiles if a marketplace outgrows it.
+			$active_vendor_ids = wpss_get_active_vendor_ids();
 
-			// Match the vendor directory: role OR the legacy meta. Searching on
-			// the meta alone missed every vendor created by role — which is
-			// every vendor the wizard, the admin screen and the seeder make —
-			// so they were unfindable by name.
-			$vendors_query = new \WP_User_Query(
-				[
-					'meta_query'     => [
-						'relation' => 'OR',
-						[
-							'key'     => $wpdb->prefix . 'capabilities',
-							'value'   => '"' . \WPSellServices\Services\VendorService::ROLE . '"',
-							'compare' => 'LIKE',
-						],
-						[
-							'key'   => '_wpss_is_vendor',
-							'value' => '1',
-						],
-					],
-					'search'         => '*' . $query . '*',
-					'search_columns' => [ 'user_login', 'display_name', 'user_nicename' ],
-					'number'         => $per_page,
-					'offset'         => $offset,
-					'count_total'    => true,
-				]
-			);
+			$vendors       = [];
+			$vendors_query = $active_vendor_ids
+				? new \WP_User_Query(
+					[
+						// WP_User_Query ignores an empty include and would return
+						// every user on the site, hence the guard above.
+						'include'        => $active_vendor_ids,
+						'search'         => '*' . $query . '*',
+						'search_columns' => [ 'user_login', 'display_name', 'user_nicename' ],
+						'number'         => $per_page,
+						'offset'         => $offset,
+						'count_total'    => true,
+					]
+				)
+				: null;
 
-			$vendors = [];
-			foreach ( $vendors_query->get_results() as $user ) {
+			foreach ( $vendors_query ? $vendors_query->get_results() : [] as $user ) {
 				// Tagline lives on the canonical wpss_vendor_profiles table —
 				// the _wpss_vendor_tagline user-meta key was never written.
 				$vendor_profile = wpss_get_vendor( $user->ID );
@@ -1272,7 +1263,7 @@ class API {
 			}
 
 			$results['vendors']       = $vendors;
-			$results['vendors_total'] = (int) $vendors_query->get_total();
+			$results['vendors_total'] = $vendors_query ? (int) $vendors_query->get_total() : 0;
 		}
 
 		return new \WP_REST_Response( $results );

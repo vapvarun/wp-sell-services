@@ -2,8 +2,8 @@
     "openapi": "3.1.0",
     "info": {
         "title": "WP Sell Services REST API",
-        "version": "1.7.0",
-        "description": "REST API for the WP Sell Services marketplace (Free + Pro). Every entity is reachable through these endpoints - the same surface the mobile app and integrations use. Namespaced under `wpss/v1` (Free) and `wpss-pro/v1` (Pro).\n\nThis document is generated from the live route registrations, scoped to the WP Sell Services namespaces only, so it never includes routes from other plugins on the same install.\n\nGenerated on the **standalone** rail, which is the default. Two routes under `wpss-pro/v1` are registered only by the FluentCart adapter and therefore only exist when `wpss_general[ecommerce_platform]` is `fluentcart`; regenerate on the standalone rail so the committed spec stays stable, or the freshness check will flip-flop with whatever rail was last active.",
+        "version": "1.7.1",
+        "description": "REST API for the WP Sell Services marketplace (Free + Pro). Every entity is reachable through these endpoints - the same surface the mobile app and integrations use. Namespaced under `wpss/v1` (Free) and `wpss-pro/v1` (Pro).\n\nThis document is generated from the live route registrations, scoped to the WP Sell Services namespaces only, so it never includes routes from other plugins on the same install.\n\nGenerated on the **standalone** rail, which is the default. Two routes under `wpss-pro/v1` are registered only by the FluentCart adapter and therefore only exist when `wpss_general[ecommerce_platform]` is `fluentcart`; regenerate on the standalone rail so the committed spec stays stable, or the freshness check will flip-flop with whatever rail was last active.\n\nEvery path carries `x-wpss-tier`: `free` routes ship with WP Sell Services, `pro` routes exist only when WP Sell Services Pro is active and licensed.",
         "contact": {
             "name": "Wbcom Designs",
             "url": "https://wbcomdesigns.com/downloads/wp-sell-services/"
@@ -120,9 +120,6 @@
             "name": "Settings"
         },
         {
-            "name": "Storage"
-        },
-        {
             "name": "Stripe-connect"
         },
         {
@@ -147,18 +144,53 @@
             "name": "Withdrawals"
         }
     ],
-    "security": [],
+    "security": [
+        {
+            "basicAuth": []
+        },
+        {
+            "cookieAuth": [],
+            "wpNonce": []
+        }
+    ],
     "components": {
-        "securitySchemes": {}
+        "securitySchemes": {
+            "basicAuth": {
+                "type": "http",
+                "scheme": "basic",
+                "description": "WordPress Application Password (Users > Profile > Application Passwords). Send as HTTP Basic auth: username and the application password. Use this from the mobile app and integrations."
+            },
+            "cookieAuth": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "wordpress_logged_in_{hash}",
+                "description": "WordPress login cookie. Only valid together with the X-WP-Nonce header."
+            },
+            "wpNonce": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-WP-Nonce",
+                "description": "Nonce from wp_create_nonce( 'wp_rest' ) (wpApiSettings.nonce in the browser). Required with cookieAuth."
+            }
+        }
     },
     "paths": {
         "/wpss/v1/analytics/export": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Analytics"
                 ],
                 "operationId": "post_wpss_v1_analytics_export",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -204,12 +236,21 @@
             }
         },
         "/wpss/v1/analytics/overview": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Analytics"
                 ],
                 "operationId": "get_wpss_v1_analytics_overview",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -227,12 +268,21 @@
             }
         },
         "/wpss/v1/analytics/revenue": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Analytics"
                 ],
                 "operationId": "get_wpss_v1_analytics_revenue",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "period",
@@ -267,12 +317,21 @@
             }
         },
         "/wpss/v1/analytics/vendor/orders": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Analytics"
                 ],
                 "operationId": "get_wpss_v1_analytics_vendor_orders",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "period",
@@ -308,12 +367,21 @@
             }
         },
         "/wpss/v1/analytics/vendor/overview": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Analytics"
                 ],
                 "operationId": "get_wpss_v1_analytics_vendor_overview",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "period",
@@ -349,12 +417,21 @@
             }
         },
         "/wpss/v1/analytics/vendor/revenue": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Analytics"
                 ],
                 "operationId": "get_wpss_v1_analytics_vendor_revenue",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "period",
@@ -390,12 +467,21 @@
             }
         },
         "/wpss/v1/analytics/vendor/services": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Analytics"
                 ],
                 "operationId": "get_wpss_v1_analytics_vendor_services",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -413,12 +499,21 @@
             }
         },
         "/wpss/v1/audit-log": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Audit-log"
                 ],
                 "operationId": "get_wpss_v1_audit_log",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "object_type",
@@ -525,12 +620,21 @@
             }
         },
         "/wpss/v1/auth/change-password": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Auth"
                 ],
                 "operationId": "post_wpss_v1_auth_change_password",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -570,12 +674,21 @@
             }
         },
         "/wpss/v1/auth/devices": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Auth"
                 ],
                 "operationId": "get_wpss_v1_auth_devices",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -621,7 +734,15 @@
                     "Auth"
                 ],
                 "operationId": "post_wpss_v1_auth_devices",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -676,12 +797,21 @@
             }
         },
         "/wpss/v1/auth/devices/{device_id}": {
+            "x-wpss-tier": "free",
             "delete": {
                 "tags": [
                     "Auth"
                 ],
                 "operationId": "delete_wpss_v1_auth_devices_device_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "device_id",
@@ -710,6 +840,7 @@
             }
         },
         "/wpss/v1/auth/forgot-password": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Auth"
@@ -731,7 +862,7 @@
                     }
                 },
                 "requestBody": {
-                    "required": true,
+                    "required": false,
                     "content": {
                         "application/json": {
                             "schema": {
@@ -740,11 +871,11 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email"
+                                    },
+                                    "user_login": {
+                                        "type": "string"
                                     }
-                                },
-                                "required": [
-                                    "email"
-                                ]
+                                }
                             }
                         }
                     }
@@ -752,6 +883,7 @@
             }
         },
         "/wpss/v1/auth/login": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Auth"
@@ -802,12 +934,21 @@
             }
         },
         "/wpss/v1/auth/logout": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Auth"
                 ],
                 "operationId": "post_wpss_v1_auth_logout",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -825,12 +966,21 @@
             }
         },
         "/wpss/v1/auth/me": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Auth"
                 ],
                 "operationId": "get_wpss_v1_auth_me",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -848,6 +998,7 @@
             }
         },
         "/wpss/v1/auth/register": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Auth"
@@ -914,12 +1065,21 @@
             }
         },
         "/wpss/v1/auth/sessions": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Auth"
                 ],
                 "operationId": "get_wpss_v1_auth_sessions",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -937,12 +1097,21 @@
             }
         },
         "/wpss/v1/auth/sessions/{uuid}": {
+            "x-wpss-tier": "free",
             "delete": {
                 "tags": [
                     "Auth"
                 ],
                 "operationId": "delete_wpss_v1_auth_sessions_uuid",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "uuid",
@@ -971,12 +1140,21 @@
             }
         },
         "/wpss/v1/batch": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Batch"
                 ],
                 "operationId": "post_wpss_v1_batch",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -1034,12 +1212,21 @@
             }
         },
         "/wpss/v1/blocks": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Blocks"
                 ],
                 "operationId": "get_wpss_v1_blocks",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -1057,12 +1244,21 @@
             }
         },
         "/wpss/v1/blocks/{user_id}": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Blocks"
                 ],
                 "operationId": "post_wpss_v1_blocks_user_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "user_id",
@@ -1094,7 +1290,15 @@
                     "Blocks"
                 ],
                 "operationId": "delete_wpss_v1_blocks_user_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "user_id",
@@ -1123,6 +1327,7 @@
             }
         },
         "/wpss/v1/buyer-requests": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Buyer-requests"
@@ -1210,7 +1415,15 @@
                     "Buyer-requests"
                 ],
                 "operationId": "post_wpss_v1_buyer_requests",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -1276,12 +1489,21 @@
             }
         },
         "/wpss/v1/buyer-requests/mine": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Buyer-requests"
                 ],
                 "operationId": "get_wpss_v1_buyer_requests_mine",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -1324,6 +1546,7 @@
             }
         },
         "/wpss/v1/buyer-requests/{id}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Buyer-requests"
@@ -1361,7 +1584,15 @@
                     "Buyer-requests"
                 ],
                 "operationId": "post_wpss_v1_buyer_requests_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -1428,7 +1659,15 @@
                     "Buyer-requests"
                 ],
                 "operationId": "put_wpss_v1_buyer_requests_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -1495,7 +1734,15 @@
                     "Buyer-requests"
                 ],
                 "operationId": "patch_wpss_v1_buyer_requests_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -1562,7 +1809,15 @@
                     "Buyer-requests"
                 ],
                 "operationId": "delete_wpss_v1_buyer_requests_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -1591,12 +1846,21 @@
             }
         },
         "/wpss/v1/buyer-requests/{id}/proposals": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Buyer-requests"
                 ],
                 "operationId": "get_wpss_v1_buyer_requests_id_proposals",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -1628,7 +1892,15 @@
                     "Buyer-requests"
                 ],
                 "operationId": "post_wpss_v1_buyer_requests_id_proposals",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -1701,12 +1973,21 @@
             }
         },
         "/wpss/v1/buyer-requests/{id}/proposals/{proposal_id}/accept": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Buyer-requests"
                 ],
                 "operationId": "post_wpss_v1_buyer_requests_id_proposals_proposal_id_accept",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -1744,12 +2025,21 @@
             }
         },
         "/wpss/v1/buyer-requests/{id}/proposals/{proposal_id}/reject": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Buyer-requests"
                 ],
                 "operationId": "post_wpss_v1_buyer_requests_id_proposals_proposal_id_reject",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -1802,12 +2092,21 @@
             }
         },
         "/wpss/v1/cart": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Cart"
                 ],
                 "operationId": "get_wpss_v1_cart",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -1825,12 +2124,21 @@
             }
         },
         "/wpss/v1/cart/add": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Cart"
                 ],
                 "operationId": "post_wpss_v1_cart_add",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -1879,12 +2187,21 @@
             }
         },
         "/wpss/v1/cart/checkout": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Cart"
                 ],
                 "operationId": "post_wpss_v1_cart_checkout",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -1918,12 +2235,21 @@
             }
         },
         "/wpss/v1/cart/{item_key}": {
+            "x-wpss-tier": "free",
             "delete": {
                 "tags": [
                     "Cart"
                 ],
                 "operationId": "delete_wpss_v1_cart_item_key",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "item_key",
@@ -1952,6 +2278,7 @@
             }
         },
         "/wpss/v1/categories": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Categories"
@@ -2020,12 +2347,21 @@
             }
         },
         "/wpss/v1/commission-rules": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Commission-rules"
                 ],
                 "operationId": "get_wpss_v1_commission_rules",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "active_only",
@@ -2058,7 +2394,15 @@
                     "Commission-rules"
                 ],
                 "operationId": "post_wpss_v1_commission_rules",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -2136,12 +2480,21 @@
             }
         },
         "/wpss/v1/commission-rules/preview": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Commission-rules"
                 ],
                 "operationId": "get_wpss_v1_commission_rules_preview",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -2181,12 +2534,21 @@
             }
         },
         "/wpss/v1/commission-rules/{id}": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Commission-rules"
                 ],
                 "operationId": "get_wpss_v1_commission_rules_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -2218,7 +2580,15 @@
                     "Commission-rules"
                 ],
                 "operationId": "post_wpss_v1_commission_rules_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -2305,7 +2675,15 @@
                     "Commission-rules"
                 ],
                 "operationId": "put_wpss_v1_commission_rules_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -2392,7 +2770,15 @@
                     "Commission-rules"
                 ],
                 "operationId": "patch_wpss_v1_commission_rules_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -2479,7 +2865,15 @@
                     "Commission-rules"
                 ],
                 "operationId": "delete_wpss_v1_commission_rules_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -2508,12 +2902,21 @@
             }
         },
         "/wpss/v1/conversations": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Conversations"
                 ],
                 "operationId": "get_wpss_v1_conversations",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -2556,12 +2959,21 @@
             }
         },
         "/wpss/v1/conversations/unread-count": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Conversations"
                 ],
                 "operationId": "get_wpss_v1_conversations_unread_count",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -2579,12 +2991,21 @@
             }
         },
         "/wpss/v1/conversations/{id}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Conversations"
                 ],
                 "operationId": "get_wpss_v1_conversations_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -2613,12 +3034,21 @@
             }
         },
         "/wpss/v1/conversations/{id}/messages": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Conversations"
                 ],
                 "operationId": "get_wpss_v1_conversations_id_messages",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -2693,7 +3123,15 @@
                     "Conversations"
                 ],
                 "operationId": "post_wpss_v1_conversations_id_messages",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -2745,12 +3183,21 @@
             }
         },
         "/wpss/v1/conversations/{id}/read": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Conversations"
                 ],
                 "operationId": "post_wpss_v1_conversations_id_read",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -2779,12 +3226,21 @@
             }
         },
         "/wpss/v1/dashboard": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Dashboard"
                 ],
                 "operationId": "get_wpss_v1_dashboard",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -2802,12 +3258,21 @@
             }
         },
         "/wpss/v1/disputes": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Disputes"
                 ],
                 "operationId": "get_wpss_v1_disputes",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -2866,6 +3331,7 @@
             }
         },
         "/wpss/v1/disputes/options": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Disputes"
@@ -2889,12 +3355,21 @@
             }
         },
         "/wpss/v1/disputes/{id}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Disputes"
                 ],
                 "operationId": "get_wpss_v1_disputes_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -2923,12 +3398,21 @@
             }
         },
         "/wpss/v1/disputes/{id}/assign": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Disputes"
                 ],
                 "operationId": "post_wpss_v1_disputes_id_assign",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -2975,12 +3459,21 @@
             }
         },
         "/wpss/v1/disputes/{id}/cancel": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Disputes"
                 ],
                 "operationId": "post_wpss_v1_disputes_id_cancel",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3024,12 +3517,21 @@
             }
         },
         "/wpss/v1/disputes/{id}/escalate": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Disputes"
                 ],
                 "operationId": "post_wpss_v1_disputes_id_escalate",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3076,12 +3578,21 @@
             }
         },
         "/wpss/v1/disputes/{id}/evidence": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Disputes"
                 ],
                 "operationId": "get_wpss_v1_disputes_id_evidence",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3113,7 +3624,15 @@
                     "Disputes"
                 ],
                 "operationId": "post_wpss_v1_disputes_id_evidence",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3156,15 +3675,16 @@
                                         ]
                                     },
                                     "content": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "default": "",
+                                        "description": "Text or link. Optional when a multipart `file` is sent."
                                     },
                                     "description": {
                                         "type": "string"
                                     }
                                 },
                                 "required": [
-                                    "type",
-                                    "content"
+                                    "type"
                                 ]
                             }
                         }
@@ -3173,12 +3693,21 @@
             }
         },
         "/wpss/v1/disputes/{id}/resolve": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Disputes"
                 ],
                 "operationId": "post_wpss_v1_disputes_id_resolve",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3240,12 +3769,21 @@
             }
         },
         "/wpss/v1/disputes/{id}/respond": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Disputes"
                 ],
                 "operationId": "post_wpss_v1_disputes_id_respond",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3285,8 +3823,9 @@
                                         "type": "array",
                                         "default": [],
                                         "items": {
-                                            "type": "integer"
-                                        }
+                                            "type": "string"
+                                        },
+                                        "description": "Ids of files you already uploaded to this order (evidence, requirement or delivery records)."
                                     }
                                 },
                                 "required": [
@@ -3299,12 +3838,21 @@
             }
         },
         "/wpss/v1/disputes/{id}/timeline": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Disputes"
                 ],
                 "operationId": "get_wpss_v1_disputes_id_timeline",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3333,12 +3881,21 @@
             }
         },
         "/wpss/v1/earnings/history": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Earnings"
                 ],
                 "operationId": "get_wpss_v1_earnings_history",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -3394,12 +3951,21 @@
             }
         },
         "/wpss/v1/earnings/summary": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Earnings"
                 ],
                 "operationId": "get_wpss_v1_earnings_summary",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -3417,12 +3983,21 @@
             }
         },
         "/wpss/v1/extensions/{id}/decline": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Extensions"
                 ],
                 "operationId": "post_wpss_v1_extensions_id_decline",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3466,12 +4041,21 @@
             }
         },
         "/wpss/v1/favorites": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Favorites"
                 ],
                 "operationId": "get_wpss_v1_favorites",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -3512,12 +4096,21 @@
             }
         },
         "/wpss/v1/favorites/{service_id}": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Favorites"
                 ],
                 "operationId": "post_wpss_v1_favorites_service_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "service_id",
@@ -3549,7 +4142,15 @@
                     "Favorites"
                 ],
                 "operationId": "delete_wpss_v1_favorites_service_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "service_id",
@@ -3578,12 +4179,21 @@
             }
         },
         "/wpss/v1/me": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Me"
                 ],
                 "operationId": "get_wpss_v1_me",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -3604,7 +4214,15 @@
                     "Me"
                 ],
                 "operationId": "delete_wpss_v1_me",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "password",
@@ -3643,12 +4261,21 @@
             }
         },
         "/wpss/v1/media": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Media"
                 ],
                 "operationId": "get_wpss_v1_media",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -3694,7 +4321,15 @@
                     "Media"
                 ],
                 "operationId": "post_wpss_v1_media",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -3708,16 +4343,44 @@
                     "404": {
                         "description": "Not found."
                     }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "context": {
+                                        "type": "string",
+                                        "description": "What the file is for: avatar, portfolio, service or profile. Order files (deliveries, requirements, messages, disputes) are uploaded on their own order routes."
+                                    }
+                                },
+                                "required": [
+                                    "context"
+                                ]
+                            }
+                        }
+                    }
                 }
             }
         },
         "/wpss/v1/media/{id}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Media"
                 ],
                 "operationId": "get_wpss_v1_media_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3749,7 +4412,15 @@
                     "Media"
                 ],
                 "operationId": "delete_wpss_v1_media_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3778,12 +4449,21 @@
             }
         },
         "/wpss/v1/milestones/{id}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Milestones"
                 ],
                 "operationId": "get_wpss_v1_milestones_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3815,7 +4495,15 @@
                     "Milestones"
                 ],
                 "operationId": "delete_wpss_v1_milestones_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3844,12 +4532,21 @@
             }
         },
         "/wpss/v1/milestones/{id}/approve": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Milestones"
                 ],
                 "operationId": "post_wpss_v1_milestones_id_approve",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3878,12 +4575,21 @@
             }
         },
         "/wpss/v1/milestones/{id}/decline": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Milestones"
                 ],
                 "operationId": "post_wpss_v1_milestones_id_decline",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3912,12 +4618,21 @@
             }
         },
         "/wpss/v1/milestones/{id}/pay": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Milestones"
                 ],
                 "operationId": "post_wpss_v1_milestones_id_pay",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3946,12 +4661,21 @@
             }
         },
         "/wpss/v1/milestones/{id}/request-revision": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Milestones"
                 ],
                 "operationId": "post_wpss_v1_milestones_id_request_revision",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -3995,12 +4719,21 @@
             }
         },
         "/wpss/v1/milestones/{id}/submit": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Milestones"
                 ],
                 "operationId": "post_wpss_v1_milestones_id_submit",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4044,12 +4777,21 @@
             }
         },
         "/wpss/v1/moderation/count": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Moderation"
                 ],
                 "operationId": "get_wpss_v1_moderation_count",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -4067,12 +4809,21 @@
             }
         },
         "/wpss/v1/moderation/pending": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Moderation"
                 ],
                 "operationId": "get_wpss_v1_moderation_pending",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -4113,12 +4864,21 @@
             }
         },
         "/wpss/v1/moderation/{service_id}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Moderation"
                 ],
                 "operationId": "get_wpss_v1_moderation_service_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "service_id",
@@ -4147,12 +4907,21 @@
             }
         },
         "/wpss/v1/moderation/{service_id}/approve": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Moderation"
                 ],
                 "operationId": "post_wpss_v1_moderation_service_id_approve",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "service_id",
@@ -4197,12 +4966,21 @@
             }
         },
         "/wpss/v1/moderation/{service_id}/reject": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Moderation"
                 ],
                 "operationId": "post_wpss_v1_moderation_service_id_reject",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "service_id",
@@ -4250,12 +5028,21 @@
             }
         },
         "/wpss/v1/notifications": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Notifications"
                 ],
                 "operationId": "get_wpss_v1_notifications",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -4314,12 +5101,21 @@
             }
         },
         "/wpss/v1/notifications/read-all": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Notifications"
                 ],
                 "operationId": "post_wpss_v1_notifications_read_all",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -4337,12 +5133,21 @@
             }
         },
         "/wpss/v1/notifications/unread-count": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Notifications"
                 ],
                 "operationId": "get_wpss_v1_notifications_unread_count",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -4360,12 +5165,21 @@
             }
         },
         "/wpss/v1/notifications/{id}": {
+            "x-wpss-tier": "free",
             "delete": {
                 "tags": [
                     "Notifications"
                 ],
                 "operationId": "delete_wpss_v1_notifications_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4394,12 +5208,21 @@
             }
         },
         "/wpss/v1/notifications/{id}/read": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Notifications"
                 ],
                 "operationId": "post_wpss_v1_notifications_id_read",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4428,12 +5251,21 @@
             }
         },
         "/wpss/v1/orders": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -4519,12 +5351,21 @@
             }
         },
         "/wpss/v1/orders/{id}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4556,7 +5397,15 @@
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4613,7 +5462,15 @@
                     "Orders"
                 ],
                 "operationId": "put_wpss_v1_orders_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4670,7 +5527,15 @@
                     "Orders"
                 ],
                 "operationId": "patch_wpss_v1_orders_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4724,12 +5589,21 @@
             }
         },
         "/wpss/v1/orders/{id}/deliverables": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_id_deliverables",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4761,7 +5635,15 @@
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_id_deliverables",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4806,13 +5688,74 @@
                 }
             }
         },
+        "/wpss/v1/orders/{id}/files/{file_id}": {
+            "x-wpss-tier": "free",
+            "get": {
+                "tags": [
+                    "Orders"
+                ],
+                "operationId": "get_wpss_v1_orders_id_files_file_id",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": ""
+                    },
+                    {
+                        "name": "file_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": ""
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                }
+            }
+        },
         "/wpss/v1/orders/{id}/messages": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_id_messages",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4877,7 +5820,15 @@
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_id_messages",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4925,12 +5876,21 @@
             }
         },
         "/wpss/v1/orders/{id}/pay": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_id_pay",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4959,12 +5919,21 @@
             }
         },
         "/wpss/v1/orders/{id}/receipts": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_id_receipts",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -4996,7 +5965,15 @@
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_id_receipts",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -5041,12 +6018,21 @@
             }
         },
         "/wpss/v1/orders/{id}/requirements": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_id_requirements",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -5078,7 +6064,15 @@
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_id_requirements",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -5126,12 +6120,21 @@
             }
         },
         "/wpss/v1/orders/{id}/requirements/files/{file_id}": {
+            "x-wpss-tier": "free",
             "delete": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "delete_wpss_v1_orders_id_requirements_files_file_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -5169,12 +6172,21 @@
             }
         },
         "/wpss/v1/orders/{id}/requirements/skip": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_id_requirements_skip",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -5203,12 +6215,21 @@
             }
         },
         "/wpss/v1/orders/{id}/sub-orders": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_id_sub_orders",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -5251,12 +6272,21 @@
             }
         },
         "/wpss/v1/orders/{id}/timeline": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_id_timeline",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -5308,12 +6338,21 @@
             }
         },
         "/wpss/v1/orders/{id}/{action}": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_id_action",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -5367,12 +6406,21 @@
             }
         },
         "/wpss/v1/orders/{order_id}/conversation": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_order_id_conversation",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -5401,12 +6449,21 @@
             }
         },
         "/wpss/v1/orders/{order_id}/conversation/messages": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_order_id_conversation_messages",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -5451,12 +6508,21 @@
             }
         },
         "/wpss/v1/orders/{order_id}/dispute": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_order_id_dispute",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -5510,7 +6576,15 @@
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_order_id_dispute",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -5539,12 +6613,21 @@
             }
         },
         "/wpss/v1/orders/{order_id}/extension": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_order_id_extension",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -5604,12 +6687,21 @@
             }
         },
         "/wpss/v1/orders/{order_id}/extensions": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_order_id_extensions",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -5641,7 +6733,15 @@
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_order_id_extensions",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -5698,12 +6798,21 @@
             }
         },
         "/wpss/v1/orders/{order_id}/milestones": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_order_id_milestones",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -5735,7 +6844,15 @@
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_order_id_milestones",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -5796,12 +6913,21 @@
             }
         },
         "/wpss/v1/orders/{order_id}/review": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_order_id_review",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -5856,12 +6982,21 @@
             }
         },
         "/wpss/v1/orders/{order_id}/tip": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Orders"
                 ],
                 "operationId": "post_wpss_v1_orders_order_id_tip",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -5917,7 +7052,15 @@
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_order_id_tip",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -5946,12 +7089,21 @@
             }
         },
         "/wpss/v1/payments/confirm": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Payments"
                 ],
                 "operationId": "post_wpss_v1_payments_confirm",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6008,12 +7160,21 @@
             }
         },
         "/wpss/v1/payments/create-intent": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Payments"
                 ],
                 "operationId": "post_wpss_v1_payments_create_intent",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6065,12 +7226,21 @@
             }
         },
         "/wpss/v1/payments/methods": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Payments"
                 ],
                 "operationId": "get_wpss_v1_payments_methods",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6088,12 +7258,21 @@
             }
         },
         "/wpss/v1/payments/offline/submit": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Payments"
                 ],
                 "operationId": "post_wpss_v1_payments_offline_submit",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6137,12 +7316,21 @@
             }
         },
         "/wpss/v1/payments/paypal/capture": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Payments"
                 ],
                 "operationId": "post_wpss_v1_payments_paypal_capture",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6186,12 +7374,21 @@
             }
         },
         "/wpss/v1/payments/paypal/create-order": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Payments"
                 ],
                 "operationId": "post_wpss_v1_payments_paypal_create_order",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6240,12 +7437,21 @@
             }
         },
         "/wpss/v1/payments/razorpay/create-order": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Payments"
                 ],
                 "operationId": "post_wpss_v1_payments_razorpay_create_order",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6294,12 +7500,21 @@
             }
         },
         "/wpss/v1/payments/razorpay/verify": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Payments"
                 ],
                 "operationId": "post_wpss_v1_payments_razorpay_verify",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6330,19 +7545,27 @@
                                     "razorpay_signature": {
                                         "type": "string"
                                     },
+                                    "pay_order": {
+                                        "type": "integer",
+                                        "default": 0
+                                    },
+                                    "is_multi_checkout": {
+                                        "type": "boolean",
+                                        "default": false
+                                    },
                                     "service_id": {
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "default": 0
                                     },
                                     "package_id": {
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "default": 0
                                     }
                                 },
                                 "required": [
                                     "razorpay_order_id",
                                     "razorpay_payment_id",
-                                    "razorpay_signature",
-                                    "service_id",
-                                    "package_id"
+                                    "razorpay_signature"
                                 ]
                             }
                         }
@@ -6351,12 +7574,21 @@
             }
         },
         "/wpss/v1/payments/stripe/confirm": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Payments"
                 ],
                 "operationId": "post_wpss_v1_payments_stripe_confirm",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6400,12 +7632,21 @@
             }
         },
         "/wpss/v1/payments/stripe/create-intent": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Payments"
                 ],
                 "operationId": "post_wpss_v1_payments_stripe_create_intent",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6454,12 +7695,21 @@
             }
         },
         "/wpss/v1/payments/{order_id}/status": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Payments"
                 ],
                 "operationId": "get_wpss_v1_payments_order_id_status",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "order_id",
@@ -6488,12 +7738,21 @@
             }
         },
         "/wpss/v1/paypal-payouts/batches": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Paypal-payouts"
                 ],
                 "operationId": "get_wpss_v1_paypal_payouts_batches",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -6538,7 +7797,15 @@
                     "Paypal-payouts"
                 ],
                 "operationId": "post_wpss_v1_paypal_payouts_batches",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6584,12 +7851,21 @@
             }
         },
         "/wpss/v1/paypal-payouts/batches/{id}": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Paypal-payouts"
                 ],
                 "operationId": "get_wpss_v1_paypal_payouts_batches_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -6618,12 +7894,21 @@
             }
         },
         "/wpss/v1/paypal-payouts/batches/{id}/sync": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Paypal-payouts"
                 ],
                 "operationId": "post_wpss_v1_paypal_payouts_batches_id_sync",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -6652,12 +7937,21 @@
             }
         },
         "/wpss/v1/paypal-payouts/pending": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Paypal-payouts"
                 ],
                 "operationId": "get_wpss_v1_paypal_payouts_pending",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6675,12 +7969,21 @@
             }
         },
         "/wpss/v1/paypal-payouts/profile": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Paypal-payouts"
                 ],
                 "operationId": "get_wpss_v1_paypal_payouts_profile",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6701,7 +8004,15 @@
                     "Paypal-payouts"
                 ],
                 "operationId": "post_wpss_v1_paypal_payouts_profile",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6741,7 +8052,15 @@
                     "Paypal-payouts"
                 ],
                 "operationId": "put_wpss_v1_paypal_payouts_profile",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6781,7 +8100,15 @@
                     "Paypal-payouts"
                 ],
                 "operationId": "patch_wpss_v1_paypal_payouts_profile",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6818,12 +8145,21 @@
             }
         },
         "/wpss/v1/portfolio": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Portfolio"
                 ],
                 "operationId": "get_wpss_v1_portfolio",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -6869,7 +8205,15 @@
                     "Portfolio"
                 ],
                 "operationId": "post_wpss_v1_portfolio",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6926,12 +8270,21 @@
             }
         },
         "/wpss/v1/portfolio/reorder": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Portfolio"
                 ],
                 "operationId": "post_wpss_v1_portfolio_reorder",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -6971,6 +8324,7 @@
             }
         },
         "/wpss/v1/portfolio/{id}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Portfolio"
@@ -7008,7 +8362,15 @@
                     "Portfolio"
                 ],
                 "operationId": "post_wpss_v1_portfolio_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7040,7 +8402,15 @@
                     "Portfolio"
                 ],
                 "operationId": "put_wpss_v1_portfolio_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7072,7 +8442,15 @@
                     "Portfolio"
                 ],
                 "operationId": "patch_wpss_v1_portfolio_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7104,7 +8482,15 @@
                     "Portfolio"
                 ],
                 "operationId": "delete_wpss_v1_portfolio_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7133,12 +8519,21 @@
             }
         },
         "/wpss/v1/portfolio/{id}/featured": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Portfolio"
                 ],
                 "operationId": "post_wpss_v1_portfolio_id_featured",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7167,12 +8562,21 @@
             }
         },
         "/wpss/v1/proposals": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Proposals"
                 ],
                 "operationId": "get_wpss_v1_proposals",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -7233,7 +8637,15 @@
                     "Proposals"
                 ],
                 "operationId": "post_wpss_v1_proposals",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -7302,12 +8714,21 @@
             }
         },
         "/wpss/v1/proposals/stats": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Proposals"
                 ],
                 "operationId": "get_wpss_v1_proposals_stats",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -7325,12 +8746,21 @@
             }
         },
         "/wpss/v1/proposals/{id}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Proposals"
                 ],
                 "operationId": "get_wpss_v1_proposals_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7362,7 +8792,15 @@
                     "Proposals"
                 ],
                 "operationId": "post_wpss_v1_proposals_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7428,7 +8866,15 @@
                     "Proposals"
                 ],
                 "operationId": "put_wpss_v1_proposals_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7494,7 +8940,15 @@
                     "Proposals"
                 ],
                 "operationId": "patch_wpss_v1_proposals_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7557,12 +9011,21 @@
             }
         },
         "/wpss/v1/proposals/{id}/withdraw": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Proposals"
                 ],
                 "operationId": "post_wpss_v1_proposals_id_withdraw",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7606,12 +9069,21 @@
             }
         },
         "/wpss/v1/realtime/auth": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Realtime"
                 ],
                 "operationId": "post_wpss_v1_realtime_auth",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -7654,12 +9126,21 @@
             }
         },
         "/wpss/v1/recurring-services": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Recurring-services"
                 ],
                 "operationId": "get_wpss_v1_recurring_services",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "status",
@@ -7712,12 +9193,21 @@
             }
         },
         "/wpss/v1/recurring-services/my-subscriptions": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Recurring-services"
                 ],
                 "operationId": "get_wpss_v1_recurring_services_my_subscriptions",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "status",
@@ -7747,12 +9237,21 @@
             }
         },
         "/wpss/v1/recurring-services/vendor-subscriptions": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Recurring-services"
                 ],
                 "operationId": "get_wpss_v1_recurring_services_vendor_subscriptions",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "status",
@@ -7782,12 +9281,21 @@
             }
         },
         "/wpss/v1/recurring-services/{id}": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Recurring-services"
                 ],
                 "operationId": "get_wpss_v1_recurring_services_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7816,12 +9324,21 @@
             }
         },
         "/wpss/v1/recurring-services/{id}/cancel": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Recurring-services"
                 ],
                 "operationId": "post_wpss_v1_recurring_services_id_cancel",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7850,12 +9367,21 @@
             }
         },
         "/wpss/v1/recurring-services/{id}/pause": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Recurring-services"
                 ],
                 "operationId": "post_wpss_v1_recurring_services_id_pause",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7884,12 +9410,21 @@
             }
         },
         "/wpss/v1/recurring-services/{id}/resume": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Recurring-services"
                 ],
                 "operationId": "post_wpss_v1_recurring_services_id_resume",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -7918,12 +9453,21 @@
             }
         },
         "/wpss/v1/reports": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Reports"
                 ],
                 "operationId": "post_wpss_v1_reports",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -7991,7 +9535,15 @@
                     "Reports"
                 ],
                 "operationId": "get_wpss_v1_reports",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "status",
@@ -8049,12 +9601,21 @@
             }
         },
         "/wpss/v1/reports/{id}/resolve": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Reports"
                 ],
                 "operationId": "post_wpss_v1_reports_id_resolve",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -8105,6 +9666,7 @@
             }
         },
         "/wpss/v1/reviews": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Reviews"
@@ -8214,7 +9776,15 @@
                     "Reviews"
                 ],
                 "operationId": "post_wpss_v1_reviews",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -8263,6 +9833,7 @@
             }
         },
         "/wpss/v1/reviews/{id}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Reviews"
@@ -8300,7 +9871,15 @@
                     "Reviews"
                 ],
                 "operationId": "post_wpss_v1_reviews_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -8363,7 +9942,15 @@
                     "Reviews"
                 ],
                 "operationId": "put_wpss_v1_reviews_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -8426,7 +10013,15 @@
                     "Reviews"
                 ],
                 "operationId": "patch_wpss_v1_reviews_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -8489,7 +10084,15 @@
                     "Reviews"
                 ],
                 "operationId": "delete_wpss_v1_reviews_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -8518,12 +10121,21 @@
             }
         },
         "/wpss/v1/reviews/{id}/helpful": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Reviews"
                 ],
                 "operationId": "post_wpss_v1_reviews_id_helpful",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -8552,12 +10164,21 @@
             }
         },
         "/wpss/v1/reviews/{id}/reply": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Reviews"
                 ],
                 "operationId": "post_wpss_v1_reviews_id_reply",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -8605,6 +10226,7 @@
             }
         },
         "/wpss/v1/search": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Search"
@@ -8686,6 +10308,7 @@
             }
         },
         "/wpss/v1/seller-levels": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Seller-levels"
@@ -8709,6 +10332,7 @@
             }
         },
         "/wpss/v1/seller-levels/{level}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Seller-levels"
@@ -8743,6 +10367,7 @@
             }
         },
         "/wpss/v1/services": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Services"
@@ -8897,7 +10522,15 @@
                     "Services"
                 ],
                 "operationId": "post_wpss_v1_services",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -8960,6 +10593,7 @@
             }
         },
         "/wpss/v1/services/grid": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Services"
@@ -9042,6 +10676,7 @@
             }
         },
         "/wpss/v1/services/limits": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Services"
@@ -9065,6 +10700,7 @@
             }
         },
         "/wpss/v1/services/{id}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Services"
@@ -9102,7 +10738,15 @@
                     "Services"
                 ],
                 "operationId": "post_wpss_v1_services_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -9184,7 +10828,15 @@
                     "Services"
                 ],
                 "operationId": "put_wpss_v1_services_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -9266,7 +10918,15 @@
                     "Services"
                 ],
                 "operationId": "patch_wpss_v1_services_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -9348,7 +11008,15 @@
                     "Services"
                 ],
                 "operationId": "delete_wpss_v1_services_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -9377,6 +11045,7 @@
             }
         },
         "/wpss/v1/services/{id}/addons": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Services"
@@ -9414,7 +11083,15 @@
                     "Services"
                 ],
                 "operationId": "post_wpss_v1_services_id_addons",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -9471,12 +11148,21 @@
             }
         },
         "/wpss/v1/services/{id}/addons/{addon_id}": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Services"
                 ],
                 "operationId": "post_wpss_v1_services_id_addons_addon_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -9541,7 +11227,15 @@
                     "Services"
                 ],
                 "operationId": "put_wpss_v1_services_id_addons_addon_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -9606,7 +11300,15 @@
                     "Services"
                 ],
                 "operationId": "patch_wpss_v1_services_id_addons_addon_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -9671,7 +11373,15 @@
                     "Services"
                 ],
                 "operationId": "delete_wpss_v1_services_id_addons_addon_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -9709,6 +11419,7 @@
             }
         },
         "/wpss/v1/services/{id}/faqs": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Services"
@@ -9743,6 +11454,7 @@
             }
         },
         "/wpss/v1/services/{id}/packages": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Services"
@@ -9777,6 +11489,7 @@
             }
         },
         "/wpss/v1/services/{id}/reviews": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Services"
@@ -9834,12 +11547,21 @@
             }
         },
         "/wpss/v1/services/{service_id}/favorited": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Services"
                 ],
                 "operationId": "get_wpss_v1_services_service_id_favorited",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "service_id",
@@ -9868,6 +11590,7 @@
             }
         },
         "/wpss/v1/services/{service_id}/reviews/summary": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Services"
@@ -9902,6 +11625,7 @@
             }
         },
         "/wpss/v1/settings": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Settings"
@@ -9924,147 +11648,22 @@
                 }
             }
         },
-        "/wpss/v1/storage/providers": {
-            "get": {
-                "tags": [
-                    "Storage"
-                ],
-                "operationId": "get_wpss_v1_storage_providers",
-                "security": [],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "401": {
-                        "description": "Authentication required or invalid."
-                    },
-                    "403": {
-                        "description": "Not permitted."
-                    },
-                    "404": {
-                        "description": "Not found."
-                    }
-                }
-            }
-        },
-        "/wpss/v1/storage/upload": {
-            "post": {
-                "tags": [
-                    "Storage"
-                ],
-                "operationId": "post_wpss_v1_storage_upload",
-                "security": [],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "401": {
-                        "description": "Authentication required or invalid."
-                    },
-                    "403": {
-                        "description": "Not permitted."
-                    },
-                    "404": {
-                        "description": "Not found."
-                    }
-                },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "context": {
-                                        "type": "string",
-                                        "description": "Upload context (delivery, portfolio)."
-                                    },
-                                    "order_id": {
-                                        "type": "integer",
-                                        "description": "Related order ID."
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/wpss/v1/storage/{file_id}": {
-            "delete": {
-                "tags": [
-                    "Storage"
-                ],
-                "operationId": "delete_wpss_v1_storage_file_id",
-                "security": [],
-                "parameters": [
-                    {
-                        "name": "file_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": ""
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "401": {
-                        "description": "Authentication required or invalid."
-                    },
-                    "403": {
-                        "description": "Not permitted."
-                    },
-                    "404": {
-                        "description": "Not found."
-                    }
-                }
-            }
-        },
-        "/wpss/v1/storage/{file_id}/url": {
-            "get": {
-                "tags": [
-                    "Storage"
-                ],
-                "operationId": "get_wpss_v1_storage_file_id_url",
-                "security": [],
-                "parameters": [
-                    {
-                        "name": "file_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": ""
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "401": {
-                        "description": "Authentication required or invalid."
-                    },
-                    "403": {
-                        "description": "Not permitted."
-                    },
-                    "404": {
-                        "description": "Not found."
-                    }
-                }
-            }
-        },
         "/wpss/v1/stripe-connect/accounts": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Stripe-connect"
                 ],
                 "operationId": "get_wpss_v1_stripe_connect_accounts",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -10107,12 +11706,21 @@
             }
         },
         "/wpss/v1/stripe-connect/accounts/{vendor_id}": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Stripe-connect"
                 ],
                 "operationId": "get_wpss_v1_stripe_connect_accounts_vendor_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "vendor_id",
@@ -10141,12 +11749,21 @@
             }
         },
         "/wpss/v1/stripe-connect/disconnect": {
+            "x-wpss-tier": "pro",
             "delete": {
                 "tags": [
                     "Stripe-connect"
                 ],
                 "operationId": "delete_wpss_v1_stripe_connect_disconnect",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -10164,12 +11781,21 @@
             }
         },
         "/wpss/v1/stripe-connect/onboard": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Stripe-connect"
                 ],
                 "operationId": "post_wpss_v1_stripe_connect_onboard",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -10187,12 +11813,21 @@
             }
         },
         "/wpss/v1/stripe-connect/settings": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Stripe-connect"
                 ],
                 "operationId": "post_wpss_v1_stripe_connect_settings",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -10235,7 +11870,15 @@
                     "Stripe-connect"
                 ],
                 "operationId": "put_wpss_v1_stripe_connect_settings",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -10278,7 +11921,15 @@
                     "Stripe-connect"
                 ],
                 "operationId": "patch_wpss_v1_stripe_connect_settings",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -10318,12 +11969,21 @@
             }
         },
         "/wpss/v1/stripe-connect/status": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Stripe-connect"
                 ],
                 "operationId": "get_wpss_v1_stripe_connect_status",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -10341,6 +12001,7 @@
             }
         },
         "/wpss/v1/subscription-plans": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Subscription-plans"
@@ -10379,7 +12040,15 @@
                     "Subscription-plans"
                 ],
                 "operationId": "post_wpss_v1_subscription_plans",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -10479,12 +12148,21 @@
             }
         },
         "/wpss/v1/subscription-plans/my-subscription": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Subscription-plans"
                 ],
                 "operationId": "get_wpss_v1_subscription_plans_my_subscription",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -10502,12 +12180,21 @@
             }
         },
         "/wpss/v1/subscription-plans/subscribe": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Subscription-plans"
                 ],
                 "operationId": "post_wpss_v1_subscription_plans_subscribe",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -10548,7 +12235,15 @@
                     "Subscription-plans"
                 ],
                 "operationId": "delete_wpss_v1_subscription_plans_subscribe",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -10566,6 +12261,7 @@
             }
         },
         "/wpss/v1/subscription-plans/{id}": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Subscription-plans"
@@ -10603,7 +12299,15 @@
                     "Subscription-plans"
                 ],
                 "operationId": "post_wpss_v1_subscription_plans_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -10712,7 +12416,15 @@
                     "Subscription-plans"
                 ],
                 "operationId": "put_wpss_v1_subscription_plans_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -10821,7 +12533,15 @@
                     "Subscription-plans"
                 ],
                 "operationId": "patch_wpss_v1_subscription_plans_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -10930,7 +12650,15 @@
                     "Subscription-plans"
                 ],
                 "operationId": "delete_wpss_v1_subscription_plans_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -10959,6 +12687,7 @@
             }
         },
         "/wpss/v1/tags": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Tags"
@@ -11016,12 +12745,21 @@
             }
         },
         "/wpss/v1/tour/complete": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Tour"
                 ],
                 "operationId": "post_wpss_v1_tour_complete",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -11039,6 +12777,7 @@
             }
         },
         "/wpss/v1/vendors": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Vendors"
@@ -11120,12 +12859,21 @@
             }
         },
         "/wpss/v1/vendors/me": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Vendors"
                 ],
                 "operationId": "get_wpss_v1_vendors_me",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -11146,7 +12894,15 @@
                     "Vendors"
                 ],
                 "operationId": "post_wpss_v1_vendors_me",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -11244,7 +13000,15 @@
                     "Vendors"
                 ],
                 "operationId": "put_wpss_v1_vendors_me",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -11342,7 +13106,15 @@
                     "Vendors"
                 ],
                 "operationId": "patch_wpss_v1_vendors_me",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -11437,12 +13209,21 @@
             }
         },
         "/wpss/v1/vendors/me/level": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Vendors"
                 ],
                 "operationId": "get_wpss_v1_vendors_me_level",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -11460,12 +13241,21 @@
             }
         },
         "/wpss/v1/vendors/me/vacation": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Vendors"
                 ],
                 "operationId": "post_wpss_v1_vendors_me_vacation",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -11514,7 +13304,15 @@
                     "Vendors"
                 ],
                 "operationId": "put_wpss_v1_vendors_me_vacation",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -11563,7 +13361,15 @@
                     "Vendors"
                 ],
                 "operationId": "patch_wpss_v1_vendors_me_vacation",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -11609,12 +13415,21 @@
             }
         },
         "/wpss/v1/vendors/register": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Vendors"
                 ],
                 "operationId": "post_wpss_v1_vendors_register",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -11655,6 +13470,7 @@
             }
         },
         "/wpss/v1/vendors/{id}": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Vendors"
@@ -11689,6 +13505,7 @@
             }
         },
         "/wpss/v1/vendors/{id}/reviews": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Vendors"
@@ -11743,6 +13560,7 @@
             }
         },
         "/wpss/v1/vendors/{id}/services": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Vendors"
@@ -11797,6 +13615,7 @@
             }
         },
         "/wpss/v1/vendors/{id}/stats": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Vendors"
@@ -11831,6 +13650,7 @@
             }
         },
         "/wpss/v1/vendors/{vendor_id}/level": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Vendors"
@@ -11865,6 +13685,7 @@
             }
         },
         "/wpss/v1/vendors/{vendor_id}/portfolio": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Vendors"
@@ -11920,6 +13741,7 @@
             }
         },
         "/wpss/v1/vendors/{vendor_id}/reviews/summary": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Vendors"
@@ -11954,12 +13776,21 @@
             }
         },
         "/wpss/v1/vendors/{vendor_id}/tips": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Vendors"
                 ],
                 "operationId": "get_wpss_v1_vendors_vendor_id_tips",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "vendor_id",
@@ -12009,12 +13840,21 @@
             }
         },
         "/wpss/v1/vendors/{vendor_id}/tips/total": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Vendors"
                 ],
                 "operationId": "get_wpss_v1_vendors_vendor_id_tips_total",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "vendor_id",
@@ -12043,12 +13883,21 @@
             }
         },
         "/wpss/v1/wallet/balance": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Wallet"
                 ],
                 "operationId": "get_wpss_v1_wallet_balance",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -12066,12 +13915,21 @@
             }
         },
         "/wpss/v1/wallet/providers": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Wallet"
                 ],
                 "operationId": "get_wpss_v1_wallet_providers",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -12089,12 +13947,21 @@
             }
         },
         "/wpss/v1/wallet/transactions": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Wallet"
                 ],
                 "operationId": "get_wpss_v1_wallet_transactions",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -12146,12 +14013,21 @@
             }
         },
         "/wpss/v1/wallet/withdraw": {
+            "x-wpss-tier": "pro",
             "post": {
                 "tags": [
                     "Wallet"
                 ],
                 "operationId": "post_wpss_v1_wallet_withdraw",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -12195,12 +14071,21 @@
             }
         },
         "/wpss/v1/wallet/withdrawals": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "Wallet"
                 ],
                 "operationId": "get_wpss_v1_wallet_withdrawals",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -12240,12 +14125,21 @@
             }
         },
         "/wpss/v1/white-label": {
+            "x-wpss-tier": "pro",
             "get": {
                 "tags": [
                     "White-label"
                 ],
                 "operationId": "get_wpss_v1_white_label",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -12266,7 +14160,15 @@
                     "White-label"
                 ],
                 "operationId": "post_wpss_v1_white_label",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -12328,7 +14230,15 @@
                     "White-label"
                 ],
                 "operationId": "put_wpss_v1_white_label",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -12390,7 +14300,15 @@
                     "White-label"
                 ],
                 "operationId": "patch_wpss_v1_white_label",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -12449,12 +14367,21 @@
             }
         },
         "/wpss/v1/withdrawals": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Withdrawals"
                 ],
                 "operationId": "post_wpss_v1_withdrawals",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -12503,7 +14430,15 @@
                     "Withdrawals"
                 ],
                 "operationId": "get_wpss_v1_withdrawals",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "page",
@@ -12559,12 +14494,21 @@
             }
         },
         "/wpss/v1/withdrawals/methods": {
+            "x-wpss-tier": "free",
             "get": {
                 "tags": [
                     "Withdrawals"
                 ],
                 "operationId": "get_wpss_v1_withdrawals_methods",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -12582,12 +14526,21 @@
             }
         },
         "/wpss/v1/withdrawals/{id}": {
+            "x-wpss-tier": "free",
             "post": {
                 "tags": [
                     "Withdrawals"
                 ],
                 "operationId": "post_wpss_v1_withdrawals_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -12647,7 +14600,15 @@
                     "Withdrawals"
                 ],
                 "operationId": "put_wpss_v1_withdrawals_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",
@@ -12707,7 +14668,15 @@
                     "Withdrawals"
                 ],
                 "operationId": "patch_wpss_v1_withdrawals_id",
-                "security": [],
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
                 "parameters": [
                     {
                         "name": "id",

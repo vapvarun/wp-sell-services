@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 $is_buyer  = (int) $current_order->customer_id === $user_id;
 $is_vendor = (int) $current_order->vendor_id === $user_id;
 
-$currency   = $current_order->currency ?: ( get_option( 'wpss_general', array() )['currency'] ?? 'USD' );
+$currency   = $current_order->currency ?: wpss_get_currency();
 $gross      = (float) $current_order->total;
 $net_vendor = (float) ( $current_order->vendor_earnings ?? $gross );
 $platform_f = (float) ( $current_order->platform_fee ?? 0 );
@@ -56,7 +56,7 @@ $is_cancelled = 'cancelled' === $status;
 // bounces the buyer away - which is why "Accept & Pay" did nothing on Woo
 // sites while the same phase paid fine from the notification email, which
 // does use the seam.
-$pay_url = wpss_get_pay_order_url( (int) $current_order->id );
+$pay_url = wpss_get_pay_order_url( (int) $current_order->id, $current_order );
 
 $counterparty_id = $is_buyer ? (int) $current_order->vendor_id : (int) $current_order->customer_id;
 $counterparty    = get_userdata( $counterparty_id );
@@ -210,7 +210,7 @@ do_action( 'wpss_before_milestone_view', $current_order );
 		</dl>
 
 		<div class="wpss-tip-view__actions">
-			<?php if ( $is_buyer && $is_unpaid ) : ?>
+			<?php if ( $is_buyer && $is_unpaid && '' !== $pay_url ) : ?>
 				<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--primary">
 					<?php
 					printf(

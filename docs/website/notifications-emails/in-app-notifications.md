@@ -22,8 +22,14 @@ Notifications are created for all major marketplace events:
 - **Delivery submitted** by vendor
 - **Delivery accepted** by buyer
 - **Revision requested** by buyer
-- **Review received** from a buyer
-- **Dispute opened** or resolved
+- **Review received** from a buyer, and a **review reply** to the buyer
+- **Dispute opened**, escalated, cancelled or resolved
+- **Withdrawal** requested, approved, paid or rejected
+- **Service** approved or sent back for changes
+- **Tip** received (vendor) and tip receipt (buyer)
+- **Buyer request** expired
+- **Vendor account** approved, rejected or suspended
+- **Refund needs attention** (every administrator, when a gateway refund fails or must be sent by hand)
 
 These in-app notifications are always created, regardless of whether email notifications are enabled or disabled. They are independent systems.
 

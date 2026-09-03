@@ -1729,18 +1729,10 @@
 	white-space: nowrap;
 }
 
-/* .wpss-btn--primary: see design-system.css (single owner) */
-.wpss-btn--outline {
-	background: var(--wpss-surface, #fff);
-	color: var(--wpss-gray-700);
-	border: 1px solid var(--wpss-gray-300);
-}
-
-.wpss-btn--outline:hover {
-	background: var(--wpss-gray-50);
-	color: var(--wpss-gray-900);
-	border-color: var(--wpss-gray-400);
-}
+/* .wpss-btn--primary and .wpss-btn--outline: see design-system.css (single
+   owner). The copy that used to live here painted the button --wpss-gray-700
+   on --wpss-gray-300, neither of which flips for dark mode, and it won on the
+   live page purely by enqueue order. */
 
 .wpss-btn--ghost {
 	background: transparent;
@@ -2070,6 +2062,33 @@ select.wpss-input option,
 /* ==========================================================================
    Responsive
    ========================================================================== */
+
+/* Under 480px the sidebar collapses to one bar - current section title plus a
+   Menu toggle - so the section content is the first thing on screen instead of
+   a dozen nav links (F27). The toggle flips .wpss-dashboard__sidebar--open;
+   nothing animates, so prefers-reduced-motion needs no override. */
+.wpss-dashboard__nav-bar {
+	display: none;
+}
+
+@media (max-width: 480px) {
+	.wpss-dashboard__nav-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--wpss-space-3);
+		padding: var(--wpss-space-3) var(--wpss-space-4);
+	}
+
+	.wpss-dashboard__nav-bar-title {
+		font-weight: 600;
+		color: var(--wpss-gray-900);
+	}
+
+	.wpss-dashboard__sidebar:not(.wpss-dashboard__sidebar--open) > :not(.wpss-dashboard__nav-bar) {
+		display: none;
+	}
+}
 
 @media (max-width: 768px) {
 	.wpss-dashboard {
@@ -3695,6 +3714,37 @@ select.wpss-input option,
 .wpss-evidence-filename{font-size:12px;color:var(--wpss-gray-500,#6b7280)}
 .wpss-evidence-locked{font-size:13px;color:var(--wpss-gray-500,#6b7280);margin:12px 0 0}
 @media (max-width:480px){.wpss-evidence-bubble{max-width:100%}.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:0;width:100%}}
+
+/* ==========================================================================
+   Reviews section (vendor)
+   ========================================================================== */
+
+.wpss-reviews-list .wpss-review {
+	padding: var(--wpss-space-4, 16px) 0;
+}
+
+.wpss-review-service {
+	margin: 0 0 var(--wpss-space-2, 8px);
+	font-size: 13px;
+	color: var(--wpss-gray-500);
+}
+
+.wpss-review-reply-form {
+	margin-top: var(--wpss-space-3, 12px);
+}
+
+.wpss-review-reply-form__row {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: var(--wpss-space-2, 8px);
+}
+
+@media (max-width: 480px) {
+
+	.wpss-review-reply-form__row .wpss-btn {
+		width: 100%;
+	}
+}
 
 /* Wallet transactions: the header block (title, hint, period filter + export)
    sat flush against the table - a measured 0px gap - so the controls read as

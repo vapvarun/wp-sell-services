@@ -10,6 +10,8 @@
 
 namespace WPSellServices\Services;
 
+use WPSellServices\Checkout\CheckoutIntentService;
+
 use WPSellServices\PostTypes\BuyerRequestPostType;
 use WPSellServices\Taxonomies\ServiceCategoryTaxonomy;
 
@@ -522,7 +524,10 @@ class BuyerRequestService {
 		$args = array(
 			'post_type'      => BuyerRequestPostType::POST_TYPE,
 			'post_status'    => 'publish',
-			'posts_per_page' => -1,
+			// Bounded per run; the next cron tick picks up the rest.
+			'posts_per_page' => 200,
+			'orderby'        => 'ID',
+			'order'          => 'ASC',
 			'fields'         => 'ids',
 			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				'relation' => 'AND',
@@ -677,7 +682,23 @@ class BuyerRequestService {
 		// through the standard pay_order checkout.
 		$is_milestone_contract = isset( $proposal->contract_type ) && ProposalService::CONTRACT_TYPE_MILESTONE === $proposal->contract_type;
 
-		$parent_total          = $is_milestone_contract ? 0.0 : (float) $proposal->proposed_price;
+		// Priced and split the way a catalog order is: tax through the checkout
+		// intent's line pricing, commission locked at creation through the one
+		// breakdown authority. Both used to be skipped here, so a proposal
+		// order carried no tax and took whatever rate applied at completion.
+		$parent_subtotal = $is_milestone_contract ? 0.0 : (float) $proposal->proposed_price;
+		$parent_service  = isset( $proposal->service_id ) ? (int) $proposal->service_id : 0;
+		$line            = CheckoutIntentService::price_line( $parent_service, $parent_subtotal, 0.0, (int) $proposal->vendor_id );
+		$breakdown       = CommissionService::compute_breakdown(
+			$parent_subtotal,
+			(object) array(
+				'id'         => 0,
+				'vendor_id'  => (int) $proposal->vendor_id,
+				'service_id' => $parent_service,
+			)
+		);
+		$parent_total    = $line['total'];
+
 		$parent_status         = $is_milestone_contract ? 'in_progress' : 'pending_payment';
 		$parent_payment_status = $is_milestone_contract ? 'paid' : 'pending';
 		$parent_paid_at        = $is_milestone_contract ? current_time( 'mysql' ) : null;
@@ -689,6 +710,42 @@ class BuyerRequestService {
 		// project that is missing some of its predefined phases.
 		$wpdb->query( 'START TRANSACTION' );
 
+		// Lock every proposal on this request so a second accept (same
+		// proposal double-clicked, or a rival proposal from another tab) waits
+		// here, then re-check under the lock. The checks above ran on a stale
+		// read; only this one decides.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$locked = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, status FROM {$this->proposals_table} WHERE request_id = %d FOR UPDATE",
+				$request_id
+			)
+		);
+		$mine   = array_values( array_filter( $locked, static fn( $row ) => (int) $row->id === $proposal_id ) );
+		$taken  = array_filter( $locked, static fn( $row ) => ProposalService::STATUS_ACCEPTED === $row->status );
+
+		if ( empty( $mine ) || ProposalService::STATUS_PENDING !== $mine[0]->status || ! empty( $taken ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'message' => __( 'This proposal has already been processed.', 'wp-sell-services' ),
+			);
+		}
+
+		// Claim the proposal inside the transaction so the row the next caller
+		// reads under its lock is already accepted.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update(
+			$this->proposals_table,
+			array(
+				'status'     => ProposalService::STATUS_ACCEPTED,
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $proposal_id ),
+			array( '%s', '%s' ),
+			array( '%d' )
+		);
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
 			$orders_table,
@@ -696,15 +753,18 @@ class BuyerRequestService {
 				'order_number'       => $order_number,
 				'customer_id'        => $request->author_id,
 				'vendor_id'          => $proposal->vendor_id,
-				'service_id'         => isset( $proposal->service_id ) ? (int) $proposal->service_id : 0,
+				'service_id'         => $parent_service,
 				'package_id'         => null,
 				'addons'             => wp_json_encode( array() ),
 				'platform'           => 'request',
 				'platform_order_id'  => $request_id,
-				'subtotal'           => $parent_total,
+				'subtotal'           => $parent_subtotal,
 				'addons_total'       => 0,
 				'total'              => $parent_total,
 				'currency'           => wpss_get_currency(),
+				'commission_rate'    => $breakdown['commission_rate'],
+				'platform_fee'       => $breakdown['platform_fee'],
+				'vendor_earnings'    => $breakdown['vendor_earnings'],
 				'status'             => $parent_status,
 				'delivery_deadline'  => $deadline,
 				'original_deadline'  => $deadline,
@@ -720,11 +780,16 @@ class BuyerRequestService {
 						[
 							'proposal_snapshot' => $proposal_snapshot,
 							'contract_type'     => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
+							'tax_rate'          => $line['tax_rate'],
+							'tax_amount'        => $line['tax'],
 						]
 					)
 				),
 			),
-			array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' )
+			// One format per column, in column order. A 27th entry here once
+			// shifted created_at onto a %d and every proposal order was born
+			// with created_at 0000-00-00 00:00:00.
+			array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%f', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' )
 		);
 
 		if ( ! $result ) {
@@ -799,10 +864,11 @@ class BuyerRequestService {
 			}
 		}
 
-		// Accept the proposal, and record WHICH order it produced. The column is
+		// The proposal was claimed inside the transaction; announce it now that
+		// the rows exist, and record WHICH order it produced. The column is
 		// published in every proposal REST response and was never written, so
 		// nothing could get from an accepted proposal to its order.
-		$proposal_service->update_status( $proposal_id, ProposalService::STATUS_ACCEPTED );
+		do_action( 'wpss_proposal_status_updated', $proposal_id, ProposalService::STATUS_ACCEPTED );
 		$proposal_service->link_order( $proposal_id, $order_id );
 
 		// Reject other proposals for this request.

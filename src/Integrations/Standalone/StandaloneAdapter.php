@@ -350,9 +350,13 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 		// Set query vars for the shortcode to read.
 		set_query_var( 'wpss_service_id', $service_id );
 
-		// Render the page.
+		// Named after the mapped checkout page, which is what the pay-one-order
+		// route renders through - the tab here used to read the bare site name.
+		$page_id = function_exists( 'wpss_get_page_id' ) ? wpss_get_page_id( 'checkout' ) : 0;
+		$title   = $page_id ? (string) get_the_title( $page_id ) : '';
+
 		$this->render_standalone_page(
-			__( 'Checkout', 'wp-sell-services' ),
+			'' !== $title ? $title : __( 'Checkout', 'wp-sell-services' ),
 			$this->checkout_provider->render_checkout_shortcode( [] )
 		);
 	}
@@ -367,6 +371,16 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 	private function render_standalone_page( string $title, string $content ): void {
 		// Enqueue frontend assets for proper styling and functionality.
 		wpss_enqueue_frontend_assets();
+
+		// This route matches no post, so the document title fell back to the
+		// bare site name. Name the tab after the page.
+		add_filter(
+			'document_title_parts',
+			static function ( array $parts ) use ( $title ): array {
+				$parts['title'] = $title;
+				return $parts;
+			}
+		);
 
 		// Use get_header/get_footer for theme integration.
 		get_header();

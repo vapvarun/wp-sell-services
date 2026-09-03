@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace WPSellServices\Admin;
 
+use WPSellServices\Services\AuditLogService;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -274,6 +276,16 @@ class Settings {
 				'enterSecret' => __( 'Enter the new secret value', 'wp-sell-services' ),
 			)
 		);
+
+		wp_localize_script(
+			'wpss-admin-settings',
+			'wpssSettingsAdvanced',
+			array(
+				'confirmDeleteTitle' => __( 'Delete all plugin data on uninstall?', 'wp-sell-services' ),
+				'confirmDelete'      => __( 'When this plugin is deleted, every order, delivery, message, dispute, review, vendor profile, wallet ledger, withdrawal and setting it created will be removed permanently. Deactivating keeps the data; only Delete on the Plugins screen triggers this.', 'wp-sell-services' ),
+				'confirmDeleteYes'   => __( 'Yes, delete on uninstall', 'wp-sell-services' ),
+			)
+		);
 	}
 
 	/**
@@ -333,12 +345,14 @@ class Settings {
 			);
 		}
 
-		// Create the page.
+		// Create the page. Same marker the installer stamps, for the same
+		// reason - the branch above adopts an existing page and must not.
 		$new_page = array(
 			'post_title'   => $title,
 			'post_content' => $page_content,
 			'post_status'  => 'publish',
 			'post_type'    => 'page',
+			'meta_input'   => array( '_wpss_created_page' => $field ),
 		);
 
 		if ( '' !== $slug ) {
@@ -512,7 +526,6 @@ class Settings {
 					__( 'Used in emails and notifications. Leave empty to use your site title (%s). If you rename the site later, update this too or your emails will keep the old name.', 'wp-sell-services' ),
 					get_bloginfo( 'name' )
 				),
-				'default'     => get_bloginfo( 'name' ),
 			)
 		);
 
@@ -526,7 +539,6 @@ class Settings {
 				'option_name' => 'wpss_general',
 				'field'       => 'currency',
 				'options'     => $this->get_currencies(),
-				'default'     => 'USD',
 			)
 		);
 
@@ -574,7 +586,6 @@ class Settings {
 				'option_name' => 'wpss_general',
 				'field'       => 'checkout_badges_enabled',
 				'label'       => __( 'Display a short row of reassurance items on the checkout page.', 'wp-sell-services' ),
-				'default'     => true,
 			)
 		);
 
@@ -592,7 +603,6 @@ class Settings {
 					'option_name' => 'wpss_general',
 					'field'       => 'use_marketplace_cart_link',
 					'label'       => __( 'Point the theme\'s cart link at the marketplace cart. Turn this on for a marketplace-only site; leave it off if you also sell WooCommerce products, or their cart link will send buyers to the wrong place.', 'wp-sell-services' ),
-					'default'     => false,
 				)
 			);
 		}
@@ -607,7 +617,6 @@ class Settings {
 				'option_name' => 'wpss_general',
 				'field'       => 'checkout_account_creation',
 				'label'       => __( 'Let a logged-out buyer complete checkout. Their account is created from the billing name and email they enter, and they are signed in before the order is placed, so they can submit requirements and message the seller straight away. Off by default: it changes who can transact on your site.', 'wp-sell-services' ),
-				'default'     => false,
 			)
 		);
 
@@ -730,7 +739,6 @@ class Settings {
 				'min'         => 0,
 				'max'         => 1000,
 				'step'        => 1,
-				'default'     => 50,
 				'description' => __( 'Vendors must earn at least this amount before they can request a withdrawal. Recommended: $50-$100 for most marketplaces.', 'wp-sell-services' ),
 			)
 		);
@@ -762,7 +770,6 @@ class Settings {
 				'min'         => 0,
 				'max'         => 90,
 				'step'        => 1,
-				'default'     => 0,
 				'description' => __( 'Days to hold earnings after an order completes, before a vendor can be paid. 0 pays out as soon as an order completes. A hold is your refund window: if a refund lands after you have already paid the vendor, their balance goes negative and future earnings clear it — a hold avoids that situation entirely. 7 = weekly, 14 = fortnightly, 30 = monthly.', 'wp-sell-services' ),
 			)
 		);
@@ -784,7 +791,6 @@ class Settings {
 				'option_name' => 'wpss_payouts',
 				'field'       => 'auto_withdrawal_enabled',
 				'label'       => __( 'Automatically create withdrawal requests for high-earning vendors', 'wp-sell-services' ),
-				'default'     => false,
 			)
 		);
 
@@ -800,7 +806,6 @@ class Settings {
 				'min'         => 100,
 				'max'         => 10000,
 				'step'        => 50,
-				'default'     => 500,
 				'description' => __( 'A withdrawal request is created for any vendor whose available balance is above this amount, on the schedule below. You still approve and pay each request - no money leaves your account on its own. Set to 0 to disable.', 'wp-sell-services' ),
 			)
 		);
@@ -819,7 +824,6 @@ class Settings {
 					'biweekly' => __( 'Bi-weekly (1st and 15th)', 'wp-sell-services' ),
 					'monthly'  => __( 'Monthly (1st of month)', 'wp-sell-services' ),
 				),
-				'default'     => 'monthly',
 				'description' => __( 'How often automatic withdrawals are processed for eligible vendors.', 'wp-sell-services' ),
 			)
 		);
@@ -927,7 +931,6 @@ class Settings {
 					'approval' => __( 'Requires Approval', 'wp-sell-services' ),
 					'closed'   => __( 'Closed (admin only)', 'wp-sell-services' ),
 				),
-				'default'     => 'open',
 			)
 		);
 
@@ -942,7 +945,6 @@ class Settings {
 				'field'       => 'max_services_per_vendor',
 				'min'         => 0,
 				'max'         => 100,
-				'default'     => 20,
 				'description' => __( 'Maximum services each vendor can publish. Set to 0 for unlimited. Vendors see an error when they reach the limit.', 'wp-sell-services' ),
 			)
 		);
@@ -959,7 +961,6 @@ class Settings {
 				'option_name' => 'wpss_vendor',
 				'field'       => 'require_service_moderation',
 				'label'       => __( 'Require admin approval before services are published', 'wp-sell-services' ),
-				'default'     => false,
 				'description' => __( 'New services require admin approval before becoming visible to buyers. Manage pending services in the Moderation page.', 'wp-sell-services' ),
 			)
 		);
@@ -974,7 +975,6 @@ class Settings {
 				'option_name' => 'wpss_vendor',
 				'field'       => 'moderate_reviews',
 				'label'       => __( 'Hold new reviews for admin approval before they are published', 'wp-sell-services' ),
-				'default'     => false,
 				'description' => __( 'New reviews land as pending and appear on the Review Moderation page until approved.', 'wp-sell-services' ),
 			)
 		);
@@ -1019,7 +1019,6 @@ class Settings {
 				'field'       => 'auto_complete_days',
 				'min'         => 0,
 				'max'         => 30,
-				'default'     => 3,
 				'description' => __( 'Days after vendor submits delivery before the order auto-completes if buyer does not respond. Set to 0 to require buyer action.', 'wp-sell-services' ),
 			)
 		);
@@ -1059,7 +1058,20 @@ class Settings {
 				'option_name' => 'wpss_orders',
 				'field'       => 'allow_disputes',
 				'label'       => __( 'Allow buyers to open disputes on orders', 'wp-sell-services' ),
-				'default'     => true,
+			)
+		);
+
+		add_settings_field(
+			'allow_vendor_refunds',
+			__( 'Vendor Refunds', 'wp-sell-services' ),
+			array( $this, 'render_checkbox_field' ),
+			'wpss_orders',
+			'wpss_orders_section',
+			array(
+				'option_name' => 'wpss_orders',
+				'field'       => 'allow_vendor_refunds',
+				'label'       => __( 'Let vendors refund their own orders from the dashboard', 'wp-sell-services' ),
+				'description' => __( 'Off by default: refunds reverse the vendor\'s credit and return money to the buyer, so only an administrator can issue them unless you enable this.', 'wp-sell-services' ),
 			)
 		);
 
@@ -1074,7 +1086,6 @@ class Settings {
 				'field'       => 'dispute_window_days',
 				'min'         => 1,
 				'max'         => 90,
-				'default'     => 14,
 				'description' => __( 'Days after order completion during which buyers can open a dispute. After this window, disputes are locked.', 'wp-sell-services' ),
 			)
 		);
@@ -1090,7 +1101,6 @@ class Settings {
 				'field'       => 'auto_dispute_late_days',
 				'min'         => 0,
 				'max'         => 30,
-				'default'     => 3,
 				'description' => __( 'Automatically open a dispute if delivery is overdue by this many days past the deadline. Set to 0 to disable.', 'wp-sell-services' ),
 			)
 		);
@@ -1105,7 +1115,6 @@ class Settings {
 				'option_name' => 'wpss_orders',
 				'field'       => 'allow_late_requirements',
 				'label'       => __( 'Allow buyers to submit requirements after work has started', 'wp-sell-services' ),
-				'default'     => false,
 				'description' => __( 'If enabled, buyers can submit requirements even if the order is already in progress without them.', 'wp-sell-services' ),
 			)
 		);
@@ -1121,7 +1130,6 @@ class Settings {
 				'field'       => 'requirements_timeout_days',
 				'min'         => 0,
 				'max'         => 30,
-				'default'     => 0,
 				'description' => __( 'Days to wait for buyer to submit requirements before the order auto-starts or auto-cancels (see next setting). Set to 0 to disable.', 'wp-sell-services' ),
 			)
 		);
@@ -1136,8 +1144,22 @@ class Settings {
 				'option_name' => 'wpss_orders',
 				'field'       => 'auto_start_on_timeout',
 				'label'       => __( 'Auto-start order when requirements timeout is reached', 'wp-sell-services' ),
-				'default'     => true,
 				'description' => __( 'If enabled, the order starts without requirements. If disabled, the order is cancelled instead.', 'wp-sell-services' ),
+			)
+		);
+
+		add_settings_field(
+			'review_window_days',
+			__( 'Review Window (Days)', 'wp-sell-services' ),
+			array( $this, 'render_number_field' ),
+			'wpss_orders',
+			'wpss_orders_section',
+			array(
+				'option_name' => 'wpss_orders',
+				'field'       => 'review_window_days',
+				'min'         => 0,
+				'max'         => 365,
+				'description' => __( 'Days after an order completes during which the buyer can leave a review. Set to 0 for no limit.', 'wp-sell-services' ),
 			)
 		);
 
@@ -1326,7 +1348,7 @@ class Settings {
 				'option_name' => 'wpss_advanced',
 				'field'       => 'delete_data_on_uninstall',
 				'label'       => __( 'Delete all plugin data when uninstalling', 'wp-sell-services' ),
-				'default'     => false,
+				'description' => __( 'Applies only when the plugin is deleted from the Plugins screen, not on deactivation. Removes the plugin\'s own tables, posts, options, user meta and uploaded files: every order, delivery, message, dispute, review, vendor profile, wallet ledger, withdrawal and setting the plugin created. There is no undo. The pages mapped under Settings > Pages are left in place, because they may hold content you wrote. Delete them by hand if you no longer want them.', 'wp-sell-services' ),
 			)
 		);
 
@@ -1340,7 +1362,6 @@ class Settings {
 				'option_name' => 'wpss_advanced',
 				'field'       => 'enable_debug_mode',
 				'label'       => __( 'Enable debug logging', 'wp-sell-services' ),
-				'default'     => false,
 			)
 		);
 
@@ -1353,7 +1374,6 @@ class Settings {
 			array(
 				'option_name' => 'wpss_advanced',
 				'field'       => 'max_file_size',
-				'default'     => 10,
 				'min'         => 1,
 				'max'         => 100,
 				'step'        => 1,
@@ -1370,7 +1390,6 @@ class Settings {
 			array(
 				'option_name' => 'wpss_advanced',
 				'field'       => 'allowed_file_types',
-				'default'     => 'jpg,jpeg,png,gif,pdf,doc,docx',
 				'description' => __( 'Comma-separated list of allowed file extensions.', 'wp-sell-services' ),
 			)
 		);
@@ -1384,7 +1403,6 @@ class Settings {
 			array(
 				'option_name' => 'wpss_advanced',
 				'field'       => 'currency_position',
-				'default'     => 'before',
 				'options'     => array(
 					'before' => __( 'Before amount ($99)', 'wp-sell-services' ),
 					'after'  => __( 'After amount (99$)', 'wp-sell-services' ),
@@ -2603,7 +2621,7 @@ class Settings {
 	 */
 	public function render_text_field( array $args ): void {
 		$options = get_option( $args['option_name'], array() );
-		$value   = $options[ $args['field'] ] ?? ( $args['default'] ?? '' );
+		$value   = $options[ $args['field'] ] ?? $this->field_default( $args ) ?? '';
 
 		printf(
 			'<input type="text" id="%1$s" name="%2$s[%1$s]" value="%3$s" class="regular-text">',
@@ -2733,7 +2751,7 @@ class Settings {
 	 */
 	public function render_number_field( array $args ): void {
 		$options = get_option( $args['option_name'], array() );
-		$value   = $options[ $args['field'] ] ?? ( $args['default'] ?? 0 );
+		$value   = $options[ $args['field'] ] ?? $this->field_default( $args ) ?? 0;
 
 		$min  = (float) ( $args['min'] ?? 0 );
 		$max  = (float) ( $args['max'] ?? 100 );
@@ -2821,7 +2839,7 @@ class Settings {
 	 */
 	public function render_select_field( array $args ): void {
 		$options = get_option( $args['option_name'], array() );
-		$value   = $options[ $args['field'] ] ?? ( $args['default'] ?? '' );
+		$value   = $options[ $args['field'] ] ?? $this->field_default( $args ) ?? '';
 
 		printf(
 			'<select id="%1$s" name="%2$s[%1$s]">',
@@ -3071,7 +3089,7 @@ class Settings {
 			'wpss_advanced_section',
 			__( 'Audit Log Retention (Days)', 'wp-sell-services' ),
 			array(
-				'default'     => 0,
+				'default'     => AuditLogService::RETENTION_DEFAULT,
 				'min'         => 0,
 				'max'         => 3650,
 				'description' => __( 'Audit log entries older than this are pruned. 0 keeps entries forever.', 'wp-sell-services' ),
@@ -3205,7 +3223,7 @@ class Settings {
 	 */
 	public function render_checkbox_field( array $args ): void {
 		$options = get_option( $args['option_name'], array() );
-		$value   = $options[ $args['field'] ] ?? ( $args['default'] ?? false );
+		$value   = $options[ $args['field'] ] ?? $this->field_default( $args ) ?? false;
 
 		printf(
 			'<label><input type="checkbox" id="%1$s" name="%2$s[%1$s]" value="1" %3$s> %4$s</label>',
@@ -3214,6 +3232,23 @@ class Settings {
 			checked( $value, true, false ),
 			esc_html( $args['label'] ?? '' )
 		);
+
+		if ( ! empty( $args['description'] ) ) {
+			printf( '<p class="description">%s</p>', esc_html( $args['description'] ) );
+		}
+	}
+
+	/**
+	 * Default for a field: the shared wpss_settings_defaults() entry, else the
+	 * field's own 'default' for option groups the shared list does not cover.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string, mixed> $args Field arguments.
+	 * @return mixed
+	 */
+	private function field_default( array $args ) {
+		return wpss_settings_defaults()[ $args['option_name'] ][ $args['field'] ] ?? $args['default'] ?? null;
 	}
 
 	/**
@@ -3239,9 +3274,26 @@ class Settings {
 		);
 
 		foreach ( $registered as $id => $adapter ) {
-			$name                    = $adapter->get_name();
-			$is_active               = $adapter->is_active();
-			$status                  = $is_active ? __( 'Available', 'wp-sell-services' ) : __( 'Not Installed', 'wp-sell-services' );
+			$name      = $adapter->get_name();
+			$is_active = $adapter->is_active();
+			$status    = $is_active ? __( 'Available', 'wp-sell-services' ) : __( 'Not Installed', 'wp-sell-services' );
+
+			/**
+			 * Filter the status word shown beside one platform.
+			 *
+			 * "Available" only means the platform's plugin is installed. A rail
+			 * that is installed but cannot yet take a purchase has to say so
+			 * here, or the owner reads it as working. Pro uses this for its beta
+			 * rails.
+			 *
+			 * @since 1.7.1
+			 *
+			 * @param string $status    Status word, plain text.
+			 * @param string $id        Adapter id.
+			 * @param bool   $is_active Whether the platform's plugin is active.
+			 */
+			$status = (string) apply_filters( 'wpss_ecommerce_platform_status', $status, $id, $is_active );
+
 			$platform_options[ $id ] = sprintf( '%s (%s)', $name, $status );
 		}
 
@@ -3276,10 +3328,21 @@ class Settings {
 			);
 		}
 
-		printf(
-			'<p class="description">%s</p>',
-			esc_html__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD and FluentCart.', 'wp-sell-services' )
+		/**
+		 * Filter the platform field description.
+		 *
+		 * Pro appends why a rail is missing from the list (beta rails).
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param string $description Field description, plain text.
+		 */
+		$description = apply_filters(
+			'wpss_ecommerce_platform_description',
+			__( 'Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD and FluentCart.', 'wp-sell-services' )
 		);
+
+		printf( '<p class="description">%s</p>', esc_html( $description ) );
 	}
 
 	/**
@@ -3543,11 +3606,13 @@ class Settings {
 		$sanitized['auto_complete_days'] = absint( $input['auto_complete_days'] ?? 3 );
 		// Revision limits are defined per-package in service packages, not as a global setting.
 		$sanitized['allow_disputes']            = ! empty( $input['allow_disputes'] );
+		$sanitized['allow_vendor_refunds']      = ! empty( $input['allow_vendor_refunds'] );
 		$sanitized['dispute_window_days']       = absint( $input['dispute_window_days'] ?? 14 );
 		$sanitized['auto_dispute_late_days']    = absint( $input['auto_dispute_late_days'] ?? 3 );
 		$sanitized['allow_late_requirements']   = ! empty( $input['allow_late_requirements'] );
 		$sanitized['requirements_timeout_days'] = absint( $input['requirements_timeout_days'] ?? 0 );
 		$sanitized['auto_start_on_timeout']     = ! empty( $input['auto_start_on_timeout'] );
+		$sanitized['review_window_days']        = absint( $input['review_window_days'] ?? 30 );
 
 		return $sanitized;
 	}
@@ -3677,12 +3742,6 @@ class Settings {
 		$sanitized['currency_position']  = in_array( $input['currency_position'] ?? 'before', array( 'before', 'after' ), true )
 			? $input['currency_position']
 			: 'before';
-
-		// Sync to standalone options for backward compatibility with existing code
-		// that reads these via get_option('wpss_*').
-		update_option( 'wpss_max_file_size', $sanitized['max_file_size'] );
-		update_option( 'wpss_allowed_file_types', $sanitized['allowed_file_types'] );
-		update_option( 'wpss_currency_position', $sanitized['currency_position'] );
 
 		return $sanitized;
 	}
@@ -3815,6 +3874,11 @@ class Settings {
 				'extension_approved'     => __( 'Extension Approved', 'wp-sell-services' ),
 				'extension_declined'     => __( 'Extension Declined', 'wp-sell-services' ),
 				'moderation'             => __( 'Service Moderation', 'wp-sell-services' ),
+				'review_reply'           => __( 'Review Reply', 'wp-sell-services' ),
+				'request_expired'        => __( 'Request Expired', 'wp-sell-services' ),
+				'dispute_escalated'      => __( 'Dispute Escalated', 'wp-sell-services' ),
+				'dispute_cancelled'      => __( 'Dispute Cancelled', 'wp-sell-services' ),
+				'tip_receipt'            => __( 'Tip Receipt', 'wp-sell-services' ),
 			)
 		);
 	}
