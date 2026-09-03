@@ -29,11 +29,13 @@ class SchemaManager {
 	 * table the single store for a dispute conversation. 1.7.1 backfills
 	 * revisions_included on standalone orders from their package snapshot.
 	 * 1.7.2 moves the last rows out of wpss_service_requirements and
-	 * wpss_service_addons into post meta and drops both tables.
+	 * wpss_service_addons into post meta and drops both tables. 1.7.3 gives
+	 * wpss_payment_receipts an `attachments` column and moves every existing
+	 * receipt out of the media library into the private order store.
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.7.2';
+	const DB_VERSION = '1.7.3';
 
 	/**
 	 * Option name for storing DB version.
@@ -520,6 +522,16 @@ class SchemaManager {
 				'definition' => 'varchar(64) DEFAULT NULL',
 				'after'      => 'platform_order_id',
 			),
+			// Proof of payment as a private order-file record instead of a
+			// media-library attachment id, which was a public uploads URL
+			// (Basecamp 10267994010). Same column name and shape as every other
+			// table that holds order files, so one read gate covers them all.
+			array(
+				'table'      => 'payment_receipts',
+				'column'     => 'attachments',
+				'definition' => 'longtext',
+				'after'      => 'attachment_id',
+			),
 		);
 
 		foreach ( $migrations as $migration ) {
@@ -535,7 +547,72 @@ class SchemaManager {
 		$this->backfill_package_snapshots();
 		$this->backfill_package_ids();
 		$this->backfill_revisions_included();
+		$this->migrate_receipt_files();
 		$this->retire_requirement_and_addon_tables();
+	}
+
+	/**
+	 * Move pre-1.7.1 payment receipts out of the media library.
+	 *
+	 * Every receipt written before this release points at a media-library
+	 * attachment, which is a public wp-content/uploads URL: a stranger holding
+	 * the link downloaded a stranger's bank transfer slip (Basecamp
+	 * 10267994010). Fixing the upload path alone would close the hole for new
+	 * receipts and leave every existing one readable.
+	 *
+	 * Moved in bulk here rather than on access, which is what deliveries and
+	 * briefs do: a receipt link lives in an admin review box that is re-rendered
+	 * from the row every time, never in a buyer's inbox, so there is no
+	 * outstanding link to keep alive. wpss_get_receipt_file() adopts anything
+	 * this pass leaves behind (a row added while the batch cap was reached).
+	 *
+	 * Guarded by the column check, capped, and idempotent: an adopted row no
+	 * longer matches the WHERE.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	private function migrate_receipt_files(): void {
+		if ( ! function_exists( 'wpss_adopt_legacy_receipt_file' ) ) {
+			return;
+		}
+
+		$table = $this->get_table_name( 'payment_receipts' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$column_exists = $this->wpdb->get_var(
+			$this->wpdb->prepare(
+				'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+				WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+				DB_NAME,
+				$table,
+				'attachments'
+			)
+		);
+
+		if ( (int) $column_exists < 1 ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from a private const.
+		$rows = $this->wpdb->get_results(
+			"SELECT id, order_id, uploaded_by, attachment_id FROM `{$table}`
+			WHERE attachment_id > 0 AND ( attachments IS NULL OR attachments = '' )
+			LIMIT 500"
+		);
+
+		if ( ! $rows ) {
+			return;
+		}
+
+		foreach ( $rows as $row ) {
+			wpss_adopt_legacy_receipt_file( $row );
+		}
+
+		if ( function_exists( 'wpss_log' ) ) {
+			wpss_log( sprintf( 'Schema 1.7.3: moved %d payment receipt(s) out of the media library into the private order store.', count( $rows ) ) );
+		}
 	}
 
 	/**
@@ -995,6 +1072,12 @@ class SchemaManager {
 	 * Proof-of-payment a buyer uploads against an offline order, and the record
 	 * of who verified it (Basecamp #10194890682).
 	 *
+	 * The proof itself is a file record in `attachments`, the same column shape
+	 * deliveries and messages use, so it answers to the order read gate. It used
+	 * to be `attachment_id` - a media-library post, and therefore a public
+	 * wp-content/uploads URL (Basecamp 10267994010). That column stays for rows
+	 * written before 1.7.1; nothing writes it any more.
+	 *
 	 * A TABLE, not order meta, because the admin screen queries it BY STATUS
 	 * across orders - "show me everything awaiting verification" is the whole
 	 * job, and that is a query post meta cannot serve without scanning.
@@ -1017,6 +1100,7 @@ class SchemaManager {
 			order_id bigint(20) unsigned NOT NULL,
 			uploaded_by bigint(20) unsigned NOT NULL DEFAULT 0,
 			attachment_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			attachments longtext DEFAULT NULL,
 			note text DEFAULT NULL,
 			status varchar(20) NOT NULL DEFAULT 'submitted',
 			verified_by bigint(20) unsigned NOT NULL DEFAULT 0,

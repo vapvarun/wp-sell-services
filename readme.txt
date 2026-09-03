@@ -305,6 +305,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Tax is charged on multi-item cart checkout and on PayPal checkout, matching the single-service total.
 * Fix      - Closing a dispute from the admin restores the order, a dispute cannot be resolved twice, and disputes cannot be opened on unpaid orders.
 * Security - Message, contact and dispute attachments are stored privately like deliveries, dispute evidence checks ownership, and vendor payout details are encrypted at rest.
+* Security - Payment receipts are stored privately like deliveries instead of in the media library.
 * Security - Buyers and vendors can no longer refund or cancel orders outside their allowed steps; retired accept and decline actions removed.
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Payment intents carry the vendor id for every order type.
