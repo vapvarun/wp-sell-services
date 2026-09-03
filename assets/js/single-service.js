@@ -739,16 +739,26 @@
             const checkoutUrl = this.state.checkoutUrl || wpssService.checkoutUrl;
             const cartUrl = wpssService.cartUrl || checkoutUrl;
 
+            // A link with an empty href reloads this page, which is how the
+            // dead end used to loop. The server refuses before it gets here
+            // now, so this only ever drops a button it cannot point anywhere.
+            let actions = '';
+            if (cartUrl) {
+                actions += '<a href="' + cartUrl + '" class="wpss-btn wpss-btn-outline">' +
+                    wpssService.i18n.viewCart +
+                    '</a>';
+            }
+            if (checkoutUrl) {
+                actions += '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn-primary">' +
+                    wpssService.i18n.checkout +
+                    '</a>';
+            }
+
             $footer.html(
                 '<div class="wpss-cart-success">' +
                 '<p class="wpss-success-message">&#10003; ' + wpssService.i18n.added + '</p>' +
                 '<div class="wpss-cart-actions">' +
-                '<a href="' + cartUrl + '" class="wpss-btn wpss-btn-outline">' +
-                wpssService.i18n.viewCart +
-                '</a>' +
-                '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn-primary">' +
-                wpssService.i18n.checkout +
-                '</a>' +
+                actions +
                 '</div>' +
                 '</div>'
             );

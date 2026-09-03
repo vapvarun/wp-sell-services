@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**512 hooks** across **727** firing sites.
+**513 hooks** across **728** firing sites.
 
 ## Actions (274)
 
@@ -184,7 +184,7 @@ guide; this is the complete index.
 | `wpss_pro_connect_payout_paid` | 4 | `src/StripeConnect/ConnectWebhookHandler.php:254` **[PRO]** | Fires when a payout to a connected vendor account succeeds. |
 | `wpss_pro_connect_transfer_created` | 4 | `src/StripeConnect/ConnectWebhookHandler.php:336` **[PRO]** | Fires when a Stripe transfer to a connected vendor account is created. |
 | `wpss_pro_connect_transfer_reversed` | 3 | `src/StripeConnect/ConnectWebhookHandler.php:155` **[PRO]** | Fires when a Connect transfer reversal is confirmed by Stripe. |
-| `wpss_pro_loaded` | 1 | `wp-sell-services-pro.php:258` **[PRO]** | Fires after WP Sell Services Pro is fully loaded. |
+| `wpss_pro_loaded` | 1 | `wp-sell-services-pro.php:262` **[PRO]** | Fires after WP Sell Services Pro is fully loaded. |
 | `wpss_profile_form_fields` | 1 | `templates/dashboard/sections/profile.php:231` | Fires in the profile form before the submit button. |
 | `wpss_proposal_accepted` | 3 | `src/Services/BuyerRequestService.php:891` | Fires when a proposal is accepted via order conversion. |
 | `wpss_proposal_deleted` | 2 | `src/Services/ProposalService.php:896` | Fires when a proposal is deleted. |
@@ -275,7 +275,7 @@ guide; this is the complete index.
 | `wpss_vendor_profile_bio` | 1 | `templates/vendor/profile.php:293` | Hook: wpss_vendor_profile_bio |
 | `wpss_vendor_profile_header` | 1 | `templates/vendor/profile.php:149` | Hook: wpss_vendor_profile_header |
 | `wpss_vendor_profile_reviews` | 1 | `templates/vendor/profile.php:402` | Hook: wpss_vendor_profile_reviews |
-| `wpss_vendor_profile_saved` | 2 | `src/Frontend/AjaxHandlers.php:3523` *(+1 more)* | Fires after a vendor profile is saved from a frontend form. |
+| `wpss_vendor_profile_saved` | 2 | `src/Frontend/AjaxHandlers.php:3565` *(+1 more)* | Fires after a vendor profile is saved from a frontend form. |
 | `wpss_vendor_profile_services` | 1 | `templates/vendor/profile.php:313` | Hook: wpss_vendor_profile_services |
 | `wpss_vendor_profile_sidebar` | 1 | `templates/vendor/profile.php:598` | Hook: wpss_vendor_profile_sidebar |
 | `wpss_vendor_profile_stats` | 1 | `templates/vendor/profile.php:470` | Hook: wpss_vendor_profile_stats |
@@ -291,13 +291,13 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php:699` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php:2136` | Fires after the wizard persists service meta. |
 
-## Filters (238)
+## Filters (239)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
 | `wpss_account_page_section` | 2 | `src/Integrations/Standalone/StandaloneAccountProvider.php:278` | Filters the dashboard section a legacy [wpss_account] page maps to. |
 | `wpss_account_status` | 2 | `src/functions/moderation.php:180` | Filter a member's account standing. |
-| `wpss_add_service_to_cart` | 3 | `src/Frontend/AjaxHandlers.php:2321` | Filter to let e-commerce adapters handle cart addition natively. |
+| `wpss_add_service_to_cart` | 3 | `src/Frontend/AjaxHandlers.php:2366` | Filter to let e-commerce adapters handle cart addition natively. |
 | `wpss_admin_menu_label` | 1 | `src/Admin/Admin.php:1413` | Filter the admin menu label for white-labelling. |
 | `wpss_admin_notification_email` | 1 | `src/Services/EmailService.php:617` | Tell the site owner a buyer has sent proof of an offline payment. |
 | `wpss_admin_vendor_notification_content` | 2 | `src/Services/NotificationService.php:1630` | Filter admin vendor notification email content. |
@@ -360,7 +360,8 @@ guide; this is the complete index.
 | `wpss_dispute_reasons` | 1 | `src/functions/moderation.php:107` | Filter the reasons a buyer may give for opening a dispute. |
 | `wpss_docs_url` | 1 | `src/Admin/Pages/UpgradePage.php:348` | Filters the documentation URL shown on the upgrade screen. |
 | `wpss_ecommerce_adapters` | 1 | `src/CLI/PreflightCommand.php:663` *(+1 more)* |  |
-| `wpss_ecommerce_platform_description` | 1 | `src/Admin/Settings.php:3323` | Filter the platform field description. |
+| `wpss_ecommerce_platform_description` | 1 | `src/Admin/Settings.php:3340` | Filter the platform field description. |
+| `wpss_ecommerce_platform_status` | 3 | `src/Admin/Settings.php:3295` | Filter the status word shown beside one platform. |
 | `wpss_edd_can_access_vendor_dashboard` | 2 | `src/Integrations/EDD/EDDAccountProvider.php:484` **[PRO]** | Filter whether user can access vendor dashboard. |
 | `wpss_edd_cart_item_data` | 3 | `src/Integrations/EDD/EDDCheckoutProvider.php:56` **[PRO]** | Filter cart item data for services. |
 | `wpss_edd_thankyou_redirect` | 2 | `src/Integrations/EDD/EDDCheckoutProvider.php:250` **[PRO]** | Filter the thank you redirect URL for service orders. |
@@ -396,7 +397,7 @@ guide; this is the complete index.
 | `wpss_no_requests_message` | 1 | `templates/content-no-requests.php:26` | Template: No Requests Found |
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php:33` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php:2020` | Filter email content before sending. |
-| `wpss_notification_types` | 1 | `src/Admin/Settings.php:3833` | Filter the switchable notification types. |
+| `wpss_notification_types` | 1 | `src/Admin/Settings.php:3850` | Filter the switchable notification types. |
 | `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php:1668` | Named offline methods. |
 | `wpss_offline_methods` | 2 | `src/Integrations/Gateways/OfflineGateway.php:331` | Filter the offline payment methods. |
 | `wpss_open_graph_data` | 2 | `src/SEO/SEO.php:260` |  |
@@ -431,7 +432,7 @@ guide; this is the complete index.
 | `wpss_pre_update_service` | 2 | `src/Services/ServiceManager.php:207` | Filters service data before update. |
 | `wpss_pre_vendor_register` | 2 | `src/Services/VendorService.php:155` | Filter vendor profile data before creating the vendor profile. |
 | `wpss_presence_window` | 2 | `src/functions/notifications.php:162` | Filters the presence window, in seconds. |
-| `wpss_pro_beta_rails` | 1 | `wp-sell-services-pro.php:322` **[PRO]** | Filter whether the beta EDD and FluentCart rails are registered. |
+| `wpss_pro_beta_rails` | 1 | `wp-sell-services-pro.php:326` **[PRO]** | Filter whether the beta EDD and FluentCart rails are registered. |
 | `wpss_pro_fcm_payload` | 3 | `src/Push/FcmProvider.php:208` **[PRO]** | Filter the FCM message body before it is sent. |
 | `wpss_pro_pause_license_recheck` | 2 | `src/License/Manager.php:182` **[PRO]** | Filter whether automatic license re-checks are paused. |
 | `wpss_pro_push_provider` | 2 | `src/Push/PushNotificationService.php:137` **[PRO]** | Filter the push provider. |
@@ -483,7 +484,7 @@ guide; this is the complete index.
 | `wpss_service_tag_args` | 1 | `src/PostTypes/ServicePostType.php:305` | Filter service tag taxonomy arguments. |
 | `wpss_service_tag_taxonomy_args` | 1 | `src/Taxonomies/ServiceTagTaxonomy.php:103` | Filter service tag taxonomy arguments. |
 | `wpss_services_per_page` | 1 | `src/Frontend/ServiceArchiveView.php:651` *(+1 more)* |  |
-| `wpss_settings_currencies` | 1 | `src/Admin/Settings.php:3795` | Filter the currencies available in the Settings currency dropdown. |
+| `wpss_settings_currencies` | 1 | `src/Admin/Settings.php:3812` | Filter the currencies available in the Settings currency dropdown. |
 | `wpss_settings_sections` | 1 | `src/functions/urls.php:986` | Filter the known admin settings sections. |
 | `wpss_settings_tabs` | 1 | `src/Admin/Settings.php:227` | Filter the settings tabs. |
 | `wpss_should_reverse_vendor_earnings` | 2 | `src/Services/OrderWorkflowManager.php:1111` | Filters whether the vendor's wallet earnings should be reversed. |

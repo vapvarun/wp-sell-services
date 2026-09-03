@@ -100,6 +100,8 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 * Offline payment gateway with admin confirmation workflow
 * Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce, EDD and FluentCart checkout integrations.
 * Milestone, tip and extension payments are supported on Standalone, WooCommerce and FluentCart
+* Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce checkout; the EDD and FluentCart rails are beta and cannot take a catalog purchase yet.
+* Milestone, tip and extension payments are supported on Standalone and WooCommerce
 
 **Developer Ready**
 
@@ -134,7 +136,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 
 Upgrade to [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-services-pro/) for additional capabilities:
 
-* **E-commerce Platforms**: WooCommerce, Easy Digital Downloads, FluentCart
+* **E-commerce Platforms**: WooCommerce. Easy Digital Downloads and FluentCart are beta, off by default, and cannot take a catalog purchase yet
 * **Additional Payment Gateway**: Razorpay (UPI, cards, netbanking)
 * **Tiered Commission Rules**: Category, volume, and seller-level based commission rates
 * **White-Label Branding**: Rebrand the entire marketplace with custom name and styling
@@ -196,7 +198,7 @@ Full documentation at [wbcomdesigns.com/docs/wp-sell-services](https://wbcomdesi
 
 = Is WooCommerce required? =
 
-No. WP Sell Services includes a built-in standalone checkout system with Stripe, PayPal, and Offline payment gateways. Your marketplace is fully functional out of the box - service listings, vendor management, order workflow, messaging, reviews, dispute resolution, and checkout all work without any additional plugins. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, EDD and FluentCart integrations for sites that prefer those platforms.
+No. WP Sell Services includes a built-in standalone checkout system with Stripe, PayPal, and Offline payment gateways. Your marketplace is fully functional out of the box - service listings, vendor management, order workflow, messaging, reviews, dispute resolution, and checkout all work without any additional plugins. The Pro version adds Razorpay as an additional gateway, plus WooCommerce checkout for sites that prefer it. The EDD and FluentCart rails are beta, off by default, and cannot take a catalog purchase yet.
 
 = Does it work on multisite? =
 
@@ -220,7 +222,7 @@ Yes. Buyers can post project requests with budget range, description, and deadli
 
 = What payment gateways are supported? =
 
-The free version includes a standalone checkout with Stripe, PayPal, and Offline payment gateways - no e-commerce plugin required. The Pro version adds Razorpay as an additional gateway, plus WooCommerce, Easy Digital Downloads and FluentCart checkout integrations for sites already using those platforms.
+The free version includes a standalone checkout with Stripe, PayPal, and Offline payment gateways - no e-commerce plugin required. The Pro version adds Razorpay as an additional gateway, plus WooCommerce checkout for sites already using it. The Easy Digital Downloads and FluentCart rails are beta, off by default, and cannot take a catalog purchase yet.
 
 One difference worth knowing: paying a single existing amount (a milestone phase, a tip, a paid extension) is supported on Standalone and WooCommerce. If your marketplace needs milestones, tipping or paid extensions, run it on one of those two.
 
@@ -292,6 +294,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Demo delete removes only demo content.
 * Fix      - Every command that writes or deletes data now asks first and refuses on a production site without --force.
 * Fix      - Pay buttons for tips, milestones, extensions and proposals are hidden on a store rail that cannot take a single-order payment instead of linking to a page it ignores.
+* Fix      - A store rail that cannot take a catalog purchase now says so instead of adding to the cart and looping.
 * Fix      - Orders left without requirements now auto-start by default instead of being cancelled after the timeout.
 * Fix      - Price decimals and currency position settings are applied; minimum and maximum order amounts are enforced at checkout.
 * Fix      - Password reset over REST accepts a username as well as an email, private order files can be downloaded by app clients, and repeated failed logins lock the account temporarily.
