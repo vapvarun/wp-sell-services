@@ -77,6 +77,21 @@ $check( 'thumbs carry data-src for the opener', str_contains( $gallery, 'data-sr
 $check( '  and an alt on the thumb image', (bool) preg_match( '/wp_get_attachment_image_url\( \$image_id.*?alt="/s', $gallery ) );
 // No [^>] here: the attribute value is a PHP tag, so it contains '>' itself.
 $check( '  the main image carries an alt', (bool) preg_match( '/alt="[^"]*"\s*class="wpss-gallery-image"/s', $gallery ) );
+
+/*
+ * The trigger is a real <button>, and the JS binds to IT.
+ *
+ * The overlay had a dialog role, a label, named controls and a focus trap, and
+ * every bit of it was unreachable: the only way in was a mouse click on a bare
+ * <img> with no tabindex and no role. Enter and Space fire a click on the
+ * button, not on its child image, so a handler bound to the image never sees
+ * the keyboard at all.
+ */
+$check( 'the zoom trigger is a button', str_contains( $gallery, '<button type="button"' ) && str_contains( $gallery, 'class="wpss-gallery-zoom"' ) );
+$check( '  it carries an accessible name', (bool) preg_match( '/wpss-gallery-zoom"\s*\n?\s*aria-label=/s', $gallery ) );
+$check( '  the image sits inside it', (bool) preg_match( '/wpss-gallery-zoom.*?<img.*?wpss-gallery-image.*?<\/button>/s', $gallery ) );
+$check( '  and the opener is bound to the button, not the image', str_contains( $single_js, "'click', '.wpss-gallery-zoom'" ) && ! str_contains( $single_js, "'click', '.wpss-gallery-image'" ) );
+$check( '  the button resets its UA chrome so it stays the stage', str_contains( $single_css, '.wpss-gallery-zoom {' ) && str_contains( $single_css, '.wpss-gallery-zoom:focus-visible' ) );
 $check( 'single-service.js reads the thumb data-src', str_contains( $single_js, ".wpss-gallery-thumb[data-src]'" ) );
 $check( '  and falls back to the main image with no strip', str_contains( $single_js, "src: \$image.attr('src')" ) );
 

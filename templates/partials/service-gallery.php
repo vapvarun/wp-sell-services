@@ -106,9 +106,28 @@ do_action( 'wpss_before_service_gallery', $service_id );
 			 */
 			$service_title = (string) get_post_field( 'post_title', $service_id );
 			?>
-			<img src="<?php echo esc_url( wp_get_attachment_image_url( $first_image, $image_size ) ); ?>"
-				alt="<?php echo esc_attr( $service_title ); ?>"
-				class="wpss-gallery-image">
+			<?php
+			/*
+			 * A real <button>, not a click handler on the <img>.
+			 *
+			 * The overlay it opens has a dialog role, a label, named controls
+			 * and a focus trap - all of it unreachable, because the only way in
+			 * was a mouse click on a bare image with no tabindex and no role. A
+			 * keyboard or screen-reader user could not open the lightbox at
+			 * all. The button also gives the browser something to return focus
+			 * to when the overlay closes.
+			 *
+			 * The thumbnails below were already buttons; this makes the main
+			 * image match them.
+			 */
+			?>
+			<button type="button"
+					class="wpss-gallery-zoom"
+					aria-label="<?php echo esc_attr( sprintf( /* translators: %s: service title. */ __( 'View larger image of %s', 'wp-sell-services' ), $service_title ) ); ?>">
+				<img src="<?php echo esc_url( wp_get_attachment_image_url( $first_image, $image_size ) ); ?>"
+					alt="<?php echo esc_attr( $service_title ); ?>"
+					class="wpss-gallery-image">
+			</button>
 
 			<?php if ( '' !== $video_url ) : ?>
 				<div class="wpss-gallery-video" hidden></div>

@@ -397,6 +397,28 @@
 	cursor: zoom-in;
 }
 
+/*
+ * The zoom trigger is a real button so the keyboard can reach the lightbox, but
+ * it must not look or lay out like one - it IS the stage. Everything here is
+ * either resetting a UA button default or handing its own size to the image.
+ */
+.wpss-gallery-zoom {
+	display: block;
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: zoom-in;
+	font: inherit;
+	color: inherit;
+}
+
+.wpss-gallery-zoom:focus-visible {
+	outline: 2px solid var(--wpss-primary);
+	outline-offset: -2px;
+}
+
 .wpss-gallery-video {
 	width: 100%;
 	height: 100%;

@@ -107,10 +107,13 @@
              * implementation in frontend.js. The whole strip goes with it, so
              * the overlay can move between images.
              */
-            $gallery.on('click', '.wpss-gallery-image', function(e) {
+            // Bound to the BUTTON, not the image. Enter and Space fire a click
+            // on the button itself, so a handler on the <img> never sees them
+            // and the lightbox stayed mouse-only.
+            $gallery.on('click', '.wpss-gallery-zoom', function(e) {
                 e.preventDefault();
 
-                const $image = $(this);
+                const $image = $(this).find('.wpss-gallery-image');
                 const $thumbs = $gallery.find('.wpss-gallery-thumb[data-src]');
                 const items = $thumbs.map(function() {
                     const $thumb = $(this);

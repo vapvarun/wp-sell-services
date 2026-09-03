@@ -40,7 +40,7 @@ guide; this is the complete index.
 | `wpss_after_service_archive` | 0 | `templates/archive-service.php:147` | Hook: wpss_after_service_archive |
 | `wpss_after_service_card` | 1 | `templates/content-service-card.php:282` | Hook: wpss_after_service_card |
 | `wpss_after_service_faqs` | 1 | `templates/partials/service-faqs.php:67` | Fires after the service FAQs section. |
-| `wpss_after_service_gallery` | 1 | `templates/partials/service-gallery.php:195` | Fires after the service gallery. |
+| `wpss_after_service_gallery` | 1 | `templates/partials/service-gallery.php:214` | Fires after the service gallery. |
 | `wpss_after_service_loop` | 0 | `templates/archive-service.php:122` | Hook: wpss_after_service_loop |
 | `wpss_after_service_packages` | 1 | `templates/partials/service-packages.php:420` | Fires after the service packages widget. |
 | `wpss_after_service_reviews` | 1 | `templates/partials/service-reviews.php:201` | Fires after the service reviews section. |
