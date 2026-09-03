@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wp-sell-services",
     "name": "WP Sell Services",
-    "version": "1.7.0",
+    "version": "1.7.1",
     "namespace": "WPSellServices",
     "main_file": "wp-sell-services.php",
     "text_domain": "wp-sell-services",

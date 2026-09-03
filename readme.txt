@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -333,6 +333,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Dev      - Pay-order URLs are read-only; rails create store orders through the new wpss_ensure_pay_order seam.
 * Dev      - CI now runs the integration, REST and contract suites; run-tests.sh works on a fresh clone; OpenAPI marks Pro-only routes.
 * Dev      - The pay-order support matrix lives in one place and the docs check now validates link anchors and hook names.
+* Compat   - Requires WP Sell Services Pro 1.7.1. Install both updates together.
 
 = 1.7.0 - August 2026 =
 

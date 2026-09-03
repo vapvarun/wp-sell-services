@@ -1,6 +1,6 @@
 {
   "title": "WP Sell Services REST API",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "REST API for the WP Sell Services marketplace (Free + Pro). Every entity is reachable through these endpoints - the same surface the mobile app and integrations use. Namespaced under `wpss/v1` (Free) and `wpss-pro/v1` (Pro).\n\nThis document is generated from the live route registrations, scoped to the WP Sell Services namespaces only, so it never includes routes from other plugins on the same install.\n\nGenerated on the **standalone** rail, which is the default. Two routes under `wpss-pro/v1` are registered only by the FluentCart adapter and therefore only exist when `wpss_general[ecommerce_platform]` is `fluentcart`; regenerate on the standalone rail so the committed spec stays stable, or the freshness check will flip-flop with whatever rail was last active.\n\nEvery path carries `x-wpss-tier`: `free` routes ship with WP Sell Services, `pro` routes exist only when WP Sell Services Pro is active and licensed.",
   "namespaces": [
     "wpss/v1",
