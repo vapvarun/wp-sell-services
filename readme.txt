@@ -99,7 +99,7 @@ Build a freelance platform, gig marketplace, or service directory with tiered pr
 * Built-in checkout system - no WooCommerce or other e-commerce plugin required
 * Offline payment gateway with admin confirmation workflow
 * Free version includes Stripe, PayPal, and Offline gateways. Pro adds Razorpay gateway plus WooCommerce, EDD and FluentCart checkout integrations.
-* Milestone, tip and extension payments are supported on Standalone and WooCommerce
+* Milestone, tip and extension payments are supported on Standalone, WooCommerce and FluentCart
 
 **Developer Ready**
 
@@ -321,6 +321,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Dev      - Retired the unused service requirements and add-ons tables; post meta is the single store.
 * Dev      - Pay-order URLs are read-only; rails create store orders through the new wpss_ensure_pay_order seam.
 * Dev      - CI now runs the integration, REST and contract suites; run-tests.sh works on a fresh clone; OpenAPI marks Pro-only routes.
+* Dev      - The pay-order support matrix lives in one place and the docs check now validates link anchors and hook names.
 
 = 1.7.0 - August 2026 =
 

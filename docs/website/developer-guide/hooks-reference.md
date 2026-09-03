@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**510 hooks** across **725** firing sites.
+**512 hooks** across **727** firing sites.
 
-## Actions (273)
+## Actions (274)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -184,6 +184,7 @@ guide; this is the complete index.
 | `wpss_pro_connect_payout_paid` | 4 | `src/StripeConnect/ConnectWebhookHandler.php:254` **[PRO]** | Fires when a payout to a connected vendor account succeeds. |
 | `wpss_pro_connect_transfer_created` | 4 | `src/StripeConnect/ConnectWebhookHandler.php:336` **[PRO]** | Fires when a Stripe transfer to a connected vendor account is created. |
 | `wpss_pro_connect_transfer_reversed` | 3 | `src/StripeConnect/ConnectWebhookHandler.php:155` **[PRO]** | Fires when a Connect transfer reversal is confirmed by Stripe. |
+| `wpss_pro_loaded` | 1 | `wp-sell-services-pro.php:258` **[PRO]** | Fires after WP Sell Services Pro is fully loaded. |
 | `wpss_profile_form_fields` | 1 | `templates/dashboard/sections/profile.php:231` | Fires in the profile form before the submit button. |
 | `wpss_proposal_accepted` | 3 | `src/Services/BuyerRequestService.php:891` | Fires when a proposal is accepted via order conversion. |
 | `wpss_proposal_deleted` | 2 | `src/Services/ProposalService.php:896` | Fires when a proposal is deleted. |
@@ -290,7 +291,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php:699` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php:2136` | Fires after the wizard persists service meta. |
 
-## Filters (237)
+## Filters (238)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -430,6 +431,7 @@ guide; this is the complete index.
 | `wpss_pre_update_service` | 2 | `src/Services/ServiceManager.php:207` | Filters service data before update. |
 | `wpss_pre_vendor_register` | 2 | `src/Services/VendorService.php:155` | Filter vendor profile data before creating the vendor profile. |
 | `wpss_presence_window` | 2 | `src/functions/notifications.php:162` | Filters the presence window, in seconds. |
+| `wpss_pro_beta_rails` | 1 | `wp-sell-services-pro.php:322` **[PRO]** | Filter whether the beta EDD and FluentCart rails are registered. |
 | `wpss_pro_fcm_payload` | 3 | `src/Push/FcmProvider.php:208` **[PRO]** | Filter the FCM message body before it is sent. |
 | `wpss_pro_pause_license_recheck` | 2 | `src/License/Manager.php:182` **[PRO]** | Filter whether automatic license re-checks are paused. |
 | `wpss_pro_push_provider` | 2 | `src/Push/PushNotificationService.php:137` **[PRO]** | Filter the push provider. |

@@ -5,8 +5,9 @@ Catches the defect classes that made the 1.3.0 docs untrustworthy:
 
   1. docs_config.json out of sync with the files on disk (orphans / missing)
   2. Broken image references
-  3. Broken internal .md links
-  4. Hooks documented but never fired (a dead add_action a developer will bind to)
+  3. Broken internal .md links, including the #anchor half
+  4. Hooks documented but never fired (a dead add_action a developer will bind to),
+     in reference tables AND in prose
   5. Admin paths naming a Settings tab that does not exist
   6. Duplicate publishing from the Pro docs tree
 
@@ -116,11 +117,35 @@ def md_files(root):
                 yield os.path.join(r, n)
 
 
+def heading_slugs(path):
+    """GitHub anchor slugs for every heading in a markdown file."""
+    slugs, fenced = set(), False
+    for line in open(path, errors="ignore"):
+        if line.startswith("```"):
+            fenced = not fenced
+            continue
+        m = None if fenced else re.match(r"#{1,6}\s+(.*?)\s*$", line)
+        if m:
+            # GitHub's rule: downcase, drop punctuation, then one hyphen per
+            # space - runs are NOT collapsed, which is why a heading built from
+            # "name -- description" anchors as "name----description".
+            s = re.sub(r"[^\w\s-]", "", m.group(1).lower())
+            slugs.add(re.sub(r"\s", "-", s).strip("-"))
+    return slugs
+
+
 def hooks_in_php(*roots):
     """Every hook name fired by the plugin, including multi-line do_action()."""
     pat = re.compile(r"(?:do_action|apply_filters)\s*\(\s*(?:\n\s*)?'([a-z0-9_]+)'")
     found = set()
     for root in roots:
+        # A plugin bootstrap file is a root in its own right: Pro fires
+        # wpss_pro_beta_rails from wp-sell-services-pro.php, and scanning only
+        # src/ + templates/ made that documented filter look phantom.
+        if os.path.isfile(root):
+            with open(root, errors="ignore") as fh:
+                found |= set(pat.findall(fh.read()))
+            continue
         if not os.path.isdir(root):
             continue
         for r, _, fs in os.walk(root):
@@ -168,6 +193,32 @@ if not bad_img:
 if not bad_link:
     ok("links", "no broken internal links")
 
+# --- 3a. the #anchor half of an internal link ---------------------------------
+# link_re above stops at the '#', so a link whose FILE exists always passed no
+# matter what it pointed at inside that file. That is how documentation-coverage
+# kept sending readers to #wpss_pay_order_url----the-payment-handoff-seam years
+# after the heading was renamed: the file resolved, the fragment never landed,
+# and the reader got the top of a 1,000-line page instead of the section.
+anchor_re = re.compile(r"(?<!!)\[[^\]]*\]\((?!https?://)([^)\s#]*\.md)?#([^)\s]+)\)")
+slug_cache = {}
+bad_anchor = anchors = 0
+for p in md_files(DOCS):
+    rel = os.path.relpath(p, DOCS)
+    for i, line in enumerate(open(p), 1):
+        for m in anchor_re.finditer(line):
+            target = os.path.normpath(os.path.join(os.path.dirname(p), m.group(1))) if m.group(1) else p
+            if not os.path.exists(target):
+                continue  # the links check above already failed this one.
+            if target not in slug_cache:
+                slug_cache[target] = heading_slugs(target)
+            anchors += 1
+            if m.group(2) not in slug_cache[target]:
+                fail("anchors", f"{rel}:{i} -> {m.group(1) or ''}#{m.group(2)} "
+                                f"is not a heading in {os.path.relpath(target, DOCS)}")
+                bad_anchor += 1
+if not bad_anchor:
+    ok("anchors", f"all {anchors} internal link anchors resolve to a real heading")
+
 # --- 3b. links must not escape the published tree ----------------------------
 # `../../architecture/FOO.md` resolves on disk but only docs/website/ publishes,
 # so it 404s on the docs site. Link to the repo URL instead.
@@ -185,8 +236,11 @@ if not escaped:
 # --- 4. phantom hooks ---------------------------------------------------------
 fired = hooks_in_php(os.path.join(FREE, "src"), os.path.join(FREE, "templates"),
                      os.path.join(FREE, "includes"), os.path.join(PRO, "src"),
-                     os.path.join(PRO, "templates"))
+                     os.path.join(PRO, "templates"),
+                     os.path.join(FREE, "wp-sell-services.php"),
+                     os.path.join(PRO, "wp-sell-services-pro.php"))
 hooks_doc = os.path.join(DOCS, "developer-guide", "hooks-filters.md")
+pro_only = set()
 if fired and os.path.exists(hooks_doc):
     text = open(hooks_doc).read()
     # Only rows of a reference table assert "this hook exists". Prose that
@@ -201,7 +255,6 @@ if fired and os.path.exists(hooks_doc):
     # and keep asserting the Free ones. Skipping the whole check when Pro is
     # absent would have turned this into a gate that passes by being blind,
     # which is the failure mode this file exists to catch elsewhere.
-    pro_only = set()
     if not os.path.isdir(os.path.join(PRO, "src")):
         ref = os.path.join(DOCS, "developer-guide", "hooks-reference.md")
         if os.path.exists(ref):
@@ -217,6 +270,47 @@ if fired and os.path.exists(hooks_doc):
         fail("hooks", f"documented in a table but never fired: {h}")
     if not phantom:
         ok("hooks", f"all {len(documented)} tabled hooks are fired in source")
+
+# --- 4a. hook names in PROSE must exist too ------------------------------------
+# Check 4 only reads reference-table rows, so a renamed filter survives
+# everywhere else: 1.7.1 split wpss_pay_order_url into wpss_pay_order_url_lookup
+# and wpss_ensure_pay_order, and the old name stayed in four pages of prose,
+# code samples and a class table - each one telling a developer to hook a filter
+# that is never applied.
+#
+# Only names WRITTEN AS A HOOK are asserted: passed to a hook API, or sitting
+# next to the words filter/hook/action/seam. `wpss_*` is also the prefix of
+# every function, error code, capability and option in the plugin, and demanding
+# those be fired would flag most of the docs.
+HOOK_CALL = re.compile(
+    r"(?:add|remove|has)_(?:filter|action)\s*\(\s*'(wpss_[a-z0-9_]+)'"
+    r"|(?:apply_filters|do_action)\s*\(\s*'(wpss_[a-z0-9_]+)'"
+)
+HOOK_WORD = r"(?:filter|hook|action|seam)s?"
+HOOK_PROSE = re.compile(
+    r"`(wpss_[a-z0-9_]+)`\s*(?:\([^)]*\)\s*)?(?:and\s+`wpss_[a-z0-9_]+`\s*)?" + HOOK_WORD + r"\b"
+    r"|(?:" + HOOK_WORD + r")\s+`(wpss_[a-z0-9_]+)`",
+    re.I,
+)
+# A dynamic hook is fired as `'wpss_settings_tab_' . $key`, so the scan records
+# the trailing-underscore stem. Docs name a real instance of it.
+STEMS = tuple(h for h in fired if h.endswith("_"))
+
+ghost = 0
+for p in md_files(DOCS):
+    rel = os.path.relpath(p, DOCS)
+    for i, line in enumerate(open(p, errors="ignore"), 1):
+        names = {m.group(1) or m.group(2) for m in HOOK_CALL.finditer(line)}
+        names |= {m.group(1) or m.group(2) for m in HOOK_PROSE.finditer(line)}
+        for name in sorted(n for n in names if n):
+            if name in fired or name in pro_only or name.startswith(STEMS):
+                continue
+            fail("hook-prose", f"{rel}:{i} writes `{name}` as a hook; "
+                               f"nothing fires it in Free or Pro")
+            ghost += 1
+if not ghost:
+    ok("hook-prose", "every hook named in doc prose is fired in source")
+
 
 # --- 4b. hook citations point at the right place ------------------------------
 # The reference table cites `file.php:NNN` beside each hook. Line numbers move on

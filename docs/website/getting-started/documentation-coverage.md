@@ -45,8 +45,8 @@ run of `bin/docs-audit.py`.
 | Was missing | Now at |
 |---|---|
 | The three money settings tabs created by the July 2026 regroup | [Payment Gateways](../platform-settings/payment-gateways-settings.md), [Commission & Tax](../platform-settings/commission-tax-settings.md), [Payouts](../platform-settings/payouts-settings.md) |
-| The WooCommerce pay-order handoff, and which platforms support it | [WooCommerce Checkout](../payments-checkout/woocommerce-checkout.md#paying-a-milestone-tip-or-extension) |
-| `wpss_pay_order_url`, the payment-handoff seam | [Hooks and Filters](../developer-guide/hooks-filters.md#wpss_pay_order_url----the-payment-handoff-seam) |
+| The WooCommerce pay-order handoff | [WooCommerce Checkout](../payments-checkout/woocommerce-checkout.md#paying-a-milestone-tip-or-extension) |
+| `wpss_pay_order_url_lookup` + `wpss_ensure_pay_order`, the payment-handoff seam | [Hooks and Filters](../developer-guide/hooks-filters.md#the-pay-order-seam-wpss_pay_order_url_lookup--wpss_ensure_pay_order) |
 | Milestone failure paths, the 48-hour abandon sweep, and where lock-step is *not* enforced | [Milestone Contracts](../order-management/milestones-wpss.md) |
 | Six live REST routes, the two-namespace split, and the real error codes | [REST Controllers](../developer-guide/rest-api-controllers.md), [REST Overview](../developer-guide/rest-api-overview.md) |
 
@@ -97,13 +97,14 @@ site owner:
 These are limitations of the software, not of the writing. They are called out
 where a reader will hit them:
 
-- **Milestone, tip and extension payments work on Standalone and WooCommerce
-  only.** EDD and FluentCart have no pay-order flow, so those links
-  are a dead end there. See
-  [WooCommerce Checkout](../payments-checkout/woocommerce-checkout.md#platform-support----read-this-before-promising-it).
+- **Milestone, tip and extension payments work on Standalone, WooCommerce and
+  FluentCart only.** EDD has no pay-order flow, so no Pay button is offered
+  there at all. See
+  [Pay-order support by rail](../developer-guide/hooks-filters.md#pay-order-support-by-rail)
+  for the one table that says which rail can do what.
 - **Lock-step milestone payment is a workflow rail, not a security control.**
   It is enforced on the standalone checkout and the REST pay endpoints, but not
-  on the WooCommerce order-pay URL. See
+  on the WooCommerce or FluentCart pay URLs. See
   [Milestone Contracts](../order-management/milestones-wpss.md#the-lock-step-rule-and-where-it-actually-holds).
 - **Tips, milestone phases and paid extensions are not escrowed.** They credit
   the vendor at payment, not at delivery. See
