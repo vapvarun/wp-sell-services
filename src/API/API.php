@@ -1223,36 +1223,31 @@ class API {
 
 		// Search vendors.
 		if ( 'all' === $type || 'vendors' === $type ) {
-			global $wpdb;
+			// Active vendors only, the same set wpss_is_vendor() answers for.
+			// Role OR the legacy meta matched neither end: it missed vendors
+			// created by role and it published suspended vendors and bare
+			// role-holders with no profile row on a public endpoint.
+			// ponytail: an id list in `include`; swap for a pre_user_query JOIN
+			// on wpss_vendor_profiles if a marketplace outgrows it.
+			$active_vendor_ids = wpss_get_active_vendor_ids();
 
-			// Match the vendor directory: role OR the legacy meta. Searching on
-			// the meta alone missed every vendor created by role — which is
-			// every vendor the wizard, the admin screen and the seeder make —
-			// so they were unfindable by name.
-			$vendors_query = new \WP_User_Query(
-				[
-					'meta_query'     => [
-						'relation' => 'OR',
-						[
-							'key'     => $wpdb->prefix . 'capabilities',
-							'value'   => '"' . \WPSellServices\Services\VendorService::ROLE . '"',
-							'compare' => 'LIKE',
-						],
-						[
-							'key'   => '_wpss_is_vendor',
-							'value' => '1',
-						],
-					],
-					'search'         => '*' . $query . '*',
-					'search_columns' => [ 'user_login', 'display_name', 'user_nicename' ],
-					'number'         => $per_page,
-					'offset'         => $offset,
-					'count_total'    => true,
-				]
-			);
+			$vendors       = [];
+			$vendors_query = $active_vendor_ids
+				? new \WP_User_Query(
+					[
+						// WP_User_Query ignores an empty include and would return
+						// every user on the site, hence the guard above.
+						'include'        => $active_vendor_ids,
+						'search'         => '*' . $query . '*',
+						'search_columns' => [ 'user_login', 'display_name', 'user_nicename' ],
+						'number'         => $per_page,
+						'offset'         => $offset,
+						'count_total'    => true,
+					]
+				)
+				: null;
 
-			$vendors = [];
-			foreach ( $vendors_query->get_results() as $user ) {
+			foreach ( $vendors_query ? $vendors_query->get_results() : [] as $user ) {
 				// Tagline lives on the canonical wpss_vendor_profiles table —
 				// the _wpss_vendor_tagline user-meta key was never written.
 				$vendor_profile = wpss_get_vendor( $user->ID );
@@ -1268,7 +1263,7 @@ class API {
 			}
 
 			$results['vendors']       = $vendors;
-			$results['vendors_total'] = (int) $vendors_query->get_total();
+			$results['vendors_total'] = $vendors_query ? (int) $vendors_query->get_total() : 0;
 		}
 
 		return new \WP_REST_Response( $results );

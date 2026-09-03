@@ -305,6 +305,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Order requirements use one schema on every surface, so requirement forms show the vendor's questions and REST submissions validate correctly.
 * Fix      - The review window filter is honoured by the API as well as the website, and review replies go through one writer.
 * Fix      - Vendor detection now requires an approved seller profile; the author role no longer receives seller capabilities.
+* Fix      - Vendor statistics refresh for every approved seller, and marketplace search returns only active vendors.
 * Fix      - A repeated payment webhook no longer resets a paid order or resends its notifications.
 * Fix      - Tax is charged on multi-item cart checkout and on PayPal checkout, matching the single-service total.
 * Fix      - Closing a dispute from the admin restores the order, a dispute cannot be resolved twice, and disputes cannot be opened on unpaid orders.

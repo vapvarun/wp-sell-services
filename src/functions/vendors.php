@@ -149,6 +149,32 @@ function wpss_is_vendor( ?int $user_id = null ): bool {
 }
 
 /**
+ * User IDs of the vendors wpss_is_vendor() answers true for.
+ *
+ * The list form of wpss_is_vendor(): an ACTIVE wpss_vendor_profiles row, the
+ * same set and the same WHERE the public directory pages. Every query that
+ * needs "all vendors" goes through here - the `_wpss_is_vendor` user meta is
+ * still written for back-compat but is never a vendor list, because the wizard,
+ * the seeder and role assignment do not write it and suspending a vendor does
+ * not remove it.
+ *
+ * @since 1.7.1
+ *
+ * @param int $limit  Page size. 0 (default) returns every active vendor.
+ * @param int $offset Rows to skip. Ordering is by user_id, so paging is stable.
+ * @return array<int> Vendor user IDs.
+ */
+function wpss_get_active_vendor_ids( int $limit = 0, int $offset = 0 ): array {
+	return ( new \WPSellServices\Database\Repositories\VendorProfileRepository() )->get_directory_user_ids(
+		array(
+			'status' => 'active',
+			'limit'  => $limit,
+			'offset' => $offset,
+		)
+	);
+}
+
+/**
  * Resolve a reviewer's display name for templates.
  *
  * Thin template-facing wrapper over Review::resolve_reviewer_name() so raw

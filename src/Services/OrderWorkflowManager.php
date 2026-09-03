@@ -1711,17 +1711,26 @@ class OrderWorkflowManager {
 	 */
 	public function update_vendor_stats(): void {
 		$vendor_service = new \WPSellServices\Services\VendorService();
-		$vendors        = get_users(
-			array(
-				'meta_key'   => '_wpss_is_vendor', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				'meta_value' => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-				'fields'     => 'ID',
-			)
-		);
+		$offset         = 0;
 
-		foreach ( $vendors as $vendor_id ) {
-			$vendor_service->update_stats( (int) $vendor_id );
-		}
+		// Every ACTIVE vendor, not the `_wpss_is_vendor` meta: the wizard, the
+		// admin screen, role assignment and the seeder all create vendors
+		// without that meta, so a meta-keyed sweep left most sellers on stale
+		// or zero order counts, completion rate and response stats forever.
+		// ponytail: pages the whole list in one run (SWEEP_BATCH ids in memory at
+		// a time) rather than one batch per tick - a stats refresh has to reach
+		// every vendor, and a per-tick batch would starve the tail. Move to a
+		// stored cursor if a run ever outgrows the cron window.
+		do {
+			$vendor_ids = wpss_get_active_vendor_ids( self::SWEEP_BATCH, $offset );
+			$page_size  = count( $vendor_ids );
+
+			foreach ( $vendor_ids as $vendor_id ) {
+				$vendor_service->update_stats( $vendor_id );
+			}
+
+			$offset += self::SWEEP_BATCH;
+		} while ( self::SWEEP_BATCH === $page_size );
 	}
 
 	/**
