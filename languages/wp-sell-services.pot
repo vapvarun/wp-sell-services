@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-03T10:28:11+00:00\n"
+"POT-Creation-Date: 2026-09-03T10:48:31+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -4547,7 +4547,7 @@ msgstr ""
 #: src/Taxonomies/ServiceCategoryTaxonomy.php:206
 #: src/Taxonomies/ServiceCategoryTaxonomy.php:272
 #: templates/dashboard/sections/portfolio.php:133
-#: templates/partials/vendor-portfolio.php:265
+#: templates/partials/vendor-portfolio.php:268
 msgid "Featured"
 msgstr ""
 
@@ -18407,7 +18407,7 @@ msgid "Showcase your best work to attract more buyers."
 msgstr ""
 
 #: templates/dashboard/sections/portfolio.php:166
-#: templates/partials/vendor-portfolio.php:298
+#: templates/partials/vendor-portfolio.php:301
 msgid "View Project"
 msgstr ""
 

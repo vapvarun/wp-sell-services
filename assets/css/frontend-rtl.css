@@ -1071,14 +1071,8 @@ article.wpss-service-card:hover {
 	text-align: center;
 }
 
-.wpss-contact-link {
-	color: var(--wpss-text);
-	font-weight: 600;
-}
-
-.wpss-contact-link:hover {
-	color: var(--wpss-primary-accent);
-}
+/* .wpss-contact-link: see single-service.css (single owner). The copy that was
+   here set a different colour and weight, and whichever loaded last won. */
 
 /* Contact Modal
    -------------------------------------------------------------------------- */

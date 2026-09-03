@@ -103,7 +103,10 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 	padding: 2px var( --wpss-space-2, 8px );
 	border-radius: var( --wpss-radius-full, 9999px );
 	background: var( --wpss-warning, #f59e0b );
-	color: var(--wpss-white, #fff);
+	/* Dark on amber, not white. White on --wpss-warning measures 2.15:1; the
+	literal black is the on-colour counterpart to --wpss-white and gives about
+	9:1 on the same background, in both modes. */
+	color: var(--wpss-black, #111827);
 	font-size: var( --wpss-text-xs, 12px );
 	font-weight: 600;
 	line-height: 1.6;

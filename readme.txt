@@ -319,6 +319,8 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - The cart page follows the theme's dark mode. Every colour on it referenced a token that did not exist, so it was locked to light.
 * Fix      - The become a vendor card and the standalone account panel no longer stay white when the theme goes dark, which had made their headings unreadable.
 * Fix      - Outline buttons take their colours from the design system again, so they follow the theme instead of a fixed grey.
+* Fix      - The Contact Seller button no longer keeps the browser's default grey, which left it unreadable when the theme is dark.
+* Fix      - The Featured badge on portfolio items uses dark text on amber so the label is legible.
 * Security - Message, contact and dispute attachments are stored privately like deliveries, dispute evidence checks ownership, and vendor payout details are encrypted at rest.
 * Security - Payment receipts are stored privately like deliveries instead of in the media library.
 * Security - Buyers and vendors can no longer refund or cancel orders outside their allowed steps; retired accept and decline actions removed.

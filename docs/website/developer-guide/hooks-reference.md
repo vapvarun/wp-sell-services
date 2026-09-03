@@ -50,7 +50,7 @@ guide; this is the complete index.
 | `wpss_after_status_change_notification` | 3 | `src/Services/OrderWorkflowManager.php:647` | Fires after status change processing. |
 | `wpss_after_tip_view` | 1 | `templates/order/tip-view.php:149` | Fires after the tip sub-order view content. |
 | `wpss_after_vendor_card` | 1 | `templates/partials/vendor-card.php:189` | Fires after the vendor card. |
-| `wpss_after_vendor_portfolio` | 1 | `templates/partials/vendor-portfolio.php:315` | Fires after the vendor portfolio grid. |
+| `wpss_after_vendor_portfolio` | 1 | `templates/partials/vendor-portfolio.php:318` | Fires after the vendor portfolio grid. |
 | `wpss_after_vendor_profile` | 1 | `templates/vendor/profile.php:690` | Hook: wpss_after_vendor_profile |
 | `wpss_analytics_init` | 1 | `src/Analytics/AnalyticsManager.php:104` **[PRO]** | Fires when analytics manager is initialized. |
 | `wpss_app_session_revoked` | 2 | `src/API/AuthController.php:416` | Fires after a single app sign-in is revoked. |

@@ -1183,10 +1183,21 @@
 	border-top: 1px solid var(--wpss-border);
 }
 
+/*
+ * This is a <button>, so it needs its chrome reset explicitly. Without the
+ * background it kept the browser's default buttonface grey, which stays light
+ * when the theme goes dark - light-grey text on a light-grey button, measured
+ * at 2.21:1 on Reign dark mode.
+ */
 .wpss-contact-link {
 	color: var(--wpss-text-muted);
 	text-decoration: none;
 	font-size: 0.875rem;
+	background: none;
+	border: 0;
+	padding: 0;
+	font-family: inherit;
+	cursor: pointer;
 }
 
 .wpss-contact-link:hover {
