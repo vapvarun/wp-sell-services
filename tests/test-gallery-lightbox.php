@@ -66,8 +66,17 @@ $check( '  the deleted block is gone from single-service.css', ! str_contains( $
 // --- the markup carries what the opener needs ------------------------------------
 $gallery = $read( 'templates/partials/service-gallery.php' );
 $check( 'thumbs carry data-src for the opener', str_contains( $gallery, 'data-src="' ) );
-$check( '  and an alt on the thumb image', str_contains( $gallery, "esc_attr( get_the_title() . ' - '" ) );
-$check( '  the main image carries an alt', str_contains( $gallery, 'class="wpss-gallery-image"' ) && str_contains( $gallery, 'alt="<?php echo esc_attr( get_the_title() ); ?>"' ) );
+/*
+ * Assert the PROPERTY, not the expression. These two lines used to pin the exact
+ * get_the_title() source they were written against, so the moment that call was
+ * replaced - with a correct one, because the theme-title suppression was blanking
+ * it - the contract failed on code that had just been fixed. A contract that
+ * breaks when the implementation improves is testing the wrong thing.
+ * test-title-suppression-scope.php asserts what the alt actually renders as.
+ */
+$check( '  and an alt on the thumb image', (bool) preg_match( '/wp_get_attachment_image_url\( \$image_id.*?alt="/s', $gallery ) );
+// No [^>] here: the attribute value is a PHP tag, so it contains '>' itself.
+$check( '  the main image carries an alt', (bool) preg_match( '/alt="[^"]*"\s*class="wpss-gallery-image"/s', $gallery ) );
 $check( 'single-service.js reads the thumb data-src', str_contains( $single_js, ".wpss-gallery-thumb[data-src]'" ) );
 $check( '  and falls back to the main image with no strip', str_contains( $single_js, "src: \$image.attr('src')" ) );
 

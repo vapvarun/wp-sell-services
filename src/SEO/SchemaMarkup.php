@@ -112,6 +112,7 @@ class SchemaMarkup {
 			'@context'    => 'https://schema.org',
 			'@type'       => array( 'Service', 'Product' ),
 			'@id'         => get_permalink( $service_id ) . '#service',
+
 			/*
 			 * Raw post_title, never get_the_title().
 			 *

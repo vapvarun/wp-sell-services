@@ -40,7 +40,7 @@ guide; this is the complete index.
 | `wpss_after_service_archive` | 0 | `templates/archive-service.php:147` | Hook: wpss_after_service_archive |
 | `wpss_after_service_card` | 1 | `templates/content-service-card.php:282` | Hook: wpss_after_service_card |
 | `wpss_after_service_faqs` | 1 | `templates/partials/service-faqs.php:67` | Fires after the service FAQs section. |
-| `wpss_after_service_gallery` | 1 | `templates/partials/service-gallery.php:176` | Fires after the service gallery. |
+| `wpss_after_service_gallery` | 1 | `templates/partials/service-gallery.php:195` | Fires after the service gallery. |
 | `wpss_after_service_loop` | 0 | `templates/archive-service.php:122` | Hook: wpss_after_service_loop |
 | `wpss_after_service_packages` | 1 | `templates/partials/service-packages.php:420` | Fires after the service packages widget. |
 | `wpss_after_service_reviews` | 1 | `templates/partials/service-reviews.php:201` | Fires after the service reviews section. |
@@ -76,7 +76,7 @@ guide; this is the complete index.
 | `wpss_before_service_card` | 1 | `templates/content-service-card.php:65` | Hook: wpss_before_service_card |
 | `wpss_before_service_deleted` | 1 | `src/Services/ServiceManager.php:324` | Fires before a service is deleted. |
 | `wpss_before_service_faqs` | 1 | `templates/partials/service-faqs.php:31` | Fires before the service FAQs section. |
-| `wpss_before_service_gallery` | 1 | `templates/partials/service-gallery.php:63` | Fires before the service gallery. |
+| `wpss_before_service_gallery` | 1 | `templates/partials/service-gallery.php:70` | Fires before the service gallery. |
 | `wpss_before_service_loop` | 0 | `templates/archive-service.php:103` | Hook: wpss_before_service_loop |
 | `wpss_before_service_packages` | 1 | `templates/partials/service-packages.php:60` | Fires before the service packages widget. |
 | `wpss_before_service_reviews` | 1 | `templates/partials/service-reviews.php:75` | Fires before the service reviews section. |
@@ -322,7 +322,7 @@ guide; this is the complete index.
 | `wpss_billing_address` | 2 | `src/functions/billing.php:660` | Filter a user's billing address after it is read. |
 | `wpss_billing_fields` | 1 | `src/functions/billing.php:58` | Filter the billing address fields. |
 | `wpss_blocks` | 1 | `src/Blocks/BlocksManager.php:96` | Filter registered blocks. |
-| `wpss_breadcrumbs` | 2 | `src/SEO/SEO.php:390` |  |
+| `wpss_breadcrumbs` | 2 | `src/SEO/SEO.php:403` |  |
 | `wpss_buyer_request_post_type_args` | 1 | `src/PostTypes/BuyerRequestPostType.php:99` | Filter buyer request post type arguments. |
 | `wpss_buyer_request_slug` | 1 | `src/PostTypes/BuyerRequestPostType.php:115` | Filter the buyer request post type slug. |
 | `wpss_can_access_dashboard_section` | 3 | `src/Frontend/UnifiedDashboard.php:444` | Filter whether user can access a dashboard section. |
@@ -332,7 +332,7 @@ guide; this is the complete index.
 | `wpss_catalog_price_html` | 3 | `src/functions/money.php:146` | Filter catalog price HTML to append a display-currency hint. |
 | `wpss_category_card_classes` | 2 | `templates/partials/category-card.php:82` | Filters the category card CSS classes. |
 | `wpss_category_card_link` | 2 | `templates/partials/category-card.php:66` | Filters the category card's link target. |
-| `wpss_category_schema` | 2 | `src/SEO/SchemaMarkup.php:288` |  |
+| `wpss_category_schema` | 2 | `src/SEO/SchemaMarkup.php:302` |  |
 | `wpss_category_terms_limit` | 1 | `src/functions/services.php:750` | Filter the maximum number of category terms a chooser will render. |
 | `wpss_checkout_badges` | 2 | `src/functions/payments.php:197` | Filter the checkout reassurance badges. |
 | `wpss_checkout_creates_accounts` | 1 | `src/functions/billing.php:826` | Filter whether checkout creates an account for a logged-out buyer. |
@@ -378,7 +378,7 @@ guide; this is the complete index.
 | `wpss_foreign_page_map` | 1 | `src/Admin/PageDropdownWalker.php:81` | Filter the pages shown as belonging to another plugin. |
 | `wpss_format_price` | 3 | `src/functions/money.php:57` |  |
 | `wpss_fullwidth_page_keys` | 1 | `src/Frontend/TemplateLoader.php:316` | Filter which mapped plugin pages render full-width. |
-| `wpss_gallery_image_size` | 2 | `templates/partials/service-gallery.php:79` | Filters the gallery image size. |
+| `wpss_gallery_image_size` | 2 | `templates/partials/service-gallery.php:86` | Filters the gallery image size. |
 | `wpss_get_template` | 3 | `src/functions/templates.php:177` | Filter the template file path. |
 | `wpss_get_template_part` | 3 | `src/functions/templates.php:126` | Filter the template file path. |
 | `wpss_is_vendor` | 2 | `src/functions/vendors.php:148` | Filter whether user is a vendor. |
@@ -387,7 +387,7 @@ guide; this is the complete index.
 | `wpss_locate_template` | 3 | `src/Frontend/TemplateLoader.php:545` |  |
 | `wpss_locked_billing_fields` | 1 | `src/functions/billing.php:171` | Filters the billing fields that cannot be disabled. |
 | `wpss_manual_order_currencies` | 1 | `src/Admin/Pages/ManualOrderPage.php:824` | Filter the currencies available on the Manual Order page dropdown. |
-| `wpss_max_order_quantity` | 2 | `src/Frontend/SingleServiceView.php:926` *(+1 more)* | Filters the maximum order quantity for a service. |
+| `wpss_max_order_quantity` | 2 | `src/Frontend/SingleServiceView.php:930` *(+1 more)* | Filters the maximum order quantity for a service. |
 | `wpss_max_upload_size` | 1 | `src/functions/misc.php:127` | Filter the max upload size for requirements files. |
 | `wpss_member_bypasses_limits` | 2 | `src/functions/vendors.php:722` | Filter whether a member is exempt from vendor selling limits. |
 | `wpss_member_display_name` | 3 | `src/functions/vendors.php:596` *(+1 more)* | This filter is documented below. |
@@ -400,7 +400,7 @@ guide; this is the complete index.
 | `wpss_notification_types` | 1 | `src/Admin/Settings.php:3850` | Filter the switchable notification types. |
 | `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php:1668` | Named offline methods. |
 | `wpss_offline_methods` | 2 | `src/Integrations/Gateways/OfflineGateway.php:331` | Filter the offline payment methods. |
-| `wpss_open_graph_data` | 2 | `src/SEO/SEO.php:260` |  |
+| `wpss_open_graph_data` | 2 | `src/SEO/SEO.php:271` |  |
 | `wpss_order_actions` | 2 | `templates/order/order-view.php:415` | Filter: wpss_order_actions |
 | `wpss_order_is_refundable` | 2 | `src/functions/money.php:328` | Filter whether an order may be refunded. |
 | `wpss_order_number_prefix` | 1 | `src/Database/Repositories/OrderRepository.php:93` *(+1 more)* | Generate a unique order number. |
@@ -409,7 +409,7 @@ guide; this is the complete index.
 | `wpss_order_status_label` | 3 | `templates/order/order-view.php:155` | Filter: wpss_order_status_label |
 | `wpss_order_status_transitions` | 3 | `src/Services/OrderService.php:710` | Filter allowed status transitions. |
 | `wpss_order_statuses` | 1 | `src/functions/orders.php:127` | Filter order statuses. |
-| `wpss_organization_schema` | 1 | `src/SEO/SchemaMarkup.php:419` |  |
+| `wpss_organization_schema` | 1 | `src/SEO/SchemaMarkup.php:433` |  |
 | `wpss_package_button_text` | 2 | `templates/partials/service-packages.php:240` | Filters the package button text. |
 | `wpss_package_id_base` | 2 | `src/functions/services.php:123` |  |
 | `wpss_package_price_html` | 3 | `templates/partials/service-packages.php:117` | Filters the package price HTML. |
@@ -419,7 +419,7 @@ guide; this is the complete index.
 | `wpss_payment_declined_message` | 3 | `src/Integrations/Stripe/StripeGateway.php:393` | Filters the message shown to a buyer whose card was declined. |
 | `wpss_payment_gateways` | 1 | `src/Core/Plugin.php:2558` *(+4 more)* | Filter the registered payment gateways. |
 | `wpss_payout_banner_state` | 4 | `templates/dashboard/sections/earnings.php:86` | Filters the payout banner state shown on the earnings section. |
-| `wpss_person_schema` | 2 | `src/SEO/SchemaMarkup.php:341` |  |
+| `wpss_person_schema` | 2 | `src/SEO/SchemaMarkup.php:355` |  |
 | `wpss_platform_name` | 1 | `src/functions/misc.php:37` | Filter the platform name. |
 | `wpss_pre_create_order` | 1 | `src/Integrations/Standalone/StandaloneOrderProvider.php:110` | Filters order data before database insertion. |
 | `wpss_pre_create_review` | 2 | `src/Services/ReviewService.php:77` | Filters review data before database insertion. |
@@ -443,7 +443,7 @@ guide; this is the complete index.
 | `wpss_rail_status_map` | 2 | `src/functions/orders.php:1512` | Filters the rail status map. |
 | `wpss_rate_limits` | 2 | `src/Core/RateLimiter.php:267` | Filter rate limits for a specific action. |
 | `wpss_realtime_settings` | 1 | `src/Services/RealtimeService.php:65` | Filter the realtime (Pusher-protocol) connection settings. |
-| `wpss_related_services_args` | 2 | `src/Frontend/SingleServiceView.php:813` | Filter related services query args. |
+| `wpss_related_services_args` | 2 | `src/Frontend/SingleServiceView.php:817` | Filter related services query args. |
 | `wpss_report_reasons` | 1 | `src/functions/moderation.php:61` | Filter the report reasons offered to members. |
 | `wpss_report_target_types` | 1 | `src/functions/moderation.php:139` | Filter what members may report. |
 | `wpss_request_card_classes` | 2 | `templates/content-request-card.php:43` |  |
@@ -469,7 +469,7 @@ guide; this is the complete index.
 | `wpss_service_card_thumbnail_size` | 2 | `templates/content-service-card.php:73` | Hook: wpss_before_service_card |
 | `wpss_service_category_taxonomy_args` | 1 | `src/Taxonomies/ServiceCategoryTaxonomy.php:118` | Filter service category taxonomy arguments. |
 | `wpss_service_limit_error_message` | 1 | `src/Frontend/ServiceWizard.php:231` *(+3 more)* | Filter the error message shown when a vendor cannot create more services. |
-| `wpss_service_list_schema` | 1 | `src/SEO/SchemaMarkup.php:229` |  |
+| `wpss_service_list_schema` | 1 | `src/SEO/SchemaMarkup.php:243` |  |
 | `wpss_service_max_extras` | 1 | `src/functions/services.php:984` | Max service extras (add-ons). |
 | `wpss_service_max_faq` | 1 | `src/functions/services.php:994` | Max FAQs. |
 | `wpss_service_max_gallery` | 1 | `src/functions/services.php:964` | Max gallery images (additional, not including main). |
@@ -479,11 +479,11 @@ guide; this is the complete index.
 | `wpss_service_meta_fields` | 2 | `src/Admin/Metaboxes/ServiceMetabox.php:246` | Filter additional service meta fields rendered in the metabox. |
 | `wpss_service_order_slug` | 1 | `src/Core/Plugin.php:612` *(+3 more)* | Filter the service order URL slug. |
 | `wpss_service_post_type_args` | 1 | `src/PostTypes/ServicePostType.php:243` | Filter service post type arguments. |
-| `wpss_service_schema` | 2 | `src/SEO/SchemaMarkup.php:191` |  |
+| `wpss_service_schema` | 2 | `src/SEO/SchemaMarkup.php:203` |  |
 | `wpss_service_slug` | 1 | `src/PostTypes/ServicePostType.php:321` | Filter the service post type slug. |
 | `wpss_service_tag_args` | 1 | `src/PostTypes/ServicePostType.php:305` | Filter service tag taxonomy arguments. |
 | `wpss_service_tag_taxonomy_args` | 1 | `src/Taxonomies/ServiceTagTaxonomy.php:103` | Filter service tag taxonomy arguments. |
-| `wpss_services_per_page` | 1 | `src/Frontend/ServiceArchiveView.php:651` *(+1 more)* |  |
+| `wpss_services_per_page` | 1 | `src/Frontend/ServiceArchiveView.php:657` *(+1 more)* |  |
 | `wpss_settings_currencies` | 1 | `src/Admin/Settings.php:3812` | Filter the currencies available in the Settings currency dropdown. |
 | `wpss_settings_sections` | 1 | `src/functions/urls.php:986` | Filter the known admin settings sections. |
 | `wpss_settings_tabs` | 1 | `src/Admin/Settings.php:227` | Filter the settings tabs. |
@@ -491,7 +491,7 @@ guide; this is the complete index.
 | `wpss_show_powered_by` | 1 | `src/Frontend/UnifiedDashboard.php:785` | Filters whether the "Powered by WP Sell Services" footer credit is rendered on the frontend dashboard. |
 | `wpss_single_request_layout` | 2 | `templates/single-request.php:126` | Filter: wpss_single_request_layout |
 | `wpss_single_service_layout` | 2 | `templates/single-service.php:95` | Filter: wpss_single_service_layout |
-| `wpss_sitemap_post_types` | 1 | `src/SEO/SEO.php:324` | Add service post type to sitemap. |
+| `wpss_sitemap_post_types` | 1 | `src/SEO/SEO.php:335` | Add service post type to sitemap. |
 | `wpss_skip_message_email_when_online` | 3 | `src/functions/notifications.php:210` | Filters whether a message email is skipped for an online recipient. |
 | `wpss_status_class` | 2 | `src/functions/templates.php:52` | Filter the CSS classes for a status badge. |
 | `wpss_sticky_top_offset` | 1 | `src/Frontend/Frontend.php:260` | Extra pixels to add above every sticky WPSS surface. |
@@ -514,7 +514,7 @@ guide; this is the complete index.
 | `wpss_vendor_benefit_listings_copy` | 2 | `templates/partials/vendor-benefits.php:37` | Filter the service-count promise on the Become a Vendor page. |
 | `wpss_vendor_can_create_service` | 2 | `src/Frontend/ServiceWizard.php:219` *(+4 more)* |  |
 | `wpss_vendor_is_on_vacation` | 2 | `src/Models/VendorProfile.php:519` | Check if vendor is on vacation. |
-| `wpss_vendor_page_schema` | 2 | `src/SEO/SchemaMarkup.php:388` |  |
+| `wpss_vendor_page_schema` | 2 | `src/SEO/SchemaMarkup.php:402` |  |
 | `wpss_vendor_pending_email_content` | 3 | `src/Services/NotificationService.php:1577` | Filter vendor pending review email content. |
 | `wpss_vendor_pitch_stats` | 1 | `src/functions/vendors.php:824` | Filter the proof points on the Become a Vendor page. |
 | `wpss_vendor_pitch_steps` | 1 | `src/Frontend/Shortcodes.php:1364` | Filter the "how it works" steps on the vendor registration page. |

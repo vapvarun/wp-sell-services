@@ -233,6 +233,7 @@ class SEO {
 
 		$data = [
 			'og:type'        => 'product',
+
 			/*
 			 * Raw post_title, never get_the_title().
 			 *
