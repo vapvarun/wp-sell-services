@@ -273,6 +273,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * New      - Vendors get Proposals and Reviews sections in the dashboard, with review replies and declined-proposal status.
 * New      - Notifications for review replies, expired requests, dispute escalation and cancellation, withdrawal progress, service moderation decisions and tip receipts, each with an admin toggle.
 * New      - Setting to allow vendor-initiated refunds, off by default.
+* Improve  - Upgrading preserves access for people who were already selling, including author-role sellers, and tells the owner who was migrated.
 * Improve  - The audit log now records withdrawals, dispute outcomes, vendor status changes, commission changes, moderation decisions, payments and every ledger entry; retention defaults to one year.
 * Improve  - Dispute pages show the outcome, refund amount and admin note to both parties; the link after posting a request opens the request list.
 * Improve  - The dashboard menu collapses on small screens so content comes first, and the vendor sales list can be filtered by status and searched.

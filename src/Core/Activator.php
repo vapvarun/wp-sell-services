@@ -26,6 +26,26 @@ use WPSellServices\Services\Scheduler;
 class Activator {
 
 	/**
+	 * User meta marking a seller whose access the 1.7.1 upgrade preserved.
+	 *
+	 * Written by {@see self::migrate_existing_sellers()}, read by the Vendors
+	 * screen's "Migrated" filter so the owner can review exactly that set.
+	 *
+	 * @since 1.7.1
+	 * @var string
+	 */
+	public const MIGRATED_SELLER_META = '_wpss_migrated_seller';
+
+	/**
+	 * How many sellers that migration preserved. 0 / absent on every site
+	 * where it found nobody, which is every fresh install.
+	 *
+	 * @since 1.7.1
+	 * @var string
+	 */
+	public const MIGRATED_SELLERS_OPTION = 'wpss_migrated_sellers';
+
+	/**
 	 * Run activation tasks (called from register_activation_hook).
 	 *
 	 * @return void
@@ -199,6 +219,124 @@ class Activator {
 			$user->remove_cap( 'edit_posts' );
 			$user->add_cap( 'wpss_vendor_orders' );
 		}
+	}
+
+	/**
+	 * One-time 1.7.1 upgrade: keep the people who were already selling.
+	 *
+	 * 1.7.1 made an ACTIVE wpss_vendor_profiles row the definition of a vendor
+	 * ({@see wpss_is_vendor()}) and took the seller capabilities off the author
+	 * role. Both are right for a new site and wrong for a live one: up to
+	 * 1.7.0 an author, a wpss_vendor role holder and anyone carrying the legacy
+	 * _wpss_is_vendor meta could all sell, and a missing profile row read as
+	 * active. Upgrading without this would lock every one of them out - people
+	 * with live orders included - until an admin approved each by hand, and
+	 * the owner would hear about it from their sellers rather than from us.
+	 *
+	 * So: whoever HELD that access and ACTUALLY sold with it gets the profile
+	 * row they were missing, at the status they effectively had. Selling is
+	 * evidence, not intent - a service on the site, an order taken, a proposal
+	 * sent. An author with none of the three is the case 1.7.1 exists to close
+	 * and is left alone.
+	 *
+	 * Anyone who already has a profile row is skipped whatever its status:
+	 * pending, suspended and rejected are the owner's own decisions and blocked
+	 * those users before this release too. That is also what makes a second run
+	 * a no-op and stops a since-suspended vendor coming back.
+	 *
+	 * Deliberately does NOT call VendorService::grant_vendor_access(): that
+	 * mails "your vendor application is approved" to people who never applied,
+	 * and fires the hook Pro uses to hand out a subscription plan. This
+	 * preserves access; it does not approve anyone and grants nothing new.
+	 *
+	 * ponytail: one table scan per site on upgrade; batch by user_id if a
+	 * marketplace with millions of orders times out.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return int Number of sellers migrated.
+	 */
+	public static function migrate_existing_sellers(): int {
+		global $wpdb;
+
+		$profiles  = $wpdb->prefix . 'wpss_vendor_profiles';
+		$orders    = $wpdb->prefix . 'wpss_orders';
+		$proposals = $wpdb->prefix . 'wpss_proposals';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- one-time upgrade scan; table names only, no user input.
+		$candidates = $wpdb->get_col(
+			"SELECT DISTINCT sellers.user_id FROM (
+				SELECT post_author AS user_id FROM {$wpdb->posts}
+					WHERE post_type = 'wpss_service' AND post_status IN ('publish', 'pending')
+				UNION SELECT vendor_id FROM {$orders}
+				UNION SELECT vendor_id FROM {$proposals}
+			) sellers
+			LEFT JOIN {$profiles} vp ON vp.user_id = sellers.user_id
+			WHERE sellers.user_id > 0 AND vp.id IS NULL"
+		);
+
+		$repo     = new \WPSellServices\Database\Repositories\VendorProfileRepository();
+		$audit    = new \WPSellServices\Services\AuditLogService();
+		$migrated = 0;
+
+		foreach ( $candidates as $candidate_id ) {
+			$user = get_userdata( (int) $candidate_id );
+
+			// Administrators are never blocked by the vendor gate, so they have
+			// nothing to preserve.
+			if ( ! $user instanceof \WP_User || $user->has_cap( 'manage_options' ) ) {
+				continue;
+			}
+
+			// Did they hold seller access before this upgrade? create_roles()
+			// has already stripped the author role by the time this runs, so
+			// that one is recognised by name; has_cap() still answers for the
+			// vendor role, a custom role and per-user grants.
+			$had_access = $user->has_cap( 'wpss_vendor' )
+				|| in_array( 'author', (array) $user->roles, true )
+				|| (bool) get_user_meta( $user->ID, '_wpss_is_vendor', true );
+
+			if ( ! $had_access ) {
+				continue;
+			}
+
+			$created = $repo->upsert(
+				$user->ID,
+				array(
+					'display_name' => $user->display_name,
+					'status'       => 'active',
+				)
+			);
+
+			if ( false === $created ) {
+				continue;
+			}
+
+			$user->add_role( \WPSellServices\Services\VendorService::ROLE );
+			update_user_meta( $user->ID, '_wpss_is_vendor', true );
+			update_user_meta( $user->ID, self::MIGRATED_SELLER_META, 1 );
+
+			$audit->log(
+				'vendor.migrated',
+				'vendor',
+				$user->ID,
+				array(
+					'action'   => 'migrated',
+					'to_value' => 'active',
+				)
+			);
+
+			++$migrated;
+		}
+
+		// Only ever written when someone was migrated, so a later re-run that
+		// finds nobody cannot wipe the number the owner was told.
+		if ( $migrated > 0 ) {
+			update_option( self::MIGRATED_SELLERS_OPTION, $migrated, false );
+			wpss_log( sprintf( 'Preserved seller access for %d existing seller(s) on the 1.7.1 upgrade.', $migrated ) );
+		}
+
+		return $migrated;
 	}
 
 	/**

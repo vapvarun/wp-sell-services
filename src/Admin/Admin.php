@@ -414,6 +414,7 @@ class Admin {
 		add_action( 'admin_notices', array( $this, 'order_files_public_notice' ) );
 		add_action( 'admin_notices', array( $this, 'missing_terms_notice' ) );
 		add_action( 'admin_notices', array( $this, 'pending_manual_refunds_notice' ) );
+		add_action( 'admin_notices', array( $this, 'migrated_sellers_notice' ) );
 		add_action( 'wp_ajax_wpss_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
 		add_action( 'admin_post_wpss_mark_refund_sent', array( $this, 'handle_mark_refund_sent' ) );
@@ -648,6 +649,67 @@ class Admin {
 	}
 
 	/**
+	 * Tell the owner which of their sellers this update kept selling.
+	 *
+	 * 1.7.1 made an approved vendor profile the requirement for selling, and
+	 * {@see \WPSellServices\Core\Activator::migrate_existing_sellers()} gave a
+	 * profile to everyone who was already selling without one. That is a change
+	 * to accounts the owner did not make, so it is reported rather than done
+	 * quietly, with the filtered list to check it against.
+	 *
+	 * Dismissible against the count, which never changes again after the
+	 * one-time migration - so dismissing it once dismisses it for good.
+	 *
+	 * @since 1.7.1
+	 * @return void
+	 */
+	public function migrated_sellers_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Our own screens only, like every other notice here.
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+			return;
+		}
+
+		$count = (int) get_option( \WPSellServices\Core\Activator::MIGRATED_SELLERS_OPTION, 0 );
+
+		if ( $count < 1 ) {
+			return;
+		}
+
+		$signature = (string) $count;
+
+		if ( get_user_meta( get_current_user_id(), '_wpss_sellers_notice_dismissed', true ) === $signature ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-info is-dismissible wpss-dismissible-notice" data-notice="sellers" data-signature="%s" data-nonce="%s"><p><strong>%s</strong> %s</p><p><a class="button" href="%s">%s</a></p></div>',
+			esc_attr( $signature ),
+			esc_attr( wp_create_nonce( 'wpss_dismiss_notice' ) ),
+			esc_html(
+				sprintf(
+					/* translators: %s: number of sellers. */
+					_n(
+						'%s seller kept their selling access in this update.',
+						'%s sellers kept their selling access in this update.',
+						$count,
+						'wp-sell-services'
+					),
+					number_format_i18n( $count )
+				)
+			),
+			esc_html__( 'This update made an approved vendor profile the requirement for selling. These people were already selling before it - they have a service, an order or a proposal - so their access was preserved and nothing changed for their buyers. Nobody else was given access.', 'wp-sell-services' ),
+			esc_url( admin_url( 'admin.php?page=wpss-vendors&status=migrated' ) ),
+			esc_html__( 'Review these sellers', 'wp-sell-services' )
+		);
+	}
+
+	/**
 	 * Identify the currently live gateway set.
 	 *
 	 * Used so a dismissal applies to the configuration it was made against.
@@ -693,8 +755,9 @@ class Admin {
 		}
 
 		$allowed = array(
-			'terms' => '_wpss_terms_notice_dismissed',
-			'pages' => '_wpss_pages_notice_dismissed',
+			'terms'   => '_wpss_terms_notice_dismissed',
+			'pages'   => '_wpss_pages_notice_dismissed',
+			'sellers' => '_wpss_sellers_notice_dismissed',
 		);
 		$notice  = isset( $_POST['notice'] ) ? sanitize_key( wp_unslash( $_POST['notice'] ) ) : '';
 

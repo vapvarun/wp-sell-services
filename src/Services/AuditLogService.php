@@ -71,6 +71,7 @@ class AuditLogService {
 		'vendor.rejected',
 		'vendor.suspended',
 		'vendor.pending',
+		'vendor.migrated',
 		'commission.rate_changed',
 		'service.approved',
 		'service.rejected',
