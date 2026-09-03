@@ -531,7 +531,13 @@ class ServiceArchiveView {
 		if ( wpss_is_page( 'services_page' ) ) {
 			$page_id = wpss_get_page_id( 'services_page' );
 			if ( $page_id ) {
-				$page_title = get_the_title( $page_id );
+				/*
+				 * Raw title. On the mapped services page THIS id is the queried
+				 * object, so get_the_title() came back blank, the check below
+				 * failed, and the owner's own page name was replaced by the
+				 * generic "All Services" fallback.
+				 */
+				$page_title = (string) get_post_field( 'post_title', $page_id );
 				if ( $page_title ) {
 					return $page_title;
 				}

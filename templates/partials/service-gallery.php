@@ -46,7 +46,14 @@ if ( empty( $gallery_ids ) ) {
 	return;
 }
 
-$gallery_ids = array_unique( array_filter( $gallery_ids ) );
+/*
+ * array_values() matters: array_unique() and array_filter() PRESERVE keys, so a
+ * vendor whose featured image also sits in the gallery got keys 0, 2, 3 for a
+ * three-image strip. That leaked into the "Title - 4" alt text of a third
+ * thumbnail and into data-index, and it would break the first-thumbnail
+ * `0 === $index` active state the moment key 0 were the duplicate one.
+ */
+$gallery_ids = array_values( array_unique( array_filter( $gallery_ids ) ) );
 
 // Exit if no valid images after filtering.
 if ( empty( $gallery_ids ) ) {
@@ -87,8 +94,20 @@ do_action( 'wpss_before_service_gallery', $service_id );
 			 * 10208068212).
 			 */
 			?>
+			<?php
+			/*
+			 * Raw post_title, never get_the_title().
+			 *
+			 * ShellHeader::maybe_suppress_theme_title() blanks `the_title` for
+			 * the queried object on every plugin-shell surface so the theme
+			 * stops printing a duplicate H1, and a single service page IS one.
+			 * It cannot tell who is asking, so this alt shipped as alt="" and
+			 * the thumbnails below as alt=" - 1".
+			 */
+			$service_title = (string) get_post_field( 'post_title', $service_id );
+			?>
 			<img src="<?php echo esc_url( wp_get_attachment_image_url( $first_image, $image_size ) ); ?>"
-				alt="<?php echo esc_attr( get_the_title() ); ?>"
+				alt="<?php echo esc_attr( $service_title ); ?>"
 				class="wpss-gallery-image">
 
 			<?php if ( '' !== $video_url ) : ?>
@@ -158,7 +177,7 @@ do_action( 'wpss_before_service_gallery', $service_id );
 						data-index="<?php echo esc_attr( $index ); ?>"
 						data-src="<?php echo esc_url( wp_get_attachment_image_url( $image_id, $image_size ) ); ?>">
 					<img src="<?php echo esc_url( wp_get_attachment_image_url( $image_id, 'thumbnail' ) ); ?>"
-						alt="<?php echo esc_attr( get_the_title() . ' - ' . ( $index + 1 ) ); ?>">
+						alt="<?php echo esc_attr( $service_title . ' - ' . ( $index + 1 ) ); ?>">
 				</button>
 			<?php endforeach; ?>
 		</div>

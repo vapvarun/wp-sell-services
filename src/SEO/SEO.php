@@ -233,7 +233,17 @@ class SEO {
 
 		$data = [
 			'og:type'        => 'product',
-			'og:title'       => get_the_title( $service_id ),
+			/*
+			 * Raw post_title, never get_the_title().
+			 *
+			 * ShellHeader::maybe_suppress_theme_title() blanks `the_title` for
+			 * the queried object on a single-service page, and it cannot tell
+			 * the theme's H1 apart from the plugin's own reads. This came back
+			 * empty, the empty value was dropped before output, and so every
+			 * service page shipped with NO og:title and no twitter:title -
+			 * every share on Facebook, LinkedIn, Slack or WhatsApp was untitled.
+			 */
+			'og:title'       => (string) get_post_field( 'post_title', $service_id ),
 			'og:description' => $description,
 			'og:url'         => get_permalink( $service_id ),
 			'og:site_name'   => get_bloginfo( 'name' ),
