@@ -225,7 +225,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 |--------|-----------|------|
 | `wpss_pre_vendor_register` | `array $profile_data, int $user_id` | `VendorService.php` |
 | `wpss_vendor_profile_allowed_fields` | `array $allowed_fields` | `VendorService.php` |
-| `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:797` |
+| `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:823` |
 | `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1363` |
 
 | Hook | Parameters | File |
@@ -757,8 +757,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:925` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:183` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:647` |
-| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1290` |
-| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1363` |
+| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1285` |
+| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1358` |
 | `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:226` |
 | `wpss_blocks` | `$blocks` | `src/Blocks/BlocksManager.php:95` |
 | `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:266` |
@@ -770,7 +770,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_realtime_settings` | `array $settings` | `RealtimeService.php` |
 | `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:503` |
 | `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/API/ReviewsController.php:426` |
-| `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:615` |
+| `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:611` |
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:112` |
 | `wpss_delivery_allowed_file_types` | `$types` | `src/Services/DeliveryService.php:346` |
 | `wpss_requirements_allowed_file_types` | `$types` | `src/Services/RequirementsService.php:502` |

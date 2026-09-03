@@ -96,7 +96,7 @@ guide; this is the complete index.
 | `wpss_commission_recorded` | 3 | `src/Services/CommissionService.php:290` *(+3 more)* | Fires when commission is recorded for an order. |
 | `wpss_conversation_form` | 1 | `templates/order/conversation.php:293` | Hook: wpss_conversation_form |
 | `wpss_conversation_header` | 1 | `templates/order/conversation.php:176` | Hook: wpss_conversation_header |
-| `wpss_cron_daily` | 0 | `src/Core/Plugin.php:2930` |  |
+| `wpss_cron_daily` | 0 | `src/Core/Plugin.php:2919` |  |
 | `wpss_dashboard_header` | 0 | `src/Frontend/UnifiedDashboard.php:719` *(+1 more)* | Fires at the start of the unified dashboard header. |
 | `wpss_dashboard_section_after` | 2 | `templates/dashboard/sections/create-request.php:258` *(+13 more)* | Fires after the create request dashboard section content. |
 | `wpss_dashboard_section_before` | 2 | `templates/dashboard/sections/create-request.php:25` *(+15 more)* | Fires before the create request dashboard section content. |
@@ -302,9 +302,9 @@ guide; this is the complete index.
 | `wpss_admin_vendor_notification_content` | 2 | `src/Services/NotificationService.php:1630` | Filter admin vendor notification email content. |
 | `wpss_after_become_vendor_redirect` | 2 | `src/Frontend/UnifiedDashboard.php:1142` | Filter the redirect URL after a vendor successfully registers. |
 | `wpss_allow_late_requirements_submission` | 1 | `src/functions/orders.php:652` *(+1 more)* | Filter whether late requirements submission is allowed. |
-| `wpss_analytics_widgets` | 1 | `src/Core/Plugin.php:2624` *(+1 more)* | Filter the registered analytics widgets. |
+| `wpss_analytics_widgets` | 1 | `src/Core/Plugin.php:2613` *(+1 more)* | Filter the registered analytics widgets. |
 | `wpss_api_controllers` | 1 | `src/API/API.php:184` | Filter registered API controllers. |
-| `wpss_api_cors_origins` | 0 | `src/API/API.php:1364` | Filter allowed CORS origins. |
+| `wpss_api_cors_origins` | 0 | `src/API/API.php:1359` | Filter allowed CORS origins. |
 | `wpss_api_public_settings` | 1 | `src/API/API.php:647` | Filter public API settings. |
 | `wpss_app_abuse_contact` | 1 | `src/API/API.php:787` |  |
 | `wpss_app_branding` | 1 | `src/API/API.php:772` | Public subset only. Pro's white label supplies the real values. |
@@ -317,7 +317,7 @@ guide; this is the complete index.
 | `wpss_auth_login_challenge` | 3 | `src/API/AuthController.php:537` | Filter a successful password check before a token is issued. |
 | `wpss_auto_approve_reviews` | 1 | `src/API/ReviewsController.php:427` |  |
 | `wpss_auto_approve_vendors` | 1 | `src/Services/VendorService.php:112` | Filter whether new vendors are auto-approved. |
-| `wpss_batch_max_requests` | 1 | `src/API/API.php:1291` | Handle batch requests for mobile efficiency. |
+| `wpss_batch_max_requests` | 1 | `src/API/API.php:1286` | Handle batch requests for mobile efficiency. |
 | `wpss_billing_address` | 2 | `src/functions/billing.php:660` | Filter a user's billing address after it is read. |
 | `wpss_billing_fields` | 1 | `src/functions/billing.php:58` | Filter the billing address fields. |
 | `wpss_blocks` | 1 | `src/Blocks/BlocksManager.php:96` | Filter registered blocks. |
@@ -370,7 +370,7 @@ guide; this is the complete index.
 | `wpss_email_from_name` | 1 | `src/Services/EmailService.php:2048` *(+1 more)* | Filter the email "from" name for white-labelling. |
 | `wpss_email_header_vars` | 2 | `src/Services/EmailService.php:2032` | Filter email header/template variables for white-labelling. |
 | `wpss_email_preference_categories` | 3 | `src/functions/notifications.php:120` | Filters the email preference categories offered to a user. |
-| `wpss_email_providers` | 1 | `src/Core/Plugin.php:2612` | Filter the registered email providers. |
+| `wpss_email_providers` | 1 | `src/Core/Plugin.php:2601` | Filter the registered email providers. |
 | `wpss_email_subject` | 3 | `src/Services/EmailService.php:2017` *(+1 more)* | Filters the email subject line before sending. |
 | `wpss_ensure_pay_order` | 2 | `src/functions/urls.php:915` | Filter the pay URL after the rail has made sure its store order exists. |
 | `wpss_foreign_page_map` | 1 | `src/Admin/PageDropdownWalker.php:81` | Filter the pages shown as belonging to another plugin. |
@@ -387,8 +387,8 @@ guide; this is the complete index.
 | `wpss_manual_order_currencies` | 1 | `src/Admin/Pages/ManualOrderPage.php:824` | Filter the currencies available on the Manual Order page dropdown. |
 | `wpss_max_order_quantity` | 2 | `src/Frontend/SingleServiceView.php:926` *(+1 more)* | Filters the maximum order quantity for a service. |
 | `wpss_max_upload_size` | 1 | `src/functions/misc.php:127` | Filter the max upload size for requirements files. |
-| `wpss_member_bypasses_limits` | 2 | `src/functions/vendors.php:696` | Filter whether a member is exempt from vendor selling limits. |
-| `wpss_member_display_name` | 3 | `src/functions/vendors.php:570` *(+1 more)* | This filter is documented below. |
+| `wpss_member_bypasses_limits` | 2 | `src/functions/vendors.php:722` | Filter whether a member is exempt from vendor selling limits. |
+| `wpss_member_display_name` | 3 | `src/functions/vendors.php:596` *(+1 more)* | This filter is documented below. |
 | `wpss_message_email_delay_minutes` | 1 | `src/Services/EmailService.php:1219` | Filter the message-email delay. |
 | `wpss_messages_per_page` | 2 | `templates/dashboard/sections/messages.php:38` | Filter how many conversations one page of the messages list shows. |
 | `wpss_min_service_price` | 1 | `src/Frontend/ServiceWizard.php:1387` *(+2 more)* |  |
@@ -415,7 +415,7 @@ guide; this is the complete index.
 | `wpss_pay_order_url_lookup` | 3 | `src/functions/urls.php:878` | Filter the pay URL with one the rail already knows. |
 | `wpss_payment_action_required_message` | 3 | `src/Integrations/Stripe/StripeGateway.php:416` | Filters the message shown when a payment still needs a buyer step (typically 3D Secure authentication). |
 | `wpss_payment_declined_message` | 3 | `src/Integrations/Stripe/StripeGateway.php:393` | Filters the message shown to a buyer whose card was declined. |
-| `wpss_payment_gateways` | 1 | `src/Core/Plugin.php:2569` *(+4 more)* | Filter the registered payment gateways. |
+| `wpss_payment_gateways` | 1 | `src/Core/Plugin.php:2558` *(+4 more)* | Filter the registered payment gateways. |
 | `wpss_payout_banner_state` | 4 | `templates/dashboard/sections/earnings.php:86` | Filters the payout banner state shown on the earnings section. |
 | `wpss_person_schema` | 2 | `src/SEO/SchemaMarkup.php:341` |  |
 | `wpss_platform_name` | 1 | `src/functions/misc.php:37` | Filter the platform name. |
@@ -454,7 +454,7 @@ guide; this is the complete index.
 | `wpss_rest_order_data` | 3 | `src/API/OrdersController.php:1960` | Filters the order data returned in REST API responses. |
 | `wpss_rest_review_data` | 3 | `src/API/ReviewsController.php:1070` | Filters the review data returned in REST API responses. |
 | `wpss_rest_service_data` | 3 | `src/API/ServicesController.php:1194` | Filter service REST response data. |
-| `wpss_rest_vendor_data` | 3 | `src/API/VendorsController.php:917` | Filters the vendor data returned in REST API responses. |
+| `wpss_rest_vendor_data` | 3 | `src/API/VendorsController.php:913` | Filters the vendor data returned in REST API responses. |
 | `wpss_review_window_days` | 1 | `src/Services/ReviewService.php:504` | Filter the review time window in days. |
 | `wpss_reviews_per_page` | 2 | `templates/partials/service-reviews.php:54` | Filters the number of reviews to display per page. |
 | `wpss_search_categories_limit` | 1 | `src/Blocks/ServiceSearch.php:180` |  |
@@ -492,7 +492,7 @@ guide; this is the complete index.
 | `wpss_skip_message_email_when_online` | 3 | `src/functions/notifications.php:210` | Filters whether a message email is skipped for an online recipient. |
 | `wpss_status_class` | 2 | `src/functions/templates.php:52` | Filter the CSS classes for a status badge. |
 | `wpss_sticky_top_offset` | 1 | `src/Frontend/Frontend.php:260` | Extra pixels to add above every sticky WPSS surface. |
-| `wpss_storage_providers` | 1 | `src/Core/Plugin.php:2600` *(+3 more)* | Filter the registered storage providers. |
+| `wpss_storage_providers` | 1 | `src/Core/Plugin.php:2589` *(+3 more)* | Filter the registered storage providers. |
 | `wpss_stripe_customer_shipping` | 2 | `src/Integrations/Stripe/StripeGateway.php:222` | Filter the buyer shipping details sent to Stripe. |
 | `wpss_stripe_payment_description` | 3 | `src/Integrations/Stripe/StripeGateway.php:263` | Filter the Stripe PaymentIntent description. |
 | `wpss_stripe_payment_intent_args` | 3 | `src/Integrations/Stripe/StripeGateway.php:303` | Filter Stripe PaymentIntent parameters before creation. |
@@ -513,19 +513,19 @@ guide; this is the complete index.
 | `wpss_vendor_is_on_vacation` | 2 | `src/Models/VendorProfile.php:519` | Check if vendor is on vacation. |
 | `wpss_vendor_page_schema` | 2 | `src/SEO/SchemaMarkup.php:388` |  |
 | `wpss_vendor_pending_email_content` | 3 | `src/Services/NotificationService.php:1577` | Filter vendor pending review email content. |
-| `wpss_vendor_pitch_stats` | 1 | `src/functions/vendors.php:798` | Filter the proof points on the Become a Vendor page. |
+| `wpss_vendor_pitch_stats` | 1 | `src/functions/vendors.php:824` | Filter the proof points on the Become a Vendor page. |
 | `wpss_vendor_pitch_steps` | 1 | `src/Frontend/Shortcodes.php:1364` | Filter the "how it works" steps on the vendor registration page. |
 | `wpss_vendor_profile_allowed_fields` | 1 | `src/Services/VendorService.php:541` | Filter the list of allowed vendor profile fields for update. |
 | `wpss_vendor_profile_fields` | 2 | `templates/vendor/profile.php:548` | Filter additional vendor profile fields. |
-| `wpss_vendor_registration_open` | 1 | `src/API/VendorsController.php:616` |  |
+| `wpss_vendor_registration_open` | 1 | `src/API/VendorsController.php:612` |  |
 | `wpss_vendor_slug` | 1 | `src/Core/Plugin.php:604` *(+1 more)* | Filter the vendor profile URL slug. |
 | `wpss_vendor_status_email_vars` | 3 | `src/Services/VendorService.php:851` | Filters the template variables for a vendor status-change email. |
 | `wpss_vendor_welcome_email_content` | 3 | `src/Services/NotificationService.php:1528` | Filter vendor welcome email content. |
-| `wpss_vendors_page_id` | 1 | `src/functions/vendors.php:231` | Filter the resolved vendor-directory page ID. |
-| `wpss_vendors_url` | 2 | `src/functions/vendors.php:303` | Filter the vendor-directory URL. |
+| `wpss_vendors_page_id` | 1 | `src/functions/vendors.php:257` | Filter the resolved vendor-directory page ID. |
+| `wpss_vendors_url` | 2 | `src/functions/vendors.php:329` | Filter the vendor-directory URL. |
 | `wpss_video_thumbnail_cache_ttl` | 2 | `src/functions/services.php:920` | Filter how long a video's poster URL is cached. |
 | `wpss_wallet_manager` | 1 | `src/functions/money.php:1736` | Filter the wallet manager instance. |
-| `wpss_wallet_providers` | 1 | `src/Core/Plugin.php:2588` *(+2 more)* | Filter the registered wallet providers. |
+| `wpss_wallet_providers` | 1 | `src/Core/Plugin.php:2577` *(+2 more)* | Filter the registered wallet providers. |
 | `wpss_web_login_lock` | 1 | `src/Core/Plugin.php:2007` | Filter whether the website sign-in form honours the lockout. |
 | `wpss_withdrawal_methods` | 1 | `src/API/EarningsController.php:650` *(+1 more)* | Filter available withdrawal methods. |
 | `wpss_wizard_sanitize_service_data` | 2 | `src/Frontend/ServiceWizard.php:1855` | Filter the sanitized wizard payload. |
