@@ -3272,9 +3272,26 @@ class Settings {
 		);
 
 		foreach ( $registered as $id => $adapter ) {
-			$name                    = $adapter->get_name();
-			$is_active               = $adapter->is_active();
-			$status                  = $is_active ? __( 'Available', 'wp-sell-services' ) : __( 'Not Installed', 'wp-sell-services' );
+			$name      = $adapter->get_name();
+			$is_active = $adapter->is_active();
+			$status    = $is_active ? __( 'Available', 'wp-sell-services' ) : __( 'Not Installed', 'wp-sell-services' );
+
+			/**
+			 * Filter the status word shown beside one platform.
+			 *
+			 * "Available" only means the platform's plugin is installed. A rail
+			 * that is installed but cannot yet take a purchase has to say so
+			 * here, or the owner reads it as working. Pro uses this for its beta
+			 * rails.
+			 *
+			 * @since 1.7.1
+			 *
+			 * @param string $status    Status word, plain text.
+			 * @param string $id        Adapter id.
+			 * @param bool   $is_active Whether the platform's plugin is active.
+			 */
+			$status = (string) apply_filters( 'wpss_ecommerce_platform_status', $status, $id, $is_active );
+
 			$platform_options[ $id ] = sprintf( '%s (%s)', $name, $status );
 		}
 

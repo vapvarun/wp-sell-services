@@ -2180,11 +2180,9 @@ class AjaxHandlers {
 
 		$checkout_url = '';
 		if ( $service_id && 'publish' === get_post_status( $service_id ) ) {
-			$checkout_url = wpss_get_service_checkout_url( $service_id, $package_id, $addons );
-
-			if ( $checkout_url && $quantity > 1 ) {
-				$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
-			}
+			// Exits with the honest refusal when the rail cannot check out, so
+			// the guest is told now rather than after a round trip to log in.
+			$checkout_url = $this->require_checkout_url( $service_id, $package_id, $addons, $quantity );
 		}
 
 		if ( $checkout_url && wpss_checkout_creates_accounts() ) {
@@ -2205,6 +2203,48 @@ class AjaxHandlers {
 				'login_url' => wp_login_url( $checkout_url ?: ( wp_get_referer() ?: home_url() ) ),
 			)
 		);
+	}
+
+	/**
+	 * The checkout URL for a selection, or refuse when the rail cannot build one.
+	 *
+	 * A store rail that has no catalog checkout returns an empty string from its
+	 * checkout provider. Carrying on regardless is what made the dead end silent:
+	 * the buyer got "Added to cart", a cart row, and a Checkout link with an
+	 * empty href, which reloaded the service page forever with no error anywhere
+	 * (Basecamp 10268056147, 10268056083).
+	 *
+	 * The refusal lives here, at the one seam every add-to-cart path goes
+	 * through, so a rail is honest by default rather than by special case.
+	 *
+	 * Exits when no URL can be built.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int             $service_id Service CPT ID.
+	 * @param int             $package_id Package index.
+	 * @param array<int, int> $addons     Selected addon indexes.
+	 * @param int             $quantity   Quantity, appended when above one.
+	 * @return string
+	 */
+	private function require_checkout_url( int $service_id, int $package_id, array $addons, int $quantity = 1 ): string {
+		$checkout_url = wpss_get_service_checkout_url( $service_id, $package_id, $addons );
+
+		if ( '' === $checkout_url ) {
+			$adapter = wpss_get_active_adapter();
+
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+						/* translators: %s: name of the active store platform, e.g. Fluent Cart */
+						__( 'Checkout is not available for this service on %s, so nothing was added to your cart. Please let the site owner know.', 'wp-sell-services' ),
+						$adapter ? $adapter->get_name() : __( 'this store platform', 'wp-sell-services' )
+					),
+				)
+			);
+		}
+
+		return $quantity > 1 ? add_query_arg( 'quantity', $quantity, $checkout_url ) : $checkout_url;
 	}
 
 	/**
@@ -2318,6 +2358,11 @@ class AjaxHandlers {
 		 * @param array                                                     $cart_item Cart item data.
 		 * @param \WPSellServices\Integrations\Contracts\EcommerceAdapterInterface|null $adapter   Active adapter.
 		 */
+		// Resolved before anything is written to any cart: a rail that cannot
+		// check this service out refuses here instead of leaving the buyer with
+		// a cart row and a Checkout button that goes nowhere.
+		$checkout_url = $this->require_checkout_url( $service_id, (int) $package_index, $extras, $quantity );
+
 		$adapter_result = apply_filters( 'wpss_add_service_to_cart', false, $cart_item, $adapter );
 
 		if ( is_array( $adapter_result ) && ! empty( $adapter_result['handled'] ) ) {
@@ -2326,9 +2371,11 @@ class AjaxHandlers {
 				wp_send_json_error( array( 'message' => $adapter_result['error'] ) );
 			}
 
-			$checkout_url = $adapter_result['checkout_url'] ?? wpss_get_service_checkout_url( $service_id, (int) $package_index, $extras );
-			if ( $quantity > 1 ) {
-				$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
+			if ( ! empty( $adapter_result['checkout_url'] ) ) {
+				$checkout_url = (string) $adapter_result['checkout_url'];
+				if ( $quantity > 1 ) {
+					$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
+				}
 			}
 
 			wp_send_json_success(
@@ -2353,11 +2400,6 @@ class AjaxHandlers {
 		$cart[ $item_key ]     = $cart_item;
 
 		update_user_meta( $user_id, '_wpss_cart', $cart );
-
-		$checkout_url = wpss_get_service_checkout_url( $service_id, (int) $package_index, $extras );
-		if ( $quantity > 1 ) {
-			$checkout_url = add_query_arg( 'quantity', $quantity, $checkout_url );
-		}
 
 		wp_send_json_success(
 			array(
