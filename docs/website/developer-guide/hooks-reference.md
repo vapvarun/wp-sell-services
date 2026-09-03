@@ -19,7 +19,7 @@ guide; this is the complete index.
 | `wpss_account_status_changed` | 2 | `src/Admin/Pages/ReportsPage.php:160` *(+1 more)* |  |
 | `wpss_adapter_initialized` | 1 | `src/Integrations/IntegrationManager.php:136` | Fires after the active e-commerce adapter is initialized. |
 | `wpss_admin_order_actions` | 2 | `src/Admin/Admin.php:2477` | Fires in the admin order actions area for gateway-specific actions. |
-| `wpss_advanced_settings_sections` | 0 | `src/Admin/Settings.php:2075` |  |
+| `wpss_advanced_settings_sections` | 0 | `src/Admin/Settings.php:2077` |  |
 | `wpss_after_account_deletion` | 1 | `src/Services/AccountDeletionService.php:265` | Fires after a member's account has been deleted. |
 | `wpss_after_cascade_delete_request` | 1 | `src/Services/DataCascadeHandler.php:163` | Fires after buyer request cascade data is deleted. |
 | `wpss_after_cascade_delete_service` | 1 | `src/Services/DataCascadeHandler.php:136` | Fires after service cascade data is deleted. |
@@ -130,9 +130,9 @@ guide; this is the complete index.
 | `wpss_fluentcart_adapter_init` | 1 | `src/Integrations/FluentCart/FluentCartAdapter.php:214` **[PRO]** | Fires after Fluent Cart adapter is initialized. |
 | `wpss_fluentcart_order_created` | 3 | `src/Integrations/FluentCart/FluentCartOrderProvider.php:111` **[PRO]** | Fires when a WPSS order is created from Fluent Cart. |
 | `wpss_fluentcart_order_detail` | 1 | `src/Integrations/FluentCart/FluentCartAccountProvider.php:367` **[PRO]** | Fires after order detail content. |
-| `wpss_gateway_cards` | 1 | `src/Admin/Settings.php:1947` | Fires after core gateways, before Offline. |
+| `wpss_gateway_cards` | 1 | `src/Admin/Settings.php:1949` | Fires after core gateways, before Offline. |
 | `wpss_gateway_refund_received` | 4 | `src/Integrations/PayPal/PayPalGateway.php:921` *(+3 more)* | Fires when a refund happened at the payment rail. |
-| `wpss_gateway_settings_owned_by_rail` | 1 | `src/Admin/Settings.php:1909` | Fires instead of the gateway cards when a cart rail owns payment. |
+| `wpss_gateway_settings_owned_by_rail` | 1 | `src/Admin/Settings.php:1911` | Fires instead of the gateway cards when a cart rail owns payment. |
 | `wpss_loaded` | 1 | `src/Core/Plugin.php:295` | Fires after the plugin is fully loaded. |
 | `wpss_message_sent` | 2 | `src/Services/ConversationService.php:343` | Fires when a message is sent. |
 | `wpss_milestone_approved` | 4 | `src/Services/MilestoneService.php:533` |  |
@@ -233,9 +233,9 @@ guide; this is the complete index.
 | `wpss_service_updated` | 2 | `src/Services/ServiceManager.php:290` | Fires after a service is updated. |
 | `wpss_service_wizard_saved` | 2 | `src/Frontend/ServiceWizard.php:1712` | Fires after a service is saved via the wizard. |
 | `wpss_services_list_actions` | 1 | `templates/dashboard/sections/services.php:137` | Fires in the services list area for bulk actions or filters. |
-| `wpss_settings_sections_gateways` | 0 | `src/Admin/Settings.php:1957` | Unified gateway sections hook. |
-| `wpss_settings_sections_payments` | 1 | `src/Admin/Settings.php:1801` | Legacy payments-sections hook. |
-| `wpss_settings_tab_` | 0 | `src/Admin/Settings.php:1682` | Fires when rendering a custom settings tab added by Pro or extensions. |
+| `wpss_settings_sections_gateways` | 0 | `src/Admin/Settings.php:1959` | Unified gateway sections hook. |
+| `wpss_settings_sections_payments` | 1 | `src/Admin/Settings.php:1803` | Legacy payments-sections hook. |
+| `wpss_settings_tab_` | 0 | `src/Admin/Settings.php:1684` | Fires when rendering a custom settings tab added by Pro or extensions. |
 | `wpss_single_request_content` | 1 | `templates/single-request.php:238` | Hook: wpss_single_request_content |
 | `wpss_single_request_header` | 1 | `templates/single-request.php:150` | Hook: wpss_single_request_header |
 | `wpss_single_request_proposals` | 1 | `templates/single-request.php:253` | Hook: wpss_single_request_proposals |
@@ -359,7 +359,7 @@ guide; this is the complete index.
 | `wpss_dispute_reasons` | 1 | `src/functions/moderation.php:107` | Filter the reasons a buyer may give for opening a dispute. |
 | `wpss_docs_url` | 1 | `src/Admin/Pages/UpgradePage.php:348` | Filters the documentation URL shown on the upgrade screen. |
 | `wpss_ecommerce_adapters` | 1 | `src/CLI/PreflightCommand.php:663` *(+1 more)* |  |
-| `wpss_ecommerce_platform_description` | 1 | `src/Admin/Settings.php:3321` | Filter the platform field description. |
+| `wpss_ecommerce_platform_description` | 1 | `src/Admin/Settings.php:3323` | Filter the platform field description. |
 | `wpss_edd_can_access_vendor_dashboard` | 2 | `src/Integrations/EDD/EDDAccountProvider.php:484` **[PRO]** | Filter whether user can access vendor dashboard. |
 | `wpss_edd_cart_item_data` | 3 | `src/Integrations/EDD/EDDCheckoutProvider.php:56` **[PRO]** | Filter cart item data for services. |
 | `wpss_edd_thankyou_redirect` | 2 | `src/Integrations/EDD/EDDCheckoutProvider.php:250` **[PRO]** | Filter the thank you redirect URL for service orders. |
@@ -395,7 +395,7 @@ guide; this is the complete index.
 | `wpss_no_requests_message` | 1 | `templates/content-no-requests.php:26` | Template: No Requests Found |
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php:33` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php:2067` | Filter email content before sending. |
-| `wpss_notification_types` | 1 | `src/Admin/Settings.php:3831` | Filter the switchable notification types. |
+| `wpss_notification_types` | 1 | `src/Admin/Settings.php:3833` | Filter the switchable notification types. |
 | `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php:1668` | Named offline methods. |
 | `wpss_offline_methods` | 2 | `src/Integrations/Gateways/OfflineGateway.php:331` | Filter the offline payment methods. |
 | `wpss_open_graph_data` | 2 | `src/SEO/SEO.php:260` |  |
@@ -481,7 +481,7 @@ guide; this is the complete index.
 | `wpss_service_tag_args` | 1 | `src/PostTypes/ServicePostType.php:305` | Filter service tag taxonomy arguments. |
 | `wpss_service_tag_taxonomy_args` | 1 | `src/Taxonomies/ServiceTagTaxonomy.php:103` | Filter service tag taxonomy arguments. |
 | `wpss_services_per_page` | 1 | `src/Frontend/ServiceArchiveView.php:651` *(+1 more)* |  |
-| `wpss_settings_currencies` | 1 | `src/Admin/Settings.php:3793` | Filter the currencies available in the Settings currency dropdown. |
+| `wpss_settings_currencies` | 1 | `src/Admin/Settings.php:3795` | Filter the currencies available in the Settings currency dropdown. |
 | `wpss_settings_sections` | 1 | `src/functions/urls.php:986` | Filter the known admin settings sections. |
 | `wpss_settings_tabs` | 1 | `src/Admin/Settings.php:227` | Filter the settings tabs. |
 | `wpss_should_reverse_vendor_earnings` | 2 | `src/Services/OrderWorkflowManager.php:1111` | Filters whether the vendor's wallet earnings should be reversed. |
@@ -499,7 +499,7 @@ guide; this is the complete index.
 | `wpss_stripe_refund_args` | 5 | `src/Integrations/Stripe/StripeGateway.php:598` | Filter the Stripe refund request arguments. |
 | `wpss_suppress_theme_title` | 1 | `src/Frontend/ShellHeader.php:178` | Filter whether the active theme's entry-title is suppressed on the current plugin-shell surface. |
 | `wpss_template_args` | 2 | `src/functions/templates.php:131` *(+1 more)* |  |
-| `wpss_terms_page_slugs` | 1 | `src/Core/Activator.php:588` | Filters the slugs searched when auto-mapping an existing terms page. |
+| `wpss_terms_page_slugs` | 1 | `src/Core/Activator.php:592` | Filters the slugs searched when auto-mapping an existing terms page. |
 | `wpss_three_decimal_currencies` | 1 | `src/functions/money.php:730` | Filter the list of three-decimal currency codes. |
 | `wpss_tip_commission_rate` | 3 | `src/Services/TippingService.php:372` | Filter the commission rate applied to a tip. |
 | `wpss_tip_quick_amounts` | 2 | `templates/order/order-view.php:2159` |  |

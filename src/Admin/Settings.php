@@ -345,12 +345,14 @@ class Settings {
 			);
 		}
 
-		// Create the page.
+		// Create the page. Same marker the installer stamps, for the same
+		// reason - the branch above adopts an existing page and must not.
 		$new_page = array(
 			'post_title'   => $title,
 			'post_content' => $page_content,
 			'post_status'  => 'publish',
 			'post_type'    => 'page',
+			'meta_input'   => array( '_wpss_created_page' => $field ),
 		);
 
 		if ( '' !== $slug ) {
@@ -1346,7 +1348,7 @@ class Settings {
 				'option_name' => 'wpss_advanced',
 				'field'       => 'delete_data_on_uninstall',
 				'label'       => __( 'Delete all plugin data when uninstalling', 'wp-sell-services' ),
-				'description' => __( 'Applies only when the plugin is deleted from the Plugins screen, not on deactivation. Removes every order, delivery, message, dispute, review, vendor profile, wallet ledger, withdrawal and setting the plugin created. There is no undo.', 'wp-sell-services' ),
+				'description' => __( 'Applies only when the plugin is deleted from the Plugins screen, not on deactivation. Removes the plugin\'s own tables, posts, options, user meta and uploaded files: every order, delivery, message, dispute, review, vendor profile, wallet ledger, withdrawal and setting the plugin created. There is no undo. The pages mapped under Settings > Pages are left in place, because they may hold content you wrote. Delete them by hand if you no longer want them.', 'wp-sell-services' ),
 			)
 		);
 
