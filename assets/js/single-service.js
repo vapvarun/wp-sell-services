@@ -52,7 +52,6 @@
          * Initialize gallery functionality.
          */
         initGallery: function() {
-            const self = this;
             const $gallery = $(this.config.gallery);
 
             if (!$gallery.length) {
@@ -103,14 +102,46 @@
                 }
             });
 
-            // Lightbox for main image.
+            /*
+             * Lightbox for the main image, opened through the ONE shared
+             * implementation in frontend.js. The whole strip goes with it, so
+             * the overlay can move between images.
+             */
             $gallery.on('click', '.wpss-gallery-image', function(e) {
                 e.preventDefault();
-                self.openLightbox($(this).attr('src'));
+
+                const $image = $(this);
+                const $thumbs = $gallery.find('.wpss-gallery-thumb[data-src]');
+                const items = $thumbs.map(function() {
+                    const $thumb = $(this);
+                    return {
+                        src: $thumb.data('src'),
+                        alt: $thumb.find('img').attr('alt') || ''
+                    };
+                }).get();
+
+                // A one-image service renders no strip; the main image is the
+                // whole gallery.
+                if (!items.length) {
+                    WPSS.openLightbox([{ src: $image.attr('src'), alt: $image.attr('alt') || '' }], 0);
+                    return;
+                }
+
+                const active = $thumbs.index($thumbs.filter('.active'));
+                WPSS.openLightbox(items, active < 0 ? 0 : active);
             });
 
             // Keyboard navigation.
             $(document).on('keydown', function(e) {
+                /*
+                 * The overlay owns the arrow keys while it is open. Without
+                 * this, ArrowRight swapped the image BEHIND the overlay while
+                 * the overlay image stayed put.
+                 */
+                if (window.WPSS && WPSS.lightboxOpen) {
+                    return;
+                }
+
                 if (!$gallery.is(':visible')) {
                     return;
                 }
@@ -123,38 +154,6 @@
                     $thumbs.eq(currentIndex - 1).trigger('click');
                 } else if (e.key === 'ArrowRight' && currentIndex < $thumbs.length - 1) {
                     $thumbs.eq(currentIndex + 1).trigger('click');
-                }
-            });
-        },
-
-        /**
-         * Open lightbox.
-         */
-        openLightbox: function(src) {
-            // If using a lightbox library.
-            if (typeof lightbox !== 'undefined') {
-                lightbox.start($(this.config.gallery + ' .wpss-gallery-image'));
-                return;
-            }
-
-            // Simple lightbox fallback.
-            const $lightbox = $('<div class="wpss-lightbox">' +
-                '<button class="wpss-lightbox-close">&times;</button>' +
-                '<img src="' + src + '" alt="">' +
-                '</div>');
-
-            $('body').append($lightbox);
-
-            $lightbox.on('click', function(e) {
-                if ($(e.target).hasClass('wpss-lightbox') || $(e.target).hasClass('wpss-lightbox-close')) {
-                    $lightbox.remove();
-                }
-            });
-
-            $(document).on('keydown.lightbox', function(e) {
-                if (e.key === 'Escape') {
-                    $lightbox.remove();
-                    $(document).off('keydown.lightbox');
                 }
             });
         },

@@ -1926,18 +1926,34 @@ article.wpss-service-card:hover {
 	right: 0;
 	left: 0;
 	bottom: 0;
-	z-index: 9991;
+
+	/*
+	 * Above a sticky theme header, below the admin bar (99999). The shared
+	 * --wpss-z-modal is 9991 and BuddyX's header is 9999, so at the token
+	 * value the theme's mobile hamburger sat ON TOP of the close button and
+	 * took the tap meant for it.
+	 */
+	z-index: 99998;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	opacity: 0;
 	visibility: hidden;
-	transition: opacity 0.3s ease, visibility 0.3s ease;
+
+	/*
+	 * visibility switches instantly on show and is DELAYED on hide, so the
+	 * fade-out still completes before the overlay leaves the a11y tree. A
+	 * plain `visibility 0.3s` transition left it computing as hidden at
+	 * progress 0, and a visibility:hidden node cannot take focus - the close
+	 * button never received it when the dialog opened.
+	 */
+	transition: opacity 0.3s ease, visibility 0s linear 0.3s;
 }
 
 .wpss-lightbox--visible {
 	opacity: 1;
 	visibility: visible;
+	transition: opacity 0.3s ease, visibility 0s linear 0s;
 }
 
 .wpss-lightbox__backdrop {
@@ -1954,6 +1970,7 @@ article.wpss-service-card:hover {
 	position: relative;
 	max-width: 90vw;
 	max-height: 90vh;
+	overflow: auto;
 	z-index: 1;
 }
 
@@ -1965,30 +1982,98 @@ article.wpss-service-card:hover {
 	height: auto;
 	border-radius: var(--wpss-radius);
 	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+	cursor: zoom-in;
 }
 
-.wpss-lightbox__close {
+/* Themes commonly ship maximum-scale=1, which kills native pinch site-wide. */
+.wpss-lightbox__content--zoomed img {
+	max-width: none;
+	max-height: none;
+	width: 200%;
+	cursor: zoom-out;
+}
+
+/*
+ * Controls sit on the overlay root, not inside the content: the content
+ * scrolls when the image is zoomed, and they must not scroll away with it.
+ */
+.wpss-lightbox__close,
+.wpss-lightbox__nav {
 	position: absolute;
-	top: -40px;
-	left: 0;
-	width: 36px;
-	height: 36px;
+	z-index: 2;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	background: var(--wpss-surface);
 	border: none;
 	border-radius: 50%;
-	font-size: 24px;
 	line-height: 1;
 	color: var(--wpss-text);
 	cursor: pointer;
-	transition: all 0.2s ease;
+
+	/*
+	 * Named properties, never `all`: `all` also transitions the visibility
+	 * these buttons INHERIT from the overlay root, so they stayed hidden for
+	 * the duration after the overlay had shown - and a hidden button cannot
+	 * take the focus the dialog moves to it on open.
+	 */
+	transition: background 0.2s ease, color 0.2s ease;
 }
 
-.wpss-lightbox__close:hover {
+/*
+ * The admin bar is z-index 99999 and would sit on top of the close button, so
+ * clear it. Core defines the variable only when the bar is showing; it falls
+ * back to 0 for logged-out visitors.
+ */
+.wpss-lightbox__close {
+	top: calc(var(--wpss-space-4, 16px) + var(--wp-admin--admin-bar--height, 0px));
+	inset-inline-end: var(--wpss-space-4, 16px);
+	width: 40px;
+	height: 40px;
+	font-size: 24px;
+}
+
+.wpss-lightbox__nav {
+	top: 50%;
+	transform: translateY(-50%);
+	width: 44px;
+	height: 44px;
+	font-size: 28px;
+}
+
+.wpss-lightbox__nav--prev {
+	inset-inline-start: var(--wpss-space-4, 16px);
+}
+
+.wpss-lightbox__nav--next {
+	inset-inline-end: var(--wpss-space-4, 16px);
+}
+
+.wpss-lightbox__close:hover,
+.wpss-lightbox__nav:hover {
 	background: var(--wpss-danger);
 	color: var(--wpss-white);
+}
+
+@media (max-width: 640px) {
+	.wpss-lightbox__close,
+	.wpss-lightbox__nav {
+		width: 40px;
+		height: 40px;
+	}
+
+	.wpss-lightbox__close {
+		top: calc(var(--wpss-space-2, 8px) + var(--wp-admin--admin-bar--height, 0px));
+		inset-inline-end: var(--wpss-space-2, 8px);
+	}
+
+	.wpss-lightbox__nav--prev {
+		inset-inline-start: var(--wpss-space-2, 8px);
+	}
+
+	.wpss-lightbox__nav--next {
+		inset-inline-end: var(--wpss-space-2, 8px);
+	}
 }
 
 /* Sidebar Cards */
