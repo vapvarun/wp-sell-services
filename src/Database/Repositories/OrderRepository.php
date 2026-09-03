@@ -578,46 +578,76 @@ class OrderRepository extends AbstractRepository {
 	 * @return array<string, mixed> Statistics.
 	 */
 	public function get_vendor_stats( int $vendor_id ): array {
-		// Sub-order platforms are counted differently from the row they
-		// represent:
-		// * Tips never count towards service stats — they live in
-		// get_vendor_tip_stats() so analytics can surface them separately.
-		// * Extensions are NOT separate orders (they top up an existing
-		// service order) but the extra money the vendor earned IS real
-		// revenue, so they are excluded from the counts but summed into
-		// total_earnings.
-		// Revenue uses vendor_earnings (NET, post-commission) so the number
-		// the seller sees matches what they can actually withdraw. Falls back
-		// to total for legacy rows written before CommissionService populated
-		// vendor_earnings.
-		$tip_platform       = \WPSellServices\Services\TippingService::ORDER_TYPE;
-		$extension_platform = \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE;
-		$milestone_platform = \WPSellServices\Services\MilestoneService::ORDER_TYPE;
+		/*
+		 * The status lists come from wpss_get_order_status_groups(), the same
+		 * definition the sales filter chips read - so the Active card and the
+		 * Active chip beside it cannot say different things.
+		 *
+		 * They had drifted: this counted 'in_progress, pending_approval' as
+		 * Active while the chip selected nine statuses, so a vendor with a
+		 * delivered order read "1 Active" next to an Active chip showing 2,
+		 * and clicking the chip listed 2 rows (Basecamp 10268055975). This is
+		 * the seller half of what get_customer_stats() fixed for buyers in
+		 * Basecamp 10240019463.
+		 *
+		 * Sub-order platforms are counted differently from the row they
+		 * represent:
+		 * * Tips never count towards service stats - they live in
+		 * get_vendor_tip_stats() so analytics can surface them separately.
+		 * * Extensions are NOT separate orders (they top up an existing
+		 * service order) but the extra money the vendor earned IS real
+		 * revenue, so they are excluded from the counts but summed into
+		 * total_earnings.
+		 * Revenue uses vendor_earnings (NET, post-commission) so the number
+		 * the seller sees matches what they can actually withdraw. Falls back
+		 * to total for legacy rows written before CommissionService populated
+		 * vendor_earnings.
+		 */
+		$groups = function_exists( 'wpss_get_order_status_groups' ) ? wpss_get_order_status_groups() : array();
+
+		$active_statuses    = $groups['active']['statuses'] ?? array( 'in_progress', 'pending_approval' );
+		$completed_statuses = $groups['completed']['statuses'] ?? array( 'completed' );
+
+		$active_sql    = $this->status_in_placeholders( $active_statuses );
+		$completed_sql = $this->status_in_placeholders( $completed_statuses );
+
+		// Which rows are orders, from the same list exclude_sub_orders() gives
+		// the chips - not a second one written here. COALESCE because in SQL
+		// `NULL NOT IN (...)` is NULL, which dropped every catalog order with
+		// no platform set out of the stats while the chips still counted it.
+		$sub_platforms = function_exists( 'wpss_get_sub_order_platforms' ) ? wpss_get_sub_order_platforms() : array();
+		$sub_sql       = $this->status_in_placeholders( $sub_platforms );
+		$is_order      = "COALESCE(platform, '') NOT IN {$sub_sql}";
+
+		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the interpolated parts are %s placeholder lists built from fixed status/platform maps.
+		$sql = "SELECT
+					SUM(CASE WHEN {$is_order} THEN 1 ELSE 0 END) as total_orders,
+					SUM(CASE WHEN {$is_order} AND status IN {$completed_sql} THEN 1 ELSE 0 END) as completed_orders,
+					SUM(CASE WHEN {$is_order} AND status IN {$active_sql} THEN 1 ELSE 0 END) as active_orders,
+					SUM(CASE WHEN COALESCE(platform, '') != %s AND status IN {$completed_sql} THEN COALESCE(vendor_earnings, total) ELSE 0 END) as total_earnings,
+					AVG(CASE WHEN {$is_order} AND status IN {$completed_sql} THEN TIMESTAMPDIFF(HOUR, started_at, completed_at) END) as avg_completion_hours
+				FROM {$this->table}
+				WHERE vendor_id = %d";
+
+		$params = array_merge(
+			$sub_platforms,
+			$sub_platforms,
+			$completed_statuses,
+			$sub_platforms,
+			$active_statuses,
+			array( $tip_platform ),
+			$completed_statuses,
+			$sub_platforms,
+			$completed_statuses,
+			array( $vendor_id )
+		);
 
 		$stats = $this->wpdb->get_row(
 			$this->wpdb->prepare(
-				"SELECT
-					SUM(CASE WHEN platform NOT IN (%s, %s, %s) THEN 1 ELSE 0 END) as total_orders,
-					SUM(CASE WHEN platform NOT IN (%s, %s, %s) AND status = 'completed' THEN 1 ELSE 0 END) as completed_orders,
-					SUM(CASE WHEN platform NOT IN (%s, %s, %s) AND status IN ('in_progress', 'pending_approval') THEN 1 ELSE 0 END) as active_orders,
-					SUM(CASE WHEN platform != %s AND status = 'completed' THEN COALESCE(vendor_earnings, total) ELSE 0 END) as total_earnings,
-					AVG(CASE WHEN platform NOT IN (%s, %s, %s) AND status = 'completed' THEN TIMESTAMPDIFF(HOUR, started_at, completed_at) END) as avg_completion_hours
-				FROM {$this->table}
-				WHERE vendor_id = %d",
-				$tip_platform,
-				$extension_platform,
-				$milestone_platform,
-				$tip_platform,
-				$extension_platform,
-				$milestone_platform,
-				$tip_platform,
-				$extension_platform,
-				$milestone_platform,
-				$tip_platform,
-				$tip_platform,
-				$extension_platform,
-				$milestone_platform,
-				$vendor_id
+				$sql, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				...$params
 			),
 			ARRAY_A
 		);
@@ -788,9 +818,12 @@ class OrderRepository extends AbstractRepository {
 	 * Never returns an empty (), which is a MySQL syntax error - an empty
 	 * status list becomes a condition that matches nothing instead.
 	 *
+	 * Also used for the sub-order platform list, which is sanitised the same
+	 * way and needs the same empty-list guard.
+	 *
 	 * @since 1.7.0
 	 *
-	 * @param string[] $statuses Statuses, by reference so an empty list is normalised.
+	 * @param string[] $statuses Statuses (or platforms), by reference so an empty list is normalised.
 	 * @return string Placeholder list, e.g. "( %s, %s )".
 	 */
 	private function status_in_placeholders( array &$statuses ): string {
