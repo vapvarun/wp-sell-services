@@ -324,6 +324,11 @@ class Frontend {
 					'skipRequirementsConfirm'     => __( 'You can submit requirements later. Continue to checkout?', 'wp-sell-services' ),
 					'continue'                    => __( 'Continue', 'wp-sell-services' ),
 					'enterReason'                 => __( 'Enter your reason...', 'wp-sell-services' ),
+					// Image lightbox — the dialog label and its control names.
+					'imagePreview'                => __( 'Image preview', 'wp-sell-services' ),
+					'close'                       => __( 'Close', 'wp-sell-services' ),
+					'previousImage'               => __( 'Previous image', 'wp-sell-services' ),
+					'nextImage'                   => __( 'Next image', 'wp-sell-services' ),
 					// UX primitives — autosave indicator labels.
 					'autosaveSaving'              => __( 'Saving…', 'wp-sell-services' ),
 					'autosaveSaved'               => __( 'Saved', 'wp-sell-services' ),

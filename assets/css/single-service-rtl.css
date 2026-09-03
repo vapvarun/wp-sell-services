@@ -370,18 +370,30 @@
 	position: relative;
 }
 
+/*
+ * aspect-ratio is a PREFERRED size, not a cap: frontend.css sets
+ * `.wpss-gallery-active img { height: auto }`, which outgrew the ratio and let
+ * a 700x2100 portrait push the container to 2186px and the page down with it.
+ * overflow keeps the stage, and the rule below outranks that height.
+ */
 .wpss-gallery-active {
 	aspect-ratio: 16 / 9;
+	overflow: hidden;
 	background: var(--wpss-bg);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
-.wpss-gallery-image {
+/*
+ * Two classes (0,2,0) so this beats frontend.css `.wpss-gallery-active img`
+ * (0,1,1). `contain` letterboxes a portrait inside the stage; `cover` used to
+ * crop the seller's work to fill it.
+ */
+.wpss-gallery-active .wpss-gallery-image {
 	width: 100%;
 	height: 100%;
-	object-fit: cover;
+	object-fit: contain;
 	cursor: zoom-in;
 }
 
@@ -427,36 +439,12 @@
 	border-color: var(--wpss-primary);
 }
 
-/* Lightbox */
-.wpss-lightbox {
-	position: fixed;
-	top: 0;
-	right: 0;
-	width: 100%;
-	height: 100%;
-	background: rgb(0 0 0 / 90%);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 9991;
-}
-
-.wpss-lightbox img {
-	max-width: 90%;
-	max-height: 90%;
-	object-fit: contain;
-}
-
-.wpss-lightbox-close {
-	position: absolute;
-	top: 1rem;
-	left: 1rem;
-	background: none;
-	border: none;
-	color: var(--wpss-white);
-	font-size: 2rem;
-	cursor: pointer;
-}
+/*
+ * The lightbox lives in frontend.css. A second `.wpss-lightbox` block used to
+ * sit here, and because this file loads AFTER frontend.css but re-declared the
+ * root without resetting opacity/visibility, the two collided: the overlay
+ * frontend.css hides until `--visible` never became visible.
+ */
 
 /* ==========================================================================
    Description & Content
