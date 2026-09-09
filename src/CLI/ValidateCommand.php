@@ -113,7 +113,7 @@ class ValidateCommand {
 		WP_CLI::line( '' );
 
 		if ( $has_errors ) {
-			WP_CLI::error( 'Schema validation failed with errors.', false );
+			WP_CLI::error( 'Schema validation failed with errors.' );
 		} elseif ( $has_warnings ) {
 			WP_CLI::warning( 'Schema validation passed with warnings.' );
 		} else {
@@ -205,7 +205,7 @@ class ValidateCommand {
 		$error_count = count( array_filter( $issues, fn( $i ) => 'error' === $i['type'] ) );
 
 		if ( $error_count > 0 ) {
-			WP_CLI::error( "Found {$error_count} error(s).", false );
+			WP_CLI::error( "Found {$error_count} error(s)." );
 		} else {
 			WP_CLI::warning( 'Found ' . count( $issues ) . ' warning(s).' );
 		}
