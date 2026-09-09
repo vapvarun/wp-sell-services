@@ -275,7 +275,16 @@ class MediaController extends RestController {
 	/**
 	 * Check read permissions for file info.
 	 *
-	 * Allows file uploader, order participants, and admins.
+	 * Allows the file's uploader and administrators, and nobody else.
+	 *
+	 * It used to claim order participants too, through a branch that read
+	 * `_wpss_order_id` off the attachment - a key nothing in either plugin has
+	 * ever written, so the branch could not fire (Basecamp 10268706891). Order
+	 * attachments are addressed through GET /wpss/v1/orders/{id}/files/{file_id},
+	 * which does its own participant check, and POST /wpss/v1/media already
+	 * refuses an order context outright (wpss_order_upload_context), so an
+	 * order's file cannot arrive here to be read in the first place. The branch
+	 * is gone rather than wired to an order id it was never going to be given.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return bool|WP_Error
@@ -303,16 +312,6 @@ class MediaController extends RestController {
 		$uploader = (int) get_post_meta( $attachment_id, '_wpss_uploader', true );
 		if ( $uploader === $user_id || (int) $attachment->post_author === $user_id ) {
 			return true;
-		}
-
-		// Check if file is linked to an order the user participates in.
-		$context = get_post_meta( $attachment_id, '_wpss_upload_context', true );
-		if ( $context ) {
-			// Allow if user owns any order resource.
-			$order_id = (int) get_post_meta( $attachment_id, '_wpss_order_id', true );
-			if ( $order_id && $this->user_owns_resource( $order_id, 'order' ) ) {
-				return true;
-			}
 		}
 
 		return new WP_Error( 'wpss_not_owner', __( 'You do not have access to this file.', 'wp-sell-services' ), array( 'status' => 403 ) );
