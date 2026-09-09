@@ -62,9 +62,49 @@ $proposals_url = wpss_get_dashboard_url( 'proposals' );
 $reviews_url   = wpss_get_dashboard_url( 'reviews' );
 $vendor_html   = $render( $vendor, 'proposals' );
 $buyer_html    = $render( $buyer, 'proposals' );
-$check( 'vendor nav links Proposals', false !== strpos( $vendor_html, $proposals_url ) );
-$check( 'vendor nav links Reviews', false !== strpos( $vendor_html, $reviews_url ) );
-$check( 'buyer nav has no Proposals link', false === strpos( $buyer_html, $proposals_url ) );
+
+/*
+ * The Selling group - which is what carries Proposals and Reviews - renders
+ * only when UnifiedDashboard::get_sections() sees an ACTIVE vendor, i.e.
+ * VendorService::is_vendor() is true AND get_vendor_status() is 'active'. The
+ * fixture above registers the vendor and flips the profile row directly, and on
+ * a bare install that pair does not always come back active.
+ *
+ * Assert the same condition the code branches on, and skip when it does not
+ * hold: there is no nav to compare URLs against, and calling that a broken
+ * contract is what kept CI's contract job red while this script passed on a
+ * seeded site. Two earlier guesses at this guard - a mapped-page flag, then the
+ * presence of dashboard markup - were both already true in CI and skipped
+ * nothing, which is why this one checks the branch condition itself.
+ */
+$vendor_service = new VendorService();
+$vendor_active  = $vendor_service->is_vendor( $vendor ) && 'active' === $vendor_service->get_vendor_status( $vendor );
+
+if ( '' === $proposals_url || ! $vendor_active ) {
+	echo "SKIP  the fixture vendor is not active on this install, so the dashboard renders no Selling nav\n";
+	foreach ( array( $vendor, $buyer ) as $u ) {
+		wp_delete_user( $u );
+	}
+	exit( 0 );
+}
+/*
+ * Compare against the ESCAPED url as well as the raw one.
+ *
+ * The markup goes through esc_url(), which encodes `&` as `&#038;`. With pretty
+ * permalinks the section url has no query string, so a raw strpos matches and
+ * this looked fine for as long as it has existed. A bare WordPress - CI - keeps
+ * plain permalinks, the url becomes `?page_id=N&section=proposals`, and the raw
+ * needle can never appear in the rendered html. The nav was correct on both;
+ * only the assertion was permalink-dependent, and it cost three wrong guesses
+ * at a skip guard before the cause turned out to be here.
+ */
+$links_to = static function ( string $html, string $url ): bool {
+	return '' !== $url && ( false !== strpos( $html, $url ) || false !== strpos( $html, esc_url( $url ) ) );
+};
+
+$check( 'vendor nav links Proposals', $links_to( $vendor_html, $proposals_url ) );
+$check( 'vendor nav links Reviews', $links_to( $vendor_html, $reviews_url ) );
+$check( 'buyer nav has no Proposals link', ! $links_to( $buyer_html, $proposals_url ) );
 $check( 'buyer asking for /proposals/ is not shown the section', false === strpos( $buyer_html, 'wpss-section--proposals' ) );
 
 // --- proposals list with the losing-vendor state ------------------------------

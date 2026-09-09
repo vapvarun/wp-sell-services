@@ -244,9 +244,9 @@ class AuditLogService {
 
 		add_action(
 			'update_option_wpss_commission',
-			function ( $old, $new ): void {
-				$from = (string) ( is_array( $old ) ? ( $old['commission_rate'] ?? '' ) : '' );
-				$to   = (string) ( is_array( $new ) ? ( $new['commission_rate'] ?? '' ) : '' );
+			function ( $old_value, $new_value ): void {
+				$from = (string) ( is_array( $old_value ) ? ( $old_value['commission_rate'] ?? '' ) : '' );
+				$to   = (string) ( is_array( $new_value ) ? ( $new_value['commission_rate'] ?? '' ) : '' );
 				if ( $from !== $to ) {
 					$this->log(
 						'commission.rate_changed',
