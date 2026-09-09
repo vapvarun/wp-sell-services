@@ -855,18 +855,6 @@ parameters:
 			path: src/CLI/PreflightCommand.php
 
 		-
-			message: '#^Right side of \|\| is always true\.$#'
-			identifier: booleanOr.rightAlwaysTrue
-			count: 1
-			path: src/CLI/PreflightCommand.php
-
-		-
-			message: '#^Variable \$wpss on left side of \?\? is never defined\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/CLI/PreflightCommand.php
-
-		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 1
