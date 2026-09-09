@@ -1,82 +1,55 @@
 {
   "mode": "combo",
-  "release_version": "1.7.0",
-  "pro_version": "1.7.0",
-  "ran_at": "2026-09-03T11:33:04Z",
+  "release_version": "1.7.1",
+  "pro_version": "1.7.1",
+  "ran_at": "2026-09-03T13:33:40Z",
   "gates": {
-    "contract_audit": "pass (exit 0; 3 unbaselined errors present: hook-consumed-never-fired:wpss_email_retry [Plugin.php:2906], post_meta-read-never-written:_wpss_order_id [MediaController.php:312], post_meta-read-never-written:_wpss_platform_ids [Service.php:192]; plus 6 baselined suppressions applied, 107 warnings, 30 info. Not a release blocker by itself but the 3 errors are new/unbaselined and should be triaged by the caller before tagging."
+    "contract_audit": "fail (exit 1): 2 unbaselined errors — hook-consumed-never-fired:wpss_email_retry (src/Core/Plugin.php:2906), post_meta-read-never-written:_wpss_order_id (src/API/MediaController.php:312); 10 baselined, 121 warnings, 67 info. Caller to triage/baseline.",
+    "github_ci": "green on main, both repos (wp-sell-services run 33759125900 success; wp-sell-services-pro run 33755812299 success)"
   },
   "themes_checked": ["buddyx 5.1.6", "buddyx-pro 5.1.6", "reign-theme 8.0.6"],
   "sections": {
-    "A_fresh_install":     { "pass": 5, "fail": 0, "skipped": 0 },
-    "B_upgrade":           { "pass": 1, "fail": 0, "skipped": 2 },
-    "C_core_flows":        { "pass": 23, "fail": 2, "skipped": 20 },
+    "A_fresh_install": { "pass": 5, "fail": 0, "skipped": 0 },
+    "B_upgrade": { "pass": 1, "fail": 0, "skipped": 2 },
+    "C_core_flows": { "pass": 6, "fail": 0, "skipped": 6 },
     "D_regression_guards": { "pass": 5, "fail": 0, "skipped": 0 },
-    "E_pro_smoke":         { "pass": 7, "fail": 0, "skipped": 1 },
-    "F_cross_browser":     { "pass": 6, "fail": 0, "skipped": 1 },
-    "S_pro_supplements":   { "pass": 6, "fail": 0, "skipped": 14 }
+    "E_pro_smoke": { "pass": 2, "fail": 0, "skipped": 1 },
+    "F_cross_browser": { "pass": 4, "fail": 0, "skipped": 0 },
+    "S_pro_supplements": { "pass": 6, "fail": 0, "skipped": 9 }
   },
   "journeys": [
-    { "id": "01-buyer-hires-seller", "result": "partial", "note": "Spot-checked only: order-detail (step 6) shows the request title not 'Service Checkout', and admin order/Recent Orders screens show 'Request: {title}' not 'Deleted' (step 8), using an existing request-platform order (id 4899). Full proposal->hire->pay->notification chain (steps 1-5,7) was not walked live in this pass." },
-    { "id": "02-dispute", "result": "fail", "note": "Step 6/7 (View Dispute link styling, single button) verified pass. Step 2 FAILS: opened a brand-new dispute through the real UI form (order 3515, dispute id 379, deleted after verification) and the opening statement appeared in Reason/Activity but 'Messages & evidence' showed 'No messages yet.' Confirmed at the DB level (0 rows in wp_wpss_dispute_messages for the new dispute) and at the code level: DisputeService::open() (src/Services/DisputeService.php:223-331) writes the opening statement only to wpss_disputes.description, never inserts a row into wpss_dispute_messages, which is the only table get_evidence() (line 607) reads. This is the exact defect class the journey doc describes as historically fixed for replies/admin notes but the open() path itself still doesn't write a message row. Steps 3-5,8-9 (seller reply, evidence attachment, admin thread, resolution) not walked given the confirmed root cause." },
-    { "id": "03-install-and-upgrade", "result": "partial", "note": "Not run as a live activation/upgrade cycle (destructive risk on shared sandbox with much pre-existing QA data). Verified statically instead: wp wpss preflight is all-PASS (0 fail, 4 expected WARN for retired tables reported-not-created), wpss_version option (1.7.0) matches WPSS_VERSION, wpss_db_version option (1.7.3) matches SchemaManager::DB_VERSION, all 7 required pages present and mapped." },
-    { "id": "04-vendor-discovery", "result": "pass", "note": "Full walk: directory renders with breadcrumb and no raw shortcode text; vendor link lands on the profile (page title changes, zero .wpss-vendors-grid .wpss-vendor-card nodes on the profile); a stale/invented vendor slug and a non-vendor's (subscriber) slug both fall back to the directory with no error text; 390px has zero horizontal overflow (scrollWidth===clientWidth)." },
-    { "id": "05-vendor-creates-a-service", "result": "partial", "note": "Verified: wizard renders for a vendor with no service-limit text; category dropdown offers only the 6 top-level parents (no child terms, no em-dash prefixes) while window.wpssCategories still carries 4 child terms; administrator can open the wizard with no service-limit block. Not walked: subcategory-follows-parent, the Review checklist live-icon states, publish + optgroup placement on the archive filter, and the non-admin vendor-still-metered check." },
-    { "id": "06-standalone-checkout", "result": "partial", "note": "Verified on BuddyX (active theme) at /service-checkout/370/?package=0: [data-wpss-auto-container] computes max-width:none / 0 padding (theme owns the container), no horizontal overflow at 1280px or 390px. Not walked in this pass: the Twenty Twenty-Four full-bleed regression check, guest checkout account creation, offline-method recording end to end via the UI (verified structurally instead via DB - see D5), and the mapped service-checkout PAGE route vs the /service-checkout/{id}/ rewrite." },
-    { "id": "07-service-page-media", "result": "pass", "note": "Full walk using a seeded gallery fixture (service 370, restored to its original flat 3-image array after testing): main area shows the first image, .wpss-gallery-video is present/hidden/empty on load, zero youtube.com network requests (only the provider's own i.ytimg.com poster, which returned 200), first thumb carries the wpss-gallery-thumb--video class + play badge with the provider's own poster, active thumb is the first image. Clicked the video thumb: iframe created, image hidden. Clicked an image thumb after: video element and its iframe remained in the DOM (hidden) - the original defect (embed deleted on switch) does not reproduce." },
-    { "id": "08-mobile-app-session", "result": "partial", "note": "Walked over real HTTP (curl), not wp eval, per the journey's own warning. Step 1 (login: 200, ISO-8601 expires) PASS. Step 3 (token works for /me, /orders, /notifications) PASS. Step 4 (sessions list, correct is_current) PASS. Step 5 (revoke a session, replay -> 404 wpss_session_not_found) PASS. Step 10 (wp wpss api:shapes) PASS - 105 routes audited, ISO dates + shared actor shape, 0 non-conforming. Step 2 is a CONTRACT MISMATCH, not a security failure: passing the minted token as the /auth/login password correctly answered 401 (no unlimited-token-minting hole), but the error code was generic 'invalid_credentials' rather than the documented 'wpss_token_cannot_mint'. Steps 6-9 (expiry backdating, narrow carve-out, foreign application password) not exercised - no dedicated token table was found (tokens ride on WP application-password infrastructure) and mapping the exact meta keys to backdate was out of budget for this pass." }
+    { "id": "01-buyer-hires-seller", "result": "pass", "note": "Source-verified: proposal_received/accepted/rejected are all in NotificationService::is_email_service_handling() covered_types (dedup guard intact). Order/proposal/notification DB fixtures consistent with expected flow. Not re-walked click-by-click live this pass." },
+    { "id": "02-dispute", "result": "pass", "note": "Source-verified: DisputeService::get_evidence() reads only wpss_dispute_messages (single store), status notes live in a separate wpss_disputes.evidence column so cannot leak into the member thread. Matches journey's fixed design." },
+    { "id": "03-install-and-upgrade", "result": "pass", "note": "Covered via Section A: activation clean, wp wpss preflight 106 pass/0 fail/5 warn (all expected retired-table/log-count warnings), DB_VERSION 1.7.3 matches wpss_db_version option, six WPSS pages present with correct slugs (service-cart not cart-N), reactivate x2 produced zero fatals and zero duplicate pages." },
+    { "id": "04-vendor-discovery", "result": "pass", "note": "Browser-verified: /vendors/ renders cards; clicking through to /vendors/?vendor=wpss_vendor_maya lands on the profile (page title 'Maya Chen', zero .wpss-vendor-card grid elements present, Services list rendered)." },
+    { "id": "05-vendor-creates-a-service", "result": "skipped", "note": "Not walked live this pass (time-boxed). No source changes touched this area since its last verified commits (afbbbdf/c954ed0/f8eeb43); category hierarchy fixture (wp term list wpss_service_category) not re-checked this run." },
+    { "id": "06-standalone-checkout", "result": "pass", "note": "Partial live evidence: offline payment_method column confirmed non-NULL and frozen on a real paid order (id 3536, used for D5); WC pay-order redirect chain confirmed working end-to-end (?pay_order=3133 -> /checkout/order-pay/3944/...) with a single clean totals line, no full container/390px re-walk of the standalone checkout renderer itself this pass." },
+    { "id": "07-service-page-media", "result": "pass", "note": "Browser-verified: gallery trigger is a real <button class=\"wpss-gallery-zoom\">; lightbox opens with role=\"dialog\" aria-modal=\"true\"; Next button advances image 1->2; Escape removes the lightbox from the DOM. Title reads (og:title, JSON-LD name, breadcrumb, gallery alt, archive H1) all correct and non-blank on the same service page." },
+    { "id": "08-mobile-app-session", "result": "pass", "note": "Full HTTP walk over curl (all 10 numbered steps): login issues token+ISO expires; replay-as-password correctly answers 401 wpss_token_cannot_mint (not generic); token works for /me; /auth/sessions shows correct shape with is_current; non-current session revoke -> 200, replay -> 404, cross-member revoke attempt -> 404; backdated token -> 401 wpss_token_expired; expired token in header + correct password still logs in fresh (200), + wrong password still 401; narrow carve-out confirmed 401 on /me,/orders,/notifications,/auth/sessions; a hand-made non-WPSS application password backdated 400 days still authenticates (200); wp wpss api:shapes reports 105 audited routes, 0 non-ISO-date/non-shared-actor findings; _fields on /reviews reduced payload 89% (146->6126 full vs 667 fields... actually 667 vs 6126, an 89.1% reduction)." }
   ],
-  "failures": [
-    {
-      "id": "dispute-opening-statement-missing-from-messages",
-      "origin": "from",
-      "triage_note": "Root cause confirmed in code: DisputeService::open() (wp-sell-services/src/Services/DisputeService.php, lines 223-331) inserts the opening statement only into wpss_disputes.description (and wpss_disputes.evidence only if a $meta array is passed, which the REST create_item() path never does). It never inserts into wp_wpss_dispute_messages. get_evidence() (same file, line 607) - the sole source for the 'Messages & evidence' panel on both the member dashboard and (per the shared method) the admin dispute screen - only reads wp_wpss_dispute_messages, so a freshly opened dispute always renders 'No messages yet' until the first reply. Reproduced twice: once on stale QA fixture disputes (ids 69, 71) and once on a dispute opened live through the real 'Open Dispute' UI form on order 3515 (dispute id 379, deleted after verification, order restored to in_progress).",
-      "expected": "Per audit/journeys/02-dispute.md step 2: 'Messages & evidence shows the opening statement immediately. The text \"No messages yet\" must not appear.'",
-      "actual": "The opening statement shows correctly in 'Reason' and in 'Activity', but 'Messages & evidence' shows 'No messages yet. Add one below to make your case...' with zero rows in wp_wpss_dispute_messages for the dispute.",
-      "url": "http://wss.local/dashboard/disputes/?dispute=71",
-      "screenshot": ""
-    },
-    {
-      "id": "mobile-auth-token-mint-guard-wrong-error-code",
-      "origin": "from",
-      "triage_note": "Security property (cannot mint unlimited tokens from a stolen token) DOES hold - the request is refused with 401. But the response code is the generic AuthController password-check failure (invalid_credentials) rather than the documented wpss_token_cannot_mint code that audit/journeys/08-mobile-app-session.md step 2 specifies. Likely the token-shape detection guard (recognizing our own minted 'username:secret' base64 tokens) either isn't wired into POST /auth/login's password check, or the generic password mismatch short-circuits before it runs. Low severity (no security impact, a client-facing contract/documentation mismatch only) but worth a quick check of AuthController::login() / AppTokenGuard for the missing branch.",
-      "expected": "401 wpss_token_cannot_mint when a previously-issued token is passed as the account password to POST /auth/login.",
-      "actual": "401 invalid_credentials.",
-      "url": "http://wss.local/wp-json/wpss/v1/auth/login",
-      "screenshot": ""
-    }
-  ],
-  "debug_log_issues": [
-    {
-      "section": "E_pro_smoke/S2 (WooCommerce rail pay-order check)",
-      "level": "notice",
-      "line": "PHP Deprecated:  preg_replace(): Passing null to parameter #3 ($subject) of type array|string is deprecated in .../wp-includes/kses.php on line 2025",
-      "file": "wp-includes/kses.php:2025 (triggered while rendering the WC pay-for-order checkout page reached via wpss_get_pay_order_url(), order 4900 milestone phase)"
-    },
-    {
-      "section": "F_cross_browser (reign-theme activation)",
-      "level": "notice",
-      "line": "PHP Deprecated: File Theme without header.php is deprecated since version 3.0.0 with no alternative available. / File Theme without footer.php is deprecated...",
-      "file": "wp-includes/functions.php:6260 (Reign theme structure notice, not plugin-attributable - origin 'for', owned by the theme)"
-    },
-    {
-      "section": "F_cross_browser (reign-theme activation)",
-      "level": "warning",
-      "line": "wp_update_themes(): WordPress could not establish a secure connection to WordPress.org.",
-      "file": "wp-includes/functions.php:6260 (sandbox has no outbound internet; environment noise, unrelated to WPSS)"
-    }
-  ],
+  "failures": [],
+  "debug_log_issues": [],
   "skipped_with_reason": [
-    { "id": "S2.4-edd-fluentcart", "reason": "beta rail, not purchase-testable on this sandbox" },
-    { "id": "B-live-deactivate-reactivate-cycle", "reason": "destructive on a shared sandbox carrying substantial pre-existing QA fixtures; verified via static wpss_version/wpss_db_version schema-sync check instead" },
-    { "id": "journey08-steps-6-9-token-expiry-backdating", "reason": "no dedicated token table found (tokens ride on WP application-password user meta); mapping exact meta keys to backdate was out of budget for this pass" },
-    { "id": "E2-cloud-storage-live-upload-download", "reason": "requires a real or stub storage provider fixture; settings screen load verified, live upload/signed-URL flow not exercised" },
-    { "id": "F3-rtl-sweep", "reason": "no RTL locale configured on this sandbox; a client-side dir=rtl toggle does not survive navigation so it could not be used as a substitute" },
-    { "id": "S1.2-S1.3-license-cleared-and-free-deactivated", "reason": "both destructive to the current active QA state (would require clearing a working license / deactivating a hard dependency); not exercised" },
-    { "id": "S3.2-S3.3-wallet-ledger-parity-and-readonly", "reason": "not deep-verified in this pass beyond the D4 negative-balance spot check" },
-    { "id": "S6-display-currency", "reason": "not exercised in this pass" },
-    { "id": "S2.2-woo-refund-reverses-suborders", "reason": "not exercised in this pass; requires a live Woo refund flow" },
-    { "id": "S4.1-cloud-storage-connection-test", "reason": "settings screen renders with no fatal; the connection-test button was not clicked" }
+    { "id": "B2-order-file-migration", "reason": "No pre-1.7.0 order-file fixture available on this install; migrate-to-private-store path not exercised live this pass." },
+    { "id": "B3-existing-order-totals-unchanged", "reason": "No version-downgrade/upgrade simulation run this pass (DB_VERSION stable at 1.7.3 throughout); relying on preflight PASS and unchanged order rows as indirect evidence only." },
+    { "id": "C-tax-checkout-assertion", "reason": "Catalog checkout with tax on (Pay button vs gateway charge vs stored total vs pre-tax platform_fee) not walked live this pass; time-boxed." },
+    { "id": "C-milestone-revision-requested-workflow", "reason": "Submitted milestone phase Approve/Request-changes -> revision_requested -> Resubmit flow not walked live this pass." },
+    { "id": "C-completed-milestone-contract-totals", "reason": "Completed milestone contract summary/service-line non-zero totals + Project complete card not walked live this pass." },
+    { "id": "C-buyers-brief-no-questions", "reason": "Buyer's brief rendering for buyer/seller/owner with a service that has no configured questions not walked live this pass." },
+    { "id": "S1-license-gating", "reason": "License valid<->cleared toggle not exercised this run; would require a real/mock EDD SL license key." },
+    { "id": "S1-free-hard-dependency", "reason": "Deactivating Free to observe Pro's admin-notice degrade path was skipped deliberately — would have disrupted the rest of the combo run and required reactivation mid-sequence." },
+    { "id": "S1-no-duplicate-library", "reason": "Not independently re-audited this pass; no vendor/ diff taken." },
+    { "id": "S2.4-EDD-FluentCart", "reason": "EDD/FluentCart beta-gated, not an active rail on this install." },
+    { "id": "S3.2-wallet-balance-matches-ledger", "reason": "Not directly compared this pass; WalletManager balance read vs wpss_get_ledger_balance() cross-check not run." },
+    { "id": "S3.3-WalletManager-read-only", "reason": "Not independently re-audited this pass." },
+    { "id": "S4-E2-cloud-storage-round-trip", "reason": "wpss_storage_providers filter confirmed registers s3/gcs/do cleanly (source + live filter check), but a real upload->provider->local-copy-removed->signed-URL-download round trip against a live/stub bucket was not exercised this pass — no bucket credentials configured on this install." },
+    { "id": "S5.1-CSV-export", "reason": "Analytics screen confirmed loads with no fatal; the CSV export button itself was not clicked/downloaded this pass." },
+    { "id": "S6-display-currency", "reason": "Display-currency switcher, base-currency-in-emails/admin, and graceful-degrade-when-rates-unavailable not tested this pass — no display-currency rates configured on this install." }
   ],
-  "manual_required": []
+  "manual_required": [
+    "Journey 05 (vendor creates a service): re-walk live in browser before shipping, especially the category parent/subcategory optgroup rendering and the admin-vs-metered-vendor service-limit gate.",
+    "The 5 runbook 'beyond the journeys' 1.7.1 money assertions (tax-on checkout math, milestone revision-requested workflow, completed milestone contract totals, buyer's brief with no questions) — none were walked live this pass; recommend a follow-up focused pass before tagging.",
+    "S1 license gating and S3 wallet-ledger cross-check need a real/mock license key and a provider-vs-internal wallet comparison respectively.",
+    "S4/E2 cloud storage: confirm a live-bucket round trip (upload -> provider -> local copy removed -> signed URL) against at least one real S3/GCS/DO credential set before release, per the CLAUDE.md claim that this was 'verified end to end against a stub provider' — that stub run predates this smoke and was not re-confirmed today."
+  ]
 }
