@@ -197,6 +197,25 @@ jobs:
           mv plugin "$PLUGIN_DIR"
           wp plugin activate wp-sell-services --path=wp
 
+      # Three receipt-privacy assertions are HTTP round trips against the site's
+      # own URL: whether a receipt link is refused without a session, whether a
+      # legacy receipt really was publicly readable, and whether the moved file
+      # stops being served from uploads. Nothing but a real request can answer
+      # those, which is why they are written that way - so the job has to have
+      # something listening on the URL WordPress was installed with. It did not,
+      # so all three failed on a connection error and the privacy claim they
+      # exist to make went unasserted.
+      - name: Serve WordPress for the HTTP assertions
+        run: |
+          sudo "$(which php)" -S 127.0.0.1:80 -t wp >/dev/null 2>&1 &
+          for i in $(seq 1 20); do
+            curl -sf http://localhost/ >/dev/null && break
+            sleep 1
+          done
+          curl -sfI http://localhost/ >/dev/null \
+            && echo "serving http://localhost" \
+            || echo "::warning::nothing listening; the receipt HTTP assertions will report SKIP"
+
       - name: Install dependencies
         working-directory: ${{ env.PLUGIN_DIR }}
         run: composer install --prefer-dist --no-progress --no-suggest

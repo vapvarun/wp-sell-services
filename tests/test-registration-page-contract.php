@@ -81,11 +81,44 @@ wpss_t(
 update_option( 'wpss_pages', $restore );
 
 // 3. The shortcode renders the form that actually works.
+//
+// Two preconditions the shortcode checks before it renders anything, neither of
+// which this script used to establish. A bare WordPress ships
+// users_can_register at 0, so on CI the shortcode correctly returned "
+// Registration is currently disabled." and every assertion below failed - not
+// because the form was wrong, but because the script never asked for a site
+// that accepts registrations. Worth noting that "the old dead form is gone"
+// passed throughout, because a disabled notice contains no nonce either: an
+// assertion can be green for the wrong reason as easily as red.
+$saved_open  = get_option( 'users_can_register' );
+$saved_user  = get_current_user_id();
+wp_set_current_user( 0 );
+update_option( 'users_can_register', 1 );
+
 $html = do_shortcode( '[wpss_register]' );
 wpss_t( false !== strpos( $html, 'data-wpss-signup-form' ), '[wpss_register] renders PublicSignup::render_form()' );
 wpss_t( false !== strpos( $html, 'value="buyer"' ), 'it renders the buyer intent, not vendor' );
 wpss_t( false !== strpos( $html, 'wpss_public_signup' ), 'the form posts to a handler that exists' );
 wpss_t( false === strpos( $html, 'wpss_register_nonce' ), 'the old dead form is gone' );
+
+// The two refusals are part of the contract, and asserting them here is what
+// keeps the four above honest: they now have to pass for the right reason.
+update_option( 'users_can_register', 0 );
+wpss_t(
+	false === strpos( do_shortcode( '[wpss_register]' ), 'data-wpss-signup-form' ),
+	'a site with registration closed renders no signup form'
+);
+update_option( 'users_can_register', 1 );
+
+wp_set_current_user( 1 );
+wpss_t(
+	false === strpos( do_shortcode( '[wpss_register]' ), 'data-wpss-signup-form' ),
+	'a logged-in visitor is told so rather than offered a signup form'
+);
+wp_set_current_user( 0 );
+
+update_option( 'users_can_register', false === $saved_open ? 0 : $saved_open );
+wp_set_current_user( $saved_user );
 
 // 4. That handler is genuinely reachable logged out - the whole point.
 wpss_t( has_action( 'wp_ajax_nopriv_wpss_public_signup' ) !== false, 'wpss_public_signup is registered for logged-out visitors' );

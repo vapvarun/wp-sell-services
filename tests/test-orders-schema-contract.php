@@ -83,6 +83,34 @@ foreach ( array_keys( $messages ) as $arg ) {
 }
 
 // And the filter still filters.
+//
+// Seeded rather than read off whatever the site happens to hold. The assertion
+// below is that excluding a status returns fewer rows, and on an install with
+// no completed, cancelled or refunded order there is nothing to exclude - so it
+// compared 0 with 0 and failed on a bare WordPress while passing on a seeded
+// one. A contract that only holds when someone else's fixtures happen to be
+// present is not testing the filter, it is testing the database it ran against.
+global $wpdb;
+$orders_table = $wpdb->prefix . 'wpss_orders';
+$seeded       = array();
+foreach ( array( 'completed', 'in_progress' ) as $seed_status ) {
+	$wpdb->insert(
+		$orders_table,
+		array(
+			'order_number' => 'WPSS-SCHEMA-CONTRACT-' . wp_rand(),
+			'customer_id'  => 1,
+			'vendor_id'    => 1,
+			'service_id'   => 0,
+			'platform'     => 'standalone',
+			'status'       => $seed_status,
+			'total'        => 10.00,
+			'currency'     => 'USD',
+			'created_at'   => current_time( 'mysql' ),
+		)
+	);
+	$seeded[] = (int) $wpdb->insert_id;
+}
+
 wp_set_current_user( 1 );
 $req = new WP_REST_Request( 'GET', '/wpss/v1/orders' );
 $req->set_param( 'per_page', 100 );
@@ -104,6 +132,10 @@ $leaked = array_filter(
 );
 
 wpss_t( count( (array) $filtered ) < count( (array) $all ), 'the filter removes rows' );
+
+foreach ( $seeded as $seed_id ) {
+	$wpdb->delete( $orders_table, array( 'id' => $seed_id ) );
+}
 wpss_t( empty( $leaked ), 'no excluded status survives the filter' );
 
 echo "\n{$GLOBALS['wpss_pass']} passed, {$GLOBALS['wpss_fail']} failed\n";

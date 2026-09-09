@@ -241,13 +241,29 @@ $rest_url = (string) ( $rest[0]['file_url'] ?? '' );
 $check( 'GET /orders/{id}/receipts answers the buyer', 200 === $response->get_status() && '' !== $rest_url );
 $check( 'REST returns the gated URL', false !== strpos( $rest_url, 'action=wpss_order_file' ) && false === strpos( $rest_url, '/uploads/' ) );
 
+// Three assertions below are HTTP round trips against this site's own URL:
+// whether a receipt link is refused without a session, whether a legacy receipt
+// really was publicly readable, and whether the moved file stops being served.
+// Nothing but a real request can answer those - that is why they are written
+// this way - so they need a web server actually listening on home_url().
+// CI installs WordPress with wp-cli and serves it too, but a plain `wp
+// eval-file` on a developer's machine may have nothing on the other end, and a
+// connection error is not the same finding as a file that stays readable.
+$wpss_http_probe = wp_remote_get( home_url( '/' ), array( 'timeout' => 5, 'sslverify' => false ) );
+$wpss_http_live  = ! is_wp_error( $wpss_http_probe );
+if ( ! $wpss_http_live ) {
+	echo "SKIP  the three public-readability assertions: nothing is serving " . home_url( '/' ) . " (" . $wpss_http_probe->get_error_message() . ")\n";
+}
+
 // A logged-out fetch of that link is refused: admin-post.php authenticates from
 // the session cookie, and this request carries none.
-$anon = wp_remote_get( html_entity_decode( $rest_url ), array( 'timeout' => 10, 'sslverify' => false ) );
-$check(
-	'a logged-out fetch of the receipt is refused',
-	! is_wp_error( $anon ) && 200 !== (int) wp_remote_retrieve_response_code( $anon ) && false === strpos( (string) wp_remote_retrieve_body( $anon ), $png )
-);
+if ( $wpss_http_live ) {
+	$anon = wp_remote_get( html_entity_decode( $rest_url ), array( 'timeout' => 10, 'sslverify' => false ) );
+	$check(
+		'a logged-out fetch of the receipt is refused',
+		! is_wp_error( $anon ) && 200 !== (int) wp_remote_retrieve_response_code( $anon ) && false === strpos( (string) wp_remote_retrieve_body( $anon ), $png )
+	);
+}
 
 // --- a pre-1.7.1 receipt is moved out of the media library -----------------
 $legacy_name = 'legacy-slip-' . wp_rand() . '.png';
@@ -278,11 +294,13 @@ $wpdb->insert(
 );
 $legacy_receipt_id = (int) $wpdb->insert_id;
 
-$leak = wp_remote_get( $legacy_url, array( 'timeout' => 10, 'sslverify' => false ) );
-$check(
-	'the legacy receipt starts out publicly readable (the reported bug)',
-	! is_wp_error( $leak ) && 200 === (int) wp_remote_retrieve_response_code( $leak )
-);
+if ( $wpss_http_live ) {
+	$leak = wp_remote_get( $legacy_url, array( 'timeout' => 10, 'sslverify' => false ) );
+	$check(
+		'the legacy receipt starts out publicly readable (the reported bug)',
+		! is_wp_error( $leak ) && 200 === (int) wp_remote_retrieve_response_code( $leak )
+	);
+}
 
 ( new SchemaManager() )->sync();
 
@@ -290,8 +308,10 @@ $legacy_stored = (string) $wpdb->get_var( $wpdb->prepare( "SELECT attachments FR
 $check( 'the upgrade gives the legacy row a private file record', '' !== $legacy_stored && false !== strpos( $legacy_stored, '"kind":"receipt"' ) );
 $check( 'the upgrade drops the public URL from the row', '' !== $legacy_stored && false === strpos( $legacy_stored, '"url"' ) && false === strpos( $legacy_stored, '/uploads/' ) );
 
-$after = wp_remote_get( $legacy_url, array( 'timeout' => 10, 'sslverify' => false ) );
-$check( 'the moved file is no longer served from uploads', ! is_wp_error( $after ) && 200 !== (int) wp_remote_retrieve_response_code( $after ) );
+if ( $wpss_http_live ) {
+	$after = wp_remote_get( $legacy_url, array( 'timeout' => 10, 'sslverify' => false ) );
+	$check( 'the moved file is no longer served from uploads', ! is_wp_error( $after ) && 200 !== (int) wp_remote_retrieve_response_code( $after ) );
+}
 $check( 'the media-library row went with it', null === get_post( $legacy_attachment ) );
 
 wp_set_current_user( 1 );
