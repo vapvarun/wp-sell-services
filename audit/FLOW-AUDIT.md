@@ -9,7 +9,7 @@ Started 2026-07-23. **This is a skeleton with one flow completed.** Flows marked
 Do not read an unaudited row as working.
 
 Money rules live in `../docs/architecture/MONEY-FLOW.md`. This file must not
-restate them. (The old `MONEY-FLOW-PLAN.md` is archived — every task in it was
+restate them. (The old money-flow planning document has been removed — every task in it was
 done.)
 
 ---
@@ -25,7 +25,7 @@ done.)
 
 ## A. Money flow ✅ AUDITED
 
-Full stage-by-stage audit in `MONEY-FLOW-PLAN.md`. Summary:
+Full stage-by-stage rules in `docs/architecture/MONEY-FLOW.md`. Summary:
 
 | Stage | State |
 |---|---|
@@ -64,12 +64,12 @@ on a theme we do not ship, and record have/expect/gap.
 
 ## C. Carried forward — NOT yet triaged
 
-**`TASKS.md` was triaged and archived on 2026-08-26.** It was a branch-1.2.2
+**`TASKS.md` was triaged on 2026-08-26 and has since been deleted.** It was a branch-1.2.2
 sprint list — its own final item was "before tagging 1.2.2" — and its headline
 open items had since been fixed: the Stripe inline-duplicate in 1.2.2, the
 PayPal payout double-pay in 1.4.0. The remaining unverified items were carried
 onto the Basecamp board, which is where open work lives now. Kept for history at
-`archive/TASKS.md`; do not plan from it. The items it listed were:
+git history; do not plan from it. The items it listed were:
 
 - ~~**(P0) PayPal and Razorpay hit the unregistered-gateway-action wall**~~ —
   **REFUTED 2026-07-23.** The Stripe bug was a *mismatch*: the checkout JS posted
@@ -90,7 +90,7 @@ onto the Basecamp board, which is where open work lives now. Kept for history at
 
 ### Triage results — the list was stale, the count was wrong
 
-I repeated "36 remain" from `TASKS.md` without checking it. Cross-checked
+I repeated "36 remain" from that list without checking it. Cross-checked
 against current code, a third of what I checked was already fixed and several
 line references have drifted so far they no longer point at the described code.
 **Treat every remaining item as unverified until re-checked**, and do not quote
@@ -111,7 +111,7 @@ the open count as if it were real.
 
 | Item | Claim | Evidence it is real |
 |---|---|---|
-| 38/39/40 | PayPal payouts re-pay, no lock, 500 cap | promoted to `MONEY-FLOW-PLAN.md` S6.5-S6.8 (P0) |
+| 38/39/40 | PayPal payouts re-pay, no lock, 500 cap | promoted to the 1.2.x money-flow plan, S6.5-S6.8 (P0); shipped |
 | 104/109/129 | Drag-dropped requirement files never submitted | `DataTransfer` appears 0 times in `requirements-form.js` |
 | 112 | Messaging unread badge unindexed `JSON_CONTAINS` | still 3 occurrences in `ConversationRepository` |
 | 88/124 | Manual Order page unbounded selects | no select2/AJAX search in `ManualOrderPage` |

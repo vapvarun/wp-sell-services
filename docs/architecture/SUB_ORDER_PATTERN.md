@@ -109,9 +109,8 @@ This makes the ledger row self-describing — the reference column points
 at the object that carries the money. Reporting, audit, and CSV export
 all link correctly by following `reference_id`.
 
-Note: tip currently writes `reference_id = parent_order_id` (tracked in
-`docs/qa/1.1.0-dataflow-audit.md` finding C1); new sub-order flows must
-follow the sub-order-id convention. When tip is migrated, `has_tipped()`
+Note: tip currently writes `reference_id = parent_order_id`; new sub-order
+flows must follow the sub-order-id convention. When tip is migrated, `has_tipped()`
 and `get_order_tip()` need to update together.
 
 ## Abandon-cron convention

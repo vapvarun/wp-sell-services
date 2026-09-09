@@ -1,7 +1,7 @@
 # Future Feature Ideas — parked from the 1.1.0 completeness audit
 
 > **Date:** 2026-04-25
-> **Source:** `plans/1.1.0-COMPLETENESS-AUDIT.md` walk (25 features × 5 personas)
+> **Source:** the 1.1.0 completeness walk (25 features × 5 personas)
 >
 > No 🟢 (entirely-missing-feature) cells were found in the matrix — every feature concept described
 > in the audit exists in code to some degree. This file captures **UX improvements and new capabilities**

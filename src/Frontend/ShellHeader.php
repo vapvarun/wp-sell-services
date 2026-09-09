@@ -2,7 +2,7 @@
 /**
  * Shell Header — the one page-header component for every plugin surface.
  *
- * Implements F1 of plan/ux-uplift-findings.md: the plugin app shell owns the
+ * Implements F1 of plans/ux-uplift-findings.md: the plugin app shell owns the
  * page header on every plugin surface (archive, single, dashboard, account,
  * vendor, requests, cart/order). One `wpss-page-header` component renders the
  * title, optional subtitle, and optional actions slot. The active theme's own
