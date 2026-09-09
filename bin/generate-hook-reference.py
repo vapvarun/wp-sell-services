@@ -6,10 +6,16 @@ grouped, it explains when to reach for a hook, and that is worth a person's
 time. What it cannot be is COMPLETE - 508 hooks are fired across the two
 plugins and 237 of them appear in no document at all (Basecamp 10239807296).
 
-So this writes the other half: every hook, with the file and line it fires
-from, its type, its argument count and the first line of its docblock. It is
-regenerated, never edited. docs-audit.py fails when it is stale, which is what
-stops it rotting the way the hand-maintained citations did.
+So this writes the other half: every hook, with the file it fires from, its
+type, its argument count and the first line of its docblock. It is regenerated,
+never edited. docs-audit.py fails when it is stale, which is what stops it
+rotting the way the hand-maintained citations did.
+
+No line numbers. They were in here once, and every commit that shifted a line
+in a file that fires a hook made this document stale and turned the docs gate
+red for a reason nobody could act on - the hook had not changed, its address in
+a 3000-line file had. A gate that fires on churn is a gate people learn to
+regenerate without reading. The file path is the part a reader can use.
 
 Usage:
     python3 bin/generate-hook-reference.py           # write the file
@@ -168,7 +174,7 @@ def render(found):
         for hook in names:
             sites = [s for s in found[hook] if s["type"] == kind]
             first = sites[0]
-            where = f"`{first['file']}:{first['line']}`"
+            where = f"`{first['file']}`"
             if len(sites) > 1:
                 where += f" *(+{len(sites) - 1} more)*"
             if first["plugin"] == "Pro":
