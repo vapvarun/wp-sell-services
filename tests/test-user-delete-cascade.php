@@ -17,6 +17,8 @@
  * @package WPSellServices
  */
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 global $wpdb;
 
 require_once ABSPATH . 'wp-admin/includes/user.php';

@@ -19,6 +19,8 @@
 
 use WPSellServices\Services\ReviewService;
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 defined( 'ABSPATH' ) || exit;
 
 $fails = 0;

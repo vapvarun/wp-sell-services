@@ -18,6 +18,8 @@
  * @package WPSellServices
  */
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 $GLOBALS['wpss_pass'] = 0;
 $GLOBALS['wpss_fail'] = 0;
 

@@ -20,6 +20,8 @@ use WPSellServices\Frontend\ServiceWizard;
 use WPSellServices\Services\BuyerRequestService;
 use WPSellServices\Services\ProposalService;
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 global $wpdb;
 
 $failures = array();
