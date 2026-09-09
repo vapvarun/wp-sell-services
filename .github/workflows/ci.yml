@@ -14,6 +14,10 @@ on:
     branches:
       - main
       - '[0-9]+.[0-9]+.[0-9]+'
+  # Runnable on demand. Actions was switched off on this repository between
+  # 2026-09-03 and 2026-09-09, so nothing was gated for six days and there was
+  # no way to ask for a run on a commit that had already been pushed.
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
