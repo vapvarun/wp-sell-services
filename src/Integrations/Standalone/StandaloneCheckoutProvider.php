@@ -1216,40 +1216,18 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							<?php endif; ?>
 
 
-						</div><!-- /right column -->
-
-					</div><!-- /layout -->
-				</form>
-
-				<?php
-				/*
-				 * Reassurance badges are the SITE OWNER'S words, edited under
-				 * Settings > General > Checkout Reassurance. This is a public page a
-				 * buyer reads while paying, so the plugin must not put claims in the
-				 * owner's mouth - it previously printed "On-time Delivery / Or your
-				 * money back", a refund promise nothing in the code honours, and
-				 * "Unlimited revisions" on packages that include two.
-				 *
-				 * Where the owner has left a row blank we fall back to facts about
-				 * the package being bought, so a badge can never contradict the order
-				 * beside it.
-				 */
-				$badges = wpss_get_checkout_badges( is_array( $selected_package ) ? $selected_package : array() );
-				?>
-				<?php if ( ! empty( $badges ) ) : ?>
-				<div class="wpss-co-guarantees-bar">
-					<?php foreach ( $badges as $badge ) : ?>
-						<div class="wpss-co-guarantee">
-							<span aria-hidden="true"><?php echo esc_html( $badge['icon'] ); ?></span>
-							<div>
-								<strong><?php echo esc_html( $badge['title'] ); ?></strong>
-								<span><?php echo esc_html( $badge['note'] ); ?></span>
-							</div>
-						</div>
-					<?php endforeach; ?>
-				</div>
-				<?php endif; ?>
-
+							<?php
+							/*
+							 * Reassurance belongs where the decision is made. This block used
+							 * to render after the form closed, last on the page - 2063px down a
+							 * 2302px checkout, below the payment method - so the only buyers who
+							 * ever read what happens after paying were the ones who had already
+							 * decided to pay. In the right column under the order summary it is
+							 * visible without scrolling, while the payment form keeps the main
+							 * column and nothing is pushed further down.
+							 * See Basecamp 10289700826.
+							 */
+							?>
 				<!-- What happens next -->
 				<div class="wpss-co-steps">
 					<div class="wpss-card">
@@ -1312,6 +1290,41 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						</div>
 					</div>
 				</div>
+
+						</div><!-- /right column -->
+
+					</div><!-- /layout -->
+				</form>
+
+				<?php
+				/*
+				 * Reassurance badges are the SITE OWNER'S words, edited under
+				 * Settings > General > Checkout Reassurance. This is a public page a
+				 * buyer reads while paying, so the plugin must not put claims in the
+				 * owner's mouth - it previously printed "On-time Delivery / Or your
+				 * money back", a refund promise nothing in the code honours, and
+				 * "Unlimited revisions" on packages that include two.
+				 *
+				 * Where the owner has left a row blank we fall back to facts about
+				 * the package being bought, so a badge can never contradict the order
+				 * beside it.
+				 */
+				$badges = wpss_get_checkout_badges( is_array( $selected_package ) ? $selected_package : array() );
+				?>
+				<?php if ( ! empty( $badges ) ) : ?>
+				<div class="wpss-co-guarantees-bar">
+					<?php foreach ( $badges as $badge ) : ?>
+						<div class="wpss-co-guarantee">
+							<span aria-hidden="true"><?php echo esc_html( $badge['icon'] ); ?></span>
+							<div>
+								<strong><?php echo esc_html( $badge['title'] ); ?></strong>
+								<span><?php echo esc_html( $badge['note'] ); ?></span>
+							</div>
+						</div>
+					<?php endforeach; ?>
+				</div>
+				<?php endif; ?>
+
 
 				<script>
 				(function() {
