@@ -528,6 +528,23 @@ textarea.wpss-form-textarea {
    is what makes the owner actually own the component. */
 .wpss-btn.wpss-btn--outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border); }
 .wpss-btn.wpss-btn--outline:hover { border-color: var(--wpss-text-muted); color: var(--wpss-text); }
+
+/* Legacy single-dash aliases, carrying the same two-class weight on purpose.
+   The one-class `.wpss-btn-outline` in frontend.css scores (0,1,0) and loses to
+   a theme's anchor rule, so an <a class="wpss-btn wpss-btn-outline"> took the
+   theme link colour: #4f46e5 measured 3.34 on white and 2.33 on the dark
+   surface, against the same class on a <button> at 14.68. Matching the BEM
+   selector's (0,2,0) is enough on its own - no !important, unlike the filled
+   variants, because nothing here has to beat BuddyX's (0,5,1) content-wrapper
+   rule for a foreground ON a fill.
+
+   `.wpss-btn-ghost` is defined in no stylesheet at all, so the favourites
+   toggle on the packages widget has been rendering unstyled; it gets the ghost
+   treatment here rather than staying a dead class. */
+.wpss-btn.wpss-btn-outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border); }
+.wpss-btn.wpss-btn-outline:hover { border-color: var(--wpss-text-muted); color: var(--wpss-text); }
+.wpss-btn.wpss-btn-ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
+.wpss-btn.wpss-btn-ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
 .wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
 .wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
 
@@ -618,7 +635,30 @@ a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline),
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):link,
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):visited,
-a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
+a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
+/* Legacy single-dash variants. Templates predating the BEM rename still ship
+   `wpss-btn-primary` (55 call sites across 13 files as of 1.7.1), and they were
+   never given the protection above, so an ANCHOR carrying one took the theme's
+   link colour while a <button> carrying the same class rendered correctly.
+   Measured on the empty category archive: "Browse All Services" came out
+   #4f46e5 on a #4f46e5 fill - contrast 1.00, the label invisible - beside an
+   "Apply Filters" <button> at 6.29 with the identical class. Reported as poor
+   dark-mode visibility, but it fails in both modes and for the same reason.
+   Guarding the alias here fixes every one of those call sites at once; the
+   template migration to BEM is 1.8.0 work alongside the .wpss-btn
+   consolidation noted above. */
+a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline),
+a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):link,
+a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):visited,
+a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
+a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline),
+a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):link,
+a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):visited,
+a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
+a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline),
+a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline):link,
+a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline):visited,
+a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover {
 	color: var(--wpss-white, #fff) !important;
 }
 
@@ -649,6 +689,30 @@ a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
 }
 button.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline),
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
+	background: var(--wpss-success) !important; border-color: var(--wpss-success) !important;
+}
+
+/* Legacy single-dash variants, same reasoning as the colour block above: the
+   fill has to be pinned too, or a themed submit button keeps the theme's
+   background under the now-white label. */
+button.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline),
+a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
+	background: var(--wpss-primary) !important; border-color: var(--wpss-primary) !important;
+}
+button.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
+a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover {
+	background: var(--wpss-primary-hover) !important; border-color: var(--wpss-primary-hover) !important;
+}
+button.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline),
+a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
+	background: var(--wpss-danger) !important; border-color: var(--wpss-danger) !important;
+}
+button.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
+a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover {
+	background: var(--wpss-danger-dark, #b91c1c) !important; border-color: var(--wpss-danger-dark, #b91c1c) !important;
+}
+button.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline),
+a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 	background: var(--wpss-success) !important; border-color: var(--wpss-success) !important;
 }
 
