@@ -292,9 +292,14 @@ class ServiceModerationPage {
 			$per_page = 20;
 		}
 
+		// Rejecting a service flips it to draft (ajax_reject_service) so it leaves
+		// the marketplace and the vendor dashboard can show the Resubmit CTA. The
+		// moderation queries must therefore include drafts, or the service the
+		// admin just rejected disappears from every tab and drops out of Total
+		// Services. See Basecamp 10295239620.
 		$args = array(
 			'post_type'      => 'wpss_service',
-			'post_status'    => array( 'pending', 'publish' ),
+			'post_status'    => array( 'pending', 'publish', 'draft' ),
 			'posts_per_page' => absint( $per_page ),
 			'paged'          => $paged,
 			'orderby'        => 'date',
@@ -321,8 +326,19 @@ class ServiceModerationPage {
 			}
 		}
 
+		// The status tabs pin a meta value, so a draft with no moderation meta can
+		// never match one. The All tab has no such pin, so it needs the guard: a
+		// vendor's unsubmitted draft never entered moderation and must not appear
+		// in the queue (get_status_counts() would read it as approved, since a
+		// missing meta COALESCEs to approved).
+		if ( 'all' === $status_filter ) {
+			add_filter( 'posts_where', array( $this, 'exclude_unmoderated_drafts' ) );
+		}
+
 		$query    = new \WP_Query( $args );
 		$services = $query->posts;
+
+		remove_filter( 'posts_where', array( $this, 'exclude_unmoderated_drafts' ) );
 
 		// Get counts for tabs.
 		$counts = $this->get_status_counts();
@@ -587,6 +603,31 @@ class ServiceModerationPage {
 	}
 
 	/**
+	 * Drop drafts that never entered moderation from the All tab.
+	 *
+	 * A rejected service is a draft carrying `_wpss_moderation_status =
+	 * rejected`. A vendor's work-in-progress draft carries no moderation meta at
+	 * all (ensure_meta() only backfills on an admin save), so the two are told
+	 * apart by the meta, never by post_status.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $where Current WHERE clause.
+	 * @return string
+	 */
+	public function exclude_unmoderated_drafts( string $where ): string {
+		global $wpdb;
+
+		return $where . $wpdb->prepare(
+			" AND ( {$wpdb->posts}.post_status <> 'draft' OR EXISTS (
+				SELECT 1 FROM {$wpdb->postmeta} md
+				WHERE md.post_id = {$wpdb->posts}.ID AND md.meta_key = %s
+			) ) ",
+			self::META_KEY
+		);
+	}
+
+	/**
 	 * Get status counts.
 	 *
 	 * @return array
@@ -609,7 +650,10 @@ class ServiceModerationPage {
 				FROM {$wpdb->posts} p
 				LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = %s
 				WHERE p.post_type = 'wpss_service'
-				AND p.post_status IN ('pending', 'publish')
+				AND (
+					p.post_status IN ('pending', 'publish')
+					OR ( p.post_status = 'draft' AND pm.meta_value IS NOT NULL )
+				)
 				GROUP BY COALESCE(pm.meta_value, %s)",
 				self::STATUS_APPROVED,
 				self::META_KEY,
