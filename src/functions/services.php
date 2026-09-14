@@ -1006,6 +1006,108 @@ function wpss_get_service_limits(): array {
 }
 
 /**
+ * The rules a service must satisfy before buyers can see it.
+ *
+ * The one place those rules live. The frontend wizard enforced six of them
+ * server-side while the admin metabox enforced none, so a site owner could
+ * publish straight from wp-admin what the wizard refused from the vendor
+ * dashboard: no category, no main image, no delivery time, and a price under
+ * the minimum. Verified on a live install - a $2.00 service with no category
+ * and no image published and appeared on /services/, auto-approved, because
+ * admin-created services bypass moderation too. See Basecamp 10289819803.
+ *
+ * Callers pass what they have; a key that is absent is not checked, so a
+ * partial save path can validate the subset it owns.
+ *
+ * @since 1.7.1
+ *
+ * @param array<string,mixed> $service {
+ *     The service fields to check.
+ *
+ *     @type string                         $title        Service title.
+ *     @type array<int,int>                 $category_ids Assigned category term ids.
+ *     @type string                         $description  Service description.
+ *     @type array<int,array<string,mixed>> $packages     Package rows with price + delivery_days.
+ *     @type int                            $thumbnail_id Main image attachment id.
+ * }
+ * @return string[] User-facing error sentences; empty when the service may go live.
+ */
+function wpss_validate_service_publishable( array $service ): array {
+	$errors = array();
+
+	if ( array_key_exists( 'title', $service ) ) {
+		$title = trim( (string) $service['title'] );
+		if ( '' === $title ) {
+			$errors[] = __( 'Please enter a service title.', 'wp-sell-services' );
+		} elseif ( mb_strlen( $title ) < 10 ) {
+			$errors[] = __( 'Please enter at least 10 characters for the service title.', 'wp-sell-services' );
+		}
+	}
+
+	if ( array_key_exists( 'category_ids', $service ) && empty( $service['category_ids'] ) ) {
+		$errors[] = __( 'Please select a category.', 'wp-sell-services' );
+	}
+
+	if ( array_key_exists( 'description', $service ) ) {
+		$description = trim( wp_strip_all_tags( (string) $service['description'] ) );
+		if ( mb_strlen( $description ) < 120 ) {
+			$errors[] = __( 'Description must be at least 120 characters.', 'wp-sell-services' );
+		}
+	}
+
+	if ( array_key_exists( 'packages', $service ) ) {
+		$packages = array_filter(
+			(array) $service['packages'],
+			static function ( $package ) {
+				return is_array( $package ) && ( ! empty( $package['name'] ) || ! empty( $package['price'] ) );
+			}
+		);
+
+		if ( empty( $packages ) ) {
+			$errors[] = __( 'Please add at least one package.', 'wp-sell-services' );
+		} else {
+			// The cheapest package is the price buyers see on the card, so it is
+			// the one the floor applies to - and it is the wizard's Basic tier by
+			// construction.
+			$min_price = (float) apply_filters( 'wpss_min_service_price', 5 );
+			$cheapest  = null;
+
+			foreach ( $packages as $package ) {
+				if ( null === $cheapest || (float) ( $package['price'] ?? 0 ) < (float) ( $cheapest['price'] ?? 0 ) ) {
+					$cheapest = $package;
+				}
+			}
+
+			if ( (float) ( $cheapest['price'] ?? 0 ) < $min_price ) {
+				$errors[] = sprintf(
+					/* translators: %s: formatted minimum price (e.g. $5.00). */
+					__( 'Basic package price must be at least %s.', 'wp-sell-services' ),
+					wpss_format_price( $min_price )
+				);
+			}
+
+			if ( empty( $cheapest['delivery_days'] ) ) {
+				$errors[] = __( 'Please set a delivery time for the Basic package.', 'wp-sell-services' );
+			}
+		}
+	}
+
+	if ( array_key_exists( 'thumbnail_id', $service ) && empty( $service['thumbnail_id'] ) ) {
+		$errors[] = __( 'Please upload a main image.', 'wp-sell-services' );
+	}
+
+	/**
+	 * Filter the reasons a service may not go live.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string[]            $errors  Error sentences.
+	 * @param array<string,mixed> $service The validated input.
+	 */
+	return apply_filters( 'wpss_service_publish_errors', $errors, $service );
+}
+
+/**
  * Truncate a service's lists to wpss_get_service_limits().
  *
  * The one enforcer for every save path (wizard, REST, admin metabox,

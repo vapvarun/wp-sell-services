@@ -833,11 +833,21 @@ class ServiceWizard {
 							<div class="wpss-form-row wpss-form-row--2col">
 								<div class="wpss-form-group">
 									<label class="wpss-form-label"><?php esc_html_e( 'Answer Type', 'wp-sell-services' ); ?></label>
+									<?php
+									/*
+									 * Rendered from the shared map, not hardcoded. This list
+									 * offered four of the eight types the admin metabox offers,
+									 * and labelled `select` "Multiple Choice" where the metabox
+									 * calls that `radio` - so the wizard, the primary authoring
+									 * surface, could not produce a Number/Yes-No/radio/Date
+									 * requirement and disagreed with admin on what the labels
+									 * meant. See Basecamp 10286129293.
+									 */
+									?>
 									<select class="wpss-form-select" x-model="data.requirements[index].type">
-										<option value="text"><?php esc_html_e( 'Short Text', 'wp-sell-services' ); ?></option>
-										<option value="textarea"><?php esc_html_e( 'Long Text', 'wp-sell-services' ); ?></option>
-										<option value="file"><?php esc_html_e( 'File Upload', 'wp-sell-services' ); ?></option>
-										<option value="select"><?php esc_html_e( 'Multiple Choice', 'wp-sell-services' ); ?></option>
+										<?php foreach ( wpss_requirement_type_labels() as $wpss_req_type => $wpss_req_label ) : ?>
+											<option value="<?php echo esc_attr( $wpss_req_type ); ?>"><?php echo esc_html( $wpss_req_label ); ?></option>
+										<?php endforeach; ?>
 									</select>
 								</div>
 								<div class="wpss-form-group">
@@ -848,8 +858,15 @@ class ServiceWizard {
 									</label>
 								</div>
 							</div>
-							<!-- Options for select type -->
-							<div class="wpss-form-group" x-show="data.requirements[index].type === 'select'" x-cloak>
+							<?php
+							/*
+							 * Shown for every type that needs caller-supplied choices, not
+							 * `select` alone - a vendor adding a Multiple Choice (radio)
+							 * requirement needs somewhere to type the choices just as much.
+							 */
+							?>
+							<!-- Options for the choice types -->
+							<div class="wpss-form-group" x-show="<?php echo esc_attr( wp_json_encode( array_values( wpss_requirement_choice_types() ) ) ); ?>.includes(data.requirements[index].type)" x-cloak>
 								<label class="wpss-form-label"><?php esc_html_e( 'Options', 'wp-sell-services' ); ?></label>
 								<input type="text"
 									class="wpss-form-input"

@@ -32,6 +32,13 @@ class ServiceMetabox {
 	public function init(): void {
 		add_action( 'add_meta_boxes', array( $this, 'register_metaboxes' ) );
 		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'save_meta' ), 10, 2 );
+
+		// Late, so it is the last word on post_status. The Moderation Status
+		// metabox saves on the same hook at the same priority and maps an
+		// approved service to `publish`; at priority 10 the winner would depend
+		// on which class registered first, and an invalid service could be
+		// demoted here then re-published a moment later in the same request.
+		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'enforce_publish_rules' ), 99, 2 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_notices', array( $this, 'limit_notice' ) );
 	}
@@ -80,16 +87,9 @@ class ServiceMetabox {
 	 * @return array<string, string>
 	 */
 	private function get_requirement_types(): array {
-		return array(
-			'text'     => __( 'Short Text', 'wp-sell-services' ),
-			'textarea' => __( 'Long Text', 'wp-sell-services' ),
-			'number'   => __( 'Number', 'wp-sell-services' ),
-			'checkbox' => __( 'Yes/No', 'wp-sell-services' ),
-			'select'   => __( 'Dropdown', 'wp-sell-services' ),
-			'radio'    => __( 'Multiple Choice', 'wp-sell-services' ),
-			'file'     => __( 'File Upload', 'wp-sell-services' ),
-			'date'     => __( 'Date', 'wp-sell-services' ),
-		);
+		// Shared with the frontend wizard so the two authoring surfaces cannot
+		// drift again. See wpss_requirement_type_labels().
+		return wpss_requirement_type_labels();
 	}
 
 	/**
@@ -98,7 +98,7 @@ class ServiceMetabox {
 	 * @return array<int, string>
 	 */
 	private function get_choice_requirement_types(): array {
-		return array( 'select', 'radio' );
+		return wpss_requirement_choice_types();
 	}
 
 	/**
@@ -886,6 +886,129 @@ class ServiceMetabox {
 	}
 
 	/**
+	 * Keep a service that fails the marketplace rules out of the marketplace.
+	 *
+	 * The wizard refuses to publish a service with no category, no main image,
+	 * no delivery time or a sub-minimum price. wp-admin enforced none of that,
+	 * so the same service published from the backend and went live - see
+	 * wpss_validate_service_publishable().
+	 *
+	 * An invalid service is taken off the marketplace whatever route put it
+	 * there. Distinguishing "going live now" from "already live" is not
+	 * reliable here: the block editor publishes over REST and posts the
+	 * metaboxes in a SECOND request, so by the time this runs - after the meta
+	 * it must validate has been written - the row already reads `publish` and
+	 * the transition looks like publish -> publish either way. One rule, always
+	 * applied, is both simpler and the one that protects buyers; the notice
+	 * names every reason so the owner can fix and publish again.
+	 *
+	 * This only fires on an explicit editor save, never in bulk: Quick Edit and
+	 * bulk edit post no `wpss_service_nonce`, and the frontend wizard, the REST
+	 * controllers and the moderation Approve action do not either, so each of
+	 * those keeps its own publishing rules.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param \WP_Post $post    Post object.
+	 * @return void
+	 */
+	public function enforce_publish_rules( int $post_id, \WP_Post $post ): void {
+		// Same gate as save_meta(): this is the editor's rule, so it applies only
+		// to an editor save. Re-checked here because this runs on its own hook.
+		if ( ! isset( $_POST['wpss_service_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['wpss_service_nonce'] ), 'wpss_service_meta' ) ) {
+			return;
+		}
+
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		// post_status on $post is the value as saved; re-read so a handler that
+		// already changed it in this request is respected.
+		if ( 'publish' !== get_post_status( $post_id ) ) {
+			return;
+		}
+
+		$errors = wpss_validate_service_publishable(
+			array(
+				'title'        => $post->post_title,
+				'category_ids' => wp_get_post_terms( $post_id, 'wpss_service_category', array( 'fields' => 'ids' ) ),
+				'description'  => $post->post_content,
+				'packages'     => (array) get_post_meta( $post_id, '_wpss_packages', true ),
+				'thumbnail_id' => get_post_thumbnail_id( $post_id ),
+			)
+		);
+
+		if ( empty( $errors ) ) {
+			return;
+		}
+
+		// Detach both handlers: wp_update_post() fires save_post again, which
+		// would re-enter this very method as well as re-running the meta save.
+		remove_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'save_meta' ), 10 );
+		remove_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'enforce_publish_rules' ), 99 );
+		wp_update_post(
+			array(
+				'ID'          => $post_id,
+				'post_status' => 'draft',
+			)
+		);
+		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'save_meta' ), 10, 2 );
+		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'enforce_publish_rules' ), 99, 2 );
+	}
+
+	/**
+	 * Show what still stands between this service and the marketplace.
+	 *
+	 * Computed on every render rather than stashed in a transient after a save.
+	 * A one-shot message could not be delivered reliably: the block editor drops
+	 * classic admin notices, and its metabox-refresh request consumed the
+	 * transient without the result reaching the screen - the owner got a service
+	 * silently dropped back to draft and no reason for it.
+	 *
+	 * Reading the rules live also makes this a checklist rather than an error:
+	 * it is there while the owner fills the form, not only after a refused
+	 * publish, and it disappears the moment the service qualifies.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param \WP_Post $post Service being edited.
+	 * @return void
+	 */
+	private function render_invalid_notice( \WP_Post $post ): void {
+		if ( $this->is_new_service( $post ) ) {
+			return;
+		}
+
+		$errors = wpss_validate_service_publishable(
+			array(
+				'title'        => $post->post_title,
+				'category_ids' => wp_get_post_terms( $post->ID, 'wpss_service_category', array( 'fields' => 'ids' ) ),
+				'description'  => $post->post_content,
+				'packages'     => (array) get_post_meta( $post->ID, '_wpss_packages', true ),
+				'thumbnail_id' => get_post_thumbnail_id( $post->ID ),
+			)
+		);
+
+		if ( empty( $errors ) ) {
+			return;
+		}
+
+		echo '<div class="notice notice-warning wpss-service-invalid-notice" style="margin:0 0 16px;"><p><strong>';
+		esc_html_e( 'Not ready for the marketplace yet. This service stays a draft until:', 'wp-sell-services' );
+		echo '</strong></p><ul style="list-style:disc;margin-left:20px;">';
+		foreach ( $errors as $message ) {
+			echo '<li>' . esc_html( $message ) . '</li>';
+		}
+		echo '</ul></div>';
+	}
+
+	/**
 	 * Get service data tab definitions.
 	 *
 	 * @return array Tab configuration.
@@ -946,6 +1069,13 @@ class ServiceMetabox {
 	 */
 	public function render_service_data_metabox( \WP_Post $post ): void {
 		wp_nonce_field( 'wpss_service_meta', 'wpss_service_nonce' );
+
+		// Rendered here, not through admin_notices: the block editor suppresses
+		// classic notices, and a service silently dropped back to draft with no
+		// stated reason is a worse experience than the missing validation was.
+		// The editor re-fetches this metabox after every save, so the reasons
+		// appear straight away without a reload.
+		$this->render_invalid_notice( $post );
 
 		$is_new = $this->is_new_service( $post );
 		$tabs   = $this->get_service_data_tabs();
@@ -1350,7 +1480,16 @@ class ServiceMetabox {
 	 */
 	private function render_package_template(): void {
 		?>
-		<div class="wpss-package-item collapsed" data-index="{{data.index}}">
+		<?php
+		/*
+		 * A package the owner just added opens ready to fill in. It used to render
+		 * collapsed, so "Add Package" appeared to do nothing but add a grey bar the
+		 * owner then had to find and click. Packages loaded from saved data still
+		 * render collapsed (render_package above) - that is a list to scan, this is
+		 * a form to complete. See Basecamp 10286092451.
+		 */
+		?>
+		<div class="wpss-package-item" data-index="{{data.index}}">
 			<div class="wpss-package-header">
 				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
 				<span class="wpss-package-title"><?php esc_html_e( 'New Package', 'wp-sell-services' ); ?></span>

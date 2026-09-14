@@ -352,6 +352,56 @@ function wpss_requirement_types(): array {
 }
 
 /**
+ * Requirement types a vendor can choose, with their labels.
+ *
+ * The one list every authoring surface renders from. Three had drifted: the
+ * frontend wizard hardcoded four options, the admin metabox returned eight, and
+ * the canonical whitelist above allows eleven. A vendor using the wizard - the
+ * primary authoring path - could not add Number, Yes/No, Multiple Choice or
+ * Date at all, though every one of them stores, renders and submits correctly
+ * on the buyer's requirements form.
+ *
+ * Worse than the missing four: the two lists disagreed on what a label MEANT.
+ * The wizard called `select` "Multiple Choice"; the metabox calls `select`
+ * "Dropdown" and reserves "Multiple Choice" for `radio`. The same words
+ * produced a different field depending on where the vendor was standing.
+ *
+ * Narrower than wpss_requirement_types() on purpose: `multiselect`, `url` and
+ * `email` stay accepted for data already stored and for REST callers, but are
+ * not offered in the authoring UI until they have a reviewed editing
+ * experience. Widen here and both surfaces pick it up.
+ *
+ * @since 1.7.1
+ *
+ * @see Basecamp 10286129293
+ *
+ * @return array<string, string> Type slug => translated label.
+ */
+function wpss_requirement_type_labels(): array {
+	return array(
+		'text'     => __( 'Short Text', 'wp-sell-services' ),
+		'textarea' => __( 'Long Text', 'wp-sell-services' ),
+		'number'   => __( 'Number', 'wp-sell-services' ),
+		'checkbox' => __( 'Yes/No', 'wp-sell-services' ),
+		'select'   => __( 'Dropdown', 'wp-sell-services' ),
+		'radio'    => __( 'Multiple Choice', 'wp-sell-services' ),
+		'file'     => __( 'File Upload', 'wp-sell-services' ),
+		'date'     => __( 'Date', 'wp-sell-services' ),
+	);
+}
+
+/**
+ * Requirement types that need a caller-supplied list of choices.
+ *
+ * @since 1.7.1
+ *
+ * @return string[]
+ */
+function wpss_requirement_choice_types(): array {
+	return array( 'select', 'radio', 'multiselect' );
+}
+
+/**
  * Normalise a requirement list into the one schema every surface reads.
  *
  * Four shapes shared the `_wpss_requirements` key: the wizard wrote
