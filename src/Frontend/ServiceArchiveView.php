@@ -649,12 +649,20 @@ class ServiceArchiveView {
 		// explicitly further down; this makes the two routes agree.
 		$query->set( 'post_type', 'wpss_service' );
 
+		// Same reasoning for the page size: /service/ and /service-category/<slug>/
+		// are the same catalog as the mapped /services/ page, so they must page at
+		// the same rate. Left inside the mapped-page branch below, the post-type
+		// and taxonomy archives fell through to the Reading setting (10 by
+		// default) while /services/ used 12 - two entry points to one catalog
+		// disagreeing, with "12 services found" printed above 10 cards. See
+		// Basecamp 10285814256.
+		$query->set( 'posts_per_page', apply_filters( 'wpss_services_per_page', 12 ) );
+
 		// Convert the mapped services page query to fetch services.
 		if ( $is_services_page ) {
 			$query->set( 'post_type', 'wpss_service' );
 			$query->set( 'page_id', '' );
 			$query->set( 'pagename', '' );
-			$query->set( 'posts_per_page', apply_filters( 'wpss_services_per_page', 12 ) );
 
 			// Translate singular sub-page paging into archive paging. When the
 			// services page is the static front page (or any page) and is
