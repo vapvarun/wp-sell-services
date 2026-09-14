@@ -271,7 +271,19 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 								<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
 							</a>
 						<?php endif; ?>
-						<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--ghost wpss-btn--sm" target="_blank">
+						<?php
+						/*
+						 * Outline, not ghost. View sits between Edit and Pause as a peer
+						 * action a vendor uses constantly, but the two --ghost rules that
+						 * actually load (design-system.css, unified-dashboard.css) set only
+						 * a transparent background and muted text, leaving the base button's
+						 * 2px border at rgba(0,0,0,0). The result rendered as plain text
+						 * between three bordered siblings. The one --ghost rule that does
+						 * paint a border lives in vendor-dashboard.css, which nothing
+						 * enqueues. See Basecamp 10285993241.
+						 */
+						?>
+						<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm" target="_blank">
 							<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 						</a>
 						<?php
