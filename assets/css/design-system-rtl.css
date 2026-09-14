@@ -327,6 +327,51 @@
    from prefers-color-scheme sets one of those signals, so real theme dark mode
    still works. */
 
+/* Native form widgets follow the same rule as the tokens above: the THEME's
+   dark mode, never the OS. A date/time input renders its picker panel, spin
+   buttons and calendar indicator from `color-scheme`, which the plugin never
+   declared - so the panel inherited the OS preference and opened black on an
+   otherwise light page (the buyer-request Deadline field, Basecamp
+   10289684894). Declaring it light here, and dark only under the same explicit
+   theme selectors, makes the native chrome track the page it sits on. */
+.wpss-app input,
+.wpss-app select,
+.wpss-app textarea,
+input.wpss-input,
+input.wpss-form-input,
+select.wpss-form-select,
+textarea.wpss-form-textarea {
+	color-scheme: light;
+}
+
+/* The same set under theme dark mode. Scoped to the plugin's own classes as
+   well as .wpss-app, because plugin forms are not all inside that wrapper -
+   the buyer-request Deadline field is one that is not, and scoping to the
+   wrapper alone would have left it declaring light on a dark page. */
+:root[data-theme="dark"] .wpss-app input,
+:root[data-theme="dark"] .wpss-app select,
+:root[data-theme="dark"] .wpss-app textarea,
+:root[data-theme="dark"] input.wpss-input,
+:root[data-theme="dark"] input.wpss-form-input,
+:root[data-theme="dark"] select.wpss-form-select,
+:root[data-theme="dark"] textarea.wpss-form-textarea,
+:root[data-bx-mode="dark"] .wpss-app input,
+:root[data-bx-mode="dark"] .wpss-app select,
+:root[data-bx-mode="dark"] .wpss-app textarea,
+:root[data-bx-mode="dark"] input.wpss-input,
+:root[data-bx-mode="dark"] input.wpss-form-input,
+:root[data-bx-mode="dark"] select.wpss-form-select,
+:root[data-bx-mode="dark"] textarea.wpss-form-textarea,
+.wpss-dark .wpss-app input,
+.wpss-dark .wpss-app select,
+.wpss-dark .wpss-app textarea,
+.wpss-dark input.wpss-input,
+.wpss-dark input.wpss-form-input,
+.wpss-dark select.wpss-form-select,
+.wpss-dark textarea.wpss-form-textarea {
+	color-scheme: dark;
+}
+
 :root[data-theme="dark"],
 :root[data-bx-mode="dark"],
 .wpss-dark .wpss-app {
