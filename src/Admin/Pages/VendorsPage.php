@@ -896,7 +896,24 @@ class VendorsPage {
 									data-status="active"><?php esc_html_e( 'Activate', 'wp-sell-services' ); ?></button>
 						</span>
 					<?php elseif ( 'pending' === $status ) : ?>
-						<span class="approve">
+						<?php
+						/*
+						 * `wpss-approve`, not the bare `approve` the other row
+						 * actions use. WordPress core's list-tables.css ships
+						 * `.approve, .unapproved .unapprove { display: none; }`
+						 * for comment moderation, where the class is toggled per
+						 * row state - so a bare `approve` anywhere in wp-admin is
+						 * hidden outright. The Approve button was in the DOM and
+						 * correctly wired, and the owner could not see it: the
+						 * Pending tab offered only View, Edit User and Reject.
+						 *
+						 * The siblings keep their bare names on purpose. Core
+						 * STYLES `.view`, `.edit`, `.trash` and `.untrash` as row
+						 * actions rather than hiding them, so they render and look
+						 * right; `.approve` is the only one core takes away.
+						 */
+						?>
+						<span class="wpss-approve">
 							| <button type="button" class="button-link wpss-change-status"
 									data-vendor-id="<?php echo esc_attr( $vendor->user_id ); ?>"
 									data-status="active"><?php esc_html_e( 'Approve', 'wp-sell-services' ); ?></button>
