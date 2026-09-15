@@ -285,6 +285,8 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Improve  - One setup notice tells the owner when a mapped page is missing, no payment method is enabled, or the selected store plugin is inactive; links to unpublished pages are hidden.
 * Improve  - Dashboard lists, favourites and the vendor directory are paginated, the vendor directory can be sorted and filtered, admin counts are cached, and new indexes keep review moderation and the vendor directory fast on large sites.
 * Improve  - The delete-data setting now says that mapped pages are left in place, and pages the plugin creates are marked so a future release can offer to remove them.
+* Improve  - The "What happens next" steps now sit beside the order summary on checkout, where buyers see them before paying rather than after the payment form.
+* Improve  - Adding a package, add-on, requirement or FAQ in the service editor opens it ready to fill in, and each row's remove button is visible.
 * Fix      - Refunds made in the PayPal or Razorpay dashboard now update the order and reverse the vendor credit.
 * Fix      - A Stripe payment webhook arriving before checkout finishes no longer creates a duplicate order, and cart refunds land on the right order.
 * Fix      - Offline and manual gateway refunds are marked as pending manual payment instead of being reported as sent.
@@ -321,6 +323,20 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Outline buttons take their colours from the design system again, so they follow the theme instead of a fixed grey.
 * Fix      - The Contact Seller button no longer keeps the browser's default grey, which left it unreadable when the theme is dark.
 * Fix      - The Featured badge on portfolio items uses dark text on amber so the label is legible.
+* Fix      - A rejected service stays in the Rejected tab of Moderation with its reason, and the Total Services count no longer drops when one is rejected.
+* Fix      - Services created in the admin now follow the same rules as the vendor wizard: a category, a main image, a delivery time and the minimum price are required before one can go live.
+* Fix      - A withdrawal is checked against the vendor's balance again at the moment it is paid, so a payout approved before a refund cleared the earnings can no longer overdraw the vendor.
+* Fix      - Opening a dispute now shows the opening statement in the messages panel instead of "No messages yet", and lists it once on the activity timeline.
+* Fix      - Approving or rejecting a vendor sends one email instead of two.
+* Fix      - Buyer requests show every category they were filed under, on both the request card and the request page, instead of only the first.
+* Fix      - The service wizard offers the same eight requirement answer types as the admin editor, and the type names now mean the same thing on both.
+* Fix      - The services archive at /service/ shows the same number of services per page as the mapped services page, and the count above the grid matches what is listed.
+* Fix      - Date fields follow the site's light or dark mode instead of the visitor's operating system.
+* Fix      - The View action in My Services is styled as a button alongside Edit and Pause.
+* Fix      - The floating cart button no longer sits on top of the package card or the seller details while a buyer is choosing or paying.
+* Fix      - Buttons in older templates keep their own colours instead of taking the theme's link colour, which left some labels unreadable against their own background.
+* Fix      - The Earnings and Payouts tiles sit in even rows, so Total Withdrawn is no longer stranded on a line of its own.
+* Fix      - A showcase video fills the service gallery instead of half of it.
 * Security - Message, contact and dispute attachments are stored privately like deliveries, dispute evidence checks ownership, and vendor payout details are encrypted at rest.
 * Security - Payment receipts are stored privately like deliveries instead of in the media library.
 * Security - Buyers and vendors can no longer refund or cancel orders outside their allowed steps; retired accept and decline actions removed.

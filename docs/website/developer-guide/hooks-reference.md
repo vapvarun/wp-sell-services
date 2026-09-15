@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**513 hooks** across **728** firing sites.
+**514 hooks** across **728** firing sites.
 
 ## Actions (274)
 
@@ -291,7 +291,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (239)
+## Filters (240)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -369,11 +369,11 @@ guide; this is the complete index.
 | `wpss_email_before_send` | 2 | `src/Services/EmailService.php` | Filter email before sending. |
 | `wpss_email_button_text` | 2 | `templates/emails/cancellation-requested.php` *(+20 more)* |  |
 | `wpss_email_button_url` | 3 | `templates/emails/cancellation-requested.php` *(+20 more)* |  |
-| `wpss_email_from_name` | 1 | `src/Services/EmailService.php` *(+1 more)* | Filter the email "from" name for white-labelling. |
+| `wpss_email_from_name` | 1 | `src/Services/EmailService.php` | Filter the email "from" name for white-labelling. |
 | `wpss_email_header_vars` | 2 | `src/Services/EmailService.php` | Filter email header/template variables for white-labelling. |
 | `wpss_email_preference_categories` | 3 | `src/functions/notifications.php` | Filters the email preference categories offered to a user. |
 | `wpss_email_providers` | 1 | `src/Core/Plugin.php` | Filter the registered email providers. |
-| `wpss_email_subject` | 3 | `src/Services/EmailService.php` *(+1 more)* | Filters the email subject line before sending. |
+| `wpss_email_subject` | 3 | `src/Services/EmailService.php` | Filters the email subject line before sending. |
 | `wpss_ensure_pay_order` | 2 | `src/functions/urls.php` | Filter the pay URL after the rail has made sure its store order exists. |
 | `wpss_foreign_page_map` | 1 | `src/Admin/PageDropdownWalker.php` | Filter the pages shown as belonging to another plugin. |
 | `wpss_format_price` | 3 | `src/functions/money.php` |  |
@@ -393,7 +393,7 @@ guide; this is the complete index.
 | `wpss_member_display_name` | 3 | `src/functions/vendors.php` *(+1 more)* | This filter is documented below. |
 | `wpss_message_email_delay_minutes` | 1 | `src/Services/EmailService.php` | Filter the message-email delay. |
 | `wpss_messages_per_page` | 2 | `templates/dashboard/sections/messages.php` | Filter how many conversations one page of the messages list shows. |
-| `wpss_min_service_price` | 1 | `src/Frontend/ServiceWizard.php` *(+2 more)* |  |
+| `wpss_min_service_price` | 1 | `src/Frontend/ServiceWizard.php` *(+3 more)* |  |
 | `wpss_no_requests_message` | 1 | `templates/content-no-requests.php` | Template: No Requests Found |
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php` | Filter email content before sending. |
@@ -479,6 +479,7 @@ guide; this is the complete index.
 | `wpss_service_meta_fields` | 2 | `src/Admin/Metaboxes/ServiceMetabox.php` | Filter additional service meta fields rendered in the metabox. |
 | `wpss_service_order_slug` | 1 | `src/Core/Plugin.php` *(+3 more)* | Filter the service order URL slug. |
 | `wpss_service_post_type_args` | 1 | `src/PostTypes/ServicePostType.php` | Filter service post type arguments. |
+| `wpss_service_publish_errors` | 2 | `src/functions/services.php` | Filter the reasons a service may not go live. |
 | `wpss_service_schema` | 2 | `src/SEO/SchemaMarkup.php` |  |
 | `wpss_service_slug` | 1 | `src/PostTypes/ServicePostType.php` | Filter the service post type slug. |
 | `wpss_service_tag_args` | 1 | `src/PostTypes/ServicePostType.php` | Filter service tag taxonomy arguments. |
@@ -488,6 +489,7 @@ guide; this is the complete index.
 | `wpss_settings_sections` | 1 | `src/functions/urls.php` | Filter the known admin settings sections. |
 | `wpss_settings_tabs` | 1 | `src/Admin/Settings.php` | Filter the settings tabs. |
 | `wpss_should_reverse_vendor_earnings` | 2 | `src/Services/OrderWorkflowManager.php` | Filters whether the vendor's wallet earnings should be reversed. |
+| `wpss_show_mini_cart` | 1 | `src/Frontend/Frontend.php` | Filter whether the floating mini-cart renders on the current request. |
 | `wpss_show_powered_by` | 1 | `src/Frontend/UnifiedDashboard.php` | Filters whether the "Powered by WP Sell Services" footer credit is rendered on the frontend dashboard. |
 | `wpss_single_request_layout` | 2 | `templates/single-request.php` | Filter: wpss_single_request_layout |
 | `wpss_single_service_layout` | 2 | `templates/single-service.php` | Filter: wpss_single_service_layout |
@@ -522,7 +524,6 @@ guide; this is the complete index.
 | `wpss_vendor_profile_fields` | 2 | `templates/vendor/profile.php` | Filter additional vendor profile fields. |
 | `wpss_vendor_registration_open` | 1 | `src/API/VendorsController.php` |  |
 | `wpss_vendor_slug` | 1 | `src/Core/Plugin.php` *(+1 more)* | Filter the vendor profile URL slug. |
-| `wpss_vendor_status_email_vars` | 3 | `src/Services/VendorService.php` | Filters the template variables for a vendor status-change email. |
 | `wpss_vendor_welcome_email_content` | 3 | `src/Services/NotificationService.php` | Filter vendor welcome email content. |
 | `wpss_vendors_page_id` | 1 | `src/functions/vendors.php` | Filter the resolved vendor-directory page ID. |
 | `wpss_vendors_url` | 2 | `src/functions/vendors.php` | Filter the vendor-directory URL. |
