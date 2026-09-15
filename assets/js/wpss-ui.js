@@ -30,14 +30,25 @@
 		 * @param {string} [options.confirmText] Label for the confirm button (default 'Confirm').
 		 * @param {string} [options.cancelText]  Label for the cancel button (default 'Cancel').
 		 * @param {string} [options.tone]        'danger' tints the confirm button red.
-		 * @return {Promise<boolean>} Resolves true on confirm, false on cancel/Esc/backdrop.
+		 * @param {Object} [options.prompt]      Ask for text as well as consent. Renders a
+		 *                                       textarea; {label, placeholder, maxLength}.
+		 * @return {Promise<boolean|string>} Without options.prompt: true on confirm, false
+		 *                                   otherwise. With it: the entered string on
+		 *                                   confirm (possibly empty), false on
+		 *                                   cancel/Esc/backdrop - so test `false === result`,
+		 *                                   never truthiness.
 		 */
 		window.wpssConfirm = function( message, options ) {
 			return new Promise( function( resolve ) {
 				options = options || {};
 
-				var confirmText = options.confirmText || 'Confirm';
-				var cancelText  = options.cancelText  || 'Cancel';
+				// Fall back to the site's language, then to English. The literals
+				// are the last resort for a page that loaded the script without
+				// the localized strings, not the normal path.
+				var i18n = window.wpssUiI18n || {};
+
+				var confirmText = options.confirmText || i18n.confirm || 'Confirm';
+				var cancelText  = options.cancelText  || i18n.cancel  || 'Cancel';
 				var titleText   = options.title        || '';
 				var isDanger    = options.tone === 'danger';
 
@@ -65,6 +76,37 @@
 				p.textContent = message;
 				dialog.appendChild( p );
 
+				/*
+				 * Optional text input. Exists so nothing in this plugin has to reach
+				 * for window.prompt(), whose OK/Cancel come from the browser's
+				 * language rather than the site's - a non-English owner rejecting a
+				 * service got a half-translated dialog (Basecamp 10304333428).
+				 */
+				var field = null;
+				if ( options.prompt ) {
+					var promptOpts = 'object' === typeof options.prompt ? options.prompt : {};
+
+					if ( promptOpts.label ) {
+						var label = document.createElement( 'label' );
+						label.className = 'wpss-confirm__label';
+						label.setAttribute( 'for', 'wpss-confirm-input' );
+						label.textContent = promptOpts.label;
+						dialog.appendChild( label );
+					}
+
+					field = document.createElement( 'textarea' );
+					field.className = 'wpss-confirm__input';
+					field.id = 'wpss-confirm-input';
+					field.rows = 3;
+					if ( promptOpts.placeholder ) {
+						field.placeholder = promptOpts.placeholder;
+					}
+					if ( promptOpts.maxLength ) {
+						field.maxLength = promptOpts.maxLength;
+					}
+					dialog.appendChild( field );
+				}
+
 				var actions = document.createElement( 'div' );
 				actions.className = 'wpss-confirm__actions';
 
@@ -89,7 +131,7 @@
 				wrapper.appendChild( dialog );
 
 				document.body.appendChild( wrapper );
-				confirmBtn.focus();
+				( field || confirmBtn ).focus();
 
 				/* ---- Focus trap ---- */
 				var focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -137,7 +179,7 @@
 				document.addEventListener( 'keydown', onEsc );
 
 				confirmBtn.addEventListener( 'click', function() {
-					teardown( true );
+					teardown( field ? field.value : true );
 				} );
 
 				cancelBtn.addEventListener( 'click', function() {

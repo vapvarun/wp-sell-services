@@ -1044,6 +1044,11 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 .wpss-confirm__message { margin: 0; font-size: var(--wpss-text-base); line-height: 1.55; color: var(--wpss-text-secondary); }
 .wpss-confirm__actions { display: flex; gap: var(--wpss-space-3); justify-content: center; margin-top: var(--wpss-space-2); }
 .wpss-confirm__actions .wpss-btn { min-width: 110px; }
+/* Optional prompt field (wpssConfirm options.prompt). Left-aligned inside an
+   otherwise centred dialog, because a label and its input read as a form. */
+.wpss-confirm__label { text-align: start; font-size: var(--wpss-text-sm); font-weight: 600; color: var(--wpss-text); }
+.wpss-confirm__input { width: 100%; box-sizing: border-box; padding: var(--wpss-space-3); border: 1px solid var(--wpss-border); border-radius: var(--wpss-radius); background: var(--wpss-bg); color: var(--wpss-text); font: inherit; font-size: var(--wpss-text-base); line-height: 1.5; resize: vertical; text-align: start; }
+.wpss-confirm__input:focus { outline: 2px solid var(--wpss-primary); outline-offset: 1px; border-color: var(--wpss-primary); }
 
 /* wpss-ui.js confirm primitive — overlay + dialog wrapper.
    The dialog reuses .wpss-modal__dialog.wpss-confirm (above) + .wpss-btn

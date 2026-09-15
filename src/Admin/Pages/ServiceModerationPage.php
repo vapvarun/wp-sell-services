@@ -227,10 +227,14 @@ class ServiceModerationPage {
 		wp_enqueue_style( 'wpss-admin' );
 		wp_enqueue_script( 'wpss-admin' );
 
+		// wpss-ui supplies window.wpssConfirm, which this screen's approve and
+		// reject actions go through instead of the browser's own dialogs.
+		\WPSellServices\Assets\ScriptRegistry::enqueue_ui();
+
 		wp_enqueue_script(
 			'wpss-admin-moderation',
 			\WPSS_PLUGIN_URL . 'assets/js/admin-moderation.js',
-			array( 'jquery', 'wpss-admin' ),
+			array( 'jquery', 'wpss-admin', \WPSellServices\Assets\ScriptRegistry::HANDLE_UI ),
 			\WPSS_VERSION,
 			true
 		);
@@ -247,7 +251,10 @@ class ServiceModerationPage {
 				'i18n'    => array(
 					'confirmApprove' => __( 'Approve this service?', 'wp-sell-services' ),
 					'confirmReject'  => __( 'Reject this service?', 'wp-sell-services' ),
-					'rejectReason'   => __( 'Please provide a reason for rejection:', 'wp-sell-services' ),
+					'rejectTitle'    => __( 'Reject service', 'wp-sell-services' ),
+					'rejectConfirm'  => __( 'Reject', 'wp-sell-services' ),
+					'rejectReason'   => __( 'Reason for rejection (optional)', 'wp-sell-services' ),
+					'rejectPlaceholder' => __( 'The vendor sees this. Say what needs to change.', 'wp-sell-services' ),
 					'loading'        => __( 'Processing...', 'wp-sell-services' ),
 					'approved'       => __( 'Service approved!', 'wp-sell-services' ),
 					'rejected'       => __( 'Service rejected.', 'wp-sell-services' ),

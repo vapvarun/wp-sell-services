@@ -36,26 +36,28 @@
 			var $btn = $(this);
 			var serviceId = $btn.data('service');
 
-			if (!confirm(wpssModeration.i18n.confirmApprove)) {
-				return;
-			}
-
-			$btn.text(wpssModeration.i18n.loading);
-
-			$.post(wpssModeration.ajaxUrl, {
-				action: 'wpss_approve_service',
-				service_id: serviceId,
-				nonce: wpssModeration.nonce
-			}, function(response) {
-				if (response.success) {
-					location.reload();
-				} else {
-					wpssAdminNotice(response.data.message || wpssModeration.i18n.error, 'error');
-					$btn.text('Approve');
+			wpssConfirm(wpssModeration.i18n.confirmApprove).then(function(ok) {
+				if (!ok) {
+					return;
 				}
-			}).fail(function() {
-				wpssAdminNotice(wpssModeration.i18n.error, 'error');
-				$btn.text('Approve');
+
+				$btn.text(wpssModeration.i18n.loading);
+
+				$.post(wpssModeration.ajaxUrl, {
+					action: 'wpss_approve_service',
+					service_id: serviceId,
+					nonce: wpssModeration.nonce
+				}, function(response) {
+					if (response.success) {
+						location.reload();
+					} else {
+						wpssAdminNotice(response.data.message || wpssModeration.i18n.error, 'error');
+						$btn.text('Approve');
+					}
+				}).fail(function() {
+					wpssAdminNotice(wpssModeration.i18n.error, 'error');
+					$btn.text('Approve');
+				});
 			});
 		});
 
@@ -65,10 +67,21 @@
 			var $btn = $(this);
 			var serviceId = $btn.data('service');
 
-			var reason = prompt(wpssModeration.i18n.rejectReason);
-			if (reason === null) {
-				return;
-			}
+			wpssConfirm(wpssModeration.i18n.confirmReject, {
+				title: wpssModeration.i18n.rejectTitle,
+				confirmText: wpssModeration.i18n.rejectConfirm,
+				tone: 'danger',
+				prompt: {
+					label: wpssModeration.i18n.rejectReason,
+					placeholder: wpssModeration.i18n.rejectPlaceholder,
+					maxLength: 500
+				}
+			}).then(function(reason) {
+				// false is cancel; '' is a deliberate empty reason, which this
+				// flow has always allowed. Never test truthiness here.
+				if (false === reason) {
+					return;
+				}
 
 			$btn.text(wpssModeration.i18n.loading);
 
@@ -87,6 +100,7 @@
 			}).fail(function() {
 				wpssAdminNotice(wpssModeration.i18n.error, 'error');
 				$btn.text('Reject');
+			});
 			});
 		});
 
@@ -107,30 +121,39 @@
 				return;
 			}
 
-			if (!confirm(wpssModeration.i18n.confirmBulk)) {
-				return;
-			}
+			// One dialog for both shapes: rejecting also asks why, everything
+			// else is a plain confirm. Same reason as the single-row action -
+			// native confirm()/prompt() label their own buttons in the browser's
+			// language, not the site's.
+			var isReject = 'reject' === action;
 
-			var reason = '';
-			if (action === 'reject') {
-				reason = prompt(wpssModeration.i18n.rejectReason);
-				if (reason === null) {
+			wpssConfirm(wpssModeration.i18n.confirmBulk, {
+				title: isReject ? wpssModeration.i18n.rejectTitle : '',
+				confirmText: isReject ? wpssModeration.i18n.rejectConfirm : '',
+				tone: isReject ? 'danger' : '',
+				prompt: isReject ? {
+					label: wpssModeration.i18n.rejectReason,
+					placeholder: wpssModeration.i18n.rejectPlaceholder,
+					maxLength: 500
+				} : null
+			}).then(function(result) {
+				if (false === result) {
 					return;
 				}
-			}
 
-			$.post(wpssModeration.ajaxUrl, {
-				action: 'wpss_bulk_moderate_services',
-				bulk_action: action,
-				service_ids: serviceIds,
-				reason: reason,
-				nonce: wpssModeration.nonce
-			}, function(response) {
-				if (response.success) {
-					location.reload();
-				} else {
-					wpssAdminNotice(response.data.message || wpssModeration.i18n.error, 'error');
-				}
+				$.post(wpssModeration.ajaxUrl, {
+					action: 'wpss_bulk_moderate_services',
+					bulk_action: action,
+					service_ids: serviceIds,
+					reason: isReject ? result : '',
+					nonce: wpssModeration.nonce
+				}, function(response) {
+					if (response.success) {
+						location.reload();
+					} else {
+						wpssAdminNotice(response.data.message || wpssModeration.i18n.error, 'error');
+					}
+				});
 			});
 		});
 
