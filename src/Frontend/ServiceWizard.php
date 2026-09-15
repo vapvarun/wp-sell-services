@@ -383,7 +383,8 @@ class ServiceWizard {
 	 * @return void
 	 */
 	private function render_step_basic( ?\WP_Post $_service ): void {
-		$categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
+		$wpss_publish_floors = wpss_service_publish_thresholds();
+		$categories          = wpss_get_category_terms( array( 'hide_empty' => false ) );
 
 		// Build categories data for JavaScript subcategory filtering.
 		$categories_data = array();
@@ -474,8 +475,16 @@ class ServiceWizard {
 					placeholder="<?php esc_attr_e( 'Describe your service in detail. What makes you unique? What\'s included?', 'wp-sell-services' ); ?>"
 					required></textarea>
 				<div class="wpss-form-hint" style="display: flex; justify-content: space-between;">
-					<span><?php esc_html_e( 'Minimum 120 characters. Be detailed and specific.', 'wp-sell-services' ); ?></span>
-					<span x-text="(data.description || '').length + ' / 5000'" :class="{ 'wpss-text-danger': (data.description || '').length < 120 }"></span>
+					<span>
+						<?php
+						printf(
+							/* translators: %d: minimum number of characters. */
+							esc_html__( 'Minimum %d characters. Be detailed and specific.', 'wp-sell-services' ),
+							(int) $wpss_publish_floors['description_length']
+						);
+						?>
+					</span>
+					<span x-text="(data.description || '').length + ' / 5000'" :class="{ 'wpss-text-danger': (data.description || '').length &lt; wpssWizard.thresholds.description_length }"></span>
 				</div>
 				<p id="service_description-error" class="wpss-form-error" hidden></p>
 			</div>
@@ -1044,6 +1053,7 @@ class ServiceWizard {
 	 * @return void
 	 */
 	private function render_step_review( ?\WP_Post $_service ): void {
+		$wpss_publish_floors = wpss_service_publish_thresholds();
 		?>
 		<div class="wpss-wizard__step-header">
 			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Review & Publish', 'wp-sell-services' ); ?></h2>
@@ -1108,20 +1118,32 @@ class ServiceWizard {
 					 */
 					?>
 					<ul class="wpss-review-checklist">
-						<li :class="{ 'completed': data.title?.length >= 10 }">
-							<span class="wpss-icon" aria-hidden="true" x-show="data.title?.length >= 10" x-cloak><i data-lucide="check-circle-2"></i></span>
-							<span class="wpss-icon" aria-hidden="true" x-show="!(data.title?.length >= 10)"><i data-lucide="circle"></i></span>
-							<?php esc_html_e( 'Service title (10+ characters)', 'wp-sell-services' ); ?>
+						<li :class="{ 'completed': data.title?.length >= wpssWizard.thresholds.title_length }">
+							<span class="wpss-icon" aria-hidden="true" x-show="data.title?.length >= wpssWizard.thresholds.title_length" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(data.title?.length >= wpssWizard.thresholds.title_length)"><i data-lucide="circle"></i></span>
+							<?php
+							printf(
+								/* translators: %d: minimum number of characters. */
+								esc_html__( 'Service title (%d+ characters)', 'wp-sell-services' ),
+								(int) $wpss_publish_floors['title_length']
+							);
+							?>
 						</li>
 						<li :class="{ 'completed': data.category }">
 							<span class="wpss-icon" aria-hidden="true" x-show="data.category" x-cloak><i data-lucide="check-circle-2"></i></span>
 							<span class="wpss-icon" aria-hidden="true" x-show="!(data.category)"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Category selected', 'wp-sell-services' ); ?>
 						</li>
-						<li :class="{ 'completed': data.description?.length >= 120 }">
-							<span class="wpss-icon" aria-hidden="true" x-show="data.description?.length >= 120" x-cloak><i data-lucide="check-circle-2"></i></span>
-							<span class="wpss-icon" aria-hidden="true" x-show="!(data.description?.length >= 120)"><i data-lucide="circle"></i></span>
-							<?php esc_html_e( 'Description (120+ characters)', 'wp-sell-services' ); ?>
+						<li :class="{ 'completed': data.description?.length >= wpssWizard.thresholds.description_length }">
+							<span class="wpss-icon" aria-hidden="true" x-show="data.description?.length >= wpssWizard.thresholds.description_length" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(data.description?.length >= wpssWizard.thresholds.description_length)"><i data-lucide="circle"></i></span>
+							<?php
+							printf(
+								/* translators: %d: minimum number of characters. */
+								esc_html__( 'Description (%d+ characters)', 'wp-sell-services' ),
+								(int) $wpss_publish_floors['description_length']
+							);
+							?>
 						</li>
 						<li :class="{ 'completed': isPackageValid('basic') }">
 							<span class="wpss-icon" aria-hidden="true" x-show="isPackageValid('basic')" x-cloak><i data-lucide="check-circle-2"></i></span>
@@ -1390,6 +1412,8 @@ class ServiceWizard {
 		// Make sure Alpine loads after service-wizard.
 		wp_enqueue_script( 'alpinejs' );
 
+		$wpss_thresholds = wpss_service_publish_thresholds();
+
 		wp_localize_script(
 			'wpss-service-wizard',
 			'wpssWizard',
@@ -1398,10 +1422,12 @@ class ServiceWizard {
 				'nonce'          => wp_create_nonce( 'wpss_service_wizard' ),
 				'dashboardUrl'   => $this->get_dashboard_url(),
 				'currencySymbol' => wpss_get_currency_symbol(),
-				// Minimum Basic price, shared with the server validation via the
-				// same filter so the client can't Continue past a price the
-				// server will reject at Publish.
-				'minPrice'       => (float) apply_filters( 'wpss_min_service_price', 5 ),
+				// The publish floors, straight from the server's own validator, so
+				// the checklist in the browser cannot claim a step is complete
+				// that Publish will then refuse. minPrice is kept as its own key
+				// because the template already reads it by that name.
+				'minPrice'       => $wpss_thresholds['min_price'],
+				'thresholds'     => $wpss_thresholds,
 				'limits'         => $this->get_limits(),
 				'isPro'          => $this->is_pro_active(),
 				'strings'        => array(
@@ -1415,7 +1441,11 @@ class ServiceWizard {
 					'validationTitle'    => __( 'Please enter a service title', 'wp-sell-services' ),
 					'validationTitleMin' => __( 'Please enter at least 10 characters for the service title.', 'wp-sell-services' ),
 					'validationCat'      => __( 'Please select a category', 'wp-sell-services' ),
-					'validationDesc'     => __( 'Please add a description (minimum 120 characters)', 'wp-sell-services' ),
+					'validationDesc'     => sprintf(
+						/* translators: %d: minimum number of characters. */
+						__( 'Please add a description (minimum %d characters)', 'wp-sell-services' ),
+						(int) $wpss_thresholds['description_length']
+					),
 					'validationPrice'    => __( 'Please set a price for the Basic package', 'wp-sell-services' ),
 					'validationPriceMin' => sprintf(
 						/* translators: %s: formatted minimum price (e.g. $5.00). */
@@ -1998,41 +2028,33 @@ class ServiceWizard {
 	 * @return array Validation errors.
 	 */
 	private function validate_service_data( array $data ): array {
-		$errors = array();
-
-		$title = trim( (string) ( $data['title'] ?? '' ) );
-		if ( '' === $title ) {
-			$errors[] = __( 'Please enter a service title.', 'wp-sell-services' );
-		} elseif ( strlen( $title ) < 10 ) {
-			$errors[] = __( 'Please enter at least 10 characters for the service title..', 'wp-sell-services' );
+		// One authority. This used to be a second, hand-written copy of the same
+		// six rules, and its parent card (#10289819803) was filed because the
+		// wizard's copy and wp-admin's had drifted apart. Fixing the drift while
+		// leaving two implementations standing only reset the clock, so the
+		// wizard now calls the shared validator rather than agreeing with it.
+		//
+		// Only the shapes differ: the wizard carries one category rather than a
+		// list, names its delivery field delivery_time, and keeps the main image
+		// under gallery. Translate, do not re-decide.
+		$packages = array();
+		foreach ( (array) ( $data['packages'] ?? array() ) as $tier => $package ) {
+			if ( ! is_array( $package ) ) {
+				continue;
+			}
+			$package['delivery_days'] = $package['delivery_days'] ?? ( $package['delivery_time'] ?? '' );
+			$packages[ $tier ]        = $package;
 		}
 
-		if ( empty( $data['category'] ) ) {
-			$errors[] = __( 'Please select a category.', 'wp-sell-services' );
-		}
-
-		if ( empty( $data['description'] ) || strlen( $data['description'] ) < 120 ) {
-			$errors[] = __( 'Description must be at least 120 characters.', 'wp-sell-services' );
-		}
-
-		$min_price = (float) apply_filters( 'wpss_min_service_price', 5 );
-		if ( empty( $data['packages']['basic']['price'] ) || floatval( $data['packages']['basic']['price'] ) < $min_price ) {
-			$errors[] = sprintf(
-				/* translators: %s: formatted minimum price (e.g. $5.00). */
-				__( 'Basic package price must be at least %s.', 'wp-sell-services' ),
-				wpss_format_price( $min_price )
-			);
-		}
-
-		if ( empty( $data['packages']['basic']['delivery_time'] ) ) {
-			$errors[] = __( 'Please set a delivery time for the Basic package.', 'wp-sell-services' );
-		}
-
-		if ( empty( $data['gallery']['main'] ) ) {
-			$errors[] = __( 'Please upload a main image.', 'wp-sell-services' );
-		}
-
-		return $errors;
+		return wpss_validate_service_publishable(
+			array(
+				'title'        => (string) ( $data['title'] ?? '' ),
+				'category_ids' => array_filter( array( $data['category'] ?? '' ) ),
+				'description'  => (string) ( $data['description'] ?? '' ),
+				'packages'     => $packages,
+				'thumbnail_id' => $data['gallery']['main'] ?? 0,
+			)
+		);
 	}
 
 	/**

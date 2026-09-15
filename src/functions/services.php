@@ -1006,6 +1006,26 @@ function wpss_get_service_limits(): array {
 }
 
 /**
+ * The numeric floors a service must clear to go live.
+ *
+ * Exists so the wizard's client-side checklist and the server-side validator
+ * cannot hold different numbers. The validator below reads these, and
+ * ServiceWizard hands the same array to the browser - #10304336130 was filed
+ * because the 120-character floor was written out as a literal in four places.
+ *
+ * @since 1.7.1
+ *
+ * @return array{title_length:int,description_length:int,min_price:float}
+ */
+function wpss_service_publish_thresholds(): array {
+	return array(
+		'title_length'       => 10,
+		'description_length' => 120,
+		'min_price'          => (float) apply_filters( 'wpss_min_service_price', 5 ),
+	);
+}
+
+/**
  * The rules a service must satisfy before buyers can see it.
  *
  * The one place those rules live. The frontend wizard enforced six of them
@@ -1035,12 +1055,18 @@ function wpss_get_service_limits(): array {
 function wpss_validate_service_publishable( array $service ): array {
 	$errors = array();
 
+	$thresholds = wpss_service_publish_thresholds();
+
 	if ( array_key_exists( 'title', $service ) ) {
 		$title = trim( (string) $service['title'] );
 		if ( '' === $title ) {
 			$errors[] = __( 'Please enter a service title.', 'wp-sell-services' );
-		} elseif ( mb_strlen( $title ) < 10 ) {
-			$errors[] = __( 'Please enter at least 10 characters for the service title.', 'wp-sell-services' );
+		} elseif ( mb_strlen( $title ) < $thresholds['title_length'] ) {
+			$errors[] = sprintf(
+				/* translators: %d: minimum number of characters. */
+				__( 'Please enter at least %d characters for the service title.', 'wp-sell-services' ),
+				$thresholds['title_length']
+			);
 		}
 	}
 
@@ -1050,8 +1076,12 @@ function wpss_validate_service_publishable( array $service ): array {
 
 	if ( array_key_exists( 'description', $service ) ) {
 		$description = trim( wp_strip_all_tags( (string) $service['description'] ) );
-		if ( mb_strlen( $description ) < 120 ) {
-			$errors[] = __( 'Description must be at least 120 characters.', 'wp-sell-services' );
+		if ( mb_strlen( $description ) < $thresholds['description_length'] ) {
+			$errors[] = sprintf(
+				/* translators: %d: minimum number of characters. */
+				__( 'Description must be at least %d characters.', 'wp-sell-services' ),
+				$thresholds['description_length']
+			);
 		}
 	}
 
@@ -1069,7 +1099,7 @@ function wpss_validate_service_publishable( array $service ): array {
 			// The cheapest package is the price buyers see on the card, so it is
 			// the one the floor applies to - and it is the wizard's Basic tier by
 			// construction.
-			$min_price = (float) apply_filters( 'wpss_min_service_price', 5 );
+			$min_price = $thresholds['min_price'];
 			$cheapest  = null;
 
 			foreach ( $packages as $package ) {
