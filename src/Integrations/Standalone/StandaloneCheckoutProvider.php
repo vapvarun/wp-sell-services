@@ -819,6 +819,31 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			.wpss-co-login { text-align: center; padding: var(--wpss-space-10) var(--wpss-space-6); }
 			.wpss-co-login__actions { display: flex; gap: var(--wpss-space-3); justify-content: center; margin-top: var(--wpss-space-5); }
 
+			/*
+			 * Stacking order once the sidebar drops below the form.
+			 *
+			 * .wpss-layout--sidebar-right collapses to one column at 1024px, and
+			 * a collapsed grid emits the columns in source order - so the whole
+			 * sidebar landed after Payment Method and the buyer chose how to pay
+			 * BEFORE seeing what they were paying. Measured at 390: Payment
+			 * Method y=2001, Order Summary y=2274 (Basecamp 10304335437).
+			 *
+			 * display: contents lifts the two columns out of the box tree so all
+			 * six cards become siblings that `order` can sequence. The sticky
+			 * column has nothing to stick to at this width, so losing position:
+			 * sticky here is the intent, not a side effect.
+			 */
+			@media (max-width: 1024px) {
+				.wpss-checkout-page .wpss-layout--sidebar-right { display: flex; flex-direction: column; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack,
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky { display: contents; }
+				/* Service details first, then the total, then the form. */
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack > * { order: 3; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack > :first-child { order: 1; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > * { order: 4; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > .wpss-co-card--summary { order: 2; }
+			}
+
 			/* Responsive */
 			@media (max-width: 768px) {
 				.wpss-co-header { flex-direction: column; gap: var(--wpss-space-2); align-items: flex-start; }
@@ -1063,7 +1088,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 						<!-- RIGHT COLUMN: Order summary (sticky) -->
 						<div class="wpss-sticky">
-							<div class="wpss-card">
+							<div class="wpss-card wpss-co-card--summary">
 								<div class="wpss-card__header">
 									<h3 class="wpss-card__title">
 										<?php echo $is_pay_order ? esc_html__( 'Order Payment', 'wp-sell-services' ) : esc_html__( 'Order Summary', 'wp-sell-services' ); ?>
@@ -1931,7 +1956,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 						<!-- RIGHT COLUMN: Order summary -->
 						<div class="wpss-sticky">
-							<div class="wpss-card">
+							<div class="wpss-card wpss-co-card--summary">
 								<div class="wpss-card__header">
 									<h3 class="wpss-card__title"><?php esc_html_e( 'Order Summary', 'wp-sell-services' ); ?></h3>
 								</div>
