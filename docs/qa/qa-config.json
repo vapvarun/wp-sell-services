@@ -4,8 +4,8 @@
   "name": "WP Sell Services",
   "version_constant": "WPSS_VERSION",
   "main_file": "wp-sell-services.php",
-  "base_url": "http://wss.local",
-  "wp_path": "/Users/varundubey/Local Sites/wss/app/public",
+  "base_url": "http://wp-sell-services.local",
+  "wp_path": "/Users/vapvarun/Local Sites/wp-sell-services/app/public",
   "autologin_param": "autologin",
   "rest_namespace": "wpss/v1",
   "front_routes": [
@@ -28,7 +28,10 @@
     "bugs_column_id": 9381846253,
     "ready_for_testing_column_id": 9381846126
   },
-  "modes": ["free", "combo"],
+  "modes": [
+    "free",
+    "combo"
+  ],
   "report_path": "docs/qa/.last-smoke-pass.json",
   "supplements_path": null,
   "journeys_path": "audit/journeys",
@@ -39,5 +42,49 @@
     "woocommerce-gateway-dummy",
     "jquery-migrate",
     "Refused a partial refund"
+  ],
+  "personas": [
+    {
+      "key": "visitor",
+      "login": null,
+      "role": "(logged out)",
+      "email": null,
+      "note": "Public catalog, single service, vendor directory, buyer requests."
+    },
+    {
+      "key": "buyer",
+      "login": "wpss_buyer_ella",
+      "role": "subscriber",
+      "email": "wpss_buyer_ella@example.test",
+      "note": "Holds NO wpss_* capability. Every buyer gate is an ownership check, never a cap check."
+    },
+    {
+      "key": "buyer_2",
+      "login": "wpss_buyer_ben",
+      "role": "subscriber",
+      "email": "wpss_buyer_ben@example.test",
+      "note": "Second buyer, same role. Proves one buyer cannot reach another's order, dispute or request."
+    },
+    {
+      "key": "vendor",
+      "login": "wpss_vendor_maya",
+      "role": "wpss_vendor",
+      "email": "wpss_vendor_maya@example.test",
+      "note": "Vendor is ADDITIVE - still a buyer. Dashboard must be role-aware, not role-switched."
+    },
+    {
+      "key": "vendor_2",
+      "login": "wpss_vendor_sofia",
+      "role": "wpss_vendor",
+      "email": "wpss_vendor_sofia@example.test",
+      "note": "Second vendor, same role. Required for cross-vendor permission checks."
+    },
+    {
+      "key": "admin",
+      "login": "varundubey",
+      "role": "administrator",
+      "email": null,
+      "note": "Control rung. Test LAST and never alone - admin passes hide participant-check bugs."
+    }
   ]
 }

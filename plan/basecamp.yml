@@ -1,0 +1,38 @@
+# Basecamp ledger config for WP Sell Services.
+#
+# Read by wppqa_learn_from_basecamp, which writes plan/basecamp/ledger.md +
+# ledger.json + a per-card cache. The ledger is what stops a card being
+# re-researched from zero: fix SHAs, reopen patterns, module hot-spots and
+# title-similarity duplicate detection all persist across sessions.
+#
+# The tool does NOT talk to Basecamp. Fetch the listings named in its `needsFetch`
+# reply via basecamp-mcp, then call it again with them.
+project_id: 45156734
+project_url: https://app.basecamp.com/5798509/buckets/45156734
+
+# Column name -> Basecamp column id. Names are free-form but must stay stable:
+# they key the cache and the ledger's per-column history.
+columns:
+  bugs: 9381846253
+  ready_for_testing: 9381846126
+  ui_issues: 9542411037
+  in_progress: 9381845879
+  done: 9381845577
+
+# Where new cards go. Every finding a QA walk produces is filed in `intake`,
+# including cleanup and tech-debt shapes — a suggestion column is for work
+# nobody has found broken. Suggestion and scope-reference columns are
+# deliberately NOT listed as bug sources: the ledger tracks defects, not backlog.
+intake: bugs
+verdict_targets:
+  PASS: done
+  BOUNCE: bugs
+  BLOCKED: null      # stays put; the comment says what is needed
+  REFUTED: done
+
+# Card table id - required by `basecamp cards move --to <column NAME>`.
+# Moving by numeric column id silently no-ops: the CLI reports success and the
+# card stays put. Found the hard way on 2026-09-15, when three cards reported as
+# moved to Bugs were still sitting in Ready for Testing. Always move by name
+# with this card_table set, and verify placement afterwards.
+card_table: 9381845572
