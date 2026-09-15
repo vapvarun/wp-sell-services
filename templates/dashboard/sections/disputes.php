@@ -219,7 +219,17 @@ if ( $view_dispute_id ) {
 							<div class="wpss-evidence-bubble">
 								<span class="wpss-evidence-author"><strong><?php echo esc_html( $ev_name ); ?></strong></span>
 								<div class="wpss-evidence-content">
-									<?php if ( 'text' === $ev_type && '' !== $ev_content ) : ?>
+									<?php
+									/*
+									 * Anything that is not a media type renders as prose. This
+									 * tested `'text' === $ev_type`, an allow-list of exactly one
+									 * value, so the opening statement - typed `opening_statement`
+									 * so the panel can tell it from a reply - matched no branch
+									 * and drew an empty bubble with just a name and a time. Any
+									 * future textual type would have failed the same silent way.
+									 */
+									?>
+									<?php if ( ! in_array( $ev_type, array( 'image', 'file', 'link' ), true ) && '' !== $ev_content ) : ?>
 										<div class="wpss-evidence-text"><?php echo wp_kses_post( nl2br( esc_html( $ev_content ) ) ); ?></div>
 									<?php endif; ?>
 									<?php if ( '' !== $ev_desc && 'text' !== $ev_type ) : ?>

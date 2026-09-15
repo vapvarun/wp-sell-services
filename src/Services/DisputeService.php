@@ -292,6 +292,36 @@ class DisputeService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update( $this->table, array( 'dispute_number' => sprintf( 'DSP-%06d', $dispute_id ) ), array( 'id' => $dispute_id ), array( '%s' ), array( '%d' ) );
 
+		// The statement is also the first message. get_evidence() reads only the
+		// messages table, so a dispute that wrote its statement to the row and
+		// nowhere else opened with "No messages yet" printed directly beneath
+		// the complaint it was meant to be showing - which reads as though the
+		// save failed.
+		//
+		// Written here rather than through add_evidence(): that method fires
+		// wpss_dispute_evidence_added, which notifies the other party, and this
+		// party is already being told through the dispute-opened mail. Inside
+		// the open transaction, so a failure further down takes the message with
+		// the dispute instead of orphaning it.
+		//
+		// `description` stays on the dispute row: both screens render it in
+		// their own structured block above the conversation, and neither copy is
+		// ever edited after this method, so they cannot drift. Collapsing them
+		// to one home is a migration, not a bug fix.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->insert(
+			$this->messages_table,
+			array(
+				'dispute_id'   => $dispute_id,
+				'sender_id'    => $opened_by,
+				'sender_role'  => 'opener_statement',
+				'message'      => $dispute_data['description'],
+				'message_type' => 'opening_statement',
+				'created_at'   => $dispute_data['created_at'],
+			),
+			array( '%d', '%d', '%s', '%s', '%s', '%s' )
+		);
+
 		// Record the pre-dispute status BEFORE overwriting it. $order was loaded
 		// above, before any status change, so it holds the real one; cancel()
 		// restores the order to it.

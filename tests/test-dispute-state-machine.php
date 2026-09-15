@@ -114,9 +114,25 @@ $check( 'partial refund of 0 is refused by resolve()', false === $service->resol
 $check( 'partial refund of the total is refused by resolve()', false === $service->resolve( $dispute3, 'partial_refund', 'n', 1, 100.0 ) );
 $check( '  dispute still open', 'open' === $dispute_status( $dispute3 ) );
 
+// --- the opening statement is the first message -------------------------------
+// Guards Basecamp 10268782014: open() wrote the statement to the dispute row and
+// nowhere else, while get_evidence() reads only the messages table, so the
+// "Messages and evidence" panel opened saying "No messages yet" underneath the
+// complaint it was supposed to be showing.
+$paid4     = $seed( 'in_progress' );
+$statement = 'The delivered file does not match the brief.';
+$dispute4  = (int) $service->open( $paid4, $buyer, 'not_as_described', $statement );
+$evidence  = $service->get_evidence( $dispute4 );
+
+$check( 'opening a dispute leaves exactly one message', 1 === count( $evidence ) );
+$check( '  it is typed as the opening statement', 'opening_statement' === ( $evidence[0]['type'] ?? '' ) );
+$check( '  it carries the statement text', $statement === ( $evidence[0]['content'] ?? '' ) );
+$check( '  it is attributed to whoever opened it', $buyer === (int) ( $evidence[0]['user_id'] ?? 0 ) );
+$check( '  a reply does not duplicate it', 2 === ( $service->add_evidence( $dispute4, $vendor, 'text', 'My reply.' ) ? count( $service->get_evidence( $dispute4 ) ) : -1 ) );
+
 // --- cleanup ------------------------------------------------------------------
 update_option( 'wpss_orders', $saved_settings );
-$order_ids = array( $paid, $unpaid, $paid2, $paid3 );
+$order_ids = array( $paid, $unpaid, $paid2, $paid3, $paid4 );
 foreach ( $order_ids as $id ) {
 	$wpdb->delete( $wpdb->prefix . 'wpss_dispute_messages', array( 'dispute_id' => (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$disputes} WHERE order_id = %d", $id ) ) ) );
 	$wpdb->delete( $disputes, array( 'order_id' => $id ) );
