@@ -83,7 +83,10 @@
 	--wpss-warning-light: #fffbeb;
 	--wpss-warning-dark: #92400e;
 	--wpss-warning-border: #fde68a;
-	--wpss-danger: #ef4444;
+	/* red-600, not red-500. A filled danger button is white on this token, and
+	   #ef4444 gives 3.76 against white - under the 4.5 AA floor, in both light
+	   and dark. #dc2626 carries the same intent and clears it. */
+	--wpss-danger: #dc2626;
 	--wpss-danger-light: #fef2f2;
 	--wpss-danger-dark: #991b1b;
 	--wpss-danger-border: #fecaca;
@@ -425,6 +428,21 @@ textarea.wpss-form-textarea {
 	--wpss-gray-700: #e5e7eb;
 	--wpss-gray-800: #f3f4f6;
 	--wpss-gray-900: #f9fafb;
+
+	/* Tinted notice grounds. These kept their light values, so any component
+	   using one as a BACKGROUND stayed a pale panel on a dark page and its
+	   text - which does flip - landed light-on-light. The payout banner read
+	   1.35 that way. Dark equivalents of the same hues, chosen so the
+	   foreground tokens already in use clear AA on them. */
+	--wpss-info-light: #1e3a5f;
+	--wpss-success-light: #14532d;
+	--wpss-warning-light: #422006;
+
+	/* primary-dark is a FOREGROUND on tinted grounds (.wpss-alert--info sets it
+	   as colour over --wpss-primary-light). It had no dark value at all, so a
+	   #4338ca indigo sat on the dark indigo ground at 1.45. The accent is the
+	   readable-on-dark member of the ramp. */
+	--wpss-primary-dark: var( --wpss-primary-accent );
 }
 
 /* ==========================================================================

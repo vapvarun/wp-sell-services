@@ -801,7 +801,10 @@
 
 .wpss-conversation-card__time {
 	font-size: 12px;
-	color: var(--wpss-gray-400);
+	/* text-muted, not gray-400. The ramp value lands at 4.46 on the dark card
+	   surface - close, but under the 4.5 floor, and a timestamp is text. The
+	   muted TEXT token is the one tuned for this job in both modes. */
+	color: var(--wpss-text-muted, #6b7280);
 }
 
 .wpss-conversation-card__preview {

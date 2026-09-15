@@ -45,7 +45,12 @@
 	/* Semantic Colors */
 	--wpss-success: #10b981;
 	--wpss-warning: #f59e0b;
-	--wpss-danger: #ef4444;
+	/* Kept in step with design-system.css, which owns this token. red-500 gives
+	   3.76 against the white label on a filled danger button, under the 4.5 AA
+	   floor. This sheet loads after the design system, so a stale value here
+	   silently wins - which is why the token change there had no effect until
+	   this one moved too. */
+	--wpss-danger: #dc2626;
 	--wpss-info: #3b82f6;
 	--wpss-star: #fbbf24;
 
