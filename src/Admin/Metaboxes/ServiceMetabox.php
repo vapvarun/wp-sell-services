@@ -180,6 +180,51 @@ class ServiceMetabox {
 				),
 			)
 		);
+
+		$this->enqueue_status_sync();
+	}
+
+	/**
+	 * Keep the block editor's status indicator honest when a publish is refused.
+	 *
+	 * Gutenberg saves the post over REST first and posts the metaboxes second.
+	 * enforce_publish_rules() only has the metabox data in that second request,
+	 * so it demotes the post back to draft after the editor has already been
+	 * told "publish" by the first response - and Gutenberg discards the metabox
+	 * response entirely (apiFetch parse: false), so the server cannot correct
+	 * the label through it. The only remaining seam is the client: re-read the
+	 * status once the metabox request settles and reload if it disagrees with
+	 * what the editor is showing. Reloading is deliberate - it also surfaces
+	 * render_invalid_notice(), which lists why the publish was refused.
+	 *
+	 * @return void
+	 */
+	private function enqueue_status_sync(): void {
+		global $post;
+
+		if ( ! $post instanceof \WP_Post || ! use_block_editor_for_post( $post ) ) {
+			return;
+		}
+
+		$js = sprintf(
+			'( function ( wp, path ) {
+	if ( ! wp || ! wp.apiFetch || ! wp.data ) { return; }
+	wp.apiFetch.use( function ( options, next ) {
+		var result = next( options );
+		if ( ! window._wpMetaBoxUrl || options.url !== window._wpMetaBoxUrl ) { return result; }
+		return result.then( function ( response ) {
+			var shown = wp.data.select( "core/editor" ).getCurrentPostAttribute( "status" );
+			wp.apiFetch( { path: path } ).then( function ( saved ) {
+				if ( saved && saved.status && saved.status !== shown ) { window.location.reload(); }
+			} ).catch( function () {} );
+			return response;
+		} );
+	} );
+}( window.wp, %s ) );',
+			wp_json_encode( '/wp/v2/wpss-services/' . $post->ID . '?context=edit&_fields=status' )
+		);
+
+		wp_add_inline_script( 'wp-edit-post', $js );
 	}
 
 	/**
