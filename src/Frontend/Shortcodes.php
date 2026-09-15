@@ -722,7 +722,21 @@ class Shortcodes {
 
 				<div class="wpss-form-row">
 					<label for="request_deadline"><?php esc_html_e( 'Deadline', 'wp-sell-services' ); ?></label>
-					<input type="date" name="deadline" id="request_deadline" min="<?php echo esc_attr( wp_date( 'Y-m-d', strtotime( '+1 day' ) ) ); ?>" data-field="deadline">
+					<?php
+					/*
+					 * `wpss-input` so the color-scheme declaration reaches it. A
+					 * native date input draws its picker panel from that property,
+					 * and the rule that sets it targets `.wpss-app input` and
+					 * `input.wpss-input`. This form wraps its output in
+					 * `.wpss-post-request`, not `.wpss-app`, and the field carried
+					 * no class, so it matched neither and the picker kept
+					 * following the visitor's OS - the exact symptom fixed
+					 * everywhere else. The dashboard's copy of this field already
+					 * carries the class, which is why only the shortcode route
+					 * showed it. See Basecamp 10304261682.
+					 */
+					?>
+					<input type="date" name="deadline" id="request_deadline" class="wpss-input" min="<?php echo esc_attr( wp_date( 'Y-m-d', strtotime( '+1 day' ) ) ); ?>" data-field="deadline">
 				</div>
 
 				<div class="wpss-form-row">
