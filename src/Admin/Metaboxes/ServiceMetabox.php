@@ -999,7 +999,22 @@ class ServiceMetabox {
 			return;
 		}
 
-		echo '<div class="notice notice-warning wpss-service-invalid-notice" style="margin:0 0 16px;"><p><strong>';
+		/*
+		 * `wpss-notice warning`, NOT WordPress's `notice notice-warning`.
+		 *
+		 * wp-admin's own JS hoists any element carrying `.notice` out of where
+		 * it was printed and into the page's notice area. Inside the block
+		 * editor that target sits in `div.wrap.hide-if-js.block-editor-no-js` -
+		 * the no-JavaScript fallback - which is display:none for every real
+		 * owner. So the reasons rendered, were moved, and were never seen: the
+		 * exact silent failure this notice exists to prevent, reintroduced by
+		 * the class name. Verified: one occurrence in the document, zero inside
+		 * #wpss_service_data.
+		 *
+		 * The plugin's own class carries the same left-border treatment from
+		 * admin.css and nothing relocates it.
+		 */
+		echo '<div class="wpss-notice warning wpss-service-invalid-notice" style="margin:0 0 16px;"><p><strong>';
 		esc_html_e( 'Not ready for the marketplace yet. This service stays a draft until:', 'wp-sell-services' );
 		echo '</strong></p><ul style="list-style:disc;margin-left:20px;">';
 		foreach ( $errors as $message ) {
