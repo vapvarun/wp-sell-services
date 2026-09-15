@@ -1480,6 +1480,38 @@
 	margin: 0;
 }
 
+/*
+ * Row remove controls: 40px target around a 28px button.
+ *
+ * All four authoring sections (packages, add-ons, requirements, FAQ) share this
+ * control and it measured 28x28 - our own responsive contract sets a 40px
+ * minimum, and the vendor dashboard's View button was raised for exactly this
+ * reason, so the admin was being held to a lower bar than the frontend
+ * (Basecamp 10304334073).
+ *
+ * The target is grown with an overlay rather than by sizing the button: setting
+ * min-height: 40px pushed the package header from 53px to 65px, and a taller row
+ * on every package, add-on, requirement and FAQ is a visible redesign of four
+ * screens to fix a hit area. The pseudo-element leaves every row exactly where
+ * it is.
+ */
+.wpss-remove-package,
+.wpss-remove-addon,
+.wpss-remove-requirement,
+.wpss-remove-faq {
+	position: relative;
+}
+
+.wpss-remove-package::after,
+.wpss-remove-addon::after,
+.wpss-remove-requirement::after,
+.wpss-remove-faq::after {
+	content: '';
+	position: absolute;
+	/* 28px button + 6px each side = 40px. */
+	inset: -6px;
+}
+
 .wpss-remove-requirement {
 	background: none;
 	border: none;
