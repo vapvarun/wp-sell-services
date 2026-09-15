@@ -68,6 +68,20 @@
                 const $image = $active.find('.wpss-gallery-image');
                 const src = $thumb.data('src');
 
+                /*
+                 * Hiding the <img> is not enough. The stage is display:flex and
+                 * its children are the ZOOM BUTTON and the video box, so hiding
+                 * only the image inside the button left the button holding its
+                 * flex slot: the video rendered 363px wide in a 726px stage -
+                 * exactly half - with the other half blank. The button wrapper
+                 * was added later (to give the main image the same keyboard
+                 * affordance as the thumbs) and this toggle was never moved up
+                 * to it. See Basecamp 10300504025.
+                 */
+                const $imageSlot = $image.closest('.wpss-gallery-zoom').length
+                    ? $image.closest('.wpss-gallery-zoom')
+                    : $image;
+
                 // Update active state.
                 $gallery.find('.wpss-gallery-thumb').removeClass('active');
                 $thumb.addClass('active');
@@ -89,13 +103,13 @@
                             $video[0].appendChild(document.importNode(tpl.content, true));
                         }
                     }
-                    $image.attr('hidden', 'hidden');
+                    $imageSlot.attr('hidden', 'hidden');
                     $video.removeAttr('hidden');
                     return;
                 }
 
                 $video.attr('hidden', 'hidden');
-                $image.removeAttr('hidden');
+                $imageSlot.removeAttr('hidden');
 
                 if (src) {
                     $image.attr('src', src);
