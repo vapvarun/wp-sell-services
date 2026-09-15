@@ -59,6 +59,20 @@ if ( $view_dispute_id ) {
 
 	$status_key = (string) $dispute->status;
 	$timeline   = ( new DisputeWorkflowManager() )->get_timeline( (int) $dispute->id );
+
+	// Fetched here rather than beside the thread below because the Reason block
+	// needs to know whether the opening statement already has a home in the
+	// conversation. Since 1.7.1 it is written to the messages table as a typed
+	// opening_statement row; disputes opened before that carry the text only on
+	// the dispute row, so the Reason block is still their one place to show it.
+	$evidence_items    = $dispute_service->get_evidence( (int) $dispute->id );
+	$has_opening_msg   = false;
+	foreach ( $evidence_items as $wpss_ev ) {
+		if ( 'opening_statement' === (string) ( $wpss_ev['type'] ?? '' ) ) {
+			$has_opening_msg = true;
+			break;
+		}
+	}
 	?>
 	<div class="wpss-section wpss-section--disputes wpss-card wpss-disputes wpss-dispute-detail">
 		<p class="wpss-dispute-detail__back">
@@ -156,7 +170,8 @@ if ( $view_dispute_id ) {
 				<?php if ( ! empty( $dispute->reason ) ) : ?>
 					<p class="wpss-dispute-detail__reason-label"><strong><?php echo esc_html( $wpss_dispute_reasons[ $dispute->reason ] ?? $dispute->reason ); ?></strong></p>
 				<?php endif; ?>
-				<?php if ( ! empty( $dispute->description ) ) : ?>
+				<?php // Shown once. When the statement is in the conversation below, this block stays the category alone. ?>
+				<?php if ( ! $has_opening_msg && ! empty( $dispute->description ) ) : ?>
 					<p><?php echo esc_html( $dispute->description ); ?></p>
 				<?php endif; ?>
 			</div>
@@ -195,7 +210,6 @@ if ( $view_dispute_id ) {
 		// existed, but no member-facing surface ever rendered the thread or a
 		// reply form — a party could OPEN a dispute and then never respond to it.
 		// This wires the existing backend to the dashboard.
-		$evidence_items   = $dispute_service->get_evidence( (int) $dispute->id );
 		$can_add_evidence = ! in_array( $status_key, array( 'resolved', 'closed' ), true );
 		?>
 		<div class="wpss-dispute-detail__evidence">

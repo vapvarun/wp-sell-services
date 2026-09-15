@@ -1102,10 +1102,16 @@ class DisputeWorkflowManager {
 
 		// Add dispute creation.
 		if ( $dispute ) {
+			// The event, not the complaint. This carried $dispute->description,
+			// which put the opening statement on screen a third time - the Reason
+			// block reads the same column and the conversation panel reads the
+			// opening_statement message written from the same text. A timeline is
+			// a log of what happened; the statement itself belongs to the one
+			// surface that owns it (Basecamp 10304334811).
 			$timeline[] = array(
 				'type'       => 'dispute_opened',
 				'user_id'    => $dispute->initiator_id,
-				'content'    => $dispute->description,
+				'content'    => __( 'Opened this dispute.', 'wp-sell-services' ),
 				'created_at' => self::timeline_datetime( $dispute->created_at ),
 			);
 		}
