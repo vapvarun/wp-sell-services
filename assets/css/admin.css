@@ -266,49 +266,6 @@
    Toast Notifications
    ========================================================================== */
 
-.wpss-toast-container {
-	position: fixed;
-	bottom: 20px;
-	right: 20px;
-	z-index: 160000;
-	display: flex;
-	flex-direction: column-reverse;
-	gap: 8px;
-}
-
-.wpss-toast {
-	padding: 12px 20px;
-	border-radius: var(--wpss-admin-radius-md);
-	font-size: 13px;
-	color: var(--wpss-white, #fff);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-	max-width: 360px;
-	opacity: 0;
-	transform: translateY(8px);
-	transition: opacity 0.3s, transform 0.3s;
-}
-
-.wpss-toast.is-visible {
-	opacity: 1;
-	transform: translateY(0);
-}
-
-.wpss-toast--success {
-	background: var(--wpss-admin-success);
-}
-
-.wpss-toast--error {
-	background: var(--wpss-admin-danger);
-}
-
-.wpss-toast--warning {
-	background: var(--wpss-admin-warning);
-}
-
-.wpss-toast--info {
-	background: var(--wpss-admin-accent);
-}
-
 /* Settings page styles are in admin-settings.css (loaded only on settings page). */
 
 /* ==========================================================================

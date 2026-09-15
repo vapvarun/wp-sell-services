@@ -3716,6 +3716,12 @@ select.wpss-input option,
 .wpss-evidence-attach{cursor:pointer}
 .wpss-evidence-filename{font-size:12px;color:var(--wpss-gray-500,#6b7280)}
 .wpss-evidence-locked{font-size:13px;color:var(--wpss-gray-500,#6b7280);margin:12px 0 0}
+/* The detail footer. The class was in the template from the start and had no rule
+   anywhere, so its <p> kept whatever margin the theme gave it - on Reign that is 0,
+   which left View order touching the Attach file row with no gap at all, and stacked
+   three flush buttons at 390px. Space it, and make it a row so a second action can be
+   added without repeating this. */
+.wpss-dispute-detail__actions{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 0}
 @media (max-width:480px){.wpss-evidence-bubble{max-width:100%}.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:0;width:100%}}
 
 /* ==========================================================================

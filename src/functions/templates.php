@@ -311,6 +311,12 @@ function wpss_enqueue_frontend_assets(): void {
 	wp_enqueue_script( 'lucide' );
 	wp_enqueue_script( 'wpss-icons' );
 	wp_enqueue_script( 'wpss-frontend' );
+	// wpss-ui carries the primitives our templates call by name: window.wpssToast,
+	// window.wpssConfirm, and the delegated click that expands the collapsed
+	// billing block. Enqueueing it per-surface meant every new surface had to
+	// remember - and checkout did not, so the billing Edit button rendered and
+	// did nothing at all. It belongs with the rest of the frontend set.
+	\WPSellServices\Assets\ScriptRegistry::enqueue_ui();
 }
 
 /**
