@@ -210,16 +210,41 @@ class Shortcodes {
 			'wpss_service_categories'
 		);
 
-		$categories = get_terms(
-			array(
-				'taxonomy'   => 'wpss_service_category',
-				'parent'     => absint( $atts['parent'] ),
-				'hide_empty' => 'true' === $atts['hide_empty'],
-				'number'     => absint( $atts['limit'] ),
-				'orderby'    => 'count',
-				'order'      => 'DESC',
-			)
+		/*
+		 * parent="" or parent="any" means every level.
+		 *
+		 * parent defaulted to 0 and ran through absint(), so subcategories could
+		 * never be listed and there was no value that meant "all levels" - a site
+		 * with its catalogue organised under parents could not render a complete
+		 * grid at all (Basecamp 10308581339). Default stays 0 so existing
+		 * shortcodes are untouched.
+		 */
+		$parent_att = strtolower( trim( (string) $atts['parent'] ) );
+		$all_levels = in_array( $parent_att, array( '', 'any', 'all', '-1' ), true );
+
+		/*
+		 * limit="-1" or limit="0" means no cap. absint() turned -1 into 1, which
+		 * is a silent one-item grid rather than the unlimited list the author
+		 * asked for, so it is resolved before the cast.
+		 */
+		$limit_att = trim( (string) $atts['limit'] );
+		$no_limit  = in_array( $limit_att, array( '-1', '0' ), true );
+
+		$term_args = array(
+			'taxonomy'   => 'wpss_service_category',
+			'hide_empty' => 'true' === $atts['hide_empty'],
+			'number'     => $no_limit ? 0 : absint( $limit_att ),
+			'orderby'    => 'count',
+			'order'      => 'DESC',
 		);
+
+		// Omitting `parent` entirely is what get_terms() treats as "any depth";
+		// passing 0 restricts to top level, which is the existing default.
+		if ( ! $all_levels ) {
+			$term_args['parent'] = absint( $parent_att );
+		}
+
+		$categories = get_terms( $term_args );
 
 		if ( is_wp_error( $categories ) || empty( $categories ) ) {
 			return '<p class="wpss-no-results">' . esc_html__( 'No categories found.', 'wp-sell-services' ) . '</p>';
