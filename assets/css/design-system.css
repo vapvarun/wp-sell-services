@@ -1044,6 +1044,16 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 .wpss-confirm__message { margin: 0; font-size: var(--wpss-text-base); line-height: 1.55; color: var(--wpss-text-secondary); }
 .wpss-confirm__actions { display: flex; gap: var(--wpss-space-3); justify-content: center; margin-top: var(--wpss-space-2); }
 .wpss-confirm__actions .wpss-btn { min-width: 110px; }
+
+/* Text-only button. Lived only in vendor-dashboard.css, which the member
+   dashboard does not load - so the Remove control under the profile photo had
+   NO rule at all and fell through to the theme: pure black on the dark card,
+   measured 1.18:1 (Basecamp 10300330443). Same shape as wpss-btn-ghost and the
+   toast: a class the markup uses that the loaded stylesheets never define.
+   --wpss-primary-accent carries a dark value, so it follows the mode. */
+.wpss-btn--link { background: none; border: none; padding: 0; color: var(--wpss-primary-accent, #4f46e5); text-decoration: none; }
+.wpss-btn--link:hover,
+.wpss-btn--link:focus-visible { color: var(--wpss-primary-accent, #4f46e5); text-decoration: underline; }
 /* Optional prompt field (wpssConfirm options.prompt). Left-aligned inside an
    otherwise centred dialog, because a label and its input read as a form. */
 .wpss-confirm__label { text-align: start; font-size: var(--wpss-text-sm); font-weight: 600; color: var(--wpss-text); }
