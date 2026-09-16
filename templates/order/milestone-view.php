@@ -40,7 +40,14 @@ $deliverables = (string) ( $meta['deliverables'] ?? '' );
 $submit_note  = (string) ( $meta['submit_note'] ?? '' );
 
 $status       = (string) $current_order->status;
-$is_unpaid    = 'pending_payment' === $status;
+// pending_payment covers two very different situations for the buyer: they have
+// not paid yet, or they chose an offline method and we are waiting on the site
+// owner to confirm the transfer. Rendering the second as the first showed the
+// buyer the same Accept & Pay button they had just used, with nothing to say
+// their instruction had been received - so they used it again (Basecamp
+// 10305169436).
+$awaiting_confirmation = wpss_order_awaits_payment_confirmation( $current_order );
+$is_unpaid    = 'pending_payment' === $status && ! $awaiting_confirmation;
 $is_working   = 'in_progress' === $status;
 $is_submitted = 'pending_approval' === $status;
 // A phase the buyer sent back. submit() has always accepted this as a
@@ -224,6 +231,30 @@ do_action( 'wpss_before_milestone_view', $current_order );
 					data-milestone="<?php echo esc_attr( (int) $current_order->id ); ?>">
 					<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>
 				</button>
+			<?php endif; ?>
+
+			<?php
+			/*
+			 * Payment submitted, waiting on the owner to confirm it. Deliberately
+			 * not a bare "waiting" state: this template does not fire
+			 * wpss_order_view_details, so the offline instructions the buyer needs
+			 * are on the parent order, and paying another way has to stay
+			 * reachable. Both routes are offered so the buyer is never left with
+			 * a status and nothing to do.
+			 */
+			?>
+			<?php if ( $is_buyer && $awaiting_confirmation ) : ?>
+				<p class="wpss-notice wpss-notice--info wpss-milestone-awaiting">
+					<?php esc_html_e( 'Payment submitted. We will confirm your transfer shortly.', 'wp-sell-services' ); ?>
+				</p>
+				<a href="<?php echo esc_url( wpss_get_order_url( (int) ( $current_order->platform_order_id ?: $current_order->id ) ) ); ?>" class="wpss-btn wpss-btn--secondary">
+					<?php esc_html_e( 'View payment instructions', 'wp-sell-services' ); ?>
+				</a>
+				<?php if ( '' !== $pay_url ) : ?>
+					<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--ghost">
+						<?php esc_html_e( 'Pay by another method', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
 			<?php endif; ?>
 
 			<?php if ( $is_vendor && $is_unpaid ) : ?>

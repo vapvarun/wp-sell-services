@@ -270,7 +270,14 @@ do_action( 'wpss_before_order_view', $order );
 			// Pay Now button for unpaid orders (e.g., from accepted proposals).
 			// Through the seam, so the button is right on whichever rail the
 			// site runs, and absent ('') on a rail that cannot pay one order.
-			$pay_url = 'pending_payment' === $order->status ? wpss_get_pay_order_url( (int) $order_id, $order ) : '';
+			// Not while an offline instruction is waiting on the owner to confirm
+			// it: the buyer already submitted, and re-offering the same Pay
+			// button is what made them submit again (Basecamp 10305169436). The
+			// awaiting state renders its own block below, with routes out.
+			$awaiting_confirmation = wpss_order_awaits_payment_confirmation( $order );
+			$pay_url = 'pending_payment' === $order->status && ! $awaiting_confirmation
+				? wpss_get_pay_order_url( (int) $order_id, $order )
+				: '';
 			if ( '' !== $pay_url ) {
 				$actions['pay'] = array(
 					'label' => sprintf(
@@ -281,6 +288,22 @@ do_action( 'wpss_before_order_view', $order );
 					'class' => 'wpss-btn wpss-btn--success',
 					'attrs' => 'onclick="window.location.href=\'' . esc_url( $pay_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
 				);
+			}
+
+			// Waiting on confirmation is not a dead end: the buyer may have
+			// picked offline by mistake, or changed their mind. The route to
+			// another method stays open, just demoted so it no longer reads as
+			// "you have not paid".
+			if ( $awaiting_confirmation ) {
+				$alt_pay_url = wpss_get_pay_order_url( (int) $order_id, $order );
+
+				if ( '' !== $alt_pay_url ) {
+					$actions['pay_other'] = array(
+						'label' => __( 'Pay by another method', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--ghost',
+						'attrs' => 'onclick="window.location.href=\'' . esc_url( $alt_pay_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
+					);
+				}
 			}
 
 			// Submit Requirements CTA. A paid order sits in pending_requirements
@@ -1690,7 +1713,11 @@ do_action( 'wpss_before_order_view', $order );
 							$ms_sub_url = wpss_get_order_url( $ms_sub_id );
 							// Only a phase the buyer can pay right now gets a URL: a read
 							// per payable row, nothing for paid or locked ones.
-							$ms_pay_url     = 'pending_payment' === $ms_status && empty( $m['is_locked'] ) ? wpss_get_pay_order_url( $ms_sub_id ) : '';
+							// A phase whose offline payment is already submitted is not
+							// "ready to pay" - offering the button again in the list is
+							// the same trap as on the phase page itself.
+							$ms_awaiting    = wpss_order_awaits_payment_confirmation( $ms_sub_id );
+							$ms_pay_url     = 'pending_payment' === $ms_status && empty( $m['is_locked'] ) && ! $ms_awaiting ? wpss_get_pay_order_url( $ms_sub_id ) : '';
 							$ms_state_label = '';
 							$ms_state_class = 'wpss-ms-state--' . sanitize_html_class( $ms_status );
 
@@ -1701,6 +1728,10 @@ do_action( 'wpss_before_order_view', $order );
 											? __( 'Locked — finish the earlier phase first', 'wp-sell-services' )
 											: __( 'Locked behind earlier phase', 'wp-sell-services' );
 										$ms_state_class .= ' wpss-ms-state--locked';
+									} elseif ( $ms_awaiting ) {
+										$ms_state_label = $is_customer
+											? __( 'Payment submitted · awaiting confirmation', 'wp-sell-services' )
+											: __( 'Buyer paid · awaiting confirmation', 'wp-sell-services' );
 									} else {
 										$ms_state_label = $is_customer ? __( 'Ready to pay', 'wp-sell-services' ) : __( 'Awaiting buyer payment', 'wp-sell-services' );
 									}

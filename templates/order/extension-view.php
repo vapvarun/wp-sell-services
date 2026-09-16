@@ -21,7 +21,12 @@ defined( 'ABSPATH' ) || exit;
 $is_buyer   = (int) $current_order->customer_id === $user_id;
 $is_vendor  = (int) $current_order->vendor_id === $user_id;
 $is_paid    = 'completed' === $current_order->status;
-$is_pending = 'pending_payment' === $current_order->status;
+// Same split as the milestone view: pending_payment means "not paid yet" OR
+// "offline instruction submitted, waiting on the owner". Showing the second as
+// the first hands the buyer back the button they just used (Basecamp
+// 10305169436).
+$awaiting_confirmation = wpss_order_awaits_payment_confirmation( $current_order );
+$is_pending = 'pending_payment' === $current_order->status && ! $awaiting_confirmation;
 $currency   = $current_order->currency ?: wpss_get_currency();
 $gross      = (float) $current_order->total;
 $net_vendor = (float) ( $current_order->vendor_earnings ?? $gross );
@@ -181,6 +186,18 @@ do_action( 'wpss_before_extension_view', $current_order );
 					data-parent="<?php echo esc_attr( $parent_id ); ?>">
 					<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>
 				</button>
+			<?php endif; ?>
+
+			<?php // Acknowledged, with the alternative left open - "View original order" below carries the instructions. ?>
+			<?php if ( $is_buyer && $awaiting_confirmation ) : ?>
+				<p class="wpss-notice wpss-notice--info wpss-extension-awaiting">
+					<?php esc_html_e( 'Payment submitted. We will confirm your transfer shortly.', 'wp-sell-services' ); ?>
+				</p>
+				<?php if ( '' !== $pay_url ) : ?>
+					<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--ghost">
+						<?php esc_html_e( 'Pay by another method', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
 			<?php endif; ?>
 
 			<?php if ( $parent_url ) : ?>

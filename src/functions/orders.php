@@ -1612,3 +1612,42 @@ foreach ( array( 'wpss_order_created', 'wpss_order_paid', 'wpss_order_status_cha
 	add_action( $wpss_aggregates_hook, 'wpss_flush_order_aggregates' );
 }
 unset( $wpss_aggregates_hook );
+
+/**
+ * Whether the buyer has submitted payment that is waiting on manual confirmation.
+ *
+ * `pending_payment` means two different things and every surface was reading
+ * only the first: "the buyer has not paid yet" AND "the buyer chose an offline
+ * method and we are waiting for the admin to confirm the transfer". Offline is
+ * correct to sit in that status - nothing is broken in the payment path - but
+ * rendering it as "not paid yet" means the buyer is shown the same Pay button
+ * they just used, with no acknowledgement that anything happened. They conclude
+ * it failed and pay again, which is the milestone "redirect loop" in Basecamp
+ * 10305169436 and the same silence on ordinary orders and extensions.
+ *
+ * `payment_method` is the discriminator: it is NULL until the buyer submits and
+ * carries the chosen method afterwards. Verified across a milestone phase, an
+ * extension and a standalone order.
+ *
+ * @since 1.7.1
+ *
+ * @param object|int $order Order row or id.
+ * @return bool True when payment was submitted and awaits confirmation.
+ */
+function wpss_order_awaits_payment_confirmation( $order ): bool {
+	$order = is_object( $order ) ? $order : wpss_get_order( (int) $order );
+
+	if ( ! is_object( $order ) ) {
+		return false;
+	}
+
+	if ( 'pending_payment' !== ( $order->status ?? '' ) ) {
+		return false;
+	}
+
+	// A paid order has left this status; a gateway that captured instantly
+	// never lingers here. Anything still here WITH a method chosen is an
+	// offline-style instruction the site owner has to confirm by hand.
+	return '' !== (string) ( $order->payment_method ?? '' )
+		&& 'paid' !== ( $order->payment_status ?? '' );
+}

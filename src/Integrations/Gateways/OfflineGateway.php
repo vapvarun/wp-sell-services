@@ -1194,6 +1194,26 @@ class OfflineGateway implements PaymentGatewayInterface {
 		 * get_order_method() existed for exactly this and had no callers - the
 		 * snapshot was being written and never read.
 		 */
+		/*
+		 * Acknowledge the submission FIRST, and unconditionally.
+		 *
+		 * Reaching this point means the buyer already chose offline and
+		 * submitted; until now nothing on any screen said so, and they were
+		 * shown the same Pay button they had just used (Basecamp 10305169436).
+		 *
+		 * This deliberately sits ABOVE the instructions lookup. The lookup
+		 * returns early when the owner has written no instructions - which is
+		 * the default on a fresh install - and an acknowledgement nested inside
+		 * it inherited that silence. The first version of this fix did exactly
+		 * that: the Pay button was correctly withdrawn and the explanation
+		 * never rendered, which left the buyer with less than before.
+		 */
+		?>
+		<p class="wpss-notice wpss-notice--info wpss-offline-awaiting">
+			<?php esc_html_e( 'Payment submitted. We will confirm your transfer shortly.', 'wp-sell-services' ); ?>
+		</p>
+		<?php
+
 		$method       = self::get_order_method( $order );
 		$instructions = $method['instructions'] ?? '';
 
