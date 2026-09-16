@@ -1778,3 +1778,55 @@ function wpss_has_wallet(): bool {
 
 	return null !== $wallet && method_exists( $wallet, 'get_balance' );
 }
+
+/**
+ * Refuse a checkout total that falls outside the owner's configured range.
+ *
+ * ONE reading of wpss_min_order_amount / wpss_max_order_amount. The check lived
+ * as a private method on CheckoutIntentService, which only the Stripe and PayPal
+ * rails route through - so the Offline gateway priced and created orders without
+ * ever consulting it and a $2,500 order sailed past a $10 maximum (Basecamp
+ * 10304350394). A limit the owner sets is a marketplace rule, not a property of
+ * one payment method.
+ *
+ * @since 1.7.1
+ *
+ * @param float  $total   Checkout total, tax included.
+ * @param string $context Which rail is asking - offline, stripe, paypal, cart.
+ * @return \WP_Error|null Error when outside the range, null when acceptable.
+ */
+function wpss_check_order_limits( float $total, string $context = '' ): ?\WP_Error {
+	$min = (float) get_option( 'wpss_min_order_amount', 0 );
+	$max = (float) get_option( 'wpss_max_order_amount', 0 );
+
+	$error = null;
+
+	if ( $min > 0 && $total < $min ) {
+		$error = new \WP_Error(
+			'wpss_below_minimum',
+			/* translators: %s: formatted minimum order amount */
+			sprintf( __( 'The minimum order amount is %s.', 'wp-sell-services' ), wpss_format_price( $min ) )
+		);
+	} elseif ( $max > 0 && $total > $max ) {
+		$error = new \WP_Error(
+			'wpss_above_maximum',
+			/* translators: %s: formatted maximum order amount */
+			sprintf( __( 'The maximum order amount is %s.', 'wp-sell-services' ), wpss_format_price( $max ) )
+		);
+	}
+
+	/**
+	 * Filter the order-limit decision.
+	 *
+	 * Return a WP_Error to refuse a total the built-in range would allow, or
+	 * null to permit one it would refuse - a B2B site exempting a trusted buyer,
+	 * for instance. $context names the rail so a rule can apply to one only.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param \WP_Error|null $error   Refusal, or null when acceptable.
+	 * @param float          $total   Checkout total, tax included.
+	 * @param string         $context Rail asking: offline, stripe, paypal, cart.
+	 */
+	return apply_filters( 'wpss_check_order_limits', $error, $total, $context );
+}

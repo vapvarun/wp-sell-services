@@ -675,6 +675,29 @@ class OfflineGateway implements PaymentGatewayInterface {
 				return;
 			}
 
+			/*
+			 * Same rule on the multi-item path, against the number the buyer was
+			 * actually shown: each cart row carries its own `total`, and
+			 * CartController sums exactly these to render the cart.
+			 *
+			 * Checked against the basket as a whole rather than per row - a
+			 * maximum is a limit on what the owner is willing to take in one
+			 * transaction, and three $9 rows under a $10 cap would otherwise
+			 * pass while a single $11 order is refused.
+			 */
+			$cart_total = 0.0;
+
+			foreach ( $cart as $cart_row ) {
+				$cart_total += (float) ( $cart_row['total'] ?? 0 );
+			}
+
+			$limit_error = wpss_check_order_limits( $cart_total, 'offline_cart' );
+
+			if ( null !== $limit_error ) {
+				wp_send_json_error( array( 'message' => $limit_error->get_error_message() ) );
+				return;
+			}
+
 			// For offline payments there is no shared transaction ID yet — generate a placeholder.
 			$transaction_id = 'offline_multi_' . wp_generate_uuid4();
 
@@ -758,6 +781,22 @@ class OfflineGateway implements PaymentGatewayInterface {
 		// Resolve selected addons from POST data.
 		$addon_data   = wpss_resolve_checkout_addons( $service_id );
 		$addons_total = $addon_data['addons_total'];
+
+		/*
+		 * The owner's min/max order amount, same as Stripe and PayPal.
+		 *
+		 * Those rails get it from CheckoutIntentService::resolve(); this handler
+		 * prices the order itself and never called resolve(), so a $2,500 order
+		 * checked out cleanly against a $10 maximum (Basecamp 10304350394). A
+		 * limit the owner sets is a marketplace rule, not a property of one
+		 * payment method.
+		 */
+		$limit_error = wpss_check_order_limits( (float) ( $price + $addons_total ), 'offline' );
+
+		if ( null !== $limit_error ) {
+			wp_send_json_error( array( 'message' => $limit_error->get_error_message() ) );
+			return;
+		}
 
 		// Get order provider.
 		$order_provider = wpss_get_order_provider();
