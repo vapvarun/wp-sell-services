@@ -394,8 +394,19 @@ class Activator {
 			}
 		}
 
-		// Clean up old incorrectly-named options from previous versions.
-		$old_options = array( 'wpss_general_settings', 'wpss_vendor_settings', 'wpss_notification_settings' );
+		/*
+		 * Clean up old incorrectly-named options from previous versions.
+		 *
+		 * wpss_notification_settings was on this list and is NOT old: Settings.php
+		 * registers it and renders two live controls from it - "Skip when they are
+		 * already here" and "Hold message emails for". Activation runs on every
+		 * deactivate/reactivate, which is a routine troubleshooting step and
+		 * something some managed hosts do around updates, so an owner's choices
+		 * were silently reset to defaults with no notice (Basecamp 10304927632).
+		 *
+		 * The other two have no reader anywhere in src/ or templates/ and stay.
+		 */
+		$old_options = array( 'wpss_general_settings', 'wpss_vendor_settings' );
 		foreach ( $old_options as $old_option ) {
 			delete_option( $old_option );
 		}

@@ -739,7 +739,7 @@ class Settings {
 				'min'         => 0,
 				'max'         => 1000,
 				'step'        => 1,
-				'description' => __( 'Vendors must earn at least this amount before they can request a withdrawal. Recommended: $50-$100 for most marketplaces.', 'wp-sell-services' ),
+				'description' => __( 'Two rules, one number. A vendor needs at least this much in available earnings before they can request a withdrawal at all, and every individual request must also be for at least this amount. Recommended: $50-$100 for most marketplaces.', 'wp-sell-services' ),
 			)
 		);
 
@@ -3225,8 +3225,24 @@ class Settings {
 		$options = get_option( $args['option_name'], array() );
 		$value   = $options[ $args['field'] ] ?? $this->field_default( $args ) ?? false;
 
+		/*
+		 * The hidden 0 is what makes unchecking possible.
+		 *
+		 * A browser omits an unchecked box from the POST entirely, and the
+		 * sanitizers guard every key with array_key_exists - deliberately, so a
+		 * partial `wp option patch` or a migration cannot wipe keys it never
+		 * mentioned. The two rules together meant an unchecked box looked like
+		 * "not submitted", the stored 1 survived, and the owner could turn
+		 * these settings ON but never OFF (Basecamp 10304564392).
+		 *
+		 * Pairing the checkbox with a hidden 0 means the key is ALWAYS present
+		 * on a real form submit, so absent still safely means "not this form"
+		 * while unchecked now means false. Fixed here rather than in the
+		 * sanitizers so every checkbox on every tab gets it, not the two that
+		 * were reported.
+		 */
 		printf(
-			'<label><input type="checkbox" id="%1$s" name="%2$s[%1$s]" value="1" %3$s> %4$s</label>',
+			'<input type="hidden" name="%2$s[%1$s]" value="0"><label><input type="checkbox" id="%1$s" name="%2$s[%1$s]" value="1" %3$s> %4$s</label>',
 			esc_attr( $args['field'] ),
 			esc_attr( $args['option_name'] ),
 			checked( $value, true, false ),

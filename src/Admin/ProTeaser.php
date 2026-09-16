@@ -182,8 +182,41 @@ class ProTeaser {
 	 * @param int $user_id Current user ID.
 	 * @return void
 	 */
+	/**
+	 * Where a teaser's "Learn More" should send the reader.
+	 *
+	 * The frontend teasers linked to admin.php?page=wpss-upgrade, which requires
+	 * manage_options. A vendor never has it, so every vendor who clicked Learn
+	 * More on the dashboard got "Sorry, you are not allowed to access this page"
+	 * - at the exact moment we were asking them to buy something (Basecamp
+	 * 10304873919). The admin-side teasers keep the in-admin page: only an admin
+	 * ever sees those, and for them it is the better destination.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return string Public, capability-free upgrade URL.
+	 */
+	private function public_upgrade_url(): string {
+		/**
+		 * Filter the public upgrade URL used by frontend Pro teasers.
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param string $url Public upgrade URL.
+		 */
+		return (string) apply_filters( 'wpss_pro_upgrade_url', 'https://store.wbcomdesigns.com/wp-sell-services-pro/' );
+	}
+
+	/**
+	 * Render earnings summary teaser.
+	 *
+	 * Appears after the earnings summary stats on the vendor dashboard.
+	 *
+	 * @param int $user_id Current user ID.
+	 * @return void
+	 */
 	public function render_earnings_teaser( int $user_id ): void {
-		$upgrade_url = admin_url( 'admin.php?page=wpss-upgrade' );
+		$upgrade_url = $this->public_upgrade_url();
 		?>
 		<div class="wpss-pro-teaser" style="margin-top:1.5rem;">
 			<span class="wpss-pro-teaser__badge"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></span>
@@ -215,7 +248,7 @@ class ProTeaser {
 			return;
 		}
 
-		$upgrade_url = admin_url( 'admin.php?page=wpss-upgrade' );
+		$upgrade_url = $this->public_upgrade_url();
 		?>
 		<div class="wpss-pro-teaser" style="margin-top:1.5rem;">
 			<span class="wpss-pro-teaser__badge"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></span>

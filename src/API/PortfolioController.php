@@ -384,19 +384,37 @@ class PortfolioController extends RestController {
 	public function toggle_featured( WP_REST_Request $request ) {
 		$item_id = (int) $request->get_param( 'id' );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_portfolio_items';
+		/*
+		 * Through the service, not a raw UPDATE.
+		 *
+		 * PortfolioService::toggle_featured() already enforces
+		 * wpss_max_featured_portfolio and already checks the item belongs to the
+		 * caller. This route did neither: it flipped the column directly, so the
+		 * owner's limit was enforced on whichever surface happened to call the
+		 * service and ignored on the dashboard, which calls this (Basecamp
+		 * 10304836976). The vendor-ownership check it was also missing matters
+		 * more than the limit.
+		 */
+		$result = ( new \WPSellServices\Services\PortfolioService() )->toggle_featured(
+			$item_id,
+			get_current_user_id()
+		);
 
-		$item = $this->get_portfolio_item( $item_id );
+		if ( empty( $result['success'] ) ) {
+			$message = (string) ( $result['message'] ?? __( 'Portfolio item not found.', 'wp-sell-services' ) );
 
-		if ( ! $item ) {
-			return new WP_Error( 'not_found', __( 'Portfolio item not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+			// A refused limit is a 409, not a 404: the item exists and the caller
+			// owns it, the marketplace rule is what says no.
+			$is_missing = false !== strpos( $message, 'not found' );
+
+			return new WP_Error(
+				$is_missing ? 'not_found' : 'wpss_featured_limit',
+				$message,
+				array( 'status' => $is_missing ? 404 : 409 )
+			);
 		}
 
-		$new_featured = $item['is_featured'] ? 0 : 1;
-		$wpdb->update( $table, array( 'is_featured' => $new_featured ), array( 'id' => $item_id ), array( '%d' ), array( '%d' ) );
-
-		$item['is_featured'] = $new_featured;
+		$item = $this->get_portfolio_item( $item_id );
 
 		return new WP_REST_Response( $this->format_item( $item ) );
 	}
