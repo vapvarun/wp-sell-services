@@ -133,6 +133,18 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 
 <div class="wpss-vendor-profile">
 	<div class="wpss-container">
+		<?php
+		/*
+		 * Availability first, before anything the buyer might act on.
+		 *
+		 * This page had no vacation notice at all - a vendor could switch
+		 * Availability on in their dashboard and a buyer browsing their profile
+		 * saw nothing, ordered, and found out afterwards (Basecamp 10304941561).
+		 * Same renderer the single-service page uses, so the two cannot drift.
+		 */
+		wpss_render_vendor_vacation_notice( (int) $vendor_id );
+		?>
+
 		<!-- Profile Header -->
 		<div class="wpss-profile-header">
 			<?php

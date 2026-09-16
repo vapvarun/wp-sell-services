@@ -823,3 +823,96 @@ function wpss_get_vendor_pitch_stats(): array {
 	 */
 	return apply_filters( 'wpss_vendor_pitch_stats', $stats );
 }
+
+/**
+ * Print the vacation / availability notice for a vendor, if they are away.
+ *
+ * ONE renderer for a notice that only ever existed on the single-service page.
+ * A vendor could switch Availability on in their dashboard and a buyer looking
+ * at their PROFILE saw nothing at all - so the buyer browsed their services,
+ * ordered, and found out afterwards (Basecamp 10304941561). The seller is never
+ * shown their own notice.
+ *
+ * @since 1.7.1
+ *
+ * @param int $vendor_id Vendor user ID.
+ * @return void
+ */
+function wpss_render_vendor_vacation_notice( int $vendor_id ): void {
+	if ( $vendor_id <= 0 ) {
+		return;
+	}
+
+	// Never block the seller on their own page.
+	if ( is_user_logged_in() && get_current_user_id() === $vendor_id ) {
+		return;
+	}
+
+	$profile = \WPSellServices\Models\VendorProfile::get_by_user_id( $vendor_id );
+
+	if ( ! $profile || ! $profile->is_on_vacation() ) {
+		return;
+	}
+
+	$message = trim( (string) $profile->vacation_message );
+
+	if ( '' === $message ) {
+		$message = __( 'This seller is currently on vacation.', 'wp-sell-services' );
+	}
+
+	$return_display = '';
+	$return_date    = $profile->vacation_return_date ?? null;
+
+	if ( $return_date ) {
+		$timestamp = strtotime( (string) $return_date );
+
+		if ( $timestamp ) {
+			$return_display = date_i18n( get_option( 'date_format' ), $timestamp );
+		}
+	}
+
+	/**
+	 * Filter the vendor vacation notice before it renders.
+	 *
+	 * Return an empty array to suppress the notice entirely - a site that
+	 * handles seller absence its own way, for instance.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string,string> $notice    message, return_date_display.
+	 * @param int                  $vendor_id Vendor user ID.
+	 */
+	$notice = (array) apply_filters(
+		'wpss_vendor_vacation_notice',
+		array(
+			'message'             => $message,
+			'return_date_display' => $return_display,
+		),
+		$vendor_id
+	);
+
+	if ( empty( $notice['message'] ) ) {
+		return;
+	}
+	?>
+	<div class="wpss-vacation-notice" role="status">
+		<span class="wpss-vacation-notice__icon" aria-hidden="true">
+			<i data-lucide="palmtree" class="wpss-icon"></i>
+		</span>
+		<div class="wpss-vacation-notice__body">
+			<p class="wpss-vacation-notice__message"><?php echo esc_html( (string) $notice['message'] ); ?></p>
+			<?php if ( ! empty( $notice['return_date_display'] ) ) : ?>
+				<p class="wpss-vacation-notice__resume">
+					<?php
+					printf(
+						/* translators: %s: formatted return date */
+						esc_html__( 'Orders resume on %s', 'wp-sell-services' ),
+						esc_html( (string) $notice['return_date_display'] )
+					);
+					?>
+				</p>
+			<?php endif; ?>
+		</div>
+	</div>
+	<?php
+}
