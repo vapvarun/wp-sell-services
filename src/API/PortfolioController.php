@@ -290,7 +290,15 @@ class PortfolioController extends RestController {
 				'media'        => wp_json_encode( is_array( $media ) ? array_map( 'intval', $media ) : array() ),
 				'service_id'   => (int) $request->get_param( 'service_id' ),
 				'external_url' => esc_url_raw( $request->get_param( 'external_url' ) ?: '' ),
-				'is_featured'  => 0,
+
+				/*
+				 * The form's "Mark as Featured" checkbox, not a hardcoded 0.
+				 * PortfolioService::create() has always honoured is_featured;
+				 * this route ignored it and wrote 0 every time, so the checkbox
+				 * in the Add Portfolio modal did nothing at all (Basecamp
+				 * 10300287069). Still capped by the owner's limit.
+				 */
+				'is_featured'  => ( $request->get_param( 'is_featured' ) && $this->can_feature_another( $vendor_id ) ) ? 1 : 0,
 				'sort_order'   => 0,
 				'created_at'   => current_time( 'mysql', true ),
 			),
@@ -306,6 +314,48 @@ class PortfolioController extends RestController {
 		$item = $this->get_portfolio_item( $item_id );
 
 		return new WP_REST_Response( $this->format_item( $item ), 201 );
+	}
+
+	/**
+	 * Update portfolio item.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	/**
+	 * Whether this vendor may feature one more item.
+	 *
+	 * Both create_item() and update_item() write is_featured directly, so the
+	 * limit PortfolioService::toggle_featured() enforces has to be applied here
+	 * too - otherwise the cap holds on the toggle and not on the form beside it.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @param int $exclude_id Item being edited, excluded from the count.
+	 * @return bool
+	 */
+	private function can_feature_another( int $vendor_id, int $exclude_id = 0 ): bool {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'wpss_portfolio_items';
+		$max   = (int) get_option( 'wpss_max_featured_portfolio', 6 );
+
+		if ( $max <= 0 ) {
+			return true;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is a trusted $wpdb->prefix concat, as everywhere else in this class.
+				"SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND is_featured = 1 AND id <> %d",
+				$vendor_id,
+				$exclude_id
+			)
+		);
+
+		return $count < $max;
 	}
 
 	/**
@@ -342,6 +392,25 @@ class PortfolioController extends RestController {
 		if ( $request->has_param( 'service_id' ) ) {
 			$update['service_id'] = (int) $request->get_param( 'service_id' );
 			$format[]             = '%d';
+		}
+
+		/*
+		 * Editing an existing item could not change its featured state either -
+		 * the modal populates the checkbox correctly on open and then discarded
+		 * whatever the vendor did with it (Basecamp 10300287069). Unfeaturing is
+		 * always allowed; featuring is capped, with the item itself excluded
+		 * from the count so re-saving an already-featured item is not blocked by
+		 * its own row.
+		 */
+		if ( $request->has_param( 'is_featured' ) ) {
+			$wants_featured = (bool) $request->get_param( 'is_featured' );
+
+			// $item is not fetched until after this block, so resolve the owner
+			// directly rather than reaching for a variable that does not exist yet.
+			$owner_id = (int) $this->get_portfolio_item( $item_id )['vendor_id'] ?? 0;
+
+			$update['is_featured'] = ( $wants_featured && $this->can_feature_another( $owner_id, $item_id ) ) ? 1 : 0;
+			$format[]              = '%d';
 		}
 
 		if ( $request->has_param( 'external_url' ) ) {
