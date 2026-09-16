@@ -787,6 +787,35 @@ class ServiceMetabox {
 
 		// Save status field.
 		// Note: Delivery time and revisions are now per-package only (see packages below).
+		if ( isset( $_POST['wpss_featured'] ) ) {
+			$wpss_featured = ! empty( $_POST['wpss_featured'] );
+
+			/**
+			 * Filter whether a service is featured as it saves.
+			 *
+			 * The owner's checkbox is the default. A site can force the flag from
+			 * its own rule - a vendor tier, a paid placement, a campaign window -
+			 * without having to intercept save_post.
+			 *
+			 * @since 1.7.1
+			 *
+			 * @param bool $wpss_featured Whether the service should be featured.
+			 * @param int  $post_id       Service post ID.
+			 */
+			$wpss_featured = (bool) apply_filters( 'wpss_service_is_featured', $wpss_featured, $post_id );
+
+			if ( $wpss_featured ) {
+				update_post_meta( $post_id, '_wpss_featured', 1 );
+			} else {
+				// Deleted rather than stored as 0. Both readers compare the value
+				// to '1', so a 0 would not match either way - but leaving rows
+				// behind for every service anyone ever unticked is meta nobody
+				// reads, and EXISTS is the obvious way for a future query to ask
+				// this question.
+				delete_post_meta( $post_id, '_wpss_featured' );
+			}
+		}
+
 		if ( isset( $_POST['wpss_status'] ) ) {
 			update_post_meta( $post_id, '_wpss_status', sanitize_key( $_POST['wpss_status'] ) );
 		}
@@ -1263,6 +1292,8 @@ class ServiceMetabox {
 		$status = get_post_meta( $post->ID, '_wpss_status', true );
 		$status = ! empty( $status ) ? $status : 'active';
 
+		$is_featured = (bool) get_post_meta( $post->ID, '_wpss_featured', true );
+
 		$order_count    = (int) get_post_meta( $post->ID, '_wpss_order_count', true );
 		$review_count   = (int) get_post_meta( $post->ID, '_wpss_review_count', true );
 		$average_rating = (float) get_post_meta( $post->ID, '_wpss_rating_average', true );
@@ -1288,6 +1319,35 @@ class ServiceMetabox {
 								</select>
 							</div>
 							<p class="description"><?php esc_html_e( 'Control service visibility', 'wp-sell-services' ); ?></p>
+						</div>
+					</div>
+
+					<?php
+					/*
+					 * The only writer of _wpss_featured outside WP-CLI and the demo
+					 * seeder.
+					 *
+					 * [wpss_featured_services] and the Featured Services block both
+					 * filter on this meta and render correctly - the display half was
+					 * finished and the authoring half was never built, so the feature
+					 * was unreachable on a real site (Basecamp 10308762619).
+					 */
+					?>
+					<div class="wpss-detail-card">
+						<div class="wpss-detail-icon">
+							<i data-lucide="sparkles" class="wpss-icon" aria-hidden="true"></i>
+						</div>
+						<div class="wpss-detail-content">
+							<label for="wpss_featured"><?php esc_html_e( 'Featured', 'wp-sell-services' ); ?></label>
+							<div class="wpss-detail-input">
+								<?php // Hidden 0 so unticking is submitted - a bare checkbox is simply absent when off. ?>
+								<input type="hidden" name="wpss_featured" value="0">
+								<label class="wpss-featured-toggle">
+									<input type="checkbox" id="wpss_featured" name="wpss_featured" value="1" <?php checked( $is_featured ); ?>>
+									<?php esc_html_e( 'Show in featured listings', 'wp-sell-services' ); ?>
+								</label>
+							</div>
+							<p class="description"><?php esc_html_e( 'Included by the Featured Services block and the [wpss_featured_services] shortcode.', 'wp-sell-services' ); ?></p>
 						</div>
 					</div>
 				</div>
