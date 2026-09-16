@@ -152,6 +152,10 @@ class UnifiedDashboard {
 				'serviceNonce'          => wp_create_nonce( 'wpss_service_nonce' ),
 				'restUrl'               => esc_url_raw( rest_url( 'wpss/v1/' ) ),
 				'restNonce'             => wp_create_nonce( 'wp_rest' ),
+				// Which profile route Save Changes should use. Buyers own a
+				// billing address and a display name but no vendor profile, and
+				// PUT /vendors/me refuses them outright.
+				'isVendor'              => wpss_is_vendor( get_current_user_id() ),
 				'currencyDecimals'      => wpss_get_currency_decimals(),
 				'zeroDecimalCurrencies' => wpss_get_zero_decimal_currencies(),
 				'i18n'                  => array(

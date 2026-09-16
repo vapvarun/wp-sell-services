@@ -447,12 +447,20 @@
 				data.vacation_mode = $vac.is(':checked') ? 1 : 0;
 			}
 
-			// REST: PUT /vendors/me (via POST + method override for host
-			// compatibility). Writes the wpss_vendor_profiles table - the single
-			// canonical store - so intro video, country, city, website, vacation,
-			// and cover all persist (the old AJAX twin split storage / dropped them).
+			// REST: PUT /vendors/me for vendors, PUT /me for everyone else.
+			//
+			// vendors/me writes the wpss_vendor_profiles table - the single
+			// canonical store - so intro video, country, city, website, vacation
+			// and cover all persist. It also refuses a non-vendor with 403
+			// wpss_not_vendor, and this form is shown to buyers too: sending
+			// every member there meant a buyer pressing Save was told they were
+			// not a vendor while their billing address silently failed to save.
+			// Both routes write the account-level fields through the same
+			// server-side helper, so the two are not a fork.
+			var profileRoute = wpssUnifiedDashboard.isVendor ? 'vendors/me' : 'me';
+
 			$.ajax({
-				url: wpssUnifiedDashboard.restUrl + 'vendors/me',
+				url: wpssUnifiedDashboard.restUrl + profileRoute,
 				method: 'PUT',
 				data: data,
 				beforeSend: function (xhr) {

@@ -299,6 +299,19 @@ class API {
 				[
 
 					/*
+					 * The account-level profile: billing address, display name,
+					 * avatar. Every logged-in member owns these, so they do not
+					 * belong behind the vendor gate on PUT /vendors/me - a buyer
+					 * saving their billing address there was answered with
+					 * "You are not registered as a vendor" and nothing saved.
+					 */
+					'methods'             => \WP_REST_Server::EDITABLE,
+					'callback'            => [ $this, 'update_current_user_profile' ],
+					'permission_callback' => 'wpss_rest_require_login',
+				],
+				[
+
+					/*
 					 * App Store Guideline 5.1.1(v) and Google Play's data
 					 * deletion policy: an account that can be created in the app
 					 * must be deletable in the app. "Email the site owner" is
@@ -924,6 +937,32 @@ class API {
 		$icon = get_site_icon_url();
 
 		return $icon ? (string) $icon : '';
+	}
+
+	/**
+	 * Save the current member's account-level profile.
+	 *
+	 * Billing address, display name and avatar - the fields any logged-in
+	 * member owns. Vendor marketing copy stays on PUT /vendors/me; this route
+	 * deliberately writes nothing vendor-specific, so granting it to every
+	 * logged-in user grants nothing a buyer should not already have.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return \WP_REST_Response
+	 */
+	public function update_current_user_profile( \WP_REST_Request $request ): \WP_REST_Response {
+		$user_id = get_current_user_id();
+
+		wpss_save_member_profile( $request->get_params(), $user_id );
+
+		return rest_ensure_response(
+			[
+				'success' => true,
+				'user'    => wpss_rest_user( $user_id ),
+			]
+		);
 	}
 
 	/**

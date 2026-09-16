@@ -3490,31 +3490,12 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
 		}
 
-		// Billing address — available to ALL users, not just vendors, because a
-		// buyer needs one for invoices and they never see the vendor fields.
-		// Shares the exact helper the checkout save-back uses, so both surfaces
-		// write the same WooCommerce-compatible keys with the same sanitising.
+		// Billing address, display name and avatar — available to ALL users, not
+		// just vendors, because a buyer needs a billing address for invoices and
+		// never sees the vendor fields. One writer, shared with PUT /me and
+		// PUT /vendors/me, so the three surfaces cannot drift again.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-		wpss_save_billing_from_request( $_POST, $user_id );
-
-		// Update display name (available for all users).
-		$display_name = sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) );
-		if ( ! empty( $display_name ) ) {
-			wp_update_user(
-				array(
-					'ID'           => $user_id,
-					'display_name' => $display_name,
-				)
-			);
-		}
-
-		// Update avatar (available for all users).
-		$avatar_id = absint( $_POST['avatar_id'] ?? 0 );
-		if ( $avatar_id > 0 ) {
-			update_user_meta( $user_id, '_wpss_avatar_id', $avatar_id );
-		} else {
-			delete_user_meta( $user_id, '_wpss_avatar_id' );
-		}
+		wpss_save_member_profile( wp_unslash( $_POST ), $user_id );
 
 		// Check if user is a vendor (canonical capability/role check - role-based
 		// vendors do not always carry the _wpss_is_vendor meta).
