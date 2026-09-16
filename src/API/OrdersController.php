@@ -954,7 +954,29 @@ class OrdersController extends RestController {
 					$error = __( 'Only the customer can mark orders as complete.', 'wp-sell-services' );
 				} elseif ( ! in_array( $order->status, array( 'delivered', 'pending_approval' ), true ) ) {
 					$error = __( 'Order cannot be completed in current status.', 'wp-sell-services' );
+				} elseif ( ServiceOrder::STATUS_PENDING_APPROVAL === $order->status ) {
+					/*
+					 * Approving from pending_approval IS accepting the delivery.
+					 *
+					 * This called update_status() straight to completed, which
+					 * leaves the delivery row on 'pending' - so the order read
+					 * Completed while the Delivery panel still read Pending, and
+					 * both parties were left unsure whether the handover had
+					 * actually happened (Basecamp 10304615155). The AJAX path the
+					 * dashboard button uses has always gone through accept();
+					 * this is the same flow reached over REST.
+					 *
+					 * accept() marks the delivery, completes the order in the
+					 * same call, and fires wpss_delivery_accepted - which this
+					 * path was also skipping.
+					 */
+					$result = ( new \WPSellServices\Services\DeliveryService() )->accept( $order_id );
+
+					if ( ! $result ) {
+						$error = __( 'Delivery could not be accepted.', 'wp-sell-services' );
+					}
 				} else {
+					// 'delivered' has no pending delivery row to accept.
 					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
 				}
 				break;
