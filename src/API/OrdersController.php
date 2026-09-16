@@ -1079,14 +1079,23 @@ class OrdersController extends RestController {
 					$error = __( 'No cancellation request to respond to.', 'wp-sell-services' );
 				} else {
 					// Vendor disputes the cancellation — escalate to dispute.
+					//
+					// The vendor's sentence is the DESCRIPTION; the reason column
+					// holds a key from wpss_get_dispute_reasons(). This passed the
+					// sentence as both, so the dispute screen printed a whole
+					// translated string where the reason category belongs - the
+					// same mistake the late-delivery cron made before it was
+					// fixed. open() now coerces an unknown key, but a caller
+					// should not be relying on that.
 					$dispute_service = new \WPSellServices\Services\DisputeService();
-					$dispute_reason  = ! empty( $reason ) ? $reason : __( 'Vendor disputed buyer cancellation request.', 'wp-sell-services' );
-					$dispute_id      = $dispute_service->open( $order_id, $user_id, $dispute_reason, $dispute_reason );
+					$dispute_note    = ! empty( $reason ) ? $reason : __( 'Vendor disputed buyer cancellation request.', 'wp-sell-services' );
+					$dispute_reason  = \WPSellServices\Models\Dispute::REASON_OTHER;
+					$dispute_id      = $dispute_service->open( $order_id, $user_id, $dispute_reason, $dispute_note );
 
 					if ( $dispute_id ) {
 						// DisputeService::open() already sets status to disputed.
 						$result = true;
-						do_action( 'wpss_order_disputed', $order_id, 'vendor', $dispute_reason );
+						do_action( 'wpss_order_disputed', $order_id, 'vendor', $dispute_note );
 					} else {
 						$error = __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' );
 					}

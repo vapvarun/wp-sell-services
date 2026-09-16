@@ -249,11 +249,40 @@ class DisputeService {
 			? (int) $order->vendor_id
 			: (int) $order->customer_id;
 
+		// The reason column holds a KEY from wpss_get_dispute_reasons(), and
+		// every renderer does $reasons[$key] ?? $key - so an unknown value is
+		// printed raw to the buyer, the vendor and the admin. Nothing validated
+		// it: sanitize_text_field() happily stores a whole translated sentence.
+		// It has happened twice. The late-delivery cron once wrote the
+		// translated LABEL (see DisputeWorkflowManager, fixed there), and rows
+		// carrying "Late delivery" as a value still exist. Coerce rather than
+		// refuse: the caller is mid-flow and the text survives as the
+		// description, so nothing is lost but the bad key.
+		$reason = sanitize_text_field( $reason );
+
+		if ( ! array_key_exists( $reason, wpss_get_dispute_reasons() ) ) {
+			wpss_log(
+				sprintf(
+					'Dispute opened on order %1$d with an unrecognised reason "%2$s"; stored as "%3$s".',
+					$order_id,
+					$reason,
+					\WPSellServices\Models\Dispute::REASON_OTHER
+				),
+				'warning'
+			);
+
+			if ( '' === trim( $description ) ) {
+				$description = $reason;
+			}
+
+			$reason = \WPSellServices\Models\Dispute::REASON_OTHER;
+		}
+
 		$dispute_data = array(
 			'order_id'      => $order_id,
 			'initiated_by'  => $opened_by,
 			'respondent_id' => $respondent_id,
-			'reason'        => sanitize_text_field( $reason ),
+			'reason'        => $reason,
 			'description'   => sanitize_textarea_field( $description ),
 			'status'        => self::STATUS_OPEN,
 			'evidence'      => ! empty( $meta ) ? wp_json_encode( $meta ) : null,
