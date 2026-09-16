@@ -58,12 +58,16 @@
 	   Tiers were previously coloured via inline style="" with raw hex in three
 	   templates (service card, vendor card, vendor profile). Tokenised here so a
 	   single edit re-skins every surface and the templates stay markup-only. */
+	/* Text values are measured against their own bg, not picked from the ramp:
+	   #64748b on #f1f5f9 is 4.34 and #ca8a04 on #fefce8 is 2.84, both under
+	   WCAG AA 1.4.3 in every mode. Deepened to 6.92 and 4.76 (Basecamp
+	   10240423992). Rising 4.75 and Pro 5.31 already cleared it. */
 	--wpss-tier-new-bg: #f1f5f9;
-	--wpss-tier-new-text: #64748b;
+	--wpss-tier-new-text: #475569;
 	--wpss-tier-rising-bg: #eff6ff;
 	--wpss-tier-rising-text: #2563eb;
 	--wpss-tier-top-rated-bg: #fefce8;
-	--wpss-tier-top-rated-text: #ca8a04;
+	--wpss-tier-top-rated-text: #a16207;
 	--wpss-tier-pro-bg: #faf5ff;
 	--wpss-tier-pro-text: #7c3aed;
 
@@ -91,6 +95,24 @@
    Modals/dialogs:      9991
    Mini-cart FAB:       9995
    ------------------------------------------ */
+
+/* Seller-tier badges in dark mode.
+   This file defines the tier palette but carried no dark block, so a badge kept
+   its light near-white ground on a dark card - wrong to look at, and the light
+   pairs were never measured against a dark surface. Same selector triple the
+   design system uses, so it follows the host theme's toggle. */
+:root[data-theme="dark"],
+:root[data-bx-mode="dark"],
+.wpss-dark .wpss-app {
+	--wpss-tier-new-bg: #334155;
+	--wpss-tier-new-text: #cbd5e1;
+	--wpss-tier-rising-bg: #1e3a5f;
+	--wpss-tier-rising-text: #bfdbfe;
+	--wpss-tier-top-rated-bg: #422006;
+	--wpss-tier-top-rated-text: #fde68a;
+	--wpss-tier-pro-bg: #3b0764;
+	--wpss-tier-pro-text: #ddd6fe;
+}
 
 /* Admin bar offset adjustment */
 .admin-bar {

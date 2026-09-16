@@ -807,6 +807,19 @@
 	color: var(--wpss-text-muted, #6b7280);
 }
 
+/*
+ * The unread card swaps its ground to --wpss-primary-light, which in dark mode
+ * is indigo #312e81 - lighter than the normal card. --wpss-text-muted measures
+ * 4.4993 there: seven ten-thousandths under the WCAG AA 1.4.3 floor, on exactly
+ * the card a member is most likely to open. The rule above is correct for the
+ * default ground (6.99) and was never wrong; it is simply a different ground.
+ * The secondary ramp gives 7.75 on indigo, and stays right in light mode where
+ * both tokens flip together. Basecamp 10240423992.
+ */
+.wpss-conversation-card--unread .wpss-conversation-card__time {
+	color: var(--wpss-text-secondary, #374151);
+}
+
 .wpss-conversation-card__preview {
 	margin: 0 0 4px;
 	font-size: 13px;
