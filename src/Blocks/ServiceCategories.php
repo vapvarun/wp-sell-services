@@ -94,9 +94,19 @@ class ServiceCategories extends AbstractBlock {
 				'type'    => 'boolean',
 				'default' => false,
 			],
+			/*
+			 * true, matching assets/js/blocks.js.
+			 *
+			 * Gutenberg omits an attribute equal to its default from the saved
+			 * markup. The editor defaulted this to true and previewed empty
+			 * categories hidden; PHP defaulted to false, so the frontend fell
+			 * back to false and showed them - the toggle visibly ON while doing
+			 * the opposite (Basecamp 10308602331). The editor's behaviour is the
+			 * one owners have been seeing and expecting, so PHP moves to match.
+			 */
 			'hideEmpty'  => [
 				'type'    => 'boolean',
-				'default' => false,
+				'default' => true,
 			],
 			'parentOnly' => [
 				'type'    => 'boolean',
@@ -135,7 +145,8 @@ class ServiceCategories extends AbstractBlock {
 			'showCount'  => true,
 			'showIcon'   => true,
 			'showImage'  => false,
-			'hideEmpty'  => false,
+			// Second copy of the same default; both must agree with blocks.js.
+			'hideEmpty'  => true,
 			'parentOnly' => false,
 			'maxItems'   => 8,
 			'orderBy'    => 'name',

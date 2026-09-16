@@ -25,6 +25,16 @@
 
 defined( 'ABSPATH' ) || exit;
 
+/*
+ * Display toggles from the Service Grid block, via wpss_render_services_grid().
+ * Absent means show - every caller that does not pass them ([wpss_services],
+ * archives, REST, a theme override including this file directly) renders
+ * exactly as before (Basecamp 10308731466).
+ */
+$wpss_show_rating = ! isset( $wpss_show_rating ) || $wpss_show_rating;
+$wpss_show_price  = ! isset( $wpss_show_price ) || $wpss_show_price;
+$wpss_show_seller = ! isset( $wpss_show_seller ) || $wpss_show_seller;
+
 $service_id     = get_the_ID();
 $vendor_id      = (int) get_post_field( 'post_author', $service_id );
 $vendor         = get_userdata( $vendor_id );
@@ -132,6 +142,7 @@ do_action( 'wpss_before_service_card', $service_id );
 		</div>
 
 		<div class="wpss-service-card__body">
+			<?php if ( $wpss_show_seller ) : ?>
 			<div class="wpss-service-card__vendor">
 				<img src="<?php echo esc_url( get_avatar_url( $vendor_id, array( 'size' => 32 ) ) ); ?>"
 					alt="<?php echo esc_attr( $vendor ? $vendor->display_name : '' ); ?>"
@@ -202,6 +213,7 @@ do_action( 'wpss_before_service_card', $service_id );
 				endif;
 				?>
 			</div>
+			<?php endif; ?>
 
 			<?php
 			/**
@@ -231,6 +243,7 @@ do_action( 'wpss_before_service_card', $service_id );
 			do_action( 'wpss_service_card_header', $service_id );
 			?>
 
+			<?php if ( $wpss_show_rating ) : ?>
 			<div class="wpss-service-card__rating">
 				<?php if ( $rating_count > 0 ) : ?>
 					<i data-lucide="star" class="wpss-icon wpss-icon--sm wpss-service-card__star" aria-hidden="true"></i>
@@ -248,6 +261,7 @@ do_action( 'wpss_before_service_card', $service_id );
 					<span class="wpss-service-card__rating-new"><?php esc_html_e( 'New', 'wp-sell-services' ); ?></span>
 				<?php endif; ?>
 			</div>
+			<?php endif; ?>
 		</div>
 
 		<div class="wpss-service-card__footer">
@@ -264,8 +278,10 @@ do_action( 'wpss_before_service_card', $service_id );
 			do_action( 'wpss_service_card_footer', $service_id );
 			?>
 
-			<span class="wpss-service-card__price-label"><?php esc_html_e( 'Starting at', 'wp-sell-services' ); ?></span>
-			<span class="wpss-service-card__price"><?php echo wp_kses_post( wpss_catalog_price_html( $starting_price, 'card' ) ); ?></span>
+			<?php if ( $wpss_show_price ) : ?>
+				<span class="wpss-service-card__price-label"><?php esc_html_e( 'Starting at', 'wp-sell-services' ); ?></span>
+				<span class="wpss-service-card__price"><?php echo wp_kses_post( wpss_catalog_price_html( $starting_price, 'card' ) ); ?></span>
+			<?php endif; ?>
 		</div>
 	</a>
 

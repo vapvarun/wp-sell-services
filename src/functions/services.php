@@ -614,7 +614,12 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 		'posts_per_page' => absint( $attributes['postsPerPage'] ?? 12 ),
 		'paged'          => max( 1, $page ),
 		'orderby'        => sanitize_key( $attributes['orderBy'] ?? 'date' ),
-		'order'          => in_array( ( $attributes['order'] ?? 'DESC' ), array( 'ASC', 'DESC' ), true ) ? $attributes['order'] : 'DESC',
+		// The ?? guarded the comparison but not the branch that uses the value, so
+		// any caller omitting `order` - the shortcode, archives, REST - emitted
+		// "Undefined array key order" on every render. Resolve once, then test.
+		'order'          => in_array( strtoupper( (string) ( $attributes['order'] ?? 'DESC' ) ), array( 'ASC', 'DESC' ), true )
+			? strtoupper( (string) ( $attributes['order'] ?? 'DESC' ) )
+			: 'DESC',
 	);
 
 	// Category filter. Accepts a term id OR a slug: the [wpss_services]
@@ -675,11 +680,36 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 
 	wpss_prime_service_card_caches( $query->posts );
 
+	/*
+	 * Display toggles for the card, passed down rather than assumed.
+	 *
+	 * The Service Grid block exposes Show Rating / Show Price / Show Seller and
+	 * this renderer never read them - it always loaded the card template, which
+	 * always printed all three, so the toggles did nothing in the editor preview
+	 * or on the frontend (Basecamp 10308731466). Absent means true, so every
+	 * other caller - [wpss_services], archives, REST - renders exactly as before.
+	 */
+	$wpss_card_display = array(
+		'wpss_show_rating' => ! array_key_exists( 'showRating', $attributes ) || (bool) $attributes['showRating'],
+		'wpss_show_price'  => ! array_key_exists( 'showPrice', $attributes ) || (bool) $attributes['showPrice'],
+		'wpss_show_seller' => ! array_key_exists( 'showSeller', $attributes ) || (bool) $attributes['showSeller'],
+	);
+
+	/**
+	 * Filter which elements a service card renders.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string,bool>  $wpss_card_display wpss_show_rating, wpss_show_price, wpss_show_seller.
+	 * @param array<string,mixed> $attributes        Grid attributes.
+	 */
+	$wpss_card_display = (array) apply_filters( 'wpss_service_card_display', $wpss_card_display, $attributes );
+
 	ob_start();
 	if ( $query->have_posts() ) {
 		while ( $query->have_posts() ) {
 			$query->the_post();
-			wpss_get_template_part( 'content', 'service-card' );
+			wpss_get_template_part( 'content', 'service-card', $wpss_card_display );
 		}
 	} else {
 		echo '<p class="wpss-no-services">' . esc_html__( 'No services found.', 'wp-sell-services' ) . '</p>';
