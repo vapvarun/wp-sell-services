@@ -618,7 +618,7 @@ class AjaxHandlers {
 			wp_send_json_success(
 				array(
 					'message'  => __( 'Requirements submitted successfully. The vendor will start working on your order.', 'wp-sell-services' ),
-					'redirect' => wpss_get_order_url( $order_id ),
+					'redirect' => wpss_get_post_checkout_url( (int) $order_id, wpss_get_order_url( $order_id ), 'ajax' ),
 				)
 			);
 		} else {
@@ -1648,7 +1648,7 @@ class AjaxHandlers {
 			// timeline + Pay-phase-1 button live.
 			$is_milestone_contract = ProposalService::CONTRACT_TYPE_MILESTONE === ( $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED );
 			if ( $is_milestone_contract ) {
-				$redirect_url = wpss_get_order_url( (int) $result['order_id'] );
+				$redirect_url = wpss_get_post_checkout_url( (int) $result['order_id'], wpss_get_order_url( (int) $result['order_id'] ), 'ajax' );
 				$message      = __( 'Proposal accepted — your project is set up. Opening the order…', 'wp-sell-services' );
 			} else {
 				$redirect_url = wpss_ensure_pay_order( (int) $result['order_id'] );

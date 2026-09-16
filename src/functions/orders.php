@@ -683,6 +683,56 @@ function wpss_get_order_confirmation_url( int $order_id ): string {
 }
 
 /**
+ * Where a buyer goes after a successful checkout.
+ *
+ * Settings > Pages > Order Confirmation Page existed, saved correctly, and was
+ * read by nothing: wpss_get_order_confirmation_url() had ZERO callers outside
+ * its own definition while eleven redirect sites each built their own URL, so
+ * the owner could pick a thank-you page and buyers never saw it (Basecamp
+ * 10304592376).
+ *
+ * The fallback is passed in rather than assumed, because the right destination
+ * without a confirmation page differs by site: a paid order with requirements
+ * belongs on the requirements form, not the order view. Passing it keeps every
+ * existing redirect byte-identical when no confirmation page is configured.
+ *
+ * @since 1.7.1
+ *
+ * @param int    $order_id     Order ID.
+ * @param string $fallback_url Where to go when no confirmation page is set.
+ * @param string $context      Which rail is redirecting, for the filter.
+ * @return string
+ */
+function wpss_get_post_checkout_url( int $order_id, string $fallback_url = '', string $context = '' ): string {
+	$confirmation_page = (int) get_option( 'wpss_order_confirmation_page' );
+	$url               = '';
+
+	if ( $confirmation_page ) {
+		$permalink = get_permalink( $confirmation_page );
+
+		if ( $permalink ) {
+			$url = add_query_arg( 'order_id', $order_id, $permalink );
+		}
+	}
+
+	if ( '' === $url ) {
+		$url = '' !== $fallback_url ? $fallback_url : wpss_get_order_url( $order_id );
+	}
+
+	/**
+	 * Filter the post-checkout redirect.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $url      Resolved destination.
+	 * @param int    $order_id Order ID.
+	 * @param string $context  Rail that is redirecting: offline, stripe, test,
+	 *                         intent, cart, edd.
+	 */
+	return (string) apply_filters( 'wpss_post_checkout_url', $url, $order_id, $context );
+}
+
+/**
  * Check if late requirements submission is allowed.
  *
  * @since 1.0.0

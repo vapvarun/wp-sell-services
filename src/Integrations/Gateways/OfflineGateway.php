@@ -653,7 +653,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 				array(
 					'order_id'     => $order->id,
 					'order_number' => $order->order_number,
-					'redirect'     => wpss_get_order_url( $order->id ),
+					'redirect'     => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_url( $order->id ), 'offline' ),
 					'instructions' => $this->render_buyer_instructions( (int) $order->id ),
 					'message'      => __( 'Please complete your payment using the instructions below. Your order will be activated once payment is confirmed.', 'wp-sell-services' ),
 				)
@@ -843,7 +843,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 			array(
 				'order_id'     => $order->id,
 				'order_number' => $order->order_number,
-				'redirect_url' => wpss_get_order_url( $order->id ),
+				'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_url( $order->id ), 'offline' ),
 				'instructions' => $this->render_buyer_instructions( $order->id ),
 			)
 		);
