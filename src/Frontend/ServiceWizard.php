@@ -1820,10 +1820,41 @@ class ServiceWizard {
 			wp_send_json_error( array( 'message' => __( 'Invalid file type. Please upload a valid image.', 'wp-sell-services' ) ) );
 		}
 
-		// Check file size (max 5MB for gallery images).
-		$max_size = 5 * 1024 * 1024;
-		if ( $file['size'] > $max_size ) {
-			wp_send_json_error( array( 'message' => __( 'Image file size exceeds 5MB limit.', 'wp-sell-services' ) ) );
+		/*
+		 * Size comes from Settings > Advanced, not a literal.
+		 *
+		 * The image-only rule above is deliberate and stays - a service gallery
+		 * should not accept a zip - but the 5MB cap was a third private copy of
+		 * a number the owner thinks they control, alongside the ones in
+		 * RequirementsService and DeliveryService. No card reported this one;
+		 * it surfaced sweeping for the other two.
+		 */
+		$max_mb = (int) wpss_get_option( 'advanced', 'max_file_size' );
+
+		/**
+		 * Filter the maximum size of a service gallery image, in megabytes.
+		 *
+		 * Defaults to Settings > Advanced > Max File Upload Size. Gallery images
+		 * are the one upload every visitor loads on a service page, so a site
+		 * may want a tighter cap here than it allows for private deliveries.
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param int                 $max_mb Maximum size in MB.
+		 * @param array<string,mixed> $file   The $_FILES entry being checked.
+		 */
+		$max_mb = (int) apply_filters( 'wpss_gallery_max_upload_size_mb', $max_mb, $file );
+
+		if ( $max_mb > 0 && $file['size'] > $max_mb * MB_IN_BYTES ) {
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+						/* translators: %s: maximum file size, e.g. 10 MB */
+						__( 'Image file size exceeds the %s limit.', 'wp-sell-services' ),
+						size_format( $max_mb * MB_IN_BYTES )
+					),
+				)
+			);
 		}
 
 		require_once ABSPATH . 'wp-admin/includes/image.php';

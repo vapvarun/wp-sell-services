@@ -286,64 +286,18 @@ class DeliveryService {
 		// provider and keeps the file out of the web root. Deliveries were the
 		// reason cloud storage existed and never received a single file
 		// (Basecamp 10239805812).
-		$allowed = $this->get_allowed_file_types();
-		$checked = wp_check_filetype( (string) ( $file['name'] ?? '' ) );
 
-		if ( empty( $checked['ext'] ) || ! in_array( $checked['ext'], $allowed, true ) ) {
+		/*
+		 * The owner's Settings > Advanced rule. This checked a private 31-type
+		 * allowlist and no size at all, so Max File Upload Size was ignored on
+		 * the one surface where a vendor uploads the largest files (Basecamp
+		 * 10304977538). svg/html/css/js stay out via the shipped default, which
+		 * is the union of the old lists minus those carriers.
+		 */
+		if ( null !== wpss_check_upload( $file, 'delivery' ) ) {
 			return null;
 		}
 
 		return wpss_store_order_file( $file, $order_id, 'delivery' );
-	}
-
-	/**
-	 * Get allowed file types for delivery.
-	 *
-	 * @return array
-	 */
-	private function get_allowed_file_types(): array {
-		// Security note: svg, html, css, and js are intentionally NOT allowed -
-		// each can carry executable content (script tags, expressions, imports)
-		// and is an XSS risk when served back to other users.
-		$types = array(
-			'jpg',
-			'jpeg',
-			'png',
-			'gif',
-			'webp',
-			'pdf',
-			'doc',
-			'docx',
-			'xls',
-			'xlsx',
-			'ppt',
-			'pptx',
-			'zip',
-			'rar',
-			'7z',
-			'mp3',
-			'wav',
-			'ogg',
-			'mp4',
-			'mov',
-			'avi',
-			'webm',
-			'txt',
-			'csv',
-			'json',
-			'xml',
-			'psd',
-			'ai',
-			'eps',
-			'sketch',
-			'fig',
-		);
-
-		/**
-		 * Filter allowed file types for delivery.
-		 *
-		 * @param array $types Allowed file extensions.
-		 */
-		return apply_filters( 'wpss_delivery_allowed_file_types', $types );
 	}
 }

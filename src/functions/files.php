@@ -237,11 +237,25 @@ function wpss_order_files_are_public( bool $force = false ): ?bool {
  *
  * @since 1.7.1
  *
- * @param array<string,mixed> $file One entry from $_FILES.
+ * @param array<string,mixed> $file    One entry from $_FILES.
+ * @param string              $context Which surface is uploading - passed to the
+ *                                     filters so a site can vary the rule per
+ *                                     context rather than globally.
  * @return WP_Error|null Error describing the refusal, or null when acceptable.
  */
-function wpss_check_upload( array $file ): ?WP_Error {
+function wpss_check_upload( array $file, string $context = '' ): ?WP_Error {
 	$max_mb = (int) wpss_get_option( 'advanced', 'max_file_size' );
+
+	/**
+	 * Filter the maximum upload size, in megabytes.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int                 $max_mb  Maximum size in MB.
+	 * @param array<string,mixed> $file    The $_FILES entry being checked.
+	 * @param string              $context Upload context.
+	 */
+	$max_mb = (int) apply_filters( 'wpss_max_upload_size_mb', $max_mb, $file, $context );
 
 	if ( (int) ( $file['size'] ?? 0 ) > $max_mb * MB_IN_BYTES ) {
 		return new WP_Error(
@@ -260,6 +274,23 @@ function wpss_check_upload( array $file ): ?WP_Error {
 	}
 
 	$allowed = array_map( 'trim', explode( ',', strtolower( (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ) ) );
+
+	/**
+	 * Filter the file extensions any WPSS upload may use.
+	 *
+	 * The owner's Settings > Advanced list is the default. This filter is the
+	 * seam for a site that needs a type the settings screen does not offer, or
+	 * needs to narrow the list for one context - $context tells you which
+	 * surface is asking.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string[]            $allowed Lower-case extensions, no dots.
+	 * @param array<string,mixed> $file    The $_FILES entry being checked.
+	 * @param string              $context Upload context: requirements, delivery,
+	 *                                     message, dispute, media, portfolio, ''.
+	 */
+	$allowed = (array) apply_filters( 'wpss_allowed_file_types', $allowed, $file, $context );
 
 	if ( ! in_array( strtolower( (string) $checked['ext'] ), $allowed, true ) ) {
 		return new WP_Error( 'invalid_type', __( 'File type not allowed.', 'wp-sell-services' ), array( 'status' => 400 ) );

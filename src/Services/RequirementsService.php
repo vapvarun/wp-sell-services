@@ -380,17 +380,15 @@ class RequirementsService {
 				continue;
 			}
 
-			// Check file type.
-			$allowed_types = $this->get_allowed_file_types();
-			$file_type     = wp_check_filetype( $file['name'] );
-
-			if ( ! in_array( $file_type['ext'], $allowed_types, true ) ) {
-				continue;
-			}
-
-			// Check file size (max 50MB).
-			$max_size = 50 * 1024 * 1024;
-			if ( $file['size'] > $max_size ) {
+			/*
+			 * The owner's Settings > Advanced rule, not a private copy of it.
+			 * This carried its own 27-type allowlist and a hardcoded 50MB cap, so
+			 * changing Max File Upload Size did nothing here and a type added to
+			 * Allowed File Types was still refused (Basecamp 10304976534).
+			 * wpss_check_upload() also verifies the real bytes rather than
+			 * trusting the client-supplied extension.
+			 */
+			if ( null !== wpss_check_upload( $file, 'requirements' ) ) {
 				continue;
 			}
 
@@ -457,50 +455,6 @@ class RequirementsService {
 		}
 
 		return $flat;
-	}
-
-	/**
-	 * Get allowed file types.
-	 *
-	 * @return array
-	 */
-	private function get_allowed_file_types(): array {
-		$types = array(
-			'jpg',
-			'jpeg',
-			'png',
-			'gif',
-			'webp',
-			'pdf',
-			'doc',
-			'docx',
-			'xls',
-			'xlsx',
-			'ppt',
-			'pptx',
-			'txt',
-			'rtf',
-			'csv',
-			'zip',
-			'rar',
-			'7z',
-			'mp3',
-			'wav',
-			'mp4',
-			'mov',
-			'avi',
-			'psd',
-			'ai',
-			'eps',
-			'svg',
-		);
-
-		/**
-		 * Filter allowed file types for requirements.
-		 *
-		 * @param array $types Allowed extensions.
-		 */
-		return apply_filters( 'wpss_requirements_allowed_file_types', $types );
 	}
 
 	/**

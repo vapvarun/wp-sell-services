@@ -367,6 +367,23 @@ class Activator {
 			delete_option( 'wpss_' . $key );
 		}
 
+		/*
+		 * Widen a stored allowlist that is still the old shipped default.
+		 *
+		 * Requirements and delivery uploads used to enforce private 27- and
+		 * 31-type lists and ignore this setting entirely. Now that they read it,
+		 * a site sitting on the old 7-type default would start refusing zip,
+		 * mp4, psd and 23 other types its vendors were uploading yesterday.
+		 *
+		 * Only the untouched default is rewritten. An owner who edited the field
+		 * chose their list and keeps it, even if it is narrower.
+		 */
+		$legacy_default = 'jpg,jpeg,png,gif,pdf,doc,docx';
+
+		if ( ( $advanced['allowed_file_types'] ?? '' ) === $legacy_default ) {
+			$advanced['allowed_file_types'] = wpss_settings_defaults()['wpss_advanced']['allowed_file_types'] ?? $legacy_default;
+		}
+
 		update_option( 'wpss_advanced', $advanced );
 	}
 
