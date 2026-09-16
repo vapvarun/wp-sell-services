@@ -96,6 +96,18 @@
    Mini-cart FAB:       9995
    ------------------------------------------ */
 
+/* Category card: the owner's Category Color and Featured flag.
+   Both were admin fields with read helpers and no consumer - set them and
+   nothing changed on the site (Basecamp 10308737393). The colour arrives as
+   --wpss-category-color on the card, so a theme can pick it up anywhere; here
+   it tints the icon and gives a featured card an accent edge. Falls back to the
+   design-system border when a term has no colour set. */
+.wpss-category-card { border-inline-start: 3px solid transparent; }
+.wpss-category-card .wpss-category-icon,
+.wpss-category-card .wpss-category-icon .wpss-icon,
+.wpss-category-card .wpss-category-icon .dashicons { color: var(--wpss-category-color, var(--wpss-primary-accent)); }
+.wpss-category-card--featured { border-inline-start-color: var(--wpss-category-color, var(--wpss-primary-accent)); }
+
 /* Seller-tier badges in dark mode.
    This file defines the tier palette but carried no dark block, so a badge kept
    its light near-white ground on a dark card - wrong to look at, and the light

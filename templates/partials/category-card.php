@@ -65,11 +65,31 @@ $card_link = is_wp_error( $term_link ) ? '' : $term_link;
  */
 $card_link = (string) apply_filters( 'wpss_category_card_link', $card_link, $category );
 
+/*
+ * Category Color and Featured Category are real admin fields on the term edit
+ * screen, saved to _wpss_color / _wpss_featured, with static read helpers
+ * written specifically to expose them - and no template ever called either, so
+ * an owner set a colour and a featured flag and nothing changed anywhere on the
+ * site (Basecamp 10308737393).
+ *
+ * The colour tints the icon and drives an accent border via a CSS custom
+ * property, so a theme can re-use it without the template dictating where it
+ * lands. Featured adds a modifier class rather than a badge: these cards already
+ * carry name, count and image, and the owner's own ordering is what a featured
+ * category is usually for.
+ */
+$card_color    = \WPSellServices\Taxonomies\ServiceCategoryTaxonomy::get_color( (int) $category->term_id );
+$card_featured = (bool) get_term_meta( $category->term_id, '_wpss_featured', true );
+
 $icon     = get_term_meta( $category->term_id, '_wpss_icon', true );
 $image_id = get_term_meta( $category->term_id, '_wpss_image', true );
 $image    = $image_id ? wp_get_attachment_image_url( (int) $image_id, 'medium' ) : '';
 
 $card_classes = array( 'wpss-category-card' );
+
+if ( $card_featured ) {
+	$card_classes[] = 'wpss-category-card--featured';
+}
 
 /**
  * Filters the category card CSS classes.
@@ -90,7 +110,9 @@ $card_classes = (array) apply_filters( 'wpss_category_card_classes', $card_class
  */
 do_action( 'wpss_before_category_card', $category );
 ?>
-<a href="<?php echo esc_url( $card_link ); ?>" class="<?php echo esc_attr( implode( ' ', array_map( 'sanitize_html_class', $card_classes ) ) ); ?>">
+<a href="<?php echo esc_url( $card_link ); ?>"
+	class="<?php echo esc_attr( implode( ' ', array_map( 'sanitize_html_class', $card_classes ) ) ); ?>"
+	style="--wpss-category-color: <?php echo esc_attr( $card_color ); ?>;">
 	<?php if ( $show_image && $image ) : ?>
 		<div class="wpss-category-image">
 			<img src="<?php echo esc_url( $image ); ?>" alt="<?php echo esc_attr( $category->name ); ?>" loading="lazy">
