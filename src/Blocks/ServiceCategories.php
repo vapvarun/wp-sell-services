@@ -94,6 +94,7 @@ class ServiceCategories extends AbstractBlock {
 				'type'    => 'boolean',
 				'default' => false,
 			],
+
 			/*
 			 * true, matching assets/js/blocks.js.
 			 *
