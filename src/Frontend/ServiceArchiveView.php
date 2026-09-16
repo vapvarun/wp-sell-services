@@ -192,16 +192,13 @@ class ServiceArchiveView {
 								<?php selected( $current_category, $wpss_parent->term_id ); ?>>
 								<?php echo esc_html( $wpss_parent->name ); ?>
 							</option>
-							<?php if ( ! empty( $wpss_group['children'] ) ) : ?>
-								<optgroup label="<?php echo esc_attr( $wpss_parent->name ); ?>">
-									<?php foreach ( $wpss_group['children'] as $wpss_child ) : ?>
-										<option value="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'category' => $wpss_child->term_id ) ), $base_url ) ); ?>"
-											<?php selected( $current_category, $wpss_child->term_id ); ?>>
-											<?php echo esc_html( $wpss_child->name ); ?>
-										</option>
-									<?php endforeach; ?>
-								</optgroup>
-							<?php endif; ?>
+							<?php // Indented, not an optgroup labelled with the parent's own name - see Basecamp 10304812139. ?>
+							<?php foreach ( $wpss_group['children'] as $wpss_child ) : ?>
+								<option value="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'category' => $wpss_child->term_id ) ), $base_url ) ); ?>"
+									<?php selected( $current_category, $wpss_child->term_id ); ?>>
+									<?php echo esc_html( "\u{00A0}\u{00A0}\u{00A0}" . $wpss_child->name ); ?>
+								</option>
+							<?php endforeach; ?>
 						<?php endforeach; ?>
 					</select>
 				<?php endif; ?>

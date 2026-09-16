@@ -80,18 +80,25 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 						foreach ( wpss_group_category_terms( $categories ) as $wpss_group ) :
 							$wpss_parent = $wpss_group['term'];
 							?>
+							<?php
+							/*
+							 * Indented children, not an optgroup labelled with the
+							 * parent's name. The parent was printed as a selectable
+							 * option AND again as the optgroup label, so it appeared
+							 * twice in the list and the buyer had to guess which one
+							 * was right (Basecamp 10304812139). WP core's own
+							 * hierarchical dropdowns indent instead, which shows every
+							 * name once and keeps the parent selectable.
+							 */
+							?>
 							<option value="<?php echo esc_attr( $wpss_parent->term_id ); ?>">
 								<?php echo esc_html( $wpss_parent->name ); ?>
 							</option>
-							<?php if ( ! empty( $wpss_group['children'] ) ) : ?>
-								<optgroup label="<?php echo esc_attr( $wpss_parent->name ); ?>">
-									<?php foreach ( $wpss_group['children'] as $wpss_child ) : ?>
-										<option value="<?php echo esc_attr( $wpss_child->term_id ); ?>">
-											<?php echo esc_html( $wpss_child->name ); ?>
-										</option>
-									<?php endforeach; ?>
-								</optgroup>
-							<?php endif; ?>
+							<?php foreach ( $wpss_group['children'] as $wpss_child ) : ?>
+								<option value="<?php echo esc_attr( $wpss_child->term_id ); ?>">
+									<?php echo esc_html( "\u{00A0}\u{00A0}\u{00A0}" . $wpss_child->name ); ?>
+								</option>
+							<?php endforeach; ?>
 						<?php endforeach; ?>
 					<?php endif; ?>
 				</select>
