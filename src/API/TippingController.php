@@ -31,6 +31,12 @@ class TippingController extends RestController {
 	 * @return void
 	 */
 	public function register_routes(): void {
+		// Not registered while tipping is off, so a client reading the index
+		// never discovers a tip route, and GET /me reports tips as false.
+		if ( ! wpss_tipping_enabled() ) {
+			return;
+		}
+
 		// POST /orders/{order_id}/tip - Send tip.
 		register_rest_route(
 			$this->namespace,

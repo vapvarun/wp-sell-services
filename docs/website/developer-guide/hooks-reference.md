@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**514 hooks** across **728** firing sites.
+**529 hooks** across **742** firing sites.
 
-## Actions (274)
+## Actions (275)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -198,6 +198,7 @@ guide; this is the complete index.
 | `wpss_recurring_payment_failed` | 2 | `src/RecurringServices/RecurringWebhookHandler.php` **[PRO]** | Fires after a recurring subscription is marked past_due due to a failed payment. |
 | `wpss_recurring_renewal_order_created` | 3 | `src/RecurringServices/RecurringOrderFactory.php` **[PRO]** | Fires after a recurring renewal order is created. |
 | `wpss_recurring_subscription_cancelled` | 2 | `src/RecurringServices/RecurringWebhookHandler.php` **[PRO]** | Fires after a recurring subscription is cancelled via Stripe webhook. |
+| `wpss_register_tipping_settings` | 0 | `src/Admin/Settings.php` | Register fields that belong directly above the tip commission rate. |
 | `wpss_render_secret_field` | 1 | `src/Admin/Settings.php` *(+3 more)* |  |
 | `wpss_report_filed` | 4 | `src/API/ReportsController.php` | Fires when a member files a report. |
 | `wpss_request_archive_header` | 0 | `templates/archive-request.php` | Hook: wpss_request_archive_header |
@@ -291,7 +292,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (240)
+## Filters (254)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -303,6 +304,8 @@ guide; this is the complete index.
 | `wpss_admin_vendor_notification_content` | 2 | `src/Services/NotificationService.php` | Filter admin vendor notification email content. |
 | `wpss_after_become_vendor_redirect` | 2 | `src/Frontend/UnifiedDashboard.php` | Filter the redirect URL after a vendor successfully registers. |
 | `wpss_allow_late_requirements_submission` | 1 | `src/functions/orders.php` *(+1 more)* | Filter whether late requirements submission is allowed. |
+| `wpss_allowed_file_types` | 3 | `src/functions/files.php` | Filter the file extensions any WPSS upload may use. |
+| `wpss_analytics_page_url` | 1 | `src/Admin/ProTeaser.php` | Filter the destination the Analytics settings tab points at. |
 | `wpss_analytics_widgets` | 1 | `src/Core/Plugin.php` *(+1 more)* | Filter the registered analytics widgets. |
 | `wpss_api_controllers` | 1 | `src/API/API.php` | Filter registered API controllers. |
 | `wpss_api_cors_origins` | 0 | `src/API/API.php` | Filter allowed CORS origins. |
@@ -334,6 +337,7 @@ guide; this is the complete index.
 | `wpss_category_card_link` | 2 | `templates/partials/category-card.php` | Filters the category card's link target. |
 | `wpss_category_schema` | 2 | `src/SEO/SchemaMarkup.php` |  |
 | `wpss_category_terms_limit` | 1 | `src/functions/services.php` | Filter the maximum number of category terms a chooser will render. |
+| `wpss_check_order_limits` | 3 | `src/functions/money.php` | Filter the order-limit decision. |
 | `wpss_checkout_badges` | 2 | `src/functions/payments.php` | Filter the checkout reassurance badges. |
 | `wpss_checkout_creates_accounts` | 1 | `src/functions/billing.php` | Filter whether checkout creates an account for a logged-out buyer. |
 | `wpss_checkout_slug` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php` | Filter the checkout URL slug. |
@@ -356,7 +360,7 @@ guide; this is the complete index.
 | `wpss_dashboard_sections` | 3 | `src/Frontend/UnifiedDashboard.php` | Filter dashboard sections. |
 | `wpss_default_page_slugs` | 1 | `src/functions/urls.php` | Filter default page slugs. |
 | `wpss_default_service_categories` | 1 | `src/PostTypes/ServicePostType.php` | Insert the default service categories. Returns the created term IDs. |
-| `wpss_delivery_allowed_file_types` | 1 | `src/Services/DeliveryService.php` | Filter allowed file types for delivery. |
+| `wpss_delivery_allowed_file_types` | 1 | `src/functions/files.php` | Filter the file extensions allowed for order deliveries. |
 | `wpss_dispute_reasons` | 1 | `src/functions/moderation.php` | Filter the reasons a buyer may give for opening a dispute. |
 | `wpss_docs_url` | 1 | `src/Admin/Pages/UpgradePage.php` | Filters the documentation URL shown on the upgrade screen. |
 | `wpss_ecommerce_adapters` | 1 | `src/CLI/PreflightCommand.php` *(+1 more)* |  |
@@ -379,6 +383,7 @@ guide; this is the complete index.
 | `wpss_format_price` | 3 | `src/functions/money.php` |  |
 | `wpss_fullwidth_page_keys` | 1 | `src/Frontend/TemplateLoader.php` | Filter which mapped plugin pages render full-width. |
 | `wpss_gallery_image_size` | 2 | `templates/partials/service-gallery.php` | Filters the gallery image size. |
+| `wpss_gallery_max_upload_size_mb` | 2 | `src/Frontend/ServiceWizard.php` | Filter the maximum size of a service gallery image, in megabytes. |
 | `wpss_get_template` | 3 | `src/functions/templates.php` | Filter the template file path. |
 | `wpss_get_template_part` | 3 | `src/functions/templates.php` | Filter the template file path. |
 | `wpss_is_vendor` | 2 | `src/functions/vendors.php` | Filter whether user is a vendor. |
@@ -389,11 +394,12 @@ guide; this is the complete index.
 | `wpss_manual_order_currencies` | 1 | `src/Admin/Pages/ManualOrderPage.php` | Filter the currencies available on the Manual Order page dropdown. |
 | `wpss_max_order_quantity` | 2 | `src/Frontend/SingleServiceView.php` *(+1 more)* | Filters the maximum order quantity for a service. |
 | `wpss_max_upload_size` | 1 | `src/functions/misc.php` | Filter the max upload size for requirements files. |
+| `wpss_max_upload_size_mb` | 3 | `src/functions/files.php` | Filter the maximum upload size, in megabytes. |
 | `wpss_member_bypasses_limits` | 2 | `src/functions/vendors.php` | Filter whether a member is exempt from vendor selling limits. |
 | `wpss_member_display_name` | 3 | `src/functions/vendors.php` *(+1 more)* | This filter is documented below. |
 | `wpss_message_email_delay_minutes` | 1 | `src/Services/EmailService.php` | Filter the message-email delay. |
 | `wpss_messages_per_page` | 2 | `templates/dashboard/sections/messages.php` | Filter how many conversations one page of the messages list shows. |
-| `wpss_min_service_price` | 1 | `src/Frontend/ServiceWizard.php` *(+3 more)* |  |
+| `wpss_min_service_price` | 1 | `src/Frontend/ServiceWizard.php` *(+1 more)* |  |
 | `wpss_no_requests_message` | 1 | `templates/content-no-requests.php` | Template: No Requests Found |
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php` | Filter email content before sending. |
@@ -421,6 +427,7 @@ guide; this is the complete index.
 | `wpss_payout_banner_state` | 4 | `templates/dashboard/sections/earnings.php` | Filters the payout banner state shown on the earnings section. |
 | `wpss_person_schema` | 2 | `src/SEO/SchemaMarkup.php` |  |
 | `wpss_platform_name` | 1 | `src/functions/misc.php` | Filter the platform name. |
+| `wpss_post_checkout_url` | 3 | `src/functions/orders.php` | Filter the post-checkout redirect. |
 | `wpss_pre_create_order` | 1 | `src/Integrations/Standalone/StandaloneOrderProvider.php` | Filters order data before database insertion. |
 | `wpss_pre_create_review` | 2 | `src/Services/ReviewService.php` | Filters review data before database insertion. |
 | `wpss_pre_create_service` | 1 | `src/Services/ServiceManager.php` | Filters service data before creation. |
@@ -438,7 +445,7 @@ guide; this is the complete index.
 | `wpss_pro_push_provider` | 2 | `src/Push/PushNotificationService.php` **[PRO]** | Filter the push provider. |
 | `wpss_pro_push_should_send` | 5 | `src/Push/PushNotificationService.php` **[PRO]** | Filter whether a push is sent for this notification. |
 | `wpss_pro_recurring_feature_available` | 1 | `src/RecurringServices/RecurringSettingsRenderer.php` **[PRO]** | Whether the recurring-services feature is available in this version. |
-| `wpss_pro_upgrade_url` | 1 | `src/Frontend/ServiceWizard.php` *(+3 more)* |  |
+| `wpss_pro_upgrade_url` | 1 | `src/Frontend/ServiceWizard.php` *(+4 more)* |  |
 | `wpss_proposal_order_revisions` | 3 | `src/Services/BuyerRequestService.php` |  |
 | `wpss_rail_status_map` | 2 | `src/functions/orders.php` | Filters the rail status map. |
 | `wpss_rate_limits` | 2 | `src/Core/RateLimiter.php` | Filter rate limits for a specific action. |
@@ -450,7 +457,7 @@ guide; this is the complete index.
 | `wpss_requests_per_page` | 1 | `templates/archive-request.php` | Filter: wpss_requests_per_page |
 | `wpss_require_service_moderation` | 1 | `src/Services/ModerationService.php` | Filter whether new/updated services require moderation. |
 | `wpss_requirement_field_label` | 2 | `src/functions/orders.php` | Filter the label shown for a submitted requirement field. |
-| `wpss_requirements_allowed_file_types` | 1 | `src/Services/RequirementsService.php` | Filter allowed file types for requirements. |
+| `wpss_requirements_allowed_file_types` | 1 | `src/functions/files.php` | Filter the file extensions allowed for buyer requirement attachments. |
 | `wpss_requirements_file_inputs` | 2 | `src/Frontend/AjaxHandlers.php` |  |
 | `wpss_rest_confirm_payment` | 6 | `src/API/PaymentController.php` | Filter to handle custom payment gateway confirmation via REST. |
 | `wpss_rest_create_payment_intent` | 7 | `src/API/PaymentController.php` | Filter to handle custom payment gateway intent creation via REST. |
@@ -466,8 +473,11 @@ guide; this is the complete index.
 | `wpss_search_suggestions` | 2 | `src/Services/SearchService.php` | Filter search suggestions. |
 | `wpss_seller_levels` | 1 | `src/API/SellerLevelsController.php` | Filter seller level definitions. |
 | `wpss_service_card_classes` | 2 | `templates/content-service-card.php` |  |
+| `wpss_service_card_display` | 2 | `src/functions/services.php` | Filter which elements a service card renders. |
 | `wpss_service_card_thumbnail_size` | 2 | `templates/content-service-card.php` | Hook: wpss_before_service_card |
 | `wpss_service_category_taxonomy_args` | 1 | `src/Taxonomies/ServiceCategoryTaxonomy.php` | Filter service category taxonomy arguments. |
+| `wpss_service_editor_url` | 2 | `src/functions/urls.php` | Filter the service create/edit destination. |
+| `wpss_service_is_featured` | 2 | `src/Admin/Metaboxes/ServiceMetabox.php` | Filter whether a service is featured as it saves. |
 | `wpss_service_limit_error_message` | 1 | `src/Frontend/ServiceWizard.php` *(+3 more)* | Filter the error message shown when a vendor cannot create more services. |
 | `wpss_service_list_schema` | 1 | `src/SEO/SchemaMarkup.php` |  |
 | `wpss_service_max_extras` | 1 | `src/functions/services.php` | Max service extras (add-ons). |
@@ -498,6 +508,7 @@ guide; this is the complete index.
 | `wpss_status_class` | 2 | `src/functions/templates.php` | Filter the CSS classes for a status badge. |
 | `wpss_sticky_top_offset` | 1 | `src/Frontend/Frontend.php` | Extra pixels to add above every sticky WPSS surface. |
 | `wpss_storage_providers` | 1 | `src/Core/Plugin.php` *(+3 more)* | Filter the registered storage providers. |
+| `wpss_stripe_api_version` | 1 | `src/functions/payments.php` | Filter the Stripe API version used for every request. |
 | `wpss_stripe_customer_shipping` | 2 | `src/Integrations/Stripe/StripeGateway.php` | Filter the buyer shipping details sent to Stripe. |
 | `wpss_stripe_payment_description` | 3 | `src/Integrations/Stripe/StripeGateway.php` | Filter the Stripe PaymentIntent description. |
 | `wpss_stripe_payment_intent_args` | 3 | `src/Integrations/Stripe/StripeGateway.php` | Filter Stripe PaymentIntent parameters before creation. |
@@ -508,14 +519,17 @@ guide; this is the complete index.
 | `wpss_three_decimal_currencies` | 1 | `src/functions/money.php` | Filter the list of three-decimal currency codes. |
 | `wpss_tip_commission_rate` | 3 | `src/Services/TippingService.php` | Filter the commission rate applied to a tip. |
 | `wpss_tip_quick_amounts` | 2 | `templates/order/order-view.php` |  |
+| `wpss_tipping_enabled` | 1 | `src/functions/orders.php` | Filter whether tipping is available. |
 | `wpss_token_recovery_routes` | 1 | `src/API/AppTokenGuard.php` | Filter the routes reachable without a valid token. |
 | `wpss_tour_should_enqueue` | 1 | `src/Frontend/Tour.php` | Filter whether WPSS tour assets load on the current request. |
 | `wpss_tour_steps` | 1 | `src/Frontend/Tour.php` | Filter the steps array handed to Shepherd. |
 | `wpss_use_fullwidth_template` | 1 | `src/Frontend/TemplateLoader.php` *(+1 more)* | Filter whether plugin pages use the full-width template. |
+| `wpss_user_can_feature_service` | 2 | `src/functions/services.php` | Filter who may mark a service as Featured. |
 | `wpss_validate_add_to_cart` | 4 | `src/API/CartController.php` | Validates whether a service can be added to the cart. |
 | `wpss_vendor_benefit_listings_copy` | 2 | `templates/partials/vendor-benefits.php` | Filter the service-count promise on the Become a Vendor page. |
 | `wpss_vendor_can_create_service` | 2 | `src/Frontend/ServiceWizard.php` *(+4 more)* |  |
 | `wpss_vendor_is_on_vacation` | 2 | `src/Models/VendorProfile.php` | Check if vendor is on vacation. |
+| `wpss_vendor_max_services` | 2 | `src/Models/VendorProfile.php` | Filter the number of services this vendor may have. |
 | `wpss_vendor_page_schema` | 2 | `src/SEO/SchemaMarkup.php` |  |
 | `wpss_vendor_pending_email_content` | 3 | `src/Services/NotificationService.php` | Filter vendor pending review email content. |
 | `wpss_vendor_pitch_stats` | 1 | `src/functions/vendors.php` | Filter the proof points on the Become a Vendor page. |
@@ -524,6 +538,7 @@ guide; this is the complete index.
 | `wpss_vendor_profile_fields` | 2 | `templates/vendor/profile.php` | Filter additional vendor profile fields. |
 | `wpss_vendor_registration_open` | 1 | `src/API/VendorsController.php` |  |
 | `wpss_vendor_slug` | 1 | `src/Core/Plugin.php` *(+1 more)* | Filter the vendor profile URL slug. |
+| `wpss_vendor_vacation_notice` | 2 | `src/functions/vendors.php` | Filter the vendor vacation notice before it renders. |
 | `wpss_vendor_welcome_email_content` | 3 | `src/Services/NotificationService.php` | Filter vendor welcome email content. |
 | `wpss_vendors_page_id` | 1 | `src/functions/vendors.php` | Filter the resolved vendor-directory page ID. |
 | `wpss_vendors_url` | 2 | `src/functions/vendors.php` | Filter the vendor-directory URL. |

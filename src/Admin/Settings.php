@@ -678,22 +678,37 @@ class Settings {
 			)
 		);
 
-		add_settings_field(
-			'tip_commission_rate',
-			__( 'Tip Commission Rate (%)', 'wp-sell-services' ),
-			array( $this, 'render_number_field' ),
-			'wpss_commission',
-			'wpss_commission_section',
-			array(
-				'option_name' => 'wpss_commission',
-				'field'       => 'tip_commission_rate',
-				'min'         => 0,
-				'max'         => 50,
-				'step'        => 0.1,
-				'default'     => '',
-				'description' => __( 'Cut the platform keeps on tips. Leave empty to use the main commission rate (vendors receive the same net cut as on regular orders). Set to 0 to give vendors 100% of every tip.', 'wp-sell-services' ),
-			)
-		);
+		/**
+		 * Register fields that belong directly above the tip commission rate.
+		 *
+		 * Fires whether or not tipping is on, so a switch that turns tipping on
+		 * can always be shown. Settings fields render in the order they are
+		 * added, which is why this is an action at this exact point rather
+		 * than a hook priority for callers to guess at.
+		 *
+		 * @since 1.7.1
+		 */
+		do_action( 'wpss_register_tipping_settings' );
+
+		// Shown only while tipping is on.
+		if ( wpss_tipping_enabled() ) {
+			add_settings_field(
+				'tip_commission_rate',
+				__( 'Tip Commission Rate (%)', 'wp-sell-services' ),
+				array( $this, 'render_number_field' ),
+				'wpss_commission',
+				'wpss_commission_section',
+				array(
+					'option_name' => 'wpss_commission',
+					'field'       => 'tip_commission_rate',
+					'min'         => 0,
+					'max'         => 50,
+					'step'        => 0.1,
+					'default'     => '',
+					'description' => __( 'Cut the platform keeps on tips. Leave empty to use the main commission rate (vendors receive the same net cut as on regular orders). Set to 0 to give vendors 100% of every tip.', 'wp-sell-services' ),
+				)
+			);
+		}
 
 		// Payouts settings.
 		register_setting(
@@ -3531,7 +3546,21 @@ class Settings {
 		// commission rate at runtime" rather than a saved 0 (which means
 		// "no platform cut"). Admins can clear the field to revert to the
 		// matching-rate behavior.
-		$tip_rate_raw = $input['tip_commission_rate'] ?? '';
+		//
+		// Absent from the POST is not the same as cleared. The field is not
+		// rendered while tipping is off, and without this the next save of the
+		// Commission tab would quietly wipe a rate the owner set - so switching
+		// tipping back on would come back to the wrong commission.
+		if ( ! array_key_exists( 'tip_commission_rate', $input ) ) {
+			$existing                         = get_option( 'wpss_commission', array() );
+			$sanitized['tip_commission_rate'] = is_array( $existing ) && array_key_exists( 'tip_commission_rate', $existing )
+				? $existing['tip_commission_rate']
+				: '';
+
+			return $sanitized;
+		}
+
+		$tip_rate_raw = $input['tip_commission_rate'];
 		if ( '' === $tip_rate_raw ) {
 			$sanitized['tip_commission_rate'] = '';
 		} else {

@@ -1611,6 +1611,11 @@ final class Plugin {
 		$this->loader->add_action(
 			'wpss_tip_sent',
 			function ( int $wallet_txn_id, int $parent_order_id, int $vendor_id, int $customer_id, float $amount, string $message = '' ) use ( $notification_service ): void {
+				// The credit has already happened by the time this fires; only
+				// the announcement is withheld when tipping is off.
+				if ( ! wpss_tipping_enabled() ) {
+					return;
+				}
 				$notification_service->notify_tip_received( $wallet_txn_id, $parent_order_id, $vendor_id, $customer_id, $amount, $message );
 			},
 			null,

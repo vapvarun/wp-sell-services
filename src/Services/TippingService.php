@@ -171,6 +171,17 @@ class TippingService {
 	public function create_pending_tip_order( int $parent_order_id, float $amount, int $customer_id, string $message = '' ): array {
 		global $wpdb;
 
+		// The route is not registered while tipping is off, but this is the
+		// only place a tip is created, so it refuses too - whatever calls it.
+		if ( ! wpss_tipping_enabled() ) {
+			return array(
+				'success'      => false,
+				'tip_order_id' => null,
+				'checkout_url' => null,
+				'message'      => __( 'Tipping is not available on this site.', 'wp-sell-services' ),
+			);
+		}
+
 		if ( $amount <= 0 ) {
 			return array(
 				'success'      => false,

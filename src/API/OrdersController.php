@@ -1405,7 +1405,10 @@ class OrdersController extends RestController {
 			);
 		}
 
-		$platforms = array( 'milestone', 'extension', 'tip' );
+		$platforms = array( 'milestone', 'extension' );
+		if ( wpss_tipping_enabled() ) {
+			$platforms[] = 'tip';
+		}
 		if ( $type && in_array( $type, $platforms, true ) ) {
 			$platforms = array( $type );
 		}

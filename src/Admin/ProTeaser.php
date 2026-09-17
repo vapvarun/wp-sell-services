@@ -219,6 +219,7 @@ class ProTeaser {
 						<li><?php esc_html_e( 'Vendor subscription plans with recurring billing', 'wp-sell-services' ); ?></li>
 						<li><?php esc_html_e( 'White-label branding for your marketplace', 'wp-sell-services' ); ?></li>
 						<li><?php esc_html_e( 'Stripe Connect for automatic vendor payouts', 'wp-sell-services' ); ?></li>
+						<li><?php esc_html_e( 'Buyer tips on completed orders, with their own commission rate', 'wp-sell-services' ); ?></li>
 					</ul>
 					<a href="<?php echo esc_url( $upgrade_url ); ?>" class="wpss-pro-teaser__cta">
 						<?php esc_html_e( 'Upgrade to Pro', 'wp-sell-services' ); ?>

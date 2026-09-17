@@ -2103,7 +2103,7 @@ do_action( 'wpss_before_order_view', $order );
 
 	<!-- Tip CTA (for completed orders, buyer only, once per order, on a rail that can take the payment) -->
 	<?php
-	if ( 'completed' === $order->status && $is_customer && wpss_can_pay_single_order() ) :
+	if ( 'completed' === $order->status && $is_customer && wpss_can_pay_single_order() && wpss_tipping_enabled() ) :
 		$tipping_service = new \WPSellServices\Services\TippingService();
 		$already_tipped  = $tipping_service->has_tipped( $order_id, get_current_user_id() );
 		$currency        = wpss_get_currency();
@@ -2160,7 +2160,7 @@ do_action( 'wpss_before_order_view', $order );
 	<?php endif; ?>
 </div>
 
-<?php if ( 'completed' === $order->status && $is_customer && empty( $already_tipped ) ) : ?>
+<?php if ( 'completed' === $order->status && $is_customer && empty( $already_tipped ) && wpss_tipping_enabled() ) : ?>
 <!-- Tip Modal -->
 <div class="wpss-modal" id="wpss-tip-modal" data-order="<?php echo esc_attr( (string) $order_id ); ?>" role="dialog" aria-modal="true" aria-labelledby="wpss-tip-modal-title">
 	<div class="wpss-modal__backdrop"></div>

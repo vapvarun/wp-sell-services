@@ -841,7 +841,7 @@ class API {
 					 * same time.
 					 */
 					'milestones'     => $can_pay_single_order,
-					'tips'           => $can_pay_single_order,
+					'tips'           => $can_pay_single_order && wpss_tipping_enabled(),
 					'extensions'     => $can_pay_single_order,
 
 					/*

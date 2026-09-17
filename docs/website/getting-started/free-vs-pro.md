@@ -30,7 +30,7 @@ All of these are fully available in both versions -- nothing is held back:
 - Delivery management with revisions and deadline extensions
 - 5-star reviews, dispute resolution, and buyer requests with proposals
 - Vendor and buyer dashboards, 4 seller levels (New Seller, Rising Seller, Top Rated, Pro Seller), portfolios, vacation mode
-- Tipping system, in-app notifications, and 24 switchable email notification types
+- In-app notifications and switchable email notification types
 - 6 page-building blocks, mobile-responsive templates, and theme customization
 
 ### Service Creation Limits
@@ -66,7 +66,7 @@ All of these are fully available in both versions -- nothing is held back:
 
 ### Commission and Earnings
 
-Free covers the complete flat-commission and manual-withdrawal path: global commission rates (0-50%), per-vendor custom rates, earnings tracking, withdrawal management, minimum withdrawal amounts, clearance periods, automatic withdrawal scheduling, and a separate commission rate for tips. You can run a marketplace and pay every vendor on Free alone.
+Free covers the complete flat-commission and manual-withdrawal path: global commission rates (0-50%), per-vendor custom rates, earnings tracking, withdrawal management, minimum withdrawal amounts, clearance periods, and automatic withdrawal scheduling. You can run a marketplace and pay every vendor on Free alone.
 
 An owner can therefore pay every vendor with **zero integrations** using Free alone. Pro adds the commission rules engine and *automated* payout rails on top:
 
@@ -144,6 +144,7 @@ same six-step flow either way; Pro simply stops capping how much they can add.
 | White-Label Branding (rebrand the marketplace) | -- | **[PRO]** |
 | Display Currency (show prices in the shopper's currency) | -- | **[PRO]** |
 | Push notifications to members' phones (Firebase) | -- | **[PRO]** |
+| Buyer tips on completed orders, with their own commission rate | -- | **[PRO]** |
 | Recurring Services (subscription billing for services) | -- | Not enabled in 1.7.0 |
 
 **Recurring Services** ships behind a default-off feature flag in 1.7.0 and its

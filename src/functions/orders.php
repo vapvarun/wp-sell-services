@@ -952,6 +952,36 @@ function wpss_get_order_status_priority(): array {
 }
 
 /**
+ * Whether buyers can tip on this site, and whether tip records are shown.
+ *
+ * Tipping is a Pro feature. Off by default, so the free plugin alone never
+ * offers a tip or shows one; Pro answers this filter from its own on/off
+ * setting, which defaults to on.
+ *
+ * This gates what people SEE and START - the tip button, the REST route that
+ * creates a tip, tip receipts, the tip email, the tip commission setting. It
+ * deliberately does NOT gate the money path. Crediting a paid tip, refunding
+ * one and the abandoned-tip cleanup keep running, because they are the same
+ * sub-order code milestones and paid extensions use, and because a buyer who
+ * has already paid for a tip must still reach the vendor. Hiding a record is
+ * reversible; leaving a buyer's money uncredited is not.
+ *
+ * @since 1.7.1
+ *
+ * @return bool
+ */
+function wpss_tipping_enabled(): bool {
+	/**
+	 * Filter whether tipping is available.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param bool $enabled False unless an extension turns it on.
+	 */
+	return (bool) apply_filters( 'wpss_tipping_enabled', false );
+}
+
+/**
  * Platform slugs that mark an order as a sub-order of another order.
  *
  * Sub-orders (tips, extras, revisions) hang off a parent order, so they must
