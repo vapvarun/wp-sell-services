@@ -201,8 +201,33 @@ do_action( 'wpss_service_rejected', $service_id, 'contract' );
 $check( 'service rejected writes the vendor an in-app row', 1 === $rows( $vendor, 'service_rejected' ) );
 
 $mails = array();
+
+/*
+ * Tipping is a Pro feature as of 1.7.1, so on the free plugin alone the tip
+ * receipt is deliberately not sent: wpss_tipping_enabled() answers false and
+ * the listener returns before notifying. Assert BOTH directions - silent while
+ * tipping is off, and the full receipt once something turns it on - so this
+ * test states the contract rather than whichever half happens to be true on
+ * the machine running it.
+ */
+$wpss_tipping_off = static function () {
+	return false;
+};
+$wpss_tipping_on  = static function () {
+	return true;
+};
+
+// Pin the switch rather than inheriting it: Pro answers this filter too, and
+// which plugins are active decides nothing about what this contract says.
+add_filter( 'wpss_tipping_enabled', $wpss_tipping_off, 99 );
 do_action( 'wpss_tip_sent', 0, $order1, $vendor, $buyer, 5.0, 'thanks' );
-$check( 'tip sends the buyer a receipt', 1 === $rows( $buyer, 'tip_receipt' ) && 1 === count( $mails_to( $buyer_email ) ) );
+$check( 'tip sends no receipt while tipping is off', 0 === $rows( $buyer, 'tip_receipt' ) && 0 === count( $mails_to( $buyer_email ) ) );
+remove_filter( 'wpss_tipping_enabled', $wpss_tipping_off, 99 );
+
+add_filter( 'wpss_tipping_enabled', $wpss_tipping_on, 99 );
+do_action( 'wpss_tip_sent', 0, $order1, $vendor, $buyer, 5.0, 'thanks' );
+$check( 'tip sends the buyer a receipt once tipping is on', 1 === $rows( $buyer, 'tip_receipt' ) && 1 === count( $mails_to( $buyer_email ) ) );
+remove_filter( 'wpss_tipping_enabled', $wpss_tipping_on, 99 );
 
 // request_withdrawal() needs a cleared balance to reach its notification, so
 // assert the seam statically: the request path writes the vendor a row.
