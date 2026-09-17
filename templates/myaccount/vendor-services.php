@@ -24,7 +24,7 @@ do_action( 'wpss_vendor_services_before', $user_id );
 <div class="wpss-vendor-services">
 	<div class="wpss-services-header">
 		<h2><?php esc_html_e( 'My Services', 'wp-sell-services' ); ?></h2>
-		<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wpss_service' ) ); ?>" class="button button-primary">
+		<a href="<?php echo esc_url( wpss_get_service_editor_url() ); ?>" class="button button-primary">
 			<?php esc_html_e( 'Add New Service', 'wp-sell-services' ); ?>
 		</a>
 	</div>
@@ -32,7 +32,7 @@ do_action( 'wpss_vendor_services_before', $user_id );
 	<?php if ( empty( $services ) ) : ?>
 		<div class="wpss-no-services">
 			<p><?php esc_html_e( 'You haven\'t created any services yet.', 'wp-sell-services' ); ?></p>
-			<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wpss_service' ) ); ?>" class="button button-primary">
+			<a href="<?php echo esc_url( wpss_get_service_editor_url() ); ?>" class="button button-primary">
 				<?php esc_html_e( 'Create Your First Service', 'wp-sell-services' ); ?>
 			</a>
 		</div>
@@ -55,7 +55,7 @@ do_action( 'wpss_vendor_services_before', $user_id );
 					</div>
 					<div class="wpss-service-info">
 						<h3 class="wpss-service-title">
-							<a href="<?php echo esc_url( get_edit_post_link( $service->id ) ); ?>">
+							<a href="<?php echo esc_url( wpss_get_service_editor_url( (int) $service->id ) ); ?>">
 								<?php echo esc_html( $service->title ); ?>
 							</a>
 						</h3>
@@ -80,7 +80,7 @@ do_action( 'wpss_vendor_services_before', $user_id );
 							</span>
 						</div>
 						<div class="wpss-service-actions">
-							<a href="<?php echo esc_url( get_edit_post_link( $service->id ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--secondary">
+							<a href="<?php echo esc_url( wpss_get_service_editor_url( (int) $service->id ) ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--secondary">
 								<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
 							</a>
 							<a href="<?php echo esc_url( $service->get_permalink() ); ?>" class="wpss-btn wpss-btn--sm wpss-btn--secondary" target="_blank">

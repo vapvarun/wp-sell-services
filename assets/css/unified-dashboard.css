@@ -3789,3 +3789,33 @@ select.wpss-input option,
 .wpss-earnings__wallet {
 	margin-top: var(--wpss-space-8, 32px);
 }
+
+/* The same panel embedded in someone else's page - WooCommerce My Account,
+   where the host already provides the nav and the content column is around
+   450px wide.
+   .wpss-dashboard is the full shell: a sidebar column plus a content column.
+   vendor-dashboard.css sets it to `grid-template-columns: 260px 1fr`, so on a
+   surface with no sidebar to put in that first column the content was left
+   with whatever remained - about 150px, every stat label breaking mid-word.
+   Two classes deep so it beats that single-class rule wherever the sheets
+   happen to load in. */
+.wpss-dashboard.wpss-dashboard--embedded {
+	display: block;
+	grid-template-columns: none;
+	min-height: 0;
+	background: none;
+	box-shadow: none;
+	border-radius: 0;
+}
+
+/* The card grids size themselves off the viewport, not off the box they are
+   in - `repeat(3, 1fr)` until the WINDOW drops below 991px. Embedded in a
+   ~450px My Account column on a 1280px screen, every media query says "plenty
+   of room" and three columns get 104px each, so "Orders", "Messages" and
+   "Earnings" all render truncated. Inside this panel the available width is
+   the container's, so let the tracks decide from their own minimum. */
+.wpss-dashboard--embedded .wpss-card-grid--2col,
+.wpss-dashboard--embedded .wpss-card-grid--3col,
+.wpss-dashboard--embedded .wpss-card-grid--4col {
+	grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+}
