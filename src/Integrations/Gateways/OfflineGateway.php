@@ -1232,6 +1232,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 		 * get_order_method() existed for exactly this and had no callers - the
 		 * snapshot was being written and never read.
 		 */
+
 		/*
 		 * Acknowledge the submission FIRST, and unconditionally.
 		 *

@@ -39,7 +39,7 @@ $description  = (string) ( $meta['description'] ?? ( $current_order->vendor_note
 $deliverables = (string) ( $meta['deliverables'] ?? '' );
 $submit_note  = (string) ( $meta['submit_note'] ?? '' );
 
-$status       = (string) $current_order->status;
+$status = (string) $current_order->status;
 // pending_payment covers two very different situations for the buyer: they have
 // not paid yet, or they chose an offline method and we are waiting on the site
 // owner to confirm the transfer. Rendering the second as the first showed the
@@ -47,9 +47,9 @@ $status       = (string) $current_order->status;
 // their instruction had been received - so they used it again (Basecamp
 // 10305169436).
 $awaiting_confirmation = wpss_order_awaits_payment_confirmation( $current_order );
-$is_unpaid    = 'pending_payment' === $status && ! $awaiting_confirmation;
-$is_working   = 'in_progress' === $status;
-$is_submitted = 'pending_approval' === $status;
+$is_unpaid             = 'pending_payment' === $status && ! $awaiting_confirmation;
+$is_working            = 'in_progress' === $status;
+$is_submitted          = 'pending_approval' === $status;
 // A phase the buyer sent back. submit() has always accepted this as a
 // from-state; until 1.7.0 nothing could put a phase into it, so the template
 // had no branch and the page rendered with no heading at all.

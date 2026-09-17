@@ -18,21 +18,21 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$is_buyer   = (int) $current_order->customer_id === $user_id;
-$is_vendor  = (int) $current_order->vendor_id === $user_id;
-$is_paid    = 'completed' === $current_order->status;
+$is_buyer  = (int) $current_order->customer_id === $user_id;
+$is_vendor = (int) $current_order->vendor_id === $user_id;
+$is_paid   = 'completed' === $current_order->status;
 // Same split as the milestone view: pending_payment means "not paid yet" OR
 // "offline instruction submitted, waiting on the owner". Showing the second as
 // the first hands the buyer back the button they just used (Basecamp
 // 10305169436).
 $awaiting_confirmation = wpss_order_awaits_payment_confirmation( $current_order );
-$is_pending = 'pending_payment' === $current_order->status && ! $awaiting_confirmation;
-$currency   = $current_order->currency ?: wpss_get_currency();
-$gross      = (float) $current_order->total;
-$net_vendor = (float) ( $current_order->vendor_earnings ?? $gross );
-$platform_f = (float) ( $current_order->platform_fee ?? 0 );
-$parent_id  = (int) ( $current_order->platform_order_id ?? 0 );
-$parent_url = $parent_id ? wpss_get_order_url( $parent_id ) : '';
+$is_pending            = 'pending_payment' === $current_order->status && ! $awaiting_confirmation;
+$currency              = $current_order->currency ?: wpss_get_currency();
+$gross                 = (float) $current_order->total;
+$net_vendor            = (float) ( $current_order->vendor_earnings ?? $gross );
+$platform_f            = (float) ( $current_order->platform_fee ?? 0 );
+$parent_id             = (int) ( $current_order->platform_order_id ?? 0 );
+$parent_url            = $parent_id ? wpss_get_order_url( $parent_id ) : '';
 // Resolved through the seam, never rebuilt inline: ?pay_order=N is a real
 // payment page only on the standalone rail. On WooCommerce it lands on the
 // store cart and bounces the buyer away, so this button was dead on every

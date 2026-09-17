@@ -65,8 +65,8 @@ if ( $view_dispute_id ) {
 	// conversation. Since 1.7.1 it is written to the messages table as a typed
 	// opening_statement row; disputes opened before that carry the text only on
 	// the dispute row, so the Reason block is still their one place to show it.
-	$evidence_items    = $dispute_service->get_evidence( (int) $dispute->id );
-	$has_opening_msg   = false;
+	$evidence_items  = $dispute_service->get_evidence( (int) $dispute->id );
+	$has_opening_msg = false;
 	foreach ( $evidence_items as $wpss_ev ) {
 		if ( 'opening_statement' === (string) ( $wpss_ev['type'] ?? '' ) ) {
 			$has_opening_msg = true;

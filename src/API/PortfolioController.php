@@ -292,11 +292,12 @@ class PortfolioController extends RestController {
 				'external_url' => esc_url_raw( $request->get_param( 'external_url' ) ?: '' ),
 
 				/*
-				 * The form's "Mark as Featured" checkbox, not a hardcoded 0.
-				 * PortfolioService::create() has always honoured is_featured;
-				 * this route ignored it and wrote 0 every time, so the checkbox
-				 * in the Add Portfolio modal did nothing at all (Basecamp
-				 * 10300287069). Still capped by the owner's limit.
+				 * Read from the form's "Mark as Featured" checkbox rather than
+				 * written as a hardcoded zero. The portfolio service has always
+				 * honoured this field; the route ignored it and stored zero every
+				 * time, so the checkbox in the Add Portfolio modal did nothing at
+				 * all (Basecamp 10300287069). The owner's featured limit still
+				 * applies.
 				 */
 				'is_featured'  => ( $request->get_param( 'is_featured' ) && $this->can_feature_another( $vendor_id ) ) ? 1 : 0,
 				'sort_order'   => 0,
