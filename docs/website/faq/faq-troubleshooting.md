@@ -115,5 +115,5 @@ Request expiration runs on WordPress cron, which requires site traffic to trigge
 - Steps to reproduce the issue
 
 **Support channels:**
-- **Free version** -- WordPress.org support forum
-- **Pro version** -- Priority email support
+- **Free version** -- open a ticket at [wbcomdesigns.com/support](https://wbcomdesigns.com/support/)
+- **Pro version** -- the same form, with priority handling on an active licence

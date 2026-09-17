@@ -16,6 +16,14 @@ Most modern WordPress hosts already meet these requirements. If you are unsure, 
 WP Sell Services Pro has the **same** minimums, and must run the same version
 number as the free plugin -- the two are released in lockstep.
 
+## Where to get the plugin
+
+Both the free plugin and Pro are distributed from the
+[WP Sell Services downloads page](https://wbcomdesigns.com/downloads/wp-sell-services/)
+on wbcomdesigns.com. That is the only source, so searching the plugin directory
+from inside WordPress will not find it: download the ZIP first, then upload it
+using one of the routes below.
+
 ## Install the Plugin
 
 ### Option A: Upload from WordPress Admin (Recommended)
