@@ -1322,7 +1322,7 @@ class AjaxHandlers {
 						<div class="wpss-evidence-file">
 							<a href="<?php echo esc_url( $evidence_content ); ?>" target="_blank" class="wpss-file-link">
 								<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-								<span><?php echo esc_html( $evidence_files ? (string) $evidence_files[0]['name'] : basename( $evidence_content ) ); ?></span>
+								<span><?php echo esc_html( wpss_format_attachment_name( $evidence_files ? (string) $evidence_files[0]['name'] : basename( (string) wp_parse_url( $evidence_content, PHP_URL_PATH ) ) ) ); ?></span>
 							</a>
 						</div>
 					<?php endif; ?>

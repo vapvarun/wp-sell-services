@@ -356,6 +356,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Security - Buyers and vendors can no longer refund or cancel orders outside their allowed steps; retired accept and decline actions removed.
 * Security - Repeated failed sign-ins now lock the account on the website as well as the API.
 * Security - Only the site owner can mark a service as Featured; a vendor can no longer promote their own service into the featured slot.
+* Security - Attachment names are shown with direction and formatting characters removed, so an uploaded file cannot disguise what it is in a dispute or an order.
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Payment intents carry the vendor id for every order type.
 * Dev      - New wpss_auth_login_challenge filter for two-factor plugins.

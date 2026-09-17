@@ -989,7 +989,7 @@ do_action( 'wpss_before_order_view', $order );
 								// file is not addressable - same as the orphan list below.
 								$field_attachment['order_id'] = $order_id;
 								$field_file_url               = wpss_get_order_file_url( $field_attachment );
-								$field_file_name              = (string) ( $field_attachment['name'] ?? __( 'Attachment', 'wp-sell-services' ) );
+								$field_file_name              = wpss_format_attachment_name( (string) ( $field_attachment['name'] ?? '' ) );
 								$is_image                     = '' !== $field_file_url && in_array( strtolower( pathinfo( $field_file_name, PATHINFO_EXTENSION ) ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ), true );
 								?>
 								<?php if ( $is_image ) : ?>
@@ -1103,7 +1103,7 @@ do_action( 'wpss_before_order_view', $order );
 									<?php
 									$orphan_att['order_id'] = $order_id;
 									$orphan_url             = function_exists( 'wpss_get_order_file_url' ) ? wpss_get_order_file_url( $orphan_att ) : '';
-									$orphan_name            = (string) ( $orphan_att['name'] ?? __( 'Attachment', 'wp-sell-services' ) );
+									$orphan_name            = wpss_format_attachment_name( (string) ( $orphan_att['name'] ?? '' ) );
 									?>
 									<li>
 										<?php if ( $orphan_url ) : ?>
@@ -1499,7 +1499,7 @@ do_action( 'wpss_before_order_view', $order );
 
 										$att_id    = $file['id'] ?? 0;
 										$file_url  = wpss_get_order_file_url( $file );
-										$file_name = $file['name'] ?? get_the_title( $att_id );
+										$file_name = wpss_format_attachment_name( (string) ( $file['name'] ?? get_the_title( $att_id ) ) );
 
 										if ( '' === $file_url ) {
 											$file_url = wp_get_attachment_url( $att_id );

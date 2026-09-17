@@ -103,7 +103,7 @@ do_action( 'wpss_email_content_before', 'vendor_contact', $recipient, $sender );
 		<?php if ( ! empty( $attachment['url'] ) ) : ?>
 		<li style="margin-bottom: 4px;">
 			<a href="<?php echo esc_url( $attachment['url'] ); ?>" style="color: <?php echo esc_attr( $base_color ); ?>;">
-				<?php echo esc_html( $attachment['name'] ?? basename( $attachment['url'] ) ); ?>
+				<?php echo esc_html( wpss_format_attachment_name( (string) ( $attachment['name'] ?? basename( $attachment['url'] ) ) ) ); ?>
 			</a>
 		</li>
 		<?php endif; ?>

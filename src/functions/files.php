@@ -334,6 +334,65 @@ function wpss_check_upload( array $file, string $context = '' ): ?WP_Error {
 }
 
 /**
+ * A filename that is safe to show to the other party.
+ *
+ * The stored `name` on an attachment record is what the uploader's browser
+ * sent, kept verbatim so the recipient sees the file they were given -
+ * `sanitize_file_name()` is applied to the name on disk, not to this one. It is
+ * therefore text written by the other side of a dispute or an order, and it is
+ * rendered next to a download link, which makes it worth neutralising before
+ * display:
+ *
+ *   - Bidi overrides (U+202A-U+202E, U+2066-U+2069 and friends) can reverse how
+ *     the tail of a name reads, the long-standing trick for making an
+ *     executable look like a PDF in a file listing.
+ *   - Control characters and newlines can push the visible label away from the
+ *     link it belongs to.
+ *   - An unbounded name can run past the row and hide what follows it.
+ *
+ * Escaping is not enough on its own: esc_html() stops markup, not a character
+ * whose whole purpose is to change the direction the rest of the string reads
+ * in. Callers still escape - this only decides what the string says.
+ *
+ * @since 1.7.1
+ *
+ * @param string $name Stored attachment name.
+ * @param int    $max  Longest label to show before eliding the middle.
+ * @return string Display-safe name, never empty.
+ */
+function wpss_format_attachment_name( string $name, int $max = 80 ): string {
+	// Bidi control and other invisible formatting characters.
+	$name = (string) preg_replace( '/[\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}-\x{2064}\x{2066}-\x{2069}\x{FEFF}\x{061C}]/u', '', $name );
+
+	// C0/C1 controls, including the newlines that would split the label.
+	$name = (string) preg_replace( '/[\x00-\x1F\x7F-\x9F]/u', '', $name );
+
+	$name = trim( (string) preg_replace( '/\s+/u', ' ', $name ) );
+
+	if ( '' === $name ) {
+		return __( 'Attachment', 'wp-sell-services' );
+	}
+
+	// Keep the head and the tail: the extension is the part a reader checks.
+	if ( function_exists( 'mb_strlen' ) && mb_strlen( $name ) > $max ) {
+		$head = mb_substr( $name, 0, $max - 15 );
+		$tail = mb_substr( $name, -10 );
+		$name = $head . '...' . $tail;
+	} elseif ( ! function_exists( 'mb_strlen' ) && strlen( $name ) > $max ) {
+		$name = substr( $name, 0, $max - 15 ) . '...' . substr( $name, -10 );
+	}
+
+	/**
+	 * Filter the display form of an attachment filename.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $name Display-safe name.
+	 */
+	return (string) apply_filters( 'wpss_attachment_display_name', $name );
+}
+
+/**
  * Store one uploaded file against an order.
  *
  * Replaces the bare wp_handle_upload() that each caller used to run. Writes

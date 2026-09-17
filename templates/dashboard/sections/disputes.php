@@ -239,7 +239,7 @@ if ( $view_dispute_id ) {
 						 * returns the real name on the attachment record.
 						 */
 						$ev_attach = isset( $item['attachments'][0] ) && is_array( $item['attachments'][0] ) ? $item['attachments'][0] : array();
-						$ev_name   = (string) ( $ev_attach['name'] ?? '' );
+						$ev_name   = wpss_format_attachment_name( (string) ( $ev_attach['name'] ?? '' ) );
 
 						if ( '' === $ev_name ) {
 							$ev_path = (string) wp_parse_url( $ev_content, PHP_URL_PATH );

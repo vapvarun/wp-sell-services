@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**529 hooks** across **742** firing sites.
+**530 hooks** across **743** firing sites.
 
 ## Actions (275)
 
@@ -292,7 +292,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (254)
+## Filters (255)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -318,6 +318,7 @@ guide; this is the complete index.
 | `wpss_app_token_lifetime` | 1 | `src/functions/misc.php` | Filter how long a mobile app token stays valid. |
 | `wpss_archive_request_columns` | 1 | `templates/archive-request.php` | Filter: wpss_archive_request_columns |
 | `wpss_archive_service_columns` | 1 | `templates/archive-service.php` | Filter: wpss_archive_service_columns |
+| `wpss_attachment_display_name` | 1 | `src/functions/files.php` | Filter the display form of an attachment filename. |
 | `wpss_auth_login_challenge` | 3 | `src/API/AuthController.php` | Filter a successful password check before a token is issued. |
 | `wpss_auto_approve_reviews` | 1 | `src/API/ReviewsController.php` |  |
 | `wpss_auto_approve_vendors` | 1 | `src/Services/VendorService.php` | Filter whether new vendors are auto-approved. |
