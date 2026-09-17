@@ -553,7 +553,12 @@ textarea.wpss-form-textarea {
    never paint a border. Consolidating those four is 1.8.0 work; until then this
    is what makes the owner actually own the component. */
 .wpss-btn.wpss-btn--outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border); }
-.wpss-btn.wpss-btn--outline:hover { border-color: var(--wpss-text-muted); color: var(--wpss-text); }
+/* The background matters as much as the colour here. Declaring only border and
+   text left the background to whatever the theme gives a hovered control, and
+   BuddyX styles button[type="submit"]:hover with its accent red - the order
+   search button flashed red with dark text at 3.94:1 on hover. Our own subtle
+   surface, so hover looks the same on every theme. */
+.wpss-btn.wpss-btn--outline:hover { background: var(--wpss-bg-subtle); border-color: var(--wpss-text-muted); color: var(--wpss-text); }
 
 /* Legacy single-dash aliases, carrying the same two-class weight on purpose.
    The one-class `.wpss-btn-outline` in frontend.css scores (0,1,0) and loses to

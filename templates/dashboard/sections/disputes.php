@@ -389,7 +389,8 @@ $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 						</td>
 						<td data-title="<?php esc_attr_e( 'Opened', 'wp-sell-services' ); ?>"><?php echo esc_html( $opened ); ?></td>
 						<td>
-							<a class="wpss-btn wpss-btn--sm wpss-btn--secondary" href="<?php echo esc_url( $detail_url ); ?>">
+							<?php // Same outline View as the order and sales lists: one action, one look. ?>
+							<a class="wpss-btn wpss-btn--outline wpss-btn--sm" href="<?php echo esc_url( $detail_url ); ?>">
 								<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 							</a>
 						</td>
