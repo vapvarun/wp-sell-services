@@ -275,7 +275,7 @@ do_action( 'wpss_before_order_view', $order );
 			// button is what made them submit again (Basecamp 10305169436). The
 			// awaiting state renders its own block below, with routes out.
 			$awaiting_confirmation = wpss_order_awaits_payment_confirmation( $order );
-			$pay_url = 'pending_payment' === $order->status && ! $awaiting_confirmation
+			$pay_url               = 'pending_payment' === $order->status && ! $awaiting_confirmation
 				? wpss_get_pay_order_url( (int) $order_id, $order )
 				: '';
 			if ( '' !== $pay_url ) {
@@ -2631,7 +2631,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 /* Order Sections */
 .wpss-order-section {
-	background: var(--wpss-card-bg, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 12px;
 	margin-bottom: 1.5rem;

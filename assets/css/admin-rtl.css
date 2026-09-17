@@ -2875,7 +2875,7 @@
 .wpss-secret-field__input {
 	flex: 1 1 240px;
 	min-width: 0;
-	font-family: var(--wpss-admin-font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+	font-family: var(--wpss-font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
 	letter-spacing: 0.02em;
 }
 
@@ -2905,7 +2905,7 @@
 	font-weight: 600;
 	line-height: 1.6;
 	color: var(--wpss-admin-success);
-	background: var(--wpss-success-bg, rgba(0, 163, 42, 0.1));
+	background: var(--wpss-success-light, rgba(0, 163, 42, 0.1));
 }
 
 /* ==========================================================================
@@ -3373,4 +3373,68 @@
 .wpss-reports-table th:last-child,
 .wpss-reports-table td:last-child {
 	width: 280px;
+}
+
+/* ---------------------------------------------------------------------------
+   Metabox controls that named a class no stylesheet defined.
+   --------------------------------------------------------------------------- */
+
+/* Featured checkbox in the service Overview panel: box and its words on one
+   line, the whole thing clickable. */
+.wpss-featured-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 8px);
+	cursor: pointer;
+}
+
+.wpss-featured-toggle input {
+	margin: 0;
+}
+
+/* Heading for a group of fields inside a metabox table cell. */
+.wpss-field-group-label {
+	display: block;
+	font-weight: 600;
+	color: var(--wpss-text, #1d2327);
+}
+
+/* FAQ repeater. The remove control is icon-only, so it needs a hit area and a
+   hover state of its own - a bare <button> inherits whatever the admin theme
+   gives it, which is a grey chrome box next to two flat icons. */
+.wpss-faq-remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	margin-inline-start: auto;
+	padding: 0;
+	border: 0;
+	border-radius: var(--wpss-radius-sm, 6px);
+	background: transparent;
+	color: var(--wpss-text-muted, #6b7280);
+	cursor: pointer;
+	transition: background var(--wpss-transition, 0.2s ease), color var(--wpss-transition, 0.2s ease);
+}
+
+.wpss-faq-remove:hover,
+.wpss-faq-remove:focus-visible {
+	background: var(--wpss-danger-light, #fee2e2);
+	color: var(--wpss-danger, #dc2626);
+}
+
+.wpss-faq-field {
+	margin-bottom: var(--wpss-space-3, 12px);
+}
+
+.wpss-faq-field label {
+	display: block;
+	margin-bottom: var(--wpss-space-1, 4px);
+	font-weight: 600;
+}
+
+.wpss-faq-field input,
+.wpss-faq-field textarea {
+	width: 100%;
 }

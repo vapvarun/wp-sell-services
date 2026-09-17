@@ -419,32 +419,32 @@
 /* Order Status Badges */
 .wpss-badge--status-pending {
 	background: var(--wpss-status-pending-bg, #fef3c7);
-	color: var(--wpss-status-pending-text, #92400e);
+	color: var(--wpss-status-pending-fg, #92400e);
 }
 
 .wpss-badge--status-in-progress {
 	background: var(--wpss-status-in-progress-bg, #e0e7ff);
-	color: var(--wpss-status-in-progress-text, #3730a3);
+	color: var(--wpss-status-in-progress-fg, #3730a3);
 }
 
 .wpss-badge--status-completed {
 	background: var(--wpss-status-completed-bg, #d1fae5);
-	color: var(--wpss-status-completed-text, #065f46);
+	color: var(--wpss-status-completed-fg, #065f46);
 }
 
 .wpss-badge--status-delivered {
 	background: var(--wpss-status-delivered-bg, #dbeafe);
-	color: var(--wpss-status-delivered-text, #1e40af);
+	color: var(--wpss-status-delivered-fg, #1e40af);
 }
 
 .wpss-badge--status-disputed {
 	background: var(--wpss-status-disputed-bg, #fee2e2);
-	color: var(--wpss-status-disputed-text, #991b1b);
+	color: var(--wpss-status-disputed-fg, #991b1b);
 }
 
 .wpss-badge--status-cancelled {
-	background: var(--wpss-status-cancelled-bg, #f1f5f9);
-	color: var(--wpss-status-cancelled-text, #475569);
+	background: var(--wpss-status-rejected-bg, #f1f5f9);
+	color: var(--wpss-status-rejected-fg, #475569);
 }
 
 /* ==========================================================================

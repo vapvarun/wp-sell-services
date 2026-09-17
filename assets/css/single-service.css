@@ -1921,3 +1921,19 @@ body.wpss-modal-open {
 		padding: 12px 14px;
 	}
 }
+
+/* Rating jumps to the reviews further down the page. It is a link, so it must
+   not take the theme's link colour mid-sentence in the service meta row - it
+   follows the surrounding text and only marks itself on hover. */
+.wpss-rating-link {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-1, 4px);
+	color: inherit;
+	text-decoration: none;
+}
+
+.wpss-rating-link:hover,
+.wpss-rating-link:focus-visible {
+	color: var(--wpss-primary-accent, #4f46e5);
+}

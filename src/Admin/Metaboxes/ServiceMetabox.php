@@ -787,7 +787,12 @@ class ServiceMetabox {
 
 		// Save status field.
 		// Note: Delivery time and revisions are now per-package only (see packages below).
-		if ( isset( $_POST['wpss_featured'] ) ) {
+		// Featured is marketplace curation, not authoring: a vendor holds
+		// edit_post on their own service, so gating this on edit_post alone
+		// would let any vendor promote themselves into the featured slot.
+		// The field is not rendered for them either, so a vendor's save
+		// carries no wpss_featured key and leaves the owner's choice intact.
+		if ( isset( $_POST['wpss_featured'] ) && wpss_user_can_feature_service( $post_id ) ) {
 			$wpss_featured = ! empty( $_POST['wpss_featured'] );
 
 			/**
@@ -1293,6 +1298,7 @@ class ServiceMetabox {
 		$status = ! empty( $status ) ? $status : 'active';
 
 		$is_featured = (bool) get_post_meta( $post->ID, '_wpss_featured', true );
+		$can_feature = wpss_user_can_feature_service( $post->ID );
 
 		$order_count    = (int) get_post_meta( $post->ID, '_wpss_order_count', true );
 		$review_count   = (int) get_post_meta( $post->ID, '_wpss_review_count', true );
@@ -1339,15 +1345,33 @@ class ServiceMetabox {
 						</div>
 						<div class="wpss-detail-content">
 							<label for="wpss_featured"><?php esc_html_e( 'Featured', 'wp-sell-services' ); ?></label>
-							<div class="wpss-detail-input">
-								<?php // Hidden 0 so unticking is submitted - a bare checkbox is simply absent when off. ?>
-								<input type="hidden" name="wpss_featured" value="0">
-								<label class="wpss-featured-toggle">
-									<input type="checkbox" id="wpss_featured" name="wpss_featured" value="1" <?php checked( $is_featured ); ?>>
-									<?php esc_html_e( 'Show in featured listings', 'wp-sell-services' ); ?>
-								</label>
-							</div>
-							<p class="description"><?php esc_html_e( 'Included by the Featured Services block and the [wpss_featured_services] shortcode.', 'wp-sell-services' ); ?></p>
+							<?php if ( $can_feature ) : ?>
+								<div class="wpss-detail-input">
+									<?php // Hidden 0 so unticking is submitted - a bare checkbox is simply absent when off. ?>
+									<input type="hidden" name="wpss_featured" value="0">
+									<label class="wpss-featured-toggle">
+										<input type="checkbox" id="wpss_featured" name="wpss_featured" value="1" <?php checked( $is_featured ); ?>>
+										<?php esc_html_e( 'Show in featured listings', 'wp-sell-services' ); ?>
+									</label>
+								</div>
+								<p class="description"><?php esc_html_e( 'Included by the Featured Services block and the [wpss_featured_services] shortcode.', 'wp-sell-services' ); ?></p>
+							<?php else : ?>
+								<?php
+								// Read-only for a vendor. Silence would be worse than a
+								// disabled control: a vendor whose service the marketplace
+								// has promoted should be able to see that it has.
+								?>
+								<p class="wpss-detail-value">
+									<?php
+									if ( $is_featured ) {
+										esc_html_e( 'Featured by the marketplace', 'wp-sell-services' );
+									} else {
+										esc_html_e( 'Not featured', 'wp-sell-services' );
+									}
+									?>
+								</p>
+								<p class="description"><?php esc_html_e( 'Only the site owner can feature a service.', 'wp-sell-services' ); ?></p>
+							<?php endif; ?>
 						</div>
 					</div>
 				</div>

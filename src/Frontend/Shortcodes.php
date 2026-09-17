@@ -1778,7 +1778,7 @@ class Shortcodes {
 		}
 
 		// For any other adapter or misconfigured state.
-		return '<div class="wpss-checkout-notice"><p>'
+		return '<div class="wpss-notice wpss-checkout-notice"><p>'
 			. __( 'Checkout is not available. Please configure an e-commerce platform in settings.', 'wp-sell-services' )
 			. '</p></div>';
 	}

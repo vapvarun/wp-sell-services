@@ -1725,3 +1725,24 @@ button.wpss-write-review-btn:focus,
 	outline-offset: 2px;
 	border-radius: var(--wpss-radius-sm, 6px);
 }
+
+/* The order number is the way into the order, and it is the only link in its
+   cell. With no rule it inherited the theme's anchor colour, which on a dark
+   card is the defect this whole sweep exists for. */
+.wpss-order-link {
+	font-weight: 600;
+	color: var(--wpss-primary-accent, #4f46e5);
+	text-decoration: none;
+}
+
+.wpss-order-link:hover,
+.wpss-order-link:focus-visible {
+	text-decoration: underline;
+}
+
+.wpss-milestone-submit-form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wpss-space-3, 12px);
+	margin-top: var(--wpss-space-3, 12px);
+}

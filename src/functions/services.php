@@ -1215,3 +1215,33 @@ function wpss_enforce_service_limits( array $meta ): array {
 		'truncated' => $truncated,
 	);
 }
+
+/**
+ * Whether the current user may set a service's Featured flag.
+ *
+ * Featured is marketplace curation, not service authoring: `_wpss_featured` is
+ * what the Featured Services block and `[wpss_featured_services]` select on, so
+ * it decides who appears in the promoted slot on the marketplace's front page.
+ * `edit_post` is therefore the wrong gate - every vendor holds it on their own
+ * service, which would let any vendor promote themselves above everyone else.
+ * The owner's capability is the default; a site running paid placement or a
+ * vendor tier lowers it through the filter rather than by editing the metabox.
+ *
+ * @since 1.7.1
+ *
+ * @param int $service_id Service post ID.
+ * @return bool
+ */
+function wpss_user_can_feature_service( int $service_id = 0 ): bool {
+	$can = current_user_can( 'manage_options' );
+
+	/**
+	 * Filter who may mark a service as Featured.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param bool $can        Whether the current user may set the flag.
+	 * @param int  $service_id Service post ID.
+	 */
+	return (bool) apply_filters( 'wpss_user_can_feature_service', $can, $service_id );
+}

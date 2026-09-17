@@ -1205,3 +1205,22 @@ select.wpss-form-input::-ms-expand {
 .wpss-form-disclosure__body {
 	margin-top: var(--wpss-space-4, 16px);
 }
+
+/* The wizard says a limit was reached and offers the way past it. Neither had
+   a rule, so the sentence and the upgrade link both read as body text. */
+.wpss-limit-notice {
+	font-weight: 600;
+	color: var(--wpss-warning-dark, #92400e);
+}
+
+.wpss-upgrade-link {
+	margin-inline-start: var(--wpss-space-2, 8px);
+	font-weight: 600;
+	color: var(--wpss-primary-accent, #4f46e5);
+	text-decoration: underline;
+}
+
+.wpss-upgrade-link:hover,
+.wpss-upgrade-link:focus-visible {
+	color: var(--wpss-primary-dark, #4338ca);
+}
