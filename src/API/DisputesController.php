@@ -770,7 +770,17 @@ class DisputesController extends RestController {
 				// site's list instead of inventing its own — the `reason` arg
 				// on POST /orders/{id}/dispute is a free string with no enum,
 				// so without this every client guessed.
-				'reasons'          => wpss_get_dispute_reasons(),
+				//
+				// Unchanged meaning: the buyer's list, so an existing client
+				// keeps offering buyers what it offered them before.
+				'reasons'          => wpss_get_dispute_reasons( 'customer' ),
+				// Which list to offer, by the role the user holds on the order.
+				'reasons_by_role'  => array(
+					'customer' => wpss_get_dispute_reasons( 'customer' ),
+					'vendor'   => wpss_get_dispute_reasons( 'vendor' ),
+				),
+				// Every label, for rendering a dispute either party opened.
+				'reason_labels'    => wpss_get_dispute_reasons(),
 			)
 		);
 	}

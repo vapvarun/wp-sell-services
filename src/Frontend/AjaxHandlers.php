@@ -522,7 +522,9 @@ class AjaxHandlers {
 		$dispute_result  = $dispute_service->open(
 			$order_id,
 			$user_id,
-			__( 'Cancellation Dispute', 'wp-sell-services' ),
+			// A reason KEY, not a translated sentence - see OrdersController,
+			// which had the same mistake and was fixed first.
+			\WPSellServices\Models\Dispute::REASON_OTHER,
 			__( 'Vendor disputed the buyer cancellation request.', 'wp-sell-services' )
 		);
 
@@ -3043,10 +3045,11 @@ class AjaxHandlers {
 					$dispute_result  = $dispute_service->open(
 						$order_id,
 						$user_id,
-						__( 'Cancellation Dispute', 'wp-sell-services' ),
+						// A reason KEY, not a translated sentence.
+						\WPSellServices\Models\Dispute::REASON_OTHER,
 						__( 'Vendor disputed the buyer cancellation request.', 'wp-sell-services' )
 					);
-					$result          = array( 'success' => (bool) $dispute_result );
+					$result = array( 'success' => (bool) $dispute_result );
 					if ( ! $dispute_result ) {
 						$result['message'] = __( 'Failed to create dispute.', 'wp-sell-services' );
 					}

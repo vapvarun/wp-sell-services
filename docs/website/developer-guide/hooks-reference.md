@@ -361,7 +361,7 @@ guide; this is the complete index.
 | `wpss_default_page_slugs` | 1 | `src/functions/urls.php` | Filter default page slugs. |
 | `wpss_default_service_categories` | 1 | `src/PostTypes/ServicePostType.php` | Insert the default service categories. Returns the created term IDs. |
 | `wpss_delivery_allowed_file_types` | 1 | `src/functions/files.php` | Filter the file extensions allowed for order deliveries. |
-| `wpss_dispute_reasons` | 1 | `src/functions/moderation.php` | Filter the reasons a buyer may give for opening a dispute. |
+| `wpss_dispute_reasons` | 2 | `src/functions/moderation.php` | Filter the reasons offered for opening a dispute. |
 | `wpss_docs_url` | 1 | `src/Admin/Pages/UpgradePage.php` | Filters the documentation URL shown on the upgrade screen. |
 | `wpss_ecommerce_adapters` | 1 | `src/CLI/PreflightCommand.php` *(+1 more)* |  |
 | `wpss_ecommerce_platform_description` | 1 | `src/Admin/Settings.php` | Filter the platform field description. |

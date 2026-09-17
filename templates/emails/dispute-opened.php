@@ -14,6 +14,9 @@
  * @var string  $email_heading Email heading.
  * @var string  $base_color    Brand color.
  * @var string  $dispute_reason Reason for the dispute (optional).
+ * @var bool    $is_opener      Whether the recipient opened the dispute (1.7.1).
+ * @var bool    $opened_by_vendor Whether the vendor opened it (1.7.1).
+ * @var string  $opener_name    Display name of whoever opened it (1.7.1).
  * @var WC_Email|null $email   WC Email object (when using WooCommerce).
  */
 
@@ -51,24 +54,30 @@ do_action( 'wpss_email_content_before', 'dispute_opened', $order, $recipient );
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php esc_html_e( 'A dispute has been opened and requires your review. Please investigate and mediate between both parties.', 'wp-sell-services' ); ?>
 </p>
-<?php elseif ( ! empty( $is_customer ) ) : ?>
-<p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php
-	printf(
-		/* translators: %s: vendor name */
-		esc_html__( 'Your dispute regarding the order with %s has been submitted. Our support team will review the case and reach out to both parties.', 'wp-sell-services' ),
-		esc_html( $vendor_name ?? __( 'the vendor', 'wp-sell-services' ) )
-	);
+else :
+	// Follow who actually opened it. A theme override written before 1.7.1
+	// has no $is_opener, so fall back to the old assumption that the buyer did.
+	$wpss_is_opener   = isset( $is_opener ) ? (bool) $is_opener : ! empty( $is_customer );
+	$wpss_other_party = ! empty( $is_customer )
+		? ( $vendor_name ?? __( 'the vendor', 'wp-sell-services' ) )
+		: ( $customer_name ?? __( 'the buyer', 'wp-sell-services' ) );
 	?>
-</p>
-<?php else : ?>
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php
-	printf(
-		/* translators: %s: customer name */
-		esc_html__( 'A dispute has been opened on your order by %s. Please review the details and respond through the order page. Our support team will mediate if needed.', 'wp-sell-services' ),
-		esc_html( $customer_name ?? __( 'the buyer', 'wp-sell-services' ) )
-	);
+	if ( $wpss_is_opener ) {
+		printf(
+			/* translators: %s: the other party's name */
+			esc_html__( 'Your dispute regarding the order with %s has been submitted. Our support team will review the case and reach out to both parties.', 'wp-sell-services' ),
+			esc_html( $wpss_other_party )
+		);
+	} else {
+		printf(
+			/* translators: %s: name of whoever opened the dispute */
+			esc_html__( 'A dispute has been opened on your order by %s. Please review the details and respond through the order page. Our support team will mediate if needed.', 'wp-sell-services' ),
+			esc_html( $wpss_other_party )
+		);
+	}
 	?>
 </p>
 <?php endif; ?>
@@ -99,6 +108,21 @@ do_action( 'wpss_email_content_before', 'dispute_opened', $order, $recipient );
 				<?php
 				$vendor = get_user_by( 'id', $order->vendor_id );
 				echo esc_html( $vendor ? $vendor->display_name : '#' . $order->vendor_id );
+				?>
+			</td>
+		</tr>
+		<?php endif; ?>
+		<?php if ( ! empty( $is_admin ) && ! empty( $opener_name ) ) : ?>
+		<tr>
+			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; width: 35%; font-weight: 600;"><?php esc_html_e( 'Opened by', 'wp-sell-services' ); ?></th>
+			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;">
+				<?php
+				printf(
+					/* translators: 1: person's name, 2: their role on the order */
+					esc_html__( '%1$s (%2$s)', 'wp-sell-services' ),
+					esc_html( $opener_name ),
+					! empty( $opened_by_vendor ) ? esc_html__( 'vendor', 'wp-sell-services' ) : esc_html__( 'buyer', 'wp-sell-services' )
+				);
 				?>
 			</td>
 		</tr>

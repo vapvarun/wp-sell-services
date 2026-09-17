@@ -260,7 +260,10 @@ class DisputeService {
 		// description, so nothing is lost but the bad key.
 		$reason = sanitize_text_field( $reason );
 
-		if ( ! array_key_exists( $reason, wpss_get_dispute_reasons() ) ) {
+		// Checked against the list the opener was offered, not every reason.
+		$opener_role = ( (int) $order->customer_id === $opened_by ) ? 'customer' : 'vendor';
+
+		if ( ! array_key_exists( $reason, wpss_get_dispute_reasons( $opener_role ) ) ) {
 			wpss_log(
 				sprintf(
 					'Dispute opened on order %1$d with an unrecognised reason "%2$s"; stored as "%3$s".',
@@ -430,7 +433,11 @@ class DisputeService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$this->table} WHERE order_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// Newest first. An order can be disputed again after an earlier
+				// dispute is resolved, and with no ORDER BY this returned
+				// whichever row the engine found first - so the email about a
+				// new dispute could name the old one's opener and reason.
+				"SELECT * FROM {$this->table} WHERE order_id = %d ORDER BY id DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$order_id
 			)
 		);

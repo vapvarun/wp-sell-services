@@ -39,6 +39,14 @@ class Dispute {
 	public const REASON_COMMUNICATION    = 'communication';
 	public const REASON_OTHER            = 'other';
 
+	// Reasons a VENDOR gives. Both parties may open a dispute, and every reason
+	// above is a buyer's complaint about the work (Basecamp 10312799183).
+	public const REASON_BUYER_UNRESPONSIVE = 'buyer_unresponsive';
+	public const REASON_PAYMENT_ISSUE      = 'payment_issue';
+	public const REASON_BUYER_CONDUCT      = 'buyer_conduct';
+	public const REASON_SCOPE_CHANGED      = 'scope_changed';
+	public const REASON_OUT_OF_SCOPE       = 'out_of_scope';
+
 	/**
 	 * Resolution types.
 	 */

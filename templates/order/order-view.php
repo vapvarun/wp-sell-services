@@ -2439,7 +2439,17 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 			<div class="wpss-modal__body">
 				<div class="wpss-alert wpss-alert--warning">
 					<i data-lucide="triangle-alert" class="wpss-icon" aria-hidden="true"></i>
-					<p><?php esc_html_e( 'Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the seller first.', 'wp-sell-services' ); ?></p>
+					<p>
+						<?php
+						// Both parties can open this modal, so it cannot assume the
+						// reader is the buyer (Basecamp 10312798850).
+						if ( $is_vendor ) {
+							esc_html_e( 'Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the buyer first.', 'wp-sell-services' );
+						} else {
+							esc_html_e( 'Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the seller first.', 'wp-sell-services' );
+						}
+						?>
+					</p>
 				</div>
 
 				<div class="wpss-form-group">
@@ -2447,7 +2457,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					<select name="reason" id="dispute-reason" class="wpss-select" required>
 						<option value=""><?php esc_html_e( 'Select a reason', 'wp-sell-services' ); ?></option>
 						<?php // One map, shared with the REST options endpoint, so the web form and every client offer the same reasons. ?>
-						<?php foreach ( wpss_get_dispute_reasons() as $wpss_reason_key => $wpss_reason_label ) : ?>
+						<?php foreach ( wpss_get_dispute_reasons( $is_vendor ? 'vendor' : 'customer' ) as $wpss_reason_key => $wpss_reason_label ) : ?>
 							<option value="<?php echo esc_attr( $wpss_reason_key ); ?>"><?php echo esc_html( $wpss_reason_label ); ?></option>
 						<?php endforeach; ?>
 					</select>
