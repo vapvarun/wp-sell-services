@@ -118,7 +118,10 @@
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
-	color: var(--wpss-gray-400);
+	/* --wpss-text-muted, not --wpss-gray-400. The raw grey measured 2.54:1 on
+	   the white sidebar at 11px - under AA on every theme - and a raw palette
+	   step does not follow dark mode the way a text token does. */
+	color: var(--wpss-text-muted, #6b7280);
 }
 
 .wpss-dashboard__nav-list {
@@ -2185,9 +2188,18 @@ select.wpss-input option,
 		padding: 16px;
 	}
 
-	.wpss-stats-grid,
-	.wpss-stats-grid--4 {
-		grid-template-columns: repeat(2, 1fr);
+	/*
+	 * Scoped to the dashboard, and that is what makes it work. frontend.css
+	 * also defines .wpss-stats-grid (auto-fit, minmax(200px, 1fr)) and loads
+	 * after this sheet, so at equal specificity it won: in a ~300px phone
+	 * column two 200px tracks do not fit, the grid fell to ONE column, and
+	 * five stacked stat cards pushed the first order below the screen on
+	 * BuddyX, BuddyX Pro and Reign alike. This two-column rule existed and
+	 * had never applied.
+	 */
+	.wpss-dashboard .wpss-stats-grid,
+	.wpss-dashboard .wpss-stats-grid--4 {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
 	.wpss-order-card {
