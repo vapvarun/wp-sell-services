@@ -292,6 +292,40 @@ function wpss_check_upload( array $file, string $context = '' ): ?WP_Error {
 	 */
 	$allowed = (array) apply_filters( 'wpss_allowed_file_types', $allowed, $file, $context );
 
+	/*
+	 * The per-flow filters from before uploads shared one check.
+	 *
+	 * Delivery and requirements each used to build their own list and pass it
+	 * through its own filter. Folding both into this function removed those
+	 * filters, so a site restricting what vendors may deliver, or widening what
+	 * buyers may attach to requirements, silently lost that rule. They fire
+	 * again here, with the same single argument they always took, after the
+	 * general filter so either one can have the last word for its own flow.
+	 */
+	// Written out literally, not as a computed hook name: the docs gate and
+	// any developer grepping for a hook both search for the literal string.
+	if ( 'delivery' === $context ) {
+		/**
+		 * Filter the file extensions allowed for order deliveries.
+		 *
+		 * @since 1.0.0
+		 * @since 1.7.1 Fired from wpss_check_upload(), after wpss_allowed_file_types. Same signature.
+		 *
+		 * @param string[] $allowed Lower-case extensions, no dots.
+		 */
+		$allowed = (array) apply_filters( 'wpss_delivery_allowed_file_types', $allowed );
+	} elseif ( 'requirements' === $context ) {
+		/**
+		 * Filter the file extensions allowed for buyer requirement attachments.
+		 *
+		 * @since 1.0.0
+		 * @since 1.7.1 Fired from wpss_check_upload(), after wpss_allowed_file_types. Same signature.
+		 *
+		 * @param string[] $allowed Lower-case extensions, no dots.
+		 */
+		$allowed = (array) apply_filters( 'wpss_requirements_allowed_file_types', $allowed );
+	}
+
 	if ( ! in_array( strtolower( (string) $checked['ext'] ), $allowed, true ) ) {
 		return new WP_Error( 'invalid_type', __( 'File type not allowed.', 'wp-sell-services' ), array( 'status' => 400 ) );
 	}
