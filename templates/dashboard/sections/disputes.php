@@ -227,7 +227,25 @@ if ( $view_dispute_id ) {
 						$ev_type    = (string) ( $item['type'] ?? 'text' );
 						$ev_content = (string) ( $item['content'] ?? '' );
 						$ev_desc    = (string) ( $item['description'] ?? '' );
-						$ev_when    = ! empty( $item['created_at'] ) ? mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item['created_at'] ) : '';
+
+						/*
+						 * The stored filename, not basename() of the link.
+						 *
+						 * Since the 1.7.1 private-file rework the content is a
+						 * permission-gated admin-post.php URL with the file in a
+						 * query string, and basename() does not strip a query
+						 * string - so the label printed the endpoint and its
+						 * arguments instead of a name. get_evidence() already
+						 * returns the real name on the attachment record.
+						 */
+						$ev_attach = isset( $item['attachments'][0] ) && is_array( $item['attachments'][0] ) ? $item['attachments'][0] : array();
+						$ev_name   = (string) ( $ev_attach['name'] ?? '' );
+
+						if ( '' === $ev_name ) {
+							$ev_path = (string) wp_parse_url( $ev_content, PHP_URL_PATH );
+							$ev_name = '' !== $ev_path ? basename( $ev_path ) : __( 'Attachment', 'wp-sell-services' );
+						}
+						$ev_when = ! empty( $item['created_at'] ) ? mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item['created_at'] ) : '';
 						?>
 						<div class="wpss-evidence-item <?php echo $ev_own ? 'wpss-evidence-own' : 'wpss-evidence-other'; ?>">
 							<div class="wpss-evidence-bubble">
@@ -259,7 +277,7 @@ if ( $view_dispute_id ) {
 										<div class="wpss-evidence-file">
 											<a href="<?php echo esc_url( $ev_content ); ?>" target="_blank" rel="noopener noreferrer" class="wpss-file-link">
 												<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-												<span><?php echo esc_html( basename( $ev_content ) ); ?></span>
+												<span><?php echo esc_html( $ev_name ); ?></span>
 											</a>
 										</div>
 									<?php endif; ?>
