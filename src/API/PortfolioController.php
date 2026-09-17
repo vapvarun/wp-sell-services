@@ -407,7 +407,10 @@ class PortfolioController extends RestController {
 
 			// $item is not fetched until after this block, so resolve the owner
 			// directly rather than reaching for a variable that does not exist yet.
-			$owner_id = (int) $this->get_portfolio_item( $item_id )['vendor_id'] ?? 0;
+			// The cast binds tighter than ??, so `(int) $x['vendor_id'] ?? 0`
+			// never reaches the fallback and reads an offset on a possible null.
+			$portfolio_item = $this->get_portfolio_item( $item_id );
+			$owner_id       = isset( $portfolio_item['vendor_id'] ) ? (int) $portfolio_item['vendor_id'] : 0;
 
 			$update['is_featured'] = ( $wants_featured && $this->can_feature_another( $owner_id, $item_id ) ) ? 1 : 0;
 			$format[]              = '%d';

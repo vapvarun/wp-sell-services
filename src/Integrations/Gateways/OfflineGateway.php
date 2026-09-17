@@ -880,8 +880,8 @@ class OfflineGateway implements PaymentGatewayInterface {
 
 		// Verify order is pending payment.
 		if ( 'pending_payment' !== $order->status ) {
+			// wp_send_json_error() exits, so no return is needed here.
 			wp_send_json_error( array( 'message' => __( 'Order is not awaiting payment.', 'wp-sell-services' ) ) );
-			return;
 		}
 
 		// Generate transaction ID if not provided.
@@ -896,7 +896,6 @@ class OfflineGateway implements PaymentGatewayInterface {
 
 		if ( ! $result ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to mark order as paid.', 'wp-sell-services' ) ) );
-			return;
 		}
 
 		/**

@@ -3521,6 +3521,14 @@ class AjaxHandlers {
 			// checkbox means "off" - make that explicit so the builder writes 0.
 			$post_data['vacation_mode'] = empty( $post_data['vacation_mode'] ) ? 0 : 1;
 
+			// The avatar's user meta is written by wpss_save_member_profile()
+			// above; the vendor profile table keeps its own avatar_id column, so
+			// the builder still needs the resolved id. The assignment was dropped
+			// when the member-profile writer was extracted, leaving $avatar_id
+			// undefined - and the builder types it as int, so every vendor
+			// profile save through this AJAX route ended in a TypeError.
+			$avatar_id = absint( $post_data['avatar_id'] ?? 0 );
+
 			$profile_data = wpss_build_vendor_profile_update( $post_data, $avatar_id, $cover_id );
 
 			if ( ! empty( $profile_data ) ) {
