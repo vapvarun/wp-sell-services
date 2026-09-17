@@ -2,54 +2,111 @@
   "mode": "combo",
   "release_version": "1.7.1",
   "pro_version": "1.7.1",
-  "ran_at": "2026-09-03T13:33:40Z",
+  "ran_at": "2026-09-17T07:58:36Z",
+  "recorded": "2026-09-17T08:05:12Z",
+  "site": "wp-sell-services.local",
+  "themes_checked": [
+    "buddyx 5.1.7 (master 6dd5641)",
+    "buddyx-pro 5.1.7 (master 91f5c5f)",
+    "reign-theme 8.0.7 (master 1f4a5a278)"
+  ],
+  "rail": "auto (WooCommerce active and owning payment); set to standalone for journey 06 and restored",
   "gates": {
-    "contract_audit": "fail (exit 1): 2 unbaselined errors — hook-consumed-never-fired:wpss_email_retry (src/Core/Plugin.php:2906), post_meta-read-never-written:_wpss_order_id (src/API/MediaController.php:312); 10 baselined, 121 warnings, 67 info. Caller to triage/baseline.",
-    "github_ci": "green on main, both repos (wp-sell-services run 33759125900 success; wp-sell-services-pro run 33755812299 success)"
+    "contract_audit": "pass: 0 errors, 122 warnings, 66 info, 11 baselined (wpss_email_retry baselined with reason: fired via Action Scheduler, not do_action)",
+    "rest_reachability": "pass: 173 routes, 0 without a permission callback, 0 GET 5xx",
+    "i18n_verify": "pass in both plugins after regenerating the catalogues",
+    "preflight": "pass: 83 checks, 0 fail, 1 warn (WP_DEBUG_DISPLAY on this dev box)",
+    "github_ci": "not re-checked this run"
   },
-  "themes_checked": ["buddyx 5.1.6", "buddyx-pro 5.1.6", "reign-theme 8.0.6"],
   "sections": {
-    "A_fresh_install": { "pass": 5, "fail": 0, "skipped": 0 },
-    "B_upgrade": { "pass": 1, "fail": 0, "skipped": 2 },
-    "C_core_flows": { "pass": 6, "fail": 0, "skipped": 6 },
-    "D_regression_guards": { "pass": 5, "fail": 0, "skipped": 0 },
-    "E_pro_smoke": { "pass": 2, "fail": 0, "skipped": 1 },
-    "F_cross_browser": { "pass": 4, "fail": 0, "skipped": 0 },
-    "S_pro_supplements": { "pass": 6, "fail": 0, "skipped": 9 }
+    "A_fresh_install": {
+      "pass": 6,
+      "fail": 0,
+      "skipped": 0
+    },
+    "B_upgrade": {
+      "pass": 3,
+      "fail": 0,
+      "skipped": 1
+    },
+    "C_core_flows": {
+      "pass": 6,
+      "fail": 0,
+      "skipped": 2
+    },
+    "D_regression_guards": {
+      "pass": 3,
+      "fail": 0,
+      "skipped": 2
+    },
+    "E_pro_smoke": {
+      "pass": 2,
+      "fail": 0,
+      "skipped": 1
+    },
+    "F_cross_browser": {
+      "pass": 4,
+      "fail": 0,
+      "skipped": 1
+    }
   },
   "journeys": [
-    { "id": "01-buyer-hires-seller", "result": "pass", "note": "Source-verified: proposal_received/accepted/rejected are all in NotificationService::is_email_service_handling() covered_types (dedup guard intact). Order/proposal/notification DB fixtures consistent with expected flow. Not re-walked click-by-click live this pass." },
-    { "id": "02-dispute", "result": "pass", "note": "Source-verified: DisputeService::get_evidence() reads only wpss_dispute_messages (single store), status notes live in a separate wpss_disputes.evidence column so cannot leak into the member thread. Matches journey's fixed design." },
-    { "id": "03-install-and-upgrade", "result": "pass", "note": "Covered via Section A: activation clean, wp wpss preflight 106 pass/0 fail/5 warn (all expected retired-table/log-count warnings), DB_VERSION 1.7.3 matches wpss_db_version option, six WPSS pages present with correct slugs (service-cart not cart-N), reactivate x2 produced zero fatals and zero duplicate pages." },
-    { "id": "04-vendor-discovery", "result": "pass", "note": "Browser-verified: /vendors/ renders cards; clicking through to /vendors/?vendor=wpss_vendor_maya lands on the profile (page title 'Maya Chen', zero .wpss-vendor-card grid elements present, Services list rendered)." },
-    { "id": "05-vendor-creates-a-service", "result": "skipped", "note": "Not walked live this pass (time-boxed). No source changes touched this area since its last verified commits (afbbbdf/c954ed0/f8eeb43); category hierarchy fixture (wp term list wpss_service_category) not re-checked this run." },
-    { "id": "06-standalone-checkout", "result": "pass", "note": "Partial live evidence: offline payment_method column confirmed non-NULL and frozen on a real paid order (id 3536, used for D5); WC pay-order redirect chain confirmed working end-to-end (?pay_order=3133 -> /checkout/order-pay/3944/...) with a single clean totals line, no full container/390px re-walk of the standalone checkout renderer itself this pass." },
-    { "id": "07-service-page-media", "result": "pass", "note": "Browser-verified: gallery trigger is a real <button class=\"wpss-gallery-zoom\">; lightbox opens with role=\"dialog\" aria-modal=\"true\"; Next button advances image 1->2; Escape removes the lightbox from the DOM. Title reads (og:title, JSON-LD name, breadcrumb, gallery alt, archive H1) all correct and non-blank on the same service page." },
-    { "id": "08-mobile-app-session", "result": "pass", "note": "Full HTTP walk over curl (all 10 numbered steps): login issues token+ISO expires; replay-as-password correctly answers 401 wpss_token_cannot_mint (not generic); token works for /me; /auth/sessions shows correct shape with is_current; non-current session revoke -> 200, replay -> 404, cross-member revoke attempt -> 404; backdated token -> 401 wpss_token_expired; expired token in header + correct password still logs in fresh (200), + wrong password still 401; narrow carve-out confirmed 401 on /me,/orders,/notifications,/auth/sessions; a hand-made non-WPSS application password backdated 400 days still authenticates (200); wp wpss api:shapes reports 105 audited routes, 0 non-ISO-date/non-shared-actor findings; _fields on /reviews reduced payload 89% (146->6126 full vs 667 fields... actually 667 vs 6126, an 89.1% reduction)." }
+    {
+      "id": "01-buyer-hires-seller",
+      "result": "skipped",
+      "note": "Not walked live this pass. The proposal/notification/email chain was not re-exercised; no source changes this cycle touched ProposalService or the proposal notification types."
+    },
+    {
+      "id": "02-dispute",
+      "result": "pass",
+      "note": "Re-walked after this cycle's dispute changes. Opening statement renders in Messages & evidence, Activity names the opener, View Dispute on the order is a real anchor to dashboard/disputes/?dispute=84 with the 1px danger border, Open Dispute is not offered twice. Role-aware reasons and opener-aware emails verified end to end on real orders (16/16 assertions), with every test row removed and each order restored afterwards."
+    },
+    {
+      "id": "03-install-and-upgrade",
+      "result": "pass",
+      "note": "Covered by sections A and B: activation clean, preflight 83/0 fail, deactivate+reactivate of both plugins produced no fatals and no duplicate pages (24 before, 24 after), wpss_db_version 1.7.3 intact."
+    },
+    {
+      "id": "04-vendor-discovery",
+      "result": "pass",
+      "note": "/vendors/ renders 7 vendor cards; the first card deep-links to /vendors/?vendor=wpss_vendor_maya; no horizontal scroll."
+    },
+    {
+      "id": "05-vendor-creates-a-service",
+      "result": "skipped",
+      "note": "Not walked live this pass. The wizard's upload cap and category dropdowns were exercised earlier in the cycle, but the full create flow was not re-run."
+    },
+    {
+      "id": "06-standalone-checkout",
+      "result": "pass",
+      "note": "Rail set to standalone for this journey. Reign: checkout contained at 1140 of 1280 (not full-bleed), wrapper is the theme's entry-content, Pay button and both stripe and offline gateway forms present; 390px shows no horizontal scroll. Rail restored to auto."
+    },
+    {
+      "id": "07-service-page-media",
+      "result": "pass",
+      "note": "Gallery trigger is a real <button class=\"wpss-gallery-zoom\">; lightbox opens with role=dialog aria-modal=true and a Next control. Title chain consistent: og:title, JSON-LD name and H1 all match and are non-blank."
+    },
+    {
+      "id": "08-mobile-app-session",
+      "result": "pass",
+      "note": "Spot-checked this pass rather than the full 10-step HTTP walk: GET /me returns 200 with its capabilities block, and app.features.tips now tracks the new Buyer Tips switch (true with Pro active and the setting on) instead of being hardcoded. The full token lifecycle walk was last done 2026-09-03 and no auth code changed this cycle."
+    }
   ],
+  "woo_rail_walk": {
+    "result": "pass",
+    "note": "Real purchase on the WooCommerce rail with COD: WC order 807 (processing, $35.00) created WPSS order 291 with platform=woocommerce, platform_order_id=807, status pending_requirements, total 35.000, platform_fee 3.500, vendor_earnings 31.500. Block checkout showed Subtotal $35.00 and Total $35.00 with no phantom rows. No wallet credit yet, which is correct: the vendor is credited at completion, not at payment. WooCommerce coming-soon mode had to be switched off first (artifact of installing Woo today, not a plugin issue)."
+  },
   "failures": [],
   "debug_log_issues": [],
-  "skipped_with_reason": [
-    { "id": "B2-order-file-migration", "reason": "No pre-1.7.0 order-file fixture available on this install; migrate-to-private-store path not exercised live this pass." },
-    { "id": "B3-existing-order-totals-unchanged", "reason": "No version-downgrade/upgrade simulation run this pass (DB_VERSION stable at 1.7.3 throughout); relying on preflight PASS and unchanged order rows as indirect evidence only." },
-    { "id": "C-tax-checkout-assertion", "reason": "Catalog checkout with tax on (Pay button vs gateway charge vs stored total vs pre-tax platform_fee) not walked live this pass; time-boxed." },
-    { "id": "C-milestone-revision-requested-workflow", "reason": "Submitted milestone phase Approve/Request-changes -> revision_requested -> Resubmit flow not walked live this pass." },
-    { "id": "C-completed-milestone-contract-totals", "reason": "Completed milestone contract summary/service-line non-zero totals + Project complete card not walked live this pass." },
-    { "id": "C-buyers-brief-no-questions", "reason": "Buyer's brief rendering for buyer/seller/owner with a service that has no configured questions not walked live this pass." },
-    { "id": "S1-license-gating", "reason": "License valid<->cleared toggle not exercised this run; would require a real/mock EDD SL license key." },
-    { "id": "S1-free-hard-dependency", "reason": "Deactivating Free to observe Pro's admin-notice degrade path was skipped deliberately — would have disrupted the rest of the combo run and required reactivation mid-sequence." },
-    { "id": "S1-no-duplicate-library", "reason": "Not independently re-audited this pass; no vendor/ diff taken." },
-    { "id": "S2.4-EDD-FluentCart", "reason": "EDD/FluentCart beta-gated, not an active rail on this install." },
-    { "id": "S3.2-wallet-balance-matches-ledger", "reason": "Not directly compared this pass; WalletManager balance read vs wpss_get_ledger_balance() cross-check not run." },
-    { "id": "S3.3-WalletManager-read-only", "reason": "Not independently re-audited this pass." },
-    { "id": "S4-E2-cloud-storage-round-trip", "reason": "wpss_storage_providers filter confirmed registers s3/gcs/do cleanly (source + live filter check), but a real upload->provider->local-copy-removed->signed-URL-download round trip against a live/stub bucket was not exercised this pass — no bucket credentials configured on this install." },
-    { "id": "S5.1-CSV-export", "reason": "Analytics screen confirmed loads with no fatal; the CSV export button itself was not clicked/downloaded this pass." },
-    { "id": "S6-display-currency", "reason": "Display-currency switcher, base-currency-in-emails/admin, and graceful-degrade-when-rates-unavailable not tested this pass — no display-currency rates configured on this install." }
+  "not_covered": [
+    "Stripe test-mode webhook replay: needs the Stripe CLI, not available here.",
+    "Journeys 01 and 05 not walked live.",
+    "Pro storage provider upload to a real bucket (E2) not exercised; no provider configured on this site.",
+    "RTL regression sweep (F3) not re-run this pass.",
+    "GitHub CI not re-checked this run."
   ],
-  "manual_required": [
-    "Journey 05 (vendor creates a service): re-walk live in browser before shipping, especially the category parent/subcategory optgroup rendering and the admin-vs-metered-vendor service-limit gate.",
-    "The 5 runbook 'beyond the journeys' 1.7.1 money assertions (tax-on checkout math, milestone revision-requested workflow, completed milestone contract totals, buyer's brief with no questions) — none were walked live this pass; recommend a follow-up focused pass before tagging.",
-    "S1 license gating and S3 wallet-ledger cross-check need a real/mock license key and a provider-vs-internal wallet comparison respectively.",
-    "S4/E2 cloud storage: confirm a live-bucket round trip (upload -> provider -> local copy removed -> signed URL) against at least one real S3/GCS/DO credential set before release, per the CLAUDE.md claim that this was 'verified end to end against a stub provider' — that stub run predates this smoke and was not re-confirmed today."
-  ]
+  "pristine_zip_install": {
+    "result": "pass (after one fix)",
+    "note": "Built both zips with grunt release and installed them into a brand-new WordPress 7.1 with its own database, never over the working copy. Both activated with no fatal; 26 tables created, wpss_db_version 1.7.3, six WPSS pages created with correct slugs. Artifacts verified: no dev packages in either autoloader, no node_modules/tests/bin/.git/dist in either zip, version headers 1.7.1. The first run FAILED preflight with 'Pro settings defaults -- Missing: wpss_razorpay_settings, wpss_s3_settings, wpss_gcs_settings, wpss_do_spaces_settings, wpss_white_label' - a first-run gap invisible on any developer machine. Fixed in Pro 42717ce (activation now seeds them), Pro zip rebuilt, reinstalled clean: preflight 83 checks, 0 failures."
+  }
 }
