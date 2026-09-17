@@ -150,6 +150,20 @@
         "auth": "public",
         "since": "1.7.1",
         "why": "Service ceilings (packages, gallery, videos, extras, FAQs, requirements) were reachable only as a template var inside the web wizard, so an app discovered each one by being rejected. Reads wpss_get_service_limits(), the same helper the wizard reads."
+      },
+      {
+        "route": "/wpss/v1/orders/{order_id}/tip, /wpss/v1/vendors/{vendor_id}/tips, /wpss/v1/vendors/{vendor_id}/tips/total",
+        "method": "POST, GET, GET",
+        "auth": "buyer on the order / vendor or admin",
+        "since": "1.7.1",
+        "why": "Registered only when wpss_tipping_enabled() is true. Tipping moved to Pro, which answers that filter from its Buyer Tips setting, so on a free-only site these three routes are absent and GET /settings reports app.features.tips false. The endpoint_count above is the count with tipping on."
+      },
+      {
+        "route": "/wpss/v1/disputes/options",
+        "method": "GET",
+        "auth": "logged in",
+        "since": "1.7.1",
+        "why": "Payload gained reasons_by_role (customer and vendor lists) and reason_labels (every label, for rendering a dispute either party opened). The existing reasons key still means the buyer's list, so older clients are unaffected."
       }
     ]
   },
