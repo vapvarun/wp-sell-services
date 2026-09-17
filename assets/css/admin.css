@@ -3379,19 +3379,6 @@
    Metabox controls that named a class no stylesheet defined.
    --------------------------------------------------------------------------- */
 
-/* Featured checkbox in the service Overview panel: box and its words on one
-   line, the whole thing clickable. */
-.wpss-featured-toggle {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--wpss-space-2, 8px);
-	cursor: pointer;
-}
-
-.wpss-featured-toggle input {
-	margin: 0;
-}
-
 /* Heading for a group of fields inside a metabox table cell. */
 .wpss-field-group-label {
 	display: block;

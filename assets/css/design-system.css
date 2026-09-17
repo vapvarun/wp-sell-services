@@ -1491,3 +1491,19 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	white-space: nowrap;
 	border: 0;
 }
+
+/* A checkbox and its own label text on one line, the whole thing clickable.
+   Two names for one rule: the metabox Featured control and the wizard's
+   recurring toggle in Pro were each about to grow their own copy. */
+.wpss-form-checkbox,
+.wpss-featured-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 8px);
+	cursor: pointer;
+}
+
+.wpss-form-checkbox input,
+.wpss-featured-toggle input {
+	margin: 0;
+}
