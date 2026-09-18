@@ -2,7 +2,7 @@
 Contributors: wbcomdesigns
 Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
-Tested up to: 6.9
+Tested up to: 7.1
 Requires PHP: 8.1
 Stable tag: 1.7.1
 License: GPLv2 or later
@@ -320,6 +320,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Vendor statistics refresh for every approved seller, and marketplace search returns only active vendors.
 * Fix      - A repeated payment webhook no longer resets a paid order or resends its notifications.
 * Fix      - Tax is charged on multi-item cart checkout and on PayPal checkout, matching the single-service total.
+* Fix      - The notification list runs one query instead of two identical ones.
 * Fix      - Closing a dispute from the admin restores the order, a dispute cannot be resolved twice, and disputes cannot be opened on unpaid orders.
 * Fix      - The Active count on the Sales and Orders screens matches the Active filter beside it.
 * Fix      - The service gallery lightbox opens, zooms and moves between images, and a tall image no longer stretches the page.

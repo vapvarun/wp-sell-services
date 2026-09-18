@@ -199,8 +199,6 @@ function wpss_get_user_notifications( int $user_id, array $args = array() ): arr
 	$params[] = $args['offset'];
 
 	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is hardcoded fragments with %d/%s placeholders; values come via prepare().
-	$rows = $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
-
 	return $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
 }
 
