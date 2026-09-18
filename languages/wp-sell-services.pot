@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-17T07:58:45+00:00\n"
+"POT-Creation-Date: 2026-09-18T03:56:36+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -132,9 +132,9 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:2618
 #: src/Frontend/AjaxHandlers.php:2863
 #: src/Frontend/AjaxHandlers.php:2969
-#: src/Frontend/AjaxHandlers.php:3565
-#: src/Frontend/AjaxHandlers.php:3611
-#: src/Frontend/AjaxHandlers.php:3680
+#: src/Frontend/AjaxHandlers.php:3573
+#: src/Frontend/AjaxHandlers.php:3619
+#: src/Frontend/AjaxHandlers.php:3688
 #: src/Integrations/Gateways/OfflineGateway.php:861
 msgid "Permission denied."
 msgstr ""
@@ -354,7 +354,7 @@ msgid "Send Test Email"
 msgstr ""
 
 #: src/Admin/Admin.php:1359
-#: src/Integrations/Gateways/OfflineGateway.php:1009
+#: src/Integrations/Gateways/OfflineGateway.php:1008
 msgid "Request failed. Please try again."
 msgstr ""
 
@@ -633,8 +633,8 @@ msgstr ""
 #: src/Integrations/Gateways/OfflineGateway.php:1500
 #: src/Privacy/PersonalData.php:280
 #: src/Privacy/PersonalData.php:292
-#: templates/dashboard/sections/disputes.php:343
-#: templates/dashboard/sections/disputes.php:382
+#: templates/dashboard/sections/disputes.php:361
+#: templates/dashboard/sections/disputes.php:400
 #: templates/emails/requirements-reminder.php:68
 #: templates/myaccount/service-orders.php:68
 #: templates/myaccount/service-orders.php:84
@@ -732,8 +732,8 @@ msgstr ""
 #: src/Privacy/PersonalData.php:317
 #: src/Privacy/PersonalData.php:329
 #: src/Privacy/PersonalData.php:515
-#: templates/dashboard/sections/disputes.php:345
-#: templates/dashboard/sections/disputes.php:385
+#: templates/dashboard/sections/disputes.php:363
+#: templates/dashboard/sections/disputes.php:403
 #: templates/dashboard/sections/earnings.php:446
 #: templates/dashboard/sections/edit-request.php:155
 #: templates/emails/cancellation-requested.php:83
@@ -1334,8 +1334,8 @@ msgstr ""
 #: src/Privacy/PersonalData.php:268
 #: src/Privacy/PersonalData.php:327
 #: templates/dashboard/sections/disputes.php:169
-#: templates/dashboard/sections/disputes.php:344
-#: templates/dashboard/sections/disputes.php:384
+#: templates/dashboard/sections/disputes.php:362
+#: templates/dashboard/sections/disputes.php:402
 #: templates/order/extension-view.php:167
 #: templates/order/order-view.php:2043
 msgid "Reason"
@@ -2826,7 +2826,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:516
 #: src/Admin/Pages/WithdrawalsPage.php:535
 #: src/Frontend/Shortcodes.php:880
-#: templates/dashboard/sections/disputes.php:347
+#: templates/dashboard/sections/disputes.php:365
 #: templates/myaccount/service-orders.php:73
 #: templates/myaccount/service-orders.php:143
 msgid "Actions"
@@ -2885,7 +2885,7 @@ msgstr ""
 
 #: src/Admin/Pages/ReportsPage.php:509
 #: src/Admin/Pages/ReportsPage.php:552
-#: src/Integrations/Gateways/OfflineGateway.php:1166
+#: src/Integrations/Gateways/OfflineGateway.php:1165
 msgid "You do not have permission to do that."
 msgstr ""
 
@@ -3050,7 +3050,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:186
 #: src/Admin/Pages/WithdrawalsPage.php:497
 #: src/Admin/Pages/WithdrawalsPage.php:731
-#: src/Integrations/Gateways/OfflineGateway.php:1104
+#: src/Integrations/Gateways/OfflineGateway.php:1103
 msgid "Reject"
 msgstr ""
 
@@ -3127,7 +3127,7 @@ msgstr ""
 #: src/Frontend/Frontend.php:280
 #: src/Frontend/Shortcodes.php:1302
 #: src/Frontend/UnifiedDashboard.php:175
-#: src/Integrations/Gateways/OfflineGateway.php:993
+#: src/Integrations/Gateways/OfflineGateway.php:992
 #: src/Integrations/PayPal/PayPalGateway.php:570
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1514
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2083
@@ -3228,7 +3228,7 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:117
 #: src/Admin/Tables/OrdersListTable.php:119
 #: src/Frontend/Shortcodes.php:900
-#: templates/dashboard/sections/disputes.php:394
+#: templates/dashboard/sections/disputes.php:412
 #: templates/dashboard/sections/orders.php:370
 #: templates/dashboard/sections/sales.php:376
 #: templates/dashboard/sections/services.php:287
@@ -4752,9 +4752,9 @@ msgid "Approve Withdrawal"
 msgstr ""
 
 #: src/Admin/Pages/WithdrawalsPage.php:190
-#: src/Integrations/Gateways/OfflineGateway.php:968
-#: src/Integrations/Gateways/OfflineGateway.php:1006
-#: src/Integrations/Gateways/OfflineGateway.php:1010
+#: src/Integrations/Gateways/OfflineGateway.php:967
+#: src/Integrations/Gateways/OfflineGateway.php:1005
+#: src/Integrations/Gateways/OfflineGateway.php:1009
 msgid "Mark as Paid"
 msgstr ""
 
@@ -6938,9 +6938,9 @@ msgstr ""
 #: src/API/MediaController.php:265
 #: src/API/MediaController.php:306
 #: src/API/OrdersController.php:1351
-#: src/functions/files.php:1026
-#: src/functions/files.php:1092
-#: src/functions/files.php:1150
+#: src/functions/files.php:1085
+#: src/functions/files.php:1151
+#: src/functions/files.php:1209
 msgid "File not found."
 msgstr ""
 
@@ -7427,21 +7427,21 @@ msgid "Array of item IDs in desired order."
 msgstr ""
 
 #: src/API/PortfolioController.php:265
-#: src/API/PortfolioController.php:473
-#: src/API/PortfolioController.php:536
-#: src/Frontend/AjaxHandlers.php:3625
+#: src/API/PortfolioController.php:477
+#: src/API/PortfolioController.php:540
+#: src/Frontend/AjaxHandlers.php:3633
 #: src/Services/PortfolioService.php:222
 #: src/Services/PortfolioService.php:316
 #: src/Services/PortfolioService.php:393
 msgid "Portfolio item not found."
 msgstr ""
 
-#: src/API/PortfolioController.php:311
+#: src/API/PortfolioController.php:312
 #: src/Services/PortfolioService.php:187
 msgid "Failed to create portfolio item."
 msgstr ""
 
-#: src/API/PortfolioController.php:540
+#: src/API/PortfolioController.php:544
 msgid "You do not own this portfolio item."
 msgstr ""
 
@@ -7888,7 +7888,7 @@ msgid "You are not registered as a vendor."
 msgstr ""
 
 #: src/API/VendorsController.php:490
-#: src/Frontend/AjaxHandlers.php:3531
+#: src/Frontend/AjaxHandlers.php:3539
 msgid "Your profile could not be saved. Please try again or contact support."
 msgstr ""
 
@@ -8643,14 +8643,14 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:3238
 #: src/Frontend/AjaxHandlers.php:3425
 #: src/Frontend/AjaxHandlers.php:3493
-#: src/Frontend/AjaxHandlers.php:3757
-#: src/Frontend/AjaxHandlers.php:3798
-#: src/Frontend/AjaxHandlers.php:3827
-#: src/Frontend/AjaxHandlers.php:3866
-#: src/Frontend/AjaxHandlers.php:3890
-#: src/Frontend/AjaxHandlers.php:3915
-#: src/Frontend/AjaxHandlers.php:3939
-#: src/Frontend/AjaxHandlers.php:3962
+#: src/Frontend/AjaxHandlers.php:3765
+#: src/Frontend/AjaxHandlers.php:3806
+#: src/Frontend/AjaxHandlers.php:3835
+#: src/Frontend/AjaxHandlers.php:3874
+#: src/Frontend/AjaxHandlers.php:3898
+#: src/Frontend/AjaxHandlers.php:3923
+#: src/Frontend/AjaxHandlers.php:3947
+#: src/Frontend/AjaxHandlers.php:3970
 msgid "Please log in."
 msgstr ""
 
@@ -8731,7 +8731,7 @@ msgid "You do not have permission to add evidence to this dispute."
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:1318
-#: templates/dashboard/sections/disputes.php:255
+#: templates/dashboard/sections/disputes.php:273
 msgid "Evidence image"
 msgstr ""
 
@@ -9014,30 +9014,30 @@ msgstr ""
 msgid "Preferences saved."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3552
+#: src/Frontend/AjaxHandlers.php:3560
 #: src/Frontend/UnifiedDashboard.php:184
 msgid "Profile updated successfully."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3617
-#: src/Frontend/AjaxHandlers.php:3686
+#: src/Frontend/AjaxHandlers.php:3625
+#: src/Frontend/AjaxHandlers.php:3694
 msgid "Invalid portfolio item."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3715
+#: src/Frontend/AjaxHandlers.php:3723
 msgid "Invalid cart item."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3737
+#: src/Frontend/AjaxHandlers.php:3745
 msgid "Item removed from cart."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3766
-#: src/Frontend/AjaxHandlers.php:3838
+#: src/Frontend/AjaxHandlers.php:3774
+#: src/Frontend/AjaxHandlers.php:3846
 msgid "Missing order."
 msgstr ""
 
-#: src/Frontend/AjaxHandlers.php:3805
+#: src/Frontend/AjaxHandlers.php:3813
 msgid "Missing request."
 msgstr ""
 
@@ -9146,7 +9146,7 @@ msgid "Could not start tip flow. Please try again."
 msgstr ""
 
 #: src/Frontend/Frontend.php:276
-#: templates/dashboard/sections/disputes.php:293
+#: templates/dashboard/sections/disputes.php:311
 #: templates/dashboard/sections/messages.php:141
 #: templates/dashboard/sections/messages.php:198
 msgid "Send"
@@ -10488,7 +10488,7 @@ msgstr ""
 #: src/Frontend/Shortcodes.php:1312
 #: src/Frontend/SingleServiceView.php:156
 #: src/Frontend/UnifiedDashboard.php:190
-#: src/Integrations/Gateways/OfflineGateway.php:1005
+#: src/Integrations/Gateways/OfflineGateway.php:1004
 #: templates/dashboard/sections/create-request.php:239
 #: templates/dashboard/sections/earnings.php:537
 #: templates/dashboard/sections/edit-request.php:286
@@ -12185,7 +12185,13 @@ msgstr ""
 msgid "File type not allowed."
 msgstr ""
 
-#: src/functions/files.php:1084
+#: src/functions/files.php:373
+#: src/Models/Message.php:142
+#: templates/dashboard/sections/disputes.php:246
+msgid "Attachment"
+msgstr ""
+
+#: src/functions/files.php:1143
 msgid "This file is stored remotely and the storage provider is unavailable. Try again shortly."
 msgstr ""
 
@@ -13396,7 +13402,7 @@ msgstr ""
 msgid "Your orders have been placed. Please complete your payment using the instructions for each order."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:883
+#: src/Integrations/Gateways/OfflineGateway.php:884
 msgid "Order is not awaiting payment."
 msgstr ""
 
@@ -13404,71 +13410,71 @@ msgstr ""
 msgid "Failed to mark order as paid."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:912
+#: src/Integrations/Gateways/OfflineGateway.php:911
 msgid "Order marked as paid successfully."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:935
+#: src/Integrations/Gateways/OfflineGateway.php:934
 msgid "Offline Payment - Awaiting Confirmation"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:938
+#: src/Integrations/Gateways/OfflineGateway.php:937
 msgid "This order is awaiting offline payment. Mark it as paid once you receive the payment."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:956
+#: src/Integrations/Gateways/OfflineGateway.php:955
 msgid "Transaction ID (optional)"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:961
+#: src/Integrations/Gateways/OfflineGateway.php:960
 msgid "Bank ref, receipt #, etc."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:989
+#: src/Integrations/Gateways/OfflineGateway.php:988
 msgid "Are you sure you want to mark this order as paid?"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1040
+#: src/Integrations/Gateways/OfflineGateway.php:1039
 msgid "The buyer has not uploaded proof of payment yet."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1048
-#: src/Integrations/Gateways/OfflineGateway.php:1079
+#: src/Integrations/Gateways/OfflineGateway.php:1047
+#: src/Integrations/Gateways/OfflineGateway.php:1078
 msgid "Payment proof"
 msgstr ""
 
 #. translators: 1: uploader name, 2: date
-#: src/Integrations/Gateways/OfflineGateway.php:1064
+#: src/Integrations/Gateways/OfflineGateway.php:1063
 #, php-format
 msgid "uploaded by %1$s on %2$s"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1065
+#: src/Integrations/Gateways/OfflineGateway.php:1064
 msgid "a buyer"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1085
+#: src/Integrations/Gateways/OfflineGateway.php:1084
 msgid "Open the uploaded file"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1094
+#: src/Integrations/Gateways/OfflineGateway.php:1093
 msgid "Note to buyer (required to reject)"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1100
+#: src/Integrations/Gateways/OfflineGateway.php:1099
 msgid "Approve + mark paid"
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1128
+#: src/Integrations/Gateways/OfflineGateway.php:1127
 msgid "Give the buyer a reason so they know what to send instead."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1142
-#: src/Integrations/Gateways/OfflineGateway.php:1146
+#: src/Integrations/Gateways/OfflineGateway.php:1141
+#: src/Integrations/Gateways/OfflineGateway.php:1145
 msgid "Could not record that decision."
 msgstr ""
 
-#: src/Integrations/Gateways/OfflineGateway.php:1174
+#: src/Integrations/Gateways/OfflineGateway.php:1173
 msgid "Unknown decision."
 msgstr ""
 
@@ -14436,12 +14442,6 @@ msgstr ""
 msgid "Text"
 msgstr ""
 
-#: src/Models/Message.php:142
-#: templates/order/order-view.php:992
-#: templates/order/order-view.php:1106
-msgid "Attachment"
-msgstr ""
-
 #: src/Models/Message.php:144
 msgid "Revision Request"
 msgstr ""
@@ -15017,8 +15017,8 @@ msgid "Dispute number"
 msgstr ""
 
 #: src/Privacy/PersonalData.php:272
-#: templates/dashboard/sections/disputes.php:346
-#: templates/dashboard/sections/disputes.php:390
+#: templates/dashboard/sections/disputes.php:364
+#: templates/dashboard/sections/disputes.php:408
 msgid "Opened"
 msgstr ""
 
@@ -18149,27 +18149,27 @@ msgstr ""
 msgid "No messages yet. Add one below to make your case to the reviewer and the other party."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:281
+#: templates/dashboard/sections/disputes.php:299
 msgid "Add a message or evidence"
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:284
+#: templates/dashboard/sections/disputes.php:302
 msgid "Explain your side, or add context for the reviewer…"
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:288
+#: templates/dashboard/sections/disputes.php:306
 msgid "Attach file"
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:298
+#: templates/dashboard/sections/disputes.php:316
 msgid "This dispute is closed. No further messages can be added."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:313
+#: templates/dashboard/sections/disputes.php:331
 msgid "View order"
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:337
+#: templates/dashboard/sections/disputes.php:355
 msgid "You have no disputes. Disputes you open on an order will appear here."
 msgstr ""
 
