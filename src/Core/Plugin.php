@@ -1870,10 +1870,28 @@ final class Plugin {
 			if ( empty( $ms_list ) ) {
 				return;
 			}
+
+			// Every phase must have finished, and at least one of them must have
+			// actually been delivered. Counting a cancelled phase as finished on
+			// its own meant a project where the vendor cancelled one phase and
+			// the buyer declined the other - nothing delivered, nothing paid -
+			// was marked Completed, and because a completed parent is closed the
+			// vendor could no longer propose a replacement phase. Such a project
+			// stays open so the work can be re-proposed.
+			$delivered = false;
+
 			foreach ( $ms_list as $ms ) {
 				if ( ! in_array( $ms['status'], array( 'completed', 'cancelled' ), true ) ) {
 					return;
 				}
+
+				if ( 'completed' === $ms['status'] ) {
+					$delivered = true;
+				}
+			}
+
+			if ( ! $delivered ) {
+				return;
 			}
 			( new \WPSellServices\Services\OrderService() )->update_status(
 				$parent_order_id,
