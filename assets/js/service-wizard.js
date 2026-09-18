@@ -337,6 +337,23 @@ function wpssServiceWizard(existingData = {}) {
 		 * @return {boolean} Is valid.
 		 */
 		/**
+		 * Re-draw Lucide icons after Alpine renders new rows.
+		 *
+		 * Lucide swaps [data-lucide] elements for <svg> once, on page load.
+		 * Anything Alpine adds afterwards - a new extra, FAQ, requirement,
+		 * deliverable or gallery image - kept its placeholder element, so the
+		 * icon-only remove button rendered as an empty 40x40 box and looked
+		 * like there was no way to remove the row at all.
+		 */
+		refreshIcons() {
+			this.$nextTick(() => {
+				if (window.lucide && typeof window.lucide.createIcons === 'function') {
+					window.lucide.createIcons();
+				}
+			});
+		},
+
+		/**
 		 * Validation messages for every tier the vendor actually offers.
 		 *
 		 * Shared by the Pricing step and by Publish so the two cannot drift:
@@ -423,6 +440,7 @@ function wpssServiceWizard(existingData = {}) {
 			}
 			this.data.packages[tier].enabled = true;
 			this.activePackage = tier;
+			this.refreshIcons();
 		},
 
 		/**
@@ -451,6 +469,7 @@ function wpssServiceWizard(existingData = {}) {
 		 */
 		addFeature(tier) {
 			this.data.packages[tier].features.push('');
+			this.refreshIcons();
 		},
 
 		/**
@@ -480,6 +499,7 @@ function wpssServiceWizard(existingData = {}) {
 				required: false,
 				options: ''
 			});
+			this.refreshIcons();
 		},
 
 		/**
@@ -519,6 +539,7 @@ function wpssServiceWizard(existingData = {}) {
 				price: '',
 				delivery_days_extra: 0
 			});
+			this.refreshIcons();
 		},
 
 		/**
@@ -556,6 +577,7 @@ function wpssServiceWizard(existingData = {}) {
 				question: '',
 				answer: ''
 			});
+			this.refreshIcons();
 		},
 
 		/**

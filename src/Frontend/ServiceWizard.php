@@ -686,7 +686,7 @@ class ServiceWizard {
 											class="wpss-form-input"
 											x-model="data.packages.<?php echo esc_attr( $tier ); ?>.features[index]"
 											placeholder="<?php esc_attr_e( 'e.g. 3 logo concepts', 'wp-sell-services' ); ?>">
-										<button type="button" class="wpss-btn--icon" @click="removeFeature('<?php echo esc_attr( $tier ); ?>', index)">
+										<button type="button" class="wpss-btn--icon" aria-label="<?php esc_attr_e( 'Remove this deliverable', 'wp-sell-services' ); ?>" @click="removeFeature('<?php echo esc_attr( $tier ); ?>', index)">
 											<i data-lucide="x-circle" class="wpss-icon" aria-hidden="true"></i>
 										</button>
 									</div>
@@ -753,7 +753,7 @@ class ServiceWizard {
 					<template x-if="data.gallery.main">
 						<div class="wpss-gallery-preview">
 							<img :src="data.gallery.main.url" alt="">
-							<button type="button" class="wpss-gallery-remove" @click.stop="removeGalleryItem('main')">
+							<button type="button" aria-label="<?php esc_attr_e( 'Remove the main image', 'wp-sell-services' ); ?>" class="wpss-gallery-remove" @click.stop="removeGalleryItem('main')">
 								<i data-lucide="x-circle" class="wpss-icon" aria-hidden="true"></i>
 							</button>
 						</div>
@@ -787,7 +787,7 @@ class ServiceWizard {
 							<template x-for="(image, index) in data.gallery.images" :key="image.id">
 								<div class="wpss-gallery-item">
 									<img :src="image.url" alt="">
-									<button type="button" class="wpss-gallery-remove" @click="removeGalleryItem('images', index)">
+									<button type="button" aria-label="<?php esc_attr_e( 'Remove this image', 'wp-sell-services' ); ?>" class="wpss-gallery-remove" @click="removeGalleryItem('images', index)">
 										<i data-lucide="x-circle" class="wpss-icon" aria-hidden="true"></i>
 									</button>
 								</div>
@@ -835,7 +835,7 @@ class ServiceWizard {
 					<div class="wpss-requirement-item">
 						<div class="wpss-requirement-header">
 							<span class="wpss-requirement-number" x-text="index + 1"></span>
-							<button type="button" class="wpss-btn--icon" @click="removeRequirement(index)">
+							<button type="button" aria-label="<?php esc_attr_e( 'Remove this requirement', 'wp-sell-services' ); ?>" class="wpss-btn--icon" @click="removeRequirement(index)">
 								<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 							</button>
 						</div>
@@ -844,7 +844,7 @@ class ServiceWizard {
 								<label class="wpss-form-label"><?php esc_html_e( 'Question', 'wp-sell-services' ); ?></label>
 								<input type="text"
 									class="wpss-form-input"
-									x-model="data.requirements[index].label"
+									x-model="req.label"
 									placeholder="<?php esc_attr_e( 'What do you need from the buyer?', 'wp-sell-services' ); ?>">
 							</div>
 							<div class="wpss-form-row wpss-form-row--2col">
@@ -861,7 +861,7 @@ class ServiceWizard {
 									 * meant. See Basecamp 10286129293.
 									 */
 									?>
-									<select class="wpss-form-select" x-model="data.requirements[index].type">
+									<select class="wpss-form-select" x-model="req.type">
 										<?php foreach ( wpss_requirement_type_labels() as $wpss_req_type => $wpss_req_label ) : ?>
 											<option value="<?php echo esc_attr( $wpss_req_type ); ?>"><?php echo esc_html( $wpss_req_label ); ?></option>
 										<?php endforeach; ?>
@@ -869,7 +869,7 @@ class ServiceWizard {
 								</div>
 								<div class="wpss-form-group">
 									<label class="wpss-toggle wpss-toggle--inline">
-										<input type="checkbox" x-model="data.requirements[index].required">
+										<input type="checkbox" x-model="req.required">
 										<span class="wpss-toggle__slider"></span>
 										<span class="wpss-toggle__label"><?php esc_html_e( 'Required', 'wp-sell-services' ); ?></span>
 									</label>
@@ -887,7 +887,7 @@ class ServiceWizard {
 								<label class="wpss-form-label"><?php esc_html_e( 'Options', 'wp-sell-services' ); ?></label>
 								<input type="text"
 									class="wpss-form-input"
-									x-model="data.requirements[index].options"
+									x-model="req.options"
 									placeholder="<?php esc_attr_e( 'Option 1, Option 2, Option 3', 'wp-sell-services' ); ?>">
 								<div class="wpss-form-hint"><?php esc_html_e( 'Separate options with commas', 'wp-sell-services' ); ?></div>
 							</div>
@@ -942,7 +942,7 @@ class ServiceWizard {
 						<div class="wpss-extra-item">
 							<div class="wpss-extra-header">
 								<span class="wpss-extra-title" x-text="extra.title || '<?php esc_attr_e( 'New Extra', 'wp-sell-services' ); ?>'"></span>
-								<button type="button" class="wpss-btn--icon" @click="removeExtra(index)">
+								<button type="button" aria-label="<?php esc_attr_e( 'Remove this extra', 'wp-sell-services' ); ?>" class="wpss-btn--icon" @click="removeExtra(index)">
 									<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 								</button>
 							</div>
@@ -951,7 +951,7 @@ class ServiceWizard {
 									<label class="wpss-form-label"><?php esc_html_e( 'Extra Title', 'wp-sell-services' ); ?></label>
 									<input type="text"
 										class="wpss-form-input"
-										x-model="data.extras[index].title"
+										x-model="extra.title"
 										placeholder="<?php esc_attr_e( 'e.g., Express Delivery', 'wp-sell-services' ); ?>">
 								</div>
 								<div class="wpss-form-row wpss-form-row--2col">
@@ -961,7 +961,7 @@ class ServiceWizard {
 											<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 											<input type="number"
 												class="wpss-form-input"
-												x-model="data.extras[index].price"
+												x-model="extra.price"
 												min="0"
 												step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>">
 										</div>
@@ -970,7 +970,7 @@ class ServiceWizard {
 										<label class="wpss-form-label"><?php esc_html_e( 'Extra Days', 'wp-sell-services' ); ?></label>
 										<input type="number"
 											class="wpss-form-input"
-											x-model="data.extras[index].delivery_days_extra"
+											x-model="extra.delivery_days_extra"
 											min="0"
 											placeholder="0">
 									</div>
@@ -978,7 +978,7 @@ class ServiceWizard {
 								<div class="wpss-form-group">
 									<label class="wpss-form-label"><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
 									<textarea class="wpss-form-textarea"
-										x-model="data.extras[index].description"
+										x-model="extra.description"
 										rows="2"
 										placeholder="<?php esc_attr_e( 'Describe what\'s included in this extra', 'wp-sell-services' ); ?>"></textarea>
 								</div>
@@ -1012,7 +1012,7 @@ class ServiceWizard {
 						<div class="wpss-faq-item">
 							<div class="wpss-faq-header">
 								<span class="wpss-faq-number" x-text="'Q' + (index + 1)"></span>
-								<button type="button" class="wpss-btn--icon" @click="removeFaq(index)">
+								<button type="button" aria-label="<?php esc_attr_e( 'Remove this FAQ', 'wp-sell-services' ); ?>" class="wpss-btn--icon" @click="removeFaq(index)">
 									<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 								</button>
 							</div>
@@ -1021,13 +1021,13 @@ class ServiceWizard {
 									<label class="wpss-form-label"><?php esc_html_e( 'Question', 'wp-sell-services' ); ?></label>
 									<input type="text"
 										class="wpss-form-input"
-										x-model="data.faqs[index].question"
+										x-model="faq.question"
 										placeholder="<?php esc_attr_e( 'What question do buyers often ask?', 'wp-sell-services' ); ?>">
 								</div>
 								<div class="wpss-form-group">
 									<label class="wpss-form-label"><?php esc_html_e( 'Answer', 'wp-sell-services' ); ?></label>
 									<textarea class="wpss-form-textarea"
-										x-model="data.faqs[index].answer"
+										x-model="faq.answer"
 										rows="3"
 										placeholder="<?php esc_attr_e( 'Provide a helpful answer...', 'wp-sell-services' ); ?>"></textarea>
 								</div>
