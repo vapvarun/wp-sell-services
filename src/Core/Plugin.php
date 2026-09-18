@@ -434,6 +434,17 @@ final class Plugin {
 				Activator::migrate_advanced_standalone_keys();
 			}
 
+			// Until 1.7.2 the moderation guards were registered only inside
+			// wp-admin, so a vendor publishing over REST slipped past them and
+			// the service went live unapproved. Those services sit at
+			// post_status=publish with _wpss_moderation_status=pending, which
+			// the moderation queue cannot show either - it selects on
+			// post_status=pending - so the owner cannot even find them. Pull
+			// them back to pending so they re-enter the queue.
+			if ( $installed_version && version_compare( $installed_version, '1.7.2', '<' ) ) {
+				self::migrate_unapproved_published_services();
+			}
+
 			// Note: the wallet-ledger reconciliation is NOT here. It runs off its
 			// own wpss_ledger_reconciled flag at the top of this method, so it
 			// cannot be missed by a release that forgets to bump the version.
@@ -2212,6 +2223,56 @@ final class Plugin {
 	 * @return void
 	 */
 	/**
+	 * Return services that went live without approval to the moderation queue.
+	 *
+	 * Only runs where moderation is switched on right now. A site that turned
+	 * the setting off since publishing meant those services to be public, and
+	 * unpublishing them on upgrade would take a working catalogue offline.
+	 *
+	 * @since 1.7.2
+	 *
+	 * @return void
+	 */
+	private static function migrate_unapproved_published_services(): void {
+		if ( ! \WPSellServices\Services\ModerationService::is_enabled() ) {
+			return;
+		}
+
+		$stranded = get_posts(
+			array(
+				'post_type'        => 'wpss_service',
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'suppress_filters' => true,
+				'meta_query'       => array(
+					array(
+						'key'     => \WPSellServices\Services\ModerationService::META_MODERATION_STATUS,
+						'value'   => array( 'pending', 'rejected' ),
+						'compare' => 'IN',
+					),
+				),
+			)
+		);
+
+		foreach ( $stranded as $service_id ) {
+			wp_update_post(
+				array(
+					'ID'          => (int) $service_id,
+					'post_status' => 'pending',
+				)
+			);
+		}
+
+		if ( $stranded ) {
+			wpss_log(
+				sprintf( 'Moderation: returned %d published-but-unapproved service(s) to the review queue.', count( $stranded ) ),
+				'info'
+			);
+		}
+	}
+
+	/**
 	 * Register the service-moderation guards on every request.
 	 *
 	 * Separate from define_admin_hooks() on purpose: that method returns early
@@ -2226,6 +2287,11 @@ final class Plugin {
 		( new \WPSellServices\Admin\Pages\ServiceModerationPage() )->register_guards();
 	}
 
+	/**
+	 * Define admin-specific hooks.
+	 *
+	 * @return void
+	 */
 	private function define_admin_hooks(): void {
 		if ( ! is_admin() ) {
 			return;
