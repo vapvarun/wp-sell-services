@@ -263,6 +263,18 @@ function wpssServiceWizard(existingData = {}) {
 						this.validationErrors.push(wpssWizard.strings.validationDesc);
 						fieldErrors['service_description'] = wpssWizard.strings.validationDesc;
 					}
+					// The save paths cut the list to max_tags, so without this the
+					// vendor typed six tags, continued, and the sixth was dropped
+					// with nothing said.
+					const maxTags = parseInt((wpssWizard.limits || {}).max_tags, 10) || 0;
+					const tagCount = (this.data.tags || '')
+						.split(',')
+						.map((t) => t.trim())
+						.filter((t) => t.length).length;
+					if (maxTags > 0 && tagCount > maxTags) {
+						this.validationErrors.push(wpssWizard.strings.validationTags);
+						fieldErrors['service_tags'] = wpssWizard.strings.validationTags;
+					}
 					break;
 
 				case 'pricing':
@@ -284,7 +296,7 @@ function wpssServiceWizard(existingData = {}) {
 			// the primitive script hasn't loaded yet (older builds, dev cache).
 			if (typeof window.WpssFormError !== 'undefined') {
 				// Clear all known fields first so we don't leave stale errors behind.
-				['service_title', 'service_category', 'service_description', 'wpss-wizard-main-image'].forEach((id) => {
+				['service_title', 'service_category', 'service_description', 'service_tags', 'wpss-wizard-main-image'].forEach((id) => {
 					window.WpssFormError.clear(id);
 				});
 

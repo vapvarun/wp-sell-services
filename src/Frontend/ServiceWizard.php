@@ -498,7 +498,15 @@ class ServiceWizard {
 					class="wpss-form-input"
 					x-model="data.tags"
 					placeholder="<?php esc_attr_e( 'e.g., web design, responsive, WordPress', 'wp-sell-services' ); ?>">
-				<div class="wpss-form-hint"><?php esc_html_e( 'Separate tags with commas. Max 5 tags.', 'wp-sell-services' ); ?></div>
+				<div class="wpss-form-hint">
+					<?php
+					printf(
+						/* translators: %d: maximum number of tags. */
+						esc_html__( 'Separate tags with commas. Max %d tags.', 'wp-sell-services' ),
+						(int) $this->get_limit( 'max_tags' )
+					);
+					?>
+				</div>
 			</div>
 		</div>
 		<?php
@@ -1459,6 +1467,11 @@ class ServiceWizard {
 					'validationPkgDesc'  => __( 'Package description is required for the %s package.', 'wp-sell-services' ),
 					/* translators: %s: package tier name (e.g. Standard). */
 					'validationPkgPrice' => __( 'Set a price and delivery time for the %s package.', 'wp-sell-services' ),
+					'validationTags'     => sprintf(
+						/* translators: %d: maximum number of tags. */
+						__( 'You can add a maximum of %d tags.', 'wp-sell-services' ),
+						(int) $this->get_limit( 'max_tags' )
+					),
 					'limitGallery'       => __( 'You have reached the maximum number of gallery images. Upgrade to Pro for unlimited images.', 'wp-sell-services' ),
 					'limitExtras'        => __( 'You have reached the maximum number of extras. Upgrade to Pro for unlimited extras.', 'wp-sell-services' ),
 					'limitFaq'           => __( 'You have reached the maximum number of FAQs. Upgrade to Pro for unlimited FAQs.', 'wp-sell-services' ),
@@ -1589,7 +1602,7 @@ class ServiceWizard {
 
 		if ( ! empty( $sanitized['tags'] ) ) {
 			$tags = array_map( 'trim', explode( ',', $sanitized['tags'] ) );
-			wp_set_object_terms( $service_id, array_slice( $tags, 0, 5 ), 'wpss_service_tag' );
+			wp_set_object_terms( $service_id, array_slice( $tags, 0, (int) $this->get_limit( 'max_tags' ) ), 'wpss_service_tag' );
 		}
 
 		wp_send_json_success(
@@ -1745,7 +1758,7 @@ class ServiceWizard {
 
 		if ( ! empty( $sanitized['tags'] ) ) {
 			$tags = array_map( 'trim', explode( ',', $sanitized['tags'] ) );
-			wp_set_object_terms( $service_id, array_slice( $tags, 0, 5 ), 'wpss_service_tag' );
+			wp_set_object_terms( $service_id, array_slice( $tags, 0, (int) $this->get_limit( 'max_tags' ) ), 'wpss_service_tag' );
 		}
 
 		/**

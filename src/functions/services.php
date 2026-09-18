@@ -1032,6 +1032,19 @@ function wpss_get_service_limits(): array {
 		 * @param int $max Maximum requirements. -1 for unlimited.
 		 */
 		'max_requirements' => apply_filters( 'wpss_service_max_requirements', 5 ),
+
+		/**
+		 * Max service tags.
+		 *
+		 * The save paths already cut the list to this many; it lives here so
+		 * the wizard can warn the vendor before their extra tags are dropped,
+		 * and so a site can raise the cap like any other limit.
+		 *
+		 * @since 1.7.2
+		 *
+		 * @param int $max Maximum tags.
+		 */
+		'max_tags'         => apply_filters( 'wpss_service_max_tags', 5 ),
 	);
 }
 
