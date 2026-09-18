@@ -1119,7 +1119,25 @@ function wpss_validate_service_publishable( array $service ): array {
 		$packages = array_filter(
 			(array) $service['packages'],
 			static function ( $package ) {
-				return is_array( $package ) && ( ! empty( $package['name'] ) || ! empty( $package['price'] ) );
+				if ( ! is_array( $package ) ) {
+					return false;
+				}
+
+				// A tier the vendor switched off is not part of the offer, so it
+				// must not be validated. The wizard keeps placeholder objects for
+				// Standard and Premium with their names already filled in and
+				// their prices empty; without this guard the placeholder passed
+				// the name test below, then won "cheapest" at price 0 and had its
+				// own empty fields reported against Basic - which is why a
+				// Basic-only service could not be published at all.
+				//
+				// Checked with array_key_exists so callers that never send the
+				// key (the admin metabox) keep their previous behaviour.
+				if ( array_key_exists( 'enabled', $package ) && ! $package['enabled'] ) {
+					return false;
+				}
+
+				return ! empty( $package['name'] ) || ! empty( $package['price'] );
 			}
 		);
 
