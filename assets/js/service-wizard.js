@@ -266,22 +266,9 @@ function wpssServiceWizard(existingData = {}) {
 					break;
 
 				case 'pricing':
-					if (!this.isPackageValid('basic')) {
-						this.validationErrors.push(this.basicPriceError());
-					}
-					// Validate enabled packages have a name. Description is no longer
-					// required — vendors describe their tier via the Features list
-					// (bullets sell better than prose, matching Fiverr's pattern).
-					['basic', 'standard', 'premium'].forEach((tier) => {
-						const pkg = this.data.packages[tier];
-						if (tier === 'basic' || pkg.enabled) {
-							if (!pkg.name || !pkg.name.trim()) {
-								this.validationErrors.push(
-									(wpssWizard.strings.validationPkgName || 'Package name is required for the %s package.').replace('%s', tier)
-								);
-							}
-						}
-					});
+					// Description is not required — vendors describe a tier via the
+					// Features list (bullets sell better than prose).
+					this.validationErrors.push(...this.pricingErrors());
 					break;
 
 				case 'gallery':
@@ -337,6 +324,44 @@ function wpssServiceWizard(existingData = {}) {
 		 * @param {string} tier - Package tier.
 		 * @return {boolean} Is valid.
 		 */
+		/**
+		 * Validation messages for every tier the vendor actually offers.
+		 *
+		 * Shared by the Pricing step and by Publish so the two cannot drift:
+		 * previously both looked at Basic only, so an enabled Standard or
+		 * Premium with no price or delivery time sailed through both.
+		 * Disabled tiers are skipped here and by isPackageValid.
+		 *
+		 * @return {Array} Validation messages, empty when every offered tier is complete.
+		 */
+		pricingErrors() {
+			const errors = [];
+
+			['basic', 'standard', 'premium'].forEach((tier) => {
+				const pkg = this.data.packages[tier];
+
+				if (tier !== 'basic' && !pkg.enabled) {
+					return;
+				}
+
+				if (!pkg.name || !pkg.name.trim()) {
+					errors.push(
+						(wpssWizard.strings.validationPkgName || 'Package name is required for the %s package.').replace('%s', tier)
+					);
+				}
+
+				if (!this.isPackageValid(tier)) {
+					errors.push(
+						tier === 'basic'
+							? this.basicPriceError()
+							: (wpssWizard.strings.validationPkgPrice || 'Set a price and delivery time for the %s package.').replace('%s', pkg.name || tier)
+					);
+				}
+			});
+
+			return errors;
+		},
+
 		isPackageValid(tier) {
 			const pkg = this.data.packages[tier];
 
@@ -723,9 +748,7 @@ function wpssServiceWizard(existingData = {}) {
 			if (!this.data.description || this.data.description.length < 120) {
 				this.validationErrors.push(wpssWizard.strings.validationDesc);
 			}
-			if (!this.isPackageValid('basic')) {
-				this.validationErrors.push(this.basicPriceError());
-			}
+			this.validationErrors.push(...this.pricingErrors());
 			if (!this.data.gallery.main) {
 				this.validationErrors.push(wpssWizard.strings.validationImage);
 			}

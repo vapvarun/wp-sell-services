@@ -1457,6 +1457,8 @@ class ServiceWizard {
 					'validationPkgName'  => __( 'Package name is required for the %s package.', 'wp-sell-services' ),
 					/* translators: %s: package tier name (e.g. Basic). */
 					'validationPkgDesc'  => __( 'Package description is required for the %s package.', 'wp-sell-services' ),
+					/* translators: %s: package tier name (e.g. Standard). */
+					'validationPkgPrice' => __( 'Set a price and delivery time for the %s package.', 'wp-sell-services' ),
 					'limitGallery'       => __( 'You have reached the maximum number of gallery images. Upgrade to Pro for unlimited images.', 'wp-sell-services' ),
 					'limitExtras'        => __( 'You have reached the maximum number of extras. Upgrade to Pro for unlimited extras.', 'wp-sell-services' ),
 					'limitFaq'           => __( 'You have reached the maximum number of FAQs. Upgrade to Pro for unlimited FAQs.', 'wp-sell-services' ),
