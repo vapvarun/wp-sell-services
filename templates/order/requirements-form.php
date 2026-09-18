@@ -224,12 +224,28 @@ do_action( 'wpss_before_requirements_form_component', $order_id, $order );
 
 					case 'checkbox':
 						if ( empty( $requirement['options'] ) ) :
-							// A yes/no question.
+							/*
+							 * A yes/no question, so offer both answers.
+							 *
+							 * This was a single "Yes" checkbox, which gave the
+							 * buyer no way to say No: an unticked box could not
+							 * be told apart from an unanswered one, and when the
+							 * question was required the box had to be ticked, so
+							 * the only answer a buyer could give was Yes.
+							 */
+							$wpss_yes = __( 'Yes', 'wp-sell-services' );
+							$wpss_no  = __( 'No', 'wp-sell-services' );
 							?>
-							<label class="wpss-requirements-form__checkbox-option">
-								<input type="checkbox" name="<?php echo esc_attr( $field_name ); ?>" id="<?php echo esc_attr( $field_id ); ?>" value="<?php esc_attr_e( 'Yes', 'wp-sell-services' ); ?>" <?php checked( '' !== (string) $value ); ?> <?php echo $is_required ? 'required' : ''; ?>>
-								<span><?php esc_html_e( 'Yes', 'wp-sell-services' ); ?></span>
-							</label>
+							<div class="wpss-requirements-form__radio-group" id="<?php echo esc_attr( $field_id ); ?>">
+								<label class="wpss-requirements-form__radio-option">
+									<input type="radio" name="<?php echo esc_attr( $field_name ); ?>" value="<?php echo esc_attr( $wpss_yes ); ?>" <?php checked( (string) $value, $wpss_yes ); ?> <?php echo $is_required ? 'required' : ''; ?>>
+									<span><?php echo esc_html( $wpss_yes ); ?></span>
+								</label>
+								<label class="wpss-requirements-form__radio-option">
+									<input type="radio" name="<?php echo esc_attr( $field_name ); ?>" value="<?php echo esc_attr( $wpss_no ); ?>" <?php checked( (string) $value, $wpss_no ); ?> <?php echo $is_required ? 'required' : ''; ?>>
+									<span><?php echo esc_html( $wpss_no ); ?></span>
+								</label>
+							</div>
 							<?php
 							break;
 						endif;
