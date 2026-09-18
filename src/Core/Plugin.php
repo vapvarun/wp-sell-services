@@ -238,6 +238,7 @@ final class Plugin {
 		$this->define_avatar_filter();
 		$this->register_post_types();
 		$this->register_rewrite_rules();
+		$this->define_moderation_hooks();
 		$this->define_admin_hooks();
 		$this->define_frontend_hooks();
 		$this->define_ajax_hooks();
@@ -2210,6 +2211,21 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Register the service-moderation guards on every request.
+	 *
+	 * Separate from define_admin_hooks() on purpose: that method returns early
+	 * when ! is_admin(), and moderation has to hold on the front end and over
+	 * REST too - the vendor dashboard publishes with PUT /wpss/v1/services/{id}.
+	 *
+	 * @since 1.7.2
+	 *
+	 * @return void
+	 */
+	private function define_moderation_hooks(): void {
+		( new \WPSellServices\Admin\Pages\ServiceModerationPage() )->register_guards();
+	}
+
 	private function define_admin_hooks(): void {
 		if ( ! is_admin() ) {
 			return;

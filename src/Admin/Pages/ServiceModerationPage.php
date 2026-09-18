@@ -95,17 +95,40 @@ class ServiceModerationPage {
 		// Admin notices.
 		add_action( 'admin_notices', array( $this, 'pending_services_notice' ) );
 
-		// Only apply moderation workflow when enabled.
-		if ( ModerationService::is_enabled() ) {
-			// Set default moderation status on new service.
-			add_action( 'save_post_wpss_service', array( $this, 'set_default_moderation_status' ), 10, 3 );
+		// The moderation guards themselves are registered by
+		// register_guards(), which the plugin calls on every request. They used
+		// to live here, but this method only ever runs inside wp-admin, so a
+		// vendor publishing over REST - which is what the dashboard's Publish
+		// button does - was never intercepted at all.
+	}
 
-			// Filter frontend queries.
-			add_action( 'pre_get_posts', array( $this, 'filter_frontend_queries' ) );
-
-			// Modify publish to pending for vendors.
-			add_filter( 'wp_insert_post_data', array( $this, 'intercept_publish' ), 10, 2 );
+	/**
+	 * Register the moderation guards.
+	 *
+	 * Deliberately separate from init(): these three must run on EVERY request,
+	 * not just in wp-admin. The dashboard Publish button issues
+	 * PUT /wpss/v1/services/{id}, where is_admin() is false, so when these were
+	 * registered from the admin-only bootstrap a vendor could publish an
+	 * unapproved service and it went live on the single service page and in the
+	 * public REST list while the admin queue still reported it as Pending.
+	 *
+	 * @since 1.7.2
+	 *
+	 * @return void
+	 */
+	public function register_guards(): void {
+		if ( ! ModerationService::is_enabled() ) {
+			return;
 		}
+
+		// Set default moderation status on new service.
+		add_action( 'save_post_wpss_service', array( $this, 'set_default_moderation_status' ), 10, 3 );
+
+		// Hide non-approved services from public queries.
+		add_action( 'pre_get_posts', array( $this, 'filter_frontend_queries' ) );
+
+		// Hold a vendor's publish at pending until it is approved.
+		add_filter( 'wp_insert_post_data', array( $this, 'intercept_publish' ), 10, 2 );
 	}
 
 	/**
