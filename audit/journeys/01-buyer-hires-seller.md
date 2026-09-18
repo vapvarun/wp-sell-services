@@ -58,7 +58,7 @@ Accept A's proposal.
 
 > **Scale note:** every losing proposal currently produces one notification and
 > one email at hire time. On a request with hundreds of bids that is a burst.
-> Open question with the owner — see `HANDOFF-1.6.0-bugs.md`.
+> Open question with the owner.
 
 ### 6. Order detail
 Buyer opens the new order.

@@ -17,6 +17,8 @@ use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\DisputeWorkflowManager;
 use WPSellServices\Services\EarningsService;
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 $fails = 0;
 $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . "\n";
@@ -144,6 +146,61 @@ $request = new WP_REST_Request( 'POST', '/wpss/v1/media' );
 $request->set_param( 'context', 'order' );
 $response = rest_do_request( $request );
 $check( 'POST /media with context=order is a 400 naming the order routes', 400 === $response->get_status() && 'wpss_order_upload_context' === ( $response->as_error() ? $response->as_error()->get_error_code() : '' ) );
+
+// --- GET /media/{id} serves the uploader and admins, and says so -----------
+// The read gate used to claim order participants through a `_wpss_order_id`
+// branch that nothing wrote, so it never fired (Basecamp 10268706891). The
+// branch is gone; these assertions hold the endpoint to what it actually does,
+// and the grep holds the key to staying dead.
+// Real accounts: the read gate runs after an is-logged-in check, so the
+// synthetic ids the rows above use would answer 401 and prove nothing.
+$media_uploader = wp_insert_user(
+	array(
+		'user_login' => 'wpss-media-uploader-' . wp_rand(),
+		'user_pass'  => wp_generate_password(),
+		'role'       => 'subscriber',
+	)
+);
+$media_stranger = wp_insert_user(
+	array(
+		'user_login' => 'wpss-media-stranger-' . wp_rand(),
+		'user_pass'  => wp_generate_password(),
+		'role'       => 'subscriber',
+	)
+);
+
+$attachment = wp_insert_post(
+	array(
+		'post_title'     => 'contract-media-read.txt',
+		'post_type'      => 'attachment',
+		'post_status'    => 'inherit',
+		'post_author'    => $media_uploader,
+		'post_mime_type' => 'text/plain',
+	)
+);
+update_post_meta( $attachment, '_wpss_upload', true );
+update_post_meta( $attachment, '_wpss_uploader', $media_uploader );
+update_post_meta( $attachment, '_wpss_upload_context', 'message' );
+
+$read_as = static function ( int $user_id ) use ( $attachment ): int {
+	wp_set_current_user( $user_id );
+	return rest_do_request( new WP_REST_Request( 'GET', '/wpss/v1/media/' . $attachment ) )->get_status();
+};
+
+$check( 'GET /media/{id} serves the uploader', 200 === $read_as( $media_uploader ) );
+$check( 'GET /media/{id} serves an administrator', 200 === $read_as( 1 ) );
+$check( 'GET /media/{id} refuses everyone else', 403 === $read_as( $media_stranger ) );
+
+// The quoted form only - the docblock that explains the removal names the key
+// in prose, and prose is not a read.
+$sources = shell_exec( 'grep -rl "\x27_wpss_order_id\x27" ' . escapeshellarg( dirname( __DIR__ ) . '/src' ) . ' --include="*.php" 2>/dev/null' );
+$check( 'no code reads _wpss_order_id, a key nothing writes', '' === trim( (string) $sources ) );
+
+wp_delete_post( $attachment, true );
+wp_set_current_user( 0 );
+require_once ABSPATH . 'wp-admin/includes/user.php';
+wp_delete_user( $media_uploader );
+wp_delete_user( $media_stranger );
 
 // --- cleanup ----------------------------------------------------------------
 update_option( 'wpss_orders', $saved_settings );

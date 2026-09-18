@@ -522,7 +522,9 @@ class AjaxHandlers {
 		$dispute_result  = $dispute_service->open(
 			$order_id,
 			$user_id,
-			__( 'Cancellation Dispute', 'wp-sell-services' ),
+			// A reason KEY, not a translated sentence - see OrdersController,
+			// which had the same mistake and was fixed first.
+			\WPSellServices\Models\Dispute::REASON_OTHER,
 			__( 'Vendor disputed the buyer cancellation request.', 'wp-sell-services' )
 		);
 
@@ -618,7 +620,7 @@ class AjaxHandlers {
 			wp_send_json_success(
 				array(
 					'message'  => __( 'Requirements submitted successfully. The vendor will start working on your order.', 'wp-sell-services' ),
-					'redirect' => wpss_get_order_url( $order_id ),
+					'redirect' => wpss_get_post_checkout_url( (int) $order_id, wpss_get_order_url( $order_id ), 'ajax' ),
 				)
 			);
 		} else {
@@ -1320,7 +1322,7 @@ class AjaxHandlers {
 						<div class="wpss-evidence-file">
 							<a href="<?php echo esc_url( $evidence_content ); ?>" target="_blank" class="wpss-file-link">
 								<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-								<span><?php echo esc_html( $evidence_files ? (string) $evidence_files[0]['name'] : basename( $evidence_content ) ); ?></span>
+								<span><?php echo esc_html( wpss_format_attachment_name( $evidence_files ? (string) $evidence_files[0]['name'] : basename( (string) wp_parse_url( $evidence_content, PHP_URL_PATH ) ) ) ); ?></span>
 							</a>
 						</div>
 					<?php endif; ?>
@@ -1648,7 +1650,7 @@ class AjaxHandlers {
 			// timeline + Pay-phase-1 button live.
 			$is_milestone_contract = ProposalService::CONTRACT_TYPE_MILESTONE === ( $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED );
 			if ( $is_milestone_contract ) {
-				$redirect_url = wpss_get_order_url( (int) $result['order_id'] );
+				$redirect_url = wpss_get_post_checkout_url( (int) $result['order_id'], wpss_get_order_url( (int) $result['order_id'] ), 'ajax' );
 				$message      = __( 'Proposal accepted — your project is set up. Opening the order…', 'wp-sell-services' );
 			} else {
 				$redirect_url = wpss_ensure_pay_order( (int) $result['order_id'] );
@@ -3043,10 +3045,11 @@ class AjaxHandlers {
 					$dispute_result  = $dispute_service->open(
 						$order_id,
 						$user_id,
-						__( 'Cancellation Dispute', 'wp-sell-services' ),
+						// A reason KEY, not a translated sentence.
+						\WPSellServices\Models\Dispute::REASON_OTHER,
 						__( 'Vendor disputed the buyer cancellation request.', 'wp-sell-services' )
 					);
-					$result          = array( 'success' => (bool) $dispute_result );
+					$result = array( 'success' => (bool) $dispute_result );
 					if ( ! $dispute_result ) {
 						$result['message'] = __( 'Failed to create dispute.', 'wp-sell-services' );
 					}
@@ -3490,31 +3493,12 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
 		}
 
-		// Billing address — available to ALL users, not just vendors, because a
-		// buyer needs one for invoices and they never see the vendor fields.
-		// Shares the exact helper the checkout save-back uses, so both surfaces
-		// write the same WooCommerce-compatible keys with the same sanitising.
+		// Billing address, display name and avatar — available to ALL users, not
+		// just vendors, because a buyer needs a billing address for invoices and
+		// never sees the vendor fields. One writer, shared with PUT /me and
+		// PUT /vendors/me, so the three surfaces cannot drift again.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-		wpss_save_billing_from_request( $_POST, $user_id );
-
-		// Update display name (available for all users).
-		$display_name = sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) );
-		if ( ! empty( $display_name ) ) {
-			wp_update_user(
-				array(
-					'ID'           => $user_id,
-					'display_name' => $display_name,
-				)
-			);
-		}
-
-		// Update avatar (available for all users).
-		$avatar_id = absint( $_POST['avatar_id'] ?? 0 );
-		if ( $avatar_id > 0 ) {
-			update_user_meta( $user_id, '_wpss_avatar_id', $avatar_id );
-		} else {
-			delete_user_meta( $user_id, '_wpss_avatar_id' );
-		}
+		wpss_save_member_profile( wp_unslash( $_POST ), $user_id );
 
 		// Check if user is a vendor (canonical capability/role check - role-based
 		// vendors do not always carry the _wpss_is_vendor meta).
@@ -3536,6 +3520,14 @@ class AjaxHandlers {
 			// The composer posts the whole form, so an absent vacation_mode
 			// checkbox means "off" - make that explicit so the builder writes 0.
 			$post_data['vacation_mode'] = empty( $post_data['vacation_mode'] ) ? 0 : 1;
+
+			// The avatar's user meta is written by wpss_save_member_profile()
+			// above; the vendor profile table keeps its own avatar_id column, so
+			// the builder still needs the resolved id. The assignment was dropped
+			// when the member-profile writer was extracted, leaving $avatar_id
+			// undefined - and the builder types it as int, so every vendor
+			// profile save through this AJAX route ended in a TypeError.
+			$avatar_id = absint( $post_data['avatar_id'] ?? 0 );
 
 			$profile_data = wpss_build_vendor_profile_update( $post_data, $avatar_id, $cover_id );
 

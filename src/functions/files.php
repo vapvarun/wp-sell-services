@@ -237,11 +237,25 @@ function wpss_order_files_are_public( bool $force = false ): ?bool {
  *
  * @since 1.7.1
  *
- * @param array<string,mixed> $file One entry from $_FILES.
+ * @param array<string,mixed> $file    One entry from $_FILES.
+ * @param string              $context Which surface is uploading - passed to the
+ *                                     filters so a site can vary the rule per
+ *                                     context rather than globally.
  * @return WP_Error|null Error describing the refusal, or null when acceptable.
  */
-function wpss_check_upload( array $file ): ?WP_Error {
+function wpss_check_upload( array $file, string $context = '' ): ?WP_Error {
 	$max_mb = (int) wpss_get_option( 'advanced', 'max_file_size' );
+
+	/**
+	 * Filter the maximum upload size, in megabytes.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int                 $max_mb  Maximum size in MB.
+	 * @param array<string,mixed> $file    The $_FILES entry being checked.
+	 * @param string              $context Upload context.
+	 */
+	$max_mb = (int) apply_filters( 'wpss_max_upload_size_mb', $max_mb, $file, $context );
 
 	if ( (int) ( $file['size'] ?? 0 ) > $max_mb * MB_IN_BYTES ) {
 		return new WP_Error(
@@ -261,11 +275,121 @@ function wpss_check_upload( array $file ): ?WP_Error {
 
 	$allowed = array_map( 'trim', explode( ',', strtolower( (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ) ) );
 
+	/**
+	 * Filter the file extensions any WPSS upload may use.
+	 *
+	 * The owner's Settings > Advanced list is the default. This filter is the
+	 * seam for a site that needs a type the settings screen does not offer, or
+	 * needs to narrow the list for one context - $context tells you which
+	 * surface is asking.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string[]            $allowed Lower-case extensions, no dots.
+	 * @param array<string,mixed> $file    The $_FILES entry being checked.
+	 * @param string              $context Upload context: requirements, delivery,
+	 *                                     message, dispute, media, portfolio, ''.
+	 */
+	$allowed = (array) apply_filters( 'wpss_allowed_file_types', $allowed, $file, $context );
+
+	/*
+	 * The per-flow filters from before uploads shared one check.
+	 *
+	 * Delivery and requirements each used to build their own list and pass it
+	 * through its own filter. Folding both into this function removed those
+	 * filters, so a site restricting what vendors may deliver, or widening what
+	 * buyers may attach to requirements, silently lost that rule. They fire
+	 * again here, with the same single argument they always took, after the
+	 * general filter so either one can have the last word for its own flow.
+	 */
+	// Written out literally, not as a computed hook name: the docs gate and
+	// any developer grepping for a hook both search for the literal string.
+	if ( 'delivery' === $context ) {
+		/**
+		 * Filter the file extensions allowed for order deliveries.
+		 *
+		 * @since 1.0.0
+		 * @since 1.7.1 Fired from wpss_check_upload(), after wpss_allowed_file_types. Same signature.
+		 *
+		 * @param string[] $allowed Lower-case extensions, no dots.
+		 */
+		$allowed = (array) apply_filters( 'wpss_delivery_allowed_file_types', $allowed );
+	} elseif ( 'requirements' === $context ) {
+		/**
+		 * Filter the file extensions allowed for buyer requirement attachments.
+		 *
+		 * @since 1.0.0
+		 * @since 1.7.1 Fired from wpss_check_upload(), after wpss_allowed_file_types. Same signature.
+		 *
+		 * @param string[] $allowed Lower-case extensions, no dots.
+		 */
+		$allowed = (array) apply_filters( 'wpss_requirements_allowed_file_types', $allowed );
+	}
+
 	if ( ! in_array( strtolower( (string) $checked['ext'] ), $allowed, true ) ) {
 		return new WP_Error( 'invalid_type', __( 'File type not allowed.', 'wp-sell-services' ), array( 'status' => 400 ) );
 	}
 
 	return null;
+}
+
+/**
+ * A filename that is safe to show to the other party.
+ *
+ * The stored `name` on an attachment record is what the uploader's browser
+ * sent, kept verbatim so the recipient sees the file they were given -
+ * `sanitize_file_name()` is applied to the name on disk, not to this one. It is
+ * therefore text written by the other side of a dispute or an order, and it is
+ * rendered next to a download link, which makes it worth neutralising before
+ * display:
+ *
+ *   - Bidi overrides (U+202A-U+202E, U+2066-U+2069 and friends) can reverse how
+ *     the tail of a name reads, the long-standing trick for making an
+ *     executable look like a PDF in a file listing.
+ *   - Control characters and newlines can push the visible label away from the
+ *     link it belongs to.
+ *   - An unbounded name can run past the row and hide what follows it.
+ *
+ * Escaping is not enough on its own: esc_html() stops markup, not a character
+ * whose whole purpose is to change the direction the rest of the string reads
+ * in. Callers still escape - this only decides what the string says.
+ *
+ * @since 1.7.1
+ *
+ * @param string $name Stored attachment name.
+ * @param int    $max  Longest label to show before eliding the middle.
+ * @return string Display-safe name, never empty.
+ */
+function wpss_format_attachment_name( string $name, int $max = 80 ): string {
+	// Bidi control and other invisible formatting characters.
+	$name = (string) preg_replace( '/[\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}-\x{2064}\x{2066}-\x{2069}\x{FEFF}\x{061C}]/u', '', $name );
+
+	// C0/C1 controls, including the newlines that would split the label.
+	$name = (string) preg_replace( '/[\x00-\x1F\x7F-\x9F]/u', '', $name );
+
+	$name = trim( (string) preg_replace( '/\s+/u', ' ', $name ) );
+
+	if ( '' === $name ) {
+		return __( 'Attachment', 'wp-sell-services' );
+	}
+
+	// Keep the head and the tail: the extension is the part a reader checks.
+	if ( function_exists( 'mb_strlen' ) && mb_strlen( $name ) > $max ) {
+		$head = mb_substr( $name, 0, $max - 15 );
+		$tail = mb_substr( $name, -10 );
+		$name = $head . '...' . $tail;
+	} elseif ( ! function_exists( 'mb_strlen' ) && strlen( $name ) > $max ) {
+		$name = substr( $name, 0, $max - 15 ) . '...' . substr( $name, -10 );
+	}
+
+	/**
+	 * Filter the display form of an attachment filename.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $name Display-safe name.
+	 */
+	return (string) apply_filters( 'wpss_attachment_display_name', $name );
 }
 
 /**

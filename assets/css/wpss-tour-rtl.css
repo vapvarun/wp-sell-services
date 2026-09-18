@@ -192,14 +192,23 @@
 	background: transparent;
 	border: 1px solid transparent;
 	border-radius: 6px;
-	color: var( --wpss-muted, #6b7280 );
+	/* --wpss-muted is not a token. It never existed, so this always resolved to
+	   the literal - the LIGHT muted value - and stayed #6b7280 on a dark
+	   dashboard: 3.04:1, under AA. The real name is --wpss-text-muted, which
+	   carries a dark value (Basecamp 10300330443). */
+	color: var( --wpss-text-muted, #6b7280 );
 	font-size: 13px;
 	cursor: pointer;
 	transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .wpss-dashboard__tour-replay:hover,
 .wpss-dashboard__tour-replay:focus {
-	background: var( --wpss-surface-hover, #f3f4f6 );
+	/* --wpss-surface-hover is not a token either, so hover painted the literal
+	   #f3f4f6 - a near-white panel - while --wpss-text DID resolve and supplied
+	   the dark theme's near-white ink. White on white, measured 1.13:1 with a
+	   real pointer hover. --wpss-bg-muted is the surface one step up from the
+	   card in both modes. */
+	background: var( --wpss-bg-muted, #f3f4f6 );
 	color: var( --wpss-text, #111827 );
 	border-color: var( --wpss-border, #e5e7eb );
 }

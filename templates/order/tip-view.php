@@ -27,6 +27,24 @@ $parent_id  = (int) ( $current_order->platform_order_id ?? 0 );
 $parent_url = $parent_id ? wpss_get_order_url( $parent_id ) : '';
 $note       = $current_order->vendor_notes ?? '';
 
+// Tipping is off, but the link still resolves. Falling through to the full
+// order view would present a tip as a service order, and a blank page is a
+// dead end - so say the record is not available and point at the order it
+// belongs to.
+if ( ! wpss_tipping_enabled() ) {
+	?>
+	<div class="wpss-empty-state">
+		<p><?php esc_html_e( 'This item is not available.', 'wp-sell-services' ); ?></p>
+		<?php if ( $parent_url ) : ?>
+			<a href="<?php echo esc_url( $parent_url ); ?>" class="wpss-btn wpss-btn--primary">
+				<?php esc_html_e( 'View the order', 'wp-sell-services' ); ?>
+			</a>
+		<?php endif; ?>
+	</div>
+	<?php
+	return;
+}
+
 $counterparty_id = $is_buyer ? (int) $current_order->vendor_id : (int) $current_order->customer_id;
 $counterparty    = get_userdata( $counterparty_id );
 

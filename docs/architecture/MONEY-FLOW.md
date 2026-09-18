@@ -3,8 +3,10 @@
 How money moves through this plugin, and the rules that keep it correct. Read
 this before touching anything that charges, credits, refunds, or pays out.
 
-Live plan and open work: `audit/archive/MONEY-FLOW-PLAN.md`. This document describes the
-rules; that one tracks the tasks. If they disagree, the plan is newer.
+This document is the single source for the money rules. The 1.2.x-era planning
+document that used to outrank it has been removed - it had no open items left
+and had not been touched since 2026-07-23, so it could only ever disagree with
+the code by being older.
 
 ---
 
@@ -234,9 +236,9 @@ Cross-references that must agree with this section:
 
 Connect is currently wired as a **charge-time split** (`transfer_data` on the
 PaymentIntent), which pays the vendor at charge and bypasses clearance entirely.
-That contradicts §1 and is scheduled to move to scheduled transfers — see
-`audit/archive/MONEY-FLOW-PLAN.md` T7/T8, including the migration hazard for orders that
-were already split.
+That contradicts §1 and is scheduled to move to scheduled transfers. Orders that
+were already split at charge time are the migration hazard: they carry a
+transfer the ledger does not own.
 
 ---
 

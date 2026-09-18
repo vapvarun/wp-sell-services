@@ -440,7 +440,7 @@ class GalleryService {
 					<i data-lucide="x-circle" class="wpss-icon" aria-hidden="true"></i>
 				</button>
 			</div>
-			<span class="wpss-gallery-type-badge"><?php echo esc_html( ucfirst( $type ) ); ?></span>
+			<span class="wpss-badge wpss-gallery-type-badge"><?php echo esc_html( ucfirst( $type ) ); ?></span>
 		</div>
 		<?php
 		return ob_get_clean();

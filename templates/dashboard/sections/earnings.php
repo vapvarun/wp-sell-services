@@ -165,7 +165,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 	<?php endif; ?>
 
 	<!-- Earnings Summary Cards -->
-	<div class="wpss-stats-grid wpss-stats-grid--4">
+	<div class="wpss-stats-grid">
 		<div class="wpss-stat-card wpss-stat-card--highlight<?php echo $available_balance < 0 ? ' wpss-stat-card--negative' : ''; ?>">
 			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $earnings['available_balance'] ) ); ?></span>
 			<span class="wpss-stat-card__label">
@@ -192,10 +192,23 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $earnings['withdrawn'] ) ); ?></span>
 			<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Withdrawn', 'wp-sell-services' ); ?></span>
 		</div>
-	</div>
-
-	<!-- Total Earnings Card -->
-	<div class="wpss-stats-grid wpss-stats-grid--2" style="margin-top: 1rem;">
+		<?php
+		/*
+		 * All six tiles share one grid on purpose. They used to be split into a
+		 * four-tile row and a two-tile row, and the four never fitted: the rail
+		 * is 742px and `.wpss-stats-grid` resolves to auto-fit/minmax(200px),
+		 * so the row held three and left "Total Withdrawn" stranded on a line of
+		 * its own beside an empty gap. Forcing four columns instead only moved
+		 * the damage - `.wpss-stat-card` is display:flex (frontend.css), so the
+		 * value and its label sit side by side and need about 230px; at four
+		 * across they render 171px and clip the label.
+		 *
+		 * Six tiles over three columns is two balanced rows at the width the
+		 * card was already rendering correctly, and it needs no CSS at all -
+		 * which is why the --4 and --2 modifiers are gone from the markup.
+		 * See Basecamp 10300099697.
+		 */
+		?>
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $earnings['total_earned'] ) ); ?></span>
 			<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Earned (All Time)', 'wp-sell-services' ); ?></span>

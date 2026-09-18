@@ -152,7 +152,7 @@ class UpgradePage {
 				),
 				array(
 					'feature' => __( 'Order tipping', 'wp-sell-services' ),
-					'free'    => true,
+					'free'    => false,
 					'pro'     => true,
 				),
 			),

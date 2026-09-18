@@ -454,6 +454,38 @@ class EarningsService {
 			);
 		}
 
+		// Solvency, re-checked at the moment the money moves.
+		//
+		// request_withdrawal() checks the balance when the vendor asks, and that
+		// was the only check anywhere: neither approve nor this method looked
+		// again. A request is legitimate when it is made and can stop being
+		// legitimate before it is paid - a dispute refund or a chargeback lands
+		// between the two and claws the earnings back. Reproduced: a vendor at
+		// -134.04 had a 75.00 request approved and marked paid, ledger debit
+		// written, ending at -209.04. The platform paid out money the vendor did
+		// not have.
+		//
+		// Read under the row lock this transaction already holds, so two admins
+		// paying two withdrawals at once cannot both see the same balance and
+		// both pass. Compared against the ledger rather than available_balance:
+		// available already subtracts this very withdrawal, so testing it here
+		// would count the amount twice and refuse a vendor who can afford it.
+		$ledger_balance = wpss_get_ledger_balance( (int) $withdrawal->vendor_id, true );
+
+		if ( $ledger_balance < (float) $withdrawal->amount ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'message' => sprintf(
+					/* translators: 1: withdrawal amount, 2: vendor's current wallet balance. */
+					__( 'This withdrawal is %1$s but the vendor\'s balance is only %2$s, so paying it would put them in debt. Their balance may have changed since they asked - a refund or dispute can claw earnings back. Reject this request, or wait until they have earned enough to cover it.', 'wp-sell-services' ),
+					wpss_format_price( (float) $withdrawal->amount ),
+					wpss_format_price( $ledger_balance )
+				),
+				'code'    => 'insufficient_balance',
+			);
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$updated = $wpdb->update(
 			$table,

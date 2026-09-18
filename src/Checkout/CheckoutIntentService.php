@@ -218,26 +218,9 @@ class CheckoutIntentService {
 	 * @return \WP_Error|null Error when outside the range, null when fine.
 	 */
 	private function check_order_limits( float $total ): ?\WP_Error {
-		$min = (float) get_option( 'wpss_min_order_amount', 0 );
-		$max = (float) get_option( 'wpss_max_order_amount', 0 );
-
-		if ( $min > 0 && $total < $min ) {
-			return new \WP_Error(
-				'wpss_below_minimum',
-				/* translators: %s: formatted minimum order amount */
-				sprintf( __( 'The minimum order amount is %s.', 'wp-sell-services' ), wpss_format_price( $min ) )
-			);
-		}
-
-		if ( $max > 0 && $total > $max ) {
-			return new \WP_Error(
-				'wpss_above_maximum',
-				/* translators: %s: formatted maximum order amount */
-				sprintf( __( 'The maximum order amount is %s.', 'wp-sell-services' ), wpss_format_price( $max ) )
-			);
-		}
-
-		return null;
+		// The rule itself lives in wpss_check_order_limits() so the Offline rail,
+		// which never routes through resolve(), can apply the same one.
+		return wpss_check_order_limits( $total, 'intent' );
 	}
 
 	/**
@@ -402,7 +385,7 @@ class CheckoutIntentService {
 			'success'      => true,
 			'order_id'     => (int) $order->id,
 			'order_number' => $order->order_number,
-			'redirect_url' => wpss_get_order_requirements_url( $order->id ),
+			'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_requirements_url( $order->id ), 'intent' ),
 		);
 	}
 
@@ -540,7 +523,7 @@ class CheckoutIntentService {
 			'success'      => true,
 			'order_id'     => (int) $order->id,
 			'order_number' => $order->order_number,
-			'redirect_url' => wpss_get_order_requirements_url( $order->id ),
+			'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_requirements_url( $order->id ), 'intent' ),
 		);
 	}
 }

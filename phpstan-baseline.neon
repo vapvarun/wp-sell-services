@@ -855,18 +855,6 @@ parameters:
 			path: src/CLI/PreflightCommand.php
 
 		-
-			message: '#^Right side of \|\| is always true\.$#'
-			identifier: booleanOr.rightAlwaysTrue
-			count: 1
-			path: src/CLI/PreflightCommand.php
-
-		-
-			message: '#^Variable \$wpss on left side of \?\? is never defined\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/CLI/PreflightCommand.php
-
-		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 1
@@ -2584,12 +2572,6 @@ parameters:
 			path: src/Services/ConversationService.php
 
 		-
-			message: '#^Method WPSellServices\\Services\\DeliveryService\:\:get_allowed_file_types\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/DeliveryService.php
-
-		-
 			message: '#^Method WPSellServices\\Services\\DeliveryService\:\:get_order_deliveries\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -3269,12 +3251,6 @@ parameters:
 
 		-
 			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:get\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Services/RequirementsService.php
-
-		-
-			message: '#^Method WPSellServices\\Services\\RequirementsService\:\:get_allowed_file_types\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Services/RequirementsService.php

@@ -118,7 +118,10 @@
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
-	color: var(--wpss-gray-400);
+	/* --wpss-text-muted, not --wpss-gray-400. The raw grey measured 2.54:1 on
+	   the white sidebar at 11px - under AA on every theme - and a raw palette
+	   step does not follow dark mode the way a text token does. */
+	color: var(--wpss-text-muted, #6b7280);
 }
 
 .wpss-dashboard__nav-list {
@@ -801,7 +804,23 @@
 
 .wpss-conversation-card__time {
 	font-size: 12px;
-	color: var(--wpss-gray-400);
+	/* text-muted, not gray-400. The ramp value lands at 4.46 on the dark card
+	   surface - close, but under the 4.5 floor, and a timestamp is text. The
+	   muted TEXT token is the one tuned for this job in both modes. */
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+/*
+ * The unread card swaps its ground to --wpss-primary-light, which in dark mode
+ * is indigo #312e81 - lighter than the normal card. --wpss-text-muted measures
+ * 4.4993 there: seven ten-thousandths under the WCAG AA 1.4.3 floor, on exactly
+ * the card a member is most likely to open. The rule above is correct for the
+ * default ground (6.99) and was never wrong; it is simply a different ground.
+ * The secondary ramp gives 7.75 on indigo, and stays right in light mode where
+ * both tokens flip together. Basecamp 10240423992.
+ */
+.wpss-conversation-card--unread .wpss-conversation-card__time {
+	color: var(--wpss-text-secondary, #374151);
 }
 
 .wpss-conversation-card__preview {
@@ -2169,9 +2188,18 @@ select.wpss-input option,
 		padding: 16px;
 	}
 
-	.wpss-stats-grid,
-	.wpss-stats-grid--4 {
-		grid-template-columns: repeat(2, 1fr);
+	/*
+	 * Scoped to the dashboard, and that is what makes it work. frontend.css
+	 * also defines .wpss-stats-grid (auto-fit, minmax(200px, 1fr)) and loads
+	 * after this sheet, so at equal specificity it won: in a ~300px phone
+	 * column two 200px tracks do not fit, the grid fell to ONE column, and
+	 * five stacked stat cards pushed the first order below the screen on
+	 * BuddyX, BuddyX Pro and Reign alike. This two-column rule existed and
+	 * had never applied.
+	 */
+	.wpss-dashboard .wpss-stats-grid,
+	.wpss-dashboard .wpss-stats-grid--4 {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
 	.wpss-order-card {
@@ -3138,7 +3166,7 @@ select.wpss-input option,
 .wpss-disputes-table th {
 	text-align: start;
 	padding: 12px 15px;
-	background: var(--wpss-bg-light, #f6f7f7);
+	background: var(--wpss-bg-subtle, #f6f7f7);
 	font-weight: 600;
 	font-size: 13px;
 	color: var(--wpss-text-secondary, #646970);
@@ -3148,13 +3176,13 @@ select.wpss-input option,
 
 .wpss-disputes-table td {
 	padding: 15px;
-	border-bottom: 1px solid var(--wpss-border-color, #dcdcde);
+	border-bottom: 1px solid var(--wpss-border, #dcdcde);
 	vertical-align: middle;
 }
 
 .wpss-dispute-link {
 	font-weight: 600;
-	color: var(--wpss-primary-color, #2271b1);
+	color: var(--wpss-primary, #2271b1);
 	text-decoration: none;
 }
 
@@ -3170,7 +3198,7 @@ select.wpss-input option,
 
 .wpss-order-number {
 	font-weight: 500;
-	color: var(--wpss-text-primary, #1d2327);
+	color: var(--wpss-text, #1d2327);
 }
 
 .wpss-service-name {
@@ -3660,7 +3688,7 @@ select.wpss-input option,
 	.wpss-disputes-table tr {
 		display: block;
 		margin-bottom: 15px;
-		border: 1px solid var(--wpss-border-color, #dcdcde);
+		border: 1px solid var(--wpss-border, #dcdcde);
 		border-radius: 8px;
 		overflow: hidden;
 	}
@@ -3670,7 +3698,7 @@ select.wpss-input option,
 		justify-content: space-between;
 		align-items: center;
 		padding: 12px 15px;
-		border-bottom: 1px solid var(--wpss-border-color, #dcdcde);
+		border-bottom: 1px solid var(--wpss-border, #dcdcde);
 	}
 
 	.wpss-disputes-table td:last-child {
@@ -3698,7 +3726,7 @@ select.wpss-input option,
 .wpss-evidence-empty{color:var(--wpss-gray-500,#6b7280);font-size:14px;margin:0}
 .wpss-evidence-item{display:flex;max-width:100%}
 .wpss-evidence-item.wpss-evidence-own{justify-content:flex-end}
-.wpss-evidence-bubble{max-width:82%;padding:10px 14px;border-radius:14px;background:var(--wpss-gray-100,#f3f4f6);border:1px solid var(--wpss-border-color,#e5e7eb)}
+.wpss-evidence-bubble{max-width:82%;padding:10px 14px;border-radius:14px;background:var(--wpss-gray-100,#f3f4f6);border:1px solid var(--wpss-border,#e5e7eb)}
 .wpss-evidence-own .wpss-evidence-bubble{background:var(--wpss-primary-light,#eef2ff);border-color:var(--wpss-primary,#4f46e5)}
 .wpss-evidence-author{display:block;font-size:12px;color:var(--wpss-gray-600,#4b5563);margin-bottom:2px}
 .wpss-evidence-text{font-size:14px;line-height:1.5;color:var(--wpss-gray-800,#1f2937);white-space:pre-wrap;word-break:break-word}
@@ -3706,13 +3734,19 @@ select.wpss-input option,
 .wpss-evidence-file{margin-top:6px}
 .wpss-evidence-file .wpss-file-link{display:inline-flex;align-items:center;gap:6px;font-size:13px}
 .wpss-evidence-time{display:block;font-size:11px;color:var(--wpss-gray-400,#9ca3af);margin-top:4px}
-.wpss-add-evidence-form{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--wpss-border-color,#e5e7eb);padding-top:14px}
+.wpss-add-evidence-form{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--wpss-border,#e5e7eb);padding-top:14px}
 .wpss-add-evidence-form .wpss-form-label{font-weight:600;font-size:14px}
 .wpss-add-evidence-form__row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:auto}
 .wpss-evidence-attach{cursor:pointer}
 .wpss-evidence-filename{font-size:12px;color:var(--wpss-gray-500,#6b7280)}
 .wpss-evidence-locked{font-size:13px;color:var(--wpss-gray-500,#6b7280);margin:12px 0 0}
+/* The detail footer. The class was in the template from the start and had no rule
+   anywhere, so its <p> kept whatever margin the theme gave it - on Reign that is 0,
+   which left View order touching the Attach file row with no gap at all, and stacked
+   three flush buttons at 390px. Space it, and make it a row so a second action can be
+   added without repeating this. */
+.wpss-dispute-detail__actions{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 0}
 @media (max-width:480px){.wpss-evidence-bubble{max-width:100%}.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:0;width:100%}}
 
 /* ==========================================================================
@@ -3766,4 +3800,34 @@ select.wpss-input option,
    mode can reach it. */
 .wpss-earnings__wallet {
 	margin-top: var(--wpss-space-8, 32px);
+}
+
+/* The same panel embedded in someone else's page - WooCommerce My Account,
+   where the host already provides the nav and the content column is around
+   450px wide.
+   .wpss-dashboard is the full shell: a sidebar column plus a content column.
+   vendor-dashboard.css sets it to `grid-template-columns: 260px 1fr`, so on a
+   surface with no sidebar to put in that first column the content was left
+   with whatever remained - about 150px, every stat label breaking mid-word.
+   Two classes deep so it beats that single-class rule wherever the sheets
+   happen to load in. */
+.wpss-dashboard.wpss-dashboard--embedded {
+	display: block;
+	grid-template-columns: none;
+	min-height: 0;
+	background: none;
+	box-shadow: none;
+	border-radius: 0;
+}
+
+/* The card grids size themselves off the viewport, not off the box they are
+   in - `repeat(3, 1fr)` until the WINDOW drops below 991px. Embedded in a
+   ~450px My Account column on a 1280px screen, every media query says "plenty
+   of room" and three columns get 104px each, so "Orders", "Messages" and
+   "Earnings" all render truncated. Inside this panel the available width is
+   the container's, so let the tracks decide from their own minimum. */
+.wpss-dashboard--embedded .wpss-card-grid--2col,
+.wpss-dashboard--embedded .wpss-card-grid--3col,
+.wpss-dashboard--embedded .wpss-card-grid--4col {
+	grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
 }

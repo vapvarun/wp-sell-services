@@ -59,6 +59,20 @@ if ( $view_dispute_id ) {
 
 	$status_key = (string) $dispute->status;
 	$timeline   = ( new DisputeWorkflowManager() )->get_timeline( (int) $dispute->id );
+
+	// Fetched here rather than beside the thread below because the Reason block
+	// needs to know whether the opening statement already has a home in the
+	// conversation. Since 1.7.1 it is written to the messages table as a typed
+	// opening_statement row; disputes opened before that carry the text only on
+	// the dispute row, so the Reason block is still their one place to show it.
+	$evidence_items  = $dispute_service->get_evidence( (int) $dispute->id );
+	$has_opening_msg = false;
+	foreach ( $evidence_items as $wpss_ev ) {
+		if ( 'opening_statement' === (string) ( $wpss_ev['type'] ?? '' ) ) {
+			$has_opening_msg = true;
+			break;
+		}
+	}
 	?>
 	<div class="wpss-section wpss-section--disputes wpss-card wpss-disputes wpss-dispute-detail">
 		<p class="wpss-dispute-detail__back">
@@ -156,7 +170,8 @@ if ( $view_dispute_id ) {
 				<?php if ( ! empty( $dispute->reason ) ) : ?>
 					<p class="wpss-dispute-detail__reason-label"><strong><?php echo esc_html( $wpss_dispute_reasons[ $dispute->reason ] ?? $dispute->reason ); ?></strong></p>
 				<?php endif; ?>
-				<?php if ( ! empty( $dispute->description ) ) : ?>
+				<?php // Shown once. When the statement is in the conversation below, this block stays the category alone. ?>
+				<?php if ( ! $has_opening_msg && ! empty( $dispute->description ) ) : ?>
 					<p><?php echo esc_html( $dispute->description ); ?></p>
 				<?php endif; ?>
 			</div>
@@ -195,7 +210,6 @@ if ( $view_dispute_id ) {
 		// existed, but no member-facing surface ever rendered the thread or a
 		// reply form — a party could OPEN a dispute and then never respond to it.
 		// This wires the existing backend to the dashboard.
-		$evidence_items   = $dispute_service->get_evidence( (int) $dispute->id );
 		$can_add_evidence = ! in_array( $status_key, array( 'resolved', 'closed' ), true );
 		?>
 		<div class="wpss-dispute-detail__evidence">
@@ -213,13 +227,41 @@ if ( $view_dispute_id ) {
 						$ev_type    = (string) ( $item['type'] ?? 'text' );
 						$ev_content = (string) ( $item['content'] ?? '' );
 						$ev_desc    = (string) ( $item['description'] ?? '' );
-						$ev_when    = ! empty( $item['created_at'] ) ? mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item['created_at'] ) : '';
+
+						/*
+						 * The stored filename, not basename() of the link.
+						 *
+						 * Since the 1.7.1 private-file rework the content is a
+						 * permission-gated admin-post.php URL with the file in a
+						 * query string, and basename() does not strip a query
+						 * string - so the label printed the endpoint and its
+						 * arguments instead of a name. get_evidence() already
+						 * returns the real name on the attachment record.
+						 */
+						$ev_attach = isset( $item['attachments'][0] ) && is_array( $item['attachments'][0] ) ? $item['attachments'][0] : array();
+						$ev_name   = wpss_format_attachment_name( (string) ( $ev_attach['name'] ?? '' ) );
+
+						if ( '' === $ev_name ) {
+							$ev_path = (string) wp_parse_url( $ev_content, PHP_URL_PATH );
+							$ev_name = '' !== $ev_path ? basename( $ev_path ) : __( 'Attachment', 'wp-sell-services' );
+						}
+						$ev_when = ! empty( $item['created_at'] ) ? mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item['created_at'] ) : '';
 						?>
 						<div class="wpss-evidence-item <?php echo $ev_own ? 'wpss-evidence-own' : 'wpss-evidence-other'; ?>">
 							<div class="wpss-evidence-bubble">
 								<span class="wpss-evidence-author"><strong><?php echo esc_html( $ev_name ); ?></strong></span>
 								<div class="wpss-evidence-content">
-									<?php if ( 'text' === $ev_type && '' !== $ev_content ) : ?>
+									<?php
+									/*
+									 * Anything that is not a media type renders as prose. This
+									 * tested `'text' === $ev_type`, an allow-list of exactly one
+									 * value, so the opening statement - typed `opening_statement`
+									 * so the panel can tell it from a reply - matched no branch
+									 * and drew an empty bubble with just a name and a time. Any
+									 * future textual type would have failed the same silent way.
+									 */
+									?>
+									<?php if ( ! in_array( $ev_type, array( 'image', 'file', 'link' ), true ) && '' !== $ev_content ) : ?>
 										<div class="wpss-evidence-text"><?php echo wp_kses_post( nl2br( esc_html( $ev_content ) ) ); ?></div>
 									<?php endif; ?>
 									<?php if ( '' !== $ev_desc && 'text' !== $ev_type ) : ?>
@@ -235,7 +277,7 @@ if ( $view_dispute_id ) {
 										<div class="wpss-evidence-file">
 											<a href="<?php echo esc_url( $ev_content ); ?>" target="_blank" rel="noopener noreferrer" class="wpss-file-link">
 												<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-												<span><?php echo esc_html( basename( $ev_content ) ); ?></span>
+												<span><?php echo esc_html( $ev_name ); ?></span>
 											</a>
 										</div>
 									<?php endif; ?>
@@ -365,7 +407,8 @@ $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 						</td>
 						<td data-title="<?php esc_attr_e( 'Opened', 'wp-sell-services' ); ?>"><?php echo esc_html( $opened ); ?></td>
 						<td>
-							<a class="wpss-btn wpss-btn--sm wpss-btn--secondary" href="<?php echo esc_url( $detail_url ); ?>">
+							<?php // Same outline View as the order and sales lists: one action, one look. ?>
+							<a class="wpss-btn wpss-btn--outline wpss-btn--sm" href="<?php echo esc_url( $detail_url ); ?>">
 								<?php esc_html_e( 'View', 'wp-sell-services' ); ?>
 							</a>
 						</td>

@@ -117,7 +117,20 @@ function wpss_settings_defaults(): array {
 			'delete_data_on_uninstall' => false,
 			'enable_debug_mode'        => false,
 			'max_file_size'            => 10,
-			'allowed_file_types'       => 'jpg,jpeg,png,gif,pdf,doc,docx',
+
+			/*
+			 * The union of every list this plugin already enforced in code, so
+			 * turning the setting into the real rule does not start refusing
+			 * uploads that worked the day before. RequirementsService allowed 27
+			 * types and DeliveryService 31; the shipped default was 7, so a
+			 * straight switch would have rejected zip, mp4, psd, xlsx and 22
+			 * others on every site running defaults.
+			 *
+			 * svg is deliberately NOT here even though requirements accepted it:
+			 * DeliveryService excluded it on purpose as an XSS carrier, and that
+			 * is the right call for a file served back to another member.
+			 */
+			'allowed_file_types'       => '7z,ai,avi,csv,doc,docx,eps,fig,gif,jpeg,jpg,json,mov,mp3,mp4,ogg,pdf,png,ppt,pptx,psd,rar,rtf,sketch,txt,wav,webm,webp,xls,xlsx,xml,zip',
 			'currency_position'        => 'before',
 		),
 	);

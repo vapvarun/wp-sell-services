@@ -38,6 +38,11 @@
 	--wpss-primary-hover: #4338ca;
 	--wpss-primary-dark: #4338ca;
 	--wpss-primary-light: #eef2ff;
+	/* --wpss-primary as space-separated channels, for `rgb(var(--wpss-primary-rgb)
+	   / 15%)` focus rings. Keep in step with --wpss-primary above; it does not
+	   change in dark mode, so this does not either. A var() with no definition
+	   makes the whole declaration invalid, so the ring simply did not draw. */
+	--wpss-primary-rgb: 79 70 229;
 	--wpss-primary-50: rgba(79, 70, 229, 0.08);
 	/* Accent = primary used as TEXT/links/icons. Same brand indigo in light, but
 	   a lighter indigo in dark mode so it stays readable on dark surfaces
@@ -83,7 +88,10 @@
 	--wpss-warning-light: #fffbeb;
 	--wpss-warning-dark: #92400e;
 	--wpss-warning-border: #fde68a;
-	--wpss-danger: #ef4444;
+	/* red-600, not red-500. A filled danger button is white on this token, and
+	   #ef4444 gives 3.76 against white - under the 4.5 AA floor, in both light
+	   and dark. #dc2626 carries the same intent and clears it. */
+	--wpss-danger: #dc2626;
 	--wpss-danger-light: #fef2f2;
 	--wpss-danger-dark: #991b1b;
 	--wpss-danger-border: #fecaca;
@@ -208,6 +216,9 @@
 	--wpss-ease-in-out: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 	/* Legacy alias consumed by archive/single CSS; points at the canonical ease. */
 	--wpss-transition: 0.2s ease;
+	/* The slower partner, for movements the eye should follow rather than just
+	   register: a drawer, a panel, an image scaling under the cursor. */
+	--wpss-transition-slow: 0.3s ease;
 
 	/* ---- Layout (F2/F3: single container source of truth) ----
 	   Every wpss container caps at --wpss-container-max and gutters at
@@ -327,6 +338,51 @@
    from prefers-color-scheme sets one of those signals, so real theme dark mode
    still works. */
 
+/* Native form widgets follow the same rule as the tokens above: the THEME's
+   dark mode, never the OS. A date/time input renders its picker panel, spin
+   buttons and calendar indicator from `color-scheme`, which the plugin never
+   declared - so the panel inherited the OS preference and opened black on an
+   otherwise light page (the buyer-request Deadline field, Basecamp
+   10289684894). Declaring it light here, and dark only under the same explicit
+   theme selectors, makes the native chrome track the page it sits on. */
+.wpss-app input,
+.wpss-app select,
+.wpss-app textarea,
+input.wpss-input,
+input.wpss-form-input,
+select.wpss-form-select,
+textarea.wpss-form-textarea {
+	color-scheme: light;
+}
+
+/* The same set under theme dark mode. Scoped to the plugin's own classes as
+   well as .wpss-app, because plugin forms are not all inside that wrapper -
+   the buyer-request Deadline field is one that is not, and scoping to the
+   wrapper alone would have left it declaring light on a dark page. */
+:root[data-theme="dark"] .wpss-app input,
+:root[data-theme="dark"] .wpss-app select,
+:root[data-theme="dark"] .wpss-app textarea,
+:root[data-theme="dark"] input.wpss-input,
+:root[data-theme="dark"] input.wpss-form-input,
+:root[data-theme="dark"] select.wpss-form-select,
+:root[data-theme="dark"] textarea.wpss-form-textarea,
+:root[data-bx-mode="dark"] .wpss-app input,
+:root[data-bx-mode="dark"] .wpss-app select,
+:root[data-bx-mode="dark"] .wpss-app textarea,
+:root[data-bx-mode="dark"] input.wpss-input,
+:root[data-bx-mode="dark"] input.wpss-form-input,
+:root[data-bx-mode="dark"] select.wpss-form-select,
+:root[data-bx-mode="dark"] textarea.wpss-form-textarea,
+.wpss-dark .wpss-app input,
+.wpss-dark .wpss-app select,
+.wpss-dark .wpss-app textarea,
+.wpss-dark input.wpss-input,
+.wpss-dark input.wpss-form-input,
+.wpss-dark select.wpss-form-select,
+.wpss-dark textarea.wpss-form-textarea {
+	color-scheme: dark;
+}
+
 :root[data-theme="dark"],
 :root[data-bx-mode="dark"],
 .wpss-dark .wpss-app {
@@ -380,6 +436,21 @@
 	--wpss-gray-700: #e5e7eb;
 	--wpss-gray-800: #f3f4f6;
 	--wpss-gray-900: #f9fafb;
+
+	/* Tinted notice grounds. These kept their light values, so any component
+	   using one as a BACKGROUND stayed a pale panel on a dark page and its
+	   text - which does flip - landed light-on-light. The payout banner read
+	   1.35 that way. Dark equivalents of the same hues, chosen so the
+	   foreground tokens already in use clear AA on them. */
+	--wpss-info-light: #1e3a5f;
+	--wpss-success-light: #14532d;
+	--wpss-warning-light: #422006;
+
+	/* primary-dark is a FOREGROUND on tinted grounds (.wpss-alert--info sets it
+	   as colour over --wpss-primary-light). It had no dark value at all, so a
+	   #4338ca indigo sat on the dark indigo ground at 1.45. The accent is the
+	   readable-on-dark member of the ramp. */
+	--wpss-primary-dark: var( --wpss-primary-accent );
 }
 
 /* ==========================================================================
@@ -482,7 +553,29 @@
    never paint a border. Consolidating those four is 1.8.0 work; until then this
    is what makes the owner actually own the component. */
 .wpss-btn.wpss-btn--outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border); }
-.wpss-btn.wpss-btn--outline:hover { border-color: var(--wpss-text-muted); color: var(--wpss-text); }
+/* The background matters as much as the colour here. Declaring only border and
+   text left the background to whatever the theme gives a hovered control, and
+   BuddyX styles button[type="submit"]:hover with its accent red - the order
+   search button flashed red with dark text at 3.94:1 on hover. Our own subtle
+   surface, so hover looks the same on every theme. */
+.wpss-btn.wpss-btn--outline:hover { background: var(--wpss-bg-subtle); border-color: var(--wpss-text-muted); color: var(--wpss-text); }
+
+/* Legacy single-dash aliases, carrying the same two-class weight on purpose.
+   The one-class `.wpss-btn-outline` in frontend.css scores (0,1,0) and loses to
+   a theme's anchor rule, so an <a class="wpss-btn wpss-btn-outline"> took the
+   theme link colour: #4f46e5 measured 3.34 on white and 2.33 on the dark
+   surface, against the same class on a <button> at 14.68. Matching the BEM
+   selector's (0,2,0) is enough on its own - no !important, unlike the filled
+   variants, because nothing here has to beat BuddyX's (0,5,1) content-wrapper
+   rule for a foreground ON a fill.
+
+   `.wpss-btn-ghost` is defined in no stylesheet at all, so the favourites
+   toggle on the packages widget has been rendering unstyled; it gets the ghost
+   treatment here rather than staying a dead class. */
+.wpss-btn.wpss-btn-outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border); }
+.wpss-btn.wpss-btn-outline:hover { border-color: var(--wpss-text-muted); color: var(--wpss-text); }
+.wpss-btn.wpss-btn-ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
+.wpss-btn.wpss-btn-ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
 .wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
 .wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
 
@@ -573,7 +666,30 @@ a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline),
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):link,
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):visited,
-a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
+a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
+/* Legacy single-dash variants. Templates predating the BEM rename still ship
+   `wpss-btn-primary` (55 call sites across 13 files as of 1.7.1), and they were
+   never given the protection above, so an ANCHOR carrying one took the theme's
+   link colour while a <button> carrying the same class rendered correctly.
+   Measured on the empty category archive: "Browse All Services" came out
+   #4f46e5 on a #4f46e5 fill - contrast 1.00, the label invisible - beside an
+   "Apply Filters" <button> at 6.29 with the identical class. Reported as poor
+   dark-mode visibility, but it fails in both modes and for the same reason.
+   Guarding the alias here fixes every one of those call sites at once; the
+   template migration to BEM is 1.8.0 work alongside the .wpss-btn
+   consolidation noted above. */
+a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline),
+a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):link,
+a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):visited,
+a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
+a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline),
+a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):link,
+a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):visited,
+a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
+a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline),
+a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline):link,
+a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline):visited,
+a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover {
 	color: var(--wpss-white, #fff) !important;
 }
 
@@ -604,6 +720,30 @@ a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
 }
 button.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline),
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
+	background: var(--wpss-success) !important; border-color: var(--wpss-success) !important;
+}
+
+/* Legacy single-dash variants, same reasoning as the colour block above: the
+   fill has to be pinned too, or a themed submit button keeps the theme's
+   background under the now-white label. */
+button.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline),
+a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
+	background: var(--wpss-primary) !important; border-color: var(--wpss-primary) !important;
+}
+button.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
+a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover {
+	background: var(--wpss-primary-hover) !important; border-color: var(--wpss-primary-hover) !important;
+}
+button.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline),
+a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
+	background: var(--wpss-danger) !important; border-color: var(--wpss-danger) !important;
+}
+button.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
+a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover {
+	background: var(--wpss-danger-dark, #b91c1c) !important; border-color: var(--wpss-danger-dark, #b91c1c) !important;
+}
+button.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline),
+a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 	background: var(--wpss-success) !important; border-color: var(--wpss-success) !important;
 }
 
@@ -918,6 +1058,21 @@ a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
 .wpss-confirm__actions { display: flex; gap: var(--wpss-space-3); justify-content: center; margin-top: var(--wpss-space-2); }
 .wpss-confirm__actions .wpss-btn { min-width: 110px; }
 
+/* Text-only button. Lived only in vendor-dashboard.css, which the member
+   dashboard does not load - so the Remove control under the profile photo had
+   NO rule at all and fell through to the theme: pure black on the dark card,
+   measured 1.18:1 (Basecamp 10300330443). Same shape as wpss-btn-ghost and the
+   toast: a class the markup uses that the loaded stylesheets never define.
+   --wpss-primary-accent carries a dark value, so it follows the mode. */
+.wpss-btn--link { background: none; border: none; padding: 0; color: var(--wpss-primary-accent, #4f46e5); text-decoration: none; }
+.wpss-btn--link:hover,
+.wpss-btn--link:focus-visible { color: var(--wpss-primary-accent, #4f46e5); text-decoration: underline; }
+/* Optional prompt field (wpssConfirm options.prompt). Left-aligned inside an
+   otherwise centred dialog, because a label and its input read as a form. */
+.wpss-confirm__label { text-align: start; font-size: var(--wpss-text-sm); font-weight: 600; color: var(--wpss-text); }
+.wpss-confirm__input { width: 100%; box-sizing: border-box; padding: var(--wpss-space-3); border: 1px solid var(--wpss-border); border-radius: var(--wpss-radius); background: var(--wpss-bg); color: var(--wpss-text); font: inherit; font-size: var(--wpss-text-base); line-height: 1.5; resize: vertical; text-align: start; }
+.wpss-confirm__input:focus { outline: 2px solid var(--wpss-primary); outline-offset: 1px; border-color: var(--wpss-primary); }
+
 /* wpss-ui.js confirm primitive — overlay + dialog wrapper.
    The dialog reuses .wpss-modal__dialog.wpss-confirm (above) + .wpss-btn
    primitives so no extra component tokens are needed here. */
@@ -930,6 +1085,30 @@ a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
 	.wpss-ui-modal.wpss-modal__dialog.wpss-confirm { max-width: 100%; margin-bottom: var(--wpss-space-2, 8px); }
 	.wpss-confirm__actions { flex-direction: column; }
 	.wpss-confirm__actions .wpss-btn { width: 100%; min-width: 0; }
+}
+
+/* wpss-ui.js toast primitive — window.wpssToast().
+   Lives here, not in admin.css, because wpss-ui.js is loaded on the frontend
+   too and its confirm half has always been styled here. While the toast rules
+   were admin-only the container fell back to `position: static`, so a frontend
+   toast rendered in normal flow at the very bottom of <body> — thousands of
+   pixels below the fold, transparent and unpadded. The dashboard reported a
+   saved profile through it and the member saw nothing at all. */
+.wpss-toast-container { position: fixed; bottom: var(--wpss-space-5, 20px); inset-inline-end: var(--wpss-space-5, 20px); z-index: 160000; display: flex; flex-direction: column-reverse; gap: var(--wpss-space-2, 8px); pointer-events: none; }
+.wpss-toast { padding: var(--wpss-space-3, 12px) var(--wpss-space-5, 20px); border-radius: var(--wpss-radius, 8px); font-size: var(--wpss-text-sm, 13px); line-height: 1.5; color: var(--wpss-white, #fff); background: var(--wpss-text, #111827); box-shadow: var(--wpss-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1)); max-width: 360px; opacity: 0; transform: translateY(8px); transition: opacity 0.3s, transform 0.3s; }
+.wpss-toast.is-visible { opacity: 1; transform: translateY(0); }
+.wpss-toast--success { background: var(--wpss-success, #10b981); }
+.wpss-toast--error { background: var(--wpss-danger, #dc2626); }
+/* Dark on amber. White on --wpss-warning measures 2.15:1; --wpss-black is the
+   on-colour counterpart and gives about 9:1, in both modes. Same pairing as
+   the portfolio Featured badge. */
+.wpss-toast--warning { background: var(--wpss-warning, #f59e0b); color: var(--wpss-black, #111827); }
+.wpss-toast--info { background: var(--wpss-info, #3b82f6); }
+
+@media (max-width: 640px) {
+	/* Full-bleed at the bottom rather than a 360px card hanging off one edge. */
+	.wpss-toast-container { inset-inline: var(--wpss-space-4, 16px); bottom: var(--wpss-space-4, 16px); }
+	.wpss-toast { max-width: none; }
 }
 
 /* ==========================================================================
@@ -1010,6 +1189,7 @@ a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
      </div>
    ========================================================================== */
 
+.wpss-field-error,
 .wpss-form-error { color: var(--wpss-danger); font-size: var(--wpss-text-sm); margin: var(--wpss-space-1) 0 0; line-height: 1.4; display: flex; align-items: flex-start; gap: var(--wpss-space-1); }
 .wpss-form-error::before { content: "⚠"; flex: 0 0 auto; font-size: var(--wpss-text-base); line-height: 1; }
 .wpss-form-error[hidden] { display: none; }
@@ -1293,5 +1473,42 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 
 .wpss-pill--warning {
 	background: var(--wpss-warning-light, var(--wpss-bg-subtle));
-	color: var(--wpss-warning-fg, var(--wpss-text));
+	color: var(--wpss-warning-dark, var(--wpss-text));
+}
+
+/* ---------------------------------------------------------------------------
+   Names the markup used and no stylesheet defined. Found by the CSS contract
+   checker; each one rendered as whatever the host theme happened to say.
+   --------------------------------------------------------------------------- */
+
+/* Hide from sight, keep for screen readers AND keep focusable. display:none
+   removes an element from the tab order, which is how a file input behind a
+   styled label stopped being reachable by keyboard at all. */
+.wpss-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* A checkbox and its own label text on one line, the whole thing clickable.
+   Two names for one rule: the metabox Featured control and the wizard's
+   recurring toggle in Pro were each about to grow their own copy. */
+.wpss-form-checkbox,
+.wpss-featured-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 8px);
+	cursor: pointer;
+}
+
+.wpss-form-checkbox input,
+.wpss-featured-toggle input {
+	margin: 0;
 }

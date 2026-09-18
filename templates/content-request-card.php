@@ -123,8 +123,32 @@ do_action( 'wpss_before_request_card', $request_id );
 			</div>
 		</div>
 
+		<?php
+		/*
+		 * Every assigned category, not just $categories[0]. A request filed under
+		 * three categories was only discoverable under the first one, and the card
+		 * misreported its scope. Capped and overflowed the same way the skills
+		 * chips below are, so a request with many terms cannot blow out the card.
+		 * See Basecamp 10286357906.
+		 */
+		?>
 		<?php if ( ! empty( $categories ) ) : ?>
-			<span class="wpss-request-card__category"><?php echo esc_html( $categories[0] ); ?></span>
+			<span class="wpss-request-card__categories">
+				<?php foreach ( array_slice( $categories, 0, 3 ) as $wpss_category ) : ?>
+					<span class="wpss-request-card__category"><?php echo esc_html( $wpss_category ); ?></span>
+				<?php endforeach; ?>
+				<?php if ( count( $categories ) > 3 ) : ?>
+					<span class="wpss-request-card__category wpss-request-card__category--more">
+						<?php
+						printf(
+							/* translators: %d: number of additional categories */
+							esc_html__( '+%d more', 'wp-sell-services' ),
+							count( $categories ) - 3
+						);
+						?>
+					</span>
+				<?php endif; ?>
+			</span>
 		<?php endif; ?>
 
 		<?php

@@ -29,6 +29,8 @@ use WPSellServices\Admin\Settings;
 use WPSellServices\Services\EmailService;
 use WPSellServices\Services\NotificationService;
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 global $wpdb;
 
 $failures = array();

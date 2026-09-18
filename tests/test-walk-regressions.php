@@ -28,6 +28,8 @@ use WPSellServices\Services\EarningsService;
 use WPSellServices\Services\OrderWorkflowManager;
 use WPSellServices\Services\ProposalService;
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 global $wpdb;
 
 $fails = 0;

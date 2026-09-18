@@ -35,7 +35,8 @@ playwright.config.ts
 run-tests.sh
 CLAUDE.md
 REST_API_MAPPING.md
-SCOPE.md
+APP-COVERAGE.md
+CAPABILITIES.md
 
 # Dev vendor packages
 vendor/bin
@@ -56,6 +57,6 @@ vendor/theseer
 .DS_Store
 Thumbs.db
 **/.DS_Store
-plan
+plans
 audit
 .contract-audit-baseline.json

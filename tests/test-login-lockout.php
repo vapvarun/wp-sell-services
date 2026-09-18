@@ -18,6 +18,8 @@
  * @package WPSellServices
  */
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 $fails = 0;
 $check = static function ( string $label, bool $ok, string $detail = '' ) use ( &$fails ) {
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . ( '' !== $detail ? "  [{$detail}]" : '' ) . "\n";

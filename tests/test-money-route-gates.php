@@ -16,6 +16,8 @@
  * @package WPSellServices
  */
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 $failures = array();
 
 $routes = rest_get_server()->get_routes();

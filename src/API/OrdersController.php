@@ -954,7 +954,29 @@ class OrdersController extends RestController {
 					$error = __( 'Only the customer can mark orders as complete.', 'wp-sell-services' );
 				} elseif ( ! in_array( $order->status, array( 'delivered', 'pending_approval' ), true ) ) {
 					$error = __( 'Order cannot be completed in current status.', 'wp-sell-services' );
+				} elseif ( ServiceOrder::STATUS_PENDING_APPROVAL === $order->status ) {
+					/*
+					 * Approving from pending_approval IS accepting the delivery.
+					 *
+					 * This called update_status() straight to completed, which
+					 * leaves the delivery row on 'pending' - so the order read
+					 * Completed while the Delivery panel still read Pending, and
+					 * both parties were left unsure whether the handover had
+					 * actually happened (Basecamp 10304615155). The AJAX path the
+					 * dashboard button uses has always gone through accept();
+					 * this is the same flow reached over REST.
+					 *
+					 * accept() marks the delivery, completes the order in the
+					 * same call, and fires wpss_delivery_accepted - which this
+					 * path was also skipping.
+					 */
+					$result = ( new \WPSellServices\Services\DeliveryService() )->accept( $order_id );
+
+					if ( ! $result ) {
+						$error = __( 'Delivery could not be accepted.', 'wp-sell-services' );
+					}
 				} else {
+					// 'delivered' has no pending delivery row to accept.
 					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_COMPLETED );
 				}
 				break;
@@ -1079,14 +1101,23 @@ class OrdersController extends RestController {
 					$error = __( 'No cancellation request to respond to.', 'wp-sell-services' );
 				} else {
 					// Vendor disputes the cancellation — escalate to dispute.
+					//
+					// The vendor's sentence is the DESCRIPTION; the reason column
+					// holds a key from wpss_get_dispute_reasons(). This passed the
+					// sentence as both, so the dispute screen printed a whole
+					// translated string where the reason category belongs - the
+					// same mistake the late-delivery cron made before it was
+					// fixed. open() now coerces an unknown key, but a caller
+					// should not be relying on that.
 					$dispute_service = new \WPSellServices\Services\DisputeService();
-					$dispute_reason  = ! empty( $reason ) ? $reason : __( 'Vendor disputed buyer cancellation request.', 'wp-sell-services' );
-					$dispute_id      = $dispute_service->open( $order_id, $user_id, $dispute_reason, $dispute_reason );
+					$dispute_note    = ! empty( $reason ) ? $reason : __( 'Vendor disputed buyer cancellation request.', 'wp-sell-services' );
+					$dispute_reason  = \WPSellServices\Models\Dispute::REASON_OTHER;
+					$dispute_id      = $dispute_service->open( $order_id, $user_id, $dispute_reason, $dispute_note );
 
 					if ( $dispute_id ) {
 						// DisputeService::open() already sets status to disputed.
 						$result = true;
-						do_action( 'wpss_order_disputed', $order_id, 'vendor', $dispute_reason );
+						do_action( 'wpss_order_disputed', $order_id, 'vendor', $dispute_note );
 					} else {
 						$error = __( 'Failed to open dispute. A dispute may already exist for this order.', 'wp-sell-services' );
 					}
@@ -1374,7 +1405,10 @@ class OrdersController extends RestController {
 			);
 		}
 
-		$platforms = array( 'milestone', 'extension', 'tip' );
+		$platforms = array( 'milestone', 'extension' );
+		if ( wpss_tipping_enabled() ) {
+			$platforms[] = 'tip';
+		}
 		if ( $type && in_array( $type, $platforms, true ) ) {
 			$platforms = array( $type );
 		}

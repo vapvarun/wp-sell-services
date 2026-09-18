@@ -21,6 +21,8 @@
  * @package WPSellServices
  */
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 $failures = array();
 
 if ( ! class_exists( '\WPSellServicesPro\License\Manager' ) ) {

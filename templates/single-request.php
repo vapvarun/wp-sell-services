@@ -172,13 +172,28 @@ do_action( 'wpss_before_single_request', $request_id );
 						<h1 class="wpss-request-title"><?php echo esc_html( get_post_field( 'post_title', $request_id, 'raw' ) ); ?></h1>
 
 						<div class="wpss-request-meta-bar">
-							<?php if ( ! empty( $categories ) ) : ?>
+							<?php
+							/*
+							 * Link every assigned category. Rendering only $categories[0]
+							 * misrepresented the scope of a multi-category request and hid
+							 * the other terms' archives from the reader. The meta bar is
+							 * uncapped on purpose: the single page is where the full scope
+							 * belongs, and the taxonomy caps the count upstream.
+							 * See Basecamp 10286357906.
+							 */
+							?>
+							<?php foreach ( ( is_wp_error( $categories ) ? array() : (array) $categories ) as $wpss_category ) : ?>
+								<?php $wpss_term_link = get_term_link( $wpss_category ); ?>
 								<span class="wpss-request-category">
-									<a href="<?php echo esc_url( get_term_link( $categories[0] ) ); ?>">
-										<?php echo esc_html( $categories[0]->name ); ?>
-									</a>
+									<?php if ( is_wp_error( $wpss_term_link ) ) : ?>
+										<?php echo esc_html( $wpss_category->name ); ?>
+									<?php else : ?>
+										<a href="<?php echo esc_url( $wpss_term_link ); ?>">
+											<?php echo esc_html( $wpss_category->name ); ?>
+										</a>
+									<?php endif; ?>
 								</span>
-							<?php endif; ?>
+							<?php endforeach; ?>
 
 							<span class="wpss-request-date">
 								<?php

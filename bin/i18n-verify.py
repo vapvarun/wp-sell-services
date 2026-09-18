@@ -353,8 +353,16 @@ def check_pot(root: Path, cfg: dict, verbose: bool):
     extra = len(added) + len(removed) - len(detail)
     if extra > 0:
         detail.append(f'... and {extra} more')
+
+    # Nothing added, nothing removed: the catalogue of translatable strings is
+    # identical and only the '#:' line references moved, because an edit
+    # somewhere shifted a line. Translators lose nothing; CI turning red here
+    # costs a regenerate-and-commit of the POT plus binary .mo and .json on
+    # almost every commit, and a gate that fires on churn is one people learn to
+    # satisfy without reading. Regenerating the references is a release step,
+    # not a per-commit one.
     if not detail:
-        detail.append('(headers or line references changed)')
+        return violations
 
     violations.append(Violation(
         'stale-pot', cfg['potFile'], 0,

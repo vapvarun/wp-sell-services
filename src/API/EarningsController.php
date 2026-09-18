@@ -367,6 +367,14 @@ class EarningsController extends RestController {
 			'milestone' => __( 'View Milestone', 'wp-sell-services' ),
 		);
 
+		// No link into a tip when tipping is off: the tip view is hidden, so the
+		// link would lead nowhere. The ledger row stays, as plain text, because
+		// it is part of what the balance adds up to - removing it would leave a
+		// wallet total that its own history cannot explain.
+		if ( ! wpss_tipping_enabled() ) {
+			unset( $reference_labels['tip'] );
+		}
+
 		$items = array();
 		foreach ( $rows ? $rows : array() as $row ) {
 			$reference_id   = null !== $row['reference_id'] ? (int) $row['reference_id'] : null;

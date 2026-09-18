@@ -383,7 +383,8 @@ class ServiceWizard {
 	 * @return void
 	 */
 	private function render_step_basic( ?\WP_Post $_service ): void {
-		$categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
+		$wpss_publish_floors = wpss_service_publish_thresholds();
+		$categories          = wpss_get_category_terms( array( 'hide_empty' => false ) );
 
 		// Build categories data for JavaScript subcategory filtering.
 		$categories_data = array();
@@ -474,8 +475,16 @@ class ServiceWizard {
 					placeholder="<?php esc_attr_e( 'Describe your service in detail. What makes you unique? What\'s included?', 'wp-sell-services' ); ?>"
 					required></textarea>
 				<div class="wpss-form-hint" style="display: flex; justify-content: space-between;">
-					<span><?php esc_html_e( 'Minimum 120 characters. Be detailed and specific.', 'wp-sell-services' ); ?></span>
-					<span x-text="(data.description || '').length + ' / 5000'" :class="{ 'wpss-text-danger': (data.description || '').length < 120 }"></span>
+					<span>
+						<?php
+						printf(
+							/* translators: %d: minimum number of characters. */
+							esc_html__( 'Minimum %d characters. Be detailed and specific.', 'wp-sell-services' ),
+							(int) $wpss_publish_floors['description_length']
+						);
+						?>
+					</span>
+					<span x-text="(data.description || '').length + ' / 5000'" :class="{ 'wpss-text-danger': (data.description || '').length &lt; wpssWizard.thresholds.description_length }"></span>
 				</div>
 				<p id="service_description-error" class="wpss-form-error" hidden></p>
 			</div>
@@ -833,11 +842,21 @@ class ServiceWizard {
 							<div class="wpss-form-row wpss-form-row--2col">
 								<div class="wpss-form-group">
 									<label class="wpss-form-label"><?php esc_html_e( 'Answer Type', 'wp-sell-services' ); ?></label>
+									<?php
+									/*
+									 * Rendered from the shared map, not hardcoded. This list
+									 * offered four of the eight types the admin metabox offers,
+									 * and labelled `select` "Multiple Choice" where the metabox
+									 * calls that `radio` - so the wizard, the primary authoring
+									 * surface, could not produce a Number/Yes-No/radio/Date
+									 * requirement and disagreed with admin on what the labels
+									 * meant. See Basecamp 10286129293.
+									 */
+									?>
 									<select class="wpss-form-select" x-model="data.requirements[index].type">
-										<option value="text"><?php esc_html_e( 'Short Text', 'wp-sell-services' ); ?></option>
-										<option value="textarea"><?php esc_html_e( 'Long Text', 'wp-sell-services' ); ?></option>
-										<option value="file"><?php esc_html_e( 'File Upload', 'wp-sell-services' ); ?></option>
-										<option value="select"><?php esc_html_e( 'Multiple Choice', 'wp-sell-services' ); ?></option>
+										<?php foreach ( wpss_requirement_type_labels() as $wpss_req_type => $wpss_req_label ) : ?>
+											<option value="<?php echo esc_attr( $wpss_req_type ); ?>"><?php echo esc_html( $wpss_req_label ); ?></option>
+										<?php endforeach; ?>
 									</select>
 								</div>
 								<div class="wpss-form-group">
@@ -848,8 +867,15 @@ class ServiceWizard {
 									</label>
 								</div>
 							</div>
-							<!-- Options for select type -->
-							<div class="wpss-form-group" x-show="data.requirements[index].type === 'select'" x-cloak>
+							<?php
+							/*
+							 * Shown for every type that needs caller-supplied choices, not
+							 * `select` alone - a vendor adding a Multiple Choice (radio)
+							 * requirement needs somewhere to type the choices just as much.
+							 */
+							?>
+							<!-- Options for the choice types -->
+							<div class="wpss-form-group" x-show="<?php echo esc_attr( wp_json_encode( array_values( wpss_requirement_choice_types() ) ) ); ?>.includes(data.requirements[index].type)" x-cloak>
 								<label class="wpss-form-label"><?php esc_html_e( 'Options', 'wp-sell-services' ); ?></label>
 								<input type="text"
 									class="wpss-form-input"
@@ -1027,6 +1053,7 @@ class ServiceWizard {
 	 * @return void
 	 */
 	private function render_step_review( ?\WP_Post $_service ): void {
+		$wpss_publish_floors = wpss_service_publish_thresholds();
 		?>
 		<div class="wpss-wizard__step-header">
 			<h2 class="wpss-wizard__step-title"><?php esc_html_e( 'Review & Publish', 'wp-sell-services' ); ?></h2>
@@ -1091,20 +1118,32 @@ class ServiceWizard {
 					 */
 					?>
 					<ul class="wpss-review-checklist">
-						<li :class="{ 'completed': data.title?.length >= 10 }">
-							<span class="wpss-icon" aria-hidden="true" x-show="data.title?.length >= 10" x-cloak><i data-lucide="check-circle-2"></i></span>
-							<span class="wpss-icon" aria-hidden="true" x-show="!(data.title?.length >= 10)"><i data-lucide="circle"></i></span>
-							<?php esc_html_e( 'Service title (10+ characters)', 'wp-sell-services' ); ?>
+						<li :class="{ 'completed': data.title?.length >= wpssWizard.thresholds.title_length }">
+							<span class="wpss-icon" aria-hidden="true" x-show="data.title?.length >= wpssWizard.thresholds.title_length" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(data.title?.length >= wpssWizard.thresholds.title_length)"><i data-lucide="circle"></i></span>
+							<?php
+							printf(
+								/* translators: %d: minimum number of characters. */
+								esc_html__( 'Service title (%d+ characters)', 'wp-sell-services' ),
+								(int) $wpss_publish_floors['title_length']
+							);
+							?>
 						</li>
 						<li :class="{ 'completed': data.category }">
 							<span class="wpss-icon" aria-hidden="true" x-show="data.category" x-cloak><i data-lucide="check-circle-2"></i></span>
 							<span class="wpss-icon" aria-hidden="true" x-show="!(data.category)"><i data-lucide="circle"></i></span>
 							<?php esc_html_e( 'Category selected', 'wp-sell-services' ); ?>
 						</li>
-						<li :class="{ 'completed': data.description?.length >= 120 }">
-							<span class="wpss-icon" aria-hidden="true" x-show="data.description?.length >= 120" x-cloak><i data-lucide="check-circle-2"></i></span>
-							<span class="wpss-icon" aria-hidden="true" x-show="!(data.description?.length >= 120)"><i data-lucide="circle"></i></span>
-							<?php esc_html_e( 'Description (120+ characters)', 'wp-sell-services' ); ?>
+						<li :class="{ 'completed': data.description?.length >= wpssWizard.thresholds.description_length }">
+							<span class="wpss-icon" aria-hidden="true" x-show="data.description?.length >= wpssWizard.thresholds.description_length" x-cloak><i data-lucide="check-circle-2"></i></span>
+							<span class="wpss-icon" aria-hidden="true" x-show="!(data.description?.length >= wpssWizard.thresholds.description_length)"><i data-lucide="circle"></i></span>
+							<?php
+							printf(
+								/* translators: %d: minimum number of characters. */
+								esc_html__( 'Description (%d+ characters)', 'wp-sell-services' ),
+								(int) $wpss_publish_floors['description_length']
+							);
+							?>
 						</li>
 						<li :class="{ 'completed': isPackageValid('basic') }">
 							<span class="wpss-icon" aria-hidden="true" x-show="isPackageValid('basic')" x-cloak><i data-lucide="check-circle-2"></i></span>
@@ -1373,6 +1412,8 @@ class ServiceWizard {
 		// Make sure Alpine loads after service-wizard.
 		wp_enqueue_script( 'alpinejs' );
 
+		$wpss_thresholds = wpss_service_publish_thresholds();
+
 		wp_localize_script(
 			'wpss-service-wizard',
 			'wpssWizard',
@@ -1381,10 +1422,12 @@ class ServiceWizard {
 				'nonce'          => wp_create_nonce( 'wpss_service_wizard' ),
 				'dashboardUrl'   => $this->get_dashboard_url(),
 				'currencySymbol' => wpss_get_currency_symbol(),
-				// Minimum Basic price, shared with the server validation via the
-				// same filter so the client can't Continue past a price the
-				// server will reject at Publish.
-				'minPrice'       => (float) apply_filters( 'wpss_min_service_price', 5 ),
+				// The publish floors, straight from the server's own validator, so
+				// the checklist in the browser cannot claim a step is complete
+				// that Publish will then refuse. minPrice is kept as its own key
+				// because the template already reads it by that name.
+				'minPrice'       => $wpss_thresholds['min_price'],
+				'thresholds'     => $wpss_thresholds,
 				'limits'         => $this->get_limits(),
 				'isPro'          => $this->is_pro_active(),
 				'strings'        => array(
@@ -1398,7 +1441,11 @@ class ServiceWizard {
 					'validationTitle'    => __( 'Please enter a service title', 'wp-sell-services' ),
 					'validationTitleMin' => __( 'Please enter at least 10 characters for the service title.', 'wp-sell-services' ),
 					'validationCat'      => __( 'Please select a category', 'wp-sell-services' ),
-					'validationDesc'     => __( 'Please add a description (minimum 120 characters)', 'wp-sell-services' ),
+					'validationDesc'     => sprintf(
+						/* translators: %d: minimum number of characters. */
+						__( 'Please add a description (minimum %d characters)', 'wp-sell-services' ),
+						(int) $wpss_thresholds['description_length']
+					),
 					'validationPrice'    => __( 'Please set a price for the Basic package', 'wp-sell-services' ),
 					'validationPriceMin' => sprintf(
 						/* translators: %s: formatted minimum price (e.g. $5.00). */
@@ -1773,10 +1820,41 @@ class ServiceWizard {
 			wp_send_json_error( array( 'message' => __( 'Invalid file type. Please upload a valid image.', 'wp-sell-services' ) ) );
 		}
 
-		// Check file size (max 5MB for gallery images).
-		$max_size = 5 * 1024 * 1024;
-		if ( $file['size'] > $max_size ) {
-			wp_send_json_error( array( 'message' => __( 'Image file size exceeds 5MB limit.', 'wp-sell-services' ) ) );
+		/*
+		 * Size comes from Settings > Advanced, not a literal.
+		 *
+		 * The image-only rule above is deliberate and stays - a service gallery
+		 * should not accept a zip - but the 5MB cap was a third private copy of
+		 * a number the owner thinks they control, alongside the ones in
+		 * RequirementsService and DeliveryService. No card reported this one;
+		 * it surfaced sweeping for the other two.
+		 */
+		$max_mb = (int) wpss_get_option( 'advanced', 'max_file_size' );
+
+		/**
+		 * Filter the maximum size of a service gallery image, in megabytes.
+		 *
+		 * Defaults to Settings > Advanced > Max File Upload Size. Gallery images
+		 * are the one upload every visitor loads on a service page, so a site
+		 * may want a tighter cap here than it allows for private deliveries.
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param int                 $max_mb Maximum size in MB.
+		 * @param array<string,mixed> $file   The $_FILES entry being checked.
+		 */
+		$max_mb = (int) apply_filters( 'wpss_gallery_max_upload_size_mb', $max_mb, $file );
+
+		if ( $max_mb > 0 && $file['size'] > $max_mb * MB_IN_BYTES ) {
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+						/* translators: %s: maximum file size, e.g. 10 MB */
+						__( 'Image file size exceeds the %s limit.', 'wp-sell-services' ),
+						size_format( $max_mb * MB_IN_BYTES )
+					),
+				)
+			);
 		}
 
 		require_once ABSPATH . 'wp-admin/includes/image.php';
@@ -1981,41 +2059,33 @@ class ServiceWizard {
 	 * @return array Validation errors.
 	 */
 	private function validate_service_data( array $data ): array {
-		$errors = array();
-
-		$title = trim( (string) ( $data['title'] ?? '' ) );
-		if ( '' === $title ) {
-			$errors[] = __( 'Please enter a service title.', 'wp-sell-services' );
-		} elseif ( strlen( $title ) < 10 ) {
-			$errors[] = __( 'Please enter at least 10 characters for the service title..', 'wp-sell-services' );
+		// One authority. This used to be a second, hand-written copy of the same
+		// six rules, and its parent card (#10289819803) was filed because the
+		// wizard's copy and wp-admin's had drifted apart. Fixing the drift while
+		// leaving two implementations standing only reset the clock, so the
+		// wizard now calls the shared validator rather than agreeing with it.
+		//
+		// Only the shapes differ: the wizard carries one category rather than a
+		// list, names its delivery field delivery_time, and keeps the main image
+		// under gallery. Translate, do not re-decide.
+		$packages = array();
+		foreach ( (array) ( $data['packages'] ?? array() ) as $tier => $package ) {
+			if ( ! is_array( $package ) ) {
+				continue;
+			}
+			$package['delivery_days'] = $package['delivery_days'] ?? ( $package['delivery_time'] ?? '' );
+			$packages[ $tier ]        = $package;
 		}
 
-		if ( empty( $data['category'] ) ) {
-			$errors[] = __( 'Please select a category.', 'wp-sell-services' );
-		}
-
-		if ( empty( $data['description'] ) || strlen( $data['description'] ) < 120 ) {
-			$errors[] = __( 'Description must be at least 120 characters.', 'wp-sell-services' );
-		}
-
-		$min_price = (float) apply_filters( 'wpss_min_service_price', 5 );
-		if ( empty( $data['packages']['basic']['price'] ) || floatval( $data['packages']['basic']['price'] ) < $min_price ) {
-			$errors[] = sprintf(
-				/* translators: %s: formatted minimum price (e.g. $5.00). */
-				__( 'Basic package price must be at least %s.', 'wp-sell-services' ),
-				wpss_format_price( $min_price )
-			);
-		}
-
-		if ( empty( $data['packages']['basic']['delivery_time'] ) ) {
-			$errors[] = __( 'Please set a delivery time for the Basic package.', 'wp-sell-services' );
-		}
-
-		if ( empty( $data['gallery']['main'] ) ) {
-			$errors[] = __( 'Please upload a main image.', 'wp-sell-services' );
-		}
-
-		return $errors;
+		return wpss_validate_service_publishable(
+			array(
+				'title'        => (string) ( $data['title'] ?? '' ),
+				'category_ids' => array_filter( array( $data['category'] ?? '' ) ),
+				'description'  => (string) ( $data['description'] ?? '' ),
+				'packages'     => $packages,
+				'thumbnail_id' => $data['gallery']['main'] ?? 0,
+			)
+		);
 	}
 
 	/**

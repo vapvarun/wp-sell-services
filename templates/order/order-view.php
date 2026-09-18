@@ -270,7 +270,14 @@ do_action( 'wpss_before_order_view', $order );
 			// Pay Now button for unpaid orders (e.g., from accepted proposals).
 			// Through the seam, so the button is right on whichever rail the
 			// site runs, and absent ('') on a rail that cannot pay one order.
-			$pay_url = 'pending_payment' === $order->status ? wpss_get_pay_order_url( (int) $order_id, $order ) : '';
+			// Not while an offline instruction is waiting on the owner to confirm
+			// it: the buyer already submitted, and re-offering the same Pay
+			// button is what made them submit again (Basecamp 10305169436). The
+			// awaiting state renders its own block below, with routes out.
+			$awaiting_confirmation = wpss_order_awaits_payment_confirmation( $order );
+			$pay_url               = 'pending_payment' === $order->status && ! $awaiting_confirmation
+				? wpss_get_pay_order_url( (int) $order_id, $order )
+				: '';
 			if ( '' !== $pay_url ) {
 				$actions['pay'] = array(
 					'label' => sprintf(
@@ -281,6 +288,22 @@ do_action( 'wpss_before_order_view', $order );
 					'class' => 'wpss-btn wpss-btn--success',
 					'attrs' => 'onclick="window.location.href=\'' . esc_url( $pay_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
 				);
+			}
+
+			// Waiting on confirmation is not a dead end: the buyer may have
+			// picked offline by mistake, or changed their mind. The route to
+			// another method stays open, just demoted so it no longer reads as
+			// "you have not paid".
+			if ( $awaiting_confirmation ) {
+				$alt_pay_url = wpss_get_pay_order_url( (int) $order_id, $order );
+
+				if ( '' !== $alt_pay_url ) {
+					$actions['pay_other'] = array(
+						'label' => __( 'Pay by another method', 'wp-sell-services' ),
+						'class' => 'wpss-btn wpss-btn--ghost',
+						'attrs' => 'onclick="window.location.href=\'' . esc_url( $alt_pay_url ) . '\'" data-order="' . esc_attr( $order_id ) . '"',
+					);
+				}
 			}
 
 			// Submit Requirements CTA. A paid order sits in pending_requirements
@@ -966,7 +989,7 @@ do_action( 'wpss_before_order_view', $order );
 								// file is not addressable - same as the orphan list below.
 								$field_attachment['order_id'] = $order_id;
 								$field_file_url               = wpss_get_order_file_url( $field_attachment );
-								$field_file_name              = (string) ( $field_attachment['name'] ?? __( 'Attachment', 'wp-sell-services' ) );
+								$field_file_name              = wpss_format_attachment_name( (string) ( $field_attachment['name'] ?? '' ) );
 								$is_image                     = '' !== $field_file_url && in_array( strtolower( pathinfo( $field_file_name, PATHINFO_EXTENSION ) ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ), true );
 								?>
 								<?php if ( $is_image ) : ?>
@@ -1080,7 +1103,7 @@ do_action( 'wpss_before_order_view', $order );
 									<?php
 									$orphan_att['order_id'] = $order_id;
 									$orphan_url             = function_exists( 'wpss_get_order_file_url' ) ? wpss_get_order_file_url( $orphan_att ) : '';
-									$orphan_name            = (string) ( $orphan_att['name'] ?? __( 'Attachment', 'wp-sell-services' ) );
+									$orphan_name            = wpss_format_attachment_name( (string) ( $orphan_att['name'] ?? '' ) );
 									?>
 									<li>
 										<?php if ( $orphan_url ) : ?>
@@ -1476,7 +1499,7 @@ do_action( 'wpss_before_order_view', $order );
 
 										$att_id    = $file['id'] ?? 0;
 										$file_url  = wpss_get_order_file_url( $file );
-										$file_name = $file['name'] ?? get_the_title( $att_id );
+										$file_name = wpss_format_attachment_name( (string) ( $file['name'] ?? get_the_title( $att_id ) ) );
 
 										if ( '' === $file_url ) {
 											$file_url = wp_get_attachment_url( $att_id );
@@ -1690,7 +1713,11 @@ do_action( 'wpss_before_order_view', $order );
 							$ms_sub_url = wpss_get_order_url( $ms_sub_id );
 							// Only a phase the buyer can pay right now gets a URL: a read
 							// per payable row, nothing for paid or locked ones.
-							$ms_pay_url     = 'pending_payment' === $ms_status && empty( $m['is_locked'] ) ? wpss_get_pay_order_url( $ms_sub_id ) : '';
+							// A phase whose offline payment is already submitted is not
+							// "ready to pay" - offering the button again in the list is
+							// the same trap as on the phase page itself.
+							$ms_awaiting    = wpss_order_awaits_payment_confirmation( $ms_sub_id );
+							$ms_pay_url     = 'pending_payment' === $ms_status && empty( $m['is_locked'] ) && ! $ms_awaiting ? wpss_get_pay_order_url( $ms_sub_id ) : '';
 							$ms_state_label = '';
 							$ms_state_class = 'wpss-ms-state--' . sanitize_html_class( $ms_status );
 
@@ -1701,6 +1728,10 @@ do_action( 'wpss_before_order_view', $order );
 											? __( 'Locked — finish the earlier phase first', 'wp-sell-services' )
 											: __( 'Locked behind earlier phase', 'wp-sell-services' );
 										$ms_state_class .= ' wpss-ms-state--locked';
+									} elseif ( $ms_awaiting ) {
+										$ms_state_label = $is_customer
+											? __( 'Payment submitted · awaiting confirmation', 'wp-sell-services' )
+											: __( 'Buyer paid · awaiting confirmation', 'wp-sell-services' );
 									} else {
 										$ms_state_label = $is_customer ? __( 'Ready to pay', 'wp-sell-services' ) : __( 'Awaiting buyer payment', 'wp-sell-services' );
 									}
@@ -2072,7 +2103,7 @@ do_action( 'wpss_before_order_view', $order );
 
 	<!-- Tip CTA (for completed orders, buyer only, once per order, on a rail that can take the payment) -->
 	<?php
-	if ( 'completed' === $order->status && $is_customer && wpss_can_pay_single_order() ) :
+	if ( 'completed' === $order->status && $is_customer && wpss_can_pay_single_order() && wpss_tipping_enabled() ) :
 		$tipping_service = new \WPSellServices\Services\TippingService();
 		$already_tipped  = $tipping_service->has_tipped( $order_id, get_current_user_id() );
 		$currency        = wpss_get_currency();
@@ -2129,7 +2160,7 @@ do_action( 'wpss_before_order_view', $order );
 	<?php endif; ?>
 </div>
 
-<?php if ( 'completed' === $order->status && $is_customer && empty( $already_tipped ) ) : ?>
+<?php if ( 'completed' === $order->status && $is_customer && empty( $already_tipped ) && wpss_tipping_enabled() ) : ?>
 <!-- Tip Modal -->
 <div class="wpss-modal" id="wpss-tip-modal" data-order="<?php echo esc_attr( (string) $order_id ); ?>" role="dialog" aria-modal="true" aria-labelledby="wpss-tip-modal-title">
 	<div class="wpss-modal__backdrop"></div>
@@ -2408,7 +2439,17 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 			<div class="wpss-modal__body">
 				<div class="wpss-alert wpss-alert--warning">
 					<i data-lucide="triangle-alert" class="wpss-icon" aria-hidden="true"></i>
-					<p><?php esc_html_e( 'Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the seller first.', 'wp-sell-services' ); ?></p>
+					<p>
+						<?php
+						// Both parties can open this modal, so it cannot assume the
+						// reader is the buyer (Basecamp 10312798850).
+						if ( $is_vendor ) {
+							esc_html_e( 'Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the buyer first.', 'wp-sell-services' );
+						} else {
+							esc_html_e( 'Opening a dispute will pause this order until resolved. Please try to resolve issues directly with the seller first.', 'wp-sell-services' );
+						}
+						?>
+					</p>
 				</div>
 
 				<div class="wpss-form-group">
@@ -2416,7 +2457,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 					<select name="reason" id="dispute-reason" class="wpss-select" required>
 						<option value=""><?php esc_html_e( 'Select a reason', 'wp-sell-services' ); ?></option>
 						<?php // One map, shared with the REST options endpoint, so the web form and every client offer the same reasons. ?>
-						<?php foreach ( wpss_get_dispute_reasons() as $wpss_reason_key => $wpss_reason_label ) : ?>
+						<?php foreach ( wpss_get_dispute_reasons( $is_vendor ? 'vendor' : 'customer' ) as $wpss_reason_key => $wpss_reason_label ) : ?>
 							<option value="<?php echo esc_attr( $wpss_reason_key ); ?>"><?php echo esc_html( $wpss_reason_label ); ?></option>
 						<?php endforeach; ?>
 					</select>
@@ -2600,7 +2641,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 
 /* Order Sections */
 .wpss-order-section {
-	background: var(--wpss-card-bg, #fff);
+	background: var(--wpss-surface, #fff);
 	border: 1px solid var(--wpss-border, #e5e7eb);
 	border-radius: 12px;
 	margin-bottom: 1.5rem;

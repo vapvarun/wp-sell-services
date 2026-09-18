@@ -443,3 +443,38 @@ function wpss_gateway_require_enabled( object $gateway ): void {
 		403
 	);
 }
+
+/**
+ * The Stripe API version every request pins.
+ *
+ * ONE place. This was a private constant repeated in four classes across both
+ * plugins - StripeGateway, Pro's StripeClient, StripeCheckoutSession and
+ * StripeRecurringBilling - all carrying the same literal, which is the shape
+ * that lets two of them drift a release apart without anyone noticing.
+ *
+ * Pinning is deliberate: an unpinned request follows the Stripe account's own
+ * default, so the payload shape could change under a live site the day the
+ * owner clicks Upgrade in their dashboard. Pinning means WE choose when the
+ * contract moves.
+ *
+ * Note the version string carries the release name ("2026-08-26.dahlia").
+ * Stripe rejects the bare date with `Invalid Stripe API version` - verified
+ * against the live test API, not assumed.
+ *
+ * @since 1.7.1
+ *
+ * @return string Stripe API version string.
+ */
+function wpss_stripe_api_version(): string {
+	/**
+	 * Filter the Stripe API version used for every request.
+	 *
+	 * Override only with a version you have tested the whole payment path
+	 * against; the response shape is part of the contract this plugin reads.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $version Stripe API version string.
+	 */
+	return (string) apply_filters( 'wpss_stripe_api_version', '2026-08-26.dahlia' );
+}

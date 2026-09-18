@@ -14,6 +14,8 @@
  * @package WPSellServices
  */
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 global $wpdb;
 
 $fails = 0;

@@ -653,7 +653,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 				array(
 					'order_id'     => $order->id,
 					'order_number' => $order->order_number,
-					'redirect'     => wpss_get_order_url( $order->id ),
+					'redirect'     => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_url( $order->id ), 'offline' ),
 					'instructions' => $this->render_buyer_instructions( (int) $order->id ),
 					'message'      => __( 'Please complete your payment using the instructions below. Your order will be activated once payment is confirmed.', 'wp-sell-services' ),
 				)
@@ -672,6 +672,29 @@ class OfflineGateway implements PaymentGatewayInterface {
 
 			if ( empty( $cart ) ) {
 				wp_send_json_error( array( 'message' => __( 'Your cart is empty.', 'wp-sell-services' ) ) );
+				return;
+			}
+
+			/*
+			 * Same rule on the multi-item path, against the number the buyer was
+			 * actually shown: each cart row carries its own `total`, and
+			 * CartController sums exactly these to render the cart.
+			 *
+			 * Checked against the basket as a whole rather than per row - a
+			 * maximum is a limit on what the owner is willing to take in one
+			 * transaction, and three $9 rows under a $10 cap would otherwise
+			 * pass while a single $11 order is refused.
+			 */
+			$cart_total = 0.0;
+
+			foreach ( $cart as $cart_row ) {
+				$cart_total += (float) ( $cart_row['total'] ?? 0 );
+			}
+
+			$limit_error = wpss_check_order_limits( $cart_total, 'offline_cart' );
+
+			if ( null !== $limit_error ) {
+				wp_send_json_error( array( 'message' => $limit_error->get_error_message() ) );
 				return;
 			}
 
@@ -759,6 +782,22 @@ class OfflineGateway implements PaymentGatewayInterface {
 		$addon_data   = wpss_resolve_checkout_addons( $service_id );
 		$addons_total = $addon_data['addons_total'];
 
+		/*
+		 * The owner's min/max order amount, same as Stripe and PayPal.
+		 *
+		 * Those rails get it from CheckoutIntentService::resolve(); this handler
+		 * prices the order itself and never called resolve(), so a $2,500 order
+		 * checked out cleanly against a $10 maximum (Basecamp 10304350394). A
+		 * limit the owner sets is a marketplace rule, not a property of one
+		 * payment method.
+		 */
+		$limit_error = wpss_check_order_limits( (float) ( $price + $addons_total ), 'offline' );
+
+		if ( null !== $limit_error ) {
+			wp_send_json_error( array( 'message' => $limit_error->get_error_message() ) );
+			return;
+		}
+
 		// Get order provider.
 		$order_provider = wpss_get_order_provider();
 
@@ -804,7 +843,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 			array(
 				'order_id'     => $order->id,
 				'order_number' => $order->order_number,
-				'redirect_url' => wpss_get_order_url( $order->id ),
+				'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_url( $order->id ), 'offline' ),
 				'instructions' => $this->render_buyer_instructions( $order->id ),
 			)
 		);
@@ -841,8 +880,8 @@ class OfflineGateway implements PaymentGatewayInterface {
 
 		// Verify order is pending payment.
 		if ( 'pending_payment' !== $order->status ) {
+			// wp_send_json_error() exits, so no return is needed here.
 			wp_send_json_error( array( 'message' => __( 'Order is not awaiting payment.', 'wp-sell-services' ) ) );
-			return;
 		}
 
 		// Generate transaction ID if not provided.
@@ -857,7 +896,6 @@ class OfflineGateway implements PaymentGatewayInterface {
 
 		if ( ! $result ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to mark order as paid.', 'wp-sell-services' ) ) );
-			return;
 		}
 
 		/**
@@ -1194,6 +1232,27 @@ class OfflineGateway implements PaymentGatewayInterface {
 		 * get_order_method() existed for exactly this and had no callers - the
 		 * snapshot was being written and never read.
 		 */
+
+		/*
+		 * Acknowledge the submission FIRST, and unconditionally.
+		 *
+		 * Reaching this point means the buyer already chose offline and
+		 * submitted; until now nothing on any screen said so, and they were
+		 * shown the same Pay button they had just used (Basecamp 10305169436).
+		 *
+		 * This deliberately sits ABOVE the instructions lookup. The lookup
+		 * returns early when the owner has written no instructions - which is
+		 * the default on a fresh install - and an acknowledgement nested inside
+		 * it inherited that silence. The first version of this fix did exactly
+		 * that: the Pay button was correctly withdrawn and the explanation
+		 * never rendered, which left the buyer with less than before.
+		 */
+		?>
+		<p class="wpss-notice wpss-notice--info wpss-offline-awaiting">
+			<?php esc_html_e( 'Payment submitted. We will confirm your transfer shortly.', 'wp-sell-services' ); ?>
+		</p>
+		<?php
+
 		$method       = self::get_order_method( $order );
 		$instructions = $method['instructions'] ?? '';
 

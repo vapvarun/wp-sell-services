@@ -669,32 +669,9 @@ class SingleServiceView {
 	 * @return void
 	 */
 	public function render_vacation_notice( Service $service ): void {
-		$vacation = $this->get_vendor_vacation( $service );
-
-		if ( null === $vacation ) {
-			return;
-		}
-		?>
-		<div class="wpss-vacation-notice" role="status">
-			<span class="wpss-vacation-notice__icon" aria-hidden="true">
-				<i data-lucide="palmtree" class="wpss-icon"></i>
-			</span>
-			<div class="wpss-vacation-notice__body">
-				<p class="wpss-vacation-notice__message"><?php echo esc_html( $vacation['message'] ); ?></p>
-				<?php if ( '' !== $vacation['return_date_display'] ) : ?>
-					<p class="wpss-vacation-notice__resume">
-						<?php
-						printf(
-							/* translators: %s: formatted return date */
-							esc_html__( 'Orders resume on %s', 'wp-sell-services' ),
-							esc_html( $vacation['return_date_display'] )
-						);
-						?>
-					</p>
-				<?php endif; ?>
-			</div>
-		</div>
-		<?php
+		// One renderer, shared with the public vendor profile, which had no
+		// notice of its own at all (Basecamp 10304941561).
+		wpss_render_vendor_vacation_notice( (int) $service->vendor_id );
 	}
 
 	/**

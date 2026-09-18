@@ -367,6 +367,23 @@ class Activator {
 			delete_option( 'wpss_' . $key );
 		}
 
+		/*
+		 * Widen a stored allowlist that is still the old shipped default.
+		 *
+		 * Requirements and delivery uploads used to enforce private 27- and
+		 * 31-type lists and ignore this setting entirely. Now that they read it,
+		 * a site sitting on the old 7-type default would start refusing zip,
+		 * mp4, psd and 23 other types its vendors were uploading yesterday.
+		 *
+		 * Only the untouched default is rewritten. An owner who edited the field
+		 * chose their list and keeps it, even if it is narrower.
+		 */
+		$legacy_default = 'jpg,jpeg,png,gif,pdf,doc,docx';
+
+		if ( ( $advanced['allowed_file_types'] ?? '' ) === $legacy_default ) {
+			$advanced['allowed_file_types'] = wpss_settings_defaults()['wpss_advanced']['allowed_file_types'] ?? $legacy_default;
+		}
+
 		update_option( 'wpss_advanced', $advanced );
 	}
 
@@ -394,8 +411,19 @@ class Activator {
 			}
 		}
 
-		// Clean up old incorrectly-named options from previous versions.
-		$old_options = array( 'wpss_general_settings', 'wpss_vendor_settings', 'wpss_notification_settings' );
+		/*
+		 * Clean up old incorrectly-named options from previous versions.
+		 *
+		 * wpss_notification_settings was on this list and is NOT old: Settings.php
+		 * registers it and renders two live controls from it - "Skip when they are
+		 * already here" and "Hold message emails for". Activation runs on every
+		 * deactivate/reactivate, which is a routine troubleshooting step and
+		 * something some managed hosts do around updates, so an owner's choices
+		 * were silently reset to defaults with no notice (Basecamp 10304927632).
+		 *
+		 * The other two have no reader anywhere in src/ or templates/ and stay.
+		 */
+		$old_options = array( 'wpss_general_settings', 'wpss_vendor_settings' );
 		foreach ( $old_options as $old_option ) {
 			delete_option( $old_option );
 		}

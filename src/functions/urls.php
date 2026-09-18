@@ -86,6 +86,48 @@ function wpss_get_dashboard_url( string $section = '' ): string {
 }
 
 /**
+ * Where a vendor goes to create or edit a service.
+ *
+ * The frontend wizard, never wp-admin. A vendor role carries the plugin's own
+ * capabilities, not the core ones `post-new.php` and `post.php` demand, so an
+ * admin link is a dead end for exactly the person the button is for: they get
+ * "Sorry, you are not allowed to access this page", or - where the link came
+ * from `get_edit_post_link()`, which returns null when the user cannot edit -
+ * an empty href that silently does nothing at all.
+ *
+ * Falls back to the admin screen only when no dashboard page is configured,
+ * which is the one case where the frontend wizard genuinely has no home.
+ *
+ * @since 1.7.1
+ *
+ * @param int $service_id Service to edit. 0 creates a new one.
+ * @return string
+ */
+function wpss_get_service_editor_url( int $service_id = 0 ): string {
+	$url = wpss_get_dashboard_url( 'create' );
+
+	if ( $url && $service_id > 0 ) {
+		$url = add_query_arg( 'id', $service_id, $url );
+	}
+
+	if ( ! $url ) {
+		$url = $service_id > 0
+			? (string) get_edit_post_link( $service_id, 'url' )
+			: admin_url( 'post-new.php?post_type=wpss_service' );
+	}
+
+	/**
+	 * Filter the service create/edit destination.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $url        Editor URL.
+	 * @param int    $service_id Service being edited, 0 when creating.
+	 */
+	return (string) apply_filters( 'wpss_service_editor_url', $url, $service_id );
+}
+
+/**
  * Append a dashboard section to a base dashboard URL.
  *
  * Emits a pretty endpoint path (e.g. /dashboard/services/) when permalinks

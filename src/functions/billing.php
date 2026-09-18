@@ -825,3 +825,63 @@ function wpss_checkout_creates_accounts(): bool {
 	 */
 	return (bool) apply_filters( 'wpss_checkout_creates_accounts', $enabled );
 }
+
+/**
+ * Save the profile fields every member owns, vendor or not.
+ *
+ * Billing address, display name and avatar belong to the ACCOUNT, not to the
+ * vendor profile. The AJAX handler always knew that - it saved these for
+ * everyone and only then checked for a vendor - but when the dashboard moved to
+ * REST the rule was left behind in the twin, and PUT /vendors/me refuses a
+ * non-vendor outright. A buyer could edit their billing address, press Save,
+ * and be told "You are not registered as a vendor" while nothing persisted
+ * (Basecamp 10308485598). Checkout reads that same address, so it is a money
+ * path, not a profile nicety.
+ *
+ * One writer now, called by the REST route for buyers, the REST route for
+ * vendors, and the AJAX twin.
+ *
+ * @since 1.7.1
+ *
+ * @param array<string,mixed> $data    Posted/parsed fields.
+ * @param int                 $user_id User to write to.
+ * @return bool True when the user was resolvable.
+ */
+function wpss_save_member_profile( array $data, int $user_id = 0 ): bool {
+	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+
+	if ( $user_id <= 0 ) {
+		return false;
+	}
+
+	// The same helper checkout saves through, so both surfaces write the same
+	// WooCommerce-compatible keys with the same sanitising.
+	wpss_save_billing_from_request( $data, $user_id );
+
+	if ( array_key_exists( 'display_name', $data ) ) {
+		$display_name = sanitize_text_field( (string) $data['display_name'] );
+
+		// Empty is ignored rather than written: WordPress renders an empty
+		// display_name as a blank byline everywhere the member appears.
+		if ( '' !== $display_name ) {
+			wp_update_user(
+				array(
+					'ID'           => $user_id,
+					'display_name' => $display_name,
+				)
+			);
+		}
+	}
+
+	if ( array_key_exists( 'avatar_id', $data ) ) {
+		$avatar_id = absint( $data['avatar_id'] );
+
+		if ( $avatar_id > 0 && wp_attachment_is_image( $avatar_id ) ) {
+			update_user_meta( $user_id, '_wpss_avatar_id', $avatar_id );
+		} else {
+			delete_user_meta( $user_id, '_wpss_avatar_id' );
+		}
+	}
+
+	return true;
+}

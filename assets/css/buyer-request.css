@@ -508,6 +508,15 @@
 	color: var(--wpss-text-light, #6b7280);
 }
 
+/* A request can carry several categories, so the chips wrap rather than
+   stretching the card header on a narrow viewport. Matches the skills chip
+   row below. See Basecamp 10286357906. */
+.wpss-request-card__categories {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+}
+
 .wpss-request-card__category {
 	display: inline-block;
 	padding: 0.25rem 0.75rem;
@@ -515,6 +524,11 @@
 	color: var(--wpss-text, #1f2937);
 	font-size: 0.75rem;
 	border-radius: var(--wpss-radius-sm, 4px);
+}
+
+.wpss-request-card__category--more {
+	background: transparent;
+	color: var(--wpss-text-muted, #6b7280);
 }
 
 .wpss-request-card__body {
@@ -692,6 +706,7 @@
 .wpss-request-meta-bar {
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	gap: 1rem;
 	color: var(--wpss-text-light, #6b7280);
 	font-size: 0.875rem;

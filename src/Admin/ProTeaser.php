@@ -30,13 +30,24 @@ class ProTeaser {
 	 * @return void
 	 */
 	public function init(): void {
+		/*
+		 * The Analytics tab stays registered whether or not Pro is installed.
+		 *
+		 * It used to disappear the moment Pro activated, because this whole
+		 * class returned early - and Pro adds an unrelated "Branding" tab in
+		 * the same run. To the owner that reads as Analytics being REPLACED by
+		 * Branding: the thing they were looking at yesterday is gone, with
+		 * nothing saying it moved to its own menu (Basecamp 10305275155).
+		 *
+		 * So the tab survives the upgrade and changes what it says: an upgrade
+		 * pitch without Pro, and directions to the real screen with it.
+		 */
+		add_filter( 'wpss_settings_tabs', array( $this, 'add_analytics_tab' ) );
+		add_action( 'wpss_settings_tab_analytics', array( $this, 'render_analytics_tab' ) );
+
 		if ( defined( 'WPSS_PRO_VERSION' ) ) {
 			return;
 		}
-
-		// Admin: Locked Analytics tab in settings.
-		add_filter( 'wpss_settings_tabs', array( $this, 'add_analytics_tab' ) );
-		add_action( 'wpss_settings_tab_analytics', array( $this, 'render_analytics_tab' ) );
 
 		// Admin: Vendor settings accordion teaser.
 		add_action( 'wpss_settings_sections_vendor', array( $this, 'render_vendor_settings_teaser' ) );
@@ -72,9 +83,48 @@ class ProTeaser {
 	}
 
 	/**
-	 * Add locked Analytics tab to settings.
+	 * Where Analytics lives once Pro is installed.
 	 *
-	 * Inserts before the Advanced tab so it appears in the Pro group.
+	 * Not a second analytics screen - a signpost. The reports are Pro's, and
+	 * duplicating any part of them here would be the same flow in two places.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return void
+	 */
+	private function render_analytics_moved_notice(): void {
+		/**
+		 * Filter the destination the Analytics settings tab points at.
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param string $url Admin URL of the analytics screen.
+		 */
+		$url = (string) apply_filters( 'wpss_analytics_page_url', admin_url( 'admin.php?page=wpss-analytics' ) );
+		?>
+		<div class="wpss-card">
+			<h2><?php esc_html_e( 'Analytics', 'wp-sell-services' ); ?></h2>
+			<p>
+				<?php esc_html_e( 'Analytics has its own screen now that Pro is active, because the reports need more room than a settings tab.', 'wp-sell-services' ); ?>
+			</p>
+			<p>
+				<a href="<?php echo esc_url( $url ); ?>" class="button button-primary">
+					<?php esc_html_e( 'Open Analytics', 'wp-sell-services' ); ?>
+				</a>
+			</p>
+			<p class="description">
+				<?php esc_html_e( 'You can also reach it any time from Sell Services → Analytics in the admin menu.', 'wp-sell-services' ); ?>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Add the Analytics tab to settings.
+	 *
+	 * Registered whether or not Pro is active: without it the tab is a locked
+	 * upgrade pitch, with it a signpost to the real analytics screen. It must
+	 * not simply disappear on upgrade - see init().
 	 *
 	 * @param array $tabs Existing tabs.
 	 * @return array
@@ -93,6 +143,11 @@ class ProTeaser {
 	 * @return void
 	 */
 	public function render_analytics_tab(): void {
+		if ( defined( 'WPSS_PRO_VERSION' ) ) {
+			$this->render_analytics_moved_notice();
+			return;
+		}
+
 		$upgrade_url = admin_url( 'admin.php?page=wpss-upgrade' );
 		?>
 		<div class="wpss-pro-locked">
@@ -164,6 +219,7 @@ class ProTeaser {
 						<li><?php esc_html_e( 'Vendor subscription plans with recurring billing', 'wp-sell-services' ); ?></li>
 						<li><?php esc_html_e( 'White-label branding for your marketplace', 'wp-sell-services' ); ?></li>
 						<li><?php esc_html_e( 'Stripe Connect for automatic vendor payouts', 'wp-sell-services' ); ?></li>
+						<li><?php esc_html_e( 'Buyer tips on completed orders, with their own commission rate', 'wp-sell-services' ); ?></li>
 					</ul>
 					<a href="<?php echo esc_url( $upgrade_url ); ?>" class="wpss-pro-teaser__cta">
 						<?php esc_html_e( 'Upgrade to Pro', 'wp-sell-services' ); ?>
@@ -182,8 +238,41 @@ class ProTeaser {
 	 * @param int $user_id Current user ID.
 	 * @return void
 	 */
+	/**
+	 * Where a teaser's "Learn More" should send the reader.
+	 *
+	 * The frontend teasers linked to admin.php?page=wpss-upgrade, which requires
+	 * manage_options. A vendor never has it, so every vendor who clicked Learn
+	 * More on the dashboard got "Sorry, you are not allowed to access this page"
+	 * - at the exact moment we were asking them to buy something (Basecamp
+	 * 10304873919). The admin-side teasers keep the in-admin page: only an admin
+	 * ever sees those, and for them it is the better destination.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return string Public, capability-free upgrade URL.
+	 */
+	private function public_upgrade_url(): string {
+		/**
+		 * Filter the public upgrade URL used by frontend Pro teasers.
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param string $url Public upgrade URL.
+		 */
+		return (string) apply_filters( 'wpss_pro_upgrade_url', 'https://store.wbcomdesigns.com/wp-sell-services-pro/' );
+	}
+
+	/**
+	 * Render earnings summary teaser.
+	 *
+	 * Appears after the earnings summary stats on the vendor dashboard.
+	 *
+	 * @param int $user_id Current user ID.
+	 * @return void
+	 */
 	public function render_earnings_teaser( int $user_id ): void {
-		$upgrade_url = admin_url( 'admin.php?page=wpss-upgrade' );
+		$upgrade_url = $this->public_upgrade_url();
 		?>
 		<div class="wpss-pro-teaser" style="margin-top:1.5rem;">
 			<span class="wpss-pro-teaser__badge"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></span>
@@ -215,7 +304,7 @@ class ProTeaser {
 			return;
 		}
 
-		$upgrade_url = admin_url( 'admin.php?page=wpss-upgrade' );
+		$upgrade_url = $this->public_upgrade_url();
 		?>
 		<div class="wpss-pro-teaser" style="margin-top:1.5rem;">
 			<span class="wpss-pro-teaser__badge"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></span>

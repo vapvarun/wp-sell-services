@@ -64,7 +64,7 @@ $message = apply_filters( 'wpss_no_services_message', $default_message );
 			<?php endif; ?>
 
 			<?php if ( wpss_is_vendor() ) : ?>
-				<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wpss_service' ) ); ?>"
+				<a href="<?php echo esc_url( wpss_get_service_editor_url() ); ?>"
 					class="wpss-btn wpss-btn-outline">
 					<?php esc_html_e( 'Create a Service', 'wp-sell-services' ); ?>
 				</a>

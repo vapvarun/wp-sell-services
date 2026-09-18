@@ -819,6 +819,31 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			.wpss-co-login { text-align: center; padding: var(--wpss-space-10) var(--wpss-space-6); }
 			.wpss-co-login__actions { display: flex; gap: var(--wpss-space-3); justify-content: center; margin-top: var(--wpss-space-5); }
 
+			/*
+			 * Stacking order once the sidebar drops below the form.
+			 *
+			 * .wpss-layout--sidebar-right collapses to one column at 1024px, and
+			 * a collapsed grid emits the columns in source order - so the whole
+			 * sidebar landed after Payment Method and the buyer chose how to pay
+			 * BEFORE seeing what they were paying. Measured at 390: Payment
+			 * Method y=2001, Order Summary y=2274 (Basecamp 10304335437).
+			 *
+			 * display: contents lifts the two columns out of the box tree so all
+			 * six cards become siblings that `order` can sequence. The sticky
+			 * column has nothing to stick to at this width, so losing position:
+			 * sticky here is the intent, not a side effect.
+			 */
+			@media (max-width: 1024px) {
+				.wpss-checkout-page .wpss-layout--sidebar-right { display: flex; flex-direction: column; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack,
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky { display: contents; }
+				/* Service details first, then the total, then the form. */
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack > * { order: 3; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack > :first-child { order: 1; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > * { order: 4; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > .wpss-co-card--summary { order: 2; }
+			}
+
 			/* Responsive */
 			@media (max-width: 768px) {
 				.wpss-co-header { flex-direction: column; gap: var(--wpss-space-2); align-items: flex-start; }
@@ -1063,7 +1088,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 						<!-- RIGHT COLUMN: Order summary (sticky) -->
 						<div class="wpss-sticky">
-							<div class="wpss-card">
+							<div class="wpss-card wpss-co-card--summary">
 								<div class="wpss-card__header">
 									<h3 class="wpss-card__title">
 										<?php echo $is_pay_order ? esc_html__( 'Order Payment', 'wp-sell-services' ) : esc_html__( 'Order Summary', 'wp-sell-services' ); ?>
@@ -1216,40 +1241,18 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							<?php endif; ?>
 
 
-						</div><!-- /right column -->
-
-					</div><!-- /layout -->
-				</form>
-
-				<?php
-				/*
-				 * Reassurance badges are the SITE OWNER'S words, edited under
-				 * Settings > General > Checkout Reassurance. This is a public page a
-				 * buyer reads while paying, so the plugin must not put claims in the
-				 * owner's mouth - it previously printed "On-time Delivery / Or your
-				 * money back", a refund promise nothing in the code honours, and
-				 * "Unlimited revisions" on packages that include two.
-				 *
-				 * Where the owner has left a row blank we fall back to facts about
-				 * the package being bought, so a badge can never contradict the order
-				 * beside it.
-				 */
-				$badges = wpss_get_checkout_badges( is_array( $selected_package ) ? $selected_package : array() );
-				?>
-				<?php if ( ! empty( $badges ) ) : ?>
-				<div class="wpss-co-guarantees-bar">
-					<?php foreach ( $badges as $badge ) : ?>
-						<div class="wpss-co-guarantee">
-							<span aria-hidden="true"><?php echo esc_html( $badge['icon'] ); ?></span>
-							<div>
-								<strong><?php echo esc_html( $badge['title'] ); ?></strong>
-								<span><?php echo esc_html( $badge['note'] ); ?></span>
-							</div>
-						</div>
-					<?php endforeach; ?>
-				</div>
-				<?php endif; ?>
-
+							<?php
+							/*
+							 * Reassurance belongs where the decision is made. This block used
+							 * to render after the form closed, last on the page - 2063px down a
+							 * 2302px checkout, below the payment method - so the only buyers who
+							 * ever read what happens after paying were the ones who had already
+							 * decided to pay. In the right column under the order summary it is
+							 * visible without scrolling, while the payment form keeps the main
+							 * column and nothing is pushed further down.
+							 * See Basecamp 10289700826.
+							 */
+							?>
 				<!-- What happens next -->
 				<div class="wpss-co-steps">
 					<div class="wpss-card">
@@ -1312,6 +1315,41 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						</div>
 					</div>
 				</div>
+
+						</div><!-- /right column -->
+
+					</div><!-- /layout -->
+				</form>
+
+				<?php
+				/*
+				 * Reassurance badges are the SITE OWNER'S words, edited under
+				 * Settings > General > Checkout Reassurance. This is a public page a
+				 * buyer reads while paying, so the plugin must not put claims in the
+				 * owner's mouth - it previously printed "On-time Delivery / Or your
+				 * money back", a refund promise nothing in the code honours, and
+				 * "Unlimited revisions" on packages that include two.
+				 *
+				 * Where the owner has left a row blank we fall back to facts about
+				 * the package being bought, so a badge can never contradict the order
+				 * beside it.
+				 */
+				$badges = wpss_get_checkout_badges( is_array( $selected_package ) ? $selected_package : array() );
+				?>
+				<?php if ( ! empty( $badges ) ) : ?>
+				<div class="wpss-co-guarantees-bar">
+					<?php foreach ( $badges as $badge ) : ?>
+						<div class="wpss-co-guarantee">
+							<span aria-hidden="true"><?php echo esc_html( $badge['icon'] ); ?></span>
+							<div>
+								<strong><?php echo esc_html( $badge['title'] ); ?></strong>
+								<span><?php echo esc_html( $badge['note'] ); ?></span>
+							</div>
+						</div>
+					<?php endforeach; ?>
+				</div>
+				<?php endif; ?>
+
 
 				<script>
 				(function() {
@@ -1918,7 +1956,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 						<!-- RIGHT COLUMN: Order summary -->
 						<div class="wpss-sticky">
-							<div class="wpss-card">
+							<div class="wpss-card wpss-co-card--summary">
 								<div class="wpss-card__header">
 									<h3 class="wpss-card__title"><?php esc_html_e( 'Order Summary', 'wp-sell-services' ); ?></h3>
 								</div>

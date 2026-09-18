@@ -352,6 +352,56 @@ function wpss_requirement_types(): array {
 }
 
 /**
+ * Requirement types a vendor can choose, with their labels.
+ *
+ * The one list every authoring surface renders from. Three had drifted: the
+ * frontend wizard hardcoded four options, the admin metabox returned eight, and
+ * the canonical whitelist above allows eleven. A vendor using the wizard - the
+ * primary authoring path - could not add Number, Yes/No, Multiple Choice or
+ * Date at all, though every one of them stores, renders and submits correctly
+ * on the buyer's requirements form.
+ *
+ * Worse than the missing four: the two lists disagreed on what a label MEANT.
+ * The wizard called `select` "Multiple Choice"; the metabox calls `select`
+ * "Dropdown" and reserves "Multiple Choice" for `radio`. The same words
+ * produced a different field depending on where the vendor was standing.
+ *
+ * Narrower than wpss_requirement_types() on purpose: `multiselect`, `url` and
+ * `email` stay accepted for data already stored and for REST callers, but are
+ * not offered in the authoring UI until they have a reviewed editing
+ * experience. Widen here and both surfaces pick it up.
+ *
+ * @since 1.7.1
+ *
+ * @see Basecamp 10286129293
+ *
+ * @return array<string, string> Type slug => translated label.
+ */
+function wpss_requirement_type_labels(): array {
+	return array(
+		'text'     => __( 'Short Text', 'wp-sell-services' ),
+		'textarea' => __( 'Long Text', 'wp-sell-services' ),
+		'number'   => __( 'Number', 'wp-sell-services' ),
+		'checkbox' => __( 'Yes/No', 'wp-sell-services' ),
+		'select'   => __( 'Dropdown', 'wp-sell-services' ),
+		'radio'    => __( 'Multiple Choice', 'wp-sell-services' ),
+		'file'     => __( 'File Upload', 'wp-sell-services' ),
+		'date'     => __( 'Date', 'wp-sell-services' ),
+	);
+}
+
+/**
+ * Requirement types that need a caller-supplied list of choices.
+ *
+ * @since 1.7.1
+ *
+ * @return string[]
+ */
+function wpss_requirement_choice_types(): array {
+	return array( 'select', 'radio', 'multiselect' );
+}
+
+/**
  * Normalise a requirement list into the one schema every surface reads.
  *
  * Four shapes shared the `_wpss_requirements` key: the wizard wrote
@@ -633,6 +683,56 @@ function wpss_get_order_confirmation_url( int $order_id ): string {
 }
 
 /**
+ * Where a buyer goes after a successful checkout.
+ *
+ * Settings > Pages > Order Confirmation Page existed, saved correctly, and was
+ * read by nothing: wpss_get_order_confirmation_url() had ZERO callers outside
+ * its own definition while eleven redirect sites each built their own URL, so
+ * the owner could pick a thank-you page and buyers never saw it (Basecamp
+ * 10304592376).
+ *
+ * The fallback is passed in rather than assumed, because the right destination
+ * without a confirmation page differs by site: a paid order with requirements
+ * belongs on the requirements form, not the order view. Passing it keeps every
+ * existing redirect byte-identical when no confirmation page is configured.
+ *
+ * @since 1.7.1
+ *
+ * @param int    $order_id     Order ID.
+ * @param string $fallback_url Where to go when no confirmation page is set.
+ * @param string $context      Which rail is redirecting, for the filter.
+ * @return string
+ */
+function wpss_get_post_checkout_url( int $order_id, string $fallback_url = '', string $context = '' ): string {
+	$confirmation_page = (int) get_option( 'wpss_order_confirmation_page' );
+	$url               = '';
+
+	if ( $confirmation_page ) {
+		$permalink = get_permalink( $confirmation_page );
+
+		if ( $permalink ) {
+			$url = add_query_arg( 'order_id', $order_id, $permalink );
+		}
+	}
+
+	if ( '' === $url ) {
+		$url = '' !== $fallback_url ? $fallback_url : wpss_get_order_url( $order_id );
+	}
+
+	/**
+	 * Filter the post-checkout redirect.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $url      Resolved destination.
+	 * @param int    $order_id Order ID.
+	 * @param string $context  Rail that is redirecting: offline, stripe, test,
+	 *                         intent, cart, edd.
+	 */
+	return (string) apply_filters( 'wpss_post_checkout_url', $url, $order_id, $context );
+}
+
+/**
  * Check if late requirements submission is allowed.
  *
  * @since 1.0.0
@@ -849,6 +949,36 @@ function wpss_get_order_status_priority(): array {
 	}
 
 	return $priority;
+}
+
+/**
+ * Whether buyers can tip on this site, and whether tip records are shown.
+ *
+ * Tipping is a Pro feature. Off by default, so the free plugin alone never
+ * offers a tip or shows one; Pro answers this filter from its own on/off
+ * setting, which defaults to on.
+ *
+ * This gates what people SEE and START - the tip button, the REST route that
+ * creates a tip, tip receipts, the tip email, the tip commission setting. It
+ * deliberately does NOT gate the money path. Crediting a paid tip, refunding
+ * one and the abandoned-tip cleanup keep running, because they are the same
+ * sub-order code milestones and paid extensions use, and because a buyer who
+ * has already paid for a tip must still reach the vendor. Hiding a record is
+ * reversible; leaving a buyer's money uncredited is not.
+ *
+ * @since 1.7.1
+ *
+ * @return bool
+ */
+function wpss_tipping_enabled(): bool {
+	/**
+	 * Filter whether tipping is available.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param bool $enabled False unless an extension turns it on.
+	 */
+	return (bool) apply_filters( 'wpss_tipping_enabled', false );
 }
 
 /**
@@ -1562,3 +1692,42 @@ foreach ( array( 'wpss_order_created', 'wpss_order_paid', 'wpss_order_status_cha
 	add_action( $wpss_aggregates_hook, 'wpss_flush_order_aggregates' );
 }
 unset( $wpss_aggregates_hook );
+
+/**
+ * Whether the buyer has submitted payment that is waiting on manual confirmation.
+ *
+ * `pending_payment` means two different things and every surface was reading
+ * only the first: "the buyer has not paid yet" AND "the buyer chose an offline
+ * method and we are waiting for the admin to confirm the transfer". Offline is
+ * correct to sit in that status - nothing is broken in the payment path - but
+ * rendering it as "not paid yet" means the buyer is shown the same Pay button
+ * they just used, with no acknowledgement that anything happened. They conclude
+ * it failed and pay again, which is the milestone "redirect loop" in Basecamp
+ * 10305169436 and the same silence on ordinary orders and extensions.
+ *
+ * `payment_method` is the discriminator: it is NULL until the buyer submits and
+ * carries the chosen method afterwards. Verified across a milestone phase, an
+ * extension and a standalone order.
+ *
+ * @since 1.7.1
+ *
+ * @param object|int $order Order row or id.
+ * @return bool True when payment was submitted and awaits confirmation.
+ */
+function wpss_order_awaits_payment_confirmation( $order ): bool {
+	$order = is_object( $order ) ? $order : wpss_get_order( (int) $order );
+
+	if ( ! is_object( $order ) ) {
+		return false;
+	}
+
+	if ( 'pending_payment' !== ( $order->status ?? '' ) ) {
+		return false;
+	}
+
+	// A paid order has left this status; a gateway that captured instantly
+	// never lingers here. Anything still here WITH a method chosen is an
+	// offline-style instruction the site owner has to confirm by hand.
+	return '' !== (string) ( $order->payment_method ?? '' )
+		&& 'paid' !== ( $order->payment_status ?? '' );
+}

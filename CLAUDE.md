@@ -202,7 +202,7 @@ wp-sell-services/
 
 ## Browser audits / QA browser walks
 
-**Always use the Sonnet model for browser-driven audits and persona-based QA walks** (e.g. the `1.1.0-COMPLETENESS-AUDIT.md` 25-feature × 5-persona matrix, ad-hoc dashboard regression sweeps, any task that involves driving Playwright through many flows in sequence).
+**Always use the Sonnet model for browser-driven audits and persona-based QA walks** (feature × persona matrices, ad-hoc dashboard regression sweeps, any task that involves driving Playwright through many flows in sequence).
 
 Why: browser-walk work is high-volume, highly parallel, and rarely needs deep reasoning per step. Sonnet is the right cost/throughput trade-off for this kind of repetitive UI verification.
 

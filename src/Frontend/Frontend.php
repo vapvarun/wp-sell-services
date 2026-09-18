@@ -392,6 +392,39 @@ class Frontend {
 			return;
 		}
 
+		// Not on a surface that already owns the purchase action. The button is
+		// fixed to the bottom-right of the viewport while these pages pin a card
+		// to the right rail, so on a theme whose content column runs close to the
+		// viewport edge (Reign at ~1250px puts the card's right edge at 1177 and
+		// the button's left at 1173) the button lands on top of that card. It was
+		// reported on the single service as a stray circular element clipping the
+		// add-ons row; the same collision hits the About the Seller card on
+		// checkout. On all of these the buyer is already holding the cart - the
+		// packages widget, the cart page, the checkout form - so the floating
+		// shortcut is redundant exactly where it does damage. See Basecamp
+		// 10285949893.
+		/**
+		 * Filter whether the floating mini-cart renders on the current request.
+		 *
+		 * Defaults to false on a single service, where the packages widget and
+		 * the Continue CTA already own the purchase action. An owner whose menu
+		 * carries no cart or checkout link can switch it back on here rather
+		 * than leaving buyers with items and no way back to them.
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param bool $show Whether to render the floating mini-cart.
+		 */
+		$owns_cart_action = is_singular( 'wpss_service' )
+			|| wpss_is_page( 'checkout' )
+			|| wpss_is_page( 'cart' )
+			|| (bool) get_query_var( 'wpss_checkout' )
+			|| (bool) get_query_var( 'wpss_pay_order' );
+
+		if ( ! apply_filters( 'wpss_show_mini_cart', ! $owns_cart_action ) ) {
+			return;
+		}
+
 		$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
 		$cart_count = is_array( $cart ) ? count( $cart ) : 0;
 

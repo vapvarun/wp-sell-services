@@ -447,12 +447,20 @@
 				data.vacation_mode = $vac.is(':checked') ? 1 : 0;
 			}
 
-			// REST: PUT /vendors/me (via POST + method override for host
-			// compatibility). Writes the wpss_vendor_profiles table - the single
-			// canonical store - so intro video, country, city, website, vacation,
-			// and cover all persist (the old AJAX twin split storage / dropped them).
+			// REST: PUT /vendors/me for vendors, PUT /me for everyone else.
+			//
+			// vendors/me writes the wpss_vendor_profiles table - the single
+			// canonical store - so intro video, country, city, website, vacation
+			// and cover all persist. It also refuses a non-vendor with 403
+			// wpss_not_vendor, and this form is shown to buyers too: sending
+			// every member there meant a buyer pressing Save was told they were
+			// not a vendor while their billing address silently failed to save.
+			// Both routes write the account-level fields through the same
+			// server-side helper, so the two are not a fork.
+			var profileRoute = wpssUnifiedDashboard.isVendor ? 'vendors/me' : 'me';
+
 			$.ajax({
-				url: wpssUnifiedDashboard.restUrl + 'vendors/me',
+				url: wpssUnifiedDashboard.restUrl + profileRoute,
 				method: 'PUT',
 				data: data,
 				beforeSend: function (xhr) {
@@ -954,6 +962,15 @@
 			if (serviceId) {
 				data.service_id = parseInt(serviceId, 10);
 			}
+
+			// The "Mark as Featured" checkbox. This payload was built from title,
+			// description, external_url, media and service_id only, so whatever
+			// the vendor did with the checkbox was discarded before the request
+			// left the browser - on Add AND on Edit, even though the modal
+			// populates it correctly when opening an existing item
+			// (Basecamp 10300287069). Always sent, so unticking it on Edit
+			// unfeatures rather than being read as "not submitted".
+			data.is_featured = $form.find('[name="is_featured"]').is(':checked') ? 1 : 0;
 
 			$.ajax({
 				url: wpssUnifiedDashboard.restUrl + 'portfolio' + (isEdit ? '/' + itemId : ''),

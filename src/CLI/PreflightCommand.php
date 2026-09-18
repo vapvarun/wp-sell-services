@@ -72,7 +72,6 @@ class PreflightCommand {
 	 *   - uninstall
 	 *   - debug
 	 *   - pro
-	 *   - market
 	 * ---
 	 *
 	 * [--format=<format>]
@@ -111,7 +110,6 @@ class PreflightCommand {
 			'uninstall'   => 'check_uninstall',
 			'debug'       => 'check_debug',
 			'pro'         => 'check_pro',
-			'market'      => 'check_market_readiness',
 		);
 
 		foreach ( $checks as $key => $method ) {
@@ -681,70 +679,6 @@ class PreflightCommand {
 	}
 
 	/**
-	 * Check market readiness and competitive gaps.
-	 *
-	 * @return void
-	 */
-	private function check_market_readiness(): void {
-		WP_CLI::log( '> Market Readiness (vs Fiverr/Upwork)' );
-
-		global $wpdb;
-		$existing = $wpdb->get_col( 'SHOW TABLES' );
-
-		// Core features.
-		$features = array(
-			'Service packages'       => 'wpss_service_packages',
-			'Order workflow'         => 'wpss_orders',
-			'Messaging'              => 'wpss_conversations',
-			'File delivery'          => 'wpss_deliveries',
-			'Reviews & ratings'      => 'wpss_reviews',
-			'Dispute resolution'     => 'wpss_disputes',
-			'Buyer requests'         => 'wpss_proposals',
-			'Vendor portfolios'      => 'wpss_portfolio_items',
-			'Notifications'          => 'wpss_notifications',
-			'Earnings & withdrawals' => 'wpss_withdrawals',
-			'Deadline extensions'    => 'wpss_extension_requests',
-		);
-
-		foreach ( $features as $name => $table ) {
-			$this->record( 'Market', $name, in_array( $wpdb->prefix . $table, $existing, true ) ? 'pass' : 'fail' );
-		}
-
-		// Key shortcodes.
-		$sc         = array( 'wpss_services', 'wpss_dashboard', 'wpss_vendor_registration', 'wpss_cart', 'wpss_service_wizard', 'wpss_buyer_requests', 'wpss_service_search', 'wpss_login', 'wpss_register' );
-		$missing_sc = array_filter( $sc, fn( $s ) => ! shortcode_exists( $s ) );
-		$this->record( 'Market', 'Shortcodes', empty( $missing_sc ) ? 'pass' : 'fail', empty( $missing_sc ) ? count( $sc ) . ' registered' : 'Missing: ' . implode( ', ', $missing_sc ) );
-
-		// Blocks.
-		$registry   = \WP_Block_Type_Registry::get_instance();
-		$blocks     = array( 'wpss/service-grid', 'wpss/service-search', 'wpss/service-categories', 'wpss/featured-services', 'wpss/seller-card', 'wpss/buyer-requests' );
-		$missing_bl = array_filter( $blocks, fn( $b ) => ! $registry->is_registered( $b ) );
-		$this->record( 'Market', 'Gutenberg blocks', empty( $missing_bl ) ? 'pass' : 'warn', empty( $missing_bl ) ? count( $blocks ) . ' registered' : 'Missing: ' . implode( ', ', $missing_bl ) );
-
-		WP_CLI::log( '' );
-		WP_CLI::log( '> Competitive Gap Analysis' );
-
-		$gaps = array(
-			array( 'SEO schema markup', file_exists( WPSS_PLUGIN_DIR . 'src/SEO/' ), 'JSON-LD for services' ),
-			array( 'Email template system', is_dir( WPSS_PLUGIN_DIR . 'templates/emails/' ), 'Theme-overridable templates' ),
-			array( 'Seller levels/badges', true, 'Gamification for retention' ),
-			array( 'REST API (mobile-ready)', count( $wpss ?? array() ) > 50 || true, '170+ routes for mobile apps' ),
-			array( 'Multi-currency', ! empty( get_option( 'wpss_general', array() )['currency'] ), 'Single currency (consider multi)' ),
-			array( 'Subscription billing', defined( 'WPSS_PRO_VERSION' ), 'Pro feature for SaaS services' ),
-			array( 'Cloud storage', defined( 'WPSS_PRO_VERSION' ), 'S3/GCS/DO Spaces via Pro' ),
-			array( 'Analytics dashboard', defined( 'WPSS_PRO_VERSION' ), 'Revenue/order charts via Pro' ),
-			array( 'Vendor subscriptions', defined( 'WPSS_PRO_VERSION' ), 'Plan-based vendor tiers via Pro' ),
-			array( 'White label', defined( 'WPSS_PRO_VERSION' ), 'Full rebrand via Pro' ),
-		);
-
-		foreach ( $gaps as $g ) {
-			$this->record( 'Gap', $g[0], $g[1] ? 'pass' : 'warn', $g[2] );
-		}
-
-		WP_CLI::log( '' );
-	}
-
-	/**
 	 * Get admin user ID.
 	 *
 	 * @return int
@@ -787,7 +721,7 @@ class PreflightCommand {
 		WP_CLI::log( '' );
 
 		if ( $this->results['fail'] > 0 ) {
-			WP_CLI::error( 'Preflight FAILED -- fix issues before release.', false );
+			WP_CLI::error( 'Preflight FAILED -- fix issues before release.' );
 		} elseif ( $this->results['warn'] > 0 ) {
 			WP_CLI::warning( 'Passed with ' . $this->results['warn'] . ' warning(s).' );
 		} else {

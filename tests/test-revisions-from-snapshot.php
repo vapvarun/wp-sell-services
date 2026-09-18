@@ -24,6 +24,8 @@ use WPSellServices\Checkout\CheckoutIntentService;
 use WPSellServices\Database\SchemaManager;
 use WPSellServices\Services\OrderService;
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 global $wpdb;
 
 $failures = array();

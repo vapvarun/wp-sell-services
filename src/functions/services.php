@@ -614,7 +614,12 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 		'posts_per_page' => absint( $attributes['postsPerPage'] ?? 12 ),
 		'paged'          => max( 1, $page ),
 		'orderby'        => sanitize_key( $attributes['orderBy'] ?? 'date' ),
-		'order'          => in_array( ( $attributes['order'] ?? 'DESC' ), array( 'ASC', 'DESC' ), true ) ? $attributes['order'] : 'DESC',
+		// The ?? guarded the comparison but not the branch that uses the value, so
+		// any caller omitting `order` - the shortcode, archives, REST - emitted
+		// "Undefined array key order" on every render. Resolve once, then test.
+		'order'          => in_array( strtoupper( (string) ( $attributes['order'] ?? 'DESC' ) ), array( 'ASC', 'DESC' ), true )
+			? strtoupper( (string) ( $attributes['order'] ?? 'DESC' ) )
+			: 'DESC',
 	);
 
 	// Category filter. Accepts a term id OR a slug: the [wpss_services]
@@ -675,11 +680,36 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 
 	wpss_prime_service_card_caches( $query->posts );
 
+	/*
+	 * Display toggles for the card, passed down rather than assumed.
+	 *
+	 * The Service Grid block exposes Show Rating / Show Price / Show Seller and
+	 * this renderer never read them - it always loaded the card template, which
+	 * always printed all three, so the toggles did nothing in the editor preview
+	 * or on the frontend (Basecamp 10308731466). Absent means true, so every
+	 * other caller - [wpss_services], archives, REST - renders exactly as before.
+	 */
+	$wpss_card_display = array(
+		'wpss_show_rating' => ! array_key_exists( 'showRating', $attributes ) || (bool) $attributes['showRating'],
+		'wpss_show_price'  => ! array_key_exists( 'showPrice', $attributes ) || (bool) $attributes['showPrice'],
+		'wpss_show_seller' => ! array_key_exists( 'showSeller', $attributes ) || (bool) $attributes['showSeller'],
+	);
+
+	/**
+	 * Filter which elements a service card renders.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array<string,bool>  $wpss_card_display wpss_show_rating, wpss_show_price, wpss_show_seller.
+	 * @param array<string,mixed> $attributes        Grid attributes.
+	 */
+	$wpss_card_display = (array) apply_filters( 'wpss_service_card_display', $wpss_card_display, $attributes );
+
 	ob_start();
 	if ( $query->have_posts() ) {
 		while ( $query->have_posts() ) {
 			$query->the_post();
-			wpss_get_template_part( 'content', 'service-card' );
+			wpss_get_template_part( 'content', 'service-card', $wpss_card_display );
 		}
 	} else {
 		echo '<p class="wpss-no-services">' . esc_html__( 'No services found.', 'wp-sell-services' ) . '</p>';
@@ -1006,6 +1036,138 @@ function wpss_get_service_limits(): array {
 }
 
 /**
+ * The numeric floors a service must clear to go live.
+ *
+ * Exists so the wizard's client-side checklist and the server-side validator
+ * cannot hold different numbers. The validator below reads these, and
+ * ServiceWizard hands the same array to the browser - #10304336130 was filed
+ * because the 120-character floor was written out as a literal in four places.
+ *
+ * @since 1.7.1
+ *
+ * @return array{title_length:int,description_length:int,min_price:float}
+ */
+function wpss_service_publish_thresholds(): array {
+	return array(
+		'title_length'       => 10,
+		'description_length' => 120,
+		'min_price'          => (float) apply_filters( 'wpss_min_service_price', 5 ),
+	);
+}
+
+/**
+ * The rules a service must satisfy before buyers can see it.
+ *
+ * The one place those rules live. The frontend wizard enforced six of them
+ * server-side while the admin metabox enforced none, so a site owner could
+ * publish straight from wp-admin what the wizard refused from the vendor
+ * dashboard: no category, no main image, no delivery time, and a price under
+ * the minimum. Verified on a live install - a $2.00 service with no category
+ * and no image published and appeared on /services/, auto-approved, because
+ * admin-created services bypass moderation too. See Basecamp 10289819803.
+ *
+ * Callers pass what they have; a key that is absent is not checked, so a
+ * partial save path can validate the subset it owns.
+ *
+ * @since 1.7.1
+ *
+ * @param array<string,mixed> $service {
+ *     The service fields to check.
+ *
+ *     @type string                         $title        Service title.
+ *     @type array<int,int>                 $category_ids Assigned category term ids.
+ *     @type string                         $description  Service description.
+ *     @type array<int,array<string,mixed>> $packages     Package rows with price + delivery_days.
+ *     @type int                            $thumbnail_id Main image attachment id.
+ * }
+ * @return string[] User-facing error sentences; empty when the service may go live.
+ */
+function wpss_validate_service_publishable( array $service ): array {
+	$errors = array();
+
+	$thresholds = wpss_service_publish_thresholds();
+
+	if ( array_key_exists( 'title', $service ) ) {
+		$title = trim( (string) $service['title'] );
+		if ( '' === $title ) {
+			$errors[] = __( 'Please enter a service title.', 'wp-sell-services' );
+		} elseif ( mb_strlen( $title ) < $thresholds['title_length'] ) {
+			$errors[] = sprintf(
+				/* translators: %d: minimum number of characters. */
+				__( 'Please enter at least %d characters for the service title.', 'wp-sell-services' ),
+				$thresholds['title_length']
+			);
+		}
+	}
+
+	if ( array_key_exists( 'category_ids', $service ) && empty( $service['category_ids'] ) ) {
+		$errors[] = __( 'Please select a category.', 'wp-sell-services' );
+	}
+
+	if ( array_key_exists( 'description', $service ) ) {
+		$description = trim( wp_strip_all_tags( (string) $service['description'] ) );
+		if ( mb_strlen( $description ) < $thresholds['description_length'] ) {
+			$errors[] = sprintf(
+				/* translators: %d: minimum number of characters. */
+				__( 'Description must be at least %d characters.', 'wp-sell-services' ),
+				$thresholds['description_length']
+			);
+		}
+	}
+
+	if ( array_key_exists( 'packages', $service ) ) {
+		$packages = array_filter(
+			(array) $service['packages'],
+			static function ( $package ) {
+				return is_array( $package ) && ( ! empty( $package['name'] ) || ! empty( $package['price'] ) );
+			}
+		);
+
+		if ( empty( $packages ) ) {
+			$errors[] = __( 'Please add at least one package.', 'wp-sell-services' );
+		} else {
+			// The cheapest package is the price buyers see on the card, so it is
+			// the one the floor applies to - and it is the wizard's Basic tier by
+			// construction.
+			$min_price = $thresholds['min_price'];
+			$cheapest  = null;
+
+			foreach ( $packages as $package ) {
+				if ( null === $cheapest || (float) ( $package['price'] ?? 0 ) < (float) ( $cheapest['price'] ?? 0 ) ) {
+					$cheapest = $package;
+				}
+			}
+
+			if ( (float) ( $cheapest['price'] ?? 0 ) < $min_price ) {
+				$errors[] = sprintf(
+					/* translators: %s: formatted minimum price (e.g. $5.00). */
+					__( 'Basic package price must be at least %s.', 'wp-sell-services' ),
+					wpss_format_price( $min_price )
+				);
+			}
+
+			if ( empty( $cheapest['delivery_days'] ) ) {
+				$errors[] = __( 'Please set a delivery time for the Basic package.', 'wp-sell-services' );
+			}
+		}
+	}
+
+	if ( array_key_exists( 'thumbnail_id', $service ) && empty( $service['thumbnail_id'] ) ) {
+		$errors[] = __( 'Please upload a main image.', 'wp-sell-services' );
+	}
+
+	/**
+	 * Filter the reasons a service may not go live.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string[]            $errors  Error sentences.
+	 * @param array<string,mixed> $service The validated input.
+	 */
+	return apply_filters( 'wpss_service_publish_errors', $errors, $service );
+}
+
+/**
  * Truncate a service's lists to wpss_get_service_limits().
  *
  * The one enforcer for every save path (wizard, REST, admin metabox,
@@ -1052,4 +1214,34 @@ function wpss_enforce_service_limits( array $meta ): array {
 		'meta'      => $meta,
 		'truncated' => $truncated,
 	);
+}
+
+/**
+ * Whether the current user may set a service's Featured flag.
+ *
+ * Featured is marketplace curation, not service authoring: `_wpss_featured` is
+ * what the Featured Services block and `[wpss_featured_services]` select on, so
+ * it decides who appears in the promoted slot on the marketplace's front page.
+ * `edit_post` is therefore the wrong gate - every vendor holds it on their own
+ * service, which would let any vendor promote themselves above everyone else.
+ * The owner's capability is the default; a site running paid placement or a
+ * vendor tier lowers it through the filter rather than by editing the metabox.
+ *
+ * @since 1.7.1
+ *
+ * @param int $service_id Service post ID.
+ * @return bool
+ */
+function wpss_user_can_feature_service( int $service_id = 0 ): bool {
+	$can = current_user_can( 'manage_options' );
+
+	/**
+	 * Filter who may mark a service as Featured.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param bool $can        Whether the current user may set the flag.
+	 * @param int  $service_id Service post ID.
+	 */
+	return (bool) apply_filters( 'wpss_user_can_feature_service', $can, $service_id );
 }

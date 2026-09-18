@@ -1503,15 +1503,37 @@ class EmailService {
 		$dispute        = ( new DisputeService() )->get_by_order( (int) $order->id );
 		$dispute_reason = '';
 		if ( $dispute ) {
+			// The reason column holds a key; show its label, never the raw slug.
+			$reason_labels  = wpss_get_dispute_reasons();
+			$reason_key     = (string) ( $dispute->reason ?? '' );
 			$dispute_reason = ! empty( $dispute->description )
 				? (string) $dispute->description
-				: (string) ( $dispute->reason ?? '' );
+				: (string) ( $reason_labels[ $reason_key ] ?? $reason_key );
 		}
 
+		// Who actually opened it. This email is sent from the order's move to
+		// DISPUTED, which carries no opener, so every copy used to assume the
+		// buyer had filed - the vendor who opened a dispute was told "a dispute
+		// has been opened on your order by [buyer]" (Basecamp 10312799060).
+		// The dispute row has always recorded the truth in initiated_by.
+		// The model names it initiator_id; initiated_by is the column.
+		$opener_id = $dispute ? (int) $dispute->initiator_id : 0;
+		if ( ! in_array( $opener_id, array( (int) $order->customer_id, (int) $order->vendor_id ), true ) ) {
+			// No dispute row, or an opener who is neither party: keep the old
+			// assumption rather than guess something new.
+			$opener_id = (int) $order->customer_id;
+		}
+		$opened_by_vendor = (int) $order->vendor_id === $opener_id;
+		$opener_name      = $opened_by_vendor
+			? $this->get_vendor_name( $order->vendor_id )
+			: $this->get_customer_name( $order->customer_id );
+
 		$base_vars = array(
-			'order'          => $order,
-			'email_heading'  => __( 'Dispute Opened', 'wp-sell-services' ),
-			'dispute_reason' => $dispute_reason,
+			'order'            => $order,
+			'email_heading'    => __( 'Dispute Opened', 'wp-sell-services' ),
+			'dispute_reason'   => $dispute_reason,
+			'opened_by_vendor' => $opened_by_vendor,
+			'opener_name'      => $opener_name,
 		);
 
 		// Send to customer with customer-specific context.
@@ -1525,6 +1547,7 @@ class EmailService {
 					array(
 						'recipient'   => $customer,
 						'is_customer' => true,
+						'is_opener'   => ! $opened_by_vendor,
 						'vendor_name' => $this->get_vendor_name( $order->vendor_id ),
 					)
 				)
@@ -1542,6 +1565,7 @@ class EmailService {
 					array(
 						'recipient'     => $vendor,
 						'is_customer'   => false,
+						'is_opener'     => $opened_by_vendor,
 						'customer_name' => $this->get_customer_name( $order->customer_id ),
 					)
 				)

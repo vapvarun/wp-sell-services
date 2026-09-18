@@ -78,7 +78,7 @@ function wpss_get_report_reasons(): array {
  *
  * @return array<string,string> Reason key => translated label.
  */
-function wpss_get_dispute_reasons(): array {
+function wpss_get_dispute_reasons( string $role = '' ): array {
 	// THE list. Dispute::get_reasons() was a second copy with no filter, and the
 	// two disagreed: this one had `deadline`, that one had `late_delivery`, and
 	// `not_delivered` was labelled differently in each. The API read this list
@@ -88,23 +88,52 @@ function wpss_get_dispute_reasons(): array {
 	// `late_delivery` wins because it is what exists: 40 rows carry it and none
 	// ever carried `deadline`. Keys come from the model's REASON_* constants so
 	// there is one vocabulary rather than two spellings of it.
-	$reasons = array(
+	//
+	// Both parties may open a dispute, so the list depends on who is opening
+	// it: a vendor offered "Work not delivered" can only honestly pick Other
+	// (Basecamp 10312799183). With no role the answer is EVERY reason, because
+	// that call is labelling a stored dispute - the admin table, the dispute
+	// screen, a client rendering history - and it must know a vendor's keys
+	// as well as a buyer's.
+	$customer = array(
 		\WPSellServices\Models\Dispute::REASON_NOT_DELIVERED => __( 'Work not delivered', 'wp-sell-services' ),
 		\WPSellServices\Models\Dispute::REASON_POOR_QUALITY => __( 'Poor quality work', 'wp-sell-services' ),
 		\WPSellServices\Models\Dispute::REASON_NOT_AS_DESCRIBED => __( 'Not as described', 'wp-sell-services' ),
 		\WPSellServices\Models\Dispute::REASON_COMMUNICATION => __( 'Communication issues', 'wp-sell-services' ),
 		\WPSellServices\Models\Dispute::REASON_LATE_DELIVERY => __( 'Late delivery', 'wp-sell-services' ),
-		\WPSellServices\Models\Dispute::REASON_OTHER => __( 'Other', 'wp-sell-services' ),
 	);
 
+	$vendor = array(
+		\WPSellServices\Models\Dispute::REASON_BUYER_UNRESPONSIVE => __( 'Buyer unresponsive or not providing required information', 'wp-sell-services' ),
+		\WPSellServices\Models\Dispute::REASON_PAYMENT_ISSUE => __( 'Non-payment, or a payment or chargeback issue', 'wp-sell-services' ),
+		\WPSellServices\Models\Dispute::REASON_BUYER_CONDUCT => __( 'Abusive or inappropriate buyer behavior', 'wp-sell-services' ),
+		\WPSellServices\Models\Dispute::REASON_SCOPE_CHANGED => __( 'Requirements changed after the order was accepted', 'wp-sell-services' ),
+		\WPSellServices\Models\Dispute::REASON_OUT_OF_SCOPE => __( 'Buyer requesting work outside the agreed service', 'wp-sell-services' ),
+	);
+
+	// Other is common to both and always last, so a free-text description is
+	// available whatever the list becomes.
+	$other = array( \WPSellServices\Models\Dispute::REASON_OTHER => __( 'Other', 'wp-sell-services' ) );
+
+	if ( 'customer' === $role ) {
+		$reasons = $customer + $other;
+	} elseif ( 'vendor' === $role ) {
+		$reasons = $vendor + $other;
+	} else {
+		$reasons = $customer + $vendor + $other;
+	}
+
 	/**
-	 * Filter the reasons a buyer may give for opening a dispute.
+	 * Filter the reasons offered for opening a dispute.
 	 *
 	 * @since 1.5.1
+	 * @since 1.7.1 Added $role. Called with '' when labelling an existing
+	 *              dispute, so a reason added here should be added for '' too.
 	 *
 	 * @param array<string,string> $reasons Reason key => label.
+	 * @param string               $role    'customer', 'vendor', or '' for all.
 	 */
-	return apply_filters( 'wpss_dispute_reasons', $reasons );
+	return apply_filters( 'wpss_dispute_reasons', $reasons, $role );
 }
 
 /**

@@ -427,6 +427,12 @@ class VendorsController extends RestController {
 			return $status_block;
 		}
 
+		// Billing address, display name and avatar are account-level, shared
+		// with PUT /me and the AJAX twin through one writer. A vendor saves the
+		// whole form in one request; only the fields below this line are the
+		// vendor's own marketing copy.
+		wpss_save_member_profile( $request->get_params(), $user_id );
+
 		// Resolve avatar/cover attachment ids (accept both cover_image_id and
 		// the form's legacy cover_id name).
 		$avatar_id = $request->has_param( 'avatar_id' ) ? absint( $request->get_param( 'avatar_id' ) ) : 0;
@@ -437,15 +443,9 @@ class VendorsController extends RestController {
 			$cover_id = absint( $request->get_param( 'cover_id' ) );
 		}
 
-		// Global avatar user-meta (the source get_avatar_url reads). Mirrors the
-		// legacy form/AJAX path; the table avatar_id is set via the builder below.
-		if ( $request->has_param( 'avatar_id' ) ) {
-			if ( $avatar_id && wp_attachment_is_image( $avatar_id ) ) {
-				update_user_meta( $user_id, '_wpss_avatar_id', $avatar_id );
-			} elseif ( 0 === $avatar_id ) {
-				delete_user_meta( $user_id, '_wpss_avatar_id' );
-			}
-		}
+		// The global avatar user-meta that get_avatar_url reads is written by
+		// wpss_save_member_profile() above, with the rest of the account-level
+		// fields. The table's own avatar_id is still set by the builder below.
 
 		// Build the table-backed field set from the request (only present
 		// params), then persist through the canonical VendorService::update_profile()
@@ -503,16 +503,6 @@ class VendorsController extends RestController {
 		}
 		if ( $request->has_param( 'response_time' ) ) {
 			update_user_meta( $user_id, '_wpss_vendor_response_time', sanitize_text_field( $request->get_param( 'response_time' ) ) );
-		}
-
-		// Display name (WordPress user record).
-		if ( $request->has_param( 'display_name' ) ) {
-			wp_update_user(
-				array(
-					'ID'           => $user_id,
-					'display_name' => sanitize_text_field( $request->get_param( 'display_name' ) ),
-				)
-			);
 		}
 
 		/** This action is documented in src/Frontend/AjaxHandlers.php */

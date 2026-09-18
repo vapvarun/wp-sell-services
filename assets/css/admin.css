@@ -266,49 +266,6 @@
    Toast Notifications
    ========================================================================== */
 
-.wpss-toast-container {
-	position: fixed;
-	bottom: 20px;
-	right: 20px;
-	z-index: 160000;
-	display: flex;
-	flex-direction: column-reverse;
-	gap: 8px;
-}
-
-.wpss-toast {
-	padding: 12px 20px;
-	border-radius: var(--wpss-admin-radius-md);
-	font-size: 13px;
-	color: var(--wpss-white, #fff);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-	max-width: 360px;
-	opacity: 0;
-	transform: translateY(8px);
-	transition: opacity 0.3s, transform 0.3s;
-}
-
-.wpss-toast.is-visible {
-	opacity: 1;
-	transform: translateY(0);
-}
-
-.wpss-toast--success {
-	background: var(--wpss-admin-success);
-}
-
-.wpss-toast--error {
-	background: var(--wpss-admin-danger);
-}
-
-.wpss-toast--warning {
-	background: var(--wpss-admin-warning);
-}
-
-.wpss-toast--info {
-	background: var(--wpss-admin-accent);
-}
-
 /* Settings page styles are in admin-settings.css (loaded only on settings page). */
 
 /* ==========================================================================
@@ -1521,6 +1478,38 @@
 
 .wpss-requirement-required input[type="checkbox"] {
 	margin: 0;
+}
+
+/*
+ * Row remove controls: 40px target around a 28px button.
+ *
+ * All four authoring sections (packages, add-ons, requirements, FAQ) share this
+ * control and it measured 28x28 - our own responsive contract sets a 40px
+ * minimum, and the vendor dashboard's View button was raised for exactly this
+ * reason, so the admin was being held to a lower bar than the frontend
+ * (Basecamp 10304334073).
+ *
+ * The target is grown with an overlay rather than by sizing the button: setting
+ * min-height: 40px pushed the package header from 53px to 65px, and a taller row
+ * on every package, add-on, requirement and FAQ is a visible redesign of four
+ * screens to fix a hit area. The pseudo-element leaves every row exactly where
+ * it is.
+ */
+.wpss-remove-package,
+.wpss-remove-addon,
+.wpss-remove-requirement,
+.wpss-remove-faq {
+	position: relative;
+}
+
+.wpss-remove-package::after,
+.wpss-remove-addon::after,
+.wpss-remove-requirement::after,
+.wpss-remove-faq::after {
+	content: '';
+	position: absolute;
+	/* 28px button + 6px each side = 40px. */
+	inset: -6px;
 }
 
 .wpss-remove-requirement {
@@ -2886,7 +2875,7 @@
 .wpss-secret-field__input {
 	flex: 1 1 240px;
 	min-width: 0;
-	font-family: var(--wpss-admin-font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+	font-family: var(--wpss-font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
 	letter-spacing: 0.02em;
 }
 
@@ -2916,7 +2905,7 @@
 	font-weight: 600;
 	line-height: 1.6;
 	color: var(--wpss-admin-success);
-	background: var(--wpss-success-bg, rgba(0, 163, 42, 0.1));
+	background: var(--wpss-success-light, rgba(0, 163, 42, 0.1));
 }
 
 /* ==========================================================================
@@ -3384,4 +3373,55 @@
 .wpss-reports-table th:last-child,
 .wpss-reports-table td:last-child {
 	width: 280px;
+}
+
+/* ---------------------------------------------------------------------------
+   Metabox controls that named a class no stylesheet defined.
+   --------------------------------------------------------------------------- */
+
+/* Heading for a group of fields inside a metabox table cell. */
+.wpss-field-group-label {
+	display: block;
+	font-weight: 600;
+	color: var(--wpss-text, #1d2327);
+}
+
+/* FAQ repeater. The remove control is icon-only, so it needs a hit area and a
+   hover state of its own - a bare <button> inherits whatever the admin theme
+   gives it, which is a grey chrome box next to two flat icons. */
+.wpss-faq-remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	margin-inline-start: auto;
+	padding: 0;
+	border: 0;
+	border-radius: var(--wpss-radius-sm, 6px);
+	background: transparent;
+	color: var(--wpss-text-muted, #6b7280);
+	cursor: pointer;
+	transition: background var(--wpss-transition, 0.2s ease), color var(--wpss-transition, 0.2s ease);
+}
+
+.wpss-faq-remove:hover,
+.wpss-faq-remove:focus-visible {
+	background: var(--wpss-danger-light, #fee2e2);
+	color: var(--wpss-danger, #dc2626);
+}
+
+.wpss-faq-field {
+	margin-bottom: var(--wpss-space-3, 12px);
+}
+
+.wpss-faq-field label {
+	display: block;
+	margin-bottom: var(--wpss-space-1, 4px);
+	font-weight: 600;
+}
+
+.wpss-faq-field input,
+.wpss-faq-field textarea {
+	width: 100%;
 }

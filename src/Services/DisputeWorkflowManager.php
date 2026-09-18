@@ -1102,17 +1102,33 @@ class DisputeWorkflowManager {
 
 		// Add dispute creation.
 		if ( $dispute ) {
+			// The event, not the complaint. This carried $dispute->description,
+			// which put the opening statement on screen a third time - the Reason
+			// block reads the same column and the conversation panel reads the
+			// opening_statement message written from the same text. A timeline is
+			// a log of what happened; the statement itself belongs to the one
+			// surface that owns it (Basecamp 10304334811).
 			$timeline[] = array(
 				'type'       => 'dispute_opened',
 				'user_id'    => $dispute->initiator_id,
-				'content'    => $dispute->description,
+				'content'    => __( 'Opened this dispute.', 'wp-sell-services' ),
 				'created_at' => self::timeline_datetime( $dispute->created_at ),
 			);
 		}
 
 		foreach ( $conversation as $item ) {
 			$item_type = (string) ( $item['type'] ?? 'text' );
-			$is_text   = '' === $item_type || 'text' === $item_type;
+
+			// The opening statement is already the `dispute_opened` entry above.
+			// It also lives in the messages table so the conversation panel has
+			// something to show, and listing it here too put the complaint on
+			// the timeline twice - once with its text, once as a blank evidence
+			// line, because an opening statement carries no caption.
+			if ( 'opening_statement' === $item_type ) {
+				continue;
+			}
+
+			$is_text = '' === $item_type || 'text' === $item_type;
 
 			// A plain reply reads as a message; anything carrying a URL (an
 			// upload or a link) reads as evidence, with its caption as the

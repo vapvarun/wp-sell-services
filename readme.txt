@@ -275,6 +275,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * New      - Vendors get Proposals and Reviews sections in the dashboard, with review replies and declined-proposal status.
 * New      - Notifications for review replies, expired requests, dispute escalation and cancellation, withdrawal progress, service moderation decisions and tip receipts, each with an admin toggle.
 * New      - Setting to allow vendor-initiated refunds, off by default.
+* New      - Vendors opening a dispute now choose from reasons that describe their side: buyer unresponsive, payment or chargeback issue, abusive behaviour, requirements changed after acceptance, or work outside the agreed service.
 * Improve  - Upgrading preserves access for people who were already selling, including author-role sellers, and tells the owner who was migrated.
 * Improve  - The audit log now records withdrawals, dispute outcomes, vendor status changes, commission changes, moderation decisions, payments and every ledger entry; retention defaults to one year.
 * Improve  - Dispute pages show the outcome, refund amount and admin note to both parties; the link after posting a request opens the request list.
@@ -285,6 +286,13 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Improve  - One setup notice tells the owner when a mapped page is missing, no payment method is enabled, or the selected store plugin is inactive; links to unpublished pages are hidden.
 * Improve  - Dashboard lists, favourites and the vendor directory are paginated, the vendor directory can be sorted and filtered, admin counts are cached, and new indexes keep review moderation and the vendor directory fast on large sites.
 * Improve  - The delete-data setting now says that mapped pages are left in place, and pages the plugin creates are marked so a future release can offer to remove them.
+* Improve  - The "What happens next" steps now sit beside the order summary on checkout, where buyers see them before paying rather than after the payment form.
+* Improve  - Adding a package, add-on, requirement or FAQ in the service editor opens it ready to fill in, and each row's remove button is visible.
+* Improve  - Tipping is now part of Pro. Without Pro, buyers see no tip option and tip records are hidden; a tip a buyer already paid for is still credited to the vendor and still appears in their wallet history.
+* Improve  - Dispute emails name whoever actually opened the dispute, and the copy to the admin says which side they were on.
+* Improve  - The Open Dispute notice speaks to whoever is reading it, so a vendor is no longer told to settle with the seller.
+* Improve  - Analytics stays in Settings once Pro is active and points to the Analytics screen, instead of disappearing the moment Pro is installed.
+* Improve  - A vendor on a paid subscription plan can create up to that plan's service limit rather than the site-wide default.
 * Fix      - Refunds made in the PayPal or Razorpay dashboard now update the order and reverse the vendor credit.
 * Fix      - A Stripe payment webhook arriving before checkout finishes no longer creates a duplicate order, and cart refunds land on the right order.
 * Fix      - Offline and manual gateway refunds are marked as pending manual payment instead of being reported as sent.
@@ -321,10 +329,34 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Fix      - Outline buttons take their colours from the design system again, so they follow the theme instead of a fixed grey.
 * Fix      - The Contact Seller button no longer keeps the browser's default grey, which left it unreadable when the theme is dark.
 * Fix      - The Featured badge on portfolio items uses dark text on amber so the label is legible.
+* Fix      - A rejected service stays in the Rejected tab of Moderation with its reason, and the Total Services count no longer drops when one is rejected.
+* Fix      - Services created in the admin now follow the same rules as the vendor wizard: a category, a main image, a delivery time and the minimum price are required before one can go live.
+* Fix      - A withdrawal is checked against the vendor's balance again at the moment it is paid, so a payout approved before a refund cleared the earnings can no longer overdraw the vendor.
+* Fix      - Opening a dispute now shows the opening statement in the messages panel instead of "No messages yet", and lists it once on the activity timeline.
+* Fix      - Approving or rejecting a vendor sends one email instead of two.
+* Fix      - Buyer requests show every category they were filed under, on both the request card and the request page, instead of only the first.
+* Fix      - The service wizard offers the same eight requirement answer types as the admin editor, and the type names now mean the same thing on both.
+* Fix      - The services archive at /service/ shows the same number of services per page as the mapped services page, and the count above the grid matches what is listed.
+* Fix      - Date fields follow the site's light or dark mode instead of the visitor's operating system.
+* Fix      - The View action in My Services is styled as a button alongside Edit and Pause.
+* Fix      - The floating cart button no longer sits on top of the package card or the seller details while a buyer is choosing or paying.
+* Fix      - Buttons in older templates keep their own colours instead of taking the theme's link colour, which left some labels unreadable against their own background.
+* Fix      - The Earnings and Payouts tiles sit in even rows, so Total Withdrawn is no longer stranded on a line of its own.
+* Fix      - A showcase video fills the service gallery instead of half of it.
+* Fix      - The review countdown no longer reads zero days left while a review can still be left.
+* Fix      - Add New Service and the service links on the WooCommerce My Account tabs open the frontend wizard instead of an admin screen vendors are not allowed to use.
+* Fix      - The WooCommerce My Account service tabs load the plugin's styles and icons, and the vendor dashboard tab fits the column it sits in.
+* Fix      - On a phone the order list is reachable without scrolling past every stat card first.
+* Fix      - Dashboard sidebar headings and order filter counts meet contrast requirements in both light and dark mode.
+* Fix      - The order search button keeps its own hover colour instead of the theme's, and View looks the same in orders, sales and disputes.
+* Fix      - Controls that named a style the plugin never defined render as intended, including the focus ring and the file upload area.
+* Fix      - The delivery and requirements file type filters fire again, so a site restricting either upload keeps its rule.
 * Security - Message, contact and dispute attachments are stored privately like deliveries, dispute evidence checks ownership, and vendor payout details are encrypted at rest.
 * Security - Payment receipts are stored privately like deliveries instead of in the media library.
 * Security - Buyers and vendors can no longer refund or cancel orders outside their allowed steps; retired accept and decline actions removed.
 * Security - Repeated failed sign-ins now lock the account on the website as well as the API.
+* Security - Only the site owner can mark a service as Featured; a vendor can no longer promote their own service into the featured slot.
+* Security - Attachment names are shown with direction and formatting characters removed, so an uploaded file cannot disguise what it is in a dispute or an order.
 * Dev      - Stored files record which storage provider holds them.
 * Dev      - Payment intents carry the vendor id for every order type.
 * Dev      - New wpss_auth_login_challenge filter for two-factor plugins.
@@ -333,6 +365,8 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 * Dev      - Pay-order URLs are read-only; rails create store orders through the new wpss_ensure_pay_order seam.
 * Dev      - CI now runs the integration, REST and contract suites; run-tests.sh works on a fresh clone; OpenAPI marks Pro-only routes.
 * Dev      - The pay-order support matrix lives in one place and the docs check now validates link anchors and hook names.
+* Dev      - New filters wpss_tipping_enabled, wpss_vendor_max_services, wpss_user_can_feature_service, wpss_service_editor_url and wpss_analytics_page_url, plus the wpss_register_tipping_settings action.
+* Dev      - wpss_get_dispute_reasons() takes a role, and the wpss_dispute_reasons filter receives it; GET /disputes/options adds reasons_by_role and reason_labels.
 * Compat   - Requires WP Sell Services Pro 1.7.1. Install both updates together.
 
 = 1.7.0 - August 2026 =
@@ -778,6 +812,9 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * WP 6.7+ compatible (lazy-loaded translations)
 
 == Upgrade Notice ==
+
+= 1.7.1 =
+Tipping is now a Pro feature. If your site takes tips on Free, buyers will no longer see the tip option after this update, and past tips are hidden from order pages; any tip already paid for is still credited to the vendor and still shows in their wallet history. Installing Pro 1.7.1 restores tipping, on by default, with an on/off setting under Commission and Tax. Requires WP Sell Services Pro 1.7.1 - install both updates together.
 
 = 1.4.0 =
 WooCommerce sites can now take milestone, tip and extension payments. A cart plugin, when active, owns all payment. The order actions accept and reject, and the hooks wpss_order_accepted / wpss_order_rejected / wpss_order_delivered, have been removed.

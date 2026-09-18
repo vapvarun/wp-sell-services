@@ -461,31 +461,66 @@ class ReviewService {
 			return false;
 		}
 
-		$window_days = $this->get_review_window_days();
-
 		// 0 or negative means unlimited time to review.
-		if ( $window_days <= 0 ) {
+		if ( $this->get_review_window_days() <= 0 ) {
 			return true;
 		}
 
-		// Handle case where completed_at is a string instead of DateTimeImmutable.
+		$deadline = $this->get_review_deadline( $order );
+
+		if ( ! $deadline instanceof \DateTimeImmutable ) {
+			return false;
+		}
+
+		return new \DateTimeImmutable() <= $deadline;
+	}
+
+	/**
+	 * The moment the review window closes for an order.
+	 *
+	 * One deadline, computed once. The permission gate and the "N days left"
+	 * notice used to work it out separately, which is how they came to
+	 * disagree: the gate compared timestamps while the notice compared whole
+	 * days, so with a one-day window a buyer was told "0 days left" for the
+	 * first 22 hours of the 24 they actually had.
+	 *
+	 * The string branch below is belt-and-braces: ServiceOrder::$completed_at
+	 * is typed ?DateTimeImmutable, so it cannot currently arrive as a string.
+	 * It is kept because the gate already carried it and it costs nothing.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param ServiceOrder $order Order object.
+	 * @return \DateTimeImmutable|null Null when the order has no usable
+	 *                                 completion date, or the window is
+	 *                                 unlimited.
+	 */
+	public function get_review_deadline( ServiceOrder $order ): ?\DateTimeImmutable {
+		if ( ! $order->completed_at ) {
+			return null;
+		}
+
+		$window_days = $this->get_review_window_days();
+
+		if ( $window_days <= 0 ) {
+			return null;
+		}
+
 		$completed_at = $order->completed_at;
+
 		if ( is_string( $completed_at ) ) {
 			try {
 				$completed_at = new \DateTimeImmutable( $completed_at );
 			} catch ( \Exception $e ) {
-				return false;
+				return null;
 			}
 		}
 
 		if ( ! $completed_at instanceof \DateTimeImmutable ) {
-			return false;
+			return null;
 		}
 
-		$deadline = $completed_at->modify( "+{$window_days} days" );
-		$now      = new \DateTimeImmutable();
-
-		return $now <= $deadline;
+		return $completed_at->modify( "+{$window_days} days" );
 	}
 
 	/**
@@ -515,23 +550,29 @@ class ReviewService {
 			return 0;
 		}
 
-		$window_days = $this->get_review_window_days();
-
 		// 0 means unlimited.
-		if ( $window_days <= 0 ) {
+		if ( $this->get_review_window_days() <= 0 ) {
 			return null;
 		}
 
-		$deadline = $order->completed_at->modify( "+{$window_days} days" );
-		$now      = new \DateTimeImmutable();
+		$deadline = $this->get_review_deadline( $order );
+
+		if ( ! $deadline instanceof \DateTimeImmutable ) {
+			return 0;
+		}
+
+		$now = new \DateTimeImmutable();
 
 		if ( $now > $deadline ) {
 			return 0;
 		}
 
-		$interval = $now->diff( $deadline );
+		// Round the part-day UP. This number is only ever shown while the
+		// window is still open, so 0 is the one answer it must never give -
+		// and it did, for every buyer with less than a full day to go.
+		$remaining = $deadline->getTimestamp() - $now->getTimestamp();
 
-		return $interval->days;
+		return max( 1, (int) ceil( $remaining / DAY_IN_SECONDS ) );
 	}
 
 	/**

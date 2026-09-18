@@ -158,12 +158,19 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 	margin-bottom: var( --wpss-space-3, 12px );
 }
 
+/*
+ * Tokens, not white-on-white. These two literals were written for a tag
+ * sitting on a dark image overlay; on the card surface they render
+ * rgba(255,255,255,.9) over rgba(255,255,255,.15), which is white on white -
+ * contrast 1.00, the tag text invisible rather than merely low-contrast. The
+ * muted-surface pair follows the theme in both modes.
+ */
 .wpss-portfolio-public__tag {
 	padding: 2px var( --wpss-space-2, 8px );
 	border-radius: var( --wpss-radius-full, 9999px );
-	background: rgba(255,255,255,.15);
+	background: var( --wpss-bg-muted, #f3f4f6 );
 	font-size: var( --wpss-text-xs, 12px );
-	color: rgba(255,255,255,.9);
+	color: var( --wpss-text-secondary, #374151 );
 	line-height: 1.6;
 	font-weight: 500;
 }

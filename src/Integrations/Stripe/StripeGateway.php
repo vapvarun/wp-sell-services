@@ -29,11 +29,6 @@ class StripeGateway implements PaymentGatewayInterface {
 	private const GATEWAY_ID = 'stripe';
 
 	/**
-	 * Stripe API version.
-	 */
-	private const API_VERSION = '2023-10-16';
-
-	/**
 	 * Settings option name.
 	 */
 	private const OPTION_NAME = 'wpss_stripe_settings';
@@ -1046,7 +1041,7 @@ class StripeGateway implements PaymentGatewayInterface {
 			'success'      => true,
 			'order_id'     => $order->id,
 			'order_number' => $order->order_number,
-			'redirect_url' => wpss_get_order_requirements_url( $order->id ),
+			'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_requirements_url( $order->id ), 'stripe' ),
 		);
 	}
 
@@ -1875,7 +1870,7 @@ class StripeGateway implements PaymentGatewayInterface {
 			'method'  => $method,
 			'headers' => array(
 				'Authorization'  => 'Bearer ' . $this->get_secret_key(),
-				'Stripe-Version' => self::API_VERSION,
+				'Stripe-Version' => wpss_stripe_api_version(),
 				'Content-Type'   => 'application/x-www-form-urlencoded',
 			),
 			'timeout' => 30,

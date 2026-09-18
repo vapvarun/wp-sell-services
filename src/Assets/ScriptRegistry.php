@@ -124,6 +124,21 @@ class ScriptRegistry {
 	 */
 	public static function register_ui(): void {
 		self::register( self::HANDLE_UI, self::SRC_UI );
+
+		// The dialog's own button labels. They were English literals inside
+		// wpss-ui.js, so replacing window.confirm() with our dialog would have
+		// moved the untranslated buttons rather than fixed them - a non-English
+		// owner saw the browser's language before and would have seen ours
+		// after (Basecamp 10304333428). Localized once here, so every
+		// wpssConfirm caller inherits it.
+		wp_localize_script(
+			self::HANDLE_UI,
+			'wpssUiI18n',
+			array(
+				'confirm' => __( 'Confirm', 'wp-sell-services' ),
+				'cancel'  => __( 'Cancel', 'wp-sell-services' ),
+			)
+		);
 	}
 
 	/**
@@ -132,6 +147,10 @@ class ScriptRegistry {
 	 * @return void
 	 */
 	public static function enqueue_ui(): void {
-		self::enqueue( self::HANDLE_UI, self::SRC_UI );
+		// Through register_ui(), not self::enqueue(), so the localized dialog
+		// labels are attached on this path too. Going straight to enqueue()
+		// skipped them and the buttons fell back to their English literals.
+		self::register_ui();
+		wp_enqueue_script( self::HANDLE_UI );
 	}
 }

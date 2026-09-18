@@ -28,8 +28,10 @@ echo "\n\n";
 
 if ( ! empty( $is_admin ) ) {
 	echo esc_html__( 'A dispute has been opened and requires your review. Please investigate and mediate between both parties.', 'wp-sell-services' );
+} elseif ( ! empty( $is_opener ) ) {
+	echo esc_html__( 'Your dispute has been submitted. Our support team will review the case and reach out to both parties.', 'wp-sell-services' );
 } else {
-	echo esc_html__( 'A dispute has been opened on your order. Our support team will review the case and reach out to both parties.', 'wp-sell-services' );
+	echo esc_html__( 'A dispute has been opened on your order. Please review the details and respond through the order page. Our support team will mediate if needed.', 'wp-sell-services' );
 }
 echo "\n\n";
 
@@ -46,6 +48,11 @@ if ( ! empty( $is_admin ) ) {
 	echo "\n";
 	printf( esc_html__( 'Vendor: %s', 'wp-sell-services' ), esc_html( $vendor ? $vendor->display_name : '#' . $order->vendor_id ) );
 	echo "\n";
+	if ( ! empty( $opener_name ) ) {
+		/* translators: 1: person's name, 2: their role on the order */
+		printf( esc_html__( 'Opened by: %1$s (%2$s)', 'wp-sell-services' ), esc_html( $opener_name ), ! empty( $opened_by_vendor ) ? esc_html__( 'vendor', 'wp-sell-services' ) : esc_html__( 'buyer', 'wp-sell-services' ) );
+		echo "\n";
+	}
 }
 echo esc_html__( 'Status: Disputed', 'wp-sell-services' );
 echo "\n----------\n\n";

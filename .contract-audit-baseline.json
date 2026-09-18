@@ -39,6 +39,10 @@
     {
       "id": "hook-consumed-never-fired:wpss_pro_push_dispatch",
       "reason": "Fired by the SCHEDULER, not by a literal do_action the audit can see: PushNotificationService schedules it through Action Scheduler and falls back to wp_schedule_single_event (src/Push/PushNotificationService.php:197 and :210). Verified 2026-08-18."
+    },
+    {
+      "id": "hook-consumed-never-fired:wpss_email_retry",
+      "reason": "Fired through Action Scheduler, not do_action: EmailService::on_mail_failed() queues it via Scheduler::schedule_single( self::RETRY_HOOK, ... ) at src/Services/EmailService.php:2149, and Action Scheduler calls the hook when the job runs. The audit only matches a literal do_action. Verified 2026-09-17"
     }
   ]
 }

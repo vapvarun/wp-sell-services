@@ -249,11 +249,43 @@ class DisputeService {
 			? (int) $order->vendor_id
 			: (int) $order->customer_id;
 
+		// The reason column holds a KEY from wpss_get_dispute_reasons(), and
+		// every renderer does $reasons[$key] ?? $key - so an unknown value is
+		// printed raw to the buyer, the vendor and the admin. Nothing validated
+		// it: sanitize_text_field() happily stores a whole translated sentence.
+		// It has happened twice. The late-delivery cron once wrote the
+		// translated LABEL (see DisputeWorkflowManager, fixed there), and rows
+		// carrying "Late delivery" as a value still exist. Coerce rather than
+		// refuse: the caller is mid-flow and the text survives as the
+		// description, so nothing is lost but the bad key.
+		$reason = sanitize_text_field( $reason );
+
+		// Checked against the list the opener was offered, not every reason.
+		$opener_role = ( (int) $order->customer_id === $opened_by ) ? 'customer' : 'vendor';
+
+		if ( ! array_key_exists( $reason, wpss_get_dispute_reasons( $opener_role ) ) ) {
+			wpss_log(
+				sprintf(
+					'Dispute opened on order %1$d with an unrecognised reason "%2$s"; stored as "%3$s".',
+					$order_id,
+					$reason,
+					\WPSellServices\Models\Dispute::REASON_OTHER
+				),
+				'warning'
+			);
+
+			if ( '' === trim( $description ) ) {
+				$description = $reason;
+			}
+
+			$reason = \WPSellServices\Models\Dispute::REASON_OTHER;
+		}
+
 		$dispute_data = array(
 			'order_id'      => $order_id,
 			'initiated_by'  => $opened_by,
 			'respondent_id' => $respondent_id,
-			'reason'        => sanitize_text_field( $reason ),
+			'reason'        => $reason,
 			'description'   => sanitize_textarea_field( $description ),
 			'status'        => self::STATUS_OPEN,
 			'evidence'      => ! empty( $meta ) ? wp_json_encode( $meta ) : null,
@@ -291,6 +323,36 @@ class DisputeService {
 		// after the insert. Never populated before 1.7.1.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update( $this->table, array( 'dispute_number' => sprintf( 'DSP-%06d', $dispute_id ) ), array( 'id' => $dispute_id ), array( '%s' ), array( '%d' ) );
+
+		// The statement is also the first message. get_evidence() reads only the
+		// messages table, so a dispute that wrote its statement to the row and
+		// nowhere else opened with "No messages yet" printed directly beneath
+		// the complaint it was meant to be showing - which reads as though the
+		// save failed.
+		//
+		// Written here rather than through add_evidence(): that method fires
+		// wpss_dispute_evidence_added, which notifies the other party, and this
+		// party is already being told through the dispute-opened mail. Inside
+		// the open transaction, so a failure further down takes the message with
+		// the dispute instead of orphaning it.
+		//
+		// `description` stays on the dispute row: both screens render it in
+		// their own structured block above the conversation, and neither copy is
+		// ever edited after this method, so they cannot drift. Collapsing them
+		// to one home is a migration, not a bug fix.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->insert(
+			$this->messages_table,
+			array(
+				'dispute_id'   => $dispute_id,
+				'sender_id'    => $opened_by,
+				'sender_role'  => 'opener_statement',
+				'message'      => $dispute_data['description'],
+				'message_type' => 'opening_statement',
+				'created_at'   => $dispute_data['created_at'],
+			),
+			array( '%d', '%d', '%s', '%s', '%s', '%s' )
+		);
 
 		// Record the pre-dispute status BEFORE overwriting it. $order was loaded
 		// above, before any status change, so it holds the real one; cancel()
@@ -371,7 +433,11 @@ class DisputeService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$this->table} WHERE order_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// Newest first. An order can be disputed again after an earlier
+				// dispute is resolved, and with no ORDER BY this returned
+				// whichever row the engine found first - so the email about a
+				// new dispute could name the old one's opener and reason.
+				"SELECT * FROM {$this->table} WHERE order_id = %d ORDER BY id DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$order_id
 			)
 		);

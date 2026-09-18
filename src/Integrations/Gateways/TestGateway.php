@@ -277,7 +277,7 @@ class TestGateway implements PaymentGatewayInterface {
 				array(
 					'order_id'     => $order->id,
 					'order_number' => $order->order_number,
-					'redirect_url' => wpss_get_order_requirements_url( $order->id ),
+					'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_requirements_url( $order->id ), 'test' ),
 				)
 			);
 			return;
@@ -404,7 +404,7 @@ class TestGateway implements PaymentGatewayInterface {
 			array(
 				'order_id'     => $order->id,
 				'order_number' => $order->order_number,
-				'redirect_url' => wpss_get_order_requirements_url( $order->id ),
+				'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_requirements_url( $order->id ), 'test' ),
 			)
 		);
 	}

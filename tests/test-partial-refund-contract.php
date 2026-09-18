@@ -21,6 +21,8 @@ use WPSellServices\Services\BuyerRequestService;
 use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\OrderService;
 
+require_once __DIR__ . '/exit-on-fail.php';
+
 $fails = 0;
 $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ) . $label . "\n";

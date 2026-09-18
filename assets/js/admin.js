@@ -9,6 +9,28 @@
 	'use strict';
 
 	/**
+	 * Instantiate Lucide icons in markup added after page load.
+	 *
+	 * admin-icons.js calls lucide.createIcons() once on DOMContentLoaded, which
+	 * only ever sees the server-rendered page. Every row added from a
+	 * wp.template (package, add-on, requirement, FAQ) therefore kept its raw
+	 * `<i data-lucide>` placeholders, and because those buttons contain nothing
+	 * but the icon they collapsed to 0x0 - the owner saw no Remove control and
+	 * no expand chevron at all. Calling this after each append is the one place
+	 * that gap is closed for all four repeaters.
+	 *
+	 * createIcons() replaces `[data-lucide]` elements with `<svg>`, so icons it
+	 * has already rendered no longer match and a repeat pass is a cheap no-op.
+	 *
+	 * @see Basecamp 10286092451
+	 */
+	function renderIcons() {
+		if (window.lucide && typeof lucide.createIcons === 'function') {
+			lucide.createIcons();
+		}
+	}
+
+	/**
 	 * Initialize admin functionality
 	 */
 	function init() {
@@ -44,6 +66,7 @@
 
 			var template = wp.template('wpss-package-item');
 			$container.append(template({ index: count }));
+			renderIcons();
 
 			// Hide add button if max reached
 			if (count + 1 >= maxPackages) {
@@ -129,6 +152,7 @@
 			var index = $container.find('.wpss-faq-item').length;
 			var template = wp.template('wpss-faq-item');
 			$container.append(template({ index: index }));
+			renderIcons();
 		});
 
 		// Remove FAQ
@@ -171,6 +195,7 @@
 			var index = $container.find('.wpss-requirement-item').length;
 			var template = wp.template('wpss-requirement-item');
 			$container.append(template({ index: index }));
+			renderIcons();
 		});
 
 		// Remove Requirement
@@ -226,6 +251,7 @@
 			var index = $container.find('.wpss-addon-item').length;
 			var template = wp.template('wpss-addon-item');
 			$container.append(template({ index: index }));
+			renderIcons();
 		});
 
 		// Remove Addon

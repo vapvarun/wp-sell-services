@@ -135,7 +135,7 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 							<span><?php esc_html_e( 'Attach files', 'wp-sell-services' ); ?></span>
 						</label>
 						<?php // Same accept list as the order composer - one answer to "what may be uploaded". ?>
-						<input type="file" name="attachments[]" id="wpss-reply-attachments" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt" style="display:none;">
+						<input type="file" name="attachments[]" id="wpss-reply-attachments" class="wpss-visually-hidden" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.txt">
 						<span class="wpss-messaging__composer-attachments" aria-live="polite"></span>
 					</div>
 					<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--sm"><?php esc_html_e( 'Send', 'wp-sell-services' ); ?></button>

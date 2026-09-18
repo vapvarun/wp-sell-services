@@ -27,7 +27,7 @@ wp_enqueue_style( 'wpss-vendor-dashboard', WPSS_PLUGIN_URL . 'assets/css/vendor-
 do_action( 'wpss_vendor_dashboard_before', $user_id );
 ?>
 
-<div class="wpss-dashboard">
+<div class="wpss-dashboard wpss-dashboard--embedded">
 	<header class="wpss-dashboard__header">
 		<h1 class="wpss-dashboard__title"><?php esc_html_e( 'Vendor Dashboard', 'wp-sell-services' ); ?></h1>
 		<div class="wpss-dashboard__actions">
