@@ -84,6 +84,9 @@
             "name": "Orders"
         },
         {
+            "name": "Payments"
+        },
+        {
             "name": "Paypal-payouts"
         },
         {
@@ -7139,6 +7142,655 @@
                     "Orders"
                 ],
                 "operationId": "get_wpss_v1_orders_order_id_tip",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "order_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": ""
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                }
+            }
+        },
+        "/wpss/v1/payments/confirm": {
+            "x-wpss-tier": "free",
+            "post": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "post_wpss_v1_payments_confirm",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "gateway": {
+                                        "type": "string",
+                                        "description": "Payment gateway ID."
+                                    },
+                                    "payment_id": {
+                                        "type": "string",
+                                        "description": "Gateway payment/order ID."
+                                    },
+                                    "service_id": {
+                                        "type": "integer",
+                                        "description": "Service ID."
+                                    },
+                                    "package_id": {
+                                        "type": "integer",
+                                        "default": 0,
+                                        "description": "Package index."
+                                    },
+                                    "pay_order": {
+                                        "type": "integer",
+                                        "default": 0,
+                                        "description": "Existing order ID to pay for."
+                                    }
+                                },
+                                "required": [
+                                    "gateway",
+                                    "payment_id",
+                                    "service_id"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wpss/v1/payments/create-intent": {
+            "x-wpss-tier": "free",
+            "post": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "post_wpss_v1_payments_create_intent",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "service_id": {
+                                        "type": "integer",
+                                        "description": "Service ID."
+                                    },
+                                    "package_id": {
+                                        "type": "integer",
+                                        "default": 0,
+                                        "description": "Package index."
+                                    },
+                                    "gateway": {
+                                        "type": "string",
+                                        "description": "Payment gateway ID."
+                                    },
+                                    "pay_order": {
+                                        "type": "integer",
+                                        "default": 0,
+                                        "description": "Existing order ID to pay for (from proposal)."
+                                    }
+                                },
+                                "required": [
+                                    "service_id",
+                                    "gateway"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wpss/v1/payments/methods": {
+            "x-wpss-tier": "free",
+            "get": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "get_wpss_v1_payments_methods",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                }
+            }
+        },
+        "/wpss/v1/payments/offline/submit": {
+            "x-wpss-tier": "pro",
+            "post": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "post_wpss_v1_payments_offline_submit",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "service_id": {
+                                        "type": "integer"
+                                    },
+                                    "package_id": {
+                                        "type": "integer"
+                                    },
+                                    "payment_info": {
+                                        "type": "string",
+                                        "description": "Payment reference or details."
+                                    }
+                                },
+                                "required": [
+                                    "service_id",
+                                    "package_id"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wpss/v1/payments/paypal/capture": {
+            "x-wpss-tier": "pro",
+            "post": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "post_wpss_v1_payments_paypal_capture",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "paypal_order_id": {
+                                        "type": "string"
+                                    },
+                                    "service_id": {
+                                        "type": "integer"
+                                    },
+                                    "package_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "paypal_order_id",
+                                    "service_id",
+                                    "package_id"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wpss/v1/payments/paypal/create-order": {
+            "x-wpss-tier": "pro",
+            "post": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "post_wpss_v1_payments_paypal_create_order",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "minimum": 0.01
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "default": "USD"
+                                    },
+                                    "service_id": {
+                                        "type": "integer"
+                                    },
+                                    "package_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "amount",
+                                    "service_id",
+                                    "package_id"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wpss/v1/payments/razorpay/create-order": {
+            "x-wpss-tier": "pro",
+            "post": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "post_wpss_v1_payments_razorpay_create_order",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "minimum": 0.01
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "default": "USD"
+                                    },
+                                    "service_id": {
+                                        "type": "integer"
+                                    },
+                                    "package_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "amount",
+                                    "service_id",
+                                    "package_id"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wpss/v1/payments/razorpay/verify": {
+            "x-wpss-tier": "pro",
+            "post": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "post_wpss_v1_payments_razorpay_verify",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "razorpay_order_id": {
+                                        "type": "string"
+                                    },
+                                    "razorpay_payment_id": {
+                                        "type": "string"
+                                    },
+                                    "razorpay_signature": {
+                                        "type": "string"
+                                    },
+                                    "pay_order": {
+                                        "type": "integer",
+                                        "default": 0
+                                    },
+                                    "is_multi_checkout": {
+                                        "type": "boolean",
+                                        "default": false
+                                    },
+                                    "service_id": {
+                                        "type": "integer",
+                                        "default": 0
+                                    },
+                                    "package_id": {
+                                        "type": "integer",
+                                        "default": 0
+                                    }
+                                },
+                                "required": [
+                                    "razorpay_order_id",
+                                    "razorpay_payment_id",
+                                    "razorpay_signature"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wpss/v1/payments/stripe/confirm": {
+            "x-wpss-tier": "pro",
+            "post": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "post_wpss_v1_payments_stripe_confirm",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "payment_intent_id": {
+                                        "type": "string"
+                                    },
+                                    "service_id": {
+                                        "type": "integer"
+                                    },
+                                    "package_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "payment_intent_id",
+                                    "service_id",
+                                    "package_id"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wpss/v1/payments/stripe/create-intent": {
+            "x-wpss-tier": "pro",
+            "post": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "post_wpss_v1_payments_stripe_create_intent",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "minimum": 0.01
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "default": "USD"
+                                    },
+                                    "service_id": {
+                                        "type": "integer"
+                                    },
+                                    "package_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "amount",
+                                    "service_id",
+                                    "package_id"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wpss/v1/payments/{order_id}/status": {
+            "x-wpss-tier": "pro",
+            "get": {
+                "tags": [
+                    "Payments"
+                ],
+                "operationId": "get_wpss_v1_payments_order_id_status",
                 "security": [
                     {
                         "basicAuth": []

@@ -41,6 +41,48 @@ if ( ! is_array( $config ) || empty( $config['namespaces'] ) ) {
 	exit( 1 );
 }
 
+/*
+ * Refuse to generate on the wrong rail.
+ *
+ * A route only exists in the spec if it is registered on the site the generator
+ * runs against, and whole controllers are rail-gated: PaymentController
+ * registers only when wpss_uses_standalone_payments() is true, because a cart
+ * adapter owns all payment when one is active. Generating on a WooCommerce site
+ * therefore produces a spec with every /payments route silently missing - and
+ * the mobile client builds itself from this document.
+ *
+ * The config has always DECLARED the required rail in _generation.rail and
+ * explained why. Nothing read it, so the declaration was prose: it was possible
+ * to regenerate on the wrong rail, commit an 11-route regression, and have every
+ * gate pass. That is exactly what happened producing the 1.7.2 spec (184 paths
+ * down to 173).
+ *
+ * Fail loudly instead, and say how to fix it.
+ */
+$required_rail = (string) ( $config['_generation']['rail'] ?? '' );
+
+if ( '' !== $required_rail && function_exists( 'wpss_get_option' ) ) {
+	$active_rail = (string) wpss_get_option( 'general', 'ecommerce_platform' );
+
+	if ( $active_rail !== $required_rail ) {
+		fwrite(
+			STDERR,
+			sprintf(
+				"Refusing to generate: this spec must be built on the '%s' rail, but the site is on '%s'.
+"
+				. "Rail-gated controllers do not register on the wrong rail, so the spec would silently lose routes.
+"
+				. "Set Settings > General > E-commerce Platform to '%s', regenerate, then set it back.
+",
+				$required_rail,
+				'' === $active_rail ? '(unset)' : $active_rail,
+				$required_rail
+			)
+		);
+		exit( 1 );
+	}
+}
+
 /**
  * Turn a WP route regex into an OpenAPI path template + its path-parameter names.
  * `/wpss/v1/orders/(?P<id>[\d]+)` -> ['/wpss/v1/orders/{id}', ['id']]
