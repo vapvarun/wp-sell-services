@@ -847,3 +847,43 @@ function wpss_submit_button( string $text, string $type = 'primary', string $nam
 		esc_html( $text )
 	);
 }
+
+/**
+ * Whether an admin hook suffix or screen id refers to one of our pages.
+ *
+ * WordPress derives a submenu hook suffix from the PARENT MENU TITLE, not from
+ * the parent slug: sanitize_title( $menu_title ) . '_page_' . $page_slug. The
+ * menu title is renameable - Pro's White Label sells exactly that - so any
+ * comparison against a literal like 'sell-services_page_wpss-reports' silently
+ * stops matching the moment an owner renames the menu, and whatever it guarded
+ * simply never happens. That has now cost two separate defects: the vendor
+ * detail screen sat on "Loading" forever (fixed in 1.7.2 by capturing the
+ * suffix at registration), and the Reports queue lost the script carrying its
+ * suspend/close-account confirmation (Basecamp 10320551487).
+ *
+ * Compare the page slug instead, which no site owner can change. Handles both
+ * the 'toplevel_page_<slug>' and '<parent>_page_<slug>' forms.
+ *
+ * Where a class registers the page itself, capturing the return value of
+ * add_submenu_page() is still the most direct answer; this helper is for the
+ * places that only receive the hook.
+ *
+ * @since 1.7.3
+ *
+ * @param string $hook  Hook suffix or WP_Screen id.
+ * @param string ...$slugs One or more page slugs, e.g. 'wpss-reports'.
+ * @return bool True when $hook addresses any of the given slugs.
+ */
+function wpss_is_admin_page( string $hook, string ...$slugs ): bool {
+	foreach ( $slugs as $slug ) {
+		if ( '' === $slug ) {
+			continue;
+		}
+
+		if ( $hook === 'toplevel_page_' . $slug || str_ends_with( $hook, '_page_' . $slug ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}

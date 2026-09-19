@@ -981,8 +981,7 @@ class ServiceModerationPage {
 		 * Widen the status and skip the approved-only clause for exactly those
 		 * two, and only on a single service. The archive and every public list
 		 * keep the original behaviour.
-		 */
-		/*
+		 *
 		 * is_single(), not is_singular( 'wpss_service' ). The post-type-qualified
 		 * form calls get_queried_object(), which is still empty at pre_get_posts
 		 * for a ?p=ID request, so it answers false on exactly the URL this needs
@@ -1344,7 +1343,7 @@ class ServiceModerationPage {
 		}
 
 		// Skip the moderation page itself.
-		if ( 'wp-sell-services_page_wpss-moderation' === $screen->id ) {
+		if ( wpss_is_admin_page( (string) $screen->id, 'wpss-moderation' ) ) {
 			return;
 		}
 
