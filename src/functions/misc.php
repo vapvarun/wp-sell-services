@@ -868,7 +868,7 @@ function wpss_submit_button( string $text, string $type = 'primary', string $nam
  * add_submenu_page() is still the most direct answer; this helper is for the
  * places that only receive the hook.
  *
- * @since 1.7.3
+ * @since 1.7.2
  *
  * @param string $hook  Hook suffix or WP_Screen id.
  * @param string ...$slugs One or more page slugs, e.g. 'wpss-reports'.
@@ -900,7 +900,7 @@ function wpss_is_admin_page( string $hook, string ...$slugs ): bool {
  * Call this instead of wp_enqueue_style() for plugin CSS so the RTL pairing is
  * not something each call site has to remember.
  *
- * @since 1.7.3
+ * @since 1.7.2
  *
  * @param string   $handle   Style handle, e.g. 'wpss-orders'.
  * @param string   $relative Path under the plugin root, e.g. 'assets/css/orders.css'.

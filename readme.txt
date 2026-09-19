@@ -278,6 +278,23 @@ Fixes from a QA audit of the vendor and buyer dashboards.
 * Improve  - The service wizard says when you have added more tags than the limit, instead of accepting them and dropping the extras on save. The limit is filterable.
 * Improve  - Remove buttons on wizard extras, FAQs, requirements, deliverables and gallery images are visible and named for screen readers.
 * Improve  - The link from Review Moderation opens Settings at the section holding the setting.
+* Fix      - A vendor and the reviewer can open a service that is waiting for approval. Holding it back correctly hid it from the public and hid it from them too, so the reviewer could not see what they were being asked to approve.
+* Fix      - Withdraw and Escalate stay available on a dispute after the other party replies, which is when they matter most.
+* Fix      - A long requirement answer can be expanded. The Show more control was being clipped away by the same rule that shortened the text.
+* Fix      - Removing a requirement row in the service wizard no longer logs JavaScript errors.
+* Fix      - The Reports screen keeps its confirmation step when the plugin menu has been renamed, so Suspend and Close account still ask before they act.
+* Fix      - File evidence on a dispute is visible to the site owner. Uploaded files were rendering as empty messages on the admin dispute screen.
+* Fix      - Creating or updating a service through the REST API follows the same rules as the wizard: the tag limit, no repeated gallery image, and the checks that decide whether a service is ready to publish. This also covers the Pause and Publish control on the vendor dashboard.
+* Fix      - Right-to-left sites get the right stylesheet on the order screens, the order conversation and the vendor dashboard.
+* Fix      - An extra with no price is refused instead of being published to buyers as a free add-on.
+* Fix      - Mark all as read stays available when the unread notifications are on a later page, and a custom page size can no longer empty the list.
+* Fix      - A custom project completes when its last remaining phase is cancelled, instead of staying In Progress with nothing left to do.
+* Fix      - The Edit control on checkout underlines on hover again.
+* Fix      - Add Image in the service wizard can be reached with a keyboard, wizard messages are announced by screen readers, and the pricing fields are linked to their labels.
+* Fix      - The back link on a dispute is styled, and keeps its colour on themes that restyle links inside content.
+* Fix      - Analytics and sales figures follow the site's timezone. Ranges were built in UTC while orders are recorded in site time, so totals covered the wrong window on any site not set to UTC.
+* Fix      - Today is available on the vendor analytics API and on the free Sales tab.
+* Dev      - The REST catalogue's version is taken from the plugin itself rather than a value kept by hand, which had left it a release behind.
 * Fix      - A service using only the Basic package can be published. Switched-off Standard and Premium tiers were being validated and their empty fields reported against Basic.
 * Fix      - A Standard or Premium tier that is switched on but left empty is refused, on the Pricing step and at Publish.
 * Fix      - Services awaiting approval no longer go live when a vendor publishes from the dashboard. Moderation now applies however a service is published, and services already published without approval return to the review queue on upgrade.

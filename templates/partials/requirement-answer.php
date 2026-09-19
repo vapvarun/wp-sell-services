@@ -17,7 +17,7 @@
  *   string $wpss_answer_text  The answer, already unslashed, not yet escaped.
  *
  * @package WPSellServices
- * @since   1.7.3
+ * @since   1.7.2
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -27,7 +27,7 @@ $wpss_answer_text = isset( $wpss_answer_text ) ? (string) $wpss_answer_text : ''
 /**
  * Length past which an answer is collapsed behind a Show more control.
  *
- * @since 1.7.3
+ * @since 1.7.2
  *
  * @param int    $threshold Character count. Default 300.
  * @param string $answer    The answer being rendered.

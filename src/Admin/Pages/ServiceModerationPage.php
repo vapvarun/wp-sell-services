@@ -896,7 +896,7 @@ class ServiceModerationPage {
 	 * post has to be found from whichever of the two addressing forms the link
 	 * used: ?p=ID or the pretty permalink's slug.
 	 *
-	 * @since 1.7.3
+	 * @since 1.7.2
 	 *
 	 * @param \WP_Query $query The query object.
 	 * @return int Service post ID, or 0 when it cannot be resolved.
@@ -926,7 +926,7 @@ class ServiceModerationPage {
 	 * Everyone else - including a logged-in buyer and another vendor - is
 	 * refused, so an unapproved service stays off the public site.
 	 *
-	 * @since 1.7.3
+	 * @since 1.7.2
 	 *
 	 * @param int $service_id Service post ID.
 	 * @return bool

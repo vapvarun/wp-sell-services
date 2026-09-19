@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-19T12:19:13+00:00\n"
+"POT-Creation-Date: 2026-09-19T13:07:11+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -633,8 +633,8 @@ msgstr ""
 #: src/Integrations/Gateways/OfflineGateway.php:1500
 #: src/Privacy/PersonalData.php:280
 #: src/Privacy/PersonalData.php:292
-#: templates/dashboard/sections/disputes.php:423
-#: templates/dashboard/sections/disputes.php:462
+#: templates/dashboard/sections/disputes.php:432
+#: templates/dashboard/sections/disputes.php:471
 #: templates/emails/requirements-reminder.php:68
 #: templates/myaccount/service-orders.php:68
 #: templates/myaccount/service-orders.php:84
@@ -730,8 +730,8 @@ msgstr ""
 #: src/Privacy/PersonalData.php:317
 #: src/Privacy/PersonalData.php:329
 #: src/Privacy/PersonalData.php:515
-#: templates/dashboard/sections/disputes.php:425
-#: templates/dashboard/sections/disputes.php:465
+#: templates/dashboard/sections/disputes.php:434
+#: templates/dashboard/sections/disputes.php:474
 #: templates/dashboard/sections/earnings.php:446
 #: templates/dashboard/sections/edit-request.php:155
 #: templates/emails/cancellation-requested.php:83
@@ -1327,9 +1327,9 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:54
 #: src/Privacy/PersonalData.php:268
 #: src/Privacy/PersonalData.php:327
-#: templates/dashboard/sections/disputes.php:169
-#: templates/dashboard/sections/disputes.php:424
-#: templates/dashboard/sections/disputes.php:464
+#: templates/dashboard/sections/disputes.php:178
+#: templates/dashboard/sections/disputes.php:433
+#: templates/dashboard/sections/disputes.php:473
 #: templates/order/extension-view.php:167
 #: templates/order/order-view.php:2040
 msgid "Reason"
@@ -2319,8 +2319,8 @@ msgstr[1] ""
 #: src/Models/Message.php:146
 #: src/Models/Message.php:170
 #: src/Services/DisputeWorkflowManager.php:1166
-#: templates/dashboard/sections/disputes.php:186
-#: templates/dashboard/sections/disputes.php:225
+#: templates/dashboard/sections/disputes.php:195
+#: templates/dashboard/sections/disputes.php:234
 msgid "System"
 msgstr ""
 
@@ -2822,7 +2822,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:516
 #: src/Admin/Pages/WithdrawalsPage.php:535
 #: src/Frontend/Shortcodes.php:880
-#: templates/dashboard/sections/disputes.php:427
+#: templates/dashboard/sections/disputes.php:436
 #: templates/myaccount/service-orders.php:73
 #: templates/myaccount/service-orders.php:143
 msgid "Actions"
@@ -3224,7 +3224,7 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:117
 #: src/Admin/Tables/OrdersListTable.php:119
 #: src/Frontend/Shortcodes.php:900
-#: templates/dashboard/sections/disputes.php:474
+#: templates/dashboard/sections/disputes.php:483
 #: templates/dashboard/sections/orders.php:370
 #: templates/dashboard/sections/sales.php:392
 #: templates/dashboard/sections/services.php:287
@@ -8726,7 +8726,7 @@ msgid "You do not have permission to add evidence to this dispute."
 msgstr ""
 
 #: src/Frontend/AjaxHandlers.php:1318
-#: templates/dashboard/sections/disputes.php:273
+#: templates/dashboard/sections/disputes.php:282
 msgid "Evidence image"
 msgstr ""
 
@@ -9141,7 +9141,7 @@ msgid "Could not start tip flow. Please try again."
 msgstr ""
 
 #: src/Frontend/Frontend.php:276
-#: templates/dashboard/sections/disputes.php:311
+#: templates/dashboard/sections/disputes.php:320
 #: templates/dashboard/sections/messages.php:141
 #: templates/dashboard/sections/messages.php:198
 msgid "Send"
@@ -9165,7 +9165,7 @@ msgid "Ask a site administrator to review this dispute and decide it? You and th
 msgstr ""
 
 #: src/Frontend/Frontend.php:282
-#: templates/dashboard/sections/disputes.php:374
+#: templates/dashboard/sections/disputes.php:383
 msgid "Ask for a reviewer"
 msgstr ""
 
@@ -9174,7 +9174,7 @@ msgid "Withdraw this dispute? The order goes back to where it was, with no refun
 msgstr ""
 
 #: src/Frontend/Frontend.php:284
-#: templates/dashboard/sections/disputes.php:380
+#: templates/dashboard/sections/disputes.php:389
 msgid "Withdraw dispute"
 msgstr ""
 
@@ -12266,7 +12266,7 @@ msgstr ""
 
 #: src/functions/files.php:373
 #: src/Models/Message.php:142
-#: templates/dashboard/sections/disputes.php:246
+#: templates/dashboard/sections/disputes.php:255
 msgid "Attachment"
 msgstr ""
 
@@ -15103,8 +15103,8 @@ msgid "Dispute number"
 msgstr ""
 
 #: src/Privacy/PersonalData.php:272
-#: templates/dashboard/sections/disputes.php:426
-#: templates/dashboard/sections/disputes.php:470
+#: templates/dashboard/sections/disputes.php:435
+#: templates/dashboard/sections/disputes.php:479
 msgid "Opened"
 msgstr ""
 
@@ -18158,113 +18158,113 @@ msgstr ""
 msgid "Back to disputes"
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:79
+#: templates/dashboard/sections/disputes.php:88
 msgid "All disputes"
 msgstr ""
 
 #. translators: %s: order number
-#: templates/dashboard/sections/disputes.php:87
+#: templates/dashboard/sections/disputes.php:96
 #, php-format
 msgid "Dispute for order %s"
 msgstr ""
 
 #. translators: %s: refunded amount
-#: templates/dashboard/sections/disputes.php:118
+#: templates/dashboard/sections/disputes.php:127
 #, php-format
 msgid "%s was refunded to the buyer. The rest of the order amount stays in your earnings."
 msgstr ""
 
 #. translators: %s: refunded amount
-#: templates/dashboard/sections/disputes.php:121
+#: templates/dashboard/sections/disputes.php:130
 #, php-format
 msgid "%s is being refunded to you. The refund is sent manually, outside the site, and is on its way."
 msgstr ""
 
 #. translators: %s: refunded amount
-#: templates/dashboard/sections/disputes.php:124
+#: templates/dashboard/sections/disputes.php:133
 #, php-format
 msgid "%s was refunded to you."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:128
+#: templates/dashboard/sections/disputes.php:137
 msgid "The full order amount was refunded to the buyer. No earnings were released for this order."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:130
+#: templates/dashboard/sections/disputes.php:139
 msgid "The full order amount is being refunded to you. The refund is sent manually, outside the site, and is on its way."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:132
+#: templates/dashboard/sections/disputes.php:141
 msgid "The full order amount was refunded to you."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:136
+#: templates/dashboard/sections/disputes.php:145
 msgid "The order was marked completed and your earnings were released as usual."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:137
+#: templates/dashboard/sections/disputes.php:146
 msgid "The order was marked completed. No refund was issued."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:140
+#: templates/dashboard/sections/disputes.php:149
 msgid "This dispute was closed without a ruling and the order went back to where it was."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:145
+#: templates/dashboard/sections/disputes.php:154
 msgid "Outcome"
 msgstr ""
 
 #. translators: %s: date the dispute was resolved
-#: templates/dashboard/sections/disputes.php:158
+#: templates/dashboard/sections/disputes.php:167
 #, php-format
 msgid "Resolved on %s"
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:182
+#: templates/dashboard/sections/disputes.php:191
 msgid "Activity"
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:216
+#: templates/dashboard/sections/disputes.php:225
 msgid "Messages &amp; evidence"
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:220
+#: templates/dashboard/sections/disputes.php:229
 msgid "No messages yet. Add one below to make your case to the reviewer and the other party."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:299
+#: templates/dashboard/sections/disputes.php:308
 msgid "Add a message or evidence"
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:302
+#: templates/dashboard/sections/disputes.php:311
 msgid "Explain your side, or add context for the reviewer…"
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:306
+#: templates/dashboard/sections/disputes.php:315
 msgid "Attach file"
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:316
+#: templates/dashboard/sections/disputes.php:325
 msgid "This dispute is closed. No further messages can be added."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:331
+#: templates/dashboard/sections/disputes.php:340
 msgid "View order"
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:388
+#: templates/dashboard/sections/disputes.php:397
 msgid "Asking for a reviewer brings a site administrator in to decide. Withdrawing closes the dispute and returns the order to where it was, with no refund and no decision recorded."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:390
+#: templates/dashboard/sections/disputes.php:399
 msgid "Asking for a reviewer brings a site administrator in to decide."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:392
+#: templates/dashboard/sections/disputes.php:401
 msgid "Withdrawing closes the dispute and returns the order to where it was, with no refund and no decision recorded."
 msgstr ""
 
-#: templates/dashboard/sections/disputes.php:417
+#: templates/dashboard/sections/disputes.php:426
 msgid "You have no disputes. Disputes you open on an order will appear here."
 msgstr ""
 

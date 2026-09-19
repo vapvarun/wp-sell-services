@@ -1240,7 +1240,7 @@ function wpss_serve_order_file(): void {
  * are resolved through wpss_get_order_file_url(), which already knows the
  * difference and applies the permission check, so neither caller has to.
  *
- * @since 1.7.3
+ * @since 1.7.2
  *
  * @param mixed $raw The message's `attachments` value: a JSON string or array.
  * @return array<int, array{name: string, url: string}> Links, possibly empty.

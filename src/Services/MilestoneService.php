@@ -767,7 +767,7 @@ class MilestoneService {
 		 * was never re-checked and sat In Progress forever even though every
 		 * phase was settled.
 		 *
-		 * @since 1.7.3
+		 * @since 1.7.2
 		 *
 		 * @param int $milestone_id    Cancelled phase sub-order ID.
 		 * @param int $parent_order_id Parent order ID.
