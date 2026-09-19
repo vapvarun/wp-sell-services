@@ -382,6 +382,31 @@ class ServiceWizard {
 	 * @param \WP_Post|null $_service Existing service post (unused, data from Alpine.js).
 	 * @return void
 	 */
+	/**
+	 * Empty form-level error summary node for one wizard step.
+	 *
+	 * WpssFormError.summary() fills this node; it does NOT create one. A step
+	 * whose markup omitted it therefore validated, blocked Next, and showed the
+	 * vendor nothing at all - which is what happened on Extras, where
+	 * extrasErrors() reported a missing add-on price into a box that was never
+	 * rendered (Basecamp 10320551766).
+	 *
+	 * Written once and called by every step, because the previous three copies
+	 * were what let the other three steps go without.
+	 *
+	 * @since 1.7.2
+	 *
+	 * @return void
+	 */
+	private function render_error_summary(): void {
+		?>
+		<div class="wpss-form-error-summary" hidden>
+			<p class="wpss-form-error-summary__title"><?php esc_html_e( 'Please fix the following:', 'wp-sell-services' ); ?></p>
+			<ul class="wpss-form-error-summary__list"></ul>
+		</div>
+		<?php
+	}
+
 	private function render_step_basic( ?\WP_Post $_service ): void {
 		$wpss_publish_floors = wpss_service_publish_thresholds();
 		$categories          = wpss_get_category_terms( array( 'hide_empty' => false ) );
@@ -406,11 +431,7 @@ class ServiceWizard {
 		</div>
 
 		<div class="wpss-wizard__step-body">
-			<?php /* Form-level error summary, populated by WpssFormError.summary() on validate failure. */ ?>
-			<div class="wpss-form-error-summary" hidden>
-				<p class="wpss-form-error-summary__title"><?php esc_html_e( 'Please fix the following:', 'wp-sell-services' ); ?></p>
-				<ul class="wpss-form-error-summary__list"></ul>
-			</div>
+			<?php $this->render_error_summary(); ?>
 
 			<div class="wpss-form-group">
 				<label for="service_title" class="wpss-form-label">
@@ -526,11 +547,7 @@ class ServiceWizard {
 		</div>
 
 		<div class="wpss-wizard__step-body">
-			<?php /* Form-level error summary, populated by WpssFormError.summary() on validate failure. */ ?>
-			<div class="wpss-form-error-summary" hidden>
-				<p class="wpss-form-error-summary__title"><?php esc_html_e( 'Please fix the following:', 'wp-sell-services' ); ?></p>
-				<ul class="wpss-form-error-summary__list"></ul>
-			</div>
+			<?php $this->render_error_summary(); ?>
 
 			<?php
 			/* Tab strip — Basic always visible; Standard / Premium only when enabled. */
@@ -741,11 +758,7 @@ class ServiceWizard {
 		</div>
 
 		<div class="wpss-wizard__step-body">
-			<?php /* Form-level error summary, populated by WpssFormError.summary() on validate failure. */ ?>
-			<div class="wpss-form-error-summary" hidden>
-				<p class="wpss-form-error-summary__title"><?php esc_html_e( 'Please fix the following:', 'wp-sell-services' ); ?></p>
-				<ul class="wpss-form-error-summary__list"></ul>
-			</div>
+			<?php $this->render_error_summary(); ?>
 
 			<?php /* Main image — the only required field on this step. */ ?>
 			<div class="wpss-form-group">
@@ -852,6 +865,7 @@ class ServiceWizard {
 		</div>
 
 		<div class="wpss-wizard__step-body">
+			<?php $this->render_error_summary(); ?>
 			<div class="wpss-requirements-list">
 				<template x-for="(req, index) in data.requirements" :key="index">
 					<div class="wpss-requirement-item">
@@ -957,6 +971,7 @@ class ServiceWizard {
 		</div>
 
 		<div class="wpss-wizard__step-body">
+			<?php $this->render_error_summary(); ?>
 			<!-- Service Extras -->
 			<div class="wpss-section">
 				<h3 class="wpss-section__title"><?php esc_html_e( 'Service Extras', 'wp-sell-services' ); ?></h3>
@@ -1100,6 +1115,7 @@ class ServiceWizard {
 		</div>
 
 		<div class="wpss-wizard__step-body">
+			<?php $this->render_error_summary(); ?>
 			<div class="wpss-review-grid">
 				<!-- Service Preview Card -->
 				<div class="wpss-review-section">
