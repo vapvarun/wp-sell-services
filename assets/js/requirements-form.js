@@ -159,14 +159,63 @@
 		/**
 		 * Handle new files.
 		 *
+		 * Appending and stopping at the cap silently discarded whatever would
+		 * not fit. On a single-file requirement that meant the SECOND pick was
+		 * thrown away: the list still showed the first file, input.files still
+		 * held it, and the buyer submitted a file they had just replaced. A
+		 * one-file control means "this file", so a fresh pick replaces.
+		 *
+		 * Above one file, appending across picker sessions is the useful
+		 * behaviour (pick three, then two more) - but reaching the cap now says
+		 * so rather than dropping the remainder in silence.
+		 *
 		 * @param {FileList} newFiles The files to add.
 		 */
 		function handleFiles(newFiles) {
-			for (var i = 0; i < newFiles.length && files.length < maxFiles; i++) {
-				files.push(newFiles[i]);
+			if (maxFiles === 1) {
+				files = [];
 			}
+
+			var dropped = 0;
+
+			for (var i = 0; i < newFiles.length; i++) {
+				if (files.length < maxFiles) {
+					files.push(newFiles[i]);
+				} else {
+					dropped++;
+				}
+			}
+
 			renderFiles();
 			syncInput();
+			announceDropped(dropped);
+		}
+
+		/**
+		 * Tell the user when the cap refused part of their selection.
+		 *
+		 * @param {number} dropped How many files did not fit.
+		 */
+		function announceDropped(dropped) {
+			var $notice = $area.find('.wpss-requirements-form__upload-notice');
+
+			if (!dropped) {
+				$notice.remove();
+				return;
+			}
+
+			if (!$notice.length) {
+				$notice = $('<p class="wpss-requirements-form__upload-notice" role="status"></p>');
+				$area.append($notice);
+			}
+
+			var template = 1 === dropped
+				? (wpss_ajax.i18n.files_capped || 'This field takes up to %1$d. %2$d file was not added.')
+				: (wpss_ajax.i18n.files_capped_plural || 'This field takes up to %1$d. %2$d files were not added.');
+
+			$notice.text(
+				template.replace('%1$d', maxFiles).replace('%2$d', dropped)
+			);
 		}
 
 		/**

@@ -33,8 +33,12 @@ wp_localize_script(
 	array(
 		'ajax_url' => admin_url( 'admin-ajax.php' ),
 		'i18n'     => array(
-			'submit_error' => __( 'Failed to submit requirements.', 'wp-sell-services' ),
-			'ajax_error'   => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+			'submit_error'        => __( 'Failed to submit requirements.', 'wp-sell-services' ),
+			'ajax_error'          => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+			/* translators: 1: how many files this field accepts, 2: how many of the selected files were refused. */
+			'files_capped'        => __( 'This field takes up to %1$d. %2$d file was not added.', 'wp-sell-services' ),
+			/* translators: 1: how many files this field accepts, 2: how many of the selected files were refused. */
+			'files_capped_plural' => __( 'This field takes up to %1$d. %2$d files were not added.', 'wp-sell-services' ),
 		),
 	)
 );

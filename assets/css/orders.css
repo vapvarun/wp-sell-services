@@ -1126,6 +1126,14 @@
 	color: var(--wpss-text-muted, #6b7280);
 }
 
+/* Shown only when the field's cap refused part of a selection, so the files
+   that did not fit are never dropped in silence. */
+.wpss-requirements-form__upload-notice {
+	margin: 0.75rem 0 0;
+	font-size: 0.8125rem;
+	color: var(--wpss-warning-dark, var(--wpss-text));
+}
+
 .wpss-requirements-form__file-list {
 	margin-top: 1rem;
 	text-align: left;

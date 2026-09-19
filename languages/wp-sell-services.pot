@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-19T05:09:00+00:00\n"
+"POT-Creation-Date: 2026-09-19T05:24:18+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -2589,7 +2589,7 @@ msgstr ""
 #: templates/order/order-requirements.php:68
 #: templates/order/order-view.php:325
 #: templates/order/order-view.php:912
-#: templates/order/requirements-form.php:334
+#: templates/order/requirements-form.php:338
 msgid "Submit Requirements"
 msgstr ""
 
@@ -9148,7 +9148,7 @@ msgid "Upload File"
 msgstr ""
 
 #: src/Frontend/Frontend.php:279
-#: templates/order/requirements-form.php:337
+#: templates/order/requirements-form.php:341
 msgid "Submitting..."
 msgstr ""
 
@@ -17665,7 +17665,7 @@ msgid "Invalid value for %s."
 msgstr ""
 
 #: src/Services/RequirementsService.php:589
-#: templates/order/requirements-form.php:236
+#: templates/order/requirements-form.php:240
 msgid "Yes"
 msgstr ""
 
@@ -21109,70 +21109,82 @@ msgstr ""
 msgid "Failed to submit requirements."
 msgstr ""
 
+#. translators: 1: how many files this field accepts, 2: how many of the selected files were refused.
+#: templates/order/requirements-form.php:39
+#, php-format
+msgid "This field takes up to %1$d. %2$d file was not added."
+msgstr ""
+
+#. translators: 1: how many files this field accepts, 2: how many of the selected files were refused.
+#: templates/order/requirements-form.php:41
+#, php-format
+msgid "This field takes up to %1$d. %2$d files were not added."
+msgstr ""
+
 #. translators: 1: filled count, 2: total required
-#: templates/order/requirements-form.php:83
-#: templates/order/requirements-form.php:434
+#: templates/order/requirements-form.php:87
+#: templates/order/requirements-form.php:438
 #, php-format
 msgid "%1$d of %2$d required answered"
 msgstr ""
 
-#: templates/order/requirements-form.php:100
+#: templates/order/requirements-form.php:104
 #: templates/single-request.php:212
 msgid "Project Description"
 msgstr ""
 
-#: templates/order/requirements-form.php:109
+#: templates/order/requirements-form.php:113
 msgid "Please describe your project in detail..."
 msgstr ""
 
-#: templates/order/requirements-form.php:112
+#: templates/order/requirements-form.php:116
 msgid "Include as much detail as possible to help the seller understand your needs."
 msgstr ""
 
-#: templates/order/requirements-form.php:118
+#: templates/order/requirements-form.php:122
 msgid "Reference Files (Optional)"
 msgstr ""
 
-#: templates/order/requirements-form.php:129
+#: templates/order/requirements-form.php:133
 msgid "Drag files here or click to upload"
 msgstr ""
 
 #. translators: %s: max file size
-#: templates/order/requirements-form.php:134
-#: templates/order/requirements-form.php:280
+#: templates/order/requirements-form.php:138
+#: templates/order/requirements-form.php:284
 #, php-format
 msgid "Maximum file size: %s"
 msgstr ""
 
-#: templates/order/requirements-form.php:188
+#: templates/order/requirements-form.php:192
 msgid "-- Select an option --"
 msgstr ""
 
-#: templates/order/requirements-form.php:208
+#: templates/order/requirements-form.php:212
 msgid "Hold Ctrl/Cmd to select multiple options"
 msgstr ""
 
-#: templates/order/requirements-form.php:237
+#: templates/order/requirements-form.php:241
 msgid "No"
 msgstr ""
 
-#: templates/order/requirements-form.php:275
+#: templates/order/requirements-form.php:279
 msgid "Drag a file here or click to upload"
 msgstr ""
 
-#: templates/order/requirements-form.php:321
+#: templates/order/requirements-form.php:325
 msgid "Additional Notes (Optional)"
 msgstr ""
 
-#: templates/order/requirements-form.php:328
+#: templates/order/requirements-form.php:332
 msgid "Any additional information or special requests..."
 msgstr ""
 
-#: templates/order/requirements-form.php:343
+#: templates/order/requirements-form.php:347
 msgid "The seller has already started; your answers will be sent to them right away."
 msgstr ""
 
-#: templates/order/requirements-form.php:344
+#: templates/order/requirements-form.php:348
 msgid "Once submitted, the seller will start working on your order."
 msgstr ""
 
