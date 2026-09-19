@@ -34,6 +34,25 @@ class VendorsPage {
 	 *
 	 * @var VendorProfileRepository
 	 */
+	/**
+	 * Hook suffix WordPress assigned to this screen.
+	 *
+	 * Captured from add_submenu_page() rather than assumed, because the suffix
+	 * is built from the PARENT MENU TITLE. A site that renames the menu - via
+	 * White Label or the wpss_admin_menu_label filter - gets a different suffix,
+	 * and the hardcoded comparison this replaced then failed silently: the
+	 * vendor detail screen's script never loaded, so every tab sat on "Loading"
+	 * with no console error to explain it.
+	 *
+	 * @var string
+	 */
+	private string $hook_suffix = '';
+
+	/**
+	 * Vendor profile repository.
+	 *
+	 * @var VendorProfileRepository
+	 */
 	private VendorProfileRepository $vendor_repo;
 
 	/**
@@ -111,6 +130,7 @@ class VendorsPage {
 		);
 
 		if ( $hook ) {
+			$this->hook_suffix = $hook;
 			add_action( 'load-' . $hook, array( $this, 'add_help_tabs' ) );
 		}
 	}
@@ -156,7 +176,7 @@ class VendorsPage {
 	 * @return void
 	 */
 	public function enqueue_scripts( string $hook ): void {
-		if ( 'sell-services_page_wpss-vendors' !== $hook ) {
+		if ( '' === $this->hook_suffix || $hook !== $this->hook_suffix ) {
 			return;
 		}
 

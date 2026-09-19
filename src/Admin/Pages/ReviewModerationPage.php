@@ -289,7 +289,9 @@ JS;
 						printf(
 							/* translators: %s: settings page URL. */
 							wp_kses_post( __( 'Review moderation is currently <strong>disabled</strong>, so new reviews are auto-approved. You can still review existing entries below, or <a href="%s">enable moderation in Settings</a>.', 'wp-sell-services' ) ),
-							esc_url( admin_url( 'admin.php?page=wpss-settings' ) )
+							// #vendor so the owner lands on the section holding the
+							// setting, as every other cross-link here does.
+							esc_url( admin_url( 'admin.php?page=wpss-settings#vendor' ) )
 						);
 						?>
 					</p>

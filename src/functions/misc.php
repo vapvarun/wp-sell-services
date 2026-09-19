@@ -203,6 +203,35 @@ function wpss_get_user_notifications( int $user_id, array $args = array() ): arr
 }
 
 /**
+ * Count a user's notifications.
+ *
+ * Needed so the notifications screen can page: it used to take the 50 most
+ * recent and stop, with nothing in the UI to reach anything older.
+ *
+ * @since 1.7.2
+ *
+ * @param int                  $user_id User ID.
+ * @param array<string, mixed> $args    Query arguments (unread_only).
+ * @return int Total matching notifications.
+ */
+function wpss_count_user_notifications( int $user_id, array $args = array() ): int {
+	global $wpdb;
+	$table = $wpdb->prefix . 'wpss_notifications';
+
+	$args = wp_parse_args( $args, array( 'unread_only' => false ) );
+
+	$sql    = "SELECT COUNT(*) FROM {$table} WHERE user_id = %d";
+	$params = array( $user_id );
+
+	if ( $args['unread_only'] ) {
+		$sql .= ' AND is_read = 0';
+	}
+
+	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- $sql is hardcoded fragments with %d placeholders; values come via prepare().
+	return (int) $wpdb->get_var( $wpdb->prepare( $sql, $params ) );
+}
+
+/**
  * Validate + store conversation message file attachments.
  *
  * Single source of truth for message, contact and dispute-reply attachments,

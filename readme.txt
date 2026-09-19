@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.7.1
+Stable tag: 1.7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -268,6 +268,27 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.7.2 - September 2026 =
+
+Fixes from a QA audit of the vendor and buyer dashboards.
+
+* New      - Members can withdraw a dispute they opened, or ask a site administrator to review one, from the dispute screen. Both already worked over the API but had no button.
+* New      - The notifications list is paginated, so notifications older than the newest 50 can be reached.
+* Improve  - The service wizard says when you have added more tags than the limit, instead of accepting them and dropping the extras on save. The limit is filterable.
+* Improve  - Remove buttons on wizard extras, FAQs, requirements, deliverables and gallery images are visible and named for screen readers.
+* Improve  - The link from Review Moderation opens Settings at the section holding the setting.
+* Fix      - A service using only the Basic package can be published. Switched-off Standard and Premium tiers were being validated and their empty fields reported against Basic.
+* Fix      - A Standard or Premium tier that is switched on but left empty is refused, on the Pricing step and at Publish.
+* Fix      - Services awaiting approval no longer go live when a vendor publishes from the dashboard. Moderation now applies however a service is published, and services already published without approval return to the review queue on upgrade.
+* Fix      - A Yes/No requirement offers both answers. It showed only Yes, and when the question was required Yes was the only answer a buyer could give.
+* Fix      - A custom project is only marked complete once a phase has actually been delivered. Cancelling every phase marked the order complete and blocked proposing a new one.
+* Fix      - The vendor detail screen in wp-admin works when the plugin menu has been renamed. Its tabs previously sat on Loading forever.
+* Fix      - The selected order filter stays readable on themes that recolour content links.
+* Fix      - The checkout steps appear before the payment form on phones.
+* Fix      - Removing a wizard extra no longer logs JavaScript errors.
+* Dev      - Removed templates/order/order-confirmation.php, which no rail rendered.
+* Compat   - Requires WP Sell Services Pro 1.7.2. Install both updates together.
 
 = 1.7.1 - September 2026 =
 

@@ -107,6 +107,16 @@ function wpssServiceWizard(existingData = {}) {
 		 * Initialize the wizard.
 		 */
 		init() {
+			/*
+			 * A service saved before duplicates were refused can still carry the
+			 * same attachment twice. Hydrating that straight into the x-for list
+			 * reproduces the same duplicate-key crash on open, so the vendor could
+			 * not edit their own service. Make the hydrated list unique first.
+			 */
+			this.data.gallery.images = this.data.gallery.images.filter(
+				(image, index, all) => image && index === all.findIndex((other) => other && other.id === image.id)
+			);
+
 			// Mark steps as completed based on existing data
 			if (existingData.id) {
 				this.markCompletedSteps();
@@ -263,25 +273,24 @@ function wpssServiceWizard(existingData = {}) {
 						this.validationErrors.push(wpssWizard.strings.validationDesc);
 						fieldErrors['service_description'] = wpssWizard.strings.validationDesc;
 					}
+					// The save paths cut the list to max_tags, so without this the
+					// vendor typed six tags, continued, and the sixth was dropped
+					// with nothing said.
+					const maxTags = parseInt((wpssWizard.limits || {}).max_tags, 10) || 0;
+					const tagCount = (this.data.tags || '')
+						.split(',')
+						.map((t) => t.trim())
+						.filter((t) => t.length).length;
+					if (maxTags > 0 && tagCount > maxTags) {
+						this.validationErrors.push(wpssWizard.strings.validationTags);
+						fieldErrors['service_tags'] = wpssWizard.strings.validationTags;
+					}
 					break;
 
 				case 'pricing':
-					if (!this.isPackageValid('basic')) {
-						this.validationErrors.push(this.basicPriceError());
-					}
-					// Validate enabled packages have a name. Description is no longer
-					// required — vendors describe their tier via the Features list
-					// (bullets sell better than prose, matching Fiverr's pattern).
-					['basic', 'standard', 'premium'].forEach((tier) => {
-						const pkg = this.data.packages[tier];
-						if (tier === 'basic' || pkg.enabled) {
-							if (!pkg.name || !pkg.name.trim()) {
-								this.validationErrors.push(
-									(wpssWizard.strings.validationPkgName || 'Package name is required for the %s package.').replace('%s', tier)
-								);
-							}
-						}
-					});
+					// Description is not required — vendors describe a tier via the
+					// Features list (bullets sell better than prose).
+					this.validationErrors.push(...this.pricingErrors());
 					break;
 
 				case 'gallery':
@@ -297,7 +306,7 @@ function wpssServiceWizard(existingData = {}) {
 			// the primitive script hasn't loaded yet (older builds, dev cache).
 			if (typeof window.WpssFormError !== 'undefined') {
 				// Clear all known fields first so we don't leave stale errors behind.
-				['service_title', 'service_category', 'service_description', 'wpss-wizard-main-image'].forEach((id) => {
+				['service_title', 'service_category', 'service_description', 'service_tags', 'wpss-wizard-main-image'].forEach((id) => {
 					window.WpssFormError.clear(id);
 				});
 
@@ -337,6 +346,61 @@ function wpssServiceWizard(existingData = {}) {
 		 * @param {string} tier - Package tier.
 		 * @return {boolean} Is valid.
 		 */
+		/**
+		 * Re-draw Lucide icons after Alpine renders new rows.
+		 *
+		 * Lucide swaps [data-lucide] elements for <svg> once, on page load.
+		 * Anything Alpine adds afterwards - a new extra, FAQ, requirement,
+		 * deliverable or gallery image - kept its placeholder element, so the
+		 * icon-only remove button rendered as an empty 40x40 box and looked
+		 * like there was no way to remove the row at all.
+		 */
+		refreshIcons() {
+			this.$nextTick(() => {
+				if (window.lucide && typeof window.lucide.createIcons === 'function') {
+					window.lucide.createIcons();
+				}
+			});
+		},
+
+		/**
+		 * Validation messages for every tier the vendor actually offers.
+		 *
+		 * Shared by the Pricing step and by Publish so the two cannot drift:
+		 * previously both looked at Basic only, so an enabled Standard or
+		 * Premium with no price or delivery time sailed through both.
+		 * Disabled tiers are skipped here and by isPackageValid.
+		 *
+		 * @return {Array} Validation messages, empty when every offered tier is complete.
+		 */
+		pricingErrors() {
+			const errors = [];
+
+			['basic', 'standard', 'premium'].forEach((tier) => {
+				const pkg = this.data.packages[tier];
+
+				if (tier !== 'basic' && !pkg.enabled) {
+					return;
+				}
+
+				if (!pkg.name || !pkg.name.trim()) {
+					errors.push(
+						(wpssWizard.strings.validationPkgName || 'Package name is required for the %s package.').replace('%s', tier)
+					);
+				}
+
+				if (!this.isPackageValid(tier)) {
+					errors.push(
+						tier === 'basic'
+							? this.basicPriceError()
+							: (wpssWizard.strings.validationPkgPrice || 'Set a price and delivery time for the %s package.').replace('%s', pkg.name || tier)
+					);
+				}
+			});
+
+			return errors;
+		},
+
 		isPackageValid(tier) {
 			const pkg = this.data.packages[tier];
 
@@ -386,6 +450,7 @@ function wpssServiceWizard(existingData = {}) {
 			}
 			this.data.packages[tier].enabled = true;
 			this.activePackage = tier;
+			this.refreshIcons();
 		},
 
 		/**
@@ -414,6 +479,7 @@ function wpssServiceWizard(existingData = {}) {
 		 */
 		addFeature(tier) {
 			this.data.packages[tier].features.push('');
+			this.refreshIcons();
 		},
 
 		/**
@@ -443,6 +509,7 @@ function wpssServiceWizard(existingData = {}) {
 				required: false,
 				options: ''
 			});
+			this.refreshIcons();
 		},
 
 		/**
@@ -482,6 +549,7 @@ function wpssServiceWizard(existingData = {}) {
 				price: '',
 				delivery_days_extra: 0
 			});
+			this.refreshIcons();
 		},
 
 		/**
@@ -519,6 +587,7 @@ function wpssServiceWizard(existingData = {}) {
 				question: '',
 				answer: ''
 			});
+			this.refreshIcons();
 		},
 
 		/**
@@ -573,6 +642,18 @@ function wpssServiceWizard(existingData = {}) {
 						url: attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url
 					};
 				} else if (type === 'images') {
+					// The gallery strip is keyed on image.id. The same attachment
+					// twice means the same key twice, which breaks Alpine's x-for
+					// reconciliation outright - it throws and leaves orphaned empty
+					// tiles where the duplicate should be. A gallery holding one
+					// picture twice is never what a vendor wants anyway, and on the
+					// free tier it would burn one of only four slots, so refuse it
+					// and say why.
+					if (this.data.gallery.images.some((image) => image.id === attachment.id)) {
+						this.showNotice(wpssWizard.strings.duplicateImage, 'error');
+						return;
+					}
+
 					const maxGallery = this.limits.max_gallery;
 					if (maxGallery === -1 || this.data.gallery.images.length < maxGallery) {
 						this.data.gallery.images.push({
@@ -723,9 +804,7 @@ function wpssServiceWizard(existingData = {}) {
 			if (!this.data.description || this.data.description.length < 120) {
 				this.validationErrors.push(wpssWizard.strings.validationDesc);
 			}
-			if (!this.isPackageValid('basic')) {
-				this.validationErrors.push(this.basicPriceError());
-			}
+			this.validationErrors.push(...this.pricingErrors());
 			if (!this.data.gallery.main) {
 				this.validationErrors.push(wpssWizard.strings.validationImage);
 			}

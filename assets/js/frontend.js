@@ -798,6 +798,29 @@
 			WPSS.submitDisputeEvidence($(this));
 		});
 
+		// Escalate a dispute. The REST route requires a reason, so ask for one
+		// rather than sending an empty string the API would reject.
+		$(document).on('click', '.wpss-dispute-escalate', function(e) {
+			e.preventDefault();
+			WPSS.disputeAction($(this), 'escalate', {
+				requireReason: true,
+				confirm: wpssData.i18n.disputeEscalateConfirm,
+				confirmText: wpssData.i18n.disputeEscalateBtn,
+				tone: 'primary'
+			});
+		});
+
+		// Withdraw a dispute the member opened. Reason is optional here.
+		$(document).on('click', '.wpss-dispute-cancel', function(e) {
+			e.preventDefault();
+			WPSS.disputeAction($(this), 'cancel', {
+				requireReason: false,
+				confirm: wpssData.i18n.disputeCancelConfirm,
+				confirmText: wpssData.i18n.disputeCancelBtn,
+				tone: 'danger'
+			});
+		});
+
 		// Delivery form submission.
 		$(document).on('submit', '#wpss-deliver-form', function(e) {
 			e.preventDefault();
@@ -1016,6 +1039,60 @@
 	 * Uses FormData so the optional file upload rides along; the nonce and
 	 * dispute_id are carried by the form's own hidden fields.
 	 */
+	/**
+	 * Escalate or withdraw a dispute.
+	 *
+	 * Both actions already existed as REST routes with no way to reach them
+	 * from the dashboard. The permission and status rules live on the server;
+	 * this asks for confirmation, sends the request, and reloads so the page
+	 * reflects the new status and the timeline entry the workflow writes.
+	 *
+	 * @param {jQuery} $btn    The clicked control.
+	 * @param {string} action  'escalate' or 'cancel'.
+	 * @param {Object} options requireReason, confirm, confirmText, tone.
+	 */
+	WPSS.disputeAction = function($btn, action, options) {
+		const disputeId = parseInt($btn.data('dispute-id'), 10);
+		if (!disputeId) {
+			return;
+		}
+
+		WPSS.showConfirm(options.confirm, function(reason) {
+			reason = reason || '';
+
+			const original = $btn.text();
+			$btn.prop('disabled', true).text(wpssData.i18n.submitting);
+
+			// wpssData exposes the namespace base as apiUrl; the dashboard bundle
+			// calls the same base restUrl, so accept either rather than depend
+			// on which script localised the page.
+			const apiBase = wpssData.apiUrl
+				|| (typeof wpssUnifiedDashboard !== 'undefined' ? wpssUnifiedDashboard.restUrl : '');
+
+			$.ajax({
+				url: apiBase + 'disputes/' + disputeId + '/' + action,
+				type: 'POST',
+				data: { reason: reason },
+				beforeSend: function(xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
+				}
+			}).done(function(response) {
+				WPSS.showNotification((response && response.message) || wpssData.i18n.saved, 'success');
+				window.location.reload();
+			}).fail(function(xhr) {
+				const message = (xhr.responseJSON && xhr.responseJSON.message) || wpssData.i18n.error;
+				WPSS.showNotification(message, 'error');
+				$btn.prop('disabled', false).text(original);
+			});
+		}, {
+			confirmText: options.confirmText,
+			tone: options.tone,
+			// The escalate route requires a reason, so collect it in the same
+			// dialog rather than a second step.
+			prompt: options.requireReason ? wpssData.i18n.disputeReasonPrompt : ''
+		});
+	};
+
 	WPSS.submitDisputeEvidence = function($form) {
 		const $btn = $form.find('button[type="submit"]');
 		const btnText = $btn.text();
@@ -1775,7 +1852,9 @@
 	 * @param {string}   message   - The confirmation message.
 	 * @param {Function} onConfirm - Callback when confirmed.
 	 * @param {Object}   options   - Optional: title, confirmText, cancelText,
-	 *                               tone ('danger' renders a danger confirm).
+	 *                               tone ('danger' renders a danger confirm),
+	 *                               prompt (label for a required reason field -
+	 *                               its value is passed to onConfirm).
 	 */
 	WPSS.showConfirm = function(message, onConfirm, options) {
 		options = options || {};
@@ -1804,6 +1883,10 @@
 			'<div class="wpss-modal__dialog wpss-confirm" role="document">' +
 				(title ? '<h2 id="' + titleId + '" class="wpss-confirm__title">' + WPSS.escapeHtml(title) + '</h2>' : '') +
 				'<p id="' + msgId + '" class="wpss-confirm__message">' + WPSS.escapeHtml(message) + '</p>' +
+				(options.prompt ?
+					'<label class="wpss-confirm__prompt-label" for="wpss-confirm-prompt">' + WPSS.escapeHtml(options.prompt) + '</label>' +
+					'<textarea id="wpss-confirm-prompt" class="wpss-form-textarea wpss-confirm__prompt" rows="3"></textarea>'
+					: '') +
 				'<div class="wpss-confirm__actions">' +
 					'<button type="button" class="wpss-btn wpss-btn--outline wpss-confirm-cancel">' + WPSS.escapeHtml(cancelText) + '</button>' +
 					'<button type="button" class="wpss-btn ' + confirmVariant + ' wpss-confirm-ok">' + WPSS.escapeHtml(confirmText) + '</button>' +
@@ -1823,16 +1906,34 @@
 		};
 
 		$modal.find('.wpss-confirm-ok').on('click', function() {
+			var reason = '';
+
+			if (options.prompt) {
+				var $field = $modal.find('.wpss-confirm__prompt');
+				reason = $.trim($field.val() || '');
+
+				// Keep the dialog open rather than sending something the server
+				// would only refuse.
+				if (!reason) {
+					$field.addClass('wpss-form-input--error').attr('aria-invalid', 'true').focus();
+					return;
+				}
+			}
+
 			close();
-			if (onConfirm) onConfirm();
+			if (onConfirm) onConfirm(reason);
 		});
 
 		$modal.find('.wpss-confirm-cancel, .wpss-modal__overlay').on('click', function() {
 			close();
 		});
 
-		// Keyboard: Escape closes; Tab is trapped between the two buttons.
-		var $focusable = $modal.find('button');
+		if (options.prompt) {
+			$modal.find('.wpss-confirm__prompt').trigger('focus');
+		}
+
+		// Keyboard: Escape closes; Tab is trapped between the focusable controls.
+		var $focusable = $modal.find('textarea, button');
 		$modal.on('keydown.wpss-confirm', function(e) {
 			if ('Escape' === e.key) {
 				e.preventDefault();

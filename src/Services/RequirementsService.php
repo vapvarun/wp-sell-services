@@ -579,7 +579,15 @@ class RequirementsService {
 		}
 
 		if ( 'checkbox' === $type && $value ) {
-			return __( 'Yes', 'wp-sell-services' );
+			$raw = (string) $value;
+
+			// Older answers to a yes/no question stored a bare truthy marker
+			// from the single checkbox this replaced, and only ever meant yes.
+			// A real answer is now stored as its own label, so show what the
+			// buyer actually chose - otherwise a No came back reading "Yes".
+			return in_array( $raw, array( '1', 'on', 'true' ), true )
+				? __( 'Yes', 'wp-sell-services' )
+				: $raw;
 		}
 
 		return (string) $value;

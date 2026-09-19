@@ -837,11 +837,21 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				.wpss-checkout-page .wpss-layout--sidebar-right { display: flex; flex-direction: column; }
 				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack,
 				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky { display: contents; }
-				/* Service details first, then the total, then the form. */
-				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack > * { order: 3; }
+				/*
+				 * Service details, the total, what happens next, then the form.
+				 *
+				 * The steps are deliberately shown before the buyer pays. On a
+				 * wide screen the sidebar puts them beside the summary and above
+				 * the payment form for free, but once the columns stack, every
+				 * remaining sidebar card fell below the form - so on a phone the
+				 * one place the explanation mattered most was the one place it
+				 * came too late.
+				 */
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack > * { order: 4; }
 				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack > :first-child { order: 1; }
-				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > * { order: 4; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > * { order: 5; }
 				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > .wpss-co-card--summary { order: 2; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > .wpss-co-steps { order: 3; }
 			}
 
 			/* Responsive */

@@ -238,6 +238,7 @@ final class Plugin {
 		$this->define_avatar_filter();
 		$this->register_post_types();
 		$this->register_rewrite_rules();
+		$this->define_moderation_hooks();
 		$this->define_admin_hooks();
 		$this->define_frontend_hooks();
 		$this->define_ajax_hooks();
@@ -431,6 +432,17 @@ final class Plugin {
 				Activator::migrate_vendor_user_caps();
 				Activator::migrate_existing_sellers();
 				Activator::migrate_advanced_standalone_keys();
+			}
+
+			// Until 1.7.2 the moderation guards were registered only inside
+			// wp-admin, so a vendor publishing over REST slipped past them and
+			// the service went live unapproved. Those services sit at
+			// post_status=publish with _wpss_moderation_status=pending, which
+			// the moderation queue cannot show either - it selects on
+			// post_status=pending - so the owner cannot even find them. Pull
+			// them back to pending so they re-enter the queue.
+			if ( $installed_version && version_compare( $installed_version, '1.7.2', '<' ) ) {
+				self::migrate_unapproved_published_services();
 			}
 
 			// Note: the wallet-ledger reconciliation is NOT here. It runs off its
@@ -1858,10 +1870,28 @@ final class Plugin {
 			if ( empty( $ms_list ) ) {
 				return;
 			}
+
+			// Every phase must have finished, and at least one of them must have
+			// actually been delivered. Counting a cancelled phase as finished on
+			// its own meant a project where the vendor cancelled one phase and
+			// the buyer declined the other - nothing delivered, nothing paid -
+			// was marked Completed, and because a completed parent is closed the
+			// vendor could no longer propose a replacement phase. Such a project
+			// stays open so the work can be re-proposed.
+			$delivered = false;
+
 			foreach ( $ms_list as $ms ) {
 				if ( ! in_array( $ms['status'], array( 'completed', 'cancelled' ), true ) ) {
 					return;
 				}
+
+				if ( 'completed' === $ms['status'] ) {
+					$delivered = true;
+				}
+			}
+
+			if ( ! $delivered ) {
+				return;
 			}
 			( new \WPSellServices\Services\OrderService() )->update_status(
 				$parent_order_id,
@@ -2203,6 +2233,76 @@ final class Plugin {
 			10,
 			2
 		);
+	}
+
+	/**
+	 * Define admin-specific hooks.
+	 *
+	 * @return void
+	 */
+	/**
+	 * Return services that went live without approval to the moderation queue.
+	 *
+	 * Only runs where moderation is switched on right now. A site that turned
+	 * the setting off since publishing meant those services to be public, and
+	 * unpublishing them on upgrade would take a working catalogue offline.
+	 *
+	 * @since 1.7.2
+	 *
+	 * @return void
+	 */
+	private static function migrate_unapproved_published_services(): void {
+		if ( ! \WPSellServices\Services\ModerationService::is_enabled() ) {
+			return;
+		}
+
+		$stranded = get_posts(
+			array(
+				'post_type'        => 'wpss_service',
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'suppress_filters' => true,
+				'meta_query'       => array(
+					array(
+						'key'     => \WPSellServices\Services\ModerationService::META_MODERATION_STATUS,
+						'value'   => array( 'pending', 'rejected' ),
+						'compare' => 'IN',
+					),
+				),
+			)
+		);
+
+		foreach ( $stranded as $service_id ) {
+			wp_update_post(
+				array(
+					'ID'          => (int) $service_id,
+					'post_status' => 'pending',
+				)
+			);
+		}
+
+		if ( $stranded ) {
+			wpss_log(
+				sprintf( 'Moderation: returned %d published-but-unapproved service(s) to the review queue.', count( $stranded ) ),
+				'info'
+			);
+		}
+	}
+
+	/**
+	 * Register the service-moderation guards on every request.
+	 *
+	 * Separate from define_admin_hooks() on purpose: that method returns early
+	 * when ! is_admin(), and moderation has to hold on the front end and over
+	 * REST too - the vendor dashboard publishes with PUT /wpss/v1/services/{id}.
+	 *
+	 * @since 1.7.2
+	 *
+	 * @return void
+	 */
+	private function define_moderation_hooks(): void {
+		( new \WPSellServices\Admin\Pages\ServiceModerationPage() )->register_guards();
 	}
 
 	/**

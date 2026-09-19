@@ -64,7 +64,6 @@ $surfaces = array(
 	'single request budget'    => 'templates/single-request.php',
 	'dashboard my requests'    => 'templates/dashboard/sections/requests.php',
 	'cart lines and totals'    => 'templates/cart/cart.php',
-	'order confirmation'       => 'templates/order/order-confirmation.php',
 	'service card'             => 'templates/content-service-card.php',
 	'package tiers'            => 'templates/partials/service-packages.php',
 );
@@ -92,7 +91,7 @@ foreach ( $base_only as $label => $file ) {
 // 5. Escaping. Every converted surface now emits HTML, so a site still running
 //    esc_html() on it would print the markup as visible text.
 $escaped = array();
-foreach ( array( 'templates/content-request-card.php', 'templates/single-request.php', 'templates/cart/cart.php', 'templates/order/order-confirmation.php', 'templates/dashboard/sections/requests.php' ) as $file ) {
+foreach ( array( 'templates/content-request-card.php', 'templates/single-request.php', 'templates/cart/cart.php', 'templates/dashboard/sections/requests.php' ) as $file ) {
 	$src = (string) file_get_contents( WPSS_PLUGIN_DIR . $file );
 	if ( preg_match( '/esc_html\(\s*wpss_catalog_price_html\(/', $src ) ) {
 		$escaped[] = $file;

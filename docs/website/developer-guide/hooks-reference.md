@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**530 hooks** across **743** firing sites.
+**529 hooks** across **742** firing sites.
 
-## Actions (275)
+## Actions (272)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -29,7 +29,6 @@ guide; this is the complete index.
 | `wpss_after_extension_view` | 1 | `templates/order/extension-view.php` | Fires after the extension sub-order view content. |
 | `wpss_after_message` | 2 | `templates/order/conversation.php` | Hook: wpss_after_message |
 | `wpss_after_milestone_view` | 1 | `templates/order/milestone-view.php` | Fires after the milestone sub-order view content. |
-| `wpss_after_order_confirmation` | 1 | `templates/order/order-confirmation.php` | Hook: wpss_after_order_confirmation |
 | `wpss_after_order_view` | 1 | `templates/order/order-view.php` | Hook: wpss_after_order_view |
 | `wpss_after_package_tab` | 3 | `templates/partials/service-packages.php` | Fires after a single package tab. |
 | `wpss_after_request_archive` | 0 | `templates/archive-request.php` | Hook: wpss_after_request_archive |
@@ -64,7 +63,6 @@ guide; this is the complete index.
 | `wpss_before_conversation` | 1 | `templates/order/conversation.php` | Hook: wpss_before_conversation |
 | `wpss_before_extension_view` | 1 | `templates/order/extension-view.php` | Fires before the extension sub-order view content. |
 | `wpss_before_milestone_view` | 1 | `templates/order/milestone-view.php` | Fires before the milestone sub-order view content. |
-| `wpss_before_order_confirmation` | 1 | `templates/order/order-confirmation.php` | Hook: wpss_before_order_confirmation |
 | `wpss_before_order_view` | 1 | `templates/order/order-view.php` | Hook: wpss_before_order_view |
 | `wpss_before_package_tab` | 3 | `templates/partials/service-packages.php` | Fires before a single package tab. |
 | `wpss_before_request_archive` | 0 | `templates/archive-request.php` | Hook: wpss_before_request_archive |
@@ -152,7 +150,6 @@ guide; this is the complete index.
 | `wpss_order_auto_refunded` | 3 | `src/Services/OrderWorkflowManager.php` | Fires when an auto-refund is processed successfully. |
 | `wpss_order_cancelled` | 2 | `src/Services/OrderWorkflowManager.php` | Fires when order is cancelled. |
 | `wpss_order_completed` | 2 | `src/Services/OrderWorkflowManager.php` | Fires when order is completed. |
-| `wpss_order_confirmation_details` | 1 | `templates/order/order-confirmation.php` | Hook: wpss_order_confirmation_details |
 | `wpss_order_created` | 2 | `src/functions/orders.php` | Fires after a service order is created, on every e-commerce rail. |
 | `wpss_order_disputed` | 3 | `src/API/OrdersController.php` *(+1 more)* |  |
 | `wpss_order_message_created` | 3 | `src/API/OrdersController.php` |  |
@@ -292,7 +289,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (255)
+## Filters (257)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -405,6 +402,7 @@ guide; this is the complete index.
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php` | Filter email content before sending. |
 | `wpss_notification_types` | 1 | `src/Admin/Settings.php` | Filter the switchable notification types. |
+| `wpss_notifications_per_page` | 1 | `templates/partials/notifications-list.php` |  |
 | `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php` | Named offline methods. |
 | `wpss_offline_methods` | 2 | `src/Integrations/Gateways/OfflineGateway.php` | Filter the offline payment methods. |
 | `wpss_open_graph_data` | 2 | `src/SEO/SEO.php` |  |
@@ -486,6 +484,7 @@ guide; this is the complete index.
 | `wpss_service_max_gallery` | 1 | `src/functions/services.php` | Max gallery images (additional, not including main). |
 | `wpss_service_max_packages` | 1 | `src/functions/services.php` | Max pricing packages (tiers). |
 | `wpss_service_max_requirements` | 1 | `src/functions/services.php` | Max buyer requirements. |
+| `wpss_service_max_tags` | 1 | `src/functions/services.php` | Max service tags. |
 | `wpss_service_max_videos` | 1 | `src/functions/services.php` | Max video URLs. |
 | `wpss_service_meta_fields` | 2 | `src/Admin/Metaboxes/ServiceMetabox.php` | Filter additional service meta fields rendered in the metabox. |
 | `wpss_service_order_slug` | 1 | `src/Core/Plugin.php` *(+3 more)* | Filter the service order URL slug. |

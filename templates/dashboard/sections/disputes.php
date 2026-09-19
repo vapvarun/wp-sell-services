@@ -330,7 +330,51 @@ if ( $view_dispute_id ) {
 			<a class="wpss-btn wpss-btn--secondary" href="<?php echo esc_url( $view_order_url ); ?>">
 				<?php esc_html_e( 'View order', 'wp-sell-services' ); ?>
 			</a>
+
+			<?php
+			/*
+			 * Withdraw and Escalate. Both already existed as REST routes and
+			 * workflow methods with nothing on the dashboard to reach them, so
+			 * a member could neither take back a dispute they opened nor ask
+			 * for a reviewer.
+			 *
+			 * The conditions mirror what the API enforces, so a control is only
+			 * offered when the request behind it would actually be accepted:
+			 * only the opener may withdraw (DisputeWorkflowManager::cancel()
+			 * checks initiator_id), and the state machine allows closing from
+			 * open, pending or escalated, and escalating from open or pending
+			 * only.
+			 */
+			$wpss_is_opener    = (int) $dispute->initiator_id === $user_id;
+			$wpss_can_cancel   = $wpss_is_opener && in_array( $status_key, array( 'open', 'pending', 'escalated' ), true );
+			$wpss_can_escalate = in_array( $status_key, array( 'open', 'pending' ), true );
+			?>
+
+			<?php if ( $wpss_can_escalate ) : ?>
+				<button type="button" class="wpss-btn wpss-btn--secondary wpss-dispute-escalate" data-dispute-id="<?php echo esc_attr( (string) (int) $dispute->id ); ?>">
+					<i data-lucide="life-buoy" class="wpss-icon" aria-hidden="true"></i>
+					<?php esc_html_e( 'Ask for a reviewer', 'wp-sell-services' ); ?>
+				</button>
+			<?php endif; ?>
+
+			<?php if ( $wpss_can_cancel ) : ?>
+				<button type="button" class="wpss-btn wpss-btn--ghost wpss-dispute-cancel" data-dispute-id="<?php echo esc_attr( (string) (int) $dispute->id ); ?>">
+					<?php esc_html_e( 'Withdraw dispute', 'wp-sell-services' ); ?>
+				</button>
+			<?php endif; ?>
 		</p>
+
+		<?php if ( $wpss_can_escalate || $wpss_can_cancel ) : ?>
+			<p class="wpss-dispute-detail__actions-hint">
+				<?php if ( $wpss_can_escalate && $wpss_can_cancel ) : ?>
+					<?php esc_html_e( 'Asking for a reviewer brings a site administrator in to decide. Withdrawing closes the dispute and returns the order to where it was, with no refund and no decision recorded.', 'wp-sell-services' ); ?>
+				<?php elseif ( $wpss_can_escalate ) : ?>
+					<?php esc_html_e( 'Asking for a reviewer brings a site administrator in to decide.', 'wp-sell-services' ); ?>
+				<?php else : ?>
+					<?php esc_html_e( 'Withdrawing closes the dispute and returns the order to where it was, with no refund and no decision recorded.', 'wp-sell-services' ); ?>
+				<?php endif; ?>
+			</p>
+		<?php endif; ?>
 	</div>
 	<?php
 	return;

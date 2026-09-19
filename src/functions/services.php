@@ -1032,6 +1032,19 @@ function wpss_get_service_limits(): array {
 		 * @param int $max Maximum requirements. -1 for unlimited.
 		 */
 		'max_requirements' => apply_filters( 'wpss_service_max_requirements', 5 ),
+
+		/**
+		 * Max service tags.
+		 *
+		 * The save paths already cut the list to this many; it lives here so
+		 * the wizard can warn the vendor before their extra tags are dropped,
+		 * and so a site can raise the cap like any other limit.
+		 *
+		 * @since 1.7.2
+		 *
+		 * @param int $max Maximum tags.
+		 */
+		'max_tags'         => apply_filters( 'wpss_service_max_tags', 5 ),
 	);
 }
 
@@ -1119,7 +1132,25 @@ function wpss_validate_service_publishable( array $service ): array {
 		$packages = array_filter(
 			(array) $service['packages'],
 			static function ( $package ) {
-				return is_array( $package ) && ( ! empty( $package['name'] ) || ! empty( $package['price'] ) );
+				if ( ! is_array( $package ) ) {
+					return false;
+				}
+
+				// A tier the vendor switched off is not part of the offer, so it
+				// must not be validated. The wizard keeps placeholder objects for
+				// Standard and Premium with their names already filled in and
+				// their prices empty; without this guard the placeholder passed
+				// the name test below, then won "cheapest" at price 0 and had its
+				// own empty fields reported against Basic - which is why a
+				// Basic-only service could not be published at all.
+				//
+				// Checked with array_key_exists so callers that never send the
+				// key (the admin metabox) keep their previous behaviour.
+				if ( array_key_exists( 'enabled', $package ) && ! $package['enabled'] ) {
+					return false;
+				}
+
+				return ! empty( $package['name'] ) || ! empty( $package['price'] );
 			}
 		);
 
