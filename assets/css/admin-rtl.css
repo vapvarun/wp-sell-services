@@ -2227,14 +2227,24 @@
 	margin-bottom: 20px;
 }
 
+/*
+ * Brand accent, not --wpss-info.
+ *
+ * --wpss-info is the semantic status blue that "processing" badges use, and
+ * White Label deliberately leaves the status palette alone - so every plugin
+ * surface that borrowed it for navigation chrome stayed WordPress blue while
+ * the rest of the screen took the brand colour. --wpss-admin-accent defaults
+ * to the same #2271b1, so an unbranded site looks identical (Basecamp
+ * 10313806241).
+ */
 .wpss-back-link {
 	text-decoration: none;
 	font-size: 14px;
-	color: var(--wpss-info, #2271b1);
+	color: var(--wpss-admin-accent, #2271b1);
 }
 
 .wpss-back-link:hover {
-	color: var(--wpss-info-dark, #135e96);
+	color: var(--wpss-admin-accent-hover, #135e96);
 }
 
 .wpss-detail-buttons {
@@ -2361,8 +2371,8 @@
 }
 
 .wpss-detail-tab.active {
-	color: var(--wpss-info, #2271b1);
-	border-bottom-color: var(--wpss-info, #2271b1);
+	color: var(--wpss-admin-accent, #2271b1);
+	border-bottom-color: var(--wpss-admin-accent, #2271b1);
 	font-weight: 500;
 }
 
@@ -2441,7 +2451,7 @@
 	background: var(--wpss-bg-subtle, #f6f7f7);
 	border-radius: 3px;
 	text-decoration: none;
-	color: var(--wpss-info, #2271b1);
+	color: var(--wpss-admin-accent, #2271b1);
 	font-size: 13px;
 }
 
