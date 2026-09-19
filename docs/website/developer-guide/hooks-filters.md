@@ -63,7 +63,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_service_approved` | `int $service_id, string $notes` | `src/API/ModerationController.php:223` |
 | `wpss_service_rejected` | `int $service_id, string $reason` | `src/API/ModerationController.php:264` |
-| `wpss_service_pending_moderation` | `int $service_id` | `src/Frontend/ServiceWizard.php:1785` |
+| `wpss_service_pending_moderation` | `int $service_id` | `src/Frontend/ServiceWizard.php:1786` |
 
 ## Order Actions
 
@@ -408,7 +408,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_service_wizard_saved` | `int $service_id, array $sanitized_data` | `src/Frontend/ServiceWizard.php:1773` |
+| `wpss_service_wizard_saved` | `int $service_id, array $sanitized_data` | `src/Frontend/ServiceWizard.php:1774` |
 | `wpss_wizard_pricing_after` | `WP_Post\|null $service` | `ServiceWizard.php` |
 | `wpss_wizard_save_service_meta` | `int $service_id, array $data` | `ServiceWizard.php` |
 

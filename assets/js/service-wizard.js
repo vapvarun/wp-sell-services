@@ -107,6 +107,16 @@ function wpssServiceWizard(existingData = {}) {
 		 * Initialize the wizard.
 		 */
 		init() {
+			/*
+			 * A service saved before duplicates were refused can still carry the
+			 * same attachment twice. Hydrating that straight into the x-for list
+			 * reproduces the same duplicate-key crash on open, so the vendor could
+			 * not edit their own service. Make the hydrated list unique first.
+			 */
+			this.data.gallery.images = this.data.gallery.images.filter(
+				(image, index, all) => image && index === all.findIndex((other) => other && other.id === image.id)
+			);
+
 			// Mark steps as completed based on existing data
 			if (existingData.id) {
 				this.markCompletedSteps();
@@ -632,6 +642,18 @@ function wpssServiceWizard(existingData = {}) {
 						url: attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url
 					};
 				} else if (type === 'images') {
+					// The gallery strip is keyed on image.id. The same attachment
+					// twice means the same key twice, which breaks Alpine's x-for
+					// reconciliation outright - it throws and leaves orphaned empty
+					// tiles where the duplicate should be. A gallery holding one
+					// picture twice is never what a vendor wants anyway, and on the
+					// free tier it would burn one of only four slots, so refuse it
+					// and say why.
+					if (this.data.gallery.images.some((image) => image.id === attachment.id)) {
+						this.showNotice(wpssWizard.strings.duplicateImage, 'error');
+						return;
+					}
+
 					const maxGallery = this.limits.max_gallery;
 					if (maxGallery === -1 || this.data.gallery.images.length < maxGallery) {
 						this.data.gallery.images.push({
