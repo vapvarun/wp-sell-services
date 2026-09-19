@@ -4448,7 +4448,29 @@ body.wpss-modal-active {
 .wpss-order-filter.is-active:hover {
 	border-color: var(--wpss-primary, #4f46e5);
 	background: var(--wpss-primary, #4f46e5);
-	color: #fff;
+	color: var(--wpss-white, #fff);
+}
+
+/* Link-state foreground, pinned - the same treatment, for the same reason, as
+   the filled buttons in design-system.css. The rule above loses inside a
+   theme's content wrapper: BuddyX ships
+     `.entry-content a:not(.wp-element-button):not(.wp-block-button__link)
+      :not(.button):not([class*="button"])`
+   at (0,5,1) versus (0,2,0) here, so the active chip took the theme's
+   near-black link colour - #111 on the indigo fill measured 3.00, under the
+   4.5 WCAG AA floor, on the control that tells a buyer which filter they are
+   reading. The theme's escape hatch matches `[class*="button"]`; our class is
+   `wpss-order-filter`, so nothing exempts us by luck.
+
+   Narrow on purpose: only `color`, only the active chip, only anchors. The
+   background is left to the rule above so hover keeps working, and a site
+   owner still retints this through the `--wpss-*` tokens. */
+a.wpss-order-filter.is-active,
+a.wpss-order-filter.is-active:link,
+a.wpss-order-filter.is-active:visited,
+a.wpss-order-filter.is-active:hover,
+a.wpss-order-filter.is-active:focus {
+	color: var(--wpss-white, #fff) !important;
 }
 
 .wpss-order-filter__count {

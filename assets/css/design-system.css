@@ -1528,3 +1528,43 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-featured-toggle input {
 	margin: 0;
 }
+
+/* The success state a form swaps itself for once it submits: the contact
+   modal on a service page AND on a vendor profile, and the cart add. It was
+   styled only in single-service.css, so on the vendor profile it had no rule
+   at all, and even where the rule loaded it set colour and nothing else - the
+   tick is a <span> and the text a <p>, so the block <p> pushed the message
+   onto the line below its own tick with no spacing between them.
+
+   Two shapes render this and both have to centre: a wrapper holding a
+   separate icon span and paragraph, and a single <p> carrying the tick inline
+   with its text. */
+.wpss-success-message {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--wpss-space-3, 12px);
+	padding: var(--wpss-space-6, 24px) var(--wpss-space-4, 16px);
+	color: var(--wpss-success);
+	font-weight: 500;
+	text-align: center;
+}
+
+/* The host theme gives a <p> a bottom margin; the flex gap owns the spacing
+   here, so a trailing gap would sit under the last line. */
+.wpss-success-message > p {
+	margin: 0;
+}
+
+.wpss-success-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 48px;
+	height: 48px;
+	border-radius: var(--wpss-radius-full, 9999px);
+	background: var(--wpss-success-light);
+	color: var(--wpss-success-dark, var(--wpss-success));
+	font-size: 1.5rem;
+	line-height: 1;
+}
