@@ -1753,6 +1753,12 @@ article.wpss-service-card:hover {
 	position: relative;
 	color: var(--wpss-text);
 	line-height: 1.6;
+	/* A buyer answer is free text and can hold an unbroken string with no
+	   spaces - a long URL, a file path, an API key. The default keeps such a
+	   run on one line and pushes it out of the card sideways, which on a phone
+	   scrolls the whole page. Break inside the run when there is nowhere else
+	   to break. */
+	overflow-wrap: anywhere;
 }
 
 .wpss-requirement-view__answer--collapsed {
