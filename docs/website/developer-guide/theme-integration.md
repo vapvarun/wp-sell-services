@@ -51,9 +51,11 @@ Only copy templates you need to change. Uncopied templates continue using plugin
 |----------|---------|
 | `order/order-view.php` | Order details page |
 | `order/order-requirements.php` | Requirements submission page |
-| `order/order-confirmation.php` | Order confirmation/thank you page |
 | `order/requirements-form.php` | Requirements form template |
 | `order/conversation.php` | Order messaging/conversation view |
+| `order/milestone-view.php` | Milestone phase of a parent contract order |
+| `order/extension-view.php` | Paid extension on a catalog order |
+| `order/tip-view.php` | Tip payment record |
 
 Order URLs route as: `/service-order/{id}/` (view), `/service-order/{id}/requirements/`, `/service-order/{id}/delivery/`, `/service-order/{id}/review/`.
 

@@ -5,10 +5,10 @@
 | Lens | Count | QA question it feeds |
 |---|---|---|
 | Options / settings | 45 (+16 foreign) | O-* — does each do what it says, is the default right |
-| Admin pages | 24 | O-* / A-* — can the owner find it |
+| Admin pages | 26 | O-* / A-* — can the owner find it |
 | Templates | 105 shipped, 16 named literally, 28 locate_template call(s), theme-override loader: yes | T-* — looks right on their theme, can they override |
 | Emails | 19 `wp_mail` sites | E-* — what fires, when, editable |
-| Hooks | 248 actions, 234 filters (474 own, 414 documented) | D-* — developer-friendly |
+| Hooks | 247 actions, 252 filters (491 own, 428 documented) | D-* — developer-friendly |
 
 ## Options & defaults
 
@@ -18,7 +18,7 @@ Every option the code reads, with the default it falls back to. **A blank defaul
 |---|---|---|---|---|
 | `wpss_pages` | `array(` | 16 | Y | templates/dashboard/sections/favorites.php |
 | `wpss_general` | `array(` | 8 | Y | wp-sell-services.php |
-| `wpss_commission` | `array(` | 6 | Y | src/Admin/Settings.php |
+| `wpss_commission` | `array(` | 7 | Y | src/Admin/Settings.php |
 | `wpss_terms_page` | `` | 4 |  | src/Core/Activator.php |
 | `wpss_active_storage_provider` | `''` | 4 |  | src/functions/files.php |
 | `wpss_max_extension_days` | `14` | 3 |  | templates/order/order-view.php |
@@ -33,9 +33,11 @@ Every option the code reads, with the default it falls back to. **A blank defaul
 | `wpss_billing_field_settings` | `array(` | 2 | Y | src/Admin/Settings.php |
 | `wpss_tax` | `array(` | 2 | Y | src/Admin/Settings.php |
 | `wpss_notification_settings` | `array(` | 2 | Y | src/Admin/Settings.php |
-| `wpss_min_order_amount` | `0` | 2 |  | src/Checkout/CheckoutIntentService.php |
-| `wpss_max_order_amount` | `0` | 2 |  | src/Checkout/CheckoutIntentService.php |
 | `wpss_order_meta_table_version` | `` | 2 |  | src/Integrations/Standalone/StandaloneOrderProvider.php |
+| `wpss_max_featured_portfolio` | `6` | 2 |  | src/API/PortfolioController.php |
+| `wpss_min_order_amount` | `5` | 2 |  | src/API/API.php |
+| `wpss_max_order_amount` | `10000` | 2 |  | src/API/API.php |
+| `wpss_order_confirmation_page` | `` | 2 |  | src/functions/orders.php |
 | `wpss_popular_searches` | `array(` | 2 |  | src/Services/SearchService.php |
 | `wpss_standalone_migrated` | `` | 1 |  | wp-sell-services.php |
 | `wpss_version` | `''` | 1 |  | src/Core/Plugin.php |
@@ -52,12 +54,10 @@ Every option the code reads, with the default it falls back to. **A blank defaul
 | `wpss_vendors_page` | `` | 1 |  | src/functions/vendors.php |
 | `wpss_demo_payments` | `''` | 1 |  | src/functions/payments.php |
 | `wpss_decimal_places` | `null` | 1 |  | src/functions/money.php |
-| `wpss_order_confirmation_page` | `` | 1 |  | src/functions/orders.php |
 | `wpss_dispute_auto_escalate_days` | `7` | 1 |  | src/Services/DisputeWorkflowManager.php |
 | `wpss_dispute_reminder_days` | `2` | 1 |  | src/Services/DisputeWorkflowManager.php |
 | `wpss_auto_withdrawal_schedule_type` | `''` | 1 |  | src/Services/EarningsService.php |
 | `wpss_request_expiry_days` | `30` | 1 |  | src/Services/BuyerRequestService.php |
-| `wpss_max_featured_portfolio` | `6` | 1 |  | src/Services/PortfolioService.php |
 | `wpss_payouts` | `` | 0 | Y | src/Admin/Settings.php |
 | `wpss_orders` | `` | 0 | Y | src/Admin/Settings.php |
 | `wpss_realtime_settings` | `` | 0 | Y | src/Admin/Settings.php |
@@ -80,6 +80,7 @@ Every option the code reads, with the default it falls back to. **A blank defaul
 | `manage_options` | wp-sell-services · Setup Wizard · wp-sell-services · Setup Wizard | src/Admin/Pages/SetupWizardPage.php |
 | `?` | wp-sell-services_page_wpss-withdrawals · sell-services_page_wpss-withdrawals | src/Admin/Pages/WithdrawalsPage.php |
 | `manage_options` | wp-sell-services · Withdrawals · wp-sell-services · Withdrawals | src/Admin/Pages/WithdrawalsPage.php |
+| `?` | s script never loaded, so every tab sat on  | src/Admin/Pages/VendorsPage.php |
 | `manage_options` | wp-sell-services · Vendors · wp-sell-services · Vendors | src/Admin/Pages/VendorsPage.php |
 | `manage_options` | wp-sell-services · Audit Log · wp-sell-services · Audit Log | src/Admin/Pages/AuditLogPage.php |
 | `?` | Review Moderation · wp-sell-services | src/Admin/Pages/ReviewModerationPage.php |
@@ -90,6 +91,11 @@ Every option the code reads, with the default it falls back to. **A blank defaul
 | `manage_options` | Create Order · wpss-orders · Create Order · wp-sell-services | src/Admin/Pages/ManualOrderPage.php |
 | `?` | admin_menu · add_menu_page | src/Admin/Pages/UpgradePage.php |
 | `manage_options` | wp-sell-services · Upgrade to Pro · wp-sell-services · Upgrade to Pro | src/Admin/Pages/UpgradePage.php |
+| `?` | wpss-reports ·  === $slug ) {
+			continue;
+		}
+
+		if ( $hook ===  ·  . $slug || str_ends_with( $hook,  · rtl | src/functions/misc.php |
 
 ## Templates
 
@@ -179,7 +185,6 @@ Shipped:
 - `templates/order/conversation.php`
 - `templates/order/extension-view.php`
 - `templates/order/milestone-view.php`
-- `templates/order/order-confirmation.php`
 - `templates/order/order-requirements.php`
 - `templates/order/order-view.php`
 - `templates/order/requirements-form.php`
@@ -189,6 +194,7 @@ Shipped:
 - `templates/partials/category-card.php`
 - `templates/partials/legal-links.php`
 - `templates/partials/notifications-list.php`
+- `templates/partials/requirement-answer.php`
 - `templates/partials/review-body.php`
 - `templates/partials/service-faqs.php`
 - `templates/partials/service-gallery.php`
@@ -224,7 +230,7 @@ Overridable via `locate_template` (theme can replace):
 
 | Where | Subject (best guess) |
 |---|---|
-| templates/emails/dispute-opened.php:17 | ? |
+| templates/emails/dispute-opened.php:20 | ? |
 | templates/emails/new-order.php:16 | ? |
 | templates/emails/delivery-ready.php:16 | ? |
 | templates/emails/order-cancelled.php:17 | ? |
@@ -238,17 +244,17 @@ Overridable via `locate_template` (theme can replace):
 | src/Services/EmailService.php:109 | ? |
 | src/Services/EmailService.php:116 | ? |
 | src/Services/EmailService.php:1268 | ? |
-| src/Services/EmailService.php:2080 | ? |
-| src/Services/EmailService.php:2094 | ? |
-| src/Services/EmailService.php:2099 | ? |
-| src/Services/EmailService.php:2150 | ? |
-| src/Services/EmailService.php:2339 | Vendor |
+| src/Services/EmailService.php:2104 | ? |
+| src/Services/EmailService.php:2118 | ? |
+| src/Services/EmailService.php:2123 | ? |
+| src/Services/EmailService.php:2174 | ? |
+| src/Services/EmailService.php:2363 | Vendor |
 
-BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
+BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 57
 
 ## Hooks (developer-friendliness)
 
-474 own hooks; 414/482 have a docblock. Undocumented hooks are D-findings.
+491 own hooks; 428/499 have a docblock. Undocumented hooks are D-findings.
 
 <details><summary>Actions</summary>
 
@@ -315,9 +321,6 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_after_message` — templates/order/conversation.php
 - `wpss_conversation_form` — templates/order/conversation.php
 - `wpss_after_conversation` — templates/order/conversation.php
-- `wpss_before_order_confirmation` — templates/order/order-confirmation.php
-- `wpss_order_confirmation_details` — templates/order/order-confirmation.php
-- `wpss_after_order_confirmation` — templates/order/order-confirmation.php
 - `wpss_before_requirements_form` — templates/order/order-requirements.php
 - `wpss_after_requirements_form` — templates/order/order-requirements.php
 - `wpss_service_orders_before` — templates/myaccount/service-orders.php
@@ -375,6 +378,7 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_vendor_contacted` — src/Frontend/AjaxHandlers.php
 - `wpss_vendor_profile_saved` — src/Frontend/AjaxHandlers.php
 - `wpss_render_secret_field` — src/Admin/Settings.php
+- `wpss_register_tipping_settings` — src/Admin/Settings.php
 - `wpss_settings_tab_` — src/Admin/Settings.php
 - `wpss_settings_sections_payments` — src/Admin/Settings.php
 - `wpss_gateway_settings_owned_by_rail` — src/Admin/Settings.php
@@ -433,6 +437,7 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_milestone_approved` — src/Services/MilestoneService.php
 - `wpss_milestone_revision_requested` — src/Services/MilestoneService.php
 - `wpss_milestone_declined` — src/Services/MilestoneService.php
+- `wpss_milestone_cancelled` — src/Services/MilestoneService.php
 - `wpss_dispute_opened` — src/Services/DisputeService.php
 - `wpss_dispute_evidence_added` — src/Services/DisputeService.php
 - `wpss_dispute_status_changed` — src/Services/DisputeService.php
@@ -527,11 +532,13 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_payout_banner_state` — templates/dashboard/sections/earnings.php
 - `wpss_messages_per_page` — templates/dashboard/sections/messages.php
 - `wpss_reviews_per_page` — templates/partials/service-reviews.php
+- `wpss_requirement_answer_collapse_at` — templates/partials/requirement-answer.php
 - `wpss_vendor_benefit_listings_copy` — templates/partials/vendor-benefits.php
 - `wpss_category_card_link` — templates/partials/category-card.php
 - `wpss_category_card_classes` — templates/partials/category-card.php
 - `wpss_package_price_html` — templates/partials/service-packages.php
 - `wpss_package_button_text` — templates/partials/service-packages.php
+- `wpss_notifications_per_page` — templates/partials/notifications-list.php
 - `wpss_gallery_image_size` — templates/partials/service-gallery.php
 - `wpss_search_categories_limit` — src/Blocks/ServiceSearch.php
 - `wpss_blocks` — src/Blocks/BlocksManager.php
@@ -558,6 +565,7 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_pro_upgrade_url` — src/Frontend/ServiceWizard.php
 - `wpss_wizard_service_data` — src/Frontend/ServiceWizard.php
 - `wpss_min_service_price` — src/Frontend/ServiceWizard.php
+- `wpss_gallery_max_upload_size_mb` — src/Frontend/ServiceWizard.php
 - `wpss_wizard_sanitize_service_data` — src/Frontend/ServiceWizard.php
 - `the_content` — src/Frontend/SingleServiceView.php
 - `wpss_related_services_args` — src/Frontend/SingleServiceView.php
@@ -581,6 +589,7 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_suppress_theme_title` — src/Frontend/ShellHeader.php
 - `wpss_sticky_top_offset` — src/Frontend/Frontend.php
 - `wpss_show_mini_cart` — src/Frontend/Frontend.php
+- `wpss_analytics_page_url` — src/Admin/ProTeaser.php
 - `wpss_settings_tabs` — src/Admin/Settings.php
 - `wpss_ecommerce_platform_status` — src/Admin/Settings.php
 - `wpss_ecommerce_platform_description` — src/Admin/Settings.php
@@ -591,7 +600,9 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_manual_order_currencies` — src/Admin/Pages/ManualOrderPage.php
 - `wpss_docs_url` — src/Admin/Pages/UpgradePage.php
 - `wpss_service_meta_fields` — src/Admin/Metaboxes/ServiceMetabox.php
+- `wpss_service_is_featured` — src/Admin/Metaboxes/ServiceMetabox.php
 - `wpss_vendor_is_on_vacation` — src/Models/VendorProfile.php
+- `wpss_vendor_max_services` — src/Models/VendorProfile.php
 - `wpss_ecommerce_adapters` — src/CLI/PreflightCommand.php
 - `wpss_pre_create_order` — src/Integrations/Standalone/StandaloneOrderProvider.php
 - `wpss_checkout_slug` — src/Integrations/Standalone/StandaloneAdapter.php
@@ -637,6 +648,7 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_template_args` — src/functions/templates.php
 - `wpss_get_template` — src/functions/templates.php
 - `wpss_package_id_base` — src/functions/services.php
+- `wpss_service_card_display` — src/functions/services.php
 - `wpss_category_terms_limit` — src/functions/services.php
 - `wpss_video_thumbnail_cache_ttl` — src/functions/services.php
 - `wpss_service_max_packages` — src/functions/services.php
@@ -645,13 +657,22 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_service_max_extras` — src/functions/services.php
 - `wpss_service_max_faq` — src/functions/services.php
 - `wpss_service_max_requirements` — src/functions/services.php
+- `wpss_service_max_tags` — src/functions/services.php
 - `wpss_service_publish_errors` — src/functions/services.php
+- `wpss_user_can_feature_service` — src/functions/services.php
+- `wpss_max_upload_size_mb` — src/functions/files.php
+- `wpss_allowed_file_types` — src/functions/files.php
+- `wpss_delivery_allowed_file_types` — src/functions/files.php
+- `wpss_requirements_allowed_file_types` — src/functions/files.php
+- `wpss_attachment_display_name` — src/functions/files.php
 - `wpss_is_vendor` — src/functions/vendors.php
 - `wpss_vendors_page_id` — src/functions/vendors.php
 - `wpss_vendors_url` — src/functions/vendors.php
 - `wpss_member_display_name` — src/functions/vendors.php
 - `wpss_member_bypasses_limits` — src/functions/vendors.php
 - `wpss_vendor_pitch_stats` — src/functions/vendors.php
+- `wpss_vendor_vacation_notice` — src/functions/vendors.php
+- `wpss_service_editor_url` — src/functions/urls.php
 - `wpss_known_dashboard_sections` — src/functions/urls.php
 - `wpss_dashboard_section_aliases` — src/functions/urls.php
 - `wpss_page_definitions` — src/functions/urls.php
@@ -660,6 +681,7 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_ensure_pay_order` — src/functions/urls.php
 - `wpss_settings_sections` — src/functions/urls.php
 - `wpss_checkout_badges` — src/functions/payments.php
+- `wpss_stripe_api_version` — src/functions/payments.php
 - `wpss_email_preference_categories` — src/functions/notifications.php
 - `wpss_presence_window` — src/functions/notifications.php
 - `wpss_skip_message_email_when_online` — src/functions/notifications.php
@@ -677,6 +699,7 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_currency_registry` — src/functions/money.php
 - `wpss_currencies` — src/functions/money.php
 - `wpss_wallet_manager` — src/functions/money.php
+- `wpss_check_order_limits` — src/functions/money.php
 - `wpss_billing_fields` — src/functions/billing.php
 - `wpss_locked_billing_fields` — src/functions/billing.php
 - `wpss_countries` — src/functions/billing.php
@@ -687,7 +710,9 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_app_token_lifetime` — src/functions/misc.php
 - `wpss_order_statuses` — src/functions/orders.php
 - `wpss_requirement_field_label` — src/functions/orders.php
+- `wpss_post_checkout_url` — src/functions/orders.php
 - `wpss_order_status_groups` — src/functions/orders.php
+- `wpss_tipping_enabled` — src/functions/orders.php
 - `wpss_order_payment_reference` — src/functions/orders.php
 - `wpss_rail_status_map` — src/functions/orders.php
 - `wpss_open_graph_data` — src/SEO/SEO.php
@@ -712,7 +737,6 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_pre_open_dispute` — src/Services/DisputeService.php
 - `wpss_should_reverse_vendor_earnings` — src/Services/OrderWorkflowManager.php
 - `wpss_pre_process_gateway_refund` — src/Services/OrderWorkflowManager.php
-- `wpss_requirements_allowed_file_types` — src/Services/RequirementsService.php
 - `wpss_require_service_moderation` — src/Services/ModerationService.php
 - `wpss_pre_create_review` — src/Services/ReviewService.php
 - `wpss_review_window_days` — src/Services/ReviewService.php
@@ -733,7 +757,6 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 56
 - `wpss_email_from_name` — src/Services/EmailService.php
 - `wpss_email_before_send` — src/Services/EmailService.php
 - `wpss_pre_submit_delivery` — src/Services/DeliveryService.php
-- `wpss_delivery_allowed_file_types` — src/Services/DeliveryService.php
 - `wpss_cascade_preserve_shared_records` — src/Services/DataCascadeHandler.php
 - `wpss_search_results` — src/Services/SearchService.php
 - `wpss_search_query_args` — src/Services/SearchService.php
