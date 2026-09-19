@@ -1218,9 +1218,31 @@ function wpss_enforce_service_limits( array $meta ): array {
 		'extras'       => array( 'max_extras', __( 'extras', 'wp-sell-services' ) ),
 		'faqs'         => array( 'max_faq', __( 'FAQs', 'wp-sell-services' ) ),
 		'requirements' => array( 'max_requirements', __( 'requirements', 'wp-sell-services' ) ),
+		// The wizard enforces the tag cap and REST did not, so the same service
+		// could carry more tags depending on which surface created it.
+		'tags'         => array( 'max_tags', __( 'tags', 'wp-sell-services' ) ),
 	);
 
 	$truncated = array();
+
+	/*
+	 * The gallery is keyed on the attachment id wherever it is rendered - most
+	 * sharply in the wizard, whose x-for keys on image.id, where a repeated id
+	 * breaks Alpine's reconciliation outright. A duplicate saved through REST
+	 * therefore did not show up until the vendor next opened their own service
+	 * to edit it, and then broke that screen. Collapse repeats at the single
+	 * point every save path passes through, before the cap is applied, so the
+	 * cap counts distinct images.
+	 */
+	if ( ! empty( $meta['gallery'] ) && is_array( $meta['gallery'] ) ) {
+		$unique_gallery = array_values( array_unique( array_map( 'absint', $meta['gallery'] ) ) );
+
+		if ( count( $unique_gallery ) !== count( $meta['gallery'] ) ) {
+			$truncated['gallery_duplicates'] = __( 'The same image was listed more than once; the repeats were not saved.', 'wp-sell-services' );
+		}
+
+		$meta['gallery'] = $unique_gallery;
+	}
 
 	foreach ( $rules as $key => [ $limit_key, $label ] ) {
 		$max = (int) ( $limits[ $limit_key ] ?? -1 );

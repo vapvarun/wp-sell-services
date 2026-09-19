@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-19T09:06:06+00:00\n"
+"POT-Creation-Date: 2026-09-19T09:08:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -6600,7 +6600,7 @@ msgstr ""
 #: src/API/ProposalsController.php:633
 #: src/API/ReviewsController.php:1083
 #: src/API/ServicesController.php:235
-#: src/API/ServicesController.php:1298
+#: src/API/ServicesController.php:1335
 #: src/API/VendorsController.php:955
 msgid "Current page."
 msgstr ""
@@ -6615,7 +6615,7 @@ msgstr ""
 #: src/API/ProposalsController.php:639
 #: src/API/ReviewsController.php:1089
 #: src/API/ServicesController.php:241
-#: src/API/ServicesController.php:1303
+#: src/API/ServicesController.php:1340
 #: src/API/VendorsController.php:961
 msgid "Items per page."
 msgstr ""
@@ -6904,8 +6904,8 @@ msgstr ""
 #: src/API/ModerationController.php:287
 #: src/API/ServicesController.php:498
 #: src/API/ServicesController.php:509
-#: src/API/ServicesController.php:717
-#: src/API/ServicesController.php:800
+#: src/API/ServicesController.php:719
+#: src/API/ServicesController.php:836
 #: src/Frontend/AjaxHandlers.php:2286
 #: src/Frontend/ServiceWizard.php:245
 #: src/Integrations/Gateways/OfflineGateway.php:761
@@ -7678,7 +7678,7 @@ msgid "Filter by rating."
 msgstr ""
 
 #: src/API/ReviewsController.php:1110
-#: src/API/ServicesController.php:1337
+#: src/API/ServicesController.php:1374
 #: src/API/VendorsController.php:976
 msgid "Order by field."
 msgstr ""
@@ -7730,36 +7730,36 @@ msgstr ""
 msgid "Select at least one category. A service without one cannot be found by buyers browsing the catalog."
 msgstr ""
 
-#: src/API/ServicesController.php:746
+#: src/API/ServicesController.php:748
 msgid "Status must be either publish or draft."
 msgstr ""
 
-#: src/API/ServicesController.php:816
+#: src/API/ServicesController.php:852
 #: src/Frontend/AjaxHandlers.php:2902
 msgid "Failed to delete service."
 msgstr ""
 
-#: src/API/ServicesController.php:989
+#: src/API/ServicesController.php:1025
 msgid "Failed to create addon."
 msgstr ""
 
-#: src/API/ServicesController.php:1007
-#: src/API/ServicesController.php:1038
+#: src/API/ServicesController.php:1043
+#: src/API/ServicesController.php:1074
 msgid "Addon not found."
 msgstr ""
 
-#: src/API/ServicesController.php:1092
+#: src/API/ServicesController.php:1128
 #: src/Frontend/ServiceWizard.php:233
 #: src/Frontend/ServiceWizard.php:1544
 #: src/Frontend/ServiceWizard.php:1685
 msgid "You have reached the maximum number of services allowed. Please remove an existing service before creating a new one."
 msgstr ""
 
-#: src/API/ServicesController.php:1108
+#: src/API/ServicesController.php:1144
 msgid "You do not have permission to create services."
 msgstr ""
 
-#: src/API/ServicesController.php:1134
+#: src/API/ServicesController.php:1170
 #: src/Frontend/ServiceWizard.php:249
 #: src/Frontend/ServiceWizard.php:1563
 #: src/Frontend/ServiceWizard.php:1734
@@ -7767,66 +7767,66 @@ msgstr ""
 msgid "You do not have permission to edit this service."
 msgstr ""
 
-#: src/API/ServicesController.php:1309
+#: src/API/ServicesController.php:1346
 msgid "Filter by category ID or slug."
 msgstr ""
 
-#: src/API/ServicesController.php:1313
+#: src/API/ServicesController.php:1350
 msgid "Filter by vendor ID."
 msgstr ""
 
-#: src/API/ServicesController.php:1317
+#: src/API/ServicesController.php:1354
 msgid "Search term."
 msgstr ""
 
-#: src/API/ServicesController.php:1325
+#: src/API/ServicesController.php:1362
 msgid "Search term. Alias of `search`, accepted for parity with /search."
 msgstr ""
 
-#: src/API/ServicesController.php:1329
+#: src/API/ServicesController.php:1366
 #: src/Core/AbilitiesRegistrar.php:111
 msgid "Minimum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1333
+#: src/API/ServicesController.php:1370
 #: src/Core/AbilitiesRegistrar.php:115
 msgid "Maximum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1343
+#: src/API/ServicesController.php:1380
 msgid "Sort order."
 msgstr ""
 
-#: src/API/ServicesController.php:1349
+#: src/API/ServicesController.php:1386
 msgid "Maximum delivery days filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1354
+#: src/API/ServicesController.php:1391
 msgid "Minimum rating filter (0-5)."
 msgstr ""
 
-#: src/API/ServicesController.php:1376
+#: src/API/ServicesController.php:1413
 #: src/Core/AbilitiesRegistrar.php:231
 msgid "Service title."
 msgstr ""
 
-#: src/API/ServicesController.php:1382
+#: src/API/ServicesController.php:1419
 msgid "Service description."
 msgstr ""
 
-#: src/API/ServicesController.php:1387
+#: src/API/ServicesController.php:1424
 msgid "Service excerpt."
 msgstr ""
 
-#: src/API/ServicesController.php:1392
+#: src/API/ServicesController.php:1429
 msgid "Base price."
 msgstr ""
 
-#: src/API/ServicesController.php:1400
+#: src/API/ServicesController.php:1437
 msgid "Category IDs or slugs."
 msgstr ""
 
-#: src/API/ServicesController.php:1406
+#: src/API/ServicesController.php:1443
 msgid "Tags."
 msgstr ""
 
@@ -13310,8 +13310,16 @@ msgstr ""
 msgid "requirements"
 msgstr ""
 
+#: src/functions/services.php:1223
+msgid "tags"
+msgstr ""
+
+#: src/functions/services.php:1241
+msgid "The same image was listed more than once; the repeats were not saved."
+msgstr ""
+
 #. translators: 1: maximum count, 2: list name (packages, gallery images, extras, FAQs, requirements)
-#: src/functions/services.php:1238
+#: src/functions/services.php:1260
 #, php-format
 msgid "A service can have at most %1$d %2$s; the extra entries were not saved."
 msgstr ""
