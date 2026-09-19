@@ -660,6 +660,11 @@ function wpssServiceWizard(existingData = {}) {
 							id: attachment.id,
 							url: attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url
 						});
+						// Lucide hydrates once at page load, so the new tile's remove
+						// button would keep its raw <i data-lucide> placeholder and read
+						// as an empty, broken box. Every sibling add-method already does
+						// this; the gallery path was the one that did not.
+						this.refreshIcons();
 					}
 				}
 
