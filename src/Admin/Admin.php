@@ -2917,7 +2917,34 @@ class Admin {
 													<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
 												</span>
 											</div>
-											<div><?php echo wp_kses_post( wpautop( $message->message ) ); ?></div>
+											<?php if ( '' !== trim( (string) $message->message ) ) : ?>
+												<div><?php echo wp_kses_post( wpautop( $message->message ) ); ?></div>
+											<?php endif; ?>
+											<?php
+											/*
+											 * File evidence is stored with message = '' and the
+											 * file in `attachments`. Rendering only ->message drew
+											 * an empty bubble for every uploaded file, so the
+											 * person deciding the dispute could not open any of
+											 * the evidence they were being asked to weigh.
+											 */
+											$wpss_msg_files = wpss_dispute_message_attachments( $message->attachments ?? '' );
+											?>
+											<?php if ( $wpss_msg_files ) : ?>
+												<ul class="wpss-dispute-message-files" style="margin: 8px 0 0; padding: 0; list-style: none;">
+													<?php foreach ( $wpss_msg_files as $wpss_msg_file ) : ?>
+														<li style="margin-top: 4px;">
+															<a href="<?php echo esc_url( $wpss_msg_file['url'] ); ?>" target="_blank" rel="noopener noreferrer">
+																<span class="dashicons dashicons-media-default" style="vertical-align: middle;"></span>
+																<?php echo esc_html( $wpss_msg_file['name'] ); ?>
+															</a>
+														</li>
+													<?php endforeach; ?>
+												</ul>
+											<?php endif; ?>
+											<?php if ( '' === trim( (string) $message->message ) && ! $wpss_msg_files ) : ?>
+												<em style="color: #666;"><?php esc_html_e( 'No content', 'wp-sell-services' ); ?></em>
+											<?php endif; ?>
 										</div>
 									<?php endforeach; ?>
 								</div>

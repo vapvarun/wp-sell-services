@@ -1224,3 +1224,57 @@ function wpss_serve_order_file(): void {
 	wpss_stream_order_file( $located['record'], $located['path'] );
 	exit;
 }
+
+/**
+ * Renderable file links for one dispute message.
+ *
+ * A dispute message that carries a file is stored with message = '' and the
+ * file in the `attachments` column, so any surface that renders only
+ * $message->message draws an empty bubble and the evidence is invisible. That
+ * is what the admin dispute screen did (Basecamp 10320551466) - the person
+ * being asked to decide the dispute could not open a single piece of evidence,
+ * and a PDF appeared as the raw admin-post.php query string.
+ *
+ * Two record shapes exist in the wild: older rows carry a ready `url`, newer
+ * private-store rows carry `id` + `order_id` + `path` and no url at all. Both
+ * are resolved through wpss_get_order_file_url(), which already knows the
+ * difference and applies the permission check, so neither caller has to.
+ *
+ * @since 1.7.3
+ *
+ * @param mixed $raw The message's `attachments` value: a JSON string or array.
+ * @return array<int, array{name: string, url: string}> Links, possibly empty.
+ */
+function wpss_dispute_message_attachments( $raw ): array {
+	$rows = is_string( $raw ) ? json_decode( $raw, true ) : $raw;
+
+	if ( ! is_array( $rows ) ) {
+		return array();
+	}
+
+	$links = array();
+
+	foreach ( $rows as $row ) {
+		if ( ! is_array( $row ) ) {
+			continue;
+		}
+
+		$url = wpss_get_order_file_url( $row );
+
+		if ( '' === $url ) {
+			$url = (string) ( $row['url'] ?? '' );
+		}
+
+		if ( '' === $url ) {
+			// No addressable file. A link here would only 404.
+			continue;
+		}
+
+		$links[] = array(
+			'name' => wpss_format_attachment_name( (string) ( $row['name'] ?? '' ) ),
+			'url'  => $url,
+		);
+	}
+
+	return $links;
+}

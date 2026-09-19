@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-19T08:43:09+00:00\n"
+"POT-Creation-Date: 2026-09-19T09:06:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -95,8 +95,8 @@ msgstr ""
 #: src/Admin/Admin.php:971
 #: src/Admin/Admin.php:1021
 #: src/Admin/Admin.php:1083
-#: src/Admin/Admin.php:3058
-#: src/Admin/Admin.php:3264
+#: src/Admin/Admin.php:3085
+#: src/Admin/Admin.php:3291
 #: src/Admin/OrderScreen.php:153
 #: src/Admin/OrderScreen.php:167
 #: src/Admin/OrderScreen.php:243
@@ -1019,8 +1019,8 @@ msgstr ""
 #: src/Admin/Admin.php:2362
 #: src/Admin/Admin.php:2875
 #: src/Admin/Admin.php:2915
-#: src/Admin/Admin.php:2943
-#: src/Admin/Admin.php:2953
+#: src/Admin/Admin.php:2970
+#: src/Admin/Admin.php:2980
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:193
 #: src/Admin/Pages/ServiceModerationPage.php:590
 #: src/Admin/Pages/WithdrawalsPage.php:640
@@ -1045,7 +1045,7 @@ msgid "Has attachments"
 msgstr ""
 
 #: src/Admin/Admin.php:2302
-#: src/Admin/Admin.php:2925
+#: src/Admin/Admin.php:2952
 #: templates/dashboard/sections/messages.php:104
 msgid "No messages yet."
 msgstr ""
@@ -1066,12 +1066,12 @@ msgid "Parties"
 msgstr ""
 
 #: src/Admin/Admin.php:2344
-#: src/Admin/Admin.php:2937
+#: src/Admin/Admin.php:2964
 msgid "Buyer:"
 msgstr ""
 
 #: src/Admin/Admin.php:2355
-#: src/Admin/Admin.php:2947
+#: src/Admin/Admin.php:2974
 msgid "Vendor:"
 msgstr ""
 
@@ -1211,7 +1211,7 @@ msgid "Dispute mediation guide"
 msgstr ""
 
 #: src/Admin/Admin.php:2692
-#: src/Admin/Admin.php:3004
+#: src/Admin/Admin.php:3031
 msgid "Resolution:"
 msgstr ""
 
@@ -1370,59 +1370,63 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
-#: src/Admin/Admin.php:2934
+#: src/Admin/Admin.php:2946
+msgid "No content"
+msgstr ""
+
+#: src/Admin/Admin.php:2961
 msgid "Parties Involved"
 msgstr ""
 
-#: src/Admin/Admin.php:2958
+#: src/Admin/Admin.php:2985
 msgid "Order Value:"
 msgstr ""
 
-#: src/Admin/Admin.php:2968
-#: src/Admin/Admin.php:3001
+#: src/Admin/Admin.php:2995
+#: src/Admin/Admin.php:3028
 #: src/Privacy/PersonalData.php:271
 msgid "Resolution"
 msgstr ""
 
-#: src/Admin/Admin.php:2976
+#: src/Admin/Admin.php:3003
 msgid "Update Status:"
 msgstr ""
 
-#: src/Admin/Admin.php:2991
-#: src/Admin/Admin.php:3009
+#: src/Admin/Admin.php:3018
+#: src/Admin/Admin.php:3036
 msgid "Admin Notes:"
 msgstr ""
 
-#: src/Admin/Admin.php:2995
+#: src/Admin/Admin.php:3022
 msgid "Update Dispute"
 msgstr ""
 
-#: src/Admin/Admin.php:3005
+#: src/Admin/Admin.php:3032
 #: src/Admin/Pages/VendorsPage.php:1026
 #: src/Blocks/SellerCard.php:282
 msgid "N/A"
 msgstr ""
 
-#: src/Admin/Admin.php:3015
+#: src/Admin/Admin.php:3042
 msgid "Resolved At:"
 msgstr ""
 
-#: src/Admin/Admin.php:3019
+#: src/Admin/Admin.php:3046
 msgid "A resolved or closed dispute is final: the order has already moved, and money moves once."
 msgstr ""
 
-#: src/Admin/Admin.php:3063
+#: src/Admin/Admin.php:3090
 msgid "Demo content module not found."
 msgstr ""
 
 #. translators: 1: services count, 2: categories count, 3: vendors count
-#: src/Admin/Admin.php:3129
+#: src/Admin/Admin.php:3156
 #, php-format
 msgid "Imported %1$d services, %2$d categories, and %3$d vendor profiles."
 msgstr ""
 
 #. translators: 1: services count, 2: vendors count
-#: src/Admin/Admin.php:3335
+#: src/Admin/Admin.php:3362
 #, php-format
 msgid "Deleted %1$d demo services and %2$d demo vendors."
 msgstr ""
