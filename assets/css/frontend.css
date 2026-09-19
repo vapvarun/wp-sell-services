@@ -4530,8 +4530,18 @@ a.wpss-order-filter.is-active:focus {
 	text-align: center;
 }
 
+/* Darken the fill under the badge, never lighten it.
+   A white veil raised the backdrop towards the white numeral: over the indigo
+   fill it composited to #766feb and the count measured 4.02:1 at 12.75px,
+   under the 4.5 AA floor - on the one element that says how many orders the
+   filter holds (Basecamp 10320906024). The sibling comment below records the
+   inactive badge being measured at the time; the active one never was.
+
+   A black veil moves the backdrop away from the numeral instead, so this
+   passes for any --wpss-primary a site owner sets rather than only for the
+   default indigo, and the badge keeps reading as a distinct pill. */
 .wpss-order-filter.is-active .wpss-order-filter__count {
-	background: rgba(255, 255, 255, 0.22);
+	background: rgba(0, 0, 0, 0.22);
 	color: #fff;
 }
 
