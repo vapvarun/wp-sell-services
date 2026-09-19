@@ -260,12 +260,44 @@ foreach ( array_keys( $tagset ) as $t ) {
 }
 sort( $tags );
 
+/*
+ * The spec's version is DERIVED, never a literal in the config.
+ *
+ * It used to read $config['version'], and the freshness gate cannot catch that:
+ * the gate regenerates the spec and diffs it against the committed copy, and
+ * both sides read the same key, so a stale stamp matches itself and passes.
+ * That is how this spec sat at 1.7.1 while the plugin shipped 1.7.2 - the
+ * mobile client generates against this document, so it was being told the wrong
+ * API version by a check designed to prove the document was current.
+ *
+ * Order matters: the plugin's main-file header first, because that is the
+ * version WordPress itself reads for update checks and therefore the canonical
+ * one; the WPSS_VERSION constant second, which covers a directory not named
+ * after its plugin file; the config key last, and only so a spec could be
+ * deliberately pinned.
+ */
+$wpss_spec_version = '';
+$wpss_main_file    = dirname( __DIR__ ) . '/wp-sell-services.php';
+
+if ( is_readable( $wpss_main_file ) ) {
+	$wpss_header = get_file_data( $wpss_main_file, array( 'Version' => 'Version' ) );
+	$wpss_spec_version = trim( (string) ( $wpss_header['Version'] ?? '' ) );
+}
+
+if ( '' === $wpss_spec_version && defined( 'WPSS_VERSION' ) ) {
+	$wpss_spec_version = (string) WPSS_VERSION;
+}
+
+if ( '' === $wpss_spec_version ) {
+	$wpss_spec_version = (string) ( $config['version'] ?? '1.0.0' );
+}
+
 $spec = array(
 	'openapi' => '3.1.0',
 	'info'    => array_filter(
 		array(
 			'title'       => $config['title'] ?? 'REST API',
-			'version'     => $config['version'] ?? '1.0.0',
+			'version'     => $wpss_spec_version,
 			'description' => $config['description'] ?? '',
 			'contact'     => $config['contact'] ?? null,
 			'license'     => $config['license'] ?? null,

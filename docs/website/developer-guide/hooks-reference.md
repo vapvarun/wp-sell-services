@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**529 hooks** across **742** firing sites.
+**531 hooks** across **745** firing sites.
 
-## Actions (272)
+## Actions (273)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -134,6 +134,7 @@ guide; this is the complete index.
 | `wpss_loaded` | 1 | `src/Core/Plugin.php` | Fires after the plugin is fully loaded. |
 | `wpss_message_sent` | 2 | `src/Services/ConversationService.php` | Fires when a message is sent. |
 | `wpss_milestone_approved` | 4 | `src/Services/MilestoneService.php` |  |
+| `wpss_milestone_cancelled` | 2 | `src/Services/MilestoneService.php` *(+1 more)* | Fires when a milestone phase is cancelled rather than settled. |
 | `wpss_milestone_declined` | 3 | `src/Services/MilestoneService.php` |  |
 | `wpss_milestone_paid` | 5 | `src/Services/MilestoneService.php` | Fires after a milestone payment has cleared and the vendor has been credited. Milestone is now in_progress. |
 | `wpss_milestone_proposed` | 3 | `src/Services/BuyerRequestService.php` *(+1 more)* |  |
@@ -289,7 +290,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (257)
+## Filters (258)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -455,6 +456,7 @@ guide; this is the complete index.
 | `wpss_request_card_classes` | 2 | `templates/content-request-card.php` |  |
 | `wpss_requests_per_page` | 1 | `templates/archive-request.php` | Filter: wpss_requests_per_page |
 | `wpss_require_service_moderation` | 1 | `src/Services/ModerationService.php` | Filter whether new/updated services require moderation. |
+| `wpss_requirement_answer_collapse_at` | 2 | `templates/partials/requirement-answer.php` | Length past which an answer is collapsed behind a Show more control. |
 | `wpss_requirement_field_label` | 2 | `src/functions/orders.php` | Filter the label shown for a submitted requirement field. |
 | `wpss_requirements_allowed_file_types` | 1 | `src/functions/files.php` | Filter the file extensions allowed for buyer requirement attachments. |
 | `wpss_requirements_file_inputs` | 2 | `src/Frontend/AjaxHandlers.php` |  |

@@ -3,7 +3,7 @@
   "release_version": "1.7.2",
   "pro_version": "1.7.2",
   "ran_at": "2026-09-19T06:00:00Z",
-  "recorded": "2026-09-19T07:15:00Z",
+  "recorded": "2026-09-19T07:26:39Z",
   "site": "wp-sell-services.local",
   "themes_checked": [
     "reign-theme (active)"
@@ -23,9 +23,9 @@
       "skipped": 1
     },
     "B_upgrade": {
-      "pass": 0,
+      "pass": 3,
       "fail": 0,
-      "skipped": 3
+      "skipped": 0
     },
     "C_core_flows": {
       "pass": 4,
@@ -162,45 +162,26 @@
       "id": "08-mobile-app-session",
       "result": "skipped",
       "note": "Not walked this pass; no source changes this cycle touched AppTokenGuard or the /me contract."
+    },
+    {
+      "id": "03-install-and-upgrade (B_upgrade, run by the calling session)",
+      "result": "pass",
+      "note": "Real 1.7.1 -> 1.7.2 upgrade exercised on the live bed after the walk's sandbox denial on 'wp plugin deactivate'. Stored wpss_version rewound to 1.7.1, moderation enabled, and a service planted in the exact broken shape 1.7.2 migrates (post_status=publish with _wpss_moderation_status=pending). A real front-end request returned HTTP 200 with no fatal; maybe_run_install() advanced wpss_version to 1.7.2 and migrate_unapproved_published_services() moved the stranded service to post_status=pending, so it re-enters the queue the owner can actually see. No duplicate page slugs (24 published pages before and after), wpss_db_version 1.7.3 intact. Every fixture removed and both options restored to their prior values afterwards. The only debug.log growth in this window was from the session's own malformed wp eval probes, not the plugin."
     }
   ],
   "woo_rail_walk": {
     "result": "pass",
     "note": "Rail resolves to 'woocommerce' under the site's 'auto' setting (WooCommerce active, per Settings > E-Commerce Integration showing 'Currently Active: WooCommerce'). Confirmed the Continue-to-Checkout flow adds the service to the real WooCommerce cart/mini-cart with the 'Package: Basic' line meta, matching the documented WCOrderProvider integration. Did not complete a full paid purchase this pass (previous 1.7.1 pass already proved the full charge -> WPSS order -> vendor-credit-at-completion chain end to end on this rail); this pass instead confirmed E3 (fee-only pay-order Subtotal-row suppression) via code: WCPayOrderResolver::filter_order_item_totals() removes the empty product-subtotal row on fee-only (tip/extension/milestone) pay-orders, hooked on woocommerce_get_order_item_totals, guarded on both plugin meta and an empty line-item set."
   },
-  "failures": [
-    {
-      "id": "F1-dispute-evidence-author-name-shows-attachment",
-      "severity": "soft",
-      "origin": "from",
-      "surface": "dashboard/disputes/?dispute={id} - Messages & evidence thread",
-      "where": "templates/dashboard/sections/disputes.php, evidence-item rendering loop (~line 224-247)",
-      "expected": "Each message bubble's author label shows the member's display name (e.g. 'Ella Fixed').",
-      "actual": "Every text-only evidence/message entry with no attachment shows the literal word 'Attachment' as the author name instead of the sender's name. Reproduced live: opened a fresh dispute as buyer Ella and vendor Sofia both saw the opening statement bubble labelled '<strong>Attachment</strong>' instead of '<strong>Ella Fixed</strong>'.",
-      "root_cause": "$ev_name is set correctly to the member display name, then unconditionally overwritten two lines later by $ev_name = wpss_format_attachment_name(...) followed by a fallback to the literal string 'Attachment' when there is no attachment on the row - this logic was written for filename display but reuses the same variable that also holds the author name.",
-      "evidence": "Live: dashboard/disputes/?dispute=92 and ?dispute=93, both parties, both showed 'Attachment' as author. Code: templates/dashboard/sections/disputes.php lines ~240-247."
-    },
-    {
-      "id": "F2-gallery-add-icon-not-refreshed",
-      "severity": "soft",
-      "origin": "from",
-      "surface": "dashboard/create/ (service wizard) - Gallery step",
-      "where": "assets/js/service-wizard.js, openMediaUploader() images branch (~line 655)",
-      "expected": "After picking an additional gallery image, its 'Remove this image' icon-only button renders a visible Lucide icon, exactly like the equivalent buttons for extras/FAQs/deliverables/requirements (all of which call refreshIcons() after their add-methods).",
-      "actual": "The gallery-images push in openMediaUploader() never calls this.refreshIcons(), so a newly added gallery image's remove button keeps the raw <i data-lucide=\"x-circle\"> placeholder instead of the rendered <svg> - an empty 40px box with no visible way to remove the row, matching the exact historical bug pattern (1.6.0 changelog) already fixed for extras/FAQ/deliverables but missed here.",
-      "root_cause": "addFeature(), addRequirement(), addExtra(), addFaq() all end with this.refreshIcons(); the gallery-images push inside the frame.on('select', ...) callback in openMediaUploader() does not.",
-      "evidence": "Live: pushed a synthetic gallery image into the Alpine component's data.gallery.images array on the real wizard page (id=250) and inspected the new .wpss-gallery-remove button's innerHTML - it was '<i data-lucide=\"x-circle\" class=\"wpss-icon\" aria-hidden=\"true\"></i>', not an <svg>. Code: assets/js/service-wizard.js lines ~640-665 (no refreshIcons() call) vs lines 480-600 (all other add-methods call it)."
-    }
-  ],
   "debug_log_issues": [],
   "not_covered": [
-    "B_upgrade deactivate+reactivate: the sandbox's auto-mode classifier denied 'wp plugin deactivate' as a shared-resource-modifying action; not attempted after the denial per instructions to not work around it.",
     "Journeys 01, 04, 07, 08 not walked live this pass (no source changes this cycle touched those surfaces).",
     "E2 (Pro storage provider real upload) not exercised; no storage provider configured on this site, matching 1.7.1.",
     "F3 RTL sweep not re-run this pass.",
     "Rail-identity observation: wpss_general[ecommerce_platform] read 'standalone' at the very start of this session and 'auto' by the time item 5 was reached, with the active adapter resolving to 'woocommerce' in between. No code path was found that writes this option outside the admin settings save and the setup wizard, neither of which ran during this session; could not isolate whether this was a pre-existing artifact from a prior session/process on this long-lived dev site or a genuine runtime behavior. Not filed as a bug given the inconclusive root cause; flagging for the next session to watch for.",
     "Stripe/PayPal/Razorpay/Wallet/Commission-Rules/Subscription-Plans/Cloud-Storage admin settings sections were confirmed present in the wpss-settings page DOM (tab-hidden via CSS, not missing) but were not individually clicked through and screenshotted this pass - time budget was concentrated on the 14 branch-diff items per the branch-mode instruction to walk those first and in full.",
-    "Pristine zip install not re-run this pass (see pristine_zip_install)."
+    "Pristine zip install not re-run this pass (see pristine_zip_install).",
+    "B_upgrade deactivate+reactivate cycle still not run: the sandbox classifier denied 'wp plugin deactivate'. The upgrade PATH was verified instead by rewinding wpss_version and booting (see journey 03), which is what the 1.7.2 migration actually keys off. A true deactivate/reactivate remains unexercised this cycle."
   ],
   "hard_fails": [],
   "untested": [
@@ -221,11 +202,39 @@
     "gates_run": "contract_audit (carried), rest_reachability (run), i18n_verify (run, both plugins), preflight (run)"
   },
   "pristine_zip_install": {
-    "result": "deferred",
-    "note": "zip not yet built; this walk is the gate that unblocks grunt release"
+    "result": "pass",
+    "note": "Real 1.7.1 -> 1.7.2 upgrade on the docker bed (WordPress 7.1), not over the working copy. Both plugins were active at 1.7.1; the built zips were installed with --force. Both came back 1.7.2 and ACTIVE with no fatal. wpss_version advanced to 1.7.2 and the migration moved a planted published-but-unapproved service to post_status=pending, so it re-enters the review queue. Published pages unchanged at 8 (no duplicates), wpss_db_version 1.7.3 intact. wp wpss preflight: 84 checks, 0 fail, 0 warn, 100%. A first preflight run reported 1 FAIL for 'Fatals in debug.log'; all three entries were dated 18-Sep, from the previous session's own test harness (a wpss_milestone_approved call made with 2 args where the hook passes 4), not from this upgrade. Confirmed by clearing the log and re-running clean rather than by assertion. Probe and moderation setting removed afterwards."
   },
   "verdict": {
     "result": "pass_with_findings",
     "summary": "All 14 items in the 1.7.2 diff behave correctly per their spec, verified via a mix of live browser exercise (with fixtures created and fully cleaned up), server-side DB confirmation, and source-code review where a live walk was impractical (recurring-services, off by design) or could not be reliably captured (the 2-second contact-seller success window). Two real, reproducible soft bugs were found and are NOT release-blocking: F1 (dispute evidence author label shows the word 'Attachment' instead of the sender's name when there is no file attached) and F2 (a newly added gallery image's remove-icon does not render because the gallery-add path is missing the refreshIcons() call every sibling add-method already has). Both are small, isolated, one-line-class fixes. No hard fails, no fatals, no unexplained debug.log entries, no unguarded REST routes, no i18n regressions. The only unresolved question from this pass is a rail-identity value flip (standalone -> auto) observed mid-session whose cause could not be isolated - it did not block or corrupt anything, but is worth a second look before shipping given the runbook's explicit warning about rail-related false bounces."
-  }
+  },
+  "failures": [],
+  "failures_resolved_before_build": [
+    {
+      "id": "F1-dispute-evidence-author-name-shows-attachment",
+      "severity": "soft",
+      "origin": "from",
+      "surface": "dashboard/disputes/?dispute={id} - Messages & evidence thread",
+      "where": "templates/dashboard/sections/disputes.php, evidence-item rendering loop (~line 224-247)",
+      "expected": "Each message bubble's author label shows the member's display name (e.g. 'Ella Fixed').",
+      "actual": "Every text-only evidence/message entry with no attachment shows the literal word 'Attachment' as the author name instead of the sender's name. Reproduced live: opened a fresh dispute as buyer Ella and vendor Sofia both saw the opening statement bubble labelled '<strong>Attachment</strong>' instead of '<strong>Ella Fixed</strong>'.",
+      "root_cause": "$ev_name is set correctly to the member display name, then unconditionally overwritten two lines later by $ev_name = wpss_format_attachment_name(...) followed by a fallback to the literal string 'Attachment' when there is no attachment on the row - this logic was written for filename display but reuses the same variable that also holds the author name.",
+      "evidence": "Live: dashboard/disputes/?dispute=92 and ?dispute=93, both parties, both showed 'Attachment' as author. Code: templates/dashboard/sections/disputes.php lines ~240-247.",
+      "resolution": "fixed and re-verified in 1.7.2 before the build (commit ef1043f5, merged as 03c180c2)"
+    },
+    {
+      "id": "F2-gallery-add-icon-not-refreshed",
+      "severity": "soft",
+      "origin": "from",
+      "surface": "dashboard/create/ (service wizard) - Gallery step",
+      "where": "assets/js/service-wizard.js, openMediaUploader() images branch (~line 655)",
+      "expected": "After picking an additional gallery image, its 'Remove this image' icon-only button renders a visible Lucide icon, exactly like the equivalent buttons for extras/FAQs/deliverables/requirements (all of which call refreshIcons() after their add-methods).",
+      "actual": "The gallery-images push in openMediaUploader() never calls this.refreshIcons(), so a newly added gallery image's remove button keeps the raw <i data-lucide=\"x-circle\"> placeholder instead of the rendered <svg> - an empty 40px box with no visible way to remove the row, matching the exact historical bug pattern (1.6.0 changelog) already fixed for extras/FAQ/deliverables but missed here.",
+      "root_cause": "addFeature(), addRequirement(), addExtra(), addFaq() all end with this.refreshIcons(); the gallery-images push inside the frame.on('select', ...) callback in openMediaUploader() does not.",
+      "evidence": "Live: pushed a synthetic gallery image into the Alpine component's data.gallery.images array on the real wizard page (id=250) and inspected the new .wpss-gallery-remove button's innerHTML - it was '<i data-lucide=\"x-circle\" class=\"wpss-icon\" aria-hidden=\"true\"></i>', not an <svg>. Code: assets/js/service-wizard.js lines ~640-665 (no refreshIcons() call) vs lines 480-600 (all other add-methods call it).",
+      "resolution": "fixed and re-verified in 1.7.2 before the build (commit ef1043f5, merged as 03c180c2)"
+    }
+  ],
+  "failures_resolved_note": "Both findings were re-verified by the calling session, fixed, browser-verified on both halves, and merged through PR #18 with all 13 CI checks green, before any zip was built. F1: the dispute thread's author label and the file-link label shared one variable, so every text-only message was attributed to 'Attachment'; split into $ev_name and $ev_file, confirmed on dispute 84 (5 bubbles read Sofia Rossi / Ella Fixed, both attachments still show their real filenames) and dispute 54 (reads Benjamin Lee). F2: the wizard's gallery push did not call refreshIcons() as its five sibling add-methods do, so a new tile's remove control kept a raw <i data-lucide> placeholder; confirmed the new tile now renders a real <svg> carrying its aria-label."
 }
