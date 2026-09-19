@@ -652,6 +652,38 @@ class ServicesController extends RestController {
 			);
 		}
 
+		/*
+		 * Creating a service over REST is the app's version of finishing the
+		 * wizard, and it has to clear the same bar. It did not: with moderation
+		 * off this endpoint went straight to 'publish', so POST /services with
+		 * no packages at all put a live, unbuyable listing in the catalogue
+		 * (Basecamp 10320551446). update_item already asks the shared validator
+		 * before going live; create never asked it anything.
+		 *
+		 * Validated unconditionally, exactly as the wizard does, because there
+		 * is no draft path here - every service this route creates is either
+		 * published or queued for moderation, and neither should be publishable
+		 * with a missing price, delivery time or package.
+		 */
+		$publish_errors = wpss_validate_service_publishable(
+			array(
+				'title'       => (string) $request->get_param( 'title' ),
+				'description' => (string) $request->get_param( 'description' ),
+				'packages'    => (array) $request->get_param( 'packages' ),
+			)
+		);
+
+		if ( $publish_errors ) {
+			return new WP_Error(
+				'wpss_not_publishable',
+				implode( ' ', $publish_errors ),
+				array(
+					'status' => 400,
+					'errors' => array_values( $publish_errors ),
+				)
+			);
+		}
+
 		// Determine post status based on moderation setting.
 		$post_status = ModerationService::is_enabled() ? 'pending' : 'publish';
 
@@ -749,40 +781,47 @@ class ServicesController extends RestController {
 					array( 'status' => 400 )
 				);
 			}
-			/*
-			 * Going live has to clear the same bar here as in the wizard.
-			 *
-			 * The dashboard's Pause/Publish toggle and every app client come
-			 * through this route, and it accepted status=publish without asking
-			 * wpss_validate_service_publishable() anything - so a service the
-			 * wizard would refuse to publish could be published anyway by
-			 * flipping the toggle, and the marketplace ended up with listings
-			 * that have no price, no delivery time or no packages at all.
-			 */
-			if ( 'publish' === $requested_status ) {
-				$publish_errors = wpss_validate_service_publishable(
-					array(
-						'title'       => $update_data['post_title'] ?? get_the_title( $service_id ),
-						'description' => $update_data['post_content'] ?? (string) get_post_field( 'post_content', $service_id ),
-						'packages'    => $request->has_param( 'packages' )
-							? (array) $request->get_param( 'packages' )
-							: (array) get_post_meta( $service_id, '_wpss_packages', true ),
-					)
-				);
-
-				if ( $publish_errors ) {
-					return new WP_Error(
-						'wpss_not_publishable',
-						implode( ' ', $publish_errors ),
-						array(
-							'status' => 400,
-							'errors' => array_values( $publish_errors ),
-						)
-					);
-				}
-			}
 
 			$update_data['post_status'] = $requested_status;
+		}
+
+		/*
+		 * Anything that ends up live has to clear the same bar as the wizard.
+		 *
+		 * The gate used to hang off the status parameter, so it only ran when a
+		 * client asked to go live - and an ALREADY published service could be
+		 * edited straight past it. PUT /services/{id} carrying nothing but a
+		 * crafted package list repriced a live listing to $2 under the $5 floor,
+		 * or emptied its packages entirely, because no status was sent and the
+		 * validator was therefore never called (Basecamp 10320551446).
+		 *
+		 * Keyed off the status the service will HAVE, not the one it was asked
+		 * for. A draft is still free to be saved half-finished; publishing it,
+		 * or editing it while public, is not.
+		 */
+		$effective_status = $update_data['post_status'] ?? get_post_status( $service_id );
+
+		if ( 'publish' === $effective_status ) {
+			$publish_errors = wpss_validate_service_publishable(
+				array(
+					'title'       => $update_data['post_title'] ?? get_the_title( $service_id ),
+					'description' => $update_data['post_content'] ?? (string) get_post_field( 'post_content', $service_id ),
+					'packages'    => $request->has_param( 'packages' )
+						? (array) $request->get_param( 'packages' )
+						: (array) get_post_meta( $service_id, '_wpss_packages', true ),
+				)
+			);
+
+			if ( $publish_errors ) {
+				return new WP_Error(
+					'wpss_not_publishable',
+					implode( ' ', $publish_errors ),
+					array(
+						'status' => 400,
+						'errors' => array_values( $publish_errors ),
+					)
+				);
+			}
 		}
 
 		$result = wp_update_post( $update_data, true );
@@ -1260,6 +1299,21 @@ class ServicesController extends RestController {
 			$packages     = array();
 			if ( is_array( $raw_packages ) ) {
 				foreach ( $raw_packages as $pkg ) {
+					/*
+					 * A tier the vendor switched off is not part of the offer.
+					 * wpss_validate_service_publishable() skips those rows, and
+					 * ServiceWizard::save_service_meta() drops them before
+					 * storing - but this saver kept them, so the validator and
+					 * the store disagreed about what the service actually
+					 * offers. A package sent as { price: 2, enabled: false }
+					 * alongside a valid one was never price-checked and was
+					 * then written anyway, becoming _wpss_starting_price: the
+					 * $5 floor was bypassed with a $2 listing over REST
+					 * (Basecamp 10320551446).
+					 */
+					if ( is_array( $pkg ) && array_key_exists( 'enabled', $pkg ) && ! $pkg['enabled'] ) {
+						continue;
+					}
 					$packages[] = array(
 						'id'            => sanitize_key( $pkg['id'] ?? '' ),
 						'name'          => sanitize_text_field( $pkg['name'] ?? '' ),
