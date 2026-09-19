@@ -1055,6 +1055,22 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 .wpss-confirm { display: flex; flex-direction: column; gap: var(--wpss-space-4); text-align: center; }
 .wpss-confirm__title { margin: 0; font-size: var(--wpss-text-xl); font-weight: 600; color: var(--wpss-text); }
 .wpss-confirm__message { margin: 0; font-size: var(--wpss-text-base); line-height: 1.55; color: var(--wpss-text-secondary); }
+/* Optional reason field inside the confirm dialog, used where an action needs
+   a sentence from the member (escalating a dispute) rather than just a yes. */
+.wpss-confirm__prompt-label {
+	display: block;
+	margin-top: var(--wpss-space-3, 12px);
+	margin-bottom: var(--wpss-space-1, 4px);
+	font-size: 0.875rem;
+	font-weight: 600;
+	text-align: left;
+}
+
+.wpss-confirm__prompt {
+	width: 100%;
+	margin-bottom: var(--wpss-space-2, 8px);
+}
+
 .wpss-confirm__actions { display: flex; gap: var(--wpss-space-3); justify-content: center; margin-top: var(--wpss-space-2); }
 .wpss-confirm__actions .wpss-btn { min-width: 110px; }
 
