@@ -1473,6 +1473,10 @@ class ServiceWizard {
 						(int) $this->get_limit( 'max_tags' )
 					),
 					'limitGallery'       => __( 'You have reached the maximum number of gallery images. Upgrade to Pro for unlimited images.', 'wp-sell-services' ),
+					/* translators: %d: the extra's position in the list, starting at 1. */
+					'validationExtraTitle' => __( 'Extra %d needs a name, or clear its price to remove it.', 'wp-sell-services' ),
+					/* translators: %s: the extra's name. */
+					'validationExtraPrice' => __( 'Enter a price above zero for "%s", or remove it. An extra with no price is offered to buyers as a free add-on.', 'wp-sell-services' ),
 					'duplicateImage'     => __( 'That image is already in your gallery.', 'wp-sell-services' ),
 					'limitExtras'        => __( 'You have reached the maximum number of extras. Upgrade to Pro for unlimited extras.', 'wp-sell-services' ),
 					'limitFaq'           => __( 'You have reached the maximum number of FAQs. Upgrade to Pro for unlimited FAQs.', 'wp-sell-services' ),

@@ -299,6 +299,10 @@ function wpssServiceWizard(existingData = {}) {
 						fieldErrors['wpss-wizard-main-image'] = wpssWizard.strings.validationImage;
 					}
 					break;
+
+				case 'extras':
+					this.validationErrors.push(...this.extrasErrors());
+					break;
 			}
 
 			// Apply errors via the wpss-form-error primitive — inline on each field
@@ -373,6 +377,43 @@ function wpssServiceWizard(existingData = {}) {
 		 *
 		 * @return {Array} Validation messages, empty when every offered tier is complete.
 		 */
+		/**
+		 * Errors on the Extras step.
+		 *
+		 * A package refuses an empty price; an extra silently turned one into a
+		 * free add-on, so a vendor who left the field blank published
+		 * 'Alpha +$0.00' and gave the work away. Named extras must carry a
+		 * price, and a price must be a positive number - the same bar the
+		 * pricing tiers are held to.
+		 *
+		 * @return {Array} Human-readable messages, empty when the step is valid.
+		 */
+		extrasErrors() {
+			const errors = [];
+
+			(this.data.extras || []).forEach((extra, i) => {
+				const title = (extra.title || '').trim();
+				const raw   = extra.price;
+				const price = parseFloat(raw);
+
+				// An untouched blank row is not an error - it is simply unused.
+				if ('' === title && (raw === '' || raw === null || typeof raw === 'undefined')) {
+					return;
+				}
+
+				if ('' === title) {
+					errors.push(wpssWizard.strings.validationExtraTitle.replace('%d', i + 1));
+					return;
+				}
+
+				if (raw === '' || raw === null || typeof raw === 'undefined' || isNaN(price) || price <= 0) {
+					errors.push(wpssWizard.strings.validationExtraPrice.replace('%s', title));
+				}
+			});
+
+			return errors;
+		},
+
 		pricingErrors() {
 			const errors = [];
 
