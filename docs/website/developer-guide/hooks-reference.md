@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**531 hooks** across **745** firing sites.
+**531 hooks** across **744** firing sites.
 
 ## Actions (273)
 
@@ -489,7 +489,7 @@ guide; this is the complete index.
 | `wpss_service_max_tags` | 1 | `src/functions/services.php` | Max service tags. |
 | `wpss_service_max_videos` | 1 | `src/functions/services.php` | Max video URLs. |
 | `wpss_service_meta_fields` | 2 | `src/Admin/Metaboxes/ServiceMetabox.php` | Filter additional service meta fields rendered in the metabox. |
-| `wpss_service_order_slug` | 1 | `src/Core/Plugin.php` *(+3 more)* | Filter the service order URL slug. |
+| `wpss_service_order_slug` | 1 | `src/Core/Plugin.php` *(+2 more)* | Filter the service order URL slug. |
 | `wpss_service_post_type_args` | 1 | `src/PostTypes/ServicePostType.php` | Filter service post type arguments. |
 | `wpss_service_publish_errors` | 2 | `src/functions/services.php` | Filter the reasons a service may not go live. |
 | `wpss_service_schema` | 2 | `src/SEO/SchemaMarkup.php` |  |

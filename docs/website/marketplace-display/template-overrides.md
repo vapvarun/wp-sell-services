@@ -81,7 +81,6 @@ Subfolders are preserved: `templates/order/order-view.php` becomes
 | Template | Controls |
 |----------|----------|
 | `order/order-view.php` | The order detail screen |
-| `order/order-confirmation.php` | Post-checkout confirmation |
 | `order/conversation.php` | Order messaging thread |
 | `order/order-requirements.php` | Requirements screen |
 | `order/requirements-form.php` | The requirements form itself |

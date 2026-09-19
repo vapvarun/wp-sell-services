@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-19T09:53:10+00:00\n"
+"POT-Creation-Date: 2026-09-19T12:19:13+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -546,7 +546,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:414
 #: src/Blocks/SellerCard.php:204
 #: src/functions/orders.php:115
-#: src/functions/orders.php:819
+#: src/functions/orders.php:830
 #: src/Models/ServiceOrder.php:637
 #: src/Privacy/PersonalData.php:527
 #: src/Services/EarningsService.php:1033
@@ -902,7 +902,7 @@ msgstr ""
 #: src/Admin/Admin.php:2065
 #: src/Admin/Pages/VendorsPage.php:1951
 #: src/functions/orders.php:116
-#: src/functions/orders.php:823
+#: src/functions/orders.php:834
 #: src/Models/ServiceOrder.php:638
 #: src/Services/BuyerRequestService.php:1134
 #: templates/emails/order-cancelled.php:66
@@ -1649,7 +1649,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:1322
 #: src/Admin/Pages/ReportsPage.php:111
 #: src/Admin/Pages/VendorsPage.php:637
-#: src/functions/orders.php:801
+#: src/functions/orders.php:812
 #: templates/dashboard/sections/orders.php:146
 #: templates/dashboard/sections/sales.php:169
 #: templates/dashboard/sections/services.php:87
@@ -2534,7 +2534,7 @@ msgstr ""
 #: src/Admin/Pages/ManualOrderPage.php:367
 #: src/Frontend/UnifiedDashboard.php:174
 #: src/functions/moderation.php:116
-#: src/functions/orders.php:878
+#: src/functions/orders.php:889
 #: src/Services/EmailService.php:1370
 #: src/Services/NotificationService.php:606
 #: templates/order/order-view.php:1193
@@ -2780,7 +2780,7 @@ msgstr ""
 #: src/Admin/Tables/DisputesListTable.php:261
 #: src/Admin/Tables/DisputesListTable.php:281
 #: src/Admin/Tables/OrdersListTable.php:326
-#: src/functions/orders.php:793
+#: src/functions/orders.php:804
 msgid "All"
 msgstr ""
 
@@ -13168,59 +13168,59 @@ msgstr ""
 msgid "File Upload"
 msgstr ""
 
-#: src/functions/orders.php:797
+#: src/functions/orders.php:808
 msgid "Awaiting payment"
 msgstr ""
 
-#: src/functions/orders.php:815
+#: src/functions/orders.php:826
 msgid "Needs attention"
 msgstr ""
 
-#: src/functions/orders.php:1227
+#: src/functions/orders.php:1238
 msgid "Payment Reference"
 msgstr ""
 
 #. translators: %s: parent order number.
-#: src/functions/orders.php:1275
+#: src/functions/orders.php:1286
 #, php-format
 msgid "Tip on order #%s"
 msgstr ""
 
 #. translators: %s: parent order number.
-#: src/functions/orders.php:1277
+#: src/functions/orders.php:1288
 #, php-format
 msgid "Extension on order #%s"
 msgstr ""
 
 #. translators: %s: parent order number.
-#: src/functions/orders.php:1279
+#: src/functions/orders.php:1290
 #, php-format
 msgid "Milestone of order #%s"
 msgstr ""
 
 #. translators: %s: sub-order platform (Tip/Extension/Milestone).
-#: src/functions/orders.php:1296
+#: src/functions/orders.php:1307
 #, php-format
 msgid "%s sub-order (parent missing)"
 msgstr ""
 
 #. translators: %s: buyer request title.
-#: src/functions/orders.php:1310
-#: src/functions/orders.php:1336
+#: src/functions/orders.php:1321
+#: src/functions/orders.php:1347
 #, php-format
 msgid "Request: %s"
 msgstr ""
 
-#: src/functions/orders.php:1339
+#: src/functions/orders.php:1350
 msgid "Buyer request"
 msgstr ""
 
-#: src/functions/orders.php:1346
+#: src/functions/orders.php:1357
 msgid "No service linked"
 msgstr ""
 
 #. translators: %d: removed service post ID.
-#: src/functions/orders.php:1357
+#: src/functions/orders.php:1368
 #, php-format
 msgid "Deleted service #%d"
 msgstr ""

@@ -657,6 +657,13 @@ function wpss_prime_order_requirements( array $order_ids = array(), ?int $forget
  * @return string
  */
 function wpss_get_order_confirmation_url( int $order_id ): string {
+	/*
+	 * Superseded by wpss_get_post_checkout_url(), which every redirect site now
+	 * uses because it takes the fallback destination as an argument - a paid
+	 * order with outstanding requirements belongs on the requirements form, not
+	 * the order view, and this function cannot know that. Kept because it is a
+	 * public function a site may call; it has no callers inside the plugin.
+	 */
 	$order = wpss_get_order( $order_id );
 
 	if ( ! $order ) {
@@ -672,14 +679,18 @@ function wpss_get_order_confirmation_url( int $order_id ): string {
 		}
 	}
 
-	// Fall back to the pretty dashboard order view.
-	$url = wpss_get_order_url( $order_id );
-	if ( $url ) {
-		return $url;
-	}
-
-	$order_slug = apply_filters( 'wpss_service_order_slug', 'service-order' );
-	return home_url( '/' . $order_slug . '/' . $order_id . '/confirmation/' );
+	/*
+	 * Fall back to the pretty dashboard order view.
+	 *
+	 * There used to be a final fallback here that built
+	 * /{order-slug}/{id}/confirmation/. That address was served by
+	 * templates/order/order-confirmation.php, which 1.7.2 removed because
+	 * nothing rendered it - so the last line of this function became a
+	 * guaranteed 404 for anyone who reached it. Returning an empty string lets
+	 * a caller notice there is no destination instead of sending a buyer to a
+	 * dead page.
+	 */
+	return wpss_get_order_url( $order_id );
 }
 
 /**

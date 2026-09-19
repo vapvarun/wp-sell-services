@@ -287,7 +287,7 @@ Fixes from a QA audit of the vendor and buyer dashboards.
 * Fix      - The selected order filter stays readable on themes that recolour content links.
 * Fix      - The checkout steps appear before the payment form on phones.
 * Fix      - Removing a wizard extra no longer logs JavaScript errors.
-* Dev      - Removed templates/order/order-confirmation.php, which no rail rendered.
+* Dev      - Removed templates/order/order-confirmation.php, which no rail rendered, along with its stylesheet rules. This retires three actions that only that template fired: wpss_before_order_confirmation, wpss_order_confirmation_details and wpss_after_order_confirmation. A site hooking them was never being called, because the template was never loaded.
 * Compat   - Requires WP Sell Services Pro 1.7.2. Install both updates together.
 
 = 1.7.1 - September 2026 =
