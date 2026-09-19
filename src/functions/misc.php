@@ -887,3 +887,27 @@ function wpss_is_admin_page( string $hook, string ...$slugs ): bool {
 
 	return false;
 }
+
+/**
+ * Enqueue one of the plugin's stylesheets, with its RTL sibling registered.
+ *
+ * Every sheet registered from a class remembered wp_style_add_data( …, 'rtl',
+ * 'replace' ); every sheet enqueued inline from a template forgot it. So
+ * orders.css, vendor-dashboard.css and messaging.css shipped an -rtl.css that
+ * WordPress was never told about and therefore never served - the RTL build ran
+ * on every release and its output went nowhere (Basecamp 10320551778).
+ *
+ * Call this instead of wp_enqueue_style() for plugin CSS so the RTL pairing is
+ * not something each call site has to remember.
+ *
+ * @since 1.7.3
+ *
+ * @param string   $handle   Style handle, e.g. 'wpss-orders'.
+ * @param string   $relative Path under the plugin root, e.g. 'assets/css/orders.css'.
+ * @param string[] $deps     Dependencies. Defaults to the design system.
+ * @return void
+ */
+function wpss_enqueue_style( string $handle, string $relative, array $deps = array( 'wpss-design-system' ) ): void {
+	wp_enqueue_style( $handle, WPSS_PLUGIN_URL . $relative, $deps, WPSS_VERSION );
+	wp_style_add_data( $handle, 'rtl', 'replace' );
+}

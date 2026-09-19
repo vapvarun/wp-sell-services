@@ -28,7 +28,7 @@ if ( empty( $order_id ) || empty( $order ) ) {
 }
 
 // Enqueue messaging styles.
-wp_enqueue_style( 'wpss-messaging', WPSS_PLUGIN_URL . 'assets/css/messaging.css', array( 'wpss-design-system' ), WPSS_VERSION );
+wpss_enqueue_style( 'wpss-messaging', 'assets/css/messaging.css' );
 
 // Enqueue frontend script. The `wpss` object (ajaxUrl, restUrl, nonce,
 // restNonce) is localized once, authoritatively, in Frontend.php on

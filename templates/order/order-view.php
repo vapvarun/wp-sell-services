@@ -30,7 +30,7 @@ if ( empty( $order_id ) ) {
 }
 
 // Enqueue orders styles.
-wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', array( 'wpss-design-system' ), WPSS_VERSION );
+wpss_enqueue_style( 'wpss-orders', 'assets/css/orders.css' );
 
 // Enqueue frontend assets to ensure wpssData is available.
 wpss_enqueue_frontend_assets();
