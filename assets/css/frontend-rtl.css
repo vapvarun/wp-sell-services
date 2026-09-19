@@ -1761,12 +1761,19 @@ article.wpss-service-card:hover {
 	overflow-wrap: anywhere;
 }
 
-.wpss-requirement-view__answer--collapsed {
-	max-height: 100px;
+/* Clip the TEXT, never the container.
+   The Show more / Show less button and the copy button are siblings of
+   .wpss-requirement-view__text-content INSIDE .wpss-requirement-view__answer.
+   Capping the container clipped those controls away along with the overflowing
+   text, so a long answer was cut off with no way at all to expand it - the one
+   control that would have opened it was the thing being hidden. */
+.wpss-requirement-view__answer--collapsed .wpss-requirement-view__text-content {
+	position: relative;
+	max-height: 120px;
 	overflow: hidden;
 }
 
-.wpss-requirement-view__answer--collapsed::after {
+.wpss-requirement-view__answer--collapsed .wpss-requirement-view__text-content::after {
 	content: "";
 	position: absolute;
 	bottom: 0;
@@ -1777,12 +1784,18 @@ article.wpss-service-card:hover {
 	pointer-events: none;
 }
 
-.wpss-requirement-view__answer--expanded {
+.wpss-requirement-view__answer--expanded .wpss-requirement-view__text-content {
 	max-height: none;
 }
 
-.wpss-requirement-view__answer--expanded::after {
+.wpss-requirement-view__answer--expanded .wpss-requirement-view__text-content::after {
 	display: none;
+}
+
+/* The toggle must never be clipped, whatever state the answer is in. */
+.wpss-requirement-view__expand-btn {
+	position: relative;
+	z-index: 1;
 }
 
 .wpss-requirement-view__text-content {
