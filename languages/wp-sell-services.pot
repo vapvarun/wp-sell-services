@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-19T09:46:34+00:00\n"
+"POT-Creation-Date: 2026-09-19T09:53:10+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -231,7 +231,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:1442
 #: src/Frontend/AjaxHandlers.php:2303
 #: src/Frontend/ServiceWizard.php:556
-#: src/Frontend/ServiceWizard.php:1314
+#: src/Frontend/ServiceWizard.php:1326
 #: templates/partials/service-packages.php:41
 msgid "Standard"
 msgstr ""
@@ -254,7 +254,7 @@ msgstr ""
 #: src/Frontend/AjaxHandlers.php:2934
 #: src/Frontend/AjaxHandlers.php:3115
 #: src/Frontend/AjaxHandlers.php:3314
-#: src/Frontend/ServiceWizard.php:1820
+#: src/Frontend/ServiceWizard.php:1832
 #: src/Integrations/PayPal/PayPalGateway.php:805
 msgid "Invalid request."
 msgstr ""
@@ -329,7 +329,7 @@ msgstr ""
 #: src/Admin/Pages/WithdrawalsPage.php:172
 #: src/Frontend/Frontend.php:271
 #: src/Frontend/Frontend.php:275
-#: src/Frontend/ServiceWizard.php:1446
+#: src/Frontend/ServiceWizard.php:1458
 #: src/Frontend/Shortcodes.php:1317
 #: src/Frontend/UnifiedDashboard.php:191
 #: src/Integrations/PayPal/PayPalGateway.php:571
@@ -1356,7 +1356,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:1752
 #: src/Admin/Pages/VendorsPage.php:2290
 #: src/Frontend/ServiceWizard.php:466
-#: src/Frontend/ServiceWizard.php:979
+#: src/Frontend/ServiceWizard.php:991
 #: src/Frontend/Shortcodes.php:708
 #: src/Frontend/UnifiedDashboard.php:170
 #: src/Integrations/Gateways/OfflineGateway.php:388
@@ -1522,8 +1522,8 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:500
 #: src/Admin/Pages/VendorsPage.php:1448
 #: src/Admin/Pages/VendorsPage.php:1821
-#: src/Frontend/ServiceWizard.php:632
-#: src/Frontend/ServiceWizard.php:959
+#: src/Frontend/ServiceWizard.php:633
+#: src/Frontend/ServiceWizard.php:971
 #: src/Frontend/SingleServiceView.php:151
 msgid "Price"
 msgstr ""
@@ -1759,7 +1759,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:731
 #: src/Admin/Metaboxes/ServiceMetabox.php:1688
 #: src/Admin/Metaboxes/ServiceMetabox.php:1808
-#: src/Frontend/ServiceWizard.php:1177
+#: src/Frontend/ServiceWizard.php:1189
 #: src/Frontend/SingleServiceView.php:884
 #: templates/single-request.php:614
 #: templates/single-request.php:631
@@ -1768,7 +1768,7 @@ msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:470
 #: src/Admin/Metaboxes/ServiceMetabox.php:1694
-#: src/Frontend/ServiceWizard.php:666
+#: src/Frontend/ServiceWizard.php:668
 #: src/Frontend/SingleServiceView.php:153
 #: src/functions/payments.php:117
 #: src/functions/payments.php:118
@@ -1828,7 +1828,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:738
 #: src/Admin/Metaboxes/ServiceMetabox.php:1814
 #: src/Admin/Metaboxes/ServiceMetabox.php:1848
-#: src/Frontend/ServiceWizard.php:874
+#: src/Frontend/ServiceWizard.php:886
 msgid "Required"
 msgstr ""
 
@@ -1937,7 +1937,7 @@ msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:719
 #: src/Admin/Metaboxes/ServiceMetabox.php:1797
-#: src/Frontend/ServiceWizard.php:887
+#: src/Frontend/ServiceWizard.php:899
 msgid "Options"
 msgstr ""
 
@@ -2033,7 +2033,7 @@ msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:1486
 #: src/Frontend/ServiceWizard.php:92
-#: src/Frontend/ServiceWizard.php:728
+#: src/Frontend/ServiceWizard.php:730
 msgid "Gallery"
 msgstr ""
 
@@ -2054,7 +2054,7 @@ msgid "Add Add-on"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:1555
-#: src/Frontend/ServiceWizard.php:828
+#: src/Frontend/ServiceWizard.php:840
 msgid "Buyer Requirements"
 msgstr ""
 
@@ -2063,12 +2063,12 @@ msgid "Questions to ask buyers when they place an order."
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:1567
-#: src/Frontend/ServiceWizard.php:901
+#: src/Frontend/ServiceWizard.php:913
 msgid "Add Requirement"
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:1586
-#: src/Frontend/ServiceWizard.php:1007
+#: src/Frontend/ServiceWizard.php:1019
 #: src/Services/FAQService.php:158
 #: templates/partials/service-faqs.php:35
 msgid "Frequently Asked Questions"
@@ -2101,7 +2101,7 @@ msgid "Enter answer..."
 msgstr ""
 
 #: src/Admin/Metaboxes/ServiceMetabox.php:1611
-#: src/Frontend/ServiceWizard.php:1041
+#: src/Frontend/ServiceWizard.php:1053
 #: src/Services/FAQService.php:231
 msgid "Add FAQ"
 msgstr ""
@@ -2146,7 +2146,7 @@ msgid "Updating..."
 msgstr ""
 
 #: src/Admin/OrderScreen.php:136
-#: src/Frontend/ServiceWizard.php:1442
+#: src/Frontend/ServiceWizard.php:1454
 msgid "Saving..."
 msgstr ""
 
@@ -3581,7 +3581,7 @@ msgstr ""
 #: src/Admin/Pages/UpgradePage.php:114
 #: src/Admin/Pages/UpgradePage.php:119
 #: src/Admin/Pages/UpgradePage.php:124
-#: src/Frontend/ServiceWizard.php:673
+#: src/Frontend/ServiceWizard.php:675
 #: templates/partials/service-packages.php:164
 msgid "Unlimited"
 msgstr ""
@@ -7750,8 +7750,8 @@ msgstr ""
 
 #: src/API/ServicesController.php:1128
 #: src/Frontend/ServiceWizard.php:233
-#: src/Frontend/ServiceWizard.php:1548
-#: src/Frontend/ServiceWizard.php:1689
+#: src/Frontend/ServiceWizard.php:1560
+#: src/Frontend/ServiceWizard.php:1701
 msgid "You have reached the maximum number of services allowed. Please remove an existing service before creating a new one."
 msgstr ""
 
@@ -7761,8 +7761,8 @@ msgstr ""
 
 #: src/API/ServicesController.php:1170
 #: src/Frontend/ServiceWizard.php:249
-#: src/Frontend/ServiceWizard.php:1567
-#: src/Frontend/ServiceWizard.php:1738
+#: src/Frontend/ServiceWizard.php:1579
+#: src/Frontend/ServiceWizard.php:1750
 #: templates/dashboard/sections/create.php:46
 msgid "You do not have permission to edit this service."
 msgstr ""
@@ -8051,7 +8051,7 @@ msgid "No featured services found."
 msgstr ""
 
 #: src/Blocks/FeaturedServices.php:294
-#: src/Frontend/ServiceWizard.php:1090
+#: src/Frontend/ServiceWizard.php:1102
 #: templates/content-service-card.php:282
 msgid "Starting at"
 msgstr ""
@@ -8114,8 +8114,8 @@ msgid "Display a search form to find services."
 msgstr ""
 
 #: src/Checkout/CheckoutIntentService.php:47
-#: src/Frontend/ServiceWizard.php:1510
-#: src/Frontend/ServiceWizard.php:1630
+#: src/Frontend/ServiceWizard.php:1522
+#: src/Frontend/ServiceWizard.php:1642
 #: src/Integrations/Gateways/OfflineGateway.php:571
 #: src/Integrations/Gateways/TestGateway.php:250
 #: src/Integrations/PayPal/PayPalGateway.php:676
@@ -9368,7 +9368,7 @@ msgstr ""
 #: src/Frontend/PublicSignup.php:491
 #: src/Frontend/ServiceWizard.php:411
 #: src/Frontend/ServiceWizard.php:531
-#: src/Frontend/ServiceWizard.php:735
+#: src/Frontend/ServiceWizard.php:737
 msgid "Please fix the following:"
 msgstr ""
 
@@ -9653,7 +9653,7 @@ msgid "& Up"
 msgstr ""
 
 #: src/Frontend/ServiceArchiveView.php:458
-#: src/Frontend/ServiceWizard.php:647
+#: src/Frontend/ServiceWizard.php:649
 #: templates/partials/service-packages.php:140
 #: templates/single-request.php:608
 msgid "Delivery Time"
@@ -9703,7 +9703,7 @@ msgid "Basic Info"
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:100
-#: src/Frontend/ServiceWizard.php:930
+#: src/Frontend/ServiceWizard.php:942
 msgid "Extras & FAQs"
 msgstr ""
 
@@ -9717,7 +9717,7 @@ msgid "Update Service"
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:342
-#: src/Frontend/ServiceWizard.php:1444
+#: src/Frontend/ServiceWizard.php:1456
 msgid "Publishing..."
 msgstr ""
 
@@ -9784,12 +9784,12 @@ msgid "Set your starting price. You can offer Standard and Premium tiers for buy
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:545
-#: src/Frontend/ServiceWizard.php:1305
+#: src/Frontend/ServiceWizard.php:1317
 msgid "Basic"
 msgstr ""
 
 #: src/Frontend/ServiceWizard.php:566
-#: src/Frontend/ServiceWizard.php:1323
+#: src/Frontend/ServiceWizard.php:1335
 msgid "Premium"
 msgstr ""
 
@@ -9811,415 +9811,419 @@ msgstr ""
 msgid "Tier title"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:626
+#: src/Frontend/ServiceWizard.php:627
 msgid "Short label buyers see on the package card (e.g. \"Logo + 3 revisions\")."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:651
+#: src/Frontend/ServiceWizard.php:653
 msgid "Select"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:652
+#: src/Frontend/ServiceWizard.php:654
 msgid "1 day"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:653
+#: src/Frontend/ServiceWizard.php:655
 msgid "2 days"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:654
+#: src/Frontend/ServiceWizard.php:656
 msgid "3 days"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:655
+#: src/Frontend/ServiceWizard.php:657
 msgid "5 days"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:656
+#: src/Frontend/ServiceWizard.php:658
 msgid "7 days"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:657
+#: src/Frontend/ServiceWizard.php:659
 msgid "14 days"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:658
+#: src/Frontend/ServiceWizard.php:660
 msgid "21 days"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:659
+#: src/Frontend/ServiceWizard.php:661
 msgid "30 days"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:668
+#: src/Frontend/ServiceWizard.php:670
 #: src/Models/ServicePackage.php:210
 msgid "No revisions"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:680
+#: src/Frontend/ServiceWizard.php:682
 msgid "What's included"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:681
+#: src/Frontend/ServiceWizard.php:683
 msgid "List the deliverables for this tier. One bullet per line."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:688
+#: src/Frontend/ServiceWizard.php:690
 msgid "e.g. 3 logo concepts"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:689
+#: src/Frontend/ServiceWizard.php:691
 msgid "Remove this deliverable"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:696
+#: src/Frontend/ServiceWizard.php:698
 msgid "Add a deliverable"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:729
+#: src/Frontend/ServiceWizard.php:731
 msgid "Add images and videos to showcase your work. High-quality visuals increase conversions."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:742
+#: src/Frontend/ServiceWizard.php:744
 msgid "Main Image"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:756
+#: src/Frontend/ServiceWizard.php:758
 msgid "Remove the main image"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:764
+#: src/Frontend/ServiceWizard.php:766
 msgid "Click to upload main image"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:765
+#: src/Frontend/ServiceWizard.php:767
 msgid "Recommended: 800x600px"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:780
+#: src/Frontend/ServiceWizard.php:782
 msgid "Add more media (optional)"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:785
+#: src/Frontend/ServiceWizard.php:787
 msgid "Additional Images"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:790
+#: src/Frontend/ServiceWizard.php:792
 msgid "Remove this image"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:797
+#: src/Frontend/ServiceWizard.php:807
+msgid "Add a gallery image"
+msgstr ""
+
+#: src/Frontend/ServiceWizard.php:809
 #: src/Services/GalleryService.php:401
 msgid "Add Image"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:801
+#: src/Frontend/ServiceWizard.php:813
 msgid "Unlimited additional images"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:801
+#: src/Frontend/ServiceWizard.php:813
 msgid "Up to"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:801
+#: src/Frontend/ServiceWizard.php:813
 msgid "additional images"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:806
+#: src/Frontend/ServiceWizard.php:818
 msgid "Showcase video"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:807
+#: src/Frontend/ServiceWizard.php:819
 msgid "YouTube or Vimeo URL."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:811
+#: src/Frontend/ServiceWizard.php:823
 msgid "https://www.youtube.com/watch?v=..."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:829
+#: src/Frontend/ServiceWizard.php:841
 msgid "Define what information you need from buyers before starting work."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:838
+#: src/Frontend/ServiceWizard.php:850
 msgid "Remove this requirement"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:844
-#: src/Frontend/ServiceWizard.php:1021
+#: src/Frontend/ServiceWizard.php:856
+#: src/Frontend/ServiceWizard.php:1033
 #: src/Services/FAQService.php:273
 msgid "Question"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:848
+#: src/Frontend/ServiceWizard.php:860
 msgid "What do you need from the buyer?"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:852
+#: src/Frontend/ServiceWizard.php:864
 msgid "Answer Type"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:891
+#: src/Frontend/ServiceWizard.php:903
 msgid "Option 1, Option 2, Option 3"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:892
+#: src/Frontend/ServiceWizard.php:904
 msgid "Separate options with commas"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:905
+#: src/Frontend/ServiceWizard.php:917
 msgid "Requirement limit reached."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:908
-#: src/Frontend/ServiceWizard.php:999
-#: src/Frontend/ServiceWizard.php:1048
+#: src/Frontend/ServiceWizard.php:920
+#: src/Frontend/ServiceWizard.php:1011
+#: src/Frontend/ServiceWizard.php:1060
 msgid "Upgrade to Pro for unlimited"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:914
+#: src/Frontend/ServiceWizard.php:926
 msgid "Tip:"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:915
+#: src/Frontend/ServiceWizard.php:927
 msgid "Ask clear, specific questions to avoid delays. Requirements help you deliver exactly what the buyer needs."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:931
+#: src/Frontend/ServiceWizard.php:943
 msgid "Offer add-ons and answer common questions."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:937
+#: src/Frontend/ServiceWizard.php:949
 msgid "Service Extras"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:938
+#: src/Frontend/ServiceWizard.php:950
 msgid "Offer additional services buyers can add to their order."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:944
+#: src/Frontend/ServiceWizard.php:956
 msgid "New Extra"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:945
+#: src/Frontend/ServiceWizard.php:957
 msgid "Remove this extra"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:951
+#: src/Frontend/ServiceWizard.php:963
 msgid "Extra Title"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:955
+#: src/Frontend/ServiceWizard.php:967
 msgid "e.g., Express Delivery"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:970
+#: src/Frontend/ServiceWizard.php:982
 msgid "Extra Days"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:983
+#: src/Frontend/ServiceWizard.php:995
 msgid "Describe what's included in this extra"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:992
+#: src/Frontend/ServiceWizard.php:1004
 msgid "Add Extra"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:996
+#: src/Frontend/ServiceWizard.php:1008
 msgid "Extras limit reached."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1008
+#: src/Frontend/ServiceWizard.php:1020
 msgid "Answer common questions to help buyers make decisions."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1015
+#: src/Frontend/ServiceWizard.php:1027
 msgid "Remove this FAQ"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1025
+#: src/Frontend/ServiceWizard.php:1037
 msgid "What question do buyers often ask?"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1028
+#: src/Frontend/ServiceWizard.php:1040
 #: src/Services/FAQService.php:277
 msgid "Answer"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1032
+#: src/Frontend/ServiceWizard.php:1044
 msgid "Provide a helpful answer..."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1045
+#: src/Frontend/ServiceWizard.php:1057
 msgid "FAQ limit reached."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1067
+#: src/Frontend/ServiceWizard.php:1079
 msgid "Review & Publish"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1068
+#: src/Frontend/ServiceWizard.php:1080
 msgid "Review your service details before publishing."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1075
+#: src/Frontend/ServiceWizard.php:1087
 msgid "Service Preview"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1088
+#: src/Frontend/ServiceWizard.php:1100
 msgid "Untitled Service"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1099
+#: src/Frontend/ServiceWizard.php:1111
 msgid "Completion Checklist"
 msgstr ""
 
 #. translators: %d: minimum number of characters.
-#: src/Frontend/ServiceWizard.php:1135
+#: src/Frontend/ServiceWizard.php:1147
 #, php-format
 msgid "Service title (%d+ characters)"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1143
+#: src/Frontend/ServiceWizard.php:1155
 msgid "Category selected"
 msgstr ""
 
 #. translators: %d: minimum number of characters.
-#: src/Frontend/ServiceWizard.php:1151
+#: src/Frontend/ServiceWizard.php:1163
 #, php-format
 msgid "Description (%d+ characters)"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1159
+#: src/Frontend/ServiceWizard.php:1171
 msgid "Basic package pricing complete"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1164
+#: src/Frontend/ServiceWizard.php:1176
 msgid "Main image uploaded"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1171
+#: src/Frontend/ServiceWizard.php:1183
 msgid "Pricing Summary"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1186
+#: src/Frontend/ServiceWizard.php:1198
 msgid "Please fix these issues before publishing:"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1443
+#: src/Frontend/ServiceWizard.php:1455
 msgid "Draft saved!"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1445
+#: src/Frontend/ServiceWizard.php:1457
 msgid "Service published!"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1447
+#: src/Frontend/ServiceWizard.php:1459
 msgid "You have unsaved changes. Are you sure you want to leave?"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1448
+#: src/Frontend/ServiceWizard.php:1460
 msgid "Are you sure you want to remove this item?"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1449
+#: src/Frontend/ServiceWizard.php:1461
 msgid "Please enter a service title"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1450
+#: src/Frontend/ServiceWizard.php:1462
 msgid "Please enter at least 10 characters for the service title."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1451
+#: src/Frontend/ServiceWizard.php:1463
 msgid "Please select a category"
 msgstr ""
 
 #. translators: %d: minimum number of characters.
-#: src/Frontend/ServiceWizard.php:1454
+#: src/Frontend/ServiceWizard.php:1466
 #, php-format
 msgid "Please add a description (minimum %d characters)"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1457
+#: src/Frontend/ServiceWizard.php:1469
 msgid "Please set a price for the Basic package"
 msgstr ""
 
 #. translators: %s: formatted minimum price (e.g. $5.00).
-#: src/Frontend/ServiceWizard.php:1460
+#: src/Frontend/ServiceWizard.php:1472
 #: src/functions/services.php:1175
 #, php-format
 msgid "Basic package price must be at least %s."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1463
+#: src/Frontend/ServiceWizard.php:1475
 msgid "Please upload a main image"
 msgstr ""
 
 #. translators: %s: package tier name (e.g. Basic).
-#: src/Frontend/ServiceWizard.php:1465
+#: src/Frontend/ServiceWizard.php:1477
 #, php-format
 msgid "Package name is required for the %s package."
 msgstr ""
 
 #. translators: %s: package tier name (e.g. Basic).
-#: src/Frontend/ServiceWizard.php:1467
+#: src/Frontend/ServiceWizard.php:1479
 #, php-format
 msgid "Package description is required for the %s package."
 msgstr ""
 
 #. translators: %s: package tier name (e.g. Standard).
-#: src/Frontend/ServiceWizard.php:1469
+#: src/Frontend/ServiceWizard.php:1481
 #, php-format
 msgid "Set a price and delivery time for the %s package."
 msgstr ""
 
 #. translators: %d: maximum number of tags.
-#: src/Frontend/ServiceWizard.php:1472
+#: src/Frontend/ServiceWizard.php:1484
 #, php-format
 msgid "You can add a maximum of %d tags."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1475
+#: src/Frontend/ServiceWizard.php:1487
 msgid "You have reached the maximum number of gallery images. Upgrade to Pro for unlimited images."
 msgstr ""
 
 #. translators: %d: the extra's position in the list, starting at 1.
-#: src/Frontend/ServiceWizard.php:1477
+#: src/Frontend/ServiceWizard.php:1489
 #, php-format
 msgid "Extra %d needs a name, or clear its price to remove it."
 msgstr ""
 
 #. translators: %s: the extra's name.
-#: src/Frontend/ServiceWizard.php:1479
+#: src/Frontend/ServiceWizard.php:1491
 #, php-format
 msgid "Enter a price above zero for \"%s\", or remove it. An extra with no price is offered to buyers as a free add-on."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1480
+#: src/Frontend/ServiceWizard.php:1492
 msgid "That image is already in your gallery."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1481
+#: src/Frontend/ServiceWizard.php:1493
 msgid "You have reached the maximum number of extras. Upgrade to Pro for unlimited extras."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1482
+#: src/Frontend/ServiceWizard.php:1494
 msgid "You have reached the maximum number of FAQs. Upgrade to Pro for unlimited FAQs."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1483
+#: src/Frontend/ServiceWizard.php:1495
 msgid "You have reached the maximum number of requirements. Upgrade to Pro for unlimited requirements."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1484
+#: src/Frontend/ServiceWizard.php:1496
 msgid "Select Main Image"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1485
+#: src/Frontend/ServiceWizard.php:1497
 msgid "Add Gallery Image"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1486
+#: src/Frontend/ServiceWizard.php:1498
 #: src/Frontend/UnifiedDashboard.php:189
 #: templates/dashboard/sections/portfolio.php:142
 #: templates/dashboard/sections/requests.php:198
@@ -10228,112 +10232,112 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1518
-#: src/Frontend/ServiceWizard.php:1638
+#: src/Frontend/ServiceWizard.php:1530
+#: src/Frontend/ServiceWizard.php:1650
 msgid "You must be an approved vendor to create services."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1526
-#: src/Frontend/ServiceWizard.php:1646
+#: src/Frontend/ServiceWizard.php:1538
+#: src/Frontend/ServiceWizard.php:1658
 msgid "Your vendor account is suspended. You cannot create services."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1528
-#: src/Frontend/ServiceWizard.php:1648
+#: src/Frontend/ServiceWizard.php:1540
+#: src/Frontend/ServiceWizard.php:1660
 msgid "Your vendor account is pending approval. You cannot create services yet."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1530
-#: src/Frontend/ServiceWizard.php:1650
-#: src/Frontend/ServiceWizard.php:2281
+#: src/Frontend/ServiceWizard.php:1542
+#: src/Frontend/ServiceWizard.php:1662
+#: src/Frontend/ServiceWizard.php:2293
 msgid "You are not authorized to create services."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1560
-#: src/Frontend/ServiceWizard.php:1704
+#: src/Frontend/ServiceWizard.php:1572
+#: src/Frontend/ServiceWizard.php:1716
 msgid "Invalid data."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1615
+#: src/Frontend/ServiceWizard.php:1627
 msgid "Draft saved successfully."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1662
+#: src/Frontend/ServiceWizard.php:1674
 msgid "Your service is already being published. Please wait."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1713
+#: src/Frontend/ServiceWizard.php:1725
 msgid "Please complete all required fields."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1793
+#: src/Frontend/ServiceWizard.php:1805
 msgid "Service submitted for review. You will be notified once it is approved."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1796
+#: src/Frontend/ServiceWizard.php:1808
 msgid "Service published successfully!"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1831
+#: src/Frontend/ServiceWizard.php:1843
 msgid "Only image files (JPG, PNG, GIF, WebP) are allowed."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1840
+#: src/Frontend/ServiceWizard.php:1852
 msgid "Invalid file type. Please upload a valid image."
 msgstr ""
 
 #. translators: %s: maximum file size, e.g. 10 MB
-#: src/Frontend/ServiceWizard.php:1873
+#: src/Frontend/ServiceWizard.php:1885
 #, php-format
 msgid "Image file size exceeds the %s limit."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1909
+#: src/Frontend/ServiceWizard.php:1921
 msgid "Invalid attachment."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:1915
+#: src/Frontend/ServiceWizard.php:1927
 msgid "You cannot delete this attachment."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2236
+#: src/Frontend/ServiceWizard.php:2248
 msgid "Please log in to create a service."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2237
+#: src/Frontend/ServiceWizard.php:2249
 #: src/Frontend/UnifiedDashboard.php:586
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:902
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1838
 msgid "Log In"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2248
+#: src/Frontend/ServiceWizard.php:2260
 msgid "You need to be a registered vendor to create services."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2255
+#: src/Frontend/ServiceWizard.php:2267
 #: src/Frontend/UnifiedDashboard.php:957
 #: src/functions/urls.php:465
 #: templates/single-request.php:496
 msgid "Become a Vendor"
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2270
+#: src/Frontend/ServiceWizard.php:2282
 msgid "Your vendor account is suspended. You cannot create services at this time."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2276
+#: src/Frontend/ServiceWizard.php:2288
 msgid "Your vendor account is pending approval. You will be able to create services once approved."
 msgstr ""
 
-#: src/Frontend/ServiceWizard.php:2295
+#: src/Frontend/ServiceWizard.php:2307
 #: templates/dashboard/sections/earnings.php:331
 #: templates/dashboard/sections/earnings.php:357
 msgid "Manage your services"
 msgstr ""
 
 #. translators: %d: maximum number of services allowed
-#: src/Frontend/ServiceWizard.php:2301
+#: src/Frontend/ServiceWizard.php:2313
 #, php-format
 msgid "You have reached the maximum limit of %d services. Please remove an existing service before creating a new one."
 msgstr ""

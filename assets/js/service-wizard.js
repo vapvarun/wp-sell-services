@@ -915,10 +915,21 @@ function wpssServiceWizard(existingData = {}) {
 		 * @param {string} type    - 'success' or 'error'.
 		 */
 		showNotice(message, type = 'success') {
-			// Create notice element
+			// Create notice element.
 			const notice = document.createElement('div');
 			notice.className = `wpss-wizard-notice wpss-wizard-notice--${type}`;
 			notice.textContent = message;
+
+			/*
+			 * Announce it. Every wizard notice - duplicate image refused, a limit
+			 * reached, draft saved, published - was appended as a plain div, so a
+			 * screen-reader user got no feedback at all for actions that only
+			 * report through this toast. An error is assertive because it means
+			 * the vendor's action did not happen; a success is polite so it does
+			 * not interrupt what they are typing (WCAG 2.1 AA, 4.1.3).
+			 */
+			notice.setAttribute('role', type === 'error' ? 'alert' : 'status');
+			notice.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
 
 			// Style the notice
 			Object.assign(notice.style, {

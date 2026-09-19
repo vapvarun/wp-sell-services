@@ -615,11 +615,12 @@ class ServiceWizard {
 
 					<div class="wpss-pricing-fields">
 						<div class="wpss-form-group">
-							<label class="wpss-form-label">
+							<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-name">
 								<?php esc_html_e( 'Tier title', 'wp-sell-services' ); ?>
 								<span class="wpss-required">*</span>
 							</label>
 							<input type="text"
+								id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-name"
 								class="wpss-form-input"
 								x-model="data.packages.<?php echo esc_attr( $tier ); ?>.name"
 								placeholder="<?php echo esc_attr( ucfirst( $tier ) ); ?>">
@@ -628,13 +629,14 @@ class ServiceWizard {
 
 						<div class="wpss-form-row wpss-form-row--2col">
 							<div class="wpss-form-group">
-								<label class="wpss-form-label">
+								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-price">
 									<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
 									<span class="wpss-required">*</span>
 								</label>
 								<div class="wpss-input-group">
 									<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 									<input type="number"
+										id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-price"
 										class="wpss-form-input"
 										x-model="data.packages.<?php echo esc_attr( $tier ); ?>.price"
 										min="5"
@@ -643,11 +645,11 @@ class ServiceWizard {
 							</div>
 
 							<div class="wpss-form-group">
-								<label class="wpss-form-label">
+								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-delivery">
 									<?php esc_html_e( 'Delivery Time', 'wp-sell-services' ); ?>
 									<span class="wpss-required">*</span>
 								</label>
-								<select class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.delivery_time">
+								<select id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-delivery" class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.delivery_time">
 									<option value=""><?php esc_html_e( 'Select', 'wp-sell-services' ); ?></option>
 									<option value="1"><?php esc_html_e( '1 day', 'wp-sell-services' ); ?></option>
 									<option value="2"><?php esc_html_e( '2 days', 'wp-sell-services' ); ?></option>
@@ -663,8 +665,8 @@ class ServiceWizard {
 
 						<div class="wpss-form-row wpss-form-row--2col">
 							<div class="wpss-form-group">
-								<label class="wpss-form-label"><?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?></label>
-								<select class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.revisions">
+								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-revisions"><?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?></label>
+								<select id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-revisions" class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.revisions">
 									<option value="0"><?php esc_html_e( 'No revisions', 'wp-sell-services' ); ?></option>
 									<option value="1">1</option>
 									<option value="2">2</option>
@@ -792,10 +794,20 @@ class ServiceWizard {
 									</button>
 								</div>
 							</template>
-							<div class="wpss-gallery-add" @click="openMediaUploader('images')" x-show="canAddGalleryImage()">
+							<?php
+							/*
+							 * A button, not a div. This was a <div> carrying only an
+							 * @click, so it took no focus and answered no key - a
+							 * keyboard user could not add a gallery image at all, and
+							 * a screen reader announced nothing where a control was
+							 * (WCAG 2.1 AA, 2.1.1 and 4.1.2). type="button" matters
+							 * too: inside the wizard form a bare <button> submits.
+							 */
+							?>
+							<button type="button" class="wpss-gallery-add" @click="openMediaUploader('images')" x-show="canAddGalleryImage()" aria-label="<?php esc_attr_e( 'Add a gallery image', 'wp-sell-services' ); ?>">
 								<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 								<span><?php esc_html_e( 'Add Image', 'wp-sell-services' ); ?></span>
-							</div>
+							</button>
 						</div>
 						<div class="wpss-form-hint">
 							<span x-text="limits.max_gallery === -1 ? '<?php esc_attr_e( 'Unlimited additional images', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Up to', 'wp-sell-services' ); ?> ' + limits.max_gallery + ' <?php esc_attr_e( 'additional images', 'wp-sell-services' ); ?>'"></span>
