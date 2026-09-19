@@ -75,8 +75,17 @@ if ( $view_dispute_id ) {
 	}
 	?>
 	<div class="wpss-section wpss-section--disputes wpss-card wpss-disputes wpss-dispute-detail">
+		<?php
+		/*
+		 * wpss-back-link is the existing primitive for this control, used by the
+		 * order views. This link carried only wpss-dispute-detail__back, which no
+		 * stylesheet defines, so it rendered as whatever the host theme said a
+		 * bare anchor looks like - on BuddyX a 20px unstyled line that did not
+		 * read as a control at all (Basecamp 10312821624).
+		 */
+		?>
 		<p class="wpss-dispute-detail__back">
-			<a href="<?php echo esc_url( $section_base_url ); ?>">&larr; <?php esc_html_e( 'All disputes', 'wp-sell-services' ); ?></a>
+			<a class="wpss-back-link" href="<?php echo esc_url( $section_base_url ); ?>">&larr; <?php esc_html_e( 'All disputes', 'wp-sell-services' ); ?></a>
 		</p>
 
 		<div class="wpss-dispute-detail__head">
