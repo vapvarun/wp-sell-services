@@ -653,39 +653,63 @@ class ServicesController extends RestController {
 		}
 
 		/*
-		 * Creating a service over REST is the app's version of finishing the
-		 * wizard, and it has to clear the same bar. It did not: with moderation
-		 * off this endpoint went straight to 'publish', so POST /services with
-		 * no packages at all put a live, unbuyable listing in the catalogue
-		 * (Basecamp 10320551446). update_item already asks the shared validator
-		 * before going live; create never asked it anything.
+		 * An app may legitimately save a half-finished service, so status=draft
+		 * is honoured on create. It was ignored: a draft request came back 201
+		 * published, or 201 pending straight into the owner's review queue with
+		 * a 0-character description (Basecamp 10320551446).
 		 *
-		 * Validated unconditionally, exactly as the wizard does, because there
-		 * is no draft path here - every service this route creates is either
-		 * published or queued for moderation, and neither should be publishable
-		 * with a missing price, delivery time or package.
+		 * Only draft is vendor-selectable here, the same pair update_item
+		 * allows. Anything else is the moderation setting's decision, not the
+		 * client's - a client must not be able to skip the review queue.
 		 */
-		$publish_errors = wpss_validate_service_publishable(
-			array(
-				'title'       => (string) $request->get_param( 'title' ),
-				'description' => (string) $request->get_param( 'description' ),
-				'packages'    => (array) $request->get_param( 'packages' ),
-			)
-		);
+		$requested_status = $request->has_param( 'status' )
+			? sanitize_key( (string) $request->get_param( 'status' ) )
+			: '';
 
-		if ( $publish_errors ) {
+		if ( '' !== $requested_status && ! in_array( $requested_status, array( 'publish', 'draft' ), true ) ) {
 			return new WP_Error(
-				'wpss_not_publishable',
-				implode( ' ', $publish_errors ),
-				array(
-					'status' => 400,
-					'errors' => array_values( $publish_errors ),
-				)
+				'invalid_status',
+				__( 'Status must be either publish or draft.', 'wp-sell-services' ),
+				array( 'status' => 400 )
 			);
 		}
 
-		// Determine post status based on moderation setting.
-		$post_status = ModerationService::is_enabled() ? 'pending' : 'publish';
+		$post_status = 'draft' === $requested_status
+			? 'draft'
+			: ( ModerationService::is_enabled() ? 'pending' : 'publish' );
+
+		/*
+		 * Creating a service over REST is the app's version of finishing the
+		 * wizard, and it has to clear the same bar. It did not: with moderation
+		 * off this endpoint went straight to 'publish', so POST /services with
+		 * no packages at all put a live, unbuyable listing in the catalogue,
+		 * and with moderation on a 0-character description reached the review
+		 * queue (Basecamp 10320551446).
+		 *
+		 * A draft is exempt, exactly as it is on update - that is the point of
+		 * saving one. Pending is NOT exempt: the review queue is the owner's
+		 * time, and an unfinishable service should never reach it.
+		 */
+		if ( 'draft' !== $post_status ) {
+			$publish_errors = wpss_validate_service_publishable(
+				array(
+					'title'       => (string) $request->get_param( 'title' ),
+					'description' => (string) $request->get_param( 'description' ),
+					'packages'    => (array) $request->get_param( 'packages' ),
+				)
+			);
+
+			if ( $publish_errors ) {
+				return new WP_Error(
+					'wpss_not_publishable',
+					implode( ' ', $publish_errors ),
+					array(
+						'status' => 400,
+						'errors' => array_values( $publish_errors ),
+					)
+				);
+			}
+		}
 
 		$service_data = array(
 			'post_type'    => 'wpss_service',
