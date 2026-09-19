@@ -48,6 +48,7 @@ if ( $wpss_notif_user <= 0 ) {
  * and no Next - so a busy account simply could not reach anything older, even
  * though the data layer already accepted an offset.
  */
+
 /*
  * Clamped deliberately. A filter returning 0 or a negative number produced
  * LIMIT 0 - an empty list on a member who has notifications - or an SQL error,

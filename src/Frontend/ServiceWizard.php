@@ -377,12 +377,6 @@ class ServiceWizard {
 	}
 
 	/**
-	 * Render Step 1: Basic Info.
-	 *
-	 * @param \WP_Post|null $_service Existing service post (unused, data from Alpine.js).
-	 * @return void
-	 */
-	/**
 	 * Empty form-level error summary node for one wizard step.
 	 *
 	 * WpssFormError.summary() fills this node; it does NOT create one. A step
@@ -407,6 +401,12 @@ class ServiceWizard {
 		<?php
 	}
 
+	/**
+	 * Render Step 1: Basic Info.
+	 *
+	 * @param \WP_Post|null $_service Existing service post (unused, data from Alpine.js).
+	 * @return void
+	 */
 	private function render_step_basic( ?\WP_Post $_service ): void {
 		$wpss_publish_floors = wpss_service_publish_thresholds();
 		$categories          = wpss_get_category_terms( array( 'hide_empty' => false ) );

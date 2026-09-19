@@ -799,6 +799,7 @@ class MilestoneService {
 		// commitment go to the abandon-cron. The marker is stored in the
 		// sub-order's meta JSON; we filter on the JSON text so the
 		// cleanup stays a single SQL statement.
+
 		/*
 		 * Read the rows before updating them. The sweep is still one UPDATE,
 		 * but the parents have to be known afterwards so each can be re-checked

@@ -354,6 +354,7 @@ if ( $view_dispute_id ) {
 			 * open, pending or escalated, and escalating from open or pending
 			 * only.
 			 */
+
 			/*
 			 * Ask the state machine, do not restate it.
 			 *
