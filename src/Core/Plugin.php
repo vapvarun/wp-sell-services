@@ -1901,6 +1901,11 @@ final class Plugin {
 		};
 		$this->loader->add_action( 'wpss_milestone_approved', $auto_complete_parent, null, 20, 2 );
 		$this->loader->add_action( 'wpss_milestone_declined', $auto_complete_parent, null, 20, 2 );
+		// Cancelling a phase settles it just as approving or declining does, so
+		// it has to re-check the parent too. Without this, a project whose last
+		// open phase was cancelled - by the vendor, or by the abandoned-phase
+		// cron - stayed In Progress forever with every phase settled.
+		$this->loader->add_action( 'wpss_milestone_cancelled', $auto_complete_parent, null, 20, 2 );
 
 		// Cascade-cancel: when a parent order is cancelled, every still-
 		// pending_payment milestone under it is cancelled immediately.
