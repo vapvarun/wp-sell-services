@@ -883,7 +883,7 @@ class ServiceWizard {
 							 */
 							?>
 							<!-- Options for the choice types -->
-							<div class="wpss-form-group" x-show="<?php echo esc_attr( wp_json_encode( array_values( wpss_requirement_choice_types() ) ) ); ?>.includes(data.requirements[index].type)" x-cloak>
+							<div class="wpss-form-group" x-show="<?php echo esc_attr( wp_json_encode( array_values( wpss_requirement_choice_types() ) ) ); ?>.includes(req.type)" x-cloak>
 								<label class="wpss-form-label"><?php esc_html_e( 'Options', 'wp-sell-services' ); ?></label>
 								<input type="text"
 									class="wpss-form-input"
