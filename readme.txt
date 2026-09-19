@@ -292,6 +292,7 @@ Fixes from a QA audit of the vendor and buyer dashboards.
 * Fix      - The Edit control on checkout underlines on hover again.
 * Fix      - Add Image in the service wizard can be reached with a keyboard, wizard messages are announced by screen readers, and the pricing fields are linked to their labels.
 * Fix      - The back link on a dispute is styled, and keeps its colour on themes that restyle links inside content.
+* Fix      - A brand colour set under White Label now reaches the plugin's own controls on the Vendors screen. Status badges keep their own colours, because green means completed and red means cancelled.
 * Fix      - Analytics and sales figures follow the site's timezone. Ranges were built in UTC while orders are recorded in site time, so totals covered the wrong window on any site not set to UTC.
 * Fix      - Today is available on the vendor analytics API and on the free Sales tab.
 * Dev      - The REST catalogue's version is taken from the plugin itself rather than a value kept by hand, which had left it a release behind.
