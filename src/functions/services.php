@@ -1177,8 +1177,59 @@ function wpss_validate_service_publishable( array $service ): array {
 				);
 			}
 
-			if ( empty( $cheapest['delivery_days'] ) ) {
-				$errors[] = __( 'Please set a delivery time for the Basic package.', 'wp-sell-services' );
+			/*
+			 * Every enabled tier, not only the cheapest one.
+			 *
+			 * The delivery and name checks used to run against $cheapest alone,
+			 * so an enabled Standard or Premium with a price but no delivery
+			 * time - or no name - published without complaint, and the buyer was
+			 * shown a purchasable tier with no date on it. The price floor stays
+			 * on the cheapest deliberately: that is the lowest a buyer can pay,
+			 * so checking the minimum covers every tier at once (Basecamp
+			 * 10320551446).
+			 */
+			$position = 0;
+
+			foreach ( $packages as $key => $package ) {
+				++$position;
+				$name = trim( (string) ( $package['name'] ?? '' ) );
+
+				/*
+				 * The wizard keys packages by tier ('basic', 'standard'), REST
+				 * and the metabox key them numerically. Naming a tier "the 1
+				 * package" helps nobody, so fall back to its position instead.
+				 */
+				$label = '' !== $name
+					? $name
+					: ( is_numeric( $key ) ? '' : ucfirst( (string) $key ) );
+
+				if ( '' === $name ) {
+					$errors[] = '' !== $label
+						? sprintf(
+							/* translators: %s: package tier name (e.g. Standard). */
+							__( 'Please name the %s package.', 'wp-sell-services' ),
+							$label
+						)
+						: sprintf(
+							/* translators: %d: position of the package in the list, starting at 1. */
+							__( 'Please name package %d.', 'wp-sell-services' ),
+							$position
+						);
+				}
+
+				if ( empty( $package['delivery_days'] ) ) {
+					$errors[] = '' !== $label
+						? sprintf(
+							/* translators: %s: package name or tier (e.g. Standard). */
+							__( 'Please set a delivery time for the %s package.', 'wp-sell-services' ),
+							$label
+						)
+						: sprintf(
+							/* translators: %d: position of the package in the list, starting at 1. */
+							__( 'Please set a delivery time for package %d.', 'wp-sell-services' ),
+							$position
+						);
+				}
 			}
 		}
 	}

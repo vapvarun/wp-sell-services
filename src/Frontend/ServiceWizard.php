@@ -1654,7 +1654,11 @@ class ServiceWizard {
 
 		if ( ! empty( $sanitized['tags'] ) ) {
 			$tags = array_map( 'trim', explode( ',', $sanitized['tags'] ) );
-			wp_set_object_terms( $service_id, array_slice( $tags, 0, (int) $this->get_limit( 'max_tags' ) ), 'wpss_service_tag' );
+			// Shared enforcer, not a second array_slice: get_limit() returns -1
+			// for unlimited, and array_slice( $tags, 0, -1 ) silently DROPS the
+			// last tag instead of keeping them all (Basecamp 10320551446).
+			$capped_tags = wpss_enforce_service_limits( array( 'tags' => $tags ) )['meta']['tags'];
+			wp_set_object_terms( $service_id, $capped_tags, 'wpss_service_tag' );
 		}
 
 		wp_send_json_success(
@@ -1810,7 +1814,11 @@ class ServiceWizard {
 
 		if ( ! empty( $sanitized['tags'] ) ) {
 			$tags = array_map( 'trim', explode( ',', $sanitized['tags'] ) );
-			wp_set_object_terms( $service_id, array_slice( $tags, 0, (int) $this->get_limit( 'max_tags' ) ), 'wpss_service_tag' );
+			// Shared enforcer, not a second array_slice: get_limit() returns -1
+			// for unlimited, and array_slice( $tags, 0, -1 ) silently DROPS the
+			// last tag instead of keeping them all (Basecamp 10320551446).
+			$capped_tags = wpss_enforce_service_limits( array( 'tags' => $tags ) )['meta']['tags'];
+			wp_set_object_terms( $service_id, $capped_tags, 'wpss_service_tag' );
 		}
 
 		/**
@@ -2141,7 +2149,24 @@ class ServiceWizard {
 				continue;
 			}
 			$package['delivery_days'] = $package['delivery_days'] ?? ( $package['delivery_time'] ?? '' );
-			$packages[ $tier ]        = $package;
+
+			/*
+			 * Basic is always part of the offer, exactly as sanitize_packages()
+			 * decides a few lines later. Validation ran on the RAW client data
+			 * and the sanitiser forced Basic on afterwards, so a request sending
+			 * basic.enabled=false had its Basic tier skipped by the validator -
+			 * the price floor then applied to whichever tier was left - and
+			 * stored anyway. A $2 Basic went live under a $5 floor
+			 * (Basecamp 10320551446).
+			 *
+			 * The two must agree on what the offer contains; whichever moves,
+			 * they move together.
+			 */
+			if ( 'basic' === $tier ) {
+				$package['enabled'] = true;
+			}
+
+			$packages[ $tier ] = $package;
 		}
 
 		return wpss_validate_service_publishable(
