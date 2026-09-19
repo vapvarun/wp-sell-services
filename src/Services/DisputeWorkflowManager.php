@@ -302,6 +302,30 @@ class DisputeWorkflowManager {
 			);
 		}
 
+		/*
+		 * Ask the state machine BEFORE doing anything, the way cancel() does.
+		 *
+		 * transition() treats a move to the status a dispute already holds as a
+		 * successful no-op - deliberately, so a note can be appended without
+		 * moving the row. escalate() read that `true` as "it moved" and carried
+		 * on: escalating an already-escalated dispute overwrote the original
+		 * escalation reason, escalated_by and escalated_at, mailed every admin
+		 * a second time, and fired wpss_dispute_escalated again. The reason is
+		 * evidence in an open dispute, so losing it is the worst part
+		 * (Basecamp 10320905997).
+		 *
+		 * ESCALATED can only move to RESOLVED or CLOSED, so this refuses a
+		 * repeat escalation as well as a resolved or closed one.
+		 */
+		if ( ! $this->dispute_service->can_transition( (string) $dispute->status, DisputeService::STATUS_ESCALATED ) ) {
+			return array(
+				'success' => false,
+				'message' => DisputeService::STATUS_ESCALATED === (string) $dispute->status
+					? __( 'This dispute has already been escalated to support.', 'wp-sell-services' )
+					: __( 'This dispute has already been resolved or closed.', 'wp-sell-services' ),
+			);
+		}
+
 		$meta               = $dispute->meta;
 		$meta['escalation'] = array(
 			'reason'       => sanitize_textarea_field( $reason ),
@@ -309,7 +333,6 @@ class DisputeWorkflowManager {
 			'escalated_at' => current_time( 'mysql' ),
 		);
 
-		// The state machine refuses escalated, resolved and closed disputes.
 		$moved = $this->dispute_service->transition(
 			$dispute_id,
 			DisputeService::STATUS_ESCALATED,
