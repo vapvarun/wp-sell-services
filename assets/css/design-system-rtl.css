@@ -1224,6 +1224,11 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 .wpss-form-error-summary__title { font-weight: 600; margin: 0 0 var(--wpss-space-1); display: flex; align-items: center; gap: var(--wpss-space-2); }
 .wpss-form-error-summary__list { margin: 0; padding-inline-start: var(--wpss-space-5); }
 .wpss-form-error-summary__list li { margin: var(--wpss-space-1) 0; }
+/* A single error does not need a bullet - one marker on its own reads as a
+   stray glyph rather than a list. The <ul> stays for assistive tech, which
+   still announces the count; only the marker and its indent go. */
+.wpss-form-error-summary__list li:only-child { list-style: none; margin-block: 0; }
+.wpss-form-error-summary__list:has(li:only-child) { padding-inline-start: 0; }
 
 /* Invalid input outline (matches the form-error colour). */
 input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--wpss-danger) !important; box-shadow: 0 0 0 1px var(--wpss-danger) !important; }
