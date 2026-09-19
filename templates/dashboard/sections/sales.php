@@ -82,6 +82,10 @@ $sales_search = isset( $_GET['sales_search'] ) ? sanitize_text_field( wp_unslash
 // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 $valid_periods = array(
+	'today'  => array(
+		'label' => __( 'Today', 'wp-sell-services' ),
+		'days'  => 0,
+	),
 	'30days' => array(
 		'label' => __( 'Last 30 days', 'wp-sell-services' ),
 		'days'  => 30,
@@ -105,8 +109,20 @@ if ( ! isset( $valid_periods[ $sales_period ] ) ) {
 
 $per_page  = 20;
 $date_from = '';
-if ( $valid_periods[ $sales_period ]['days'] > 0 ) {
-	$date_from = gmdate( 'Y-m-d H:i:s', time() - ( $valid_periods[ $sales_period ]['days'] * DAY_IN_SECONDS ) );
+
+/*
+ * Site time, not UTC. Orders are written with current_time( 'mysql' ), so a
+ * window built from gmdate()/time() is offset by the site's timezone on every
+ * non-UTC install - the totals are then quietly wrong rather than obviously
+ * missing. 'today' and 'all' both carry days = 0, so they are told apart by
+ * the key, not by the number.
+ */
+$sales_today = current_time( 'Y-m-d' );
+
+if ( 'today' === $sales_period ) {
+	$date_from = $sales_today . ' 00:00:00';
+} elseif ( $valid_periods[ $sales_period ]['days'] > 0 ) {
+	$date_from = gmdate( 'Y-m-d', strtotime( $sales_today . ' -' . (int) $valid_periods[ $sales_period ]['days'] . ' days' ) ) . ' 00:00:00';
 }
 
 // Status chips + order-number search: the same filter the buyer list has,
