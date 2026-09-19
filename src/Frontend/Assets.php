@@ -67,8 +67,43 @@ class Assets {
 			return;
 		}
 
-		add_filter( 'style_loader_src', array( __CLASS__, 'filter_loader_src' ), 10, 2 );
+		add_filter( 'style_loader_src', array( __CLASS__, 'filter_style_src' ), 10, 2 );
 		add_filter( 'script_loader_src', array( __CLASS__, 'filter_loader_src' ), 10, 2 );
+	}
+
+	/**
+	 * Style variant of the rewrite, which also keeps the RTL name buildable.
+	 *
+	 * WP_Styles::do_item() builds the RTL URL as
+	 * `str_replace( "{$suffix}.css", "-rtl{$suffix}.css", … )`, where $suffix is
+	 * whatever `wp_style_add_data( $handle, 'suffix', … )` recorded. Nothing
+	 * recorded one, so with $suffix empty core rewrote the ALREADY minified URL
+	 * this filter returns - turning `frontend.min.css` into
+	 * `frontend.min-rtl.css`, while the build writes `frontend-rtl.min.css`.
+	 *
+	 * Every plugin stylesheet therefore 404d on any RTL site and the plugin
+	 * rendered with no CSS at all (Basecamp 10320551778). Registering the rtl
+	 * flag at each enqueue was necessary but not sufficient; this is the other
+	 * half, and it belongs here because this is the one place that decides a
+	 * minified file is being served.
+	 *
+	 * Order matters and core guarantees it: do_item() resolves the LTR href
+	 * (running this filter) before it reads extra['suffix'] for the RTL one.
+	 * Handles ending in `-rtl` are core asking for the RTL URL itself, so they
+	 * are skipped - there is no such registered style to annotate.
+	 *
+	 * @param string $src    The full asset URL including `?ver=…`.
+	 * @param string $handle Registered style handle.
+	 * @return string Possibly-rewritten URL.
+	 */
+	public static function filter_style_src( $src, $handle ): string {
+		$rewritten = self::filter_loader_src( $src, $handle );
+
+		if ( $rewritten !== $src && '-rtl' !== substr( (string) $handle, -4 ) ) {
+			wp_style_add_data( $handle, 'suffix', '.min' );
+		}
+
+		return $rewritten;
 	}
 
 	/**
