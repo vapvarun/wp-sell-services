@@ -41,7 +41,32 @@ if ( $wpss_notif_user <= 0 ) {
 	return;
 }
 
-$wpss_notifications = wpss_get_user_notifications( $wpss_notif_user, array( 'limit' => 50 ) );
+/*
+ * Paged, 20 a page, mirroring the other dashboard lists.
+ *
+ * This took the 50 most recent and stopped, with no page numbers, no Load more
+ * and no Next - so a busy account simply could not reach anything older, even
+ * though the data layer already accepted an offset.
+ */
+$wpss_notif_per_page = (int) apply_filters( 'wpss_notifications_per_page', 20 );
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination param.
+$wpss_notif_page  = isset( $_GET['notifications_page'] ) ? max( 1, absint( wp_unslash( $_GET['notifications_page'] ) ) ) : 1;
+$wpss_notif_total = wpss_count_user_notifications( $wpss_notif_user );
+$wpss_notif_pages = $wpss_notif_per_page > 0 ? (int) ceil( $wpss_notif_total / $wpss_notif_per_page ) : 1;
+
+// A deep link past the end lands on the last real page rather than showing an
+// empty list that looks like the notifications have gone.
+if ( $wpss_notif_pages > 0 && $wpss_notif_page > $wpss_notif_pages ) {
+	$wpss_notif_page = $wpss_notif_pages;
+}
+
+$wpss_notifications = wpss_get_user_notifications(
+	$wpss_notif_user,
+	array(
+		'limit'  => $wpss_notif_per_page,
+		'offset' => ( $wpss_notif_page - 1 ) * $wpss_notif_per_page,
+	)
+);
 
 // Keyed on the type strings actually stored in wpss_notifications.
 //
@@ -170,6 +195,38 @@ foreach ( $wpss_notifications as $wpss_n ) {
 				</li>
 			<?php endforeach; ?>
 		</ul>
+
+		<?php if ( $wpss_notif_pages > 1 ) : ?>
+			<nav class="wpss-pagination" aria-label="<?php esc_attr_e( 'Notification pages', 'wp-sell-services' ); ?>">
+				<?php
+				$wpss_notif_page_url = static function ( int $page ): string {
+					return $page > 1 ? add_query_arg( 'notifications_page', $page ) : remove_query_arg( 'notifications_page' );
+				};
+	?>
+				<?php if ( $wpss_notif_page > 1 ) : ?>
+					<a href="<?php echo esc_url( $wpss_notif_page_url( $wpss_notif_page - 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--prev">
+						<i data-lucide="chevron-left" class="wpss-icon" aria-hidden="true"></i>
+						<?php esc_html_e( 'Previous', 'wp-sell-services' ); ?>
+					</a>
+				<?php endif; ?>
+				<span class="wpss-pagination__current">
+					<?php
+					printf(
+						/* translators: 1: current page, 2: total pages */
+						esc_html__( 'Page %1$d of %2$d', 'wp-sell-services' ),
+						(int) $wpss_notif_page,
+						(int) $wpss_notif_pages
+					);
+					?>
+				</span>
+				<?php if ( $wpss_notif_page < $wpss_notif_pages ) : ?>
+					<a href="<?php echo esc_url( $wpss_notif_page_url( $wpss_notif_page + 1 ) ); ?>" class="wpss-pagination__link wpss-pagination__link--next">
+						<?php esc_html_e( 'Next', 'wp-sell-services' ); ?>
+						<i data-lucide="chevron-right" class="wpss-icon" aria-hidden="true"></i>
+					</a>
+				<?php endif; ?>
+			</nav>
+		<?php endif; ?>
 	<?php endif; ?>
 </div>
 
