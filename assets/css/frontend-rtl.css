@@ -1651,6 +1651,30 @@ article.wpss-service-card:hover {
 	color: var(--wpss-primary-accent);
 }
 
+/* Link-state foreground, pinned - the same treatment, and the same reason, as
+   the active order-filter chip. A theme's content-link rule outguns a single
+   class inside its content wrapper: BuddyX ships
+     `.entry-content a:not(.wp-element-button):not(.wp-block-button__link)
+      :not(.button):not([class*="button"])`
+   at (0,5,1) against (0,1,0) here, so the back link took the theme's near-black
+   #111 instead of our token. Measured on BuddyX: layout and spacing came from
+   our rule, colour did not.
+
+   Deliberately narrow: colour only, anchors only, and the hover keeps its own
+   accent. Nothing here hardcodes BuddyX - any theme with a comparable content
+   rule was overriding us the same way, and a site owner still retints this
+   through the --wpss-* tokens. */
+a.wpss-back-link,
+a.wpss-back-link:link,
+a.wpss-back-link:visited {
+	color: var(--wpss-text) !important;
+}
+
+a.wpss-back-link:hover,
+a.wpss-back-link:focus {
+	color: var(--wpss-primary-accent) !important;
+}
+
 .wpss-order-title {
 	display: flex;
 	align-items: center;
@@ -1761,12 +1785,19 @@ article.wpss-service-card:hover {
 	overflow-wrap: anywhere;
 }
 
-.wpss-requirement-view__answer--collapsed {
-	max-height: 100px;
+/* Clip the TEXT, never the container.
+   The Show more / Show less button and the copy button are siblings of
+   .wpss-requirement-view__text-content INSIDE .wpss-requirement-view__answer.
+   Capping the container clipped those controls away along with the overflowing
+   text, so a long answer was cut off with no way at all to expand it - the one
+   control that would have opened it was the thing being hidden. */
+.wpss-requirement-view__answer--collapsed .wpss-requirement-view__text-content {
+	position: relative;
+	max-height: 120px;
 	overflow: hidden;
 }
 
-.wpss-requirement-view__answer--collapsed::after {
+.wpss-requirement-view__answer--collapsed .wpss-requirement-view__text-content::after {
 	content: "";
 	position: absolute;
 	bottom: 0;
@@ -1777,12 +1808,18 @@ article.wpss-service-card:hover {
 	pointer-events: none;
 }
 
-.wpss-requirement-view__answer--expanded {
+.wpss-requirement-view__answer--expanded .wpss-requirement-view__text-content {
 	max-height: none;
 }
 
-.wpss-requirement-view__answer--expanded::after {
+.wpss-requirement-view__answer--expanded .wpss-requirement-view__text-content::after {
 	display: none;
+}
+
+/* The toggle must never be clipped, whatever state the answer is in. */
+.wpss-requirement-view__expand-btn {
+	position: relative;
+	z-index: 1;
 }
 
 .wpss-requirement-view__text-content {

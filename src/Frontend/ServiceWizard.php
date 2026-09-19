@@ -615,11 +615,12 @@ class ServiceWizard {
 
 					<div class="wpss-pricing-fields">
 						<div class="wpss-form-group">
-							<label class="wpss-form-label">
+							<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-name">
 								<?php esc_html_e( 'Tier title', 'wp-sell-services' ); ?>
 								<span class="wpss-required">*</span>
 							</label>
 							<input type="text"
+								id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-name"
 								class="wpss-form-input"
 								x-model="data.packages.<?php echo esc_attr( $tier ); ?>.name"
 								placeholder="<?php echo esc_attr( ucfirst( $tier ) ); ?>">
@@ -628,13 +629,14 @@ class ServiceWizard {
 
 						<div class="wpss-form-row wpss-form-row--2col">
 							<div class="wpss-form-group">
-								<label class="wpss-form-label">
+								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-price">
 									<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
 									<span class="wpss-required">*</span>
 								</label>
 								<div class="wpss-input-group">
 									<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 									<input type="number"
+										id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-price"
 										class="wpss-form-input"
 										x-model="data.packages.<?php echo esc_attr( $tier ); ?>.price"
 										min="5"
@@ -643,11 +645,11 @@ class ServiceWizard {
 							</div>
 
 							<div class="wpss-form-group">
-								<label class="wpss-form-label">
+								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-delivery">
 									<?php esc_html_e( 'Delivery Time', 'wp-sell-services' ); ?>
 									<span class="wpss-required">*</span>
 								</label>
-								<select class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.delivery_time">
+								<select id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-delivery" class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.delivery_time">
 									<option value=""><?php esc_html_e( 'Select', 'wp-sell-services' ); ?></option>
 									<option value="1"><?php esc_html_e( '1 day', 'wp-sell-services' ); ?></option>
 									<option value="2"><?php esc_html_e( '2 days', 'wp-sell-services' ); ?></option>
@@ -663,8 +665,8 @@ class ServiceWizard {
 
 						<div class="wpss-form-row wpss-form-row--2col">
 							<div class="wpss-form-group">
-								<label class="wpss-form-label"><?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?></label>
-								<select class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.revisions">
+								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-revisions"><?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?></label>
+								<select id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-revisions" class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.revisions">
 									<option value="0"><?php esc_html_e( 'No revisions', 'wp-sell-services' ); ?></option>
 									<option value="1">1</option>
 									<option value="2">2</option>
@@ -676,10 +678,19 @@ class ServiceWizard {
 						</div>
 
 						<?php /* Features list — vendors describe what's included via bullets, not prose. */ ?>
+						<?php
+						/*
+						 * A group label, not a field label. This names a LIST of
+						 * deliverable inputs, so for= would silently point at
+						 * whichever one happened to be first and leave the rest
+						 * unnamed. role=group + aria-labelledby names the set,
+						 * which is what a screen reader needs here (WCAG 1.3.1).
+						 */
+						?>
 						<div class="wpss-form-group">
-							<label class="wpss-form-label"><?php esc_html_e( "What's included", 'wp-sell-services' ); ?></label>
+							<label class="wpss-form-label" id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-features-label"><?php esc_html_e( "What's included", 'wp-sell-services' ); ?></label>
 							<div class="wpss-form-hint wpss-form-hint--top"><?php esc_html_e( 'List the deliverables for this tier. One bullet per line.', 'wp-sell-services' ); ?></div>
-							<div class="wpss-features-list">
+							<div class="wpss-features-list" role="group" aria-labelledby="wpss-pkg-<?php echo esc_attr( $tier ); ?>-features-label">
 								<template x-for="(feature, index) in data.packages.<?php echo esc_attr( $tier ); ?>.features" :key="index">
 									<div class="wpss-feature-item">
 										<input type="text"
@@ -782,8 +793,8 @@ class ServiceWizard {
 
 				<div class="wpss-form-disclosure__body">
 					<div class="wpss-form-group">
-						<label class="wpss-form-label"><?php esc_html_e( 'Additional Images', 'wp-sell-services' ); ?></label>
-						<div class="wpss-gallery-grid">
+						<label class="wpss-form-label" id="wpss-gallery-images-label"><?php esc_html_e( 'Additional Images', 'wp-sell-services' ); ?></label>
+						<div class="wpss-gallery-grid" role="group" aria-labelledby="wpss-gallery-images-label">
 							<template x-for="(image, index) in data.gallery.images" :key="image.id">
 								<div class="wpss-gallery-item">
 									<img :src="image.url" alt="">
@@ -792,10 +803,20 @@ class ServiceWizard {
 									</button>
 								</div>
 							</template>
-							<div class="wpss-gallery-add" @click="openMediaUploader('images')" x-show="canAddGalleryImage()">
+							<?php
+							/*
+							 * A button, not a div. This was a <div> carrying only an
+							 * @click, so it took no focus and answered no key - a
+							 * keyboard user could not add a gallery image at all, and
+							 * a screen reader announced nothing where a control was
+							 * (WCAG 2.1 AA, 2.1.1 and 4.1.2). type="button" matters
+							 * too: inside the wizard form a bare <button> submits.
+							 */
+							?>
+							<button type="button" class="wpss-gallery-add" @click="openMediaUploader('images')" x-show="canAddGalleryImage()" aria-label="<?php esc_attr_e( 'Add a gallery image', 'wp-sell-services' ); ?>">
 								<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
 								<span><?php esc_html_e( 'Add Image', 'wp-sell-services' ); ?></span>
-							</div>
+							</button>
 						</div>
 						<div class="wpss-form-hint">
 							<span x-text="limits.max_gallery === -1 ? '<?php esc_attr_e( 'Unlimited additional images', 'wp-sell-services' ); ?>' : '<?php esc_attr_e( 'Up to', 'wp-sell-services' ); ?> ' + limits.max_gallery + ' <?php esc_attr_e( 'additional images', 'wp-sell-services' ); ?>'"></span>
@@ -803,9 +824,10 @@ class ServiceWizard {
 					</div>
 
 					<div class="wpss-form-group">
-						<label class="wpss-form-label"><?php esc_html_e( 'Showcase video', 'wp-sell-services' ); ?></label>
+						<label class="wpss-form-label" for="wpss-showcase-video"><?php esc_html_e( 'Showcase video', 'wp-sell-services' ); ?></label>
 						<div class="wpss-form-hint wpss-form-hint--top"><?php esc_html_e( 'YouTube or Vimeo URL.', 'wp-sell-services' ); ?></div>
 						<input type="url"
+							id="wpss-showcase-video"
 							class="wpss-form-input"
 							x-model="data.gallery.video"
 							placeholder="<?php esc_attr_e( 'https://www.youtube.com/watch?v=...', 'wp-sell-services' ); ?>">
@@ -841,15 +863,16 @@ class ServiceWizard {
 						</div>
 						<div class="wpss-requirement-fields">
 							<div class="wpss-form-group">
-								<label class="wpss-form-label"><?php esc_html_e( 'Question', 'wp-sell-services' ); ?></label>
+								<label class="wpss-form-label" :for="'wpss-req-' + index"><?php esc_html_e( 'Question', 'wp-sell-services' ); ?></label>
 								<input type="text"
 									class="wpss-form-input"
 									x-model="req.label"
+										:id="'wpss-req-' + index"
 									placeholder="<?php esc_attr_e( 'What do you need from the buyer?', 'wp-sell-services' ); ?>">
 							</div>
 							<div class="wpss-form-row wpss-form-row--2col">
 								<div class="wpss-form-group">
-									<label class="wpss-form-label"><?php esc_html_e( 'Answer Type', 'wp-sell-services' ); ?></label>
+									<label class="wpss-form-label" :for="'wpss-req-type-' + index"><?php esc_html_e( 'Answer Type', 'wp-sell-services' ); ?></label>
 									<?php
 									/*
 									 * Rendered from the shared map, not hardcoded. This list
@@ -861,7 +884,8 @@ class ServiceWizard {
 									 * meant. See Basecamp 10286129293.
 									 */
 									?>
-									<select class="wpss-form-select" x-model="req.type">
+									<select class="wpss-form-select" x-model="req.type"
+										:id="'wpss-req-type-' + index">
 										<?php foreach ( wpss_requirement_type_labels() as $wpss_req_type => $wpss_req_label ) : ?>
 											<option value="<?php echo esc_attr( $wpss_req_type ); ?>"><?php echo esc_html( $wpss_req_label ); ?></option>
 										<?php endforeach; ?>
@@ -883,11 +907,12 @@ class ServiceWizard {
 							 */
 							?>
 							<!-- Options for the choice types -->
-							<div class="wpss-form-group" x-show="<?php echo esc_attr( wp_json_encode( array_values( wpss_requirement_choice_types() ) ) ); ?>.includes(data.requirements[index].type)" x-cloak>
-								<label class="wpss-form-label"><?php esc_html_e( 'Options', 'wp-sell-services' ); ?></label>
+							<div class="wpss-form-group" x-show="<?php echo esc_attr( wp_json_encode( array_values( wpss_requirement_choice_types() ) ) ); ?>.includes(req.type)" x-cloak>
+								<label class="wpss-form-label" :for="'wpss-req-options-' + index"><?php esc_html_e( 'Options', 'wp-sell-services' ); ?></label>
 								<input type="text"
 									class="wpss-form-input"
 									x-model="req.options"
+										:id="'wpss-req-options-' + index"
 									placeholder="<?php esc_attr_e( 'Option 1, Option 2, Option 3', 'wp-sell-services' ); ?>">
 								<div class="wpss-form-hint"><?php esc_html_e( 'Separate options with commas', 'wp-sell-services' ); ?></div>
 							</div>
@@ -948,37 +973,41 @@ class ServiceWizard {
 							</div>
 							<div class="wpss-extra-fields">
 								<div class="wpss-form-group">
-									<label class="wpss-form-label"><?php esc_html_e( 'Extra Title', 'wp-sell-services' ); ?></label>
+									<label class="wpss-form-label" :for="'wpss-extra-title-' + index"><?php esc_html_e( 'Extra Title', 'wp-sell-services' ); ?></label>
 									<input type="text"
 										class="wpss-form-input"
 										x-model="extra.title"
+										:id="'wpss-extra-title-' + index"
 										placeholder="<?php esc_attr_e( 'e.g., Express Delivery', 'wp-sell-services' ); ?>">
 								</div>
 								<div class="wpss-form-row wpss-form-row--2col">
 									<div class="wpss-form-group">
-										<label class="wpss-form-label"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
+										<label class="wpss-form-label" :for="'wpss-extra-price-' + index"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
 										<div class="wpss-input-group">
 											<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 											<input type="number"
 												class="wpss-form-input"
 												x-model="extra.price"
+										:id="'wpss-extra-price-' + index"
 												min="0"
 												step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>">
 										</div>
 									</div>
 									<div class="wpss-form-group">
-										<label class="wpss-form-label"><?php esc_html_e( 'Extra Days', 'wp-sell-services' ); ?></label>
+										<label class="wpss-form-label" :for="'wpss-extra-days-' + index"><?php esc_html_e( 'Extra Days', 'wp-sell-services' ); ?></label>
 										<input type="number"
 											class="wpss-form-input"
 											x-model="extra.delivery_days_extra"
+										:id="'wpss-extra-days-' + index"
 											min="0"
 											placeholder="0">
 									</div>
 								</div>
 								<div class="wpss-form-group">
-									<label class="wpss-form-label"><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
+									<label class="wpss-form-label" :for="'wpss-extra-desc-' + index"><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
 									<textarea class="wpss-form-textarea"
 										x-model="extra.description"
+										:id="'wpss-extra-desc-' + index"
 										rows="2"
 										placeholder="<?php esc_attr_e( 'Describe what\'s included in this extra', 'wp-sell-services' ); ?>"></textarea>
 								</div>
@@ -1018,16 +1047,18 @@ class ServiceWizard {
 							</div>
 							<div class="wpss-faq-fields">
 								<div class="wpss-form-group">
-									<label class="wpss-form-label"><?php esc_html_e( 'Question', 'wp-sell-services' ); ?></label>
+									<label class="wpss-form-label" :for="'wpss-faq-q-' + index"><?php esc_html_e( 'Question', 'wp-sell-services' ); ?></label>
 									<input type="text"
 										class="wpss-form-input"
 										x-model="faq.question"
+										:id="'wpss-faq-q-' + index"
 										placeholder="<?php esc_attr_e( 'What question do buyers often ask?', 'wp-sell-services' ); ?>">
 								</div>
 								<div class="wpss-form-group">
-									<label class="wpss-form-label"><?php esc_html_e( 'Answer', 'wp-sell-services' ); ?></label>
+									<label class="wpss-form-label" :for="'wpss-faq-a-' + index"><?php esc_html_e( 'Answer', 'wp-sell-services' ); ?></label>
 									<textarea class="wpss-form-textarea"
 										x-model="faq.answer"
+										:id="'wpss-faq-a-' + index"
 										rows="3"
 										placeholder="<?php esc_attr_e( 'Provide a helpful answer...', 'wp-sell-services' ); ?>"></textarea>
 								</div>
@@ -1473,6 +1504,10 @@ class ServiceWizard {
 						(int) $this->get_limit( 'max_tags' )
 					),
 					'limitGallery'       => __( 'You have reached the maximum number of gallery images. Upgrade to Pro for unlimited images.', 'wp-sell-services' ),
+					/* translators: %d: the extra's position in the list, starting at 1. */
+					'validationExtraTitle' => __( 'Extra %d needs a name, or clear its price to remove it.', 'wp-sell-services' ),
+					/* translators: %s: the extra's name. */
+					'validationExtraPrice' => __( 'Enter a price above zero for "%s", or remove it. An extra with no price is offered to buyers as a free add-on.', 'wp-sell-services' ),
 					'duplicateImage'     => __( 'That image is already in your gallery.', 'wp-sell-services' ),
 					'limitExtras'        => __( 'You have reached the maximum number of extras. Upgrade to Pro for unlimited extras.', 'wp-sell-services' ),
 					'limitFaq'           => __( 'You have reached the maximum number of FAQs. Upgrade to Pro for unlimited FAQs.', 'wp-sell-services' ),

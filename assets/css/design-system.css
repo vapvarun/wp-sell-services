@@ -1081,6 +1081,15 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
    toast: a class the markup uses that the loaded stylesheets never define.
    --wpss-primary-accent carries a dark value, so it follows the mode. */
 .wpss-btn--link { background: none; border: none; padding: 0; color: var(--wpss-primary-accent, #4f46e5); text-decoration: none; }
+/* Qualified with .wpss-btn on purpose.
+   frontend.css carries a blanket `.wpss-btn:hover { text-decoration: none; }`
+   at the same specificity as a bare `.wpss-btn--link:hover`, and it loads after
+   the design system, so the blanket rule won and the link button had no hover
+   signal at all. A text button whose only affordance is colour is the thing
+   Basecamp 10313294062 objected to - and it was right, because the underline it
+   was told about never rendered. (0,3,0) beats (0,2,0) regardless of order. */
+.wpss-btn.wpss-btn--link:hover,
+.wpss-btn.wpss-btn--link:focus-visible,
 .wpss-btn--link:hover,
 .wpss-btn--link:focus-visible { color: var(--wpss-primary-accent, #4f46e5); text-decoration: underline; }
 /* Optional prompt field (wpssConfirm options.prompt). Left-aligned inside an

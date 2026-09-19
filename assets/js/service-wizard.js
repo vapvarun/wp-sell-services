@@ -299,6 +299,10 @@ function wpssServiceWizard(existingData = {}) {
 						fieldErrors['wpss-wizard-main-image'] = wpssWizard.strings.validationImage;
 					}
 					break;
+
+				case 'extras':
+					this.validationErrors.push(...this.extrasErrors());
+					break;
 			}
 
 			// Apply errors via the wpss-form-error primitive — inline on each field
@@ -373,6 +377,43 @@ function wpssServiceWizard(existingData = {}) {
 		 *
 		 * @return {Array} Validation messages, empty when every offered tier is complete.
 		 */
+		/**
+		 * Errors on the Extras step.
+		 *
+		 * A package refuses an empty price; an extra silently turned one into a
+		 * free add-on, so a vendor who left the field blank published
+		 * 'Alpha +$0.00' and gave the work away. Named extras must carry a
+		 * price, and a price must be a positive number - the same bar the
+		 * pricing tiers are held to.
+		 *
+		 * @return {Array} Human-readable messages, empty when the step is valid.
+		 */
+		extrasErrors() {
+			const errors = [];
+
+			(this.data.extras || []).forEach((extra, i) => {
+				const title = (extra.title || '').trim();
+				const raw   = extra.price;
+				const price = parseFloat(raw);
+
+				// An untouched blank row is not an error - it is simply unused.
+				if ('' === title && (raw === '' || raw === null || typeof raw === 'undefined')) {
+					return;
+				}
+
+				if ('' === title) {
+					errors.push(wpssWizard.strings.validationExtraTitle.replace('%d', i + 1));
+					return;
+				}
+
+				if (raw === '' || raw === null || typeof raw === 'undefined' || isNaN(price) || price <= 0) {
+					errors.push(wpssWizard.strings.validationExtraPrice.replace('%s', title));
+				}
+			});
+
+			return errors;
+		},
+
 		pricingErrors() {
 			const errors = [];
 
@@ -874,10 +915,21 @@ function wpssServiceWizard(existingData = {}) {
 		 * @param {string} type    - 'success' or 'error'.
 		 */
 		showNotice(message, type = 'success') {
-			// Create notice element
+			// Create notice element.
 			const notice = document.createElement('div');
 			notice.className = `wpss-wizard-notice wpss-wizard-notice--${type}`;
 			notice.textContent = message;
+
+			/*
+			 * Announce it. Every wizard notice - duplicate image refused, a limit
+			 * reached, draft saved, published - was appended as a plain div, so a
+			 * screen-reader user got no feedback at all for actions that only
+			 * report through this toast. An error is assertive because it means
+			 * the vendor's action did not happen; a success is polite so it does
+			 * not interrupt what they are typing (WCAG 2.1 AA, 4.1.3).
+			 */
+			notice.setAttribute('role', type === 'error' ? 'alert' : 'status');
+			notice.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
 
 			// Style the notice
 			Object.assign(notice.style, {

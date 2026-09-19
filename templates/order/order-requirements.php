@@ -20,7 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', array( 'wpss-design-system' ), WPSS_VERSION );
+wpss_enqueue_style( 'wpss-orders', 'assets/css/orders.css' );
 
 if ( empty( $order_id ) ) {
 	return;

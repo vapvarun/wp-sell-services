@@ -675,8 +675,10 @@ class ServicesController extends RestController {
 
 		wp_set_object_terms( $service_id, $requested_categories, 'wpss_service_category' );
 
-		// Set tags.
-		$tags = $request->get_param( 'tags' );
+		// Set tags. Capped by wpss_enforce_service_limits() inside
+		// save_service_meta(), the same cap the wizard shows, so a service
+		// cannot carry more tags just because it was created over the API.
+		$tags = wpss_enforce_service_limits( array( 'tags' => (array) $request->get_param( 'tags' ) ) )['meta']['tags'];
 		if ( $tags ) {
 			wp_set_object_terms( $service_id, $tags, 'wpss_service_tag' );
 		}
@@ -747,6 +749,39 @@ class ServicesController extends RestController {
 					array( 'status' => 400 )
 				);
 			}
+			/*
+			 * Going live has to clear the same bar here as in the wizard.
+			 *
+			 * The dashboard's Pause/Publish toggle and every app client come
+			 * through this route, and it accepted status=publish without asking
+			 * wpss_validate_service_publishable() anything - so a service the
+			 * wizard would refuse to publish could be published anyway by
+			 * flipping the toggle, and the marketplace ended up with listings
+			 * that have no price, no delivery time or no packages at all.
+			 */
+			if ( 'publish' === $requested_status ) {
+				$publish_errors = wpss_validate_service_publishable(
+					array(
+						'title'       => $update_data['post_title'] ?? get_the_title( $service_id ),
+						'description' => $update_data['post_content'] ?? (string) get_post_field( 'post_content', $service_id ),
+						'packages'    => $request->has_param( 'packages' )
+							? (array) $request->get_param( 'packages' )
+							: (array) get_post_meta( $service_id, '_wpss_packages', true ),
+					)
+				);
+
+				if ( $publish_errors ) {
+					return new WP_Error(
+						'wpss_not_publishable',
+						implode( ' ', $publish_errors ),
+						array(
+							'status' => 400,
+							'errors' => array_values( $publish_errors ),
+						)
+					);
+				}
+			}
+
 			$update_data['post_status'] = $requested_status;
 		}
 
@@ -764,9 +799,10 @@ class ServicesController extends RestController {
 			wp_set_object_terms( $service_id, $this->resolve_category_terms( $request->get_param( 'categories' ) ), 'wpss_service_category' );
 		}
 
-		// Update tags.
+		// Update tags, capped the same way as on create.
 		if ( $request->has_param( 'tags' ) ) {
-			wp_set_object_terms( $service_id, $request->get_param( 'tags' ), 'wpss_service_tag' );
+			$capped_tags = wpss_enforce_service_limits( array( 'tags' => (array) $request->get_param( 'tags' ) ) )['meta']['tags'];
+			wp_set_object_terms( $service_id, $capped_tags, 'wpss_service_tag' );
 		}
 
 		/**
@@ -1214,6 +1250,7 @@ class ServicesController extends RestController {
 				'gallery'      => $request->get_param( 'gallery' ),
 				'extras'       => wpss_normalize_service_addons( (array) $request->get_param( 'addons' ) ),
 				'requirements' => wpss_normalize_service_requirements( (array) $request->get_param( 'requirements' ) ),
+				'tags'         => (array) $request->get_param( 'tags' ),
 			)
 		);
 

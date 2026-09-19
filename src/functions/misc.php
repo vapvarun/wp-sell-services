@@ -847,3 +847,67 @@ function wpss_submit_button( string $text, string $type = 'primary', string $nam
 		esc_html( $text )
 	);
 }
+
+/**
+ * Whether an admin hook suffix or screen id refers to one of our pages.
+ *
+ * WordPress derives a submenu hook suffix from the PARENT MENU TITLE, not from
+ * the parent slug: sanitize_title( $menu_title ) . '_page_' . $page_slug. The
+ * menu title is renameable - Pro's White Label sells exactly that - so any
+ * comparison against a literal like 'sell-services_page_wpss-reports' silently
+ * stops matching the moment an owner renames the menu, and whatever it guarded
+ * simply never happens. That has now cost two separate defects: the vendor
+ * detail screen sat on "Loading" forever (fixed in 1.7.2 by capturing the
+ * suffix at registration), and the Reports queue lost the script carrying its
+ * suspend/close-account confirmation (Basecamp 10320551487).
+ *
+ * Compare the page slug instead, which no site owner can change. Handles both
+ * the 'toplevel_page_<slug>' and '<parent>_page_<slug>' forms.
+ *
+ * Where a class registers the page itself, capturing the return value of
+ * add_submenu_page() is still the most direct answer; this helper is for the
+ * places that only receive the hook.
+ *
+ * @since 1.7.2
+ *
+ * @param string $hook  Hook suffix or WP_Screen id.
+ * @param string ...$slugs One or more page slugs, e.g. 'wpss-reports'.
+ * @return bool True when $hook addresses any of the given slugs.
+ */
+function wpss_is_admin_page( string $hook, string ...$slugs ): bool {
+	foreach ( $slugs as $slug ) {
+		if ( '' === $slug ) {
+			continue;
+		}
+
+		if ( $hook === 'toplevel_page_' . $slug || str_ends_with( $hook, '_page_' . $slug ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Enqueue one of the plugin's stylesheets, with its RTL sibling registered.
+ *
+ * Every sheet registered from a class remembered wp_style_add_data( …, 'rtl',
+ * 'replace' ); every sheet enqueued inline from a template forgot it. So
+ * orders.css, vendor-dashboard.css and messaging.css shipped an -rtl.css that
+ * WordPress was never told about and therefore never served - the RTL build ran
+ * on every release and its output went nowhere (Basecamp 10320551778).
+ *
+ * Call this instead of wp_enqueue_style() for plugin CSS so the RTL pairing is
+ * not something each call site has to remember.
+ *
+ * @since 1.7.2
+ *
+ * @param string   $handle   Style handle, e.g. 'wpss-orders'.
+ * @param string   $relative Path under the plugin root, e.g. 'assets/css/orders.css'.
+ * @param string[] $deps     Dependencies. Defaults to the design system.
+ * @return void
+ */
+function wpss_enqueue_style( string $handle, string $relative, array $deps = array( 'wpss-design-system' ) ): void {
+	wp_enqueue_style( $handle, WPSS_PLUGIN_URL . $relative, $deps, WPSS_VERSION );
+	wp_style_add_data( $handle, 'rtl', 'replace' );
+}

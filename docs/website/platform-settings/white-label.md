@@ -22,7 +22,7 @@ Branding applies immediately. There are no template edits and no CSS to write.
 | **Primary colour** | Accent colour across admin, dashboard, and email headers | `#7f54b3` |
 | **Email footer text** | Small-print line at the bottom of every transactional email | *(empty)* |
 | **Email from name** | The sender name on every transactional email | *(empty -- uses your site name)* |
-| **Hide branding** | Removes the "powered by" attribution | Off |
+| **Hide branding** | Keeps the "powered by" credit off the vendor dashboard. The credit is already hidden by default and no email carries it, so this only matters if your theme or a snippet switches it back on | Off |
 
 ### Brand name renames the admin menu
 
