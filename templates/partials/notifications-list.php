@@ -48,7 +48,14 @@ if ( $wpss_notif_user <= 0 ) {
  * and no Next - so a busy account simply could not reach anything older, even
  * though the data layer already accepted an offset.
  */
+/*
+ * Clamped deliberately. A filter returning 0 or a negative number produced
+ * LIMIT 0 - an empty list on a member who has notifications - or an SQL error,
+ * and the site owner would have no way to tell that their own snippet caused
+ * it. An upper bound keeps one bad value from selecting the whole table.
+ */
 $wpss_notif_per_page = (int) apply_filters( 'wpss_notifications_per_page', 20 );
+$wpss_notif_per_page = max( 1, min( 200, $wpss_notif_per_page ) );
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination param.
 $wpss_notif_page  = isset( $_GET['notifications_page'] ) ? max( 1, absint( wp_unslash( $_GET['notifications_page'] ) ) ) : 1;
 $wpss_notif_total = wpss_count_user_notifications( $wpss_notif_user );
@@ -92,13 +99,16 @@ $wpss_notif_icons = array(
 	'proposal_rejected'  => 'thumbs-down',
 );
 
-$wpss_has_unread = false;
-foreach ( $wpss_notifications as $wpss_n ) {
-	if ( empty( $wpss_n->is_read ) ) {
-		$wpss_has_unread = true;
-		break;
-	}
-}
+/*
+ * Count unread across EVERY page, not just the rows on screen.
+ *
+ * "Mark all as read" marks every page - its handler has never been scoped to
+ * the current one - but its visibility was computed from the loaded rows. So a
+ * member whose first page happened to be all read lost the control while
+ * unread notifications sat on page 3, and the only way to get it back was to
+ * page forward until one showed up.
+ */
+$wpss_has_unread = wpss_count_user_notifications( $wpss_notif_user, array( 'unread_only' => true ) ) > 0;
 ?>
 <style>
 .wpss-notif-center__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
