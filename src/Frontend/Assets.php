@@ -99,11 +99,74 @@ class Assets {
 	public static function filter_style_src( $src, $handle ): string {
 		$rewritten = self::filter_loader_src( $src, $handle );
 
-		if ( $rewritten !== $src && '-rtl' !== substr( (string) $handle, -4 ) ) {
+		// A handle ending -rtl is core asking for the RTL URL itself; there is
+		// no such registered style to annotate.
+		if ( '-rtl' === substr( (string) $handle, -4 ) ) {
+			return $rewritten;
+		}
+
+		if ( $rewritten !== $src ) {
 			wp_style_add_data( $handle, 'suffix', '.min' );
 		}
 
+		self::maybe_pair_rtl( $handle, $rewritten, $rewritten !== $src );
+
 		return $rewritten;
+	}
+
+	/**
+	 * Serve a stylesheet's RTL sibling whenever one was actually built.
+	 *
+	 * Pairing used to be each enqueue's job, and five of them never did it -
+	 * the Vendors screen, the service-edit metabox, and Pro's currency, EDD and
+	 * WooCommerce sheets all shipped an -rtl.css that WordPress was never told
+	 * about. On Vendors that was worse than nothing: an LTR sheet loaded on top
+	 * of an RTL one and won wherever the two overlapped (Basecamp 10321368043).
+	 *
+	 * Remembering at 24 call sites is the thing that keeps failing, so the
+	 * pairing is derived here instead: this filter already runs for every
+	 * stylesheet whose URL is inside this plugin's assets dir, and core reads
+	 * extra['rtl'] after resolving the LTR href, so a flag set here is seen.
+	 * A future enqueue inherits the pairing without knowing it exists.
+	 *
+	 * Only ever set when the sibling is on disk - flagging a sheet that has no
+	 * -rtl build would turn a working LTR page into a 404.
+	 *
+	 * An explicit value already registered is left alone, including a handle
+	 * that points 'rtl' at a URL of its own.
+	 *
+	 * @param string $handle   Registered style handle.
+	 * @param string $src      Resolved URL, after any .min rewrite.
+	 * @param bool   $minified Whether that rewrite happened.
+	 * @return void
+	 */
+	private static function maybe_pair_rtl( string $handle, string $src, bool $minified ): void {
+		$styles = wp_styles();
+
+		if ( ! $styles instanceof \WP_Styles || ! isset( $styles->registered[ $handle ] ) ) {
+			return;
+		}
+
+		if ( isset( $styles->registered[ $handle ]->extra['rtl'] ) ) {
+			return;
+		}
+
+		$path = self::url_to_path( explode( '?', $src, 2 )[0] );
+
+		if ( null === $path ) {
+			return;
+		}
+
+		// The name core will build: foo.min.css -> foo-rtl.min.css, and
+		// foo.css -> foo-rtl.css when nothing was minified.
+		$suffix   = $minified ? '.min' : '';
+		$rtl_path = preg_replace( '#' . preg_quote( $suffix, '#' ) . '\.css$#i', '-rtl' . $suffix . '.css', $path );
+
+		if ( ! is_string( $rtl_path ) || $rtl_path === $path || ! self::min_exists( $rtl_path ) ) {
+			return;
+		}
+
+		wp_style_add_data( $handle, 'rtl', 'replace' );
 	}
 
 	/**
