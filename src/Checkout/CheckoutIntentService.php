@@ -344,6 +344,50 @@ class CheckoutIntentService {
 	 * @return array<string,mixed> { success:bool, ... }
 	 */
 	public function settle( CheckoutIntent $intent, string $gateway_id, string $transaction_id, float $charged_amount, string $charged_currency ): array {
+		/*
+		 * Bind the charge to the intent it is paying for, before anything is
+		 * created or marked paid.
+		 *
+		 * Nothing compared the two. The gateway confirmed only that SOME
+		 * PaymentIntent reached 'succeeded'; the intent was then resolved from
+		 * the request's own service_id / package_id / pay_order, and
+		 * settle_single() priced the order from the server-side intent. So a
+		 * buyer could pay for a cheap service, keep the pi_... id the JS
+		 * response exposes, re-post it naming an expensive one, and receive a
+		 * $5,000 order for a $5 charge - with the vendor credited in full on
+		 * completion (Basecamp 10321653099).
+		 *
+		 * The docblock on settle_single() has claimed since 1.3.0 that
+		 * $charged_amount "is checked against the intent below". It never was.
+		 * It is now, and this is the line that makes that comment true.
+		 *
+		 * Placed here rather than in each gateway deliberately: PayPal already
+		 * does this check itself (PayPalGateway.php:711) and Stripe and
+		 * Razorpay did not. One guard on the shared seam closes both, covers
+		 * all three intent kinds, and covers any rail added later. Every caller
+		 * refunds on a false return, so a mismatched charge is given back.
+		 */
+		if ( strtoupper( $charged_currency ) !== strtoupper( $intent->currency )
+			|| ! wpss_amounts_match( $charged_amount, $intent->amount, $intent->currency ) ) {
+			wpss_log(
+				sprintf(
+					'%s charge %s took %s %s but the checkout intent is %s %s. Refusing to settle.',
+					$gateway_id,
+					$transaction_id,
+					$charged_currency,
+					$charged_amount,
+					$intent->currency,
+					$intent->amount
+				),
+				'error'
+			);
+
+			return array(
+				'success' => false,
+				'error'   => __( 'The paid amount does not match the order total.', 'wp-sell-services' ),
+			);
+		}
+
 		$provider = wpss_get_order_provider();
 
 		switch ( $intent->kind ) {
@@ -475,8 +519,9 @@ class CheckoutIntentService {
 				 * SECOND time (Pay $88.50, order total $104.43) and billed
 				 * commission on the tax as well (Basecamp 10254561978).
 				 *
-				 * $charged_amount is still what the gateway reports it took, and
-				 * is checked against the intent below; it is simply not the
+				 * $charged_amount is still what the gateway reports it took. It
+				 * is verified against the intent's amount and currency in
+				 * settle(), before this method is reached; it is simply not the
 				 * number the order row is built from.
 				 */
 				'subtotal'       => max( 0, $intent->taxable_base - $intent->addons_total ),
