@@ -362,16 +362,31 @@ final class Plugin {
 			);
 		}
 
-		// Withdrawal payout details were plaintext JSON until 1.7.1. Same
-		// own-flag pattern as above: exactly once, cannot be skipped by a
-		// forgotten version bump, idempotent (rows already prefixed are not
-		// selected).
-		if ( ! get_option( 'wpss_withdrawal_details_encrypted', false ) ) {
+		/*
+		 * Withdrawal payout details were plaintext JSON until 1.7.1. Idempotent
+		 * (rows already prefixed are not selected), so re-running is free.
+		 *
+		 * The flag is a VERSION stamp, not a boolean, because a one-shot flag
+		 * repaired the rows that existed when it ran and then closed the door.
+		 * Pro's POST /wallet/withdraw kept writing cleartext after that
+		 * (WalletController.php:265, fixed in 1.7.2), so on any site that
+		 * upgraded to 1.7.1 those rows would never be repaired - vendor IBAN,
+		 * bank and PayPal identifiers sitting in the clear permanently
+		 * (Basecamp 10321653459).
+		 *
+		 * Bump the version below whenever a defect is found that could have
+		 * written plaintext since the last stamp. A legacy value of 1 sorts
+		 * below any version string, so sites carrying the old boolean re-run
+		 * once and are stamped properly.
+		 */
+		$wpss_details_encrypted_through = (string) get_option( 'wpss_withdrawal_details_encrypted', '' );
+
+		if ( '' === $wpss_details_encrypted_through || version_compare( $wpss_details_encrypted_through, '1.7.2', '<' ) ) {
 			add_action(
 				'init',
 				static function (): void {
 					wpss_encrypt_legacy_withdrawal_details();
-					update_option( 'wpss_withdrawal_details_encrypted', 1, false );
+					update_option( 'wpss_withdrawal_details_encrypted', '1.7.2', false );
 				},
 				20
 			);
