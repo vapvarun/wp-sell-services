@@ -430,93 +430,43 @@ class EarningsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function request_withdrawal( WP_REST_Request $request ) {
-		global $wpdb;
-
 		$vendor_id = get_current_user_id();
 		$amount    = (float) $request->get_param( 'amount' );
-		$method    = sanitize_text_field( $request->get_param( 'method' ) );
-		$details   = $request->get_param( 'details' ) ?: array();
+		$method    = sanitize_text_field( (string) $request->get_param( 'method' ) );
+		$details   = map_deep( (array) ( $request->get_param( 'details' ) ?: array() ), 'sanitize_text_field' );
 
-		if ( $amount <= 0 ) {
-			return new WP_Error( 'invalid_amount', __( 'Amount must be greater than zero.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
+		/*
+		 * One writer for withdrawals.
+		 *
+		 * This method used to carry its own transaction, its own FOR UPDATE
+		 * lock, its own pending-request rule and its own encrypted insert - a
+		 * second complete implementation beside EarningsService. Pro's
+		 * /wallet/withdraw was a third, and consolidating it onto the service
+		 * exposed the split: the queue rule lived here, so the two routes
+		 * disagreed about how many open requests a vendor may hold
+		 * (Basecamp 10322374689).
+		 *
+		 * The service now owns every rule - minimum, lock, one-open-request,
+		 * balance, encryption, notifications and the wpss_withdrawal_requested
+		 * hook - and all three routes call it. ONE FLOW, ONE IMPLEMENTATION, as
+		 * CLAUDE.md requires; it is the rule this endpoint broke twice.
+		 */
+		$result = ( new \WPSellServices\Services\EarningsService() )
+			->request_withdrawal( $vendor_id, $amount, $method, $details );
 
-		// Check minimum withdrawal.
-		$min_amount = \WPSellServices\Services\EarningsService::get_min_withdrawal_amount();
-		if ( $amount < $min_amount ) {
+		if ( empty( $result['success'] ) ) {
 			return new WP_Error(
-				'below_minimum',
-				/* translators: %s: minimum withdrawal amount */
-				sprintf( __( 'Minimum withdrawal amount is %s.', 'wp-sell-services' ), wpss_format_currency( $min_amount ) ),
+				(string) ( $result['code'] ?? 'withdrawal_failed' ),
+				(string) ( $result['message'] ?? __( 'Failed to create withdrawal request.', 'wp-sell-services' ) ),
 				array( 'status' => 400 )
 			);
 		}
 
-		// Check available balance using transaction to prevent race conditions.
-		$wd_table = $wpdb->prefix . 'wpss_withdrawals';
+		$withdrawal_id = (int) $result['withdrawal_id'];
 
-		$wpdb->query( 'START TRANSACTION' );
-
-		// Take the row lock on this vendor's open withdrawals first, so two
-		// concurrent requests cannot both pass the gate below.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(amount), 0) FROM {$wd_table} WHERE vendor_id = %d AND status IN ('pending', 'approved', 'completed') FOR UPDATE",
-				$vendor_id
-			)
-		);
-
-		// Ask the ONE balance authority rather than re-deriving it. This block
-		// used to re-implement get_summary() inline — its own comment said so —
-		// and had already drifted: it counted completed withdrawals from the
-		// withdrawals table, which double-debits them now that they are in the
-		// ledger, and it scoped clearance to order rows so tips and milestone
-		// credits were withdrawable immediately.
-		$available = ( new \WPSellServices\Services\EarningsService() )
-			->get_summary( $vendor_id )['available_balance'];
-
-		if ( $amount > $available ) {
-			$wpdb->query( 'ROLLBACK' );
-			return new WP_Error( 'insufficient_balance', __( 'Insufficient available balance.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		// Check for existing pending withdrawal.
-		$existing = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wd_table} WHERE vendor_id = %d AND status = 'pending'",
-				$vendor_id
-			)
-		);
-
-		if ( $existing > 0 ) {
-			$wpdb->query( 'ROLLBACK' );
-			return new WP_Error( 'pending_exists', __( 'You already have a pending withdrawal request.', 'wp-sell-services' ), array( 'status' => 400 ) );
-		}
-
-		$wpdb->insert(
-			$wd_table,
-			array(
-				'vendor_id'  => $vendor_id,
-				'amount'     => $amount,
-				'method'     => $method,
-				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
-				'status'     => 'pending',
-				'created_at' => current_time( 'mysql', true ),
-			),
-			array( '%d', '%f', '%s', '%s', '%s', '%s' )
-		);
-
-		$withdrawal_id = (int) $wpdb->insert_id;
-
-		if ( ! $withdrawal_id ) {
-			$wpdb->query( 'ROLLBACK' );
-			return new WP_Error( 'create_failed', __( 'Failed to create withdrawal request.', 'wp-sell-services' ), array( 'status' => 500 ) );
-		}
-
-		$wpdb->query( 'COMMIT' );
-
-		// Persist payout profile so cron can find eligible vendors.
+		// Payout profile, so the auto-payout cron can find eligible vendors.
+		// Kept here rather than in the service: it is this endpoint's own
+		// convenience, not part of creating a withdrawal.
 		update_user_meta( $vendor_id, 'wpss_payout_method', $method );
 		update_user_meta( $vendor_id, 'wpss_payout_details', $details );
 
