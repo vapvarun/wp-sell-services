@@ -76,6 +76,7 @@ class ServiceManager {
 			'categories'   => array(),
 			'tags'         => array(),
 			'gallery'      => array(),
+			'extras'       => array(),
 			'faqs'         => array(),
 			'requirements' => array(),
 		);
@@ -156,6 +157,12 @@ class ServiceManager {
 			if ( ! has_post_thumbnail( $post_id ) && ! empty( $gallery_ids[0] ) ) {
 				set_post_thumbnail( $post_id, $gallery_ids[0] );
 			}
+		}
+
+		// Save add-ons. wpss_enforce_service_limits() above has already capped
+		// the list, same as every other save path.
+		if ( ! empty( $data['extras'] ) ) {
+			wpss_save_service_addons( $post_id, $data['extras'] );
 		}
 
 		// Save FAQs.
@@ -270,6 +277,11 @@ class ServiceManager {
 			}
 		}
 
+		// Update add-ons.
+		if ( isset( $data['extras'] ) ) {
+			wpss_save_service_addons( $service_id, $data['extras'] );
+		}
+
 		// Update FAQs.
 		if ( isset( $data['faqs'] ) ) {
 			$this->save_faqs( $service_id, $data['faqs'] );
@@ -308,6 +320,9 @@ class ServiceManager {
 
 		// Delete packages.
 		$this->package_repo->delete_by_service( $service_id );
+
+		// Delete add-ons.
+		delete_post_meta( $service_id, '_wpss_addons' );
 
 		// Delete FAQs.
 		$this->delete_faqs( $service_id );

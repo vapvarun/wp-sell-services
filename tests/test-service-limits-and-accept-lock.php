@@ -85,7 +85,6 @@ $posts[]   = $wizard_id;
 $image_ids = $wpdb->get_col( "SELECT ID FROM {$wpdb->posts} ORDER BY ID DESC LIMIT 9" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $wizard    = new ServiceWizard();
 $save      = new ReflectionMethod( $wizard, 'save_service_meta' );
-$save->setAccessible( true );
 $save->invoke(
 	$wizard,
 	$wizard_id,

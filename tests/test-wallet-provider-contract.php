@@ -77,7 +77,6 @@ foreach ( array( 'credit', 'debit', 'handle_withdrawal_completed' ) as $m ) {
 // 3. A configured-but-inactive provider falls to internal, never to a
 //    different third-party wallet. This is the substitution bug.
 $providers = $ref->getProperty( 'providers' );
-$providers->setAccessible( true );
 $all = $providers->getValue( $mgr );
 
 $stub_a = new class() implements \WPSellServicesPro\Integrations\Wallets\WalletProviderInterface {
@@ -130,7 +129,6 @@ $restore = get_option( 'wpss_wallet_provider' );
 update_option( 'wpss_wallet_provider', 'stub_chosen' );
 
 $resolve = $ref->getMethod( 'set_active_provider' );
-$resolve->setAccessible( true );
 $resolve->invoke( $mgr );
 
 $active = $mgr->get_active_provider();

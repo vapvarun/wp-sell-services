@@ -188,6 +188,10 @@ class Service {
 		// Load meta.
 		$service->gallery      = self::normalize_gallery_ids( get_post_meta( $post->ID, '_wpss_gallery', true ) );
 		$service->requirements = wpss_get_service_requirements( $post->ID );
+		// Add-ons. Declared and documented as wpss_get_service_extras() rows
+		// since 1.2.0, and filled in by nothing until 1.7.2 - so every reader
+		// of $service->addons saw an empty list on a service that had them.
+		$service->addons       = wpss_get_service_extras( $post->ID );
 		$service->faqs         = get_post_meta( $post->ID, '_wpss_faqs', true ) ?: array();
 		$service->platform_ids = get_post_meta( $post->ID, '_wpss_platform_ids', true ) ?: array();
 

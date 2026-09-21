@@ -2,12 +2,15 @@
 /**
  * Service Creation Integration Tests.
  *
- * Tests all variations of service creation:
- * - Simple service
- * - With requirements
- * - Single plan
- * - Multiple plans
- * - With addons
+ * Every assertion here runs against the Service model ServiceManager
+ * actually persisted and read back, not against the array the factory was
+ * handed. The earlier version wrapped every assertion in
+ * `if ( is_array( $service_data ) )`, a branch for a "standalone mode (no
+ * WordPress)" that cannot occur under WP_UnitTestCase - so eleven tests
+ * passed while asserting nothing about the product, and
+ * test_addon_price_calculation was flagged risky because its whole body was
+ * skipped. Asserting on the round trip is the only version of this file that
+ * can fail when service creation breaks.
  *
  * @package WPSellServices\Tests\Integration
  */
@@ -27,214 +30,130 @@ use WPSellServices\Services\ServiceManager;
  */
 class ServiceCreationTest extends TestCase {
 
-	/**
-	 * Service manager instance.
-	 *
-	 * @var ServiceManager|null
-	 */
 	private ?ServiceManager $service_manager = null;
 
-	/**
-	 * Set up before each test.
-	 *
-	 * @return void
-	 */
 	protected function set_up(): void {
 		parent::set_up();
 
 		ServiceFactory::reset();
 		UserFactory::reset();
 
-		// Only instantiate ServiceManager when WordPress is available.
-		global $wpdb;
-		if ( isset( $wpdb ) && $wpdb instanceof \wpdb && class_exists( ServiceManager::class ) ) {
-			$this->service_manager = new ServiceManager();
-		}
+		$this->service_manager = new ServiceManager();
 	}
 
 	/**
-	 * Test creating a simple service with title, description, single package.
+	 * The factory falls back to returning its input array when
+	 * ServiceManager::create() throws. That fallback silently turns a
+	 * persistence failure into a skipped test, so every test asserts the
+	 * round trip produced a real model first.
 	 *
-	 * @return void
+	 * @param  Service|array $subject What the factory returned.
+	 * @return Service
 	 */
+	private function persisted( $subject ): Service {
+		$this->assertInstanceOf(
+			Service::class,
+			$subject,
+			'ServiceFactory fell back to its input array, which means ServiceManager::create() failed.'
+		);
+
+		return $subject;
+	}
+
 	public function test_create_simple_service(): void {
-		$service_data = ServiceFactory::simple();
+		$service = $this->persisted( ServiceFactory::simple() );
 
-		$this->assertNotEmpty( $service_data );
+		$this->assertNotEmpty( $service->title );
+		$this->assertNotEmpty( $service->description );
+		$this->assertCount( 1, $service->packages );
 
-		if ( is_array( $service_data ) ) {
-			// Standalone mode - verify data structure.
-			$this->assertArrayHasKey( 'title', $service_data );
-			$this->assertArrayHasKey( 'content', $service_data );
-			$this->assertArrayHasKey( 'packages', $service_data );
-			$this->assertCount( 1, $service_data['packages'] );
-
-			$package = $service_data['packages'][0];
-			$this->assertEquals( 'Basic', $package['name'] );
-			$this->assertEquals( 49.99, $package['price'] );
-			$this->assertEquals( 3, $package['delivery_days'] );
-		} else {
-			// Integration mode - verify Service object.
-			$this->assertInstanceOf( Service::class, $service_data );
-			$this->assertNotEmpty( $service_data->title );
-			$this->assertNotEmpty( $service_data->packages );
-		}
+		$package = $service->packages[0];
+		$this->assertSame( 'Basic', $package->name );
+		$this->assertEquals( 49.99, $package->price );
+		$this->assertSame( 3, $package->delivery_days );
 	}
 
-	/**
-	 * Test creating a service with buyer requirements.
-	 *
-	 * @return void
-	 */
 	public function test_create_service_with_requirements(): void {
-		$service_data = ServiceFactory::with_requirements();
+		$service = $this->persisted( ServiceFactory::with_requirements() );
 
-		$this->assertNotEmpty( $service_data );
+		$this->assertCount( 3, $service->requirements );
 
-		if ( is_array( $service_data ) ) {
-			$this->assertArrayHasKey( 'requirements', $service_data );
-			$this->assertCount( 3, $service_data['requirements'] );
+		// wpss_normalize_service_requirements() is the one schema every
+		// reader sees: field_type/is_required are input aliases, the stored
+		// row is type/required.
+		$types = array_column( $service->requirements, 'type' );
+		$this->assertContains( 'text', $types );
+		$this->assertContains( 'select', $types );
+		$this->assertContains( 'file', $types );
 
-			// Verify requirement types.
-			$types = array_column( $service_data['requirements'], 'field_type' );
-			$this->assertContains( 'text', $types );
-			$this->assertContains( 'select', $types );
-			$this->assertContains( 'file', $types );
-
-			// Verify required flags.
-			$required_count = count(
-				array_filter(
-					$service_data['requirements'],
-					fn( $r ) => $r['is_required'] === true
-				)
-			);
-			$this->assertEquals( 2, $required_count );
-		}
+		$required = array_filter(
+			$service->requirements,
+			fn( $r ) => ! empty( $r['required'] )
+		);
+		$this->assertCount( 2, $required );
 	}
 
-	/**
-	 * Test creating a service with a single pricing plan.
-	 *
-	 * @return void
-	 */
 	public function test_create_single_plan_service(): void {
-		$service_data = ServiceFactory::single_plan();
+		$service = $this->persisted( ServiceFactory::single_plan() );
 
-		$this->assertNotEmpty( $service_data );
+		$this->assertCount( 1, $service->packages );
 
-		if ( is_array( $service_data ) ) {
-			$this->assertArrayHasKey( 'packages', $service_data );
-			$this->assertCount( 1, $service_data['packages'] );
-
-			$package = $service_data['packages'][0];
-			$this->assertEquals( 'Complete Package', $package['name'] );
-			$this->assertEquals( 149.99, $package['price'] );
-			$this->assertNotEmpty( $package['features'] );
-		}
+		$package = $service->packages[0];
+		$this->assertSame( 'Complete Package', $package->name );
+		$this->assertEquals( 149.99, $package->price );
+		$this->assertNotEmpty( $package->features );
 	}
 
-	/**
-	 * Test creating a service with multiple pricing plans (Basic/Standard/Premium).
-	 *
-	 * @return void
-	 */
 	public function test_create_multi_plan_service(): void {
-		$service_data = ServiceFactory::multi_plan();
+		$service = $this->persisted( ServiceFactory::multi_plan() );
 
-		$this->assertNotEmpty( $service_data );
+		$this->assertCount( 3, $service->packages );
 
-		if ( is_array( $service_data ) ) {
-			$this->assertArrayHasKey( 'packages', $service_data );
-			$this->assertCount( 3, $service_data['packages'] );
+		$this->assertSame(
+			array( 'Basic', 'Standard', 'Premium' ),
+			array_map( fn( $p ) => $p->name, $service->packages )
+		);
+		$this->assertEqualsWithDelta(
+			array( 29.99, 59.99, 99.99 ),
+			array_map( fn( $p ) => (float) $p->price, $service->packages ),
+			0.001
+		);
+		$this->assertSame(
+			array( 5, 3, 1 ),
+			array_map( fn( $p ) => (int) $p->delivery_days, $service->packages )
+		);
 
-			$names = array_column( $service_data['packages'], 'name' );
-			$this->assertEquals( array( 'Basic', 'Standard', 'Premium' ), $names );
-
-			// Verify prices are ascending.
-			$prices = array_column( $service_data['packages'], 'price' );
-			$this->assertEquals( array( 29.99, 59.99, 99.99 ), $prices );
-
-			// Verify delivery days are descending (faster for higher tiers).
-			$delivery = array_column( $service_data['packages'], 'delivery_days' );
-			$this->assertEquals( array( 5, 3, 1 ), $delivery );
-
-			// Verify Premium has unlimited revisions.
-			$premium = $service_data['packages'][2];
-			$this->assertEquals( -1, $premium['revisions'] );
-		}
+		// Premium offers unlimited revisions, stored as -1.
+		$this->assertSame( -1, (int) $service->packages[2]->revisions );
 	}
 
-	/**
-	 * Test creating a service with add-ons/extras.
-	 *
-	 * @return void
-	 */
 	public function test_create_service_with_addons(): void {
-		$service_data = ServiceFactory::with_addons();
+		$service = $this->persisted( ServiceFactory::with_addons() );
 
-		$this->assertNotEmpty( $service_data );
+		$this->assertCount( 3, $service->addons );
 
-		if ( is_array( $service_data ) ) {
-			$this->assertArrayHasKey( 'addons', $service_data );
-			$this->assertCount( 3, $service_data['addons'] );
+		$names = array_column( $service->addons, 'title' );
+		$this->assertContains( 'Rush Delivery', $names );
+		$this->assertContains( 'Extra Revisions', $names );
+		$this->assertContains( 'Source Files', $names );
 
-			$names = array_column( $service_data['addons'], 'name' );
-			$this->assertContains( 'Rush Delivery', $names );
-			$this->assertContains( 'Extra Revisions', $names );
-			$this->assertContains( 'Source Files', $names );
-
-			// Verify Rush Delivery reduces delivery time.
-			$rush = array_filter(
-				$service_data['addons'],
-				fn( $a ) => $a['name'] === 'Rush Delivery'
-			);
-			$rush = array_values( $rush )[0];
-			$this->assertEquals( -2, $rush['extra_days'] );
-		}
+		$rush = $this->addon_named( $service, 'Rush Delivery' );
+		$this->assertSame( 2, (int) $rush['delivery_days_extra'] );
 	}
 
-	/**
-	 * Test creating a complete service with all features.
-	 *
-	 * @return void
-	 */
 	public function test_create_complete_service(): void {
-		$service_data = ServiceFactory::complete();
+		$service = $this->persisted( ServiceFactory::complete() );
 
-		$this->assertNotEmpty( $service_data );
-
-		if ( is_array( $service_data ) ) {
-			// Has multiple packages.
-			$this->assertArrayHasKey( 'packages', $service_data );
-			$this->assertCount( 3, $service_data['packages'] );
-
-			// Has addons.
-			$this->assertArrayHasKey( 'addons', $service_data );
-			$this->assertGreaterThan( 0, count( $service_data['addons'] ) );
-
-			// Has requirements.
-			$this->assertArrayHasKey( 'requirements', $service_data );
-			$this->assertGreaterThan( 0, count( $service_data['requirements'] ) );
-
-			// Has FAQs.
-			$this->assertArrayHasKey( 'faqs', $service_data );
-			$this->assertGreaterThan( 0, count( $service_data['faqs'] ) );
-		}
+		$this->assertCount( 3, $service->packages );
+		$this->assertNotEmpty( $service->addons );
+		$this->assertNotEmpty( $service->requirements );
+		$this->assertNotEmpty( $service->faqs );
 	}
 
-	/**
-	 * Test service validation fails without title.
-	 *
-	 * @return void
-	 */
 	public function test_service_validation_fails_without_title(): void {
-		if ( ! $this->service_manager ) {
-			$this->markTestSkipped( 'ServiceManager not available.' );
-		}
-
 		$result = $this->service_manager->create(
 			array(
-				'title'   => '', // Empty title.
+				'title'   => '',
 				'content' => 'Description without title.',
 			)
 		);
@@ -242,81 +161,30 @@ class ServiceCreationTest extends TestCase {
 		$this->assertFalse( $result );
 	}
 
-	/**
-	 * Test that service gets starting price from lowest package.
-	 *
-	 * @return void
-	 */
 	public function test_service_starting_price_calculated(): void {
-		$service_data = ServiceFactory::multi_plan();
+		$service = $this->persisted( ServiceFactory::multi_plan() );
 
-		if ( is_array( $service_data ) ) {
-			// Find minimum price.
-			$min_price = min( array_column( $service_data['packages'], 'price' ) );
-			$this->assertEquals( 29.99, $min_price );
-		} elseif ( $service_data instanceof Service ) {
-			$starting_price = $service_data->get_starting_price();
-			$this->assertEquals( 29.99, $starting_price );
-		}
+		$this->assertEqualsWithDelta( 29.99, $service->get_starting_price(), 0.001 );
 	}
 
-	/**
-	 * Test that service gets fastest delivery from packages.
-	 *
-	 * @return void
-	 */
 	public function test_service_fastest_delivery_calculated(): void {
-		$service_data = ServiceFactory::multi_plan();
+		$service = $this->persisted( ServiceFactory::multi_plan() );
 
-		if ( is_array( $service_data ) ) {
-			// Find minimum delivery days.
-			$min_days = min( array_column( $service_data['packages'], 'delivery_days' ) );
-			$this->assertEquals( 1, $min_days );
-		} elseif ( $service_data instanceof Service ) {
-			$fastest = $service_data->get_fastest_delivery();
-			$this->assertEquals( 1, $fastest );
-		}
+		$this->assertSame( 1, $service->get_fastest_delivery() );
 	}
 
-	/**
-	 * Test creating a draft service.
-	 *
-	 * @return void
-	 */
 	public function test_create_draft_service(): void {
-		$service_data = ServiceFactory::draft();
+		$service = $this->persisted( ServiceFactory::draft() );
 
-		$this->assertNotEmpty( $service_data );
-
-		if ( is_array( $service_data ) ) {
-			$this->assertEquals( 'draft', $service_data['status'] );
-		} elseif ( $service_data instanceof Service ) {
-			$this->assertEquals( 'draft', $service_data->status );
-		}
+		$this->assertSame( 'draft', $service->status );
 	}
 
-	/**
-	 * Test creating a pending service (for moderation).
-	 *
-	 * @return void
-	 */
 	public function test_create_pending_service(): void {
-		$service_data = ServiceFactory::pending();
+		$service = $this->persisted( ServiceFactory::pending() );
 
-		$this->assertNotEmpty( $service_data );
-
-		if ( is_array( $service_data ) ) {
-			$this->assertEquals( 'pending', $service_data['status'] );
-		} elseif ( $service_data instanceof Service ) {
-			$this->assertEquals( 'pending', $service_data->status );
-		}
+		$this->assertSame( 'pending', $service->status );
 	}
 
-	/**
-	 * Test package data structure.
-	 *
-	 * @return void
-	 */
 	public function test_package_data_structure(): void {
 		$package = ServiceFactory::package_data(
 			'Test Package',
@@ -326,43 +194,36 @@ class ServiceCreationTest extends TestCase {
 			array( 'Feature A', 'Feature B' )
 		);
 
-		$this->assertArrayHasKey( 'name', $package );
-		$this->assertArrayHasKey( 'price', $package );
-		$this->assertArrayHasKey( 'delivery_days', $package );
-		$this->assertArrayHasKey( 'revisions', $package );
-		$this->assertArrayHasKey( 'features', $package );
-		$this->assertArrayHasKey( 'is_active', $package );
-
-		$this->assertEquals( 'Test Package', $package['name'] );
+		$this->assertSame( 'Test Package', $package['name'] );
 		$this->assertEquals( 99.99, $package['price'] );
-		$this->assertEquals( 5, $package['delivery_days'] );
-		$this->assertEquals( 3, $package['revisions'] );
-		$this->assertEquals( array( 'Feature A', 'Feature B' ), $package['features'] );
+		$this->assertSame( 5, $package['delivery_days'] );
+		$this->assertSame( 3, $package['revisions'] );
+		$this->assertSame( array( 'Feature A', 'Feature B' ), $package['features'] );
 		$this->assertTrue( $package['is_active'] );
 	}
 
-	/**
-	 * Test addon price calculation.
-	 *
-	 * @return void
-	 */
 	public function test_addon_price_calculation(): void {
-		$service_data = ServiceFactory::with_addons();
+		$service = $this->persisted( ServiceFactory::with_addons() );
 
-		if ( is_array( $service_data ) ) {
-			$extra_revisions = array_filter(
-				$service_data['addons'],
-				fn( $a ) => $a['name'] === 'Extra Revisions'
-			);
-			$extra_revisions = array_values( $extra_revisions )[0];
+		$extra_revisions = $this->addon_named( $service, 'Extra Revisions' );
 
-			// Price is $19.99, max quantity is 3.
-			$this->assertEquals( 19.99, $extra_revisions['price'] );
-			$this->assertEquals( 3, $extra_revisions['max_quantity'] );
+		$this->assertEqualsWithDelta( 19.99, (float) $extra_revisions['price'], 0.001 );
+		$this->assertSame( 3, (int) $extra_revisions['max_quantity'] );
+		$this->assertEqualsWithDelta( 39.98, (float) $extra_revisions['price'] * 2, 0.001 );
+	}
 
-			// Calculate total for 2 units.
-			$total = $extra_revisions['price'] * 2;
-			$this->assertEquals( 39.98, $total );
+	/**
+	 * @param  Service $service Persisted service.
+	 * @param  string  $name    Add-on name.
+	 * @return array<string, mixed>
+	 */
+	private function addon_named( Service $service, string $name ): array {
+		foreach ( $service->addons as $addon ) {
+			if ( ( $addon['title'] ?? '' ) === $name ) {
+				return $addon;
+			}
 		}
+
+		$this->fail( 'Add-on "' . $name . '" did not survive the round trip through ServiceManager.' );
 	}
 }

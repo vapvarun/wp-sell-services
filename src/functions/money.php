@@ -596,7 +596,7 @@ function wpss_insert_ledger_row( array $row ): bool {
 		'status'         => '%s',
 		'created_at'     => '%s',
 	);
-	$row = array_intersect_key( $row, $formats );
+	$row     = array_intersect_key( $row, $formats );
 
 	/*
 	 * Formats in $row's key order, not $formats'.

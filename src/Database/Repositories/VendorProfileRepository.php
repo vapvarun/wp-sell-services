@@ -140,7 +140,7 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @return array<object>
 	 */
 	public function get_directory( array $args = array() ): array {
-		$args    = wp_parse_args(
+		$args                         = wp_parse_args(
 			$args,
 			array(
 				'orderby' => 'avg_rating',
@@ -149,8 +149,8 @@ class VendorProfileRepository extends AbstractRepository {
 				'offset'  => 0,
 			)
 		);
-		$orderby = $this->validate_orderby( (string) $args['orderby'] );
-		$order   = $this->validate_order( (string) $args['order'] );
+		$orderby                      = $this->validate_orderby( (string) $args['orderby'] );
+		$order                        = $this->validate_order( (string) $args['order'] );
 		list( $where, $where_values ) = $this->directory_where( $args );
 
 		$values   = $where_values;

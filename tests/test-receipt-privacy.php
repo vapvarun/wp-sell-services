@@ -223,7 +223,6 @@ $check( 'the receipt link goes through the gated endpoint', false !== strpos( $f
 $check( 'the receipt link leaks no uploads path', '' !== $file['url'] && false === strpos( $file['url'], '/uploads/' ) );
 
 $admin_box = new ReflectionMethod( \WPSellServices\Integrations\Gateways\OfflineGateway::class, 'render_admin_receipt_review' );
-$admin_box->setAccessible( true );
 ob_start();
 $admin_box->invoke( new \WPSellServices\Integrations\Gateways\OfflineGateway(), $order_id );
 $admin_html = (string) ob_get_clean();

@@ -105,7 +105,6 @@ wpss_t(
 );
 
 $ref = new ReflectionMethod( $admin, 'live_gateway_signature' );
-$ref->setAccessible( true );
 $sig = $ref->invoke( $admin );
 wpss_t( is_string( $sig ) && 12 === strlen( $sig ), 'the dismissal is scoped to a gateway signature' );
 
@@ -131,7 +130,7 @@ $restore = get_option( 'wpss_stripe_settings', array() );
  * looked like that morning is not testing anything.
  */
 $probe_sig = static function () {
-	$cmd = 'wp eval \'$a = new \\WPSellServices\\Admin\\Admin(); $r = new ReflectionMethod( $a, "live_gateway_signature" ); $r->setAccessible(true); echo $r->invoke( $a );\' --path=' . escapeshellarg( ABSPATH ) . ' 2>/dev/null';
+	$cmd = 'wp eval \'$a = new \\WPSellServices\\Admin\\Admin(); $r = new ReflectionMethod( $a, "live_gateway_signature" ); echo $r->invoke( $a );\' --path=' . escapeshellarg( ABSPATH ) . ' 2>/dev/null';
 	return trim( (string) shell_exec( $cmd ) );
 };
 

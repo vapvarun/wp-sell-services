@@ -5,10 +5,8 @@
 	bootstrap="tests/bootstrap.php"
 	backupGlobals="false"
 	colors="true"
-	convertDeprecationsToExceptions="true"
-	convertErrorsToExceptions="true"
-	convertNoticesToExceptions="true"
-	convertWarningsToExceptions="true"
+	failOnNotice="true"
+	failOnWarning="true"
 >
 	<testsuites>
 		<testsuite name="unit">
@@ -34,6 +32,9 @@
 			<clover outputFile="coverage/clover.xml"/>
 			<html outputDirectory="coverage/html"/>
 		</report>
+	</coverage>
+
+	<source>
 		<include>
 			<directory suffix=".php">./src</directory>
 		</include>
@@ -41,7 +42,7 @@
 			<directory suffix=".php">./vendor</directory>
 			<directory suffix=".php">./tests</directory>
 		</exclude>
-	</coverage>
+	</source>
 
 	<php>
 		<const name="WPSS_TESTING" value="true"/>

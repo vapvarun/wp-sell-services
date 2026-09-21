@@ -1486,51 +1486,51 @@ class ServiceWizard {
 				'limits'         => $this->get_limits(),
 				'isPro'          => $this->is_pro_active(),
 				'strings'        => array(
-					'saving'             => __( 'Saving...', 'wp-sell-services' ),
-					'saved'              => __( 'Draft saved!', 'wp-sell-services' ),
-					'publishing'         => __( 'Publishing...', 'wp-sell-services' ),
-					'published'          => __( 'Service published!', 'wp-sell-services' ),
-					'error'              => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
-					'unsavedChanges'     => __( 'You have unsaved changes. Are you sure you want to leave?', 'wp-sell-services' ),
-					'confirmDelete'      => __( 'Are you sure you want to remove this item?', 'wp-sell-services' ),
-					'validationTitle'    => __( 'Please enter a service title', 'wp-sell-services' ),
-					'validationTitleMin' => __( 'Please enter at least 10 characters for the service title.', 'wp-sell-services' ),
-					'validationCat'      => __( 'Please select a category', 'wp-sell-services' ),
-					'validationDesc'     => sprintf(
+					'saving'               => __( 'Saving...', 'wp-sell-services' ),
+					'saved'                => __( 'Draft saved!', 'wp-sell-services' ),
+					'publishing'           => __( 'Publishing...', 'wp-sell-services' ),
+					'published'            => __( 'Service published!', 'wp-sell-services' ),
+					'error'                => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'unsavedChanges'       => __( 'You have unsaved changes. Are you sure you want to leave?', 'wp-sell-services' ),
+					'confirmDelete'        => __( 'Are you sure you want to remove this item?', 'wp-sell-services' ),
+					'validationTitle'      => __( 'Please enter a service title', 'wp-sell-services' ),
+					'validationTitleMin'   => __( 'Please enter at least 10 characters for the service title.', 'wp-sell-services' ),
+					'validationCat'        => __( 'Please select a category', 'wp-sell-services' ),
+					'validationDesc'       => sprintf(
 						/* translators: %d: minimum number of characters. */
 						__( 'Please add a description (minimum %d characters)', 'wp-sell-services' ),
 						(int) $wpss_thresholds['description_length']
 					),
-					'validationPrice'    => __( 'Please set a price for the Basic package', 'wp-sell-services' ),
-					'validationPriceMin' => sprintf(
+					'validationPrice'      => __( 'Please set a price for the Basic package', 'wp-sell-services' ),
+					'validationPriceMin'   => sprintf(
 						/* translators: %s: formatted minimum price (e.g. $5.00). */
 						__( 'Basic package price must be at least %s.', 'wp-sell-services' ),
 						wpss_format_price( (float) apply_filters( 'wpss_min_service_price', 5 ) )
 					),
-					'validationImage'    => __( 'Please upload a main image', 'wp-sell-services' ),
+					'validationImage'      => __( 'Please upload a main image', 'wp-sell-services' ),
 					/* translators: %s: package tier name (e.g. Basic). */
-					'validationPkgName'  => __( 'Package name is required for the %s package.', 'wp-sell-services' ),
+					'validationPkgName'    => __( 'Package name is required for the %s package.', 'wp-sell-services' ),
 					/* translators: %s: package tier name (e.g. Basic). */
-					'validationPkgDesc'  => __( 'Package description is required for the %s package.', 'wp-sell-services' ),
+					'validationPkgDesc'    => __( 'Package description is required for the %s package.', 'wp-sell-services' ),
 					/* translators: %s: package tier name (e.g. Standard). */
-					'validationPkgPrice' => __( 'Set a price and delivery time for the %s package.', 'wp-sell-services' ),
-					'validationTags'     => sprintf(
+					'validationPkgPrice'   => __( 'Set a price and delivery time for the %s package.', 'wp-sell-services' ),
+					'validationTags'       => sprintf(
 						/* translators: %d: maximum number of tags. */
 						__( 'You can add a maximum of %d tags.', 'wp-sell-services' ),
 						(int) $this->get_limit( 'max_tags' )
 					),
-					'limitGallery'       => __( 'You have reached the maximum number of gallery images. Upgrade to Pro for unlimited images.', 'wp-sell-services' ),
+					'limitGallery'         => __( 'You have reached the maximum number of gallery images. Upgrade to Pro for unlimited images.', 'wp-sell-services' ),
 					/* translators: %d: the extra's position in the list, starting at 1. */
 					'validationExtraTitle' => __( 'Extra %d needs a name, or clear its price to remove it.', 'wp-sell-services' ),
 					/* translators: %s: the extra's name. */
 					'validationExtraPrice' => __( 'Enter a price above zero for "%s", or remove it. An extra with no price is offered to buyers as a free add-on.', 'wp-sell-services' ),
-					'duplicateImage'     => __( 'That image is already in your gallery.', 'wp-sell-services' ),
-					'limitExtras'        => __( 'You have reached the maximum number of extras. Upgrade to Pro for unlimited extras.', 'wp-sell-services' ),
-					'limitFaq'           => __( 'You have reached the maximum number of FAQs. Upgrade to Pro for unlimited FAQs.', 'wp-sell-services' ),
-					'limitRequirements'  => __( 'You have reached the maximum number of requirements. Upgrade to Pro for unlimited requirements.', 'wp-sell-services' ),
-					'selectMainImage'    => __( 'Select Main Image', 'wp-sell-services' ),
-					'addGalleryImage'    => __( 'Add Gallery Image', 'wp-sell-services' ),
-					'delete'             => __( 'Delete', 'wp-sell-services' ),
+					'duplicateImage'       => __( 'That image is already in your gallery.', 'wp-sell-services' ),
+					'limitExtras'          => __( 'You have reached the maximum number of extras. Upgrade to Pro for unlimited extras.', 'wp-sell-services' ),
+					'limitFaq'             => __( 'You have reached the maximum number of FAQs. Upgrade to Pro for unlimited FAQs.', 'wp-sell-services' ),
+					'limitRequirements'    => __( 'You have reached the maximum number of requirements. Upgrade to Pro for unlimited requirements.', 'wp-sell-services' ),
+					'selectMainImage'      => __( 'Select Main Image', 'wp-sell-services' ),
+					'addGalleryImage'      => __( 'Add Gallery Image', 'wp-sell-services' ),
+					'delete'               => __( 'Delete', 'wp-sell-services' ),
 				),
 			)
 		);
