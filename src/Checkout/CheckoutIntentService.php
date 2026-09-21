@@ -388,6 +388,48 @@ class CheckoutIntentService {
 			);
 		}
 
+		/*
+		 * One charge, one set of orders.
+		 *
+		 * mark_as_paid() is idempotent per order, but create_order() had no
+		 * transaction_id dedupe and neither settle path consulted
+		 * get_by_transaction_ids() - only the webhook did
+		 * (OrderWorkflowManager.php:875). So re-posting the same succeeded
+		 * pi_... minted a fresh paid order every time, and on the AJAX rail
+		 * each one was priced from the intent (Basecamp 10321653385).
+		 *
+		 * Returning the existing order rather than an error: a client retrying
+		 * a settle it never saw the response to is doing the right thing, and
+		 * should get the order it already paid for. KIND_ORDER is already safe
+		 * through resolve_order()'s 'pending_payment' check, but it costs
+		 * nothing to cover it here too.
+		 */
+		$existing = ( new \WPSellServices\Database\Repositories\OrderRepository() )
+			->get_by_transaction_ids( array( $transaction_id ) );
+
+		if ( ! empty( $existing ) ) {
+			$first = $existing[0];
+
+			wpss_log(
+				sprintf(
+					'%s transaction %s has already settled into %d order(s); returning the existing order instead of creating another.',
+					$gateway_id,
+					$transaction_id,
+					count( $existing )
+				),
+				'warning'
+			);
+
+			return array(
+				'success'      => true,
+				'order_id'     => (int) $first->id,
+				'order_ids'    => array_map( static fn( $row ) => (int) $row->id, $existing ),
+				'order_number' => (string) $first->order_number,
+				'redirect_url' => wpss_get_post_checkout_url( (int) $first->id, wpss_get_order_requirements_url( (int) $first->id ), 'intent' ),
+				'duplicate'    => true,
+			);
+		}
+
 		$provider = wpss_get_order_provider();
 
 		switch ( $intent->kind ) {
