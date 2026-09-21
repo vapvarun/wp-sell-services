@@ -61,6 +61,15 @@ class RateLimiter {
 			'requests' => 20,
 			'window'   => 3600,
 		),
+		// The standalone signup form. Same shape as checkout_account -
+		// unauthenticated, creates users, keyed by IP - so it gets the same
+		// ceiling and the same CGNAT reasoning. It had NO limit at all, and no
+		// registration check either, so a script could mint vendor accounts
+		// without pause (Basecamp 10321653411).
+		'public_signup'    => array(
+			'requests' => 20,
+			'window'   => 3600,
+		),
 		// 5 WRONG passwords per hour on DELETE /me. Only failures are charged,
 		// so this is a guessing ceiling, not a budget an honest member spends.
 		'account_delete'   => array(
