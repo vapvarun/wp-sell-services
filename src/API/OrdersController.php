@@ -125,6 +125,7 @@ class OrdersController extends RestController {
 							'type'        => 'string',
 							'required'    => true,
 						),
+
 						/*
 						 * Attachment IDs, declared - this route read the param
 						 * as a raw array and send_message() json-encoded it

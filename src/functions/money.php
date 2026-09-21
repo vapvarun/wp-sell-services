@@ -238,7 +238,18 @@ function wpss_get_ledger_debit_types(): array {
  * @return string e.g. "'withdrawal','debit','dispute_refund','connect_transfer'"
  */
 function wpss_get_ledger_debit_types_sql(): string {
-	return "'" . implode( "','", wpss_get_ledger_debit_types() ) . "'";
+	/*
+	 * sanitize_key() each type before it reaches IN ().
+	 *
+	 * The list comes through the wpss_ledger_debit_types filter, so it is
+	 * developer-controlled rather than request-controlled and this is not an
+	 * injection - but a third party returning a value with a quote in it would
+	 * break the balance query, and a balance query that errors is a money
+	 * surface that silently shows nothing (Basecamp 10321653509).
+	 */
+	$types = array_filter( array_map( 'sanitize_key', wpss_get_ledger_debit_types() ) );
+
+	return "'" . implode( "','", $types ) . "'";
 }
 
 /**
@@ -558,6 +569,7 @@ function wpss_insert_ledger_row( array $row ): bool {
 	$is_debit = in_array( (string) ( $row['type'] ?? '' ), wpss_get_ledger_debit_types(), true );
 
 	$row += array(
+
 		/*
 		 * Locked read for the fallback. Every caller computes balance_after
 		 * from a balance it already holds under FOR UPDATE and passes it in, so
