@@ -305,7 +305,12 @@ function wpss_handle_message_attachments( array $files, int $order_id = 0, strin
 		// unlisted, not gated. Move them behind a conversation read gate if
 		// pre-sale inquiries start carrying sensitive documents.
 		$_FILES['upload_file'] = $file;
-		$attachment_id         = media_handle_upload( 'upload_file', 0, array( 'post_status' => 'private' ) );
+
+		// Unlisted means unguessable, or it means nothing - see
+		// wpss_obfuscate_public_upload_name().
+		add_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
+		$attachment_id = media_handle_upload( 'upload_file', 0, array( 'post_status' => 'private' ) );
+		remove_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
 
 		if ( ! is_wp_error( $attachment_id ) ) {
 			$attachments[] = array(

@@ -1857,7 +1857,12 @@ class AjaxHandlers {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
+		// Unguessable path: this handler has no owning record to gate on, so the
+		// URL is the only thing protecting the file. See
+		// wpss_obfuscate_public_upload_name().
+		add_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
 		$attachment_id = media_handle_upload( 'file', 0 );
+		remove_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
 
 		if ( is_wp_error( $attachment_id ) ) {
 			wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
@@ -3220,7 +3225,7 @@ class AjaxHandlers {
 		$output = fopen( 'php://output', 'w' );
 
 		if ( 'orders' === $type ) {
-			fputcsv( $output, array( 'Order ID', 'Service', 'Customer', 'Status', 'Total', 'Created' ) );
+			wpss_fputcsv( $output, array( 'Order ID', 'Service', 'Customer', 'Status', 'Total', 'Created' ) );
 
 			$orders_table = $wpdb->prefix . 'wpss_orders';
 
@@ -3239,7 +3244,7 @@ class AjaxHandlers {
 			foreach ( $orders as $order ) {
 				$service  = get_post( $order->service_id );
 				$customer = get_userdata( $order->customer_id );
-				fputcsv(
+				wpss_fputcsv(
 					$output,
 					array(
 						$order->id,

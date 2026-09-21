@@ -120,10 +120,27 @@ class OrdersController extends RestController {
 					'callback'            => array( $this, 'create_message' ),
 					'permission_callback' => array( $this, 'check_item_permissions' ),
 					'args'                => array(
-						'message' => array(
+						'message'     => array(
 							'description' => __( 'Message content.', 'wp-sell-services' ),
 							'type'        => 'string',
 							'required'    => true,
+						),
+						/*
+						 * Attachment IDs, declared - this route read the param
+						 * as a raw array and send_message() json-encoded it
+						 * straight into the row, which get_messages() then
+						 * handed to the counterparty verbatim. A participant
+						 * could inject arbitrary { url, name } objects into the
+						 * other party's thread, which renders as a real
+						 * attachment pointing anywhere (Basecamp 10321653478,
+						 * finding 3). Same shape the sibling
+						 * POST /conversations/{id}/messages already publishes.
+						 */
+						'attachments' => array(
+							'description' => __( 'Attachment IDs.', 'wp-sell-services' ),
+							'type'        => 'array',
+							'items'       => array( 'type' => 'integer' ),
+							'default'     => array(),
 						),
 					),
 				),

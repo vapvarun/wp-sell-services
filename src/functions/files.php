@@ -1278,3 +1278,86 @@ function wpss_dispute_message_attachments( $raw ): array {
 
 	return $links;
 }
+
+/**
+ * Neutralise a spreadsheet formula in one CSV cell.
+ *
+ * Excel, LibreOffice and Google Sheets execute a cell whose first character is
+ * `=`, `+`, `-` or `@` (and treat a leading tab or CR as a continuation of the
+ * same trick). Every export in this plugin writes values a vendor or buyer
+ * typed - display names, service titles, bank names, PayPal addresses - so a
+ * vendor could set their display name to `=cmd|'/c calc'!A1` and wait for an
+ * admin to open the payout export (Basecamp 10321653478, finding 1).
+ *
+ * A leading apostrophe is the standard remedy: the spreadsheet stores the text
+ * and shows it without the quote. Numeric strings are returned untouched, so a
+ * negative amount stays a number the sheet can sum rather than becoming text.
+ *
+ * @since 1.7.2
+ *
+ * @param mixed $value Cell value.
+ * @return string Safe cell value.
+ */
+function wpss_csv_cell( $value ): string {
+	$value = (string) $value;
+
+	if ( '' === $value || is_numeric( $value ) ) {
+		return $value;
+	}
+
+	return false !== strpbrk( $value[0], "=+-@\t\r" ) ? "'" . $value : $value;
+}
+
+/**
+ * fputcsv() with every cell run through wpss_csv_cell() first.
+ *
+ * Exports live in five files across both plugins; escaping at each call site
+ * would be five chances to forget, and the next export added would be a sixth.
+ * Write rows through this and the escaping is not something anyone has to
+ * remember.
+ *
+ * @since 1.7.2
+ *
+ * @param resource             $handle Open stream.
+ * @param array<int, mixed>    $row    Row values.
+ * @return void
+ */
+function wpss_fputcsv( $handle, array $row ): void {
+	fputcsv( $handle, array_map( 'wpss_csv_cell', $row ) );
+}
+
+/**
+ * Give a publicly-served upload an unguessable filename.
+ *
+ * Two upload paths cannot use the private store because they have no owning
+ * record to gate on: the generic `wpss_upload_file` handler, and pre-sale
+ * contact attachments, which exist before any order or conversation. Both are
+ * documented as "unlisted, not secret" - post_status private hides the library
+ * row, not the bytes.
+ *
+ * That claim only holds if the URL cannot be guessed, and WordPress keeps the
+ * uploader's own filename, so `brief.pdf` in this month's upload folder is a
+ * URL anyone can try. Prefixing 16 random characters makes the documented
+ * property actually true (Basecamp 10321653478, finding 4).
+ *
+ * The original name is still what the UI shows - both callers carry it
+ * separately - so this changes the stored path, not what anyone reads.
+ *
+ * Attach with add_filter( 'wp_handle_upload_prefilter', ... ) immediately
+ * before the upload and remove it immediately after, so it never touches
+ * uploads from anywhere else.
+ *
+ * @since 1.7.2
+ *
+ * @param array<string, mixed> $file Upload array.
+ * @return array<string, mixed>
+ */
+function wpss_obfuscate_public_upload_name( array $file ): array {
+	$name = sanitize_file_name( (string) ( $file['name'] ?? '' ) );
+
+	if ( '' !== $name ) {
+		$file['name'] = wp_generate_password( 16, false, false ) . '-' . $name;
+	}
+
+	return $file;
+}
