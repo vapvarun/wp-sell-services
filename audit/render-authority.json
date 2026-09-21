@@ -1,0 +1,131 @@
+{
+  "_doc": [
+    "Every shortcode and block this plugin registers, and who may see what it renders.",
+    "",
+    "A privacy rule that lives only in a REST controller is a rule the page does not have.",
+    "The same order, service or profile is reachable through a shortcode, and RenderSurfaceAuthorityTest",
+    "dispatches the member-scoped ones as an anonymous caller and fails if they render anyway.",
+    "",
+    "audience: public = renders for anyone, including signed out |",
+    "member = requires a logged-in user |",
+    "owner = requires the viewer to be a party to the object it renders |",
+    "vendor = requires the vendor capability.",
+    "",
+    "A member/owner surface MUST carry a refusal string: the text it returns to someone who",
+    "may not see it, which the probe asserts on. Without that the probe can only check a byte",
+    "count, and a surface that renders an empty shell would pass."
+  ],
+  "shortcodes": {
+    "wpss_buyer_requests": {
+      "audience": "public",
+      "reason": "Public job board - a request exists to be found by vendors who are not signed in."
+    },
+    "wpss_cart": {
+      "audience": "public",
+      "reason": "Renders the CALLER'S OWN cart, which for a signed-out visitor is the session cart. No other member's data is reachable."
+    },
+    "wpss_checkout": {
+      "audience": "public",
+      "reason": "Checkout for the caller's own cart. Payment authority is enforced server-side at settle time, not by this surface."
+    },
+    "wpss_currency_switcher": {
+      "audience": "public",
+      "reason": "Display-currency control. Carries no member data."
+    },
+    "wpss_dashboard": {
+      "audience": "member",
+      "reason": "The member's own dashboard. Verified signed out on 2026-09-21: returns the log-in notice, not a dashboard.",
+      "refuses_with": "log in"
+    },
+    "wpss_featured_services": {
+      "audience": "public",
+      "reason": "Public marketplace catalogue - renders the same published data the public REST routes serve."
+    },
+    "wpss_login": {
+      "audience": "public",
+      "reason": "Login form - necessarily reachable signed out."
+    },
+    "wpss_my_orders": {
+      "audience": "member",
+      "reason": "The member's own orders. Verified signed out: returns the log-in notice.",
+      "refuses_with": "log in"
+    },
+    "wpss_order_details": {
+      "audience": "owner",
+      "reason": "One order, resolved from the request. Verified on 2026-09-21 against order 322: anonymous gets the log-in notice, an unrelated member gets 'You do not have permission to view this order', and only the buyer and the vendor render it. manage_options may also view.",
+      "refuses_with": "log in"
+    },
+    "wpss_post_request": {
+      "audience": "member",
+      "reason": "Posting a buyer request requires an account. Verified signed out: returns the log-in notice.",
+      "refuses_with": "log in"
+    },
+    "wpss_register": {
+      "audience": "public",
+      "reason": "Registration form. Honours users_can_register; see Basecamp 10321653411."
+    },
+    "wpss_seller_card": {
+      "audience": "public",
+      "reason": "Public vendor card. Renders nothing without a resolvable vendor."
+    },
+    "wpss_service_categories": {
+      "audience": "public",
+      "reason": "Public marketplace catalogue - renders the same published data the public REST routes serve."
+    },
+    "wpss_service_search": {
+      "audience": "public",
+      "reason": "Public marketplace catalogue - renders the same published data the public REST routes serve."
+    },
+    "wpss_service_wizard": {
+      "audience": "member",
+      "reason": "Service creation. Verified signed out: returns the log-in notice; vendor capability is checked inside.",
+      "refuses_with": "log in"
+    },
+    "wpss_services": {
+      "audience": "public",
+      "reason": "Public marketplace catalogue - renders the same published data the public REST routes serve."
+    },
+    "wpss_top_vendors": {
+      "audience": "public",
+      "reason": "Public marketplace catalogue - renders the same published data the public REST routes serve."
+    },
+    "wpss_vendor_profile": {
+      "audience": "public",
+      "reason": "Public vendor profile, the same data GET /vendors/{id} serves."
+    },
+    "wpss_vendor_registration": {
+      "audience": "public",
+      "reason": "Become-a-vendor form. Reachable signed out so a visitor can see what is involved; the submission itself is gated."
+    },
+    "wpss_vendors": {
+      "audience": "public",
+      "reason": "Public marketplace catalogue - renders the same published data the public REST routes serve."
+    }
+  },
+  "blocks": {
+    "wpss/buyer-requests": {
+      "audience": "public",
+      "reason": "Public job board block - same store as the shortcode."
+    },
+    "wpss/featured-services": {
+      "audience": "public",
+      "reason": "Public marketplace catalogue - renders the same published data the public REST routes serve."
+    },
+    "wpss/seller-card": {
+      "audience": "public",
+      "reason": "Public vendor card block."
+    },
+    "wpss/service-categories": {
+      "audience": "public",
+      "reason": "Public marketplace catalogue - renders the same published data the public REST routes serve."
+    },
+    "wpss/service-grid": {
+      "audience": "public",
+      "reason": "Public marketplace catalogue - renders the same published data the public REST routes serve."
+    },
+    "wpss/service-search": {
+      "audience": "public",
+      "reason": "Public marketplace catalogue - renders the same published data the public REST routes serve."
+    }
+  }
+}
