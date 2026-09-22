@@ -251,6 +251,29 @@
                         "wpNonce": []
                     }
                 ],
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "today",
+                                "week",
+                                "month",
+                                "year",
+                                "all",
+                                "7days",
+                                "30days",
+                                "90days",
+                                "12months"
+                            ],
+                            "default": "month"
+                        },
+                        "description": "Time period."
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Success"
@@ -289,7 +312,13 @@
                         "in": "query",
                         "required": false,
                         "schema": {
+                            "type": "string",
                             "enum": [
+                                "today",
+                                "week",
+                                "month",
+                                "year",
+                                "all",
                                 "7days",
                                 "30days",
                                 "90days",
@@ -297,7 +326,7 @@
                             ],
                             "default": "30days"
                         },
-                        "description": ""
+                        "description": "Time period."
                     }
                 ],
                 "responses": {
@@ -341,6 +370,10 @@
                             "type": "string",
                             "enum": [
                                 "today",
+                                "week",
+                                "month",
+                                "year",
+                                "all",
                                 "7days",
                                 "30days",
                                 "90days",
@@ -392,6 +425,10 @@
                             "type": "string",
                             "enum": [
                                 "today",
+                                "week",
+                                "month",
+                                "year",
+                                "all",
                                 "7days",
                                 "30days",
                                 "90days",
@@ -443,6 +480,10 @@
                             "type": "string",
                             "enum": [
                                 "today",
+                                "week",
+                                "month",
+                                "year",
+                                "all",
                                 "7days",
                                 "30days",
                                 "90days",
@@ -483,6 +524,29 @@
                     {
                         "cookieAuth": [],
                         "wpNonce": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "today",
+                                "week",
+                                "month",
+                                "year",
+                                "all",
+                                "7days",
+                                "30days",
+                                "90days",
+                                "12months"
+                            ],
+                            "default": "30days"
+                        },
+                        "description": "Time period."
                     }
                 ],
                 "responses": {
@@ -5954,6 +6018,14 @@
                                     "message": {
                                         "type": "string",
                                         "description": "Message content."
+                                    },
+                                    "attachments": {
+                                        "type": "array",
+                                        "default": [],
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "description": "Attachment IDs."
                                     }
                                 },
                                 "required": [
