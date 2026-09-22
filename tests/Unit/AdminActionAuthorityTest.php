@@ -81,7 +81,9 @@ class AdminActionAuthorityTest extends TestCase {
 
 					if ( '' !== $file && is_readable( $file ) ) {
 						$lines  = (array) file( $file );
-						$source = implode( '', array_slice( $lines, $ref->getStartLine() - 1, $ref->getEndLine() - $ref->getStartLine() + 1 ) );
+						$source = self::strip_comments(
+							implode( '', array_slice( $lines, $ref->getStartLine() - 1, $ref->getEndLine() - $ref->getStartLine() + 1 ) )
+						);
 					}
 
 					$out[ $hook ] = array(
@@ -162,7 +164,15 @@ class AdminActionAuthorityTest extends TestCase {
 		foreach ( $this->mine() as $hook => $live ) {
 			++$checked;
 
-			if ( preg_match( '/check_ajax_referer|check_admin_referer|wp_verify_nonce/', $live['source'] ) ) {
+			/*
+			 * Boundary, so a WRAPPER cannot satisfy the search.
+			 *
+			 * Without (?<![\w>:$]), a handler calling
+			 * $this->check_ajax_referer_wrapper() - which may verify nothing -
+			 * matches a search for check_ajax_referer and reads as protected.
+			 * The standard's Trap 3.
+			 */
+			if ( preg_match( '/(?<![\w>:$])(check_ajax_referer|check_admin_referer|wp_verify_nonce)\s*\(/', $live['source'] ) ) {
 				continue;
 			}
 
@@ -217,5 +227,42 @@ class AdminActionAuthorityTest extends TestCase {
 		);
 
 		$this->assertSame( array(), $problems, implode( "\n", $problems ) );
+	}
+
+	/**
+	 * PHP source with comments removed, line numbering preserved.
+	 *
+	 * The nonce search below used to run over raw source, so a COMMENTED-OUT
+	 * check_ajax_referer() still matched and the guard reported green on a
+	 * genuinely CSRF-unprotected handler. Proven by commenting out the real
+	 * check at src/Frontend/AjaxHandlers.php:234 and watching this file still
+	 * report OK (5 tests, 8 assertions) - Basecamp 10321653531.
+	 *
+	 * That is Trap 1's second clause verbatim: "a commented-out registration
+	 * still matches a raw regex". Commenting a check out "just to test
+	 * something" is one of the commonest ways a nonce dies, and this guard is
+	 * the thing meant to notice.
+	 *
+	 * Lifted from CapabilityMapTest::…, which already did this - the newline
+	 * padding keeps line numbers aligned for any caller that reports them.
+	 *
+	 * @param  string $source Raw PHP source.
+	 * @return string Source with T_COMMENT / T_DOC_COMMENT blanked out.
+	 */
+	private static function strip_comments( string $source ): string {
+		// token_get_all() needs an open tag to treat the input as PHP.
+		$tokens = @token_get_all( '<?php ' . $source ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a partial method body can warn; the tokens are still usable.
+		$code   = '';
+
+		foreach ( $tokens as $token ) {
+			if ( is_array( $token ) && in_array( $token[0], array( T_COMMENT, T_DOC_COMMENT ), true ) ) {
+				$code .= str_repeat( "\n", substr_count( $token[1], "\n" ) );
+				continue;
+			}
+
+			$code .= is_array( $token ) ? $token[1] : $token;
+		}
+
+		return $code;
 	}
 }
