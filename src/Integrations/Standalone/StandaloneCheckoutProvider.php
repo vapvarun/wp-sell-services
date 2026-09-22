@@ -296,7 +296,10 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				$quantity   = max( 1, (int) ( $cart_item['quantity'] ?? 1 ) );
 
 				// Restore addons from cart item if not provided via URL.
-				if ( ! $addon_ids_raw && ! empty( $cart_item['addons'] ) ) {
+				// '' means the URL carried none; "0" means it carried the FIRST
+				// add-on, and a truthiness test here discarded that selection in
+				// favour of the cart's - see the comment at the resolve site below.
+				if ( '' === $addon_ids_raw && ! empty( $cart_item['addons'] ) ) {
 					$addon_ids_raw = implode( ',', array_column( $cart_item['addons'], 'id' ) );
 				}
 			}
@@ -357,9 +360,18 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return '<p>' . esc_html__( 'Service not found.', 'wp-sell-services' ) . '</p>';
 		}
 
-		// Resolve selected addons from URL param (comma-separated add-on indices).
+		/*
+		 * Resolve selected addons from URL param (comma-separated indices).
+		 *
+		 * The indices are 0-based, so selecting ONLY the first add-on sends
+		 * "0" - falsy in PHP. `if ( $addon_ids_raw )` skipped this whole block,
+		 * and the Order Summary and Pay button both showed the un-added price
+		 * while the hidden addon_ids / addons_data fields went out empty. The
+		 * buyer was charged without the add-on they had selected.
+		 * "1" and "0,1" both worked, which is how it went unnoticed.
+		 */
 		$selected_addons = array();
-		if ( $addon_ids_raw ) {
+		if ( '' !== $addon_ids_raw ) {
 			$addon_ids  = array_map( 'absint', explode( ',', $addon_ids_raw ) );
 			$all_extras = wpss_get_service_extras( $service->id );
 

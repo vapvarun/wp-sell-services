@@ -499,7 +499,21 @@ function wpss_resolve_checkout_addons( int $service_id, string $addon_ids = '' )
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
 	$addon_ids_raw = '' !== $addon_ids ? $addon_ids : ( isset( $_POST['addon_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_ids'] ) ) : '' );
 
-	if ( ! $addon_ids_raw ) {
+	/*
+	 * '' means "no add-ons", "0" means "the FIRST add-on".
+	 *
+	 * Add-on ids here are 0-based indices into _wpss_addons, so a buyer who
+	 * selects only the first add-on sends the string "0" - which PHP treats as
+	 * falsy. `if ( ! $addon_ids_raw )` therefore returned an empty result and
+	 * the charge silently dropped that add-on: the buyer saw it in the UI, was
+	 * billed without it, and the vendor lost the revenue. It only ever broke
+	 * for the FIRST add-on selected alone, which is the most commonly selected
+	 * one, and never for "1" or "0,1" - which is why it survived.
+	 *
+	 * Compare against '' explicitly. Same reason the line above already uses
+	 * `'' !== $addon_ids` rather than a truthiness test.
+	 */
+	if ( '' === $addon_ids_raw ) {
 		return $result;
 	}
 
