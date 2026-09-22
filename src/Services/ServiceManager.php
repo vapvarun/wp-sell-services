@@ -89,6 +89,8 @@ class ServiceManager {
 			return false;
 		}
 
+		$data['status'] = $this->publishable_status( $data );
+
 		// Check max services limit for the author (skip for admins).
 		$author_id = absint( $data['author'] );
 		if ( $author_id && ! user_can( $author_id, 'manage_options' ) ) {
@@ -596,5 +598,87 @@ class ServiceManager {
 	public function increment_order_count( int $service_id ): void {
 		$count = (int) get_post_meta( $service_id, '_wpss_order_count', true );
 		update_post_meta( $service_id, '_wpss_order_count', $count + 1 );
+	}
+
+	/**
+	 * Hold a service as a draft when it is not ready to be published.
+	 *
+	 * The wizard (ServiceWizard.php), the admin metabox (ServiceMetabox.php)
+	 * and REST (ServicesController.php) all call
+	 * wpss_validate_service_publishable() before letting a service go live.
+	 * This class - the documented programmatic entry point, the one CLAUDE.md
+	 * tells people to use instead of raw $wpdb - did not, so
+	 * `create( array( 'title' => 'x', 'status' => 'publish' ) )` put a live,
+	 * purchasable listing with no category, no description and no image into a
+	 * site owner's catalogue (Basecamp 10330733407).
+	 *
+	 * Downgraded rather than refused, deliberately. Returning false would be
+	 * stricter but breaks every existing caller that publishes
+	 * programmatically, including our own demo seeder, and turns a working call
+	 * into a silent failure. Holding it as a draft is what the admin UI already
+	 * does - the metabox keeps the service back and lists what is missing - so
+	 * this makes the API agree with the surface people already know.
+	 *
+	 * @since 1.7.2
+	 *
+	 * @param  array<string, mixed> $data Service data, after defaults + limits.
+	 * @return string The status to store.
+	 */
+	private function publishable_status( array $data ): string {
+		$status = (string) ( $data['status'] ?? 'draft' );
+
+		if ( 'publish' !== $status ) {
+			return $status;
+		}
+
+		/*
+		 * Translate to the validator's vocabulary.
+		 *
+		 * wpss_validate_service_publishable() gates every check on
+		 * array_key_exists(), so a key it does not recognise is simply not
+		 * checked - pass $data straight in and the description and category
+		 * rules silently never run. create() calls them 'content' and
+		 * 'categories'; the validator calls them 'description' and
+		 * 'category_ids'.
+		 */
+		$subject = $data;
+
+		if ( array_key_exists( 'content', $data ) ) {
+			$subject['description'] = $data['content'];
+		}
+
+		if ( array_key_exists( 'categories', $data ) ) {
+			$subject['category_ids'] = $data['categories'];
+		}
+
+		$errors = wpss_validate_service_publishable( $subject );
+
+		if ( empty( $errors ) ) {
+			return 'publish';
+		}
+
+		/**
+		 * Let a caller publish a service that is not marketplace-ready.
+		 *
+		 * The one legitimate use is seeding: `wp wpss demo` builds fixtures
+		 * that deliberately skip the checklist. Anything else should fix the
+		 * data rather than switch the guard off.
+		 *
+		 * @since 1.7.2
+		 *
+		 * @param bool                 $enforce True to hold the service as a draft.
+		 * @param array<string, mixed> $data    The service data.
+		 * @param string[]             $errors  Why it is not publishable.
+		 */
+		if ( ! apply_filters( 'wpss_service_manager_enforce_publishable', true, $data, $errors ) ) {
+			return 'publish';
+		}
+
+		wpss_log(
+			'ServiceManager: held "' . ( $data['title'] ?? '' ) . '" as a draft - ' . implode( ' ', $errors ),
+			'notice'
+		);
+
+		return 'draft';
 	}
 }

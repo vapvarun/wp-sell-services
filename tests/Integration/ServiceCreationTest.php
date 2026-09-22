@@ -32,6 +32,9 @@ class ServiceCreationTest extends TestCase {
 
 	private ?ServiceManager $service_manager = null;
 
+	/** @var int[] Services created directly through the manager in a test. */
+	private array $created = array();
+
 	protected function set_up(): void {
 		parent::set_up();
 
@@ -50,6 +53,11 @@ class ServiceCreationTest extends TestCase {
 	 * walked the catalogue, found one, and bought it.
 	 */
 	protected function tear_down(): void {
+		foreach ( $this->created as $id ) {
+			wp_delete_post( $id, true );
+		}
+		$this->created = array();
+
 		ServiceFactory::cleanup();
 
 		parent::tear_down();
@@ -162,6 +170,80 @@ class ServiceCreationTest extends TestCase {
 		$this->assertNotEmpty( $service->addons );
 		$this->assertNotEmpty( $service->requirements );
 		$this->assertNotEmpty( $service->faqs );
+	}
+
+	/**
+	 * An unpublishable service is held as a draft, never published.
+	 *
+	 * The wizard, the admin metabox and REST all call
+	 * wpss_validate_service_publishable() before letting a service go live.
+	 * ServiceManager - the documented programmatic entry point - did not, so
+	 * create( [ 'status' => 'publish' ] ) put a live, purchasable listing with
+	 * no category and no description into the catalogue (Basecamp 10330733407).
+	 *
+	 * Asserts the STORED post_status, because that is what a buyer sees.
+	 */
+	public function test_an_unpublishable_service_is_held_as_a_draft(): void {
+		$id = $this->service_manager->create(
+			array(
+				'title'      => 'Held back probe service',
+				'content'    => 'Too short to publish.',
+				'categories' => array(),
+				'status'     => 'publish',
+			)
+		);
+
+		$this->assertIsInt( $id, 'The service should still be created - held back, not refused.' );
+		$this->created[] = $id;
+
+		$this->assertSame(
+			'draft',
+			get_post_status( $id ),
+			'A service missing its category and with a 21-character description must not be published.'
+		);
+	}
+
+	/**
+	 * A service that passes the checklist still publishes.
+	 *
+	 * The other half: holding everything back would be its own bug.
+	 */
+	public function test_a_publishable_service_still_publishes(): void {
+		$id = $this->service_manager->create(
+			array(
+				'title'      => 'Ready probe service',
+				'content'    => str_repeat( 'Long enough description. ', 12 ),
+				'categories' => array( 1 ),
+				'packages'   => array( ServiceFactory::package_data( 'Basic', 25.00, 3, 1 ) ),
+				'status'     => 'publish',
+			)
+		);
+
+		$this->assertIsInt( $id );
+		$this->created[] = $id;
+
+		$this->assertSame( 'publish', get_post_status( $id ) );
+	}
+
+	/**
+	 * A seeder can opt out deliberately, and only deliberately.
+	 */
+	public function test_the_filter_can_allow_an_unpublishable_service_through(): void {
+		add_filter( 'wpss_service_manager_enforce_publishable', '__return_false' );
+
+		$id = $this->service_manager->create(
+			array(
+				'title'      => 'Seeded probe service',
+				'content'    => 'Short.',
+				'categories' => array(),
+				'status'     => 'publish',
+			)
+		);
+
+		$this->assertIsInt( $id );
+		$this->created[] = $id;
+
+		$this->assertSame( 'publish', get_post_status( $id ), 'The filter must be able to allow a seeder through.' );
 	}
 
 	public function test_service_validation_fails_without_title(): void {
