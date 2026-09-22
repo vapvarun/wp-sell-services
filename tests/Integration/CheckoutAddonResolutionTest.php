@@ -91,6 +91,30 @@ class CheckoutAddonResolutionTest extends TestCase {
 	}
 
 	/**
+	 * A negative "extra days" clamps to 0 - it never inverts.
+	 *
+	 * wpss_normalize_service_addons() used absint(), so an add-on entered as
+	 * "deliver two days sooner" (-2) was stored as "two days later" (+2): the
+	 * buyer paid extra for a worse delivery date and nothing reported it
+	 * (Basecamp 10330601718). Negative is not a supported concept - the field
+	 * is "Extra Delivery Days", both inputs carry min="0", and the service page
+	 * renders "(+N days)" - so 0 is the honest reading, and +2 is the one
+	 * answer that must never come back.
+	 */
+	public function test_negative_extra_days_clamp_to_zero_and_never_invert(): void {
+		$rows = wpss_normalize_service_addons(
+			array(
+				array( 'title' => 'Rush delivery', 'price' => 25, 'delivery_days_extra' => -2 ),
+				array( 'title' => 'Slow and steady', 'price' => 5, 'delivery_days_extra' => 3 ),
+			)
+		);
+
+		$this->assertSame( 0, $rows[0]['delivery_days_extra'], 'A negative must clamp to 0.' );
+		$this->assertNotSame( 2, $rows[0]['delivery_days_extra'], 'A negative must never be stored as its positive counterpart.' );
+		$this->assertSame( 3, $rows[1]['delivery_days_extra'], 'A positive value is untouched.' );
+	}
+
+	/**
 	 * The guard must reject only the empty string.
 	 *
 	 * Stated separately from the pricing cases because this is the exact

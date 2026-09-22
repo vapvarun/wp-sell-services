@@ -342,7 +342,22 @@ function wpss_normalize_service_addons( array $raw ): array {
 			'title'               => $title,
 			'description'         => sanitize_textarea_field( (string) ( $addon['description'] ?? '' ) ),
 			'price'               => (float) ( $addon['price'] ?? 0 ),
-			'delivery_days_extra' => absint( $addon['delivery_days_extra'] ?? $addon['extra_days'] ?? $addon['delivery_time'] ?? 0 ),
+			/*
+			 * max(0, ...) - never absint().
+			 *
+			 * absint( -2 ) is 2, so an add-on entered as "deliver two days
+			 * SOONER" was stored as "two days LATER" and the buyer paid extra
+			 * for a worse delivery date. Silently inverting the vendor's
+			 * intent is the one outcome worse than ignoring it.
+			 *
+			 * Negative is not a supported concept here and the whole product
+			 * agrees: the field is labelled "Extra Delivery Days", both inputs
+			 * carry min="0", and SingleServiceView renders it as "(+N days)".
+			 * A paid rush option would be a different feature with its own
+			 * field, not a sign flip on this one. So a negative clamps to 0 -
+			 * no extra days - which is the closest honest reading of it.
+			 */
+			'delivery_days_extra' => max( 0, (int) ( $addon['delivery_days_extra'] ?? $addon['extra_days'] ?? $addon['delivery_time'] ?? 0 ) ),
 			'field_type'          => in_array( $field_type, array( 'checkbox', 'quantity', 'dropdown', 'text' ), true ) ? $field_type : 'checkbox',
 			'price_type'          => in_array( $price_type, array( 'flat', 'percentage', 'quantity_based' ), true ) ? $price_type : 'flat',
 			'min_quantity'        => max( 1, absint( $addon['min_quantity'] ?? 1 ) ),
