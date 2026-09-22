@@ -42,6 +42,20 @@ class ServiceCreationTest extends TestCase {
 	}
 
 	/**
+	 * Delete the services this test published.
+	 *
+	 * Without this the rows survive the run. The suite falls back to the LIVE
+	 * Local site when the WordPress test library is absent, so every run left
+	 * more published listings behind - 304 of them by the time a browser smoke
+	 * walked the catalogue, found one, and bought it.
+	 */
+	protected function tear_down(): void {
+		ServiceFactory::cleanup();
+
+		parent::tear_down();
+	}
+
+	/**
 	 * The factory falls back to returning its input array when
 	 * ServiceManager::create() throws. That fallback silently turns a
 	 * persistence failure into a skipped test, so every test asserts the

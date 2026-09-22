@@ -380,6 +380,34 @@ class ServiceFactory {
 	 * @param array $data Service data.
 	 * @return Service|array
 	 */
+	/**
+	 * Every service this factory has persisted, for cleanup().
+	 *
+	 * @var int[]
+	 */
+	private static array $created_ids = array();
+
+	/**
+	 * Delete everything this factory created.
+	 *
+	 * The suite runs against the LIVE Local site whenever the WordPress test
+	 * library is not installed, and nothing deleted these rows - so 304
+	 * published "Service with Addons N" / "Multi Plan N" listings had piled up
+	 * on the QA site, skewing the catalogue and, in one case, being found by a
+	 * browser smoke and bought for $149.97 as though it were a real listing.
+	 *
+	 * @return void
+	 */
+	public static function cleanup(): void {
+		foreach ( self::$created_ids as $id ) {
+			if ( function_exists( 'wp_delete_post' ) ) {
+				wp_delete_post( $id, true );
+			}
+		}
+
+		self::$created_ids = array();
+	}
+
 	private static function create( array $data ): Service|array {
 		// In standalone mode (no WordPress), just return data array.
 		// Check for global $wpdb which indicates WordPress is loaded.
@@ -393,6 +421,8 @@ class ServiceFactory {
 				if ( ! $service_id || is_wp_error( $service_id ) ) {
 					throw new \RuntimeException( 'Failed to create service via ServiceManager.' );
 				}
+
+				self::$created_ids[] = (int) $service_id;
 
 				return $manager->get( $service_id );
 			} catch ( \Throwable $e ) {
