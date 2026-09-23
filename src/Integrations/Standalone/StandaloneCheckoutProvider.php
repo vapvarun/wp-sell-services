@@ -270,6 +270,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$service_id = isset( $_GET['service'] ) ? absint( wp_unslash( $_GET['service'] ) ) : absint( get_query_var( 'wpss_service_id' ) );
 		}
+
 		/*
 		 * Nothing unsellable gets a Pay button - from the cart or from a link.
 		 *
