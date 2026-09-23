@@ -27,7 +27,7 @@ add_filter( 'wpss_review_window_days', fn( $days ) => 14 );
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_loaded` | `Plugin $plugin` | `src/Core/Plugin.php:295` |
+| `wpss_loaded` | `Plugin $plugin` | `src/Core/Plugin.php:303` |
 | `wpss_adapter_initialized` | `EcommerceAdapterInterface $adapter` | `src/Integrations/IntegrationManager.php:136` |
 
 **`wpss_loaded`** is the primary extension hook. All Pro features register here:
