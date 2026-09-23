@@ -342,6 +342,7 @@ function wpss_normalize_service_addons( array $raw ): array {
 			'title'               => $title,
 			'description'         => sanitize_textarea_field( (string) ( $addon['description'] ?? '' ) ),
 			'price'               => (float) ( $addon['price'] ?? 0 ),
+
 			/*
 			 * max(0, ...) - never absint().
 			 *

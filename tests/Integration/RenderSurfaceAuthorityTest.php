@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace WPSellServices\Tests\Unit;
+namespace WPSellServices\Tests\Integration;
 
 use WPSellServices\Tests\TestCase;
 use WP_Block_Type_Registry;

@@ -25,12 +25,21 @@
  *
  * Pro carries the same test over its own manifest.
  *
+ * Lives in tests/Integration, not tests/Unit, despite the standard calling
+ * these "unit" guards. CI's unit job runs against tests/stubs with no database
+ * and no WordPress - by design - and every one of these tests walks a LIVE
+ * WordPress registry. In tests/Unit they failed in CI with
+ * "Call to undefined function WPSellServices\Tests\Unit\wp_roles()" and
+ * "Class WP_Block_Type_Registry not found", which reads as a broken guard
+ * rather than a guard in the wrong suite. The integration job installs real
+ * WordPress, so that is where a registry walk belongs.
+ *
  * @package WPSellServices\Tests
  */
 
 declare(strict_types=1);
 
-namespace WPSellServices\Tests\Unit;
+namespace WPSellServices\Tests\Integration;
 
 use WPSellServices\Tests\TestCase;
 use WP_REST_Request;

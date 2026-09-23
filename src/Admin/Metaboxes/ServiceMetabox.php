@@ -1093,6 +1093,7 @@ class ServiceMetabox {
 		 * The plugin's own class carries the same left-border treatment from
 		 * admin.css and nothing relocates it.
 		 */
+
 		/*
 		 * Two states, two sentences.
 		 *
