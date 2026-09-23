@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**531 hooks** across **744** firing sites.
+**532 hooks** across **745** firing sites.
 
 ## Actions (273)
 
@@ -290,7 +290,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (258)
+## Filters (259)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -481,6 +481,7 @@ guide; this is the complete index.
 | `wpss_service_is_featured` | 2 | `src/Admin/Metaboxes/ServiceMetabox.php` | Filter whether a service is featured as it saves. |
 | `wpss_service_limit_error_message` | 1 | `src/Frontend/ServiceWizard.php` *(+3 more)* | Filter the error message shown when a vendor cannot create more services. |
 | `wpss_service_list_schema` | 1 | `src/SEO/SchemaMarkup.php` |  |
+| `wpss_service_manager_enforce_publishable` | 3 | `src/Services/ServiceManager.php` | Let a caller publish a service that is not marketplace-ready. |
 | `wpss_service_max_extras` | 1 | `src/functions/services.php` | Max service extras (add-ons). |
 | `wpss_service_max_faq` | 1 | `src/functions/services.php` | Max FAQs. |
 | `wpss_service_max_gallery` | 1 | `src/functions/services.php` | Max gallery images (additional, not including main). |
