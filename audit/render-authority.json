@@ -16,6 +16,12 @@
     "count, and a surface that renders an empty shell would pass."
   ],
   "shortcodes": {
+    "wpss_account": {
+      "audience": "member",
+      "reason": "The member's own account area - orders, downloads, profile. Verified in source on 2026-09-23: StandaloneAccountProvider::render_account_shortcode() returns render_login_form() when ! is_user_logged_in(), so a signed-out caller is shown the log-in form and no member data.",
+      "refuses_with": "log in",
+      "conditional_on": "The standalone rail - StandaloneAdapter::init() registers this shortcode; when a cart plugin owns checkout it supplies its own account page instead."
+    },
     "wpss_buyer_requests": {
       "audience": "public",
       "reason": "Public job board - a request exists to be found by vendors who are not signed in."

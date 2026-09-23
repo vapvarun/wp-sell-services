@@ -396,7 +396,7 @@
     },
     "GET /wpss/v1/payments/methods": {
       "audience": "member",
-      "permission_callback": "WPSellServices\\API\\RestController::check_permissions",
+      "permission_callback": "WPSellServices\\API\\PaymentController::check_permissions",
       "object_id": false,
       "writes": false,
       "conditional_on": "wpss_uses_standalone_payments() - PaymentController::register_routes() returns early when a cart plugin owns payment, so these are absent on a WooCommerce/EDD/FluentCart rail."
@@ -950,14 +950,14 @@
     },
     "POST /wpss/v1/payments/confirm": {
       "audience": "member",
-      "permission_callback": "WPSellServices\\API\\RestController::check_permissions",
+      "permission_callback": "WPSellServices\\API\\PaymentController::check_permissions",
       "object_id": false,
       "writes": true,
       "conditional_on": "wpss_uses_standalone_payments() - PaymentController::register_routes() returns early when a cart plugin owns payment, so these are absent on a WooCommerce/EDD/FluentCart rail."
     },
     "POST /wpss/v1/payments/create-intent": {
       "audience": "member",
-      "permission_callback": "WPSellServices\\API\\RestController::check_permissions",
+      "permission_callback": "WPSellServices\\API\\PaymentController::check_permissions",
       "object_id": false,
       "writes": true,
       "conditional_on": "wpss_uses_standalone_payments() - PaymentController::register_routes() returns early when a cart plugin owns payment, so these are absent on a WooCommerce/EDD/FluentCart rail."

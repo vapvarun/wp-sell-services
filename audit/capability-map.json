@@ -30,7 +30,8 @@
         "administrator",
         "wpss_vendor",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "wpss_manage_services": {
       "scope": "own",
@@ -40,7 +41,8 @@
         "administrator",
         "wpss_vendor",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "wpss_view_analytics": {
       "scope": "own",
@@ -50,7 +52,8 @@
         "administrator",
         "wpss_vendor",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "wpss_vendor_orders": {
       "scope": "own",
@@ -59,7 +62,8 @@
         "administrator",
         "wpss_vendor",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "wpss_respond_to_requests": {
       "scope": "feature",
@@ -68,7 +72,8 @@
         "administrator",
         "wpss_vendor",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "wpss_manage_orders": {
       "scope": "any",
@@ -76,7 +81,8 @@
       "held_by": [
         "administrator",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "wpss_manage_disputes": {
       "scope": "any",
@@ -108,7 +114,8 @@
         "administrator",
         "wpss_vendor",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "delete_wpss_services": {
       "scope": "own",
@@ -117,7 +124,8 @@
         "administrator",
         "wpss_vendor",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "publish_wpss_services": {
       "scope": "own",
@@ -126,7 +134,8 @@
         "administrator",
         "wpss_vendor",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "edit_published_wpss_services": {
       "scope": "own",
@@ -135,7 +144,8 @@
         "administrator",
         "wpss_vendor",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "delete_published_wpss_services": {
       "scope": "own",
@@ -144,7 +154,8 @@
         "administrator",
         "wpss_vendor",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "edit_others_wpss_services": {
       "scope": "any",
@@ -152,7 +163,8 @@
       "held_by": [
         "administrator",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "delete_others_wpss_services": {
       "scope": "any",
@@ -160,7 +172,8 @@
       "held_by": [
         "administrator",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "read_private_wpss_services": {
       "scope": "any",
@@ -168,7 +181,8 @@
       "held_by": [
         "administrator",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "edit_private_wpss_services": {
       "scope": "any",
@@ -176,7 +190,8 @@
       "held_by": [
         "administrator",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     },
     "delete_private_wpss_services": {
       "scope": "any",
@@ -184,7 +199,8 @@
       "held_by": [
         "administrator",
         "shop_manager"
-      ]
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
     }
   },
   "roles": {

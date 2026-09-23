@@ -153,6 +153,29 @@ class CapabilityMapTest extends TestCase {
 
 		foreach ( $this->live_capabilities() as $cap => $roles ) {
 			$declared = (array) ( $this->map['scope'][ $cap ]['held_by'] ?? array() );
+
+			/*
+			 * A role that does not exist on this install cannot hold anything.
+			 *
+			 * `shop_manager` is WooCommerce's role, not ours. Activator.php
+			 * grants the staff capabilities to it only `if ( $role )`, so on a
+			 * site without WooCommerce - which includes CI, and every Free-only
+			 * customer - the role is absent and holds nothing. Comparing the
+			 * map against roles that are not registered reports an absent
+			 * integration as capability drift, which is a different thing and
+			 * would make this guard fail on the majority of real installs.
+			 *
+			 * Only roles that EXIST are compared. A role that exists and has
+			 * lost a capability is still caught, which is the drift this test
+			 * is for.
+			 */
+			$declared = array_values(
+				array_filter(
+					$declared,
+					static fn( string $role ): bool => (bool) get_role( $role )
+				)
+			);
+
 			sort( $declared );
 
 			if ( $declared !== $roles ) {
