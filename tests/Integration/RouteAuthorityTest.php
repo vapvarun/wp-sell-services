@@ -183,8 +183,31 @@ class RouteAuthorityTest extends TestCase {
 		);
 	}
 
+	/**
+	 * A declared route that no longer exists is a manifest that has rotted.
+	 *
+	 * Entries carrying `conditional_on` are exempt, and only those. The
+	 * standard asks for that field precisely so "absent because a feature is
+	 * off" cannot be confused with "deleted": the payment routes vanish on a
+	 * WooCommerce rail, tips vanish when tipping is off, the test gateway's
+	 * handler only exists on a dev site. CI installs Free alone with default
+	 * settings and legitimately sees none of them, and a gate that cannot tell
+	 * that apart from rot either fails every CI run or gets switched off.
+	 *
+	 * The exemption is deliberately narrow - it is not "absent is fine", it is
+	 * "absent is fine where somebody wrote down what mounts it".
+	 */
 	public function test_the_manifest_has_no_routes_that_no_longer_exist(): void {
-		$stale = array_keys( array_diff_key( $this->manifest, $this->live_routes() ) );
+		$missing = array_diff_key( $this->manifest, $this->live_routes() );
+		$stale   = array();
+
+		foreach ( $missing as $key => $declared ) {
+			if ( '' !== trim( (string) ( $declared['conditional_on'] ?? '' ) ) ) {
+				continue;
+			}
+
+			$stale[] = $key;
+		}
 
 		$this->assertSame(
 			array(),

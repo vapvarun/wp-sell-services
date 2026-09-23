@@ -100,10 +100,38 @@ class RenderSurfaceAuthorityTest extends TestCase {
 		);
 	}
 
+	/**
+	 * A declared surface that no longer exists is a manifest that has rotted.
+	 *
+	 * Entries carrying `conditional_on` are exempt, and only those - the field
+	 * exists so "absent because a feature is off" cannot be confused with
+	 * "deleted". CI installs Free alone with default settings, where the test
+	 * gateway's handler and the standalone-rail surfaces legitimately do not
+	 * mount. The exemption is narrow: not "absent is fine", but "absent is fine
+	 * where somebody wrote down what mounts it".
+	 */
 	public function test_the_manifest_has_no_surface_that_no_longer_exists(): void {
+		$survives = static function ( array $declared, array $live ): array {
+			$out = array();
+
+			foreach ( $declared as $name => $entry ) {
+				if ( in_array( $name, $live, true ) ) {
+					continue;
+				}
+
+				if ( '' !== trim( (string) ( ( (array) $entry )['conditional_on'] ?? '' ) ) ) {
+					continue;
+				}
+
+				$out[] = $name;
+			}
+
+			return $out;
+		};
+
 		$stale = array_merge(
-			array_diff( array_keys( (array) ( $this->manifest['shortcodes'] ?? array() ) ), $this->live_shortcodes() ),
-			array_diff( array_keys( (array) ( $this->manifest['blocks'] ?? array() ) ), $this->live_blocks() )
+			$survives( (array) ( $this->manifest['shortcodes'] ?? array() ), $this->live_shortcodes() ),
+			$survives( (array) ( $this->manifest['blocks'] ?? array() ), $this->live_blocks() )
 		);
 
 		$this->assertSame( array(), array_values( $stale ), implode( "\n", $stale ) );

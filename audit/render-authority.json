@@ -28,10 +28,6 @@
       "audience": "public",
       "reason": "Checkout for the caller's own cart. Payment authority is enforced server-side at settle time, not by this surface."
     },
-    "wpss_currency_switcher": {
-      "audience": "public",
-      "reason": "Display-currency control. Carries no member data."
-    },
     "wpss_dashboard": {
       "audience": "member",
       "reason": "The member's own dashboard. Verified signed out on 2026-09-21: returns the log-in notice, not a dashboard.",

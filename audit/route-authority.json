@@ -107,18 +107,6 @@
       "object_id": true,
       "writes": true
     },
-    "GET /wpss/v1/analytics/overview": {
-      "audience": "admin",
-      "permission_callback": "wpss_rest_require_admin",
-      "object_id": false,
-      "writes": false
-    },
-    "GET /wpss/v1/analytics/revenue": {
-      "audience": "admin",
-      "permission_callback": "wpss_rest_require_admin",
-      "object_id": false,
-      "writes": false
-    },
     "GET /wpss/v1/audit-log": {
       "audience": "admin",
       "permission_callback": "WPSellServices\\API\\AuditLogController::check_admin_permissions",
@@ -403,7 +391,15 @@
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\TippingController::check_order_access",
       "object_id": true,
-      "writes": false
+      "writes": false,
+      "conditional_on": "wpss_tipping_enabled() - TippingController returns early when tipping is off."
+    },
+    "GET /wpss/v1/payments/methods": {
+      "audience": "member",
+      "permission_callback": "WPSellServices\\API\\RestController::check_permissions",
+      "object_id": false,
+      "writes": false,
+      "conditional_on": "wpss_uses_standalone_payments() - PaymentController::register_routes() returns early when a cart plugin owns payment, so these are absent on a WooCommerce/EDD/FluentCart rail."
     },
     "GET /wpss/v1/portfolio": {
       "audience": "guarded",
@@ -553,20 +549,6 @@
       "writes": false,
       "reason": "Public client bootstrap: currency, page URLs, file limits and the moderation flags a signed-out app needs to render. Verified signed out on 2026-09-21 - every key is non-sensitive; the only credential-shaped field is realtime.key, which is the Pusher PUBLIC app key that is designed to reach the browser (the secret stays server-side in RealtimeService::get_client_config())."
     },
-    "GET /wpss/v1/subscription-plans": {
-      "audience": "public",
-      "permission_callback": "__return_true",
-      "object_id": false,
-      "writes": false,
-      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
-    },
-    "GET /wpss/v1/subscription-plans/(?P<id>[\\d]+)": {
-      "audience": "public",
-      "permission_callback": "__return_true",
-      "object_id": true,
-      "writes": false,
-      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
-    },
     "GET /wpss/v1/tags": {
       "audience": "public",
       "permission_callback": "__return_true",
@@ -634,13 +616,15 @@
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\TippingController::check_vendor_tips_access",
       "object_id": true,
-      "writes": false
+      "writes": false,
+      "conditional_on": "wpss_tipping_enabled() - TippingController returns early when tipping is off."
     },
     "GET /wpss/v1/vendors/(?P<vendor_id>[\\d]+)/tips/total": {
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\TippingController::check_vendor_tips_access",
       "object_id": true,
-      "writes": false
+      "writes": false,
+      "conditional_on": "wpss_tipping_enabled() - TippingController returns early when tipping is off."
     },
     "GET /wpss/v1/vendors/me": {
       "audience": "guarded",
@@ -961,7 +945,22 @@
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\TippingController::check_buyer_access",
       "object_id": true,
-      "writes": true
+      "writes": true,
+      "conditional_on": "wpss_tipping_enabled() - TippingController returns early when tipping is off."
+    },
+    "POST /wpss/v1/payments/confirm": {
+      "audience": "member",
+      "permission_callback": "WPSellServices\\API\\RestController::check_permissions",
+      "object_id": false,
+      "writes": true,
+      "conditional_on": "wpss_uses_standalone_payments() - PaymentController::register_routes() returns early when a cart plugin owns payment, so these are absent on a WooCommerce/EDD/FluentCart rail."
+    },
+    "POST /wpss/v1/payments/create-intent": {
+      "audience": "member",
+      "permission_callback": "WPSellServices\\API\\RestController::check_permissions",
+      "object_id": false,
+      "writes": true,
+      "conditional_on": "wpss_uses_standalone_payments() - PaymentController::register_routes() returns early when a cart plugin owns payment, so these are absent on a WooCommerce/EDD/FluentCart rail."
     },
     "POST /wpss/v1/portfolio": {
       "audience": "guarded",

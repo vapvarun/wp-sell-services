@@ -561,7 +561,8 @@
       "nonce": true,
       "capability": false,
       "rate_limited": false,
-      "anonymous": false
+      "anonymous": false,
+      "conditional_on": "A dev site, or wpss_demo_payments_enabled() - Plugin.php mounts TestGateway only then."
     },
     "wp_ajax_wpss_unfavorite_service": {
       "callback": "WPSellServices\\Frontend\\AjaxHandlers::unfavorite_service",

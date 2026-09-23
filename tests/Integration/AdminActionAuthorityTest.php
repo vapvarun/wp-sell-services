@@ -143,10 +143,34 @@ class AdminActionAuthorityTest extends TestCase {
 		);
 	}
 
+	/**
+	 * A declared handler that no longer exists is a manifest that has rotted.
+	 *
+	 * Entries carrying `conditional_on` are exempt, and only those - the field
+	 * exists so "absent because a feature is off" cannot be confused with
+	 * "deleted". CI installs Free alone with default settings, where the test
+	 * gateway's handler and the standalone-rail surfaces legitimately do not
+	 * mount. The exemption is narrow: not "absent is fine", but "absent is fine
+	 * where somebody wrote down what mounts it".
+	 */
 	public function test_the_manifest_has_no_handler_that_no_longer_exists(): void {
-		$stale = array_diff( array_keys( (array) ( $this->manifest['handlers'] ?? array() ) ), array_keys( $this->live_handlers() ) );
+		$declared = (array) ( $this->manifest['handlers'] ?? array() );
+		$live     = $this->live_handlers();
+		$stale    = array();
 
-		$this->assertSame( array(), array_values( $stale ), implode( "\n", $stale ) );
+		foreach ( $declared as $hook => $entry ) {
+			if ( isset( $live[ $hook ] ) ) {
+				continue;
+			}
+
+			if ( '' !== trim( (string) ( ( (array) $entry )['conditional_on'] ?? '' ) ) ) {
+				continue;
+			}
+
+			$stale[] = $hook;
+		}
+
+		$this->assertSame( array(), $stale, implode( "\n", $stale ) );
 	}
 
 	/**
