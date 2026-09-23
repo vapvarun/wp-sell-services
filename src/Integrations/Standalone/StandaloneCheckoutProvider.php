@@ -270,6 +270,22 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$service_id = isset( $_GET['service'] ) ? absint( wp_unslash( $_GET['service'] ) ) : absint( get_query_var( 'wpss_service_id' ) );
 		}
+
+		/*
+		 * Nothing unsellable gets a Pay button - from the cart or from a link.
+		 *
+		 * Checked here, before any of the render paths below, because there are
+		 * several of them (single service, multi-cart, package preselected) and
+		 * a guard inside one is a guard the other two do not have. Paying for
+		 * an existing order and returning from a gateway have already been
+		 * handled above and are deliberately not affected: that money has moved.
+		 */
+		$blocked = $this->blocked_checkout_notice( $service_id );
+
+		if ( '' !== $blocked ) {
+			return $blocked;
+		}
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$package_id = isset( $_GET['package'] ) ? absint( wp_unslash( $_GET['package'] ) ) : 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -2157,9 +2173,118 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return array();
 		}
 
-		$cart = get_user_meta( $user_id, self::CART_META_KEY, true );
+		/*
+		 * The ONE cart reader, not a second copy of it.
+		 *
+		 * This read the meta row directly, so every availability rule added to
+		 * wpss_get_user_cart() reached the cart screen and stopped there. A
+		 * cart holding one live service and one the seller had paused rendered
+		 * BOTH at checkout, priced, under a live Pay button - the cart page
+		 * said one of them could not be bought and the very next screen
+		 * charged for it. Same shape as the two cart bugs already fixed this
+		 * cycle: the flow implemented twice, and the second copy never got the
+		 * fix.
+		 *
+		 * wpss_get_user_cart() without keep_paused returns only what can
+		 * actually be sold, which is the right answer for every caller here -
+		 * the checkout form, the totals, the remaining-items notice, and order
+		 * creation downstream. The buyer is not left wondering where the line
+		 * went: render_checkout_shortcode() refuses to show a Pay button at
+		 * all while an unsellable line is still in the cart, and says so.
+		 */
+		return wpss_get_user_cart( $user_id );
+	}
 
-		return is_array( $cart ) ? $cart : array();
+	/**
+	 * Lines in the cart that cannot be sold, with the reason for each.
+	 *
+	 * Read from the RAW meta rather than get_cart(), which by design no longer
+	 * returns them - the point here is to notice that they exist.
+	 *
+	 * @return array<int, array{title: string, reason: string}> Keyed by service id.
+	 */
+	private function unsellable_cart_lines(): array {
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return array();
+		}
+
+		$raw   = get_user_meta( $user_id, self::CART_META_KEY, true );
+		$stuck = array();
+
+		foreach ( ( is_array( $raw ) ? $raw : array() ) as $item ) {
+			$service_id = (int) ( $item['service_id'] ?? 0 );
+			$reason     = wpss_service_unavailable_reason( $service_id );
+
+			if ( '' !== $reason ) {
+				$stuck[ $service_id ] = array(
+					'title'  => (string) get_the_title( $service_id ),
+					'reason' => $reason,
+				);
+			}
+		}
+
+		return $stuck;
+	}
+
+	/**
+	 * Refuse checkout while the cart holds something that cannot be sold.
+	 *
+	 * Returns '' when checkout may proceed, or the notice to render instead of
+	 * the form. A buyer who is told on the cart screen that a line is no longer
+	 * available must not then be shown a Pay button that charges for it.
+	 *
+	 * @param int $url_service_id Service id taken from the URL, if any.
+	 * @return string
+	 */
+	private function blocked_checkout_notice( int $url_service_id = 0 ): string {
+		$stuck = $this->unsellable_cart_lines();
+
+		// A direct link to a paused or deleted service skips the cart entirely.
+		if ( $url_service_id > 0 && ! isset( $stuck[ $url_service_id ] ) ) {
+			$reason = wpss_service_unavailable_reason( $url_service_id );
+
+			if ( '' !== $reason ) {
+				$stuck[ $url_service_id ] = array(
+					'title'  => (string) get_the_title( $url_service_id ),
+					'reason' => $reason,
+				);
+			}
+		}
+
+		if ( ! $stuck ) {
+			return '';
+		}
+
+		ob_start();
+		?>
+		<div class="wpss-checkout-blocked wpss-notice wpss-notice--warning">
+			<p>
+				<?php esc_html_e( 'Checkout is on hold because something in your cart is no longer for sale.', 'wp-sell-services' ); ?>
+			</p>
+			<ul class="wpss-checkout-blocked__list">
+				<?php foreach ( $stuck as $line ) : ?>
+					<li>
+						<?php
+						$title = '' !== $line['title'] ? $line['title'] : __( 'A service that has since been removed', 'wp-sell-services' );
+						printf(
+							/* translators: 1: service name, 2: the reason it cannot be bought. */
+							esc_html__( '%1$s - %2$s', 'wp-sell-services' ),
+							esc_html( $title ),
+							esc_html( $line['reason'] )
+						);
+						?>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+			<p>
+				<a class="wpss-btn wpss-btn--primary" href="<?php echo esc_url( wpss_get_cart_url() ); ?>">
+					<?php esc_html_e( 'Go to your cart to remove it', 'wp-sell-services' ); ?>
+				</a>
+			</p>
+		</div>
+		<?php
+		return (string) ob_get_clean();
 	}
 
 	/**

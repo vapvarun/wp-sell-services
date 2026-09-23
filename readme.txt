@@ -271,13 +271,17 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 = 1.7.2 - September 2026 =
 
-Fixes from a QA audit of the vendor and buyer dashboards, plus checkout and service add-on corrections found in pre-release testing.
+Fixes from a QA audit of the vendor and buyer dashboards, plus checkout, cart and service add-on corrections found in pre-release testing.
 
 * New      - Members can withdraw a dispute they opened, or ask a site administrator to review one, from the dispute screen. Both already worked over the API but had no button.
 * New      - The notifications list is paginated, so notifications older than the newest 50 can be reached.
 * Improve  - The service wizard says when you have added more tags than the limit, instead of accepting them and dropping the extras on save. The limit is filterable.
 * Improve  - Remove buttons on wizard extras, FAQs, requirements, deliverables and gallery images are visible and named for screen readers.
 * Improve  - The link from Review Moderation opens Settings at the section holding the setting.
+* Fix      - A service that is paused or deleted while it sits in a cart stays on the cart screen with a plain reason, is left out of the total, and stops checkout until the buyer removes it. It used to disappear and the total simply shrank, with nothing to explain where the item went.
+* Fix      - Checkout refuses to take payment while anything in the cart is no longer for sale, and names what it is. A cart holding one available service and one the seller had paused was charging for both.
+* Fix      - A service that is already live but does not meet the publishing checklist can be edited again through the API. Every edit was being refused, including the one that would have filled in what was missing, while the same edit through the editor or WP-CLI was accepted.
+* Fix      - Settings tells the site owner the setup wizard has been completed, instead of reporting a completion date of January 1, 1970 on sites upgraded from a version that recorded it differently.
 * Fix      - A vendor and the reviewer can open a service that is waiting for approval. Holding it back correctly hid it from the public and hid it from them too, so the reviewer could not see what they were being asked to approve.
 * Fix      - Withdraw and Escalate stay available on a dispute after the other party replies, which is when they matter most.
 * Fix      - A long requirement answer can be expanded. The Show more control was being clipped away by the same rule that shortened the text.
@@ -300,8 +304,6 @@ Fixes from a QA audit of the vendor and buyer dashboards, plus checkout and serv
 * Fix      - An add-on saved with a negative number of extra delivery days is treated as no extra days. It was being stored as that many days later, so an add-on meant to speed delivery up slowed it down.
 * Fix      - A service created through the API, an import or a migration is held as a draft until it meets the same publishing checklist the wizard applies, instead of going live incomplete and purchasable.
 * Fix      - The service editor no longer tells a site owner that a published service is being held as a draft. It now says the service is live and lists what it is still missing.
-* Dev      - The REST catalogue's version is taken from the plugin itself rather than a value kept by hand, which had left it a release behind.
-* Dev      - The REST catalogue documents the period parameter on the earnings and analytics routes, including every value it accepts. Clients generated from the published document were rejecting valid values.
 * Fix      - A service using only the Basic package can be published. Switched-off Standard and Premium tiers were being validated and their empty fields reported against Basic.
 * Fix      - A Standard or Premium tier that is switched on but left empty is refused, on the Pricing step and at Publish.
 * Fix      - Services awaiting approval no longer go live when a vendor publishes from the dashboard. Moderation now applies however a service is published, and services already published without approval return to the review queue on upgrade.
@@ -311,6 +313,8 @@ Fixes from a QA audit of the vendor and buyer dashboards, plus checkout and serv
 * Fix      - The selected order filter stays readable on themes that recolour content links.
 * Fix      - The checkout steps appear before the payment form on phones.
 * Fix      - Removing a wizard extra no longer logs JavaScript errors.
+* Dev      - The REST catalogue's version is taken from the plugin itself rather than a value kept by hand, which had left it a release behind.
+* Dev      - The REST catalogue documents the period parameter on the earnings and analytics routes, including every value it accepts. Clients generated from the published document were rejecting valid values.
 * Dev      - Removed templates/order/order-confirmation.php, which no rail rendered, along with its stylesheet rules. This retires three actions that only that template fired: wpss_before_order_confirmation, wpss_order_confirmation_details and wpss_after_order_confirmation. A site hooking them was never being called, because the template was never loaded.
 * Compat   - Requires WP Sell Services Pro 1.7.2. Install both updates together.
 

@@ -836,6 +836,44 @@ class ServicesController extends RestController {
 				)
 			);
 
+			/*
+			 * Judge the EDIT, not the listing.
+			 *
+			 * Validating the merged result alone closed the repricing hole, and
+			 * locked out every service that was already live and already short
+			 * of the bar - a dataset from before the rule, or a force-publish
+			 * outside the wizard. Those could not be edited at all: not the
+			 * title, not the category, not even the very field that was
+			 * missing, because some OTHER pre-existing gap failed the same
+			 * check. The owner's only route was to send a complete object in
+			 * one request or leave a broken listing public, and the admin
+			 * screen and wp-cli both saved the same edit happily - two save
+			 * paths for one object, enforcing different rules.
+			 *
+			 * So an edit to an already-live service is refused only for what it
+			 * BREAKS. Errors the listing already had pass through untouched;
+			 * an error this request introduces is still a 400. Repricing a live
+			 * listing under the floor adds an error it did not have, so the
+			 * original exploit stays closed - the regression test for Basecamp
+			 * 10320551446 is what proves that, not this comment.
+			 *
+			 * Going live is unchanged: a draft asking for publish, or any
+			 * request that sets status, must clear the whole bar.
+			 */
+			$edits_a_live_listing = ! isset( $update_data['post_status'] ) && 'publish' === get_post_status( $service_id );
+
+			if ( $publish_errors && $edits_a_live_listing ) {
+				$existing_errors = wpss_validate_service_publishable(
+					array(
+						'title'       => get_the_title( $service_id ),
+						'description' => (string) get_post_field( 'post_content', $service_id ),
+						'packages'    => (array) get_post_meta( $service_id, '_wpss_packages', true ),
+					)
+				);
+
+				$publish_errors = array_diff( $publish_errors, $existing_errors );
+			}
+
 			if ( $publish_errors ) {
 				return new WP_Error(
 					'wpss_not_publishable',

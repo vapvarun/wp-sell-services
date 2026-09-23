@@ -1426,19 +1426,33 @@ function wpss_get_user_cart( int $user_id, bool $keep_paused = false ): array {
 	foreach ( $cart as $key => $item ) {
 		$service = get_post( (int) ( $item['service_id'] ?? 0 ) );
 
-		if ( ! $service || 'wpss_service' !== $service->post_type ) {
-			$changed = true;
-			continue;
-		}
+		$reason = wpss_service_unavailable_reason( (int) ( $item['service_id'] ?? 0 ) );
 
-		if ( 'publish' !== $service->post_status ) {
+		if ( '' !== $reason ) {
+			/*
+			 * Never remove a line the buyer did not remove.
+			 *
+			 * This used to drop a DELETED service silently and keep only a
+			 * paused one. On the cart screen that is indistinguishable from the
+			 * site losing the item: a two-item $100 cart became one item and $75
+			 * with nothing said. The WooCommerce rail was corrected first and
+			 * this one was left behind - the same "fixed one rail, missed the
+			 * other" mistake, on the rail every FREE install runs.
+			 *
+			 * Deleted and paused now read the same way on both rails: the line
+			 * stays, says why it cannot be bought, is kept out of the subtotal,
+			 * and is refused at checkout until the buyer removes it.
+			 *
+			 * The money paths still pass $keep_paused = false and drop it, so an
+			 * unavailable line can never reach an order.
+			 */
 			if ( ! $keep_paused ) {
 				$changed = true;
 				continue;
 			}
 
 			$item['unavailable']        = true;
-			$item['unavailable_reason'] = __( 'This service is not currently available.', 'wp-sell-services' );
+			$item['unavailable_reason'] = $reason;
 		}
 
 		$out[ $key ] = $item;
@@ -1451,4 +1465,42 @@ function wpss_get_user_cart( int $user_id, bool $keep_paused = false ): array {
 	}
 
 	return $out;
+}
+
+/**
+ * Why a service cannot be bought right now, or '' when it can.
+ *
+ * The ONE place either rail asks "is this still purchasable". The standalone
+ * cart reads it through wpss_get_user_cart(); the WooCommerce cart reads it
+ * through the Pro adapter's cart re-check. Two copies of this rule is how the
+ * two rails drift, and the drift already happened once: the standalone cart was
+ * fixed on 2026-09-23 and WooCommerce - the rail most sites actually run - kept
+ * selling unpublished services for another afternoon, because "the cart" meant
+ * a different thing there and nobody asked the question twice.
+ *
+ * @since 1.7.2
+ *
+ * @param  int $service_id Service post ID.
+ * @return string Empty when purchasable; otherwise a sentence for the buyer.
+ */
+function wpss_service_unavailable_reason( int $service_id ): string {
+	$service = $service_id ? get_post( $service_id ) : null;
+
+	if ( ! $service || 'wpss_service' !== $service->post_type ) {
+		return __( 'This service is no longer offered.', 'wp-sell-services' );
+	}
+
+	if ( 'publish' !== $service->post_status ) {
+		return __( 'This service is not currently available.', 'wp-sell-services' );
+	}
+
+	/**
+	 * Let an integration refuse a service for its own reason.
+	 *
+	 * @since 1.7.2
+	 *
+	 * @param string $reason     Empty when purchasable.
+	 * @param int    $service_id Service post ID.
+	 */
+	return (string) apply_filters( 'wpss_service_unavailable_reason', '', $service_id );
 }

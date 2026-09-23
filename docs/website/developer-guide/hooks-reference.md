@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**532 hooks** across **745** firing sites.
+**533 hooks** across **746** firing sites.
 
 ## Actions (273)
 
@@ -290,7 +290,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (259)
+## Filters (260)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -497,6 +497,7 @@ guide; this is the complete index.
 | `wpss_service_slug` | 1 | `src/PostTypes/ServicePostType.php` | Filter the service post type slug. |
 | `wpss_service_tag_args` | 1 | `src/PostTypes/ServicePostType.php` | Filter service tag taxonomy arguments. |
 | `wpss_service_tag_taxonomy_args` | 1 | `src/Taxonomies/ServiceTagTaxonomy.php` | Filter service tag taxonomy arguments. |
+| `wpss_service_unavailable_reason` | 2 | `src/functions/services.php` | Let an integration refuse a service for its own reason. |
 | `wpss_services_per_page` | 1 | `src/Frontend/ServiceArchiveView.php` *(+1 more)* |  |
 | `wpss_settings_currencies` | 1 | `src/Admin/Settings.php` | Filter the currencies available in the Settings currency dropdown. |
 | `wpss_settings_sections` | 1 | `src/functions/urls.php` | Filter the known admin settings sections. |

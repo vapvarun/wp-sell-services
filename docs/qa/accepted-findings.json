@@ -1,0 +1,111 @@
+{
+  "_doc": [
+    "Findings a human has accepted for this release, each naming its card.",
+    "",
+    "The smoke report is EVIDENCE and is never edited to make a gate pass. This",
+    "file is the separate, reviewable record of which findings were triaged and",
+    "consciously shipped with - so the acceptance is auditable, attributable and",
+    "sits next to the evidence rather than inside it.",
+    "",
+    "The release skill's own rule: a pre-existing finding 'does not block - it",
+    "gets a card and a line in the audit file, so the delta stays honest'.",
+    "",
+    "Rules the gate enforces, so this cannot become a dumping ground:",
+    "  - every entry names a real card id and a reason;",
+    "  - every entry names the version it is accepted FOR, and is ignored for any",
+    "    other version, so an acceptance cannot silently carry forward;",
+    "  - a finding in the report that is NOT listed here still blocks.",
+    "",
+    "Accepting a finding is a decision someone made. Removing an entry is how you",
+    "un-make it.",
+    "",
+    "`resolved` is NOT `accepted`. An accepted finding ships as-is. A resolved one",
+    "was FIXED after the walk recorded it, so the report is simply stale for that",
+    "entry - and the honest answer to a stale report is a re-walk. Where a re-walk",
+    "was not run, the entry must say exactly how the fix was verified instead, so a",
+    "reader can weigh that evidence rather than assume a walk covered it."
+  ],
+  "version": "1.7.2",
+  "accepted": [
+    {
+      "id": "wpss-dispute-refund-marked-but-not-executed",
+      "card": "10331363649",
+      "severity": "P0",
+      "scheduled": "1.7.3",
+      "reason": "A dispute resolved for the buyer records a completed refund even when the gateway refund fails. src/Services/OrderService.php is UNCHANGED since the v1.7.1 tag (2026-09-18), so this behaviour ships in production today: 1.7.2 neither introduces it nor, by being held, fixes it. The correct fix has to tell a failed gateway refund apart from a rail that has no automatic refund (offline, bank transfer), where a refunded status is legitimate while a human sends the money - getting that wrong breaks every offline refund, so it is not a same-day change. Admins are notified and an audit row exists; it is the order record that is wrong, not the whole system."
+    },
+    {
+      "id": "wpss-pro-storage-test-connection-silent",
+      "card": "10331371292",
+      "severity": "medium",
+      "scheduled": "1.7.3",
+      "reason": "The Cloud Storage Test Connection button renders no result. The AJAX round trip and the server reply are both correct; only the notice fails to appear. StorageSettingsRenderer is unchanged since v1.7.1, so it is pre-existing. It costs a site owner configuring cloud storage an answer they need, but it blocks no purchase, no payout and no data."
+    }
+  ],
+  "debug_log_accepted": [
+    {
+      "match": "Auto-refund FAILED",
+      "card": "10331363649",
+      "reason": "The log output OF the accepted finding above, not a separate defect. The line is the system correctly shouting that a money step was skipped, which is the behaviour the standard asks for."
+    },
+    {
+      "match": "Manual refund required",
+      "card": "10331363649",
+      "reason": "Same finding: the offline-rail branch telling an administrator to send the refund by hand."
+    },
+    {
+      "match": "no completed wallet credit found for the vendor",
+      "card": "10331363649",
+      "reason": "Second log line of the same accepted dispute-refund finding: the earnings reversal is skipped because the credit it would reverse was never completed. The system is correctly announcing a skipped money step rather than performing a wrong one."
+    }
+  ],
+  "resolved": [
+    {
+      "id": "wpss-cart-delete-no-notice",
+      "fixed_in": "wp-sell-services-pro 388984c",
+      "verified_by": "Direct probe on the WooCommerce rail with a real buyer and a real cart, not a re-walk: paused -> 1 item + 1 checkout-blocking error naming the service; deleted -> 1 item + 1 blocking error 'no longer offered'; healthy -> 1 item, 0 errors, buys normally.",
+      "note": "The walk reported that deleting a cart item emptied the cart with no explanation. Fixed by no longer auto-removing: deleted and paused now behave identically - the line stays, says why, and checkout is refused until the buyer removes it. The fix is in PRO only, which this gate's staleness check does not see because it diffs Free's tree alone - a real blind spot in the gate, recorded on its own card rather than relied upon."
+    },
+    {
+      "id": "wpss-free-cart-delete-silent-removal",
+      "fixed_in": "wp-sell-services d2a49ef1",
+      "verified_by": "Targeted probes on BOTH rails, not a re-walk. STANDALONE (free mode): a 2-item cart whose second service is then deleted outright returns 2 items to the cart screen with the dead line flagged unavailable and explained, and 1 item to the checkout path. COMBO (free+Pro+WooCommerce active): the same seed returns the same 2 / 1 split with the same reason string. Mutation-proven: restore the drop and the cart screen silently returns 1 item.",
+      "note": "The free walk found this. It is the same defect the WooCommerce rail had, and the same mistake made twice in one day - fixing one rail and leaving the other. Both rails now behave identically: deleted and paused lines stay visible with a reason, are kept out of the subtotal, and are refused at checkout until the buyer removes them.\nSTALENESS: this commit touches src/functions/services.php, a rendered file, so verify:smoke-gate correctly reports the COMBO walk (9b0909ec) as stale and the build was run with --force. The combo probe above is the evidence offered in place of a re-walk, and it is weaker than a walk: it exercises wpss_get_user_cart() directly rather than through the cart screen. What limits the blast radius is that the only callers are the standalone cart shortcode, CheckoutIntentService and the REST cart route - the WooCommerce cart does not read this function at all - so no combo-mode checkout surface changed behaviour."
+    },
+    {
+      "id": "wpss-free-rest-edit-blocked-on-grandfathered-incomplete-service",
+      "fixed_in": "wp-sell-services (this release, src/API/ServicesController.php)",
+      "verified_by": "Direct dispatch probe through rest_get_server(), as a real vendor, not a re-walk. The fixture is a listing that is live AND short of the bar - written straight to wp_posts, because wp_insert_post correctly downgrades a new incomplete service and that is not the state under test. Results: an unrelated title-only PUT now returns 200, applies the title and leaves the listing published; repricing a COMPLETE live listing from 50 to 2, under the 5 floor, still returns 400 wpss_not_publishable and changes nothing (the Basecamp 10320551446 exploit stays closed); a draft asking to go live while incomplete still returns 400. Mutation-proven: force the new branch off and the title-only PUT returns 400 again.",
+      "note": "The gate validated the merged result, which closed the repricing hole and locked out every listing that was already live and already incomplete - a pre-rule dataset, or a force-publish outside the wizard. Those could not be edited at all, not even in the field that was missing, while the admin screen and wp-cli saved the same edit happily: two save paths for one object, enforcing different rules. An edit to an already-live listing is now refused only for the errors it INTRODUCES; errors the listing already had pass through. Going live is unchanged."
+    },
+    {
+      "id": "wpss-free-setup-wizard-epoch-date",
+      "fixed_in": "wp-sell-services (this release, src/Admin/Settings.php)",
+      "verified_by": "Rendered the section at all three values a site can hold and read the line back: a legacy '1' now says 'Setup wizard has been completed.', a real timestamp says 'Setup wizard was completed on September 22, 2026.', and an unset option says 'The setup wizard has not been completed yet.' Before the fix the first case printed January 1, 1970.",
+      "note": "wpss_setup_wizard_completed is a timestamp now and was not always one, so any truthy value took the completed branch and went through (int) + wp_date(). A date is printed only when the value can be one: after the plugin existed, and not in the future."
+    },
+    {
+      "id": "wpss-free-standalone-checkout-sells-unavailable-line",
+      "fixed_in": "wp-sell-services (this release, StandaloneCheckoutProvider / StandaloneOrderProvider / CartController / OfflineGateway / TestGateway)",
+      "verified_by": "Found by a scoped browser walk in standalone mode, then fixed and re-probed. Browser evidence of the defect: a cart holding one live service and one the seller had paused rendered BOTH at /service-checkout/ as 'Your Order (2 Services)', $45.00 each, Total $90.00, under an active 'Pay $90.00' button - the cart screen one click earlier had already said one of them could not be bought. After the fix, rendering the same mixed cart returns no Pay button and a notice naming the service and the reason ('QA Addon Wizard Test 0923 - This service is not currently available.') with a link back to the cart. A healthy two-item cart still renders 'Your Order (2 Services)' with no notice, so the guard does not fire on good carts. Handed the RAW cart directly, order creation produces 1 order from 2 lines and logs the refusal. Mutation-proven: force the checkout guard off and the notice disappears.",
+      "note": "The third time this cycle that one flow was implemented twice and only one copy got the fix. wpss_get_user_cart() is the cart reader, and the cart SCREEN called it - while the standalone checkout renderer, the REST checkout route and both offline/test payment rails each read the _wpss_cart meta row directly. My own earlier probe missed it because it called the function instead of driving the flow. All four now read through wpss_get_user_cart(); the checkout screen refuses to show a Pay button at all while an unsellable line is in the cart, the REST route answers 409 with the reasons, and create_orders_from_cart() refuses per line as a last backstop before a paid order exists, logging any rail that still reaches it."
+    }
+  ],
+  "coverage_verified_elsewhere": [
+    {
+      "mode": "free",
+      "section": "B_upgrade",
+      "verified_by": "A scripted upgrade cycle in the docker-smoke stack, not a browser walk. WordPress 6.9 + PHP 8.3, clean DB: install the PUBLISHED v1.7.1 free and pro ZIPs and activate; seed a vendor, a buyer, a published service at 120 and that buyer's one-item cart; deactivate both and wind wpss_db_version back to 1.6.0 so install() has a real migration to run; then overwrite both plugins with the built 1.7.2 ZIPs (wp plugin install --force, the path the updater takes), reactivate, and load the site. Result: free 1.7.2 / pro 1.7.2, both active, frontend 200, wpss_db_version 1.6.0 -> 1.7.3, 28 tables (no loss), the service count unchanged, the buyer's cart still 1 item at 120 and the service still published, and zero Fatal / Uncaught / textdomain lines in debug.log across the whole cycle.",
+      "evidence": "scratchpad/docker-upgrade-test.sh - rerunnable; prints each assertion and exits non-zero on any failure.",
+      "note": "The free walk could not run this section: its own prompt forbade deactivating or activating plugins, which an upgrade cycle requires, so all three of its checks recorded as skipped. That is a limit of how the walk was commissioned, not of the product - the right answer is to run the cycle somewhere it is allowed and say exactly what was run, which is what this entry is. It is weaker than a walk in one specific way: it asserts on data and logs, not on what a buyer or owner SEES after an upgrade."
+    }
+  ],
+  "staleness": {
+    "gate": "verify:smoke-gate",
+    "state": "The recorded COMBO walk (9b0909ec) is stale: ten rendered files changed after it ran. Both release builds were taken with --force.",
+    "why_not_a_re-walk": "Six of those ten files changed BECAUSE of what a walk found after 9b0909ec, and each change was verified against the behaviour it touches rather than by re-running a 40-minute walk that would itself be stale by the next fix. The evidence per fix is in `resolved` above, and each entry says in writing how it was verified and that it was not a walk.",
+    "what_was_walked_after_the_recorded_run": "A free-mode walk (f5e767cc, docs/qa/.last-smoke-pass-free.json) and a scoped combo-mode browser walk covering exactly the three surfaces the first six file changes render - the cart on both rails at 1280 and 390, Settings > Advanced, and a vendor editing their own service through the dashboard. That scoped walk is what found the checkout defect a direct probe of the cart reader had missed, which is the strongest argument in this file for why a browser walk is not interchangeable with a probe.",
+    "verified_on_the_built_artifacts": "Pristine install of both 1.7.2 ZIPs on clean WordPress + PHP 8.3: both active, frontend 200, 28 tables, zero fatals, production autoloader. Upgrade 1.7.1 -> 1.7.2 with wpss_db_version wound back to 1.6.0 so the migration ran: schema 1.6.0 -> 1.7.3, no table loss, an existing buyer's cart and service unchanged, zero fatals. Both re-run against the final ZIPs, not an earlier build.",
+    "not_covered": "No full combo walk describes the shipped tree. The surfaces changed after the scoped walk are src/Core/Plugin.php (an upgrade migration, covered by the upgrade cycle above) and the four cart/checkout files (covered by the probes in `resolved`). What none of this covers is the rest of the product as a whole at the shipped commit - a full combo walk is the first thing 1.7.3 should do, before any change."
+  }
+}
