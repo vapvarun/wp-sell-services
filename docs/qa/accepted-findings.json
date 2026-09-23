@@ -71,6 +71,27 @@
       "fixed_in": "wp-sell-services d2a49ef1",
       "verified_by": "Targeted probes on BOTH rails, not a re-walk. STANDALONE (free mode): a 2-item cart whose second service is then deleted outright returns 2 items to the cart screen with the dead line flagged unavailable and explained, and 1 item to the checkout path. COMBO (free+Pro+WooCommerce active): the same seed returns the same 2 / 1 split with the same reason string. Mutation-proven: restore the drop and the cart screen silently returns 1 item.",
       "note": "The free walk found this. It is the same defect the WooCommerce rail had, and the same mistake made twice in one day - fixing one rail and leaving the other. Both rails now behave identically: deleted and paused lines stay visible with a reason, are kept out of the subtotal, and are refused at checkout until the buyer removes them.\nSTALENESS: this commit touches src/functions/services.php, a rendered file, so verify:smoke-gate correctly reports the COMBO walk (9b0909ec) as stale and the build was run with --force. The combo probe above is the evidence offered in place of a re-walk, and it is weaker than a walk: it exercises wpss_get_user_cart() directly rather than through the cart screen. What limits the blast radius is that the only callers are the standalone cart shortcode, CheckoutIntentService and the REST cart route - the WooCommerce cart does not read this function at all - so no combo-mode checkout surface changed behaviour."
+    },
+    {
+      "id": "wpss-free-rest-edit-blocked-on-grandfathered-incomplete-service",
+      "fixed_in": "wp-sell-services (this release, src/API/ServicesController.php)",
+      "verified_by": "Direct dispatch probe through rest_get_server(), as a real vendor, not a re-walk. The fixture is a listing that is live AND short of the bar - written straight to wp_posts, because wp_insert_post correctly downgrades a new incomplete service and that is not the state under test. Results: an unrelated title-only PUT now returns 200, applies the title and leaves the listing published; repricing a COMPLETE live listing from 50 to 2, under the 5 floor, still returns 400 wpss_not_publishable and changes nothing (the Basecamp 10320551446 exploit stays closed); a draft asking to go live while incomplete still returns 400. Mutation-proven: force the new branch off and the title-only PUT returns 400 again.",
+      "note": "The gate validated the merged result, which closed the repricing hole and locked out every listing that was already live and already incomplete - a pre-rule dataset, or a force-publish outside the wizard. Those could not be edited at all, not even in the field that was missing, while the admin screen and wp-cli saved the same edit happily: two save paths for one object, enforcing different rules. An edit to an already-live listing is now refused only for the errors it INTRODUCES; errors the listing already had pass through. Going live is unchanged."
+    },
+    {
+      "id": "wpss-free-setup-wizard-epoch-date",
+      "fixed_in": "wp-sell-services (this release, src/Admin/Settings.php)",
+      "verified_by": "Rendered the section at all three values a site can hold and read the line back: a legacy '1' now says 'Setup wizard has been completed.', a real timestamp says 'Setup wizard was completed on September 22, 2026.', and an unset option says 'The setup wizard has not been completed yet.' Before the fix the first case printed January 1, 1970.",
+      "note": "wpss_setup_wizard_completed is a timestamp now and was not always one, so any truthy value took the completed branch and went through (int) + wp_date(). A date is printed only when the value can be one: after the plugin existed, and not in the future."
+    }
+  ],
+  "coverage_verified_elsewhere": [
+    {
+      "mode": "free",
+      "section": "B_upgrade",
+      "verified_by": "A scripted upgrade cycle in the docker-smoke stack, not a browser walk. WordPress 6.9 + PHP 8.3, clean DB: install the PUBLISHED v1.7.1 free and pro ZIPs and activate; seed a vendor, a buyer, a published service at 120 and that buyer's one-item cart; deactivate both and wind wpss_db_version back to 1.6.0 so install() has a real migration to run; then overwrite both plugins with the built 1.7.2 ZIPs (wp plugin install --force, the path the updater takes), reactivate, and load the site. Result: free 1.7.2 / pro 1.7.2, both active, frontend 200, wpss_db_version 1.6.0 -> 1.7.3, 28 tables (no loss), the service count unchanged, the buyer's cart still 1 item at 120 and the service still published, and zero Fatal / Uncaught / textdomain lines in debug.log across the whole cycle.",
+      "evidence": "scratchpad/docker-upgrade-test.sh - rerunnable; prints each assertion and exits non-zero on any failure.",
+      "note": "The free walk could not run this section: its own prompt forbade deactivating or activating plugins, which an upgrade cycle requires, so all three of its checks recorded as skipped. That is a limit of how the walk was commissioned, not of the product - the right answer is to run the cycle somewhere it is allowed and say exactly what was run, which is what this entry is. It is weaker than a walk in one specific way: it asserts on data and logs, not on what a buyer or owner SEES after an upgrade."
     }
   ]
 }

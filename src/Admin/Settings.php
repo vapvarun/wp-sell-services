@@ -2603,17 +2603,37 @@ class Settings {
 	public function render_setup_wizard_section(): void {
 		$completed  = get_option( 'wpss_setup_wizard_completed', false );
 		$wizard_url = admin_url( 'admin.php?page=wpss-setup-wizard' );
+
+		/*
+		 * The option is a timestamp NOW, and was not always one.
+		 *
+		 * Anything truthy took the "completed" branch and went through
+		 * (int) + wp_date(), so a site carrying a plain `1` - an older
+		 * version's boolean, an import, a seeder - was told "Setup wizard was
+		 * completed on January 1, 1970." An owner reads that as a real date
+		 * and has no way to tell it is the epoch showing through.
+		 *
+		 * A completion date is only printed when the value can actually be
+		 * one: after the plugin itself existed, and not in the future.
+		 */
+		$completed_at = is_numeric( $completed ) && (int) $completed > 1451606400 && (int) $completed <= time()
+			? (int) $completed
+			: 0;
 		?>
 		<div style="margin-top: 15px;">
-			<?php if ( $completed ) : ?>
+			<?php if ( $completed_at ) : ?>
 				<p style="margin-bottom: 10px;">
 					<?php
 					printf(
 						/* translators: %s: completion date */
 						esc_html__( 'Setup wizard was completed on %s.', 'wp-sell-services' ),
-						esc_html( wp_date( get_option( 'date_format' ), (int) $completed ) )
+						esc_html( wp_date( get_option( 'date_format' ), $completed_at ) )
 					);
 					?>
+				</p>
+			<?php elseif ( $completed ) : ?>
+				<p style="margin-bottom: 10px;">
+					<?php esc_html_e( 'Setup wizard has been completed.', 'wp-sell-services' ); ?>
 				</p>
 			<?php else : ?>
 				<p style="margin-bottom: 10px;">

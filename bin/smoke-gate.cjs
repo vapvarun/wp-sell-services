@@ -93,6 +93,20 @@ module.exports = function smokeGate( { version, freeDir } ) {
 	 */
 	const acceptedIds = new Set();
 	let acceptedLogPatterns = [];
+	/*
+	 * Sections proven outside the walk, per mode.
+	 *
+	 * A walk can be genuinely unable to reach a section - B_upgrade needs an
+	 * install/activate cycle, which a walk run under a no-activation constraint
+	 * cannot perform - and the gate was then left with two bad answers: block a
+	 * release over evidence the walk could never produce, or force past it and
+	 * lose the record. Neither says what was actually verified.
+	 *
+	 * So there is a third: name the section, in the same reviewable file, with
+	 * how it was proven instead. An entry without a verified_by is ignored, so
+	 * this cannot become a way to wave a section through by listing it.
+	 */
+	const coveredElsewhere = { combo: new Set(), free: new Set() };
 	const acceptFile = at( 'docs/qa/accepted-findings.json' );
 
 	if ( fs.existsSync( acceptFile ) ) {
@@ -124,6 +138,10 @@ module.exports = function smokeGate( { version, freeDir } ) {
 			acceptedLogPatterns = ( raw.debug_log_accepted || [] )
 				.filter( ( a ) => a && a.match && a.card )
 				.map( ( a ) => a.match );
+
+			( raw.coverage_verified_elsewhere || [] )
+				.filter( ( c ) => c && c.section && coveredElsewhere[ c.mode ] && String( c.verified_by || '' ).trim() )
+				.forEach( ( c ) => coveredElsewhere[ c.mode ].add( c.section ) );
 		}
 	}
 
@@ -248,8 +266,9 @@ module.exports = function smokeGate( { version, freeDir } ) {
 		);
 
 		const exempt = CANNOT_RUN[ mode ] || CANNOT_RUN.combo;
+		const covered = coveredElsewhere[ mode ] || new Set();
 		const unrun = Object.keys( sections ).filter(
-			( name ) => ! exempt.includes( name ) &&
+			( name ) => ! exempt.includes( name ) && ! covered.has( name ) &&
 				! sections[ name ].pass && sections[ name ].skipped
 		);
 
