@@ -271,7 +271,7 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 
 = 1.7.2 - September 2026 =
 
-Fixes from a QA audit of the vendor and buyer dashboards.
+Fixes from a QA audit of the vendor and buyer dashboards, plus checkout and service add-on corrections found in pre-release testing.
 
 * New      - Members can withdraw a dispute they opened, or ask a site administrator to review one, from the dispute screen. Both already worked over the API but had no button.
 * New      - The notifications list is paginated, so notifications older than the newest 50 can be reached.
@@ -295,7 +295,13 @@ Fixes from a QA audit of the vendor and buyer dashboards.
 * Fix      - A brand colour set under White Label now reaches the plugin's own controls on the Vendors screen. Status badges keep their own colours, because green means completed and red means cancelled.
 * Fix      - Analytics and sales figures follow the site's timezone. Ranges were built in UTC while orders are recorded in site time, so totals covered the wrong window on any site not set to UTC.
 * Fix      - Today is available on the vendor analytics API and on the free Sales tab.
+* Fix      - An add-on is charged for when it is the only one selected. Picking just the first add-on on a service showed it on the order but left it out of the amount charged, so the buyer paid the base price and the vendor lost the add-on.
+* Fix      - Add-ons created through the API, an import or a migration are saved with the service and shown to buyers. Only the service wizard and the editor were storing them.
+* Fix      - An add-on saved with a negative number of extra delivery days is treated as no extra days. It was being stored as that many days later, so an add-on meant to speed delivery up slowed it down.
+* Fix      - A service created through the API, an import or a migration is held as a draft until it meets the same publishing checklist the wizard applies, instead of going live incomplete and purchasable.
+* Fix      - The service editor no longer tells a site owner that a published service is being held as a draft. It now says the service is live and lists what it is still missing.
 * Dev      - The REST catalogue's version is taken from the plugin itself rather than a value kept by hand, which had left it a release behind.
+* Dev      - The REST catalogue documents the period parameter on the earnings and analytics routes, including every value it accepts. Clients generated from the published document were rejecting valid values.
 * Fix      - A service using only the Basic package can be published. Switched-off Standard and Premium tiers were being validated and their empty fields reported against Basic.
 * Fix      - A Standard or Premium tier that is switched on but left empty is refused, on the Pricing step and at Publish.
 * Fix      - Services awaiting approval no longer go live when a vendor publishes from the dashboard. Moderation now applies however a service is published, and services already published without approval return to the review queue on upgrade.
