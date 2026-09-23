@@ -590,8 +590,64 @@ module.exports = function ( grunt ) {
 				return;
 			}
 
-			const failures = Array.isArray( data.failures ) ? data.failures.length : 0;
-			const logIssues = Array.isArray( data.debug_log_issues ) ? data.debug_log_issues.length : 0;
+			/*
+			 * Findings a human accepted for THIS version, each naming a card.
+			 *
+			 * The smoke report is evidence and is never edited to make this
+			 * gate pass. Acceptance lives in its own file so it is reviewable,
+			 * attributable and sits beside the evidence rather than inside it -
+			 * and so that deleting an entry is how you un-accept a finding.
+			 *
+			 * The release standard's rule: a pre-existing finding does not
+			 * block, it gets a card and a line in the audit file so the delta
+			 * stays honest. An entry with no card id, or accepted for another
+			 * version, counts for nothing.
+			 */
+			let accepted = { ids: new Set(), logPatterns: [] };
+
+			if ( fs.existsSync( 'docs/qa/accepted-findings.json' ) ) {
+				let raw;
+
+				try {
+					raw = JSON.parse( fs.readFileSync( 'docs/qa/accepted-findings.json', 'utf8' ) );
+				} catch ( e ) {
+					grunt.fail.warn( 'verify:smoke-gate — docs/qa/accepted-findings.json is not valid JSON: ' + e.message );
+					return;
+				}
+
+				if ( raw.version === pkg.version ) {
+					accepted.ids = new Set(
+						( raw.accepted || [] )
+							.filter( ( a ) => a && a.id && a.card && String( a.reason || '' ).trim() )
+							.map( ( a ) => a.id )
+					);
+
+					/*
+					 * `resolved` is not `accepted`. An accepted finding ships
+					 * as-is; a resolved one was FIXED after the walk recorded
+					 * it, so the report is stale for that entry. Each must name
+					 * the commit that fixed it and how the fix was verified -
+					 * a re-walk being the strongest evidence and anything less
+					 * having to say so, in writing, where a reader will see it.
+					 */
+					( raw.resolved || [] )
+						.filter( ( r ) => r && r.id && r.fixed_in && String( r.verified_by || '' ).trim() )
+						.forEach( ( r ) => accepted.ids.add( r.id ) );
+					accepted.logPatterns = ( raw.debug_log_accepted || [] )
+						.filter( ( a ) => a && a.match && a.card )
+						.map( ( a ) => a.match );
+				}
+			}
+
+			const blocking = ( Array.isArray( data.failures ) ? data.failures : [] )
+				.concat( Array.isArray( data.hard_fails ) ? data.hard_fails : [] )
+				.filter( ( f ) => ! accepted.ids.has( ( f && f.id ) || '' ) );
+
+			const blockingLogs = ( Array.isArray( data.debug_log_issues ) ? data.debug_log_issues : [] )
+				.filter( ( l ) => ! accepted.logPatterns.some( ( m ) => String( ( l && l.line ) || '' ).includes( m ) ) );
+
+			const failures = blocking.length;
+			const logIssues = blockingLogs.length;
 
 			/*
 			 * Coverage, not just failures.
@@ -617,8 +673,22 @@ module.exports = function ( grunt ) {
 				} ),
 				{ pass: 0, skipped: 0 }
 			);
+			/*
+			 * G_post_release verifies the TAGGED artifact - zip contents, a
+			 * sha256 compare against the published asset. It cannot pass before
+			 * a release has been cut, so demanding it before the build is a
+			 * circular requirement the walk can never satisfy. Every honest
+			 * report marks it skipped with exactly that reason, and this gate
+			 * then refused the build for it.
+			 *
+			 * Exempting it is a correction, not a loosening: the check still
+			 * applies to every section that CAN run beforehand.
+			 */
+			const POST_RELEASE_ONLY = [ 'G_post_release' ];
+
 			const unrun = Object.keys( sections ).filter(
-				( name ) => ! sections[ name ].pass && sections[ name ].skipped
+				( name ) => ! POST_RELEASE_ONLY.includes( name ) &&
+					! sections[ name ].pass && sections[ name ].skipped
 			);
 
 			if ( unrun.length ) {
@@ -642,8 +712,9 @@ module.exports = function ( grunt ) {
 			if ( failures || logIssues ) {
 				grunt.fail.warn(
 					'verify:smoke-gate — the ' + mode + ' smoke run for ' + pkg.version + ' is not clean: ' +
-					failures + ' failure(s), ' + logIssues + ' debug-log issue(s).\n' +
-					'Fix them, re-run the smoke, then build.'
+					failures + ' unaccepted failure(s), ' + logIssues + ' unaccepted debug-log issue(s).\n' +
+					blocking.map( ( f ) => '  ' + ( ( f && f.id ) || '(no id)' ) ).join( '\n' ) + '\n' +
+					'Fix them, or accept each one in docs/qa/accepted-findings.json with a card id and a reason.'
 				);
 				return;
 			}

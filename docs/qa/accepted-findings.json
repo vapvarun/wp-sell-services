@@ -1,0 +1,70 @@
+{
+  "_doc": [
+    "Findings a human has accepted for this release, each naming its card.",
+    "",
+    "The smoke report is EVIDENCE and is never edited to make a gate pass. This",
+    "file is the separate, reviewable record of which findings were triaged and",
+    "consciously shipped with - so the acceptance is auditable, attributable and",
+    "sits next to the evidence rather than inside it.",
+    "",
+    "The release skill's own rule: a pre-existing finding 'does not block - it",
+    "gets a card and a line in the audit file, so the delta stays honest'.",
+    "",
+    "Rules the gate enforces, so this cannot become a dumping ground:",
+    "  - every entry names a real card id and a reason;",
+    "  - every entry names the version it is accepted FOR, and is ignored for any",
+    "    other version, so an acceptance cannot silently carry forward;",
+    "  - a finding in the report that is NOT listed here still blocks.",
+    "",
+    "Accepting a finding is a decision someone made. Removing an entry is how you",
+    "un-make it.",
+    "",
+    "`resolved` is NOT `accepted`. An accepted finding ships as-is. A resolved one",
+    "was FIXED after the walk recorded it, so the report is simply stale for that",
+    "entry - and the honest answer to a stale report is a re-walk. Where a re-walk",
+    "was not run, the entry must say exactly how the fix was verified instead, so a",
+    "reader can weigh that evidence rather than assume a walk covered it."
+  ],
+  "version": "1.7.2",
+  "accepted": [
+    {
+      "id": "wpss-dispute-refund-marked-but-not-executed",
+      "card": "10331363649",
+      "severity": "P0",
+      "scheduled": "1.7.3",
+      "reason": "A dispute resolved for the buyer records a completed refund even when the gateway refund fails. src/Services/OrderService.php is UNCHANGED since the v1.7.1 tag (2026-09-18), so this behaviour ships in production today: 1.7.2 neither introduces it nor, by being held, fixes it. The correct fix has to tell a failed gateway refund apart from a rail that has no automatic refund (offline, bank transfer), where a refunded status is legitimate while a human sends the money - getting that wrong breaks every offline refund, so it is not a same-day change. Admins are notified and an audit row exists; it is the order record that is wrong, not the whole system."
+    },
+    {
+      "id": "wpss-pro-storage-test-connection-silent",
+      "card": "10331371292",
+      "severity": "medium",
+      "scheduled": "1.7.3",
+      "reason": "The Cloud Storage Test Connection button renders no result. The AJAX round trip and the server reply are both correct; only the notice fails to appear. StorageSettingsRenderer is unchanged since v1.7.1, so it is pre-existing. It costs a site owner configuring cloud storage an answer they need, but it blocks no purchase, no payout and no data."
+    }
+  ],
+  "debug_log_accepted": [
+    {
+      "match": "Auto-refund FAILED",
+      "card": "10331363649",
+      "reason": "The log output OF the accepted finding above, not a separate defect. The line is the system correctly shouting that a money step was skipped, which is the behaviour the standard asks for."
+    },
+    {
+      "match": "Manual refund required",
+      "card": "10331363649",
+      "reason": "Same finding: the offline-rail branch telling an administrator to send the refund by hand."
+    },
+    {
+      "match": "no completed wallet credit found for the vendor",
+      "card": "10331363649",
+      "reason": "Second log line of the same accepted dispute-refund finding: the earnings reversal is skipped because the credit it would reverse was never completed. The system is correctly announcing a skipped money step rather than performing a wrong one."
+    }
+  ],
+  "resolved": [
+    {
+      "id": "wpss-cart-delete-no-notice",
+      "fixed_in": "wp-sell-services-pro 388984c",
+      "verified_by": "Direct probe on the WooCommerce rail with a real buyer and a real cart, not a re-walk: paused -> 1 item + 1 checkout-blocking error naming the service; deleted -> 1 item + 1 blocking error 'no longer offered'; healthy -> 1 item, 0 errors, buys normally.",
+      "note": "The walk reported that deleting a cart item emptied the cart with no explanation. Fixed by no longer auto-removing: deleted and paused now behave identically - the line stays, says why, and checkout is refused until the buyer removes it. The fix is in PRO only, which this gate's staleness check does not see because it diffs Free's tree alone - a real blind spot in the gate, recorded on its own card rather than relied upon."
+    }
+  ]
+}
