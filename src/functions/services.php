@@ -344,7 +344,7 @@ function wpss_normalize_service_addons( array $raw ): array {
 			'price'               => (float) ( $addon['price'] ?? 0 ),
 
 			/*
-			 * max(0, ...) - never absint().
+			 * Clamp, never absint().
 			 *
 			 * absint( -2 ) is 2, so an add-on entered as "deliver two days
 			 * SOONER" was stored as "two days LATER" and the buyer paid extra
@@ -1378,4 +1378,77 @@ function wpss_user_can_feature_service( int $service_id = 0 ): bool {
 	 * @param int  $service_id Service post ID.
 	 */
 	return (bool) apply_filters( 'wpss_user_can_feature_service', $can, $service_id );
+}
+
+/**
+ * A buyer's cart, with items whose service is no longer purchasable removed.
+ *
+ * Adding to the cart validates properly - add_to_cart() requires the service
+ * to exist, be a wpss_service, and be published. Nothing re-checked on the way back out, and
+ * ten call sites read `_wpss_cart` straight from user meta, so an item whose
+ * service was deleted, trashed or paused AFTER it was added survived, rendered
+ * and could be bought.
+ *
+ * It was bought. A 2026-09-23 smoke left this behind:
+ *
+ *     order #583  service_id=1604  total=0.000  status=pending_requirements
+ *
+ * Service 1604 no longer existed. The platform created a real order row for
+ * it, at zero, parked in a status that waits on the buyer forever. On a live
+ * marketplace the same thing happens when a vendor simply PAUSES a service -
+ * a documented feature - and the vendor receives an order they cannot fulfil
+ * for a price that never reached them (Basecamp 10330917388).
+ *
+ * Guarding the cart endpoint alone would have fixed the screen and left the
+ * checkout path that actually creates the order untouched, so the check lives
+ * here and every reader calls it.
+ *
+ * @since 1.7.2
+ *
+ * @param  int  $user_id     Buyer.
+ * @param  bool $keep_paused Keep paused/unpublished items, marked unavailable,
+ *                           so the buyer is told rather than watching the cart
+ *                           empty itself. Deleted services are always dropped -
+ *                           there is nothing to come back to. Checkout passes
+ *                           false: an unavailable item must never reach an order.
+ * @return array<string, array<string, mixed>> Cart items keyed as stored.
+ */
+function wpss_get_user_cart( int $user_id, bool $keep_paused = false ): array {
+	$cart = get_user_meta( $user_id, '_wpss_cart', true );
+
+	if ( ! is_array( $cart ) ) {
+		return array();
+	}
+
+	$out     = array();
+	$changed = false;
+
+	foreach ( $cart as $key => $item ) {
+		$service = get_post( (int) ( $item['service_id'] ?? 0 ) );
+
+		if ( ! $service || 'wpss_service' !== $service->post_type ) {
+			$changed = true;
+			continue;
+		}
+
+		if ( 'publish' !== $service->post_status ) {
+			if ( ! $keep_paused ) {
+				$changed = true;
+				continue;
+			}
+
+			$item['unavailable']        = true;
+			$item['unavailable_reason'] = __( 'This service is not currently available.', 'wp-sell-services' );
+		}
+
+		$out[ $key ] = $item;
+	}
+
+	// Persist only the removal of genuinely dead rows, so a paused service
+	// coming back does not find the buyer's cart already emptied.
+	if ( $changed && ! $keep_paused ) {
+		update_user_meta( $user_id, '_wpss_cart', $out );
+	}
+
+	return $out;
 }

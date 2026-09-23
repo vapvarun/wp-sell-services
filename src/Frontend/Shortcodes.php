@@ -1686,11 +1686,7 @@ class Shortcodes {
 				. '<p class="wpss-alert">' . esc_html__( 'Please log in to view your cart.', 'wp-sell-services' ) . '</p>';
 		}
 
-		$cart_items = get_user_meta( get_current_user_id(), '_wpss_cart', true );
-		if ( ! is_array( $cart_items ) ) {
-			$cart_items = array();
-		}
-
+		$cart_items = wpss_get_user_cart( get_current_user_id(), true );
 		ob_start();
 		wpss_get_template( 'cart/cart.php', array( 'cart_items' => $cart_items ) );
 		return ob_get_clean();

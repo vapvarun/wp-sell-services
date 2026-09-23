@@ -39,6 +39,7 @@ class ServiceMetabox {
 		// on which class registered first, and an invalid service could be
 		// demoted here then re-published a moment later in the same request.
 		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'enforce_publish_rules' ), 99, 2 );
+		add_action( 'pre_post_update', array( $this, 'remember_status_before_save' ), 10, 1 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_notices', array( $this, 'limit_notice' ) );
 	}
@@ -992,6 +993,50 @@ class ServiceMetabox {
 	 * @param \WP_Post $post    Post object.
 	 * @return void
 	 */
+	/**
+	 * Status as stored before the current request, keyed by post id.
+	 *
+	 * @var array<int, string>
+	 */
+	private static array $status_before_save = array();
+
+	/**
+	 * Record what the service's status was BEFORE this request changed it.
+	 *
+	 * The pre_post_update hook runs inside wp_insert_post() before the row is
+	 * written, so get_post_status() here still returns the stored value. save_post - and
+	 * therefore enforce_publish_rules() - runs after, when that value is gone.
+	 *
+	 * This is what makes "already live" distinguishable from "going live now",
+	 * which the block editor's two-request publish otherwise hides: by the
+	 * second request the row already reads `publish` either way.
+	 *
+	 * @since 1.7.2
+	 *
+	 * @param  int $post_id Post being updated.
+	 * @return void
+	 */
+	public function remember_status_before_save( int $post_id ): void {
+		if ( ServicePostType::POST_TYPE !== get_post_type( $post_id ) ) {
+			return;
+		}
+
+		self::$status_before_save[ $post_id ] = (string) get_post_status( $post_id );
+	}
+
+	/**
+	 * Keep an incomplete service from GOING live, without taking a live one down.
+	 *
+	 * Runs on an explicit editor save only: Quick Edit, bulk edit, the frontend
+	 * wizard, the REST controllers and the moderation Approve action post no
+	 * `wpss_service_nonce`, so each keeps its own publishing rules.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param  int      $post_id Post ID.
+	 * @param  \WP_Post $post    Post object.
+	 * @return void
+	 */
 	public function enforce_publish_rules( int $post_id, \WP_Post $post ): void {
 		// Same gate as save_meta(): this is the editor's rule, so it applies only
 		// to an editor save. Re-checked here because this runs on its own hook.
@@ -1024,6 +1069,37 @@ class ServiceMetabox {
 		);
 
 		if ( empty( $errors ) ) {
+			return;
+		}
+
+		/*
+		 * A service that was ALREADY live stays live.
+		 *
+		 * Until 1.7.2 this demoted any published service failing the checklist,
+		 * on every save. The reasoning was sound as far as it went - one rule,
+		 * always applied, protects buyers from incomplete listings - but the
+		 * cost lands on the wrong person. The checklist is enforced at save
+		 * time, not retroactively, so a site running since before a rule
+		 * existed holds services that are live, selling, and non-compliant. The
+		 * owner opens one to fix a typo, presses Save, and their listing leaves
+		 * the storefront with no warning. They may not notice for days, and
+		 * nothing tells the buyers either.
+		 *
+		 * Taking a shop's listing down is the owner's decision to make, not a
+		 * side effect of editing it. So the rule now only blocks something
+		 * GOING live incomplete, which is what it was really for. An already
+		 * live service keeps its status and the metabox banner says plainly
+		 * what it is missing - "This service is live and buyers see it as it
+		 * is." - so the owner is told and chooses when to fix it.
+		 *
+		 * The pre-save status is what makes this reliable; see
+		 * remember_status_before_save() for why the transition itself cannot be
+		 * read here.
+		 */
+		$was = self::$status_before_save[ $post_id ] ?? '';
+		unset( self::$status_before_save[ $post_id ] );
+
+		if ( 'publish' === $was ) {
 			return;
 		}
 

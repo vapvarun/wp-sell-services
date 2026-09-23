@@ -121,8 +121,7 @@ class CheckoutIntentService {
 	 * @return CheckoutIntent|\WP_Error
 	 */
 	private function resolve_cart( int $buyer_id ) {
-		$cart = get_user_meta( $buyer_id, '_wpss_cart', true );
-		$cart = is_array( $cart ) ? $cart : array();
+		$cart = wpss_get_user_cart( (int) $buyer_id );
 
 		if ( empty( $cart ) ) {
 			return new \WP_Error( 'wpss_empty_cart', __( 'Your cart is empty.', 'wp-sell-services' ) );
@@ -590,8 +589,8 @@ class CheckoutIntentService {
 		// on service_id + package_id) and leave any unrelated items intact.
 		// Without this, a single Stripe checkout left the item in the cart —
 		// PayPal and Offline already cleared it (re-checkout risk).
-		$cart = get_user_meta( $intent->buyer_id, '_wpss_cart', true );
-		if ( is_array( $cart ) && ! empty( $cart ) ) {
+		$cart = wpss_get_user_cart( (int) $intent->buyer_id );
+		if ( ! empty( $cart ) ) {
 			foreach ( $cart as $key => $item ) {
 				if ( (int) ( $item['service_id'] ?? 0 ) === $intent->service_id
 					&& (int) ( $item['package_id'] ?? 0 ) === $intent->package_id ) {

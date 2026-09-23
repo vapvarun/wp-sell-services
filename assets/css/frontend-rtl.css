@@ -4626,3 +4626,14 @@ a.wpss-order-filter.is-active:focus {
 	font-size: 1rem;
 	font-weight: 600;
 }
+
+/* Earnings: one plain line saying how the tiles relate.
+   The figures are each correct and do not sum, which reads as an error unless
+   it is explained. Muted so it sits under the tiles without competing. */
+.wpss-earnings-explainer {
+	margin: 12px 0 0;
+	color: var(--wpss-text-muted, #646970);
+	font-size: 13px;
+	line-height: 1.6;
+	max-width: 70ch;
+}

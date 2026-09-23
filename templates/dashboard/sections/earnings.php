@@ -175,22 +175,22 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 				if ( $available_balance < 0 ) {
 					esc_html_e( 'Balance to clear', 'wp-sell-services' );
 				} else {
-					esc_html_e( 'Available for Withdrawal', 'wp-sell-services' );
+					esc_html_e( 'Available to withdraw', 'wp-sell-services' );
 				}
 				?>
 			</span>
 		</div>
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $earnings['pending_clearance'] ) ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Pending Clearance', 'wp-sell-services' ); ?></span>
+			<span class="wpss-stat-card__label"><?php esc_html_e( 'Clearing from open orders', 'wp-sell-services' ); ?></span>
 		</div>
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $earnings['pending_withdrawal'] ) ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Pending Withdrawal', 'wp-sell-services' ); ?></span>
+			<span class="wpss-stat-card__label"><?php esc_html_e( 'Withdrawal in progress', 'wp-sell-services' ); ?></span>
 		</div>
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $earnings['withdrawn'] ) ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Withdrawn', 'wp-sell-services' ); ?></span>
+			<span class="wpss-stat-card__label"><?php esc_html_e( 'Total paid out to you', 'wp-sell-services' ); ?></span>
 		</div>
 		<?php
 		/*
@@ -211,13 +211,29 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 		?>
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $earnings['total_earned'] ) ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Total Earned (All Time)', 'wp-sell-services' ); ?></span>
+			<span class="wpss-stat-card__label"><?php esc_html_e( 'Total earned so far', 'wp-sell-services' ); ?></span>
 		</div>
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( $earnings['completed_orders'] ); ?></span>
 			<span class="wpss-stat-card__label"><?php esc_html_e( 'Completed Orders', 'wp-sell-services' ); ?></span>
 		</div>
 	</div>
+
+	<?php
+	/*
+	 * Say how the figures relate to each other.
+	 *
+	 * The tiles are each correct and they do not add up, which is worse than
+	 * being wrong: a vendor cannot tell whether they are being paid properly.
+	 * "Clearing from open orders" is money not yet credited, so it is NOT part
+	 * of "Total earned so far" - reading them as parts of one sum is the
+	 * obvious interpretation and the wrong one. One plain sentence costs
+	 * nothing and removes the doubt.
+	 */
+	?>
+	<p class="wpss-earnings-explainer">
+		<?php esc_html_e( 'Money clearing from open orders is not counted as earned until the order completes. Total earned so far is everything credited to you after any refunds, and is not reduced by withdrawals.', 'wp-sell-services' ); ?>
+	</p>
 
 	<?php
 	/**
