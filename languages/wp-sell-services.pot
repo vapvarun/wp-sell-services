@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-23T06:02:35+00:00\n"
+"POT-Creation-Date: 2026-09-23T08:06:03+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -309,7 +309,7 @@ msgid "Page Created!"
 msgstr ""
 
 #: src/Admin/Admin.php:1337
-#: src/Admin/Settings.php:3410
+#: src/Admin/Settings.php:3430
 msgid "Create Page"
 msgstr ""
 
@@ -885,7 +885,7 @@ msgid "Delivered"
 msgstr ""
 
 #: src/Admin/Admin.php:2063
-#: src/Admin/Settings.php:3903
+#: src/Admin/Settings.php:3923
 #: src/functions/misc.php:153
 #: src/functions/orders.php:114
 #: src/Models/Notification.php:270
@@ -3079,7 +3079,7 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:377
 #: src/Admin/Pages/ServiceModerationPage.php:1308
 #: src/Admin/Settings.php:971
-#: src/Admin/Settings.php:3921
+#: src/Admin/Settings.php:3941
 msgid "Service Moderation"
 msgstr ""
 
@@ -3221,8 +3221,8 @@ msgstr ""
 #: src/Admin/Pages/ServiceModerationPage.php:579
 #: src/Admin/Pages/VendorsPage.php:912
 #: src/Admin/Pages/VendorsPage.php:1867
-#: src/Admin/Settings.php:3418
-#: src/Admin/Settings.php:3423
+#: src/Admin/Settings.php:3438
+#: src/Admin/Settings.php:3443
 #: src/Admin/Tables/DisputesListTable.php:117
 #: src/Admin/Tables/OrdersListTable.php:119
 #: src/Frontend/Shortcodes.php:900
@@ -4295,7 +4295,7 @@ msgid "Availability"
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1751
-#: src/Admin/Settings.php:3310
+#: src/Admin/Settings.php:3330
 msgid "Available"
 msgstr ""
 
@@ -5016,7 +5016,7 @@ msgid "SYSTEM"
 msgstr ""
 
 #: src/Admin/Settings.php:272
-#: src/Admin/Settings.php:2704
+#: src/Admin/Settings.php:2724
 msgid "Reveal"
 msgstr ""
 
@@ -5231,7 +5231,7 @@ msgid "Tax Label"
 msgstr ""
 
 #: src/Admin/Settings.php:884
-#: src/Admin/Settings.php:3615
+#: src/Admin/Settings.php:3635
 #: src/functions/money.php:695
 #: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1614
 msgid "Tax"
@@ -5890,211 +5890,215 @@ msgid "Creates 20 sample services across 6 categories with 4 demo vendors."
 msgstr ""
 
 #. translators: %s: completion date
-#: src/Admin/Settings.php:2613
+#: src/Admin/Settings.php:2629
 #, php-format
 msgid "Setup wizard was completed on %s."
 msgstr ""
 
-#: src/Admin/Settings.php:2620
+#: src/Admin/Settings.php:2636
+msgid "Setup wizard has been completed."
+msgstr ""
+
+#: src/Admin/Settings.php:2640
 msgid "The setup wizard has not been completed yet."
 msgstr ""
 
-#: src/Admin/Settings.php:2624
+#: src/Admin/Settings.php:2644
 msgid "Re-Run Setup Wizard"
 msgstr ""
 
-#: src/Admin/Settings.php:2624
+#: src/Admin/Settings.php:2644
 msgid "Run Setup Wizard"
 msgstr ""
 
-#: src/Admin/Settings.php:2686
+#: src/Admin/Settings.php:2706
 msgid "••••••••••••  (saved — leave blank to keep)"
 msgstr ""
 
-#: src/Admin/Settings.php:2687
+#: src/Admin/Settings.php:2707
 msgid "Not set"
 msgstr ""
 
-#: src/Admin/Settings.php:2712
-#: src/Admin/Settings.php:2724
+#: src/Admin/Settings.php:2732
+#: src/Admin/Settings.php:2744
 msgid "Configured"
 msgstr ""
 
 #. translators: %s: non-secret key prefix, e.g. whsec_
-#: src/Admin/Settings.php:2716
+#: src/Admin/Settings.php:2736
 #, php-format
 msgid "A secret starting with %s is stored. Type a new value to replace it."
 msgstr ""
 
-#: src/Admin/Settings.php:2725
+#: src/Admin/Settings.php:2745
 msgid "A secret is stored. Type a new value to replace it."
 msgstr ""
 
-#: src/Admin/Settings.php:2906
+#: src/Admin/Settings.php:2926
 msgid "Internal Wallet"
 msgstr ""
 
-#: src/Admin/Settings.php:2924
+#: src/Admin/Settings.php:2944
 msgid "Vendor earnings, balances and withdrawals already work with no wallet plugin installed - that is the Internal Wallet below. A provider does not add the wallet; it changes where the balance is held, so it can sit alongside one you already run. Each appears here only while its plugin is active."
 msgstr ""
 
-#: src/Admin/Settings.php:2954
+#: src/Admin/Settings.php:2974
 msgid "Price Decimal Places"
 msgstr ""
 
-#: src/Admin/Settings.php:2959
+#: src/Admin/Settings.php:2979
 msgid "Decimal places used when formatting prices."
 msgstr ""
 
-#: src/Admin/Settings.php:2966
+#: src/Admin/Settings.php:2986
 msgid "Minimum Order Amount"
 msgstr ""
 
-#: src/Admin/Settings.php:2973
+#: src/Admin/Settings.php:2993
 msgid "Smallest order total buyers can place."
 msgstr ""
 
-#: src/Admin/Settings.php:2980
+#: src/Admin/Settings.php:3000
 msgid "Maximum Order Amount"
 msgstr ""
 
-#: src/Admin/Settings.php:2987
+#: src/Admin/Settings.php:3007
 msgid "Largest order total buyers can place."
 msgstr ""
 
-#: src/Admin/Settings.php:2996
+#: src/Admin/Settings.php:3016
 msgid "Max Extension Days"
 msgstr ""
 
-#: src/Admin/Settings.php:3001
+#: src/Admin/Settings.php:3021
 msgid "Longest deadline extension a vendor can quote on an order."
 msgstr ""
 
-#: src/Admin/Settings.php:3008
+#: src/Admin/Settings.php:3028
 msgid "Buyer Request Expiry (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:3013
+#: src/Admin/Settings.php:3033
 msgid "Open buyer requests expire after this many days."
 msgstr ""
 
-#: src/Admin/Settings.php:3020
+#: src/Admin/Settings.php:3040
 msgid "Dispute Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:3028
+#: src/Admin/Settings.php:3048
 msgid "Response Window (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:3033
+#: src/Admin/Settings.php:3053
 msgid "Days the other party has to respond to a dispute before it can escalate."
 msgstr ""
 
-#: src/Admin/Settings.php:3040
+#: src/Admin/Settings.php:3060
 msgid "Reminder After (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:3045
+#: src/Admin/Settings.php:3065
 msgid "Days of silence before a dispute reminder email is sent."
 msgstr ""
 
-#: src/Admin/Settings.php:3052
+#: src/Admin/Settings.php:3072
 msgid "Auto-Escalate After (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:3057
+#: src/Admin/Settings.php:3077
 msgid "Unresolved disputes escalate to admin review after this many days."
 msgstr ""
 
-#: src/Admin/Settings.php:3064
+#: src/Admin/Settings.php:3084
 msgid "Dispute Notifications Email"
 msgstr ""
 
-#: src/Admin/Settings.php:3070
+#: src/Admin/Settings.php:3090
 msgid "Escalated disputes are sent here. Leave blank to use the site admin email."
 msgstr ""
 
-#: src/Admin/Settings.php:3079
+#: src/Admin/Settings.php:3099
 msgid "Max Portfolio Items"
 msgstr ""
 
-#: src/Admin/Settings.php:3084
+#: src/Admin/Settings.php:3104
 msgid "Portfolio items each vendor can publish."
 msgstr ""
 
-#: src/Admin/Settings.php:3091
+#: src/Admin/Settings.php:3111
 msgid "Max Featured Portfolio Items"
 msgstr ""
 
-#: src/Admin/Settings.php:3096
+#: src/Admin/Settings.php:3116
 msgid "Portfolio items a vendor can mark as featured."
 msgstr ""
 
-#: src/Admin/Settings.php:3105
+#: src/Admin/Settings.php:3125
 msgid "Audit Log Retention (Days)"
 msgstr ""
 
-#: src/Admin/Settings.php:3110
+#: src/Admin/Settings.php:3130
 msgid "Audit log entries older than this are pruned. 0 keeps entries forever."
 msgstr ""
 
-#: src/Admin/Settings.php:3116
+#: src/Admin/Settings.php:3136
 msgid "Order Confirmation Page"
 msgstr ""
 
-#: src/Admin/Settings.php:3116
+#: src/Admin/Settings.php:3136
 msgid "Custom thank-you page buyers land on after checkout. Leave unset to use the default order view."
 msgstr ""
 
-#: src/Admin/Settings.php:3117
+#: src/Admin/Settings.php:3137
 msgid "Terms & Conditions Page"
 msgstr ""
 
-#: src/Admin/Settings.php:3117
+#: src/Admin/Settings.php:3137
 msgid "Map your own page - we never publish one. Linked from checkout and exposed to API clients. Privacy Policy comes from Settings > Privacy."
 msgstr ""
 
-#: src/Admin/Settings.php:3204
+#: src/Admin/Settings.php:3224
 msgid "— Not set —"
 msgstr ""
 
-#: src/Admin/Settings.php:3304
+#: src/Admin/Settings.php:3324
 msgid "Auto-detect (recommended)"
 msgstr ""
 
-#: src/Admin/Settings.php:3310
+#: src/Admin/Settings.php:3330
 msgid "Not Installed"
 msgstr ""
 
-#: src/Admin/Settings.php:3352
+#: src/Admin/Settings.php:3372
 msgid "Currently Active"
 msgstr ""
 
-#: src/Admin/Settings.php:3358
+#: src/Admin/Settings.php:3378
 msgid "No e-commerce platform detected. Please check your configuration."
 msgstr ""
 
-#: src/Admin/Settings.php:3373
+#: src/Admin/Settings.php:3393
 msgid "Select which e-commerce platform should handle service checkouts. Standalone checkout is included. Pro adds WooCommerce, EDD and FluentCart."
 msgstr ""
 
-#: src/Admin/Settings.php:3396
+#: src/Admin/Settings.php:3416
 msgid "— Select —"
 msgstr ""
 
-#: src/Admin/Settings.php:3898
+#: src/Admin/Settings.php:3918
 #: src/functions/misc.php:148
 #: src/Models/Notification.php:264
 msgid "New Order"
 msgstr ""
 
-#: src/Admin/Settings.php:3899
+#: src/Admin/Settings.php:3919
 #: src/Models/Notification.php:268
 #: src/Services/NotificationService.php:536
 msgid "Order Completed"
 msgstr ""
 
-#: src/Admin/Settings.php:3900
+#: src/Admin/Settings.php:3920
 #: src/Models/Notification.php:269
 #: src/Services/EmailService.php:1465
 #: src/Services/NotificationService.php:657
@@ -6104,7 +6108,7 @@ msgstr ""
 msgid "Order Cancelled"
 msgstr ""
 
-#: src/Admin/Settings.php:3901
+#: src/Admin/Settings.php:3921
 #: src/functions/orders.php:113
 #: src/Models/ServiceOrder.php:642
 #: src/Services/EmailService.php:1402
@@ -6114,27 +6118,27 @@ msgstr ""
 msgid "Cancellation Requested"
 msgstr ""
 
-#: src/Admin/Settings.php:3902
+#: src/Admin/Settings.php:3922
 #: src/functions/misc.php:151
 msgid "Delivery Submitted"
 msgstr ""
 
-#: src/Admin/Settings.php:3904
+#: src/Admin/Settings.php:3924
 #: src/functions/misc.php:150
 #: src/Models/Notification.php:272
 msgid "New Message"
 msgstr ""
 
-#: src/Admin/Settings.php:3905
+#: src/Admin/Settings.php:3925
 msgid "Vendor Direct Message"
 msgstr ""
 
-#: src/Admin/Settings.php:3906
+#: src/Admin/Settings.php:3926
 #: src/functions/misc.php:154
 msgid "New Review"
 msgstr ""
 
-#: src/Admin/Settings.php:3907
+#: src/Admin/Settings.php:3927
 #: src/functions/misc.php:155
 #: src/Models/Notification.php:274
 #: src/Services/EmailService.php:1533
@@ -6142,87 +6146,87 @@ msgstr ""
 msgid "Dispute Opened"
 msgstr ""
 
-#: src/Admin/Settings.php:3908
+#: src/Admin/Settings.php:3928
 #: src/Services/NotificationService.php:1416
 msgid "Withdrawal Requested"
 msgstr ""
 
-#: src/Admin/Settings.php:3909
+#: src/Admin/Settings.php:3929
 #: src/functions/misc.php:161
 #: src/Models/Notification.php:281
 #: src/Services/EmailService.php:1808
 msgid "Withdrawal Approved"
 msgstr ""
 
-#: src/Admin/Settings.php:3910
+#: src/Admin/Settings.php:3930
 #: src/functions/misc.php:162
 #: src/Models/Notification.php:282
 #: src/Services/EmailService.php:1808
 msgid "Withdrawal Rejected"
 msgstr ""
 
-#: src/Admin/Settings.php:3911
+#: src/Admin/Settings.php:3931
 msgid "Proposal Submitted"
 msgstr ""
 
-#: src/Admin/Settings.php:3912
+#: src/Admin/Settings.php:3932
 #: src/Models/Notification.php:278
 msgid "Proposal Accepted"
 msgstr ""
 
-#: src/Admin/Settings.php:3913
+#: src/Admin/Settings.php:3933
 msgid "Tip Received"
 msgstr ""
 
-#: src/Admin/Settings.php:3914
+#: src/Admin/Settings.php:3934
 msgid "Milestone Proposed"
 msgstr ""
 
-#: src/Admin/Settings.php:3915
+#: src/Admin/Settings.php:3935
 msgid "Milestone Paid"
 msgstr ""
 
-#: src/Admin/Settings.php:3916
+#: src/Admin/Settings.php:3936
 msgid "Milestone Delivered"
 msgstr ""
 
-#: src/Admin/Settings.php:3917
+#: src/Admin/Settings.php:3937
 msgid "Milestone Approved"
 msgstr ""
 
-#: src/Admin/Settings.php:3918
+#: src/Admin/Settings.php:3938
 msgid "Extension Proposed"
 msgstr ""
 
-#: src/Admin/Settings.php:3919
+#: src/Admin/Settings.php:3939
 #: src/Models/Notification.php:287
 #: src/Services/ExtensionRequestService.php:341
 msgid "Extension Approved"
 msgstr ""
 
-#: src/Admin/Settings.php:3920
+#: src/Admin/Settings.php:3940
 msgid "Extension Declined"
 msgstr ""
 
-#: src/Admin/Settings.php:3922
+#: src/Admin/Settings.php:3942
 msgid "Review Reply"
 msgstr ""
 
-#: src/Admin/Settings.php:3923
+#: src/Admin/Settings.php:3943
 msgid "Request Expired"
 msgstr ""
 
-#: src/Admin/Settings.php:3924
+#: src/Admin/Settings.php:3944
 #: src/Services/NotificationService.php:1391
 msgid "Dispute Escalated"
 msgstr ""
 
-#: src/Admin/Settings.php:3925
+#: src/Admin/Settings.php:3945
 #: src/Services/NotificationService.php:1404
 msgid "Dispute Cancelled"
 msgstr ""
 
-#: src/Admin/Settings.php:3926
+#: src/Admin/Settings.php:3946
 msgid "Tip Receipt"
 msgstr ""
 
@@ -6602,7 +6606,7 @@ msgstr ""
 #: src/API/ProposalsController.php:633
 #: src/API/ReviewsController.php:1083
 #: src/API/ServicesController.php:235
-#: src/API/ServicesController.php:1413
+#: src/API/ServicesController.php:1451
 #: src/API/VendorsController.php:955
 msgid "Current page."
 msgstr ""
@@ -6617,7 +6621,7 @@ msgstr ""
 #: src/API/ProposalsController.php:639
 #: src/API/ReviewsController.php:1089
 #: src/API/ServicesController.php:241
-#: src/API/ServicesController.php:1418
+#: src/API/ServicesController.php:1456
 #: src/API/VendorsController.php:961
 msgid "Items per page."
 msgstr ""
@@ -6888,7 +6892,7 @@ msgstr ""
 #: src/API/ServicesController.php:498
 #: src/API/ServicesController.php:509
 #: src/API/ServicesController.php:775
-#: src/API/ServicesController.php:899
+#: src/API/ServicesController.php:937
 #: src/Frontend/AjaxHandlers.php:2252
 #: src/Frontend/ServiceWizard.php:245
 #: src/Integrations/Gateways/OfflineGateway.php:761
@@ -7662,7 +7666,7 @@ msgid "Filter by rating."
 msgstr ""
 
 #: src/API/ReviewsController.php:1110
-#: src/API/ServicesController.php:1452
+#: src/API/ServicesController.php:1490
 #: src/API/VendorsController.php:976
 msgid "Order by field."
 msgstr ""
@@ -7719,32 +7723,32 @@ msgstr ""
 msgid "Status must be either publish or draft."
 msgstr ""
 
-#: src/API/ServicesController.php:915
+#: src/API/ServicesController.php:953
 #: src/Frontend/AjaxHandlers.php:2868
 msgid "Failed to delete service."
 msgstr ""
 
-#: src/API/ServicesController.php:1088
+#: src/API/ServicesController.php:1126
 msgid "Failed to create addon."
 msgstr ""
 
-#: src/API/ServicesController.php:1106
-#: src/API/ServicesController.php:1137
+#: src/API/ServicesController.php:1144
+#: src/API/ServicesController.php:1175
 msgid "Addon not found."
 msgstr ""
 
-#: src/API/ServicesController.php:1191
+#: src/API/ServicesController.php:1229
 #: src/Frontend/ServiceWizard.php:233
 #: src/Frontend/ServiceWizard.php:1595
 #: src/Frontend/ServiceWizard.php:1740
 msgid "You have reached the maximum number of services allowed. Please remove an existing service before creating a new one."
 msgstr ""
 
-#: src/API/ServicesController.php:1207
+#: src/API/ServicesController.php:1245
 msgid "You do not have permission to create services."
 msgstr ""
 
-#: src/API/ServicesController.php:1233
+#: src/API/ServicesController.php:1271
 #: src/Frontend/ServiceWizard.php:249
 #: src/Frontend/ServiceWizard.php:1614
 #: src/Frontend/ServiceWizard.php:1789
@@ -7752,66 +7756,66 @@ msgstr ""
 msgid "You do not have permission to edit this service."
 msgstr ""
 
-#: src/API/ServicesController.php:1424
+#: src/API/ServicesController.php:1462
 msgid "Filter by category ID or slug."
 msgstr ""
 
-#: src/API/ServicesController.php:1428
+#: src/API/ServicesController.php:1466
 msgid "Filter by vendor ID."
 msgstr ""
 
-#: src/API/ServicesController.php:1432
+#: src/API/ServicesController.php:1470
 msgid "Search term."
 msgstr ""
 
-#: src/API/ServicesController.php:1440
+#: src/API/ServicesController.php:1478
 msgid "Search term. Alias of `search`, accepted for parity with /search."
 msgstr ""
 
-#: src/API/ServicesController.php:1444
+#: src/API/ServicesController.php:1482
 #: src/Core/AbilitiesRegistrar.php:111
 msgid "Minimum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1448
+#: src/API/ServicesController.php:1486
 #: src/Core/AbilitiesRegistrar.php:115
 msgid "Maximum price filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1458
+#: src/API/ServicesController.php:1496
 msgid "Sort order."
 msgstr ""
 
-#: src/API/ServicesController.php:1464
+#: src/API/ServicesController.php:1502
 msgid "Maximum delivery days filter."
 msgstr ""
 
-#: src/API/ServicesController.php:1469
+#: src/API/ServicesController.php:1507
 msgid "Minimum rating filter (0-5)."
 msgstr ""
 
-#: src/API/ServicesController.php:1491
+#: src/API/ServicesController.php:1529
 #: src/Core/AbilitiesRegistrar.php:231
 msgid "Service title."
 msgstr ""
 
-#: src/API/ServicesController.php:1497
+#: src/API/ServicesController.php:1535
 msgid "Service description."
 msgstr ""
 
-#: src/API/ServicesController.php:1502
+#: src/API/ServicesController.php:1540
 msgid "Service excerpt."
 msgstr ""
 
-#: src/API/ServicesController.php:1507
+#: src/API/ServicesController.php:1545
 msgid "Base price."
 msgstr ""
 
-#: src/API/ServicesController.php:1515
+#: src/API/ServicesController.php:1553
 msgid "Category IDs or slugs."
 msgstr ""
 
-#: src/API/ServicesController.php:1521
+#: src/API/ServicesController.php:1559
 msgid "Tags."
 msgstr ""
 
@@ -13340,11 +13344,11 @@ msgstr ""
 msgid "A service can have at most %1$d %2$s; the extra entries were not saved."
 msgstr ""
 
-#: src/functions/services.php:1475
+#: src/functions/services.php:1490
 msgid "This service is no longer offered."
 msgstr ""
 
-#: src/functions/services.php:1479
+#: src/functions/services.php:1494
 #: templates/cart/cart.php:392
 msgid "This service is not currently available."
 msgstr ""

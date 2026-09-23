@@ -160,6 +160,13 @@
     "endpoints_detail_at": "Counted by agent enumeration of register_rest_route( calls, not by write-manifest.mjs - the generator undercounts because controllers are registered through an array wrapper. 142 = 134 across 23 *Controller.php files + 7 generic routes in API.php + 1 in Frontend/Tour.php. RestController.php is the shared base class and registers none.",
     "recent_additions": [
       {
+        "route": "/wpss/v1/services/{id}",
+        "method": "PUT",
+        "auth": "vendor, own service",
+        "since": "1.7.2",
+        "why": "No route change: a rule change. The publishable checklist runs against the MERGED result, which is what stops a status-less PUT repricing a live listing under the floor (Basecamp 10320551446). Applied alone it also locked out every listing that was already live and already short of the bar - a pre-rule dataset, or a force-publish outside the wizard - which could then not be edited at all, not even in the field that was missing, while the editor and WP-CLI accepted the same edit. An edit to an ALREADY-published service is now refused only for the errors it introduces; errors the listing already carried pass through. Publishing, or any request that sets status, still has to clear the whole checklist."
+      },
+      {
         "route": "/wpss/v1/services/limits",
         "method": "GET",
         "auth": "public",
