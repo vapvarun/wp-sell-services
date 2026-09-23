@@ -2202,6 +2202,39 @@ select.wpss-input option,
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
+	/*
+	 * Stack the value above its label, and let the label wrap.
+	 *
+	 * Same specificity story as the grid rule above, one property along:
+	 * frontend.css sets a bare `.wpss-stat-card { display: flex;
+	 * align-items: center }` and loads after this sheet, so the value and the
+	 * label sat SIDE BY SIDE. In a 125px column at 390px the 28px value took
+	 * almost all of it and the label was squeezed into what was left -
+	 * "Withdrawal in progress" rendered as "With / in pr", "Total earned so
+	 * far" as "Tota / earn / so fa", and one label was reduced to single
+	 * letters. A vendor on a phone could not tell what most of the numbers
+	 * meant.
+	 *
+	 * Scoped to .wpss-dashboard so it outranks the unscoped rule, exactly as
+	 * the grid fix above has to be. min-width: 0 because a flex item will not
+	 * shrink below its content width without it, which is what made the label
+	 * overflow rather than wrap in the first place.
+	 */
+	.wpss-dashboard .wpss-stat-card {
+		display: block;
+	}
+
+	.wpss-dashboard .wpss-stat-card__value,
+	.wpss-dashboard .wpss-stat-card__label {
+		display: block;
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+
+	.wpss-dashboard .wpss-stat-card__value {
+		font-size: 22px;
+	}
+
 	.wpss-order-card {
 		flex-direction: column;
 		align-items: flex-start;

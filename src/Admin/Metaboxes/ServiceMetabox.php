@@ -33,13 +33,7 @@ class ServiceMetabox {
 		add_action( 'add_meta_boxes', array( $this, 'register_metaboxes' ) );
 		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'save_meta' ), 10, 2 );
 
-		// Late, so it is the last word on post_status. The Moderation Status
-		// metabox saves on the same hook at the same priority and maps an
-		// approved service to `publish`; at priority 10 the winner would depend
-		// on which class registered first, and an invalid service could be
-		// demoted here then re-published a moment later in the same request.
-		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'enforce_publish_rules' ), 99, 2 );
-		add_action( 'pre_post_update', array( $this, 'remember_status_before_save' ), 10, 1 );
+		$this->register_publish_guards();
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_notices', array( $this, 'limit_notice' ) );
 	}
@@ -1001,6 +995,55 @@ class ServiceMetabox {
 	private static array $status_before_save = array();
 
 	/**
+	 * Register only the publish rule, on every request.
+	 *
+	 * Separate from init() for the same reason define_moderation_hooks() is
+	 * separate from define_admin_hooks(): that method returns early when
+	 * ! is_admin(), and is_admin() is FALSE during a REST request. The block
+	 * editor publishes over /wp/v2/wpss-services/<id>, so this class was never
+	 * constructed on the path most owners actually use and the rule simply did
+	 * not exist there - a service with no category, a 38-character description
+	 * and no image published cleanly through the native Publish button
+	 * (reproduced 2026-09-23, REST 200).
+	 *
+	 * Called by Plugin::define_publish_rule_hooks() on every request, and by
+	 * init() so a classic-editor load does not register it twice.
+	 *
+	 * @since 1.7.2
+	 *
+	 * @return void
+	 */
+	public function register_publish_guards(): void {
+		/*
+		 * Static, not has_action().
+		 *
+		 * has_action() compares the callable, so a SECOND instance of this class
+		 * registers happily - and both then run. The first consumed the stashed
+		 * pre-save status and returned; the second found no stash, read the
+		 * service as "going live now" and demoted a perfectly good published
+		 * service. Registration is per-request, so a static flag is the right
+		 * shape and cannot be fooled by a new instance.
+		 */
+		static $registered = false;
+
+		if ( $registered ) {
+			return;
+		}
+
+		$registered = true;
+
+		/*
+		 * Late, so it is the last word on post_status. The Moderation Status
+		 * metabox saves on the same hook at the same priority and maps an
+		 * approved service to `publish`; at priority 10 the winner would depend
+		 * on which class registered first, and an invalid service could be
+		 * demoted here then re-published a moment later in the same request.
+		 */
+		add_action( 'save_post_' . ServicePostType::POST_TYPE, array( $this, 'enforce_publish_rules' ), 99, 2 );
+		add_action( 'pre_post_update', array( $this, 'remember_status_before_save' ), 10, 1 );
+	}
+
+	/**
 	 * Record what the service's status was BEFORE this request changed it.
 	 *
 	 * The pre_post_update hook runs inside wp_insert_post() before the row is
@@ -1038,12 +1081,30 @@ class ServiceMetabox {
 	 * @return void
 	 */
 	public function enforce_publish_rules( int $post_id, \WP_Post $post ): void {
-		// Same gate as save_meta(): this is the editor's rule, so it applies only
-		// to an editor save. Re-checked here because this runs on its own hook.
-		if ( ! isset( $_POST['wpss_service_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['wpss_service_nonce'] ), 'wpss_service_meta' ) ) {
-			return;
-		}
-
+		/*
+		 * Deliberately NOT gated on wpss_service_nonce.
+		 *
+		 * It used to be, on the reasoning that this is "the editor's rule" - and
+		 * that made it unreachable from the editor most people actually use. The
+		 * block editor publishes over the REST route the post type registers
+		 * (/wp/v2/wpss-services/<id>) and never posts a classic form, so the
+		 * nonce is absent and the whole check returned early. A service with no
+		 * category, a 38-character description and no image published cleanly
+		 * through the native Publish button: REST 200, post_status=publish.
+		 * Reproduced 2026-09-23.
+		 *
+		 * A nonce is CSRF protection, not authorisation, and it was doing
+		 * neither here - the capability check below is what decides whether this
+		 * user may change this post, and it runs on every path. Dropping the
+		 * nonce condition brings the block editor, Quick Edit, bulk edit, REST
+		 * and WP-CLI under the same rule, which is what "an incomplete service
+		 * must not go live" has to mean to be worth anything.
+		 *
+		 * Nothing legitimately published is at risk: the already-live guard
+		 * further down returns before any demotion. save_meta() keeps its nonce
+		 * check, because writing metabox fields from a request genuinely does
+		 * need CSRF protection.
+		 */
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
@@ -1096,8 +1157,10 @@ class ServiceMetabox {
 		 * remember_status_before_save() for why the transition itself cannot be
 		 * read here.
 		 */
+		// Read, never consume: if anything else ends up reading this in the same
+		// request it must get the same answer, not an empty string that looks
+		// like "this was never live".
 		$was = self::$status_before_save[ $post_id ] ?? '';
-		unset( self::$status_before_save[ $post_id ] );
 
 		if ( 'publish' === $was ) {
 			return;

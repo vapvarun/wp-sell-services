@@ -84,11 +84,43 @@ class RenderSurfaceAuthorityTest extends TestCase {
 		);
 	}
 
+	/** Is this surface declared in the paired plugin's manifest? */
+	private function declared_by_pair( string $name ): bool {
+		$paired = dirname( __DIR__, 3 ) . '/wp-sell-services-pro/audit/render-authority.json';
+
+		if ( ! file_exists( $paired ) ) {
+			return false;
+		}
+
+		$decoded = json_decode( (string) file_get_contents( $paired ), true );
+
+		return isset( $decoded['shortcodes'][ $name ] ) || isset( $decoded['blocks'][ $name ] );
+	}
+
 	public function test_every_render_surface_is_declared(): void {
-		$undeclared = array_merge(
+		$missing = array_merge(
 			array_diff( $this->live_shortcodes(), array_keys( (array) ( $this->manifest['shortcodes'] ?? array() ) ) ),
 			array_diff( $this->live_blocks(), array_keys( (array) ( $this->manifest['blocks'] ?? array() ) ) )
 		);
+
+		/*
+		 * A surface the PAIRED plugin declares is not this plugin's omission.
+		 *
+		 * Same rule the route guard already applies. Pro registers
+		 * wpss_currency_switcher, and on a combo install it is live here - but
+		 * it belongs in Pro's manifest, not Free's. Without this, correcting
+		 * that ownership made the combo install fail for the very reason the
+		 * correction was right.
+		 */
+		$undeclared = array();
+
+		foreach ( $missing as $name ) {
+			if ( $this->declared_by_pair( (string) $name ) ) {
+				continue;
+			}
+
+			$undeclared[] = $name;
+		}
 
 		$this->assertSame(
 			array(),

@@ -2323,6 +2323,17 @@ final class Plugin {
 	 */
 	private function define_moderation_hooks(): void {
 		( new \WPSellServices\Admin\Pages\ServiceModerationPage() )->register_guards();
+
+		/*
+		 * The publish checklist has the same requirement as moderation and was
+		 * not given the same treatment: define_admin_hooks() returns early when
+		 * ! is_admin(), and is_admin() is FALSE during a REST request. The block
+		 * editor publishes over /wp/v2/wpss-services/<id>, so ServiceMetabox was
+		 * never constructed there and the rule did not exist on the path most
+		 * owners use. An incomplete service published through the native Publish
+		 * button with a 200 (reproduced 2026-09-23).
+		 */
+		( new \WPSellServices\Admin\Metaboxes\ServiceMetabox() )->register_publish_guards();
 	}
 
 	/**
