@@ -1093,8 +1093,29 @@ class ServiceMetabox {
 		 * The plugin's own class carries the same left-border treatment from
 		 * admin.css and nothing relocates it.
 		 */
+		/*
+		 * Two states, two sentences.
+		 *
+		 * This always said "This service stays a draft until: ..." - including
+		 * on rows whose post_status is already `publish`. For a live service
+		 * that sentence is simply false, and it is false in the dangerous
+		 * direction: it tells the owner the listing is safely held back while
+		 * buyers can see it and buy it. A published service with an incomplete
+		 * checklist reached this branch and was reported as a draft
+		 * (Basecamp 10330733407).
+		 *
+		 * A service can be published and incomplete because the checklist is
+		 * enforced at save time, not retroactively - a row published before a
+		 * rule existed, or imported, keeps its status.
+		 */
+		$is_live = in_array( $post->post_status, array( 'publish', 'pending' ), true );
+
 		echo '<div class="wpss-notice warning wpss-service-invalid-notice" style="margin:0 0 16px;"><p><strong>';
-		esc_html_e( 'Not ready for the marketplace yet. This service stays a draft until:', 'wp-sell-services' );
+		if ( $is_live ) {
+			esc_html_e( 'This service is live and buyers see it as it is. It is still missing:', 'wp-sell-services' );
+		} else {
+			esc_html_e( 'Not ready for the marketplace yet. This service stays a draft until:', 'wp-sell-services' );
+		}
 		echo '</strong></p><ul style="list-style:disc;margin-left:20px;">';
 		foreach ( $errors as $message ) {
 			echo '<li>' . esc_html( $message ) . '</li>';
