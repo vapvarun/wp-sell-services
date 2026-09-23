@@ -2,239 +2,103 @@
   "mode": "combo",
   "release_version": "1.7.2",
   "pro_version": "1.7.2",
-  "ran_at": "2026-09-19T06:00:00Z",
-  "recorded": "2026-09-19T07:26:39Z",
-  "site": "wp-sell-services.local",
-  "themes_checked": [
-    "reign-theme (active)"
-  ],
-  "rail": "auto (WooCommerce active and owning payment); observed flipped mid-session from an initial 'standalone' read to 'auto' by an unidentified cause (see not_covered) - set explicitly to standalone for item 5 (standalone checkout) and restored to auto afterwards",
-  "gates": {
-    "contract_audit": "pass: 0 errors, 122 warnings, 66 info, 11 baselined (wpss_email_retry baselined with reason: fired via Action Scheduler, not do_action)",
-    "rest_reachability": "pass: 173 routes checked, 110 GET endpoints reachable, 0 5xx/threw, 0 without a permission callback, 61 mutation-only, 2 streaming GET (wpss-pro/v1 namespace not registered - expected, no SureCart/FluentCart installed so its 4 adapter-only routes never register)",
-    "i18n_verify": "pass in both plugins (bin/i18n-verify.py exit 0, no output)",
-    "preflight": "pass: 83 checks, 0 fail, 1 warn (1 WPSS debug-log entry - traced to this session's own malformed wp-cli eval command, not plugin code)",
-    "github_ci": "PR #16 all 13 checks green, merged as b167c048; Pro PR #6 merged as 2687c3ac"
-  },
+  "ran_at": "2026-09-23T06:49:55Z",
+  "ran_against": "9b0909ecc737df3e84a42fbd9d52506f262aa73f",
   "sections": {
-    "A_fresh_install": {
-      "pass": 4,
-      "fail": 0,
-      "skipped": 1
-    },
-    "B_upgrade": {
-      "pass": 3,
-      "fail": 0,
-      "skipped": 0
-    },
-    "C_core_flows": {
-      "pass": 4,
-      "fail": 0,
-      "skipped": 4
-    },
-    "D_regression_guards": {
-      "pass": 5,
-      "fail": 0,
-      "skipped": 0
-    },
-    "E_pro_smoke": {
-      "pass": 2,
-      "fail": 0,
-      "skipped": 1
-    },
-    "F_cross_browser": {
-      "pass": 3,
-      "fail": 0,
-      "skipped": 1
-    }
+    "A_fresh_install": { "pass": 4, "fail": 0, "skipped": 1 },
+    "B_upgrade": { "pass": 2, "fail": 0, "skipped": 1 },
+    "C_core_flows": { "pass": 10, "fail": 1, "skipped": 5 },
+    "D_regression_guards": { "pass": 3, "fail": 0, "skipped": 2 },
+    "E_pro_smoke": { "pass": 4, "fail": 1, "skipped": 3 },
+    "E2_environment": { "pass": 3, "fail": 0, "skipped": 0 },
+    "F_cross_browser": { "pass": 3, "fail": 0, "skipped": 1 },
+    "G_post_release": { "pass": 0, "fail": 0, "skipped": 2 }
   },
-  "branch_1_7_2_changes": [
+  "hard_fails": [
     {
-      "id": "1-disputes-withdraw-escalate-gating",
-      "result": "pass",
-      "note": "Live end-to-end on real orders (fixtures created and cleaned up). Opener sees both Withdraw dispute + Ask for a reviewer on an 'open' dispute; the other party sees only Ask for a reviewer; on a closed/resolved dispute neither renders. Exercised one full Withdraw (dispute 92 on order 284: DisputeWorkflowManager::cancel() closed the dispute and restored the order from 'disputed' back to its prior 'completed' status - confirmed in DB) and one full Escalate (dispute 93 on order 48: status flipped to 'escalated', order stayed 'disputed' as expected, Escalate control correctly disappeared afterward while Withdraw remained since the opener can still withdraw from 'escalated'). Gating in templates/dashboard/sections/disputes.php matches DisputeWorkflowManager::cancel()'s initiator-only check exactly. Found one real bug in the Messages & evidence thread while doing this (see failures[])."
-    },
-    {
-      "id": "2-notifications-pagination",
-      "result": "pass",
-      "note": "User 72 (Ella) already carried 51 notifications. Page 1 showed 20 rows with 'Page 1 of 3'; page 3 showed the remaining 11 rows including the oldest notification (2026-07-24, 'New Message Received'); ?notifications_page=99 clamped to 'Page 3 of 3' with the same 11 rows rather than rendering empty. No seeding/teardown needed since the account already had enough volume; the 14 test notification rows this walk generated as a side effect of the dispute tests were deleted afterward."
-    },
-    {
-      "id": "3-service-wizard-gallery-tags",
-      "result": "pass_with_bug",
-      "note": "(a) Duplicate-image refusal: confirmed in code (assets/js/service-wizard.js openMediaUploader) - selecting an attachment id already in gallery.images shows the 'already in your gallery' notice and returns before pushing, so no orphan tile. (b) Dedup-on-hydrate: live-verified by writing a duplicate id into post 250's _wpss_gallery meta (images:[251,251,252,253]), opening the edit wizard - Alpine data.gallery.images resolved to exactly 3 unique entries, zero console errors, meta restored afterward. (c) Tags limit: live-verified - typing 6 tags and clicking Continue blocked navigation and showed 'You can add a maximum of 5 tags.' inline, matching the maxTags check in validateStep(). (d) Icon-refresh-after-dynamic-add: verified for deliverables/requirements/extras/FAQ (refreshIcons() called, live-confirmed a newly added deliverable row's remove button renders a real <svg data-lucide=\"x-circle\"> icon) but the GALLERY image add path does NOT call refreshIcons() - see failures[]."
-    },
-    {
-      "id": "4-requirements-form",
-      "result": "pass",
-      "note": "Code in templates/order/requirements-form.php confirms the file input renders data-max-files=\"1\" (single-file per requirement, by design). assets/js/requirements-form.js: handleFiles() resets files=[] before adding when maxFiles===1, so a second pick replaces the first in both the rendered list and (via syncInput()'s DataTransfer rebuild) input.files - matching the spec precisely. Dropping 3 files on a max=1 field keeps file 0 and reports 'This field takes up to 1. 2 files were not added.' exactly per the dropped-count math. Live evidence on a real order (305, requirement service 841): the Yes/No question ('Do you already have a domain name?') was submitted and displayed as 'No', and the file requirement ('Please upload your logo') has a real uploaded, permission-gated download link - proving both paths work end-to-end in production data, not just in isolation."
-    },
-    {
-      "id": "5-standalone-checkout-390px",
-      "result": "pass",
-      "note": "Rail explicitly set to standalone for this row (was resolving to woocommerce via 'auto' beforehand - see rail note above), restored to auto afterward. At 390px on /service-checkout/210/?package=0: no horizontal scroll (scrollWidth==clientWidth==390). Visual/box order top-to-bottom: Service Details (347) -> Order Summary/Pay button (782) -> 'What happens next?' 5-step tracker (1295) -> Billing details (1522) -> Payment Method radios - Stripe/Offline/Test Gateway (1719) -> About the Seller (2078). The steps tracker sits before the Payment Method form, satisfying the CSS-order requirement. No console errors (one unrelated Stripe-over-HTTP dev warning, expected on non-HTTPS localhost)."
-    },
-    {
-      "id": "6-moderation-gate",
-      "result": "pass",
-      "note": "Enabled wpss_vendor[require_service_moderation], published a full new service (id 847) through the real wizard as vendor Sofia end to end (all 6 steps, Basic/Pricing/Gallery/Requirements/Extras/Review, real Publish click). Confirmed on 3 surfaces: (1) frontend My Services list showed it under 'Pending' with a '1 Pending Review' stat, not live; (2) DB: wp_posts.post_status = 'pending' for post 847; (3) wp-admin Service Moderation queue listed it with Approve/Reject actions. Matches ServiceWizard.php's ModerationService::is_enabled() ? 'pending' : 'publish' exactly. Test service deleted and setting restored to 0 afterward."
-    },
-    {
-      "id": "7-vendor-admin-tabs-renamed-menu",
-      "result": "pass",
-      "note": "Renamed the admin menu title via wpss_white_label (brand_name='QA Marketplace Brand', enabled=true) which flows through Pro's AdminBrandingService -> wpss_admin_menu_label filter, changing the computed hook suffix from sell-services_page_wpss-vendors to qa-marketplace-brand_page_wpss-vendors (confirmed via body class). Visited the vendor detail screen (vendor_id=55): all 8 tabs (Overview/Services/Orders/Earnings/Wallet/Reviews/Portfolio/Settings) rendered real content immediately, no 'Loading...' stuck state, 0 console errors, tab switching (clicked Services) worked. VendorsPage.php already captures its own hook_suffix from add_submenu_page()'s return value (per its own code comment, this was a fixed bug), and Admin::is_plugin_page() has a str_contains($hook,'wpss') fallback for exactly this scenario. White Label settings restored afterward."
-    },
-    {
-      "id": "8-order-filter-chip-contrast",
-      "result": "pass",
-      "note": "Measured the active chip (.wpss-order-filter.is-active) on dashboard/orders/ at 1280px on Reign: white text rgb(255,255,255) on indigo rgb(79,70,229) background. Computed WCAG contrast ratio = 6.29:1, comfortably above the 4.5:1 AA minimum for normal text."
-    },
-    {
-      "id": "9-contact-seller-success-state",
-      "result": "pass",
-      "note": "Source CSS (assets/css/design-system.css, one shared stylesheet loaded everywhere): .wpss-success-message { display:flex; flex-direction:column; align-items:center; gap:12px; ... } and .wpss-success-icon { width:48px; height:48px; border-radius:9999px; ... } - matches the spec exactly (flex column, 12px gap, 48px circle). Live-confirmed the JS (single-service.js) injects this exact markup ('<div class=\"wpss-success-message\"><span class=\"wpss-success-icon\">&#10003;</span><p>...</p></div>') into #wpss-contact-form on a successful AJAX send, both from a single-service page and reachable identically on a vendor profile page since both load the same wpss-contact-modal partial and the same design-system.css - no per-surface or per-viewport override exists for these classes. Could not catch the ~2-second visible window live in this session (tool round-trips consistently exceeded the 2000ms auto-close timer), so this is verified by code + DOM-injection evidence rather than a screenshot of the visible state; not treated as a finding."
-    },
-    {
-      "id": "10-auto-complete-milestones",
-      "result": "pass",
-      "note": "Core::Plugin.php's $auto_complete_parent listener (fired on wpss_milestone_approved and wpss_milestone_declined) requires every phase to be terminal (completed or cancelled) AND at least one phase to be genuinely 'completed' ($delivered flag) before marking the parent order complete - all-cancelled contracts are deliberately left open for re-proposal. Verified with real production data: order 267 (platform=request) has 6 milestone phases, all 6 cancelled, 0 completed, and its own status is 'in_progress', not 'completed' - exactly the guarded case, already true in this dataset without any action needed."
+      "id": "wpss-dispute-refund-marked-but-not-executed",
+      "invariant": "money-flow-integrity",
+      "actual": "Resolving a dispute as 'In Favor of Buyer' (or 'Full Refund') writes the order to status=refunded with refunded_amount = full order total BEFORE the actual gateway refund is attempted. On order #36 (payment_method=standalone), the gateway refund call failed ('Auto-refund FAILED for order 36: gateway standalone not available or missing process_refund(). The buyer has NOT been refunded.' - debug.log 06:34:34) and the vendor earnings reversal was also skipped ('no completed wallet credit found for the vendor, so the earnings reversal is skipped'). The order and dispute both now read as fully resolved/refunded in the admin UI - Dispute #8 shows status Resolved, resolution favor_buyer - with no visible error anywhere, while the buyer never received their money back. Root cause: WPSellServices\\Services\\OrderService::apply_refund_status() (src/Services/OrderService.php:281) writes `refunded_amount` to the DB unconditionally before the status transition/gateway hook runs, and DisputeService::resolve()/handle_resolution() treats apply_refund_status()'s return value (which reflects only the DB write + status transition, not the gateway call) as success."
     }
   ],
-  "branch_1_7_2_pro_changes": [
-    {
-      "id": "11-white-label-admin-accent",
-      "result": "pass",
-      "note": "With wpss_white_label enabled and primary_color=#ff5722, AdminBrandingService::output_admin_css() injected 'body.wp-admin{--wpss-admin-accent:#ff5722;--wpss-admin-accent-hover:#ff5722;--wpss-admin-primary:#ff5722;...}' - confirmed present in an inline <style> tag on a WPSS admin screen. Design tokens land on body.wp-admin as documented (not :root, to win source-order against admin.css). Restored to disabled afterward."
-    },
-    {
-      "id": "12-hide-branding-label-matches-behavior",
-      "result": "pass",
-      "note": "Settings label: 'Keep the Powered by WP Sell Services credit off the vendor dashboard' with description explicitly noting 'The credit is already hidden on every site, so this changes nothing unless your theme or a snippet switches it on with wpss_show_powered_by.' Verified against code: Free's UnifiedDashboard.php defaults apply_filters('wpss_show_powered_by', false) to false already; Pro's DashboardBrandingService::filter_show_powered_by() only forces it false when hide_branding is on - matching the label's scope (frontend vendor dashboard) exactly. The admin-side CSS rule the same method also emits (.wpss-powered-by,.wpss-footer-branding,.wpss-admin-footer-credit{display:none}) targets classes that do not exist anywhere in the admin markup, so it is inert dead CSS rather than a behavior mismatch - noted, not filed, too minor to be worth a card."
-    },
-    {
-      "id": "13-recurring-services-default-interval",
-      "result": "pass",
-      "note": "Both consumers - RecurringServiceManager::add_recurring_meta_fields() (admin metabox) and the wizard's Alpine x-init block (RecurringServiceManager.php:372) - call the exact same static method RecurringSettingsRenderer::get_default_interval() when a service has no interval of its own saved yet, so they cannot drift by construction. Feature remains off by default (is_feature_available() returns apply_filters('wpss_pro_recurring_feature_available', false)) with no admin UI to enable it in 1.7.2, matching CLAUDE.md's documented intentional-non-ship status; verified via code only, live UI walkthrough would require flipping the filter via a temporary mu-plugin which was not done given the feature is explicitly not shipping."
-    },
-    {
-      "id": "14-vendor-analytics-today",
-      "result": "pass",
-      "note": "dashboard/analytics/?period=today for vendor Sofia rendered a full report: stat tiles correctly relabeled 'Today' (Net Earnings $0.00, Tips $0.00, Milestones 0, Orders 3, Completion Rate 0%), Revenue Over Time chart showed a graceful 'No revenue data for this period.' empty state (not blank/broken), and Top Performing Services table still populated. 0 console errors."
-    }
-  ],
-  "journeys": [
-    {
-      "id": "01-buyer-hires-seller",
-      "result": "skipped",
-      "note": "Not walked live this pass. No source changes this cycle touched ProposalService or proposal notifications; time budget spent on the 14 branch items above."
-    },
-    {
-      "id": "02-dispute",
-      "result": "pass",
-      "note": "Fully re-walked as part of branch item 1 above - see that entry for full detail. Both withdraw and escalate exercised end to end on real orders with cleanup."
-    },
-    {
-      "id": "03-install-and-upgrade",
-      "result": "partial",
-      "note": "Activation health confirmed via wp wpss preflight (83/0 fail) and rest-reachability (173 routes, 0 5xx). The deactivate+reactivate-both-plugins step itself was NOT performed: the sandbox's auto-mode classifier denied 'wp plugin deactivate' as a shared-resource-modifying action on this dev site. See not_covered."
-    },
-    {
-      "id": "04-vendor-discovery",
-      "result": "skipped",
-      "note": "Not walked live this pass; no source changes this cycle touched vendor discovery/search."
-    },
-    {
-      "id": "05-vendor-creates-a-service",
-      "result": "pass",
-      "note": "Covered live via branch items 3 (gallery dedup/tags/icons) and 6 (moderation gate, full real Publish through all 6 wizard steps)."
-    },
-    {
-      "id": "06-standalone-checkout",
-      "result": "pass",
-      "note": "Covered live via branch item 5 above (390px, rail flipped to standalone and restored)."
-    },
-    {
-      "id": "07-service-page-media",
-      "result": "skipped",
-      "note": "Not re-walked live this pass (gallery lightbox/media specifically); the service-wizard gallery upload path was covered instead (branch item 3). No source changes this cycle touched the public gallery lightbox."
-    },
-    {
-      "id": "08-mobile-app-session",
-      "result": "skipped",
-      "note": "Not walked this pass; no source changes this cycle touched AppTokenGuard or the /me contract."
-    },
-    {
-      "id": "03-install-and-upgrade (B_upgrade, run by the calling session)",
-      "result": "pass",
-      "note": "Real 1.7.1 -> 1.7.2 upgrade exercised on the live bed after the walk's sandbox denial on 'wp plugin deactivate'. Stored wpss_version rewound to 1.7.1, moderation enabled, and a service planted in the exact broken shape 1.7.2 migrates (post_status=publish with _wpss_moderation_status=pending). A real front-end request returned HTTP 200 with no fatal; maybe_run_install() advanced wpss_version to 1.7.2 and migrate_unapproved_published_services() moved the stranded service to post_status=pending, so it re-enters the queue the owner can actually see. No duplicate page slugs (24 published pages before and after), wpss_db_version 1.7.3 intact. Every fixture removed and both options restored to their prior values afterwards. The only debug.log growth in this window was from the session's own malformed wp eval probes, not the plugin."
-    }
-  ],
-  "woo_rail_walk": {
-    "result": "pass",
-    "note": "Rail resolves to 'woocommerce' under the site's 'auto' setting (WooCommerce active, per Settings > E-Commerce Integration showing 'Currently Active: WooCommerce'). Confirmed the Continue-to-Checkout flow adds the service to the real WooCommerce cart/mini-cart with the 'Package: Basic' line meta, matching the documented WCOrderProvider integration. Did not complete a full paid purchase this pass (previous 1.7.1 pass already proved the full charge -> WPSS order -> vendor-credit-at-completion chain end to end on this rail); this pass instead confirmed E3 (fee-only pay-order Subtotal-row suppression) via code: WCPayOrderResolver::filter_order_item_totals() removes the empty product-subtotal row on fee-only (tip/extension/milestone) pay-orders, hooked on woocommerce_get_order_item_totals, guarded on both plugin meta and an empty line-item set."
-  },
-  "debug_log_issues": [],
-  "not_covered": [
-    "Journeys 01, 04, 07, 08 not walked live this pass (no source changes this cycle touched those surfaces).",
-    "E2 (Pro storage provider real upload) not exercised; no storage provider configured on this site, matching 1.7.1.",
-    "F3 RTL sweep not re-run this pass.",
-    "Rail-identity observation: wpss_general[ecommerce_platform] read 'standalone' at the very start of this session and 'auto' by the time item 5 was reached, with the active adapter resolving to 'woocommerce' in between. No code path was found that writes this option outside the admin settings save and the setup wizard, neither of which ran during this session; could not isolate whether this was a pre-existing artifact from a prior session/process on this long-lived dev site or a genuine runtime behavior. Not filed as a bug given the inconclusive root cause; flagging for the next session to watch for.",
-    "Stripe/PayPal/Razorpay/Wallet/Commission-Rules/Subscription-Plans/Cloud-Storage admin settings sections were confirmed present in the wpss-settings page DOM (tab-hidden via CSS, not missing) but were not individually clicked through and screenshotted this pass - time budget was concentrated on the 14 branch-diff items per the branch-mode instruction to walk those first and in full.",
-    "Pristine zip install not re-run this pass (see pristine_zip_install).",
-    "B_upgrade deactivate+reactivate cycle still not run: the sandbox classifier denied 'wp plugin deactivate'. The upgrade PATH was verified instead by rewinding wpss_version and booting (see journey 03), which is what the 1.7.2 migration actually keys off. A true deactivate/reactivate remains unexercised this cycle."
-  ],
-  "hard_fails": [],
   "untested": [
-    {
-      "id": "B-upgrade-deactivate-reactivate",
-      "reason": "Sandbox permission classifier denied 'wp plugin deactivate wp-sell-services-pro wp-sell-services' as a shared-resource-modifying action on this dev site.",
-      "needs": "Either an explicit user-granted Bash permission for plugin activate/deactivate on this site, or running this specific check outside the current sandbox policy."
-    },
-    {
-      "id": "F3-RTL-sweep",
-      "reason": "Not run this pass given time budget; no RTL-relevant source changes identified in the 1.7.2 diff.",
-      "needs": "A dedicated RTL pass (WP admin/site set to an RTL locale) across the surfaces touched this release, especially the disputes template and checkout steps tracker."
-    }
+    "Journey 05 (vendor creates a service, full wizard) - not walked fresh this run; only the publish-rule guard was exercised in isolation via a throwaway draft post.",
+    "Journey 06 (standalone checkout) - unreachable: wpss_general[ecommerce_platform]=auto resolves to WooCommerce on this install (WooCommerce is the only cart plugin active), so standalone gateways never register.",
+    "Journey 07 (service page media) - not walked this run.",
+    "Journey 08 (mobile app session / Application Passwords) - not walked this run.",
+    "Buyer's brief rendering for a service with no configured questions - not walked this run.",
+    "D1 stats-vs-chips (buyer with most orders, summary cards vs filter-chip counts) - not walked this run, time-boxed out in favour of Priority A depth.",
+    "D5 offline-method-identity (rename/delete a named offline method does not change what a past order says) - not exercised; the active rail is WooCommerce so the offline gateway's admin settings were not the focus this pass.",
+    "E4 cloud storage real upload round trip (real S3/GCS/DO credentials, local-copy removal, signed-URL download) - no real credentials configured in this dev environment; the settings screen itself was verified, and the Test Connection AJAX round-trip was independently confirmed working server-side (see failures[]).",
+    "S2.2 Woo refund reversing tip/extension/milestone sub-orders - not exercised as its own scenario (a real refund WAS triggered incidentally by the dispute-resolution hard_fail above, but that order had no sub-orders to reverse).",
+    "S6 display currency switcher live behaviour (rate conversion in the browser) - settings screen loads (verified) but the live switcher was not exercised.",
+    "RTL - no margin-left/right regression check performed; would require switching the site to an RTL locale.",
+    "Multisite, concurrency (two actors racing the same action) - not applicable / not set up this run.",
+    "Contract-audit pre-gate (wp-contract-audit skill Step 0) - not run this session; recommend running before tagging.",
+    "G_post_release: post-tag artifact verification (zip contents, sha256 compare) - structurally not applicable before a release has been cut."
   ],
   "coverage": {
-    "branch_diff_items_verified": "14 of 14 (all Free items 1-10 and all Pro items 11-14 from the 1.7.2 diff)",
-    "standard_rows_verified": "A (4/5), C (4/8 journeys live + 4 skipped with reason), D (5/5), E (2/3), F (3/4)",
-    "gates_run": "contract_audit (carried), rest_reachability (run), i18n_verify (run, both plugins), preflight (run)"
+    "multisite": "Not tested. Single-site install; no multisite network available in this environment.",
+    "rtl": "Not tested this pass - would require switching the site to an RTL locale and re-walking the touched surfaces.",
+    "concurrency": "Not tested. No multi-actor race condition was set up this run.",
+    "uninstall": "Not run live. Verified via `wp wpss preflight`'s Uninstall Completeness section: role removal, WP_UNINSTALL_PLUGIN guard, delete_data respect, table drops, wpss_* option cleanup, cron-hook clearing, rewrite-rule flush, offline auto-cancel cron - 8/8 PASS.",
+    "mobile_390": "Real 390x844 coverage on the cart-unavailable-item notice (checkout-unavailable-390.png) and the vendor Earnings & Payouts tiles (earnings-390-recheck.png, labels fully readable; the previously-known cosmetic 3-digit value line-wrap on 'Available to withdraw'/'Total earned so far' is unchanged, not a regression). Milestone order-summary page also incidentally captured at 390px (milestone-order-summary-1280.png - mislabelled, actually 390px) and stacks cleanly with no horizontal scroll.",
+    "code_to_live": "Not run as a full owner-inventory sweep this pass; spot-checked artefacts (Disputes admin screen, Moderation admin screen, Analytics dashboard, Payouts/Payment Gateways/Advanced settings tabs, Cloud Storage section) all verified-working except Cloud Storage's Test Connection control, which is present-but-broken (see failures[])."
   },
-  "pristine_zip_install": {
-    "result": "pass",
-    "note": "Real 1.7.1 -> 1.7.2 upgrade on the docker bed (WordPress 7.1), not over the working copy. Both plugins were active at 1.7.1; the built zips were installed with --force. Both came back 1.7.2 and ACTIVE with no fatal. wpss_version advanced to 1.7.2 and the migration moved a planted published-but-unapproved service to post_status=pending, so it re-enters the review queue. Published pages unchanged at 8 (no duplicates), wpss_db_version 1.7.3 intact. wp wpss preflight: 84 checks, 0 fail, 0 warn, 100%. A first preflight run reported 1 FAIL for 'Fatals in debug.log'; all three entries were dated 18-Sep, from the previous session's own test harness (a wpss_milestone_approved call made with 2 args where the hook passes 4), not from this upgrade. Confirmed by clearing the log and re-running clean rather than by assertion. Probe and moderation setting removed afterwards."
-  },
-  "verdict": {
-    "result": "pass_with_findings",
-    "summary": "All 14 items in the 1.7.2 diff behave correctly per their spec, verified via a mix of live browser exercise (with fixtures created and fully cleaned up), server-side DB confirmation, and source-code review where a live walk was impractical (recurring-services, off by design) or could not be reliably captured (the 2-second contact-seller success window). Two real, reproducible soft bugs were found and are NOT release-blocking: F1 (dispute evidence author label shows the word 'Attachment' instead of the sender's name when there is no file attached) and F2 (a newly added gallery image's remove-icon does not render because the gallery-add path is missing the refreshIcons() call every sibling add-method already has). Both are small, isolated, one-line-class fixes. No hard fails, no fatals, no unexplained debug.log entries, no unguarded REST routes, no i18n regressions. The only unresolved question from this pass is a rail-identity value flip (standalone -> auto) observed mid-session whose cause could not be isolated - it did not block or corrupt anything, but is worth a second look before shipping given the runbook's explicit warning about rail-related false bounces."
-  },
-  "failures": [],
-  "failures_resolved_before_build": [
+  "verdict": "BLOCK",
+  "top3": [
+    "BLOCK: Resolving a dispute in favor of the buyer (or Full Refund) marks the order 'refunded' with the full amount recorded in refunded_amount, even when the underlying gateway refund silently fails - debug.log proves 'Auto-refund FAILED ... The buyer has NOT been refunded' on order #36, yet the admin UI and DB both show a clean resolved/refunded state with no error surfaced anywhere. A site owner would believe every dispute they resolve this way has actually paid the buyer back when it may not have.",
+    "Priority A is now HALF fixed. Unpublishing a service already in a buyer's cart now shows a clear, correctly-named notice ('...cannot be ordered right now: This service is not currently available. Remove it to continue.') and checkout is genuinely refused server-side (WooCommerce Store API returns 409, verified via network trace, no wpss_orders row created) - this closes last cycle's hard_fail cleanly, at both 1280 and 390. But deleting the same cart item instead produces NO notice at all - the item just vanishes and the cart reads 'Your cart is currently empty!' with zero explanation, which a real buyer would read as a bug, not as 'that service is gone.'",
+    "The Cloud Storage 'Test Connection' button (Settings -> Advanced) never shows the admin anything. Instrumentation proves the click handler fires, the AJAX round-trip completes, the server returns a correct message either way ('This provider does not support connection testing.' for S3, or a client-side guard for Local), and the JS response handler calls showNotice() with the right arguments - but no toast or notice ever appears in the DOM. An admin configuring cloud storage gets no feedback whatsoever from this button, success or failure."
+  ],
+  "failures": [
     {
-      "id": "F1-dispute-evidence-author-name-shows-attachment",
-      "severity": "soft",
+      "id": "wpss-cart-delete-no-notice",
       "origin": "from",
-      "surface": "dashboard/disputes/?dispute={id} - Messages & evidence thread",
-      "where": "templates/dashboard/sections/disputes.php, evidence-item rendering loop (~line 224-247)",
-      "expected": "Each message bubble's author label shows the member's display name (e.g. 'Ella Fixed').",
-      "actual": "Every text-only evidence/message entry with no attachment shows the literal word 'Attachment' as the author name instead of the sender's name. Reproduced live: opened a fresh dispute as buyer Ella and vendor Sofia both saw the opening statement bubble labelled '<strong>Attachment</strong>' instead of '<strong>Ella Fixed</strong>'.",
-      "root_cause": "$ev_name is set correctly to the member display name, then unconditionally overwritten two lines later by $ev_name = wpss_format_attachment_name(...) followed by a fallback to the literal string 'Attachment' when there is no attachment on the row - this logic was written for filename display but reuses the same variable that also holds the author name.",
-      "evidence": "Live: dashboard/disputes/?dispute=92 and ?dispute=93, both parties, both showed 'Attachment' as author. Code: templates/dashboard/sections/disputes.php lines ~240-247.",
-      "resolution": "fixed and re-verified in 1.7.2 before the build (commit ef1043f5, merged as 03c180c2)"
+      "triage_note": "Half-regression of the same feature area as last cycle's hard_fail. The unpublish path (StandaloneProductProvider/WooCommerceAdapter's new availability check) fires a clear cart notice; the delete path removes the WooCommerce cart item (product post presumably force-deleted alongside, or the line silently drops on cart validation) but never routes through the same 'this service is not currently available' notice path, so the buyer gets no explanation at all.",
+      "expected": "Per this release's own spec: when the underlying service is deleted, the item is removed from the cart with a notice saying it is no longer offered.",
+      "actual": "As wpss_buyer_ella: after force-deleting service 238 while it sat alone in her cart, /cart-2/ rendered the generic empty-cart state ('Your cart is currently empty!') with no notice of any kind, at 1280px. The header mini-cart briefly showed a stale ghost line item ('Service Order', $65.00, qty 1) that self-corrected on a full page reload - a secondary, minor inconsistency.",
+      "url": "http://wp-sell-services.local/cart-2/",
+      "screenshot": "cart-deleted-service-1280.png",
+      "viewport": "1280"
     },
     {
-      "id": "F2-gallery-add-icon-not-refreshed",
-      "severity": "soft",
+      "id": "wpss-pro-storage-test-connection-silent",
       "origin": "from",
-      "surface": "dashboard/create/ (service wizard) - Gallery step",
-      "where": "assets/js/service-wizard.js, openMediaUploader() images branch (~line 655)",
-      "expected": "After picking an additional gallery image, its 'Remove this image' icon-only button renders a visible Lucide icon, exactly like the equivalent buttons for extras/FAQs/deliverables/requirements (all of which call refreshIcons() after their add-methods).",
-      "actual": "The gallery-images push in openMediaUploader() never calls this.refreshIcons(), so a newly added gallery image's remove button keeps the raw <i data-lucide=\"x-circle\"> placeholder instead of the rendered <svg> - an empty 40px box with no visible way to remove the row, matching the exact historical bug pattern (1.6.0 changelog) already fixed for extras/FAQ/deliverables but missed here.",
-      "root_cause": "addFeature(), addRequirement(), addExtra(), addFaq() all end with this.refreshIcons(); the gallery-images push inside the frame.on('select', ...) callback in openMediaUploader() does not.",
-      "evidence": "Live: pushed a synthetic gallery image into the Alpine component's data.gallery.images array on the real wizard page (id=250) and inspected the new .wpss-gallery-remove button's innerHTML - it was '<i data-lucide=\"x-circle\" class=\"wpss-icon\" aria-hidden=\"true\"></i>', not an <svg>. Code: assets/js/service-wizard.js lines ~640-665 (no refreshIcons() call) vs lines 480-600 (all other add-methods call it).",
-      "resolution": "fixed and re-verified in 1.7.2 before the build (commit ef1043f5, merged as 03c180c2)"
+      "triage_note": "wp-sell-services-pro/assets/js/admin.js:632-661 binds #wpss-test-storage-connection's click handler, correctly early-guards on provider==='local' (calling showStorageNotice('error', ...)), and otherwise posts action=wpss_pro_test_storage via $.post, routing the response through showStorageNotice() -> WPSSPro.showNotice() -> window.wpssToast(). Confirmed via a runtime spy that showNotice IS invoked with the correct (type, message) pair in both the local-guard case and the real S3 AJAX-response case (server correctly replies {success:false, data:{message:'This provider does not support connection testing.'}}), and confirmed window.wpssToast works fine when invoked directly from the console (creates a visible .wpss-toast element) - but no .wpss-toast element, and no legacy .notice fallback element, ever appears in the DOM when the real call chain runs. Needs a JS-side debugging session to find where the toast call is being lost between showNotice() and DOM insertion in this specific call path.",
+      "expected": "Per S4.1: the connection test result (pass or a clear failure reason) is shown to the admin.",
+      "actual": "Clicking Test Connection with Storage Provider = Local (WordPress Media Library) produces zero visible feedback. Switching to Amazon S3 (no credentials) and clicking Test Connection completes a real AJAX round trip with a correct error message server-side, but again zero visible feedback in the browser - no toast, no notice, nothing changes on screen.",
+      "url": "http://wp-sell-services.local/wp-admin/admin.php?page=wpss-settings#advanced",
+      "screenshot": "admin-settings-advanced.png",
+      "viewport": "1280"
     }
   ],
-  "failures_resolved_note": "Both findings were re-verified by the calling session, fixed, browser-verified on both halves, and merged through PR #18 with all 13 CI checks green, before any zip was built. F1: the dispute thread's author label and the file-link label shared one variable, so every text-only message was attributed to 'Attachment'; split into $ev_name and $ev_file, confirmed on dispute 84 (5 bubbles read Sofia Rossi / Ella Fixed, both attachments still show their real filenames) and dispute 54 (reads Benjamin Lee). F2: the wizard's gallery push did not call refreshIcons() as its five sibling add-methods do, so a new tile's remove control kept a raw <i data-lucide> placeholder; confirmed the new tile now renders a real <svg> carrying its aria-label."
+  "debug_log_issues": [
+    {
+      "section": "C_core_flows (dispute resolution)",
+      "level": "error",
+      "line": "[23-Sep-2026 06:34:34 UTC] [WPSS ERROR] Auto-refund FAILED for order 36: gateway 'standalone' not available or missing process_refund(). The buyer has NOT been refunded.",
+      "file": "src/Services/DisputeService.php / OrderService.php (auto-refund path)"
+    },
+    {
+      "section": "C_core_flows (dispute resolution)",
+      "level": "warning",
+      "line": "[23-Sep-2026 06:34:34 UTC] [WPSS WARNING] Order 36 refund: no completed wallet credit found for the vendor, so the earnings reversal is skipped - a reversal here would debit money never credited. The credit written at completion is netted by the refunded amount instead.",
+      "file": "src/Services/OrderService.php (refund/earnings-reversal path)"
+    }
+  ],
+  "manual_required": [
+    "Service 242 ('I will produce social media motion graphics') was unpublished (draft) to verify the Priority A unpublish scenario, then restored to publish and re-verified live in the catalog and on the service page - no action needed.",
+    "Service 238 ('I will optimize your store for higher conversions') was PERMANENTLY force-deleted per Priority A test 2 - the wpss_service post type does not support trash, so this could not be reversed. Full post + postmeta were captured before deletion to /private/tmp/.../scratchpad/service-238-backup.json and service-238-meta-backup.json for re-seeding if desired. The live catalog count is permanently down by 1 (was 12 published test/demo services, now 11).",
+    "Two WooCommerce orders were placed as real data and left in place: #5071 / wpss_orders #855 (wpss_buyer_ella, service 234, $65.00, status manually forced from pending_requirements to in_progress via wp-cli to enable dispute-flow testing) and #5074 / wpss_orders #856 (wpss_buyer_ben, service 2028 + Priority Support add-on, $84.99).",
+    "Milestone phase 2 (wpss_orders #842, parent #840/#841, wpss_rest_buyer_tUdjLNgW / wpss_rest_vendor_tUdjLNgW) was paid for real ($200.00 via order-pay #4896) to verify the WooCommerce fee-only pay-order subtotal fix. A QA test message was also posted to that order's conversation thread - both left in place as real data, harmless.",
+    "Dispute #8 (Ella Fixed vs Sofia Rossi, order #WPSS-20260409-0036 / wpss_orders id 36) was resolved end-to-end via the admin UI (status Escalated -> Resolved, resolution=favor_buyer) to verify the resolution workflow. This is what surfaced the hard_fail above: order 36 is now permanently marked status=refunded / refunded_amount=$255.00 in the DB even though the real gateway refund failed. This was NOT reverted - it stands as live evidence of the bug for whoever fixes it. The dispute's Admin Notes field contains a QA note explaining this.",
+    "wpss_vendor_maya's vendor_profiles.status was set to 'suspended' to verify D3 (suspended-vendor REST refusal via GET /wpss/v1/earnings/summary -> 403 wpss_not_vendor), then restored to 'active' and re-verified - no action needed.",
+    "A temporary $1,252.00 debit wallet_transactions row was inserted for wpss_vendor_sofia to produce a -$700.00 balance and verify D4 (negative-balance explanation on the Earnings & Payouts page), then deleted - balance restored to $552.00 and re-verified via wpss_get_ledger_balance() - no action needed.",
+    "A throwaway QA service post (ID 5072, draft, incomplete) was created to re-verify the publish-rule guard via the block editor's native Publish button (correctly blocked, 'Draft saved.' with the same 'Not ready for the marketplace yet' banner as last cycle), then force-deleted - no action needed.",
+    "Service 250 ('I will build a custom WordPress plugin to spec') had its title re-saved via wp-cli (same value) to confirm an unrelated-field save does not unpublish an already-live incomplete-by-current-rules service - no data changed, no action needed.",
+    "Both plugins were deactivated then reactivated to exercise Section B; both are active at v1.7.2 afterward with zero fatals and no duplicate wpss_orders rows.",
+    "The site's own background jobs (Action Scheduler) appear to have pruned some pre-existing pending/abandoned test orders during this session - wpss_orders total count dropped from 388 (session start) to 384 before any of my new orders were added; this looks like legitimate scheduled cleanup of old test data, not something I did, but is noted for the record since it was unexpected.",
+    "18 screenshots were saved as bare relative filenames into the site's public document root per this run's instructions (caller relocates them): admin-analytics-1280.png, admin-dispute-detail-8.png, admin-disputes-1280.png, admin-moderation-1280.png, admin-settings-advanced.png, admin-settings-gateways.png, admin-settings-payment-gateways.png, admin-settings-payouts.png, cart-deleted-service-1280.png, cart-unpublished-1280.png, checkout-place-order-blocked-1280.png, checkout-unavailable-390.png, checkout-unpublished-1280.png, earnings-390-recheck.png, milestone-order-summary-1280.png (actually captured at 390px, not 1280 - viewport was left at 390 from the earlier earnings check), pay-for-order-phase2-1280.png, vendor-profile-maya-1280.png, vendors-directory-1280.png."
+  ]
 }

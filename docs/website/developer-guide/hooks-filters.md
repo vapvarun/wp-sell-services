@@ -54,8 +54,8 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_before_service_deleted` | `int $service_id` | `src/Services/ServiceManager.php:340` |
 | `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:958` |
 | `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:749` |
-| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:876` |
-| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:925` |
+| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:914` |
+| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:963` |
 
 ## Moderation Actions
 
@@ -416,7 +416,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1176` |
+| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1214` |
 | `wpss_services_per_page` | `int $per_page` (default 12) | `src/Frontend/ServiceArchiveView.php:655` |
 | `wpss_wizard_service_data` | `array $data, int $service_id` | `ServiceWizard.php` |
 | `wpss_wizard_sanitize_service_data` | `array $sanitized, array $raw` | `ServiceWizard.php` |
@@ -696,7 +696,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1764` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:185` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:890` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3856` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3876` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:823` |
 
 **`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
@@ -790,7 +790,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:793` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:378` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:266` |
-| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1292` |
+| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1330` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
