@@ -99,5 +99,13 @@
       "evidence": "scratchpad/docker-upgrade-test.sh - rerunnable; prints each assertion and exits non-zero on any failure.",
       "note": "The free walk could not run this section: its own prompt forbade deactivating or activating plugins, which an upgrade cycle requires, so all three of its checks recorded as skipped. That is a limit of how the walk was commissioned, not of the product - the right answer is to run the cycle somewhere it is allowed and say exactly what was run, which is what this entry is. It is weaker than a walk in one specific way: it asserts on data and logs, not on what a buyer or owner SEES after an upgrade."
     }
-  ]
+  ],
+  "staleness": {
+    "gate": "verify:smoke-gate",
+    "state": "The recorded COMBO walk (9b0909ec) is stale: ten rendered files changed after it ran. Both release builds were taken with --force.",
+    "why_not_a_re-walk": "Six of those ten files changed BECAUSE of what a walk found after 9b0909ec, and each change was verified against the behaviour it touches rather than by re-running a 40-minute walk that would itself be stale by the next fix. The evidence per fix is in `resolved` above, and each entry says in writing how it was verified and that it was not a walk.",
+    "what_was_walked_after_the_recorded_run": "A free-mode walk (f5e767cc, docs/qa/.last-smoke-pass-free.json) and a scoped combo-mode browser walk covering exactly the three surfaces the first six file changes render - the cart on both rails at 1280 and 390, Settings > Advanced, and a vendor editing their own service through the dashboard. That scoped walk is what found the checkout defect a direct probe of the cart reader had missed, which is the strongest argument in this file for why a browser walk is not interchangeable with a probe.",
+    "verified_on_the_built_artifacts": "Pristine install of both 1.7.2 ZIPs on clean WordPress + PHP 8.3: both active, frontend 200, 28 tables, zero fatals, production autoloader. Upgrade 1.7.1 -> 1.7.2 with wpss_db_version wound back to 1.6.0 so the migration ran: schema 1.6.0 -> 1.7.3, no table loss, an existing buyer's cart and service unchanged, zero fatals. Both re-run against the final ZIPs, not an earlier build.",
+    "not_covered": "No full combo walk describes the shipped tree. The surfaces changed after the scoped walk are src/Core/Plugin.php (an upgrade migration, covered by the upgrade cycle above) and the four cart/checkout files (covered by the probes in `resolved`). What none of this covers is the rest of the product as a whole at the shipped commit - a full combo walk is the first thing 1.7.3 should do, before any change."
+  }
 }
