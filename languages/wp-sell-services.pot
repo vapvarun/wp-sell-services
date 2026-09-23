@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-23T08:28:00+00:00\n"
+"POT-Creation-Date: 2026-09-23T08:45:42+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -331,8 +331,8 @@ msgstr ""
 #: src/Frontend/Shortcodes.php:1317
 #: src/Frontend/UnifiedDashboard.php:191
 #: src/Integrations/PayPal/PayPalGateway.php:571
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1595
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2151
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1596
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2152
 #: src/Integrations/Stripe/StripeGateway.php:922
 #: templates/dashboard/sections/create-request.php:246
 #: templates/dashboard/sections/edit-request.php:293
@@ -684,8 +684,8 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:1985
 #: src/Admin/Tables/OrdersListTable.php:55
 #: src/Frontend/SingleServiceView.php:139
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1177
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2020
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1178
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2021
 #: src/Privacy/PersonalData.php:519
 #: templates/cart/cart.php:503
 #: templates/emails/new-order.php:84
@@ -840,7 +840,7 @@ msgstr[1] ""
 #: src/Frontend/Shortcodes.php:956
 #: src/Frontend/Shortcodes.php:969
 #: src/Integrations/Gateways/OfflineGateway.php:880
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:421
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:422
 #: src/Services/DisputeService.php:230
 #: src/Services/ExtensionOrderService.php:157
 #: src/Services/ExtensionRequestService.php:132
@@ -965,7 +965,7 @@ msgstr ""
 
 #: src/Admin/Admin.php:2161
 #: src/Admin/Pages/ManualOrderPage.php:168
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1011
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1012
 #: templates/order/order-requirements.php:110
 msgid "Order Details"
 msgstr ""
@@ -998,7 +998,7 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:1297
 #: src/Frontend/ServiceWizard.php:96
 #: src/Frontend/SingleServiceView.php:398
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1336
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1337
 msgid "Requirements"
 msgstr ""
 
@@ -2430,7 +2430,7 @@ msgid "Auto-calculated"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:282
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1139
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1140
 #: templates/emails/cancellation-requested.php:79
 msgid "Order Total"
 msgstr ""
@@ -2512,8 +2512,8 @@ msgid "Refunded"
 msgstr ""
 
 #: src/Admin/Pages/ManualOrderPage.php:362
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1102
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1971
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1103
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1972
 #: templates/dashboard/sections/earnings.php:284
 msgid "Payment Method"
 msgstr ""
@@ -2992,7 +2992,7 @@ msgstr ""
 #: src/Admin/Pages/ReviewModerationPage.php:393
 #: src/Frontend/ServiceWizard.php:104
 #: src/functions/moderation.php:157
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1344
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1345
 #: src/Privacy/PersonalData.php:359
 #: src/Privacy/PersonalData.php:634
 msgid "Review"
@@ -3127,8 +3127,8 @@ msgstr ""
 #: src/Frontend/UnifiedDashboard.php:175
 #: src/Integrations/Gateways/OfflineGateway.php:995
 #: src/Integrations/PayPal/PayPalGateway.php:570
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1551
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2120
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1552
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2121
 #: src/Integrations/Stripe/StripeGateway.php:921
 #: templates/dashboard/sections/earnings.php:530
 msgid "Processing..."
@@ -5233,7 +5233,7 @@ msgstr ""
 #: src/Admin/Settings.php:884
 #: src/Admin/Settings.php:3635
 #: src/functions/money.php:695
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1629
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1630
 msgid "Tax"
 msgstr ""
 
@@ -6901,8 +6901,8 @@ msgstr ""
 #: src/Frontend/ServiceWizard.php:245
 #: src/Integrations/Gateways/OfflineGateway.php:764
 #: src/Integrations/Gateways/TestGateway.php:348
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:375
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:478
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:376
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:479
 #: src/Services/RequirementsService.php:168
 msgid "Service not found."
 msgstr ""
@@ -6968,7 +6968,7 @@ msgstr ""
 
 #: src/API/MilestonesController.php:516
 #: src/API/OrdersController.php:1661
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:450
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:451
 msgid "This phase is locked. Pay the previous phase first — once it is approved or cancelled, this one will unlock."
 msgstr ""
 
@@ -7320,7 +7320,7 @@ msgstr ""
 #: src/Checkout/CheckoutIntentService.php:79
 #: src/Integrations/Gateways/OfflineGateway.php:601
 #: src/Integrations/Gateways/TestGateway.php:270
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:436
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:437
 msgid "This order has already been paid."
 msgstr ""
 
@@ -8144,7 +8144,7 @@ msgid "Manage your service marketplace — services, orders, vendors, and earnin
 msgstr ""
 
 #: src/Core/AbilitiesRegistrar.php:95
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:365
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:366
 #: templates/cart/cart.php:341
 #: templates/dashboard/sections/orders.php:226
 #: templates/myaccount/service-orders.php:59
@@ -8464,21 +8464,21 @@ msgstr ""
 msgid "The site owner will contact you with payment instructions after you place your order."
 msgstr ""
 
-#: src/Core/Plugin.php:1914
+#: src/Core/Plugin.php:1922
 msgid "All milestones on this custom-project order are complete."
 msgstr ""
 
 #. translators: %d: count of paid phases
-#: src/Core/Plugin.php:1976
+#: src/Core/Plugin.php:1984
 #, php-format
 msgid "Project cancelled while %d milestone was already paid. Money has moved to the seller wallet; open a dispute if the work cannot be accepted."
 msgstr ""
 
-#: src/Core/Plugin.php:1981
+#: src/Core/Plugin.php:1989
 msgid "Paid milestone not delivered"
 msgstr ""
 
-#: src/Core/Plugin.php:1982
+#: src/Core/Plugin.php:1990
 msgid "Paid milestone on cancelled project"
 msgstr ""
 
@@ -10298,8 +10298,8 @@ msgstr ""
 
 #: src/Frontend/ServiceWizard.php:2309
 #: src/Frontend/UnifiedDashboard.php:586
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:929
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1865
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:930
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1866
 msgid "Log In"
 msgstr ""
 
@@ -14013,8 +14013,8 @@ msgid "Don't have an account?"
 msgstr ""
 
 #: src/Integrations/Standalone/StandaloneAccountProvider.php:308
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:932
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1868
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:933
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1869
 msgid "Register"
 msgstr ""
 
@@ -14060,76 +14060,76 @@ msgstr ""
 msgid "Try another payment method"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:362
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:363
 #: templates/cart/cart.php:338
 msgid "Your cart is empty"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:363
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:364
 msgid "Choose a service and a package to check out."
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:426
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:427
 msgid "You do not have permission to pay for this order."
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:438
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:452
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:439
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:453
 msgid "Back to order"
 msgstr ""
 
 #. translators: %s: order number
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:508
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:509
 #: src/Services/ConversationService.php:87
 #, php-format
 msgid "Order %s"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:900
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:901
 msgid "Back to service"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:904
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1840
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:905
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1841
 msgid "Secure Checkout"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:923
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1859
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:924
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1860
 msgid "Sign in to continue"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:925
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1861
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:926
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1862
 msgid "Please log in or create an account to complete your purchase."
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:940
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1875
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:941
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1876
 msgid "No payment methods available. Please contact support."
 msgstr ""
 
 #. translators: 1: number of remaining items, 2: current service title
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:962
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:963
 #, php-format
 msgid "You have %1$d more item in your cart. This checkout is for %2$s only. Your other item will remain in your cart for separate checkout."
 msgid_plural "You have %1$d more items in your cart. This checkout is for %2$s only. Your other items will remain in your cart for separate checkout."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1011
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1012
 #: templates/order/order-view.php:784
 msgid "Service Details"
 msgstr ""
 
 #. translators: %d: number of days
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1051
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1052
 #, php-format
 msgid "%d-day delivery"
 msgstr ""
 
 #. translators: %d: number of revisions
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1061
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1062
 #: src/Models/ServicePackage.php:215
 #, php-format
 msgid "%d revision"
@@ -14137,147 +14137,147 @@ msgid_plural "%d revisions"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1090
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1091
 msgid "We will create your account from the name and email below, so you can send the seller your requirements and follow your order. You will get an email to choose a password."
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1131
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1132
 msgid "Order Payment"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1131
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1998
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1132
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1999
 #: templates/cart/cart.php:487
 #: templates/order/order-view.php:560
 msgid "Order Summary"
 msgstr ""
 
 #. translators: %s: formatted price
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1204
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2030
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1205
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2031
 #: templates/order/order-view.php:285
 #, php-format
 msgid "Pay %s"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1215
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2040
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1216
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2041
 msgid "Secure payment"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1219
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2044
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1220
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2045
 msgid "Order protection"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1240
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1241
 msgid "About the Seller"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1246
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1247
 msgid "Orders Completed"
 msgstr ""
 
 #. translators: %d: number of reviews
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1257
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1258
 #, php-format
 msgid "%d Review"
 msgid_plural "%d Reviews"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1265
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1266
 msgid "Member Since"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1273
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1274
 msgid "Verified Buyer"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1297
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1298
 #: src/Services/NotificationService.php:1562
 msgid "What happens next?"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1304
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1332
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1305
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1333
 msgid "Pay"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1312
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1321
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1313
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1322
 msgid "Seller credited"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1315
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1316
 msgid "Work continues on extended scope"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1318
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1319
 msgid "Seller works on this phase"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1340
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1341
 msgid "Seller Works"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1348
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1349
 msgid "Complete"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1471
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1472
 msgid "Log in"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1478
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1479
 msgid "We could not create your account. Please check your details."
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1527
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2104
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1528
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2105
 msgid "Please select a payment method."
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1581
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2143
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1582
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2144
 msgid "Payment failed. Please try again."
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1694
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1695
 msgid "Your cart contains no valid services."
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1836
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1837
 msgid "Back to cart"
 msgstr ""
 
 #. translators: %d: number of items
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1907
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1908
 #, php-format
 msgid "Your Order (%d Service)"
 msgid_plural "Your Order (%d Services)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1940
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:1941
 msgid "add-on(s)"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2262
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2263
 msgid "Checkout is on hold because something in your cart is no longer for sale."
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2268
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2269
 msgid "A service that has since been removed"
 msgstr ""
 
 #. translators: 1: service name, 2: the reason it cannot be bought.
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2271
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2272
 #, php-format
 msgid "%1$s - %2$s"
 msgstr ""
 
-#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2281
+#: src/Integrations/Standalone/StandaloneCheckoutProvider.php:2282
 msgid "Go to your cart to remove it"
 msgstr ""
 
