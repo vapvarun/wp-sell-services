@@ -361,9 +361,37 @@ class CartController extends RestController {
 	public function checkout( WP_REST_Request $request ) {
 		// Standalone checkout - create order directly.
 		$user_id = get_current_user_id();
-		$cart    = get_user_meta( $user_id, '_wpss_cart', true );
 
-		if ( ! is_array( $cart ) || empty( $cart ) ) {
+		// The raw meta row still holds lines the seller has paused or deleted,
+		// which the cart screen shows with a reason and refuses to sell. Read
+		// through the one cart reader so this route cannot bill for them, and
+		// answer the app the same way the checkout page answers a browser:
+		// say what is stuck rather than quietly charging for less.
+		$raw   = get_user_meta( $user_id, '_wpss_cart', true );
+		$stuck = array();
+
+		foreach ( ( is_array( $raw ) ? $raw : array() ) as $item ) {
+			$reason = wpss_service_unavailable_reason( (int) ( $item['service_id'] ?? 0 ) );
+
+			if ( '' !== $reason ) {
+				$stuck[] = $reason;
+			}
+		}
+
+		if ( $stuck ) {
+			return new WP_Error(
+				'wpss_cart_unavailable',
+				__( 'Something in your cart is no longer for sale. Remove it and try again.', 'wp-sell-services' ),
+				array(
+					'status'  => 409,
+					'reasons' => array_values( array_unique( $stuck ) ),
+				)
+			);
+		}
+
+		$cart = wpss_get_user_cart( $user_id );
+
+		if ( empty( $cart ) ) {
 			return new WP_Error( 'empty_cart', __( 'Cart is empty.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 

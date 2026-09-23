@@ -185,6 +185,30 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 				continue;
 			}
 
+			/*
+			 * The backstop at the money boundary.
+			 *
+			 * Every rail should already have read the cart through
+			 * wpss_get_user_cart(), which drops what cannot be sold. This is
+			 * the last place before a paid order exists, and it is reached by
+			 * four callers (two gateways, the REST cart route and the CLI test
+			 * flow), so it refuses here too rather than trusting all four to
+			 * keep doing the right thing. A line reaching this point is a rail
+			 * that bypassed the guard, which is worth saying out loud.
+			 */
+			$unavailable = wpss_service_unavailable_reason( $service_id );
+
+			if ( '' !== $unavailable ) {
+				error_log( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					sprintf(
+						'WPSS: refused to create an order for service %d - %s. The cart was read without wpss_get_user_cart().',
+						$service_id,
+						$unavailable
+					)
+				);
+				continue;
+			}
+
 			// Determine package price from live post meta so we never trust client-side values.
 			$packages = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
 			$pkg      = $packages[ $package_id ] ?? ( ! empty( $packages ) ? reset( $packages ) : null );

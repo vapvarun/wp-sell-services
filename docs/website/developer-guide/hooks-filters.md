@@ -134,18 +134,18 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 |------|-----------|------|
 | `wpss_standalone_adapter_init` | `StandaloneAdapter $adapter` | `src/Integrations/Standalone/StandaloneAdapter.php:156` |
 | `wpss_standalone_checkout_processed` | `int $order_id, array $order_data` | `StandaloneCheckoutProvider.php:133` |
-| `wpss_standalone_order_complete` | `object $order` | `src/Integrations/Standalone/StandaloneOrderProvider.php:719` |
-| `wpss_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Standalone/StandaloneOrderProvider.php:415` |
-| `wpss_order_status_pending_requirements` | `int $order_id, string $old_status` | `src/Integrations/Standalone/StandaloneOrderProvider.php:406` |
+| `wpss_standalone_order_complete` | `object $order` | `src/Integrations/Standalone/StandaloneOrderProvider.php:743` |
+| `wpss_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Standalone/StandaloneOrderProvider.php:439` |
+| `wpss_order_status_pending_requirements` | `int $order_id, string $old_status` | `src/Integrations/Standalone/StandaloneOrderProvider.php:430` |
 | `wpss_payment_callback` | `string $gateway_id` | `src/Integrations/Standalone/StandaloneAdapter.php:335` |
 
 ### Offline Gateway
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_offline_multi_orders_created` | `array $order_ids, int $customer_id` | `src/Integrations/Gateways/OfflineGateway.php:722` |
+| `wpss_offline_multi_orders_created` | `array $order_ids, int $customer_id` | `src/Integrations/Gateways/OfflineGateway.php:725` |
 | `wpss_offline_order_created` | `int $order_id, object $order` | `src/Integrations/Gateways/OfflineGateway.php:649` |
-| `wpss_offline_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Gateways/OfflineGateway.php:907` |
+| `wpss_offline_order_paid` | `int $order_id, string $transaction_id` | `src/Integrations/Gateways/OfflineGateway.php:909` |
 
 ### Stripe Gateway
 
@@ -788,7 +788,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:522` |
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:793` |
-| `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:378` |
+| `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:406` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:266` |
 | `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1330` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |

@@ -279,6 +279,7 @@ Fixes from a QA audit of the vendor and buyer dashboards, plus checkout, cart an
 * Improve  - Remove buttons on wizard extras, FAQs, requirements, deliverables and gallery images are visible and named for screen readers.
 * Improve  - The link from Review Moderation opens Settings at the section holding the setting.
 * Fix      - A service that is paused or deleted while it sits in a cart stays on the cart screen with a plain reason, is left out of the total, and stops checkout until the buyer removes it. It used to disappear and the total simply shrank, with nothing to explain where the item went.
+* Fix      - Checkout refuses to take payment while anything in the cart is no longer for sale, and names what it is. A cart holding one available service and one the seller had paused was charging for both.
 * Fix      - A service that is already live but does not meet the publishing checklist can be edited again through the API. Every edit was being refused, including the one that would have filled in what was missing, while the same edit through the editor or WP-CLI was accepted.
 * Fix      - Settings tells the site owner the setup wizard has been completed, instead of reporting a completion date of January 1, 1970 on sites upgraded from a version that recorded it differently.
 * Fix      - A vendor and the reviewer can open a service that is waiting for approval. Holding it back correctly hid it from the public and hid it from them too, so the reviewer could not see what they were being asked to approve.

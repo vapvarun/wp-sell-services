@@ -287,8 +287,11 @@ class TestGateway implements PaymentGatewayInterface {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
 		$is_multi = ! empty( $_POST['is_multi_checkout'] );
 		if ( $is_multi ) {
-			$customer_id    = get_current_user_id();
-			$cart           = get_user_meta( $customer_id, '_wpss_cart', true ) ?: array();
+			$customer_id = get_current_user_id();
+
+			// The one cart reader, for the same reason as the offline rail:
+			// a paused or deleted service must never reach an order.
+			$cart           = wpss_get_user_cart( $customer_id );
 			$order_provider = wpss_get_order_provider();
 
 			$transaction_id = 'test_' . wp_generate_uuid4();

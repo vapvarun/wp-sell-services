@@ -160,6 +160,13 @@
     "endpoints_detail_at": "Counted by agent enumeration of register_rest_route( calls, not by write-manifest.mjs - the generator undercounts because controllers are registered through an array wrapper. 142 = 134 across 23 *Controller.php files + 7 generic routes in API.php + 1 in Frontend/Tour.php. RestController.php is the shared base class and registers none.",
     "recent_additions": [
       {
+        "route": "/wpss/v1/cart/checkout",
+        "method": "POST",
+        "auth": "logged in, own cart",
+        "since": "1.7.2",
+        "why": "New refusal, no route change: 409 wpss_cart_unavailable, with a reasons[] array, when the cart still holds a service the seller has paused or deleted. The route read the raw _wpss_cart meta row, so it billed for lines the cart screen had already told the buyer were not for sale. It now reads through wpss_get_user_cart() like every other rail, and says what is stuck instead of quietly charging for less."
+      },
+      {
         "route": "/wpss/v1/services/{id}",
         "method": "PUT",
         "auth": "vendor, own service",

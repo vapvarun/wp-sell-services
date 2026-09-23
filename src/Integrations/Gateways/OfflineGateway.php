@@ -667,8 +667,11 @@ class OfflineGateway implements PaymentGatewayInterface {
 			$order_provider = wpss_get_order_provider();
 
 			$customer_id = get_current_user_id();
-			$cart        = get_user_meta( $customer_id, '_wpss_cart', true );
-			$cart        = is_array( $cart ) ? $cart : array();
+
+			// The one cart reader. Read raw, this charged for services the
+			// seller had paused or deleted - the cart screen said they could
+			// not be bought and this rail billed for them anyway.
+			$cart = wpss_get_user_cart( $customer_id );
 
 			if ( empty( $cart ) ) {
 				wp_send_json_error( array( 'message' => __( 'Your cart is empty.', 'wp-sell-services' ) ) );
