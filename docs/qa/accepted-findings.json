@@ -65,6 +65,12 @@
       "fixed_in": "wp-sell-services-pro 388984c",
       "verified_by": "Direct probe on the WooCommerce rail with a real buyer and a real cart, not a re-walk: paused -> 1 item + 1 checkout-blocking error naming the service; deleted -> 1 item + 1 blocking error 'no longer offered'; healthy -> 1 item, 0 errors, buys normally.",
       "note": "The walk reported that deleting a cart item emptied the cart with no explanation. Fixed by no longer auto-removing: deleted and paused now behave identically - the line stays, says why, and checkout is refused until the buyer removes it. The fix is in PRO only, which this gate's staleness check does not see because it diffs Free's tree alone - a real blind spot in the gate, recorded on its own card rather than relied upon."
+    },
+    {
+      "id": "wpss-free-cart-delete-silent-removal",
+      "fixed_in": "wp-sell-services ddfadae5",
+      "verified_by": "Targeted probe on the STANDALONE rail, not a re-walk: a 2-item cart whose second service is then deleted outright returns 2 items to the cart screen with the dead line flagged unavailable and explained, and 1 item to the checkout path - so the buyer sees what happened and the dead line can never reach an order. Mutation-proven: restore the drop and the cart screen silently returns 1 item.",
+      "note": "The free walk found this. It is the same defect the WooCommerce rail had, and the same mistake made twice in one day - fixing one rail and leaving the other. Both rails now behave identically: deleted and paused lines stay visible with a reason, are kept out of the subtotal, and are refused at checkout until the buyer removes them."
     }
   ]
 }

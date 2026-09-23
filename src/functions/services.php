@@ -1429,9 +1429,24 @@ function wpss_get_user_cart( int $user_id, bool $keep_paused = false ): array {
 		$reason = wpss_service_unavailable_reason( (int) ( $item['service_id'] ?? 0 ) );
 
 		if ( '' !== $reason ) {
-			// A service that is gone stays gone; one that is merely paused is kept
-			// visible so the buyer is told why. Both are refused at checkout.
-			if ( ! $service || ! $keep_paused ) {
+			/*
+			 * Never remove a line the buyer did not remove.
+			 *
+			 * This used to drop a DELETED service silently and keep only a
+			 * paused one. On the cart screen that is indistinguishable from the
+			 * site losing the item: a two-item $100 cart became one item and $75
+			 * with nothing said. The WooCommerce rail was corrected first and
+			 * this one was left behind - the same "fixed one rail, missed the
+			 * other" mistake, on the rail every FREE install runs.
+			 *
+			 * Deleted and paused now read the same way on both rails: the line
+			 * stays, says why it cannot be bought, is kept out of the subtotal,
+			 * and is refused at checkout until the buyer removes it.
+			 *
+			 * The money paths still pass $keep_paused = false and drop it, so an
+			 * unavailable line can never reach an order.
+			 */
+			if ( ! $keep_paused ) {
 				$changed = true;
 				continue;
 			}
