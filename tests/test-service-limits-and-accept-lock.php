@@ -43,7 +43,11 @@ $request = new WP_REST_Request( 'POST', '/wpss/v1/services' );
 $request->set_body_params(
 	array(
 		'title'        => 'F12 limit test',
-		'description'  => 'Limit test',
+		// Long enough to PASS the publish checklist, on purpose: this script tests
+		// the service LIMITS, and a short description makes the controller answer
+		// wpss_not_publishable first, so the limit is never reached and the
+		// failure names the wrong rule.
+		'description'  => 'Limit test. ' . str_repeat( 'A description long enough to clear the publish checklist. ', 3 ),
 		'categories'   => array( (int) $category['term_id'] ),
 		'packages'     => $rows( 6, 'Package' ),
 		'gallery'      => range( 1, 9 ),

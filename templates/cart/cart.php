@@ -71,15 +71,15 @@ defined( 'ABSPATH' ) || exit;
 	margin: 0;
 	padding: 12px 14px;
 	border-radius: 6px;
-	background: var(--wpss-warning-bg, #fcf3e3);
-	color: var(--wpss-warning-fg, #7a5b12);
+	background: var(--wpss-warning-light);
+	color: var(--wpss-warning-dark);
 	font-size: 14px;
 	line-height: 1.5;
 }
 
 .wpss-cart-item--unavailable {
 	opacity: 0.68;
-	background: var(--wpss-surface-muted, #f6f7f7);
+	background: var(--wpss-bg-subtle, var(--wpss-warning-light));
 }
 
 .wpss-cart-item--unavailable .wpss-cart-item__price {
@@ -91,8 +91,8 @@ defined( 'ABSPATH' ) || exit;
 	margin: 0 0 8px;
 	padding: 6px 10px;
 	border-radius: 4px;
-	background: var(--wpss-warning-bg, #fcf3e3);
-	color: var(--wpss-warning-fg, #7a5b12);
+	background: var(--wpss-warning-light);
+	color: var(--wpss-warning-dark);
 	font-size: 13px;
 	font-weight: 500;
 	opacity: 1;

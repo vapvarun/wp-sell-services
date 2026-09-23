@@ -408,7 +408,83 @@ class ServiceFactory {
 		self::$created_ids = array();
 	}
 
+	/**
+	 * A category and an image, so a factory service can actually be published.
+	 *
+	 * Since 1.7.2 the publish checklist holds an incomplete service as a draft
+	 * on every save path. A fixture with a title and one package is incomplete,
+	 * so every factory service silently became a draft - and the downstream
+	 * tests that thought they were exercising a live catalogue were exercising
+	 * an empty one. tests/test-scale-surfaces.php caught it: 60 seeded services,
+	 * 25 favourited, and the favourites endpoint correctly returned nothing
+	 * because none of them were published.
+	 *
+	 * Filling the checklist here fixes it once, for every fixture, rather than
+	 * in each test that happens to need a live service.
+	 *
+	 * @param  array<string,mixed> $data Service data.
+	 * @return array<string,mixed>
+	 */
+	private static function fill_publish_checklist( array $data ): array {
+		if ( 'publish' !== ( $data['status'] ?? '' ) ) {
+			return $data;
+		}
+
+		if ( mb_strlen( trim( wp_strip_all_tags( (string) ( $data['content'] ?? '' ) ) ) ) < 120 ) {
+			$data['content'] = (string) ( $data['content'] ?? '' )
+				. ' ' . str_repeat( 'This fixture needs a description long enough for the publish checklist. ', 3 );
+		}
+
+		if ( empty( $data['categories'] ) && function_exists( 'wp_insert_term' ) ) {
+			$existing = get_terms(
+				array( 'taxonomy' => 'wpss_service_category', 'hide_empty' => false, 'number' => 1, 'fields' => 'ids' )
+			);
+
+			if ( ! is_wp_error( $existing ) && ! empty( $existing ) ) {
+				$data['categories'] = array( (int) $existing[0] );
+			} else {
+				$term = wp_insert_term( 'Fixture category', 'wpss_service_category' );
+				if ( ! is_wp_error( $term ) ) {
+					$data['categories'] = array( (int) $term['term_id'] );
+				}
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * An attachment id the main-image rule accepts.
+	 *
+	 * set_post_thumbnail() refuses an attachment with no file behind it, so the
+	 * meta is written directly - which is what get_post_thumbnail_id() reads.
+	 *
+	 * @return int
+	 */
+	private static function fixture_thumbnail_id(): int {
+		static $id = 0;
+
+		if ( $id ) {
+			return $id;
+		}
+
+		$attachment = wp_insert_post(
+			array(
+				'post_type'      => 'attachment',
+				'post_title'     => 'wpss-fixture-image',
+				'post_mime_type' => 'image/jpeg',
+				'post_status'    => 'inherit',
+			)
+		);
+
+		$id = is_wp_error( $attachment ) ? 0 : (int) $attachment;
+
+		return $id;
+	}
+
 	private static function create( array $data ): Service|array {
+		$data = self::fill_publish_checklist( $data );
+
 		// In standalone mode (no WordPress), just return data array.
 		// Check for global $wpdb which indicates WordPress is loaded.
 		global $wpdb;
@@ -423,6 +499,11 @@ class ServiceFactory {
 				}
 
 				self::$created_ids[] = (int) $service_id;
+
+				if ( 'publish' === ( $data['status'] ?? '' ) && ! get_post_thumbnail_id( $service_id ) ) {
+					update_post_meta( $service_id, '_thumbnail_id', self::fixture_thumbnail_id() );
+					wp_update_post( array( 'ID' => $service_id, 'post_status' => 'publish' ) );
+				}
 
 				return $manager->get( $service_id );
 			} catch ( \Throwable $e ) {

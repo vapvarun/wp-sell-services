@@ -16,6 +16,25 @@
 
 require_once __DIR__ . '/exit-on-fail.php';
 
+
+/*
+ * This script asserts the STANDALONE rail's behaviour.
+ *
+ * When a cart plugin owns checkout, wpss_get_service_checkout_url() delegates to
+ * that adapter and the URL shape is the adapter's, not ours - so every assertion
+ * below fails for a configuration difference rather than a defect. It cost an
+ * afternoon of chasing a "broken checkout URL" that was a site on the `auto`
+ * rail (2026-09-23).
+ *
+ * tests/exit-on-fail.php: absent the fixture, SKIP with the reason and exit 0.
+ * A rail is a fixture.
+ */
+if ( function_exists( 'wpss_uses_standalone_payments' ) && ! wpss_uses_standalone_payments() ) {
+	echo "SKIP  this script needs the standalone rail; the site is on '"
+		. (string) wpss_get_option( 'wpss_general', 'ecommerce_platform', 'auto' ) . "'.\n";
+	return;
+}
+
 $GLOBALS['wpss_pass'] = 0;
 $GLOBALS['wpss_fail'] = 0;
 
