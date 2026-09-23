@@ -68,9 +68,9 @@
     },
     {
       "id": "wpss-free-cart-delete-silent-removal",
-      "fixed_in": "wp-sell-services ddfadae5",
-      "verified_by": "Targeted probe on the STANDALONE rail, not a re-walk: a 2-item cart whose second service is then deleted outright returns 2 items to the cart screen with the dead line flagged unavailable and explained, and 1 item to the checkout path - so the buyer sees what happened and the dead line can never reach an order. Mutation-proven: restore the drop and the cart screen silently returns 1 item.",
-      "note": "The free walk found this. It is the same defect the WooCommerce rail had, and the same mistake made twice in one day - fixing one rail and leaving the other. Both rails now behave identically: deleted and paused lines stay visible with a reason, are kept out of the subtotal, and are refused at checkout until the buyer removes them."
+      "fixed_in": "wp-sell-services d2a49ef1",
+      "verified_by": "Targeted probes on BOTH rails, not a re-walk. STANDALONE (free mode): a 2-item cart whose second service is then deleted outright returns 2 items to the cart screen with the dead line flagged unavailable and explained, and 1 item to the checkout path. COMBO (free+Pro+WooCommerce active): the same seed returns the same 2 / 1 split with the same reason string. Mutation-proven: restore the drop and the cart screen silently returns 1 item.",
+      "note": "The free walk found this. It is the same defect the WooCommerce rail had, and the same mistake made twice in one day - fixing one rail and leaving the other. Both rails now behave identically: deleted and paused lines stay visible with a reason, are kept out of the subtotal, and are refused at checkout until the buyer removes them.\nSTALENESS: this commit touches src/functions/services.php, a rendered file, so verify:smoke-gate correctly reports the COMBO walk (9b0909ec) as stale and the build was run with --force. The combo probe above is the evidence offered in place of a re-walk, and it is weaker than a walk: it exercises wpss_get_user_cart() directly rather than through the cart screen. What limits the blast radius is that the only callers are the standalone cart shortcode, CheckoutIntentService and the REST cart route - the WooCommerce cart does not read this function at all - so no combo-mode checkout surface changed behaviour."
     }
   ]
 }
