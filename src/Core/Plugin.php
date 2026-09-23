@@ -62,6 +62,14 @@ final class Plugin {
 	public const VERSION = '1.2.0';
 
 	/**
+	 * How many stranded services one upgrade pass repairs before re-querying.
+	 *
+	 * @since 1.7.2
+	 * @var int
+	 */
+	private const MODERATION_MIGRATION_BATCH = 200;
+
+	/**
 	 * Loader instance for managing hooks.
 	 *
 	 * @var Loader
@@ -2276,35 +2284,55 @@ final class Plugin {
 			return;
 		}
 
-		$stranded = get_posts(
-			array(
-				'post_type'        => 'wpss_service',
-				'post_status'      => 'publish',
-				'posts_per_page'   => -1,
-				'fields'           => 'ids',
-				'suppress_filters' => true,
-				'meta_query'       => array(
-					array(
-						'key'     => \WPSellServices\Services\ModerationService::META_MODERATION_STATUS,
-						'value'   => array( 'pending', 'rejected' ),
-						'compare' => 'IN',
-					),
-				),
-			)
-		);
+		/*
+		 * In batches, because this runs on every customer's upgrade.
+		 *
+		 * posts_per_page => -1 with a meta_query is fine on the marketplace
+		 * with forty services and is a stall on the one with forty thousand -
+		 * and an upgrade is exactly when a site owner is least able to tell a
+		 * slow migration from a broken one. The batch is re-queried each pass
+		 * rather than paged: every row it touches stops matching post_status
+		 * publish, so offsetting would skip as many as it processed.
+		 */
+		$moved = 0;
 
-		foreach ( $stranded as $service_id ) {
-			wp_update_post(
+		do {
+			$stranded = get_posts(
 				array(
-					'ID'          => (int) $service_id,
-					'post_status' => 'pending',
+					'post_type'        => 'wpss_service',
+					'post_status'      => 'publish',
+					'posts_per_page'   => self::MODERATION_MIGRATION_BATCH,
+					'fields'           => 'ids',
+					// A migration must see the same rows on every site. A
+					// theme or plugin filtering pre_get_posts would otherwise
+					// decide which stranded services get repaired.
+					'suppress_filters' => true, // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.SuppressFilters_suppress_filters
+					'meta_query'       => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+						array(
+							'key'     => \WPSellServices\Services\ModerationService::META_MODERATION_STATUS,
+							'value'   => array( 'pending', 'rejected' ),
+							'compare' => 'IN',
+						),
+					),
 				)
 			);
-		}
 
-		if ( $stranded ) {
+			$found = count( $stranded );
+
+			foreach ( $stranded as $service_id ) {
+				wp_update_post(
+					array(
+						'ID'          => (int) $service_id,
+						'post_status' => 'pending',
+					)
+				);
+				++$moved;
+			}
+		} while ( self::MODERATION_MIGRATION_BATCH === $found );
+
+		if ( $moved ) {
 			wpss_log(
-				sprintf( 'Moderation: returned %d published-but-unapproved service(s) to the review queue.', count( $stranded ) ),
+				sprintf( 'Moderation: returned %d published-but-unapproved service(s) to the review queue.', $moved ),
 				'info'
 			);
 		}
