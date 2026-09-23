@@ -14,7 +14,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Enqueue orders styles.
-wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', array( 'wpss-design-system' ), WPSS_VERSION );
+wpss_enqueue_style( 'wpss-orders', 'assets/css/orders.css' );
 
 $statuses       = \WPSellServices\Models\ServiceOrder::get_statuses();
 $current_filter = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended

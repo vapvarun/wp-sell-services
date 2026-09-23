@@ -63,7 +63,6 @@ $saved = get_option( 'wpss_tax', array() );
 $intent_amount = static function () use ( $service_id ) {
 	$svc = new \WPSellServices\Checkout\CheckoutIntentService();
 	$ref = new ReflectionMethod( $svc, 'resolve_single' );
-	$ref->setAccessible( true );
 	$intent = $ref->invoke( $svc, array( 'service_id' => $service_id, 'package_id' => 0 ), 1 );
 	return is_wp_error( $intent ) ? null : (float) $intent->amount;
 };
@@ -123,7 +122,6 @@ update_option(
 
 $svc = new \WPSellServices\Checkout\CheckoutIntentService();
 $ref = new ReflectionMethod( $svc, 'resolve_single' );
-$ref->setAccessible( true );
 $intent = $ref->invoke( $svc, array( 'service_id' => $service_id, 'package_id' => 0 ), 1 );
 
 if ( ! is_wp_error( $intent ) ) {
@@ -160,7 +158,6 @@ if ( ! is_wp_error( $intent ) ) {
 
 	if ( $provider ) {
 		$settle = new ReflectionMethod( $svc, 'settle_single' );
-		$settle->setAccessible( true );
 		$result = $settle->invoke( $svc, $intent, $provider, 'test', 'txn_tax_contract_probe', $intent->amount, $intent->currency );
 
 		if ( ! empty( $result['success'] ) ) {
@@ -253,7 +250,6 @@ if ( count( $two ) < 1 ) {
 		$provider = function_exists( 'wpss_get_order_provider' ) ? wpss_get_order_provider() : null;
 		if ( $provider ) {
 			$settle = new ReflectionMethod( $svc, 'settle_cart' );
-			$settle->setAccessible( true );
 			$result = $settle->invoke( $svc, $intent, $provider, 'test', 'txn_tax_contract_cart_probe' );
 
 			if ( ! empty( $result['order_ids'] ) ) {

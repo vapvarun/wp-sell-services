@@ -60,6 +60,35 @@ class PublicSignup {
 			);
 		}
 
+		/*
+		 * Honour the owner's registration switch.
+		 *
+		 * The FORM already does: Shortcodes::register_form() refuses to render
+		 * and shows "Registration is currently disabled" when users_can_register
+		 * is off. This handler did not, so the notice was decoration - posting
+		 * straight to admin-ajax created the account anyway, including a full
+		 * vendor account when intent=vendor. Verified: with the switch off,
+		 * three anonymous posts created three users (Basecamp 10321653411).
+		 *
+		 * Gated on users_can_register alone, not on the checkout-account clause
+		 * that AuthController::register() also accepts - that clause is there
+		 * because the REST route serves account-at-checkout as well as signup,
+		 * and this form is only ever signup.
+		 */
+		if ( ! get_option( 'users_can_register' ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Registration is currently disabled.', 'wp-sell-services' ) ),
+				403
+			);
+		}
+
+		// Unauthenticated and it creates users, so it is an abuse surface. Keyed
+		// by IP because there is no user yet - the same treatment, and the same
+		// ceiling, as ajax_checkout_account() below.
+		if ( RateLimiter::check_and_track( 'public_signup' ) ) {
+			RateLimiter::send_error( 'public_signup' );
+		}
+
 		$email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
 		// Passwords are intentionally NOT sanitized — wp_insert_user hashes
 		// them via wp_hash_password and any sanitization would corrupt the

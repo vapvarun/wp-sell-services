@@ -1,0 +1,655 @@
+{
+  "_doc": [
+    "Every admin-post and AJAX handler this plugin registers, and the authority each one checks.",
+    "",
+    "A handler reached over admin-ajax.php has no REST permission_callback and no page",
+    "capability check around it - whatever it checks itself is the whole gate. That is how a",
+    "signup handler came to create vendor accounts on a site with registration switched off:",
+    "the FORM refused and the handler did not (Basecamp 10321653411).",
+    "",
+    "AdminActionAuthorityTest walks $GLOBALS['wp_filter'] and fails when a handler is",
+    "registered but not declared, when this file names one that is gone, when a handler has",
+    "no nonce check and no allow-list entry saying why, and when an anonymous-reachable",
+    "handler carries no reason.",
+    "",
+    "anonymous: true means the handler is registered for wp_ajax_nopriv_ / admin_post_nopriv_",
+    "and is reachable signed out. Each of those MUST carry a reason - it is the surface an",
+    "unauthenticated caller can drive."
+  ],
+  "handlers": {
+    "admin_post_wpss_order_file": {
+      "callback": "wpss_serve_order_file",
+      "nonce": false,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_nopriv_wpss_add_service_to_cart": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::add_service_to_cart",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": true,
+      "reason": "A signed-out visitor builds a session cart before registering, which is the normal marketplace flow. The cart is per-session and carries no other member's data; payment authority is enforced at settle time, not here."
+    },
+    "wp_ajax_nopriv_wpss_checkout_create_account": {
+      "callback": "WPSellServices\\Frontend\\PublicSignup::ajax_checkout_account",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": true,
+      "reason": "Account-at-checkout for a signed-out buyer. Gated on wpss_checkout_creates_accounts() - the owner's switch - and rate limited at 20/hour by IP."
+    },
+    "wp_ajax_nopriv_wpss_live_search": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::live_search",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": true,
+      "reason": "Public catalogue search, the same data GET /search serves. Rate limited via the live_search action."
+    },
+    "wp_ajax_nopriv_wpss_load_reviews": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::load_reviews",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": true,
+      "reason": "Public review pagination on a public service page."
+    },
+    "wp_ajax_nopriv_wpss_load_services": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::load_services",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": true,
+      "reason": "Public catalogue pagination."
+    },
+    "wp_ajax_nopriv_wpss_mark_review_helpful": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::mark_review_helpful",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": true,
+      "reason": "A helpful vote from a signed-out reader. Writes a counter only, never member data, and is rate limited via the helpful_vote action."
+    },
+    "wp_ajax_nopriv_wpss_public_signup": {
+      "callback": "WPSellServices\\Frontend\\PublicSignup::ajax_signup",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": true,
+      "reason": "The signup form itself. Gated on users_can_register and rate limited at 20/hour by IP since Basecamp 10321653411 - before that it honoured neither."
+    },
+    "wp_ajax_wpss_accept_cancellation": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::accept_cancellation",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_accept_delivery": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::accept_delivery",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_accept_proposal": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::accept_proposal",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_add_dispute_evidence": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::add_dispute_evidence",
+      "nonce": true,
+      "capability": true,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_add_portfolio_item": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::add_portfolio_item",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_add_service_to_cart": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::add_service_to_cart",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_admin_mark_order_paid": {
+      "callback": "WPSellServices\\Integrations\\Gateways\\OfflineGateway::ajax_admin_mark_paid",
+      "nonce": true,
+      "capability": true,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_approve_milestone": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::ajax_approve_milestone",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_become_vendor": {
+      "callback": "WPSellServices\\Frontend\\UnifiedDashboard::ajax_become_vendor",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_bulk_action": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::bulk_action",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_cancel_order": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::cancel_order",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_cancel_withdrawal": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::cancel_withdrawal",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_contact_vendor": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::contact_vendor",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_decline_extension": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::ajax_decline_extension",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_decline_milestone": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::ajax_decline_milestone",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_delete_milestone": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::ajax_delete_milestone",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_delete_portfolio_item": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::delete_portfolio_item",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_delete_request": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::delete_request",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_delete_service": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::delete_service",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_deliver_order": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::deliver_order",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_dismiss_standalone_notice": {
+      "callback": "WPSellServices\\wpss_dismiss_standalone_notice",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_export_data": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::export_data",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_favorite_service": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::favorite_service",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_filter_dashboard": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::filter_dashboard",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_get_dashboard_stats": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::get_dashboard_stats",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_get_dashboard_tab": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::get_dashboard_tab",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_get_favorites": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::get_favorites",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_get_messages": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::get_messages",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_get_new_messages": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::get_new_messages",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_get_notifications": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::get_notifications",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_live_search": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::live_search",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_load_reviews": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::load_reviews",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_load_services": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::load_services",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_mark_all_notifications_read": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::mark_all_notifications_read",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_mark_messages_read": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::mark_messages_read",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_mark_notification_read": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::mark_notification_read",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_mark_review_helpful": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::mark_review_helpful",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_offline_process_payment": {
+      "callback": "WPSellServices\\Integrations\\Gateways\\OfflineGateway::ajax_create_order",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_open_dispute": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::open_dispute",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_order_action": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::order_action",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_paginate_dashboard": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::paginate_dashboard",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_paypal_capture": {
+      "callback": "WPSellServices\\Integrations\\PayPal\\PayPalGateway::ajax_capture_order",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_paypal_create_order": {
+      "callback": "WPSellServices\\Integrations\\PayPal\\PayPalGateway::ajax_create_order",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_post_request": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::post_request",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_propose_milestone": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::ajax_propose_milestone",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_public_signup": {
+      "callback": "WPSellServices\\Frontend\\PublicSignup::ajax_signup",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_reject_cancellation": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::reject_cancellation",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_reject_proposal": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::reject_proposal",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_remove_cart_item": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::remove_cart_item",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_remove_requirement_file": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::remove_requirement_file",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_request_extension": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::ajax_request_extension",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_request_milestone_revision": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::ajax_request_milestone_revision",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_request_revision": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::request_revision",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_review_payment_receipt": {
+      "callback": "WPSellServices\\Integrations\\Gateways\\OfflineGateway::ajax_review_payment_receipt",
+      "nonce": true,
+      "capability": true,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_save_email_preferences": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::save_email_preferences",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_search_dashboard": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::search_dashboard",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_send_direct_message": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::send_direct_message",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_send_message": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::send_message",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_service_action": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::service_action",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_skip_requirements": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::skip_requirements",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_start_work": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::start_work",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_stripe_confirm_payment": {
+      "callback": "WPSellServices\\Integrations\\Stripe\\StripeGateway::ajax_confirm_payment",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_stripe_create_payment_intent": {
+      "callback": "WPSellServices\\Integrations\\Stripe\\StripeGateway::ajax_create_payment_intent",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_stripe_process_payment": {
+      "callback": "WPSellServices\\Integrations\\Stripe\\StripeGateway::ajax_confirm_payment",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_submit_milestone": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::ajax_submit_milestone",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_submit_proposal": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::submit_proposal",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_submit_requirements": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::submit_requirements",
+      "nonce": true,
+      "capability": true,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_submit_review": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::submit_review",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_test_process_payment": {
+      "callback": "WPSellServices\\Integrations\\Gateways\\TestGateway::ajax_process_payment",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false,
+      "conditional_on": "A dev site, or wpss_demo_payments_enabled() - Plugin.php mounts TestGateway only then."
+    },
+    "wp_ajax_wpss_unfavorite_service": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::unfavorite_service",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_update_cart_item": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::update_cart_item",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_update_portfolio_item": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::update_portfolio_item",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_update_request": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::update_request",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_update_request_status": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::update_request_status",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_update_vendor_profile": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::update_vendor_profile",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_upload_file": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::upload_file",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": true,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_withdraw_proposal": {
+      "callback": "WPSellServices\\Frontend\\AjaxHandlers::withdraw_proposal",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_wizard_publish": {
+      "callback": "WPSellServices\\Frontend\\ServiceWizard::ajax_publish_service",
+      "nonce": true,
+      "capability": true,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_wizard_remove_gallery": {
+      "callback": "WPSellServices\\Frontend\\ServiceWizard::ajax_remove_gallery",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_wizard_save_draft": {
+      "callback": "WPSellServices\\Frontend\\ServiceWizard::ajax_save_draft",
+      "nonce": true,
+      "capability": true,
+      "rate_limited": false,
+      "anonymous": false
+    },
+    "wp_ajax_wpss_wizard_upload_gallery": {
+      "callback": "WPSellServices\\Frontend\\ServiceWizard::ajax_upload_gallery",
+      "nonce": true,
+      "capability": false,
+      "rate_limited": false,
+      "anonymous": false
+    }
+  },
+  "nonce_allowlist": {
+    "admin_post_wpss_order_file": "Deliberately nonce-free: this serves order deliverables from the private store, and a nonce would break an emailed or bookmarked file link. Authority is wpss_can_read_order_files( $order_id ), and the handler answers the same 404 for 'no such file' and 'not yours' so it cannot be used to discover which order ids exist (the standard's rule 1). Verified in source 2026-09-21."
+  }
+}

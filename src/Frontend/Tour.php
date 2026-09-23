@@ -251,7 +251,7 @@ final class Tour {
 			if ( $screen instanceof \WP_Screen ) {
 				$id = (string) $screen->id;
 				if ( 0 === strpos( $id, 'toplevel_page_wp-sell-services' )
-					|| 'sell-services_page_wpss-setup-wizard' === $id ) {
+					|| wpss_is_admin_page( $id, 'wpss-setup-wizard' ) ) {
 					$steps = $this->get_admin_tour_steps();
 				}
 			}

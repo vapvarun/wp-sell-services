@@ -1290,7 +1290,7 @@ class Admin {
 		wp_set_script_translations( 'wpss-admin-icons', 'wp-sell-services', \WPSS_PLUGIN_DIR . 'languages' );
 
 		// Reports queue: confirm before suspending or closing an account.
-		if ( 'sell-services_page_wpss-reports' === $hook ) {
+		if ( wpss_is_admin_page( $hook, 'wpss-reports' ) ) {
 			wp_enqueue_script(
 				'wpss-admin-reports',
 				\WPSS_PLUGIN_URL . 'assets/js/admin-reports.js',
@@ -1517,32 +1517,40 @@ class Admin {
 	 * @return bool
 	 */
 	private function is_plugin_page( string $hook ): bool {
+		/*
+		 * Page SLUGS, not hook suffixes. A submenu hook is built from the parent
+		 * MENU TITLE, which Pro's White Label lets an owner rename, so a list of
+		 * literal hooks stops matching on exactly the sites that paid for
+		 * renaming. wpss_is_admin_page() compares the slug, which nobody can
+		 * change.
+		 *
+		 * A new admin page that is not listed here still renders - it just
+		 * renders with no plugin CSS, which reads as a styling bug rather than a
+		 * missing registration. Add the slug in the same commit that adds the
+		 * page.
+		 */
 		$plugin_pages = array(
-			'toplevel_page_wp-sell-services',
-			'sell-services_page_wpss-orders',
-			'sell-services_page_wpss-vendors',
-			'sell-services_page_wpss-withdrawals',
-			'sell-services_page_wpss-moderation',
-			'sell-services_page_wpss-review-moderation',
-			'sell-services_page_wpss-disputes',
-			'sell-services_page_wpss-settings',
-			'sell-services_page_wpss-notifications',
-			'sell-services_page_wpss-audit-log',
-			// A new admin page that is not listed here still renders — it just
-			// renders with no plugin CSS at all, which looks like a styling bug
-			// rather than a missing registration. Add the hook suffix in the
-			// same commit that adds the page.
-			'sell-services_page_wpss-reports',
-			'admin_page_wpss-create-order',
-			'admin_page_wpss-setup-wizard',
-			'sell-services_page_wpss-upgrade',
+			'wp-sell-services',
+			'wpss-orders',
+			'wpss-vendors',
+			'wpss-withdrawals',
+			'wpss-moderation',
+			'wpss-review-moderation',
+			'wpss-disputes',
+			'wpss-settings',
+			'wpss-notifications',
+			'wpss-audit-log',
+			'wpss-reports',
+			'wpss-create-order',
+			'wpss-setup-wizard',
+			'wpss-upgrade',
 		);
 
-		if ( in_array( $hook, $plugin_pages, true ) ) {
+		if ( wpss_is_admin_page( $hook, ...$plugin_pages ) ) {
 			return true;
 		}
 
-		// Support white-labeled menu slugs (e.g., my-marketplace_page_wpss-settings).
+		// Anything else this plugin registers later, white-labelled or not.
 		return str_contains( $hook, 'wpss' );
 	}
 
@@ -2909,7 +2917,34 @@ class Admin {
 													<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
 												</span>
 											</div>
-											<div><?php echo wp_kses_post( wpautop( $message->message ) ); ?></div>
+											<?php if ( '' !== trim( (string) $message->message ) ) : ?>
+												<div><?php echo wp_kses_post( wpautop( $message->message ) ); ?></div>
+											<?php endif; ?>
+											<?php
+											/*
+											 * File evidence is stored with message = '' and the
+											 * file in `attachments`. Rendering only ->message drew
+											 * an empty bubble for every uploaded file, so the
+											 * person deciding the dispute could not open any of
+											 * the evidence they were being asked to weigh.
+											 */
+											$wpss_msg_files = wpss_dispute_message_attachments( $message->attachments ?? '' );
+											?>
+											<?php if ( $wpss_msg_files ) : ?>
+												<ul class="wpss-dispute-message-files" style="margin: 8px 0 0; padding: 0; list-style: none;">
+													<?php foreach ( $wpss_msg_files as $wpss_msg_file ) : ?>
+														<li style="margin-top: 4px;">
+															<a href="<?php echo esc_url( $wpss_msg_file['url'] ); ?>" target="_blank" rel="noopener noreferrer">
+																<span class="dashicons dashicons-media-default" style="vertical-align: middle;"></span>
+																<?php echo esc_html( $wpss_msg_file['name'] ); ?>
+															</a>
+														</li>
+													<?php endforeach; ?>
+												</ul>
+											<?php endif; ?>
+											<?php if ( '' === trim( (string) $message->message ) && ! $wpss_msg_files ) : ?>
+												<em style="color: #666;"><?php esc_html_e( 'No content', 'wp-sell-services' ); ?></em>
+											<?php endif; ?>
 										</div>
 									<?php endforeach; ?>
 								</div>

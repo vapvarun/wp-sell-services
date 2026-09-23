@@ -238,7 +238,18 @@ function wpss_get_ledger_debit_types(): array {
  * @return string e.g. "'withdrawal','debit','dispute_refund','connect_transfer'"
  */
 function wpss_get_ledger_debit_types_sql(): string {
-	return "'" . implode( "','", wpss_get_ledger_debit_types() ) . "'";
+	/*
+	 * sanitize_key() each type before it reaches IN ().
+	 *
+	 * The list comes through the wpss_ledger_debit_types filter, so it is
+	 * developer-controlled rather than request-controlled and this is not an
+	 * injection - but a third party returning a value with a quote in it would
+	 * break the balance query, and a balance query that errors is a money
+	 * surface that silently shows nothing (Basecamp 10321653509).
+	 */
+	$types = array_filter( array_map( 'sanitize_key', wpss_get_ledger_debit_types() ) );
+
+	return "'" . implode( "','", $types ) . "'";
 }
 
 /**
@@ -524,10 +535,50 @@ function wpss_insert_ledger_row( array $row ): bool {
 		return false;
 	}
 
+	/*
+	 * A money row must carry its reference, because the UNIQUE index cannot
+	 * enforce it otherwise.
+	 *
+	 * uniq_reference (reference_type, reference_id, type) is the double-credit
+	 * and replay defence, and the duplicate-entry branch below treats a
+	 * collision as success precisely because of it. But MySQL permits unlimited
+	 * duplicate rows when an indexed column is NULL, and both reference columns
+	 * default to NULL - so a row written without a reference had no idempotency
+	 * protection at all, silently, while looking exactly like a protected one
+	 * (Basecamp 10321653478, finding 2).
+	 *
+	 * Every caller in both plugins passes both fields today; this refuses the
+	 * one that forgets tomorrow rather than crediting twice.
+	 */
+	$reference_type = trim( (string) ( $row['reference_type'] ?? '' ) );
+	$reference_id   = (int) ( $row['reference_id'] ?? 0 );
+
+	if ( '' === $reference_type || $reference_id <= 0 ) {
+		wpss_log(
+			sprintf(
+				'Refused a ledger row of type "%s" for user %d: a money row must carry reference_type and reference_id, or the uniq_reference index cannot dedupe it.',
+				(string) ( $row['type'] ?? '' ),
+				$user_id
+			),
+			'error'
+		);
+
+		return false;
+	}
+
 	$is_debit = in_array( (string) ( $row['type'] ?? '' ), wpss_get_ledger_debit_types(), true );
 
 	$row += array(
-		'balance_after' => wpss_get_ledger_balance( $user_id ) + ( $is_debit ? -abs( $amount ) : $amount ),
+
+		/*
+		 * Locked read for the fallback. Every caller computes balance_after
+		 * from a balance it already holds under FOR UPDATE and passes it in, so
+		 * this default is only reached by a caller that did not - and reading
+		 * it unlocked there is how a stored running balance goes
+		 * non-monotonic under concurrency and confuses anyone reconciling a
+		 * statement (Basecamp 10321653509).
+		 */
+		'balance_after' => wpss_get_ledger_balance( $user_id, true ) + ( $is_debit ? -abs( $amount ) : $amount ),
 		'currency'      => wpss_get_currency(),
 		'status'        => 'completed',
 		'created_at'    => current_time( 'mysql' ),
@@ -547,8 +598,29 @@ function wpss_insert_ledger_row( array $row ): bool {
 	);
 	$row     = array_intersect_key( $row, $formats );
 
+	/*
+	 * Formats in $row's key order, not $formats'.
+	 *
+	 * $wpdb->insert() binds the format list POSITIONALLY against the data
+	 * array, but array_intersect_key( $formats, $row ) returns them in
+	 * $formats' order. The two only agreed because every caller happened to
+	 * write its keys in the same sequence as the list above. A caller that
+	 * ordered them differently silently wrote each value into the NEXT
+	 * column's format - observed while testing this function: a row came back
+	 * with currency = '0' and reference_type = '0.000000'.
+	 *
+	 * Latent rather than live, since no shipped caller orders them differently,
+	 * but this is a money table and the failure is silent corruption rather
+	 * than an error.
+	 */
+	$insert_formats = array();
+
+	foreach ( array_keys( $row ) as $column ) {
+		$insert_formats[] = $formats[ $column ];
+	}
+
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-	$inserted = $wpdb->insert( $wpdb->prefix . 'wpss_wallet_transactions', $row, array_values( array_intersect_key( $formats, $row ) ) );
+	$inserted = $wpdb->insert( $wpdb->prefix . 'wpss_wallet_transactions', $row, $insert_formats );
 
 	if ( false === $inserted ) {
 		if ( false === stripos( (string) $wpdb->last_error, 'Duplicate entry' ) ) {

@@ -679,6 +679,39 @@ class EarningsService {
 			)
 		);
 
+		/*
+		 * One open request at a time - checked INSIDE the lock taken above.
+		 *
+		 * This rule lived in EarningsController, not here, so when Pro's
+		 * /wallet/withdraw was consolidated onto this service it inherited the
+		 * balance lock and not the queue rule: five concurrent requests from one
+		 * vendor left two pending rows through Pro and would have left one
+		 * through Free (Basecamp 10322374689). No overdraw - the balance lock
+		 * held - but the owner's payout queue behaved differently depending on
+		 * which client the vendor used.
+		 *
+		 * It is the same shape that made the original overdraw possible: a rule
+		 * living in a caller rather than in the shared writer. Inside the
+		 * transaction it is race-safe rather than advisory, which the
+		 * controller's copy was not.
+		 */
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$open = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND status = 'pending'",
+				$vendor_id
+			)
+		);
+
+		if ( $open > 0 ) {
+			$wpdb->query( 'ROLLBACK' );
+			return array(
+				'success' => false,
+				'code'    => 'pending_exists',
+				'message' => __( 'You already have a pending withdrawal request.', 'wp-sell-services' ),
+			);
+		}
+
 		$summary = $this->get_summary( $vendor_id );
 
 		// Check available balance.
@@ -686,6 +719,7 @@ class EarningsService {
 			$wpdb->query( 'ROLLBACK' );
 			return array(
 				'success' => false,
+				'code'    => 'insufficient_balance',
 				'message' => __( 'Insufficient balance for this withdrawal.', 'wp-sell-services' ),
 			);
 		}

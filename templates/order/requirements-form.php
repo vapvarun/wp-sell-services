@@ -25,7 +25,7 @@ if ( empty( $order_id ) || empty( $order ) ) {
 	return;
 }
 
-wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', array( 'wpss-design-system' ), WPSS_VERSION );
+wpss_enqueue_style( 'wpss-orders', 'assets/css/orders.css' );
 \WPSellServices\Assets\ScriptRegistry::enqueue( 'wpss-requirements-form', 'assets/js/requirements-form.js', array( 'jquery' ) );
 wp_localize_script(
 	'wpss-requirements-form',

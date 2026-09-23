@@ -85,10 +85,13 @@ final class CheckoutIntent {
 	public int $order_id = 0;
 
 	/**
-	 * Cart line items (KIND_CART only).
+	 * Cart line items (KIND_CART only), keyed by cart item key.
+	 *
+	 * Not a list: resolve_cart() builds these as $lines[ $key ], and checkout
+	 * matches a line back to its cart entry by that key. See cart().
 	 *
 	 * @since 1.3.0
-	 * @var   array<int,array<string,mixed>>
+	 * @var   array<string,array<string,mixed>>
 	 */
 	public array $cart = array();
 
@@ -193,7 +196,16 @@ final class CheckoutIntent {
 	 *
 	 * @since 1.3.0
 	 *
-	 * @param array<int, mixed>    $cart Cart line items.
+	 * Cart lines keep the CART ITEM KEY, they are not a list.
+	 *
+	 * resolve_cart() builds them as $lines[ $key ] = ..., where $key is the
+	 * item key stored in the buyer's cart, and checkout matches lines back to
+	 * cart entries by that key. This was annotated array<int, mixed> and had
+	 * always been string-keyed; nothing caught it because the cart arrived
+	 * from get_user_meta() as `mixed`. Typing the cart reader in 1.7.2 made
+	 * the real shape visible.
+	 *
+	 * @param array<string, mixed> $cart Cart line items, keyed by cart item key.
 	 * @param float                $amount   Server-computed cart total.
 	 * @param string               $currency Currency.
 	 * @param int                  $buyer_id Buyer ID.

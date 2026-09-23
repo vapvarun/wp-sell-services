@@ -168,7 +168,6 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_favorite_service', array( $this, 'favorite_service' ) );
 		add_action( 'wp_ajax_wpss_unfavorite_service', array( $this, 'unfavorite_service' ) );
 		add_action( 'wp_ajax_wpss_get_favorites', array( $this, 'get_favorites' ) );
-		add_action( 'wp_ajax_wpss_update_service_status', array( $this, 'update_service_status' ) );
 		add_action( 'wp_ajax_wpss_delete_service', array( $this, 'delete_service' ) );
 
 		// File upload.
@@ -1800,44 +1799,6 @@ class AjaxHandlers {
 	}
 
 	/**
-	 * Toggle service status between publish and draft.
-	 *
-	 * @return void
-	 */
-	public function update_service_status(): void {
-		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
-
-		$service_id = absint( $_POST['service_id'] ?? 0 );
-		$user_id    = get_current_user_id();
-
-		if ( ! $service_id || ! $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
-		}
-
-		$service = get_post( $service_id );
-
-		if ( ! $service || 'wpss_service' !== $service->post_type || (int) $service->post_author !== $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
-		}
-
-		$new_status = ( 'publish' === $service->post_status ) ? 'draft' : 'publish';
-
-		wp_update_post(
-			array(
-				'ID'          => $service_id,
-				'post_status' => $new_status,
-			)
-		);
-
-		wp_send_json_success(
-			array(
-				'message'    => __( 'Service status updated.', 'wp-sell-services' ),
-				'new_status' => $new_status,
-			)
-		);
-	}
-
-	/**
 	 * Delete a service owned by the current user.
 	 *
 	 * @return void
@@ -1896,7 +1857,12 @@ class AjaxHandlers {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
+		// Unguessable path: this handler has no owning record to gate on, so the
+		// URL is the only thing protecting the file. See
+		// wpss_obfuscate_public_upload_name().
+		add_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
 		$attachment_id = media_handle_upload( 'file', 0 );
+		remove_filter( 'wp_handle_upload_prefilter', 'wpss_obfuscate_public_upload_name' );
 
 		if ( is_wp_error( $attachment_id ) ) {
 			wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
@@ -3259,7 +3225,7 @@ class AjaxHandlers {
 		$output = fopen( 'php://output', 'w' );
 
 		if ( 'orders' === $type ) {
-			fputcsv( $output, array( 'Order ID', 'Service', 'Customer', 'Status', 'Total', 'Created' ) );
+			wpss_fputcsv( $output, array( 'Order ID', 'Service', 'Customer', 'Status', 'Total', 'Created' ) );
 
 			$orders_table = $wpdb->prefix . 'wpss_orders';
 
@@ -3278,7 +3244,7 @@ class AjaxHandlers {
 			foreach ( $orders as $order ) {
 				$service  = get_post( $order->service_id );
 				$customer = get_userdata( $order->customer_id );
-				fputcsv(
+				wpss_fputcsv(
 					$output,
 					array(
 						$order->id,

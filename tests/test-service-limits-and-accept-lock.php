@@ -43,7 +43,11 @@ $request = new WP_REST_Request( 'POST', '/wpss/v1/services' );
 $request->set_body_params(
 	array(
 		'title'        => 'F12 limit test',
-		'description'  => 'Limit test',
+		// Long enough to PASS the publish checklist, on purpose: this script tests
+		// the service LIMITS, and a short description makes the controller answer
+		// wpss_not_publishable first, so the limit is never reached and the
+		// failure names the wrong rule.
+		'description'  => 'Limit test. ' . str_repeat( 'A description long enough to clear the publish checklist. ', 3 ),
 		'categories'   => array( (int) $category['term_id'] ),
 		'packages'     => $rows( 6, 'Package' ),
 		'gallery'      => range( 1, 9 ),
@@ -85,7 +89,6 @@ $posts[]   = $wizard_id;
 $image_ids = $wpdb->get_col( "SELECT ID FROM {$wpdb->posts} ORDER BY ID DESC LIMIT 9" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $wizard    = new ServiceWizard();
 $save      = new ReflectionMethod( $wizard, 'save_service_meta' );
-$save->setAccessible( true );
 $save->invoke(
 	$wizard,
 	$wizard_id,

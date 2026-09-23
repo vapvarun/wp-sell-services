@@ -151,15 +151,19 @@ class ProExtensionHooksTest extends TestCase {
 	 * Location: Admin::register_menu()
 	 */
 	public function test_wpss_admin_menu_label_filter(): void {
-		$default = apply_filters( 'wpss_admin_menu_label', 'Sell Services' );
-		$this->assertSame( 'Sell Services', $default );
-
-		add_filter(
-			'wpss_admin_menu_label',
-			function () {
-				return 'MyMarket';
-			}
-		);
+		/*
+		 * The unfiltered default is deliberately NOT asserted.
+		 *
+		 * Pro's AdminBrandingService hooks this filter, and a hook
+		 * registration lasts the life of the PHP process - there is no
+		 * un-registering it once Pro has booted. Asserting "nothing else is
+		 * hooked here" is asserting that Pro does not do the one thing this
+		 * seam exists for, so the old version passed only while white label
+		 * happened to be switched off and went red the moment a QA walk turned
+		 * it on. What the extension point promises is that a later consumer
+		 * can override - so that is what is asserted.
+		 */
+		add_filter( 'wpss_admin_menu_label', fn() => 'MyMarket', PHP_INT_MAX );
 
 		$this->assertSame( 'MyMarket', apply_filters( 'wpss_admin_menu_label', 'Sell Services' ) );
 	}
@@ -171,13 +175,20 @@ class ProExtensionHooksTest extends TestCase {
 	public function test_wpss_email_from_name_filter(): void {
 		$received = null;
 
+		// Priority 1 so the callback sees the value the emitter passed, before
+		// Pro's EmailBrandingService (priority 10) rewrites it; PHP_INT_MAX so
+		// the return value is the one that reaches the caller. Same reason as
+		// the menu-label test above.
 		add_filter(
 			'wpss_email_from_name',
 			function ( $name ) use ( &$received ) {
 				$received = $name;
-				return 'Custom Sender';
-			}
+				return $name;
+			},
+			1
 		);
+
+		add_filter( 'wpss_email_from_name', fn() => 'Custom Sender', PHP_INT_MAX );
 
 		$result = apply_filters( 'wpss_email_from_name', 'WP Sell Services' );
 

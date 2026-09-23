@@ -99,11 +99,9 @@ $uid   = (int) wp_insert_user(
 );
 
 $email_gate = new ReflectionMethod( EmailService::class, 'is_email_type_enabled' );
-$email_gate->setAccessible( true );
 $es = new EmailService();
 
 $row_gate = new ReflectionMethod( NotificationService::class, 'should_send_email' );
-$row_gate->setAccessible( true );
 $ns = new NotificationService();
 
 /**

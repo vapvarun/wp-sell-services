@@ -2069,7 +2069,15 @@ class EmailService {
 		 *
 		 * @param string $from_name The sender name.
 		 */
-		$from_name = apply_filters( 'wpss_email_from_name', $this->settings()['from_name'] );
+
+		/*
+		 * sanitize_text_field() on both display names before they are
+		 * interpolated into a header. PHPMailer strips CR/LF and wp_mail's
+		 * greedy regex keeps the real address, so header injection does not
+		 * land today - this is so the defence does not rest on two other
+		 * components continuing to behave that way (Basecamp 10321653509).
+		 */
+		$from_name = sanitize_text_field( (string) apply_filters( 'wpss_email_from_name', $this->settings()['from_name'] ) );
 
 		// Set headers.
 		$headers = array(
@@ -2079,7 +2087,7 @@ class EmailService {
 
 		// Add Reply-To header when reply_to_email is provided by the sending method.
 		if ( ! empty( $template_vars['reply_to_email'] ) ) {
-			$reply_name = $template_vars['reply_to_name'] ?? '';
+			$reply_name = sanitize_text_field( (string) ( $template_vars['reply_to_name'] ?? '' ) );
 			$headers[]  = sprintf( 'Reply-To: %s <%s>', $reply_name, $template_vars['reply_to_email'] );
 		}
 

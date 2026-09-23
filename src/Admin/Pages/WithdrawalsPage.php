@@ -918,7 +918,7 @@ class WithdrawalsPage {
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Streaming CSV to the response body.
 		$out = fopen( 'php://output', 'w' );
 
-		fputcsv(
+		wpss_fputcsv(
 			$out,
 			array(
 				'withdrawal_id',
@@ -966,7 +966,7 @@ class WithdrawalsPage {
 				$last_id = (int) $row->id;
 				$details = json_decode( wpss_decrypt_secret( (string) ( $row->details ?? '' ) ), true ) ?: array();
 
-				fputcsv(
+				wpss_fputcsv(
 					$out,
 					array(
 						(int) $row->id,

@@ -1,0 +1,274 @@
+{
+  "_doc": [
+    "Who holds which wpss_* capability, and what each one AUTHORISES.",
+    "",
+    "The scope field is the point. A WordPress capability name does not say whether it",
+    "means 'your own' or 'anyone's', and reading one the wrong way is a privilege",
+    "escalation. That is not hypothetical here: the FluentCart order routes gated on",
+    "wpss_manage_services, which READS like a site-wide management power and is granted",
+    "to every vendor at registration. Behind it sat an unscoped SELECT * over every order",
+    "on the marketplace, so any self-registered vendor could read every buyer's billing",
+    "address and every competitor's earnings (Basecamp 10321653293).",
+    "",
+    "scope:",
+    "  own     - authorises the CALLER'S OWN object only. Never sufficient on its own in a",
+    "            permission callback; pair it with an ownership comparison.",
+    "  any     - authorises acting on anyone's object. The real site-wide authority.",
+    "  site    - configuration and administration.",
+    "  feature - 'may use this feature at all'. Fine as a bare entry gate where no object",
+    "            exists yet (creating one, listing your own).",
+    "",
+    "CapabilityMapTest fails when a capability exists in a role but not here, when this",
+    "file names one no role holds, and when a wpss_* capability is checked bare in source",
+    "without being allow-listed with a reason."
+  ],
+  "scope": {
+    "wpss_vendor": {
+      "scope": "feature",
+      "means": "This account is a vendor. A marker, not an authority - it never decides access to a specific object.",
+      "held_by": [
+        "administrator",
+        "wpss_vendor",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "wpss_manage_services": {
+      "scope": "own",
+      "means": "May create and manage THE CALLER'S OWN services. Despite the name, this is NOT a site-wide management power and NOT an admin capability.",
+      "warning": "Every vendor holds this from registration (Core/Activator.php, Services/VendorService.php). Any gate that uses it to mean 'staff' is a privilege escalation - that is exactly what happened on the FluentCart routes (Basecamp 10321653293). The site-wide equivalents are edit_others_wpss_services and wpss_manage_orders.",
+      "held_by": [
+        "administrator",
+        "wpss_vendor",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "wpss_view_analytics": {
+      "scope": "own",
+      "means": "May view THE CALLER'S OWN analytics. Not marketplace-wide figures.",
+      "warning": "Every vendor holds this. The Pro wpss/analytics-overview ability gated marketplace-wide analytics on it and was saved only by the inner route's admin check (Basecamp 10321653478, finding 6). Marketplace-wide analytics require manage_options.",
+      "held_by": [
+        "administrator",
+        "wpss_vendor",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "wpss_vendor_orders": {
+      "scope": "own",
+      "means": "May act on orders where the caller is the VENDOR. Ownership is still compared separately; this only says the caller is a seller at all.",
+      "held_by": [
+        "administrator",
+        "wpss_vendor",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "wpss_respond_to_requests": {
+      "scope": "feature",
+      "means": "May submit proposals to buyer requests. No object exists at the point this is checked.",
+      "held_by": [
+        "administrator",
+        "wpss_vendor",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "wpss_manage_orders": {
+      "scope": "any",
+      "means": "Site staff authority over ANY order, including forcing a status transition the state machine would refuse.",
+      "held_by": [
+        "administrator",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "wpss_manage_disputes": {
+      "scope": "any",
+      "means": "Site staff authority over ANY dispute: mediate, resolve, refund.",
+      "held_by": [
+        "administrator"
+      ],
+      "note": "Deliberately NOT granted to shop_manager, unlike wpss_manage_orders."
+    },
+    "wpss_manage_vendors": {
+      "scope": "any",
+      "means": "Approve, suspend and edit ANY vendor profile.",
+      "held_by": [
+        "administrator"
+      ],
+      "note": "Deliberately NOT granted to shop_manager."
+    },
+    "wpss_manage_settings": {
+      "scope": "site",
+      "means": "Plugin configuration. Paired with manage_options at every call site.",
+      "held_by": [
+        "administrator"
+      ]
+    },
+    "edit_wpss_services": {
+      "scope": "own",
+      "means": "Standard WordPress CPT capability over the caller's OWN wpss_service posts. Held by every vendor.",
+      "held_by": [
+        "administrator",
+        "wpss_vendor",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "delete_wpss_services": {
+      "scope": "own",
+      "means": "Standard WordPress CPT capability over the caller's OWN wpss_service posts. Held by every vendor.",
+      "held_by": [
+        "administrator",
+        "wpss_vendor",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "publish_wpss_services": {
+      "scope": "own",
+      "means": "Standard WordPress CPT capability over the caller's OWN wpss_service posts. Held by every vendor.",
+      "held_by": [
+        "administrator",
+        "wpss_vendor",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "edit_published_wpss_services": {
+      "scope": "own",
+      "means": "Standard WordPress CPT capability over the caller's OWN wpss_service posts. Held by every vendor.",
+      "held_by": [
+        "administrator",
+        "wpss_vendor",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "delete_published_wpss_services": {
+      "scope": "own",
+      "means": "Standard WordPress CPT capability over the caller's OWN wpss_service posts. Held by every vendor.",
+      "held_by": [
+        "administrator",
+        "wpss_vendor",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "edit_others_wpss_services": {
+      "scope": "any",
+      "means": "Standard WordPress CPT capability over ANYONE'S wpss_service posts. This is the real site-wide authority over services - not wpss_manage_services.",
+      "held_by": [
+        "administrator",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "delete_others_wpss_services": {
+      "scope": "any",
+      "means": "Standard WordPress CPT capability over ANYONE'S wpss_service posts. This is the real site-wide authority over services - not wpss_manage_services.",
+      "held_by": [
+        "administrator",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "read_private_wpss_services": {
+      "scope": "any",
+      "means": "Standard WordPress CPT capability over ANYONE'S wpss_service posts. This is the real site-wide authority over services - not wpss_manage_services.",
+      "held_by": [
+        "administrator",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "edit_private_wpss_services": {
+      "scope": "any",
+      "means": "Standard WordPress CPT capability over ANYONE'S wpss_service posts. This is the real site-wide authority over services - not wpss_manage_services.",
+      "held_by": [
+        "administrator",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    },
+    "delete_private_wpss_services": {
+      "scope": "any",
+      "means": "Standard WordPress CPT capability over ANYONE'S wpss_service posts. This is the real site-wide authority over services - not wpss_manage_services.",
+      "held_by": [
+        "administrator",
+        "shop_manager"
+      ],
+      "held_by_note": "shop_manager is WooCommerce's role, not ours. Activator.php grants the staff set to it only when the role exists, so on a site without WooCommerce it holds nothing."
+    }
+  },
+  "roles": {
+    "administrator": [
+      "delete_others_wpss_services",
+      "delete_private_wpss_services",
+      "delete_published_wpss_services",
+      "delete_wpss_services",
+      "edit_others_wpss_services",
+      "edit_private_wpss_services",
+      "edit_published_wpss_services",
+      "edit_wpss_services",
+      "publish_wpss_services",
+      "read_private_wpss_services",
+      "wpss_manage_disputes",
+      "wpss_manage_orders",
+      "wpss_manage_services",
+      "wpss_manage_settings",
+      "wpss_manage_vendors",
+      "wpss_respond_to_requests",
+      "wpss_vendor",
+      "wpss_vendor_orders",
+      "wpss_view_analytics"
+    ],
+    "wpss_vendor": [
+      "delete_published_wpss_services",
+      "delete_wpss_services",
+      "edit_published_wpss_services",
+      "edit_wpss_services",
+      "publish_wpss_services",
+      "wpss_manage_services",
+      "wpss_respond_to_requests",
+      "wpss_vendor",
+      "wpss_vendor_orders",
+      "wpss_view_analytics"
+    ],
+    "shop_manager": [
+      "delete_others_wpss_services",
+      "delete_private_wpss_services",
+      "delete_published_wpss_services",
+      "delete_wpss_services",
+      "edit_others_wpss_services",
+      "edit_private_wpss_services",
+      "edit_published_wpss_services",
+      "edit_wpss_services",
+      "publish_wpss_services",
+      "read_private_wpss_services",
+      "wpss_manage_orders",
+      "wpss_manage_services",
+      "wpss_respond_to_requests",
+      "wpss_vendor",
+      "wpss_vendor_orders",
+      "wpss_view_analytics"
+    ]
+  },
+  "bare_check_allowlist": {
+    "src/API/ServicesController.php:1204": "Entry gate, not object authority: create_item_permissions_check asks only whether the caller may author a service at all, and no service exists yet to own. Every later edit path compares authorship separately.",
+    "src/Services/OrderService.php:521": "Deliberate staff bypass of the order state machine, scoped to wpss_manage_orders (scope: any) and manage_options. The forcing is audited downstream via can_transition_naturally() -> AuditLogService, so forensics can tell a forced transition from a natural one.",
+    "src/Core/AbilitiesRegistrar.php:273": "Entry gate on the wpss/create-service ability - no object exists at registration time; the inner REST route re-checks.",
+    "src/Core/AbilitiesRegistrar.php:437": "Entry gate on wpss/view-earnings. The ability delegates to GET /earnings/summary, which scopes to get_current_user_id().",
+    "src/Core/AbilitiesRegistrar.php:490": "Entry gate on wpss/request-withdrawal. Delegates to POST /earnings/withdrawals, which scopes to the caller.",
+    "src/Core/AbilitiesRegistrar.php:613": "Entry gate on the proposals ability (wpss_respond_to_requests, scope: feature).",
+    "src/Admin/OrderScreen.php:152": "Admin screen entry gate; per-order authority is resolved inside the screen.",
+    "src/Admin/Settings.php:1577": "Settings screen, scope: site. Paired with manage_options.",
+    "src/Admin/Admin.php:1012": "Vendor order-screen access, combined with an explicit $order_id ownership comparison on the same line.",
+    "src/API/AuthController.php:989": "Informational flag in the /me payload, not a gate.",
+    "src/API/AuthController.php:990": "Informational flag in the /me payload, not a gate.",
+    "src/API/API.php:989": "Informational flag in the /me payload, not a gate.",
+    "src/API/API.php:994": "Informational flag in the /me payload, not a gate."
+  }
+}

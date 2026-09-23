@@ -342,7 +342,23 @@ function wpss_normalize_service_addons( array $raw ): array {
 			'title'               => $title,
 			'description'         => sanitize_textarea_field( (string) ( $addon['description'] ?? '' ) ),
 			'price'               => (float) ( $addon['price'] ?? 0 ),
-			'delivery_days_extra' => absint( $addon['delivery_days_extra'] ?? $addon['extra_days'] ?? $addon['delivery_time'] ?? 0 ),
+
+			/*
+			 * Clamp, never absint().
+			 *
+			 * absint( -2 ) is 2, so an add-on entered as "deliver two days
+			 * SOONER" was stored as "two days LATER" and the buyer paid extra
+			 * for a worse delivery date. Silently inverting the vendor's
+			 * intent is the one outcome worse than ignoring it.
+			 *
+			 * Negative is not a supported concept here and the whole product
+			 * agrees: the field is labelled "Extra Delivery Days", both inputs
+			 * carry min="0", and SingleServiceView renders it as "(+N days)".
+			 * A paid rush option would be a different feature with its own
+			 * field, not a sign flip on this one. So a negative clamps to 0 -
+			 * no extra days - which is the closest honest reading of it.
+			 */
+			'delivery_days_extra' => max( 0, (int) ( $addon['delivery_days_extra'] ?? $addon['extra_days'] ?? $addon['delivery_time'] ?? 0 ) ),
 			'field_type'          => in_array( $field_type, array( 'checkbox', 'quantity', 'dropdown', 'text' ), true ) ? $field_type : 'checkbox',
 			'price_type'          => in_array( $price_type, array( 'flat', 'percentage', 'quantity_based' ), true ) ? $price_type : 'flat',
 			'min_quantity'        => max( 1, absint( $addon['min_quantity'] ?? 1 ) ),
@@ -499,7 +515,21 @@ function wpss_resolve_checkout_addons( int $service_id, string $addon_ids = '' )
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
 	$addon_ids_raw = '' !== $addon_ids ? $addon_ids : ( isset( $_POST['addon_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_ids'] ) ) : '' );
 
-	if ( ! $addon_ids_raw ) {
+	/*
+	 * '' means "no add-ons", "0" means "the FIRST add-on".
+	 *
+	 * Add-on ids here are 0-based indices into _wpss_addons, so a buyer who
+	 * selects only the first add-on sends the string "0" - which PHP treats as
+	 * falsy. `if ( ! $addon_ids_raw )` therefore returned an empty result and
+	 * the charge silently dropped that add-on: the buyer saw it in the UI, was
+	 * billed without it, and the vendor lost the revenue. It only ever broke
+	 * for the FIRST add-on selected alone, which is the most commonly selected
+	 * one, and never for "1" or "0,1" - which is why it survived.
+	 *
+	 * Compare against '' explicitly. Same reason the line above already uses
+	 * `'' !== $addon_ids` rather than a truthiness test.
+	 */
+	if ( '' === $addon_ids_raw ) {
 		return $result;
 	}
 
@@ -1177,8 +1207,59 @@ function wpss_validate_service_publishable( array $service ): array {
 				);
 			}
 
-			if ( empty( $cheapest['delivery_days'] ) ) {
-				$errors[] = __( 'Please set a delivery time for the Basic package.', 'wp-sell-services' );
+			/*
+			 * Every enabled tier, not only the cheapest one.
+			 *
+			 * The delivery and name checks used to run against $cheapest alone,
+			 * so an enabled Standard or Premium with a price but no delivery
+			 * time - or no name - published without complaint, and the buyer was
+			 * shown a purchasable tier with no date on it. The price floor stays
+			 * on the cheapest deliberately: that is the lowest a buyer can pay,
+			 * so checking the minimum covers every tier at once (Basecamp
+			 * 10320551446).
+			 */
+			$position = 0;
+
+			foreach ( $packages as $key => $package ) {
+				++$position;
+				$name = trim( (string) ( $package['name'] ?? '' ) );
+
+				/*
+				 * The wizard keys packages by tier ('basic', 'standard'), REST
+				 * and the metabox key them numerically. Naming a tier "the 1
+				 * package" helps nobody, so fall back to its position instead.
+				 */
+				$label = '' !== $name
+					? $name
+					: ( is_numeric( $key ) ? '' : ucfirst( (string) $key ) );
+
+				if ( '' === $name ) {
+					$errors[] = '' !== $label
+						? sprintf(
+							/* translators: %s: package tier name (e.g. Standard). */
+							__( 'Please name the %s package.', 'wp-sell-services' ),
+							$label
+						)
+						: sprintf(
+							/* translators: %d: position of the package in the list, starting at 1. */
+							__( 'Please name package %d.', 'wp-sell-services' ),
+							$position
+						);
+				}
+
+				if ( empty( $package['delivery_days'] ) ) {
+					$errors[] = '' !== $label
+						? sprintf(
+							/* translators: %s: package name or tier (e.g. Standard). */
+							__( 'Please set a delivery time for the %s package.', 'wp-sell-services' ),
+							$label
+						)
+						: sprintf(
+							/* translators: %d: position of the package in the list, starting at 1. */
+							__( 'Please set a delivery time for package %d.', 'wp-sell-services' ),
+							$position
+						);
+				}
 			}
 		}
 	}
@@ -1218,9 +1299,31 @@ function wpss_enforce_service_limits( array $meta ): array {
 		'extras'       => array( 'max_extras', __( 'extras', 'wp-sell-services' ) ),
 		'faqs'         => array( 'max_faq', __( 'FAQs', 'wp-sell-services' ) ),
 		'requirements' => array( 'max_requirements', __( 'requirements', 'wp-sell-services' ) ),
+		// The wizard enforces the tag cap and REST did not, so the same service
+		// could carry more tags depending on which surface created it.
+		'tags'         => array( 'max_tags', __( 'tags', 'wp-sell-services' ) ),
 	);
 
 	$truncated = array();
+
+	/*
+	 * The gallery is keyed on the attachment id wherever it is rendered - most
+	 * sharply in the wizard, whose x-for keys on image.id, where a repeated id
+	 * breaks Alpine's reconciliation outright. A duplicate saved through REST
+	 * therefore did not show up until the vendor next opened their own service
+	 * to edit it, and then broke that screen. Collapse repeats at the single
+	 * point every save path passes through, before the cap is applied, so the
+	 * cap counts distinct images.
+	 */
+	if ( ! empty( $meta['gallery'] ) && is_array( $meta['gallery'] ) ) {
+		$unique_gallery = array_values( array_unique( array_map( 'absint', $meta['gallery'] ) ) );
+
+		if ( count( $unique_gallery ) !== count( $meta['gallery'] ) ) {
+			$truncated['gallery_duplicates'] = __( 'The same image was listed more than once; the repeats were not saved.', 'wp-sell-services' );
+		}
+
+		$meta['gallery'] = $unique_gallery;
+	}
 
 	foreach ( $rules as $key => [ $limit_key, $label ] ) {
 		$max = (int) ( $limits[ $limit_key ] ?? -1 );
@@ -1275,4 +1378,77 @@ function wpss_user_can_feature_service( int $service_id = 0 ): bool {
 	 * @param int  $service_id Service post ID.
 	 */
 	return (bool) apply_filters( 'wpss_user_can_feature_service', $can, $service_id );
+}
+
+/**
+ * A buyer's cart, with items whose service is no longer purchasable removed.
+ *
+ * Adding to the cart validates properly - add_to_cart() requires the service
+ * to exist, be a wpss_service, and be published. Nothing re-checked on the way back out, and
+ * ten call sites read `_wpss_cart` straight from user meta, so an item whose
+ * service was deleted, trashed or paused AFTER it was added survived, rendered
+ * and could be bought.
+ *
+ * It was bought. A 2026-09-23 smoke left this behind:
+ *
+ *     order #583  service_id=1604  total=0.000  status=pending_requirements
+ *
+ * Service 1604 no longer existed. The platform created a real order row for
+ * it, at zero, parked in a status that waits on the buyer forever. On a live
+ * marketplace the same thing happens when a vendor simply PAUSES a service -
+ * a documented feature - and the vendor receives an order they cannot fulfil
+ * for a price that never reached them (Basecamp 10330917388).
+ *
+ * Guarding the cart endpoint alone would have fixed the screen and left the
+ * checkout path that actually creates the order untouched, so the check lives
+ * here and every reader calls it.
+ *
+ * @since 1.7.2
+ *
+ * @param  int  $user_id     Buyer.
+ * @param  bool $keep_paused Keep paused/unpublished items, marked unavailable,
+ *                           so the buyer is told rather than watching the cart
+ *                           empty itself. Deleted services are always dropped -
+ *                           there is nothing to come back to. Checkout passes
+ *                           false: an unavailable item must never reach an order.
+ * @return array<string, array<string, mixed>> Cart items keyed as stored.
+ */
+function wpss_get_user_cart( int $user_id, bool $keep_paused = false ): array {
+	$cart = get_user_meta( $user_id, '_wpss_cart', true );
+
+	if ( ! is_array( $cart ) ) {
+		return array();
+	}
+
+	$out     = array();
+	$changed = false;
+
+	foreach ( $cart as $key => $item ) {
+		$service = get_post( (int) ( $item['service_id'] ?? 0 ) );
+
+		if ( ! $service || 'wpss_service' !== $service->post_type ) {
+			$changed = true;
+			continue;
+		}
+
+		if ( 'publish' !== $service->post_status ) {
+			if ( ! $keep_paused ) {
+				$changed = true;
+				continue;
+			}
+
+			$item['unavailable']        = true;
+			$item['unavailable_reason'] = __( 'This service is not currently available.', 'wp-sell-services' );
+		}
+
+		$out[ $key ] = $item;
+	}
+
+	// Persist only the removal of genuinely dead rows, so a paused service
+	// coming back does not find the buyer's cart already emptied.
+	if ( $changed && ! $keep_paused ) {
+		update_user_meta( $user_id, '_wpss_cart', $out );
+	}
+
+	return $out;
 }

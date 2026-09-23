@@ -206,11 +206,7 @@ class CartController extends RestController {
 			return $valid;
 		}
 
-		$cart = get_user_meta( $user_id, '_wpss_cart', true );
-
-		if ( ! is_array( $cart ) ) {
-			$cart = array();
-		}
+		$cart = wpss_get_user_cart( (int) $user_id, true );
 
 		$item_key  = md5( $service_id . '-' . $package_id . '-' . wp_json_encode( $addon_ids ) );
 		$cart_item = array(

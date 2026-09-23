@@ -67,8 +67,106 @@ class Assets {
 			return;
 		}
 
-		add_filter( 'style_loader_src', array( __CLASS__, 'filter_loader_src' ), 10, 2 );
+		add_filter( 'style_loader_src', array( __CLASS__, 'filter_style_src' ), 10, 2 );
 		add_filter( 'script_loader_src', array( __CLASS__, 'filter_loader_src' ), 10, 2 );
+	}
+
+	/**
+	 * Style variant of the rewrite, which also keeps the RTL name buildable.
+	 *
+	 * WP_Styles::do_item() builds the RTL URL as
+	 * `str_replace( "{$suffix}.css", "-rtl{$suffix}.css", … )`, where $suffix is
+	 * whatever `wp_style_add_data( $handle, 'suffix', … )` recorded. Nothing
+	 * recorded one, so with $suffix empty core rewrote the ALREADY minified URL
+	 * this filter returns - turning `frontend.min.css` into
+	 * `frontend.min-rtl.css`, while the build writes `frontend-rtl.min.css`.
+	 *
+	 * Every plugin stylesheet therefore 404d on any RTL site and the plugin
+	 * rendered with no CSS at all (Basecamp 10320551778). Registering the rtl
+	 * flag at each enqueue was necessary but not sufficient; this is the other
+	 * half, and it belongs here because this is the one place that decides a
+	 * minified file is being served.
+	 *
+	 * Order matters and core guarantees it: do_item() resolves the LTR href
+	 * (running this filter) before it reads extra['suffix'] for the RTL one.
+	 * Handles ending in `-rtl` are core asking for the RTL URL itself, so they
+	 * are skipped - there is no such registered style to annotate.
+	 *
+	 * @param string $src    The full asset URL including `?ver=…`.
+	 * @param string $handle Registered style handle.
+	 * @return string Possibly-rewritten URL.
+	 */
+	public static function filter_style_src( $src, $handle ): string {
+		$rewritten = self::filter_loader_src( $src, $handle );
+
+		// A handle ending -rtl is core asking for the RTL URL itself; there is
+		// no such registered style to annotate.
+		if ( '-rtl' === substr( (string) $handle, -4 ) ) {
+			return $rewritten;
+		}
+
+		if ( $rewritten !== $src ) {
+			wp_style_add_data( $handle, 'suffix', '.min' );
+		}
+
+		self::maybe_pair_rtl( $handle, $rewritten, $rewritten !== $src );
+
+		return $rewritten;
+	}
+
+	/**
+	 * Serve a stylesheet's RTL sibling whenever one was actually built.
+	 *
+	 * Pairing used to be each enqueue's job, and five of them never did it -
+	 * the Vendors screen, the service-edit metabox, and Pro's currency, EDD and
+	 * WooCommerce sheets all shipped an -rtl.css that WordPress was never told
+	 * about. On Vendors that was worse than nothing: an LTR sheet loaded on top
+	 * of an RTL one and won wherever the two overlapped (Basecamp 10321368043).
+	 *
+	 * Remembering at 24 call sites is the thing that keeps failing, so the
+	 * pairing is derived here instead: this filter already runs for every
+	 * stylesheet whose URL is inside this plugin's assets dir, and core reads
+	 * extra['rtl'] after resolving the LTR href, so a flag set here is seen.
+	 * A future enqueue inherits the pairing without knowing it exists.
+	 *
+	 * Only ever set when the sibling is on disk - flagging a sheet that has no
+	 * -rtl build would turn a working LTR page into a 404.
+	 *
+	 * An explicit value already registered is left alone, including a handle
+	 * that points 'rtl' at a URL of its own.
+	 *
+	 * @param string $handle   Registered style handle.
+	 * @param string $src      Resolved URL, after any .min rewrite.
+	 * @param bool   $minified Whether that rewrite happened.
+	 * @return void
+	 */
+	private static function maybe_pair_rtl( string $handle, string $src, bool $minified ): void {
+		$styles = wp_styles();
+
+		if ( ! $styles instanceof \WP_Styles || ! isset( $styles->registered[ $handle ] ) ) {
+			return;
+		}
+
+		if ( isset( $styles->registered[ $handle ]->extra['rtl'] ) ) {
+			return;
+		}
+
+		$path = self::url_to_path( explode( '?', $src, 2 )[0] );
+
+		if ( null === $path ) {
+			return;
+		}
+
+		// The name core will build: foo.min.css -> foo-rtl.min.css, and
+		// foo.css -> foo-rtl.css when nothing was minified.
+		$suffix   = $minified ? '.min' : '';
+		$rtl_path = preg_replace( '#' . preg_quote( $suffix, '#' ) . '\.css$#i', '-rtl' . $suffix . '.css', $path );
+
+		if ( ! is_string( $rtl_path ) || $rtl_path === $path || ! self::min_exists( $rtl_path ) ) {
+			return;
+		}
+
+		wp_style_add_data( $handle, 'rtl', 'replace' );
 	}
 
 	/**

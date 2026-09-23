@@ -890,6 +890,64 @@ class ServiceModerationPage {
 	}
 
 	/**
+	 * Resolve which service a singular front-end query is about.
+	 *
+	 * Runs at pre_get_posts, before $query->queried_object is populated, so the
+	 * post has to be found from whichever of the two addressing forms the link
+	 * used: ?p=ID or the pretty permalink's slug.
+	 *
+	 * @since 1.7.2
+	 *
+	 * @param \WP_Query $query The query object.
+	 * @return int Service post ID, or 0 when it cannot be resolved.
+	 */
+	private static function resolve_queried_service( \WP_Query $query ): int {
+		$by_id = (int) $query->get( 'p' );
+
+		if ( $by_id > 0 ) {
+			return $by_id;
+		}
+
+		$slug = (string) $query->get( 'name' );
+
+		if ( '' === $slug ) {
+			return 0;
+		}
+
+		$post = get_page_by_path( $slug, OBJECT, 'wpss_service' );
+
+		return $post instanceof \WP_Post ? (int) $post->ID : 0;
+	}
+
+	/**
+	 * Whether the current user may open a service that is not approved yet.
+	 *
+	 * True for whoever moderates the queue, and for the service's own author.
+	 * Everyone else - including a logged-in buyer and another vendor - is
+	 * refused, so an unapproved service stays off the public site.
+	 *
+	 * @since 1.7.2
+	 *
+	 * @param int $service_id Service post ID.
+	 * @return bool
+	 */
+	public static function can_view_unapproved( int $service_id ): bool {
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		$user_id = get_current_user_id();
+
+		if ( $user_id <= 0 || $service_id <= 0 ) {
+			return false;
+		}
+
+		$post = get_post( $service_id );
+
+		return $post instanceof \WP_Post && (int) $post->post_author === $user_id;
+	}
+
+	/**
 	 * Filter frontend queries to only show approved services.
 	 *
 	 * @param \WP_Query $query The query object.
@@ -904,6 +962,41 @@ class ServiceModerationPage {
 		// Skip if not main query or not our post type.
 		if ( ! $query->is_main_query() ) {
 			return;
+		}
+
+		/*
+		 * Two people are entitled to open a service that is still waiting for
+		 * review: the vendor who wrote it, and whoever is reviewing it. Both
+		 * reach it through the ordinary public permalink - the dashboard's View
+		 * button (templates/dashboard/sections/services.php) and the queue's
+		 * View link (self::render_page()) both emit get_permalink().
+		 *
+		 * A held service sits at post_status=pending, which WordPress refuses to
+		 * serve to anyone on the front end, so both of those links answered 404
+		 * the moment moderation started holding publishes. Hiding it from the
+		 * public is right; hiding it from its own author and from the reviewer
+		 * is not - it left the reviewer unable to look at the thing they are
+		 * being asked to approve.
+		 *
+		 * Widen the status and skip the approved-only clause for exactly those
+		 * two, and only on a single service. The archive and every public list
+		 * keep the original behaviour.
+		 *
+		 * is_single(), not is_singular( 'wpss_service' ). The post-type-qualified
+		 * form calls get_queried_object(), which is still empty at pre_get_posts
+		 * for a ?p=ID request, so it answers false on exactly the URL this needs
+		 * to catch. Check the flag and the post_type query var separately.
+		 */
+		$queried_type = $query->get( 'post_type' );
+		$is_service   = in_array( 'wpss_service', (array) $queried_type, true );
+
+		if ( $query->is_single() && $is_service ) {
+			$viewed = self::resolve_queried_service( $query );
+
+			if ( $viewed && self::can_view_unapproved( $viewed ) ) {
+				$query->set( 'post_status', array( 'publish', 'pending', 'draft' ) );
+				return;
+			}
 		}
 
 		// Check if querying services.
@@ -1250,7 +1343,7 @@ class ServiceModerationPage {
 		}
 
 		// Skip the moderation page itself.
-		if ( 'wp-sell-services_page_wpss-moderation' === $screen->id ) {
+		if ( wpss_is_admin_page( (string) $screen->id, 'wpss-moderation' ) ) {
 			return;
 		}
 

@@ -362,16 +362,31 @@ final class Plugin {
 			);
 		}
 
-		// Withdrawal payout details were plaintext JSON until 1.7.1. Same
-		// own-flag pattern as above: exactly once, cannot be skipped by a
-		// forgotten version bump, idempotent (rows already prefixed are not
-		// selected).
-		if ( ! get_option( 'wpss_withdrawal_details_encrypted', false ) ) {
+		/*
+		 * Withdrawal payout details were plaintext JSON until 1.7.1. Idempotent
+		 * (rows already prefixed are not selected), so re-running is free.
+		 *
+		 * The flag is a VERSION stamp, not a boolean, because a one-shot flag
+		 * repaired the rows that existed when it ran and then closed the door.
+		 * Pro's POST /wallet/withdraw kept writing cleartext after that
+		 * (WalletController.php:265, fixed in 1.7.2), so on any site that
+		 * upgraded to 1.7.1 those rows would never be repaired - vendor IBAN,
+		 * bank and PayPal identifiers sitting in the clear permanently
+		 * (Basecamp 10321653459).
+		 *
+		 * Bump the version below whenever a defect is found that could have
+		 * written plaintext since the last stamp. A legacy value of 1 sorts
+		 * below any version string, so sites carrying the old boolean re-run
+		 * once and are stamped properly.
+		 */
+		$wpss_details_encrypted_through = (string) get_option( 'wpss_withdrawal_details_encrypted', '' );
+
+		if ( '' === $wpss_details_encrypted_through || version_compare( $wpss_details_encrypted_through, '1.7.2', '<' ) ) {
 			add_action(
 				'init',
 				static function (): void {
 					wpss_encrypt_legacy_withdrawal_details();
-					update_option( 'wpss_withdrawal_details_encrypted', 1, false );
+					update_option( 'wpss_withdrawal_details_encrypted', '1.7.2', false );
 				},
 				20
 			);
@@ -1901,6 +1916,11 @@ final class Plugin {
 		};
 		$this->loader->add_action( 'wpss_milestone_approved', $auto_complete_parent, null, 20, 2 );
 		$this->loader->add_action( 'wpss_milestone_declined', $auto_complete_parent, null, 20, 2 );
+		// Cancelling a phase settles it just as approving or declining does, so
+		// it has to re-check the parent too. Without this, a project whose last
+		// open phase was cancelled - by the vendor, or by the abandoned-phase
+		// cron - stayed In Progress forever with every phase settled.
+		$this->loader->add_action( 'wpss_milestone_cancelled', $auto_complete_parent, null, 20, 2 );
 
 		// Cascade-cancel: when a parent order is cancelled, every still-
 		// pending_payment milestone under it is cancelled immediately.
@@ -2303,6 +2323,17 @@ final class Plugin {
 	 */
 	private function define_moderation_hooks(): void {
 		( new \WPSellServices\Admin\Pages\ServiceModerationPage() )->register_guards();
+
+		/*
+		 * The publish checklist has the same requirement as moderation and was
+		 * not given the same treatment: define_admin_hooks() returns early when
+		 * ! is_admin(), and is_admin() is FALSE during a REST request. The block
+		 * editor publishes over /wp/v2/wpss-services/<id>, so ServiceMetabox was
+		 * never constructed there and the rule did not exist on the path most
+		 * owners use. An incomplete service published through the native Publish
+		 * button with a 200 (reproduced 2026-09-23).
+		 */
+		( new \WPSellServices\Admin\Metaboxes\ServiceMetabox() )->register_publish_guards();
 	}
 
 	/**

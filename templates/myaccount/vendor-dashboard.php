@@ -15,7 +15,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Enqueue vendor dashboard styles.
-wp_enqueue_style( 'wpss-vendor-dashboard', WPSS_PLUGIN_URL . 'assets/css/vendor-dashboard.css', array( 'wpss-design-system' ), WPSS_VERSION );
+wpss_enqueue_style( 'wpss-vendor-dashboard', 'assets/css/vendor-dashboard.css' );
 
 /**
  * Fires before the vendor dashboard content.

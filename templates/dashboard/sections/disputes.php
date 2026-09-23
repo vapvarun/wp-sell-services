@@ -75,8 +75,17 @@ if ( $view_dispute_id ) {
 	}
 	?>
 	<div class="wpss-section wpss-section--disputes wpss-card wpss-disputes wpss-dispute-detail">
+		<?php
+		/*
+		 * wpss-back-link is the existing primitive for this control, used by the
+		 * order views. This link carried only wpss-dispute-detail__back, which no
+		 * stylesheet defines, so it rendered as whatever the host theme said a
+		 * bare anchor looks like - on BuddyX a 20px unstyled line that did not
+		 * read as a control at all (Basecamp 10312821624).
+		 */
+		?>
 		<p class="wpss-dispute-detail__back">
-			<a href="<?php echo esc_url( $section_base_url ); ?>">&larr; <?php esc_html_e( 'All disputes', 'wp-sell-services' ); ?></a>
+			<a class="wpss-back-link" href="<?php echo esc_url( $section_base_url ); ?>">&larr; <?php esc_html_e( 'All disputes', 'wp-sell-services' ); ?></a>
 		</p>
 
 		<div class="wpss-dispute-detail__head">
@@ -345,9 +354,28 @@ if ( $view_dispute_id ) {
 			 * open, pending or escalated, and escalating from open or pending
 			 * only.
 			 */
-			$wpss_is_opener    = (int) $dispute->initiator_id === $user_id;
-			$wpss_can_cancel   = $wpss_is_opener && in_array( $status_key, array( 'open', 'pending', 'escalated' ), true );
-			$wpss_can_escalate = in_array( $status_key, array( 'open', 'pending' ), true );
+
+			/*
+			 * Ask the state machine, do not restate it.
+			 *
+			 * These two gates used to carry their own hardcoded status lists,
+			 * which included 'pending'. No dispute is ever in 'pending' -
+			 * DisputeService::STATUS_PENDING is the CONSTANT name and its value
+			 * is 'pending_review'. So the moment the other party answered and
+			 * the dispute moved to pending_review, both controls vanished,
+			 * while DisputeWorkflowManager happily still accepted cancel and
+			 * escalate from that state. The buttons disappeared exactly when
+			 * they were most needed.
+			 *
+			 * cancel() and escalate() both decide through can_transition(), so
+			 * asking the same question here means the UI cannot drift from the
+			 * API again, whatever statuses are added later.
+			 */
+			$wpss_dispute_service = new \WPSellServices\Services\DisputeService();
+			$wpss_is_opener       = (int) $dispute->initiator_id === $user_id;
+			$wpss_can_cancel      = $wpss_is_opener
+				&& $wpss_dispute_service->can_transition( $status_key, \WPSellServices\Services\DisputeService::STATUS_CLOSED );
+			$wpss_can_escalate    = $wpss_dispute_service->can_transition( $status_key, \WPSellServices\Services\DisputeService::STATUS_ESCALATED );
 			?>
 
 			<?php if ( $wpss_can_escalate ) : ?>

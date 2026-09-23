@@ -1,0 +1,1128 @@
+{
+  "_doc": [
+    "Declared authority for every registered REST route. RouteAuthorityTest walks the live",
+    "registry and fails when a route is missing here, when this file names a route the code",
+    "no longer registers, and when the declared callback is not the one actually registered.",
+    "A new route therefore cannot ship without someone stating who may reach it.",
+    "",
+    "audience: public = anyone including signed out | member = any logged-in user |",
+    "owner = the object owner (or an admin) | admin = a capability holder |",
+    "guarded = a controller callback that resolves authority itself.",
+    "",
+    "A public route MUST carry a reason recording how it was verified, not a claim that it",
+    "is safe. A public route that takes an object id MUST say what stops it leaking a record",
+    "its caller may not see.",
+    "",
+    "Ownership is resolved by the file of the class that REGISTERS the route, so a Pro",
+    "controller inheriting a Free base-class guard is still recorded here in Pro."
+  ],
+  "routes": {
+    "DELETE /wpss/v1/auth/devices/(?P<device_id>[a-zA-Z0-9_-]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\AuthController::check_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/auth/sessions/(?P<uuid>[a-zA-Z0-9\\-]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\AuthController::check_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/blocks/(?P<user_id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\BlocksController::check_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/buyer-requests/(?P<id>[\\d]+)": {
+      "audience": "owner",
+      "permission_callback": "WPSellServices\\API\\BuyerRequestsController::check_owner_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/cart/(?P<item_key>[a-z0-9]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\CartController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "DELETE /wpss/v1/favorites/(?P<service_id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\FavoritesController::check_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/me": {
+      "audience": "member",
+      "permission_callback": "wpss_rest_require_login",
+      "object_id": false,
+      "writes": true
+    },
+    "DELETE /wpss/v1/media/(?P<id>[\\d]+)": {
+      "audience": "owner",
+      "permission_callback": "WPSellServices\\API\\MediaController::check_owner_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/milestones/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\MilestonesController::check_participant_milestone_access",
+      "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/notifications/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\NotificationsController::check_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/orders/(?P<id>[\\d]+)/requirements/files/(?P<file_id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_customer_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/portfolio/(?P<id>[\\d]+)": {
+      "audience": "owner",
+      "permission_callback": "WPSellServices\\API\\PortfolioController::check_owner_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/reviews/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ReviewsController::check_delete_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/services/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ServicesController::delete_item_permissions_check",
+      "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/services/(?P<id>[\\d]+)/addons/(?P<addon_id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ServicesController::update_item_permissions_check",
+      "object_id": true,
+      "writes": true
+    },
+    "GET /wpss/v1/audit-log": {
+      "audience": "admin",
+      "permission_callback": "WPSellServices\\API\\AuditLogController::check_admin_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/auth/devices": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\AuthController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/auth/me": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\AuthController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/auth/sessions": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\AuthController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/blocks": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\BlocksController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/buyer-requests": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public job board - a buyer request exists to be found by vendors who are not yet signed in. Verified signed out on 2026-09-21: only published requests are returned (7 of 8; the auto-draft is not), and the payload is the brief the buyer chose to publish plus its budget range."
+    },
+    "GET /wpss/v1/buyer-requests/(?P<id>[\\d]+)": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Single public job board entry; same store and same published-only filter as the list above."
+    },
+    "GET /wpss/v1/buyer-requests/(?P<id>[\\d]+)/proposals": {
+      "audience": "owner",
+      "permission_callback": "WPSellServices\\API\\BuyerRequestsController::check_owner_permission",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/buyer-requests/mine": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\BuyerRequestsController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/cart": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\CartController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/categories": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
+    },
+    "GET /wpss/v1/conversations": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ConversationsController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/conversations/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ConversationsController::check_conversation_permission",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/conversations/(?P<id>[\\d]+)/messages": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ConversationsController::check_conversation_permission",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/conversations/unread-count": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ConversationsController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/dashboard": {
+      "audience": "member",
+      "permission_callback": "wpss_rest_require_login",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/disputes": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\DisputesController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/disputes/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\DisputesController::check_dispute_permission",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/disputes/(?P<id>[\\d]+)/evidence": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\DisputesController::check_dispute_permission",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/disputes/(?P<id>[\\d]+)/timeline": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\DisputesController::check_dispute_permission",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/disputes/options": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
+    },
+    "GET /wpss/v1/earnings/history": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/earnings/summary": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/favorites": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\FavoritesController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/me": {
+      "audience": "member",
+      "permission_callback": "wpss_rest_require_login",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/media": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\MediaController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/media/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\MediaController::check_read_permissions",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/milestones/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\MilestonesController::check_participant_milestone_access",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/moderation/(?P<service_id>[\\d]+)": {
+      "audience": "admin",
+      "permission_callback": "WPSellServices\\API\\ModerationController::check_admin_permissions",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/moderation/count": {
+      "audience": "admin",
+      "permission_callback": "WPSellServices\\API\\ModerationController::check_admin_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/moderation/pending": {
+      "audience": "admin",
+      "permission_callback": "WPSellServices\\API\\ModerationController::check_admin_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/notifications": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\NotificationsController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/notifications/unread-count": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\NotificationsController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/orders": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<id>[\\d]+)/deliverables": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<id>[\\d]+)/files/(?P<file_id>[A-Za-z0-9\\-]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_file_permissions",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<id>[\\d]+)/messages": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<id>[\\d]+)/receipts": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<id>[\\d]+)/requirements": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<id>[\\d]+)/sub-orders": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<id>[\\d]+)/timeline": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<order_id>[\\d]+)/conversation": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ConversationsController::check_order_permission",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<order_id>[\\d]+)/dispute": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\DisputesController::check_order_permission",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<order_id>[\\d]+)/extensions": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ExtensionRequestsController::check_order_access",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<order_id>[\\d]+)/milestones": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\MilestonesController::check_order_access",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/orders/(?P<order_id>[\\d]+)/tip": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\TippingController::check_order_access",
+      "object_id": true,
+      "writes": false,
+      "conditional_on": "wpss_tipping_enabled() - TippingController returns early when tipping is off."
+    },
+    "GET /wpss/v1/payments/methods": {
+      "audience": "member",
+      "permission_callback": "WPSellServices\\API\\PaymentController::check_permissions",
+      "object_id": false,
+      "writes": false,
+      "conditional_on": "wpss_uses_standalone_payments() - PaymentController::register_routes() returns early when a cart plugin owns payment, so these are absent on a WooCommerce/EDD/FluentCart rail."
+    },
+    "GET /wpss/v1/portfolio": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\PortfolioController::check_vendor_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/portfolio/(?P<id>[\\d]+)": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public vendor showcase. wpss_portfolio_items has NO visibility column - a portfolio item is public the moment a vendor saves it, and there is no draft state to leak. Recorded explicitly because the absence of a flag is otherwise read as a missing check."
+    },
+    "GET /wpss/v1/proposals": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ProposalsController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/proposals/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ProposalsController::check_proposal_permission",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/proposals/stats": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ProposalsController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/reports": {
+      "audience": "admin",
+      "permission_callback": "wpss_rest_require_admin",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/reviews": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
+    },
+    "GET /wpss/v1/reviews/(?P<id>[\\d]+)": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/search": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
+    },
+    "GET /wpss/v1/seller-levels": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
+    },
+    "GET /wpss/v1/seller-levels/(?P<level>[a-z_]+)": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
+    },
+    "GET /wpss/v1/services": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
+    },
+    "GET /wpss/v1/services/(?P<id>[\\d]+)": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/services/(?P<id>[\\d]+)/addons": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/services/(?P<id>[\\d]+)/faqs": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/services/(?P<id>[\\d]+)/packages": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/services/(?P<id>[\\d]+)/reviews": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/services/(?P<service_id>[\\d]+)/favorited": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\FavoritesController::check_permissions",
+      "object_id": true,
+      "writes": false
+    },
+    "GET /wpss/v1/services/(?P<service_id>[\\d]+)/reviews/summary": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/services/grid": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
+    },
+    "GET /wpss/v1/services/limits": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
+    },
+    "GET /wpss/v1/settings": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public client bootstrap: currency, page URLs, file limits and the moderation flags a signed-out app needs to render. Verified signed out on 2026-09-21 - every key is non-sensitive; the only credential-shaped field is realtime.key, which is the Pusher PUBLIC app key that is designed to reach the browser (the secret stays server-side in RealtimeService::get_client_config())."
+    },
+    "GET /wpss/v1/tags": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
+    },
+    "GET /wpss/v1/vendors": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission."
+    },
+    "GET /wpss/v1/vendors/(?P<id>[\\d]+)": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/vendors/(?P<id>[\\d]+)/reviews": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/vendors/(?P<id>[\\d]+)/services": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/vendors/(?P<id>[\\d]+)/stats": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public vendor reputation. Verified signed out on 2026-09-21: the payload is services_count, total/completed/active/cancelled orders, completion and on-time rate, review count, average rating, response time and member_since. No earnings, balance or payout figure is present - a buyer choosing a vendor sees reputation, never revenue."
+    },
+    "GET /wpss/v1/vendors/(?P<vendor_id>[\\d]+)/level": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/vendors/(?P<vendor_id>[\\d]+)/portfolio": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/vendors/(?P<vendor_id>[\\d]+)/reviews/summary": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+    },
+    "GET /wpss/v1/vendors/(?P<vendor_id>[\\d]+)/tips": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\TippingController::check_vendor_tips_access",
+      "object_id": true,
+      "writes": false,
+      "conditional_on": "wpss_tipping_enabled() - TippingController returns early when tipping is off."
+    },
+    "GET /wpss/v1/vendors/(?P<vendor_id>[\\d]+)/tips/total": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\TippingController::check_vendor_tips_access",
+      "object_id": true,
+      "writes": false,
+      "conditional_on": "wpss_tipping_enabled() - TippingController returns early when tipping is off."
+    },
+    "GET /wpss/v1/vendors/me": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\VendorsController::check_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/vendors/me/level": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\SellerLevelsController::check_vendor_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/wallet/transactions": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/withdrawals": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "GET /wpss/v1/withdrawals/methods": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "POST /wpss/v1/auth/change-password": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\AuthController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/auth/devices": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\AuthController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/auth/forgot-password": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": true,
+      "reason": "Necessarily public. Answers identically whether or not the address exists, so it does not confirm account existence."
+    },
+    "POST /wpss/v1/auth/login": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": true,
+      "reason": "Necessarily public - a caller cannot authenticate before authenticating. Brute force is bounded by the RateLimiter, not by this gate."
+    },
+    "POST /wpss/v1/auth/logout": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\AuthController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/auth/register": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": false,
+      "writes": true,
+      "reason": "Necessarily public. Gated on users_can_register (or checkout account creation) inside the handler, which is the owner's switch - see Basecamp 10321653411, where the AJAX twin honoured neither."
+    },
+    "POST /wpss/v1/batch": {
+      "audience": "member",
+      "permission_callback": "wpss_rest_require_login",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/blocks/(?P<user_id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\BlocksController::check_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/buyer-requests": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\BuyerRequestsController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/buyer-requests/(?P<id>[\\d]+)/proposals": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\BuyerRequestsController::check_vendor_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/buyer-requests/(?P<id>[\\d]+)/proposals/(?P<proposal_id>[\\d]+)/accept": {
+      "audience": "owner",
+      "permission_callback": "WPSellServices\\API\\BuyerRequestsController::check_owner_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/buyer-requests/(?P<id>[\\d]+)/proposals/(?P<proposal_id>[\\d]+)/reject": {
+      "audience": "owner",
+      "permission_callback": "WPSellServices\\API\\BuyerRequestsController::check_owner_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/cart/add": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\CartController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/cart/checkout": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\CartController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/conversations/(?P<id>[\\d]+)/messages": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ConversationsController::check_conversation_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/conversations/(?P<id>[\\d]+)/read": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ConversationsController::check_conversation_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/disputes/(?P<id>[\\d]+)/assign": {
+      "audience": "admin",
+      "permission_callback": "WPSellServices\\API\\DisputesController::check_admin_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/disputes/(?P<id>[\\d]+)/cancel": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\DisputesController::check_dispute_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/disputes/(?P<id>[\\d]+)/escalate": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\DisputesController::check_dispute_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/disputes/(?P<id>[\\d]+)/evidence": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\DisputesController::check_dispute_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/disputes/(?P<id>[\\d]+)/resolve": {
+      "audience": "admin",
+      "permission_callback": "WPSellServices\\API\\DisputesController::check_admin_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/disputes/(?P<id>[\\d]+)/respond": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\DisputesController::check_dispute_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/extensions/(?P<id>[\\d]+)/decline": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ExtensionRequestsController::check_buyer_extension_access",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/favorites/(?P<service_id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\FavoritesController::check_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/media": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\MediaController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/milestones/(?P<id>[\\d]+)/approve": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\MilestonesController::check_buyer_milestone_access",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/milestones/(?P<id>[\\d]+)/decline": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\MilestonesController::check_buyer_milestone_access",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/milestones/(?P<id>[\\d]+)/pay": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\MilestonesController::check_buyer_milestone_access",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/milestones/(?P<id>[\\d]+)/request-revision": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\MilestonesController::check_buyer_milestone_access",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/milestones/(?P<id>[\\d]+)/submit": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\MilestonesController::check_vendor_milestone_access",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/moderation/(?P<service_id>[\\d]+)/approve": {
+      "audience": "admin",
+      "permission_callback": "WPSellServices\\API\\ModerationController::check_admin_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/moderation/(?P<service_id>[\\d]+)/reject": {
+      "audience": "admin",
+      "permission_callback": "WPSellServices\\API\\ModerationController::check_admin_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/notifications/(?P<id>[\\d]+)/read": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\NotificationsController::check_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/notifications/read-all": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\NotificationsController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_action_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/deliverables": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_vendor_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/messages": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/pay": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_customer_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/receipts": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/requirements": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_customer_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/requirements/skip": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_customer_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<order_id>[\\d]+)/conversation/messages": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ConversationsController::check_order_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<order_id>[\\d]+)/dispute": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\DisputesController::check_order_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<order_id>[\\d]+)/extension": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ExtensionRequestsController::check_vendor_order_access",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<order_id>[\\d]+)/extensions": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ExtensionRequestsController::check_vendor_order_access",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<order_id>[\\d]+)/milestones": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\MilestonesController::check_vendor_order_access",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<order_id>[\\d]+)/review": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ReviewsController::check_create_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/orders/(?P<order_id>[\\d]+)/tip": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\TippingController::check_buyer_access",
+      "object_id": true,
+      "writes": true,
+      "conditional_on": "wpss_tipping_enabled() - TippingController returns early when tipping is off."
+    },
+    "POST /wpss/v1/payments/confirm": {
+      "audience": "member",
+      "permission_callback": "WPSellServices\\API\\PaymentController::check_permissions",
+      "object_id": false,
+      "writes": true,
+      "conditional_on": "wpss_uses_standalone_payments() - PaymentController::register_routes() returns early when a cart plugin owns payment, so these are absent on a WooCommerce/EDD/FluentCart rail."
+    },
+    "POST /wpss/v1/payments/create-intent": {
+      "audience": "member",
+      "permission_callback": "WPSellServices\\API\\PaymentController::check_permissions",
+      "object_id": false,
+      "writes": true,
+      "conditional_on": "wpss_uses_standalone_payments() - PaymentController::register_routes() returns early when a cart plugin owns payment, so these are absent on a WooCommerce/EDD/FluentCart rail."
+    },
+    "POST /wpss/v1/portfolio": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\PortfolioController::check_vendor_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/portfolio/(?P<id>[\\d]+)/featured": {
+      "audience": "owner",
+      "permission_callback": "WPSellServices\\API\\PortfolioController::check_owner_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/portfolio/reorder": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\PortfolioController::check_vendor_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/proposals": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ProposalsController::check_vendor_can_submit",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/proposals/(?P<id>[\\d]+)/withdraw": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ProposalsController::check_vendor_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/realtime/auth": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\RealtimeController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/reports": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ReportsController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/reports/(?P<id>[\\d]+)/resolve": {
+      "audience": "admin",
+      "permission_callback": "wpss_rest_require_admin",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/reviews": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ReviewsController::check_create_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/reviews/(?P<id>[\\d]+)/helpful": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ReviewsController::check_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/reviews/(?P<id>[\\d]+)/reply": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ReviewsController::check_reply_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/services": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ServicesController::create_item_permissions_check",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/services/(?P<id>[\\d]+)/addons": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ServicesController::update_item_permissions_check",
+      "object_id": true,
+      "writes": true
+    },
+    "POST /wpss/v1/tour/complete": {
+      "audience": "member",
+      "permission_callback": "wpss_rest_require_login",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/vendors/register": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\VendorsController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST /wpss/v1/withdrawals": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST,PUT,PATCH /wpss/v1/buyer-requests/(?P<id>[\\d]+)": {
+      "audience": "owner",
+      "permission_callback": "WPSellServices\\API\\BuyerRequestsController::check_owner_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST,PUT,PATCH /wpss/v1/me": {
+      "audience": "member",
+      "permission_callback": "wpss_rest_require_login",
+      "object_id": false,
+      "writes": true
+    },
+    "POST,PUT,PATCH /wpss/v1/orders/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\OrdersController::check_item_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST,PUT,PATCH /wpss/v1/portfolio/(?P<id>[\\d]+)": {
+      "audience": "owner",
+      "permission_callback": "WPSellServices\\API\\PortfolioController::check_owner_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST,PUT,PATCH /wpss/v1/proposals/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ProposalsController::check_vendor_permission",
+      "object_id": true,
+      "writes": true
+    },
+    "POST,PUT,PATCH /wpss/v1/reviews/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ReviewsController::check_update_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "POST,PUT,PATCH /wpss/v1/services/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ServicesController::update_item_permissions_check",
+      "object_id": true,
+      "writes": true
+    },
+    "POST,PUT,PATCH /wpss/v1/services/(?P<id>[\\d]+)/addons/(?P<addon_id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\ServicesController::update_item_permissions_check",
+      "object_id": true,
+      "writes": true
+    },
+    "POST,PUT,PATCH /wpss/v1/vendors/me": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\VendorsController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST,PUT,PATCH /wpss/v1/vendors/me/vacation": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\VendorsController::check_permissions",
+      "object_id": false,
+      "writes": true
+    },
+    "POST,PUT,PATCH /wpss/v1/withdrawals/(?P<id>[\\d]+)": {
+      "audience": "admin",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_admin_permissions",
+      "object_id": true,
+      "writes": true
+    }
+  }
+}

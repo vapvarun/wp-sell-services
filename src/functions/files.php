@@ -207,8 +207,16 @@ function wpss_order_files_are_public( bool $force = false ): ?bool {
 	$response = wp_remote_get(
 		trailingslashit( $uploads['baseurl'] ) . 'wpss-order-files/' . $name,
 		array(
-			'timeout'   => 5,
-			'sslverify' => false,
+			'timeout' => 5,
+
+			/*
+			 * sslverify left at its default (true). This is same-host with a
+			 * URL we build and a body compared against a generated nonce, so
+			 * disabling it bought nothing and it was the only such call in
+			 * either plugin. A bad certificate now fails into the 'unknown'
+			 * branch below, which is the correct answer to "can I reach my own
+			 * uploads dir" when the transport is broken (Basecamp 10321653509).
+			 */
 		)
 	);
 
@@ -413,6 +421,28 @@ function wpss_format_attachment_name( string $name, int $max = 80 ): string {
  * @return array<string,mixed>|null Record, or null when the upload is rejected.
  */
 function wpss_store_order_file( array $file, int $order_id, string $kind = 'delivery' ): ?array {
+	/*
+	 * Enforce the allow-list here, not only in the callers.
+	 *
+	 * Every current caller runs wpss_check_upload() first, so this is belt and
+	 * braces today - but a future one that forgets falls back to WordPress's
+	 * default mime list, which includes html, and this function writes into the
+	 * order-files store (Basecamp 10321653509). wpss_check_upload() is
+	 * idempotent, so running it twice costs a mime lookup and nothing else.
+	 */
+	$wpss_refused = wpss_check_upload( $file );
+
+	if ( $wpss_refused ) {
+		// null, not the WP_Error: this function's contract is ?array and every
+		// caller reads null as "not stored".
+		wpss_log(
+			sprintf( 'Refused an order-file upload for order %d: %s', $order_id, $wpss_refused->get_error_message() ),
+			'warning'
+		);
+
+		return null;
+	}
+
 	if ( empty( $file['tmp_name'] ) || ! is_uploaded_file( $file['tmp_name'] ) ) {
 		return null;
 	}
@@ -1223,4 +1253,150 @@ function wpss_serve_order_file(): void {
 
 	wpss_stream_order_file( $located['record'], $located['path'] );
 	exit;
+}
+
+/**
+ * Renderable file links for one dispute message.
+ *
+ * A dispute message that carries a file is stored with message = '' and the
+ * file in the `attachments` column, so any surface that renders only
+ * $message->message draws an empty bubble and the evidence is invisible. That
+ * is what the admin dispute screen did (Basecamp 10320551466) - the person
+ * being asked to decide the dispute could not open a single piece of evidence,
+ * and a PDF appeared as the raw admin-post.php query string.
+ *
+ * Two record shapes exist in the wild: older rows carry a ready `url`, newer
+ * private-store rows carry `id` + `order_id` + `path` and no url at all. Both
+ * are resolved through wpss_get_order_file_url(), which already knows the
+ * difference and applies the permission check, so neither caller has to.
+ *
+ * @since 1.7.2
+ *
+ * @param mixed $raw The message's `attachments` value: a JSON string or array.
+ * @return array<int, array{name: string, url: string}> Links, possibly empty.
+ */
+function wpss_dispute_message_attachments( $raw ): array {
+	$rows = is_string( $raw ) ? json_decode( $raw, true ) : $raw;
+
+	if ( ! is_array( $rows ) ) {
+		return array();
+	}
+
+	$links = array();
+
+	foreach ( $rows as $row ) {
+		if ( ! is_array( $row ) ) {
+			continue;
+		}
+
+		/*
+		 * No fallback to the stored public URL.
+		 *
+		 * wpss_get_order_file_url() returns '' when the file is unreadable -
+		 * which includes the PERMISSION-REFUSED case - so falling back to
+		 * $row['url'] handed back exactly the address the private-file gate
+		 * exists to suppress. Only an admin screen calls this today, which is
+		 * why it was never seen, but the fallback undoes the gate for whoever
+		 * calls it next (Basecamp 10321653509).
+		 *
+		 * A row with no readable file simply gets no link, which is what the
+		 * branch below already does for every other unaddressable case.
+		 */
+		$url = wpss_get_order_file_url( $row );
+
+		if ( '' === $url ) {
+			// No addressable file. A link here would only 404.
+			continue;
+		}
+
+		$links[] = array(
+			'name' => wpss_format_attachment_name( (string) ( $row['name'] ?? '' ) ),
+			'url'  => $url,
+		);
+	}
+
+	return $links;
+}
+
+/**
+ * Neutralise a spreadsheet formula in one CSV cell.
+ *
+ * Excel, LibreOffice and Google Sheets execute a cell whose first character is
+ * `=`, `+`, `-` or `@` (and treat a leading tab or CR as a continuation of the
+ * same trick). Every export in this plugin writes values a vendor or buyer
+ * typed - display names, service titles, bank names, PayPal addresses - so a
+ * vendor could set their display name to `=cmd|'/c calc'!A1` and wait for an
+ * admin to open the payout export (Basecamp 10321653478, finding 1).
+ *
+ * A leading apostrophe is the standard remedy: the spreadsheet stores the text
+ * and shows it without the quote. Numeric strings are returned untouched, so a
+ * negative amount stays a number the sheet can sum rather than becoming text.
+ *
+ * @since 1.7.2
+ *
+ * @param mixed $value Cell value.
+ * @return string Safe cell value.
+ */
+function wpss_csv_cell( $value ): string {
+	$value = (string) $value;
+
+	if ( '' === $value || is_numeric( $value ) ) {
+		return $value;
+	}
+
+	return false !== strpbrk( $value[0], "=+-@\t\r" ) ? "'" . $value : $value;
+}
+
+/**
+ * Write a CSV row with every cell run through wpss_csv_cell() first.
+ *
+ * Exports live in five files across both plugins; escaping at each call site
+ * would be five chances to forget, and the next export added would be a sixth.
+ * Write rows through this and the escaping is not something anyone has to
+ * remember.
+ *
+ * @since 1.7.2
+ *
+ * @param resource          $handle Open stream.
+ * @param array<int, mixed> $row    Row values.
+ * @return void
+ */
+function wpss_fputcsv( $handle, array $row ): void {
+	fputcsv( $handle, array_map( 'wpss_csv_cell', $row ) );
+}
+
+/**
+ * Give a publicly-served upload an unguessable filename.
+ *
+ * Two upload paths cannot use the private store because they have no owning
+ * record to gate on: the generic `wpss_upload_file` handler, and pre-sale
+ * contact attachments, which exist before any order or conversation. Both are
+ * documented as "unlisted, not secret" - post_status private hides the library
+ * row, not the bytes.
+ *
+ * That claim only holds if the URL cannot be guessed, and WordPress keeps the
+ * uploader's own filename, so `brief.pdf` in this month's upload folder is a
+ * URL anyone can try. Prefixing 16 random characters makes the documented
+ * property actually true (Basecamp 10321653478, finding 4).
+ *
+ * The original name is still what the UI shows - both callers carry it
+ * separately - so this changes the stored path, not what anyone reads.
+ *
+ * Attach with add_filter( 'wp_handle_upload_prefilter', ... ) immediately
+ * before the upload and remove it immediately after, so it never touches
+ * uploads from anywhere else.
+ *
+ * @since 1.7.2
+ *
+ * @param array<string, mixed> $file Upload array.
+ * @return array<string, mixed>
+ */
+function wpss_obfuscate_public_upload_name( array $file ): array {
+	$name = sanitize_file_name( (string) ( $file['name'] ?? '' ) );
+
+	if ( '' !== $name ) {
+		$file['name'] = wp_generate_password( 16, false, false ) . '-' . $name;
+	}
+
+	return $file;
 }

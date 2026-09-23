@@ -203,32 +203,32 @@ class ServiceFactory {
 				'packages' => array(
 					self::package_data( 'Standard', 79.99, 5, 2 ),
 				),
-				'addons'   => array(
+				'extras'   => array(
 					array(
-						'name'         => 'Rush Delivery',
+						'title'         => 'Rush Delivery',
 						'description'  => 'Get your order 2 days faster.',
 						'price'        => 49.99,
-						'extra_days'   => -2,
+						'delivery_days_extra' => 2,
 						'max_quantity' => 1,
 						'is_required'  => false,
 						'sort_order'   => 0,
 						'is_active'    => true,
 					),
 					array(
-						'name'         => 'Extra Revisions',
+						'title'         => 'Extra Revisions',
 						'description'  => 'Add 2 more revisions.',
 						'price'        => 19.99,
-						'extra_days'   => 0,
+						'delivery_days_extra' => 0,
 						'max_quantity' => 3,
 						'is_required'  => false,
 						'sort_order'   => 1,
 						'is_active'    => true,
 					),
 					array(
-						'name'         => 'Source Files',
+						'title'         => 'Source Files',
 						'description'  => 'Receive all source files.',
 						'price'        => 29.99,
-						'extra_days'   => 0,
+						'delivery_days_extra' => 0,
 						'max_quantity' => 1,
 						'is_required'  => false,
 						'sort_order'   => 2,
@@ -263,22 +263,22 @@ class ServiceFactory {
 					self::package_data( 'Standard', 99.99, 5, 3, array( 'Standard features', 'Source files' ) ),
 					self::package_data( 'Premium', 199.99, 3, -1, array( 'All features', 'Priority support' ) ),
 				),
-				'addons'       => array(
+				'extras'       => array(
 					array(
-						'name'         => 'Rush Delivery',
+						'title'         => 'Rush Delivery',
 						'description'  => 'Express delivery.',
 						'price'        => 49.99,
-						'extra_days'   => -2,
+						'delivery_days_extra' => 2,
 						'max_quantity' => 1,
 						'is_required'  => false,
 						'sort_order'   => 0,
 						'is_active'    => true,
 					),
 					array(
-						'name'         => 'Extra Revisions',
+						'title'         => 'Extra Revisions',
 						'description'  => 'Additional revisions.',
 						'price'        => 19.99,
-						'extra_days'   => 0,
+						'delivery_days_extra' => 0,
 						'max_quantity' => 5,
 						'is_required'  => false,
 						'sort_order'   => 1,
@@ -380,7 +380,111 @@ class ServiceFactory {
 	 * @param array $data Service data.
 	 * @return Service|array
 	 */
+	/**
+	 * Every service this factory has persisted, for cleanup().
+	 *
+	 * @var int[]
+	 */
+	private static array $created_ids = array();
+
+	/**
+	 * Delete everything this factory created.
+	 *
+	 * The suite runs against the LIVE Local site whenever the WordPress test
+	 * library is not installed, and nothing deleted these rows - so 304
+	 * published "Service with Addons N" / "Multi Plan N" listings had piled up
+	 * on the QA site, skewing the catalogue and, in one case, being found by a
+	 * browser smoke and bought for $149.97 as though it were a real listing.
+	 *
+	 * @return void
+	 */
+	public static function cleanup(): void {
+		foreach ( self::$created_ids as $id ) {
+			if ( function_exists( 'wp_delete_post' ) ) {
+				wp_delete_post( $id, true );
+			}
+		}
+
+		self::$created_ids = array();
+	}
+
+	/**
+	 * A category and an image, so a factory service can actually be published.
+	 *
+	 * Since 1.7.2 the publish checklist holds an incomplete service as a draft
+	 * on every save path. A fixture with a title and one package is incomplete,
+	 * so every factory service silently became a draft - and the downstream
+	 * tests that thought they were exercising a live catalogue were exercising
+	 * an empty one. tests/test-scale-surfaces.php caught it: 60 seeded services,
+	 * 25 favourited, and the favourites endpoint correctly returned nothing
+	 * because none of them were published.
+	 *
+	 * Filling the checklist here fixes it once, for every fixture, rather than
+	 * in each test that happens to need a live service.
+	 *
+	 * @param  array<string,mixed> $data Service data.
+	 * @return array<string,mixed>
+	 */
+	private static function fill_publish_checklist( array $data ): array {
+		if ( 'publish' !== ( $data['status'] ?? '' ) ) {
+			return $data;
+		}
+
+		if ( mb_strlen( trim( wp_strip_all_tags( (string) ( $data['content'] ?? '' ) ) ) ) < 120 ) {
+			$data['content'] = (string) ( $data['content'] ?? '' )
+				. ' ' . str_repeat( 'This fixture needs a description long enough for the publish checklist. ', 3 );
+		}
+
+		if ( empty( $data['categories'] ) && function_exists( 'wp_insert_term' ) ) {
+			$existing = get_terms(
+				array( 'taxonomy' => 'wpss_service_category', 'hide_empty' => false, 'number' => 1, 'fields' => 'ids' )
+			);
+
+			if ( ! is_wp_error( $existing ) && ! empty( $existing ) ) {
+				$data['categories'] = array( (int) $existing[0] );
+			} else {
+				$term = wp_insert_term( 'Fixture category', 'wpss_service_category' );
+				if ( ! is_wp_error( $term ) ) {
+					$data['categories'] = array( (int) $term['term_id'] );
+				}
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * An attachment id the main-image rule accepts.
+	 *
+	 * set_post_thumbnail() refuses an attachment with no file behind it, so the
+	 * meta is written directly - which is what get_post_thumbnail_id() reads.
+	 *
+	 * @return int
+	 */
+	private static function fixture_thumbnail_id(): int {
+		static $id = 0;
+
+		if ( $id ) {
+			return $id;
+		}
+
+		$attachment = wp_insert_post(
+			array(
+				'post_type'      => 'attachment',
+				'post_title'     => 'wpss-fixture-image',
+				'post_mime_type' => 'image/jpeg',
+				'post_status'    => 'inherit',
+			)
+		);
+
+		$id = is_wp_error( $attachment ) ? 0 : (int) $attachment;
+
+		return $id;
+	}
+
 	private static function create( array $data ): Service|array {
+		$data = self::fill_publish_checklist( $data );
+
 		// In standalone mode (no WordPress), just return data array.
 		// Check for global $wpdb which indicates WordPress is loaded.
 		global $wpdb;
@@ -392,6 +496,13 @@ class ServiceFactory {
 
 				if ( ! $service_id || is_wp_error( $service_id ) ) {
 					throw new \RuntimeException( 'Failed to create service via ServiceManager.' );
+				}
+
+				self::$created_ids[] = (int) $service_id;
+
+				if ( 'publish' === ( $data['status'] ?? '' ) && ! get_post_thumbnail_id( $service_id ) ) {
+					update_post_meta( $service_id, '_thumbnail_id', self::fixture_thumbnail_id() );
+					wp_update_post( array( 'ID' => $service_id, 'post_status' => 'publish' ) );
 				}
 
 				return $manager->get( $service_id );

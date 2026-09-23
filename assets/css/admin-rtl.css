@@ -2227,14 +2227,24 @@
 	margin-bottom: 20px;
 }
 
+/*
+ * Brand accent, not --wpss-info.
+ *
+ * --wpss-info is the semantic status blue that "processing" badges use, and
+ * White Label deliberately leaves the status palette alone - so every plugin
+ * surface that borrowed it for navigation chrome stayed WordPress blue while
+ * the rest of the screen took the brand colour. --wpss-admin-accent defaults
+ * to the same #2271b1, so an unbranded site looks identical (Basecamp
+ * 10313806241).
+ */
 .wpss-back-link {
 	text-decoration: none;
 	font-size: 14px;
-	color: var(--wpss-info, #2271b1);
+	color: var(--wpss-admin-accent, #2271b1);
 }
 
 .wpss-back-link:hover {
-	color: var(--wpss-info-dark, #135e96);
+	color: var(--wpss-admin-accent-hover, #135e96);
 }
 
 .wpss-detail-buttons {
@@ -2361,8 +2371,8 @@
 }
 
 .wpss-detail-tab.active {
-	color: var(--wpss-info, #2271b1);
-	border-bottom-color: var(--wpss-info, #2271b1);
+	color: var(--wpss-admin-accent, #2271b1);
+	border-bottom-color: var(--wpss-admin-accent, #2271b1);
 	font-weight: 500;
 }
 
@@ -2441,7 +2451,7 @@
 	background: var(--wpss-bg-subtle, #f6f7f7);
 	border-radius: 3px;
 	text-decoration: none;
-	color: var(--wpss-info, #2271b1);
+	color: var(--wpss-admin-accent, #2271b1);
 	font-size: 13px;
 }
 
@@ -3424,4 +3434,61 @@
 .wpss-faq-field input,
 .wpss-faq-field textarea {
 	width: 100%;
+}
+
+/* ==========================================================================
+   White Label reach on the plugin's own admin controls
+   ==========================================================================
+
+   The accent token is set on body.wp-admin for every plugin screen - that part
+   has worked since 1.7.2 - but a token nothing reads changes nothing. The
+   action controls the plugin renders inside WordPress list tables were never
+   claimed by our CSS, so they inherited WordPress's own #3858e9 and an owner
+   who had set a brand colour saw Settings and Analytics rebranded while
+   Vendors, Orders and Disputes stayed WordPress blue. Half re-branded is worse
+   than not re-branded, because it reads as a bug rather than a default.
+
+   Scoped to controls this plugin renders and names. Two deliberate exclusions:
+
+   - .wpss-status-badge is NEVER touched. Those colours are semantic - green is
+     completed, red is cancelled, amber is waiting - and tinting them the brand
+     colour would make every status look alike and destroy the only signal the
+     screen carries. Same reasoning for the .wpss-stat-* modifiers, which colour
+     a figure by what it means.
+   - WordPress's own chrome (row actions, the status filter links above a list
+     table) is left alone. It belongs to WordPress, it is consistent with every
+     other admin screen the owner uses, and claiming it would be this plugin
+     restyling the host.
+   ========================================================================== */
+
+.wpss-listing-page a[class*="wpss-"],
+.wpss-listing-page button[class*="wpss-"].button-link,
+.wpss-list-card a[class*="wpss-"],
+a.wpss-change-status,
+button.wpss-change-status {
+	color: var(--wpss-admin-accent, #2271b1);
+}
+
+.wpss-listing-page a[class*="wpss-"]:hover,
+.wpss-listing-page button[class*="wpss-"].button-link:hover,
+.wpss-list-card a[class*="wpss-"]:hover,
+a.wpss-change-status:hover,
+button.wpss-change-status:hover,
+a.wpss-change-status:focus,
+button.wpss-change-status:focus {
+	color: var(--wpss-admin-accent-hover, #135e96);
+}
+
+/* Secondary buttons the plugin adds to its own screens, e.g. the bulk-action
+   Apply on Vendors. Border and text only - the fill stays WordPress's, so the
+   button still reads as secondary next to a primary action. */
+.button[class*="wpss-"]:not(.button-primary) {
+	color: var(--wpss-admin-accent, #2271b1);
+	border-color: var(--wpss-admin-accent, #2271b1);
+}
+
+.button[class*="wpss-"]:not(.button-primary):hover,
+.button[class*="wpss-"]:not(.button-primary):focus {
+	color: var(--wpss-admin-accent-hover, #135e96);
+	border-color: var(--wpss-admin-accent-hover, #135e96);
 }

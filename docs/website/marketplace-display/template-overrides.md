@@ -81,7 +81,6 @@ Subfolders are preserved: `templates/order/order-view.php` becomes
 | Template | Controls |
 |----------|----------|
 | `order/order-view.php` | The order detail screen |
-| `order/order-confirmation.php` | Post-checkout confirmation |
 | `order/conversation.php` | Order messaging thread |
 | `order/order-requirements.php` | Requirements screen |
 | `order/requirements-form.php` | The requirements form itself |
@@ -197,8 +196,6 @@ useful precedent if you are adding your own panel.
 |------|------|
 | `wpss_before_order_view` / `wpss_after_order_view` | `$order` |
 | `wpss_order_view_header`, `_actions`, `_details`, `_sidebar` | `$order` |
-| `wpss_before_order_confirmation` / `wpss_after_order_confirmation` | `$order` |
-| `wpss_order_confirmation_details` | `$order` |
 | `wpss_before_conversation` / `wpss_after_conversation` | `$order` |
 | `wpss_conversation_header`, `wpss_conversation_form` | `$order` |
 | `wpss_after_message` | `$message, $order` |

@@ -891,7 +891,10 @@ class ServiceCommands extends WP_CLI_Command {
 						'title'               => 'Express 24-hour delivery',
 						'description'         => 'Get your logo concepts within 24 hours',
 						'price'               => 30,
-						'delivery_days_extra' => -2,
+						// Extra delivery days are additive and never negative; see
+						// wpss_normalize_service_addons(). This seeded -2, which the
+						// normaliser used to store as +2.
+						'delivery_days_extra' => 0,
 						'field_type'          => 'checkbox',
 					),
 					array(

@@ -1,0 +1,93 @@
+{
+  "mode": "free",
+  "release_version": "1.7.2",
+  "pro_version": null,
+  "ran_at": "2026-09-22T23:06:00Z",
+  "ran_against": "b8693790b1a482e356ca5c64dae1c8e5253ce5f6",
+  "sections": {
+    "A_fresh_install":     {"pass": 3, "fail": 0, "skipped": 2},
+    "B_upgrade":           {"pass": 0, "fail": 0, "skipped": 3},
+    "C_core_flows":        {"pass": 14, "fail": 1, "skipped": 5},
+    "D_regression_guards": {"pass": 0, "fail": 0, "skipped": 5},
+    "E_pro_smoke":         {"pass": 0, "fail": 0, "skipped": 7},
+    "E2_environment":      {"pass": 1, "fail": 0, "skipped": 0},
+    "F_cross_browser":     {"pass": 2, "fail": 0, "skipped": 2},
+    "G_post_release":      {"pass": 0, "fail": 0, "skipped": 0}
+  },
+  "hard_fails": [
+    {
+      "id": "C-addons-index0-dropped",
+      "invariant": "A buyer-selected service add-on must price into the checkout total and the stored order, regardless of which add-on index is selected.",
+      "actual": "When exactly one add-on is selected and it happens to be the FIRST add-on configured on the service (index 0), it is silently dropped from checkout: no line item appears in Order Summary, the Pay button amount is unchanged, and the resulting order has no add-on. Root cause: src/Integrations/Standalone/StandaloneCheckoutProvider.php line 362 does `if ( $addon_ids_raw )` where `$addon_ids_raw` can legitimately be the PHP string \"0\" (the sole selected add-on's index) -- PHP treats the string \"0\" as falsy, so the entire add-on-resolution block is skipped. The same falsy check appears at line 299 for the cart-fallback branch. Selecting any other single index (e.g. addons=1) or multiple indices including 0 (e.g. addons=0,1) works correctly because the string is then non-\"0\" and therefore truthy. Since most vendors configure only one add-on, this is the single most common real-world case for the release's headline feature."
+    }
+  ],
+  "untested": [
+    {"id": "A-real-fresh-activate", "reason": "Hard constraint forbids activating/deactivating any plugin during this walk", "needs": "A clean WP install where activation can be exercised, or explicit permission to toggle wp-sell-services off/on"},
+    {"id": "A-retired-tables", "reason": "SchemaManager::get_retired_tables() could not be exercised meaningfully without a pre-1.7 dataset carrying retired tables", "needs": "A DB snapshot from a pre-retirement schema version"},
+    {"id": "B-upgrade-cycle", "reason": "Deactivate+reactivate and pre-1.7.0 order-file migration both require plugin activation, forbidden by hard constraints", "needs": "Permission to deactivate/reactivate, or a dedicated upgrade-test site"},
+    {"id": "C-checkout-account-creation-on", "reason": "Only tested with an existing buyer session; did not toggle checkout_account_creation on and complete checkout as a brand-new anonymous visitor to confirm customer_id is never 0 and sign-in happens in the same request", "needs": "A pass with wpss_general[checkout_account_creation]=1 and a throwaway email"},
+    {"id": "C-category-hierarchy-wizard", "reason": "Did not confirm with certainty that the wizard Category dropdown offers parents only while window.wpssCategories still carries children, nor that Subcategory follows the selected parent -- the category picked during my wizard run did not have a visibly exercised child hierarchy", "needs": "A parent category with confirmed child terms, walked step-by-step in the wizard"},
+    {"id": "C-admin-exempt-from-service-limit", "reason": "Did not test that the site administrator bypasses the per-vendor service-limit gate (journey 05 steps 7-8) or that a non-admin vendor at their limit is still blocked", "needs": "A configured max-services-per-vendor limit and a vendor already at that limit"},
+    {"id": "C-checkout-two-theme-comparison", "reason": "Checkout containment (no full-bleed) was verified only on the site's current active theme (Reign); the journey calls for comparing a theme that opens its container in header.php against one that does not (e.g. Twenty Twenty-Four)", "needs": "A second theme activation, which is outside a verification-only walk"},
+    {"id": "C-mark-as-paid-idempotency-live", "reason": "Confirmed via source reading that mark_as_paid() no-ops when payment_status is already 'paid', but did not repeat the browser click on the same order to observe it live", "needs": "A second click on Mark as Paid for order #496 and a DB diff"},
+    {"id": "D-stats-vs-chips", "reason": "Not exercised -- requires picking the buyer with the most orders and comparing summary cards to filter-chip counts across two separate reads", "needs": "Dedicated pass focused on section D"},
+    {"id": "D-deleted-service-revenue", "reason": "Not exercised -- requires Analytics Top Services report, which is Pro-only and unreachable in free mode; the underlying service_id=0 exclusion could only be checked at the DB/query level", "needs": "Pro active, or a direct query-level check of the reporting SQL"},
+    {"id": "D-suspended-vendor-money-rest", "reason": "Not exercised -- requires suspending a vendor and hitting the money REST endpoints as that vendor", "needs": "Dedicated pass with a suspended vendor fixture"},
+    {"id": "D-negative-balance-messaging", "reason": "Not exercised -- requires a vendor with a negative wallet balance", "needs": "A refund-after-payout scenario to produce a negative balance"},
+    {"id": "D-offline-method-identity", "reason": "Not exercised -- requires renaming/deleting a named offline method and re-checking a past order's displayed method", "needs": "Dedicated pass focused on section D"},
+    {"id": "F-rtl", "reason": "RTL rendering not checked in this walk", "needs": "An RTL locale or forced dir=rtl pass over the touched surfaces"},
+    {"id": "F-dark-mode-pixel-check", "reason": "The site rendered in dark mode throughout (theme default), and no layout breakage appeared in accessibility snapshots, but no pixel screenshot could be saved for this run -- the Playwright MCP's screenshot tool is sandboxed to write only under the site's document root or its own .playwright-mcp folder, which conflicts with the qa-artifacts-only screenshot rule, so screenshots were skipped in favor of accessibility-tree + computed-style checks", "needs": "Either a screenshot tool with a writable path outside the doc root, or an explicit exception to save into .playwright-mcp for this session"}
+  ],
+  "coverage": {
+    "multisite": "not tested",
+    "rtl": "not tested",
+    "concurrency": "not tested",
+    "uninstall": "not exercised live; wp wpss preflight's static Uninstall Completeness checks all pass (role removal, WP_UNINSTALL_PLUGIN guard, delete_data respect, table/option/cron cleanup, rewrite flush)",
+    "mobile_390": "tested on single-service page and both checkout routes (mapped page + rewrite) -- no horizontal scroll on either"
+  },
+  "verdict": "BLOCK",
+  "top3": [
+    "HARD FAIL: selecting a lone add-on at index 0 (the most common real-world case -- a service with exactly one add-on) is silently dropped from the checkout total and the stored order, because of a PHP falsy-string bug (`if ($addon_ids_raw)` treats the string \"0\" as empty) in StandaloneCheckoutProvider.php lines 299 and 362. This breaks the release's headline add-ons feature for its most common configuration.",
+    "Site data issue (not plugin code): wpss_order_confirmation_page is set to page 796, a leftover 'QA Thank You' test page with no order details, sidebar widgets full of Factory Post junk, and no link back to the order or dashboard -- every buyer who pays lands there instead of a real confirmation screen. The underlying fallback code (wpss_get_post_checkout_url()) is correct when this option is unset; clearing it (or repointing it to a real page) before any further checkout QA is required.",
+    "Minor UI inconsistency: the admin 'Mark as Paid' button (OfflineGateway.php ~line 988) uses a native browser confirm() dialog instead of the plugin's own themed WPSS.showConfirm()/wpssConfirm pattern used elsewhere (e.g. the service wizard's remove-extra/remove-FAQ actions). Not a functional defect, but inconsistent with the plugin's established UI language."
+  ],
+  "failures": [
+    {
+      "id": "C-addons-index0-dropped",
+      "origin": "from",
+      "triage_note": "Root-caused precisely to a PHP truthiness bug, not a data or config issue. Reproduced on both the /service-checkout/{id}/ rewrite route and the mapped ?service={id} page, so both checkout renderers share the same underlying add-on resolution bug.",
+      "expected": "Selecting the service's only add-on (Priority Support, +$25.00) via the on-page 'Order Options' modal and clicking Continue to Checkout should show Order Summary as Basic $59.99 + Priority Support $25.00 = Total $84.99, and the Pay button should read 'Pay $84.99'.",
+      "actual": "Order Summary shows only 'Basic $59.99', Total $59.99, and 'Pay $59.99' -- the add-on and its $25.00 are completely absent from the page and from the hidden addon_ids/addons_data form fields (both empty/missing). Confirmed the same when navigating directly to /service-checkout/2028/?package=0&addons=0 and to /service-checkout/?service=2028&package=0&addons=0. Confirmed the add-on IS carried through correctly when: (a) a different single index is used (addons=1 on service 2026 worked, total $99.98 correctly included the $19.99 Extra Revisions add-on), and (b) two indices including 0 are used together (addons=0,1 worked, total $149.97). Completed a full purchase on a fresh 2-addon test service (ID 2215, 'QA Free Limits Test Service 0923B') with addons=0,1 selected and it round-tripped perfectly into wpss_orders: subtotal 45.00, addons_total 25.00 (Rush Delivery $15 + Source Files Package $10), total 70.00, commission_rate 10%, platform_fee 7.00, vendor_earnings 63.00, payment_method 'offline' (not NULL).",
+      "url": "http://wp-sell-services.local/service-checkout/2028/?package=0&addons=0 and http://wp-sell-services.local/service-checkout/?service=2028&package=0&addons=0",
+      "screenshot": "",
+      "viewport": "1280"
+    },
+    {
+      "id": "F-order-confirmation-page-misconfigured",
+      "origin": "for",
+      "triage_note": "Site/test-data configuration issue, not a code defect. wp option get wpss_order_confirmation_page returns 796, which is a page titled 'QA Thank You' with post_content literally 'Thanks' -- clearly leftover from an earlier QA session on this same site. Code path (wpss_get_post_checkout_url() in src/functions/orders.php) is correct: when the option is 0/unset it falls back to the real order-view URL. Recommend clearing wp option delete wpss_order_confirmation_page (or pointing it at a real page) before any further buyer-journey QA on this site, since every completed order currently redirects here.",
+      "expected": "After paying via Offline on order #496, the buyer should land on a page that shows the order number, a summary of what was purchased, and a way to view the order or return to the dashboard.",
+      "actual": "Redirected to http://wp-sell-services.local/qa-thank-you/?order_id=496, a generic WordPress page with heading 'QA Thank You', body text 'Thanks', and a sidebar showing 'Recent Posts' (all 'Factory Post ...' junk) and 'Recent Comments' -- no order details, no order number, no next-step link.",
+      "url": "http://wp-sell-services.local/qa-thank-you/?order_id=496",
+      "screenshot": "",
+      "viewport": "1280"
+    },
+    {
+      "id": "G-mark-as-paid-native-confirm",
+      "origin": "from",
+      "triage_note": "Cosmetic/consistency issue only -- functionality is correct (order was marked paid successfully, status transitioned to pending_requirements, paid_at set). Not a release blocker on its own.",
+      "expected": "Clicking 'Mark as Paid' on the admin order-detail screen shows the plugin's own themed confirmation dialog, matching the pattern used elsewhere in the plugin (e.g. WPSS.showConfirm() for removing a wizard extra/FAQ/requirement).",
+      "actual": "Clicking 'Mark as Paid' triggers a native browser confirm() ('Are you sure you want to mark this order as paid?'), sourced from src/Integrations/Gateways/OfflineGateway.php around line 988 (`if (!confirm('...'))`). This is a different, unthemed dialog style from the rest of the plugin's admin/frontend UI.",
+      "url": "http://wp-sell-services.local/wp-admin/admin.php?page=wpss-orders&action=view&order_id=496",
+      "screenshot": "",
+      "viewport": "1280"
+    }
+  ],
+  "debug_log_issues": [],
+  "manual_required": [
+    "Clear or repoint the wpss_order_confirmation_page option (currently page ID 796, 'QA Thank You') before any further buyer-journey QA on this site -- it is masking what the real post-purchase screen looks like for every completed order.",
+    "Fix the add-on index-0 falsy-string bug in src/Integrations/Standalone/StandaloneCheckoutProvider.php (lines 299 and 362): replace `if ( $addon_ids_raw )` / `if ( ! $addon_ids_raw ...)` with an explicit `'' !== $addon_ids_raw` check, then re-verify a single-add-on service end to end before release.",
+    "Re-run journey 06 step 1 (checkout containment) on a second theme that opens its container outside header.php (e.g. Twenty Twenty-Four) -- this walk only had Reign active.",
+    "Optional: align the admin 'Mark as Paid' confirm with the plugin's own themed confirm dialog for UI consistency."
+  ]
+}

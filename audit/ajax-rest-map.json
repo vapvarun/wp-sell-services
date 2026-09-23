@@ -14,9 +14,15 @@
   "flows": [
     {
       "name": "favorites - toggle (single service page)",
-      "ajax_actions": ["wpss_favorite_service", "wpss_unfavorite_service"],
+      "ajax_actions": [
+        "wpss_favorite_service",
+        "wpss_unfavorite_service"
+      ],
       "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::favorite_service / ::unfavorite_service",
-      "rest_twin": ["POST /wpss/v1/favorites/{service_id}", "DELETE /wpss/v1/favorites/{service_id}"],
+      "rest_twin": [
+        "POST /wpss/v1/favorites/{service_id}",
+        "DELETE /wpss/v1/favorites/{service_id}"
+      ],
       "rest_controller": "WPSellServices\\API\\FavoritesController",
       "shared_service": "WPSellServices\\Services\\FavoritesService::add / ::remove",
       "js_call_site": "assets/js/single-service.js (WPSSFavorite.bindEvents)",
@@ -27,8 +33,14 @@
     },
     {
       "name": "favorites - toggle (services archive / cards)",
-      "ajax_actions": ["wpss_favorite_service", "wpss_unfavorite_service"],
-      "rest_twin": ["POST /wpss/v1/favorites/{service_id}", "DELETE /wpss/v1/favorites/{service_id}"],
+      "ajax_actions": [
+        "wpss_favorite_service",
+        "wpss_unfavorite_service"
+      ],
+      "rest_twin": [
+        "POST /wpss/v1/favorites/{service_id}",
+        "DELETE /wpss/v1/favorites/{service_id}"
+      ],
       "rest_controller": "WPSellServices\\API\\FavoritesController",
       "shared_service": "WPSellServices\\Services\\FavoritesService",
       "js_call_site": "assets/js/frontend.js (WPSS favorite toggle)",
@@ -37,8 +49,12 @@
     },
     {
       "name": "favorites - remove from saved grid (unified dashboard)",
-      "ajax_actions": ["wpss_unfavorite_service"],
-      "rest_twin": ["DELETE /wpss/v1/favorites/{service_id}"],
+      "ajax_actions": [
+        "wpss_unfavorite_service"
+      ],
+      "rest_twin": [
+        "DELETE /wpss/v1/favorites/{service_id}"
+      ],
       "rest_controller": "WPSellServices\\API\\FavoritesController",
       "shared_service": "WPSellServices\\Services\\FavoritesService::remove",
       "js_call_site": "assets/js/unified-dashboard.js (handleFavoriteRemove)",
@@ -46,24 +62,21 @@
       "notes": "Migrated to REST DELETE. Reads response.count (now returned by remove_favorite) to update the saved-count label. Uses the dashboard's existing restUrl + restNonce localized keys."
     },
     {
-      "name": "service status toggle (pause / publish on dashboard)",
-      "ajax_actions": ["wpss_update_service_status"],
-      "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::update_service_status",
-      "rest_twin": ["PUT /wpss/v1/services/{id} (status param)"],
-      "rest_controller": "WPSellServices\\API\\ServicesController::update_item",
-      "shared_backend": "wp_update_post (both paths); REST restricts status to publish|draft (6.0b merged)",
-      "js_call_site": "assets/js/unified-dashboard.js (handleToggleStatus)",
-      "migrated": true,
-      "notes": "Migrated to PUT /services/{id} with explicit target status. The legacy AJAX flipped status server-side; the JS now flips client-side (currentStatus -> targetStatus) and reads response.status (= post_status) from the prepared service response. update_item_permissions_check enforces vendor ownership, matching the AJAX post_author check."
-    },
-    {
       "name": "order lifecycle transitions (accept/reject/start/deliver/complete/cancel/accept-cancellation/reject-cancellation)",
       "ajax_actions": [
-        "wpss_accept_order", "wpss_decline_order", "wpss_start_work", "wpss_deliver_order",
-        "wpss_accept_delivery", "wpss_cancel_order", "wpss_accept_cancellation", "wpss_reject_cancellation"
+        "wpss_accept_order",
+        "wpss_decline_order",
+        "wpss_start_work",
+        "wpss_deliver_order",
+        "wpss_accept_delivery",
+        "wpss_cancel_order",
+        "wpss_accept_cancellation",
+        "wpss_reject_cancellation"
       ],
       "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::accept_order / ::decline_order / ::start_work / ...",
-      "rest_twin": ["POST /wpss/v1/orders/{id}/{action} where action in accept|reject|start|deliver|complete|cancel|accept-cancellation|reject-cancellation"],
+      "rest_twin": [
+        "POST /wpss/v1/orders/{id}/{action} where action in accept|reject|start|deliver|complete|cancel|accept-cancellation|reject-cancellation"
+      ],
       "rest_controller": "WPSellServices\\API\\OrdersController::perform_action",
       "shared_service": "WPSellServices\\Services\\OrderService (update_status / start_work / request_revision / cancel) - the SAME service both the AJAX handlers and the REST twin route through",
       "js_call_site": "assets/js/frontend.js (WPSS.performOrderAction)",
@@ -72,9 +85,13 @@
     },
     {
       "name": "reviews - load more (single service page)",
-      "ajax_actions": ["wpss_load_reviews"],
+      "ajax_actions": [
+        "wpss_load_reviews"
+      ],
       "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::load_reviews",
-      "rest_twin": ["GET /wpss/v1/reviews?service_id=&page=&per_page="],
+      "rest_twin": [
+        "GET /wpss/v1/reviews?service_id=&page=&per_page="
+      ],
       "rest_controller": "WPSellServices\\API\\ReviewsController::get_items",
       "shared_service": "WPSellServices\\Services\\ReviewService",
       "js_call_site": "assets/js/single-service.js (WPSSReviews load-more)",
@@ -85,9 +102,13 @@
     },
     {
       "name": "reviews - mark helpful (single service page)",
-      "ajax_actions": ["wpss_mark_review_helpful"],
+      "ajax_actions": [
+        "wpss_mark_review_helpful"
+      ],
       "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::mark_review_helpful",
-      "rest_twin": ["POST /wpss/v1/reviews/{id}/helpful (ReviewsController CREATABLE helpful route)"],
+      "rest_twin": [
+        "POST /wpss/v1/reviews/{id}/helpful (ReviewsController CREATABLE helpful route)"
+      ],
       "rest_controller": "WPSellServices\\API\\ReviewsController",
       "js_call_site": "assets/js/single-service.js (helpful button)",
       "migrated": true,
@@ -97,9 +118,13 @@
     },
     {
       "name": "services - load / pagination (services block)",
-      "ajax_actions": ["wpss_load_services"],
+      "ajax_actions": [
+        "wpss_load_services"
+      ],
       "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::load_services",
-      "rest_twin": ["GET /wpss/v1/services?... (ServicesController::get_items)"],
+      "rest_twin": [
+        "GET /wpss/v1/services?... (ServicesController::get_items)"
+      ],
       "rest_controller": "WPSellServices\\API\\ServicesController",
       "shared_service": "WP_Query via ServicesController",
       "js_call_site": "assets/js/blocks-frontend.js (load services)",
@@ -110,9 +135,14 @@
     },
     {
       "name": "conversation / messaging - send message (order thread)",
-      "ajax_actions": ["wpss_send_message", "wpss_send_direct_message"],
+      "ajax_actions": [
+        "wpss_send_message",
+        "wpss_send_direct_message"
+      ],
       "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::send_message / ::send_direct_message",
-      "rest_twin": ["POST /wpss/v1/conversations/{id}/messages (ConversationsController CREATABLE)"],
+      "rest_twin": [
+        "POST /wpss/v1/conversations/{id}/messages (ConversationsController CREATABLE)"
+      ],
       "rest_controller": "WPSellServices\\API\\ConversationsController",
       "shared_service": "WPSellServices\\Services\\ConversationService::send_message",
       "js_call_site": "assets/js/conversation.js (sendMessage)",
@@ -123,9 +153,13 @@
     },
     {
       "name": "profile update incl. intro video (flow #12)",
-      "ajax_actions": ["wpss_update_vendor_profile"],
+      "ajax_actions": [
+        "wpss_update_vendor_profile"
+      ],
       "ajax_handler": "WPSellServices\\Frontend\\AjaxHandlers::update_vendor_profile",
-      "rest_twin": ["PUT /wpss/v1/vendors/me (VendorsController::update_current_vendor)"],
+      "rest_twin": [
+        "PUT /wpss/v1/vendors/me (VendorsController::update_current_vendor)"
+      ],
       "rest_controller": "WPSellServices\\API\\VendorsController",
       "js_call_site": "assets/js/unified-dashboard.js (profile form submit)",
       "migrated": true,

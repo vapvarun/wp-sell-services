@@ -59,6 +59,45 @@ defined( 'ABSPATH' ) || exit;
 	transition: box-shadow 0.15s ease;
 }
 
+/*
+ * Unavailable item: muted, but still readable and still removable.
+ *
+ * Deliberately NOT hidden and NOT at opacity so low the buyer cannot read it -
+ * the whole point is that they can see what it was and decide for themselves.
+ * The reason line keeps full contrast so it stays legible against the muted
+ * row, which matters at AA.
+ */
+.wpss-cart-summary__blocked {
+	margin: 0;
+	padding: 12px 14px;
+	border-radius: 6px;
+	background: var(--wpss-warning-light);
+	color: var(--wpss-warning-dark);
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.wpss-cart-item--unavailable {
+	opacity: 0.68;
+	background: var(--wpss-bg-subtle, var(--wpss-warning-light));
+}
+
+.wpss-cart-item--unavailable .wpss-cart-item__price {
+	text-decoration: line-through;
+}
+
+.wpss-cart-item__unavailable {
+	flex-basis: 100%;
+	margin: 0 0 8px;
+	padding: 6px 10px;
+	border-radius: 4px;
+	background: var(--wpss-warning-light);
+	color: var(--wpss-warning-dark);
+	font-size: 13px;
+	font-weight: 500;
+	opacity: 1;
+}
+
 .wpss-cart-item:hover {
 	box-shadow: var(--wpss-shadow-md, 0 4px 16px rgba(0,0,0,0.08));
 }
@@ -315,7 +354,18 @@ defined( 'ABSPATH' ) || exit;
 					$package    = is_array( $item['package'] ?? null ) ? $item['package'] : array();
 					$addons     = is_array( $item['addons'] ?? null ) ? $item['addons'] : array();
 					$item_total = (float) ( $item['total'] ?? 0 );
-					$subtotal  += $item_total;
+
+					/*
+					 * An item whose service has been paused stays visible so the
+					 * buyer is told why, rather than watching their cart quietly
+					 * empty itself - but it is not money they can spend, so it is
+					 * kept out of the subtotal and out of checkout.
+					 */
+					$unavailable = ! empty( $item['unavailable'] );
+
+					if ( ! $unavailable ) {
+						$subtotal += $item_total;
+					}
 
 					$service_title = $service_id ? get_the_title( $service_id ) : __( 'Service', 'wp-sell-services' );
 					$service_url   = $service_id ? get_permalink( $service_id ) : '';
@@ -333,7 +383,18 @@ defined( 'ABSPATH' ) || exit;
 					$thumb_url = $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'thumbnail' ) : '';
 					$thumb_alt = $thumb_id ? get_post_meta( $thumb_id, '_wp_attachment_image_alt', true ) : '';
 					?>
-					<div class="wpss-cart-item" data-item-key="<?php echo esc_attr( $item_key ); ?>">
+					<div class="wpss-cart-item<?php echo $unavailable ? ' wpss-cart-item--unavailable' : ''; ?>" data-item-key="<?php echo esc_attr( $item_key ); ?>">
+
+						<?php if ( $unavailable ) : ?>
+							<p class="wpss-cart-item__unavailable" role="status">
+								<?php
+								echo esc_html(
+									(string) ( $item['unavailable_reason'] ?? __( 'This service is not currently available.', 'wp-sell-services' ) )
+								);
+								?>
+							</p>
+						<?php endif; ?>
+
 
 						<!-- Thumbnail -->
 						<div class="wpss-cart-item__image">
@@ -464,10 +525,32 @@ defined( 'ABSPATH' ) || exit;
 				do_action( 'wpss_payable_total_after', (float) $subtotal, 'cart' );
 				?>
 
+				<?php
+				/*
+				 * Count what is actually buyable.
+				 *
+				 * A cart holding nothing but paused services must not offer a
+				 * checkout button that can only fail - the buyer would press it,
+				 * land on an empty checkout and have no idea why.
+				 */
+				$wpss_buyable = 0;
+				foreach ( $cart_items as $wpss_item ) {
+					if ( empty( $wpss_item['unavailable'] ) ) {
+						++$wpss_buyable;
+					}
+				}
+				?>
+
 				<div class="wpss-cart-summary__cta">
+					<?php if ( 0 === $wpss_buyable ) : ?>
+						<p class="wpss-cart-summary__blocked" role="status">
+							<?php esc_html_e( 'Nothing in your cart is available to buy right now. Remove the unavailable items, or check back when the sellers are taking orders again.', 'wp-sell-services' ); ?>
+						</p>
+					<?php else : ?>
 					<a href="<?php echo esc_url( wpss_get_checkout_base_url() ); ?>" class="wpss-btn wpss-btn--primary">
 						<?php esc_html_e( 'Proceed to Checkout', 'wp-sell-services' ); ?>
 					</a>
+					<?php endif; ?>
 				</div>
 			</div>
 		</div>

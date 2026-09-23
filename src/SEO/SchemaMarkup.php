@@ -618,9 +618,21 @@ class SchemaMarkup {
 	 * @return void
 	 */
 	private function output_json_ld( array $schema ): void {
+		/*
+		 * JSON_UNESCAPED_SLASHES turned off the \/ encoding that makes a
+		 * literal </script> inside a JSON string harmless, leaving the whole
+		 * defence resting on four separate sanitizers staying correct forever -
+		 * and two of the stores feeding this are custom tables with no kses at
+		 * read time. No live path reaches it today; this is the structural
+		 * escape that means one never can (Basecamp 10321653478, finding 5).
+		 *
+		 * JSON_HEX_TAG encodes < and >, JSON_HEX_AMP encodes &. Google parses
+		 * the escaped form perfectly well - the slashes flag was only ever
+		 * cosmetic, for URLs that read more nicely in view-source.
+		 */
 		printf(
 			'<script type="application/ld+json">%s</script>' . "\n",
-			wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
+			wp_json_encode( $schema, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP )
 		);
 	}
 

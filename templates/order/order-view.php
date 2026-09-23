@@ -30,7 +30,7 @@ if ( empty( $order_id ) ) {
 }
 
 // Enqueue orders styles.
-wp_enqueue_style( 'wpss-orders', WPSS_PLUGIN_URL . 'assets/css/orders.css', array( 'wpss-design-system' ), WPSS_VERSION );
+wpss_enqueue_style( 'wpss-orders', 'assets/css/orders.css' );
 
 // Enqueue frontend assets to ensure wpssData is available.
 wpss_enqueue_frontend_assets();
@@ -1006,16 +1006,10 @@ do_action( 'wpss_before_order_view', $order );
 									<?php echo esc_html( $field_file_name ); ?>
 								<?php endif; ?>
 							<?php elseif ( $response_value ) : ?>
-								<div class="wpss-requirement-view__text-content">
-									<?php echo wp_kses_post( wpautop( $response_value ) ); ?>
-								</div>
-								<?php if ( $is_long_text ) : ?>
-									<button type="button" class="wpss-requirement-view__expand-btn" aria-expanded="false">
-										<span class="wpss-expand-text"><?php esc_html_e( 'Show more', 'wp-sell-services' ); ?></span>
-										<span class="wpss-collapse-text" style="display:none;"><?php esc_html_e( 'Show less', 'wp-sell-services' ); ?></span>
-										<i data-lucide="chevron-down" class="wpss-icon wpss-expand-icon" aria-hidden="true"></i>
-									</button>
-								<?php endif; ?>
+								<?php
+								$wpss_answer_text = (string) $response_value;
+								require WPSS_PLUGIN_DIR . 'templates/partials/requirement-answer.php';
+								?>
 								<button type="button" class="wpss-requirement-view__copy-btn" data-copy-text="<?php echo esc_attr( $response_value ); ?>" title="<?php esc_attr_e( 'Copy to clipboard', 'wp-sell-services' ); ?>">
 									<i data-lucide="copy" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 								</button>
@@ -1076,7 +1070,10 @@ do_action( 'wpss_before_order_view', $order );
 					<div class="wpss-requirement-view <?php echo $orphan_long ? 'wpss-requirement-view--expandable' : ''; ?>">
 						<h4 class="wpss-requirement-view__question"><?php echo esc_html( $orphan_label ); ?></h4>
 						<div class="wpss-requirement-view__answer <?php echo $orphan_long ? 'wpss-requirement-view__answer--collapsed' : ''; ?>">
-							<?php echo wp_kses_post( wpautop( $orphan_text ) ); ?>
+							<?php
+							$wpss_answer_text = $orphan_text;
+							require WPSS_PLUGIN_DIR . 'templates/partials/requirement-answer.php';
+							?>
 						</div>
 					</div>
 				<?php endforeach; ?>
@@ -3111,33 +3108,15 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	font-weight: 400;
 }
 
-.wpss-requirement-view__answer {
-	position: relative;
-}
-
-.wpss-requirement-view__answer--collapsed .wpss-requirement-view__text-content {
-	max-height: 120px;
-	overflow: hidden;
-	position: relative;
-}
-
-.wpss-requirement-view__answer--collapsed .wpss-requirement-view__text-content::after {
-	content: '';
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	height: 40px;
-	background: linear-gradient(transparent, var(--wpss-bg-subtle, #f9fafb));
-}
-
-.wpss-requirement-view__answer.wpss-expanded .wpss-requirement-view__text-content {
-	max-height: none;
-}
-
-.wpss-requirement-view__answer.wpss-expanded .wpss-requirement-view__text-content::after {
-	display: none;
-}
+/*
+ * The expand/collapse rules for this component live in frontend.css, the shared
+ * layer every surface loads. A second copy lived here and toggled
+ * .wpss-expanded, a class neither the shared CSS nor frontend.js ever sets, so
+ * the two fought: the global rule capped the whole answer at 100px, clipping
+ * the Show more button out of sight, while this copy's expand class was never
+ * applied by anything. Removed rather than reconciled - one component, one
+ * implementation.
+ */
 
 .wpss-requirement-view__expand-btn {
 	display: inline-flex;
@@ -3161,7 +3140,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	transition: transform 0.2s;
 }
 
-.wpss-requirement-view__answer.wpss-expanded .wpss-expand-icon {
+.wpss-requirement-view__answer--expanded .wpss-expand-icon {
 	transform: rotate(180deg);
 }
 
@@ -3287,27 +3266,10 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 (function() {
 	'use strict';
 
-	// Expand/Collapse functionality for long text responses
-	document.querySelectorAll('.wpss-requirement-view__expand-btn').forEach(function(btn) {
-		btn.addEventListener('click', function() {
-			var answer = this.closest('.wpss-requirement-view__answer');
-			var isExpanded = answer.classList.toggle('wpss-expanded');
-			var expandText = this.querySelector('.wpss-expand-text');
-			var collapseText = this.querySelector('.wpss-collapse-text');
-
-			this.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
-
-			if (isExpanded) {
-				answer.classList.remove('wpss-requirement-view__answer--collapsed');
-				expandText.style.display = 'none';
-				collapseText.style.display = 'inline';
-			} else {
-				answer.classList.add('wpss-requirement-view__answer--collapsed');
-				expandText.style.display = 'inline';
-				collapseText.style.display = 'none';
-			}
-		});
-	});
+	// Expand/Collapse is owned by WPSS.initRequirementsView() in frontend.js.
+	// A second handler lived here and toggled .wpss-expanded while the shared
+	// one toggles --collapsed/--expanded, so both fired on every click and the
+	// two class vocabularies disagreed about the resulting state.
 
 	// Copy to clipboard functionality
 	document.querySelectorAll('.wpss-requirement-view__copy-btn').forEach(function(btn) {

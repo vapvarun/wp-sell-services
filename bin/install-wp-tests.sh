@@ -89,8 +89,15 @@ install_test_suite() {
 		local ioption='-i'
 	fi
 
-	# set up testing suite if it doesn't yet exist
-	if [ ! -d $WP_TESTS_DIR ]; then
+	# Set up the testing suite if it is not already COMPLETE.
+	#
+	# This used to guard on [ ! -d $WP_TESTS_DIR ]. /tmp is swept periodically
+	# on macOS, and the sweep removes the files while leaving the directory
+	# tree standing - so the guard saw a directory, skipped the download, and
+	# exited 0 on an install with no includes/functions.php in it. Re-running
+	# this script to repair a gutted library therefore did nothing and
+	# reported success. Guard on a file only a complete install has.
+	if [ ! -f "$WP_TESTS_DIR/includes/functions.php" ]; then
 		# set up testing suite
 		mkdir -p $WP_TESTS_DIR
 		rm -rf $WP_TESTS_DIR/{includes,data}

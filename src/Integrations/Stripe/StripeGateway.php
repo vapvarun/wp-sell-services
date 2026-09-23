@@ -1003,46 +1003,66 @@ class StripeGateway implements PaymentGatewayInterface {
 			);
 		}
 
-		$service = wpss_get_service( $service_id );
-		if ( ! $service ) {
-			return array(
-				'success' => false,
-				'error'   => __( 'Service not found.', 'wp-sell-services' ),
-			);
-		}
-
-		$order_provider = wpss_get_order_provider();
-
-		$order = $order_provider->create_order(
+		/*
+		 * Settle through the shared, guarded seam - do not build the order here.
+		 *
+		 * This branch took service_id / package_id straight from the request
+		 * body and created the order with subtotal = $payment['amount'], while
+		 * process_payment() verifies only that the intent reached 'succeeded'
+		 * and never reads the intent's own metadata. So a client could create
+		 * an intent for a cheap service, confirm it, then call this naming an
+		 * EXPENSIVE one: the order was recorded at the small amount and the
+		 * vendor was asked to deliver premium work against it
+		 * (Basecamp 10321653352).
+		 *
+		 * resolve() prices the intent on the server from the requested service
+		 * and package, and settle() refuses unless the charge matches it - so
+		 * the mismatch is caught by the same guard that closed the AJAX rail,
+		 * rather than by a second copy of the check written here. settle() also
+		 * carries the one-charge-one-order dedupe (Basecamp 10321653385).
+		 */
+		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
+		$intent   = $checkout->resolve(
 			array(
-				'service_id'     => $service_id,
-				'package_id'     => $package_id,
-				'customer_id'    => get_current_user_id(),
-				'subtotal'       => $payment['amount'],
-				'currency'       => $payment['currency'],
-				'payment_method' => 'stripe',
+				'service_id' => $service_id,
+				'package_id' => $package_id,
 			)
 		);
 
-		if ( ! $order ) {
+		if ( is_wp_error( $intent ) ) {
 			$this->process_refund( $payment_intent_id );
+
 			return array(
 				'success' => false,
-				'error'   => __( 'Failed to create order.', 'wp-sell-services' ),
+				'error'   => $intent->get_error_message(),
 			);
 		}
 
-		$order_provider->mark_as_paid( $order->id, $payment_intent_id, 'stripe' );
+		$settle = $checkout->settle(
+			$intent,
+			'stripe',
+			$payment_intent_id,
+			(float) $payment['amount'],
+			(string) $payment['currency']
+		);
+
+		if ( empty( $settle['success'] ) ) {
+			$refund = $this->process_refund( $payment_intent_id );
+
+			if ( empty( $refund['success'] ) ) {
+				wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
+			}
+
+			return array(
+				'success' => false,
+				'error'   => $settle['error'] ?? __( 'Failed to create order.', 'wp-sell-services' ),
+			);
+		}
 
 		// Clear cart after successful order creation.
 		delete_user_meta( get_current_user_id(), '_wpss_cart' );
 
-		return array(
-			'success'      => true,
-			'order_id'     => $order->id,
-			'order_number' => $order->order_number,
-			'redirect_url' => wpss_get_post_checkout_url( (int) $order->id, wpss_get_order_requirements_url( $order->id ), 'stripe' ),
-		);
+		return $settle;
 	}
 
 	/**

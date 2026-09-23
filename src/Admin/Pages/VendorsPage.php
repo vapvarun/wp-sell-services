@@ -356,19 +356,23 @@ class VendorsPage {
 			AND wt.status = 'completed'
 			AND wt.type NOT IN ({$debit_types_sql}))";
 
-		$fixed_count_sql = $wpdb->prepare(
-			"(SELECT COUNT(*) FROM {$orders_table} o
+		/*
+		 * Placeholders only - these fragments are NOT pre-prepared.
+		 *
+		 * They used to be prepare()d here and then interpolated into the main
+		 * query, which is prepare()d again: a second substitution pass over
+		 * text whose values had already been replaced. Inert as written, since
+		 * every value is an internal platform constant with no % in it, but it
+		 * breaks the moment one contains a literal % (Basecamp 10321653509).
+		 *
+		 * Their values now travel with the rest and are bound once, below.
+		 */
+		$fixed_count_sql = "(SELECT COUNT(*) FROM {$orders_table} o
 			WHERE o.vendor_id = vp.user_id
 			AND o.status = 'completed'
-			AND o.platform NOT IN (%s, %s, %s, %s))",
-			$tip_platform,
-			$extension_platform,
-			$milestone_platform,
-			'request'
-		);
+			AND o.platform NOT IN (%s, %s, %s, %s))";
 
-		$milestone_count_sql = $wpdb->prepare(
-			"(SELECT COUNT(*) FROM {$orders_table} o
+		$milestone_count_sql = "(SELECT COUNT(*) FROM {$orders_table} o
 			WHERE o.vendor_id = vp.user_id
 			AND o.status = 'completed'
 			AND o.platform = %s
@@ -376,12 +380,19 @@ class VendorsPage {
 				SELECT 1 FROM {$orders_table} c
 				WHERE c.platform = %s
 				AND c.platform_order_id = o.id
-			))",
+			))";
+
+		// The SELECT list is built before the WHERE, so its values bind first.
+		$select_values = array(
+			$tip_platform,
+			$extension_platform,
+			$milestone_platform,
 			'request',
-			$milestone_platform
+			'request',
+			$milestone_platform,
 		);
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed/milestone SQL fragments are pre-prepared above.
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fragments carry placeholders only; every value is bound in this one prepare().
 		$query = $wpdb->prepare(
 			"SELECT
 				vp.*,
@@ -397,7 +408,7 @@ class VendorsPage {
 			WHERE {$where_clause}
 			ORDER BY {$orderby} {$order}
 			LIMIT %d OFFSET %d",
-			array_merge( $values, array( $args['per_page'], $offset ) )
+			array_merge( $select_values, $values, array( $args['per_page'], $offset ) )
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- query pre-prepared, table names from $wpdb->prefix are safe.

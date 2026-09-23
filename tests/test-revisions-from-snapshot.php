@@ -52,7 +52,15 @@ foreach ( get_posts(
 }
 
 if ( ! $service_id ) {
-	WP_CLI::error( 'No published service with a first package that includes revisions.' );
+	/*
+	 * An absent fixture is a SKIP, not an error.
+	 *
+	 * WP_CLI::error() exits non-zero, so on a fresh CI install - which has no
+	 * seeded catalogue - this reported a failure when nothing was wrong. See
+	 * tests/exit-on-fail.php.
+	 */
+	echo "SKIP  no published service whose first package declares revisions; nothing to snapshot.\n";
+	return;
 }
 
 $buyer_id = wp_insert_user(

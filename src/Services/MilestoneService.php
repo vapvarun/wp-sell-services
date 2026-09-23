@@ -758,6 +758,22 @@ class MilestoneService {
 			)
 		);
 
+		/**
+		 * Fires when a milestone phase is cancelled rather than settled.
+		 *
+		 * Approving and declining a phase have always announced themselves, and
+		 * the parent order's auto-complete check listens to both. Cancelling one
+		 * announced nothing, so a project whose LAST open phase was cancelled
+		 * was never re-checked and sat In Progress forever even though every
+		 * phase was settled.
+		 *
+		 * @since 1.7.2
+		 *
+		 * @param int $milestone_id    Cancelled phase sub-order ID.
+		 * @param int $parent_order_id Parent order ID.
+		 */
+		do_action( 'wpss_milestone_cancelled', $milestone_id, (int) $sub->platform_order_id );
+
 		return array(
 			'success' => true,
 			'message' => __( 'Phase proposal cancelled.', 'wp-sell-services' ),
@@ -783,6 +799,33 @@ class MilestoneService {
 		// commitment go to the abandon-cron. The marker is stored in the
 		// sub-order's meta JSON; we filter on the JSON text so the
 		// cleanup stays a single SQL statement.
+
+		/*
+		 * Read the rows before updating them. The sweep is still one UPDATE,
+		 * but the parents have to be known afterwards so each can be re-checked
+		 * for completion - cancelling a project's last open phase from cron
+		 * left it In Progress forever, exactly as cancelling it by hand did.
+		 */
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$doomed = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT id, platform_order_id
+				FROM {$orders_table}
+				WHERE platform = %s
+				AND status = %s
+				AND created_at < %s
+				AND ( meta IS NULL OR meta NOT LIKE %s )",
+				self::ORDER_TYPE,
+				'pending_payment',
+				$threshold,
+				'%"is_contract_milestone":true%'
+			)
+		);
+
+		if ( ! $doomed ) {
+			return 0;
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$count = (int) $wpdb->query(
 			$wpdb->prepare(
@@ -799,6 +842,11 @@ class MilestoneService {
 				'%"is_contract_milestone":true%'
 			)
 		);
+
+		foreach ( $doomed as $row ) {
+			/** This action is documented in src/Services/MilestoneService.php */
+			do_action( 'wpss_milestone_cancelled', (int) $row->id, (int) $row->platform_order_id );
+		}
 
 		return $count;
 	}

@@ -140,7 +140,7 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @return array<object>
 	 */
 	public function get_directory( array $args = array() ): array {
-		$args    = wp_parse_args(
+		$args                         = wp_parse_args(
 			$args,
 			array(
 				'orderby' => 'avg_rating',
@@ -149,16 +149,19 @@ class VendorProfileRepository extends AbstractRepository {
 				'offset'  => 0,
 			)
 		);
-		$orderby = $this->validate_orderby( (string) $args['orderby'] );
-		$order   = $this->validate_order( (string) $args['order'] );
-		$where   = $this->directory_where( $args );
+		$orderby                      = $this->validate_orderby( (string) $args['orderby'] );
+		$order                        = $this->validate_order( (string) $args['order'] );
+		list( $where, $where_values ) = $this->directory_where( $args );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- $where is prepared below; identifiers are allow-listed.
+		$values   = $where_values;
+		$values[] = max( 1, (int) $args['limit'] );
+		$values[] = max( 0, (int) $args['offset'] );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- identifiers are allow-listed; every value is bound in the single prepare() below.
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT * FROM {$this->table} {$where} ORDER BY {$orderby} {$order}, id DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				max( 1, (int) $args['limit'] ),
-				max( 0, (int) $args['offset'] )
+				...$values
 			)
 		);
 	}
@@ -172,10 +175,12 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @return int
 	 */
 	public function count_directory( array $args = array() ): int {
-		$where = $this->directory_where( $args );
+		list( $where, $values ) = $this->directory_where( $args );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- $where is prepared; the table name is plugin-controlled.
-		return (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$this->table} {$where}" );
+		$sql = "SELECT COUNT(*) FROM {$this->table} {$where}"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders only; the table name is plugin-controlled.
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- bound below when there is anything to bind.
+		return (int) ( empty( $values ) ? $this->wpdb->get_var( $sql ) : $this->wpdb->get_var( $this->wpdb->prepare( $sql, ...$values ) ) );
 	}
 
 	/**
@@ -191,28 +196,37 @@ class VendorProfileRepository extends AbstractRepository {
 	 * @return array<int> Vendor user IDs, ascending.
 	 */
 	public function get_directory_user_ids( array $args = array() ): array {
-		$where = $this->directory_where( $args );
-		$limit = (int) ( $args['limit'] ?? 0 );
+		list( $where, $values ) = $this->directory_where( $args );
+		$limit                  = (int) ( $args['limit'] ?? 0 );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- $where is prepared; the table name is plugin-controlled.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders only; the table name is plugin-controlled.
 		$sql = "SELECT user_id FROM {$this->table} {$where} ORDER BY user_id ASC";
 
 		if ( $limit > 0 ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only.
-			$sql .= (string) $this->wpdb->prepare( ' LIMIT %d OFFSET %d', $limit, max( 0, (int) ( $args['offset'] ?? 0 ) ) );
+			$sql     .= ' LIMIT %d OFFSET %d';
+			$values[] = $limit;
+			$values[] = max( 0, (int) ( $args['offset'] ?? 0 ) );
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- prepared above.
-		return array_map( 'intval', (array) $this->wpdb->get_col( $sql ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- bound in one pass here.
+		return array_map( 'intval', (array) ( empty( $values ) ? $this->wpdb->get_col( $sql ) : $this->wpdb->get_col( $this->wpdb->prepare( $sql, ...$values ) ) ) );
 	}
 
 	/**
-	 * Prepared WHERE clause shared by get_directory() and count_directory().
+	 * WHERE clause shared by the three directory queries, with its values.
+	 *
+	 * Returns the clause with PLACEHOLDERS and the values separately, so each
+	 * caller binds exactly once. It used to return an already-prepared
+	 * fragment, which the callers then interpolated into a string they passed
+	 * to prepare() again - a second pass over text that had already had its
+	 * values substituted. Inert as written, because status and country are
+	 * sanitized keys, but the moment a bound value contains a literal % the
+	 * second prepare() mangles the query (Basecamp 10321653509).
 	 *
 	 * @param array<string, mixed> $args Directory filters.
-	 * @return string '' or a prepared ' WHERE ...' fragment.
+	 * @return array{0: string, 1: array<int, mixed>} Clause ('' when unfiltered) and its values.
 	 */
-	private function directory_where( array $args ): string {
+	private function directory_where( array $args ): array {
 		$status  = (string) ( $args['status'] ?? 'active' );
 		$country = (string) ( $args['country'] ?? '' );
 		$clauses = array();
@@ -231,13 +245,10 @@ class VendorProfileRepository extends AbstractRepository {
 		}
 
 		if ( empty( $clauses ) ) {
-			return '';
+			return array( '', array() );
 		}
 
-		$where = ' WHERE ' . implode( ' AND ', $clauses );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders only; values bound here.
-		return empty( $values ) ? $where : (string) $this->wpdb->prepare( $where, ...$values );
+		return array( ' WHERE ' . implode( ' AND ', $clauses ), $values );
 	}
 
 	/**

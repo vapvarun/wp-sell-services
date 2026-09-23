@@ -569,12 +569,20 @@ select.wpss-form-input::-ms-expand {
 	object-fit: cover;
 }
 
+/* This is a <button> now, so the user-agent background, font and intrinsic
+   width have to be reset or the tile stops matching the gallery thumbs beside
+   it. It was a <div> with only a click handler, which no keyboard could reach. */
 .wpss-gallery-add {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	font: inherit;
+	background: none;
 	aspect-ratio: 1;
 	border: 2px dashed var(--wpss-border, #e5e7eb);
 	border-radius: var(--wpss-radius, 8px);
@@ -584,6 +592,14 @@ select.wpss-form-input::-ms-expand {
 }
 
 .wpss-gallery-add:hover {
+	border-color: var(--wpss-primary, #4f46e5);
+	color: var(--wpss-primary-accent, #4f46e5);
+}
+
+/* A control that can now be tabbed to has to show where focus is. */
+.wpss-gallery-add:focus-visible {
+	outline: 2px solid var(--wpss-primary, #4f46e5);
+	outline-offset: 2px;
 	border-color: var(--wpss-primary, #4f46e5);
 	color: var(--wpss-primary-accent, #4f46e5);
 }
