@@ -167,7 +167,7 @@ guide; this is the complete index.
 | `wpss_order_view_sidebar` | 1 | `templates/order/order-view.php` | Hook: wpss_order_view_sidebar |
 | `wpss_orders_filters` | 1 | `templates/dashboard/sections/orders.php` | Fires in the orders filter area. |
 | `wpss_package_features` | 3 | `templates/partials/service-packages.php` | Fires inside the package features list. |
-| `wpss_payable_total_after` | 2 | `src/Integrations/Standalone/StandaloneCheckoutProvider.php` *(+1 more)* | Fires after the payable total, before the Pay button. |
+| `wpss_payable_total_after` | 2 | `templates/checkout/summary.php` *(+1 more)* | Fires after the payable total, before the Pay button. |
 | `wpss_payment_callback` | 1 | `src/Integrations/Standalone/StandaloneAdapter.php` | Fires when a payment callback is received. |
 | `wpss_payment_receipt_rejected` | 4 | `src/Services/PaymentReceiptService.php` | Fires when an admin rejects proof of an offline payment. |
 | `wpss_payment_receipt_submitted` | 3 | `src/Services/PaymentReceiptService.php` | Fires when a buyer submits proof of an offline payment. |

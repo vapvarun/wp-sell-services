@@ -103,7 +103,13 @@ wpss_t(
 // 3. The account seam is published at IIFE scope, NOT inside the submit
 //    handler - that handler returns early for exactly the gateways that need
 //    it, so publishing from in there would define it only for buyers who don't.
-$checkout = file_get_contents( $free . '/src/Integrations/Standalone/StandaloneCheckoutProvider.php' );
+//    Since 1.8.0 the checkout script is assets/js/checkout.js, shared by both
+//    checkout forms, instead of two inline copies in the provider.
+$provider = file_get_contents( $free . '/src/Integrations/Standalone/StandaloneCheckoutProvider.php' );
+wpss_t( false === strpos( $provider, "addEventListener('submit'" ) && false === strpos( $provider, 'ensureAccount' ), 'the checkout provider carries no inline checkout script (one script: assets/js/checkout.js)' );
+wpss_t( false !== strpos( $provider, "'assets/js/checkout.js'" ), 'the checkout provider enqueues assets/js/checkout.js' );
+wpss_t( file_exists( $free . '/assets/js/checkout.min.js' ) && filemtime( $free . '/assets/js/checkout.min.js' ) >= filemtime( $free . '/assets/js/checkout.js' ), 'checkout.min.js is rebuilt from checkout.js' );
+$checkout = file_get_contents( $free . '/assets/js/checkout.js' );
 $seam_pos = strpos( $checkout, 'window.wpssEnsureCheckoutAccount = ensureAccount;' );
 $call_pos = strpos( $checkout, "ensureAccount().then(function() {" );
 wpss_t( false !== $seam_pos, 'checkout publishes window.wpssEnsureCheckoutAccount' );

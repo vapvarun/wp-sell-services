@@ -52,7 +52,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_pre_create_service` | `array $data` | `ServiceManager.php` |
 | `wpss_pre_update_service` | `array $data, int $service_id` | `ServiceManager.php` |
 | `wpss_before_service_deleted` | `int $service_id` | `src/Services/ServiceManager.php:340` |
-| `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:958` |
+| `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:949` |
 | `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:734` |
 | `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:899` |
 | `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:948` |
@@ -69,7 +69,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:766` |
+| `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:753` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
 | `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:1138` |
 
@@ -354,7 +354,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_service_meta_fields` | `array $fields, int $post_id` | `src/Admin/Metaboxes/ServiceMetabox.php:285` |
+| `wpss_service_meta_fields` | `array $fields, int $post_id` | `src/Admin/Metaboxes/ServiceMetabox.php:276` |
 | `wpss_pro_upgrade_url` | `string $url` (default `https://wpsellservices.com/`) | `UpgradePage.php`, `ServiceWizard.php:961` |
 | `wpss_docs_url` | `string $url` (default `https://wpsellservices.com/docs/`) | `src/Admin/Pages/UpgradePage.php:347` |
 
@@ -697,7 +697,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:185` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:981` |
 | `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3876` |
-| `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:823` |
+| `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:810` |
 
 **`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
 
