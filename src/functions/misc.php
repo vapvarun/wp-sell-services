@@ -916,3 +916,132 @@ function wpss_enqueue_style( string $handle, string $relative, array $deps = arr
 	wp_enqueue_style( $handle, WPSS_PLUGIN_URL . $relative, $deps, WPSS_VERSION );
 	wp_style_add_data( $handle, 'rtl', 'replace' );
 }
+
+/**
+ * The visitor's IP address - THE one reader of the client address.
+ *
+ * REMOTE_ADDR, unless the connection comes from a hop allowed to speak for
+ * the visitor: Cloudflare's published ranges for CF-Connecting-IP, or a proxy
+ * declared through the wpss_trusted_proxies filter for X-Forwarded-For (read
+ * right to left, stopping at the first hop that is not a declared proxy).
+ * Taking the first header value from anyone let a script be a new visitor on
+ * every request and walk past every guest rate limit (Basecamp 10336398096).
+ *
+ * @since 1.8.0
+ *
+ * @return string Validated IP, or '' when there is none (CLI, cron).
+ */
+function wpss_client_ip(): string {
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- validated by filter_var below.
+	$remote = trim( sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) ) );
+
+	if ( ! filter_var( $remote, FILTER_VALIDATE_IP ) ) {
+		return '';
+	}
+
+	$cf = trim( sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ?? '' ) ) );
+
+	/**
+	 * Filters Cloudflare's address ranges. Update when Cloudflare publishes new ones.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string[] $ranges CIDR ranges from https://www.cloudflare.com/ips/.
+	 */
+	$cloudflare = (array) apply_filters(
+		'wpss_cloudflare_ip_ranges',
+		array(
+			'173.245.48.0/20',
+			'103.21.244.0/22',
+			'103.22.200.0/22',
+			'103.31.4.0/22',
+			'141.101.64.0/18',
+			'108.162.192.0/18',
+			'190.93.240.0/20',
+			'188.114.96.0/20',
+			'197.234.240.0/22',
+			'198.41.128.0/17',
+			'162.158.0.0/15',
+			'104.16.0.0/13',
+			'104.24.0.0/14',
+			'172.64.0.0/13',
+			'131.0.72.0/22',
+			'2400:cb00::/32',
+			'2606:4700::/32',
+			'2803:f800::/32',
+			'2405:b500::/32',
+			'2405:8100::/32',
+			'2a06:98c0::/29',
+			'2c0f:f248::/32',
+		)
+	);
+
+	if ( filter_var( $cf, FILTER_VALIDATE_IP ) && wpss_ip_in_ranges( $remote, $cloudflare ) ) {
+		return $cf;
+	}
+
+	/**
+	 * Filters the proxies allowed to set X-Forwarded-For (IPs or CIDR ranges).
+	 * Declare a load balancer or proxy here, or every guest behind it shares
+	 * one rate-limit bucket. Cloudflare needs no entry.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string[] $proxies Trusted proxy IPs / ranges.
+	 */
+	$trusted = (array) apply_filters( 'wpss_trusted_proxies', array() );
+	$xff     = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '' ) );
+
+	if ( $trusted && '' !== $xff && wpss_ip_in_ranges( $remote, $trusted ) ) {
+		foreach ( array_reverse( array_map( 'trim', explode( ',', $xff ) ) ) as $hop ) {
+			if ( ! filter_var( $hop, FILTER_VALIDATE_IP ) ) {
+				break;
+			}
+			if ( ! wpss_ip_in_ranges( $hop, $trusted ) ) {
+				return $hop;
+			}
+		}
+	}
+
+	return $remote;
+}
+
+/**
+ * Whether an IP falls inside any of the given IPs / CIDR ranges (v4 or v6).
+ *
+ * @since 1.8.0
+ *
+ * @param string   $ip     IP address.
+ * @param string[] $ranges IPs or CIDR ranges.
+ * @return bool
+ */
+function wpss_ip_in_ranges( string $ip, array $ranges ): bool {
+	$packed = @inet_pton( $ip ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- invalid input returns false.
+
+	if ( false === $packed ) {
+		return false;
+	}
+
+	foreach ( $ranges as $range ) {
+		list( $subnet, $bits ) = array_pad( explode( '/', trim( (string) $range ), 2 ), 2, null );
+		$net                   = @inet_pton( (string) $subnet ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+
+		if ( false === $net || strlen( $net ) !== strlen( $packed ) ) {
+			continue;
+		}
+
+		$bits  = null === $bits ? strlen( $net ) * 8 : (int) $bits;
+		$bytes = intdiv( $bits, 8 );
+		$rest  = $bits % 8;
+
+		if ( substr( $packed, 0, $bytes ) !== substr( $net, 0, $bytes ) ) {
+			continue;
+		}
+
+		if ( 0 === $rest || ( ( ord( $packed[ $bytes ] ) ^ ord( $net[ $bytes ] ) ) & ( 0xFF << ( 8 - $rest ) ) & 0xFF ) === 0 ) {
+			return true;
+		}
+	}
+
+	return false;
+}

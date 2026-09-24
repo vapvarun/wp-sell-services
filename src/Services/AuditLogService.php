@@ -313,7 +313,7 @@ class AuditLogService {
 
 		// Merge in request metadata unless the caller supplied their own.
 		if ( ! isset( $context['ip'] ) ) {
-			$context['ip'] = $this->get_request_ip();
+			$context['ip'] = wpss_client_ip();
 		}
 		if ( ! isset( $context['user_agent'] ) ) {
 			$context['user_agent'] = $this->get_request_user_agent();
@@ -487,38 +487,6 @@ class AuditLogService {
 		return (int) $deleted;
 	}
 
-	/**
-	 * Best-effort request IP extraction.
-	 *
-	 * Prefers trusted proxy headers when the site is behind a reverse proxy,
-	 * falls back to REMOTE_ADDR. Returns an empty string when no address is
-	 * available (CLI, cron, unit tests).
-	 *
-	 * @return string
-	 */
-	private function get_request_ip(): string {
-		$candidates = array( 'HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR' );
-
-		foreach ( $candidates as $key ) {
-			if ( empty( $_SERVER[ $key ] ) ) {
-				continue;
-			}
-
-			$value = sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) );
-
-			// X-Forwarded-For may contain a comma-separated chain — take the first.
-			if ( false !== strpos( $value, ',' ) ) {
-				$value = trim( explode( ',', $value )[0] );
-			}
-
-			$ip = filter_var( $value, FILTER_VALIDATE_IP );
-			if ( $ip ) {
-				return (string) $ip;
-			}
-		}
-
-		return '';
-	}
 
 	/**
 	 * Best-effort request user-agent extraction.

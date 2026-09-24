@@ -421,25 +421,20 @@ class AuthController extends RestController {
 	/**
 	 * Check rate limit for an action.
 	 *
-	 * @param string $action  Action identifier (e.g. 'login', 'register').
-	 * @param int    $limit   Max attempts allowed in the window.
-	 * @param int    $window  Time window in seconds.
+	 * One limiter for the whole plugin: RateLimiter, keyed on wpss_client_ip().
+	 * The limits are the auth_* entries in RateLimiter::DEFAULT_LIMITS.
+	 *
+	 * @param string $action Action identifier (login, register, forgot_password).
 	 * @return bool|WP_Error True if allowed, WP_Error if rate limited.
 	 */
-	private function check_rate_limit( string $action, int $limit = 5, int $window = 300 ) {
-		$ip        = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0' ) );
-		$cache_key = 'wpss_rate_' . $action . '_' . md5( $ip );
-		$attempts  = (int) get_transient( $cache_key );
-
-		if ( $attempts >= $limit ) {
+	private function check_rate_limit( string $action ) {
+		if ( \WPSellServices\Core\RateLimiter::check_and_track( 'auth_' . $action ) ) {
 			return new WP_Error(
 				'rate_limit_exceeded',
 				__( 'Too many attempts. Please try again later.', 'wp-sell-services' ),
 				array( 'status' => 429 )
 			);
 		}
-
-		set_transient( $cache_key, $attempts + 1, $window );
 
 		return true;
 	}
@@ -451,7 +446,7 @@ class AuthController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function login( WP_REST_Request $request ) {
-		$rate_check = $this->check_rate_limit( 'login', 5, 300 );
+		$rate_check = $this->check_rate_limit( 'login' );
 		if ( is_wp_error( $rate_check ) ) {
 			return $rate_check;
 		}
@@ -571,7 +566,7 @@ class AuthController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function register( WP_REST_Request $request ) {
-		$rate_check = $this->check_rate_limit( 'register', 3, 600 );
+		$rate_check = $this->check_rate_limit( 'register' );
 		if ( is_wp_error( $rate_check ) ) {
 			return $rate_check;
 		}
@@ -726,7 +721,7 @@ class AuthController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function forgot_password( WP_REST_Request $request ) {
-		$rate_check = $this->check_rate_limit( 'forgot_password', 3, 600 );
+		$rate_check = $this->check_rate_limit( 'forgot_password' );
 		if ( is_wp_error( $rate_check ) ) {
 			return $rate_check;
 		}

@@ -771,7 +771,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1397` |
 | `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:226` |
 | `wpss_blocks` | `$blocks` | `src/Blocks/BlocksManager.php:95` |
-| `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:275` |
+| `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:289` |
 
 ### Miscellaneous Filters
 

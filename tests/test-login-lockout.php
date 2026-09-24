@@ -159,7 +159,7 @@ foreach ( $made_keys as $made_key ) {
 }
 
 foreach ( array( '198.51.100.77', '198.51.100.78', '198.51.100.79', '198.51.100.80' ) as $ip ) {
-	delete_transient( 'wpss_rate_login_' . md5( $ip ) );
+	delete_transient( 'wpss_rate_auth_login_ip_' . md5( $ip ) );
 }
 
 foreach ( $made_users as $made_user ) {

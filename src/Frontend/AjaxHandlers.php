@@ -1114,7 +1114,7 @@ class AjaxHandlers {
 
 		// Build unique vote identifier.
 		$user_id    = get_current_user_id();
-		$ip_address = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) );
+		$ip_address = wpss_client_ip();
 		$vote_key   = '_wpss_vote_' . $review_id . '_' . ( $user_id ? 'u' . $user_id : 'ip' . md5( $ip_address ) );
 
 		// Use atomic INSERT IGNORE to prevent race condition.
