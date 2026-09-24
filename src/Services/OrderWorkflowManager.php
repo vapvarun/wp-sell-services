@@ -51,6 +51,18 @@ class OrderWorkflowManager {
 	public const REFUND_PENDING_META = '_wpss_refund_pending';
 
 	/**
+	 * Order meta key holding a refund the gateway refused.
+	 *
+	 * Written by OrderService::refund() (and the cancel path) when the gateway
+	 * could not move the money; the order keeps its status and the admin order
+	 * view offers Retry. Cleared when a refund is recorded. Shape: amount,
+	 * status, origin, dispute_id, resolution, error, attempts, first_at, last_at.
+	 *
+	 * @since 1.8.0
+	 */
+	public const REFUND_FAILED_META = '_wpss_refund_failed';
+
+	/**
 	 * Rows a cron sweep handles per run; the next tick takes the rest.
 	 *
 	 * @since 1.7.1
@@ -78,6 +90,71 @@ class OrderWorkflowManager {
 	 */
 	public static function get_last_refund_result( int $order_id ): ?array {
 		return self::$refund_results[ $order_id ] ?? null;
+	}
+
+	/**
+	 * Record on the order that the gateway refused a refund.
+	 *
+	 * The one writer of REFUND_FAILED_META. Repeated failures of the same
+	 * refund keep the first timestamp and count the attempts.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int                  $order_id Order ID.
+	 * @param float                $amount   Amount that did not go back.
+	 * @param string               $error    Gateway message.
+	 * @param array<string, mixed> $intent   What to replay on retry: status, origin, dispute_id, resolution.
+	 * @return void
+	 */
+	public static function flag_refund_failed( int $order_id, float $amount, string $error, array $intent ): void {
+		$provider = wpss_get_order_provider();
+		$previous = $provider->get_item_meta( $order_id, self::REFUND_FAILED_META );
+		$previous = is_array( $previous ) ? $previous : array();
+		$now      = current_time( 'mysql' );
+
+		$provider->update_item_meta(
+			$order_id,
+			self::REFUND_FAILED_META,
+			array(
+				'amount'     => $amount,
+				'status'     => (string) ( $intent['status'] ?? ServiceOrder::STATUS_REFUNDED ),
+				'origin'     => (string) ( $intent['origin'] ?? 'admin' ),
+				'dispute_id' => (int) ( $intent['dispute_id'] ?? 0 ),
+				'resolution' => (string) ( $intent['resolution'] ?? '' ),
+				'error'      => $error,
+				'attempts'   => (int) ( $previous['attempts'] ?? 0 ) + 1,
+				'first_at'   => (string) ( $previous['first_at'] ?? $now ),
+				'last_at'    => $now,
+			)
+		);
+	}
+
+	/**
+	 * The refund the gateway refused on this order, or null.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return array<string, mixed>|null
+	 */
+	public static function get_failed_refund( int $order_id ): ?array {
+		$flag = wpss_get_order_provider()->get_item_meta( $order_id, self::REFUND_FAILED_META );
+
+		return is_array( $flag ) && ! empty( $flag['amount'] ) ? $flag : null;
+	}
+
+	/**
+	 * Clear the failed-refund flag once a refund is recorded.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return void
+	 */
+	public static function clear_failed_refund( int $order_id ): void {
+		if ( null !== self::get_failed_refund( $order_id ) ) {
+			wpss_get_order_provider()->update_item_meta( $order_id, self::REFUND_FAILED_META, '' );
+		}
 	}
 
 	/**
@@ -749,8 +826,22 @@ class OrderWorkflowManager {
 			}
 		}
 
-		// Auto-refund the buyer's original payment via the payment gateway.
-		$this->attempt_payment_refund( $order );
+		// Auto-refund the buyer's original payment via the payment gateway. The
+		// cancellation stands either way; a refusal is flagged on the order so
+		// the admin sees Retry instead of an order that looks settled.
+		$refund = $this->attempt_payment_refund( $order );
+
+		if ( is_array( $refund ) && empty( $refund['success'] ) && empty( $refund['manual'] ) ) {
+			self::flag_refund_failed(
+				$order_id,
+				max( 0.0, (float) $order->total - wpss_get_order_refunded_amount( $order ) ),
+				(string) ( $refund['message'] ?? '' ),
+				array(
+					'status' => ServiceOrder::STATUS_REFUNDED,
+					'origin' => 'cancel',
+				)
+			);
+		}
 
 		// Note: Notifications handled by Plugin.php → NotificationService::notify_order_status().
 
@@ -1283,13 +1374,17 @@ class OrderWorkflowManager {
 	 * @return array<string, mixed>|null Seam-3 result, or null when no refund was attempted.
 	 */
 	private function attempt_payment_refund( ServiceOrder $order, ?float $amount = null ): ?array {
-		// Skip if no payment was made (offline/pending orders, or already refunded).
-		if ( empty( $order->transaction_id ) || empty( $order->payment_method ) ) {
-			return null;
-		}
+		// OrderService::refund() asks the gateway BEFORE it moves the status,
+		// so by the time this runs inside the status hook the money question is
+		// already answered. Asking again would refund the buyer twice.
+		if ( OrderService::has_gateway_result( (int) $order->id ) ) {
+			$result = OrderService::get_gateway_result( (int) $order->id );
 
-		if ( in_array( $order->payment_status, array( 'refunded', 'pending' ), true ) ) {
-			return null;
+			if ( null !== $result ) {
+				self::$refund_results[ (int) $order->id ] = $result;
+			}
+
+			return $result;
 		}
 
 		// The refund started AT the rail — a Stripe dashboard refund arriving on
@@ -1324,6 +1419,35 @@ class OrderWorkflowManager {
 			? $remaining
 			: $amount;
 		$is_partial    = null !== $amount && $cumulative < $order_total;
+
+		return $this->refund_at_gateway( $order, (float) $refund_amount, $is_partial );
+	}
+
+	/**
+	 * Ask the order's gateway (or the rail that owns the money) to refund.
+	 *
+	 * The money step on its own, sized by the caller. OrderService::refund()
+	 * runs it before the order moves; attempt_payment_refund() runs it for the
+	 * cancel path and for status changes made outside refund().
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param ServiceOrder $order         Order object.
+	 * @param float        $refund_amount Amount to send back in this event.
+	 * @param bool         $is_partial    Whether the order is not fully refunded once this lands.
+	 * @return array<string, mixed>|null Seam-3 result, or null when nothing was captured to refund.
+	 */
+	public function refund_at_gateway( ServiceOrder $order, float $refund_amount, bool $is_partial ): ?array {
+		// Skip if no payment was made (offline/pending orders, or already refunded).
+		if ( empty( $order->transaction_id ) || empty( $order->payment_method ) ) {
+			return null;
+		}
+
+		if ( in_array( $order->payment_status, array( 'refunded', 'pending' ), true ) ) {
+			return null;
+		}
+
+		$order_total = (float) $order->total;
 
 		/**
 		 * Short-circuit the gateway refund.

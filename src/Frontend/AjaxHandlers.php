@@ -2984,14 +2984,20 @@ class AjaxHandlers {
 					// — the refund handlers read it there to size both the buyer
 					// refund and the vendor's reversal. Writing it here and
 					// transitioning separately left the column claiming a refund
-					// whenever the transition was refused; apply_refund_status()
-					// owns that ordering and undoes the write if the order does
-					// not actually move.
-					$result['success'] = $order_service->apply_refund_status(
+					// whenever the transition was refused; refund() owns that
+					// ordering, asks the gateway first, and records nothing when
+					// the gateway refuses (the order is flagged for the admin).
+					$wpss_refund       = $order_service->refund(
 						$order_id,
 						$wpss_is_partial ? round( $wpss_refund_amount, wpss_get_currency_decimals( $order->currency ?? '' ) ) : $wpss_order_total,
-						$wpss_is_partial ? 'partially_refunded' : 'refunded'
+						$wpss_is_partial ? 'partially_refunded' : 'refunded',
+						array( 'origin' => 'vendor' )
 					);
+					$result['success'] = $wpss_refund['ok'];
+
+					if ( ! $wpss_refund['ok'] ) {
+						$result['message'] = $wpss_refund['message'];
+					}
 				} else {
 					wp_send_json_error( array( 'message' => __( 'Order cannot be refunded in its current status.', 'wp-sell-services' ) ) );
 				}

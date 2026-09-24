@@ -168,10 +168,9 @@ class OrderScreen {
 			}
 		}
 
-		// A refund is a money action, not a bare status flip: apply_refund_status()
-		// sizes the amount, writes refunded_amount BEFORE the transition (the
-		// refund/reversal hooks read it there) and undoes the write if the move is
-		// refused. An empty or full amount is a full refund; a smaller value is a
+		// A refund is a money action, not a bare status flip: refund() sizes the
+		// amount, asks the gateway first, and records the refund only when the
+		// money moved (or is an honest manual refund). An empty or full amount is a full refund; a smaller value is a
 		// partial, and the status is resolved accordingly so the admin never has
 		// to pick "partially_refunded" by hand. Any non-refund status keeps the
 		// plain update_status() path.
@@ -193,30 +192,31 @@ class OrderScreen {
 			$amount     = isset( $_POST['refund_amount'] ) ? (float) wp_unslash( $_POST['refund_amount'] ) : 0.0;
 			$is_partial = $amount > 0 && $amount < $order_total;
 
-			$result = $this->order_service->apply_refund_status(
+			$refund = $this->order_service->refund(
 				$order_id,
 				$is_partial ? round( $amount, 2 ) : $order_total,
-				$is_partial ? 'partially_refunded' : 'refunded'
+				$is_partial ? 'partially_refunded' : 'refunded',
+				array( 'origin' => 'admin' )
 			);
 
-			// The status moved, but did the money? apply_refund_status() stays
-			// a bool for its other callers; the gateway outcome is read back
-			// here so a failed refund is an error the admin sees, not a
-			// silent "Status updated". A manual (offline) outcome reloads into
-			// the pending-refund box on this screen.
-			$outcome = $result ? \WPSellServices\Services\OrderWorkflowManager::get_last_refund_result( $order_id ) : null;
-
-			if ( is_array( $outcome ) && empty( $outcome['success'] ) ) {
+			// refund() asks the gateway before the order moves, so a refusal
+			// leaves the order as it was and flags it for Retry. Say so, with
+			// the gateway's own words - not "Status updated".
+			if ( ! $refund['ok'] ) {
 				wp_send_json_error(
 					array(
-						'message' => sprintf(
-							/* translators: %s: gateway error message */
-							__( 'The order is marked refunded, but the gateway refund failed: %s. Refund the buyer from your gateway dashboard.', 'wp-sell-services' ),
-							(string) ( $outcome['message'] ?? __( 'Unknown error', 'wp-sell-services' ) )
-						),
+						'message' => 'failed' === $refund['outcome']
+							? sprintf(
+								/* translators: %s: gateway error message */
+								__( 'The refund did not go through: %s. Nothing was changed on the order; use Retry refund once the problem is fixed.', 'wp-sell-services' ),
+								$refund['message']
+							)
+							: $refund['message'],
 					)
 				);
 			}
+
+			$result = true;
 		} else {
 			// Use OrderService instead of repository to ensure hooks fire.
 			// This triggers wpss_order_status_changed and wpss_order_status_{status} hooks

@@ -208,7 +208,7 @@ class OrdersController extends RestController {
 		// having them.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation)',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -1021,6 +1021,20 @@ class OrdersController extends RestController {
 					$error = __( 'Only in-progress orders can be put on hold.', 'wp-sell-services' );
 				} else {
 					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_ON_HOLD );
+				}
+				break;
+
+			case 'retry-refund':
+				// A refund the gateway refused (see OrderService::refund()).
+				// The site owner's call only: it moves money.
+				if ( ! $is_admin ) {
+					$error = __( 'Only an administrator can retry a refund.', 'wp-sell-services' );
+				} else {
+					$retry  = $order_service->retry_refund( $order_id );
+					$result = $retry['ok'];
+					if ( ! $result ) {
+						$error = $retry['message'];
+					}
 				}
 				break;
 

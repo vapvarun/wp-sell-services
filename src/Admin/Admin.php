@@ -418,6 +418,7 @@ class Admin {
 		add_action( 'wp_ajax_wpss_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
 		add_action( 'admin_post_wpss_mark_refund_sent', array( $this, 'handle_mark_refund_sent' ) );
+		add_action( 'admin_post_wpss_retry_refund', array( $this, 'handle_retry_refund' ) );
 	}
 
 	/**
@@ -588,6 +589,42 @@ class Admin {
 				admin_url( 'admin.php' )
 			)
 		);
+		exit;
+	}
+
+	/**
+	 * Admin retries a refund the gateway refused.
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function handle_retry_refund(): void {
+		$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		if ( ! isset( $_POST['wpss_retry_refund_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_retry_refund_nonce'] ) ), 'wpss_retry_refund_' . $order_id ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
+		}
+
+		$result = ( new OrderService() )->retry_refund( $order_id );
+
+		// Back to the order either way. A refusal is an expected outcome, not
+		// an error page: the Refund failed box on the order already shows the
+		// gateway's latest message and the attempt count.
+		$args = array(
+			'page'     => 'wpss-orders',
+			'action'   => 'view',
+			'order_id' => $order_id,
+		);
+
+		if ( $result['ok'] ) {
+			$args['updated'] = '1';
+		}
+
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
 		exit;
 	}
 
@@ -2450,6 +2487,42 @@ class Admin {
 									<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order_id ); ?>">
 									<?php wp_nonce_field( 'wpss_mark_refund_sent_' . $order_id, 'wpss_refund_sent_nonce' ); ?>
 									<?php submit_button( __( 'Mark refund sent', 'wp-sell-services' ), 'secondary', 'submit', false ); ?>
+								</form>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<?php
+					// A refund the gateway refused. Nothing was recorded - the
+					// order kept its status and the vendor kept the credit - so
+					// the admin fixes the cause at the gateway and retries here.
+					$wpss_refund_failed = current_user_can( 'manage_options' ) ? OrderWorkflowManager::get_failed_refund( $order_id ) : null;
+
+					if ( null !== $wpss_refund_failed ) :
+						?>
+						<div class="postbox wpss-refund-failed">
+							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Refund failed', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<p>
+									<?php
+									printf(
+										/* translators: 1: amount, 2: payment method, 3: number of attempts */
+										esc_html( _n( '%1$s could not be refunded via %2$s (%3$d attempt). The buyer has not been refunded and the order was not changed.', '%1$s could not be refunded via %2$s (%3$d attempts). The buyer has not been refunded and the order was not changed.', (int) $wpss_refund_failed['attempts'], 'wp-sell-services' ) ),
+										'<strong>' . esc_html( wpss_format_price( (float) $wpss_refund_failed['amount'], (string) $order->currency ) ) . '</strong>',
+										esc_html( (string) $order->payment_method ),
+										(int) $wpss_refund_failed['attempts']
+									);
+									?>
+								</p>
+								<?php if ( '' !== (string) $wpss_refund_failed['error'] ) : ?>
+									<p><code><?php echo esc_html( (string) $wpss_refund_failed['error'] ); ?></code></p>
+								<?php endif; ?>
+								<p class="description"><?php esc_html_e( 'Fix the cause at the payment gateway, then retry. Check the gateway dashboard first if a refund may already have gone through.', 'wp-sell-services' ); ?></p>
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+									<input type="hidden" name="action" value="wpss_retry_refund">
+									<input type="hidden" name="order_id" value="<?php echo esc_attr( (string) $order_id ); ?>">
+									<?php wp_nonce_field( 'wpss_retry_refund_' . $order_id, 'wpss_retry_refund_nonce' ); ?>
+									<?php submit_button( __( 'Retry refund', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
 								</form>
 							</div>
 						</div>

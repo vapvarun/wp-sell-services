@@ -918,7 +918,22 @@ class DisputeService {
 			);
 		}
 
-		$wpdb->query( 'START TRANSACTION' );
+		/*
+		 * A refund ruling moves money, so it runs OUTSIDE the transaction.
+		 *
+		 * It used to run inside it, which was wrong twice over: a ROLLBACK
+		 * cannot un-send a refund the gateway already made, and the earnings
+		 * reversal opens its own transaction, which in MySQL silently COMMITs
+		 * this one - so the rollback below never rolled anything back. The
+		 * refund now records itself only when the money moved, and the
+		 * transaction covers just the dispute row (Basecamp 10331363649).
+		 */
+		$is_refund_ruling = in_array( $resolution, array( self::RESOLUTION_REFUND, self::RESOLUTION_FAVOR_BUYER, self::RESOLUTION_PARTIAL_REFUND ), true );
+		$this->last_error = '';
+
+		if ( ! $is_refund_ruling ) {
+			$wpdb->query( 'START TRANSACTION' );
+		}
 
 		try {
 			$moved = $this->handle_resolution( $dispute, $resolution, $refund_amount );
@@ -927,9 +942,19 @@ class DisputeService {
 		}
 
 		if ( ! $moved ) {
-			$wpdb->query( 'ROLLBACK' );
-			$this->last_error = __( 'The order could not be moved for this resolution, so the dispute stays open. Check the order status and try again.', 'wp-sell-services' );
+			if ( ! $is_refund_ruling ) {
+				$wpdb->query( 'ROLLBACK' );
+			}
+
+			if ( '' === $this->last_error ) {
+				$this->last_error = __( 'The order could not be moved for this resolution, so the dispute stays open. Check the order status and try again.', 'wp-sell-services' );
+			}
+
 			return false;
+		}
+
+		if ( $is_refund_ruling ) {
+			$wpdb->query( 'START TRANSACTION' );
 		}
 
 		$resolved = $this->transition(
@@ -984,12 +1009,41 @@ class DisputeService {
 		switch ( $resolution ) {
 			case self::RESOLUTION_REFUND:
 			case self::RESOLUTION_FAVOR_BUYER:
-				// Ruling for the buyer returns everything they paid; NULL asks
-				// apply_refund_status() to resolve that to the order total.
-				return $this->order_service->apply_refund_status( $order_id, null, ServiceOrder::STATUS_REFUNDED );
-
 			case self::RESOLUTION_PARTIAL_REFUND:
-				return $this->order_service->apply_refund_status( $order_id, $refund_amount, ServiceOrder::STATUS_PARTIALLY_REFUNDED );
+				$partial = self::RESOLUTION_PARTIAL_REFUND === $resolution;
+				$order   = $this->order_service->get( $order_id );
+
+				// Resolving again after the money already went back (the
+				// dispute row write failed last time) must close the dispute,
+				// not try to refund a fully refunded order a second time.
+				if ( ! $partial && $order && ServiceOrder::STATUS_REFUNDED === $order->status ) {
+					return true;
+				}
+
+				// Ruling for the buyer returns everything they paid; NULL asks
+				// refund() to resolve that to the order total.
+				$refund = $this->order_service->refund(
+					$order_id,
+					$partial ? $refund_amount : null,
+					$partial ? ServiceOrder::STATUS_PARTIALLY_REFUNDED : ServiceOrder::STATUS_REFUNDED,
+					array(
+						'origin'     => 'dispute',
+						'dispute_id' => (int) $dispute->id,
+						'resolution' => $resolution,
+					)
+				);
+
+				if ( ! $refund['ok'] ) {
+					$this->last_error = 'failed' === $refund['outcome']
+						? sprintf(
+							/* translators: %s: message from the payment gateway. */
+							__( 'The refund did not go through, so the dispute stays open: %s The order is flagged for retry.', 'wp-sell-services' ),
+							$refund['message']
+						)
+						: $refund['message'];
+				}
+
+				return $refund['ok'];
 
 			case self::RESOLUTION_FAVOR_VENDOR:
 			case self::RESOLUTION_MUTUAL:

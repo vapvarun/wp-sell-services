@@ -121,6 +121,42 @@ class OrderService {
 	}
 
 	/**
+	 * Gateway answers refund() already obtained, for the event in flight.
+	 *
+	 * refund() asks the gateway before it moves the status; the status hook
+	 * then reads the answer from here instead of asking a second time. A null
+	 * entry means "asked, nothing was captured to refund".
+	 *
+	 * @since 1.8.0
+	 * @var array<int, array<string, mixed>|null>
+	 */
+	private static array $gateway_results = array();
+
+	/**
+	 * Whether refund() already ran the gateway step for this order's event.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public static function has_gateway_result( int $order_id ): bool {
+		return array_key_exists( $order_id, self::$gateway_results );
+	}
+
+	/**
+	 * The gateway answer refund() obtained for this order's event.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return array<string, mixed>|null
+	 */
+	public static function get_gateway_result( int $order_id ): ?array {
+		return self::$gateway_results[ $order_id ] ?? null;
+	}
+
+	/**
 	 * Get order by ID.
 	 *
 	 * @param int $order_id Order ID.
@@ -270,21 +306,44 @@ class OrderService {
 	 *                             anything at or above the order total means the
 	 *                             whole order.
 	 * @param string     $status   Target status.
-	 * @param bool       $settled_at_rail Whether the money already went back at
-	 *                                    the payment rail (a gateway-initiated
-	 *                                    refund arriving on a webhook). Suppresses
-	 *                                    the second gateway call only; the vendor
-	 *                                    reversal still runs. See
-	 *                                    self::$settled_at_rail.
-	 * @return bool True when the order actually moved.
+	 * The gateway is asked FIRST, since 1.8.0. The status used to move before
+	 * the money did: the order read "refunded", the buyer's email went out and
+	 * the vendor was debited, and only then did the status hook ask the
+	 * gateway - which could say no (Basecamp 10331363649). Now a refusal
+	 * records nothing: the order keeps its status, the vendor keeps the
+	 * credit, and the order carries OrderWorkflowManager::REFUND_FAILED_META
+	 * so the admin can retry.
+	 *
+	 * @param array<string, mixed> $ctx Optional: settled_at_rail (bool - the money
+	 *                                  already went back at the rail, a webhook;
+	 *                                  the gateway is not asked), origin (admin,
+	 *                                  vendor, dispute, webhook, retry),
+	 *                                  dispute_id (int), resolution (string).
+	 * @return array{ok: bool, outcome: string, amount: float, status_after: string, gateway: array<string, mixed>|null, message: string, retryable: bool}
+	 *         outcome: moved (gateway refunded), manual (admin must send it),
+	 *         settled_at_rail, recorded (nothing was captured to refund),
+	 *         failed (gateway refused - nothing recorded), refused (not refundable).
 	 */
-	public function apply_refund_status( int $order_id, ?float $amount, string $status, bool $settled_at_rail = false ): bool {
+	public function refund( int $order_id, ?float $amount, string $status, array $ctx = array() ): array {
 		global $wpdb;
+
+		$settled_at_rail = ! empty( $ctx['settled_at_rail'] );
+		$result          = static function ( bool $ok, string $outcome, float $delta, string $status_after, ?array $gateway = null, string $message = '' ): array {
+			return array(
+				'ok'           => $ok,
+				'outcome'      => $outcome,
+				'amount'       => $delta,
+				'status_after' => $status_after,
+				'gateway'      => $gateway,
+				'message'      => $message,
+				'retryable'    => 'failed' === $outcome,
+			);
+		};
 
 		$order = $this->get( $order_id );
 
 		if ( ! $order ) {
-			return false;
+			return $result( false, 'refused', 0.0, '', null, __( 'Order not found.', 'wp-sell-services' ) );
 		}
 
 		$table    = $wpdb->prefix . 'wpss_orders';
@@ -298,7 +357,7 @@ class OrderService {
 
 		if ( $remaining <= 0 ) {
 			wpss_log( sprintf( 'Refused a refund on order %d: the full total %s is already refunded.', $order_id, (string) $total ), 'error' );
-			return false;
+			return $result( false, 'refused', 0.0, (string) $order->status, null, __( 'This order has already been refunded in full.', 'wp-sell-services' ) );
 		}
 
 		// A partial refund with no usable amount is refused, not promoted.
@@ -323,7 +382,7 @@ class OrderService {
 				'error'
 			);
 
-			return false;
+			return $result( false, 'refused', 0.0, (string) $order->status, null, __( 'A partial refund needs an amount greater than zero and less than the order total.', 'wp-sell-services' ) );
 		}
 
 		// A partial that covers exactly what is left completes the refund and
@@ -339,6 +398,40 @@ class OrderService {
 		}
 
 		$cumulative = round( $previous + $delta, $decimals );
+
+		// Refuse before any money moves if the order may not take this status.
+		// Asking afterwards is how a refunded buyer ended up on an order that
+		// still read "in progress".
+		if ( $order->status !== $status && ! $this->can_transition( (string) $order->status, $status ) ) {
+			wpss_log( sprintf( 'Refused a refund on order %d: "%s" cannot move to "%s".', $order_id, (string) $order->status, $status ), 'warning' );
+			return $result( false, 'refused', 0.0, (string) $order->status, null, __( 'This order cannot be refunded from its current status.', 'wp-sell-services' ) );
+		}
+
+		$gateway = null;
+
+		if ( ! $settled_at_rail ) {
+			$gateway = ( new OrderWorkflowManager() )->refund_at_gateway( $order, $delta, $delta < $remaining );
+
+			if ( is_array( $gateway ) && empty( $gateway['success'] ) && empty( $gateway['manual'] ) ) {
+				$message = (string) ( $gateway['message'] ?? '' );
+
+				OrderWorkflowManager::flag_refund_failed(
+					$order_id,
+					$delta,
+					$message,
+					array(
+						'status'     => $status,
+						'origin'     => (string) ( $ctx['origin'] ?? 'admin' ),
+						'dispute_id' => (int) ( $ctx['dispute_id'] ?? 0 ),
+						'resolution' => (string) ( $ctx['resolution'] ?? '' ),
+					)
+				);
+
+				return $result( false, 'failed', $delta, (string) $order->status, $gateway, '' !== $message ? $message : __( 'The payment gateway refused the refund.', 'wp-sell-services' ) );
+			}
+
+			self::$gateway_results[ $order_id ] = $gateway;
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update( $table, array( 'refunded_amount' => $cumulative ), array( 'id' => $order_id ), array( '%f' ), array( '%d' ) );
@@ -361,7 +454,7 @@ class OrderService {
 				$moved = $this->update_status( $order_id, $status, '', $order->status );
 			}
 		} finally {
-			unset( self::$refund_deltas[ $order_id ] );
+			unset( self::$refund_deltas[ $order_id ], self::$gateway_results[ $order_id ] );
 
 			if ( $settled_at_rail ) {
 				self::clear_settled_at_rail( $order_id );
@@ -385,9 +478,114 @@ class OrderService {
 				sprintf( 'Order %d: refund to "%s" was refused; refunded_amount restored.', $order_id, $status ),
 				'warning'
 			);
+
+			// ponytail: the transition was checked before the gateway call, so
+			// this only happens when the order changed underneath us in between.
+			// Money that moved is shouted about rather than reversed; a row lock
+			// around the whole event is the upgrade if this ever shows up in logs.
+			if ( is_array( $gateway ) && ! empty( $gateway['success'] ) && empty( $gateway['manual'] ) ) {
+				wpss_log( sprintf( 'Order %d: the gateway refunded %s but the order could not be moved to "%s". Record the refund by hand.', $order_id, (string) $delta, $status ), 'error' );
+				( new AuditLogService() )->log(
+					'order.refund_unrecorded',
+					'order',
+					$order_id,
+					array(
+						'action'  => 'refund',
+						'context' => array(
+							'amount' => $delta,
+							'status' => $status,
+						),
+					)
+				);
+			}
+
+			return $result( false, 'refused', 0.0, (string) $order->status, $gateway, __( 'The order changed while the refund was being recorded. Reload it and check its status.', 'wp-sell-services' ) );
 		}
 
-		return $moved;
+		OrderWorkflowManager::clear_failed_refund( $order_id );
+
+		if ( $settled_at_rail ) {
+			$outcome = 'settled_at_rail';
+		} elseif ( null === $gateway ) {
+			$outcome = 'recorded';
+		} else {
+			$outcome = empty( $gateway['manual'] ) ? 'moved' : 'manual';
+		}
+
+		return $result( true, $outcome, $delta, $status, $gateway );
+	}
+
+	/**
+	 * Apply a refund and report only whether the order moved.
+	 *
+	 * Kept for callers written before refund() returned the outcome. A refund
+	 * the gateway refused now returns false here - the order did not move.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param int        $order_id        Order ID.
+	 * @param float|null $amount          Amount refunded to the buyer; NULL means the remainder.
+	 * @param string     $status          Target status.
+	 * @param bool       $settled_at_rail Whether the money already went back at the rail.
+	 * @return bool True when the order actually moved.
+	 */
+	public function apply_refund_status( int $order_id, ?float $amount, string $status, bool $settled_at_rail = false ): bool {
+		return $this->refund( $order_id, $amount, $status, array( 'settled_at_rail' => $settled_at_rail ) )['ok'];
+	}
+
+	/**
+	 * Try again a refund the gateway refused.
+	 *
+	 * Replays what OrderWorkflowManager::REFUND_FAILED_META recorded. A refund
+	 * that came from a dispute ruling is replayed through the dispute, so the
+	 * dispute closes when the money finally moves.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return array Same shape as refund().
+	 */
+	public function retry_refund( int $order_id ): array {
+		$failed = OrderWorkflowManager::get_failed_refund( $order_id );
+
+		if ( null === $failed ) {
+			return array(
+				'ok'           => false,
+				'outcome'      => 'refused',
+				'amount'       => 0.0,
+				'status_after' => '',
+				'gateway'      => null,
+				'message'      => __( 'There is no failed refund to retry on this order.', 'wp-sell-services' ),
+				'retryable'    => false,
+			);
+		}
+
+		// ponytail: no gateway idempotency key. Stripe caches a failed request
+		// under its key for 24h, so a keyed retry after the admin fixes the
+		// cause would replay the old failure. The timeout case (the first
+		// attempt really went through) heals itself: the rail's refund webhook
+		// records it via handle_gateway_refund(), which clears this flag and
+		// the Retry box with it. Upgrade path if webhooks are missing: look up
+		// existing refunds on the charge before retrying.
+		$status = (string) $failed['status'];
+		$amount = ServiceOrder::STATUS_PARTIALLY_REFUNDED === $status ? (float) $failed['amount'] : null;
+
+		if ( 'dispute' === $failed['origin'] && ! empty( $failed['dispute_id'] ) ) {
+			$disputes = new DisputeService();
+			$ok       = $disputes->resolve( (int) $failed['dispute_id'], (string) $failed['resolution'], __( 'Refund retried after the gateway refused it.', 'wp-sell-services' ), get_current_user_id(), (float) ( $amount ?? 0.0 ) );
+
+			return array(
+				'ok'           => $ok,
+				'outcome'      => $ok ? 'moved' : 'failed',
+				'amount'       => (float) $failed['amount'],
+				'status_after' => $ok ? $status : '',
+				'gateway'      => null,
+				'message'      => $ok ? '' : $disputes->last_error(),
+				'retryable'    => ! $ok,
+			);
+		}
+
+		return $this->refund( $order_id, $amount, $status, array( 'origin' => 'retry' ) );
 	}
 
 	/**

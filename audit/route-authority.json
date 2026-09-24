@@ -863,7 +863,7 @@
       "object_id": false,
       "writes": true
     },
-    "POST /wpss/v1/orders/(?P<id>[\\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation)": {
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund)": {
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\OrdersController::check_action_permissions",
       "object_id": true,
