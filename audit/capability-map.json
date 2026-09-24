@@ -257,18 +257,18 @@
     ]
   },
   "bare_check_allowlist": {
-    "src/Services/OrderService.php:521": "Deliberate staff bypass of the order state machine, scoped to wpss_manage_orders (scope: any) and manage_options. The forcing is audited downstream via can_transition_naturally() -> AuditLogService, so forensics can tell a forced transition from a natural one.",
+    "src/Services/OrderService.php:815": "Deliberate staff bypass of the order state machine, scoped to wpss_manage_orders (scope: any) and manage_options. The forcing is audited downstream via can_transition_naturally() -> AuditLogService, so forensics can tell a forced transition from a natural one.",
     "src/Core/AbilitiesRegistrar.php:273": "Entry gate on the wpss/create-service ability - no object exists at registration time; the inner REST route re-checks.",
     "src/Core/AbilitiesRegistrar.php:437": "Entry gate on wpss/view-earnings. The ability delegates to GET /earnings/summary, which scopes to get_current_user_id().",
     "src/Core/AbilitiesRegistrar.php:490": "Entry gate on wpss/request-withdrawal. Delegates to POST /earnings/withdrawals, which scopes to the caller.",
     "src/Core/AbilitiesRegistrar.php:613": "Entry gate on the proposals ability (wpss_respond_to_requests, scope: feature).",
     "src/Admin/OrderScreen.php:152": "Admin screen entry gate; per-order authority is resolved inside the screen.",
     "src/Admin/Settings.php:1577": "Settings screen, scope: site. Paired with manage_options.",
-    "src/Admin/Admin.php:1012": "Vendor order-screen access, combined with an explicit $order_id ownership comparison on the same line.",
-    "src/API/AuthController.php:989": "Informational flag in the /me payload, not a gate.",
-    "src/API/AuthController.php:990": "Informational flag in the /me payload, not a gate.",
+    "src/Admin/Admin.php:1115": "Vendor order-screen access, combined with an explicit $order_id ownership comparison on the same line.",
+    "src/API/AuthController.php:985": "Informational flag in the /me payload, not a gate.",
+    "src/API/AuthController.php:984": "Informational flag in the /me payload, not a gate.",
     "src/API/API.php:989": "Informational flag in the /me payload, not a gate.",
     "src/API/API.php:994": "Informational flag in the /me payload, not a gate.",
-    "src/API/ServicesController.php:1242": "Entry gate, not object authority: create_item_permissions_check asks only whether the caller may author a service at all, and no service exists yet to own. Every later edit path compares authorship separately."
+    "src/API/ServicesController.php:1244": "Entry gate, not object authority: create_item_permissions_check asks only whether the caller may author a service at all, and no service exists yet to own. Every later edit path compares authorship separately."
   }
 }
