@@ -470,6 +470,37 @@ function wpss_get_service_revisions( int $service_id ): int {
 }
 
 /**
+ * Whether a person may see a service at all.
+ *
+ * Published services are public; an unpublished one (draft, pending, private,
+ * rejected) is visible only to its author and site admins. The single rule for
+ * every route that resolves a service by id - GET /services/{id} had it inline
+ * and its /packages, /faqs, /addons, /reviews and review-summary siblings did
+ * not, so they served unpublished listings to anyone (Basecamp 10336370426).
+ *
+ * @since 1.8.0
+ *
+ * @param int      $service_id Service post ID.
+ * @param int|null $user_id    Viewer; null for the current user.
+ * @return bool
+ */
+function wpss_can_view_service( int $service_id, ?int $user_id = null ): bool {
+	$service = get_post( $service_id );
+
+	if ( ! $service || 'wpss_service' !== $service->post_type ) {
+		return false;
+	}
+
+	if ( 'publish' === $service->post_status ) {
+		return true;
+	}
+
+	$user_id = null === $user_id ? get_current_user_id() : $user_id;
+
+	return $user_id > 0 && ( (int) $service->post_author === $user_id || user_can( $user_id, 'manage_options' ) );
+}
+
+/**
  * Resolve addon data from checkout POST data.
  *
  * Reads addon_ids from $_POST, validates each addon belongs to the service

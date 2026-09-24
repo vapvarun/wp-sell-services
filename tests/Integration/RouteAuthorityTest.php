@@ -327,10 +327,13 @@ class RouteAuthorityTest extends TestCase {
 				++$probed;
 
 				$response = rest_do_request( new WP_REST_Request( 'GET', $path ) );
-				$body     = (string) wp_json_encode( $response->get_data() );
 
-				if ( 200 === $response->get_status() && false !== strpos( $body, $secret ) ) {
-					$leaks[] = $key . " - a {$status} service reached an anonymous caller";
+				// ANY success is the leak. This used to require the title in the
+				// body, and /packages, /faqs, /addons, /reviews and the review
+				// summary never return a title - so they served drafts to anyone
+				// while this test passed (Basecamp 10336370426).
+				if ( $response->get_status() < 300 ) {
+					$leaks[] = $key . " - a {$status} service reached an anonymous caller (HTTP " . $response->get_status() . ')';
 				}
 			}
 		}

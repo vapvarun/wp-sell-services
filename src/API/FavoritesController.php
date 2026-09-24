@@ -212,9 +212,8 @@ class FavoritesController extends RestController {
 		$service_id = (int) $request->get_param( 'service_id' );
 		$user_id    = get_current_user_id();
 
-		// Verify service exists.
-		$service = get_post( $service_id );
-		if ( ! $service || 'wpss_service' !== $service->post_type ) {
+		// A member can only favourite a service they can see.
+		if ( ! wpss_can_view_service( $service_id, $user_id ) ) {
 			return new WP_Error( 'not_found', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 

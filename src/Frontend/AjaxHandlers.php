@@ -1745,7 +1745,7 @@ class AjaxHandlers {
 		$service_id = absint( $_POST['service_id'] ?? 0 );
 		$user_id    = get_current_user_id();
 
-		if ( ! $service_id || ! $user_id ) {
+		if ( ! $service_id || ! $user_id || ! wpss_can_view_service( $service_id, $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
 		}
 

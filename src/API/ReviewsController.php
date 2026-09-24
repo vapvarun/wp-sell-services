@@ -726,6 +726,10 @@ class ReviewsController extends RestController {
 		$service_id = (int) $request->get_param( 'service_id' );
 		$table      = $wpdb->prefix . 'wpss_reviews';
 
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return new WP_Error( 'not_found', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
 		// Get aggregate data.
 		$stats = $wpdb->get_row(
 			$wpdb->prepare(

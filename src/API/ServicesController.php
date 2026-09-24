@@ -490,27 +490,12 @@ class ServicesController extends RestController {
 	 */
 	public function get_item( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
-		$service    = get_post( $service_id );
 
-		if ( ! $service || 'wpss_service' !== $service->post_type ) {
-			return new WP_Error(
-				'not_found',
-				__( 'Service not found.', 'wp-sell-services' ),
-				array( 'status' => 404 )
-			);
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return $this->service_not_found();
 		}
 
-		// Only show published services publicly; authors and admins can see their own.
-		if ( 'publish' !== $service->post_status ) {
-			$current_user_id = get_current_user_id();
-			if ( (int) $service->post_author !== $current_user_id && ! current_user_can( 'manage_options' ) ) {
-				return new WP_Error(
-					'not_found',
-					__( 'Service not found.', 'wp-sell-services' ),
-					array( 'status' => 404 )
-				);
-			}
-		}
+		$service = get_post( $service_id );
 
 		// The detail response is the LIST shape plus the fields a service page
 		// needs. Both routes share prepare_item_for_response(), which is exactly
@@ -975,6 +960,10 @@ class ServicesController extends RestController {
 	public function get_packages( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
 
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return $this->service_not_found();
+		}
+
 		// Publish a STABLE id with every package.
 		//
 		// This response carried no id at all, while POST /cart/add required
@@ -1000,7 +989,12 @@ class ServicesController extends RestController {
 	 */
 	public function get_faqs( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
-		$faqs       = get_post_meta( $service_id, '_wpss_faqs', true );
+
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return $this->service_not_found();
+		}
+
+		$faqs = get_post_meta( $service_id, '_wpss_faqs', true );
 
 		if ( ! is_array( $faqs ) ) {
 			$faqs = array();
@@ -1017,6 +1011,10 @@ class ServicesController extends RestController {
 	 */
 	public function get_reviews( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
+
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return $this->service_not_found();
+		}
 		$pagination = $this->get_pagination_args( $request );
 
 		global $wpdb;
@@ -1065,6 +1063,10 @@ class ServicesController extends RestController {
 	 */
 	public function get_addons( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
+
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return $this->service_not_found();
+		}
 
 		$data = array();
 		foreach ( wpss_get_service_extras( $service_id ) as $index => $addon ) {
@@ -1581,5 +1583,22 @@ class ServicesController extends RestController {
 		unset( $request );
 
 		return rest_ensure_response( wpss_get_service_limits() );
+	}
+
+	/**
+	 * The 404 every service route answers for a service the caller may not see.
+	 *
+	 * Deliberately the same as "does not exist", so an id cannot be probed.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return WP_Error
+	 */
+	private function service_not_found(): WP_Error {
+		return new WP_Error(
+			'not_found',
+			__( 'Service not found.', 'wp-sell-services' ),
+			array( 'status' => 404 )
+		);
 	}
 }
