@@ -1318,6 +1318,40 @@ class API {
 	 * @return \WP_REST_Response
 	 */
 	public function handle_batch( \WP_REST_Request $request ): \WP_REST_Response {
+		// A batch inside a batch is refused. The path check below admits
+		// /wpss/v1/batch itself, and each level had its own 25-request cap, so
+		// one call fanned out to 625+ dispatches (Basecamp 10336370365). A depth
+		// counter also catches path spellings a string match would miss.
+		static $depth = 0;
+
+		if ( $depth > 0 ) {
+			return new \WP_REST_Response(
+				array(
+					'code'    => 'nested_batch_not_allowed',
+					'message' => __( 'A batch request cannot contain another batch request.', 'wp-sell-services' ),
+				),
+				400
+			);
+		}
+
+		++$depth;
+
+		try {
+			return $this->run_batch( $request );
+		} finally {
+			--$depth;
+		}
+	}
+
+	/**
+	 * Dispatch the sub-requests of one (non-nested) batch.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param \WP_REST_Request $request Batch request.
+	 * @return \WP_REST_Response
+	 */
+	private function run_batch( \WP_REST_Request $request ): \WP_REST_Response {
 		$requests  = $request->get_param( 'requests' );
 		$responses = [];
 		$server    = rest_get_server();

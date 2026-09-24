@@ -320,7 +320,7 @@ guide; this is the complete index.
 | `wpss_auth_login_challenge` | 3 | `src/API/AuthController.php` | Filter a successful password check before a token is issued. |
 | `wpss_auto_approve_reviews` | 1 | `src/API/ReviewsController.php` |  |
 | `wpss_auto_approve_vendors` | 1 | `src/Services/VendorService.php` | Filter whether new vendors are auto-approved. |
-| `wpss_batch_max_requests` | 1 | `src/API/API.php` | Handle batch requests for mobile efficiency. |
+| `wpss_batch_max_requests` | 1 | `src/API/API.php` | Dispatch the sub-requests of one (non-nested) batch. |
 | `wpss_billing_address` | 2 | `src/functions/billing.php` | Filter a user's billing address after it is read. |
 | `wpss_billing_fields` | 1 | `src/functions/billing.php` | Filter the billing address fields. |
 | `wpss_blocks` | 1 | `src/Blocks/BlocksManager.php` | Filter registered blocks. |
