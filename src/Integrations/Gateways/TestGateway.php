@@ -80,17 +80,19 @@ class TestGateway implements PaymentGatewayInterface {
 	/**
 	 * Check if gateway is enabled.
 	 *
-	 * Only enabled when WP_DEBUG is true and settings have it enabled.
+	 * One rule, matching the two reasons Plugin registers this gateway: a dev
+	 * site (WP_DEBUG) where the owner switched it on, or demo mode, which lasts
+	 * only until a real gateway is configured. The checkout list and the payment
+	 * handler both ask this, so they cannot disagree (Basecamp 10336397941).
 	 *
 	 * @return bool
 	 */
 	public function is_enabled(): bool {
-		// Only available in debug mode.
-		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
-			return false;
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! empty( $this->settings['enabled'] ) ) {
+			return true;
 		}
 
-		return ! empty( $this->settings['enabled'] );
+		return wpss_demo_payments_enabled();
 	}
 
 	/**
@@ -251,11 +253,10 @@ class TestGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		// Verify debug mode.
-		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
-			wp_send_json_error( array( 'message' => __( 'Test gateway is only available in debug mode.', 'wp-sell-services' ) ) );
-			return;
-		}
+		// The gateway's own switch, through the same gate as every other rail.
+		// This checked WP_DEBUG alone, so a disabled Test gateway still marked
+		// real orders paid on any debug site (Basecamp 10336397941).
+		wpss_gateway_require_enabled( $this );
 
 		// Handle payment for existing order (from proposal acceptance).
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
