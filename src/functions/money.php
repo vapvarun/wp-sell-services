@@ -788,8 +788,8 @@ function wpss_calculate_tax( float $base, int $vendor_id = 0, int $service_id = 
 /**
  * The amount commission is taken on for a stored order: its price without tax.
  *
- * subtotal + addons_total is already pre-tax when tax is added on top. When the
- * tax is included in the price it is not, so the tax recorded on the order is
+ * The subtotal plus addons_total is already pre-tax when tax is added on top. When
+ * the tax is included in the price it is not, so the tax recorded on the order is
  * taken off (Basecamp 10336467589). Orders created before 1.8.0 did not record
  * whether their tax was included and keep the old reading.
  *
