@@ -488,7 +488,8 @@
     "commission": {
       "authority": "WPSellServices\\Services\\CommissionService::compute_breakdown()",
       "rule": "Never compute a fee inline. Free (ManualOrderPage, OrderWorkflowManager) and Pro (TieredCommission flat rules, SubscriptionManager plan override, Stripe Connect split, EDD orders, subscription renewals) all route through it; the Connect split reads the PERSISTED fee and never recomputes.",
-      "extension_points": "wpss_commission_fee (amount) / wpss_commission_rate (percent) / wpss_commission_base_amount (base)"
+      "extension_points": "wpss_commission_fee (amount) / wpss_commission_rate (percent) / wpss_commission_base_amount (base)",
+      "base": "The base is the price WITHOUT tax. New orders: wpss_calculate_tax()['net'] (StandaloneOrderProvider, CheckoutIntentService::price_line()['net'] for proposals). Stored orders: wpss_order_commission_base( $order ), which takes meta.tax_amount off subtotal + addons_total when meta.tax_included is set (1.8.0+; older orders keep the pre-1.8.0 reading)."
     },
     "wallet_balance": {
       "authority": "wpss_get_ledger_balance( int $user_id, bool $lock = false ) — src/functions.php:128",

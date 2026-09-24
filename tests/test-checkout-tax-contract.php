@@ -188,6 +188,59 @@ if ( ! is_wp_error( $intent ) ) {
 }
 
 /*
+ * --- Inclusive tax: commission on the price WITHOUT the tax -----------------
+ *
+ * With tax_included the order total already contains the tax, and commission
+ * was taken on that gross figure: an $80 order at 18% inclusive carries $12.20
+ * of tax and a 10% fee was 8.00 instead of 6.78 (Basecamp 10336467589,
+ * reopening 9706034265 - the March fix only ever ran in exclusive mode).
+ */
+update_option(
+	'wpss_tax',
+	array( 'enable_tax' => true, 'tax_rate' => 18, 'tax_included' => true, 'tax_label' => 'Tax' )
+);
+
+$net_split = wpss_calculate_tax( 118.0 );
+wpss_t( isset( $net_split['net'] ) && abs( (float) $net_split['net'] - 100.0 ) < 0.01, 'inclusive: the tax helper reports the net price (118 incl. 18% -> 100)' );
+
+$intent_incl = $ref->invoke( $svc, array( 'service_id' => $service_id, 'package_id' => 0 ), 1 );
+
+if ( ! is_wp_error( $intent_incl ) && isset( $provider ) && $provider ) {
+	$settle      = new ReflectionMethod( $svc, 'settle_single' );
+	$result_incl = $settle->invoke( $svc, $intent_incl, $provider, 'test', 'txn_tax_incl_probe', $intent_incl->amount, $intent_incl->currency );
+
+	if ( ! empty( $result_incl['success'] ) ) {
+		global $wpdb;
+		$order_id = (int) $result_incl['order_id'];
+		$row      = $wpdb->get_row( $wpdb->prepare( "SELECT total, platform_fee, vendor_earnings, commission_rate, meta FROM {$wpdb->prefix}wpss_orders WHERE id = %d", $order_id ) );
+		$net      = $price / 1.18;
+		$rate     = $row ? (float) $row->commission_rate : 0.0;
+
+		wpss_t( $row && abs( (float) $row->total - $price ) < 0.01, sprintf( 'inclusive: the order total is the price the buyer saw (%.2f)', $row ? (float) $row->total : 0 ) );
+		wpss_t(
+			$row && abs( (float) $row->platform_fee - round( $net * $rate / 100, 2 ) ) < 0.02,
+			sprintf( 'inclusive: commission is taken on the net %.2f, not the gross %.2f (fee %.2f)', $net, $price, $row ? (float) $row->platform_fee : 0 )
+		);
+		wpss_t(
+			$row && abs( (float) $row->vendor_earnings - round( $net - $net * $rate / 100, 2 ) ) < 0.02,
+			sprintf( 'inclusive: the vendor earns the net less the fee (%.2f)', $row ? (float) $row->vendor_earnings : 0 )
+		);
+
+		$meta = $row ? json_decode( (string) $row->meta, true ) : array();
+		wpss_t( ! empty( $meta['tax_included'] ), 'inclusive: the order records that its tax was included' );
+
+		$commission = ( new \WPSellServices\Services\CommissionService() )->get_order_commission( $order_id );
+		wpss_t( $commission && abs( (float) $commission['order_total'] - $net ) < 0.02, 'inclusive: the stored commission base reads back as the net price' );
+
+		$wpdb->delete( $wpdb->prefix . 'wpss_orders', array( 'id' => $order_id ) );
+		$wpdb->delete( $wpdb->prefix . 'wpss_wallet_transactions', array( 'reference_id' => $order_id ) );
+		$wpdb->delete( $wpdb->prefix . 'wpss_audit_log', array( 'object_type' => 'order', 'object_id' => $order_id ) );
+	} else {
+		echo "  SKIP  settle_single() did not create an inclusive order here\n";
+	}
+}
+
+/*
  * --- The cart is taxed like the single path -------------------------------
  *
  * With tax on, a two-item cart (25 + 35) was charged 60.00 while the single
@@ -327,8 +380,8 @@ foreach ( $roots as $file ) {
 // addons_total, which is the pre-tax base, and must stay that way.
 $commission_src = file_get_contents( dirname( __DIR__ ) . '/src/Services/CommissionService.php' );
 wpss_t(
-	false !== strpos( $commission_src, '$order->subtotal + (float) $order->addons_total' ),
-	'commission is still calculated on the pre-tax base'
+	false !== strpos( $commission_src, 'wpss_order_commission_base( $order )' ),
+	'commission is calculated on the order\'s pre-tax base (wpss_order_commission_base)'
 );
 wpss_t(
 	false === strpos( $commission_src, 'wpss_calculate_tax' ),

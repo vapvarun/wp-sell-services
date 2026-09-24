@@ -248,6 +248,8 @@ class CheckoutIntentService {
 			'tax'          => (float) $tax['amount'],
 			'tax_rate'     => (float) $tax['rate'],
 			'total'        => (float) $tax['total'],
+			'net'          => (float) $tax['net'],
+			'tax_included' => (bool) $tax['included'],
 		);
 	}
 

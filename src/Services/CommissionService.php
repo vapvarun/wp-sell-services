@@ -42,8 +42,9 @@ class CommissionService {
 			return null;
 		}
 
-		// Use pre-tax base (subtotal + addons) for commission calculation.
-		$commission_base = (float) $order->subtotal + (float) $order->addons_total;
+		// The order's price without tax, whether the tax was added on top or
+		// included in the price.
+		$commission_base = wpss_order_commission_base( $order );
 
 		// Commission is LOCKED when the order is created / paid. A row that
 		// already carries its rate and split keeps them: a rate change in
@@ -420,7 +421,7 @@ class CommissionService {
 		}
 
 		return array(
-			'order_total'     => (float) $order->subtotal + (float) $order->addons_total,
+			'order_total'     => wpss_order_commission_base( $order ),
 			'commission_rate' => (float) $order->commission_rate,
 			'platform_fee'    => (float) $order->platform_fee,
 			'vendor_earnings' => (float) $order->vendor_earnings,

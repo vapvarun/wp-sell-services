@@ -698,7 +698,7 @@ class BuyerRequestService {
 		$parent_service  = isset( $proposal->service_id ) ? (int) $proposal->service_id : 0;
 		$line            = CheckoutIntentService::price_line( $parent_service, $parent_subtotal, 0.0, (int) $proposal->vendor_id );
 		$breakdown       = CommissionService::compute_breakdown(
-			$parent_subtotal,
+			(float) $line['net'],
 			(object) array(
 				'id'         => 0,
 				'vendor_id'  => (int) $proposal->vendor_id,
@@ -790,6 +790,7 @@ class BuyerRequestService {
 							'contract_type'     => $proposal->contract_type ?? ProposalService::CONTRACT_TYPE_FIXED,
 							'tax_rate'          => $line['tax_rate'],
 							'tax_amount'        => $line['tax'],
+							'tax_included'      => $line['tax_included'],
 						]
 					)
 				),

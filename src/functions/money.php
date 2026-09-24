@@ -779,7 +779,35 @@ function wpss_calculate_tax( float $base, int $vendor_id = 0, int $service_id = 
 		// Inclusive: the tax is already inside the price, so the buyer pays the
 		// base. Exclusive: it is added on top.
 		'total'    => $included ? $base : $base + $amount,
+		// The price without tax, in both modes - what commission is taken on.
+		// Tax is held for someone else; the platform never takes a cut of it.
+		'net'      => $included ? $base - $amount : $base,
 	);
+}
+
+/**
+ * The amount commission is taken on for a stored order: its price without tax.
+ *
+ * subtotal + addons_total is already pre-tax when tax is added on top. When the
+ * tax is included in the price it is not, so the tax recorded on the order is
+ * taken off (Basecamp 10336467589). Orders created before 1.8.0 did not record
+ * whether their tax was included and keep the old reading.
+ *
+ * @since 1.8.0
+ *
+ * @param object $order Order row or ServiceOrder.
+ * @return float
+ */
+function wpss_order_commission_base( object $order ): float {
+	$base = (float) ( $order->subtotal ?? 0 ) + (float) ( $order->addons_total ?? 0 );
+	$meta = $order->meta ?? null;
+	$meta = is_string( $meta ) ? json_decode( $meta, true ) : (array) $meta;
+
+	if ( is_array( $meta ) && ! empty( $meta['tax_included'] ) ) {
+		$base -= (float) ( $meta['tax_amount'] ?? 0 );
+	}
+
+	return max( 0.0, $base );
 }
 
 /**

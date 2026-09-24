@@ -87,7 +87,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		// time) already reflects per-vendor rates, tiered rules, plan overrides
 		// and flat fees — instead of a divergent local round( base * rate / 100 ).
 		// Pre-tax base so vendors aren't charged fees on tax.
-		$commission_base = $subtotal + $addons_total;
+		$commission_base = (float) $tax['net'];
 		$order_context   = (object) array(
 			'id'         => 0,
 			'vendor_id'  => (int) $service->vendor_id,
@@ -142,6 +142,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 						[
 							'tax_rate'         => $tax_rate,
 							'tax_amount'       => round( $tax_amount, 2 ),
+							'tax_included'     => (bool) $tax['included'],
 							'package_snapshot' => $package_snapshot,
 						]
 					)
