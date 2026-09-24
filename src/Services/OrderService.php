@@ -123,7 +123,7 @@ class OrderService {
 	/**
 	 * Gateway answers refund() already obtained, for the event in flight.
 	 *
-	 * refund() asks the gateway before it moves the status; the status hook
+	 * The refund() method asks the gateway before it moves the status; the hook
 	 * then reads the answer from here instead of asking a second time. A null
 	 * entry means "asked, nothing was captured to refund".
 	 *
@@ -280,45 +280,35 @@ class OrderService {
 	}
 
 	/**
-	 * Record how much is coming back, then move the order to a refund status.
+	 * Refund an order: ask the gateway first, record only what actually moved.
 	 *
-	 * These two writes are ordered the way they are for a reason: the refund
-	 * handlers read `refunded_amount` off the order DURING the status hook, to
-	 * size both the buyer's refund and the vendor's reversal. The amount has to
-	 * be on the row before the transition fires.
-	 *
-	 * That ordering is a trap, and it was live. update_status() returns false
-	 * for a refused transition, but by then the amount is already written — so
-	 * the order reads as "$50.00 refunded" on every display surface while
-	 * nothing was refunded and no money moved. Reproduced on a paid
-	 * `pending_requirements` order: the status the buyer/vendor refund handler
-	 * explicitly advertises as refundable, and which can_transition() refuses.
-	 *
-	 * So the write is undone whenever the order does not actually move. Every
-	 * caller that sets refunded_amount goes through here; none may write the
-	 * column and call update_status() themselves, or the trap comes straight
-	 * back.
-	 *
-	 * @since 1.2.3
-	 *
-	 * @param int        $order_id Order ID.
-	 * @param float|null $amount   Amount refunded to the buyer. NULL, zero, or
-	 *                             anything at or above the order total means the
-	 *                             whole order.
-	 * @param string     $status   Target status.
 	 * The gateway is asked FIRST, since 1.8.0. The status used to move before
 	 * the money did: the order read "refunded", the buyer's email went out and
 	 * the vendor was debited, and only then did the status hook ask the
 	 * gateway - which could say no (Basecamp 10331363649). Now a refusal
-	 * records nothing: the order keeps its status, the vendor keeps the
-	 * credit, and the order carries OrderWorkflowManager::REFUND_FAILED_META
-	 * so the admin can retry.
+	 * records nothing: the order keeps its status, the vendor keeps the credit,
+	 * and the order carries OrderWorkflowManager::REFUND_FAILED_META so the
+	 * admin can retry.
 	 *
-	 * @param array<string, mixed> $ctx Optional: settled_at_rail (bool - the money
-	 *                                  already went back at the rail, a webhook;
-	 *                                  the gateway is not asked), origin (admin,
-	 *                                  vendor, dispute, webhook, retry),
-	 *                                  dispute_id (int), resolution (string).
+	 * Once the money has moved, the amount is written BEFORE the status moves,
+	 * because the reversal handler on the status hook reads `refunded_amount`
+	 * off the row to size the vendor's share. If the transition is then refused
+	 * the write is undone, so the order never reads "$50.00 refunded" when
+	 * nothing was. Every caller that sets refunded_amount goes through here;
+	 * none may write the column and call update_status() themselves.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int                  $order_id Order ID.
+	 * @param float|null           $amount   Amount refunded to the buyer. NULL, zero, or
+	 *                                       anything at or above the order total means the
+	 *                                       whole order.
+	 * @param string               $status   Target status.
+	 * @param array<string, mixed> $ctx      Optional: settled_at_rail (bool - the money
+	 *                                       already went back at the rail, a webhook;
+	 *                                       the gateway is not asked), origin (admin,
+	 *                                       vendor, dispute, webhook, retry),
+	 *                                       dispute_id (int), resolution (string).
 	 * @return array{ok: bool, outcome: string, amount: float, status_after: string, gateway: array<string, mixed>|null, message: string, retryable: bool}
 	 *         outcome: moved (gateway refunded), manual (admin must send it),
 	 *         settled_at_rail, recorded (nothing was captured to refund),
