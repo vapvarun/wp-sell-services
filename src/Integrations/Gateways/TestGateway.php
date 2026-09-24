@@ -351,24 +351,24 @@ class TestGateway implements PaymentGatewayInterface {
 		}
 
 		// Calculate price from package.
-		$packages = wpss_get_service_packages( $service_id );
-		$price    = 0;
+		// Priced by the one line pricer, from ids alone - package (stable id or
+		// index), quantity and the add-ons as the vendor set them.
+		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line(
+			$service_id,
+			$package_id,
+			$quantity,
+			\WPSellServices\Checkout\CheckoutIntentService::request_selection( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the calling handler.
+		);
 
-		if ( isset( $packages[ $package_id ] ) ) {
-			$price = (float) ( $packages[ $package_id ]['price'] ?? 0 );
+		if ( is_wp_error( $line ) ) {
+			wp_send_json_error( array( 'message' => $line->get_error_message() ) );
+			return;
 		}
 
-		// Fallback to starting price.
-		if ( $price <= 0 ) {
-			$price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-		}
-
-		// Apply quantity.
-		$price *= $quantity;
-
-		// Resolve selected addons from POST data.
-		$addon_data   = wpss_resolve_checkout_addons( $service_id );
-		$addons_total = $addon_data['addons_total'];
+		$price        = (float) $line['subtotal'];
+		$package_id   = (int) $line['package_id'];
+		$addon_data   = array( 'addons' => $line['addons'] );
+		$addons_total = (float) $line['addons_total'];
 
 		// Get order provider.
 		$order_provider = wpss_get_order_provider();

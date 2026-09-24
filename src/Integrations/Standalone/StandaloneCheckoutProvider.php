@@ -13,6 +13,7 @@ namespace WPSellServices\Integrations\Standalone;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Checkout\CheckoutIntentService;
 use WPSellServices\Integrations\Contracts\CheckoutProviderInterface;
 use WPSellServices\Models\ServiceOrder;
 
@@ -316,7 +317,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				// add-on, and a truthiness test here discarded that selection in
 				// favour of the cart's - see the comment at the resolve site below.
 				if ( '' === $addon_ids_raw && ! empty( $cart_item['addons'] ) ) {
-					$addon_ids_raw = implode( ',', array_column( $cart_item['addons'], 'id' ) );
+					$addon_ids_raw = $cart_item['addons'];
 				}
 			}
 		}
@@ -376,36 +377,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return '<p>' . esc_html__( 'Service not found.', 'wp-sell-services' ) . '</p>';
 		}
 
-		/*
-		 * Resolve selected addons from URL param (comma-separated indices).
-		 *
-		 * The indices are 0-based, so selecting ONLY the first add-on sends
-		 * "0" - falsy in PHP. `if ( $addon_ids_raw )` skipped this whole block,
-		 * and the Order Summary and Pay button both showed the un-added price
-		 * while the hidden addon_ids field went out empty. The
-		 * buyer was charged without the add-on they had selected.
-		 * "1" and "0,1" both worked, which is how it went unnoticed.
-		 */
-		$selected_addons = array();
-		if ( '' !== $addon_ids_raw ) {
-			$addon_ids  = array_map( 'absint', explode( ',', $addon_ids_raw ) );
-			$all_extras = wpss_get_service_extras( $service->id );
-
-			foreach ( $addon_ids as $addon_index ) {
-				if ( isset( $all_extras[ $addon_index ] ) ) {
-					$extra             = $all_extras[ $addon_index ];
-					$selected_addons[] = (object) [
-						'id'                  => $addon_index,
-						'title'               => $extra['title'] ?? '',
-						'price'               => (float) ( $extra['price'] ?? 0 ),
-						'delivery_days_extra' => (int) $extra['delivery_days_extra'],
-					];
-				}
-			}
-		}
-
 		ob_start();
-		$this->render_checkout_form( $service, $package_id, $quantity, null, $selected_addons );
+		$this->render_checkout_form( $service, $package_id, $quantity, null, $addon_ids_raw );
 		return ob_get_clean();
 	}
 
@@ -538,10 +511,10 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * @param int                                      $package_id Selected package ID (ignored when $pay_order is set).
 	 * @param int                                      $quantity   Quantity (ignored when $pay_order is set).
 	 * @param \WPSellServices\Models\ServiceOrder|null $pay_order       Existing order to pay (from proposal acceptance).
-	 * @param array                                    $selected_addons Validated addon objects from the addons table.
+	 * @param mixed                                    $selection       Add-on selection (see wpss_normalize_addon_selection()).
 	 * @return void
 	 */
-	private function render_checkout_form( $service, int $package_id = 0, int $quantity = 1, ?ServiceOrder $pay_order = null, array $selected_addons = array() ): void {
+	private function render_checkout_form( $service, int $package_id = 0, int $quantity = 1, ?ServiceOrder $pay_order = null, $selection = array() ): void {
 		$is_pay_order = null !== $pay_order;
 
 		// Sub-orders (tip, extension, milestone) skip the 5-step "Pay →
@@ -570,47 +543,25 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$vendor           = get_user_by( 'id', $pay_order->vendor_id );
 			$vendor_name      = $vendor ? $vendor->display_name : '';
 		} else {
-			// Regular checkout flow: calculate price from package.
-			$packages         = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
-			$selected_package = null;
+			// Regular checkout flow: priced by the one pricer the gateways charge through.
+			$line = CheckoutIntentService::price_service_line( (int) $service->id, $package_id, $quantity, $selection );
 
-			if ( isset( $packages[ $package_id ] ) ) {
-				$selected_package = $packages[ $package_id ];
+			if ( is_wp_error( $line ) ) {
+				echo '<p class="wpss-alert wpss-alert-error">' . esc_html( $line->get_error_message() ) . '</p>';
+				return;
 			}
 
-			if ( ! $selected_package && ! empty( $packages ) ) {
-				$selected_package = reset( $packages );
-				$package_id       = (int) array_key_first( $packages );
-			}
-
-			$unit_price   = (float) ( $selected_package['price'] ?? 0 );
-			$price        = $unit_price * $quantity;
-			$addons_total = 0;
-			$addon_lines  = array();
-
-			foreach ( $selected_addons as $addon ) {
-				$addon_price   = (float) $addon->price;
-				$addons_total += $addon_price;
-				$addon_lines[] = array(
-					'id'                  => (int) $addon->id,
-					'name'                => $addon->title ?? $addon->name ?? '',
-					'price'               => $addon_price,
-					'delivery_days_extra' => (int) ( $addon->delivery_days_extra ?? 0 ),
-				);
-			}
-
-			$price   += $addons_total;
-			$currency = wpss_get_currency();
-
-			// Tax through the shared helper, so the figure on the Pay button is
-			// the same arithmetic the gateway charges and the order row records.
-			$tax = wpss_calculate_tax( (float) $price, (int) $service->vendor_id, (int) $service->id );
-
-			$tax_rate    = (float) $tax['rate'];
-			$tax_amount  = (float) $tax['amount'];
-			$tax_label   = (string) $tax['label'];
-			$total       = (float) $tax['total'];
-			$vendor_name = '';
+			$selected_package = $line['package'];
+			$package_id       = (int) $line['package_id'];
+			$addon_lines      = $line['addons'];
+			$addons_total     = (float) $line['addons_total'];
+			$price            = (float) $line['subtotal'] + $addons_total;
+			$currency         = wpss_get_currency();
+			$tax_rate         = (float) $line['tax_rate'];
+			$tax_amount       = (float) $line['tax'];
+			$tax_label        = (string) $line['tax_label'];
+			$total            = (float) $line['total'];
+			$vendor_name      = '';
 		}
 
 		// Get available payment gateways.
@@ -654,7 +605,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			}
 			foreach ( $addon_lines as $addon_item ) {
 				$summary_lines[] = array(
-					'label'  => $addon_item['name'],
+					'label'  => $addon_item['title'],
+					'note'   => $addon_item['quantity'] > 1 ? "\u{00D7} " . $addon_item['quantity'] : (string) $addon_item['option'],
 					'amount' => $addon_item['price'],
 					'type'   => 'addon',
 				);
@@ -1020,7 +972,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						<input type="hidden" name="quantity" value="<?php echo esc_attr( $quantity ); ?>">
 						<input type="hidden" name="tax_amount" value="<?php echo esc_attr( round( $tax_amount, 2 ) ); ?>">
 						<?php if ( ! empty( $addon_lines ) ) : ?>
-							<input type="hidden" name="addon_ids" value="<?php echo esc_attr( implode( ',', array_column( $addon_lines, 'id' ) ) ); ?>">
+							<?php foreach ( CheckoutIntentService::selection_metadata( $addon_lines ) as $sel_key => $sel_value ) : ?>
+								<input type="hidden" name="<?php echo esc_attr( $sel_key ); ?>" value="<?php echo esc_attr( $sel_value ); ?>">
+							<?php endforeach; ?>
 							<input type="hidden" name="addons_total" value="<?php echo esc_attr( round( $addons_total, 2 ) ); ?>">
 						<?php endif; ?>
 					<?php endif; ?>
@@ -1360,33 +1314,19 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				continue;
 			}
 
-			$packages         = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
-			$selected_package = $packages[ $package_id ] ?? ( ! empty( $packages ) ? reset( $packages ) : null );
-
-			if ( ! $selected_package ) {
+			// The same pricer resolve_cart() charges through, so the page and the charge agree.
+			$line = CheckoutIntentService::price_service_line( $service_id, $package_id, $quantity, $item['addons'] ?? array() );
+			if ( is_wp_error( $line ) ) {
 				continue;
 			}
 
-			$unit_price   = (float) ( $selected_package['price'] ?? 0 );
-			$line_price   = $unit_price * $quantity;
-			$addons_total = 0.0;
-			$addon_lines  = array();
-
-			foreach ( $item['addons'] ?? array() as $addon ) {
-				$addon_price   = (float) ( $addon['price'] ?? 0 );
-				$addons_total += $addon_price;
-				$addon_lines[] = $addon;
-			}
-
-			$line_total = $line_price + $addons_total;
-
-			// Per item, through the same helper - the rate filter is applied
-			// inside it, so a per-vendor rate still works here.
-			$item_tax_data = wpss_calculate_tax( (float) $line_total, (int) $service->vendor_id, (int) $service->id );
-			$item_tax      = (float) $item_tax_data['amount'];
-			$line_total    = (float) $item_tax_data['total'];
-
-			$tax_amount += $item_tax;
+			$selected_package = $line['package'];
+			$unit_price       = (float) ( $selected_package['price'] ?? 0 );
+			$line_price       = (float) $line['subtotal'];
+			$addon_lines      = $line['addons'];
+			$addons_total     = (float) $line['addons_total'];
+			$line_total       = (float) $line['total'];
+			$tax_amount      += (float) $line['tax'];
 
 			$vendor        = get_userdata( $service->vendor_id );
 			$vendor_name   = $vendor ? $vendor->display_name : '';

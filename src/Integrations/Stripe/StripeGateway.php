@@ -346,6 +346,9 @@ class StripeGateway implements PaymentGatewayInterface {
 				'status'         => 'completed',
 				'amount'         => $this->parse_amount( $response['amount'], $response['currency'] ),
 				'currency'       => strtoupper( $response['currency'] ),
+				// Set by resolve() on this server when the intent was created;
+				// lets a return leg re-price exactly what was charged.
+				'metadata'       => (array) ( $response['metadata'] ?? array() ),
 			);
 		}
 
@@ -1022,10 +1025,16 @@ class StripeGateway implements PaymentGatewayInterface {
 		 * carries the one-charge-one-order dedupe (Basecamp 10321653385).
 		 */
 		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
+		$meta     = (array) ( $payment['metadata'] ?? array() );
 		$intent   = $checkout->resolve(
 			array(
 				'service_id' => $service_id,
 				'package_id' => $package_id,
+				// Quantity and add-ons as charged, from the intent's own metadata:
+				// without them a purchase with add-ons never matched its charge.
+				'quantity'   => max( 1, (int) ( $meta['quantity'] ?? 1 ) ),
+				'addon_sel'  => (string) ( $meta['addon_sel'] ?? '' ),
+				'addon_ids'  => (string) ( $meta['addon_ids'] ?? '' ),
 			)
 		);
 
@@ -1085,12 +1094,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		// Pricing + routing (single / multi-cart / pay-order) is resolved once,
 		// server-side, by the gateway-agnostic CheckoutIntentService — the client
 		// amount is never trusted. See audit/PAYMENT-ARCHITECTURE-RND.md.
-		$request = array(
-			'pay_order'         => absint( $_POST['pay_order'] ?? 0 ),
-			'is_multi_checkout' => ! empty( $_POST['is_multi_checkout'] ),
-			'service_id'        => absint( $_POST['service_id'] ?? 0 ),
-			'package_id'        => absint( $_POST['package_id'] ?? 0 ),
-		);
+		$request = \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked above.
 
 		$intent = ( new \WPSellServices\Checkout\CheckoutIntentService() )->resolve( $request );
 		if ( is_wp_error( $intent ) ) {
@@ -1159,14 +1163,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		wpss_save_billing_from_request( $_POST );
 
 		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
-		$intent   = $checkout->resolve(
-			array(
-				'pay_order'         => absint( $_POST['pay_order'] ?? 0 ),
-				'is_multi_checkout' => ! empty( $_POST['is_multi_checkout'] ),
-				'service_id'        => absint( $_POST['service_id'] ?? 0 ),
-				'package_id'        => absint( $_POST['package_id'] ?? 0 ),
-			)
-		);
+		$intent   = $checkout->resolve( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked above.
 
 		// Resolve failed after a successful charge — refund and bail.
 		if ( is_wp_error( $intent ) ) {

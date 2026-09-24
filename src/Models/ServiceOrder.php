@@ -1141,14 +1141,23 @@ class ServiceOrder {
 			'total'       => $this->subtotal,
 		);
 
-		// Add-on items.
+		// Add-on items. 1.8.0 lines carry title, quantity, unit_price and the
+		// buyer's option or text; older rows carry name and price only.
 		if ( ! empty( $this->addons ) ) {
 			foreach ( $this->addons as $addon ) {
+				$detail = '';
+
+				if ( '' !== (string) ( $addon['option'] ?? '' ) ) {
+					$detail = (string) $addon['option'];
+				} elseif ( '' !== (string) ( $addon['text'] ?? '' ) ) {
+					$detail = (string) $addon['text'];
+				}
+
 				$items[] = array(
-					'name'        => $addon['name'] ?? __( 'Add-on', 'wp-sell-services' ),
-					'description' => $addon['description'] ?? '',
-					'quantity'    => $addon['quantity'] ?? 1,
-					'price'       => (float) ( $addon['price'] ?? 0 ),
+					'name'        => (string) ( $addon['title'] ?? $addon['name'] ?? __( 'Add-on', 'wp-sell-services' ) ),
+					'description' => '' !== $detail ? $detail : (string) ( $addon['description'] ?? '' ),
+					'quantity'    => max( 1, (int) ( $addon['quantity'] ?? 1 ) ),
+					'price'       => (float) ( $addon['unit_price'] ?? $addon['price'] ?? 0 ),
 					'total'       => (float) ( $addon['total'] ?? $addon['price'] ?? 0 ),
 				);
 			}

@@ -102,12 +102,7 @@ class ServiceMetabox {
 	 * @return array<string, string>
 	 */
 	private function get_addon_field_types(): array {
-		return array(
-			'checkbox' => __( 'Checkbox (Yes/No)', 'wp-sell-services' ),
-			'quantity' => __( 'Quantity Selector', 'wp-sell-services' ),
-			'dropdown' => __( 'Dropdown Select', 'wp-sell-services' ),
-			'text'     => __( 'Text Input', 'wp-sell-services' ),
-		);
+		return wpss_get_addon_field_types();
 	}
 
 	/**
@@ -116,11 +111,7 @@ class ServiceMetabox {
 	 * @return array<string, string>
 	 */
 	private function get_addon_price_types(): array {
-		return array(
-			'flat'           => __( 'Flat Price', 'wp-sell-services' ),
-			'percentage'     => __( 'Percentage of Order', 'wp-sell-services' ),
-			'quantity_based' => __( 'Per Quantity', 'wp-sell-services' ),
-		);
+		return wpss_get_addon_price_types();
 	}
 
 	/**

@@ -817,6 +817,13 @@ do_action( 'wpss_before_order_view', $order );
 						);
 						?>
 					</p>
+					<?php
+					// What was bought, line by line: package, add-ons, tax. A
+					// milestone parent is left out - its money is on the phases.
+					if ( ! $show_phase_total ) {
+						wpss_get_template_part( 'order/line-items', '', array( 'wpss_order' => $order ) );
+					}
+					?>
 				</div>
 			</div>
 

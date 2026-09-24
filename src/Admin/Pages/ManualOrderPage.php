@@ -16,6 +16,7 @@ namespace WPSellServices\Admin\Pages;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Checkout\CheckoutIntentService;
 use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\ConversationService;
 use WPSellServices\Assets\ScriptRegistry;
@@ -492,8 +493,10 @@ class ManualOrderPage {
 		}
 
 		// --- 1. Collect and sanitize inputs ---
-		$service_id      = absint( $_POST['service_id'] ?? 0 );
-		$package_id      = absint( $_POST['package_id'] ?? 0 );
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		// '' means "no package" and 0 is the FIRST package; absint() cannot
+		// tell them apart, which is how index 0 went unrecorded.
+		$package_raw     = isset( $_POST['package_id'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['package_id'] ) ) ) : '';
 		$customer_id     = absint( $_POST['customer_id'] ?? 0 );
 		$vendor_id_input = absint( $_POST['vendor_id'] ?? 0 );
 		$status          = sanitize_key( $_POST['status'] ?? 'pending_requirements' );
@@ -501,14 +504,14 @@ class ManualOrderPage {
 		$payment_method  = sanitize_key( $_POST['payment_method'] ?? 'manual' );
 		$transaction_id  = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';
 		$delivery_days   = absint( $_POST['delivery_days'] ?? 7 );
-		$revisions_input = absint( $_POST['revisions_included'] ?? 2 );
+		$revisions_input = isset( $_POST['revisions_included'] ) && '' !== $_POST['revisions_included'] ? absint( $_POST['revisions_included'] ) : null;
 		$currency        = isset( $_POST['currency'] ) ? sanitize_text_field( wp_unslash( $_POST['currency'] ) ) : wpss_get_currency();
 		$commission_rate = isset( $_POST['commission_rate'] ) ? (float) $_POST['commission_rate'] : CommissionService::get_global_commission_rate();
 		$notes           = isset( $_POST['notes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['notes'] ) ) : '';
 
-		// Pricing from JS calculations (hidden fields).
+		// An admin may type the price for a bespoke order, or override the
+		// total; otherwise the total is computed here, never taken from the form.
 		$subtotal_input = isset( $_POST['subtotal'] ) ? (float) $_POST['subtotal'] : 0;
-		$total_input    = isset( $_POST['total'] ) ? (float) $_POST['total'] : 0;
 
 		// Addons from form.
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
@@ -531,65 +534,55 @@ class ManualOrderPage {
 			wp_send_json_error( array( 'message' => __( 'Customer cannot be the same as the vendor.', 'wp-sell-services' ) ) );
 		}
 
-		// --- 4. Load package data ---
-		$revisions_included = $revisions_input;
-		$subtotal           = $subtotal_input;
+		// --- 4. Package: by stable id or index, '' for none ---
+		$resolved   = '' === $package_raw ? null : wpss_resolve_service_package( $service_id, (int) $package_raw );
+		$package_id = $resolved ? (int) $resolved['index'] : null;
+		$package    = $resolved ? $resolved['package'] : array();
 
-		if ( $package_id ) {
-			$packages = get_post_meta( $service_id, '_wpss_packages', true );
-			if ( is_array( $packages ) && isset( $packages[ $package_id ] ) ) {
-				$package = $packages[ $package_id ];
-				if ( ! $subtotal ) {
-					$subtotal      = (float) ( $package['price'] ?? 0 );
-					$delivery_days = (int) ( $package['delivery_days'] ?? $delivery_days );
-				}
-				if ( ! $revisions_input ) {
-					$revisions_included = (int) ( $package['revisions'] ?? 2 );
-				}
-			}
+		if ( $package && ! isset( $_POST['delivery_days'] ) ) {
+			$delivery_days = (int) ( $package['delivery_days'] ?? $delivery_days );
 		}
 
-		// Fallback to starting price.
-		if ( ! $subtotal ) {
+		$revisions_included = $revisions_input ?? (int) ( $package['revisions'] ?? 2 );
+
+		// --- 5 & 6. Price through the same line pricer checkout uses ---
+		// The base is what the admin typed, else the package, else the
+		// service's starting price. Add-ons and tax follow the checkout rules.
+		if ( $subtotal_input > 0 ) {
+			$subtotal = $subtotal_input;
+		} elseif ( $package ) {
+			$subtotal = (float) ( $package['price'] ?? 0 );
+		} else {
 			$subtotal = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
 		}
 
-		// --- 5. Process addons (ids are indices into the service's add-on list) ---
-		$all_addons      = wpss_get_service_extras( $service_id );
-		$selected_addons = array();
-		$addons_total    = 0;
+		$priced_addons = wpss_price_addons( $service_id, $addons_raw, $subtotal );
 
-		foreach ( $addons_raw as $addon_id => $addon_data ) {
-			$addon_id = absint( $addon_id );
-			$addon    = $all_addons[ $addon_id ] ?? null;
-			if ( empty( $addon_data['selected'] ) || ! $addon ) {
-				continue;
-			}
-
-			$quantity    = max( 1, absint( $addon_data['quantity'] ?? 1 ) );
-			$addon_price = 'percentage' === $addon['price_type'] ? $subtotal * $addon['price'] / 100 : (float) $addon['price'];
-			if ( 'quantity' === $addon['field_type'] ) {
-				$addon_price *= $quantity;
-			}
-
-			$selected_addons[] = array(
-				'id'       => $addon_id,
-				'title'    => $addon['title'],
-				'price'    => $addon_price,
-				'quantity' => $quantity,
-			);
-
-			$addons_total += $addon_price;
+		if ( is_wp_error( $priced_addons ) ) {
+			wp_send_json_error( array( 'message' => $priced_addons->get_error_message() ) );
 		}
 
-		// --- 6. Calculate total ---
-		$total = $total_input;
-		if ( ! $total || $total <= 0 ) {
-			$total = $subtotal + $addons_total;
+		$selected_addons = $priced_addons['addons'];
+		$addons_total    = (float) $priced_addons['addons_total'];
+		$line            = CheckoutIntentService::price_line( $service_id, $subtotal, $addons_total, (int) $vendor_id );
+
+		// "Override total" is the exact amount the buyer pays: no tax on top.
+		// The field is disabled, so not posted, unless the admin ticks it.
+		$total_override = isset( $_POST['total_override'] ) ? (float) $_POST['total_override'] : 0;
+		if ( $total_override > 0 ) {
+			$line = array(
+				'total'        => $total_override,
+				'net'          => $total_override,
+				'tax'          => 0.0,
+				'tax_rate'     => 0.0,
+				'tax_included' => false,
+			) + $line;
 		}
 
-		if ( ! $total || $total <= 0 ) {
-			$total = 10.00; // Minimum fallback.
+		$total = (float) $line['total'];
+
+		if ( $total <= 0 ) {
+			wp_send_json_error( array( 'message' => __( 'Enter a price for this order: the package and service have none.', 'wp-sell-services' ) ) );
 		}
 
 		// --- 7. Calculate commission ---
@@ -607,7 +600,7 @@ class ManualOrderPage {
 		add_filter( 'wpss_commission_rate', $pin_manual_rate, PHP_INT_MAX );
 
 		$manual_breakdown = CommissionService::compute_breakdown(
-			(float) $total,
+			(float) $line['net'],
 			(object) array(
 				'id'         => 0,
 				'vendor_id'  => (int) $vendor_id,
@@ -663,6 +656,13 @@ class ManualOrderPage {
 			'vendor_earnings'    => $vendor_earnings,
 			'revisions_included' => $revisions_included,
 			'revisions_used'     => 0,
+			'meta'               => wp_json_encode(
+				array(
+					'tax_rate'     => (float) $line['tax_rate'],
+					'tax_amount'   => round( (float) $line['tax'], 2 ),
+					'tax_included' => (bool) $line['tax_included'],
+				)
+			),
 			'created_at'         => current_time( 'mysql' ),
 			'updated_at'         => current_time( 'mysql' ),
 		);
@@ -685,12 +685,13 @@ class ManualOrderPage {
 			'%f', // vendor_earnings.
 			'%d', // revisions_included.
 			'%d', // revisions_used.
+			'%s', // meta.
 			'%s', // created_at.
 			'%s', // updated_at.
 		);
 
 		// Only include nullable columns when they have non-null values.
-		if ( $package_id ) {
+		if ( null !== $package_id ) {
 			$data['package_id'] = $package_id;
 			$format[]           = '%d';
 		}

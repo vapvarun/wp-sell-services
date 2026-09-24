@@ -596,7 +596,23 @@ class PayPalGateway implements PaymentGatewayInterface {
 			);
 		}
 
-		return $this->create_payment( $intent->amount, $intent->currency, $this->paypal_metadata( $intent ) );
+		$metadata = $this->paypal_metadata( $intent );
+
+		// custom_id holds at most 127 characters, too few for add-on quantities,
+		// options and text. The full selection waits in a transient keyed by the
+		// PayPal order for capture; if it is gone by then, capture re-prices from
+		// the compact addon_ids and settle() refuses a charge that no longer
+		// matches, so nothing is ever charged for what was not bought.
+		$selection = (string) ( $metadata['addon_sel'] ?? '' );
+		unset( $metadata['addon_sel'] );
+
+		$result = $this->create_payment( $intent->amount, $intent->currency, $metadata );
+
+		if ( '' !== $selection && ! empty( $result['id'] ) ) {
+			set_transient( 'wpss_pp_sel_' . sanitize_key( (string) $result['id'] ), $selection, DAY_IN_SECONDS );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -622,9 +638,8 @@ class PayPalGateway implements PaymentGatewayInterface {
 	private function paypal_metadata( \WPSellServices\Checkout\CheckoutIntent $intent ): array {
 		$metadata = $intent->metadata;
 
-		if ( ! empty( $intent->addons ) ) {
-			$metadata['addon_ids'] = implode( ',', array_column( $intent->addons, 'id' ) );
-		}
+		// addon_ids / addon_sel come from the intent's own metadata
+		// (CheckoutIntentService::selection_metadata()).
 
 		switch ( $intent->kind ) {
 			case \WPSellServices\Checkout\CheckoutIntent::KIND_CART:
@@ -684,6 +699,8 @@ class PayPalGateway implements PaymentGatewayInterface {
 				'is_multi_checkout' => ! empty( $metadata['is_multi_checkout'] ),
 				'service_id'        => (int) ( $metadata['service_id'] ?? 0 ),
 				'package_id'        => (int) ( $metadata['package_id'] ?? 0 ),
+				'quantity'          => max( 1, (int) ( $metadata['quantity'] ?? 1 ) ),
+				'addon_sel'         => (string) get_transient( 'wpss_pp_sel_' . sanitize_key( $paypal_order_id ) ),
 				'addon_ids'         => (string) ( $metadata['addon_ids'] ?? '' ),
 			),
 			$buyer_id
@@ -771,14 +788,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 		// Pricing + routing (single / multi-cart / pay-order) is resolved once,
 		// server-side, by CheckoutIntentService - the same call Stripe makes,
 		// so the two rails charge the same number for the same checkout.
-		$result = $this->create_order(
-			array(
-				'pay_order'         => absint( $_POST['pay_order'] ?? 0 ),
-				'is_multi_checkout' => ! empty( $_POST['is_multi_checkout'] ),
-				'service_id'        => absint( $_POST['service_id'] ?? 0 ),
-				'package_id'        => absint( $_POST['package_id'] ?? 0 ),
-			)
-		);
+		$result = $this->create_order( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked above.
 
 		if ( $result['success'] ) {
 			wp_send_json_success( $result );

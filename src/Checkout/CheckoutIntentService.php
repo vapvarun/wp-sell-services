@@ -142,31 +142,23 @@ class CheckoutIntentService {
 				continue;
 			}
 
-			$quantity = max( 1, (int) ( $item['quantity'] ?? 1 ) );
-			$packages = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
-			$pkg      = $packages[ (int) ( $item['package_id'] ?? 0 ) ] ?? ( ! empty( $packages ) ? reset( $packages ) : null );
+			$line = self::price_service_line( $service_id, (int) ( $item['package_id'] ?? 0 ), max( 1, (int) ( $item['quantity'] ?? 1 ) ), $item['addons'] ?? array() );
 
-			if ( ! $pkg ) {
-				continue;
+			// A line whose package or required add-on no longer resolves stops
+			// the checkout with the reason, rather than dropping out of the
+			// total while the buyer still sees it.
+			if ( is_wp_error( $line ) ) {
+				return $line;
 			}
 
-			$vendors[ (int) get_post_field( 'post_author', $service_id ) ] = true;
-
-			$line = self::price_line(
-				$service_id,
-				(float) ( $pkg['price'] ?? 0 ) * $quantity,
-				(float) array_reduce(
-					$item['addons'] ?? array(),
-					static fn( float $carry, array $addon ) => $carry + (float) ( $addon['price'] ?? 0 ),
-					0.0
-				)
-			);
+			$vendors[ (int) $line['vendor_id'] ] = true;
 
 			foreach ( $totals as $k => $v ) {
 				$totals[ $k ] = $v + $line[ $k ];
 			}
 
-			$lines[ $key ] = $item + $line;
+			// The priced line wins over what the cart stored (its old add-on prices).
+			$lines[ $key ] = $line + $item;
 		}
 
 		if ( $totals['total'] <= 0 ) {
@@ -223,6 +215,61 @@ class CheckoutIntentService {
 	}
 
 	/**
+	 * Price one service line from ids alone: package, quantity, add-ons, tax.
+	 *
+	 * THE line pricer. Checkout, the cart, the app's payment intent, the order
+	 * modal quote and the admin manual order all price through here, so a
+	 * buyer is charged the same on every surface. Nothing a request says about
+	 * money is read - only which package, how many, and which add-ons.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int   $service_id  Service post ID.
+	 * @param int   $package_ref Stable package id, or legacy index.
+	 * @param int   $quantity    How many of the package.
+	 * @param mixed $selection   Add-on selection (see wpss_normalize_addon_selection()).
+	 * @return array<string, mixed>|\WP_Error Line: service_id, vendor_id, package_id (index), package, quantity,
+	 *                                        subtotal, addons, addons_total, delivery_days_extra, tax, tax_rate,
+	 *                                        net, tax_included, total.
+	 */
+	public static function price_service_line( int $service_id, int $package_ref, int $quantity, $selection ) {
+		$resolved = wpss_resolve_service_package( $service_id, $package_ref );
+
+		// A service sold without packages is bought at its starting price.
+		if ( null === $resolved && ! wpss_get_service_packages( $service_id ) ) {
+			$resolved = array(
+				'package' => array( 'price' => (float) get_post_meta( $service_id, '_wpss_starting_price', true ) ),
+				'index'   => 0,
+			);
+		}
+
+		if ( null === $resolved ) {
+			return new \WP_Error( 'wpss_invalid_package', __( 'Invalid package.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		$quantity = max( 1, $quantity );
+		$subtotal = round( (float) ( $resolved['package']['price'] ?? 0 ) * $quantity, wpss_get_currency_decimals() );
+		$addons   = wpss_price_addons( $service_id, $selection, $subtotal );
+
+		if ( is_wp_error( $addons ) ) {
+			return $addons;
+		}
+
+		$vendor_id = (int) get_post_field( 'post_author', $service_id );
+		$line      = self::price_line( $service_id, $subtotal, (float) $addons['addons_total'], $vendor_id );
+
+		return array(
+			'service_id'          => $service_id,
+			'vendor_id'           => $vendor_id,
+			'package_id'          => (int) $resolved['index'],
+			'package'             => $resolved['package'],
+			'quantity'            => $quantity,
+			'addons'              => $addons['addons'],
+			'delivery_days_extra' => (int) $addons['delivery_days_extra'],
+		) + $line;
+	}
+
+	/**
 	 * Price one line the way StandaloneOrderProvider::create_order() prices its
 	 * row: subtotal plus add-ons is the taxable base, tax through the shared
 	 * helper. Every caller (single, cart, and an order created from an
@@ -236,7 +283,7 @@ class CheckoutIntentService {
 	 * @param float $subtotal     Package / proposal price (times quantity).
 	 * @param float $addons_total Add-ons total.
 	 * @param int   $vendor_id    Vendor, when the service cannot say (proposals).
-	 * @return array{subtotal:float,addons_total:float,tax:float,tax_rate:float,total:float}
+	 * @return array{subtotal:float,addons_total:float,tax:float,tax_rate:float,total:float,net:float,tax_included:bool,tax_label:string}
 	 */
 	public static function price_line( int $service_id, float $subtotal, float $addons_total, int $vendor_id = 0 ): array {
 		$vendor_id = $vendor_id > 0 ? $vendor_id : (int) get_post_field( 'post_author', $service_id );
@@ -250,6 +297,7 @@ class CheckoutIntentService {
 			'total'        => (float) $tax['total'],
 			'net'          => (float) $tax['net'],
 			'tax_included' => (bool) $tax['included'],
+			'tax_label'    => (string) $tax['label'],
 		);
 	}
 
@@ -264,16 +312,10 @@ class CheckoutIntentService {
 	 */
 	private function resolve_single( array $request, int $buyer_id ) {
 		$service_id = absint( $request['service_id'] ?? 0 );
-		$package_id = absint( $request['package_id'] ?? 0 );
 
 		$service = get_post( $service_id );
 		if ( ! $service || 'wpss_service' !== $service->post_type || 'publish' !== $service->post_status ) {
 			return new \WP_Error( 'wpss_invalid_service', __( 'Invalid service.', 'wp-sell-services' ) );
-		}
-
-		$packages = get_post_meta( $service_id, '_wpss_packages', true );
-		if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) ) {
-			return new \WP_Error( 'wpss_invalid_package', __( 'Invalid package.', 'wp-sell-services' ) );
 		}
 
 		// Nobody buys from themselves; every rail used to check this on its own
@@ -282,51 +324,133 @@ class CheckoutIntentService {
 			return new \WP_Error( 'wpss_own_service', __( 'You cannot purchase your own service.', 'wp-sell-services' ) );
 		}
 
-		$price = (float) ( $packages[ $package_id ]['price'] ?? 0 );
-		if ( $price <= 0 ) {
+		// Priced from ids alone by the one line pricer: package (stable id or
+		// index), quantity, add-ons as the vendor set them, then tax. Charge
+		// what the buyer was shown (Basecamp 10254444011) - the template, this
+		// intent and the order row all read the same line.
+		$selection = self::request_selection( $request );
+		$line      = self::price_service_line( $service_id, absint( $request['package_id'] ?? 0 ), max( 1, absint( $request['quantity'] ?? 1 ) ), $selection );
+
+		if ( is_wp_error( $line ) ) {
+			return $line;
+		}
+
+		if ( $line['subtotal'] <= 0 ) {
 			return new \WP_Error( 'wpss_invalid_amount', __( 'Invalid amount.', 'wp-sell-services' ) );
 		}
 
-		// Add-ons come from the request (the checkout form) or, on a gateway
-		// return leg where the form is long gone, from the ids the gateway
-		// carried in its own metadata.
-		$addon_data = wpss_resolve_checkout_addons( $service_id, (string) ( $request['addon_ids'] ?? '' ) );
-
-		/*
-		 * Charge what the buyer was shown.
-		 *
-		 * The checkout template computes tax and puts the taxed figure on the
-		 * Pay button; the order row records the taxed total; the gateway must
-		 * charge THAT number. A buyer saw $100.30 and was charged $85.00, and
-		 * the 18% was never collected from anybody (Basecamp 10254444011).
-		 * Commission is unaffected: CommissionService works from the PRE-tax
-		 * base, because tax is not revenue to split.
-		 */
-		$line = self::price_line( $service_id, $price, (float) ( $addon_data['addons_total'] ?? 0 ) );
-
 		$intent = CheckoutIntent::single(
 			$service_id,
-			$package_id,
-			(array) ( $addon_data['addons'] ?? array() ),
+			(int) $line['package_id'],
+			$line['addons'],
 			$line['addons_total'],
 			$line['total'],
 			wpss_get_currency(),
 			$buyer_id,
 			array(
 				'service_id'  => $service_id,
-				'package_id'  => $package_id,
+				'package_id'  => (int) $line['package_id'],
+				'quantity'    => (int) $line['quantity'],
 				'customer_id' => $buyer_id,
 				// Every order type names its vendor. Without this only
 				// pay-order intents did, so a split rail (Pro Connect) never
 				// split a catalog purchase.
 				'vendor_id'   => (int) $service->post_author,
-			),
+			) + self::selection_metadata( $line['addons'] ),
 			$line['subtotal'] + $line['addons_total']
 		);
 
 		$intent->tax = $line['tax'];
 
 		return $this->check_order_limits( $line['total'] ) ?? $intent;
+	}
+
+	/**
+	 * The add-on selection a resolve() request carries, in any accepted key.
+	 *
+	 * Accepts addon_sel (the full selection, JSON), addons (array or JSON), or the
+	 * legacy addon_ids CSV. Never read from a superglobal: rails build the
+	 * request with request_from_post() or from their own stored metadata.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param array<string, mixed> $request Request.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function request_selection( array $request ): array {
+		foreach ( array( 'addon_sel', 'addons', 'addon_ids' ) as $key ) {
+			if ( isset( $request[ $key ] ) && '' !== $request[ $key ] && array() !== $request[ $key ] ) {
+				return wpss_normalize_addon_selection( $request[ $key ] );
+			}
+		}
+
+		return array();
+	}
+
+	/**
+	 * Build a resolve() request from a checkout POST - the one reader of it.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param array<string, mixed> $post Raw $_POST (unslashed here).
+	 * @return array<string, mixed>
+	 */
+	public static function request_from_post( array $post ): array {
+		$post = wp_unslash( $post );
+
+		return array(
+			'pay_order'         => absint( $post['pay_order'] ?? 0 ),
+			'is_multi_checkout' => ! empty( $post['is_multi_checkout'] ),
+			'service_id'        => absint( $post['service_id'] ?? 0 ),
+			'package_id'        => absint( $post['package_id'] ?? 0 ),
+			'quantity'          => max( 1, absint( $post['quantity'] ?? 1 ) ),
+			'addon_sel'         => isset( $post['addon_sel'] ) ? (string) $post['addon_sel'] : '',
+			'addon_ids'         => isset( $post['addon_ids'] ) ? sanitize_text_field( (string) $post['addon_ids'] ) : '',
+		);
+	}
+
+	/**
+	 * Metadata that lets a return leg re-price the same add-ons.
+	 *
+	 * The addon_ids key stays compact for rails with small metadata fields (PayPal's
+	 * custom_id is 127 characters); addon_sel carries quantity, option and text
+	 * when there is any, for rails that can hold it.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param array<int, array<string, mixed>> $addons Priced add-on lines.
+	 * @return array<string, string>
+	 */
+	public static function selection_metadata( array $addons ): array {
+		if ( empty( $addons ) ) {
+			return array();
+		}
+
+		$meta  = array( 'addon_ids' => implode( ',', array_column( $addons, 'id' ) ) );
+		$plain = true;
+
+		foreach ( $addons as $addon ) {
+			if ( (int) ( $addon['quantity'] ?? 1 ) > 1 || '' !== (string) ( $addon['option'] ?? '' ) || '' !== (string) ( $addon['text'] ?? '' ) ) {
+				$plain = false;
+				break;
+			}
+		}
+
+		if ( ! $plain ) {
+			$meta['addon_sel'] = (string) wp_json_encode(
+				array_map(
+					static fn( array $a ): array => array(
+						'id'       => (int) $a['id'],
+						'quantity' => (int) ( $a['quantity'] ?? 1 ),
+						'option'   => (string) ( $a['option'] ?? '' ),
+						'text'     => (string) ( $a['text'] ?? '' ),
+					),
+					$addons
+				)
+			);
+		}
+
+		return $meta;
 	}
 
 	/**

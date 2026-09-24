@@ -2643,11 +2643,11 @@ class Admin {
 					<div class="postbox">
 						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Financial Summary', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
+							<?php
+							// The same line items the buyer sees: package, add-ons, tax, total.
+							wpss_get_template_part( 'order/line-items', '', array( 'wpss_order' => $order ) );
+							?>
 							<table style="width: 100%;">
-								<tr>
-									<td><?php esc_html_e( 'Order Total:', 'wp-sell-services' ); ?></td>
-									<td style="text-align: right;"><strong><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></strong></td>
-								</tr>
 								<?php if ( isset( $order->vendor_earnings ) && $order->vendor_earnings > 0 ) : ?>
 									<tr>
 										<td><?php esc_html_e( 'Vendor Earning:', 'wp-sell-services' ); ?></td>

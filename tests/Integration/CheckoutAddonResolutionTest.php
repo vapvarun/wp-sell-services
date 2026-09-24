@@ -73,7 +73,7 @@ class CheckoutAddonResolutionTest extends TestCase {
 	 * @param int    $count     Expected number of resolved add-ons.
 	 */
 	public function test_the_resolver_prices_every_selection( string $addon_ids, float $expected, int $count ): void {
-		$resolved = wpss_resolve_checkout_addons( $this->service_id, $addon_ids );
+		$resolved = wpss_price_addons( $this->service_id, $addon_ids, 100.0 );
 
 		$this->assertCount(
 			$count,
@@ -122,8 +122,8 @@ class CheckoutAddonResolutionTest extends TestCase {
 	 * reintroduces a truthiness test.
 	 */
 	public function test_empty_and_zero_are_not_the_same_selection(): void {
-		$none  = wpss_resolve_checkout_addons( $this->service_id, '' );
-		$first = wpss_resolve_checkout_addons( $this->service_id, '0' );
+		$none  = wpss_price_addons( $this->service_id, '', 100.0 );
+		$first = wpss_price_addons( $this->service_id, '0', 100.0 );
 
 		$this->assertSame( array(), $none['addons'], '"" must mean no add-ons.' );
 		$this->assertNotSame(

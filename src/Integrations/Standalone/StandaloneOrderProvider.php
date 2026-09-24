@@ -211,19 +211,18 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			}
 
 			// Determine package price from live post meta so we never trust client-side values.
-			$packages = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
-			$pkg      = $packages[ $package_id ] ?? ( ! empty( $packages ) ? reset( $packages ) : null );
+			// Priced from ids by the one line pricer - never from the prices
+			// the cart stored when the item was added.
+			$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, $package_id, $quantity, $item['addons'] ?? array() );
 
-			if ( ! $pkg ) {
+			if ( is_wp_error( $line ) ) {
 				continue;
 			}
 
-			$subtotal     = (float) ( $pkg['price'] ?? 0 ) * $quantity;
-			$addons_total = (float) array_reduce(
-				$item['addons'] ?? array(),
-				static fn( float $carry, array $addon ) => $carry + (float) ( $addon['price'] ?? 0 ),
-				0.0
-			);
+			$package_id   = (int) $line['package_id'];
+			$subtotal     = (float) $line['subtotal'];
+			$addons_total = (float) $line['addons_total'];
+			$item_addons  = $line['addons'];
 
 			$order = $this->create_order(
 				array(
@@ -232,7 +231,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 					'quantity'       => $quantity,
 					'customer_id'    => $customer_id,
 					'subtotal'       => $subtotal,
-					'addons'         => $item['addons'] ?? array(),
+					'addons'         => $item_addons,
 					'addons_total'   => $addons_total,
 					'currency'       => wpss_get_currency(),
 					'payment_method' => $payment_method,

@@ -338,6 +338,11 @@ function wpss_normalize_service_addons( array $raw ): array {
 		$field_type = sanitize_key( (string) ( $addon['field_type'] ?? 'checkbox' ) );
 		$price_type = sanitize_key( (string) ( $addon['price_type'] ?? 'flat' ) );
 
+		// "Per Quantity" pricing means nothing without a quantity to multiply.
+		if ( 'quantity_based' === $price_type ) {
+			$field_type = 'quantity';
+		}
+
 		$out[] = array(
 			'title'               => $title,
 			'description'         => sanitize_textarea_field( (string) ( $addon['description'] ?? '' ) ),
@@ -360,8 +365,8 @@ function wpss_normalize_service_addons( array $raw ): array {
 			 * no extra days - which is the closest honest reading of it.
 			 */
 			'delivery_days_extra' => max( 0, (int) ( $addon['delivery_days_extra'] ?? $addon['extra_days'] ?? $addon['delivery_time'] ?? 0 ) ),
-			'field_type'          => in_array( $field_type, array( 'checkbox', 'quantity', 'dropdown', 'text' ), true ) ? $field_type : 'checkbox',
-			'price_type'          => in_array( $price_type, array( 'flat', 'percentage', 'quantity_based' ), true ) ? $price_type : 'flat',
+			'field_type'          => isset( wpss_get_addon_field_types()[ $field_type ] ) ? $field_type : 'checkbox',
+			'price_type'          => isset( wpss_get_addon_price_types()[ $price_type ] ) ? $price_type : 'flat',
 			'min_quantity'        => max( 1, absint( $addon['min_quantity'] ?? 1 ) ),
 			'max_quantity'        => max( 1, absint( $addon['max_quantity'] ?? 10 ) ),
 			'options'             => sanitize_text_field( is_array( $addon['options'] ?? null ) ? implode( ', ', $addon['options'] ) : (string) ( $addon['options'] ?? '' ) ),
@@ -470,6 +475,213 @@ function wpss_get_service_revisions( int $service_id ): int {
 }
 
 /**
+ * Add-on field types: how the buyer answers an add-on (value => label).
+ *
+ * @since 1.8.0
+ *
+ * @return array<string, string>
+ */
+function wpss_get_addon_field_types(): array {
+	return array(
+		'checkbox' => __( 'Checkbox (Yes/No)', 'wp-sell-services' ),
+		'quantity' => __( 'Quantity Selector', 'wp-sell-services' ),
+		'dropdown' => __( 'Dropdown Select', 'wp-sell-services' ),
+		'text'     => __( 'Text Input', 'wp-sell-services' ),
+	);
+}
+
+/**
+ * Add-on price types: how an add-on is priced (value => label).
+ *
+ * @since 1.8.0
+ *
+ * @return array<string, string>
+ */
+function wpss_get_addon_price_types(): array {
+	return array(
+		'flat'           => __( 'Flat Price', 'wp-sell-services' ),
+		'percentage'     => __( 'Percentage of Order', 'wp-sell-services' ),
+		'quantity_based' => __( 'Per Quantity', 'wp-sell-services' ),
+	);
+}
+
+/**
+ * How an add-on's price reads to a buyer: "+$20", "+10%" or "$5 each".
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, mixed> $addon Normalised add-on (wpss_get_service_extras()).
+ * @return string Plain text.
+ */
+function wpss_addon_price_label( array $addon ): string {
+	$amount = (float) ( $addon['price'] ?? 0 );
+
+	if ( 'percentage' === ( $addon['price_type'] ?? 'flat' ) ) {
+		/* translators: %s: percentage number */
+		return sprintf( __( '+%s%%', 'wp-sell-services' ), number_format_i18n( $amount, floor( $amount ) === $amount ? 0 : 2 ) );
+	}
+
+	$money = wp_strip_all_tags( wpss_format_price( $amount ) );
+
+	if ( 'quantity_based' === ( $addon['price_type'] ?? 'flat' ) ) {
+		/* translators: %s: price per unit */
+		return sprintf( __( '%s each', 'wp-sell-services' ), $money );
+	}
+
+	/* translators: %s: price */
+	return sprintf( __( '+%s', 'wp-sell-services' ), $money );
+}
+
+/**
+ * Normalise what a buyer picked into one shape, from any shape a surface sends.
+ *
+ * Accepts a CSV of ids ("0,2"), a list of ids, a list of {id, quantity, option,
+ * text}, the manual-order map {id: {selected, quantity, option, text}}, legacy
+ * cart rows {id, title, price} (the price is IGNORED - add-ons are priced from
+ * the service, never from what a request says), or a JSON string of any of
+ * these. Ids are indices into the service's add-ons.
+ *
+ * @since 1.8.0
+ *
+ * @param mixed $raw Selection in any supported shape.
+ * @return array<int, array{id: int, quantity: int, option: string, text: string}> Keyed by add-on id.
+ */
+function wpss_normalize_addon_selection( $raw ): array {
+	if ( is_string( $raw ) ) {
+		$raw     = trim( $raw );
+		$decoded = ( '' !== $raw && ( '[' === $raw[0] || '{' === $raw[0] ) ) ? json_decode( $raw, true ) : null;
+		$raw     = is_array( $decoded ) ? $decoded : ( '' === $raw ? array() : explode( ',', $raw ) );
+	}
+
+	$out = array();
+
+	foreach ( (array) $raw as $key => $entry ) {
+		if ( is_array( $entry ) && array_key_exists( 'selected', $entry ) ) {
+			// Manual-order map: {id: {selected, quantity, option, text}}.
+			if ( empty( $entry['selected'] ) ) {
+				continue;
+			}
+			$entry['id'] = $key;
+		}
+
+		$row = is_array( $entry ) ? $entry : array( 'id' => $entry );
+
+		if ( ! isset( $row['id'] ) || ! is_numeric( $row['id'] ) || (int) $row['id'] < 0 ) {
+			continue;
+		}
+
+		$id         = (int) $row['id'];
+		$out[ $id ] = array(
+			'id'       => $id,
+			'quantity' => max( 1, absint( $row['quantity'] ?? 1 ) ),
+			'option'   => sanitize_text_field( (string) ( $row['option'] ?? '' ) ),
+			'text'     => sanitize_textarea_field( (string) ( $row['text'] ?? '' ) ),
+		);
+	}
+
+	return $out;
+}
+
+/**
+ * Price the add-ons a buyer picked - THE one add-on pricer.
+ *
+ * Every surface that shows or charges an add-on reads this: the order modal's
+ * quote, the cart, checkout, the app's payment intent, the admin manual order
+ * and Pro's store rails. Flat add-ons cost their price; percentage add-ons are
+ * that percent of the package subtotal; a quantity add-on is its unit price
+ * times the quantity, clamped to its min and max. Required add-ons are always
+ * included. Before 1.8.0 five surfaces priced add-ons on their own and all but
+ * one treated every add-on as flat (Basecamp 10336467507).
+ *
+ * @since 1.8.0
+ *
+ * @param int   $service_id       Service post ID.
+ * @param mixed $selection        What the buyer picked (any shape wpss_normalize_addon_selection() takes).
+ * @param float $package_subtotal Package price x quantity, the base for percentage add-ons.
+ * @return array{addons: array<int, array<string, mixed>>, addons_total: float, delivery_days_extra: int}|WP_Error
+ */
+function wpss_price_addons( int $service_id, $selection, float $package_subtotal ) {
+	$definitions = wpss_get_service_extras( $service_id );
+	$picked      = array_intersect_key( wpss_normalize_addon_selection( $selection ), $definitions );
+	$decimals    = wpss_get_currency_decimals();
+
+	foreach ( $definitions as $index => $definition ) {
+		if ( ! empty( $definition['is_required'] ) && ! isset( $picked[ $index ] ) ) {
+			$picked[ $index ] = array(
+				'id'       => $index,
+				'quantity' => 1,
+				'option'   => '',
+				'text'     => '',
+			);
+		}
+	}
+
+	ksort( $picked );
+
+	$result = array(
+		'addons'              => array(),
+		'addons_total'        => 0.0,
+		'delivery_days_extra' => 0,
+	);
+
+	foreach ( $picked as $index => $choice ) {
+		$definition = $definitions[ $index ];
+		$field_type = (string) $definition['field_type'];
+		$quantity   = 1;
+		$option     = '';
+		$text       = '';
+
+		if ( 'quantity' === $field_type ) {
+			$quantity = min( max( $choice['quantity'], (int) $definition['min_quantity'] ), max( (int) $definition['min_quantity'], (int) $definition['max_quantity'] ) );
+		} elseif ( 'dropdown' === $field_type ) {
+			$options = array_values( array_filter( array_map( 'trim', explode( ',', (string) $definition['options'] ) ), 'strlen' ) );
+			$option  = in_array( $choice['option'], $options, true ) ? $choice['option'] : '';
+		} elseif ( 'text' === $field_type ) {
+			$text = mb_substr( trim( $choice['text'] ), 0, 500 );
+		}
+
+		// A dropdown needs a real option and a text add-on needs text; without
+		// one it was not really chosen.
+		if ( ( 'dropdown' === $field_type && '' === $option ) || ( 'text' === $field_type && '' === $text ) ) {
+			if ( ! empty( $definition['is_required'] ) ) {
+				return new WP_Error(
+					'wpss_addon_required',
+					/* translators: %s: add-on title */
+					sprintf( __( 'Please complete the required add-on "%s".', 'wp-sell-services' ), $definition['title'] ),
+					array( 'status' => 400 )
+				);
+			}
+			continue;
+		}
+
+		$rate  = (float) $definition['price'];
+		$unit  = 'percentage' === $definition['price_type'] ? round( $package_subtotal * $rate / 100, $decimals ) : $rate;
+		$price = round( $unit * $quantity, $decimals );
+
+		$result['addons'][]             = array(
+			'id'                  => (int) $index,
+			'title'               => (string) $definition['title'],
+			'name'                => (string) $definition['title'],
+			'field_type'          => $field_type,
+			'price_type'          => (string) $definition['price_type'],
+			'rate'                => $rate,
+			'unit_price'          => $unit,
+			'quantity'            => $quantity,
+			'option'              => $option,
+			'text'                => $text,
+			'price'               => $price,
+			'delivery_days_extra' => (int) $definition['delivery_days_extra'],
+		);
+		$result['addons_total']        += $price;
+		$result['delivery_days_extra'] += (int) $definition['delivery_days_extra'];
+	}
+
+	$result['addons_total'] = round( $result['addons_total'], $decimals );
+
+	return $result;
+}
+
+/**
  * Whether a person may see a service at all.
  *
  * Published services are public; an unpublished one (draft, pending, private,
@@ -498,79 +710,6 @@ function wpss_can_view_service( int $service_id, ?int $user_id = null ): bool {
 	$user_id = null === $user_id ? get_current_user_id() : $user_id;
 
 	return $user_id > 0 && ( (int) $service->post_author === $user_id || user_can( $user_id, 'manage_options' ) );
-}
-
-/**
- * Resolve addon data from checkout POST data.
- *
- * Reads addon_ids from $_POST, validates each addon belongs to the service
- * and is active, then returns addon details and total for create_order().
- *
- * @since 1.1.0
- *
- * @param int    $service_id Service post ID.
- * @param string $addon_ids  Optional. Comma-separated add-on indices; overrides the request.
- * @return array{addons: array, addons_total: float, delivery_days_extra: int}
- */
-function wpss_resolve_checkout_addons( int $service_id, string $addon_ids = '' ): array {
-	$result = array(
-		'addons'              => array(),
-		'addons_total'        => 0,
-		'delivery_days_extra' => 0,
-	);
-
-	/*
-	 * Ids only, priced from post meta.
-	 *
-	 * This used to read a posted JSON add-on list first and charge each add-on
-	 * at the `price` the request carried. The checkout form filled it in, so it
-	 * looked like server data - but it arrived from the browser, and posting
-	 * [{"price":-70}] against an $80 package created a real $11.80 order
-	 * (Basecamp 10336645932). The buyer chooses WHICH add-ons; the service
-	 * decides what they cost.
-	 */
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
-	$addon_ids_raw = '' !== $addon_ids ? $addon_ids : ( isset( $_POST['addon_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_ids'] ) ) : '' );
-
-	/*
-	 * '' means "no add-ons", "0" means "the FIRST add-on".
-	 *
-	 * Add-on ids here are 0-based indices into _wpss_addons, so a buyer who
-	 * selects only the first add-on sends the string "0" - which PHP treats as
-	 * falsy. `if ( ! $addon_ids_raw )` therefore returned an empty result and
-	 * the charge silently dropped that add-on: the buyer saw it in the UI, was
-	 * billed without it, and the vendor lost the revenue. It only ever broke
-	 * for the FIRST add-on selected alone, which is the most commonly selected
-	 * one, and never for "1" or "0,1" - which is why it survived.
-	 *
-	 * Compare against '' explicitly. Same reason the line above already uses
-	 * `'' !== $addon_ids` rather than a truthiness test.
-	 */
-	if ( '' === $addon_ids_raw ) {
-		return $result;
-	}
-
-	$addon_indices = array_map( 'intval', explode( ',', $addon_ids_raw ) );
-	$all_extras    = wpss_get_service_extras( $service_id );
-
-	foreach ( $addon_indices as $index ) {
-		if ( $index < 0 || ! isset( $all_extras[ $index ] ) ) {
-			continue;
-		}
-		$extra                          = $all_extras[ $index ];
-		$addon_price                    = (float) ( $extra['price'] ?? 0 );
-		$extra_days                     = (int) $extra['delivery_days_extra'];
-		$result['addons_total']        += $addon_price;
-		$result['delivery_days_extra'] += $extra_days;
-		$result['addons'][]             = array(
-			'id'                  => $index,
-			'name'                => sanitize_text_field( $extra['title'] ?? '' ),
-			'price'               => $addon_price,
-			'delivery_days_extra' => $extra_days,
-		);
-	}
-
-	return $result;
 }
 
 /**
