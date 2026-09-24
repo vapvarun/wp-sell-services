@@ -382,7 +382,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		 * The indices are 0-based, so selecting ONLY the first add-on sends
 		 * "0" - falsy in PHP. `if ( $addon_ids_raw )` skipped this whole block,
 		 * and the Order Summary and Pay button both showed the un-added price
-		 * while the hidden addon_ids / addons_data fields went out empty. The
+		 * while the hidden addon_ids field went out empty. The
 		 * buyer was charged without the add-on they had selected.
 		 * "1" and "0,1" both worked, which is how it went unnoticed.
 		 */
@@ -586,12 +586,12 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$unit_price   = (float) ( $selected_package['price'] ?? 0 );
 			$price        = $unit_price * $quantity;
 			$addons_total = 0;
-			$addons_data  = array();
+			$addon_lines  = array();
 
 			foreach ( $selected_addons as $addon ) {
 				$addon_price   = (float) $addon->price;
 				$addons_total += $addon_price;
-				$addons_data[] = array(
+				$addon_lines[] = array(
 					'id'                  => (int) $addon->id,
 					'name'                => $addon->title ?? $addon->name ?? '',
 					'price'               => $addon_price,
@@ -990,10 +990,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						<input type="hidden" name="package_id" value="<?php echo esc_attr( $package_id ); ?>">
 						<input type="hidden" name="quantity" value="<?php echo esc_attr( $quantity ); ?>">
 						<input type="hidden" name="tax_amount" value="<?php echo esc_attr( round( $tax_amount, 2 ) ); ?>">
-						<?php if ( ! empty( $addons_data ) ) : ?>
-							<input type="hidden" name="addon_ids" value="<?php echo esc_attr( implode( ',', array_column( $addons_data, 'id' ) ) ); ?>">
+						<?php if ( ! empty( $addon_lines ) ) : ?>
+							<input type="hidden" name="addon_ids" value="<?php echo esc_attr( implode( ',', array_column( $addon_lines, 'id' ) ) ); ?>">
 							<input type="hidden" name="addons_total" value="<?php echo esc_attr( round( $addons_total, 2 ) ); ?>">
-							<input type="hidden" name="addons_data" value="<?php echo esc_attr( wp_json_encode( $addons_data ) ); ?>">
 						<?php endif; ?>
 					<?php endif; ?>
 					<input type="hidden" name="amount" value="<?php echo esc_attr( $total ); ?>">
@@ -1155,8 +1154,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 										<?php endif; ?>
 
 										<!-- Addon lines -->
-										<?php if ( ! empty( $addons_data ) ) : ?>
-											<?php foreach ( $addons_data as $addon_item ) : ?>
+										<?php if ( ! empty( $addon_lines ) ) : ?>
+											<?php foreach ( $addon_lines as $addon_item ) : ?>
 												<div class="wpss-co-summary-line wpss-co-summary-line--addon">
 													<span><?php echo esc_html( $addon_item['name'] ); ?></span>
 													<span><?php echo esc_html( wpss_format_price( $addon_item['price'], $currency ) ); ?></span>
@@ -1650,12 +1649,12 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$unit_price   = (float) ( $selected_package['price'] ?? 0 );
 			$line_price   = $unit_price * $quantity;
 			$addons_total = 0.0;
-			$addons_data  = array();
+			$addon_lines  = array();
 
 			foreach ( $item['addons'] ?? array() as $addon ) {
 				$addon_price   = (float) ( $addon['price'] ?? 0 );
 				$addons_total += $addon_price;
-				$addons_data[] = $addon;
+				$addon_lines[] = $addon;
 			}
 
 			$line_total = $line_price + $addons_total;
@@ -1681,7 +1680,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				'package'       => $selected_package,
 				'unit_price'    => $unit_price,
 				'line_price'    => $line_price,
-				'addons'        => $addons_data,
+				'addons'        => $addon_lines,
 				'addons_total'  => $addons_total,
 				'line_total'    => $line_total,
 				'vendor_name'   => $vendor_name,

@@ -341,7 +341,8 @@ function wpss_normalize_service_addons( array $raw ): array {
 		$out[] = array(
 			'title'               => $title,
 			'description'         => sanitize_textarea_field( (string) ( $addon['description'] ?? '' ) ),
-			'price'               => (float) ( $addon['price'] ?? 0 ),
+			// A negative add-on is a discount the buyer can stack; never store one.
+			'price'               => max( 0.0, (float) ( $addon['price'] ?? 0 ) ),
 
 			/*
 			 * Clamp, never absint().
@@ -487,31 +488,16 @@ function wpss_resolve_checkout_addons( int $service_id, string $addon_ids = '' )
 		'delivery_days_extra' => 0,
 	);
 
-	// Try pre-resolved addons_data first (sent by checkout form as JSON).
-	// Skipped when the caller names the ids itself (a gateway return leg
-	// re-resolving from its own metadata): those are priced from post meta.
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
-	$addons_json = ( '' === $addon_ids && isset( $_POST['addons_data'] ) ) ? sanitize_text_field( wp_unslash( $_POST['addons_data'] ) ) : '';
-	if ( $addons_json ) {
-		$addons_array = json_decode( $addons_json, true );
-		if ( is_array( $addons_array ) ) {
-			foreach ( $addons_array as $addon ) {
-				$addon_price                    = (float) ( $addon['price'] ?? 0 );
-				$extra_days                     = (int) ( $addon['delivery_days_extra'] ?? $addon['extra_days'] ?? 0 );
-				$result['addons_total']        += $addon_price;
-				$result['delivery_days_extra'] += $extra_days;
-				$result['addons'][]             = array(
-					'id'                  => (int) ( $addon['id'] ?? 0 ),
-					'name'                => sanitize_text_field( $addon['name'] ?? $addon['title'] ?? '' ),
-					'price'               => $addon_price,
-					'delivery_days_extra' => $extra_days,
-				);
-			}
-			return $result;
-		}
-	}
-
-	// Fallback: resolve from addon_ids (indices into _wpss_addons post meta).
+	/*
+	 * Ids only, priced from post meta.
+	 *
+	 * This used to read a posted JSON add-on list first and charge each add-on
+	 * at the `price` the request carried. The checkout form filled it in, so it
+	 * looked like server data - but it arrived from the browser, and posting
+	 * [{"price":-70}] against an $80 package created a real $11.80 order
+	 * (Basecamp 10336645932). The buyer chooses WHICH add-ons; the service
+	 * decides what they cost.
+	 */
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
 	$addon_ids_raw = '' !== $addon_ids ? $addon_ids : ( isset( $_POST['addon_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_ids'] ) ) : '' );
 

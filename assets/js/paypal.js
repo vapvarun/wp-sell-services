@@ -189,7 +189,6 @@
 			const payOrder = document.querySelector('input[name="pay_order"]')?.value || '';
 			const isMulti = (this.form && this.form.id === 'wpss-multi-checkout-form') ? 1 : '';
 			const addonIds = document.querySelector('input[name="addon_ids"]')?.value || '';
-			const addonsData = document.querySelector('input[name="addons_data"], [name="addons_data"]')?.value || '';
 			return new Promise((resolve) => {
 				$.ajax({
 					url: wpssPayPal.ajaxUrl,
@@ -204,7 +203,6 @@
 						pay_order: payOrder,
 						is_multi_checkout: isMulti,
 						addon_ids: addonIds,
-						addons_data: addonsData,
 					},
 					success: resolve,
 					error: () => {
