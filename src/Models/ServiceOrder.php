@@ -1193,6 +1193,23 @@ class ServiceOrder {
 	}
 
 	/**
+	 * The buyer's pending cancellation request, or null.
+	 *
+	 * Stored in meta since 1.8.0. It used to be JSON in vendor_notes, a column
+	 * REST let the buyer write - and the 48-hour auto-cancel timer reads
+	 * requested_at from it (Basecamp 10336370631).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return array{reason?: string, note?: string, requested_by?: int, requested_at?: string}|null
+	 */
+	public function get_cancellation_request(): ?array {
+		$request = $this->meta['cancellation_request'] ?? null;
+
+		return is_array( $request ) ? $request : null;
+	}
+
+	/**
 	 * Get order status history (stored in meta JSON).
 	 *
 	 * @return array<array{status: string, timestamp: string, note: string}>

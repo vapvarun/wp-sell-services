@@ -121,6 +121,36 @@ class OrderService {
 	}
 
 	/**
+	 * Statuses a person may set directly on an order.
+	 *
+	 * Every real status except the ones that only mean something when their own
+	 * flow writes them - refunded and partially refunded (refund()), disputed
+	 * (DisputeService::open(), which creates the dispute) - and the three left
+	 * over from a vendor-acceptance step the product no longer has (pending,
+	 * accepted, rejected: nothing writes them, readers only honour old rows).
+	 * The admin status form, the admin order screen and REST PATCH read this.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return array<string, string> Status => label.
+	 */
+	public static function get_settable_statuses(): array {
+		return array_diff_key(
+			ServiceOrder::get_statuses(),
+			array_flip(
+				array(
+					ServiceOrder::STATUS_REFUNDED,
+					ServiceOrder::STATUS_PARTIALLY_REFUNDED,
+					ServiceOrder::STATUS_DISPUTED,
+					ServiceOrder::STATUS_PENDING,
+					ServiceOrder::STATUS_ACCEPTED,
+					ServiceOrder::STATUS_REJECTED,
+				)
+			)
+		);
+	}
+
+	/**
 	 * Gateway answers refund() already obtained, for the event in flight.
 	 *
 	 * The refund() method asks the gateway before it moves the status; the hook
@@ -658,6 +688,16 @@ class OrderService {
 
 		$old_status = $order->status;
 
+		// Refunded and partially refunded are money facts, written only by
+		// refund(), which sizes the amount and asks the gateway first. A bare
+		// status change to either used to fire the refund handlers with nothing
+		// sized and nothing asked.
+		if ( in_array( $new_status, array( ServiceOrder::STATUS_REFUNDED, ServiceOrder::STATUS_PARTIALLY_REFUNDED ), true )
+			&& ! isset( self::$refund_deltas[ $order_id ] ) ) {
+			wpss_log( sprintf( 'Order %d: "%s" can only be reached through OrderService::refund(); not applied.', $order_id, $new_status ), 'warning' );
+			return false;
+		}
+
 		if ( '' !== $expected_from && $expected_from !== $old_status ) {
 			wpss_log( sprintf( 'Order %d: expected status "%s" but found "%s"; "%s" not applied.', $order_id, $expected_from, $old_status, $new_status ), 'warning' );
 			return false;
@@ -759,6 +799,14 @@ class OrderService {
 	 * @return bool
 	 */
 	public function can_transition( string $from, string $to ): bool {
+		// A status that does not exist is refused for everyone, admins
+		// included. The capability bypass below used to accept any string, so
+		// "banana" was stored and the order lost every action it had
+		// (Basecamp 10336370527).
+		if ( ! isset( ServiceOrder::get_statuses()[ $to ] ) ) {
+			return false;
+		}
+
 		// Only site staff (wpss_manage_orders is admin-side; vendors hold
 		// wpss_vendor_orders, which never reaches here) can force a status
 		// transition. The forcing is audited downstream via
@@ -1206,28 +1254,32 @@ class OrderService {
 			);
 		}
 
-		// Store reason in vendor_notes first so status-change hooks can access it.
-		$cancel_data = wp_json_encode(
-			array(
-				'reason'       => sanitize_key( $reason ),
-				'note'         => sanitize_textarea_field( $note ),
-				'requested_by' => $user_id,
-				'requested_at' => current_time( 'mysql' ),
-			)
+		// Stored in the order's meta, not vendor_notes, before the status
+		// moves, so the status hooks (notification, email) can read it. The
+		// 48-hour auto-cancel timer reads requested_at from here, which is
+		// exactly why it must not live in a field anyone else can write
+		// (Basecamp 10336370631).
+		global $wpdb;
+		$table    = $wpdb->prefix . 'wpss_orders';
+		$old_meta = (string) $wpdb->get_var( $wpdb->prepare( "SELECT meta FROM {$table} WHERE id = %d", $order_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$meta     = json_decode( $old_meta, true );
+		$meta     = is_array( $meta ) ? $meta : array();
+
+		$meta['cancellation_request'] = array(
+			'reason'       => sanitize_key( $reason ),
+			'note'         => sanitize_textarea_field( $note ),
+			'requested_by' => $user_id,
+			'requested_at' => current_time( 'mysql' ),
 		);
 
-		global $wpdb;
-		$table     = $wpdb->prefix . 'wpss_orders';
-		$old_notes = $order->vendor_notes;
-
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$notes_written = $wpdb->update(
+		$meta_written = $wpdb->update(
 			$table,
-			array( 'vendor_notes' => $cancel_data ),
+			array( 'meta' => wp_json_encode( $meta ) ),
 			array( 'id' => $order_id )
 		);
 
-		if ( false === $notes_written ) {
+		if ( false === $meta_written ) {
 			return array(
 				'success' => false,
 				'message' => __( 'Failed to save cancellation details.', 'wp-sell-services' ),
@@ -1241,11 +1293,11 @@ class OrderService {
 		);
 
 		if ( ! $updated ) {
-			// Rollback vendor_notes on status transition failure.
+			// Put meta back exactly as it was when the transition is refused.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$table,
-				array( 'vendor_notes' => $old_notes ),
+				array( 'meta' => '' === $old_meta ? null : $old_meta ),
 				array( 'id' => $order_id )
 			);
 

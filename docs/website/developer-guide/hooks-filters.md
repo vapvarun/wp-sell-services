@@ -79,11 +79,11 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |--------|-----------|------|
 | `wpss_pre_create_order` | `array $order_data` | `StandaloneOrderProvider.php` |
 | `wpss_pre_order_status_change` | `bool $allow, int $order_id, string $new_status, string $old_status` | `OrderService.php` |
-| `wpss_order_started` | `int $order_id` | `src/API/OrdersController.php:938` |
+| `wpss_order_started` | `int $order_id` | `src/API/OrdersController.php:944` |
 | `wpss_order_completed` | `int $order_id, object $order` | `src/Services/OrderWorkflowManager.php:762` |
 | `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `src/Services/OrderWorkflowManager.php:853` |
 | `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:1151` |
-| `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:679` |
+| `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:685` |
 | `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/orders.php:298` |
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderWorkflowManager.php:723` |
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:490` |
@@ -120,7 +120,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_delivery_accepted` | `int $order_id` | `src/Services/DeliveryService.php:197` |
 | `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:251` |
 | `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:506` |
-| `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:1265` |
+| `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:1317` |
 | `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1598` |
 | `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` | `src/Services/ConversationService.php:351` |
 
@@ -347,7 +347,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2623` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2613` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1963` |
 
 ### Admin Filters
@@ -606,8 +606,8 @@ These filters let you customize outgoing email content without modifying templat
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2079` |
-| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2055` |
+| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2075` |
+| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2051` |
 | `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1576` |
 
 ```php
@@ -761,7 +761,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:956` |
+| `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1004` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:355` |
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:781` |
 | `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:906` |

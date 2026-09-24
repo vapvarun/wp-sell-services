@@ -595,7 +595,7 @@ class NotificationService {
 
 			case 'cancellation_requested':
 				// Parse cancellation reason.
-				$cancel_data   = json_decode( $order->vendor_notes ?? '', true );
+				$cancel_data   = \WPSellServices\Models\ServiceOrder::find( (int) $order->id )?->get_cancellation_request() ?? array();
 				$reason        = $cancel_data['reason'] ?? '';
 				$reason_labels = array(
 					'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),

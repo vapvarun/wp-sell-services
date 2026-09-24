@@ -218,6 +218,10 @@ class OrderScreen {
 
 			$result = true;
 		} else {
+			if ( ! isset( \WPSellServices\Services\OrderService::get_settable_statuses()[ $status ] ) ) {
+				wp_send_json_error( array( 'message' => __( 'That status cannot be set directly. Refunds and disputes have their own actions.', 'wp-sell-services' ) ) );
+			}
+
 			// Use OrderService instead of repository to ensure hooks fire.
 			// This triggers wpss_order_status_changed and wpss_order_status_{status} hooks
 			// which are needed for commission recording, notifications, etc.

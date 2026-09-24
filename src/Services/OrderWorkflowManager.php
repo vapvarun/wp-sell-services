@@ -1663,11 +1663,11 @@ class OrderWorkflowManager {
 		$table = $wpdb->prefix . 'wpss_orders';
 
 		// Find all orders in cancellation_requested status.
-		// We check the requested_at timestamp from vendor_notes JSON for accurate 48h enforcement.
+		// requested_at comes from the request stored in the order's meta.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$pending_orders = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, customer_id, vendor_id, vendor_notes, updated_at FROM {$table}
+				"SELECT id, customer_id, vendor_id, meta, updated_at FROM {$table}
 				WHERE status = %s",
 				ServiceOrder::STATUS_CANCELLATION_REQUESTED
 			)
@@ -1684,12 +1684,13 @@ class OrderWorkflowManager {
 		$timed_out_orders = array();
 
 		foreach ( $pending_orders as $order ) {
-			$cancel_data  = json_decode( $order->vendor_notes ?? '', true );
+			$order_meta   = json_decode( (string) ( $order->meta ?? '' ), true );
+			$cancel_data  = is_array( $order_meta ) ? ( $order_meta['cancellation_request'] ?? array() ) : array();
 			$requested_at = ! empty( $cancel_data['requested_at'] )
 				? strtotime( get_gmt_from_date( (string) $cancel_data['requested_at'] ) . ' UTC' )
 				: 0;
 
-			// Fall back to updated_at if vendor_notes JSON is missing or corrupt.
+			// Fall back to updated_at if the stored request is missing.
 			if ( $requested_at <= 0 && ! empty( $order->updated_at ) ) {
 				$requested_at = strtotime( $order->updated_at . ' UTC' );
 			}

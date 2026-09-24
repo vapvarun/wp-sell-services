@@ -35,7 +35,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.7.3';
+	const DB_VERSION = '1.8.0';
 
 	/**
 	 * Option name for storing DB version.
@@ -255,6 +255,7 @@ class SchemaManager {
 		$this->run_column_migrations();
 		$this->run_precision_migrations();
 		$this->add_1_7_1_indexes();
+		$this->run_1_8_0_data_migrations();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
 	}
@@ -1700,8 +1701,66 @@ class SchemaManager {
 		$this->run_column_migrations();
 		$this->run_precision_migrations();
 		$this->add_1_7_1_indexes();
+		$this->run_1_8_0_data_migrations();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
+	}
+
+	/**
+	 * Data moves for 1.8.0. Every step is idempotent.
+	 *
+	 * 1. Cancellation requests move from vendor_notes to the order's meta
+	 *    (Basecamp 10336370631). Only orders still waiting on one are touched -
+	 *    the status is indexed, and nothing reads the JSON on closed orders.
+	 * 2. wpss_tax.tax_on_commission is removed: no code ever read it, and the
+	 *    tax settings sanitiser already drops it on the next save.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return void
+	 */
+	private function run_1_8_0_data_migrations(): void {
+		$table = $this->prefix . 'orders';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT id, vendor_notes, meta FROM {$table} WHERE status = %s AND vendor_notes IS NOT NULL AND vendor_notes <> ''",
+				'cancellation_requested'
+			)
+		);
+
+		foreach ( (array) $rows as $row ) {
+			$request = json_decode( (string) $row->vendor_notes, true );
+
+			if ( ! is_array( $request ) || empty( $request['requested_at'] ) ) {
+				continue;
+			}
+
+			$meta = json_decode( (string) $row->meta, true );
+			$meta = is_array( $meta ) ? $meta : array();
+
+			if ( empty( $meta['cancellation_request'] ) ) {
+				$meta['cancellation_request'] = $request;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$this->wpdb->update(
+				$table,
+				array(
+					'meta'         => wp_json_encode( $meta ),
+					'vendor_notes' => null,
+				),
+				array( 'id' => (int) $row->id )
+			);
+		}
+
+		$tax = get_option( 'wpss_tax' );
+
+		if ( is_array( $tax ) && array_key_exists( 'tax_on_commission', $tax ) ) {
+			unset( $tax['tax_on_commission'] );
+			update_option( 'wpss_tax', $tax );
+		}
 	}
 
 	/**

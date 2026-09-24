@@ -535,6 +535,12 @@
       "callers": "free: OrderScreen::ajax_update_status (admin), AjaxHandlers refund verb (vendor), DisputeService::handle_resolution (outside its transaction), OrderWorkflowManager::handle_gateway_refund (settled_at_rail); retry: Admin::handle_retry_refund, POST /orders/{id}/retry-refund",
       "since": "1.8.0",
       "cascade": "A full refund that this plugin initiates also refunds the order's paid extension and tip sub-orders through refund() (origin cascade), each with its own gateway call, reversal and failed flag. A rail-initiated (settled_at_rail) refund does not cascade; those parents are listed by wpss_get_refund_review_items() with pre-1.8.0 history, shown in Admin::refund_review_notice(). Milestone phases are not cascaded."
+    },
+    "order_status_writes": {
+      "authority": "WPSellServices\\Services\\OrderService::get_settable_statuses() / can_transition() / update_status()",
+      "rule": "can_transition() refuses any status not in ServiceOrder::get_statuses(), admins included. update_status() refuses refunded / partially_refunded unless called from inside refund(). Statuses a person may set directly (admin form, OrderScreen AJAX, REST PATCH) come only from get_settable_statuses(): everything except refunded, partially_refunded, disputed and the unused acceptance-step statuses pending / accepted / rejected. REST PATCH /orders/{id} answers 400 for anything else and when the transition is refused; vendor_notes and due_date are readonly (400 wpss_field_not_writable).",
+      "cancellation_request": "Stored in wpss_orders.meta['cancellation_request'] and read through ServiceOrder::get_cancellation_request() by the 48h sweep, NotificationService, EmailService and order-view. Never in vendor_notes, which now only carries the creator note on a sub-order (tip message, extension reason, milestone description). SchemaManager::run_1_8_0_data_migrations() moved in-flight requests.",
+      "since": "1.8.0"
     }
   },
   "capabilities": {

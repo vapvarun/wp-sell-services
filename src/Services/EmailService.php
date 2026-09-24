@@ -1353,13 +1353,9 @@ class EmailService {
 		$vendor   = get_user_by( 'id', $order->vendor_id );
 		$customer = get_user_by( 'id', $order->customer_id );
 
-		// Parse cancellation data from vendor_notes.
-		$cancel_data = json_decode( $order->vendor_notes ?? '', true );
-		if ( ! is_array( $cancel_data ) ) {
-			$cancel_data = array();
-		}
-		$reason_key = $cancel_data['reason'] ?? '';
-		$note       = $cancel_data['note'] ?? '';
+		$cancel_data = $order->get_cancellation_request() ?? array();
+		$reason_key  = $cancel_data['reason'] ?? '';
+		$note        = $cancel_data['note'] ?? '';
 
 		$reason_labels = array(
 			'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),

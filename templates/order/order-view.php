@@ -1180,7 +1180,7 @@ do_action( 'wpss_before_order_view', $order );
 	<!-- Cancellation Request Banner -->
 	<?php if ( 'cancellation_requested' === $order->status ) : ?>
 		<?php
-		$cancel_data   = json_decode( $order->vendor_notes ?? '', true );
+		$cancel_data   = $order->get_cancellation_request() ?? array();
 		$cancel_reason = $cancel_data['reason'] ?? '';
 		$cancel_note   = $cancel_data['note'] ?? '';
 
@@ -1197,7 +1197,7 @@ do_action( 'wpss_before_order_view', $order );
 		// CB5 + VS7 (plans/ORDER-FLOW-AUDIT.md): visible auto-cancel countdown.
 		// Both buyer and vendor see exactly when the cancellation_requested
 		// state will auto-resolve via the existing 48h cron. Computed from the
-		// requested_at timestamp baked into vendor_notes JSON.
+		// requested_at timestamp stored with the cancellation request.
 		$requested_at_iso         = $cancel_data['requested_at'] ?? '';
 		$cancellation_deadline_ts = 0;
 		$time_remaining_label     = '';

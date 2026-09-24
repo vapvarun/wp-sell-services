@@ -523,49 +523,55 @@ class OrdersController extends RestController {
 			);
 		}
 
-		// Only allow updating certain fields.
-		$allowed_fields = array( 'vendor_notes' );
-
-		// Admin can update more fields.
-		if ( current_user_can( 'manage_options' ) ) {
-			$allowed_fields = array_merge( $allowed_fields, array( 'status', 'due_date' ) );
-		}
-
-		$updates = array();
-		foreach ( $allowed_fields as $field ) {
-			if ( $request->has_param( $field ) ) {
-				$value = $request->get_param( $field );
-
-				$updates[ $field ] = match ( $field ) {
-					'vendor_notes' => sanitize_textarea_field( $value ),
-					'status'       => sanitize_key( $value ),
-					'due_date'     => sanitize_text_field( $value ),
-					default        => sanitize_text_field( $value ),
-				};
+		// vendor_notes and due_date are not PATCHable. vendor_notes held the
+		// cancellation request that drives the 48-hour auto-cancel timer, so a
+		// buyer who could write it could cancel an order early (Basecamp
+		// 10336370631); due_date was accepted and silently ignored. Refuse both
+		// out loud rather than return 200 for nothing.
+		foreach ( array( 'vendor_notes', 'due_date' ) as $readonly_field ) {
+			if ( $request->has_param( $readonly_field ) ) {
+				return new WP_Error(
+					'wpss_field_not_writable',
+					/* translators: %s: field name */
+					sprintf( __( '%s cannot be changed through this endpoint.', 'wp-sell-services' ), $readonly_field ),
+					array( 'status' => 400 )
+				);
 			}
 		}
 
-		if ( ! empty( $updates ) ) {
-			// Route status changes through OrderService for consistent
-			// timestamps, logging, and hook behavior across all paths.
-			if ( isset( $updates['status'] ) ) {
-				$new_status = $updates['status'];
-				unset( $updates['status'] );
-
-				// Apply any non-status fields first.
-				if ( ! empty( $updates ) ) {
-					$order->update( $updates );
-				}
-
-				$order_service = new OrderService();
-				$order_service->update_status( $order_id, $new_status );
-
-				// Refresh order to reflect all changes.
-				$order = ServiceOrder::find( $order_id );
-			} else {
-				$order->update( $updates );
-			}
+		if ( ! $request->has_param( 'status' ) ) {
+			return $this->prepare_item_for_response( $order, $request );
 		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return new WP_Error(
+				'wpss_field_not_writable',
+				__( 'Only an administrator can set an order status directly. Use the order actions instead.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$new_status = sanitize_key( (string) $request->get_param( 'status' ) );
+
+		// Refunds and disputes have their own actions, which move money and
+		// create the dispute. A bare status would do neither.
+		if ( ! isset( OrderService::get_settable_statuses()[ $new_status ] ) ) {
+			return new WP_Error(
+				'wpss_invalid_status',
+				__( 'That status cannot be set directly. Refunds and disputes have their own actions.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( $new_status !== $order->status && ! ( new OrderService() )->update_status( $order_id, $new_status ) ) {
+			return new WP_Error(
+				'wpss_invalid_transition',
+				__( 'The order cannot move to that status from its current one.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$order = ServiceOrder::find( $order_id );
 
 		return $this->prepare_item_for_response( $order, $request );
 	}
@@ -1054,8 +1060,6 @@ class OrdersController extends RestController {
 					if ( empty( $reason ) ) {
 						$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
 					} else {
-						// Store cancellation reason in vendor_notes before status change.
-						$order->update( array( 'vendor_notes' => $reason ) );
 						$cancel_result = $order_service->cancel( $order_id, $user_id, $reason );
 						$result        = $cancel_result['success'] ?? false;
 						if ( ! $result ) {
@@ -1070,8 +1074,6 @@ class OrdersController extends RestController {
 						if ( empty( $reason ) ) {
 							$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
 						} else {
-							// Store cancellation reason in vendor_notes before status change.
-							$order->update( array( 'vendor_notes' => $reason ) );
 							$cancel_result = $order_service->cancel( $order_id, $user_id, $reason );
 							$result        = $cancel_result['success'] ?? false;
 							if ( ! $result ) {
@@ -1099,8 +1101,6 @@ class OrdersController extends RestController {
 					if ( empty( $reason ) ) {
 						$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
 					} else {
-						// Store cancellation reason in vendor_notes before status change.
-						$order->update( array( 'vendor_notes' => $reason ) );
 						$cancel_result = $order_service->cancel( $order_id, $user_id, $reason );
 						$result        = $cancel_result['success'] ?? false;
 						if ( ! $result ) {
@@ -2338,15 +2338,17 @@ class OrdersController extends RestController {
 						'readonly'    => true,
 					),
 					'vendor_notes' => array(
-						'description' => __( 'Vendor notes.', 'wp-sell-services' ),
+						'description' => __( 'Note written with a sub-order (tip message, extension reason, milestone description).', 'wp-sell-services' ),
 						'type'        => 'string',
 						'context'     => array( 'view', 'edit' ),
+						'readonly'    => true,
 					),
 					'due_date'     => array(
 						'description' => __( 'Due date.', 'wp-sell-services' ),
 						'type'        => 'string',
 						'format'      => 'date-time',
 						'context'     => array( 'view', 'edit' ),
+						'readonly'    => true,
 					),
 				)
 			),

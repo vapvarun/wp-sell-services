@@ -1129,19 +1129,10 @@ class Admin {
 			wp_die( esc_html__( 'Invalid request.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
 		}
 
-		// Valid statuses.
-		$valid_statuses = array(
-			'pending_payment',
-			'pending_requirements',
-			'in_progress',
-			'delivered',
-			'revision_requested',
-			'completed',
-			'cancelled',
-			'disputed',
-		);
-
-		if ( ! in_array( $status, $valid_statuses, true ) ) {
+		// The one list of statuses a person may set by hand. Refunds and
+		// disputes have their own actions; this form used to allow "disputed",
+		// which left an order in dispute with no dispute behind it.
+		if ( ! isset( OrderService::get_settable_statuses()[ $status ] ) ) {
 			wp_die( esc_html__( 'Invalid status.', 'wp-sell-services' ), '', array( 'back_link' => true ) );
 		}
 
@@ -2158,16 +2149,15 @@ class Admin {
 			)
 		);
 
-		$statuses = array(
-			'pending_payment'      => __( 'Pending Payment', 'wp-sell-services' ),
-			'pending_requirements' => __( 'Waiting for Requirements', 'wp-sell-services' ),
-			'in_progress'          => __( 'In Progress', 'wp-sell-services' ),
-			'delivered'            => __( 'Delivered', 'wp-sell-services' ),
-			'revision_requested'   => __( 'Revision Requested', 'wp-sell-services' ),
-			'completed'            => __( 'Completed', 'wp-sell-services' ),
-			'cancelled'            => __( 'Cancelled', 'wp-sell-services' ),
-			'disputed'             => __( 'Disputed', 'wp-sell-services' ),
-		);
+		// Labels for every status; the dropdown offers only the settable ones,
+		// plus the order's current status so the form never silently shows a
+		// different one than the order has.
+		$statuses         = ServiceOrder::get_statuses();
+		$wpss_set_options = OrderService::get_settable_statuses();
+
+		if ( ! isset( $wpss_set_options[ $order->status ] ) ) {
+			$wpss_set_options = array( $order->status => $statuses[ $order->status ] ?? $order->status ) + $wpss_set_options;
+		}
 		?>
 		<div class="wrap wpss-order-detail">
 			<h1 class="wp-heading-inline">
@@ -2481,7 +2471,7 @@ class Admin {
 									<p>
 										<label for="order_status"><strong><?php esc_html_e( 'Status:', 'wp-sell-services' ); ?></strong></label><br>
 										<select name="order_status" id="order_status" style="width: 100%;">
-											<?php foreach ( $statuses as $value => $label ) : ?>
+											<?php foreach ( $wpss_set_options as $value => $label ) : ?>
 												<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $order->status, $value ); ?>>
 													<?php echo esc_html( $label ); ?>
 												</option>
