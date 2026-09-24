@@ -382,6 +382,69 @@ function wpss_get_pending_manual_refunds(): array {
 }
 
 /**
+ * Refunds the owner has to look at: ones the gateway refused, and fully
+ * refunded orders whose paid extensions or tips were never refunded.
+ *
+ * The second list is mostly history: before 1.8.0 a full refund stopped at the
+ * parent (Basecamp 10336467671). It also catches a refund that started at the
+ * payment rail, which never touches the separately charged children. Nothing
+ * here is changed automatically - each one needs a person to decide.
+ *
+ * @since 1.8.0
+ *
+ * @param int $limit Maximum orders per list.
+ * @return array{failed: array<int, array<string, mixed>>, uncascaded: int[]}
+ */
+function wpss_get_refund_review_items( int $limit = 20 ): array {
+	global $wpdb;
+
+	$items = array(
+		'failed'     => array(),
+		'uncascaded' => array(),
+	);
+
+	if ( '1.0' === get_option( 'wpss_order_meta_table_version' ) ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT order_id, meta_value FROM {$wpdb->prefix}wpss_order_meta WHERE meta_key = %s AND meta_value <> '' ORDER BY order_id ASC LIMIT %d",
+				\WPSellServices\Services\OrderWorkflowManager::REFUND_FAILED_META,
+				$limit
+			)
+		);
+
+		foreach ( (array) $rows as $row ) {
+			$flag = maybe_unserialize( (string) $row->meta_value );
+
+			if ( is_array( $flag ) && ! empty( $flag['amount'] ) ) {
+				$items['failed'][ (int) $row->order_id ] = $flag;
+			}
+		}
+	}
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- child side uses idx_platform (platform, platform_order_id).
+	$items['uncascaded'] = array_map(
+		'intval',
+		(array) $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT p.id FROM {$wpdb->prefix}wpss_orders p
+				INNER JOIN {$wpdb->prefix}wpss_orders c
+					ON c.platform IN (%s, %s) AND c.platform_order_id = p.id
+				WHERE p.status = %s AND c.payment_status = 'paid' AND c.status <> %s
+				ORDER BY p.id ASC LIMIT %d",
+				\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_EXTENSION,
+				\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_TIP,
+				\WPSellServices\Models\ServiceOrder::STATUS_REFUNDED,
+				\WPSellServices\Models\ServiceOrder::STATUS_REFUNDED,
+				$limit
+			)
+		)
+	);
+
+	return $items;
+}
+
+/**
  * Vendor's share of a refund.
  *
  * THE single proportional formula. A refund gives the buyer back some or all of

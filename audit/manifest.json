@@ -532,7 +532,8 @@
       "authority": "WPSellServices\\Services\\OrderService::refund( int $order_id, ?float $amount, string $status, array $ctx = [] ): array",
       "rule": "The gateway is asked BEFORE the order moves. Only a refund whose money moved (outcome moved), an honest manual refund (manual), a rail-initiated one (settled_at_rail) or one with nothing captured (recorded) changes status, refunded_amount or the vendor ledger. A gateway refusal (failed) records nothing and writes OrderWorkflowManager::REFUND_FAILED_META; retry via OrderService::retry_refund(). apply_refund_status() is a bool wrapper kept for old callers.",
       "callers": "free: OrderScreen::ajax_update_status (admin), AjaxHandlers refund verb (vendor), DisputeService::handle_resolution (outside its transaction), OrderWorkflowManager::handle_gateway_refund (settled_at_rail); retry: Admin::handle_retry_refund, POST /orders/{id}/retry-refund",
-      "since": "1.8.0"
+      "since": "1.8.0",
+      "cascade": "A full refund that this plugin initiates also refunds the order's paid extension and tip sub-orders through refund() (origin cascade), each with its own gateway call, reversal and failed flag. A rail-initiated (settled_at_rail) refund does not cascade; those parents are listed by wpss_get_refund_review_items() with pre-1.8.0 history, shown in Admin::refund_review_notice(). Milestone phases are not cascaded."
     }
   },
   "capabilities": {

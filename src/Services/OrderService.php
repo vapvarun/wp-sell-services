@@ -327,6 +327,7 @@ class OrderService {
 				'gateway'      => $gateway,
 				'message'      => $message,
 				'retryable'    => 'failed' === $outcome,
+				'children'     => array(),
 			);
 		};
 
@@ -494,6 +495,19 @@ class OrderService {
 
 		OrderWorkflowManager::clear_failed_refund( $order_id );
 
+		// A full refund returns everything the buyer paid for this order,
+		// including the extensions and tips they paid for separately. The seam
+		// used to stop at the parent, so the extension stayed completed and
+		// credited - the buyer never got it back and the vendor kept it
+		// (Basecamp 10336467671). A refund that started at the rail is left
+		// alone: those children were separate charges the rail did not touch,
+		// so they are listed for the owner instead of refunded blind.
+		$children = array();
+
+		if ( ServiceOrder::STATUS_REFUNDED === $status && ! $settled_at_rail && 'cascade' !== ( $ctx['origin'] ?? '' ) ) {
+			$children = $this->refund_paid_children( $order_id );
+		}
+
 		if ( $settled_at_rail ) {
 			$outcome = 'settled_at_rail';
 		} elseif ( null === $gateway ) {
@@ -502,7 +516,51 @@ class OrderService {
 			$outcome = empty( $gateway['manual'] ) ? 'moved' : 'manual';
 		}
 
-		return $result( true, $outcome, $delta, $status, $gateway );
+		$recorded             = $result( true, $outcome, $delta, $status, $gateway );
+		$recorded['children'] = $children;
+
+		return $recorded;
+	}
+
+	/**
+	 * Refund the paid extensions and tips hanging off an order.
+	 *
+	 * Each child goes through refund() on its own - its own gateway charge, its
+	 * own vendor reversal, its own failed flag if the gateway refuses. A child
+	 * that fails does not undo the parent: the buyer got that money back.
+	 * Milestone phases are not included; they are paid and settled as their
+	 * own orders.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $parent_id Parent order ID.
+	 * @return array<int, string> Child order ID => refund outcome.
+	 */
+	private function refund_paid_children( int $parent_id ): array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one indexed lookup (idx_platform) per full refund.
+		$child_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}wpss_orders
+				WHERE platform IN (%s, %s) AND platform_order_id = %d
+				AND payment_status = 'paid' AND status <> %s
+				ORDER BY id ASC",
+				ServiceOrder::SUB_ORDER_TYPE_EXTENSION,
+				ServiceOrder::SUB_ORDER_TYPE_TIP,
+				$parent_id,
+				ServiceOrder::STATUS_REFUNDED
+			)
+		);
+
+		$outcomes = array();
+
+		foreach ( array_map( 'intval', $child_ids ) as $child_id ) {
+			$child_result          = $this->refund( $child_id, null, ServiceOrder::STATUS_REFUNDED, array( 'origin' => 'cascade' ) );
+			$outcomes[ $child_id ] = $child_result['outcome'];
+		}
+
+		return $outcomes;
 	}
 
 	/**

@@ -414,6 +414,7 @@ class Admin {
 		add_action( 'admin_notices', array( $this, 'order_files_public_notice' ) );
 		add_action( 'admin_notices', array( $this, 'missing_terms_notice' ) );
 		add_action( 'admin_notices', array( $this, 'pending_manual_refunds_notice' ) );
+		add_action( 'admin_notices', array( $this, 'refund_review_notice' ) );
 		add_action( 'admin_notices', array( $this, 'migrated_sellers_notice' ) );
 		add_action( 'wp_ajax_wpss_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
@@ -524,6 +525,71 @@ class Admin {
 			esc_html__( 'These orders were paid through a gateway that cannot refund automatically. Send the money, then open the order and mark the refund as sent.', 'wp-sell-services' ),
 			implode( '', $items ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each item escaped above.
 		);
+	}
+
+	/**
+	 * List refunds that did not complete and need a person.
+	 *
+	 * Refused at the gateway (Retry is on the order), or a fully refunded order
+	 * whose paid extensions or tips were never refunded. See
+	 * wpss_get_refund_review_items().
+	 *
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function refund_review_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+			return;
+		}
+
+		$review = wpss_get_refund_review_items();
+		$link   = static function ( int $order_id ): string {
+			return sprintf(
+				'<a href="%1$s">%2$s</a>',
+				esc_url(
+					add_query_arg(
+						array(
+							'page'     => 'wpss-orders',
+							'action'   => 'view',
+							'order_id' => $order_id,
+						),
+						admin_url( 'admin.php' )
+					)
+				),
+				/* translators: %d: order ID */
+				esc_html( sprintf( __( 'Order #%d', 'wp-sell-services' ), $order_id ) )
+			);
+		};
+
+		if ( ! empty( $review['failed'] ) ) {
+			$items = array();
+
+			foreach ( $review['failed'] as $order_id => $flag ) {
+				$items[] = '<li>' . $link( (int) $order_id ) . ': ' . esc_html( (string) ( $flag['error'] ?? '' ) ) . '</li>';
+			}
+
+			printf(
+				'<div class="notice notice-error"><p><strong>%s</strong> %s</p><ul style="list-style: disc; margin-inline-start: 1.5em;">%s</ul></div>',
+				esc_html( _n( 'A refund was refused by the payment gateway.', 'Refunds were refused by the payment gateway.', count( $items ), 'wp-sell-services' ) ),
+				esc_html__( 'The buyer has not been refunded and nothing was changed on the order. Fix the cause at the gateway, then open the order and use Retry refund.', 'wp-sell-services' ),
+				implode( '', $items ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each item escaped above.
+			);
+		}
+
+		if ( ! empty( $review['uncascaded'] ) ) {
+			printf(
+				'<div class="notice notice-warning"><p><strong>%s</strong> %s</p><ul style="list-style: disc; margin-inline-start: 1.5em;">%s</ul></div>',
+				esc_html__( 'Refunded orders with extensions or tips still paid.', 'wp-sell-services' ),
+				esc_html__( 'These orders were refunded in full, but an extension or tip paid on them was not. Before 1.8.0 a full refund stopped at the main order; a refund made at the payment gateway also leaves them. Review each one and refund the extension or tip from its own order if the buyer is owed it.', 'wp-sell-services' ),
+				implode( '', array_map( static fn( int $id ): string => '<li>' . $link( $id ) . '</li>', $review['uncascaded'] ) ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built from escaped links.
+			);
+		}
 	}
 
 	/**
