@@ -130,9 +130,38 @@ $check( '  it carries the statement text', $statement === ( $evidence[0]['conten
 $check( '  it is attributed to whoever opened it', $buyer === (int) ( $evidence[0]['user_id'] ?? 0 ) );
 $check( '  a reply does not duplicate it', 2 === ( $service->add_evidence( $dispute4, $vendor, 'text', 'My reply.' ) ? count( $service->get_evidence( $dispute4 ) ) : -1 ) );
 
+// --- a completed order inside the window can be disputed (Basecamp 10336467327)
+// open_guard() allowed it, but the transition map had no completed -> disputed
+// edge, so the button showed and every submit failed. Both now read one list.
+// As a buyer holds no capabilities: an admin context passes can_transition()'s
+// cap bypass and would hide the missing edge.
+wp_set_current_user( 0 );
+$window = (array) get_option( 'wpss_orders', array() );
+update_option( 'wpss_orders', array_merge( $window, array( 'dispute_window_days' => 14 ) ) );
+
+$recent = $seed( 'completed' );
+$wpdb->update( $orders, array( 'completed_at' => gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS ) ), array( 'id' => $recent ) );
+$stale = $seed( 'completed' );
+$wpdb->update( $orders, array( 'completed_at' => gmdate( 'Y-m-d H:i:s', time() - 30 * DAY_IN_SECONDS ) ), array( 'id' => $stale ) );
+
+$check( 'a buyer can open a dispute on an order completed yesterday (14-day window)', (bool) $service->open( $recent, $buyer, 'not_as_described', 'Broke a day after delivery.' ) );
+$check( '  and the order moves to disputed', 'disputed' === $order_status( $recent ) );
+$check( 'a buyer cannot open one after the window closes', ! $service->open( $stale, $buyer, 'not_as_described', 'Too late.' ) );
+$check( '  and the order stays completed', 'completed' === $order_status( $stale ) );
+
+$order_service = new \WPSellServices\Services\OrderService();
+$sources       = DisputeService::dispute_source_statuses();
+$drift         = array();
+foreach ( array_keys( \WPSellServices\Models\ServiceOrder::get_statuses() ) as $from ) {
+	if ( $order_service->can_transition_naturally( $from, 'disputed' ) !== in_array( $from, $sources, true ) ) {
+		$drift[] = $from;
+	}
+}
+$check( 'every -> disputed edge comes from dispute_source_statuses()' . ( $drift ? ' (drift: ' . implode( ', ', $drift ) . ')' : '' ), empty( $drift ) );
+
 // --- cleanup ------------------------------------------------------------------
 update_option( 'wpss_orders', $saved_settings );
-$order_ids = array( $paid, $unpaid, $paid2, $paid3, $paid4 );
+$order_ids = array( $paid, $unpaid, $paid2, $paid3, $paid4, $recent, $stale );
 foreach ( $order_ids as $id ) {
 	$wpdb->delete( $wpdb->prefix . 'wpss_dispute_messages', array( 'dispute_id' => (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$disputes} WHERE order_id = %d", $id ) ) ) );
 	$wpdb->delete( $disputes, array( 'order_id' => $id ) );

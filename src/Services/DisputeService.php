@@ -77,6 +77,21 @@ class DisputeService {
 	);
 
 	/**
+	 * Every order status a dispute may be opened from.
+	 *
+	 * DISPUTABLE_ORDER_STATUSES plus completed, which open_guard() admits only
+	 * inside the dispute window. OrderService builds its -> disputed edges from
+	 * this list, so the guard and the state machine read the same thing.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return string[]
+	 */
+	public static function dispute_source_statuses(): array {
+		return array_merge( self::DISPUTABLE_ORDER_STATUSES, array( ServiceOrder::STATUS_COMPLETED ) );
+	}
+
+	/**
 	 * Why the last open()/transition()/resolve() call returned false.
 	 *
 	 * @var string

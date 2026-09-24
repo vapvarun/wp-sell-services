@@ -575,7 +575,6 @@ class OrderService {
 				ServiceOrder::STATUS_LATE,
 				ServiceOrder::STATUS_CANCELLATION_REQUESTED,
 				ServiceOrder::STATUS_DELIVERED,
-				ServiceOrder::STATUS_DISPUTED,
 				// Milestone-contract parents skip pending_approval because every
 				// phase has its own submit + approve cycle; when the last phase
 				// closes, the parent auto-flips straight from in_progress to
@@ -585,20 +584,17 @@ class OrderService {
 			ServiceOrder::STATUS_PENDING_APPROVAL       => array(
 				ServiceOrder::STATUS_COMPLETED,
 				ServiceOrder::STATUS_REVISION_REQUESTED,
-				ServiceOrder::STATUS_DISPUTED,
 				ServiceOrder::STATUS_CANCELLED,
 			),
 			ServiceOrder::STATUS_REVISION_REQUESTED     => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
-				ServiceOrder::STATUS_DISPUTED,
 			),
 			ServiceOrder::STATUS_LATE                   => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
-				ServiceOrder::STATUS_DISPUTED,
 				ServiceOrder::STATUS_DELIVERED,
 			),
 			ServiceOrder::STATUS_ON_HOLD                => array(
@@ -607,7 +603,6 @@ class OrderService {
 			),
 			ServiceOrder::STATUS_CANCELLATION_REQUESTED => array(
 				ServiceOrder::STATUS_CANCELLED,
-				ServiceOrder::STATUS_DISPUTED,
 				ServiceOrder::STATUS_IN_PROGRESS,
 			),
 			// The four rulings, plus every status a dispute can be opened from:
@@ -640,7 +635,6 @@ class OrderService {
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_DELIVERED,
 				ServiceOrder::STATUS_COMPLETED,
-				ServiceOrder::STATUS_DISPUTED,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_REFUNDED,
 			),
@@ -662,9 +656,16 @@ class OrderService {
 			ServiceOrder::STATUS_DELIVERED              => array(
 				ServiceOrder::STATUS_COMPLETED,
 				ServiceOrder::STATUS_REVISION_REQUESTED,
-				ServiceOrder::STATUS_DISPUTED,
 			),
 		);
+
+		// Every -> disputed edge comes from the one list DisputeService opens
+		// from. They were written out by hand here and missed completed, so a
+		// buyer inside the dispute window saw the button and every submit
+		// failed (Basecamp 10336467327). The window itself is open_guard()'s.
+		foreach ( DisputeService::dispute_source_statuses() as $dispute_source ) {
+			$transitions[ $dispute_source ][] = ServiceOrder::STATUS_DISPUTED;
+		}
 
 		// Refund is a money action, not a workflow step: policy is that any PAID
 		// order is refundable at any stage (quality problems surface after
