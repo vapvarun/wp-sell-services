@@ -301,6 +301,25 @@ function wpss_check_upload( array $file, string $context = '' ): ?WP_Error {
 	$allowed = (array) apply_filters( 'wpss_allowed_file_types', $allowed, $file, $context );
 
 	/*
+	 * Public profile media is capped to what it is: images, plus video for a
+	 * portfolio. The owner's list is written for PRIVATE order files (pdf, zip,
+	 * psd...), and applying it here let any member host an archive publicly as
+	 * an "avatar" (Basecamp 10336370704). Intersected, so an owner who narrows
+	 * the list narrows these too, but nothing can widen them past the cap.
+	 */
+	$images        = array( 'jpg', 'jpeg', 'png', 'gif', 'webp' );
+	$public_limits = array(
+		'avatar'    => $images,
+		'profile'   => $images,
+		'service'   => $images,
+		'portfolio' => array_merge( $images, array( 'mp4', 'webm', 'mov' ) ),
+	);
+
+	if ( isset( $public_limits[ $context ] ) ) {
+		$allowed = array_values( array_intersect( $allowed, $public_limits[ $context ] ) );
+	}
+
+	/*
 	 * The per-flow filters from before uploads shared one check.
 	 *
 	 * Delivery and requirements each used to build their own list and pass it

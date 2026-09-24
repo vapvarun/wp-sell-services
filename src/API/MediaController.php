@@ -138,7 +138,7 @@ class MediaController extends RestController {
 			return new WP_Error( 'no_file', __( 'No file provided.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		$refused = wpss_check_upload( (array) $files['file'] );
+		$refused = wpss_check_upload( (array) $files['file'], $context );
 
 		if ( $refused ) {
 			return $refused;
@@ -355,5 +355,17 @@ class MediaController extends RestController {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Uploads are charged to the upload budget, not the general one.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return string
+	 */
+	protected function get_rate_limit_action( WP_REST_Request $request ): string {
+		return 'POST' === $request->get_method() ? 'file_upload' : parent::get_rate_limit_action( $request );
 	}
 }

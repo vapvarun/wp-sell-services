@@ -782,8 +782,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/API/ReviewsController.php:426` |
 | `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:601` |
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:112` |
-| `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:323` |
-| `wpss_requirements_allowed_file_types` | `$allowed` | `src/functions/files.php:333` |
+| `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:342` |
+| `wpss_requirements_allowed_file_types` | `$allowed` | `src/functions/files.php:352` |
 | `wpss_withdrawal_methods` | `$methods` | `src/API/EarningsController.php:607` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:522` |
