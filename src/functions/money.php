@@ -411,7 +411,9 @@ function wpss_get_pending_manual_refunds(): array {
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$rows = $wpdb->get_results(
 		$wpdb->prepare(
-			"SELECT order_id, meta_value FROM {$wpdb->prefix}wpss_order_meta WHERE meta_key = %s ORDER BY order_id ASC",
+			// Only orders that still exist: a flag left on a deleted order showed
+			// the owner a dead link to send money for nothing (Basecamp 10336652112).
+			"SELECT m.order_id, m.meta_value FROM {$wpdb->prefix}wpss_order_meta m INNER JOIN {$wpdb->prefix}wpss_orders o ON o.id = m.order_id WHERE m.meta_key = %s ORDER BY m.order_id ASC",
 			\WPSellServices\Services\OrderWorkflowManager::REFUND_PENDING_META
 		)
 	);

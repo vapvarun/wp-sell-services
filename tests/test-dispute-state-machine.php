@@ -166,6 +166,7 @@ foreach ( $order_ids as $id ) {
 	$wpdb->delete( $wpdb->prefix . 'wpss_dispute_messages', array( 'dispute_id' => (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$disputes} WHERE order_id = %d", $id ) ) ) );
 	$wpdb->delete( $disputes, array( 'order_id' => $id ) );
 	$wpdb->delete( $orders, array( 'id' => $id ) );
+	$wpdb->delete( $wpdb->prefix . 'wpss_order_meta', array( 'order_id' => $id ) );
 	$wpdb->delete( $wpdb->prefix . 'wpss_conversations', array( 'order_id' => $id ) );
 	$wpdb->delete( $wpdb->prefix . 'wpss_audit_log', array( 'object_type' => 'order', 'object_id' => $id ) );
 }
