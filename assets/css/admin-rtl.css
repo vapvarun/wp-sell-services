@@ -3685,3 +3685,104 @@ button.wpss-change-status:focus {
 	height: auto;
 	padding-block: 4px;
 }
+
+/* Orders list (Basecamp 10337161480): payment under the total, due/late under
+   the status; a status + total line in the primary cell and a tab select on
+   a phone, where core shows only the primary column. */
+.wpss-order-row-sub {
+	display: block;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-order-row-sub--late {
+	color: var(--wpss-admin-danger, #b32d2e);
+	font-weight: 500;
+}
+
+.wpss-order-row-mobile,
+.wpss-orders-group-select {
+	display: none;
+}
+
+/* In a list toolbar the picker is just its search box: the matches open
+   underneath it, and the select stays in the row only once something is
+   chosen. */
+.tablenav .wpss-search-select {
+	position: relative;
+	display: inline-flex;
+	flex-direction: row;
+	width: auto;
+	vertical-align: middle;
+	margin-inline-end: 6px;
+}
+
+.tablenav .wpss-search-select__input,
+.tablenav .wpss-search-select select {
+	width: 11rem;
+}
+
+.tablenav .wpss-search-select select:not(.is-open):not(.has-value) {
+	display: none;
+}
+
+.tablenav .wpss-search-select select.is-open {
+	position: absolute;
+	z-index: 10;
+	top: 100%;
+	inset-inline-start: 0;
+	width: 18rem;
+}
+
+@media screen and (max-width: 782px) {
+	.wpss-order-row-mobile {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 4px 8px;
+		margin-top: 4px;
+	}
+
+	.wpss-order-row-mobile .wpss-order-row-sub {
+		display: inline;
+	}
+
+	.wpss-list-card__filters .subsubsub {
+		display: none;
+	}
+
+	/* Core keeps the row actions' height at this width but shows them only on
+	   touch or hover, which read as a blank band under every row. */
+	.wp-list-table.orders .row-actions {
+		right: 0;
+	}
+
+	.wpss-orders-group-select {
+		display: block;
+		width: 100%;
+		max-width: none;
+		margin-block: 8px;
+	}
+
+	.tablenav .wpss-search-select {
+		display: flex;
+		width: 100%;
+		margin-block: 4px;
+	}
+
+	.tablenav .wpss-search-select__input,
+	.tablenav .wpss-search-select select {
+		width: 50%;
+	}
+}
+
+/* Order numbers such as #WPSS-20260816-0004 need their own width; core gave
+   every column the same share and split them mid-word at 1024 and 820. */
+.wp-list-table.orders .column-order_number { width: 12em; }
+.wp-list-table.orders .column-total { width: 8em; }
+.wp-list-table.orders .column-status { width: 10em; }
+.wp-list-table.orders .column-date { width: 7em; }
+
+@media screen and (min-width: 783px) and (max-width: 1024px) {
+	/* Tablet: the order date gives way to the names; the due date is under Status. */
+	.wp-list-table.orders .column-date { display: none; }
+}

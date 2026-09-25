@@ -610,7 +610,10 @@
 		function closeList() {
 			select.size = 0;
 			select.classList.remove( 'is-open' );
+			select.classList.toggle( 'has-value', '' !== select.value );
 		}
+
+		closeList();
 
 		input.addEventListener( 'input', function () {
 			clearTimeout( timer );
@@ -658,3 +661,13 @@
 		select.addEventListener( 'blur', closeList );
 	} );
 }() );
+
+/**
+ * A select whose options are URLs navigates on change (the Orders tabs on a
+ * phone).
+ */
+document.querySelectorAll( 'select[data-wpss-nav]' ).forEach( function ( select ) {
+	select.addEventListener( 'change', function () {
+		window.location.href = select.value;
+	} );
+} );

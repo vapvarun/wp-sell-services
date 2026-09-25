@@ -2031,7 +2031,11 @@ class Admin {
 
 		$list_table = new OrdersListTable();
 		$list_table->prepare_items();
-		$has_items = ! empty( $list_table->items );
+		// A filter that matches nothing keeps the table (and its filters) so it
+		// can be changed; only a store with no orders at all gets the empty state.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filters.
+		$is_filtered = (bool) array_filter( array_intersect_key( $_GET, array_flip( array( 'group', 'status', 'm', 'suborder_type', 's', 'vendor_id', 'customer_id' ) ) ) );
+		$has_items   = ! empty( $list_table->items ) || $is_filtered;
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></h1>

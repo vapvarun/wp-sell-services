@@ -161,10 +161,19 @@ class OrdersListTable extends \WP_List_Table {
 			);
 		}
 
+		// On a phone core shows only this column until the row is expanded, so
+		// the status and total ride along here (hidden above 782px by admin.css).
+		$mobile = sprintf(
+			'<span class="wpss-order-row-mobile">%s %s</span>',
+			$this->column_status( $item ),
+			$this->column_total( $item )
+		);
+
 		return sprintf(
-			'<strong><a href="%s">#%s</a></strong>%s',
+			'<strong><a href="%s">#%s</a></strong>%s%s',
 			esc_url( $view_url ),
 			esc_html( $item->order_number ),
+			$mobile,
 			$this->row_actions( $actions )
 		);
 	}
@@ -192,9 +201,10 @@ class OrdersListTable extends \WP_List_Table {
 			);
 		}
 
+		// Sub-orders link to their parent order in this admin, so it opens in place.
 		if ( '' !== $subject['url'] ) {
 			return sprintf(
-				'<a href="%s" target="_blank"><em>%s</em></a>',
+				'<a href="%s">%s</a>',
 				esc_url( $subject['url'] ),
 				esc_html( $subject['label'] )
 			);
@@ -216,11 +226,13 @@ class OrdersListTable extends \WP_List_Table {
 			return '<em>' . esc_html( wpss_get_member_display_name( (int) $item->customer_id ) ) . '</em>';
 		}
 
+		// Name only: the email sat under it on every row and broke a character
+		// per line at 820px. It is on hover, and "Email customer" mails it.
 		return sprintf(
-			'<a href="%s">%s</a><br><small>%s</small>',
+			'<a href="%s" title="%s">%s</a>',
 			esc_url( get_edit_user_link( $user->ID ) ),
-			esc_html( $user->display_name ),
-			esc_html( $user->user_email )
+			esc_attr( $user->user_email ),
+			esc_html( $user->display_name )
 		);
 	}
 
@@ -251,7 +263,21 @@ class OrdersListTable extends \WP_List_Table {
 	 * @return string
 	 */
 	public function column_total( $item ): string {
-		return esc_html( wpss_format_price( (float) $item->total, $item->currency ) );
+		$method = wpss_get_payment_method_label( (string) ( $item->payment_method ?? '' ) );
+		$paid   = 'paid' === ( $item->payment_status ?? '' ) || ! empty( $item->paid_at );
+
+		if ( $paid ) {
+			/* translators: %s: payment method, e.g. Stripe. */
+			$payment = '' !== $method ? sprintf( __( 'Paid · %s', 'wp-sell-services' ), $method ) : __( 'Paid', 'wp-sell-services' );
+		} else {
+			$payment = __( 'Not paid', 'wp-sell-services' );
+		}
+
+		return sprintf(
+			'%s<small class="wpss-order-row-sub">%s</small>',
+			esc_html( wpss_format_price( (float) $item->total, $item->currency ) ),
+			esc_html( $payment )
+		);
 	}
 
 	/**
@@ -267,11 +293,30 @@ class OrdersListTable extends \WP_List_Table {
 		// One authority for status→class (wpss_status_class). The hand-map that
 		// used to live here was missing refunded / delivered / accepted, so
 		// those fell through to a "pending" default and rendered amber.
-		return sprintf(
+		$html = sprintf(
 			'<span class="%s">%s</span>',
 			esc_attr( wpss_status_class( (string) $item->status ) ),
 			esc_html( $label )
 		);
+
+		// The due date matters only while the seller is working; late says so.
+		$working = in_array( $item->status, array( 'in_progress', 'revision_requested', 'late', 'on_hold' ), true );
+		if ( $working && ! empty( $item->delivery_deadline ) ) {
+			$late  = wpss_is_order_late( $item );
+			$html .= sprintf(
+				'<small class="wpss-order-row-sub%s">%s</small>',
+				$late ? ' wpss-order-row-sub--late' : '',
+				esc_html(
+					sprintf(
+						/* translators: %s: due date. */
+						$late ? __( 'Was due %s', 'wp-sell-services' ) : __( 'Due %s', 'wp-sell-services' ),
+						wp_date( 'M j', strtotime( get_gmt_from_date( (string) $item->delivery_deadline ) . ' UTC' ) ) // Stored in site time, as wpss_is_order_late() reads it.
+					)
+				)
+			);
+		}
+
+		return $html;
 	}
 
 	/**
@@ -292,59 +337,109 @@ class OrdersListTable extends \WP_List_Table {
 	}
 
 	/**
-	 * Get views (status filters).
+	 * Status tabs: the owner's triage groups, not 15 raw statuses.
+	 *
+	 * The groups are wpss_get_order_filter_groups() - the same buckets as the
+	 * buyer and seller dashboard chips, plus an Other tab for any status no
+	 * group claims, so the tabs always add up to All. The exact status stays
+	 * available in the Status filter (Basecamp 10337161480).
 	 *
 	 * @return array
 	 */
 	protected function get_views(): array {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_orders';
+		$counts  = $this->get_status_counts();
+		$current = $this->get_current_group();
+		$base    = admin_url( 'admin.php?page=wpss-orders' );
+		$views   = array();
 
-		// Vendor filter for non-admin vendors.
-		$vendor_where = '';
-		if ( ! current_user_can( 'manage_options' ) && wpss_is_vendor() ) {
-			$vendor_where = $wpdb->prepare( ' WHERE vendor_id = %d', get_current_user_id() );
-		}
+		foreach ( wpss_get_order_filter_groups( $counts ) as $key => $group ) {
+			$count = 'all' === $key ? array_sum( $counts ) : array_sum( array_intersect_key( $counts, array_flip( $group['statuses'] ) ) );
 
-		// Get status counts.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$counts = $wpdb->get_results(
-			"SELECT status, COUNT(*) as count FROM {$table}{$vendor_where} GROUP BY status",
-			OBJECT_K
-		);
-
-		$total = array_sum( array_column( (array) $counts, 'count' ) );
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$current_status = isset( $_GET['status'] ) ? sanitize_key( $_GET['status'] ) : '';
-
-		$views = [
-			'all' => sprintf(
-				'<a href="%s" class="%s">%s <span class="count">(%d)</span></a>',
-				esc_url( admin_url( 'admin.php?page=wpss-orders' ) ),
-				empty( $current_status ) ? 'current' : '',
-				__( 'All', 'wp-sell-services' ),
-				$total
-			),
-		];
-
-		$statuses = ServiceOrder::get_statuses();
-
-		foreach ( $statuses as $status => $label ) {
-			$count = isset( $counts[ $status ] ) ? (int) $counts[ $status ]->count : 0;
-
-			if ( $count > 0 ) {
-				$views[ $status ] = sprintf(
-					'<a href="%s" class="%s">%s <span class="count">(%d)</span></a>',
-					esc_url( add_query_arg( 'status', $status, admin_url( 'admin.php?page=wpss-orders' ) ) ),
-					$current_status === $status ? 'current' : '',
-					$label,
-					$count
-				);
+			if ( 'all' !== $key && $count < 1 ) {
+				continue;
 			}
+
+			$views[ $key ] = sprintf(
+				'<a href="%s"%s>%s <span class="count">(%s)</span></a>',
+				esc_url( 'all' === $key ? $base : add_query_arg( 'group', $key, $base ) ),
+				$current === $key ? ' class="current" aria-current="page"' : '',
+				esc_html( $group['label'] ),
+				esc_html( number_format_i18n( $count ) )
+			);
 		}
 
 		return $views;
+	}
+
+	/**
+	 * Tabs, plus the same choice as a select for a phone, where eight tabs
+	 * took eight lines (admin.css shows one or the other).
+	 *
+	 * @return void
+	 */
+	public function views(): void {
+		parent::views();
+
+		$counts  = $this->get_status_counts();
+		$current = $this->get_current_group();
+		$base    = admin_url( 'admin.php?page=wpss-orders' );
+		?>
+		<label class="screen-reader-text" for="wpss-orders-group-select"><?php esc_html_e( 'Show orders', 'wp-sell-services' ); ?></label>
+		<select id="wpss-orders-group-select" class="wpss-orders-group-select" data-wpss-nav>
+			<?php
+			foreach ( wpss_get_order_filter_groups( $counts ) as $key => $group ) :
+				$count = 'all' === $key ? array_sum( $counts ) : array_sum( array_intersect_key( $counts, array_flip( $group['statuses'] ) ) );
+				if ( 'all' !== $key && $count < 1 ) {
+					continue;
+				}
+				?>
+				<option value="<?php echo esc_url( 'all' === $key ? $base : add_query_arg( 'group', $key, $base ) ); ?>" <?php selected( $current, $key ); ?>>
+					<?php echo esc_html( sprintf( '%1$s (%2$s)', $group['label'], number_format_i18n( $count ) ) ); ?>
+				</option>
+			<?php endforeach; ?>
+		</select>
+		<?php
+	}
+
+	/**
+	 * Order count per status in the current scope, memoised for the request.
+	 *
+	 * @return array<string, int>
+	 */
+	private function get_status_counts(): array {
+		static $counts = null;
+
+		if ( null === $counts ) {
+			global $wpdb;
+			$table = $wpdb->prefix . 'wpss_orders';
+
+			// Vendor filter for non-admin vendors.
+			$vendor_where = '';
+			if ( ! current_user_can( 'manage_options' ) && wpss_is_vendor() ) {
+				$vendor_where = $wpdb->prepare( ' WHERE vendor_id = %d', get_current_user_id() );
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$rows   = $wpdb->get_results( "SELECT status, COUNT(*) AS count FROM {$table}{$vendor_where} GROUP BY status" );
+			$counts = array();
+			foreach ( (array) $rows as $row ) {
+				$counts[ (string) $row->status ] = (int) $row->count;
+			}
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * The status group in the request; 'all' when none or unknown.
+	 *
+	 * @return string
+	 */
+	private function get_current_group(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filter.
+		$group = isset( $_GET['group'] ) ? sanitize_key( wp_unslash( $_GET['group'] ) ) : 'all';
+
+		return array_key_exists( $group, wpss_get_order_filter_groups( $this->get_status_counts() ) ) ? $group : 'all';
 	}
 
 	/**
@@ -372,6 +467,11 @@ class OrdersListTable extends \WP_List_Table {
 		?>
 		<div class="alignleft actions">
 			<?php
+			if ( 'all' !== $this->get_current_group() ) {
+				// Filtering inside a tab stays inside that tab.
+				printf( '<input type="hidden" name="group" value="%s">', esc_attr( $this->get_current_group() ) );
+			}
+
 			// Date filter.
 			$months = $this->get_order_months();
 
@@ -412,6 +512,48 @@ class OrdersListTable extends \WP_List_Table {
 					<?php endforeach; ?>
 				</select>
 				<?php
+			}
+
+			// The exact status, for when a group is too broad.
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$selected_status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
+			?>
+			<label for="wpss-orders-status-filter" class="screen-reader-text"><?php esc_html_e( 'Filter by status', 'wp-sell-services' ); ?></label>
+			<select name="status" id="wpss-orders-status-filter">
+				<option value=""><?php esc_html_e( 'All statuses', 'wp-sell-services' ); ?></option>
+				<?php foreach ( ServiceOrder::get_statuses() as $status_key => $status_label ) : ?>
+					<option value="<?php echo esc_attr( $status_key ); ?>" <?php selected( $selected_status, $status_key ); ?>><?php echo esc_html( $status_label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+			<?php
+			if ( current_user_can( 'manage_options' ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$vendor_filter = isset( $_GET['vendor_id'] ) ? absint( $_GET['vendor_id'] ) : 0;
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$customer_filter = isset( $_GET['customer_id'] ) ? absint( $_GET['customer_id'] ) : 0;
+
+				wpss_admin_search_select(
+					array(
+						'type'           => 'seller',
+						'name'           => 'vendor_id',
+						'id'             => 'wpss-orders-vendor-filter',
+						'placeholder'    => __( 'All vendors', 'wp-sell-services' ),
+						'search_label'   => __( 'Search vendors', 'wp-sell-services' ),
+						'selected'       => $vendor_filter,
+						'selected_label' => $vendor_filter ? wpss_get_member_display_name( $vendor_filter ) : '',
+					)
+				);
+				wpss_admin_search_select(
+					array(
+						'type'           => 'user',
+						'name'           => 'customer_id',
+						'id'             => 'wpss-orders-customer-filter',
+						'placeholder'    => __( 'All buyers', 'wp-sell-services' ),
+						'search_label'   => __( 'Search buyers', 'wp-sell-services' ),
+						'selected'       => $customer_filter,
+						'selected_label' => $customer_filter ? wpss_get_member_display_name( $customer_filter ) : '',
+					)
+				);
 			}
 
 			submit_button( __( 'Filter', 'wp-sell-services' ), '', 'filter_action', false );
@@ -497,12 +639,30 @@ class OrdersListTable extends \WP_List_Table {
 			$params[] = get_current_user_id();
 		}
 
-		// Status filter.
+		// Status filter: the exact status when chosen, else the tab's group.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! empty( $_GET['status'] ) ) {
 			$where .= ' AND status = %s';
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$params[] = sanitize_key( $_GET['status'] );
+		} else {
+			$group_statuses = wpss_get_order_filter_groups( $this->get_status_counts() )[ $this->get_current_group() ]['statuses'];
+			if ( $group_statuses ) {
+				$where .= ' AND status IN (' . implode( ', ', array_fill( 0, count( $group_statuses ), '%s' ) ) . ')';
+				$params = array_merge( $params, $group_statuses );
+			}
+		}
+
+		// Vendor and buyer filters (admins only; a vendor is already scoped above).
+		if ( current_user_can( 'manage_options' ) ) {
+			foreach ( array( 'vendor_id', 'customer_id' ) as $party ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$party_id = isset( $_GET[ $party ] ) ? absint( $_GET[ $party ] ) : 0;
+				if ( $party_id ) {
+					$where   .= " AND {$party} = %d";
+					$params[] = $party_id;
+				}
+			}
 		}
 
 		// Month filter.
@@ -603,6 +763,16 @@ class OrdersListTable extends \WP_List_Table {
 	 * @return void
 	 */
 	public function no_items(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filters.
+		if ( array_filter( array_intersect_key( $_GET, array_flip( array( 'group', 'status', 'm', 'suborder_type', 's', 'vendor_id', 'customer_id' ) ) ) ) ) {
+			printf(
+				'%s <a href="%s">%s</a>',
+				esc_html__( 'No orders match these filters.', 'wp-sell-services' ),
+				esc_url( admin_url( 'admin.php?page=wpss-orders' ) ),
+				esc_html__( 'Show all orders', 'wp-sell-services' )
+			);
+			return;
+		}
 		?>
 		<div class="wpss-empty-state">
 			<div class="wpss-empty-state__icon">

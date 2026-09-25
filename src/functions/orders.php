@@ -1227,6 +1227,28 @@ function wpss_capture_order_package_snapshot( int $order_id ): bool {
 }
 
 /**
+ * Human label for an order's payment_method.
+ *
+ * A registered gateway names itself (get_name()); anything else - a rail slug
+ * such as woocommerce or bacs, or 'manual' from Create Order - is shown as
+ * words. Empty means no method was recorded (Basecamp 10337161480).
+ *
+ * @since 1.8.0
+ *
+ * @param string $method Stored payment_method.
+ * @return string Label, '' when none was recorded.
+ */
+function wpss_get_payment_method_label( string $method ): string {
+	if ( '' === $method ) {
+		return '';
+	}
+
+	$gateway = wpss()->get_payment_gateway( $method );
+
+	return $gateway ? $gateway->get_name() : ucwords( str_replace( array( '_', '-' ), ' ', $method ) );
+}
+
+/**
  * Get the payment-rail receipt reference for an order, if any.
  *
  * A WPSS order is the order, and its lifecycle is the same whichever rail took

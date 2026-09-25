@@ -347,7 +347,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2716` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2720` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1963` |
 
 ### Admin Filters
