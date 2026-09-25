@@ -2133,18 +2133,14 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
 		$service_id = absint( $_POST['service_id'] ?? 0 );
-		$package_id = absint( $_POST['package_index'] ?? 0 );
 		$quantity   = max( 1, absint( $_POST['quantity'] ?? 1 ) );
-		// Both keys are accepted here for the same reason as below: 'extras' is
-		// the legacy name and single-service.js posts 'addons'.
-		$addons_raw = wp_unslash( $_POST['extras'] ?? $_POST['addons'] ?? array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- values are sanitized with absint() on the next line.
-		$addons     = ! empty( $addons_raw ) ? array_map( 'absint', (array) $addons_raw ) : array();
 
 		$checkout_url = '';
 		if ( $service_id && 'publish' === get_post_status( $service_id ) ) {
 			// Exits with the honest refusal when the rail cannot check out, so
 			// the guest is told now rather than after a round trip to log in.
-			$checkout_url = $this->require_checkout_url( $service_id, $package_id, $addons, $quantity );
+			$line         = $this->price_posted_selection( $service_id, $quantity );
+			$checkout_url = $this->checkout_url_for_line( $service_id, $line, $quantity );
 		}
 
 		if ( $checkout_url && wpss_checkout_creates_accounts() ) {
@@ -2165,6 +2161,57 @@ class AjaxHandlers {
 				'login_url' => wp_login_url( $checkout_url ?: ( wp_get_referer() ?: home_url() ) ),
 			)
 		);
+	}
+
+	/**
+	 * Read and price the order modal's POSTed package and add-on selection.
+	 *
+	 * The one reader for both the cart and the guest path. What the buyer chose
+	 * - never a price: addon_sel (the full selection, JSON), else addons /
+	 * extras (ids, legacy clients). Priced by the pricer checkout charges
+	 * through, which also refuses an invalid package or a required add-on left
+	 * empty - here, not at checkout. Exits with the error.
+	 *
+	 * @param int $service_id Service ID.
+	 * @param int $quantity   Package quantity.
+	 * @return array<string, mixed> The priced line.
+	 */
+	private function price_posted_selection( int $service_id, int $quantity ): array {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- both callers verified the nonce; normalised by wpss_normalize_addon_selection().
+		$selection = \WPSellServices\Checkout\CheckoutIntentService::request_selection(
+			array(
+				'addon_sel' => wp_unslash( $_POST['addon_sel'] ?? '' ),
+				'addons'    => wp_unslash( $_POST['addons'] ?? $_POST['extras'] ?? array() ),
+			)
+		);
+		$package   = absint( $_POST['package_index'] ?? 0 );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, $package, $quantity, $selection );
+
+		if ( is_wp_error( $line ) ) {
+			wp_send_json_error( array( 'message' => $line->get_error_message() ) );
+		}
+
+		return $line;
+	}
+
+	/**
+	 * The checkout URL for a priced line, carrying the whole selection.
+	 *
+	 * Ids travel in the URL; a quantity, option or text needs the full
+	 * selection beside them or checkout would drop it.
+	 *
+	 * @param int                  $service_id Service ID.
+	 * @param array<string, mixed> $line       Priced line.
+	 * @param int                  $quantity   Package quantity.
+	 * @return string
+	 */
+	private function checkout_url_for_line( int $service_id, array $line, int $quantity ): string {
+		$url  = $this->require_checkout_url( $service_id, (int) $line['package_id'], array_map( 'intval', array_column( $line['addons'], 'id' ) ), $quantity );
+		$meta = \WPSellServices\Checkout\CheckoutIntentService::selection_metadata( $line['addons'] );
+
+		return empty( $meta['addon_sel'] ) ? $url : add_query_arg( 'addon_sel', rawurlencode( $meta['addon_sel'] ), $url );
 	}
 
 	/**
@@ -2223,12 +2270,8 @@ class AjaxHandlers {
 
 		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
-		$service_id    = absint( $_POST['service_id'] ?? 0 );
-		$package_index = sanitize_text_field( wp_unslash( $_POST['package_index'] ?? '0' ) );
-		$quantity      = absint( $_POST['quantity'] ?? 1 );
-		// Accept both 'extras' (legacy) and 'addons' (single-service.js sends this key).
-		$extras_raw = wp_unslash( $_POST['extras'] ?? $_POST['addons'] ?? array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- values are sanitized with absint() on the next line.
-		$extras     = ! empty( $extras_raw ) ? array_map( 'absint', (array) $extras_raw ) : array();
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$quantity   = max( 1, absint( $_POST['quantity'] ?? 1 ) );
 
 		if ( ! $service_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
@@ -2251,57 +2294,19 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You cannot purchase your own service.', 'wp-sell-services' ) ) );
 		}
 
-		// Get packages.
-		$packages_raw = get_post_meta( $service_id, '_wpss_packages', true );
-		$packages     = $packages_raw ? $packages_raw : array();
-
-		// If no packages defined, create a default one.
-		if ( empty( $packages ) ) {
-			$starting_price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-			$packages       = array(
-				array(
-					'name'          => __( 'Standard', 'wp-sell-services' ),
-					'price'         => $starting_price,
-					'delivery_time' => wpss_get_service_delivery_days( $service_id ),
-				),
-			);
-		}
-
-		// Validate package index.
-		if ( ! isset( $packages[ $package_index ] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid package selected.', 'wp-sell-services' ) ) );
-		}
-
-		$selected_package = $packages[ $package_index ];
-		$package_price    = (float) ( $selected_package['price'] ?? 0 );
-
-		// Calculate extras price.
-		$all_extras      = wpss_get_service_extras( $service_id );
-		$extras_price    = 0;
-		$extras_days     = 0;
-		$selected_extras = array();
-
-		foreach ( $extras as $extra_index ) {
-			if ( isset( $all_extras[ $extra_index ] ) ) {
-				$extras_price     += (float) ( $all_extras[ $extra_index ]['price'] ?? 0 );
-				$extras_days      += (int) $all_extras[ $extra_index ]['delivery_days_extra'];
-				$selected_extras[] = array(
-					'id'    => $extra_index,
-					'title' => $all_extras[ $extra_index ]['title'] ?? '',
-					'price' => (float) ( $all_extras[ $extra_index ]['price'] ?? 0 ),
-				);
-			}
-		}
-
-		$total = ( $package_price + $extras_price ) * $quantity;
-
+		$line      = $this->price_posted_selection( $service_id, $quantity );
 		$cart_item = array(
 			'service_id' => $service_id,
-			'package_id' => $package_index,
-			'package'    => $selected_package,
-			'addons'     => $selected_extras,
+			'package_id' => (int) $line['package_id'],
+			'package'    => $line['package'],
+			// The selection only: the cart prices it again on every read
+			// (wpss_price_cart_item()), so a price can never go stale here.
+			'addons'     => array_map(
+				static fn( $addon ) => array_intersect_key( $addon, array_flip( array( 'id', 'quantity', 'option', 'text' ) ) ),
+				$line['addons']
+			),
 			'quantity'   => $quantity,
-			'total'      => $total,
+			'total'      => (float) $line['total'],
 		);
 
 		/**
@@ -2323,7 +2328,7 @@ class AjaxHandlers {
 		// Resolved before anything is written to any cart: a rail that cannot
 		// check this service out refuses here instead of leaving the buyer with
 		// a cart row and a Checkout button that goes nowhere.
-		$checkout_url = $this->require_checkout_url( $service_id, (int) $package_index, $extras, $quantity );
+		$checkout_url = $this->checkout_url_for_line( $service_id, $line, $quantity );
 
 		$adapter_result = apply_filters( 'wpss_add_service_to_cart', false, $cart_item, $adapter );
 
@@ -2357,7 +2362,7 @@ class AjaxHandlers {
 			$cart = array();
 		}
 
-		$item_key              = md5( $service_id . '-' . $package_index . '-' . wp_json_encode( $extras ) );
+		$item_key              = md5( $service_id . '-' . $line['package_id'] . '-' . wp_json_encode( $cart_item['addons'] ) );
 		$cart_item['added_at'] = current_time( 'mysql', true );
 		$cart[ $item_key ]     = $cart_item;
 

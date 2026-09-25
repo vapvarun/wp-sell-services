@@ -1654,6 +1654,31 @@ function wpss_get_user_cart( int $user_id, bool $keep_paused = false ): array {
 }
 
 /**
+ * Price one cart line the way checkout will charge it.
+ *
+ * A cart item stores what the buyer chose - service, package, quantity and
+ * the add-on selection (id, quantity, option, text) - never a price. Every
+ * screen that shows a cart total (the cart page, GET /cart, checkout) prices
+ * the line here through CheckoutIntentService::price_service_line(), so a
+ * percentage or per-quantity add-on, or tax, cannot read one way in the cart
+ * and charge another (Basecamp 10336467507, 10336467589). Older items that
+ * stored add-on prices still work: any price in the selection is ignored.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, mixed> $item Cart item.
+ * @return array<string, mixed>|\WP_Error The priced line (see price_service_line()).
+ */
+function wpss_price_cart_item( array $item ) {
+	return \WPSellServices\Checkout\CheckoutIntentService::price_service_line(
+		(int) ( $item['service_id'] ?? 0 ),
+		(int) ( $item['package_id'] ?? 0 ),
+		max( 1, (int) ( $item['quantity'] ?? 1 ) ),
+		$item['addons'] ?? array()
+	);
+}
+
+/**
  * Why a service cannot be bought right now, or '' when it can.
  *
  * The ONE place either rail asks "is this still purchasable". The standalone

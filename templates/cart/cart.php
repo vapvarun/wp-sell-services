@@ -347,13 +347,34 @@ defined( 'ABSPATH' ) || exit;
 			<!-- Cart Items -->
 			<div class="wpss-cart-items">
 				<?php
-				$subtotal = 0.0;
+				$subtotal    = 0.0;
+				$tax_total   = 0.0;
+				$grand_total = 0.0;
+				$tax_label   = '';
+				$tax_incl    = false;
 
 				foreach ( $cart_items as $item_key => $item ) :
 					$service_id = absint( $item['service_id'] ?? 0 );
-					$package    = is_array( $item['package'] ?? null ) ? $item['package'] : array();
-					$addons     = is_array( $item['addons'] ?? null ) ? $item['addons'] : array();
-					$item_total = (float) ( $item['total'] ?? 0 );
+
+					// Priced now, the way checkout will charge it - a cart stores
+					// the buyer's choices, never prices (wpss_price_cart_item()).
+					$line = wpss_price_cart_item( $item );
+					if ( is_wp_error( $line ) ) {
+						$item['unavailable']        = true;
+						$item['unavailable_reason'] = $item['unavailable_reason'] ?? $line->get_error_message();
+						$line                       = array(
+							'package'      => is_array( $item['package'] ?? null ) ? $item['package'] : array(),
+							'addons'       => array(),
+							'subtotal'     => 0.0,
+							'addons_total' => 0.0,
+							'tax'          => 0.0,
+							'total'        => 0.0,
+						);
+					}
+
+					$package    = (array) $line['package'];
+					$addons     = (array) $line['addons'];
+					$item_total = (float) $line['subtotal'] + (float) $line['addons_total'];
 
 					/*
 					 * An item whose service has been paused stays visible so the
@@ -364,7 +385,11 @@ defined( 'ABSPATH' ) || exit;
 					$unavailable = ! empty( $item['unavailable'] );
 
 					if ( ! $unavailable ) {
-						$subtotal += $item_total;
+						$subtotal    += $item_total;
+						$tax_total   += (float) $line['tax'];
+						$grand_total += (float) $line['total'];
+						$tax_label    = (string) ( $line['tax_label'] ?? $tax_label );
+						$tax_incl     = ! empty( $line['tax_included'] );
 					}
 
 					$service_title = $service_id ? get_the_title( $service_id ) : __( 'Service', 'wp-sell-services' );
@@ -453,11 +478,12 @@ defined( 'ABSPATH' ) || exit;
 									</div>
 									<?php foreach ( $addons as $addon ) : ?>
 										<?php
-										$addon_title = sanitize_text_field( $addon['title'] ?? '' );
+										$addon_title = (string) ( $addon['title'] ?? '' );
 										$addon_price = (float) ( $addon['price'] ?? 0 );
+										$addon_note  = (int) ( $addon['quantity'] ?? 1 ) > 1 ? "\u{00D7} " . (int) $addon['quantity'] : (string) ( $addon['option'] ?? '' );
 										?>
 										<div class="wpss-cart-item__addon">
-											<span><?php echo esc_html( $addon_title ); ?></span>
+											<span><?php echo esc_html( trim( $addon_title . ' ' . $addon_note ) ); ?></span>
 											<span class="wpss-cart-item__addon-price">
 												+<?php echo wp_kses_post( wpss_catalog_price_html( $addon_price, 'cart-addon' ) ); ?>
 											</span>
@@ -499,9 +525,25 @@ defined( 'ABSPATH' ) || exit;
 					<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $subtotal, 'cart-subtotal' ) ); ?></span>
 				</div>
 
+				<?php if ( $tax_total > 0 ) : ?>
+					<div class="wpss-cart-summary__line">
+						<span>
+							<?php
+							echo esc_html(
+								$tax_incl
+									/* translators: %s: tax label, e.g. VAT. */
+									? sprintf( __( '%s (included)', 'wp-sell-services' ), $tax_label ? $tax_label : __( 'Tax', 'wp-sell-services' ) )
+									: ( $tax_label ? $tax_label : __( 'Tax', 'wp-sell-services' ) )
+							);
+							?>
+						</span>
+						<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $tax_total, 'cart-tax' ) ); ?></span>
+					</div>
+				<?php endif; ?>
+
 				<div class="wpss-cart-summary__total">
 					<span><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></span>
-					<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $subtotal, 'cart-total' ) ); ?></span>
+					<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $grand_total, 'cart-total' ) ); ?></span>
 				</div>
 
 				<?php
@@ -522,7 +564,7 @@ defined( 'ABSPATH' ) || exit;
 				 * @param float  $total   Payable total in the store base currency.
 				 * @param string $context Surface identifier ('cart', 'checkout').
 				 */
-				do_action( 'wpss_payable_total_after', (float) $subtotal, 'cart' );
+				do_action( 'wpss_payable_total_after', (float) $grand_total, 'cart' );
 				?>
 
 				<?php

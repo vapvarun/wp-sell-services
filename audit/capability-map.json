@@ -269,6 +269,6 @@
     "src/API/AuthController.php:984": "Informational flag in the /me payload, not a gate.",
     "src/API/API.php:989": "Informational flag in the /me payload, not a gate.",
     "src/API/API.php:994": "Informational flag in the /me payload, not a gate.",
-    "src/API/ServicesController.php:1244": "Entry gate, not object authority: create_item_permissions_check asks only whether the caller may author a service at all, and no service exists yet to own. Every later edit path compares authorship separately."
+    "src/API/ServicesController.php:1347": "Entry gate, not object authority: create_item_permissions_check asks only whether the caller may author a service at all, and no service exists yet to own. Every later edit path compares authorship separately."
   }
 }

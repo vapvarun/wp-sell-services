@@ -359,10 +359,12 @@ do_action( 'wpss_before_service_packages', $service_id );
 		$wpss_pkg_extras = wpss_get_service_extras( $service_id );
 
 		if ( $wpss_pkg_extras ) :
+			// "From" is a money amount, so a percentage add-on (10% is not $10)
+			// is left out of it; a per-unit price is the least it can cost.
 			$wpss_pkg_extra_prices = array_filter(
 				array_map(
 					static function ( $wpss_extra ) {
-						return (float) ( $wpss_extra['price'] ?? 0 );
+						return 'percentage' === ( $wpss_extra['price_type'] ?? 'flat' ) ? 0.0 : (float) ( $wpss_extra['price'] ?? 0 );
 					},
 					$wpss_pkg_extras
 				)

@@ -1529,8 +1529,42 @@ body.wpss-modal-open {
 	border-color: var(--wpss-primary);
 }
 
-.wpss-extra-option input {
+.wpss-extra-option {
+	flex-wrap: wrap;
+}
+
+.wpss-extra-option input[type="checkbox"] {
 	margin-top: 0.25rem;
+}
+
+/* A choice or a note gets its own full-width line under the add-on's name. */
+.wpss-extra-select,
+.wpss-extra-text {
+	flex-basis: 100%;
+	width: 100%;
+	padding: var(--wpss-space-2, 0.5rem);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+	font: inherit;
+}
+
+.wpss-extra-qty {
+	width: 4.5rem;
+	padding: var(--wpss-space-1, 0.25rem) var(--wpss-space-2, 0.5rem);
+	border: 1px solid var(--wpss-border);
+	border-radius: var(--wpss-radius);
+}
+
+.wpss-extra-required {
+	font-weight: 400;
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted);
+}
+
+.wpss-order-quote-error {
+	margin: 0 0 var(--wpss-space-2, 0.5rem);
+	color: var(--wpss-danger);
+	font-size: 0.875rem;
 }
 
 .wpss-extra-info {

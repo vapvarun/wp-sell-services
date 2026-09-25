@@ -208,6 +208,33 @@ class ServicesController extends RestController {
 			)
 		);
 
+		// GET /services/{id}/quote - What a selection costs, priced by the server.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/quote',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_quote' ),
+					'permission_callback' => '__return_true',
+					'args'                => array(
+						'package'  => array(
+							'type'              => 'integer',
+							'default'           => 0,
+							'sanitize_callback' => 'absint',
+						),
+						'quantity' => array(
+							'type'              => 'integer',
+							'default'           => 1,
+							'minimum'           => 1,
+							'maximum'           => 10,
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+			)
+		);
+
 		// GET /services/{id}/faqs - Get service FAQs.
 		register_rest_route(
 			$this->namespace,
@@ -979,6 +1006,82 @@ class ServicesController extends RestController {
 		$packages = wpss_assign_package_ids( $service_id );
 
 		return new WP_REST_Response( array_values( $packages ), 200 );
+	}
+
+	/**
+	 * Quote a package and add-on selection: the numbers checkout will charge.
+	 *
+	 * Every screen that shows a price before checkout - the order modal, the
+	 * cart, the admin Create Order preview, the app - asks here instead of
+	 * adding prices up itself, so a percentage add-on, a per-quantity add-on
+	 * or tax can never read one way on screen and charge another (Basecamp
+	 * 10336467507). Takes `package` (stable id or index), `quantity`, and the
+	 * add-on selection as `addon_sel` (JSON), `addons` or `addon_ids` - never
+	 * a price.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_quote( $request ) {
+		$service_id = (int) $request->get_param( 'id' );
+
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return $this->service_not_found();
+		}
+
+		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line(
+			$service_id,
+			(int) $request->get_param( 'package' ),
+			max( 1, (int) $request->get_param( 'quantity' ) ),
+			\WPSellServices\Checkout\CheckoutIntentService::request_selection( $request->get_params() )
+		);
+
+		if ( is_wp_error( $line ) ) {
+			return $line;
+		}
+
+		$currency = wpss_get_currency();
+		$addons   = array();
+
+		foreach ( $line['addons'] as $addon ) {
+			$addons[] = array(
+				'id'       => (int) $addon['id'],
+				'title'    => (string) $addon['title'],
+				'quantity' => (int) $addon['quantity'],
+				'option'   => (string) $addon['option'],
+				'text'     => (string) $addon['text'],
+			) + wpss_rest_money( 'price', (float) $addon['price'], $currency ) + array(
+				'price_formatted' => wpss_format_price( (float) $addon['price'] ),
+			);
+		}
+
+		$days = (int) ( $line['package']['delivery_days'] ?? 0 ) + (int) $line['delivery_days_extra'];
+
+		return new WP_REST_Response(
+			array(
+				'service_id'    => $service_id,
+				'package_id'    => (int) ( $line['package']['id'] ?? $line['package_id'] ),
+				'package_name'  => (string) ( $line['package']['name'] ?? '' ),
+				'quantity'      => (int) $line['quantity'],
+				'addons'        => $addons,
+				'delivery_days' => $days,
+				'tax_label'     => (string) $line['tax_label'],
+				'tax_rate'      => (float) $line['tax_rate'],
+				'tax_included'  => (bool) $line['tax_included'],
+				'formatted'     => array(
+					'subtotal'     => wpss_format_price( (float) $line['subtotal'] ),
+					'addons_total' => wpss_format_price( (float) $line['addons_total'] ),
+					'tax'          => wpss_format_price( (float) $line['tax'] ),
+					'total'        => wpss_format_price( (float) $line['total'] ),
+				),
+			) + wpss_rest_money( 'subtotal', (float) $line['subtotal'], $currency )
+				+ wpss_rest_money( 'addons_total', (float) $line['addons_total'], $currency )
+				+ wpss_rest_money( 'tax', (float) $line['tax'], $currency )
+				+ wpss_rest_money( 'total', (float) $line['total'], $currency ),
+			200
+		);
 	}
 
 	/**

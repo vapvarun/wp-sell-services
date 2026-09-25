@@ -32,7 +32,8 @@
             deliveryDays: 0,
             quantity: 1,
             extras: [],
-            totalPrice: 0
+            totalPrice: 0,
+            quoteRequest: 0
         },
 
         /**
@@ -525,7 +526,8 @@
         openOrderModal: function() {
             const $modal = $(this.config.orderModal);
 
-            // Update modal content.
+            // Update modal content (required add-ons are pre-ticked).
+            this.updateExtras();
             this.updateOrderSummary();
 
             // Show modal.
@@ -567,10 +569,14 @@
                 return;
             }
 
-            // Extras checkbox change.
-            $modal.on('change', 'input[name="extras[]"]', function() {
-                self.updateExtras();
-                self.updateOrderSummary();
+            // Any add-on control: tick, quantity, option or text.
+            let extrasTimer = null;
+            $modal.on('change input', '.wpss-extra-option :input', function() {
+                clearTimeout(extrasTimer);
+                extrasTimer = setTimeout(function() {
+                    self.updateExtras();
+                    self.updateOrderSummary();
+                }, 250);
             });
 
             // Quantity controls.
@@ -606,7 +612,8 @@
         },
 
         /**
-         * Update extras state.
+         * Read the buyer's add-on selection from the modal: which add-ons,
+         * how many, which option, what text - never a price.
          */
         updateExtras: function() {
             const self = this;
@@ -614,60 +621,91 @@
 
             this.state.extras = [];
 
-            $modal.find('input[name="extras[]"]:checked').each(function() {
-                self.state.extras.push({
-                    index: $(this).val(),
-                    price: parseFloat($(this).data('price')),
-                    time: parseInt($(this).data('time')) || 0
-                });
+            $modal.find('.wpss-extra-option').each(function() {
+                const $row = $(this);
+                const id = parseInt($row.data('addon-id'), 10);
+                const type = $row.data('field-type');
+
+                if (type === 'dropdown') {
+                    const option = $row.find('.wpss-extra-select').val();
+                    if (option) {
+                        self.state.extras.push({ id: id, option: option });
+                    }
+                } else if (type === 'text') {
+                    const text = ($row.find('.wpss-extra-text').val() || '').trim();
+                    if (text) {
+                        self.state.extras.push({ id: id, text: text });
+                    }
+                } else if ($row.find('.wpss-extra-pick').is(':checked')) {
+                    self.state.extras.push({ id: id, quantity: parseInt($row.find('.wpss-extra-qty').val(), 10) || 1 });
+                }
             });
         },
 
         /**
-         * Update order summary.
+         * Update order summary from the server's quote.
+         *
+         * The total and delivery time come from GET /services/{id}/quote - the
+         * pricer checkout charges through - so a percentage or per-quantity
+         * add-on, or tax, reads here exactly as it will be charged.
          */
         updateOrderSummary: function() {
+            const self = this;
             const $modal = $(this.config.orderModal);
             const $packages = $(this.config.packages);
-
-            // Get package info.
             const $activePackage = $packages.find('.wpss-package[data-package="' + this.state.selectedPackage + '"]');
-            const packageName = $activePackage.find('.wpss-package-name').text();
+            const $total = $modal.find('.wpss-total-price');
+            const $btn = $modal.find('.wpss-add-to-cart-btn');
 
-            // Calculate total.
-            let totalPrice = this.state.basePrice;
-            let totalDays = this.state.deliveryDays;
-
-            this.state.extras.forEach(function(extra) {
-                totalPrice += extra.price;
-                totalDays += extra.time;
-            });
-
-            totalPrice *= this.state.quantity;
-            this.state.totalPrice = totalPrice;
-
-            // Update display.
-            $modal.find('.wpss-package-name').text(packageName);
-            $modal.find('.wpss-delivery-time').text(totalDays + ' ' + (totalDays === 1 ? wpssService.i18n.day : wpssService.i18n.days));
-            // The total is computed here, in the browser, from the base price
-            // plus whichever extras are ticked — so no server-side filter can
-            // ever reach it. Carrying the base amount on the element (the same
-            // `data-wbcom-amount` contract wpss_catalog_price_html() emits) lets
-            // a display-currency layer hint this total exactly like a package
-            // price, instead of the modal being the one surface that silently
-            // shows base currency only.
-            $modal.find('.wpss-total-price')
-                .text(this.formatPrice(totalPrice))
-                .attr('data-wbcom-amount', totalPrice.toFixed(4));
-
-            // Announce it: the total just changed, so anything decorating prices
-            // needs to re-render. No-op when nothing is listening.
-            document.dispatchEvent(new CustomEvent('wbcom:prices-updated', {
-                detail: { root: $modal.get(0) || document }
-            }));
-
-            // Update hidden input.
+            $modal.find('.wpss-package-name').text($activePackage.find('.wpss-package-name').text());
             $modal.find('input[name="package_index"]').val(this.state.selectedPackage);
+            $modal.find('.wpss-order-quote-error').remove();
+            $total.attr('aria-busy', 'true');
+
+            const params = new URLSearchParams({
+                package: this.state.selectedPackage,
+                quantity: this.state.quantity || 1,
+                addon_sel: JSON.stringify(this.state.extras)
+            });
+            const request = ++this.state.quoteRequest;
+
+            fetch(wpssService.apiUrl + '/services/' + wpssService.serviceId + '/quote?' + params.toString(), { credentials: 'same-origin' })
+                .then(function(response) {
+                    return response.json().then(function(body) { return { ok: response.ok, body: body }; });
+                })
+                .then(function(result) {
+                    if (request !== self.state.quoteRequest) {
+                        return; // A newer selection is already being priced.
+                    }
+
+                    $total.removeAttr('aria-busy');
+
+                    if (!result.ok) {
+                        $btn.prop('disabled', true);
+                        $total.text('');
+                        $('<p class="wpss-order-quote-error" role="alert"></p>')
+                            .text(result.body && result.body.message ? result.body.message : wpssService.i18n.error)
+                            .insertBefore($btn);
+                        return;
+                    }
+
+                    const quote = result.body;
+                    const days = parseInt(quote.delivery_days, 10) || 0;
+
+                    self.state.totalPrice = quote.total;
+                    $btn.prop('disabled', false);
+                    $modal.find('.wpss-delivery-time').text(days + ' ' + (days === 1 ? wpssService.i18n.day : wpssService.i18n.days));
+                    // Carry the base amount like wpss_catalog_price_html() does, so a
+                    // display-currency layer can hint this total too.
+                    $total.text(quote.formatted.total).attr('data-wbcom-amount', Number(quote.total).toFixed(4));
+
+                    document.dispatchEvent(new CustomEvent('wbcom:prices-updated', {
+                        detail: { root: $modal.get(0) || document }
+                    }));
+                })
+                .catch(function() {
+                    $total.removeAttr('aria-busy');
+                });
         },
 
         /**
@@ -685,7 +723,7 @@
                 service_id: wpssService.serviceId,
                 package_index: this.state.selectedPackage,
                 quantity: this.state.quantity || 1,
-                addons: this.state.extras.map(function(e) { return e.index; }),
+                addon_sel: JSON.stringify(this.state.extras),
                 nonce: wpssService.nonce
             };
 
@@ -852,16 +890,6 @@
             });
         },
 
-        /**
-         * Format price.
-         */
-        formatPrice: function(amount) {
-            var decimals = (typeof wpssService.currencyDecimals !== 'undefined') ? wpssService.currencyDecimals : 2;
-            if (typeof wpssService.currencyFormat !== 'undefined') {
-                return wpssService.currencyFormat.replace('%s', parseFloat(amount).toFixed(decimals));
-            }
-            return '$' + parseFloat(amount).toFixed(decimals);
-        },
 
         /**
          * Show error message.

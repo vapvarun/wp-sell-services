@@ -118,18 +118,16 @@ class SingleServiceView {
 			'wpss-single-service',
 			'wpssService',
 			array(
-				'serviceId'        => get_the_ID(),
-				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-				'nonce'            => wp_create_nonce( 'wpss_service_nonce' ),
-				'apiUrl'           => esc_url_raw( rest_url( 'wpss/v1' ) ),
-				'restNonce'        => wp_create_nonce( 'wp_rest' ),
-				'checkoutUrl'      => $checkout_url,
-				'cartUrl'          => $cart_url,
-				'currencyFormat'   => wpss_get_currency_symbol() . '%s',
-				'currencyDecimals' => wpss_get_currency_decimals(),
-				'isLoggedIn'       => is_user_logged_in(),
-				'loginUrl'         => wp_login_url( get_permalink() ),
-				'i18n'             => array(
+				'serviceId'   => get_the_ID(),
+				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+				'nonce'       => wp_create_nonce( 'wpss_service_nonce' ),
+				'apiUrl'      => esc_url_raw( rest_url( 'wpss/v1' ) ),
+				'restNonce'   => wp_create_nonce( 'wp_rest' ),
+				'checkoutUrl' => $checkout_url,
+				'cartUrl'     => $cart_url,
+				'isLoggedIn'  => is_user_logged_in(),
+				'loginUrl'    => wp_login_url( get_permalink() ),
+				'i18n'        => array(
 					'addingToCart'       => __( 'Adding to cart...', 'wp-sell-services' ),
 					'added'              => __( 'Added to cart!', 'wp-sell-services' ),
 					'viewCart'           => __( 'View Cart', 'wp-sell-services' ),
@@ -824,7 +822,6 @@ class SingleServiceView {
 	 */
 	public function render_order_modal( Service $service ): void {
 		$service_id = $service->id;
-		$packages   = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
 		$extras     = wpss_get_service_extras( $service_id );
 
 		// Don't show modal for own services.
@@ -864,28 +861,52 @@ class SingleServiceView {
 						<?php if ( ! empty( $extras ) ) : ?>
 							<div class="wpss-order-extras">
 								<h4><?php esc_html_e( 'Add Extras', 'wp-sell-services' ); ?></h4>
-								<?php foreach ( $extras as $index => $extra ) : ?>
-									<label class="wpss-extra-option">
-										<input type="checkbox"
-												name="extras[]"
-												value="<?php echo esc_attr( $index ); ?>"
-												data-price="<?php echo esc_attr( $extra['price'] ); ?>"
-												data-time="<?php echo esc_attr( $extra['delivery_days_extra'] ); ?>">
-										<span class="wpss-extra-info">
-											<span class="wpss-extra-title"><?php echo esc_html( $extra['title'] ?? '' ); ?></span>
+								<?php
+								foreach ( $extras as $index => $extra ) :
+									$field_type = (string) ( $extra['field_type'] ?? 'checkbox' );
+									$required   = ! empty( $extra['is_required'] );
+									$input_id   = 'wpss-extra-' . (int) $index;
+									$options    = array_filter( array_map( 'trim', explode( ',', (string) ( $extra['options'] ?? '' ) ) ), 'strlen' );
+									?>
+									<div class="wpss-extra-option" data-addon-id="<?php echo esc_attr( $index ); ?>" data-field-type="<?php echo esc_attr( $field_type ); ?>">
+										<?php if ( in_array( $field_type, array( 'checkbox', 'quantity' ), true ) ) : ?>
+											<input type="checkbox" id="<?php echo esc_attr( $input_id ); ?>" class="wpss-extra-pick" <?php checked( $required ); ?> <?php disabled( $required ); ?>>
+										<?php endif; ?>
+										<label class="wpss-extra-info" for="<?php echo esc_attr( $input_id ); ?>">
+											<span class="wpss-extra-title">
+												<?php echo esc_html( $extra['title'] ?? '' ); ?>
+												<?php if ( $required ) : ?>
+													<span class="wpss-extra-required"><?php esc_html_e( '(required)', 'wp-sell-services' ); ?></span>
+												<?php endif; ?>
+											</span>
 											<?php if ( ! empty( $extra['description'] ) ) : ?>
 												<span class="wpss-extra-desc"><?php echo esc_html( $extra['description'] ); ?></span>
 											<?php endif; ?>
-										</span>
+										</label>
 										<span class="wpss-extra-price">
-											+<?php echo esc_html( wpss_format_price( (float) ( $extra['price'] ?? 0 ) ) ); ?>
+											<?php echo esc_html( wpss_addon_price_label( $extra ) ); ?>
 											<?php if ( ! empty( $extra['delivery_days_extra'] ) ) : ?>
 												<span class="wpss-extra-time">
-													(+<?php echo esc_html( $extra['delivery_days_extra'] ); ?> <?php esc_html_e( 'days', 'wp-sell-services' ); ?>)
+													<?php
+													/* translators: %d: extra delivery days */
+													echo esc_html( sprintf( _n( '(+%d day)', '(+%d days)', (int) $extra['delivery_days_extra'], 'wp-sell-services' ), (int) $extra['delivery_days_extra'] ) );
+													?>
 												</span>
 											<?php endif; ?>
 										</span>
-									</label>
+										<?php if ( 'quantity' === $field_type ) : ?>
+											<input type="number" class="wpss-extra-qty" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: add-on name */ __( 'How many: %s', 'wp-sell-services' ), $extra['title'] ?? '' ) ); ?>" value="<?php echo esc_attr( (int) ( $extra['min_quantity'] ?? 1 ) ); ?>" min="<?php echo esc_attr( (int) ( $extra['min_quantity'] ?? 1 ) ); ?>" max="<?php echo esc_attr( (int) ( $extra['max_quantity'] ?? 10 ) ); ?>" step="1">
+										<?php elseif ( 'dropdown' === $field_type ) : ?>
+											<select id="<?php echo esc_attr( $input_id ); ?>" class="wpss-extra-select">
+												<option value=""><?php echo esc_html( $required ? __( 'Choose one', 'wp-sell-services' ) : __( 'None', 'wp-sell-services' ) ); ?></option>
+												<?php foreach ( $options as $option ) : ?>
+													<option value="<?php echo esc_attr( $option ); ?>"><?php echo esc_html( $option ); ?></option>
+												<?php endforeach; ?>
+											</select>
+										<?php elseif ( 'text' === $field_type ) : ?>
+											<textarea id="<?php echo esc_attr( $input_id ); ?>" class="wpss-extra-text" rows="2" maxlength="1000" placeholder="<?php esc_attr_e( 'Tell the seller what you need', 'wp-sell-services' ); ?>"></textarea>
+										<?php endif; ?>
+									</div>
 								<?php endforeach; ?>
 							</div>
 						<?php endif; ?>

@@ -53,9 +53,9 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_pre_update_service` | `array $data, int $service_id` | `ServiceManager.php` |
 | `wpss_before_service_deleted` | `int $service_id` | `src/Services/ServiceManager.php:340` |
 | `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:949` |
-| `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:734` |
-| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:899` |
-| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:948` |
+| `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:761` |
+| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:926` |
+| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:975` |
 
 ## Moderation Actions
 
@@ -416,7 +416,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1216` |
+| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1319` |
 | `wpss_services_per_page` | `int $per_page` (default 12) | `src/Frontend/ServiceArchiveView.php:655` |
 | `wpss_wizard_service_data` | `array $data, int $service_id` | `ServiceWizard.php` |
 | `wpss_wizard_sanitize_service_data` | `array $sanitized, array $raw` | `ServiceWizard.php` |
@@ -516,7 +516,7 @@ add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2328` |
+| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2332` |
 | `wpss_pay_order_url_lookup` | `string $url, int $order_id, ?object $order` | `src/functions/urls.php` |
 | `wpss_ensure_pay_order` | `string $url, int $order_id` | `src/functions/urls.php` |
 
@@ -764,7 +764,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1004` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:355` |
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:849` |
-| `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:906` |
+| `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:927` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:183` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:659` |
 | `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1359` |
@@ -787,10 +787,10 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_withdrawal_methods` | `$methods` | `src/API/EarningsController.php:607` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:522` |
-| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:793` |
-| `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:406` |
+| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:791` |
+| `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:427` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:266` |
-| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1332` |
+| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1435` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |

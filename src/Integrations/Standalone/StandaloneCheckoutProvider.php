@@ -295,6 +295,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$addon_ids_raw = isset( $_GET['addons'] ) ? sanitize_text_field( wp_unslash( $_GET['addons'] ) ) : '';
+		// The full selection (quantity, option, text) when the order modal sent
+		// one; ids alone otherwise. Normalised by the pricer, never a price.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- normalised by wpss_normalize_addon_selection().
+		$addon_sel = isset( $_GET['addon_sel'] ) ? wp_unslash( $_GET['addon_sel'] ) : '';
+		if ( is_string( $addon_sel ) && '' !== $addon_sel ) {
+			$addon_ids_raw = $addon_sel;
+		}
 
 		// If no service_id in URL, try to load from user's cart.
 		if ( ! $service_id ) {
