@@ -359,6 +359,8 @@ is `pending_approval`.
 | GET | `/wallet/transactions` |
 | GET, POST | `/withdrawals` |
 | POST/PUT/PATCH | `/withdrawals/(?P<id>[\d]+)` |
+| DELETE | `/withdrawals/(?P<id>[\d]+)` (vendor cancels their own pending request) |
+| GET, PUT | `/withdrawals/profile` (the vendor's payout profile) |
 | GET | `/withdrawals/methods` |
 
 ### Payments (free) -- standalone rail only
@@ -371,6 +373,12 @@ is `pending_approval`.
 
 These are the **standalone checkout** payment routes shipped in free. Pro
 replaces them with a wider, gateway-specific set -- see [Payments (Pro)](#payments-pro).
+
+`POST /payments/create-intent` takes `service_id`, `package_id` (stable id or
+legacy index), `quantity` and `addons` (ids, or `{id, quantity, option, text}`
+objects), or `pay_order` for an existing order, plus `gateway`. It is priced on
+the server exactly like the web checkout - package, quantity, add-ons and tax -
+and never reads a price from the request.
 
 > **These routes do not exist on every site.** As of 1.4.0 the whole controller
 > is skipped unless `wpss_uses_standalone_payments()` is true

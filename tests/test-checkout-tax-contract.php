@@ -368,9 +368,13 @@ foreach ( $roots as $file ) {
 
 wpss_t( empty( $inline ), 'no site computes tax inline any more (' . ( $inline ? implode( ', ', $inline ) : 'all use wpss_calculate_tax' ) . ')' );
 
+// Each site taxes through the shared helper, directly or through the one line
+// pricer (CheckoutIntentService::price_service_line(), which calls it). The
+// checkout page prices through the pricer since 1.8.0.
 foreach ( $roots as $file ) {
+	$src = file_get_contents( $file );
 	wpss_t(
-		false !== strpos( file_get_contents( $file ), 'wpss_calculate_tax(' ),
+		false !== strpos( $src, 'wpss_calculate_tax(' ) || false !== strpos( $src, 'price_service_line(' ),
 		basename( $file ) . ' uses the shared helper'
 	);
 }

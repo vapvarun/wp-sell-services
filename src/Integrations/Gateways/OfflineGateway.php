@@ -764,78 +764,16 @@ class OfflineGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		// Self-purchase check: vendors cannot buy their own service.
-		$service_post = get_post( $service_id );
-		if ( $service_post && (int) $service_post->post_author === get_current_user_id() ) {
-			wp_send_json_error( array( 'message' => __( 'You cannot purchase your own service.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Get service and package details.
-		$service = wpss_get_service( $service_id );
-
-		if ( ! $service ) {
-			wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Calculate price from package.
-		// Priced by the one line pricer, from ids alone - package (stable id or
-		// index), quantity and the add-ons as the vendor set them.
-		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line(
+		$order = $this->create_service_order(
 			$service_id,
 			$package_id,
 			$quantity,
-			\WPSellServices\Checkout\CheckoutIntentService::request_selection( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the calling handler.
+			\WPSellServices\Checkout\CheckoutIntentService::request_selection( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ) ), // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the calling handler.
+			'offline'
 		);
 
-		if ( is_wp_error( $line ) ) {
-			wp_send_json_error( array( 'message' => $line->get_error_message() ) );
-			return;
-		}
-
-		$price        = (float) $line['subtotal'];
-		$package_id   = (int) $line['package_id'];
-		$addon_data   = array( 'addons' => $line['addons'] );
-		$addons_total = (float) $line['addons_total'];
-
-		/*
-		 * The owner's min/max order amount, same as Stripe and PayPal.
-		 *
-		 * Those rails get it from CheckoutIntentService::resolve(); this handler
-		 * prices the order itself and never called resolve(), so a $2,500 order
-		 * checked out cleanly against a $10 maximum (Basecamp 10304350394). A
-		 * limit the owner sets is a marketplace rule, not a property of one
-		 * payment method.
-		 */
-		$limit_error = wpss_check_order_limits( (float) ( $price + $addons_total ), 'offline' );
-
-		if ( null !== $limit_error ) {
-			wp_send_json_error( array( 'message' => $limit_error->get_error_message() ) );
-			return;
-		}
-
-		// Get order provider.
-		$order_provider = wpss_get_order_provider();
-
-		// Create order (stays in pending_payment status).
-		// subtotal = package price only; addons_total is separate — StandaloneOrderProvider sums them.
-		$order = $order_provider->create_order(
-			array(
-				'service_id'     => $service_id,
-				'package_id'     => $package_id,
-				'quantity'       => $quantity,
-				'customer_id'    => get_current_user_id(),
-				'subtotal'       => $price,
-				'addons'         => $addon_data['addons'],
-				'addons_total'   => $addons_total,
-				'currency'       => wpss_get_currency(),
-				'payment_method' => 'offline',
-			)
-		);
-
-		if ( ! $order ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
+		if ( is_wp_error( $order ) ) {
+			wp_send_json_error( array( 'message' => $order->get_error_message() ) );
 			return;
 		}
 
@@ -864,6 +802,69 @@ class OfflineGateway implements PaymentGatewayInterface {
 				'instructions' => $this->render_buyer_instructions( $order->id ),
 			)
 		);
+	}
+
+	/**
+	 * Create a pending-payment order for one service, priced by the one pricer.
+	 *
+	 * Shared by the checkout form (AJAX) and the app (POST
+	 * /payments/create-intent), so both refuse a self-purchase, price the
+	 * package, quantity and add-ons the same way, and apply the owner's order
+	 * limits. The REST copy created the order with its own flat package price
+	 * (Basecamp 10336467402).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int                              $service_id Service ID.
+	 * @param int                              $package_id Stable package id or legacy index.
+	 * @param int                              $quantity   Quantity.
+	 * @param array<int, array<string, mixed>> $selection  Add-on selection.
+	 * @param string                           $gateway_id Rail that will collect the money (offline, test).
+	 * @return object|\WP_Error The order.
+	 */
+	public function create_service_order( int $service_id, int $package_id, int $quantity, array $selection, string $gateway_id ) {
+		$service_post = get_post( $service_id );
+
+		if ( ! $service_post || ! wpss_get_service( $service_id ) ) {
+			return new \WP_Error( 'wpss_invalid_service', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		if ( (int) $service_post->post_author === get_current_user_id() ) {
+			return new \WP_Error( 'wpss_own_service', __( 'You cannot purchase your own service.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		// Priced by the one line pricer, from ids alone - package (stable id or
+		// index), quantity and the add-ons as the vendor set them.
+		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, $package_id, max( 1, $quantity ), $selection );
+
+		if ( is_wp_error( $line ) ) {
+			return $line;
+		}
+
+		// The owner's min/max order amount, the same rule Stripe and PayPal
+		// get from CheckoutIntentService::resolve() (Basecamp 10304350394).
+		$limit_error = wpss_check_order_limits( (float) $line['subtotal'] + (float) $line['addons_total'], 'offline' );
+
+		if ( null !== $limit_error ) {
+			return $limit_error;
+		}
+
+		// subtotal = package price only; addons_total is separate - StandaloneOrderProvider sums them.
+		$order = wpss_get_order_provider()->create_order(
+			array(
+				'service_id'     => $service_id,
+				'package_id'     => (int) $line['package_id'],
+				'quantity'       => max( 1, $quantity ),
+				'customer_id'    => get_current_user_id(),
+				'subtotal'       => (float) $line['subtotal'],
+				'addons'         => $line['addons'],
+				'addons_total'   => (float) $line['addons_total'],
+				'currency'       => wpss_get_currency(),
+				'payment_method' => $gateway_id,
+			)
+		);
+
+		return $order ? $order : new \WP_Error( 'wpss_order_failed', __( 'Failed to create order.', 'wp-sell-services' ), array( 'status' => 500 ) );
 	}
 
 	/**
