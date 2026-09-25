@@ -3,7 +3,7 @@
 **Generated**: 2026-05-08 · **last refreshed** 2026-08-26 (branch `1.7.0`)
 **Version**: 1.7.0-dev
 **Source**: [`audit/manifest.json`](manifest.json)
-**Counts**: 208 PHP files in `src/` · 151 `register_rest_route` calls (26 controllers) · 119 AJAX handlers · 20 custom DB tables · 9 WP-CLI command files · 377 hook firings (165 do_actions + 212 apply_filters) · 6 blocks · 20 shortcodes · 37 HTML + 14 plain email templates · 24 switchable notification types. Re-measured after the 1.7.0 dead-code sweep (-1,299 lines).
+**Counts**: 208 PHP files in `src/` · 151 `register_rest_route` calls (26 controllers) · 119 AJAX handlers · 20 custom DB tables · 9 WP-CLI command files · 377 hook firings (165 do_actions + 212 apply_filters) · 6 blocks · 20 shortcodes · 37 HTML email templates (no plain-text variants) · 24 switchable notification types. Re-measured after the 1.7.0 dead-code sweep (-1,299 lines).
 
 > Counts are enumerated by hand, not by `write-manifest.mjs` — the generator undercounts REST
 > because controllers register through an array wrapper. See `audit/manifest.json`.
@@ -134,7 +134,6 @@ i18n: `wp_set_script_translations()` on every wpss-* handle (commit `4c74224`). 
 ## 9. Email templates (35 files)
 
 - HTML variants: `templates/emails/*.php`
-- Plain-text variants: `templates/emails/plain/*.php`
 - Categories: order lifecycle (11), milestones (4), extensions (3), tips (3), disputes (4), reviews (2), withdrawals (3), notifications (5)
 
 ## 10. Cron jobs (4)
