@@ -105,7 +105,6 @@ class VendorsPage {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
 		add_action( 'wp_ajax_wpss_update_vendor_status', array( $this, 'ajax_update_vendor_status' ) );
 		add_action( 'wp_ajax_wpss_bulk_update_vendor_status', array( $this, 'ajax_bulk_update_vendor_status' ) );
-		add_action( 'wp_ajax_wpss_get_vendor_details', array( $this, 'ajax_get_vendor_details' ) );
 		add_action( 'wp_ajax_wpss_update_vendor_commission', array( $this, 'ajax_update_vendor_commission' ) );
 		add_action( 'wp_ajax_wpss_vendor_tab_content', array( $this, 'ajax_get_tab_content' ) );
 		add_action( 'wp_ajax_wpss_update_vendor_vacation', array( $this, 'ajax_update_vendor_vacation' ) );
@@ -778,21 +777,6 @@ class VendorsPage {
 				</div><!-- .wpss-list-card__body -->
 			</div><!-- .wpss-list-card -->
 		</div>
-
-		<!-- Vendor Details Modal -->
-		<div id="wpss-vendor-modal" class="wpss-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="wpss-vendor-modal-heading">
-			<div class="wpss-modal-content">
-				<span class="wpss-modal-close" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</span>
-				<div id="wpss-vendor-modal-body">
-					<div class="wpss-modal-loading">
-						<span class="spinner is-active"></span>
-						<?php esc_html_e( 'Loading vendor details...', 'wp-sell-services' ); ?>
-					</div>
-				</div>
-			</div>
-		</div>
-
-
 		<?php
 	}
 
@@ -1133,11 +1117,9 @@ class VendorsPage {
 			)
 		);
 
-		// Calculate average response time (mock for now, would need message tracking).
-		$response_time = __( 'N/A', 'wp-sell-services' );
-
-		// Get wallet balance.
-		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
+		// The vendor's own Earnings figures (EarningsService::get_summary()), so
+		// admin and the vendor read the same "available" number.
+		$money_summary = ( new \WPSellServices\Services\EarningsService() )->get_summary( (int) $vendor_id );
 		?>
 		<div class="wrap wpss-vendor-detail-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Vendor Details', 'wp-sell-services' ); ?></h1>
@@ -1203,16 +1185,23 @@ class VendorsPage {
 			<div class="wpss-detail-stats-row">
 				<div class="wpss-detail-stat-card">
 					<span class="wpss-detail-stat-number"><?php echo esc_html( number_format_i18n( $services_count ) ); ?></span>
-					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Services', 'wp-sell-services' ); ?></span>
+					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Active services', 'wp-sell-services' ); ?></span>
 				</div>
 				<div class="wpss-detail-stat-card">
 					<span class="wpss-detail-stat-number"><?php echo esc_html( number_format_i18n( (int) ( $vendor->total_orders ?? 0 ) ) ); ?></span>
-					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></span>
+					<span class="wpss-detail-stat-label">
+						<?php
+						printf(
+							/* translators: %s: number of completed orders */
+							esc_html__( 'Orders placed (%s completed)', 'wp-sell-services' ),
+							esc_html( number_format_i18n( (int) ( $vendor->completed_orders ?? 0 ) ) )
+						);
+						?>
+					</span>
 				</div>
 				<div class="wpss-detail-stat-card">
-					<span class="wpss-detail-stat-number"><?php echo esc_html( wpss_format_price( (float) $wallet_balance ) ); ?></span>
-					<?php // The ledger: what the vendor sees as Available + Withdrawal in progress. ?>
-					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?></span>
+					<span class="wpss-detail-stat-number"><?php echo esc_html( wpss_format_price( (float) $money_summary['available_balance'] ) ); ?></span>
+					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Available to withdraw', 'wp-sell-services' ); ?></span>
 				</div>
 				<div class="wpss-detail-stat-card">
 					<span class="wpss-detail-stat-number">
@@ -1224,10 +1213,7 @@ class VendorsPage {
 					</span>
 					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?> (<?php echo esc_html( number_format_i18n( $reviews ) ); ?>)</span>
 				</div>
-				<div class="wpss-detail-stat-card">
-					<span class="wpss-detail-stat-number"><?php echo esc_html( $response_time ); ?></span>
-					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Response', 'wp-sell-services' ); ?></span>
-				</div>
+				<?php // No Response card: nothing measures response time yet, and a big "N/A" stat reads as a fault. ?>
 			</div>
 
 			<!-- Tab Navigation -->
@@ -1383,247 +1369,6 @@ class VendorsPage {
 		set_transient( 'wpss_bulk_vendor_report_' . get_current_user_id(), $message, MINUTE_IN_SECONDS );
 
 		wp_send_json_success( array( 'message' => $message ) );
-	}
-
-	/**
-	 * AJAX handler for getting vendor details.
-	 *
-	 * @return void
-	 */
-	public function ajax_get_vendor_details(): void {
-		check_ajax_referer( 'wpss_vendors_admin', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
-		}
-
-		$vendor_id = absint( $_POST['vendor_id'] ?? 0 );
-
-		if ( ! $vendor_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid vendor ID.', 'wp-sell-services' ) ) );
-		}
-
-		global $wpdb;
-
-		// Get vendor profile.
-		$vendor = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT vp.*, u.display_name, u.user_email, u.user_registered
-				FROM {$wpdb->prefix}wpss_vendor_profiles vp
-				LEFT JOIN {$wpdb->users} u ON vp.user_id = u.ID
-				WHERE vp.user_id = %d",
-				$vendor_id
-			)
-		);
-
-		if ( ! $vendor ) {
-			wp_send_json_error( array( 'message' => __( 'Vendor not found.', 'wp-sell-services' ) ) );
-		}
-
-		// Payout-relevant number: current wallet balance ("what do I owe"),
-		// read from the ledger authority rather than vp.total_earnings.
-		$wallet_balance = wpss_get_ledger_balance( (int) $vendor_id );
-
-		// Get services.
-		$services = get_posts(
-			array(
-				'post_type'      => 'wpss_service',
-				'post_status'    => array( 'publish', 'draft', 'pending' ),
-				'author'         => $vendor_id,
-				'posts_per_page' => 10,
-				'orderby'        => 'date',
-				'order'          => 'DESC',
-			)
-		);
-
-		// Get recent orders.
-		$orders = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT o.*, s.post_title as service_title
-				FROM {$wpdb->prefix}wpss_orders o
-				LEFT JOIN {$wpdb->posts} s ON o.service_id = s.ID
-				WHERE o.vendor_id = %d
-				ORDER BY o.created_at DESC
-				LIMIT 10",
-				$vendor_id
-			)
-		);
-
-		// Build HTML.
-		ob_start();
-		?>
-		<div class="wpss-vendor-details">
-			<div class="wpss-vendor-header">
-				<?php echo get_avatar( $vendor_id, 80 ); ?>
-				<div>
-					<h2><?php echo esc_html( $vendor->display_name ); ?></h2>
-					<p><?php echo esc_html( $vendor->user_email ); ?></p>
-					<span class="<?php echo esc_attr( wpss_status_class( $vendor->status ) ); ?>">
-						<?php echo esc_html( ucfirst( $vendor->status ) ); ?>
-					</span>
-				</div>
-			</div>
-
-			<div class="wpss-vendor-stats-grid">
-				<div class="wpss-vendor-stat">
-					<strong><?php echo esc_html( number_format_i18n( count( $services ) ) ); ?></strong>
-					<?php esc_html_e( 'Services', 'wp-sell-services' ); ?>
-				</div>
-				<div class="wpss-vendor-stat">
-					<strong><?php echo esc_html( number_format_i18n( (int) ( $vendor->total_orders ?? 0 ) ) ); ?></strong>
-					<?php esc_html_e( 'Total Orders', 'wp-sell-services' ); ?>
-				</div>
-				<div class="wpss-vendor-stat">
-					<strong>
-						<?php if ( $vendor->avg_rating ) : ?>
-							<?php echo esc_html( number_format( (float) $vendor->avg_rating, 1 ) ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i>
-						<?php else : ?>
-							-
-						<?php endif; ?>
-					</strong>
-					<?php esc_html_e( 'Rating', 'wp-sell-services' ); ?>
-				</div>
-				<div class="wpss-vendor-stat">
-					<strong><?php echo esc_html( wpss_format_price( (float) $wallet_balance ) ); ?></strong>
-					<?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?>
-				</div>
-			</div>
-
-			<!-- Commission Rate Section -->
-			<?php
-			$effective_rate = $this->commission_service->get_effective_vendor_rate( $vendor_id );
-			$global_rate    = CommissionService::get_global_commission_rate();
-			?>
-			<div class="wpss-commission-section" style="background: #f6f7f7; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-				<h3 style="margin-top: 0;"><?php esc_html_e( 'Commission Rate', 'wp-sell-services' ); ?></h3>
-				<p class="description" style="margin-bottom: 15px;">
-					<?php
-					printf(
-						/* translators: %s: global commission rate */
-						esc_html__( 'Global commission rate is %s%%. Set a custom rate below to override for this vendor.', 'wp-sell-services' ),
-						esc_html( number_format( $global_rate, 1 ) )
-					);
-					?>
-				</p>
-				<div style="display: flex; align-items: center; gap: 10px;">
-					<label for="wpss-vendor-commission-rate" class="screen-reader-text">
-						<?php esc_html_e( 'Commission Rate', 'wp-sell-services' ); ?>
-					</label>
-					<input type="number" id="wpss-vendor-commission-rate"
-							value="<?php echo esc_attr( $effective_rate['is_custom'] ? number_format( $effective_rate['rate'], 2, '.', '' ) : '' ); ?>"
-							placeholder="<?php echo esc_attr( number_format( $global_rate, 1 ) ); ?>"
-							min="0" max="100" step="0.01"
-							style="width: 100px;">
-					<span>%</span>
-					<button type="button" class="button button-primary" id="wpss-save-commission"
-							data-vendor-id="<?php echo esc_attr( $vendor_id ); ?>">
-						<?php esc_html_e( 'Save', 'wp-sell-services' ); ?>
-					</button>
-					<?php if ( $effective_rate['is_custom'] ) : ?>
-						<button type="button" class="button" id="wpss-reset-commission"
-								data-vendor-id="<?php echo esc_attr( $vendor_id ); ?>">
-							<?php esc_html_e( 'Reset to Global', 'wp-sell-services' ); ?>
-						</button>
-					<?php endif; ?>
-				</div>
-				<p id="wpss-commission-status" style="margin-top: 10px;">
-					<?php if ( $effective_rate['is_custom'] ) : ?>
-						<span style="color: #2271b1;">
-							<?php
-							printf(
-								/* translators: %s: custom commission rate */
-								esc_html__( 'Custom rate: %s%%', 'wp-sell-services' ),
-								esc_html( number_format( $effective_rate['rate'], 2 ) )
-							);
-							?>
-						</span>
-					<?php else : ?>
-						<span style="color: #646970;">
-							<?php esc_html_e( 'Using global rate', 'wp-sell-services' ); ?>
-						</span>
-					<?php endif; ?>
-				</p>
-			</div>
-
-			<?php if ( $vendor->bio ) : ?>
-				<h3><?php esc_html_e( 'Bio', 'wp-sell-services' ); ?></h3>
-				<p><?php echo wp_kses_post( $vendor->bio ); ?></p>
-			<?php endif; ?>
-
-			<?php if ( ! empty( $services ) ) : ?>
-				<h3><?php esc_html_e( 'Services', 'wp-sell-services' ); ?></h3>
-				<table class="widefat striped">
-					<thead>
-						<tr>
-							<th><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
-							<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-							<th><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $services as $service ) : ?>
-							<tr>
-								<td>
-									<a href="<?php echo esc_url( get_edit_post_link( $service->ID ) ); ?>">
-										<?php echo esc_html( $service->post_title ); ?>
-									</a>
-								</td>
-								<td><?php echo esc_html( ucfirst( $service->post_status ) ); ?></td>
-								<td>
-									<?php
-									$price = get_post_meta( $service->ID, '_wpss_starting_price', true );
-									echo $price ? esc_html( wpss_format_price( (float) $price ) ) : '-';
-									?>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-			<?php endif; ?>
-
-			<?php if ( ! empty( $orders ) ) : ?>
-				<h3><?php esc_html_e( 'Recent Orders', 'wp-sell-services' ); ?></h3>
-				<table class="widefat striped">
-					<thead>
-						<tr>
-							<th><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></th>
-							<th><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
-							<th><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></th>
-							<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-							<th><?php esc_html_e( 'Date', 'wp-sell-services' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $orders as $order ) : ?>
-							<tr>
-								<td><?php echo esc_html( $order->order_number ); ?></td>
-								<td><?php echo esc_html( $order->service_title ); ?></td>
-								<td><?php echo esc_html( wpss_format_price( (float) $order->total ) ); ?></td>
-								<td>
-									<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
-										<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
-									</span>
-								</td>
-								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $order->created_at ) ) ); ?></td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-			<?php endif; ?>
-
-			<p style="margin-top: 20px;">
-				<a href="<?php echo esc_url( get_edit_user_link( $vendor_id ) ); ?>" class="button button-primary">
-					<?php esc_html_e( 'Edit User Profile', 'wp-sell-services' ); ?>
-				</a>
-				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=wpss_service&author=' . $vendor_id ) ); ?>" class="button">
-					<?php esc_html_e( 'View All Services', 'wp-sell-services' ); ?>
-				</a>
-			</p>
-		</div>
-		<?php
-		$html = ob_get_clean();
-
-		wp_send_json_success( array( 'html' => $html ) );
 	}
 
 	/**

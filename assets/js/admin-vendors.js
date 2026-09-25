@@ -25,9 +25,6 @@
 	}
 
 	jQuery(function($) {
-		var $modal = $('#wpss-vendor-modal');
-		var $modalBody = $('#wpss-vendor-modal-body');
-
 		// Bulk actions: select-all + apply.
 		$('#cb-select-all-1, #cb-select-all-2').on('change', function() {
 			$('input[name="vendor_ids[]"]').prop('checked', $(this).prop('checked'));
@@ -52,10 +49,11 @@
 			/* translators: 1: action label, 2: count */
 			var confirmMsg = wpssVendors.i18n.bulkConfirm;
 			confirmMsg = confirmMsg.replace('%1$s', labels[bulkAction] || bulkAction).replace('%2$d', ids.length);
-			if ( ! confirm( confirmMsg ) ) {
+			var $btn = $(this);
+			window.wpssConfirm( confirmMsg ).then( function ( ok ) {
+			if ( ! ok ) {
 				return;
 			}
-			var $btn = $(this);
 			$btn.prop('disabled', true);
 			$.ajax({
 				url: wpssVendors.ajaxUrl,
@@ -79,56 +77,21 @@
 					$btn.prop('disabled', false);
 				}
 			});
-		});
-
-		// View vendor details
-		$('.wpss-view-vendor').on('click', function(e) {
-			e.preventDefault();
-			var vendorId = $(this).data('vendor-id');
-
-			$modalBody.html('<div class="wpss-modal-loading"><span class="spinner is-active"></span> ' + wpssVendors.i18n.loadingVendorDetails + '</div>');
-			$modal.show();
-
-			$.ajax({
-				url: wpssVendors.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'wpss_get_vendor_details',
-					nonce: wpssVendors.nonce,
-					vendor_id: vendorId
-				},
-				success: function(response) {
-					if (response.success) {
-						$modalBody.html(response.data.html);
-					} else {
-						$modalBody.html('<div class="notice notice-error"><p>' + (response.data.message || i18n.error) + '</p></div>');
-					}
-				},
-				error: function() {
-					$modalBody.html('<div class="notice notice-error"><p>' + i18n.error + '</p></div>');
-				}
-			});
-		});
-
-		// Close modal
-		$('.wpss-modal-close, .wpss-modal').on('click', function(e) {
-			if (e.target === this) {
-				$modal.hide();
-			}
+			} );
 		});
 
 		// Update vendor status
 		$('.wpss-change-status').on('click', function(e) {
 			e.preventDefault();
 
-			if (!confirm(wpssVendors.i18n.confirmStatusChange)) {
-				return;
-			}
-
 			var $btn = $(this);
 			var vendorId = $btn.data('vendor-id');
 			var newStatus = $btn.data('status');
-			var $row = $btn.closest('tr');
+
+			window.wpssConfirm(wpssVendors.i18n.confirmStatusChange).then(function(ok) {
+			if (!ok) {
+				return;
+			}
 
 			$btn.prop('disabled', true);
 
@@ -154,83 +117,6 @@
 					$btn.prop('disabled', false);
 				}
 			});
-		});
-
-		// Save vendor commission rate
-		$(document).on('click', '#wpss-save-commission', function(e) {
-			e.preventDefault();
-			var $btn = $(this);
-			var vendorId = $btn.data('vendor-id');
-			var rate = $('#wpss-vendor-commission-rate').val();
-
-			if (rate === '') {
-				wpssAdminNotice(wpssVendors.i18n.pleaseEnterACommissionRate, 'error');
-				return;
-			}
-
-			$btn.prop('disabled', true);
-
-			$.ajax({
-				url: wpssVendors.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'wpss_update_vendor_commission',
-					nonce: wpssVendors.nonce,
-					vendor_id: vendorId,
-					rate: rate
-				},
-				success: function(response) {
-					if (response.success) {
-						$('#wpss-commission-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
-						// Reload modal content to update UI
-						$('.wpss-view-vendor[data-vendor-id="' + vendorId + '"]').click();
-					} else {
-						wpssAdminNotice(response.data.message || i18n.error, 'error');
-						$btn.prop('disabled', false);
-					}
-				},
-				error: function() {
-					wpssAdminNotice(i18n.error, 'error');
-					$btn.prop('disabled', false);
-				}
-			});
-		});
-
-		// Reset vendor commission to global rate
-		$(document).on('click', '#wpss-reset-commission', function(e) {
-			e.preventDefault();
-			if (!confirm(wpssVendors.i18n.resetThisVendorsCommission)) {
-				return;
-			}
-
-			var $btn = $(this);
-			var vendorId = $btn.data('vendor-id');
-
-			$btn.prop('disabled', true);
-
-			$.ajax({
-				url: wpssVendors.ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'wpss_update_vendor_commission',
-					nonce: wpssVendors.nonce,
-					vendor_id: vendorId,
-					reset: 'true'
-				},
-				success: function(response) {
-					if (response.success) {
-						$('#wpss-commission-status').html('<span style="color: #00a32a;">' + response.data.message + '</span>');
-						// Reload modal content to update UI
-						$('.wpss-view-vendor[data-vendor-id="' + vendorId + '"]').click();
-					} else {
-						wpssAdminNotice(response.data.message || i18n.error, 'error');
-						$btn.prop('disabled', false);
-					}
-				},
-				error: function() {
-					wpssAdminNotice(i18n.error, 'error');
-					$btn.prop('disabled', false);
-				}
 			});
 		});
 	});
@@ -357,11 +243,12 @@
 
 			// Reset commission.
 			$('#wpss-reset-commission-detail').off('click').on('click', function() {
-				if (!confirm(wpssVendors.i18n.resetToGlobalCommissionRate)) {
+				var $btn = $(this);
+				window.wpssConfirm(wpssVendors.i18n.resetToGlobalCommissionRate).then(function(ok) {
+				if (!ok) {
 					return;
 				}
 
-				var $btn = $(this);
 				$btn.prop('disabled', true);
 
 				$.ajax({
@@ -387,6 +274,7 @@
 						wpssAdminNotice(wpssVendors.i18n.errorResettingCommissionRate, 'error');
 						$btn.prop('disabled', false);
 					}
+				});
 				});
 			});
 
@@ -666,8 +554,10 @@
 				return;
 			}
 
-			if (!confirm(i18n.confirmStatusChange)) {
-				$(this).val('');
+			var $select = $(this);
+			window.wpssConfirm(i18n.confirmStatusChange).then(function(ok) {
+			if (!ok) {
+				$select.val('');
 				return;
 			}
 
@@ -690,6 +580,7 @@
 				error: function() {
 					wpssAdminNotice(i18n.error, 'error');
 				}
+			});
 			});
 		});
 	});
