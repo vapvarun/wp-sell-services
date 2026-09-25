@@ -215,7 +215,6 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_update_vendor_profile', array( $this, 'update_vendor_profile' ) );
 
 		// Per-vendor email preferences (VS11 from plans/ORDER-FLOW-AUDIT.md).
-		add_action( 'wp_ajax_wpss_save_email_preferences', array( $this, 'save_email_preferences' ) );
 
 		// Portfolio (AJAX fallback for non-REST contexts).
 		add_action( 'wp_ajax_wpss_add_portfolio_item', array( $this, 'add_portfolio_item' ) );
@@ -3143,81 +3142,6 @@ class AjaxHandlers {
 		}
 
 		return $value;
-	}
-
-	/**
-	 * Update vendor/customer profile from the unified dashboard.
-	 *
-	 * Handles both vendor profiles (with vendor-specific fields like tagline, bio)
-	 * and regular customer profiles (display name only).
-	 *
-	 * @return void
-	 */
-	/**
-	 * Save per-vendor email preferences.
-	 *
-	 * Stores a key=>bool array in user meta `wpss_email_preferences`. Missing
-	 * key OR true means "send"; explicit false means "mute". Categories map
-	 * to email types in EmailService::is_email_type_enabled().
-	 *
-	 * VS11 from plans/ORDER-FLOW-AUDIT.md.
-	 *
-	 * @since 1.1.0
-	 * @return void
-	 */
-	public function save_email_preferences(): void {
-		check_ajax_referer( 'wpss_save_email_prefs', 'wpss_email_prefs_nonce' );
-
-		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
-		}
-
-		// Only the categories this user was actually OFFERED.
-		//
-		// The list is role-aware now (Basecamp #10159633379), so a buyer's form
-		// carries no tips / withdrawals / proposals checkboxes. This used to
-		// iterate a hardcoded list of all eight and read "checkbox absent" as
-		// "explicitly muted" - which would have recorded those three as OFF for
-		// every buyer who ever saved the form, and left them silently muted if
-		// that person later became a vendor, with nothing in the UI to explain
-		// why their sales mail had stopped.
-		//
-		// Preferences the form did not show are preserved as they were stored.
-		$valid_keys = array_keys( wpss_get_email_preference_categories( $user_id ) );
-
-		$existing = get_user_meta( $user_id, 'wpss_email_preferences', true );
-		$existing = is_array( $existing ) ? $existing : array();
-
-		$submitted   = isset( $_POST['prefs'] ) && is_array( $_POST['prefs'] ) ? wp_unslash( $_POST['prefs'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Whitelisted booleans below.
-		$preferences = $existing;
-		foreach ( $valid_keys as $key ) {
-			// Checkbox is present only if checked. Absence = explicit false (muted).
-			$preferences[ $key ] = isset( $submitted[ $key ] );
-		}
-
-		update_user_meta( $user_id, 'wpss_email_preferences', $preferences );
-
-		// Verify persistence instead of trusting update_user_meta()'s return
-		// (false also means "value unchanged"). Read back and compare so a
-		// DB-level failure surfaces as an error, not a fake success
-		// (Basecamp #9983538201).
-		wp_cache_delete( $user_id, 'user_meta' );
-		$persisted = get_user_meta( $user_id, 'wpss_email_preferences', true );
-
-		if ( $persisted !== $preferences ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Your preferences could not be saved. Please try again.', 'wp-sell-services' ) ),
-				500
-			);
-		}
-
-		wp_send_json_success(
-			array(
-				'message'     => __( 'Preferences saved.', 'wp-sell-services' ),
-				'preferences' => $preferences,
-			)
-		);
 	}
 
 	/**

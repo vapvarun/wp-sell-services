@@ -356,3 +356,37 @@ function wpss_notification_type_allowed( string $type ): bool {
 	// Unknown type: send. A new event ships live until it is given a control.
 	return ! isset( $map[ $type ] ) || wpss_notification_type_enabled( $map[ $type ] );
 }
+
+/**
+ * Save a member's email preferences from a submitted checkbox set.
+ *
+ * Only the categories this user is OFFERED are written (the list is role-aware,
+ * Basecamp #10159633379): a checkbox that is absent means muted, and categories
+ * the form did not show keep their stored value, so a buyer who saves never
+ * mutes the seller mail they would get after becoming a vendor.
+ *
+ * One writer for the profile form (wpss_save_member_profile(), REST and AJAX)
+ * and the older standalone AJAX action.
+ *
+ * @since 1.8.0
+ *
+ * @param int                 $user_id   Member.
+ * @param array<string,mixed> $submitted Checked keys => any value.
+ * @return array<string,bool>|null Saved preferences, or null if the write did not persist.
+ */
+function wpss_save_email_preferences( int $user_id, array $submitted ): ?array {
+	$existing    = get_user_meta( $user_id, 'wpss_email_preferences', true );
+	$preferences = is_array( $existing ) ? $existing : array();
+
+	foreach ( array_keys( wpss_get_email_preference_categories( $user_id ) ) as $key ) {
+		$preferences[ $key ] = isset( $submitted[ $key ] );
+	}
+
+	update_user_meta( $user_id, 'wpss_email_preferences', $preferences );
+
+	// Read back rather than trust update_user_meta()'s return, which is also
+	// false for "unchanged" (Basecamp #9983538201).
+	wp_cache_delete( $user_id, 'user_meta' );
+
+	return get_user_meta( $user_id, 'wpss_email_preferences', true ) === $preferences ? $preferences : null;
+}

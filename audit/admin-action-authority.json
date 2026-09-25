@@ -451,13 +451,6 @@
       "rate_limited": false,
       "anonymous": false
     },
-    "wp_ajax_wpss_save_email_preferences": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::save_email_preferences",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": false,
-      "anonymous": false
-    },
     "wp_ajax_wpss_search_dashboard": {
       "callback": "WPSellServices\\Frontend\\AjaxHandlers::search_dashboard",
       "nonce": true,

@@ -19,6 +19,10 @@
  *
  * @var array<string,string> $wpss_billing  Current values (profile or posted).
  * @var bool                 $wpss_complete Whether every required field is set.
+ * @var bool                 $wpss_optional Profile use: nothing is required there,
+ *                                          so a member without an address can
+ *                                          still save the rest of the form.
+ *                                          Checkout requires the fields.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -89,7 +93,7 @@ $wpss_summary_addr = array_filter(
 			<div class="wpss-form-group wpss-billing__field wpss-billing__field--<?php echo esc_attr( $wpss_key ); ?>">
 				<label for="<?php echo esc_attr( $wpss_id ); ?>">
 					<?php echo esc_html( $wpss_field['label'] ); ?>
-					<?php if ( ! empty( $wpss_field['required'] ) ) : ?>
+					<?php if ( ! empty( $wpss_field['required'] ) && empty( $wpss_optional ) ) : ?>
 						<span class="wpss-required" aria-hidden="true">*</span>
 					<?php endif; ?>
 				</label>
@@ -99,7 +103,7 @@ $wpss_summary_addr = array_filter(
 						name="<?php echo esc_attr( $wpss_key ); ?>"
 						class="wpss-input"
 						autocomplete="<?php echo esc_attr( $wpss_field['autocomplete'] ); ?>"
-						<?php echo ! empty( $wpss_field['required'] ) ? 'required' : ''; ?>>
+						<?php echo ! empty( $wpss_field['required'] ) && empty( $wpss_optional ) ? 'required' : ''; ?>>
 						<option value=""><?php esc_html_e( 'Select a country…', 'wp-sell-services' ); ?></option>
 						<?php foreach ( wpss_get_countries() as $wpss_code => $wpss_label ) : ?>
 							<option value="<?php echo esc_attr( $wpss_code ); ?>" <?php selected( $wpss_value, $wpss_code ); ?>>
@@ -114,7 +118,7 @@ $wpss_summary_addr = array_filter(
 						class="wpss-input"
 						value="<?php echo esc_attr( $wpss_value ); ?>"
 						autocomplete="<?php echo esc_attr( $wpss_field['autocomplete'] ); ?>"
-						<?php echo ! empty( $wpss_field['required'] ) ? 'required' : ''; ?>>
+						<?php echo ! empty( $wpss_field['required'] ) && empty( $wpss_optional ) ? 'required' : ''; ?>>
 				<?php endif; ?>
 			</div>
 		<?php endforeach; ?>

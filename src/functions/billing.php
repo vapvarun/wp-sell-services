@@ -857,6 +857,13 @@ function wpss_save_member_profile( array $data, int $user_id = 0 ): bool {
 	// WooCommerce-compatible keys with the same sanitising.
 	wpss_save_billing_from_request( $data, $user_id );
 
+	// Email preferences are part of the one profile form (one Save Changes,
+	// owner decision 2026-09-25). The marker says the checkboxes were on the
+	// form, so an unchecked set means "all muted", not "not sent".
+	if ( ! empty( $data['email_prefs_submitted'] ) ) {
+		wpss_save_email_preferences( $user_id, is_array( $data['prefs'] ?? null ) ? $data['prefs'] : array() );
+	}
+
 	if ( array_key_exists( 'display_name', $data ) ) {
 		$display_name = sanitize_text_field( (string) $data['display_name'] );
 
