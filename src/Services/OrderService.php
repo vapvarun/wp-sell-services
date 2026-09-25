@@ -884,6 +884,8 @@ class OrderService {
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
+				// Past the revision's own deadline (check_late_orders()).
+				ServiceOrder::STATUS_LATE,
 			),
 			ServiceOrder::STATUS_LATE                   => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
@@ -1062,6 +1064,37 @@ class OrderService {
 	}
 
 	/**
+	 * How many days the vendor has to deliver this order: the package's
+	 * delivery time plus any add-on days (at least 1).
+	 *
+	 * Shared by the first deadline (requirements submitted) and a revision's
+	 * deadline (DeliveryService::request_revision()), so both count the same.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param ServiceOrder $order Order.
+	 * @return int Days.
+	 */
+	public function get_delivery_days( ServiceOrder $order ): int {
+		// The package the buyer paid for (frozen snapshot, proposal, or the
+		// live package by stable id). Indexing _wpss_packages by package_id
+		// missed every order carrying a stable id (1000+) and fell to 7 days.
+		$snapshot      = $order->get_package_snapshot();
+		$delivery_days = (int) ( $snapshot['delivery_days'] ?? 0 );
+		$delivery_days = $delivery_days > 0 ? $delivery_days : 7;
+
+		// Add addon delivery days (can be negative for rush delivery).
+		if ( ! empty( $order->addons ) && is_array( $order->addons ) ) {
+			foreach ( $order->addons as $addon ) {
+				$delivery_days += (int) ( $addon['delivery_days_extra'] ?? 0 );
+			}
+			$delivery_days = max( 1, $delivery_days );
+		}
+
+		return $delivery_days;
+	}
+
+	/**
 	 * Set the delivery deadline when requirements are submitted.
 	 *
 	 * This is where the real delivery clock starts — vendors cannot begin
@@ -1080,23 +1113,7 @@ class OrderService {
 			return;
 		}
 
-		$service       = $order->get_service();
-		$delivery_days = 7;
-
-		if ( $service ) {
-			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: array();
-			if ( isset( $packages[ $order->package_id ] ) ) {
-				$delivery_days = (int) ( $packages[ $order->package_id ]['delivery_days'] ?? 7 );
-			}
-		}
-
-		// Add addon delivery days (can be negative for rush delivery).
-		if ( ! empty( $order->addons ) && is_array( $order->addons ) ) {
-			foreach ( $order->addons as $addon ) {
-				$delivery_days += (int) ( $addon['delivery_days_extra'] ?? 0 );
-			}
-			$delivery_days = max( 1, $delivery_days );
-		}
+		$delivery_days = $this->get_delivery_days( $order );
 
 		$deadline = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
 

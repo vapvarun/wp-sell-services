@@ -245,6 +245,17 @@ class DeliveryService {
 			return false;
 		}
 
+		// The revision gets its own deadline - the order's delivery time from
+		// now - so it can be marked late like any delivery. The original
+		// deadline has usually passed by the time a buyer reviews, so without
+		// this every revision would read late at once (owner decision,
+		// Basecamp 10336731826). original_deadline keeps the first one.
+		$wpdb->update(
+			$wpdb->prefix . 'wpss_orders',
+			array( 'delivery_deadline' => gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) + $order_service->get_delivery_days( $order ) * DAY_IN_SECONDS ) ),
+			array( 'id' => $order_id )
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
 		/**
 		 * Fires when revision is requested.
 		 *

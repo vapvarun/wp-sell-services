@@ -74,6 +74,9 @@ class DisputeService {
 		ServiceOrder::STATUS_LATE,
 		ServiceOrder::STATUS_DELIVERED,
 		ServiceOrder::STATUS_CANCELLATION_REQUESTED,
+		// The buyer's way out of a hold only the vendor can lift
+		// (Basecamp 10336731826).
+		ServiceOrder::STATUS_ON_HOLD,
 	);
 
 	/**

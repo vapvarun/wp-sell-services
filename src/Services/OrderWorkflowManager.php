@@ -288,11 +288,13 @@ class OrderWorkflowManager {
 		$late_orders = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, vendor_id, customer_id FROM {$table}
-				WHERE status = %s
+				WHERE status IN (%s, %s)
 				AND delivery_deadline < %s
 				ORDER BY delivery_deadline ASC
 				LIMIT %d",
 				ServiceOrder::STATUS_IN_PROGRESS,
+				// A revision has its own deadline (DeliveryService::request_revision()).
+				ServiceOrder::STATUS_REVISION_REQUESTED,
 				current_time( 'mysql' ),
 				self::SWEEP_BATCH
 			)
