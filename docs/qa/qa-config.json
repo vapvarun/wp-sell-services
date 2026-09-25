@@ -4,8 +4,8 @@
   "name": "WP Sell Services",
   "version_constant": "WPSS_VERSION",
   "main_file": "wp-sell-services.php",
-  "base_url": "http://wp-sell-services.local",
-  "wp_path": "/Users/vapvarun/Local Sites/wp-sell-services/app/public",
+  "base_url": "http://wss.local",
+  "wp_path": "/Users/varundubey/Local Sites/wss/app/public",
   "autologin_param": "autologin",
   "rest_namespace": "wpss/v1",
   "front_routes": [
