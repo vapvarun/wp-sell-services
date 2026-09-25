@@ -273,6 +273,7 @@ class ServiceModerationPage {
 				'nonce'   => wp_create_nonce( 'wpss_moderation' ),
 				'i18n'    => array(
 					'confirmApprove'    => __( 'Approve this service?', 'wp-sell-services' ),
+					'editService'       => __( 'Edit service', 'wp-sell-services' ),
 					'confirmReject'     => __( 'Reject this service?', 'wp-sell-services' ),
 					'rejectTitle'       => __( 'Reject service', 'wp-sell-services' ),
 					'rejectConfirm'     => __( 'Reject', 'wp-sell-services' ),
@@ -595,7 +596,7 @@ class ServiceModerationPage {
 			</td>
 			<td class="column-actions">
 				<?php if ( self::STATUS_APPROVED !== $status ) : ?>
-					<a href="#" class="button button-small wpss-approve-service approve-action" data-service="<?php echo esc_attr( $service->ID ); ?>">
+					<a href="#" class="button button-small wpss-approve-service approve-action" data-service="<?php echo esc_attr( $service->ID ); ?>" data-edit="<?php echo esc_url( (string) get_edit_post_link( $service->ID, 'url' ) ); ?>">
 						<?php esc_html_e( 'Approve', 'wp-sell-services' ); ?>
 					</a>
 				<?php endif; ?>
