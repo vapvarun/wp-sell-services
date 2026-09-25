@@ -1421,35 +1421,67 @@ function wpss_obfuscate_public_upload_name( array $file ): array {
 }
 
 /**
- * Let vendors reach the media uploader when WooCommerce guards wp-admin.
+ * Let a member upload an image through the media modal.
  *
- * The service wizard and the dashboard use the WordPress media modal, which
- * uploads to wp-admin/async-upload.php. WooCommerce sends anyone without
- * edit_posts away from wp-admin to My Account, so on every site running
- * WooCommerce a vendor's upload got the My Account page back instead of JSON
- * ("An error occurred in the upload") and no vendor could add the main image
- * a service needs to go live (Basecamp 10340613689).
+ * The dashboard (avatar, cover, portfolio) and the service wizard open the
+ * WordPress media modal, which uploads to wp-admin/async-upload.php. Two things
+ * stopped that (Basecamp 10340613689):
  *
- * Only that one endpoint, only for a WPSS vendor, and only with
- * upload_files - which async-upload.php checks again itself. The rest of
- * wp-admin stays closed to them; admin-ajax (the modal's library) is already
- * outside WooCommerce's check.
+ * - Buyers have no upload_files. The dashboard granted it only while its own
+ *   page rendered, so the upload request itself was refused and no buyer could
+ *   ever set a profile photo. It is now granted for that one request too, for
+ *   images only - a member who does not already hold upload_files gets the
+ *   image types and nothing else.
+ * - WooCommerce sends anyone without edit_posts away from wp-admin to My
+ *   Account, so on every WooCommerce site the upload got that page back instead
+ *   of JSON ("An error occurred in the upload") - vendors included, so no
+ *   vendor could add the main image a service needs to go live.
+ *
+ * Only async-upload.php; the rest of wp-admin stays closed. admin-ajax (the
+ * modal's library) is already outside WooCommerce's check.
  *
  * @since 1.8.0
  *
- * @param bool $prevent Whether WooCommerce keeps the user out of wp-admin.
- * @return bool
+ * @param array<string, bool> $allcaps All capabilities of the user.
+ * @return array<string, bool>
  */
-function wpss_allow_vendor_media_upload( $prevent ) {
-	global $pagenow;
-
-	if ( $prevent && 'async-upload.php' === $pagenow && current_user_can( 'upload_files' ) && wpss_is_vendor( get_current_user_id() ) ) {
-		return false;
+function wpss_grant_member_image_upload( array $allcaps ): array {
+	if ( empty( $allcaps['upload_files'] ) && is_user_logged_in() ) {
+		$allcaps['upload_files'] = true;
+		add_filter( 'upload_mimes', 'wpss_image_mimes_only' );
 	}
 
-	return $prevent;
+	return $allcaps;
 }
-add_filter( 'woocommerce_prevent_admin_access', 'wpss_allow_vendor_media_upload' );
+
+/**
+ * The image types from the site's allowed list, for members granted uploads.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, string> $mimes Allowed mime types.
+ * @return array<string, string>
+ */
+function wpss_image_mimes_only( array $mimes ): array {
+	return array_filter( $mimes, static fn( $type ) => str_starts_with( $type, 'image/' ) );
+}
+
+add_action(
+	'init',
+	static function () {
+		global $pagenow;
+
+		if ( 'async-upload.php' !== $pagenow ) {
+			return;
+		}
+
+		add_filter( 'user_has_cap', 'wpss_grant_member_image_upload' );
+		add_filter(
+			'woocommerce_prevent_admin_access',
+			static fn( $prevent ) => $prevent && ! current_user_can( 'upload_files' )
+		);
+	}
+);
 
 /**
  * The media library a member browses holds only their own uploads.

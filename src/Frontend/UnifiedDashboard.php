@@ -87,19 +87,9 @@ class UnifiedDashboard {
 
 		// Media library for profile avatar/portfolio uploads.
 		if ( is_user_logged_in() ) {
-			// Grant upload_files capability temporarily for non-vendor users on the dashboard
-			// so customers can upload profile images via the WP Media Library.
-			// Uses a filter instead of $user->add_cap() to avoid persisting to the database.
-			$user = wp_get_current_user();
-			if ( $user->exists() && ! $user->has_cap( 'upload_files' ) ) {
-				add_filter(
-					'user_has_cap',
-					static function ( array $allcaps ) use ( $user ): array {
-						$allcaps['upload_files'] = true;
-						return $allcaps;
-					}
-				);
-			}
+			// Members without upload_files get it for images while the dashboard
+			// renders (so the modal offers Upload) and on the upload request itself.
+			add_filter( 'user_has_cap', 'wpss_grant_member_image_upload' );
 			wp_enqueue_media();
 		}
 
