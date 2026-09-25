@@ -928,6 +928,8 @@ function wpss_render_vendor_vacation_notice( int $vendor_id ): void {
  *
  * @param int    $vendor_id Vendor user ID.
  * @param string $tier      The vendor's current level.
+ * @param bool   $with_next Also name what the next level still needs (one
+ *                          vendor's page only: it runs the stats queries).
  * @return string
  */
 function wpss_seller_level_note( int $vendor_id, string $tier, bool $with_next = false ): string {
