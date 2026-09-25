@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**535 hooks** across **742** firing sites.
+**536 hooks** across **743** firing sites.
 
 ## Actions (273)
 
@@ -290,7 +290,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (262)
+## Filters (263)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -384,6 +384,7 @@ guide; this is the complete index.
 | `wpss_fullwidth_page_keys` | 1 | `src/Frontend/TemplateLoader.php` | Filter which mapped plugin pages render full-width. |
 | `wpss_gallery_image_size` | 2 | `templates/partials/service-gallery.php` | Filters the gallery image size. |
 | `wpss_gallery_max_upload_size_mb` | 2 | `src/Frontend/ServiceWizard.php` | Filter the maximum size of a service gallery image, in megabytes. |
+| `wpss_gateway_checkout_button_label` | 4 | `src/functions/payments.php` | Filter the checkout button label for a gateway. |
 | `wpss_get_template` | 3 | `src/functions/templates.php` | Filter the template file path. |
 | `wpss_get_template_part` | 3 | `src/functions/templates.php` | Filter the template file path. |
 | `wpss_is_vendor` | 2 | `src/functions/vendors.php` | Filter whether user is a vendor. |

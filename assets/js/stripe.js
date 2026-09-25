@@ -13,7 +13,6 @@
 		elements: null,
 		paymentElement: null,
 		form: null,
-		submitButton: null,
 		errorElement: null,
 		paymentIntentId: null,
 
@@ -418,18 +417,19 @@
 		 * Set loading state.
 		 */
 		setLoading: function(loading) {
-			this.submitButton = this.submitButton || this.form?.querySelector('button[type="submit"]');
+			// Every Pay button (under the payment method and in the summary).
+			const buttons = this.form ? this.form.querySelectorAll('button[type="submit"]') : [];
 
-			if (this.submitButton) {
-				this.submitButton.disabled = loading;
+			buttons.forEach(function(button) {
+				button.disabled = loading;
 
 				if (loading) {
-					this.submitButton.dataset.originalText = this.submitButton.textContent;
-					this.submitButton.textContent = wpssStripe.i18n.processing;
-				} else if (this.submitButton.dataset.originalText) {
-					this.submitButton.textContent = this.submitButton.dataset.originalText;
+					button.dataset.originalText = button.textContent;
+					button.textContent = wpssStripe.i18n.processing;
+				} else if (button.dataset.originalText) {
+					button.textContent = button.dataset.originalText;
 				}
-			}
+			});
 		},
 	};
 

@@ -439,9 +439,17 @@ class Activator {
 				array(
 					'enabled'      => '1',
 					'title'        => __( 'Manual / Offline Payment', 'wp-sell-services' ),
-					'instructions' => __( 'The site owner will contact you with payment instructions after you place your order.', 'wp-sell-services' ),
+					'instructions' => __( 'The site owner will send you payment instructions by email.', 'wp-sell-services' ),
 				)
 			);
+		}
+
+		// First-run only: a new marketplace starts with the digital billing
+		// set - name, email, country - not a 13-field postal address for work
+		// delivered online (owner decision, Basecamp 10337204220). Same gate as
+		// above, so an existing site keeps exactly what it saved.
+		if ( false === get_option( 'wpss_billing_field_settings' ) && false === get_option( 'wpss_activated_at' ) ) {
+			add_option( 'wpss_billing_field_settings', array( 'enabled' => wpss_get_digital_billing_field_preset() ) );
 		}
 
 		// Set activation timestamp.

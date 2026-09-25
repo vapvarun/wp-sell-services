@@ -1856,3 +1856,27 @@ function wpss_order_awaits_payment_confirmation( $order ): bool {
 	return '' !== (string) ( $order->payment_method ?? '' )
 		&& 'paid' !== ( $order->payment_status ?? '' );
 }
+
+/**
+ * What to tell a buyer whose offline order is waiting on payment.
+ *
+ * Right after an offline order is placed nothing has been paid - the buyer
+ * still has to send it - yet every view said "Payment submitted. We will
+ * confirm your transfer shortly." above instructions that begin "after you
+ * place your order" (Basecamp 10336467932). "Received" is only true once the
+ * buyer has uploaded proof of payment for review. The one wording for the
+ * order, extension and milestone views and the Offline gateway's panel.
+ *
+ * @since 1.8.0
+ *
+ * @param object $order Order awaiting confirmation (wpss_order_awaits_payment_confirmation()).
+ * @return string
+ */
+function wpss_offline_payment_notice( object $order ): string {
+	$proof = \WPSellServices\Services\PaymentReceiptService::is_enabled()
+		&& null !== ( new \WPSellServices\Database\Repositories\PaymentReceiptRepository() )->get_pending_for_order( (int) $order->id );
+
+	return $proof
+		? __( 'Payment proof received. We will confirm it shortly and let you know.', 'wp-sell-services' )
+		: __( 'Order placed and waiting for your payment. Work starts once it is confirmed.', 'wp-sell-services' );
+}

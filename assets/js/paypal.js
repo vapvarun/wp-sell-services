@@ -49,11 +49,12 @@
 				const selected = document.querySelector('input[name="payment_method"]:checked');
 				const isPayPal = selected && selected.value === 'paypal';
 
-				const submitBtn = this.form
-					? this.form.querySelector('button[type="submit"], .wpss-checkout-button')
-					: null;
-				if (submitBtn) {
-					submitBtn.style.display = isPayPal ? 'none' : '';
+				// Every Pay button: the checkout renders one under the payment
+				// method and one in the summary.
+				if (this.form) {
+					this.form.querySelectorAll('button[type="submit"], .wpss-checkout-button').forEach((btn) => {
+						btn.style.display = isPayPal ? 'none' : '';
+					});
 				}
 
 				if (isPayPal) {

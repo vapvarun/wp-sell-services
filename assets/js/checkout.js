@@ -41,9 +41,25 @@
 	 * there and this resolves immediately.
 	 */
 	function initForm(form) {
-		var submitBtn = form.querySelector('.wpss-checkout-button');
-		var submitBtnText = submitBtn ? submitBtn.querySelector('.wpss-checkout-button__text') : null;
-		var originalText = submitBtnText ? submitBtnText.textContent : '';
+		// Two Pay buttons (under the payment method and in the summary) submit
+		// the same form; they always read and behave the same.
+		var submitBtns = form.querySelectorAll('.wpss-checkout-button');
+
+		function setButtons(text, disabled) {
+			submitBtns.forEach(function(btn) {
+				btn.disabled = disabled;
+				var label = btn.querySelector('.wpss-checkout-button__text');
+				if (label) {
+					label.textContent = text;
+				}
+			});
+		}
+
+		function selectedLabel() {
+			var checked = form.querySelector('input[name="payment_method"]:checked');
+			var first = submitBtns[0] && submitBtns[0].querySelector('.wpss-checkout-button__text');
+			return (checked && checked.getAttribute('data-button-label')) || (first ? first.textContent : '');
+		}
 		var noticeEl = document.getElementById(form.getAttribute('data-wpss-checkout-notice'));
 		var needsAccount = !!config.needsAccount;
 
@@ -138,6 +154,8 @@
 				if (selected) {
 					selected.style.display = 'block';
 				}
+				// The gateway's own words: "Place order" for pay-later methods.
+				setButtons(selectedLabel(), false);
 			});
 		});
 
@@ -176,12 +194,11 @@
 				return;
 			}
 
-			submitBtn.disabled = true;
-			submitBtnText.textContent = i18n.processing;
+			var restoreText = selectedLabel();
+			setButtons(i18n.processing, true);
 
 			function restoreButton() {
-				submitBtn.disabled = false;
-				submitBtnText.textContent = originalText;
+				setButtons(restoreText, false);
 			}
 
 			ensureAccount().then(function() {

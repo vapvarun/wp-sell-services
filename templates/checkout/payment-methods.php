@@ -35,19 +35,42 @@ $wpss_order_id = isset( $wpss_order_id ) ? (int) $wpss_order_id : 0;
 	</div>
 	<div class="wpss-card__body">
 		<div class="wpss-co-methods">
-			<?php foreach ( $wpss_gateways as $wpss_gateway_id => $wpss_gateway ) : ?>
-				<div class="wpss-co-method" data-method="<?php echo esc_attr( $wpss_gateway_id ); ?>">
+			<?php
+			// The first method is chosen for the buyer: with one method, making
+			// them tick the only option (and hiding its instructions until they
+			// do) was a dead end the browser's own "select one" message guarded.
+			$wpss_first = true;
+			foreach ( $wpss_gateways as $wpss_gateway_id => $wpss_gateway ) :
+				$wpss_label = wpss_checkout_button_label( $wpss_gateway, $wpss_amount, $wpss_currency );
+				?>
+				<div class="wpss-co-method<?php echo $wpss_first ? ' wpss-co-method--active' : ''; ?>" data-method="<?php echo esc_attr( $wpss_gateway_id ); ?>">
 					<label class="wpss-co-method__label">
-						<input type="radio" name="payment_method" value="<?php echo esc_attr( $wpss_gateway_id ); ?>" required>
+						<input type="radio" name="payment_method" value="<?php echo esc_attr( $wpss_gateway_id ); ?>" data-button-label="<?php echo esc_attr( $wpss_label ); ?>" required <?php checked( $wpss_first ); ?>>
 						<?php echo esc_html( $wpss_gateway->get_name() ); ?>
 					</label>
-					<div class="wpss-co-method__form wpss-gateway-form" data-gateway="<?php echo esc_attr( $wpss_gateway_id ); ?>" style="display: none;">
+					<div class="wpss-co-method__form wpss-gateway-form" data-gateway="<?php echo esc_attr( $wpss_gateway_id ); ?>"<?php echo $wpss_first ? '' : ' style="display: none;"'; ?>>
 						<?php
 						echo $wpss_gateway->render_payment_form( $wpss_amount, $wpss_currency, $wpss_order_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- gateway-owned markup, escaped by each gateway.
 						?>
 					</div>
 				</div>
-			<?php endforeach; ?>
+				<?php
+				$wpss_first = false;
+			endforeach;
+			?>
 		</div>
+
+		<?php
+		// The same Pay button again, right where the buyer finishes the form:
+		// on desktop and tablet the summary's button had scrolled out of view
+		// by the time the payment method was on screen (Basecamp 10337204220).
+		// Same form, same handler, same validation.
+		$wpss_first_gateway = reset( $wpss_gateways );
+		if ( $wpss_first_gateway ) :
+			?>
+			<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-btn--full wpss-checkout-button wpss-co-methods__submit">
+				<span class="wpss-checkout-button__text"><?php echo esc_html( wpss_checkout_button_label( $wpss_first_gateway, $wpss_amount, $wpss_currency ) ); ?></span>
+			</button>
+		<?php endif; ?>
 	</div>
 </div>

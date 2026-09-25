@@ -238,6 +238,26 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * @return string
 	 */
 	public function render_checkout_shortcode( array $atts ): string {
+		// The page's own heading on every checkout state (form, pay-order,
+		// payment return, empty, sign-in): the shared page header the cart and
+		// dashboard use (ShellHeader), so the
+		// theme's page title is suppressed here (ShellHeader) and the page does
+		// not open on a 64px "Service Checkout" (Basecamp 10337204220).
+		return \WPSellServices\Frontend\ShellHeader::render(
+			array(
+				'title' => __( 'Checkout', 'wp-sell-services' ),
+				'echo'  => false,
+			)
+		) . $this->render_checkout_body( $atts );
+	}
+
+	/**
+	 * The checkout body for the current request.
+	 *
+	 * @param array $atts Shortcode attributes.
+	 * @return string
+	 */
+	private function render_checkout_body( array $atts ): string {
 		// Enqueue frontend assets for proper styling and functionality.
 		wpss_enqueue_frontend_assets();
 
@@ -727,6 +747,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				font-size: var(--wpss-text-base); color: var(--wpss-text-secondary);
 			}
 			.wpss-co-summary-line--addon { font-size: var(--wpss-text-sm); color: var(--wpss-text-muted); }
+			.wpss-co-summary-subheading { margin-top: var(--wpss-space-2); font-size: var(--wpss-text-xs); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--wpss-text-muted); }
 			.wpss-co-summary-line--tax { font-size: var(--wpss-text-sm); color: var(--wpss-text-muted); }
 			.wpss-co-summary-total {
 				display: flex; justify-content: space-between; align-items: center;
@@ -849,10 +870,20 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			 * column has nothing to stick to at this width, so losing position:
 			 * sticky here is the intent, not a side effect.
 			 */
+			/*
+			 * Only the Order Summary sticks (Basecamp 10337204220). The whole
+			 * column used to, and it is taller than a laptop screen, so its top
+			 * scrolled out of view (-17px) with the total and Pay button in it.
+			 * The column stretches to the form's height to give the card room to
+			 * stick; the cards below it pass underneath.
+			 */
+			.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { z-index: 2; }
+
 			@media (max-width: 1024px) {
 				.wpss-checkout-page .wpss-layout--sidebar-right { display: flex; flex-direction: column; }
 				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack,
-				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky { display: contents; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-co-aside { display: contents; }
+				.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { position: static; align-self: stretch; }
 				/*
 				 * Service details, the total, what happens next, then the form.
 				 *
@@ -865,9 +896,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				 */
 				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack > * { order: 4; }
 				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack > :first-child { order: 1; }
-				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > * { order: 5; }
-				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > .wpss-co-card--summary { order: 2; }
-				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > .wpss-co-steps { order: 3; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-co-aside > * { order: 5; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-co-aside > .wpss-co-card--summary { order: 2; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-co-aside > .wpss-co-steps { order: 3; }
 			}
 
 			/* Responsive */
@@ -1100,16 +1131,17 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 						</div><!-- /left column -->
 
-						<!-- RIGHT COLUMN: Order summary (sticky) -->
-						<div class="wpss-sticky">
+						<!-- RIGHT COLUMN: only the Order Summary card sticks (summary.php). -->
+						<div class="wpss-co-aside">
 							<?php
 							wpss_get_template(
 								'checkout/summary.php',
 								array(
-									'wpss_title'    => $is_pay_order ? __( 'Order Payment', 'wp-sell-services' ) : __( 'Order Summary', 'wp-sell-services' ),
-									'wpss_lines'    => $summary_lines,
-									'wpss_total'    => $total,
-									'wpss_currency' => $currency,
+									'wpss_title'        => $is_pay_order ? __( 'Order Payment', 'wp-sell-services' ) : __( 'Order Summary', 'wp-sell-services' ),
+									'wpss_lines'        => $summary_lines,
+									'wpss_total'        => $total,
+									'wpss_currency'     => $currency,
+									'wpss_button_label' => $enabled_gateways ? wpss_checkout_button_label( reset( $enabled_gateways ), (float) $total, (string) $currency ) : '',
 								)
 							);
 							?>
@@ -1661,14 +1693,15 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						</div><!-- /left column -->
 
 						<!-- RIGHT COLUMN: Order summary -->
-						<div class="wpss-sticky">
+						<div class="wpss-co-aside">
 							<?php
 							wpss_get_template(
 								'checkout/summary.php',
 								array(
-									'wpss_lines'    => $summary_lines,
-									'wpss_total'    => $grand_total,
-									'wpss_currency' => $currency,
+									'wpss_lines'        => $summary_lines,
+									'wpss_total'        => $grand_total,
+									'wpss_currency'     => $currency,
+									'wpss_button_label' => $enabled_gateways ? wpss_checkout_button_label( reset( $enabled_gateways ), (float) $grand_total, (string) $currency ) : '',
 								)
 							);
 							?>

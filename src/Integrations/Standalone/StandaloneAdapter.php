@@ -357,18 +357,20 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 
 		$this->render_standalone_page(
 			'' !== $title ? $title : __( 'Checkout', 'wp-sell-services' ),
-			$this->checkout_provider->render_checkout_shortcode( [] )
+			$this->checkout_provider->render_checkout_shortcode( [] ),
+			false // The checkout prints its own "Checkout" heading.
 		);
 	}
 
 	/**
 	 * Render a standalone page with theme wrapper.
 	 *
-	 * @param string $title   Page title.
-	 * @param string $content Page content.
+	 * @param string $title         Page title.
+	 * @param string $content       Page content.
+	 * @param bool   $print_heading Whether to print the title as the H1 (off when the content has its own).
 	 * @return void
 	 */
-	private function render_standalone_page( string $title, string $content ): void {
+	private function render_standalone_page( string $title, string $content, bool $print_heading = true ): void {
 		// Enqueue frontend assets for proper styling and functionality.
 		wpss_enqueue_frontend_assets();
 
@@ -414,9 +416,11 @@ class StandaloneAdapter implements EcommerceAdapterInterface {
 			?>
 			<div class="wpss-container" data-wpss-auto-container>
 				<article class="wpss-standalone-page">
-					<header class="entry-header">
-						<h1 class="entry-title"><?php echo esc_html( $title ); ?></h1>
-					</header>
+					<?php if ( $print_heading ) : ?>
+						<header class="entry-header">
+							<h1 class="entry-title"><?php echo esc_html( $title ); ?></h1>
+						</header>
+					<?php endif; ?>
 					<div class="entry-content">
 						<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Content is escaped in provider. ?>
 					</div>

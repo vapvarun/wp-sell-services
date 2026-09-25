@@ -191,7 +191,7 @@ do_action( 'wpss_before_extension_view', $current_order );
 			<?php // Acknowledged, with the alternative left open - "View original order" below carries the instructions. ?>
 			<?php if ( $is_buyer && $awaiting_confirmation ) : ?>
 				<p class="wpss-notice wpss-notice--info wpss-extension-awaiting">
-					<?php esc_html_e( 'Payment submitted. We will confirm your transfer shortly.', 'wp-sell-services' ); ?>
+					<?php echo esc_html( wpss_offline_payment_notice( $current_order ) ); ?>
 				</p>
 				<?php if ( '' !== $pay_url ) : ?>
 					<a href="<?php echo esc_url( $pay_url ); ?>" class="wpss-btn wpss-btn--ghost">

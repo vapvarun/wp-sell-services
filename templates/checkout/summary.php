@@ -18,23 +18,34 @@
  *                            optionally note (string, shown as a caption),
  *                            type ('addon'|'tax' modifier) and strong (bool).
  * @var float  $wpss_total    Payable total.
+ * @var string $wpss_button_label Label for the selected gateway (wpss_checkout_button_label()).
  * @var string $wpss_currency Currency code.
  */
 
 defined( 'ABSPATH' ) || exit;
 
-$wpss_title    = isset( $wpss_title ) ? (string) $wpss_title : __( 'Order Summary', 'wp-sell-services' );
-$wpss_lines    = isset( $wpss_lines ) && is_array( $wpss_lines ) ? $wpss_lines : array();
-$wpss_total    = isset( $wpss_total ) ? (float) $wpss_total : 0.0;
-$wpss_currency = isset( $wpss_currency ) ? (string) $wpss_currency : wpss_get_currency();
+$wpss_title        = isset( $wpss_title ) ? (string) $wpss_title : __( 'Order Summary', 'wp-sell-services' );
+$wpss_lines        = isset( $wpss_lines ) && is_array( $wpss_lines ) ? $wpss_lines : array();
+$wpss_total        = isset( $wpss_total ) ? (float) $wpss_total : 0.0;
+$wpss_currency     = isset( $wpss_currency ) ? (string) $wpss_currency : wpss_get_currency();
+$wpss_button_label = isset( $wpss_button_label ) ? (string) $wpss_button_label : '';
 ?>
-<div class="wpss-card wpss-co-card--summary">
+<div class="wpss-card wpss-co-card--summary wpss-sticky">
 	<div class="wpss-card__header">
 		<h3 class="wpss-card__title"><?php echo esc_html( $wpss_title ); ?></h3>
 	</div>
 	<div class="wpss-card__body">
-		<?php foreach ( $wpss_lines as $wpss_line ) : ?>
-			<?php
+		<?php
+		$wpss_addons_heading = false;
+		foreach ( $wpss_lines as $wpss_line ) :
+			// Add-ons under their own heading, apart from the package line.
+			if ( 'addon' === ( $wpss_line['type'] ?? '' ) && ! $wpss_addons_heading ) :
+				$wpss_addons_heading = true;
+				?>
+				<div class="wpss-co-summary-subheading"><?php esc_html_e( 'Add-ons', 'wp-sell-services' ); ?></div>
+				<?php
+			endif;
+
 			$wpss_line_class = 'wpss-co-summary-line';
 			if ( ! empty( $wpss_line['type'] ) ) {
 				$wpss_line_class .= ' wpss-co-summary-line--' . $wpss_line['type'];
@@ -81,8 +92,12 @@ $wpss_currency = isset( $wpss_currency ) ? (string) $wpss_currency : wpss_get_cu
 		<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-btn--full wpss-checkout-button">
 			<span class="wpss-checkout-button__text">
 				<?php
-				/* translators: %s: formatted price */
-				printf( esc_html__( 'Pay %s', 'wp-sell-services' ), esc_html( wpss_format_price( $wpss_total, $wpss_currency ) ) );
+				if ( '' !== $wpss_button_label ) {
+					echo esc_html( $wpss_button_label );
+				} else {
+					/* translators: %s: formatted price */
+					printf( esc_html__( 'Pay %s', 'wp-sell-services' ), esc_html( wpss_format_price( $wpss_total, $wpss_currency ) ) );
+				}
 				?>
 			</span>
 		</button>

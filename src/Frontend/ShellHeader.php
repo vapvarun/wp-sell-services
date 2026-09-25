@@ -115,7 +115,8 @@ class ShellHeader {
 		 *   /service-cart/      theme H1 + plugin H1   -> suppress (added here)
 		 *   /dashboard/         theme H1 + plugin H1   -> suppress (already here)
 		 *   /                   plugin H1 only         -> correct already
-		 *   /service-checkout/  theme H1 ONLY          -> must NOT suppress
+		 *   /service-checkout/  theme H1 ONLY          -> since 1.8.0 prints its own
+		 *                                               "Checkout" H1, so suppress
 		 *   /become-a-vendor/   theme H1 ONLY          -> must NOT suppress
 		 *   /vendors/           theme H1 ONLY          -> must NOT suppress
 		 *
@@ -125,7 +126,7 @@ class ShellHeader {
 		 * own ShellHeader::render() heading first, then add it here - in that
 		 * order.
 		 */
-		$page_keys = array( 'dashboard', 'services_page', 'cart' );
+		$page_keys = array( 'dashboard', 'services_page', 'cart', 'checkout' );
 
 		foreach ( $page_keys as $page_key ) {
 			if ( \wpss_is_page( $page_key ) ) {

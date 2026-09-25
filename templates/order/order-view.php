@@ -1734,7 +1734,7 @@ do_action( 'wpss_before_order_view', $order );
 										$ms_state_class .= ' wpss-ms-state--locked';
 									} elseif ( $ms_awaiting ) {
 										$ms_state_label = $is_customer
-											? __( 'Payment submitted · awaiting confirmation', 'wp-sell-services' )
+											? __( 'Awaiting your payment', 'wp-sell-services' )
 											: __( 'Buyer paid · awaiting confirmation', 'wp-sell-services' );
 									} else {
 										$ms_state_label = $is_customer ? __( 'Ready to pay', 'wp-sell-services' ) : __( 'Awaiting buyer payment', 'wp-sell-services' );

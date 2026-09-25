@@ -20,13 +20,6 @@ defined( 'ABSPATH' ) || exit;
 	font-family: var(--wpss-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
 }
 
-.wpss-cart-page__heading {
-	font-size: 1.75rem;
-	font-weight: 700;
-	color: var(--wpss-text, #0f172a);
-	margin: 0 0 var(--wpss-space-6, 24px);
-}
-
 .wpss-cart-page__layout {
 	display: grid;
 	grid-template-columns: 1fr 320px;
@@ -328,7 +321,11 @@ defined( 'ABSPATH' ) || exit;
 </style>
 
 <div class="wpss-cart-page">
-	<h1 class="wpss-cart-page__heading"><?php esc_html_e( 'Your Cart', 'wp-sell-services' ); ?></h1>
+	<?php
+	// The shared page header (ShellHeader), the same band as checkout and the
+	// dashboard - and the same one the cart's logged-out branch prints.
+	\WPSellServices\Frontend\ShellHeader::render( array( 'title' => __( 'Your Cart', 'wp-sell-services' ) ) );
+	?>
 
 	<?php if ( empty( $cart_items ) ) : ?>
 		<div class="wpss-cart-empty">

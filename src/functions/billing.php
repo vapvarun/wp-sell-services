@@ -213,8 +213,9 @@ function wpss_filter_enabled_billing_fields( array $fields ): array {
 /**
  * The shorter field set that suits a marketplace selling digital work.
  *
- * Offered as a one-click preset rather than imposed as a default, so the choice
- * stays the owner's and is visible in the settings after they make it.
+ * Name, email and country (owner decision, Basecamp 10337204220): the default
+ * on a new install, and a one-click preset in the settings for existing sites,
+ * which keep the fields they saved.
  *
  * @since 1.6.0
  *
@@ -225,8 +226,6 @@ function wpss_get_digital_billing_field_preset(): array {
 		'billing_first_name',
 		'billing_last_name',
 		'billing_email',
-		'billing_phone',
-		'billing_company',
 		'billing_country',
 	);
 }

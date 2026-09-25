@@ -61,6 +61,20 @@ class OfflineGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * Checkout button words: nothing is charged at checkout, so not "Pay".
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param float  $total    Order total.
+	 * @param string $currency Currency code.
+	 * @return string
+	 */
+	public function get_checkout_button_label( float $total, string $currency ): string {
+		unset( $total, $currency );
+		return __( 'Place order', 'wp-sell-services' );
+	}
+
+	/**
 	 * Get the gateway display name.
 	 *
 	 * @return string
@@ -1252,7 +1266,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 		 */
 		?>
 		<p class="wpss-notice wpss-notice--info wpss-offline-awaiting">
-			<?php esc_html_e( 'Payment submitted. We will confirm your transfer shortly.', 'wp-sell-services' ); ?>
+			<?php echo esc_html( wpss_offline_payment_notice( $order ) ); ?>
 		</p>
 		<?php
 
@@ -1277,6 +1291,11 @@ class OfflineGateway implements PaymentGatewayInterface {
 		}
 
 		if ( empty( $instructions ) ) {
+			// No instructions written anywhere (the owner never filled them
+			// in): say how the buyer will find out, rather than nothing.
+			?>
+			<p class="wpss-offline-instructions-fallback"><?php esc_html_e( 'The site owner will send you payment instructions by email.', 'wp-sell-services' ); ?></p>
+			<?php
 			return;
 		}
 

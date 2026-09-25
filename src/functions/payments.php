@@ -478,3 +478,40 @@ function wpss_stripe_api_version(): string {
 	 */
 	return (string) apply_filters( 'wpss_stripe_api_version', '2026-08-26.dahlia' );
 }
+
+/**
+ * The checkout button's words for a gateway.
+ *
+ * "Pay $X" is right when the gateway takes the money now. It is wrong for a
+ * pay-later method - an offline order charges nothing at checkout, and a
+ * buyer told "Pay $280.00" expects a charge that never comes (Basecamp
+ * 10336467932). A gateway supplies its own label with
+ * get_checkout_button_label(); the Offline gateway says "Place order".
+ *
+ * @since 1.8.0
+ *
+ * @param object $gateway  Payment gateway.
+ * @param float  $total    Payable total.
+ * @param string $currency Currency code.
+ * @return string
+ */
+function wpss_checkout_button_label( object $gateway, float $total, string $currency ): string {
+	/* translators: %s: formatted total */
+	$label = sprintf( __( 'Pay %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $total, $currency ) ) );
+
+	if ( method_exists( $gateway, 'get_checkout_button_label' ) ) {
+		$label = (string) $gateway->get_checkout_button_label( $total, $currency );
+	}
+
+	/**
+	 * Filter the checkout button label for a gateway.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $label    Button label.
+	 * @param string $gateway  Gateway id.
+	 * @param float  $total    Payable total.
+	 * @param string $currency Currency code.
+	 */
+	return (string) apply_filters( 'wpss_gateway_checkout_button_label', $label, method_exists( $gateway, 'get_id' ) ? (string) $gateway->get_id() : '', $total, $currency );
+}
