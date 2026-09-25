@@ -1506,7 +1506,8 @@ class OrderWorkflowManager {
 					__( 'Order #%1$d was paid via %3$s, which cannot refund automatically. Send %2$s to the buyer and mark the refund as sent on the order.', 'wp-sell-services' ),
 					$order->id,
 					wpss_format_price( $refund_amount, (string) $order->currency ),
-					$order->payment_method
+					// "paid via , which" when no method was recorded (Basecamp 10337159668).
+					wpss_get_payment_method_label( (string) $order->payment_method ) ?: __( 'a payment method', 'wp-sell-services' )
 				),
 				array( 'order_id' => $order->id )
 			);
@@ -1580,7 +1581,8 @@ class OrderWorkflowManager {
 				/* translators: 1: order ID, 2: error message */
 				__( 'Automatic refund failed for order #%1$d. Error: %2$s. Please process the refund manually via the payment gateway dashboard.', 'wp-sell-services' ),
 				$order->id,
-				$error_msg
+				// Gateway messages end in their own full stop; the sentence adds one.
+				rtrim( (string) $error_msg, '. ' )
 			),
 			array( 'order_id' => $order->id )
 		);

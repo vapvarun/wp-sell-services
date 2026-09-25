@@ -200,6 +200,15 @@ function wpss_get_notification_url( array $data, ?string $action_url = null ): s
 		);
 	}
 
+	// A dispute notification opens the dispute, not its order (Basecamp
+	// 10337159668). The dashboard view admits only the two parties, so the
+	// site's admin goes to the admin dispute screen.
+	if ( ! empty( $data['dispute_id'] ) ) {
+		return current_user_can( 'manage_options' )
+			? admin_url( 'admin.php?page=wpss-disputes&action=view&dispute_id=' . (int) $data['dispute_id'] )
+			: add_query_arg( 'dispute', (int) $data['dispute_id'], wpss_get_dashboard_url( 'disputes' ) );
+	}
+
 	foreach ( array( 'order_id', 'parent_order_id' ) as $key ) {
 		if ( ! empty( $data[ $key ] ) ) {
 			$url = wpss_get_order_url( (int) $data[ $key ] );

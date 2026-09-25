@@ -20,9 +20,11 @@
  * who needs the underlying events should use the forensic Audit Log instead,
  * which records sensitive marketplace actions cross-user by design.
  *
- * The view is read-only here: there are no mark-read/delete affordances, because
- * those mutations belong to the owning user's own client (the dashboard and the
- * REST API), not to an admin screen.
+ * The list is the members' own notification center
+ * (templates/partials/notifications-list.php), so the admin marks read, marks
+ * all read and opens each notification's order or dispute exactly as members
+ * do. It was a read-only table with 1,183 unread and no way to clear them
+ * (Basecamp 10337159668).
  *
  * @package WPSellServices\Admin\Pages
  * @since   1.2.0
@@ -32,8 +34,6 @@ declare(strict_types=1);
 
 namespace WPSellServices\Admin\Pages;
 
-use WPSellServices\Services\Icon;
-use WPSellServices\Services\NotificationService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -50,25 +50,6 @@ class NotificationsPage {
 	 * @var string
 	 */
 	private string $hook = '';
-
-	/**
-	 * Notification service.
-	 *
-	 * @var NotificationService
-	 */
-	private NotificationService $service;
-
-	/**
-	 * Notifications per page.
-	 */
-	private const PER_PAGE = 20;
-
-	/**
-	 * Constructor.
-	 */
-	public function __construct() {
-		$this->service = new NotificationService();
-	}
 
 	/**
 	 * Initialize the page.
@@ -154,185 +135,32 @@ class NotificationsPage {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'wp-sell-services' ) );
 		}
-
-		$user_id      = get_current_user_id();
-		$current_page = $this->read_paged();
-		$offset       = ( $current_page - 1 ) * self::PER_PAGE;
-
-		$total = $this->count_notifications( $user_id );
-		$rows  = $this->service->get_user_notifications(
-			$user_id,
-			array(
-				'limit'  => self::PER_PAGE,
-				'offset' => $offset,
-			)
-		);
-
-		$unread      = $this->service->get_unread_count( $user_id );
-		$total_pages = $total > 0 ? (int) ceil( $total / self::PER_PAGE ) : 0;
 		?>
 		<div class="wrap wpss-listing-page wpss-notifications-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'My Notifications', 'wp-sell-services' ); ?></h1>
 			<hr class="wp-header-end">
 
 			<p class="description wpss-notifications-intro">
-				<?php esc_html_e( 'Your own in-app notifications, mirroring the marketplace dashboard and mobile app. Notifications are private to each recipient, so this view shows only your stream. This is a read-only view.', 'wp-sell-services' ); ?>
+				<?php esc_html_e( 'Your own notifications - the same list members see on their dashboard. Only you see these.', 'wp-sell-services' ); ?>
 			</p>
-
-			<div class="wpss-listing-stats wpss-notifications-stats">
-				<div class="wpss-stat-card wpss-stat-total">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $total ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Your notifications', 'wp-sell-services' ); ?></span>
-				</div>
-				<div class="wpss-stat-card wpss-stat-unread">
-					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $unread ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Unread', 'wp-sell-services' ); ?></span>
-				</div>
-			</div>
 
 			<div class="wpss-list-card">
 				<div class="wpss-list-card__body">
-					<?php if ( empty( $rows ) ) : ?>
-						<div class="wpss-empty-state">
-							<div class="wpss-empty-state__icon">
-								<?php echo Icon::render( 'bell' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns escaped markup. ?>
-							</div>
-							<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No notifications yet', 'wp-sell-services' ); ?></h2>
-							<p class="wpss-empty-state__body"><?php esc_html_e( 'Order updates, messages, reviews, and other marketplace events addressed to you will appear here.', 'wp-sell-services' ); ?></p>
-						</div>
-					<?php else : ?>
-						<table class="wp-list-table widefat fixed striped wpss-notifications-table wpss-stacked-table">
-							<thead>
-								<tr>
-									<th scope="col" class="column-state"><?php esc_html_e( 'State', 'wp-sell-services' ); ?></th>
-									<th scope="col" class="column-title"><?php esc_html_e( 'Notification', 'wp-sell-services' ); ?></th>
-									<th scope="col" class="column-type"><?php esc_html_e( 'Type', 'wp-sell-services' ); ?></th>
-									<th scope="col" class="column-date"><?php esc_html_e( 'Received', 'wp-sell-services' ); ?></th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php
-								foreach ( $rows as $row ) :
-									if ( ! is_object( $row ) ) {
-										continue;
-									}
-									$this->render_notification_row( $row );
-								endforeach;
-								?>
-							</tbody>
-						</table>
-
-						<?php if ( $total_pages > 1 ) : ?>
-							<div class="tablenav bottom">
-								<div class="tablenav-pages">
-									<span class="displaying-num">
-										<?php
-										printf(
-											/* translators: %s: number of notifications. */
-											esc_html( _n( '%s notification', '%s notifications', $total, 'wp-sell-services' ) ),
-											esc_html( number_format_i18n( $total ) )
-										);
-										?>
-									</span>
-									<span class="pagination-links">
-										<?php
-										echo wp_kses_post(
-											(string) paginate_links(
-												array(
-													'base' => add_query_arg( 'paged', '%#%' ),
-													'format' => '',
-													'prev_text' => '&laquo;',
-													'next_text' => '&raquo;',
-													'total' => $total_pages,
-													'current' => $current_page,
-												)
-											)
-										);
-										?>
-									</span>
-								</div>
-							</div>
-						<?php endif; ?>
-					<?php endif; ?>
-				</div><!-- .wpss-list-card__body -->
-			</div><!-- .wpss-list-card -->
+					<?php
+					wpss_get_template_part(
+						'partials/notifications-list',
+						'',
+						array(
+							'user_id'           => get_current_user_id(),
+							'wpss_show_heading' => false,
+						)
+					);
+					?>
+				</div>
+			</div>
 		</div>
 		<?php
 	}
 
-	/**
-	 * Render a single notification row.
-	 *
-	 * @param object $row Raw notification DB row.
-	 * @return void
-	 */
-	private function render_notification_row( object $row ): void {
-		$title      = isset( $row->title ) ? (string) $row->title : '';
-		$message    = isset( $row->message ) ? (string) $row->message : '';
-		$type       = isset( $row->type ) ? (string) $row->type : '';
-		$is_read    = ! empty( $row->is_read );
-		$created_at = isset( $row->created_at ) ? (string) $row->created_at : '';
 
-		$when = '';
-		if ( '' !== $created_at ) {
-			$timestamp = strtotime( $created_at );
-			if ( false !== $timestamp ) {
-				$when = (string) wp_date(
-					get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
-					$timestamp
-				);
-			}
-		}
-
-		// Notification "type" is a machine slug (e.g. order_status); present it
-		// as a readable label without inventing a translation per slug.
-		$type_label = '' !== $type ? ucwords( str_replace( '_', ' ', $type ) ) : '';
-		?>
-		<tr class="<?php echo $is_read ? '' : 'wpss-notification--unread'; ?>">
-			<td class="column-state" data-colname="<?php esc_attr_e( 'State', 'wp-sell-services' ); ?>">
-				<?php if ( $is_read ) : ?>
-					<span class="wpss-status-badge wpss-status-approved"><?php esc_html_e( 'Read', 'wp-sell-services' ); ?></span>
-				<?php else : ?>
-					<span class="wpss-status-badge wpss-status-pending"><?php esc_html_e( 'Unread', 'wp-sell-services' ); ?></span>
-				<?php endif; ?>
-			</td>
-			<td class="column-title">
-				<strong><?php echo esc_html( $title ); ?></strong>
-				<?php if ( '' !== trim( $message ) ) : ?>
-					<div class="wpss-notification-message"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $message ), 30 ) ); ?></div>
-				<?php endif; ?>
-			</td>
-			<td class="column-type" data-colname="<?php esc_attr_e( 'Type', 'wp-sell-services' ); ?>">
-				<?php echo '' !== $type_label ? esc_html( $type_label ) : '&mdash;'; ?>
-			</td>
-			<td class="column-date" data-colname="<?php esc_attr_e( 'Received', 'wp-sell-services' ); ?>"><?php echo esc_html( '' !== $when ? $when : $created_at ); ?></td>
-		</tr>
-		<?php
-	}
-
-	/**
-	 * Count the current user's notifications.
-	 *
-	 * @param int $user_id User ID.
-	 * @return int
-	 */
-	private function count_notifications( int $user_id ): int {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_notifications';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (int) $wpdb->get_var(
-			$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE user_id = %d", $user_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		);
-	}
-
-	/**
-	 * Read the current page number from the query string.
-	 *
-	 * @return int
-	 */
-	private function read_paged(): int {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only pagination; no state change.
-		return isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
-	}
 }

@@ -83,6 +83,47 @@ class AuditLogService {
 	);
 
 	/**
+	 * What each event means, in the owner's words (Basecamp 10337159668).
+	 *
+	 * The Audit Log showed the raw keys. A key missing here reads as words
+	 * built from the key, never as the key itself.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return array<string, string> Event key => label.
+	 */
+	public static function get_event_labels(): array {
+		return array(
+			'order.status_change'            => __( 'Order status changed', 'wp-sell-services' ),
+			'order.paid'                     => __( 'Order paid', 'wp-sell-services' ),
+			'order.cancel'                   => __( 'Order cancelled', 'wp-sell-services' ),
+			'order.refund'                   => __( 'Order refunded', 'wp-sell-services' ),
+			'order.refund_pending'           => __( 'Refund to send by hand', 'wp-sell-services' ),
+			'order.refund_failed'            => __( 'Refund refused by the gateway', 'wp-sell-services' ),
+			'order.earnings_reversal_failed' => __( 'Vendor earnings not taken back', 'wp-sell-services' ),
+			'withdrawal.requested'           => __( 'Withdrawal requested', 'wp-sell-services' ),
+			'withdrawal.approved'            => __( 'Withdrawal approved', 'wp-sell-services' ),
+			'withdrawal.rejected'            => __( 'Withdrawal rejected', 'wp-sell-services' ),
+			'withdrawal.paid'                => __( 'Withdrawal paid', 'wp-sell-services' ),
+			'dispute.transition'             => __( 'Dispute status changed', 'wp-sell-services' ),
+			'vendor.approved'                => __( 'Vendor approved', 'wp-sell-services' ),
+			'vendor.rejected'                => __( 'Vendor rejected', 'wp-sell-services' ),
+			'vendor.suspended'               => __( 'Vendor suspended', 'wp-sell-services' ),
+			'vendor.pending'                 => __( 'Vendor set to pending', 'wp-sell-services' ),
+			'vendor.migrated'                => __( 'Seller access kept in the update', 'wp-sell-services' ),
+			'vendor.role_removed'            => __( 'Vendor role removed', 'wp-sell-services' ),
+			'vendor.role_restored'           => __( 'Vendor role restored', 'wp-sell-services' ),
+			'commission.rate_changed'        => __( 'Commission rate changed', 'wp-sell-services' ),
+			'service.approved'               => __( 'Service approved', 'wp-sell-services' ),
+			'service.rejected'               => __( 'Service rejected', 'wp-sell-services' ),
+			'review.approved'                => __( 'Review approved', 'wp-sell-services' ),
+			'review.rejected'                => __( 'Review rejected', 'wp-sell-services' ),
+			'ledger.insert'                  => __( 'Wallet entry', 'wp-sell-services' ),
+			'email.failed'                   => __( 'Email not sent', 'wp-sell-services' ),
+		);
+	}
+
+	/**
 	 * Daily cron hook name used for the retention cleanup job.
 	 *
 	 * @since 1.1.0
@@ -186,6 +227,12 @@ class AuditLogService {
 		add_action(
 			'wpss_order_paid',
 			function ( int $order_id, string $transaction_id ): void {
+				// No order, nothing to audit: test runs fired this with 0 and
+				// left "order" rows with no ID behind (Basecamp 10337159668).
+				if ( $order_id <= 0 ) {
+					return;
+				}
+
 				$order = wpss_get_order( $order_id );
 				$this->log(
 					'order.paid',

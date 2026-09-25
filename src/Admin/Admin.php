@@ -438,6 +438,7 @@ class Admin {
 		add_action( 'admin_notices', array( $this, 'pending_manual_refunds_notice' ) );
 		add_action( 'admin_notices', array( $this, 'refund_review_notice' ) );
 		add_action( 'admin_notices', array( $this, 'migrated_sellers_notice' ) );
+		add_action( 'admin_notices', array( $this, 'deferred_notices_summary' ), 99 );
 		add_action( 'wp_ajax_wpss_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 		add_action( 'admin_post_wpss_disable_demo_payments', array( $this, 'disable_demo_payments' ) );
 		add_action( 'admin_post_wpss_mark_refund_sent', array( $this, 'handle_mark_refund_sent' ) );
@@ -508,13 +509,18 @@ class Admin {
 
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+		if ( ! self::is_wpss_screen( $screen ) ) {
 			return;
 		}
 
 		$pending = wpss_get_pending_manual_refunds();
 
 		if ( empty( $pending ) ) {
+			return;
+		}
+
+		/* translators: %d: number of refunds */
+		if ( $this->defer_notice( sprintf( _n( '%d refund to send by hand', '%d refunds to send by hand', count( $pending ), 'wp-sell-services' ), count( $pending ) ) ) ) {
 			return;
 		}
 
@@ -566,7 +572,7 @@ class Admin {
 
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+		if ( ! self::is_wpss_screen( $screen ) ) {
 			return;
 		}
 
@@ -588,6 +594,18 @@ class Admin {
 				esc_html( sprintf( __( 'Order #%d', 'wp-sell-services' ), $order_id ) )
 			);
 		};
+
+		$deferred = false;
+		if ( ! empty( $review['failed'] ) ) {
+			/* translators: %d: number of refunds */
+			$deferred = $this->defer_notice( sprintf( _n( '%d refund refused by the gateway', '%d refunds refused by the gateway', count( $review['failed'] ), 'wp-sell-services' ), count( $review['failed'] ) ) );
+		}
+		if ( ! empty( $review['uncascaded'] ) ) {
+			$deferred = $this->defer_notice( __( 'refunded orders with extensions or tips still paid', 'wp-sell-services' ) ) || $deferred;
+		}
+		if ( $deferred ) {
+			return;
+		}
 
 		if ( ! empty( $review['failed'] ) ) {
 			$items = array();
@@ -744,7 +762,7 @@ class Admin {
 		// interrupted about a settings page.
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+		if ( ! self::is_wpss_screen( $screen ) ) {
 			return;
 		}
 
@@ -764,6 +782,10 @@ class Admin {
 			return;
 		}
 
+		if ( $this->defer_notice( __( 'no Terms page is mapped', 'wp-sell-services' ) ) ) {
+			return;
+		}
+
 		printf(
 			'<div class="notice notice-warning is-dismissible wpss-dismissible-notice" data-notice="terms" data-signature="%s" data-nonce="%s"><p><strong>%s</strong> %s</p><p><a class="button" href="%s">%s</a></p></div>',
 			esc_attr( $signature ),
@@ -772,6 +794,69 @@ class Admin {
 			esc_html__( 'Checkout has nothing to link to, so buyers agree to nothing in writing - which is the gap owners usually find out about during a dispute. Map a page you have written; we never publish one for you.', 'wp-sell-services' ),
 			esc_url( wpss_get_settings_url( 'pages' ) ),
 			esc_html__( 'Map a Terms page', 'wp-sell-services' )
+		);
+	}
+
+	/**
+	 * Notices held back from this screen, shown as one line instead.
+	 *
+	 * @var string[]
+	 */
+	private array $deferred_notices = array();
+
+	/**
+	 * A WP Sell Services screen - the top-level Dashboard included, whose id
+	 * (toplevel_page_wp-sell-services) has no "wpss" in it, so the notices
+	 * showed on every screen except the one meant for them.
+	 *
+	 * @param \WP_Screen|null $screen Current screen.
+	 * @return bool
+	 */
+	private static function is_wpss_screen( $screen ): bool {
+		return $screen && ( false !== strpos( (string) $screen->id, 'wpss' ) || 'toplevel_page_wp-sell-services' === $screen->id );
+	}
+
+	/**
+	 * The full owner notices belong on the Dashboard. Anywhere else a notice
+	 * is noted here and summed up in one line (deferred_notices_summary()),
+	 * so a phone reaches the page's own content (Basecamp 10337159668).
+	 *
+	 * @param string $label What needs attention, as a phrase.
+	 * @return bool True when deferred - the caller prints nothing.
+	 */
+	private function defer_notice( string $label ): bool {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( $screen && 'toplevel_page_wp-sell-services' === $screen->id ) {
+			return false;
+		}
+
+		$this->deferred_notices[] = $label;
+
+		return true;
+	}
+
+	/**
+	 * One line for the notices held back from this screen.
+	 *
+	 * @return void
+	 */
+	public function deferred_notices_summary(): void {
+		if ( ! $this->deferred_notices ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning wpss-notice-summary"><p>%s <a href="%s">%s</a></p></div>',
+			esc_html(
+				sprintf(
+					/* translators: %s: list of things, e.g. "no Terms page is mapped, 2 refunds to send by hand". */
+					__( 'Needs your attention: %s.', 'wp-sell-services' ),
+					implode( ', ', $this->deferred_notices )
+				)
+			),
+			esc_url( admin_url( 'admin.php?page=wp-sell-services' ) ),
+			esc_html__( 'See the Dashboard', 'wp-sell-services' )
 		);
 	}
 
@@ -795,10 +880,11 @@ class Admin {
 			return;
 		}
 
-		// Our own screens only, like every other notice here.
+		// The Vendors screen only: it is about vendors, and on every other
+		// screen it pushed the page's own content down (Basecamp 10337159668).
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		if ( ! $screen || false === strpos( (string) $screen->id, 'wpss' ) ) {
+		if ( ! $screen || ! wpss_is_admin_page( (string) $screen->id, 'wpss-vendors' ) ) {
 			return;
 		}
 
@@ -1792,35 +1878,59 @@ class Admin {
 		$order_stats = wpss_get_order_aggregates();
 		$revenue     = $order_stats->revenue;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// Real orders only: tip, extension and milestone rows are parts of an
+		// order and crowded it out of the list (Basecamp 10337159668).
+		$sub_platforms = wpss_get_sub_order_platforms();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders only.
 		$recent_orders = $wpdb->get_results(
-			"SELECT * FROM {$orders_table} ORDER BY created_at DESC LIMIT 5"
+			$wpdb->prepare(
+				"SELECT * FROM {$orders_table} WHERE ( platform IS NULL OR platform NOT IN (" . implode( ', ', array_fill( 0, count( $sub_platforms ), '%s' ) ) . ') ) ORDER BY created_at DESC LIMIT 5', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$sub_platforms
+			)
 		);
 
-		// Daily-cadence action items: things that need admin attention today.
-		// Each tile links to the page where the work happens, so the
-		// dashboard answers "what's on my plate?" before "how big is the
-		// marketplace?" (see plans/1.1.0-ADMIN-OVERWHELM-AUDIT.md finding #4).
+		// The owner's queues: the same counts as each screen's own tab (and the
+		// menu bubbles), each linking to that tab (Basecamp 10337159668).
 		$disputes_table    = $wpdb->prefix . 'wpss_disputes';
 		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
 		$vendor_profiles   = $wpdb->prefix . 'wpss_vendor_profiles';
-		$is_approval_mode  = 'approval' === wpss_get_option( 'vendor', 'vendor_registration' );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$open_disputes = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$disputes_table} WHERE status IN ('open', 'in_review', 'evidence_pending')"
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- COUNT(*) on indexed status columns.
+		$queues = array(
+			array(
+				'count' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$vendor_profiles} WHERE status = 'pending'" ),
+				'label' => __( 'Vendors awaiting approval', 'wp-sell-services' ),
+				'url'   => admin_url( 'admin.php?page=wpss-vendors&status=pending' ),
+				'icon'  => 'user-check',
+			),
+			array(
+				'count' => wpss_count_pending_services(),
+				'label' => __( 'Services awaiting moderation', 'wp-sell-services' ),
+				'url'   => admin_url( 'admin.php?page=wpss-moderation&status=pending' ),
+				'icon'  => 'badge-check',
+			),
+			array(
+				'count' => $this->reports_page->count_by_status( 'open' ),
+				'label' => __( 'Member reports', 'wp-sell-services' ),
+				'url'   => admin_url( 'admin.php?page=wpss-reports&status=open' ),
+				'icon'  => 'flag',
+			),
+			array(
+				// Escalated is the one waiting on the owner; open and pending
+				// review wait on the parties.
+				'count' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$disputes_table} WHERE status = 'escalated'" ),
+				'label' => __( 'Disputes waiting on you', 'wp-sell-services' ),
+				'url'   => admin_url( 'admin.php?page=wpss-disputes&status=escalated' ),
+				'icon'  => 'shield-alert',
+			),
+			array(
+				'count' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$withdrawals_table} WHERE status = 'pending'" ),
+				'label' => __( 'Withdrawals to approve', 'wp-sell-services' ),
+				'url'   => admin_url( 'admin.php?page=wpss-withdrawals&status=pending' ),
+				'icon'  => 'banknote',
+			),
 		);
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$pending_withdrawals = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$withdrawals_table} WHERE status = 'pending'"
-		);
-		$pending_vendors     = 0;
-		if ( $is_approval_mode ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$pending_vendors = (int) $wpdb->get_var(
-				"SELECT COUNT(*) FROM {$vendor_profiles} WHERE status = 'pending'"
-			);
-		}
+		// phpcs:enable
 		?>
 		<div class="wrap wpss-dashboard-wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'WP Sell Services Dashboard', 'wp-sell-services' ); ?></h1>
@@ -1833,41 +1943,16 @@ class Admin {
 				<!-- Daily action items — counts >0 are highlighted, =0 dim out
 					so admin can confirm "nothing on my plate today" at a glance. -->
 				<h2 class="wpss-stats-heading"><?php esc_html_e( 'Action items', 'wp-sell-services' ); ?></h2>
-				<div class="wpss-stats-row wpss-stats-row--action">
-					<a class="wpss-stat-card wpss-stat-card--action <?php echo $open_disputes > 0 ? 'is-active' : 'is-empty'; ?>"
-						href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-disputes' ) ); ?>">
-						<i data-lucide="shield-alert" class="wpss-icon wpss-stat-icon" style="color: <?php echo $open_disputes > 0 ? '#d63638' : '#a7aaad'; ?>;" aria-hidden="true"></i>
-						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( (string) $open_disputes ); ?></span>
-							<span class="wpss-stat-label"><?php esc_html_e( 'Open disputes', 'wp-sell-services' ); ?></span>
-						</div>
-					</a>
-					<a class="wpss-stat-card wpss-stat-card--action <?php echo $pending_withdrawals > 0 ? 'is-active' : 'is-empty'; ?>"
-						href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-withdrawals&status=pending' ) ); ?>">
-						<i data-lucide="banknote" class="wpss-icon wpss-stat-icon" style="color: <?php echo $pending_withdrawals > 0 ? '#dba617' : '#a7aaad'; ?>;" aria-hidden="true"></i>
-						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( (string) $pending_withdrawals ); ?></span>
-							<span class="wpss-stat-label"><?php esc_html_e( 'Pending withdrawals', 'wp-sell-services' ); ?></span>
-						</div>
-					</a>
-					<?php if ( $is_approval_mode ) : ?>
-					<a class="wpss-stat-card wpss-stat-card--action <?php echo $pending_vendors > 0 ? 'is-active' : 'is-empty'; ?>"
-						href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&status=pending' ) ); ?>">
-						<i data-lucide="user-check" class="wpss-icon wpss-stat-icon" style="color: <?php echo $pending_vendors > 0 ? '#2271b1' : '#a7aaad'; ?>;" aria-hidden="true"></i>
-						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( (string) $pending_vendors ); ?></span>
-							<span class="wpss-stat-label"><?php esc_html_e( 'Pending vendor approvals', 'wp-sell-services' ); ?></span>
-						</div>
-					</a>
-					<?php endif; ?>
-					<a class="wpss-stat-card wpss-stat-card--action <?php echo ( $order_stats->pending ?? 0 ) > 0 ? 'is-active' : 'is-empty'; ?>"
-						href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&status=pending_payment' ) ); ?>">
-						<i data-lucide="clock" class="wpss-icon wpss-stat-icon" style="color: <?php echo ( $order_stats->pending ?? 0 ) > 0 ? '#dba617' : '#a7aaad'; ?>;" aria-hidden="true"></i>
-						<div class="wpss-stat-info">
-							<span class="wpss-stat-number"><?php echo esc_html( (string) ( $order_stats->pending ?? 0 ) ); ?></span>
-							<span class="wpss-stat-label"><?php esc_html_e( 'Pending orders', 'wp-sell-services' ); ?></span>
-						</div>
-					</a>
+				<div class="wpss-stats-row wpss-stats-row--action wpss-stats-row--queues">
+					<?php foreach ( $queues as $queue ) : ?>
+						<a class="wpss-stat-card wpss-stat-card--action <?php echo $queue['count'] > 0 ? 'is-active' : 'is-empty'; ?>" href="<?php echo esc_url( $queue['url'] ); ?>">
+							<i data-lucide="<?php echo esc_attr( $queue['icon'] ); ?>" class="wpss-icon wpss-stat-icon" aria-hidden="true"></i>
+							<div class="wpss-stat-info">
+								<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $queue['count'] ) ); ?></span>
+								<span class="wpss-stat-label"><?php echo esc_html( $queue['label'] ); ?></span>
+							</div>
+						</a>
+					<?php endforeach; ?>
 				</div>
 
 				<!-- Marketplace health (rolling totals — read-only at-a-glance). -->
@@ -1913,33 +1998,6 @@ class Admin {
 				</div>
 
 				<div class="wpss-dashboard-columns">
-					<!-- Quick Actions -->
-					<div class="wpss-dashboard-box">
-						<h2><?php esc_html_e( 'Quick Actions', 'wp-sell-services' ); ?></h2>
-						<div class="wpss-quick-actions">
-							<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=wpss_service' ) ); ?>" class="wpss-action-btn">
-								<i data-lucide="plus" class="wpss-icon" aria-hidden="true"></i>
-								<?php esc_html_e( 'Add Service', 'wp-sell-services' ); ?>
-							</a>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders' ) ); ?>" class="wpss-action-btn">
-								<i data-lucide="list" class="wpss-icon" aria-hidden="true"></i>
-								<?php esc_html_e( 'View Orders', 'wp-sell-services' ); ?>
-							</a>
-							<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=wpss_service' ) ); ?>" class="wpss-action-btn">
-								<i data-lucide="wrench" class="wpss-icon" aria-hidden="true"></i>
-								<?php esc_html_e( 'Manage Services', 'wp-sell-services' ); ?>
-							</a>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings' ) ); ?>" class="wpss-action-btn">
-								<i data-lucide="settings" class="wpss-icon" aria-hidden="true"></i>
-								<?php esc_html_e( 'Settings', 'wp-sell-services' ); ?>
-							</a>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-audit-log' ) ); ?>" class="wpss-action-btn">
-								<i data-lucide="scroll-text" class="wpss-icon" aria-hidden="true"></i>
-								<?php esc_html_e( 'Audit Log', 'wp-sell-services' ); ?>
-							</a>
-						</div>
-					</div>
-
 					<!-- Content Stats -->
 					<div class="wpss-dashboard-box">
 						<h2><?php esc_html_e( 'Content Overview', 'wp-sell-services' ); ?></h2>
@@ -1962,21 +2020,18 @@ class Admin {
 									<?php esc_html_e( 'Buyer Requests', 'wp-sell-services' ); ?>
 								</a>
 							</li>
-							<li>
-								<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&status=pending_payment' ) ); ?>">
-									<span class="count"><?php echo esc_html( (string) $order_stats->pending ); ?></span>
-									<?php esc_html_e( 'Pending Orders', 'wp-sell-services' ); ?>
-								</a>
-							</li>
 						</ul>
 					</div>
 				</div>
 
 				<!-- Recent Orders -->
 				<div class="wpss-dashboard-box wpss-recent-orders">
-					<h2><?php esc_html_e( 'Recent Orders', 'wp-sell-services' ); ?></h2>
+					<h2>
+						<?php esc_html_e( 'Recent Orders', 'wp-sell-services' ); ?>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders' ) ); ?>" class="wpss-recent-orders__all"><?php esc_html_e( 'View all orders', 'wp-sell-services' ); ?></a>
+					</h2>
 					<?php if ( ! empty( $recent_orders ) ) : ?>
-						<table class="wp-list-table widefat fixed striped">
+						<table class="wp-list-table widefat fixed striped wpss-stacked-table">
 							<thead>
 								<tr>
 									<th><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></th>
@@ -1990,19 +2045,19 @@ class Admin {
 								<?php foreach ( $recent_orders as $order ) : ?>
 									<?php $wpss_subject = wpss_get_order_subject( $order, 'admin' ); ?>
 									<tr>
-										<td>
+										<td data-colname="<?php esc_attr_e( 'Order', 'wp-sell-services' ); ?>">
 											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $order->id ) ); ?>">
 												#<?php echo esc_html( $order->order_number ); ?>
 											</a>
 										</td>
-										<td><?php echo esc_html( $wpss_subject['label'] ); ?></td>
-										<td><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></td>
-										<td>
+										<td data-colname="<?php esc_attr_e( 'Service', 'wp-sell-services' ); ?>"><?php echo esc_html( $wpss_subject['label'] ); ?></td>
+										<td data-colname="<?php esc_attr_e( 'Total', 'wp-sell-services' ); ?>"><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></td>
+										<td data-colname="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
 											<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
-												<?php echo esc_html( ucwords( str_replace( '_', ' ', $order->status ) ) ); ?>
+												<?php echo esc_html( wpss_get_order_status_label( (string) $order->status ) ); ?>
 											</span>
 										</td>
-										<td><?php echo esc_html( wp_date( 'M j, Y', strtotime( $order->created_at ) ) ); ?></td>
+										<td data-colname="<?php esc_attr_e( 'Date', 'wp-sell-services' ); ?>"><?php echo esc_html( wp_date( 'M j, Y', strtotime( $order->created_at ) ) ); ?></td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>
@@ -2667,7 +2722,7 @@ class Admin {
 										/* translators: 1: amount, 2: payment method */
 										esc_html__( 'Send %1$s to the buyer manually. This order was paid via %2$s, which cannot refund automatically. The buyer has not been refunded yet.', 'wp-sell-services' ),
 										'<strong>' . esc_html( wpss_format_price( $wpss_refund_pending, (string) $order->currency ) ) . '</strong>',
-										esc_html( (string) $order->payment_method )
+										esc_html( wpss_get_payment_method_label( (string) $order->payment_method ) ?: __( 'a payment method', 'wp-sell-services' ) )
 									);
 									?>
 								</p>
@@ -2698,7 +2753,7 @@ class Admin {
 										/* translators: 1: amount, 2: payment method, 3: number of attempts */
 										esc_html( _n( '%1$s could not be refunded via %2$s (%3$d attempt). The buyer has not been refunded and the order was not changed.', '%1$s could not be refunded via %2$s (%3$d attempts). The buyer has not been refunded and the order was not changed.', (int) $wpss_refund_failed['attempts'], 'wp-sell-services' ) ),
 										'<strong>' . esc_html( wpss_format_price( (float) $wpss_refund_failed['amount'], (string) $order->currency ) ) . '</strong>',
-										esc_html( (string) $order->payment_method ),
+										esc_html( wpss_get_payment_method_label( (string) $order->payment_method ) ?: __( 'a payment method', 'wp-sell-services' ) ),
 										(int) $wpss_refund_failed['attempts']
 									);
 									?>

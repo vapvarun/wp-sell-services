@@ -3707,7 +3707,8 @@ button.wpss-change-status:focus {
 /* In a list toolbar the picker is just its search box: the matches open
    underneath it, and the select stays in the row only once something is
    chosen. */
-.tablenav .wpss-search-select {
+.tablenav .wpss-search-select,
+.wpss-audit-filters .wpss-search-select {
 	position: relative;
 	display: inline-flex;
 	flex-direction: row;
@@ -3717,15 +3718,19 @@ button.wpss-change-status:focus {
 }
 
 .tablenav .wpss-search-select__input,
-.tablenav .wpss-search-select select {
+.tablenav .wpss-search-select select,
+.wpss-audit-filters .wpss-search-select__input,
+.wpss-audit-filters .wpss-search-select select {
 	width: 11rem;
 }
 
-.tablenav .wpss-search-select select:not(.is-open):not(.has-value) {
+.tablenav .wpss-search-select select:not(.is-open):not(.has-value),
+.wpss-audit-filters .wpss-search-select select:not(.is-open):not(.has-value) {
 	display: none;
 }
 
-.tablenav .wpss-search-select select.is-open {
+.tablenav .wpss-search-select select.is-open,
+.wpss-audit-filters .wpss-search-select select.is-open {
 	position: absolute;
 	z-index: 10;
 	top: 100%;
@@ -3936,4 +3941,76 @@ button.wpss-change-status:focus {
 	.wpss-admin-dispute__thread { order: 3; }
 	.wpss-admin-dispute__order { order: 4; }
 	.wpss-admin-dispute__parties { order: 5; }
+}
+
+/* Dashboard (Basecamp 10337159668): five owner queues fill the row at any
+   width; Content Overview is the one box left in its row. */
+.wpss-stats-row.wpss-stats-row--queues {
+	grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.wpss-dashboard-wrap .wpss-dashboard-columns {
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.wpss-recent-orders h2 {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 12px;
+}
+
+.wpss-recent-orders__all {
+	font-size: 13px;
+	font-weight: 400;
+}
+
+/* Audit Log (Basecamp 10337159668). */
+.wpss-audit-table .column-date { width: 10em; }
+.wpss-audit-table .column-forced { width: 5em; }
+
+/* Member Reports: account actions in one menu (Basecamp 10337159668). */
+.wpss-reports-account {
+	position: relative;
+	display: inline-block;
+}
+
+.wpss-reports-account > summary {
+	list-style: none;
+}
+
+.wpss-reports-account > summary::-webkit-details-marker {
+	display: none;
+}
+
+.wpss-reports-account__menu {
+	position: absolute;
+	z-index: 10;
+	inset-inline-end: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-top: 4px;
+	padding: 8px;
+	background: var(--wpss-admin-white);
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: var(--wpss-admin-radius-md);
+	box-shadow: var(--wpss-admin-shadow-md);
+	white-space: nowrap;
+}
+
+.wpss-reports-account__menu .wpss-inline-form {
+	margin: 0;
+}
+
+.wpss-reports-account__menu .button.button-link-delete {
+	color: var(--wpss-admin-danger);
+	border-color: var(--wpss-admin-danger);
+	background: var(--wpss-admin-white);
+}
+
+.wpss-reports-account__menu .button.button-link-delete:hover,
+.wpss-reports-account__menu .button.button-link-delete:focus {
+	color: var(--wpss-admin-white);
+	background: var(--wpss-admin-danger);
 }

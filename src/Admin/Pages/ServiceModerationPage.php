@@ -93,7 +93,6 @@ class ServiceModerationPage {
 		add_action( 'add_meta_boxes', array( $this, 'add_moderation_metabox' ) );
 
 		// Admin notices.
-		add_action( 'admin_notices', array( $this, 'pending_services_notice' ) );
 
 		// The moderation guards themselves are registered by
 		// register_guards(), which the plugin calls on every request. They used
@@ -1214,52 +1213,6 @@ class ServiceModerationPage {
 			</div>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Show admin notice for pending services.
-	 *
-	 * @return void
-	 */
-	public function pending_services_notice(): void {
-		// Only show when moderation is enabled.
-		if ( ! ModerationService::is_enabled() ) {
-			return;
-		}
-
-		$screen = get_current_screen();
-
-		// Only show on our plugin pages.
-		if ( ! $screen || strpos( $screen->id, 'wp-sell-services' ) === false ) {
-			return;
-		}
-
-		// Skip the moderation page itself.
-		if ( wpss_is_admin_page( (string) $screen->id, 'wpss-moderation' ) ) {
-			return;
-		}
-
-		$pending_count = $this->get_pending_count();
-
-		if ( $pending_count > 0 ) {
-			printf(
-				'<div class="notice notice-warning"><p>%s <a href="%s">%s</a></p></div>',
-				sprintf(
-					esc_html(
-						/* translators: %d: Number of services pending moderation review. */
-						_n(
-							'You have %d service pending review.',
-							'You have %d services pending review.',
-							$pending_count,
-							'wp-sell-services'
-						)
-					),
-					esc_html( $pending_count )
-				),
-				esc_url( admin_url( 'admin.php?page=wpss-moderation' ) ),
-				esc_html__( 'Review now', 'wp-sell-services' )
-			);
-		}
 	}
 
 	/**

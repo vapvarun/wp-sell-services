@@ -205,39 +205,40 @@ class AuditLogPage {
 						<input type="hidden" name="page" value="wpss-audit-log">
 
 						<label for="wpss-audit-object-type" class="screen-reader-text"><?php esc_html_e( 'Filter by object type', 'wp-sell-services' ); ?></label>
-						<input
-							type="text"
-							id="wpss-audit-object-type"
-							name="object_type"
-							class="wpss-audit-filter"
-							value="<?php echo esc_attr( $filters['object_type'] ); ?>"
-							placeholder="<?php esc_attr_e( 'Object type (e.g. order)', 'wp-sell-services' ); ?>"
-						>
+						<select id="wpss-audit-object-type" name="object_type" class="wpss-audit-filter">
+							<option value=""><?php esc_html_e( 'Everything', 'wp-sell-services' ); ?></option>
+							<?php foreach ( self::object_labels() as $type => $label ) : ?>
+								<option value="<?php echo esc_attr( $type ); ?>"<?php selected( $filters['object_type'], $type ); ?>><?php echo esc_html( $label ); ?></option>
+							<?php endforeach; ?>
+						</select>
 
 						<label for="wpss-audit-event-type" class="screen-reader-text"><?php esc_html_e( 'Filter by event type', 'wp-sell-services' ); ?></label>
 						<select id="wpss-audit-event-type" name="event_type" class="wpss-audit-filter">
 							<option value=""><?php esc_html_e( 'All events', 'wp-sell-services' ); ?></option>
 							<?php
-							$event_types = AuditLogService::EVENT_TYPES;
-							if ( '' !== $filters['event_type'] && ! in_array( $filters['event_type'], $event_types, true ) ) {
-								$event_types[] = $filters['event_type'];
+							$event_types = AuditLogService::get_event_labels();
+							if ( '' !== $filters['event_type'] && ! isset( $event_types[ $filters['event_type'] ] ) ) {
+								$event_types[ $filters['event_type'] ] = self::event_label( $filters['event_type'] );
 							}
-							foreach ( $event_types as $type ) :
+							foreach ( $event_types as $type => $label ) :
 								?>
-								<option value="<?php echo esc_attr( $type ); ?>"<?php selected( $filters['event_type'], $type ); ?>><?php echo esc_html( $type ); ?></option>
+								<option value="<?php echo esc_attr( $type ); ?>"<?php selected( $filters['event_type'], $type ); ?>><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
 						</select>
 
-						<label for="wpss-audit-actor" class="screen-reader-text"><?php esc_html_e( 'Filter by actor user ID', 'wp-sell-services' ); ?></label>
-						<input
-							type="number"
-							id="wpss-audit-actor"
-							name="actor_id"
-							class="wpss-audit-filter wpss-audit-filter--num"
-							min="0"
-							value="<?php echo $filters['actor_id'] > 0 ? esc_attr( (string) $filters['actor_id'] ) : ''; ?>"
-							placeholder="<?php esc_attr_e( 'Actor ID', 'wp-sell-services' ); ?>"
-						>
+						<?php
+						wpss_admin_search_select(
+							array(
+								'type'           => 'user',
+								'name'           => 'actor_id',
+								'id'             => 'wpss-audit-actor',
+								'placeholder'    => __( 'Anyone', 'wp-sell-services' ),
+								'search_label'   => __( 'Search who did it', 'wp-sell-services' ),
+								'selected'       => $filters['actor_id'],
+								'selected_label' => $filters['actor_id'] > 0 ? wpss_get_member_display_name( $filters['actor_id'] ) : '',
+							)
+						);
+						?>
 
 						<label for="wpss-audit-from" class="screen-reader-text"><?php esc_html_e( 'From date', 'wp-sell-services' ); ?></label>
 						<input
@@ -281,10 +282,10 @@ class AuditLogPage {
 							<thead>
 								<tr>
 									<th scope="col" class="column-date"><?php esc_html_e( 'When', 'wp-sell-services' ); ?></th>
-									<th scope="col" class="column-actor"><?php esc_html_e( 'Actor', 'wp-sell-services' ); ?></th>
-									<th scope="col" class="column-event"><?php esc_html_e( 'Event', 'wp-sell-services' ); ?></th>
-									<th scope="col" class="column-object"><?php esc_html_e( 'Object', 'wp-sell-services' ); ?></th>
-									<th scope="col" class="column-change"><?php esc_html_e( 'Change', 'wp-sell-services' ); ?></th>
+									<th scope="col" class="column-actor"><?php esc_html_e( 'Who', 'wp-sell-services' ); ?></th>
+									<th scope="col" class="column-event"><?php esc_html_e( 'What happened', 'wp-sell-services' ); ?></th>
+									<th scope="col" class="column-object"><?php esc_html_e( 'On', 'wp-sell-services' ); ?></th>
+									<th scope="col" class="column-change"><?php esc_html_e( 'Details', 'wp-sell-services' ); ?></th>
 									<th scope="col" class="column-forced"><?php esc_html_e( 'Forced', 'wp-sell-services' ); ?></th>
 								</tr>
 							</thead>
@@ -295,34 +296,7 @@ class AuditLogPage {
 							</tbody>
 						</table>
 
-						<?php if ( $total_pages > 1 ) : ?>
-							<div class="tablenav bottom">
-								<div class="tablenav-pages">
-									<span class="displaying-num">
-										<?php
-										printf(
-											/* translators: %s: number of items. */
-											esc_html( _n( '%s event', '%s events', $total, 'wp-sell-services' ) ),
-											esc_html( number_format_i18n( $total ) )
-										);
-										?>
-									</span>
-									<span class="pagination-links">
-										<?php
-										$pagination_args = array(
-											'base'      => add_query_arg( 'paged', '%#%' ),
-											'format'    => '',
-											'prev_text' => '&laquo;',
-											'next_text' => '&raquo;',
-											'total'     => $total_pages,
-											'current'   => $current_page,
-										);
-										echo wp_kses_post( paginate_links( $pagination_args ) );
-										?>
-									</span>
-								</div>
-							</div>
-						<?php endif; ?>
+						<?php wpss_admin_list_pager( $total, $per_page ); ?>
 					<?php endif; ?>
 				</div><!-- .wpss-list-card__body -->
 			</div><!-- .wpss-list-card -->
@@ -347,61 +321,40 @@ class AuditLogPage {
 		$is_forced   = ! empty( $row->is_forced );
 		$created_at  = isset( $row->created_at ) ? (string) $row->created_at : '';
 
-		$actor_name = '';
-		if ( $actor_id > 0 ) {
-			$user       = get_userdata( $actor_id );
-			$actor_name = $user ? $user->display_name : '';
-		}
+		$context = json_decode( (string) ( $row->context ?? '' ), true );
+		$context = is_array( $context ) ? $context : array();
+
+		$user = $actor_id > 0 ? get_userdata( $actor_id ) : false;
 
 		$when = '';
 		if ( '' !== $created_at ) {
 			$timestamp = strtotime( $created_at );
 			if ( false !== $timestamp ) {
-				$when = wp_date(
-					get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
-					$timestamp
-				);
+				$when = wp_date( 'M j, Y g:i a', $timestamp );
 			}
 		}
+
+		$object = self::object_link( $object_type, $object_id, $context );
+		$change = self::describe_change( $event_type, $object_type, $from_value, $to_value, $context );
 		?>
 		<tr>
 			<td class="column-date" data-colname="<?php esc_attr_e( 'When', 'wp-sell-services' ); ?>"><?php echo esc_html( '' !== $when ? $when : $created_at ); ?></td>
-			<td class="column-actor" data-colname="<?php esc_attr_e( 'Actor', 'wp-sell-services' ); ?>">
-				<?php if ( '' !== $actor_name ) : ?>
-					<span class="wpss-audit-actor-name"><?php echo esc_html( $actor_name ); ?></span>
+			<td class="column-actor" data-colname="<?php esc_attr_e( 'Who', 'wp-sell-services' ); ?>">
+				<?php if ( $user ) : ?>
+					<a class="wpss-audit-actor-name" href="<?php echo esc_url( get_edit_user_link( $actor_id ) ); ?>"><?php echo esc_html( $user->display_name ); ?></a>
 				<?php elseif ( $actor_id > 0 ) : ?>
-					<span class="wpss-audit-actor-name">#<?php echo esc_html( (string) $actor_id ); ?></span>
+					<?php /* translators: %d: user ID */ ?>
+					<span class="wpss-audit-actor-name"><?php echo esc_html( sprintf( __( 'Deleted user #%d', 'wp-sell-services' ), $actor_id ) ); ?></span>
 				<?php else : ?>
 					<span class="wpss-audit-actor-name wpss-audit-system"><?php esc_html_e( 'System', 'wp-sell-services' ); ?></span>
 				<?php endif; ?>
 				<?php if ( '' !== $actor_role ) : ?>
-					<span class="wpss-audit-actor-role"><?php echo esc_html( translate_user_role( ucfirst( $actor_role ) ) ); ?></span>
+					<span class="wpss-audit-actor-role"><?php echo esc_html( translate_user_role( wp_roles()->role_names[ $actor_role ] ?? ucwords( str_replace( array( 'wpss_', '_' ), array( '', ' ' ), $actor_role ) ) ) ); ?></span>
 				<?php endif; ?>
 			</td>
-			<td class="column-event" data-colname="<?php esc_attr_e( 'Event', 'wp-sell-services' ); ?>"><code class="wpss-audit-event"><?php echo esc_html( $event_type ); ?></code></td>
-			<td class="column-object" data-colname="<?php esc_attr_e( 'Object', 'wp-sell-services' ); ?>">
-				<?php
-				if ( '' !== $object_type ) {
-					echo esc_html( $object_type );
-					if ( $object_id > 0 ) {
-						echo ' #' . esc_html( (string) $object_id );
-					}
-				} else {
-					echo '&mdash;';
-				}
-				?>
-			</td>
-			<td class="column-change" data-colname="<?php esc_attr_e( 'Change', 'wp-sell-services' ); ?>">
-				<?php if ( '' !== $from_value || '' !== $to_value ) : ?>
-					<span class="wpss-audit-change">
-						<span class="wpss-audit-from"><?php echo esc_html( '' !== $from_value ? $from_value : '—' ); ?></span>
-						<span class="wpss-audit-arrow" aria-hidden="true">&rarr;</span>
-						<span class="wpss-audit-to"><?php echo esc_html( '' !== $to_value ? $to_value : '—' ); ?></span>
-					</span>
-				<?php else : ?>
-					&mdash;
-				<?php endif; ?>
-			</td>
+			<td class="column-event" data-colname="<?php esc_attr_e( 'What happened', 'wp-sell-services' ); ?>"><?php echo esc_html( self::event_label( $event_type ) ); ?></td>
+			<td class="column-object" data-colname="<?php esc_attr_e( 'On', 'wp-sell-services' ); ?>"><?php echo $object; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built escaped in object_link(). ?></td>
+			<td class="column-change" data-colname="<?php esc_attr_e( 'Details', 'wp-sell-services' ); ?>"><?php echo '' !== $change ? esc_html( $change ) : '&mdash;'; ?></td>
 			<td class="column-forced" data-colname="<?php esc_attr_e( 'Forced', 'wp-sell-services' ); ?>">
 				<?php if ( $is_forced ) : ?>
 					<span class="wpss-status-badge wpss-status-badge--danger"><?php esc_html_e( 'Forced', 'wp-sell-services' ); ?></span>
@@ -411,6 +364,134 @@ class AuditLogPage {
 			</td>
 		</tr>
 		<?php
+	}
+
+	/**
+	 * Object types the log records, in words.
+	 *
+	 * @return array<string, string>
+	 */
+	private static function object_labels(): array {
+		return array(
+			'order'      => __( 'Orders', 'wp-sell-services' ),
+			'dispute'    => __( 'Disputes', 'wp-sell-services' ),
+			'withdrawal' => __( 'Withdrawals', 'wp-sell-services' ),
+			'ledger'     => __( 'Wallet entries', 'wp-sell-services' ),
+			'vendor'     => __( 'Vendors', 'wp-sell-services' ),
+			'user'       => __( 'Members', 'wp-sell-services' ),
+			'service'    => __( 'Services', 'wp-sell-services' ),
+			'review'     => __( 'Reviews', 'wp-sell-services' ),
+			'email'      => __( 'Emails', 'wp-sell-services' ),
+			'settings'   => __( 'Settings', 'wp-sell-services' ),
+		);
+	}
+
+	/**
+	 * An event key in words; an unknown key is still words, never the key.
+	 *
+	 * @param string $event Event key.
+	 * @return string
+	 */
+	private static function event_label( string $event ): string {
+		return AuditLogService::get_event_labels()[ $event ] ?? ucfirst( str_replace( array( '.', '_' ), ' ', $event ) );
+	}
+
+	/**
+	 * The object a row is about, linked to the screen that manages it.
+	 *
+	 * @param string              $type    Object type.
+	 * @param int                 $id      Object ID.
+	 * @param array<string,mixed> $context Row context.
+	 * @return string Escaped HTML.
+	 */
+	private static function object_link( string $type, int $id, array $context ): string {
+		if ( 'email' === $type ) {
+			$recipient = (string) ( $context['recipient'] ?? '' );
+			return esc_html( '' !== $recipient ? $recipient : __( 'No recipient address', 'wp-sell-services' ) );
+		}
+
+		// A wallet entry is about the order (or withdrawal) it records.
+		$reference = (string) ( $context['reference_type'] ?? '' );
+		if ( 'ledger' === $type && ! empty( $context['reference_id'] ) && preg_match( '/^(order|withdrawal)/', $reference, $match ) ) {
+			$type = $match[1];
+			$id   = (int) $context['reference_id'];
+		}
+
+		if ( '' === $type ) {
+			return '&mdash;';
+		}
+
+		$labels = array(
+			/* translators: %d: order ID */
+			'order'      => __( 'Order #%d', 'wp-sell-services' ),
+			/* translators: %d: dispute ID */
+			'dispute'    => __( 'Dispute #%d', 'wp-sell-services' ),
+			/* translators: %d: withdrawal ID */
+			'withdrawal' => __( 'Withdrawal #%d', 'wp-sell-services' ),
+			/* translators: %d: service ID */
+			'service'    => __( 'Service #%d', 'wp-sell-services' ),
+			/* translators: %d: review ID */
+			'review'     => __( 'Review #%d', 'wp-sell-services' ),
+		);
+
+		if ( in_array( $type, array( 'vendor', 'user' ), true ) && $id > 0 ) {
+			return sprintf( '<a href="%s">%s</a>', esc_url( get_edit_user_link( $id ) ), esc_html( wpss_get_member_display_name( $id ) ) );
+		}
+
+		if ( $id <= 0 || ! isset( $labels[ $type ] ) ) {
+			return esc_html( self::object_labels()[ $type ] ?? ucfirst( $type ) );
+		}
+
+		$urls = array(
+			'order'      => admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $id ),
+			'dispute'    => admin_url( 'admin.php?page=wpss-disputes&action=view&dispute_id=' . $id ),
+			'withdrawal' => admin_url( 'admin.php?page=wpss-withdrawals&s=' . $id ),
+			'service'    => (string) get_edit_post_link( $id, 'raw' ),
+			'review'     => admin_url( 'admin.php?page=wpss-review-moderation' ),
+		);
+
+		return sprintf( '<a href="%s">%s</a>', esc_url( $urls[ $type ] ), esc_html( sprintf( $labels[ $type ], $id ) ) );
+	}
+
+	/**
+	 * What changed, in words: status labels instead of slugs, the amount of a
+	 * wallet entry, the reason an email was not sent.
+	 *
+	 * @param string              $event   Event key.
+	 * @param string              $type    Object type.
+	 * @param string              $from    From value.
+	 * @param string              $to      To value.
+	 * @param array<string,mixed> $context Row context.
+	 * @return string Plain text.
+	 */
+	private static function describe_change( string $event, string $type, string $from, string $to, array $context ): string {
+		if ( 'email.failed' === $event ) {
+			return trim( (string) ( $context['subject'] ?? '' ) . ' - ' . (string) ( $context['error'] ?? '' ), ' -' );
+		}
+
+		if ( 'ledger' === $type ) {
+			$amount = (float) ( $context['amount'] ?? $to );
+			return trim( ucfirst( str_replace( '_', ' ', (string) ( $context['type'] ?? '' ) ) ) . ' ' . wpss_format_price( $amount ) );
+		}
+
+		if ( '' === $from && '' === $to ) {
+			return '';
+		}
+
+		$label = static function ( string $value ) use ( $type ): string {
+			if ( '' === $value ) {
+				return '—';
+			}
+			if ( 'order' === $type ) {
+				return wpss_get_order_status_label( $value );
+			}
+			if ( 'dispute' === $type ) {
+				return \WPSellServices\Models\Dispute::get_statuses()[ $value ] ?? ucfirst( str_replace( '_', ' ', $value ) );
+			}
+			return ucfirst( str_replace( '_', ' ', $value ) );
+		};
+
+		return $label( $from ) . ' → ' . $label( $to );
 	}
 
 	/**

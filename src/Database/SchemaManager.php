@@ -1728,6 +1728,10 @@ class SchemaManager {
 			'Please log in to your dashboard to view the response and continue the discussion if needed.' => 'Open the dispute to read the response and reply if needed.',
 			'Please log in to your dashboard to respond to the dispute to avoid automatic escalation.' => 'Respond to the dispute to avoid automatic escalation.',
 			'You have a new notification. Please check your dashboard for details.' => 'You have a new notification.',
+			// A gateway error already ends in a full stop, and a blank payment
+			// method left "via , which" (Basecamp 10337159668).
+			'.. Please process the refund manually'                                  => '. Please process the refund manually',
+			'was paid via , which cannot refund automatically'                       => 'was paid via a payment method, which cannot refund automatically',
 		);
 		$changed = 0;
 

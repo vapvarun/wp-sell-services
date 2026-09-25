@@ -167,7 +167,9 @@ class ReportsPage {
 	 */
 	public function add_menu_page(): void {
 		$open       = $this->count_by_status( 'open' );
-		$menu_title = __( 'Reports', 'wp-sell-services' );
+		// "Member Reports": the plugin's numbers live under Analytics, and a
+		// bare "Reports" sent owners to the wrong screen (Basecamp 10337159668).
+		$menu_title = __( 'Member Reports', 'wp-sell-services' );
 
 		// The bubble is the whole point of putting this in the menu: an owner
 		// who has to open a screen to discover there is nothing to do will stop
@@ -178,7 +180,7 @@ class ReportsPage {
 
 		add_submenu_page(
 			'wp-sell-services',
-			__( 'Reports', 'wp-sell-services' ),
+			__( 'Member Reports', 'wp-sell-services' ),
 			$menu_title,
 			'manage_options',
 			'wpss-reports',
@@ -192,7 +194,7 @@ class ReportsPage {
 	 * @param string $status Status.
 	 * @return int
 	 */
-	private function count_by_status( string $status ): int {
+	public function count_by_status( string $status ): int {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'wpss_reports';
@@ -262,7 +264,7 @@ class ReportsPage {
 		$total_pages = (int) ceil( $total / self::PER_PAGE );
 		?>
 		<div class="wrap wpss-listing-page wpss-reports-page">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Reports', 'wp-sell-services' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Member Reports', 'wp-sell-services' ); ?></h1>
 
 			<p class="description">
 				<?php esc_html_e( 'What members have reported to you, newest first. Acting on a member here applies everywhere: on the website and in the app.', 'wp-sell-services' ); ?>
@@ -348,9 +350,14 @@ class ReportsPage {
 								</td>
 								<td data-label="<?php esc_attr_e( 'Reason', 'wp-sell-services' ); ?>"><?php echo esc_html( $reasons[ $row->reason ] ?? $row->reason ); ?></td>
 								<td data-label="<?php esc_attr_e( 'What', 'wp-sell-services' ); ?>">
-									<?php echo esc_html( $targets[ $row->target_type ] ?? $row->target_type ); ?>
-									<?php if ( (int) $row->target_id ) : ?>
-										<code>#<?php echo esc_html( (string) (int) $row->target_id ); ?></code>
+									<?php
+									$target_label = ( $targets[ $row->target_type ] ?? $row->target_type ) . ( (int) $row->target_id ? ' #' . (int) $row->target_id : '' );
+									$target_url   = $this->target_url( (string) $row->target_type, (int) $row->target_id, (int) $row->reported_user_id );
+									?>
+									<?php if ( '' !== $target_url ) : ?>
+										<a href="<?php echo esc_url( $target_url ); ?>"><?php echo esc_html( $target_label ); ?></a>
+									<?php else : ?>
+										<?php echo esc_html( $target_label ); ?>
 									<?php endif; ?>
 									<?php if ( '' !== (string) $row->details ) : ?>
 										<p class="description"><?php echo esc_html( wp_trim_words( (string) $row->details, 24 ) ); ?></p>
@@ -383,8 +390,14 @@ class ReportsPage {
 
 									<?php if ( get_userdata( (int) $row->reported_user_id ) ) : ?>
 										<?php if ( 'active' === $standing ) : ?>
-											<?php $this->status_button( (int) $row->reported_user_id, 'suspended', __( 'Suspend member', 'wp-sell-services' ) ); ?>
-											<?php $this->status_button( (int) $row->reported_user_id, 'banned', __( 'Close account', 'wp-sell-services' ) ); ?>
+											<?php // The account actions are rarer and heavier than deciding the report, so they sit behind one menu. ?>
+											<details class="wpss-reports-account">
+												<summary class="button"><?php esc_html_e( 'Account', 'wp-sell-services' ); ?></summary>
+												<div class="wpss-reports-account__menu">
+													<?php $this->status_button( (int) $row->reported_user_id, 'suspended', __( 'Suspend member', 'wp-sell-services' ) ); ?>
+													<?php $this->status_button( (int) $row->reported_user_id, 'banned', __( 'Close account', 'wp-sell-services' ) ); ?>
+												</div>
+											</details>
 										<?php else : ?>
 											<?php $this->status_button( (int) $row->reported_user_id, 'active', __( 'Restore member', 'wp-sell-services' ) ); ?>
 										<?php endif; ?>
@@ -420,6 +433,27 @@ class ReportsPage {
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Where the reported thing can be seen, '' when nowhere.
+	 *
+	 * @param string $type        Target type.
+	 * @param int    $id          Target ID.
+	 * @param int    $reported_id The reported member.
+	 * @return string
+	 */
+	private function target_url( string $type, int $id, int $reported_id ): string {
+		switch ( $type ) {
+			case 'service':
+				return $id ? (string) get_edit_post_link( $id, 'raw' ) : '';
+			case 'review':
+				return admin_url( 'admin.php?page=wpss-review-moderation' );
+			case 'user':
+				return get_edit_user_link( $id ? $id : $reported_id );
+			default:
+				return '';
+		}
 	}
 
 	/**

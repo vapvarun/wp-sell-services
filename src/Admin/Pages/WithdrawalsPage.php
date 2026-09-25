@@ -240,13 +240,15 @@ class WithdrawalsPage {
 			$values[] = $args['method'];
 		}
 
-		// Vendor search: name, email or login.
+		// Vendor search: name, email or login - or the withdrawal's own number,
+		// which is how the Audit Log links to one.
 		if ( '' !== $args['search'] ) {
 			$like     = '%' . $wpdb->esc_like( $args['search'] ) . '%';
-			$where[]  = '( u.display_name LIKE %s OR u.user_email LIKE %s OR u.user_login LIKE %s )';
+			$where[]  = '( u.display_name LIKE %s OR u.user_email LIKE %s OR u.user_login LIKE %s OR w.id = %d )';
 			$values[] = $like;
 			$values[] = $like;
 			$values[] = $like;
+			$values[] = absint( $args['search'] );
 		}
 
 		// Whitelisted: the orderby value is interpolated.
