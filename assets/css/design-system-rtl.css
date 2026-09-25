@@ -1633,3 +1633,8 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	padding: 0;
 	border: 0;
 }
+
+/* Wizard: the reviewer's feedback above the steps (Basecamp 10340661636). */
+.wpss-wizard > .wpss-service-card__rejection {
+	margin-bottom: var(--wpss-space-5, 20px);
+}

@@ -258,6 +258,14 @@ class ServiceWizard {
 		<div class="wpss-wizard" id="wpss-service-wizard" data-service-id="<?php echo esc_attr( $service_id ); ?>" x-data="wpssServiceWizard(<?php echo $service_id ? esc_attr( wp_json_encode( $this->get_service_data( $service_id ) ) ) : '{}'; ?>)">
 			<?php wp_nonce_field( 'wpss_service_wizard', 'wpss_wizard_nonce' ); ?>
 
+			<?php
+			// A rejected service opens with the reviewer's feedback on top, so
+			// the vendor fixing it can see what to fix (Basecamp 10340661636).
+			if ( $service_id ) {
+				wpss_get_template( 'partials/service-rejection-notice.php', array( 'service_id' => $service_id ) );
+			}
+			?>
+
 			<!-- Progress Steps -->
 			<div class="wpss-wizard__progress">
 				<?php $this->render_progress_steps(); ?>
