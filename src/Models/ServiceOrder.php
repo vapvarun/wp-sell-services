@@ -1163,6 +1163,20 @@ class ServiceOrder {
 			}
 		}
 
+		// addons_total with no (or partial) itemised add-ons - orders written
+		// before the add-on lines were stored. Show the rest as one line so the
+		// rows still add up to the total instead of dropping money.
+		$unlisted = round( $this->addons_total - array_sum( array_column( array_slice( $items, 1 ), 'total' ) ), 2 );
+		if ( $unlisted > 0 ) {
+			$items[] = array(
+				'name'        => __( 'Add-ons', 'wp-sell-services' ),
+				'description' => '',
+				'quantity'    => 1,
+				'price'       => $unlisted,
+				'total'       => $unlisted,
+			);
+		}
+
 		return $items;
 	}
 

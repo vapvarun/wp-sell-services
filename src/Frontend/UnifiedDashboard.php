@@ -310,7 +310,11 @@ class UnifiedDashboard {
 
 		$section = wpss_normalize_dashboard_section( $section );
 
-		if ( '' !== $section ) {
+		// On an order URL the order decides buying vs selling, even when the
+		// path says /orders/: wpss_get_order_url() without a section (wallet
+		// "View Order", notifications, emails) sends a vendor to
+		// /dashboard/orders/<sale>/, which titled a sale "My Orders".
+		if ( '' !== $section && ! in_array( $section, array( 'orders', 'sales' ), true ) ) {
 			return $section;
 		}
 
@@ -323,7 +327,11 @@ class UnifiedDashboard {
 		// sale. Deciding from the order keeps buying and selling honest.
 		$section_for_order = $this->section_for_order( $this->resolve_requested_order_id() );
 
-		return '' !== $section_for_order ? $section_for_order : $this->default_section();
+		if ( '' !== $section_for_order ) {
+			return $section_for_order;
+		}
+
+		return '' !== $section ? $section : $this->default_section();
 	}
 
 	/**
