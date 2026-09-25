@@ -259,6 +259,7 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 		</div>
 	<?php else : ?>
 		<div class="wpss-orders-list">
+			<?php wpss_get_credited_order_ids( wp_list_pluck( $orders, 'id' ) ); // One query for the page's revenue rows. ?>
 			<?php foreach ( $orders as $order_item ) : ?>
 				<?php
 				$order_platform = $order_item->platform ?? '';

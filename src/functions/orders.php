@@ -1793,12 +1793,47 @@ function wpss_get_order_revenue( object $order ): object {
 	$refunded = min( $total, $refunded );
 	$share    = ( $total - $refunded ) / $total;
 
+	// Credited orders already carry the net after a refund's reversal; see
+	// OrderRepository::get_revenue().
+	$credited = in_array( (int) ( $order->id ?? 0 ), wpss_get_credited_order_ids( array( (int) ( $order->id ?? 0 ) ) ), true );
+	$scale    = $credited ? 1.0 : $share;
+
 	return (object) array(
 		'counts'          => true,
 		'revenue'         => $total - $refunded,
-		'commission'      => (float) ( $order->platform_fee ?? 0 ) * $share,
-		'vendor_earnings' => (float) ( $order->vendor_earnings ?? 0 ) * $share,
+		'commission'      => (float) ( $order->platform_fee ?? 0 ) * $scale,
+		'vendor_earnings' => (float) ( $order->vendor_earnings ?? 0 ) * $scale,
 	);
+}
+
+/**
+ * Which of these orders the vendor has been credited for (a ledger credit).
+ *
+ * Remembered for the request, so a list primes its page in one query and each
+ * row's wpss_get_order_revenue() reads from memory.
+ *
+ * @since 1.8.0
+ *
+ * @param int[] $order_ids Order IDs.
+ * @return int[] The credited ones.
+ */
+function wpss_get_credited_order_ids( array $order_ids ): array {
+	static $known = array();
+
+	$order_ids = array_values( array_filter( array_map( 'intval', $order_ids ) ) );
+	$missing   = array_diff( $order_ids, array_keys( $known ) );
+
+	if ( $missing ) {
+		global $wpdb;
+		$placeholders = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$credited = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT reference_id FROM {$wpdb->prefix}wpss_wallet_transactions WHERE reference_type = 'order' AND amount > 0 AND reference_id IN ({$placeholders})", ...$missing ) ) );
+		foreach ( $missing as $id ) {
+			$known[ $id ] = in_array( $id, $credited, true );
+		}
+	}
+
+	return array_values( array_filter( $order_ids, static fn( $id ) => ! empty( $known[ $id ] ) ) );
 }
 
 /**

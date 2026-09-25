@@ -59,6 +59,8 @@ $seed = static function ( string $label, array $row ) use ( $wpdb, $orders, $buy
 	return (int) $wpdb->insert_id;
 };
 
+require_once ABSPATH . 'wp-admin/includes/user.php';
+
 try {
 	$seed( 'A', array( 'total' => 100, 'status' => 'completed', 'payment_status' => 'paid', 'paid_at' => '2031-03-05 10:00:00', 'created_at' => '2031-03-05 09:00:00', 'platform_fee' => 10, 'vendor_earnings' => 90 ) );
 	$seed( 'B', array( 'total' => 50, 'status' => 'in_progress', 'payment_status' => 'paid', 'paid_at' => '2031-03-06 10:00:00', 'created_at' => '2031-03-06 09:00:00', 'platform_fee' => 5, 'vendor_earnings' => 45 ) );
@@ -94,6 +96,24 @@ try {
 	$check( '8. admin vendor Earnings tab: revenue 190, commission 19, net 171', $money( $summary['total_revenue'], 190 ) && $money( $summary['total_commission'], 19 ) && $money( $summary['net_earnings'], 171 ) );
 	$pending = wpss_get_order_revenue( $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$orders} WHERE id = %d", $e ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	$check( '8. a pending-payment row earns nothing', ! $pending->counts && 0.0 === $pending->vendor_earnings );
+
+	// 9. Clearing (Basecamp 10336467813): Total earned + Clearing = the Sales
+	// earnings figure, and a credited partial refund is not taken off twice.
+	$ledger = $wpdb->prefix . 'wpss_wallet_transactions';
+	$clr    = wp_insert_user( array( 'user_login' => 'dev_f1_rev_clr', 'user_pass' => wp_generate_password(), 'user_email' => 'dev_f1_rev_clr@example.test' ) );
+	$h      = $seed( 'H', array( 'vendor_id' => $clr, 'total' => 29.5, 'status' => 'partially_refunded', 'payment_status' => 'paid', 'paid_at' => '2031-04-02 10:00:00', 'created_at' => '2031-04-02 09:00:00', 'refunded_amount' => 10, 'platform_fee' => 1.65, 'vendor_earnings' => 14.87 ) );
+	$seed( 'I', array( 'vendor_id' => $clr, 'total' => 29.5, 'status' => 'delivered', 'payment_status' => 'paid', 'paid_at' => '2031-04-03 10:00:00', 'created_at' => '2031-04-03 09:00:00', 'platform_fee' => 2.95, 'vendor_earnings' => 22.5 ) );
+	// H was completed (credited 22.50) and then $10 refunded (7.63 reversed; the reversal wrote 14.87 back).
+	wpss_insert_ledger_row( array( 'user_id' => $clr, 'type' => 'order_earning', 'amount' => 22.5, 'balance_after' => 22.5, 'currency' => wpss_get_currency(), 'description' => 'dev_f1', 'reference_type' => 'order', 'reference_id' => $h, 'status' => 'completed', 'created_at' => '2031-04-02 11:00:00' ) );
+	wpss_insert_ledger_row( array( 'user_id' => $clr, 'type' => 'order_reversal', 'amount' => -7.63, 'balance_after' => 14.87, 'currency' => wpss_get_currency(), 'description' => 'dev_f1', 'reference_type' => 'order', 'reference_id' => $h, 'status' => 'completed', 'created_at' => '2031-04-02 12:00:00' ) );
+
+	$sales   = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_vendor_stats( $clr )['total_earnings'];
+	$summary = ( new \WPSellServices\Services\EarningsService() )->get_summary( $clr );
+	$check( sprintf( '9. a credited partial refund counts once: H + I = 14.87 + 22.50 = 37.37 (got %s)', $sales ), $money( $sales, 37.37 ) );
+	$check( sprintf( '9. Clearing is the uncredited order I, 22.50 (got %s)', $summary['pending_clearance'] - $summary['in_clearance'] ), $money( $summary['pending_clearance'] - $summary['in_clearance'], 22.5 ) );
+	$check( '9. Total earned + Clearing = Sales earnings', $money( wpss_get_ledger_total_earned( $clr ) + $summary['pending_clearance'] - $summary['in_clearance'], $sales ) );
+	$wpdb->delete( $ledger, array( 'user_id' => $clr ) );
+	wp_delete_user( $clr );
 
 	// Pro: every Analytics surface reads the same numbers.
 	if ( class_exists( '\WPSellServicesPro\Analytics\AnalyticsManager' ) ) {

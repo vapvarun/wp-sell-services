@@ -1075,6 +1075,8 @@ class OrderRepository extends AbstractRepository {
 	 *     @type string $to        Paid on or before. Optional.
 	 *     @type int    $vendor_id One vendor. Optional.
 	 *     @type string $platform  Only this order platform (e.g. 'tip', 'milestone'). Optional.
+	 *     @type bool   $uncredited Only orders the vendor has not been credited for yet (no
+	 *                              ledger credit): the vendor's Clearing. Optional.
 	 *     @type string $group_by  '' (one row), 'day', 'vendor', 'service' or 'currency'.
 	 *     @type int    $limit     Rows to return when grouped, largest revenue first. 0 = all.
 	 * }
@@ -1087,14 +1089,21 @@ class OrderRepository extends AbstractRepository {
 				'from'      => '',
 				'to'        => '',
 				'vendor_id' => 0,
-				'platform'  => '',
-				'group_by'  => '',
-				'limit'     => 0,
+				'platform'   => '',
+				'uncredited' => false,
+				'group_by'   => '',
+				'limit'      => 0,
 			)
 		);
 
-		$refund = "LEAST( total, COALESCE( refunded_amount, CASE WHEN status = 'refunded' OR ( payment_status = 'refunded' AND status <> 'partially_refunded' ) THEN total ELSE 0 END ) )";
-		$share  = "CASE WHEN total > 0 THEN ( total - {$refund} ) / total ELSE 0 END";
+		$refund   = "LEAST( total, COALESCE( refunded_amount, CASE WHEN status = 'refunded' OR ( payment_status = 'refunded' AND status <> 'partially_refunded' ) THEN total ELSE 0 END ) )";
+		$credited = "EXISTS ( SELECT 1 FROM {$this->wpdb->prefix}wpss_wallet_transactions t WHERE t.reference_type = 'order' AND t.reference_id = {$this->table}.id AND t.amount > 0 )";
+		// Once the vendor has been credited, a refund's reversal writes the
+		// net back into vendor_earnings and platform_fee, so those are scaled
+		// only while nothing was credited. Scaling a reversed row again took
+		// the refund off twice (a $22.50 share with $10 of $29.50 refunded
+		// read $9.83 instead of $14.87).
+		$share = "CASE WHEN {$credited} THEN 1 WHEN total > 0 THEN ( total - {$refund} ) / total ELSE 0 END";
 
 		$where  = array(
 			"status NOT IN ( 'pending_payment', 'pending', 'cancelled', 'rejected' )",
@@ -1124,6 +1133,12 @@ class OrderRepository extends AbstractRepository {
 		if ( '' !== (string) $args['platform'] ) {
 			$where[]  = "COALESCE( platform, '' ) = %s";
 			$values[] = (string) $args['platform'];
+		}
+
+		// Earned but not yet in the wallet: no credit row for the order. On
+		// the ledger's (reference_type, reference_id, type) unique index.
+		if ( ! empty( $args['uncredited'] ) ) {
+			$where[] = "NOT {$credited}";
 		}
 
 		$groups = array(

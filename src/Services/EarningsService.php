@@ -116,24 +116,17 @@ class EarningsService {
 			)
 		);
 
-		// Get pending earnings (orders in progress) — show vendor's expected share after commission.
-		// Use CommissionService::get_global_commission_rate() for consistency with actual commission calculation.
-		$commission_rate = CommissionService::get_global_commission_rate();
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$pending = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(
-					CASE WHEN vendor_earnings IS NOT NULL THEN vendor_earnings
-					ELSE total * (1 - %f / 100) END
-				), 0) FROM {$orders_table}
-				WHERE vendor_id = %d AND status IN (%s, %s, %s)",
-				$commission_rate,
-				$vendor_id,
-				ServiceOrder::STATUS_IN_PROGRESS,
-				ServiceOrder::STATUS_PENDING_APPROVAL,
-				ServiceOrder::STATUS_REVISION_REQUESTED
+		// Clearing: the vendor's share of paid orders not credited yet, by the
+		// one revenue definition - so Total earned + Clearing equals the Sales
+		// earnings figure. It listed three statuses by hand and read $0 for
+		// delivered, awaiting-requirements, late and disputed work (Basecamp
+		// 10336467813).
+		$pending = (float) ( wpss_get_revenue(
+			array(
+				'vendor_id'  => $vendor_id,
+				'uncredited' => true,
 			)
-		);
+		)[0]->vendor_earnings ?? 0 );
 
 		// Get withdrawn amount.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
