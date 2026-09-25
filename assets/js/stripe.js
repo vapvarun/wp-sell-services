@@ -115,9 +115,7 @@
 					},
 				});
 
-				this.paymentElement = this.elements.create('payment', {
-					layout: 'tabs',
-				});
+				this.paymentElement = this.elements.create('payment', this.paymentElementOptions());
 
 				this.paymentElement.mount(elementContainer);
 
@@ -297,18 +295,55 @@
 			// Stripe rejects empty strings on optional fields; drop them.
 			if (!details.phone) { delete details.phone; }
 			if (!details.email) { delete details.email; }
-			if (!details.address.line2) { delete details.address.line2; }
-			if (!details.address.state) { delete details.address.state; }
+			Object.keys(details.address).forEach((key) => {
+				if (!details.address[key]) { delete details.address[key]; }
+			});
 
-			const complete = !!(
-				details.name &&
-				details.address.line1 &&
-				details.address.city &&
-				details.address.postal_code &&
-				details.address.country
+			// Complete = a name, plus every field the site's billing block marks
+			// required. It used to demand line 1, city and postcode outright, so
+			// with the digital preset (name, email, country - the default on a
+			// new install) no Stripe payment could be made at all.
+			const missing = Array.prototype.some.call(
+				document.querySelectorAll('[data-wpss-billing] [name^="billing_"][required]'),
+				(el) => !(el.value || '').trim()
 			);
 
-			return { complete: complete, details: details };
+			return { complete: !!details.name && !missing, details: details };
+		},
+
+		/**
+		 * Payment Element options: our billing block owns the billing details.
+		 *
+		 * The element otherwise asks for its own country (defaulting to the
+		 * browser's region, so a US buyer saw India) and postcode. A field
+		 * our block collects as required is switched off in the element
+		 * ('never') and sent at confirm; one it collects as optional is
+		 * prefilled; one it does not collect is left to the element.
+		 *
+		 * @return {Object}
+		 */
+		paymentElementOptions: function() {
+			const input = (key) => document.querySelector('[data-wpss-billing] [name="' + key + '"]');
+			const mode = (key) => {
+				const el = input(key);
+				return el && el.required ? 'never' : 'auto';
+			};
+			const details = this.readBillingDetails().details;
+
+			return {
+				layout: 'tabs',
+				defaultValues: { billingDetails: details },
+				fields: {
+					billingDetails: {
+						name: mode('billing_first_name'),
+						email: mode('billing_email'),
+						address: {
+							country: mode('billing_country'),
+							postalCode: mode('billing_postcode'),
+						},
+					},
+				},
+			};
 		},
 
 		/**

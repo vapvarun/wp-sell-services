@@ -2153,7 +2153,7 @@ do_action( 'wpss_before_order_view', $order );
 				<div class="wpss-tip-cta">
 					<i data-lucide="heart" class="wpss-icon wpss-icon--lg wpss-tip-cta__icon" aria-hidden="true"></i>
 					<h3 class="wpss-tip-cta__title"><?php esc_html_e( 'Say thanks with a tip', 'wp-sell-services' ); ?></h3>
-					<p class="wpss-tip-cta__text"><?php esc_html_e( 'Loved the work? A tip goes straight to the vendor on top of the order total.', 'wp-sell-services' ); ?></p>
+					<p class="wpss-tip-cta__text"><?php esc_html_e( 'Loved the work? Add a tip on top of the order total. It goes to the vendor\'s wallet, less any marketplace fee on tips.', 'wp-sell-services' ); ?></p>
 					<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-open-tip-modal"
 							data-order="<?php echo esc_attr( (string) $order_id ); ?>">
 						<?php esc_html_e( 'Send a tip', 'wp-sell-services' ); ?>
@@ -2182,7 +2182,7 @@ do_action( 'wpss_before_order_view', $order );
 					echo esc_html(
 						sprintf(
 							/* translators: %s: vendor display name */
-							__( 'Send a tip to %s — it is credited to their wallet after the platform fee.', 'wp-sell-services' ),
+							__( 'Send a tip to %s. It goes to their wallet, less any marketplace fee on tips.', 'wp-sell-services' ),
 							$other_party ? $other_party->display_name : __( 'the vendor', 'wp-sell-services' )
 						)
 					);

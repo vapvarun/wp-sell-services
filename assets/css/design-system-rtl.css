@@ -1619,3 +1619,9 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	font-weight: 600;
 	color: var(--wpss-text-primary, var(--wpss-text-secondary));
 }
+
+/* Checkout: the second Pay button under the payment methods sat against the
+   last method's box (Basecamp 10337204220). */
+.wpss-co-methods__submit {
+	margin-top: var(--wpss-space-5, 20px);
+}
