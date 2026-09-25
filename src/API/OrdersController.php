@@ -1013,10 +1013,7 @@ class OrdersController extends RestController {
 				} elseif ( ! $order->can_request_revision() ) {
 					$error = __( 'Revision limit reached for this order.', 'wp-sell-services' );
 				} else {
-					$result = $order_service->request_revision( $order_id, $reason );
-					if ( $result ) {
-						do_action( 'wpss_revision_requested', $order_id, $reason );
-					}
+					$result = ( new \WPSellServices\Services\DeliveryService() )->request_revision( $order_id, $reason );
 				}
 				break;
 

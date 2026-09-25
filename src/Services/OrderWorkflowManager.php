@@ -341,17 +341,16 @@ class OrderWorkflowManager {
 		$table            = $wpdb->prefix . 'wpss_orders';
 		$deliveries_table = $wpdb->prefix . 'wpss_deliveries';
 
-		// Find orders pending approval/delivered with delivery older than X days.
+		// Orders awaiting approval whose LATEST delivery is older than X days.
+		// Any old pending row used to qualify, so an order re-delivered after a
+		// revision completed on the next run (Basecamp 10336731604).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$orders_to_complete = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT o.id, o.customer_id, o.vendor_id
 				FROM {$table} o
-				INNER JOIN {$deliveries_table} d ON d.order_id = o.id
 				WHERE o.status IN (%s, %s)
-				AND d.status = 'pending'
-				AND d.created_at < DATE_SUB(%s, INTERVAL %d DAY)
-				GROUP BY o.id
+				AND ( SELECT MAX( d.created_at ) FROM {$deliveries_table} d WHERE d.order_id = o.id ) < DATE_SUB(%s, INTERVAL %d DAY)
 				ORDER BY o.id ASC
 				LIMIT %d",
 				ServiceOrder::STATUS_PENDING_APPROVAL,

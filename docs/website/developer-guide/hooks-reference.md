@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**536 hooks** across **741** firing sites.
+**536 hooks** across **740** firing sites.
 
 ## Actions (273)
 
@@ -215,7 +215,7 @@ guide; this is the complete index.
 | `wpss_review_created` | 2 | `src/API/ReviewsController.php` *(+1 more)* |  |
 | `wpss_review_moderated` | 2 | `src/Services/ReviewService.php` | Fires after an admin moderates a review from the queue. |
 | `wpss_review_reply_created` | 1 | `src/API/ReviewsController.php` |  |
-| `wpss_revision_requested` | 2 | `src/API/OrdersController.php` *(+1 more)* |  |
+| `wpss_revision_requested` | 2 | `src/Services/DeliveryService.php` | Fires when revision is requested. |
 | `wpss_send_requirements_reminder_email` | 3 | `src/Services/OrderWorkflowManager.php` |  |
 | `wpss_service_approved` | 2 | `src/Services/ModerationService.php` | Fires after a service is approved. |
 | `wpss_service_archive_header` | 0 | `templates/archive-service.php` | Hook: wpss_service_archive_header |

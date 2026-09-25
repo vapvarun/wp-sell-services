@@ -214,11 +214,14 @@ class DeliveryService {
 			return false;
 		}
 
-		if ( ServiceOrder::STATUS_PENDING_APPROVAL !== $order->status ) {
+		if ( ! in_array( $order->status, array( ServiceOrder::STATUS_PENDING_APPROVAL, ServiceOrder::STATUS_DELIVERED ), true ) ) {
 			return false;
 		}
 
-		// Mark latest delivery as revision requested.
+		// Retire the open delivery. This is the one revision path (dashboard
+		// and REST): the REST action used to skip it, so the old delivery
+		// stayed 'pending' and let the auto-complete sweep finish a re-delivered
+		// order at once (Basecamp 10336731604).
 		global $wpdb;
 		$deliveries_table = $wpdb->prefix . 'wpss_deliveries';
 
