@@ -723,7 +723,7 @@ class VendorsPage {
 			</div>
 
 			<!-- Vendors Table -->
-			<table class="wp-list-table widefat fixed striped wpss-vendors-table">
+			<table class="wp-list-table widefat fixed striped wpss-vendors-table wpss-stacked-table">
 				<thead>
 					<tr>
 						<td class="manage-column column-cb check-column">

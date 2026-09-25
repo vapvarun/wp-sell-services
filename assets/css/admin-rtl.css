@@ -3555,3 +3555,89 @@ button.wpss-change-status:focus {
 .column-wpss_icon .wpss-icon {
 	color: var(--wpss-admin-primary-dark);
 }
+
+/* ==========================================================================
+   Stacked list tables (782px and below)
+   The plugin's hand-built admin tables carry no core "primary column", so
+   WordPress's own mobile list-table rules half-applied: every header stayed
+   (wrapping mid-word), and the data-colname labels were absolutely placed
+   over the values. One rule for all of them: no header row, each cell a
+   label/value pair, identity cells (no data-colname) full width.
+   The selector mirrors core's and adds a class, so it wins on specificity.
+   ========================================================================== */
+@media screen and (max-width: 782px) {
+	.wpss-stacked-table thead,
+	.wpss-stacked-table tfoot {
+		display: none;
+	}
+
+	/* The desktop minimum width (for sideways scrolling) would keep a stacked
+	   table 720px wide inside a 390px screen, hiding every value past the edge. */
+	.wpss-stacked-table.wp-list-table,
+	.wpss-stacked-table.wp-list-table tbody {
+		display: block;
+		width: 100%;
+		min-width: 0;
+	}
+
+	.wpss-stacked-table.wp-list-table tbody tr {
+		display: block;
+		position: relative;
+		padding: 12px 44px 12px 12px;
+		border-bottom: 1px solid var(--wpss-admin-border, #dcdcde);
+	}
+
+	.wpss-stacked-table.wp-list-table tbody .check-column {
+		position: absolute;
+		top: 12px;
+		right: 8px;
+		width: auto;
+		padding: 0;
+	}
+
+	.wpss-stacked-table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column),
+	.wpss-stacked-table.wp-list-table tr:not(.inline-edit-row):not(.no-items) th:not(.check-column) {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		width: auto;
+		padding: 4px 0;
+		position: static;
+		text-align: start;
+		overflow-wrap: anywhere;
+	}
+
+	.wpss-stacked-table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td[data-colname] {
+		grid-template-columns: 7.5rem minmax(0, 1fr);
+		column-gap: 12px;
+		align-items: start;
+	}
+
+	.wpss-stacked-table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column)::before {
+		content: none;
+	}
+
+	.wpss-stacked-table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td[data-colname]::before {
+		content: attr(data-colname);
+		position: static;
+		width: auto;
+		font-weight: 600;
+		color: var(--wpss-admin-text-muted, #646970);
+	}
+
+	/* A label cell's value may be several nodes; keep them in the value column. */
+	.wpss-stacked-table.wp-list-table td[data-colname] > * {
+		grid-column: 2;
+	}
+
+	.wpss-stacked-table .row-actions {
+		position: static;
+		right: auto;
+	}
+
+	/* The avatar + name block is a flex row; its text column must be able to
+	   shrink so a long unbroken name wraps instead of running off the screen. */
+	.wpss-stacked-table .wpss-vendor-info,
+	.wpss-stacked-table .wpss-vendor-info > div {
+		min-width: 0;
+	}
+}

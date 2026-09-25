@@ -201,7 +201,7 @@ class NotificationsPage {
 							<p class="wpss-empty-state__body"><?php esc_html_e( 'Order updates, messages, reviews, and other marketplace events addressed to you will appear here.', 'wp-sell-services' ); ?></p>
 						</div>
 					<?php else : ?>
-						<table class="wp-list-table widefat fixed striped wpss-notifications-table">
+						<table class="wp-list-table widefat fixed striped wpss-notifications-table wpss-stacked-table">
 							<thead>
 								<tr>
 									<th scope="col" class="column-state"><?php esc_html_e( 'State', 'wp-sell-services' ); ?></th>
@@ -289,7 +289,7 @@ class NotificationsPage {
 		$type_label = '' !== $type ? ucwords( str_replace( '_', ' ', $type ) ) : '';
 		?>
 		<tr class="<?php echo $is_read ? '' : 'wpss-notification--unread'; ?>">
-			<td class="column-state">
+			<td class="column-state" data-colname="<?php esc_attr_e( 'State', 'wp-sell-services' ); ?>">
 				<?php if ( $is_read ) : ?>
 					<span class="wpss-status-badge wpss-status-approved"><?php esc_html_e( 'Read', 'wp-sell-services' ); ?></span>
 				<?php else : ?>
@@ -302,10 +302,10 @@ class NotificationsPage {
 					<div class="wpss-notification-message"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $message ), 30 ) ); ?></div>
 				<?php endif; ?>
 			</td>
-			<td class="column-type">
+			<td class="column-type" data-colname="<?php esc_attr_e( 'Type', 'wp-sell-services' ); ?>">
 				<?php echo '' !== $type_label ? esc_html( $type_label ) : '&mdash;'; ?>
 			</td>
-			<td class="column-date"><?php echo esc_html( '' !== $when ? $when : $created_at ); ?></td>
+			<td class="column-date" data-colname="<?php esc_attr_e( 'Received', 'wp-sell-services' ); ?>"><?php echo esc_html( '' !== $when ? $when : $created_at ); ?></td>
 		</tr>
 		<?php
 	}

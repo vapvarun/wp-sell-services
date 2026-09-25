@@ -446,7 +446,7 @@ class ServiceModerationPage {
 						</p>
 					</div>
 				<?php else : ?>
-				<table class="wp-list-table widefat fixed striped wpss-moderation-table">
+				<table class="wp-list-table widefat fixed striped wpss-moderation-table wpss-stacked-table">
 					<thead>
 						<tr>
 							<td class="manage-column column-cb check-column">
@@ -568,7 +568,7 @@ class ServiceModerationPage {
 					<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
 				<?php endif; ?>
 			</td>
-			<td class="column-category">
+			<td class="column-category" data-colname="<?php esc_attr_e( 'Category', 'wp-sell-services' ); ?>">
 				<?php
 				if ( $categories && ! is_wp_error( $categories ) ) {
 					$cat_names = wp_list_pluck( $categories, 'name' );
@@ -578,13 +578,13 @@ class ServiceModerationPage {
 				}
 				?>
 			</td>
-			<td class="column-price">
+			<td class="column-price" data-colname="<?php esc_attr_e( 'Price', 'wp-sell-services' ); ?>">
 				<?php echo $price ? esc_html( wpss_format_price( (float) $price ) ) : '—'; ?>
 			</td>
-			<td class="column-date">
+			<td class="column-date" data-colname="<?php esc_attr_e( 'Submitted', 'wp-sell-services' ); ?>">
 				<?php echo esc_html( get_the_date( '', $service ) ); ?>
 			</td>
-			<td class="column-status">
+			<td class="column-status" data-colname="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
 				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">
 					<?php echo esc_html( ucfirst( $status ) ); ?>
 				</span>

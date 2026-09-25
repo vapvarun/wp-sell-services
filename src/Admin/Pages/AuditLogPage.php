@@ -277,7 +277,7 @@ class AuditLogPage {
 							<p class="wpss-empty-state__body"><?php esc_html_e( 'No events match the current filters. Sensitive marketplace actions are recorded here as they happen.', 'wp-sell-services' ); ?></p>
 						</div>
 					<?php else : ?>
-						<table class="wp-list-table widefat fixed striped wpss-audit-table">
+						<table class="wp-list-table widefat fixed striped wpss-audit-table wpss-stacked-table">
 							<thead>
 								<tr>
 									<th scope="col" class="column-date"><?php esc_html_e( 'When', 'wp-sell-services' ); ?></th>
@@ -365,8 +365,8 @@ class AuditLogPage {
 		}
 		?>
 		<tr>
-			<td class="column-date"><?php echo esc_html( '' !== $when ? $when : $created_at ); ?></td>
-			<td class="column-actor">
+			<td class="column-date" data-colname="<?php esc_attr_e( 'When', 'wp-sell-services' ); ?>"><?php echo esc_html( '' !== $when ? $when : $created_at ); ?></td>
+			<td class="column-actor" data-colname="<?php esc_attr_e( 'Actor', 'wp-sell-services' ); ?>">
 				<?php if ( '' !== $actor_name ) : ?>
 					<span class="wpss-audit-actor-name"><?php echo esc_html( $actor_name ); ?></span>
 				<?php elseif ( $actor_id > 0 ) : ?>
@@ -378,8 +378,8 @@ class AuditLogPage {
 					<span class="wpss-audit-actor-role"><?php echo esc_html( translate_user_role( ucfirst( $actor_role ) ) ); ?></span>
 				<?php endif; ?>
 			</td>
-			<td class="column-event"><code class="wpss-audit-event"><?php echo esc_html( $event_type ); ?></code></td>
-			<td class="column-object">
+			<td class="column-event" data-colname="<?php esc_attr_e( 'Event', 'wp-sell-services' ); ?>"><code class="wpss-audit-event"><?php echo esc_html( $event_type ); ?></code></td>
+			<td class="column-object" data-colname="<?php esc_attr_e( 'Object', 'wp-sell-services' ); ?>">
 				<?php
 				if ( '' !== $object_type ) {
 					echo esc_html( $object_type );
@@ -391,7 +391,7 @@ class AuditLogPage {
 				}
 				?>
 			</td>
-			<td class="column-change">
+			<td class="column-change" data-colname="<?php esc_attr_e( 'Change', 'wp-sell-services' ); ?>">
 				<?php if ( '' !== $from_value || '' !== $to_value ) : ?>
 					<span class="wpss-audit-change">
 						<span class="wpss-audit-from"><?php echo esc_html( '' !== $from_value ? $from_value : '—' ); ?></span>
@@ -402,7 +402,7 @@ class AuditLogPage {
 					&mdash;
 				<?php endif; ?>
 			</td>
-			<td class="column-forced">
+			<td class="column-forced" data-colname="<?php esc_attr_e( 'Forced', 'wp-sell-services' ); ?>">
 				<?php if ( $is_forced ) : ?>
 					<span class="wpss-status-badge wpss-status-badge--danger"><?php esc_html_e( 'Forced', 'wp-sell-services' ); ?></span>
 				<?php else : ?>

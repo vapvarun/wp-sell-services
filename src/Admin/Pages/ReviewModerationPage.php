@@ -386,7 +386,7 @@ JS;
 							<p class="wpss-empty-state__body"><?php esc_html_e( 'Customer reviews appear here after buyers rate completed orders. With moderation enabled, new reviews wait for your approval before going live.', 'wp-sell-services' ); ?></p>
 						</div>
 					<?php else : ?>
-						<table class="wp-list-table widefat fixed striped wpss-review-table">
+						<table class="wp-list-table widefat fixed striped wpss-review-table wpss-stacked-table">
 							<thead>
 								<tr>
 									<th scope="col" class="column-rating"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></th>
@@ -476,7 +476,7 @@ JS;
 		$status_label  = $status_labels[ $status ] ?? ucfirst( $status );
 		?>
 		<tr>
-			<td class="column-rating">
+			<td class="column-rating" data-colname="<?php esc_attr_e( 'Rating', 'wp-sell-services' ); ?>">
 				<span class="wpss-review-rating" aria-label="
 				<?php
 				echo esc_attr(
@@ -498,22 +498,22 @@ JS;
 					<em><?php esc_html_e( 'No written review.', 'wp-sell-services' ); ?></em>
 				<?php endif; ?>
 			</td>
-			<td class="column-reviewer">
+			<td class="column-reviewer" data-colname="<?php esc_attr_e( 'Reviewer', 'wp-sell-services' ); ?>">
 				<?php if ( $reviewer ) : ?>
 					<a href="<?php echo esc_url( (string) get_edit_user_link( $reviewer_id ) ); ?>"><?php echo esc_html( $reviewer_name ); ?></a>
 				<?php else : ?>
 					<?php echo esc_html( $reviewer_name ); ?>
 				<?php endif; ?>
 			</td>
-			<td class="column-service">
+			<td class="column-service" data-colname="<?php esc_attr_e( 'Service', 'wp-sell-services' ); ?>">
 				<?php if ( $service ) : ?>
 					<a href="<?php echo esc_url( (string) get_edit_post_link( $service_id ) ); ?>"><?php echo esc_html( $service_title ); ?></a>
 				<?php else : ?>
 					&mdash;
 				<?php endif; ?>
 			</td>
-			<td class="column-date"><?php echo esc_html( '' !== $when ? $when : $created_at ); ?></td>
-			<td class="column-status">
+			<td class="column-date" data-colname="<?php esc_attr_e( 'Submitted', 'wp-sell-services' ); ?>"><?php echo esc_html( '' !== $when ? $when : $created_at ); ?></td>
+			<td class="column-status" data-colname="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
 				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>"><?php echo esc_html( $status_label ); ?></span>
 			</td>
 			<td class="column-actions">

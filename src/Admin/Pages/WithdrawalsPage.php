@@ -508,7 +508,7 @@ class WithdrawalsPage {
 			</div>
 
 			<!-- Withdrawals Table -->
-			<table class="wp-list-table widefat fixed striped wpss-withdrawals-table">
+			<table class="wp-list-table widefat fixed striped wpss-withdrawals-table wpss-stacked-table">
 				<thead>
 					<tr>
 						<td class="manage-column column-cb check-column">
@@ -628,7 +628,7 @@ class WithdrawalsPage {
 			<td class="column-amount" data-colname="<?php esc_attr_e( 'Amount', 'wp-sell-services' ); ?>">
 				<strong><?php echo esc_html( wpss_format_price( (float) $withdrawal->amount ) ); ?></strong>
 			</td>
-			<td class="column-method" data-colname="<?php esc_attr_e( 'Method', 'wp-sell-services' ); ?>">
+			<td class="column-method" data-colname="<?php esc_attr_e( 'Payout to', 'wp-sell-services' ); ?>">
 				<?php echo esc_html( $methods[ $withdrawal->method ] ?? ucfirst( $withdrawal->method ) ); ?>
 				<?php if ( ! empty( $withdrawal->is_auto ) ) : ?>
 					<?php

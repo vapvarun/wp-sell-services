@@ -321,7 +321,7 @@ class ReportsPage {
 						</div>
 					</div>
 				<?php else : ?>
-					<table class="wp-list-table widefat fixed striped wpss-reports-table">
+					<table class="wp-list-table widefat fixed striped wpss-reports-table wpss-stacked-table">
 						<thead>
 							<tr>
 								<th scope="col"><?php esc_html_e( 'Reported', 'wp-sell-services' ); ?></th>
