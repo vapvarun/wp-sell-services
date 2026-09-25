@@ -2266,7 +2266,7 @@ class Admin {
 			$wpss_set_options = array( $order->status => $statuses[ $order->status ] ?? $order->status ) + $wpss_set_options;
 		}
 		?>
-		<div class="wrap wpss-order-detail">
+		<div class="wrap wpss-admin-order">
 			<h1 class="wp-heading-inline">
 				<?php
 				printf(

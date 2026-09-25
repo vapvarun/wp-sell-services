@@ -122,6 +122,11 @@ class UnifiedDashboard {
 		);
 		wp_style_add_data( 'wpss-messaging', 'rtl', 'replace' );
 
+		// A single order (orders/{id} or sales/{id}) renders templates/order/order-view.php.
+		if ( wpss_resolve_request_order_id() ) {
+			wpss_enqueue_order_view_style();
+		}
+
 		// wpss-ui provides window.wpssToast. The dashboard reports a saved
 		// profile through it, so declare the dependency rather than relying on
 		// some other surface having registered the handle first.

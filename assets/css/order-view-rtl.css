@@ -1,0 +1,729 @@
+/**
+ * Order view: the buyer and seller order page, and the blocks the admin
+ * order screen shares with it (timeline, deliveries, requirements).
+ *
+ * Moved out of an inline <style> in templates/order/order-view.php so the
+ * admin order screen can load the same rules (Basecamp 10337161480).
+ * Enqueued by wpss_enqueue_order_view_style().
+ *
+ * @package WPSellServices
+ * @since   1.8.0
+ */
+
+/* Single Column Order View Styles */
+.wpss-order-view {
+	max-width: 100%;
+	margin: 0;
+}
+
+.wpss-order-view__header {
+	margin-bottom: 1rem;
+}
+
+.wpss-order-view__back {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: var(--wpss-text-muted, #6b7280);
+	text-decoration: none;
+	font-size: 0.875rem;
+	transition: color 0.2s;
+}
+
+.wpss-order-view__back:hover {
+	color: var(--wpss-primary, #3b82f6);
+}
+
+.wpss-order-view__title-bar {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 1rem;
+	padding-bottom: 1.5rem;
+	margin-bottom: 1.5rem;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+/* Persistent revision count badge (CB3 + VS3 from plans/ORDER-FLOW-AUDIT.md) */
+.wpss-revision-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-right: 8px;
+	padding: 4px 10px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--wpss-gray-600, #4b5563);
+	background: var(--wpss-bg-muted, #f3f4f6);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 9999px;
+	vertical-align: middle;
+}
+
+.wpss-revision-badge .wpss-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.wpss-revision-badge--last {
+	color: var(--wpss-warning-dark, #b45309);
+	background: var(--wpss-warning-light, #fffbeb);
+	border-color: var(--wpss-warning-border, #fde68a);
+}
+
+.wpss-revision-badge--exhausted {
+	color: var(--wpss-danger-dark, #b91c1c);
+	background: var(--wpss-danger-light, #fef2f2);
+	border-color: var(--wpss-danger-border, #fecaca);
+}
+
+.wpss-order-view__title-info {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1rem;
+}
+
+.wpss-order-view__title {
+	margin: 0;
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-order-view__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+/* Accept / Request Revision under the delivery the buyer is reviewing. */
+.wpss-order-view__actions--review {
+	margin: -0.5rem 0 1.5rem;
+}
+
+/* Order Sections */
+.wpss-order-section {
+	background: var(--wpss-surface, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 12px;
+	margin-bottom: 1.5rem;
+	overflow: hidden;
+}
+
+.wpss-order-section__header {
+	padding: 1rem 1.5rem;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+	background: var(--wpss-bg-subtle, #f9fafb);
+}
+
+.wpss-order-section__title {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-order-section__title svg {
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-order-section__body {
+	padding: 1.5rem;
+}
+
+/* Order Details Grid */
+.wpss-order-details-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 1.5rem;
+}
+
+.wpss-order-detail-item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.wpss-order-detail-item__label {
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted, #6b7280);
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+}
+
+.wpss-order-detail-item__value {
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-order-detail-item--highlight .wpss-order-detail-item__value {
+	font-size: 1.25rem;
+	color: var(--wpss-success, #10b981);
+}
+
+/* Service Info */
+.wpss-service-info {
+	display: flex;
+	gap: 1rem;
+	padding-bottom: 1.5rem;
+	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
+	margin-bottom: 1.5rem;
+}
+
+.wpss-service-info__image {
+	width: 120px;
+	height: 80px;
+	object-fit: cover;
+	border-radius: 8px;
+	flex-shrink: 0;
+}
+
+.wpss-service-info__content {
+	flex: 1;
+	min-width: 0;
+}
+
+.wpss-service-info__title {
+	margin: 0 0 0.5rem;
+	font-size: 1.125rem;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.wpss-service-info__title a {
+	color: var(--wpss-text, #111827);
+	text-decoration: none;
+}
+
+.wpss-service-info__title a:hover {
+	color: var(--wpss-primary, #3b82f6);
+}
+
+.wpss-service-info__price {
+	margin: 0;
+	font-size: 1.125rem;
+	font-weight: 700;
+	color: var(--wpss-success, #10b981);
+}
+
+/* Party Info */
+.wpss-party-info__card {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.wpss-party-info__avatar {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.wpss-party-info__details {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.wpss-party-info__role {
+	font-size: 0.75rem;
+	color: var(--wpss-text-muted, #6b7280);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.wpss-party-info__name {
+	font-size: 1rem;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-party-info__rating {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.875rem;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-party-info__rating .wpss-star-icon {
+	color: var(--wpss-warning, #f59e0b);
+}
+
+.wpss-party-info__rating-count {
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+/* Timeline */
+.wpss-timeline {
+	position: relative;
+	padding-right: 2rem;
+}
+
+.wpss-timeline::before {
+	content: '';
+	position: absolute;
+	right: 7px;
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	background: var(--wpss-border, #e5e7eb);
+}
+
+.wpss-timeline__item {
+	position: relative;
+	padding-bottom: 1.5rem;
+}
+
+.wpss-timeline__item:last-child {
+	padding-bottom: 0;
+}
+
+.wpss-timeline__marker {
+	position: absolute;
+	right: -2rem;
+	top: 2px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: var(--wpss-bg, #fff);
+	border: 2px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-timeline__item--completed .wpss-timeline__marker {
+	background: var(--wpss-success, #10b981);
+	border-color: var(--wpss-success, #10b981);
+}
+
+.wpss-timeline__item--pending .wpss-timeline__marker {
+	background: var(--wpss-bg, #fff);
+	border-color: var(--wpss-border, #d1d5db);
+}
+
+.wpss-timeline__content {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+
+.wpss-timeline__title {
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-timeline__item--pending .wpss-timeline__title {
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-timeline__date {
+	font-size: 0.875rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-timeline__note {
+	margin: var(--wpss-space-2, 0.5rem) 0 0;
+	padding: var(--wpss-space-2, 0.5rem) var(--wpss-space-3, 0.75rem);
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border-inline-start: 3px solid var(--wpss-warning, #f59e0b);
+	border-radius: 4px;
+	font-size: 0.875rem;
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+}
+
+/* Delivery Items */
+.wpss-delivery-item {
+	padding: 1rem;
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border-radius: 8px;
+	margin-bottom: 1rem;
+}
+
+.wpss-delivery-item:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-delivery-item__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 0.75rem;
+}
+
+.wpss-delivery-item__date {
+	font-size: 0.875rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-delivery-item__content {
+	color: var(--wpss-text, #111827);
+	line-height: 1.6;
+}
+
+.wpss-delivery-item__content p:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-delivery-item__files {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 1rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-file-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 1rem;
+	background: var(--wpss-bg, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 6px;
+	color: var(--wpss-primary, #3b82f6);
+	text-decoration: none;
+	font-size: 0.875rem;
+	transition: all 0.2s;
+}
+
+.wpss-file-link:hover {
+	background: var(--wpss-primary, #3b82f6);
+	color: var(--wpss-white, #fff);
+	border-color: var(--wpss-primary, #3b82f6);
+}
+
+/* Review CTA */
+.wpss-review-cta {
+	text-align: center;
+	padding: 2rem;
+}
+
+.wpss-review-cta__icon {
+	color: var(--wpss-warning, #f59e0b);
+	margin-bottom: 1rem;
+}
+
+.wpss-review-cta__title {
+	margin: 0 0 0.5rem;
+	font-size: 1.25rem;
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-review-cta__text {
+	margin: 0 0 1.5rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+/* Badge sizes */
+.wpss-badge--lg {
+	padding: 0.375rem 0.875rem;
+	font-size: 0.875rem;
+}
+
+/* Requirements Form */
+.wpss-requirements-form .wpss-form-group {
+	margin-bottom: 1.5rem;
+}
+
+.wpss-requirements-form .wpss-label {
+	display: block;
+	margin-bottom: 0.5rem;
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-requirements-form .wpss-required {
+	color: var(--wpss-danger, #ef4444);
+}
+
+.wpss-requirements-form .wpss-input,
+.wpss-requirements-form .wpss-textarea {
+	width: 100%;
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 8px;
+	font-size: 1rem;
+	color: var(--wpss-text, #111827);
+	background: var(--wpss-bg, #fff);
+	transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.wpss-requirements-form .wpss-input:focus,
+.wpss-requirements-form .wpss-textarea:focus {
+	outline: none;
+	border-color: var(--wpss-primary, #3b82f6);
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.wpss-file-upload {
+	position: relative;
+}
+
+.wpss-file-upload .wpss-file-input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
+
+.wpss-file-upload__label {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+	padding: 2rem;
+	border: 2px dashed var(--wpss-border, #e5e7eb);
+	border-radius: 8px;
+	cursor: pointer;
+	transition: all 0.2s;
+	background: var(--wpss-bg-subtle, #f9fafb);
+}
+
+.wpss-file-upload__label:hover {
+	border-color: var(--wpss-primary, #3b82f6);
+	background: rgba(59, 130, 246, 0.05);
+}
+
+.wpss-file-upload__label svg {
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-file-upload__text {
+	font-size: 0.875rem;
+	color: var(--wpss-text-muted, #6b7280);
+}
+
+.wpss-file-upload__name {
+	display: block;
+	margin-top: 0.5rem;
+	font-size: 0.875rem;
+	color: var(--wpss-primary, #3b82f6);
+	font-weight: 500;
+}
+
+.wpss-file-upload__name:empty {
+	display: none;
+}
+
+.wpss-file-upload.has-file .wpss-file-upload__label {
+	border-color: var(--wpss-success, #10b981);
+	background: rgba(16, 185, 129, 0.05);
+}
+
+.wpss-form-actions {
+	margin-top: 2rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid var(--wpss-border, #e5e7eb);
+}
+
+.wpss-form-actions .wpss-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+/* Requirements View (Read-only) */
+.wpss-requirement-view {
+	padding: 1rem;
+	background: var(--wpss-bg-subtle, #f9fafb);
+	border-radius: 8px;
+	margin-bottom: 1rem;
+}
+
+.wpss-requirement-view:last-child {
+	margin-bottom: 0;
+}
+
+.wpss-requirement-view__question {
+	margin: 0 0 0.5rem;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--wpss-text, #111827);
+}
+
+.wpss-requirement-view__answer {
+	color: var(--wpss-text, #374151);
+	line-height: 1.6;
+}
+
+.wpss-requirement-view__answer p {
+	margin: 0;
+}
+
+.wpss-text-muted {
+	color: var(--wpss-text-muted, #6b7280);
+	font-style: italic;
+}
+
+/* Requirements View Enhancements */
+.wpss-order-section__timestamp {
+	font-size: 0.8125rem;
+	color: var(--wpss-text-muted, #6b7280);
+	font-weight: 400;
+}
+
+/*
+ * The expand/collapse rules for this component live in frontend.css, the shared
+ * layer every surface loads. A second copy lived here and toggled
+ * .wpss-expanded, a class neither the shared CSS nor frontend.js ever sets, so
+ * the two fought: the global rule capped the whole answer at 100px, clipping
+ * the Show more button out of sight, while this copy's expand class was never
+ * applied by anything. Removed rather than reconciled - one component, one
+ * implementation.
+ */
+
+.wpss-requirement-view__expand-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	margin-top: 0.5rem;
+	padding: 0;
+	background: none;
+	border: none;
+	color: var(--wpss-primary, #3b82f6);
+	font-size: 0.875rem;
+	cursor: pointer;
+	transition: color 0.2s;
+}
+
+.wpss-requirement-view__expand-btn:hover {
+	color: var(--wpss-primary-dark, #2563eb);
+}
+
+.wpss-requirement-view__expand-btn .wpss-expand-icon {
+	transition: transform 0.2s;
+}
+
+.wpss-requirement-view__answer--expanded .wpss-expand-icon {
+	transform: rotate(-180deg);
+}
+
+.wpss-requirement-view__copy-btn {
+	position: absolute;
+	top: 0;
+	left: 0;
+	padding: 0.25rem;
+	background: var(--wpss-bg, #fff);
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 4px;
+	color: var(--wpss-text-muted, #6b7280);
+	cursor: pointer;
+	opacity: 0;
+	transition: all 0.2s;
+}
+
+.wpss-requirement-view:hover .wpss-requirement-view__copy-btn {
+	opacity: 1;
+}
+
+.wpss-requirement-view__copy-btn:hover {
+	background: var(--wpss-primary, #3b82f6);
+	border-color: var(--wpss-primary, #3b82f6);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-requirement-view__copy-btn.wpss-copied {
+	background: var(--wpss-success, #10b981);
+	border-color: var(--wpss-success, #10b981);
+	color: var(--wpss-white, #fff);
+}
+
+.wpss-requirement-view__image-preview {
+	margin-bottom: 0.75rem;
+}
+
+.wpss-requirement-view__thumbnail {
+	max-width: 200px;
+	max-height: 150px;
+	object-fit: cover;
+	border-radius: 8px;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	cursor: pointer;
+	transition: transform 0.2s;
+}
+
+.wpss-requirement-view__thumbnail:hover {
+	transform: scale(1.02);
+}
+
+/* Alert Styles */
+.wpss-alert--warning {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	padding: 1rem;
+	background: var(--wpss-warning-light, #fff8e1);
+	border: 1px solid rgba(245, 158, 11, 0.3);
+	border-radius: 8px;
+	color: var(--wpss-warning-dark, #92400e);
+}
+
+.wpss-alert--warning svg {
+	flex-shrink: 0;
+	margin-top: 0.125rem;
+}
+
+.wpss-alert--warning p {
+	margin: 0;
+	font-size: 0.875rem;
+}
+
+.wpss-alert--info {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	padding: 1rem;
+	background: rgba(59, 130, 246, 0.1);
+	border: 1px solid rgba(59, 130, 246, 0.2);
+	border-radius: 8px;
+	color: var(--wpss-primary, #3b82f6);
+}
+
+.wpss-alert--info svg {
+	flex-shrink: 0;
+	margin-top: 0.125rem;
+}
+
+.wpss-alert--info p {
+	margin: 0;
+	font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+	.wpss-order-view__title-bar {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wpss-order-view__actions {
+		justify-content: flex-start;
+	}
+
+	.wpss-order-details-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.wpss-service-info {
+		flex-direction: column;
+	}
+
+	.wpss-service-info__image {
+		width: 100%;
+		height: 160px;
+	}
+}
+

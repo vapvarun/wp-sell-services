@@ -626,6 +626,23 @@ function wpss_register_design_system( bool $enqueue = false ): void {
 }
 
 /**
+ * Enqueue the order view stylesheet (assets/css/order-view.css).
+ *
+ * The buyer/seller order page and the admin order screen render the same
+ * blocks (timeline, deliveries, requirements), so both load the same rules.
+ * Called from the order routes before the head prints, and from the template
+ * as a fallback for a shortcode render, where WordPress prints it late.
+ *
+ * @since 1.8.0
+ *
+ * @return void
+ */
+function wpss_enqueue_order_view_style(): void {
+	wpss_register_design_system();
+	wpss_enqueue_style( 'wpss-order-view', 'assets/css/order-view.css' );
+}
+
+/**
  * WordPress core's list-table pager, for admin lists built without WP_List_Table.
  *
  * Orders and Disputes use WP_List_Table and get core's pager (first, previous,

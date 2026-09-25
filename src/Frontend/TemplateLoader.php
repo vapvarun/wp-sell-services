@@ -414,6 +414,8 @@ class TemplateLoader {
 		// Determine action (requirements, delivery, review, etc.).
 		$action = get_query_var( 'wpss_order_action' );
 
+		wpss_enqueue_order_view_style();
+
 		// Load appropriate template.
 		switch ( $action ) {
 			case 'requirements':
