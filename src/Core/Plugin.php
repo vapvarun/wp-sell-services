@@ -723,6 +723,11 @@ final class Plugin {
 		add_filter( 'wp_robots', array( $this, 'filter_dormant_store_page_robots' ) );
 		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'exclude_dormant_store_pages_from_sitemap' ), 10, 2 );
 
+		// Proposal counts for any list of buyer requests, in one query per list.
+		// Per-request only: a persistent object cache would show stale counts.
+		wp_cache_add_non_persistent_groups( \WPSellServices\Services\BuyerRequestService::PROPOSAL_COUNT_GROUP );
+		add_filter( 'the_posts', array( \WPSellServices\Services\BuyerRequestService::class, 'prime_proposal_counts_for_posts' ) );
+
 		// Flush rewrite rules once after activation (consumes transient set by Activator).
 		add_action(
 			'init',

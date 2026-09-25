@@ -25,6 +25,14 @@ defined( 'ABSPATH' ) || exit;
 class BuyerRequestService {
 
 	/**
+	 * Non-persistent cache group for proposal counts.
+	 *
+	 * @var string
+	 */
+	public const PROPOSAL_COUNT_GROUP = 'wpss_proposal_count';
+
+
+	/**
 	 * Request statuses.
 	 */
 	public const STATUS_OPEN      = 'open';
@@ -499,20 +507,80 @@ class BuyerRequestService {
 	}
 
 	/**
-	 * Get proposal count for a request.
+	 * How many proposals a request has: every proposal except withdrawn ones.
+	 *
+	 * The one count every surface shows - archive card, single page, buyer
+	 * dashboard, REST. The card used to read `_wpss_proposal_count` meta that
+	 * only the demo seeder wrote, so every real request read "Proposals 0"
+	 * (Basecamp 10337193560). Lists are primed in one query by
+	 * prime_proposal_counts(), so a page of cards costs one query, not one each.
 	 *
 	 * @param int $request_id Request post ID.
 	 * @return int Proposal count.
 	 */
 	public function get_proposal_count( int $request_id ): int {
+		$count = wp_cache_get( $request_id, self::PROPOSAL_COUNT_GROUP, false, $found );
+
+		if ( ! $found ) {
+			self::prime_proposal_counts( array( $request_id ) );
+			$count = wp_cache_get( $request_id, self::PROPOSAL_COUNT_GROUP );
+		}
+
+		return (int) $count;
+	}
+
+	/**
+	 * Count proposals for many requests in one query.
+	 *
+	 * The cache group is non-persistent (see Plugin), so a count lives for one
+	 * request and never needs invalidating when a proposal is sent or withdrawn.
+	 *
+	 * @param int[] $request_ids Request post IDs.
+	 * @return void
+	 */
+	public static function prime_proposal_counts( array $request_ids ): void {
 		global $wpdb;
 
-		return (int) $wpdb->get_var(
+		$request_ids = array_values( array_unique( array_filter( array_map( 'intval', $request_ids ) ) ) );
+
+		if ( ! $request_ids ) {
+			return;
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $request_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- cached per request below.
+		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$this->proposals_table} WHERE request_id = %d AND status != 'withdrawn'",
-				$request_id
-			)
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholders built above.
+				"SELECT request_id, COUNT(*) AS n FROM {$wpdb->prefix}wpss_proposals WHERE request_id IN ({$placeholders}) AND status != 'withdrawn' GROUP BY request_id",
+				...$request_ids
+			),
+			OBJECT_K
 		);
+
+		foreach ( $request_ids as $id ) {
+			wp_cache_set( $id, isset( $rows[ $id ] ) ? (int) $rows[ $id ]->n : 0, self::PROPOSAL_COUNT_GROUP );
+		}
+	}
+
+	/**
+	 * Prime proposal counts for any list of requests (the_posts filter).
+	 *
+	 * @param \WP_Post[] $posts Posts the query found.
+	 * @return \WP_Post[]
+	 */
+	public static function prime_proposal_counts_for_posts( $posts ) {
+		if ( is_array( $posts ) && $posts ) {
+			$ids = array();
+			foreach ( $posts as $post ) {
+				if ( $post instanceof \WP_Post && BuyerRequestPostType::POST_TYPE === $post->post_type ) {
+					$ids[] = $post->ID;
+				}
+			}
+			self::prime_proposal_counts( $ids );
+		}
+
+		return $posts;
 	}
 
 	/**

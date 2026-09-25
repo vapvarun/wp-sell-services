@@ -97,14 +97,7 @@ $active_count = (int) ( new WP_Query(
 				} elseif ( $budget_min > 0 ) {
 					$budget_display = wpss_catalog_price_html( (float) $budget_min, 'request-budget' );
 				}
-				// Query actual proposal count from DB instead of potentially stale meta.
-				global $wpdb;
-				$offers      = (int) $wpdb->get_var(
-					$wpdb->prepare(
-						"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_proposals WHERE request_id = %d",
-						$request_id
-					)
-				);
+				$offers      = ( new \WPSellServices\Services\BuyerRequestService() )->get_proposal_count( $request_id );
 				$item_status = get_post_status();
 				?>
 				<div class="wpss-request-card">

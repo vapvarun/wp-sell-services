@@ -1038,7 +1038,6 @@ class MarketplaceSeeder {
 
 			// Each request gets 2-3 proposals from different vendors.
 			$proposal_total    = 2 + ( $r_index % 2 );
-			$request_props     = 0;
 			$proposal_statuses = array(
 				Proposal::STATUS_PENDING,
 				Proposal::STATUS_ACCEPTED,
@@ -1071,11 +1070,8 @@ class MarketplaceSeeder {
 
 				if ( $inserted ) {
 					++$proposal_count;
-					++$request_props;
 				}
 			}
-
-			update_post_meta( $post_id, '_wpss_proposal_count', $request_props );
 		}
 
 		return array(

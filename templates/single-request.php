@@ -85,13 +85,10 @@ if ( ! isset( $proposal_service ) ) {
 if ( $is_buyer ) {
 	$proposals = $proposal_service->get_by_request( $request_id );
 }
-// "Proposals" means the same number on every surface. The archive card counts
-// every proposal on the request, and the buyer branch below counts every
-// proposal too; counting only 'pending' for vendors made the same request read
-// "2 proposals" in the listing and "1" on its own page. A vendor sizing up the
-// competition also needs to know a proposal was already accepted, so the honest
-// figure is the total.
-$proposal_count = $is_buyer ? count( $proposals ) : count( $proposal_service->get_by_request( $request_id ) );
+// "Proposals" means the same number on every surface - archive card, this
+// page, the buyer dashboard and REST: every proposal except withdrawn ones,
+// accepted included, since a vendor sizing up the competition needs to know.
+$proposal_count = ( new \WPSellServices\Services\BuyerRequestService() )->get_proposal_count( $request_id );
 
 // Format budget display.
 if ( 'range' === $budget_type && $budget_min && $budget_max ) {

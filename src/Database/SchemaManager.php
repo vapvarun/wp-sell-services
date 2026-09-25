@@ -1720,6 +1720,10 @@ class SchemaManager {
 	 * @return void
 	 */
 	private function run_1_8_0_data_migrations(): void {
+		// Proposal counts come from the proposals table now; this meta was only
+		// ever written by the demo seeder and read by the request card.
+		delete_post_meta_by_key( '_wpss_proposal_count' );
+
 		$table = $this->prefix . 'orders';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

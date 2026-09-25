@@ -34,7 +34,7 @@ $budget_min         = (float) get_post_meta( $request_id, '_wpss_budget_min', tr
 $budget_max         = (float) get_post_meta( $request_id, '_wpss_budget_max', true );
 $delivery_days      = (int) get_post_meta( $request_id, '_wpss_delivery_days', true );
 $expires_at         = get_post_meta( $request_id, '_wpss_expires_at', true );
-$proposal_count     = (int) get_post_meta( $request_id, '_wpss_proposal_count', true );
+$proposal_count     = ( new \WPSellServices\Services\BuyerRequestService() )->get_proposal_count( $request_id );
 $skills_raw         = get_post_meta( $request_id, '_wpss_skills_required', true );
 $skills             = $skills_raw ? $skills_raw : array();
 $categories         = wp_get_post_terms( $request_id, 'wpss_service_category', array( 'fields' => 'names' ) );
