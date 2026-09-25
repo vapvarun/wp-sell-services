@@ -126,8 +126,9 @@ try {
 		$wpdb->delete( $wpdb->prefix . 'wpss_order_meta', array( 'order_id' => $id ) );
 		$wpdb->delete( $wpdb->prefix . 'wpss_wallet_transactions', array( 'reference_id' => $id ) );
 		$wpdb->delete( $wpdb->prefix . 'wpss_orders', array( 'id' => $id ) );
+		// Only the notifications about this script's orders: other sessions share the table.
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}wpss_notifications WHERE id > %d AND JSON_EXTRACT( data, '$.order_id' ) = %d", $notif_floor, $id ) );
 	}
-	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}wpss_notifications WHERE id > %d", $notif_floor ) );
 	wp_delete_post( $service_id, true );
 	$_POST    = array();
 	$_REQUEST = array();

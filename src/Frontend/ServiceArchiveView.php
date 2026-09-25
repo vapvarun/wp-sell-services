@@ -714,22 +714,7 @@ class ServiceArchiveView {
 		}
 
 		// Always filter out rejected/pending services regardless of moderation setting.
-		// Services without moderation meta (legacy) are allowed through.
-		$meta_query   = $query->get( 'meta_query' );
-		$meta_query   = $meta_query ? $meta_query : array();
-		$meta_query[] = array(
-			'relation' => 'OR',
-			array(
-				'key'     => '_wpss_moderation_status',
-				'value'   => 'approved',
-				'compare' => '=',
-			),
-			array(
-				'key'     => '_wpss_moderation_status',
-				'compare' => 'NOT EXISTS',
-			),
-		);
-		$query->set( 'meta_query', $meta_query );
+		$query->set( 'wpss_moderation_state', 'approved' );
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 

@@ -1110,15 +1110,7 @@ class ServiceMetabox {
 			return;
 		}
 
-		$errors = wpss_validate_service_publishable(
-			array(
-				'title'        => $post->post_title,
-				'category_ids' => wp_get_post_terms( $post_id, 'wpss_service_category', array( 'fields' => 'ids' ) ),
-				'description'  => $post->post_content,
-				'packages'     => (array) get_post_meta( $post_id, '_wpss_packages', true ),
-				'thumbnail_id' => get_post_thumbnail_id( $post_id ),
-			)
-		);
+		$errors = wpss_get_service_publish_errors( $post_id );
 
 		if ( empty( $errors ) ) {
 			return;
@@ -1194,15 +1186,7 @@ class ServiceMetabox {
 			return;
 		}
 
-		$errors = wpss_validate_service_publishable(
-			array(
-				'title'        => $post->post_title,
-				'category_ids' => wp_get_post_terms( $post->ID, 'wpss_service_category', array( 'fields' => 'ids' ) ),
-				'description'  => $post->post_content,
-				'packages'     => (array) get_post_meta( $post->ID, '_wpss_packages', true ),
-				'thumbnail_id' => get_post_thumbnail_id( $post->ID ),
-			)
-		);
+		$errors = wpss_get_service_publish_errors( $post->ID );
 
 		if ( empty( $errors ) ) {
 			return;

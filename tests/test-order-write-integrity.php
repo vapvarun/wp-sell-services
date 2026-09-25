@@ -105,7 +105,8 @@ try {
 	$wpdb->delete( $wpdb->prefix . 'wpss_conversations', array( 'order_id' => $order_id ) );
 	$wpdb->delete( $wpdb->prefix . 'wpss_audit_log', array( 'object_type' => 'order', 'object_id' => $order_id ) );
 	$wpdb->delete( $wpdb->prefix . 'wpss_order_meta', array( 'order_id' => $order_id ) );
-	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}wpss_notifications WHERE id > %d", $notif_floor ) );
+	// Only the notifications about this script's order: other sessions share the table.
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}wpss_notifications WHERE id > %d AND JSON_EXTRACT( data, '$.order_id' ) = %d", $notif_floor, $order_id ) );
 	$wpdb->delete( $orders, array( 'id' => $order_id ) );
 }
 

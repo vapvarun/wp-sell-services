@@ -123,7 +123,10 @@ try {
 		$wpdb->delete( $wpdb->prefix . 'wpss_order_meta', array( 'order_id' => $id ) );
 		$wpdb->delete( $orders, array( 'id' => $id ) );
 	}
-	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}wpss_notifications WHERE id > %d", $notif_floor ) );
+	// Only the notifications about this script's orders: other sessions share the table.
+	foreach ( $ids as $id ) {
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}wpss_notifications WHERE id > %d AND JSON_EXTRACT( data, '$.order_id' ) = %d", $notif_floor, $id ) );
+	}
 }
 
 echo $fails ? "\n{$fails} FAILED\n" : "\nall passed\n";

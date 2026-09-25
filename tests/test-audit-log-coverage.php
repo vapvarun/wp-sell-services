@@ -135,7 +135,12 @@ $r = $row( 'commission.rate_changed', 'vendor', $vendor );
 $check( 'commission.rate_changed (vendor) global -> 12.5', null !== $r && 'global' === $r->from_value && '12.5' === $r->to_value );
 
 // --- service moderation ------------------------------------------------------
-$service_id = (int) wp_insert_post( array( 'post_type' => 'wpss_service', 'post_status' => 'pending', 'post_title' => 'Audit contract', 'post_author' => $vendor ) );
+// A complete service: approval refuses one that cannot go live.
+$service_id = (int) wp_insert_post( array( 'post_type' => 'wpss_service', 'post_status' => 'pending', 'post_title' => 'Audit contract', 'post_content' => str_repeat( 'Audit contract description. ', 6 ), 'post_author' => $vendor ) );
+$audit_term = wp_insert_term( 'Audit contract ' . wp_generate_password( 6, false ), 'wpss_service_category' );
+wp_set_object_terms( $service_id, array( (int) $audit_term['term_id'] ), 'wpss_service_category' );
+update_post_meta( $service_id, '_wpss_packages', array( array( 'name' => 'Basic', 'price' => 50, 'delivery_days' => 3, 'revisions' => 1 ) ) );
+update_post_meta( $service_id, '_thumbnail_id', 1 ); // Any id: the rule checks one is set.
 ( new ModerationService() )->approve( $service_id, 'fine' );
 $r = $row( 'service.approved', 'service', $service_id );
 $check( 'service.approved with notes', null !== $r && $admin === (int) $r->actor_id && 'fine' === ( $ctx( $r )['notes'] ?? '' ) );
@@ -176,11 +181,28 @@ foreach ( array( $order_id, $paid_id ) as $oid ) {
 	$wpdb->delete( $wpdb->prefix . 'wpss_order_meta', array( 'order_id' => $oid ) );
 	$wpdb->delete( $orders, array( 'id' => $oid ) );
 }
+wp_delete_post( $service_id, true );
+wp_delete_term( (int) $audit_term['term_id'], 'wpss_service_category' );
 $wpdb->delete( $wpdb->prefix . 'wpss_wallet_transactions', array( 'user_id' => $vendor ) );
 $wpdb->delete( $wpdb->prefix . 'wpss_vendor_profiles', array( 'user_id' => $vendor ) );
 foreach ( array( $buyer, $vendor ) as $uid ) {
 	$wpdb->delete( $wpdb->prefix . 'wpss_notifications', array( 'user_id' => $uid ) );
 }
-$wpdb->query( $wpdb->prepare( "DELETE FROM {$audit} WHERE id > %d", $start ) );
+// Only this script's rows: other sessions write to the audit log at the same time.
+$wpdb->query(
+	$wpdb->prepare(
+		"DELETE FROM {$audit} WHERE id > %d AND ( actor_id IN ( %d, %d ) OR object_id IN ( %d, %d, %d, %d, %d, %d, %d ) )",
+		$start,
+		$buyer,
+		$vendor,
+		$order_id,
+		$paid_id,
+		$service_id,
+		$review_id,
+		$credit_id,
+		$buyer,
+		$vendor
+	)
+);
 
 echo $fails ? "\n{$fails} FAILED\n" : "\nall passed\n";

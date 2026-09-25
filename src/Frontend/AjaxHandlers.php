@@ -1922,17 +1922,12 @@ class AjaxHandlers {
 		// Only show approved services in search results.
 		$services = new \WP_Query(
 			array(
-				'post_type'      => 'wpss_service',
-				'post_status'    => 'publish',
-				's'              => $query,
-				'posts_per_page' => 5,
-				'meta_query'     => array(
-					array(
-						'key'     => '_wpss_moderation_status',
-						'value'   => 'approved',
-						'compare' => '=',
-					),
-				),
+				'post_type'             => 'wpss_service',
+				'post_status'           => 'publish',
+				's'                     => $query,
+				'posts_per_page'        => 5,
+				// Effective state: a live service with no moderation meta is approved.
+				'wpss_moderation_state' => 'approved',
 			)
 		);
 

@@ -112,18 +112,13 @@ class ModerationService {
 	 */
 	public function get_pending_services( array $args = array() ): array {
 		$defaults = array(
-			'post_type'      => self::POST_TYPE,
-			'post_status'    => 'pending',
-			'posts_per_page' => 20,
-			'orderby'        => 'date',
-			'order'          => 'ASC',
-			'meta_query'     => array(
-				array(
-					'key'     => self::META_MODERATION_STATUS,
-					'value'   => self::STATUS_PENDING,
-					'compare' => '=',
-				),
-			),
+			'post_type'             => self::POST_TYPE,
+			'post_status'           => 'pending',
+			'posts_per_page'        => 20,
+			'orderby'               => 'date',
+			'order'                 => 'ASC',
+			'wpss_moderation_state' => self::STATUS_PENDING,
+			'suppress_filters'      => false, // The state filter is a posts_where filter.
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -141,39 +136,56 @@ class ModerationService {
 	}
 
 	/**
-	 * Approve a service.
+	 * Approve a service and put it live.
+	 *
+	 * The one approval path: the moderation screen (single and bulk) and REST
+	 * all call this. They used to carry four copies that disagreed - REST never
+	 * wrote the moderation meta, so a REST-approved service stayed "pending"
+	 * and hidden - and none of them checked the publish rules, so approving an
+	 * incomplete service reported success and notified the vendor while the
+	 * editor's rules quietly put it back to draft (Basecamp 10337188110).
 	 *
 	 * @param int    $service_id Service post ID.
 	 * @param string $notes      Optional approval notes.
-	 * @return bool True on success, false on failure.
+	 * @return true|\WP_Error
 	 */
-	public function approve( int $service_id, string $notes = '' ): bool {
+	public function approve( int $service_id, string $notes = '' ) {
 		$post = get_post( $service_id );
 
 		if ( ! $post || self::POST_TYPE !== $post->post_type ) {
-			return false;
+			return new \WP_Error( 'wpss_service_not_found', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		// Update post status to publish.
-		$result = wp_update_post(
+		$missing = wpss_get_service_publish_errors( $service_id );
+
+		if ( $missing ) {
+			return new \WP_Error(
+				'wpss_service_incomplete',
+				/* translators: %s: what the service is missing, as sentences. */
+				sprintf( __( 'This service cannot go live yet. %s', 'wp-sell-services' ), implode( ' ', $missing ) ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// The meta first: the publish guard lets a service go live only once it
+		// is approved.
+		$previous = get_post_meta( $service_id, self::META_MODERATION_STATUS, true );
+		update_post_meta( $service_id, self::META_MODERATION_STATUS, self::STATUS_APPROVED );
+
+		wp_update_post(
 			array(
 				'ID'          => $service_id,
 				'post_status' => 'publish',
 			)
 		);
 
-		if ( is_wp_error( $result ) || 0 === $result ) {
-			return false;
+		if ( 'publish' !== get_post_status( $service_id ) ) {
+			update_post_meta( $service_id, self::META_MODERATION_STATUS, $previous ? $previous : self::STATUS_PENDING );
+			return new \WP_Error( 'wpss_service_not_published', __( 'The service could not be published.', 'wp-sell-services' ), array( 'status' => 500 ) );
 		}
 
-		// Update moderation meta.
-		update_post_meta( $service_id, self::META_MODERATION_STATUS, self::STATUS_APPROVED );
-		update_post_meta( $service_id, self::META_MODERATED_AT, current_time( 'mysql' ) );
-		update_post_meta( $service_id, self::META_MODERATOR_ID, get_current_user_id() );
-
-		if ( ! empty( $notes ) ) {
-			update_post_meta( $service_id, self::META_MODERATION_NOTES, sanitize_textarea_field( $notes ) );
-		}
+		delete_post_meta( $service_id, self::META_REJECTION_REASON );
+		$this->record( $service_id, 'approved', $notes );
 
 		/**
 		 * Fires after a service is approved.
@@ -187,42 +199,43 @@ class ModerationService {
 	}
 
 	/**
-	 * Reject a service.
+	 * Reject a service and take it off the marketplace.
+	 *
+	 * The one rejection path (see approve()). A rejected service is a draft
+	 * carrying the rejected state, which is what the vendor dashboard keys its
+	 * "Resubmit for review" on. The reason is optional, as the screen says.
 	 *
 	 * @param int    $service_id Service post ID.
-	 * @param string $reason     Rejection reason (required).
-	 * @return bool True on success, false on failure.
+	 * @param string $reason     Rejection reason shown to the vendor.
+	 * @return true|\WP_Error
 	 */
-	public function reject( int $service_id, string $reason ): bool {
+	public function reject( int $service_id, string $reason = '' ) {
 		$post = get_post( $service_id );
 
 		if ( ! $post || self::POST_TYPE !== $post->post_type ) {
-			return false;
+			return new \WP_Error( 'wpss_service_not_found', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		if ( empty( $reason ) ) {
-			return false;
-		}
+		$reason = sanitize_textarea_field( $reason );
 
-		// Update post status to draft.
-		$result = wp_update_post(
-			array(
-				'ID'          => $service_id,
-				'post_status' => 'draft',
-			)
-		);
-
-		if ( is_wp_error( $result ) || 0 === $result ) {
-			return false;
-		}
-
-		// Update moderation meta.
 		update_post_meta( $service_id, self::META_MODERATION_STATUS, self::STATUS_REJECTED );
-		update_post_meta( $service_id, self::META_MODERATED_AT, current_time( 'mysql' ) );
-		update_post_meta( $service_id, self::META_MODERATOR_ID, get_current_user_id() );
-		update_post_meta( $service_id, self::META_MODERATION_NOTES, sanitize_textarea_field( $reason ) );
-		// Also store in rejection reason key for compatibility with ServiceModerationPage.
-		update_post_meta( $service_id, self::META_REJECTION_REASON, sanitize_textarea_field( $reason ) );
+
+		if ( '' !== $reason ) {
+			update_post_meta( $service_id, self::META_REJECTION_REASON, $reason );
+		} else {
+			delete_post_meta( $service_id, self::META_REJECTION_REASON );
+		}
+
+		if ( 'draft' !== $post->post_status ) {
+			wp_update_post(
+				array(
+					'ID'          => $service_id,
+					'post_status' => 'draft',
+				)
+			);
+		}
+
+		$this->record( $service_id, 'rejected', $reason );
 
 		/**
 		 * Fires after a service is rejected.
@@ -233,6 +246,32 @@ class ModerationService {
 		do_action( 'wpss_service_rejected', $service_id, $reason );
 
 		return true;
+	}
+
+	/**
+	 * Record who moderated a service, when, and why, including the history
+	 * REST serves at GET /moderation/{id}.
+	 *
+	 * @param int    $service_id Service post ID.
+	 * @param string $action     'approved' or 'rejected'.
+	 * @param string $notes      Notes or reason.
+	 * @return void
+	 */
+	private function record( int $service_id, string $action, string $notes ): void {
+		update_post_meta( $service_id, self::META_MODERATED_AT, current_time( 'mysql' ) );
+		update_post_meta( $service_id, self::META_MODERATOR_ID, get_current_user_id() );
+		update_post_meta( $service_id, self::META_MODERATION_NOTES, sanitize_textarea_field( $notes ) );
+
+		$history   = get_post_meta( $service_id, '_wpss_moderation_history', true );
+		$history   = is_array( $history ) ? $history : array();
+		$history[] = array(
+			'action'     => $action,
+			'notes'      => sanitize_textarea_field( $notes ),
+			'admin_id'   => get_current_user_id(),
+			'admin_name' => wp_get_current_user()->display_name,
+			'date'       => current_time( 'mysql', true ),
+		);
+		update_post_meta( $service_id, '_wpss_moderation_history', $history );
 	}
 
 	/**
@@ -283,7 +322,7 @@ class ModerationService {
 	 */
 	public function get_moderation_data( int $service_id ): array {
 		return array(
-			'status'       => get_post_meta( $service_id, self::META_MODERATION_STATUS, true ),
+			'status'       => wpss_get_service_moderation_state( $service_id ),
 			'notes'        => get_post_meta( $service_id, self::META_MODERATION_NOTES, true ),
 			'moderated_at' => get_post_meta( $service_id, self::META_MODERATED_AT, true ),
 			'moderator_id' => get_post_meta( $service_id, self::META_MODERATOR_ID, true ),

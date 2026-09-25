@@ -1436,6 +1436,36 @@ function wpss_validate_service_publishable( array $service ): array {
 }
 
 /**
+ * What stands between a saved service and going live, read from the post.
+ *
+ * The same check as {@see wpss_validate_service_publishable()} for a service
+ * that already exists, so every "make it live" path - the editor, moderation
+ * approval, REST - asks one question and gets one answer.
+ *
+ * @since 1.8.0
+ *
+ * @param int $service_id Service post ID.
+ * @return string[] User-facing error sentences; empty when the service may go live.
+ */
+function wpss_get_service_publish_errors( int $service_id ): array {
+	$post = get_post( $service_id );
+
+	if ( ! $post ) {
+		return array( __( 'Service not found.', 'wp-sell-services' ) );
+	}
+
+	return wpss_validate_service_publishable(
+		array(
+			'title'        => $post->post_title,
+			'category_ids' => wp_get_post_terms( $post->ID, 'wpss_service_category', array( 'fields' => 'ids' ) ),
+			'description'  => $post->post_content,
+			'packages'     => (array) get_post_meta( $post->ID, '_wpss_packages', true ),
+			'thumbnail_id' => get_post_thumbnail_id( $post->ID ),
+		)
+	);
+}
+
+/**
  * Truncate a service's lists to wpss_get_service_limits().
  *
  * The one enforcer for every save path (wizard, REST, admin metabox,
