@@ -1419,3 +1419,57 @@ function wpss_obfuscate_public_upload_name( array $file ): array {
 
 	return $file;
 }
+
+/**
+ * Let vendors reach the media uploader when WooCommerce guards wp-admin.
+ *
+ * The service wizard and the dashboard use the WordPress media modal, which
+ * uploads to wp-admin/async-upload.php. WooCommerce sends anyone without
+ * edit_posts away from wp-admin to My Account, so on every site running
+ * WooCommerce a vendor's upload got the My Account page back instead of JSON
+ * ("An error occurred in the upload") and no vendor could add the main image
+ * a service needs to go live (Basecamp 10340613689).
+ *
+ * Only that one endpoint, only for a WPSS vendor, and only with
+ * upload_files - which async-upload.php checks again itself. The rest of
+ * wp-admin stays closed to them; admin-ajax (the modal's library) is already
+ * outside WooCommerce's check.
+ *
+ * @since 1.8.0
+ *
+ * @param bool $prevent Whether WooCommerce keeps the user out of wp-admin.
+ * @return bool
+ */
+function wpss_allow_vendor_media_upload( $prevent ) {
+	global $pagenow;
+
+	if ( $prevent && 'async-upload.php' === $pagenow && current_user_can( 'upload_files' ) && wpss_is_vendor( get_current_user_id() ) ) {
+		return false;
+	}
+
+	return $prevent;
+}
+add_filter( 'woocommerce_prevent_admin_access', 'wpss_allow_vendor_media_upload' );
+
+/**
+ * The media library a member browses holds only their own uploads.
+ *
+ * The wizard and dashboard open the WordPress media modal, whose Library tab
+ * listed every attachment on the site - other vendors' service images,
+ * buyers' delivery files - to anyone who could upload (Basecamp 10340613689).
+ * Someone who cannot edit other people's posts now sees their own files only;
+ * editors and admins keep the whole library.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, mixed> $query Attachment query args.
+ * @return array<string, mixed>
+ */
+function wpss_limit_media_library_to_own( array $query ): array {
+	if ( ! current_user_can( 'edit_others_posts' ) ) {
+		$query['author'] = get_current_user_id();
+	}
+
+	return $query;
+}
+add_filter( 'ajax_query_attachments_args', 'wpss_limit_media_library_to_own' );
