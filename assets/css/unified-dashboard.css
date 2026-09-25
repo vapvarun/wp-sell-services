@@ -432,6 +432,21 @@
 	object-fit: cover;
 }
 
+.wpss-order-card__placeholder {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	background: var(--wpss-gray-100);
+	color: var(--wpss-gray-400);
+}
+
+.wpss-order-card__number {
+	font-variant-numeric: tabular-nums;
+	color: var(--wpss-gray-700);
+}
+
 .wpss-order-card__info {
 	min-width: 0;
 }

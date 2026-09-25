@@ -157,6 +157,9 @@ do_action( 'wpss_before_order_view', $order );
 			<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 				<?php echo esc_html( $status_label ); ?>
 			</span>
+			<?php if ( 'late' !== $order->status && wpss_is_order_late( $order ) ) : ?>
+				<span class="wpss-badge wpss-badge--danger"><?php esc_html_e( 'Late', 'wp-sell-services' ); ?></span>
+			<?php endif; ?>
 
 			<?php
 			// CB3 + VS3 (plans/ORDER-FLOW-AUDIT.md): persistent revision count

@@ -71,7 +71,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:727` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
-| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:1138` |
+| `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:1168` |
 
 ### Order Filters
 
@@ -84,7 +84,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_order_cancelled` | `int $order_id, int $user_id, string $reason` | `src/Services/OrderWorkflowManager.php:858` |
 | `wpss_order_disputed` | `int $order_id, int $opened_by, string $reason` | `src/API/OrdersController.php:1148` |
 | `wpss_order_message_created` | `int $message_id, int $order_id, int $user_id` | `src/API/OrdersController.php:685` |
-| `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/orders.php:298` |
+| `wpss_requirement_field_label` | `string $label, string $key` | `src/functions/orders.php:328` |
 | `wpss_after_status_change_notification` | `int $order_id, string $new_status, string $old_status` | `src/Services/OrderWorkflowManager.php:728` |
 | `wpss_send_requirements_reminder_email` | `int $order_id, int $reminder_num, string $message` | `src/Services/OrderWorkflowManager.php:493` |
 | `wpss_requirements_timeout` | `int $order_id, bool $auto_start` | `src/Services/OrderWorkflowManager.php:628` |
@@ -684,7 +684,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_currencies` | `$currencies` | `src/functions/money.php:1926` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:126` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:126` |
-| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:762` |
+| `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:792` |
 | `wpss_wallet_manager` | `null` | `src/functions/money.php:1948` |
 
 ### Currency System Filters (1.2.1)

@@ -193,6 +193,36 @@ function wpss_order_actor_role( object $order, int $user_id ): string {
 }
 
 /**
+ * Whether an order is past its delivery deadline while the seller owes work.
+ *
+ * The one definition of "late": the late-order sweep
+ * (OrderWorkflowManager::check_late_orders()) moves in_progress and
+ * revision_requested orders past their deadline to `late`, so an order is late
+ * when it is `late`, or still in one of those two before the sweep reaches it.
+ * Waiting on the buyer (payment, requirements, approval) is not late.
+ *
+ * @since 1.8.0
+ *
+ * @param object $order Order model or list row (status, delivery_deadline).
+ * @return bool
+ */
+function wpss_is_order_late( object $order ): bool {
+	if ( 'late' === $order->status ) {
+		return true;
+	}
+
+	if ( ! in_array( $order->status, array( 'in_progress', 'revision_requested' ), true ) || empty( $order->delivery_deadline ) ) {
+		return false;
+	}
+
+	$deadline = $order->delivery_deadline instanceof \DateTimeInterface
+		? $order->delivery_deadline->format( 'Y-m-d H:i:s' )
+		: (string) $order->delivery_deadline;
+
+	return $deadline < current_time( 'mysql' );
+}
+
+/**
  * Resolve the order ID named by the current request.
  *
  * Prefers the pretty-permalink query var (`wpss_order_id`) and falls back to

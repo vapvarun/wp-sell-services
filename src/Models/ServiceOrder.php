@@ -677,15 +677,7 @@ class ServiceOrder {
 	 * @return bool
 	 */
 	public function is_late(): bool {
-		if ( ! $this->delivery_deadline ) {
-			return false;
-		}
-
-		if ( in_array( $this->status, array( self::STATUS_COMPLETED, self::STATUS_CANCELLED ), true ) ) {
-			return false;
-		}
-
-		return $this->delivery_deadline < new \DateTimeImmutable();
+		return wpss_is_order_late( $this );
 	}
 
 	/**
