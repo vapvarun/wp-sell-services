@@ -930,8 +930,41 @@ function wpss_render_vendor_vacation_notice( int $vendor_id ): void {
  * @param string $tier      The vendor's current level.
  * @return string
  */
-function wpss_seller_level_note( int $vendor_id, string $tier ): string {
-	return \WPSellServices\Services\SellerLevelService::level_is_admin_set( $vendor_id, $tier )
-		? __( 'Awarded by the marketplace team', 'wp-sell-services' )
-		: __( 'Earned from completed orders, rating and on-time delivery', 'wp-sell-services' );
+function wpss_seller_level_note( int $vendor_id, string $tier, bool $with_next = false ): string {
+	if ( \WPSellServices\Services\SellerLevelService::level_is_admin_set( $vendor_id, $tier ) ) {
+		return __( 'Awarded by the marketplace team', 'wp-sell-services' );
+	}
+
+	$note = __( 'Earned from completed orders, rating and on-time delivery', 'wp-sell-services' );
+
+	// One vendor's page can afford the stats queries; a directory of cards
+	// cannot, so only the profile asks for what the next level still needs.
+	if ( $with_next ) {
+		$progress = ( new \WPSellServices\Services\SellerLevelService() )->get_progress_to_next_level( $vendor_id );
+		$labels   = array(
+			'orders'        => __( 'completed orders', 'wp-sell-services' ),
+			'rating'        => __( 'rating', 'wp-sell-services' ),
+			'reviews'       => __( 'reviews', 'wp-sell-services' ),
+			'response_rate' => __( '% response rate', 'wp-sell-services' ),
+			'delivery_rate' => __( '% on-time delivery', 'wp-sell-services' ),
+			'days_active'   => __( 'days selling', 'wp-sell-services' ),
+		);
+		$missing  = array();
+		foreach ( (array) ( $progress['progress'] ?? array() ) as $key => $row ) {
+			if ( empty( $row['met'] ) && isset( $labels[ $key ] ) ) {
+				$required  = 'rating' === $key ? number_format_i18n( (float) $row['required'], 1 ) : (string) $row['required'];
+				$missing[] = $required . ( str_starts_with( $labels[ $key ], '%' ) ? '' : ' ' ) . $labels[ $key ];
+			}
+		}
+		if ( $missing && ! empty( $progress['next_level'] ) ) {
+			$note .= '. ' . sprintf(
+				/* translators: 1: next seller level, 2: list of requirements not yet met */
+				__( '%1$s needs %2$s.', 'wp-sell-services' ),
+				\WPSellServices\Services\SellerLevelService::get_level_label( (string) $progress['next_level'] ),
+				implode( ', ', $missing )
+			);
+		}
+	}
+
+	return $note;
 }

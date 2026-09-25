@@ -4147,11 +4147,22 @@ body.wpss-modal-active {
 
 .wpss-vendors-grid .wpss-vendor-name {
 	grid-column: 2;
+	min-width: 0;
 	margin: 0;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--wpss-space-2, 8px);
+}
+
+/* A long display name ("wpss_rest_vendor_ZTL6w4qW") ends in an ellipsis inside
+   the tile; the full name is the link's title. */
+.wpss-vendors-grid .wpss-vendor-name > a {
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* Two lines for every card, so tiles in a row end up the same height whatever

@@ -226,7 +226,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_pre_vendor_register` | `array $profile_data, int $user_id` | `VendorService.php` |
 | `wpss_vendor_profile_allowed_fields` | `array $allowed_fields` | `VendorService.php` |
 | `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:823` |
-| `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1402` |
+| `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1421` |
 
 | Hook | Parameters | File |
 |------|-----------|------|

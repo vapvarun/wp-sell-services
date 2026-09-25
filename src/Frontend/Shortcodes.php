@@ -382,6 +382,25 @@ class Shortcodes {
 		);
 
 		ob_start();
+
+		// The mapped Vendors page gets the same plugin header as /services/ (one
+		// directory style); ShellHeader then suppresses the theme's title band
+		// there. Raw post_title: get_the_title() is blanked by that suppression.
+		static $wpss_vendors_header = false;
+		if ( ! $wpss_vendors_header && $toolbar && wpss_is_page( 'vendors_page' ) ) {
+			$wpss_vendors_header = true;
+			ShellHeader::render(
+				array(
+					'title'    => (string) get_post_field( 'post_title', (int) wpss_get_page_id( 'vendors_page' ) ),
+					'subtitle' => sprintf(
+						/* translators: %s: platform name */
+						__( 'Find sellers on %s', 'wp-sell-services' ),
+						wpss_get_platform_name()
+					),
+				)
+			);
+		}
+
 		if ( $toolbar ) :
 			// Option values are URLs: .wpss-url-select navigates on change (frontend.js).
 			$link = static fn ( array $args ): string => add_query_arg( $args + array( 'vpage' => false ) );

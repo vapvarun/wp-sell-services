@@ -75,9 +75,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 
 		<div class="wpss-vendor-info">
 			<h4 class="wpss-vendor-name">
-				<a href="<?php echo esc_url( wpss_get_vendor_url( $vendor_id ) ); ?>">
-					<?php echo esc_html( $vendor->display_name ); ?>
-				</a>
+				<a href="<?php echo esc_url( wpss_get_vendor_url( $vendor_id ) ); ?>" title="<?php echo esc_attr( $vendor->display_name ); ?>"><?php echo esc_html( $vendor->display_name ); ?></a>
 				<?php
 				if ( $vendor_profile ) :
 					$tier       = $vendor_profile->tier;

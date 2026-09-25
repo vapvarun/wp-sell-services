@@ -118,7 +118,8 @@ class ShellHeader {
 		 *   /service-checkout/  theme H1 ONLY          -> since 1.8.0 prints its own
 		 *                                               "Checkout" H1, so suppress
 		 *   /become-a-vendor/   theme H1 ONLY          -> must NOT suppress
-		 *   /vendors/           theme H1 ONLY          -> must NOT suppress
+		 *   /vendors/           since 1.8.0 prints its own header (the
+		 *                       [wpss_vendors] directory), so suppress
 		 *
 		 * The card that reported this asked for checkout, become_vendor and
 		 * vendors_page to be added too. They are deliberately left out: each has
@@ -126,7 +127,7 @@ class ShellHeader {
 		 * own ShellHeader::render() heading first, then add it here - in that
 		 * order.
 		 */
-		$page_keys = array( 'dashboard', 'services_page', 'cart', 'checkout' );
+		$page_keys = array( 'dashboard', 'services_page', 'cart', 'checkout', 'vendors_page' );
 
 		foreach ( $page_keys as $page_key ) {
 			if ( \wpss_is_page( $page_key ) ) {

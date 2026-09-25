@@ -197,7 +197,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							// Colour comes from the .wpss-seller-badge--{tier} modifier in
 							// frontend.css (token-driven), not an inline style attribute.
 							?>
-							<span class="wpss-seller-badge wpss-seller-badge--lg wpss-seller-badge--<?php echo esc_attr( $tier ); ?>" title="<?php echo esc_attr( wpss_seller_level_note( $vendor_id, $tier ) ); ?>">
+							<span class="wpss-seller-badge wpss-seller-badge--lg wpss-seller-badge--<?php echo esc_attr( $tier ); ?>" title="<?php echo esc_attr( wpss_seller_level_note( $vendor_id, $tier, true ) ); ?>">
 								<?php if ( 'pro' === $tier ) : ?>
 									<i data-lucide="badge-check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 								<?php endif; ?>
