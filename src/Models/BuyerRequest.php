@@ -229,6 +229,11 @@ class BuyerRequest {
 			);
 		}
 
+		// A fixed budget is stored in budget_min alone.
+		if ( $this->budget_min ) {
+			return wpss_format_currency( $this->budget_min );
+		}
+
 		if ( $this->budget_max ) {
 			/* translators: %s: maximum budget amount. */
 			return sprintf( __( 'Up to %s', 'wp-sell-services' ), wpss_format_currency( $this->budget_max ) );

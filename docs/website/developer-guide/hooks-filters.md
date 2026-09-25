@@ -347,7 +347,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2621` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2622` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1963` |
 
 ### Admin Filters
@@ -749,10 +749,10 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_vendor_slug` | `$slug` (default `'provider'`) | `Plugin.php`, `functions.php` |
 | `wpss_service_order_slug` | `$slug` (default `'service-order'`) | `Plugin.php`, `functions.php` |
 | `wpss_checkout_slug` | `$slug` (default `'service-checkout'`) | `StandaloneAdapter.php` |
-| `wpss_service_slug` | `$slug` (default `'service'`) | `src/PostTypes/ServicePostType.php:387` |
+| `wpss_service_slug` | `$slug` (default `'service'`) | `src/PostTypes/ServicePostType.php:403` |
 | `wpss_buyer_request_slug` | `$slug` (default `'buyer-request'`) | `src/PostTypes/BuyerRequestPostType.php:114` |
-| `wpss_service_post_type_args` | `$args` | `src/PostTypes/ServicePostType.php:309` |
-| `wpss_service_tag_args` | `$args` | `src/PostTypes/ServicePostType.php:371` |
+| `wpss_service_post_type_args` | `$args` | `src/PostTypes/ServicePostType.php:325` |
+| `wpss_service_tag_args` | `$args` | `src/PostTypes/ServicePostType.php:387` |
 | `wpss_service_category_taxonomy_args` | `$args` | `ServiceCategoryTaxonomy.php:118` |
 | `wpss_service_tag_taxonomy_args` | `$args` | `ServiceTagTaxonomy.php:103` |
 | `wpss_buyer_request_post_type_args` | `$args` | `src/PostTypes/BuyerRequestPostType.php:98` |

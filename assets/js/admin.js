@@ -559,3 +559,33 @@
 	$(document).ready(init);
 
 })(jQuery);
+
+/**
+ * Category icon field: show the Lucide icon beside the name as it is typed
+ * (Basecamp 10337190248). An unknown name renders nothing, which is the hint.
+ */
+( function () {
+	var input = document.getElementById( 'wpss-category-icon' );
+	var preview = document.querySelector( '[data-wpss-icon-preview]' );
+
+	if ( ! input || ! preview ) {
+		return;
+	}
+
+	var timer;
+
+	input.addEventListener( 'input', function () {
+		clearTimeout( timer );
+		timer = setTimeout( function () {
+			var name = input.value.trim().toLowerCase().replace( /[^a-z0-9-]/g, '' );
+			preview.textContent = '';
+			if ( name ) {
+				var icon = document.createElement( 'i' );
+				icon.setAttribute( 'data-lucide', name );
+				icon.className = 'wpss-icon';
+				preview.appendChild( icon );
+				document.dispatchEvent( new CustomEvent( 'wpss:icons:refresh' ) );
+			}
+		}, 250 );
+	} );
+}() );

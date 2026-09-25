@@ -103,6 +103,19 @@ class ServicePostType {
 			)
 		);
 
+		// Lucide icons for the defaults, so a fresh marketplace's category
+		// list and Icon column are not blank (Basecamp 10337190248).
+		$icons = array(
+			__( 'Graphics & Design', 'wp-sell-services' )  => 'palette',
+			__( 'Programming & Tech', 'wp-sell-services' ) => 'code',
+			__( 'Digital Marketing', 'wp-sell-services' )  => 'megaphone',
+			__( 'Writing & Translation', 'wp-sell-services' ) => 'pen-line',
+			__( 'Video & Animation', 'wp-sell-services' )  => 'clapperboard',
+			__( 'Music & Audio', 'wp-sell-services' )      => 'music',
+			__( 'Business', 'wp-sell-services' )           => 'briefcase',
+			__( 'AI Services', 'wp-sell-services' )        => 'sparkles',
+		);
+
 		$created = array();
 		foreach ( $defaults as $name ) {
 			$name = trim( (string) $name );
@@ -112,6 +125,9 @@ class ServicePostType {
 			$term = wp_insert_term( $name, 'wpss_service_category' );
 			if ( ! is_wp_error( $term ) && ! empty( $term['term_id'] ) ) {
 				$created[] = (int) $term['term_id'];
+				if ( isset( $icons[ $name ] ) ) {
+					update_term_meta( (int) $term['term_id'], '_wpss_icon', $icons[ $name ] );
+				}
 			}
 		}
 

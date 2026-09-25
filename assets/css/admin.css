@@ -3527,3 +3527,25 @@ button.wpss-change-status:focus {
 		display: none;
 	}
 }
+
+/* Category icon field preview (ServiceCategoryTaxonomy). */
+.wpss-icon-preview {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	margin-inline-start: 8px;
+	vertical-align: middle;
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: 6px;
+	color: var(--wpss-admin-primary-dark);
+}
+
+.wpss-icon-preview:empty {
+	display: none;
+}
+
+.column-wpss_icon .wpss-icon {
+	color: var(--wpss-admin-primary-dark);
+}

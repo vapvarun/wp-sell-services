@@ -379,6 +379,7 @@ class Admin {
 		$service_metabox->init();
 
 		( new ServiceListScreen() )->init();
+		( new RequestListScreen() )->init();
 
 		$request_metabox = new BuyerRequestMetabox();
 		$request_metabox->init();

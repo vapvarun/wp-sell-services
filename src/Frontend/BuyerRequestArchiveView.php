@@ -92,27 +92,7 @@ class BuyerRequestArchiveView {
 		}
 
 		// Only show open requests.
-		$meta_query = array(
-			'relation' => 'AND',
-			array(
-				'key'     => '_wpss_status',
-				'value'   => BuyerRequestService::STATUS_OPEN,
-				'compare' => '=',
-			),
-			array(
-				'relation' => 'OR',
-				array(
-					'key'     => '_wpss_expires_at',
-					'value'   => current_time( 'mysql' ),
-					'compare' => '>',
-					'type'    => 'DATETIME',
-				),
-				array(
-					'key'     => '_wpss_expires_at',
-					'compare' => 'NOT EXISTS',
-				),
-			),
-		);
+		$meta_query = BuyerRequestService::open_meta_query();
 
 		// Filter by category.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -376,26 +356,7 @@ class BuyerRequestArchiveView {
 												'terms'    => $category->term_id,
 											),
 										),
-										'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-											'relation' => 'AND',
-											array(
-												'key'   => '_wpss_status',
-												'value' => 'open',
-											),
-											array(
-												'relation' => 'OR',
-												array(
-													'key'  => '_wpss_expires_at',
-													'value' => current_time( 'mysql' ),
-													'compare' => '>',
-													'type' => 'DATETIME',
-												),
-												array(
-													'key' => '_wpss_expires_at',
-													'compare' => 'NOT EXISTS',
-												),
-											),
-										),
+										'meta_query'     => BuyerRequestService::open_meta_query(), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 									)
 								);
 								$request_count = (int) $count_query->found_posts;

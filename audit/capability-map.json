@@ -264,7 +264,7 @@
     "src/Core/AbilitiesRegistrar.php:613": "Entry gate on the proposals ability (wpss_respond_to_requests, scope: feature).",
     "src/Admin/OrderScreen.php:152": "Admin screen entry gate; per-order authority is resolved inside the screen.",
     "src/Admin/Settings.php:1577": "Settings screen, scope: site. Paired with manage_options.",
-    "src/Admin/Admin.php:1117": "Vendor order-screen access, combined with an explicit $order_id ownership comparison on the same line.",
+    "src/Admin/Admin.php:1118": "Vendor order-screen access, combined with an explicit $order_id ownership comparison on the same line.",
     "src/API/AuthController.php:985": "Informational flag in the /me payload, not a gate.",
     "src/API/AuthController.php:984": "Informational flag in the /me payload, not a gate.",
     "src/API/API.php:989": "Informational flag in the /me payload, not a gate.",
