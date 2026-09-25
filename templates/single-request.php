@@ -233,7 +233,7 @@ do_action( 'wpss_before_single_request', $request_id );
 										$attachment_name = basename( get_attached_file( $attachment_id ) );
 										?>
 										<a href="<?php echo esc_url( $attachment_url ); ?>" class="wpss-attachment-item" target="_blank" rel="noopener">
-											<span class="wpss-icon-file"></span>
+											<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>
 											<span class="wpss-attachment-name"><?php echo esc_html( $attachment_name ); ?></span>
 										</a>
 									<?php endforeach; ?>

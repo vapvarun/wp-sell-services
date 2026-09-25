@@ -238,7 +238,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:285` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:377` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1593` |
-| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2095` |
+| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2098` |
 | `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:442` |
 | `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:494` |
 
@@ -297,16 +297,16 @@ tip. Tips are excluded from commission by default, so the two usually match.
 | `wpss_review_reply_created` | `int $review_id` | `src/API/ReviewsController.php:621` |
 | `wpss_buyer_request_created` | `int $post_id, array $data` | `src/Services/BuyerRequestService.php:121` |
 | `wpss_buyer_request_updated` | `int $request_id, array $data` | `src/Services/BuyerRequestService.php:174` |
-| `wpss_buyer_request_status_changed` | `int $request_id, string $status, string $old_status` | `src/Services/BuyerRequestService.php:488` |
-| `wpss_request_converted_to_order` | `int $order_id, int $request_id, int $proposal_id, object $request, object $proposal` | `src/Services/BuyerRequestService.php:1025` |
+| `wpss_buyer_request_status_changed` | `int $request_id, string $status, string $old_status` | `src/Services/BuyerRequestService.php:497` |
+| `wpss_request_converted_to_order` | `int $order_id, int $request_id, int $proposal_id, object $request, object $proposal` | `src/Services/BuyerRequestService.php:1034` |
 | `wpss_proposal_submitted` | `int $proposal_id, int $request_id, int $vendor_id, array $proposal_data` | `src/Services/ProposalService.php:187` |
 | `wpss_proposal_updated` | `int $proposal_id, array $update_data` | `src/Services/ProposalService.php:365` |
-| `wpss_proposal_accepted` | `int $proposal_id, object $proposal, object $request` | `src/Services/BuyerRequestService.php:967` |
+| `wpss_proposal_accepted` | `int $proposal_id, object $proposal, object $request` | `src/Services/BuyerRequestService.php:976` |
 | `wpss_proposal_rejected` | `int $proposal_id, object $proposal, string $reason` | `src/Services/ProposalService.php:458` |
 | `wpss_proposal_withdrawn` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:503` |
 | `wpss_proposal_deleted` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:895` |
 | `wpss_proposal_status_updated` | `int $proposal_id, string $status` | `src/Services/ProposalService.php:593` |
-| `wpss_buyer_request_deleted` | `int $request_id` | `src/Services/BuyerRequestService.php:1185` |
+| `wpss_buyer_request_deleted` | `int $request_id` | `src/Services/BuyerRequestService.php:1194` |
 | `wpss_buyer_request_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/BuyerRequestMetabox.php:349` |
 
 ## Milestone and Extension Actions
@@ -516,7 +516,7 @@ add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2332` |
+| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2334` |
 | `wpss_pay_order_url_lookup` | `string $url, int $order_id, ?object $order` | `src/functions/urls.php` |
 | `wpss_ensure_pay_order` | `string $url, int $order_id` | `src/functions/urls.php` |
 
@@ -763,7 +763,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 |--------|-----------|------|
 | `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1006` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:362` |
-| `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:849` |
+| `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:858` |
 | `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:927` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:183` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:659` |

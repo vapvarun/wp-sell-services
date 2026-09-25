@@ -2130,6 +2130,36 @@ select.wpss-input option,
 	overflow-wrap: anywhere;
 }
 
+/* Post a Request: uploaded attachments. */
+.wpss-request-files {
+	list-style: none;
+	margin: var(--wpss-space-2) 0 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--wpss-space-2);
+}
+
+.wpss-request-files__item {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-3);
+	padding: var(--wpss-space-2) var(--wpss-space-3);
+	border: 1px solid var(--wpss-gray-200);
+	border-radius: var(--wpss-radius);
+	font-size: 13px;
+}
+
+.wpss-request-files__name {
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.wpss-request-files__state {
+	color: var(--wpss-gray-500);
+}
+
 /* ==========================================================================
    Responsive
    ========================================================================== */

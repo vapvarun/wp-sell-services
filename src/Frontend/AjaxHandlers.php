@@ -1366,6 +1366,9 @@ class AjaxHandlers {
 			'budget_min'      => floatval( $_POST['budget_min'] ?? 0 ),
 			'budget_max'      => floatval( $_POST['budget_max'] ?? 0 ),
 			'skills_required' => $skills_raw ? array_map( 'trim', explode( ',', $skills_raw ) ) : array(),
+			// Uploaded through POST /media (context request); ownership is
+			// checked where they are saved (BuyerRequestService::save_meta).
+			'attachments'     => array_map( 'absint', (array) wp_unslash( $_POST['attachments'] ?? array() ) ),
 		);
 
 		// Calculate delivery_days and expires_at from the deadline date.

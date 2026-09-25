@@ -904,6 +904,9 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 	box-shadow: 0 0 0 var(--wpss-ring-spread) var(--wpss-primary-50);
 }
 .wpss-field__input::placeholder, .wpss-field__textarea::placeholder { color: var(--wpss-text-hint); }
+/* The dashboard forms use .wpss-input; without this their placeholders took the
+   theme's text colour and an example read as a filled-in value. */
+.wpss-input::placeholder { color: var(--wpss-text-hint); opacity: 1; }
 .wpss-field__hint { font-size: var(--wpss-text-sm); color: var(--wpss-text-muted); margin-top: var(--wpss-space-1); }
 .wpss-field__error { font-size: var(--wpss-text-sm); color: var(--wpss-danger); margin-top: var(--wpss-space-1); }
 .wpss-field--error .wpss-field__input, .wpss-field--error .wpss-field__select { border-color: var(--wpss-danger); }

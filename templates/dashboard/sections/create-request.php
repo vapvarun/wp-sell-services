@@ -121,7 +121,6 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 							class="wpss-input"
 							min="0"
 							step="1"
-							placeholder="0"
 						>
 					</div>
 				</div>
@@ -136,7 +135,6 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 							class="wpss-input"
 							min="0"
 							step="1"
-							placeholder="0"
 						>
 					</div>
 				</div>
@@ -165,6 +163,31 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 					placeholder="<?php esc_attr_e( 'e.g., WordPress, PHP, JavaScript (comma-separated)', 'wp-sell-services' ); ?>"
 				>
 				<p class="wpss-form-hint"><?php esc_html_e( 'Separate multiple skills with commas.', 'wp-sell-services' ); ?></p>
+			</div>
+
+			<?php
+			$wpss_file_types = array_filter( array_map( 'trim', explode( ',', strtolower( (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ) ) ) );
+			$wpss_file_max   = (int) wpss_get_option( 'advanced', 'max_file_size' );
+			?>
+			<div class="wpss-form-row">
+				<label for="request_attachments"><?php esc_html_e( 'Attachments', 'wp-sell-services' ); ?></label>
+				<input
+					type="file"
+					id="request_attachments"
+					class="wpss-input"
+					multiple
+					accept="<?php echo esc_attr( implode( ',', array_map( static fn( $ext ) => '.' . $ext, $wpss_file_types ) ) ); ?>"
+				>
+				<ul class="wpss-request-files" aria-live="polite"></ul>
+				<p class="wpss-form-hint">
+					<?php
+					printf(
+						/* translators: %s: maximum file size */
+						esc_html__( 'A brief, mockups or reference images. Sellers see them on your request. Up to %s each.', 'wp-sell-services' ),
+						esc_html( size_format( $wpss_file_max * MB_IN_BYTES ) )
+					);
+					?>
+				</p>
 			</div>
 		</div>
 
@@ -196,12 +219,53 @@ function wpssShowNotice(msg, type) {
 (function($) {
 	'use strict';
 
+	// Each file goes to the public media route as soon as it is picked; the
+	// form then carries only the attachment IDs.
+	$('#request_attachments').on('change', function() {
+		var $list = $('.wpss-request-files');
+		Array.prototype.forEach.call(this.files, function(file) {
+			var $item = $('<li class="wpss-request-files__item wpss-request-files__item--uploading"></li>')
+				.append($('<span class="wpss-request-files__name"></span>').text(file.name))
+				.append($('<span class="wpss-request-files__state"></span>').text('<?php echo esc_js( __( 'Uploading...', 'wp-sell-services' ) ); ?>'))
+				.appendTo($list);
+			var body = new FormData();
+			body.append('file', file);
+			body.append('context', 'request');
+			$.ajax({
+				url: wpssUnifiedDashboard.restUrl + 'media',
+				type: 'POST',
+				data: body,
+				processData: false,
+				contentType: false,
+				beforeSend: function(xhr) { xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce); }
+			}).done(function(media) {
+				$item.removeClass('wpss-request-files__item--uploading');
+				$item.find('.wpss-request-files__state').remove();
+				$item.append($('<input type="hidden" name="attachments[]">').val(media.id));
+				$item.append($('<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-request-files__remove"></button>').text('<?php echo esc_js( __( 'Remove', 'wp-sell-services' ) ); ?>'));
+			}).fail(function(xhr) {
+				$item.remove();
+				wpssShowNotice((xhr.responseJSON && xhr.responseJSON.message) || '<?php echo esc_js( __( 'The file could not be uploaded.', 'wp-sell-services' ) ); ?>', 'error');
+			});
+		});
+		this.value = '';
+	});
+
+	$(document).on('click', '.wpss-request-files__remove', function() {
+		$(this).closest('.wpss-request-files__item').remove();
+	});
+
 	$('#wpss-post-request-form').on('submit', function(e) {
 		e.preventDefault();
 
 		var $form = $(this);
 		var $button = $form.find('button[type="submit"]');
 		var originalHtml = $button.html();
+
+		if ($form.find('.wpss-request-files__item--uploading').length) {
+			wpssShowNotice('<?php echo esc_js( __( 'Wait for the attachments to finish uploading.', 'wp-sell-services' ) ); ?>', 'error');
+			return;
+		}
 
 		// Validate budget
 		var minBudget = parseFloat($('#request_budget_min').val()) || 0;

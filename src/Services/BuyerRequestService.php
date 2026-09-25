@@ -202,7 +202,16 @@ class BuyerRequestService {
 
 		// Handle arrays.
 		if ( isset( $data['attachments'] ) && is_array( $data['attachments'] ) ) {
-			update_post_meta( $request_id, '_wpss_attachments', array_map( 'absint', $data['attachments'] ) );
+			// Only files the request's author uploaded: an ID is just a number,
+			// and the request page links whatever is listed here.
+			$author = (int) get_post_field( 'post_author', $request_id );
+			$files  = array_values(
+				array_filter(
+					array_unique( array_map( 'absint', $data['attachments'] ) ),
+					static fn( int $id ) => $id && 'attachment' === get_post_type( $id ) && (int) get_post_field( 'post_author', $id ) === $author
+				)
+			);
+			update_post_meta( $request_id, '_wpss_attachments', $files );
 		}
 
 		if ( isset( $data['skills_required'] ) && is_array( $data['skills_required'] ) ) {

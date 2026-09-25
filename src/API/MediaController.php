@@ -74,7 +74,7 @@ class MediaController extends RestController {
 					'permission_callback' => array( $this, 'check_permissions' ),
 					'args'                => array(
 						'context' => array(
-							'description'       => __( 'What the file is for: avatar, portfolio, service or profile. Order files (deliveries, requirements, messages, disputes) are uploaded on their own order routes.', 'wp-sell-services' ),
+							'description'       => __( 'What the file is for: avatar, portfolio, service, profile or request. Order files (deliveries, requirements, messages, disputes) are uploaded on their own order routes.', 'wp-sell-services' ),
 							'type'              => 'string',
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_key',
@@ -124,7 +124,9 @@ class MediaController extends RestController {
 		// meant to be seen). Anything that belongs to an order goes through
 		// the private order store on the order routes instead
 		// (Basecamp 10264291163).
-		if ( ! in_array( $context, array( 'avatar', 'portfolio', 'service', 'profile' ), true ) ) {
+		// 'request': a buyer request is a public page vendors browse, so its
+		// brief and reference files are public by nature too.
+		if ( ! in_array( $context, array( 'avatar', 'portfolio', 'service', 'profile', 'request' ), true ) ) {
 			return new WP_Error(
 				'wpss_order_upload_context',
 				__( 'This route is for public profile media only. Upload order files on POST /orders/{id}/deliverables, /orders/{id}/requirements, /orders/{id}/messages or /disputes/{id}/evidence.', 'wp-sell-services' ),

@@ -4507,7 +4507,7 @@
                                 "properties": {
                                     "context": {
                                         "type": "string",
-                                        "description": "What the file is for: avatar, portfolio, service or profile. Order files (deliveries, requirements, messages, disputes) are uploaded on their own order routes."
+                                        "description": "What the file is for: avatar, portfolio, service, profile or request. Order files (deliveries, requirements, messages, disputes) are uploaded on their own order routes."
                                     }
                                 },
                                 "required": [
