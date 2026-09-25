@@ -438,13 +438,15 @@ class OrderWorkflowManager {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		// Find orders stuck in pending_requirements status.
+		// Orders waiting on requirements, counted from payment: an offline
+		// order paid days after it was placed must not get its day-5 reminder
+		// the hour it is paid (Basecamp 10336731914).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$pending_orders = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, customer_id, vendor_id, created_at FROM {$table}
+				"SELECT id, customer_id, vendor_id, COALESCE( paid_at, created_at ) AS created_at FROM {$table}
 				WHERE status = %s
-				AND created_at < DATE_SUB(%s, INTERVAL 1 DAY)",
+				AND COALESCE( paid_at, created_at ) < DATE_SUB(%s, INTERVAL 1 DAY)",
 				ServiceOrder::STATUS_PENDING_REQUIREMENTS,
 				current_time( 'mysql' )
 			)
@@ -526,13 +528,15 @@ class OrderWorkflowManager {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		// Find orders stuck in pending_requirements past the timeout.
+		// Orders past the timeout, counted from payment - not creation, which
+		// auto-started a late-paid offline order the hour it was marked paid,
+		// before the buyer could send requirements (Basecamp 10336731914).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$timed_out_orders = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, customer_id, vendor_id FROM {$table}
 				WHERE status = %s
-				AND created_at < DATE_SUB(%s, INTERVAL %d DAY)",
+				AND COALESCE( paid_at, created_at ) < DATE_SUB(%s, INTERVAL %d DAY)",
 				ServiceOrder::STATUS_PENDING_REQUIREMENTS,
 				current_time( 'mysql' ),
 				$timeout_days
