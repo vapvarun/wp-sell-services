@@ -441,88 +441,16 @@ class CommissionService {
 	 * }
 	 */
 	public function get_vendor_summary( int $vendor_id ): array {
-		global $wpdb;
-
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$summary = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT
-					COUNT(*) as total_orders,
-					COALESCE(SUM(total), 0) as total_revenue,
-					COALESCE(SUM(platform_fee), 0) as total_commission,
-					COALESCE(SUM(vendor_earnings), 0) as net_earnings,
-					COALESCE(AVG(commission_rate), 0) as avg_commission_rate
-				FROM {$orders_table}
-				WHERE vendor_id = %d
-					AND status = %s
-					AND vendor_earnings IS NOT NULL",
-				$vendor_id,
-				ServiceOrder::STATUS_COMPLETED
-			)
-		);
+		// The one revenue definition: paid orders net of refunds, commission
+		// and earnings scaled by what was not refunded (wpss_get_revenue()).
+		$revenue = wpss_get_revenue( array( 'vendor_id' => $vendor_id ) )[0] ?? null;
 
 		return array(
-			'total_orders'        => (int) ( $summary->total_orders ?? 0 ),
-			'total_revenue'       => (float) ( $summary->total_revenue ?? 0 ),
-			'total_commission'    => (float) ( $summary->total_commission ?? 0 ),
-			'net_earnings'        => (float) ( $summary->net_earnings ?? 0 ),
-			'avg_commission_rate' => (float) ( $summary->avg_commission_rate ?? 0 ),
-		);
-	}
-
-	/**
-	 * Get platform commission totals.
-	 *
-	 * @param string|null $start_date Start date (Y-m-d format).
-	 * @param string|null $end_date   End date (Y-m-d format).
-	 * @return array{
-	 *     total_orders: int,
-	 *     total_revenue: float,
-	 *     total_commission: float,
-	 *     total_vendor_earnings: float
-	 * }
-	 */
-	public function get_platform_totals( ?string $start_date = null, ?string $end_date = null ): array {
-		global $wpdb;
-
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-
-		$where  = array( 'status = %s', 'vendor_earnings IS NOT NULL' );
-		$params = array( ServiceOrder::STATUS_COMPLETED );
-
-		if ( $start_date ) {
-			$where[]  = 'completed_at >= %s';
-			$params[] = $start_date . ' 00:00:00';
-		}
-
-		if ( $end_date ) {
-			$where[]  = 'completed_at <= %s';
-			$params[] = $end_date . ' 23:59:59';
-		}
-
-		$where_clause = implode( ' AND ', $where );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-		$totals = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT
-					COUNT(*) as total_orders,
-					COALESCE(SUM(total), 0) as total_revenue,
-					COALESCE(SUM(platform_fee), 0) as total_commission,
-					COALESCE(SUM(vendor_earnings), 0) as total_vendor_earnings
-				FROM {$orders_table}
-				WHERE {$where_clause}",
-				$params
-			)
-		);
-
-		return array(
-			'total_orders'          => (int) ( $totals->total_orders ?? 0 ),
-			'total_revenue'         => (float) ( $totals->total_revenue ?? 0 ),
-			'total_commission'      => (float) ( $totals->total_commission ?? 0 ),
-			'total_vendor_earnings' => (float) ( $totals->total_vendor_earnings ?? 0 ),
+			'total_orders'        => (int) ( $revenue->orders ?? 0 ),
+			'total_revenue'       => (float) ( $revenue->revenue ?? 0 ),
+			'total_commission'    => (float) ( $revenue->commission ?? 0 ),
+			'net_earnings'        => (float) ( $revenue->vendor_earnings ?? 0 ),
+			'avg_commission_rate' => ! empty( $revenue->revenue ) ? round( $revenue->commission / $revenue->revenue * 100, 2 ) : 0.0,
 		);
 	}
 

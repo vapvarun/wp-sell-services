@@ -372,6 +372,8 @@ class SchemaManager {
 		$this->maybe_add_index( 'vendor_profiles', 'availability', 'is_available, vacation_mode' );
 		$this->maybe_add_index( 'vendor_profiles', 'country', 'country' );
 		$this->maybe_add_index( 'orders', 'customer_status_created', 'customer_id, status, created_at' );
+		// Revenue is counted by the date money was paid (wpss_get_revenue()).
+		$this->maybe_add_index( 'orders', 'idx_paid', 'paid_at' );
 	}
 
 	/**
@@ -1236,6 +1238,7 @@ class SchemaManager {
 			KEY idx_platform (platform,platform_order_id),
 			KEY idx_platform_ref (platform,platform_order_ref),
 			KEY idx_deadline (delivery_deadline),
+			KEY idx_paid (paid_at),
 			KEY idx_transaction (transaction_id(191))
 		) {$charset_collate};";
 	}

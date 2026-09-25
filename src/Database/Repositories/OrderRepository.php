@@ -619,14 +619,11 @@ class OrderRepository extends AbstractRepository {
 		$sub_sql       = $this->status_in_placeholders( $sub_platforms );
 		$is_order      = "COALESCE(platform, '') NOT IN {$sub_sql}";
 
-		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
-
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the interpolated parts are %s placeholder lists built from fixed status/platform maps.
 		$sql = "SELECT
 					SUM(CASE WHEN {$is_order} THEN 1 ELSE 0 END) as total_orders,
 					SUM(CASE WHEN {$is_order} AND status IN {$completed_sql} THEN 1 ELSE 0 END) as completed_orders,
 					SUM(CASE WHEN {$is_order} AND status IN {$active_sql} THEN 1 ELSE 0 END) as active_orders,
-					SUM(CASE WHEN COALESCE(platform, '') != %s AND status IN {$completed_sql} THEN COALESCE(vendor_earnings, total) ELSE 0 END) as total_earnings,
 					AVG(CASE WHEN {$is_order} AND status IN {$completed_sql} THEN TIMESTAMPDIFF(HOUR, started_at, completed_at) END) as avg_completion_hours
 				FROM {$this->table}
 				WHERE vendor_id = %d";
@@ -637,8 +634,6 @@ class OrderRepository extends AbstractRepository {
 			$completed_statuses,
 			$sub_platforms,
 			$active_statuses,
-			array( $tip_platform ),
-			$completed_statuses,
 			$sub_platforms,
 			$completed_statuses,
 			array( $vendor_id )
@@ -673,7 +668,9 @@ class OrderRepository extends AbstractRepository {
 			'total_orders'         => (int) ( $stats['total_orders'] ?? 0 ),
 			'completed_orders'     => (int) ( $stats['completed_orders'] ?? 0 ),
 			'active_orders'        => (int) ( $stats['active_orders'] ?? 0 ),
-			'total_earnings'       => (float) ( $stats['total_earnings'] ?? 0 ),
+			// The vendor's share of what buyers paid, net of refunds and
+			// commission, by the one revenue definition (get_revenue()).
+			'total_earnings'       => $this->get_revenue( array( 'vendor_id' => $vendor_id ) )[0]->vendor_earnings ?? 0.0,
 			'avg_completion_hours' => (float) ( $stats['avg_completion_hours'] ?? 0 ),
 		);
 	}
@@ -690,8 +687,6 @@ class OrderRepository extends AbstractRepository {
 	 * @return array<string, mixed> Keys: tips_received, tips_total_gross, tips_total_net.
 	 */
 	public function get_vendor_tip_stats( int $vendor_id ): array {
-		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
-
 		$row = $this->wpdb->get_row(
 			$this->wpdb->prepare(
 				"SELECT
@@ -730,8 +725,6 @@ class OrderRepository extends AbstractRepository {
 		if ( array_key_exists( $vendor_id, self::$last_completed_memo ) ) {
 			return self::$last_completed_memo[ $vendor_id ];
 		}
-
-		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
 
 		$date = $this->wpdb->get_var(
 			$this->wpdb->prepare(
@@ -1031,7 +1024,7 @@ class OrderRepository extends AbstractRepository {
 	 *
 	 * @since 1.7.1
 	 *
-	 * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float}
+	 * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float,commission:float}
 	 */
 	public function get_aggregates(): object {
 		$row = $this->wpdb->get_row(
@@ -1039,17 +1032,146 @@ class OrderRepository extends AbstractRepository {
 				COUNT(*) AS total,
 				SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS in_progress,
 				SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
-				SUM(CASE WHEN status IN ('pending_payment', 'pending_requirements') THEN 1 ELSE 0 END) AS pending,
-				SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END) AS revenue
+				SUM(CASE WHEN status IN ('pending_payment', 'pending_requirements') THEN 1 ELSE 0 END) AS pending
 			FROM {$this->table}"
 		);
+
+		$revenue = $this->get_revenue()[0] ?? null;
 
 		return (object) array(
 			'total'       => (int) ( $row->total ?? 0 ),
 			'in_progress' => (int) ( $row->in_progress ?? 0 ),
 			'completed'   => (int) ( $row->completed ?? 0 ),
 			'pending'     => (int) ( $row->pending ?? 0 ),
-			'revenue'     => (float) ( $row->revenue ?? 0 ),
+			'revenue'     => $revenue->revenue ?? 0.0,
+			'commission'  => $revenue->commission ?? 0.0,
+		);
+	}
+
+	/**
+	 * Revenue: what buyers paid, net of refunds - the one definition.
+	 *
+	 * Owner decision (Basecamp 10337156274): revenue is paid GMV minus
+	 * refunds; unpaid, cancelled and pending-payment orders never count, and
+	 * platform commission is a second figure. Every revenue figure a person
+	 * sees - admin Dashboard and Analytics, the CSV, vendor Sales and
+	 * Analytics, the REST analytics routes - is this query; call it through
+	 * wpss_get_revenue().
+	 *
+	 * An order counts once it is paid (paid_at, or a paid payment_status on
+	 * rows older than paid_at) and is not cancelled or rejected. Refunds come
+	 * off at their recorded amount, or in full on legacy rows marked refunded
+	 * without one. Commission and vendor earnings are scaled by the share of
+	 * the order that was not refunded. The date is when the money was paid.
+	 * Sub-orders (tips, extensions, milestone phases) are real money and
+	 * count; a milestone parent carries a total of 0, so nothing counts twice.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param array<string, mixed> $args {
+	 *     Filters.
+	 *
+	 *     @type string $from      Paid on or after (site time, Y-m-d H:i:s). Optional.
+	 *     @type string $to        Paid on or before. Optional.
+	 *     @type int    $vendor_id One vendor. Optional.
+	 *     @type string $platform  Only this order platform (e.g. 'tip', 'milestone'). Optional.
+	 *     @type string $group_by  '' (one row), 'day', 'vendor', 'service' or 'currency'.
+	 *     @type int    $limit     Rows to return when grouped, largest revenue first. 0 = all.
+	 * }
+	 * @return array<int, object{key:string,orders:int,gross:float,refunded:float,revenue:float,commission:float,vendor_earnings:float}>
+	 */
+	public function get_revenue( array $args = array() ): array {
+		$args = wp_parse_args(
+			$args,
+			array(
+				'from'      => '',
+				'to'        => '',
+				'vendor_id' => 0,
+				'platform'  => '',
+				'group_by'  => '',
+				'limit'     => 0,
+			)
+		);
+
+		$refund = "LEAST( total, COALESCE( refunded_amount, CASE WHEN status = 'refunded' OR ( payment_status = 'refunded' AND status <> 'partially_refunded' ) THEN total ELSE 0 END ) )";
+		$share  = "CASE WHEN total > 0 THEN ( total - {$refund} ) / total ELSE 0 END";
+
+		$where  = array(
+			"status NOT IN ( 'pending_payment', 'pending', 'cancelled', 'rejected' )",
+			"( paid_at IS NOT NULL OR payment_status IN ( 'paid', 'completed', 'refunded' ) )",
+		);
+		$values = array();
+
+		// Written as an OR over the two indexed columns rather than a
+		// COALESCE, so a period stays an index range at 100k orders.
+		if ( '' !== (string) $args['from'] ) {
+			$where[]  = '( paid_at >= %s OR ( paid_at IS NULL AND created_at >= %s ) )';
+			$values[] = $args['from'];
+			$values[] = $args['from'];
+		}
+
+		if ( '' !== (string) $args['to'] ) {
+			$where[]  = '( paid_at <= %s OR ( paid_at IS NULL AND created_at <= %s ) )';
+			$values[] = $args['to'];
+			$values[] = $args['to'];
+		}
+
+		if ( (int) $args['vendor_id'] > 0 ) {
+			$where[]  = 'vendor_id = %d';
+			$values[] = (int) $args['vendor_id'];
+		}
+
+		if ( '' !== (string) $args['platform'] ) {
+			$where[]  = "COALESCE( platform, '' ) = %s";
+			$values[] = (string) $args['platform'];
+		}
+
+		$groups = array(
+			''         => "''",
+			'day'      => 'DATE( COALESCE( paid_at, created_at ) )',
+			'vendor'   => 'vendor_id',
+			'service'  => 'service_id',
+			'currency' => 'currency',
+		);
+		$key    = $groups[ (string) $args['group_by'] ] ?? "''";
+
+		$sql = "SELECT {$key} AS group_key,
+				COUNT(*) AS orders,
+				COALESCE( SUM( total ), 0 ) AS gross,
+				COALESCE( SUM( {$refund} ), 0 ) AS refunded,
+				COALESCE( SUM( total - {$refund} ), 0 ) AS revenue,
+				COALESCE( SUM( COALESCE( platform_fee, 0 ) * {$share} ), 0 ) AS commission,
+				COALESCE( SUM( COALESCE( vendor_earnings, 0 ) * {$share} ), 0 ) AS vendor_earnings
+			FROM {$this->table}
+			WHERE " . implode( ' AND ', $where );
+
+		if ( "''" !== $key ) {
+			$sql .= ' GROUP BY group_key ORDER BY ' . ( 'day' === $args['group_by'] ? 'group_key ASC' : 'revenue DESC' );
+		}
+
+		if ( (int) $args['limit'] > 0 ) {
+			$sql     .= ' LIMIT %d';
+			$values[] = (int) $args['limit'];
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is assembled from fixed fragments; values are bound here.
+		$rows = $this->wpdb->get_results( $values ? $this->wpdb->prepare( $sql, ...$values ) : $sql );
+
+		$decimals = wpss_get_currency_decimals();
+
+		return array_map(
+			static function ( $row ) use ( $decimals ): object {
+				return (object) array(
+					'key'             => (string) $row->group_key,
+					'orders'          => (int) $row->orders,
+					'gross'           => round( (float) $row->gross, $decimals ),
+					'refunded'        => round( (float) $row->refunded, $decimals ),
+					'revenue'         => round( (float) $row->revenue, $decimals ),
+					'commission'      => round( (float) $row->commission, $decimals ),
+					'vendor_earnings' => round( (float) $row->vendor_earnings, $decimals ),
+				);
+			},
+			(array) $rows
 		);
 	}
 

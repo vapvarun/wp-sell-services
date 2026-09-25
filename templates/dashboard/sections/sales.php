@@ -174,7 +174,7 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 		</div>
 		<div class="wpss-stat-card wpss-stat-card--highlight">
 			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $total_revenue ) ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Revenue', 'wp-sell-services' ); ?></span>
+			<span class="wpss-stat-card__label"><?php esc_html_e( 'Earnings (paid orders, after commission)', 'wp-sell-services' ); ?></span>
 		</div>
 	</div>
 
@@ -361,26 +361,38 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 								?>
 								<span class="wpss-order-card__sep">&bull;</span>
 								<?php
-								// Vendor sees the NET take-home (post-commission) so the sum of
-								// rows matches the Revenue stat above and the wallet balance.
-								// Falls back to $total for legacy rows where vendor_earnings is
-								// NULL (orders created before CommissionService populated it).
-								$row_net_amount = isset( $order_item->vendor_earnings ) && null !== $order_item->vendor_earnings
-									? (float) $order_item->vendor_earnings
-									: (float) $order_item->total;
-								$row_gross      = (float) $order_item->total;
+								// The vendor's net take-home, counted the way the Earnings stat
+								// above counts it (wpss_get_order_revenue()): nothing until the
+								// buyer pays, and a refund takes its share off.
+								$row_money = wpss_get_order_revenue(
+									(object) ( array( 'vendor_earnings' => $order_item->vendor_earnings ?? $order_item->total ) + (array) $order_item )
+								);
+								$row_gross = (float) $order_item->total;
 								?>
-								<span class="wpss-order-card__amount" title="<?php echo esc_attr( sprintf( /* translators: %s: gross amount the buyer paid */ __( 'Buyer paid %s (gross). You earn the net amount after platform fee.', 'wp-sell-services' ), wpss_format_price( $row_gross ) ) ); ?>">
-									<?php echo esc_html( wpss_format_price( $row_net_amount ) ); ?>
-									<?php if ( abs( $row_gross - $row_net_amount ) > 0.005 ) : ?>
-										<small class="wpss-order-card__gross">
+								<?php if ( ! $row_money->counts ) : ?>
+									<span class="wpss-order-card__amount">
 										<?php
-										/* translators: %s: buyer-paid amount */
-										printf( esc_html__( '(buyer paid %s)', 'wp-sell-services' ), esc_html( wpss_format_price( $row_gross ) ) );
+										echo esc_html(
+											in_array( (string) $order_item->status, array( 'pending_payment', 'pending' ), true )
+												/* translators: %s: amount the buyer will pay */
+												? sprintf( __( 'Awaiting payment of %s', 'wp-sell-services' ), wpss_format_price( $row_gross ) )
+												: __( 'No earnings', 'wp-sell-services' )
+										);
 										?>
-										</small>
-									<?php endif; ?>
-								</span>
+									</span>
+								<?php else : ?>
+									<span class="wpss-order-card__amount" title="<?php echo esc_attr( sprintf( /* translators: %s: gross amount the buyer paid */ __( 'Buyer paid %s (gross). You earn the net amount after platform fee.', 'wp-sell-services' ), wpss_format_price( $row_gross ) ) ); ?>">
+										<?php echo esc_html( wpss_format_price( $row_money->vendor_earnings ) ); ?>
+										<?php if ( abs( $row_gross - $row_money->vendor_earnings ) > 0.005 ) : ?>
+											<small class="wpss-order-card__gross">
+											<?php
+											/* translators: %s: buyer-paid amount */
+											printf( esc_html__( '(buyer paid %s)', 'wp-sell-services' ), esc_html( wpss_format_price( $row_gross ) ) );
+											?>
+											</small>
+										<?php endif; ?>
+									</span>
+								<?php endif; ?>
 							</p>
 						</div>
 					</div>

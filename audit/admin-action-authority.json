@@ -248,13 +248,6 @@
       "rate_limited": false,
       "anonymous": false
     },
-    "wp_ajax_wpss_get_dashboard_stats": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::get_dashboard_stats",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": false,
-      "anonymous": false
-    },
     "wp_ajax_wpss_get_dashboard_tab": {
       "callback": "WPSellServices\\Frontend\\AjaxHandlers::get_dashboard_tab",
       "nonce": true,

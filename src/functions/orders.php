@@ -1673,7 +1673,7 @@ function wpss_map_rail_status( string $platform, string $rail_status ): ?string 
  *
  * @since 1.7.1
  *
- * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float}
+ * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float,commission:float}
  */
 function wpss_get_order_aggregates(): object {
 	$cached = get_transient( 'wpss_order_aggregates' );
@@ -1689,6 +1689,119 @@ function wpss_get_order_aggregates(): object {
 }
 
 /**
+ * Revenue - what buyers paid, net of refunds - by the one definition.
+ *
+ * Every revenue figure shown anywhere comes from here; see
+ * OrderRepository::get_revenue() for the rule and the arguments. Ungrouped,
+ * the result is one row; read `[0]`.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, mixed> $args from, to, vendor_id, group_by, limit.
+ * @return array<int, object{key:string,orders:int,gross:float,refunded:float,revenue:float,commission:float,vendor_earnings:float}>
+ */
+function wpss_get_revenue( array $args = array() ): array {
+	return ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_revenue( $args );
+}
+
+/**
+ * Revenue per day across a date range, with every day present.
+ *
+ * Days with no paid orders are 0 rather than missing, so a chart spaces its
+ * points by time and a curve never invents a value between them. The one
+ * series behind the admin Analytics chart, its REST route and the vendor
+ * Analytics chart.
+ *
+ * @since 1.8.0
+ *
+ * @param string               $from First day (Y-m-d).
+ * @param string               $to   Last day (Y-m-d).
+ * @param array<string, mixed> $args Other wpss_get_revenue() filters (vendor_id, platform).
+ * @return array{labels:string[],revenue:float[],commission:float[],vendor_earnings:float[],orders:int[]}
+ */
+function wpss_get_revenue_series( string $from, string $to, array $args = array() ): array {
+	$rows = wpss_get_revenue(
+		array(
+			'from'     => $from . ' 00:00:00',
+			'to'       => $to . ' 23:59:59',
+			'group_by' => 'day',
+		) + $args
+	);
+
+	$by_day = array();
+	foreach ( $rows as $row ) {
+		$by_day[ $row->key ] = $row;
+	}
+
+	$series = array(
+		'labels'          => array(),
+		'revenue'         => array(),
+		'commission'      => array(),
+		'vendor_earnings' => array(),
+		'orders'          => array(),
+	);
+
+	$last = strtotime( $to );
+
+	for ( $day = strtotime( $from ); $day <= $last; $day = strtotime( '+1 day', $day ) ) {
+		$key                         = gmdate( 'Y-m-d', $day );
+		$row                         = $by_day[ $key ] ?? null;
+		$series['labels'][]          = $key;
+		$series['revenue'][]         = $row ? $row->revenue : 0.0;
+		$series['commission'][]      = $row ? $row->commission : 0.0;
+		$series['vendor_earnings'][] = $row ? $row->vendor_earnings : 0.0;
+		$series['orders'][]          = $row ? $row->orders : 0;
+	}
+
+	return $series;
+}
+
+/**
+ * One order's part of revenue: the PHP twin of OrderRepository::get_revenue().
+ *
+ * For rendering a single row the same way the totals count it: an order that
+ * is unpaid, cancelled or rejected counts for nothing (so its row shows no
+ * earnings), and a refund takes its share off the commission and the vendor's
+ * earnings. Keep the rule in step with the SQL.
+ *
+ * @since 1.8.0
+ *
+ * @param object $order Order row (status, payment_status, paid_at, total, refunded_amount, platform_fee, vendor_earnings).
+ * @return object{counts:bool,revenue:float,commission:float,vendor_earnings:float}
+ */
+function wpss_get_order_revenue( object $order ): object {
+	$status = (string) ( $order->status ?? '' );
+	$paid   = ! empty( $order->paid_at ) || in_array( (string) ( $order->payment_status ?? '' ), array( 'paid', 'completed', 'refunded' ), true );
+	$counts = $paid && ! in_array( $status, array( 'pending_payment', 'pending', 'cancelled', 'rejected' ), true );
+	$total  = (float) ( $order->total ?? 0 );
+
+	if ( ! $counts || $total <= 0 ) {
+		return (object) array(
+			'counts'          => $counts,
+			'revenue'         => 0.0,
+			'commission'      => 0.0,
+			'vendor_earnings' => 0.0,
+		);
+	}
+
+	if ( null !== ( $order->refunded_amount ?? null ) ) {
+		$refunded = (float) $order->refunded_amount;
+	} else {
+		$refunded = ( 'refunded' === $status || ( 'refunded' === ( $order->payment_status ?? '' ) && 'partially_refunded' !== $status ) ) ? $total : 0.0;
+	}
+
+	$refunded = min( $total, $refunded );
+	$share    = ( $total - $refunded ) / $total;
+
+	return (object) array(
+		'counts'          => true,
+		'revenue'         => $total - $refunded,
+		'commission'      => (float) ( $order->platform_fee ?? 0 ) * $share,
+		'vendor_earnings' => (float) ( $order->vendor_earnings ?? 0 ) * $share,
+	);
+}
+
+/**
  * Drop the cached admin order aggregates.
  *
  * @since 1.7.1
@@ -1699,7 +1812,8 @@ function wpss_flush_order_aggregates(): void {
 	delete_transient( 'wpss_order_aggregates' );
 }
 
-foreach ( array( 'wpss_order_created', 'wpss_order_paid', 'wpss_order_status_changed' ) as $wpss_aggregates_hook ) {
+// A second partial refund is not a status change, so the refund hooks are listed too.
+foreach ( array( 'wpss_order_created', 'wpss_order_paid', 'wpss_order_status_changed', 'wpss_order_status_refunded', 'wpss_order_status_partially_refunded' ) as $wpss_aggregates_hook ) {
 	add_action( $wpss_aggregates_hook, 'wpss_flush_order_aggregates' );
 }
 unset( $wpss_aggregates_hook );

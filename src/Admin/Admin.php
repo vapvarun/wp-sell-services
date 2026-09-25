@@ -1797,7 +1797,13 @@ class Admin {
 						<i data-lucide="banknote" class="wpss-icon wpss-stat-icon wpss-stat-icon--revenue" aria-hidden="true"></i>
 						<div class="wpss-stat-info">
 							<span class="wpss-stat-number"><?php echo esc_html( wpss_format_price( (float) ( $revenue ?? 0 ) ) ); ?></span>
-							<span class="wpss-stat-label"><?php esc_html_e( 'Total Revenue', 'wp-sell-services' ); ?></span>
+							<span class="wpss-stat-label"><?php esc_html_e( 'Revenue, all time (paid, net of refunds)', 'wp-sell-services' ); ?></span>
+							<span class="wpss-stat-label">
+								<?php
+								/* translators: %s: platform commission earned on that revenue. */
+								echo esc_html( sprintf( __( 'Your commission: %s', 'wp-sell-services' ), wpss_format_price( (float) ( $order_stats->commission ?? 0 ) ) ) );
+								?>
+							</span>
 						</div>
 					</div>
 				</div>

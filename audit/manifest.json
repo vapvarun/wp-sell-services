@@ -547,7 +547,7 @@
     "_note": "Plugin uses standard WP capabilities (edit_posts, manage_options) plus role-based ownership. No custom capability slugs registered. Vendor role created via add_role on activation."
   },
   "services": {
-    "_note": "Service-class layer in src/Services/. Key services: OrderService, ProposalService, MilestoneService, ExtensionOrderService, DeliveryService, DisputeService, ReviewService, NotificationService, EmailService, AnalyticsService, EarningsService, AuditLogService, BuyerRequestService, MessageService, PortfolioService, RateLimiter, Scheduler, TippingService, FAQService, GalleryService, ExtensionRequestService, ModerationService, FormFieldRegistry, Icon, RealtimeService (Pusher-protocol publisher; secret stays server-side), RealtimeBridge (relays wpss_message_sent + wpss_notification_created to private channels)."
+    "_note": "Service-class layer in src/Services/. Key services: OrderService, ProposalService, MilestoneService, ExtensionOrderService, DeliveryService, DisputeService, ReviewService, NotificationService, EmailService, EarningsService, AuditLogService, BuyerRequestService, MessageService, PortfolioService, RateLimiter, Scheduler, TippingService, FAQService, GalleryService, ExtensionRequestService, ModerationService, FormFieldRegistry, Icon, RealtimeService (Pusher-protocol publisher; secret stays server-side), RealtimeBridge (relays wpss_message_sent + wpss_notification_created to private channels)."
   },
   "hooks_fired": {
     "do_action_count": 247,

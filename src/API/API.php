@@ -1159,8 +1159,7 @@ class API {
 						COUNT(*) as total,
 						SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
 						SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-						SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
-						SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END) as earnings
+						SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress
 					FROM {$orders_table}
 					WHERE vendor_id = %d",
 					$user_id
@@ -1175,7 +1174,9 @@ class API {
 				'pending_orders'   => (int) $vendor_orders->pending,
 				'active_orders'    => (int) $vendor_orders->in_progress,
 				'completed_orders' => (int) $vendor_orders->completed,
-				'total_earnings'   => (float) $vendor_orders->earnings,
+				// Paid orders, net of refunds and commission: the same figure as
+				// the web dashboard's Sales tile (wpss_get_revenue()).
+				'total_earnings'   => (float) ( wpss_get_revenue( array( 'vendor_id' => (int) $user_id ) )[0]->vendor_earnings ?? 0 ),
 				'rating'           => (float) get_user_meta( $user_id, '_wpss_rating_average', true ) ?: 0,
 				'review_count'     => (int) get_user_meta( $user_id, '_wpss_rating_count', true ) ?: 0,
 			];
