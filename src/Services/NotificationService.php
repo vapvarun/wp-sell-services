@@ -843,7 +843,7 @@ class NotificationService {
 			);
 		}
 
-		$notification->paragraph( __( 'Log in to your dashboard to view the full conversation and reply.', 'wp-sell-services' ) );
+		$notification->paragraph( __( 'Open the conversation to read it in full and reply.', 'wp-sell-services' ) );
 
 		$this->create(
 			$recipient_id,
@@ -1204,7 +1204,7 @@ class NotificationService {
 					NotificationMessage::strong( $from_name ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
-				$message->paragraph( __( 'Please log in to your dashboard to view the response and continue the discussion if needed.', 'wp-sell-services' ) );
+				$message->paragraph( __( 'Open the dispute to read the response and reply if needed.', 'wp-sell-services' ) );
 				break;
 
 			case 'dispute_resolved':
@@ -1223,7 +1223,7 @@ class NotificationService {
 					__( 'This is a reminder that you have a pending dispute for Order #%s that requires your response.', 'wp-sell-services' ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
-				$message->paragraph( __( 'Please log in to your dashboard to respond to the dispute to avoid automatic escalation.', 'wp-sell-services' ) );
+				$message->paragraph( __( 'Respond to the dispute to avoid automatic escalation.', 'wp-sell-services' ) );
 				break;
 
 			case 'deadline_warning':
@@ -1423,7 +1423,7 @@ class NotificationService {
 
 			default:
 				$title = __( 'Notification', 'wp-sell-services' );
-				$message->line( __( 'You have a new notification. Please check your dashboard for details.', 'wp-sell-services' ) );
+				$message->line( __( 'You have a new notification.', 'wp-sell-services' ) );
 				break;
 		}
 
@@ -2021,15 +2021,9 @@ class NotificationService {
 		 */
 		$message = apply_filters( 'wpss_notification_email_content', $message, $subject, $user_id, $data );
 
-		$button_url  = '';
-		$button_text = '';
-		if ( ! empty( $data['order_id'] ) ) {
-			$button_url  = wpss_get_order_url( (int) $data['order_id'] );
-			$button_text = __( 'View Order Details', 'wp-sell-services' );
-		} elseif ( ! empty( $data['action_url'] ) ) {
-			$button_url  = (string) $data['action_url'];
-			$button_text = __( 'View Details', 'wp-sell-services' );
-		}
+		// Same target the in-app row links to (wpss_get_notification_url()).
+		$button_url  = wpss_get_notification_url( $data );
+		$button_text = '' === $button_url ? '' : ( ! empty( $data['order_id'] ) && empty( $data['action_url'] ) ? __( 'View Order Details', 'wp-sell-services' ) : __( 'View Details', 'wp-sell-services' ) );
 
 		return ( new EmailService() )->send(
 			$user->user_email,

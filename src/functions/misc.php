@@ -168,6 +168,59 @@ function wpss_add_notification( int $user_id, string $type, string $message, arr
 }
 
 /**
+ * Where a notification leads: the thing it is about.
+ *
+ * An explicit action_url wins; otherwise the IDs the notification already
+ * carries name the target - a thread with no order goes to Messages, anything
+ * with an order goes to that order (the dashboard picks the buyer or seller
+ * side), then a request, a withdrawal. Most rows carry only an order_id, so
+ * the list, the REST payload and the email button all read the link from here
+ * instead of each rows' empty action_url column (Basecamp 10337217098).
+ *
+ * @since 1.8.0
+ *
+ * @param array       $data       The notification's data payload.
+ * @param string|null $action_url The stored action_url column, if any.
+ * @return string URL, or '' when the notification points at nothing.
+ */
+function wpss_get_notification_url( array $data, ?string $action_url = null ): string {
+	foreach ( array( $action_url, $data['action_url'] ?? '', $data['link'] ?? '' ) as $url ) {
+		if ( ! empty( $url ) ) {
+			return (string) $url;
+		}
+	}
+
+	if ( ! empty( $data['conversation_id'] ) && empty( $data['order_id'] ) ) {
+		return add_query_arg(
+			array(
+				'section'         => 'messages',
+				'conversation_id' => (int) $data['conversation_id'],
+			),
+			wpss_get_dashboard_url()
+		);
+	}
+
+	foreach ( array( 'order_id', 'parent_order_id' ) as $key ) {
+		if ( ! empty( $data[ $key ] ) ) {
+			$url = wpss_get_order_url( (int) $data[ $key ] );
+			if ( '' !== $url ) {
+				return $url;
+			}
+		}
+	}
+
+	if ( ! empty( $data['request_id'] ) ) {
+		return (string) get_permalink( (int) $data['request_id'] );
+	}
+
+	if ( ! empty( $data['withdrawal_id'] ) ) {
+		return wpss_get_dashboard_url( 'earnings' );
+	}
+
+	return '';
+}
+
+/**
  * Get notifications for a user.
  *
  * @since 1.2.0

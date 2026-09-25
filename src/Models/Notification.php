@@ -244,7 +244,7 @@ class Notification {
 			'type'       => $this->type,
 			'title'      => $this->title,
 			'message'    => $this->message,
-			'action_url' => $this->action_url,
+			'action_url' => wpss_get_notification_url( is_array( $this->data ) ? $this->data : array(), $this->action_url ),
 			'data'       => $this->data,
 			'is_read'    => $this->is_read,
 			'read_at'    => $this->read_at,

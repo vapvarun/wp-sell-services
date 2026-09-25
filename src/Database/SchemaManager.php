@@ -1710,6 +1710,39 @@ class SchemaManager {
 	}
 
 	/**
+	 * Replace email-only sentences in stored notification text (1.8.0).
+	 *
+	 * The in-app list and the REST payload show the stored body, which told a
+	 * member already on the dashboard to "log in to your dashboard". The
+	 * senders now write wording that reads right in both places; this rewords
+	 * rows written before, in English and in the site's language.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return int Rows changed.
+	 */
+	public function reword_stored_notifications(): int {
+		// phpcs:disable WordPress.WP.I18n.NonSingularStringLiteralText -- the old msgids, looked up so translated rows match too.
+		$map     = array(
+			'Log in to your dashboard to view the full conversation and reply.' => 'Open the conversation to read it in full and reply.',
+			'Please log in to your dashboard to view the response and continue the discussion if needed.' => 'Open the dispute to read the response and reply if needed.',
+			'Please log in to your dashboard to respond to the dispute to avoid automatic escalation.' => 'Respond to the dispute to avoid automatic escalation.',
+			'You have a new notification. Please check your dashboard for details.' => 'You have a new notification.',
+		);
+		$changed = 0;
+
+		foreach ( $map as $old => $new ) {
+			foreach ( array_unique( array( $old, __( $old, 'wp-sell-services' ) ) ) as $needle ) {
+				$sql      = $this->wpdb->prepare( "UPDATE {$this->prefix}notifications SET message = REPLACE( message, %s, %s ) WHERE message LIKE %s", $needle, __( $new, 'wp-sell-services' ), '%' . $this->wpdb->esc_like( $needle ) . '%' ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$changed += (int) $this->wpdb->query( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+			}
+		}
+		// phpcs:enable
+
+		return $changed;
+	}
+
+	/**
 	 * Data moves for 1.8.0. Every step is idempotent.
 	 *
 	 * 1. Cancellation requests move from vendor_notes to the order's meta
@@ -1723,6 +1756,8 @@ class SchemaManager {
 	 * @return void
 	 */
 	private function run_1_8_0_data_migrations(): void {
+		$this->reword_stored_notifications();
+
 		// Proposal counts come from the proposals table now; this meta was only
 		// ever written by the demo seeder and read by the request card.
 		delete_post_meta_by_key( '_wpss_proposal_count' );
