@@ -582,7 +582,7 @@ class ServiceModerationPage {
 				<?php echo $price ? esc_html( wpss_format_price( (float) $price ) ) : '—'; ?>
 			</td>
 			<td class="column-date" data-colname="<?php esc_attr_e( 'Submitted', 'wp-sell-services' ); ?>">
-				<?php echo esc_html( get_the_date( '', $service ) ); ?>
+				<span title="<?php echo esc_attr( get_the_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $service ) ); ?>"><?php echo esc_html( get_the_date( 'M j, Y', $service ) ); ?></span>
 			</td>
 			<td class="column-status" data-colname="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
 				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">

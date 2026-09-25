@@ -1910,9 +1910,10 @@
    used to repeat them (and 20 other shared rules) in an inline <style>, so two
    sets fought and load order decided. Joined folded under the vendor name and
    Actions became row-actions, so those two widths are gone. */
-.wpss-vendors-table .column-vendor { width: 42%; }
+.wpss-vendors-table .column-vendor { width: 38%; }
 .wpss-vendors-table .column-services { width: 9%; text-align: center; }
-.wpss-vendors-table .column-orders { width: 9%; text-align: center; }
+/* Wide enough for "Orders" plus its sort arrows on one line at 820px. */
+.wpss-vendors-table .column-orders { width: 13%; text-align: center; }
 .wpss-vendors-table .column-rating { width: 12%; text-align: center; }
 .wpss-vendors-table .column-earnings { width: 14%; text-align: left; }
 .wpss-vendors-table .column-status { width: 14%; }
@@ -1967,16 +1968,29 @@
 	display: flex;
 	align-items: center;
 	gap: 10px;
+	min-width: 0;
+}
+
+/* The text column must be able to shrink, so a long name or email wraps
+   inside its cell instead of running over the next column. */
+.wpss-vendor-info > div {
+	min-width: 0;
 }
 
 .wpss-vendor-avatar {
 	width: 40px;
 	height: 40px;
 	border-radius: 50%;
+	flex-shrink: 0;
 }
 
 .wpss-vendor-name {
 	font-weight: 500;
+}
+
+.wpss-vendor-name,
+.wpss-vendor-email {
+	overflow-wrap: anywhere;
 }
 
 /* Withdrawals: a request with no payout destination says so beside Mark paid. */
@@ -2028,12 +2042,20 @@
    .wpss-moderation-table. */
 .wpss-moderation-table .column-cb { width: 30px; }
 .wpss-moderation-table .column-thumbnail { width: 60px; }
-.wpss-moderation-table .column-title { width: 25%; }
-.wpss-moderation-table .column-vendor { width: 12%; }
-.wpss-moderation-table .column-category { width: 12%; }
-.wpss-moderation-table .column-price { width: 8%; }
-.wpss-moderation-table .column-date { width: 10%; }
-.wpss-moderation-table .column-status { width: 10%; }
+.wpss-moderation-table .column-title { width: 22%; }
+.wpss-moderation-table .column-vendor { width: 13%; }
+.wpss-moderation-table .column-category { width: 14%; }
+/* Fixed widths: core's break-word splits "$50.00", dates and status badges
+   mid-word once a percentage column gets narrow (820px). */
+.wpss-moderation-table .column-price { width: 5em; }
+.wpss-moderation-table .column-date { width: 6.5em; }
+.wpss-moderation-table .column-status { width: 6.5em; }
+
+/* Eight columns do not fit a tablet; the thumbnail is the one that says
+   least, so it gives its width to the vendor and service names. */
+@media screen and (max-width: 1024px) {
+	.wpss-moderation-table .column-thumbnail { display: none; }
+}
 .wpss-moderation-table .column-actions { width: 15%; }
 
 .wpss-moderation-table .service-thumb {
@@ -2062,13 +2084,20 @@
 .inline-edit-row .inline-edit-status { display: none !important; }
 
 /* Withdrawals (Payouts) page */
-.wpss-withdrawals-table .column-id { width: 6%; }
+/* Fixed widths: the label, its sort arrows and a 5-digit id stay on one line at 820px (ID, Amount, Status). */
+.wpss-withdrawals-table .column-id { width: 5em; }
 .wpss-withdrawals-table .column-vendor { width: 20%; }
-.wpss-withdrawals-table .column-amount { width: 12%; text-align: end; }
+.wpss-withdrawals-table .column-amount { width: 7.5em; text-align: end; }
 .wpss-withdrawals-table .column-method { width: 12%; }
-.wpss-withdrawals-table .column-status { width: 12%; }
+.wpss-withdrawals-table .column-status { width: 7.5em; }
 .wpss-withdrawals-table .column-date { width: 15%; }
 .wpss-withdrawals-table .column-actions { width: 18%; }
+
+/* Tablet: seven columns leave the vendor column too narrow to carry the
+   avatar as well as the name and email. */
+@media screen and (min-width: 783px) and (max-width: 1024px) {
+	.wpss-withdrawals-table .wpss-vendor-avatar { display: none; }
+}
 
 .wpss-withdrawals-filters {
 	display: flex;
@@ -2357,6 +2386,7 @@
 /* Tab Navigation */
 .wpss-detail-tabs {
 	display: flex;
+	flex-wrap: wrap; /* Eight tabs overflowed an 820px screen by 41px; wrapping only started at 640px. */
 	gap: 0;
 	background: var(--wpss-admin-white);
 	border: 1px solid var(--wpss-admin-border);
@@ -3632,12 +3662,5 @@ button.wpss-change-status:focus {
 	.wpss-stacked-table .row-actions {
 		position: static;
 		right: auto;
-	}
-
-	/* The avatar + name block is a flex row; its text column must be able to
-	   shrink so a long unbroken name wraps instead of running off the screen. */
-	.wpss-stacked-table .wpss-vendor-info,
-	.wpss-stacked-table .wpss-vendor-info > div {
-		min-width: 0;
 	}
 }

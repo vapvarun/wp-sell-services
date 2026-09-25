@@ -590,7 +590,8 @@ class WithdrawalsPage {
 	 */
 	private function render_withdrawal_row( object $withdrawal, array $statuses, array $methods ): void {
 		$avatar  = get_avatar_url( $withdrawal->vendor_id, array( 'size' => 64 ) );
-		$details = json_decode( wpss_decrypt_secret( (string) ( $withdrawal->details ?? '' ) ), true ) ?: array();
+		// array_filter: a blank field (stored as [""]) is no destination either.
+		$details = array_filter( (array) json_decode( wpss_decrypt_secret( (string) ( $withdrawal->details ?? '' ) ), true ), static fn( $value ) => is_scalar( $value ) && '' !== trim( (string) $value ) );
 		$status  = $withdrawal->status ?? 'pending';
 		?>
 		<tr data-withdrawal-id="<?php echo esc_attr( $withdrawal->id ); ?>">
@@ -629,7 +630,10 @@ class WithdrawalsPage {
 				<strong><?php echo esc_html( wpss_format_price( (float) $withdrawal->amount ) ); ?></strong>
 			</td>
 			<td class="column-method" data-colname="<?php esc_attr_e( 'Payout to', 'wp-sell-services' ); ?>">
-				<?php echo esc_html( $methods[ $withdrawal->method ] ?? ucfirst( $withdrawal->method ) ); ?>
+				<?php if ( empty( $details ) ) : ?>
+					<?php // With details on file the destination line below already starts with the method. ?>
+					<?php echo esc_html( $methods[ $withdrawal->method ] ?? ucfirst( $withdrawal->method ) ); ?>
+				<?php endif; ?>
 				<?php if ( ! empty( $withdrawal->is_auto ) ) : ?>
 					<?php
 					// is_auto was stored, and changed behaviour - a vendor cannot
@@ -649,8 +653,8 @@ class WithdrawalsPage {
 						echo esc_html( EarningsService::format_payout_destination( (string) $withdrawal->method, $details, false ) );
 						?>
 					</div>
-				<?php else : ?>
-					<?php // Requests before 1.8.0 could be made with no details; say so beside Mark paid rather than show a bare method. ?>
+				<?php elseif ( in_array( $status, array( 'pending', 'approved' ), true ) ) : ?>
+					<?php // Requests before 1.8.0 could be made with no details; while the payout is still to be sent, say so beside Mark paid rather than show a bare method. ?>
 					<div class="wpss-withdrawal-details wpss-withdrawal-details--missing">
 						<?php esc_html_e( 'No payout details on file. Ask the vendor before paying.', 'wp-sell-services' ); ?>
 					</div>
