@@ -1717,6 +1717,61 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 }
 
 /**
+ * A service's rating: the average and count of its approved reviews.
+ *
+ * The one read for the service page header, the reviews block, checkout and
+ * the service card. They used to read three ways - stored meta in the header,
+ * a live query in the reviews block, a repository summary at checkout - and
+ * showed "4.8 (4)" above "4.7 / 3 reviews" once the stored figure went stale
+ * (Basecamp 10337201764). It stays a stored number because the "top rated"
+ * sort and every card in a grid need it without a query each.
+ *
+ * @since 1.8.0
+ *
+ * @param int $service_id Service ID.
+ * @return array{average: float, count: int} Average to one decimal, and count.
+ */
+function wpss_get_service_rating( int $service_id ): array {
+	$count = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
+
+	return array(
+		'average' => $count > 0 ? round( (float) get_post_meta( $service_id, '_wpss_rating_average', true ), 1 ) : 0.0,
+		'count'   => $count,
+	);
+}
+
+/**
+ * Recount a service's rating from its approved reviews.
+ *
+ * The only writer of the stored rating; every review create, moderation and
+ * delete calls it.
+ *
+ * @since 1.8.0
+ *
+ * @param int $service_id Service ID.
+ * @return array{average: float, count: int} The stored rating.
+ */
+function wpss_recount_service_rating( int $service_id ): array {
+	global $wpdb;
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$stats = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT COUNT(*) AS count, AVG(rating) AS average FROM {$wpdb->prefix}wpss_reviews WHERE service_id = %d AND status = 'approved'",
+			$service_id
+		)
+	);
+
+	$count = (int) ( $stats->count ?? 0 );
+
+	update_post_meta( $service_id, '_wpss_rating_average', $count > 0 ? round( (float) $stats->average, 2 ) : 0 );
+	update_post_meta( $service_id, '_wpss_rating_count', $count );
+	update_post_meta( $service_id, '_wpss_review_count', $count );
+
+	return wpss_get_service_rating( $service_id );
+}
+
+/**
  * Recount a service's completed orders into _wpss_order_count.
  *
  * The stored count feeds the admin list, the editor stats, the service page,

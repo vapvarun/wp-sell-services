@@ -742,6 +742,15 @@ article.wpss-service-card:hover {
 	font-weight: 600;
 }
 
+.wpss-service-card__delivery {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-inline-start: auto;
+	color: var(--wpss-text-light);
+	white-space: nowrap;
+}
+
 .wpss-service-card__footer {
 	padding: 12px 16px;
 	border-top: 1px solid var(--wpss-border);
@@ -834,41 +843,7 @@ article.wpss-service-card:hover {
 	padding: 30px 0;
 }
 
-.wpss-service-layout {
-	display: grid;
-	grid-template-columns: 1fr 350px;
-	gap: 30px;
-}
-
-@media (max-width: 992px) {
-	.wpss-service-layout {
-		grid-template-columns: 1fr;
-	}
-
-	.wpss-service-sidebar {
-		position: relative;
-		top: 0;
-		width: 100%;
-		max-width: 100%;
-		max-height: none;
-		justify-self: stretch;
-		order: -1;
-	}
-}
-
-.wpss-service-main {
-	min-width: 0;
-}
-
-.wpss-service-sidebar {
-	position: sticky;
-	top: var(--wpss-sticky-top, 32px);
-	align-self: start;
-	max-height: none;
-	overflow-y: visible;
-	width: 350px;
-	justify-self: end;
-}
+/* The service layout itself lives in single-service.css (one owner). */
 
 /* ==========================================================================
    Gallery

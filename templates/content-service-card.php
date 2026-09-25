@@ -39,8 +39,10 @@ $service_id     = get_the_ID();
 $vendor_id      = (int) get_post_field( 'post_author', $service_id );
 $vendor         = get_userdata( $vendor_id );
 $starting_price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-$rating_avg     = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
-$rating_count   = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
+$rating         = wpss_get_service_rating( $service_id );
+$rating_avg     = $rating['average'];
+$rating_count   = $rating['count'];
+$delivery_days  = wpss_get_service_delivery_days( $service_id );
 // get_the_terms() reads the object-term cache that WP_Query already primed for
 // the whole result set; wp_get_post_terms() with a `fields` argument bypasses
 // that cache and queries per card - 12 cards meant 12 term queries. Same data,
@@ -259,6 +261,16 @@ do_action( 'wpss_before_service_card', $service_id );
 					</span>
 				<?php else : ?>
 					<span class="wpss-service-card__rating-new"><?php esc_html_e( 'New', 'wp-sell-services' ); ?></span>
+				<?php endif; ?>
+				<?php // Delivery beside the rating, so cards compare without opening each one (Basecamp 10337201764). ?>
+				<?php if ( $delivery_days > 0 ) : ?>
+					<span class="wpss-service-card__delivery">
+						<i data-lucide="clock" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
+						<?php
+						/* translators: %d: delivery time in days */
+						echo esc_html( sprintf( _n( '%d-day delivery', '%d-day delivery', $delivery_days, 'wp-sell-services' ), $delivery_days ) );
+						?>
+					</span>
 				<?php endif; ?>
 			</div>
 			<?php endif; ?>

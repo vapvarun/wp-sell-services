@@ -56,7 +56,8 @@ get_header();
  *
  * @since 1.0.0
  *
- * @param int $columns Number of columns. Default 3. Accepts 2, 3, or 4.
+ * @param int $columns Most columns the grid shows on a wide screen. Default 3.
+ *                     Narrower screens drop columns so a card stays 240px or wider.
  */
 $columns = apply_filters( 'wpss_archive_service_columns', 3 );
 
@@ -104,7 +105,8 @@ do_action( 'wpss_before_service_archive' );
 
 			if ( have_posts() ) :
 				?>
-				<div class="wpss-services-grid wpss-grid-columns-<?php echo esc_attr( $columns ); ?>">
+				<?php // The most columns the grid shows; narrower screens get fewer (archive-service.css). ?>
+				<div class="wpss-services-grid wpss-grid-columns-<?php echo esc_attr( $columns ); ?>" style="--wpss-archive-columns: <?php echo absint( $columns ); ?>">
 					<?php
 					while ( have_posts() ) :
 						the_post();

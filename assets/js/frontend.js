@@ -1129,6 +1129,23 @@
 			}
 		});
 
+		// Filters apply as soon as they are picked, the same as sort
+		// (Basecamp 10337201764). A keyboard user arrowing through a radio group
+		// has not chosen yet, so a keyboard change waits for Enter or the Apply
+		// button, which shows on focus. Price applies when committed (Enter or
+		// leaving the field) - that is when a number input fires change.
+		let pointerPick = false;
+		$(document).on('pointerdown', '.wpss-filter-form label, .wpss-filter-form input', function() {
+			pointerPick = true;
+		});
+		$(document).on('change', '.wpss-filter-form input', function() {
+			const picked = 'radio' !== this.type || pointerPick;
+			pointerPick = false;
+			if (picked && this.form) {
+				this.form.requestSubmit();
+			}
+		});
+
 		if (!$toggle.length || !$sidebar.length) {
 			return;
 		}

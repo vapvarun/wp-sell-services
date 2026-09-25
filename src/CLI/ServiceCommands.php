@@ -558,12 +558,11 @@ class ServiceCommands extends WP_CLI_Command {
 		// Save stats.
 		if ( ! empty( $data['stats'] ) ) {
 			update_post_meta( $post_id, '_wpss_views', $data['stats']['views'] );
-			update_post_meta( $post_id, '_wpss_order_count', $data['stats']['orders'] );
-			update_post_meta( $post_id, '_wpss_rating_average', $data['stats']['rating'] );
-			update_post_meta( $post_id, '_wpss_rating_count', $data['stats']['reviews'] );
-			update_post_meta( $post_id, '_wpss_review_count', $data['stats']['reviews'] );
 
-			// Insert actual rows into wpss_reviews so the table matches post meta.
+			// Seed real review rows, then count them the way a live review is
+			// counted. Writing the stat figures straight into meta left demo
+			// services claiming "198 reviews" over two rows (Basecamp 10337201764).
+			// Orders are counted from the orders table, so a demo service has none.
 			if ( $data['stats']['reviews'] > 0 ) {
 				$this->insert_demo_reviews(
 					$post_id,
@@ -572,6 +571,7 @@ class ServiceCommands extends WP_CLI_Command {
 					(int) $data['stats']['reviews']
 				);
 			}
+			wpss_recount_service_rating( $post_id );
 		}
 
 		// Set featured.

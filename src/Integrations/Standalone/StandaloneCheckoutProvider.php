@@ -608,11 +608,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$delivery_days = $selected_package['delivery_days'] ?? 0;
 		$revisions     = $selected_package['revisions'] ?? 0;
 
-		// Review stats from actual reviews table (not post meta which may be stale).
-		$review_repo    = new \WPSellServices\Database\Repositories\ReviewRepository();
-		$rating_summary = $review_repo->get_service_rating_summary( $service->id );
-		$review_count   = (int) ( $rating_summary['total_reviews'] ?? 0 );
-		$review_avg     = round( (float) ( $rating_summary['average_rating'] ?? 0 ), 1 );
+		$rating       = wpss_get_service_rating( (int) $service->id );
+		$review_count = $rating['count'];
+		$review_avg   = $rating['average'];
 
 		// Summary lines for templates/checkout/summary.php.
 		$summary_lines = array();

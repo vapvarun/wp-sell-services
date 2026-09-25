@@ -417,7 +417,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1367` |
-| `wpss_services_per_page` | `int $per_page` (default 12) | `src/Frontend/ServiceArchiveView.php:655` |
+| `wpss_services_per_page` | `int $per_page` (default 12) | `src/Frontend/ServiceArchiveView.php:640` |
 | `wpss_wizard_service_data` | `array $data, int $service_id` | `ServiceWizard.php` |
 | `wpss_wizard_sanitize_service_data` | `array $sanitized, array $raw` | `ServiceWizard.php` |
 
@@ -764,7 +764,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1006` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:362` |
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:858` |
-| `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:927` |
+| `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:928` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:183` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:659` |
 | `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1359` |
@@ -778,7 +778,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_realtime_settings` | `array $settings` | `RealtimeService.php` |
-| `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:538` |
+| `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:519` |
 | `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/API/ReviewsController.php:426` |
 | `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:601` |
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:112` |
@@ -787,7 +787,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_withdrawal_methods` | `$methods` | `src/API/EarningsController.php:705` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:522` |
-| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:791` |
+| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:792` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:427` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:266` |
 | `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1483` |

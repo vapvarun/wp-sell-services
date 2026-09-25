@@ -127,8 +127,6 @@ class ServiceArchiveView {
 	 * @return void
 	 */
 	public function render_filters_bar(): void {
-		$categories = wpss_get_category_terms();
-
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_sort = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : 'default';
 
@@ -140,19 +138,13 @@ class ServiceArchiveView {
 			$current_category = $current_term instanceof \WP_Term ? $current_term->term_id : 0;
 		}
 
-		// Use the services page (or CPT archive) as the base URL for category filter links.
-		// This prevents broken URLs when navigating categories from a taxonomy archive page.
+		// Search submits to the services page (or CPT archive), so a search from
+		// a category archive keeps working.
 		$services_page_url = wpss_get_page_url( 'services_page' );
 		$base_url          = $services_page_url ? $services_page_url : get_post_type_archive_link( 'wpss_service' );
 
-		// Preserve current sort param when switching categories.
-		$base_args = array();
-		if ( 'default' !== $current_sort ) {
-			$base_args['sort'] = $current_sort;
-		}
 		?>
-		<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
-		<?php $current_search = isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : ''; ?>
+		<?php $current_search = $this->current_search(); ?>
 		<div class="wpss-filters-bar">
 			<button type="button" class="wpss-btn wpss-btn-outline wpss-filter-toggle" aria-expanded="false" aria-controls="wpss-sidebar">
 				<span class="wpss-icon-filter"></span>
@@ -171,38 +163,7 @@ class ServiceArchiveView {
 			</form>
 
 			<div class="wpss-filters-bar-controls">
-				<?php if ( ! empty( $categories ) ) : ?>
-					<select class="wpss-category-filter wpss-url-select">
-						<option value="<?php echo esc_url( add_query_arg( $base_args, $base_url ) ); ?>">
-							<?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?>
-						</option>
-						<?php
-						/*
-						 * Grouped, not flat (Basecamp 10208080926). A child term
-						 * used to appear alphabetically between parents with
-						 * nothing marking it as a subcategory, so "Logo Design"
-						 * read as a peer of "Graphics & Design". Children stay
-						 * selectable - a buyer filtering by a subcategory is the
-						 * whole point - they are just shown where they belong.
-						 */
-						foreach ( wpss_group_category_terms( $categories ) as $wpss_group ) :
-							$wpss_parent = $wpss_group['term'];
-							?>
-							<option value="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'category' => $wpss_parent->term_id ) ), $base_url ) ); ?>"
-								<?php selected( $current_category, $wpss_parent->term_id ); ?>>
-								<?php echo esc_html( $wpss_parent->name ); ?>
-							</option>
-							<?php // Indented, not an optgroup labelled with the parent's own name - see Basecamp 10304812139. ?>
-							<?php foreach ( $wpss_group['children'] as $wpss_child ) : ?>
-								<option value="<?php echo esc_url( add_query_arg( array_merge( $base_args, array( 'category' => $wpss_child->term_id ) ), $base_url ) ); ?>"
-									<?php selected( $current_category, $wpss_child->term_id ); ?>>
-									<?php echo esc_html( "\u{00A0}\u{00A0}\u{00A0}" . $wpss_child->name ); ?>
-								</option>
-							<?php endforeach; ?>
-						<?php endforeach; ?>
-					</select>
-				<?php endif; ?>
-
+				<?php // Categories are chosen in the filters list only - a second select here made three ways to do one thing (Basecamp 10337201764). ?>
 				<select class="wpss-sort-filter wpss-url-select">
 					<option value="<?php echo esc_url( remove_query_arg( 'sort' ) ); ?>" <?php selected( $current_sort, 'default' ); ?>>
 						<?php esc_html_e( 'Sort: Recommended', 'wp-sell-services' ); ?>
@@ -226,6 +187,20 @@ class ServiceArchiveView {
 	}
 
 	/**
+	 * The words the buyer searched for.
+	 *
+	 * The plugin's search box sends ?search=; a theme search or a shared link
+	 * sends WordPress's ?s=. The search box, the results line and the filters
+	 * all read it here, so a search survives picking a filter either way.
+	 *
+	 * @return string
+	 */
+	private function current_search(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : get_search_query( false );
+	}
+
+	/**
 	 * Render results info.
 	 *
 	 * @return void
@@ -233,14 +208,24 @@ class ServiceArchiveView {
 	public function render_results_info(): void {
 		global $wp_query;
 		$total = $wp_query->found_posts;
+		$term  = $this->current_search();
 		?>
 		<div class="wpss-results-info">
 			<?php
-			printf(
-				/* translators: %s: number of services */
-				esc_html( _n( '%s service found', '%s services found', $total, 'wp-sell-services' ) ),
-				esc_html( number_format_i18n( $total ) )
-			);
+			if ( '' !== $term ) {
+				printf(
+					/* translators: 1: search words, 2: number of services found */
+					esc_html__( 'Results for “%1$s” (%2$s)', 'wp-sell-services' ),
+					esc_html( $term ),
+					esc_html( number_format_i18n( $total ) )
+				);
+			} else {
+				printf(
+					/* translators: %s: number of services */
+					esc_html( _n( '%s service found', '%s services found', $total, 'wp-sell-services' ) ),
+					esc_html( number_format_i18n( $total ) )
+				);
+			}
 			?>
 		</div>
 		<?php
@@ -352,8 +337,7 @@ class ServiceArchiveView {
 				<?php
 				// Preserve an active keyword search so price/rating/delivery filtering
 				// does not silently drop the buyer's search term.
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				$preserved_search = isset( $_GET['search'] ) ? sanitize_text_field( wp_unslash( $_GET['search'] ) ) : '';
+				$preserved_search = $this->current_search();
 				if ( '' !== $preserved_search ) :
 					?>
 					<input type="hidden" name="search" value="<?php echo esc_attr( $preserved_search ); ?>">
@@ -477,7 +461,8 @@ class ServiceArchiveView {
 				</div>
 
 				<div class="wpss-filter-actions">
-					<button type="submit" class="wpss-btn wpss-btn-primary wpss-btn-block">
+					<?php // Filters apply as soon as they are picked, like sort (frontend.js); this stays for keyboard and no-JS use and shows when focused. ?>
+					<button type="submit" class="wpss-btn wpss-btn-primary wpss-btn-block screen-reader-text">
 						<?php esc_html_e( 'Apply Filters', 'wp-sell-services' ); ?>
 					</button>
 					<?php

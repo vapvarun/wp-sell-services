@@ -295,8 +295,9 @@ class SingleServiceView {
 		$service_id   = $service->id;
 		$vendor_id    = $service->vendor_id;
 		$vendor       = get_userdata( $vendor_id );
-		$rating_count = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
-		$rating_avg   = (float) get_post_meta( $service_id, '_wpss_rating_average', true );
+		$rating       = wpss_get_service_rating( $service_id );
+		$rating_count = $rating['count'];
+		$rating_avg   = $rating['average'];
 		$order_count  = (int) get_post_meta( $service_id, '_wpss_order_count', true );
 		?>
 		<div class="wpss-service-meta">
@@ -321,8 +322,8 @@ class SingleServiceView {
 					<span class="wpss-orders-count">
 						<?php
 						printf(
-							/* translators: %d: number of orders */
-							esc_html( _n( '%d order', '%d orders', $order_count, 'wp-sell-services' ) ),
+							/* translators: %d: number of this service's completed orders */
+							esc_html( _n( '%d completed', '%d completed', $order_count, 'wp-sell-services' ) ),
 							absint( $order_count )
 						);
 						?>

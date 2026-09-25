@@ -868,20 +868,7 @@ class ReviewsController extends RestController {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_reviews';
 
-		// Update service rating.
-		$service_stats = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT COUNT(*) as count, AVG(rating) as average
-				FROM {$table}
-				WHERE service_id = %d AND status = 'approved'",
-				$service_id
-			)
-		);
-
-		$service_count = (int) $service_stats->count;
-		update_post_meta( $service_id, '_wpss_rating_count', $service_count );
-		update_post_meta( $service_id, '_wpss_review_count', $service_count );
-		update_post_meta( $service_id, '_wpss_rating_average', round( (float) $service_stats->average, 1 ) );
+		wpss_recount_service_rating( $service_id );
 
 		// Update vendor rating.
 		$vendor_stats = $wpdb->get_row(

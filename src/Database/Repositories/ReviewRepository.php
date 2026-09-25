@@ -160,67 +160,6 @@ class ReviewRepository extends AbstractRepository {
 	}
 
 	/**
-	 * Get rating summary for a service.
-	 *
-	 * @param int $service_id Service post ID.
-	 * @return array<string, mixed> Rating summary.
-	 */
-	public function get_service_rating_summary( int $service_id ): array {
-		$cache_key = 'wpss_service_rating_' . $service_id;
-		$result    = get_transient( $cache_key );
-
-		if ( false !== $result ) {
-			return $result;
-		}
-
-		$summary = $this->wpdb->get_row(
-			$this->wpdb->prepare(
-				"SELECT
-					COUNT(*) as total_reviews,
-					AVG(rating) as average_rating,
-					AVG(communication_rating) as avg_communication,
-					AVG(quality_rating) as avg_quality,
-					AVG(delivery_rating) as avg_delivery
-				FROM {$this->table}
-				WHERE service_id = %d AND status = 'approved'",
-				$service_id
-			),
-			ARRAY_A
-		);
-
-		// Get rating breakdown.
-		$breakdown = $this->wpdb->get_results(
-			$this->wpdb->prepare(
-				"SELECT rating, COUNT(*) as count
-				FROM {$this->table}
-				WHERE service_id = %d AND status = 'approved'
-				GROUP BY rating
-				ORDER BY rating DESC",
-				$service_id
-			),
-			ARRAY_A
-		);
-
-		$rating_breakdown = array();
-		foreach ( $breakdown as $row ) {
-			$rating_breakdown[ (int) $row['rating'] ] = (int) $row['count'];
-		}
-
-		$result = array(
-			'total_reviews'     => (int) ( $summary['total_reviews'] ?? 0 ),
-			'average_rating'    => round( (float) ( $summary['average_rating'] ?? 0 ), 1 ),
-			'avg_communication' => round( (float) ( $summary['avg_communication'] ?? 0 ), 1 ),
-			'avg_quality'       => round( (float) ( $summary['avg_quality'] ?? 0 ), 1 ),
-			'avg_delivery'      => round( (float) ( $summary['avg_delivery'] ?? 0 ), 1 ),
-			'breakdown'         => $rating_breakdown,
-		);
-
-		set_transient( $cache_key, $result, HOUR_IN_SECONDS );
-
-		return $result;
-	}
-
-	/**
 	 * Get rating summary for a vendor.
 	 *
 	 * @param int $vendor_id Vendor user ID.

@@ -196,6 +196,55 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 	color: var(--wpss-white, #fff);
 }
 
+/*
+ * One or two projects read as rows - the picture beside its title, words and
+ * tags - instead of a lone tile a third of the row wide (Basecamp 10337201764).
+ * The hover overlay becomes the always-visible details column.
+ */
+.wpss-portfolio-public--list .wpss-portfolio-public__grid {
+	grid-template-columns: 1fr;
+}
+
+.wpss-portfolio-public--list .wpss-portfolio-public__card {
+	display: grid;
+	grid-template-columns: minmax( 0, 280px ) 1fr;
+	aspect-ratio: auto;
+	background: var( --wpss-surface, #fff );
+	border: 1px solid var( --wpss-border, #e5e7eb );
+	box-shadow: none;
+}
+
+.wpss-portfolio-public--list .wpss-portfolio-public__image,
+.wpss-portfolio-public--list .wpss-portfolio-public__placeholder {
+	aspect-ratio: 4 / 3;
+}
+
+.wpss-portfolio-public--list .wpss-portfolio-public__title-bar {
+	display: none;
+}
+
+.wpss-portfolio-public--list .wpss-portfolio-public__overlay {
+	position: static;
+	opacity: 1;
+	background: none;
+	justify-content: center;
+	color: var( --wpss-text, #111827 );
+}
+
+.wpss-portfolio-public--list .wpss-portfolio-public__desc {
+	color: var( --wpss-text-secondary, #374151 );
+}
+
+.wpss-portfolio-public--list .wpss-portfolio-public__ext-link {
+	color: var( --wpss-primary, #4f46e5 );
+	border-color: var( --wpss-border, #e5e7eb );
+}
+
+.wpss-portfolio-public--list .wpss-portfolio-public__ext-link:hover {
+	background: var( --wpss-bg-muted, #f3f4f6 );
+	color: var( --wpss-primary, #4f46e5 );
+}
+
 /* Responsive */
 @media ( max-width: 900px ) {
 	.wpss-portfolio-public {
@@ -207,10 +256,14 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 	.wpss-portfolio-public {
 		--_cols: 1;
 	}
+
+	.wpss-portfolio-public--list .wpss-portfolio-public__card {
+		grid-template-columns: 1fr;
+	}
 }
 </style>
 
-<div class="wpss-portfolio-public">
+<div class="wpss-portfolio-public<?php echo count( $portfolio_items ) < 3 ? ' wpss-portfolio-public--list' : ''; ?>">
 	<div class="wpss-portfolio-public__grid">
 		<?php
 		// Collect all items for the lightbox.

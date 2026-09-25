@@ -201,9 +201,31 @@
 	min-width: 0;
 }
 
+/* One column: the price and Continue sit right under the gallery, not after
+   every review (Basecamp 10337201764 - on an iPad in portrait the package
+   card was 3,300px down, on a phone 4,100px). The main column's children
+   join the layout's flow so the sidebar can slot in between them; anything
+   an add-on hooks into the main column follows the price. */
 @media (max-width: 991px) {
 	.wpss-service-layout {
-		grid-template-columns: 1fr;
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+	}
+
+	.wpss-service-main {
+		display: contents;
+	}
+
+	.wpss-service-main > * {
+		order: 3;
+	}
+
+	.wpss-service-main > .wpss-breadcrumb,
+	.wpss-service-main > .wpss-service-title,
+	.wpss-service-main > .wpss-service-meta,
+	.wpss-service-main > .wpss-service-gallery {
+		order: 1;
 	}
 
 	.wpss-service-sidebar {
@@ -215,6 +237,7 @@
 		overflow-y: visible;
 		justify-self: stretch;
 		order: 2;
+		margin-block-end: var(--wpss-space-8, 2rem);
 	}
 }
 

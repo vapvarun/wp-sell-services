@@ -1783,6 +1783,15 @@ class SchemaManager {
 			wpss_sync_service_order_count( $service_id );
 		}
 
+		// The stored service rating could drift from the reviews behind it (a
+		// deleted review, seeded figures); every surface now reads it, so
+		// recount it once. wpss_recount_service_rating() keeps it after.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only, no input.
+		$rated = $this->wpdb->get_col( "SELECT DISTINCT service_id FROM {$this->prefix}reviews WHERE service_id > 0" );
+		foreach ( array_unique( array_merge( array_map( 'intval', $rated ), array_map( 'intval', $this->wpdb->get_col( "SELECT post_id FROM {$this->wpdb->postmeta} WHERE meta_key IN ( '_wpss_rating_average', '_wpss_rating_count', '_wpss_review_count' )" ) ) ) ) as $service_id ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			wpss_recount_service_rating( $service_id );
+		}
+
 		// _wpss_starting_price now follows every package write; recompute it
 		// once for services last edited somewhere other than the wizard. Those
 		// with no _wpss_packages meta (packages only in the packages table) keep

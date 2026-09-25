@@ -577,19 +577,6 @@ class ServiceManager {
 	}
 
 	/**
-	 * Update service rating.
-	 *
-	 * @param int   $service_id Service post ID.
-	 * @param float $average    Average rating.
-	 * @param int   $count      Total review count.
-	 * @return void
-	 */
-	public function update_rating( int $service_id, float $average, int $count ): void {
-		update_post_meta( $service_id, '_wpss_rating_average', $average );
-		update_post_meta( $service_id, '_wpss_rating_count', $count );
-	}
-
-	/**
 	 * Hold a service as a draft when it is not ready to be published.
 	 *
 	 * The wizard (ServiceWizard.php), the admin metabox (ServiceMetabox.php)
