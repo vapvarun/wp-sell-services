@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**536 hooks** across **740** firing sites.
+**537 hooks** across **741** firing sites.
 
-## Actions (273)
+## Actions (274)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -285,6 +285,7 @@ guide; this is the complete index.
 | `wpss_vendor_status_updated` | 2 | `src/Services/VendorService.php` | Fires when vendor status is updated. |
 | `wpss_vendor_tier_changed` | 2 | `src/Services/VendorService.php` | Fires when vendor verification tier changes. |
 | `wpss_vendor_vacation_mode_changed` | 4 | `src/Services/VendorService.php` | Fires when vacation mode is toggled. |
+| `wpss_withdrawal_cancelled` | 2 | `src/Services/EarningsService.php` | Fires after a vendor cancels their pending withdrawal. |
 | `wpss_withdrawal_processed` | 3 | `src/Services/EarningsService.php` *(+1 more)* |  |
 | `wpss_withdrawal_requested` | 3 | `src/Services/EarningsService.php` | Fires when withdrawal is requested. |
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |

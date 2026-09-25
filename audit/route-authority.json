@@ -1130,6 +1130,12 @@
       "permission_callback": "WPSellServices\\API\\EarningsController::check_admin_permissions",
       "object_id": true,
       "writes": true
+    },
+    "DELETE /wpss/v1/withdrawals/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": true,
+      "writes": true
     }
   }
 }

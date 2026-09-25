@@ -460,6 +460,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 							<th><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></th>
 							<th><?php esc_html_e( 'Method', 'wp-sell-services' ); ?></th>
 							<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
+							<th><span class="screen-reader-text"><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></span></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -476,6 +477,13 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 									<span class="wpss-badge <?php echo esc_attr( $status_class ); ?>">
 										<?php echo esc_html( $statuses[ $withdrawal['status'] ] ?? ucfirst( $withdrawal['status'] ) ); ?>
 									</span>
+								</td>
+								<td>
+									<?php if ( EarningsService::WITHDRAWAL_PENDING === $withdrawal['status'] && empty( $withdrawal['is_auto'] ) ) : ?>
+										<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" data-wpss-cancel-withdrawal="<?php echo esc_attr( (string) $withdrawal['id'] ); ?>">
+											<?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?>
+										</button>
+									<?php endif; ?>
 								</td>
 							</tr>
 						<?php endforeach; ?>

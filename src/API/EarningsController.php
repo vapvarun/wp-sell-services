@@ -194,6 +194,12 @@ class EarningsController extends RestController {
 						),
 					),
 				),
+				// DELETE /withdrawals/{id} - The vendor cancels their own pending request.
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'cancel_withdrawal' ),
+					'permission_callback' => array( $this, 'check_vendor_permissions' ),
+				),
 			)
 		);
 
@@ -545,6 +551,31 @@ class EarningsController extends RestController {
 		}
 
 		return $this->paginated_response( $withdrawals, $total, $pagination['page'], $pagination['per_page'] );
+	}
+
+	/**
+	 * Cancel the caller's pending withdrawal.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|\WP_Error
+	 */
+	public function cancel_withdrawal( WP_REST_Request $request ) {
+		$result = ( new \WPSellServices\Services\EarningsService() )->cancel_withdrawal( (int) $request['id'], get_current_user_id() );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new WP_REST_Response(
+			array(
+				'id'      => (int) $request['id'],
+				'status'  => \WPSellServices\Services\EarningsService::WITHDRAWAL_CANCELLED,
+				'message' => __( 'Withdrawal cancelled. The amount is back in your available balance.', 'wp-sell-services' ),
+			),
+			200
+		);
 	}
 
 	/**

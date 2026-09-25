@@ -210,7 +210,6 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_export_data', array( $this, 'export_data' ) );
 
 		// Withdrawals.
-		add_action( 'wp_ajax_wpss_cancel_withdrawal', array( $this, 'cancel_withdrawal' ) );
 
 		// Profile.
 		add_action( 'wp_ajax_wpss_update_vendor_profile', array( $this, 'update_vendor_profile' ) );
@@ -3119,82 +3118,6 @@ class AjaxHandlers {
 		// equivalent for. fclose() is the only way to close it.
 		fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- php://output stream, not a filesystem path.
 		exit;
-	}
-
-	/**
-	 * Cancel withdrawal request.
-	 *
-	 * @return void
-	 */
-	public function cancel_withdrawal(): void {
-		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
-
-		$withdrawal_id = absint( $_POST['withdrawal_id'] ?? 0 );
-		$user_id       = get_current_user_id();
-
-		if ( ! $withdrawal_id || ! $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
-		}
-
-		global $wpdb;
-
-		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
-
-		// Lock the withdrawal row to prevent double-cancel race conditions.
-		$wpdb->query( 'START TRANSACTION' );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$withdrawal = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT * FROM {$withdrawals_table} WHERE id = %d AND vendor_id = %d FOR UPDATE",
-				$withdrawal_id,
-				$user_id
-			)
-		);
-
-		if ( ! $withdrawal ) {
-			$wpdb->query( 'ROLLBACK' );
-			wp_send_json_error( array( 'message' => __( 'Withdrawal not found.', 'wp-sell-services' ) ) );
-		}
-
-		if ( ! empty( $withdrawal->is_auto ) ) {
-			$wpdb->query( 'ROLLBACK' );
-			wp_send_json_error( array( 'message' => __( 'Auto-withdrawals cannot be cancelled manually.', 'wp-sell-services' ) ) );
-		}
-
-		if ( 'pending' !== $withdrawal->status ) {
-			$wpdb->query( 'ROLLBACK' );
-			wp_send_json_error( array( 'message' => __( 'Only pending withdrawals can be cancelled.', 'wp-sell-services' ) ) );
-		}
-
-		// Cancel withdrawal.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update(
-			$withdrawals_table,
-			array(
-				'status'     => 'cancelled',
-				'updated_at' => current_time( 'mysql' ),
-			),
-			array( 'id' => $withdrawal_id ),
-			array( '%s', '%s' ),
-			array( '%d' )
-		);
-
-		// Restore balance atomically using SQL arithmetic.
-		$vendor_table = $wpdb->prefix . 'wpss_vendor_profiles';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$vendor_table} SET pending_balance = GREATEST(0, pending_balance - %f), available_balance = available_balance + %f WHERE user_id = %d",
-				(float) $withdrawal->amount,
-				(float) $withdrawal->amount,
-				$user_id
-			)
-		);
-
-		$wpdb->query( 'COMMIT' );
-
-		wp_send_json_success( array( 'message' => __( 'Withdrawal cancelled. Balance restored.', 'wp-sell-services' ) ) );
 	}
 
 	/**

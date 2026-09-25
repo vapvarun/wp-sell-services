@@ -41,6 +41,7 @@
 
 			// Delete service
 			$(document).on('click', '.wpss-delete-service', this.handleDeleteService.bind(this));
+			$(document).on('click', '[data-wpss-cancel-withdrawal]', this.handleCancelWithdrawal.bind(this));
 
 			// Avatar upload
 			$(document).on('click', '#wpss-avatar-upload-btn', this.handleAvatarUpload.bind(this));
@@ -550,6 +551,37 @@
 		 *
 		 * @param {Event} e Click event.
 		 */
+		/**
+		 * Cancel a pending withdrawal (DELETE /withdrawals/{id}).
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleCancelWithdrawal: function (e) {
+			e.preventDefault();
+
+			const $button = $(e.currentTarget);
+
+			WPSS.showConfirm(wpssUnifiedDashboard.i18n.confirmCancelWithdrawal, function () {
+				$button.prop('disabled', true);
+
+				$.ajax({
+					url: wpssUnifiedDashboard.restUrl + 'withdrawals/' + $button.data('wpss-cancel-withdrawal'),
+					method: 'DELETE',
+					beforeSend: function (xhr) {
+						xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
+					},
+					success: function () {
+						// Balance cards and the request form all change: reload the section.
+						window.location.reload();
+					},
+					error: function (xhr) {
+						WPSS.showNotification((xhr.responseJSON && xhr.responseJSON.message) || wpssUnifiedDashboard.i18n.errorOccurred, 'error');
+						$button.prop('disabled', false);
+					}
+				});
+			});
+		},
+
 		handleDeleteService: function (e) {
 			e.preventDefault();
 

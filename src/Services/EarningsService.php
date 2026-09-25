@@ -31,6 +31,7 @@ class EarningsService {
 	public const WITHDRAWAL_APPROVED  = 'approved';
 	public const WITHDRAWAL_COMPLETED = 'completed';
 	public const WITHDRAWAL_REJECTED  = 'rejected';
+	public const WITHDRAWAL_CANCELLED = 'cancelled';
 
 	/**
 	 * Earnings grouping periods (consumed by get_by_period() and the REST
@@ -858,6 +859,7 @@ class EarningsService {
 					'id'           => (int) $row->id,
 					'amount'       => (float) $row->amount,
 					'method'       => $row->method,
+					'is_auto'      => ! empty( $row->is_auto ),
 					// Cast: the column is nullable, and under strict_types a NULL here
 					// is a TypeError that fatals the whole earnings page.
 					'details'      => json_decode( wpss_decrypt_secret( (string) ( $row->details ?? '' ) ), true ) ?: array(),
@@ -1066,7 +1068,66 @@ class EarningsService {
 			self::WITHDRAWAL_APPROVED  => __( 'Approved', 'wp-sell-services' ),
 			self::WITHDRAWAL_COMPLETED => __( 'Completed', 'wp-sell-services' ),
 			self::WITHDRAWAL_REJECTED  => __( 'Rejected', 'wp-sell-services' ),
+			self::WITHDRAWAL_CANCELLED => __( 'Cancelled', 'wp-sell-services' ),
 		);
+	}
+
+	/**
+	 * A vendor withdraws their own pending request.
+	 *
+	 * Nothing to put back: the available balance is the ledger minus open
+	 * requests, so leaving 'pending' releases the amount by itself. The old
+	 * AJAX handler wrote columns that do not exist, changed nothing and
+	 * reported "Balance restored" (Basecamp 10336467746). One conditional
+	 * UPDATE, so a double click or an admin approving at the same moment
+	 * cannot both win.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $withdrawal_id Withdrawal ID.
+	 * @param int $vendor_id     Vendor who must own it.
+	 * @return true|\WP_Error
+	 */
+	public function cancel_withdrawal( int $withdrawal_id, int $vendor_id ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_withdrawals';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$changed = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table} SET status = %s WHERE id = %d AND vendor_id = %d AND status = %s AND is_auto = 0", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				self::WITHDRAWAL_CANCELLED,
+				$withdrawal_id,
+				$vendor_id,
+				self::WITHDRAWAL_PENDING
+			)
+		);
+
+		if ( 1 === $changed ) {
+			/**
+			 * Fires after a vendor cancels their pending withdrawal.
+			 *
+			 * @since 1.8.0
+			 *
+			 * @param int $withdrawal_id Withdrawal ID.
+			 * @param int $vendor_id     Vendor user ID.
+			 */
+			do_action( 'wpss_withdrawal_cancelled', $withdrawal_id, $vendor_id );
+			return true;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT status, is_auto FROM {$table} WHERE id = %d AND vendor_id = %d", $withdrawal_id, $vendor_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		if ( ! $row ) {
+			return new \WP_Error( 'wpss_withdrawal_not_found', __( 'Withdrawal not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		if ( ! empty( $row->is_auto ) ) {
+			return new \WP_Error( 'wpss_withdrawal_auto', __( 'Automatic withdrawals cannot be cancelled.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		}
+
+		return new \WP_Error( 'wpss_withdrawal_not_pending', __( 'Only a pending withdrawal can be cancelled. This one has already been processed.', 'wp-sell-services' ), array( 'status' => 409 ) );
 	}
 
 	/**
