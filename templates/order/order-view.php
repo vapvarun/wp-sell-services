@@ -705,8 +705,18 @@ do_action( 'wpss_before_order_view', $order );
 				// so reading the column here showed the buyer no figure at all
 				// on exactly the orders where the whole charge came back.
 				$refunded_amount = wpss_get_order_refunded_amount( $order );
+				$refund_state    = wpss_get_order_refund_state( $order );
 
-				if ( $refunded_amount > 0 ) :
+				// A refund decided but not yet sent (offline, or a gateway that
+				// refused): say so, instead of an order that reads settled.
+				if ( in_array( $refund_state['state'], array( 'pending', 'failed' ), true ) ) :
+					?>
+					<div class="wpss-order-detail-item wpss-order-detail-item--refunded">
+						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Refund on its way', 'wp-sell-services' ); ?></span>
+						<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_format_price( (float) $refund_state['amount'], $order->currency ) ); ?></span>
+					</div>
+					<?php
+				elseif ( $refunded_amount > 0 ) :
 					$is_full_refund = $refunded_amount >= (float) $order->total;
 					?>
 					<div class="wpss-order-detail-item wpss-order-detail-item--refunded">

@@ -622,8 +622,10 @@ class Admin {
 		wpss_get_order_provider()->update_item_meta( $order_id, OrderWorkflowManager::REFUND_PENDING_META, 0 );
 
 		// A full manual refund closes the payment the same way a gateway
-		// refund would; a partial leaves the rest of the payment in place.
-		if ( ServiceOrder::STATUS_REFUNDED === $order->status ) {
+		// refund would; a partial leaves the rest of the payment in place. A
+		// cancellation refunds whatever was left, so it closes it too - the
+		// order used to stay "paid" after the money went back (10336731713).
+		if ( in_array( $order->status, array( ServiceOrder::STATUS_REFUNDED, ServiceOrder::STATUS_CANCELLED ), true ) ) {
 			$order->update( array( 'payment_status' => 'refunded' ) );
 		}
 

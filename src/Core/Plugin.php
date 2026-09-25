@@ -3048,6 +3048,7 @@ final class Plugin {
 		// Email hook map: hook => [ method, priority, accepted_args ].
 		$email_hooks = array(
 			'wpss_order_status_changed'             => array( 'handle_status_change', 20, 3 ),
+			'wpss_order_cancelled'                  => array( 'handle_order_cancelled', 20, 1 ),
 			'wpss_requirements_submitted'           => array( 'send_requirements_submitted', 20, 3 ),
 			'wpss_delivery_submitted'               => array( 'send_delivery_ready', 20, 2 ),
 			'wpss_new_order_message'                => array( 'send_new_message', 20, 3 ),

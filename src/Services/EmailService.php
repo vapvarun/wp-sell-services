@@ -155,6 +155,7 @@ class EmailService {
 	public function init(): void {
 		// Hook into order status changes.
 		add_action( 'wpss_order_status_changed', array( $this, 'handle_status_change' ), 20, 3 );
+		add_action( 'wpss_order_cancelled', array( $this, 'handle_order_cancelled' ), 20, 1 );
 
 		// Hook into specific events.
 		add_action( 'wpss_requirements_submitted', array( $this, 'send_requirements_submitted' ), 20, 3 );
@@ -256,9 +257,8 @@ class EmailService {
 				$this->send_cancellation_requested( $order );
 				break;
 
-			case ServiceOrder::STATUS_CANCELLED:
-				$this->send_order_cancelled( $order );
-				break;
+			// STATUS_CANCELLED is sent from handle_order_cancelled(), after the
+			// refund has been attempted, so the email can say where the money is.
 
 			case ServiceOrder::STATUS_DISPUTED:
 				$this->send_dispute_opened( $order );
@@ -1437,6 +1437,38 @@ class EmailService {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Send the cancellation email once the cancellation has been processed.
+	 *
+	 * Hooked to wpss_order_cancelled, which fires after the refund attempt:
+	 * on wpss_order_status_changed the refund had not run yet, so the email
+	 * could not tell the buyer whether or how their money was coming back
+	 * (Basecamp 10336731713).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return void
+	 */
+	public function handle_order_cancelled( int $order_id ): void {
+		$order = wpss_get_order( $order_id );
+
+		// Sub-orders (tips, extensions, milestone phases) have their own flows.
+		if ( ! $order || in_array(
+			$order->platform ?? '',
+			array(
+				\WPSellServices\Services\TippingService::ORDER_TYPE,
+				\WPSellServices\Services\ExtensionOrderService::ORDER_TYPE,
+				\WPSellServices\Services\MilestoneService::ORDER_TYPE,
+			),
+			true
+		) ) {
+			return;
+		}
+
+		$this->send_order_cancelled( $order );
 	}
 
 	/**

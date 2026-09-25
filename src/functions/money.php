@@ -288,6 +288,54 @@ function wpss_get_order_refunded_amount( object $order ): float {
 }
 
 /**
+ * Where the buyer's money stands after a refund was decided.
+ *
+ * - 'pending':  no gateway could send it (offline, or paid outside one); the
+ *               admin sends it by hand and "Mark refund sent" clears it.
+ * - 'failed':   the gateway refused; the admin retries.
+ * - 'refunded': it went back.
+ * - '':         no refund on this order.
+ *
+ * One read for the cancellation email and the order page, so the buyer is told
+ * the same thing in both (Basecamp 10336731713).
+ *
+ * @since 1.8.0
+ *
+ * @param object $order Order row or ServiceOrder.
+ * @return array{state: string, amount: float}
+ */
+function wpss_get_order_refund_state( object $order ): array {
+	$order_id = (int) ( $order->id ?? 0 );
+	$pending  = (float) wpss_get_order_provider()->get_item_meta( $order_id, \WPSellServices\Services\OrderWorkflowManager::REFUND_PENDING_META );
+
+	if ( $pending > 0 ) {
+		return array(
+			'state'  => 'pending',
+			'amount' => $pending,
+		);
+	}
+
+	$failed = \WPSellServices\Services\OrderWorkflowManager::get_failed_refund( $order_id );
+
+	if ( $failed ) {
+		return array(
+			'state'  => 'failed',
+			'amount' => (float) ( $failed['amount'] ?? 0 ),
+		);
+	}
+
+	$refunded = wpss_get_order_refunded_amount( $order );
+
+	return $refunded > 0 ? array(
+		'state'  => 'refunded',
+		'amount' => $refunded,
+	) : array(
+		'state'  => '',
+		'amount' => 0.0,
+	);
+}
+
+/**
  * THE single authority for "can this order be refunded".
  *
  * Replaces two hardcoded, contradictory status lists — the vendor/customer AJAX
