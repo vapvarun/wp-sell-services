@@ -137,6 +137,7 @@ class ScriptRegistry {
 			array(
 				'confirm' => __( 'Confirm', 'wp-sell-services' ),
 				'cancel'  => __( 'Cancel', 'wp-sell-services' ),
+				'dismiss' => __( 'Dismiss', 'wp-sell-services' ),
 			)
 		);
 	}

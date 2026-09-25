@@ -221,21 +221,42 @@
 
 		var toast = document.createElement( 'div' );
 		toast.className = 'wpss-toast wpss-toast--' + type;
-		toast.textContent = message;
-		_getContainer().appendChild( toast );
 
-		requestAnimationFrame( function() {
-			toast.classList.add( 'is-visible' );
-		} );
+		var text = document.createElement( 'span' );
+		text.textContent = message;
+		toast.appendChild( text );
 
-		setTimeout( function() {
+		var dismiss = function() {
 			toast.classList.remove( 'is-visible' );
 			setTimeout( function() {
 				if ( toast.parentNode ) {
 					toast.parentNode.removeChild( toast );
 				}
 			}, 300 );
-		}, 4000 );
+		};
+
+		// An error stays until it is dismissed: a reason that vanished after
+		// four seconds (a storage save refused, a failed test) could not be
+		// read, let alone acted on (Basecamp 10340902293).
+		if ( 'error' === type ) {
+			toast.setAttribute( 'role', 'alert' );
+			var close = document.createElement( 'button' );
+			close.type = 'button';
+			close.className = 'wpss-toast__close';
+			close.setAttribute( 'aria-label', ( window.wpssUiI18n && window.wpssUiI18n.dismiss ) || 'Dismiss' );
+			close.textContent = '\u00d7';
+			close.addEventListener( 'click', dismiss );
+			toast.appendChild( close );
+		} else {
+			toast.setAttribute( 'role', 'status' );
+			setTimeout( dismiss, 4000 );
+		}
+
+		_getContainer().appendChild( toast );
+
+		requestAnimationFrame( function() {
+			toast.classList.add( 'is-visible' );
+		} );
 	};
 
 } )();

@@ -1123,7 +1123,9 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 .wpss-toast { padding: var(--wpss-space-3, 12px) var(--wpss-space-5, 20px); border-radius: var(--wpss-radius, 8px); font-size: var(--wpss-text-sm, 13px); line-height: 1.5; color: var(--wpss-white, #fff); background: var(--wpss-text, #111827); box-shadow: var(--wpss-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1)); max-width: 360px; opacity: 0; transform: translateY(8px); transition: opacity 0.3s, transform 0.3s; }
 .wpss-toast.is-visible { opacity: 1; transform: translateY(0); }
 .wpss-toast--success { background: var(--wpss-success, #10b981); }
-.wpss-toast--error { background: var(--wpss-danger, #dc2626); }
+.wpss-toast--error { background: var(--wpss-danger, #dc2626); display: flex; align-items: flex-start; gap: var(--wpss-space-3, 12px); pointer-events: auto; }
+.wpss-toast__close { flex-shrink: 0; margin-inline-start: auto; padding: 0 var(--wpss-space-1, 4px); border: 0; background: none; color: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
+.wpss-toast__close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 /* Dark on amber. White on --wpss-warning measures 2.15:1; --wpss-black is the
    on-colour counterpart and gives about 9:1, in both modes. Same pairing as
    the portfolio Featured badge. */
