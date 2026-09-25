@@ -3752,7 +3752,8 @@ button.wpss-change-status:focus {
 
 	/* Core keeps the row actions' height at this width but shows them only on
 	   touch or hover, which read as a blank band under every row. */
-	.wp-list-table.orders .row-actions {
+	.wp-list-table.orders .row-actions,
+	.wp-list-table.disputes .row-actions {
 		right: 0;
 	}
 
@@ -3859,4 +3860,80 @@ button.wpss-change-status:focus {
 		grid-template-columns: minmax(0, 1fr);
 		gap: 2px;
 	}
+}
+
+/* Disputes list (Basecamp 10337171525). */
+.wp-list-table.disputes .column-id { width: 13em; }
+.wp-list-table.disputes .column-amount { width: 7em; }
+.wp-list-table.disputes .column-status { width: 11em; }
+.wp-list-table.disputes .column-age { width: 7em; }
+
+/* Admin dispute detail (Basecamp 10337171525). Two columns; below 1024px the
+   columns dissolve and the boxes take the order an owner works in. */
+.wpss-admin-dispute__layout {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+	gap: 20px;
+	align-items: start;
+	margin-top: 20px;
+}
+
+.wpss-admin-dispute .postbox > .hndle {
+	margin: 0;
+	padding: 8px 12px;
+}
+
+.wpss-admin-dispute__statement {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-admin-dispute__thread .wpss-dispute-detail__evidence {
+	margin-top: 0;
+}
+
+.wpss-admin-dispute__party {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding-block: 8px;
+	overflow-wrap: anywhere;
+}
+
+.wpss-admin-dispute__party + .wpss-admin-dispute__party {
+	border-top: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-admin-dispute__party small,
+.wpss-admin-dispute__email {
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-dispute-outcome {
+	margin: 0 0 12px;
+	font-weight: 600;
+}
+
+.wpss-dispute-outcome:empty {
+	display: none;
+}
+
+@media screen and (max-width: 1024px) {
+	.wpss-admin-dispute__layout {
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+	}
+
+	.wpss-admin-dispute__main,
+	.wpss-admin-dispute__side {
+		display: contents;
+	}
+
+	.wpss-admin-dispute__details { order: 1; }
+	.wpss-admin-dispute__decide { order: 2; }
+	.wpss-admin-dispute__thread { order: 3; }
+	.wpss-admin-dispute__order { order: 4; }
+	.wpss-admin-dispute__parties { order: 5; }
 }

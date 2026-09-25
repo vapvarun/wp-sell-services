@@ -1185,6 +1185,30 @@ class DisputeService {
 	}
 
 	/**
+	 * How many disputes a member has been party to, as buyer or vendor.
+	 *
+	 * Shown beside each party on the admin dispute screen - the history a
+	 * judge wants before ruling (Basecamp 10337171525).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $user_id User ID.
+	 * @return int
+	 */
+	public function count_for_user( int $user_id ): int {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$this->table} d INNER JOIN {$wpdb->prefix}wpss_orders o ON o.id = d.order_id WHERE o.customer_id = %d OR o.vendor_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$user_id,
+				$user_id
+			)
+		);
+	}
+
+	/**
 	 * Count disputes by status.
 	 *
 	 * @return array<string, int> Status counts.

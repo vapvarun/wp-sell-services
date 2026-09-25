@@ -1078,20 +1078,23 @@ class DisputeWorkflowManager {
 			return;
 		}
 
-		// Notify the other party.
-		$notify_user = (int) $user_id === (int) $order->customer_id
-			? (int) $order->vendor_id
-			: (int) $order->customer_id;
+		// Notify the other party. A reply from someone who is neither - the
+		// admin mediating - goes to both; it used to reach the buyer only
+		// (Basecamp 10337171525).
+		$parties    = array( (int) $order->customer_id, (int) $order->vendor_id );
+		$recipients = in_array( (int) $user_id, $parties, true ) ? array_diff( $parties, array( (int) $user_id ) ) : $parties;
 
-		$this->notification_service->send(
-			$notify_user,
-			'dispute_response_received',
-			array(
-				'dispute_id' => $dispute_id,
-				'order_id'   => $dispute->order_id,
-				'from_user'  => $user_id,
-			)
-		);
+		foreach ( $recipients as $notify_user ) {
+			$this->notification_service->send(
+				$notify_user,
+				'dispute_response_received',
+				array(
+					'dispute_id' => $dispute_id,
+					'order_id'   => $dispute->order_id,
+					'from_user'  => $user_id,
+				)
+			);
+		}
 	}
 
 	/**

@@ -786,17 +786,7 @@
 			WPSS.showModal('wpss-dispute-modal');
 		});
 
-		// Add-evidence: reflect the chosen file name next to the attach button.
-		$(document).on('change', '#wpss-add-evidence-form input[name="evidence_file"]', function() {
-			const name = (this.files && this.files.length) ? this.files[0].name : '';
-			$(this).closest('.wpss-add-evidence-form').find('.wpss-evidence-filename').text(name);
-		});
-
-		// Add-evidence form submission (dispute detail thread).
-		$(document).on('submit', '#wpss-add-evidence-form', function(e) {
-			e.preventDefault();
-			WPSS.submitDisputeEvidence($(this));
-		});
+		// The dispute thread's reply form is assets/js/dispute-thread.js, shared with the admin screen.
 
 		// Escalate a dispute. The REST route requires a reason, so ask for one
 		// rather than sending an empty string the API would reject.
@@ -1090,47 +1080,6 @@
 			// The escalate route requires a reason, so collect it in the same
 			// dialog rather than a second step.
 			prompt: options.requireReason ? wpssData.i18n.disputeReasonPrompt : ''
-		});
-	};
-
-	WPSS.submitDisputeEvidence = function($form) {
-		const $btn = $form.find('button[type="submit"]');
-		const btnText = $btn.text();
-		const formEl = $form.get(0);
-		const data = new FormData(formEl);
-		data.append('action', 'wpss_add_dispute_evidence');
-
-		$btn.prop('disabled', true).text(wpssData.i18n.submitting);
-
-		$.ajax({
-			url: wpssData.ajaxUrl,
-			type: 'POST',
-			data: data,
-			processData: false,
-			contentType: false,
-			success: function(response) {
-				if (response.success) {
-					const $thread = $('#wpss-evidence-thread');
-					$thread.find('.wpss-evidence-empty').remove();
-					if (response.data && response.data.html) {
-						$thread.append(response.data.html);
-					}
-					formEl.reset();
-					$form.find('.wpss-evidence-filename').text('');
-					if (window.lucide && typeof window.lucide.createIcons === 'function') {
-						window.lucide.createIcons();
-					}
-					WPSS.showNotification((response.data && response.data.message) || 'Message added.', 'success');
-				} else {
-					WPSS.showNotification((response.data && response.data.message) || wpssData.i18n.error, 'error');
-				}
-			},
-			error: function() {
-				WPSS.showNotification(wpssData.i18n.error, 'error');
-			},
-			complete: function() {
-				$btn.prop('disabled', false).text(btnText);
-			}
 		});
 	};
 

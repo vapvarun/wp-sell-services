@@ -1892,7 +1892,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 							id="deliver-files"
 							class="wpss-file-input"
 							multiple
-							accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip,.rar"
+							accept="<?php echo esc_attr( wpss_upload_accept( 'delivery' ) ); ?>"
 						>
 						<label for="deliver-files" class="wpss-file-label">
 							<i data-lucide="upload" class="wpss-icon" aria-hidden="true"></i>

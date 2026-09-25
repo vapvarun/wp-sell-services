@@ -214,117 +214,18 @@ if ( $view_dispute_id ) {
 		<?php endif; ?>
 
 		<?php
-		// Messages & evidence thread. The AJAX write path
-		// (wpss_add_dispute_evidence) and DisputeService::add_evidence() already
-		// existed, but no member-facing surface ever rendered the thread or a
-		// reply form — a party could OPEN a dispute and then never respond to it.
-		// This wires the existing backend to the dashboard.
-		$can_add_evidence = ! in_array( $status_key, array( 'resolved', 'closed' ), true );
+		wpss_get_template_part(
+			'partials/dispute-thread',
+			'',
+			array(
+				'wpss_dispute'     => $dispute,
+				'wpss_evidence'    => $evidence_items,
+				'wpss_viewer_id'   => $user_id,
+				'wpss_customer_id' => (int) $dispute_order->customer_id,
+				'wpss_vendor_id'   => (int) $dispute_order->vendor_id,
+			)
+		);
 		?>
-		<div class="wpss-dispute-detail__evidence">
-			<h3><?php esc_html_e( 'Messages &amp; evidence', 'wp-sell-services' ); ?></h3>
-
-			<div class="wpss-evidence-thread" id="wpss-evidence-thread">
-				<?php if ( empty( $evidence_items ) ) : ?>
-					<p class="wpss-evidence-empty"><?php esc_html_e( 'No messages yet. Add one below to make your case to the reviewer and the other party.', 'wp-sell-services' ); ?></p>
-				<?php else : ?>
-					<?php
-					foreach ( $evidence_items as $item ) :
-						$ev_user_id = (int) ( $item['user_id'] ?? 0 );
-						$ev_name    = $ev_user_id ? wpss_get_member_display_name( $ev_user_id ) : __( 'System', 'wp-sell-services' );
-						$ev_own     = $ev_user_id === $user_id;
-						$ev_type    = (string) ( $item['type'] ?? 'text' );
-						$ev_content = (string) ( $item['content'] ?? '' );
-						$ev_desc    = (string) ( $item['description'] ?? '' );
-
-						/*
-						 * The stored filename, not basename() of the link.
-						 *
-						 * Since the 1.7.1 private-file rework the content is a
-						 * permission-gated admin-post.php URL with the file in a
-						 * query string, and basename() does not strip a query
-						 * string - so the label printed the endpoint and its
-						 * arguments instead of a name. get_evidence() already
-						 * returns the real name on the attachment record.
-						 */
-						$ev_attach = isset( $item['attachments'][0] ) && is_array( $item['attachments'][0] ) ? $item['attachments'][0] : array();
-						$ev_file   = wpss_format_attachment_name( (string) ( $ev_attach['name'] ?? '' ) );
-
-						if ( '' === $ev_file ) {
-							$ev_path = (string) wp_parse_url( $ev_content, PHP_URL_PATH );
-							$ev_file = '' !== $ev_path ? basename( $ev_path ) : __( 'Attachment', 'wp-sell-services' );
-						}
-						$ev_when = ! empty( $item['created_at'] ) ? mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item['created_at'] ) : '';
-						?>
-						<div class="wpss-evidence-item <?php echo $ev_own ? 'wpss-evidence-own' : 'wpss-evidence-other'; ?>">
-							<div class="wpss-evidence-bubble">
-								<span class="wpss-evidence-author"><strong><?php echo esc_html( $ev_name ); ?></strong></span>
-								<div class="wpss-evidence-content">
-									<?php
-									/*
-									 * Anything that is not a media type renders as prose. This
-									 * tested `'text' === $ev_type`, an allow-list of exactly one
-									 * value, so the opening statement - typed `opening_statement`
-									 * so the panel can tell it from a reply - matched no branch
-									 * and drew an empty bubble with just a name and a time. Any
-									 * future textual type would have failed the same silent way.
-									 */
-									?>
-									<?php if ( ! in_array( $ev_type, array( 'image', 'file', 'link' ), true ) && '' !== $ev_content ) : ?>
-										<div class="wpss-evidence-text"><?php echo wp_kses_post( nl2br( esc_html( $ev_content ) ) ); ?></div>
-									<?php endif; ?>
-									<?php if ( '' !== $ev_desc && 'text' !== $ev_type ) : ?>
-										<div class="wpss-evidence-text"><?php echo wp_kses_post( nl2br( esc_html( $ev_desc ) ) ); ?></div>
-									<?php endif; ?>
-									<?php if ( 'image' === $ev_type && '' !== $ev_content ) : ?>
-										<div class="wpss-evidence-image">
-											<a href="<?php echo esc_url( $ev_content ); ?>" target="_blank" rel="noopener noreferrer">
-												<img src="<?php echo esc_url( $ev_content ); ?>" alt="<?php esc_attr_e( 'Evidence image', 'wp-sell-services' ); ?>">
-											</a>
-										</div>
-									<?php elseif ( in_array( $ev_type, array( 'file', 'link' ), true ) && '' !== $ev_content ) : ?>
-										<div class="wpss-evidence-file">
-											<a href="<?php echo esc_url( $ev_content ); ?>" target="_blank" rel="noopener noreferrer" class="wpss-file-link">
-												<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-												<span><?php echo esc_html( $ev_file ); ?></span>
-											</a>
-										</div>
-									<?php endif; ?>
-								</div>
-								<?php if ( $ev_when ) : ?>
-									<span class="wpss-evidence-time"><?php echo esc_html( $ev_when ); ?></span>
-								<?php endif; ?>
-							</div>
-						</div>
-					<?php endforeach; ?>
-				<?php endif; ?>
-			</div>
-
-			<?php if ( $can_add_evidence ) : ?>
-				<form id="wpss-add-evidence-form" class="wpss-add-evidence-form" enctype="multipart/form-data">
-					<?php wp_nonce_field( 'wpss_add_evidence', 'nonce' ); ?>
-					<input type="hidden" name="dispute_id" value="<?php echo esc_attr( (int) $dispute->id ); ?>">
-					<label class="wpss-form-label" for="wpss-evidence-message">
-						<?php esc_html_e( 'Add a message or evidence', 'wp-sell-services' ); ?>
-					</label>
-					<textarea id="wpss-evidence-message" name="description" class="wpss-form-textarea" rows="3"
-						placeholder="<?php esc_attr_e( 'Explain your side, or add context for the reviewer…', 'wp-sell-services' ); ?>"></textarea>
-					<div class="wpss-add-evidence-form__row">
-						<label class="wpss-btn wpss-btn--secondary wpss-btn--sm wpss-evidence-attach">
-							<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>
-							<span><?php esc_html_e( 'Attach file', 'wp-sell-services' ); ?></span>
-							<input type="file" name="evidence_file" accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip,.txt" hidden>
-						</label>
-						<span class="wpss-evidence-filename" aria-live="polite"></span>
-						<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--sm">
-							<?php esc_html_e( 'Send', 'wp-sell-services' ); ?>
-						</button>
-					</div>
-				</form>
-			<?php else : ?>
-				<p class="wpss-evidence-locked"><?php esc_html_e( 'This dispute is closed. No further messages can be added.', 'wp-sell-services' ); ?></p>
-			<?php endif; ?>
-		</div>
 
 		<p class="wpss-dispute-detail__actions">
 			<?php

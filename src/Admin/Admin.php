@@ -1365,6 +1365,13 @@ class Admin {
 		);
 		wp_style_add_data( 'wpss-admin', 'rtl', 'replace' );
 
+		// The dispute detail renders the order view's delivery and requirements
+		// blocks (Basecamp 10337171525); the order detail loads it in OrderScreen.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen switch.
+		if ( str_ends_with( $hook, '_page_wpss-disputes' ) && isset( $_GET['action'] ) && 'view' === sanitize_key( wp_unslash( $_GET['action'] ) ) ) {
+			wpss_enqueue_order_view_style();
+		}
+
 		// Settings page CSS (loaded only on settings page).
 		if ( $this->is_settings_page( $hook ) ) {
 			wp_enqueue_style(
@@ -2802,7 +2809,9 @@ class Admin {
 
 		$list_table = new DisputesListTable();
 		$list_table->prepare_items();
-		$has_items = ! empty( $list_table->items );
+		// A filter with no matches keeps the table and its filters (as on Orders).
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filters.
+		$has_items = ! empty( $list_table->items ) || (bool) array_filter( array_intersect_key( $_GET, array_flip( array( 'status', 'reason', 's' ) ) ) );
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Disputes', 'wp-sell-services' ); ?></h1>
@@ -2932,8 +2941,19 @@ class Admin {
 			<label for="<?php echo esc_attr( $id ); ?>"><strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong></label><br>
 			<select name="resolution" id="<?php echo esc_attr( $id ); ?>" class="wpss-dispute-resolution" style="width: 100%;">
 				<option value=""><?php esc_html_e( '— Select Resolution —', 'wp-sell-services' ); ?></option>
+				<?php
+				// Five labels, three outcomes (DisputeService::handle_resolution):
+				// the buyer gets everything back, part of it, or nothing and the
+				// order completes. Each option says which, and the line below
+				// states the money before saving (Basecamp 10337171525).
+				$refunds = array(
+					DisputeService::RESOLUTION_REFUND      => 'full',
+					DisputeService::RESOLUTION_FAVOR_BUYER => 'full',
+					DisputeService::RESOLUTION_PARTIAL_REFUND => 'partial',
+				);
+				?>
 				<?php foreach ( $resolutions as $value => $label ) : ?>
-					<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $selected, $value ); ?>>
+					<option value="<?php echo esc_attr( $value ); ?>" data-refund="<?php echo esc_attr( $refunds[ $value ] ?? 'none' ); ?>" <?php selected( $selected, $value ); ?>>
 						<?php echo esc_html( $label ); ?>
 					</option>
 				<?php endforeach; ?>
@@ -2970,25 +2990,12 @@ class Admin {
 			</span>
 		</p>
 
-		<script>
-			( function () {
-				var select = document.getElementById( <?php echo wp_json_encode( $id ); ?> );
-
-				if ( ! select ) {
-					return;
-				}
-
-				var row = select.closest( 'form' ).querySelector( '.wpss-dispute-refund-amount' );
-
-				if ( ! row ) {
-					return;
-				}
-
-				select.addEventListener( 'change', function () {
-					row.style.display = select.value === row.dataset.wpssPartial ? '' : 'none';
-				} );
-			}() );
-		</script>
+		<p class="wpss-dispute-outcome" aria-live="polite"
+			data-total="<?php echo esc_attr( (string) $total ); ?>"
+			data-currency="<?php echo esc_attr( (string) ( $order->currency ?? wpss_get_currency() ) ); ?>"
+			data-full="<?php /* translators: 1: amount refunded to the buyer */ esc_attr_e( 'The buyer gets %1$s back (a full refund); the vendor keeps nothing.', 'wp-sell-services' ); ?>"
+			data-partial="<?php /* translators: 1: amount refunded to the buyer, 2: amount the vendor keeps */ esc_attr_e( 'The buyer gets %1$s back; the vendor keeps %2$s.', 'wp-sell-services' ); ?>"
+			data-none="<?php /* translators: 2: amount the vendor keeps */ esc_attr_e( 'The buyer gets nothing back; the order completes and the vendor keeps %2$s.', 'wp-sell-services' ); ?>"></p>
 		<?php
 	}
 
@@ -3001,7 +3008,6 @@ class Admin {
 	private function render_dispute_detail( int $dispute_id ): void {
 		global $wpdb;
 		$disputes_table = $wpdb->prefix . 'wpss_disputes';
-		$messages_table = $wpdb->prefix . 'wpss_dispute_messages';
 		$orders_table   = $wpdb->prefix . 'wpss_orders';
 
 		// Show update feedback notice.
@@ -3045,32 +3051,16 @@ class Admin {
 			)
 		);
 
-		// Get dispute messages.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$messages = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$messages_table} WHERE dispute_id = %d ORDER BY created_at ASC",
-				$dispute_id
-			)
-		);
-
 		$initiated_by = get_userdata( $dispute->initiated_by );
 		$vendor       = $order ? get_userdata( $order->vendor_id ) : null;
 		$customer     = $order ? get_userdata( $order->customer_id ) : null;
 
-		$statuses = array(
-			'open'           => __( 'Open', 'wp-sell-services' ),
-			'pending_review' => __( 'Pending Review', 'wp-sell-services' ),
-			'resolved'       => __( 'Resolved', 'wp-sell-services' ),
-			'escalated'      => __( 'Escalated', 'wp-sell-services' ),
-			'closed'         => __( 'Closed', 'wp-sell-services' ),
-		);
-
+		$statuses    = \WPSellServices\Models\Dispute::get_statuses();
 		$resolutions = DisputeService::get_resolution_types();
 
 		$reasons = wpss_get_dispute_reasons();
 		?>
-		<div class="wrap wpss-dispute-detail">
+		<div class="wrap wpss-admin-dispute">
 			<h1 class="wp-heading-inline">
 				<?php
 				printf(
@@ -3085,154 +3075,168 @@ class Admin {
 			</a>
 			<hr class="wp-header-end">
 
-			<div class="wpss-dispute-layout" style="display: flex; gap: 20px; margin-top: 20px;">
-				<div class="wpss-dispute-main" style="flex: 2;">
-					<!-- Dispute Info -->
-					<div class="postbox">
-						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Dispute Details', 'wp-sell-services' ); ?></h2>
+			<?php
+			/*
+			 * Two columns on a desktop. Below 1024px both columns dissolve
+			 * (display: contents) and the boxes take the order an owner works
+			 * in: details, the decision, the conversation, the order, the
+			 * parties. It used to stay a row at 390px and scroll sideways to
+			 * the resolution controls (Basecamp 10337171525).
+			 */
+			?>
+			<div class="wpss-admin-dispute__layout">
+				<div class="wpss-admin-dispute__main">
+					<div class="postbox wpss-admin-dispute__details">
+						<h2 class="hndle"><?php esc_html_e( 'Dispute Details', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
-							<table class="form-table">
-								<tr>
-									<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-									<td>
-										<span class="<?php echo esc_attr( wpss_status_class( $dispute->status ) ); ?>">
-											<?php echo esc_html( $statuses[ $dispute->status ] ?? $dispute->status ); ?>
-										</span>
-									</td>
-								</tr>
-								<tr>
-									<th><?php esc_html_e( 'Reason', 'wp-sell-services' ); ?></th>
-									<td><?php echo esc_html( $reasons[ $dispute->reason ] ?? $dispute->reason ); ?></td>
-								</tr>
-								<tr>
-									<th><?php esc_html_e( 'Opened By', 'wp-sell-services' ); ?></th>
-									<td>
-										<?php if ( $initiated_by ) : ?>
-											<a href="<?php echo esc_url( get_edit_user_link( $initiated_by->ID ) ); ?>">
-												<?php echo esc_html( $initiated_by->display_name ); ?>
-											</a>
-										<?php else : ?>
-											<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
-										<?php endif; ?>
-									</td>
-								</tr>
-								<tr>
-									<th><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></th>
-									<td>
-										<?php if ( $order ) : ?>
-											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $order->id ) ); ?>">
-												#<?php echo esc_html( $order->order_number ); ?>
-											</a>
-										<?php else : ?>
-											<em><?php esc_html_e( 'Deleted', 'wp-sell-services' ); ?></em>
-										<?php endif; ?>
-									</td>
-								</tr>
-								<tr>
-									<th><?php esc_html_e( 'Date Opened', 'wp-sell-services' ); ?></th>
-									<td><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dispute->created_at ) ) ); ?></td>
-								</tr>
-								<?php if ( ! empty( $dispute->description ) ) : ?>
-									<tr>
-										<th><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></th>
-										<td><?php echo wp_kses_post( wpautop( $dispute->description ) ); ?></td>
-									</tr>
-								<?php endif; ?>
-							</table>
-						</div>
-					</div>
-
-					<!-- Messages -->
-					<div class="postbox">
-						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Messages', 'wp-sell-services' ); ?></h2>
-						<div class="inside">
-							<?php if ( ! empty( $messages ) ) : ?>
-								<div class="wpss-dispute-messages" style="max-height: 400px; overflow-y: auto;">
-									<?php foreach ( $messages as $message ) : ?>
-										<?php $msg_user = get_userdata( $message->sender_id ); ?>
-										<div class="wpss-message" style="padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-left: 3px solid #0073aa;">
-											<div style="margin-bottom: 5px;">
-												<strong><?php echo esc_html( $msg_user ? $msg_user->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
-												<span style="color: #666; margin-left: 10px;">
-													<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
-												</span>
-											</div>
-											<?php if ( '' !== trim( (string) $message->message ) ) : ?>
-												<div><?php echo wp_kses_post( wpautop( $message->message ) ); ?></div>
-											<?php endif; ?>
-											<?php
-											/*
-											 * File evidence is stored with message = '' and the
-											 * file in `attachments`. Rendering only ->message drew
-											 * an empty bubble for every uploaded file, so the
-											 * person deciding the dispute could not open any of
-											 * the evidence they were being asked to weigh.
-											 */
-											$wpss_msg_files = wpss_dispute_message_attachments( $message->attachments ?? '' );
-											?>
-											<?php if ( $wpss_msg_files ) : ?>
-												<ul class="wpss-dispute-message-files" style="margin: 8px 0 0; padding: 0; list-style: none;">
-													<?php foreach ( $wpss_msg_files as $wpss_msg_file ) : ?>
-														<li style="margin-top: 4px;">
-															<a href="<?php echo esc_url( $wpss_msg_file['url'] ); ?>" target="_blank" rel="noopener noreferrer">
-																<span class="dashicons dashicons-media-default" style="vertical-align: middle;"></span>
-																<?php echo esc_html( $wpss_msg_file['name'] ); ?>
-															</a>
-														</li>
-													<?php endforeach; ?>
-												</ul>
-											<?php endif; ?>
-											<?php if ( '' === trim( (string) $message->message ) && ! $wpss_msg_files ) : ?>
-												<em style="color: #666;"><?php esc_html_e( 'No content', 'wp-sell-services' ); ?></em>
-											<?php endif; ?>
-										</div>
-									<?php endforeach; ?>
+							<div class="wpss-order-details-grid">
+								<div class="wpss-order-detail-item">
+									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></span>
+									<span class="wpss-order-detail-item__value">
+										<span class="<?php echo esc_attr( wpss_status_class( $dispute->status ) ); ?>"><?php echo esc_html( $statuses[ $dispute->status ] ?? $dispute->status ); ?></span>
+									</span>
 								</div>
-							<?php else : ?>
-								<p><?php esc_html_e( 'No messages yet.', 'wp-sell-services' ); ?></p>
+								<div class="wpss-order-detail-item">
+									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Reason', 'wp-sell-services' ); ?></span>
+									<span class="wpss-order-detail-item__value"><?php echo esc_html( $reasons[ $dispute->reason ] ?? ucwords( str_replace( '_', ' ', (string) $dispute->reason ) ) ); ?></span>
+								</div>
+								<div class="wpss-order-detail-item">
+									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'At Stake', 'wp-sell-services' ); ?></span>
+									<span class="wpss-order-detail-item__value"><?php echo $order ? esc_html( wpss_format_price( (float) $order->total, (string) $order->currency ) ) : '&mdash;'; ?></span>
+								</div>
+								<div class="wpss-order-detail-item">
+									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Opened', 'wp-sell-services' ); ?></span>
+									<span class="wpss-order-detail-item__value">
+										<?php
+										echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dispute->created_at ) ) );
+										if ( $initiated_by ) {
+											/* translators: %s: member name */
+											echo '<br><small>' . esc_html( sprintf( __( 'by %s', 'wp-sell-services' ), wpss_get_member_display_name( (int) $initiated_by->ID ) ) ) . '</small>';
+										}
+										?>
+									</span>
+								</div>
+							</div>
+							<?php if ( ! empty( $dispute->description ) ) : ?>
+								<div class="wpss-admin-dispute__statement"><?php echo wp_kses_post( wpautop( $dispute->description ) ); ?></div>
 							<?php endif; ?>
 						</div>
 					</div>
+
+					<div class="postbox wpss-admin-dispute__thread">
+						<div class="inside">
+							<?php
+							wpss_get_template_part(
+								'partials/dispute-thread',
+								'',
+								array(
+									'wpss_dispute'     => $dispute,
+									'wpss_evidence'    => ( new DisputeService() )->get_evidence( $dispute_id ),
+									'wpss_viewer_id'   => get_current_user_id(),
+									'wpss_customer_id' => $order ? (int) $order->customer_id : 0,
+									'wpss_vendor_id'   => $order ? (int) $order->vendor_id : 0,
+								)
+							);
+							?>
+						</div>
+					</div>
+
+					<?php if ( $order ) : ?>
+						<?php $wpss_order_model = \WPSellServices\Models\ServiceOrder::find( (int) $order->id ); ?>
+						<div class="postbox wpss-admin-dispute__order">
+							<h2 class="hndle"><?php esc_html_e( 'The Order', 'wp-sell-services' ); ?></h2>
+							<div class="inside">
+								<div class="wpss-order-details-grid">
+									<div class="wpss-order-detail-item">
+										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></span>
+										<span class="wpss-order-detail-item__value">
+											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $order->id ) ); ?>">#<?php echo esc_html( $order->order_number ); ?></a>
+										</span>
+									</div>
+									<div class="wpss-order-detail-item">
+										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Status', 'wp-sell-services' ); ?></span>
+										<span class="wpss-order-detail-item__value"><span class="<?php echo esc_attr( wpss_status_class( (string) $order->status ) ); ?>"><?php echo esc_html( wpss_get_order_status_label( (string) $order->status ) ); ?></span></span>
+									</div>
+									<?php
+									if ( $wpss_order_model ) {
+										wpss_get_template_part( 'order/payment', '', array( 'wpss_order' => $wpss_order_model ) );
+									}
+									?>
+								</div>
+								<?php
+								// The delivery and the brief are what a dispute is usually about;
+								// the same blocks as the order screen, read-only.
+								if ( $wpss_order_model ) {
+									wpss_get_template_part(
+										'order/deliveries',
+										'',
+										array(
+											'wpss_order'  => $wpss_order_model,
+											'wpss_deliveries' => ( new \WPSellServices\Services\DeliveryService() )->get_order_deliveries( (int) $order->id ),
+											'wpss_viewer' => 'admin',
+										)
+									);
+									wpss_get_template_part(
+										'order/requirements',
+										'',
+										array(
+											'wpss_order'  => $wpss_order_model,
+											'wpss_viewer' => 'admin',
+										)
+									);
+								}
+								?>
+								<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . $order->id ) ); ?>"><?php esc_html_e( 'Open the order: timeline, activity and messages', 'wp-sell-services' ); ?> &rarr;</a></p>
+							</div>
+						</div>
+					<?php endif; ?>
 				</div>
 
-				<div class="wpss-dispute-sidebar" style="flex: 1;">
-					<!-- Parties -->
-					<div class="postbox">
-						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Parties Involved', 'wp-sell-services' ); ?></h2>
+				<div class="wpss-admin-dispute__side">
+					<div class="postbox wpss-admin-dispute__parties">
+						<h2 class="hndle"><?php esc_html_e( 'Parties Involved', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
-							<p>
-								<strong><?php esc_html_e( 'Buyer:', 'wp-sell-services' ); ?></strong><br>
-								<?php if ( $customer ) : ?>
-									<a href="<?php echo esc_url( get_edit_user_link( $customer->ID ) ); ?>">
-										<?php echo esc_html( wpss_get_member_display_name( (int) $customer->ID ) ); ?>
-									</a>
-								<?php else : ?>
-									<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
-								<?php endif; ?>
-							</p>
-							<p>
-								<strong><?php esc_html_e( 'Vendor:', 'wp-sell-services' ); ?></strong><br>
-								<?php if ( $vendor ) : ?>
-									<a href="<?php echo esc_url( get_edit_user_link( $vendor->ID ) ); ?>">
-										<?php echo esc_html( wpss_get_member_display_name( (int) $vendor->ID ) ); ?>
-									</a>
-								<?php else : ?>
-									<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
-								<?php endif; ?>
-							</p>
-							<?php if ( $order ) : ?>
-								<p>
-									<strong><?php esc_html_e( 'Order Value:', 'wp-sell-services' ); ?></strong><br>
-									<?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?>
-								</p>
-							<?php endif; ?>
+							<?php
+							$wpss_dispute_service = new DisputeService();
+							$wpss_order_repo      = new \WPSellServices\Database\Repositories\OrderRepository();
+							$wpss_parties         = array(
+								array( __( 'Buyer', 'wp-sell-services' ), $customer, 'customer' ),
+								array( __( 'Vendor', 'wp-sell-services' ), $vendor, 'vendor' ),
+							);
+							foreach ( $wpss_parties as list( $wpss_role_label, $wpss_party, $wpss_side ) ) :
+								?>
+								<div class="wpss-admin-dispute__party">
+									<strong><?php echo esc_html( $wpss_role_label ); ?></strong>
+									<?php if ( $wpss_party ) : ?>
+										<a href="<?php echo esc_url( get_edit_user_link( $wpss_party->ID ) ); ?>"><?php echo esc_html( wpss_get_member_display_name( (int) $wpss_party->ID ) ); ?></a>
+										<a href="<?php echo esc_url( 'mailto:' . $wpss_party->user_email ); ?>" class="wpss-admin-dispute__email"><?php echo esc_html( $wpss_party->user_email ); ?></a>
+										<small>
+											<?php
+											$wpss_orders_n   = 'customer' === $wpss_side ? $wpss_order_repo->count_by_customer( (int) $wpss_party->ID ) : $wpss_order_repo->count_by_vendor( (int) $wpss_party->ID );
+											$wpss_disputes_n = $wpss_dispute_service->count_for_user( (int) $wpss_party->ID );
+											echo esc_html(
+												sprintf(
+													/* translators: 1: number of orders, 2: number of disputes */
+													__( '%1$s · %2$s', 'wp-sell-services' ),
+													/* translators: %s: number of orders */
+													sprintf( _n( '%s order', '%s orders', $wpss_orders_n, 'wp-sell-services' ), number_format_i18n( $wpss_orders_n ) ),
+													/* translators: %s: number of disputes */
+													sprintf( _n( '%s dispute', '%s disputes', $wpss_disputes_n, 'wp-sell-services' ), number_format_i18n( $wpss_disputes_n ) )
+												)
+											);
+											?>
+										</small>
+									<?php else : ?>
+										<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
+									<?php endif; ?>
+								</div>
+							<?php endforeach; ?>
 						</div>
 					</div>
 
-					<!-- Resolution Actions -->
 					<?php if ( ! in_array( $dispute->status, array( 'resolved', 'closed' ), true ) ) : ?>
-						<div class="postbox">
-							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Resolution', 'wp-sell-services' ); ?></h2>
+						<div class="postbox wpss-admin-dispute__decide">
+							<h2 class="hndle"><?php esc_html_e( 'Resolution', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 									<?php wp_nonce_field( 'wpss_resolve_dispute', 'wpss_dispute_nonce' ); ?>
@@ -3249,14 +3253,19 @@ class Admin {
 											<?php endforeach; ?>
 										</select>
 									</p>
+									<ul class="wpss-admin-order__effects">
+										<li><strong><?php esc_html_e( 'Resolved', 'wp-sell-services' ); ?></strong> &ndash; <?php esc_html_e( 'you rule on the money: choose who gets what below.', 'wp-sell-services' ); ?></li>
+										<li><strong><?php esc_html_e( 'Closed', 'wp-sell-services' ); ?></strong> &ndash; <?php esc_html_e( 'ends the dispute with no ruling; the order goes back to where it was and no money moves.', 'wp-sell-services' ); ?></li>
+									</ul>
 
 									<div id="wpss-resolution-fields" style="<?php echo 'resolved' === $dispute->status ? '' : 'display:none;'; ?>">
 										<?php $this->render_dispute_resolution_fields( $dispute, $order, $resolutions, 'resolution' ); ?>
 									</div>
 
 									<p>
-										<label for="admin_notes"><strong><?php esc_html_e( 'Admin Notes:', 'wp-sell-services' ); ?></strong></label><br>
+										<label for="admin_notes"><strong><?php esc_html_e( 'Decision note:', 'wp-sell-services' ); ?></strong></label><br>
 										<textarea name="admin_notes" id="admin_notes" rows="4" style="width: 100%;"><?php echo esc_textarea( $dispute->resolution_notes ?? '' ); ?></textarea>
+										<span class="description"><?php esc_html_e( 'Saved with the decision and shown to both parties. To ask a question first, use the thread.', 'wp-sell-services' ); ?></span>
 									</p>
 
 									<?php submit_button( __( 'Update Dispute', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
@@ -3264,8 +3273,8 @@ class Admin {
 							</div>
 						</div>
 					<?php else : ?>
-						<div class="postbox">
-							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Resolution', 'wp-sell-services' ); ?></h2>
+						<div class="postbox wpss-admin-dispute__decide">
+							<h2 class="hndle"><?php esc_html_e( 'Resolution', 'wp-sell-services' ); ?></h2>
 							<div class="inside">
 								<p>
 									<strong><?php esc_html_e( 'Resolution:', 'wp-sell-services' ); ?></strong><br>

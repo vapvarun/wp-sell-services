@@ -236,6 +236,54 @@ function wpss_order_files_are_public( bool $force = false ): ?bool {
 }
 
 /**
+ * The file extensions an upload may use: the owner's Settings > Advanced list,
+ * through the wpss_allowed_file_types filter.
+ *
+ * Read by wpss_check_upload() and by wpss_upload_accept(), so a file picker
+ * offers exactly what the server will take. The pickers carried their own
+ * hardcoded lists and offered .txt, .zip and .rar the server then refused
+ * (Basecamp 10337171525).
+ *
+ * @since 1.8.0
+ *
+ * @param string              $context Upload context (see the filter).
+ * @param array<string,mixed> $file    The $_FILES entry, when checking one.
+ * @return string[] Lower-case extensions, no dots.
+ */
+function wpss_get_allowed_file_types( string $context = '', array $file = array() ): array {
+	$allowed = array_map( 'trim', explode( ',', strtolower( (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ) ) );
+
+	/**
+	 * Filter the file extensions any WPSS upload may use.
+	 *
+	 * The owner's Settings > Advanced list is the default. This filter is the
+	 * seam for a site that needs a type the settings screen does not offer, or
+	 * needs to narrow the list for one context - $context tells you which
+	 * surface is asking.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string[]            $allowed Lower-case extensions, no dots.
+	 * @param array<string,mixed> $file    The $_FILES entry being checked.
+	 * @param string              $context Upload context: requirements, delivery,
+	 *                                     message, dispute, media, portfolio, ''.
+	 */
+	return (array) apply_filters( 'wpss_allowed_file_types', $allowed, $file, $context );
+}
+
+/**
+ * The accept="" value for a file input in an upload context.
+ *
+ * @since 1.8.0
+ *
+ * @param string $context Upload context.
+ * @return string e.g. ".jpg,.png,.pdf".
+ */
+function wpss_upload_accept( string $context ): string {
+	return implode( ',', array_map( static fn( $ext ) => '.' . $ext, array_filter( wpss_get_allowed_file_types( $context ) ) ) );
+}
+
+/**
  * Validate an upload against the plugin's size and type settings.
  *
  * ONE reading of `wpss_max_file_size` and `wpss_allowed_file_types`. Message,
@@ -281,24 +329,7 @@ function wpss_check_upload( array $file, string $context = '' ): ?WP_Error {
 		return new WP_Error( 'invalid_type', __( 'File type could not be verified.', 'wp-sell-services' ), array( 'status' => 400 ) );
 	}
 
-	$allowed = array_map( 'trim', explode( ',', strtolower( (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ) ) );
-
-	/**
-	 * Filter the file extensions any WPSS upload may use.
-	 *
-	 * The owner's Settings > Advanced list is the default. This filter is the
-	 * seam for a site that needs a type the settings screen does not offer, or
-	 * needs to narrow the list for one context - $context tells you which
-	 * surface is asking.
-	 *
-	 * @since 1.7.1
-	 *
-	 * @param string[]            $allowed Lower-case extensions, no dots.
-	 * @param array<string,mixed> $file    The $_FILES entry being checked.
-	 * @param string              $context Upload context: requirements, delivery,
-	 *                                     message, dispute, media, portfolio, ''.
-	 */
-	$allowed = (array) apply_filters( 'wpss_allowed_file_types', $allowed, $file, $context );
+	$allowed = wpss_get_allowed_file_types( $context, $file );
 
 	/*
 	 * Public profile media is capped to what it is: images, plus video for a

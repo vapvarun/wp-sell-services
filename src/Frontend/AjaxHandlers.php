@@ -1255,7 +1255,7 @@ class AjaxHandlers {
 		if ( ! empty( $_FILES['evidence_file'] ) && ! empty( $_FILES['evidence_file']['name'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			$file    = $_FILES['evidence_file'];
-			$refused = wpss_check_upload( $file );
+			$refused = wpss_check_upload( $file, 'dispute' );
 
 			if ( $refused ) {
 				wp_send_json_error( array( 'message' => $refused->get_error_message() ) );
@@ -1292,44 +1292,21 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Failed to add evidence.', 'wp-sell-services' ) ) );
 		}
 
-		// Generate HTML for the new evidence item.
-		$evidence_user = get_userdata( $user_id );
-		$is_own        = true;
+		// The new message, rendered by the thread's own item partial.
+		$wpss_items = $dispute_service->get_evidence( $dispute_id );
 
 		ob_start();
-		?>
-		<div class="wpss-evidence-item wpss-evidence-own">
-			<div class="wpss-evidence-bubble">
-				<span class="wpss-evidence-author"><strong><?php echo esc_html( $evidence_user ? $evidence_user->display_name : '' ); ?></strong></span>
-				<div class="wpss-evidence-content">
-					<?php if ( ! empty( $description ) ) : ?>
-						<div class="wpss-evidence-text">
-							<?php echo wp_kses_post( nl2br( $description ) ); ?>
-						</div>
-					<?php endif; ?>
-
-					<?php if ( $evidence_type === 'image' && ! empty( $evidence_content ) ) : ?>
-						<div class="wpss-evidence-image">
-							<a href="<?php echo esc_url( $evidence_content ); ?>" target="_blank">
-								<img src="<?php echo esc_url( $evidence_content ); ?>" alt="<?php esc_attr_e( 'Evidence image', 'wp-sell-services' ); ?>">
-							</a>
-						</div>
-					<?php elseif ( $evidence_type === 'file' && ! empty( $evidence_content ) ) : ?>
-						<div class="wpss-evidence-file">
-							<a href="<?php echo esc_url( $evidence_content ); ?>" target="_blank" class="wpss-file-link">
-								<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-								<span><?php echo esc_html( wpss_format_attachment_name( $evidence_files ? (string) $evidence_files[0]['name'] : basename( (string) wp_parse_url( $evidence_content, PHP_URL_PATH ) ) ) ); ?></span>
-							</a>
-						</div>
-					<?php endif; ?>
-				</div>
-				<span class="wpss-evidence-time">
-					<?php echo esc_html( wp_date( get_option( 'time_format' ), time() ) ); ?>
-				</span>
-			</div>
-		</div>
-		<?php
-		$html = ob_get_clean();
+		wpss_get_template_part(
+			'partials/dispute-evidence-item',
+			'',
+			array(
+				'wpss_item'        => (array) end( $wpss_items ),
+				'wpss_viewer_id'   => $user_id,
+				'wpss_customer_id' => (int) $order->customer_id,
+				'wpss_vendor_id'   => (int) $order->vendor_id,
+			)
+		);
+		$html = (string) ob_get_clean();
 
 		wp_send_json_success(
 			array(

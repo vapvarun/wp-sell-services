@@ -543,6 +543,55 @@
 	});
 
 	/**
+	 * Dispute resolution: show the refund amount only for a partial refund,
+	 * and say what the money does before the admin saves (Basecamp
+	 * 10337171525). Moved out of an inline <script> in Admin.php.
+	 */
+	function updateDisputeOutcome(form) {
+		var select = form.querySelector('.wpss-dispute-resolution');
+		var outcome = form.querySelector('.wpss-dispute-outcome');
+		var amountRow = form.querySelector('.wpss-dispute-refund-amount');
+
+		if (!select || !outcome) {
+			return;
+		}
+
+		var option = select.options[select.selectedIndex];
+		var kind = option ? option.getAttribute('data-refund') : null;
+		var total = parseFloat(outcome.dataset.total) || 0;
+		var money = function (value) {
+			try {
+				return new Intl.NumberFormat(document.documentElement.lang || undefined, { style: 'currency', currency: outcome.dataset.currency }).format(value);
+			} catch (e) {
+				return value.toFixed(2);
+			}
+		};
+
+		if (amountRow) {
+			amountRow.style.display = kind === 'partial' ? '' : 'none';
+		}
+
+		if (!select.value || !kind) {
+			outcome.textContent = '';
+			return;
+		}
+
+		var refund = kind === 'full' ? total : (kind === 'partial' ? Math.min(total, Math.max(0, parseFloat((form.querySelector('input[name="refund_amount"]') || {}).value) || 0)) : 0);
+
+		outcome.textContent = outcome.dataset[kind]
+			.replace('%1$s', money(refund))
+			.replace('%2$s', money(total - refund));
+	}
+
+	$(document).on('change input', '.wpss-dispute-resolution, input[name="refund_amount"]', function () {
+		updateDisputeOutcome(this.form);
+	});
+
+	$('.wpss-dispute-resolution').each(function () {
+		updateDisputeOutcome(this.form);
+	});
+
+	/**
 	 * Replay the onboarding tour.
 	 *
 	 * Replaces an inline onclick="" attribute on the dashboard heading button.
