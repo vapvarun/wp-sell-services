@@ -40,26 +40,6 @@ $args          = array(
 
 $services = new WP_Query( $args );
 
-// Pre-fetch order counts for all displayed services in a single query.
-$service_order_counts = array();
-if ( $services->have_posts() ) {
-	$displayed_ids = wp_list_pluck( $services->posts, 'ID' );
-	if ( ! empty( $displayed_ids ) ) {
-		global $wpdb;
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-		$placeholders = implode( ',', array_fill( 0, count( $displayed_ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$counts = $wpdb->get_results(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->prepare( "SELECT service_id, COUNT(*) AS order_count FROM {$orders_table} WHERE service_id IN ({$placeholders}) GROUP BY service_id", ...$displayed_ids ),
-			OBJECT_K
-		);
-		foreach ( $displayed_ids as $sid ) {
-			$service_order_counts[ $sid ] = isset( $counts[ $sid ] ) ? (int) $counts[ $sid ]->order_count : 0;
-		}
-	}
-}
-
 // Stats are COUNT queries, not loaded id lists.
 $published_count = wpss_count_vendor_services( $user_id, 'publish' );
 $pending_count   = wpss_count_vendor_services( $user_id, 'pending' );
@@ -156,7 +136,10 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 				$service_id  = get_the_ID();
 				$price       = get_post_meta( $service_id, '_wpss_starting_price', true );
 				$views       = (int) get_post_meta( $service_id, '_wpss_views', true );
-				$orders      = $service_order_counts[ $service_id ] ?? 0;
+				// Completed orders, the figure the catalog and the admin list show
+				// (wpss_sync_service_order_count). A raw COUNT(*) here counted
+				// unpaid and cancelled orders too: "3 views - 16 orders".
+				$orders      = (int) get_post_meta( $service_id, '_wpss_order_count', true );
 				$item_status = get_post_status();
 
 				// Check moderation meta for rejected services (stored as draft post_status).
@@ -187,7 +170,9 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 						<?php elseif ( $gallery_thumb ) : ?>
 							<?php echo wp_get_attachment_image( $gallery_thumb, 'medium' ); ?>
 						<?php else : ?>
-							<div class="wpss-service-card__placeholder"></div>
+							<div class="wpss-service-card__placeholder">
+								<i data-lucide="image" class="wpss-icon wpss-service-card__placeholder-icon" aria-hidden="true"></i>
+							</div>
 						<?php endif; ?>
 						<span class="wpss-service-card__status wpss-service-card__status--<?php echo esc_attr( $item_status ); ?>">
 							<?php
@@ -280,7 +265,7 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 								?>
 							</button>
 						<?php endif; ?>
-						<button type="button" class="wpss-btn wpss-btn--danger wpss-btn--sm wpss-delete-service" data-service-id="<?php echo esc_attr( $service_id ); ?>">
+						<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--danger wpss-btn--sm wpss-delete-service" data-service-id="<?php echo esc_attr( $service_id ); ?>">
 							<?php esc_html_e( 'Delete', 'wp-sell-services' ); ?>
 						</button>
 					</div>
