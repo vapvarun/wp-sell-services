@@ -623,6 +623,11 @@
 
             $modal.find('.wpss-extra-option').each(function() {
                 const $row = $(this);
+
+                // Express is offered per package; a hidden row is not on offer.
+                if ($row.closest('[hidden]').length) {
+                    return;
+                }
                 const id = parseInt($row.data('addon-id'), 10);
                 const type = $row.data('field-type');
 
@@ -643,6 +648,29 @@
         },
 
         /**
+         * Show Express delivery for the chosen package, or hide and untick it
+         * when that package does not offer it.
+         */
+        syncExpress: function() {
+            const $block = $(this.config.orderModal).find('.wpss-order-express');
+
+            if (!$block.length) {
+                return;
+            }
+
+            const offer = ($block.data('express') || {})[this.state.selectedPackage];
+
+            $block.prop('hidden', !offer);
+            if (offer) {
+                $block.find('.wpss-express-days').text(offer.days);
+                $block.find('.wpss-express-price').text('+' + offer.price);
+            } else {
+                $block.find('.wpss-extra-pick').prop('checked', false);
+            }
+            this.updateExtras();
+        },
+
+        /**
          * Update order summary from the server's quote.
          *
          * The total and delivery time come from GET /services/{id}/quote - the
@@ -659,6 +687,7 @@
 
             $modal.find('.wpss-package-name').text($activePackage.find('.wpss-package-name').text());
             $modal.find('input[name="package_index"]').val(this.state.selectedPackage);
+            this.syncExpress();
             $modal.find('.wpss-order-quote-error').remove();
             $total.attr('aria-busy', 'true');
 

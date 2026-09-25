@@ -604,8 +604,10 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$vendor_avatar_url = get_avatar_url( $pay_order->vendor_id, array( 'size' => 48 ) );
 		}
 
-		// Delivery and revision info from the selected package.
-		$delivery_days = $selected_package['delivery_days'] ?? 0;
+		// Delivery as the order will count it - Express and add-on days
+		// included - so Service Details and the reassurance row promise the day
+		// the deadline will say (Basecamp 10337201764).
+		$delivery_days = $is_pay_order ? (int) ( $selected_package['delivery_days'] ?? 0 ) : (int) $line['delivery_days'];
 		$revisions     = $selected_package['revisions'] ?? 0;
 
 		$rating       = wpss_get_service_rating( (int) $service->id );
@@ -1295,7 +1297,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				 * the package being bought, so a badge can never contradict the order
 				 * beside it.
 				 */
-				$badges = wpss_get_checkout_badges( is_array( $selected_package ) ? $selected_package : array() );
+				$badges = wpss_get_checkout_badges( array( 'delivery_days' => $delivery_days ) + ( is_array( $selected_package ) ? $selected_package : array() ) );
 				?>
 				<?php if ( ! empty( $badges ) ) : ?>
 				<div class="wpss-co-guarantees-bar">

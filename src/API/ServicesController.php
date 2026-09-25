@@ -1029,8 +1029,6 @@ class ServicesController extends RestController {
 			);
 		}
 
-		$days = (int) ( $line['package']['delivery_days'] ?? 0 ) + (int) $line['delivery_days_extra'];
-
 		return new WP_REST_Response(
 			array(
 				'service_id'    => $service_id,
@@ -1038,7 +1036,7 @@ class ServicesController extends RestController {
 				'package_name'  => (string) ( $line['package']['name'] ?? '' ),
 				'quantity'      => (int) $line['quantity'],
 				'addons'        => $addons,
-				'delivery_days' => $days,
+				'delivery_days' => (int) $line['delivery_days'],
 				'tax_label'     => (string) $line['tax_label'],
 				'tax_rate'      => (float) $line['tax_rate'],
 				'tax_included'  => (bool) $line['tax_included'],
@@ -1537,7 +1535,7 @@ class ServicesController extends RestController {
 						'delivery_days' => absint( $pkg['delivery_days'] ?? 7 ),
 						'revisions'     => absint( $pkg['revisions'] ?? 0 ),
 						'features'      => isset( $pkg['features'] ) && is_array( $pkg['features'] ) ? array_map( 'sanitize_text_field', $pkg['features'] ) : array(),
-					);
+					) + wpss_sanitize_package_express( (array) $pkg );
 				}
 			}
 			update_post_meta( $service_id, '_wpss_packages', $packages );

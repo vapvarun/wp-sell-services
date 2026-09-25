@@ -42,6 +42,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'WPSS_VERSION', '1.7.2' );
 
 /**
+ * Add-on id of a package's Express delivery in a buyer's selection and on an
+ * order's add-on rows. Real add-on ids are indexes (0 and up), so it cannot
+ * collide, and it survives every (int) cast on the way through the rails.
+ *
+ * @var int
+ */
+define( 'WPSS_EXPRESS_ADDON_ID', -1 );
+
+/**
  * Plugin file path.
  *
  * @var string

@@ -541,6 +541,14 @@
       "rule": "can_transition() refuses any status not in ServiceOrder::get_statuses(), admins included. update_status() refuses refunded / partially_refunded unless called from inside refund(). Statuses a person may set directly (admin form, OrderScreen AJAX, REST PATCH) come only from get_settable_statuses(): everything except refunded, partially_refunded, disputed and the unused acceptance-step statuses pending / accepted / rejected. REST PATCH /orders/{id} answers 400 for anything else and when the transition is refused; vendor_notes and due_date are readonly (400 wpss_field_not_writable).",
       "cancellation_request": "Stored in wpss_orders.meta['cancellation_request'] and read through ServiceOrder::get_cancellation_request() by the 48h sweep, NotificationService, EmailService and order-view. Never in vendor_notes, which now only carries the creator note on a sub-order (tip message, extension reason, milestone description). SchemaManager::run_1_8_0_data_migrations() moved in-flight requests.",
       "since": "1.8.0"
+    },
+    "line_pricing": {
+      "authority": "wpss_price_addons( $service_id, $selection, $package_subtotal, $package ) + CheckoutIntentService::price_service_line()",
+      "rule": "Add-ons and a package's Express delivery are priced only here. Express (package keys express_price / express_days, read via wpss_get_package_express(), sanitised by wpss_sanitize_package_express() in the wizard, wp-admin editor and REST savers) rides as an add-on row with id WPSS_EXPRESS_ADDON_ID (-1) so every rail that carries addon_sel carries it. Callers that price add-ons directly must pass the package or Express is not offered (Pro WooCommerce does)."
+    },
+    "delivery_days": {
+      "authority": "wpss_line_delivery_days( $package, $addon_rows )",
+      "rule": "Package days, replaced by an Express row's delivery_days when bought, plus every add-on's delivery_days_extra, minimum 1. Used by price_service_line (quote, checkout, badges), OrderService::get_delivery_days (deadline, revision deadline), the mark_as_paid placeholder and Pro WCOrderProvider. Never add package + add-on days inline."
     }
   },
   "capabilities": {

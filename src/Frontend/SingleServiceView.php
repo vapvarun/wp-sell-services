@@ -859,6 +859,36 @@ class SingleServiceView {
 						<input type="hidden" name="service_id" value="<?php echo esc_attr( $service_id ); ?>">
 						<input type="hidden" name="package_index" value="0">
 
+						<?php
+						// Express delivery per package (Basecamp 10337201764), keyed by the
+						// same package index the package buttons carry. single-service.js
+						// shows the row for the chosen package only.
+						$express = array();
+						foreach ( wpss_get_service_packages( $service_id ) as $package_index => $package ) {
+							$offer = wpss_get_package_express( (array) $package );
+							if ( $offer ) {
+								$express[ $package_index ] = array(
+									'price' => wpss_format_price( $offer['price'] ),
+									/* translators: %d: number of days */
+									'days'  => sprintf( _n( 'Delivered in %d day', 'Delivered in %d days', $offer['days'], 'wp-sell-services' ), $offer['days'] ),
+								);
+							}
+						}
+						?>
+						<?php if ( $express ) : ?>
+							<div class="wpss-order-extras wpss-order-express" data-express="<?php echo esc_attr( (string) wp_json_encode( $express ) ); ?>" hidden>
+								<h4><?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?></h4>
+								<div class="wpss-extra-option" data-addon-id="<?php echo esc_attr( (string) WPSS_EXPRESS_ADDON_ID ); ?>" data-field-type="checkbox">
+									<input type="checkbox" id="wpss-extra-express" class="wpss-extra-pick">
+									<label class="wpss-extra-info" for="wpss-extra-express">
+										<span class="wpss-extra-title"><?php esc_html_e( 'Express delivery', 'wp-sell-services' ); ?></span>
+										<span class="wpss-extra-desc wpss-express-days"></span>
+									</label>
+									<span class="wpss-extra-price wpss-express-price"></span>
+								</div>
+							</div>
+						<?php endif; ?>
+
 						<?php if ( ! empty( $extras ) ) : ?>
 							<div class="wpss-order-extras">
 								<h4><?php esc_html_e( 'Add Extras', 'wp-sell-services' ); ?></h4>

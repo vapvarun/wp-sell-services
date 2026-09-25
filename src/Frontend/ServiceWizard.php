@@ -702,6 +702,45 @@ class ServiceWizard {
 							</div>
 						</div>
 
+						<?php
+						/*
+						 * Express delivery (Basecamp 10337201764): the buyer pays extra
+						 * and this delivery time replaces the package's own. Optional;
+						 * blank price means not offered.
+						 */
+						?>
+						<div class="wpss-form-row wpss-form-row--2col">
+							<div class="wpss-form-group">
+								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-express-price"><?php esc_html_e( 'Express delivery price', 'wp-sell-services' ); ?></label>
+								<div class="wpss-input-group">
+									<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
+									<input type="number"
+										id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-express-price"
+										class="wpss-form-input"
+										x-model="data.packages.<?php echo esc_attr( $tier ); ?>.express_price"
+										min="0"
+										step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>">
+								</div>
+								<div class="wpss-form-hint"><?php esc_html_e( 'Optional. Leave blank to not offer Express.', 'wp-sell-services' ); ?></div>
+							</div>
+
+							<div class="wpss-form-group">
+								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-express-days"><?php esc_html_e( 'Express delivery time', 'wp-sell-services' ); ?></label>
+								<select id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-express-days" class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.express_days">
+									<option value=""><?php esc_html_e( 'Select', 'wp-sell-services' ); ?></option>
+									<?php foreach ( array( 1, 2, 3, 5, 7, 14, 21 ) as $wpss_express_days ) : ?>
+										<option value="<?php echo esc_attr( $wpss_express_days ); ?>">
+											<?php
+											/* translators: %d: number of days */
+											echo esc_html( sprintf( _n( '%d day', '%d days', $wpss_express_days, 'wp-sell-services' ), $wpss_express_days ) );
+											?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+								<div class="wpss-form-hint"><?php esc_html_e( 'Replaces the delivery time above; must be shorter.', 'wp-sell-services' ); ?></div>
+							</div>
+						</div>
+
 						<?php /* Features list — vendors describe what's included via bullets, not prose. */ ?>
 						<?php
 						/*
@@ -1398,6 +1437,8 @@ class ServiceWizard {
 				'price'         => '',
 				'delivery_time' => '',
 				'revisions'     => '1',
+				'express_price' => '',
+				'express_days'  => '',
 				'features'      => array(),
 			),
 			'standard' => array(
@@ -1407,6 +1448,8 @@ class ServiceWizard {
 				'price'         => '',
 				'delivery_time' => '',
 				'revisions'     => '2',
+				'express_price' => '',
+				'express_days'  => '',
 				'features'      => array(),
 			),
 			'premium'  => array(
@@ -1416,6 +1459,8 @@ class ServiceWizard {
 				'price'         => '',
 				'delivery_time' => '',
 				'revisions'     => '3',
+				'express_price' => '',
+				'express_days'  => '',
 				'features'      => array(),
 			),
 		);
@@ -1437,6 +1482,11 @@ class ServiceWizard {
 			$package['delivery_time']   = $package['delivery_time'] ?? $package['delivery_days'] ?? '';
 			$mapped[ $tier ]            = array_merge( $defaults[ $tier ], $package );
 			$mapped[ $tier ]['enabled'] = true;
+			// Not offered reads as an empty field, not "0".
+			if ( (float) $mapped[ $tier ]['express_price'] <= 0 ) {
+				$mapped[ $tier ]['express_price'] = '';
+				$mapped[ $tier ]['express_days']  = '';
+			}
 		}
 
 		return $mapped;
@@ -2076,7 +2126,7 @@ class ServiceWizard {
 				'delivery_time' => absint( $pkg['delivery_time'] ?? 0 ),
 				'revisions'     => intval( $pkg['revisions'] ?? 0 ),
 				'features'      => array_map( 'sanitize_text_field', $pkg['features'] ?? array() ),
-			);
+			) + wpss_sanitize_package_express( (array) $pkg );
 		}
 
 		return $sanitized;
@@ -2247,7 +2297,7 @@ class ServiceWizard {
 				'delivery_days' => (int) ( $pkg['delivery_days'] ?? $pkg['delivery_time'] ?? 7 ),
 				'revisions'     => (int) ( $pkg['revisions'] ?? 0 ),
 				'features'      => $pkg['features'] ?? array(),
-			);
+			) + wpss_sanitize_package_express( (array) $pkg );
 		}
 		update_post_meta( $service_id, '_wpss_packages', $numeric_packages );
 

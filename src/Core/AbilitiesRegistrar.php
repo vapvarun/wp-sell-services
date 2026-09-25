@@ -249,6 +249,14 @@ class AbilitiesRegistrar {
 									'price'         => array( 'type' => 'number' ),
 									'delivery_days' => array( 'type' => 'integer' ),
 									'revisions'     => array( 'type' => 'integer' ),
+									'express_price' => array(
+										'type'        => 'number',
+										'description' => __( 'Optional Express delivery price; 0 means not offered.', 'wp-sell-services' ),
+									),
+									'express_days'  => array(
+										'type'        => 'integer',
+										'description' => __( 'Express delivery time in days; replaces delivery_days and must be shorter.', 'wp-sell-services' ),
+									),
 								),
 							),
 						),

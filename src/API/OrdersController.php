@@ -2088,7 +2088,7 @@ class OrdersController extends RestController {
 			'delivery_days' => (int) ( $snapshot['delivery_days'] ?? 0 ),
 			'revisions'     => (int) ( $snapshot['revisions'] ?? 0 ),
 			'features'      => array_values( (array) ( $snapshot['features'] ?? array() ) ),
-		);
+		) + wpss_sanitize_package_express( $snapshot );
 	}
 
 	/**

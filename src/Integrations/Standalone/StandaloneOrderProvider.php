@@ -401,14 +401,10 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 
 			// Calculate delivery deadline only if not already set (e.g., by convert_to_order).
 			if ( empty( $order->delivery_deadline ) ) {
-				$delivery_days = 7;
-				$service       = $order->get_service();
-				if ( $service ) {
-					$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: array();
-					if ( isset( $packages[ $order->package_id ] ) ) {
-						$delivery_days = (int) ( $packages[ $order->package_id ]['delivery_days'] ?? 7 );
-					}
-				}
+				// The same count the real deadline uses once requirements are in,
+				// so the placeholder shown until then does not promise a
+				// different day (Express, add-on days).
+				$delivery_days = ( new \WPSellServices\Services\OrderService() )->get_delivery_days( $order );
 
 				$deadline                         = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
 				$update_data['delivery_deadline'] = $deadline->format( 'Y-m-d H:i:s' );

@@ -566,7 +566,7 @@ function wpss_normalize_addon_selection( $raw ): array {
 
 		$row = is_array( $entry ) ? $entry : array( 'id' => $entry );
 
-		if ( ! isset( $row['id'] ) || ! is_numeric( $row['id'] ) || (int) $row['id'] < 0 ) {
+		if ( ! isset( $row['id'] ) || ! is_numeric( $row['id'] ) || ( (int) $row['id'] < 0 && WPSS_EXPRESS_ADDON_ID !== (int) $row['id'] ) ) {
 			continue;
 		}
 
@@ -598,11 +598,14 @@ function wpss_normalize_addon_selection( $raw ): array {
  * @param int   $service_id       Service post ID.
  * @param mixed $selection        What the buyer picked (any shape wpss_normalize_addon_selection() takes).
  * @param float $package_subtotal Package price x quantity, the base for percentage add-ons.
+ * @param array $package          The package bought; needed to price its Express delivery
+ *                                (wpss_get_package_express()). Without it Express is not offered.
  * @return array{addons: array<int, array<string, mixed>>, addons_total: float, delivery_days_extra: int}|WP_Error
  */
-function wpss_price_addons( int $service_id, $selection, float $package_subtotal ) {
+function wpss_price_addons( int $service_id, $selection, float $package_subtotal, array $package = array() ) {
 	$definitions = wpss_get_service_extras( $service_id );
-	$picked      = array_intersect_key( wpss_normalize_addon_selection( $selection ), $definitions );
+	$normalized  = wpss_normalize_addon_selection( $selection );
+	$picked      = array_intersect_key( $normalized, $definitions );
 	$decimals    = wpss_get_currency_decimals();
 
 	foreach ( $definitions as $index => $definition ) {
@@ -676,9 +679,110 @@ function wpss_price_addons( int $service_id, $selection, float $package_subtotal
 		$result['delivery_days_extra'] += (int) $definition['delivery_days_extra'];
 	}
 
+	// Express delivery: a flat price for the package's faster delivery time,
+	// which replaces the package's days rather than adding to them. It rides
+	// as an add-on row so every rail that carries add-ons carries it.
+	$express = wpss_get_package_express( $package );
+	if ( $express && isset( $normalized[ WPSS_EXPRESS_ADDON_ID ] ) ) {
+		$price                          = round( $express['price'], $decimals );
+		$result['addons'][]             = array(
+			'id'                  => WPSS_EXPRESS_ADDON_ID,
+			'title'               => __( 'Express delivery', 'wp-sell-services' ),
+			'name'                => __( 'Express delivery', 'wp-sell-services' ),
+			'field_type'          => 'express',
+			'price_type'          => 'flat',
+			'rate'                => $price,
+			'unit_price'          => $price,
+			'quantity'            => 1,
+			'option'              => '',
+			'text'                => '',
+			'price'               => $price,
+			'delivery_days_extra' => 0,
+			'delivery_days'       => $express['days'],
+		);
+		$result['addons_total']        += $price;
+	}
+
 	$result['addons_total'] = round( $result['addons_total'], $decimals );
 
 	return $result;
+}
+
+/**
+ * A package's Express delivery, when it offers one.
+ *
+ * Express is set per package (Basecamp 10337201764): a price and a delivery
+ * time that REPLACES the package's own, which an add-on cannot express - an
+ * add-on only adds days, so an "Express 24h" add-on made the order slower.
+ * Offered only when it is actually faster than the package.
+ *
+ * @since 1.8.0
+ *
+ * @param array $package Package row.
+ * @return array{price: float, days: int}|null
+ */
+function wpss_get_package_express( array $package ): ?array {
+	$price = (float) ( $package['express_price'] ?? 0 );
+	$days  = (int) ( $package['express_days'] ?? 0 );
+	$base  = (int) ( $package['delivery_days'] ?? 0 );
+
+	if ( $price <= 0 || $days < 1 || ( $base > 0 && $days >= $base ) ) {
+		return null;
+	}
+
+	return array(
+		'price' => $price,
+		'days'  => $days,
+	);
+}
+
+/**
+ * The Express fields of a package, sanitised - the one reader of them for
+ * every package saver (wizard, wp-admin editor, REST), each of which rebuilds
+ * a package from its own list of keys.
+ *
+ * @since 1.8.0
+ *
+ * @param array $raw Package input.
+ * @return array{express_price: float, express_days: int}
+ */
+function wpss_sanitize_package_express( array $raw ): array {
+	$price = max( 0.0, round( (float) ( $raw['express_price'] ?? 0 ), wpss_get_currency_decimals() ) );
+
+	return array(
+		'express_price' => $price,
+		'express_days'  => $price > 0 ? absint( $raw['express_days'] ?? 0 ) : 0,
+	);
+}
+
+/**
+ * How many days an order line takes: the package's time, or its Express time
+ * when bought, plus any add-on days. At least one.
+ *
+ * The one count for the order modal, checkout, the order's deadline and a
+ * revision's deadline.
+ *
+ * @since 1.8.0
+ *
+ * @param array $package Package row (or the order's package snapshot).
+ * @param array $addons  Priced add-on rows (wpss_price_addons(), or the order's addons).
+ * @return int Days.
+ */
+function wpss_line_delivery_days( array $package, array $addons ): int {
+	$days = (int) ( $package['delivery_days'] ?? 0 );
+	$days = $days > 0 ? $days : 7;
+
+	foreach ( $addons as $addon ) {
+		if ( ! empty( $addon['delivery_days'] ) ) {
+			$days = (int) $addon['delivery_days'];
+		}
+	}
+
+	foreach ( $addons as $addon ) {
+		$days += (int) ( $addon['delivery_days_extra'] ?? 0 );
+	}
+
+	return max( 1, $days );
 }
 
 /**
@@ -1413,6 +1517,22 @@ function wpss_validate_service_publishable( array $service ): array {
 						: sprintf(
 							/* translators: %d: position of the package in the list, starting at 1. */
 							__( 'Please set a delivery time for package %d.', 'wp-sell-services' ),
+							$position
+						);
+				}
+
+				// Express is optional, but once priced it must be a real, faster
+				// time - otherwise the buyer pays extra for nothing.
+				if ( (float) ( $package['express_price'] ?? 0 ) > 0 && null === wpss_get_package_express( wpss_sanitize_package_express( $package ) + array( 'delivery_days' => (int) ( $package['delivery_days'] ?? 0 ) ) ) ) {
+					$errors[] = '' !== $label
+						? sprintf(
+							/* translators: %s: package name or tier (e.g. Standard). */
+							__( 'Express delivery on the %s package must be faster than its delivery time.', 'wp-sell-services' ),
+							$label
+						)
+						: sprintf(
+							/* translators: %d: position of the package in the list, starting at 1. */
+							__( 'Express delivery on package %d must be faster than its delivery time.', 'wp-sell-services' ),
 							$position
 						);
 				}

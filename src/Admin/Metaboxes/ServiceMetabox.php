@@ -290,11 +290,11 @@ class ServiceMetabox {
 	/**
 	 * Render a single package item.
 	 *
-	 * @param int   $index   Package index.
-	 * @param array $package Package data.
+	 * @param int|string $index   Package index.
+	 * @param array      $package Package data.
 	 * @return void
 	 */
-	private function render_package_item( int $index, array $package ): void {
+	private function render_package_item( $index, array $package ): void {
 		$is_first     = ( 0 === $index );
 		$package_name = ! empty( $package['name'] ) ? $package['name'] : __( 'New Package', 'wp-sell-services' );
 		$price        = ! empty( $package['price'] ) ? (float) $package['price'] : 0;
@@ -374,6 +374,35 @@ class ServiceMetabox {
 									min="0" max="20" placeholder="2">
 							<span class="wpss-input-suffix"><?php esc_html_e( 'times', 'wp-sell-services' ); ?></span>
 						</div>
+					</div>
+				</div>
+				<?php $express = wpss_sanitize_package_express( $package ); ?>
+				<div class="wpss-package-row wpss-package-row-grid">
+					<div class="wpss-package-field">
+						<label>
+							<i data-lucide="zap" class="wpss-icon" aria-hidden="true"></i>
+							<?php esc_html_e( 'Express price', 'wp-sell-services' ); ?>
+						</label>
+						<div class="wpss-input-with-prefix">
+							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
+							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][express_price]" aria-label="<?php esc_attr_e( 'Express delivery price', 'wp-sell-services' ); ?>"
+									value="<?php echo esc_attr( $express['express_price'] > 0 ? $express['express_price'] : '' ); ?>"
+									min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>">
+						</div>
+						<p class="description"><?php esc_html_e( 'Optional. Blank means not offered.', 'wp-sell-services' ); ?></p>
+					</div>
+					<div class="wpss-package-field">
+						<label>
+							<i data-lucide="timer" class="wpss-icon" aria-hidden="true"></i>
+							<?php esc_html_e( 'Express delivery', 'wp-sell-services' ); ?>
+						</label>
+						<div class="wpss-input-with-suffix">
+							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][express_days]" aria-label="<?php esc_attr_e( 'Express delivery time in days', 'wp-sell-services' ); ?>"
+									value="<?php echo esc_attr( $express['express_days'] > 0 ? $express['express_days'] : '' ); ?>"
+									min="1" max="364">
+							<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
+						</div>
+						<p class="description"><?php esc_html_e( 'Replaces the delivery time; must be shorter.', 'wp-sell-services' ); ?></p>
 					</div>
 				</div>
 				<div class="wpss-package-row">
@@ -745,7 +774,7 @@ class ServiceMetabox {
 						'delivery_days' => absint( $package['delivery_days'] ?? 0 ),
 						'revisions'     => $revisions_val,
 						'features'      => array_filter( array_map( 'sanitize_text_field', explode( "\n", $package['features'] ?? '' ) ) ),
-					);
+					) + wpss_sanitize_package_express( (array) $package );
 				}
 			}
 			update_post_meta( $post_id, '_wpss_packages', $packages );
@@ -1677,98 +1706,15 @@ class ServiceMetabox {
 	 * @return void
 	 */
 	private function render_package_template(): void {
-		?>
-		<?php
 		/*
 		 * A package the owner just added opens ready to fill in. It used to render
 		 * collapsed, so "Add Package" appeared to do nothing but add a grey bar the
 		 * owner then had to find and click. Packages loaded from saved data still
-		 * render collapsed (render_package above) - that is a list to scan, this is
-		 * a form to complete. See Basecamp 10286092451.
+		 * render collapsed - that is a list to scan, this is a form to complete.
+		 * See Basecamp 10286092451. The markup is the saved package's own, so a
+		 * field added there (Express, Basecamp 10337201764) is here too.
 		 */
-		?>
-		<div class="wpss-package-item" data-index="{{data.index}}">
-			<div class="wpss-package-header">
-				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
-				<span class="wpss-package-title"><?php esc_html_e( 'New Package', 'wp-sell-services' ); ?></span>
-				<span class="wpss-package-price-display"></span>
-				<div class="wpss-package-actions">
-					<button type="button" class="wpss-package-toggle" title="<?php esc_attr_e( 'Expand/Collapse', 'wp-sell-services' ); ?>">
-						<i data-lucide="chevron-down" class="wpss-icon" aria-hidden="true"></i>
-					</button>
-					<button type="button" class="wpss-remove-package" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-						<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
-					</button>
-				</div>
-			</div>
-			<div class="wpss-package-body">
-				<div class="wpss-package-row">
-					<div class="wpss-package-field wpss-package-field-wide">
-						<label><?php esc_html_e( 'Package Name', 'wp-sell-services' ); ?></label>
-						<input type="text" name="wpss_packages[{{data.index}}][name]" aria-label="<?php esc_attr_e( 'Package name', 'wp-sell-services' ); ?>"
-								class="widefat wpss-package-name-input"
-								placeholder="<?php esc_attr_e( 'e.g., Standard, Premium, Enterprise', 'wp-sell-services' ); ?>">
-					</div>
-					<div class="wpss-package-field">
-						<label>
-							<i data-lucide="banknote" class="wpss-icon" aria-hidden="true"></i>
-							<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
-						</label>
-						<div class="wpss-input-with-prefix">
-							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
-							<input type="number" name="wpss_packages[{{data.index}}][price]" aria-label="<?php esc_attr_e( 'Package price', 'wp-sell-services' ); ?>"
-									class="wpss-package-price-input"
-									min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="<?php echo esc_attr( wpss_get_price_input_attrs()['placeholder'] ); ?>">
-						</div>
-					</div>
-				</div>
-				<div class="wpss-package-row">
-					<div class="wpss-package-field wpss-package-field-full">
-						<label><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
-						<textarea name="wpss_packages[{{data.index}}][description]" aria-label="<?php esc_attr_e( 'Package description', 'wp-sell-services' ); ?>"
-								rows="2" class="widefat"
-								placeholder="<?php esc_attr_e( 'Describe what\'s included in this package...', 'wp-sell-services' ); ?>"></textarea>
-					</div>
-				</div>
-				<div class="wpss-package-row wpss-package-row-grid">
-					<div class="wpss-package-field">
-						<label>
-							<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
-							<?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?>
-						</label>
-						<div class="wpss-input-with-suffix">
-							<input type="number" name="wpss_packages[{{data.index}}][delivery_days]" aria-label="<?php esc_attr_e( 'Delivery time in days', 'wp-sell-services' ); ?>"
-									min="1" max="365" placeholder="7">
-							<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
-						</div>
-					</div>
-					<div class="wpss-package-field">
-						<label>
-							<i data-lucide="refresh-cw" class="wpss-icon" aria-hidden="true"></i>
-							<?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?>
-						</label>
-						<div class="wpss-input-with-suffix">
-							<input type="number" name="wpss_packages[{{data.index}}][revisions]" aria-label="<?php esc_attr_e( 'Number of revisions', 'wp-sell-services' ); ?>"
-									min="0" max="20" placeholder="2">
-							<span class="wpss-input-suffix"><?php esc_html_e( 'times', 'wp-sell-services' ); ?></span>
-						</div>
-					</div>
-				</div>
-				<div class="wpss-package-row">
-					<div class="wpss-package-field wpss-package-field-full">
-						<label>
-							<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
-							<?php esc_html_e( 'Features Included', 'wp-sell-services' ); ?>
-						</label>
-						<textarea name="wpss_packages[{{data.index}}][features]" aria-label="<?php esc_attr_e( 'Features included', 'wp-sell-services' ); ?>"
-								rows="3" class="widefat"
-								placeholder="<?php esc_attr_e( "Feature 1\nFeature 2\nFeature 3", 'wp-sell-services' ); ?>"></textarea>
-						<p class="description"><?php esc_html_e( 'Enter one feature per line', 'wp-sell-services' ); ?></p>
-					</div>
-				</div>
-			</div>
-		</div>
-		<?php
+		$this->render_package_item( '{{data.index}}', array() );
 	}
 
 	/**

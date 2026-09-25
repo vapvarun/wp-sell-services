@@ -258,7 +258,7 @@ class CheckoutIntentService {
 
 		$quantity = max( 1, $quantity );
 		$subtotal = round( (float) ( $resolved['package']['price'] ?? 0 ) * $quantity, wpss_get_currency_decimals() );
-		$addons   = wpss_price_addons( $service_id, $selection, $subtotal );
+		$addons   = wpss_price_addons( $service_id, $selection, $subtotal, $resolved['package'] );
 
 		if ( is_wp_error( $addons ) ) {
 			return $addons;
@@ -275,6 +275,7 @@ class CheckoutIntentService {
 			'quantity'            => $quantity,
 			'addons'              => $addons['addons'],
 			'delivery_days_extra' => (int) $addons['delivery_days_extra'],
+			'delivery_days'       => wpss_line_delivery_days( $resolved['package'], $addons['addons'] ),
 		) + $line;
 	}
 

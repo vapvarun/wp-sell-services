@@ -71,6 +71,8 @@ function wpssServiceWizard(existingData = {}) {
 					price: '',
 					delivery_time: '',
 					revisions: '1',
+					express_price: '',
+					express_days: '',
 					features: []
 				},
 				standard: {
@@ -80,6 +82,8 @@ function wpssServiceWizard(existingData = {}) {
 					price: '',
 					delivery_time: '',
 					revisions: '2',
+					express_price: '',
+					express_days: '',
 					features: []
 				},
 				premium: {
@@ -89,6 +93,8 @@ function wpssServiceWizard(existingData = {}) {
 					price: '',
 					delivery_time: '',
 					revisions: '3',
+					express_price: '',
+					express_days: '',
 					features: []
 				}
 			},

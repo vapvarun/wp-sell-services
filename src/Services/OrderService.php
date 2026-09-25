@@ -1077,21 +1077,10 @@ class OrderService {
 	 */
 	public function get_delivery_days( ServiceOrder $order ): int {
 		// The package the buyer paid for (frozen snapshot, proposal, or the
-		// live package by stable id). Indexing _wpss_packages by package_id
-		// missed every order carrying a stable id (1000+) and fell to 7 days.
-		$snapshot      = $order->get_package_snapshot();
-		$delivery_days = (int) ( $snapshot['delivery_days'] ?? 0 );
-		$delivery_days = $delivery_days > 0 ? $delivery_days : 7;
-
-		// Add addon delivery days (can be negative for rush delivery).
-		if ( ! empty( $order->addons ) && is_array( $order->addons ) ) {
-			foreach ( $order->addons as $addon ) {
-				$delivery_days += (int) ( $addon['delivery_days_extra'] ?? 0 );
-			}
-			$delivery_days = max( 1, $delivery_days );
-		}
-
-		return $delivery_days;
+		// live package by stable id) and the add-ons on the order, Express
+		// included. Indexing _wpss_packages by package_id missed every order
+		// carrying a stable id (1000+) and fell to 7 days.
+		return wpss_line_delivery_days( $order->get_package_snapshot(), is_array( $order->addons ) ? $order->addons : array() );
 	}
 
 	/**
