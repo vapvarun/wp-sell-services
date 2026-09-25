@@ -695,3 +695,18 @@
 	});
 
 }( jQuery ) );
+
+// Role cleanup: the plugin's confirm dialog before a bulk role change (no browser confirm()).
+document.addEventListener( 'submit', function ( e ) {
+	var form = e.target;
+	if ( ! form.matches || ! form.matches( '.wpss-role-cleanup-form' ) || '1' === form.dataset.confirmed || 'function' !== typeof window.wpssConfirm ) {
+		return;
+	}
+	e.preventDefault();
+	window.wpssConfirm( form.getAttribute( 'data-confirm' ), { tone: 'danger' } ).then( function ( ok ) {
+		if ( ok ) {
+			form.dataset.confirmed = '1';
+			form.submit();
+		}
+	} );
+} );

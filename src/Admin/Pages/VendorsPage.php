@@ -112,6 +112,9 @@ class VendorsPage {
 		add_action( 'wp_ajax_wpss_update_vendor_availability', array( $this, 'ajax_update_vendor_availability' ) );
 		add_action( 'wp_ajax_wpss_update_vendor_level', array( $this, 'ajax_update_vendor_level' ) );
 		add_action( 'wp_ajax_wpss_moderate_portfolio_item', array( $this, 'ajax_moderate_portfolio_item' ) );
+		add_action( 'admin_post_wpss_vendor_role_cleanup', array( $this, 'handle_role_cleanup' ) );
+		add_action( 'admin_post_wpss_vendor_role_undo', array( $this, 'handle_role_undo' ) );
+		add_action( 'pre_get_users', array( $this, 'filter_users_to_role_only' ) );
 	}
 
 	/**
@@ -537,6 +540,7 @@ class VendorsPage {
 					esc_html( (string) $bulk_report )
 				);
 			}
+			$this->render_role_only_notice();
 			?>
 
 			<?php
@@ -790,6 +794,133 @@ class VendorsPage {
 
 
 		<?php
+	}
+
+	/**
+	 * Role-only users: the count with Review / Remove, or the last removal with Undo.
+	 *
+	 * Owner decision 2026-09-25: the upgrade only detects these accounts;
+	 * removing the role is the owner's call, every change is in the Audit Log,
+	 * and the last removal can be undone.
+	 *
+	 * @return void
+	 */
+	private function render_role_only_notice(): void {
+		$last = get_option( WPSS_VENDOR_ROLE_CLEANUP_OPTION );
+		if ( is_array( $last ) && ! empty( $last['users'] ) ) {
+			$n = count( $last['users'] );
+			?>
+			<div class="notice notice-success">
+				<p>
+					<?php
+					printf(
+						/* translators: %s: number of users */
+						esc_html( _n( 'Removed the Vendor role from %s user. Each change is in the Audit Log.', 'Removed the Vendor role from %s users. Each change is in the Audit Log.', $n, 'wp-sell-services' ) ),
+						esc_html( number_format_i18n( $n ) )
+					);
+					?>
+				</p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="wpss_vendor_role_undo">
+					<?php wp_nonce_field( 'wpss_vendor_role_undo' ); ?>
+					<p><button type="submit" class="button"><?php esc_html_e( 'Undo', 'wp-sell-services' ); ?></button></p>
+				</form>
+			</div>
+			<?php
+			return;
+		}
+
+		$ids = wpss_get_role_only_vendor_ids();
+		if ( ! $ids ) {
+			return;
+		}
+
+		$n = count( $ids );
+		?>
+		<div class="notice notice-warning">
+			<p>
+				<strong>
+					<?php
+					printf(
+						/* translators: %s: number of users */
+						esc_html( _n( '%s user has the Vendor role but no seller profile or activity.', '%s users have the Vendor role but no seller profile or activity.', $n, 'wp-sell-services' ) ),
+						esc_html( number_format_i18n( $n ) )
+					);
+					?>
+				</strong>
+				<?php esc_html_e( 'Selling needs an approved seller profile, so the role gives them nothing. Nothing was changed; removing it is your call, and you can undo it.', 'wp-sell-services' ); ?>
+			</p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wpss-role-cleanup-form"
+				data-confirm="<?php echo esc_attr( sprintf( /* translators: %s: number of users */ _n( 'Remove the Vendor role from %s user? Each change is logged and can be undone.', 'Remove the Vendor role from %s users? Each change is logged and can be undone.', $n, 'wp-sell-services' ), number_format_i18n( $n ) ) ); ?>">
+				<input type="hidden" name="action" value="wpss_vendor_role_cleanup">
+				<?php wp_nonce_field( 'wpss_vendor_role_cleanup' ); ?>
+				<p>
+					<a class="button" href="<?php echo esc_url( admin_url( 'users.php?wpss_role_only=1' ) ); ?>"><?php esc_html_e( 'Review', 'wp-sell-services' ); ?></a>
+					<button type="submit" class="button button-primary">
+						<?php
+						/* translators: %s: number of users */
+						printf( esc_html( _n( 'Remove role from %s user', 'Remove role from all %s users', $n, 'wp-sell-services' ) ), esc_html( number_format_i18n( $n ) ) );
+						?>
+					</button>
+				</p>
+			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Remove the Vendor role from every role-only user (admin-post).
+	 *
+	 * @return void
+	 */
+	public function handle_role_cleanup(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), 403 );
+		}
+		check_admin_referer( 'wpss_vendor_role_cleanup' );
+
+		wpss_remove_vendor_role( wpss_get_role_only_vendor_ids() );
+
+		wp_safe_redirect( admin_url( 'admin.php?page=wpss-vendors' ) );
+		exit;
+	}
+
+	/**
+	 * Undo the last role cleanup (admin-post).
+	 *
+	 * @return void
+	 */
+	public function handle_role_undo(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'wp-sell-services' ), 403 );
+		}
+		check_admin_referer( 'wpss_vendor_role_undo' );
+
+		wpss_restore_vendor_role();
+
+		wp_safe_redirect( admin_url( 'admin.php?page=wpss-vendors' ) );
+		exit;
+	}
+
+	/**
+	 * Users screen, "Review": list exactly the role-only users.
+	 *
+	 * @param \WP_User_Query $query The users query.
+	 * @return void
+	 */
+	public function filter_users_to_role_only( $query ): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filter.
+		if ( ! is_admin() || empty( $_GET['wpss_role_only'] ) || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		global $pagenow;
+		if ( 'users.php' !== $pagenow ) {
+			return;
+		}
+
+		$ids = wpss_get_role_only_vendor_ids();
+		$query->set( 'include', $ids ? $ids : array( 0 ) );
 	}
 
 	/**

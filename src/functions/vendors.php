@@ -970,3 +970,145 @@ function wpss_seller_level_note( int $vendor_id, string $tier, bool $with_next =
 
 	return $note;
 }
+
+/**
+ * Users who hold the Vendor role but have no seller profile and never sold.
+ *
+ * Since 1.7.1 selling needs an approved profile, so the role alone grants
+ * nothing; these accounts are clutter the owner may clear (owner decision
+ * 2026-09-25: detected only, cleared only on the owner's say-so, logged,
+ * undoable). Administrators are left out, and so is anyone with a service,
+ * an order or a proposal as a seller.
+ *
+ * @since 1.8.0
+ *
+ * @return int[] User IDs.
+ */
+function wpss_get_role_only_vendor_ids(): array {
+	global $wpdb;
+
+	$cap = $wpdb->get_blog_prefix() . 'capabilities';
+
+	return array_map(
+		'intval',
+		$wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- admin-only count; must be exact after each cleanup.
+			$wpdb->prepare(
+				"SELECT u.ID FROM {$wpdb->users} u
+				JOIN {$wpdb->usermeta} m ON m.user_id = u.ID AND m.meta_key = %s
+				LEFT JOIN {$wpdb->prefix}wpss_vendor_profiles vp ON vp.user_id = u.ID
+				WHERE m.meta_value LIKE %s AND m.meta_value NOT LIKE %s AND vp.id IS NULL
+				AND NOT EXISTS ( SELECT 1 FROM {$wpdb->posts} p WHERE p.post_author = u.ID AND p.post_type = 'wpss_service' )
+				AND NOT EXISTS ( SELECT 1 FROM {$wpdb->prefix}wpss_orders o WHERE o.vendor_id = u.ID )
+				AND NOT EXISTS ( SELECT 1 FROM {$wpdb->prefix}wpss_proposals pr WHERE pr.vendor_id = u.ID )
+				ORDER BY u.ID", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$cap,
+				'%"' . $wpdb->esc_like( \WPSellServices\Services\VendorService::ROLE ) . '"%',
+				'%"administrator"%'
+			)
+		)
+	);
+}
+
+/**
+ * Option holding the last role cleanup, so it can be undone.
+ */
+const WPSS_VENDOR_ROLE_CLEANUP_OPTION = 'wpss_vendor_role_cleanup';
+
+/**
+ * Remove the Vendor role from role-only users, logging each one.
+ *
+ * A user left with no role gets the site's default role, and that is
+ * remembered so Undo can take it away again.
+ *
+ * @since 1.8.0
+ *
+ * @param int[] $user_ids Users to clear (re-checked against the finder).
+ * @return int Users changed.
+ */
+function wpss_remove_vendor_role( array $user_ids ): int {
+	$allowed = array_intersect( array_map( 'intval', $user_ids ), wpss_get_role_only_vendor_ids() );
+	$audit   = new \WPSellServices\Services\AuditLogService();
+	$default = (string) get_option( 'default_role', 'subscriber' );
+	$batch   = array();
+
+	foreach ( $allowed as $user_id ) {
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			continue;
+		}
+
+		$user->remove_role( \WPSellServices\Services\VendorService::ROLE );
+		$added_default = false;
+		if ( empty( $user->roles ) && '' !== $default ) {
+			$user->add_role( $default );
+			$added_default = true;
+		}
+
+		$batch[ $user_id ] = $added_default ? $default : '';
+		$audit->log(
+			'vendor.role_removed',
+			'user',
+			$user_id,
+			array(
+				'from_value' => \WPSellServices\Services\VendorService::ROLE,
+				'to_value'   => implode( ',', $user->roles ),
+			)
+		);
+	}
+
+	if ( $batch ) {
+		update_option(
+			WPSS_VENDOR_ROLE_CLEANUP_OPTION,
+			array(
+				'users' => $batch,
+				'at'    => time(),
+				'by'    => get_current_user_id(),
+			),
+			false
+		);
+	}
+
+	return count( $batch );
+}
+
+/**
+ * Undo the last role cleanup: give the Vendor role back, and remove the
+ * default role the cleanup added.
+ *
+ * @since 1.8.0
+ *
+ * @return int Users restored.
+ */
+function wpss_restore_vendor_role(): int {
+	$last = get_option( WPSS_VENDOR_ROLE_CLEANUP_OPTION );
+	if ( ! is_array( $last ) || empty( $last['users'] ) ) {
+		return 0;
+	}
+
+	$audit    = new \WPSellServices\Services\AuditLogService();
+	$restored = 0;
+
+	foreach ( $last['users'] as $user_id => $added_default ) {
+		$user = get_userdata( (int) $user_id );
+		if ( ! $user ) {
+			continue;
+		}
+
+		$user->add_role( \WPSellServices\Services\VendorService::ROLE );
+		if ( '' !== $added_default ) {
+			$user->remove_role( (string) $added_default );
+		}
+
+		$audit->log(
+			'vendor.role_restored',
+			'user',
+			(int) $user_id,
+			array( 'to_value' => implode( ',', $user->roles ) )
+		);
+		++$restored;
+	}
+
+	delete_option( WPSS_VENDOR_ROLE_CLEANUP_OPTION );
+
+	return $restored;
+}
