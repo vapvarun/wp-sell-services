@@ -298,22 +298,7 @@ class ServicesController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_addon' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
-					'args'                => array(
-						'title'       => array(
-							'description' => __( 'Addon title.', 'wp-sell-services' ),
-							'type'        => 'string',
-							'required'    => true,
-						),
-						'description' => array(
-							'description' => __( 'Addon description.', 'wp-sell-services' ),
-							'type'        => 'string',
-						),
-						'price'       => array(
-							'description' => __( 'Addon price.', 'wp-sell-services' ),
-							'type'        => 'number',
-							'required'    => true,
-						),
-					),
+					'args'                => $this->addon_args( true ),
 				),
 			)
 		);
@@ -327,20 +312,7 @@ class ServicesController extends RestController {
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_addon' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
-					'args'                => array(
-						'title'       => array(
-							'description' => __( 'Addon title.', 'wp-sell-services' ),
-							'type'        => 'string',
-						),
-						'description' => array(
-							'description' => __( 'Addon description.', 'wp-sell-services' ),
-							'type'        => 'string',
-						),
-						'price'       => array(
-							'description' => __( 'Addon price.', 'wp-sell-services' ),
-							'type'        => 'number',
-						),
-					),
+					'args'                => $this->addon_args( false ),
 				),
 			)
 		);
@@ -1180,6 +1152,73 @@ class ServicesController extends RestController {
 	}
 
 	/**
+	 * What an add-on write may set: every field the admin metabox and the
+	 * vendor wizard offer, so the app can create a percentage, per-quantity,
+	 * dropdown or text add-on too. Stored through wpss_save_service_addons(),
+	 * which normalises every key.
+	 */
+	private const ADDON_KEYS = array( 'title', 'description', 'price', 'delivery_days_extra', 'field_type', 'price_type', 'options', 'min_quantity', 'max_quantity', 'is_required' );
+
+	/**
+	 * REST args for creating or updating an add-on.
+	 *
+	 * @param bool $create Whether title and price are required.
+	 * @return array<string, array<string, mixed>>
+	 */
+	private function addon_args( bool $create ): array {
+		return array(
+			'title'               => array(
+				'description' => __( 'Addon title.', 'wp-sell-services' ),
+				'type'        => 'string',
+				'required'    => $create,
+			),
+			'description'         => array(
+				'description' => __( 'Addon description.', 'wp-sell-services' ),
+				'type'        => 'string',
+			),
+			'price'               => array(
+				'description' => __( 'Addon price: an amount, or a percent of the package when price_type is percentage.', 'wp-sell-services' ),
+				'type'        => 'number',
+				'minimum'     => 0,
+				'required'    => $create,
+			),
+			'delivery_days_extra' => array(
+				'description' => __( 'Days the add-on adds to delivery.', 'wp-sell-services' ),
+				'type'        => 'integer',
+				'minimum'     => 0,
+			),
+			'field_type'          => array(
+				'description' => __( 'How the buyer chooses it.', 'wp-sell-services' ),
+				'type'        => 'string',
+				'enum'        => array_keys( wpss_get_addon_field_types() ),
+			),
+			'price_type'          => array(
+				'description' => __( 'How it is priced.', 'wp-sell-services' ),
+				'type'        => 'string',
+				'enum'        => array_keys( wpss_get_addon_price_types() ),
+			),
+			'options'             => array(
+				'description' => __( 'Dropdown choices, comma separated.', 'wp-sell-services' ),
+				'type'        => 'string',
+			),
+			'min_quantity'        => array(
+				'description' => __( 'Smallest quantity (quantity add-ons).', 'wp-sell-services' ),
+				'type'        => 'integer',
+				'minimum'     => 1,
+			),
+			'max_quantity'        => array(
+				'description' => __( 'Largest quantity (quantity add-ons).', 'wp-sell-services' ),
+				'type'        => 'integer',
+				'minimum'     => 1,
+			),
+			'is_required'         => array(
+				'description' => __( 'Every order includes it.', 'wp-sell-services' ),
+				'type'        => 'boolean',
+			),
+		);
+	}
+
+	/**
 	 * One add-on in the REST shape.
 	 *
 	 * @param int                  $service_id Service ID.
@@ -1197,6 +1236,14 @@ class ServicesController extends RestController {
 				'title'               => $addon['title'],
 				'description'         => $addon['description'],
 				'delivery_days_extra' => $addon['delivery_days_extra'],
+				'field_type'          => $addon['field_type'],
+				'price_type'          => $addon['price_type'],
+				'options'             => $addon['options'],
+				'min_quantity'        => (int) $addon['min_quantity'],
+				'max_quantity'        => (int) $addon['max_quantity'],
+				'is_required'         => (bool) $addon['is_required'],
+				// A percentage is not money: "+10%" / "$5.00 each" / "+$20.00".
+				'price_label'         => wpss_addon_price_label( $addon ),
 			),
 			wpss_rest_money( 'price', (float) $addon['price'] )
 		);
@@ -1211,12 +1258,13 @@ class ServicesController extends RestController {
 	public function create_addon( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
 		$addons     = wpss_get_service_extras( $service_id );
-		$addons[]   = array(
-			'title'               => $request->get_param( 'title' ),
-			'description'         => $request->get_param( 'description' ),
-			'price'               => $request->get_param( 'price' ),
-			'delivery_days_extra' => $request->get_param( 'delivery_days_extra' ),
-		);
+		$addon      = array();
+		foreach ( self::ADDON_KEYS as $key ) {
+			if ( $request->has_param( $key ) ) {
+				$addon[ $key ] = $request->get_param( $key );
+			}
+		}
+		$addons[] = $addon;
 
 		$capped = wpss_enforce_service_limits( array( 'extras' => $addons ) );
 		if ( ! empty( $capped['truncated'] ) ) {
@@ -1249,7 +1297,7 @@ class ServicesController extends RestController {
 			return new WP_Error( 'addon_not_found', __( 'Addon not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		foreach ( array( 'title', 'description', 'price', 'delivery_days_extra' ) as $key ) {
+		foreach ( self::ADDON_KEYS as $key ) {
 			if ( $request->has_param( $key ) ) {
 				$addons[ $index ][ $key ] = $request->get_param( $key );
 			}

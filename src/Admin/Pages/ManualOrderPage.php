@@ -37,6 +37,7 @@ class ManualOrderPage {
 		// Priority 20 to ensure parent menu is registered first (default is 10).
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 20 );
 		add_action( 'wp_ajax_wpss_create_manual_order', array( $this, 'handle_create_order' ) );
+		add_action( 'wp_ajax_wpss_manual_order_quote', array( $this, 'ajax_quote' ) );
 		add_action( 'wp_ajax_wpss_get_service_addons', array( $this, 'ajax_get_service_addons' ) );
 		// Priority 20 ensures this runs after Admin::enqueue_scripts registers wpss-admin.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
@@ -103,6 +104,8 @@ class ManualOrderPage {
 					'loadingPackages'     => __( 'Loading packages...', 'wp-sell-services' ),
 					'loadingAddons'       => __( 'Loading addons...', 'wp-sell-services' ),
 					'noAddons'            => __( 'No addons available for this service.', 'wp-sell-services' ),
+					'chooseOne'           => __( 'Choose one', 'wp-sell-services' ),
+					'none'                => __( 'None', 'wp-sell-services' ),
 					/* translators: 1: order number, 2: order ID */
 					'orderCreated'        => __( 'Order #%1$s has been created. Order ID: %2$d', 'wp-sell-services' ),
 					'requirementsSkipped' => __( 'Note: This service has no requirements defined. Order was set to "In Progress" automatically.', 'wp-sell-services' ),
@@ -263,6 +266,10 @@ class ManualOrderPage {
 											<td><?php esc_html_e( 'Addons Total', 'wp-sell-services' ); ?></td>
 											<td id="wpss-summary-addons"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
 										</tr>
+										<tr id="wpss-pricing-tax-row" style="display: none;">
+											<td id="wpss-summary-tax-label"><?php esc_html_e( 'Tax', 'wp-sell-services' ); ?></td>
+											<td id="wpss-summary-tax"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
+										</tr>
 										<tr class="wpss-pricing-editable">
 											<td colspan="2">
 												<div class="wpss-override-toggle">
@@ -321,11 +328,8 @@ class ManualOrderPage {
 									</div>
 
 									<!-- Hidden calculated fields -->
+									<?php // The package price is the base; everything else is priced by the server (price_manual_order()). ?>
 									<input type="hidden" name="subtotal" id="wpss-calculated-subtotal" value="0">
-									<input type="hidden" name="addons_total" id="wpss-calculated-addons-total" value="0">
-									<input type="hidden" name="total" id="wpss-calculated-total" value="0">
-									<input type="hidden" name="platform_fee" id="wpss-calculated-platform-fee" value="0">
-									<input type="hidden" name="vendor_earnings" id="wpss-calculated-vendor-earnings" value="0">
 								</div>
 							</div>
 						</div>
@@ -473,6 +477,7 @@ class ManualOrderPage {
 				array(
 					'id'              => $index,
 					'formatted_price' => wpss_format_price( $addon['price'] ),
+					'price_label'     => wpss_addon_price_label( $addon ),
 				)
 			);
 		}
@@ -534,84 +539,39 @@ class ManualOrderPage {
 			wp_send_json_error( array( 'message' => __( 'Customer cannot be the same as the vendor.', 'wp-sell-services' ) ) );
 		}
 
-		// --- 4. Package: by stable id or index, '' for none ---
-		$resolved   = '' === $package_raw ? null : wpss_resolve_service_package( $service_id, (int) $package_raw );
-		$package_id = $resolved ? (int) $resolved['index'] : null;
-		$package    = $resolved ? $resolved['package'] : array();
+		// --- 4-7. Package, price, add-ons, tax and commission ---
+		// One method, shared with the live preview (ajax_quote()), so the
+		// screen shows exactly what this saves.
+		$priced = $this->price_manual_order(
+			$service_id,
+			$package_raw,
+			(int) $vendor_id,
+			$subtotal_input,
+			$addons_raw,
+			isset( $_POST['total_override'] ) ? (float) $_POST['total_override'] : 0.0,
+			$commission_rate
+		);
+
+		if ( is_wp_error( $priced ) ) {
+			wp_send_json_error( array( 'message' => $priced->get_error_message() ) );
+		}
+
+		$package_id      = $priced['package_id'];
+		$package         = $priced['package'];
+		$subtotal        = $priced['subtotal'];
+		$selected_addons = $priced['addons'];
+		$addons_total    = $priced['addons_total'];
+		$line            = $priced['line'];
+		$total           = $priced['total'];
+		$commission_rate = $priced['commission_rate'];
+		$platform_fee    = $priced['platform_fee'];
+		$vendor_earnings = $priced['vendor_earnings'];
 
 		if ( $package && ! isset( $_POST['delivery_days'] ) ) {
 			$delivery_days = (int) ( $package['delivery_days'] ?? $delivery_days );
 		}
 
 		$revisions_included = $revisions_input ?? (int) ( $package['revisions'] ?? 2 );
-
-		// --- 5 & 6. Price through the same line pricer checkout uses ---
-		// The base is what the admin typed, else the package, else the
-		// service's starting price. Add-ons and tax follow the checkout rules.
-		if ( $subtotal_input > 0 ) {
-			$subtotal = $subtotal_input;
-		} elseif ( $package ) {
-			$subtotal = (float) ( $package['price'] ?? 0 );
-		} else {
-			$subtotal = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-		}
-
-		$priced_addons = wpss_price_addons( $service_id, $addons_raw, $subtotal );
-
-		if ( is_wp_error( $priced_addons ) ) {
-			wp_send_json_error( array( 'message' => $priced_addons->get_error_message() ) );
-		}
-
-		$selected_addons = $priced_addons['addons'];
-		$addons_total    = (float) $priced_addons['addons_total'];
-		$line            = CheckoutIntentService::price_line( $service_id, $subtotal, $addons_total, (int) $vendor_id );
-
-		// "Override total" is the exact amount the buyer pays: no tax on top.
-		// The field is disabled, so not posted, unless the admin ticks it.
-		$total_override = isset( $_POST['total_override'] ) ? (float) $_POST['total_override'] : 0;
-		if ( $total_override > 0 ) {
-			$line = array(
-				'total'        => $total_override,
-				'net'          => $total_override,
-				'tax'          => 0.0,
-				'tax_rate'     => 0.0,
-				'tax_included' => false,
-			) + $line;
-		}
-
-		$total = (float) $line['total'];
-
-		if ( $total <= 0 ) {
-			wp_send_json_error( array( 'message' => __( 'Enter a price for this order: the package and service have none.', 'wp-sell-services' ) ) );
-		}
-
-		// --- 7. Calculate commission ---
-		// The admin picks the rate for a manual order, so that choice stays
-		// authoritative — but the arithmetic goes through the single authority
-		// rather than being hand-rolled here. The rate is pinned for this call
-		// only, so tiered rules / plan overrides cannot silently replace what the
-		// admin explicitly entered.
-		$commission_rate = max( 0, min( 100, $commission_rate ) );
-
-		$pin_manual_rate = static function () use ( $commission_rate ): float {
-			return (float) $commission_rate;
-		};
-
-		add_filter( 'wpss_commission_rate', $pin_manual_rate, PHP_INT_MAX );
-
-		$manual_breakdown = CommissionService::compute_breakdown(
-			(float) $line['net'],
-			(object) array(
-				'id'         => 0,
-				'vendor_id'  => (int) $vendor_id,
-				'service_id' => (int) $service_id,
-			)
-		);
-
-		remove_filter( 'wpss_commission_rate', $pin_manual_rate, PHP_INT_MAX );
-
-		$platform_fee    = $manual_breakdown['platform_fee'];
-		$vendor_earnings = $manual_breakdown['vendor_earnings'];
 
 		// --- 8. Smart status ---
 		$service_has_requirements = ! empty( wpss_get_service_requirements( $service_id ) );
@@ -782,6 +742,154 @@ class ManualOrderPage {
 			)
 		);
 	}
+
+	/**
+	 * Price a manual order: the one calculation behind Create Order and its
+	 * live preview.
+	 *
+	 * The base is what the admin typed, else the package, else the service's
+	 * starting price; add-ons and tax follow the checkout rules; "Override
+	 * total" is the exact amount charged, with no tax on top; commission uses
+	 * the rate the admin entered. The preview used to add this up in the
+	 * browser without tax, so the screen said $55.00 and the order charged
+	 * $64.90 (Basecamp 10340505963).
+	 *
+	 * @param int          $service_id      Service ID.
+	 * @param string       $package_raw     Package id or index; '' for none.
+	 * @param int          $vendor_id       Vendor ID.
+	 * @param float        $subtotal_input  Price the admin typed, 0 for none.
+	 * @param array<mixed> $addons_raw      Add-on selection as posted.
+	 * @param float        $total_override  Exact total, 0 for none.
+	 * @param float        $commission_rate Rate the admin entered.
+	 * @return array<string, mixed>|\WP_Error
+	 */
+	private function price_manual_order( int $service_id, string $package_raw, int $vendor_id, float $subtotal_input, array $addons_raw, float $total_override, float $commission_rate ) {
+		// Package: by stable id or index, '' for none.
+		$resolved   = '' === $package_raw ? null : wpss_resolve_service_package( $service_id, (int) $package_raw );
+		$package_id = $resolved ? (int) $resolved['index'] : null;
+		$package    = $resolved ? $resolved['package'] : array();
+
+		if ( $subtotal_input > 0 ) {
+			$subtotal = $subtotal_input;
+		} elseif ( $package ) {
+			$subtotal = (float) ( $package['price'] ?? 0 );
+		} else {
+			$subtotal = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
+		}
+
+		$priced_addons = wpss_price_addons( $service_id, $addons_raw, $subtotal );
+
+		if ( is_wp_error( $priced_addons ) ) {
+			return $priced_addons;
+		}
+
+		$addons_total = (float) $priced_addons['addons_total'];
+		$line         = CheckoutIntentService::price_line( $service_id, $subtotal, $addons_total, $vendor_id );
+
+		if ( $total_override > 0 ) {
+			$line = array(
+				'total'        => $total_override,
+				'net'          => $total_override,
+				'tax'          => 0.0,
+				'tax_rate'     => 0.0,
+				'tax_included' => false,
+			) + $line;
+		}
+
+		if ( (float) $line['total'] <= 0 ) {
+			return new \WP_Error( 'wpss_manual_order_no_price', __( 'Enter a price for this order: the package and service have none.', 'wp-sell-services' ) );
+		}
+
+		// The admin picks the rate for a manual order, so that choice stays
+		// authoritative, but the arithmetic goes through the single authority.
+		// The rate is pinned for this call only, so tiered rules or plan
+		// overrides cannot silently replace what the admin entered.
+		$commission_rate = max( 0, min( 100, $commission_rate ) );
+		$pin_manual_rate = static function () use ( $commission_rate ): float {
+			return (float) $commission_rate;
+		};
+
+		add_filter( 'wpss_commission_rate', $pin_manual_rate, PHP_INT_MAX );
+
+		$breakdown = CommissionService::compute_breakdown(
+			(float) $line['net'],
+			(object) array(
+				'id'         => 0,
+				'vendor_id'  => $vendor_id,
+				'service_id' => $service_id,
+			)
+		);
+
+		remove_filter( 'wpss_commission_rate', $pin_manual_rate, PHP_INT_MAX );
+
+		return array(
+			'package_id'      => $package_id,
+			'package'         => $package,
+			'subtotal'        => $subtotal,
+			'addons'          => $priced_addons['addons'],
+			'addons_total'    => $addons_total,
+			'line'            => $line,
+			'total'           => (float) $line['total'],
+			'commission_rate' => $commission_rate,
+			'platform_fee'    => $breakdown['platform_fee'],
+			'vendor_earnings' => $breakdown['vendor_earnings'],
+		);
+	}
+
+	/**
+	 * AJAX: the live Create Order summary, priced by price_manual_order().
+	 *
+	 * @return void
+	 */
+	public function ajax_quote(): void {
+		check_ajax_referer( 'wpss_create_manual_order', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$service    = get_post( $service_id );
+
+		if ( ! $service || 'wpss_service' !== $service->post_type ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
+		}
+
+		$vendor_id = absint( $_POST['vendor_id'] ?? 0 );
+		$priced    = $this->price_manual_order(
+			$service_id,
+			isset( $_POST['package_id'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['package_id'] ) ) ) : '',
+			$vendor_id ? $vendor_id : (int) $service->post_author,
+			isset( $_POST['subtotal'] ) ? (float) $_POST['subtotal'] : 0.0,
+			isset( $_POST['addons'] ) ? (array) wp_unslash( $_POST['addons'] ) : array(), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- normalised by wpss_price_addons().
+			isset( $_POST['total_override'] ) ? (float) $_POST['total_override'] : 0.0,
+			isset( $_POST['commission_rate'] ) ? (float) $_POST['commission_rate'] : CommissionService::get_global_commission_rate()
+		);
+
+		if ( is_wp_error( $priced ) ) {
+			wp_send_json_error( array( 'message' => $priced->get_error_message() ) );
+		}
+
+		$line = $priced['line'];
+
+		wp_send_json_success(
+			array(
+				'subtotal'        => wpss_format_price( $priced['subtotal'] ),
+				'addons_total'    => wpss_format_price( $priced['addons_total'] ),
+				'has_addons'      => $priced['addons_total'] > 0,
+				'tax'             => wpss_format_price( (float) $line['tax'] ),
+				'has_tax'         => (float) $line['tax'] > 0,
+				'tax_label'       => ! empty( $line['tax_included'] )
+					/* translators: %s: tax label, e.g. VAT. */
+					? sprintf( __( '%s (included)', 'wp-sell-services' ), $line['tax_label'] ?? __( 'Tax', 'wp-sell-services' ) )
+					: ( $line['tax_label'] ?? __( 'Tax', 'wp-sell-services' ) ),
+				'total'           => wpss_format_price( $priced['total'] ),
+				'platform_fee'    => wpss_format_price( (float) $priced['platform_fee'] ),
+				'vendor_earnings' => wpss_format_price( (float) $priced['vendor_earnings'] ),
+			)
+		);
+	}
+
 
 	/**
 	 * Get initial order statuses available for manual creation.

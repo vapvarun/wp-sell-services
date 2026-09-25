@@ -21,7 +21,6 @@
 
 	var state = {
 		subtotal: 0,
-		addonsTotal: 0,
 		deliveryDays: 0,
 		revisions: 0,
 		overrideTotal: false,
@@ -31,79 +30,66 @@
 	var $form = $('#wpss-manual-order-form');
 	var $result = $('#wpss-order-result');
 
-	/**
-	 * Format price using site currency format.
-	 */
-	function formatPrice(amount) {
-		var num = parseFloat(amount) || 0;
-		var decimals = (typeof wpssManualOrder.currencyDecimals !== 'undefined') ? wpssManualOrder.currencyDecimals : 2;
-		return wpssManualOrder.currencyFormat.replace('%s', num.toFixed(decimals));
-	}
 
 	/**
-	 * Update pricing summary display.
+	 * Update the pricing summary from the server.
+	 *
+	 * Priced by ManualOrderPage::price_manual_order() - the same calculation
+	 * Create Order saves - so the screen shows the tax and the total the order
+	 * will carry. It used to add prices up here, without tax, and said $55.00
+	 * for an order saved at $64.90.
 	 */
+	var quoteTimer = null;
+	var quoteRequest = 0;
+
 	function updatePricingSummary() {
-		var total;
-
-		if (state.overrideTotal) {
-			total = parseFloat($('#wpss-total-override').val()) || 0;
-		} else {
-			total = state.subtotal + state.addonsTotal;
-		}
-
-		var commissionRate = parseFloat($('#wpss-commission-rate').val()) || state.commissionRate;
-		var platformFee = Math.round(total * (commissionRate / 100) * 100) / 100;
-		var vendorEarnings = Math.round((total - platformFee) * 100) / 100;
-
-		$('#wpss-summary-subtotal').text(formatPrice(state.subtotal));
-		$('#wpss-summary-addons').text(formatPrice(state.addonsTotal));
-		$('#wpss-summary-total').text(formatPrice(total));
-		$('#wpss-summary-platform-fee').text(formatPrice(platformFee));
-		$('#wpss-summary-vendor-earnings').text(formatPrice(vendorEarnings));
-
-		// Update hidden fields.
 		$('#wpss-calculated-subtotal').val(state.subtotal.toFixed(2));
-		$('#wpss-calculated-addons-total').val(state.addonsTotal.toFixed(2));
-		$('#wpss-calculated-total').val(total.toFixed(2));
-		$('#wpss-calculated-platform-fee').val(platformFee.toFixed(2));
-		$('#wpss-calculated-vendor-earnings').val(vendorEarnings.toFixed(2));
 
-		// Show/hide addons row.
-		$('#wpss-pricing-addons-row').toggle(state.addonsTotal > 0);
-	}
-
-	/**
-	 * Recalculate addon totals from checked items.
-	 */
-	function recalculateAddons() {
-		var total = 0;
-
-		$('.wpss-addon-item').each(function () {
-			var $item = $(this);
-			var $checkbox = $item.find('.wpss-addon-checkbox input');
-
-			if (!$checkbox.is(':checked')) {
+		clearTimeout(quoteTimer);
+		quoteTimer = setTimeout(function () {
+			if (!$('#wpss-service-id').val()) {
 				return;
 			}
 
-			var price = parseFloat($item.data('price')) || 0;
-			var fieldType = $item.data('field-type');
-			var priceType = $item.data('price-type');
+			var request = ++quoteRequest;
+			var data = $form.serializeArray().filter(function (field) {
+				return field.name !== 'action' && field.name !== 'nonce';
+			});
+			data.push({ name: 'action', value: 'wpss_manual_order_quote' });
+			data.push({ name: 'nonce', value: wpssManualOrder.nonce });
 
-			if (fieldType === 'quantity') {
-				var qty = parseInt($item.find('.wpss-addon-qty input').val(), 10) || 1;
-				price = price * qty;
-			}
+			$('#wpss-summary-total').attr('aria-busy', 'true');
 
-			if (priceType === 'percentage') {
-				price = (state.subtotal * price) / 100;
-			}
+			$.post(wpssManualOrder.ajaxUrl, $.param(data), function (response) {
+				if (request !== quoteRequest) {
+					return; // A newer change is already being priced.
+				}
 
-			total += price;
-		});
+				$('#wpss-summary-total').removeAttr('aria-busy');
 
-		state.addonsTotal = Math.round(total * 100) / 100;
+				if (!response.success) {
+					$('#wpss-summary-total').text('-');
+					return;
+				}
+
+				var q = response.data;
+				$('#wpss-summary-subtotal').text(q.subtotal);
+				$('#wpss-summary-addons').text(q.addons_total);
+				$('#wpss-pricing-addons-row').toggle(!!q.has_addons);
+				$('#wpss-summary-tax-label').text(q.tax_label);
+				$('#wpss-summary-tax').text(q.tax);
+				$('#wpss-pricing-tax-row').toggle(!!q.has_tax);
+				$('#wpss-summary-total').text(q.total);
+				$('#wpss-summary-platform-fee').text(q.platform_fee);
+				$('#wpss-summary-vendor-earnings').text(q.vendor_earnings);
+			});
+		}, 250);
+	}
+
+	/**
+	 * Add-on choices changed: re-price on the server.
+	 */
+	function recalculateAddons() {
 		updatePricingSummary();
 	}
 
@@ -119,7 +105,6 @@
 			$packageRow.hide();
 			$addonsContainer.hide();
 			state.subtotal = 0;
-			state.addonsTotal = 0;
 			updatePricingSummary();
 			return;
 		}
@@ -248,10 +233,8 @@
 	 * Build HTML for a single addon item.
 	 */
 	function buildAddonHtml(addon) {
-		var priceDisplay = addon.formatted_price;
-		if (addon.price_type === 'percentage') {
-			priceDisplay = addon.price + '%';
-		}
+		var priceDisplay = addon.price_label || addon.formatted_price;
+		var choosesByValue = addon.field_type === 'dropdown' || addon.field_type === 'text';
 
 		var html =
 			'<div class="wpss-addon-item"' +
@@ -271,19 +254,22 @@
 			addon.delivery_days_extra +
 			'">';
 
-		html +=
-			'<div class="wpss-addon-checkbox">' +
-			'<input type="checkbox" name="addons[' +
-			addon.id +
-			'][selected]" value="1"' +
-			(addon.is_required ? ' checked disabled' : '') +
-			'>' +
-			(addon.is_required
-				? '<input type="hidden" name="addons[' +
-					addon.id +
-					'][selected]" value="1">'
-				: '') +
-			'</div>';
+		// A dropdown or text add-on is chosen by its value: the server charges
+		// it only when an option or text is given.
+		html += choosesByValue
+			? '<input type="hidden" name="addons[' + addon.id + '][selected]" value="1">'
+			: '<div class="wpss-addon-checkbox">' +
+				'<input type="checkbox" name="addons[' +
+				addon.id +
+				'][selected]" value="1"' +
+				(addon.is_required ? ' checked disabled' : '') +
+				'>' +
+				(addon.is_required
+					? '<input type="hidden" name="addons[' +
+						addon.id +
+						'][selected]" value="1">'
+					: '') +
+				'</div>';
 
 		html +=
 			'<div class="wpss-addon-info">' +
@@ -318,6 +304,16 @@
 				'"' +
 				' step="1">' +
 				'</div>';
+		}
+
+		if (addon.field_type === 'dropdown') {
+			var options = String(addon.options || '').split(',').map(function (o) { return o.trim(); }).filter(Boolean);
+			html += '<div class="wpss-addon-qty"><select name="addons[' + addon.id + '][option]">' +
+				'<option value="">' + escapeHtml(addon.is_required ? wpssManualOrder.i18n.chooseOne : wpssManualOrder.i18n.none) + '</option>' +
+				options.map(function (o) { return '<option value="' + escapeHtml(o) + '">' + escapeHtml(o) + '</option>'; }).join('') +
+				'</select></div>';
+		} else if (addon.field_type === 'text') {
+			html += '<div class="wpss-addon-qty"><textarea rows="2" name="addons[' + addon.id + '][text]"></textarea></div>';
 		}
 
 		html +=
@@ -368,7 +364,6 @@
 
 		// Reset state.
 		state.subtotal = 0;
-		state.addonsTotal = 0;
 
 		loadPackages(serviceId);
 		loadVendorCommissionRate(vendorId);
@@ -403,7 +398,7 @@
 	});
 
 	// Addon quantity change → recalculate.
-	$(document).on('change input', '.wpss-addon-qty input', function () {
+	$(document).on('change input', '.wpss-addon-qty input, .wpss-addon-qty select, .wpss-addon-qty textarea', function () {
 		recalculateAddons();
 	});
 
@@ -511,7 +506,6 @@
 		$('#wpss-package-row').hide();
 		$('#wpss-addons-container').hide();
 		state.subtotal = 0;
-		state.addonsTotal = 0;
 		state.overrideTotal = false;
 		$('#wpss-total-override').prop('disabled', true);
 		updatePricingSummary();
