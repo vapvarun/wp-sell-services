@@ -113,25 +113,32 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 					data-media-thumbs="<?php echo esc_attr( $media_thumbs ); ?>"
 				>
 					<?php if ( ! empty( $item['media'] ) ) : ?>
-						<div class="wpss-portfolio__media wpss-portfolio-preview" data-index="<?php echo esc_attr( $portfolio_index ); ?>" role="button" tabindex="0" style="cursor:pointer;">
+						<div class="wpss-portfolio__media wpss-portfolio-preview" data-index="<?php echo esc_attr( $portfolio_index ); ?>" aria-hidden="true" style="cursor:pointer;">
 							<img src="<?php echo esc_url( $item['media'][0]['medium'] ?? $item['media'][0]['url'] ?? '' ); ?>" alt="<?php echo esc_attr( $item['title'] ); ?>">
 						</div>
 					<?php else : ?>
-						<div class="wpss-portfolio__media wpss-portfolio__media--placeholder wpss-portfolio-preview" data-index="<?php echo esc_attr( $portfolio_index ); ?>" role="button" tabindex="0" style="cursor:pointer;">
+						<div class="wpss-portfolio__media wpss-portfolio__media--placeholder wpss-portfolio-preview" data-index="<?php echo esc_attr( $portfolio_index ); ?>" aria-hidden="true" style="cursor:pointer;">
 							<i data-lucide="image" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 						</div>
 					<?php endif; ?>
 
 					<div class="wpss-portfolio__info">
+						<?php
+						// The title is the keyboard/AT control for the preview; the media
+						// tile above is a mouse shortcut to the same thing, so it is hidden
+						// from AT rather than being a second, unnamed button. The Featured
+						// badge sits here, not in the action row, where it pushed Delete
+						// onto a line of its own.
+						?>
+						<?php if ( ! empty( $item['is_featured'] ) ) : ?>
+							<span class="wpss-badge wpss-badge--warning wpss-badge--small wpss-portfolio__badge"><?php esc_html_e( 'Featured', 'wp-sell-services' ); ?></span>
+						<?php endif; ?>
 						<h4 class="wpss-portfolio__title wpss-portfolio-preview" data-index="<?php echo esc_attr( $portfolio_index ); ?>" role="button" tabindex="0" style="cursor:pointer;"><?php echo esc_html( $item['title'] ); ?></h4>
 						<?php if ( ! empty( $item['description'] ) ) : ?>
 							<p class="wpss-portfolio__desc"><?php echo esc_html( wp_trim_words( $item['description'], 15 ) ); ?></p>
 						<?php endif; ?>
 
 						<div class="wpss-portfolio__actions">
-							<?php if ( ! empty( $item['is_featured'] ) ) : ?>
-								<span class="wpss-badge wpss-badge--warning wpss-badge--small"><?php esc_html_e( 'Featured', 'wp-sell-services' ); ?></span>
-							<?php endif; ?>
 							<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--ghost wpss-portfolio-edit" data-item-id="<?php echo esc_attr( $item['id'] ); ?>">
 								<?php esc_html_e( 'Edit', 'wp-sell-services' ); ?>
 							</button>
@@ -192,6 +199,7 @@ do_action( 'wpss_dashboard_section_before', 'portfolio', get_userdata( $user_id 
 			function close(){lb.setAttribute('aria-hidden','true');document.body.style.overflow='';}
 			document.querySelectorAll('.wpss-portfolio-preview').forEach(function(el){
 				el.addEventListener('click',function(e){e.stopPropagation();show(parseInt(this.dataset.index,10));});
+				el.addEventListener('keydown',function(e){if('Enter'===e.key||' '===e.key){e.preventDefault();show(parseInt(this.dataset.index,10));}});
 			});
 			lb.querySelector('.wpss-portfolio-lightbox__backdrop').addEventListener('click',close);
 			lb.querySelector('.wpss-portfolio-lightbox__close').addEventListener('click',close);

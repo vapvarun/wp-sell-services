@@ -1985,8 +1985,20 @@ select.wpss-input option,
 .wpss-portfolio__actions {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 4px;
 	flex-wrap: wrap;
+}
+
+.wpss-portfolio__actions .wpss-btn {
+	padding-inline: var(--wpss-space-2);
+}
+
+.wpss-portfolio__actions .wpss-portfolio-delete {
+	margin-inline-start: auto;
+}
+
+.wpss-portfolio__badge {
+	margin-bottom: 6px;
 }
 
 .wpss-portfolio-media-thumb {
