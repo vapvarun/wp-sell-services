@@ -228,6 +228,13 @@ class CommissionService {
 			return false;
 		}
 
+		// A milestone phase has its own ledger row type; it is credited by
+		// MilestoneService::credit_phase() so a phase completed by approval, a
+		// dispute ruling or an admin is credited once (Basecamp 10336732073).
+		if ( MilestoneService::ORDER_TYPE === ( $order->platform ?? '' ) ) {
+			return ( new MilestoneService() )->credit_phase( $order_id );
+		}
+
 		// Skip if commission already recorded (check for existing wallet transaction).
 		$transactions_table = $wpdb->prefix . 'wpss_wallet_transactions';
 

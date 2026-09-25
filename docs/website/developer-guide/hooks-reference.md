@@ -136,7 +136,7 @@ guide; this is the complete index.
 | `wpss_milestone_approved` | 4 | `src/Services/MilestoneService.php` |  |
 | `wpss_milestone_cancelled` | 2 | `src/Services/MilestoneService.php` *(+1 more)* | Fires when a milestone phase is cancelled rather than settled. |
 | `wpss_milestone_declined` | 3 | `src/Services/MilestoneService.php` |  |
-| `wpss_milestone_paid` | 5 | `src/Services/MilestoneService.php` | Fires after a milestone payment has cleared and the vendor has been credited. Milestone is now in_progress. |
+| `wpss_milestone_paid` | 5 | `src/Services/MilestoneService.php` | Fires after a milestone phase has been paid. The phase is now in_progress; the vendor is credited when the buyer approves it. |
 | `wpss_milestone_proposed` | 3 | `src/Services/BuyerRequestService.php` *(+1 more)* |  |
 | `wpss_milestone_revision_requested` | 5 | `src/Services/MilestoneService.php` | Fires when a buyer sends a milestone phase back for changes. |
 | `wpss_milestone_submitted` | 4 | `src/Services/MilestoneService.php` |  |

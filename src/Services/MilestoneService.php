@@ -114,7 +114,7 @@ class MilestoneService {
 		if ( self::ORDER_TYPE !== ( $order->platform ?? '' ) ) {
 			return;
 		}
-		$this->credit_milestone_on_payment_complete( $order_id );
+		$this->start_paid_phase( $order_id );
 	}
 
 	/**
@@ -271,29 +271,101 @@ class MilestoneService {
 	}
 
 	/**
-	 * Credit the vendor on payment clearing + flip the milestone to
-	 * in_progress so the Submit Delivery action becomes live.
+	 * A phase was paid: record its fee breakdown and start the work.
 	 *
-	 * Idempotent via the wallet-transaction reference check — the same
-	 * pattern tips and extensions use, so gateway webhook retries do not
-	 * double-credit.
+	 * The vendor is NOT credited here. A phase is earned when the buyer
+	 * approves it, the same as an order on completion (owner decision,
+	 * Basecamp 10336732073); until then the earnings show as clearing. It used
+	 * to credit on payment, with nothing to stop the vendor withdrawing money
+	 * for work nobody had seen.
+	 *
+	 * Idempotent on started_at, so a gateway webhook retry does nothing.
+	 *
+	 * @since 1.8.0
 	 *
 	 * @param int $milestone_id Sub-order ID.
-	 * @return bool True if credited, false if skipped.
+	 * @return bool True if started, false if skipped.
 	 */
-	public function credit_milestone_on_payment_complete( int $milestone_id ): bool {
+	public function start_paid_phase( int $milestone_id ): bool {
 		global $wpdb;
 
 		$sub = wpss_get_order( $milestone_id );
-		if ( ! $sub ) {
-			return false;
-		}
 
-		if ( self::ORDER_TYPE !== ( $sub->platform ?? '' ) ) {
+		if ( ! $sub || self::ORDER_TYPE !== ( $sub->platform ?? '' ) ) {
 			return false;
 		}
 
 		if ( 'paid' !== ( $sub->payment_status ?? '' ) && empty( $sub->paid_at ) ) {
+			return false;
+		}
+
+		// Started once: a webhook retry finds started_at already set.
+		if ( ! empty( $sub->started_at ) || (float) $sub->total <= 0 ) {
+			return false;
+		}
+
+		$commission      = ( new CommissionService() )->calculate( $milestone_id );
+		$vendor_earnings = (float) ( $commission['vendor_earnings'] ?? $sub->total );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->update(
+			$wpdb->prefix . 'wpss_orders',
+			array(
+				'status'          => ServiceOrder::STATUS_IN_PROGRESS,
+				'started_at'      => current_time( 'mysql' ),
+				'updated_at'      => current_time( 'mysql' ),
+				'commission_rate' => $commission['commission_rate'] ?? 0.0,
+				'platform_fee'    => $commission['platform_fee'] ?? 0.0,
+				'vendor_earnings' => $vendor_earnings,
+			),
+			array( 'id' => $milestone_id )
+		);
+
+		/**
+		 * Fires after a milestone phase has been paid. The phase is now
+		 * in_progress; the vendor is credited when the buyer approves it.
+		 *
+		 * @since 1.1.0
+		 * @since 1.8.0 No longer means the vendor has been credited.
+		 *
+		 * @param int   $milestone_id    Sub-order ID.
+		 * @param int   $parent_order_id Parent service order ID.
+		 * @param int   $vendor_id       Vendor user ID.
+		 * @param int   $customer_id     Buyer user ID.
+		 * @param float $net_amount      What the vendor earns on approval.
+		 */
+		do_action(
+			'wpss_milestone_paid',
+			$milestone_id,
+			(int) $sub->platform_order_id,
+			(int) $sub->vendor_id,
+			(int) $sub->customer_id,
+			$vendor_earnings
+		);
+
+		return true;
+	}
+
+	/**
+	 * Credit the vendor for a completed phase.
+	 *
+	 * The one writer of a phase's earnings: approve() calls it, and
+	 * CommissionService::record() hands phases here when one is completed
+	 * another way (a dispute ruling, an admin), so a phase is credited once
+	 * whichever path finishes it. Idempotent on the ledger row, which also
+	 * covers phases credited on payment before 1.8.0.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $milestone_id Sub-order ID.
+	 * @return bool True when the phase is credited (now or before).
+	 */
+	public function credit_phase( int $milestone_id ): bool {
+		global $wpdb;
+
+		$sub = wpss_get_order( $milestone_id );
+
+		if ( ! $sub || self::ORDER_TYPE !== ( $sub->platform ?? '' ) || ServiceOrder::STATUS_COMPLETED !== $sub->status ) {
 			return false;
 		}
 
@@ -309,18 +381,12 @@ class MilestoneService {
 			)
 		);
 		if ( $existing ) {
-			return false;
+			return true;
 		}
 
-		$amount = (float) $sub->total;
-		if ( $amount <= 0 ) {
-			return false;
-		}
-
-		$commission      = ( new CommissionService() )->calculate( $milestone_id );
-		$commission_rate = $commission['commission_rate'] ?? 0.0;
-		$platform_fee    = $commission['platform_fee'] ?? 0.0;
-		$vendor_earnings = $commission['vendor_earnings'] ?? $amount;
+		$vendor_earnings = null !== $sub->vendor_earnings && '' !== $sub->vendor_earnings
+			? (float) $sub->vendor_earnings
+			: (float) ( ( new CommissionService() )->calculate( $milestone_id )['vendor_earnings'] ?? 0 );
 
 		if ( $vendor_earnings <= 0 ) {
 			return false;
@@ -328,32 +394,25 @@ class MilestoneService {
 
 		$wpdb->query( 'START TRANSACTION' );
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$current_balance = (float) wpss_get_ledger_balance( (int) $sub->vendor_id, true );
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-
-		$new_balance = $current_balance + $vendor_earnings;
-		$meta        = $this->decode_meta( $sub );
-		$description = sprintf(
-			/* translators: 1: milestone title, 2: sub-order number */
-			__( 'Milestone payment: %1$s (%2$s)', 'wp-sell-services' ),
-			(string) ( $meta['title'] ?? $sub->order_number ),
-			$sub->order_number
-		);
-
+		$meta     = $this->decode_meta( $sub );
 		$inserted = wpss_insert_ledger_row(
 			array(
 				'user_id'        => (int) $sub->vendor_id,
 				'type'           => self::TYPE_MILESTONE,
 				'amount'         => $vendor_earnings,
-				'balance_after'  => $new_balance,
+				'balance_after'  => (float) wpss_get_ledger_balance( (int) $sub->vendor_id, true ) + $vendor_earnings,
 				'currency'       => $sub->currency ?? 'USD',
-				'description'    => $description,
+				'description'    => sprintf(
+					/* translators: 1: milestone title, 2: sub-order number */
+					__( 'Milestone payment: %1$s (%2$s)', 'wp-sell-services' ),
+					(string) ( $meta['title'] ?? $sub->order_number ),
+					$sub->order_number
+				),
 				'reference_type' => 'order',
 				'reference_id'   => $milestone_id,
 				'status'         => 'completed',
 				'created_at'     => current_time( 'mysql' ),
-			),
+			)
 		);
 
 		if ( ! $inserted ) {
@@ -361,60 +420,33 @@ class MilestoneService {
 			return false;
 		}
 
-		// Flip to in_progress so the vendor sees Submit Delivery and the
-		// timeline reflects 'paid, seller working'. Persist the commission
-		// breakdown so the sub-order row matches the wallet event.
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update(
-			$orders_table,
-			array(
-				'status'          => ServiceOrder::STATUS_IN_PROGRESS,
-				'started_at'      => current_time( 'mysql' ),
-				'updated_at'      => current_time( 'mysql' ),
-				'commission_rate' => $commission_rate,
-				'platform_fee'    => $platform_fee,
-				'vendor_earnings' => $vendor_earnings,
-			),
-			array( 'id' => $milestone_id )
-		);
-
 		$wpdb->query( 'COMMIT' );
 
 		do_action(
 			'wpss_commission_recorded',
 			$milestone_id,
 			array(
-				'order_total'     => $amount,
-				'commission_rate' => $commission_rate,
-				'platform_fee'    => $platform_fee,
+				'order_total'     => (float) $sub->total,
+				'commission_rate' => (float) $sub->commission_rate,
+				'platform_fee'    => (float) $sub->platform_fee,
 				'vendor_earnings' => $vendor_earnings,
 			),
 			(int) $sub->vendor_id
 		);
 
-		/**
-		 * Fires after a milestone payment has cleared and the vendor has been
-		 * credited. Milestone is now in_progress.
-		 *
-		 * @since 1.1.0
-		 *
-		 * @param int   $milestone_id    Sub-order ID.
-		 * @param int   $parent_order_id Parent service order ID.
-		 * @param int   $vendor_id       Vendor user ID.
-		 * @param int   $customer_id     Buyer user ID.
-		 * @param float $net_amount      NET vendor earnings.
-		 */
-		do_action(
-			'wpss_milestone_paid',
-			$milestone_id,
-			(int) $sub->platform_order_id,
-			(int) $sub->vendor_id,
-			(int) $sub->customer_id,
-			(float) $vendor_earnings
-		);
-
 		return true;
+	}
+
+	/**
+	 * Kept for callers from before 1.8.0.
+	 *
+	 * @deprecated 1.8.0 A phase is credited on approval (credit_phase()); payment only starts it.
+	 *
+	 * @param int $milestone_id Sub-order ID.
+	 * @return bool
+	 */
+	public function credit_milestone_on_payment_complete( int $milestone_id ): bool {
+		return $this->start_paid_phase( $milestone_id );
 	}
 
 	/**
@@ -529,6 +561,9 @@ class MilestoneService {
 			),
 			array( 'id' => $milestone_id )
 		);
+
+		// Earned now: the phase is approved.
+		$this->credit_phase( $milestone_id );
 
 		do_action( 'wpss_milestone_approved', $milestone_id, (int) $sub->platform_order_id, (int) $sub->vendor_id, $customer_id );
 

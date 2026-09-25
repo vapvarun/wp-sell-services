@@ -48,8 +48,8 @@ do_action( 'wpss_email_content_before', 'milestone_paid', $milestone, $recipient
 <p style="margin: 0 0 20px 0; font-size: 16px; color: #3c3c3c; line-height: 1.6;">
 	<?php
 	printf(
-		/* translators: 1: buyer, 2: phase title, 3: net amount */
-		esc_html__( '%1$s paid the phase %2$s. %3$s has been credited to your wallet — you can start work.', 'wp-sell-services' ),
+		/* translators: 1: buyer (used twice), 2: phase title, 3: net amount */
+		esc_html__( '%1$s paid the phase %2$s, so you can start work. You earn %3$s, credited to your wallet when %1$s approves the phase.', 'wp-sell-services' ),
 		'<strong>' . esc_html( $buyer_name ) . '</strong>',
 		'<strong>' . esc_html( $phase_title ) . '</strong>',
 		'<strong>' . esc_html( $format( $net_amount ) ) . '</strong>'
@@ -64,7 +64,7 @@ do_action( 'wpss_email_content_before', 'milestone_paid', $milestone, $recipient
 			<?php if ( $platform_fee > 0 ) : ?>
 				<div style="margin-bottom: 8px; color: #666;"><strong><?php esc_html_e( 'Platform fee:', 'wp-sell-services' ); ?></strong> &minus;<?php echo esc_html( $format( $platform_fee ) ); ?></div>
 			<?php endif; ?>
-			<div><strong><?php esc_html_e( 'Credited to your wallet:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( $format( $net_amount ) ); ?></div>
+			<div><strong><?php esc_html_e( 'Credited when approved:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( $format( $net_amount ) ); ?></div>
 		</td>
 	</tr>
 </table>

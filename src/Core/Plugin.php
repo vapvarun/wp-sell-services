@@ -1798,8 +1798,8 @@ final class Plugin {
 			3
 		);
 
-		// Milestone paid — buyer's payment cleared, vendor credited,
-		// milestone is in_progress. Notify vendor to start work.
+		// Milestone paid - buyer's payment cleared, the phase is in_progress.
+		// The vendor is credited on approval (MilestoneService::credit_phase()).
 		$this->loader->add_action(
 			'wpss_milestone_paid',
 			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id, float $net_amount ) use ( $notification_service, $email_service ): void {
@@ -1847,8 +1847,8 @@ final class Plugin {
 			4
 		);
 
-		// Milestone approved — buyer accepted the delivery.
-		// Notify the vendor (money already landed at payment time).
+		// Milestone approved - buyer accepted the delivery; the phase has just
+		// been credited to the vendor. Notify them.
 		$this->loader->add_action(
 			'wpss_milestone_approved',
 			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id ) use ( $notification_service, $email_service ): void {

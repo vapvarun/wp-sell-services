@@ -1267,10 +1267,10 @@ class NotificationService {
 				break;
 
 			case 'milestone_paid':
-				$title = __( 'Milestone paid — start work', 'wp-sell-services' );
+				$title = __( 'Milestone paid - start work', 'wp-sell-services' );
 				$message->line(
 					/* translators: 1: net amount, 2: parent order ID */
-					__( 'Buyer paid the phase on Order #%2$s. %1$s credited to your wallet — you can start work and submit when delivered.', 'wp-sell-services' ),
+					__( 'Buyer paid the phase on Order #%2$s, so you can start work. %1$s is credited to your wallet when the buyer approves it.', 'wp-sell-services' ),
 					function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ) : (string) ( $data['net_amount'] ?? 0 ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);

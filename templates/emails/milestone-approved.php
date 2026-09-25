@@ -46,7 +46,7 @@ do_action( 'wpss_email_content_before', 'milestone_approved', $milestone, $recip
 	<?php
 	printf(
 		/* translators: 1: buyer, 2: phase title */
-		esc_html__( 'Nice work — %1$s approved the phase %2$s. The phase is complete and the payment is already in your wallet.', 'wp-sell-services' ),
+		esc_html__( 'Nice work: %1$s approved the phase %2$s. The phase is complete and your earnings are now in your wallet.', 'wp-sell-services' ),
 		'<strong>' . esc_html( $buyer_name ) . '</strong>',
 		'<strong>' . esc_html( $phase_title ) . '</strong>'
 	);
