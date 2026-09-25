@@ -452,14 +452,14 @@ do_action( 'wpss_before_order_view', $order );
 			// sections with the delivery far below (Basecamp 10337217098).
 			$wpss_review_first   = $is_customer && 'pending_approval' === $order->status && ! empty( $deliveries );
 			$wpss_review_actions = array();
-			if ( $wpss_review_first ) {
-				foreach ( array( 'complete', 'revision' ) as $wpss_key ) {
-					if ( isset( $actions[ $wpss_key ] ) ) {
-						$wpss_review_actions[ $wpss_key ] = $actions[ $wpss_key ];
-						unset( $actions[ $wpss_key ] );
-					}
+		if ( $wpss_review_first ) {
+			foreach ( array( 'complete', 'revision' ) as $wpss_key ) {
+				if ( isset( $actions[ $wpss_key ] ) ) {
+					$wpss_review_actions[ $wpss_key ] = $actions[ $wpss_key ];
+					unset( $actions[ $wpss_key ] );
 				}
 			}
+		}
 		?>
 
 			<?php if ( ! empty( $actions ) ) : ?>
@@ -577,99 +577,17 @@ do_action( 'wpss_before_order_view', $order );
 	<?php endif; ?>
 
 	<?php ob_start(); ?>
-	<!-- Deliveries Section -->
-	<?php if ( empty( $deliveries ) && 'pending_approval' === $order->status ) : ?>
-		<section class="wpss-order-section">
-			<div class="wpss-order-section__header">
-				<h2 class="wpss-order-section__title">
-					<i data-lucide="upload" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Deliveries', 'wp-sell-services' ); ?>
-				</h2>
-			</div>
-			<div class="wpss-order-section__body">
-				<div class="wpss-empty-state wpss-empty-state--compact">
-					<h3><?php esc_html_e( 'Nothing delivered yet', 'wp-sell-services' ); ?></h3>
-					<p>
-						<?php
-						echo esc_html(
-							$is_customer
-								? __( 'This order is marked for your approval, but the seller has not attached a delivery. Message them below, or open a dispute if the work does not arrive.', 'wp-sell-services' )
-								: __( 'This order is waiting for approval with no delivery attached, so the buyer cannot accept it. Ask the site admin to move it back to In Progress so you can deliver.', 'wp-sell-services' )
-						);
-						?>
-					</p>
-				</div>
-			</div>
-		</section>
-	<?php elseif ( ! empty( $deliveries ) ) : ?>
-		<section class="wpss-order-section">
-			<div class="wpss-order-section__header">
-				<h2 class="wpss-order-section__title">
-					<i data-lucide="upload" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Deliveries', 'wp-sell-services' ); ?>
-				</h2>
-			</div>
-			<div class="wpss-order-section__body">
-				<?php foreach ( $deliveries as $delivery ) : ?>
-					<div class="wpss-delivery-item">
-						<div class="wpss-delivery-item__header">
-							<span class="wpss-delivery-item__date">
-								<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $delivery->created_at ) ) ); ?>
-							</span>
-							<span class="<?php echo esc_attr( wpss_status_class( $delivery->status ) ); ?>">
-								<?php echo esc_html( wpss_get_order_status_label( (string) $delivery->status ) ); ?>
-							</span>
-						</div>
-						<div class="wpss-delivery-item__content">
-							<?php echo wp_kses_post( wpautop( $delivery->message ) ); ?>
-						</div>
-						<?php
-						$files = maybe_unserialize( $delivery->attachments );
-						if ( is_string( $files ) ) {
-							$decoded = json_decode( $files, true );
-							$files   = is_array( $decoded ) ? $decoded : array();
-						}
-						if ( ! empty( $files ) && is_array( $files ) ) :
-							?>
-							<div class="wpss-delivery-item__files">
-								<?php foreach ( $files as $file ) : ?>
-									<?php
-									// Three formats now: a 1.7.0 record addressed by id, a
-									// pre-1.7.0 record carrying a stored public URL, or a bare
-									// attachment ID from further back still. Only the first is
-									// permission-checked; the older two are already public and
-									// keep working, because breaking a delivered file to tighten
-									// history would punish the buyer for our bug.
-									if ( is_array( $file ) ) {
-										$file['order_id'] = $file['order_id'] ?? $order_id;
-
-										$att_id    = $file['id'] ?? 0;
-										$file_url  = wpss_get_order_file_url( $file );
-										$file_name = wpss_format_attachment_name( (string) ( $file['name'] ?? get_the_title( $att_id ) ) );
-
-										if ( '' === $file_url ) {
-											$file_url = wp_get_attachment_url( $att_id );
-										}
-									} else {
-										$file_url  = wp_get_attachment_url( (int) $file );
-										$file_name = get_the_title( (int) $file );
-									}
-									if ( ! $file_url ) {
-										continue;
-									}
-									?>
-									<a href="<?php echo esc_url( $file_url ); ?>" class="wpss-file-link" target="_blank" download>
-										<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
-										<?php echo esc_html( $file_name ); ?>
-									</a>
-								<?php endforeach; ?>
-							</div>
-						<?php endif; ?>
-					</div>
-				<?php endforeach; ?>
-			</div>
-		</section>
-	<?php endif; ?>
+	<?php
+	wpss_get_template_part(
+		'order/deliveries',
+		'',
+		array(
+			'wpss_order'      => $order,
+			'wpss_deliveries' => $deliveries,
+			'wpss_viewer'     => $is_customer ? 'buyer' : 'vendor',
+		)
+	);
+	?>
 	<?php $wpss_deliveries_html = (string) ob_get_clean(); ?>
 
 	<?php if ( $wpss_review_first ) : ?>
@@ -730,6 +648,7 @@ do_action( 'wpss_before_order_view', $order );
 					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Date', 'wp-sell-services' ); ?></span>
 					<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) : '—' ); ?></span>
 				</div>
+				<?php wpss_get_template_part( 'order/payment', '', array( 'wpss_order' => $order ) ); ?>
 				<?php if ( $order->delivery_deadline ) : ?>
 					<div class="wpss-order-detail-item">
 						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
@@ -1016,21 +935,11 @@ do_action( 'wpss_before_order_view', $order );
 		$service_requirements = wpss_get_service_requirements( (int) $service->ID );
 	}
 
-	// Get submitted requirements from database.
-	global $wpdb;
-	$requirements_table = $wpdb->prefix . 'wpss_order_requirements';
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$submitted_row = $wpdb->get_row(
-		$wpdb->prepare(
-			"SELECT * FROM {$requirements_table} WHERE order_id = %d ORDER BY id DESC LIMIT 1",
-			$order_id
-		)
-	);
-	if ( $submitted_row ) {
-		$submitted_data        = json_decode( $submitted_row->field_data, true ) ?: array();
-		$submitted_attachments = json_decode( $submitted_row->attachments, true ) ?: array();
-		$submitted_at          = $submitted_row->submitted_at ?? null;
-	}
+	// Submitted requirements: the one read shared with the admin order screen.
+	$wpss_submitted             = $order->get_submitted_requirements();
+	$submitted_data             = $wpss_submitted['data'];
+	$submitted_attachments      = $wpss_submitted['attachments'];
+	$submitted_at               = $wpss_submitted['submitted_at'];
 	$has_submitted_requirements = ! empty( $submitted_data ) || ! empty( $submitted_attachments );
 	$service_has_requirements   = ! empty( $service_requirements );
 
@@ -1044,10 +953,7 @@ do_action( 'wpss_before_order_view', $order );
 	// seller looking at a completed order. When the service DOES define
 	// requirements, the section is always shown so both parties can see
 	// the form, the submitted answers, or the 'not yet provided' notice.
-	$show_requirements_form   = 'pending_requirements' === $order->status && $is_customer && $service_has_requirements && ! $has_submitted_requirements;
-	$show_submitted_readonly  = $has_submitted_requirements && ( $is_vendor || $is_customer );
-	$show_not_provided_notice = ! $has_submitted_requirements && $service_has_requirements && in_array( $order->status, array( 'in_progress', 'pending_approval', 'completed', 'delivered', 'late', 'revision_requested' ), true );
-	$show_no_requirements_msg = false;
+	$show_requirements_form = 'pending_requirements' === $order->status && $is_customer && $service_has_requirements && ! $has_submitted_requirements;
 
 	// Allow late requirements submission if enabled in settings and order is in_progress without requirements.
 	$allow_late_submission       = apply_filters( 'wpss_allow_late_requirements_submission', false );
@@ -1084,249 +990,19 @@ do_action( 'wpss_before_order_view', $order );
 		</section>
 	<?php endif; ?>
 
-	<!-- Submitted Requirements (for vendor or customer after submission) -->
-	<?php if ( $show_submitted_readonly ) : ?>
-		<section class="wpss-order-section wpss-order-section--requirements-view">
-			<div class="wpss-order-section__header">
-				<h2 class="wpss-order-section__title">
-					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
-				</h2>
-				<?php if ( $submitted_at ) : ?>
-					<span class="wpss-order-section__timestamp">
-						<?php
-						printf(
-							/* translators: %s: submission date/time */
-							esc_html__( 'Submitted %s', 'wp-sell-services' ),
-							esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $submitted_at ) ) )
-						);
-						?>
-					</span>
-				<?php endif; ?>
-			</div>
-			<div class="wpss-order-section__body">
-				<?php foreach ( $service_requirements as $index => $requirement ) : ?>
-					<?php
-					$question       = $requirement['label'];
-					$type           = $requirement['type'];
-					$response_value = wpss_requirement_answer( $requirement, $submitted_data );
-					if ( is_array( $response_value ) ) {
-						$response_value = implode( ', ', array_map( 'strval', $response_value ) );
-					}
-
-					// Find attachment for this field (if file type). Answers and
-					// attachments are keyed by requirement id; pre-1.7.1 rows by
-					// question text.
-					$field_attachment = null;
-					if ( 'file' === $type && ! empty( $submitted_attachments ) ) {
-						foreach ( $submitted_attachments as $att ) {
-							if ( isset( $att['key'] ) && in_array( $att['key'], array( $requirement['id'], $question ), true ) ) {
-								$field_attachment = $att;
-								break;
-							}
-						}
-					}
-
-					// Determine if text is long (for expand/collapse).
-					$is_long_text = is_string( $response_value ) && strlen( $response_value ) > 300;
-					?>
-					<div class="wpss-requirement-view <?php echo $is_long_text ? 'wpss-requirement-view--expandable' : ''; ?>">
-						<h4 class="wpss-requirement-view__question"><?php echo esc_html( $question ); ?></h4>
-						<div class="wpss-requirement-view__answer <?php echo $is_long_text ? 'wpss-requirement-view__answer--collapsed' : ''; ?>">
-							<?php if ( 'file' === $type && $field_attachment ) : ?>
-								<?php
-								// Private records (1.7.0+) carry a path, not a url: the ONE
-								// resolver hands back the guarded endpoint, or '' when the
-								// file is not addressable - same as the orphan list below.
-								$field_attachment['order_id'] = $order_id;
-								$field_file_url               = wpss_get_order_file_url( $field_attachment );
-								$field_file_name              = wpss_format_attachment_name( (string) ( $field_attachment['name'] ?? '' ) );
-								$is_image                     = '' !== $field_file_url && in_array( strtolower( pathinfo( $field_file_name, PATHINFO_EXTENSION ) ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ), true );
-								?>
-								<?php if ( $is_image ) : ?>
-									<div class="wpss-requirement-view__image-preview">
-										<img src="<?php echo esc_url( $field_file_url ); ?>" alt="<?php echo esc_attr( $field_file_name ); ?>" class="wpss-requirement-view__thumbnail" loading="lazy">
-									</div>
-								<?php endif; ?>
-								<?php if ( '' !== $field_file_url ) : ?>
-									<a href="<?php echo esc_url( $field_file_url ); ?>" class="wpss-file-link" target="_blank" download>
-										<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
-										<?php echo esc_html( $field_file_name ); ?>
-									</a>
-								<?php else : ?>
-									<?php echo esc_html( $field_file_name ); ?>
-								<?php endif; ?>
-							<?php elseif ( $response_value ) : ?>
-								<?php
-								$wpss_answer_text = (string) $response_value;
-								require WPSS_PLUGIN_DIR . 'templates/partials/requirement-answer.php';
-								?>
-								<button type="button" class="wpss-requirement-view__copy-btn" data-copy-text="<?php echo esc_attr( $response_value ); ?>" title="<?php esc_attr_e( 'Copy to clipboard', 'wp-sell-services' ); ?>">
-									<i data-lucide="copy" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
-								</button>
-							<?php else : ?>
-								<span class="wpss-text-muted"><?php esc_html_e( 'No response provided', 'wp-sell-services' ); ?></span>
-							<?php endif; ?>
-						</div>
-					</div>
-				<?php endforeach; ?>
-
-				<?php
-				/*
-				 * Anything the buyer submitted that no configured question claims.
-				 *
-				 * The loop above walks the SERVICE's questions and looks each
-				 * answer up by question text. A service with no configured
-				 * questions therefore rendered nothing at all, even though the
-				 * buyer had written a brief and the row was sitting in
-				 * field_data - so the vendor opened the order and could not read
-				 * what they had been asked to build (Basecamp 10254444197).
-				 *
-				 * Keying answers by question text has a second failure with the
-				 * same shape: edit or delete a question after submission and its
-				 * answer silently disappears too. Both are covered by rendering
-				 * whatever is left over rather than by special-casing
-				 * 'description'.
-				 */
-				$rendered_keys = array();
-				foreach ( $service_requirements as $requirement ) {
-					$rendered_keys[] = $requirement['id'];
-					$rendered_keys[] = $requirement['label'];
-				}
-
-				$orphan_answers = array();
-				foreach ( (array) $submitted_data as $key => $value ) {
-					if ( in_array( (string) $key, $rendered_keys, true ) ) {
-						continue;
-					}
-					if ( '' === trim( (string) ( is_scalar( $value ) ? $value : wp_json_encode( $value ) ) ) ) {
-						continue;
-					}
-					$orphan_answers[ $key ] = $value;
-				}
-				?>
-
-				<?php foreach ( $orphan_answers as $orphan_key => $orphan_value ) : ?>
-					<?php
-					// One label helper, shared with the admin order screen, which
-					// used to print the raw key instead.
-					$orphan_label = wpss_requirement_field_label( (string) $orphan_key );
-
-					$orphan_text = is_scalar( $orphan_value )
-						? (string) $orphan_value
-						: wp_json_encode( $orphan_value );
-
-					$orphan_long = strlen( $orphan_text ) > 300;
-					?>
-					<div class="wpss-requirement-view <?php echo $orphan_long ? 'wpss-requirement-view--expandable' : ''; ?>">
-						<h4 class="wpss-requirement-view__question"><?php echo esc_html( $orphan_label ); ?></h4>
-						<div class="wpss-requirement-view__answer <?php echo $orphan_long ? 'wpss-requirement-view__answer--collapsed' : ''; ?>">
-							<?php
-							$wpss_answer_text = $orphan_text;
-							require WPSS_PLUGIN_DIR . 'templates/partials/requirement-answer.php';
-							?>
-						</div>
-					</div>
-				<?php endforeach; ?>
-
-				<?php
-				// Attachments the buyer uploaded that no configured file question
-				// claims. Same reasoning: a delivered brief must not vanish
-				// because the question it answered was removed.
-				$orphan_attachments = array();
-				foreach ( (array) $submitted_attachments as $att ) {
-					if ( ! empty( $att['key'] ) && in_array( (string) $att['key'], $rendered_keys, true ) ) {
-						continue;
-					}
-					$orphan_attachments[] = $att;
-				}
-				?>
-
-				<?php if ( $orphan_attachments ) : ?>
-					<div class="wpss-requirement-view">
-						<h4 class="wpss-requirement-view__question"><?php esc_html_e( 'Files the buyer attached', 'wp-sell-services' ); ?></h4>
-						<div class="wpss-requirement-view__answer">
-							<ul class="wpss-requirement-view__files">
-								<?php foreach ( $orphan_attachments as $orphan_att ) : ?>
-									<?php
-									$orphan_att['order_id'] = $order_id;
-									$orphan_url             = function_exists( 'wpss_get_order_file_url' ) ? wpss_get_order_file_url( $orphan_att ) : '';
-									$orphan_name            = wpss_format_attachment_name( (string) ( $orphan_att['name'] ?? '' ) );
-									?>
-									<li>
-										<?php if ( $orphan_url ) : ?>
-											<a href="<?php echo esc_url( $orphan_url ); ?>" rel="nofollow"><?php echo esc_html( $orphan_name ); ?></a>
-										<?php else : ?>
-											<?php echo esc_html( $orphan_name ); ?>
-										<?php endif; ?>
-									</li>
-								<?php endforeach; ?>
-							</ul>
-						</div>
-					</div>
-				<?php endif; ?>
-			</div>
-		</section>
-	<?php endif; ?>
-
-	<!-- Requirements Section (when service has requirements but none submitted) -->
-	<?php if ( $show_not_provided_notice && ! $show_late_requirements_form ) : ?>
-		<section class="wpss-order-section wpss-order-section--requirements-view">
-			<div class="wpss-order-section__header">
-				<h2 class="wpss-order-section__title">
-					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
-				</h2>
-			</div>
-			<div class="wpss-order-section__body">
-				<div class="wpss-notice wpss-notice--warning">
-					<p class="wpss-notice__text">
-						<strong><?php esc_html_e( 'Note:', 'wp-sell-services' ); ?></strong>
-						<?php esc_html_e( 'No requirements were formally submitted for this order. Below are the questions the service requires:', 'wp-sell-services' ); ?>
-					</p>
-				</div>
-				<?php foreach ( $service_requirements as $index => $requirement ) : ?>
-					<?php
-					$question = $requirement['label'];
-					$required = $requirement['required'];
-					?>
-					<div class="wpss-requirement-view">
-						<h4 class="wpss-requirement-view__question">
-							<?php echo esc_html( $question ); ?>
-							<?php if ( $required ) : ?>
-								<span class="wpss-required">*</span>
-							<?php endif; ?>
-						</h4>
-						<div class="wpss-requirement-view__answer">
-							<span class="wpss-text-muted wpss-text-italic">
-								<?php esc_html_e( 'Not provided', 'wp-sell-services' ); ?>
-							</span>
-						</div>
-					</div>
-				<?php endforeach; ?>
-			</div>
-		</section>
-	<?php endif; ?>
-
-	<!-- No Requirements Message (when service has no requirements) -->
-	<?php if ( $show_no_requirements_msg ) : ?>
-		<section class="wpss-order-section wpss-order-section--requirements-view">
-			<div class="wpss-order-section__header">
-				<h2 class="wpss-order-section__title">
-					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
-				</h2>
-			</div>
-			<div class="wpss-order-section__body">
-				<div class="wpss-notice wpss-notice--info">
-					<p class="wpss-notice__text">
-						<i data-lucide="info" class="wpss-icon" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;"></i>
-						<?php esc_html_e( 'This service does not require any specific information from the buyer.', 'wp-sell-services' ); ?>
-					</p>
-				</div>
-			</div>
-		</section>
-	<?php endif; ?>
+	<?php
+	wpss_get_template_part(
+		'order/requirements',
+		'',
+		array(
+			'wpss_order'                => $order,
+			'wpss_viewer'               => $is_customer ? 'buyer' : 'vendor',
+			'wpss_service_requirements' => $service_requirements,
+			'wpss_submitted'            => $wpss_submitted,
+			'wpss_hide_not_provided'    => $show_late_requirements_form,
+		)
+	);
+	?>
 
 	<!-- Cancellation Request Banner -->
 	<?php if ( 'cancellation_requested' === $order->status ) : ?>
@@ -1433,174 +1109,7 @@ do_action( 'wpss_before_order_view', $order );
 	wpss_get_template_part( 'partials/billing', 'summary', array( 'wpss_order' => $order ) );
 	?>
 
-	<!-- Order Timeline Section -->
-	<section class="wpss-order-section">
-		<div class="wpss-order-section__header">
-			<h2 class="wpss-order-section__title">
-				<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Order Timeline', 'wp-sell-services' ); ?>
-			</h2>
-		</div>
-		<div class="wpss-order-section__body">
-			<div class="wpss-timeline">
-				<div class="wpss-timeline__item wpss-timeline__item--completed">
-					<div class="wpss-timeline__marker"></div>
-					<div class="wpss-timeline__content">
-						<span class="wpss-timeline__title"><?php esc_html_e( 'Order Placed', 'wp-sell-services' ); ?></span>
-						<span class="wpss-timeline__date"><?php echo esc_html( $order->created_at ? wp_date( 'M j, Y \a\t g:i A', $order->created_at->getTimestamp() ) : '' ); ?></span>
-					</div>
-				</div>
-
-				<?php if ( $order->started_at ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Work Started', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $order->started_at->getTimestamp() ) ); ?></span>
-						</div>
-					</div>
-				<?php endif; ?>
-
-				<?php if ( in_array( $order->status, array( 'delivered', 'completed' ), true ) ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Delivered', 'wp-sell-services' ); ?></span>
-						</div>
-					</div>
-				<?php endif; ?>
-
-				<?php if ( $order->completed_at ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $order->completed_at->getTimestamp() ) ); ?></span>
-						</div>
-					</div>
-				<?php endif; ?>
-
-				<?php
-				// Own `if`, not an `elseif` of completed_at: an order that was
-				// completed and THEN refunded or cancelled keeps its Completed
-				// entry and also shows what happened to it afterwards.
-				?>
-				<?php if ( in_array( $order->status, array( 'cancelled', 'refunded', 'partially_refunded' ), true ) ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title">
-								<?php
-								if ( 'refunded' === $order->status ) {
-									esc_html_e( 'Refunded', 'wp-sell-services' );
-								} elseif ( 'partially_refunded' === $order->status ) {
-									esc_html_e( 'Partially Refunded', 'wp-sell-services' );
-								} else {
-									esc_html_e( 'Cancelled', 'wp-sell-services' );
-								}
-								?>
-							</span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-				<?php elseif ( 'cancellation_requested' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Cancellation Requested', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-
-				<?php elseif ( 'disputed' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Disputed', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-
-				<?php elseif ( 'rejected' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-
-				<?php elseif ( 'revision_requested' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Revision Requested', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-							<?php $revision_reason = $order->get_revision_reason(); ?>
-							<?php if ( '' !== $revision_reason ) : ?>
-								<p class="wpss-timeline__note wpss-revision-reason"><?php echo esc_html( $revision_reason ); ?></p>
-							<?php endif; ?>
-						</div>
-					</div>
-
-				<?php elseif ( 'late' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Order Late', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-
-				<?php elseif ( 'pending_approval' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-info, #3b82f6);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Awaiting Approval', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-
-				<?php elseif ( 'on_hold' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'On Hold', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-
-				<?php else : ?>
-					<!-- Pending steps -->
-					<?php if ( ! $order->started_at && in_array( $order->status, array( 'pending', 'accepted', 'pending_requirements' ), true ) ) : ?>
-						<div class="wpss-timeline__item wpss-timeline__item--pending">
-							<div class="wpss-timeline__marker"></div>
-							<div class="wpss-timeline__content">
-								<span class="wpss-timeline__title"><?php esc_html_e( 'Work Started', 'wp-sell-services' ); ?></span>
-								<span class="wpss-timeline__date"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
-							</div>
-						</div>
-					<?php endif; ?>
-					<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'pending_requirements', 'in_progress' ), true ) ) : ?>
-						<div class="wpss-timeline__item wpss-timeline__item--pending">
-							<div class="wpss-timeline__marker"></div>
-							<div class="wpss-timeline__content">
-								<span class="wpss-timeline__title"><?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?></span>
-								<span class="wpss-timeline__date"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
-							</div>
-						</div>
-						<div class="wpss-timeline__item wpss-timeline__item--pending">
-							<div class="wpss-timeline__marker"></div>
-							<div class="wpss-timeline__content">
-								<span class="wpss-timeline__title"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
-								<span class="wpss-timeline__date"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
-							</div>
-						</div>
-					<?php endif; ?>
-				<?php endif; ?>
-			</div>
-		</div>
-	</section>
+	<?php wpss_get_template_part( 'order/timeline', '', array( 'wpss_order' => $order ) ); ?>
 
 	<?php
 	// Shown here in every state except the buyer reviewing a delivery, when it

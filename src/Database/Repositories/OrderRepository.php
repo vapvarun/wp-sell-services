@@ -964,6 +964,30 @@ class OrderRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Paid tips and extensions on an order.
+	 *
+	 * They are orders of their own, so the parent's Financial Summary never
+	 * listed them and the owner could not see an order's full money from the
+	 * order page (Basecamp 10337161480). Milestone phases are not included -
+	 * they are the contract itself and have their own view.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $parent_id Parent order ID.
+	 * @return object[] Rows (id, order_number, platform, total, currency, status), oldest first.
+	 */
+	public function get_paid_extras( int $parent_id ): array {
+		return (array) $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT id, order_number, platform, total, currency, status FROM {$this->table} WHERE platform IN (%s, %s) AND platform_order_id = %d AND payment_status = 'paid' ORDER BY id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_EXTENSION,
+				\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_TIP,
+				$parent_id
+			)
+		);
+	}
+
+	/**
 	 * Find order by external platform order ID.
 	 *
 	 * @param int    $platform_order_id External platform order ID.
@@ -1086,9 +1110,9 @@ class OrderRepository extends AbstractRepository {
 		$args = wp_parse_args(
 			$args,
 			array(
-				'from'      => '',
-				'to'        => '',
-				'vendor_id' => 0,
+				'from'       => '',
+				'to'         => '',
+				'vendor_id'  => 0,
 				'platform'   => '',
 				'uncredited' => false,
 				'group_by'   => '',

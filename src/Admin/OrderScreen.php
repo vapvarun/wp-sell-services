@@ -98,6 +98,12 @@ class OrderScreen {
 			return;
 		}
 
+		// The order detail renders the order view's partials (Basecamp 10337161480).
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen switch.
+		if ( isset( $_GET['action'] ) && 'view' === sanitize_key( wp_unslash( $_GET['action'] ) ) ) {
+			wpss_enqueue_order_view_style();
+		}
+
 		wp_enqueue_style(
 			'wpss-order-metabox',
 			\WPSS_PLUGIN_URL . 'assets/css/orders.css',

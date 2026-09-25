@@ -3786,3 +3786,77 @@ button.wpss-change-status:focus {
 	/* Tablet: the order date gives way to the names; the due date is under Status. */
 	.wp-list-table.orders .column-date { display: none; }
 }
+
+/* Admin order detail (Basecamp 10337161480): main column (details, money,
+   the order view's blocks, activity, messages) beside the controls; one
+   column on a tablet and phone, money before the messages. */
+.wpss-admin-order__layout {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+	gap: 20px;
+	align-items: start;
+	margin-top: 20px;
+}
+
+.wpss-admin-order .postbox > .hndle {
+	margin: 0;
+	padding: 8px 12px;
+}
+
+.wpss-admin-order__figures {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.wpss-admin-order__figures td {
+	padding-block: 6px;
+}
+
+.wpss-admin-order__figures td:last-child {
+	text-align: end;
+	white-space: nowrap;
+}
+
+.wpss-admin-order__blocks {
+	margin-bottom: 20px;
+}
+
+.wpss-admin-order__activity {
+	margin: 0;
+	list-style: none;
+}
+
+.wpss-admin-order__activity li {
+	display: grid;
+	grid-template-columns: 11em 10em minmax(0, 1fr);
+	gap: 8px;
+	padding-block: 6px;
+	border-bottom: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-admin-order__activity li:last-child {
+	border-bottom: 0;
+}
+
+.wpss-admin-order__activity time,
+.wpss-admin-order__activity li > span:nth-child(2) {
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-admin-order__effects {
+	margin: 0 0 12px;
+	color: var(--wpss-admin-text-light);
+}
+
+@media screen and (max-width: 1024px) {
+	.wpss-admin-order__layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+@media screen and (max-width: 600px) {
+	.wpss-admin-order__activity li {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 2px;
+	}
+}

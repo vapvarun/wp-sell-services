@@ -2201,7 +2201,6 @@ class Admin {
 	private function render_order_detail( int $order_id ): void {
 		global $wpdb;
 		$conversations_table = $wpdb->prefix . 'wpss_conversations';
-		$deliveries_table    = $wpdb->prefix . 'wpss_deliveries';
 
 		// Hydrate the MODEL, never a raw row.
 		//
@@ -2247,14 +2246,8 @@ class Admin {
 			)
 		);
 
-		// Get deliveries.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$deliveries = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$deliveries_table} WHERE order_id = %d ORDER BY created_at DESC",
-				$order_id
-			)
-		);
+		// The same rows, from the same service, as the buyer's order view.
+		$deliveries = ( new \WPSellServices\Services\DeliveryService() )->get_order_deliveries( $order_id );
 
 		// Labels for every status; the dropdown offers only the settable ones,
 		// plus the order's current status so the form never silently shows a
@@ -2354,133 +2347,183 @@ class Admin {
 			endif;
 			?>
 
-			<div class="wpss-order-layout" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
-				<div class="wpss-order-main" style="flex: 2;">
+			<?php
+			/*
+			 * The admin order screen renders the buyer's and seller's order
+			 * blocks - payment, timeline, requirements, deliveries - from the
+			 * same partials, read-only, with the admin controls around them
+			 * (Basecamp 10337161480). The money sits right under the details so
+			 * a phone reaches it before the messages.
+			 */
+			?>
+			<div class="wpss-order-layout wpss-admin-order__layout">
+				<div class="wpss-order-main wpss-admin-order__main">
 					<!-- Order Info -->
 					<div class="postbox">
-						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Order Details', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle"><?php esc_html_e( 'Order Details', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
-							<table class="form-table">
-								<tr>
-									<th><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-									<td>
+							<div class="wpss-order-details-grid">
+								<div class="wpss-order-detail-item">
+									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></span>
+									<span class="wpss-order-detail-item__value">
 										<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 											<?php echo esc_html( $statuses[ $order->status ] ?? ucwords( str_replace( '_', ' ', $order->status ) ) ); ?>
 										</span>
-									</td>
-								</tr>
-								<tr>
-									<th><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></th>
-									<td>
+									</span>
+								</div>
+								<div class="wpss-order-detail-item">
+									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Service', 'wp-sell-services' ); ?></span>
+									<span class="wpss-order-detail-item__value">
 										<?php if ( '' !== $subject['url'] ) : ?>
-											<a href="<?php echo esc_url( $subject['url'] ); ?>">
-												<?php echo esc_html( $subject['label'] ); ?>
-											</a>
+											<a href="<?php echo esc_url( $subject['url'] ); ?>"><?php echo esc_html( $subject['label'] ); ?></a>
 										<?php else : ?>
-											<em><?php echo esc_html( $subject['label'] ); ?></em>
+											<?php echo esc_html( $subject['label'] ); ?>
 										<?php endif; ?>
-									</td>
-								</tr>
+									</span>
+								</div>
 								<?php $wpss_package_name = $order->get_package_name(); ?>
 								<?php if ( '' !== $wpss_package_name ) : ?>
-									<tr>
-										<th><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></th>
-										<td><?php echo esc_html( $wpss_package_name ); ?></td>
-									</tr>
+									<div class="wpss-order-detail-item">
+										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></span>
+										<span class="wpss-order-detail-item__value"><?php echo esc_html( $wpss_package_name ); ?></span>
+									</div>
 								<?php endif; ?>
-								<tr>
-									<th><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></th>
-									<td><strong><?php echo esc_html( wpss_format_price( (float) $order->total, $order->currency ) ); ?></strong></td>
-								</tr>
+								<div class="wpss-order-detail-item">
+									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Created', 'wp-sell-services' ); ?></span>
+									<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) : '—' ); ?></span>
+								</div>
 								<?php if ( $order->delivery_deadline ) : ?>
-									<tr>
-										<th><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></th>
-										<td>
-										<?php
-										// ServiceOrder::from_db() guarantees a DateTimeImmutable here,
-										// so the old string/object dual handling is now dead.
-										echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) );
-										?>
-										</td>
-									</tr>
+									<div class="wpss-order-detail-item">
+										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
+										<span class="wpss-order-detail-item__value"><?php echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) ); ?></span>
+									</div>
 								<?php endif; ?>
-								<tr>
-									<th><?php esc_html_e( 'Created', 'wp-sell-services' ); ?></th>
-									<td>
-									<?php
-									if ( $order->created_at ) {
-										// Always a DateTimeImmutable via the model hydrator.
-										echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) );
-									}
-									?>
-									</td>
-								</tr>
+								<?php wpss_get_template_part( 'order/payment', '', array( 'wpss_order' => $order ) ); ?>
 								<?php
-								// `platform_order_id` does NOT always hold a WooCommerce
-								// order id: on a sub-order (tip / milestone / extension)
-								// the same column holds the PARENT WPSS order id, and
-								// `platform` holds the sub-order type rather than a rail.
-								// Gating this row on the column alone therefore printed
-								// "WooCommerce Order #74" for a milestone whose 74 is a
-								// WPSS order — a link straight into a WooCommerce order
-								// edit screen for an order that does not exist. Only a
-								// row whose platform really IS woocommerce has a WC order
-								// behind that number.
+								// `platform_order_id` holds a WooCommerce order id only when
+								// the platform really is woocommerce: on a sub-order the same
+								// column holds the PARENT WPSS order id.
 								if ( ! empty( $order->platform_order_id ) && 'woocommerce' === ( $order->platform ?? '' ) ) :
 									?>
+									<div class="wpss-order-detail-item">
+										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'WooCommerce Order', 'wp-sell-services' ); ?></span>
+										<span class="wpss-order-detail-item__value">
+											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-orders&action=edit&id=' . $order->platform_order_id ) ); ?>">#<?php echo esc_html( (string) $order->platform_order_id ); ?></a>
+										</span>
+									</div>
+								<?php endif; ?>
+							</div>
+						</div>
+					</div>
+
+					<!-- Financial Summary -->
+					<div class="postbox wpss-admin-order__money">
+						<h2 class="hndle"><?php esc_html_e( 'Financial Summary', 'wp-sell-services' ); ?></h2>
+						<div class="inside">
+							<?php
+							// The same line items the buyer sees: package, add-ons, tax, total.
+							wpss_get_template_part( 'order/line-items', '', array( 'wpss_order' => $order ) );
+
+							$wpss_extras = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_paid_extras( $order_id );
+							?>
+							<table class="wpss-admin-order__figures">
+								<?php foreach ( $wpss_extras as $wpss_extra ) : ?>
 									<tr>
-										<th><?php esc_html_e( 'WooCommerce Order', 'wp-sell-services' ); ?></th>
 										<td>
-											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-orders&action=edit&id=' . $order->platform_order_id ) ); ?>">
-												#<?php echo esc_html( (string) $order->platform_order_id ); ?>
+											<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-orders&action=view&order_id=' . (int) $wpss_extra->id ) ); ?>">
+												<?php
+												echo esc_html(
+													ServiceOrder::SUB_ORDER_TYPE_TIP === $wpss_extra->platform
+														/* translators: %s: sub-order number */
+														? sprintf( __( 'Tip #%s', 'wp-sell-services' ), $wpss_extra->order_number )
+														/* translators: %s: sub-order number */
+														: sprintf( __( 'Extension #%s', 'wp-sell-services' ), $wpss_extra->order_number )
+												);
+												?>
 											</a>
+											<?php if ( in_array( $wpss_extra->status, array( 'refunded', 'partially_refunded' ), true ) ) : ?>
+												<small>(<?php echo esc_html( wpss_get_order_status_label( (string) $wpss_extra->status ) ); ?>)</small>
+											<?php endif; ?>
 										</td>
+										<td><?php echo esc_html( wpss_format_price( (float) $wpss_extra->total, (string) $wpss_extra->currency ) ); ?></td>
 									</tr>
-									<?php
-								endif;
-								?>
+								<?php endforeach; ?>
+								<?php if ( isset( $order->vendor_earnings ) && $order->vendor_earnings > 0 ) : ?>
+									<tr>
+										<td><?php esc_html_e( 'Vendor Earning', 'wp-sell-services' ); ?></td>
+										<td><?php echo esc_html( wpss_format_price( (float) $order->vendor_earnings, $order->currency ) ); ?></td>
+									</tr>
+								<?php endif; ?>
+								<?php if ( isset( $order->platform_fee ) && $order->platform_fee > 0 ) : ?>
+									<tr>
+										<td><?php esc_html_e( 'Commission', 'wp-sell-services' ); ?></td>
+										<td><?php echo esc_html( wpss_format_price( (float) $order->platform_fee, $order->currency ) ); ?></td>
+									</tr>
+								<?php endif; ?>
 							</table>
 						</div>
 					</div>
 
-					<!-- Requirements -->
+					<?php // Already cards in the order view's own style; a postbox around them boxed them twice. ?>
+					<div class="wpss-admin-order__blocks">
+						<?php
+							wpss_get_template_part( 'order/timeline', '', array( 'wpss_order' => $order ) );
+							wpss_get_template_part(
+								'order/requirements',
+								'',
+								array(
+									'wpss_order'  => $order,
+									'wpss_viewer' => 'admin',
+								)
+							);
+							wpss_get_template_part(
+								'order/deliveries',
+								'',
+								array(
+									'wpss_order'      => $order,
+									'wpss_deliveries' => $deliveries,
+									'wpss_viewer'     => 'admin',
+								)
+							);
+						?>
+					</div>
+
 					<?php
-					// Requirements live in the wpss_order_requirements table, NOT on
-					// the orders row. This block previously read `$order->requirements`,
-					// a column that does not exist, so the panel never rendered for
-					// any order. get_requirements() is the canonical accessor and is
-					// what the buyer-facing surfaces already use.
-					$wpss_requirements = $order->get_requirements();
+					// What was done to the order and by whom - the record the REST
+					// timeline already builds - instead of a trip to the Audit Log.
+					$wpss_activity = ( new \WPSellServices\Services\OrderTimelineService() )->get_timeline( $order_id );
 					?>
-					<?php if ( ! empty( $wpss_requirements ) ) : ?>
-						<div class="postbox">
-							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Requirements', 'wp-sell-services' ); ?></h2>
-							<div class="inside">
-								<?php
-								echo '<dl>';
-								foreach ( $wpss_requirements as $wpss_req_key => $wpss_req_value ) {
-									// Shared with the buyer/seller order view, which is why
-									// the owner no longer reads a raw 'description' key.
-									echo '<dt><strong>' . esc_html( wpss_requirement_field_label( (string) $wpss_req_key ) ) . '</strong></dt>';
-									echo '<dd>' . esc_html( is_array( $wpss_req_value ) ? implode( ', ', $wpss_req_value ) : (string) $wpss_req_value ) . '</dd>';
-								}
-								echo '</dl>';
-								?>
-							</div>
+					<div class="postbox">
+						<h2 class="hndle"><?php esc_html_e( 'Activity', 'wp-sell-services' ); ?></h2>
+						<div class="inside">
+							<?php if ( $wpss_activity ) : ?>
+								<ol class="wpss-admin-order__activity">
+									<?php foreach ( $wpss_activity as $wpss_event ) : ?>
+										<li>
+											<time datetime="<?php echo esc_attr( (string) $wpss_event['created_at'] ); ?>"><?php echo esc_html( $wpss_event['created_at'] ? wp_date( 'M j, Y g:i a', (int) strtotime( (string) $wpss_event['created_at'] ) ) : '—' ); ?></time>
+											<span><?php echo esc_html( $wpss_event['actor']['name'] ?? __( 'System', 'wp-sell-services' ) ); ?></span>
+											<span><?php echo esc_html( (string) $wpss_event['message'] ); ?></span>
+										</li>
+									<?php endforeach; ?>
+								</ol>
+							<?php else : ?>
+								<p><?php esc_html_e( 'Nothing recorded on this order yet.', 'wp-sell-services' ); ?></p>
+							<?php endif; ?>
 						</div>
-					<?php endif; ?>
+					</div>
 
 					<!-- Messages -->
 					<div class="postbox">
-						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Messages', 'wp-sell-services' ); ?></h2>
+						<h2 class="hndle"><?php esc_html_e( 'Messages', 'wp-sell-services' ); ?></h2>
 						<div class="inside">
 							<?php if ( ! empty( $messages ) ) : ?>
 								<div class="wpss-order-messages" style="max-height: 400px; overflow-y: auto;">
 									<?php foreach ( $messages as $message ) : ?>
-										<?php $msg_user = isset( $message->sender_id ) ? get_userdata( $message->sender_id ) : null; ?>
+										<?php $msg_user = ! empty( $message->sender_id ) ? get_userdata( (int) $message->sender_id ) : null; ?>
 										<div class="wpss-message" style="padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-left: 3px solid #0073aa;">
 											<div style="margin-bottom: 5px;">
-												<strong><?php echo esc_html( $msg_user ? $msg_user->display_name : __( 'Unknown', 'wp-sell-services' ) ); ?></strong>
+												<?php // No sender means the plugin wrote it (a status change, a note) - not an "Unknown" person. ?>
+												<strong><?php echo esc_html( $msg_user ? $msg_user->display_name : ( empty( $message->sender_id ) ? __( 'System', 'wp-sell-services' ) : __( 'Deleted user', 'wp-sell-services' ) ) ); ?></strong>
 												<span style="color: #666; margin-left: 10px;">
 													<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
 												</span>
@@ -2503,39 +2546,9 @@ class Admin {
 							<?php endif; ?>
 						</div>
 					</div>
-
-					<!-- Deliveries -->
-					<?php if ( ! empty( $deliveries ) ) : ?>
-						<div class="postbox">
-							<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Deliveries', 'wp-sell-services' ); ?></h2>
-							<div class="inside">
-								<?php foreach ( $deliveries as $delivery ) : ?>
-									<div class="wpss-delivery" style="padding: 10px; margin-bottom: 10px; background: #f0f9f0; border-left: 3px solid #00a32a;">
-										<div style="margin-bottom: 5px;">
-											<strong>
-												<?php
-												printf(
-													/* translators: %d: delivery number */
-													esc_html__( 'Delivery #%d', 'wp-sell-services' ),
-													absint( $delivery->id )
-												);
-												?>
-											</strong>
-											<span style="color: #666; margin-left: 10px;">
-												<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $delivery->created_at ) ) ); ?>
-											</span>
-										</div>
-										<?php if ( ! empty( $delivery->message ) ) : ?>
-											<div><?php echo wp_kses_post( wpautop( $delivery->message ) ); ?></div>
-										<?php endif; ?>
-									</div>
-								<?php endforeach; ?>
-							</div>
-						</div>
-					<?php endif; ?>
 				</div>
 
-				<div class="wpss-order-sidebar" style="flex: 1;">
+				<div class="wpss-order-sidebar wpss-admin-order__side">
 					<!-- Parties -->
 					<div class="postbox">
 						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Parties', 'wp-sell-services' ); ?></h2>
@@ -2585,6 +2598,12 @@ class Admin {
 											<?php endforeach; ?>
 										</select>
 									</p>
+									<?php // What a change sets off, said before it is saved (OrderWorkflowManager::handle_order_completed / handle_order_cancelled). ?>
+									<ul class="wpss-admin-order__effects">
+										<li><strong><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></strong> &ndash; <?php esc_html_e( 'credits the vendor\'s earnings to their wallet.', 'wp-sell-services' ); ?></li>
+										<li><strong><?php esc_html_e( 'Cancelled', 'wp-sell-services' ); ?></strong> &ndash; <?php esc_html_e( 'refunds the buyer through the payment gateway (or lists it for a manual refund) and takes back any vendor earnings.', 'wp-sell-services' ); ?></li>
+										<li><?php esc_html_e( 'Any other status moves no money.', 'wp-sell-services' ); ?></li>
+									</ul>
 
 									<?php submit_button( __( 'Update Status', 'wp-sell-services' ), 'primary', 'submit', false ); ?>
 								</form>
@@ -2608,7 +2627,7 @@ class Admin {
 									<input type="number" id="wpss-refund-amount-<?php echo esc_attr( $order_id ); ?>"
 										class="wpss-refund-amount" min="0" step="0.01"
 										max="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>"
-										placeholder="<?php echo esc_attr( (string) $wpss_refundable_left ); ?>"
+										placeholder="<?php echo esc_attr( sprintf( /* translators: %s: amount still refundable */ __( 'Full: %s', 'wp-sell-services' ), wpss_format_price( $wpss_refundable_left, (string) $order->currency ) ) ); ?>"
 										style="width: 140px;">
 								</p>
 								<button type="button" class="button button-link-delete wpss-process-refund"
@@ -2740,36 +2759,21 @@ class Admin {
 					// and the customer never see different invoice detail.
 					// Silent on pre-1.5.0 orders, which carry no snapshot.
 					?>
-					<div class="postbox wpss-billing-postbox">
-						<div class="inside">
-							<?php wpss_get_template_part( 'partials/billing', 'summary', array( 'wpss_order' => $order ) ); ?>
-						</div>
-					</div>
+					<?php
+					// Rendered only when there is a billing snapshot - an order paid
+					// before 1.5.0, or with no billing captured, left an empty card.
+					ob_start();
+					wpss_get_template_part( 'partials/billing', 'summary', array( 'wpss_order' => $order ) );
+					$wpss_billing = trim( (string) ob_get_clean() );
 
-					<!-- Financial Summary -->
-					<div class="postbox">
-						<h2 class="hndle" style="padding: 0 12px;"><?php esc_html_e( 'Financial Summary', 'wp-sell-services' ); ?></h2>
-						<div class="inside">
-							<?php
-							// The same line items the buyer sees: package, add-ons, tax, total.
-							wpss_get_template_part( 'order/line-items', '', array( 'wpss_order' => $order ) );
-							?>
-							<table style="width: 100%;">
-								<?php if ( isset( $order->vendor_earnings ) && $order->vendor_earnings > 0 ) : ?>
-									<tr>
-										<td><?php esc_html_e( 'Vendor Earning:', 'wp-sell-services' ); ?></td>
-										<td style="text-align: right;"><?php echo esc_html( wpss_format_price( (float) $order->vendor_earnings, $order->currency ) ); ?></td>
-									</tr>
-								<?php endif; ?>
-								<?php if ( isset( $order->platform_fee ) && $order->platform_fee > 0 ) : ?>
-									<tr>
-										<td><?php esc_html_e( 'Commission:', 'wp-sell-services' ); ?></td>
-										<td style="text-align: right;"><?php echo esc_html( wpss_format_price( (float) $order->platform_fee, $order->currency ) ); ?></td>
-									</tr>
-								<?php endif; ?>
-							</table>
+					if ( '' !== $wpss_billing ) :
+						?>
+						<div class="postbox wpss-billing-postbox">
+							<div class="inside">
+								<?php echo $wpss_billing; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the partial escapes its own output. ?>
+							</div>
 						</div>
-					</div>
+					<?php endif; ?>
 				</div>
 			</div>
 		</div>

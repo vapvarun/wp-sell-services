@@ -1178,24 +1178,39 @@ class ServiceOrder {
 	 * @return array<string, mixed>
 	 */
 	public function get_requirements(): array {
+		return $this->get_submitted_requirements()['data'];
+	}
+
+	/**
+	 * The buyer's submitted requirements: answers, attached files and when.
+	 *
+	 * The one read of wpss_order_requirements for display, shared by the order
+	 * view and the admin order screen (Basecamp 10337161480).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return array{data: array<string, mixed>, attachments: array<int, array<string, mixed>>, submitted_at: ?string}
+	 */
+	public function get_submitted_requirements(): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_order_requirements';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT field_data FROM {$table} WHERE order_id = %d ORDER BY id DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT field_data, attachments, submitted_at FROM {$table} WHERE order_id = %d ORDER BY id DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$this->id
 			)
 		);
 
-		if ( ! $row || ! $row->field_data ) {
-			return array();
-		}
+		$data        = $row ? json_decode( (string) $row->field_data, true ) : array();
+		$attachments = $row ? json_decode( (string) $row->attachments, true ) : array();
 
-		$data = json_decode( $row->field_data, true );
-
-		return is_array( $data ) ? $data : array();
+		return array(
+			'data'         => is_array( $data ) ? $data : array(),
+			'attachments'  => is_array( $attachments ) ? $attachments : array(),
+			'submitted_at' => $row && $row->submitted_at ? (string) $row->submitted_at : null,
+		);
 	}
 
 	/**

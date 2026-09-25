@@ -1604,7 +1604,9 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	text-align: start;
 	font-weight: 400;
 }
-.wpss-line-items__amount {
+/* Qualified: `.wpss-line-items td` (0,1,1) set text-align: start and beat the
+   bare class, so every amount sat mid-row instead of at the right edge. */
+.wpss-line-items .wpss-line-items__amount {
 	text-align: end;
 	white-space: nowrap;
 	padding-inline-start: var(--wpss-space-3);
