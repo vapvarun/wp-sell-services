@@ -3410,7 +3410,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 			</div>
 			<div class="wpss-modal__body">
 				<p class="wpss-modal__intro">
-					<?php esc_html_e( 'The buyer requested extra work on top of the original scope. Quote how much and how many more days you need — they pay through the same checkout, and once payment clears you can continue on the extended scope.', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Quote extra work for this order: the buyer pays through the same checkout, then you continue on the extended scope.', 'wp-sell-services' ); ?>
 				</p>
 				<form class="wpss-extension-form" data-order="<?php echo esc_attr( (int) $order_id ); ?>">
 					<?php wp_nonce_field( 'wpss_request_extension', 'wpss_extension_nonce' ); ?>

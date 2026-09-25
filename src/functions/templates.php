@@ -502,7 +502,7 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 
 	if ( $is_system ) :
 		?>
-		<div class="wpss-messaging__system">
+		<div class="wpss-messaging__system" data-message-id="<?php echo esc_attr( (string) ( $message->id ?? 0 ) ); ?>">
 			<span class="wpss-messaging__system-text">
 				<?php echo wp_kses_post( $content ); ?>
 				<span class="wpss-messaging__message-time">
