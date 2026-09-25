@@ -427,30 +427,33 @@ class EarningsController extends RestController {
 			}
 
 			$items[] = array(
-				'id'              => (int) $row['id'],
-				'type'            => $row['type'],
-				'amount'          => (float) $row['amount'],
+				'id'               => (int) $row['id'],
+				'type'             => $row['type'],
+				'amount'           => (float) $row['amount'],
 				// Minor units alongside the float, as everywhere else money is
 				// returned. balance_after is not exposed: it is a stored running
 				// number that drifts from the ledger SUM; the balance comes from
 				// /earnings/summary.
-				'amount_minor'    => wpss_amount_to_minor_units( (float) $row['amount'], (string) $row['currency'] ),
+				'amount_minor'     => wpss_amount_to_minor_units( (float) $row['amount'], (string) $row['currency'] ),
 				// Whether this row REDUCES the balance. The client cannot infer
 				// it from the sign: debits are stored POSITIVE and the sign is
 				// applied on read from wpss_get_ledger_debit_types(), so a
 				// withdrawal rendered as "+90.00" — a payout looking like a
 				// credit. The server owns the debit-type list, so it answers
 				// here rather than the JS duplicating the rule.
-				'is_debit'        => in_array( $row['type'], wpss_get_ledger_debit_types(), true )
+				'is_debit'         => in_array( $row['type'], wpss_get_ledger_debit_types(), true )
 					|| (float) $row['amount'] < 0,
-				'currency'        => $row['currency'],
-				'description'     => $row['description'],
-				'reference_type'  => $reference_type,
-				'reference_id'    => $reference_id,
-				'reference_label' => $reference_label,
-				'reference_url'   => $reference_url,
-				'status'          => $row['status'],
-				'created_at'      => $this->format_datetime( $row['created_at'] ),
+				'currency'         => $row['currency'],
+				// Unsigned and formatted the way every other screen shows money
+				// ("$22.50"); the client prefixes the +/- from is_debit.
+				'amount_formatted' => wpss_format_price( abs( (float) $row['amount'] ), (string) $row['currency'] ),
+				'description'      => $row['description'],
+				'reference_type'   => $reference_type,
+				'reference_id'     => $reference_id,
+				'reference_label'  => $reference_label,
+				'reference_url'    => $reference_url,
+				'status'           => $row['status'],
+				'created_at'       => $this->format_datetime( $row['created_at'] ),
 			);
 		}
 

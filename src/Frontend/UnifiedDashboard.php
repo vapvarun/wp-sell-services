@@ -137,18 +137,16 @@ class UnifiedDashboard {
 			'wpss-unified-dashboard',
 			'wpssUnifiedDashboard',
 			array(
-				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
-				'nonce'                 => wp_create_nonce( 'wpss_dashboard_nonce' ),
-				'serviceNonce'          => wp_create_nonce( 'wpss_service_nonce' ),
-				'restUrl'               => esc_url_raw( rest_url( 'wpss/v1/' ) ),
-				'restNonce'             => wp_create_nonce( 'wp_rest' ),
+				'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+				'nonce'        => wp_create_nonce( 'wpss_dashboard_nonce' ),
+				'serviceNonce' => wp_create_nonce( 'wpss_service_nonce' ),
+				'restUrl'      => esc_url_raw( rest_url( 'wpss/v1/' ) ),
+				'restNonce'    => wp_create_nonce( 'wp_rest' ),
 				// Which profile route Save Changes should use. Buyers own a
 				// billing address and a display name but no vendor profile, and
 				// PUT /vendors/me refuses them outright.
-				'isVendor'              => wpss_is_vendor( get_current_user_id() ),
-				'currencyDecimals'      => wpss_get_currency_decimals(),
-				'zeroDecimalCurrencies' => wpss_get_zero_decimal_currencies(),
-				'i18n'                  => array(
+				'isVendor'     => wpss_is_vendor( get_current_user_id() ),
+				'i18n'         => array(
 					'becomeVendorConfirm'     => __( 'Start selling services on this marketplace?', 'wp-sell-services' ),
 
 					// Wallet transactions table. These are rendered entirely in JS,
@@ -599,17 +597,22 @@ class UnifiedDashboard {
 				<div class="wpss-dashboard">
 					<aside class="wpss-dashboard__sidebar">
 				<?php
-				// Under 480px the sidebar collapses to this bar (see the CSS), so
-				// the section content is the first thing on screen; the toggle
-				// reveals the nav below it. Hidden on wider viewports.
+				// At 1024px and below the sidebar collapses to this bar (see the
+				// CSS), so the section content gets the full width; the toggle
+				// opens the drawer below as an off-canvas panel. Hidden on wider
+				// viewports, where the drawer is the plain sidebar.
 				?>
 				<div class="wpss-dashboard__nav-bar">
 					<span class="wpss-dashboard__nav-bar-title"><?php echo esc_html( $section_data['title'] ); ?></span>
-					<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-dashboard__nav-toggle" aria-expanded="false" aria-controls="wpss-dashboard-nav">
+					<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-dashboard__nav-toggle" aria-expanded="false" aria-controls="wpss-dashboard-drawer">
 						<?php $this->render_icon( 'menu' ); ?>
 						<span><?php esc_html_e( 'Menu', 'wp-sell-services' ); ?></span>
 					</button>
 				</div>
+				<div id="wpss-dashboard-drawer" class="wpss-dashboard__drawer">
+				<button type="button" class="wpss-dashboard__drawer-close" aria-label="<?php esc_attr_e( 'Close menu', 'wp-sell-services' ); ?>">
+					<?php $this->render_icon( 'x' ); ?>
+				</button>
 				<div class="wpss-dashboard__user">
 					<?php echo get_avatar( $user_id, 48, '', '', array( 'class' => 'wpss-dashboard__avatar' ) ); ?>
 					<div class="wpss-dashboard__user-info">
@@ -692,6 +695,7 @@ class UnifiedDashboard {
 					</div>
 					<?php endif; ?>
 				<?php endif; ?>
+				</div>
 			</aside>
 
 			<main class="wpss-dashboard__content">

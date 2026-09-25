@@ -492,7 +492,15 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 								<td><?php echo esc_html( $methods[ $withdrawal['method'] ] ?? ucfirst( $withdrawal['method'] ) ); ?></td>
 								<td>
 									<?php
-									$status_class = 'wpss-badge--' . esc_attr( $withdrawal['status'] );
+									// Semantic badge tones from design-system.css; the old
+									// per-status classes (wpss-badge--pending ...) have no styles.
+									$tones        = array(
+										EarningsService::WITHDRAWAL_PENDING   => 'warning',
+										EarningsService::WITHDRAWAL_APPROVED  => 'info',
+										EarningsService::WITHDRAWAL_COMPLETED => 'success',
+										EarningsService::WITHDRAWAL_REJECTED  => 'danger',
+									);
+									$status_class = 'wpss-badge--' . ( $tones[ $withdrawal['status'] ] ?? 'neutral' );
 									$statuses     = EarningsService::get_withdrawal_statuses();
 									?>
 									<span class="wpss-badge <?php echo esc_attr( $status_class ); ?>">

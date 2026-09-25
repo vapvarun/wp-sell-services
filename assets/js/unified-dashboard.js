@@ -75,7 +75,19 @@
 
 			// Collapsed nav (under 480px): Menu opens the list, picking a section closes it.
 			$(document).on('click', '.wpss-dashboard__nav-toggle', this.handleNavToggle);
-			$(document).on('click', '.wpss-dashboard__nav-item', this.closeNav);
+			$(document).on('click', '.wpss-dashboard__nav-item, .wpss-dashboard__drawer-close', this.closeNav);
+			// The open drawer's backdrop is the sidebar's ::after, so a click on
+			// it lands on the sidebar itself.
+			$(document).on('click', '.wpss-dashboard__sidebar--open', function (e) {
+				if (e.target === e.currentTarget) {
+					this.closeNav();
+				}
+			}.bind(this));
+			$(document).on('keydown', function (e) {
+				if ('Escape' === e.key && $('.wpss-dashboard__sidebar--open').length) {
+					this.closeNav();
+				}
+			}.bind(this));
 
 			// Reviews section: vendor reply, through the same REST route the app uses.
 			$(document).on('submit', '.wpss-review-reply-form', this.handleReviewReply.bind(this));
@@ -92,16 +104,22 @@
 
 			$btn.attr('aria-expanded', open ? 'true' : 'false');
 			$btn.closest('.wpss-dashboard__sidebar').toggleClass('wpss-dashboard__sidebar--open', open);
+			$('html').toggleClass('wpss-drawer-open', open);
+			if (open) {
+				$('#wpss-dashboard-drawer .wpss-dashboard__drawer-close').trigger('focus');
+			}
 		},
 
 		/**
 		 * Close the collapsed dashboard nav.
 		 */
 		closeNav: function () {
-			$('.wpss-dashboard__sidebar--open')
+			var $toggle = $('.wpss-dashboard__sidebar--open')
 				.removeClass('wpss-dashboard__sidebar--open')
 				.find('.wpss-dashboard__nav-toggle')
 				.attr('aria-expanded', 'false');
+			$('html').removeClass('wpss-drawer-open');
+			$toggle.trigger('focus');
 		},
 
 		// Current page already loaded into the wallet ledger.
@@ -286,16 +304,9 @@
 			}
 			$descCell.appendTo($row);
 
-			var symbol = isDebit ? '-' : '+';
-			// Decimals depend on the transaction's own currency (the ledger can
-			// mix currencies), so resolve per-row against the zero-decimal set.
-			var cfg = window.wpssUnifiedDashboard || {};
-			var zeroDecimal = cfg.zeroDecimalCurrencies || [];
-			var txnDecimals = (txn.currency && zeroDecimal.indexOf(txn.currency) !== -1) ? 0
-				: (typeof cfg.currencyDecimals !== 'undefined' ? cfg.currencyDecimals : 2);
 			$('<td>')
 				.addClass('wpss-wallet__amount-col wpss-wallet__amount')
-				.text(symbol + Math.abs(amount).toFixed(txnDecimals) + ' ' + (txn.currency || ''))
+				.text((isDebit ? '-' : '+') + (txn.amount_formatted || Math.abs(amount).toFixed(2)))
 				.appendTo($row);
 
 			return $row;

@@ -2078,19 +2078,69 @@ select.wpss-input option,
 	margin-top: 16px;
 }
 
+/*
+ * Stack the value above its label, and let the label wrap - at every width.
+ * At 1440 the Earnings labels sat beside the number and wrapped to 3-4
+ * lines ("Clearing / from / open / orders"), so this is not phone-only.
+ *
+ * Same specificity story as the stats-grid rule in the 768px block:
+ * frontend.css sets a bare `.wpss-stat-card { display: flex;
+ * align-items: center }` and loads after this sheet, so the value and the
+ * label sat SIDE BY SIDE. In a 125px column at 390px the 28px value took
+ * almost all of it and the label was squeezed into what was left -
+ * "Withdrawal in progress" rendered as "With / in pr", "Total earned so
+ * far" as "Tota / earn / so fa", and one label was reduced to single
+ * letters. A vendor on a phone could not tell what most of the numbers
+ * meant.
+ *
+ * Scoped to .wpss-dashboard so it outranks the unscoped rule, exactly as
+ * the stats-grid fix has to be. min-width: 0 because a flex item will not
+ * shrink below its content width without it, which is what made the label
+ * overflow rather than wrap in the first place.
+ */
+.wpss-dashboard .wpss-stat-card {
+	display: block;
+}
+
+.wpss-dashboard .wpss-stat-card__value,
+.wpss-dashboard .wpss-stat-card__label {
+	display: block;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
 /* ==========================================================================
    Responsive
    ========================================================================== */
 
-/* Under 480px the sidebar collapses to one bar - current section title plus a
-   Menu toggle - so the section content is the first thing on screen instead of
-   a dozen nav links (F27). The toggle flips .wpss-dashboard__sidebar--open;
-   nothing animates, so prefers-reduced-motion needs no override. */
-.wpss-dashboard__nav-bar {
+/* At 1024px and below the sidebar collapses to one bar - current section
+   title plus a Menu toggle - so the section gets the full width (an iPad in
+   portrait kept a 250px sidebar and cut the wallet table's Amount column).
+   The toggle opens the drawer as an off-canvas panel over a backdrop; the
+   panel keeps the desktop nav layout. Owner decision 2026-09-25, shared by
+   the buyer and vendor dashboards. */
+.wpss-dashboard__nav-bar,
+.wpss-dashboard__drawer-close {
 	display: none;
 }
 
-@media (max-width: 480px) {
+.wpss-dashboard__drawer {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+}
+
+@media (max-width: 1024px) {
+	.wpss-dashboard {
+		flex-direction: column;
+	}
+
+	.wpss-dashboard__sidebar {
+		width: 100%;
+		border-right: none;
+		border-bottom: 1px solid var(--wpss-gray-200);
+	}
+
 	.wpss-dashboard__nav-bar {
 		display: flex;
 		align-items: center;
@@ -2104,86 +2154,64 @@ select.wpss-input option,
 		color: var(--wpss-gray-900);
 	}
 
-	.wpss-dashboard__sidebar:not(.wpss-dashboard__sidebar--open) > :not(.wpss-dashboard__nav-bar) {
+	.wpss-dashboard__sidebar:not(.wpss-dashboard__sidebar--open) .wpss-dashboard__drawer {
 		display: none;
+	}
+
+	.wpss-dashboard__sidebar--open::after {
+		content: "";
+		position: fixed;
+		inset: 0;
+		z-index: 100000;
+		background: rgba(15, 23, 42, 0.5);
+	}
+
+	.wpss-dashboard__sidebar--open .wpss-dashboard__drawer {
+		position: fixed;
+		inset-block: 0;
+		inset-inline-start: 0;
+		z-index: 100001;
+		width: min(320px, 85vw);
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		background: var(--wpss-surface, #fff);
+		box-shadow: var(--wpss-shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.2));
+	}
+
+	.wpss-dashboard__drawer-close {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		align-self: flex-end;
+		width: 44px;
+		height: 44px;
+		margin: var(--wpss-space-2) var(--wpss-space-2) 0;
+		padding: 0;
+		border: 0;
+		border-radius: var(--wpss-radius);
+		background: transparent;
+		color: var(--wpss-gray-700);
+		cursor: pointer;
+	}
+
+	.wpss-dashboard__drawer-close:hover,
+	.wpss-dashboard__drawer-close:focus-visible {
+		background: var(--wpss-gray-100);
+		color: var(--wpss-gray-900);
+	}
+
+	html.wpss-drawer-open {
+		overflow: hidden;
+	}
+
+	/* The shell isolates its own stacking context (design-system.css), which
+	   would keep the drawer under the theme header; lift it while open. */
+	html.wpss-drawer-open .wpss-app-shell {
+		z-index: 100000;
 	}
 }
 
 @media (max-width: 768px) {
-	.wpss-dashboard {
-		flex-direction: column;
-	}
-
-	.wpss-dashboard__sidebar {
-		width: 100%;
-		border-right: none;
-		border-bottom: 1px solid var(--wpss-gray-200);
-	}
-
-	.wpss-dashboard__nav {
-		display: block;
-		padding: 12px 16px;
-	}
-
-	.wpss-dashboard__nav-group {
-		margin-bottom: 12px;
-	}
-
-	.wpss-dashboard__nav-group:last-child {
-		margin-bottom: 0;
-	}
-
-	.wpss-dashboard__nav-label {
-		display: block;
-		padding: 0 4px;
-		margin-bottom: 6px;
-		font-size: 11px;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--wpss-gray-500);
-	}
-
-	.wpss-dashboard__nav-list {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-	}
-
-	.wpss-dashboard__nav-item {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		min-height: 40px;
-		padding: 8px 12px;
-		border: 1px solid var(--wpss-gray-200);
-		border-radius: var(--wpss-radius);
-		background: var(--wpss-surface, #fff);
-		font-size: 13px;
-		font-weight: 500;
-		white-space: nowrap;
-	}
-
-	.wpss-dashboard__nav-item--active {
-		border-right: 1px solid var(--wpss-primary);
-		border-color: var(--wpss-primary);
-		background: var(--wpss-primary);
-		color: var(--wpss-white, #fff);
-	}
-
-	.wpss-dashboard__nav-item--active:hover {
-		background: var(--wpss-primary);
-		color: var(--wpss-white, #fff);
-	}
-
-	.wpss-dashboard__nav-item span {
-		display: inline;
-	}
-
-	.wpss-dashboard__become-vendor {
-		display: none;
-	}
-
 	.wpss-dashboard__body {
 		padding: 16px;
 	}
@@ -2200,35 +2228,6 @@ select.wpss-input option,
 	.wpss-dashboard .wpss-stats-grid,
 	.wpss-dashboard .wpss-stats-grid--4 {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
-
-	/*
-	 * Stack the value above its label, and let the label wrap.
-	 *
-	 * Same specificity story as the grid rule above, one property along:
-	 * frontend.css sets a bare `.wpss-stat-card { display: flex;
-	 * align-items: center }` and loads after this sheet, so the value and the
-	 * label sat SIDE BY SIDE. In a 125px column at 390px the 28px value took
-	 * almost all of it and the label was squeezed into what was left -
-	 * "Withdrawal in progress" rendered as "With / in pr", "Total earned so
-	 * far" as "Tota / earn / so fa", and one label was reduced to single
-	 * letters. A vendor on a phone could not tell what most of the numbers
-	 * meant.
-	 *
-	 * Scoped to .wpss-dashboard so it outranks the unscoped rule, exactly as
-	 * the grid fix above has to be. min-width: 0 because a flex item will not
-	 * shrink below its content width without it, which is what made the label
-	 * overflow rather than wrap in the first place.
-	 */
-	.wpss-dashboard .wpss-stat-card {
-		display: block;
-	}
-
-	.wpss-dashboard .wpss-stat-card__value,
-	.wpss-dashboard .wpss-stat-card__label {
-		display: block;
-		min-width: 0;
-		overflow-wrap: anywhere;
 	}
 
 	.wpss-dashboard .wpss-stat-card__value {
