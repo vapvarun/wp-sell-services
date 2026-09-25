@@ -1727,6 +1727,14 @@ class SchemaManager {
 		// ever written by the demo seeder and read by the request card.
 		delete_post_meta_by_key( '_wpss_proposal_count' );
 
+		// _wpss_order_count was never written by a sale; recount it once from
+		// the orders table (wpss_sync_service_order_count() keeps it after).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$counted = $this->wpdb->get_col( "SELECT DISTINCT service_id FROM {$this->prefix}orders WHERE service_id > 0 AND status = 'completed'" );
+		foreach ( array_unique( array_merge( array_map( 'intval', $counted ), array_map( 'intval', $this->wpdb->get_col( "SELECT post_id FROM {$this->wpdb->postmeta} WHERE meta_key = '_wpss_order_count'" ) ) ) ) as $service_id ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			wpss_sync_service_order_count( $service_id );
+		}
+
 		// _wpss_starting_price now follows every package write; recompute it
 		// once for services last edited somewhere other than the wizard. Those
 		// with no _wpss_packages meta (packages only in the packages table) keep

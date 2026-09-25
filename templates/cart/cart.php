@@ -366,6 +366,8 @@ defined( 'ABSPATH' ) || exit;
 					if ( is_wp_error( $line ) ) {
 						$item['unavailable']        = true;
 						$item['unavailable_reason'] = $item['unavailable_reason'] ?? $line->get_error_message();
+						// Written back: the checkout button below counts what is buyable.
+						$cart_items[ $item_key ] = $item;
 						$line                       = array(
 							'package'      => is_array( $item['package'] ?? null ) ? $item['package'] : array(),
 							'addons'       => array(),

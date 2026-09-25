@@ -233,6 +233,15 @@ class CheckoutIntentService {
 	 *                                        net, tax_included, total.
 	 */
 	public static function price_service_line( int $service_id, int $package_ref, int $quantity, $selection ) {
+		// Paused: the page stays up but no new order is taken. The service page
+		// only hid its button, so /service-checkout/{id}/ still sold a paused
+		// service (Basecamp 10337190248, order 6962). Every purchase path prices
+		// through here - checkout, cart, REST cart and quote, the gateways - so
+		// the refusal is here once.
+		if ( 'paused' === wpss_get_service_status( $service_id ) ) {
+			return new \WP_Error( 'wpss_service_paused', __( 'This service is not taking new orders right now.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		}
+
 		$resolved = wpss_resolve_service_package( $service_id, $package_ref );
 
 		// A service sold without packages is bought at its starting price.

@@ -1715,3 +1715,47 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 	 */
 	return (string) apply_filters( 'wpss_service_unavailable_reason', '', $service_id );
 }
+
+/**
+ * Recount a service's completed orders into _wpss_order_count.
+ *
+ * The stored count feeds the admin list, the editor stats, the service page,
+ * schema markup and the "most orders" sort, but its only writer
+ * (ServiceManager::increment_order_count()) was never called, so every real
+ * sale read 0 (Basecamp 10337190248). It is now recounted from the orders
+ * table whenever one of the service's orders changes status - the count
+ * stays a stored number because the popularity sort needs one.
+ *
+ * @since 1.8.0
+ *
+ * @param int $service_id Service ID.
+ * @return int The count.
+ */
+function wpss_sync_service_order_count( int $service_id ): int {
+	global $wpdb;
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$count = (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_orders WHERE service_id = %d AND status = 'completed' AND COALESCE( platform, '' ) NOT IN ( 'tip', 'extension', 'milestone' )",
+			$service_id
+		)
+	);
+
+	update_post_meta( $service_id, '_wpss_order_count', $count );
+
+	return $count;
+}
+
+add_action(
+	'wpss_order_status_changed',
+	static function ( $order_id ) {
+		$order = wpss_get_order( (int) $order_id );
+
+		if ( $order && (int) $order->service_id > 0 ) {
+			wpss_sync_service_order_count( (int) $order->service_id );
+		}
+	},
+	30
+);
+

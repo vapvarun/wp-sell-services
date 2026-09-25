@@ -590,17 +590,6 @@ class ServiceManager {
 	}
 
 	/**
-	 * Increment order count.
-	 *
-	 * @param int $service_id Service post ID.
-	 * @return void
-	 */
-	public function increment_order_count( int $service_id ): void {
-		$count = (int) get_post_meta( $service_id, '_wpss_order_count', true );
-		update_post_meta( $service_id, '_wpss_order_count', $count + 1 );
-	}
-
-	/**
 	 * Hold a service as a draft when it is not ready to be published.
 	 *
 	 * The wizard (ServiceWizard.php), the admin metabox (ServiceMetabox.php)
