@@ -816,6 +816,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			}
 			.wpss-co-guarantee > span:first-child {
 				font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 2px;
+				color: var(--wpss-primary);
 			}
 			.wpss-co-guarantee strong {
 				display: block; font-size: var(--wpss-text-sm); font-weight: 600;
@@ -909,6 +910,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				.wpss-co-steps__track { flex-wrap: wrap; gap: var(--wpss-space-3); }
 				.wpss-co-steps__track::before { display: none; }
 				.wpss-co-step { flex-direction: row; text-align: left; }
+				.wpss-co-guarantees-bar { flex-direction: column; gap: var(--wpss-space-4); }
 			}
 		</style>
 
@@ -1301,7 +1303,12 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				<div class="wpss-co-guarantees-bar">
 					<?php foreach ( $badges as $badge ) : ?>
 						<div class="wpss-co-guarantee">
-							<span aria-hidden="true"><?php echo esc_html( $badge['icon'] ); ?></span>
+							<?php // A filter may still pass text (an emoji) rather than a Lucide name. ?>
+							<?php if ( preg_match( '/^[a-z0-9-]+$/', (string) $badge['icon'] ) ) : ?>
+								<span aria-hidden="true"><i data-lucide="<?php echo esc_attr( $badge['icon'] ); ?>" class="wpss-icon"></i></span>
+							<?php else : ?>
+								<span aria-hidden="true"><?php echo esc_html( $badge['icon'] ); ?></span>
+							<?php endif; ?>
 							<div>
 								<strong><?php echo esc_html( $badge['title'] ); ?></strong>
 								<span><?php echo esc_html( $badge['note'] ); ?></span>

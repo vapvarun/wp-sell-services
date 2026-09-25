@@ -173,7 +173,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | `wpss_stripe_payment_intent_args` | `array $params, int $order_id, int $vendor_id` | `src/Integrations/Stripe/StripeGateway.php:297` |
 | `wpss_rest_create_payment_intent` | `null, object $gateway, float $amount, string $currency, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:270` |
 | `wpss_rest_confirm_payment` | `null, object $gateway, string $payment_id, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:319` |
-| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:811` |
+| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:831` |
 
 **`wpss_stripe_payment_intent_args`** lets you modify Stripe PaymentIntent parameters before creation:
 
@@ -348,7 +348,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2801` |
-| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1963` |
+| `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:2052` |
 
 ### Admin Filters
 
@@ -388,7 +388,7 @@ add_filter( 'wpss_can_access_dashboard_section', function( $can, $section, $user
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_catalog_price_html` | `string $html, float $amount, string $context` | `src/functions/money.php:145` |
+| `wpss_catalog_price_html` | `string $html, float $amount, string $context` | `src/functions/money.php:165` |
 
 _`wpss_catalog_price_html` (added 1.3.0) is the single seam for catalog price display. Base currency is authoritative for all stored amounts; this filter is where an add-on (such as the Pro display-currency hint) injects a converted, visitor-facing price without changing the stored value._
 
@@ -644,7 +644,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_portfolio_item_updated` | `int $item_id, array $data` | `src/Services/PortfolioService.php:294` |
 | `wpss_portfolio_item_deleted` | `int $item_id, object $item` | `src/Services/PortfolioService.php:344` |
 | `wpss_settings_tab_{tab}` | *(none)* | `Settings.php:985` |
-| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2091` |
+| `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2173` |
 
 ## Filters
 
@@ -675,17 +675,17 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:57` |
-| `wpss_currency` | `$currency` | `src/functions/money.php:1069` |
+| `wpss_currency` | `$currency` | `src/functions/money.php:1089` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/misc.php:36` |
 | `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:147` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:92` |
-| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:1104` |
-| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:1131` |
-| `wpss_currencies` | `$currencies` | `src/functions/money.php:1926` |
+| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:1124` |
+| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:1151` |
+| `wpss_currencies` | `$currencies` | `src/functions/money.php:1946` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:126` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:126` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:792` |
-| `wpss_wallet_manager` | `null` | `src/functions/money.php:1948` |
+| `wpss_wallet_manager` | `null` | `src/functions/money.php:1968` |
 
 ### Currency System Filters (1.2.1)
 
@@ -693,10 +693,10 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1905` |
-| `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:185` |
-| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:1031` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3885` |
+| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1925` |
+| `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:205` |
+| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:1051` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3983` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:942` |
 
 **`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
@@ -769,7 +769,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:659` |
 | `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1359` |
 | `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1432` |
-| `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:226` |
+| `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:239` |
 | `wpss_blocks` | `$blocks` | `src/Blocks/BlocksManager.php:95` |
 | `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:289` |
 

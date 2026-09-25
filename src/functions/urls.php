@@ -1005,6 +1005,7 @@ function wpss_get_cart_url(): string {
 function wpss_get_settings_sections(): array {
 	$sections = array(
 		'general',
+		'checkout',
 		'pages',
 		'payments',
 		'commission',
@@ -1012,6 +1013,7 @@ function wpss_get_settings_sections(): array {
 		'vendor',
 		'orders',
 		'emails',
+		'integrations',
 		'advanced',
 	);
 

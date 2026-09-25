@@ -75,8 +75,9 @@ class Settings {
 
 		$this->tabs = array(
 			// Setup.
-			'general'    => __( 'General', 'wp-sell-services' ),
-			'pages'      => __( 'Pages', 'wp-sell-services' ),
+			'general'      => __( 'General', 'wp-sell-services' ),
+			'checkout'     => __( 'Checkout', 'wp-sell-services' ),
+			'pages'        => __( 'Pages', 'wp-sell-services' ),
 			// Money. The old single "Payments" tab carried commission, tax,
 			// payouts AND every gateway credential set — eight independent
 			// forms with eight save buttons, where editing across two cards
@@ -90,16 +91,20 @@ class Settings {
 			'vendor'     => __( 'Vendor Settings', 'wp-sell-services' ),
 			'orders'     => __( 'Orders &amp; Disputes', 'wp-sell-services' ),
 			'emails'     => __( 'Emails', 'wp-sell-services' ),
-			// System (Pro tabs inserted before this via filter).
-			'advanced'   => __( 'Advanced', 'wp-sell-services' ),
+			// System (Pro tabs inserted before this via filter). Advanced was
+			// split in two (Basecamp 10337154229): outside services on
+			// Integrations, the site's own plumbing on System. The System tab
+			// keeps the `advanced` slug so every existing #advanced link lands.
+			'integrations' => __( 'Integrations', 'wp-sell-services' ),
+			'advanced'     => __( 'System', 'wp-sell-services' ),
 		);
 
 		$this->tab_groups = array(
-			'setup'      => array( 'general', 'pages' ),
+			'setup'      => array( 'general', 'checkout', 'pages' ),
 			'money'      => array( 'payments', 'commission', 'payouts' ),
 			'operations' => array( 'vendor', 'orders', 'emails' ),
 			'pro'        => array(), // Pro tabs added via filter.
-			'system'     => array( 'advanced' ),
+			'system'     => array( 'integrations', 'advanced' ),
 		);
 	}
 
@@ -122,6 +127,7 @@ class Settings {
 	private function get_core_tabs(): array {
 		return array(
 			'general',
+			'checkout',
 			'pages',
 			'payments',
 			'commission',
@@ -129,6 +135,7 @@ class Settings {
 			'vendor',
 			'orders',
 			'emails',
+			'integrations',
 			'advanced',
 		);
 	}
@@ -182,15 +189,21 @@ class Settings {
 	 */
 	private function get_icon_map(): array {
 		return array(
-			'general'    => 'settings',
-			'pages'      => 'layout-template',
+			'general'      => 'settings',
+			'checkout'     => 'shopping-bag',
+			'pages'        => 'layout-template',
 			'payments'   => 'credit-card',
 			'commission' => 'percent',
 			'payouts'    => 'banknote',
 			'vendor'     => 'store',
 			'orders'     => 'shopping-cart',
-			'emails'     => 'mail',
-			'advanced'   => 'wrench',
+			'emails'       => 'mail',
+			'integrations' => 'plug',
+			'advanced'     => 'wrench',
+			// Tabs an add-on registers; a missing icon drew a hollow circle
+			// that read as a locked option.
+			'analytics'    => 'bar-chart-3',
+			'branding'     => 'palette',
 		);
 	}
 
@@ -482,8 +495,6 @@ class Settings {
 	 * @return void
 	 */
 	public function register_settings(): void {
-		$this->register_tuning_settings();
-
 		// General settings.
 		register_setting(
 			'wpss_general',
@@ -542,6 +553,25 @@ class Settings {
 			)
 		);
 
+		// All money formatting in one place (Basecamp 10337154229): the symbol
+		// position lived on Advanced, away from the currency it formats.
+		add_settings_field(
+			'currency_position',
+			__( 'Currency Symbol Position', 'wp-sell-services' ),
+			array( $this, 'render_select_field' ),
+			'wpss_general',
+			'wpss_general_section',
+			array(
+				'option_name' => 'wpss_general',
+				'field'       => 'currency_position',
+				'default'     => wpss_get_currency_position(),
+				'options'     => array(
+					'before' => __( 'Before amount ($99)', 'wp-sell-services' ),
+					'after'  => __( 'After amount (99$)', 'wp-sell-services' ),
+				),
+			)
+		);
+
 		// E-commerce integration section.
 		add_settings_section(
 			'wpss_ecommerce_section',
@@ -562,6 +592,26 @@ class Settings {
 			)
 		);
 
+		// Checkout tab (Basecamp 10337154229): checkout behaviour and the
+		// billing fields, which sat under "Checkout Reassurance" and on Orders.
+		// Its own option group; the keys stay in wpss_general, whose sanitizer
+		// merges into the stored array, so each tab saves only its own keys.
+		register_setting(
+			'wpss_checkout',
+			'wpss_general',
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( $this, 'sanitize_general_settings' ),
+			)
+		);
+
+		add_settings_section(
+			'wpss_checkout_section',
+			__( 'Checkout', 'wp-sell-services' ),
+			'__return_empty_string',
+			'wpss_checkout'
+		);
+
 		// Checkout reassurance badges.
 		//
 		// These print on a PUBLIC page a buyer reads while paying, so the words
@@ -573,14 +623,14 @@ class Settings {
 			'wpss_checkout_badges_section',
 			__( 'Checkout Reassurance', 'wp-sell-services' ),
 			array( $this, 'render_checkout_badges_section' ),
-			'wpss_general'
+			'wpss_checkout'
 		);
 
 		add_settings_field(
 			'checkout_badges_enabled',
 			__( 'Show reassurance badges', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
-			'wpss_general',
+			'wpss_checkout',
 			'wpss_checkout_badges_section',
 			array(
 				'option_name' => 'wpss_general',
@@ -597,8 +647,8 @@ class Settings {
 				'use_marketplace_cart_link',
 				__( 'Site cart link', 'wp-sell-services' ),
 				array( $this, 'render_checkbox_field' ),
-				'wpss_general',
-				'wpss_checkout_badges_section',
+				'wpss_checkout',
+				'wpss_checkout_section',
 				array(
 					'option_name' => 'wpss_general',
 					'field'       => 'use_marketplace_cart_link',
@@ -611,8 +661,8 @@ class Settings {
 			'checkout_account_creation',
 			__( 'Account at checkout', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
-			'wpss_general',
-			'wpss_checkout_badges_section',
+			'wpss_checkout',
+			'wpss_checkout_section',
 			array(
 				'option_name' => 'wpss_general',
 				'field'       => 'checkout_account_creation',
@@ -624,7 +674,7 @@ class Settings {
 			'checkout_badges',
 			__( 'Badge text', 'wp-sell-services' ),
 			array( $this, 'render_checkout_badges_field' ),
-			'wpss_general',
+			'wpss_checkout',
 			'wpss_checkout_badges_section',
 			array(
 				'option_name' => 'wpss_general',
@@ -646,6 +696,8 @@ class Settings {
 			'wpss_commission'
 		);
 
+		$commission_rate = \WPSellServices\Services\CommissionService::get_global_commission_rate();
+
 		add_settings_field(
 			'commission_rate',
 			__( 'Commission Rate (%)', 'wp-sell-services' ),
@@ -659,7 +711,15 @@ class Settings {
 				'max'         => 50,
 				'step'        => 0.1,
 				'default'     => 10,
-				'description' => __( 'Platform commission deducted from each order. Example: 20% on a $100 order = you keep $20, vendor gets $80.', 'wp-sell-services' ),
+				// The example uses the saved rate: a fixed "20%" read as the setting.
+				'description' => sprintf(
+					/* translators: 1: commission rate, 2: example order total, 3: platform share, 4: vendor share */
+					__( 'Platform commission deducted from each order. At %1$s%%, a %2$s order means you keep %3$s and the vendor gets %4$s.', 'wp-sell-services' ),
+					number_format_i18n( $commission_rate, floor( $commission_rate ) === $commission_rate ? 0 : 1 ),
+					wpss_format_price( 100 ),
+					wpss_format_price( $commission_rate ),
+					wpss_format_price( 100 - $commission_rate )
+				),
 			)
 		);
 
@@ -821,7 +881,7 @@ class Settings {
 				'min'         => 100,
 				'max'         => 10000,
 				'step'        => 50,
-				'description' => __( 'A withdrawal request is created for any vendor whose available balance is above this amount, on the schedule below. You still approve and pay each request - no money leaves your account on its own. Set to 0 to disable.', 'wp-sell-services' ),
+				'description' => __( 'A withdrawal request is created for any vendor whose available balance is above this amount, on the schedule below. You still approve and pay each request - no money leaves your account on its own. To stop, untick Enable Auto-Withdrawal above.', 'wp-sell-services' ),
 			)
 		);
 
@@ -997,7 +1057,7 @@ class Settings {
 		// Checkout billing fields. Owner picks which of the twelve are collected
 		// (Basecamp #10159633185).
 		register_setting(
-			'wpss_orders',
+			'wpss_checkout',
 			'wpss_billing_field_settings',
 			array( $this, 'sanitize_billing_field_settings' )
 		);
@@ -1042,8 +1102,8 @@ class Settings {
 			'wpss_billing_fields',
 			__( 'Checkout Billing Fields', 'wp-sell-services' ),
 			array( $this, 'render_billing_fields_field' ),
-			'wpss_orders',
-			'wpss_orders_section'
+			'wpss_checkout',
+			'wpss_checkout_section'
 		);
 
 		add_settings_field(
@@ -1068,7 +1128,7 @@ class Settings {
 			__( 'Allow Disputes', 'wp-sell-services' ),
 			array( $this, 'render_checkbox_field' ),
 			'wpss_orders',
-			'wpss_orders_section',
+			'wpss_disputes_section',
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'allow_disputes',
@@ -1095,7 +1155,7 @@ class Settings {
 			__( 'Dispute Window (Days)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_orders',
-			'wpss_orders_section',
+			'wpss_disputes_section',
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'dispute_window_days',
@@ -1110,7 +1170,7 @@ class Settings {
 			__( 'Auto-Dispute Late Orders (Days)', 'wp-sell-services' ),
 			array( $this, 'render_number_field' ),
 			'wpss_orders',
-			'wpss_orders_section',
+			'wpss_disputes_section',
 			array(
 				'option_name' => 'wpss_orders',
 				'field'       => 'auto_dispute_late_days',
@@ -1237,29 +1297,46 @@ class Settings {
 			)
 		);
 
-		add_settings_section(
-			'wpss_notifications_section',
-			__( 'Email Notifications', 'wp-sell-services' ),
-			array( $this, 'render_notifications_section' ),
-			'wpss_notifications'
+		// Grouped by who receives the email, each with when it is sent
+		// (Basecamp 10337154229): 30 look-alike toggles in one list, with
+		// "Tip Received" and "Tip Receipt" impossible to tell apart. The option
+		// keys are unchanged. A type an add-on registers without a group lands
+		// under "More emails".
+		$email_groups = array(
+			'buyer'  => __( 'Emails to buyers', 'wp-sell-services' ),
+			'vendor' => __( 'Emails to sellers', 'wp-sell-services' ),
+			'both'   => __( 'Emails to buyer and seller', 'wp-sell-services' ),
+			'admin'  => __( 'Emails to you', 'wp-sell-services' ),
+			'other'  => __( 'More emails', 'wp-sell-services' ),
 		);
 
-		/**
-		 * Filter notification types shown in email settings.
-		 *
-		 * @since 1.1.0
-		 *
-		 * @param array $types Associative array of notification_key => label.
-		 */
-		$notification_types = $this->get_notification_types();
+		$email_meta  = $this->get_notification_recipients();
+		$used_groups = array();
+		foreach ( array_keys( $this->get_notification_types() ) as $type ) {
+			$used_groups[ $email_meta[ $type ][0] ?? 'other' ] = true;
+		}
 
-		foreach ( $notification_types as $key => $label ) {
+		foreach ( $email_groups as $group_key => $group_title ) {
+			// An empty group would print a heading over nothing.
+			if ( isset( $used_groups[ $group_key ] ) ) {
+				add_settings_section(
+					'wpss_notifications_section_' . $group_key,
+					$group_title,
+					'__return_empty_string',
+					'wpss_notifications'
+				);
+			}
+		}
+
+		foreach ( $this->get_notification_types() as $key => $label ) {
+			$meta = $email_meta[ $key ] ?? array( 'other', '' );
+
 			add_settings_field(
 				'notify_' . $key,
 				$label,
 				array( $this, 'render_checkbox_field' ),
 				'wpss_notifications',
-				'wpss_notifications_section',
+				'wpss_notifications_section_' . $meta[0],
 				array(
 					'option_name' => 'wpss_notifications',
 					'field'       => 'notify_' . $key,
@@ -1268,6 +1345,7 @@ class Settings {
 						__( 'Send email for %s', 'wp-sell-services' ),
 						strtolower( $label )
 					),
+					'description' => $meta[1],
 					'default'     => true,
 				)
 			);
@@ -1348,7 +1426,7 @@ class Settings {
 
 		add_settings_section(
 			'wpss_advanced_section',
-			__( 'Advanced Settings', 'wp-sell-services' ),
+			__( 'System Settings', 'wp-sell-services' ),
 			array( $this, 'render_advanced_section' ),
 			'wpss_advanced'
 		);
@@ -1409,23 +1487,6 @@ class Settings {
 			)
 		);
 
-		add_settings_field(
-			'currency_position',
-			__( 'Currency Symbol Position', 'wp-sell-services' ),
-			array( $this, 'render_select_field' ),
-			'wpss_advanced',
-			'wpss_advanced_section',
-			array(
-				'option_name' => 'wpss_advanced',
-				'field'       => 'currency_position',
-				'options'     => array(
-					'before' => __( 'Before amount ($99)', 'wp-sell-services' ),
-					'after'  => __( 'After amount (99$)', 'wp-sell-services' ),
-				),
-				'description' => __( 'Position of the currency symbol relative to the amount.', 'wp-sell-services' ),
-			)
-		);
-
 		// Realtime (WebSocket) settings.
 		register_setting(
 			'wpss_realtime',
@@ -1438,7 +1499,7 @@ class Settings {
 
 		add_settings_section(
 			'wpss_realtime_section',
-			__( 'Real-time Settings', 'wp-sell-services' ),
+			__( 'Real-time (WebSockets)', 'wp-sell-services' ),
 			array( $this, 'render_realtime_section' ),
 			'wpss_realtime'
 		);
@@ -1557,6 +1618,11 @@ class Settings {
 				'default'     => true,
 			)
 		);
+
+		// Last, so a tab's own section comes before the tuning sections added
+		// to it: Orders & Disputes opened on "Dispute Settings" because this
+		// registered the disputes section before the orders one.
+		$this->register_tuning_settings();
 	}
 
 	/**
@@ -1648,7 +1714,7 @@ class Settings {
 					</span>
 					<?php foreach ( $group_tabs as $tab_key => $tab_label ) : ?>
 						<?php
-						$icon   = $icon_map[ $tab_key ] ?? 'circle';
+						$icon   = $icon_map[ $tab_key ] ?? 'puzzle';
 						$is_pro = ! in_array( $tab_key, $core_tabs, true );
 						?>
 						<a class="wpss-settings-nav-item"
@@ -1656,7 +1722,8 @@ class Settings {
 							data-section="<?php echo esc_attr( $tab_key ); ?>">
 							<i data-lucide="<?php echo esc_attr( $icon ); ?>"></i>
 							<?php echo esc_html( $tab_label ); ?>
-							<?php if ( $is_pro ) : ?>
+							<?php // The badge is an upsell: with Pro active the tab is simply a tab. ?>
+							<?php if ( $is_pro && ! defined( 'WPSS_PRO_VERSION' ) ) : ?>
 								<span class="wpss-pro-badge"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></span>
 							<?php endif; ?>
 						</a>
@@ -1704,6 +1771,34 @@ class Settings {
 			case 'general':
 				$this->render_general_tab();
 				break;
+			case 'checkout':
+				$this->render_tab_sections(
+					'checkout',
+					array(
+						array(
+							'id'           => 'checkout',
+							'title'        => __( 'Checkout', 'wp-sell-services' ),
+							'description'  => __( 'What buyers see and give when they pay.', 'wp-sell-services' ),
+							'option_group' => 'wpss_checkout',
+							'settings_id'  => 'wpss_checkout',
+						),
+					)
+				);
+				break;
+			case 'integrations':
+				$this->render_tab_sections(
+					'integrations',
+					array(
+						array(
+							'id'           => 'realtime',
+							'title'        => __( 'Real-time (WebSockets)', 'wp-sell-services' ),
+							'description'  => __( 'Push live messages and notifications to logged-in users. Works with Pusher.com or any self-hosted Pusher-compatible server such as Soketi.', 'wp-sell-services' ),
+							'option_group' => 'wpss_realtime',
+							'settings_id'  => 'wpss_realtime',
+						),
+					)
+				);
+				break;
 			case 'pages':
 				$this->render_pages_tab();
 				break;
@@ -1738,11 +1833,8 @@ class Settings {
 	 */
 	private function render_general_tab(): void {
 		?>
+		<?php // The "General Settings" section heads this card; a card head repeated it. ?>
 		<div class="wpss-card">
-			<div class="wpss-card__head">
-				<p class="wpss-card__title"><?php esc_html_e( 'GENERAL SETTINGS', 'wp-sell-services' ); ?></p>
-				<p class="wpss-card__desc"><?php esc_html_e( 'Configure general platform settings.', 'wp-sell-services' ); ?></p>
-			</div>
 			<div class="wpss-card__body">
 				<form method="post" action="options.php">
 					<?php
@@ -1765,11 +1857,8 @@ class Settings {
 	 */
 	private function render_pages_tab(): void {
 		?>
+		<?php // The "Page Settings" section heads this card; a card head repeated it. ?>
 		<div class="wpss-card">
-			<div class="wpss-card__head">
-				<p class="wpss-card__title"><?php esc_html_e( 'PAGE SETTINGS', 'wp-sell-services' ); ?></p>
-				<p class="wpss-card__desc"><?php esc_html_e( 'Assign pages for plugin functionality.', 'wp-sell-services' ); ?></p>
-			</div>
 			<div class="wpss-card__body">
 				<form method="post" action="options.php">
 					<?php
@@ -1830,14 +1919,14 @@ class Settings {
 			array(
 				array(
 					'id'           => 'commission',
-					'title'        => __( 'Commission Settings', 'wp-sell-services' ),
+					'title'        => __( 'Platform Commission', 'wp-sell-services' ),
 					'description'  => __( 'Configure the platform commission deducted from vendor earnings.', 'wp-sell-services' ),
 					'option_group' => 'wpss_commission',
 					'settings_id'  => 'wpss_commission',
 				),
 				array(
 					'id'           => 'tax',
-					'title'        => __( 'Tax Settings', 'wp-sell-services' ),
+					'title'        => __( 'Tax Configuration', 'wp-sell-services' ),
 					'description'  => __( 'Configure tax calculation for services.', 'wp-sell-services' ),
 					'option_group' => 'wpss_tax',
 					'settings_id'  => 'wpss_tax',
@@ -1863,7 +1952,7 @@ class Settings {
 			array(
 				array(
 					'id'           => 'payouts',
-					'title'        => __( 'Payout Settings', 'wp-sell-services' ),
+					'title'        => __( 'Withdrawal Settings', 'wp-sell-services' ),
 					'description'  => __( 'Configure vendor withdrawal and payout settings.', 'wp-sell-services' ),
 					'option_group' => 'wpss_payouts',
 					'settings_id'  => 'wpss_payouts',
@@ -2063,13 +2152,6 @@ class Settings {
 					'description'  => __( 'Configure advanced system options.', 'wp-sell-services' ),
 					'option_group' => 'wpss_advanced',
 					'settings_id'  => 'wpss_advanced',
-				),
-				array(
-					'id'           => 'realtime',
-					'title'        => __( 'Real-time (WebSockets)', 'wp-sell-services' ),
-					'description'  => __( 'Push live messages and notifications to logged-in users. Works with Pusher.com or any self-hosted Pusher-compatible server such as Soketi.', 'wp-sell-services' ),
-					'option_group' => 'wpss_realtime',
-					'settings_id'  => 'wpss_realtime',
 				),
 				array(
 					'id'          => 'demo-content',
@@ -2291,10 +2373,11 @@ class Settings {
 			esc_html__( 'Uncheck what your marketplace does not need. Address fields suit physical goods; a digital service rarely needs more than a name, an email and a country.', 'wp-sell-services' )
 		);
 
+		// Field names as the owner reads them above, not the billing_* keys.
 		printf(
-			'<p class="description">%s <code>%s</code></p>',
+			'<p class="description">%s %s</p>',
 			esc_html__( 'Suggested set for digital services:', 'wp-sell-services' ),
-			esc_html( implode( ', ', $preset ) )
+			esc_html( implode( ', ', array_map( static fn( $key ) => (string) ( $all[ $key ]['label'] ?? $key ), $preset ) ) )
 		);
 	}
 
@@ -2331,18 +2414,6 @@ class Settings {
 		$clean = array_values( array_unique( array_merge( $clean, wpss_get_required_billing_fields() ) ) );
 
 		return array( 'enabled' => $clean );
-	}
-
-	/**
-	 * Render notifications section description.
-	 *
-	 * @return void
-	 */
-	public function render_notifications_section(): void {
-		echo '<p>' . esc_html__( 'Configure which email notifications are sent.', 'wp-sell-services' ) . '</p>';
-		echo '<p class="description">';
-		echo esc_html__( 'These toggles are the master switch for each notification type. When a notification is disabled here, no email will be sent regardless of other settings.', 'wp-sell-services' );
-		echo '</p>';
 	}
 
 	/**
@@ -2404,6 +2475,27 @@ class Settings {
 	}
 
 	/**
+	 * Whether a settings page's first section already heads the card.
+	 *
+	 * The card head repeated the first section's own heading and description
+	 * ("GENERAL SETTINGS / Configure..." over "General Settings / Configure...",
+	 * Basecamp 10337154229). When they match, the section's heading is the
+	 * card's heading and the card head is left out.
+	 *
+	 * @param string $page  Settings page (do_settings_sections id).
+	 * @param string $title Card title.
+	 * @return bool
+	 */
+	private function page_leads_with( string $page, string $title ): bool {
+		global $wp_settings_sections;
+
+		$sections = $wp_settings_sections[ $page ] ?? array();
+		$first    = $sections ? reset( $sections ) : array();
+
+		return '' !== $title && 0 === strcasecmp( trim( (string) ( $first['title'] ?? '' ) ), trim( $title ) );
+	}
+
+	/**
 	 * Render a single card section.
 	 *
 	 * Used by render_tab_sections() and available publicly so Pro renderers
@@ -2426,12 +2518,14 @@ class Settings {
 		$title = $section['title'] ?? '';
 		?>
 		<div class="wpss-card" data-section="<?php echo esc_attr( $section['id'] ?? '' ); ?>">
-			<div class="wpss-card__head">
-				<p class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></p>
-				<?php if ( ! empty( $section['description'] ) ) : ?>
-					<p class="wpss-card__desc"><?php echo esc_html( $section['description'] ); ?></p>
-				<?php endif; ?>
-			</div>
+			<?php if ( empty( $section['option_group'] ) || ! $this->page_leads_with( (string) ( $section['settings_id'] ?? $section['option_group'] ), $title ) ) : ?>
+				<div class="wpss-card__head">
+					<p class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></p>
+					<?php if ( ! empty( $section['description'] ) ) : ?>
+						<p class="wpss-card__desc"><?php echo esc_html( $section['description'] ); ?></p>
+					<?php endif; ?>
+				</div>
+			<?php endif; ?>
 			<div class="wpss-card__body">
 				<?php if ( ! empty( $section['callback'] ) ) : ?>
 					<?php call_user_func( $section['callback'] ); ?>
@@ -3534,7 +3628,9 @@ class Settings {
 		// The field only renders when WooCommerce is active, so an absent key
 		// must not clear a stored preference on a site that has since
 		// deactivated Woo — same trap that once wiped wpss_pages['cart'].
-		if ( array_key_exists( 'use_marketplace_cart_link', $input ) || class_exists( 'WooCommerce' ) ) {
+		// The checkbox sends a hidden 0, so present means "this form"; the
+		// General form no longer carries it since the Checkout tab split.
+		if ( array_key_exists( 'use_marketplace_cart_link', $input ) ) {
 			$sanitized['use_marketplace_cart_link'] = ! empty( $input['use_marketplace_cart_link'] );
 		}
 
@@ -3542,18 +3638,23 @@ class Settings {
 			$sanitized['checkout_account_creation'] = ! empty( $input['checkout_account_creation'] );
 		}
 
-		$badges = array();
+		if ( array_key_exists( 'currency_position', $input ) ) {
+			$sanitized['currency_position'] = 'after' === $input['currency_position'] ? 'after' : 'before';
+		}
 
+		// Only the Checkout form carries the badge table; the General form
+		// saving without it must not empty it.
 		if ( isset( $input['checkout_badges'] ) && is_array( $input['checkout_badges'] ) ) {
+			$badges = array();
 			foreach ( wpss_get_checkout_badge_defaults() as $key => $unused ) {
 				$badges[ $key ] = array(
 					'title' => sanitize_text_field( (string) ( $input['checkout_badges'][ $key ]['title'] ?? '' ) ),
 					'note'  => sanitize_text_field( (string) ( $input['checkout_badges'][ $key ]['note'] ?? '' ) ),
 				);
 			}
-		}
 
-		$sanitized['checkout_badges'] = $badges;
+			$sanitized['checkout_badges'] = $badges;
+		}
 
 		return $sanitized;
 	}
@@ -3813,9 +3914,6 @@ class Settings {
 
 		$sanitized['max_file_size']      = absint( $input['max_file_size'] ?? 10 );
 		$sanitized['allowed_file_types'] = sanitize_text_field( $input['allowed_file_types'] ?? 'jpg,jpeg,png,gif,pdf,doc,docx' );
-		$sanitized['currency_position']  = in_array( $input['currency_position'] ?? 'before', array( 'before', 'after' ), true )
-			? $input['currency_position']
-			: 'before';
 
 		return $sanitized;
 	}
@@ -3897,6 +3995,47 @@ class Settings {
 	public static function get( string $group, string $key, mixed $default = null ): mixed { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound -- Public API; renaming is a named-argument BC break.
 		$options = get_option( 'wpss_' . $group, array() );
 		return $options[ $key ] ?? $default;
+	}
+
+	/**
+	 * Who each email goes to, and when (Basecamp 10337154229).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return array<string, array{0: string, 1: string}> Type => [group, "sent when"].
+	 */
+	private function get_notification_recipients(): array {
+		return array(
+			'delivery_submitted'     => array( 'buyer', __( 'When the seller delivers work to review.', 'wp-sell-services' ) ),
+			'proposal_submitted'     => array( 'buyer', __( 'When a seller sends a proposal for the buyer\'s request.', 'wp-sell-services' ) ),
+			'milestone_proposed'     => array( 'buyer', __( 'When the seller proposes a milestone to pay for.', 'wp-sell-services' ) ),
+			'milestone_submitted'    => array( 'buyer', __( 'When the seller delivers a milestone for approval.', 'wp-sell-services' ) ),
+			'extension_proposed'     => array( 'buyer', __( 'When the seller asks for more time or money.', 'wp-sell-services' ) ),
+			'tip_receipt'            => array( 'buyer', __( 'A receipt to the buyer for a tip they paid.', 'wp-sell-services' ) ),
+			'request_expired'        => array( 'buyer', __( 'When the buyer\'s request closes without a hire.', 'wp-sell-services' ) ),
+			'review_reply'           => array( 'buyer', __( 'When the seller replies to the buyer\'s review.', 'wp-sell-services' ) ),
+			'revision_requested'     => array( 'vendor', __( 'When the buyer asks for changes to a delivery.', 'wp-sell-services' ) ),
+			'new_review'             => array( 'vendor', __( 'When a buyer reviews the seller.', 'wp-sell-services' ) ),
+			'vendor_contact'         => array( 'vendor', __( 'When someone messages the seller from their profile.', 'wp-sell-services' ) ),
+			'withdrawal_approved'    => array( 'vendor', __( 'When you approve the seller\'s withdrawal.', 'wp-sell-services' ) ),
+			'withdrawal_rejected'    => array( 'vendor', __( 'When you reject the seller\'s withdrawal.', 'wp-sell-services' ) ),
+			'proposal_accepted'      => array( 'vendor', __( 'When the buyer hires the seller from a proposal.', 'wp-sell-services' ) ),
+			'tip_received'           => array( 'vendor', __( 'To the seller, when a buyer tips them.', 'wp-sell-services' ) ),
+			'milestone_paid'         => array( 'vendor', __( 'When the buyer pays for a milestone.', 'wp-sell-services' ) ),
+			'milestone_approved'     => array( 'vendor', __( 'When the buyer approves a milestone.', 'wp-sell-services' ) ),
+			'extension_approved'     => array( 'vendor', __( 'When the buyer accepts an extension.', 'wp-sell-services' ) ),
+			'extension_declined'     => array( 'vendor', __( 'When the buyer declines an extension.', 'wp-sell-services' ) ),
+			'moderation'             => array( 'vendor', __( 'When you approve or reject the seller\'s service.', 'wp-sell-services' ) ),
+			'new_order'              => array( 'both', __( 'A confirmation to the buyer and a new-order alert to the seller.', 'wp-sell-services' ) ),
+			'order_completed'        => array( 'both', __( 'When an order is completed.', 'wp-sell-services' ) ),
+			'order_cancelled'        => array( 'both', __( 'When an order is cancelled.', 'wp-sell-services' ) ),
+			'cancellation_requested' => array( 'both', __( 'To the other party, when one side asks to cancel.', 'wp-sell-services' ) ),
+			'new_message'            => array( 'both', __( 'To the other party, when a message arrives on an order.', 'wp-sell-services' ) ),
+			'dispute_opened'         => array( 'both', __( 'When a dispute is opened on an order (you are told too).', 'wp-sell-services' ) ),
+			'dispute_cancelled'      => array( 'both', __( 'When a dispute is withdrawn or closed.', 'wp-sell-services' ) ),
+			'withdrawal_requested'   => array( 'admin', __( 'When a seller asks to withdraw.', 'wp-sell-services' ) ),
+			'dispute_escalated'      => array( 'admin', __( 'When a dispute is escalated for your decision.', 'wp-sell-services' ) ),
+		);
 	}
 
 	/**

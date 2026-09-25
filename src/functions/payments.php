@@ -159,10 +159,11 @@ function wpss_get_checkout_badges( array $package ): array {
 				: sprintf( _n( '%d revision included', '%d revisions included', $revisions, 'wp-sell-services' ), $revisions ) ),
 	);
 
+	// Lucide icon names; the checkout renders them as icons, not emoji.
 	$icons = array(
-		'delivery'      => "\xE2\x8F\xB1",
-		'communication' => "\xF0\x9F\x92\xAC",
-		'revisions'     => "\xE2\x9C\x85",
+		'delivery'      => 'timer',
+		'communication' => 'message-circle',
+		'revisions'     => 'circle-check',
 	);
 
 	$badges = array();
@@ -191,7 +192,7 @@ function wpss_get_checkout_badges( array $package ): array {
 	 *
 	 * @since 1.4.0
 	 *
-	 * @param array $badges  Each entry: icon, title, note.
+	 * @param array $badges  Each entry: icon (Lucide name, or text), title, note.
 	 * @param array $package Package being purchased.
 	 */
 	return (array) apply_filters( 'wpss_checkout_badges', $badges, $package );

@@ -627,7 +627,7 @@ class API {
 		$settings = [
 			'currency'            => wpss_get_currency(),
 			'currency_symbol'     => wpss_get_currency_symbol(),
-			'currency_position'   => wpss_get_option( 'advanced', 'currency_position' ),
+			'currency_position'   => wpss_get_currency_position(),
 			'decimal_places'      => wpss_get_decimal_places(),
 			'min_order_amount'    => (float) get_option( 'wpss_min_order_amount', 5 ),
 			'max_order_amount'    => (float) get_option( 'wpss_max_order_amount', 10000 ),

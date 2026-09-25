@@ -31,23 +31,19 @@ class ProTeaser {
 	 */
 	public function init(): void {
 		/*
-		 * The Analytics tab stays registered whether or not Pro is installed.
-		 *
-		 * It used to disappear the moment Pro activated, because this whole
-		 * class returned early - and Pro adds an unrelated "Branding" tab in
-		 * the same run. To the owner that reads as Analytics being REPLACED by
-		 * Branding: the thing they were looking at yesterday is gone, with
-		 * nothing saying it moved to its own menu (Basecamp 10305275155).
-		 *
-		 * So the tab survives the upgrade and changes what it says: an upgrade
-		 * pitch without Pro, and directions to the real screen with it.
+		 * Without Pro the Analytics tab is the upgrade teaser. With Pro it is
+		 * not registered: Sell Services > Analytics is the way in, and an old
+		 * #analytics settings link goes straight there (admin-settings-nav.js).
+		 * It used to stay as a signpost so the tab did not seem to vanish on
+		 * upgrade (Basecamp 10305275155); the owner's settings regroup removed
+		 * that dead tab (Basecamp 10337154229).
 		 */
-		add_filter( 'wpss_settings_tabs', array( $this, 'add_analytics_tab' ) );
-		add_action( 'wpss_settings_tab_analytics', array( $this, 'render_analytics_tab' ) );
-
 		if ( defined( 'WPSS_PRO_VERSION' ) ) {
 			return;
 		}
+
+		add_filter( 'wpss_settings_tabs', array( $this, 'add_analytics_tab' ) );
+		add_action( 'wpss_settings_tab_analytics', array( $this, 'render_analytics_tab' ) );
 
 		// Admin: Vendor settings accordion teaser.
 		add_action( 'wpss_settings_sections_vendor', array( $this, 'render_vendor_settings_teaser' ) );
@@ -83,48 +79,9 @@ class ProTeaser {
 	}
 
 	/**
-	 * Where Analytics lives once Pro is installed.
-	 *
-	 * Not a second analytics screen - a signpost. The reports are Pro's, and
-	 * duplicating any part of them here would be the same flow in two places.
-	 *
-	 * @since 1.7.1
-	 *
-	 * @return void
-	 */
-	private function render_analytics_moved_notice(): void {
-		/**
-		 * Filter the destination the Analytics settings tab points at.
-		 *
-		 * @since 1.7.1
-		 *
-		 * @param string $url Admin URL of the analytics screen.
-		 */
-		$url = (string) apply_filters( 'wpss_analytics_page_url', admin_url( 'admin.php?page=wpss-analytics' ) );
-		?>
-		<div class="wpss-card">
-			<h2><?php esc_html_e( 'Analytics', 'wp-sell-services' ); ?></h2>
-			<p>
-				<?php esc_html_e( 'Analytics has its own screen now that Pro is active, because the reports need more room than a settings tab.', 'wp-sell-services' ); ?>
-			</p>
-			<p>
-				<a href="<?php echo esc_url( $url ); ?>" class="button button-primary">
-					<?php esc_html_e( 'Open Analytics', 'wp-sell-services' ); ?>
-				</a>
-			</p>
-			<p class="description">
-				<?php esc_html_e( 'You can also reach it any time from Sell Services → Analytics in the admin menu.', 'wp-sell-services' ); ?>
-			</p>
-		</div>
-		<?php
-	}
-
-	/**
 	 * Add the Analytics tab to settings.
 	 *
-	 * Registered whether or not Pro is active: without it the tab is a locked
-	 * upgrade pitch, with it a signpost to the real analytics screen. It must
-	 * not simply disappear on upgrade - see init().
+	 * Registered only without Pro, as the locked upgrade pitch - see init().
 	 *
 	 * @param array $tabs Existing tabs.
 	 * @return array
@@ -143,11 +100,6 @@ class ProTeaser {
 	 * @return void
 	 */
 	public function render_analytics_tab(): void {
-		if ( defined( 'WPSS_PRO_VERSION' ) ) {
-			$this->render_analytics_moved_notice();
-			return;
-		}
-
 		$upgrade_url = admin_url( 'admin.php?page=wpss-upgrade' );
 		?>
 		<div class="wpss-pro-locked">

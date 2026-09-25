@@ -48,7 +48,7 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 	// UI once refunds started driving vendor balances below zero.
 	$is_negative = $price < 0;
 	$number      = number_format( abs( $price ), $decimals );
-	$formatted   = 'after' === wpss_get_option( 'advanced', 'currency_position' ) ? $number . $symbol : $symbol . $number;
+	$formatted   = 'after' === wpss_get_currency_position() ? $number . $symbol : $symbol . $number;
 
 	if ( $is_negative ) {
 		$formatted = '-' . $formatted;
@@ -60,6 +60,26 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 		$price,
 		$currency
 	);
+}
+
+/**
+ * Where the currency symbol goes: 'before' or 'after' the amount.
+ *
+ * Set on Settings > General since 1.8.0 (it was on Advanced, away from the
+ * currency it formats - Basecamp 10337154229). A site that has not saved
+ * General since then still reads its Advanced value, so nothing moves.
+ *
+ * @since 1.8.0
+ *
+ * @return string 'before' or 'after'.
+ */
+function wpss_get_currency_position(): string {
+	$general  = get_option( 'wpss_general', array() );
+	$position = is_array( $general ) && isset( $general['currency_position'] )
+		? $general['currency_position']
+		: wpss_get_option( 'advanced', 'currency_position' );
+
+	return 'after' === $position ? 'after' : 'before';
 }
 
 /**

@@ -106,15 +106,26 @@
 	// It is rewritten to a hash rather than merely honoured, so a save (which
 	// preserves the hash through _wp_http_referer) returns to the same section
 	// instead of falling back to General on the round trip.
-	var initial = location.hash.replace( '#', '' );
+	var initial = location.hash.replace( '#', '' ) || new URLSearchParams( location.search ).get( 'tab' ) || '';
 
-	if ( ! initial ) {
-		var legacyTab = new URLSearchParams( location.search ).get( 'tab' );
-
-		if ( legacyTab && document.getElementById( 'section-' + legacyTab ) ) {
-			initial = legacyTab;
-			history.replaceState( null, '', '#' + legacyTab );
+	// Tabs that moved off this page (Basecamp 10337154229): with Pro active the
+	// Analytics tab was only a link to its own screen, so an old #analytics or
+	// &tab=analytics goes straight there.
+	var moved = { analytics: 'admin.php?page=wpss-analytics' };
+	var leaveIfMoved = function( id ) {
+		if ( id && ! document.getElementById( 'section-' + id ) && moved[ id ] ) {
+			location.replace( location.pathname.replace( /[^/]*$/, '' ) + moved[ id ] );
+			return true;
 		}
+		return false;
+	};
+
+	if ( leaveIfMoved( initial ) ) {
+		return;
+	}
+
+	if ( initial && ! location.hash && document.getElementById( 'section-' + initial ) ) {
+		history.replaceState( null, '', '#' + initial );
 	}
 
 	activate( initial || '' );
@@ -122,7 +133,54 @@
 	// Browser back/forward between sections. Without this the URL changed and
 	// the page did not.
 	window.addEventListener( 'hashchange', function() {
-		activate( location.hash.replace( '#', '' ) || '' );
+		var id = location.hash.replace( '#', '' );
+		if ( ! leaveIfMoved( id ) ) {
+			activate( id || '' );
+		}
+	} );
+
+	// Unsaved changes (Basecamp 10337154229). Each card is its own form, so
+	// saving one reloads the page and drops edits made in another: say so
+	// before that happens, and before leaving with anything unsaved.
+	var dirty = new Set();
+
+	document.querySelectorAll( SECTION + ' form' ).forEach( function( form ) {
+		var mark = function() {
+			dirty.add( form );
+		};
+		form.addEventListener( 'input', mark );
+		form.addEventListener( 'change', mark );
+
+		form.addEventListener( 'submit', function( e ) {
+			var others = Array.from( dirty ).filter( function( f ) {
+				return f !== form && document.body.contains( f );
+			} );
+
+			if ( ! others.length || form.dataset.wpssConfirmed ) {
+				dirty.clear();
+				return;
+			}
+
+			e.preventDefault();
+			var ask = window.wpssConfirm
+				? window.wpssConfirm( __( 'Another card on this page has unsaved changes. Saving this one reloads the page and those changes will be lost. Save this card anyway?', 'wp-sell-services' ) )
+				: Promise.resolve( true );
+
+			ask.then( function( ok ) {
+				if ( ok ) {
+					form.dataset.wpssConfirmed = '1';
+					dirty.clear();
+					form.requestSubmit();
+				}
+			} );
+		} );
+	} );
+
+	window.addEventListener( 'beforeunload', function( e ) {
+		if ( dirty.size ) {
+			e.preventDefault();
+			e.returnValue = '';
+		}
 	} );
 
 	// Gateway card collapse/expand toggle.

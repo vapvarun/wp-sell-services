@@ -59,7 +59,8 @@ class MenuVisibility {
 		// saves it, and render the role x section matrix in that tab. Uses the
 		// current sections hook (unified .wpss-card chrome), not the legacy action.
 		add_action( 'admin_init', array( $this, 'register_setting' ) );
-		add_action( 'wpss_settings_sections_advanced', array( $this, 'render_settings_ui' ) );
+		// Who sees which marketplace menu is access control, so it sits with the vendor settings (Basecamp 10337154229).
+		add_action( 'wpss_settings_sections_vendor', array( $this, 'render_settings_ui' ) );
 	}
 
 	/**

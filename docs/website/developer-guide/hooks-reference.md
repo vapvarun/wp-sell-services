@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**539 hooks** across **743** firing sites.
+**538 hooks** across **742** firing sites.
 
 ## Actions (275)
 
@@ -292,7 +292,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (264)
+## Filters (263)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -305,7 +305,6 @@ guide; this is the complete index.
 | `wpss_after_become_vendor_redirect` | 2 | `src/Frontend/UnifiedDashboard.php` | Filter the redirect URL after a vendor successfully registers. |
 | `wpss_allow_late_requirements_submission` | 1 | `src/functions/orders.php` *(+1 more)* | Filter whether late requirements submission is allowed. |
 | `wpss_allowed_file_types` | 3 | `src/functions/files.php` | Filter the file extensions any WPSS upload may use. |
-| `wpss_analytics_page_url` | 1 | `src/Admin/ProTeaser.php` | Filter the destination the Analytics settings tab points at. |
 | `wpss_analytics_widgets` | 1 | `src/Core/Plugin.php` *(+1 more)* | Filter the registered analytics widgets. |
 | `wpss_api_controllers` | 1 | `src/API/API.php` | Filter registered API controllers. |
 | `wpss_api_cors_origins` | 0 | `src/API/API.php` | Filter allowed CORS origins. |
