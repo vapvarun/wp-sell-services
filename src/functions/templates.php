@@ -624,3 +624,59 @@ function wpss_register_design_system( bool $enqueue = false ): void {
 		wp_enqueue_style( 'wpss-design-system' );
 	}
 }
+
+/**
+ * WordPress core's list-table pager, for admin lists built without WP_List_Table.
+ *
+ * Orders and Disputes use WP_List_Table and get core's pager (first, previous,
+ * page input, next, last); the hand-built lists printed a bare "1 2 3 >>" row.
+ * This reuses core's own pagination() rather than copying its markup, so the
+ * lists stay identical as core changes it. Reads and writes the `paged` arg.
+ *
+ * @since 1.8.0
+ *
+ * @param int $total    Total items.
+ * @param int $per_page Items per page.
+ * @return void
+ */
+function wpss_admin_list_pager( int $total, int $per_page ): void {
+	if ( $total <= $per_page ) {
+		return;
+	}
+
+	if ( ! class_exists( 'WP_List_Table' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+	}
+
+	$pager = new class() extends \WP_List_Table {
+		/**
+		 * Print the bottom pager for the given totals.
+		 *
+		 * @param int $total    Total items.
+		 * @param int $per_page Items per page.
+		 * @return void
+		 */
+		public function print_pager( int $total, int $per_page ): void {
+			$this->set_pagination_args(
+				array(
+					'total_items' => $total,
+					'per_page'    => $per_page,
+				)
+			);
+			echo '<div class="tablenav bottom">';
+			$this->pagination( 'bottom' );
+			echo '<br class="clear"></div>';
+		}
+
+		/**
+		 * No columns: only the pager is used.
+		 *
+		 * @return array<string, string>
+		 */
+		public function get_columns() {
+			return array();
+		}
+	};
+
+	$pager->print_pager( $total, $per_page );
+}

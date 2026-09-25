@@ -736,21 +736,13 @@ class VendorsPage {
 						// also stops three buttons wrapping onto two lines and
 						// inflating every row's height.
 						?>
-						<th scope="col" class="column-vendor">
-							<?php $this->sortable_column_header( 'display_name', __( 'Vendor', 'wp-sell-services' ), $orderby, $order ); ?>
-						</th>
+						<?php $this->sortable_column_header( 'vendor', 'display_name', __( 'Vendor', 'wp-sell-services' ), $orderby, $order ); ?>
 						<th scope="col" class="column-services">
 							<?php esc_html_e( 'Services', 'wp-sell-services' ); ?>
 						</th>
-						<th scope="col" class="column-orders">
-							<?php $this->sortable_column_header( 'total_orders', __( 'Orders', 'wp-sell-services' ), $orderby, $order ); ?>
-						</th>
-						<th scope="col" class="column-rating">
-							<?php $this->sortable_column_header( 'rating', __( 'Rating', 'wp-sell-services' ), $orderby, $order ); ?>
-						</th>
-						<th scope="col" class="column-earnings">
-							<?php $this->sortable_column_header( 'total_earned', __( 'Earned', 'wp-sell-services' ), $orderby, $order ); ?>
-						</th>
+						<?php $this->sortable_column_header( 'orders', 'total_orders', __( 'Orders', 'wp-sell-services' ), $orderby, $order ); ?>
+						<?php $this->sortable_column_header( 'rating', 'rating', __( 'Rating', 'wp-sell-services' ), $orderby, $order ); ?>
+						<?php $this->sortable_column_header( 'earnings', 'total_earned', __( 'Earned', 'wp-sell-services' ), $orderby, $order ); ?>
 						<th scope="col" class="column-status">
 							<?php esc_html_e( 'Status', 'wp-sell-services' ); ?>
 						</th>
@@ -776,36 +768,8 @@ class VendorsPage {
 				</tfoot>
 			</table>
 
-			<!-- Pagination -->
-				<?php if ( $total_pages > 1 ) : ?>
-				<div class="tablenav bottom">
-					<div class="tablenav-pages">
-						<span class="displaying-num">
-							<?php
-							printf(
-								/* translators: %s: number of items */
-								esc_html( _n( '%s item', '%s items', $total, 'wp-sell-services' ) ),
-								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- number_format_i18n() is a safe formatting function.
-								number_format_i18n( $total )
-							);
-							?>
-						</span>
-						<span class="pagination-links">
-							<?php
-							$pagination_args = array(
-								'base'      => add_query_arg( 'paged', '%#%' ),
-								'format'    => '',
-								'prev_text' => '&laquo;',
-								'next_text' => '&raquo;',
-								'total'     => $total_pages,
-								'current'   => $current_page,
-							);
-							echo wp_kses_post( paginate_links( $pagination_args ) );
-							?>
-						</span>
-					</div>
-				</div>
-			<?php endif; ?>
+			<!-- Pagination: WordPress core's pager, as on Orders and Disputes. -->
+			<?php wpss_admin_list_pager( (int) $total, 20 ); // get_vendors() pages by 20. ?>
 			<?php endif; // vendors empty check. ?>
 				</div><!-- .wpss-list-card__body -->
 			</div><!-- .wpss-list-card -->
@@ -829,32 +793,37 @@ class VendorsPage {
 	}
 
 	/**
-	 * Render sortable column header.
+	 * Render a sortable column's whole <th>.
 	 *
-	 * @param string $column  Column name.
+	 * @param string $slug    Column class slug (column-{slug}).
+	 * @param string $column  Orderby key.
 	 * @param string $label   Column label.
 	 * @param string $current Current orderby.
 	 * @param string $order   Current order.
 	 * @return void
 	 */
-	private function sortable_column_header( string $column, string $label, string $current, string $order ): void {
-		$is_sorted   = $current === $column;
-		$new_order   = $is_sorted && $order === 'ASC' ? 'DESC' : 'ASC';
-		$sort_class  = $is_sorted ? 'sorted ' . strtolower( $order ) : 'sortable asc';
-		$arrow_class = $is_sorted ? ( $order === 'ASC' ? 'asc' : 'desc' ) : '';
+	private function sortable_column_header( string $slug, string $column, string $label, string $current, string $order ): void {
+		$is_sorted = $current === $column;
+		$new_order = $is_sorted && 'ASC' === $order ? 'DESC' : 'ASC';
 
-		$url = add_query_arg(
-			array(
-				'orderby' => $column,
-				'order'   => $new_order,
-			)
-		);
-
+		// WordPress core's list-table CSS keys the arrows off the <th>'s own
+		// sortable/sorted classes. They sat on the <a>, so the indicators fell
+		// below the label and shifted a column left.
 		printf(
-			'<a href="%s" class="%s"><span>%s</span><span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span class="sorting-indicator desc" aria-hidden="true"></span></span></a>',
-			esc_url( $url ),
-			esc_attr( $sort_class ),
-			esc_html( $label )
+			'<th scope="col" class="manage-column column-%1$s %2$s"%6$s><a href="%3$s"><span>%4$s</span><span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span class="sorting-indicator desc" aria-hidden="true"></span></span>%5$s</a></th>',
+			esc_attr( $slug ),
+			esc_attr( $is_sorted ? 'sorted ' . strtolower( $order ) : 'sortable asc' ),
+			esc_url(
+				add_query_arg(
+					array(
+						'orderby' => $column,
+						'order'   => $new_order,
+					)
+				)
+			),
+			esc_html( $label ),
+			'orders' === $slug ? '<span class="screen-reader-text">' . esc_html__( '(every order placed, any status)', 'wp-sell-services' ) . '</span>' : '',
+			'orders' === $slug ? ' title="' . esc_attr__( 'Every order placed with this vendor, any status', 'wp-sell-services' ) . '"' : ''
 		);
 	}
 
@@ -881,7 +850,7 @@ class VendorsPage {
 					<img src="<?php echo esc_url( $avatar ); ?>" alt="" class="wpss-vendor-avatar">
 					<div>
 						<div class="wpss-vendor-name">
-							<?php echo esc_html( $vendor->display_name ?? $user->display_name ?? '' ); ?>
+							<a class="row-title" href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-vendors&action=view&vendor_id=' . $vendor->user_id ) ); ?>"><?php echo esc_html( $vendor->display_name ?? $user->display_name ?? '' ); ?></a>
 						</div>
 						<div class="wpss-vendor-email">
 							<?php echo esc_html( $vendor->user_email ?? $user->user_email ?? '' ); ?>
