@@ -2259,9 +2259,6 @@ class ServiceWizard {
 		$revision_values = array_map( 'intval', wp_list_pluck( $numeric_packages, 'revisions' ) );
 		update_post_meta( $service_id, '_wpss_max_revisions', ! empty( $revision_values ) ? max( $revision_values ) : (int) ( $basic['revisions'] ?? 0 ) );
 
-		// Save starting price (from first/basic package).
-		update_post_meta( $service_id, '_wpss_starting_price', $basic['price'] ?? 0 );
-
 		// Save gallery images.
 		// Collect additional gallery image IDs, filtering out invalid attachments.
 		$gallery_ids = array();

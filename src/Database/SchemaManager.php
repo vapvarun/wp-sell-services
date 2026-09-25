@@ -1727,6 +1727,46 @@ class SchemaManager {
 		// ever written by the demo seeder and read by the request card.
 		delete_post_meta_by_key( '_wpss_proposal_count' );
 
+		// _wpss_starting_price now follows every package write; recompute it
+		// once for services last edited somewhere other than the wizard. Those
+		// with no _wpss_packages meta (packages only in the packages table) keep
+		// the price they have.
+		$service_ids = get_posts(
+			array(
+				'post_type'      => 'wpss_service',
+				'post_status'    => 'any',
+				'fields'         => 'ids',
+				'posts_per_page' => -1,
+				'no_found_rows'  => true,
+			)
+		);
+
+		foreach ( $service_ids as $service_id ) {
+			$packages = get_post_meta( $service_id, '_wpss_packages', true );
+			if ( is_array( $packages ) && $packages ) {
+				update_post_meta( $service_id, '_wpss_starting_price', \WPSellServices\PostTypes\ServicePostType::starting_price( $packages ) );
+			}
+		}
+
+		// Services are edited in the classic editor from 1.8.0 (one content
+		// format with the vendor wizard's plain description). A service an admin
+		// saved in the block editor carries <!-- wp: --> comments that the
+		// wizard would show as text; convert those once (Basecamp 10337190248).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$blocky = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT ID, post_content FROM {$this->wpdb->posts} WHERE post_type = %s AND post_content LIKE %s",
+				'wpss_service',
+				'%' . $this->wpdb->esc_like( '<!-- wp:' ) . '%'
+			)
+		);
+
+		foreach ( (array) $blocky as $post ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$this->wpdb->update( $this->wpdb->posts, array( 'post_content' => \WPSellServices\PostTypes\ServicePostType::strip_block_markup( (string) $post->post_content ) ), array( 'ID' => (int) $post->ID ) );
+			clean_post_cache( (int) $post->ID );
+		}
+
 		$table = $this->prefix . 'orders';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

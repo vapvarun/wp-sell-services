@@ -960,7 +960,7 @@
 
 .wpss-details-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
 	gap: 15px;
 	max-width: 400px;
 }
@@ -984,7 +984,11 @@
 	flex-shrink: 0;
 	width: 40px;
 	height: 40px;
-	background: linear-gradient(135deg, var(--wpss-admin-primary), var(--wpss-success-dark, #19a463));
+	/* A tint with the glyph in the accent: the old dark gradient left the
+	   Lucide glyphs (which inherit currentColor, not the white set on
+	   .dashicons) nearly invisible (Basecamp 10337190248). */
+	background: color-mix(in srgb, var(--wpss-admin-primary) 12%, transparent);
+	color: var(--wpss-admin-primary-dark);
 	border-radius: 8px;
 	display: flex;
 	align-items: center;
@@ -992,7 +996,7 @@
 }
 
 .wpss-detail-icon .dashicons {
-	color: var(--wpss-white, #fff);
+	color: inherit;
 	font-size: 20px;
 	width: 20px;
 	height: 20px;
@@ -2930,10 +2934,6 @@
 		grid-template-columns: repeat(2, 1fr);
 	}
 
-	.wpss-details-grid {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
 	.wpss-detail-stats-row {
 		grid-template-columns: repeat(3, 1fr);
 	}
@@ -3491,4 +3491,39 @@ button.wpss-change-status:focus {
 .button[class*="wpss-"]:not(.button-primary):focus {
 	color: var(--wpss-admin-accent-hover, #135e96);
 	border-color: var(--wpss-admin-accent-hover, #135e96);
+}
+
+/* All Services list (ServiceListScreen). */
+.post-type-wpss_service .column-wpss_thumb {
+	width: 56px;
+}
+
+.wpss-list-thumb {
+	display: block;
+	width: 48px;
+	height: 48px;
+	border-radius: 6px;
+	object-fit: cover;
+}
+
+.wpss-list-thumb--empty {
+	background: var(--wpss-admin-border, #e2e8f0);
+}
+
+.post-type-wpss_service .column-wpss_moderation,
+.post-type-wpss_service .column-wpss_price {
+	width: 7em;
+}
+
+.post-type-wpss_service .column-wpss_orders {
+	width: 9em;
+}
+
+/* iPad widths: the title needs the room more than the thumbnail and the
+   category list do (the category filter above the table still works). */
+@media screen and (max-width: 1100px) {
+	.post-type-wpss_service .column-wpss_thumb,
+	.post-type-wpss_service .column-taxonomy-wpss_service_category {
+		display: none;
+	}
 }

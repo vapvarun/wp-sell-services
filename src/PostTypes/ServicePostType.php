@@ -40,7 +40,10 @@ class ServicePostType {
 		add_action( 'init', [ $this, 'maybe_seed_default_categories' ], 20 );
 		add_filter( 'post_updated_messages', [ $this, 'filter_post_messages' ] );
 		add_filter( 'enter_title_here', [ $this, 'filter_title_placeholder' ], 10, 2 );
+		add_filter( 'use_block_editor_for_post_type', [ $this, 'use_classic_editor' ], 10, 2 );
 		add_action( 'save_post_wpss_service', [ $this, 'sync_delivery_days_meta' ], 20, 2 );
+		add_action( 'added_post_meta', [ $this, 'sync_starting_price' ], 10, 4 );
+		add_action( 'updated_post_meta', [ $this, 'sync_starting_price' ], 10, 4 );
 	}
 
 	/**
@@ -159,6 +162,70 @@ class ServicePostType {
 		if ( ! empty( $all_days ) ) {
 			update_post_meta( $post_id, '_wpss_fastest_delivery', min( $all_days ) );
 		}
+	}
+
+	/**
+	 * A description saved by the block editor, as the wizard's plain text.
+	 *
+	 * Block comments go, and so do the <p> wrappers: the wizard edits
+	 * paragraphs as blank-line-separated text and the storefront puts them back
+	 * with wpautop(). Inline HTML the wizard allows (bold, links, lists) stays.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $content Post content.
+	 * @return string
+	 */
+	public static function strip_block_markup( string $content ): string {
+		return trim( (string) preg_replace( array( '/<!--\s*\/?wp:[^>]*?-->\n?/', '#</?p>#' ), '', $content ) );
+	}
+
+	/**
+	 * Keep the stored starting price in step with the packages.
+	 *
+	 * Service cards, the archive's price filter and sort, and the admin list
+	 * read _wpss_starting_price, but only the vendor wizard wrote it - and from
+	 * its first package rather than the cheapest - so a service edited in
+	 * wp-admin, over REST or by WP-CLI kept showing its old "Starting at"
+	 * (Basecamp 10337190248). Every package writer updates _wpss_packages, so
+	 * the price follows that write.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int    $meta_id  Meta row ID.
+	 * @param int    $post_id  Post ID.
+	 * @param string $meta_key Meta key.
+	 * @param mixed  $packages Meta value.
+	 * @return void
+	 */
+	public function sync_starting_price( $meta_id, $post_id, $meta_key, $packages ): void {
+		// An empty write leaves the price alone: older services keep their
+		// packages only in the wpss_service_packages table.
+		if ( '_wpss_packages' !== $meta_key || ! is_array( $packages ) || ! $packages ) {
+			return;
+		}
+
+		update_post_meta( (int) $post_id, '_wpss_starting_price', self::starting_price( $packages ) );
+	}
+
+	/**
+	 * The lowest price among a service's enabled packages, 0 when none is priced.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param array<int|string, mixed> $packages Packages as stored in _wpss_packages.
+	 * @return float
+	 */
+	public static function starting_price( array $packages ): float {
+		$prices = array();
+
+		foreach ( $packages as $package ) {
+			if ( is_array( $package ) && false !== ( $package['enabled'] ?? true ) && (float) ( $package['price'] ?? 0 ) > 0 ) {
+				$prices[] = (float) $package['price'];
+			}
+		}
+
+		return $prices ? min( $prices ) : 0.0;
 	}
 
 	/**
@@ -366,6 +433,26 @@ class ServicePostType {
 		];
 
 		return $messages;
+	}
+
+	/**
+	 * Edit services on the classic screen.
+	 *
+	 * The vendor wizard writes the description as plain text and the block
+	 * editor wrote block markup into the same field, so a service an admin had
+	 * touched showed <!-- wp: --> comments to its vendor. The block editor also
+	 * folded the Service Data box into a collapsed drawer. The classic screen
+	 * keeps one content format and shows the service data inline, open
+	 * (Basecamp 10337190248). REST (show_in_rest) is unaffected.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param bool   $use_block_editor Whether the post type uses the block editor.
+	 * @param string $post_type        Post type.
+	 * @return bool
+	 */
+	public function use_classic_editor( bool $use_block_editor, string $post_type ): bool {
+		return self::POST_TYPE === $post_type ? false : $use_block_editor;
 	}
 
 	/**

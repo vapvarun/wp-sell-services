@@ -1082,42 +1082,35 @@ class ServiceModerationPage {
 			return;
 		}
 
-		$old_status = get_post_meta( $post_id, self::META_KEY, true );
-
-		// Update the moderation status.
-		update_post_meta( $post_id, self::META_KEY, $new_status );
-
-		// Clear rejection reason when approving.
-		if ( self::STATUS_APPROVED === $new_status && self::STATUS_REJECTED === $old_status ) {
-			delete_post_meta( $post_id, self::REJECTION_REASON_KEY );
+		// A decision goes through the one moderation path, so the editor, Quick
+		// Edit and bulk edit record history, email the vendor and refuse to
+		// approve an incomplete service exactly like the queue does. This used
+		// to write the meta and fire the hooks itself (Basecamp 10337190248).
+		if ( wpss_get_service_moderation_state( $post_id ) === $new_status ) {
+			return;
 		}
 
-		// Sync post_status to match moderation status.
-		if ( $new_status !== $old_status ) {
-			$post_status_map = array(
-				self::STATUS_APPROVED => 'publish',
-				self::STATUS_REJECTED => 'draft',
-				self::STATUS_PENDING  => 'pending',
-			);
+		$service = new ModerationService();
 
-			if ( isset( $post_status_map[ $new_status ] ) && $post->post_status !== $post_status_map[ $new_status ] ) {
-				// Remove this action to prevent infinite loop.
-				remove_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10 );
-				wp_update_post(
-					array(
-						'ID'          => $post_id,
-						'post_status' => $post_status_map[ $new_status ],
-					)
-				);
-				add_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10, 2 );
-			}
+		remove_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10 );
 
-			// Fire appropriate action.
-			if ( self::STATUS_APPROVED === $new_status ) {
-				do_action( 'wpss_service_approved', $post_id );
-			} elseif ( self::STATUS_REJECTED === $new_status ) {
-				do_action( 'wpss_service_rejected', $post_id, '' );
-			}
+		if ( self::STATUS_APPROVED === $new_status ) {
+			$result = $service->approve( $post_id );
+		} elseif ( self::STATUS_REJECTED === $new_status ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+			$reason = isset( $_POST['wpss_rejection_reason'] ) ? sanitize_textarea_field( wp_unslash( $_POST['wpss_rejection_reason'] ) ) : '';
+			$result = $service->reject( $post_id, $reason );
+		} else {
+			$result = $service->set_pending( $post_id );
+		}
+
+		add_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10, 2 );
+
+		if ( is_wp_error( $result ) ) {
+			$key      = 'wpss_service_limit_notice_' . get_current_user_id();
+			$messages = get_transient( $key );
+			$messages = is_array( $messages ) ? $messages : array();
+			set_transient( $key, array_merge( $messages, array( $result->get_error_message() ) ), MINUTE_IN_SECONDS );
 		}
 	}
 
@@ -1158,14 +1151,21 @@ class ServiceModerationPage {
 			self::STATUS_REJECTED => '#721c24',
 		);
 
+		// A draft the vendor never submitted is not in moderation. Without this
+		// choice the select showed "Pending Review" and saving the draft would
+		// have submitted it.
+		if ( '' === $current_status ) {
+			$statuses = array( '' => __( 'Not submitted (draft)', 'wp-sell-services' ) ) + $statuses;
+		}
+
 		wp_nonce_field( 'wpss_moderation_metabox', 'wpss_moderation_nonce' );
 		?>
 		<div class="wpss-moderation-metabox">
 			<p>
-				<label for="wpss_moderation_status"><strong><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></strong></label>
+				<label for="wpss-moderation-decision"><strong><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></strong></label>
 			</p>
 			<p>
-				<select name="wpss_moderation_status" id="wpss_moderation_status" style="width: 100%;">
+				<select name="wpss_moderation_status" id="wpss-moderation-decision" class="widefat">
 					<?php foreach ( $statuses as $value => $label ) : ?>
 						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $current_status, $value ); ?>>
 							<?php echo esc_html( $label ); ?>
@@ -1173,11 +1173,15 @@ class ServiceModerationPage {
 					<?php endforeach; ?>
 				</select>
 			</p>
+			<p>
+				<label for="wpss_rejection_reason"><?php esc_html_e( 'Reason for the vendor (when rejecting)', 'wp-sell-services' ); ?></label>
+				<textarea name="wpss_rejection_reason" id="wpss_rejection_reason" class="widefat" rows="3"><?php echo esc_textarea( (string) get_post_meta( $post->ID, self::REJECTION_REASON_KEY, true ) ); ?></textarea>
+			</p>
 			<p class="description">
 				<?php if ( ! ModerationService::is_enabled() ) : ?>
 					<em><?php esc_html_e( 'Note: Service moderation is currently disabled in settings.', 'wp-sell-services' ); ?></em>
 				<?php else : ?>
-					<?php esc_html_e( 'Only approved services are visible on the frontend.', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'This decision sets the service status: Approved publishes it, Rejected moves it to draft and tells the vendor, Pending holds it for review.', 'wp-sell-services' ); ?>
 				<?php endif; ?>
 			</p>
 		</div>

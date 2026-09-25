@@ -247,11 +247,14 @@
 /* Overview Panel - Status + Stats Grid */
 .wpss-overview-grid {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	/* Sized by the box, not the viewport: beside the classic editor's
+	   sidebar the two columns overflowed at 1024px. */
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
 	gap: 24px;
 }
 
 .wpss-overview-section {
+	min-width: 0;
 	background: var(--wpss-admin-bg-light);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 4px;

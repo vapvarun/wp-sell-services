@@ -166,99 +166,12 @@ class ServiceMetabox {
 				),
 			)
 		);
-
-		$this->enqueue_status_sync();
-	}
-
-	/**
-	 * Keep the block editor's status indicator honest when a publish is refused.
-	 *
-	 * Gutenberg saves the post over REST first and posts the metaboxes second.
-	 * enforce_publish_rules() only has the metabox data in that second request,
-	 * so it demotes the post back to draft after the editor has already been
-	 * told "publish" by the first response - and Gutenberg discards the metabox
-	 * response entirely (apiFetch parse: false), so the server cannot correct
-	 * the label through it. The only remaining seam is the client: re-read the
-	 * status once the metabox request settles and reload if it disagrees with
-	 * what the editor is showing. Reloading is deliberate - it also surfaces
-	 * render_invalid_notice(), which lists why the publish was refused.
-	 *
-	 * @return void
-	 */
-	private function enqueue_status_sync(): void {
-		global $post;
-
-		if ( ! $post instanceof \WP_Post || ! use_block_editor_for_post( $post ) ) {
-			return;
-		}
-
-		$js = sprintf(
-			'( function ( wp, path ) {
-	if ( ! wp || ! wp.apiFetch || ! wp.data ) { return; }
-	wp.apiFetch.use( function ( options, next ) {
-		var result = next( options );
-		if ( ! window._wpMetaBoxUrl || options.url !== window._wpMetaBoxUrl ) { return result; }
-		return result.then( function ( response ) {
-			var shown = wp.data.select( "core/editor" ).getCurrentPostAttribute( "status" );
-			wp.apiFetch( { path: path } ).then( function ( saved ) {
-				if ( saved && saved.status && saved.status !== shown ) { window.location.reload(); }
-			} ).catch( function () {} );
-			return response;
-		} );
-	} );
-}( window.wp, %s ) );',
-			wp_json_encode( '/wp/v2/wpss-services/' . $post->ID . '?context=edit&_fields=status' )
-		);
-
-		wp_add_inline_script( 'wp-edit-post', $js );
-	}
-
-	/**
-	 * Render service details metabox.
-	 *
-	 * @param \WP_Post $post Post object.
-	 * @return void
-	 */
-	public function render_details_metabox( \WP_Post $post ): void {
-		wp_nonce_field( 'wpss_service_meta', 'wpss_service_nonce' );
-
-		$status = get_post_meta( $post->ID, '_wpss_status', true );
-		$status = ! empty( $status ) ? $status : 'active';
-		?>
-		<div class="wpss-details-wrapper">
-			<div class="wpss-details-grid">
-				<div class="wpss-detail-card">
-					<div class="wpss-detail-icon">
-						<i data-lucide="eye" class="wpss-icon" aria-hidden="true"></i>
-					</div>
-					<div class="wpss-detail-content">
-						<label for="wpss_status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></label>
-						<div class="wpss-detail-input">
-							<select id="wpss_status" name="wpss_status" class="wpss-status-select">
-								<option value="active" <?php selected( $status, 'active' ); ?>><?php esc_html_e( 'Active', 'wp-sell-services' ); ?></option>
-								<option value="paused" <?php selected( $status, 'paused' ); ?>><?php esc_html_e( 'Paused', 'wp-sell-services' ); ?></option>
-								<option value="draft" <?php selected( $status, 'draft' ); ?>><?php esc_html_e( 'Draft', 'wp-sell-services' ); ?></option>
-							</select>
-						</div>
-						<p class="description"><?php esc_html_e( 'Control service visibility', 'wp-sell-services' ); ?></p>
-					</div>
-				</div>
-			</div>
-			<p class="wpss-details-note">
-				<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Delivery time and revisions are configured per package below.', 'wp-sell-services' ); ?>
-			</p>
-
-			<?php $this->render_extra_fields( $post ); ?>
-		</div>
-		<?php
 	}
 
 	/**
 	 * Apply the `wpss_service_meta_fields` filter and render the returned fields.
 	 *
-	 * Shared by the active Overview panel and the legacy details metabox so the
-	 * extension surface renders identically wherever it is used.
+	 * Rendered by the Overview panel.
 	 *
 	 * @param \WP_Post $post Post object.
 	 * @return void
@@ -590,7 +503,7 @@ class ServiceMetabox {
 					</div>
 				</div>
 				<div class="wpss-stat-item">
-					<i data-lucide="star" class="wpss-icon wpss-stat-icon" style="color: #f5a623;" aria-hidden="true"></i>
+					<i data-lucide="star" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 					<div class="wpss-stat-data">
 						<span class="wpss-stat-value"><?php echo esc_html( number_format( (float) $average_rating, 1 ) ); ?></span>
 						<span class="wpss-stat-label"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></span>
@@ -807,8 +720,10 @@ class ServiceMetabox {
 			}
 		}
 
+		// Only active / paused: visibility belongs to the post status, so the
+		// old "Draft" choice here was a third status control nothing read.
 		if ( isset( $_POST['wpss_status'] ) ) {
-			update_post_meta( $post_id, '_wpss_status', sanitize_key( $_POST['wpss_status'] ) );
+			update_post_meta( $post_id, '_wpss_status', 'paused' === sanitize_key( $_POST['wpss_status'] ) ? 'paused' : 'active' );
 		}
 
 		// Save packages (indexed array format).
@@ -1445,22 +1360,21 @@ class ServiceMetabox {
 
 		<div class="wpss-overview-grid">
 			<div class="wpss-overview-section">
-				<h4><?php esc_html_e( 'Service Status', 'wp-sell-services' ); ?></h4>
+				<h4><?php esc_html_e( 'Availability', 'wp-sell-services' ); ?></h4>
 				<div class="wpss-details-grid">
 					<div class="wpss-detail-card">
 						<div class="wpss-detail-icon">
 							<i data-lucide="eye" class="wpss-icon" aria-hidden="true"></i>
 						</div>
 						<div class="wpss-detail-content">
-							<label for="wpss_status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></label>
+							<label for="wpss_status"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></label>
 							<div class="wpss-detail-input">
 								<select id="wpss_status" name="wpss_status" class="wpss-status-select">
-									<option value="active" <?php selected( $status, 'active' ); ?>><?php esc_html_e( 'Active', 'wp-sell-services' ); ?></option>
+									<option value="active" <?php selected( $status, 'active' ); ?>><?php esc_html_e( 'Accepting orders', 'wp-sell-services' ); ?></option>
 									<option value="paused" <?php selected( $status, 'paused' ); ?>><?php esc_html_e( 'Paused', 'wp-sell-services' ); ?></option>
-									<option value="draft" <?php selected( $status, 'draft' ); ?>><?php esc_html_e( 'Draft', 'wp-sell-services' ); ?></option>
 								</select>
 							</div>
-							<p class="description"><?php esc_html_e( 'Control service visibility', 'wp-sell-services' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Paused keeps the page visible but stops new orders. Whether the service is live is set by Publish and Moderation.', 'wp-sell-services' ); ?></p>
 						</div>
 					</div>
 
@@ -1490,7 +1404,7 @@ class ServiceMetabox {
 										<?php esc_html_e( 'Show in featured listings', 'wp-sell-services' ); ?>
 									</label>
 								</div>
-								<p class="description"><?php esc_html_e( 'Included by the Featured Services block and the [wpss_featured_services] shortcode.', 'wp-sell-services' ); ?></p>
+								<p class="description"><?php esc_html_e( 'Shows it in the featured row on your homepage (the Featured Services block and the [wpss_featured_services] shortcode).', 'wp-sell-services' ); ?></p>
 							<?php else : ?>
 								<?php
 								// Read-only for a vendor. Silence would be worse than a
@@ -1524,10 +1438,14 @@ class ServiceMetabox {
 						</div>
 					</div>
 					<div class="wpss-stat-item">
-						<i data-lucide="star" class="wpss-icon wpss-stat-icon" style="color: #f5a623;" aria-hidden="true"></i>
+						<i data-lucide="star" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 						<div class="wpss-stat-data">
-							<span class="wpss-stat-value"><?php echo esc_html( number_format( $average_rating, 1 ) ); ?></span>
-							<span class="wpss-stat-label"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></span>
+							<?php if ( $review_count > 0 ) : ?>
+								<span class="wpss-stat-value"><?php echo esc_html( number_format_i18n( $average_rating, 1 ) ); ?></span>
+								<span class="wpss-stat-label"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></span>
+							<?php else : ?>
+								<span class="wpss-stat-label"><?php esc_html_e( 'No reviews yet', 'wp-sell-services' ); ?></span>
+							<?php endif; ?>
 						</div>
 					</div>
 					<div class="wpss-stat-item">

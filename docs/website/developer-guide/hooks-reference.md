@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**536 hooks** across **743** firing sites.
+**536 hooks** across **741** firing sites.
 
 ## Actions (273)
 
@@ -217,7 +217,7 @@ guide; this is the complete index.
 | `wpss_review_reply_created` | 1 | `src/API/ReviewsController.php` |  |
 | `wpss_revision_requested` | 2 | `src/API/OrdersController.php` *(+1 more)* |  |
 | `wpss_send_requirements_reminder_email` | 3 | `src/Services/OrderWorkflowManager.php` |  |
-| `wpss_service_approved` | 1 | `src/Admin/Pages/ServiceModerationPage.php` *(+1 more)* |  |
+| `wpss_service_approved` | 2 | `src/Services/ModerationService.php` | Fires after a service is approved. |
 | `wpss_service_archive_header` | 0 | `templates/archive-service.php` | Hook: wpss_service_archive_header |
 | `wpss_service_archive_sidebar` | 0 | `templates/archive-service.php` | Hook: wpss_service_archive_sidebar |
 | `wpss_service_card_footer` | 1 | `templates/content-service-card.php` | Hook: wpss_service_card_footer |
@@ -229,7 +229,7 @@ guide; this is the complete index.
 | `wpss_service_orders_after` | 1 | `templates/myaccount/service-orders.php` | Fires after the service orders content. |
 | `wpss_service_orders_before` | 1 | `templates/myaccount/service-orders.php` | Fires before the service orders content. |
 | `wpss_service_pending_moderation` | 1 | `src/Frontend/ServiceWizard.php` *(+1 more)* |  |
-| `wpss_service_rejected` | 2 | `src/Admin/Pages/ServiceModerationPage.php` *(+1 more)* |  |
+| `wpss_service_rejected` | 2 | `src/Services/ModerationService.php` | Fires after a service is rejected. |
 | `wpss_service_updated` | 2 | `src/Services/ServiceManager.php` | Fires after a service is updated. |
 | `wpss_service_wizard_saved` | 2 | `src/Frontend/ServiceWizard.php` | Fires after a service is saved via the wizard. |
 | `wpss_services_list_actions` | 1 | `templates/dashboard/sections/services.php` | Fires in the services list area for bulk actions or filters. |
