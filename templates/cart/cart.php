@@ -368,10 +368,13 @@ defined( 'ABSPATH' ) || exit;
 						$item['unavailable_reason'] = $item['unavailable_reason'] ?? $line->get_error_message();
 						// Written back: the checkout button below counts what is buyable.
 						$cart_items[ $item_key ] = $item;
+						// Shown struck through, at what it costs - not $0.00 - and
+						// kept out of the totals below.
+						$wpss_resolved              = wpss_resolve_service_package( $service_id, (int) ( $item['package_id'] ?? 0 ) );
 						$line                       = array(
-							'package'      => is_array( $item['package'] ?? null ) ? $item['package'] : array(),
+							'package'      => $wpss_resolved['package'] ?? ( is_array( $item['package'] ?? null ) ? $item['package'] : array() ),
 							'addons'       => array(),
-							'subtotal'     => 0.0,
+							'subtotal'     => (float) ( $wpss_resolved['package']['price'] ?? 0 ) * max( 1, (int) ( $item['quantity'] ?? 1 ) ),
 							'addons_total' => 0.0,
 							'tax'          => 0.0,
 							'total'        => 0.0,
@@ -417,16 +420,6 @@ defined( 'ABSPATH' ) || exit;
 					?>
 					<div class="wpss-cart-item<?php echo $unavailable ? ' wpss-cart-item--unavailable' : ''; ?>" data-item-key="<?php echo esc_attr( $item_key ); ?>">
 
-						<?php if ( $unavailable ) : ?>
-							<p class="wpss-cart-item__unavailable" role="status">
-								<?php
-								echo esc_html(
-									(string) ( $item['unavailable_reason'] ?? __( 'This service is not currently available.', 'wp-sell-services' ) )
-								);
-								?>
-							</p>
-						<?php endif; ?>
-
 
 						<!-- Thumbnail -->
 						<div class="wpss-cart-item__image">
@@ -462,6 +455,20 @@ defined( 'ABSPATH' ) || exit;
 										/* translators: %s: vendor or user display name */
 										esc_html__( 'by %s', 'wp-sell-services' ),
 										esc_html( $vendor_name )
+									);
+									?>
+								</p>
+							<?php endif; ?>
+
+							<?php
+							// Under the title: as the item's first child it took the
+							// thumbnail column (QA, Basecamp 10337190248).
+							if ( $unavailable ) :
+								?>
+								<p class="wpss-cart-item__unavailable" role="status">
+									<?php
+									echo esc_html(
+										(string) ( $item['unavailable_reason'] ?? __( 'This service is not currently available.', 'wp-sell-services' ) )
 									);
 									?>
 								</p>
