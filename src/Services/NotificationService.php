@@ -1446,7 +1446,9 @@ class NotificationService {
 			return;
 		}
 
-		$platform_name = wpss_get_option( 'general', 'platform_name', get_bloginfo( 'name' ) );
+		// The helper, not the raw option: a saved-but-empty name sent
+		// "Welcome to  - Your Vendor Account is Ready!".
+		$platform_name = wpss_get_platform_name();
 		$display_name  = $profile_data['display_name'] ?? $user->display_name;
 		$is_pending    = 'pending' === ( $profile_data['status'] ?? 'active' );
 

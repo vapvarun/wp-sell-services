@@ -457,7 +457,7 @@ class SetupWizardPage {
 		$pages      = get_option( 'wpss_pages', array() );
 		$currencies = wpss_get_currencies();
 
-		$platform_name   = $general['platform_name'] ?? get_bloginfo( 'name' );
+		$platform_name   = wpss_get_platform_name();
 		$currency        = $general['currency'] ?? 'USD';
 		$commission_rate = $commission['commission_rate'] ?? 10;
 

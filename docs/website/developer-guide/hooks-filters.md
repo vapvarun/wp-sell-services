@@ -608,7 +608,7 @@ These filters let you customize outgoing email content without modifying templat
 |--------|-----------|------|
 | `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2075` |
 | `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2051` |
-| `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1576` |
+| `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1578` |
 
 ```php
 // Change the "From" name on all marketplace emails
@@ -843,9 +843,9 @@ add_filter( 'wpss_fullwidth_page_keys', function( $keys ) {
 | `wpss_open_graph_data` | `$data, $service_id` | `src/SEO/SEO.php:270` |
 | `wpss_sitemap_post_types` | `$post_types` | `src/SEO/SEO.php:334` |
 | `wpss_breadcrumbs` | `$breadcrumbs, $service_id` | `src/SEO/SEO.php:402` |
-| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2019` |
-| `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1527` |
-| `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1629` |
+| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2021` |
+| `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1529` |
+| `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1631` |
 
 ## Pro Plugin Actions **[PRO]**
 
