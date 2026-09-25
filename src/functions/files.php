@@ -1471,7 +1471,14 @@ add_action(
 	static function () {
 		global $pagenow;
 
-		if ( 'async-upload.php' !== $pagenow ) {
+		// The modal's Library tab asks admin-ajax for query-attachments, which
+		// checks upload_files too, so a buyer could upload a photo but never
+		// pick one they uploaded before. That listing is limited to their own
+		// files by wpss_limit_media_library_to_own().
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- routing only; core checks the request.
+		$is_library = 'admin-ajax.php' === $pagenow && isset( $_REQUEST['action'] ) && 'query-attachments' === $_REQUEST['action'];
+
+		if ( 'async-upload.php' !== $pagenow && ! $is_library ) {
 			return;
 		}
 
