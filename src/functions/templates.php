@@ -720,3 +720,38 @@ function wpss_admin_sortable_th( string $slug, string $column, string $label, st
 		'' !== $title ? ' title="' . esc_attr( $title ) . '"' : ''
 	);
 }
+
+/**
+ * A search picker for admin selects that would otherwise list every user or
+ * service.
+ *
+ * Create Order rendered 399 services and two lists of 355 users on load
+ * (Basecamp 10337161480); a 10k-user site renders a page of options. The
+ * picker is a real <select> - so the form posts it and existing scripts read
+ * its selected option as before - holding only the current choice, with a
+ * search box above it that refills the options from wpss_admin_search
+ * (Admin::ajax_admin_search) as the admin types. admin.js wires every
+ * [data-wpss-search] on the page.
+ *
+ * @since 1.8.0
+ *
+ * @param array{type: string, name: string, id: string, placeholder: string, selected?: int, selected_label?: string, required?: bool, search_label?: string} $args Picker options. type: 'user', 'seller' or 'service'; placeholder: the empty option.
+ * @return void
+ */
+function wpss_admin_search_select( array $args ): void {
+	$selected = (int) ( $args['selected'] ?? 0 );
+	?>
+	<span class="wpss-search-select" data-wpss-search="<?php echo esc_attr( $args['type'] ); ?>">
+		<input type="search" class="wpss-search-select__input" autocomplete="off"
+			aria-controls="<?php echo esc_attr( $args['id'] ); ?>"
+			aria-label="<?php echo esc_attr( $args['search_label'] ?? __( 'Search', 'wp-sell-services' ) ); ?>"
+			placeholder="<?php echo esc_attr( $args['search_label'] ?? __( 'Search', 'wp-sell-services' ) ); ?>">
+		<select name="<?php echo esc_attr( $args['name'] ); ?>" id="<?php echo esc_attr( $args['id'] ); ?>"<?php echo empty( $args['required'] ) ? '' : ' required'; ?>>
+			<option value=""><?php echo esc_html( $args['placeholder'] ); ?></option>
+			<?php if ( $selected ) : ?>
+				<option value="<?php echo esc_attr( (string) $selected ); ?>" selected><?php echo esc_html( $args['selected_label'] ?? '#' . $selected ); ?></option>
+			<?php endif; ?>
+		</select>
+	</span>
+	<?php
+}

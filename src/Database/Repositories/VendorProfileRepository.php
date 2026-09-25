@@ -213,6 +213,29 @@ class VendorProfileRepository extends AbstractRepository {
 	}
 
 	/**
+	 * Active sellers whose name or email matches a term, for admin pickers.
+	 *
+	 * The admin search picker (Create Order vendor override, Orders vendor
+	 * filter) must offer sellers only - the same set wpss_is_vendor() answers
+	 * true for - without loading every user (Basecamp 10337161480).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $term  Search term; '' returns the first sellers by name.
+	 * @param int    $limit Maximum rows.
+	 * @return array<object{ID: int, display_name: string, user_email: string}>
+	 */
+	public function search_active( string $term, int $limit = 20 ): array {
+		$like = '%' . $this->wpdb->esc_like( $term ) . '%';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders only; table names are plugin/core controlled.
+		$sql = "SELECT u.ID, u.display_name, u.user_email FROM {$this->table} vp INNER JOIN {$this->wpdb->users} u ON u.ID = vp.user_id WHERE vp.status = 'active' AND ( u.display_name LIKE %s OR u.user_email LIKE %s OR u.user_login LIKE %s ) ORDER BY u.display_name ASC LIMIT %d";
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- bound here; a live admin search has nothing to cache.
+		return (array) $this->wpdb->get_results( $this->wpdb->prepare( $sql, $like, $like, $like, $limit ) );
+	}
+
+	/**
 	 * WHERE clause shared by the three directory queries, with its values.
 	 *
 	 * Returns the clause with PLACEHOLDERS and the values separately, so each

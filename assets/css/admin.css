@@ -3664,3 +3664,24 @@ button.wpss-change-status:focus {
 		left: auto;
 	}
 }
+
+/* Search picker (wpss_admin_search_select): search box over a select that
+   lists the matches while open. */
+.wpss-search-select {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	max-width: 100%;
+	width: 25rem;
+}
+
+.wpss-search-select__input,
+.wpss-search-select select {
+	width: 100%;
+	max-width: 100%;
+}
+
+.wpss-search-select select.is-open {
+	height: auto;
+	padding-block: 4px;
+}

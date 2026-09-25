@@ -325,6 +325,11 @@ class Admin {
 			return 'wp-sell-services';
 		}
 
+		// Create Order is a hidden page; without this the menu collapsed on it.
+		if ( self::is_create_order_screen() ) {
+			return 'wp-sell-services';
+		}
+
 		return $parent_file;
 	}
 
@@ -366,7 +371,21 @@ class Admin {
 			return 'edit-tags.php?taxonomy=wpss_service_tag&post_type=wpss_service';
 		}
 
+		if ( self::is_create_order_screen() ) {
+			return 'wpss-orders';
+		}
+
 		return $submenu_file;
+	}
+
+	/**
+	 * Whether this request is the hidden Create Order page (Basecamp 10337161480).
+	 *
+	 * @return bool
+	 */
+	private static function is_create_order_screen(): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only menu highlight.
+		return is_admin() && isset( $_GET['page'] ) && 'wpss-create-order' === sanitize_key( wp_unslash( $_GET['page'] ) );
 	}
 
 	/**
@@ -1061,10 +1080,83 @@ class Admin {
 	 */
 	private function init_ajax_handlers(): void {
 		add_action( 'wp_ajax_wpss_get_service_packages', array( $this, 'ajax_get_service_packages' ) );
+		add_action( 'wp_ajax_wpss_admin_search', array( $this, 'ajax_admin_search' ) );
 		add_action( 'wp_ajax_wpss_import_demo_content', array( $this, 'ajax_import_demo_content' ) );
 		add_action( 'wp_ajax_wpss_delete_demo_content', array( $this, 'ajax_delete_demo_content' ) );
 		add_action( 'admin_post_wpss_update_order', array( $this, 'handle_update_order' ) );
 		add_action( 'admin_post_wpss_resolve_dispute', array( $this, 'handle_resolve_dispute' ) );
+	}
+
+	/**
+	 * AJAX: search source for wpss_admin_search_select() pickers.
+	 *
+	 * A type=service search returns published services with the vendor and starting
+	 * price Create Order reads; type=seller returns active sellers only; type=user
+	 * returns any user. Capped at 20 rows, so no picker ever loads a full list
+	 * (Basecamp 10337161480).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return void
+	 */
+	public function ajax_admin_search(): void {
+		check_ajax_referer( 'wpss_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ), 403 );
+		}
+
+		$type  = isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : '';
+		$term  = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : '';
+		$limit = 20;
+		$items = array();
+
+		if ( 'service' === $type ) {
+			$services = get_posts(
+				array(
+					'post_type'      => 'wpss_service',
+					'post_status'    => 'publish',
+					's'              => $term,
+					'posts_per_page' => $limit,
+					'orderby'        => 'title',
+					'order'          => 'ASC',
+				)
+			);
+			foreach ( $services as $service ) {
+				$vendor  = get_userdata( (int) $service->post_author );
+				$price   = (float) get_post_meta( $service->ID, '_wpss_starting_price', true );
+				$items[] = array(
+					'id'    => $service->ID,
+					'label' => $service->post_title . ( $vendor ? ' (' . $vendor->display_name . ')' : '' ) . ( $price ? ' - ' . wpss_format_price( $price ) : '' ),
+					// Read by admin-manual-order.js from the selected option, as before.
+					'data'  => array(
+						'vendor'       => (int) $service->post_author,
+						'vendor-label' => $vendor ? $vendor->display_name . ' (' . $vendor->user_email . ')' : '',
+						'price'        => $price,
+					),
+				);
+			}
+		} else {
+			$users = 'seller' === $type
+				? ( new \WPSellServices\Database\Repositories\VendorProfileRepository() )->search_active( $term, $limit )
+				: get_users(
+					array(
+						'search'         => '*' . $term . '*',
+						'search_columns' => array( 'user_login', 'user_email', 'display_name' ),
+						'number'         => $limit,
+						'orderby'        => 'display_name',
+						'fields'         => array( 'ID', 'display_name', 'user_email' ),
+					)
+				);
+			foreach ( $users as $user ) {
+				$items[] = array(
+					'id'    => (int) $user->ID,
+					'label' => $user->display_name . ' (' . $user->user_email . ')',
+				);
+			}
+		}
+
+		wp_send_json_success( $items );
 	}
 
 	/**

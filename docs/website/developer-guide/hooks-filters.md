@@ -69,7 +69,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:727` |
+| `wpss_order_status_changed` | `int $order_id, string $new_status, string $old_status` | `src/Admin/Pages/ManualOrderPage.php:737` |
 | `wpss_order_status_{status}` | `int $order_id, string $old_status` | `OrderService.php:197` |
 | `wpss_order_created` | `int $order_id, string $status` | `src/functions/orders.php:1168` |
 
@@ -347,7 +347,7 @@ These hooks fire in the WordPress admin area for order management, service meta,
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2624` |
+| `wpss_admin_order_actions` | `object $order, string $status` | `src/Admin/Admin.php:2716` |
 | `wpss_gateway_cards` | `Settings $settings` | `src/Admin/Settings.php:1963` |
 
 ### Admin Filters
@@ -697,7 +697,7 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:185` |
 | `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:1031` |
 | `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3876` |
-| `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:932` |
+| `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:942` |
 
 **`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):
 

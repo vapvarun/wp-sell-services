@@ -589,3 +589,72 @@
 		}, 250 );
 	} );
 }() );
+
+/**
+ * Search pickers (wpss_admin_search_select()): typing refills the select with
+ * up to 20 matches from wpss_admin_search, shown as an open list; choosing one
+ * closes it. The select keeps its current choice across searches, so the form
+ * always posts what the admin picked (Basecamp 10337161480).
+ */
+( function () {
+	if ( ! window.wpssAdmin ) {
+		return;
+	}
+
+	document.querySelectorAll( '[data-wpss-search]' ).forEach( function ( wrap ) {
+		var input = wrap.querySelector( '.wpss-search-select__input' );
+		var select = wrap.querySelector( 'select' );
+		var timer;
+		var request = 0;
+
+		function closeList() {
+			select.size = 0;
+			select.classList.remove( 'is-open' );
+		}
+
+		input.addEventListener( 'input', function () {
+			clearTimeout( timer );
+			timer = setTimeout( function () {
+				var mine = ++request;
+				var url = wpssAdmin.ajaxUrl + '?' + new URLSearchParams( {
+					action: 'wpss_admin_search',
+					nonce: wpssAdmin.nonce,
+					type: wrap.getAttribute( 'data-wpss-search' ),
+					term: input.value.trim()
+				} );
+
+				fetch( url, { credentials: 'same-origin' } )
+					.then( function ( response ) { return response.json(); } )
+					.then( function ( body ) {
+						if ( mine !== request || ! body || ! body.success ) {
+							return;
+						}
+
+						// Keep the placeholder and the current choice; replace the rest.
+						Array.prototype.slice.call( select.options ).forEach( function ( option ) {
+							if ( option.value && ! option.selected ) {
+								option.remove();
+							}
+						} );
+
+						body.data.forEach( function ( item ) {
+							if ( select.querySelector( 'option[value="' + item.id + '"]' ) ) {
+								return;
+							}
+							var option = new Option( item.label, item.id );
+							Object.keys( item.data || {} ).forEach( function ( key ) {
+								option.setAttribute( 'data-' + key, item.data[ key ] );
+							} );
+							select.add( option );
+						} );
+
+						select.size = Math.min( Math.max( select.options.length, 2 ), 8 );
+						select.classList.add( 'is-open' );
+					} );
+			}, 250 );
+		} );
+
+		select.addEventListener( 'change', closeList );
+		select.addEventListener( 'blur', closeList );
+	} );
+}() );

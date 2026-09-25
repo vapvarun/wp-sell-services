@@ -58,6 +58,21 @@ class ManualOrderPage {
 			'wpss-create-order',
 			array( $this, 'render_page' )
 		);
+
+		// The registration above is what grants access and names the page hook.
+		// The submenu entry itself never renders (wpss-orders is not a top-level
+		// menu), and leaving it in place made core's get_admin_page_parent()
+		// reset the parent to wpss-orders, so the Sell Services menu collapsed
+		// on this page (Basecamp 10337161480). Admin::set_parent_menu() names it.
+		remove_submenu_page( 'wpss-orders', 'wpss-create-order' );
+
+		// Core read the page title from that submenu entry too.
+		add_action(
+			'load-admin_page_wpss-create-order',
+			static function (): void {
+				$GLOBALS['title'] = __( 'Create Order', 'wp-sell-services' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- the admin page title core would have set.
+			}
+		);
 	}
 
 	/**
@@ -122,24 +137,9 @@ class ManualOrderPage {
 	 * @return void
 	 */
 	public function render_page(): void {
-		// Get all published services.
-		$services = get_posts(
-			array(
-				'post_type'      => 'wpss_service',
-				'post_status'    => 'publish',
-				'posts_per_page' => -1,
-				'orderby'        => 'title',
-				'order'          => 'ASC',
-			)
-		);
-
-		// Get users.
-		$users = get_users(
-			array(
-				'orderby' => 'display_name',
-				'order'   => 'ASC',
-			)
-		);
+		// Service, customer and vendor are search pickers (wpss_admin_search_select()),
+		// so nothing here loads every service or user.
+		$has_services = (int) wp_count_posts( 'wpss_service' )->publish > 0;
 
 		$default_commission = CommissionService::get_global_commission_rate();
 		$default_currency   = wpss_get_currency();
@@ -149,7 +149,7 @@ class ManualOrderPage {
 		<div class="wrap wpss-manual-order-wrap">
 			<h1><?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?></h1>
 
-			<?php if ( empty( $services ) ) : ?>
+			<?php if ( ! $has_services ) : ?>
 				<div class="wpss-no-services-notice">
 					<p>
 						<?php esc_html_e( 'No services found. Please create at least one service before creating an order.', 'wp-sell-services' ); ?>
@@ -178,27 +178,18 @@ class ManualOrderPage {
 											<?php esc_html_e( 'Service', 'wp-sell-services' ); ?>
 											<span class="required">*</span>
 										</label>
-										<select name="service_id" id="wpss-service-id" required>
-											<option value=""><?php esc_html_e( '-- Select a Service --', 'wp-sell-services' ); ?></option>
-											<?php foreach ( $services as $service ) : ?>
-												<?php
-												$vendor_id = (int) $service->post_author;
-												$vendor    = get_userdata( $vendor_id );
-												$price     = get_post_meta( $service->ID, '_wpss_starting_price', true );
-												?>
-												<option value="<?php echo esc_attr( $service->ID ); ?>"
-														data-vendor="<?php echo esc_attr( $vendor_id ); ?>"
-														data-price="<?php echo esc_attr( $price ); ?>">
-													<?php echo esc_html( $service->post_title ); ?>
-													<?php if ( $vendor ) : ?>
-														(<?php echo esc_html( $vendor->display_name ); ?>)
-													<?php endif; ?>
-													<?php if ( $price ) : ?>
-														- <?php echo esc_html( wpss_format_price( (float) $price ) ); ?>
-													<?php endif; ?>
-												</option>
-											<?php endforeach; ?>
-										</select>
+										<?php
+										wpss_admin_search_select(
+											array(
+												'type'     => 'service',
+												'name'     => 'service_id',
+												'id'       => 'wpss-service-id',
+												'placeholder' => __( '-- Select a Service --', 'wp-sell-services' ),
+												'search_label' => __( 'Search services by title', 'wp-sell-services' ),
+												'required' => true,
+											)
+										);
+										?>
 									</div>
 
 									<!-- Package -->
@@ -225,29 +216,34 @@ class ManualOrderPage {
 											<?php esc_html_e( 'Customer (Buyer)', 'wp-sell-services' ); ?>
 											<span class="required">*</span>
 										</label>
-										<select name="customer_id" id="wpss-customer-id" required>
-											<option value=""><?php esc_html_e( '-- Select Customer --', 'wp-sell-services' ); ?></option>
-											<?php foreach ( $users as $user ) : ?>
-												<option value="<?php echo esc_attr( $user->ID ); ?>">
-													<?php echo esc_html( $user->display_name ); ?>
-													(<?php echo esc_html( $user->user_email ); ?>)
-												</option>
-											<?php endforeach; ?>
-										</select>
+										<?php
+										wpss_admin_search_select(
+											array(
+												'type'     => 'user',
+												'name'     => 'customer_id',
+												'id'       => 'wpss-customer-id',
+												'placeholder' => __( '-- Select Customer --', 'wp-sell-services' ),
+												'search_label' => __( 'Search users by name or email', 'wp-sell-services' ),
+												'required' => true,
+											)
+										);
+										?>
 									</div>
 
 									<!-- Vendor Override -->
 									<div class="wpss-form-row">
 										<label for="wpss-vendor-id"><?php esc_html_e( 'Vendor (Override)', 'wp-sell-services' ); ?></label>
-										<select name="vendor_id" id="wpss-vendor-id">
-											<option value=""><?php esc_html_e( '-- Use Service Author --', 'wp-sell-services' ); ?></option>
-											<?php foreach ( $users as $user ) : ?>
-												<option value="<?php echo esc_attr( $user->ID ); ?>">
-													<?php echo esc_html( $user->display_name ); ?>
-													(<?php echo esc_html( $user->user_email ); ?>)
-												</option>
-											<?php endforeach; ?>
-										</select>
+										<?php
+										wpss_admin_search_select(
+											array(
+												'type' => 'seller',
+												'name' => 'vendor_id',
+												'id'   => 'wpss-vendor-id',
+												'placeholder' => __( '-- Use Service Author --', 'wp-sell-services' ),
+												'search_label' => __( 'Search sellers by name or email', 'wp-sell-services' ),
+											)
+										);
+										?>
 										<p class="description"><?php esc_html_e( 'Leave empty to use the service author as vendor.', 'wp-sell-services' ); ?></p>
 									</div>
 								</div>
@@ -315,7 +311,8 @@ class ManualOrderPage {
 										</tr>
 									</table>
 
-									<!-- Currency -->
+									<?php if ( count( $currencies ) > 1 ) : ?>
+										<?php // One currency (the store's, by default) needs no choice; a multi-currency add-on widens the list through wpss_manual_order_currencies. ?>
 									<div class="wpss-form-row" style="margin-top: 16px;">
 										<label for="wpss-currency"><?php esc_html_e( 'Currency', 'wp-sell-services' ); ?></label>
 										<select name="currency" id="wpss-currency">
@@ -326,6 +323,9 @@ class ManualOrderPage {
 											<?php endforeach; ?>
 										</select>
 									</div>
+									<?php else : ?>
+										<input type="hidden" name="currency" value="<?php echo esc_attr( (string) key( $currencies ) ); ?>">
+									<?php endif; ?>
 
 									<!-- Hidden calculated fields -->
 									<?php // The package price is the base; everything else is priced by the server (price_manual_order()). ?>
@@ -351,6 +351,8 @@ class ManualOrderPage {
 												</option>
 											<?php endforeach; ?>
 										</select>
+										<?php // The labels used to carry this in brackets and were cut off on a phone. ?>
+										<p class="description"><?php esc_html_e( 'Pending Requirements asks the buyer for their brief first; In Progress skips it.', 'wp-sell-services' ); ?></p>
 									</div>
 
 									<div class="wpss-form-row">
@@ -532,7 +534,15 @@ class ManualOrderPage {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
 		}
 
+		if ( ! isset( $this->get_currencies()[ $currency ] ) ) {
+			wp_send_json_error( array( 'message' => __( 'That currency is not offered on this site.', 'wp-sell-services' ) ) );
+		}
+
 		// --- 3. Determine vendor ---
+		// The override picker offers sellers only; the server holds the same line.
+		if ( $vendor_id_input && ! wpss_is_vendor( $vendor_id_input ) ) {
+			wp_send_json_error( array( 'message' => __( 'The vendor override must be an active seller.', 'wp-sell-services' ) ) );
+		}
 		$vendor_id = $vendor_id_input ? $vendor_id_input : (int) $service->post_author;
 
 		if ( $customer_id === $vendor_id ) {
@@ -899,8 +909,8 @@ class ManualOrderPage {
 	private function get_initial_statuses(): array {
 		return array(
 			'pending_payment'      => __( 'Pending Payment', 'wp-sell-services' ),
-			'pending_requirements' => __( 'Pending Requirements (Payment Complete)', 'wp-sell-services' ),
-			'in_progress'          => __( 'In Progress (Skip Requirements)', 'wp-sell-services' ),
+			'pending_requirements' => __( 'Pending Requirements', 'wp-sell-services' ),
+			'in_progress'          => __( 'In Progress', 'wp-sell-services' ),
 			'delivered'            => __( 'Delivered', 'wp-sell-services' ),
 			'completed'            => __( 'Completed', 'wp-sell-services' ),
 		);
@@ -912,20 +922,20 @@ class ManualOrderPage {
 	 * @return array<string, string>
 	 */
 	private function get_currencies(): array {
-		// Derive from the single canonical currency list so the Manual Order
-		// dropdown offers every supported currency out of the box - no code
-		// snippet required.
-		$currencies = array();
-		foreach ( wpss_get_currencies() as $code => $name ) {
-			$currencies[ $code ] = sprintf( '%1$s (%2$s)', $code, wpss_get_currency_symbol( $code ) );
-		}
+		// The store currency only: the site charges in one currency, and a
+		// 148-option dropdown invited orders in a currency nothing else on the
+		// site reads (Basecamp 10337161480). A multi-currency add-on adds its
+		// currencies through the filter, and the dropdown appears.
+		$code       = wpss_get_currency();
+		$currencies = array( $code => sprintf( '%1$s (%2$s)', $code, wpss_get_currency_symbol( $code ) ) );
 
 		/**
 		 * Filter the currencies available on the Manual Order page dropdown.
 		 *
-		 * The default list already covers every supported currency; this is
-		 * an optional developer extension point.
+		 * Defaults to the store currency alone, in which case no dropdown is
+		 * shown. Return more than one to offer a choice.
 		 *
+		 * @since 1.8.0 Defaults to the store currency instead of every currency.
 		 * @since 1.2.1
 		 *
 		 * @param array<string, string> $currencies Currency code => label map.

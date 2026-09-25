@@ -357,9 +357,14 @@
 		var serviceId = $(this).val();
 		var vendorId = $selected.data('vendor');
 
-		// Auto-fill vendor.
-		if (vendorId && $('#wpss-vendor-id').length) {
-			$('#wpss-vendor-id').val(vendorId);
+		// Auto-fill vendor. The override is a search picker holding only its
+		// current choice, so the service author is added to it when missing.
+		var $vendor = $('#wpss-vendor-id');
+		if (vendorId && $vendor.length) {
+			if (!$vendor.find('option[value="' + vendorId + '"]').length) {
+				$vendor.append(new Option($selected.attr('data-vendor-label') || '#' + vendorId, vendorId));
+			}
+			$vendor.val(vendorId);
 		}
 
 		// Reset state.
