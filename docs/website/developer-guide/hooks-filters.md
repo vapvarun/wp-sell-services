@@ -117,8 +117,8 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_delivery_submitted` | `int $delivery_id, int $order_id` | `src/Services/DeliveryService.php:151` |
-| `wpss_delivery_accepted` | `int $order_id` | `src/Services/DeliveryService.php:197` |
-| `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:264` |
+| `wpss_delivery_accepted` | `int $order_id` | `src/Services/DeliveryService.php:206` |
+| `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:273` |
 | `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:506` |
 | `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:1334` |
 | `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1614` |
@@ -486,7 +486,7 @@ add_action( 'wpss_wizard_save_service_meta', function( $service_id, $data ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:929` |
+| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:936` |
 
 ### Dashboard Filters
 
@@ -740,7 +740,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_get_template_part` | `$template, $slug, $name` | `src/functions/templates.php:125` |
 | `wpss_get_template` | `$template, $template_name, $args` | `src/functions/templates.php:176` |
 | `wpss_locate_template` | `$template, $template_name, $template_path` | `src/Frontend/TemplateLoader.php:544` |
-| `wpss_dashboard_section_template` | `$template_path, $section` | `src/Frontend/UnifiedDashboard.php:904` |
+| `wpss_dashboard_section_template` | `$template_path, $section` | `src/Frontend/UnifiedDashboard.php:911` |
 
 ### URL and Taxonomy Filters
 
@@ -796,7 +796,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
 | `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:446` |
 | `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:545` |
-| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:853` |
+| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:860` |
 
 **`wpss_realtime_settings`** — filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
 

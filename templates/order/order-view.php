@@ -331,7 +331,10 @@ do_action( 'wpss_before_order_view', $order );
 				);
 			}
 
-			if ( 'pending_approval' === $order->status ) {
+			// Accept and Request Revision need something delivered; with no
+			// delivery the order shows "Nothing delivered yet" below instead
+			// (owner decision 2026-09-25, DeliveryService::accept() refuses).
+			if ( 'pending_approval' === $order->status && ! empty( $deliveries ) ) {
 				$actions['complete'] = array(
 					'label' => __( 'Accept & Complete', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--success wpss-order-action',
@@ -439,6 +442,20 @@ do_action( 'wpss_before_order_view', $order );
 			 * @param object $order   Order object.
 			 */
 			$actions = apply_filters( 'wpss_order_actions', $actions, $order );
+
+			// A buyer reviewing a delivery sees the delivery first and decides
+			// under it, instead of being offered Accept above a page of other
+			// sections with the delivery far below (Basecamp 10337217098).
+			$wpss_review_first   = $is_customer && 'pending_approval' === $order->status && ! empty( $deliveries );
+			$wpss_review_actions = array();
+			if ( $wpss_review_first ) {
+				foreach ( array( 'complete', 'revision' ) as $wpss_key ) {
+					if ( isset( $actions[ $wpss_key ] ) ) {
+						$wpss_review_actions[ $wpss_key ] = $actions[ $wpss_key ];
+						unset( $actions[ $wpss_key ] );
+					}
+				}
+			}
 		?>
 
 			<?php if ( ! empty( $actions ) ) : ?>
@@ -553,6 +570,115 @@ do_action( 'wpss_before_order_view', $order );
 				</div>
 			</div>
 		</section>
+	<?php endif; ?>
+
+	<?php ob_start(); ?>
+	<!-- Deliveries Section -->
+	<?php if ( empty( $deliveries ) && 'pending_approval' === $order->status ) : ?>
+		<section class="wpss-order-section">
+			<div class="wpss-order-section__header">
+				<h2 class="wpss-order-section__title">
+					<i data-lucide="upload" class="wpss-icon" aria-hidden="true"></i>
+					<?php esc_html_e( 'Deliveries', 'wp-sell-services' ); ?>
+				</h2>
+			</div>
+			<div class="wpss-order-section__body">
+				<div class="wpss-empty-state wpss-empty-state--compact">
+					<h3><?php esc_html_e( 'Nothing delivered yet', 'wp-sell-services' ); ?></h3>
+					<p>
+						<?php
+						echo esc_html(
+							$is_customer
+								? __( 'This order is marked for your approval, but the seller has not attached a delivery. Message them below, or open a dispute if the work does not arrive.', 'wp-sell-services' )
+								: __( 'This order is waiting for approval with no delivery attached, so the buyer cannot accept it. Ask the site admin to move it back to In Progress so you can deliver.', 'wp-sell-services' )
+						);
+						?>
+					</p>
+				</div>
+			</div>
+		</section>
+	<?php elseif ( ! empty( $deliveries ) ) : ?>
+		<section class="wpss-order-section">
+			<div class="wpss-order-section__header">
+				<h2 class="wpss-order-section__title">
+					<i data-lucide="upload" class="wpss-icon" aria-hidden="true"></i>
+					<?php esc_html_e( 'Deliveries', 'wp-sell-services' ); ?>
+				</h2>
+			</div>
+			<div class="wpss-order-section__body">
+				<?php foreach ( $deliveries as $delivery ) : ?>
+					<div class="wpss-delivery-item">
+						<div class="wpss-delivery-item__header">
+							<span class="wpss-delivery-item__date">
+								<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $delivery->created_at ) ) ); ?>
+							</span>
+							<span class="<?php echo esc_attr( wpss_status_class( $delivery->status ) ); ?>">
+								<?php echo esc_html( wpss_get_order_status_label( (string) $delivery->status ) ); ?>
+							</span>
+						</div>
+						<div class="wpss-delivery-item__content">
+							<?php echo wp_kses_post( wpautop( $delivery->message ) ); ?>
+						</div>
+						<?php
+						$files = maybe_unserialize( $delivery->attachments );
+						if ( is_string( $files ) ) {
+							$decoded = json_decode( $files, true );
+							$files   = is_array( $decoded ) ? $decoded : array();
+						}
+						if ( ! empty( $files ) && is_array( $files ) ) :
+							?>
+							<div class="wpss-delivery-item__files">
+								<?php foreach ( $files as $file ) : ?>
+									<?php
+									// Three formats now: a 1.7.0 record addressed by id, a
+									// pre-1.7.0 record carrying a stored public URL, or a bare
+									// attachment ID from further back still. Only the first is
+									// permission-checked; the older two are already public and
+									// keep working, because breaking a delivered file to tighten
+									// history would punish the buyer for our bug.
+									if ( is_array( $file ) ) {
+										$file['order_id'] = $file['order_id'] ?? $order_id;
+
+										$att_id    = $file['id'] ?? 0;
+										$file_url  = wpss_get_order_file_url( $file );
+										$file_name = wpss_format_attachment_name( (string) ( $file['name'] ?? get_the_title( $att_id ) ) );
+
+										if ( '' === $file_url ) {
+											$file_url = wp_get_attachment_url( $att_id );
+										}
+									} else {
+										$file_url  = wp_get_attachment_url( (int) $file );
+										$file_name = get_the_title( (int) $file );
+									}
+									if ( ! $file_url ) {
+										continue;
+									}
+									?>
+									<a href="<?php echo esc_url( $file_url ); ?>" class="wpss-file-link" target="_blank" download>
+										<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
+										<?php echo esc_html( $file_name ); ?>
+									</a>
+								<?php endforeach; ?>
+							</div>
+						<?php endif; ?>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</section>
+	<?php endif; ?>
+	<?php $wpss_deliveries_html = (string) ob_get_clean(); ?>
+
+	<?php if ( $wpss_review_first ) : ?>
+		<?php echo $wpss_deliveries_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it was built. ?>
+		<?php if ( $wpss_review_actions ) : ?>
+			<div class="wpss-order-view__actions wpss-order-view__actions--review">
+				<?php foreach ( $wpss_review_actions as $wpss_action ) : ?>
+					<button type="button" class="<?php echo esc_attr( $wpss_action['class'] ); ?>" <?php echo $wpss_action['attrs'] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- attrs are escaped where the action is defined. ?>>
+						<?php echo esc_html( $wpss_action['label'] ); ?>
+					</button>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
 	<?php endif; ?>
 
 	<!-- Order Summary Section -->
@@ -1471,76 +1597,13 @@ do_action( 'wpss_before_order_view', $order );
 		</div>
 	</section>
 
-	<!-- Deliveries Section -->
-	<?php if ( ! empty( $deliveries ) ) : ?>
-		<section class="wpss-order-section">
-			<div class="wpss-order-section__header">
-				<h2 class="wpss-order-section__title">
-					<i data-lucide="upload" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Deliveries', 'wp-sell-services' ); ?>
-				</h2>
-			</div>
-			<div class="wpss-order-section__body">
-				<?php foreach ( $deliveries as $delivery ) : ?>
-					<div class="wpss-delivery-item">
-						<div class="wpss-delivery-item__header">
-							<span class="wpss-delivery-item__date">
-								<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $delivery->created_at ) ) ); ?>
-							</span>
-							<span class="<?php echo esc_attr( wpss_status_class( $delivery->status ) ); ?>">
-								<?php echo esc_html( wpss_get_order_status_label( (string) $delivery->status ) ); ?>
-							</span>
-						</div>
-						<div class="wpss-delivery-item__content">
-							<?php echo wp_kses_post( wpautop( $delivery->message ) ); ?>
-						</div>
-						<?php
-						$files = maybe_unserialize( $delivery->attachments );
-						if ( is_string( $files ) ) {
-							$decoded = json_decode( $files, true );
-							$files   = is_array( $decoded ) ? $decoded : array();
-						}
-						if ( ! empty( $files ) && is_array( $files ) ) :
-							?>
-							<div class="wpss-delivery-item__files">
-								<?php foreach ( $files as $file ) : ?>
-									<?php
-									// Three formats now: a 1.7.0 record addressed by id, a
-									// pre-1.7.0 record carrying a stored public URL, or a bare
-									// attachment ID from further back still. Only the first is
-									// permission-checked; the older two are already public and
-									// keep working, because breaking a delivered file to tighten
-									// history would punish the buyer for our bug.
-									if ( is_array( $file ) ) {
-										$file['order_id'] = $file['order_id'] ?? $order_id;
-
-										$att_id    = $file['id'] ?? 0;
-										$file_url  = wpss_get_order_file_url( $file );
-										$file_name = wpss_format_attachment_name( (string) ( $file['name'] ?? get_the_title( $att_id ) ) );
-
-										if ( '' === $file_url ) {
-											$file_url = wp_get_attachment_url( $att_id );
-										}
-									} else {
-										$file_url  = wp_get_attachment_url( (int) $file );
-										$file_name = get_the_title( (int) $file );
-									}
-									if ( ! $file_url ) {
-										continue;
-									}
-									?>
-									<a href="<?php echo esc_url( $file_url ); ?>" class="wpss-file-link" target="_blank" download>
-										<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
-										<?php echo esc_html( $file_name ); ?>
-									</a>
-								<?php endforeach; ?>
-							</div>
-						<?php endif; ?>
-					</div>
-				<?php endforeach; ?>
-			</div>
-		</section>
-	<?php endif; ?>
+	<?php
+	// Shown here in every state except the buyer reviewing a delivery, when it
+	// moved up under the order header (see $wpss_review_first).
+	if ( ! $wpss_review_first ) {
+		echo $wpss_deliveries_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it was built.
+	}
+	?>
 
 	<?php
 	/**
@@ -2654,6 +2717,11 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.5rem;
+}
+
+/* Accept / Request Revision under the delivery the buyer is reviewing. */
+.wpss-order-view__actions--review {
+	margin: -0.5rem 0 1.5rem;
 }
 
 /* Order Sections */

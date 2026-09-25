@@ -167,9 +167,17 @@ class DeliveryService {
 			return false;
 		}
 
-		// Mark latest delivery as accepted.
 		global $wpdb;
 		$deliveries_table = $wpdb->prefix . 'wpss_deliveries';
+
+		// Nothing delivered, nothing to accept: the buyer would be approving
+		// blind and releasing the money (owner decision 2026-09-25, Basecamp
+		// 10337217098). The order view hides Accept in this state too.
+		if ( ! $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$deliveries_table} WHERE order_id = %d LIMIT 1", $order_id ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			return false;
+		}
+
+		// Mark latest delivery as accepted.
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query(

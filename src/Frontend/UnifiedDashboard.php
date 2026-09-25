@@ -726,7 +726,12 @@ class UnifiedDashboard {
 					 */
 					do_action( 'wpss_dashboard_header' );
 					?>
-					<h1 class="wpss-dashboard__title wpss-page-header__title">
+					<?php
+					// An open order carries its own H1 ("Order #..."); the section name
+					// is then context, not a second page heading.
+					$title_tag = $this->resolve_requested_order_id() ? 'p' : 'h1';
+					?>
+					<<?php echo esc_attr( $title_tag ); ?> class="wpss-dashboard__title wpss-page-header__title">
 						<?php
 						$id = isset( $_GET['id'] ) ? sanitize_text_field( wp_unslash( $_GET['id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only URL parameter for display.
 						// Service edit reuses the `create` section with ?id=<service_id>, so
@@ -739,7 +744,7 @@ class UnifiedDashboard {
 							echo esc_html( $section_data['title'] );
 						}
 						?>
-					</h1>
+					</<?php echo esc_attr( $title_tag ); ?>>
 					<?php
 					// F4 (baseline-2026-04-25.md): show the top "Create Service" button
 					// only when the vendor already has at least one service. On the empty
@@ -755,10 +760,13 @@ class UnifiedDashboard {
 							<?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?>
 						</a>
 					<?php endif; ?>
-					<button type="button" class="wpss-dashboard__tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
-						<i data-lucide="help-circle" class="wpss-icon" aria-hidden="true"></i>
-						<span><?php esc_html_e( 'Replay tour', 'wp-sell-services' ); ?></span>
-					</button>
+					<?php // The tour does not load on an order URL (Tour::should_load), so neither does its button. ?>
+					<?php if ( 'h1' === $title_tag ) : ?>
+						<button type="button" class="wpss-dashboard__tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
+							<i data-lucide="help-circle" class="wpss-icon" aria-hidden="true"></i>
+							<span><?php esc_html_e( 'Replay tour', 'wp-sell-services' ); ?></span>
+						</button>
+					<?php endif; ?>
 				</header>
 
 				<div class="wpss-dashboard__body">
