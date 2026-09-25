@@ -84,8 +84,29 @@
 				}
 			}.bind(this));
 			$(document).on('keydown', function (e) {
-				if ('Escape' === e.key && $('.wpss-dashboard__sidebar--open').length) {
+				var $drawer = $('.wpss-dashboard__sidebar--open .wpss-dashboard__drawer');
+				if (!$drawer.length) {
+					return;
+				}
+				if ('Escape' === e.key) {
 					this.closeNav();
+					return;
+				}
+				// Keep Tab inside the open drawer: it is a modal panel.
+				if ('Tab' === e.key) {
+					var $f = $drawer.find('a[href], button:not([disabled])').filter(':visible');
+					var first = $f.get(0);
+					var last = $f.get($f.length - 1);
+					if (e.shiftKey && document.activeElement === first) {
+						e.preventDefault();
+						last.focus();
+					} else if (!e.shiftKey && document.activeElement === last) {
+						e.preventDefault();
+						first.focus();
+					} else if (!$.contains($drawer.get(0), document.activeElement)) {
+						e.preventDefault();
+						first.focus();
+					}
 				}
 			}.bind(this));
 
