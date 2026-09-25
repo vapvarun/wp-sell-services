@@ -224,6 +224,18 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 
 <?php else : // Conversation list view. ?>
 	<?php if ( $unread_count > 0 ) : ?>
+		<?php
+		// Point at a thread, not just a number: the first open thread on this
+		// page with unread messages for this user.
+		$first_unread = null;
+		foreach ( $conversations as $wpss_conv ) {
+			$wpss_counts = $wpss_conv->unread_counts ? json_decode( $wpss_conv->unread_counts, true ) : array();
+			if ( empty( $wpss_conv->is_closed ) && (int) ( $wpss_counts[ $user_id ] ?? 0 ) > 0 ) {
+				$first_unread = $wpss_conv;
+				break;
+			}
+		}
+		?>
 		<div class="wpss-alert wpss-alert--info">
 			<?php
 			printf(
@@ -231,6 +243,18 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 				esc_html( _n( 'You have %d unread message.', 'You have %d unread messages.', $unread_count, 'wp-sell-services' ) ),
 				(int) $unread_count
 			);
+			if ( $first_unread ) {
+				$first_url = ! empty( $first_unread->order_id )
+					? wpss_get_order_url( (int) $first_unread->order_id )
+					: add_query_arg(
+						array(
+							'section'         => 'messages',
+							'conversation_id' => $first_unread->id,
+						),
+						wpss_get_dashboard_url()
+					);
+				echo ' <a href="' . esc_url( $first_url ) . '">' . esc_html__( 'Open the latest unread thread', 'wp-sell-services' ) . '</a>';
+			}
 			?>
 		</div>
 	<?php endif; ?>
@@ -426,16 +450,23 @@ $active_conversation_id = isset( $_GET['conversation_id'] ) ? absint( wp_unslash
 						</p>
 						<?php if ( $is_direct ) : ?>
 							<span class="wpss-conversation-card__label">
-								<?php echo esc_html( ! empty( $conversation->subject ) ? $conversation->subject : __( 'Direct Message', 'wp-sell-services' ) ); ?>
+								<?php
+								// A message about a service names the service; a generic
+								// stored subject ("Order discussion") told three rows apart
+								// by nothing.
+								echo esc_html( $service ? wp_trim_words( $service->post_title, 6 ) : ( ! empty( $conversation->subject ) ? $conversation->subject : __( 'Direct Message', 'wp-sell-services' ) ) );
+								?>
 							</span>
 						<?php else : ?>
 							<span class="wpss-conversation-card__order">
 								<?php
-								// The service, not the order number. Two rows for the
-								// same seller are told apart by what they are about;
-								// an order number identifies nothing to a human, and
-								// it is already on the order itself.
+								// What it is about, then which order: a buyer with several
+								// orders of the same service tells the threads apart only
+								// by the number (Basecamp 10337217098).
 								echo esc_html( $conversation_subject );
+								if ( ! empty( $conversation->order_number ) && ( $service || $request_post ) ) {
+									echo ' &middot; #' . esc_html( $conversation->order_number );
+								}
 								?>
 							</span>
 						<?php endif; ?>
