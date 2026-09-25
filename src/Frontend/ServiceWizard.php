@@ -997,9 +997,41 @@ class ServiceWizard {
 								</div>
 								<div class="wpss-form-row wpss-form-row--2col">
 									<div class="wpss-form-group">
+										<label class="wpss-form-label" :for="'wpss-extra-field-' + index"><?php esc_html_e( 'How buyers choose it', 'wp-sell-services' ); ?></label>
+										<select class="wpss-form-select" x-model="extra.field_type" :id="'wpss-extra-field-' + index">
+											<?php foreach ( wpss_get_addon_field_types() as $wpss_type => $wpss_type_label ) : ?>
+												<option value="<?php echo esc_attr( $wpss_type ); ?>"><?php echo esc_html( $wpss_type_label ); ?></option>
+											<?php endforeach; ?>
+										</select>
+									</div>
+									<div class="wpss-form-group">
+										<label class="wpss-form-label" :for="'wpss-extra-pricing-' + index"><?php esc_html_e( 'How it is priced', 'wp-sell-services' ); ?></label>
+										<select class="wpss-form-select" x-model="extra.price_type" :id="'wpss-extra-pricing-' + index" @change="if ( 'quantity_based' === extra.price_type ) { extra.field_type = 'quantity'; }">
+											<?php foreach ( wpss_get_addon_price_types() as $wpss_type => $wpss_type_label ) : ?>
+												<option value="<?php echo esc_attr( $wpss_type ); ?>"><?php echo esc_html( $wpss_type_label ); ?></option>
+											<?php endforeach; ?>
+										</select>
+									</div>
+								</div>
+								<div class="wpss-form-group" x-show="'dropdown' === extra.field_type" x-cloak>
+									<label class="wpss-form-label" :for="'wpss-extra-options-' + index"><?php esc_html_e( 'Options (comma separated)', 'wp-sell-services' ); ?></label>
+									<input type="text" class="wpss-form-input" x-model="extra.options" :id="'wpss-extra-options-' + index" placeholder="<?php esc_attr_e( 'e.g., Small, Medium, Large', 'wp-sell-services' ); ?>">
+								</div>
+								<div class="wpss-form-row wpss-form-row--2col" x-show="'quantity' === extra.field_type" x-cloak>
+									<div class="wpss-form-group">
+										<label class="wpss-form-label" :for="'wpss-extra-min-' + index"><?php esc_html_e( 'Minimum quantity', 'wp-sell-services' ); ?></label>
+										<input type="number" class="wpss-form-input" x-model="extra.min_quantity" :id="'wpss-extra-min-' + index" min="1" max="100">
+									</div>
+									<div class="wpss-form-group">
+										<label class="wpss-form-label" :for="'wpss-extra-max-' + index"><?php esc_html_e( 'Maximum quantity', 'wp-sell-services' ); ?></label>
+										<input type="number" class="wpss-form-input" x-model="extra.max_quantity" :id="'wpss-extra-max-' + index" min="1" max="100">
+									</div>
+								</div>
+								<div class="wpss-form-row wpss-form-row--2col">
+									<div class="wpss-form-group">
 										<label class="wpss-form-label" :for="'wpss-extra-price-' + index"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
 										<div class="wpss-input-group">
-											<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
+											<span class="wpss-input-prefix" x-text="'percentage' === extra.price_type ? '%' : '<?php echo esc_js( wpss_get_currency_symbol() ); ?>'"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 											<input type="number"
 												class="wpss-form-input"
 												x-model="extra.price"
@@ -1018,6 +1050,10 @@ class ServiceWizard {
 											placeholder="0">
 									</div>
 								</div>
+								<label class="wpss-form-checkbox">
+									<input type="checkbox" x-model="extra.is_required">
+									<span><?php esc_html_e( 'Required: every order includes it', 'wp-sell-services' ); ?></span>
+								</label>
 								<div class="wpss-form-group">
 									<label class="wpss-form-label" :for="'wpss-extra-desc-' + index"><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
 									<textarea class="wpss-form-textarea"

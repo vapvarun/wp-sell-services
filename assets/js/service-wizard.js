@@ -588,7 +588,13 @@ function wpssServiceWizard(existingData = {}) {
 				title: '',
 				description: '',
 				price: '',
-				delivery_days_extra: 0
+				delivery_days_extra: 0,
+				field_type: 'checkbox',
+				price_type: 'flat',
+				options: '',
+				min_quantity: 1,
+				max_quantity: 10,
+				is_required: false
 			});
 			this.refreshIcons();
 		},

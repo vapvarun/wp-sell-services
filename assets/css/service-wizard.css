@@ -1240,3 +1240,13 @@ select.wpss-form-input::-ms-expand {
 .wpss-upgrade-link:focus-visible {
 	color: var(--wpss-primary-dark, #4338ca);
 }
+
+/* Add-on "Required" tick. */
+.wpss-extra-fields .wpss-form-checkbox {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-2, 0.5rem);
+	margin-block: var(--wpss-space-2, 0.5rem);
+	font-size: var(--wpss-text-sm, 0.875rem);
+	cursor: pointer;
+}
