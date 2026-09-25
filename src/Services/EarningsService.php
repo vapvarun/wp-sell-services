@@ -646,6 +646,28 @@ class EarningsService {
 	 * @return array Result with success status.
 	 */
 	public function request_withdrawal( int $vendor_id, float $amount, string $method, array $details = array() ): array {
+		// Where the money goes. Details sent with the request are checked and
+		// become the payout profile; otherwise the saved profile is used. A
+		// request with neither is refused, so the admin is never handed a
+		// payout with no destination (Basecamp 10336467884).
+		if ( $details ) {
+			$details = self::save_payout_profile( $vendor_id, $method, $details );
+		} else {
+			$profile = self::get_payout_profile( $vendor_id );
+			$method  = '' !== $method ? $method : $profile['method'];
+			$details = $profile['method'] === $method
+				? self::validate_payout_details( $method, $profile['details'] )
+				: self::validate_payout_details( $method, array() );
+		}
+
+		if ( is_wp_error( $details ) ) {
+			return array(
+				'success' => false,
+				'code'    => $details->get_error_code(),
+				'message' => $details->get_error_message(),
+			);
+		}
+
 		// Check minimum withdrawal.
 		$min_withdrawal = self::get_min_withdrawal_amount();
 		if ( $amount < $min_withdrawal ) {
@@ -1051,6 +1073,188 @@ class EarningsService {
 	}
 
 	/**
+	 * The fields a payout method needs, keyed by detail name.
+	 *
+	 * PayPal needs an email; a bank transfer needs holder, bank and account.
+	 * A method added by filter gets one free-text field unless it declares its
+	 * own through wpss_payout_fields.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $method Withdrawal method key.
+	 * @return array<string, array{label: string, type: string, required: bool}>
+	 */
+	public static function get_payout_fields( string $method ): array {
+		$fields = array(
+			'paypal'        => array(
+				'email' => array(
+					'label'    => __( 'PayPal email', 'wp-sell-services' ),
+					'type'     => 'email',
+					'required' => true,
+				),
+			),
+			'bank_transfer' => array(
+				'account_name'   => array(
+					'label'    => __( 'Account holder name', 'wp-sell-services' ),
+					'type'     => 'text',
+					'required' => true,
+				),
+				'bank_name'      => array(
+					'label'    => __( 'Bank name', 'wp-sell-services' ),
+					'type'     => 'text',
+					'required' => true,
+				),
+				'account_number' => array(
+					'label'    => __( 'Account number or IBAN', 'wp-sell-services' ),
+					'type'     => 'text',
+					'required' => true,
+				),
+				'routing_number' => array(
+					'label'    => __( 'Routing, SWIFT or IFSC code', 'wp-sell-services' ),
+					'type'     => 'text',
+					'required' => false,
+				),
+			),
+		);
+
+		$method_fields = $fields[ $method ] ?? array(
+			'details' => array(
+				'label'    => __( 'Payout details', 'wp-sell-services' ),
+				'type'     => 'textarea',
+				'required' => true,
+			),
+		);
+
+		/**
+		 * Filter the details a payout method collects.
+		 *
+		 * @since 1.8.0
+		 *
+		 * @param array  $method_fields Fields: key => {label, type, required}.
+		 * @param string $method        Withdrawal method key.
+		 */
+		return (array) apply_filters( 'wpss_payout_fields', $method_fields, $method );
+	}
+
+	/**
+	 * Clean payout details to the method's fields and check they are complete.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string               $method  Withdrawal method key.
+	 * @param array<string, mixed> $details Submitted details.
+	 * @return array<string, string>|\WP_Error The clean details, or what is missing.
+	 */
+	public static function validate_payout_details( string $method, array $details ) {
+		if ( ! isset( self::get_withdrawal_methods()[ $method ] ) ) {
+			return new \WP_Error( 'wpss_invalid_payout_method', __( 'Choose a payout method this marketplace offers.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		$clean = array();
+
+		foreach ( self::get_payout_fields( $method ) as $key => $field ) {
+			$value = is_scalar( $details[ $key ] ?? null ) ? (string) $details[ $key ] : '';
+			$value = 'textarea' === $field['type'] ? sanitize_textarea_field( $value ) : sanitize_text_field( $value );
+
+			if ( 'email' === $field['type'] && '' !== $value && ! is_email( $value ) ) {
+				/* translators: %s: field label */
+				return new \WP_Error( 'wpss_invalid_payout_details', sprintf( __( '%s is not a valid email address.', 'wp-sell-services' ), $field['label'] ), array( 'status' => 400 ) );
+			}
+
+			if ( ! empty( $field['required'] ) && '' === $value ) {
+				/* translators: %s: field label */
+				return new \WP_Error( 'wpss_payout_details_missing', sprintf( __( 'Add your %s to receive payouts.', 'wp-sell-services' ), $field['label'] ), array( 'status' => 400 ) );
+			}
+
+			if ( '' !== $value ) {
+				$clean[ $key ] = $value;
+			}
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * The vendor's payout profile: where their money goes.
+	 *
+	 * One store for every rail - the withdrawal form, REST, automatic
+	 * withdrawals and Pro's PayPal payouts (owner decision, Basecamp
+	 * 10336467884). Details are encrypted at rest; rows saved as a plain
+	 * array before 1.8.0 are still read.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @return array{method: string, details: array<string, string>}
+	 */
+	public static function get_payout_profile( int $vendor_id ): array {
+		$stored  = get_user_meta( $vendor_id, 'wpss_payout_details', true );
+		$details = is_array( $stored ) ? $stored : ( json_decode( wpss_decrypt_secret( (string) $stored ), true ) ?: array() );
+
+		return array(
+			'method'  => (string) get_user_meta( $vendor_id, 'wpss_payout_method', true ),
+			'details' => array_map( 'strval', array_filter( (array) $details, 'is_scalar' ) ),
+		);
+	}
+
+	/**
+	 * Save the vendor's payout profile after checking it is complete.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int                  $vendor_id Vendor user ID.
+	 * @param string               $method    Withdrawal method key.
+	 * @param array<string, mixed> $details   Details for that method.
+	 * @return array<string, string>|\WP_Error The saved details.
+	 */
+	public static function save_payout_profile( int $vendor_id, string $method, array $details ) {
+		$clean = self::validate_payout_details( $method, $details );
+
+		if ( is_wp_error( $clean ) ) {
+			return $clean;
+		}
+
+		update_user_meta( $vendor_id, 'wpss_payout_method', $method );
+		update_user_meta( $vendor_id, 'wpss_payout_details', wpss_encrypt_secret( (string) wp_json_encode( $clean ) ) );
+
+		/**
+		 * Fires after a vendor's payout profile is saved.
+		 *
+		 * @since 1.8.0
+		 *
+		 * @param int                   $vendor_id Vendor user ID.
+		 * @param string                $method    Withdrawal method key.
+		 * @param array<string, string> $clean     Saved details.
+		 */
+		do_action( 'wpss_payout_profile_saved', $vendor_id, $method, $clean );
+
+		return $clean;
+	}
+
+	/**
+	 * Where a payout goes, in one line.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string               $method  Withdrawal method key.
+	 * @param array<string, mixed> $details Details.
+	 * @param bool                 $mask    Show only the last 4 of an account number (vendor-facing).
+	 * @return string
+	 */
+	public static function format_payout_destination( string $method, array $details, bool $mask = true ): string {
+		$parts = array( self::get_withdrawal_methods()[ $method ] ?? $method );
+
+		foreach ( $details as $key => $value ) {
+			if ( '' === (string) $value || ! is_scalar( $value ) ) {
+				continue;
+			}
+			$parts[] = $mask && 'account_number' === $key ? '***' . substr( (string) $value, -4 ) : (string) $value;
+		}
+
+		return implode( ' · ', $parts );
+	}
+
+	/**
 	 * Get withdrawal statuses.
 	 *
 	 * @return array Status labels.
@@ -1252,8 +1456,9 @@ class EarningsService {
 
 			if ( $summary['available_balance'] >= $threshold ) {
 				// Check if vendor has payout method configured.
-				$payout_method  = get_user_meta( (int) $vendor_id, 'wpss_payout_method', true );
-				$payout_details = get_user_meta( (int) $vendor_id, 'wpss_payout_details', true );
+				$profile        = self::get_payout_profile( (int) $vendor_id );
+				$payout_method  = $profile['method'];
+				$payout_details = $profile['details'];
 
 				if ( $payout_method && $payout_details ) {
 					$eligible[] = array(

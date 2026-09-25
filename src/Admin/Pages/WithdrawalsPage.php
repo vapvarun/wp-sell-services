@@ -666,17 +666,8 @@ class WithdrawalsPage {
 				<?php if ( ! empty( $details ) ) : ?>
 					<div class="wpss-withdrawal-details">
 						<?php
-						// Show relevant details based on method.
-						if ( $withdrawal->method === 'paypal' && ! empty( $details['email'] ) ) {
-							echo '<code>' . esc_html( $details['email'] ) . '</code>';
-						} elseif ( $withdrawal->method === 'bank_transfer' ) {
-							if ( ! empty( $details['bank_name'] ) ) {
-								echo esc_html( $details['bank_name'] );
-							}
-							if ( ! empty( $details['account_number'] ) ) {
-								echo ' <code>***' . esc_html( substr( $details['account_number'], -4 ) ) . '</code>';
-							}
-						}
+						// The full destination: the admin sends this payout by hand.
+						echo esc_html( EarningsService::format_payout_destination( (string) $withdrawal->method, $details, false ) );
 						?>
 					</div>
 				<?php endif; ?>

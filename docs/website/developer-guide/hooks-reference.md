@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**537 hooks** across **741** firing sites.
+**539 hooks** across **743** firing sites.
 
-## Actions (274)
+## Actions (275)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -173,6 +173,7 @@ guide; this is the complete index.
 | `wpss_payment_receipt_submitted` | 3 | `src/Services/PaymentReceiptService.php` | Fires when a buyer submits proof of an offline payment. |
 | `wpss_payment_receipt_verified` | 3 | `src/Services/PaymentReceiptService.php` | Fires when an admin verifies proof of an offline payment. |
 | `wpss_payout_methods` | 2 | `templates/dashboard/sections/earnings.php` *(+1 more)* |  |
+| `wpss_payout_profile_saved` | 3 | `src/Services/EarningsService.php` | Fires after a vendor's payout profile is saved. |
 | `wpss_paypal_refund_processed` | 2 | `src/Integrations/PayPal/PayPalGateway.php` | Fires when a PayPal refund is processed. |
 | `wpss_portfolio_item_created` | 3 | `src/Services/PortfolioService.php` | Fires when portfolio item is created. |
 | `wpss_portfolio_item_deleted` | 2 | `src/Services/PortfolioService.php` | Fires when portfolio item is deleted. |
@@ -291,7 +292,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (263)
+## Filters (264)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -428,6 +429,7 @@ guide; this is the complete index.
 | `wpss_payment_declined_message` | 3 | `src/Integrations/Stripe/StripeGateway.php` | Filters the message shown to a buyer whose card was declined. |
 | `wpss_payment_gateways` | 1 | `src/Core/Plugin.php` *(+4 more)* | Filter the registered payment gateways. |
 | `wpss_payout_banner_state` | 4 | `templates/dashboard/sections/earnings.php` | Filters the payout banner state shown on the earnings section. |
+| `wpss_payout_fields` | 2 | `src/Services/EarningsService.php` | Filter the details a payout method collects. |
 | `wpss_person_schema` | 2 | `src/SEO/SchemaMarkup.php` |  |
 | `wpss_platform_name` | 1 | `src/functions/misc.php` | Filter the platform name. |
 | `wpss_post_checkout_url` | 3 | `src/functions/orders.php` | Filter the post-checkout redirect. |

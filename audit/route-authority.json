@@ -1136,6 +1136,18 @@
       "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
       "object_id": true,
       "writes": true
+    },
+    "GET /wpss/v1/withdrawals/profile": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "POST,PUT,PATCH /wpss/v1/withdrawals/profile": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": false,
+      "writes": true
     }
   }
 }

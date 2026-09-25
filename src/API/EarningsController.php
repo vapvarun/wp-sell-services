@@ -203,6 +203,34 @@ class EarningsController extends RestController {
 			)
 		);
 
+		// GET|PUT /withdrawals/profile - The vendor's payout profile (where payouts go).
+		register_rest_route(
+			$this->namespace,
+			'/withdrawals/profile',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_payout_profile' ),
+					'permission_callback' => array( $this, 'check_vendor_permissions' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_payout_profile' ),
+					'permission_callback' => array( $this, 'check_vendor_permissions' ),
+					'args'                => array(
+						'method'  => array(
+							'type'     => 'string',
+							'required' => true,
+						),
+						'details' => array(
+							'type'     => 'object',
+							'required' => true,
+						),
+					),
+				),
+			)
+		);
+
 		// GET /withdrawals/methods - Get withdrawal methods.
 		register_rest_route(
 			$this->namespace,
@@ -470,12 +498,6 @@ class EarningsController extends RestController {
 
 		$withdrawal_id = (int) $result['withdrawal_id'];
 
-		// Payout profile, so the auto-payout cron can find eligible vendors.
-		// Kept here rather than in the service: it is this endpoint's own
-		// convenience, not part of creating a withdrawal.
-		update_user_meta( $vendor_id, 'wpss_payout_method', $method );
-		update_user_meta( $vendor_id, 'wpss_payout_details', $details );
-
 		return new WP_REST_Response(
 			array(
 				'id'           => $withdrawal_id,
@@ -488,6 +510,48 @@ class EarningsController extends RestController {
 			),
 			201
 		);
+	}
+
+	/**
+	 * The caller's payout profile, with the fields each method needs.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_payout_profile( WP_REST_Request $request ): WP_REST_Response {
+		unset( $request );
+		$service = \WPSellServices\Services\EarningsService::class;
+		$profile = $service::get_payout_profile( get_current_user_id() );
+		$fields  = array();
+
+		foreach ( array_keys( $service::get_withdrawal_methods() ) as $method ) {
+			$fields[ $method ] = $service::get_payout_fields( $method );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'method'      => $profile['method'],
+				'details'     => $profile['details'],
+				'destination' => '' !== $profile['method'] ? $service::format_payout_destination( $profile['method'], $profile['details'] ) : '',
+				'fields'      => $fields,
+			)
+		);
+	}
+
+	/**
+	 * Save the caller's payout profile.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_payout_profile( WP_REST_Request $request ) {
+		$saved = \WPSellServices\Services\EarningsService::save_payout_profile( get_current_user_id(), (string) $request->get_param( 'method' ), (array) $request->get_param( 'details' ) );
+
+		return is_wp_error( $saved ) ? $saved : $this->get_payout_profile( $request );
 	}
 
 	/**

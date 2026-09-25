@@ -42,6 +42,8 @@
 			// Delete service
 			$(document).on('click', '.wpss-delete-service', this.handleDeleteService.bind(this));
 			$(document).on('click', '[data-wpss-cancel-withdrawal]', this.handleCancelWithdrawal.bind(this));
+			$(document).on('change', '#withdrawal_method', this.handlePayoutMethod.bind(this));
+			$(document).on('submit', '#wpss-withdrawal-form', this.handleWithdrawalSubmit.bind(this));
 
 			// Avatar upload
 			$(document).on('click', '#wpss-avatar-upload-btn', this.handleAvatarUpload.bind(this));
@@ -551,6 +553,73 @@
 		 *
 		 * @param {Event} e Click event.
 		 */
+		/**
+		 * Show the detail fields of the chosen payout method.
+		 *
+		 * @param {Event} e Change event.
+		 */
+		handlePayoutMethod: function (e) {
+			var method = $(e.currentTarget).val();
+			$('.wpss-payout-fields').each(function () {
+				this.hidden = this.getAttribute('data-payout-method') !== method;
+			});
+		},
+
+		/**
+		 * Request a withdrawal (POST /withdrawals). The details sent become
+		 * the vendor's payout profile; the server checks they are complete.
+		 *
+		 * @param {Event} e Submit event.
+		 */
+		handleWithdrawalSubmit: function (e) {
+			e.preventDefault();
+
+			var $form = $(e.currentTarget);
+			var $button = $form.find('#wpss-withdrawal-submit');
+			var $message = $form.find('#wpss-withdrawal-message');
+			var method = $form.find('#withdrawal_method').val();
+			var amount = parseFloat($form.find('#withdrawal_amount').val());
+			var details = {};
+			var missing = !amount || !method;
+
+			$form.find('.wpss-payout-fields[data-payout-method="' + method + '"] [data-detail]').each(function () {
+				var value = $.trim($(this).val());
+				details[$(this).data('detail')] = value;
+				if (!value && $(this).data('required')) {
+					missing = true;
+				}
+			});
+
+			var show = function (text, type) {
+				$message.removeClass('wpss-notice--success wpss-notice--error').addClass('wpss-notice--' + type).text(text).show();
+			};
+
+			if (missing) {
+				show(wpssUnifiedDashboard.i18n.withdrawalFillRequired, 'error');
+				return;
+			}
+
+			$button.prop('disabled', true);
+
+			$.ajax({
+				url: wpssUnifiedDashboard.restUrl + 'withdrawals',
+				method: 'POST',
+				contentType: 'application/json',
+				data: JSON.stringify({ amount: amount, method: method, details: details }),
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
+				},
+				success: function () {
+					show(wpssUnifiedDashboard.i18n.withdrawalSubmitted, 'success');
+					window.location.reload();
+				},
+				error: function (xhr) {
+					show((xhr.responseJSON && xhr.responseJSON.message) || wpssUnifiedDashboard.i18n.errorOccurred, 'error');
+					$button.prop('disabled', false);
+				}
+			});
+		},
+
 		/**
 		 * Cancel a pending withdrawal (DELETE /withdrawals/{id}).
 		 *

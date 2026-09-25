@@ -165,6 +165,8 @@ class UnifiedDashboard {
 					'processing'              => __( 'Processing...', 'wp-sell-services' ),
 					'confirmDelete'           => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),
 					'confirmCancelWithdrawal' => __( 'Cancel this withdrawal request? The amount goes back to your available balance.', 'wp-sell-services' ),
+					'withdrawalFillRequired'  => __( 'Enter an amount, choose a payout method and fill in its details.', 'wp-sell-services' ),
+					'withdrawalSubmitted'     => __( 'Withdrawal request submitted.', 'wp-sell-services' ),
 					'pause'                   => __( 'Pause', 'wp-sell-services' ),
 					// The same button toggles between these two labels, but only
 					// 'pause' was ever sent -- so it read translated when paused and

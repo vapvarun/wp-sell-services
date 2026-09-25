@@ -35,7 +35,8 @@ $min_withdrawal   = EarningsService::get_min_withdrawal_amount();
 // call-to-action rather than a bare notice. Consumes the existing
 // .wpss-payout-banner primitive (design-system.css / unified-dashboard.css) —
 // info notice token surface, solid icon chip, primary-token CTA.
-$payout_method = get_user_meta( $user_id, 'wpss_payout_method', true );
+$payout_profile = EarningsService::get_payout_profile( $user_id );
+$payout_method  = $payout_profile['method'];
 
 // Say what is actually true of THIS vendor's balance.
 //
@@ -285,21 +286,41 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 						<select name="method" id="withdrawal_method" class="wpss-select" required>
 							<option value=""><?php esc_html_e( 'Select method', 'wp-sell-services' ); ?></option>
 							<?php foreach ( $methods as $key => $label ) : ?>
-								<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
+								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $payout_method, $key ); ?>><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</div>
 				</div>
 
-				<div class="wpss-form-group" id="wpss-payment-details-wrapper" style="display: none;">
-					<label for="payment_details"><?php esc_html_e( 'Payment Details', 'wp-sell-services' ); ?></label>
-					<textarea name="details"
-								id="payment_details"
-								class="wpss-textarea"
-								rows="3"
-								placeholder="<?php esc_attr_e( 'Enter your payment details (e.g., PayPal email, bank account info)', 'wp-sell-services' ); ?>"></textarea>
-					<span class="wpss-form-hint" id="wpss-method-hint"></span>
-				</div>
+				<?php
+				// Where the money goes: the payout profile, one field set per
+				// method, prefilled from what the vendor saved. The request saves
+				// any change (Basecamp 10336467884).
+				foreach ( $methods as $wpss_method => $wpss_method_label ) :
+					?>
+					<fieldset class="wpss-payout-fields" data-payout-method="<?php echo esc_attr( $wpss_method ); ?>"<?php echo $payout_method === $wpss_method ? '' : ' hidden'; ?>>
+						<legend class="screen-reader-text">
+							<?php
+							/* translators: %s: payout method */
+							echo esc_html( sprintf( __( '%s details', 'wp-sell-services' ), $wpss_method_label ) );
+							?>
+						</legend>
+						<?php foreach ( EarningsService::get_payout_fields( $wpss_method ) as $wpss_key => $wpss_field ) : ?>
+							<?php $wpss_id = 'payout_' . $wpss_method . '_' . $wpss_key; ?>
+							<div class="wpss-form-group">
+								<label for="<?php echo esc_attr( $wpss_id ); ?>"><?php echo esc_html( $wpss_field['label'] ); ?><?php echo ! empty( $wpss_field['required'] ) ? ' <span class="wpss-required" aria-hidden="true">*</span>' : ''; ?></label>
+								<?php
+								$wpss_value = $payout_method === $wpss_method ? ( $payout_profile['details'][ $wpss_key ] ?? '' ) : '';
+								if ( 'textarea' === $wpss_field['type'] ) :
+									?>
+									<textarea id="<?php echo esc_attr( $wpss_id ); ?>" class="wpss-textarea" rows="3" data-detail="<?php echo esc_attr( $wpss_key ); ?>"<?php echo ! empty( $wpss_field['required'] ) ? ' data-required="1"' : ''; ?>><?php echo esc_textarea( $wpss_value ); ?></textarea>
+								<?php else : ?>
+									<input type="<?php echo esc_attr( $wpss_field['type'] ); ?>" id="<?php echo esc_attr( $wpss_id ); ?>" class="wpss-input" value="<?php echo esc_attr( $wpss_value ); ?>" data-detail="<?php echo esc_attr( $wpss_key ); ?>"<?php echo ! empty( $wpss_field['required'] ) ? ' data-required="1"' : ''; ?>>
+								<?php endif; ?>
+							</div>
+						<?php endforeach; ?>
+					</fieldset>
+				<?php endforeach; ?>
 
 				<div class="wpss-form-group">
 					<button type="submit" class="wpss-btn wpss-btn--primary" id="wpss-withdrawal-submit">
@@ -496,86 +517,6 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 	</div>
 </div>
 
-<script>
-jQuery(function($) {
-	var $form = $('#wpss-withdrawal-form');
-	var $methodSelect = $('#withdrawal_method');
-	var $detailsWrapper = $('#wpss-payment-details-wrapper');
-	var $methodHint = $('#wpss-method-hint');
-	var $submitBtn = $('#wpss-withdrawal-submit');
-	var $message = $('#wpss-withdrawal-message');
-
-	// Method hints
-	var methodHints = {
-		'paypal': '<?php echo esc_js( __( 'Enter your PayPal email address', 'wp-sell-services' ) ); ?>',
-		'bank_transfer': '<?php echo esc_js( __( 'Enter your bank account details (Bank name, Account number, Routing number)', 'wp-sell-services' ) ); ?>'
-	};
-
-	// Show/hide payment details based on method selection
-	$methodSelect.on('change', function() {
-		var method = $(this).val();
-		if (method) {
-			$detailsWrapper.show();
-			$methodHint.text(methodHints[method] || '');
-		} else {
-			$detailsWrapper.hide();
-		}
-	});
-
-	// Form submission
-	$form.on('submit', function(e) {
-		e.preventDefault();
-
-		var amount = $('#withdrawal_amount').val();
-		var method = $methodSelect.val();
-		var details = $('#payment_details').val();
-
-		if (!amount || !method) {
-			showMessage('<?php echo esc_js( __( 'Please fill in all required fields.', 'wp-sell-services' ) ); ?>', 'error');
-			return;
-		}
-
-		$submitBtn.prop('disabled', true).text('<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>');
-
-		$.ajax({
-			url: wpssUnifiedDashboard.restUrl + 'withdrawals',
-			type: 'POST',
-			contentType: 'application/json',
-			data: JSON.stringify({
-				amount: parseFloat(amount),
-				method: method,
-				details: details
-			}),
-			beforeSend: function(xhr) {
-				xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
-			},
-			success: function() {
-				showMessage('<?php echo esc_js( __( 'Withdrawal request submitted successfully.', 'wp-sell-services' ) ); ?>', 'success');
-				$form[0].reset();
-				$detailsWrapper.hide();
-				setTimeout(function() {
-					location.reload();
-				}, 2000);
-			},
-			error: function(xhr) {
-				var msg = '<?php echo esc_js( __( 'An error occurred.', 'wp-sell-services' ) ); ?>';
-				try { msg = JSON.parse(xhr.responseText).message || msg; } catch(ex) {}
-				showMessage(msg, 'error');
-			},
-			complete: function() {
-				$submitBtn.prop('disabled', false).text('<?php echo esc_js( __( 'Request Withdrawal', 'wp-sell-services' ) ); ?>');
-			}
-		});
-	});
-
-	function showMessage(text, type) {
-		$message.removeClass('wpss-notice--success wpss-notice--error wpss-notice--info')
-			.addClass('wpss-notice--' + type)
-			.html('<p>' + text + '</p>')
-			.show();
-	}
-});
-</script>
 
 <?php
 /**

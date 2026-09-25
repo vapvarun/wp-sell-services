@@ -1625,3 +1625,11 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-co-methods__submit {
 	margin-top: var(--wpss-space-5, 20px);
 }
+
+/* Withdrawal form: the payout details for the chosen method (Basecamp 10336467884). */
+.wpss-payout-fields {
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
