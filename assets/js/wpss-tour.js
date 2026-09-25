@@ -132,12 +132,46 @@
 			return null;
 		}
 
+		// At 1024px and below the dashboard nav lives in a collapsed drawer
+		// (unified-dashboard.css). A step that points into it opens the drawer
+		// first, any other step closes it; otherwise the step anchors to a
+		// 0x0 hidden link and floats in the corner. The toggle is hidden on
+		// wider screens, where this does nothing.
+		function setDrawer( open ) {
+			var toggle = document.querySelector( '.wpss-dashboard__nav-toggle' );
+			if ( ! toggle || null === toggle.offsetParent ) {
+				return;
+			}
+			if ( open !== ( 'true' === toggle.getAttribute( 'aria-expanded' ) ) ) {
+				toggle.click();
+			}
+		}
+
+		function inDrawer( attachTo ) {
+			try {
+				var el = attachTo && attachTo.element && document.querySelector( attachTo.element );
+				return !! ( el && el.closest( '.wpss-dashboard__drawer' ) );
+			} catch ( e ) {
+				return false;
+			}
+		}
+
 		steps.forEach( function ( step ) {
 			var prepared = Object.assign( {}, step );
+			var opensDrawer = inDrawer( step.attachTo );
+			prepared.beforeShowPromise = function () {
+				setDrawer( opensDrawer );
+				return Promise.resolve();
+			};
 			if ( step.buttons ) {
 				prepared.buttons = normalizeButtons( step.buttons );
 			}
 			var resolved = resolveAttachTo( step.attachTo );
+			// A phone has no room beside a target: "right" slid the popup over
+			// the very item it points at. Below it keeps the item visible.
+			if ( resolved && window.innerWidth < 640 ) {
+				resolved = Object.assign( {}, resolved, { on: 'bottom' } );
+			}
 			if ( resolved ) {
 				prepared.attachTo = resolved;
 			} else {
@@ -152,6 +186,8 @@
 
 		tour.on( 'complete', persistCompletion );
 		tour.on( 'cancel',   persistCompletion );
+		tour.on( 'complete', function () { setDrawer( false ); } );
+		tour.on( 'cancel',   function () { setDrawer( false ); } );
 
 		return tour;
 	}
