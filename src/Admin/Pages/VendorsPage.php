@@ -606,7 +606,7 @@ class VendorsPage {
 								if ( $wpss_user ) {
 									printf(
 										'<a href="%s">%s</a>',
-										esc_url( admin_url( 'admin.php?page=wpss-vendors&vendor_id=' . $wpss_row['user_id'] ) ),
+										esc_url( admin_url( 'admin.php?page=wpss-vendors&action=view&vendor_id=' . $wpss_row['user_id'] ) ),
 										esc_html( $wpss_name )
 									);
 								} else {
@@ -1111,7 +1111,8 @@ class VendorsPage {
 				</div>
 				<div class="wpss-detail-stat-card">
 					<span class="wpss-detail-stat-number"><?php echo esc_html( wpss_format_price( (float) $wallet_balance ) ); ?></span>
-					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Balance', 'wp-sell-services' ); ?></span>
+					<?php // The ledger: what the vendor sees as Available + Withdrawal in progress. ?>
+					<span class="wpss-detail-stat-label"><?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?></span>
 				</div>
 				<div class="wpss-detail-stat-card">
 					<span class="wpss-detail-stat-number">
@@ -1384,7 +1385,7 @@ class VendorsPage {
 				</div>
 				<div class="wpss-vendor-stat">
 					<strong><?php echo esc_html( wpss_format_price( (float) $wallet_balance ) ); ?></strong>
-					<?php esc_html_e( 'Balance', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Wallet Balance', 'wp-sell-services' ); ?>
 				</div>
 			</div>
 
