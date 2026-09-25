@@ -2672,6 +2672,7 @@ class VendorsPage {
 		$current_level = $profile->verification_tier ?? VendorProfile::TIER_NEW;
 		$level_labels  = VendorProfile::get_tiers();
 		$auto_level    = $this->seller_level_service->calculate_level( $vendor_id );
+		$admin_set     = $this->seller_level_service->is_admin_set( $vendor_id );
 		?>
 		<div class="wpss-tab-section">
 			<h3><?php esc_html_e( 'Seller Level (Admin Override)', 'wp-sell-services' ); ?></h3>
@@ -2690,8 +2691,14 @@ class VendorsPage {
 						<?php esc_html_e( 'Seller Level', 'wp-sell-services' ); ?>
 					</label>
 					<select id="wpss-level-select-detail" data-vendor-id="<?php echo esc_attr( (string) $vendor_id ); ?>">
+						<option value="" <?php selected( ! $admin_set ); ?>>
+							<?php
+							/* translators: %s: calculated seller level label */
+							printf( esc_html__( 'Automatic (%s)', 'wp-sell-services' ), esc_html( $level_labels[ $auto_level ] ?? ucfirst( $auto_level ) ) );
+							?>
+						</option>
 						<?php foreach ( $level_labels as $level_key => $level_label ) : ?>
-							<option value="<?php echo esc_attr( $level_key ); ?>" <?php selected( $current_level, $level_key ); ?>>
+							<option value="<?php echo esc_attr( $level_key ); ?>" <?php selected( $admin_set && $current_level === $level_key ); ?>>
 								<?php echo esc_html( $level_label ); ?>
 							</option>
 						<?php endforeach; ?>
@@ -2705,7 +2712,7 @@ class VendorsPage {
 						<?php
 						printf(
 							/* translators: %s: current seller level label */
-							esc_html__( 'Current level: %s', 'wp-sell-services' ),
+							$admin_set ? esc_html__( 'Current level: %s (set by admin)', 'wp-sell-services' ) : esc_html__( 'Current level: %s (calculated)', 'wp-sell-services' ),
 							esc_html( $level_labels[ $current_level ] ?? ucfirst( $current_level ) )
 						);
 						?>
@@ -2828,16 +2835,13 @@ class VendorsPage {
 			wp_send_json_error( array( 'message' => __( 'Invalid vendor ID.', 'wp-sell-services' ) ) );
 		}
 
+		// '' hands the level back to the calculation (clears the override).
 		$allowed_levels = array_keys( VendorProfile::get_tiers() );
-		if ( ! in_array( $level, $allowed_levels, true ) ) {
+		if ( '' !== $level && ! in_array( $level, $allowed_levels, true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid seller level.', 'wp-sell-services' ) ) );
 		}
 
-		$result = $this->seller_level_service->update_vendor_level( $vendor_id, $level );
-
-		if ( ! $result ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to update seller level.', 'wp-sell-services' ) ) );
-		}
+		$level = $this->seller_level_service->set_admin_level( $vendor_id, $level );
 
 		wp_send_json_success(
 			array(

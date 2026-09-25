@@ -84,13 +84,17 @@ $response_time = $vendor_service->get_response_time( $vendor_id );
 // Shared resolver: renders a stored code as its country name, and leaves
 // legacy free-text values readable rather than blanking them.
 $country       = wpss_get_country_name( (string) ( $profile->country ?? '' ) );
-$member_since  = get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered;
+// The profile row's created_at, the date admin shows (the user meta this read
+// was never written, so it fell back to the account's registration date).
+$member_since  = ! empty( $profile->created_at ) ? $profile->created_at : $vendor->user_registered;
 $is_verified   = ( $profile->verification_tier ?? '' ) === VendorProfile::TIER_PRO;
 $social_links  = ! empty( $profile->social_links ) ? json_decode( $profile->social_links, true ) : [];
 
 // Stats from profile (cached in database).
-$rating_avg       = (float) ( $profile->rating_avg ?? 0 );
-$rating_count     = (int) ( $profile->rating_count ?? 0 );
+// avg_rating / total_reviews are the columns ReviewService keeps current;
+// rating_avg / rating_count do not exist, so the header never showed a rating.
+$rating_avg       = (float) ( $profile->avg_rating ?? 0 );
+$rating_count     = (int) ( $profile->total_reviews ?? 0 );
 $completed_orders = (int) ( $profile->completed_orders ?? 0 );
 
 // Get services (limited for display grid).
@@ -193,7 +197,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							// Colour comes from the .wpss-seller-badge--{tier} modifier in
 							// frontend.css (token-driven), not an inline style attribute.
 							?>
-							<span class="wpss-seller-badge wpss-seller-badge--lg wpss-seller-badge--<?php echo esc_attr( $tier ); ?>">
+							<span class="wpss-seller-badge wpss-seller-badge--lg wpss-seller-badge--<?php echo esc_attr( $tier ); ?>" title="<?php echo esc_attr( wpss_seller_level_note( $vendor_id, $tier ) ); ?>">
 								<?php if ( 'pro' === $tier ) : ?>
 									<i data-lucide="badge-check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 								<?php endif; ?>
@@ -429,6 +433,14 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 											</strong>
 											<span class="wpss-review-date">
 												<?php echo esc_html( wpss_time_ago( $review->created_at ) ); ?>
+												<?php
+												// Which service the review is about: a seller with several
+												// services is judged service by service.
+												$wpss_rev_service = ! empty( $review->service_id ) ? get_post( (int) $review->service_id ) : null;
+												if ( $wpss_rev_service && 'publish' === $wpss_rev_service->post_status ) :
+													?>
+													&middot; <a href="<?php echo esc_url( get_permalink( $wpss_rev_service ) ); ?>"><?php echo esc_html( $wpss_rev_service->post_title ); ?></a>
+												<?php endif; ?>
 											</span>
 										</div>
 										<div class="wpss-review-rating">
@@ -527,22 +539,39 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 				<?php endif; ?>
 
 				<!-- Social Links -->
+				<?php
+				// The icon spans this rendered (wpss-icon-twitter, ...) had no styles
+				// anywhere, so buyers saw blank circles. The bundled Lucide carries no
+				// brand logos, so each link is a generic icon plus the platform's
+				// name, which is also its accessible name. Empty URLs are dropped
+				// first so an all-empty set hides the whole card.
+				$social_names = array(
+					'twitter'   => 'X (Twitter)',
+					'x'         => 'X',
+					'linkedin'  => 'LinkedIn',
+					'facebook'  => 'Facebook',
+					'instagram' => 'Instagram',
+					'github'    => 'GitHub',
+					'youtube'   => 'YouTube',
+					'dribbble'  => 'Dribbble',
+					'behance'   => 'Behance',
+					'website'   => __( 'Website', 'wp-sell-services' ),
+				);
+				$social_links = array_filter( is_array( $social_links ) ? $social_links : array() );
+				?>
 				<?php if ( ! empty( $social_links ) ) : ?>
 					<div class="wpss-sidebar-card">
 						<h4><?php esc_html_e( 'Connect', 'wp-sell-services' ); ?></h4>
-						<div class="wpss-social-links">
+						<ul class="wpss-social-links">
 							<?php foreach ( $social_links as $platform => $url ) : ?>
-								<?php if ( ! empty( $url ) ) : ?>
-									<a href="<?php echo esc_url( $url ); ?>"
-									   class="wpss-social-link wpss-social-<?php echo esc_attr( $platform ); ?>"
-									   target="_blank"
-									   rel="noopener noreferrer"
-									   title="<?php echo esc_attr( ucfirst( $platform ) ); ?>">
-										<span class="wpss-icon-<?php echo esc_attr( $platform ); ?>"></span>
+								<li>
+									<a href="<?php echo esc_url( $url ); ?>" class="wpss-social-link" target="_blank" rel="noopener noreferrer me">
+										<i data-lucide="<?php echo esc_attr( 'website' === $platform ? 'globe' : 'external-link' ); ?>" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
+										<span><?php echo esc_html( $social_names[ $platform ] ?? ucfirst( (string) $platform ) ); ?></span>
 									</a>
-								<?php endif; ?>
+								</li>
 							<?php endforeach; ?>
-						</div>
+						</ul>
 					</div>
 				<?php endif; ?>
 

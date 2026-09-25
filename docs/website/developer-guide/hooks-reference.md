@@ -270,7 +270,7 @@ guide; this is the complete index.
 | `wpss_vendor_dashboard_after` | 1 | `templates/myaccount/vendor-dashboard.php` | Fires after the vendor dashboard content. |
 | `wpss_vendor_dashboard_before` | 1 | `templates/myaccount/vendor-dashboard.php` | Fires before the vendor dashboard content. |
 | `wpss_vendor_dashboard_widgets` | 1 | `templates/myaccount/vendor-dashboard.php` | Fires at the start of vendor dashboard body for custom widgets. |
-| `wpss_vendor_level_promoted` | 3 | `src/Services/OrderWorkflowManager.php` | Fires when a vendor is promoted to a higher level. |
+| `wpss_vendor_level_promoted` | 3 | `src/Services/SellerLevelService.php` | Fires when a vendor is promoted to a higher level. |
 | `wpss_vendor_level_updated` | 2 | `src/Services/SellerLevelService.php` | Fires when a vendor's level is updated. |
 | `wpss_vendor_profile_bio` | 1 | `templates/vendor/profile.php` | Hook: wpss_vendor_profile_bio |
 | `wpss_vendor_profile_header` | 1 | `templates/vendor/profile.php` | Hook: wpss_vendor_profile_header |

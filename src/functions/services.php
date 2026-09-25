@@ -1755,7 +1755,26 @@ add_action(
 		if ( $order && (int) $order->service_id > 0 ) {
 			wpss_sync_service_order_count( (int) $order->service_id );
 		}
+
+		// A seller's level follows completed orders now, not a week later.
+		if ( $order && 'completed' === $order->status && (int) $order->vendor_id > 0 ) {
+			( new \WPSellServices\Services\SellerLevelService() )->recalculate( (int) $order->vendor_id );
+		}
 	},
 	30
+);
+
+// ...and follows the rating as soon as a review lands.
+add_action(
+	'wpss_review_created',
+	static function ( $review_id, $order_id ) {
+		$order = wpss_get_order( (int) $order_id );
+
+		if ( $order && (int) $order->vendor_id > 0 ) {
+			( new \WPSellServices\Services\SellerLevelService() )->recalculate( (int) $order->vendor_id );
+		}
+	},
+	30,
+	2
 );
 

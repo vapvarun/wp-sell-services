@@ -45,7 +45,8 @@ do_action( 'wpss_before_vendor_portfolio', $vendor_id );
 	position: relative;
 	border-radius: var( --wpss-radius, 8px );
 	overflow: hidden;
-	background: var( --wpss-bg, #fff );
+	/* Muted, like the placeholder: a lazy image not yet loaded reads as a tile, not a blank. */
+	background: var( --wpss-bg-muted, #f3f4f6 );
 	box-shadow: var( --wpss-shadow-sm, 0 1px 3px rgba(0,0,0,.1) );
 	aspect-ratio: 4 / 3;
 }

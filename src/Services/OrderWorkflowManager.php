@@ -638,69 +638,7 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	public function recalculate_seller_levels(): void {
-		$seller_level_service = new SellerLevelService();
-
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_vendor_profiles';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$vendors = $wpdb->get_results(
-			"SELECT user_id, verification_tier FROM {$table}"
-		);
-
-		foreach ( $vendors as $vendor ) {
-			$user_id       = (int) $vendor->user_id;
-			$current_level = $vendor->verification_tier ?? VendorProfile::TIER_NEW;
-			$new_level     = $seller_level_service->calculate_level( $user_id );
-
-			// Skip Pro vendors — their tier is admin-granted only.
-			if ( VendorProfile::TIER_PRO === $current_level ) {
-				continue;
-			}
-
-			// Only update if level changed.
-			if ( $new_level !== $current_level ) {
-				$seller_level_service->update_vendor_level( $user_id, $new_level );
-
-				// Check if this is a promotion (not demotion).
-				$level_order = [
-					VendorProfile::TIER_NEW,
-					VendorProfile::TIER_RISING,
-					VendorProfile::TIER_TOP_RATED,
-				];
-
-				$current_index = array_search( $current_level, $level_order, true );
-				$new_index     = array_search( $new_level, $level_order, true );
-
-				if ( false !== $new_index && false !== $current_index && $new_index > $current_index ) {
-					// This is a promotion - notify vendor.
-					$level_label = SellerLevelService::get_level_label( $new_level );
-
-					$this->notification_service->create(
-						$user_id,
-						'seller_level_promotion',
-						__( 'Congratulations! Level Up!', 'wp-sell-services' ),
-						sprintf(
-							/* translators: %s: new seller level */
-							__( 'You have been promoted to %s! Keep up the great work.', 'wp-sell-services' ),
-							$level_label
-						),
-						[ 'new_level' => $new_level ]
-					);
-
-					/**
-					 * Fires when a vendor is promoted to a higher level.
-					 *
-					 * @since 1.0.0
-					 *
-					 * @param int    $user_id       Vendor user ID.
-					 * @param string $new_level     New seller level.
-					 * @param string $current_level Previous seller level.
-					 */
-					do_action( 'wpss_vendor_level_promoted', $user_id, $new_level, $current_level );
-				}
-			}
-		}
+		( new SellerLevelService() )->recalculate_all_levels();
 	}
 
 	/**

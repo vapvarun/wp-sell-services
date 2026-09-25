@@ -173,7 +173,7 @@ do_action( 'wpss_before_service_card', $service_id );
 							// Colour comes from the .wpss-seller-badge--{tier} modifier in
 							// frontend.css (token-driven), not an inline style attribute.
 							?>
-							<span class="wpss-seller-badge wpss-seller-badge--<?php echo esc_attr( $card_tier ); ?>">
+							<span class="wpss-seller-badge wpss-seller-badge--<?php echo esc_attr( $card_tier ); ?>" title="<?php echo esc_attr( wpss_seller_level_note( (int) $card_vendor_profile->user_id, $card_tier ) ); ?>">
 								<?php echo esc_html( $card_tier_label ); ?>
 							</span>
 							<?php

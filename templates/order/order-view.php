@@ -984,8 +984,9 @@ do_action( 'wpss_before_order_view', $order );
 						<strong class="wpss-party-info__name"><?php echo esc_html( $other_party_name ); ?></strong>
 						<?php if ( ! $is_vendor && $other_party ) : ?>
 							<?php
-							$vendor_rating = (float) get_user_meta( $other_party->ID, '_wpss_rating_average', true );
-							$vendor_count  = (int) get_user_meta( $other_party->ID, '_wpss_rating_count', true );
+							$wpss_vp       = wpss_get_vendor( $other_party->ID ); // Profile row: the _wpss_rating_* user meta is never written for vendors.
+							$vendor_rating = $wpss_vp ? $wpss_vp->rating : 0.0;
+							$vendor_count  = $wpss_vp ? $wpss_vp->review_count : 0;
 							?>
 							<?php if ( $vendor_count > 0 ) : ?>
 								<div class="wpss-party-info__rating">

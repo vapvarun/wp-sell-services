@@ -2365,7 +2365,7 @@ a.wpss-back-link:focus {
 
 .wpss-profile-info {
 	display: flex;
-	align-items: flex-end;
+	align-items: flex-start;
 	gap: 20px;
 	margin-top: -50px;
 	padding: 0 30px;
@@ -2401,9 +2401,19 @@ a.wpss-back-link:focus {
 	padding: 4px;
 }
 
+/* The row rises 50px over the cover for the avatar; the text starts below
+   the cover however many lines it has (bottom-aligned, each added line - the
+   rating row - pushed the name and the level pill into the cover). */
 .wpss-profile-details {
 	flex: 1;
+	padding-top: calc(50px + var(--wpss-space-3, 12px));
 	padding-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+	.wpss-profile-details {
+		padding-top: 0;
+	}
 }
 
 .wpss-profile-name {
@@ -2441,6 +2451,12 @@ a.wpss-back-link:focus {
 @media (max-width: 992px) {
 	.wpss-profile-layout {
 		grid-template-columns: 1fr;
+	}
+
+	/* One column: the at-a-glance card (response time, active services,
+	   orders) leads instead of landing after every review. */
+	.wpss-profile-sidebar {
+		order: -1;
 	}
 }
 
@@ -2533,18 +2549,25 @@ a.wpss-back-link:focus {
 /* Social Links */
 .wpss-social-links {
 	display: flex;
-	gap: 10px;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 
 .wpss-social-link {
-	display: flex;
+	display: inline-flex;
 	align-items: center;
-	justify-content: center;
-	width: 36px;
-	height: 36px;
+	gap: 6px;
+	min-height: 36px;
+	padding: 0 12px;
 	background: var(--wpss-background);
-	border-radius: 50%;
+	border-radius: var(--wpss-radius-full, 999px);
 	color: var(--wpss-text);
+	font-size: 13px;
+	font-weight: 500;
+	text-decoration: none;
 	transition: all var(--wpss-transition);
 }
 

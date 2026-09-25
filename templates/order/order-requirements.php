@@ -146,8 +146,9 @@ do_action( 'wpss_before_requirements_form', $order );
 							<div class="wpss-order-card__user-info">
 								<strong><?php echo esc_html( wpss_get_member_display_name( (int) $order->vendor_id ) ); ?></strong>
 								<?php
-								$vendor_rating = (float) get_user_meta( (int) $order->vendor_id, '_wpss_rating_average', true );
-								$vendor_count  = (int) get_user_meta( (int) $order->vendor_id, '_wpss_rating_count', true );
+								$wpss_vp       = wpss_get_vendor( (int) $order->vendor_id ); // Profile row: the _wpss_rating_* user meta is never written for vendors.
+								$vendor_rating = $wpss_vp ? $wpss_vp->rating : 0.0;
+								$vendor_count  = $wpss_vp ? $wpss_vp->review_count : 0;
 								?>
 								<?php if ( $vendor_count > 0 ) : ?>
 									<span class="wpss-order-card__rating">

@@ -26,21 +26,20 @@ if ( ! $vendor ) {
 	return;
 }
 
-// Canonical vendor data lives in the wpss_vendor_profiles table (1.2.0
-// migration) — the _wpss_vendor_tagline/country/verified and
-// _wpss_completed_orders user-meta keys were never written. Rating,
-// response time, and member-since meta keys DO have write paths.
+// Every figure comes from the vendor profile (wpss_vendor_profiles, via the
+// model), the same row admin reads: the _wpss_rating_* and _wpss_vendor_since
+// user meta this card used were never written for vendors, so no card ever
+// showed a rating and "member since" fell back to the account's registration.
 $vendor_profile   = wpss_get_vendor( $vendor_id );
 $tagline          = $vendor_profile ? $vendor_profile->title : '';
-$rating_avg       = (float) get_user_meta( $vendor_id, '_wpss_rating_average', true );
-$rating_count     = (int) get_user_meta( $vendor_id, '_wpss_rating_count', true );
+$rating_avg       = $vendor_profile ? $vendor_profile->rating : 0.0;
+$rating_count     = $vendor_profile ? $vendor_profile->review_count : 0;
 $completed_orders = $vendor_profile ? $vendor_profile->orders_completed : 0;
 $response_time    = get_user_meta( $vendor_id, '_wpss_vendor_response_time', true );
 // Through the shared resolver so a code renders as a name and legacy
 // free-text values still display. Same call on every country surface.
 $country       = $vendor_profile ? wpss_get_country_name( (string) $vendor_profile->country ) : '';
-$member_since  = get_user_meta( $vendor_id, '_wpss_vendor_since', true );
-$member_since  = $member_since ? $member_since : $vendor->user_registered;
+$member_since  = $vendor_profile && $vendor_profile->member_since ? $vendor_profile->member_since->format( 'Y-m-d H:i:s' ) : $vendor->user_registered;
 $is_verified   = $vendor_profile && $vendor_profile->is_verified;
 $is_online     = get_user_meta( $vendor_id, '_wpss_last_active', true );
 $last_delivery = wpss_get_vendor_last_delivery( $vendor_id );
@@ -86,7 +85,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 					// Colour comes from the .wpss-seller-badge--{tier} modifier in
 					// frontend.css (token-driven), not an inline style attribute.
 					?>
-					<span class="wpss-seller-badge wpss-seller-badge--md wpss-seller-badge--<?php echo esc_attr( $tier ); ?>">
+					<span class="wpss-seller-badge wpss-seller-badge--md wpss-seller-badge--<?php echo esc_attr( $tier ); ?>" title="<?php echo esc_attr( wpss_seller_level_note( $vendor_id, $tier ) ); ?>">
 						<?php if ( 'pro' === $tier ) : ?>
 							<i data-lucide="badge-check" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
 						<?php endif; ?>

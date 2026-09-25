@@ -916,3 +916,22 @@ function wpss_render_vendor_vacation_notice( int $vendor_id ): void {
 	</div>
 	<?php
 }
+
+/**
+ * Where a seller's level badge comes from, for its tooltip.
+ *
+ * Levels are computed from stats unless an admin set them
+ * (SellerLevelService); the badge says which, so "Pro Seller" on a new
+ * account reads as an award rather than a miscount.
+ *
+ * @since 1.8.0
+ *
+ * @param int    $vendor_id Vendor user ID.
+ * @param string $tier      The vendor's current level.
+ * @return string
+ */
+function wpss_seller_level_note( int $vendor_id, string $tier ): string {
+	return \WPSellServices\Services\SellerLevelService::level_is_admin_set( $vendor_id, $tier )
+		? __( 'Awarded by the marketplace team', 'wp-sell-services' )
+		: __( 'Earned from completed orders, rating and on-time delivery', 'wp-sell-services' );
+}

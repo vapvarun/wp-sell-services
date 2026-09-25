@@ -1758,6 +1758,15 @@ class SchemaManager {
 	private function run_1_8_0_data_migrations(): void {
 		$this->reword_stored_notifications();
 
+		// Seller levels follow stats unless an admin chose them. Pro is
+		// admin-only, so existing Pro rows are marked admin-set before the
+		// first recalculation; everyone else is recalculated from their stats.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		foreach ( $this->wpdb->get_col( "SELECT user_id FROM {$this->prefix}vendor_profiles WHERE verification_tier = 'pro'" ) as $wpss_pro_id ) {
+			update_user_meta( (int) $wpss_pro_id, \WPSellServices\Services\SellerLevelService::ADMIN_SET_META, 1 );
+		}
+		( new \WPSellServices\Services\SellerLevelService() )->recalculate_all_levels();
+
 		// Proposal counts come from the proposals table now; this meta was only
 		// ever written by the demo seeder and read by the request card.
 		delete_post_meta_by_key( '_wpss_proposal_count' );
