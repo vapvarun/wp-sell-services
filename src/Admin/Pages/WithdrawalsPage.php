@@ -214,17 +214,19 @@ class WithdrawalsPage {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_withdrawals';
 
-		$defaults = array(
-			'per_page' => 20,
-			'page'     => 1,
-			'status'   => '',
-			'method'   => '',
+		$args = wp_parse_args(
+			$args,
+			array(
+				'per_page' => 20,
+				'page'     => 1,
+				'status'   => '',
+				'method'   => '',
+				'search'   => '',
+				'orderby'  => 'created_at',
+				'order'    => 'DESC',
+			)
 		);
 
-		$args   = wp_parse_args( $args, $defaults );
-		$offset = ( $args['page'] - 1 ) * $args['per_page'];
-
-		// Build query.
 		$where  = array( '1=1' );
 		$values = array();
 
@@ -238,51 +240,43 @@ class WithdrawalsPage {
 			$values[] = $args['method'];
 		}
 
-		$where_clause = implode( ' AND ', $where );
-
-		// Count total.
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where_clause is built from hardcoded fragments with %s/%d placeholders only; user values pass through prepare() below.
-		$count_query = "SELECT COUNT(*) FROM {$table} w WHERE {$where_clause}";
-
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $count_query has hardcoded fragments only.
-		$total = $values
-			? (int) $wpdb->get_var( $wpdb->prepare( $count_query, ...$values ) )
-			: (int) $wpdb->get_var( $count_query );
-		// phpcs:enable
-
-		// Get withdrawals.
-		$query_values   = $values;
-		$query_values[] = $args['per_page'];
-		$query_values[] = $offset;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		if ( $values ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$withdrawals = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT w.*, u.display_name as vendor_name, u.user_email as vendor_email
-					FROM {$table} w
-					LEFT JOIN {$wpdb->users} u ON w.vendor_id = u.ID
-					WHERE {$where_clause}
-					ORDER BY w.created_at DESC
-					LIMIT %d OFFSET %d",
-					$query_values
-				)
-			);
-		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$withdrawals = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT w.*, u.display_name as vendor_name, u.user_email as vendor_email
-					FROM {$table} w
-					LEFT JOIN {$wpdb->users} u ON w.vendor_id = u.ID
-					ORDER BY w.created_at DESC
-					LIMIT %d OFFSET %d",
-					$args['per_page'],
-					$offset
-				)
-			);
+		// Vendor search: name, email or login.
+		if ( '' !== $args['search'] ) {
+			$like     = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+			$where[]  = '( u.display_name LIKE %s OR u.user_email LIKE %s OR u.user_login LIKE %s )';
+			$values[] = $like;
+			$values[] = $like;
+			$values[] = $like;
 		}
+
+		// Whitelisted: the orderby value is interpolated.
+		$columns = array(
+			'id'         => 'w.id',
+			'amount'     => 'w.amount',
+			'status'     => 'w.status',
+			'created_at' => 'w.created_at',
+		);
+		$orderby = $columns[ $args['orderby'] ] ?? 'w.created_at';
+		$order   = 'ASC' === $args['order'] ? 'ASC' : 'DESC';
+
+		$where_clause = implode( ' AND ', $where );
+		$from         = "{$table} w LEFT JOIN {$wpdb->users} u ON w.vendor_id = u.ID";
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- fragments are hardcoded or whitelisted; values go through prepare().
+		$count_sql = "SELECT COUNT(*) FROM {$from} WHERE {$where_clause}";
+		$total     = (int) $wpdb->get_var( $values ? $wpdb->prepare( $count_sql, ...$values ) : $count_sql );
+
+		$withdrawals = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT w.*, u.display_name as vendor_name, u.user_email as vendor_email
+				FROM {$from}
+				WHERE {$where_clause}
+				ORDER BY {$orderby} {$order}, w.id DESC
+				LIMIT %d OFFSET %d",
+				...array_merge( $values, array( (int) $args['per_page'], ( (int) $args['page'] - 1 ) * (int) $args['per_page'] ) )
+			)
+		);
+		// phpcs:enable
 
 		return array(
 			'withdrawals' => $withdrawals,
@@ -309,6 +303,7 @@ class WithdrawalsPage {
 				SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
 				SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
 				SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) as pending_amount,
+				SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END) as approved_amount,
 				SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END) as completed_amount
 			FROM {$table}"
 		);
@@ -320,6 +315,7 @@ class WithdrawalsPage {
 			'completed'        => (int) ( $stats->completed ?? 0 ),
 			'rejected'         => (int) ( $stats->rejected ?? 0 ),
 			'pending_amount'   => (float) ( $stats->pending_amount ?? 0 ),
+			'approved_amount'  => (float) ( $stats->approved_amount ?? 0 ),
 			'completed_amount' => (float) ( $stats->completed_amount ?? 0 ),
 		);
 	}
@@ -336,6 +332,11 @@ class WithdrawalsPage {
 		$status = isset( $_GET['status'] ) ? sanitize_key( $_GET['status'] ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$method = isset( $_GET['method'] ) ? sanitize_key( $_GET['method'] ) : '';
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only list controls.
+		$search  = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
+		$orderby = isset( $_GET['orderby'] ) ? sanitize_key( $_GET['orderby'] ) : 'created_at';
+		$order   = isset( $_GET['order'] ) && 'ASC' === strtoupper( sanitize_key( $_GET['order'] ) ) ? 'ASC' : 'DESC';
+		// phpcs:enable
 
 		$statuses = EarningsService::get_withdrawal_statuses();
 		$methods  = EarningsService::get_withdrawal_methods();
@@ -347,9 +348,12 @@ class WithdrawalsPage {
 
 		$result      = $this->get_withdrawals(
 			array(
-				'page'   => $current_page,
-				'status' => $status,
-				'method' => $method,
+				'page'    => $current_page,
+				'status'  => $status,
+				'method'  => $method,
+				'search'  => $search,
+				'orderby' => $orderby,
+				'order'   => $order,
 			)
 		);
 		$withdrawals = $result['withdrawals'];
@@ -389,7 +393,8 @@ class WithdrawalsPage {
 				</div>
 				<div class="wpss-stat-card wpss-stat-approved">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['approved'] ) ); ?></span>
-					<span class="wpss-stat-label"><?php esc_html_e( 'Approved', 'wp-sell-services' ); ?></span>
+					<span class="wpss-stat-label"><?php esc_html_e( 'Approved, not yet paid', 'wp-sell-services' ); ?></span>
+					<span class="wpss-stat-amount"><?php echo esc_html( wpss_format_price( $stats['approved_amount'] ) ); ?></span>
 				</div>
 				<div class="wpss-stat-card wpss-stat-completed">
 					<span class="wpss-stat-number"><?php echo esc_html( number_format_i18n( $stats['completed'] ) ); ?></span>
@@ -442,6 +447,8 @@ class WithdrawalsPage {
 								</option>
 							<?php endforeach; ?>
 						</select>
+						<label for="wpss-withdrawals-search" class="screen-reader-text"><?php esc_html_e( 'Search vendors', 'wp-sell-services' ); ?></label>
+						<input type="search" id="wpss-withdrawals-search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Vendor name or email', 'wp-sell-services' ); ?>">
 						<button type="submit" class="button"><?php esc_html_e( 'Filter', 'wp-sell-services' ); ?></button>
 					</form>
 
@@ -507,12 +514,12 @@ class WithdrawalsPage {
 						<td class="manage-column column-cb check-column">
 							<input type="checkbox" id="cb-select-all-1" aria-label="<?php esc_attr_e( 'Select all withdrawals', 'wp-sell-services' ); ?>">
 						</td>
-						<th scope="col" class="column-id"><?php esc_html_e( 'ID', 'wp-sell-services' ); ?></th>
+						<?php wpss_admin_sortable_th( 'id', 'id', __( 'ID', 'wp-sell-services' ), $orderby, $order ); ?>
 						<th scope="col" class="column-vendor"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-amount"><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-method"><?php esc_html_e( 'Method', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-date"><?php esc_html_e( 'Date', 'wp-sell-services' ); ?></th>
+						<?php wpss_admin_sortable_th( 'amount', 'amount', __( 'Amount', 'wp-sell-services' ), $orderby, $order ); ?>
+						<th scope="col" class="column-method"><?php esc_html_e( 'Payout to', 'wp-sell-services' ); ?></th>
+						<?php wpss_admin_sortable_th( 'status', 'status', __( 'Status', 'wp-sell-services' ), $orderby, $order ); ?>
+						<?php wpss_admin_sortable_th( 'date', 'created_at', __( 'Date', 'wp-sell-services' ), $orderby, $order ); ?>
 						<th scope="col" class="column-actions"><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></th>
 					</tr>
 				</thead>
@@ -529,7 +536,7 @@ class WithdrawalsPage {
 						<th scope="col" class="column-id"><?php esc_html_e( 'ID', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-vendor"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-amount"><?php esc_html_e( 'Amount', 'wp-sell-services' ); ?></th>
-						<th scope="col" class="column-method"><?php esc_html_e( 'Method', 'wp-sell-services' ); ?></th>
+						<th scope="col" class="column-method"><?php esc_html_e( 'Payout to', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-date"><?php esc_html_e( 'Date', 'wp-sell-services' ); ?></th>
 						<th scope="col" class="column-actions"><?php esc_html_e( 'Actions', 'wp-sell-services' ); ?></th>
@@ -538,35 +545,7 @@ class WithdrawalsPage {
 			</table>
 
 			<!-- Pagination -->
-				<?php if ( $total_pages > 1 ) : ?>
-				<div class="tablenav bottom">
-					<div class="tablenav-pages">
-						<span class="displaying-num">
-							<?php
-							printf(
-								/* translators: %s: number of items */
-								esc_html( _n( '%s item', '%s items', $total, 'wp-sell-services' ) ),
-								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- number_format_i18n() is a safe formatting function.
-								number_format_i18n( $total )
-							);
-							?>
-						</span>
-						<span class="pagination-links">
-							<?php
-							$pagination_args = array(
-								'base'      => add_query_arg( 'paged', '%#%' ),
-								'format'    => '',
-								'prev_text' => '&laquo;',
-								'next_text' => '&raquo;',
-								'total'     => $total_pages,
-								'current'   => $current_page,
-							);
-							echo wp_kses_post( paginate_links( $pagination_args ) );
-							?>
-						</span>
-					</div>
-				</div>
-			<?php endif; ?>
+				<?php wpss_admin_list_pager( (int) $total, 20 ); // get_withdrawals() pages by 20. ?>
 			<?php endif; // withdrawals empty check. ?>
 				</div><!-- .wpss-list-card__body -->
 			</div><!-- .wpss-list-card -->
@@ -670,6 +649,11 @@ class WithdrawalsPage {
 						echo esc_html( EarningsService::format_payout_destination( (string) $withdrawal->method, $details, false ) );
 						?>
 					</div>
+				<?php else : ?>
+					<?php // Requests before 1.8.0 could be made with no details; say so beside Mark paid rather than show a bare method. ?>
+					<div class="wpss-withdrawal-details wpss-withdrawal-details--missing">
+						<?php esc_html_e( 'No payout details on file. Ask the vendor before paying.', 'wp-sell-services' ); ?>
+					</div>
 				<?php endif; ?>
 			</td>
 			<td class="column-status" data-colname="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
@@ -678,14 +662,15 @@ class WithdrawalsPage {
 				</span>
 			</td>
 			<td class="column-date" data-colname="<?php esc_attr_e( 'Date', 'wp-sell-services' ); ?>">
-				<?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $withdrawal->created_at ) ) ); ?>
+				<?php $wpss_created = strtotime( (string) $withdrawal->created_at ); // Same short date as the Orders list, full date and time on hover. ?>
+				<span title="<?php echo esc_attr( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $wpss_created ) ); ?>"><?php echo esc_html( wp_date( 'M j, Y', $wpss_created ) ); ?></span>
 				<?php if ( ! empty( $withdrawal->processed_at ) ) : ?>
 					<div class="wpss-withdrawal-details">
 						<?php
 						printf(
 							/* translators: %s: date */
 							esc_html__( 'Processed: %s', 'wp-sell-services' ),
-							esc_html( date_i18n( get_option( 'date_format' ), strtotime( $withdrawal->processed_at ) ) )
+							esc_html( wp_date( 'M j, Y', strtotime( (string) $withdrawal->processed_at ) ) )
 						);
 						?>
 					</div>

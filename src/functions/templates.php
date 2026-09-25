@@ -680,3 +680,43 @@ function wpss_admin_list_pager( int $total, int $per_page ): void {
 
 	$pager->print_pager( $total, $per_page );
 }
+
+/**
+ * A sortable column's <th> for an admin list built without WP_List_Table.
+ *
+ * WordPress core's list-table CSS keys the arrows off the <th>'s own
+ * sortable/sorted classes, so the whole <th> is printed here. Links keep the
+ * rest of the current query (filters, search) and flip the order.
+ *
+ * @since 1.8.0
+ *
+ * @param string $slug    Column class slug (column-{slug}).
+ * @param string $column  Orderby key.
+ * @param string $label   Column label.
+ * @param string $current Current orderby.
+ * @param string $order   Current order, ASC or DESC.
+ * @param string $extra   Optional pre-escaped markup after the label (a screen-reader note).
+ * @param string $title   Optional tooltip.
+ * @return void
+ */
+function wpss_admin_sortable_th( string $slug, string $column, string $label, string $current, string $order, string $extra = '', string $title = '' ): void {
+	$is_sorted = $current === $column;
+
+	printf(
+		'<th scope="col" class="manage-column column-%1$s %2$s"%6$s><a href="%3$s"><span>%4$s</span><span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span class="sorting-indicator desc" aria-hidden="true"></span></span>%5$s</a></th>',
+		esc_attr( $slug ),
+		esc_attr( $is_sorted ? 'sorted ' . strtolower( $order ) : 'sortable asc' ),
+		esc_url(
+			add_query_arg(
+				array(
+					'orderby' => $column,
+					'order'   => $is_sorted && 'ASC' === $order ? 'DESC' : 'ASC',
+					'paged'   => false,
+				)
+			)
+		),
+		esc_html( $label ),
+		$extra, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- caller passes escaped markup.
+		'' !== $title ? ' title="' . esc_attr( $title ) . '"' : ''
+	);
+}

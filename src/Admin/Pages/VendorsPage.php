@@ -739,13 +739,13 @@ class VendorsPage {
 						// also stops three buttons wrapping onto two lines and
 						// inflating every row's height.
 						?>
-						<?php $this->sortable_column_header( 'vendor', 'display_name', __( 'Vendor', 'wp-sell-services' ), $orderby, $order ); ?>
+						<?php wpss_admin_sortable_th( 'vendor', 'display_name', __( 'Vendor', 'wp-sell-services' ), $orderby, $order ); ?>
 						<th scope="col" class="column-services">
 							<?php esc_html_e( 'Services', 'wp-sell-services' ); ?>
 						</th>
-						<?php $this->sortable_column_header( 'orders', 'total_orders', __( 'Orders', 'wp-sell-services' ), $orderby, $order ); ?>
-						<?php $this->sortable_column_header( 'rating', 'rating', __( 'Rating', 'wp-sell-services' ), $orderby, $order ); ?>
-						<?php $this->sortable_column_header( 'earnings', 'total_earned', __( 'Earned', 'wp-sell-services' ), $orderby, $order ); ?>
+						<?php wpss_admin_sortable_th( 'orders', 'total_orders', __( 'Orders', 'wp-sell-services' ), $orderby, $order, '<span class="screen-reader-text">' . esc_html__( '(every order placed, any status)', 'wp-sell-services' ) . '</span>', __( 'Every order placed with this vendor, any status', 'wp-sell-services' ) ); ?>
+						<?php wpss_admin_sortable_th( 'rating', 'rating', __( 'Rating', 'wp-sell-services' ), $orderby, $order ); ?>
+						<?php wpss_admin_sortable_th( 'earnings', 'total_earned', __( 'Earned', 'wp-sell-services' ), $orderby, $order ); ?>
 						<th scope="col" class="column-status">
 							<?php esc_html_e( 'Status', 'wp-sell-services' ); ?>
 						</th>
@@ -905,41 +905,6 @@ class VendorsPage {
 
 		$ids = wpss_get_role_only_vendor_ids();
 		$query->set( 'include', $ids ? $ids : array( 0 ) );
-	}
-
-	/**
-	 * Render a sortable column's whole <th>.
-	 *
-	 * @param string $slug    Column class slug (column-{slug}).
-	 * @param string $column  Orderby key.
-	 * @param string $label   Column label.
-	 * @param string $current Current orderby.
-	 * @param string $order   Current order.
-	 * @return void
-	 */
-	private function sortable_column_header( string $slug, string $column, string $label, string $current, string $order ): void {
-		$is_sorted = $current === $column;
-		$new_order = $is_sorted && 'ASC' === $order ? 'DESC' : 'ASC';
-
-		// WordPress core's list-table CSS keys the arrows off the <th>'s own
-		// sortable/sorted classes. They sat on the <a>, so the indicators fell
-		// below the label and shifted a column left.
-		printf(
-			'<th scope="col" class="manage-column column-%1$s %2$s"%6$s><a href="%3$s"><span>%4$s</span><span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span class="sorting-indicator desc" aria-hidden="true"></span></span>%5$s</a></th>',
-			esc_attr( $slug ),
-			esc_attr( $is_sorted ? 'sorted ' . strtolower( $order ) : 'sortable asc' ),
-			esc_url(
-				add_query_arg(
-					array(
-						'orderby' => $column,
-						'order'   => $new_order,
-					)
-				)
-			),
-			esc_html( $label ),
-			'orders' === $slug ? '<span class="screen-reader-text">' . esc_html__( '(every order placed, any status)', 'wp-sell-services' ) . '</span>' : '',
-			'orders' === $slug ? ' title="' . esc_attr__( 'Every order placed with this vendor, any status', 'wp-sell-services' ) . '"' : ''
-		);
 	}
 
 	/**

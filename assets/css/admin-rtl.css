@@ -1979,6 +1979,12 @@
 	font-weight: 500;
 }
 
+/* Withdrawals: a request with no payout destination says so beside Mark paid. */
+.wpss-withdrawal-details--missing {
+	color: var(--wpss-admin-danger, #b32d2e);
+	font-weight: 500;
+}
+
 .wpss-vendor-email {
 	font-size: 12px;
 	color: var(--wpss-admin-text-light);
