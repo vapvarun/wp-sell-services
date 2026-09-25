@@ -95,8 +95,8 @@ $refund    = static function ( int $id, ?float $amount, string $status ) use ( $
 $gateway_answer = array( 'success' => false, 'message' => 'Your card was declined.' );
 $gateway_calls  = 0;
 $mock           = static function ( $handled, $order ) use ( &$gateway_answer, &$gateway_calls, $vendor ) {
-	if ( (int) $order->vendor_id !== $vendor ) {
-		return $handled;
+	if ( (int) $order->vendor_id !== $vendor || null === $gateway_answer ) {
+		return $handled; // null answer: let the real seam decide.
 	}
 	++$gateway_calls;
 	return $gateway_answer;
@@ -157,6 +157,20 @@ try {
 	$check( '  and says why (the gateway message)', false !== strpos( (string) $disputes_service->last_error(), 'already disputed' ) );
 	$check( '  the dispute stays open', 'resolved' !== (string) $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$disputes} WHERE id = %d", $dispute_id ) ) );
 	$check( '  the order stays disputed', 'disputed' === $row( $c )->status );
+
+	// --- 5. Paid outside a gateway: the owner is told to send it back -----------
+	// Basecamp 10340506160: a Manual / Cash / Bank transfer payment an admin
+	// recorded (no transaction id) was marked refunded with no reminder.
+	$gateway_answer = null;
+	$pending_key    = OrderWorkflowManager::REFUND_PENDING_META;
+	foreach ( array( 'manual' => null, 'cash' => 40.0, 'offline' => null ) as $method => $amount ) {
+		$m     = $seed( 'completed', $method, 76.50 );
+		$ids[] = $m;
+		$wpdb->update( $orders, array( 'transaction_id' => '' ), array( 'id' => $m ) );
+		$res     = $refund( $m, $amount, null === $amount ? ServiceOrder::STATUS_REFUNDED : ServiceOrder::STATUS_PARTIALLY_REFUNDED );
+		$flagged = (float) $provider->get_item_meta( $m, $pending_key );
+		$check( sprintf( '%s payment, no transaction id, %s refund: outcome "manual", %s flagged to send (got %s, %s)', $method, null === $amount ? 'full' : 'partial', null === $amount ? '100' : '40', $res['outcome'] ?? '?', $flagged ), 'manual' === ( $res['outcome'] ?? '' ) && abs( $flagged - ( $amount ?? 100.0 ) ) < 0.01 );
+	}
 } finally {
 	remove_filter( 'wpss_pre_process_gateway_refund', $mock, 10 );
 

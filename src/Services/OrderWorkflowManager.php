@@ -1438,12 +1438,8 @@ class OrderWorkflowManager {
 	 * @return array<string, mixed>|null Seam-3 result, or null when nothing was captured to refund.
 	 */
 	public function refund_at_gateway( ServiceOrder $order, float $refund_amount, bool $is_partial ): ?array {
-		// Skip if no payment was made (offline/pending orders, or already refunded).
-		if ( empty( $order->transaction_id ) || empty( $order->payment_method ) ) {
-			return null;
-		}
-
-		if ( in_array( $order->payment_status, array( 'refunded', 'pending' ), true ) ) {
+		// Nothing to send back: never paid, already refunded, or a zero amount.
+		if ( in_array( $order->payment_status, array( 'refunded', 'pending' ), true ) || $refund_amount <= 0 ) {
 			return null;
 		}
 
@@ -1478,14 +1474,29 @@ class OrderWorkflowManager {
 				? wpss()->get_payment_gateways()
 				: apply_filters( 'wpss_payment_gateways', [] );
 
-			$gateway = $gateways[ $order->payment_method ] ?? null;
+			$gateway = $gateways[ (string) $order->payment_method ] ?? null;
 
-			$refund_result = $gateway && method_exists( $gateway, 'process_refund' )
-				? (array) $gateway->process_refund( $order->transaction_id, $refund_amount )
-				: array(
-					'success' => false,
-					'error'   => sprintf( "gateway '%s' not available or missing process_refund()", $order->payment_method ),
+			if ( '' === (string) $order->transaction_id || ! $gateway ) {
+				// Paid outside a gateway - cash, a bank transfer, a payment an
+				// admin recorded by hand - or with no charge a gateway could
+				// find. No money can move from here, so the admin sends it back:
+				// the manual result below flags the amount and raises the
+				// "send manually" notice. Returning null here recorded the order
+				// as refunded with no reminder (Basecamp 10340506160).
+				$refund_result = array(
+					'success' => true,
+					'manual'  => true,
+					'status'  => 'manual_refund',
+					'message' => __( 'This payment was not taken through a gateway, so it must be refunded to the buyer by hand.', 'wp-sell-services' ),
 				);
+			} elseif ( method_exists( $gateway, 'process_refund' ) ) {
+				$refund_result = (array) $gateway->process_refund( $order->transaction_id, $refund_amount );
+			} else {
+				$refund_result = array(
+					'success' => false,
+					'error'   => sprintf( "gateway '%s' is missing process_refund()", $order->payment_method ),
+				);
+			}
 		}
 
 		$refund_result += array(
