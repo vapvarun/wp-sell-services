@@ -41,7 +41,7 @@
 
 			// Delete service
 			$(document).on('click', '.wpss-delete-service', this.handleDeleteService.bind(this));
-			$(document).on('click', '[data-wpss-cancel-withdrawal]', this.handleCancelWithdrawal.bind(this));
+			$(document).on('click', '[data-wpss-rest-action]', this.handleRestAction.bind(this));
 			$(document).on('change', '#withdrawal_method', this.handlePayoutMethod.bind(this));
 			$(document).on('submit', '#wpss-withdrawal-form', this.handleWithdrawalSubmit.bind(this));
 
@@ -636,22 +636,31 @@
 		 *
 		 * @param {Event} e Click event.
 		 */
-		handleCancelWithdrawal: function (e) {
+		/**
+		 * A confirmed one-click REST action that changes the section's numbers
+		 * (cancel a withdrawal, withdraw a proposal). The button names the
+		 * route and method; the section reloads on success.
+		 *
+		 * Markup: data-wpss-rest-action="withdrawals/12" data-method="DELETE"
+		 *         data-confirm="Question shown in the confirm dialog"
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleRestAction: function (e) {
 			e.preventDefault();
 
 			const $button = $(e.currentTarget);
 
-			WPSS.showConfirm(wpssUnifiedDashboard.i18n.confirmCancelWithdrawal, function () {
+			WPSS.showConfirm($button.data('confirm'), function () {
 				$button.prop('disabled', true);
 
 				$.ajax({
-					url: wpssUnifiedDashboard.restUrl + 'withdrawals/' + $button.data('wpss-cancel-withdrawal'),
-					method: 'DELETE',
+					url: wpssUnifiedDashboard.restUrl + $button.data('wpss-rest-action'),
+					method: $button.data('method') || 'POST',
 					beforeSend: function (xhr) {
 						xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
 					},
 					success: function () {
-						// Balance cards and the request form all change: reload the section.
 						window.location.reload();
 					},
 					error: function (xhr) {

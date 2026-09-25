@@ -162,7 +162,6 @@ class UnifiedDashboard {
 					'walletTypeUnknown'       => __( 'Other', 'wp-sell-services' ),
 					'processing'              => __( 'Processing...', 'wp-sell-services' ),
 					'confirmDelete'           => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),
-					'confirmCancelWithdrawal' => __( 'Cancel this withdrawal request? The amount goes back to your available balance.', 'wp-sell-services' ),
 					'withdrawalFillRequired'  => __( 'Enter an amount, choose a payout method and fill in its details.', 'wp-sell-services' ),
 					'withdrawalSubmitted'     => __( 'Withdrawal request submitted.', 'wp-sell-services' ),
 					'pause'                   => __( 'Pause', 'wp-sell-services' ),

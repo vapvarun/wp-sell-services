@@ -509,7 +509,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 								</td>
 								<td>
 									<?php if ( EarningsService::WITHDRAWAL_PENDING === $withdrawal['status'] && empty( $withdrawal['is_auto'] ) ) : ?>
-										<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" data-wpss-cancel-withdrawal="<?php echo esc_attr( (string) $withdrawal['id'] ); ?>">
+										<button type="button" class="wpss-btn wpss-btn--sm wpss-btn--link" data-wpss-rest-action="<?php echo esc_attr( 'withdrawals/' . (int) $withdrawal['id'] ); ?>" data-method="DELETE" data-confirm="<?php esc_attr_e( 'Cancel this withdrawal request? The amount goes back to your available balance.', 'wp-sell-services' ); ?>">
 											<?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?>
 										</button>
 									<?php endif; ?>

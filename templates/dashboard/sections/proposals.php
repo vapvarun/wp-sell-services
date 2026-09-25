@@ -37,8 +37,10 @@ $proposals      = $proposal_service->get_by_vendor(
 	)
 );
 $status_labels  = ProposalService::get_statuses();
-// The buyer never wrote a reason on these; they hired someone else. Say so.
-$status_labels[ ProposalService::STATUS_REJECTED ] = __( 'Declined', 'wp-sell-services' );
+// One word for "the buyer went another way": the buyer never writes a reason,
+// whether they hired someone else or just declined. "Declined" and "Not
+// selected" both appeared for the same status, and the stat counted both.
+$status_labels[ ProposalService::STATUS_REJECTED ] = __( 'Not selected', 'wp-sell-services' );
 
 // One query for the request posts and one for their meta, instead of two per row.
 $request_ids = array_values( array_unique( array_map( static fn( $p ) => (int) $p->request_id, $proposals ) ) );
@@ -60,7 +62,7 @@ if ( $request_ids ) {
 		</div>
 		<div class="wpss-stat-card">
 			<span class="wpss-stat-card__value"><?php echo esc_html( (string) $counts[ ProposalService::STATUS_REJECTED ] ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Declined', 'wp-sell-services' ); ?></span>
+			<span class="wpss-stat-card__label"><?php esc_html_e( 'Not selected', 'wp-sell-services' ); ?></span>
 		</div>
 	</div>
 
@@ -84,11 +86,7 @@ if ( $request_ids ) {
 			foreach ( $proposals as $proposal ) :
 				$request_id  = (int) $proposal->request_id;
 				$status      = (string) $proposal->status;
-				$hired_id    = (int) get_post_meta( $request_id, '_wpss_accepted_proposal_id', true );
 				$status_text = $status_labels[ $status ] ?? ucfirst( $status );
-				if ( ProposalService::STATUS_REJECTED === $status && $hired_id && $hired_id !== (int) $proposal->id ) {
-					$status_text = __( 'Not selected', 'wp-sell-services' );
-				}
 				$request_title = get_the_title( $request_id );
 				$sent_on       = $proposal->created_at ? wp_date( get_option( 'date_format' ), strtotime( (string) $proposal->created_at ) ) : '';
 				?>
@@ -140,6 +138,11 @@ if ( $request_ids ) {
 								<i data-lucide="megaphone" class="wpss-icon" aria-hidden="true"></i>
 								<span class="wpss-btn__label"><?php echo esc_html( $view_label ); ?></span>
 							</a>
+						<?php endif; ?>
+						<?php if ( ProposalService::STATUS_PENDING === $status ) : ?>
+							<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--danger wpss-btn--sm" data-wpss-rest-action="<?php echo esc_attr( 'proposals/' . (int) $proposal->id . '/withdraw' ); ?>" data-confirm="<?php esc_attr_e( 'Withdraw this proposal? The buyer will no longer see it.', 'wp-sell-services' ); ?>">
+								<?php esc_html_e( 'Withdraw', 'wp-sell-services' ); ?>
+							</button>
 						<?php endif; ?>
 						<?php if ( ! empty( $proposal->order_id ) ) : ?>
 							<?php $order_label = __( 'View Order', 'wp-sell-services' ); ?>
