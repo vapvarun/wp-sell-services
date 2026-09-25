@@ -207,6 +207,13 @@ defined( 'ABSPATH' ) || exit;
 	padding: 2px 0;
 }
 
+.wpss-cart-item__line-total {
+	margin-top: 4px;
+	padding-top: 4px;
+	border-top: 1px dashed var(--wpss-border, #e2e8f0);
+	font-weight: 700;
+}
+
 .wpss-cart-item__addon-price {
 	font-weight: 600;
 	color: var(--wpss-text-muted, #64748b);
@@ -372,6 +379,7 @@ defined( 'ABSPATH' ) || exit;
 					$package    = (array) $line['package'];
 					$addons     = (array) $line['addons'];
 					$item_total = (float) $line['subtotal'] + (float) $line['addons_total'];
+					$item_qty   = max( 1, (int) ( $item['quantity'] ?? 1 ) );
 
 					/*
 					 * An item whose service has been paused stays visible so the
@@ -460,11 +468,11 @@ defined( 'ABSPATH' ) || exit;
 							<div class="wpss-cart-item__meta">
 								<?php if ( ! empty( $package['name'] ) ) : ?>
 									<span class="wpss-cart-item__package">
-										<?php echo esc_html( $package['name'] ); ?>
+										<?php echo esc_html( $package['name'] . ( $item_qty > 1 ? " \u{00D7} {$item_qty}" : '' ) ); ?>
 									</span>
 								<?php endif; ?>
 								<span class="wpss-cart-item__price">
-									<?php echo wp_kses_post( wpss_catalog_price_html( (float) $item_total, 'cart-item' ) ); ?>
+									<?php echo wp_kses_post( wpss_catalog_price_html( (float) $line['subtotal'], 'cart-item' ) ); ?>
 								</span>
 							</div>
 
@@ -486,6 +494,10 @@ defined( 'ABSPATH' ) || exit;
 											</span>
 										</div>
 									<?php endforeach; ?>
+									<div class="wpss-cart-item__addon wpss-cart-item__line-total">
+										<span><?php esc_html_e( 'Item total', 'wp-sell-services' ); ?></span>
+										<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $item_total, 'cart-item-total' ) ); ?></span>
+									</div>
 								</div>
 							<?php endif; ?>
 						</div>
