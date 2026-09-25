@@ -2129,7 +2129,7 @@ class Settings {
 		$defaults = function_exists( 'wpss_get_checkout_badge_defaults' ) ? wpss_get_checkout_badge_defaults() : array();
 
 		echo '<table class="widefat striped wpss-badge-editor"><thead><tr>';
-		echo '<th style="width:12rem">' . esc_html__( 'Item', 'wp-sell-services' ) . '</th>';
+		echo '<th class="wpss-badge-editor__item">' . esc_html__( 'Item', 'wp-sell-services' ) . '</th>';
 		echo '<th>' . esc_html__( 'Heading', 'wp-sell-services' ) . '</th>';
 		echo '<th>' . esc_html__( 'Sub-text', 'wp-sell-services' ) . '</th>';
 		echo '</tr></thead><tbody>';
@@ -2138,16 +2138,25 @@ class Settings {
 			$title = (string) ( $stored[ $key ]['title'] ?? '' );
 			$note  = (string) ( $stored[ $key ]['note'] ?? '' );
 
+			// Each cell names its column, so the stacked phone layout still
+			// says which box is the heading and which the sub-text.
 			printf(
-				'<tr><td><strong>%s</strong></td>
-				<td><input type="text" class="regular-text" name="wpss_general[checkout_badges][%s][title]" value="%s" placeholder="%s"></td>
-				<td><input type="text" class="regular-text" name="wpss_general[checkout_badges][%s][note]" value="%s" placeholder="%s"></td></tr>',
+				'<tr><td data-colname="%9$s"><strong>%1$s</strong></td>
+				<td data-colname="%10$s"><input type="text" class="regular-text" name="wpss_general[checkout_badges][%2$s][title]" value="%3$s" placeholder="%4$s" aria-label="%7$s"></td>
+				<td data-colname="%11$s"><input type="text" class="regular-text" name="wpss_general[checkout_badges][%5$s][note]" value="%6$s" placeholder="%12$s" aria-label="%8$s"></td></tr>',
 				esc_html( $default['label'] ),
 				esc_attr( $key ),
 				esc_attr( $title ),
 				esc_attr( $default['title'] ),
 				esc_attr( $key ),
 				esc_attr( $note ),
+				/* translators: %s: badge name, e.g. Delivery time */
+				esc_attr( sprintf( __( '%s heading', 'wp-sell-services' ), $default['label'] ) ),
+				/* translators: %s: badge name, e.g. Delivery time */
+				esc_attr( sprintf( __( '%s sub-text', 'wp-sell-services' ), $default['label'] ) ),
+				esc_attr__( 'Item', 'wp-sell-services' ),
+				esc_attr__( 'Heading', 'wp-sell-services' ),
+				esc_attr__( 'Sub-text', 'wp-sell-services' ),
 				esc_attr( $default['note'] )
 			);
 		}

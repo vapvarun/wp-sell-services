@@ -336,3 +336,147 @@
 		padding: 16px;
 	}
 }
+
+/* ==========================================================================
+   Nothing clipped, at any width (Basecamp 10337154229)
+   ========================================================================== */
+
+/* Settings cards show all their content: overflow:hidden cut help text, the
+   badge table and fields whenever the content was wider than the card. */
+.wpss-settings-content .wpss-card {
+	overflow: visible;
+}
+
+/* Fixed layout: a long checkbox label wraps instead of widening the table
+   past the card (an auto table grew to 1,029px inside an 869px card). */
+.wpss-settings-content .wpss-card .form-table {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.wpss-settings-content .form-table td label,
+.wpss-settings-content .form-table td p.description {
+	overflow-wrap: anywhere;
+}
+
+.wpss-settings-content .form-table input.regular-text,
+.wpss-settings-content .form-table select,
+.wpss-settings-content .form-table textarea {
+	max-width: 100%;
+}
+
+/* Wide enough for 10000 and its spin buttons ("1000(" before). */
+.wpss-settings-content input.small-text[type="number"] {
+	width: auto;
+	min-width: 10ch;
+}
+
+.wpss-badge-editor {
+	table-layout: fixed;
+}
+
+.wpss-badge-editor__item {
+	width: 12rem;
+}
+
+.wpss-badge-editor input.regular-text {
+	width: 100%;
+}
+
+/* An open gateway card has no height cap: max-height: 2000px hid the Save
+   button of the Stripe and Offline cards on a phone (4,632px of content). */
+.wpss-card[data-gateway]:not(.is-collapsed) .wpss-card__body {
+	max-height: none;
+	overflow-x: auto;
+}
+
+/* Tables wider than the card (Pro commission rules, plans) scroll inside it. */
+.wpss-settings-content .wpss-card__body {
+	overflow-x: auto;
+}
+
+/* Tablet: the side nav becomes a wrapping row of tabs above the content, and
+   the form table stacks its label over its field. */
+@media (max-width: 1024px) {
+	.wpss-settings-wrap {
+		flex-direction: column;
+		min-height: auto;
+	}
+
+	.wpss-settings-sidebar {
+		width: 100%;
+		border-left: none;
+		border-bottom: 1px solid var(--wpss-admin-border);
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		overflow: visible;
+	}
+
+	.wpss-settings-sidebar__brand {
+		width: 100%;
+		border-bottom: 1px solid var(--wpss-admin-border);
+		padding: 12px 16px;
+	}
+
+	.wpss-settings-nav-group {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		padding: 0;
+	}
+
+	.wpss-settings-nav-group__label {
+		display: none;
+	}
+
+	.wpss-settings-nav-item {
+		padding: 10px 14px;
+		border-right: none;
+		border-bottom: 3px solid transparent;
+		white-space: nowrap;
+	}
+
+	.wpss-settings-nav-item.is-active {
+		border-right-color: transparent;
+		border-bottom-color: var(--wpss-admin-primary);
+	}
+
+	.wpss-settings-content .wpss-card .form-table,
+	.wpss-settings-content .wpss-card .form-table tbody,
+	.wpss-settings-content .wpss-card .form-table tr,
+	.wpss-settings-content .wpss-card .form-table th,
+	.wpss-settings-content .wpss-card .form-table td {
+		display: block;
+		width: auto;
+	}
+
+	.wpss-settings-content .wpss-card .form-table th {
+		padding: 12px 0 4px;
+	}
+
+	.wpss-settings-content .wpss-card .form-table td {
+		padding: 0 0 12px;
+	}
+}
+
+@media (max-width: 640px) {
+	.wpss-badge-editor thead {
+		display: none;
+	}
+
+	.wpss-badge-editor,
+	.wpss-badge-editor tbody,
+	.wpss-badge-editor tr,
+	.wpss-badge-editor td {
+		display: block;
+		width: auto;
+	}
+
+	.wpss-badge-editor td[data-colname]::before {
+		content: attr(data-colname);
+		display: block;
+		font-size: 12px;
+		color: var(--wpss-admin-text-light);
+	}
+}
