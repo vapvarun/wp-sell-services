@@ -486,7 +486,7 @@ add_action( 'wpss_wizard_save_service_meta', function( $service_id, $data ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:939` |
+| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:948` |
 
 ### Dashboard Filters
 

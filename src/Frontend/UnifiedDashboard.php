@@ -914,6 +914,15 @@ class UnifiedDashboard {
 		 */
 		$template_path = apply_filters( 'wpss_dashboard_section_template', $template_path, $section );
 
+		// A theme copy wins over the plugin's file - Free's or the one Pro hands
+		// in above - the same as every template loaded by wpss_get_template().
+		// Sections never looked in the theme, so a copied section was silently
+		// ignored although the docs list them as overridable (Basecamp 10340929957).
+		$theme_template = locate_template( "wp-sell-services/dashboard/sections/{$template_section}.php" );
+		if ( $theme_template ) {
+			$template_path = $theme_template;
+		}
+
 		$user_id        = get_current_user_id();
 		$vendor_service = $this->vendor_service;
 		$is_vendor      = $vendor_service->is_vendor( $user_id );
