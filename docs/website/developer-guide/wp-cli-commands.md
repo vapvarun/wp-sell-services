@@ -98,6 +98,31 @@ unaudited route is exactly where the last gaps hid, so the command names them
 rather than passing over them silently. Seeding the missing data, or re-running
 with `--user`, shrinks the list.
 
+## Repairs
+
+```bash
+wp wpss repair:stripe-tax           # dry run: lists what would change, writes nothing
+wp wpss repair:stripe-tax --apply   # writes the changes the dry run listed
+```
+
+Before 1.8.0, when Stripe's payment webhook reached the site before the buyer's
+browser, the order was recorded with tax counted twice: a $23.60 charge could be
+stored as a $27.85 order, and the vendor's earning was sized on the inflated
+amount. This affects only sites that charge tax and use Stripe.
+
+The command reads each taxed Stripe order's payment from Stripe once and changes
+only orders with that exact shape: the stored subtotal equals what Stripe
+captured and the total is higher. It sets the subtotal, tax and total back to
+what was charged and re-splits the fee and earning at the order's own
+commission rate. If the vendor was already credited, it adds one **Order
+Correction** row to their earnings for the difference. Stripe Connect orders
+get the order row only, because Stripe paid the vendor from the real charge.
+
+Any other mismatch, and any affected order with a refund, is listed for review
+and left unchanged. Run the dry run first and read both tables. Running
+`--apply` twice changes nothing the second time. Every corrected order is
+written to the audit log as `order.repair`.
+
 ## Scale benchmarking
 
 For verifying the marketplace holds up at production shape -- 10k vendors with
