@@ -239,9 +239,14 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$response = $this->api_request( "v2/checkout/orders/{$payment_id}/capture", array() );
 
 		if ( isset( $response['error'] ) ) {
+			// PayPal's own text ("semantically incorrect, or failed business
+			// validation") is for the owner's log, not the buyer's screen. A
+			// failed capture moved no money, so say that.
+			wpss_log( sprintf( 'PayPal capture of %s refused: %s', $payment_id, (string) ( $response['error']['message'] ?? 'unknown' ) ), 'warning' );
+
 			return array(
 				'success' => false,
-				'error'   => $response['error']['message'] ?? __( 'Failed to capture payment.', 'wp-sell-services' ),
+				'error'   => __( 'PayPal could not complete this payment and you have not been charged. Please try again or choose another payment method.', 'wp-sell-services' ),
 			);
 		}
 
