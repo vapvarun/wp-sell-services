@@ -304,7 +304,8 @@ class OfflineGateway implements PaymentGatewayInterface {
 			$methods = array(
 				array(
 					'id'           => 'offline',
-					'label'        => $settings['title'] ?? __( 'Offline Payment', 'wp-sell-services' ),
+					// ?: not ??: a saved but empty title left the method nameless.
+					'label'        => ( $settings['title'] ?? '' ) ?: __( 'Offline Payment', 'wp-sell-services' ),
 					'instructions' => $settings['instructions'] ?? '',
 					'enabled'      => true,
 				),
@@ -1761,7 +1762,12 @@ class OfflineGateway implements PaymentGatewayInterface {
 				$method   = $methods[ $i ] ?? array();
 				$label    = (string) ( $method['label'] ?? '' );
 				$instr    = (string) ( $method['instructions'] ?? '' );
-				$on       = ! isset( $method['enabled'] ) || ! empty( $method['enabled'] );
+				// An empty slot is not a method (sanitize_methods() drops it), so
+				// it is not shown as offered, and only the first empty slot
+				// carries an example: four slots all reading "Bank Transfer",
+				// all ticked, looked like four saved methods (Basecamp 10341849858).
+				$on       = '' !== $label && ( ! isset( $method['enabled'] ) || ! empty( $method['enabled'] ) );
+				$example  = ( '' === $label && count( $methods ) === $i ) ? __( 'e.g. Bank Transfer', 'wp-sell-services' ) : '';
 				$name     = self::OPTION_NAME . '[methods][' . $i . ']';
 				$field_id = 'wpss-offline-method-' . $i;
 				?>
@@ -1782,7 +1788,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 								name="<?php echo esc_attr( $name ); ?>[label]"
 								value="<?php echo esc_attr( $label ); ?>"
 								class="regular-text"
-								placeholder="<?php esc_attr_e( 'Bank Transfer', 'wp-sell-services' ); ?>"
+								placeholder="<?php echo esc_attr( $example ); ?>"
 							>
 						</p>
 						<p>
@@ -1794,7 +1800,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 								name="<?php echo esc_attr( $name ); ?>[instructions]"
 								rows="4"
 								class="large-text code"
-								placeholder="<?php esc_attr_e( 'Account name, sort code, account number, and the reference to quote.', 'wp-sell-services' ); ?>"
+								placeholder="<?php echo '' !== $example ? esc_attr__( 'Account name, sort code, account number, and the reference to quote.', 'wp-sell-services' ) : ''; ?>"
 							><?php echo esc_textarea( $instr ); ?></textarea>
 						</p>
 						<p>
