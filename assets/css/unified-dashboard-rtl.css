@@ -319,6 +319,13 @@
 	font-size: 15px;
 }
 
+.wpss-dashboard-login__actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--wpss-space-3, 12px);
+}
+
 /* ==========================================================================
    Stats Grid
    ========================================================================== */

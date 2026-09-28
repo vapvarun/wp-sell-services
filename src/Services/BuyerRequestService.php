@@ -319,6 +319,52 @@ class BuyerRequestService {
 	}
 
 	/**
+	 * Open requests per category, a subcategory's counted in its parent too.
+	 *
+	 * One grouped query for the requests sidebar, which ran a WP_Query per
+	 * category and listed categories with no open request as "(0)" - the
+	 * category list is shared with services, so hide_empty counted services
+	 * (Basecamp 10337197376). Same conditions as open_meta_query().
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return array<int, int> Term ID => open requests.
+	 */
+	public static function count_open_by_category(): array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT tt.term_id, COUNT( DISTINCT p.ID ) AS open_count
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->term_relationships} tr ON tr.object_id = p.ID
+				INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'wpss_service_category'
+				INNER JOIN {$wpdb->postmeta} st ON st.post_id = p.ID AND st.meta_key = '_wpss_status' AND st.meta_value = %s
+				LEFT JOIN {$wpdb->postmeta} ex ON ex.post_id = p.ID AND ex.meta_key = '_wpss_expires_at'
+				WHERE p.post_type = 'wpss_request' AND p.post_status = 'publish'
+					AND ( ex.meta_id IS NULL OR CAST( ex.meta_value AS DATETIME ) > %s )
+				GROUP BY tt.term_id",
+				self::STATUS_OPEN,
+				current_time( 'mysql' )
+			)
+		);
+
+		$counts = array();
+		foreach ( (array) $rows as $row ) {
+			$term_id            = (int) $row->term_id;
+			$counts[ $term_id ] = ( $counts[ $term_id ] ?? 0 ) + (int) $row->open_count;
+
+			// Roll up the ancestors, as the per-category tax_query did.
+			foreach ( get_ancestors( $term_id, 'wpss_service_category', 'taxonomy' ) as $ancestor ) {
+				$counts[ (int) $ancestor ] = ( $counts[ (int) $ancestor ] ?? 0 ) + (int) $row->open_count;
+			}
+		}
+
+		return $counts;
+	}
+
+	/**
 	 * Get open requests.
 	 *
 	 * @param array<string, mixed> $args Query arguments.

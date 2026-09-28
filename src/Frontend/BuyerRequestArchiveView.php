@@ -194,46 +194,17 @@ class BuyerRequestArchiveView {
 	 * @return void
 	 */
 	public function render_filters_bar(): void {
-		$categories = wpss_get_category_terms();
-
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_sort = isset( $_GET['sort'] ) ? sanitize_text_field( wp_unslash( $_GET['sort'] ) ) : 'newest';
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$current_category = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0;
 		?>
 		<div class="wpss-filters-bar">
-			<button type="button" class="wpss-btn wpss-btn-outline wpss-filter-toggle" aria-expanded="false" aria-controls="wpss-request-sidebar">
+			<button type="button" class="wpss-btn wpss-btn-outline wpss-filter-toggle" aria-expanded="false" aria-controls="wpss-sidebar">
 				<span class="wpss-icon-filter"></span>
 				<?php esc_html_e( 'Filters', 'wp-sell-services' ); ?>
 			</button>
 
 			<div class="wpss-filters-bar-controls">
-				<?php if ( ! empty( $categories ) ) : ?>
-					<select class="wpss-category-filter wpss-url-select">
-						<option value="<?php echo esc_url( remove_query_arg( 'category' ) ); ?>">
-							<?php esc_html_e( 'All Categories', 'wp-sell-services' ); ?>
-						</option>
-						<?php
-						// Grouped so a subcategory is not mistaken for a category
-						// (Basecamp 10208080926).
-						foreach ( wpss_group_category_terms( $categories ) as $wpss_group ) :
-							$wpss_parent = $wpss_group['term'];
-							?>
-							<option value="<?php echo esc_url( add_query_arg( 'category', $wpss_parent->term_id ) ); ?>"
-								<?php selected( $current_category, $wpss_parent->term_id ); ?>>
-								<?php echo esc_html( $wpss_parent->name ); ?>
-							</option>
-							<?php // Indented, not an optgroup labelled with the parent's own name - see Basecamp 10304812139. ?>
-							<?php foreach ( $wpss_group['children'] as $wpss_child ) : ?>
-								<option value="<?php echo esc_url( add_query_arg( 'category', $wpss_child->term_id ) ); ?>"
-									<?php selected( $current_category, $wpss_child->term_id ); ?>>
-									<?php echo esc_html( "\u{00A0}\u{00A0}\u{00A0}" . $wpss_child->name ); ?>
-								</option>
-							<?php endforeach; ?>
-						<?php endforeach; ?>
-					</select>
-				<?php endif; ?>
-
+				<?php // Categories are chosen in the filters list only, as on the services archive (Basecamp 10337197376). ?>
 				<select class="wpss-sort-filter wpss-url-select">
 					<option value="<?php echo esc_url( add_query_arg( 'sort', 'newest' ) ); ?>" <?php selected( $current_sort, 'newest' ); ?>>
 						<?php esc_html_e( 'Sort: Newest', 'wp-sell-services' ); ?>
@@ -264,9 +235,11 @@ class BuyerRequestArchiveView {
 		?>
 		<div class="wpss-results-info">
 			<?php
+			// "Open": closed, hired and expired requests are not listed, which is
+			// why the count is lower than the admin list (Basecamp 10337197376).
 			printf(
-				/* translators: %s: number of requests */
-				esc_html( _n( '%s request found', '%s requests found', $total, 'wp-sell-services' ) ),
+				/* translators: %s: number of open requests */
+				esc_html( _n( '%s open request', '%s open requests', $total, 'wp-sell-services' ) ),
 				esc_html( number_format_i18n( $total ) )
 			);
 			?>
@@ -317,7 +290,13 @@ class BuyerRequestArchiveView {
 	 * @return void
 	 */
 	public function render_sidebar(): void {
-		$categories = wpss_get_category_terms( array( 'parent' => 0 ) );
+		$open_counts = BuyerRequestService::count_open_by_category();
+		// Only categories with an open request; the terms are shared with
+		// services, so their own counts say nothing about requests.
+		$categories = array_filter(
+			wpss_get_category_terms( array( 'parent' => 0 ) ),
+			static fn( $term ) => ! empty( $open_counts[ (int) $term->term_id ] )
+		);
 
 		// Get current filter values.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -341,25 +320,7 @@ class BuyerRequestArchiveView {
 						<ul class="wpss-category-list">
 							<?php foreach ( $categories as $category ) : ?>
 								<?php
-								$count_query   = new \WP_Query(
-									array(
-										'post_type'      => 'wpss_request',
-										'posts_per_page' => 1,
-										'fields'         => 'ids',
-										'no_found_rows'  => false,
-										'update_post_meta_cache' => false,
-										'update_post_term_cache' => false,
-										'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-											array(
-												'taxonomy' => 'wpss_service_category',
-												'field'    => 'term_id',
-												'terms'    => $category->term_id,
-											),
-										),
-										'meta_query'     => BuyerRequestService::open_meta_query(), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-									)
-								);
-								$request_count = (int) $count_query->found_posts;
+								$request_count = $open_counts[ (int) $category->term_id ];
 								?>
 								<li>
 									<a href="<?php echo esc_url( add_query_arg( 'category', $category->term_id ) ); ?>" class="wpss-category-link">
@@ -385,7 +346,8 @@ class BuyerRequestArchiveView {
 				</div>
 
 				<div class="wpss-filter-actions">
-					<button type="submit" class="wpss-btn wpss-btn-primary wpss-btn-block">
+					<?php // Filters apply as soon as they are picked (frontend.js); this stays for keyboard and no-JS use and shows when focused. ?>
+					<button type="submit" class="wpss-btn wpss-btn-primary wpss-btn-block screen-reader-text">
 						<?php esc_html_e( 'Apply Filters', 'wp-sell-services' ); ?>
 					</button>
 					<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_request' ) ); ?>" class="wpss-btn wpss-btn-outline wpss-btn-block">

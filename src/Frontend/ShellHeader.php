@@ -131,6 +131,12 @@ class ShellHeader {
 
 		foreach ( $page_keys as $page_key ) {
 			if ( \wpss_is_page( $page_key ) ) {
+				// Logged out, the dashboard is only a sign-in prompt with no
+				// heading of its own, so the theme's title band keeps the H1,
+				// as on Become a Vendor (Basecamp 10337197376).
+				if ( 'dashboard' === $page_key && ! \is_user_logged_in() ) {
+					return self::filter_shell_surface( false );
+				}
 				return self::filter_shell_surface( true );
 			}
 		}

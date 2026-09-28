@@ -200,6 +200,31 @@ function wpss_get_template( string $template_name, array $args = array(), string
 }
 
 /**
+ * Breadcrumb on a buyer request: Home > Buyer Requests > the request.
+ *
+ * The template documented this as hooked at wpss_single_request_header 5,
+ * but no such function existed, so a request page had no way back to the
+ * list (Basecamp 10337197376). Same markup as the service breadcrumb.
+ *
+ * @since 1.8.0
+ *
+ * @param int $request_id Request post ID.
+ * @return void
+ */
+function wpss_request_breadcrumb( int $request_id ): void {
+	?>
+	<nav class="wpss-breadcrumb" aria-label="<?php esc_attr_e( 'Breadcrumb', 'wp-sell-services' ); ?>">
+		<ol class="wpss-breadcrumb-list">
+			<li class="wpss-breadcrumb-item"><a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Home', 'wp-sell-services' ); ?></a></li>
+			<li class="wpss-breadcrumb-item"><a href="<?php echo esc_url( (string) get_post_type_archive_link( 'wpss_request' ) ); ?>"><?php esc_html_e( 'Buyer Requests', 'wp-sell-services' ); ?></a></li>
+			<li class="wpss-breadcrumb-item wpss-breadcrumb-current" aria-current="page"><?php echo esc_html( (string) get_post_field( 'post_title', $request_id ) ); ?></li>
+		</ol>
+	</nav>
+	<?php
+}
+add_action( 'wpss_single_request_header', 'wpss_request_breadcrumb', 5 );
+
+/**
  * Calculate time difference in human readable format.
  *
  * Both sides of the comparison must be real UTC timestamps. The stored

@@ -226,7 +226,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_pre_vendor_register` | `array $profile_data, int $user_id` | `VendorService.php` |
 | `wpss_vendor_profile_allowed_fields` | `array $allowed_fields` | `VendorService.php` |
 | `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:823` |
-| `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1421` |
+| `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1427` |
 
 | Hook | Parameters | File |
 |------|-----------|------|
@@ -297,16 +297,16 @@ tip. Tips are excluded from commission by default, so the two usually match.
 | `wpss_review_reply_created` | `int $review_id` | `src/API/ReviewsController.php:621` |
 | `wpss_buyer_request_created` | `int $post_id, array $data` | `src/Services/BuyerRequestService.php:121` |
 | `wpss_buyer_request_updated` | `int $request_id, array $data` | `src/Services/BuyerRequestService.php:174` |
-| `wpss_buyer_request_status_changed` | `int $request_id, string $status, string $old_status` | `src/Services/BuyerRequestService.php:497` |
-| `wpss_request_converted_to_order` | `int $order_id, int $request_id, int $proposal_id, object $request, object $proposal` | `src/Services/BuyerRequestService.php:1034` |
+| `wpss_buyer_request_status_changed` | `int $request_id, string $status, string $old_status` | `src/Services/BuyerRequestService.php:543` |
+| `wpss_request_converted_to_order` | `int $order_id, int $request_id, int $proposal_id, object $request, object $proposal` | `src/Services/BuyerRequestService.php:1080` |
 | `wpss_proposal_submitted` | `int $proposal_id, int $request_id, int $vendor_id, array $proposal_data` | `src/Services/ProposalService.php:187` |
 | `wpss_proposal_updated` | `int $proposal_id, array $update_data` | `src/Services/ProposalService.php:365` |
-| `wpss_proposal_accepted` | `int $proposal_id, object $proposal, object $request` | `src/Services/BuyerRequestService.php:976` |
+| `wpss_proposal_accepted` | `int $proposal_id, object $proposal, object $request` | `src/Services/BuyerRequestService.php:1022` |
 | `wpss_proposal_rejected` | `int $proposal_id, object $proposal, string $reason` | `src/Services/ProposalService.php:458` |
 | `wpss_proposal_withdrawn` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:503` |
 | `wpss_proposal_deleted` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:895` |
 | `wpss_proposal_status_updated` | `int $proposal_id, string $status` | `src/Services/ProposalService.php:593` |
-| `wpss_buyer_request_deleted` | `int $request_id` | `src/Services/BuyerRequestService.php:1194` |
+| `wpss_buyer_request_deleted` | `int $request_id` | `src/Services/BuyerRequestService.php:1240` |
 | `wpss_buyer_request_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/BuyerRequestMetabox.php:349` |
 
 ## Milestone and Extension Actions
@@ -486,7 +486,7 @@ add_action( 'wpss_wizard_save_service_meta', function( $service_id, $data ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:941` |
+| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:943` |
 
 ### Dashboard Filters
 
@@ -739,8 +739,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 |--------|-----------|------|
 | `wpss_get_template_part` | `$template, $slug, $name` | `src/functions/templates.php:125` |
 | `wpss_get_template` | `$template, $template_name, $args` | `src/functions/templates.php:176` |
-| `wpss_locate_template` | `$template, $template_name, $template_path` | `src/Frontend/TemplateLoader.php:546` |
-| `wpss_dashboard_section_template` | `$template_path, $section` | `src/Frontend/UnifiedDashboard.php:916` |
+| `wpss_locate_template` | `$template, $template_name, $template_path` | `src/Frontend/TemplateLoader.php:568` |
+| `wpss_dashboard_section_template` | `$template_path, $section` | `src/Frontend/UnifiedDashboard.php:918` |
 
 ### URL and Taxonomy Filters
 
@@ -763,7 +763,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 |--------|-----------|------|
 | `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1006` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:362` |
-| `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:858` |
+| `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:904` |
 | `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:958` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:183` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:659` |
@@ -796,7 +796,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
 | `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:450` |
 | `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:549` |
-| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:865` |
+| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:867` |
 
 **`wpss_realtime_settings`** — filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
 
@@ -812,8 +812,8 @@ add_filter( 'wpss_realtime_settings', function( $settings ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_use_fullwidth_template` | `bool $use` | `src/Frontend/TemplateLoader.php:270` (and `:332`) |
-| `wpss_fullwidth_page_keys` | `string[] $page_keys` | `src/Frontend/TemplateLoader.php:316` |
+| `wpss_use_fullwidth_template` | `bool $use` | `src/Frontend/TemplateLoader.php:292` (and `:332`) |
+| `wpss_fullwidth_page_keys` | `string[] $page_keys` | `src/Frontend/TemplateLoader.php:338` |
 
 **`wpss_use_fullwidth_template`** — return `false` to keep the active theme's normal page template (with sidebar) on the plugin's pages instead of the sidebar-free full-width layout:
 
@@ -821,7 +821,7 @@ add_filter( 'wpss_realtime_settings', function( $settings ) {
 add_filter( 'wpss_use_fullwidth_template', '__return_false' );
 ```
 
-**`wpss_fullwidth_page_keys`** — control which mapped plugin pages render full-width. Default: `['dashboard', 'cart', 'checkout', 'become_vendor']`:
+**`wpss_fullwidth_page_keys`** — control which mapped plugin pages render full-width. Default: `['dashboard', 'cart', 'checkout', 'become_vendor', 'registration']`:
 
 ```php
 // Remove the cart page from full-width treatment

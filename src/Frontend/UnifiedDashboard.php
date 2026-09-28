@@ -559,36 +559,38 @@ class UnifiedDashboard {
 		$login_url = wp_login_url( get_permalink() ?: home_url() );
 
 		/*
-		 * The heading is an H1, not an H2, and it has to be here.
+		 * The page's H1 is the theme's title band: logged out, the dashboard is
+		 * not a shell surface (ShellHeader::is_shell_surface()), so the theme
+		 * title is kept and this prompt carries an H2. Printing a ShellHeader
+		 * H1 here as well would make two (Basecamp 10208511245, 10337197376).
 		 *
-		 * The dashboard is a plugin-shell surface, so ShellHeader suppresses the
-		 * theme's own <h1> in favour of the plugin's. The signed-in dashboard
-		 * renders one; this prompt did not, so once suppression started working a
-		 * logged-out visitor got a page with NO H1 at all — worse than the
-		 * duplicate that was reported (Basecamp 10208511245).
-		 *
-		 * Rendered through ShellHeader::render() rather than a hand-written <h1>,
-		 * so it is the same component, class names and styling as every other
-		 * plugin heading.
+		 * A visitor with no account got only "Log In"; sign-up is offered
+		 * beside it whenever the site takes registrations.
 		 */
-		return \WPSellServices\Frontend\ShellHeader::render(
-			array(
-				'title' => __( 'Access Your Dashboard', 'wp-sell-services' ),
-				'echo'  => false,
-			)
-		) . sprintf(
+		$signup = get_option( 'users_can_register' )
+			? sprintf( '<a href="%s" class="wpss-btn wpss-btn--outline">%s</a>', esc_url( wp_registration_url() ), esc_html__( 'Create account', 'wp-sell-services' ) )
+			: '';
+
+		return sprintf(
 			'<div class="wpss-dashboard-login">
 				<div class="wpss-dashboard-login__icon">
 					<i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 				</div>
+				<h2 class="wpss-dashboard-login__title">%s</h2>
 				<p>%s</p>
-				<a href="%s" class="wpss-btn wpss-btn--primary">%s</a>
+				<div class="wpss-dashboard-login__actions">
+					<a href="%s" class="wpss-btn wpss-btn--primary">%s</a>
+					%s
+				</div>
 			</div>',
-			esc_html__( 'Please log in to view your orders, messages, and manage your services.', 'wp-sell-services' ),
+			esc_html__( 'Access your dashboard', 'wp-sell-services' ),
+			esc_html__( 'Log in to view your orders, messages, and manage your services.', 'wp-sell-services' ),
 			esc_url( $login_url ),
-			esc_html__( 'Log In', 'wp-sell-services' )
+			esc_html__( 'Log in', 'wp-sell-services' ),
+			$signup // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above.
 		);
 	}
+
 
 	/**
 	 * Render the dashboard shell.

@@ -1080,13 +1080,18 @@ class Shortcodes {
 		 * been used: [wpss_vendor_registration] only ever asked for 'vendor'.
 		 */
 		ob_start();
+		// The same card as the seller sign-up on Become a Vendor: one form, one
+		// look. This page wrapped it in a generic card that never received the
+		// sign-up styles, so it read as a different, unfinished form - small
+		// button, no spacing, theme-sized hints (Basecamp 10337197376).
+		$this->render_vendor_registration_styles();
 		?>
-		<div class="wpss-card wpss-signup-card">
-			<h2 class="wpss-heading-2"><?php esc_html_e( 'Create your account', 'wp-sell-services' ); ?></h2>
-			<p class="wpss-caption">
-				<?php esc_html_e( 'Buy services, message sellers, and follow your orders.', 'wp-sell-services' ); ?>
-			</p>
-			<?php ( new \WPSellServices\Frontend\PublicSignup() )->render_form( 'buyer' ); ?>
+		<div class="wpss-vr">
+			<div class="wpss-vr__card wpss-signup-card">
+				<h2 class="wpss-vr__card-title"><?php esc_html_e( 'Create your account', 'wp-sell-services' ); ?></h2>
+				<p class="wpss-vr__card-sub"><?php esc_html_e( 'Buy services, message sellers, and follow your orders.', 'wp-sell-services' ); ?></p>
+				<?php ( new \WPSellServices\Frontend\PublicSignup() )->render_form( 'buyer' ); ?>
+			</div>
 		</div>
 		<?php
 		return ob_get_clean();
@@ -1366,7 +1371,8 @@ class Shortcodes {
 		?>
 		<section class="wpss-vr__hero">
 			<p class="wpss-vr__eyebrow"><?php esc_html_e( 'Sell on this marketplace', 'wp-sell-services' ); ?></p>
-			<h1 class="wpss-vr__hero-title"><?php esc_html_e( 'Turn what you are good at into income', 'wp-sell-services' ); ?></h1>
+			<?php // H2: the page's H1 is the theme's title band (see ShellHeader::is_shell_surface()). ?>
+			<h2 class="wpss-vr__hero-title"><?php esc_html_e( 'Turn what you are good at into income', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-vr__hero-sub">
 				<?php esc_html_e( 'List a service, set your own prices and delivery times, and get paid once the work is approved. You choose what you take on.', 'wp-sell-services' ); ?>
 			</p>
@@ -1700,14 +1706,19 @@ class Shortcodes {
 			}
 		}
 
-		if ( ! is_user_logged_in() ) {
-			return self::cart_heading()
-				. '<p class="wpss-alert">' . esc_html__( 'Please log in to view your cart.', 'wp-sell-services' ) . '</p>';
-		}
-
-		$cart_items = wpss_get_user_cart( get_current_user_id(), true );
+		// The cart belongs to an account (owner decision, Basecamp 10337197376):
+		// a visitor buys straight from the service page, and the cart page
+		// offers sign-in or sign-up instead of a bare sentence with no link.
+		$is_guest   = ! is_user_logged_in();
+		$cart_items = $is_guest ? array() : wpss_get_user_cart( get_current_user_id(), true );
 		ob_start();
-		wpss_get_template( 'cart/cart.php', array( 'cart_items' => $cart_items ) );
+		wpss_get_template(
+			'cart/cart.php',
+			array(
+				'cart_items' => $cart_items,
+				'wpss_guest' => $is_guest,
+			)
+		);
 		return ob_get_clean();
 	}
 

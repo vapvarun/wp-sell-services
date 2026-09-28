@@ -8,6 +8,7 @@
  * @since   1.6.0
  *
  * @var array $cart_items Cart items from _wpss_cart user meta.
+ * @var bool  $wpss_guest Whether the visitor is logged out (the cart needs an account).
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -112,6 +113,15 @@ defined( 'ABSPATH' ) || exit;
 	overflow: hidden;
 	background: var(--wpss-bg-muted, #f1f5f9);
 	flex-shrink: 0;
+}
+
+/* Below the base rule so it wins: the image kept its 88px width in the 72px
+   column and ran 16px into the gap, touching the title (Basecamp 10337197376). */
+@media (max-width: 540px) {
+	.wpss-cart-item__image {
+		width: 72px;
+		height: 54px;
+	}
 }
 
 .wpss-cart-item__image img {
@@ -319,6 +329,13 @@ defined( 'ABSPATH' ) || exit;
 	margin: 0 0 var(--wpss-space-5, 20px);
 }
 
+.wpss-cart-empty__actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--wpss-space-3, 12px);
+}
+
 /* Removing animation */
 .wpss-cart-item.is-removing {
 	opacity: 0.4;
@@ -334,7 +351,21 @@ defined( 'ABSPATH' ) || exit;
 	\WPSellServices\Frontend\ShellHeader::render( array( 'title' => __( 'Your Cart', 'wp-sell-services' ) ) );
 	?>
 
-	<?php if ( empty( $cart_items ) ) : ?>
+	<?php if ( ! empty( $wpss_guest ) ) : ?>
+		<div class="wpss-cart-empty">
+			<div class="wpss-cart-empty__icon">
+				<i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
+			</div>
+			<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Log in to use your cart', 'wp-sell-services' ); ?></h2>
+			<p class="wpss-cart-empty__text"><?php esc_html_e( 'Your cart is saved to your account. You can also buy any service straight from its page.', 'wp-sell-services' ); ?></p>
+			<div class="wpss-cart-empty__actions">
+				<a href="<?php echo esc_url( wp_login_url( wpss_get_cart_url() ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Log in', 'wp-sell-services' ); ?></a>
+				<?php if ( get_option( 'users_can_register' ) ) : ?>
+					<a href="<?php echo esc_url( wp_registration_url() ); ?>" class="wpss-btn wpss-btn--outline"><?php esc_html_e( 'Create account', 'wp-sell-services' ); ?></a>
+				<?php endif; ?>
+			</div>
+		</div>
+	<?php elseif ( empty( $cart_items ) ) : ?>
 		<div class="wpss-cart-empty">
 			<div class="wpss-cart-empty__icon">
 				<i data-lucide="shopping-cart" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>

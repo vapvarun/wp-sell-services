@@ -205,12 +205,15 @@ do_action( 'wpss_before_single_request', $request_id );
 					</header>
 
 					<div class="wpss-request-content">
-						<section class="wpss-request-section wpss-request-description">
-							<h2><?php esc_html_e( 'Project Description', 'wp-sell-services' ); ?></h2>
-							<div class="wpss-request-text">
-								<?php the_content(); ?>
-							</div>
-						</section>
+						<?php // An empty card read as broken; a request without a description shows none (Basecamp 10337197376). ?>
+						<?php if ( '' !== trim( wp_strip_all_tags( (string) get_post_field( 'post_content', $request_id ) ) ) ) : ?>
+							<section class="wpss-request-section wpss-request-description">
+								<h2><?php esc_html_e( 'Project Description', 'wp-sell-services' ); ?></h2>
+								<div class="wpss-request-text">
+									<?php the_content(); ?>
+								</div>
+							</section>
+						<?php endif; ?>
 
 						<?php if ( ! empty( $skills ) ) : ?>
 							<section class="wpss-request-section wpss-request-skills">
@@ -482,7 +485,7 @@ do_action( 'wpss_before_single_request', $request_id );
 							<?php endif; ?>
 						<?php elseif ( ! is_user_logged_in() ) : ?>
 							<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn-primary wpss-btn-block">
-								<?php esc_html_e( 'Login to Submit Proposal', 'wp-sell-services' ); ?>
+								<?php esc_html_e( 'Log in to send a proposal', 'wp-sell-services' ); ?>
 							</a>
 							<?php
 						elseif ( ! $is_vendor && ! $is_buyer ) :
@@ -508,7 +511,7 @@ do_action( 'wpss_before_single_request', $request_id );
 								alt="<?php echo esc_attr( $buyer ? $buyer->display_name : '' ); ?>"
 								class="wpss-buyer-avatar">
 							<div class="wpss-buyer-info">
-								<span class="wpss-buyer-name">
+								<span class="wpss-buyer-name" title="<?php echo esc_attr( $buyer ? $buyer->display_name : '' ); ?>">
 									<?php echo esc_html( $buyer ? $buyer->display_name : __( 'Anonymous', 'wp-sell-services' ) ); ?>
 								</span>
 								<span class="wpss-buyer-member-since">
