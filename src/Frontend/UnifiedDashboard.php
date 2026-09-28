@@ -740,16 +740,7 @@ class UnifiedDashboard {
 					?>
 					<<?php echo esc_attr( $title_tag ); ?> class="wpss-dashboard__title wpss-page-header__title">
 						<?php
-						$id = isset( $_GET['id'] ) ? sanitize_text_field( wp_unslash( $_GET['id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only URL parameter for display.
-						// Service edit reuses the `create` section with ?id=<service_id>, so
-						// an editing context is `create` section + a present id. The guard was
-						// inverted (`!== 'create'`), so editing a service always fell through to
-						// the "Create Service" title.
-						if ( $id && 'create' === $this->current_section ) {
-							esc_html_e( 'Update Service', 'wp-sell-services' );
-						} else {
-							echo esc_html( $section_data['title'] );
-						}
+						echo esc_html( $section_data['title'] );
 						?>
 					</<?php echo esc_attr( $title_tag ); ?>>
 					<?php
@@ -854,7 +845,12 @@ class UnifiedDashboard {
 			'disputes'       => __( 'Disputes', 'wp-sell-services' ),
 			'notifications'  => __( 'Notifications', 'wp-sell-services' ),
 			'profile'        => __( 'Profile', 'wp-sell-services' ),
-			'create'         => __( 'Create Service', 'wp-sell-services' ),
+			// Editing a service reuses the create section with ?id=; the page
+			// heading and the phone bar both read this one title, so they can no
+			// longer say "Update Service" and "Create Service" at once
+			// (Basecamp 10337227125).
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only URL parameter for display.
+			'create'         => ! empty( $_GET['id'] ) ? __( 'Update Service', 'wp-sell-services' ) : __( 'Create Service', 'wp-sell-services' ),
 			'create-request' => __( 'Post a Request', 'wp-sell-services' ),
 			'edit-request'   => __( 'Edit Request', 'wp-sell-services' ),
 		);

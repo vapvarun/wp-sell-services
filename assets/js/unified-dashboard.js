@@ -249,7 +249,7 @@
 			if (page === 1) {
 				var $table = $(
 					'<div class="wpss-table-responsive">' +
-						'<table class="wpss-table wpss-wallet__table">' +
+						'<table class="wpss-table wpss-table--stack wpss-wallet__table">' +
 							'<thead><tr>' +
 								'<th>' + (i18n.walletColDate) + '</th>' +
 								'<th>' + (i18n.walletColType) + '</th>' +
@@ -305,8 +305,10 @@
 				return c.toUpperCase();
 			});
 
-			$('<td>').text(dateText).appendTo($row);
-			$('<td>').append(
+			// data-label: the column name each cell shows when the table stacks
+			// into rows on a phone (.wpss-table--stack).
+			$('<td>').attr('data-label', i18n.walletColDate).text(dateText).appendTo($row);
+			$('<td>').attr('data-label', i18n.walletColType).append(
 				$('<span>').addClass('wpss-badge wpss-badge--' + (txn.type || 'neutral')).text(typeLabel || i18n.walletTypeUnknown)
 			).appendTo($row);
 
@@ -314,7 +316,7 @@
 			// "View Tip" / ...). The server resolves reference_url (empty when the
 			// reference is not a linkable order), so vendors get a real link to the
 			// related order instead of an opaque internal ID.
-			var $descCell = $('<td>');
+			var $descCell = $('<td>').attr('data-label', i18n.walletColDescription);
 			$('<span>').addClass('wpss-wallet__desc').text(txn.description || '').appendTo($descCell);
 			if (txn.reference_url && txn.reference_label) {
 				$('<a>')
@@ -326,6 +328,7 @@
 			$descCell.appendTo($row);
 
 			$('<td>')
+				.attr('data-label', i18n.walletColAmount)
 				.addClass('wpss-wallet__amount-col wpss-wallet__amount')
 				.text((isDebit ? '-' : '+') + (txn.amount_formatted || Math.abs(amount).toFixed(2)))
 				.appendTo($row);

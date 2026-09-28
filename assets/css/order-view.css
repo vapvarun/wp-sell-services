@@ -704,6 +704,17 @@
 
 /* Responsive */
 @media (max-width: 640px) {
+	/* The conversation is the section on a phone: its padding and the chat's
+	   own border left the composer 124px wide (Basecamp 10337227125). */
+	.wpss-order-section--conversation .wpss-order-section__body {
+		padding: 0;
+	}
+
+	.wpss-order-section--conversation .wpss-messaging--order {
+		border: 0;
+		border-radius: 0;
+	}
+
 	.wpss-order-view__title-bar {
 		flex-direction: column;
 		align-items: stretch;

@@ -893,8 +893,10 @@ select.wpss-form-input::-ms-expand {
 	justify-content: flex-end;
 }
 
-/* Buttons */
-.wpss-btn {
+/* Buttons - scoped to the wizard. Unscoped, these restyled every button on
+   the page it loads on: the dashboard's Menu button lost its border and went
+   full width on Create / Update Service (Basecamp 10337227125). */
+.wpss-wizard .wpss-btn {
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
@@ -907,24 +909,24 @@ select.wpss-form-input::-ms-expand {
 	transition: all var(--wpss-transition, 0.2s ease);
 }
 
-.wpss-btn .dashicons {
+.wpss-wizard .wpss-btn .dashicons {
 	font-size: 16px;
 	width: 16px;
 	height: 16px;
 }
 
-.wpss-btn:disabled {
+.wpss-wizard .wpss-btn:disabled {
 	opacity: 0.6;
 	cursor: not-allowed;
 }
 
 /* .wpss-btn--primary: see design-system.css (single owner) */
-.wpss-btn--success {
+.wpss-wizard .wpss-btn--success {
 	color: var(--wpss-white, #fff);
 	background: var(--wpss-success, #10b981);
 }
 
-.wpss-btn--success:hover:not(:disabled) {
+.wpss-wizard .wpss-btn--success:hover:not(:disabled) {
 	background: var(--wpss-success-dark, #059669);
 }
 
@@ -932,17 +934,17 @@ select.wpss-form-input::-ms-expand {
    from here carried !important on its border, so it also outranked the owner
    anywhere both loaded. */
 
-.wpss-btn--ghost {
+.wpss-wizard .wpss-btn--ghost {
 	color: var(--wpss-text-muted, #6b7280);
 	background: transparent;
 }
 
-.wpss-btn--ghost:hover:not(:disabled) {
+.wpss-wizard .wpss-btn--ghost:hover:not(:disabled) {
 	background: var(--wpss-gray-100, #f1f5f9);
 	color: var(--wpss-text, #1f2937);
 }
 
-.wpss-btn--sm {
+.wpss-wizard .wpss-btn--sm {
 	padding: 8px 16px;
 	font-size: 13px;
 }
@@ -1050,7 +1052,7 @@ select.wpss-form-input::-ms-expand {
 		justify-content: center;
 	}
 
-	.wpss-btn {
+	.wpss-wizard .wpss-btn {
 		width: 100%;
 		justify-content: center;
 	}

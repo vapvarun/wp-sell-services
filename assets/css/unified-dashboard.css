@@ -610,6 +610,7 @@
 
 .wpss-service-card__actions {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 8px;
 	padding: 12px 16px;
 	border-top: 1px solid var(--wpss-gray-100);
@@ -2208,8 +2209,16 @@ select.wpss-input option,
 	}
 
 	.wpss-dashboard__nav-bar-title {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 		font-weight: 600;
 		color: var(--wpss-gray-900);
+	}
+
+	.wpss-dashboard__nav-toggle {
+		flex-shrink: 0;
 	}
 
 	.wpss-dashboard__sidebar:not(.wpss-dashboard__sidebar--open) .wpss-dashboard__drawer {
@@ -2317,6 +2326,90 @@ select.wpss-input option,
 		grid-template-columns: 1fr;
 	}
 }
+
+
+/* On a phone the shell and theme already give 27px of gutter; the body's own
+   padding and the messages card's stacked on top left a message 165px of a
+   390px screen (Basecamp 10345275760). */
+@media (max-width: 640px) {
+	.wpss-dashboard__body {
+		padding-inline: 0;
+	}
+
+	.wpss-section--messages {
+		padding-inline: 8px;
+	}
+
+	.wpss-section--messages .wpss-conversation-thread__messages {
+		padding: 12px 8px;
+	}
+
+	/* Tables with .wpss-table--stack become one labelled card per row: the
+	   Amount and Status columns sat off-screen in a sideways scroll with no
+	   hint (Basecamp 10337227125). Each cell names itself via data-label. */
+	.wpss-table--stack thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+	}
+
+	.wpss-table--stack,
+	.wpss-table--stack tbody,
+	.wpss-table--stack tr,
+	.wpss-table--stack td {
+		display: block;
+		width: 100%;
+	}
+
+	.wpss-table--stack tr {
+		padding: 10px 0;
+		border-bottom: 1px solid var(--wpss-gray-100);
+	}
+
+	.wpss-table--stack td,
+	.wpss-dashboard .wpss-table.wpss-table--stack td {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: 12px;
+		padding: 6px 12px;
+		border: 0;
+		text-align: end;
+	}
+
+	/* An action cell has no label: its button sits at the row's end. */
+	.wpss-table--stack td:not([data-label]),
+	.wpss-dashboard .wpss-table.wpss-table--stack td:not([data-label]) {
+		justify-content: flex-end;
+	}
+
+	.wpss-table--stack td::before {
+		content: attr(data-label);
+		flex-shrink: 0;
+		color: var(--wpss-gray-500);
+		font-size: 13px;
+		text-align: start;
+	}
+
+	.wpss-table--stack td:not([data-label])::before {
+		content: none;
+	}
+
+	.wpss-table--stack td:empty {
+		display: none;
+	}
+
+	/* A money figure is read whole: $113.40 split over two lines (Basecamp
+	   10337227125). Smaller, never broken. */
+	.wpss-dashboard .wpss-stat-card__value {
+		overflow-wrap: normal;
+		white-space: nowrap;
+		font-size: 1.25rem;
+	}
+}
+
 
 /* ==========================================================================
    Favorites section (Dashboard → Buying → Favorites)
