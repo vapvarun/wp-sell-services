@@ -3595,9 +3595,21 @@ button.wpss-change-status:focus {
    label/value pair, identity cells (no data-colname) full width.
    The selector mirrors core's and adds a class, so it wins on specificity.
    ========================================================================== */
+.wpss-moderation-thumb-placeholder {
+	width: 40px;
+	height: 40px;
+	color: var(--wpss-admin-text-muted, #a7aaad);
+}
+
 @media screen and (max-width: 782px) {
 	.wpss-stacked-table thead,
 	.wpss-stacked-table tfoot {
+		display: none;
+	}
+
+	/* A row with no image shows no placeholder on a phone (Basecamp 10337190248). */
+	/* Mirrors the stacked cell selector below, plus the empty class, so it wins. */
+	.wpss-stacked-table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td.column-thumbnail--empty:not(.check-column) {
 		display: none;
 	}
 

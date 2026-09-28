@@ -1167,15 +1167,17 @@ class ServiceMetabox {
 		 * enforced at save time, not retroactively - a row published before a
 		 * rule existed, or imported, keeps its status.
 		 */
-		$is_live = in_array( $post->post_status, array( 'publish', 'pending' ), true );
-
-		echo '<div class="wpss-notice warning wpss-service-invalid-notice" style="margin:0 0 16px;"><p><strong>';
-		if ( $is_live ) {
+		// Pending is held for review, not live: buyers do not see it, so it
+		// gets its own sentence rather than the live one (Basecamp 10337190248).
+		echo '<div class="wpss-notice warning wpss-service-invalid-notice"><p><strong>';
+		if ( 'publish' === $post->post_status ) {
 			esc_html_e( 'This service is live and buyers see it as it is. It is still missing:', 'wp-sell-services' );
+		} elseif ( 'pending' === $post->post_status ) {
+			esc_html_e( 'Waiting for review. It cannot go live until:', 'wp-sell-services' );
 		} else {
 			esc_html_e( 'Not ready for the marketplace yet. This service stays a draft until:', 'wp-sell-services' );
 		}
-		echo '</strong></p><ul style="list-style:disc;margin-left:20px;">';
+		echo '</strong></p><ul>';
 		foreach ( $errors as $message ) {
 			echo '<li>' . esc_html( $message ) . '</li>';
 		}

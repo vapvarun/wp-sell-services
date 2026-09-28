@@ -531,11 +531,12 @@ class ServiceModerationPage {
 			<th scope="row" class="check-column">
 				<input type="checkbox" name="service_ids[]" value="<?php echo esc_attr( $service->ID ); ?>">
 			</th>
-			<td class="column-thumbnail">
+			<?php // An empty cell is marked so the phone layout can drop it (Basecamp 10337190248). ?>
+			<td class="column-thumbnail<?php echo $thumbnail ? '' : ' column-thumbnail--empty'; ?>">
 				<?php if ( $thumbnail ) : ?>
 					<img src="<?php echo esc_url( $thumbnail ); ?>" alt="" class="service-thumb">
 				<?php else : ?>
-					<i data-lucide="image" class="wpss-icon" style="font-size: 40px; color: #ccc;" aria-hidden="true"></i>
+					<i data-lucide="image" class="wpss-icon wpss-moderation-thumb-placeholder" aria-hidden="true"></i>
 				<?php endif; ?>
 			</td>
 			<td class="column-title">
