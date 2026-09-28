@@ -826,12 +826,28 @@ class PayPalGateway implements PaymentGatewayInterface {
 			$this->capture_fail( $settle['error'] ?? __( 'Failed to create order.', 'wp-sell-services' ) );
 		}
 
-		if ( wp_doing_ajax() ) {
+		if ( ! $this->is_return_leg() ) {
 			wp_send_json_success( $settle );
 		}
 
 		wp_safe_redirect( $settle['redirect_url'] );
 		exit;
+	}
+
+	/**
+	 * Whether this capture is PayPal sending the buyer's browser back (GET
+	 * with ?token=), rather than the checkout script's AJAX call.
+	 *
+	 * Both arrive on admin-ajax.php, where wp_doing_ajax() is always true, so
+	 * it cannot tell them apart: the return leg printed raw JSON at the buyer
+	 * instead of redirecting them to their order.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return bool
+	 */
+	private function is_return_leg(): bool {
+		return 'GET' === ( $_SERVER['REQUEST_METHOD'] ?? '' ) && isset( $_GET['token'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- presence check only; the nonce is verified by the caller.
 	}
 
 	/**
@@ -844,7 +860,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 	 * @return void
 	 */
 	private function capture_fail( string $message ): void {
-		if ( wp_doing_ajax() ) {
+		if ( ! $this->is_return_leg() ) {
 			wp_send_json_error( array( 'message' => $message ) );
 		}
 
