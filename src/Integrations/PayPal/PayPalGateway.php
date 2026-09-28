@@ -847,7 +847,9 @@ class PayPalGateway implements PaymentGatewayInterface {
 	 * @return bool
 	 */
 	private function is_return_leg(): bool {
-		return 'GET' === ( $_SERVER['REQUEST_METHOD'] ?? '' ) && isset( $_GET['token'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- presence check only; the nonce is verified by the caller.
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_key( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
+
+		return 'get' === $method && isset( $_GET['token'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- presence check only; the caller verifies the nonce.
 	}
 
 	/**
