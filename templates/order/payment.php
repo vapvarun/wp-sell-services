@@ -24,7 +24,10 @@ if ( empty( $wpss_order ) ) {
 $wpss_method = wpss_get_payment_method_label( (string) $wpss_order->payment_method );
 $wpss_paid   = 'paid' === $wpss_order->payment_status || null !== $wpss_order->paid_at;
 
-if ( $wpss_paid ) {
+if ( 'refunded' === $wpss_order->payment_status ) {
+	/* translators: %s: payment method, e.g. Stripe. */
+	$wpss_payment = '' !== $wpss_method ? sprintf( __( 'Refunded · %s', 'wp-sell-services' ), $wpss_method ) : __( 'Refunded', 'wp-sell-services' );
+} elseif ( $wpss_paid ) {
 	/* translators: %s: payment method, e.g. Stripe. */
 	$wpss_payment = '' !== $wpss_method ? sprintf( __( 'Paid · %s', 'wp-sell-services' ), $wpss_method ) : __( 'Paid', 'wp-sell-services' );
 } else {

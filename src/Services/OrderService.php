@@ -540,6 +540,15 @@ class OrderService {
 
 		if ( $settled_at_rail ) {
 			$outcome = 'settled_at_rail';
+
+			// The money is already back, so a full refund closes the payment
+			// here. The admin path closes it after its own gateway call; a
+			// Stripe or PayPal dashboard refund used to leave the order
+			// refunded with its payment still "paid".
+			if ( ServiceOrder::STATUS_REFUNDED === $status ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->update( $table, array( 'payment_status' => 'refunded' ), array( 'id' => $order_id ), array( '%s' ), array( '%d' ) );
+			}
 		} elseif ( null === $gateway ) {
 			$outcome = 'recorded';
 		} else {
