@@ -304,8 +304,8 @@ class OfflineGateway implements PaymentGatewayInterface {
 			$methods = array(
 				array(
 					'id'           => 'offline',
-					// ?: not ??: a saved but empty title left the method nameless.
-					'label'        => ( $settings['title'] ?? '' ) ?: __( 'Offline Payment', 'wp-sell-services' ),
+					// A saved but empty title left the method nameless.
+					'label'        => '' !== (string) ( $settings['title'] ?? '' ) ? (string) $settings['title'] : __( 'Offline Payment', 'wp-sell-services' ),
 					'instructions' => $settings['instructions'] ?? '',
 					'enabled'      => true,
 				),
