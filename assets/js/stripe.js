@@ -91,6 +91,44 @@
 				return;
 			}
 
+			const appearance = {
+				theme: 'stripe',
+				variables: {
+					colorPrimary: '#1e3a5f',
+					fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
+				},
+			};
+
+			// A logged-out buyer has no account yet and the intent endpoint needs
+			// one, so the card field mounts from the amount alone (Stripe's
+			// deferred mode) and the intent is created on Pay, after the
+			// account step (Basecamp 10341174356). It showed "An error occurred"
+			// with no card field.
+			if (wpssStripe.isGuest) {
+				try {
+					this.deferred = { amount: amount, currency: currency, serviceId: serviceId, packageId: packageId };
+					this.elements = this.stripe.elements({
+						mode: 'payment',
+						amount: Math.round(amount * Math.pow(10, parseInt(wpssStripe.decimals, 10) || 0)),
+						currency: currency.toLowerCase(),
+						appearance: appearance,
+					});
+					this.paymentElement = this.elements.create('payment', this.paymentElementOptions());
+					this.paymentElement.mount(elementContainer);
+					this.paymentElement.on('change', (event) => {
+						if (event.error) {
+							this.showError(event.error.message);
+						} else {
+							this.hideError();
+						}
+					});
+				} catch (error) {
+					console.error('Stripe initialization error:', error);
+					this.showError(wpssStripe.i18n.error);
+				}
+				return;
+			}
+
 			// Create payment intent.
 			try {
 				const response = await this.createPaymentIntent(amount, currency, serviceId, packageId);
@@ -106,13 +144,7 @@
 				// Create and mount Payment Element.
 				this.elements = this.stripe.elements({
 					clientSecret: response.data.client_secret,
-					appearance: {
-						theme: 'stripe',
-						variables: {
-							colorPrimary: '#1e3a5f',
-							fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
-						},
-					},
+					appearance: appearance,
 				});
 
 				this.paymentElement = this.elements.create('payment', this.paymentElementOptions());
@@ -156,6 +188,9 @@
 					data: {
 						action: 'wpss_stripe_create_payment_intent',
 						nonce: wpssStripe.nonce,
+						// Refreshed by the account-at-checkout step once a new buyer is
+						// signed in; the page's Stripe nonce belongs to the visitor.
+						wpss_checkout_nonce: document.querySelector('[name="wpss_checkout_nonce"]')?.value || '',
 						amount: amount,
 						currency: currency,
 						service_id: serviceId,
@@ -234,11 +269,35 @@
 					billing_details: billing.details,
 				};
 
+				// Deferred (guest) mount: validate the card field, then make the
+				// intent now that the account step has signed the buyer in.
+				let clientSecret;
+				if (this.deferred) {
+					const { error: submitError } = await this.elements.submit();
+					if (submitError) {
+						this.showError(submitError.message);
+						this.setLoading(false);
+						return;
+					}
+
+					const response = await this.createPaymentIntent(this.deferred.amount, this.deferred.currency, this.deferred.serviceId, this.deferred.packageId);
+					if (!response.success) {
+						this.showError(response.data?.message || wpssStripe.i18n.initFailed);
+						this.setLoading(false);
+						return;
+					}
+
+					this.paymentIntentId = response.data.id;
+					document.getElementById('wpss-stripe-payment-intent-id').value = response.data.id;
+					clientSecret = response.data.client_secret;
+				}
+
 				// Confirm payment with Stripe.
 				const { error, paymentIntent } = await this.stripe.confirmPayment({
 					elements: this.elements,
 					confirmParams: confirmParams,
 					redirect: 'if_required',
+					...(clientSecret ? { clientSecret: clientSecret } : {}),
 				});
 
 				if (error) {
@@ -401,6 +460,7 @@
 				data: {
 					action: 'wpss_stripe_confirm_payment',
 					nonce: wpssStripe.nonce,
+					wpss_checkout_nonce: document.querySelector('[name="wpss_checkout_nonce"]')?.value || '',
 					payment_intent_id: paymentIntentId,
 					service_id: serviceId,
 					package_id: packageId,

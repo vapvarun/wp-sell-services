@@ -913,6 +913,11 @@ class StripeGateway implements PaymentGatewayInterface {
 				'publishableKey' => $this->get_publishable_key(),
 				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 				'nonce'          => wp_create_nonce( 'wpss_stripe' ),
+				// A logged-out buyer (account-at-checkout sites) gets the card
+				// field without an intent; the intent is made once the account
+				// exists, on Pay (stripe.js, deferred mode).
+				'isGuest'        => ! is_user_logged_in(),
+				'decimals'       => wpss_get_currency_decimals(),
 				'returnUrl'      => add_query_arg( 'step', 'complete', wpss_get_page_url( 'checkout' ) ),
 				// Prefill the Address Element from the buyer's saved profile so
 				// a returning customer enters card details and nothing else.
@@ -1080,7 +1085,16 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return void
 	 */
 	public function ajax_create_payment_intent(): void {
-		check_ajax_referer( 'wpss_stripe', 'nonce' );
+		// The Stripe nonce, or the checkout nonce the account-at-checkout step
+		// hands back once it has signed a new buyer in - the page's Stripe nonce
+		// was issued to the logged-out visitor and no longer verifies
+		// (Basecamp 10341174356). Same rule as ajax_confirm_payment().
+		$posted_nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
+		if ( ! wp_verify_nonce( $posted_nonce, 'wpss_stripe' )
+			&& ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_checkout_nonce'] ?? '' ) ), 'wpss_checkout' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
+			return;
+		}
 
 		// A disabled gateway does not start new money. Refunds and webhooks
 		// stay registered for historical orders; this does not.
