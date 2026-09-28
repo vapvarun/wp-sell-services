@@ -1089,7 +1089,10 @@ class OrderService {
 		// live package by stable id) and the add-ons on the order, Express
 		// included. Indexing _wpss_packages by package_id missed every order
 		// carrying a stable id (1000+) and fell to 7 days.
-		return wpss_line_delivery_days( $order->get_package_snapshot(), is_array( $order->addons ) ? $order->addons : array() );
+		// An order with no package (a service sold without packages, or one
+		// since deleted) has no snapshot; it takes the default days rather
+		// than fataling the payment or requirements step.
+		return wpss_line_delivery_days( $order->get_package_snapshot() ?? array(), is_array( $order->addons ) ? $order->addons : array() );
 	}
 
 	/**

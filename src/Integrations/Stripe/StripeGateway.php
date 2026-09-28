@@ -1402,32 +1402,47 @@ class StripeGateway implements PaymentGatewayInterface {
 			);
 		}
 
-		// Path 2: AJAX path failed — recover by creating the order from metadata.
-		if ( ! empty( $metadata['service_id'] ) && ! empty( $metadata['customer_id'] ) ) {
-			$amount   = $this->parse_amount( (int) $payment_intent['amount'], $payment_intent['currency'] ?? 'usd' );
-			$currency = strtoupper( $payment_intent['currency'] ?? 'usd' );
-
-			$order = $order_provider->create_order(
+		// Path 2: no order yet - the webhook beat the browser, or the browser
+		// never came back. Build it exactly as checkout does: priced on the
+		// server from the intent's own metadata, refused unless the charge
+		// matches, one order per charge. This used to create the order itself
+		// from the charged amount, which already includes tax, so the tax was
+		// added twice and add-ons and Express were lost - whenever the webhook
+		// won the race with the browser.
+		if ( ! empty( $metadata['customer_id'] ) ) {
+			$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
+			$intent   = $checkout->resolve(
 				array(
-					'service_id'     => (int) $metadata['service_id'],
-					'package_id'     => (int) ( $metadata['package_id'] ?? 0 ),
-					'customer_id'    => (int) $metadata['customer_id'],
-					'subtotal'       => $amount,
-					'currency'       => $currency,
-					'payment_method' => 'stripe',
-				)
+					'is_multi_checkout' => ! empty( $metadata['is_multi_checkout'] ),
+					'service_id'        => (int) ( $metadata['service_id'] ?? 0 ),
+					'package_id'        => (int) ( $metadata['package_id'] ?? 0 ),
+					'quantity'          => max( 1, (int) ( $metadata['quantity'] ?? 1 ) ),
+					'addon_sel'         => (string) ( $metadata['addon_sel'] ?? '' ),
+					'addon_ids'         => (string) ( $metadata['addon_ids'] ?? '' ),
+				),
+				(int) $metadata['customer_id']
 			);
 
-			if ( $order ) {
-				$order_provider->mark_as_paid( $order->id, $payment_intent['id'], 'stripe' );
-
-				// Store order_id back on PaymentIntent for future webhook deliveries.
-				$this->api_request(
-					"payment_intents/{$payment_intent['id']}",
-					array( 'metadata' => array( 'order_id' => $order->id ) )
+			$settle = is_wp_error( $intent )
+				? array( 'error' => $intent->get_error_message() )
+				: $checkout->settle(
+					$intent,
+					'stripe',
+					(string) $payment_intent['id'],
+					$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ), $payment_intent['currency'] ?? 'usd' ),
+					strtoupper( $payment_intent['currency'] ?? 'usd' )
 				);
 
-				wpss_log( "Webhook recovery: Created order {$order->id} for Stripe payment {$payment_intent['id']}.", 'info' );
+			if ( ! empty( $settle['success'] ) ) {
+				$ids = ! empty( $settle['order_ids'] ) ? array_map( 'intval', (array) $settle['order_ids'] ) : array( (int) ( $settle['order_id'] ?? 0 ) );
+
+				// Store the order id(s) back on the intent for later deliveries.
+				$this->api_request(
+					"payment_intents/{$payment_intent['id']}",
+					array( 'metadata' => count( $ids ) > 1 ? array( 'order_ids' => implode( ',', $ids ) ) : array( 'order_id' => $ids[0] ) )
+				);
+
+				wpss_log( 'Webhook recovery: settled order(s) ' . implode( ',', $ids ) . " for Stripe payment {$payment_intent['id']}.", 'info' );
 
 				return array(
 					'success' => true,
@@ -1435,7 +1450,7 @@ class StripeGateway implements PaymentGatewayInterface {
 				);
 			}
 
-			wpss_log( "Webhook recovery FAILED: Could not create order for Stripe payment {$payment_intent['id']}.", 'error' );
+			wpss_log( "Webhook recovery FAILED for Stripe payment {$payment_intent['id']}: " . ( $settle['error'] ?? 'unknown' ), 'error' );
 
 			return array(
 				'success' => false,
