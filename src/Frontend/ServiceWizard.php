@@ -2140,7 +2140,7 @@ class ServiceWizard {
 				'delivery_time' => absint( $pkg['delivery_time'] ?? 0 ),
 				'revisions'     => intval( $pkg['revisions'] ?? 0 ),
 				'features'      => array_map( 'sanitize_text_field', $pkg['features'] ?? array() ),
-			) + wpss_sanitize_package_express( (array) $pkg );
+			) + wpss_sanitize_package_express( (array) $pkg ) + wpss_package_id_from_input( (array) $pkg );
 		}
 
 		return $sanitized;
@@ -2304,7 +2304,7 @@ class ServiceWizard {
 			if ( empty( $pkg['enabled'] ) ) {
 				continue;
 			}
-			$numeric_packages[] = array(
+			$numeric_packages[] = wpss_package_id_from_input( (array) $pkg ) + array(
 				'name'          => $pkg['name'] ?? '',
 				'description'   => $pkg['description'] ?? '',
 				'price'         => (float) ( $pkg['price'] ?? 0 ),

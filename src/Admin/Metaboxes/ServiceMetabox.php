@@ -320,6 +320,8 @@ class ServiceMetabox {
 				</div>
 			</div>
 			<div class="wpss-package-body">
+				<?php // The stable id travels with the row, so saving or reordering keeps it. ?>
+				<input type="hidden" name="wpss_packages[<?php echo esc_attr( $index ); ?>][id]" value="<?php echo esc_attr( (string) ( $package['id'] ?? '' ) ); ?>">
 				<div class="wpss-package-row">
 					<div class="wpss-package-field wpss-package-field-wide">
 						<label><?php esc_html_e( 'Package Name', 'wp-sell-services' ); ?></label>
@@ -767,7 +769,7 @@ class ServiceMetabox {
 					$revisions_raw = isset( $package['revisions'] ) ? (int) $package['revisions'] : 0;
 					$revisions_val = $revisions_raw < 0 ? -1 : $revisions_raw;
 
-					$packages[] = array(
+					$packages[] = wpss_package_id_from_input( (array) $package ) + array(
 						'name'          => sanitize_text_field( $package['name'] ?? '' ),
 						'description'   => sanitize_textarea_field( $package['description'] ?? '' ),
 						'price'         => (float) ( $package['price'] ?? 0 ),

@@ -44,6 +44,8 @@ class ServicePostType {
 		add_action( 'save_post_wpss_service', [ $this, 'sync_delivery_days_meta' ], 20, 2 );
 		add_action( 'added_post_meta', [ $this, 'sync_starting_price' ], 10, 4 );
 		add_action( 'updated_post_meta', [ $this, 'sync_starting_price' ], 10, 4 );
+		add_action( 'added_post_meta', [ $this, 'sync_package_ids' ], 11, 3 );
+		add_action( 'updated_post_meta', [ $this, 'sync_package_ids' ], 11, 3 );
 	}
 
 	/**
@@ -194,6 +196,25 @@ class ServicePostType {
 	 */
 	public static function strip_block_markup( string $content ): string {
 		return trim( (string) preg_replace( array( '/<!--\s*\/?wp:[^>]*?-->\n?/', '#</?p>#' ), '', $content ) );
+	}
+
+	/**
+	 * Number any package written without a stable id, whoever wrote it.
+	 *
+	 * Ids were handed out only when something first read GET /packages, so a
+	 * package saved from the editor or the wizard had none until then
+	 * (Basecamp 10342028625). The follow-up write finds nothing missing, so
+	 * this runs once per save.
+	 *
+	 * @param int    $meta_id  Meta ID.
+	 * @param int    $post_id  Post ID.
+	 * @param string $meta_key Meta key.
+	 * @return void
+	 */
+	public function sync_package_ids( $meta_id, $post_id, $meta_key ): void {
+		if ( '_wpss_packages' === $meta_key && 'wpss_service' === get_post_type( (int) $post_id ) ) {
+			wpss_assign_package_ids( (int) $post_id );
+		}
 	}
 
 	/**

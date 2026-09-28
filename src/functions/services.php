@@ -709,6 +709,26 @@ function wpss_price_addons( int $service_id, $selection, float $package_subtotal
 }
 
 /**
+ * A package's stable id, as a saver should keep it.
+ *
+ * The wizard and the wp-admin editor rebuilt each package from a list of keys
+ * that left `id` out, so every save stripped the ids and the next read handed
+ * out new ones - a saved cart or an app link to package 1000 then pointed at
+ * nothing (Basecamp 10342028625). Every package saver adds this to the row it
+ * builds; wpss_assign_package_ids() numbers any package still without one.
+ *
+ * @since 1.8.0
+ *
+ * @param array $raw Package input.
+ * @return array{id?: int} The id, or nothing for a new package.
+ */
+function wpss_package_id_from_input( array $raw ): array {
+	$id = absint( $raw['id'] ?? 0 );
+
+	return $id > 0 ? array( 'id' => $id ) : array();
+}
+
+/**
  * A package's Express delivery, when it offers one.
  *
  * Express is set per package (Basecamp 10337201764): a price and a delivery

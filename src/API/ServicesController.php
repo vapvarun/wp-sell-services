@@ -1527,8 +1527,7 @@ class ServicesController extends RestController {
 					if ( is_array( $pkg ) && array_key_exists( 'enabled', $pkg ) && ! $pkg['enabled'] ) {
 						continue;
 					}
-					$packages[] = array(
-						'id'            => sanitize_key( $pkg['id'] ?? '' ),
+					$packages[] = wpss_package_id_from_input( (array) $pkg ) + array(
 						'name'          => sanitize_text_field( $pkg['name'] ?? '' ),
 						'description'   => sanitize_textarea_field( $pkg['description'] ?? '' ),
 						'price'         => (float) ( $pkg['price'] ?? 0 ),

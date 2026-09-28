@@ -52,7 +52,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_pre_create_service` | `array $data` | `ServiceManager.php` |
 | `wpss_pre_update_service` | `array $data, int $service_id` | `ServiceManager.php` |
 | `wpss_before_service_deleted` | `int $service_id` | `src/Services/ServiceManager.php:340` |
-| `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:893` |
+| `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:895` |
 | `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:733` |
 | `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:898` |
 | `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:947` |
@@ -749,10 +749,10 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_vendor_slug` | `$slug` (default `'provider'`) | `Plugin.php`, `functions.php` |
 | `wpss_service_order_slug` | `$slug` (default `'service-order'`) | `Plugin.php`, `functions.php` |
 | `wpss_checkout_slug` | `$slug` (default `'service-checkout'`) | `StandaloneAdapter.php` |
-| `wpss_service_slug` | `$slug` (default `'service'`) | `src/PostTypes/ServicePostType.php:403` |
+| `wpss_service_slug` | `$slug` (default `'service'`) | `src/PostTypes/ServicePostType.php:424` |
 | `wpss_buyer_request_slug` | `$slug` (default `'buyer-request'`) | `src/PostTypes/BuyerRequestPostType.php:114` |
-| `wpss_service_post_type_args` | `$args` | `src/PostTypes/ServicePostType.php:325` |
-| `wpss_service_tag_args` | `$args` | `src/PostTypes/ServicePostType.php:387` |
+| `wpss_service_post_type_args` | `$args` | `src/PostTypes/ServicePostType.php:346` |
+| `wpss_service_tag_args` | `$args` | `src/PostTypes/ServicePostType.php:408` |
 | `wpss_service_category_taxonomy_args` | `$args` | `ServiceCategoryTaxonomy.php:118` |
 | `wpss_service_tag_taxonomy_args` | `$args` | `ServiceTagTaxonomy.php:103` |
 | `wpss_buyer_request_post_type_args` | `$args` | `src/PostTypes/BuyerRequestPostType.php:98` |
