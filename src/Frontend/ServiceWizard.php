@@ -317,10 +317,17 @@ class ServiceWizard {
 					</button>
 				</div>
 				<div class="wpss-wizard__nav-center">
-					<button type="button" class="wpss-btn wpss-btn--ghost wpss-wizard__btn-save" @click="saveDraft()" :disabled="saving">
-						<i data-lucide="upload-cloud" class="wpss-icon" aria-hidden="true"></i>
-						<span><?php esc_html_e( 'Save Draft', 'wp-sell-services' ); ?></span>
-					</button>
+					<?php
+					// A live or pending service is saved with Update Service, which
+					// validates it. "Save Draft" there took the listing offline
+					// (Basecamp 10342028458), so it is offered only while it is a draft.
+					?>
+					<?php if ( ! $service_id || ! in_array( get_post_status( $service_id ), array( 'publish', 'pending' ), true ) ) : ?>
+						<button type="button" class="wpss-btn wpss-btn--ghost wpss-wizard__btn-save" @click="saveDraft()" :disabled="saving">
+							<i data-lucide="upload-cloud" class="wpss-icon" aria-hidden="true"></i>
+							<span><?php esc_html_e( 'Save Draft', 'wp-sell-services' ); ?></span>
+						</button>
+					<?php endif; ?>
 					<?php
 					// Autosave indicator pill — driven by the WpssAutosave primitive in
 					// service-wizard.js. Replaces the in-button "Saving..." state so
@@ -1706,6 +1713,13 @@ class ServiceWizard {
 			$service = get_post( $service_id );
 			if ( ! $service || $user_id !== (int) $service->post_author ) {
 				wp_send_json_error( array( 'message' => __( 'You do not have permission to edit this service.', 'wp-sell-services' ) ) );
+			}
+
+			// Saving a draft would take a live listing offline (Basecamp
+			// 10342028458); a live or pending service is saved by Update Service,
+			// which also validates it. The wizard no longer offers the button there.
+			if ( in_array( $service->post_status, array( 'publish', 'pending' ), true ) ) {
+				wp_send_json_error( array( 'message' => __( 'This service is live. Use Update Service to save your changes.', 'wp-sell-services' ) ) );
 			}
 		}
 
