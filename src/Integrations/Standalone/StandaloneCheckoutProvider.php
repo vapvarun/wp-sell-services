@@ -1389,6 +1389,10 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				'line_price'    => $line_price,
 				'addons'        => $addon_lines,
 				'addons_total'  => $addons_total,
+				// Before tax, as the cart page shows it: tax is its own
+				// summary line, so a tax-inclusive line counted it twice
+				// on screen (the total was always right).
+				'line_subtotal' => $line_price + $addons_total,
 				'line_total'    => $line_total,
 				'vendor_name'   => $vendor_name,
 				'vendor_avatar' => $vendor_avatar,
@@ -1406,7 +1410,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		foreach ( $enriched_items as $ei ) {
 			$summary_lines[] = array(
 				'label'  => wp_trim_words( $ei['service']->title, 6 ),
-				'amount' => $ei['line_total'],
+				'amount' => $ei['line_subtotal'],
 			);
 		}
 		if ( $tax_amount > 0 ) {
@@ -1663,7 +1667,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 											</div>
 
 											<div class="wpss-co-multi-item__price">
-												<?php echo esc_html( wpss_format_price( $ei['line_total'], $currency ) ); ?>
+												<?php echo esc_html( wpss_format_price( $ei['line_subtotal'], $currency ) ); ?>
 											</div>
 										</div>
 									<?php endforeach; ?>
