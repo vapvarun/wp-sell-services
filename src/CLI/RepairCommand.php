@@ -55,6 +55,12 @@ class RepairCommand extends WP_CLI_Command {
 	 * [--apply]
 	 * : Write the changes. Without it nothing is written.
 	 *
+	 * [--force]
+	 * : With --apply, allow it on a site whose environment type is production.
+	 *
+	 * [--yes]
+	 * : With --apply, skip the confirmation of how many orders will be corrected.
+	 *
 	 * @param array $args       Positional args.
 	 * @param array $assoc_args Associative args.
 	 * @return void
@@ -70,7 +76,7 @@ class RepairCommand extends WP_CLI_Command {
 		$checked = 0;
 		$last_id = 0;
 
-		WP_CLI::log( $apply ? 'APPLY: writing changes.' : 'DRY RUN: nothing will be written. Re-run with --apply to write.' );
+		WP_CLI::log( $apply ? 'Checking orders; changes are written after you confirm.' : 'DRY RUN: nothing will be written. Re-run with --apply to write.' );
 
 		do {
 			// Taxed Stripe orders only; keyset batches so a large store is read
@@ -131,11 +137,20 @@ class RepairCommand extends WP_CLI_Command {
 					continue;
 				}
 
-				$fix[] = $this->repair_order( $order, $charged, $decimals, $apply );
+				$fix[] = array( $order, $charged, $decimals );
 			}
 
 			$more = 200 === count( $batch );
 		} while ( $more );
+
+		// The dry run reads only; --apply goes through the shared write guard
+		// (production refusal, count confirmation) before anything is written,
+		// even at zero, so the refusal behaves the same on every site.
+		if ( $apply ) {
+			Guard::writes( 'double-taxed Stripe orders', count( $fix ), $assoc_args );
+		}
+
+		$fix = array_map( fn( $f ) => $this->repair_order( $f[0], $f[1], $f[2], $apply ), $fix );
 
 		if ( $fix ) {
 			WP_CLI\Utils\format_items( 'table', $fix, array( 'order', 'payment', 'charged', 'subtotal', 'tax', 'total', 'vendor_earning', 'ledger' ) );

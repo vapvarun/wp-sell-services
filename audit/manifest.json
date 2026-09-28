@@ -743,7 +743,7 @@
     "notes": "All recurring jobs migrated from WP-Cron to Action Scheduler in 1.1.0. Legacy WP-Cron sweep on version bump."
   },
   "wp_cli": {
-    "count": 16,
+    "count": 17,
     "registered_in": "src/CLI/",
     "guard": "src/CLI/Guard.php - Guard::writes( $what, $count, $assoc_args ) refuses when wp_get_environment_type() === 'production' unless --force, then confirms the row count unless --yes. Every command marked writes:true routes through it and documents --force and --yes in its synopsis. A stale count in this block is what let `scale teardown`, `scale bench --teardown` and both Pro writers ship ungated (Basecamp 10268057471), so add the command here in the same commit that registers it.",
     "commands": {
@@ -795,6 +795,9 @@
       },
       "wp wpss api:shapes": {
         "writes": false
+      },
+      "wp wpss repair:stripe-tax": {
+        "writes": true
       }
     },
     "contract_test": "tests/test-cli-guards.php - `wp eval-file tests/test-cli-guards.php` asserts every writes:true command refuses with the environment forced to production, every writes:false one is untouched, and `wp help` names --force for each writer.",
@@ -1133,7 +1136,7 @@
       "do_action_firings": 184,
       "apply_filters_firings": 233,
       "shortcodes": 20,
-      "cli_command_files": 9,
+      "cli_command_files": 10,
       "block_files": 8
     }
   }
