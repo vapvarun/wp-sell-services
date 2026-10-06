@@ -1413,6 +1413,13 @@ class AjaxHandlers {
 			'skills_required' => $skills_raw ? array_map( 'trim', explode( ',', $skills_raw ) ) : array(),
 		);
 
+		// The edit form now carries the attachment list (Basecamp 10337217098).
+		// Only when it says so: a caller without the field must not wipe them.
+		// BuyerRequestService keeps only files this buyer uploaded.
+		if ( ! empty( $_POST['attachments_present'] ) ) {
+			$data['attachments'] = array_map( 'absint', (array) wp_unslash( $_POST['attachments'] ?? array() ) );
+		}
+
 		if ( $deadline ) {
 			$deadline_timestamp = strtotime( $deadline );
 			if ( $deadline_timestamp && $deadline_timestamp > time() ) {

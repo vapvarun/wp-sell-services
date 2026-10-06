@@ -780,8 +780,9 @@ class BuyerRequestsController extends RestController {
 			'created_at'       => $this->format_datetime( $buyer_request->created_at ?? $buyer_request->post_date ?? null ),
 		];
 
-		// Add attachments if owner.
-		if ( $is_owner && isset( $buyer_request->attachments ) ) {
+		// The buyer, the sellers who would quote on it, and admins: vendors see
+		// the files on the website, and the app hid them (Basecamp 10337217098).
+		if ( ( $is_owner || wpss_is_vendor() || current_user_can( 'manage_options' ) ) && isset( $buyer_request->attachments ) ) {
 			$data['attachments'] = $this->get_attachment_urls( $buyer_request->attachments );
 		}
 

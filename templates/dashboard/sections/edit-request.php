@@ -219,6 +219,8 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 					placeholder="<?php esc_attr_e( 'e.g., WordPress, PHP, JavaScript (comma-separated)', 'wp-sell-services' ); ?>"
 				>
 			</div>
+
+			<?php wpss_get_template( 'partials/request-attachments.php', array( 'wpss_attachment_ids' => (array) get_post_meta( $request_id, '_wpss_attachments', true ) ) ); ?>
 		</div>
 
 		<!-- Submit Section -->
