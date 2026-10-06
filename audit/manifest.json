@@ -1147,5 +1147,22 @@
       "cli_command_files": 10,
       "block_files": 8
     }
+  },
+  "payment_refund_seams_1_8_0": {
+    "_note": "Shared rules added in the 1.8.0 card sweep (2026-10-06). Reuse these; do not write a second copy.",
+    "settle_once": "CheckoutIntentService::settle() takes a MySQL GET_LOCK per gateway+transaction around settle_once(): the browser confirm and the webhook can no longer both create an order for one charge.",
+    "paid_is_final": "StandaloneOrderProvider::mark_as_paid() treats paid, refunded and partially_refunded as final; a replayed succeeded event cannot reopen a refunded order.",
+    "unsettled_charge_refund": "StripeGateway::refund_unsettled_charge() is the one \"charged but no order\" refund (browser, AJAX, webhook recovery). Webhook recovery that cannot refund answers 500 and leaves the event unmarked so Stripe retries.",
+    "gateway_refund_ids": "OrderWorkflowManager::remember_gateway_refund() is the one writer of _wpss_gateway_refund_ids; OrderService::refund() records the id the gateway returned so the gateway webhook for the same refund is skipped.",
+    "refund_children": "OrderService::refund_paid_children() (public) refunds paid extensions and tips; used by a full refund and by handle_order_cancelled() for a paid order.",
+    "dispute_close_on_refund": "DisputeService::close_for_refund() resolves an open dispute as full_refund after the money already moved (rail refund via handle_gateway_refund, wp-admin full refund via OrderService::refund); never calls resolve(), which would refund again. A dispute-origin refund resolves its own dispute.",
+    "gateway_nonce": "wpss_verify_gateway_nonce( $actions ) (functions/payments.php): gateway nonce or the fresh wpss_checkout nonce from the guest account step. Used by Stripe (2 handlers), PayPal (2), Pro Razorpay (2); allow-listed in audit/admin-action-authority.json.",
+    "payment_page": "wpss_is_payment_page() (functions/payments.php): mapped checkout page, /service-checkout/ route or a service page. The one guard for loading Stripe, PayPal and Pro Razorpay scripts.",
+    "payment_label": "wpss_get_payment_status_label() (functions/orders.php): \"Refunded/Paid/Not paid · Method\" for the admin Orders list and templates/order/payment.php.",
+    "service_status_settle": "wpss_settle_service_status( $id, $status ) (functions/services.php): creators insert as draft, write meta, then settle to publish/pending and get back the status that stuck. Used by ServiceWizard, REST POST /services, ServiceManager::create(), CLI demo create_service(), MarketplaceSeeder.",
+    "service_availability": "wpss_service_unavailable_reason() now refuses paused services too; every purchase path (cart, Woo rail, order provider) asks it.",
+    "vendor_rating_source": "Vendor rating, review count and member-since come from the profile row via wpss_get_vendor() on every REST surface; ReviewsController::update_rating_cache() refreshes the row through VendorProfileRepository::update_stats(). The _wpss_rating_* and _wpss_vendor_since user meta are no longer read.",
+    "vendor_signup_closed": "PublicSignup::create_account() refuses intent=vendor when vendor_registration is closed (wpss_vendor_registration_closed, 403) for the form AJAX and REST /auth/register.",
+    "data_migrations_1_8_0": "run_1_8_0_data_migrations() also backfills package ids for every service with packages (chunked) and dates pre-1.8.0 revision_requested deliveries from the audit log."
   }
 }
