@@ -161,8 +161,9 @@
 
 			var $btn = $( this );
 
+			// No title: the message already opens with the action, and a title of
+			// the same word read as "Approve Approve 3 withdrawal(s)?".
 			window.wpssConfirm( confirmMsg, {
-				title: label,
 				confirmText: label,
 				tone: 'reject' === bulkAction ? 'danger' : undefined
 			} ).then( function( confirmed ) {

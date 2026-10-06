@@ -131,7 +131,9 @@
 				wrapper.appendChild( dialog );
 
 				document.body.appendChild( wrapper );
-				( field || confirmBtn ).focus();
+				// A destructive confirm starts on Cancel, so Enter cannot refund or
+				// delete by reflex (Basecamp 10372722884); others start on Confirm.
+				( field || ( isDanger ? cancelBtn : confirmBtn ) ).focus();
 
 				/* ---- Focus trap ---- */
 				var focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
