@@ -136,12 +136,7 @@
 	padding: 1.5rem;
 }
 
-/* Order Details Grid */
-.wpss-order-details-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-	gap: 1.5rem;
-}
+/* Order Details Grid: defined once, in design-system.css (Basecamp 10345275760). */
 
 .wpss-order-detail-item {
 	display: flex;
@@ -722,10 +717,6 @@
 
 	.wpss-order-view__actions {
 		justify-content: flex-start;
-	}
-
-	.wpss-order-details-grid {
-		grid-template-columns: repeat(2, 1fr);
 	}
 
 	.wpss-service-info {

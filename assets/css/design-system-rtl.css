@@ -1480,12 +1480,10 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-order-detail-item__sub a:hover,
 .wpss-order-detail-item__sub a:focus { color: var(--wpss-primary); }
 
+/* Phones: one column. In two ~116px columns dates and totals wrapped to two
+   or three lines (Basecamp 10345275760); a full row keeps every value on one. */
 @media (max-width: 480px) {
-	.wpss-order-details-grid { grid-template-columns: 1fr 1fr; gap: var(--wpss-space-3) var(--wpss-space-4); }
-	/* The order number is long enough to break across three lines in a half
-	   -width column, so give it (and the total) the full row. */
-	.wpss-order-details-grid > .wpss-order-detail-item--highlight,
-	.wpss-order-details-grid > .wpss-order-detail-item:has(> .wpss-order-detail-item__value--id) { grid-column: 1 / -1; }
+	.wpss-order-details-grid { grid-template-columns: 1fr; gap: var(--wpss-space-2); }
 }
 .wpss-order-detail-item--highlight .wpss-order-detail-item__value { font-weight: 700; font-size: var(--wpss-text-md); }
 .wpss-order-detail-item--refunded .wpss-order-detail-item__label,
