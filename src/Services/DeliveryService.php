@@ -233,12 +233,16 @@ class DeliveryService {
 		global $wpdb;
 		$deliveries_table = $wpdb->prefix . 'wpss_deliveries';
 
+		// responded_at is what the order timeline dates "Revision requested" by;
+		// without it the event was dropped (Basecamp 10351458776).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$deliveries_table}
-				SET status = 'revision_requested'
+				SET status = 'revision_requested', responded_at = %s, response_message = %s
 				WHERE order_id = %d AND status = 'pending'",
+				current_time( 'mysql' ),
+				sanitize_textarea_field( $reason ),
 				$order_id
 			)
 		);

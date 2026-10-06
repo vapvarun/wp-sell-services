@@ -1762,6 +1762,22 @@ class SchemaManager {
 	private function run_1_8_0_data_migrations(): void {
 		$this->reword_stored_notifications();
 
+		// Deliveries sent back for revision before 1.8.0 have no responded_at,
+		// so the timeline left the revision out. Date them by the order's own
+		// move to revision_requested in the audit log (the first one after the
+		// delivery); rows with no such entry stay as they are.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only, no input.
+		$this->wpdb->query(
+			"UPDATE {$this->prefix}deliveries d
+			SET d.responded_at = (
+				SELECT MIN( a.created_at ) FROM {$this->prefix}audit_log a
+				WHERE a.object_type = 'order' AND a.object_id = d.order_id
+				AND a.event_type = 'order.status_change' AND a.to_value = 'revision_requested'
+				AND a.created_at >= d.created_at
+			)
+			WHERE d.status = 'revision_requested' AND d.responded_at IS NULL"
+		);
+
 		// Seller levels follow stats unless an admin chose them. Pro is
 		// admin-only, so existing Pro rows are marked admin-set before the
 		// first recalculation; everyone else is recalculated from their stats.
