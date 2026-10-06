@@ -2089,12 +2089,6 @@ parameters:
 			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
 
 		-
-			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:render_checkout_body\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Integrations/Standalone/StandaloneCheckoutProvider.php
-
-		-
 			message: '#^Method WPSellServices\\Integrations\\Standalone\\StandaloneCheckoutProvider\:\:render_checkout_shortcode\(\) has parameter \$atts with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

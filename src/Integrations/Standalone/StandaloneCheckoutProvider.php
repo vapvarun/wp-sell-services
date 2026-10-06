@@ -254,7 +254,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	/**
 	 * The checkout body for the current request.
 	 *
-	 * @param array $atts Shortcode attributes.
+	 * @param array<string, mixed> $atts Shortcode attributes.
 	 * @return string
 	 */
 	private function render_checkout_body( array $atts ): string {
@@ -289,7 +289,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	/**
 	 * The checkout body itself, without the gateway return notice.
 	 *
-	 * @param array $atts Shortcode attributes.
+	 * @param array<string, mixed> $atts Shortcode attributes.
 	 * @return string
 	 */
 	private function render_checkout_inner( array $atts ): string {
