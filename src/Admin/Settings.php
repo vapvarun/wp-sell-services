@@ -84,13 +84,13 @@ class Settings {
 			// silently lost the unsaved one. Split into the three questions an
 			// owner actually asks: how does money come IN, what do we KEEP, and
 			// how does it go OUT.
-			'payments'   => __( 'Payment Gateways', 'wp-sell-services' ),
-			'commission' => __( 'Commission &amp; Tax', 'wp-sell-services' ),
-			'payouts'    => __( 'Payouts', 'wp-sell-services' ),
+			'payments'     => __( 'Payment Gateways', 'wp-sell-services' ),
+			'commission'   => __( 'Commission &amp; Tax', 'wp-sell-services' ),
+			'payouts'      => __( 'Payouts', 'wp-sell-services' ),
 			// Marketplace.
-			'vendor'     => __( 'Vendor Settings', 'wp-sell-services' ),
-			'orders'     => __( 'Orders &amp; Disputes', 'wp-sell-services' ),
-			'emails'     => __( 'Emails', 'wp-sell-services' ),
+			'vendor'       => __( 'Vendor Settings', 'wp-sell-services' ),
+			'orders'       => __( 'Orders &amp; Disputes', 'wp-sell-services' ),
+			'emails'       => __( 'Emails', 'wp-sell-services' ),
 			// System (Pro tabs inserted before this via filter). Advanced was
 			// split in two (Basecamp 10337154229): outside services on
 			// Integrations, the site's own plumbing on System. The System tab
@@ -192,11 +192,11 @@ class Settings {
 			'general'      => 'settings',
 			'checkout'     => 'shopping-bag',
 			'pages'        => 'layout-template',
-			'payments'   => 'credit-card',
-			'commission' => 'percent',
-			'payouts'    => 'banknote',
-			'vendor'     => 'store',
-			'orders'     => 'shopping-cart',
+			'payments'     => 'credit-card',
+			'commission'   => 'percent',
+			'payouts'      => 'banknote',
+			'vendor'       => 'store',
+			'orders'       => 'shopping-cart',
 			'emails'       => 'mail',
 			'integrations' => 'plug',
 			'advanced'     => 'wrench',

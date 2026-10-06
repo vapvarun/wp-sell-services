@@ -819,7 +819,7 @@ function wpss_insert_ledger_row( array $row ): bool {
  * @param float $base       Pre-tax amount (package price plus add-ons).
  * @param int   $vendor_id  Vendor user ID, for the rate filter.
  * @param int   $service_id Service post ID, for the rate filter.
- * @return array{rate: float, amount: float, base: float, total: float, included: bool, label: string, enabled: bool}
+ * @return array{rate: float, amount: float, base: float, total: float, net: float, included: bool, label: string, enabled: bool}
  */
 function wpss_calculate_tax( float $base, int $vendor_id = 0, int $service_id = 0 ): array {
 	$settings = get_option( 'wpss_tax', array() );

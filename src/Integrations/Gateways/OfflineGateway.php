@@ -1759,9 +1759,9 @@ class OfflineGateway implements PaymentGatewayInterface {
 		<table class="form-table wpss-offline-methods-editor">
 			<?php for ( $i = 0; $i < $slots; $i++ ) : ?>
 				<?php
-				$method   = $methods[ $i ] ?? array();
-				$label    = (string) ( $method['label'] ?? '' );
-				$instr    = (string) ( $method['instructions'] ?? '' );
+				$method = $methods[ $i ] ?? array();
+				$label  = (string) ( $method['label'] ?? '' );
+				$instr  = (string) ( $method['instructions'] ?? '' );
 				// An empty slot is not a method (sanitize_methods() drops it), so
 				// it is not shown as offered, and only the first empty slot
 				// carries an example: four slots all reading "Bank Transfer",

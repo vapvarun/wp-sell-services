@@ -97,7 +97,7 @@ class ServiceOrder {
 	/**
 	 * Selected add-ons.
 	 *
-	 * @var array<int, array{id: int, quantity: int}>
+	 * @var array<int, array{id: int, quantity: int, option?: string, text?: string}>
 	 */
 	public array $addons = array();
 

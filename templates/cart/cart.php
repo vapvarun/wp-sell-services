@@ -116,7 +116,7 @@ defined( 'ABSPATH' ) || exit;
 }
 
 /* Below the base rule so it wins: the image kept its 88px width in the 72px
-   column and ran 16px into the gap, touching the title (Basecamp 10337197376). */
+	column and ran 16px into the gap, touching the title (Basecamp 10337197376). */
 @media (max-width: 540px) {
 	.wpss-cart-item__image {
 		width: 72px;
@@ -401,8 +401,8 @@ defined( 'ABSPATH' ) || exit;
 						$cart_items[ $item_key ] = $item;
 						// Shown struck through, at what it costs - not $0.00 - and
 						// kept out of the totals below.
-						$wpss_resolved              = wpss_resolve_service_package( $service_id, (int) ( $item['package_id'] ?? 0 ) );
-						$line                       = array(
+						$wpss_resolved = wpss_resolve_service_package( $service_id, (int) ( $item['package_id'] ?? 0 ) );
+						$line          = array(
 							'package'      => $wpss_resolved['package'] ?? ( is_array( $item['package'] ?? null ) ? $item['package'] : array() ),
 							'addons'       => array(),
 							'subtotal'     => (float) ( $wpss_resolved['package']['price'] ?? 0 ) * max( 1, (int) ( $item['quantity'] ?? 1 ) ),

@@ -591,7 +591,7 @@ class WithdrawalsPage {
 	 * @return void
 	 */
 	private function render_withdrawal_row( object $withdrawal, array $statuses, array $methods ): void {
-		$avatar  = get_avatar_url( $withdrawal->vendor_id, array( 'size' => 64 ) );
+		$avatar = get_avatar_url( $withdrawal->vendor_id, array( 'size' => 64 ) );
 		// array_filter: a blank field (stored as [""]) is no destination either.
 		$details = array_filter( (array) json_decode( wpss_decrypt_secret( (string) ( $withdrawal->details ?? '' ) ), true ), static fn( $value ) => is_scalar( $value ) && '' !== trim( (string) $value ) );
 		$status  = $withdrawal->status ?? 'pending';

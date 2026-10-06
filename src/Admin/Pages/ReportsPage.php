@@ -166,7 +166,7 @@ class ReportsPage {
 	 * @return void
 	 */
 	public function add_menu_page(): void {
-		$open       = $this->count_by_status( 'open' );
+		$open = $this->count_by_status( 'open' );
 		// "Member Reports": the plugin's numbers live under Analytics, and a
 		// bare "Reports" sent owners to the wrong screen (Basecamp 10337159668).
 		$menu_title = __( 'Member Reports', 'wp-sell-services' );

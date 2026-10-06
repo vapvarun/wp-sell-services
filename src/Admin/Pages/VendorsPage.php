@@ -772,7 +772,7 @@ class VendorsPage {
 			</table>
 
 			<!-- Pagination: WordPress core's pager, as on Orders and Disputes. -->
-			<?php wpss_admin_list_pager( (int) $total, 20 ); // get_vendors() pages by 20. ?>
+				<?php wpss_admin_list_pager( (int) $total, 20 ); // get_vendors() pages by 20. ?>
 			<?php endif; // vendors empty check. ?>
 				</div><!-- .wpss-list-card__body -->
 			</div><!-- .wpss-list-card -->

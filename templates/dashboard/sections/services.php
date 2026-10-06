@@ -133,9 +133,9 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 			<?php
 			while ( $services->have_posts() ) :
 				$services->the_post();
-				$service_id  = get_the_ID();
-				$price       = get_post_meta( $service_id, '_wpss_starting_price', true );
-				$views       = (int) get_post_meta( $service_id, '_wpss_views', true );
+				$service_id = get_the_ID();
+				$price      = get_post_meta( $service_id, '_wpss_starting_price', true );
+				$views      = (int) get_post_meta( $service_id, '_wpss_views', true );
 				// Completed orders, the figure the catalog and the admin list show
 				// (wpss_sync_service_order_count). A raw COUNT(*) here counted
 				// unpaid and cancelled orders too: "3 views - 16 orders".
@@ -214,7 +214,15 @@ $draft_count    = max( 0, wpss_count_vendor_services( $user_id, 'draft' ) - $rej
 								$dashboard_url
 							);
 							?>
-							<?php wpss_get_template( 'partials/service-rejection-notice.php', array( 'service_id' => $service_id, 'resubmit_url' => $wpss_resubmit_url ) ); ?>
+							<?php
+							wpss_get_template(
+								'partials/service-rejection-notice.php',
+								array(
+									'service_id'   => $service_id,
+									'resubmit_url' => $wpss_resubmit_url,
+								)
+							);
+							?>
 						<?php endif; ?>
 					</div>
 					<div class="wpss-service-card__actions">

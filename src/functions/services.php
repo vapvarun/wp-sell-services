@@ -684,8 +684,8 @@ function wpss_price_addons( int $service_id, $selection, float $package_subtotal
 	// as an add-on row so every rail that carries add-ons carries it.
 	$express = wpss_get_package_express( $package );
 	if ( $express && isset( $normalized[ WPSS_EXPRESS_ADDON_ID ] ) ) {
-		$price                          = round( $express['price'], $decimals );
-		$result['addons'][]             = array(
+		$price                   = round( $express['price'], $decimals );
+		$result['addons'][]      = array(
 			'id'                  => WPSS_EXPRESS_ADDON_ID,
 			'title'               => __( 'Express delivery', 'wp-sell-services' ),
 			'name'                => __( 'Express delivery', 'wp-sell-services' ),
@@ -700,7 +700,7 @@ function wpss_price_addons( int $service_id, $selection, float $package_subtotal
 			'delivery_days_extra' => 0,
 			'delivery_days'       => $express['days'],
 		);
-		$result['addons_total']        += $price;
+		$result['addons_total'] += $price;
 	}
 
 	$result['addons_total'] = round( $result['addons_total'], $decimals );
@@ -2099,4 +2099,3 @@ add_action(
 	30,
 	2
 );
-

@@ -696,7 +696,7 @@ class OrderRepository extends AbstractRepository {
 				FROM {$this->table}
 				WHERE vendor_id = %d AND platform = %s AND status = 'completed'",
 				$vendor_id,
-				$tip_platform
+				\WPSellServices\Services\TippingService::ORDER_TYPE
 			),
 			ARRAY_A
 		);
@@ -732,7 +732,7 @@ class OrderRepository extends AbstractRepository {
 				FROM {$this->table}
 				WHERE vendor_id = %d AND status = 'completed' AND platform != %s",
 				$vendor_id,
-				$tip_platform
+				\WPSellServices\Services\TippingService::ORDER_TYPE
 			)
 		);
 

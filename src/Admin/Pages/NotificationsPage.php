@@ -34,7 +34,6 @@ declare(strict_types=1);
 
 namespace WPSellServices\Admin\Pages;
 
-
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -161,6 +160,4 @@ class NotificationsPage {
 		</div>
 		<?php
 	}
-
-
 }

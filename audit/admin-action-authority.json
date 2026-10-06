@@ -157,13 +157,6 @@
       "rate_limited": false,
       "anonymous": false
     },
-    "wp_ajax_wpss_cancel_withdrawal": {
-      "callback": "WPSellServices\\Frontend\\AjaxHandlers::cancel_withdrawal",
-      "nonce": true,
-      "capability": false,
-      "rate_limited": false,
-      "anonymous": false
-    },
     "wp_ajax_wpss_contact_vendor": {
       "callback": "WPSellServices\\Frontend\\AjaxHandlers::contact_vendor",
       "nonce": true,
@@ -636,6 +629,11 @@
     }
   },
   "nonce_allowlist": {
-    "admin_post_wpss_order_file": "Deliberately nonce-free: this serves order deliverables from the private store, and a nonce would break an emailed or bookmarked file link. Authority is wpss_can_read_order_files( $order_id ), and the handler answers the same 404 for 'no such file' and 'not yours' so it cannot be used to discover which order ids exist (the standard's rule 1). Verified in source 2026-09-21."
+    "admin_post_wpss_order_file": "Deliberately nonce-free: this serves order deliverables from the private store, and a nonce would break an emailed or bookmarked file link. Authority is wpss_can_read_order_files( $order_id ), and the handler answers the same 404 for 'no such file' and 'not yours' so it cannot be used to discover which order ids exist (the standard's rule 1). Verified in source 2026-09-21.",
+    "wp_ajax_wpss_paypal_capture": "Nonce verified by wpss_verify_gateway_nonce() (src/functions/payments.php): wp_verify_nonce() against the gateway's own action or the wpss_checkout nonce that the guest account step refreshes (Basecamp 10341174356).",
+    "wp_ajax_wpss_paypal_create_order": "Nonce verified by wpss_verify_gateway_nonce() (src/functions/payments.php): wp_verify_nonce() against the gateway's own action or the wpss_checkout nonce that the guest account step refreshes (Basecamp 10341174356).",
+    "wp_ajax_wpss_stripe_confirm_payment": "Nonce verified by wpss_verify_gateway_nonce() (src/functions/payments.php): wp_verify_nonce() against the gateway's own action or the wpss_checkout nonce that the guest account step refreshes (Basecamp 10341174356).",
+    "wp_ajax_wpss_stripe_create_payment_intent": "Nonce verified by wpss_verify_gateway_nonce() (src/functions/payments.php): wp_verify_nonce() against the gateway's own action or the wpss_checkout nonce that the guest account step refreshes (Basecamp 10341174356).",
+    "wp_ajax_wpss_stripe_process_payment": "Nonce verified by wpss_verify_gateway_nonce() (src/functions/payments.php): wp_verify_nonce() against the gateway's own action or the wpss_checkout nonce that the guest account step refreshes (Basecamp 10341174356)."
   }
 }

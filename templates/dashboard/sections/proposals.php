@@ -84,9 +84,9 @@ if ( $request_ids ) {
 		<div class="wpss-requests-list">
 			<?php
 			foreach ( $proposals as $proposal ) :
-				$request_id  = (int) $proposal->request_id;
-				$status      = (string) $proposal->status;
-				$status_text = $status_labels[ $status ] ?? ucfirst( $status );
+				$request_id    = (int) $proposal->request_id;
+				$status        = (string) $proposal->status;
+				$status_text   = $status_labels[ $status ] ?? ucfirst( $status );
 				$request_title = get_the_title( $request_id );
 				$sent_on       = $proposal->created_at ? wp_date( get_option( 'date_format' ), strtotime( (string) $proposal->created_at ) ) : '';
 				?>
