@@ -205,7 +205,8 @@ if ( ! $has_migration ) {
 	wp_set_current_user( 1 );
 	require_once ABSPATH . 'wp-admin/includes/screen.php';
 	require_once ABSPATH . 'wp-admin/includes/class-wp-screen.php';
-	set_current_screen( 'toplevel_page_wpss-dashboard' );
+	// The notice shows on the Vendors screen only (Basecamp 10337159668).
+	set_current_screen( 'sell-services_page_wpss-vendors' );
 	ob_start();
 	( new \WPSellServices\Admin\Admin() )->migrated_sellers_notice();
 	$notice = (string) ob_get_clean();

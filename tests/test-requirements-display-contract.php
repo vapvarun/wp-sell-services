@@ -95,18 +95,20 @@ $rendered = wpss_rendered_answers( array(), array( 'description' => '   ', 'note
 wpss_t( empty( $rendered ), 'blank submitted values do not render empty blocks' );
 
 // 5. The template actually contains the fallback, not just this test.
-$tpl = file_get_contents( dirname( __DIR__ ) . '/templates/order/order-view.php' );
+//    Since 1.8.0 the requirements block is ONE partial,
+//    templates/order/requirements.php, that the order view and the admin order
+//    screen both load - so the checks read the partial, then confirm each
+//    surface includes it rather than carrying its own copy.
+$tpl = (string) file_get_contents( WPSS_PLUGIN_DIR . 'templates/order/requirements.php' );
 wpss_t( false !== strpos( $tpl, '$orphan_answers' ), 'the template renders answers no question claims' );
 wpss_t( false !== strpos( $tpl, '$orphan_attachments' ), 'the template renders attachments no question claims' );
-// The label moved into wpss_requirement_field_label() so the admin screen
-// could share it, so assert the behaviour rather than the old inline literal.
 wpss_t(
 	false !== strpos( $tpl, 'wpss_requirement_field_label(' )
 		&& 'What the buyer asked for' === wpss_requirement_field_label( 'description' ),
 	'the freeform description is labelled rather than special-cased away'
 );
 
-// All three surfaces, not just the one the card named.
+// All surfaces, not just the one the card named.
 //
 // The brief reached the buyer view and the seller view but the ADMIN order
 // screen printed the raw storage key, so the site owner read "description"
@@ -122,8 +124,8 @@ wpss_t(
 
 $admin = (string) file_get_contents( WPSS_PLUGIN_DIR . 'src/Admin/Admin.php' );
 wpss_t(
-	false !== strpos( $admin, 'wpss_requirement_field_label( (string) $wpss_req_key )' ),
-	'the admin order screen uses the shared label helper'
+	false !== strpos( $admin, "'order/requirements'" ),
+	'the admin order screen uses the shared requirements partial'
 );
 wpss_t(
 	false === strpos( $admin, "esc_html( (string) \$wpss_req_key )" ),
@@ -132,8 +134,8 @@ wpss_t(
 
 $view = (string) file_get_contents( WPSS_PLUGIN_DIR . 'templates/order/order-view.php' );
 wpss_t(
-	false !== strpos( $view, 'wpss_requirement_field_label(' ),
-	'the order view uses the same helper, so the label cannot drift between surfaces'
+	false !== strpos( $view, "'order/requirements'" ),
+	'the order view uses the same partial, so the label cannot drift between surfaces'
 );
 
 echo "\n{$GLOBALS['wpss_pass']} passed, {$GLOBALS['wpss_fail']} failed\n";

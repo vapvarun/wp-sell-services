@@ -194,7 +194,7 @@ if ( ! function_exists( 'wpss_count_pending_services' ) ) {
 	}
 }
 
-// 6. Admin dashboard aggregates: one query, then none.
+// 6. Admin dashboard aggregates: a fixed number of queries, then none.
 if ( ! function_exists( 'wpss_get_order_aggregates' ) ) {
 	$failures[] = 'wpss_get_order_aggregates() does not exist.';
 } else {
@@ -217,8 +217,11 @@ if ( ! function_exists( 'wpss_get_order_aggregates' ) ) {
 	$second = wpss_get_order_aggregates();
 	$total2 = count( (array) $wpdb->queries ) - $mark;
 
-	if ( 1 !== $hits1 ) {
-		$failures[] = "First aggregates call hit wpss_orders {$hits1} times - expected 1.";
+	// Two, not one, since 1.8.0: the status counts, plus revenue through the
+	// one revenue definition (wpss_get_revenue) rather than a private copy of
+	// its refund maths. Still bounded - never one query per row - and cached.
+	if ( 2 !== $hits1 ) {
+		$failures[] = "First aggregates call hit wpss_orders {$hits1} times - expected 2 (counts + revenue).";
 	}
 	if ( 0 !== $total2 ) {
 		$failures[] = "Second aggregates call ran {$total2} queries - expected 0 (cached).";

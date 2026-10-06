@@ -87,6 +87,16 @@ foreach ( get_users( array( 'role' => 'wpss_vendor', 'number' => 20, 'fields' =>
 		break;
 	}
 }
+if ( ! $vendor_user ) {
+	// A fresh install (CI) has no vendor yet: make one rather than fail.
+	require_once __DIR__ . '/Factories/UserFactory.php';
+	$vendor_user = \WPSellServices\Tests\Factories\UserFactory::vendor(
+		array(
+			'user_login' => 'wpss_copy_vendor_' . wp_rand( 1000, 9999 ),
+			'user_email' => 'wpss_copy_vendor_' . wp_rand( 1000, 9999 ) . '@example.test',
+		)
+	);
+}
 if ( $vendor_user ) {
 	set_query_var( 'wpss_vendor', $vendor_user->user_nicename );
 	( new \WPSellServices\Frontend\TemplateLoader() )->template_include( '' );

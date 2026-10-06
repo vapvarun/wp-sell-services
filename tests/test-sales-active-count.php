@@ -148,7 +148,9 @@ $chip_count = static function ( string $html, string $label ): ?int {
  * @return int
  */
 $row_count = static function ( string $html ): int {
-	return preg_match_all( '/class="wpss-status wpss-status--([a-z_]+)"/', $html );
+	// One actions block per order row. Counting status pills missed late
+	// orders, which show a "Late" badge in place of the pill.
+	return preg_match_all( '/class="wpss-order-card__actions"/', $html );
 };
 
 // Card label => chip label, for every card that has a filter beside it.
