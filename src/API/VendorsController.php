@@ -814,6 +814,8 @@ class VendorsController extends RestController {
 		);
 		$on_time_rate       = $completed_orders > 0 ? round( ( $on_time_deliveries / $completed_orders ) * 100, 1 ) : 0;
 
+		$wpss_vp = wpss_get_vendor( $vendor_id );
+
 		return new WP_REST_Response(
 			array(
 				'vendor_id'         => $vendor_id,
@@ -827,7 +829,7 @@ class VendorsController extends RestController {
 				'total_reviews'     => (int) $review_stats->total,
 				'average_rating'    => round( (float) $review_stats->average, 1 ),
 				'avg_response_time' => $avg_response_time,
-				'member_since'      => $this->format_datetime( ( $wpss_vp = wpss_get_vendor( $vendor_id ) ) && $wpss_vp->member_since ? $wpss_vp->member_since->format( 'Y-m-d H:i:s' ) : null ),
+				'member_since'      => $this->format_datetime( $wpss_vp && $wpss_vp->member_since ? $wpss_vp->member_since->format( 'Y-m-d H:i:s' ) : null ),
 			)
 		);
 	}

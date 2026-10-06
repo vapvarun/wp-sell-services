@@ -1168,6 +1168,7 @@ class API {
 			);
 
 			$services_count = wpss_count_vendor_services( (int) $user_id, 'any' );
+			$wpss_vp        = wpss_get_vendor( (int) $user_id );
 
 			$data['as_vendor'] = [
 				'services_count'   => $services_count,
@@ -1178,7 +1179,7 @@ class API {
 				// Paid orders, net of refunds and commission: the same figure as
 				// the web dashboard's Sales tile (wpss_get_revenue()).
 				'total_earnings'   => (float) ( wpss_get_revenue( array( 'vendor_id' => (int) $user_id ) )[0]->vendor_earnings ?? 0 ),
-				'rating'           => ( $wpss_vp = wpss_get_vendor( (int) $user_id ) ) ? (float) $wpss_vp->rating : 0.0,
+				'rating'           => $wpss_vp ? (float) $wpss_vp->rating : 0.0,
 				'review_count'     => $wpss_vp ? (int) $wpss_vp->review_count : 0,
 			];
 

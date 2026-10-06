@@ -887,11 +887,13 @@ class SchemaManager {
 				)
 			);
 
+			$batch_size = count( (array) $service_ids );
+
 			foreach ( (array) $service_ids as $service_id ) {
 				$last_id = (int) $service_id;
 				wpss_assign_package_ids( $last_id );
 			}
-		} while ( 200 === count( (array) $service_ids ) );
+		} while ( 200 === $batch_size );
 	}
 
 	/**

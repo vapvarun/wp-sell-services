@@ -956,6 +956,8 @@ class AuthController extends RestController {
 	private function format_user( WP_User $user ): array {
 		$is_vendor = wpss_is_vendor( $user->ID );
 
+		$wpss_vp = wpss_get_vendor( (int) $user->ID );
+
 		return array(
 			'id'            => $user->ID,
 			'username'      => $user->user_login,
@@ -986,7 +988,7 @@ class AuthController extends RestController {
 			),
 			// Same profile row /me reads, so the two endpoints cannot report
 			// different numbers for the same user.
-			'rating'        => ( $wpss_vp = wpss_get_vendor( (int) $user->ID ) ) ? (float) $wpss_vp->rating : 0.0,
+			'rating'        => $wpss_vp ? (float) $wpss_vp->rating : 0.0,
 			'review_count'  => $wpss_vp ? (int) $wpss_vp->review_count : 0,
 		);
 	}
