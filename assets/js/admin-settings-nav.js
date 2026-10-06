@@ -176,6 +176,24 @@
 		} );
 	} );
 
+	// Cards that save over AJAX (Pro's plans, commission rules, storage) have
+	// no <form>, so nothing above saw them: QA could edit a plan and leave with
+	// no prompt. They count as dirty on input and announce `wpss:card-clean`
+	// after a save or a cancel (WPSSPro.cardClean).
+	document.querySelectorAll( SECTION + ' .wpss-card' ).forEach( function( card ) {
+		if ( card.closest( 'form' ) || card.querySelector( 'form' ) ) {
+			return;
+		}
+		var mark = function() {
+			dirty.add( card );
+		};
+		card.addEventListener( 'input', mark );
+		card.addEventListener( 'change', mark );
+		card.addEventListener( 'wpss:card-clean', function() {
+			dirty.delete( card );
+		} );
+	} );
+
 	window.addEventListener( 'beforeunload', function( e ) {
 		if ( dirty.size ) {
 			e.preventDefault();
