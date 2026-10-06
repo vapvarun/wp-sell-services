@@ -403,6 +403,26 @@ function wpss_record_pending_payment_method( int $order_id, string $method ): bo
 }
 
 /**
+ * Whether the current page can take a payment: the mapped checkout page, the
+ * /service-checkout/ route, or a service page (its order modal).
+ *
+ * The one rule for loading a gateway's script. PayPal and Razorpay tested
+ * "! is_page() && ! checkout", which is true on every page, so PayPal's SDK
+ * loaded site-wide (Basecamp 10372723578).
+ *
+ * @since 1.8.0
+ *
+ * @return bool
+ */
+function wpss_is_payment_page(): bool {
+	$checkout_page_id = (int) ( get_option( 'wpss_pages', array() )['checkout'] ?? 0 );
+
+	return ( $checkout_page_id && is_page( $checkout_page_id ) )
+		|| (bool) get_query_var( 'wpss_checkout' )
+		|| is_singular( 'wpss_service' );
+}
+
+/**
  * Verify the nonce on a gateway's checkout AJAX call.
  *
  * Accepts the gateway's own nonce, or the checkout nonce. The account-at-checkout

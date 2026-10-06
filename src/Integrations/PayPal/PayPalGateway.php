@@ -553,8 +553,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		// Only on checkout pages.
-		if ( ! is_page() && ! get_query_var( 'wpss_checkout' ) ) {
+		if ( ! wpss_is_payment_page() ) {
 			return;
 		}
 

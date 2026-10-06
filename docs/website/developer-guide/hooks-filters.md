@@ -152,7 +152,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_stripe_webhook_received` | `string $event_type, object $data, string $payload` | `src/Integrations/Stripe/StripeGateway.php:647` |
-| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1567` |
+| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1562` |
 
 ### PayPal Gateway
 
