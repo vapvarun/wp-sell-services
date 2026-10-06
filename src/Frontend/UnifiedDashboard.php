@@ -235,7 +235,8 @@ class UnifiedDashboard {
 		// the wrapper rendering correct markup with no stylesheet: nav and stats
 		// came out as bare bullet lists. Caught in the browser; no PHP-level
 		// check would have shown it.
-		$shortcodes = array( 'wpss_dashboard', 'wpss_account' );
+		// [wpss_post_request] renders the dashboard's create-request section.
+		$shortcodes = array( 'wpss_dashboard', 'wpss_account', 'wpss_post_request' );
 
 		/**
 		 * Filters the shortcodes that make a page load the dashboard assets.

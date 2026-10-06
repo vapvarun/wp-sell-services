@@ -139,8 +139,9 @@ works as a compact sidebar listing -- just lower the `limit`.
 
 ### `[wpss_post_request]` -- Post a request form
 
-The form buyers use to submit a new request. Requires the user to be logged in.
-No attributes.
+The same Post a Request form as the dashboard (title, description, category,
+budget, deadline, skills, attachments). Requires the user to be logged in. A theme
+override of `dashboard/sections/create-request.php` changes both. No attributes.
 
 ## Vendor elements
 

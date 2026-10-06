@@ -260,14 +260,6 @@ class Frontend {
 				'stickyTopOffset'  => (int) apply_filters( 'wpss_sticky_top_offset', 0 ),
 				'i18n'             => array(
 					'loading'                     => __( 'Loading...', 'wp-sell-services' ),
-
-					// Buyer-request form validation and success, rendered by
-					// frontend.js. Without these the messages stay English in every
-					// locale - the JS fallbacks were carrying them.
-					'requestTitleRequired'        => __( 'Please enter a title for your request.', 'wp-sell-services' ),
-					'requestDescriptionRequired'  => __( 'Please describe what you need.', 'wp-sell-services' ),
-					'requestBudgetRange'          => __( 'Maximum budget must be greater than or equal to the minimum.', 'wp-sell-services' ),
-					'requestPosted'               => __( 'Request posted successfully.', 'wp-sell-services' ),
 					'error'                       => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'tipAmountRequired'           => __( 'Enter a tip amount greater than zero.', 'wp-sell-services' ),
 					'tipRedirecting'              => __( 'Redirecting to payment…', 'wp-sell-services' ),
@@ -353,8 +345,6 @@ class Frontend {
 					'favoriteSavedLabel'          => __( 'Saved to favorites', 'wp-sell-services' ),
 					'favoriteAddLabel'            => __( 'Add to favorites', 'wp-sell-services' ),
 					'favoriteRemoveLabel'         => __( 'Remove from favorites', 'wp-sell-services' ),
-					// Buyer-request submission failure.
-					'requestFailed'               => __( 'Failed to post request. Please try again.', 'wp-sell-services' ),
 				),
 			)
 		);
