@@ -962,7 +962,6 @@ function wpss_seller_level_note( int $vendor_id, string $tier, bool $with_next =
 			'orders'        => __( 'completed orders', 'wp-sell-services' ),
 			'rating'        => __( 'rating', 'wp-sell-services' ),
 			'reviews'       => __( 'reviews', 'wp-sell-services' ),
-			'response_rate' => __( '% response rate', 'wp-sell-services' ),
 			'delivery_rate' => __( '% on-time delivery', 'wp-sell-services' ),
 			'days_active'   => __( 'days selling', 'wp-sell-services' ),
 		);

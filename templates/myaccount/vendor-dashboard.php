@@ -143,16 +143,6 @@ do_action( 'wpss_vendor_dashboard_before', $user_id );
 					<div class="wpss-metrics-grid">
 						<div class="wpss-metric">
 							<div class="wpss-metric__header">
-								<span class="wpss-metric__label"><?php esc_html_e( 'Response Rate', 'wp-sell-services' ); ?></span>
-								<span class="wpss-metric__value"><?php echo esc_html( number_format( $vendor->response_rate, 0 ) ); ?>%</span>
-							</div>
-							<div class="wpss-metric__bar">
-								<div class="wpss-metric__fill" style="width: <?php echo esc_attr( $vendor->response_rate ); ?>%"></div>
-							</div>
-						</div>
-
-						<div class="wpss-metric">
-							<div class="wpss-metric__header">
 								<span class="wpss-metric__label"><?php esc_html_e( 'Response Time', 'wp-sell-services' ); ?></span>
 								<span class="wpss-metric__value"><?php echo esc_html( $vendor->get_response_time_label() ); ?></span>
 							</div>

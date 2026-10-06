@@ -118,7 +118,6 @@ class SchemaValidator {
 		'skills',
 		'certifications',
 		'education',
-		'response_rate',
 		'completion_rate',
 		'member_since',
 		'last_active',

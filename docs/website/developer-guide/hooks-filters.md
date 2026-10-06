@@ -234,8 +234,8 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_profile_updated` | `int $user_id, array $filtered_data` | `src/Services/VendorService.php:561` |
 | `wpss_vendor_vacation_mode_changed` | `int $user_id, bool $enabled, string $message` | `src/Services/VendorService.php:612` |
 | `wpss_vendor_tier_changed` | `int $user_id, string $tier` | `src/Services/VendorService.php:653` |
-| `wpss_vendor_level_promoted` | `int $user_id, string $new_level, string $current_level` | `src/Services/SellerLevelService.php:388` |
-| `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:285` |
+| `wpss_vendor_level_promoted` | `int $user_id, string $new_level, string $current_level` | `src/Services/SellerLevelService.php:377` |
+| `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:274` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:377` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1405` |
 | `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2081` |
@@ -789,7 +789,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:482` |
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:792` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:427` |
-| `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:266` |
+| `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:263` |
 | `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1499` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |

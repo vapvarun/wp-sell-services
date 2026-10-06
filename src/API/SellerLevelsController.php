@@ -215,7 +215,6 @@ class SellerLevelsController extends RestController {
 				'total_earnings'   => 0,
 				'avg_rating'       => 0,
 				'total_reviews'    => 0,
-				'response_rate'    => 0,
 				'delivery_rate'    => 0,
 				'days_active'      => 0,
 			);
@@ -226,7 +225,6 @@ class SellerLevelsController extends RestController {
 			'total_earnings'   => 0,
 			'avg_rating'       => round( (float) $stats->avg_rating, 2 ),
 			'total_reviews'    => (int) $stats->total_reviews,
-			'response_rate'    => round( (float) $stats->response_rate, 1 ),
 			'delivery_rate'    => round( (float) $stats->delivery_rate, 1 ),
 			'days_active'      => (int) $stats->days_active,
 		);
@@ -252,7 +250,6 @@ class SellerLevelsController extends RestController {
 					'completed_orders' => $reqs['min_orders'] ?? 0,
 					'avg_rating'       => $reqs['min_rating'] ?? 0,
 					'total_reviews'    => $reqs['min_reviews'] ?? 0,
-					'response_rate'    => $reqs['min_response_rate'] ?? 0,
 					'delivery_rate'    => $reqs['min_delivery_rate'] ?? 0,
 					'days_active'      => $reqs['min_days_active'] ?? 0,
 				),

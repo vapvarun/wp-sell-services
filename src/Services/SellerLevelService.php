@@ -38,7 +38,6 @@ class SellerLevelService {
 			'min_orders'        => 0,
 			'min_rating'        => 0,
 			'min_reviews'       => 0,
-			'min_response_rate' => 0,
 			'min_delivery_rate' => 0,
 			'min_days_active'   => 0,
 		),
@@ -46,7 +45,6 @@ class SellerLevelService {
 			'min_orders'        => 5,
 			'min_rating'        => 4.0,
 			'min_reviews'       => 3,
-			'min_response_rate' => 80,
 			'min_delivery_rate' => 80,
 			'min_days_active'   => 30,
 		),
@@ -54,7 +52,6 @@ class SellerLevelService {
 			'min_orders'        => 25,
 			'min_rating'        => 4.7,
 			'min_reviews'       => 10,
-			'min_response_rate' => 90,
 			'min_delivery_rate' => 90,
 			'min_days_active'   => 90,
 		),
@@ -113,10 +110,6 @@ class SellerLevelService {
 		}
 
 		if ( $stats->total_reviews < $reqs['min_reviews'] ) {
-			return false;
-		}
-
-		if ( $stats->response_rate < $reqs['min_response_rate'] ) {
 			return false;
 		}
 
@@ -197,16 +190,12 @@ class SellerLevelService {
 			$delivery_rate = ( $order_stats->on_time_orders / $order_stats->completed_orders ) * 100;
 		}
 
-		// Response rate from profile (default to 100 if not tracked).
-		$response_rate = $profile->response_rate ?? 100;
-
 		return (object) array(
 			'user_id'          => $user_id,
 			'total_orders'     => (int) $order_stats->total_orders,
 			'completed_orders' => (int) $order_stats->completed_orders,
 			'total_reviews'    => (int) $review_stats->total_reviews,
 			'avg_rating'       => (float) $review_stats->avg_rating,
-			'response_rate'    => (float) $response_rate,
 			'delivery_rate'    => (float) $delivery_rate,
 			'days_active'      => $days_active,
 		);
@@ -485,10 +474,6 @@ class SellerLevelService {
 			'reviews'       => array(
 				'current'  => $stats->total_reviews,
 				'required' => $next_reqs['min_reviews'],
-			),
-			'response_rate' => array(
-				'current'  => $stats->response_rate,
-				'required' => $next_reqs['min_response_rate'],
 			),
 			'delivery_rate' => array(
 				'current'  => $stats->delivery_rate,
