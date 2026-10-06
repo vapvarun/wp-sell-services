@@ -1176,6 +1176,23 @@ class Shortcodes {
 		ob_start();
 		$this->render_vendor_registration_styles();
 
+		// Closed registration is the same card for everyone, signed in or not;
+		// the logged-out form used to render before this check (Basecamp 10351455160).
+		if ( 'closed' === wpss_get_option( 'vendor', 'vendor_registration' ) && ! wpss_is_vendor() ) {
+			?>
+			<div class="wpss-vr">
+				<div class="wpss-vr__card">
+					<div class="wpss-vr__hero-icon wpss-vr__hero-icon--muted">
+						<i data-lucide="lock" class="wpss-icon" aria-hidden="true"></i>
+					</div>
+					<h2 class="wpss-vr__title"><?php esc_html_e( 'Registration is closed', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-vr__desc"><?php esc_html_e( 'We\'re not accepting new vendors at the moment. Please check back later.', 'wp-sell-services' ); ?></p>
+				</div>
+			</div>
+			<?php
+			return ob_get_clean();
+		}
+
 		if ( ! is_user_logged_in() ) {
 			?>
 			<div class="wpss-vr wpss-vr--pitch">
@@ -1249,23 +1266,7 @@ class Shortcodes {
 			return ob_get_clean();
 		}
 
-		// Check if registration is open.
 		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-
-		if ( 'closed' === $registration_mode ) {
-			?>
-			<div class="wpss-vr">
-				<div class="wpss-vr__card">
-					<div class="wpss-vr__hero-icon wpss-vr__hero-icon--muted">
-						<i data-lucide="lock" class="wpss-icon" aria-hidden="true"></i>
-					</div>
-					<h2 class="wpss-vr__title"><?php esc_html_e( 'Registration is closed', 'wp-sell-services' ); ?></h2>
-					<p class="wpss-vr__desc"><?php esc_html_e( 'We\'re not accepting new vendors at the moment. Please check back later.', 'wp-sell-services' ); ?></p>
-				</div>
-			</div>
-			<?php
-			return ob_get_clean();
-		}
 
 		$approval_required = 'approval' === $registration_mode;
 		?>
