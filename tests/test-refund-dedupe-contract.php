@@ -70,9 +70,10 @@ $mock = static function ( $handled, $order ) use ( $vendor ) {
 };
 add_filter( 'wpss_pre_process_gateway_refund', $mock, 10, 2 );
 
-$service   = new OrderService();
-$ids       = array();
-$wc_orders = array();
+$service     = new OrderService();
+$ids         = array();
+$dispute_ids = array();
+$wc_orders   = array();
 
 try {
 	// --- wp-admin partial refund, then the gateway's webhook for it ------------
@@ -94,6 +95,27 @@ try {
 		);
 
 		$check( "{$gateway}: admin refund + its own webhook records 10, not 20", 10.0 === $refunded( $id ) );
+	}
+
+	// --- A full refund resolves the order's open dispute (10372723332) ---------
+	// Rail refund (webhook) and admin refund both leave nothing to dispute; the
+	// dispute is resolved as full_refund without moving money again.
+	$disputes = new \WPSellServices\Services\DisputeService();
+	foreach ( array( 'rail', 'admin' ) as $path ) {
+		$id    = $seed( 30.0, 'stripe' );
+		$ids[] = $id;
+		$did   = (int) $disputes->open( $id, $buyer, 'other', 'dedupe contract dispute' );
+		$txn   = (string) $wpdb->get_var( $wpdb->prepare( "SELECT transaction_id FROM {$orders} WHERE id = %d", $id ) );
+
+		if ( 'rail' === $path ) {
+			( new OrderWorkflowManager() )->handle_gateway_refund( 'stripe', $txn, 30.0, array( 'order_id' => $id, 'currency' => 'USD', 'cumulative' => true, 'refund_id' => 're_dispute_' . $id ) );
+		} else {
+			$service->refund( $id, null, ServiceOrder::STATUS_REFUNDED, array( 'origin' => 'admin' ) );
+		}
+
+		$state = $wpdb->get_row( $wpdb->prepare( "SELECT status, resolution FROM {$wpdb->prefix}wpss_disputes WHERE id = %d", $did ) );
+		$check( "{$path} full refund resolves the open dispute as full_refund", $did > 0 && $state && 'resolved' === $state->status && 'full_refund' === $state->resolution );
+		$dispute_ids[] = $did;
 	}
 
 	// --- WooCommerce rail ------------------------------------------------------
@@ -156,6 +178,11 @@ try {
 		$wpdb->delete( $wpdb->prefix . 'wpss_conversations', array( 'order_id' => $id ) );
 		$wpdb->delete( $wpdb->prefix . 'wpss_audit_log', array( 'object_type' => 'order', 'object_id' => $id ) );
 		$wpdb->delete( $orders, array( 'id' => $id ) );
+	}
+	foreach ( $dispute_ids as $did ) {
+		$wpdb->delete( $wpdb->prefix . 'wpss_dispute_messages', array( 'dispute_id' => $did ) );
+		$wpdb->delete( $wpdb->prefix . 'wpss_audit_log', array( 'object_type' => 'dispute', 'object_id' => $did ) );
+		$wpdb->delete( $wpdb->prefix . 'wpss_disputes', array( 'id' => $did ) );
 	}
 	foreach ( $wc_orders as $wc_id ) {
 		$wc = wc_get_order( $wc_id );

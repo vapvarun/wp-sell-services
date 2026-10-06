@@ -991,6 +991,10 @@ class OrderWorkflowManager {
 
 			if ( $moved ) {
 				self::remember_gateway_refund( $oid, $refund_id );
+
+				if ( ServiceOrder::STATUS_REFUNDED === $status ) {
+					( new DisputeService() )->close_for_refund( $oid, $gateway );
+				}
 			}
 
 			wpss_log(

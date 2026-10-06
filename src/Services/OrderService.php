@@ -562,6 +562,12 @@ class OrderService {
 		$recorded             = $result( true, $outcome, $delta, $status, $gateway );
 		$recorded['children'] = $children;
 
+		// A dispute ruling resolves its own dispute; every other full refund
+		// leaves nothing to dispute (Basecamp 10372723332).
+		if ( ServiceOrder::STATUS_REFUNDED === $status && 'dispute' !== ( $ctx['origin'] ?? '' ) ) {
+			( new DisputeService() )->close_for_refund( $order_id, (string) ( $ctx['origin'] ?? 'admin' ) );
+		}
+
 		return $recorded;
 	}
 

@@ -847,6 +847,56 @@ class DisputeService {
 	}
 
 	/**
+	 * Resolve an order's open dispute because the order was refunded in full.
+	 *
+	 * The money has already moved (a rail refund, an admin refund, a cancel), so
+	 * this only records the outcome: full_refund, resolved, notification sent.
+	 * It never calls resolve(), which would try to refund again. A rail refund
+	 * used to leave the dispute open or escalated beside a refunded order
+	 * (Basecamp 10372723332).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int    $order_id Order ID.
+	 * @param string $source   Where the refund came from (gateway slug or origin), for the note.
+	 * @return bool Whether a dispute was resolved.
+	 */
+	public function close_for_refund( int $order_id, string $source ): bool {
+		$dispute = $this->get_by_order( $order_id );
+
+		if ( ! $dispute || ! in_array( (string) $dispute->status, array( self::STATUS_OPEN, self::STATUS_PENDING, self::STATUS_ESCALATED ), true ) ) {
+			return false;
+		}
+
+		$order = wpss_get_order( $order_id );
+		$total = $order ? round( (float) $order->total, 2 ) : null;
+		/* translators: %s: where the refund came from, e.g. stripe or admin. */
+		$notes = sprintf( __( 'Order refunded in full (%s). No further money was moved.', 'wp-sell-services' ), $source );
+
+		$resolved = $this->transition(
+			(int) $dispute->id,
+			self::STATUS_RESOLVED,
+			array(
+				'fields' => array(
+					'resolution'       => self::RESOLUTION_REFUND,
+					'resolution_notes' => $notes,
+					'refund_amount'    => $total,
+					'resolved_by'      => get_current_user_id(),
+					'resolved_at'      => current_time( 'mysql' ),
+				),
+				'note'   => $notes,
+			)
+		);
+
+		if ( $resolved ) {
+			/** This action is documented in src/Services/DisputeService.php */
+			do_action( 'wpss_dispute_resolved', (int) $dispute->id, self::RESOLUTION_REFUND, $dispute, (float) $total );
+		}
+
+		return $resolved;
+	}
+
+	/**
 	 * Resolve a dispute.
 	 *
 	 * Money first, status second, both in one transaction: the refund or

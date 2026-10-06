@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**538 hooks** across **742** firing sites.
+**538 hooks** across **743** firing sites.
 
 ## Actions (275)
 
@@ -105,7 +105,7 @@ guide; this is the complete index.
 | `wpss_dispute_escalated` | 3 | `src/Services/DisputeWorkflowManager.php` | Fires when a dispute is escalated. |
 | `wpss_dispute_evidence_added` | 2 | `src/Services/DisputeService.php` | Fires when evidence is added to a dispute. |
 | `wpss_dispute_opened` | 4 | `src/Services/DisputeService.php` | Fires when a dispute is opened. |
-| `wpss_dispute_resolved` | 4 | `src/Services/DisputeService.php` | Fires when a dispute is resolved. |
+| `wpss_dispute_resolved` | 4 | `src/Services/DisputeService.php` *(+1 more)* |  |
 | `wpss_dispute_response_submitted` | 3 | `src/Services/DisputeWorkflowManager.php` | Fires when a dispute response is submitted. |
 | `wpss_dispute_status_changed` | 3 | `src/Services/DisputeService.php` | Fires when dispute status changes. |
 | `wpss_earnings_ledger_actions` | 1 | `templates/dashboard/sections/earnings.php` | Fires in the wallet ledger header, for ledger controls. |
