@@ -367,6 +367,9 @@
 				$vendor.append(new Option($selected.attr('data-vendor-label') || '#' + vendorId, vendorId));
 			}
 			$vendor.val(vendorId);
+		} else if ($vendor.length) {
+			// Don't carry the previous service's seller over to this one.
+			$vendor.val('');
 		}
 
 		// Reset state.
