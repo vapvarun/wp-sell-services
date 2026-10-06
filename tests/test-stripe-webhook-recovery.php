@@ -53,6 +53,20 @@ if ( ! $service_id || 'publish' !== get_post_status( $service_id ) ) {
 	exit( 1 );
 }
 
+// Tax on, exclusive, for this run: the double-count check below means nothing
+// at 0% (a fresh install, CI included, ships with tax off).
+add_filter(
+	'option_wpss_tax',
+	static fn ( $o ) => array_merge(
+		(array) $o,
+		array(
+			'enable_tax'   => true,
+			'tax_rate'     => 10,
+			'tax_included' => false,
+		)
+	)
+);
+
 $package = (array) ( get_post_meta( $service_id, '_wpss_packages', true )[0] ?? array() );
 $line    = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, (int) ( $package['id'] ?? 0 ), 1, array() );
 $charged = (float) $line['total'];
