@@ -89,6 +89,8 @@ class RepairCommand extends WP_CLI_Command {
 					"SELECT * FROM {$orders}
 					WHERE id > %d AND payment_method = 'stripe' AND transaction_id LIKE %s
 					AND total > subtotal + addons_total + 0.001
+					AND status NOT IN ( 'refunded', 'partially_refunded', 'cancelled' )
+					AND ( payment_status IS NULL OR payment_status <> 'refunded' )
 					ORDER BY id ASC LIMIT 200",
 					$last_id,
 					$wpdb->esc_like( 'pi_' ) . '%'
@@ -134,6 +136,15 @@ class RepairCommand extends WP_CLI_Command {
 
 				if ( (float) $order->refunded_amount > 0 ) {
 					$review[] = array( $order->id, $order->transaction_id, 'double-taxed but has a refund; correct by hand' );
+					continue;
+				}
+
+				// The same webhook bug dropped add-ons and Express. If Stripe's
+				// metadata names some and the order has none, re-taxing alone
+				// would leave the order short: a person decides.
+				$paid_for = (array) ( $payment['metadata'] ?? array() );
+				if ( (float) $order->addons_total <= 0 && ( '' !== (string) ( $paid_for['addon_ids'] ?? '' ) || '' !== (string) ( $paid_for['addon_sel'] ?? '' ) ) ) {
+					$review[] = array( $order->id, $order->transaction_id, 'Stripe metadata names add-ons or Express the order does not have' );
 					continue;
 				}
 
@@ -201,8 +212,36 @@ class RepairCommand extends WP_CLI_Command {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$credited = $wpdb->get_row( $wpdb->prepare( "SELECT id, amount FROM {$ledger} WHERE reference_type = 'order' AND reference_id = %d AND type = 'order_earning'", $order->id ) );
-		$connect  = '' !== (string) $order->connect_transfer_id;
+		$connect  = '' !== (string) ( $order->connect_transfer_id ?? '' ); // Pro-only column.
 		$recorded = null !== $order->vendor_earnings && (float) $order->vendor_earnings > 0;
+
+		// Re-split on the corrected base. calculate() returns a locked split
+		// as stored, which here is the inflated one, so the order's own locked
+		// rate is applied to the new base instead: the vendor keeps the terms
+		// they were paid under. An order with no locked rate yet goes through
+		// the one commission authority as completion would. Worked out before
+		// the dry-run return, so the dry run shows the new earning too.
+		$commission = null;
+
+		if ( $recorded || $credited ) {
+			$corrected           = clone $order;
+			$corrected->subtotal = $subtotal;
+			$corrected->total    = $charged;
+			$corrected->meta     = wp_json_encode( array_merge( $meta, array( 'tax_amount' => $tax ) ) );
+			$base                = wpss_order_commission_base( $corrected );
+
+			if ( null !== $order->commission_rate ) {
+				$fee        = round( $base * (float) $order->commission_rate / 100, $decimals );
+				$commission = array(
+					'platform_fee'    => $fee,
+					'vendor_earnings' => round( $base - $fee, $decimals ),
+				);
+			} else {
+				$commission = CommissionService::compute_breakdown( $base, wpss_get_order( (int) $order->id ) );
+			}
+
+			$row_earning = "{$order->vendor_earnings} -> {$commission['vendor_earnings']}";
+		}
 
 		$row = array(
 			'order'          => (string) $order->id,
@@ -211,7 +250,7 @@ class RepairCommand extends WP_CLI_Command {
 			'subtotal'       => "{$order->subtotal} -> {$subtotal}",
 			'tax'            => ( (string) ( $meta['tax_amount'] ?? '-' ) ) . " -> {$tax}",
 			'total'          => "{$order->total} -> {$charged}",
-			'vendor_earning' => $recorded ? (string) $order->vendor_earnings : 'not recorded yet',
+			'vendor_earning' => $row_earning ?? ( $recorded ? (string) $order->vendor_earnings : 'not recorded yet' ),
 			'ledger'         => $credited ? ( $connect ? 'Connect: order row only' : 'correction row' ) : 'none (not credited yet)',
 		);
 
@@ -226,36 +265,10 @@ class RepairCommand extends WP_CLI_Command {
 			'meta'     => wp_json_encode( $meta ),
 		);
 
-		if ( wpss_amounts_match( (float) $order->total_amount, (float) $order->total, (string) $order->currency ) ) {
-			$update['total_amount'] = $charged;
-		}
-
 		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update( $orders, $update, array( 'id' => (int) $order->id ) );
-
-		// Re-split on the corrected base. calculate() returns a locked split
-		// as stored, which here is the inflated one, so the order's own locked
-		// rate is applied to the new base instead: the vendor keeps the terms
-		// they were paid under. An order with no locked rate yet goes through
-		// the one commission authority as completion would.
-		$commission = null;
-
-		if ( $recorded || $credited ) {
-			$fresh = wpss_get_order( (int) $order->id );
-			$base  = wpss_order_commission_base( $fresh );
-
-			if ( null !== $order->commission_rate ) {
-				$fee        = round( $base * (float) $order->commission_rate / 100, $decimals );
-				$commission = array(
-					'platform_fee'    => $fee,
-					'vendor_earnings' => round( $base - $fee, $decimals ),
-				);
-			} else {
-				$commission = CommissionService::compute_breakdown( $base, $fresh );
-			}
-		}
 
 		if ( $commission ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -267,7 +280,6 @@ class RepairCommand extends WP_CLI_Command {
 				),
 				array( 'id' => (int) $order->id )
 			);
-			$row['vendor_earning'] = "{$order->vendor_earnings} -> {$commission['vendor_earnings']}";
 		}
 
 		if ( $commission && $credited && ! $connect ) {
