@@ -380,10 +380,13 @@ function wpss_normalize_dashboard_section( string $section ): string {
 /**
  * Resolve the template file that renders a dashboard section.
  *
- * Runs the same `wpss_dashboard_section_template` filter the dashboard renderer
- * uses, so Pro-supplied templates and third-party overrides are accounted for.
- * An empty string means "known address, nothing here can render it" — which on
- * a Free-only site is exactly the Pro-only case.
+ * The one resolver: UnifiedDashboard::render_section() calls it. Free's file,
+ * then the `wpss_dashboard_section_template` filter (Pro hands its sections in
+ * here), then a theme copy wins - but only when Free or Pro can render the
+ * section at all. Looking in the theme first meant a theme copy of a Pro
+ * section rendered with Pro switched off, where its Pro classes would fatal
+ * (Basecamp 10372723832). An empty string means "known address, nothing here
+ * can render it" - on a Free-only site, exactly the Pro-only case.
  *
  * @since 1.6.0
  *
@@ -401,10 +404,24 @@ function wpss_get_dashboard_section_template( string $section ): string {
 	$template_section = ( 'wallet' === $section ) ? 'earnings' : $section;
 	$template_path    = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$template_section}.php";
 
-	/** This filter is documented in src/Frontend/UnifiedDashboard.php */
+	/**
+	 * Filter the template path for a dashboard section.
+	 *
+	 * Allows Pro or third-party plugins to provide templates for sections.
+	 *
+	 * @since 1.1.0
+	 * @param string $template_path Full path to section template.
+	 * @param string $section       Section slug.
+	 */
 	$template_path = (string) apply_filters( 'wpss_dashboard_section_template', $template_path, $section );
 
-	return ( '' !== $template_path && file_exists( $template_path ) ) ? $template_path : '';
+	if ( '' === $template_path || ! file_exists( $template_path ) ) {
+		return '';
+	}
+
+	$theme_template = locate_template( "wp-sell-services/dashboard/sections/{$template_section}.php" );
+
+	return $theme_template ? $theme_template : $template_path;
 }
 
 /**

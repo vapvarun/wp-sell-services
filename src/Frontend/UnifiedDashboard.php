@@ -896,33 +896,9 @@ class UnifiedDashboard {
 	 * @return void
 	 */
 	private function render_section( string $section ): void {
-		// `wallet` and `earnings` are one screen ("Wallet & Earnings"):
-		// earnings.php renders both the earnings summary and the wallet ledger
-		// (#wpss-wallet-transactions). The wallet slug is kept as a friendly
-		// URL/nav entry but resolves to the single earnings template - no
-		// duplicate template, one source of truth.
-		$template_section = ( 'wallet' === $section ) ? 'earnings' : $section;
-		$template_path    = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$template_section}.php";
-
-		/**
-		 * Filter the template path for a dashboard section.
-		 *
-		 * Allows pro or third-party plugins to provide custom templates for sections.
-		 *
-		 * @since 1.1.0
-		 * @param string $template_path Full path to section template.
-		 * @param string $section       Section slug.
-		 */
-		$template_path = apply_filters( 'wpss_dashboard_section_template', $template_path, $section );
-
-		// A theme copy wins over the plugin's file - Free's or the one Pro hands
-		// in above - the same as every template loaded by wpss_get_template().
-		// Sections never looked in the theme, so a copied section was silently
-		// ignored although the docs list them as overridable (Basecamp 10340929957).
-		$theme_template = locate_template( "wp-sell-services/dashboard/sections/{$template_section}.php" );
-		if ( $theme_template ) {
-			$template_path = $theme_template;
-		}
+		// One resolver: Free's file, Pro's via the filter, then a theme copy
+		// (Basecamp 10340929957, 10372723832).
+		$template_path = wpss_get_dashboard_section_template( $section );
 
 		$user_id        = get_current_user_id();
 		$vendor_service = $this->vendor_service;
@@ -935,7 +911,7 @@ class UnifiedDashboard {
 			return;
 		}
 
-		if ( file_exists( $template_path ) ) {
+		if ( '' !== $template_path ) {
 			/**
 			 * Fires before the dashboard section content is rendered.
 			 *

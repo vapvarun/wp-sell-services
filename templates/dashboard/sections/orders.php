@@ -186,7 +186,8 @@ $disputed_count  = (int) ( $stats['disputed_orders'] ?? 0 );
 	$filter_prefix = 'orders';
 	$filter_group  = $orders_group;
 	$filter_search = $orders_search;
-	require WPSS_PLUGIN_DIR . 'templates/dashboard/partials/order-filters.php';
+	// Through the template loader so a theme can override it (Basecamp 10372723832).
+	wpss_get_template( 'dashboard/partials/order-filters.php', compact( 'filter_prefix', 'status_groups', 'status_counts', 'filter_group', 'filter_search' ) );
 	?>
 
 	<?php if ( empty( $orders ) ) : ?>
@@ -266,7 +267,7 @@ $disputed_count  = (int) ( $stats['disputed_orders'] ?? 0 );
 			$status_labels = wpss_get_order_status_labels();
 			$wpss_side     = 'buyer';
 			foreach ( $orders as $order_item ) {
-				require WPSS_PLUGIN_DIR . 'templates/dashboard/partials/order-row.php';
+				wpss_get_template( 'dashboard/partials/order-row.php', compact( 'order_item', 'wpss_side', 'status_labels' ) );
 			}
 			?>
 		</div>

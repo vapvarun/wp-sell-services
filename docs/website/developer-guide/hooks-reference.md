@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**538 hooks** across **743** firing sites.
+**538 hooks** across **742** firing sites.
 
 ## Actions (275)
 
@@ -356,7 +356,7 @@ guide; this is the complete index.
 | `wpss_dashboard_asset_shortcodes` | 1 | `src/Frontend/UnifiedDashboard.php` | Filters the shortcodes that make a page load the dashboard assets. |
 | `wpss_dashboard_default_section` | 2 | `src/Frontend/UnifiedDashboard.php` | Filter the dashboard's default landing section. |
 | `wpss_dashboard_section_aliases` | 1 | `src/functions/urls.php` | Filter the dashboard section alias map. |
-| `wpss_dashboard_section_template` | 2 | `src/Frontend/UnifiedDashboard.php` *(+1 more)* | Filter the template path for a dashboard section. |
+| `wpss_dashboard_section_template` | 2 | `src/functions/urls.php` | Filter the template path for a dashboard section. |
 | `wpss_dashboard_section_titles` | 1 | `src/Frontend/UnifiedDashboard.php` | Filter dashboard section titles. |
 | `wpss_dashboard_sections` | 3 | `src/Frontend/UnifiedDashboard.php` | Filter dashboard sections. |
 | `wpss_default_page_slugs` | 1 | `src/functions/urls.php` | Filter default page slugs. |

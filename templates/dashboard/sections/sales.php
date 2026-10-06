@@ -184,7 +184,8 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 		$filter_prefix = 'sales';
 		$filter_group  = $sales_group;
 		$filter_search = $sales_search;
-		require WPSS_PLUGIN_DIR . 'templates/dashboard/partials/order-filters.php';
+		// Through the template loader so a theme can override it (Basecamp 10372723832).
+		wpss_get_template( 'dashboard/partials/order-filters.php', compact( 'filter_prefix', 'status_groups', 'status_counts', 'filter_group', 'filter_search' ) );
 		?>
 		<div class="wpss-sales-filter">
 			<form method="get" class="wpss-sales-filter__form">
@@ -267,7 +268,7 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 			$status_labels = wpss_get_order_status_labels();
 			$wpss_side     = 'seller';
 			foreach ( $orders as $order_item ) {
-				require WPSS_PLUGIN_DIR . 'templates/dashboard/partials/order-row.php';
+				wpss_get_template( 'dashboard/partials/order-row.php', compact( 'order_item', 'wpss_side', 'status_labels' ) );
 			}
 			?>
 		</div>
