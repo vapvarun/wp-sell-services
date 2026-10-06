@@ -790,8 +790,11 @@ class VendorsPage {
 	 * @return void
 	 */
 	private function render_role_only_notice(): void {
+		// The result of the last removal shows for a week, then goes; it no
+		// longer hides the check for users who gained the role since. It used
+		// to stay until an Undo (Basecamp 10337169556).
 		$last = get_option( WPSS_VENDOR_ROLE_CLEANUP_OPTION );
-		if ( is_array( $last ) && ! empty( $last['users'] ) ) {
+		if ( is_array( $last ) && ! empty( $last['users'] ) && (int) ( $last['at'] ?? 0 ) > time() - WEEK_IN_SECONDS ) {
 			$n = count( $last['users'] );
 			?>
 			<div class="notice notice-success">
@@ -811,7 +814,6 @@ class VendorsPage {
 				</form>
 			</div>
 			<?php
-			return;
 		}
 
 		$ids = wpss_get_role_only_vendor_ids();
