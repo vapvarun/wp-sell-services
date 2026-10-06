@@ -140,7 +140,7 @@ class BuyerRequestMetabox {
 				<th><label for="wpss_expires_at"><?php esc_html_e( 'Expires On', 'wp-sell-services' ); ?></label></th>
 				<td>
 					<input type="datetime-local" id="wpss_expires_at" name="wpss_expires_at"
-							value="<?php echo esc_attr( $expires_at ? gmdate( 'Y-m-d\TH:i', strtotime( $expires_at ) ) : '' ); ?>">
+							value="<?php echo esc_attr( $expires_at ? get_date_from_gmt( $expires_at, 'Y-m-d\TH:i' ) : '' ); ?>">
 				</td>
 			</tr>
 			<tr>
@@ -320,7 +320,7 @@ class BuyerRequestMetabox {
 		// Save expiry date.
 		if ( isset( $_POST['wpss_expires_at'] ) && ! empty( $_POST['wpss_expires_at'] ) ) {
 			$expires_at = sanitize_text_field( wp_unslash( $_POST['wpss_expires_at'] ) );
-			update_post_meta( $post_id, '_wpss_expires_at', gmdate( 'Y-m-d H:i:s', strtotime( $expires_at ) ) );
+			update_post_meta( $post_id, '_wpss_expires_at', get_gmt_from_date( $expires_at ) ); // Typed in the site timezone, stored in UTC.
 		}
 
 		// Save skills.

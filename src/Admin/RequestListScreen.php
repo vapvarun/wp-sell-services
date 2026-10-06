@@ -133,7 +133,7 @@ class RequestListScreen {
 		$status  = '' !== $status ? $status : BuyerRequestService::STATUS_OPEN;
 		$expires = (string) get_post_meta( $post_id, '_wpss_expires_at', true );
 
-		if ( BuyerRequestService::STATUS_OPEN === $status && '' !== $expires && $expires <= current_time( 'mysql' ) ) {
+		if ( BuyerRequestService::STATUS_OPEN === $status && '' !== $expires && $expires <= current_time( 'mysql', true ) ) {
 			return BuyerRequestService::STATUS_EXPIRED;
 		}
 
@@ -186,6 +186,32 @@ class RequestListScreen {
 			// The storefront lists published open requests only.
 			$query->set( 'post_status', 'publish' );
 			$query->set( 'meta_query', BuyerRequestService::open_meta_query() ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+		} elseif ( BuyerRequestService::STATUS_EXPIRED === $status ) {
+			// Expired is what the list label says: swept (status expired) OR open
+			// past its expiry and not swept yet - otherwise that row is in no filter.
+			$query->set(
+				'meta_query', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
+					'relation' => 'OR',
+					array(
+						'key'   => '_wpss_status',
+						'value' => BuyerRequestService::STATUS_EXPIRED,
+					),
+					array(
+						'relation' => 'AND',
+						array(
+							'key'   => '_wpss_status',
+							'value' => BuyerRequestService::STATUS_OPEN,
+						),
+						array(
+							'key'     => '_wpss_expires_at',
+							'value'   => current_time( 'mysql', true ),
+							'compare' => '<=',
+							'type'    => 'DATETIME',
+						),
+					),
+				)
+			);
 		} elseif ( isset( BuyerRequestService::get_statuses()[ $status ] ) ) {
 			$query->set(
 				'meta_query',

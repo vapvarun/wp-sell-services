@@ -757,6 +757,103 @@ function wpss_get_package_express( array $package ): ?array {
 }
 
 /**
+ * Meta key behind each service sort that orders by a stored number.
+ *
+ * @since 1.8.0
+ *
+ * @return array<string,array{key:string,order:string}> Sort slug => meta key and direction.
+ */
+function wpss_service_meta_sorts(): array {
+	return array(
+		'price_low'  => array(
+			'key'   => '_wpss_starting_price',
+			'order' => 'ASC',
+		),
+		'price_high' => array(
+			'key'   => '_wpss_starting_price',
+			'order' => 'DESC',
+		),
+		'rating'     => array(
+			'key'   => '_wpss_rating_average',
+			'order' => 'DESC',
+		),
+		'popular'    => array(
+			'key'   => '_wpss_order_count',
+			'order' => 'DESC',
+		),
+	);
+}
+
+/**
+ * Apply a catalog sort to WP_Query args without dropping services.
+ *
+ * Ordering by `meta_key` INNER JOINs the meta, so a service with no rating or
+ * no completed order vanished from the list: "Highest Rated" showed 31 of 402.
+ * (An EXISTS / NOT EXISTS meta clause cannot fix it - WP_Query then orders by an
+ * arbitrary unrelated meta row for the services that lack the key.) This tags
+ * the query with `wpss_service_sort`; wpss_service_sort_clauses() LEFT JOINs the
+ * one key, so every service stays and those without the value sort last, newest
+ * first among them. Every surface that sorts services - storefront, search,
+ * REST, shortcodes - calls this one function; do not write another meta_key sort.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string,mixed> $args WP_Query args.
+ * @param string              $sort newest, price_low, price_high, rating or popular. Anything else leaves $args untouched.
+ * @return array<string,mixed> The args with the sort applied.
+ */
+function wpss_apply_service_sort( array $args, string $sort ): array {
+	if ( 'newest' === $sort ) {
+		$args['orderby'] = array( 'date' => 'DESC' );
+		unset( $args['meta_key'], $args['order'], $args['wpss_service_sort'] );
+		return $args;
+	}
+
+	if ( ! isset( wpss_service_meta_sorts()[ $sort ] ) ) {
+		return $args;
+	}
+
+	if ( ! has_filter( 'posts_clauses', 'wpss_service_sort_clauses' ) ) {
+		add_filter( 'posts_clauses', 'wpss_service_sort_clauses', 10, 2 );
+	}
+
+	$args['wpss_service_sort'] = $sort;
+	$args['orderby']           = array( 'date' => 'DESC' ); // Fallback only; the clause below leads.
+	unset( $args['meta_key'], $args['order'] );
+
+	return $args;
+}
+
+/**
+ * `posts_clauses` half of wpss_apply_service_sort().
+ *
+ * @since 1.8.0
+ *
+ * @param array<string,string> $clauses SQL clauses.
+ * @param \WP_Query            $query   The query.
+ * @return array<string,string>
+ */
+function wpss_service_sort_clauses( array $clauses, \WP_Query $query ): array {
+	global $wpdb;
+
+	$sorts = wpss_service_meta_sorts();
+	$sort  = (string) $query->get( 'wpss_service_sort' );
+
+	if ( ! isset( $sorts[ $sort ] ) ) {
+		return $clauses;
+	}
+
+	$clauses['join'] .= $wpdb->prepare( " LEFT JOIN {$wpdb->postmeta} AS wpss_sort ON ( wpss_sort.post_id = {$wpdb->posts}.ID AND wpss_sort.meta_key = %s )", $sorts[ $sort ]['key'] ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	// A service holding the key twice must still list once.
+	if ( false === strpos( $clauses['groupby'], 'ID' ) ) {
+		$clauses['groupby'] = trim( "{$wpdb->posts}.ID " . ( '' !== $clauses['groupby'] ? ', ' . $clauses['groupby'] : '' ) );
+	}
+	$clauses['orderby'] = 'wpss_sort.meta_value IS NULL, CAST( wpss_sort.meta_value AS DECIMAL( 12, 2 ) ) ' . $sorts[ $sort ]['order'] . ", {$wpdb->posts}.post_date DESC";
+
+	return $clauses;
+}
+
+/**
  * The Express fields of a package, sanitised - the one reader of them for
  * every package saver (wizard, wp-admin editor, REST), each of which rebuilds
  * a package from its own list of keys.

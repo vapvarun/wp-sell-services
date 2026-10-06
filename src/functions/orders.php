@@ -269,12 +269,13 @@ function wpss_resolve_request_order_action(): string {
  * e.g. `/dashboard/orders/3407/` or `/dashboard/sales/3407/`.
  * Plain permalinks keep the `?order_id=` query form.
  *
- * @param int    $order_id Order ID.
- * @param string $section  Dashboard section (e.g. 'sales' for vendor orders).
+ * @param int         $order_id Order ID.
+ * @param string      $section  Dashboard section (e.g. 'sales' for vendor orders).
+ * @param object|null $order    The order row when the caller already holds it: a list of 20 rows then makes no 20 lookups.
  * @return string
  */
-function wpss_get_order_url( int $order_id, string $section = '' ): string {
-	$order = wpss_get_order( $order_id );
+function wpss_get_order_url( int $order_id, string $section = '', ?object $order = null ): string {
+	$order = $order ?? wpss_get_order( $order_id );
 
 	if ( ! $order ) {
 		return '';

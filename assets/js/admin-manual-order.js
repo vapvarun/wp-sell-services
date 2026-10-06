@@ -360,7 +360,9 @@
 		// Auto-fill vendor. The override is a search picker holding only its
 		// current choice, so the service author is added to it when missing.
 		var $vendor = $('#wpss-vendor-id');
-		if (vendorId && $vendor.length) {
+		// Only an active seller can be the vendor: for any other author leave the
+		// override empty so the admin picks a seller instead of hitting an error.
+		if (vendorId && $vendor.length && 1 === parseInt($selected.attr('data-vendor-active'), 10)) {
 			if (!$vendor.find('option[value="' + vendorId + '"]').length) {
 				$vendor.append(new Option($selected.attr('data-vendor-label') || '#' + vendorId, vendorId));
 			}

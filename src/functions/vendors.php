@@ -175,6 +175,21 @@ function wpss_get_active_vendor_ids( int $limit = 0, int $offset = 0 ): array {
 }
 
 /**
+ * User IDs of vendors who are on vacation today.
+ *
+ * The one list every service listing excludes (catalog, search, REST). A
+ * vendor is away while vacation mode is on and the return date is empty or not
+ * yet past - once the date passes the vacation is over with nothing stored.
+ *
+ * @since 1.8.0
+ *
+ * @return array<int> Vendor user IDs.
+ */
+function wpss_get_vacation_vendor_ids(): array {
+	return ( new \WPSellServices\Database\Repositories\VendorProfileRepository() )->get_on_vacation_user_ids();
+}
+
+/**
  * Resolve a reviewer's display name for templates.
  *
  * Thin template-facing wrapper over Review::resolve_reviewer_name() so raw

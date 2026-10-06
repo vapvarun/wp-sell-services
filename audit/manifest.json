@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wp-sell-services",
     "name": "WP Sell Services",
-    "version": "1.7.1",
+    "version": "1.8.0",
     "namespace": "WPSellServices",
     "main_file": "wp-sell-services.php",
     "text_domain": "wp-sell-services",
@@ -1106,6 +1106,14 @@
     "scoping": "Only sign-ins named 'WPSS *' - the ones this plugin issued - are expired, listed or revoked. An application password a member created by hand in their WordPress profile drives whatever script they built with it and is not ours to kill (verified: a 400-day-old non-WPSS password still authenticates). Note the prefix check is case-sensitive.",
     "still_open": "Logout still revokes EVERY session, not just the current one. Left as-is deliberately: per-device revoke now exists, which is what the card required, and narrowing logout's blast radius is a behaviour change a shipped app may depend on. Worth its own card.",
     "recovery": "CRITICAL companion to expiry, found by tracing the flow rather than testing behaviours in isolation. WordPress 401s the WHOLE request on a failed application password, so POST /auth/login with a stale token in the Authorization header never reaches the handler even when the body carries the right password. Mobile clients attach the stored token to every request from one interceptor, so an app just told 'expired, sign in again' sends the expired token WITH the sign-in attempt and gets 401 forever - unrecoverable without clearing app storage. The behaviour predates this plugin (a garbage token always did the same) but expiry is what makes a correct client hit it. AppTokenGuard::allow_anonymous_auth_routes() on rest_authentication_errors priority 100 clears the auth error for /auth/login, /auth/register and /auth/forgot-password only - filter wpss_token_recovery_routes. Those three take credentials from the body and grant nothing, so running them anonymously is correct. Verified: expired token still 401s on /me, /orders, /notifications, /auth/sessions, /auth/logout, /auth/change-password; login RECOVERS at 200; and login with a wrong body password still 401s, so the dead token authenticates nothing."
+  },
+  "listing_rules_1_8_0": {
+    "_note": "One rule per question, 1.8.0. Each replaced duplicated copies that had drifted.",
+    "vacation": "wpss_get_vacation_vendor_ids() (functions/vendors.php) is the one list of vendors to hide; VendorProfileRepository::on_vacation_sql() / not_on_vacation_sql() / get_on_vacation_user_ids() is the one SQL condition; VendorProfile::is_on_vacation() applies the same rule. A vendor is away while vacation_mode is on AND vacation_return_date is empty or not yet past - nothing is stored when the date passes. Used by ServiceArchiveView, SearchService, REST /services and /search, and the vendor directory queries.",
+    "service_sort": "wpss_apply_service_sort() + wpss_service_sort_clauses() (functions/services.php) is the one catalog sort (newest, price_low, price_high, rating, popular): a LEFT JOIN on one meta key, so services without the value stay in the list and sort last. Used by ServiceArchiveView (?sort=), SearchService, ServiceManager::search and REST GET /services (orderby=price|rating|popular). Do not write another meta_key sort.",
+    "express": "ServiceMetabox::save_meta clears a non-faster Express on a LIVE service and shows a notice (transient wpss_express_cleared_{id}); the wizard and REST keep rejecting it at publish via wpss_validate_service_publishable().",
+    "buyer_request_expiry": "_wpss_expires_at is stored in UTC and every comparison uses current_time('mysql', true); the wp-admin Expired filter also lists open requests past expiry that the sweep has not flipped yet.",
+    "order_url": "wpss_get_order_url( $id, $section, $order = null ) takes the already-loaded row, so list partials make no per-row order query."
   },
   "plan_limits": {
     "_note": "Basecamp 10212521285. An administrator met their own paywall: the create-service wizard refused them and POST /services answered 403. TWO gates hang off wpss_vendor_can_create_service - this plugin's per-profile maximum (Core/Plugin.php, priority 10) and Pro's PlanEnforcer (priority 20) - and neither checked capability. Fixing only Pro, which is what the card proposed, would have left owners blocked by the gate that runs FIRST; this sandbox reproduced the block with Pro's subscriptions feature switched off entirely.",

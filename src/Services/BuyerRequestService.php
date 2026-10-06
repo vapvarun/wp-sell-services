@@ -306,7 +306,7 @@ class BuyerRequestService {
 				'relation' => 'OR',
 				array(
 					'key'     => '_wpss_expires_at',
-					'value'   => current_time( 'mysql' ),
+					'value'   => current_time( 'mysql', true ), // expires_at is stored in UTC.
 					'compare' => '>',
 					'type'    => 'DATETIME',
 				),
@@ -336,7 +336,7 @@ class BuyerRequestService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT tt.term_id, COUNT( DISTINCT p.ID ) AS open_count
+				"SELECT DISTINCT p.ID AS request_id, tt.term_id
 				FROM {$wpdb->posts} p
 				INNER JOIN {$wpdb->term_relationships} tr ON tr.object_id = p.ID
 				INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'wpss_service_category'
@@ -344,20 +344,27 @@ class BuyerRequestService {
 				LEFT JOIN {$wpdb->postmeta} ex ON ex.post_id = p.ID AND ex.meta_key = '_wpss_expires_at'
 				WHERE p.post_type = 'wpss_request' AND p.post_status = 'publish'
 					AND ( ex.meta_id IS NULL OR CAST( ex.meta_value AS DATETIME ) > %s )
-				GROUP BY tt.term_id",
+				",
 				self::STATUS_OPEN,
-				current_time( 'mysql' )
+				current_time( 'mysql', true )
 			)
 		);
 
-		$counts = array();
+		// One request counts once per category it sits in or under: a request
+		// filed in both a parent and its child must not count twice in the parent.
+		$terms_by_request = array();
 		foreach ( (array) $rows as $row ) {
-			$term_id            = (int) $row->term_id;
-			$counts[ $term_id ] = ( $counts[ $term_id ] ?? 0 ) + (int) $row->open_count;
-
-			// Roll up the ancestors, as the per-category tax_query did.
+			$term_id = (int) $row->term_id;
+			$terms_by_request[ (int) $row->request_id ][ $term_id ] = true;
 			foreach ( get_ancestors( $term_id, 'wpss_service_category', 'taxonomy' ) as $ancestor ) {
-				$counts[ (int) $ancestor ] = ( $counts[ (int) $ancestor ] ?? 0 ) + (int) $row->open_count;
+				$terms_by_request[ (int) $row->request_id ][ (int) $ancestor ] = true;
+			}
+		}
+
+		$counts = array();
+		foreach ( $terms_by_request as $term_ids ) {
+			foreach ( array_keys( $term_ids ) as $term_id ) {
+				$counts[ $term_id ] = ( $counts[ $term_id ] ?? 0 ) + 1;
 			}
 		}
 
@@ -668,7 +675,7 @@ class BuyerRequestService {
 				),
 				array(
 					'key'     => '_wpss_expires_at',
-					'value'   => current_time( 'mysql' ),
+					'value'   => current_time( 'mysql', true ), // expires_at is stored in UTC.
 					'compare' => '<',
 					'type'    => 'DATETIME',
 				),

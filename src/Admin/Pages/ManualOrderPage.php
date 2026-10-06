@@ -545,6 +545,12 @@ class ManualOrderPage {
 		}
 		$vendor_id = $vendor_id_input ? $vendor_id_input : (int) $service->post_author;
 
+		// Every order needs a seller who can deliver it and be paid: a blank
+		// override falls back to the author, who must be an active seller too.
+		if ( ! $vendor_id_input && ! wpss_is_vendor( $vendor_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'This service\'s author is not an active seller. Choose an active seller as the vendor.', 'wp-sell-services' ) ) );
+		}
+
 		if ( $customer_id === $vendor_id ) {
 			wp_send_json_error( array( 'message' => __( 'Customer cannot be the same as the vendor.', 'wp-sell-services' ) ) );
 		}

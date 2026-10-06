@@ -452,30 +452,12 @@ class ServiceManager {
 		}
 
 		// Orderby.
-		switch ( $args['orderby'] ) {
-			case 'price_low':
-				$query_args['meta_key'] = '_wpss_starting_price'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['orderby']  = 'meta_value_num';
-				$query_args['order']    = 'ASC';
-				break;
-			case 'price_high':
-				$query_args['meta_key'] = '_wpss_starting_price'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['orderby']  = 'meta_value_num';
-				$query_args['order']    = 'DESC';
-				break;
-			case 'rating':
-				$query_args['meta_key'] = '_wpss_rating_average'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['orderby']  = 'meta_value_num';
-				$query_args['order']    = 'DESC';
-				break;
-			case 'popular':
-				$query_args['meta_key'] = '_wpss_order_count'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['orderby']  = 'meta_value_num';
-				$query_args['order']    = 'DESC';
-				break;
-			default:
-				$query_args['orderby'] = $args['orderby'];
-				$query_args['order']   = $args['order'];
+		$orderby = (string) $args['orderby'];
+		if ( 'newest' === $orderby || isset( wpss_service_meta_sorts()[ $orderby ] ) ) {
+			$query_args = wpss_apply_service_sort( $query_args, $orderby );
+		} else {
+			$query_args['orderby'] = $args['orderby'];
+			$query_args['order']   = $args['order'];
 		}
 
 		$query = new \WP_Query( $query_args );

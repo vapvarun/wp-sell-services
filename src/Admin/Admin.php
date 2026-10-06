@@ -1216,9 +1216,12 @@ class Admin {
 					'label' => $service->post_title . ( $vendor ? ' (' . $vendor->display_name . ')' : '' ) . ( $price ? ' - ' . wpss_format_price( $price ) : '' ),
 					// Read by admin-manual-order.js from the selected option, as before.
 					'data'  => array(
-						'vendor'       => (int) $service->post_author,
-						'vendor-label' => $vendor ? $vendor->display_name . ' (' . $vendor->user_email . ')' : '',
-						'price'        => $price,
+						'vendor'        => (int) $service->post_author,
+						'vendor-label'  => $vendor ? $vendor->display_name . ' (' . $vendor->user_email . ')' : '',
+						// Only an active seller may be the order's vendor; the form
+						// pre-fills the author only when this is 1.
+						'vendor-active' => wpss_is_vendor( (int) $service->post_author ) ? 1 : 0,
+						'price'         => $price,
 					),
 				);
 			}

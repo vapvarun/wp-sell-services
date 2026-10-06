@@ -52,6 +52,49 @@ class VendorProfileRepository extends AbstractRepository {
 	}
 
 	/**
+	 * SQL condition: the vendor is on vacation today.
+	 *
+	 * The one definition every listing shares. A vendor is away while
+	 * vacation_mode is on AND the return date is empty or today or later - once
+	 * the return date has passed the vacation is over without anyone switching
+	 * it off, and nothing is stored to make it so.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return string Condition for a WHERE clause (no placeholders left).
+	 */
+	public function on_vacation_sql(): string {
+		return $this->wpdb->prepare(
+			'( vacation_mode = 1 AND ( vacation_return_date IS NULL OR vacation_return_date < %s OR vacation_return_date >= %s ) )',
+			'1000-01-02',
+			current_time( 'Y-m-d' )
+		);
+	}
+
+	/**
+	 * SQL condition: the vendor is NOT on vacation today. See on_vacation_sql().
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return string Condition for a WHERE clause.
+	 */
+	public function not_on_vacation_sql(): string {
+		return 'NOT ' . $this->on_vacation_sql();
+	}
+
+	/**
+	 * User IDs of vendors on vacation today. See on_vacation_sql().
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return array<int>
+	 */
+	public function get_on_vacation_user_ids(): array {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return array_map( 'intval', (array) $this->wpdb->get_col( "SELECT user_id FROM {$this->table} WHERE " . $this->on_vacation_sql() ) );
+	}
+
+	/**
 	 * Get profile by user ID.
 	 *
 	 * @param int $user_id User ID.
@@ -260,7 +303,7 @@ class VendorProfileRepository extends AbstractRepository {
 			$values[]  = $status;
 		}
 		if ( ! empty( $args['available'] ) ) {
-			$clauses[] = 'is_available = 1 AND vacation_mode = 0';
+			$clauses[] = 'is_available = 1 AND ' . $this->not_on_vacation_sql();
 		}
 		if ( '' !== $country ) {
 			$clauses[] = 'country = %s';
@@ -297,7 +340,7 @@ class VendorProfileRepository extends AbstractRepository {
 
 		$sql = $this->wpdb->prepare(
 			"SELECT * FROM {$this->table}
-			WHERE verification_tier = %s AND is_available = 1 AND vacation_mode = 0
+			WHERE verification_tier = %s AND is_available = 1 AND {$this->not_on_vacation_sql()}
 			ORDER BY {$orderby} {$order}
 			LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$args['tier'],
@@ -552,7 +595,7 @@ class VendorProfileRepository extends AbstractRepository {
 				"SELECT * FROM {$this->table}
 				WHERE (display_name LIKE %s OR tagline LIKE %s OR bio LIKE %s)
 				AND is_available = 1
-				AND vacation_mode = 0
+				AND {$this->not_on_vacation_sql()}
 				ORDER BY avg_rating DESC
 				LIMIT %d OFFSET %d",
 				$search_like,

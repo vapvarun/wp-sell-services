@@ -683,19 +683,11 @@ class ServiceArchiveView {
 		$query->set( 'post_status', 'publish' );
 
 		// Exclude services from vendors who are on vacation mode.
-		global $wpdb;
-		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$vacation_vendors = $wpdb->get_col(
-			$wpdb->prepare(
-				'SELECT user_id FROM %i WHERE vacation_mode = 1',
-				$profiles_table
-			)
-		);
+		$vacation_vendors = wpss_get_vacation_vendor_ids();
 		if ( ! empty( $vacation_vendors ) ) {
 			$existing_excludes = $query->get( 'author__not_in' );
 			$existing_excludes = $existing_excludes ? $existing_excludes : array();
-			$query->set( 'author__not_in', array_merge( $existing_excludes, array_map( 'intval', $vacation_vendors ) ) );
+			$query->set( 'author__not_in', array_merge( $existing_excludes, $vacation_vendors ) );
 		}
 
 		// Always filter out rejected/pending services regardless of moderation setting.
@@ -788,29 +780,11 @@ class ServiceArchiveView {
 		if ( isset( $_GET['sort'] ) ) {
 			$sort = sanitize_text_field( wp_unslash( $_GET['sort'] ) );
 
-			switch ( $sort ) {
-				case 'newest':
-					$query->set( 'orderby', 'date' );
-					$query->set( 'order', 'DESC' );
-					break;
-
-				case 'rating':
-					$query->set( 'orderby', 'meta_value_num' );
-					$query->set( 'meta_key', '_wpss_rating_average' );
-					$query->set( 'order', 'DESC' );
-					break;
-
-				case 'price_low':
-					$query->set( 'orderby', 'meta_value_num' );
-					$query->set( 'meta_key', '_wpss_starting_price' );
-					$query->set( 'order', 'ASC' );
-					break;
-
-				case 'price_high':
-					$query->set( 'orderby', 'meta_value_num' );
-					$query->set( 'meta_key', '_wpss_starting_price' );
-					$query->set( 'order', 'DESC' );
-					break;
+			$sorted = wpss_apply_service_sort( array(), $sort );
+			foreach ( array( 'wpss_service_sort', 'orderby' ) as $sort_arg ) {
+				if ( isset( $sorted[ $sort_arg ] ) ) {
+					$query->set( $sort_arg, $sorted[ $sort_arg ] );
+				}
 			}
 		}
 

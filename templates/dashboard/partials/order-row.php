@@ -192,7 +192,7 @@ $is_working = in_array( $order_item->status, array( 'in_progress', 'revision_req
 				<?php echo esc_html( $status_labels[ $order_item->status ] ?? $order_item->status ); ?>
 			</span>
 		<?php endif; ?>
-		<a href="<?php echo esc_url( wpss_get_order_url( (int) $order_item->id, $wpss_is_seller ? 'sales' : '' ) ); ?>" class="wpss-btn wpss-btn--sm <?php echo '' !== $next_action ? 'wpss-btn--primary' : 'wpss-btn--outline'; ?>">
+		<a href="<?php echo esc_url( wpss_get_order_url( (int) $order_item->id, $wpss_is_seller ? 'sales' : '', $order_item ) ); ?>" class="wpss-btn wpss-btn--sm <?php echo '' !== $next_action ? 'wpss-btn--primary' : 'wpss-btn--outline'; ?>">
 			<?php echo esc_html( '' !== $next_action ? $next_action : __( 'View', 'wp-sell-services' ) ); ?>
 		</a>
 	</div>

@@ -779,6 +779,24 @@ class ServiceMetabox {
 					) + wpss_sanitize_package_express( (array) $package );
 				}
 			}
+			// A live service must not keep an Express price buyers can never be
+			// offered (Express has to be faster than the package). Same rule as
+			// the wizard and REST; here the service stays live, the Express
+			// fields are cleared and the owner is told which package.
+			if ( 'publish' === $post->post_status ) {
+				$express_cleared = array();
+				foreach ( $packages as $package_index => $saved_package ) {
+					if ( (float) $saved_package['express_price'] > 0 && null === wpss_get_package_express( $saved_package ) ) {
+						$packages[ $package_index ]['express_price'] = 0.0;
+						$packages[ $package_index ]['express_days']  = 0;
+						$express_cleared[]                           = '' !== (string) $saved_package['name'] ? (string) $saved_package['name'] : (string) ( $package_index + 1 );
+					}
+				}
+				if ( $express_cleared ) {
+					set_transient( 'wpss_express_cleared_' . $post_id, $express_cleared, 5 * MINUTE_IN_SECONDS );
+				}
+			}
+
 			update_post_meta( $post_id, '_wpss_packages', $packages );
 
 			// Update computed meta values from packages.
@@ -1130,6 +1148,18 @@ class ServiceMetabox {
 	private function render_invalid_notice( \WP_Post $post ): void {
 		if ( $this->is_new_service( $post ) ) {
 			return;
+		}
+
+		$express_cleared = get_transient( 'wpss_express_cleared_' . $post->ID );
+		if ( is_array( $express_cleared ) && $express_cleared ) {
+			delete_transient( 'wpss_express_cleared_' . $post->ID );
+			echo '<div class="wpss-notice warning"><p>' . esc_html(
+				sprintf(
+					/* translators: %s: package names, comma separated. */
+					__( 'Express delivery was not saved for: %s. Express must be faster than the package delivery time, so buyers could never have been offered it. Set a shorter Express time and save again.', 'wp-sell-services' ),
+					implode( ', ', $express_cleared )
+				)
+			) . '</p></div>';
 		}
 
 		$errors = wpss_get_service_publish_errors( $post->ID );

@@ -349,6 +349,23 @@ class ServicesController extends RestController {
 			'order'          => $request->get_param( 'order' ) ?: 'DESC',
 		);
 
+		// price / rating / popular are stored numbers, not WP_Query orderby values
+		// (they silently fell back to newest-first). One shared sort that also
+		// keeps services without the value.
+		$sort = (string) $request->get_param( 'orderby' );
+		if ( 'price' === $sort ) {
+			$sort = self::SORT_ASC === strtoupper( (string) $request->get_param( 'order' ) ) ? 'price_low' : 'price_high';
+		}
+		if ( isset( wpss_service_meta_sorts()[ $sort ] ) ) {
+			$args = wpss_apply_service_sort( $args, $sort );
+		}
+
+		// Same catalog rule as the storefront: vendors on vacation are not listed.
+		$vacation_vendors = wpss_get_vacation_vendor_ids();
+		if ( ! empty( $vacation_vendors ) ) {
+			$args['author__not_in'] = $vacation_vendors;
+		}
+
 		// Filter by category.
 		$category = $request->get_param( 'category' );
 		if ( $category ) {
@@ -1639,7 +1656,7 @@ class ServicesController extends RestController {
 			'orderby'           => array(
 				'description' => __( 'Order by field.', 'wp-sell-services' ),
 				'type'        => 'string',
-				'enum'        => array( 'date', 'title', 'price', 'rating' ),
+				'enum'        => array( 'date', 'title', 'price', 'rating', 'popular' ),
 				'default'     => 'date',
 			),
 			'order'             => array(

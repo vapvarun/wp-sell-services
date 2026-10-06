@@ -816,7 +816,14 @@ class AbilitiesRegistrar {
 				'category'  => $input['category'] ?? '',
 				'min_price' => $input['min_price'] ?? '',
 				'max_price' => $input['max_price'] ?? '',
-				'sort_by'   => $input['sort_by'] ?? 'newest',
+				// REST reads orderby/order, not sort_by: translate the ability's names.
+				'orderby'   => array(
+					'price_low'  => 'price',
+					'price_high' => 'price',
+					'rating'     => 'rating',
+					'popular'    => 'popular',
+				)[ $input['sort_by'] ?? 'newest' ] ?? 'date',
+				'order'     => 'price_low' === ( $input['sort_by'] ?? '' ) ? 'ASC' : 'DESC',
 				'page'      => $input['page'] ?? 1,
 				'per_page'  => $input['per_page'] ?? 10,
 			)
