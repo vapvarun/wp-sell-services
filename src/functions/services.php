@@ -1972,6 +1972,13 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 		return __( 'This service is not currently available.', 'wp-sell-services' );
 	}
 
+	// Paused: still listed, not sold. The cart, the Woo rail and the order
+	// provider all ask here; only the standalone pricer checked it before
+	// (Basecamp 10375174747). Same words as CheckoutIntentService's refusal.
+	if ( 'paused' === wpss_get_service_status( $service_id ) ) {
+		return __( 'This service is not taking new orders right now.', 'wp-sell-services' );
+	}
+
 	/**
 	 * Let an integration refuse a service for its own reason.
 	 *
