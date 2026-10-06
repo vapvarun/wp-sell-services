@@ -229,6 +229,18 @@ do_action( 'wpss_before_single_request', $request_id );
 						<?php if ( ! empty( $attachments ) ) : ?>
 							<section class="wpss-request-section wpss-request-attachments">
 								<h2><?php esc_html_e( 'Attachments', 'wp-sell-services' ); ?></h2>
+								<?php if ( ! wpss_can_view_request_attachments( (int) $request_id ) ) : ?>
+									<p class="wpss-notice wpss-notice--info">
+										<?php
+										printf(
+											/* translators: 1: number of files, 2: sign-in URL */
+											wp_kses_post( _n( '%1$d file attached. <a href="%2$s">Sign in</a> to view it.', '%1$d files attached. <a href="%2$s">Sign in</a> to view them.', count( $attachments ), 'wp-sell-services' ) ),
+											(int) count( $attachments ),
+											esc_url( wp_login_url( (string) get_permalink( $request_id ) ) )
+										);
+										?>
+									</p>
+								<?php else : ?>
 								<div class="wpss-attachments-list">
 									<?php foreach ( $attachments as $attachment_id ) : ?>
 										<?php
@@ -241,6 +253,7 @@ do_action( 'wpss_before_single_request', $request_id );
 										</a>
 									<?php endforeach; ?>
 								</div>
+								<?php endif; ?>
 							</section>
 						<?php endif; ?>
 

@@ -780,9 +780,8 @@ class BuyerRequestsController extends RestController {
 			'created_at'       => $this->format_datetime( $buyer_request->created_at ?? $buyer_request->post_date ?? null ),
 		];
 
-		// The buyer, the sellers who would quote on it, and admins: vendors see
-		// the files on the website, and the app hid them (Basecamp 10337217098).
-		if ( ( $is_owner || wpss_is_vendor() || current_user_can( 'manage_options' ) ) && isset( $buyer_request->attachments ) ) {
+		// Same rule as the website (Basecamp 10337217098).
+		if ( isset( $buyer_request->attachments ) && wpss_can_view_request_attachments( (int) ( $buyer_request->id ?? $buyer_request->ID ) ) ) {
 			$data['attachments'] = $this->get_attachment_urls( $buyer_request->attachments );
 		}
 

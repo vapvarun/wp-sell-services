@@ -1543,3 +1543,28 @@ function wpss_limit_media_library_to_own( array $query ): array {
 	return $query;
 }
 add_filter( 'ajax_query_attachments_args', 'wpss_limit_media_library_to_own' );
+
+/**
+ * Whether the current visitor may see a buyer request's attachments.
+ *
+ * Signed-in members only: briefs and mockups can carry a client's private
+ * details, and anyone who can act on a request (quote, review) is signed in
+ * already. Owner decision on Basecamp 10337217098. The website and REST both
+ * ask here.
+ *
+ * @since 1.8.0
+ *
+ * @param int $request_id Buyer request post ID.
+ * @return bool
+ */
+function wpss_can_view_request_attachments( int $request_id ): bool {
+	/**
+	 * Filter who may see a buyer request's attachments.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param bool $can        Default: the visitor is signed in.
+	 * @param int  $request_id Buyer request post ID.
+	 */
+	return (bool) apply_filters( 'wpss_can_view_request_attachments', is_user_logged_in(), $request_id );
+}
