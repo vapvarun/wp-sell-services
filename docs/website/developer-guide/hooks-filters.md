@@ -42,8 +42,8 @@ add_action( 'wpss_loaded', function( $plugin ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_service_created` | `int $post_id, array $data` | `src/Services/ServiceManager.php:186` |
-| `wpss_service_updated` | `int $service_id, array $data` | `src/Services/ServiceManager.php:303` |
+| `wpss_service_created` | `int $post_id, array $data` | `src/Services/ServiceManager.php:188` |
+| `wpss_service_updated` | `int $service_id, array $data` | `src/Services/ServiceManager.php:305` |
 
 ### Service Filters
 
@@ -51,11 +51,11 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |--------|-----------|------|
 | `wpss_pre_create_service` | `array $data` | `ServiceManager.php` |
 | `wpss_pre_update_service` | `array $data, int $service_id` | `ServiceManager.php` |
-| `wpss_before_service_deleted` | `int $service_id` | `src/Services/ServiceManager.php:340` |
+| `wpss_before_service_deleted` | `int $service_id` | `src/Services/ServiceManager.php:342` |
 | `wpss_service_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/ServiceMetabox.php:913` |
-| `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:750` |
-| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:915` |
-| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:964` |
+| `wpss_rest_service_created` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:751` |
+| `wpss_rest_service_updated` | `int $service_id, WP_REST_Request $request` | `src/API/ServicesController.php:916` |
+| `wpss_rest_service_deleted` | `int $service_id, bool $force` | `src/API/ServicesController.php:965` |
 
 ## Moderation Actions
 
@@ -63,7 +63,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 |------|-----------|------|
 | `wpss_service_approved` | `int $service_id, string $notes` | `src/Services/ModerationService.php:196` |
 | `wpss_service_rejected` | `int $service_id, string $reason` | `src/Services/ModerationService.php:246` |
-| `wpss_service_pending_moderation` | `int $service_id` | `src/Frontend/ServiceWizard.php:1953` |
+| `wpss_service_pending_moderation` | `int $service_id` | `src/Frontend/ServiceWizard.php:1970` |
 
 ## Order Actions
 
@@ -226,7 +226,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_pre_vendor_register` | `array $profile_data, int $user_id` | `VendorService.php` |
 | `wpss_vendor_profile_allowed_fields` | `array $allowed_fields` | `VendorService.php` |
 | `wpss_vendor_pitch_stats` | `array $stats` | `src/functions/vendors.php:838` |
-| `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1427` |
+| `wpss_vendor_pitch_steps` | `array $steps` | `src/Frontend/Shortcodes.php:1428` |
 
 | Hook | Parameters | File |
 |------|-----------|------|
@@ -408,7 +408,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_service_wizard_saved` | `int $service_id, array $sanitized_data` | `src/Frontend/ServiceWizard.php:1941` |
+| `wpss_service_wizard_saved` | `int $service_id, array $sanitized_data` | `src/Frontend/ServiceWizard.php:1943` |
 | `wpss_wizard_pricing_after` | `WP_Post\|null $service` | `ServiceWizard.php` |
 | `wpss_wizard_save_service_meta` | `int $service_id, array $data` | `ServiceWizard.php` |
 
@@ -416,7 +416,7 @@ add_filter( 'wpss_service_meta_fields', function( $fields, $post_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1382` |
+| `wpss_vendor_can_create_service` | `bool $can_create, int $user_id` | `src/API/ServicesController.php:1383` |
 | `wpss_services_per_page` | `int $per_page` (default 12) | `src/Frontend/ServiceArchiveView.php:640` |
 | `wpss_wizard_service_data` | `array $data, int $service_id` | `ServiceWizard.php` |
 | `wpss_wizard_sanitize_service_data` | `array $sanitized, array $raw` | `ServiceWizard.php` |
@@ -790,7 +790,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:792` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:427` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:266` |
-| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1498` |
+| `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1499` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
 | `wpss_rest_review_data` | `$data, $review, $request` | `ReviewsController.php` |
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |

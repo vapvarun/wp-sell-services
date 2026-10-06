@@ -1673,6 +1673,36 @@ function wpss_validate_service_publishable( array $service ): array {
 }
 
 /**
+ * Move a newly written service to the status it was meant to have.
+ *
+ * Every creator must insert the post as a draft, write its packages, gallery,
+ * terms and thumbnail, and only then call this. Inserting straight as
+ * 'publish' ran the publish rules (ServiceMetabox::enforce_publish_rules) on a
+ * post with no meta yet, which demoted it to draft, and nothing published it
+ * again - the wizard said "published" while the service stayed a draft
+ * (Basecamp 10350940481, 10350889943).
+ *
+ * @since 1.8.0
+ *
+ * @param int    $service_id Service post ID.
+ * @param string $status     Intended status: publish, pending or draft.
+ * @return string The status the service actually has afterwards.
+ */
+function wpss_settle_service_status( int $service_id, string $status ): string {
+	if ( get_post_status( $service_id ) !== $status ) {
+		wp_update_post(
+			array(
+				'ID'          => $service_id,
+				'post_status' => $status,
+			)
+		);
+		clean_post_cache( $service_id );
+	}
+
+	return (string) get_post_status( $service_id );
+}
+
+/**
  * What stands between a saved service and going live, read from the post.
  *
  * The same check as {@see wpss_validate_service_publishable()} for a service

@@ -119,7 +119,7 @@ class ServiceManager {
 				'post_content' => wp_kses_post( $data['content'] ),
 				'post_excerpt' => sanitize_textarea_field( $data['excerpt'] ),
 				'post_author'  => absint( $data['author'] ),
-				'post_status'  => $data['status'],
+				'post_status'  => 'draft', // Settled below once the meta is in.
 			),
 			true
 		);
@@ -176,6 +176,8 @@ class ServiceManager {
 		if ( ! empty( $data['requirements'] ) ) {
 			$this->save_requirements( $post_id, $data['requirements'] );
 		}
+
+		wpss_settle_service_status( (int) $post_id, (string) $data['status'] );
 
 		/**
 		 * Fires after a service is created.

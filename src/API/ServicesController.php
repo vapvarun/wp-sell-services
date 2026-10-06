@@ -717,7 +717,7 @@ class ServicesController extends RestController {
 			'post_title'   => sanitize_text_field( $request->get_param( 'title' ) ),
 			'post_content' => wp_kses_post( $request->get_param( 'description' ) ),
 			'post_excerpt' => sanitize_textarea_field( $request->get_param( 'excerpt' ) ?: '' ),
-			'post_status'  => $post_status,
+			'post_status'  => 'draft', // Settled after the meta is written, see wpss_settle_service_status().
 			'post_author'  => get_current_user_id(),
 		);
 
@@ -740,6 +740,7 @@ class ServicesController extends RestController {
 			wp_set_object_terms( $service_id, $tags, 'wpss_service_tag' );
 		}
 
+		wpss_settle_service_status( $service_id, $post_status );
 		$service = get_post( $service_id );
 
 		/**

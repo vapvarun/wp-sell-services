@@ -504,7 +504,7 @@ class ServiceCommands extends WP_CLI_Command {
 				'post_title'   => $data['title'],
 				'post_content' => $data['content'],
 				'post_excerpt' => $data['excerpt'] ?? '',
-				'post_status'  => 'publish',
+				'post_status'  => 'draft', // Published below once the meta is in.
 				'post_author'  => get_current_user_id() ?: 1,
 			)
 		);
@@ -578,6 +578,8 @@ class ServiceCommands extends WP_CLI_Command {
 		if ( ! empty( $data['featured'] ) ) {
 			update_post_meta( $post_id, '_wpss_featured', 1 );
 		}
+
+		wpss_settle_service_status( (int) $post_id, 'publish' );
 
 		return $post_id;
 	}

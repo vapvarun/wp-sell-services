@@ -1881,12 +1881,14 @@ class ServiceWizard {
 		// Determine post status based on moderation setting.
 		$post_status = ModerationService::is_enabled() ? 'pending' : 'publish';
 
-		// Create or update post.
+		// Create or update post. A new service starts as a draft and an existing
+		// one keeps its status until its meta is written; the status is settled
+		// last, by wpss_settle_service_status() below.
 		$post_data = array(
 			'post_type'    => 'wpss_service',
 			'post_title'   => $sanitized['title'],
 			'post_content' => $sanitized['description'],
-			'post_status'  => $post_status,
+			'post_status'  => $service_id ? (string) get_post_status( $service_id ) : 'draft',
 			'post_author'  => $user_id,
 		);
 
@@ -1940,6 +1942,21 @@ class ServiceWizard {
 		 * @param array $sanitized  Sanitized form data.
 		 */
 		do_action( 'wpss_service_wizard_saved', $service_id, $sanitized );
+
+		// Never report "published" for a service that is not.
+		if ( wpss_settle_service_status( $service_id, $post_status ) !== $post_status ) {
+			delete_transient( $lock_key );
+			$publish_errors = wpss_get_service_publish_errors( $service_id );
+			wp_send_json_error(
+				array(
+					'message'    => $publish_errors
+						? implode( ' ', $publish_errors )
+						: __( 'The service was saved as a draft but could not be published. Check it and try again.', 'wp-sell-services' ),
+					'errors'     => array_values( $publish_errors ),
+					'service_id' => $service_id,
+				)
+			);
+		}
 
 		// Prepare success response based on post status.
 		if ( 'pending' === $post_status ) {

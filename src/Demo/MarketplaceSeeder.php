@@ -578,7 +578,7 @@ class MarketplaceSeeder {
 						'post_title'   => $title,
 						'post_content' => 'Professional, reliable delivery with clear communication and unlimited collaboration. I have shipped this work for clients across many industries and stand behind every order.',
 						'post_excerpt' => 'High-quality work, on time, every time.',
-						'post_status'  => 'publish',
+						'post_status'  => 'draft', // Published below once the meta is in.
 						'post_author'  => $vendor['user_id'],
 					),
 					true
@@ -643,6 +643,8 @@ class MarketplaceSeeder {
 					update_post_meta( $post_id, '_wpss_gallery', $gallery );
 					set_post_thumbnail( $post_id, $gallery[0] );
 				}
+
+				wpss_settle_service_status( (int) $post_id, 'publish' );
 
 				$services[] = array(
 					'id'             => (int) $post_id,
