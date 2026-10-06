@@ -666,6 +666,27 @@ class StripeGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * Refund a successful charge that could not be turned into an order.
+	 *
+	 * The one path for browser confirm, AJAX confirm and webhook recovery.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $payment_intent_id Stripe PaymentIntent ID.
+	 * @return bool Whether Stripe accepted the refund.
+	 */
+	private function refund_unsettled_charge( string $payment_intent_id ): bool {
+		$refund = $this->process_refund( $payment_intent_id );
+
+		if ( empty( $refund['success'] ) ) {
+			wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Handle webhook callback via URL.
 	 *
 	 * @return void
@@ -702,6 +723,14 @@ class StripeGateway implements PaymentGatewayInterface {
 		}
 
 		$result = $this->handle_webhook( $event );
+
+		// A charge we could neither settle nor refund: answer non-2xx and leave
+		// the event unmarked, so Stripe delivers it again.
+		if ( ! empty( $result['retry'] ) ) {
+			status_header( 500 );
+			echo wp_json_encode( $result );
+			exit;
+		}
 
 		// Mark event as processed (48-hour dedup window).
 		if ( $event_id ) {
@@ -1044,7 +1073,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		);
 
 		if ( is_wp_error( $intent ) ) {
-			$this->process_refund( $payment_intent_id );
+			$this->refund_unsettled_charge( $payment_intent_id );
 
 			return array(
 				'success' => false,
@@ -1061,11 +1090,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		);
 
 		if ( empty( $settle['success'] ) ) {
-			$refund = $this->process_refund( $payment_intent_id );
-
-			if ( empty( $refund['success'] ) ) {
-				wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
-			}
+			$this->refund_unsettled_charge( $payment_intent_id );
 
 			return array(
 				'success' => false,
@@ -1181,7 +1206,7 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		// Resolve failed after a successful charge — refund and bail.
 		if ( is_wp_error( $intent ) ) {
-			$this->process_refund( $payment_intent_id );
+			$this->refund_unsettled_charge( $payment_intent_id );
 			wp_send_json_error( array( 'message' => $intent->get_error_message() ) );
 			return;
 		}
@@ -1189,10 +1214,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		$settle = $checkout->settle( $intent, 'stripe', $payment_intent_id, (float) $payment['amount'], (string) $payment['currency'] );
 
 		if ( empty( $settle['success'] ) ) {
-			$refund = $this->process_refund( $payment_intent_id );
-			if ( empty( $refund['success'] ) ) {
-				wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
-			}
+			$this->refund_unsettled_charge( $payment_intent_id );
 			wp_send_json_error( array( 'message' => $settle['error'] ?? __( 'Failed to create order.', 'wp-sell-services' ) ) );
 			return;
 		}
@@ -1452,9 +1474,15 @@ class StripeGateway implements PaymentGatewayInterface {
 
 			wpss_log( "Webhook recovery FAILED for Stripe payment {$payment_intent['id']}: " . ( $settle['error'] ?? 'unknown' ), 'error' );
 
+			// Same as the browser path: a charge that cannot become an order is
+			// given back. Only if the refund fails too is the event left
+			// unprocessed, so Stripe retries it (Basecamp 10375174172).
+			$refunded = $this->refund_unsettled_charge( (string) $payment_intent['id'] );
+
 			return array(
 				'success' => false,
-				'message' => 'Order creation failed in webhook recovery.',
+				'message' => $refunded ? 'Order creation failed in webhook recovery; the charge was refunded.' : 'Order creation and refund both failed in webhook recovery.',
+				'retry'   => ! $refunded,
 			);
 		}
 

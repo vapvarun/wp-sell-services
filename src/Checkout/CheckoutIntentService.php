@@ -479,6 +479,47 @@ class CheckoutIntentService {
 	 * @return array<string,mixed> { success:bool, ... }
 	 */
 	public function settle( CheckoutIntent $intent, string $gateway_id, string $transaction_id, float $charged_amount, string $charged_currency ): array {
+		global $wpdb;
+
+		/*
+		 * One charge settles once. The browser confirm and the gateway webhook
+		 * can both arrive for the same charge; the transaction_id check below is
+		 * a plain read, so both passed it and each created a paid order
+		 * (Basecamp 10375173905). A named lock per transaction makes the second
+		 * caller wait, then find the first one's order.
+		 */
+		$lock = 'wpss_settle_' . md5( $gateway_id . '|' . $transaction_id );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$locked = '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 15 )', $lock ) );
+
+		if ( ! $locked ) {
+			// ponytail: on a 15s lock timeout we settle unlocked rather than fail - every caller refunds on failure, and refunding a good charge is worse than the rare race.
+			wpss_log( sprintf( '%s transaction %s: settle lock timed out, settling without it.', $gateway_id, $transaction_id ), 'warning' );
+		}
+
+		try {
+			return $this->settle_once( $intent, $gateway_id, $transaction_id, $charged_amount, $charged_currency );
+		} finally {
+			if ( $locked ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', $lock ) );
+			}
+		}
+	}
+
+	/**
+	 * Body of settle(), run while holding the per-transaction lock.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param CheckoutIntent $intent           The resolved intent.
+	 * @param string         $gateway_id       Gateway slug.
+	 * @param string         $transaction_id   Gateway transaction / intent ID.
+	 * @param float          $charged_amount   Verified charged amount.
+	 * @param string         $charged_currency Verified charged currency.
+	 * @return array<string,mixed>
+	 */
+	private function settle_once( CheckoutIntent $intent, string $gateway_id, string $transaction_id, float $charged_amount, string $charged_currency ): array {
 		/*
 		 * Bind the charge to the intent it is paying for, before anything is
 		 * created or marked paid.

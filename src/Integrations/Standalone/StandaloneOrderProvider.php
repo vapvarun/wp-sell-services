@@ -342,8 +342,10 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		// Gateways retry webhooks. A second mark-as-paid on an already-paid
 		// order must not reset paid_at / transaction_id, re-fire the status
 		// hooks, or resend the "new order" notifications.
-		if ( 'paid' === ( $order->payment_status ?? '' ) ) {
-			wpss_log( sprintf( 'mark_as_paid ignored for order #%d: already paid (incoming transaction %s)', $order_id, $transaction_id ) );
+		// A refunded payment is final too: a replayed "succeeded" event must not
+		// reopen a refunded order and credit the vendor again (Basecamp 10372723087).
+		if ( in_array( $order->payment_status ?? '', array( 'paid', 'refunded', 'partially_refunded' ), true ) ) {
+			wpss_log( sprintf( 'mark_as_paid ignored for order #%d: payment already %s (incoming transaction %s)', $order_id, $order->payment_status, $transaction_id ) );
 			return true;
 		}
 
