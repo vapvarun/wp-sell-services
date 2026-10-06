@@ -1489,7 +1489,7 @@ class MarketplaceSeeder {
 	 * @param string $label  Human label used for alt text + placeholder fallback.
 	 * @return int Attachment ID, or 0 when images are disabled or all paths fail.
 	 */
-	private function sideload_image( string $seed, int $width, int $height, int $parent_id, string $label ): int {
+	public function sideload_image( string $seed, int $width, int $height, int $parent_id, string $label ): int {
 		if ( ! $this->seed_images ) {
 			return 0;
 		}

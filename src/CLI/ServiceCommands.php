@@ -579,6 +579,18 @@ class ServiceCommands extends WP_CLI_Command {
 			update_post_meta( $post_id, '_wpss_featured', 1 );
 		}
 
+		// A live service needs a main image (the publish rules refuse one
+		// without), and no template carries one, so every demo service landed
+		// in Draft (Basecamp 10350889943, 10375511072). Same bundled demo
+		// media the marketplace seeder uses.
+		if ( ! has_post_thumbnail( $post_id ) ) {
+			$image = ( new \WPSellServices\Demo\MarketplaceSeeder() )->sideload_image( 'wpss-demo-service-' . $post_id, 800, 600, (int) $post_id, (string) $data['title'] );
+			if ( $image ) {
+				update_post_meta( $post_id, '_wpss_gallery', array( $image ) );
+				set_post_thumbnail( $post_id, $image );
+			}
+		}
+
 		wpss_settle_service_status( (int) $post_id, 'publish' );
 
 		return $post_id;

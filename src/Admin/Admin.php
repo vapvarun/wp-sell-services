@@ -3392,6 +3392,11 @@ class Admin {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
+		// One import at a time: a second click added 20 more services.
+		if ( get_option( 'wpss_demo_content_imported' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Demo content is already imported. Delete it first if you want to import it again.', 'wp-sell-services' ) ) );
+		}
+
 		$cli_file = WPSS_PLUGIN_DIR . 'src/CLI/ServiceCommands.php';
 		if ( ! file_exists( $cli_file ) ) {
 			wp_send_json_error( array( 'message' => __( 'Demo content module not found.', 'wp-sell-services' ) ) );
@@ -3446,7 +3451,8 @@ class Admin {
 
 			// create_service() marks the post _wpss_demo_content for cleanup.
 			$result = $ref_create->invoke( $commands, $service_data );
-			if ( ! is_wp_error( $result ) ) {
+			// Count what is actually live or waiting for review, not every insert.
+			if ( ! is_wp_error( $result ) && in_array( get_post_status( (int) $result ), array( 'publish', 'pending' ), true ) ) {
 				++$created;
 			}
 		}
