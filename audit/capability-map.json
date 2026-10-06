@@ -265,8 +265,8 @@
     "src/Admin/OrderScreen.php:158": "Admin screen entry gate; per-order authority is resolved inside the screen.",
     "src/Admin/Settings.php:1643": "Settings screen, scope: site. Paired with manage_options.",
     "src/Admin/Admin.php:1301": "Vendor order-screen access, combined with an explicit $order_id ownership comparison on the same line.",
-    "src/API/AuthController.php:985": "Informational flag in the /me payload, not a gate.",
-    "src/API/AuthController.php:984": "Informational flag in the /me payload, not a gate.",
+    "src/API/AuthController.php:986": "Informational flag in the /me payload, not a gate.",
+    "src/API/AuthController.php:987": "Informational flag in the /me payload, not a gate.",
     "src/API/API.php:989": "Informational flag in the /me payload, not a gate.",
     "src/API/API.php:994": "Informational flag in the /me payload, not a gate.",
     "src/API/ServicesController.php:1411": "Entry gate, not object authority: create_item_permissions_check asks only whether the caller may author a service at all, and no service exists yet to own. Every later edit path compares authorship separately."
