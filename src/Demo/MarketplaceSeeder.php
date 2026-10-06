@@ -28,6 +28,7 @@ use WPSellServices\Models\VendorProfile;
 use WPSellServices\PostTypes\BuyerRequestPostType;
 use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\ConversationService;
+use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\EarningsService;
 
 defined( 'ABSPATH' ) || exit;
@@ -279,6 +280,7 @@ class MarketplaceSeeder {
 			'messages'      => 0,
 			'favorites'     => 0,
 			'withdrawals'   => 0,
+			'disputes'      => 0,
 		);
 
 		// A seeder writes demo rows, not site settings: it used to flip
@@ -343,7 +345,16 @@ class MarketplaceSeeder {
 		$summary['withdrawals'] = $this->seed_withdrawals( $vendors, $available );
 		$this->log( 'Withdrawals created: ' . $summary['withdrawals'] );
 
+		$summary['disputes'] = $this->seed_disputes( $orders );
+		$this->log( 'Disputes opened: ' . $summary['disputes'] );
+
 		$this->refresh_vendor_stats( $vendors );
+
+		// Rows went in with $wpdb->insert, which fires no status hook, so the
+		// "N orders" figure was never written (Basecamp 10350812405).
+		foreach ( $services as $service ) {
+			wpss_sync_service_order_count( (int) $service['id'] );
+		}
 
 		return $summary;
 	}
@@ -807,6 +818,7 @@ class MarketplaceSeeder {
 
 			$is_paid      = ! in_array( $status, array( ServiceOrder::STATUS_PENDING_PAYMENT ), true );
 			$is_completed = ServiceOrder::STATUS_COMPLETED === $status;
+			$db_status    = ServiceOrder::STATUS_DISPUTED === $status ? ServiceOrder::STATUS_IN_PROGRESS : $status;
 
 			$data = array(
 				'order_number'       => sprintf( 'WPSS-%s-%04d', gmdate( 'Ymd', strtotime( $created_at ) ), $i + 1 ),
@@ -823,7 +835,10 @@ class MarketplaceSeeder {
 				'commission_rate'    => $commission_rate,
 				'platform_fee'       => $platform_fee,
 				'vendor_earnings'    => $earnings,
-				'status'             => $status,
+				// A disputed order is seeded in progress and opened through
+				// DisputeService::open() (seed_disputes) - a bare `disputed` row had no
+				// dispute behind it (Basecamp 10350812405).
+				'status'             => $db_status,
 				'delivery_deadline'  => $deadline,
 				'original_deadline'  => $deadline,
 				'payment_method'     => $is_paid ? 'standalone' : null,
@@ -839,7 +854,7 @@ class MarketplaceSeeder {
 					array(
 						'status_history' => array(
 							array(
-								'status'    => $status,
+								'status'    => $db_status,
 								'timestamp' => $created_at,
 								'note'      => 'Seeded demo order.',
 							),
@@ -1375,6 +1390,39 @@ class MarketplaceSeeder {
 				array( 'user_id' => $vendor['user_id'] )
 			);
 		}
+	}
+
+	/**
+	 * Open a real dispute on every order seeded as disputed.
+	 *
+	 * Through DisputeService::open(), the production writer, so the order gets
+	 * its thread, opening statement and status_before_dispute. Mail is muted:
+	 * a seeder must not email its demo people.
+	 *
+	 * @param array<int, array{id: int, status: string, customer_id: int}> $orders Seeded orders.
+	 * @return int Disputes opened.
+	 */
+	private function seed_disputes( array $orders ): int {
+		$disputes = new DisputeService();
+		$opened   = 0;
+
+		add_filter( 'pre_wp_mail', '__return_false' );
+
+		foreach ( $orders as $order ) {
+			if ( ServiceOrder::STATUS_DISPUTED !== $order['status'] ) {
+				continue;
+			}
+
+			if ( $disputes->open( (int) $order['id'], (int) $order['customer_id'], 'other', __( 'Demo dispute: the delivery does not match what we agreed.', 'wp-sell-services' ) ) ) {
+				++$opened;
+			} else {
+				$this->log( 'Dispute not opened for order ' . $order['id'] . ': ' . $disputes->last_error() );
+			}
+		}
+
+		remove_filter( 'pre_wp_mail', '__return_false' );
+
+		return $opened;
 	}
 
 	/**

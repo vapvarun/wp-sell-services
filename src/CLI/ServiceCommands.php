@@ -795,6 +795,9 @@ class ServiceCommands extends WP_CLI_Command {
 		$updated  = 0;
 
 		foreach ( $services as $post_id ) {
+			// The "N orders" figure, which nothing rewrote when rows were inserted directly.
+			wpss_sync_service_order_count( (int) $post_id );
+
 			$packages = get_post_meta( $post_id, '_wpss_packages', true );
 
 			if ( ! empty( $packages ) && is_array( $packages ) ) {
