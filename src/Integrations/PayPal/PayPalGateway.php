@@ -240,14 +240,31 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		if ( isset( $response['error'] ) ) {
 			// PayPal's own text ("semantically incorrect, or failed business
-			// validation") is for the owner's log, not the buyer's screen. A
-			// failed capture moved no money, so say that.
-			wpss_log( sprintf( 'PayPal capture of %s refused: %s', $payment_id, (string) ( $response['error']['message'] ?? 'unknown' ) ), 'warning' );
+			// validation") is for the owner's log, not the buyer's screen.
+			$issue = (string) ( $response['error']['details']['details'][0]['issue'] ?? '' );
+			wpss_log( sprintf( 'PayPal capture of %s refused (%s): %s', $payment_id, '' !== $issue ? $issue : 'no issue code', (string) ( $response['error']['message'] ?? 'unknown' ) ), 'warning' );
 
-			return array(
-				'success' => false,
-				'error'   => __( 'PayPal could not complete this payment and you have not been charged. Please try again or choose another payment method.', 'wp-sell-services' ),
-			);
+			// Already captured (a retry, a double click, the webhook first): the
+			// money was taken, so carry on with the captured order instead of
+			// telling the buyer they were not charged. settle() returns the
+			// existing order if one was already made.
+			if ( 'ORDER_ALREADY_CAPTURED' === $issue ) {
+				$response = $this->api_request( "v2/checkout/orders/{$payment_id}", array(), 'GET' );
+			}
+
+			if ( isset( $response['error'] ) ) {
+				// Only a refusal PayPal names moved no money. A timeout or an
+				// unknown error may have captured, so do not say "not charged"
+				// (Basecamp 10375174837).
+				$declined = in_array( $issue, array( 'INSTRUMENT_DECLINED', 'PAYER_ACTION_REQUIRED', 'PAYER_CANNOT_PAY', 'TRANSACTION_REFUSED', 'PAYEE_NOT_ENABLED_FOR_CARD_PROCESSING' ), true );
+
+				return array(
+					'success' => false,
+					'error'   => $declined
+						? __( 'PayPal could not complete this payment and you have not been charged. Please try again or choose another payment method.', 'wp-sell-services' )
+						: __( 'We could not confirm this PayPal payment. Check My Orders before paying again; if nothing is there, try again or choose another payment method.', 'wp-sell-services' ),
+				);
+			}
 		}
 
 		$status = $response['status'] ?? '';
