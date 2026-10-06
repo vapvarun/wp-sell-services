@@ -3546,11 +3546,13 @@ button.wpss-change-status:focus {
 	background: var(--wpss-admin-border, #e2e8f0);
 }
 
-.post-type-wpss_service .column-wpss_moderation,
 .post-type-wpss_service .column-wpss_price {
 	width: 7em;
 }
 
+/* 7em wrapped "Moderation" beside its sort arrows onto two lines, lifting it
+   above the other headers (Basecamp 10375195782). */
+.post-type-wpss_service .column-wpss_moderation,
 .post-type-wpss_service .column-wpss_orders {
 	width: 9em;
 }

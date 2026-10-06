@@ -174,13 +174,16 @@
 	margin-top: 16px;
 }
 
-/* Form table tweaks inside cards */
-.wpss-card .form-table th {
+/* Form table tweaks inside cards. Child combinators: the form-table's own
+   rows only. A table nested in a field (the checkout badge editor) inherited
+   the 200px label width on every header and overflowed its card, with "Item"
+   flush against the border (Basecamp 10375506455). */
+.wpss-card .form-table > tbody > tr > th {
 	width: 200px;
 	padding: 16px 10px 16px 0;
 }
 
-.wpss-card .form-table td {
+.wpss-card .form-table > tbody > tr > td {
 	padding: 16px 10px;
 }
 
@@ -375,8 +378,15 @@
 	table-layout: fixed;
 }
 
-.wpss-badge-editor__item {
-	width: 12rem;
+/* Core's `.form-table th` (200px, no left padding) reaches this nested
+   table's headers too; take the list-table cell back (10375506455). */
+.form-table .wpss-badge-editor th {
+	width: auto;
+	padding: 8px 10px;
+}
+
+.form-table .wpss-badge-editor th.wpss-badge-editor__item {
+	width: 8.5rem;
 }
 
 .wpss-badge-editor input.regular-text {
