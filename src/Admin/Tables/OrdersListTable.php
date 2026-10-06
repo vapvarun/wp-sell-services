@@ -263,15 +263,7 @@ class OrdersListTable extends \WP_List_Table {
 	 * @return string
 	 */
 	public function column_total( $item ): string {
-		$method = wpss_get_payment_method_label( (string) ( $item->payment_method ?? '' ) );
-		$paid   = 'paid' === ( $item->payment_status ?? '' ) || ! empty( $item->paid_at );
-
-		if ( $paid ) {
-			/* translators: %s: payment method, e.g. Stripe. */
-			$payment = '' !== $method ? sprintf( __( 'Paid · %s', 'wp-sell-services' ), $method ) : __( 'Paid', 'wp-sell-services' );
-		} else {
-			$payment = __( 'Not paid', 'wp-sell-services' );
-		}
+		$payment = wpss_get_payment_status_label( (string) ( $item->payment_status ?? '' ), ! empty( $item->paid_at ), (string) ( $item->payment_method ?? '' ) );
 
 		return sprintf(
 			'%s<small class="wpss-order-row-sub">%s</small>',

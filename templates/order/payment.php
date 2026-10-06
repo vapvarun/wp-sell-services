@@ -21,19 +21,7 @@ if ( empty( $wpss_order ) ) {
 	return;
 }
 
-$wpss_method = wpss_get_payment_method_label( (string) $wpss_order->payment_method );
-$wpss_paid   = 'paid' === $wpss_order->payment_status || null !== $wpss_order->paid_at;
-
-if ( 'refunded' === $wpss_order->payment_status ) {
-	/* translators: %s: payment method, e.g. Stripe. */
-	$wpss_payment = '' !== $wpss_method ? sprintf( __( 'Refunded · %s', 'wp-sell-services' ), $wpss_method ) : __( 'Refunded', 'wp-sell-services' );
-} elseif ( $wpss_paid ) {
-	/* translators: %s: payment method, e.g. Stripe. */
-	$wpss_payment = '' !== $wpss_method ? sprintf( __( 'Paid · %s', 'wp-sell-services' ), $wpss_method ) : __( 'Paid', 'wp-sell-services' );
-} else {
-	/* translators: %s: payment method, e.g. Offline Payment. */
-	$wpss_payment = '' !== $wpss_method ? sprintf( __( 'Not paid · %s', 'wp-sell-services' ), $wpss_method ) : __( 'Not paid', 'wp-sell-services' );
-}
+$wpss_payment = wpss_get_payment_status_label( (string) $wpss_order->payment_status, null !== $wpss_order->paid_at, (string) $wpss_order->payment_method );
 ?>
 <div class="wpss-order-detail-item">
 	<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Payment', 'wp-sell-services' ); ?></span>

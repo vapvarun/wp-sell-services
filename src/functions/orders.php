@@ -1228,6 +1228,38 @@ function wpss_capture_order_package_snapshot( int $order_id ): bool {
 }
 
 /**
+ * The one payment label for an order: "Refunded · Stripe", "Paid · Stripe",
+ * "Not paid · Offline Payment".
+ *
+ * The order screens and the admin Orders list each had a copy; the list's
+ * copy had no refunded branch and showed "Paid · Stripe" on a refunded order
+ * (Basecamp 10346167214).
+ *
+ * @since 1.8.0
+ *
+ * @param string $payment_status The order's payment_status.
+ * @param bool   $paid_at_set    Whether the order has a paid_at time.
+ * @param string $payment_method The order's payment_method slug.
+ * @return string
+ */
+function wpss_get_payment_status_label( string $payment_status, bool $paid_at_set, string $payment_method ): string {
+	$method = wpss_get_payment_method_label( $payment_method );
+
+	if ( 'refunded' === $payment_status ) {
+		/* translators: %s: payment method, e.g. Stripe. */
+		return '' !== $method ? sprintf( __( 'Refunded · %s', 'wp-sell-services' ), $method ) : __( 'Refunded', 'wp-sell-services' );
+	}
+
+	if ( 'paid' === $payment_status || $paid_at_set ) {
+		/* translators: %s: payment method, e.g. Stripe. */
+		return '' !== $method ? sprintf( __( 'Paid · %s', 'wp-sell-services' ), $method ) : __( 'Paid', 'wp-sell-services' );
+	}
+
+	/* translators: %s: payment method, e.g. Offline Payment. */
+	return '' !== $method ? sprintf( __( 'Not paid · %s', 'wp-sell-services' ), $method ) : __( 'Not paid', 'wp-sell-services' );
+}
+
+/**
  * Human label for an order's payment_method.
  *
  * A registered gateway names itself (get_name()); anything else - a rail slug
