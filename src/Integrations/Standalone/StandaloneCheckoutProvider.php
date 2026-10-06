@@ -258,6 +258,41 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * @return string
 	 */
 	private function render_checkout_body( array $atts ): string {
+		return $this->gateway_return_notice() . $this->render_checkout_inner( $atts );
+	}
+
+	/**
+	 * Notice for a buyer sent back from a gateway's own page.
+	 *
+	 * PayPal returns a cancelled approval to ?step=cancelled and a failed
+	 * capture to ?step=error; nothing read the parameter, so the buyer landed
+	 * on a silent checkout (Basecamp 10346279564).
+	 *
+	 * @return string Notice HTML, or '' when there is nothing to say.
+	 */
+	private function gateway_return_notice(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display flag.
+		$step = isset( $_GET['step'] ) ? sanitize_key( wp_unslash( $_GET['step'] ) ) : '';
+
+		$messages = array(
+			'cancelled' => __( 'Payment was cancelled. You have not been charged. You can try again below.', 'wp-sell-services' ),
+			'error'     => __( 'We could not confirm your payment. Check My Orders before paying again; if nothing is there, try again below.', 'wp-sell-services' ),
+		);
+
+		if ( ! isset( $messages[ $step ] ) ) {
+			return '';
+		}
+
+		return '<div class="wpss-notice wpss-notice--' . ( 'error' === $step ? 'error' : 'warning' ) . '" role="alert">' . esc_html( $messages[ $step ] ) . '</div>';
+	}
+
+	/**
+	 * The checkout body itself, without the gateway return notice.
+	 *
+	 * @param array $atts Shortcode attributes.
+	 * @return string
+	 */
+	private function render_checkout_inner( array $atts ): string {
 		// Enqueue frontend assets for proper styling and functionality.
 		wpss_enqueue_frontend_assets();
 
@@ -587,6 +622,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$tax_rate         = (float) $line['tax_rate'];
 			$tax_amount       = (float) $line['tax'];
 			$tax_label        = (string) $line['tax_label'];
+			$tax_included     = ! empty( $line['tax_included'] );
 			$total            = (float) $line['total'];
 			$vendor_name      = '';
 		}
@@ -639,7 +675,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				);
 			}
 			if ( $tax_amount > 0 ) {
-				$summary_lines[] = $this->tax_summary_line( $tax_label, $tax_rate, $tax_amount );
+				$summary_lines[] = $this->tax_summary_line( $tax_label, $tax_rate, $tax_amount, ! empty( $tax_included ) );
 			}
 		}
 
@@ -1414,7 +1450,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			);
 		}
 		if ( $tax_amount > 0 ) {
-			$summary_lines[] = $this->tax_summary_line( (string) $tax_label, $tax_rate, $tax_amount );
+			$summary_lines[] = $this->tax_summary_line( (string) $tax_label, $tax_rate, $tax_amount, $tax_included );
 		}
 
 		$this->enqueue_checkout_script();
@@ -1730,14 +1766,22 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	/**
 	 * Build the tax line for templates/checkout/summary.php.
 	 *
-	 * @param string $label  Tax label.
-	 * @param float  $rate   Tax rate in percent.
-	 * @param float  $amount Tax amount.
+	 * Prices that already include tax show it as "(18%, included)", as the cart
+	 * does: listed as a plain line it read as an extra charge, and the lines no
+	 * longer added up to the total (Basecamp 10346279564).
+	 *
+	 * @param string $label    Tax label.
+	 * @param float  $rate     Tax rate in percent.
+	 * @param float  $amount   Tax amount.
+	 * @param bool   $included Whether the prices above already include it.
 	 * @return array
 	 */
-	private function tax_summary_line( string $label, float $rate, float $amount ): array {
+	private function tax_summary_line( string $label, float $rate, float $amount, bool $included = false ): array {
 		return array(
-			'label'  => sprintf( '%s (%s%%)', $label, $rate ),
+			'label'  => $included
+				/* translators: 1: tax label, e.g. VAT. 2: tax rate in percent. */
+				? sprintf( __( '%1$s (%2$s%%, included)', 'wp-sell-services' ), $label, $rate )
+				: sprintf( '%s (%s%%)', $label, $rate ),
 			'amount' => $amount,
 			'type'   => 'tax',
 		);
