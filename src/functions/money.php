@@ -714,7 +714,7 @@ function wpss_insert_ledger_row( array $row ): bool {
 		'balance_after' => wpss_get_ledger_balance( $user_id, true ) + ( $is_debit ? -abs( $amount ) : $amount ),
 		'currency'      => wpss_get_currency(),
 		'status'        => 'completed',
-		'created_at'    => current_time( 'mysql' ),
+		'created_at'    => current_time( 'mysql', true ),
 	);
 
 	$formats = array(

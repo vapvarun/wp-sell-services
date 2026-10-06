@@ -1203,7 +1203,7 @@ class API {
 						'order_number' => $order->order_number,
 						'service'      => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
 						'total'        => wpss_format_currency( (float) $order->total, $order->currency ),
-						'created_at'   => $order->created_at,
+						'created_at'   => wpss_rest_date( $order->created_at ),
 					];
 				},
 				$pending_orders

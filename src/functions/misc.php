@@ -1107,3 +1107,24 @@ function wpss_ip_in_ranges( string $ip, array $ranges ): bool {
 
 	return false;
 }
+
+/**
+ * SQL for the site's calendar day of a UTC datetime column.
+ *
+ * Stored datetimes are UTC (Basecamp 10351460106); grouping a report by
+ * DATE( column ) bucketed by the UTC day, so an order placed at 00:30 site
+ * time on a +05:30 site landed on the previous day.
+ *
+ * ponytail: uses today's offset, so on a DST site a day near the change is
+ * off by an hour; per-row CONVERT_TZ needs MySQL's zone tables loaded.
+ *
+ * @since 1.8.0
+ *
+ * @param string $column Column or SQL expression (trusted, never user input).
+ * @return string SQL expression yielding a DATE.
+ */
+function wpss_site_day_sql( string $column ): string {
+	$offset = (int) wp_timezone()->getOffset( new \DateTimeImmutable( 'now', new \DateTimeZone( 'UTC' ) ) );
+
+	return "DATE( DATE_ADD( {$column}, INTERVAL {$offset} SECOND ) )";
+}

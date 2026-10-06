@@ -166,7 +166,7 @@ $is_working = in_array( $order_item->status, array( 'in_progress', 'revision_req
 						printf(
 							/* translators: %s: delivery due date */
 							esc_html__( 'Due %s', 'wp-sell-services' ),
-							esc_html( wp_date( get_option( 'date_format' ), strtotime( get_gmt_from_date( (string) $order_item->delivery_deadline ) . ' UTC' ) ) )
+							esc_html( wp_date( get_option( 'date_format' ), strtotime( $order_item->delivery_deadline . ' UTC' ) ) )
 						);
 						?>
 					</span>

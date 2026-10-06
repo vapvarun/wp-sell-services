@@ -302,7 +302,7 @@ class OrdersListTable extends \WP_List_Table {
 					sprintf(
 						/* translators: %s: due date. */
 						$late ? __( 'Was due %s', 'wp-sell-services' ) : __( 'Due %s', 'wp-sell-services' ),
-						wp_date( 'M j', strtotime( get_gmt_from_date( (string) $item->delivery_deadline ) . ' UTC' ) ) // Stored in site time, as wpss_is_order_late() reads it.
+						wp_date( 'M j', strtotime( $item->delivery_deadline . ' UTC' ) ) // Stored in UTC (10351460106).
 					)
 				)
 			);
@@ -601,7 +601,7 @@ class OrdersListTable extends \WP_List_Table {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $wpdb->get_results(
-			"SELECT DISTINCT DATE_FORMAT(created_at, '%Y-%m') as month
+			'SELECT DISTINCT DATE_FORMAT(' . wpss_site_day_sql( 'created_at' ) . ", '%Y-%m') as month
 			FROM {$table}{$vendor_where}
 			ORDER BY month DESC
 			LIMIT 24"
@@ -660,7 +660,7 @@ class OrdersListTable extends \WP_List_Table {
 		// Month filter.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! empty( $_GET['m'] ) ) {
-			$where .= ' AND DATE_FORMAT(created_at, "%%Y-%%m") = %s';
+			$where .= ' AND DATE_FORMAT(' . wpss_site_day_sql( 'created_at' ) . ', "%%Y-%%m") = %s';
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$params[] = sanitize_text_field( wp_unslash( $_GET['m'] ) );
 		}

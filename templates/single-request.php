@@ -469,7 +469,7 @@ do_action( 'wpss_before_single_request', $request_id );
 								<div class="wpss-detail-item">
 									<span class="wpss-detail-label"><?php esc_html_e( 'Deadline', 'wp-sell-services' ); ?></span>
 									<span class="wpss-detail-value">
-										<?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $expires_at ) ) ); ?>
+										<?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $expires_at . ' UTC' ) ) ); ?>
 									</span>
 								</div>
 							<?php endif; ?>

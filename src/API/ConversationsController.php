@@ -616,7 +616,7 @@ class ConversationsController extends RestController {
 			$last_message = (object) array(
 				'content'    => $conversation->last_message,
 				'sender_id'  => $conversation->last_message_sender_id ?? 0,
-				'created_at' => $conversation->last_message_created_at ?? null,
+				'created_at' => wpss_rest_date( $conversation->last_message_created_at ?? null ),
 			);
 		}
 

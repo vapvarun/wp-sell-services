@@ -854,8 +854,8 @@ class AuthController extends RestController {
 				'device_id'    => (string) $device_id,
 				'platform'     => (string) ( $device['platform'] ?? '' ),
 				'device_name'  => (string) ( $device['device_name'] ?? '' ),
-				'created_at'   => $registered,
-				'last_seen_at' => (string) ( $device['last_seen_at'] ?? $registered ),
+				'created_at'   => wpss_rest_date( $registered ),
+				'last_seen_at' => wpss_rest_date( $device['last_seen_at'] ?? $registered ),
 			);
 		}
 

@@ -177,7 +177,7 @@ class DisputeWorkflowManager {
 				'message'     => wp_kses_post( $response ),
 				'sender_role' => $response_type,
 				'attachments' => ! empty( $attachments ) ? wp_json_encode( $attachments ) : null,
-				'created_at'  => current_time( 'mysql' ),
+				'created_at'  => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%s', '%s', '%s', '%s' )
 		);
@@ -330,7 +330,7 @@ class DisputeWorkflowManager {
 		$meta['escalation'] = array(
 			'reason'       => sanitize_textarea_field( $reason ),
 			'escalated_by' => $escalated_by,
-			'escalated_at' => current_time( 'mysql' ),
+			'escalated_at' => current_time( 'mysql', true ),
 		);
 
 		$moved = $this->dispute_service->transition(
@@ -392,14 +392,14 @@ class DisputeWorkflowManager {
 
 		$meta                = $dispute->meta;
 		$meta['assigned_to'] = $admin_id;
-		$meta['assigned_at'] = current_time( 'mysql' );
+		$meta['assigned_at'] = current_time( 'mysql', true );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
 			$this->disputes_table,
 			array(
 				'meta'       => wp_json_encode( $meta ),
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $dispute_id ),
 			array( '%s', '%s' ),
@@ -474,7 +474,7 @@ class DisputeWorkflowManager {
 		$meta['cancellation'] = array(
 			'reason'       => sanitize_textarea_field( $reason ),
 			'cancelled_by' => $user_id,
-			'cancelled_at' => current_time( 'mysql' ),
+			'cancelled_at' => current_time( 'mysql', true ),
 		);
 
 		$wpdb->query( 'START TRANSACTION' );
@@ -552,7 +552,7 @@ class DisputeWorkflowManager {
 				AND d.response_deadline < %s
 				AND d.response_deadline IS NOT NULL",
 				DisputeService::STATUS_OPEN,
-				current_time( 'mysql' )
+				current_time( 'mysql', true )
 			)
 		);
 
@@ -631,7 +631,7 @@ class DisputeWorkflowManager {
 				AND (d.meta NOT LIKE %s OR d.meta IS NULL)",
 				DisputeService::STATUS_OPEN,
 				DisputeService::STATUS_PENDING,
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				$reminder_date,
 				'%reminder_sent%'
 			)
@@ -654,7 +654,7 @@ class DisputeWorkflowManager {
 
 				// Mark reminder as sent.
 					$meta                  = $this->decode_json_array( $dispute->meta );
-					$meta['reminder_sent'] = current_time( 'mysql' );
+					$meta['reminder_sent'] = current_time( 'mysql', true );
 
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->update(
@@ -702,7 +702,7 @@ class DisputeWorkflowManager {
 				AND o.delivery_deadline < DATE_SUB( %s, INTERVAL %d DAY )
 				AND d.id IS NULL",
 				\WPSellServices\Models\ServiceOrder::STATUS_LATE,
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				$auto_dispute_days
 			)
 		);
@@ -789,7 +789,7 @@ class DisputeWorkflowManager {
 			array(
 				'response_deadline' => $new_deadline,
 				'last_response_by'  => $responder_id,
-				'updated_at'        => current_time( 'mysql' ),
+				'updated_at'        => current_time( 'mysql', true ),
 			),
 			array( 'id' => $dispute_id ),
 			array( '%s', '%d', '%s' ),

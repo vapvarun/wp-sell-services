@@ -379,7 +379,7 @@ class AuditLogService {
 			'to_value'    => isset( $data['to_value'] ) ? (string) $data['to_value'] : null,
 			'is_forced'   => ! empty( $data['is_forced'] ) ? 1 : 0,
 			'context'     => wp_json_encode( $context ),
-			'created_at'  => current_time( 'mysql' ),
+			'created_at'  => current_time( 'mysql', true ),
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -466,14 +466,19 @@ class AuditLogService {
 			$where[] = 'is_forced = 1';
 		}
 
+		// Bounds are the owner's calendar (site time); a bare date means the
+		// whole day. created_at is UTC. A date-only to_date used to stop at
+		// that day's midnight and drop the day itself.
 		if ( ! empty( $args['from_date'] ) ) {
+			$from     = (string) $args['from_date'];
 			$where[]  = 'created_at >= %s';
-			$values[] = (string) $args['from_date'];
+			$values[] = get_gmt_from_date( 10 === strlen( $from ) ? $from . ' 00:00:00' : $from );
 		}
 
 		if ( ! empty( $args['to_date'] ) ) {
+			$to       = (string) $args['to_date'];
 			$where[]  = 'created_at <= %s';
-			$values[] = (string) $args['to_date'];
+			$values[] = get_gmt_from_date( 10 === strlen( $to ) ? $to . ' 23:59:59' : $to );
 		}
 
 		$where_sql = implode( ' AND ', $where );

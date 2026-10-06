@@ -266,7 +266,7 @@ class ConversationRepository extends AbstractRepository {
 
 		foreach ( $unread_messages as $message ) {
 			$read_by                      = json_decode( $message->read_by ?: '{}', true );
-			$read_by[ (string) $user_id ] = current_time( 'mysql' );
+			$read_by[ (string) $user_id ] = current_time( 'mysql', true );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$this->wpdb->update(
 				$messages_table,
@@ -311,7 +311,7 @@ class ConversationRepository extends AbstractRepository {
 		$count = 0;
 		foreach ( $unread_messages as $message ) {
 			$read_by                      = json_decode( $message->read_by ?: '{}', true );
-			$read_by[ (string) $user_id ] = current_time( 'mysql' );
+			$read_by[ (string) $user_id ] = current_time( 'mysql', true );
 
 			$result = $this->wpdb->update(
 				$messages_table,
@@ -368,7 +368,7 @@ class ConversationRepository extends AbstractRepository {
 		}
 
 		$read_by                      = json_decode( $message->read_by ?: '{}', true );
-		$read_by[ (string) $user_id ] = current_time( 'mysql' );
+		$read_by[ (string) $user_id ] = current_time( 'mysql', true );
 
 		return (bool) $this->wpdb->update(
 			$messages_table,

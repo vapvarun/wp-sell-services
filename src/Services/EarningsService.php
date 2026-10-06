@@ -377,7 +377,7 @@ class EarningsService {
 				'reference_type' => 'withdrawal',
 				'reference_id'   => $withdrawal_id,
 				'status'         => 'completed',
-				'created_at'     => current_time( 'mysql' ),
+				'created_at'     => current_time( 'mysql', true ),
 			),
 		);
 
@@ -486,7 +486,7 @@ class EarningsService {
 			array(
 				'status'       => self::WITHDRAWAL_COMPLETED,
 				'admin_note'   => sanitize_textarea_field( $note ),
-				'processed_at' => current_time( 'mysql' ),
+				'processed_at' => current_time( 'mysql', true ),
 				'processed_by' => get_current_user_id(),
 			),
 			array( 'id' => $withdrawal_id ),
@@ -588,14 +588,15 @@ class EarningsService {
 			$params[] = $args['status'];
 		}
 
+		// Site-time bounds against the UTC column.
 		if ( $args['start_date'] ) {
 			$where[]  = 'completed_at >= %s';
-			$params[] = $args['start_date'];
+			$params[] = get_gmt_from_date( (string) $args['start_date'] );
 		}
 
 		if ( $args['end_date'] ) {
 			$where[]  = 'completed_at <= %s';
-			$params[] = $args['end_date'];
+			$params[] = get_gmt_from_date( (string) $args['end_date'] );
 		}
 
 		$where_clause = implode( ' AND ', $where );
@@ -749,7 +750,7 @@ class EarningsService {
 				'method'     => sanitize_key( $method ),
 				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
 				'status'     => self::WITHDRAWAL_PENDING,
-				'created_at' => current_time( 'mysql' ),
+				'created_at' => current_time( 'mysql', true ),
 			),
 			array( '%d', '%f', '%s', '%s', '%s', '%s' )
 		);
@@ -953,7 +954,7 @@ class EarningsService {
 			array(
 				'status'       => $status,
 				'admin_note'   => sanitize_textarea_field( $note ),
-				'processed_at' => current_time( 'mysql' ),
+				'processed_at' => current_time( 'mysql', true ),
 				'processed_by' => get_current_user_id(),
 			),
 			array( 'id' => $withdrawal_id ),
@@ -1531,7 +1532,7 @@ class EarningsService {
 		update_option(
 			'wpss_last_auto_withdrawal_run',
 			array(
-				'timestamp' => current_time( 'mysql' ),
+				'timestamp' => current_time( 'mysql', true ),
 				'processed' => $processed,
 				'failed'    => $failed,
 			)
@@ -1593,7 +1594,7 @@ class EarningsService {
 				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
 				'status'     => self::WITHDRAWAL_PENDING,
 				'is_auto'    => 1,
-				'created_at' => current_time( 'mysql' ),
+				'created_at' => current_time( 'mysql', true ),
 			),
 			array( '%d', '%f', '%s', '%s', '%s', '%d', '%s' )
 		);

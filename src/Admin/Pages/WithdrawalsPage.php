@@ -669,18 +669,17 @@ class WithdrawalsPage {
 			</td>
 			<td class="column-date" data-colname="<?php esc_attr_e( 'Date', 'wp-sell-services' ); ?>">
 				<?php
-				// Stored in site time, so formatted as stored: wp_date() on it
-				// shifted the day by the timezone offset (Basecamp 10337169556).
+				// Stored in UTC since 1.8.0 (10351460106), shown in site time.
 				// Same short date as the Orders list, full date and time on hover.
 				?>
-				<span title="<?php echo esc_attr( mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (string) $withdrawal->created_at ) ); ?>"><?php echo esc_html( mysql2date( 'M j, Y', (string) $withdrawal->created_at ) ); ?></span>
+				<span title="<?php echo esc_attr( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $withdrawal->created_at . ' UTC' ) ) ); ?>"><?php echo esc_html( wp_date( 'M j, Y', strtotime( $withdrawal->created_at . ' UTC' ) ) ); ?></span>
 				<?php if ( ! empty( $withdrawal->processed_at ) ) : ?>
 					<div class="wpss-withdrawal-details">
 						<?php
 						printf(
 							/* translators: %s: date */
 							esc_html__( 'Processed: %s', 'wp-sell-services' ),
-							esc_html( mysql2date( 'M j, Y', (string) $withdrawal->processed_at ) )
+							esc_html( wp_date( 'M j, Y', strtotime( $withdrawal->processed_at . ' UTC' ) ) )
 						);
 						?>
 					</div>

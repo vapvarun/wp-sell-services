@@ -221,7 +221,7 @@ class BuyerRequestMetabox {
 							);
 							?>
 						</td>
-						<td><?php echo esc_html( gmdate( 'M j, Y', strtotime( $proposal->created_at ) ) ); ?></td>
+						<td><?php echo esc_html( wp_date( 'M j, Y', strtotime( $proposal->created_at . ' UTC' ) ) ); ?></td>
 					</tr>
 				<?php endforeach; ?>
 			</tbody>

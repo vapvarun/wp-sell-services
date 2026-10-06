@@ -441,7 +441,7 @@ class ReviewsController extends RestController {
 				'rating'      => $rating,
 				'review'      => $review,
 				'status'      => $status,
-				'created_at'  => current_time( 'mysql' ),
+				'created_at'  => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%d', '%s', '%s', '%s' )
 		);
@@ -524,7 +524,7 @@ class ReviewsController extends RestController {
 		}
 
 		if ( ! empty( $updates ) ) {
-			$updates['updated_at'] = current_time( 'mysql' );
+			$updates['updated_at'] = current_time( 'mysql', true );
 
 			$wpdb->update(
 				$wpdb->prefix . 'wpss_reviews',

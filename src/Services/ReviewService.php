@@ -95,7 +95,7 @@ class ReviewService {
 				'delivery_rating'      => ! empty( $data['rating_value'] ) ? (int) $data['rating_value'] : null,
 				'review'               => wp_kses_post( $data['content'] ?? '' ),
 				'status'               => $this->requires_moderation() ? Review::STATUS_PENDING : Review::STATUS_APPROVED,
-				'created_at'           => current_time( 'mysql' ),
+				'created_at'           => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%s', '%s' )
 		);
@@ -364,7 +364,7 @@ class ReviewService {
 			$table,
 			array(
 				'vendor_reply'    => wp_kses_post( $response ),
-				'vendor_reply_at' => current_time( 'mysql' ),
+				'vendor_reply_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $review_id )
 		);

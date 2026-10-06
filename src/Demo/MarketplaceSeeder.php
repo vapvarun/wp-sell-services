@@ -1223,7 +1223,7 @@ class MarketplaceSeeder {
 			}
 
 			$balances[ $vendor_id ] = round( ( $balances[ $vendor_id ] ?? 0 ) + $earnings, 2 );
-			$created_at             = $row->completed_at ? $row->completed_at : current_time( 'mysql' );
+			$created_at             = $row->completed_at ? $row->completed_at : current_time( 'mysql', true );
 
 			// Only credits OLDER than the clearance window count as withdrawable.
 			if ( PHP_INT_MAX === $clearance_cut || strtotime( $created_at ) <= $clearance_cut ) {

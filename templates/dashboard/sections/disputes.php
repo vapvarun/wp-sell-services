@@ -193,7 +193,7 @@ if ( $view_dispute_id ) {
 					<?php
 					foreach ( $timeline as $entry ) :
 						$entry_name  = ! empty( $entry['user_id'] ) ? wpss_get_member_display_name( (int) $entry['user_id'] ) : __( 'System', 'wp-sell-services' );
-						$entry_when  = ! empty( $entry['created_at'] ) ? mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $entry['created_at'] ) : '';
+						$entry_when  = ! empty( $entry['created_at'] ) ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $entry['created_at'] . ' UTC' ) ) : '';
 						$entry_text  = (string) ( $entry['content'] ?? '' );
 						$entry_class = 'wpss-dispute-timeline__item wpss-dispute-timeline__item--' . sanitize_html_class( (string) ( $entry['type'] ?? 'event' ) );
 						?>
@@ -353,10 +353,6 @@ $disputes = $dispute_service->get_by_user( $user_id, array( 'limit' => 50 ) );
 					// with "date_create(): Argument #1 must be of type string",
 					// white-screening this whole section. Same accessor the admin
 					// order screen uses.
-					//
-					// The two mysql2date() calls further up this template are fine:
-					// they read $entry['created_at'] / $item['created_at'] from
-					// plain arrays, which are still strings.
 					$opened = $dispute->created_at
 						? wp_date( get_option( 'date_format' ), $dispute->created_at->getTimestamp() )
 						: '';

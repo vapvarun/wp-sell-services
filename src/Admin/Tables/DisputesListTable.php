@@ -285,7 +285,7 @@ class DisputesListTable extends \WP_List_Table {
 	 */
 	public function column_age( $item ): string {
 		$opened = strtotime( (string) $item->created_at );
-		$until  = ! empty( $item->resolved_at ) ? strtotime( (string) $item->resolved_at ) : strtotime( current_time( 'mysql' ) );
+		$until  = ! empty( $item->resolved_at ) ? strtotime( (string) $item->resolved_at ) : strtotime( current_time( 'mysql', true ) );
 		$days   = max( 0, (int) floor( ( $until - $opened ) / DAY_IN_SECONDS ) );
 
 		return sprintf(

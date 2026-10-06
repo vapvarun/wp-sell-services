@@ -1349,7 +1349,8 @@ class AjaxHandlers {
 
 		// Calculate delivery_days and expires_at from the deadline date.
 		if ( $deadline ) {
-			$deadline_timestamp = strtotime( $deadline );
+			// The date is typed on the site's calendar; expires_at is UTC.
+			$deadline_timestamp = strtotime( get_gmt_from_date( $deadline . ' 00:00:00' ) . ' UTC' );
 			if ( $deadline_timestamp && $deadline_timestamp > time() ) {
 				$days_until_deadline   = max( 1, (int) ceil( ( $deadline_timestamp - time() ) / DAY_IN_SECONDS ) );
 				$data['delivery_days'] = $days_until_deadline;
@@ -1421,7 +1422,8 @@ class AjaxHandlers {
 		}
 
 		if ( $deadline ) {
-			$deadline_timestamp = strtotime( $deadline );
+			// The date is typed on the site's calendar; expires_at is UTC.
+			$deadline_timestamp = strtotime( get_gmt_from_date( $deadline . ' 00:00:00' ) . ' UTC' );
 			if ( $deadline_timestamp && $deadline_timestamp > time() ) {
 				$days_until_deadline   = max( 1, (int) ceil( ( $deadline_timestamp - time() ) / DAY_IN_SECONDS ) );
 				$data['delivery_days'] = $days_until_deadline;
@@ -2434,7 +2436,7 @@ class AjaxHandlers {
 			$wpdb->prefix . 'wpss_notifications',
 			array(
 				'is_read' => 1,
-				'read_at' => current_time( 'mysql' ),
+				'read_at' => current_time( 'mysql', true ),
 			),
 			array(
 				'id'      => $notification_id,
@@ -2463,7 +2465,7 @@ class AjaxHandlers {
 			$wpdb->prefix . 'wpss_notifications',
 			array(
 				'is_read' => 1,
-				'read_at' => current_time( 'mysql' ),
+				'read_at' => current_time( 'mysql', true ),
 			),
 			array(
 				'user_id' => $user_id,
@@ -3047,14 +3049,18 @@ class AjaxHandlers {
 
 		global $wpdb;
 
-		// Calculate date range.
-		$end_date   = current_time( 'Y-m-d 23:59:59' );
-		$start_date = match ( $range ) {
-			'day'   => current_time( 'Y-m-d 00:00:00' ),
-			'week'  => gmdate( 'Y-m-d 00:00:00', strtotime( '-7 days' ) ),
-			'year'  => gmdate( 'Y-01-01 00:00:00' ),
-			default => gmdate( 'Y-m-01 00:00:00' ),
-		};
+		// The vendor's calendar (site time), converted to UTC for the columns.
+		// The week/year/month starts used gmdate() while the end used site
+		// time, one range in two zones.
+		$end_date   = get_gmt_from_date( current_time( 'Y-m-d 23:59:59' ) );
+		$start_date = get_gmt_from_date(
+			match ( $range ) {
+				'day'   => current_time( 'Y-m-d 00:00:00' ),
+				'week'  => wp_date( 'Y-m-d 00:00:00', strtotime( '-7 days' ) ),
+				'year'  => current_time( 'Y-01-01 00:00:00' ),
+				default => current_time( 'Y-m-01 00:00:00' ),
+			}
+		);
 
 		$filename = sanitize_file_name( "wpss-{$type}-export-" . gmdate( 'Y-m-d' ) . '.csv' );
 

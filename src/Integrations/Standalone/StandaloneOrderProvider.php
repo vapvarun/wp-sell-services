@@ -135,8 +135,8 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 				'commission_rate'    => $commission_rate,
 				'platform_fee'       => $platform_fee,
 				'vendor_earnings'    => $vendor_earnings,
-				'created_at'         => current_time( 'mysql' ),
-				'updated_at'         => current_time( 'mysql' ),
+				'created_at'         => current_time( 'mysql', true ),
+				'updated_at'         => current_time( 'mysql', true ),
 				'meta'               => wp_json_encode(
 					array_filter(
 						[
@@ -378,8 +378,8 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			'payment_status' => 'paid',
 			'payment_method' => $payment_method,
 			'transaction_id' => $transaction_id,
-			'paid_at'        => current_time( 'mysql' ),
-			'updated_at'     => current_time( 'mysql' ),
+			'paid_at'        => current_time( 'mysql', true ),
+			'updated_at'     => current_time( 'mysql', true ),
 		);
 
 		// Snapshot the buyer's billing address AT PAYMENT TIME. The profile

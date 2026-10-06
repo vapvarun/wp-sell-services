@@ -189,7 +189,7 @@ class ExtensionRequestService {
 				'extra_days'   => $extra_days,
 				'reason'       => sanitize_textarea_field( $reason ),
 				'status'       => self::STATUS_PENDING,
-				'created_at'   => current_time( 'mysql' ),
+				'created_at'   => current_time( 'mysql', true ),
 			],
 			[ '%d', '%d', '%d', '%s', '%s', '%s' ]
 		);
@@ -308,7 +308,7 @@ class ExtensionRequestService {
 				'status'           => self::STATUS_APPROVED,
 				'responded_by'     => $responded_by,
 				'response_message' => sanitize_textarea_field( $response_message ),
-				'responded_at'     => current_time( 'mysql' ),
+				'responded_at'     => current_time( 'mysql', true ),
 			],
 			[ 'id' => $request_id ],
 			[ '%s', '%d', '%s', '%s' ],
@@ -411,7 +411,7 @@ class ExtensionRequestService {
 				'status'           => self::STATUS_REJECTED,
 				'responded_by'     => $responded_by,
 				'response_message' => sanitize_textarea_field( $response_message ),
-				'responded_at'     => current_time( 'mysql' ),
+				'responded_at'     => current_time( 'mysql', true ),
 			],
 			[ 'id' => $request_id ],
 			[ '%s', '%d', '%s', '%s' ],

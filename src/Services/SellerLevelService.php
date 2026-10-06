@@ -256,7 +256,7 @@ class SellerLevelService {
 			$table,
 			array(
 				'verification_tier' => $level,
-				'updated_at'        => current_time( 'mysql' ),
+				'updated_at'        => current_time( 'mysql', true ),
 			),
 			array( 'user_id' => $user_id ),
 			array( '%s', '%s' ),

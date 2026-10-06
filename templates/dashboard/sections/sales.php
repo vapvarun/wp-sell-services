@@ -111,11 +111,9 @@ $per_page  = 20;
 $date_from = '';
 
 /*
- * Site time, not UTC. Orders are written with current_time( 'mysql' ), so a
- * window built from gmdate()/time() is offset by the site's timezone on every
- * non-UTC install - the totals are then quietly wrong rather than obviously
- * missing. 'today' and 'all' both carry days = 0, so they are told apart by
- * the key, not by the number.
+ * The window is the vendor's calendar, so it is built in site time; the
+ * readers it reaches convert it to UTC for the columns. 'today' and 'all'
+ * both carry days = 0, so they are told apart by the key, not by the number.
  */
 $sales_today = current_time( 'Y-m-d' );
 

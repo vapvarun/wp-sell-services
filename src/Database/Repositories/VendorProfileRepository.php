@@ -510,7 +510,7 @@ class VendorProfileRepository extends AbstractRepository {
 	public function sync_ledger_totals( int $user_id ): void {
 		$updated = $this->wpdb->update(
 			$this->table,
-			$this->ledger_totals( $user_id ) + array( 'updated_at' => current_time( 'mysql' ) ),
+			$this->ledger_totals( $user_id ) + array( 'updated_at' => current_time( 'mysql', true ) ),
 			array( 'user_id' => $user_id ),
 			array( '%f', '%f', '%s' ),
 			array( '%d' )
@@ -568,7 +568,7 @@ class VendorProfileRepository extends AbstractRepository {
 		$data = array( 'verification_tier' => $tier );
 
 		if ( 'new' !== $tier ) {
-			$data['verified_at'] = current_time( 'mysql' );
+			$data['verified_at'] = current_time( 'mysql', true );
 		}
 
 		return $this->upsert( $user_id, $data ) !== false;

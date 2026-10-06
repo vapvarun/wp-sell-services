@@ -127,7 +127,7 @@ class TippingService {
 				WHERE platform = %s
 				AND status = 'pending_payment'
 				AND created_at < %s",
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				self::ORDER_TYPE,
 				gmdate( 'Y-m-d H:i:s', time() - ( self::ABANDON_AFTER_HOURS * HOUR_IN_SECONDS ) )
 			)
@@ -256,7 +256,7 @@ class TippingService {
 						'buyer_note'      => $tip_message,
 					)
 				),
-				'created_at'        => current_time( 'mysql' ),
+				'created_at'        => current_time( 'mysql', true ),
 			),
 			array( '%s', '%d', '%d', '%d', '%s', '%d', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
@@ -422,7 +422,7 @@ class TippingService {
 				// it — matches milestone + extension idempotency convention.
 				'reference_id'   => $tip_order_id,
 				'status'         => self::STATUS_COMPLETED,
-				'created_at'     => current_time( 'mysql' ),
+				'created_at'     => current_time( 'mysql', true ),
 			),
 		);
 
@@ -460,8 +460,8 @@ class TippingService {
 			$orders_table,
 			array(
 				'status'          => 'completed',
-				'completed_at'    => current_time( 'mysql' ),
-				'updated_at'      => current_time( 'mysql' ),
+				'completed_at'    => current_time( 'mysql', true ),
+				'updated_at'      => current_time( 'mysql', true ),
 				'commission_rate' => $commission_rate,
 				'platform_fee'    => $platform_fee,
 				'vendor_earnings' => $vendor_earnings,

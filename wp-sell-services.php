@@ -78,6 +78,19 @@ define( 'WPSS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
  */
 define( 'WPSS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 
+/*
+ * Every datetime the plugin stores is UTC (Basecamp 10351460106). Columns
+ * that MySQL fills itself (DEFAULT / ON UPDATE CURRENT_TIMESTAMP) and NOW()
+ * follow the session time zone, which WordPress never sets, so they wrote the
+ * database server's clock: a third zone beside site time and UTC. WordPress
+ * core never reads the session zone; it computes its own *_gmt values.
+ * ponytail: a dropped-and-reconnected connection falls back to the server
+ * zone for the rest of that request; set it again if that ever matters.
+ */
+if ( isset( $GLOBALS['wpdb'] ) && $GLOBALS['wpdb'] instanceof \wpdb ) {
+	$GLOBALS['wpdb']->query( "SET time_zone = '+00:00'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- connection setting, no table.
+}
+
 /**
  * Load Action Scheduler at file-load time.
  *
@@ -312,6 +325,10 @@ function wpss_init(): void {
 
 	// Load helper functions.
 	require_once WPSS_PLUGIN_DIR . 'src/functions.php';
+
+	// Stored datetimes to UTC, once (10351460106). Before Plugin::init() so the
+	// cutover is taken before any of this request's writes.
+	Database\UtcMigration::init();
 
 	// Load the plugin.
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Plugin.php';

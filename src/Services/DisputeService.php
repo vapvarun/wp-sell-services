@@ -307,8 +307,8 @@ class DisputeService {
 			'description'   => sanitize_textarea_field( $description ),
 			'status'        => self::STATUS_OPEN,
 			'evidence'      => ! empty( $meta ) ? wp_json_encode( $meta ) : null,
-			'created_at'    => current_time( 'mysql' ),
-			'updated_at'    => current_time( 'mysql' ),
+			'created_at'    => current_time( 'mysql', true ),
+			'updated_at'    => current_time( 'mysql', true ),
 		);
 
 		/**
@@ -520,7 +520,7 @@ class DisputeService {
 				'message_type' => $sanitized_type,
 				'description'  => sanitize_textarea_field( $description ),
 				'attachments'  => $attachments ? wp_json_encode( $attachments ) : null,
-				'created_at'   => current_time( 'mysql' ),
+				'created_at'   => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
@@ -531,7 +531,7 @@ class DisputeService {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$this->table,
-				array( 'updated_at' => current_time( 'mysql' ) ),
+				array( 'updated_at' => current_time( 'mysql', true ) ),
 				array( 'id' => $dispute_id )
 			);
 		}
@@ -603,7 +603,7 @@ class DisputeService {
 						'type'        => 'file',
 						'content'     => $item,
 						'description' => '',
-						'created_at'  => current_time( 'mysql' ),
+						'created_at'  => current_time( 'mysql', true ),
 					);
 				}
 
@@ -618,7 +618,7 @@ class DisputeService {
 
 				$user_id    = (int) ( $item['user_id'] ?? 0 );
 				$content    = (string) ( $item['content'] ?? '' );
-				$created_at = (string) ( $item['created_at'] ?? current_time( 'mysql' ) );
+				$created_at = (string) ( $item['created_at'] ?? current_time( 'mysql', true ) );
 
 				// Already carried over by an earlier partial run.
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -783,7 +783,7 @@ class DisputeService {
 			(array) ( $context['fields'] ?? array() ),
 			array(
 				'status'     => $to,
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			)
 		);
 
@@ -796,7 +796,7 @@ class DisputeService {
 				'type'       => 'status_note',
 				'note'       => sanitize_textarea_field( $note ),
 				'status'     => $to,
-				'created_at' => current_time( 'mysql' ),
+				'created_at' => current_time( 'mysql', true ),
 			);
 			$data['evidence'] = wp_json_encode( $evidence );
 		}
@@ -882,7 +882,7 @@ class DisputeService {
 					'resolution_notes' => $notes,
 					'refund_amount'    => $total,
 					'resolved_by'      => get_current_user_id(),
-					'resolved_at'      => current_time( 'mysql' ),
+					'resolved_at'      => current_time( 'mysql', true ),
 				),
 				'note'   => $notes,
 			)
@@ -967,7 +967,7 @@ class DisputeService {
 				'id'            => uniqid( 'refund_' ),
 				'type'          => 'refund_info',
 				'refund_amount' => $refund_amount,
-				'created_at'    => current_time( 'mysql' ),
+				'created_at'    => current_time( 'mysql', true ),
 			);
 		}
 
@@ -1019,7 +1019,7 @@ class DisputeService {
 					'resolution_notes' => sanitize_textarea_field( $notes ),
 					'refund_amount'    => $refund_amount > 0 ? round( $refund_amount, 2 ) : null,
 					'resolved_by'      => $resolved_by,
-					'resolved_at'      => current_time( 'mysql' ),
+					'resolved_at'      => current_time( 'mysql', true ),
 					'evidence'         => wp_json_encode( $evidence ),
 				),
 			)

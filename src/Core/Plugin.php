@@ -1369,7 +1369,7 @@ final class Plugin {
 					return;
 				}
 
-				update_user_meta( $user_id, '_wpss_last_active', current_time( 'mysql' ) );
+				update_user_meta( $user_id, '_wpss_last_active', current_time( 'mysql', true ) );
 			}
 		);
 
@@ -1955,7 +1955,7 @@ final class Plugin {
 						"UPDATE {$wpdb->prefix}wpss_orders
 						SET status = 'cancelled', updated_at = %s
 						WHERE platform = %s AND platform_order_id = %d AND status = %s",
-						current_time( 'mysql' ),
+						current_time( 'mysql', true ),
 						\WPSellServices\Services\MilestoneService::ORDER_TYPE,
 						$order_id,
 						'pending_payment'
@@ -2641,7 +2641,7 @@ final class Plugin {
 				'display_name'      => $user->display_name,
 				'status'            => 'active',
 				'verification_tier' => 'new',
-				'created_at'        => current_time( 'mysql' ),
+				'created_at'        => current_time( 'mysql', true ),
 			),
 			array( '%d', '%s', '%s', '%s', '%s' )
 		);

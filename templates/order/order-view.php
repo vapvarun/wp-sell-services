@@ -1029,12 +1029,9 @@ do_action( 'wpss_before_order_view', $order );
 		$cancellation_deadline_ts = 0;
 		$time_remaining_label     = '';
 		if ( $requested_at_iso ) {
-			// requested_at is stored site-local (current_time( 'mysql' )), so
-			// normalise to UTC and compare against a UTC now — the same
-			// convention OrderWorkflowManager uses to actually fire the 48h
-			// auto-resolve. Both sides have to agree or the countdown the
-			// buyer reads disagrees with the cron that acts on it.
-			$requested_ts             = strtotime( get_gmt_from_date( (string) $requested_at_iso ) . ' UTC' );
+			// requested_at is stored in UTC, the same value the 48h cron in
+			// OrderWorkflowManager reads, so the countdown and the cron agree.
+			$requested_ts             = strtotime( $requested_at_iso . ' UTC' );
 			$cancellation_deadline_ts = $requested_ts + ( 48 * HOUR_IN_SECONDS );
 			$seconds_left             = $cancellation_deadline_ts - time();
 			if ( $seconds_left > 0 ) {

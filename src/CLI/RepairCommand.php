@@ -304,7 +304,7 @@ class RepairCommand extends WP_CLI_Command {
 						'reference_type' => 'order',
 						'reference_id'   => (int) $order->id,
 						'status'         => 'completed',
-						'created_at'     => current_time( 'mysql' ),
+						'created_at'     => current_time( 'mysql', true ),
 					)
 				);
 				$row['ledger'] = "correction {$delta}";

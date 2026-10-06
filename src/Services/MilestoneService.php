@@ -236,7 +236,7 @@ class MilestoneService {
 						'is_contract_milestone' => $is_contract,
 					)
 				),
-				'created_at'        => current_time( 'mysql' ),
+				'created_at'        => current_time( 'mysql', true ),
 			),
 			array( '%s', '%d', '%d', '%d', '%s', '%d', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
@@ -312,8 +312,8 @@ class MilestoneService {
 			$wpdb->prefix . 'wpss_orders',
 			array(
 				'status'          => ServiceOrder::STATUS_IN_PROGRESS,
-				'started_at'      => current_time( 'mysql' ),
-				'updated_at'      => current_time( 'mysql' ),
+				'started_at'      => current_time( 'mysql', true ),
+				'updated_at'      => current_time( 'mysql', true ),
 				'commission_rate' => $commission['commission_rate'] ?? 0.0,
 				'platform_fee'    => $commission['platform_fee'] ?? 0.0,
 				'vendor_earnings' => $vendor_earnings,
@@ -411,7 +411,7 @@ class MilestoneService {
 				'reference_type' => 'order',
 				'reference_id'   => $milestone_id,
 				'status'         => 'completed',
-				'created_at'     => current_time( 'mysql' ),
+				'created_at'     => current_time( 'mysql', true ),
 			)
 		);
 
@@ -496,7 +496,7 @@ class MilestoneService {
 		// view and the milestone-view template can surface it.
 		$meta                 = $this->decode_meta( $sub );
 		$meta['submit_note']  = sanitize_textarea_field( $note );
-		$meta['submitted_at'] = current_time( 'mysql' );
+		$meta['submitted_at'] = current_time( 'mysql', true );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(
@@ -504,7 +504,7 @@ class MilestoneService {
 			array(
 				'status'     => ServiceOrder::STATUS_PENDING_APPROVAL,
 				'meta'       => wp_json_encode( $meta ),
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $milestone_id )
 		);
@@ -556,8 +556,8 @@ class MilestoneService {
 			$wpdb->prefix . 'wpss_orders',
 			array(
 				'status'       => ServiceOrder::STATUS_COMPLETED,
-				'completed_at' => current_time( 'mysql' ),
-				'updated_at'   => current_time( 'mysql' ),
+				'completed_at' => current_time( 'mysql', true ),
+				'updated_at'   => current_time( 'mysql', true ),
 			),
 			array( 'id' => $milestone_id )
 		);
@@ -626,7 +626,7 @@ class MilestoneService {
 
 		$meta                          = $this->decode_meta( $sub );
 		$meta['revision_reason']       = $reason;
-		$meta['revision_requested_at'] = current_time( 'mysql' );
+		$meta['revision_requested_at'] = current_time( 'mysql', true );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$updated = $wpdb->update(
@@ -634,7 +634,7 @@ class MilestoneService {
 			array(
 				'status'     => ServiceOrder::STATUS_REVISION_REQUESTED,
 				'meta'       => wp_json_encode( $meta ),
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $milestone_id )
 		);
@@ -731,7 +731,7 @@ class MilestoneService {
 			$wpdb->prefix . 'wpss_orders',
 			array(
 				'status'     => 'cancelled',
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			),
 			array(
 				'id'     => $milestone_id,
@@ -785,7 +785,7 @@ class MilestoneService {
 			$wpdb->prefix . 'wpss_orders',
 			array(
 				'status'     => 'cancelled',
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			),
 			array(
 				'id'     => $milestone_id,
@@ -870,7 +870,7 @@ class MilestoneService {
 				AND status = %s
 				AND created_at < %s
 				AND ( meta IS NULL OR meta NOT LIKE %s )",
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				self::ORDER_TYPE,
 				'pending_payment',
 				$threshold,

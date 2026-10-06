@@ -389,10 +389,10 @@ class ExtensionRequestsController extends RestController {
 				)
 				: null,
 			'response_message'  => $item['response_message'] ?? '',
-			'responded_at'      => $item['responded_at'] ?? null,
-			'original_due_date' => $item['original_due_date'] ?? null,
-			'new_due_date'      => $item['new_due_date'] ?? null,
-			'created_at'        => $item['created_at'],
+			'responded_at'      => wpss_rest_date( $item['responded_at'] ?? null ),
+			'original_due_date' => wpss_rest_date( $item['original_due_date'] ?? null ),
+			'new_due_date'      => wpss_rest_date( $item['new_due_date'] ?? null ),
+			'created_at'        => wpss_rest_date( $item['created_at'] ),
 			// Where the buyer goes to pay this, if it is still payable.
 			//
 			// The URL used to be returned only by the create call, so a vendor

@@ -22,6 +22,12 @@ All names are shown without the site's table prefix. Use `$wpdb->prefix` in code
 Because orders are not posts, `WP_Query` will not find them. Go through the
 order service or query the table directly.
 
+Every datetime in these tables, and in their JSON columns, is **UTC** since
+1.8.0. Write with `current_time( 'mysql', true )`; show with
+`wp_date( $format, strtotime( $value . ' UTC' ) )`; turn a site-time range into
+column bounds with `get_gmt_from_date()`. Before 1.8.0 most columns held site
+time; the upgrade converts existing rows once (see `wp wpss utc-migrate`).
+
 ## Core tables
 
 ### `wpss_orders`

@@ -78,7 +78,7 @@ class NotificationService {
 			'message'    => $stored_message,
 			'data'       => wp_json_encode( $data ),
 			'is_read'    => 0,
-			'created_at' => current_time( 'mysql' ),
+			'created_at' => current_time( 'mysql', true ),
 		);
 
 		$formats = array( '%d', '%s', '%s', '%s', '%s', '%d', '%s' );
@@ -1185,7 +1185,7 @@ class NotificationService {
 					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), (string) $data['reason'] );
 				}
 				if ( ! empty( $data['response_deadline'] ) ) {
-					$deadline = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $data['response_deadline'] ) );
+					$deadline = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $data['response_deadline'] . ' UTC' ) );
 					$message->paragraph(
 						/* translators: %s: deadline date */
 						__( 'Please respond by %s to avoid automatic escalation.', 'wp-sell-services' ),

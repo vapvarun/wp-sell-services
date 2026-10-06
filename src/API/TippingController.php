@@ -205,7 +205,7 @@ class TippingController extends RestController {
 				wpss_rest_money( 'amount', (float) $tip['amount'], (string) ( $tip['currency'] ?? '' ) ),
 				array(
 					'message'    => $meta['message'] ?? '',
-					'created_at' => $tip['created_at'],
+					'created_at' => wpss_rest_date( $tip['created_at'] ),
 				)
 			)
 		);
@@ -269,7 +269,7 @@ class TippingController extends RestController {
 						)
 						: null,
 					'message'    => (string) ( $tip['tip_message'] ?? '' ),
-					'created_at' => $tip['created_at'],
+					'created_at' => wpss_rest_date( $tip['created_at'] ),
 				)
 			);
 		}

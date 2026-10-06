@@ -101,6 +101,17 @@ with `--user`, shrinks the list.
 ## Repairs
 
 ```bash
+wp wpss utc-migrate --dry-run   # rows per column and three "old -> new" samples
+wp wpss utc-migrate             # convert now instead of waiting for the background job
+```
+
+1.8.0 stores every datetime in UTC. On upgrade, rows written before it are
+converted once in the background (Action Scheduler hook
+`wpss_utc_migrate_batch`). This command runs the same conversion in the
+foreground. A site on UTC whose database server is also on UTC has nothing to
+convert. Rows are converted once only, so running it again changes nothing.
+
+```bash
 wp wpss repair:stripe-tax           # dry run: lists what would change, writes nothing
 wp wpss repair:stripe-tax --apply   # writes the changes the dry run listed
 ```

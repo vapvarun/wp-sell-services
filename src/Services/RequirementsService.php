@@ -484,7 +484,7 @@ class RequirementsService {
 				'order_id'     => $order_id,
 				'field_data'   => wp_json_encode( $field_data ),
 				'attachments'  => wp_json_encode( $attachments ),
-				'submitted_at' => current_time( 'mysql' ),
+				'submitted_at' => current_time( 'mysql', true ),
 			),
 			array( '%d', '%s', '%s', '%s' )
 		);

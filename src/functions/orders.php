@@ -219,7 +219,7 @@ function wpss_is_order_late( object $order ): bool {
 		? $order->delivery_deadline->format( 'Y-m-d H:i:s' )
 		: (string) $order->delivery_deadline;
 
-	return $deadline < current_time( 'mysql' );
+	return $deadline < current_time( 'mysql', true );
 }
 
 /**

@@ -160,6 +160,7 @@ $check( 'test:flow refuses on production', 'wpss test:flow service-purchase', 'p
 
 $check( 'scale teardown refuses on production', 'wpss scale teardown', 'production', array( 'nonzero' => true, 'contains' => 'production' ) );
 $check( 'repair:stripe-tax --apply refuses on production', 'wpss repair:stripe-tax --apply', 'production', array( 'nonzero' => true, 'contains' => 'production' ) );
+$check( 'utc-migrate refuses on production', 'wpss utc-migrate', 'production', array( 'nonzero' => true, 'contains' => 'production' ) );
 $check( 'scale teardown names the row count', 'wpss scale teardown', 'local', array( 'zero' => true, 'contains' => 'scale-benchmark rows' ) );
 
 // bench --teardown used to hardcode the answer, so it deleted without asking
@@ -177,6 +178,7 @@ foreach ( array(
 	'rest:contract',
 	'api:shapes',
 	'repair:stripe-tax',
+	'utc-migrate --dry-run',
 ) as $read_only ) {
 	$check( "{$read_only} is not gated", 'wpss ' . $read_only, 'production', array( 'lacks' => 'Refusing on a production site' ) );
 }
@@ -191,6 +193,7 @@ foreach ( array(
 	'wpss scale teardown',
 	'wpss test:flow',
 	'wpss repair:stripe-tax',
+	'wpss utc-migrate',
 ) as $writer ) {
 	$check( "help {$writer} documents --force", 'help ' . $writer, 'local', array( 'zero' => true, 'contains' => '--force' ) );
 }

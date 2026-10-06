@@ -755,16 +755,16 @@ class OrderService {
 
 		$data = array(
 			'status'     => $new_status,
-			'updated_at' => current_time( 'mysql' ),
+			'updated_at' => current_time( 'mysql', true ),
 		);
 
 		// Set timestamps based on status.
 		if ( ServiceOrder::STATUS_IN_PROGRESS === $new_status && ! $order->started_at ) {
-			$data['started_at'] = current_time( 'mysql' );
+			$data['started_at'] = current_time( 'mysql', true );
 		}
 
 		if ( ServiceOrder::STATUS_COMPLETED === $new_status ) {
-			$data['completed_at'] = current_time( 'mysql' );
+			$data['completed_at'] = current_time( 'mysql', true );
 		}
 
 		// Conditioned on the status just read: a concurrent writer that moved
@@ -1074,7 +1074,7 @@ class OrderService {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$table,
-				array( 'started_at' => current_time( 'mysql' ) ),
+				array( 'started_at' => current_time( 'mysql', true ) ),
 				array( 'id' => $order_id )
 			);
 		}
@@ -1164,7 +1164,7 @@ class OrderService {
 		$wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$table} SET revisions_used = revisions_used + 1, updated_at = %s WHERE id = %d",
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				$order_id
 			)
 		);
@@ -1301,7 +1301,7 @@ class OrderService {
 			'reason'       => sanitize_key( $reason ),
 			'note'         => sanitize_textarea_field( $note ),
 			'requested_by' => $user_id,
-			'requested_at' => current_time( 'mysql' ),
+			'requested_at' => current_time( 'mysql', true ),
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -1376,7 +1376,7 @@ class OrderService {
 			$table,
 			array(
 				'delivery_deadline' => $new_deadline->format( 'Y-m-d H:i:s' ),
-				'updated_at'        => current_time( 'mysql' ),
+				'updated_at'        => current_time( 'mysql', true ),
 			),
 			array( 'id' => $order_id )
 		);

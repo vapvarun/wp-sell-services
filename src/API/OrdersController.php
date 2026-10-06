@@ -697,7 +697,7 @@ class OrdersController extends RestController {
 				'message'     => $message->content,
 				'attachments' => $attachments,
 				'is_system'   => false,
-				'created_at'  => $message->created_at,
+				'created_at'  => wpss_rest_date( $message->created_at ),
 			),
 			201
 		);
@@ -734,8 +734,8 @@ class OrdersController extends RestController {
 				'status'           => $delivery->status,
 				'version'          => (int) $delivery->version,
 				'response_message' => $delivery->response_message,
-				'responded_at'     => $delivery->responded_at,
-				'created_at'       => $delivery->created_at,
+				'responded_at'     => wpss_rest_date( $delivery->responded_at ),
+				'created_at'       => wpss_rest_date( $delivery->created_at ),
 			);
 		}
 
@@ -897,7 +897,7 @@ class OrdersController extends RestController {
 				'files'       => $attachments,
 				'version'     => (int) ( $delivery->version ?? 1 ),
 				'status'      => $delivery->status ?? 'pending',
-				'created_at'  => $delivery->created_at ?? current_time( 'mysql' ),
+				'created_at'  => $delivery->created_at ?? current_time( 'mysql', true ),
 			),
 			201
 		);
@@ -1301,7 +1301,7 @@ class OrdersController extends RestController {
 				'success'      => true,
 				'message'      => $result['message'],
 				'submitted'    => $result['submitted'],
-				'submitted_at' => current_time( 'mysql' ),
+				'submitted_at' => current_time( 'mysql', true ),
 			)
 		);
 	}
@@ -1561,8 +1561,8 @@ class OrdersController extends RestController {
 					// (Basecamp 10267994010).
 					'file_url'    => wpss_get_receipt_file( $receipt )['url'],
 					'uploaded_by' => (int) $receipt->uploaded_by,
-					'created_at'  => (string) $receipt->created_at,
-					'verified_at' => $receipt->verified_at ? (string) $receipt->verified_at : null,
+					'created_at'  => wpss_rest_date( $receipt->created_at ),
+					'verified_at' => wpss_rest_date( $receipt->verified_at ),
 				);
 			},
 			$receipts

@@ -219,7 +219,7 @@ class OrderRepository extends AbstractRepository {
 			'status__in' => array(),
 			'search'     => '',
 			'platform'   => '',
-			'date_from'  => '', // Y-m-d H:i:s — orders created at or after this timestamp (VS10 from plans/ORDER-FLOW-AUDIT.md).
+			'date_from'  => '', // Y-m-d H:i:s site time - orders created at or after (VS10 from plans/ORDER-FLOW-AUDIT.md).
 			'orderby'    => 'created_at',
 			'order'      => 'DESC',
 			'limit'      => 20,
@@ -286,7 +286,7 @@ class OrderRepository extends AbstractRepository {
 
 		if ( ! empty( $args['date_from'] ) ) {
 			$sql     .= ' AND created_at >= %s';
-			$params[] = $args['date_from'];
+			$params[] = get_gmt_from_date( (string) $args['date_from'] ); // Site time in, UTC column.
 		}
 
 		if ( ! empty( $args['search'] ) ) {
@@ -536,7 +536,7 @@ class OrderRepository extends AbstractRepository {
 	 * @return array<object> Array of overdue orders.
 	 */
 	public function get_overdue(): array {
-		$now = current_time( 'mysql' );
+		$now = current_time( 'mysql', true );
 
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
@@ -561,10 +561,10 @@ class OrderRepository extends AbstractRepository {
 		// Add timestamps based on status.
 		switch ( $new_status ) {
 			case 'in_progress':
-				$data['started_at'] = current_time( 'mysql' );
+				$data['started_at'] = current_time( 'mysql', true );
 				break;
 			case 'completed':
-				$data['completed_at'] = current_time( 'mysql' );
+				$data['completed_at'] = current_time( 'mysql', true );
 				break;
 		}
 
@@ -955,10 +955,10 @@ class OrderRepository extends AbstractRepository {
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT * FROM {$this->table}
-				WHERE DATE(created_at) BETWEEN %s AND %s
+				WHERE created_at BETWEEN %s AND %s
 				ORDER BY created_at DESC",
-				$start_date,
-				$end_date
+				get_gmt_from_date( $start_date . ' 00:00:00' ),
+				get_gmt_from_date( $end_date . ' 23:59:59' )
 			)
 		);
 	}
@@ -1095,7 +1095,7 @@ class OrderRepository extends AbstractRepository {
 	 * @param array<string, mixed> $args {
 	 *     Filters.
 	 *
-	 *     @type string $from      Paid on or after (site time, Y-m-d H:i:s). Optional.
+	 *     @type string $from      Paid on or after (site time, Y-m-d H:i:s; compared in UTC). Optional.
 	 *     @type string $to        Paid on or before. Optional.
 	 *     @type int    $vendor_id One vendor. Optional.
 	 *     @type string $platform  Only this order platform (e.g. 'tip', 'milestone'). Optional.
@@ -1136,17 +1136,20 @@ class OrderRepository extends AbstractRepository {
 		$values = array();
 
 		// Written as an OR over the two indexed columns rather than a
-		// COALESCE, so a period stays an index range at 100k orders.
+		// COALESCE, so a period stays an index range at 100k orders. The
+		// bounds arrive in site time and the columns are UTC (10351460106).
 		if ( '' !== (string) $args['from'] ) {
+			$from     = get_gmt_from_date( (string) $args['from'] );
 			$where[]  = '( paid_at >= %s OR ( paid_at IS NULL AND created_at >= %s ) )';
-			$values[] = $args['from'];
-			$values[] = $args['from'];
+			$values[] = $from;
+			$values[] = $from;
 		}
 
 		if ( '' !== (string) $args['to'] ) {
+			$to       = get_gmt_from_date( (string) $args['to'] );
 			$where[]  = '( paid_at <= %s OR ( paid_at IS NULL AND created_at <= %s ) )';
-			$values[] = $args['to'];
-			$values[] = $args['to'];
+			$values[] = $to;
+			$values[] = $to;
 		}
 
 		if ( (int) $args['vendor_id'] > 0 ) {
@@ -1167,7 +1170,7 @@ class OrderRepository extends AbstractRepository {
 
 		$groups = array(
 			''         => "''",
-			'day'      => 'DATE( COALESCE( paid_at, created_at ) )',
+			'day'      => wpss_site_day_sql( 'COALESCE( paid_at, created_at )' ),
 			'vendor'   => 'vendor_id',
 			'service'  => 'service_id',
 			'currency' => 'currency',

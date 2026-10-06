@@ -110,7 +110,7 @@ class OrderWorkflowManager {
 		$provider = wpss_get_order_provider();
 		$previous = $provider->get_item_meta( $order_id, self::REFUND_FAILED_META );
 		$previous = is_array( $previous ) ? $previous : array();
-		$now      = current_time( 'mysql' );
+		$now      = current_time( 'mysql', true );
 
 		$provider->update_item_meta(
 			$order_id,
@@ -295,7 +295,7 @@ class OrderWorkflowManager {
 				ServiceOrder::STATUS_IN_PROGRESS,
 				// A revision has its own deadline (DeliveryService::request_revision()).
 				ServiceOrder::STATUS_REVISION_REQUESTED,
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				self::SWEEP_BATCH
 			)
 		);
@@ -357,7 +357,7 @@ class OrderWorkflowManager {
 				LIMIT %d",
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_DELIVERED,
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				$auto_complete_days,
 				self::SWEEP_BATCH
 			)
@@ -406,8 +406,8 @@ class OrderWorkflowManager {
 				WHERE status = %s
 				AND delivery_deadline BETWEEN %s AND DATE_ADD(%s, INTERVAL 24 HOUR)",
 				ServiceOrder::STATUS_IN_PROGRESS,
-				current_time( 'mysql' ),
-				current_time( 'mysql' )
+				current_time( 'mysql', true ),
+				current_time( 'mysql', true )
 			)
 		);
 
@@ -450,7 +450,7 @@ class OrderWorkflowManager {
 				WHERE status = %s
 				AND COALESCE( paid_at, created_at ) < DATE_SUB(%s, INTERVAL 1 DAY)",
 				ServiceOrder::STATUS_PENDING_REQUIREMENTS,
-				current_time( 'mysql' )
+				current_time( 'mysql', true )
 			)
 		);
 
@@ -540,7 +540,7 @@ class OrderWorkflowManager {
 				WHERE status = %s
 				AND COALESCE( paid_at, created_at ) < DATE_SUB(%s, INTERVAL %d DAY)",
 				ServiceOrder::STATUS_PENDING_REQUIREMENTS,
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				$timeout_days
 			)
 		);
@@ -1274,7 +1274,7 @@ class OrderWorkflowManager {
 					'reference_type' => 1 === $event ? 'order' : "order_refund_{$event}",
 					'reference_id'   => $order_id,
 					'status'         => 'completed',
-					'created_at'     => current_time( 'mysql' ),
+					'created_at'     => current_time( 'mysql', true ),
 				)
 			);
 
@@ -1667,13 +1667,8 @@ class OrderWorkflowManager {
 			)
 		);
 
-		// Everything below is compared in real UTC. Two different conventions
-		// meet here: requested_at is written with current_time( 'mysql' ) and
-		// is therefore SITE-LOCAL, while updated_at is a UTC column. Reading
-		// both with a bare strtotime() and comparing against a site-local
-		// "now" made the two agree only on a UTC site — on any other site the
-		// updated_at fallback fired the 48h auto-cancel early or late by the
-		// site's offset.
+		// Both requested_at and updated_at are stored in UTC (10351460106),
+		// compared against time().
 		$now              = time();
 		$timed_out_orders = array();
 
@@ -1681,7 +1676,7 @@ class OrderWorkflowManager {
 			$order_meta   = json_decode( (string) ( $order->meta ?? '' ), true );
 			$cancel_data  = is_array( $order_meta ) ? ( $order_meta['cancellation_request'] ?? array() ) : array();
 			$requested_at = ! empty( $cancel_data['requested_at'] )
-				? strtotime( get_gmt_from_date( (string) $cancel_data['requested_at'] ) . ' UTC' )
+				? strtotime( $cancel_data['requested_at'] . ' UTC' )
 				: 0;
 
 			// Fall back to updated_at if the stored request is missing.
@@ -1915,7 +1910,7 @@ class OrderWorkflowManager {
 			[
 				'total_orders'     => $total_orders,
 				'completed_orders' => $completed_orders,
-				'updated_at'       => current_time( 'mysql' ),
+				'updated_at'       => current_time( 'mysql', true ),
 			],
 			[ 'user_id' => $vendor_id ]
 		);

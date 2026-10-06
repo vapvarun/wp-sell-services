@@ -402,7 +402,7 @@ class CommissionService {
 				'reference_type' => 'order',
 				'reference_id'   => $order_id,
 				'status'         => 'completed',
-				'created_at'     => current_time( 'mysql' ),
+				'created_at'     => current_time( 'mysql', true ),
 			)
 		);
 
@@ -512,7 +512,7 @@ class CommissionService {
 			$result = $wpdb->query(
 				$wpdb->prepare(
 					"UPDATE {$profiles_table} SET custom_commission_rate = NULL, updated_at = %s WHERE user_id = %d",
-					current_time( 'mysql' ),
+					current_time( 'mysql', true ),
 					$vendor_id
 				)
 			);
@@ -522,7 +522,7 @@ class CommissionService {
 				$profiles_table,
 				array(
 					'custom_commission_rate' => $rate,
-					'updated_at'             => current_time( 'mysql' ),
+					'updated_at'             => current_time( 'mysql', true ),
 				),
 				array( 'user_id' => $vendor_id ),
 				array( '%f', '%s' ),

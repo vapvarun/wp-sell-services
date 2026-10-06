@@ -839,8 +839,8 @@ class BuyerRequestService {
 
 		$parent_status         = $is_milestone_contract ? 'in_progress' : 'pending_payment';
 		$parent_payment_status = $is_milestone_contract ? 'paid' : 'pending';
-		$parent_paid_at        = $is_milestone_contract ? current_time( 'mysql' ) : null;
-		$parent_started_at     = $is_milestone_contract ? current_time( 'mysql' ) : null;
+		$parent_paid_at        = $is_milestone_contract ? current_time( 'mysql', true ) : null;
+		$parent_started_at     = $is_milestone_contract ? current_time( 'mysql', true ) : null;
 
 		// Wrap the parent insert + (optional) milestone bulk-create in a
 		// single transaction so a partial failure does not leave the order
@@ -877,7 +877,7 @@ class BuyerRequestService {
 			$this->proposals_table,
 			array(
 				'status'     => ProposalService::STATUS_ACCEPTED,
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $proposal_id ),
 			array( '%s', '%s' ),
@@ -911,8 +911,8 @@ class BuyerRequestService {
 				'started_at'         => $parent_started_at,
 				'revisions_included' => (int) apply_filters( 'wpss_proposal_order_revisions', 2, $proposal, $request ),
 				'revisions_used'     => 0,
-				'created_at'         => current_time( 'mysql' ),
-				'updated_at'         => current_time( 'mysql' ),
+				'created_at'         => current_time( 'mysql', true ),
+				'updated_at'         => current_time( 'mysql', true ),
 				'meta'               => wp_json_encode(
 					array_filter(
 						[
@@ -1043,7 +1043,7 @@ class BuyerRequestService {
 					)
 				),
 				'attachments'  => wp_json_encode( $request->attachments ),
-				'submitted_at' => current_time( 'mysql' ),
+				'submitted_at' => current_time( 'mysql', true ),
 			),
 			array( '%d', '%s', '%s', '%s' )
 		);

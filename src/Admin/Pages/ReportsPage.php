@@ -366,16 +366,12 @@ class ReportsPage {
 								<td data-label="<?php esc_attr_e( 'Filed by', 'wp-sell-services' ); ?>"><?php echo esc_html( wpss_get_member_display_name( (int) $row->reporter_id ) ); ?></td>
 								<td data-label="<?php esc_attr_e( 'When', 'wp-sell-services' ); ?>">
 									<?php
-									// created_at is stored in site-local time, so it is
-									// converted to GMT before being compared against
-									// time(). Comparing a local string to a UTC
-									// timestamp reads "3 hours ago" for something
-									// filed a minute ago on any site not on UTC.
+									// created_at is stored in UTC, like time().
 									echo esc_html(
 										sprintf(
 											/* translators: %s: human-readable time difference, e.g. "2 hours" */
 											__( '%s ago', 'wp-sell-services' ),
-											human_time_diff( strtotime( get_gmt_from_date( (string) $row->created_at ) ), time() )
+											human_time_diff( strtotime( $row->created_at . ' UTC' ), time() )
 										)
 									);
 									?>
@@ -559,7 +555,7 @@ class ReportsPage {
 				'status'      => 'resolved',
 				'resolution'  => $resolution,
 				'resolved_by' => get_current_user_id(),
-				'resolved_at' => current_time( 'mysql' ),
+				'resolved_at' => current_time( 'mysql', true ),
 			),
 			array(
 				'id'     => $report_id,

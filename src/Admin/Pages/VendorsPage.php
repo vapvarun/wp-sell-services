@@ -946,7 +946,7 @@ class VendorsPage {
 								printf(
 									/* translators: %s: date the vendor joined. */
 									esc_html__( 'Joined %s', 'wp-sell-services' ),
-									esc_html( date_i18n( get_option( 'date_format' ), strtotime( $joined ) ) )
+									esc_html( wp_date( get_option( 'date_format' ), strtotime( $joined ) ) )
 								);
 								?>
 							</div>
@@ -1141,7 +1141,7 @@ class VendorsPage {
 						printf(
 							/* translators: %s: date */
 							esc_html__( 'Member since: %s', 'wp-sell-services' ),
-							esc_html( date_i18n( get_option( 'date_format' ), strtotime( $vendor->created_at ?? $user->user_registered ) ) )
+							esc_html( wp_date( get_option( 'date_format' ), strtotime( $vendor->created_at ?? $user->user_registered ) ) )
 						);
 						?>
 					</p>
@@ -1554,7 +1554,7 @@ class VendorsPage {
 				<div class="wpss-info-item">
 					<span class="wpss-info-label"><?php esc_html_e( 'Verified At', 'wp-sell-services' ); ?></span>
 					<span class="wpss-info-value">
-						<?php echo $profile->verified_at ? esc_html( date_i18n( get_option( 'date_format' ), strtotime( $profile->verified_at ) ) ) : '-'; ?>
+						<?php echo $profile->verified_at ? esc_html( wp_date( get_option( 'date_format' ), strtotime( $profile->verified_at ) ) ) : '-'; ?>
 					</span>
 				</div>
 				<div class="wpss-info-item">
@@ -1816,7 +1816,7 @@ class VendorsPage {
 									<?php echo esc_html( wpss_get_order_status_label( $order->status ) ); ?>
 								</span>
 							</td>
-							<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $order->created_at ) ) ); ?></td>
+							<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $order->created_at ) ) ); ?></td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>
@@ -2004,9 +2004,9 @@ class VendorsPage {
 										<?php echo esc_html( ucfirst( $withdrawal->status ) ); ?>
 									</span>
 								</td>
-								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $withdrawal->created_at ) ) ); ?></td>
+								<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $withdrawal->created_at ) ) ); ?></td>
 								<td>
-									<?php echo $withdrawal->processed_at ? esc_html( date_i18n( get_option( 'date_format' ), strtotime( $withdrawal->processed_at ) ) ) : '-'; ?>
+									<?php echo $withdrawal->processed_at ? esc_html( wp_date( get_option( 'date_format' ), strtotime( $withdrawal->processed_at ) ) ) : '-'; ?>
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -2119,7 +2119,7 @@ class VendorsPage {
 					<tbody>
 						<?php foreach ( $transactions as $txn ) : ?>
 							<tr>
-								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $txn->created_at ) ) ); ?></td>
+								<td><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $txn->created_at ) ) ); ?></td>
 								<td><?php echo esc_html( ucwords( str_replace( '_', ' ', (string) $txn->type ) ) ); ?></td>
 								<td><?php echo esc_html( (string) ( $txn->description ?? '' ) ); ?></td>
 								<td><?php echo esc_html( wpss_format_price( (float) $txn->amount ) ); ?></td>
@@ -2228,7 +2228,7 @@ class VendorsPage {
 									<strong><?php echo esc_html( $review->reviewer_display_name ?? __( 'Anonymous', 'wp-sell-services' ) ); ?></strong>
 								</div>
 								<span class="wpss-review-meta">
-									<?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $review->created_at ) ) ); ?>
+									<?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $review->created_at ) ) ); ?>
 									<?php if ( $review->service_title ) : ?>
 										• <?php echo esc_html( $review->service_title ); ?>
 									<?php endif; ?>
@@ -2353,7 +2353,7 @@ class VendorsPage {
 										<span class="wpss-status-line__muted">&mdash;</span>
 									<?php endif; ?>
 								</td>
-								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( (string) $item->created_at ) ) ); ?></td>
+								<td><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( (string) $item->created_at ) ) ); ?></td>
 								<td>
 									<button type="button" class="button button-small wpss-portfolio-action"
 											data-item-id="<?php echo esc_attr( (string) $item->id ); ?>"
@@ -2543,7 +2543,7 @@ class VendorsPage {
 				<?php if ( $profile->verified_at ) : ?>
 					<p>
 						<strong><?php esc_html_e( 'Verified:', 'wp-sell-services' ); ?></strong>
-						<?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $profile->verified_at ) ) ); ?>
+						<?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $profile->verified_at ) ) ); ?>
 					</p>
 				<?php endif; ?>
 			</div>

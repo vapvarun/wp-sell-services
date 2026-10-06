@@ -127,7 +127,7 @@ class PaymentReceiptRepository extends AbstractRepository {
 				 WHERE id = %d AND status = 'submitted'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$status,
 				$reviewer_id,
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				$admin_note,
 				$receipt_id
 			)

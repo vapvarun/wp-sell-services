@@ -3559,7 +3559,7 @@ class Admin {
 					'status'       => 'active',
 					'country'      => $vendor_data['country'],
 					'is_available' => 1,
-					'created_at'   => current_time( 'mysql' ),
+					'created_at'   => current_time( 'mysql', true ),
 				),
 				array( '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
 			);

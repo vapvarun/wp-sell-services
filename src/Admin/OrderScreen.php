@@ -272,7 +272,7 @@ class OrderScreen {
 		$notes[] = array(
 			'content'    => $note,
 			'author_id'  => get_current_user_id(),
-			'created_at' => current_time( 'mysql' ),
+			'created_at' => current_time( 'mysql', true ),
 		);
 
 		// Store admin notes in the meta JSON column (no admin_notes column exists).

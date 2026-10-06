@@ -85,7 +85,7 @@ class DeliveryService {
 			'message'     => $message,
 			'attachments' => $processed_files,
 			'status'      => 'pending',
-			'created_at'  => current_time( 'mysql' ),
+			'created_at'  => current_time( 'mysql', true ),
 		);
 
 		/**
@@ -241,7 +241,7 @@ class DeliveryService {
 				"UPDATE {$deliveries_table}
 				SET status = 'revision_requested', responded_at = %s, response_message = %s
 				WHERE order_id = %d AND status = 'pending'",
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				sanitize_textarea_field( $reason ),
 				$order_id
 			)
@@ -264,7 +264,7 @@ class DeliveryService {
 		// Basecamp 10336731826). original_deadline keeps the first one.
 		$wpdb->update(
 			$wpdb->prefix . 'wpss_orders',
-			array( 'delivery_deadline' => gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql' ) ) + $order_service->get_delivery_days( $order ) * DAY_IN_SECONDS ) ),
+			array( 'delivery_deadline' => gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql', true ) ) + $order_service->get_delivery_days( $order ) * DAY_IN_SECONDS ) ),
 			array( 'id' => $order_id )
 		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 

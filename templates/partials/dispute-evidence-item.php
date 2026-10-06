@@ -49,7 +49,7 @@ if ( '' === $ev_file ) {
 	$ev_path = (string) wp_parse_url( $ev_content, PHP_URL_PATH );
 	$ev_file = '' !== $ev_path ? basename( $ev_path ) : __( 'Attachment', 'wp-sell-services' );
 }
-$ev_when = ! empty( $wpss_item['created_at'] ) ? mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $wpss_item['created_at'] ) : '';
+$ev_when = ! empty( $wpss_item['created_at'] ) ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $wpss_item['created_at'] . ' UTC' ) ) : '';
 ?>
 <div class="wpss-evidence-item <?php echo $ev_own ? 'wpss-evidence-own' : 'wpss-evidence-other'; ?>">
 	<div class="wpss-evidence-bubble">

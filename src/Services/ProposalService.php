@@ -168,7 +168,7 @@ class ProposalService {
 			'milestones'     => $milestones_json,
 			'status'         => self::STATUS_PENDING,
 			'attachments'    => isset( $data['attachments'] ) ? wp_json_encode( $data['attachments'] ) : null,
-			'created_at'     => current_time( 'mysql' ),
+			'created_at'     => current_time( 'mysql', true ),
 		);
 
 		$result = $wpdb->insert( $this->table, $proposal_data );
@@ -347,7 +347,7 @@ class ProposalService {
 
 		// Site clock, like created_at. Left to the column's ON UPDATE default
 		// the row carries a UTC updated_at next to a site-local created_at.
-		$update_data['updated_at'] = current_time( 'mysql' );
+		$update_data['updated_at'] = current_time( 'mysql', true );
 
 		$result = $wpdb->update(
 			$this->table,
@@ -442,7 +442,7 @@ class ProposalService {
 			$this->table,
 			array(
 				'status'     => self::STATUS_REJECTED,
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $proposal_id )
 		);
@@ -488,7 +488,7 @@ class ProposalService {
 			$this->table,
 			array(
 				'status'     => self::STATUS_WITHDRAWN,
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $proposal_id )
 		);
@@ -540,7 +540,7 @@ class ProposalService {
 			$this->table,
 			array(
 				'order_id'   => $order_id,
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $proposal_id ),
 			array( '%d', '%s' ),
@@ -577,7 +577,7 @@ class ProposalService {
 			$this->table,
 			array(
 				'status'     => $status,
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $proposal_id )
 		);
@@ -627,7 +627,7 @@ class ProposalService {
 			$this->table,
 			array(
 				'status'     => self::STATUS_REJECTED,
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			),
 			array(
 				'request_id' => $request_id,
@@ -640,7 +640,7 @@ class ProposalService {
 			$this->table,
 			array(
 				'status'     => self::STATUS_ACCEPTED,
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $except_id )
 		);

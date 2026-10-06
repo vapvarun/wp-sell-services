@@ -497,7 +497,7 @@ class ServiceOrder {
 		}
 
 		// Add updated timestamp.
-		$data['updated_at'] = current_time( 'mysql' );
+		$data['updated_at'] = current_time( 'mysql', true );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update( $table, $data, array( 'id' => $this->id ) );
@@ -517,7 +517,7 @@ class ServiceOrder {
 
 			$history[] = array(
 				'status'    => $data['status'],
-				'timestamp' => current_time( 'mysql' ),
+				'timestamp' => current_time( 'mysql', true ),
 				'note'      => '',
 			);
 

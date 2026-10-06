@@ -258,7 +258,7 @@ class ModerationService {
 	 * @return void
 	 */
 	private function record( int $service_id, string $action, string $notes ): void {
-		update_post_meta( $service_id, self::META_MODERATED_AT, current_time( 'mysql' ) );
+		update_post_meta( $service_id, self::META_MODERATED_AT, current_time( 'mysql', true ) );
 		update_post_meta( $service_id, self::META_MODERATOR_ID, get_current_user_id() );
 		update_post_meta( $service_id, self::META_MODERATION_NOTES, sanitize_textarea_field( $notes ) );
 

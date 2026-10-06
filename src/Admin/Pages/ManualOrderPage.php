@@ -639,8 +639,8 @@ class ManualOrderPage {
 					'tax_included' => (bool) $line['tax_included'],
 				)
 			),
-			'created_at'         => current_time( 'mysql' ),
-			'updated_at'         => current_time( 'mysql' ),
+			'created_at'         => current_time( 'mysql', true ),
+			'updated_at'         => current_time( 'mysql', true ),
 		);
 		$format = array(
 			'%s', // order_number.
