@@ -220,6 +220,14 @@ The multi-step form vendors use to create a service.
 |-----------|---------|
 | `redirect` | *(empty)* |
 
+A sign-in card styled like the registration form. After signing in, visitors
+go back to the page they came from (`?redirect_to=`), else to `redirect`, else
+the home page. A wrong password returns to this card with a message.
+
+Map the page under **Settings > Pages > Log In** and every Sign in link on the
+site (the plugin's and the theme's) goes to it instead of `wp-login.php`.
+wp-admin sign-in stays on `wp-login.php`.
+
 Shows an "already logged in" message to authenticated users.
 
 ### `[wpss_register]` -- Registration form
