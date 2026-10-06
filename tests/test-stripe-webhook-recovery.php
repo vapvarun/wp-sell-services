@@ -9,8 +9,8 @@
  * already includes tax, so tax was added a second time and add-ons were lost -
  * found in the 1.8.0 sandbox run, where two of five orders came out at 27.848
  * for a 23.60 charge because the webhook beat the browser. It now resolves and
- * settles through CheckoutIntentService. Needs the dev_f1 fixtures (service
- * 6205, buyer dev_f1_rev_buyer); the orders it creates are deleted at the end.
+ * settles through CheckoutIntentService. Makes its own buyer, seller and service;
+ * the orders it creates are deleted at the end.
  *
  * @package WPSellServices
  */
@@ -27,23 +27,41 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 
 global $wpdb;
 
-$buyer   = get_user_by( 'login', 'dev_f1_rev_buyer' );
-$service = get_post( 6205 );
+// Own fixtures, so the test runs on any site, CI included (it used to skip
+// anywhere but the dev site that had service 6205 and dev_f1_rev_buyer).
+require_once __DIR__ . '/Factories/UserFactory.php';
+require_once __DIR__ . '/Factories/ServiceFactory.php';
+$suffix     = wp_generate_password( 6, false, false );
+$buyer      = \WPSellServices\Tests\Factories\UserFactory::customer( array( 'user_login' => 'wpss_recovery_buyer_' . $suffix, 'user_email' => 'wpss_recovery_buyer_' . $suffix . '@example.test' ) );
+$seller     = \WPSellServices\Tests\Factories\UserFactory::vendor( array( 'user_login' => 'wpss_recovery_seller_' . $suffix, 'user_email' => 'wpss_recovery_seller_' . $suffix . '@example.test' ) );
+$made_svc   = \WPSellServices\Tests\Factories\ServiceFactory::single_plan( array( 'vendor_id' => $seller->ID ) );
+$service_id = is_object( $made_svc ) ? (int) $made_svc->id : 0;
+register_shutdown_function( array( \WPSellServices\Tests\Factories\ServiceFactory::class, 'cleanup' ) );
 
-if ( ! $buyer || ! $service ) {
-	echo "SKIP  dev_f1 fixtures missing\n";
-	return;
+// A site with moderation on queues the fixture; approve it the way an admin would.
+if ( $service_id && 'publish' !== get_post_status( $service_id ) ) {
+	wp_set_current_user( 1 );
+	( new \WPSellServices\Services\ModerationService() )->approve( $service_id );
+	wp_set_current_user( 0 );
+	clean_post_cache( $service_id );
 }
 
-$package = (array) ( get_post_meta( 6205, '_wpss_packages', true )[0] ?? array() );
-$line    = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( 6205, (int) ( $package['id'] ?? 0 ), 1, array() );
+if ( ! $service_id || 'publish' !== get_post_status( $service_id ) ) {
+	echo "FAIL  could not create a published fixture service\n";
+	\WPSellServices\Tests\Factories\ServiceFactory::cleanup();
+	\WPSellServices\Tests\Factories\UserFactory::cleanup();
+	exit( 1 );
+}
+
+$package = (array) ( get_post_meta( $service_id, '_wpss_packages', true )[0] ?? array() );
+$line    = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, (int) ( $package['id'] ?? 0 ), 1, array() );
 $charged = (float) $line['total'];
 $health  = get_option( 'wpss_stripe_webhook_health' );
 $table   = $wpdb->prefix . 'wpss_orders';
 $pi_id   = 'pi_test_recovery_' . wp_generate_password( 10, false );
 $made    = array();
 
-$event = static function ( string $id, float $amount ) use ( $buyer, $package ) {
+$event = static function ( string $id, float $amount ) use ( $buyer, $package, $service_id ) {
 	return array(
 		'type' => 'payment_intent.succeeded',
 		'data' => array(
@@ -53,7 +71,7 @@ $event = static function ( string $id, float $amount ) use ( $buyer, $package ) 
 				'amount_received' => (int) round( $amount * 100 ),
 				'currency'        => strtolower( wpss_get_currency() ),
 				'metadata'        => array(
-					'service_id'  => 6205,
+					'service_id'  => $service_id,
 					'package_id'  => (int) ( $package['id'] ?? 0 ),
 					'quantity'    => 1,
 					'customer_id' => $buyer->ID,
