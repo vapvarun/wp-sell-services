@@ -3915,7 +3915,13 @@ class Settings {
 		$sanitized['max_file_size']      = absint( $input['max_file_size'] ?? 10 );
 		$sanitized['allowed_file_types'] = sanitize_text_field( $input['allowed_file_types'] ?? 'jpg,jpeg,png,gif,pdf,doc,docx' );
 
-		return $sanitized;
+		// Keep stored keys this form does not own. currency_position moved to
+		// General in 1.8.0 but is still read from here until General is saved;
+		// rebuilding the option dropped it, so "20.00$" became "$20.00" on the
+		// next System save (Basecamp 10337154229).
+		$stored = get_option( 'wpss_advanced', array() );
+
+		return $sanitized + ( is_array( $stored ) ? $stored : array() );
 	}
 
 	/**
