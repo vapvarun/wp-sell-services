@@ -927,7 +927,9 @@ select.wpss-form-input::-ms-expand {
 }
 
 .wpss-wizard .wpss-btn--success:hover:not(:disabled) {
-	background: var(--wpss-success-dark, #059669);
+	/* A shade of the button's own fill, not --wpss-success-dark: that token is
+	   an ink and turns light in dark mode, under white text. */
+	background: color-mix(in srgb, var(--wpss-success, #10b981) 82%, #000);
 }
 
 /* .wpss-btn--outline: see design-system.css (single owner). The copy removed

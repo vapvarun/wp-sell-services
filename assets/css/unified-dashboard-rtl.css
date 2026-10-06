@@ -1404,7 +1404,7 @@
 
 .wpss-status--pending_approval {
 	background: var(--wpss-status-pending-approval-bg, #c6e1c6);
-	color: var(--wpss-status-pending-approval-fg, #5b841b);
+	color: var(--wpss-status-pending-approval-fg, #3f5c13);
 }
 
 .wpss-status--in_progress {
