@@ -337,7 +337,7 @@ class TemplateLoader {
 			 */
 			$page_keys = apply_filters(
 				'wpss_fullwidth_page_keys',
-				array( 'dashboard', 'cart', 'checkout', 'become_vendor', 'registration' )
+				array( 'dashboard', 'cart', 'checkout', 'become_vendor', 'registration', 'login' )
 			);
 
 			$page_ids = array();

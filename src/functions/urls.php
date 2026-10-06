@@ -494,6 +494,14 @@ function wpss_get_page_definitions(): array {
 			'slug'      => 'create-account',
 			'required'  => false,
 		),
+		// Same shape as registration: optional, and when mapped every Sign in
+		// link follows it through core's login_url (wpss_marketplace_login_url).
+		'login'         => array(
+			'title'     => __( 'Log In', 'wp-sell-services' ),
+			'shortcode' => '[wpss_login]',
+			'slug'      => 'login',
+			'required'  => false,
+		),
 	);
 
 	/**
@@ -792,6 +800,76 @@ function wpss_marketplace_register_url( string $url ): string {
 	return $page_url ? $page_url : $url;
 }
 add_filter( 'register_url', 'wpss_marketplace_register_url' );
+
+/**
+ * Point Sign in at the marketplace's own login page when one is mapped.
+ *
+ * Every Sign in link (ours and the theme's) is built with wp_login_url(), so
+ * an owner with a [wpss_login] page still sent buyers to wp-login.php
+ * (Basecamp 10352980066). Mirrors wpss_marketplace_register_url().
+ *
+ * Left alone:
+ * - $force_reauth: auth_redirect() for wp-admin; that is core's screen.
+ * - wp-admin page loads: the session-expired modal frames wp_login_url() with
+ *   interim-login, which only wp-login.php can answer. AJAX still follows the
+ *   mapping, since our AJAX hands the URL to the front end.
+ *
+ * @since 1.8.0
+ *
+ * @param string $url          Default login URL.
+ * @param string $redirect     Where to send the user after logging in.
+ * @param bool   $force_reauth Whether core asked for re-authentication.
+ * @return string
+ */
+function wpss_marketplace_login_url( string $url, string $redirect = '', bool $force_reauth = false ): string {
+	if ( $force_reauth || ( is_admin() && ! wp_doing_ajax() ) ) {
+		return $url;
+	}
+
+	$page_id  = wpss_get_page_id( 'login' );
+	$page_url = $page_id ? get_permalink( $page_id ) : '';
+
+	if ( ! $page_url ) {
+		return $url;
+	}
+
+	return '' !== $redirect ? add_query_arg( 'redirect_to', rawurlencode( $redirect ), $page_url ) : $page_url;
+}
+add_filter( 'login_url', 'wpss_marketplace_login_url', 10, 3 );
+
+/**
+ * Send a failed sign-in from [wpss_login] back to that page, not wp-login.php.
+ *
+ * The form posts to wp-login.php like core's; on a wrong password core would
+ * show its own screen. Only forms carrying the wpss_login marker are touched.
+ *
+ * @since 1.8.0
+ *
+ * @return void
+ */
+function wpss_login_failed_redirect(): void {
+	// phpcs:disable WordPress.Security.NonceVerification.Missing -- core's login form carries no nonce; this only reads where to send the visitor back.
+	if ( empty( $_POST['wpss_login'] ) ) {
+		return;
+	}
+
+	$back = wp_validate_redirect( esc_url_raw( wp_unslash( $_POST['wpss_login_page'] ?? '' ) ), '' );
+	$to   = wp_validate_redirect( esc_url_raw( wp_unslash( $_POST['redirect_to'] ?? '' ) ), '' );
+	// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+	if ( '' === $back ) {
+		return;
+	}
+
+	$args = array( 'login' => 'failed' );
+	if ( '' !== $to ) {
+		$args['redirect_to'] = rawurlencode( $to );
+	}
+
+	wp_safe_redirect( add_query_arg( $args, $back ) );
+	exit;
+}
+add_action( 'wp_login_failed', 'wpss_login_failed_redirect' );
 
 /**
  * Get the base checkout URL (without service ID).

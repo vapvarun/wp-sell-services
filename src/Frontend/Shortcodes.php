@@ -1036,14 +1036,62 @@ class Shortcodes {
 			'wpss_login'
 		);
 
-		$redirect = $atts['redirect'] ?: home_url();
+		// Where they came from wins (every Sign in link carries redirect_to),
+		// then the shortcode's own attribute, then home.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a return address, validated below.
+		$requested = isset( $_GET['redirect_to'] ) ? esc_url_raw( wp_unslash( $_GET['redirect_to'] ) ) : '';
+		$redirect  = wp_validate_redirect( $requested, '' ) ?: ( $atts['redirect'] ?: home_url() );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display flag set by wpss_login_failed_redirect().
+		$failed = isset( $_GET['login'] ) && 'failed' === $_GET['login'];
 
-		return wp_login_form(
-			array(
-				'echo'     => false,
-				'redirect' => $redirect,
-			)
-		);
+		/*
+		 * Core's wp_login_form() came out bare: tiny unstyled inputs beside the
+		 * styled [wpss_register] card (Basecamp 10352980066). Same card, same
+		 * field classes, so dark mode, mobile and Pro's brand colour apply here
+		 * too. It still posts to wp-login.php, so core and any 2FA / captcha
+		 * plugin hooked into login run unchanged (login_form fires below).
+		 */
+		ob_start();
+		$this->render_vendor_registration_styles();
+		?>
+		<div class="wpss-vr">
+			<div class="wpss-vr__card wpss-signup-card">
+				<h2 class="wpss-vr__card-title"><?php esc_html_e( 'Welcome back', 'wp-sell-services' ); ?></h2>
+				<p class="wpss-vr__card-sub"><?php esc_html_e( 'Sign in to your orders, messages and services.', 'wp-sell-services' ); ?></p>
+				<form class="wpss-signup-form" method="post" action="<?php echo esc_url( site_url( 'wp-login.php', 'login_post' ) ); ?>">
+					<?php if ( $failed ) : ?>
+						<div class="wpss-form-error-summary" role="alert">
+							<p class="wpss-form-error-summary__title"><?php esc_html_e( 'That email or password is not right. Please try again.', 'wp-sell-services' ); ?></p>
+						</div>
+					<?php endif; ?>
+					<div class="wpss-form-group">
+						<label class="wpss-form-label" for="wpss-login-user"><?php esc_html_e( 'Email or username', 'wp-sell-services' ); ?></label>
+						<input type="text" id="wpss-login-user" name="log" class="wpss-form-input" autocomplete="username" required>
+					</div>
+					<div class="wpss-form-group">
+						<label class="wpss-form-label" for="wpss-login-pass"><?php esc_html_e( 'Password', 'wp-sell-services' ); ?></label>
+						<input type="password" id="wpss-login-pass" name="pwd" class="wpss-form-input" autocomplete="current-password" required>
+					</div>
+					<?php do_action( 'login_form' ); ?>
+					<p class="wpss-signup-form__row">
+						<label class="wpss-signup-form__remember"><input type="checkbox" name="rememberme" value="forever"> <?php esc_html_e( 'Remember me', 'wp-sell-services' ); ?></label>
+						<a href="<?php echo esc_url( wp_lostpassword_url( $redirect ) ); ?>"><?php esc_html_e( 'Forgot password?', 'wp-sell-services' ); ?></a>
+					</p>
+					<input type="hidden" name="redirect_to" value="<?php echo esc_url( $redirect ); ?>">
+					<input type="hidden" name="wpss_login" value="1">
+					<input type="hidden" name="wpss_login_page" value="<?php echo esc_url( (string) get_permalink() ); ?>">
+					<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-signup-form__submit"><?php esc_html_e( 'Sign in', 'wp-sell-services' ); ?></button>
+					<?php if ( get_option( 'users_can_register' ) ) : ?>
+						<p class="wpss-signup-form__signin">
+							<?php esc_html_e( 'New here?', 'wp-sell-services' ); ?>
+							<a href="<?php echo esc_url( wp_registration_url() ); ?>"><?php esc_html_e( 'Create an account', 'wp-sell-services' ); ?></a>
+						</p>
+					<?php endif; ?>
+				</form>
+			</div>
+		</div>
+		<?php
+		return (string) ob_get_clean();
 	}
 
 	/**
@@ -1575,8 +1623,12 @@ class Shortcodes {
 			text-align: center; font-size: 13px; color: var(--wpss-text-muted, #6b7280);
 			margin: 16px 0 0; padding-top: 16px; border-top: 1px solid var(--wpss-border, #e5e7eb);
 		}
-		.wpss-signup-form__signin a { color: var(--wpss-primary, #4f46e5); font-weight: 600; text-decoration: none; }
-		.wpss-signup-form__signin a:hover { text-decoration: underline; }
+		/* !important for the same reason as the button pin in design-system.css:
+		   BuddyX's `.entry-content a:not(...)x4` (0,5,1) turned these #111. */
+		.wpss-signup-form a { color: var(--wpss-primary-accent, #4f46e5) !important; font-weight: 600; text-decoration: none; }
+		.wpss-signup-form a:hover { text-decoration: underline; }
+		.wpss-signup-form__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; margin: 0 0 8px; }
+		.wpss-signup-form__remember { display: inline-flex; align-items: center; gap: 6px; color: var(--wpss-text-secondary, #374151); }
 
 		/* Pitch layout: hero + two columns. The narrow single-card branches
 			(already a vendor, registration closed) keep the 560px width above. */
