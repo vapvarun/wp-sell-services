@@ -341,6 +341,21 @@
 	grid-template-columns: repeat(4, 1fr);
 }
 
+/*
+ * Desktop: every stat card in one row, whatever the section's count (3, 4 or
+ * 5). frontend.css's auto-fit 200px tracks gave three per row in the ~740px
+ * content column, so four cards split 3+1 and five 3+2 (Basecamp 10350553561).
+ * Phones keep the two-column rule further down.
+ */
+@media (min-width: 1025px) {
+	.wpss-dashboard .wpss-stats-grid,
+	.wpss-dashboard .wpss-stats-grid--4 {
+		grid-template-columns: none;
+		grid-auto-flow: column;
+		grid-auto-columns: minmax(0, 1fr);
+	}
+}
+
 .wpss-stat-card {
 	background: var(--wpss-surface, #fff);
 	border-radius: var(--wpss-radius);
@@ -2313,6 +2328,8 @@ select.wpss-input option,
 	.wpss-order-card__actions {
 		width: 100%;
 		justify-content: space-between;
+		flex-wrap: wrap; /* A long action ("Complete payment") overflowed the card at 390 (Basecamp 10350547818). */
+		row-gap: 8px;
 		margin-top: 12px;
 		padding-top: 12px;
 		border-top: 1px solid var(--wpss-gray-100);
