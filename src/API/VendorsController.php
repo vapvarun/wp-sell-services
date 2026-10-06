@@ -284,27 +284,36 @@ class VendorsController extends RestController {
 			);
 		}
 
-		// Order by rating or orders (uses custom query modifier to LEFT JOIN).
+		// Order by rating or orders, read from the vendor profile row.
 		$orderby = $request->get_param( 'orderby' );
+		$sort    = null;
 		if ( 'rating' === $orderby || 'orders' === $orderby ) {
-			add_action(
-				'pre_user_query',
-				function ( $query ) use ( $orderby ) {
-					global $wpdb;
+			$sort = static function ( $query ) use ( $orderby ) {
+				global $wpdb;
 
-					// Both live on the vendor profiles table, the one store the
-					// website reads (BC #10110742943, 10337212282).
-					$profiles             = $wpdb->prefix . 'wpss_vendor_profiles';
-					$column               = 'orders' === $orderby ? 'completed_orders' : 'avg_rating';
-					$query->query_from   .= " LEFT JOIN {$profiles} AS sort_prof ON ( {$wpdb->users}.ID = sort_prof.user_id )";
-					$query->query_orderby = "ORDER BY COALESCE(sort_prof.{$column}, 0) DESC";
-				}
-			);
+				// Both live on the vendor profiles table, the one store the
+				// website reads (BC #10110742943, 10337212282). A subquery, not
+				// a JOIN: the profiles table has its own display_name, so a join
+				// made core's unqualified `display_name LIKE` search ambiguous
+				// and /vendors?search= returned nothing.
+				$profiles             = $wpdb->prefix . 'wpss_vendor_profiles';
+				$column               = 'orders' === $orderby ? 'completed_orders' : 'avg_rating';
+				$query->query_orderby = "ORDER BY COALESCE( ( SELECT sort_prof.{$column} FROM {$profiles} AS sort_prof WHERE sort_prof.user_id = {$wpdb->users}.ID LIMIT 1 ), 0 ) DESC";
+			};
+			add_action( 'pre_user_query', $sort );
 		}
 
 		$user_query = new WP_User_Query( $args );
-		$vendors    = $user_query->get_results();
-		$total      = $user_query->get_total();
+
+		// This query only. Left in place, every later user query in the same
+		// request (a second /vendors call, a /batch sub-request) took this
+		// ORDER BY too.
+		if ( $sort ) {
+			remove_action( 'pre_user_query', $sort );
+		}
+
+		$vendors = $user_query->get_results();
+		$total   = $user_query->get_total();
 
 		// Prime user meta cache to avoid N+1 queries.
 		$vendor_ids = wp_list_pluck( $vendors, 'ID' );

@@ -148,6 +148,12 @@ $ids  = array_map( 'intval', wp_list_pluck( is_array( $list ) ? $list : array(),
 sort( $ids );
 
 $check( 'public /vendors returns exactly the two active vendors', $ids === $expected );
+
+// The rating sort used to leave its query hook behind, so a second call in the
+// same request (a /batch sub-request) broke: same answer twice.
+$again = array_map( 'intval', wp_list_pluck( (array) rest_do_request( $list_request )->get_data(), 'id' ) );
+sort( $again );
+$check( 'a second /vendors call in the same request returns the same vendors', $again === $expected );
 $check( 'public /vendors omits the suspended vendor', ! in_array( $suspended, $ids, true ) );
 $check( 'public /vendors omits the role holder with no profile row', ! in_array( $roleonly, $ids, true ) );
 
