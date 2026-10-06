@@ -419,11 +419,11 @@ class AjaxHandlers {
 		}
 
 		// Buyer on in_progress orders must go through request_cancellation (24h window + delivery check).
+		$note = sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) );
 		if ( (int) $order->customer_id === $user_id && 'in_progress' === $order->status ) {
-			$note   = sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) );
 			$result = $order_service->request_cancellation( $order_id, $user_id, $reason, $note );
 		} else {
-			$result = $order_service->cancel( $order_id, $user_id, $reason );
+			$result = $order_service->cancel( $order_id, $user_id, $reason, $note );
 		}
 
 		if ( $result['success'] ) {

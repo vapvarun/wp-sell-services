@@ -1192,9 +1192,10 @@ class OrderService {
 	 * @param int    $order_id Order ID.
 	 * @param int    $user_id  User ID requesting cancellation.
 	 * @param string $reason   Cancellation reason.
+	 * @param string $note     Optional details the person typed; kept with the reason.
 	 * @return array{success: bool, message?: string}
 	 */
-	public function cancel( int $order_id, int $user_id, string $reason = '' ): array {
+	public function cancel( int $order_id, int $user_id, string $reason = '', string $note = '' ): array {
 		$order = $this->get( $order_id );
 
 		if ( ! $order ) {
@@ -1212,8 +1213,11 @@ class OrderService {
 			);
 		}
 
-		// Update status to cancelled.
-		$updated = $this->update_status( $order_id, ServiceOrder::STATUS_CANCELLED, $reason );
+		// The details typed with an immediate cancel used to be dropped; only the
+		// request path kept them (Basecamp 10351457462). Kept with the reason in
+		// the status history, which the order timeline shows.
+		$note    = sanitize_textarea_field( $note );
+		$updated = $this->update_status( $order_id, ServiceOrder::STATUS_CANCELLED, '' !== $note ? $reason . ' - ' . $note : $reason );
 
 		if ( ! $updated ) {
 			return array(
