@@ -868,19 +868,30 @@ class SchemaManager {
 			return;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-		$service_ids = $this->wpdb->get_col(
-			"SELECT p.ID FROM `{$this->wpdb->posts}` p
-			 INNER JOIN `{$this->wpdb->postmeta}` m ON m.post_id = p.ID AND m.meta_key = '_wpss_packages'
-			 LEFT JOIN `{$this->wpdb->postmeta}` n ON n.post_id = p.ID AND n.meta_key = '_wpss_package_next_id'
-			 WHERE p.post_type = 'wpss_service'
-			   AND n.post_id IS NULL
-			 LIMIT 200"
-		);
+		// Every service with packages, in id-ordered chunks. It used to pick only
+		// services with no id counter yet (LIMIT 200), so a package added after
+		// the counter existed never got an id and REST returned it as null
+		// (Basecamp 10372724117). wpss_assign_package_ids() writes only when a
+		// package is missing an id, so a full pass is safe to repeat.
+		$last_id = 0;
 
-		foreach ( (array) $service_ids as $service_id ) {
-			wpss_assign_package_ids( (int) $service_id );
-		}
+		do {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			$service_ids = $this->wpdb->get_col(
+				$this->wpdb->prepare(
+					"SELECT p.ID FROM `{$this->wpdb->posts}` p
+					 INNER JOIN `{$this->wpdb->postmeta}` m ON m.post_id = p.ID AND m.meta_key = '_wpss_packages'
+					 WHERE p.post_type = 'wpss_service' AND p.ID > %d
+					 ORDER BY p.ID ASC LIMIT 200",
+					$last_id
+				)
+			);
+
+			foreach ( (array) $service_ids as $service_id ) {
+				$last_id = (int) $service_id;
+				wpss_assign_package_ids( $last_id );
+			}
+		} while ( 200 === count( (array) $service_ids ) );
 	}
 
 	/**
@@ -1761,6 +1772,8 @@ class SchemaManager {
 	 */
 	private function run_1_8_0_data_migrations(): void {
 		$this->reword_stored_notifications();
+
+		$this->backfill_package_ids();
 
 		// Deliveries sent back for revision before 1.8.0 have no responded_at,
 		// so the timeline left the revision out. Date them by the order's own
