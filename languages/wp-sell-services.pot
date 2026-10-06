@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-06T11:33:35+00:00\n"
+"POT-Creation-Date: 2026-10-06T12:21:05+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -516,7 +516,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:1195
 #: src/Admin/Pages/VendorsPage.php:1646
 #: src/Frontend/Tour.php:432
-#: templates/myaccount/vendor-dashboard.php:202
+#: templates/myaccount/vendor-dashboard.php:192
 #: templates/partials/vendor-card.php:113
 msgid "Orders"
 msgstr ""
@@ -1031,7 +1031,7 @@ msgstr ""
 #: src/Frontend/Tour.php:598
 #: src/Frontend/UnifiedDashboard.php:526
 #: src/Frontend/UnifiedDashboard.php:840
-#: templates/myaccount/vendor-dashboard.php:210
+#: templates/myaccount/vendor-dashboard.php:200
 msgid "Messages"
 msgstr ""
 
@@ -1072,7 +1072,7 @@ msgstr ""
 #: templates/dashboard/partials/order-row.php:121
 #: templates/emails/withdrawal-auto.php:39
 #: templates/emails/withdrawal-requested.php:39
-#: templates/single-request.php:303
+#: templates/single-request.php:316
 msgid "Unknown"
 msgstr ""
 
@@ -1530,7 +1530,7 @@ msgstr ""
 
 #: src/Admin/Metaboxes/BuyerRequestMetabox.php:46
 #: templates/dashboard/sections/edit-request.php:87
-#: templates/single-request.php:432
+#: templates/single-request.php:445
 msgid "Request Details"
 msgstr ""
 
@@ -1539,7 +1539,7 @@ msgstr ""
 #: src/Frontend/UnifiedDashboard.php:503
 #: src/Frontend/UnifiedDashboard.php:834
 #: templates/content-request-card.php:255
-#: templates/single-request.php:465
+#: templates/single-request.php:478
 msgid "Proposals"
 msgstr ""
 
@@ -1621,8 +1621,8 @@ msgstr ""
 #: templates/content-request-card.php:245
 #: templates/order/order-view.php:1630
 #: templates/order/order-view.php:1676
-#: templates/single-request.php:378
-#: templates/single-request.php:447
+#: templates/single-request.php:391
+#: templates/single-request.php:460
 #, php-format
 msgid "%d day"
 msgid_plural "%d days"
@@ -1783,8 +1783,8 @@ msgstr ""
 #: src/Admin/Metaboxes/ServiceMetabox.php:661
 #: src/Admin/Metaboxes/ServiceMetabox.php:1842
 #: src/Frontend/ServiceWizard.php:1314
-#: templates/single-request.php:614
-#: templates/single-request.php:631
+#: templates/single-request.php:627
+#: templates/single-request.php:644
 msgid "days"
 msgstr ""
 
@@ -4251,8 +4251,8 @@ msgid "No reviews"
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1069
-#: src/API/VendorsController.php:336
-#: src/API/VendorsController.php:348
+#: src/API/VendorsController.php:345
+#: src/API/VendorsController.php:357
 #: src/Frontend/AjaxHandlers.php:1983
 #: src/Frontend/Shortcodes.php:534
 #: src/Frontend/Shortcodes.php:545
@@ -4270,7 +4270,7 @@ msgstr ""
 #: src/Admin/Pages/VendorsPage.php:1105
 #: src/Blocks/SellerCard.php:220
 #: templates/partials/vendor-card.php:173
-#: templates/single-request.php:413
+#: templates/single-request.php:426
 msgid "View Profile"
 msgstr ""
 
@@ -4300,7 +4300,7 @@ msgid "Available to withdraw"
 msgstr ""
 
 #: src/Admin/Pages/VendorsPage.php:1198
-#: templates/myaccount/vendor-dashboard.php:218
+#: templates/myaccount/vendor-dashboard.php:208
 msgid "Earnings"
 msgstr ""
 
@@ -4631,7 +4631,7 @@ msgstr ""
 #: templates/emails/withdrawal-rejected.php:50
 #: templates/order/order-view.php:1466
 #: templates/order/order-view.php:1622
-#: templates/single-request.php:663
+#: templates/single-request.php:676
 msgid "Amount"
 msgstr ""
 
@@ -4704,7 +4704,7 @@ msgstr ""
 #: src/SEO/SchemaMarkup.php:594
 #: src/SEO/ServiceSchemaPiece.php:247
 #: templates/content-request-card.php:112
-#: templates/single-request.php:515
+#: templates/single-request.php:528
 msgid "Anonymous"
 msgstr ""
 
@@ -5028,7 +5028,7 @@ msgstr ""
 #: templates/order/order-view.php:2025
 #: templates/order/order-view.php:2087
 #: templates/order/order-view.php:2273
-#: templates/single-request.php:553
+#: templates/single-request.php:566
 msgid "Close"
 msgstr ""
 
@@ -5051,7 +5051,7 @@ msgstr ""
 #: templates/order/order-view.php:2007
 #: templates/order/order-view.php:2069
 #: templates/order/order-view.php:2299
-#: templates/single-request.php:677
+#: templates/single-request.php:690
 msgid "Cancel"
 msgstr ""
 
@@ -5173,7 +5173,7 @@ msgstr ""
 
 #: src/Admin/RequestListScreen.php:61
 #: templates/content-request-card.php:225
-#: templates/single-request.php:436
+#: templates/single-request.php:449
 msgid "Budget"
 msgstr ""
 
@@ -5183,7 +5183,7 @@ msgstr ""
 #: templates/dashboard/sections/edit-request.php:201
 #: templates/myaccount/service-orders.php:72
 #: templates/myaccount/service-orders.php:120
-#: templates/single-request.php:457
+#: templates/single-request.php:470
 msgid "Deadline"
 msgstr ""
 
@@ -7120,7 +7120,7 @@ msgstr ""
 msgid "Proposal rejected."
 msgstr ""
 
-#: src/API/BuyerRequestsController.php:856
+#: src/API/BuyerRequestsController.php:855
 #: src/API/ConversationsController.php:731
 #: src/API/DisputesController.php:873
 #: src/API/NotificationsController.php:315
@@ -7129,11 +7129,11 @@ msgstr ""
 #: src/API/ReviewsController.php:1067
 #: src/API/ServicesController.php:262
 #: src/API/ServicesController.php:1619
-#: src/API/VendorsController.php:946
+#: src/API/VendorsController.php:955
 msgid "Current page."
 msgstr ""
 
-#: src/API/BuyerRequestsController.php:862
+#: src/API/BuyerRequestsController.php:861
 #: src/API/ConversationsController.php:737
 #: src/API/DisputesController.php:879
 #: src/API/MediaController.php:63
@@ -7144,7 +7144,7 @@ msgstr ""
 #: src/API/ReviewsController.php:1073
 #: src/API/ServicesController.php:268
 #: src/API/ServicesController.php:1624
-#: src/API/VendorsController.php:952
+#: src/API/VendorsController.php:961
 msgid "Items per page."
 msgstr ""
 
@@ -7908,7 +7908,7 @@ msgid "Payment capture failed."
 msgstr ""
 
 #: src/API/PortfolioController.php:52
-#: src/API/VendorsController.php:987
+#: src/API/VendorsController.php:996
 msgid "Vendor ID."
 msgstr ""
 
@@ -8190,7 +8190,7 @@ msgstr ""
 
 #: src/API/ReviewsController.php:1094
 #: src/API/ServicesController.php:1658
-#: src/API/VendorsController.php:967
+#: src/API/VendorsController.php:976
 msgid "Order by field."
 msgstr ""
 
@@ -8408,83 +8408,83 @@ msgid "Vendor bio/description."
 msgstr ""
 
 #: src/API/VendorsController.php:217
-#: src/API/VendorsController.php:1008
+#: src/API/VendorsController.php:1017
 msgid "Vendor skills."
 msgstr ""
 
-#: src/API/VendorsController.php:371
-#: src/API/VendorsController.php:399
-#: src/API/VendorsController.php:523
+#: src/API/VendorsController.php:380
+#: src/API/VendorsController.php:408
+#: src/API/VendorsController.php:532
 #: src/functions/vendors.php:432
 msgid "You are not registered as a vendor."
 msgstr ""
 
-#: src/API/VendorsController.php:479
+#: src/API/VendorsController.php:488
 #: src/Frontend/AjaxHandlers.php:3195
 msgid "Your profile could not be saved. Please try again or contact support."
 msgstr ""
 
-#: src/API/VendorsController.php:548
+#: src/API/VendorsController.php:557
 msgid "Could not update vacation mode. Please try again."
 msgstr ""
 
-#: src/API/VendorsController.php:576
+#: src/API/VendorsController.php:585
 #: src/Services/VendorService.php:223
 msgid "You are already registered as a vendor."
 msgstr ""
 
-#: src/API/VendorsController.php:585
+#: src/API/VendorsController.php:594
 #: src/Services/VendorService.php:231
 msgid "You already have a pending vendor application. Please wait for admin approval."
 msgstr ""
 
-#: src/API/VendorsController.php:595
+#: src/API/VendorsController.php:604
 #: src/Frontend/UnifiedDashboard.php:1107
 #: src/Services/VendorService.php:215
 msgid "Vendor registration is currently closed."
 msgstr ""
 
-#: src/API/VendorsController.php:645
+#: src/API/VendorsController.php:654
 msgid "You are now registered as a vendor."
 msgstr ""
 
-#: src/API/VendorsController.php:646
+#: src/API/VendorsController.php:655
 msgid "Your vendor application has been submitted for review."
 msgstr ""
 
-#: src/API/VendorsController.php:959
+#: src/API/VendorsController.php:968
 msgid "Search by name."
 msgstr ""
 
-#: src/API/VendorsController.php:963
+#: src/API/VendorsController.php:972
 msgid "Filter by skill."
 msgstr ""
 
-#: src/API/VendorsController.php:993
+#: src/API/VendorsController.php:1002
 msgid "Display name."
 msgstr ""
 
-#: src/API/VendorsController.php:998
+#: src/API/VendorsController.php:1007
 msgid "Vendor bio."
 msgstr ""
 
-#: src/API/VendorsController.php:1003
+#: src/API/VendorsController.php:1012
 msgid "Vendor tagline."
 msgstr ""
 
-#: src/API/VendorsController.php:1014
+#: src/API/VendorsController.php:1023
 msgid "Languages spoken."
 msgstr ""
 
-#: src/API/VendorsController.php:1020
+#: src/API/VendorsController.php:1029
 msgid "Social media links."
 msgstr ""
 
-#: src/API/VendorsController.php:1025
+#: src/API/VendorsController.php:1034
 msgid "Typical response time."
 msgstr ""
 
-#: src/API/VendorsController.php:1030
+#: src/API/VendorsController.php:1039
 msgid "Avatar media attachment ID."
 msgstr ""
 
@@ -8932,8 +8932,8 @@ msgid "The created buyer request."
 msgstr ""
 
 #: src/Core/AbilitiesRegistrar.php:585
-#: templates/single-request.php:483
-#: templates/single-request.php:680
+#: templates/single-request.php:496
+#: templates/single-request.php:693
 msgid "Submit Proposal"
 msgstr ""
 
@@ -10207,7 +10207,7 @@ msgstr ""
 #: src/Frontend/ServiceArchiveView.php:442
 #: src/Frontend/ServiceWizard.php:681
 #: templates/partials/service-packages.php:140
-#: templates/single-request.php:608
+#: templates/single-request.php:621
 msgid "Delivery Time"
 msgstr ""
 
@@ -10918,7 +10918,7 @@ msgstr ""
 #: src/Frontend/ServiceWizard.php:2449
 #: src/Frontend/UnifiedDashboard.php:958
 #: src/functions/urls.php:482
-#: templates/single-request.php:496
+#: templates/single-request.php:509
 msgid "Become a Vendor"
 msgstr ""
 
@@ -11194,7 +11194,7 @@ msgid "Day"
 msgstr ""
 
 #: src/Frontend/SingleServiceView.php:144
-#: templates/single-request.php:667
+#: templates/single-request.php:680
 msgid "Days"
 msgstr ""
 
@@ -14170,19 +14170,15 @@ msgid "reviews"
 msgstr ""
 
 #: src/functions/vendors.php:965
-msgid "% response rate"
-msgstr ""
-
-#: src/functions/vendors.php:966
 msgid "% on-time delivery"
 msgstr ""
 
-#: src/functions/vendors.php:967
+#: src/functions/vendors.php:966
 msgid "days selling"
 msgstr ""
 
 #. translators: 1: next seller level, 2: list of requirements not yet met
-#: src/functions/vendors.php:979
+#: src/functions/vendors.php:978
 #, php-format
 msgid "%1$s needs %2$s."
 msgstr ""
@@ -15434,29 +15430,29 @@ msgstr ""
 msgid "Unlimited revisions"
 msgstr ""
 
-#: src/Models/VendorProfile.php:445
-#: src/Services/SellerLevelService.php:251
+#: src/Models/VendorProfile.php:439
+#: src/Services/SellerLevelService.php:240
 msgid "New Seller"
 msgstr ""
 
-#: src/Models/VendorProfile.php:446
+#: src/Models/VendorProfile.php:440
 msgid "Rising Seller"
 msgstr ""
 
-#: src/Models/VendorProfile.php:447
+#: src/Models/VendorProfile.php:441
 msgid "Top Rated"
 msgstr ""
 
-#: src/Models/VendorProfile.php:448
+#: src/Models/VendorProfile.php:442
 msgid "Pro Seller"
 msgstr ""
 
-#: src/Models/VendorProfile.php:532
+#: src/Models/VendorProfile.php:526
 msgid "Within an hour"
 msgstr ""
 
 #. translators: %d: number of hours
-#: src/Models/VendorProfile.php:538
+#: src/Models/VendorProfile.php:532
 #, php-format
 msgid "Within %d hour"
 msgid_plural "Within %d hours"
@@ -15464,7 +15460,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of days
-#: src/Models/VendorProfile.php:546
+#: src/Models/VendorProfile.php:540
 #, php-format
 msgid "Within %d day"
 msgid_plural "Within %d days"
@@ -16038,7 +16034,7 @@ msgstr ""
 #. translators: %d: number of days
 #: src/SEO/RankMathIntegration.php:174
 #: src/SEO/YoastIntegration.php:205
-#: templates/single-request.php:334
+#: templates/single-request.php:347
 #, php-format
 msgid "%d day delivery"
 msgid_plural "%d days delivery"
@@ -16253,7 +16249,7 @@ msgid "Email not sent"
 msgstr ""
 
 #: src/Services/BuyerRequestService.php:763
-#: templates/single-request.php:501
+#: templates/single-request.php:514
 msgid "This request is no longer accepting proposals."
 msgstr ""
 
@@ -17035,7 +17031,7 @@ msgid "[%1$s] Congratulations! You've been promoted to %2$s"
 msgstr ""
 
 #: src/Services/EmailService.php:1699
-#: src/Services/SellerLevelService.php:371
+#: src/Services/SellerLevelService.php:360
 msgid "Congratulations! Level Up!"
 msgstr ""
 
@@ -18742,7 +18738,7 @@ msgid "Price: High to Low"
 msgstr ""
 
 #. translators: %s: new seller level
-#: src/Services/SellerLevelService.php:374
+#: src/Services/SellerLevelService.php:363
 #, php-format
 msgid "You have been promoted to %s! Keep up the great work."
 msgstr ""
@@ -19074,7 +19070,7 @@ msgid "Send Proposal"
 msgstr ""
 
 #: templates/content-request-card.php:275
-#: templates/single-request.php:488
+#: templates/single-request.php:501
 msgid "Log in to send a proposal"
 msgstr ""
 
@@ -19868,7 +19864,7 @@ msgstr ""
 
 #. translators: %s: budget amount or range
 #: templates/dashboard/sections/requests.php:113
-#: templates/single-request.php:598
+#: templates/single-request.php:611
 #, php-format
 msgid "Budget: %s"
 msgstr ""
@@ -20364,7 +20360,7 @@ msgstr ""
 
 #: templates/emails/milestone-proposed.php:59
 #: templates/order/order-view.php:1375
-#: templates/single-request.php:388
+#: templates/single-request.php:401
 msgid "Deliverables:"
 msgstr ""
 
@@ -20904,42 +20900,38 @@ msgid "Active Orders"
 msgstr ""
 
 #: templates/myaccount/vendor-dashboard.php:146
-msgid "Response Rate"
-msgstr ""
-
-#: templates/myaccount/vendor-dashboard.php:156
 msgid "Response Time"
 msgstr ""
 
-#: templates/myaccount/vendor-dashboard.php:163
+#: templates/myaccount/vendor-dashboard.php:153
 msgid "On-Time Delivery"
 msgstr ""
 
-#: templates/myaccount/vendor-dashboard.php:173
+#: templates/myaccount/vendor-dashboard.php:163
 msgid "Order Completion"
 msgstr ""
 
-#: templates/myaccount/vendor-dashboard.php:203
+#: templates/myaccount/vendor-dashboard.php:193
 msgid "View and manage your orders"
 msgstr ""
 
-#: templates/myaccount/vendor-dashboard.php:211
+#: templates/myaccount/vendor-dashboard.php:201
 msgid "Chat with your buyers"
 msgstr ""
 
-#: templates/myaccount/vendor-dashboard.php:219
+#: templates/myaccount/vendor-dashboard.php:209
 msgid "Track your revenue"
 msgstr ""
 
-#: templates/myaccount/vendor-dashboard.php:244
+#: templates/myaccount/vendor-dashboard.php:234
 msgid "Set Up Your Vendor Profile"
 msgstr ""
 
-#: templates/myaccount/vendor-dashboard.php:245
+#: templates/myaccount/vendor-dashboard.php:235
 msgid "Complete your profile to start selling services on our marketplace."
 msgstr ""
 
-#: templates/myaccount/vendor-dashboard.php:247
+#: templates/myaccount/vendor-dashboard.php:237
 msgid "Get Started"
 msgstr ""
 
@@ -21085,7 +21077,7 @@ msgstr ""
 #: templates/order/milestone-view.php:232
 #: templates/order/order-view.php:1410
 #: templates/order/order-view.php:1657
-#: templates/single-request.php:410
+#: templates/single-request.php:423
 msgid "Decline"
 msgstr ""
 
@@ -21259,7 +21251,7 @@ msgid "Order Number"
 msgstr ""
 
 #: templates/order/order-requirements.php:121
-#: templates/single-request.php:442
+#: templates/single-request.php:455
 msgid "Expected Delivery"
 msgstr ""
 
@@ -22317,14 +22309,22 @@ msgstr ""
 msgid "Skills Required"
 msgstr ""
 
+#. translators: 1: number of files, 2: sign-in URL
+#: templates/single-request.php:237
+#, php-format
+msgid "%1$d file attached. <a href=\"%2$s\">Sign in</a> to view it."
+msgid_plural "%1$d files attached. <a href=\"%2$s\">Sign in</a> to view them."
+msgstr[0] ""
+msgstr[1] ""
+
 #. translators: %d: number of proposals
-#: templates/single-request.php:277
+#: templates/single-request.php:290
 #, php-format
 msgid "Proposals (%d)"
 msgstr ""
 
 #. translators: %d: number of orders
-#: templates/single-request.php:316
+#: templates/single-request.php:329
 #, php-format
 msgid "%d order"
 msgid_plural "%d orders"
@@ -22332,110 +22332,110 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: phase count
-#: templates/single-request.php:348
+#: templates/single-request.php:361
 #, php-format
 msgid "%d-phase plan"
 msgid_plural "%d-phase plan"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/single-request.php:355
-#: templates/single-request.php:574
+#: templates/single-request.php:368
+#: templates/single-request.php:587
 msgid "Fixed price"
 msgstr ""
 
-#: templates/single-request.php:367
+#: templates/single-request.php:380
 msgid "View phase breakdown"
 msgstr ""
 
-#: templates/single-request.php:394
-#: templates/single-request.php:630
+#: templates/single-request.php:407
+#: templates/single-request.php:643
 msgid "Project total:"
 msgstr ""
 
-#: templates/single-request.php:407
+#: templates/single-request.php:420
 msgid "Accept Proposal"
 msgstr ""
 
-#: templates/single-request.php:474
+#: templates/single-request.php:487
 msgid "You have already submitted a proposal for this request."
 msgstr ""
 
-#: templates/single-request.php:477
+#: templates/single-request.php:490
 msgid "Withdraw Proposal"
 msgstr ""
 
-#: templates/single-request.php:507
+#: templates/single-request.php:520
 msgid "About the Buyer"
 msgstr ""
 
 #. translators: %s: date when user registered
-#: templates/single-request.php:522
+#: templates/single-request.php:535
 #, php-format
 msgid "Member since %s"
 msgstr ""
 
-#: templates/single-request.php:552
+#: templates/single-request.php:565
 msgid "Submit Your Proposal"
 msgstr ""
 
-#: templates/single-request.php:562
+#: templates/single-request.php:575
 msgid "Cover Letter"
 msgstr ""
 
-#: templates/single-request.php:566
+#: templates/single-request.php:579
 msgid "Introduce yourself and explain why you are the best fit for this project..."
 msgstr ""
 
-#: templates/single-request.php:567
+#: templates/single-request.php:580
 msgid "Explain your relevant experience and how you would approach this project."
 msgstr ""
 
-#: templates/single-request.php:571
+#: templates/single-request.php:584
 msgid "Contract type"
 msgstr ""
 
-#: templates/single-request.php:574
+#: templates/single-request.php:587
 msgid "one payment, one delivery."
 msgstr ""
 
-#: templates/single-request.php:578
+#: templates/single-request.php:591
 msgid "Phased project"
 msgstr ""
 
-#: templates/single-request.php:578
+#: templates/single-request.php:591
 msgid "split the work into paid phases the buyer funds one at a time. Each phase is paid up front, delivered, then approved before the next unlocks."
 msgstr ""
 
-#: templates/single-request.php:585
+#: templates/single-request.php:598
 msgid "Your Price"
 msgstr ""
 
-#: templates/single-request.php:621
+#: templates/single-request.php:634
 msgid "Plan the project as paid phases. Each phase is a separate payment the buyer makes when ready. You can add more phases later if scope grows."
 msgstr ""
 
-#: templates/single-request.php:627
+#: templates/single-request.php:640
 msgid "+ Add another phase"
 msgstr ""
 
-#: templates/single-request.php:631
+#: templates/single-request.php:644
 msgid "Total time:"
 msgstr ""
 
-#: templates/single-request.php:657
+#: templates/single-request.php:670
 msgid "Phase title (e.g. Wireframes)"
 msgstr ""
 
-#: templates/single-request.php:658
+#: templates/single-request.php:671
 msgid "Remove phase"
 msgstr ""
 
-#: templates/single-request.php:660
+#: templates/single-request.php:673
 msgid "What the buyer is paying for in this phase"
 msgstr ""
 
-#: templates/single-request.php:671
+#: templates/single-request.php:684
 msgid "Deliverables (optional, e.g. Figma file + 2 mockups)"
 msgstr ""
 
