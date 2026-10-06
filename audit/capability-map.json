@@ -257,7 +257,7 @@
     ]
   },
   "bare_check_allowlist": {
-    "src/Services/OrderService.php:815": "Deliberate staff bypass of the order state machine, scoped to wpss_manage_orders (scope: any) and manage_options. The forcing is audited downstream via can_transition_naturally() -> AuditLogService, so forensics can tell a forced transition from a natural one.",
+    "src/Services/OrderService.php:828": "Deliberate staff bypass of the order state machine, scoped to wpss_manage_orders (scope: any) and manage_options. The forcing is audited downstream via can_transition_naturally() -> AuditLogService, so forensics can tell a forced transition from a natural one.",
     "src/Core/AbilitiesRegistrar.php:273": "Entry gate on the wpss/create-service ability - no object exists at registration time; the inner REST route re-checks.",
     "src/Core/AbilitiesRegistrar.php:437": "Entry gate on wpss/view-earnings. The ability delegates to GET /earnings/summary, which scopes to get_current_user_id().",
     "src/Core/AbilitiesRegistrar.php:490": "Entry gate on wpss/request-withdrawal. Delegates to POST /earnings/withdrawals, which scopes to the caller.",

@@ -786,6 +786,14 @@ class OrderWorkflowManager {
 			);
 		}
 
+		// Cancelling a paid order gives the buyer their money back, so its paid
+		// extensions and tips go back too, as on a full refund (Basecamp
+		// 10336467671). A cancel that started at the rail is left to the review
+		// list, as refunds from the rail are.
+		if ( 'paid' === (string) $order->payment_status && ! OrderService::is_settled_at_rail( $order_id ) ) {
+			$this->order_service->refund_paid_children( $order_id );
+		}
+
 		// Note: Notifications handled by Plugin.php → NotificationService::notify_order_status().
 
 		/**
@@ -981,9 +989,8 @@ class OrderWorkflowManager {
 			// not the running total. Each slice reverses its own vendor share.
 			$moved = $service->apply_refund_status( $oid, round( $target - $already, $decimals ), $status, true );
 
-			if ( $moved && '' !== $refund_id ) {
-				$seen[] = $refund_id;
-				$provider->update_item_meta( $oid, '_wpss_gateway_refund_ids', $seen );
+			if ( $moved ) {
+				self::remember_gateway_refund( $oid, $refund_id );
 			}
 
 			wpss_log(
@@ -999,6 +1006,33 @@ class OrderWorkflowManager {
 				),
 				$moved ? 'info' : 'error'
 			);
+		}
+	}
+
+	/**
+	 * Record a gateway refund id as applied to an order.
+	 *
+	 * The webhook path, handle_gateway_refund(), skips ids it has seen. A refund made from
+	 * wp-admin records its id here too, so the gateway's own webhook for that
+	 * refund is not added a second time (Basecamp 10375174271).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int    $order_id  Order ID.
+	 * @param string $refund_id Gateway refund ID; empty is ignored.
+	 * @return void
+	 */
+	public static function remember_gateway_refund( int $order_id, string $refund_id ): void {
+		if ( '' === $refund_id ) {
+			return;
+		}
+
+		$provider = wpss_get_order_provider();
+		$seen     = (array) $provider->get_item_meta( $order_id, '_wpss_gateway_refund_ids' );
+
+		if ( ! in_array( $refund_id, $seen, true ) ) {
+			$seen[] = $refund_id;
+			$provider->update_item_meta( $order_id, '_wpss_gateway_refund_ids', $seen );
 		}
 	}
 

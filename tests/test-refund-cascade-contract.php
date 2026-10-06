@@ -130,6 +130,19 @@ try {
 	$review = function_exists( 'wpss_get_refund_review_items' ) ? wpss_get_refund_review_items( 200 ) : array( 'uncascaded' => array() );
 	$check( '  and the parent is listed for the owner to review', in_array( $parent3, $review['uncascaded'], true ) );
 	$check( '  while the cascaded parent is not', ! in_array( $parent, $review['uncascaded'], true ) );
+
+	// --- Cancelling a paid order also refunds its paid extension ---------------
+	// The cancel path refunded the parent only (QA bounce on 10336467671).
+	$parent4    = $seed( 100.0, 90.0 );
+	$extension4 = $seed( 20.0, 18.0, ServiceOrder::SUB_ORDER_TYPE_EXTENSION, $parent4 );
+	array_push( $ids, $parent4, $extension4 );
+	$wpdb->update( $orders, array( 'status' => 'in_progress' ), array( 'id' => $parent4 ) );
+
+	$service->update_status( $parent4, ServiceOrder::STATUS_CANCELLED );
+	$check( 'cancelling a paid parent cancels it', 'cancelled' === $status( $parent4 ) );
+	$check( '  and refunds its paid extension', 'refunded' === $status( $extension4 ) );
+	$check( '  through the gateway', in_array( $extension4, $refunded_orders, true ) );
+	$check( '  with the vendor credit reversed', 1 === $reversals( $extension4 ) );
 } finally {
 	remove_filter( 'wpss_pre_process_gateway_refund', $mock, 10 );
 

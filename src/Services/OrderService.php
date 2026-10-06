@@ -525,6 +525,10 @@ class OrderService {
 
 		OrderWorkflowManager::clear_failed_refund( $order_id );
 
+		if ( is_array( $gateway ) && ! empty( $gateway['success'] ) ) {
+			OrderWorkflowManager::remember_gateway_refund( $order_id, (string) ( $gateway['refund_id'] ?? '' ) );
+		}
+
 		// A full refund returns everything the buyer paid for this order,
 		// including the extensions and tips they paid for separately. The seam
 		// used to stop at the parent, so the extension stayed completed and
@@ -575,7 +579,7 @@ class OrderService {
 	 * @param int $parent_id Parent order ID.
 	 * @return array<int, string> Child order ID => refund outcome.
 	 */
-	private function refund_paid_children( int $parent_id ): array {
+	public function refund_paid_children( int $parent_id ): array {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one indexed lookup (idx_platform) per full refund.
