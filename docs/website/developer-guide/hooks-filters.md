@@ -767,8 +767,8 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:958` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:183` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:659` |
-| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1361` |
-| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1434` |
+| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1362` |
+| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1435` |
 | `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:239` |
 | `wpss_blocks` | `$blocks` | `src/Blocks/BlocksManager.php:95` |
 | `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:289` |
@@ -780,7 +780,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_realtime_settings` | `array $settings` | `RealtimeService.php` |
 | `wpss_review_window_days` | `$days` | `src/Services/ReviewService.php:519` |
 | `wpss_auto_approve_reviews` | `$auto_approve` (default true) | `src/API/ReviewsController.php:426` |
-| `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:601` |
+| `wpss_vendor_registration_open` | `$open` (default true) | `src/API/VendorsController.php:590` |
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:112` |
 | `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:373` |
 | `wpss_requirements_allowed_file_types` | `$allowed` | `src/functions/files.php:383` |

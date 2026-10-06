@@ -292,23 +292,12 @@ class VendorsController extends RestController {
 				function ( $query ) use ( $orderby ) {
 					global $wpdb;
 
-					if ( 'orders' === $orderby ) {
-						// completed_orders lives in the vendor profiles table. The
-						// _wpss_completed_orders user meta was never written, so the
-						// old meta join sorted every vendor as 0 (BC #10110742943).
-						$profiles             = $wpdb->prefix . 'wpss_vendor_profiles';
-						$query->query_from   .= " LEFT JOIN {$profiles} AS sort_prof ON ( {$wpdb->users}.ID = sort_prof.user_id )";
-						$query->query_orderby = 'ORDER BY COALESCE(sort_prof.completed_orders, 0) DESC';
-						return;
-					}
-
-					// Rating still comes from the _wpss_rating_average user meta,
-					// which does have a writer.
-					$query->query_from   .= $wpdb->prepare(
-						" LEFT JOIN {$wpdb->usermeta} AS sort_meta ON ( {$wpdb->users}.ID = sort_meta.user_id AND sort_meta.meta_key = %s )",
-						'_wpss_rating_average'
-					);
-					$query->query_orderby = 'ORDER BY COALESCE(sort_meta.meta_value+0, 0) DESC';
+					// Both live on the vendor profiles table, the one store the
+					// website reads (BC #10110742943, 10337212282).
+					$profiles             = $wpdb->prefix . 'wpss_vendor_profiles';
+					$column               = 'orders' === $orderby ? 'completed_orders' : 'avg_rating';
+					$query->query_from   .= " LEFT JOIN {$profiles} AS sort_prof ON ( {$wpdb->users}.ID = sort_prof.user_id )";
+					$query->query_orderby = "ORDER BY COALESCE(sort_prof.{$column}, 0) DESC";
 				}
 			);
 		}
@@ -838,7 +827,7 @@ class VendorsController extends RestController {
 				'total_reviews'     => (int) $review_stats->total,
 				'average_rating'    => round( (float) $review_stats->average, 1 ),
 				'avg_response_time' => $avg_response_time,
-				'member_since'      => $this->format_datetime( get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: null ),
+				'member_since'      => $this->format_datetime( ( $wpss_vp = wpss_get_vendor( $vendor_id ) ) && $wpss_vp->member_since ? $wpss_vp->member_since->format( 'Y-m-d H:i:s' ) : null ),
 			)
 		);
 	}
@@ -874,10 +863,10 @@ class VendorsController extends RestController {
 			'languages'        => get_user_meta( $vendor_id, '_wpss_vendor_languages', true ) ?: array(),
 			'response_time'    => get_user_meta( $vendor_id, '_wpss_vendor_response_time', true ) ?: '',
 			'social_links'     => $profile ? $profile->social_links : array(),
-			'rating_average'   => (float) get_user_meta( $vendor_id, '_wpss_rating_average', true ) ?: 0,
-			'rating_count'     => (int) get_user_meta( $vendor_id, '_wpss_rating_count', true ) ?: 0,
+			'rating_average'   => $profile ? (float) $profile->rating : 0.0,
+			'rating_count'     => $profile ? (int) $profile->review_count : 0,
 			'completed_orders' => $profile ? $profile->orders_completed : 0,
-			'member_since'     => $this->format_datetime( get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered ),
+			'member_since'     => $this->format_datetime( $profile && $profile->member_since ? $profile->member_since->format( 'Y-m-d H:i:s' ) : $vendor->user_registered ),
 			'is_verified'      => $profile ? $profile->is_verified : false,
 			'country'          => $profile ? $profile->country : '',
 		);

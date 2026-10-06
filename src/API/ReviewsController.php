@@ -870,18 +870,11 @@ class ReviewsController extends RestController {
 
 		wpss_recount_service_rating( $service_id );
 
-		// Update vendor rating.
-		$vendor_stats = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT COUNT(*) as count, AVG(rating) as average
-				FROM {$table}
-				WHERE vendor_id = %d AND status = 'approved'",
-				$vendor_id
-			)
-		);
-
-		update_user_meta( $vendor_id, '_wpss_rating_count', (int) $vendor_stats->count );
-		update_user_meta( $vendor_id, '_wpss_rating_average', round( (float) $vendor_stats->average, 1 ) );
+		// The vendor's rating lives on the profile row, which every surface reads
+		// through wpss_get_vendor(). The old _wpss_rating_* user meta written here
+		// had no other writer, so REST read figures the website never showed
+		// (Basecamp 10337212282).
+		( new \WPSellServices\Database\Repositories\VendorProfileRepository() )->update_stats( $vendor_id );
 	}
 
 	/**

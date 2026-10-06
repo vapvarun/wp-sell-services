@@ -984,10 +984,10 @@ class AuthController extends RestController {
 				'can_create_services' => current_user_can( 'wpss_manage_services' ) && $is_vendor,
 				'can_manage_orders'   => current_user_can( 'wpss_vendor_orders' ) || current_user_can( 'wpss_manage_orders' ),
 			),
-			// Same meta keys /me reads, so the two endpoints cannot report
+			// Same profile row /me reads, so the two endpoints cannot report
 			// different numbers for the same user.
-			'rating'        => (float) get_user_meta( $user->ID, '_wpss_rating_average', true ) ?: 0,
-			'review_count'  => (int) get_user_meta( $user->ID, '_wpss_rating_count', true ) ?: 0,
+			'rating'        => ( $wpss_vp = wpss_get_vendor( (int) $user->ID ) ) ? (float) $wpss_vp->rating : 0.0,
+			'review_count'  => $wpss_vp ? (int) $wpss_vp->review_count : 0,
 		);
 	}
 }

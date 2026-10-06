@@ -586,8 +586,8 @@ class ServicesController extends RestController {
 			'country'          => $profile ? (string) $profile->country : '',
 			'is_verified'      => $profile ? (bool) $profile->is_verified : false,
 			'completed_orders' => $profile ? (int) $profile->orders_completed : 0,
-			'rating_average'   => (float) get_user_meta( $vendor_id, '_wpss_rating_average', true ),
-			'rating_count'     => (int) get_user_meta( $vendor_id, '_wpss_rating_count', true ),
+			'rating_average'   => $profile ? (float) $profile->rating : 0.0,
+			'rating_count'     => $profile ? (int) $profile->review_count : 0,
 			'response_time'    => (string) ( get_user_meta( $vendor_id, '_wpss_vendor_response_time', true ) ?: '' ),
 		);
 	}

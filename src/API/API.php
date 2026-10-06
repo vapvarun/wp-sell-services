@@ -1012,8 +1012,9 @@ class API {
 		if ( $data['is_vendor'] ) {
 			// Canonical profile status — _wpss_vendor_status was never written.
 			$data['vendor_status'] = wpss_get_vendor_status( $user_id ) ?: 'active';
-			$data['rating']        = (float) get_user_meta( $user_id, '_wpss_rating_average', true ) ?: 0;
-			$data['review_count']  = (int) get_user_meta( $user_id, '_wpss_rating_count', true ) ?: 0;
+			$vendor_profile        = wpss_get_vendor( $user_id );
+			$data['rating']        = $vendor_profile ? (float) $vendor_profile->rating : 0.0;
+			$data['review_count']  = $vendor_profile ? (int) $vendor_profile->review_count : 0;
 		}
 
 		return new \WP_REST_Response( $data );
@@ -1177,8 +1178,8 @@ class API {
 				// Paid orders, net of refunds and commission: the same figure as
 				// the web dashboard's Sales tile (wpss_get_revenue()).
 				'total_earnings'   => (float) ( wpss_get_revenue( array( 'vendor_id' => (int) $user_id ) )[0]->vendor_earnings ?? 0 ),
-				'rating'           => (float) get_user_meta( $user_id, '_wpss_rating_average', true ) ?: 0,
-				'review_count'     => (int) get_user_meta( $user_id, '_wpss_rating_count', true ) ?: 0,
+				'rating'           => ( $wpss_vp = wpss_get_vendor( (int) $user_id ) ) ? (float) $wpss_vp->rating : 0.0,
+				'review_count'     => $wpss_vp ? (int) $wpss_vp->review_count : 0,
 			];
 
 			// Recent orders needing action.
@@ -1299,7 +1300,7 @@ class API {
 					'display_name' => $user->display_name,
 					'avatar'       => get_avatar_url( $user->ID, [ 'size' => 48 ] ),
 					'tagline'      => $vendor_profile ? $vendor_profile->title : '',
-					'rating'       => (float) get_user_meta( $user->ID, '_wpss_rating_average', true ) ?: 0,
+					'rating'       => $vendor_profile ? (float) $vendor_profile->rating : 0.0,
 					'url'          => wpss_get_vendor_url( $user->ID ),
 				];
 			}

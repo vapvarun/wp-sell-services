@@ -460,8 +460,8 @@ class SingleServiceView {
 
 						<div class="wpss-vendor-quick-stats">
 							<?php
-							$rating_avg   = (float) ( $profile->avg_rating ?? get_user_meta( $vendor_id, '_wpss_rating_average', true ) );
-							$rating_count = (int) ( $profile->total_reviews ?? get_user_meta( $vendor_id, '_wpss_rating_count', true ) );
+							$rating_avg   = (float) ( $profile->avg_rating ?? 0 );
+							$rating_count = (int) ( $profile->total_reviews ?? 0 );
 							if ( $rating_count > 0 ) :
 								?>
 								<?php
