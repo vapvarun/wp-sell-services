@@ -1114,9 +1114,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		// hands back once it has signed a new buyer in - the page's Stripe nonce
 		// was issued to the logged-out visitor and no longer verifies
 		// (Basecamp 10341174356). Same rule as ajax_confirm_payment().
-		$posted_nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
-		if ( ! wp_verify_nonce( $posted_nonce, 'wpss_stripe' )
-			&& ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_checkout_nonce'] ?? '' ) ), 'wpss_checkout' ) ) {
+		if ( ! wpss_verify_gateway_nonce( array( 'wpss_stripe' ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
 			return;
 		}
@@ -1158,10 +1156,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		// Accept the Stripe nonce (stripe.js flow) OR the checkout nonce (the
 		// standalone checkout form, which posts wpss_stripe_process_payment and
 		// carries wpss_checkout_nonce). Mirrors OfflineGateway::ajax_create_order.
-		$posted_nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
-		if ( ! wp_verify_nonce( $posted_nonce, 'wpss_stripe' )
-			&& ! wp_verify_nonce( $posted_nonce, 'wpss_checkout' )
-			&& ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_checkout_nonce'] ?? '' ) ), 'wpss_checkout' ) ) {
+		if ( ! wpss_verify_gateway_nonce( array( 'wpss_stripe' ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
 			return;
 		}
@@ -1177,7 +1172,7 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		// stripe.js sends `payment_intent_id`; the checkout form sends
 		// `stripe_payment_intent_id`. Accept both.
-		$payment_intent_id = sanitize_text_field( wp_unslash( $_POST['payment_intent_id'] ?? $_POST['stripe_payment_intent_id'] ?? '' ) );
+		$payment_intent_id = sanitize_text_field( wp_unslash( $_POST['payment_intent_id'] ?? $_POST['stripe_payment_intent_id'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- wpss_verify_gateway_nonce() above.
 
 		if ( ! $payment_intent_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid payment.', 'wp-sell-services' ) ) );

@@ -197,6 +197,8 @@
 					data: {
 						action: 'wpss_paypal_create_order',
 						nonce: wpssPayPal.nonce,
+						// Fresh after the guest account step; the page nonce was the visitor's.
+						wpss_checkout_nonce: document.querySelector('[name="wpss_checkout_nonce"]')?.value || '',
 						amount: amount,
 						currency: currency,
 						service_id: serviceId,
@@ -224,6 +226,8 @@
 					data: {
 						action: 'wpss_paypal_capture',
 						nonce: wpssPayPal.nonce,
+						// Fresh after the guest account step; the page nonce was the visitor's.
+						wpss_checkout_nonce: document.querySelector('[name="wpss_checkout_nonce"]')?.value || '',
 						paypal_order_id: orderId,
 						service_id: serviceId,
 						package_id: packageId,

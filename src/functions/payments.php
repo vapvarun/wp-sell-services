@@ -403,6 +403,35 @@ function wpss_record_pending_payment_method( int $order_id, string $method ): bo
 }
 
 /**
+ * Verify the nonce on a gateway's checkout AJAX call.
+ *
+ * Accepts the gateway's own nonce, or the checkout nonce. The account-at-checkout
+ * step signs a new buyer in and hands back a fresh checkout nonce; the gateway
+ * nonce printed on the page belonged to the logged-out visitor and no longer
+ * verifies, so guests could not pay (Basecamp 10341174356, 10375174373). One
+ * rule for every gateway: Stripe, PayPal, Razorpay.
+ *
+ * @since 1.8.0
+ *
+ * @param array<int,string> $actions The gateway's own nonce actions.
+ * @return bool
+ */
+function wpss_verify_gateway_nonce( array $actions ): bool {
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- this IS the nonce check.
+	$posted   = sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ?? '' ) );
+	$checkout = sanitize_text_field( wp_unslash( $_REQUEST['wpss_checkout_nonce'] ?? '' ) );
+	// phpcs:enable
+
+	foreach ( array_merge( $actions, array( 'wpss_checkout' ) ) as $action ) {
+		if ( wp_verify_nonce( $posted, $action ) ) {
+			return true;
+		}
+	}
+
+	return (bool) wp_verify_nonce( $checkout, 'wpss_checkout' );
+}
+
+/**
  * Refuse an AJAX action on a gateway the owner has switched off.
  *
  * A gateway's init() registers its hooks unconditionally, and deliberately so:

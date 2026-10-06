@@ -143,4 +143,48 @@ foreach ( array( 'wpss_stripe_create_payment_intent', 'wpss_paypal_create_order'
 	);
 }
 
+// 6. After the account step the page's gateway nonce belongs to the logged-out
+//    visitor. Every gateway must accept the fresh checkout nonce instead, and
+//    every gateway's JS must send it (PayPal bounce on 10341174356, Razorpay
+//    10375174373).
+$fresh_user = wp_insert_user(
+	array(
+		'user_login' => 'wpss_guest_nonce_' . wp_generate_password( 6, false ),
+		'user_pass'  => wp_generate_password(),
+		'role'       => 'subscriber',
+	)
+);
+$prev_user  = get_current_user_id();
+wp_set_current_user( 0 );
+$visitor = array(
+	'wpss_stripe'   => wp_create_nonce( 'wpss_stripe' ),
+	'wpss_paypal'   => wp_create_nonce( 'wpss_paypal' ),
+	'wpss_razorpay' => wp_create_nonce( 'wpss_razorpay' ),
+);
+wp_set_current_user( (int) $fresh_user );
+$fresh = wp_create_nonce( 'wpss_checkout' );
+
+foreach ( $visitor as $action => $stale ) {
+	$_REQUEST = array( 'nonce' => $stale );
+	wpss_t( ! wpss_verify_gateway_nonce( array( $action ) ), sprintf( '%s: the visitor nonce alone is refused after sign-in', $action ) );
+	$_REQUEST = array(
+		'nonce'               => $stale,
+		'wpss_checkout_nonce' => $fresh,
+	);
+	wpss_t( wpss_verify_gateway_nonce( array( $action ) ), sprintf( '%s: the fresh checkout nonce is accepted', $action ) );
+}
+$_REQUEST = array();
+wp_set_current_user( $prev_user );
+wp_delete_user( (int) $fresh_user );
+
+$pro_js = WP_PLUGIN_DIR . '/wp-sell-services-pro/assets/js/';
+foreach ( array( $free . '/assets/js/paypal', $free . '/assets/js/stripe', $pro_js . 'razorpay' ) as $base ) {
+	foreach ( array( '.js', '.min.js' ) as $ext ) {
+		if ( file_exists( $base . $ext ) ) {
+			$js = file_get_contents( $base . $ext );
+			wpss_t( false !== strpos( $js, 'wpss_checkout_nonce' ) && false !== strpos( $js, 'wpssEnsureCheckoutAccount' ), basename( $base ) . $ext . ' runs the account step and sends the checkout nonce' );
+		}
+	}
+}
+
 echo "\n{$GLOBALS['wpss_pass']} passed, {$GLOBALS['wpss_fail']} failed\n";
