@@ -1487,6 +1487,15 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 /* The payment rail's receipt number: secondary to the order number, not a peer. */
 .wpss-order-detail-item__sub { color: var(--wpss-text-secondary); font-size: var(--wpss-text-xs, .75rem); overflow-wrap: anywhere; }
 .wpss-order-detail-item__sub a { color: inherit; text-decoration: underline; }
+
+/* Report link (service page, vendor profile) and its dialog. A quiet text
+   control: reporting is always available and never the main action. */
+.wpss-report { margin: var(--wpss-space-4) 0 0; text-align: center; }
+.wpss-report-link { display: inline-flex; align-items: center; gap: var(--wpss-space-1); min-height: 40px; padding: 0 var(--wpss-space-2); border: 0; background: none; color: var(--wpss-text-secondary); font: inherit; font-size: var(--wpss-text-sm); text-decoration: underline; cursor: pointer; }
+.wpss-report-link:hover, .wpss-report-link:focus-visible { color: var(--wpss-text); background: none; }
+.wpss-report-link .wpss-icon { width: 14px; height: 14px; }
+.wpss-report-form__intro { margin: 0 0 var(--wpss-space-4); color: var(--wpss-text-secondary); font-size: var(--wpss-text-sm); }
+.wpss-report-form__error { margin: var(--wpss-space-3) 0 0; color: var(--wpss-danger-dark, #991b1b); font-size: var(--wpss-text-sm); }
 .wpss-order-detail-item__sub a:hover,
 .wpss-order-detail-item__sub a:focus { color: var(--wpss-primary); }
 

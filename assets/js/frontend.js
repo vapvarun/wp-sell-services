@@ -715,6 +715,60 @@
 	};
 
 	/**
+	 * Report links: open the shared dialog, send it to POST wpss/v1/reports.
+	 */
+	$(document).on('click', 'button.wpss-report-link', function() {
+		var $form = $('#wpss-report-form');
+		if (!$form.length) {
+			return;
+		}
+		$form[0].reset();
+		$form.find('[name="target_type"]').val($(this).data('report-type'));
+		$form.find('[name="target_id"]').val($(this).data('report-id'));
+		$form.find('.wpss-report-form__error').prop('hidden', true).text('');
+		WPSS.showModal('wpss-report-modal');
+	});
+
+	$(document).on('submit', '#wpss-report-form', function(e) {
+		e.preventDefault();
+
+		var $form   = $(this);
+		var $submit = $form.find('[type="submit"]');
+		var $error  = $form.find('.wpss-report-form__error');
+		var cfg     = window.wpssData || {};
+
+		if ($submit.prop('disabled')) {
+			return;
+		}
+		$submit.prop('disabled', true);
+		$error.prop('hidden', true).text('');
+
+		$.ajax({
+			url: cfg.apiUrl + 'reports',
+			method: 'POST',
+			contentType: 'application/json',
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', cfg.restNonce);
+			},
+			data: JSON.stringify({
+				target_type: $form.find('[name="target_type"]').val(),
+				target_id: parseInt($form.find('[name="target_id"]').val(), 10),
+				reason: $form.find('[name="reason"]').val(),
+				details: $form.find('[name="details"]').val()
+			})
+		}).done(function(response) {
+			WPSS.hideModal('wpss-report-modal');
+			if (window.wpssToast && response && response.message) {
+				window.wpssToast(response.message, 'success');
+			}
+		}).fail(function(xhr) {
+			$error.text((xhr.responseJSON && xhr.responseJSON.message) || $form.data('error')).prop('hidden', false);
+		}).always(function() {
+			$submit.prop('disabled', false);
+		});
+	});
+
+	/**
 	 * Show inline error notice in a container.
 	 *
 	 * @param {jQuery|string} container Selector or jQuery object.

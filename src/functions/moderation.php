@@ -437,3 +437,79 @@ foreach ( array( 'save_post_wpss_service', 'deleted_post', 'wpss_service_approve
 	add_action( $wpss_pending_hook, 'wpss_flush_pending_services_count', 99 );
 }
 unset( $wpss_pending_hook );
+
+/**
+ * Print a Report link for something a member can report.
+ *
+ * The website's entry point to POST wpss/v1/reports. Nothing is printed for
+ * the person who owns the thing: the route refuses a report on your own
+ * content. A visitor gets a link to sign in and come back; a member gets a
+ * button that opens the shared dialog (templates/partials/report-modal.php),
+ * printed once in the footer.
+ *
+ * @since 1.8.0
+ *
+ * @param string $target_type One of wpss_get_report_target_types().
+ * @param int    $target_id   What is being reported.
+ * @param int    $owner_id    Whose it is.
+ * @param string $label       Link text.
+ * @return void
+ */
+function wpss_render_report_link( string $target_type, int $target_id, int $owner_id, string $label ): void {
+	if ( $target_id <= 0 || ! isset( wpss_get_report_target_types()[ $target_type ] ) || ( is_user_logged_in() && get_current_user_id() === $owner_id ) ) {
+		return;
+	}
+
+	wpss_enqueue_frontend_assets();
+
+	if ( ! is_user_logged_in() ) {
+		printf(
+			'<p class="wpss-report"><a class="wpss-report-link" href="%s"><i data-lucide="flag" class="wpss-icon" aria-hidden="true"></i> %s</a></p>',
+			esc_url( wp_login_url( (string) get_permalink() ) ),
+			esc_html( $label )
+		);
+		return;
+	}
+
+	printf(
+		'<p class="wpss-report"><button type="button" class="wpss-report-link" data-report-type="%s" data-report-id="%d"><i data-lucide="flag" class="wpss-icon" aria-hidden="true"></i> %s</button></p>',
+		esc_attr( $target_type ),
+		(int) $target_id,
+		esc_html( $label )
+	);
+
+	if ( ! has_action( 'wp_footer', 'wpss_render_report_modal' ) ) {
+		add_action( 'wp_footer', 'wpss_render_report_modal' );
+	}
+}
+
+/**
+ * Print the shared report dialog.
+ *
+ * @since 1.8.0
+ *
+ * @return void
+ */
+function wpss_render_report_modal(): void {
+	wpss_get_template( 'partials/report-modal.php' );
+}
+
+// Where the link shows in 1.8.0: the service page and the vendor profile, at
+// the foot of each sidebar. Reviews and messages follow (owner decision,
+// Basecamp 10378022010). Late priority, so it sits under whatever else a
+// site or Pro adds to the sidebar.
+add_action(
+	'wpss_single_service_sidebar',
+	static function ( $service ): void {
+		$service_id = (int) ( is_object( $service ) ? ( $service->id ?? 0 ) : $service );
+		wpss_render_report_link( 'service', $service_id, (int) get_post_field( 'post_author', $service_id ), __( 'Report this service', 'wp-sell-services' ) );
+	},
+	90
+);
+add_action(
+	'wpss_vendor_profile_sidebar',
+	static function ( $vendor_id ): void {
+		wpss_render_report_link( 'user', (int) $vendor_id, (int) $vendor_id, __( 'Report this seller', 'wp-sell-services' ) );
+	},
+	90
+);
