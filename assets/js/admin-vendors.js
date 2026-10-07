@@ -50,7 +50,7 @@
 			var confirmMsg = wpssVendors.i18n.bulkConfirm;
 			confirmMsg = confirmMsg.replace('%1$s', labels[bulkAction] || bulkAction).replace('%2$d', ids.length);
 			var $btn = $(this);
-			window.wpssConfirm( confirmMsg ).then( function ( ok ) {
+			window.wpssConfirm( confirmMsg, { tone: 'suspend' === bulkAction ? 'danger' : undefined } ).then( function ( ok ) {
 			if ( ! ok ) {
 				return;
 			}
@@ -88,7 +88,7 @@
 			var vendorId = $btn.data('vendor-id');
 			var newStatus = $btn.data('status');
 
-			window.wpssConfirm(wpssVendors.i18n.confirmStatusChange).then(function(ok) {
+			window.wpssConfirm(wpssVendors.i18n.confirmStatusChange, { tone: 'suspended' === newStatus ? 'danger' : undefined }).then(function(ok) {
 			if (!ok) {
 				return;
 			}
@@ -555,7 +555,7 @@
 			}
 
 			var $select = $(this);
-			window.wpssConfirm(i18n.confirmStatusChange).then(function(ok) {
+			window.wpssConfirm(i18n.confirmStatusChange, { tone: 'suspended' === newStatus ? 'danger' : undefined }).then(function(ok) {
 			if (!ok) {
 				$select.val('');
 				return;
