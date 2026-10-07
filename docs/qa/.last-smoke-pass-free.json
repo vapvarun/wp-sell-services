@@ -1,96 +1,386 @@
 {
   "mode": "free",
-  "release_version": "1.7.2",
+  "release_version": "1.8.0",
   "pro_version": null,
-  "ran_at": "2026-09-23T07:32:00Z",
-  "ran_against": "f5e767ccf1e2839b7c4bc6d2ecba93d8f5a8be1a",
+  "ran_at": "2026-10-07T13:54:16Z",
+  "ran_against": "42cf7a5da2a648dd717ec19d11df19791e147755",
+  "theme": "buddyx",
   "sections": {
-    "A_fresh_install": { "pass": 4, "fail": 0, "skipped": 1 },
-    "B_upgrade": { "pass": 0, "fail": 0, "skipped": 3 },
-    "C_core_flows": { "pass": 18, "fail": 1, "skipped": 3 },
-    "D_regression_guards": { "pass": 1, "fail": 0, "skipped": 4 },
-    "E_pro_smoke": { "pass": 0, "fail": 0, "skipped": 3 },
-    "E2_environment": { "pass": 3, "fail": 0, "skipped": 0 },
-    "F_cross_browser": { "pass": 6, "fail": 0, "skipped": 1 },
-    "G_post_release": { "pass": 0, "fail": 0, "skipped": 1 }
+    "A_fresh_install": {
+      "pass": 5,
+      "fail": 1,
+      "skipped": 0
+    },
+    "B_upgrade": {
+      "pass": 2,
+      "fail": 0,
+      "skipped": 2
+    },
+    "C_core_flows": {
+      "pass": 13,
+      "fail": 0,
+      "skipped": 8
+    },
+    "D_regression_guards": {
+      "pass": 93,
+      "fail": 1,
+      "skipped": 1
+    },
+    "E_pro_smoke": {
+      "pass": 0,
+      "fail": 0,
+      "skipped": 3
+    },
+    "E2_environment": {
+      "pass": 4,
+      "fail": 0,
+      "skipped": 0
+    },
+    "F_cross_browser": {
+      "pass": 6,
+      "fail": 0,
+      "skipped": 3
+    },
+    "G_post_release": {
+      "pass": 0,
+      "fail": 0,
+      "skipped": 1
+    }
   },
-  "hard_fails": [
+  "passes": [
     {
-      "id": "wpss-free-cart-delete-silent-removal",
-      "invariant": "no-data-loss",
-      "actual": "On the standalone/free cart (wpss_get_user_cart(), src/functions/services.php:1416-1453), when a service is PERMANENTLY deleted while it sits in a buyer's persistent cart, the item vanishes from the rendered cart with zero notice, zero line item, and zero total adjustment -- the buyer simply sees a smaller total and fewer items with no explanation. Reproduced live: as wpss_buyer_ella, added service 5161 ($25) to cart alongside service 242 ($75) via the real 'Continue to Checkout' add-to-cart flow (cart totalled $100.00, 2 items). Force-deleted service 5161 via wp-cli while it sat in the cart. Reloading /cart/ showed only service 242 at $75.00, 1 item -- the $25 item and any trace of it were completely absent from the page, with no 'no longer offered' message of any kind. The underlying _wpss_cart user-meta STILL carries the dead entry (confirmed via direct meta read) because the cart-page render path calls wpss_get_user_cart() with keep_paused=true, which never persists the removal, so the buyer also has no way to discover or clear the ghost row themselves. Root cause: inside wpss_get_user_cart(), the branch `if ( ! $service || ! $keep_paused ) { $changed = true; continue; }` unconditionally drops an item the moment get_post() returns null, before the keep_paused/notice logic that a merely-unpublished (still-existing) service gets can run -- by design per the function's own docblock ('Deleted services are always dropped - there is nothing to come back to'), but no notice mechanism exists anywhere in templates/cart/cart.php or the calling shortcode for this class of removal, unlike the unpublish case which correctly renders 'This service is not currently available.' This is the SAME defect class as the already-tracked wpss-cart-delete-no-notice card (10331371292-adjacent lineage), whose fix (wp-sell-services-pro 388984c, per docs/qa/accepted-findings.json) only reached the WooCommerce/Pro cart rail -- the Free/standalone cart, which is what every free-mode install actually runs, still silently drops deleted-service line items with no buyer-facing explanation."
+      "id": "A1",
+      "observed": "wp plugin list: wp-sell-services 1.8.0 active, wp-sell-services-pro inactive (caller-deactivated); /wp-admin/admin.php?page=wpss-settings and page=wpss-orders return 200 with no fatal text"
+    },
+    {
+      "id": "A2",
+      "observed": "/service/, /dashboard/, /buyer-request/ and service pages render 200 for logged-in personas"
+    },
+    {
+      "id": "A4",
+      "observed": "wpss_db_version=1.8.0 equals SchemaManager::DB_VERSION 1.8.0; all 19 CORE_TABLES exist (missing=[])"
+    },
+    {
+      "id": "A5",
+      "observed": "wp wpss preflight: 74 PASS, 1 FAIL, 6 WARN, 1 SKIP; the four retired tables are reported as WARN 'Retired table ... nothing reads it', not created"
+    },
+    {
+      "id": "A-admin-menu",
+      "observed": "WPSS admin menu lists Moderation, Review Moderation, Disputes, Vendors, Orders, Withdrawals, Audit Log, Settings; Orders list and Settings load"
+    },
+    {
+      "id": "B-schema",
+      "observed": "stored option 1.8.0 matches code constant 1.8.0; test-legacy-file-migration-contract 12 passed, 0 failed"
+    },
+    {
+      "id": "FIX1-a",
+      "observed": "Ella /dashboard/create-request/ with brief-180.png: 'Request Posted', request 8371/second request created with _wpss_attachments [8370]"
+    },
+    {
+      "id": "FIX1-b",
+      "observed": "Maya submitted proposal 547 (80.00, 7 days) on request 8371 via the modal form; row in wpss_proposals status pending"
+    },
+    {
+      "id": "FIX1-c",
+      "observed": "Ella Accept Proposal -> /service-checkout/pay/8308/ (Pay $94.40 = 80.00 + 14.40 tax), Test Gateway paid -> /dashboard/orders/8308/requirements/. Second run: order 8309 same path"
+    },
+    {
+      "id": "FIX1-d",
+      "observed": "Order 8309: requirements submitted with description + req-180.pdf. First attempt on 8308 with req-180.txt dropped the .txt because txt is not in the allowed list (jpg,jpeg,png,gif,pdf,doc,docx); see failures"
+    },
+    {
+      "id": "FIX1-e-vendor",
+      "observed": "Maya /dashboard/orders/8309/ (from Messages card) and /dashboard/sales/8309/ (Sales Orders > Deliver): 200, no fatal, dashboard nav and footer present, request brief text 'SMOKE180-B brief text must survive' kept, requirements description kept, brief-180-3.png AND req-180.pdf listed, both admin-post wpss_order_file downloads 200"
+    },
+    {
+      "id": "FIX1-e-buyer",
+      "observed": "Ella /dashboard/orders/8309/: same layout, brief text kept, both files listed, both downloads 200 (image/png, application/pdf)"
+    },
+    {
+      "id": "FIX1-e-admin",
+      "observed": "Admin wp-admin/admin.php?page=wpss-orders&action=view&order_id=8309: 200, no fatal, brief text, requirements text and both files listed, both downloads 200"
+    },
+    {
+      "id": "FIX1-f",
+      "observed": "Order page at 390x844: scrollWidth 390, footer present (buyer, vendor orders and sales URLs)"
+    },
+    {
+      "id": "FIX1-g",
+      "observed": "GET /wp-json/wpss/v1/orders/8309/requirements as Ella 200: status 'submitted', submitted holds request_title/request_description/proposal_cover/description, attachments [brief-180-3.png, req-180.pdf]; REST /orders/8309/files/{id} 200 for both"
+    },
+    {
+      "id": "FIX1-h",
+      "observed": "Ben (buyer_2): REST /orders/8309 403, /requirements 403, /files 404, /files/{id} 403 x2, /timeline 403; admin-post file download 404 for both files; order page does not show the brief"
+    },
+    {
+      "id": "FIX1-i",
+      "observed": "wp eval-file tests/test-requirement-attachment-records.php: 11 PASS lines, ALL PASS"
+    },
+    {
+      "id": "C-catalog-page",
+      "observed": "Catalog service page /service/i-will-qa-rft-wizard-publish-check-service/ renders (h1, packages, Continue buttons), no console errors"
+    },
+    {
+      "id": "C-checkout-paid",
+      "observed": "Standalone Continue to Checkout -> /service-checkout/8086/?package=0, Pay $29.50, Test Gateway -> order 8310 in_progress; stored subtotal 25.000, total 29.500 (equals Pay button), platform_fee 2.500 = 10% of pre-tax subtotal"
+    },
+    {
+      "id": "C-catalog-requirements-file",
+      "observed": "Order 8310 requirements form with req-180.pdf: submitted, 'Files the buyer attached' lists req-180.pdf, download 200"
+    },
+    {
+      "id": "C-vendor-sales",
+      "observed": "Maya /dashboard/sales/ renders 'Sales Orders', no fatal, footer present"
+    },
+    {
+      "id": "C-vendor-services",
+      "observed": "Maya /dashboard/services/ renders 'My Services', no fatal"
+    },
+    {
+      "id": "C-vendor-earnings",
+      "observed": "Maya /dashboard/earnings/ renders 'Earnings & Payouts', no fatal"
+    },
+    {
+      "id": "C-brief-render",
+      "observed": "Brief with request title/description/proposal cover renders for buyer, vendor and admin on order 8309"
+    },
+    {
+      "id": "D-scripts",
+      "observed": "95 tests/test-*.php run with wp eval-file: 93 PASS (own summary 0 failed / ALL PASS), 1 FAIL (test-addon-pricing-contract, known), 1 SKIP (test-license-gate-and-storage, Pro inactive)"
+    },
+    {
+      "id": "E2-theme",
+      "observed": "Active theme buddyx; wpss_general ecommerce_platform=standalone"
+    },
+    {
+      "id": "E2-console-order",
+      "observed": "No console errors or page errors on /dashboard/orders/8309/ (Ella) or the vendor order pages"
+    },
+    {
+      "id": "E2-console-service",
+      "observed": "No console errors on /service/ and the single service page. Checkout page shows 3x 404 from api.stripe.com/v1/consumers/sessions/lookup (third-party Stripe.js, not plugin code)"
+    },
+    {
+      "id": "F-order-1280",
+      "observed": "Order page 1280: nav and footer present, no horizontal scroll (buyer, vendor, admin)"
+    },
+    {
+      "id": "F-order-390",
+      "observed": "Order page 390: scrollWidth 390"
+    },
+    {
+      "id": "F-archive-1280",
+      "observed": "Service archive 1280: scrollWidth 1280, 197 cards"
+    },
+    {
+      "id": "F-archive-390",
+      "observed": "Service archive 390: scrollWidth 390"
+    },
+    {
+      "id": "F-service-1280",
+      "observed": "Single service 1280: scrollWidth 1280"
+    },
+    {
+      "id": "F-service-390",
+      "observed": "Single service 390: scrollWidth 390"
     }
   ],
+  "hard_fails": [],
   "untested": [
-    { "id": "A-retired-tables", "reason": "SchemaManager::get_retired_tables() reporting could not be exercised meaningfully without a pre-retirement dataset, and the hard constraint forbids deactivate/reactivate to force a fresh migration pass", "needs": "A DB snapshot carrying a retired table, or explicit permission to run an upgrade cycle" },
-    { "id": "B-upgrade-cycle", "reason": "Deactivate+reactivate and the pre-1.7.0 order-file migration both require plugin activation toggling, forbidden by this walk's hard constraints", "needs": "Permission to deactivate/reactivate wp-sell-services, or a dedicated upgrade-test site" },
-    { "id": "B-existing-orders-totals-unchanged", "reason": "Not exercised as its own before/after comparison this pass -- no migration ran during this walk (no activation cycle), so there is nothing to diff", "needs": "An upgrade-cycle pass per B-upgrade-cycle above" },
-    { "id": "C-buyer-brief-no-questions", "reason": "Did not confirm a buyer's brief renders correctly for buyer, seller and owner when the service has no configured questions", "needs": "A dedicated service with zero requirement questions, walked as buyer/vendor/admin" },
-    { "id": "C-wizard-category-hierarchy", "reason": "Did not confirm the wizard's Category dropdown offers parents only while window.wpssCategories still carries children, or that Subcategory follows the selected parent -- the wizard run in this pass did not exercise a category with confirmed child terms", "needs": "A parent category with real child terms, walked step-by-step in the wizard" },
-    { "id": "C-wizard-gallery-limit-interactive", "reason": "The gallery cap (max_gallery=4) was confirmed via the live wpssWizard.limits config and by reading openMediaUploader()/canAddGalleryImage(), which share the exact same guarded-push + showNotice(limitGallery) pattern verified live for requirements/extras/FAQs -- but was not exercised with real wp.media image selections (5 real uploads) because that requires driving the WordPress media modal's file picker, which this pass did not attempt", "needs": "A pass that actually selects 5 real media-library images through wp.media in the gallery step" },
-    { "id": "D-deleted-service-revenue", "reason": "Analytics Top Services (service_id=0 exclusion) is Pro-only and unreachable in free mode; the underlying SQL could only be checked at the query level, not exercised", "needs": "Pro active, or a direct query-level check of the reporting SQL" },
-    { "id": "D-suspended-vendor-money-rest", "reason": "Not exercised this pass -- requires suspending a vendor and hitting the money REST endpoints as that vendor", "needs": "Dedicated pass with a suspended-vendor fixture" },
-    { "id": "D-negative-balance-messaging", "reason": "Not exercised this pass -- requires a vendor with a negative wallet balance", "needs": "A refund-after-payout scenario to produce a negative balance" },
-    { "id": "D-offline-method-identity", "reason": "Not exercised this pass -- requires renaming/deleting a named offline payment method and re-checking a past order's displayed method", "needs": "Dedicated pass focused on section D" },
-    { "id": "F-rtl", "reason": "RTL rendering (margin-left/right regressions) was not checked this pass", "needs": "An RTL locale or forced dir=rtl pass over the touched surfaces" },
-    { "id": "F-multisite", "reason": "Not applicable to this single-site environment", "needs": "A multisite network" },
-    { "id": "F-concurrency", "reason": "No multi-actor race condition was set up this run", "needs": "Two simultaneous sessions acting on the same order/withdrawal" }
+    {
+      "id": "B1-reactivate-cycle",
+      "reason": "no plugin activation changes allowed in this walk",
+      "needs": "a deactivate/reactivate pass"
+    },
+    {
+      "id": "B3-existing-orders-totals",
+      "reason": "no migration ran, nothing to diff",
+      "needs": "upgrade-cycle pass"
+    },
+    {
+      "id": "C-journey-02-dispute",
+      "reason": "not walked (test-dispute-state-machine.php passes)",
+      "needs": "dispute walk"
+    },
+    {
+      "id": "C-journey-05-service-wizard",
+      "reason": "not walked",
+      "needs": "vendor wizard walk"
+    },
+    {
+      "id": "C-journey-08-mobile-session",
+      "reason": "no device",
+      "needs": "device or token walk"
+    },
+    {
+      "id": "C-tip-extension-phase-landing",
+      "reason": "not walked",
+      "needs": "paid tip, extension, milestone phase"
+    },
+    {
+      "id": "C-milestone-request-changes-resubmit",
+      "reason": "not walked (test-milestone-revision-contract.php passes)",
+      "needs": "milestone fixture"
+    },
+    {
+      "id": "C-milestone-complete-summary",
+      "reason": "not walked",
+      "needs": "completed milestone contract"
+    },
+    {
+      "id": "C-buyer-brief-no-questions",
+      "reason": "not walked for a service with zero questions",
+      "needs": "dedicated service"
+    },
+    {
+      "id": "C-guest-account-checkout",
+      "reason": "creates users",
+      "needs": "logged-out purchase"
+    },
+    {
+      "id": "D-runbook-fixtures",
+      "reason": "stats-vs-chips, deleted-service revenue (Pro analytics), suspended vendor, negative balance and offline method identity were covered by contract scripts only, not walked in a browser",
+      "needs": "browser fixtures"
+    },
+    {
+      "id": "F-dark-mode",
+      "reason": "BuddyX on wss.local has no dark mode",
+      "needs": "Reign site"
+    },
+    {
+      "id": "F-rtl",
+      "reason": "not checked",
+      "needs": "RTL locale"
+    },
+    {
+      "id": "F-other-engines",
+      "reason": "only Chromium available through Playwright MCP",
+      "needs": "Firefox and WebKit run"
+    },
+    {
+      "id": "E-pro-sections",
+      "reason": "free mode, Pro deactivated by caller",
+      "needs": "combo walk"
+    }
   ],
   "coverage": {
-    "multisite": "not tested - single-site environment, no network available",
-    "rtl": "not tested this pass",
-    "concurrency": "not tested this pass",
-    "uninstall": "not exercised live (no activation toggling allowed); wp wpss preflight's Uninstall Completeness section passes 8/8 (role removal, WP_UNINSTALL_PLUGIN guard, delete_data respect, table drops, option/cron cleanup, rewrite flush, offline auto-cancel cron)",
-    "mobile_390": "tested at 390x844 with zero horizontal scroll on: single-service page, both standalone checkout query-param routes, the standalone cart page, and the vendor Sales Orders dashboard screen"
+    "branch_mode": "fix diff (PR #23 and #24 buyer-request flow) plus core free-mode flows",
+    "rail_standalone": "run (Test Gateway on both request and catalog orders)",
+    "rail_woocommerce": "deferred: branch mode",
+    "viewports": "1280, 390",
+    "dark_mode": "deferred: branch mode (BuddyX has no dark mode)",
+    "rtl": "deferred: branch mode",
+    "cross_browser": "Chromium only; Firefox and WebKit skipped: engines not available",
+    "multisite": "na",
+    "full_runbook_sections": "deferred: branch mode for B1/B3, journeys 02/05/08, tip/extension/phase, milestone summaries"
   },
-  "verdict": "BLOCK",
+  "verdict": "PASS_WITH_ACCEPTED_FINDINGS",
   "top3": [
-    "HARD FAIL (free/standalone rail): permanently deleting a service while it sits in a buyer's persistent cart makes the line item vanish from /cart/ with zero notice and zero total adjustment -- the buyer just sees a smaller total with no explanation, and the stale row is never cleaned from their _wpss_cart meta since the cart render path never persists removals. This is the free-mode twin of the already-tracked wpss-cart-delete-no-notice defect, whose only fix so far landed in wp-sell-services-pro (WooCommerce rail) -- the standalone rail every free install actually runs is still broken.",
-    "GOOD NEWS, re-verified and now closed: the free-only add-ons falsy-'0' bug from the prior free-mode walk (index-0 add-on silently dropped from checkout) is FIXED on this commit. Selecting Rush Delivery alone (index 0), Source Files alone (index 1), and both together on a 2-add-on service all price and persist correctly into wpss_orders (subtotal/addons_total/total/commission math all verified via direct DB reads on orders #859 and #860), and payment_method is 'offline', never NULL.",
-    "Moderate inconsistency (soft, not blocking): the publish-completeness gate protects the STATUS invariant correctly (an already-live incomplete service never gets silently unpublished -- confirmed via wp-cli field resave), but PUT /wpss/v1/services/{id} refuses the ENTIRE request (400 wpss_not_publishable) for ANY edit to an already-published-but-incomplete service, even a same-value title change with no status field in the payload. This is a deliberate documented trade-off in ServicesController.php (closing Basecamp 10320551446, a live-listing reprice-below-floor exploit) but it means a vendor cannot save even a trivial edit to a grandfathered incomplete listing through the REST-backed dashboard edit flow until they backfill everything the current rules demand."
+    "Both fixes hold in free mode: request brief text and the request file survive requirements submit, order 8309 lists BOTH files, every download returns 200, and Maya (Messages and Sales > Deliver), Ella and admin order pages render with sidebar/footer, no fatal, no horizontal scroll at 390.",
+    "REST and ownership: Ella's /orders/8309/requirements is 'submitted' with both attachments; Ben gets 403/404 on every order route and the file download; tests/test-requirement-attachment-records.php is ALL PASS.",
+    "Open: only known environment items (preflight historical fatals, addon-pricing test with moderation on, teardown SQL, REST float noise) plus one new low item, a disallowed file type is skipped silently on the requirements form."
   ],
   "failures": [
     {
-      "id": "wpss-free-cart-delete-silent-removal",
-      "origin": "from",
-      "triage_note": "Same defect class as the previously-tracked wpss-cart-delete-no-notice finding, but reproduced here specifically on the FREE/standalone cart rail, which the earlier fix (wp-sell-services-pro 388984c) did not touch. See hard_fails[] for full repro and root cause (src/functions/services.php wpss_get_user_cart(), templates/cart/cart.php has no notice path for a fully-deleted item).",
-      "expected": "Per the release's own spec (matching the unpublish-case behaviour already correct on this rail): when the underlying service is deleted, the item is removed from the cart with a visible notice saying it is no longer offered, the same way an unpublished service shows 'This service is not currently available.'",
-      "actual": "As wpss_buyer_ella: after force-deleting service 5161 while it sat in a 2-item cart ($100.00 total), /cart/ silently dropped to 1 item / $75.00 with no notice, no removed-item indicator, and no way to discover the still-present ghost row in _wpss_cart user meta.",
-      "url": "http://wp-sell-services.local/cart/",
-      "screenshot": "cart-deleted-service-silent-free-1280.png",
-      "viewport": "1280"
+      "id": "A3-preflight-debug-log",
+      "origin": "for",
+      "expected": "wp wpss preflight shows no FAIL",
+      "actual": "1 FAIL: 'Fatals in debug.log - 21 entry(ies)', oldest 03-Sep wpss_get_pay_order_url TypeError. Entries are historical contract-suite and ad-hoc eval runs, none from the browser flows of this walk. Also WARN: 4 retired tables hold rows, login page not mapped in wpss_pages, 3182 WPSS log entries.",
+      "url": "wp wpss preflight",
+      "role": "cli",
+      "viewport": "n/a",
+      "screenshot": ""
     },
     {
-      "id": "wpss-free-rest-edit-blocked-on-grandfathered-incomplete-service",
-      "origin": "from",
-      "triage_note": "ServicesController::update_item() (src/API/ServicesController.php:826-849) keys its publishability gate off the service's EFFECTIVE resulting status, not off whether the request touches status at all -- deliberately, per its own inline comment, to close a real prior exploit (Basecamp 10320551446: a live listing repriced below the $5 floor via a status-less PUT). The side effect: a live-but-incomplete service (creatable only by a pre-existing dataset, or by force-publish outside the wizard, since the wizard/REST publish gate itself is correctly enforced -- see PASS items) cannot be edited AT ALL via this REST route, including edits with nothing to do with completeness. A parallel, non-REST save path (wp-cli's wp_update_post(), and presumably the classic wp-admin 'Update' button on an already-published post) does NOT run this same gate and saves unrelated fields freely without touching status. The two save paths for editing the same object enforce different rules.",
-      "expected": "An already-live incomplete service stays live when an unrelated field is saved -- the STATUS invariant holds either way in this repro (it does), but a stricter reading of that promise is that the EDIT itself should also succeed for fields unrelated to completeness, matching what the wp-cli/save_post path already allows.",
-      "actual": "PUT /wpss/v1/services/5162 with only {\"title\": \"...\"} (no status field, post already publish) returned HTTP 400 wpss_not_publishable and did not apply the title change; a wp-cli `wp post update` changing the same field on the same post succeeded immediately and left status untouched.",
-      "url": "http://wp-sell-services.local/wp-json/wpss/v1/services/5162",
-      "screenshot": "",
-      "viewport": "1280"
+      "id": "TEST-addon-pricing-contract-fatal",
+      "origin": "for",
+      "expected": "tests/test-addon-pricing-contract.php prints ALL PASS",
+      "actual": "critical error / fatal (rc=1); wpss_vendor[require_service_moderation]=true on this site so the test's publish is forced to pending and the price lookup returns WP_Error. Not re-run with moderation off (no setting changes allowed).",
+      "url": "tests/test-addon-pricing-contract.php",
+      "role": "cli",
+      "viewport": "n/a",
+      "screenshot": ""
     },
     {
-      "id": "wpss-free-setup-wizard-epoch-date",
+      "id": "TESTS-cleanup-sql-stale-columns",
       "origin": "from",
-      "triage_note": "Cosmetic/data-display issue only. Settings > Advanced renders 'Setup wizard was completed on January 1, 1970.' -- the classic Unix-epoch fallback (timestamp 0) formatted as if it were a real date, instead of a 'not yet run' / 'never completed' state. Low severity, but reads as a real (if implausible) completion date to a site owner.",
-      "expected": "When the setup-wizard-completed option has never been set, Settings > Advanced should say something like 'Setup wizard has not been run yet' rather than formatting timestamp 0 as a calendar date.",
-      "actual": "Settings > Advanced (System Settings section) literally reads 'Setup wizard was completed on January 1, 1970.'",
-      "url": "http://wp-sell-services.local/wp-admin/admin.php?page=wpss-settings#advanced",
-      "screenshot": "",
-      "viewport": "1280"
+      "expected": "Contract-test teardown deletes its fixtures cleanly",
+      "actual": "Debug log shows 'Unknown column data in where clause' for DELETE FROM wp_wpss_audit_log WHERE JSON_EXTRACT(data,...) (x3) and 'Unknown column order_id' for DELETE FROM wp_wpss_wallet_transactions (x2) during the suite run, plus 9 wpdb::prepare 'Unsupported value type (object)' notices; fixtures are left behind.",
+      "url": "tests (teardown SQL)",
+      "role": "cli",
+      "viewport": "n/a",
+      "screenshot": ""
+    },
+    {
+      "id": "REST-float-noise",
+      "origin": "from",
+      "expected": "Money in REST JSON is a clean number",
+      "actual": "GET /wpss/v1/earnings/summary as wpss_vendor_maya returns pending_withdrawal 113.40000000000001 (pending_withdrawal_minor 11340 is exact). Reproduced; site php.ini serialize_precision=17.",
+      "url": "/wp-json/wpss/v1/earnings/summary",
+      "role": "wpss_vendor_maya",
+      "viewport": "n/a",
+      "screenshot": ""
+    },
+    {
+      "id": "REQ-disallowed-file-silent-drop",
+      "origin": "from",
+      "expected": "A requirements file whose type is not in Settings > Advanced allowed types is refused with a visible message",
+      "actual": "Submitting the requirements form on order 8308 with req-180.txt (txt not in jpg,jpeg,png,gif,pdf,doc,docx; file chosen by overriding the picker filter) returned success and the order page lists only the request brief file; the .txt was skipped by RequirementsService::process_uploads() (continue on wpss_check_upload) with no notice to the buyer. Low severity: the picker's accept list normally prevents it.",
+      "url": "/dashboard/orders/8308/requirements/",
+      "role": "wpss_buyer_ella",
+      "viewport": "1280",
+      "screenshot": "smoke180-free-requirements-1280.png"
     }
   ],
-  "debug_log_issues": [],
+  "debug_log_issues": [
+    {
+      "section": "all",
+      "level": "error",
+      "line": "[WPSS ERROR] Storage provider \"does-not-exist\" is configured but not registered; falling back to local disk. (requirements uploads on orders 8309 and 8310; option wpss_active_storage_provider left by an earlier test)",
+      "file": "site option, not plugin code"
+    },
+    {
+      "section": "all",
+      "level": "deprecated",
+      "line": "PHP Deprecated: Creation of dynamic property WC_Woo_Order_Test_Gateway::$display_background_color (and 5 siblings) in woo-order-test/admin/functions.php",
+      "file": "woo-order-test plugin, not WPSS"
+    },
+    {
+      "section": "D",
+      "level": "error",
+      "line": "WordPress database error Unknown column 'data' in 'where clause' for query DELETE FROM wp_wpss_audit_log WHERE JSON_EXTRACT(data,'$.order_id') = N (x3); Unknown column 'order_id' ... DELETE FROM wp_wpss_wallet_transactions (x2)",
+      "file": "tests (fixture teardown SQL)"
+    },
+    {
+      "section": "D",
+      "level": "notice",
+      "line": "Function wpdb::prepare was called incorrectly. Unsupported value type (object) x9",
+      "file": "unknown, during test-suite run"
+    },
+    {
+      "section": "D",
+      "level": "fatal",
+      "line": "critical error from tests/test-addon-pricing-contract.php (moderation on), with a 'headers already sent' warning x3 from the eval",
+      "file": "tests/test-addon-pricing-contract.php"
+    },
+    {
+      "section": "D",
+      "level": "warning",
+      "line": "[WPSS WARNING] Manual refund required for order N ... (x20), stripe transaction already settled (x3), 'Refused a partial refund' and Email order_cancelled 'was not sent' - deliberate guard refusals driven by contract fixtures",
+      "file": "contract-suite fixtures"
+    },
+    {
+      "section": "browser walk",
+      "level": "info",
+      "line": "Between the 11705239 baseline and the start of the contract run, the only non-woo-order-test lines were the two Storage provider \"does-not-exist\" errors; no fatal, warning or deprecated from plugin code during the Playwright flows. Log is 12014159 bytes at the end.",
+      "file": "n/a"
+    }
+  ],
   "manual_required": [
-    "Rail confirmed by both code path (IntegrationManager::detect_active_adapter() falls back to the standalone adapter when wpss_ecommerce_adapters carries nothing but 'standalone', since Pro's WooCommerce adapter never registers while Pro is inactive) and live UI (Settings > General shows 'E-Commerce Platform: Auto-detect' with 'Currently Active: Standalone'; checkout renders the plugin's own Service Checkout template, not a WooCommerce cart/checkout page). WooCommerce itself stays active for the site (a store owner's other products) but its adapter is dormant.",
-    "Two real orders were created and left in place on service 2215 as part of the required end-to-end purchase + add-on verification: order #859 (wpss_buyer_ella, addon index 0 only, $60.00, offline/pending_payment) and order #860 (wpss_buyer_ella, both addons, $70.00, offline/pending_payment). Not reverted -- same precedent as prior smoke passes leaving real purchase evidence.",
-    "Service 242 ('I will produce social media motion graphics') was temporarily set to draft to verify the cart-unpublish notice, then restored to publish and re-verified live in the catalog and cart -- no action needed.",
-    "Service 5161 (a throwaway demo service created via `wp wpss service create --count=1`) was added to wpss_buyer_ella's cart, then permanently force-deleted via wp-cli to reproduce the cart-delete-silent-removal hard fail above. It was demo/test content only, not real catalog data -- no restore needed.",
-    "Service 5162 (a throwaway incomplete draft created via wp-cli) was used to verify the publish-completeness gate on three surfaces (block-editor native Publish, REST PUT with status=publish, and REST PUT with an unrelated field on a force-published copy of itself), then permanently deleted at the end of the pass -- no restore needed.",
-    "wpss_buyer_ella's persistent cart (_wpss_cart user meta) was populated and then fully cleared via wp-cli at the end of this pass (the UI has no way to remove the ghost entry left by the delete-silent-removal bug, which is itself part of the finding) -- confirmed empty afterward.",
-    "One real message was sent from wpss_vendor_maya to wpss_buyer_ben on order #856 to verify the messaging surface end to end ('QA free-mode smoke: confirming vendor messaging works end to end.') -- left in place as harmless test data.",
-    "No settings were changed and left changed: wpss_general[ecommerce_platform] remained 'auto' throughout (never needed touching, since it already resolves correctly to standalone with Pro inactive).",
-    "13 screenshots were saved as bare relative filenames into the site's public document root per this run's instructions (caller relocates them): cart-unpublished-free-1280.png, cart-deleted-service-silent-free-1280.png, wizard-limit-extras-notice-1280.png, service-page-390-free.png, checkout-390-free.png, dashboard-sales-390-free.png (plus a handful of intermediate .playwright-mcp snapshot artifacts under the site's own .playwright-mcp folder, which are not part of the deliverable)."
+    "Fixtures left in place: requests 8371 and its sibling, proposals 547 and the second proposal, orders 8308, 8309, 8310, media 8370/8374 and requirement files; none deleted.",
+    "Contract suite also left its own fixture rows (teardown SQL is stale).",
+    "No settings changed; wpss_vendor[require_service_moderation] still true; wpss_active_storage_provider still 'does-not-exist'.",
+    "Screenshots in ~/Local Sites/wss/app/qa-artifacts/ with prefix smoke180-free-.",
+    "Pro is inactive as set by the caller; not touched."
   ]
 }
