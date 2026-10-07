@@ -221,8 +221,17 @@ class BuyerRequestService {
 			)
 		);
 
+		$owner = (int) get_post_field( 'post_author', $attachment_id );
+
 		foreach ( $requests as $request_id ) {
-			if ( ! $this->is_untouched( (int) $request_id ) ) {
+			// The LIKE only narrows: in the serialized list an array position
+			// is written the same way as a file ID, and a request lists its own
+			// author's files only. Confirm both before a request can lock a file.
+			$listed = array_map( 'absint', (array) get_post_meta( (int) $request_id, '_wpss_attachments', true ) );
+
+			if ( in_array( $attachment_id, $listed, true )
+				&& (int) get_post_field( 'post_author', (int) $request_id ) === $owner
+				&& ! $this->is_untouched( (int) $request_id ) ) {
 				return true;
 			}
 		}

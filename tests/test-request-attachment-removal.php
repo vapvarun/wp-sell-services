@@ -130,6 +130,24 @@ try {
 	$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $proposal ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$answer = rest_do_request( new WP_REST_Request( 'DELETE', '/wpss/v1/media/' . $third ) );
 	$check( '  and deletes it once no request with a proposal lists it (' . $answer->get_status() . ')', 200 === $answer->get_status() && null === get_post( $third ) );
+
+	// A request locks only a file it really lists. In the stored list an array
+	// position reads like a file ID, and another member's request is not ours.
+	$other  = UserFactory::customer( array( 'user_login' => 'wpss_reqfile_other_' . $suffix, 'user_email' => 'wpss_reqfile_other_' . $suffix . '@example.test' ) );
+	$theirs = (int) wp_insert_post( array( 'post_type' => 'wpss_request', 'post_status' => 'publish', 'post_title' => 'Other member request ' . $suffix, 'post_author' => $other->ID ) );
+	$mine   = $media( 'request' );
+	// Another member's request, with a proposal on it, names our file in its
+	// list (written straight to meta: the service would have filtered it out).
+	update_post_meta( $theirs, '_wpss_attachments', array( 999998, $mine ) );
+	$wpdb->insert( $wpdb->prefix . 'wpss_proposals', array( 'request_id' => $theirs, 'vendor_id' => 1, 'cover_letter' => 'Fixture.', 'proposed_price' => 50, 'proposed_days' => 3, 'status' => 'pending', 'created_at' => current_time( 'mysql', true ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+	$their_proposal = (int) $wpdb->insert_id;
+	$check( 'another member\'s request naming our file does not lock it', false === $service->is_file_locked( $mine ) );
+
+	update_post_meta( $theirs, '_wpss_attachments', array( 999998, 999999 ) );
+	$check( 'a list position that reads like a file ID does not lock that file', false === $service->is_file_locked( 1 ) && false === $service->is_file_locked( 0 ) );
+
+	$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $their_proposal ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	wp_delete_post( $theirs, true );
 } finally {
 	wp_set_current_user( 0 );
 	if ( $request_id ) {
