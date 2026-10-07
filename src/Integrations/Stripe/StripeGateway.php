@@ -257,11 +257,13 @@ class StripeGateway implements PaymentGatewayInterface {
 			 */
 			'description'               => apply_filters( 'wpss_stripe_payment_description', $description, $order_id, $metadata ),
 			'metadata'                  => array_merge(
+				$metadata,
+				// Last, so nothing passed in can overwrite the marks
+				// is_own_intent() reads back.
 				array(
-					'site_url' => home_url(),
+					'site_url' => $this->site_marker(),
 					'platform' => 'wp-sell-services',
-				),
-				$metadata
+				)
 			),
 		);
 
@@ -340,6 +342,16 @@ class StripeGateway implements PaymentGatewayInterface {
 		$status = $response['status'] ?? '';
 
 		if ( 'succeeded' === $status ) {
+			// A real, paid intent on this Stripe account that another site or
+			// plugin created. Confirming it here would hand out an order for
+			// someone else's sale, or refund it when the price does not match.
+			if ( ! $this->is_own_intent( (array) ( $response['metadata'] ?? array() ) ) ) {
+				return array(
+					'success' => false,
+					'error'   => __( 'This payment was not made on this site.', 'wp-sell-services' ),
+				);
+			}
+
 			return array(
 				'success'        => true,
 				'transaction_id' => $response['id'],
@@ -495,6 +507,7 @@ class StripeGateway implements PaymentGatewayInterface {
 			return array(
 				'success'           => false,
 				'error'             => $response['error']['message'] ?? __( 'Refund failed.', 'wp-sell-services' ),
+				'code'              => (string) ( $response['error']['code'] ?? '' ),
 				'transfer_reversed' => $expected_reversal ? false : null,
 			);
 		}
@@ -678,12 +691,52 @@ class StripeGateway implements PaymentGatewayInterface {
 	private function refund_unsettled_charge( string $payment_intent_id ): bool {
 		$refund = $this->process_refund( $payment_intent_id );
 
+		// The buyer already has the money back (browser and webhook both tried):
+		// done, not a failure to retry for days.
+		if ( 'charge_already_refunded' === ( $refund['code'] ?? '' ) ) {
+			return true;
+		}
+
 		if ( empty( $refund['success'] ) ) {
 			wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
 			return false;
 		}
 
 		return true;
+	}
+
+	/**
+	 * This site's mark on the intents it creates.
+	 *
+	 * The stored home option, not home_url(): a multilingual plugin filters the
+	 * latter per request, and a webhook carries no language.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return string
+	 */
+	private function site_marker(): string {
+		return (string) get_option( 'home' );
+	}
+
+	/**
+	 * Whether this site created a PaymentIntent.
+	 *
+	 * Stripe sends every payment_intent.succeeded on the account to this
+	 * endpoint, so a second site, a staging copy or another plugin sharing the
+	 * account all arrive here. Acting on those refunded good sales that were
+	 * never ours (Basecamp 10375174172).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param array $metadata The intent's metadata.
+	 * @return bool
+	 */
+	private function is_own_intent( array $metadata ): bool {
+		$bare = static fn ( $url ): string => untrailingslashit( strtolower( (string) preg_replace( '#^https?://#i', '', trim( (string) $url ) ) ) );
+
+		return 'wp-sell-services' === ( $metadata['platform'] ?? '' )
+			&& $bare( $metadata['site_url'] ?? '' ) === $bare( $this->site_marker() );
 	}
 
 	/**
@@ -1386,6 +1439,16 @@ class StripeGateway implements PaymentGatewayInterface {
 	private function handle_payment_succeeded( array $payment_intent ): array {
 		$metadata       = $payment_intent['metadata'] ?? array();
 		$order_provider = wpss_get_order_provider();
+
+		// Not ours unless it carries this site's mark or already paid one of
+		// our orders. Checked before either path: Path 1 would mark a local
+		// order paid from a foreign order_id, Path 2 would refund the charge.
+		if ( ! $this->is_own_intent( (array) $metadata ) && 0 === $this->find_order_by_transaction( (string) $payment_intent['id'], (string) ( $payment_intent['latest_charge'] ?? '' ) ) ) {
+			return array(
+				'success' => true,
+				'message' => 'Not a payment this site created; ignored.',
+			);
+		}
 
 		// The browser confirm stamps order_id on the intent only AFTER settle,
 		// so a webhook that races it carries no order_id yet while the order
