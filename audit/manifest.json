@@ -1251,5 +1251,11 @@
       "listing_rule": "Vendors on vacation are left out with author__not_in = wpss_get_vacation_vendor_ids(): catalog, search, REST services, services grid, featured block, Related services (SingleServiceView), live search (AjaxHandlers)."
     },
     "request_deadline": "A request's deadline is stored as _wpss_expires_at (service key expires_at). REST create and update both map the 'deadline' parameter to it, and the response's 'deadline' field reads it back."
+  },
+  "coverage": {
+    "map": "bin/coverage-map.php lists every REST route, AJAX action, shortcode, block, admin page, CLI command, template and fired hook from the live registries and src/, and finds each in tests/, audit/journeys/, the smoke runbook and audit/render-coverage.json. Run: wp --exec=\"define('WP_ADMIN', true);\" eval-file bin/coverage-map.php [write|check]. CI runs check; audit/coverage-baseline.json ratchets down only.",
+    "recorder": "bin/coverage-run.sh runs every tests/test-*.php with tests/coverage/recorder.php loaded (wp --require for CLI, a temporary mu-plugin for HTTP) and writes what actually executed to audit/render-coverage.json. Run it with Pro active and again with --merge with Pro inactive.",
+    "matrices": "tests/test-rest-matrix.php (every route and method: logged out, buyer, and admin inside a rolled-back transaction with outbound HTTP and mail blocked), tests/test-ajax-matrix.php (every action over real HTTP with no nonce), tests/test-render-matrix.php (every page and dashboard section per role, must reach </html>), tests/test-shortcode-block-matrix.php (every shortcode and block per viewer, no PHP warning from plugin code).",
+    "rest_conversation_missing_order": "POST /orders/{order_id}/conversation/messages answers 404 rest_order_not_found for an order that does not exist; an administrator passes the permission check for any id, so it used to report a 500 conversation_unavailable."
   }
 }

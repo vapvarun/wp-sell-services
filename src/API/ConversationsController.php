@@ -453,6 +453,12 @@ class ConversationsController extends RestController {
 	public function send_order_message( $request ) {
 		$order_id = (int) $request->get_param( 'order_id' );
 
+		// An administrator passes the permission check for any id; a missing
+		// order is a 404, not a failed conversation (REST matrix, 1.8.0).
+		if ( ! wpss_get_order( $order_id ) ) {
+			return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
 		$conversation = $this->conversation_service->get_by_order( $order_id );
 		if ( ! $conversation ) {
 			$conversation = $this->conversation_service->create_for_order( $order_id );
