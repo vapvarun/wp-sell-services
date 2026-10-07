@@ -140,12 +140,13 @@ class ModerationController extends RestController {
 
 		$query = new WP_Query(
 			array(
-				'post_type'      => 'wpss_service',
-				'post_status'    => 'pending',
-				'posts_per_page' => $pagination['per_page'],
-				'offset'         => $pagination['offset'],
-				'orderby'        => 'date',
-				'order'          => 'ASC',
+				'post_type'             => 'wpss_service',
+				'post_status'           => array( 'pending', 'publish' ),
+				'wpss_moderation_state' => 'pending', // Same queue as the admin screen.
+				'posts_per_page'        => $pagination['per_page'],
+				'offset'                => $pagination['offset'],
+				'orderby'               => 'date',
+				'order'                 => 'ASC',
 			)
 		);
 
@@ -181,11 +182,9 @@ class ModerationController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_count( WP_REST_Request $request ): WP_REST_Response {
-		$count = wp_count_posts( 'wpss_service' );
-
 		return new WP_REST_Response(
 			array(
-				'pending' => (int) ( $count->pending ?? 0 ),
+				'pending' => wpss_count_pending_services(),
 			)
 		);
 	}
@@ -205,23 +204,11 @@ class ModerationController extends RestController {
 			return new WP_Error( 'not_found', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		wp_update_post(
-			array(
-				'ID'          => $service_id,
-				'post_status' => 'publish',
-			)
-		);
+		$result = ( new \WPSellServices\Services\ModerationService() )->approve( $service_id, $notes );
 
-		// Store moderation history.
-		$this->add_moderation_entry( $service_id, 'approved', $notes );
-
-		/**
-		 * Fires after a service is approved via moderation.
-		 *
-		 * @param int    $service_id Service ID.
-		 * @param string $notes      Approval notes.
-		 */
-		do_action( 'wpss_service_approved', $service_id, $notes );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
 		return new WP_REST_Response(
 			array(
@@ -247,22 +234,11 @@ class ModerationController extends RestController {
 			return new WP_Error( 'not_found', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		wp_update_post(
-			array(
-				'ID'          => $service_id,
-				'post_status' => 'draft',
-			)
-		);
+		$result = ( new \WPSellServices\Services\ModerationService() )->reject( $service_id, (string) $reason );
 
-		$this->add_moderation_entry( $service_id, 'rejected', $reason );
-
-		/**
-		 * Fires after a service is rejected via moderation.
-		 *
-		 * @param int    $service_id Service ID.
-		 * @param string $reason     Rejection reason.
-		 */
-		do_action( 'wpss_service_rejected', $service_id, $reason );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
 		return new WP_REST_Response(
 			array(
@@ -290,31 +266,5 @@ class ModerationController extends RestController {
 		$history = get_post_meta( $service_id, '_wpss_moderation_history', true );
 
 		return new WP_REST_Response( is_array( $history ) ? $history : array() );
-	}
-
-	/**
-	 * Add moderation entry.
-	 *
-	 * @param int    $service_id Service ID.
-	 * @param string $action     Action taken.
-	 * @param string $notes      Notes/reason.
-	 * @return void
-	 */
-	private function add_moderation_entry( int $service_id, string $action, string $notes ): void {
-		$history = get_post_meta( $service_id, '_wpss_moderation_history', true );
-
-		if ( ! is_array( $history ) ) {
-			$history = array();
-		}
-
-		$history[] = array(
-			'action'     => $action,
-			'notes'      => $notes,
-			'admin_id'   => get_current_user_id(),
-			'admin_name' => wp_get_current_user()->display_name,
-			'date'       => current_time( 'mysql', true ),
-		);
-
-		update_post_meta( $service_id, '_wpss_moderation_history', $history );
 	}
 }

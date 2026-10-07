@@ -14,7 +14,7 @@ The free version of WP Sell Services is a complete, production-ready marketplace
 | **Service creation limits** | Conservative (see below) | Unlimited |
 | **Analytics** | Basic stats | Full dashboards; CSV export on the admin screen |
 | **File storage** | Your server | Your server. Cloud buckets can be configured but do not yet receive delivery files |
-| **Wallet integrations** | Built-in wallet, earnings and withdrawals | Same, plus the option to hold balances in TeraWallet or MyCred instead |
+| **Vendor wallet** | Built-in wallet, earnings and withdrawals | Same, plus automatic payouts with Stripe Connect or PayPal Payouts |
 
 ---
 
@@ -89,9 +89,6 @@ An owner can therefore pay every vendor with **zero integrations** using Free al
 |----------|------|-----|
 | Built-in earnings and withdrawals | Yes | Yes |
 | Built-in wallet (earnings, balances, withdrawals) | Yes | Yes |
-| TeraWallet | -- | **[PRO]** |
-| WooWallet | -- | **[PRO]** |
-| MyCred | -- | **[PRO]** |
 
 ### Analytics and Reporting
 
@@ -169,7 +166,6 @@ Pro makes sense when you need:
 - **Unlimited service media and add-ons** -- Your vendors need more gallery images, videos, FAQs, or extras
 - **WooCommerce or other e-commerce integration** -- You already use WooCommerce, EDD or FluentCart
 - **Razorpay payments** -- Popular for marketplaces in India and Southeast Asia
-- **Wallet-based payouts** -- Integrate with TeraWallet, WooWallet, or MyCred for vendor balances
 - **Detailed analytics** -- Revenue charts, performance dashboards, and data export
 - **Cloud file storage** -- configurable for S3, Google Cloud or DigitalOcean, but **not yet connected to deliveries**. Do not upgrade for this alone.
 

@@ -81,6 +81,33 @@ function wpss_generate_order_number(): string {
 
 
 /**
+ * The words for a cancellation reason.
+ *
+ * The one list: the order screens, the notification, the email and the status
+ * history each carried their own copy, and an immediate cancel stored the raw
+ * key ("changed_mind") where a person would read it (Basecamp 10351457462).
+ * A reason that is not one of the keys - free text from a vendor or an app -
+ * is returned as written.
+ *
+ * @since 1.8.0
+ *
+ * @param string $reason Reason key, or free text.
+ * @return string
+ */
+function wpss_get_cancellation_reason_label( string $reason ): string {
+	$labels = array(
+		'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
+		'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
+		'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
+		'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
+		'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
+		'other'                => __( 'Other', 'wp-sell-services' ),
+	);
+
+	return $labels[ $reason ] ?? $reason;
+}
+
+/**
  * Get order status label.
  *
  * @param string $status Status key.
@@ -193,6 +220,36 @@ function wpss_order_actor_role( object $order, int $user_id ): string {
 }
 
 /**
+ * Whether an order is past its delivery deadline while the seller owes work.
+ *
+ * The one definition of "late": the late-order sweep
+ * (OrderWorkflowManager::check_late_orders()) moves in_progress and
+ * revision_requested orders past their deadline to `late`, so an order is late
+ * when it is `late`, or still in one of those two before the sweep reaches it.
+ * Waiting on the buyer (payment, requirements, approval) is not late.
+ *
+ * @since 1.8.0
+ *
+ * @param object $order Order model or list row (status, delivery_deadline).
+ * @return bool
+ */
+function wpss_is_order_late( object $order ): bool {
+	if ( 'late' === $order->status ) {
+		return true;
+	}
+
+	if ( ! in_array( $order->status, array( 'in_progress', 'revision_requested' ), true ) || empty( $order->delivery_deadline ) ) {
+		return false;
+	}
+
+	$deadline = $order->delivery_deadline instanceof \DateTimeInterface
+		? $order->delivery_deadline->format( 'Y-m-d H:i:s' )
+		: (string) $order->delivery_deadline;
+
+	return $deadline < current_time( 'mysql', true );
+}
+
+/**
  * Resolve the order ID named by the current request.
  *
  * Prefers the pretty-permalink query var (`wpss_order_id`) and falls back to
@@ -239,12 +296,13 @@ function wpss_resolve_request_order_action(): string {
  * e.g. `/dashboard/orders/3407/` or `/dashboard/sales/3407/`.
  * Plain permalinks keep the `?order_id=` query form.
  *
- * @param int    $order_id Order ID.
- * @param string $section  Dashboard section (e.g. 'sales' for vendor orders).
+ * @param int         $order_id Order ID.
+ * @param string      $section  Dashboard section (e.g. 'sales' for vendor orders).
+ * @param object|null $order    The order row when the caller already holds it: a list of 20 rows then makes no 20 lookups.
  * @return string
  */
-function wpss_get_order_url( int $order_id, string $section = '' ): string {
-	$order = wpss_get_order( $order_id );
+function wpss_get_order_url( int $order_id, string $section = '', ?object $order = null ): string {
+	$order = $order ?? wpss_get_order( $order_id );
 
 	if ( ! $order ) {
 		return '';
@@ -1197,6 +1255,60 @@ function wpss_capture_order_package_snapshot( int $order_id ): bool {
 }
 
 /**
+ * The one payment label for an order: "Refunded · Stripe", "Paid · Stripe",
+ * "Not paid · Offline Payment".
+ *
+ * The order screens and the admin Orders list each had a copy; the list's
+ * copy had no refunded branch and showed "Paid · Stripe" on a refunded order
+ * (Basecamp 10346167214).
+ *
+ * @since 1.8.0
+ *
+ * @param string $payment_status The order's payment_status.
+ * @param bool   $paid_at_set    Whether the order has a paid_at time.
+ * @param string $payment_method The order's payment_method slug.
+ * @return string
+ */
+function wpss_get_payment_status_label( string $payment_status, bool $paid_at_set, string $payment_method ): string {
+	$method = wpss_get_payment_method_label( $payment_method );
+
+	if ( 'refunded' === $payment_status ) {
+		/* translators: %s: payment method, e.g. Stripe. */
+		return '' !== $method ? sprintf( __( 'Refunded · %s', 'wp-sell-services' ), $method ) : __( 'Refunded', 'wp-sell-services' );
+	}
+
+	if ( 'paid' === $payment_status || $paid_at_set ) {
+		/* translators: %s: payment method, e.g. Stripe. */
+		return '' !== $method ? sprintf( __( 'Paid · %s', 'wp-sell-services' ), $method ) : __( 'Paid', 'wp-sell-services' );
+	}
+
+	/* translators: %s: payment method, e.g. Offline Payment. */
+	return '' !== $method ? sprintf( __( 'Not paid · %s', 'wp-sell-services' ), $method ) : __( 'Not paid', 'wp-sell-services' );
+}
+
+/**
+ * Human label for an order's payment_method.
+ *
+ * A registered gateway names itself (get_name()); anything else - a rail slug
+ * such as woocommerce or bacs, or 'manual' from Create Order - is shown as
+ * words. Empty means no method was recorded (Basecamp 10337161480).
+ *
+ * @since 1.8.0
+ *
+ * @param string $method Stored payment_method.
+ * @return string Label, '' when none was recorded.
+ */
+function wpss_get_payment_method_label( string $method ): string {
+	if ( '' === $method ) {
+		return '';
+	}
+
+	$gateway = wpss()->get_payment_gateway( $method );
+
+	return $gateway ? $gateway->get_name() : ucwords( str_replace( array( '_', '-' ), ' ', $method ) );
+}
+
+/**
  * Get the payment-rail receipt reference for an order, if any.
  *
  * A WPSS order is the order, and its lifecycle is the same whichever rail took
@@ -1673,7 +1785,7 @@ function wpss_map_rail_status( string $platform, string $rail_status ): ?string 
  *
  * @since 1.7.1
  *
- * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float}
+ * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float,commission:float}
  */
 function wpss_get_order_aggregates(): object {
 	$cached = get_transient( 'wpss_order_aggregates' );
@@ -1689,6 +1801,154 @@ function wpss_get_order_aggregates(): object {
 }
 
 /**
+ * Revenue - what buyers paid, net of refunds - by the one definition.
+ *
+ * Every revenue figure shown anywhere comes from here; see
+ * OrderRepository::get_revenue() for the rule and the arguments. Ungrouped,
+ * the result is one row; read `[0]`.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, mixed> $args from, to, vendor_id, group_by, limit.
+ * @return array<int, object{key:string,orders:int,gross:float,refunded:float,revenue:float,commission:float,vendor_earnings:float}>
+ */
+function wpss_get_revenue( array $args = array() ): array {
+	return ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_revenue( $args );
+}
+
+/**
+ * Revenue per day across a date range, with every day present.
+ *
+ * Days with no paid orders are 0 rather than missing, so a chart spaces its
+ * points by time and a curve never invents a value between them. The one
+ * series behind the admin Analytics chart, its REST route and the vendor
+ * Analytics chart.
+ *
+ * @since 1.8.0
+ *
+ * @param string               $from First day (Y-m-d).
+ * @param string               $to   Last day (Y-m-d).
+ * @param array<string, mixed> $args Other wpss_get_revenue() filters (vendor_id, platform).
+ * @return array{labels:string[],revenue:float[],commission:float[],vendor_earnings:float[],orders:int[]}
+ */
+function wpss_get_revenue_series( string $from, string $to, array $args = array() ): array {
+	$rows = wpss_get_revenue(
+		array(
+			'from'     => $from . ' 00:00:00',
+			'to'       => $to . ' 23:59:59',
+			'group_by' => 'day',
+		) + $args
+	);
+
+	$by_day = array();
+	foreach ( $rows as $row ) {
+		$by_day[ $row->key ] = $row;
+	}
+
+	$series = array(
+		'labels'          => array(),
+		'revenue'         => array(),
+		'commission'      => array(),
+		'vendor_earnings' => array(),
+		'orders'          => array(),
+	);
+
+	$last = strtotime( $to );
+
+	for ( $day = strtotime( $from ); $day <= $last; $day = strtotime( '+1 day', $day ) ) {
+		$key                         = gmdate( 'Y-m-d', $day );
+		$row                         = $by_day[ $key ] ?? null;
+		$series['labels'][]          = $key;
+		$series['revenue'][]         = $row ? $row->revenue : 0.0;
+		$series['commission'][]      = $row ? $row->commission : 0.0;
+		$series['vendor_earnings'][] = $row ? $row->vendor_earnings : 0.0;
+		$series['orders'][]          = $row ? $row->orders : 0;
+	}
+
+	return $series;
+}
+
+/**
+ * One order's part of revenue: the PHP twin of OrderRepository::get_revenue().
+ *
+ * For rendering a single row the same way the totals count it: an order that
+ * is unpaid, cancelled or rejected counts for nothing (so its row shows no
+ * earnings), and a refund takes its share off the commission and the vendor's
+ * earnings. Keep the rule in step with the SQL.
+ *
+ * @since 1.8.0
+ *
+ * @param object $order Order row (status, payment_status, paid_at, total, refunded_amount, platform_fee, vendor_earnings).
+ * @return object{counts:bool,revenue:float,commission:float,vendor_earnings:float}
+ */
+function wpss_get_order_revenue( object $order ): object {
+	$status = (string) ( $order->status ?? '' );
+	$paid   = ! empty( $order->paid_at ) || in_array( (string) ( $order->payment_status ?? '' ), array( 'paid', 'completed', 'refunded' ), true );
+	$counts = $paid && ! in_array( $status, array( 'pending_payment', 'pending', 'cancelled', 'rejected' ), true );
+	$total  = (float) ( $order->total ?? 0 );
+
+	if ( ! $counts || $total <= 0 ) {
+		return (object) array(
+			'counts'          => $counts,
+			'revenue'         => 0.0,
+			'commission'      => 0.0,
+			'vendor_earnings' => 0.0,
+		);
+	}
+
+	if ( null !== ( $order->refunded_amount ?? null ) ) {
+		$refunded = (float) $order->refunded_amount;
+	} else {
+		$refunded = ( 'refunded' === $status || ( 'refunded' === ( $order->payment_status ?? '' ) && 'partially_refunded' !== $status ) ) ? $total : 0.0;
+	}
+
+	$refunded = min( $total, $refunded );
+	$share    = ( $total - $refunded ) / $total;
+
+	// Credited orders already carry the net after a refund's reversal; see
+	// OrderRepository::get_revenue().
+	$credited = in_array( (int) ( $order->id ?? 0 ), wpss_get_credited_order_ids( array( (int) ( $order->id ?? 0 ) ) ), true );
+	$scale    = $credited ? 1.0 : $share;
+
+	return (object) array(
+		'counts'          => true,
+		'revenue'         => $total - $refunded,
+		'commission'      => (float) ( $order->platform_fee ?? 0 ) * $scale,
+		'vendor_earnings' => (float) ( $order->vendor_earnings ?? 0 ) * $scale,
+	);
+}
+
+/**
+ * Which of these orders the vendor has been credited for (a ledger credit).
+ *
+ * Remembered for the request, so a list primes its page in one query and each
+ * row's wpss_get_order_revenue() reads from memory.
+ *
+ * @since 1.8.0
+ *
+ * @param int[] $order_ids Order IDs.
+ * @return int[] The credited ones.
+ */
+function wpss_get_credited_order_ids( array $order_ids ): array {
+	static $known = array();
+
+	$order_ids = array_values( array_filter( array_map( 'intval', $order_ids ) ) );
+	$missing   = array_diff( $order_ids, array_keys( $known ) );
+
+	if ( $missing ) {
+		global $wpdb;
+		$placeholders = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$credited = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT reference_id FROM {$wpdb->prefix}wpss_wallet_transactions WHERE reference_type = 'order' AND amount > 0 AND reference_id IN ({$placeholders})", ...$missing ) ) );
+		foreach ( $missing as $id ) {
+			$known[ $id ] = in_array( $id, $credited, true );
+		}
+	}
+
+	return array_values( array_filter( $order_ids, static fn( $id ) => ! empty( $known[ $id ] ) ) );
+}
+
+/**
  * Drop the cached admin order aggregates.
  *
  * @since 1.7.1
@@ -1699,7 +1959,8 @@ function wpss_flush_order_aggregates(): void {
 	delete_transient( 'wpss_order_aggregates' );
 }
 
-foreach ( array( 'wpss_order_created', 'wpss_order_paid', 'wpss_order_status_changed' ) as $wpss_aggregates_hook ) {
+// A second partial refund is not a status change, so the refund hooks are listed too.
+foreach ( array( 'wpss_order_created', 'wpss_order_paid', 'wpss_order_status_changed', 'wpss_order_status_refunded', 'wpss_order_status_partially_refunded' ) as $wpss_aggregates_hook ) {
 	add_action( $wpss_aggregates_hook, 'wpss_flush_order_aggregates' );
 }
 unset( $wpss_aggregates_hook );
@@ -1741,4 +2002,28 @@ function wpss_order_awaits_payment_confirmation( $order ): bool {
 	// offline-style instruction the site owner has to confirm by hand.
 	return '' !== (string) ( $order->payment_method ?? '' )
 		&& 'paid' !== ( $order->payment_status ?? '' );
+}
+
+/**
+ * What to tell a buyer whose offline order is waiting on payment.
+ *
+ * Right after an offline order is placed nothing has been paid - the buyer
+ * still has to send it - yet every view said "Payment submitted. We will
+ * confirm your transfer shortly." above instructions that begin "after you
+ * place your order" (Basecamp 10336467932). "Received" is only true once the
+ * buyer has uploaded proof of payment for review. The one wording for the
+ * order, extension and milestone views and the Offline gateway's panel.
+ *
+ * @since 1.8.0
+ *
+ * @param object $order Order awaiting confirmation (wpss_order_awaits_payment_confirmation()).
+ * @return string
+ */
+function wpss_offline_payment_notice( object $order ): string {
+	$proof = \WPSellServices\Services\PaymentReceiptService::is_enabled()
+		&& null !== ( new \WPSellServices\Database\Repositories\PaymentReceiptRepository() )->get_pending_for_order( (int) $order->id );
+
+	return $proof
+		? __( 'Payment proof received. We will confirm it shortly and let you know.', 'wp-sell-services' )
+		: __( 'Order placed and waiting for your payment. Work starts once it is confirmed.', 'wp-sell-services' );
 }

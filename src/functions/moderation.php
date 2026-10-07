@@ -293,6 +293,98 @@ function wpss_is_blocked_between( int $user_a, int $user_b ): bool {
 }
 
 /**
+ * A service's effective moderation state: 'pending', 'approved', 'rejected',
+ * or '' when it is not in moderation (a draft that was not rejected).
+ *
+ * The stored meta wins. A service with no meta - created by WP-CLI, REST, an
+ * import or an Editor's "Submit for review", none of which write it - is
+ * decided by its post status: pending is waiting for review, publish is live.
+ * Reading a missing meta as "approved" hid every such pending service from the
+ * queue (Basecamp 10337188110), and reading only "approved" hid every such live
+ * service from search. {@see wpss_service_moderation_state_sql()} is the same
+ * rule for queries; keep the two in step.
+ *
+ * @since 1.8.0
+ *
+ * @param int|\WP_Post $service Service post or ID.
+ * @return string
+ */
+function wpss_get_service_moderation_state( $service ): string {
+	$post = get_post( $service );
+
+	if ( ! $post ) {
+		return '';
+	}
+
+	$meta = (string) get_post_meta( $post->ID, '_wpss_moderation_status', true );
+
+	// Rejection is what moves a service to draft. Any other draft - never
+	// submitted, or taken back from review - is not in moderation.
+	if ( 'draft' === $post->post_status ) {
+		return 'rejected' === $meta ? 'rejected' : '';
+	}
+
+	if ( '' !== $meta ) {
+		return $meta;
+	}
+
+	if ( 'pending' === $post->post_status ) {
+		return 'pending';
+	}
+
+	return 'publish' === $post->post_status ? 'approved' : '';
+}
+
+/**
+ * SQL for a service's effective moderation state, per row of `$posts_alias`.
+ *
+ * The query-side twin of {@see wpss_get_service_moderation_state()}.
+ *
+ * @since 1.8.0
+ *
+ * @param string $posts_alias Alias (or table name) of the posts table in the query.
+ * @return string
+ */
+function wpss_service_moderation_state_sql( string $posts_alias ): string {
+	global $wpdb;
+
+	$meta = "( SELECT wpss_ms.meta_value FROM {$wpdb->postmeta} wpss_ms
+		WHERE wpss_ms.post_id = {$posts_alias}.ID AND wpss_ms.meta_key = '_wpss_moderation_status' LIMIT 1 )";
+
+	return "CASE WHEN {$posts_alias}.post_status = 'draft'
+			THEN IF( {$meta} = 'rejected', 'rejected', '' )
+		ELSE COALESCE( {$meta},
+			CASE {$posts_alias}.post_status WHEN 'pending' THEN 'pending' WHEN 'publish' THEN 'approved' ELSE '' END )
+	END";
+}
+
+/**
+ * Let any WP_Query filter services by effective moderation state:
+ * `'wpss_moderation_state' => 'pending'` or an array of states.
+ *
+ * @since 1.8.0
+ *
+ * @param string    $where The WHERE clause.
+ * @param \WP_Query $query The query.
+ * @return string
+ */
+function wpss_filter_query_by_moderation_state( string $where, \WP_Query $query ): string {
+	$states = (array) $query->get( 'wpss_moderation_state' );
+	$states = array_filter( array_map( 'sanitize_key', $states ) );
+
+	if ( empty( $states ) ) {
+		return $where;
+	}
+
+	global $wpdb;
+
+	$list = "'" . implode( "','", $states ) . "'";
+
+	return $where . ' AND ' . wpss_service_moderation_state_sql( $wpdb->posts ) . " IN ({$list})";
+}
+add_filter( 'posts_where', 'wpss_filter_query_by_moderation_state', 10, 2 );
+
+/**
  * Count services awaiting moderation review.
  *
  * One COUNT (found_posts on a 1-row query) cached in a transient, instead of
@@ -319,12 +411,7 @@ function wpss_count_pending_services(): int {
 			'fields'                 => 'ids',
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
-			'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one key, result cached.
-				array(
-					'key'   => '_wpss_moderation_status',
-					'value' => 'pending',
-				),
-			),
+			'wpss_moderation_state'  => 'pending',
 		)
 	);
 
@@ -350,3 +437,81 @@ foreach ( array( 'save_post_wpss_service', 'deleted_post', 'wpss_service_approve
 	add_action( $wpss_pending_hook, 'wpss_flush_pending_services_count', 99 );
 }
 unset( $wpss_pending_hook );
+
+/**
+ * Print a Report link for something a member can report.
+ *
+ * The website's entry point to POST wpss/v1/reports. Nothing is printed for
+ * the person who owns the thing: the route refuses a report on your own
+ * content. A visitor gets a link to sign in and come back; a member gets a
+ * button that opens the shared dialog (templates/partials/report-modal.php),
+ * printed once in the footer.
+ *
+ * @since 1.8.0
+ *
+ * @param string $target_type One of wpss_get_report_target_types().
+ * @param int    $target_id   What is being reported.
+ * @param int    $owner_id    Whose it is.
+ * @param string $label       Link text.
+ * @return void
+ */
+function wpss_render_report_link( string $target_type, int $target_id, int $owner_id, string $label ): void {
+	if ( $target_id <= 0 || ! isset( wpss_get_report_target_types()[ $target_type ] ) || ( is_user_logged_in() && get_current_user_id() === $owner_id ) ) {
+		return;
+	}
+
+	wpss_enqueue_frontend_assets();
+
+	if ( ! is_user_logged_in() ) {
+		printf(
+			'<p class="wpss-report"><a class="wpss-report-link" href="%s"><i data-lucide="flag" class="wpss-icon" aria-hidden="true"></i> %s</a></p>',
+			// Back to what was being reported. A seller's profile is an address
+			// on the vendors page, so get_permalink() there is the directory.
+			esc_url( wp_login_url( 'user' === $target_type ? wpss_get_vendor_url( $target_id ) : (string) get_permalink( $target_id ) ) ),
+			esc_html( $label )
+		);
+		return;
+	}
+
+	printf(
+		'<p class="wpss-report"><button type="button" class="wpss-report-link" data-report-type="%s" data-report-id="%d"><i data-lucide="flag" class="wpss-icon" aria-hidden="true"></i> %s</button></p>',
+		esc_attr( $target_type ),
+		(int) $target_id,
+		esc_html( $label )
+	);
+
+	if ( ! has_action( 'wp_footer', 'wpss_render_report_modal' ) ) {
+		add_action( 'wp_footer', 'wpss_render_report_modal' );
+	}
+}
+
+/**
+ * Print the shared report dialog.
+ *
+ * @since 1.8.0
+ *
+ * @return void
+ */
+function wpss_render_report_modal(): void {
+	wpss_get_template( 'partials/report-modal.php' );
+}
+
+// Where the link shows in 1.8.0: the service page and the vendor profile, at
+// the foot of each sidebar. Reviews and messages follow (owner decision,
+// Basecamp 10378022010). Late priority, so it sits under whatever else a
+// site or Pro adds to the sidebar.
+add_action(
+	'wpss_single_service_sidebar',
+	static function ( $service ): void {
+		$service_id = (int) ( is_object( $service ) ? ( $service->id ?? 0 ) : $service );
+		wpss_render_report_link( 'service', $service_id, (int) get_post_field( 'post_author', $service_id ), __( 'Report this service', 'wp-sell-services' ) );
+	},
+	90
+);
+add_action(
+	'wpss_vendor_profile_sidebar',
+	static function ( $vendor_id ): void {
+		wpss_render_report_link( 'user', (int) $vendor_id, (int) $vendor_id, __( 'Report this seller', 'wp-sell-services' ) );
+	},
+	90
+);

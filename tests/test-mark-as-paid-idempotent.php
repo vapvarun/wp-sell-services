@@ -79,6 +79,14 @@ $check( '  paid_at unchanged', $first->paid_at === $second->paid_at );
 $check( '  transaction_id unchanged', 'txn_first' === $second->transaction_id );
 $check( '  wpss_order_paid fired once', 1 === $paid_fired );
 
+// A replayed "succeeded" event after a refund must not reopen the order (Basecamp 10372723087).
+$wpdb->update( $table, array( 'status' => 'refunded', 'payment_status' => 'refunded' ), array( 'id' => $order_id ) );
+wp_cache_flush();
+$provider->mark_as_paid( $order_id, 'txn_first', 'stripe' );
+$replayed = $row();
+$check( 'mark_as_paid on a refunded order leaves it refunded', 'refunded' === $replayed->status && 'refunded' === $replayed->payment_status );
+$check( '  and wpss_order_paid does not fire again', 1 === $paid_fired );
+
 $wpdb->delete( $table, array( 'id' => $order_id ) );
 
 echo $fails ? "\n{$fails} FAILED\n" : "\nall passed\n";

@@ -80,17 +80,19 @@ class TestGateway implements PaymentGatewayInterface {
 	/**
 	 * Check if gateway is enabled.
 	 *
-	 * Only enabled when WP_DEBUG is true and settings have it enabled.
+	 * One rule, matching the two reasons Plugin registers this gateway: a dev
+	 * site (WP_DEBUG) where the owner switched it on, or demo mode, which lasts
+	 * only until a real gateway is configured. The checkout list and the payment
+	 * handler both ask this, so they cannot disagree (Basecamp 10336397941).
 	 *
 	 * @return bool
 	 */
 	public function is_enabled(): bool {
-		// Only available in debug mode.
-		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
-			return false;
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! empty( $this->settings['enabled'] ) ) {
+			return true;
 		}
 
-		return ! empty( $this->settings['enabled'] );
+		return wpss_demo_payments_enabled();
 	}
 
 	/**
@@ -251,11 +253,10 @@ class TestGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		// Verify debug mode.
-		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
-			wp_send_json_error( array( 'message' => __( 'Test gateway is only available in debug mode.', 'wp-sell-services' ) ) );
-			return;
-		}
+		// The gateway's own switch, through the same gate as every other rail.
+		// This checked WP_DEBUG alone, so a disabled Test gateway still marked
+		// real orders paid on any debug site (Basecamp 10336397941).
+		wpss_gateway_require_enabled( $this );
 
 		// Handle payment for existing order (from proposal acceptance).
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -350,24 +351,24 @@ class TestGateway implements PaymentGatewayInterface {
 		}
 
 		// Calculate price from package.
-		$packages = wpss_get_service_packages( $service_id );
-		$price    = 0;
+		// Priced by the one line pricer, from ids alone - package (stable id or
+		// index), quantity and the add-ons as the vendor set them.
+		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line(
+			$service_id,
+			$package_id,
+			$quantity,
+			\WPSellServices\Checkout\CheckoutIntentService::request_selection( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the calling handler.
+		);
 
-		if ( isset( $packages[ $package_id ] ) ) {
-			$price = (float) ( $packages[ $package_id ]['price'] ?? 0 );
+		if ( is_wp_error( $line ) ) {
+			wp_send_json_error( array( 'message' => $line->get_error_message() ) );
+			return;
 		}
 
-		// Fallback to starting price.
-		if ( $price <= 0 ) {
-			$price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-		}
-
-		// Apply quantity.
-		$price *= $quantity;
-
-		// Resolve selected addons from POST data.
-		$addon_data   = wpss_resolve_checkout_addons( $service_id );
-		$addons_total = $addon_data['addons_total'];
+		$price        = (float) $line['subtotal'];
+		$package_id   = (int) $line['package_id'];
+		$addon_data   = array( 'addons' => $line['addons'] );
+		$addons_total = (float) $line['addons_total'];
 
 		// Get order provider.
 		$order_provider = wpss_get_order_provider();

@@ -200,8 +200,8 @@ class DisputeRepository extends AbstractRepository {
 	public function create( array $data ) {
 		$defaults = array(
 			'status'     => 'open',
-			'created_at' => current_time( 'mysql' ),
-			'updated_at' => current_time( 'mysql' ),
+			'created_at' => current_time( 'mysql', true ),
+			'updated_at' => current_time( 'mysql', true ),
 		);
 
 		$data = wp_parse_args( $data, $defaults );
@@ -221,7 +221,7 @@ class DisputeRepository extends AbstractRepository {
 			$id,
 			array(
 				'status'     => $status,
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			)
 		);
 	}
@@ -238,7 +238,7 @@ class DisputeRepository extends AbstractRepository {
 			$id,
 			array(
 				'assigned_admin' => $admin_id,
-				'updated_at'     => current_time( 'mysql' ),
+				'updated_at'     => current_time( 'mysql', true ),
 			)
 		);
 	}
@@ -255,7 +255,7 @@ class DisputeRepository extends AbstractRepository {
 		return $this->update(
 			$id,
 			array(
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			)
 		);
 	}
@@ -274,8 +274,8 @@ class DisputeRepository extends AbstractRepository {
 			array(
 				'status'           => $resolution,
 				'resolution_notes' => $notes,
-				'resolved_at'      => current_time( 'mysql' ),
-				'updated_at'       => current_time( 'mysql' ),
+				'resolved_at'      => current_time( 'mysql', true ),
+				'updated_at'       => current_time( 'mysql', true ),
 			)
 		);
 	}

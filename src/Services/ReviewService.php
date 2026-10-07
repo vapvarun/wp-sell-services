@@ -95,7 +95,7 @@ class ReviewService {
 				'delivery_rating'      => ! empty( $data['rating_value'] ) ? (int) $data['rating_value'] : null,
 				'review'               => wp_kses_post( $data['content'] ?? '' ),
 				'status'               => $this->requires_moderation() ? Review::STATUS_PENDING : Review::STATUS_APPROVED,
-				'created_at'           => current_time( 'mysql' ),
+				'created_at'           => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%s', '%s' )
 		);
@@ -364,7 +364,7 @@ class ReviewService {
 			$table,
 			array(
 				'vendor_reply'    => wp_kses_post( $response ),
-				'vendor_reply_at' => current_time( 'mysql' ),
+				'vendor_reply_at' => current_time( 'mysql', true ),
 			),
 			array( 'id' => $review_id )
 		);
@@ -377,26 +377,7 @@ class ReviewService {
 	 * @return void
 	 */
 	private function update_service_rating( int $service_id ): void {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_reviews';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$stats = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT AVG(rating) as avg_rating, COUNT(*) as review_count
-				FROM {$table}
-				WHERE service_id = %d AND status = %s",
-				$service_id,
-				Review::STATUS_APPROVED
-			)
-		);
-
-		if ( $stats ) {
-			$count = (int) $stats->review_count;
-			update_post_meta( $service_id, '_wpss_rating_average', round( (float) $stats->avg_rating, 2 ) );
-			update_post_meta( $service_id, '_wpss_review_count', $count );
-			update_post_meta( $service_id, '_wpss_rating_count', $count );
-		}
+		wpss_recount_service_rating( $service_id );
 	}
 
 	/**

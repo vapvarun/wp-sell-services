@@ -531,6 +531,19 @@
 	color: var(--wpss-text-muted, #6b7280);
 }
 
+/* On a phone the chips get their own row; beside the buyer they squeezed the
+   name and the posted date onto two lines each (Basecamp 10337197376). */
+@media (max-width: 640px) {
+	.wpss-request-card__header {
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.wpss-request-card__categories {
+		flex-basis: 100%;
+	}
+}
+
 .wpss-request-card__body {
 	margin-bottom: 1rem;
 }
@@ -958,6 +971,13 @@
 .wpss-buyer-profile .wpss-buyer-avatar {
 	width: 64px;
 	height: 64px;
+	flex-shrink: 0;
+}
+
+/* A long username ("wpss_rest_buyer_P1pkXvxh") ran to the card edge
+   (Basecamp 10337197376): let the text column shrink and cut the name. */
+.wpss-buyer-profile .wpss-buyer-info {
+	min-width: 0;
 }
 
 .wpss-buyer-profile .wpss-buyer-name {
@@ -965,6 +985,9 @@
 	color: var(--wpss-text, #111827);
 	display: block;
 	margin-bottom: 0.25rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .wpss-buyer-member-since {
@@ -1135,9 +1158,12 @@
 		grid-row: 3;
 	}
 
-	/* Hide mobile filter toggle */
+	/* Hide the drawer toggle while the sidebar is on screen - one filter UI
+	   at a time (Basecamp 10337197376). !important because the theme-proof
+	   button rule above forces display on every .wpss-btn here. */
+	.wpss-requests-archive .wpss-btn.wpss-filter-toggle,
 	.wpss-filter-toggle {
-		display: none;
+		display: none !important;
 	}
 
 	/* Hide mobile sidebar header */

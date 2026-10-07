@@ -208,7 +208,7 @@ class OrdersController extends RestController {
 		// having them.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation)',
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -523,49 +523,55 @@ class OrdersController extends RestController {
 			);
 		}
 
-		// Only allow updating certain fields.
-		$allowed_fields = array( 'vendor_notes' );
-
-		// Admin can update more fields.
-		if ( current_user_can( 'manage_options' ) ) {
-			$allowed_fields = array_merge( $allowed_fields, array( 'status', 'due_date' ) );
-		}
-
-		$updates = array();
-		foreach ( $allowed_fields as $field ) {
-			if ( $request->has_param( $field ) ) {
-				$value = $request->get_param( $field );
-
-				$updates[ $field ] = match ( $field ) {
-					'vendor_notes' => sanitize_textarea_field( $value ),
-					'status'       => sanitize_key( $value ),
-					'due_date'     => sanitize_text_field( $value ),
-					default        => sanitize_text_field( $value ),
-				};
+		// vendor_notes and due_date are not PATCHable. vendor_notes held the
+		// cancellation request that drives the 48-hour auto-cancel timer, so a
+		// buyer who could write it could cancel an order early (Basecamp
+		// 10336370631); due_date was accepted and silently ignored. Refuse both
+		// out loud rather than return 200 for nothing.
+		foreach ( array( 'vendor_notes', 'due_date' ) as $readonly_field ) {
+			if ( $request->has_param( $readonly_field ) ) {
+				return new WP_Error(
+					'wpss_field_not_writable',
+					/* translators: %s: field name */
+					sprintf( __( '%s cannot be changed through this endpoint.', 'wp-sell-services' ), $readonly_field ),
+					array( 'status' => 400 )
+				);
 			}
 		}
 
-		if ( ! empty( $updates ) ) {
-			// Route status changes through OrderService for consistent
-			// timestamps, logging, and hook behavior across all paths.
-			if ( isset( $updates['status'] ) ) {
-				$new_status = $updates['status'];
-				unset( $updates['status'] );
-
-				// Apply any non-status fields first.
-				if ( ! empty( $updates ) ) {
-					$order->update( $updates );
-				}
-
-				$order_service = new OrderService();
-				$order_service->update_status( $order_id, $new_status );
-
-				// Refresh order to reflect all changes.
-				$order = ServiceOrder::find( $order_id );
-			} else {
-				$order->update( $updates );
-			}
+		if ( ! $request->has_param( 'status' ) ) {
+			return $this->prepare_item_for_response( $order, $request );
 		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return new WP_Error(
+				'wpss_field_not_writable',
+				__( 'Only an administrator can set an order status directly. Use the order actions instead.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$new_status = sanitize_key( (string) $request->get_param( 'status' ) );
+
+		// Refunds and disputes have their own actions, which move money and
+		// create the dispute. A bare status would do neither.
+		if ( ! isset( OrderService::get_settable_statuses()[ $new_status ] ) ) {
+			return new WP_Error(
+				'wpss_invalid_status',
+				__( 'That status cannot be set directly. Refunds and disputes have their own actions.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( $new_status !== $order->status && ! ( new OrderService() )->update_status( $order_id, $new_status ) ) {
+			return new WP_Error(
+				'wpss_invalid_transition',
+				__( 'The order cannot move to that status from its current one.', 'wp-sell-services' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$order = ServiceOrder::find( $order_id );
 
 		return $this->prepare_item_for_response( $order, $request );
 	}
@@ -691,7 +697,7 @@ class OrdersController extends RestController {
 				'message'     => $message->content,
 				'attachments' => $attachments,
 				'is_system'   => false,
-				'created_at'  => $message->created_at,
+				'created_at'  => wpss_rest_date( $message->created_at ),
 			),
 			201
 		);
@@ -728,8 +734,8 @@ class OrdersController extends RestController {
 				'status'           => $delivery->status,
 				'version'          => (int) $delivery->version,
 				'response_message' => $delivery->response_message,
-				'responded_at'     => $delivery->responded_at,
-				'created_at'       => $delivery->created_at,
+				'responded_at'     => wpss_rest_date( $delivery->responded_at ),
+				'created_at'       => wpss_rest_date( $delivery->created_at ),
 			);
 		}
 
@@ -891,7 +897,7 @@ class OrdersController extends RestController {
 				'files'       => $attachments,
 				'version'     => (int) ( $delivery->version ?? 1 ),
 				'status'      => $delivery->status ?? 'pending',
-				'created_at'  => $delivery->created_at ?? current_time( 'mysql' ),
+				'created_at'  => $delivery->created_at ?? current_time( 'mysql', true ),
 			),
 			201
 		);
@@ -1007,10 +1013,7 @@ class OrdersController extends RestController {
 				} elseif ( ! $order->can_request_revision() ) {
 					$error = __( 'Revision limit reached for this order.', 'wp-sell-services' );
 				} else {
-					$result = $order_service->request_revision( $order_id, $reason );
-					if ( $result ) {
-						do_action( 'wpss_revision_requested', $order_id, $reason );
-					}
+					$result = ( new \WPSellServices\Services\DeliveryService() )->request_revision( $order_id, $reason );
 				}
 				break;
 
@@ -1021,6 +1024,20 @@ class OrdersController extends RestController {
 					$error = __( 'Only in-progress orders can be put on hold.', 'wp-sell-services' );
 				} else {
 					$result = $order_service->update_status( $order_id, ServiceOrder::STATUS_ON_HOLD );
+				}
+				break;
+
+			case 'retry-refund':
+				// A refund the gateway refused (see OrderService::refund()).
+				// The site owner's call only: it moves money.
+				if ( ! $is_admin ) {
+					$error = __( 'Only an administrator can retry a refund.', 'wp-sell-services' );
+				} else {
+					$retry  = $order_service->retry_refund( $order_id );
+					$result = $retry['ok'];
+					if ( ! $result ) {
+						$error = $retry['message'];
+					}
 				}
 				break;
 
@@ -1040,9 +1057,7 @@ class OrdersController extends RestController {
 					if ( empty( $reason ) ) {
 						$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
 					} else {
-						// Store cancellation reason in vendor_notes before status change.
-						$order->update( array( 'vendor_notes' => $reason ) );
-						$cancel_result = $order_service->cancel( $order_id, $user_id, $reason );
+						$cancel_result = $order_service->cancel( $order_id, $user_id, $reason, sanitize_textarea_field( $request->get_param( 'note' ) ?? '' ) );
 						$result        = $cancel_result['success'] ?? false;
 						if ( ! $result ) {
 							$error = $cancel_result['message'] ?? __( 'Failed to cancel order.', 'wp-sell-services' );
@@ -1056,9 +1071,7 @@ class OrdersController extends RestController {
 						if ( empty( $reason ) ) {
 							$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
 						} else {
-							// Store cancellation reason in vendor_notes before status change.
-							$order->update( array( 'vendor_notes' => $reason ) );
-							$cancel_result = $order_service->cancel( $order_id, $user_id, $reason );
+							$cancel_result = $order_service->cancel( $order_id, $user_id, $reason, sanitize_textarea_field( $request->get_param( 'note' ) ?? '' ) );
 							$result        = $cancel_result['success'] ?? false;
 							if ( ! $result ) {
 								$error = $cancel_result['message'] ?? __( 'Failed to cancel order.', 'wp-sell-services' );
@@ -1085,9 +1098,7 @@ class OrdersController extends RestController {
 					if ( empty( $reason ) ) {
 						$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
 					} else {
-						// Store cancellation reason in vendor_notes before status change.
-						$order->update( array( 'vendor_notes' => $reason ) );
-						$cancel_result = $order_service->cancel( $order_id, $user_id, $reason );
+						$cancel_result = $order_service->cancel( $order_id, $user_id, $reason, sanitize_textarea_field( $request->get_param( 'note' ) ?? '' ) );
 						$result        = $cancel_result['success'] ?? false;
 						if ( ! $result ) {
 							$error = $cancel_result['message'] ?? __( 'Failed to cancel order.', 'wp-sell-services' );
@@ -1290,7 +1301,7 @@ class OrdersController extends RestController {
 				'success'      => true,
 				'message'      => $result['message'],
 				'submitted'    => $result['submitted'],
-				'submitted_at' => current_time( 'mysql' ),
+				'submitted_at' => current_time( 'mysql', true ),
 			)
 		);
 	}
@@ -1379,8 +1390,16 @@ class OrdersController extends RestController {
 			);
 		}
 
-		// Delete attachment.
-		wp_delete_attachment( $file_id, true );
+		// A refused delete is reported, not answered as "File removed". The
+		// commonest refusal: the file is locked to a buyer request that has a
+		// proposal (wpss_guard_locked_request_file()).
+		if ( ! wp_delete_attachment( $file_id, true ) ) {
+			return new WP_Error(
+				'wpss_file_in_use',
+				__( 'This file cannot be deleted. It may belong to a request that already has proposals.', 'wp-sell-services' ),
+				array( 'status' => 409 )
+			);
+		}
 
 		return new WP_REST_Response(
 			array(
@@ -1550,8 +1569,8 @@ class OrdersController extends RestController {
 					// (Basecamp 10267994010).
 					'file_url'    => wpss_get_receipt_file( $receipt )['url'],
 					'uploaded_by' => (int) $receipt->uploaded_by,
-					'created_at'  => (string) $receipt->created_at,
-					'verified_at' => $receipt->verified_at ? (string) $receipt->verified_at : null,
+					'created_at'  => wpss_rest_date( $receipt->created_at ),
+					'verified_at' => wpss_rest_date( $receipt->verified_at ),
 				);
 			},
 			$receipts
@@ -2077,7 +2096,7 @@ class OrdersController extends RestController {
 			'delivery_days' => (int) ( $snapshot['delivery_days'] ?? 0 ),
 			'revisions'     => (int) ( $snapshot['revisions'] ?? 0 ),
 			'features'      => array_values( (array) ( $snapshot['features'] ?? array() ) ),
-		);
+		) + wpss_sanitize_package_express( $snapshot );
 	}
 
 	/**
@@ -2324,15 +2343,17 @@ class OrdersController extends RestController {
 						'readonly'    => true,
 					),
 					'vendor_notes' => array(
-						'description' => __( 'Vendor notes.', 'wp-sell-services' ),
+						'description' => __( 'Note written with a sub-order (tip message, extension reason, milestone description).', 'wp-sell-services' ),
 						'type'        => 'string',
 						'context'     => array( 'view', 'edit' ),
+						'readonly'    => true,
 					),
 					'due_date'     => array(
 						'description' => __( 'Due date.', 'wp-sell-services' ),
 						'type'        => 'string',
 						'format'      => 'date-time',
 						'context'     => array( 'view', 'edit' ),
+						'readonly'    => true,
 					),
 				)
 			),

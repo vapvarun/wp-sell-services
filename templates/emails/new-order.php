@@ -71,6 +71,18 @@ do_action( 'wpss_email_content_before', 'new_order', $order, $recipient );
 			<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Package', 'wp-sell-services' ); ?></th>
 			<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;"><?php echo esc_html( $order->get_package_name() ); ?></td>
 		</tr>
+		<?php foreach ( array_slice( $order->get_items(), 1 ) as $wpss_addon_line ) : // Index 0 is the package row above. ?>
+			<tr>
+				<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Add-on', 'wp-sell-services' ); ?></th>
+				<td style="padding: 12px; border-bottom: 1px solid #e5e5e5;">
+					<?php
+					echo esc_html( $wpss_addon_line['name'] . ( $wpss_addon_line['quantity'] > 1 ? ' x ' . $wpss_addon_line['quantity'] : '' ) . ( '' !== $wpss_addon_line['description'] ? ' (' . $wpss_addon_line['description'] . ')' : '' ) );
+					echo ' &mdash; ';
+					echo wp_kses_post( wpss_format_price( (float) $wpss_addon_line['total'], (string) $order->currency ) );
+					?>
+				</td>
+			</tr>
+		<?php endforeach; ?>
 		<tr>
 			<?php if ( ! empty( $is_customer ) ) : ?>
 				<th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e5e5; font-weight: 600;"><?php esc_html_e( 'Vendor', 'wp-sell-services' ); ?></th>

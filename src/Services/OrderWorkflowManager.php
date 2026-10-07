@@ -51,6 +51,18 @@ class OrderWorkflowManager {
 	public const REFUND_PENDING_META = '_wpss_refund_pending';
 
 	/**
+	 * Order meta key holding a refund the gateway refused.
+	 *
+	 * Written by OrderService::refund() (and the cancel path) when the gateway
+	 * could not move the money; the order keeps its status and the admin order
+	 * view offers Retry. Cleared when a refund is recorded. Shape: amount,
+	 * status, origin, dispute_id, resolution, error, attempts, first_at, last_at.
+	 *
+	 * @since 1.8.0
+	 */
+	public const REFUND_FAILED_META = '_wpss_refund_failed';
+
+	/**
 	 * Rows a cron sweep handles per run; the next tick takes the rest.
 	 *
 	 * @since 1.7.1
@@ -78,6 +90,71 @@ class OrderWorkflowManager {
 	 */
 	public static function get_last_refund_result( int $order_id ): ?array {
 		return self::$refund_results[ $order_id ] ?? null;
+	}
+
+	/**
+	 * Record on the order that the gateway refused a refund.
+	 *
+	 * The one writer of REFUND_FAILED_META. Repeated failures of the same
+	 * refund keep the first timestamp and count the attempts.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int                  $order_id Order ID.
+	 * @param float                $amount   Amount that did not go back.
+	 * @param string               $error    Gateway message.
+	 * @param array<string, mixed> $intent   What to replay on retry: status, origin, dispute_id, resolution.
+	 * @return void
+	 */
+	public static function flag_refund_failed( int $order_id, float $amount, string $error, array $intent ): void {
+		$provider = wpss_get_order_provider();
+		$previous = $provider->get_item_meta( $order_id, self::REFUND_FAILED_META );
+		$previous = is_array( $previous ) ? $previous : array();
+		$now      = current_time( 'mysql', true );
+
+		$provider->update_item_meta(
+			$order_id,
+			self::REFUND_FAILED_META,
+			array(
+				'amount'     => $amount,
+				'status'     => (string) ( $intent['status'] ?? ServiceOrder::STATUS_REFUNDED ),
+				'origin'     => (string) ( $intent['origin'] ?? 'admin' ),
+				'dispute_id' => (int) ( $intent['dispute_id'] ?? 0 ),
+				'resolution' => (string) ( $intent['resolution'] ?? '' ),
+				'error'      => $error,
+				'attempts'   => (int) ( $previous['attempts'] ?? 0 ) + 1,
+				'first_at'   => (string) ( $previous['first_at'] ?? $now ),
+				'last_at'    => $now,
+			)
+		);
+	}
+
+	/**
+	 * The refund the gateway refused on this order, or null.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return array<string, mixed>|null
+	 */
+	public static function get_failed_refund( int $order_id ): ?array {
+		$flag = wpss_get_order_provider()->get_item_meta( $order_id, self::REFUND_FAILED_META );
+
+		return is_array( $flag ) && ! empty( $flag['amount'] ) ? $flag : null;
+	}
+
+	/**
+	 * Clear the failed-refund flag once a refund is recorded.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return void
+	 */
+	public static function clear_failed_refund( int $order_id ): void {
+		if ( null !== self::get_failed_refund( $order_id ) ) {
+			wpss_get_order_provider()->update_item_meta( $order_id, self::REFUND_FAILED_META, '' );
+		}
 	}
 
 	/**
@@ -211,12 +288,14 @@ class OrderWorkflowManager {
 		$late_orders = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, vendor_id, customer_id FROM {$table}
-				WHERE status = %s
+				WHERE status IN (%s, %s)
 				AND delivery_deadline < %s
 				ORDER BY delivery_deadline ASC
 				LIMIT %d",
 				ServiceOrder::STATUS_IN_PROGRESS,
-				current_time( 'mysql' ),
+				// A revision has its own deadline (DeliveryService::request_revision()).
+				ServiceOrder::STATUS_REVISION_REQUESTED,
+				current_time( 'mysql', true ),
 				self::SWEEP_BATCH
 			)
 		);
@@ -264,22 +343,21 @@ class OrderWorkflowManager {
 		$table            = $wpdb->prefix . 'wpss_orders';
 		$deliveries_table = $wpdb->prefix . 'wpss_deliveries';
 
-		// Find orders pending approval/delivered with delivery older than X days.
+		// Orders awaiting approval whose LATEST delivery is older than X days.
+		// Any old pending row used to qualify, so an order re-delivered after a
+		// revision completed on the next run (Basecamp 10336731604).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$orders_to_complete = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT o.id, o.customer_id, o.vendor_id
 				FROM {$table} o
-				INNER JOIN {$deliveries_table} d ON d.order_id = o.id
 				WHERE o.status IN (%s, %s)
-				AND d.status = 'pending'
-				AND d.created_at < DATE_SUB(%s, INTERVAL %d DAY)
-				GROUP BY o.id
+				AND ( SELECT MAX( d.created_at ) FROM {$deliveries_table} d WHERE d.order_id = o.id ) < DATE_SUB(%s, INTERVAL %d DAY)
 				ORDER BY o.id ASC
 				LIMIT %d",
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_DELIVERED,
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				$auto_complete_days,
 				self::SWEEP_BATCH
 			)
@@ -328,8 +406,8 @@ class OrderWorkflowManager {
 				WHERE status = %s
 				AND delivery_deadline BETWEEN %s AND DATE_ADD(%s, INTERVAL 24 HOUR)",
 				ServiceOrder::STATUS_IN_PROGRESS,
-				current_time( 'mysql' ),
-				current_time( 'mysql' )
+				current_time( 'mysql', true ),
+				current_time( 'mysql', true )
 			)
 		);
 
@@ -362,15 +440,17 @@ class OrderWorkflowManager {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		// Find orders stuck in pending_requirements status.
+		// Orders waiting on requirements, counted from payment: an offline
+		// order paid days after it was placed must not get its day-5 reminder
+		// the hour it is paid (Basecamp 10336731914).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$pending_orders = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, customer_id, vendor_id, created_at FROM {$table}
+				"SELECT id, customer_id, vendor_id, COALESCE( paid_at, created_at ) AS created_at FROM {$table}
 				WHERE status = %s
-				AND created_at < DATE_SUB(%s, INTERVAL 1 DAY)",
+				AND COALESCE( paid_at, created_at ) < DATE_SUB(%s, INTERVAL 1 DAY)",
 				ServiceOrder::STATUS_PENDING_REQUIREMENTS,
-				current_time( 'mysql' )
+				current_time( 'mysql', true )
 			)
 		);
 
@@ -450,15 +530,17 @@ class OrderWorkflowManager {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_orders';
 
-		// Find orders stuck in pending_requirements past the timeout.
+		// Orders past the timeout, counted from payment - not creation, which
+		// auto-started a late-paid offline order the hour it was marked paid,
+		// before the buyer could send requirements (Basecamp 10336731914).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$timed_out_orders = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id, customer_id, vendor_id FROM {$table}
 				WHERE status = %s
-				AND created_at < DATE_SUB(%s, INTERVAL %d DAY)",
+				AND COALESCE( paid_at, created_at ) < DATE_SUB(%s, INTERVAL %d DAY)",
 				ServiceOrder::STATUS_PENDING_REQUIREMENTS,
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				$timeout_days
 			)
 		);
@@ -556,69 +638,7 @@ class OrderWorkflowManager {
 	 * @return void
 	 */
 	public function recalculate_seller_levels(): void {
-		$seller_level_service = new SellerLevelService();
-
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_vendor_profiles';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$vendors = $wpdb->get_results(
-			"SELECT user_id, verification_tier FROM {$table}"
-		);
-
-		foreach ( $vendors as $vendor ) {
-			$user_id       = (int) $vendor->user_id;
-			$current_level = $vendor->verification_tier ?? VendorProfile::TIER_NEW;
-			$new_level     = $seller_level_service->calculate_level( $user_id );
-
-			// Skip Pro vendors — their tier is admin-granted only.
-			if ( VendorProfile::TIER_PRO === $current_level ) {
-				continue;
-			}
-
-			// Only update if level changed.
-			if ( $new_level !== $current_level ) {
-				$seller_level_service->update_vendor_level( $user_id, $new_level );
-
-				// Check if this is a promotion (not demotion).
-				$level_order = [
-					VendorProfile::TIER_NEW,
-					VendorProfile::TIER_RISING,
-					VendorProfile::TIER_TOP_RATED,
-				];
-
-				$current_index = array_search( $current_level, $level_order, true );
-				$new_index     = array_search( $new_level, $level_order, true );
-
-				if ( false !== $new_index && false !== $current_index && $new_index > $current_index ) {
-					// This is a promotion - notify vendor.
-					$level_label = SellerLevelService::get_level_label( $new_level );
-
-					$this->notification_service->create(
-						$user_id,
-						'seller_level_promotion',
-						__( 'Congratulations! Level Up!', 'wp-sell-services' ),
-						sprintf(
-							/* translators: %s: new seller level */
-							__( 'You have been promoted to %s! Keep up the great work.', 'wp-sell-services' ),
-							$level_label
-						),
-						[ 'new_level' => $new_level ]
-					);
-
-					/**
-					 * Fires when a vendor is promoted to a higher level.
-					 *
-					 * @since 1.0.0
-					 *
-					 * @param int    $user_id       Vendor user ID.
-					 * @param string $new_level     New seller level.
-					 * @param string $current_level Previous seller level.
-					 */
-					do_action( 'wpss_vendor_level_promoted', $user_id, $new_level, $current_level );
-				}
-			}
-		}
+		( new SellerLevelService() )->recalculate_all_levels();
 	}
 
 	/**
@@ -749,8 +769,30 @@ class OrderWorkflowManager {
 			}
 		}
 
-		// Auto-refund the buyer's original payment via the payment gateway.
-		$this->attempt_payment_refund( $order );
+		// Auto-refund the buyer's original payment via the payment gateway. The
+		// cancellation stands either way; a refusal is flagged on the order so
+		// the admin sees Retry instead of an order that looks settled.
+		$refund = $this->attempt_payment_refund( $order );
+
+		if ( is_array( $refund ) && empty( $refund['success'] ) && empty( $refund['manual'] ) ) {
+			self::flag_refund_failed(
+				$order_id,
+				max( 0.0, (float) $order->total - wpss_get_order_refunded_amount( $order ) ),
+				(string) ( $refund['message'] ?? '' ),
+				array(
+					'status' => ServiceOrder::STATUS_REFUNDED,
+					'origin' => 'cancel',
+				)
+			);
+		}
+
+		// Cancelling a paid order gives the buyer their money back, so its paid
+		// extensions and tips go back too, as on a full refund (Basecamp
+		// 10336467671). A cancel that started at the rail is left to the review
+		// list, as refunds from the rail are.
+		if ( 'paid' === (string) $order->payment_status && ! OrderService::is_settled_at_rail( $order_id ) ) {
+			$this->order_service->refund_paid_children( $order_id );
+		}
 
 		// Note: Notifications handled by Plugin.php → NotificationService::notify_order_status().
 
@@ -947,9 +989,12 @@ class OrderWorkflowManager {
 			// not the running total. Each slice reverses its own vendor share.
 			$moved = $service->apply_refund_status( $oid, round( $target - $already, $decimals ), $status, true );
 
-			if ( $moved && '' !== $refund_id ) {
-				$seen[] = $refund_id;
-				$provider->update_item_meta( $oid, '_wpss_gateway_refund_ids', $seen );
+			if ( $moved ) {
+				self::remember_gateway_refund( $oid, $refund_id );
+
+				if ( ServiceOrder::STATUS_REFUNDED === $status ) {
+					( new DisputeService() )->close_for_refund( $oid, $gateway );
+				}
 			}
 
 			wpss_log(
@@ -965,6 +1010,33 @@ class OrderWorkflowManager {
 				),
 				$moved ? 'info' : 'error'
 			);
+		}
+	}
+
+	/**
+	 * Record a gateway refund id as applied to an order.
+	 *
+	 * The webhook path, handle_gateway_refund(), skips ids it has seen. A refund made from
+	 * wp-admin records its id here too, so the gateway's own webhook for that
+	 * refund is not added a second time (Basecamp 10375174271).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int    $order_id  Order ID.
+	 * @param string $refund_id Gateway refund ID; empty is ignored.
+	 * @return void
+	 */
+	public static function remember_gateway_refund( int $order_id, string $refund_id ): void {
+		if ( '' === $refund_id ) {
+			return;
+		}
+
+		$provider = wpss_get_order_provider();
+		$seen     = (array) $provider->get_item_meta( $order_id, '_wpss_gateway_refund_ids' );
+
+		if ( ! in_array( $refund_id, $seen, true ) ) {
+			$seen[] = $refund_id;
+			$provider->update_item_meta( $order_id, '_wpss_gateway_refund_ids', $seen );
 		}
 	}
 
@@ -1202,7 +1274,7 @@ class OrderWorkflowManager {
 					'reference_type' => 1 === $event ? 'order' : "order_refund_{$event}",
 					'reference_id'   => $order_id,
 					'status'         => 'completed',
-					'created_at'     => current_time( 'mysql' ),
+					'created_at'     => current_time( 'mysql', true ),
 				)
 			);
 
@@ -1283,13 +1355,17 @@ class OrderWorkflowManager {
 	 * @return array<string, mixed>|null Seam-3 result, or null when no refund was attempted.
 	 */
 	private function attempt_payment_refund( ServiceOrder $order, ?float $amount = null ): ?array {
-		// Skip if no payment was made (offline/pending orders, or already refunded).
-		if ( empty( $order->transaction_id ) || empty( $order->payment_method ) ) {
-			return null;
-		}
+		// OrderService::refund() asks the gateway BEFORE it moves the status,
+		// so by the time this runs inside the status hook the money question is
+		// already answered. Asking again would refund the buyer twice.
+		if ( OrderService::has_gateway_result( (int) $order->id ) ) {
+			$result = OrderService::get_gateway_result( (int) $order->id );
 
-		if ( in_array( $order->payment_status, array( 'refunded', 'pending' ), true ) ) {
-			return null;
+			if ( null !== $result ) {
+				self::$refund_results[ (int) $order->id ] = $result;
+			}
+
+			return $result;
 		}
 
 		// The refund started AT the rail — a Stripe dashboard refund arriving on
@@ -1325,6 +1401,31 @@ class OrderWorkflowManager {
 			: $amount;
 		$is_partial    = null !== $amount && $cumulative < $order_total;
 
+		return $this->refund_at_gateway( $order, (float) $refund_amount, $is_partial );
+	}
+
+	/**
+	 * Ask the order's gateway (or the rail that owns the money) to refund.
+	 *
+	 * The money step on its own, sized by the caller. OrderService::refund()
+	 * runs it before the order moves; attempt_payment_refund() runs it for the
+	 * cancel path and for status changes made outside refund().
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param ServiceOrder $order         Order object.
+	 * @param float        $refund_amount Amount to send back in this event.
+	 * @param bool         $is_partial    Whether the order is not fully refunded once this lands.
+	 * @return array<string, mixed>|null Seam-3 result, or null when nothing was captured to refund.
+	 */
+	public function refund_at_gateway( ServiceOrder $order, float $refund_amount, bool $is_partial ): ?array {
+		// Nothing to send back: never paid, already refunded, or a zero amount.
+		if ( in_array( $order->payment_status, array( 'refunded', 'pending' ), true ) || $refund_amount <= 0 ) {
+			return null;
+		}
+
+		$order_total = (float) $order->total;
+
 		/**
 		 * Short-circuit the gateway refund.
 		 *
@@ -1354,14 +1455,29 @@ class OrderWorkflowManager {
 				? wpss()->get_payment_gateways()
 				: apply_filters( 'wpss_payment_gateways', [] );
 
-			$gateway = $gateways[ $order->payment_method ] ?? null;
+			$gateway = $gateways[ (string) $order->payment_method ] ?? null;
 
-			$refund_result = $gateway && method_exists( $gateway, 'process_refund' )
-				? (array) $gateway->process_refund( $order->transaction_id, $refund_amount )
-				: array(
-					'success' => false,
-					'error'   => sprintf( "gateway '%s' not available or missing process_refund()", $order->payment_method ),
+			if ( '' === (string) $order->transaction_id || ! $gateway ) {
+				// Paid outside a gateway - cash, a bank transfer, a payment an
+				// admin recorded by hand - or with no charge a gateway could
+				// find. No money can move from here, so the admin sends it back:
+				// the manual result below flags the amount and raises the
+				// "send manually" notice. Returning null here recorded the order
+				// as refunded with no reminder (Basecamp 10340506160).
+				$refund_result = array(
+					'success' => true,
+					'manual'  => true,
+					'status'  => 'manual_refund',
+					'message' => __( 'This payment was not taken through a gateway, so it must be refunded to the buyer by hand.', 'wp-sell-services' ),
 				);
+			} elseif ( method_exists( $gateway, 'process_refund' ) ) {
+				$refund_result = (array) $gateway->process_refund( $order->transaction_id, $refund_amount );
+			} else {
+				$refund_result = array(
+					'success' => false,
+					'error'   => sprintf( "gateway '%s' is missing process_refund()", $order->payment_method ),
+				);
+			}
 		}
 
 		$refund_result += array(
@@ -1428,7 +1544,8 @@ class OrderWorkflowManager {
 					__( 'Order #%1$d was paid via %3$s, which cannot refund automatically. Send %2$s to the buyer and mark the refund as sent on the order.', 'wp-sell-services' ),
 					$order->id,
 					wpss_format_price( $refund_amount, (string) $order->currency ),
-					$order->payment_method
+					// "paid via , which" when no method was recorded (Basecamp 10337159668).
+					wpss_get_payment_method_label( (string) $order->payment_method ) ?: __( 'a payment method', 'wp-sell-services' )
 				),
 				array( 'order_id' => $order->id )
 			);
@@ -1502,7 +1619,8 @@ class OrderWorkflowManager {
 				/* translators: 1: order ID, 2: error message */
 				__( 'Automatic refund failed for order #%1$d. Error: %2$s. Please process the refund manually via the payment gateway dashboard.', 'wp-sell-services' ),
 				$order->id,
-				$error_msg
+				// Gateway messages end in their own full stop; the sentence adds one.
+				rtrim( (string) $error_msg, '. ' )
 			),
 			array( 'order_id' => $order->id )
 		);
@@ -1539,33 +1657,29 @@ class OrderWorkflowManager {
 		$table = $wpdb->prefix . 'wpss_orders';
 
 		// Find all orders in cancellation_requested status.
-		// We check the requested_at timestamp from vendor_notes JSON for accurate 48h enforcement.
+		// requested_at comes from the request stored in the order's meta.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$pending_orders = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, customer_id, vendor_id, vendor_notes, updated_at FROM {$table}
+				"SELECT id, customer_id, vendor_id, meta, updated_at FROM {$table}
 				WHERE status = %s",
 				ServiceOrder::STATUS_CANCELLATION_REQUESTED
 			)
 		);
 
-		// Everything below is compared in real UTC. Two different conventions
-		// meet here: requested_at is written with current_time( 'mysql' ) and
-		// is therefore SITE-LOCAL, while updated_at is a UTC column. Reading
-		// both with a bare strtotime() and comparing against a site-local
-		// "now" made the two agree only on a UTC site — on any other site the
-		// updated_at fallback fired the 48h auto-cancel early or late by the
-		// site's offset.
+		// Both requested_at and updated_at are stored in UTC (10351460106),
+		// compared against time().
 		$now              = time();
 		$timed_out_orders = array();
 
 		foreach ( $pending_orders as $order ) {
-			$cancel_data  = json_decode( $order->vendor_notes ?? '', true );
+			$order_meta   = json_decode( (string) ( $order->meta ?? '' ), true );
+			$cancel_data  = is_array( $order_meta ) ? ( $order_meta['cancellation_request'] ?? array() ) : array();
 			$requested_at = ! empty( $cancel_data['requested_at'] )
-				? strtotime( get_gmt_from_date( (string) $cancel_data['requested_at'] ) . ' UTC' )
+				? strtotime( $cancel_data['requested_at'] . ' UTC' )
 				: 0;
 
-			// Fall back to updated_at if vendor_notes JSON is missing or corrupt.
+			// Fall back to updated_at if the stored request is missing.
 			if ( $requested_at <= 0 && ! empty( $order->updated_at ) ) {
 				$requested_at = strtotime( $order->updated_at . ' UTC' );
 			}
@@ -1796,7 +1910,7 @@ class OrderWorkflowManager {
 			[
 				'total_orders'     => $total_orders,
 				'completed_orders' => $completed_orders,
-				'updated_at'       => current_time( 'mysql' ),
+				'updated_at'       => current_time( 'mysql', true ),
 			],
 			[ 'user_id' => $vendor_id ]
 		);

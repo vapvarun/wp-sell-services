@@ -166,8 +166,10 @@ class ReportsPage {
 	 * @return void
 	 */
 	public function add_menu_page(): void {
-		$open       = $this->count_by_status( 'open' );
-		$menu_title = __( 'Reports', 'wp-sell-services' );
+		$open = $this->count_by_status( 'open' );
+		// "Member Reports": the plugin's numbers live under Analytics, and a
+		// bare "Reports" sent owners to the wrong screen (Basecamp 10337159668).
+		$menu_title = __( 'Member Reports', 'wp-sell-services' );
 
 		// The bubble is the whole point of putting this in the menu: an owner
 		// who has to open a screen to discover there is nothing to do will stop
@@ -178,7 +180,7 @@ class ReportsPage {
 
 		add_submenu_page(
 			'wp-sell-services',
-			__( 'Reports', 'wp-sell-services' ),
+			__( 'Member Reports', 'wp-sell-services' ),
 			$menu_title,
 			'manage_options',
 			'wpss-reports',
@@ -192,7 +194,7 @@ class ReportsPage {
 	 * @param string $status Status.
 	 * @return int
 	 */
-	private function count_by_status( string $status ): int {
+	public function count_by_status( string $status ): int {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'wpss_reports';
@@ -262,7 +264,7 @@ class ReportsPage {
 		$total_pages = (int) ceil( $total / self::PER_PAGE );
 		?>
 		<div class="wrap wpss-listing-page wpss-reports-page">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'Reports', 'wp-sell-services' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Member Reports', 'wp-sell-services' ); ?></h1>
 
 			<p class="description">
 				<?php esc_html_e( 'What members have reported to you, newest first. Acting on a member here applies everywhere: on the website and in the app.', 'wp-sell-services' ); ?>
@@ -321,7 +323,7 @@ class ReportsPage {
 						</div>
 					</div>
 				<?php else : ?>
-					<table class="wp-list-table widefat fixed striped wpss-reports-table">
+					<table class="wp-list-table widefat fixed striped wpss-reports-table wpss-stacked-table">
 						<thead>
 							<tr>
 								<th scope="col"><?php esc_html_e( 'Reported', 'wp-sell-services' ); ?></th>
@@ -348,9 +350,14 @@ class ReportsPage {
 								</td>
 								<td data-label="<?php esc_attr_e( 'Reason', 'wp-sell-services' ); ?>"><?php echo esc_html( $reasons[ $row->reason ] ?? $row->reason ); ?></td>
 								<td data-label="<?php esc_attr_e( 'What', 'wp-sell-services' ); ?>">
-									<?php echo esc_html( $targets[ $row->target_type ] ?? $row->target_type ); ?>
-									<?php if ( (int) $row->target_id ) : ?>
-										<code>#<?php echo esc_html( (string) (int) $row->target_id ); ?></code>
+									<?php
+									$target_label = ( $targets[ $row->target_type ] ?? $row->target_type ) . ( (int) $row->target_id ? ' #' . (int) $row->target_id : '' );
+									$target_url   = $this->target_url( (string) $row->target_type, (int) $row->target_id, (int) $row->reported_user_id );
+									?>
+									<?php if ( '' !== $target_url ) : ?>
+										<a href="<?php echo esc_url( $target_url ); ?>"><?php echo esc_html( $target_label ); ?></a>
+									<?php else : ?>
+										<?php echo esc_html( $target_label ); ?>
 									<?php endif; ?>
 									<?php if ( '' !== (string) $row->details ) : ?>
 										<p class="description"><?php echo esc_html( wp_trim_words( (string) $row->details, 24 ) ); ?></p>
@@ -359,16 +366,12 @@ class ReportsPage {
 								<td data-label="<?php esc_attr_e( 'Filed by', 'wp-sell-services' ); ?>"><?php echo esc_html( wpss_get_member_display_name( (int) $row->reporter_id ) ); ?></td>
 								<td data-label="<?php esc_attr_e( 'When', 'wp-sell-services' ); ?>">
 									<?php
-									// created_at is stored in site-local time, so it is
-									// converted to GMT before being compared against
-									// time(). Comparing a local string to a UTC
-									// timestamp reads "3 hours ago" for something
-									// filed a minute ago on any site not on UTC.
+									// created_at is stored in UTC, like time().
 									echo esc_html(
 										sprintf(
 											/* translators: %s: human-readable time difference, e.g. "2 hours" */
 											__( '%s ago', 'wp-sell-services' ),
-											human_time_diff( strtotime( get_gmt_from_date( (string) $row->created_at ) ), time() )
+											human_time_diff( strtotime( $row->created_at . ' UTC' ), time() )
 										)
 									);
 									?>
@@ -383,8 +386,14 @@ class ReportsPage {
 
 									<?php if ( get_userdata( (int) $row->reported_user_id ) ) : ?>
 										<?php if ( 'active' === $standing ) : ?>
-											<?php $this->status_button( (int) $row->reported_user_id, 'suspended', __( 'Suspend member', 'wp-sell-services' ) ); ?>
-											<?php $this->status_button( (int) $row->reported_user_id, 'banned', __( 'Close account', 'wp-sell-services' ) ); ?>
+											<?php // The account actions are rarer and heavier than deciding the report, so they sit behind one menu. ?>
+											<details class="wpss-reports-account">
+												<summary class="button"><?php esc_html_e( 'Account', 'wp-sell-services' ); ?></summary>
+												<div class="wpss-reports-account__menu">
+													<?php $this->status_button( (int) $row->reported_user_id, 'suspended', __( 'Suspend member', 'wp-sell-services' ) ); ?>
+													<?php $this->status_button( (int) $row->reported_user_id, 'banned', __( 'Close account', 'wp-sell-services' ) ); ?>
+												</div>
+											</details>
 										<?php else : ?>
 											<?php $this->status_button( (int) $row->reported_user_id, 'active', __( 'Restore member', 'wp-sell-services' ) ); ?>
 										<?php endif; ?>
@@ -420,6 +429,27 @@ class ReportsPage {
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Where the reported thing can be seen, '' when nowhere.
+	 *
+	 * @param string $type        Target type.
+	 * @param int    $id          Target ID.
+	 * @param int    $reported_id The reported member.
+	 * @return string
+	 */
+	private function target_url( string $type, int $id, int $reported_id ): string {
+		switch ( $type ) {
+			case 'service':
+				return $id ? (string) get_edit_post_link( $id, 'raw' ) : '';
+			case 'review':
+				return admin_url( 'admin.php?page=wpss-review-moderation' );
+			case 'user':
+				return get_edit_user_link( $id ? $id : $reported_id );
+			default:
+				return '';
+		}
 	}
 
 	/**
@@ -525,7 +555,7 @@ class ReportsPage {
 				'status'      => 'resolved',
 				'resolution'  => $resolution,
 				'resolved_by' => get_current_user_id(),
-				'resolved_at' => current_time( 'mysql' ),
+				'resolved_at' => current_time( 'mysql', true ),
 			),
 			array(
 				'id'     => $report_id,

@@ -13,7 +13,7 @@
  * Plugin Name:       WP Sell Services
  * Plugin URI:        https://wbcomdesigns.com/downloads/wp-sell-services/
  * Description:       A complete Fiverr-style service marketplace platform for WordPress. Create a service marketplace with built-in standalone checkout, order management, messaging, reviews, and more.
- * Version:           1.7.2
+ * Version:           1.8.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Wbcom Designs
@@ -39,7 +39,16 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @var string
  */
-define( 'WPSS_VERSION', '1.7.2' );
+define( 'WPSS_VERSION', '1.8.0' );
+
+/**
+ * Add-on id of a package's Express delivery in a buyer's selection and on an
+ * order's add-on rows. Real add-on ids are indexes (0 and up), so it cannot
+ * collide, and it survives every (int) cast on the way through the rails.
+ *
+ * @var int
+ */
+define( 'WPSS_EXPRESS_ADDON_ID', -1 );
 
 /**
  * Plugin file path.
@@ -68,6 +77,19 @@ define( 'WPSS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
  * @var string
  */
 define( 'WPSS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+
+/*
+ * Every datetime the plugin stores is UTC (Basecamp 10351460106). Columns
+ * that MySQL fills itself (DEFAULT / ON UPDATE CURRENT_TIMESTAMP) and NOW()
+ * follow the session time zone, which WordPress never sets, so they wrote the
+ * database server's clock: a third zone beside site time and UTC. WordPress
+ * core never reads the session zone; it computes its own *_gmt values.
+ * ponytail: a dropped-and-reconnected connection falls back to the server
+ * zone for the rest of that request; set it again if that ever matters.
+ */
+if ( isset( $GLOBALS['wpdb'] ) && $GLOBALS['wpdb'] instanceof \wpdb ) {
+	$GLOBALS['wpdb']->query( "SET time_zone = '+00:00'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- connection setting, no table.
+}
 
 /**
  * Load Action Scheduler at file-load time.
@@ -303,6 +325,10 @@ function wpss_init(): void {
 
 	// Load helper functions.
 	require_once WPSS_PLUGIN_DIR . 'src/functions.php';
+
+	// Stored datetimes to UTC, once (10351460106). Before Plugin::init() so the
+	// cutover is taken before any of this request's writes.
+	Database\UtcMigration::init();
 
 	// Load the plugin.
 	require_once WPSS_PLUGIN_DIR . 'src/Core/Plugin.php';

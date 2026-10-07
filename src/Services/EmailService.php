@@ -155,6 +155,7 @@ class EmailService {
 	public function init(): void {
 		// Hook into order status changes.
 		add_action( 'wpss_order_status_changed', array( $this, 'handle_status_change' ), 20, 3 );
+		add_action( 'wpss_order_cancelled', array( $this, 'handle_order_cancelled' ), 20, 1 );
 
 		// Hook into specific events.
 		add_action( 'wpss_requirements_submitted', array( $this, 'send_requirements_submitted' ), 20, 3 );
@@ -256,9 +257,8 @@ class EmailService {
 				$this->send_cancellation_requested( $order );
 				break;
 
-			case ServiceOrder::STATUS_CANCELLED:
-				$this->send_order_cancelled( $order );
-				break;
+			// STATUS_CANCELLED is sent from handle_order_cancelled(), after the
+			// refund has been attempted, so the email can say where the money is.
 
 			case ServiceOrder::STATUS_DISPUTED:
 				$this->send_dispute_opened( $order );
@@ -1353,24 +1353,11 @@ class EmailService {
 		$vendor   = get_user_by( 'id', $order->vendor_id );
 		$customer = get_user_by( 'id', $order->customer_id );
 
-		// Parse cancellation data from vendor_notes.
-		$cancel_data = json_decode( $order->vendor_notes ?? '', true );
-		if ( ! is_array( $cancel_data ) ) {
-			$cancel_data = array();
-		}
-		$reason_key = $cancel_data['reason'] ?? '';
-		$note       = $cancel_data['note'] ?? '';
+		$cancel_data = $order->get_cancellation_request() ?? array();
+		$reason_key  = $cancel_data['reason'] ?? '';
+		$note        = $cancel_data['note'] ?? '';
 
-		$reason_labels = array(
-			'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
-			'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
-			'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
-			'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
-			'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
-			'other'                => __( 'Other', 'wp-sell-services' ),
-		);
-
-		$reason_label = $reason_labels[ $reason_key ] ?? $reason_key;
+		$reason_label = wpss_get_cancellation_reason_label( (string) $reason_key );
 
 		// Use the stored requested_at time for deadline, not current time.
 		try {
@@ -1444,6 +1431,38 @@ class EmailService {
 	}
 
 	/**
+	 * Send the cancellation email once the cancellation has been processed.
+	 *
+	 * Hooked to wpss_order_cancelled, which fires after the refund attempt:
+	 * on wpss_order_status_changed the refund had not run yet, so the email
+	 * could not tell the buyer whether or how their money was coming back
+	 * (Basecamp 10336731713).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return void
+	 */
+	public function handle_order_cancelled( int $order_id ): void {
+		$order = wpss_get_order( $order_id );
+
+		// Sub-orders (tips, extensions, milestone phases) have their own flows.
+		if ( ! $order || in_array(
+			$order->platform ?? '',
+			array(
+				\WPSellServices\Services\TippingService::ORDER_TYPE,
+				\WPSellServices\Services\ExtensionOrderService::ORDER_TYPE,
+				\WPSellServices\Services\MilestoneService::ORDER_TYPE,
+			),
+			true
+		) ) {
+			return;
+		}
+
+		$this->send_order_cancelled( $order );
+	}
+
+	/**
 	 * Send order cancelled email.
 	 *
 	 * @param ServiceOrder $order Order object.
@@ -1460,9 +1479,17 @@ class EmailService {
 			$order->order_number
 		);
 
+		// Why it was cancelled, read fresh from the order's cancellation record:
+		// the template has always had a Reason block and nothing ever filled it,
+		// so the seller had to open the order to learn why.
+		$cancellation = (array) ( ServiceOrder::find( (int) $order->id )?->get_cancellation_request() ?? array() );
+		$label        = wpss_get_cancellation_reason_label( (string) ( $cancellation['reason'] ?? '' ) );
+		$note         = (string) ( $cancellation['note'] ?? '' );
+
 		$template_vars = array(
 			'order'         => $order,
 			'email_heading' => __( 'Order Cancelled', 'wp-sell-services' ),
+			'reason'        => '' !== $note ? trim( $label . ' - ' . $note, ' -' ) : $label,
 		);
 
 		// Send to both parties.

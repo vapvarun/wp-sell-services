@@ -184,54 +184,14 @@ class SearchService {
 			$query_args['meta_query'] = $meta_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		}
 
-		// Sorting.
-		switch ( $args['sort_by'] ?? 'relevance' ) {
-			case 'price_low':
-				$query_args['orderby']  = 'meta_value_num';
-				$query_args['meta_key'] = '_wpss_starting_price'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['order']    = 'ASC';
-				break;
-
-			case 'price_high':
-				$query_args['orderby']  = 'meta_value_num';
-				$query_args['meta_key'] = '_wpss_starting_price'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['order']    = 'DESC';
-				break;
-
-			case 'rating':
-				$query_args['orderby']  = 'meta_value_num';
-				$query_args['meta_key'] = '_wpss_rating_average'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['order']    = 'DESC';
-				break;
-
-			case 'newest':
-				$query_args['orderby'] = 'date';
-				$query_args['order']   = 'DESC';
-				break;
-
-			case 'popular':
-				$query_args['orderby']  = 'meta_value_num';
-				$query_args['meta_key'] = '_wpss_order_count'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['order']    = 'DESC';
-				break;
-
-			case 'relevance':
-			default:
-				// Default WordPress relevance.
-				break;
-		}
+		// Sorting: one shared rule that keeps services without the sorted value.
+		$query_args = wpss_apply_service_sort( $query_args, (string) ( $args['sort_by'] ?? 'relevance' ) );
 
 		// Exclude services from vendors on vacation mode.
-		global $wpdb;
-		$profiles_table = $wpdb->prefix . 'wpss_vendor_profiles';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$vacation_vendors = $wpdb->get_col(
-			"SELECT user_id FROM {$profiles_table} WHERE vacation_mode = 1"
-		);
+		$vacation_vendors = wpss_get_vacation_vendor_ids();
 
 		if ( ! empty( $vacation_vendors ) ) {
-			$query_args['author__not_in'] = array_map( 'intval', $vacation_vendors );
+			$query_args['author__not_in'] = $vacation_vendors;
 		}
 
 		/**
@@ -318,7 +278,7 @@ class SearchService {
 
 		$vendor_profiles = $wpdb->prefix . 'wpss_vendor_profiles';
 
-		$where = '(display_name LIKE %s OR tagline LIKE %s OR bio LIKE %s) AND is_available = 1 AND vacation_mode = 0';
+		$where = '(display_name LIKE %s OR tagline LIKE %s OR bio LIKE %s) AND is_available = 1 AND ' . ( new \WPSellServices\Database\Repositories\VendorProfileRepository() )->not_on_vacation_sql();
 		$like  = '%' . $wpdb->esc_like( $query ) . '%';
 
 		$values = array( $like, $like, $like );

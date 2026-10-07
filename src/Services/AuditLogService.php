@@ -72,6 +72,8 @@ class AuditLogService {
 		'vendor.suspended',
 		'vendor.pending',
 		'vendor.migrated',
+		'vendor.role_removed',
+		'vendor.role_restored',
 		'commission.rate_changed',
 		'service.approved',
 		'service.rejected',
@@ -79,6 +81,47 @@ class AuditLogService {
 		'review.rejected',
 		'ledger.insert',
 	);
+
+	/**
+	 * What each event means, in the owner's words (Basecamp 10337159668).
+	 *
+	 * The Audit Log showed the raw keys. A key missing here reads as words
+	 * built from the key, never as the key itself.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return array<string, string> Event key => label.
+	 */
+	public static function get_event_labels(): array {
+		return array(
+			'order.status_change'            => __( 'Order status changed', 'wp-sell-services' ),
+			'order.paid'                     => __( 'Order paid', 'wp-sell-services' ),
+			'order.cancel'                   => __( 'Order cancelled', 'wp-sell-services' ),
+			'order.refund'                   => __( 'Order refunded', 'wp-sell-services' ),
+			'order.refund_pending'           => __( 'Refund to send by hand', 'wp-sell-services' ),
+			'order.refund_failed'            => __( 'Refund refused by the gateway', 'wp-sell-services' ),
+			'order.earnings_reversal_failed' => __( 'Vendor earnings not taken back', 'wp-sell-services' ),
+			'withdrawal.requested'           => __( 'Withdrawal requested', 'wp-sell-services' ),
+			'withdrawal.approved'            => __( 'Withdrawal approved', 'wp-sell-services' ),
+			'withdrawal.rejected'            => __( 'Withdrawal rejected', 'wp-sell-services' ),
+			'withdrawal.paid'                => __( 'Withdrawal paid', 'wp-sell-services' ),
+			'dispute.transition'             => __( 'Dispute status changed', 'wp-sell-services' ),
+			'vendor.approved'                => __( 'Vendor approved', 'wp-sell-services' ),
+			'vendor.rejected'                => __( 'Vendor rejected', 'wp-sell-services' ),
+			'vendor.suspended'               => __( 'Vendor suspended', 'wp-sell-services' ),
+			'vendor.pending'                 => __( 'Vendor set to pending', 'wp-sell-services' ),
+			'vendor.migrated'                => __( 'Seller access kept in the update', 'wp-sell-services' ),
+			'vendor.role_removed'            => __( 'Vendor role removed', 'wp-sell-services' ),
+			'vendor.role_restored'           => __( 'Vendor role restored', 'wp-sell-services' ),
+			'commission.rate_changed'        => __( 'Commission rate changed', 'wp-sell-services' ),
+			'service.approved'               => __( 'Service approved', 'wp-sell-services' ),
+			'service.rejected'               => __( 'Service rejected', 'wp-sell-services' ),
+			'review.approved'                => __( 'Review approved', 'wp-sell-services' ),
+			'review.rejected'                => __( 'Review rejected', 'wp-sell-services' ),
+			'ledger.insert'                  => __( 'Wallet entry', 'wp-sell-services' ),
+			'email.failed'                   => __( 'Email not sent', 'wp-sell-services' ),
+		);
+	}
 
 	/**
 	 * Daily cron hook name used for the retention cleanup job.
@@ -184,6 +227,12 @@ class AuditLogService {
 		add_action(
 			'wpss_order_paid',
 			function ( int $order_id, string $transaction_id ): void {
+				// No order, nothing to audit: test runs fired this with 0 and
+				// left "order" rows with no ID behind (Basecamp 10337159668).
+				if ( $order_id <= 0 ) {
+					return;
+				}
+
 				$order = wpss_get_order( $order_id );
 				$this->log(
 					'order.paid',
@@ -313,7 +362,7 @@ class AuditLogService {
 
 		// Merge in request metadata unless the caller supplied their own.
 		if ( ! isset( $context['ip'] ) ) {
-			$context['ip'] = $this->get_request_ip();
+			$context['ip'] = wpss_client_ip();
 		}
 		if ( ! isset( $context['user_agent'] ) ) {
 			$context['user_agent'] = $this->get_request_user_agent();
@@ -330,7 +379,7 @@ class AuditLogService {
 			'to_value'    => isset( $data['to_value'] ) ? (string) $data['to_value'] : null,
 			'is_forced'   => ! empty( $data['is_forced'] ) ? 1 : 0,
 			'context'     => wp_json_encode( $context ),
-			'created_at'  => current_time( 'mysql' ),
+			'created_at'  => current_time( 'mysql', true ),
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -417,14 +466,19 @@ class AuditLogService {
 			$where[] = 'is_forced = 1';
 		}
 
+		// Bounds are the owner's calendar (site time); a bare date means the
+		// whole day. created_at is UTC. A date-only to_date used to stop at
+		// that day's midnight and drop the day itself.
 		if ( ! empty( $args['from_date'] ) ) {
+			$from     = (string) $args['from_date'];
 			$where[]  = 'created_at >= %s';
-			$values[] = (string) $args['from_date'];
+			$values[] = get_gmt_from_date( 10 === strlen( $from ) ? $from . ' 00:00:00' : $from );
 		}
 
 		if ( ! empty( $args['to_date'] ) ) {
+			$to       = (string) $args['to_date'];
 			$where[]  = 'created_at <= %s';
-			$values[] = (string) $args['to_date'];
+			$values[] = get_gmt_from_date( 10 === strlen( $to ) ? $to . ' 23:59:59' : $to );
 		}
 
 		$where_sql = implode( ' AND ', $where );
@@ -487,38 +541,6 @@ class AuditLogService {
 		return (int) $deleted;
 	}
 
-	/**
-	 * Best-effort request IP extraction.
-	 *
-	 * Prefers trusted proxy headers when the site is behind a reverse proxy,
-	 * falls back to REMOTE_ADDR. Returns an empty string when no address is
-	 * available (CLI, cron, unit tests).
-	 *
-	 * @return string
-	 */
-	private function get_request_ip(): string {
-		$candidates = array( 'HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR' );
-
-		foreach ( $candidates as $key ) {
-			if ( empty( $_SERVER[ $key ] ) ) {
-				continue;
-			}
-
-			$value = sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) );
-
-			// X-Forwarded-For may contain a comma-separated chain — take the first.
-			if ( false !== strpos( $value, ',' ) ) {
-				$value = trim( explode( ',', $value )[0] );
-			}
-
-			$ip = filter_var( $value, FILTER_VALIDATE_IP );
-			if ( $ip ) {
-				return (string) $ip;
-			}
-		}
-
-		return '';
-	}
 
 	/**
 	 * Best-effort request user-agent extraction.

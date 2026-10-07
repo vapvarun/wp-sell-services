@@ -121,7 +121,6 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 							class="wpss-input"
 							min="0"
 							step="1"
-							placeholder="0"
 						>
 					</div>
 				</div>
@@ -136,7 +135,6 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 							class="wpss-input"
 							min="0"
 							step="1"
-							placeholder="0"
 						>
 					</div>
 				</div>
@@ -166,6 +164,8 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 				>
 				<p class="wpss-form-hint"><?php esc_html_e( 'Separate multiple skills with commas.', 'wp-sell-services' ); ?></p>
 			</div>
+
+			<?php wpss_get_template( 'partials/request-attachments.php' ); ?>
 		</div>
 
 		<!-- Submit Section -->
@@ -202,6 +202,11 @@ function wpssShowNotice(msg, type) {
 		var $form = $(this);
 		var $button = $form.find('button[type="submit"]');
 		var originalHtml = $button.html();
+
+		if ($form.find('.wpss-request-files__item--uploading').length) {
+			wpssShowNotice('<?php echo esc_js( __( 'Wait for the attachments to finish uploading.', 'wp-sell-services' ) ); ?>', 'error');
+			return;
+		}
 
 		// Validate budget
 		var minBudget = parseFloat($('#request_budget_min').val()) || 0;

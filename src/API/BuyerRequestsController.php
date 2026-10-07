@@ -206,6 +206,11 @@ class BuyerRequestsController extends RestController {
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
 						],
+						'attachments' => [
+							'description' => __( 'Media IDs from POST /media with context "request". Replaces the list; a file left out is deleted. Omit to leave attachments unchanged.', 'wp-sell-services' ),
+							'type'        => 'array',
+							'items'       => [ 'type' => 'integer' ],
+						],
 						'status'      => [
 							'type' => 'string',
 							'enum' => BuyerRequest::get_filterable_statuses(),
@@ -570,7 +575,8 @@ class BuyerRequestsController extends RestController {
 		}
 
 		if ( $request->get_param( 'deadline' ) ) {
-			$data['deadline'] = $request->get_param( 'deadline' );
+			// Stored as expires_at; under 'deadline' the service ignored it.
+			$data['expires_at'] = $request->get_param( 'deadline' );
 		}
 
 		if ( $request->get_param( 'status' ) ) {
@@ -580,6 +586,13 @@ class BuyerRequestsController extends RestController {
 		// Normalize 'category' to 'category_id' for BuyerRequestService::update().
 		if ( $request->get_param( 'category' ) !== null ) {
 			$data['category_id'] = (int) $request->get_param( 'category' );
+		}
+
+		// Only when the caller sends the list, as the website's edit form does:
+		// a client that omits it must not wipe the files. This route ignored
+		// attachments, so an app could add files on create and never change them.
+		if ( null !== $request->get_param( 'attachments' ) ) {
+			$data['attachments'] = array_map( 'absint', (array) $request->get_param( 'attachments' ) );
 		}
 
 		$result = $this->request_service->update( $request_id, $data );
@@ -610,6 +623,10 @@ class BuyerRequestsController extends RestController {
 	 */
 	public function delete_item( $request ) {
 		$request_id = (int) $request->get_param( 'id' );
+
+		if ( ! $this->request_service->is_untouched( $request_id ) ) {
+			return new WP_Error( 'wpss_request_has_proposals', __( 'This request has proposals, so it cannot be deleted. You can close it instead.', 'wp-sell-services' ), [ 'status' => 409 ] );
+		}
 
 		$result = $this->request_service->delete( $request_id );
 
@@ -772,7 +789,8 @@ class BuyerRequestsController extends RestController {
 			'budget_max'       => $budget_max,
 			'budget_max_minor' => wpss_amount_to_minor_units( $budget_max, $currency ),
 			'currency'         => $currency,
-			'deadline'         => $buyer_request->deadline ?? null,
+			// The request object carries it as expires_at; 'deadline' was never set, so this was always null.
+			'deadline'         => ( $buyer_request->expires_at ?? '' ) ?: null,
 			'category'         => $buyer_request->category ?? null,
 			'proposal_count'   => (int) ( $buyer_request->proposal_count ?? 0 ),
 			'author'           => wpss_rest_user( (int) $author_id ),
@@ -780,8 +798,8 @@ class BuyerRequestsController extends RestController {
 			'created_at'       => $this->format_datetime( $buyer_request->created_at ?? $buyer_request->post_date ?? null ),
 		];
 
-		// Add attachments if owner.
-		if ( $is_owner && isset( $buyer_request->attachments ) ) {
+		// Same rule as the website (Basecamp 10337217098).
+		if ( isset( $buyer_request->attachments ) && wpss_can_view_request_attachments( (int) ( $buyer_request->id ?? $buyer_request->ID ) ) ) {
 			$data['attachments'] = $this->get_attachment_urls( $buyer_request->attachments );
 		}
 

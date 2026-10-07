@@ -1,6 +1,6 @@
 # Email Notifications
 
-WP Sell Services emails buyers, vendors, and admins at every stage of an order. **24 notification types have their own on/off switch** in **Sell Services > Settings > Emails**, and all 23 are on by default. A handful of operational emails (requirement reminders, seller-level promotions, proposal rejections) send automatically and are not individually switchable. Every email has both an HTML and a plain text version.
+WP Sell Services emails buyers, vendors, and admins at every stage of an order. **24 notification types have their own on/off switch** in **Sell Services > Settings > Emails**, and all 23 are on by default. A handful of operational emails (requirement reminders, seller-level promotions, proposal rejections) send automatically and are not individually switchable.
 
 ![Email Notification Settings](../images/settings-emails-tab.png)
 
@@ -158,8 +158,6 @@ If you are not using an SMTP plugin, emails are sent via your server's default m
 
 Every email is rendered from an HTML template file in `templates/emails/`. Each template is theme-overridable -- copy it to `yourtheme/wp-sell-services/emails/` to customize the design.
 
-There are also plain text variants in `templates/emails/plain/` for email clients that do not support HTML.
-
 All emails share a common header (`email-header.php`) and footer (`email-footer.php`) that you can override to match your brand.
 
 ---
@@ -171,7 +169,6 @@ For developers who want to modify email content, sender details, or headers with
 - Changing the "From" name and email address
 - Filtering email content for specific notification types
 - Customizing the email header variables and branding
-- Using plain text vs HTML variants
 
 ---
 

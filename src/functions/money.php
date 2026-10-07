@@ -48,7 +48,7 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 	// UI once refunds started driving vendor balances below zero.
 	$is_negative = $price < 0;
 	$number      = number_format( abs( $price ), $decimals );
-	$formatted   = 'after' === wpss_get_option( 'advanced', 'currency_position' ) ? $number . $symbol : $symbol . $number;
+	$formatted   = 'after' === wpss_get_currency_position() ? $number . $symbol : $symbol . $number;
 
 	if ( $is_negative ) {
 		$formatted = '-' . $formatted;
@@ -60,6 +60,26 @@ function wpss_format_price( float $price, string $currency = '' ): string {
 		$price,
 		$currency
 	);
+}
+
+/**
+ * Where the currency symbol goes: 'before' or 'after' the amount.
+ *
+ * Set on Settings > General since 1.8.0 (it was on Advanced, away from the
+ * currency it formats - Basecamp 10337154229). A site that has not saved
+ * General since then still reads its Advanced value, so nothing moves.
+ *
+ * @since 1.8.0
+ *
+ * @return string 'before' or 'after'.
+ */
+function wpss_get_currency_position(): string {
+	$general  = get_option( 'wpss_general', array() );
+	$position = is_array( $general ) && isset( $general['currency_position'] )
+		? $general['currency_position']
+		: wpss_get_option( 'advanced', 'currency_position' );
+
+	return 'after' === $position ? 'after' : 'before';
 }
 
 /**
@@ -288,6 +308,54 @@ function wpss_get_order_refunded_amount( object $order ): float {
 }
 
 /**
+ * Where the buyer's money stands after a refund was decided.
+ *
+ * - 'pending':  no gateway could send it (offline, or paid outside one); the
+ *               admin sends it by hand and "Mark refund sent" clears it.
+ * - 'failed':   the gateway refused; the admin retries.
+ * - 'refunded': it went back.
+ * - '':         no refund on this order.
+ *
+ * One read for the cancellation email and the order page, so the buyer is told
+ * the same thing in both (Basecamp 10336731713).
+ *
+ * @since 1.8.0
+ *
+ * @param object $order Order row or ServiceOrder.
+ * @return array{state: string, amount: float}
+ */
+function wpss_get_order_refund_state( object $order ): array {
+	$order_id = (int) ( $order->id ?? 0 );
+	$pending  = (float) wpss_get_order_provider()->get_item_meta( $order_id, \WPSellServices\Services\OrderWorkflowManager::REFUND_PENDING_META );
+
+	if ( $pending > 0 ) {
+		return array(
+			'state'  => 'pending',
+			'amount' => $pending,
+		);
+	}
+
+	$failed = \WPSellServices\Services\OrderWorkflowManager::get_failed_refund( $order_id );
+
+	if ( $failed ) {
+		return array(
+			'state'  => 'failed',
+			'amount' => (float) ( $failed['amount'] ?? 0 ),
+		);
+	}
+
+	$refunded = wpss_get_order_refunded_amount( $order );
+
+	return $refunded > 0 ? array(
+		'state'  => 'refunded',
+		'amount' => $refunded,
+	) : array(
+		'state'  => '',
+		'amount' => 0.0,
+	);
+}
+
+/**
  * THE single authority for "can this order be refunded".
  *
  * Replaces two hardcoded, contradictory status lists — the vendor/customer AJAX
@@ -363,7 +431,9 @@ function wpss_get_pending_manual_refunds(): array {
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$rows = $wpdb->get_results(
 		$wpdb->prepare(
-			"SELECT order_id, meta_value FROM {$wpdb->prefix}wpss_order_meta WHERE meta_key = %s ORDER BY order_id ASC",
+			// Only orders that still exist: a flag left on a deleted order showed
+			// the owner a dead link to send money for nothing (Basecamp 10336652112).
+			"SELECT m.order_id, m.meta_value FROM {$wpdb->prefix}wpss_order_meta m INNER JOIN {$wpdb->prefix}wpss_orders o ON o.id = m.order_id WHERE m.meta_key = %s ORDER BY m.order_id ASC",
 			\WPSellServices\Services\OrderWorkflowManager::REFUND_PENDING_META
 		)
 	);
@@ -379,6 +449,69 @@ function wpss_get_pending_manual_refunds(): array {
 	}
 
 	return $pending;
+}
+
+/**
+ * Refunds the owner has to look at: ones the gateway refused, and fully
+ * refunded orders whose paid extensions or tips were never refunded.
+ *
+ * The second list is mostly history: before 1.8.0 a full refund stopped at the
+ * parent (Basecamp 10336467671). It also catches a refund that started at the
+ * payment rail, which never touches the separately charged children. Nothing
+ * here is changed automatically - each one needs a person to decide.
+ *
+ * @since 1.8.0
+ *
+ * @param int $limit Maximum orders per list.
+ * @return array{failed: array<int, array<string, mixed>>, uncascaded: int[]}
+ */
+function wpss_get_refund_review_items( int $limit = 20 ): array {
+	global $wpdb;
+
+	$items = array(
+		'failed'     => array(),
+		'uncascaded' => array(),
+	);
+
+	if ( '1.0' === get_option( 'wpss_order_meta_table_version' ) ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT order_id, meta_value FROM {$wpdb->prefix}wpss_order_meta WHERE meta_key = %s AND meta_value <> '' ORDER BY order_id ASC LIMIT %d",
+				\WPSellServices\Services\OrderWorkflowManager::REFUND_FAILED_META,
+				$limit
+			)
+		);
+
+		foreach ( (array) $rows as $row ) {
+			$flag = maybe_unserialize( (string) $row->meta_value );
+
+			if ( is_array( $flag ) && ! empty( $flag['amount'] ) ) {
+				$items['failed'][ (int) $row->order_id ] = $flag;
+			}
+		}
+	}
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- child side uses idx_platform (platform, platform_order_id).
+	$items['uncascaded'] = array_map(
+		'intval',
+		(array) $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT p.id FROM {$wpdb->prefix}wpss_orders p
+				INNER JOIN {$wpdb->prefix}wpss_orders c
+					ON c.platform IN (%s, %s) AND c.platform_order_id = p.id
+				WHERE p.status = %s AND c.payment_status = 'paid' AND c.status <> %s
+				ORDER BY p.id ASC LIMIT %d",
+				\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_EXTENSION,
+				\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_TIP,
+				\WPSellServices\Models\ServiceOrder::STATUS_REFUNDED,
+				\WPSellServices\Models\ServiceOrder::STATUS_REFUNDED,
+				$limit
+			)
+		)
+	);
+
+	return $items;
 }
 
 /**
@@ -581,7 +714,7 @@ function wpss_insert_ledger_row( array $row ): bool {
 		'balance_after' => wpss_get_ledger_balance( $user_id, true ) + ( $is_debit ? -abs( $amount ) : $amount ),
 		'currency'      => wpss_get_currency(),
 		'status'        => 'completed',
-		'created_at'    => current_time( 'mysql' ),
+		'created_at'    => current_time( 'mysql', true ),
 	);
 
 	$formats = array(
@@ -686,7 +819,7 @@ function wpss_insert_ledger_row( array $row ): bool {
  * @param float $base       Pre-tax amount (package price plus add-ons).
  * @param int   $vendor_id  Vendor user ID, for the rate filter.
  * @param int   $service_id Service post ID, for the rate filter.
- * @return array{rate: float, amount: float, base: float, total: float, included: bool, label: string, enabled: bool}
+ * @return array{rate: float, amount: float, base: float, total: float, net: float, included: bool, label: string, enabled: bool}
  */
 function wpss_calculate_tax( float $base, int $vendor_id = 0, int $service_id = 0 ): array {
 	$settings = get_option( 'wpss_tax', array() );
@@ -716,7 +849,35 @@ function wpss_calculate_tax( float $base, int $vendor_id = 0, int $service_id = 
 		// Inclusive: the tax is already inside the price, so the buyer pays the
 		// base. Exclusive: it is added on top.
 		'total'    => $included ? $base : $base + $amount,
+		// The price without tax, in both modes - what commission is taken on.
+		// Tax is held for someone else; the platform never takes a cut of it.
+		'net'      => $included ? $base - $amount : $base,
 	);
+}
+
+/**
+ * The amount commission is taken on for a stored order: its price without tax.
+ *
+ * The subtotal plus addons_total is already pre-tax when tax is added on top. When
+ * the tax is included in the price it is not, so the tax recorded on the order is
+ * taken off (Basecamp 10336467589). Orders created before 1.8.0 did not record
+ * whether their tax was included and keep the old reading.
+ *
+ * @since 1.8.0
+ *
+ * @param object $order Order row or ServiceOrder.
+ * @return float
+ */
+function wpss_order_commission_base( object $order ): float {
+	$base = (float) ( $order->subtotal ?? 0 ) + (float) ( $order->addons_total ?? 0 );
+	$meta = $order->meta ?? null;
+	$meta = is_string( $meta ) ? json_decode( $meta, true ) : (array) $meta;
+
+	if ( is_array( $meta ) && ! empty( $meta['tax_included'] ) ) {
+		$base -= (float) ( $meta['tax_amount'] ?? 0 );
+	}
+
+	return max( 0.0, $base );
 }
 
 /**

@@ -380,10 +380,13 @@ function wpss_normalize_dashboard_section( string $section ): string {
 /**
  * Resolve the template file that renders a dashboard section.
  *
- * Runs the same `wpss_dashboard_section_template` filter the dashboard renderer
- * uses, so Pro-supplied templates and third-party overrides are accounted for.
- * An empty string means "known address, nothing here can render it" — which on
- * a Free-only site is exactly the Pro-only case.
+ * The one resolver: UnifiedDashboard::render_section() calls it. Free's file,
+ * then the `wpss_dashboard_section_template` filter (Pro hands its sections in
+ * here), then a theme copy wins - but only when Free or Pro can render the
+ * section at all. Looking in the theme first meant a theme copy of a Pro
+ * section rendered with Pro switched off, where its Pro classes would fatal
+ * (Basecamp 10372723832). An empty string means "known address, nothing here
+ * can render it" - on a Free-only site, exactly the Pro-only case.
  *
  * @since 1.6.0
  *
@@ -401,10 +404,24 @@ function wpss_get_dashboard_section_template( string $section ): string {
 	$template_section = ( 'wallet' === $section ) ? 'earnings' : $section;
 	$template_path    = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$template_section}.php";
 
-	/** This filter is documented in src/Frontend/UnifiedDashboard.php */
+	/**
+	 * Filter the template path for a dashboard section.
+	 *
+	 * Allows Pro or third-party plugins to provide templates for sections.
+	 *
+	 * @since 1.1.0
+	 * @param string $template_path Full path to section template.
+	 * @param string $section       Section slug.
+	 */
 	$template_path = (string) apply_filters( 'wpss_dashboard_section_template', $template_path, $section );
 
-	return ( '' !== $template_path && file_exists( $template_path ) ) ? $template_path : '';
+	if ( '' === $template_path || ! file_exists( $template_path ) ) {
+		return '';
+	}
+
+	$theme_template = locate_template( "wp-sell-services/dashboard/sections/{$template_section}.php" );
+
+	return $theme_template ? $theme_template : $template_path;
 }
 
 /**
@@ -433,7 +450,7 @@ function wpss_get_dashboard_section_template( string $section ): string {
  *
  * @since 1.6.0
  *
- * @return array<string, array{title: string, shortcode: string, slug: string, required: bool}>
+ * @return array<string, array{title: string, shortcode: string, slug: string, required: bool, takes_over?: bool}>
  */
 function wpss_get_page_definitions(): array {
 	$definitions = array(
@@ -493,6 +510,21 @@ function wpss_get_page_definitions(): array {
 			'shortcode' => '[wpss_register]',
 			'slug'      => 'create-account',
 			'required'  => false,
+		),
+		// Same shape as registration: optional, and when mapped every Sign in
+		// link follows it through core's login_url (wpss_marketplace_login_url).
+		//
+		// 'takes_over': mapping this page changes how the WHOLE site signs in,
+		// theme and other plugins included. So the installer creates it only on
+		// a fresh install whose login is still core's; an update never creates
+		// or adopts one, and the owner maps or unmaps it in Settings > Pages
+		// (owner decision, Basecamp 10352980066).
+		'login'         => array(
+			'title'      => __( 'Log In', 'wp-sell-services' ),
+			'shortcode'  => '[wpss_login]',
+			'slug'       => 'login',
+			'required'   => false,
+			'takes_over' => true,
 		),
 	);
 
@@ -794,6 +826,76 @@ function wpss_marketplace_register_url( string $url ): string {
 add_filter( 'register_url', 'wpss_marketplace_register_url' );
 
 /**
+ * Point Sign in at the marketplace's own login page when one is mapped.
+ *
+ * Every Sign in link (ours and the theme's) is built with wp_login_url(), so
+ * an owner with a [wpss_login] page still sent buyers to wp-login.php
+ * (Basecamp 10352980066). Mirrors wpss_marketplace_register_url().
+ *
+ * Left alone:
+ * - $force_reauth: auth_redirect() for wp-admin; that is core's screen.
+ * - wp-admin page loads: the session-expired modal frames wp_login_url() with
+ *   interim-login, which only wp-login.php can answer. AJAX still follows the
+ *   mapping, since our AJAX hands the URL to the front end.
+ *
+ * @since 1.8.0
+ *
+ * @param string $url          Default login URL.
+ * @param string $redirect     Where to send the user after logging in.
+ * @param bool   $force_reauth Whether core asked for re-authentication.
+ * @return string
+ */
+function wpss_marketplace_login_url( string $url, string $redirect = '', bool $force_reauth = false ): string {
+	if ( $force_reauth || ( is_admin() && ! wp_doing_ajax() ) ) {
+		return $url;
+	}
+
+	$page_id  = wpss_get_page_id( 'login' );
+	$page_url = $page_id ? get_permalink( $page_id ) : '';
+
+	if ( ! $page_url ) {
+		return $url;
+	}
+
+	return '' !== $redirect ? add_query_arg( 'redirect_to', rawurlencode( $redirect ), $page_url ) : $page_url;
+}
+add_filter( 'login_url', 'wpss_marketplace_login_url', 10, 3 );
+
+/**
+ * Send a failed sign-in from [wpss_login] back to that page, not wp-login.php.
+ *
+ * The form posts to wp-login.php like core's; on a wrong password core would
+ * show its own screen. Only forms carrying the wpss_login marker are touched.
+ *
+ * @since 1.8.0
+ *
+ * @return void
+ */
+function wpss_login_failed_redirect(): void {
+	// phpcs:disable WordPress.Security.NonceVerification.Missing -- core's login form carries no nonce; this only reads where to send the visitor back.
+	if ( empty( $_POST['wpss_login'] ) ) {
+		return;
+	}
+
+	$back = wp_validate_redirect( esc_url_raw( wp_unslash( $_POST['wpss_login_page'] ?? '' ) ), '' );
+	$to   = wp_validate_redirect( esc_url_raw( wp_unslash( $_POST['redirect_to'] ?? '' ) ), '' );
+	// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+	if ( '' === $back ) {
+		return;
+	}
+
+	$args = array( 'login' => 'failed' );
+	if ( '' !== $to ) {
+		$args['redirect_to'] = rawurlencode( $to );
+	}
+
+	wp_safe_redirect( add_query_arg( $args, $back ) );
+	exit;
+}
+add_action( 'wp_login_failed', 'wpss_login_failed_redirect' );
+
+/**
  * Get the base checkout URL (without service ID).
  *
  * Uses the mapped checkout page URL, or builds from the adapter's checkout slug.
@@ -1005,6 +1107,7 @@ function wpss_get_cart_url(): string {
 function wpss_get_settings_sections(): array {
 	$sections = array(
 		'general',
+		'checkout',
 		'pages',
 		'payments',
 		'commission',
@@ -1012,6 +1115,7 @@ function wpss_get_settings_sections(): array {
 		'vendor',
 		'orders',
 		'emails',
+		'integrations',
 		'advanced',
 	);
 

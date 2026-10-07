@@ -196,7 +196,7 @@ class ReportsController extends RestController {
 				$reporter_id,
 				(string) $request->get_param( 'reason' ),
 				(string) ( $request->get_param( 'details' ) ?? '' ),
-				current_time( 'mysql' )
+				current_time( 'mysql', true )
 			)
 		);
 
@@ -411,7 +411,7 @@ class ReportsController extends RestController {
 				'status'      => 'resolved',
 				'resolution'  => (string) $request->get_param( 'resolution' ),
 				'resolved_by' => get_current_user_id(),
-				'resolved_at' => current_time( 'mysql' ),
+				'resolved_at' => current_time( 'mysql', true ),
 			),
 			array(
 				'id'     => $id,

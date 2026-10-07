@@ -5,7 +5,7 @@
  * At 390px every dashboard screen opened with the whole nav before the
  * content, and the seller's sales list offered only a period select while
  * the buyer's list had status chips. The shell now carries a Menu toggle
- * (aria-expanded / aria-controls) the CSS collapses under 480px, and both
+ * (aria-expanded / aria-controls) the CSS collapses into a drawer at 1024px and below, and both
  * lists render the same status + order-number filter through ONE partial,
  * backed by the same repository filters.
  *
@@ -123,8 +123,9 @@ preg_match( '/<button[^>]*wpss-dashboard__nav-toggle[^>]*>/', $html, $btn );
 $btn = $btn[0] ?? '';
 $check( 'shell renders the nav toggle button', '' !== $btn );
 $check( 'toggle carries aria-expanded="false"', false !== strpos( $btn, 'aria-expanded="false"' ) );
-$check( 'toggle carries aria-controls="wpss-dashboard-nav"', false !== strpos( $btn, 'aria-controls="wpss-dashboard-nav"' ) );
-$check( 'nav carries the id the toggle controls', false !== strpos( $html, 'id="wpss-dashboard-nav"' ) );
+$check( 'toggle carries aria-controls="wpss-dashboard-drawer"', false !== strpos( $btn, 'aria-controls="wpss-dashboard-drawer"' ) );
+$check( 'drawer carries the id the toggle controls', false !== strpos( $html, 'id="wpss-dashboard-drawer"' ) );
+$check( 'drawer has a named close button', false !== strpos( $html, 'wpss-dashboard__drawer-close" aria-label="Close menu"' ) );
 $check( 'collapsed bar names the current section', false !== strpos( $html, 'wpss-dashboard__nav-bar-title">Sales Orders<' ) );
 
 // --- 2. Sales list: shared filter partial + repository filters -------------

@@ -335,8 +335,8 @@ class TestFlowCommand extends WP_CLI_Command {
 				'total_earnings'   => 500.0,
 				'net_earnings'     => 400.0,
 				'total_commission' => 100.0,
-				'created_at'       => current_time( 'mysql' ),
-				'updated_at'       => current_time( 'mysql' ),
+				'created_at'       => current_time( 'mysql', true ),
+				'updated_at'       => current_time( 'mysql', true ),
 			),
 			array( '%d', '%f', '%f', '%f', '%s', '%s' )
 		);
@@ -359,8 +359,8 @@ class TestFlowCommand extends WP_CLI_Command {
 				'commission_rate' => 20.0,
 				'platform_fee'    => 20.0,
 				'vendor_earnings' => 80.0,
-				'created_at'      => current_time( 'mysql' ),
-				'updated_at'      => current_time( 'mysql' ),
+				'created_at'      => current_time( 'mysql', true ),
+				'updated_at'      => current_time( 'mysql', true ),
 			),
 			array( '%s', '%d', '%d', '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%f', '%f', '%f', '%s', '%s' )
 		);
@@ -462,8 +462,8 @@ class TestFlowCommand extends WP_CLI_Command {
 				'currency'       => 'USD',
 				'status'         => ServiceOrder::STATUS_IN_PROGRESS,
 				'payment_status' => 'paid',
-				'created_at'     => current_time( 'mysql' ),
-				'updated_at'     => current_time( 'mysql' ),
+				'created_at'     => current_time( 'mysql', true ),
+				'updated_at'     => current_time( 'mysql', true ),
 			),
 			array( '%s', '%d', '%d', '%d', '%s', '%f', '%f', '%s', '%s', '%s', '%s', '%s' )
 		);

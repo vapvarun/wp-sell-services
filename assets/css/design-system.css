@@ -143,7 +143,7 @@
 	--wpss-status-completed-bg: #d4edda;
 	--wpss-status-completed-fg: #155724;
 	--wpss-status-pending-approval-bg: #c6e1c6;
-	--wpss-status-pending-approval-fg: #5b841b;
+	--wpss-status-pending-approval-fg: #3f5c13; /* 5.45:1 on its ground; #5b841b was 3.15 */
 	--wpss-status-in-progress-bg: #e0e7ff;
 	--wpss-status-in-progress-fg: #3730a3;
 	--wpss-status-revision-bg: #e0f2fe;
@@ -445,6 +445,14 @@ textarea.wpss-form-textarea {
 	--wpss-info-light: #1e3a5f;
 	--wpss-success-light: #14532d;
 	--wpss-warning-light: #422006;
+
+	/* The inks that sit ON those grounds (badges, status chips, notices). They
+	   kept their light values, dark green on dark green: the Completed chip read
+	   1.19:1 and Pending payment 2.06:1 (Basecamp 10350812072). Light members of
+	   the same hues, about 6-10:1 on the grounds above. */
+	--wpss-success-dark: #86efac;
+	--wpss-warning-dark: #fcd34d;
+	--wpss-info-dark: #93c5fd;
 
 	/* primary-dark is a FOREGROUND on tinted grounds (.wpss-alert--info sets it
 	   as colour over --wpss-primary-light). It had no dark value at all, so a
@@ -904,6 +912,9 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 	box-shadow: 0 0 0 var(--wpss-ring-spread) var(--wpss-primary-50);
 }
 .wpss-field__input::placeholder, .wpss-field__textarea::placeholder { color: var(--wpss-text-hint); }
+/* The dashboard forms use .wpss-input; without this their placeholders took the
+   theme's text colour and an example read as a filled-in value. */
+.wpss-input::placeholder { color: var(--wpss-text-hint); opacity: 1; }
 .wpss-field__hint { font-size: var(--wpss-text-sm); color: var(--wpss-text-muted); margin-top: var(--wpss-space-1); }
 .wpss-field__error { font-size: var(--wpss-text-sm); color: var(--wpss-danger); margin-top: var(--wpss-space-1); }
 .wpss-field--error .wpss-field__input, .wpss-field--error .wpss-field__select { border-color: var(--wpss-danger); }
@@ -1123,7 +1134,9 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 .wpss-toast { padding: var(--wpss-space-3, 12px) var(--wpss-space-5, 20px); border-radius: var(--wpss-radius, 8px); font-size: var(--wpss-text-sm, 13px); line-height: 1.5; color: var(--wpss-white, #fff); background: var(--wpss-text, #111827); box-shadow: var(--wpss-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1)); max-width: 360px; opacity: 0; transform: translateY(8px); transition: opacity 0.3s, transform 0.3s; }
 .wpss-toast.is-visible { opacity: 1; transform: translateY(0); }
 .wpss-toast--success { background: var(--wpss-success, #10b981); }
-.wpss-toast--error { background: var(--wpss-danger, #dc2626); }
+.wpss-toast--error { background: var(--wpss-danger, #dc2626); display: flex; align-items: flex-start; gap: var(--wpss-space-3, 12px); pointer-events: auto; }
+.wpss-toast__close { flex-shrink: 0; margin-inline-start: auto; padding: 0 var(--wpss-space-1, 4px); border: 0; background: none; color: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
+.wpss-toast__close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 /* Dark on amber. White on --wpss-warning measures 2.15:1; --wpss-black is the
    on-colour counterpart and gives about 9:1, in both modes. Same pairing as
    the portfolio Featured badge. */
@@ -1467,20 +1480,29 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-order-detail-item__label { color: var(--wpss-text-secondary); text-transform: uppercase; letter-spacing: .04em; font-size: var(--wpss-text-xs, .75rem); }
 .wpss-order-detail-item__value { color: var(--wpss-text); font-weight: 600; text-align: start; min-width: 0; overflow-wrap: anywhere; }
 /* Order numbers are long and hyphenated but are identifiers, not prose: keep
-   them whole rather than breaking mid-token. */
-.wpss-order-detail-item__value--id { font-variant-numeric: tabular-nums; overflow-wrap: normal; }
+   them whole rather than breaking mid-token. break-word, not normal: a token
+   wider than the cell (a 62-character offline transaction id) breaks instead
+   of running over the next column (Basecamp 10375931857). */
+.wpss-order-detail-item__value--id { font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
 /* The payment rail's receipt number: secondary to the order number, not a peer. */
 .wpss-order-detail-item__sub { color: var(--wpss-text-secondary); font-size: var(--wpss-text-xs, .75rem); overflow-wrap: anywhere; }
 .wpss-order-detail-item__sub a { color: inherit; text-decoration: underline; }
+
+/* Report link (service page, vendor profile) and its dialog. A quiet text
+   control: reporting is always available and never the main action. */
+.wpss-report { margin: var(--wpss-space-4) 0 0; text-align: center; }
+.wpss-report-link { display: inline-flex; align-items: center; gap: var(--wpss-space-1); min-height: 40px; padding: 0 var(--wpss-space-2); border: 0; background: none; color: var(--wpss-text-secondary); font: inherit; font-size: var(--wpss-text-sm); text-decoration: underline; cursor: pointer; }
+.wpss-report-link:hover, .wpss-report-link:focus-visible { color: var(--wpss-text); background: none; }
+.wpss-report-link .wpss-icon { width: 14px; height: 14px; }
+.wpss-report-form__intro { margin: 0 0 var(--wpss-space-4); color: var(--wpss-text-secondary); font-size: var(--wpss-text-sm); }
+.wpss-report-form__error { margin: var(--wpss-space-3) 0 0; color: var(--wpss-danger-dark, #991b1b); font-size: var(--wpss-text-sm); }
 .wpss-order-detail-item__sub a:hover,
 .wpss-order-detail-item__sub a:focus { color: var(--wpss-primary); }
 
+/* Phones: one column. In two ~116px columns dates and totals wrapped to two
+   or three lines (Basecamp 10345275760); a full row keeps every value on one. */
 @media (max-width: 480px) {
-	.wpss-order-details-grid { grid-template-columns: 1fr 1fr; gap: var(--wpss-space-3) var(--wpss-space-4); }
-	/* The order number is long enough to break across three lines in a half
-	   -width column, so give it (and the total) the full row. */
-	.wpss-order-details-grid > .wpss-order-detail-item--highlight,
-	.wpss-order-details-grid > .wpss-order-detail-item:has(> .wpss-order-detail-item__value--id) { grid-column: 1 / -1; }
+	.wpss-order-details-grid { grid-template-columns: 1fr; gap: var(--wpss-space-2); }
 }
 .wpss-order-detail-item--highlight .wpss-order-detail-item__value { font-weight: 700; font-size: var(--wpss-text-md); }
 .wpss-order-detail-item--refunded .wpss-order-detail-item__label,
@@ -1582,3 +1604,87 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 	font-size: 1.5rem;
 	line-height: 1;
 }
+
+/* Order line items (templates/order/line-items.php) - buyer, vendor and admin order views. */
+.wpss-line-items {
+	width: 100%;
+	margin-block-start: var(--wpss-space-3);
+	border-collapse: collapse;
+	font-size: var(--wpss-text-sm);
+	color: var(--wpss-text-secondary);
+}
+.wpss-line-items th,
+.wpss-line-items td {
+	padding-block: var(--wpss-space-2);
+	border-block-end: 1px solid var(--wpss-border-light);
+	vertical-align: top;
+	text-align: start;
+	font-weight: 400;
+}
+/* Qualified: `.wpss-line-items td` (0,1,1) set text-align: start and beat the
+   bare class, so every amount sat mid-row instead of at the right edge. */
+.wpss-line-items .wpss-line-items__amount {
+	text-align: end;
+	white-space: nowrap;
+	padding-inline-start: var(--wpss-space-3);
+}
+.wpss-line-items__qty,
+.wpss-line-items__detail {
+	color: var(--wpss-text-muted);
+}
+.wpss-line-items__detail {
+	display: block;
+	font-size: var(--wpss-text-xs);
+	overflow-wrap: anywhere;
+}
+.wpss-line-items__total th,
+.wpss-line-items__total td {
+	border-block-end: 0;
+	font-weight: 600;
+	color: var(--wpss-text-primary, var(--wpss-text-secondary));
+}
+
+/* Checkout: the second Pay button under the payment methods sat against the
+   last method's box (Basecamp 10337204220). */
+.wpss-co-methods__submit {
+	margin-top: var(--wpss-space-5, 20px);
+}
+
+/* Withdrawal form: the payout details for the chosen method (Basecamp 10336467884). */
+.wpss-payout-fields {
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+/* Wizard: the reviewer's feedback above the steps (Basecamp 10340661636). */
+.wpss-wizard > .wpss-service-card__rejection {
+	margin-bottom: var(--wpss-space-5, 20px);
+}
+
+/* Dispute thread (templates/partials/dispute-thread.php) - the buyer and seller
+   dashboard and the admin dispute screen. Moved from unified-dashboard.css,
+   which the admin does not load (Basecamp 10337171525). */
+.wpss-dispute-detail__evidence{margin-top:24px}
+.wpss-dispute-detail__evidence>h3{margin:0 0 8px}
+.wpss-evidence-thread{display:flex;flex-direction:column;gap:12px;margin:12px 0 16px}
+.wpss-evidence-empty{color:var(--wpss-gray-500,#6b7280);font-size:14px;margin:0}
+.wpss-evidence-item{display:flex;max-width:100%}
+.wpss-evidence-item.wpss-evidence-own{justify-content:flex-end}
+.wpss-evidence-bubble{max-width:82%;padding:10px 14px;border-radius:14px;background:var(--wpss-gray-100,#f3f4f6);border:1px solid var(--wpss-border,#e5e7eb)}
+.wpss-evidence-own .wpss-evidence-bubble{background:var(--wpss-primary-light,#eef2ff);border-color:var(--wpss-primary,#4f46e5)}
+.wpss-evidence-author{display:block;font-size:12px;color:var(--wpss-gray-600,#4b5563);margin-bottom:2px}
+.wpss-evidence-text{font-size:14px;line-height:1.5;color:var(--wpss-gray-800,#1f2937);white-space:pre-wrap;word-break:break-word}
+.wpss-evidence-image img{max-width:220px;border-radius:8px;margin-top:6px}
+.wpss-evidence-file{margin-top:6px}
+.wpss-evidence-file .wpss-file-link{display:inline-flex;align-items:center;gap:6px;font-size:13px}
+.wpss-evidence-time{display:block;font-size:11px;color:var(--wpss-gray-400,#9ca3af);margin-top:4px}
+.wpss-add-evidence-form{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--wpss-border,#e5e7eb);padding-top:14px}
+.wpss-add-evidence-form .wpss-form-label{font-weight:600;font-size:14px}
+.wpss-add-evidence-form__row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:auto}
+.wpss-evidence-attach{cursor:pointer}
+.wpss-evidence-filename{font-size:12px;color:var(--wpss-gray-500,#6b7280)}
+.wpss-evidence-locked{font-size:13px;color:var(--wpss-gray-500,#6b7280);margin:12px 0 0}
+@media (max-width:480px){.wpss-evidence-bubble{max-width:100%}.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:0;width:100%}}

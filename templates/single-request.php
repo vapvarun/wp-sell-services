@@ -85,13 +85,10 @@ if ( ! isset( $proposal_service ) ) {
 if ( $is_buyer ) {
 	$proposals = $proposal_service->get_by_request( $request_id );
 }
-// "Proposals" means the same number on every surface. The archive card counts
-// every proposal on the request, and the buyer branch below counts every
-// proposal too; counting only 'pending' for vendors made the same request read
-// "2 proposals" in the listing and "1" on its own page. A vendor sizing up the
-// competition also needs to know a proposal was already accepted, so the honest
-// figure is the total.
-$proposal_count = $is_buyer ? count( $proposals ) : count( $proposal_service->get_by_request( $request_id ) );
+// "Proposals" means the same number on every surface - archive card, this
+// page, the buyer dashboard and REST: every proposal except withdrawn ones,
+// accepted included, since a vendor sizing up the competition needs to know.
+$proposal_count = ( new \WPSellServices\Services\BuyerRequestService() )->get_proposal_count( $request_id );
 
 // Format budget display.
 if ( 'range' === $budget_type && $budget_min && $budget_max ) {
@@ -208,12 +205,15 @@ do_action( 'wpss_before_single_request', $request_id );
 					</header>
 
 					<div class="wpss-request-content">
-						<section class="wpss-request-section wpss-request-description">
-							<h2><?php esc_html_e( 'Project Description', 'wp-sell-services' ); ?></h2>
-							<div class="wpss-request-text">
-								<?php the_content(); ?>
-							</div>
-						</section>
+						<?php // An empty card read as broken; a request without a description shows none (Basecamp 10337197376). ?>
+						<?php if ( '' !== trim( wp_strip_all_tags( (string) get_post_field( 'post_content', $request_id ) ) ) ) : ?>
+							<section class="wpss-request-section wpss-request-description">
+								<h2><?php esc_html_e( 'Project Description', 'wp-sell-services' ); ?></h2>
+								<div class="wpss-request-text">
+									<?php the_content(); ?>
+								</div>
+							</section>
+						<?php endif; ?>
 
 						<?php if ( ! empty( $skills ) ) : ?>
 							<section class="wpss-request-section wpss-request-skills">
@@ -229,6 +229,18 @@ do_action( 'wpss_before_single_request', $request_id );
 						<?php if ( ! empty( $attachments ) ) : ?>
 							<section class="wpss-request-section wpss-request-attachments">
 								<h2><?php esc_html_e( 'Attachments', 'wp-sell-services' ); ?></h2>
+								<?php if ( ! wpss_can_view_request_attachments( (int) $request_id ) ) : ?>
+									<p class="wpss-notice wpss-notice--info">
+										<?php
+										printf(
+											/* translators: 1: number of files, 2: sign-in URL */
+											wp_kses_post( _n( '%1$d file attached. <a href="%2$s">Sign in</a> to view it.', '%1$d files attached. <a href="%2$s">Sign in</a> to view them.', count( $attachments ), 'wp-sell-services' ) ),
+											(int) count( $attachments ),
+											esc_url( wp_login_url( (string) get_permalink( $request_id ) ) )
+										);
+										?>
+									</p>
+								<?php else : ?>
 								<div class="wpss-attachments-list">
 									<?php foreach ( $attachments as $attachment_id ) : ?>
 										<?php
@@ -236,11 +248,12 @@ do_action( 'wpss_before_single_request', $request_id );
 										$attachment_name = basename( get_attached_file( $attachment_id ) );
 										?>
 										<a href="<?php echo esc_url( $attachment_url ); ?>" class="wpss-attachment-item" target="_blank" rel="noopener">
-											<span class="wpss-icon-file"></span>
+											<i data-lucide="paperclip" class="wpss-icon" aria-hidden="true"></i>
 											<span class="wpss-attachment-name"><?php echo esc_html( $attachment_name ); ?></span>
 										</a>
 									<?php endforeach; ?>
 								</div>
+								<?php endif; ?>
 							</section>
 						<?php endif; ?>
 
@@ -456,7 +469,7 @@ do_action( 'wpss_before_single_request', $request_id );
 								<div class="wpss-detail-item">
 									<span class="wpss-detail-label"><?php esc_html_e( 'Deadline', 'wp-sell-services' ); ?></span>
 									<span class="wpss-detail-value">
-										<?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $expires_at ) ) ); ?>
+										<?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $expires_at . ' UTC' ) ) ); ?>
 									</span>
 								</div>
 							<?php endif; ?>
@@ -485,7 +498,7 @@ do_action( 'wpss_before_single_request', $request_id );
 							<?php endif; ?>
 						<?php elseif ( ! is_user_logged_in() ) : ?>
 							<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn-primary wpss-btn-block">
-								<?php esc_html_e( 'Login to Submit Proposal', 'wp-sell-services' ); ?>
+								<?php esc_html_e( 'Log in to send a proposal', 'wp-sell-services' ); ?>
 							</a>
 							<?php
 						elseif ( ! $is_vendor && ! $is_buyer ) :
@@ -511,7 +524,7 @@ do_action( 'wpss_before_single_request', $request_id );
 								alt="<?php echo esc_attr( $buyer ? $buyer->display_name : '' ); ?>"
 								class="wpss-buyer-avatar">
 							<div class="wpss-buyer-info">
-								<span class="wpss-buyer-name">
+								<span class="wpss-buyer-name" title="<?php echo esc_attr( $buyer ? $buyer->display_name : '' ); ?>">
 									<?php echo esc_html( $buyer ? $buyer->display_name : __( 'Anonymous', 'wp-sell-services' ) ); ?>
 								</span>
 								<span class="wpss-buyer-member-since">

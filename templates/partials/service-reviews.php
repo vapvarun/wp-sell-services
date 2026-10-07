@@ -34,14 +34,12 @@ $breakdown = $wpdb->get_results(
 	OBJECT_K
 );
 
-// Derive count and average from actual DB data so they stay in sync with the breakdown.
-$rating_count = 0;
-$rating_sum   = 0;
-foreach ( $breakdown as $star => $row ) {
-	$rating_count += (int) $row->count;
-	$rating_sum   += (int) $star * (int) $row->count;
-}
-$rating_avg = $rating_count > 0 ? round( $rating_sum / $rating_count, 1 ) : 0.0;
+// The headline is the one service rating every surface shows; the bars are
+// the same approved reviews split by star.
+$rating          = wpss_get_service_rating( $service_id );
+$rating_count    = $rating['count'];
+$rating_avg      = $rating['average'];
+$breakdown_total = array_sum( wp_list_pluck( $breakdown, 'count' ) );
 
 /**
  * Filters the number of reviews to display per page.
@@ -105,7 +103,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 				<?php for ( $star = 5; $star >= 1; $star-- ) : ?>
 					<?php
 					$count      = isset( $breakdown[ $star ] ) ? $breakdown[ $star ]->count : 0;
-					$percentage = $rating_count > 0 ? ( $count / $rating_count ) * 100 : 0;
+					$percentage = $breakdown_total > 0 ? ( $count / $breakdown_total ) * 100 : 0;
 					?>
 					<div class="wpss-breakdown-row">
 						<span class="wpss-breakdown-label"><?php echo esc_html( $star ); ?> <i data-lucide="star" class="wpss-icon wpss-star filled" aria-hidden="true"></i></span>

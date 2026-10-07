@@ -18,13 +18,33 @@
 ( function( $ ) {
 	'use strict';
 
+	// An error stays until dismissed and is scrolled into view: it tells the
+	// owner why nothing happened, so it must not vanish before they read it.
 	function wpssAdminNotice(msg, type) {
 		type = type || 'error';
 		var cls = type === 'success' ? 'notice-success' : 'notice-error';
-		var $notice = $('<div class="notice ' + cls + ' is-dismissible"><p>' + msg + '</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
+		var $notice = $('<div class="notice ' + cls + ' is-dismissible"><p></p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button></div>');
+		$notice.find('p').text(msg);
 		$('.wrap h1, .wrap h2').first().after($notice);
 		$notice.find('.notice-dismiss').on('click', function() { $notice.fadeOut(200, function() { $notice.remove(); }); });
-		setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
+		if (type === 'success') {
+			setTimeout(function() { $notice.fadeOut(400, function() { $notice.remove(); }); }, 6000);
+		} else {
+			$notice[0].scrollIntoView({ block: 'center' });
+		}
+	}
+
+	// Why a row's action was refused, on the row the owner clicked, with the
+	// way to fix it.
+	function wpssRowNotice($btn, msg) {
+		var $cell = $btn.closest('td');
+		$cell.find('.wpss-row-notice').remove();
+		var $notice = $('<div class="notice notice-error inline wpss-row-notice" role="alert"><p></p></div>');
+		$notice.find('p').text(msg);
+		if ($btn.data('edit')) {
+			$notice.find('p').append(' ', $('<a>').attr('href', $btn.data('edit')).text(wpssModeration.i18n.editService || 'Edit service'));
+		}
+		$cell.append($notice);
 	}
 
 	jQuery(function($) {
@@ -51,7 +71,7 @@
 					if (response.success) {
 						location.reload();
 					} else {
-						wpssAdminNotice(response.data.message || wpssModeration.i18n.error, 'error');
+						wpssRowNotice($btn, response.data.message || wpssModeration.i18n.error);
 						$btn.text('Approve');
 					}
 				}).fail(function() {

@@ -103,7 +103,13 @@ wpss_t(
 // 3. The account seam is published at IIFE scope, NOT inside the submit
 //    handler - that handler returns early for exactly the gateways that need
 //    it, so publishing from in there would define it only for buyers who don't.
-$checkout = file_get_contents( $free . '/src/Integrations/Standalone/StandaloneCheckoutProvider.php' );
+//    Since 1.8.0 the checkout script is assets/js/checkout.js, shared by both
+//    checkout forms, instead of two inline copies in the provider.
+$provider = file_get_contents( $free . '/src/Integrations/Standalone/StandaloneCheckoutProvider.php' );
+wpss_t( false === strpos( $provider, "addEventListener('submit'" ) && false === strpos( $provider, 'ensureAccount' ), 'the checkout provider carries no inline checkout script (one script: assets/js/checkout.js)' );
+wpss_t( false !== strpos( $provider, "'assets/js/checkout.js'" ), 'the checkout provider enqueues assets/js/checkout.js' );
+wpss_t( file_exists( $free . '/assets/js/checkout.min.js' ) && filemtime( $free . '/assets/js/checkout.min.js' ) >= filemtime( $free . '/assets/js/checkout.js' ), 'checkout.min.js is rebuilt from checkout.js' );
+$checkout = file_get_contents( $free . '/assets/js/checkout.js' );
 $seam_pos = strpos( $checkout, 'window.wpssEnsureCheckoutAccount = ensureAccount;' );
 $call_pos = strpos( $checkout, "ensureAccount().then(function() {" );
 wpss_t( false !== $seam_pos, 'checkout publishes window.wpssEnsureCheckoutAccount' );
@@ -135,6 +141,50 @@ foreach ( array( 'wpss_stripe_create_payment_intent', 'wpss_paypal_create_order'
 		! has_action( 'wp_ajax_nopriv_' . $action ),
 		sprintf( '%s has no nopriv handler, so the account must exist first', $action )
 	);
+}
+
+// 6. After the account step the page's gateway nonce belongs to the logged-out
+//    visitor. Every gateway must accept the fresh checkout nonce instead, and
+//    every gateway's JS must send it (PayPal bounce on 10341174356, Razorpay
+//    10375174373).
+$fresh_user = wp_insert_user(
+	array(
+		'user_login' => 'wpss_guest_nonce_' . wp_generate_password( 6, false ),
+		'user_pass'  => wp_generate_password(),
+		'role'       => 'subscriber',
+	)
+);
+$prev_user  = get_current_user_id();
+wp_set_current_user( 0 );
+$visitor = array(
+	'wpss_stripe'   => wp_create_nonce( 'wpss_stripe' ),
+	'wpss_paypal'   => wp_create_nonce( 'wpss_paypal' ),
+	'wpss_razorpay' => wp_create_nonce( 'wpss_razorpay' ),
+);
+wp_set_current_user( (int) $fresh_user );
+$fresh = wp_create_nonce( 'wpss_checkout' );
+
+foreach ( $visitor as $action => $stale ) {
+	$_REQUEST = array( 'nonce' => $stale );
+	wpss_t( ! wpss_verify_gateway_nonce( array( $action ) ), sprintf( '%s: the visitor nonce alone is refused after sign-in', $action ) );
+	$_REQUEST = array(
+		'nonce'               => $stale,
+		'wpss_checkout_nonce' => $fresh,
+	);
+	wpss_t( wpss_verify_gateway_nonce( array( $action ) ), sprintf( '%s: the fresh checkout nonce is accepted', $action ) );
+}
+$_REQUEST = array();
+wp_set_current_user( $prev_user );
+wp_delete_user( (int) $fresh_user );
+
+$pro_js = WP_PLUGIN_DIR . '/wp-sell-services-pro/assets/js/';
+foreach ( array( $free . '/assets/js/paypal', $free . '/assets/js/stripe', $pro_js . 'razorpay' ) as $base ) {
+	foreach ( array( '.js', '.min.js' ) as $ext ) {
+		if ( file_exists( $base . $ext ) ) {
+			$js = file_get_contents( $base . $ext );
+			wpss_t( false !== strpos( $js, 'wpss_checkout_nonce' ) && false !== strpos( $js, 'wpssEnsureCheckoutAccount' ), basename( $base ) . $ext . ' runs the account step and sends the checkout nonce' );
+		}
+	}
 }
 
 echo "\n{$GLOBALS['wpss_pass']} passed, {$GLOBALS['wpss_fail']} failed\n";

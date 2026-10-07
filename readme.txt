@@ -4,7 +4,7 @@ Tags: marketplace, freelance, services, standalone, fiverr
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.7.2
+Stable tag: 1.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -143,8 +143,6 @@ Upgrade to [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-ser
 * **PayPal Mass Payouts**: Automated batch vendor payouts via PayPal
 * **Stripe Connect**: Direct vendor payments with Express onboarding
 * **Vendor Subscription Plans**: Paid vendor tiers with service limits and feature gating
-* **Recurring Services**: Subscription billing for services with automated renewals
-* **Wallet Integrations**: Internal wallet, TeraWallet, WooWallet, MyCred
 * **Cloud Storage**: Amazon S3, Google Cloud Storage, DigitalOcean Spaces for file storage
 * **Advanced Analytics**: Revenue charts, order analytics, service performance, vendor statistics with CSV/Excel export
 * **Expanded Service Limits**: Unlimited gallery images, FAQs, add-ons, and requirements
@@ -268,6 +266,73 @@ Three auto-calculated levels plus one admin-granted: New Seller (default), Risin
 10. Dispute resolution interface with evidence and admin mediation
 
 == Changelog ==
+
+= 1.8.0 - October 2026 =
+
+Payments, refunds and dates made consistent across every checkout path, a rebuilt admin and member dashboard for phones and tablets, and member reporting from the website.
+
+* New      - Members can report a service or a seller from the service page and the vendor profile, and each report reaches the Member Reports screen.
+* New      - Express delivery per package: a vendor can offer a faster turnaround at its own price and delivery time.
+* New      - A Log In page with the marketplace's own sign-in form, which every Log in link on the site follows once it is selected under Settings > Pages.
+* New      - Vendors can cancel a withdrawal request while it is still pending.
+* New      - Buyers can add and remove attachments when editing a request, and sellers see them in the app.
+* New      - Pending proposals can be withdrawn by the seller who sent them.
+* New      - The command wp wpss repair:stripe-tax corrects Stripe orders whose tax was counted twice, with a dry run by default.
+* New      - The command wp wpss utc-migrate previews and runs the one-time conversion of stored dates to UTC.
+* Improve  - Every stored date is now UTC, and dates written by earlier versions are converted once in the background after updating.
+* Improve  - Settings are regrouped into one card per concern, with a warning before unsaved changes are lost.
+* Improve  - The member dashboard works on phones and tablets, with an off-canvas menu at 1024px and below.
+* Improve  - Admin lists for orders, vendors, withdrawals, disputes and moderation hold their layout at tablet width and stack cleanly on phones.
+* Improve  - The Orders list has triage tabs, shows payment and due date on each row, and filters by vendor and buyer.
+* Improve  - The admin order screen shows the payment, the activity and the money first, using the same blocks as the member order view.
+* Improve  - The Audit Log reads in plain language and shows the note entered with a status change.
+* Improve  - Every confirmation dialog opens with Cancel selected, so pressing Enter cannot approve a payout or suspend an account by reflex.
+* Improve  - The reason and details entered when cancelling an order are shown to the buyer, the vendor and the site owner, and in the Order Cancelled email.
+* Improve  - On block themes the member dashboard uses the theme's wide width instead of its reading width.
+* Improve  - Order lists show the order number, amount, due date, late badge and next action on each row.
+* Improve  - Shortcodes and blocks carry their own styling, so they look the same on a plain page in any theme, including inside a pattern or widget.
+* Improve  - Deleting demo content removes the demo vendors as well, from Settings and from the command line alike, and keeps any demo service a buyer has ordered.
+* Improve  - Gateway scripts load only on pages where a payment can happen.
+* Improve  - The earnings cards on the vendor dashboard stay readable at every screen width.
+* Fix      - One payment can pay only one order on every path, including the REST API and gateway webhooks.
+* Fix      - A site acts only on Stripe and PayPal payments it started itself, so a staging copy or second store on the same gateway account cannot mark an order paid or refunded.
+* Fix      - A buyer who is charged for a service that can no longer be ordered is refunded automatically.
+* Fix      - A Stripe payment that reaches the site by webhook before the browser returns creates the order with the correct tax, add-ons and delivery time.
+* Fix      - Each gateway refund is counted once, and a full refund reaches the order's paid extensions and tips.
+* Fix      - A full refund closes the order's open dispute without moving money a second time.
+* Fix      - Commission is taken on the price without tax, in tax-inclusive mode too.
+* Fix      - Add-on prices come from the service on every checkout path, never from the checkout request.
+* Fix      - Revenue has one definition on every screen: paid orders minus refunds.
+* Fix      - A paused or unpublished service cannot be ordered through any route, and is left out of the cart total and the cart count.
+* Fix      - Services from a vendor on vacation are left out of the services shortcode, blocks, Related services and live search, as they are in the catalog and search.
+* Fix      - A service whose seller is on vacation can no longer be paid for from a cart, a saved checkout link or the app.
+* Fix      - A buyer request that has a proposal can be closed but no longer deleted, and deleting a request from the dashboard moves it to the trash.
+* Fix      - The buyer request API returns the request's deadline and saves a changed one.
+* Fix      - Sorting the services shortcode or block by rating, sales or price no longer hides services that have no rating or sales yet.
+* Fix      - A refunded order shows no earnings on the vendor's Sales list, and the earnings total says that it includes tips.
+* Fix      - Milestone phases are credited when the buyer approves them, and the requirements clock starts at payment.
+* Fix      - Auto-complete counts from the latest delivery, and revisions run on their own deadline.
+* Fix      - Closing vendor registration applies to logged-out visitors and to every sign-up path.
+* Fix      - Guest checkout works with every gateway after the account step.
+* Fix      - PayPal tells the buyer what happened when a capture is refused, and returns them to their order.
+* Fix      - A file removed from a buyer request is deleted, and files stay on the request once a seller has sent a proposal.
+* Fix      - Deleting demo content no longer removes the site's own empty service categories.
+* Fix      - Updating the plugin no longer creates a Log In page or changes how an existing site signs in.
+* Fix      - A long transaction ID wraps inside its box on the order summary.
+* Fix      - Column headings on the Vendors list line up with their values.
+* Security - Batch API requests cannot contain another batch.
+* Security - Guest rate limits can no longer be reset with a spoofed address header.
+* Security - Public profile and portfolio uploads accept images only, and request attachments require a signed-in member.
+* Security - A payment that has already paid an order is no longer refunded when a repeated confirm request for it fails, on Stripe and PayPal.
+* Security - The app's pay-an-existing-order route only accepts a payment started by that buyer for that order.
+* Security - A buyer request with a proposal, and the files attached to it, can no longer be deleted by the buyer.
+* Dev      - New filters and actions are listed in the hook reference, including wpss_enqueue_dashboard_assets for loading dashboard assets where a shortcode is placed outside page content.
+* Dev      - REST date fields are ISO 8601 with a +00:00 offset, where about 20 fields previously returned a bare date and time.
+* Dev      - GET /cart marks lines that can no longer be bought with unavailable and unavailable_reason.
+* Dev      - PUT /buyer-requests/{id} accepts attachments, and two new 409 codes are returned: wpss_payment_already_used and wpss_file_in_use.
+* Dev      - Dashboard sections, the order row and the order filters are theme-overridable templates.
+* Dev      - The plain-text email templates that nothing loaded were removed.
+* Compat   - Aligned with WP Sell Services Pro 1.8.0. Install both updates together.
 
 = 1.7.2 - September 2026 =
 
@@ -862,6 +927,9 @@ Full audit and hardening sprint. Every customer-facing surface rebuilt on the sh
 * WP 6.7+ compatible (lazy-loaded translations)
 
 == Upgrade Notice ==
+
+= 1.8.0 =
+Stored dates are converted to UTC once, in the background, after updating; run wp wpss utc-migrate --dry-run first on a site whose database server is in a different time zone from WordPress. A PayPal payment left unfinished at the moment of updating is not charged and the buyer pays again. Updating does not create a Log In page or change how the site signs in. Requires WP Sell Services Pro 1.8.0 if Pro is active - install both updates together.
 
 = 1.7.1 =
 Tipping is now a Pro feature. If your site takes tips on Free, buyers will no longer see the tip option after this update, and past tips are hidden from order pages; any tip already paid for is still credited to the vendor and still shows in their wallet history. Installing Pro 1.7.1 restores tipping, on by default, with an on/off setting under Commission and Tax. Requires WP Sell Services Pro 1.7.1 - install both updates together.

@@ -245,7 +245,7 @@ do_action( 'wpss_before_milestone_view', $current_order );
 			?>
 			<?php if ( $is_buyer && $awaiting_confirmation ) : ?>
 				<p class="wpss-notice wpss-notice--info wpss-milestone-awaiting">
-					<?php esc_html_e( 'Payment submitted. We will confirm your transfer shortly.', 'wp-sell-services' ); ?>
+					<?php echo esc_html( wpss_offline_payment_notice( $current_order ) ); ?>
 				</p>
 				<a href="<?php echo esc_url( wpss_get_order_url( (int) ( $current_order->platform_order_id ?: $current_order->id ) ) ); ?>" class="wpss-btn wpss-btn--secondary">
 					<?php esc_html_e( 'View payment instructions', 'wp-sell-services' ); ?>

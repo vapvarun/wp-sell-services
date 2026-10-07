@@ -742,6 +742,15 @@ article.wpss-service-card:hover {
 	font-weight: 600;
 }
 
+.wpss-service-card__delivery {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-inline-start: auto;
+	color: var(--wpss-text-light);
+	white-space: nowrap;
+}
+
 .wpss-service-card__footer {
 	padding: 12px 16px;
 	border-top: 1px solid var(--wpss-border);
@@ -834,41 +843,7 @@ article.wpss-service-card:hover {
 	padding: 30px 0;
 }
 
-.wpss-service-layout {
-	display: grid;
-	grid-template-columns: 1fr 350px;
-	gap: 30px;
-}
-
-@media (max-width: 992px) {
-	.wpss-service-layout {
-		grid-template-columns: 1fr;
-	}
-
-	.wpss-service-sidebar {
-		position: relative;
-		top: 0;
-		width: 100%;
-		max-width: 100%;
-		max-height: none;
-		justify-self: stretch;
-		order: -1;
-	}
-}
-
-.wpss-service-main {
-	min-width: 0;
-}
-
-.wpss-service-sidebar {
-	position: sticky;
-	top: var(--wpss-sticky-top, 32px);
-	align-self: start;
-	max-height: none;
-	overflow-y: visible;
-	width: 350px;
-	justify-self: end;
-}
+/* The service layout itself lives in single-service.css (one owner). */
 
 /* ==========================================================================
    Gallery
@@ -2365,7 +2340,7 @@ a.wpss-back-link:focus {
 
 .wpss-profile-info {
 	display: flex;
-	align-items: flex-end;
+	align-items: flex-start;
 	gap: 20px;
 	margin-top: -50px;
 	padding: 0 30px;
@@ -2401,9 +2376,19 @@ a.wpss-back-link:focus {
 	padding: 4px;
 }
 
+/* The row rises 50px over the cover for the avatar; the text starts below
+   the cover however many lines it has (bottom-aligned, each added line - the
+   rating row - pushed the name and the level pill into the cover). */
 .wpss-profile-details {
 	flex: 1;
+	padding-top: calc(50px + var(--wpss-space-3, 12px));
 	padding-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+	.wpss-profile-details {
+		padding-top: 0;
+	}
 }
 
 .wpss-profile-name {
@@ -2441,6 +2426,12 @@ a.wpss-back-link:focus {
 @media (max-width: 992px) {
 	.wpss-profile-layout {
 		grid-template-columns: 1fr;
+	}
+
+	/* One column: the at-a-glance card (response time, active services,
+	   orders) leads instead of landing after every review. */
+	.wpss-profile-sidebar {
+		order: -1;
 	}
 }
 
@@ -2533,18 +2524,25 @@ a.wpss-back-link:focus {
 /* Social Links */
 .wpss-social-links {
 	display: flex;
-	gap: 10px;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 
 .wpss-social-link {
-	display: flex;
+	display: inline-flex;
 	align-items: center;
-	justify-content: center;
-	width: 36px;
-	height: 36px;
+	gap: 6px;
+	min-height: 36px;
+	padding: 0 12px;
 	background: var(--wpss-background);
-	border-radius: 50%;
+	border-radius: var(--wpss-radius-full, 999px);
 	color: var(--wpss-text);
+	font-size: 13px;
+	font-weight: 500;
+	text-decoration: none;
 	transition: all var(--wpss-transition);
 }
 
@@ -4124,11 +4122,22 @@ body.wpss-modal-active {
 
 .wpss-vendors-grid .wpss-vendor-name {
 	grid-column: 2;
+	min-width: 0;
 	margin: 0;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--wpss-space-2, 8px);
+}
+
+/* A long display name ("wpss_rest_vendor_ZTL6w4qW") ends in an ellipsis inside
+   the tile; the full name is the link's title. */
+.wpss-vendors-grid .wpss-vendor-name > a {
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* Two lines for every card, so tiles in a row end up the same height whatever
@@ -4636,4 +4645,20 @@ a.wpss-order-filter.is-active:focus {
 	font-size: 13px;
 	line-height: 1.6;
 	max-width: 70ch;
+}
+
+/*
+ * Pages the plugin renders on its own routes (/service-checkout/{id}/) have no
+ * theme page template around them, so no theme breadcrumb band or content
+ * padding: the page header sat flush under the site header. Give the route
+ * the breathing room the same header gets on a real page.
+ */
+.wpss-standalone-page {
+	padding-block: var(--wpss-space-8, 2rem) var(--wpss-space-10, 2.5rem);
+}
+
+@media (max-width: 640px) {
+	.wpss-standalone-page {
+		padding-block: var(--wpss-space-5, 1.25rem) var(--wpss-space-8, 2rem);
+	}
 }

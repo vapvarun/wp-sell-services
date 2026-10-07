@@ -25,6 +25,10 @@ use WPSellServices\Services\DeliveryService;
 
 defined( 'ABSPATH' ) || exit;
 
+// The order routes enqueue this before the head prints; a shortcode render
+// reaches here first, and WordPress then prints it in the footer.
+wpss_enqueue_order_view_style();
+
 if ( empty( $order_id ) ) {
 	return;
 }
@@ -157,6 +161,9 @@ do_action( 'wpss_before_order_view', $order );
 			<span class="<?php echo esc_attr( wpss_status_class( $order->status ) ); ?>">
 				<?php echo esc_html( $status_label ); ?>
 			</span>
+			<?php if ( 'late' !== $order->status && wpss_is_order_late( $order ) ) : ?>
+				<span class="wpss-badge wpss-badge--danger"><?php esc_html_e( 'Late', 'wp-sell-services' ); ?></span>
+			<?php endif; ?>
 
 			<?php
 			// CB3 + VS3 (plans/ORDER-FLOW-AUDIT.md): persistent revision count
@@ -328,7 +335,10 @@ do_action( 'wpss_before_order_view', $order );
 				);
 			}
 
-			if ( 'pending_approval' === $order->status ) {
+			// Accept and Request Revision need something delivered; with no
+			// delivery the order shows "Nothing delivered yet" below instead
+			// (owner decision 2026-09-25, DeliveryService::accept() refuses).
+			if ( 'pending_approval' === $order->status && ! empty( $deliveries ) ) {
 				$actions['complete'] = array(
 					'label' => __( 'Accept & Complete', 'wp-sell-services' ),
 					'class' => 'wpss-btn wpss-btn--success wpss-order-action',
@@ -436,6 +446,20 @@ do_action( 'wpss_before_order_view', $order );
 			 * @param object $order   Order object.
 			 */
 			$actions = apply_filters( 'wpss_order_actions', $actions, $order );
+
+			// A buyer reviewing a delivery sees the delivery first and decides
+			// under it, instead of being offered Accept above a page of other
+			// sections with the delivery far below (Basecamp 10337217098).
+			$wpss_review_first   = $is_customer && 'pending_approval' === $order->status && ! empty( $deliveries );
+			$wpss_review_actions = array();
+		if ( $wpss_review_first ) {
+			foreach ( array( 'complete', 'revision' ) as $wpss_key ) {
+				if ( isset( $actions[ $wpss_key ] ) ) {
+					$wpss_review_actions[ $wpss_key ] = $actions[ $wpss_key ];
+					unset( $actions[ $wpss_key ] );
+				}
+			}
+		}
 		?>
 
 			<?php if ( ! empty( $actions ) ) : ?>
@@ -552,6 +576,33 @@ do_action( 'wpss_before_order_view', $order );
 		</section>
 	<?php endif; ?>
 
+	<?php ob_start(); ?>
+	<?php
+	wpss_get_template_part(
+		'order/deliveries',
+		'',
+		array(
+			'wpss_order'      => $order,
+			'wpss_deliveries' => $deliveries,
+			'wpss_viewer'     => $is_customer ? 'buyer' : 'vendor',
+		)
+	);
+	?>
+	<?php $wpss_deliveries_html = (string) ob_get_clean(); ?>
+
+	<?php if ( $wpss_review_first ) : ?>
+		<?php echo $wpss_deliveries_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it was built. ?>
+		<?php if ( $wpss_review_actions ) : ?>
+			<div class="wpss-order-view__actions wpss-order-view__actions--review">
+				<?php foreach ( $wpss_review_actions as $wpss_action ) : ?>
+					<button type="button" class="<?php echo esc_attr( $wpss_action['class'] ); ?>" <?php echo $wpss_action['attrs'] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- attrs are escaped where the action is defined. ?>>
+						<?php echo esc_html( $wpss_action['label'] ); ?>
+					</button>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
+	<?php endif; ?>
+
 	<!-- Order Summary Section -->
 	<section class="wpss-order-section">
 		<div class="wpss-order-section__header">
@@ -597,6 +648,14 @@ do_action( 'wpss_before_order_view', $order );
 					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Date', 'wp-sell-services' ); ?></span>
 					<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) : '—' ); ?></span>
 				</div>
+				<?php wpss_get_template_part( 'order/payment', '', array( 'wpss_order' => $order ) ); ?>
+				<?php
+				// While a cancellation is only requested, the banner below carries
+				// the reason and the countdown; once cancelled, the summary keeps them.
+				if ( 'cancelled' === $order->status ) {
+					wpss_get_template_part( 'order/cancellation', '', array( 'wpss_order' => $order ) );
+				}
+				?>
 				<?php if ( $order->delivery_deadline ) : ?>
 					<div class="wpss-order-detail-item">
 						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
@@ -705,8 +764,18 @@ do_action( 'wpss_before_order_view', $order );
 				// so reading the column here showed the buyer no figure at all
 				// on exactly the orders where the whole charge came back.
 				$refunded_amount = wpss_get_order_refunded_amount( $order );
+				$refund_state    = wpss_get_order_refund_state( $order );
 
-				if ( $refunded_amount > 0 ) :
+				// A refund decided but not yet sent (offline, or a gateway that
+				// refused): say so, instead of an order that reads settled.
+				if ( in_array( $refund_state['state'], array( 'pending', 'failed' ), true ) ) :
+					?>
+					<div class="wpss-order-detail-item wpss-order-detail-item--refunded">
+						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Refund on its way', 'wp-sell-services' ); ?></span>
+						<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_format_price( (float) $refund_state['amount'], $order->currency ) ); ?></span>
+					</div>
+					<?php
+				elseif ( $refunded_amount > 0 ) :
 					$is_full_refund = $refunded_amount >= (float) $order->total;
 					?>
 					<div class="wpss-order-detail-item wpss-order-detail-item--refunded">
@@ -817,6 +886,13 @@ do_action( 'wpss_before_order_view', $order );
 						);
 						?>
 					</p>
+					<?php
+					// What was bought, line by line: package, add-ons, tax. A
+					// milestone parent is left out - its money is on the phases.
+					if ( ! $show_phase_total ) {
+						wpss_get_template_part( 'order/line-items', '', array( 'wpss_order' => $order ) );
+					}
+					?>
 				</div>
 			</div>
 
@@ -838,8 +914,9 @@ do_action( 'wpss_before_order_view', $order );
 						<strong class="wpss-party-info__name"><?php echo esc_html( $other_party_name ); ?></strong>
 						<?php if ( ! $is_vendor && $other_party ) : ?>
 							<?php
-							$vendor_rating = (float) get_user_meta( $other_party->ID, '_wpss_rating_average', true );
-							$vendor_count  = (int) get_user_meta( $other_party->ID, '_wpss_rating_count', true );
+							$wpss_vp       = wpss_get_vendor( $other_party->ID ); // Profile row: the _wpss_rating_* user meta is never written for vendors.
+							$vendor_rating = $wpss_vp ? $wpss_vp->rating : 0.0;
+							$vendor_count  = $wpss_vp ? $wpss_vp->review_count : 0;
 							?>
 							<?php if ( $vendor_count > 0 ) : ?>
 								<div class="wpss-party-info__rating">
@@ -865,21 +942,11 @@ do_action( 'wpss_before_order_view', $order );
 		$service_requirements = wpss_get_service_requirements( (int) $service->ID );
 	}
 
-	// Get submitted requirements from database.
-	global $wpdb;
-	$requirements_table = $wpdb->prefix . 'wpss_order_requirements';
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	$submitted_row = $wpdb->get_row(
-		$wpdb->prepare(
-			"SELECT * FROM {$requirements_table} WHERE order_id = %d ORDER BY id DESC LIMIT 1",
-			$order_id
-		)
-	);
-	if ( $submitted_row ) {
-		$submitted_data        = json_decode( $submitted_row->field_data, true ) ?: array();
-		$submitted_attachments = json_decode( $submitted_row->attachments, true ) ?: array();
-		$submitted_at          = $submitted_row->submitted_at ?? null;
-	}
+	// Submitted requirements: the one read shared with the admin order screen.
+	$wpss_submitted             = $order->get_submitted_requirements();
+	$submitted_data             = $wpss_submitted['data'];
+	$submitted_attachments      = $wpss_submitted['attachments'];
+	$submitted_at               = $wpss_submitted['submitted_at'];
 	$has_submitted_requirements = ! empty( $submitted_data ) || ! empty( $submitted_attachments );
 	$service_has_requirements   = ! empty( $service_requirements );
 
@@ -893,10 +960,7 @@ do_action( 'wpss_before_order_view', $order );
 	// seller looking at a completed order. When the service DOES define
 	// requirements, the section is always shown so both parties can see
 	// the form, the submitted answers, or the 'not yet provided' notice.
-	$show_requirements_form   = 'pending_requirements' === $order->status && $is_customer && $service_has_requirements && ! $has_submitted_requirements;
-	$show_submitted_readonly  = $has_submitted_requirements && ( $is_vendor || $is_customer );
-	$show_not_provided_notice = ! $has_submitted_requirements && $service_has_requirements && in_array( $order->status, array( 'in_progress', 'pending_approval', 'completed', 'delivered', 'late', 'revision_requested' ), true );
-	$show_no_requirements_msg = false;
+	$show_requirements_form = 'pending_requirements' === $order->status && $is_customer && $service_has_requirements && ! $has_submitted_requirements;
 
 	// Allow late requirements submission if enabled in settings and order is in_progress without requirements.
 	$allow_late_submission       = apply_filters( 'wpss_allow_late_requirements_submission', false );
@@ -933,281 +997,40 @@ do_action( 'wpss_before_order_view', $order );
 		</section>
 	<?php endif; ?>
 
-	<!-- Submitted Requirements (for vendor or customer after submission) -->
-	<?php if ( $show_submitted_readonly ) : ?>
-		<section class="wpss-order-section wpss-order-section--requirements-view">
-			<div class="wpss-order-section__header">
-				<h2 class="wpss-order-section__title">
-					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
-				</h2>
-				<?php if ( $submitted_at ) : ?>
-					<span class="wpss-order-section__timestamp">
-						<?php
-						printf(
-							/* translators: %s: submission date/time */
-							esc_html__( 'Submitted %s', 'wp-sell-services' ),
-							esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $submitted_at ) ) )
-						);
-						?>
-					</span>
-				<?php endif; ?>
-			</div>
-			<div class="wpss-order-section__body">
-				<?php foreach ( $service_requirements as $index => $requirement ) : ?>
-					<?php
-					$question       = $requirement['label'];
-					$type           = $requirement['type'];
-					$response_value = wpss_requirement_answer( $requirement, $submitted_data );
-					if ( is_array( $response_value ) ) {
-						$response_value = implode( ', ', array_map( 'strval', $response_value ) );
-					}
-
-					// Find attachment for this field (if file type). Answers and
-					// attachments are keyed by requirement id; pre-1.7.1 rows by
-					// question text.
-					$field_attachment = null;
-					if ( 'file' === $type && ! empty( $submitted_attachments ) ) {
-						foreach ( $submitted_attachments as $att ) {
-							if ( isset( $att['key'] ) && in_array( $att['key'], array( $requirement['id'], $question ), true ) ) {
-								$field_attachment = $att;
-								break;
-							}
-						}
-					}
-
-					// Determine if text is long (for expand/collapse).
-					$is_long_text = is_string( $response_value ) && strlen( $response_value ) > 300;
-					?>
-					<div class="wpss-requirement-view <?php echo $is_long_text ? 'wpss-requirement-view--expandable' : ''; ?>">
-						<h4 class="wpss-requirement-view__question"><?php echo esc_html( $question ); ?></h4>
-						<div class="wpss-requirement-view__answer <?php echo $is_long_text ? 'wpss-requirement-view__answer--collapsed' : ''; ?>">
-							<?php if ( 'file' === $type && $field_attachment ) : ?>
-								<?php
-								// Private records (1.7.0+) carry a path, not a url: the ONE
-								// resolver hands back the guarded endpoint, or '' when the
-								// file is not addressable - same as the orphan list below.
-								$field_attachment['order_id'] = $order_id;
-								$field_file_url               = wpss_get_order_file_url( $field_attachment );
-								$field_file_name              = wpss_format_attachment_name( (string) ( $field_attachment['name'] ?? '' ) );
-								$is_image                     = '' !== $field_file_url && in_array( strtolower( pathinfo( $field_file_name, PATHINFO_EXTENSION ) ), array( 'jpg', 'jpeg', 'png', 'gif', 'webp' ), true );
-								?>
-								<?php if ( $is_image ) : ?>
-									<div class="wpss-requirement-view__image-preview">
-										<img src="<?php echo esc_url( $field_file_url ); ?>" alt="<?php echo esc_attr( $field_file_name ); ?>" class="wpss-requirement-view__thumbnail" loading="lazy">
-									</div>
-								<?php endif; ?>
-								<?php if ( '' !== $field_file_url ) : ?>
-									<a href="<?php echo esc_url( $field_file_url ); ?>" class="wpss-file-link" target="_blank" download>
-										<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
-										<?php echo esc_html( $field_file_name ); ?>
-									</a>
-								<?php else : ?>
-									<?php echo esc_html( $field_file_name ); ?>
-								<?php endif; ?>
-							<?php elseif ( $response_value ) : ?>
-								<?php
-								$wpss_answer_text = (string) $response_value;
-								require WPSS_PLUGIN_DIR . 'templates/partials/requirement-answer.php';
-								?>
-								<button type="button" class="wpss-requirement-view__copy-btn" data-copy-text="<?php echo esc_attr( $response_value ); ?>" title="<?php esc_attr_e( 'Copy to clipboard', 'wp-sell-services' ); ?>">
-									<i data-lucide="copy" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
-								</button>
-							<?php else : ?>
-								<span class="wpss-text-muted"><?php esc_html_e( 'No response provided', 'wp-sell-services' ); ?></span>
-							<?php endif; ?>
-						</div>
-					</div>
-				<?php endforeach; ?>
-
-				<?php
-				/*
-				 * Anything the buyer submitted that no configured question claims.
-				 *
-				 * The loop above walks the SERVICE's questions and looks each
-				 * answer up by question text. A service with no configured
-				 * questions therefore rendered nothing at all, even though the
-				 * buyer had written a brief and the row was sitting in
-				 * field_data - so the vendor opened the order and could not read
-				 * what they had been asked to build (Basecamp 10254444197).
-				 *
-				 * Keying answers by question text has a second failure with the
-				 * same shape: edit or delete a question after submission and its
-				 * answer silently disappears too. Both are covered by rendering
-				 * whatever is left over rather than by special-casing
-				 * 'description'.
-				 */
-				$rendered_keys = array();
-				foreach ( $service_requirements as $requirement ) {
-					$rendered_keys[] = $requirement['id'];
-					$rendered_keys[] = $requirement['label'];
-				}
-
-				$orphan_answers = array();
-				foreach ( (array) $submitted_data as $key => $value ) {
-					if ( in_array( (string) $key, $rendered_keys, true ) ) {
-						continue;
-					}
-					if ( '' === trim( (string) ( is_scalar( $value ) ? $value : wp_json_encode( $value ) ) ) ) {
-						continue;
-					}
-					$orphan_answers[ $key ] = $value;
-				}
-				?>
-
-				<?php foreach ( $orphan_answers as $orphan_key => $orphan_value ) : ?>
-					<?php
-					// One label helper, shared with the admin order screen, which
-					// used to print the raw key instead.
-					$orphan_label = wpss_requirement_field_label( (string) $orphan_key );
-
-					$orphan_text = is_scalar( $orphan_value )
-						? (string) $orphan_value
-						: wp_json_encode( $orphan_value );
-
-					$orphan_long = strlen( $orphan_text ) > 300;
-					?>
-					<div class="wpss-requirement-view <?php echo $orphan_long ? 'wpss-requirement-view--expandable' : ''; ?>">
-						<h4 class="wpss-requirement-view__question"><?php echo esc_html( $orphan_label ); ?></h4>
-						<div class="wpss-requirement-view__answer <?php echo $orphan_long ? 'wpss-requirement-view__answer--collapsed' : ''; ?>">
-							<?php
-							$wpss_answer_text = $orphan_text;
-							require WPSS_PLUGIN_DIR . 'templates/partials/requirement-answer.php';
-							?>
-						</div>
-					</div>
-				<?php endforeach; ?>
-
-				<?php
-				// Attachments the buyer uploaded that no configured file question
-				// claims. Same reasoning: a delivered brief must not vanish
-				// because the question it answered was removed.
-				$orphan_attachments = array();
-				foreach ( (array) $submitted_attachments as $att ) {
-					if ( ! empty( $att['key'] ) && in_array( (string) $att['key'], $rendered_keys, true ) ) {
-						continue;
-					}
-					$orphan_attachments[] = $att;
-				}
-				?>
-
-				<?php if ( $orphan_attachments ) : ?>
-					<div class="wpss-requirement-view">
-						<h4 class="wpss-requirement-view__question"><?php esc_html_e( 'Files the buyer attached', 'wp-sell-services' ); ?></h4>
-						<div class="wpss-requirement-view__answer">
-							<ul class="wpss-requirement-view__files">
-								<?php foreach ( $orphan_attachments as $orphan_att ) : ?>
-									<?php
-									$orphan_att['order_id'] = $order_id;
-									$orphan_url             = function_exists( 'wpss_get_order_file_url' ) ? wpss_get_order_file_url( $orphan_att ) : '';
-									$orphan_name            = wpss_format_attachment_name( (string) ( $orphan_att['name'] ?? '' ) );
-									?>
-									<li>
-										<?php if ( $orphan_url ) : ?>
-											<a href="<?php echo esc_url( $orphan_url ); ?>" rel="nofollow"><?php echo esc_html( $orphan_name ); ?></a>
-										<?php else : ?>
-											<?php echo esc_html( $orphan_name ); ?>
-										<?php endif; ?>
-									</li>
-								<?php endforeach; ?>
-							</ul>
-						</div>
-					</div>
-				<?php endif; ?>
-			</div>
-		</section>
-	<?php endif; ?>
-
-	<!-- Requirements Section (when service has requirements but none submitted) -->
-	<?php if ( $show_not_provided_notice && ! $show_late_requirements_form ) : ?>
-		<section class="wpss-order-section wpss-order-section--requirements-view">
-			<div class="wpss-order-section__header">
-				<h2 class="wpss-order-section__title">
-					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
-				</h2>
-			</div>
-			<div class="wpss-order-section__body">
-				<div class="wpss-notice wpss-notice--warning">
-					<p class="wpss-notice__text">
-						<strong><?php esc_html_e( 'Note:', 'wp-sell-services' ); ?></strong>
-						<?php esc_html_e( 'No requirements were formally submitted for this order. Below are the questions the service requires:', 'wp-sell-services' ); ?>
-					</p>
-				</div>
-				<?php foreach ( $service_requirements as $index => $requirement ) : ?>
-					<?php
-					$question = $requirement['label'];
-					$required = $requirement['required'];
-					?>
-					<div class="wpss-requirement-view">
-						<h4 class="wpss-requirement-view__question">
-							<?php echo esc_html( $question ); ?>
-							<?php if ( $required ) : ?>
-								<span class="wpss-required">*</span>
-							<?php endif; ?>
-						</h4>
-						<div class="wpss-requirement-view__answer">
-							<span class="wpss-text-muted wpss-text-italic">
-								<?php esc_html_e( 'Not provided', 'wp-sell-services' ); ?>
-							</span>
-						</div>
-					</div>
-				<?php endforeach; ?>
-			</div>
-		</section>
-	<?php endif; ?>
-
-	<!-- No Requirements Message (when service has no requirements) -->
-	<?php if ( $show_no_requirements_msg ) : ?>
-		<section class="wpss-order-section wpss-order-section--requirements-view">
-			<div class="wpss-order-section__header">
-				<h2 class="wpss-order-section__title">
-					<i data-lucide="clipboard-check" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Order Requirements', 'wp-sell-services' ); ?>
-				</h2>
-			</div>
-			<div class="wpss-order-section__body">
-				<div class="wpss-notice wpss-notice--info">
-					<p class="wpss-notice__text">
-						<i data-lucide="info" class="wpss-icon" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;"></i>
-						<?php esc_html_e( 'This service does not require any specific information from the buyer.', 'wp-sell-services' ); ?>
-					</p>
-				</div>
-			</div>
-		</section>
-	<?php endif; ?>
+	<?php
+	wpss_get_template_part(
+		'order/requirements',
+		'',
+		array(
+			'wpss_order'                => $order,
+			'wpss_viewer'               => $is_customer ? 'buyer' : 'vendor',
+			'wpss_service_requirements' => $service_requirements,
+			'wpss_submitted'            => $wpss_submitted,
+			'wpss_hide_not_provided'    => $show_late_requirements_form,
+		)
+	);
+	?>
 
 	<!-- Cancellation Request Banner -->
 	<?php if ( 'cancellation_requested' === $order->status ) : ?>
 		<?php
-		$cancel_data   = json_decode( $order->vendor_notes ?? '', true );
+		$cancel_data   = $order->get_cancellation_request() ?? array();
 		$cancel_reason = $cancel_data['reason'] ?? '';
 		$cancel_note   = $cancel_data['note'] ?? '';
 
-		$reason_labels = array(
-			'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
-			'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
-			'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
-			'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
-			'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
-			'other'                => __( 'Other', 'wp-sell-services' ),
-		);
-		$reason_label  = $reason_labels[ $cancel_reason ] ?? $cancel_reason;
+		$reason_label = wpss_get_cancellation_reason_label( (string) $cancel_reason );
 
 		// CB5 + VS7 (plans/ORDER-FLOW-AUDIT.md): visible auto-cancel countdown.
 		// Both buyer and vendor see exactly when the cancellation_requested
 		// state will auto-resolve via the existing 48h cron. Computed from the
-		// requested_at timestamp baked into vendor_notes JSON.
+		// requested_at timestamp stored with the cancellation request.
 		$requested_at_iso         = $cancel_data['requested_at'] ?? '';
 		$cancellation_deadline_ts = 0;
 		$time_remaining_label     = '';
 		if ( $requested_at_iso ) {
-			// requested_at is stored site-local (current_time( 'mysql' )), so
-			// normalise to UTC and compare against a UTC now — the same
-			// convention OrderWorkflowManager uses to actually fire the 48h
-			// auto-resolve. Both sides have to agree or the countdown the
-			// buyer reads disagrees with the cron that acts on it.
-			$requested_ts             = strtotime( get_gmt_from_date( (string) $requested_at_iso ) . ' UTC' );
+			// requested_at is stored in UTC, the same value the 48h cron in
+			// OrderWorkflowManager reads, so the countdown and the cron agree.
+			$requested_ts             = strtotime( $requested_at_iso . ' UTC' );
 			$cancellation_deadline_ts = $requested_ts + ( 48 * HOUR_IN_SECONDS );
 			$seconds_left             = $cancellation_deadline_ts - time();
 			if ( $seconds_left > 0 ) {
@@ -1282,245 +1105,15 @@ do_action( 'wpss_before_order_view', $order );
 	wpss_get_template_part( 'partials/billing', 'summary', array( 'wpss_order' => $order ) );
 	?>
 
-	<!-- Order Timeline Section -->
-	<section class="wpss-order-section">
-		<div class="wpss-order-section__header">
-			<h2 class="wpss-order-section__title">
-				<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Order Timeline', 'wp-sell-services' ); ?>
-			</h2>
-		</div>
-		<div class="wpss-order-section__body">
-			<div class="wpss-timeline">
-				<div class="wpss-timeline__item wpss-timeline__item--completed">
-					<div class="wpss-timeline__marker"></div>
-					<div class="wpss-timeline__content">
-						<span class="wpss-timeline__title"><?php esc_html_e( 'Order Placed', 'wp-sell-services' ); ?></span>
-						<span class="wpss-timeline__date"><?php echo esc_html( $order->created_at ? wp_date( 'M j, Y \a\t g:i A', $order->created_at->getTimestamp() ) : '' ); ?></span>
-					</div>
-				</div>
+	<?php wpss_get_template_part( 'order/timeline', '', array( 'wpss_order' => $order ) ); ?>
 
-				<?php if ( $order->started_at ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Work Started', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $order->started_at->getTimestamp() ) ); ?></span>
-						</div>
-					</div>
-				<?php endif; ?>
-
-				<?php if ( in_array( $order->status, array( 'delivered', 'completed' ), true ) ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Delivered', 'wp-sell-services' ); ?></span>
-						</div>
-					</div>
-				<?php endif; ?>
-
-				<?php if ( $order->completed_at ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( wp_date( 'M j, Y \a\t g:i A', $order->completed_at->getTimestamp() ) ); ?></span>
-						</div>
-					</div>
-				<?php endif; ?>
-
-				<?php
-				// Own `if`, not an `elseif` of completed_at: an order that was
-				// completed and THEN refunded or cancelled keeps its Completed
-				// entry and also shows what happened to it afterwards.
-				?>
-				<?php if ( in_array( $order->status, array( 'cancelled', 'refunded', 'partially_refunded' ), true ) ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title">
-								<?php
-								if ( 'refunded' === $order->status ) {
-									esc_html_e( 'Refunded', 'wp-sell-services' );
-								} elseif ( 'partially_refunded' === $order->status ) {
-									esc_html_e( 'Partially Refunded', 'wp-sell-services' );
-								} else {
-									esc_html_e( 'Cancelled', 'wp-sell-services' );
-								}
-								?>
-							</span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-				<?php elseif ( 'cancellation_requested' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Cancellation Requested', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-
-				<?php elseif ( 'disputed' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Disputed', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-
-				<?php elseif ( 'rejected' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-danger, #ef4444);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-
-				<?php elseif ( 'revision_requested' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Revision Requested', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-							<?php $revision_reason = $order->get_revision_reason(); ?>
-							<?php if ( '' !== $revision_reason ) : ?>
-								<p class="wpss-timeline__note wpss-revision-reason"><?php echo esc_html( $revision_reason ); ?></p>
-							<?php endif; ?>
-						</div>
-					</div>
-
-				<?php elseif ( 'late' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Order Late', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-
-				<?php elseif ( 'pending_approval' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-info, #3b82f6);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'Awaiting Approval', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-
-				<?php elseif ( 'on_hold' === $order->status ) : ?>
-					<div class="wpss-timeline__item wpss-timeline__item--completed">
-						<div class="wpss-timeline__marker" style="background: var(--wpss-warning, #f59e0b);"></div>
-						<div class="wpss-timeline__content">
-							<span class="wpss-timeline__title"><?php esc_html_e( 'On Hold', 'wp-sell-services' ); ?></span>
-							<span class="wpss-timeline__date"><?php echo esc_html( $order->updated_at ? wp_date( 'M j, Y \a\t g:i A', $order->updated_at->getTimestamp() ) : '' ); ?></span>
-						</div>
-					</div>
-
-				<?php else : ?>
-					<!-- Pending steps -->
-					<?php if ( ! $order->started_at && in_array( $order->status, array( 'pending', 'accepted', 'pending_requirements' ), true ) ) : ?>
-						<div class="wpss-timeline__item wpss-timeline__item--pending">
-							<div class="wpss-timeline__marker"></div>
-							<div class="wpss-timeline__content">
-								<span class="wpss-timeline__title"><?php esc_html_e( 'Work Started', 'wp-sell-services' ); ?></span>
-								<span class="wpss-timeline__date"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
-							</div>
-						</div>
-					<?php endif; ?>
-					<?php if ( in_array( $order->status, array( 'pending', 'accepted', 'pending_requirements', 'in_progress' ), true ) ) : ?>
-						<div class="wpss-timeline__item wpss-timeline__item--pending">
-							<div class="wpss-timeline__marker"></div>
-							<div class="wpss-timeline__content">
-								<span class="wpss-timeline__title"><?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?></span>
-								<span class="wpss-timeline__date"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
-							</div>
-						</div>
-						<div class="wpss-timeline__item wpss-timeline__item--pending">
-							<div class="wpss-timeline__marker"></div>
-							<div class="wpss-timeline__content">
-								<span class="wpss-timeline__title"><?php esc_html_e( 'Completed', 'wp-sell-services' ); ?></span>
-								<span class="wpss-timeline__date"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></span>
-							</div>
-						</div>
-					<?php endif; ?>
-				<?php endif; ?>
-			</div>
-		</div>
-	</section>
-
-	<!-- Deliveries Section -->
-	<?php if ( ! empty( $deliveries ) ) : ?>
-		<section class="wpss-order-section">
-			<div class="wpss-order-section__header">
-				<h2 class="wpss-order-section__title">
-					<i data-lucide="upload" class="wpss-icon" aria-hidden="true"></i>
-					<?php esc_html_e( 'Deliveries', 'wp-sell-services' ); ?>
-				</h2>
-			</div>
-			<div class="wpss-order-section__body">
-				<?php foreach ( $deliveries as $delivery ) : ?>
-					<div class="wpss-delivery-item">
-						<div class="wpss-delivery-item__header">
-							<span class="wpss-delivery-item__date">
-								<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $delivery->created_at ) ) ); ?>
-							</span>
-							<span class="<?php echo esc_attr( wpss_status_class( $delivery->status ) ); ?>">
-								<?php echo esc_html( wpss_get_order_status_label( (string) $delivery->status ) ); ?>
-							</span>
-						</div>
-						<div class="wpss-delivery-item__content">
-							<?php echo wp_kses_post( wpautop( $delivery->message ) ); ?>
-						</div>
-						<?php
-						$files = maybe_unserialize( $delivery->attachments );
-						if ( is_string( $files ) ) {
-							$decoded = json_decode( $files, true );
-							$files   = is_array( $decoded ) ? $decoded : array();
-						}
-						if ( ! empty( $files ) && is_array( $files ) ) :
-							?>
-							<div class="wpss-delivery-item__files">
-								<?php foreach ( $files as $file ) : ?>
-									<?php
-									// Three formats now: a 1.7.0 record addressed by id, a
-									// pre-1.7.0 record carrying a stored public URL, or a bare
-									// attachment ID from further back still. Only the first is
-									// permission-checked; the older two are already public and
-									// keep working, because breaking a delivered file to tighten
-									// history would punish the buyer for our bug.
-									if ( is_array( $file ) ) {
-										$file['order_id'] = $file['order_id'] ?? $order_id;
-
-										$att_id    = $file['id'] ?? 0;
-										$file_url  = wpss_get_order_file_url( $file );
-										$file_name = wpss_format_attachment_name( (string) ( $file['name'] ?? get_the_title( $att_id ) ) );
-
-										if ( '' === $file_url ) {
-											$file_url = wp_get_attachment_url( $att_id );
-										}
-									} else {
-										$file_url  = wp_get_attachment_url( (int) $file );
-										$file_name = get_the_title( (int) $file );
-									}
-									if ( ! $file_url ) {
-										continue;
-									}
-									?>
-									<a href="<?php echo esc_url( $file_url ); ?>" class="wpss-file-link" target="_blank" download>
-										<i data-lucide="download" class="wpss-icon" aria-hidden="true"></i>
-										<?php echo esc_html( $file_name ); ?>
-									</a>
-								<?php endforeach; ?>
-							</div>
-						<?php endif; ?>
-					</div>
-				<?php endforeach; ?>
-			</div>
-		</section>
-	<?php endif; ?>
+	<?php
+	// Shown here in every state except the buyer reviewing a delivery, when it
+	// moved up under the order header (see $wpss_review_first).
+	if ( ! $wpss_review_first ) {
+		echo $wpss_deliveries_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it was built.
+	}
+	?>
 
 	<?php
 	/**
@@ -1727,7 +1320,7 @@ do_action( 'wpss_before_order_view', $order );
 										$ms_state_class .= ' wpss-ms-state--locked';
 									} elseif ( $ms_awaiting ) {
 										$ms_state_label = $is_customer
-											? __( 'Payment submitted · awaiting confirmation', 'wp-sell-services' )
+											? __( 'Awaiting your payment', 'wp-sell-services' )
 											: __( 'Buyer paid · awaiting confirmation', 'wp-sell-services' );
 									} else {
 										$ms_state_label = $is_customer ? __( 'Ready to pay', 'wp-sell-services' ) : __( 'Awaiting buyer payment', 'wp-sell-services' );
@@ -1943,7 +1536,8 @@ do_action( 'wpss_before_order_view', $order );
 			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_milestone_action' ) ); ?>';
 			document.querySelectorAll('.wpss-milestone-decline-btn').forEach(function (btn) {
 				btn.addEventListener('click', function () {
-					if (!confirm('<?php echo esc_js( __( 'Decline this phase? Your seller can propose a revised one.', 'wp-sell-services' ) ); ?>')) return;
+					( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Decline this phase? Your seller can propose a revised one.', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Decline this phase? Your seller can propose a revised one.', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
+						if (!ok) return;
 					btn.disabled = true;
 					var data = new FormData();
 					data.append('action', 'wpss_decline_milestone');
@@ -1955,6 +1549,7 @@ do_action( 'wpss_before_order_view', $order );
 							if (res && res.success) window.location.reload();
 							else { btn.disabled = false; alert((res && res.data && res.data.message) || 'Error'); }
 						});
+					});
 				});
 			});
 		}());
@@ -1968,7 +1563,8 @@ do_action( 'wpss_before_order_view', $order );
 			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_milestone_action' ) ); ?>';
 			document.querySelectorAll('.wpss-milestone-delete-btn').forEach(function (btn) {
 				btn.addEventListener('click', function () {
-					if (!confirm('<?php echo esc_js( __( 'Cancel this phase proposal?', 'wp-sell-services' ) ); ?>')) return;
+					( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Cancel this phase proposal?', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Cancel this phase proposal?', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
+						if (!ok) return;
 					btn.disabled = true;
 					var data = new FormData();
 					data.append('action', 'wpss_delete_milestone');
@@ -1980,6 +1576,7 @@ do_action( 'wpss_before_order_view', $order );
 							if (res && res.success) window.location.reload();
 							else { btn.disabled = false; alert((res && res.data && res.data.message) || 'Error'); }
 						});
+					});
 				});
 			});
 		}());
@@ -2146,7 +1743,7 @@ do_action( 'wpss_before_order_view', $order );
 				<div class="wpss-tip-cta">
 					<i data-lucide="heart" class="wpss-icon wpss-icon--lg wpss-tip-cta__icon" aria-hidden="true"></i>
 					<h3 class="wpss-tip-cta__title"><?php esc_html_e( 'Say thanks with a tip', 'wp-sell-services' ); ?></h3>
-					<p class="wpss-tip-cta__text"><?php esc_html_e( 'Loved the work? A tip goes straight to the vendor on top of the order total.', 'wp-sell-services' ); ?></p>
+					<p class="wpss-tip-cta__text"><?php esc_html_e( 'Loved the work? Add a tip on top of the order total. It goes to the vendor\'s wallet, less any marketplace fee on tips.', 'wp-sell-services' ); ?></p>
 					<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-open-tip-modal"
 							data-order="<?php echo esc_attr( (string) $order_id ); ?>">
 						<?php esc_html_e( 'Send a tip', 'wp-sell-services' ); ?>
@@ -2175,7 +1772,7 @@ do_action( 'wpss_before_order_view', $order );
 					echo esc_html(
 						sprintf(
 							/* translators: %s: vendor display name */
-							__( 'Send a tip to %s — it is credited to their wallet after the platform fee.', 'wp-sell-services' ),
+							__( 'Send a tip to %s. It goes to their wallet, less any marketplace fee on tips.', 'wp-sell-services' ),
 							$other_party ? $other_party->display_name : __( 'the vendor', 'wp-sell-services' )
 						)
 					);
@@ -2295,7 +1892,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 							id="deliver-files"
 							class="wpss-file-input"
 							multiple
-							accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip,.rar"
+							accept="<?php echo esc_attr( wpss_upload_accept( 'delivery' ) ); ?>"
 						>
 						<label for="deliver-files" class="wpss-file-label">
 							<i data-lucide="upload" class="wpss-icon" aria-hidden="true"></i>
@@ -2547,720 +2144,6 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 </div>
 <?php endif; ?>
 
-<style>
-/* Single Column Order View Styles */
-.wpss-order-view {
-	max-width: 100%;
-	margin: 0;
-}
-
-.wpss-order-view__header {
-	margin-bottom: 1rem;
-}
-
-.wpss-order-view__back {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.5rem;
-	color: var(--wpss-text-muted, #6b7280);
-	text-decoration: none;
-	font-size: 0.875rem;
-	transition: color 0.2s;
-}
-
-.wpss-order-view__back:hover {
-	color: var(--wpss-primary, #3b82f6);
-}
-
-.wpss-order-view__title-bar {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-between;
-	align-items: flex-start;
-	gap: 1rem;
-	padding-bottom: 1.5rem;
-	margin-bottom: 1.5rem;
-	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
-}
-
-/* Persistent revision count badge (CB3 + VS3 from plans/ORDER-FLOW-AUDIT.md) */
-.wpss-revision-badge {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	margin-left: 8px;
-	padding: 4px 10px;
-	font-size: 12px;
-	font-weight: 600;
-	color: var(--wpss-gray-600, #4b5563);
-	background: var(--wpss-bg-muted, #f3f4f6);
-	border: 1px solid var(--wpss-border, #e5e7eb);
-	border-radius: 9999px;
-	vertical-align: middle;
-}
-
-.wpss-revision-badge .wpss-icon {
-	width: 14px;
-	height: 14px;
-}
-
-.wpss-revision-badge--last {
-	color: var(--wpss-warning-dark, #b45309);
-	background: var(--wpss-warning-light, #fffbeb);
-	border-color: var(--wpss-warning-border, #fde68a);
-}
-
-.wpss-revision-badge--exhausted {
-	color: var(--wpss-danger-dark, #b91c1c);
-	background: var(--wpss-danger-light, #fef2f2);
-	border-color: var(--wpss-danger-border, #fecaca);
-}
-
-.wpss-order-view__title-info {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 1rem;
-}
-
-.wpss-order-view__title {
-	margin: 0;
-	font-size: 1.5rem;
-	font-weight: 700;
-	color: var(--wpss-text, #111827);
-}
-
-.wpss-order-view__actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-}
-
-/* Order Sections */
-.wpss-order-section {
-	background: var(--wpss-surface, #fff);
-	border: 1px solid var(--wpss-border, #e5e7eb);
-	border-radius: 12px;
-	margin-bottom: 1.5rem;
-	overflow: hidden;
-}
-
-.wpss-order-section__header {
-	padding: 1rem 1.5rem;
-	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
-	background: var(--wpss-bg-subtle, #f9fafb);
-}
-
-.wpss-order-section__title {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-	margin: 0;
-	font-size: 1rem;
-	font-weight: 600;
-	color: var(--wpss-text, #111827);
-}
-
-.wpss-order-section__title svg {
-	color: var(--wpss-text-muted, #6b7280);
-}
-
-.wpss-order-section__body {
-	padding: 1.5rem;
-}
-
-/* Order Details Grid */
-.wpss-order-details-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-	gap: 1.5rem;
-}
-
-.wpss-order-detail-item {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
-}
-
-.wpss-order-detail-item__label {
-	font-size: 0.8125rem;
-	color: var(--wpss-text-muted, #6b7280);
-	text-transform: uppercase;
-	letter-spacing: 0.025em;
-}
-
-.wpss-order-detail-item__value {
-	font-size: 1rem;
-	font-weight: 600;
-	color: var(--wpss-text, #111827);
-}
-
-.wpss-order-detail-item--highlight .wpss-order-detail-item__value {
-	font-size: 1.25rem;
-	color: var(--wpss-success, #10b981);
-}
-
-/* Service Info */
-.wpss-service-info {
-	display: flex;
-	gap: 1rem;
-	padding-bottom: 1.5rem;
-	border-bottom: 1px solid var(--wpss-border, #e5e7eb);
-	margin-bottom: 1.5rem;
-}
-
-.wpss-service-info__image {
-	width: 120px;
-	height: 80px;
-	object-fit: cover;
-	border-radius: 8px;
-	flex-shrink: 0;
-}
-
-.wpss-service-info__content {
-	flex: 1;
-	min-width: 0;
-}
-
-.wpss-service-info__title {
-	margin: 0 0 0.5rem;
-	font-size: 1.125rem;
-	font-weight: 600;
-	line-height: 1.3;
-}
-
-.wpss-service-info__title a {
-	color: var(--wpss-text, #111827);
-	text-decoration: none;
-}
-
-.wpss-service-info__title a:hover {
-	color: var(--wpss-primary, #3b82f6);
-}
-
-.wpss-service-info__price {
-	margin: 0;
-	font-size: 1.125rem;
-	font-weight: 700;
-	color: var(--wpss-success, #10b981);
-}
-
-/* Party Info */
-.wpss-party-info__card {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-}
-
-.wpss-party-info__avatar {
-	width: 64px;
-	height: 64px;
-	border-radius: 50%;
-	flex-shrink: 0;
-}
-
-.wpss-party-info__details {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
-}
-
-.wpss-party-info__role {
-	font-size: 0.75rem;
-	color: var(--wpss-text-muted, #6b7280);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-}
-
-.wpss-party-info__name {
-	font-size: 1rem;
-	color: var(--wpss-text, #111827);
-}
-
-.wpss-party-info__rating {
-	display: flex;
-	align-items: center;
-	gap: 0.25rem;
-	font-size: 0.875rem;
-	color: var(--wpss-text, #111827);
-}
-
-.wpss-party-info__rating .wpss-star-icon {
-	color: var(--wpss-warning, #f59e0b);
-}
-
-.wpss-party-info__rating-count {
-	color: var(--wpss-text-muted, #6b7280);
-}
-
-/* Timeline */
-.wpss-timeline {
-	position: relative;
-	padding-left: 2rem;
-}
-
-.wpss-timeline::before {
-	content: '';
-	position: absolute;
-	left: 7px;
-	top: 0;
-	bottom: 0;
-	width: 2px;
-	background: var(--wpss-border, #e5e7eb);
-}
-
-.wpss-timeline__item {
-	position: relative;
-	padding-bottom: 1.5rem;
-}
-
-.wpss-timeline__item:last-child {
-	padding-bottom: 0;
-}
-
-.wpss-timeline__marker {
-	position: absolute;
-	left: -2rem;
-	top: 2px;
-	width: 16px;
-	height: 16px;
-	border-radius: 50%;
-	background: var(--wpss-bg, #fff);
-	border: 2px solid var(--wpss-border, #e5e7eb);
-}
-
-.wpss-timeline__item--completed .wpss-timeline__marker {
-	background: var(--wpss-success, #10b981);
-	border-color: var(--wpss-success, #10b981);
-}
-
-.wpss-timeline__item--pending .wpss-timeline__marker {
-	background: var(--wpss-bg, #fff);
-	border-color: var(--wpss-border, #d1d5db);
-}
-
-.wpss-timeline__content {
-	display: flex;
-	flex-direction: column;
-	gap: 0.125rem;
-}
-
-.wpss-timeline__title {
-	font-weight: 600;
-	color: var(--wpss-text, #111827);
-}
-
-.wpss-timeline__item--pending .wpss-timeline__title {
-	color: var(--wpss-text-muted, #6b7280);
-}
-
-.wpss-timeline__date {
-	font-size: 0.875rem;
-	color: var(--wpss-text-muted, #6b7280);
-}
-
-.wpss-timeline__note {
-	margin: var(--wpss-space-2, 0.5rem) 0 0;
-	padding: var(--wpss-space-2, 0.5rem) var(--wpss-space-3, 0.75rem);
-	background: var(--wpss-bg-subtle, #f9fafb);
-	border-inline-start: 3px solid var(--wpss-warning, #f59e0b);
-	border-radius: 4px;
-	font-size: 0.875rem;
-	white-space: pre-line;
-	overflow-wrap: anywhere;
-}
-
-/* Delivery Items */
-.wpss-delivery-item {
-	padding: 1rem;
-	background: var(--wpss-bg-subtle, #f9fafb);
-	border-radius: 8px;
-	margin-bottom: 1rem;
-}
-
-.wpss-delivery-item:last-child {
-	margin-bottom: 0;
-}
-
-.wpss-delivery-item__header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 0.75rem;
-}
-
-.wpss-delivery-item__date {
-	font-size: 0.875rem;
-	color: var(--wpss-text-muted, #6b7280);
-}
-
-.wpss-delivery-item__content {
-	color: var(--wpss-text, #111827);
-	line-height: 1.6;
-}
-
-.wpss-delivery-item__content p:last-child {
-	margin-bottom: 0;
-}
-
-.wpss-delivery-item__files {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-	margin-top: 1rem;
-	padding-top: 1rem;
-	border-top: 1px solid var(--wpss-border, #e5e7eb);
-}
-
-.wpss-file-link {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.5rem;
-	padding: 0.5rem 1rem;
-	background: var(--wpss-bg, #fff);
-	border: 1px solid var(--wpss-border, #e5e7eb);
-	border-radius: 6px;
-	color: var(--wpss-primary, #3b82f6);
-	text-decoration: none;
-	font-size: 0.875rem;
-	transition: all 0.2s;
-}
-
-.wpss-file-link:hover {
-	background: var(--wpss-primary, #3b82f6);
-	color: var(--wpss-white, #fff);
-	border-color: var(--wpss-primary, #3b82f6);
-}
-
-/* Review CTA */
-.wpss-review-cta {
-	text-align: center;
-	padding: 2rem;
-}
-
-.wpss-review-cta__icon {
-	color: var(--wpss-warning, #f59e0b);
-	margin-bottom: 1rem;
-}
-
-.wpss-review-cta__title {
-	margin: 0 0 0.5rem;
-	font-size: 1.25rem;
-	font-weight: 600;
-	color: var(--wpss-text, #111827);
-}
-
-.wpss-review-cta__text {
-	margin: 0 0 1.5rem;
-	color: var(--wpss-text-muted, #6b7280);
-}
-
-/* Badge sizes */
-.wpss-badge--lg {
-	padding: 0.375rem 0.875rem;
-	font-size: 0.875rem;
-}
-
-/* Requirements Form */
-.wpss-requirements-form .wpss-form-group {
-	margin-bottom: 1.5rem;
-}
-
-.wpss-requirements-form .wpss-label {
-	display: block;
-	margin-bottom: 0.5rem;
-	font-weight: 600;
-	color: var(--wpss-text, #111827);
-}
-
-.wpss-requirements-form .wpss-required {
-	color: var(--wpss-danger, #ef4444);
-}
-
-.wpss-requirements-form .wpss-input,
-.wpss-requirements-form .wpss-textarea {
-	width: 100%;
-	padding: 0.75rem 1rem;
-	border: 1px solid var(--wpss-border, #e5e7eb);
-	border-radius: 8px;
-	font-size: 1rem;
-	color: var(--wpss-text, #111827);
-	background: var(--wpss-bg, #fff);
-	transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.wpss-requirements-form .wpss-input:focus,
-.wpss-requirements-form .wpss-textarea:focus {
-	outline: none;
-	border-color: var(--wpss-primary, #3b82f6);
-	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.wpss-file-upload {
-	position: relative;
-}
-
-.wpss-file-upload .wpss-file-input {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	padding: 0;
-	margin: -1px;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	border: 0;
-}
-
-.wpss-file-upload__label {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: 0.75rem;
-	padding: 2rem;
-	border: 2px dashed var(--wpss-border, #e5e7eb);
-	border-radius: 8px;
-	cursor: pointer;
-	transition: all 0.2s;
-	background: var(--wpss-bg-subtle, #f9fafb);
-}
-
-.wpss-file-upload__label:hover {
-	border-color: var(--wpss-primary, #3b82f6);
-	background: rgba(59, 130, 246, 0.05);
-}
-
-.wpss-file-upload__label svg {
-	color: var(--wpss-text-muted, #6b7280);
-}
-
-.wpss-file-upload__text {
-	font-size: 0.875rem;
-	color: var(--wpss-text-muted, #6b7280);
-}
-
-.wpss-file-upload__name {
-	display: block;
-	margin-top: 0.5rem;
-	font-size: 0.875rem;
-	color: var(--wpss-primary, #3b82f6);
-	font-weight: 500;
-}
-
-.wpss-file-upload__name:empty {
-	display: none;
-}
-
-.wpss-file-upload.has-file .wpss-file-upload__label {
-	border-color: var(--wpss-success, #10b981);
-	background: rgba(16, 185, 129, 0.05);
-}
-
-.wpss-form-actions {
-	margin-top: 2rem;
-	padding-top: 1.5rem;
-	border-top: 1px solid var(--wpss-border, #e5e7eb);
-}
-
-.wpss-form-actions .wpss-btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-
-/* Requirements View (Read-only) */
-.wpss-requirement-view {
-	padding: 1rem;
-	background: var(--wpss-bg-subtle, #f9fafb);
-	border-radius: 8px;
-	margin-bottom: 1rem;
-}
-
-.wpss-requirement-view:last-child {
-	margin-bottom: 0;
-}
-
-.wpss-requirement-view__question {
-	margin: 0 0 0.5rem;
-	font-size: 0.9375rem;
-	font-weight: 600;
-	color: var(--wpss-text, #111827);
-}
-
-.wpss-requirement-view__answer {
-	color: var(--wpss-text, #374151);
-	line-height: 1.6;
-}
-
-.wpss-requirement-view__answer p {
-	margin: 0;
-}
-
-.wpss-text-muted {
-	color: var(--wpss-text-muted, #6b7280);
-	font-style: italic;
-}
-
-/* Requirements View Enhancements */
-.wpss-order-section__timestamp {
-	font-size: 0.8125rem;
-	color: var(--wpss-text-muted, #6b7280);
-	font-weight: 400;
-}
-
-/*
- * The expand/collapse rules for this component live in frontend.css, the shared
- * layer every surface loads. A second copy lived here and toggled
- * .wpss-expanded, a class neither the shared CSS nor frontend.js ever sets, so
- * the two fought: the global rule capped the whole answer at 100px, clipping
- * the Show more button out of sight, while this copy's expand class was never
- * applied by anything. Removed rather than reconciled - one component, one
- * implementation.
- */
-
-.wpss-requirement-view__expand-btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.25rem;
-	margin-top: 0.5rem;
-	padding: 0;
-	background: none;
-	border: none;
-	color: var(--wpss-primary, #3b82f6);
-	font-size: 0.875rem;
-	cursor: pointer;
-	transition: color 0.2s;
-}
-
-.wpss-requirement-view__expand-btn:hover {
-	color: var(--wpss-primary-dark, #2563eb);
-}
-
-.wpss-requirement-view__expand-btn .wpss-expand-icon {
-	transition: transform 0.2s;
-}
-
-.wpss-requirement-view__answer--expanded .wpss-expand-icon {
-	transform: rotate(180deg);
-}
-
-.wpss-requirement-view__copy-btn {
-	position: absolute;
-	top: 0;
-	right: 0;
-	padding: 0.25rem;
-	background: var(--wpss-bg, #fff);
-	border: 1px solid var(--wpss-border, #e5e7eb);
-	border-radius: 4px;
-	color: var(--wpss-text-muted, #6b7280);
-	cursor: pointer;
-	opacity: 0;
-	transition: all 0.2s;
-}
-
-.wpss-requirement-view:hover .wpss-requirement-view__copy-btn {
-	opacity: 1;
-}
-
-.wpss-requirement-view__copy-btn:hover {
-	background: var(--wpss-primary, #3b82f6);
-	border-color: var(--wpss-primary, #3b82f6);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-requirement-view__copy-btn.wpss-copied {
-	background: var(--wpss-success, #10b981);
-	border-color: var(--wpss-success, #10b981);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-requirement-view__image-preview {
-	margin-bottom: 0.75rem;
-}
-
-.wpss-requirement-view__thumbnail {
-	max-width: 200px;
-	max-height: 150px;
-	object-fit: cover;
-	border-radius: 8px;
-	border: 1px solid var(--wpss-border, #e5e7eb);
-	cursor: pointer;
-	transition: transform 0.2s;
-}
-
-.wpss-requirement-view__thumbnail:hover {
-	transform: scale(1.02);
-}
-
-/* Alert Styles */
-.wpss-alert--warning {
-	display: flex;
-	align-items: flex-start;
-	gap: 0.75rem;
-	padding: 1rem;
-	background: var(--wpss-warning-light, #fff8e1);
-	border: 1px solid rgba(245, 158, 11, 0.3);
-	border-radius: 8px;
-	color: var(--wpss-warning-dark, #92400e);
-}
-
-.wpss-alert--warning svg {
-	flex-shrink: 0;
-	margin-top: 0.125rem;
-}
-
-.wpss-alert--warning p {
-	margin: 0;
-	font-size: 0.875rem;
-}
-
-.wpss-alert--info {
-	display: flex;
-	align-items: flex-start;
-	gap: 0.75rem;
-	padding: 1rem;
-	background: rgba(59, 130, 246, 0.1);
-	border: 1px solid rgba(59, 130, 246, 0.2);
-	border-radius: 8px;
-	color: var(--wpss-primary, #3b82f6);
-}
-
-.wpss-alert--info svg {
-	flex-shrink: 0;
-	margin-top: 0.125rem;
-}
-
-.wpss-alert--info p {
-	margin: 0;
-	font-size: 0.875rem;
-}
-
-/* Responsive */
-@media (max-width: 640px) {
-	.wpss-order-view__title-bar {
-		flex-direction: column;
-		align-items: stretch;
-	}
-
-	.wpss-order-view__actions {
-		justify-content: flex-start;
-	}
-
-	.wpss-order-details-grid {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
-	.wpss-service-info {
-		flex-direction: column;
-	}
-
-	.wpss-service-info__image {
-		width: 100%;
-		height: 160px;
-	}
-}
-
-</style>
 
 <script>
 (function() {
@@ -3393,7 +2276,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 			</div>
 			<div class="wpss-modal__body">
 				<p class="wpss-modal__intro">
-					<?php esc_html_e( 'The buyer requested extra work on top of the original scope. Quote how much and how many more days you need — they pay through the same checkout, and once payment clears you can continue on the extended scope.', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'Quote extra work for this order: the buyer pays through the same checkout, then you continue on the extended scope.', 'wp-sell-services' ); ?>
 				</p>
 				<form class="wpss-extension-form" data-order="<?php echo esc_attr( (int) $order_id ); ?>">
 					<?php wp_nonce_field( 'wpss_request_extension', 'wpss_extension_nonce' ); ?>
@@ -3483,7 +2366,8 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		if (!buttons.length) return;
 		buttons.forEach(function (btn) {
 			btn.addEventListener('click', function () {
-				if (!confirm('<?php echo esc_js( __( 'Decline this extra-work quote?', 'wp-sell-services' ) ); ?>')) return;
+				( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Decline this extra-work quote?', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Decline this extra-work quote?', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
+					if (!ok) return;
 				btn.disabled = true;
 				var data = new FormData();
 				data.append('action', 'wpss_decline_extension');
@@ -3503,6 +2387,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 				}).catch(function () {
 					btn.disabled = false;
 					alert('<?php echo esc_js( __( 'Network error.', 'wp-sell-services' ) ); ?>');
+				});
 				});
 			});
 		});

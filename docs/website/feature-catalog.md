@@ -39,7 +39,7 @@ Legend: **Yes** ships and is exercised · **Partial** ships with a stated limit 
 | Vendor subscription plans (charge vendors to sell) | — | Yes, off until you enable it |
 | Service limits: gallery images, add-ons, FAQs, buyer requirements | 4 / 3 / 5 / 5 | Unlimited |
 | Service limits: pricing packages, video embeds | 3 / 1 | Same — Pro does not raise these |
-| Vendor wallet and withdrawals | Yes, built in | Same, plus the option to keep balances in TeraWallet or MyCred instead |
+| Vendor wallet and withdrawals | Yes, built in | Same, plus automatic payouts with Stripe Connect or PayPal Payouts |
 | Manual payouts (mark paid, CSV export) | Yes | Yes |
 | Stripe Connect automated payouts | — | Yes |
 | PayPal Payouts batches | — | Yes |

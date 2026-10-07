@@ -176,7 +176,7 @@ class PortfolioService {
 				'tags'         => wp_json_encode( $data['tags'] ?? [] ),
 				'is_featured'  => ! empty( $data['is_featured'] ) ? 1 : 0,
 				'sort_order'   => ( $max_sort ?? 0 ) + 1,
-				'created_at'   => current_time( 'mysql' ),
+				'created_at'   => current_time( 'mysql', true ),
 			],
 			[ '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s' ]
 		);

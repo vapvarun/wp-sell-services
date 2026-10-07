@@ -93,7 +93,6 @@ class ServiceModerationPage {
 		add_action( 'add_meta_boxes', array( $this, 'add_moderation_metabox' ) );
 
 		// Admin notices.
-		add_action( 'admin_notices', array( $this, 'pending_services_notice' ) );
 
 		// The moderation guards themselves are registered by
 		// register_guards(), which the plugin calls on every request. They used
@@ -273,6 +272,7 @@ class ServiceModerationPage {
 				'nonce'   => wp_create_nonce( 'wpss_moderation' ),
 				'i18n'    => array(
 					'confirmApprove'    => __( 'Approve this service?', 'wp-sell-services' ),
+					'editService'       => __( 'Edit service', 'wp-sell-services' ),
 					'confirmReject'     => __( 'Reject this service?', 'wp-sell-services' ),
 					'rejectTitle'       => __( 'Reject service', 'wp-sell-services' ),
 					'rejectConfirm'     => __( 'Reject', 'wp-sell-services' ),
@@ -336,39 +336,16 @@ class ServiceModerationPage {
 			'order'          => 'DESC',
 		);
 
-		if ( 'all' !== $status_filter ) {
-			if ( self::STATUS_PENDING === $status_filter ) {
-				$args['meta_query'] = array(
-					array(
-						'key'     => self::META_KEY,
-						'value'   => self::STATUS_PENDING,
-						'compare' => '=',
-					),
-				);
-			} else {
-				$args['meta_query'] = array(
-					array(
-						'key'     => self::META_KEY,
-						'value'   => $status_filter,
-						'compare' => '=',
-					),
-				);
-			}
-		}
-
-		// The status tabs pin a meta value, so a draft with no moderation meta can
-		// never match one. The All tab has no such pin, so it needs the guard: a
-		// vendor's unsubmitted draft never entered moderation and must not appear
-		// in the queue (get_status_counts() would read it as approved, since a
-		// missing meta COALESCEs to approved).
-		if ( 'all' === $status_filter ) {
-			add_filter( 'posts_where', array( $this, 'exclude_unmoderated_drafts' ) );
-		}
+		// Effective state, so a service with no moderation meta is read by its
+		// post status (see wpss_get_service_moderation_state()). The All tab
+		// lists every service that entered moderation, and a vendor's
+		// unsubmitted draft never did.
+		$args['wpss_moderation_state'] = 'all' === $status_filter
+			? array( self::STATUS_PENDING, self::STATUS_APPROVED, self::STATUS_REJECTED )
+			: $status_filter;
 
 		$query    = new \WP_Query( $args );
 		$services = $query->posts;
-
-		remove_filter( 'posts_where', array( $this, 'exclude_unmoderated_drafts' ) );
 
 		// Get counts for tabs.
 		$counts = $this->get_status_counts();
@@ -459,15 +436,16 @@ class ServiceModerationPage {
 						<div class="wpss-empty-state__icon">
 							<?php echo \WPSellServices\Services\Icon::render( 'check-circle' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 						</div>
+						<?php // Only reached with moderation on: when it is off, the page shows the "Enable in Settings" notice instead of the list. ?>
 						<h2 class="wpss-empty-state__title"><?php esc_html_e( 'No services awaiting moderation', 'wp-sell-services' ); ?></h2>
-						<p class="wpss-empty-state__body"><?php esc_html_e( 'New vendor-submitted services queue here for review before going live. Toggle moderation in Settings > Vendor.', 'wp-sell-services' ); ?></p>
+						<p class="wpss-empty-state__body"><?php esc_html_e( 'Services vendors submit wait here for your review before they go live.', 'wp-sell-services' ); ?></p>
 						<p class="wpss-empty-state__actions">
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpss-settings#vendor' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Moderation settings', 'wp-sell-services' ); ?></a>
+							<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=wpss_service' ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'View all services', 'wp-sell-services' ); ?></a>
 							<a href="https://wbcomdesigns.com/docs/wp-sell-services/moderation-wpss" class="wpss-empty-state__learn" target="_blank" rel="noopener"><?php esc_html_e( 'Learn more', 'wp-sell-services' ); ?></a>
 						</p>
 					</div>
 				<?php else : ?>
-				<table class="wp-list-table widefat fixed striped wpss-moderation-table">
+				<table class="wp-list-table widefat fixed striped wpss-moderation-table wpss-stacked-table">
 					<thead>
 						<tr>
 							<td class="manage-column column-cb check-column">
@@ -542,8 +520,7 @@ class ServiceModerationPage {
 	 * @return void
 	 */
 	private function render_service_row( \WP_Post $service ): void {
-		$status           = get_post_meta( $service->ID, self::META_KEY, true );
-		$status           = $status ? $status : self::STATUS_APPROVED;
+		$status           = wpss_get_service_moderation_state( $service );
 		$rejection_reason = get_post_meta( $service->ID, self::REJECTION_REASON_KEY, true );
 		$vendor           = get_user_by( 'ID', $service->post_author );
 		$categories       = get_the_terms( $service->ID, 'wpss_service_category' );
@@ -554,11 +531,12 @@ class ServiceModerationPage {
 			<th scope="row" class="check-column">
 				<input type="checkbox" name="service_ids[]" value="<?php echo esc_attr( $service->ID ); ?>">
 			</th>
-			<td class="column-thumbnail">
+			<?php // An empty cell is marked so the phone layout can drop it (Basecamp 10337190248). ?>
+			<td class="column-thumbnail<?php echo $thumbnail ? '' : ' column-thumbnail--empty'; ?>">
 				<?php if ( $thumbnail ) : ?>
 					<img src="<?php echo esc_url( $thumbnail ); ?>" alt="" class="service-thumb">
 				<?php else : ?>
-					<i data-lucide="image" class="wpss-icon" style="font-size: 40px; color: #ccc;" aria-hidden="true"></i>
+					<i data-lucide="image" class="wpss-icon wpss-moderation-thumb-placeholder" aria-hidden="true"></i>
 				<?php endif; ?>
 			</td>
 			<td class="column-title">
@@ -590,7 +568,7 @@ class ServiceModerationPage {
 					<em><?php esc_html_e( 'Unknown', 'wp-sell-services' ); ?></em>
 				<?php endif; ?>
 			</td>
-			<td class="column-category">
+			<td class="column-category" data-colname="<?php esc_attr_e( 'Category', 'wp-sell-services' ); ?>">
 				<?php
 				if ( $categories && ! is_wp_error( $categories ) ) {
 					$cat_names = wp_list_pluck( $categories, 'name' );
@@ -600,13 +578,13 @@ class ServiceModerationPage {
 				}
 				?>
 			</td>
-			<td class="column-price">
+			<td class="column-price" data-colname="<?php esc_attr_e( 'Price', 'wp-sell-services' ); ?>">
 				<?php echo $price ? esc_html( wpss_format_price( (float) $price ) ) : '—'; ?>
 			</td>
-			<td class="column-date">
-				<?php echo esc_html( get_the_date( '', $service ) ); ?>
+			<td class="column-date" data-colname="<?php esc_attr_e( 'Submitted', 'wp-sell-services' ); ?>">
+				<span title="<?php echo esc_attr( get_the_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $service ) ); ?>"><?php echo esc_html( get_the_date( 'M j, Y', $service ) ); ?></span>
 			</td>
-			<td class="column-status">
+			<td class="column-status" data-colname="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">
 				<span class="<?php echo esc_attr( wpss_status_class( $status ) ); ?>">
 					<?php echo esc_html( ucfirst( $status ) ); ?>
 				</span>
@@ -618,7 +596,7 @@ class ServiceModerationPage {
 			</td>
 			<td class="column-actions">
 				<?php if ( self::STATUS_APPROVED !== $status ) : ?>
-					<a href="#" class="button button-small wpss-approve-service approve-action" data-service="<?php echo esc_attr( $service->ID ); ?>">
+					<a href="#" class="button button-small wpss-approve-service approve-action" data-service="<?php echo esc_attr( $service->ID ); ?>" data-edit="<?php echo esc_url( (string) get_edit_post_link( $service->ID, 'url' ) ); ?>">
 						<?php esc_html_e( 'Approve', 'wp-sell-services' ); ?>
 					</a>
 				<?php endif; ?>
@@ -632,30 +610,6 @@ class ServiceModerationPage {
 		<?php
 	}
 
-	/**
-	 * Drop drafts that never entered moderation from the All tab.
-	 *
-	 * A rejected service is a draft carrying `_wpss_moderation_status =
-	 * rejected`. A vendor's work-in-progress draft carries no moderation meta at
-	 * all (ensure_meta() only backfills on an admin save), so the two are told
-	 * apart by the meta, never by post_status.
-	 *
-	 * @since 1.7.1
-	 *
-	 * @param string $where Current WHERE clause.
-	 * @return string
-	 */
-	public function exclude_unmoderated_drafts( string $where ): string {
-		global $wpdb;
-
-		return $where . $wpdb->prepare(
-			" AND ( {$wpdb->posts}.post_status <> 'draft' OR EXISTS (
-				SELECT 1 FROM {$wpdb->postmeta} md
-				WHERE md.post_id = {$wpdb->posts}.ID AND md.meta_key = %s
-			) ) ",
-			self::META_KEY
-		);
-	}
 
 	/**
 	 * Get status counts.
@@ -674,20 +628,13 @@ class ServiceModerationPage {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT
-					COALESCE(pm.meta_value, %s) as status,
-					COUNT(*) as count
-				FROM {$wpdb->posts} p
-				LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = %s
-				WHERE p.post_type = 'wpss_service'
-				AND (
-					p.post_status IN ('pending', 'publish')
-					OR ( p.post_status = 'draft' AND pm.meta_value IS NOT NULL )
-				)
-				GROUP BY COALESCE(pm.meta_value, %s)",
-				self::STATUS_APPROVED,
-				self::META_KEY,
-				self::STATUS_APPROVED
+				'SELECT state AS status, COUNT(*) AS count
+				FROM ( SELECT ' . wpss_service_moderation_state_sql( 'p' ) . " AS state
+					FROM {$wpdb->posts} p
+					WHERE p.post_type = %s AND p.post_status IN ('pending', 'publish', 'draft') ) wpss_states
+				WHERE state <> ''
+				GROUP BY state",
+				'wpss_service'
 			)
 		);
 
@@ -718,23 +665,11 @@ class ServiceModerationPage {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
 		}
 
-		update_post_meta( $service_id, self::META_KEY, self::STATUS_APPROVED );
-		delete_post_meta( $service_id, self::REJECTION_REASON_KEY );
+		$result = ( new ModerationService() )->approve( $service_id );
 
-		// Publish the service so it's visible on the frontend.
-		wp_update_post(
-			array(
-				'ID'          => $service_id,
-				'post_status' => 'publish',
-			)
-		);
-
-		/**
-		 * Fires when a service is approved.
-		 *
-		 * @param int $service_id The service ID.
-		 */
-		do_action( 'wpss_service_approved', $service_id );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+		}
 
 		wp_send_json_success( array( 'message' => __( 'Service approved.', 'wp-sell-services' ) ) );
 	}
@@ -758,34 +693,11 @@ class ServiceModerationPage {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
 		}
 
-		update_post_meta( $service_id, self::META_KEY, self::STATUS_REJECTED );
+		$result = ( new ModerationService() )->reject( $service_id, $reason );
 
-		if ( $reason ) {
-			update_post_meta( $service_id, self::REJECTION_REASON_KEY, $reason );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
-
-		// Take the service offline. Approve sets post_status=publish; reject
-		// must symmetrically set draft, both so the rejected service stops
-		// showing in the marketplace AND so the vendor dashboard can detect
-		// the rejected state (it keys on draft + rejected-meta) and render the
-		// "Resubmit for review" CTA. Without this the service stayed published
-		// and the resubmit affordance never appeared.
-		if ( 'draft' !== get_post_status( $service_id ) ) {
-			wp_update_post(
-				array(
-					'ID'          => $service_id,
-					'post_status' => 'draft',
-				)
-			);
-		}
-
-		/**
-		 * Fires when a service is rejected.
-		 *
-		 * @param int    $service_id The service ID.
-		 * @param string $reason     The rejection reason.
-		 */
-		do_action( 'wpss_service_rejected', $service_id, $reason );
 
 		wp_send_json_success( array( 'message' => __( 'Service rejected.', 'wp-sell-services' ) ) );
 	}
@@ -810,43 +722,38 @@ class ServiceModerationPage {
 			wp_send_json_error( array( 'message' => __( 'No services selected.', 'wp-sell-services' ) ) );
 		}
 
-		$processed = 0;
+		$moderation = new ModerationService();
+		$processed  = 0;
+		$skipped    = array();
 
 		foreach ( $service_ids as $service_id ) {
-			if ( get_post_type( $service_id ) !== 'wpss_service' ) {
+			if ( 'approve' === $bulk_action ) {
+				$result = $moderation->approve( $service_id );
+			} elseif ( 'reject' === $bulk_action ) {
+				$result = $moderation->reject( $service_id, $reason );
+			} else {
 				continue;
 			}
 
-			if ( 'approve' === $bulk_action ) {
-				update_post_meta( $service_id, self::META_KEY, self::STATUS_APPROVED );
-				delete_post_meta( $service_id, self::REJECTION_REASON_KEY );
-				wp_update_post(
-					array(
-						'ID'          => $service_id,
-						'post_status' => 'publish',
-					)
-				);
-				do_action( 'wpss_service_approved', $service_id );
-			} elseif ( 'reject' === $bulk_action ) {
-				update_post_meta( $service_id, self::META_KEY, self::STATUS_REJECTED );
-				if ( $reason ) {
-					update_post_meta( $service_id, self::REJECTION_REASON_KEY, $reason );
-				}
-				// Take the service OFF the marketplace, mirroring the single-reject
-				// handler. Updating only the moderation meta left a published
-				// service live (and hid the vendor's "Resubmit for review" CTA).
-				if ( 'draft' !== get_post_status( $service_id ) ) {
-					wp_update_post(
-						array(
-							'ID'          => $service_id,
-							'post_status' => 'draft',
-						)
-					);
-				}
-				do_action( 'wpss_service_rejected', $service_id, $reason );
+			if ( is_wp_error( $result ) ) {
+				$skipped[] = get_the_title( $service_id ) . ': ' . $result->get_error_message();
+				continue;
 			}
 
 			++$processed;
+		}
+
+		if ( $skipped ) {
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+						/* translators: 1: number of services processed, 2: the services that were not, with why. */
+						__( '%1$d services processed. Not processed: %2$s', 'wp-sell-services' ),
+						$processed,
+						implode( ' | ', $skipped )
+					),
+				)
+			);
 		}
 
 		wp_send_json_success(
@@ -1008,24 +915,9 @@ class ServiceModerationPage {
 			}
 		}
 
-		// Add meta query for approved status.
-		$meta_query_raw      = $query->get( 'meta_query' );
-		$existing_meta_query = $meta_query_raw ? $meta_query_raw : array();
-
-		$existing_meta_query[] = array(
-			'relation' => 'OR',
-			array(
-				'key'     => self::META_KEY,
-				'value'   => self::STATUS_APPROVED,
-				'compare' => '=',
-			),
-			array(
-				'key'     => self::META_KEY,
-				'compare' => 'NOT EXISTS',
-			),
-		);
-
-		$query->set( 'meta_query', $existing_meta_query );
+		// Only approved services are public (effective state, so a live service
+		// with no moderation meta still shows).
+		$query->set( 'wpss_moderation_state', self::STATUS_APPROVED );
 	}
 
 	/**
@@ -1061,8 +953,7 @@ class ServiceModerationPage {
 			return;
 		}
 
-		$status_raw = get_post_meta( $post_id, self::META_KEY, true );
-		$status     = $status_raw ? $status_raw : self::STATUS_APPROVED;
+		$status = wpss_get_service_moderation_state( $post_id );
 
 		$status_labels = array(
 			self::STATUS_PENDING  => __( 'Pending', 'wp-sell-services' ),
@@ -1191,42 +1082,35 @@ class ServiceModerationPage {
 			return;
 		}
 
-		$old_status = get_post_meta( $post_id, self::META_KEY, true );
-
-		// Update the moderation status.
-		update_post_meta( $post_id, self::META_KEY, $new_status );
-
-		// Clear rejection reason when approving.
-		if ( self::STATUS_APPROVED === $new_status && self::STATUS_REJECTED === $old_status ) {
-			delete_post_meta( $post_id, self::REJECTION_REASON_KEY );
+		// A decision goes through the one moderation path, so the editor, Quick
+		// Edit and bulk edit record history, email the vendor and refuse to
+		// approve an incomplete service exactly like the queue does. This used
+		// to write the meta and fire the hooks itself (Basecamp 10337190248).
+		if ( wpss_get_service_moderation_state( $post_id ) === $new_status ) {
+			return;
 		}
 
-		// Sync post_status to match moderation status.
-		if ( $new_status !== $old_status ) {
-			$post_status_map = array(
-				self::STATUS_APPROVED => 'publish',
-				self::STATUS_REJECTED => 'draft',
-				self::STATUS_PENDING  => 'pending',
-			);
+		$service = new ModerationService();
 
-			if ( isset( $post_status_map[ $new_status ] ) && $post->post_status !== $post_status_map[ $new_status ] ) {
-				// Remove this action to prevent infinite loop.
-				remove_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10 );
-				wp_update_post(
-					array(
-						'ID'          => $post_id,
-						'post_status' => $post_status_map[ $new_status ],
-					)
-				);
-				add_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10, 2 );
-			}
+		remove_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10 );
 
-			// Fire appropriate action.
-			if ( self::STATUS_APPROVED === $new_status ) {
-				do_action( 'wpss_service_approved', $post_id );
-			} elseif ( self::STATUS_REJECTED === $new_status ) {
-				do_action( 'wpss_service_rejected', $post_id, '' );
-			}
+		if ( self::STATUS_APPROVED === $new_status ) {
+			$result = $service->approve( $post_id );
+		} elseif ( self::STATUS_REJECTED === $new_status ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+			$reason = isset( $_POST['wpss_rejection_reason'] ) ? sanitize_textarea_field( wp_unslash( $_POST['wpss_rejection_reason'] ) ) : '';
+			$result = $service->reject( $post_id, $reason );
+		} else {
+			$result = $service->set_pending( $post_id );
+		}
+
+		add_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10, 2 );
+
+		if ( is_wp_error( $result ) ) {
+			$key      = 'wpss_service_limit_notice_' . get_current_user_id();
+			$messages = get_transient( $key );
+			$messages = is_array( $messages ) ? $messages : array();
+			set_transient( $key, array_merge( $messages, array( $result->get_error_message() ) ), MINUTE_IN_SECONDS );
 		}
 	}
 
@@ -1253,10 +1137,7 @@ class ServiceModerationPage {
 	 * @return void
 	 */
 	public function render_moderation_metabox( \WP_Post $post ): void {
-		$current_status = get_post_meta( $post->ID, self::META_KEY, true );
-		if ( ! $current_status ) {
-			$current_status = self::STATUS_APPROVED;
-		}
+		$current_status = wpss_get_service_moderation_state( $post );
 
 		$statuses = array(
 			self::STATUS_PENDING  => __( 'Pending Review', 'wp-sell-services' ),
@@ -1270,14 +1151,21 @@ class ServiceModerationPage {
 			self::STATUS_REJECTED => '#721c24',
 		);
 
+		// A draft the vendor never submitted is not in moderation. Without this
+		// choice the select showed "Pending Review" and saving the draft would
+		// have submitted it.
+		if ( '' === $current_status ) {
+			$statuses = array( '' => __( 'Not submitted (draft)', 'wp-sell-services' ) ) + $statuses;
+		}
+
 		wp_nonce_field( 'wpss_moderation_metabox', 'wpss_moderation_nonce' );
 		?>
 		<div class="wpss-moderation-metabox">
 			<p>
-				<label for="wpss_moderation_status"><strong><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></strong></label>
+				<label for="wpss-moderation-decision"><strong><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></strong></label>
 			</p>
 			<p>
-				<select name="wpss_moderation_status" id="wpss_moderation_status" style="width: 100%;">
+				<select name="wpss_moderation_status" id="wpss-moderation-decision" class="widefat">
 					<?php foreach ( $statuses as $value => $label ) : ?>
 						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $current_status, $value ); ?>>
 							<?php echo esc_html( $label ); ?>
@@ -1285,11 +1173,15 @@ class ServiceModerationPage {
 					<?php endforeach; ?>
 				</select>
 			</p>
+			<p>
+				<label for="wpss_rejection_reason"><?php esc_html_e( 'Reason for the vendor (when rejecting)', 'wp-sell-services' ); ?></label>
+				<textarea name="wpss_rejection_reason" id="wpss_rejection_reason" class="widefat" rows="3"><?php echo esc_textarea( (string) get_post_meta( $post->ID, self::REJECTION_REASON_KEY, true ) ); ?></textarea>
+			</p>
 			<p class="description">
 				<?php if ( ! ModerationService::is_enabled() ) : ?>
 					<em><?php esc_html_e( 'Note: Service moderation is currently disabled in settings.', 'wp-sell-services' ); ?></em>
 				<?php else : ?>
-					<?php esc_html_e( 'Only approved services are visible on the frontend.', 'wp-sell-services' ); ?>
+					<?php esc_html_e( 'This decision sets the service status: Approved publishes it, Rejected moves it to draft and tells the vendor, Pending holds it for review.', 'wp-sell-services' ); ?>
 				<?php endif; ?>
 			</p>
 		</div>
@@ -1322,52 +1214,6 @@ class ServiceModerationPage {
 			</div>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Show admin notice for pending services.
-	 *
-	 * @return void
-	 */
-	public function pending_services_notice(): void {
-		// Only show when moderation is enabled.
-		if ( ! ModerationService::is_enabled() ) {
-			return;
-		}
-
-		$screen = get_current_screen();
-
-		// Only show on our plugin pages.
-		if ( ! $screen || strpos( $screen->id, 'wp-sell-services' ) === false ) {
-			return;
-		}
-
-		// Skip the moderation page itself.
-		if ( wpss_is_admin_page( (string) $screen->id, 'wpss-moderation' ) ) {
-			return;
-		}
-
-		$pending_count = $this->get_pending_count();
-
-		if ( $pending_count > 0 ) {
-			printf(
-				'<div class="notice notice-warning"><p>%s <a href="%s">%s</a></p></div>',
-				sprintf(
-					esc_html(
-						/* translators: %d: Number of services pending moderation review. */
-						_n(
-							'You have %d service pending review.',
-							'You have %d services pending review.',
-							$pending_count,
-							'wp-sell-services'
-						)
-					),
-					esc_html( $pending_count )
-				),
-				esc_url( admin_url( 'admin.php?page=wpss-moderation' ) ),
-				esc_html__( 'Review now', 'wp-sell-services' )
-			);
-		}
 	}
 
 	/**
@@ -1424,8 +1270,7 @@ class ServiceModerationPage {
 	 * @return string
 	 */
 	public static function get_status( int $service_id ): string {
-		$status = get_post_meta( $service_id, self::META_KEY, true );
-		return $status ? $status : self::STATUS_APPROVED;
+		return wpss_get_service_moderation_state( $service_id );
 	}
 
 	/**

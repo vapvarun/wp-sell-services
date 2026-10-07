@@ -130,8 +130,9 @@ class ServiceCategoryTaxonomy {
 		?>
 		<div class="form-field term-icon-wrap">
 			<label for="wpss-category-icon"><?php esc_html_e( 'Icon', 'wp-sell-services' ); ?></label>
-			<input type="text" name="wpss_category_icon" id="wpss-category-icon" value="" class="regular-text">
-			<p class="description"><?php esc_html_e( 'Enter a Lucide icon name (e.g., briefcase, wrench, book-open) — see lucide.dev/icons.', 'wp-sell-services' ); ?></p>
+			<input type="text" name="wpss_category_icon" id="wpss-category-icon" value="" class="regular-text" aria-describedby="wpss-category-icon-help">
+			<span class="wpss-icon-preview" data-wpss-icon-preview aria-hidden="true"></span>
+			<p class="description" id="wpss-category-icon-help"><?php esc_html_e( 'Enter a Lucide icon name (e.g., briefcase, wrench, book-open) — see lucide.dev/icons. A preview appears beside the field.', 'wp-sell-services' ); ?></p>
 		</div>
 
 		<div class="form-field term-image-wrap">
@@ -175,8 +176,9 @@ class ServiceCategoryTaxonomy {
 		<tr class="form-field term-icon-wrap">
 			<th scope="row"><label for="wpss-category-icon"><?php esc_html_e( 'Icon', 'wp-sell-services' ); ?></label></th>
 			<td>
-				<input type="text" name="wpss_category_icon" id="wpss-category-icon" value="<?php echo esc_attr( $icon ); ?>" class="regular-text">
-				<p class="description"><?php esc_html_e( 'Enter a Lucide icon name (e.g., briefcase, wrench, book-open) — see lucide.dev/icons.', 'wp-sell-services' ); ?></p>
+				<input type="text" name="wpss_category_icon" id="wpss-category-icon" value="<?php echo esc_attr( $icon ); ?>" class="regular-text" aria-describedby="wpss-category-icon-help">
+				<span class="wpss-icon-preview" data-wpss-icon-preview aria-hidden="true"><?php echo $icon ? '<i data-lucide="' . esc_attr( $icon ) . '" class="wpss-icon"></i>' : ''; ?></span>
+				<p class="description" id="wpss-category-icon-help"><?php esc_html_e( 'Enter a Lucide icon name (e.g., briefcase, wrench, book-open) — see lucide.dev/icons. A preview appears beside the field.', 'wp-sell-services' ); ?></p>
 			</td>
 		</tr>
 
@@ -271,6 +273,14 @@ class ServiceCategoryTaxonomy {
 
 		$new_columns['wpss_featured'] = __( 'Featured', 'wp-sell-services' );
 
+		// WordPress's own Count mixes services and buyer requests (the
+		// taxonomy serves both) and counts drafts that were published once, so
+		// it disagreed with the storefront. Show the storefront's number.
+		if ( isset( $new_columns['posts'] ) ) {
+			unset( $new_columns['posts'] );
+			$new_columns['wpss_live'] = __( 'Live services', 'wp-sell-services' );
+		}
+
 		return $new_columns;
 	}
 
@@ -287,7 +297,9 @@ class ServiceCategoryTaxonomy {
 			case 'wpss_icon':
 				$icon = get_term_meta( $term_id, '_wpss_icon', true );
 				if ( $icon ) {
-					$content = '<span class="dashicons ' . esc_attr( $icon ) . '"></span>';
+					// A Lucide name, rendered as one: it used to be put in a
+					// dashicons class and showed nothing.
+					$content = '<i data-lucide="' . esc_attr( $icon ) . '" class="wpss-icon" aria-hidden="true"></i><span class="screen-reader-text">' . esc_html( $icon ) . '</span>';
 				} else {
 					$content = '—';
 				}
@@ -295,7 +307,29 @@ class ServiceCategoryTaxonomy {
 
 			case 'wpss_featured':
 				$featured = get_term_meta( $term_id, '_wpss_featured', true );
-				$content  = $featured ? '<i data-lucide="star" class="wpss-icon" style="color:#f59e0b;" aria-hidden="true"></i>' : '—';
+				$content  = $featured ? '<i data-lucide="star" class="wpss-icon wpss-stat-icon--pending" aria-hidden="true"></i>' : '—';
+				break;
+
+			case 'wpss_live':
+				static $counts = null;
+				if ( null === $counts ) {
+					// One query for every category, not one per row.
+					$counts = wpss_get_category_service_counts(
+						get_terms(
+							array(
+								'taxonomy'   => self::TAXONOMY,
+								'hide_empty' => false,
+								'fields'     => 'ids',
+							)
+						)
+					);
+				}
+				$term    = get_term( $term_id, self::TAXONOMY );
+				$content = sprintf(
+					'<a href="%s">%s</a>',
+					esc_url( admin_url( 'edit.php?post_type=wpss_service&post_status=publish&wpss_service_category=' . ( $term instanceof \WP_Term ? $term->slug : '' ) ) ),
+					esc_html( number_format_i18n( $counts[ $term_id ] ?? 0 ) )
+				);
 				break;
 		}
 

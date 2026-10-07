@@ -85,9 +85,20 @@ class PaymentController extends RestController {
 							'required'    => true,
 						),
 						'package_id' => array(
-							'description' => __( 'Package index.', 'wp-sell-services' ),
+							'description' => __( 'Package: stable id or legacy index.', 'wp-sell-services' ),
 							'type'        => 'integer',
 							'default'     => 0,
+						),
+						'quantity'   => array(
+							'description' => __( 'How many of the package.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
+						),
+						'addons'     => array(
+							'description' => __( 'Add-on selection: ids, or {id, quantity, option, text} objects. Prices are never read.', 'wp-sell-services' ),
+							'type'        => array( 'array', 'string' ),
+							'default'     => array(),
 						),
 						'gateway'    => array(
 							'description' => __( 'Payment gateway ID.', 'wp-sell-services' ),
@@ -193,44 +204,36 @@ class PaymentController extends RestController {
 		$gateway_id = sanitize_text_field( $request->get_param( 'gateway' ) );
 		$pay_order  = (int) $request->get_param( 'pay_order' );
 
-		// Resolve amount: from existing order or from service package.
-		$amount   = 0.0;
-		$currency = wpss_get_currency();
+		// Priced once, on the server, by the checkout's own resolver: package
+		// (stable id or index), quantity, add-ons and tax, or the stored order
+		// total. This route priced new purchases from the raw package price -
+		// no tax, no add-ons - and 404'd on a stable package id (Basecamp
+		// 10336467402), so the app was charged differently from the web.
+		$checkout_request = array(
+			'pay_order'  => $pay_order,
+			'service_id' => $service_id,
+			'package_id' => $package_id,
+			'quantity'   => max( 1, (int) $request->get_param( 'quantity' ) ),
+			'addons'     => $request->get_param( 'addons' ),
+		);
 
-		if ( $pay_order ) {
-			$order = wpss_get_order( $pay_order );
-			if ( ! $order || (int) $order->customer_id !== get_current_user_id() ) {
-				return new WP_Error( 'invalid_order', __( 'Invalid order.', 'wp-sell-services' ), array( 'status' => 400 ) );
-			}
-			if ( 'pending_payment' !== $order->status ) {
-				return new WP_Error( 'already_paid', __( 'This order has already been paid.', 'wp-sell-services' ), array( 'status' => 400 ) );
-			}
-			$amount   = (float) $order->total;
-			$currency = $order->currency;
-		} else {
-			// Validate service.
+		if ( ! $pay_order ) {
 			$service = get_post( $service_id );
 			if ( ! $service || 'wpss_service' !== $service->post_type || 'publish' !== $service->post_status ) {
 				return new WP_Error( 'invalid_service', __( 'Service not found or not available.', 'wp-sell-services' ), array( 'status' => 404 ) );
 			}
-
-			// Cannot buy own service.
-			if ( (int) $service->post_author === get_current_user_id() ) {
-				return new WP_Error( 'own_service', __( 'You cannot purchase your own service.', 'wp-sell-services' ), array( 'status' => 400 ) );
-			}
-
-			// Get price from package.
-			$packages = get_post_meta( $service_id, '_wpss_packages', true );
-			if ( ! is_array( $packages ) || ! isset( $packages[ $package_id ] ) ) {
-				return new WP_Error( 'invalid_package', __( 'Package not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
-			}
-
-			$amount = (float) $packages[ $package_id ]['price'];
 		}
 
-		if ( $amount <= 0 ) {
-			return new WP_Error( 'invalid_amount', __( 'Invalid amount.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		// resolve() also refuses a self-purchase and applies the order limits.
+		$intent = ( new \WPSellServices\Checkout\CheckoutIntentService() )->resolve( $checkout_request );
+
+		if ( is_wp_error( $intent ) ) {
+			$intent->add_data( array( 'status' => 400 ) );
+			return $intent;
 		}
+
+		$amount   = (float) $intent->amount;
+		$currency = (string) $intent->currency;
 
 		// Find the gateway.
 		$gateway = $this->get_gateway( $gateway_id );
@@ -242,14 +245,14 @@ class PaymentController extends RestController {
 		// Route to the appropriate gateway.
 		switch ( $gateway_id ) {
 			case 'stripe':
-				return $this->create_stripe_intent( $gateway, $amount, $currency, $service_id, $package_id, $pay_order );
+				return $this->create_stripe_intent( $gateway, $intent );
 
 			case 'paypal':
-				return $this->create_paypal_order( $gateway, $amount, $currency, $service_id, $package_id, $pay_order );
+				return $this->create_paypal_order( $gateway, $checkout_request );
 
 			case 'offline':
 			case 'test':
-				return $this->create_offline_order( $gateway, $amount, $currency, $service_id, $package_id, $pay_order );
+				return $this->create_offline_order( $gateway, $checkout_request );
 
 			default:
 				/**
@@ -327,33 +330,15 @@ class PaymentController extends RestController {
 	/**
 	 * Create Stripe payment intent.
 	 *
-	 * @param object $gateway    Stripe gateway instance.
-	 * @param float  $amount     Payment amount.
-	 * @param string $currency   Currency code.
-	 * @param int    $service_id Service ID.
-	 * @param int    $package_id Package index.
-	 * @param int    $pay_order  Existing order ID (0 if new).
+	 * @param object                                  $gateway Stripe gateway instance.
+	 * @param \WPSellServices\Checkout\CheckoutIntent $intent  Resolved intent.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	private function create_stripe_intent( object $gateway, float $amount, string $currency, int $service_id, int $package_id, int $pay_order ) {
-		$result = $gateway->create_payment_intent(
-			array(
-				'amount'      => $amount,
-				'currency'    => $currency,
-				'service_id'  => $service_id,
-				'package_id'  => $package_id,
-				// The order this intent pays for. Without it the charge cannot
-				// be matched back to an order: the webhook handler resolves the
-				// order from metadata['order_id'], so a succeeded payment
-				// arrived with nothing to apply it to. Verified against a live
-				// Stripe sandbox - the card was charged, Stripe delivered
-				// payment_intent.succeeded, and the order sat at
-				// pending_payment with no transaction id and no vendor credit.
-				// Money in, order unpaid, silently.
-				'order_id'    => $pay_order,
-				'customer_id' => get_current_user_id(),
-			)
-		);
+	private function create_stripe_intent( object $gateway, \WPSellServices\Checkout\CheckoutIntent $intent ) {
+		// The resolved intent's metadata carries what the confirm leg needs to
+		// re-price the same purchase - service, package, quantity, add-ons -
+		// and the order it pays, so a succeeded charge can be matched back.
+		$result = $gateway->create_payment( (float) $intent->amount, (string) $intent->currency, (array) $intent->metadata );
 
 		if ( empty( $result['success'] ) ) {
 			return new WP_Error( 'stripe_error', $result['error'] ?? __( 'Failed to create payment intent.', 'wp-sell-services' ), array( 'status' => 400 ) );
@@ -372,24 +357,14 @@ class PaymentController extends RestController {
 	/**
 	 * Create PayPal order.
 	 *
-	 * @param object $gateway    PayPal gateway instance.
-	 * @param float  $amount     Payment amount.
-	 * @param string $currency   Currency code.
-	 * @param int    $service_id Service ID.
-	 * @param int    $package_id Package index.
-	 * @param int    $pay_order  Existing order ID (0 if new).
+	 * @param object               $gateway          PayPal gateway instance.
+	 * @param array<string, mixed> $checkout_request Resolve() request.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	private function create_paypal_order( object $gateway, float $amount, string $currency, int $service_id, int $package_id, int $pay_order ) {
-		$result = $gateway->create_order(
-			array(
-				'amount'     => $amount,
-				'currency'   => $currency,
-				'service_id' => $service_id,
-				'package_id' => $package_id,
-				'pay_order'  => $pay_order,
-			)
-		);
+	private function create_paypal_order( object $gateway, array $checkout_request ) {
+		// PayPalGateway::create_order() resolves the request itself and keeps
+		// the add-on selection for its capture leg.
+		$result = $gateway->create_order( $checkout_request );
 
 		if ( empty( $result['success'] ) ) {
 			return new WP_Error( 'paypal_error', $result['error'] ?? __( 'Failed to create PayPal order.', 'wp-sell-services' ), array( 'status' => 400 ) );
@@ -408,15 +383,13 @@ class PaymentController extends RestController {
 	/**
 	 * Create order directly for offline/test gateways.
 	 *
-	 * @param object $gateway    Gateway instance.
-	 * @param float  $amount     Payment amount.
-	 * @param string $currency   Currency code.
-	 * @param int    $service_id Service ID.
-	 * @param int    $package_id Package index.
-	 * @param int    $pay_order  Existing order ID (0 if new).
+	 * @param object               $gateway          Gateway instance.
+	 * @param array<string, mixed> $checkout_request Resolve() request.
 	 * @return WP_REST_Response|WP_Error
 	 */
-	private function create_offline_order( object $gateway, float $amount, string $currency, int $service_id, int $package_id, int $pay_order ) {
+	private function create_offline_order( object $gateway, array $checkout_request ) {
+		$pay_order = (int) $checkout_request['pay_order'];
+
 		// For existing orders (pay_order), record the rail and return. Ownership
 		// and pending_payment status are already verified by create_intent().
 		//
@@ -448,22 +421,18 @@ class PaymentController extends RestController {
 			);
 		}
 
-		// Create a new service order.
-		$order_provider = wpss_get_order_provider();
-
-		$order = $order_provider->create_order(
-			array(
-				'service_id'     => $service_id,
-				'package_id'     => $package_id,
-				'customer_id'    => get_current_user_id(),
-				'subtotal'       => $amount,
-				'currency'       => $currency,
-				'payment_method' => $gateway->get_id(),
-			)
+		// A new order, priced and created by the checkout form's own path.
+		$offline = wpss()->get_payment_gateways()['offline'] ?? new \WPSellServices\Integrations\Gateways\OfflineGateway();
+		$order   = $offline->create_service_order(
+			(int) $checkout_request['service_id'],
+			(int) $checkout_request['package_id'],
+			(int) $checkout_request['quantity'],
+			\WPSellServices\Checkout\CheckoutIntentService::request_selection( $checkout_request ),
+			$gateway->get_id()
 		);
 
-		if ( ! $order ) {
-			return new WP_Error( 'order_failed', __( 'Failed to create order.', 'wp-sell-services' ), array( 'status' => 500 ) );
+		if ( is_wp_error( $order ) ) {
+			return $order;
 		}
 
 		/**
@@ -533,22 +502,22 @@ class PaymentController extends RestController {
 				return new WP_Error( 'stripe_confirm_error', $payment['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
 			}
 
-			// The captured amount MUST match the order total. Compared in the
-			// ORDER's currency via integer minor units (wpss_amounts_match), not a
-			// hardcoded 0.01 epsilon — that would be wrong for zero-decimal
-			// currencies (JPY/KRW) and three-decimal ones (BHD/KWD).
-			$captured = (float) ( $payment['amount'] ?? 0 );
-			$expected = (float) ( $order->total ?? 0 );
-			if ( ! wpss_amounts_match( $captured, $expected, (string) ( $order->currency ?? '' ) ) ) {
-				return new WP_Error(
-					'rest_amount_mismatch',
-					__( 'The paid amount does not match the order total.', 'wp-sell-services' ),
-					array( 'status' => 400 )
-				);
+			// The payment names the member who started it and the order it was
+			// started for. Amount and reuse alone let a member confirm someone
+			// else's paid, not yet settled payment of the same price against
+			// their own order.
+			$meta = (array) ( $payment['metadata'] ?? array() );
+
+			if ( (int) ( $meta['customer_id'] ?? 0 ) !== (int) $order->customer_id || (int) ( $meta['order_id'] ?? 0 ) !== $pay_order ) {
+				return new WP_Error( 'wpss_payment_not_for_order', __( 'This payment was not made for this order.', 'wp-sell-services' ), array( 'status' => 409 ) );
 			}
 
-			$order_provider = wpss_get_order_provider();
-			$order_provider->mark_as_paid( $pay_order, $payment_id, 'stripe' );
+			$settled = $this->settle_pay_order( $order, 'stripe', $payment_id, (float) ( $payment['amount'] ?? 0 ), (string) ( $payment['currency'] ?? '' ) );
+
+			if ( is_wp_error( $settled ) ) {
+				return $settled;
+			}
+
 			$order = wpss_get_order( $pay_order );
 
 			return new WP_REST_Response(
@@ -595,22 +564,16 @@ class PaymentController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	private function confirm_paypal_payment( object $gateway, string $payment_id, int $service_id, int $package_id, int $pay_order ) {
-		// For existing orders (pay_order), capture the payment directly without creating
-		// a new WPSS order. capture_order() creates an order internally, so we use
-		// process_payment() for the capture-only path.
+		// Paying an existing order: answer the plain refusals before PayPal is
+		// asked for anything.
 		if ( $pay_order ) {
 			$order = wpss_get_order( $pay_order );
 
-			// Same three guards as the Stripe twin (see confirm_stripe_payment).
-			// Without them a buyer could capture a small PayPal payment (e.g. $5)
-			// against someone else's $500 order and have it marked paid. This hole
-			// was closed on Stripe but left open here — fixing the class, not just
-			// the instance.
 			if ( ! $order ) {
 				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 			}
 
-			if ( get_current_user_id() !== (int) $order->customer_id && ! current_user_can( 'manage_options' ) ) {
+			if ( get_current_user_id() !== (int) $order->customer_id ) {
 				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
 			}
 
@@ -625,40 +588,13 @@ class PaymentController extends RestController {
 					)
 				);
 			}
-
-			$capture = $gateway->process_payment( $payment_id );
-
-			if ( empty( $capture['success'] ) ) {
-				return new WP_Error( 'paypal_confirm_error', $capture['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
-			}
-
-			// Same currency-aware comparison as the Stripe twin.
-			$captured = (float) ( $capture['amount'] ?? 0 );
-			$expected = (float) ( $order->total ?? 0 );
-			if ( ! wpss_amounts_match( $captured, $expected, (string) ( $order->currency ?? '' ) ) ) {
-				return new WP_Error(
-					'rest_amount_mismatch',
-					__( 'The paid amount does not match the order total.', 'wp-sell-services' ),
-					array( 'status' => 400 )
-				);
-			}
-
-			$transaction_id = $capture['transaction_id'] ?? $payment_id;
-			$order_provider = wpss_get_order_provider();
-			$order_provider->mark_as_paid( $pay_order, $transaction_id, 'paypal' );
-			$order = wpss_get_order( $pay_order );
-
-			return new WP_REST_Response(
-				array(
-					'gateway'      => 'paypal',
-					'order_id'     => $pay_order,
-					'order_number' => $order ? $order->order_number : '',
-					'status'       => 'paid',
-				)
-			);
 		}
 
-		// New order: capture + create order via gateway.
+		// One capture path for a new purchase and an existing order, the one the
+		// website uses. It reads the buyer and the order from the PayPal payment
+		// itself, so a payment pays what it was started for and only for the
+		// member who started it. This route used to capture whatever PayPal
+		// payment it was handed and mark the named order paid.
 		$result = $gateway->capture_order(
 			array(
 				'paypal_order_id' => $payment_id,
@@ -679,6 +615,47 @@ class PaymentController extends RestController {
 				'status'       => 'paid',
 			)
 		);
+	}
+
+	/**
+	 * Mark an existing order paid from a verified gateway payment.
+	 *
+	 * Through the same settle() the website checkout uses, not a second copy of
+	 * its checks: it compares amount and currency, and holds the per-payment
+	 * lock while asking whether this payment has already paid an order. The
+	 * copy that lived here checked the amount and nothing else, so one payment
+	 * confirmed every equal-priced order the buyer had (Basecamp 10375173905).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param object $order          The order to pay; its owner is already checked.
+	 * @param string $gateway_id     Gateway slug.
+	 * @param string $transaction_id Verified gateway payment id.
+	 * @param float  $amount         Verified paid amount.
+	 * @param string $currency       Verified paid currency.
+	 * @return true|WP_Error
+	 */
+	private function settle_pay_order( object $order, string $gateway_id, string $transaction_id, float $amount, string $currency ) {
+		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
+		$intent   = $checkout->resolve( array( 'pay_order' => (int) $order->id ), (int) $order->customer_id );
+
+		if ( is_wp_error( $intent ) ) {
+			return new WP_Error( $intent->get_error_code(), $intent->get_error_message(), array( 'status' => 400 ) );
+		}
+
+		$settle = $checkout->settle( $intent, $gateway_id, $transaction_id, $amount, $currency );
+
+		if ( empty( $settle['success'] ) ) {
+			return new WP_Error( 'rest_amount_mismatch', $settle['error'] ?? __( 'The paid amount does not match the order total.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		// settle() answers a payment it has seen before with the order(s) that
+		// payment already paid. If this order is not one of them, the payment is spent.
+		if ( ! in_array( (int) $order->id, array_map( 'intval', (array) ( $settle['order_ids'] ?? array( $settle['order_id'] ?? 0 ) ) ), true ) ) {
+			return new WP_Error( 'wpss_payment_already_used', __( 'This payment has already been used for another order.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		}
+
+		return true;
 	}
 
 	/**

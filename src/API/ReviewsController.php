@@ -441,7 +441,7 @@ class ReviewsController extends RestController {
 				'rating'      => $rating,
 				'review'      => $review,
 				'status'      => $status,
-				'created_at'  => current_time( 'mysql' ),
+				'created_at'  => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%d', '%d', '%d', '%d', '%s', '%d', '%s', '%s', '%s' )
 		);
@@ -524,7 +524,7 @@ class ReviewsController extends RestController {
 		}
 
 		if ( ! empty( $updates ) ) {
-			$updates['updated_at'] = current_time( 'mysql' );
+			$updates['updated_at'] = current_time( 'mysql', true );
 
 			$wpdb->update(
 				$wpdb->prefix . 'wpss_reviews',
@@ -726,6 +726,10 @@ class ReviewsController extends RestController {
 		$service_id = (int) $request->get_param( 'service_id' );
 		$table      = $wpdb->prefix . 'wpss_reviews';
 
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return new WP_Error( 'not_found', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
 		// Get aggregate data.
 		$stats = $wpdb->get_row(
 			$wpdb->prepare(
@@ -864,33 +868,13 @@ class ReviewsController extends RestController {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_reviews';
 
-		// Update service rating.
-		$service_stats = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT COUNT(*) as count, AVG(rating) as average
-				FROM {$table}
-				WHERE service_id = %d AND status = 'approved'",
-				$service_id
-			)
-		);
+		wpss_recount_service_rating( $service_id );
 
-		$service_count = (int) $service_stats->count;
-		update_post_meta( $service_id, '_wpss_rating_count', $service_count );
-		update_post_meta( $service_id, '_wpss_review_count', $service_count );
-		update_post_meta( $service_id, '_wpss_rating_average', round( (float) $service_stats->average, 1 ) );
-
-		// Update vendor rating.
-		$vendor_stats = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT COUNT(*) as count, AVG(rating) as average
-				FROM {$table}
-				WHERE vendor_id = %d AND status = 'approved'",
-				$vendor_id
-			)
-		);
-
-		update_user_meta( $vendor_id, '_wpss_rating_count', (int) $vendor_stats->count );
-		update_user_meta( $vendor_id, '_wpss_rating_average', round( (float) $vendor_stats->average, 1 ) );
+		// The vendor's rating lives on the profile row, which every surface reads
+		// through wpss_get_vendor(). The old _wpss_rating_* user meta written here
+		// had no other writer, so REST read figures the website never showed
+		// (Basecamp 10337212282).
+		( new \WPSellServices\Database\Repositories\VendorProfileRepository() )->update_stats( $vendor_id );
 	}
 
 	/**

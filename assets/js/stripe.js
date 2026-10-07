@@ -13,7 +13,6 @@
 		elements: null,
 		paymentElement: null,
 		form: null,
-		submitButton: null,
 		errorElement: null,
 		paymentIntentId: null,
 
@@ -92,6 +91,44 @@
 				return;
 			}
 
+			const appearance = {
+				theme: 'stripe',
+				variables: {
+					colorPrimary: '#1e3a5f',
+					fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
+				},
+			};
+
+			// A logged-out buyer has no account yet and the intent endpoint needs
+			// one, so the card field mounts from the amount alone (Stripe's
+			// deferred mode) and the intent is created on Pay, after the
+			// account step (Basecamp 10341174356). It showed "An error occurred"
+			// with no card field.
+			if (wpssStripe.isGuest) {
+				try {
+					this.deferred = { amount: amount, currency: currency, serviceId: serviceId, packageId: packageId };
+					this.elements = this.stripe.elements({
+						mode: 'payment',
+						amount: Math.round(amount * Math.pow(10, parseInt(wpssStripe.decimals, 10) || 0)),
+						currency: currency.toLowerCase(),
+						appearance: appearance,
+					});
+					this.paymentElement = this.elements.create('payment', this.paymentElementOptions());
+					this.paymentElement.mount(elementContainer);
+					this.paymentElement.on('change', (event) => {
+						if (event.error) {
+							this.showError(event.error.message);
+						} else {
+							this.hideError();
+						}
+					});
+				} catch (error) {
+					console.error('Stripe initialization error:', error);
+					this.showError(wpssStripe.i18n.error);
+				}
+				return;
+			}
+
 			// Create payment intent.
 			try {
 				const response = await this.createPaymentIntent(amount, currency, serviceId, packageId);
@@ -107,18 +144,10 @@
 				// Create and mount Payment Element.
 				this.elements = this.stripe.elements({
 					clientSecret: response.data.client_secret,
-					appearance: {
-						theme: 'stripe',
-						variables: {
-							colorPrimary: '#1e3a5f',
-							fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
-						},
-					},
+					appearance: appearance,
 				});
 
-				this.paymentElement = this.elements.create('payment', {
-					layout: 'tabs',
-				});
+				this.paymentElement = this.elements.create('payment', this.paymentElementOptions());
 
 				this.paymentElement.mount(elementContainer);
 
@@ -159,6 +188,9 @@
 					data: {
 						action: 'wpss_stripe_create_payment_intent',
 						nonce: wpssStripe.nonce,
+						// Refreshed by the account-at-checkout step once a new buyer is
+						// signed in; the page's Stripe nonce belongs to the visitor.
+						wpss_checkout_nonce: document.querySelector('[name="wpss_checkout_nonce"]')?.value || '',
 						amount: amount,
 						currency: currency,
 						service_id: serviceId,
@@ -237,11 +269,35 @@
 					billing_details: billing.details,
 				};
 
+				// Deferred (guest) mount: validate the card field, then make the
+				// intent now that the account step has signed the buyer in.
+				let clientSecret;
+				if (this.deferred) {
+					const { error: submitError } = await this.elements.submit();
+					if (submitError) {
+						this.showError(submitError.message);
+						this.setLoading(false);
+						return;
+					}
+
+					const response = await this.createPaymentIntent(this.deferred.amount, this.deferred.currency, this.deferred.serviceId, this.deferred.packageId);
+					if (!response.success) {
+						this.showError(response.data?.message || wpssStripe.i18n.initFailed);
+						this.setLoading(false);
+						return;
+					}
+
+					this.paymentIntentId = response.data.id;
+					document.getElementById('wpss-stripe-payment-intent-id').value = response.data.id;
+					clientSecret = response.data.client_secret;
+				}
+
 				// Confirm payment with Stripe.
 				const { error, paymentIntent } = await this.stripe.confirmPayment({
 					elements: this.elements,
 					confirmParams: confirmParams,
 					redirect: 'if_required',
+					...(clientSecret ? { clientSecret: clientSecret } : {}),
 				});
 
 				if (error) {
@@ -298,18 +354,55 @@
 			// Stripe rejects empty strings on optional fields; drop them.
 			if (!details.phone) { delete details.phone; }
 			if (!details.email) { delete details.email; }
-			if (!details.address.line2) { delete details.address.line2; }
-			if (!details.address.state) { delete details.address.state; }
+			Object.keys(details.address).forEach((key) => {
+				if (!details.address[key]) { delete details.address[key]; }
+			});
 
-			const complete = !!(
-				details.name &&
-				details.address.line1 &&
-				details.address.city &&
-				details.address.postal_code &&
-				details.address.country
+			// Complete = a name, plus every field the site's billing block marks
+			// required. It used to demand line 1, city and postcode outright, so
+			// with the digital preset (name, email, country - the default on a
+			// new install) no Stripe payment could be made at all.
+			const missing = Array.prototype.some.call(
+				document.querySelectorAll('[data-wpss-billing] [name^="billing_"][required]'),
+				(el) => !(el.value || '').trim()
 			);
 
-			return { complete: complete, details: details };
+			return { complete: !!details.name && !missing, details: details };
+		},
+
+		/**
+		 * Payment Element options: our billing block owns the billing details.
+		 *
+		 * The element otherwise asks for its own country (defaulting to the
+		 * browser's region, so a US buyer saw India) and postcode. A field
+		 * our block collects as required is switched off in the element
+		 * ('never') and sent at confirm; one it collects as optional is
+		 * prefilled; one it does not collect is left to the element.
+		 *
+		 * @return {Object}
+		 */
+		paymentElementOptions: function() {
+			const input = (key) => document.querySelector('[data-wpss-billing] [name="' + key + '"]');
+			const mode = (key) => {
+				const el = input(key);
+				return el && el.required ? 'never' : 'auto';
+			};
+			const details = this.readBillingDetails().details;
+
+			return {
+				layout: 'tabs',
+				defaultValues: { billingDetails: details },
+				fields: {
+					billingDetails: {
+						name: mode('billing_first_name'),
+						email: mode('billing_email'),
+						address: {
+							country: mode('billing_country'),
+							postalCode: mode('billing_postcode'),
+						},
+					},
+				},
+			};
 		},
 
 		/**
@@ -367,6 +460,7 @@
 				data: {
 					action: 'wpss_stripe_confirm_payment',
 					nonce: wpssStripe.nonce,
+					wpss_checkout_nonce: document.querySelector('[name="wpss_checkout_nonce"]')?.value || '',
 					payment_intent_id: paymentIntentId,
 					service_id: serviceId,
 					package_id: packageId,
@@ -418,18 +512,19 @@
 		 * Set loading state.
 		 */
 		setLoading: function(loading) {
-			this.submitButton = this.submitButton || this.form?.querySelector('button[type="submit"]');
+			// Every Pay button (under the payment method and in the summary).
+			const buttons = this.form ? this.form.querySelectorAll('button[type="submit"]') : [];
 
-			if (this.submitButton) {
-				this.submitButton.disabled = loading;
+			buttons.forEach(function(button) {
+				button.disabled = loading;
 
 				if (loading) {
-					this.submitButton.dataset.originalText = this.submitButton.textContent;
-					this.submitButton.textContent = wpssStripe.i18n.processing;
-				} else if (this.submitButton.dataset.originalText) {
-					this.submitButton.textContent = this.submitButton.dataset.originalText;
+					button.dataset.originalText = button.textContent;
+					button.textContent = wpssStripe.i18n.processing;
+				} else if (button.dataset.originalText) {
+					button.textContent = button.dataset.originalText;
 				}
-			}
+			});
 		},
 	};
 

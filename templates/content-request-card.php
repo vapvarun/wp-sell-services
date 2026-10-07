@@ -34,7 +34,7 @@ $budget_min         = (float) get_post_meta( $request_id, '_wpss_budget_min', tr
 $budget_max         = (float) get_post_meta( $request_id, '_wpss_budget_max', true );
 $delivery_days      = (int) get_post_meta( $request_id, '_wpss_delivery_days', true );
 $expires_at         = get_post_meta( $request_id, '_wpss_expires_at', true );
-$proposal_count     = (int) get_post_meta( $request_id, '_wpss_proposal_count', true );
+$proposal_count     = ( new \WPSellServices\Services\BuyerRequestService() )->get_proposal_count( $request_id );
 $skills_raw         = get_post_meta( $request_id, '_wpss_skills_required', true );
 $skills             = $skills_raw ? $skills_raw : array();
 $categories         = wp_get_post_terms( $request_id, 'wpss_service_category', array( 'fields' => 'names' ) );
@@ -226,16 +226,26 @@ do_action( 'wpss_before_request_card', $request_id );
 				<span class="wpss-request-card__meta-value"><?php echo wp_kses_post( $budget_display ); ?></span>
 			</div>
 
-			<?php if ( $delivery_days ) : ?>
+			<?php
+			// The buyer's deadline, as the Post a Request form asks for it. This
+			// showed "Delivery 14 days" - the days to the deadline frozen at
+			// posting, which never counted down (Basecamp 10337197376). A request
+			// posted without a date keeps its day count.
+			?>
+			<?php if ( $expires_at || $delivery_days ) : ?>
 				<div class="wpss-request-card__meta-item">
-					<span class="wpss-request-card__meta-label"><?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?></span>
+					<span class="wpss-request-card__meta-label"><?php echo esc_html( $expires_at ? __( 'Deadline', 'wp-sell-services' ) : __( 'Needed within', 'wp-sell-services' ) ); ?></span>
 					<span class="wpss-request-card__meta-value">
 						<?php
-						printf(
-							/* translators: %d: number of days */
-							esc_html( _n( '%d day', '%d days', $delivery_days, 'wp-sell-services' ) ),
-							esc_html( $delivery_days )
-						);
+						if ( $expires_at ) {
+							echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $expires_at . ' UTC' ) ) );
+						} else {
+							printf(
+								/* translators: %d: number of days */
+								esc_html( _n( '%d day', '%d days', $delivery_days, 'wp-sell-services' ) ),
+								esc_html( $delivery_days )
+							);
+						}
 						?>
 					</span>
 				</div>
@@ -255,9 +265,16 @@ do_action( 'wpss_before_request_card', $request_id );
 				</span>
 			<?php endif; ?>
 
-			<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn-primary wpss-btn-sm">
-				<?php esc_html_e( 'Send Proposal', 'wp-sell-services' ); ?>
-			</a>
+			<?php // A visitor is told what it takes, as on the request page itself (Basecamp 10337197376). ?>
+			<?php if ( is_user_logged_in() ) : ?>
+				<a href="<?php the_permalink(); ?>" class="wpss-btn wpss-btn-primary wpss-btn-sm">
+					<?php esc_html_e( 'Send Proposal', 'wp-sell-services' ); ?>
+				</a>
+			<?php else : ?>
+				<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn-primary wpss-btn-sm">
+					<?php esc_html_e( 'Log in to send a proposal', 'wp-sell-services' ); ?>
+				</a>
+			<?php endif; ?>
 		</div>
 	</div>
 

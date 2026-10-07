@@ -85,7 +85,7 @@ class DeliveryService {
 			'message'     => $message,
 			'attachments' => $processed_files,
 			'status'      => 'pending',
-			'created_at'  => current_time( 'mysql' ),
+			'created_at'  => current_time( 'mysql', true ),
 		);
 
 		/**
@@ -167,9 +167,17 @@ class DeliveryService {
 			return false;
 		}
 
-		// Mark latest delivery as accepted.
 		global $wpdb;
 		$deliveries_table = $wpdb->prefix . 'wpss_deliveries';
+
+		// Nothing delivered, nothing to accept: the buyer would be approving
+		// blind and releasing the money (owner decision 2026-09-25, Basecamp
+		// 10337217098). The order view hides Accept in this state too.
+		if ( ! $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$deliveries_table} WHERE order_id = %d LIMIT 1", $order_id ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			return false;
+		}
+
+		// Mark latest delivery as accepted.
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query(
@@ -214,20 +222,27 @@ class DeliveryService {
 			return false;
 		}
 
-		if ( ServiceOrder::STATUS_PENDING_APPROVAL !== $order->status ) {
+		if ( ! in_array( $order->status, array( ServiceOrder::STATUS_PENDING_APPROVAL, ServiceOrder::STATUS_DELIVERED ), true ) ) {
 			return false;
 		}
 
-		// Mark latest delivery as revision requested.
+		// Retire the open delivery. This is the one revision path (dashboard
+		// and REST): the REST action used to skip it, so the old delivery
+		// stayed 'pending' and let the auto-complete sweep finish a re-delivered
+		// order at once (Basecamp 10336731604).
 		global $wpdb;
 		$deliveries_table = $wpdb->prefix . 'wpss_deliveries';
 
+		// responded_at is what the order timeline dates "Revision requested" by;
+		// without it the event was dropped (Basecamp 10351458776).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$deliveries_table}
-				SET status = 'revision_requested'
+				SET status = 'revision_requested', responded_at = %s, response_message = %s
 				WHERE order_id = %d AND status = 'pending'",
+				current_time( 'mysql', true ),
+				sanitize_textarea_field( $reason ),
 				$order_id
 			)
 		);
@@ -241,6 +256,17 @@ class DeliveryService {
 			wpss_log( "Revision request failed: status update for order {$order_id} did not succeed.", 'error' );
 			return false;
 		}
+
+		// The revision gets its own deadline - the order's delivery time from
+		// now - so it can be marked late like any delivery. The original
+		// deadline has usually passed by the time a buyer reviews, so without
+		// this every revision would read late at once (owner decision,
+		// Basecamp 10336731826). original_deadline keeps the first one.
+		$wpdb->update(
+			$wpdb->prefix . 'wpss_orders',
+			array( 'delivery_deadline' => gmdate( 'Y-m-d H:i:s', strtotime( current_time( 'mysql', true ) ) + $order_service->get_delivery_days( $order ) * DAY_IN_SECONDS ) ),
+			array( 'id' => $order_id )
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		/**
 		 * Fires when revision is requested.

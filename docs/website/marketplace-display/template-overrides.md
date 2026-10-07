@@ -69,6 +69,8 @@ Subfolders are preserved: `templates/order/order-view.php` becomes
 | `partials/notifications-list.php` | Notification list markup |
 | `partials/billing-fields.php` | Billing form fields |
 | `partials/billing-summary.php` | Billing recap at checkout |
+| `partials/report-modal.php` | The Report dialog opened from a service page or vendor profile |
+| `partials/request-attachments.php` | The attachments field on the post and edit request forms |
 
 ### Vendor
 
@@ -87,6 +89,8 @@ Subfolders are preserved: `templates/order/order-view.php` becomes
 | `order/milestone-view.php` | A milestone phase |
 | `order/extension-view.php` | A paid extension |
 | `order/tip-view.php` | A tip receipt |
+| `order/payment.php` | Payment method, status and transaction ID in the order summary |
+| `order/cancellation.php` | Cancellation reason and details in the order summary |
 
 ### Dashboard
 
@@ -94,9 +98,22 @@ Each section of the unified dashboard is its own template under
 `dashboard/sections/`:
 
 `orders.php` · `sales.php` · `services.php` · `create.php` · `requests.php` ·
-`create-request.php` · `edit-request.php` · `favorites.php` · `earnings.php` ·
-`messages.php` · `notifications.php` · `disputes.php` · `portfolio.php` ·
-`profile.php`
+`create-request.php` · `edit-request.php` · `proposals.php` · `reviews.php` ·
+`favorites.php` · `earnings.php` · `messages.php` · `notifications.php` ·
+`disputes.php` · `portfolio.php` · `profile.php`
+
+**[PRO]** sections override the same way: `analytics.php` and `subscription.php`
+(vendor plans). A theme copy of a Pro section is used only while Pro provides
+that section. With Pro or the module off, the dashboard shows its own "not
+available" notice instead of your copy, which would call Pro code.
+
+The order list rows and the status filter on Orders and Sales are partials under
+`dashboard/partials/`:
+
+| Template | Controls |
+|----------|----------|
+| `dashboard/partials/order-row.php` | One order in the Orders and Sales lists |
+| `dashboard/partials/order-filters.php` | Status chips and order-number search above both lists |
 
 ### Other
 

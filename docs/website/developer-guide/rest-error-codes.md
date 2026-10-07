@@ -63,6 +63,8 @@ isn't yours" from "you need admin" without reading the English message.
 |---|---|---|
 | `wpss_order_not_payable` | 409 | The order is not in a payable state. Refetch it before retrying. |
 | `wpss_milestone_locked` | 409 | An earlier milestone phase is not approved yet. Phases pay in lock-step. |
+| `wpss_payment_already_used` | 409 | `POST /payments/confirm` with `pay_order`: this payment already paid a different order. One payment pays one order. |
+| `wpss_file_in_use` | 409 | `DELETE /media/{id}`: the file is attached to a buyer request that has received a proposal, so it cannot be deleted. |
 | `wpss_report_already_resolved` | 400 | The report has already been actioned by someone else. |
 | `wpss_realtime_disabled` | 501 | Realtime is switched off on this site. Hide the feature. |
 | `wpss_missing_service_requirement` | 403 | Checkout blocked: a required service requirement was not supplied (FluentCart rail). |

@@ -19,7 +19,6 @@ You have proven yourself as a reliable vendor.
 | Completed Orders | 5 |
 | Average Rating | 4.0 stars |
 | Total Reviews | 3 |
-| Response Rate | 80% |
 | On-Time Delivery Rate | 80% |
 | Days Active | 30 |
 
@@ -34,7 +33,6 @@ You have built a strong track record of quality and consistency.
 | Completed Orders | 25 |
 | Average Rating | 4.7 stars |
 | Total Reviews | 10 |
-| Response Rate | 90% |
 | On-Time Delivery Rate | 90% |
 | Days Active | 90 |
 
@@ -53,7 +51,6 @@ Here is what each metric measures:
 - **Completed Orders** -- The total number of orders you have successfully delivered.
 - **Average Rating** -- The average star rating across all your approved reviews.
 - **Total Reviews** -- How many reviews buyers have left for you.
-- **Response Rate** -- How consistently you reply to buyer messages.
 - **On-Time Delivery Rate** -- The percentage of orders you delivered before the deadline.
 - **Days Active** -- How many days since you registered as a vendor.
 
@@ -89,7 +86,7 @@ Your level is recalculated daily. If your stats drop below the requirements (for
 
 **To reach Rising Seller:** Focus on completing your first 5 orders with great quality. Respond to messages quickly and deliver on time. Ask satisfied buyers to leave reviews.
 
-**To reach Top Rated:** Scale up while maintaining quality. Check messages multiple times a day to keep your response rate above 90%. Be meticulous about deadlines. Aim for 5-star ratings, near-instant responses, and flawless on-time delivery.
+**To reach Top Rated:** Scale up while maintaining quality. Reply to buyer messages quickly. Be meticulous about deadlines. Aim for 5-star ratings, near-instant responses, and flawless on-time delivery.
 
 ## Admin Level Management
 

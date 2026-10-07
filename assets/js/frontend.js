@@ -25,7 +25,6 @@
 		WPSS.initContactVendor();
 		WPSS.initFilterSidebar();
 		WPSS.initProposals();
-		WPSS.initPostRequest();
 		WPSS.initRequirementsView();
 		WPSS.initFavorites();
 		WPSS.portfolioServicesOptions();
@@ -716,6 +715,60 @@
 	};
 
 	/**
+	 * Report links: open the shared dialog, send it to POST wpss/v1/reports.
+	 */
+	$(document).on('click', 'button.wpss-report-link', function() {
+		var $form = $('#wpss-report-form');
+		if (!$form.length) {
+			return;
+		}
+		$form[0].reset();
+		$form.find('[name="target_type"]').val($(this).data('report-type'));
+		$form.find('[name="target_id"]').val($(this).data('report-id'));
+		$form.find('.wpss-report-form__error').prop('hidden', true).text('');
+		WPSS.showModal('wpss-report-modal');
+	});
+
+	$(document).on('submit', '#wpss-report-form', function(e) {
+		e.preventDefault();
+
+		var $form   = $(this);
+		var $submit = $form.find('[type="submit"]');
+		var $error  = $form.find('.wpss-report-form__error');
+		var cfg     = window.wpssData || {};
+
+		if ($submit.prop('disabled')) {
+			return;
+		}
+		$submit.prop('disabled', true);
+		$error.prop('hidden', true).text('');
+
+		$.ajax({
+			url: cfg.apiUrl + 'reports',
+			method: 'POST',
+			contentType: 'application/json',
+			beforeSend: function(xhr) {
+				xhr.setRequestHeader('X-WP-Nonce', cfg.restNonce);
+			},
+			data: JSON.stringify({
+				target_type: $form.find('[name="target_type"]').val(),
+				target_id: parseInt($form.find('[name="target_id"]').val(), 10),
+				reason: $form.find('[name="reason"]').val(),
+				details: $form.find('[name="details"]').val()
+			})
+		}).done(function(response) {
+			WPSS.hideModal('wpss-report-modal');
+			if (window.wpssToast && response && response.message) {
+				window.wpssToast(response.message, 'success');
+			}
+		}).fail(function(xhr) {
+			$error.text((xhr.responseJSON && xhr.responseJSON.message) || $form.data('error')).prop('hidden', false);
+		}).always(function() {
+			$submit.prop('disabled', false);
+		});
+	});
+
+	/**
 	 * Show inline error notice in a container.
 	 *
 	 * @param {jQuery|string} container Selector or jQuery object.
@@ -786,17 +839,7 @@
 			WPSS.showModal('wpss-dispute-modal');
 		});
 
-		// Add-evidence: reflect the chosen file name next to the attach button.
-		$(document).on('change', '#wpss-add-evidence-form input[name="evidence_file"]', function() {
-			const name = (this.files && this.files.length) ? this.files[0].name : '';
-			$(this).closest('.wpss-add-evidence-form').find('.wpss-evidence-filename').text(name);
-		});
-
-		// Add-evidence form submission (dispute detail thread).
-		$(document).on('submit', '#wpss-add-evidence-form', function(e) {
-			e.preventDefault();
-			WPSS.submitDisputeEvidence($(this));
-		});
+		// The dispute thread's reply form is assets/js/dispute-thread.js, shared with the admin screen.
 
 		// Escalate a dispute. The REST route requires a reason, so ask for one
 		// rather than sending an empty string the API would reject.
@@ -1093,47 +1136,6 @@
 		});
 	};
 
-	WPSS.submitDisputeEvidence = function($form) {
-		const $btn = $form.find('button[type="submit"]');
-		const btnText = $btn.text();
-		const formEl = $form.get(0);
-		const data = new FormData(formEl);
-		data.append('action', 'wpss_add_dispute_evidence');
-
-		$btn.prop('disabled', true).text(wpssData.i18n.submitting);
-
-		$.ajax({
-			url: wpssData.ajaxUrl,
-			type: 'POST',
-			data: data,
-			processData: false,
-			contentType: false,
-			success: function(response) {
-				if (response.success) {
-					const $thread = $('#wpss-evidence-thread');
-					$thread.find('.wpss-evidence-empty').remove();
-					if (response.data && response.data.html) {
-						$thread.append(response.data.html);
-					}
-					formEl.reset();
-					$form.find('.wpss-evidence-filename').text('');
-					if (window.lucide && typeof window.lucide.createIcons === 'function') {
-						window.lucide.createIcons();
-					}
-					WPSS.showNotification((response.data && response.data.message) || 'Message added.', 'success');
-				} else {
-					WPSS.showNotification((response.data && response.data.message) || wpssData.i18n.error, 'error');
-				}
-			},
-			error: function() {
-				WPSS.showNotification(wpssData.i18n.error, 'error');
-			},
-			complete: function() {
-				$btn.prop('disabled', false).text(btnText);
-			}
-		});
-	};
-
 	/**
 	 * Request revision.
 	 */
@@ -1177,6 +1179,23 @@
 			const url = $(this).val();
 			if (url) {
 				window.location.href = url;
+			}
+		});
+
+		// Filters apply as soon as they are picked, the same as sort
+		// (Basecamp 10337201764). A keyboard user arrowing through a radio group
+		// has not chosen yet, so a keyboard change waits for Enter or the Apply
+		// button, which shows on focus. Price applies when committed (Enter or
+		// leaving the field) - that is when a number input fires change.
+		let pointerPick = false;
+		$(document).on('pointerdown', '.wpss-filter-form label, .wpss-filter-form input', function() {
+			pointerPick = true;
+		});
+		$(document).on('change', '.wpss-filter-form input', function() {
+			const picked = 'radio' !== this.type || pointerPick;
+			pointerPick = false;
+			if (picked && this.form) {
+				this.form.requestSubmit();
 			}
 		});
 
@@ -1304,174 +1323,6 @@
 				function() { WPSS.handleProposalAction($btn, proposalId, 'withdraw'); },
 				{ confirmText: 'Withdraw' }
 			);
-		});
-	};
-
-	/**
-	 * Buyer request posting form ([wpss_post_request]).
-	 *
-	 * Wires #wpss-post-request-form to POST /wpss/v1/buyer-requests. Performs
-	 * client-side validation, sends the REST request with the wp_rest nonce,
-	 * renders per-field server errors, and swaps the form for a success state.
-	 */
-	WPSS.initPostRequest = function() {
-		$(document).on('submit', '#wpss-post-request-form', function(e) {
-			e.preventDefault();
-			WPSS.submitPostRequest($(this));
-		});
-	};
-
-	/**
-	 * Clear all error messaging on the post-request form.
-	 *
-	 * @param {jQuery} $form The post-request form.
-	 */
-	WPSS.clearRequestErrors = function($form) {
-		const $wrapper = $form.closest('[data-wpss-post-request]');
-		$wrapper.find('[data-request-form-error]').prop('hidden', true).text('');
-		$form.find('[data-field-error]').prop('hidden', true).text('');
-		$form.find('[data-field]').removeClass('wpss-input--invalid').removeAttr('aria-invalid');
-	};
-
-	/**
-	 * Display a per-field error on the post-request form.
-	 *
-	 * @param {jQuery} $form   The post-request form.
-	 * @param {string} field   The field key (matches data-field).
-	 * @param {string} message The error message.
-	 */
-	WPSS.showRequestFieldError = function($form, field, message) {
-		const $error = $form.find('[data-field-error="' + field + '"]');
-		const $input = $form.find('[data-field="' + field + '"]');
-
-		$input.addClass('wpss-input--invalid').attr('aria-invalid', 'true');
-
-		if ($error.length) {
-			$error.text(message).prop('hidden', false);
-		} else {
-			// No dedicated slot for this field — fall back to the form-level banner.
-			$form.closest('[data-wpss-post-request]')
-				.find('[data-request-form-error]')
-				.text(message)
-				.prop('hidden', false);
-		}
-	};
-
-	/**
-	 * Submit the buyer request via the REST API.
-	 *
-	 * @param {jQuery} $form The post-request form.
-	 */
-	WPSS.submitPostRequest = function($form) {
-		const i18n     = (wpssData && wpssData.i18n) || {};
-		const $wrapper = $form.closest('[data-wpss-post-request]');
-		const $btn     = $form.find('[data-request-submit]');
-		const btnText  = $btn.text();
-
-		WPSS.clearRequestErrors($form);
-
-		// Client-side validation — title + description are required.
-		const title       = ($form.find('[data-field="title"]').val() || '').trim();
-		const description = ($form.find('[data-field="description"]').val() || '').trim();
-		let hasError = false;
-
-		if (!title) {
-			WPSS.showRequestFieldError($form, 'title', i18n.requestTitleRequired);
-			hasError = true;
-		}
-
-		if (!description) {
-			WPSS.showRequestFieldError($form, 'description', i18n.requestDescriptionRequired);
-			hasError = true;
-		}
-
-		// Budget sanity — when both supplied, max must be >= min.
-		const budgetMin = parseFloat($form.find('[data-field="budget_min"]').val());
-		const budgetMax = parseFloat($form.find('[data-field="budget_max"]').val());
-		if (!isNaN(budgetMin) && !isNaN(budgetMax) && budgetMax < budgetMin) {
-			WPSS.showRequestFieldError($form, 'budget_max', i18n.requestBudgetRange);
-			hasError = true;
-		}
-
-		if (hasError) {
-			return;
-		}
-
-		// Skills: comma-separated string -> trimmed array, drop empties.
-		const skills = ($form.find('[data-field="skills_required"]').val() || '')
-			.split(',')
-			.map(function(s) { return s.trim(); })
-			.filter(function(s) { return s.length > 0; });
-
-		const payload = {
-			title: title,
-			description: description,
-			category: parseInt($form.find('[data-field="category"]').val(), 10) || 0,
-			budget_min: isNaN(budgetMin) ? 0 : budgetMin,
-			budget_max: isNaN(budgetMax) ? 0 : budgetMax,
-			deadline: $form.find('[data-field="deadline"]').val() || '',
-			skills_required: skills
-		};
-
-		$btn.prop('disabled', true).text(i18n.submitting);
-
-		$.ajax({
-			url: wpssData.apiUrl + 'buyer-requests',
-			type: 'POST',
-			contentType: 'application/json',
-			data: JSON.stringify(payload),
-			beforeSend: function(xhr) {
-				xhr.setRequestHeader('X-WP-Nonce', wpssData.restNonce);
-			},
-			success: function(response) {
-				const message = (response && response.message) || i18n.requestPosted;
-				WPSS.showNotification(message, 'success');
-
-				// Swap the form for the success state.
-				const redirect = $form.data('success-redirect') || '';
-				const $success = $wrapper.find('[data-request-success]');
-				const $link    = $success.find('[data-request-success-link]');
-
-				if (redirect) {
-					$link.attr('href', redirect);
-				} else {
-					$link.prop('hidden', true);
-				}
-
-				$form.prop('hidden', true);
-				$success.prop('hidden', false);
-
-				// Refresh Lucide icons if available.
-				if (window.lucide && typeof window.lucide.createIcons === 'function') {
-					window.lucide.createIcons();
-				}
-			},
-			error: function(xhr) {
-				$btn.prop('disabled', false).text(btnText);
-
-				const res = (xhr && xhr.responseJSON) || {};
-
-				// Per-field validation errors (WP_Error data.errors / data.params).
-				const fieldErrors = (res.data && (res.data.errors || res.data.params)) || null;
-				if (fieldErrors && typeof fieldErrors === 'object') {
-					let shown = false;
-					Object.keys(fieldErrors).forEach(function(field) {
-						const val = fieldErrors[field];
-						const msg = Array.isArray(val) ? val[0] : val;
-						if (msg) {
-							WPSS.showRequestFieldError($form, field, msg);
-							shown = true;
-						}
-					});
-					if (shown) {
-						return;
-					}
-				}
-
-				const message = res.message || i18n.requestFailed || i18n.error;
-				$wrapper.find('[data-request-form-error]').text(message).prop('hidden', false);
-				WPSS.showNotification(message, 'error');
-			}
 		});
 	};
 

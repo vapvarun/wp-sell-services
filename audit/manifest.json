@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "wp-sell-services",
     "name": "WP Sell Services",
-    "version": "1.7.1",
+    "version": "1.8.0",
     "namespace": "WPSellServices",
     "main_file": "wp-sell-services.php",
     "text_domain": "wp-sell-services",
@@ -488,7 +488,8 @@
     "commission": {
       "authority": "WPSellServices\\Services\\CommissionService::compute_breakdown()",
       "rule": "Never compute a fee inline. Free (ManualOrderPage, OrderWorkflowManager) and Pro (TieredCommission flat rules, SubscriptionManager plan override, Stripe Connect split, EDD orders, subscription renewals) all route through it; the Connect split reads the PERSISTED fee and never recomputes.",
-      "extension_points": "wpss_commission_fee (amount) / wpss_commission_rate (percent) / wpss_commission_base_amount (base)"
+      "extension_points": "wpss_commission_fee (amount) / wpss_commission_rate (percent) / wpss_commission_base_amount (base)",
+      "base": "The base is the price WITHOUT tax. New orders: wpss_calculate_tax()['net'] (StandaloneOrderProvider, CheckoutIntentService::price_line()['net'] for proposals). Stored orders: wpss_order_commission_base( $order ), which takes meta.tax_amount off subtotal + addons_total when meta.tax_included is set (1.8.0+; older orders keep the pre-1.8.0 reading)."
     },
     "wallet_balance": {
       "authority": "wpss_get_ledger_balance( int $user_id, bool $lock = false ) — src/functions.php:128",
@@ -527,13 +528,63 @@
       "also_dead": "{prefix}wpss_vendor_profiles.available_balance / .pending_balance are mutated by a raw UPDATE at src/Frontend/AjaxHandlers.php:3405 but read by NO balance path. Write-only columns — safe to retire.",
       "also_note": "wpss_wallet_transactions.balance_after IS still read — Pro's LedgerExporter (src/Services/LedgerExporter.php) selects it for statement CSVs. Retiring the column requires giving the exporter a running-balance computation first."
     },
-    "refunded_amount_display": "wpss_get_order_refunded_amount( object $order ): float in src/functions.php is THE ONLY way a display, invoice or export surface may ask how much was refunded. wpss_orders.refunded_amount stores a SENTINEL, not a plain number: NULL means 'fully refunded', a value means 'this much was refunded'. That sentinel is load-bearing for the money layer (OrderWorkflowManager::settle_refund reads NULL as 'reverse everything', DisputeService::persist_refunded_amount writes NULL for full refunds) and MUST NOT be changed to store the total. The hazard is read-side: templates/order/order-view.php read the raw column and tested `> 0`, which silently dropped every FULL refund - the buyer saw the status 'Refunded' with no amount beside it, while a PARTIAL refund correctly showed one. Its own is_full_refund branch was dead code. The helper disambiguates 'full refund' from 'no refund' via order status and returns 0.0 when nothing was refunded. Never read the column directly from a template. Commit 2dc698b."
+    "refunded_amount_display": "wpss_get_order_refunded_amount( object $order ): float in src/functions.php is THE ONLY way a display, invoice or export surface may ask how much was refunded. wpss_orders.refunded_amount stores a SENTINEL, not a plain number: NULL means 'fully refunded', a value means 'this much was refunded'. That sentinel is load-bearing for the money layer (OrderWorkflowManager::settle_refund reads NULL as 'reverse everything', DisputeService::persist_refunded_amount writes NULL for full refunds) and MUST NOT be changed to store the total. The hazard is read-side: templates/order/order-view.php read the raw column and tested `> 0`, which silently dropped every FULL refund - the buyer saw the status 'Refunded' with no amount beside it, while a PARTIAL refund correctly showed one. Its own is_full_refund branch was dead code. The helper disambiguates 'full refund' from 'no refund' via order status and returns 0.0 when nothing was refunded. Never read the column directly from a template. Commit 2dc698b.",
+    "refund_outcome": {
+      "authority": "WPSellServices\\Services\\OrderService::refund( int $order_id, ?float $amount, string $status, array $ctx = [] ): array",
+      "rule": "The gateway is asked BEFORE the order moves. Only a refund whose money moved (outcome moved), an honest manual refund (manual), a rail-initiated one (settled_at_rail) or one with nothing captured (recorded) changes status, refunded_amount or the vendor ledger. A gateway refusal (failed) records nothing and writes OrderWorkflowManager::REFUND_FAILED_META; retry via OrderService::retry_refund(). apply_refund_status() is a bool wrapper kept for old callers.",
+      "callers": "free: OrderScreen::ajax_update_status (admin), AjaxHandlers refund verb (vendor), DisputeService::handle_resolution (outside its transaction), OrderWorkflowManager::handle_gateway_refund (settled_at_rail); retry: Admin::handle_retry_refund, POST /orders/{id}/retry-refund",
+      "since": "1.8.0",
+      "cascade": "A full refund that this plugin initiates also refunds the order's paid extension and tip sub-orders through refund() (origin cascade), each with its own gateway call, reversal and failed flag. A rail-initiated (settled_at_rail) refund does not cascade; those parents are listed by wpss_get_refund_review_items() with pre-1.8.0 history, shown in Admin::refund_review_notice(). Milestone phases are not cascaded."
+    },
+    "order_status_writes": {
+      "authority": "WPSellServices\\Services\\OrderService::get_settable_statuses() / can_transition() / update_status()",
+      "rule": "can_transition() refuses any status not in ServiceOrder::get_statuses(), admins included. update_status() refuses refunded / partially_refunded unless called from inside refund(). Statuses a person may set directly (admin form, OrderScreen AJAX, REST PATCH) come only from get_settable_statuses(): everything except refunded, partially_refunded, disputed and the unused acceptance-step statuses pending / accepted / rejected. REST PATCH /orders/{id} answers 400 for anything else and when the transition is refused; vendor_notes and due_date are readonly (400 wpss_field_not_writable).",
+      "cancellation_request": "Stored in wpss_orders.meta['cancellation_request'] and read through ServiceOrder::get_cancellation_request() by the 48h sweep, NotificationService, EmailService and order-view. Never in vendor_notes, which now only carries the creator note on a sub-order (tip message, extension reason, milestone description). SchemaManager::run_1_8_0_data_migrations() moved in-flight requests.",
+      "since": "1.8.0"
+    },
+    "line_pricing": {
+      "authority": "wpss_price_addons( $service_id, $selection, $package_subtotal, $package ) + CheckoutIntentService::price_service_line()",
+      "rule": "Add-ons and a package's Express delivery are priced only here. Express (package keys express_price / express_days, read via wpss_get_package_express(), sanitised by wpss_sanitize_package_express() in the wizard, wp-admin editor and REST savers) rides as an add-on row with id WPSS_EXPRESS_ADDON_ID (-1) so every rail that carries addon_sel carries it. Callers that price add-ons directly must pass the package or Express is not offered (Pro WooCommerce does)."
+    },
+    "delivery_days": {
+      "authority": "wpss_line_delivery_days( $package, $addon_rows )",
+      "rule": "Package days, replaced by an Express row's delivery_days when bought, plus every add-on's delivery_days_extra, minimum 1. Used by price_service_line (quote, checkout, badges), OrderService::get_delivery_days (deadline, revision deadline), the mark_as_paid placeholder and Pro WCOrderProvider. Never add package + add-on days inline."
+    },
+    "payment_site_ownership": {
+      "authority": "wpss_payment_site_mark() / wpss_is_own_payment_site() / wpss_payment_site_hash() - src/functions/payments.php",
+      "rule": "A gateway sends an account's events to every site on it. Every gateway marks the payments it starts and acts only on its own: Stripe metadata site_url+platform (StripeGateway::is_own_intent), PayPal invoice_id prefix WPSS-{hash}- (PayPalGateway::is_own_order), Razorpay notes site_url+platform (Pro RazorpayGateway::is_own_order). A new gateway must mark and check the same way; never act on a webhook without it.",
+      "since": "1.8.0"
+    },
+    "webhook_settlement": {
+      "authority": "WPSellServices\\Checkout\\CheckoutIntentService::settle_webhook_order( order_id, gateway, transaction_id, amount, currency )",
+      "rule": "A webhook that names an order marks it paid only through this method: same per-transaction lock and transaction lookup as settle(), plus an amount and currency match. Never call mark_as_paid() from a webhook handler. REST pay-order confirm goes through settle() (PaymentController::settle_pay_order); a payment already spent answers 409 wpss_payment_already_used.",
+      "since": "1.8.0"
+    },
+    "pay_order_binding": {
+      "rule": "A gateway payment pays only the order it was started for, by the member who started it.",
+      "paypal": "PaymentController::confirm_paypal_payment sends new purchases and pay_order through PayPalGateway::capture_order() -> capture_and_settle(), which reads customer_id and order_id from the PayPal order's custom_id, checks site ownership inside process_payment(), and refunds on an amount mismatch.",
+      "stripe": "PaymentController::confirm_stripe_payment (pay_order) refuses when intent metadata customer_id or order_id is not the order being paid: 409 wpss_payment_not_for_order. Then settle_pay_order() (amount, currency, one payment one order).",
+      "tests": [
+        "tests/test-rest-pay-order-confirm-contract.php",
+        "tests/test-gateway-site-ownership-contract.php"
+      ]
+    },
+    "refund_unsettled": {
+      "authority": "CheckoutIntentService::refund_unsettled( gateway, transaction, callable ) - the one way a gateway gives back a verified charge that could not become an order.",
+      "rule": "Under the per-transaction settle lock: a charge that already paid an order is not refunded; a charge given back is remembered (transient wpss_unsettled_{md5}) and settle() refuses it afterwards. settle_once() answers with the existing order before the amount check. settle_webhook_order() refuses a charge given back the same way.",
+      "callers": [
+        "StripeGateway::refund_unsettled_charge",
+        "PayPalGateway::capture_and_settle (both refund branches)",
+        "Pro RazorpayGateway::settle_verified_payment (both refund branches)"
+      ],
+      "test": "tests/test-refund-unsettled-guard.php"
+    }
   },
   "capabilities": {
     "_note": "Plugin uses standard WP capabilities (edit_posts, manage_options) plus role-based ownership. No custom capability slugs registered. Vendor role created via add_role on activation."
   },
   "services": {
-    "_note": "Service-class layer in src/Services/. Key services: OrderService, ProposalService, MilestoneService, ExtensionOrderService, DeliveryService, DisputeService, ReviewService, NotificationService, EmailService, AnalyticsService, EarningsService, AuditLogService, BuyerRequestService, MessageService, PortfolioService, RateLimiter, Scheduler, TippingService, FAQService, GalleryService, ExtensionRequestService, ModerationService, FormFieldRegistry, Icon, RealtimeService (Pusher-protocol publisher; secret stays server-side), RealtimeBridge (relays wpss_message_sent + wpss_notification_created to private channels)."
+    "_note": "Service-class layer in src/Services/. Key services: OrderService, ProposalService, MilestoneService, ExtensionOrderService, DeliveryService, DisputeService, ReviewService, NotificationService, EmailService, EarningsService, AuditLogService, BuyerRequestService, MessageService, PortfolioService, RateLimiter, Scheduler, TippingService, FAQService, GalleryService, ExtensionRequestService, ModerationService, FormFieldRegistry, Icon, RealtimeService (Pusher-protocol publisher; secret stays server-side), RealtimeBridge (relays wpss_message_sent + wpss_notification_created to private channels)."
   },
   "hooks_fired": {
     "do_action_count": 247,
@@ -693,6 +744,11 @@
         "name": "wpss_payable_total_after",
         "type": "action",
         "purpose": "Fires wherever a payable total is shown, before its pay/continue CTA - cart summary and standalone checkout, with (float $total, string $context). The last surface WPSS owns before payment hands off. Args are base currency; consumers state the charge, never replace it. NOT fired on a host platform's own checkout by design (see ecommerce_adapter_boundary)."
+      },
+      {
+        "name": "wpss_enqueue_dashboard_assets",
+        "type": "action",
+        "purpose": "Ask for the dashboard CSS/JS at render time (fired by [wpss_post_request]); for a dashboard surface placed where the page content does not name the shortcode: pattern, widget, page builder"
       }
     ],
     "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 237 hook firings. 1.6.0: wpss_offline_order_created now fires from BOTH offline entry points (cart checkout and pay-an-existing-order), so listeners no longer need to know which one the buyer used."
@@ -721,7 +777,7 @@
     "notes": "All recurring jobs migrated from WP-Cron to Action Scheduler in 1.1.0. Legacy WP-Cron sweep on version bump."
   },
   "wp_cli": {
-    "count": 16,
+    "count": 18,
     "registered_in": "src/CLI/",
     "guard": "src/CLI/Guard.php - Guard::writes( $what, $count, $assoc_args ) refuses when wp_get_environment_type() === 'production' unless --force, then confirms the row count unless --yes. Every command marked writes:true routes through it and documents --force and --yes in its synopsis. A stale count in this block is what let `scale teardown`, `scale bench --teardown` and both Pro writers ship ungated (Basecamp 10268057471), so add the command here in the same commit that registers it.",
     "commands": {
@@ -773,6 +829,13 @@
       },
       "wp wpss api:shapes": {
         "writes": false
+      },
+      "wp wpss repair:stripe-tax": {
+        "writes": true
+      },
+      "wp wpss utc-migrate": {
+        "writes": true,
+        "note": "Foreground run of Database\\UtcMigration (--dry-run previews old -> new). The same conversion runs once in the background via Action Scheduler hook wpss_utc_migrate_batch; progress in option wpss_utc_migration. 1.8.0, Basecamp 10351460106."
       }
     },
     "contract_test": "tests/test-cli-guards.php - `wp eval-file tests/test-cli-guards.php` asserts every writes:true command refuses with the environment forced to production, every writes:false one is untouched, and `wp help` names --force for each writer.",
@@ -887,7 +950,7 @@
     "_note": "Unique do_action()/apply_filters() literals in src/. Counts enumerated by hand for 1.3.1 and NOT re-counted since; treat as indicative, not exact. key_extension_hooks below is maintained per-change and is authoritative for documented seams."
   },
   "cli": {
-    "command_count": 16,
+    "command_count": 17,
     "api_shapes_command": "wp wpss api:shapes - audits every registered GET route for ISO dates and the shared actor shape; exits non-zero. See api_shapes.scanner.",
     "demo_marketplace_flags": "The synopsis declares [--images] (default true), NOT [--no-images]. WP-CLI strips the no- prefix while parsing and then looks for an `images` parameter, so declaring the negative form made the documented `--no-images` example fail with 'unknown --images parameter' from the day it shipped (Basecamp 10212618689). Declaring the positive flag is what makes the negative spelling work."
   },
@@ -942,7 +1005,15 @@
     "pending_payment_method_writer": "wpss_record_pending_payment_method( int $order_id, string $method ) in src/functions/payments.php",
     "pending_payment_method_note": "Gateways normally write payment_method as a side effect of mark_as_paid(). Offline does not settle in-request, so both of its pay-an-existing-order entry points (OfflineGateway::ajax_create_order and PaymentController::create_offline_order) go through this one guarded, idempotent writer. Leaving it NULL was a dead end, not a cosmetic gap: OfflineGateway::render_admin_order_actions(), PaymentReceiptService::can_submit() and the payment instructions all key off payment_method === 'offline', so the order could never be confirmed by anyone.",
     "payment_settlement_authority": "StandaloneOrderProvider::mark_as_paid -- the only writer of payment_status/paid_at; wpss_record_pending_payment_method never touches them",
-    "earnings_credit_timing": "CommissionService::record() on transition to completed, not at payment (escrow model)"
+    "earnings_credit_timing": "CommissionService::record() on transition to completed, not at payment (escrow model)",
+    "cancellation_record": {
+      "writer": "WPSellServices\\Services\\OrderService::store_cancellation() - the one writer, used by request_cancellation() and cancel()",
+      "store": "orders.meta.cancellation_request {reason, note, requested_by, requested_at}",
+      "reader": "ServiceOrder::get_cancellation_request(); rendered by templates/order/cancellation.php (both order pages once cancelled, admin order screen)",
+      "labels": "wpss_get_cancellation_reason_label() - the one reason list (order page, notification, email, status note)",
+      "since": "1.8.0"
+    },
+    "cancellation_email": "EmailService::send_order_cancelled() passes the cancellation record's reason label and note to templates/emails/order-cancelled.php. OrdersController admin cancel passes the note. OrderService::cancel() replaces a record left by a turned-down request unless the order is in cancellation_requested."
   },
   "reviews": {
     "_note": "The order page's review block was `if ( ! $review_exists )` with no else, so the moment a buyer submitted a review the order went silent about it - the buyer's own review was invisible to the buyer on the only page they would look for it. The same seven lines also ran a raw $wpdb query for a question ReviewService already owns, and gated the CTA WITHOUT the review window, so after the window closed the button still invited a review the server would then refuse. can_review() is now the single authority on both the CTA and the modal, and its `reason` string is rendered when the CTA is withheld.",
@@ -1082,6 +1153,14 @@
     "still_open": "Logout still revokes EVERY session, not just the current one. Left as-is deliberately: per-device revoke now exists, which is what the card required, and narrowing logout's blast radius is a behaviour change a shipped app may depend on. Worth its own card.",
     "recovery": "CRITICAL companion to expiry, found by tracing the flow rather than testing behaviours in isolation. WordPress 401s the WHOLE request on a failed application password, so POST /auth/login with a stale token in the Authorization header never reaches the handler even when the body carries the right password. Mobile clients attach the stored token to every request from one interceptor, so an app just told 'expired, sign in again' sends the expired token WITH the sign-in attempt and gets 401 forever - unrecoverable without clearing app storage. The behaviour predates this plugin (a garbage token always did the same) but expiry is what makes a correct client hit it. AppTokenGuard::allow_anonymous_auth_routes() on rest_authentication_errors priority 100 clears the auth error for /auth/login, /auth/register and /auth/forgot-password only - filter wpss_token_recovery_routes. Those three take credentials from the body and grant nothing, so running them anonymously is correct. Verified: expired token still 401s on /me, /orders, /notifications, /auth/sessions, /auth/logout, /auth/change-password; login RECOVERS at 200; and login with a wrong body password still 401s, so the dead token authenticates nothing."
   },
+  "listing_rules_1_8_0": {
+    "_note": "One rule per question, 1.8.0. Each replaced duplicated copies that had drifted.",
+    "vacation": "wpss_get_vacation_vendor_ids() (functions/vendors.php) is the one list of vendors to hide; VendorProfileRepository::on_vacation_sql() / not_on_vacation_sql() / get_on_vacation_user_ids() is the one SQL condition; VendorProfile::is_on_vacation() applies the same rule. A vendor is away while vacation_mode is on AND vacation_return_date is empty or not yet past - nothing is stored when the date passes. Used by ServiceArchiveView, SearchService, REST /services and /search, and the vendor directory queries.",
+    "service_sort": "wpss_apply_service_sort() + wpss_service_sort_clauses() (functions/services.php) is the one catalog sort (newest, price_low, price_high, rating, popular): a LEFT JOIN on one meta key, so services without the value stay in the list and sort last. Used by ServiceArchiveView (?sort=), SearchService, ServiceManager::search and REST GET /services (orderby=price|rating|popular). Do not write another meta_key sort.",
+    "express": "ServiceMetabox::save_meta clears a non-faster Express on a LIVE service and shows a notice (transient wpss_express_cleared_{id}); the wizard and REST keep rejecting it at publish via wpss_validate_service_publishable().",
+    "buyer_request_expiry": "_wpss_expires_at is stored in UTC and every comparison uses current_time('mysql', true); the wp-admin Expired filter also lists open requests past expiry that the sweep has not flipped yet.",
+    "order_url": "wpss_get_order_url( $id, $section, $order = null ) takes the already-loaded row, so list partials make no per-row order query."
+  },
   "plan_limits": {
     "_note": "Basecamp 10212521285. An administrator met their own paywall: the create-service wizard refused them and POST /services answered 403. TWO gates hang off wpss_vendor_can_create_service - this plugin's per-profile maximum (Core/Plugin.php, priority 10) and Pro's PlanEnforcer (priority 20) - and neither checked capability. Fixing only Pro, which is what the card proposed, would have left owners blocked by the gate that runs FIRST; this sandbox reproduced the block with Pro's subscriptions feature switched off entirely.",
     "seam": "wpss_member_bypasses_limits( int $user_id ) in functions/vendors.php - one definition, called by both gates. Filterable, because metering admins is a legitimate product choice but has to be deliberate. Checked against the member being tested, not the current user, so an admin acting for someone else does not lift that person's limit.",
@@ -1111,8 +1190,66 @@
       "do_action_firings": 184,
       "apply_filters_firings": 233,
       "shortcodes": 20,
-      "cli_command_files": 9,
+      "cli_command_files": 10,
       "block_files": 8
     }
+  },
+  "payment_refund_seams_1_8_0": {
+    "_note": "Shared rules added in the 1.8.0 card sweep (2026-10-06). Reuse these; do not write a second copy.",
+    "settle_once": "CheckoutIntentService::settle() takes a MySQL GET_LOCK per gateway+transaction around settle_once(): the browser confirm and the webhook can no longer both create an order for one charge.",
+    "paid_is_final": "StandaloneOrderProvider::mark_as_paid() treats paid, refunded and partially_refunded as final; a replayed succeeded event cannot reopen a refunded order.",
+    "unsettled_charge_refund": "StripeGateway::refund_unsettled_charge() is the one \"charged but no order\" refund (browser, AJAX, webhook recovery). Webhook recovery that cannot refund answers 500 and leaves the event unmarked so Stripe retries.",
+    "gateway_refund_ids": "OrderWorkflowManager::remember_gateway_refund() is the one writer of _wpss_gateway_refund_ids; OrderService::refund() records the id the gateway returned so the gateway webhook for the same refund is skipped.",
+    "refund_children": "OrderService::refund_paid_children() (public) refunds paid extensions and tips; used by a full refund and by handle_order_cancelled() for a paid order.",
+    "dispute_close_on_refund": "DisputeService::close_for_refund() resolves an open dispute as full_refund after the money already moved (rail refund via handle_gateway_refund, wp-admin full refund via OrderService::refund); never calls resolve(), which would refund again. A dispute-origin refund resolves its own dispute.",
+    "gateway_nonce": "wpss_verify_gateway_nonce( $actions ) (functions/payments.php): gateway nonce or the fresh wpss_checkout nonce from the guest account step. Used by Stripe (2 handlers), PayPal (2), Pro Razorpay (2); allow-listed in audit/admin-action-authority.json.",
+    "payment_page": "wpss_is_payment_page() (functions/payments.php): mapped checkout page, /service-checkout/ route or a service page. The one guard for loading Stripe, PayPal and Pro Razorpay scripts.",
+    "payment_label": "wpss_get_payment_status_label() (functions/orders.php): \"Refunded/Paid/Not paid · Method\" for the admin Orders list and templates/order/payment.php.",
+    "service_status_settle": "wpss_settle_service_status( $id, $status ) (functions/services.php): creators insert as draft, write meta, then settle to publish/pending and get back the status that stuck. Used by ServiceWizard, REST POST /services, ServiceManager::create(), CLI demo create_service(), MarketplaceSeeder.",
+    "service_availability": "wpss_service_unavailable_reason() now refuses paused services too; every purchase path (cart, Woo rail, order provider) asks it.",
+    "vendor_rating_source": "Vendor rating, review count and member-since come from the profile row via wpss_get_vendor() on every REST surface; ReviewsController::update_rating_cache() refreshes the row through VendorProfileRepository::update_stats(). The _wpss_rating_* and _wpss_vendor_since user meta are no longer read.",
+    "vendor_signup_closed": "PublicSignup::create_account() refuses intent=vendor when vendor_registration is closed (wpss_vendor_registration_closed, 403) for the form AJAX and REST /auth/register.",
+    "data_migrations_1_8_0": "run_1_8_0_data_migrations() also backfills package ids for every service with packages (chunked) and dates pre-1.8.0 revision_requested deliveries from the audit log."
+  },
+  "shared_helpers_1_8_0": {
+    "_note": "Seams added during the 1.8.0 card fixes. Reuse these; do not write a second copy.",
+    "services_grid": "wpss_render_services_grid() sorts through wpss_apply_service_sort() and excludes wpss_get_vacation_vendor_ids() unless one vendor is named. FeaturedServices and SellerCard blocks use the same sort.",
+    "cart": "wpss_get_user_cart( $user_id, true ) is the one cart reader (flags unavailable lines); wpss_get_cart_count() is the one count. GET /cart, the cart page and the header badge all use them.",
+    "demo_content": {
+      "note": "wpss_delete_demo_content() is the one delete routine (Settings button and wp wpss demo delete); wpss_has_demo_content() replaces the wpss_demo_content_imported option. Demo-created categories carry term meta _wpss_demo_content.",
+      "kept_when_ordered": "wpss_delete_demo_content() keeps a demo service that has an order the importer did not make (order meta without 'Seeded demo order.'), with its author and featured image, and returns the count as 'kept'. Deleting a service deletes its orders (DataCascadeHandler)."
+    },
+    "request_files": "BuyerRequestService::save_meta() is the one writer of _wpss_attachments; it stamps _wpss_request_id on each media item. is_untouched() = no proposal ever; is_file_locked() reads the stamp. After a proposal existing files cannot leave the list; DELETE /media/{id} answers 409 wpss_file_in_use. The lock is enforced on WordPress's own delete (wpss_guard_locked_request_file on pre_delete_attachment, src/functions/files.php), whatever the file was uploaded as, so every route obeys it; wpss_migrate_legacy_order_file() keeps the public copy of a locked file.",
+    "reports_entry_point": "wpss_render_report_link( type, id, owner_id, label ) + templates/partials/report-modal.php, hooked on wpss_single_service_sidebar and wpss_vendor_profile_sidebar; posts to POST wpss/v1/reports.",
+    "login_page": "Page definitions with takes_over => true are created by Activator::create_pages( $fresh_install ) only on a fresh install where Activator::site_uses_core_login() is true; never on update.",
+    "confirm_dialog": "wpssConfirm() focuses Cancel for every dialog; pass tone: 'danger' for a destructive action.",
+    "dashboard_assets": "do_action( 'wpss_enqueue_dashboard_assets' ) loads dashboard CSS/JS at render time; UnifiedDashboard::render() does it itself.",
+    "utc_migration": {
+      "note": "UtcMigration::step() is the one chunk runner (named lock + transaction); updated_at on ON_UPDATE_TABLES is decided per row by updated_at_utc().",
+      "late_values": "UtcMigration::plan() records every stored value that already reads later than the plan (state key 'late', keyed table:id:column, table:id:blob, metakey:id). written_since_plan() treats a value between the plan and now as a 1.8.0 write unless it is the recorded one. Replaces the audit/notification/message lookup."
+    },
+    "request_delete": {
+      "rule": "A buyer request a seller has proposed on can be closed, not deleted. A request with no proposal is moved to the trash.",
+      "authority": "BuyerRequestService::delete() (refuses when ! is_untouched()).",
+      "callers": [
+        "AjaxHandlers::delete_request (wp_ajax_wpss_delete_request)",
+        "BuyerRequestsController::delete_item (DELETE wpss/v1/buyer-requests/{id}, 409 wpss_request_has_proposals)"
+      ],
+      "core_hooks": "wpss_guard_proposed_request() on pre_trash_post and pre_delete_post; wpss_guard_proposed_request_status() on wp_insert_post_data keeps the stored status and post type. Both in src/functions/files.php. Administrators, WP-CLI and background jobs are not stopped; AccountDeletionService lifts both for a member's own requests.",
+      "known_gap": "The post type uses WordPress's post capabilities, so a member with an editing role can still change other fields (author) through core routes. Planned: own capability type in the version after 1.8.0."
+    },
+    "service_availability": {
+      "authority": "wpss_service_unavailable_reason( $service_id ) in src/functions/services.php: missing, unpublished, paused, seller on vacation, then the wpss_service_unavailable_reason filter.",
+      "callers": [
+        "CheckoutIntentService::price_service_line (every purchase path prices through it; WP_Error wpss_service_paused or wpss_service_unavailable, 409)",
+        "wpss_get_user_cart",
+        "CartController",
+        "StandaloneCheckoutProvider",
+        "StandaloneOrderProvider",
+        "Pro WCCheckoutProvider cart re-check"
+      ],
+      "listing_rule": "Vendors on vacation are left out with author__not_in = wpss_get_vacation_vendor_ids(): catalog, search, REST services, services grid, featured block, Related services (SingleServiceView), live search (AjaxHandlers)."
+    },
+    "request_deadline": "A request's deadline is stored as _wpss_expires_at (service key expires_at). REST create and update both map the 'deadline' parameter to it, and the response's 'deadline' field reads it back."
   }
 }

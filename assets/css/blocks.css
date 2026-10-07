@@ -92,24 +92,24 @@
 .wpss-grid-cols-2 .wpss-services-grid,
 .wpss-grid-cols-2 .wpss-categories-list,
 .wpss-grid-cols-2 .wpss-featured-slides {
-	grid-template-columns: repeat(2, 1fr);
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .wpss-grid-cols-3 .wpss-services-grid,
 .wpss-grid-cols-3 .wpss-categories-list,
 .wpss-grid-cols-3 .wpss-featured-slides {
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .wpss-grid-cols-4 .wpss-services-grid,
 .wpss-grid-cols-4 .wpss-categories-list,
 .wpss-grid-cols-4 .wpss-featured-slides {
-	grid-template-columns: repeat(4, 1fr);
+	grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .wpss-grid-cols-5 .wpss-services-grid,
 .wpss-grid-cols-5 .wpss-categories-list {
-	grid-template-columns: repeat(5, 1fr);
+	grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 /* Pagination */
@@ -454,8 +454,13 @@
 	object-fit: cover;
 }
 
+/* minmax(0, 1fr) tracks plus min-width: 0 here let a card shrink to a narrow
+   container (a 226px sidebar widget); a plain 1fr track stayed at the card's
+   content width and ran 17px past the widget. */
 .wpss-category-content {
 	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 .wpss-category-name {
@@ -468,6 +473,14 @@
 .wpss-category-count {
 	font-size: 0.8125rem;
 	color: var(--wpss-block-text-light);
+}
+
+/* The block's wrapper also carries .wpss-categories-grid, which frontend.css
+   uses for the category page grid (auto-fill, 260px minimum tracks). In a
+   226px sidebar widget that made the wrapper a 260px grid, 17px wider than
+   the widget. The block lays out with its own .wpss-categories-list. */
+.wpss-block.wpss-categories-grid {
+	display: block;
 }
 
 /* Grid layout for categories */
@@ -842,19 +855,8 @@
 	gap: 1rem;
 }
 
-.wpss-request-card {
-	background: var(--wpss-block-surface);
-	border: 1px solid var(--wpss-block-border);
-	border-radius: var(--wpss-block-radius);
-	margin-bottom: 1rem;
-	padding: 1.5rem;
-	transition: all 0.2s ease;
-}
-
-.wpss-request-card:hover {
-	border-color: var(--wpss-block-primary);
-	box-shadow: var(--wpss-block-shadow);
-}
+/* The request card itself is styled once, in buyer-request.css, which the
+   block loads; a second copy here gave the block different corners. */
 
 .wpss-request-header {
 	display: flex;
@@ -1063,7 +1065,7 @@
 	 * Service Categories — single-column compact list.
 	 */
 	.wpss-block .wpss-categories-list {
-		grid-template-columns: 1fr !important;
+		grid-template-columns: minmax(0, 1fr) !important;
 		gap: 0.5rem;
 	}
 	.wpss-block.wpss-categories-grid .wpss-category-card {
@@ -1096,7 +1098,7 @@
 @media screen and (max-width: 1024px) {
 	.wpss-grid-cols-5 .wpss-services-grid,
 	.wpss-grid-cols-5 .wpss-categories-list {
-		grid-template-columns: repeat(4, 1fr);
+		grid-template-columns: repeat(4, minmax(0, 1fr));
 	}
 
 	.wpss-featured-slide {
@@ -1109,12 +1111,12 @@
 	.wpss-grid-cols-4 .wpss-categories-list,
 	.wpss-grid-cols-5 .wpss-services-grid,
 	.wpss-grid-cols-5 .wpss-categories-list {
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
 	.wpss-grid-cols-3 .wpss-services-grid,
 	.wpss-grid-cols-3 .wpss-categories-list {
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
 	.wpss-featured-slide {

@@ -194,6 +194,40 @@ class EarningsController extends RestController {
 						),
 					),
 				),
+				// DELETE /withdrawals/{id} - The vendor cancels their own pending request.
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'cancel_withdrawal' ),
+					'permission_callback' => array( $this, 'check_vendor_permissions' ),
+				),
+			)
+		);
+
+		// GET|PUT /withdrawals/profile - The vendor's payout profile (where payouts go).
+		register_rest_route(
+			$this->namespace,
+			'/withdrawals/profile',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_payout_profile' ),
+					'permission_callback' => array( $this, 'check_vendor_permissions' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_payout_profile' ),
+					'permission_callback' => array( $this, 'check_vendor_permissions' ),
+					'args'                => array(
+						'method'  => array(
+							'type'     => 'string',
+							'required' => true,
+						),
+						'details' => array(
+							'type'     => 'object',
+							'required' => true,
+						),
+					),
+				),
 			)
 		);
 
@@ -393,30 +427,33 @@ class EarningsController extends RestController {
 			}
 
 			$items[] = array(
-				'id'              => (int) $row['id'],
-				'type'            => $row['type'],
-				'amount'          => (float) $row['amount'],
+				'id'               => (int) $row['id'],
+				'type'             => $row['type'],
+				'amount'           => (float) $row['amount'],
 				// Minor units alongside the float, as everywhere else money is
 				// returned. balance_after is not exposed: it is a stored running
 				// number that drifts from the ledger SUM; the balance comes from
 				// /earnings/summary.
-				'amount_minor'    => wpss_amount_to_minor_units( (float) $row['amount'], (string) $row['currency'] ),
+				'amount_minor'     => wpss_amount_to_minor_units( (float) $row['amount'], (string) $row['currency'] ),
 				// Whether this row REDUCES the balance. The client cannot infer
 				// it from the sign: debits are stored POSITIVE and the sign is
 				// applied on read from wpss_get_ledger_debit_types(), so a
 				// withdrawal rendered as "+90.00" — a payout looking like a
 				// credit. The server owns the debit-type list, so it answers
 				// here rather than the JS duplicating the rule.
-				'is_debit'        => in_array( $row['type'], wpss_get_ledger_debit_types(), true )
+				'is_debit'         => in_array( $row['type'], wpss_get_ledger_debit_types(), true )
 					|| (float) $row['amount'] < 0,
-				'currency'        => $row['currency'],
-				'description'     => $row['description'],
-				'reference_type'  => $reference_type,
-				'reference_id'    => $reference_id,
-				'reference_label' => $reference_label,
-				'reference_url'   => $reference_url,
-				'status'          => $row['status'],
-				'created_at'      => $this->format_datetime( $row['created_at'] ),
+				'currency'         => $row['currency'],
+				// Unsigned and formatted the way every other screen shows money
+				// ("$22.50"); the client prefixes the +/- from is_debit.
+				'amount_formatted' => wpss_format_price( abs( (float) $row['amount'] ), (string) $row['currency'] ),
+				'description'      => $row['description'],
+				'reference_type'   => $reference_type,
+				'reference_id'     => $reference_id,
+				'reference_label'  => $reference_label,
+				'reference_url'    => $reference_url,
+				'status'           => $row['status'],
+				'created_at'       => $this->format_datetime( $row['created_at'] ),
 			);
 		}
 
@@ -464,12 +501,6 @@ class EarningsController extends RestController {
 
 		$withdrawal_id = (int) $result['withdrawal_id'];
 
-		// Payout profile, so the auto-payout cron can find eligible vendors.
-		// Kept here rather than in the service: it is this endpoint's own
-		// convenience, not part of creating a withdrawal.
-		update_user_meta( $vendor_id, 'wpss_payout_method', $method );
-		update_user_meta( $vendor_id, 'wpss_payout_details', $details );
-
 		return new WP_REST_Response(
 			array(
 				'id'           => $withdrawal_id,
@@ -482,6 +513,48 @@ class EarningsController extends RestController {
 			),
 			201
 		);
+	}
+
+	/**
+	 * The caller's payout profile, with the fields each method needs.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_payout_profile( WP_REST_Request $request ): WP_REST_Response {
+		unset( $request );
+		$service = \WPSellServices\Services\EarningsService::class;
+		$profile = $service::get_payout_profile( get_current_user_id() );
+		$fields  = array();
+
+		foreach ( array_keys( $service::get_withdrawal_methods() ) as $method ) {
+			$fields[ $method ] = $service::get_payout_fields( $method );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'method'      => $profile['method'],
+				'details'     => $profile['details'],
+				'destination' => '' !== $profile['method'] ? $service::format_payout_destination( $profile['method'], $profile['details'] ) : '',
+				'fields'      => $fields,
+			)
+		);
+	}
+
+	/**
+	 * Save the caller's payout profile.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_payout_profile( WP_REST_Request $request ) {
+		$saved = \WPSellServices\Services\EarningsService::save_payout_profile( get_current_user_id(), (string) $request->get_param( 'method' ), (array) $request->get_param( 'details' ) );
+
+		return is_wp_error( $saved ) ? $saved : $this->get_payout_profile( $request );
 	}
 
 	/**
@@ -545,6 +618,31 @@ class EarningsController extends RestController {
 		}
 
 		return $this->paginated_response( $withdrawals, $total, $pagination['page'], $pagination['per_page'] );
+	}
+
+	/**
+	 * Cancel the caller's pending withdrawal.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|\WP_Error
+	 */
+	public function cancel_withdrawal( WP_REST_Request $request ) {
+		$result = ( new \WPSellServices\Services\EarningsService() )->cancel_withdrawal( (int) $request['id'], get_current_user_id() );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new WP_REST_Response(
+			array(
+				'id'      => (int) $request['id'],
+				'status'  => \WPSellServices\Services\EarningsService::WITHDRAWAL_CANCELLED,
+				'message' => __( 'Withdrawal cancelled. The amount is back in your available balance.', 'wp-sell-services' ),
+			),
+			200
+		);
 	}
 
 	/**

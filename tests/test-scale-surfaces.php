@@ -59,6 +59,18 @@ $buyer  = UserFactory::customer(
 $cleanup['users'][] = $vendor->ID;
 $cleanup['users'][] = $buyer->ID;
 
+// Seeded as the site owner. With service moderation on, a non-admin publish
+// is turned into pending at wp_insert_post_data, and the 60 fixtures would
+// wait for review instead of going live.
+$wpss_owner = get_users(
+	array(
+		'role'   => 'administrator',
+		'number' => 1,
+		'fields' => 'ID',
+	)
+);
+wp_set_current_user( (int) ( $wpss_owner[0] ?? 0 ) );
+
 for ( $i = 0; $i < 60; $i++ ) {
 	$service = ServiceFactory::simple( array( 'vendor_id' => $vendor->ID ) );
 	if ( is_object( $service ) && ! empty( $service->id ) ) {
@@ -176,10 +188,13 @@ if ( ! function_exists( 'wpss_count_pending_services' ) ) {
 	}
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	// The effective state (wpss_service_moderation_state_sql): a pending post
+	// with no moderation meta is pending too. Reading the meta alone agreed
+	// only on a clean install.
 	$direct = (int) $wpdb->get_var(
-		"SELECT COUNT(DISTINCT p.ID) FROM {$wpdb->posts} p
-		INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_wpss_moderation_status'
-		WHERE p.post_type = 'wpss_service' AND p.post_status IN ('pending', 'publish') AND pm.meta_value = 'pending'"
+		"SELECT COUNT(*) FROM {$wpdb->posts}
+		WHERE {$wpdb->posts}.post_type = 'wpss_service' AND {$wpdb->posts}.post_status IN ('pending', 'publish')
+		AND " . wpss_service_moderation_state_sql( $wpdb->posts ) . " = 'pending'"
 	);
 	$after  = wpss_count_pending_services();
 
@@ -194,7 +209,7 @@ if ( ! function_exists( 'wpss_count_pending_services' ) ) {
 	}
 }
 
-// 6. Admin dashboard aggregates: one query, then none.
+// 6. Admin dashboard aggregates: a fixed number of queries, then none.
 if ( ! function_exists( 'wpss_get_order_aggregates' ) ) {
 	$failures[] = 'wpss_get_order_aggregates() does not exist.';
 } else {
@@ -217,8 +232,11 @@ if ( ! function_exists( 'wpss_get_order_aggregates' ) ) {
 	$second = wpss_get_order_aggregates();
 	$total2 = count( (array) $wpdb->queries ) - $mark;
 
-	if ( 1 !== $hits1 ) {
-		$failures[] = "First aggregates call hit wpss_orders {$hits1} times - expected 1.";
+	// Two, not one, since 1.8.0: the status counts, plus revenue through the
+	// one revenue definition (wpss_get_revenue) rather than a private copy of
+	// its refund maths. Still bounded - never one query per row - and cached.
+	if ( 2 !== $hits1 ) {
+		$failures[] = "First aggregates call hit wpss_orders {$hits1} times - expected 2 (counts + revenue).";
 	}
 	if ( 0 !== $total2 ) {
 		$failures[] = "Second aggregates call ran {$total2} queries - expected 0 (cached).";

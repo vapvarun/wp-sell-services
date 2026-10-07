@@ -167,7 +167,7 @@ class Notification {
 			$wpdb->prefix . 'wpss_notifications',
 			[
 				'is_read' => 1,
-				'read_at' => current_time( 'mysql' ),
+				'read_at' => current_time( 'mysql', true ),
 			],
 			[ 'id' => $this->id ],
 			[ '%d', '%s' ],
@@ -176,7 +176,7 @@ class Notification {
 
 		if ( $result !== false ) {
 			$this->is_read = true;
-			$this->read_at = current_time( 'mysql' );
+			$this->read_at = current_time( 'mysql', true );
 			return true;
 		}
 
@@ -244,7 +244,7 @@ class Notification {
 			'type'       => $this->type,
 			'title'      => $this->title,
 			'message'    => $this->message,
-			'action_url' => $this->action_url,
+			'action_url' => wpss_get_notification_url( is_array( $this->data ) ? $this->data : array(), $this->action_url ),
 			'data'       => $this->data,
 			'is_read'    => $this->is_read,
 			'read_at'    => $this->read_at,

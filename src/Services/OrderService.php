@@ -121,6 +121,72 @@ class OrderService {
 	}
 
 	/**
+	 * Statuses a person may set directly on an order.
+	 *
+	 * Every real status except the ones that only mean something when their own
+	 * flow writes them - refunded and partially refunded (refund()), disputed
+	 * (DisputeService::open(), which creates the dispute) - and the three left
+	 * over from a vendor-acceptance step the product no longer has (pending,
+	 * accepted, rejected: nothing writes them, readers only honour old rows).
+	 * The admin status form, the admin order screen and REST PATCH read this.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return array<string, string> Status => label.
+	 */
+	public static function get_settable_statuses(): array {
+		return array_diff_key(
+			ServiceOrder::get_statuses(),
+			array_flip(
+				array(
+					ServiceOrder::STATUS_REFUNDED,
+					ServiceOrder::STATUS_PARTIALLY_REFUNDED,
+					ServiceOrder::STATUS_DISPUTED,
+					ServiceOrder::STATUS_PENDING,
+					ServiceOrder::STATUS_ACCEPTED,
+					ServiceOrder::STATUS_REJECTED,
+				)
+			)
+		);
+	}
+
+	/**
+	 * Gateway answers refund() already obtained, for the event in flight.
+	 *
+	 * The refund() method asks the gateway before it moves the status; the hook
+	 * then reads the answer from here instead of asking a second time. A null
+	 * entry means "asked, nothing was captured to refund".
+	 *
+	 * @since 1.8.0
+	 * @var array<int, array<string, mixed>|null>
+	 */
+	private static array $gateway_results = array();
+
+	/**
+	 * Whether refund() already ran the gateway step for this order's event.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return bool
+	 */
+	public static function has_gateway_result( int $order_id ): bool {
+		return array_key_exists( $order_id, self::$gateway_results );
+	}
+
+	/**
+	 * The gateway answer refund() obtained for this order's event.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return array<string, mixed>|null
+	 */
+	public static function get_gateway_result( int $order_id ): ?array {
+		return self::$gateway_results[ $order_id ] ?? null;
+	}
+
+	/**
 	 * Get order by ID.
 	 *
 	 * @param int $order_id Order ID.
@@ -244,47 +310,61 @@ class OrderService {
 	}
 
 	/**
-	 * Record how much is coming back, then move the order to a refund status.
+	 * Refund an order: ask the gateway first, record only what actually moved.
 	 *
-	 * These two writes are ordered the way they are for a reason: the refund
-	 * handlers read `refunded_amount` off the order DURING the status hook, to
-	 * size both the buyer's refund and the vendor's reversal. The amount has to
-	 * be on the row before the transition fires.
+	 * The gateway is asked FIRST, since 1.8.0. The status used to move before
+	 * the money did: the order read "refunded", the buyer's email went out and
+	 * the vendor was debited, and only then did the status hook ask the
+	 * gateway - which could say no (Basecamp 10331363649). Now a refusal
+	 * records nothing: the order keeps its status, the vendor keeps the credit,
+	 * and the order carries OrderWorkflowManager::REFUND_FAILED_META so the
+	 * admin can retry.
 	 *
-	 * That ordering is a trap, and it was live. update_status() returns false
-	 * for a refused transition, but by then the amount is already written — so
-	 * the order reads as "$50.00 refunded" on every display surface while
-	 * nothing was refunded and no money moved. Reproduced on a paid
-	 * `pending_requirements` order: the status the buyer/vendor refund handler
-	 * explicitly advertises as refundable, and which can_transition() refuses.
+	 * Once the money has moved, the amount is written BEFORE the status moves,
+	 * because the reversal handler on the status hook reads `refunded_amount`
+	 * off the row to size the vendor's share. If the transition is then refused
+	 * the write is undone, so the order never reads "$50.00 refunded" when
+	 * nothing was. Every caller that sets refunded_amount goes through here;
+	 * none may write the column and call update_status() themselves.
 	 *
-	 * So the write is undone whenever the order does not actually move. Every
-	 * caller that sets refunded_amount goes through here; none may write the
-	 * column and call update_status() themselves, or the trap comes straight
-	 * back.
+	 * @since 1.8.0
 	 *
-	 * @since 1.2.3
-	 *
-	 * @param int        $order_id Order ID.
-	 * @param float|null $amount   Amount refunded to the buyer. NULL, zero, or
-	 *                             anything at or above the order total means the
-	 *                             whole order.
-	 * @param string     $status   Target status.
-	 * @param bool       $settled_at_rail Whether the money already went back at
-	 *                                    the payment rail (a gateway-initiated
-	 *                                    refund arriving on a webhook). Suppresses
-	 *                                    the second gateway call only; the vendor
-	 *                                    reversal still runs. See
-	 *                                    self::$settled_at_rail.
-	 * @return bool True when the order actually moved.
+	 * @param int                  $order_id Order ID.
+	 * @param float|null           $amount   Amount refunded to the buyer. NULL, zero, or
+	 *                                       anything at or above the order total means the
+	 *                                       whole order.
+	 * @param string               $status   Target status.
+	 * @param array<string, mixed> $ctx      Optional: settled_at_rail (bool - the money
+	 *                                       already went back at the rail, a webhook;
+	 *                                       the gateway is not asked), origin (admin,
+	 *                                       vendor, dispute, webhook, retry),
+	 *                                       dispute_id (int), resolution (string).
+	 * @return array{ok: bool, outcome: string, amount: float, status_after: string, gateway: array<string, mixed>|null, message: string, retryable: bool}
+	 *         outcome: moved (gateway refunded), manual (admin must send it),
+	 *         settled_at_rail, recorded (nothing was captured to refund),
+	 *         failed (gateway refused - nothing recorded), refused (not refundable).
 	 */
-	public function apply_refund_status( int $order_id, ?float $amount, string $status, bool $settled_at_rail = false ): bool {
+	public function refund( int $order_id, ?float $amount, string $status, array $ctx = array() ): array {
 		global $wpdb;
+
+		$settled_at_rail = ! empty( $ctx['settled_at_rail'] );
+		$result          = static function ( bool $ok, string $outcome, float $delta, string $status_after, ?array $gateway = null, string $message = '' ): array {
+			return array(
+				'ok'           => $ok,
+				'outcome'      => $outcome,
+				'amount'       => $delta,
+				'status_after' => $status_after,
+				'gateway'      => $gateway,
+				'message'      => $message,
+				'retryable'    => 'failed' === $outcome,
+				'children'     => array(),
+			);
+		};
 
 		$order = $this->get( $order_id );
 
 		if ( ! $order ) {
-			return false;
+			return $result( false, 'refused', 0.0, '', null, __( 'Order not found.', 'wp-sell-services' ) );
 		}
 
 		$table    = $wpdb->prefix . 'wpss_orders';
@@ -298,7 +378,7 @@ class OrderService {
 
 		if ( $remaining <= 0 ) {
 			wpss_log( sprintf( 'Refused a refund on order %d: the full total %s is already refunded.', $order_id, (string) $total ), 'error' );
-			return false;
+			return $result( false, 'refused', 0.0, (string) $order->status, null, __( 'This order has already been refunded in full.', 'wp-sell-services' ) );
 		}
 
 		// A partial refund with no usable amount is refused, not promoted.
@@ -323,7 +403,7 @@ class OrderService {
 				'error'
 			);
 
-			return false;
+			return $result( false, 'refused', 0.0, (string) $order->status, null, __( 'A partial refund needs an amount greater than zero and less than the order total.', 'wp-sell-services' ) );
 		}
 
 		// A partial that covers exactly what is left completes the refund and
@@ -339,6 +419,40 @@ class OrderService {
 		}
 
 		$cumulative = round( $previous + $delta, $decimals );
+
+		// Refuse before any money moves if the order may not take this status.
+		// Asking afterwards is how a refunded buyer ended up on an order that
+		// still read "in progress".
+		if ( $order->status !== $status && ! $this->can_transition( (string) $order->status, $status ) ) {
+			wpss_log( sprintf( 'Refused a refund on order %d: "%s" cannot move to "%s".', $order_id, (string) $order->status, $status ), 'warning' );
+			return $result( false, 'refused', 0.0, (string) $order->status, null, __( 'This order cannot be refunded from its current status.', 'wp-sell-services' ) );
+		}
+
+		$gateway = null;
+
+		if ( ! $settled_at_rail ) {
+			$gateway = ( new OrderWorkflowManager() )->refund_at_gateway( $order, $delta, $delta < $remaining );
+
+			if ( is_array( $gateway ) && empty( $gateway['success'] ) && empty( $gateway['manual'] ) ) {
+				$message = (string) ( $gateway['message'] ?? '' );
+
+				OrderWorkflowManager::flag_refund_failed(
+					$order_id,
+					$delta,
+					$message,
+					array(
+						'status'     => $status,
+						'origin'     => (string) ( $ctx['origin'] ?? 'admin' ),
+						'dispute_id' => (int) ( $ctx['dispute_id'] ?? 0 ),
+						'resolution' => (string) ( $ctx['resolution'] ?? '' ),
+					)
+				);
+
+				return $result( false, 'failed', $delta, (string) $order->status, $gateway, '' !== $message ? $message : __( 'The payment gateway refused the refund.', 'wp-sell-services' ) );
+			}
+
+			self::$gateway_results[ $order_id ] = $gateway;
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update( $table, array( 'refunded_amount' => $cumulative ), array( 'id' => $order_id ), array( '%f' ), array( '%d' ) );
@@ -361,7 +475,7 @@ class OrderService {
 				$moved = $this->update_status( $order_id, $status, '', $order->status );
 			}
 		} finally {
-			unset( self::$refund_deltas[ $order_id ] );
+			unset( self::$refund_deltas[ $order_id ], self::$gateway_results[ $order_id ] );
 
 			if ( $settled_at_rail ) {
 				self::clear_settled_at_rail( $order_id );
@@ -385,9 +499,190 @@ class OrderService {
 				sprintf( 'Order %d: refund to "%s" was refused; refunded_amount restored.', $order_id, $status ),
 				'warning'
 			);
+
+			// ponytail: the transition was checked before the gateway call, so
+			// this only happens when the order changed underneath us in between.
+			// Money that moved is shouted about rather than reversed; a row lock
+			// around the whole event is the upgrade if this ever shows up in logs.
+			if ( is_array( $gateway ) && ! empty( $gateway['success'] ) && empty( $gateway['manual'] ) ) {
+				wpss_log( sprintf( 'Order %d: the gateway refunded %s but the order could not be moved to "%s". Record the refund by hand.', $order_id, (string) $delta, $status ), 'error' );
+				( new AuditLogService() )->log(
+					'order.refund_unrecorded',
+					'order',
+					$order_id,
+					array(
+						'action'  => 'refund',
+						'context' => array(
+							'amount' => $delta,
+							'status' => $status,
+						),
+					)
+				);
+			}
+
+			return $result( false, 'refused', 0.0, (string) $order->status, $gateway, __( 'The order changed while the refund was being recorded. Reload it and check its status.', 'wp-sell-services' ) );
 		}
 
-		return $moved;
+		OrderWorkflowManager::clear_failed_refund( $order_id );
+
+		if ( is_array( $gateway ) && ! empty( $gateway['success'] ) ) {
+			OrderWorkflowManager::remember_gateway_refund( $order_id, (string) ( $gateway['refund_id'] ?? '' ) );
+		}
+
+		// A full refund returns everything the buyer paid for this order,
+		// including the extensions and tips they paid for separately. The seam
+		// used to stop at the parent, so the extension stayed completed and
+		// credited - the buyer never got it back and the vendor kept it
+		// (Basecamp 10336467671). A refund that started at the rail is left
+		// alone: those children were separate charges the rail did not touch,
+		// so they are listed for the owner instead of refunded blind.
+		$children = array();
+
+		if ( ServiceOrder::STATUS_REFUNDED === $status && ! $settled_at_rail && 'cascade' !== ( $ctx['origin'] ?? '' ) ) {
+			$children = $this->refund_paid_children( $order_id );
+		}
+
+		if ( $settled_at_rail ) {
+			$outcome = 'settled_at_rail';
+
+			// The money is already back, so a full refund closes the payment
+			// here. The admin path closes it after its own gateway call; a
+			// Stripe or PayPal dashboard refund used to leave the order
+			// refunded with its payment still "paid".
+			if ( ServiceOrder::STATUS_REFUNDED === $status ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->update( $table, array( 'payment_status' => 'refunded' ), array( 'id' => $order_id ), array( '%s' ), array( '%d' ) );
+			}
+		} elseif ( null === $gateway ) {
+			$outcome = 'recorded';
+		} else {
+			$outcome = empty( $gateway['manual'] ) ? 'moved' : 'manual';
+		}
+
+		$recorded             = $result( true, $outcome, $delta, $status, $gateway );
+		$recorded['children'] = $children;
+
+		// A dispute ruling resolves its own dispute; every other full refund
+		// leaves nothing to dispute (Basecamp 10372723332).
+		if ( ServiceOrder::STATUS_REFUNDED === $status && 'dispute' !== ( $ctx['origin'] ?? '' ) ) {
+			( new DisputeService() )->close_for_refund( $order_id, (string) ( $ctx['origin'] ?? 'admin' ) );
+		}
+
+		return $recorded;
+	}
+
+	/**
+	 * Refund the paid extensions and tips hanging off an order.
+	 *
+	 * Each child goes through refund() on its own - its own gateway charge, its
+	 * own vendor reversal, its own failed flag if the gateway refuses. A child
+	 * that fails does not undo the parent: the buyer got that money back.
+	 * Milestone phases are not included; they are paid and settled as their
+	 * own orders.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $parent_id Parent order ID.
+	 * @return array<int, string> Child order ID => refund outcome.
+	 */
+	public function refund_paid_children( int $parent_id ): array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one indexed lookup (idx_platform) per full refund.
+		$child_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}wpss_orders
+				WHERE platform IN (%s, %s) AND platform_order_id = %d
+				AND payment_status = 'paid' AND status <> %s
+				ORDER BY id ASC",
+				ServiceOrder::SUB_ORDER_TYPE_EXTENSION,
+				ServiceOrder::SUB_ORDER_TYPE_TIP,
+				$parent_id,
+				ServiceOrder::STATUS_REFUNDED
+			)
+		);
+
+		$outcomes = array();
+
+		foreach ( array_map( 'intval', $child_ids ) as $child_id ) {
+			$child_result          = $this->refund( $child_id, null, ServiceOrder::STATUS_REFUNDED, array( 'origin' => 'cascade' ) );
+			$outcomes[ $child_id ] = $child_result['outcome'];
+		}
+
+		return $outcomes;
+	}
+
+	/**
+	 * Apply a refund and report only whether the order moved.
+	 *
+	 * Kept for callers written before refund() returned the outcome. A refund
+	 * the gateway refused now returns false here - the order did not move.
+	 *
+	 * @since 1.2.3
+	 *
+	 * @param int        $order_id        Order ID.
+	 * @param float|null $amount          Amount refunded to the buyer; NULL means the remainder.
+	 * @param string     $status          Target status.
+	 * @param bool       $settled_at_rail Whether the money already went back at the rail.
+	 * @return bool True when the order actually moved.
+	 */
+	public function apply_refund_status( int $order_id, ?float $amount, string $status, bool $settled_at_rail = false ): bool {
+		return $this->refund( $order_id, $amount, $status, array( 'settled_at_rail' => $settled_at_rail ) )['ok'];
+	}
+
+	/**
+	 * Try again a refund the gateway refused.
+	 *
+	 * Replays what OrderWorkflowManager::REFUND_FAILED_META recorded. A refund
+	 * that came from a dispute ruling is replayed through the dispute, so the
+	 * dispute closes when the money finally moves.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $order_id Order ID.
+	 * @return array Same shape as refund().
+	 */
+	public function retry_refund( int $order_id ): array {
+		$failed = OrderWorkflowManager::get_failed_refund( $order_id );
+
+		if ( null === $failed ) {
+			return array(
+				'ok'           => false,
+				'outcome'      => 'refused',
+				'amount'       => 0.0,
+				'status_after' => '',
+				'gateway'      => null,
+				'message'      => __( 'There is no failed refund to retry on this order.', 'wp-sell-services' ),
+				'retryable'    => false,
+			);
+		}
+
+		// ponytail: no gateway idempotency key. Stripe caches a failed request
+		// under its key for 24h, so a keyed retry after the admin fixes the
+		// cause would replay the old failure. The timeout case (the first
+		// attempt really went through) heals itself: the rail's refund webhook
+		// records it via handle_gateway_refund(), which clears this flag and
+		// the Retry box with it. Upgrade path if webhooks are missing: look up
+		// existing refunds on the charge before retrying.
+		$status = (string) $failed['status'];
+		$amount = ServiceOrder::STATUS_PARTIALLY_REFUNDED === $status ? (float) $failed['amount'] : null;
+
+		if ( 'dispute' === $failed['origin'] && ! empty( $failed['dispute_id'] ) ) {
+			$disputes = new DisputeService();
+			$ok       = $disputes->resolve( (int) $failed['dispute_id'], (string) $failed['resolution'], __( 'Refund retried after the gateway refused it.', 'wp-sell-services' ), get_current_user_id(), (float) ( $amount ?? 0.0 ) );
+
+			return array(
+				'ok'           => $ok,
+				'outcome'      => $ok ? 'moved' : 'failed',
+				'amount'       => (float) $failed['amount'],
+				'status_after' => $ok ? $status : '',
+				'gateway'      => null,
+				'message'      => $ok ? '' : $disputes->last_error(),
+				'retryable'    => ! $ok,
+			);
+		}
+
+		return $this->refund( $order_id, $amount, $status, array( 'origin' => 'retry' ) );
 	}
 
 	/**
@@ -411,6 +706,16 @@ class OrderService {
 		}
 
 		$old_status = $order->status;
+
+		// Refunded and partially refunded are money facts, written only by
+		// refund(), which sizes the amount and asks the gateway first. A bare
+		// status change to either used to fire the refund handlers with nothing
+		// sized and nothing asked.
+		if ( in_array( $new_status, array( ServiceOrder::STATUS_REFUNDED, ServiceOrder::STATUS_PARTIALLY_REFUNDED ), true )
+			&& ! isset( self::$refund_deltas[ $order_id ] ) ) {
+			wpss_log( sprintf( 'Order %d: "%s" can only be reached through OrderService::refund(); not applied.', $order_id, $new_status ), 'warning' );
+			return false;
+		}
 
 		if ( '' !== $expected_from && $expected_from !== $old_status ) {
 			wpss_log( sprintf( 'Order %d: expected status "%s" but found "%s"; "%s" not applied.', $order_id, $expected_from, $old_status, $new_status ), 'warning' );
@@ -450,16 +755,16 @@ class OrderService {
 
 		$data = array(
 			'status'     => $new_status,
-			'updated_at' => current_time( 'mysql' ),
+			'updated_at' => current_time( 'mysql', true ),
 		);
 
 		// Set timestamps based on status.
 		if ( ServiceOrder::STATUS_IN_PROGRESS === $new_status && ! $order->started_at ) {
-			$data['started_at'] = current_time( 'mysql' );
+			$data['started_at'] = current_time( 'mysql', true );
 		}
 
 		if ( ServiceOrder::STATUS_COMPLETED === $new_status ) {
-			$data['completed_at'] = current_time( 'mysql' );
+			$data['completed_at'] = current_time( 'mysql', true );
 		}
 
 		// Conditioned on the status just read: a concurrent writer that moved
@@ -513,6 +818,14 @@ class OrderService {
 	 * @return bool
 	 */
 	public function can_transition( string $from, string $to ): bool {
+		// A status that does not exist is refused for everyone, admins
+		// included. The capability bypass below used to accept any string, so
+		// "banana" was stored and the order lost every action it had
+		// (Basecamp 10336370527).
+		if ( ! isset( ServiceOrder::get_statuses()[ $to ] ) ) {
+			return false;
+		}
+
 		// Only site staff (wpss_manage_orders is admin-side; vendors hold
 		// wpss_vendor_orders, which never reaches here) can force a status
 		// transition. The forcing is audited downstream via
@@ -575,7 +888,6 @@ class OrderService {
 				ServiceOrder::STATUS_LATE,
 				ServiceOrder::STATUS_CANCELLATION_REQUESTED,
 				ServiceOrder::STATUS_DELIVERED,
-				ServiceOrder::STATUS_DISPUTED,
 				// Milestone-contract parents skip pending_approval because every
 				// phase has its own submit + approve cycle; when the last phase
 				// closes, the parent auto-flips straight from in_progress to
@@ -585,20 +897,19 @@ class OrderService {
 			ServiceOrder::STATUS_PENDING_APPROVAL       => array(
 				ServiceOrder::STATUS_COMPLETED,
 				ServiceOrder::STATUS_REVISION_REQUESTED,
-				ServiceOrder::STATUS_DISPUTED,
 				ServiceOrder::STATUS_CANCELLED,
 			),
 			ServiceOrder::STATUS_REVISION_REQUESTED     => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
-				ServiceOrder::STATUS_DISPUTED,
+				// Past the revision's own deadline (check_late_orders()).
+				ServiceOrder::STATUS_LATE,
 			),
 			ServiceOrder::STATUS_LATE                   => array(
 				ServiceOrder::STATUS_IN_PROGRESS,
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_CANCELLED,
-				ServiceOrder::STATUS_DISPUTED,
 				ServiceOrder::STATUS_DELIVERED,
 			),
 			ServiceOrder::STATUS_ON_HOLD                => array(
@@ -607,7 +918,6 @@ class OrderService {
 			),
 			ServiceOrder::STATUS_CANCELLATION_REQUESTED => array(
 				ServiceOrder::STATUS_CANCELLED,
-				ServiceOrder::STATUS_DISPUTED,
 				ServiceOrder::STATUS_IN_PROGRESS,
 			),
 			// The four rulings, plus every status a dispute can be opened from:
@@ -640,7 +950,6 @@ class OrderService {
 				ServiceOrder::STATUS_PENDING_APPROVAL,
 				ServiceOrder::STATUS_DELIVERED,
 				ServiceOrder::STATUS_COMPLETED,
-				ServiceOrder::STATUS_DISPUTED,
 				ServiceOrder::STATUS_CANCELLED,
 				ServiceOrder::STATUS_REFUNDED,
 			),
@@ -662,9 +971,16 @@ class OrderService {
 			ServiceOrder::STATUS_DELIVERED              => array(
 				ServiceOrder::STATUS_COMPLETED,
 				ServiceOrder::STATUS_REVISION_REQUESTED,
-				ServiceOrder::STATUS_DISPUTED,
 			),
 		);
+
+		// Every -> disputed edge comes from the one list DisputeService opens
+		// from. They were written out by hand here and missed completed, so a
+		// buyer inside the dispute window saw the button and every submit
+		// failed (Basecamp 10336467327). The window itself is open_guard()'s.
+		foreach ( DisputeService::dispute_source_statuses() as $dispute_source ) {
+			$transitions[ $dispute_source ][] = ServiceOrder::STATUS_DISPUTED;
+		}
 
 		// Refund is a money action, not a workflow step: policy is that any PAID
 		// order is refundable at any stage (quality problems surface after
@@ -758,12 +1074,35 @@ class OrderService {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$table,
-				array( 'started_at' => current_time( 'mysql' ) ),
+				array( 'started_at' => current_time( 'mysql', true ) ),
 				array( 'id' => $order_id )
 			);
 		}
 
 		return true;
+	}
+
+	/**
+	 * How many days the vendor has to deliver this order: the package's
+	 * delivery time plus any add-on days (at least 1).
+	 *
+	 * Shared by the first deadline (requirements submitted) and a revision's
+	 * deadline (DeliveryService::request_revision()), so both count the same.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param ServiceOrder $order Order.
+	 * @return int Days.
+	 */
+	public function get_delivery_days( ServiceOrder $order ): int {
+		// The package the buyer paid for (frozen snapshot, proposal, or the
+		// live package by stable id) and the add-ons on the order, Express
+		// included. Indexing _wpss_packages by package_id missed every order
+		// carrying a stable id (1000+) and fell to 7 days.
+		// An order with no package (a service sold without packages, or one
+		// since deleted) has no snapshot; it takes the default days rather
+		// than fataling the payment or requirements step.
+		return wpss_line_delivery_days( $order->get_package_snapshot() ?? array(), is_array( $order->addons ) ? $order->addons : array() );
 	}
 
 	/**
@@ -785,23 +1124,7 @@ class OrderService {
 			return;
 		}
 
-		$service       = $order->get_service();
-		$delivery_days = 7;
-
-		if ( $service ) {
-			$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: array();
-			if ( isset( $packages[ $order->package_id ] ) ) {
-				$delivery_days = (int) ( $packages[ $order->package_id ]['delivery_days'] ?? 7 );
-			}
-		}
-
-		// Add addon delivery days (can be negative for rush delivery).
-		if ( ! empty( $order->addons ) && is_array( $order->addons ) ) {
-			foreach ( $order->addons as $addon ) {
-				$delivery_days += (int) ( $addon['delivery_days_extra'] ?? 0 );
-			}
-			$delivery_days = max( 1, $delivery_days );
-		}
+		$delivery_days = $this->get_delivery_days( $order );
 
 		$deadline = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
 
@@ -841,7 +1164,7 @@ class OrderService {
 		$wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$table} SET revisions_used = revisions_used + 1, updated_at = %s WHERE id = %d",
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				$order_id
 			)
 		);
@@ -869,9 +1192,10 @@ class OrderService {
 	 * @param int    $order_id Order ID.
 	 * @param int    $user_id  User ID requesting cancellation.
 	 * @param string $reason   Cancellation reason.
+	 * @param string $note     Optional details the person typed; kept with the reason.
 	 * @return array{success: bool, message?: string}
 	 */
-	public function cancel( int $order_id, int $user_id, string $reason = '' ): array {
+	public function cancel( int $order_id, int $user_id, string $reason = '', string $note = '' ): array {
 		$order = $this->get( $order_id );
 
 		if ( ! $order ) {
@@ -889,10 +1213,34 @@ class OrderService {
 			);
 		}
 
-		// Update status to cancelled.
-		$updated = $this->update_status( $order_id, ServiceOrder::STATUS_CANCELLED, $reason );
+		// The reason and details typed with an immediate cancel go where a
+		// cancellation REQUEST keeps them - the order's own cancellation record,
+		// which both order screens and the admin screen read. They used to reach
+		// only the audit row, as a raw key, and were shown nowhere (Basecamp
+		// 10351457462). While the order is waiting on a cancellation request,
+		// the record is that request being accepted and is kept. A record left
+		// by a request that was turned down earlier is replaced: it used to
+		// win, so a later cancel showed the old reason.
+		global $wpdb;
+		$note     = sanitize_textarea_field( $note );
+		$reason   = sanitize_text_field( $reason );
+		$old_meta = '';
+		$stored   = false;
+
+		if ( ( '' !== $reason || '' !== $note ) && ( ServiceOrder::STATUS_CANCELLATION_REQUESTED !== $order->status || null === $order->get_cancellation_request() ) ) {
+			$old_meta = $this->store_cancellation( $order_id, $reason, $note, $user_id );
+			$stored   = null !== $old_meta;
+		}
+
+		$label   = wpss_get_cancellation_reason_label( $reason );
+		$updated = $this->update_status( $order_id, ServiceOrder::STATUS_CANCELLED, '' !== $note ? trim( $label . ' - ' . $note, ' -' ) : $label );
 
 		if ( ! $updated ) {
+			if ( $stored ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->update( $wpdb->prefix . 'wpss_orders', array( 'meta' => '' === $old_meta ? null : $old_meta ), array( 'id' => $order_id ) );
+			}
+
 			return array(
 				'success' => false,
 				'message' => __( 'Failed to cancel order.', 'wp-sell-services' ),
@@ -900,6 +1248,41 @@ class OrderService {
 		}
 
 		return array( 'success' => true );
+	}
+
+	/**
+	 * Write an order's cancellation record: who, why, the details, when.
+	 *
+	 * The one writer, for a cancellation request and for an immediate cancel.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int    $order_id Order ID.
+	 * @param string $reason   Reason key, or free text.
+	 * @param string $note     Details typed with it.
+	 * @param int    $user_id  Who is cancelling.
+	 * @return string|null The meta JSON as it was, to put back if the status
+	 *                     change is refused; null when the write failed.
+	 */
+	private function store_cancellation( int $order_id, string $reason, string $note, int $user_id ): ?string {
+		global $wpdb;
+
+		$table    = $wpdb->prefix . 'wpss_orders';
+		$old_meta = (string) $wpdb->get_var( $wpdb->prepare( "SELECT meta FROM {$table} WHERE id = %d", $order_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$meta     = json_decode( $old_meta, true );
+		$meta     = is_array( $meta ) ? $meta : array();
+
+		$meta['cancellation_request'] = array(
+			'reason'       => $reason,
+			'note'         => sanitize_textarea_field( $note ),
+			'requested_by' => $user_id,
+			'requested_at' => current_time( 'mysql', true ),
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$written = $wpdb->update( $table, array( 'meta' => wp_json_encode( $meta ) ), array( 'id' => $order_id ) );
+
+		return false === $written ? null : $old_meta;
 	}
 
 	/**
@@ -959,28 +1342,16 @@ class OrderService {
 			);
 		}
 
-		// Store reason in vendor_notes first so status-change hooks can access it.
-		$cancel_data = wp_json_encode(
-			array(
-				'reason'       => sanitize_key( $reason ),
-				'note'         => sanitize_textarea_field( $note ),
-				'requested_by' => $user_id,
-				'requested_at' => current_time( 'mysql' ),
-			)
-		);
-
+		// Stored in the order's meta, not vendor_notes, before the status
+		// moves, so the status hooks (notification, email) can read it. The
+		// 48-hour auto-cancel timer reads requested_at from here, which is
+		// exactly why it must not live in a field anyone else can write
+		// (Basecamp 10336370631).
 		global $wpdb;
-		$table     = $wpdb->prefix . 'wpss_orders';
-		$old_notes = $order->vendor_notes;
+		$table    = $wpdb->prefix . 'wpss_orders';
+		$old_meta = $this->store_cancellation( $order_id, sanitize_key( $reason ), $note, $user_id );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$notes_written = $wpdb->update(
-			$table,
-			array( 'vendor_notes' => $cancel_data ),
-			array( 'id' => $order_id )
-		);
-
-		if ( false === $notes_written ) {
+		if ( null === $old_meta ) {
 			return array(
 				'success' => false,
 				'message' => __( 'Failed to save cancellation details.', 'wp-sell-services' ),
@@ -994,11 +1365,11 @@ class OrderService {
 		);
 
 		if ( ! $updated ) {
-			// Rollback vendor_notes on status transition failure.
+			// Put meta back exactly as it was when the transition is refused.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$table,
-				array( 'vendor_notes' => $old_notes ),
+				array( 'meta' => '' === $old_meta ? null : $old_meta ),
 				array( 'id' => $order_id )
 			);
 
@@ -1045,7 +1416,7 @@ class OrderService {
 			$table,
 			array(
 				'delivery_deadline' => $new_deadline->format( 'Y-m-d H:i:s' ),
-				'updated_at'        => current_time( 'mysql' ),
+				'updated_at'        => current_time( 'mysql', true ),
 			),
 			array( 'id' => $order_id )
 		);

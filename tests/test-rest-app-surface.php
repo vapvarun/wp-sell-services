@@ -81,7 +81,7 @@ if ( is_wp_error( $lock_user ) ) {
 
 	foreach ( array( '198.51.100.1', '198.51.100.2', '203.0.113.10' ) as $ip ) {
 		foreach ( array( 'login', 'forgot_password' ) as $action ) {
-			delete_transient( 'wpss_rate_' . $action . '_' . md5( $ip ) );
+			delete_transient( 'wpss_rate_auth_' . $action . '_ip_' . md5( $ip ) );
 		}
 	}
 	delete_transient( 'wpss_login_lock_' . md5( strtolower( $login ) ) );

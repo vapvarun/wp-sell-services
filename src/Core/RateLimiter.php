@@ -30,23 +30,23 @@ class RateLimiter {
 	 * @var array<string, array{requests: int, window: int}>
 	 */
 	private const DEFAULT_LIMITS = array(
-		'message'          => array(
+		'message'              => array(
 			'requests' => 30,
 			'window'   => 60,
 		), // 30 messages per minute.
-		'review'           => array(
+		'review'               => array(
 			'requests' => 5,
 			'window'   => 3600,
 		), // 5 reviews per hour.
-		'dispute'          => array(
+		'dispute'              => array(
 			'requests' => 3,
 			'window'   => 3600,
 		), // 3 disputes per hour.
-		'service_create'   => array(
+		'service_create'       => array(
 			'requests' => 10,
 			'window'   => 3600,
 		), // 10 services per hour.
-		'vendor_register'  => array(
+		'vendor_register'      => array(
 			'requests' => 3,
 			'window'   => 86400,
 		), // 3 attempts per day.
@@ -57,7 +57,7 @@ class RateLimiter {
 		// 20/hour is far above any genuine buyer's behaviour and still a real
 		// ceiling on scripted abuse; raise it with the wpss_rate_limits filter on
 		// a high-traffic site.
-		'checkout_account' => array(
+		'checkout_account'     => array(
 			'requests' => 20,
 			'window'   => 3600,
 		),
@@ -66,45 +66,59 @@ class RateLimiter {
 		// ceiling and the same CGNAT reasoning. It had NO limit at all, and no
 		// registration check either, so a script could mint vendor accounts
 		// without pause (Basecamp 10321653411).
-		'public_signup'    => array(
+		'public_signup'        => array(
 			'requests' => 20,
 			'window'   => 3600,
 		),
 		// 5 WRONG passwords per hour on DELETE /me. Only failures are charged,
 		// so this is a guessing ceiling, not a budget an honest member spends.
-		'account_delete'   => array(
+		'account_delete'       => array(
 			'requests' => 5,
 			'window'   => 3600,
 		),
-		'file_upload'      => array(
+		'file_upload'          => array(
 			'requests' => 50,
 			'window'   => 3600,
 		), // 50 uploads per hour.
-		'helpful_vote'     => array(
+		'helpful_vote'         => array(
 			'requests' => 20,
 			'window'   => 60,
 		), // 20 votes per minute.
-		'live_search'      => array(
+		'live_search'          => array(
 			'requests' => 30,
 			'window'   => 60,
 		), // 30 live-search queries per minute (per IP for guests, per user for logged-in).
-		'contact'          => array(
+		'contact'              => array(
 			'requests' => 5,
 			'window'   => 300,
 		), // 5 contact requests per 5 minutes.
-		'order_action'     => array(
+		'order_action'         => array(
 			'requests' => 30,
 			'window'   => 60,
 		), // 30 order actions per minute.
-		'requirements'     => array(
+		'requirements'         => array(
 			'requests' => 10,
 			'window'   => 60,
 		), // 10 requirement submissions per minute.
-		'delivery'         => array(
+		'delivery'             => array(
 			'requests' => 10,
 			'window'   => 3600,
 		), // 10 deliveries per hour.
-		'default'          => array(
+		// REST auth for the app, per IP. These were a second limiter inside
+		// AuthController, keyed on REMOTE_ADDR alone.
+		'auth_login'           => array(
+			'requests' => 5,
+			'window'   => 300,
+		),
+		'auth_register'        => array(
+			'requests' => 3,
+			'window'   => 600,
+		),
+		'auth_forgot_password' => array(
+			'requests' => 3,
+			'window'   => 600,
+		),
+		'default'              => array(
 			'requests' => 60,
 			'window'   => 60,
 		), // 60 requests per minute default.
@@ -243,8 +257,8 @@ class RateLimiter {
 		}
 
 		// Fall back to IP address for guests.
-		$ip = self::get_client_ip();
-		return 'ip_' . md5( $ip );
+		$ip = wpss_client_ip();
+		return 'ip_' . md5( '' !== $ip ? $ip : '0.0.0.0' );
 	}
 
 	/**
@@ -276,35 +290,6 @@ class RateLimiter {
 		return apply_filters( 'wpss_rate_limits', $limits, $action );
 	}
 
-	/**
-	 * Get client IP address.
-	 *
-	 * @return string Client IP.
-	 */
-	private static function get_client_ip(): string {
-		$headers = array(
-			'HTTP_CF_CONNECTING_IP', // Cloudflare.
-			'HTTP_X_FORWARDED_FOR',
-			'HTTP_X_REAL_IP',
-			'REMOTE_ADDR',
-		);
-
-		foreach ( $headers as $header ) {
-			if ( ! empty( $_SERVER[ $header ] ) ) {
-				$ip = sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) );
-				// Handle comma-separated IPs (X-Forwarded-For).
-				if ( strpos( $ip, ',' ) !== false ) {
-					$ips = explode( ',', $ip );
-					$ip  = trim( $ips[0] );
-				}
-				if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-					return $ip;
-				}
-			}
-		}
-
-		return '0.0.0.0';
-	}
 
 	/**
 	 * Send rate limit exceeded error.

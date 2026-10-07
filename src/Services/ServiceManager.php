@@ -119,7 +119,7 @@ class ServiceManager {
 				'post_content' => wp_kses_post( $data['content'] ),
 				'post_excerpt' => sanitize_textarea_field( $data['excerpt'] ),
 				'post_author'  => absint( $data['author'] ),
-				'post_status'  => $data['status'],
+				'post_status'  => 'draft', // Settled below once the meta is in.
 			),
 			true
 		);
@@ -176,6 +176,8 @@ class ServiceManager {
 		if ( ! empty( $data['requirements'] ) ) {
 			$this->save_requirements( $post_id, $data['requirements'] );
 		}
+
+		wpss_settle_service_status( (int) $post_id, (string) $data['status'] );
 
 		/**
 		 * Fires after a service is created.
@@ -452,30 +454,12 @@ class ServiceManager {
 		}
 
 		// Orderby.
-		switch ( $args['orderby'] ) {
-			case 'price_low':
-				$query_args['meta_key'] = '_wpss_starting_price'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['orderby']  = 'meta_value_num';
-				$query_args['order']    = 'ASC';
-				break;
-			case 'price_high':
-				$query_args['meta_key'] = '_wpss_starting_price'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['orderby']  = 'meta_value_num';
-				$query_args['order']    = 'DESC';
-				break;
-			case 'rating':
-				$query_args['meta_key'] = '_wpss_rating_average'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['orderby']  = 'meta_value_num';
-				$query_args['order']    = 'DESC';
-				break;
-			case 'popular':
-				$query_args['meta_key'] = '_wpss_order_count'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				$query_args['orderby']  = 'meta_value_num';
-				$query_args['order']    = 'DESC';
-				break;
-			default:
-				$query_args['orderby'] = $args['orderby'];
-				$query_args['order']   = $args['order'];
+		$orderby = (string) $args['orderby'];
+		if ( 'newest' === $orderby || isset( wpss_service_meta_sorts()[ $orderby ] ) ) {
+			$query_args = wpss_apply_service_sort( $query_args, $orderby );
+		} else {
+			$query_args['orderby'] = $args['orderby'];
+			$query_args['order']   = $args['order'];
 		}
 
 		$query = new \WP_Query( $query_args );
@@ -574,30 +558,6 @@ class ServiceManager {
 	 */
 	private function delete_requirements( int $service_id ): void {
 		delete_post_meta( $service_id, '_wpss_requirements' );
-	}
-
-	/**
-	 * Update service rating.
-	 *
-	 * @param int   $service_id Service post ID.
-	 * @param float $average    Average rating.
-	 * @param int   $count      Total review count.
-	 * @return void
-	 */
-	public function update_rating( int $service_id, float $average, int $count ): void {
-		update_post_meta( $service_id, '_wpss_rating_average', $average );
-		update_post_meta( $service_id, '_wpss_rating_count', $count );
-	}
-
-	/**
-	 * Increment order count.
-	 *
-	 * @param int $service_id Service post ID.
-	 * @return void
-	 */
-	public function increment_order_count( int $service_id ): void {
-		$count = (int) get_post_meta( $service_id, '_wpss_order_count', true );
-		update_post_meta( $service_id, '_wpss_order_count', $count + 1 );
 	}
 
 	/**

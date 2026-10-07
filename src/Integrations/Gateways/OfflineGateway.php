@@ -61,6 +61,20 @@ class OfflineGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * Checkout button words: nothing is charged at checkout, so not "Pay".
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param float  $total    Order total.
+	 * @param string $currency Currency code.
+	 * @return string
+	 */
+	public function get_checkout_button_label( float $total, string $currency ): string {
+		unset( $total, $currency );
+		return __( 'Place order', 'wp-sell-services' );
+	}
+
+	/**
 	 * Get the gateway display name.
 	 *
 	 * @return string
@@ -290,7 +304,8 @@ class OfflineGateway implements PaymentGatewayInterface {
 			$methods = array(
 				array(
 					'id'           => 'offline',
-					'label'        => $settings['title'] ?? __( 'Offline Payment', 'wp-sell-services' ),
+					// A saved but empty title left the method nameless.
+					'label'        => '' !== (string) ( $settings['title'] ?? '' ) ? (string) $settings['title'] : __( 'Offline Payment', 'wp-sell-services' ),
 					'instructions' => $settings['instructions'] ?? '',
 					'enabled'      => true,
 				),
@@ -750,78 +765,16 @@ class OfflineGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		// Self-purchase check: vendors cannot buy their own service.
-		$service_post = get_post( $service_id );
-		if ( $service_post && (int) $service_post->post_author === get_current_user_id() ) {
-			wp_send_json_error( array( 'message' => __( 'You cannot purchase your own service.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Get service and package details.
-		$service = wpss_get_service( $service_id );
-
-		if ( ! $service ) {
-			wp_send_json_error( array( 'message' => __( 'Service not found.', 'wp-sell-services' ) ) );
-			return;
-		}
-
-		// Calculate price from package.
-		$packages = wpss_get_service_packages( $service_id );
-		$price    = 0;
-
-		if ( isset( $packages[ $package_id ] ) ) {
-			$price = (float) ( $packages[ $package_id ]['price'] ?? 0 );
-		}
-
-		// Fallback to starting price.
-		if ( $price <= 0 ) {
-			$price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-		}
-
-		// Apply quantity.
-		$price *= $quantity;
-
-		// Resolve selected addons from POST data.
-		$addon_data   = wpss_resolve_checkout_addons( $service_id );
-		$addons_total = $addon_data['addons_total'];
-
-		/*
-		 * The owner's min/max order amount, same as Stripe and PayPal.
-		 *
-		 * Those rails get it from CheckoutIntentService::resolve(); this handler
-		 * prices the order itself and never called resolve(), so a $2,500 order
-		 * checked out cleanly against a $10 maximum (Basecamp 10304350394). A
-		 * limit the owner sets is a marketplace rule, not a property of one
-		 * payment method.
-		 */
-		$limit_error = wpss_check_order_limits( (float) ( $price + $addons_total ), 'offline' );
-
-		if ( null !== $limit_error ) {
-			wp_send_json_error( array( 'message' => $limit_error->get_error_message() ) );
-			return;
-		}
-
-		// Get order provider.
-		$order_provider = wpss_get_order_provider();
-
-		// Create order (stays in pending_payment status).
-		// subtotal = package price only; addons_total is separate — StandaloneOrderProvider sums them.
-		$order = $order_provider->create_order(
-			array(
-				'service_id'     => $service_id,
-				'package_id'     => $package_id,
-				'quantity'       => $quantity,
-				'customer_id'    => get_current_user_id(),
-				'subtotal'       => $price,
-				'addons'         => $addon_data['addons'],
-				'addons_total'   => $addons_total,
-				'currency'       => wpss_get_currency(),
-				'payment_method' => 'offline',
-			)
+		$order = $this->create_service_order(
+			$service_id,
+			$package_id,
+			$quantity,
+			\WPSellServices\Checkout\CheckoutIntentService::request_selection( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ) ), // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked by the calling handler.
+			'offline'
 		);
 
-		if ( ! $order ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to create order.', 'wp-sell-services' ) ) );
+		if ( is_wp_error( $order ) ) {
+			wp_send_json_error( array( 'message' => $order->get_error_message() ) );
 			return;
 		}
 
@@ -850,6 +803,69 @@ class OfflineGateway implements PaymentGatewayInterface {
 				'instructions' => $this->render_buyer_instructions( $order->id ),
 			)
 		);
+	}
+
+	/**
+	 * Create a pending-payment order for one service, priced by the one pricer.
+	 *
+	 * Shared by the checkout form (AJAX) and the app (POST
+	 * /payments/create-intent), so both refuse a self-purchase, price the
+	 * package, quantity and add-ons the same way, and apply the owner's order
+	 * limits. The REST copy created the order with its own flat package price
+	 * (Basecamp 10336467402).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int                              $service_id Service ID.
+	 * @param int                              $package_id Stable package id or legacy index.
+	 * @param int                              $quantity   Quantity.
+	 * @param array<int, array<string, mixed>> $selection  Add-on selection.
+	 * @param string                           $gateway_id Rail that will collect the money (offline, test).
+	 * @return object|\WP_Error The order.
+	 */
+	public function create_service_order( int $service_id, int $package_id, int $quantity, array $selection, string $gateway_id ) {
+		$service_post = get_post( $service_id );
+
+		if ( ! $service_post || ! wpss_get_service( $service_id ) ) {
+			return new \WP_Error( 'wpss_invalid_service', __( 'Service not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		if ( (int) $service_post->post_author === get_current_user_id() ) {
+			return new \WP_Error( 'wpss_own_service', __( 'You cannot purchase your own service.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		// Priced by the one line pricer, from ids alone - package (stable id or
+		// index), quantity and the add-ons as the vendor set them.
+		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, $package_id, max( 1, $quantity ), $selection );
+
+		if ( is_wp_error( $line ) ) {
+			return $line;
+		}
+
+		// The owner's min/max order amount, the same rule Stripe and PayPal
+		// get from CheckoutIntentService::resolve() (Basecamp 10304350394).
+		$limit_error = wpss_check_order_limits( (float) $line['subtotal'] + (float) $line['addons_total'], 'offline' );
+
+		if ( null !== $limit_error ) {
+			return $limit_error;
+		}
+
+		// subtotal = package price only; addons_total is separate - StandaloneOrderProvider sums them.
+		$order = wpss_get_order_provider()->create_order(
+			array(
+				'service_id'     => $service_id,
+				'package_id'     => (int) $line['package_id'],
+				'quantity'       => max( 1, $quantity ),
+				'customer_id'    => get_current_user_id(),
+				'subtotal'       => (float) $line['subtotal'],
+				'addons'         => $line['addons'],
+				'addons_total'   => (float) $line['addons_total'],
+				'currency'       => wpss_get_currency(),
+				'payment_method' => $gateway_id,
+			)
+		);
+
+		return $order ? $order : new \WP_Error( 'wpss_order_failed', __( 'Failed to create order.', 'wp-sell-services' ), array( 'status' => 500 ) );
 	}
 
 	/**
@@ -988,9 +1004,9 @@ class OfflineGateway implements PaymentGatewayInterface {
 				var nonce = $btn.data('nonce');
 				var transactionId = $('#wpss-transaction-id').val();
 
-				if (!confirm('<?php echo esc_js( __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ) ); ?>')) {
-					return;
-				}
+				// A money action: the plugin's own dialog, which opens on Cancel.
+				( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
+					if (!ok) return;
 
 				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>');
 
@@ -1010,6 +1026,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 				}).fail(function() {
 					wpssAdminNotice('<?php echo esc_js( __( 'Request failed. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
 					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as Paid', 'wp-sell-services' ) ); ?>');
+				});
 				});
 			});
 		});
@@ -1252,7 +1269,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 		 */
 		?>
 		<p class="wpss-notice wpss-notice--info wpss-offline-awaiting">
-			<?php esc_html_e( 'Payment submitted. We will confirm your transfer shortly.', 'wp-sell-services' ); ?>
+			<?php echo esc_html( wpss_offline_payment_notice( $order ) ); ?>
 		</p>
 		<?php
 
@@ -1277,6 +1294,11 @@ class OfflineGateway implements PaymentGatewayInterface {
 		}
 
 		if ( empty( $instructions ) ) {
+			// No instructions written anywhere (the owner never filled them
+			// in): say how the buyer will find out, rather than nothing.
+			?>
+			<p class="wpss-offline-instructions-fallback"><?php esc_html_e( 'The site owner will send you payment instructions by email.', 'wp-sell-services' ); ?></p>
+			<?php
 			return;
 		}
 
@@ -1738,10 +1760,15 @@ class OfflineGateway implements PaymentGatewayInterface {
 		<table class="form-table wpss-offline-methods-editor">
 			<?php for ( $i = 0; $i < $slots; $i++ ) : ?>
 				<?php
-				$method   = $methods[ $i ] ?? array();
-				$label    = (string) ( $method['label'] ?? '' );
-				$instr    = (string) ( $method['instructions'] ?? '' );
-				$on       = ! isset( $method['enabled'] ) || ! empty( $method['enabled'] );
+				$method = $methods[ $i ] ?? array();
+				$label  = (string) ( $method['label'] ?? '' );
+				$instr  = (string) ( $method['instructions'] ?? '' );
+				// An empty slot is not a method (sanitize_methods() drops it), so
+				// it is not shown as offered, and only the first empty slot
+				// carries an example: four slots all reading "Bank Transfer",
+				// all ticked, looked like four saved methods (Basecamp 10341849858).
+				$on       = '' !== $label && ( ! isset( $method['enabled'] ) || ! empty( $method['enabled'] ) );
+				$example  = ( '' === $label && count( $methods ) === $i ) ? __( 'e.g. Bank Transfer', 'wp-sell-services' ) : '';
 				$name     = self::OPTION_NAME . '[methods][' . $i . ']';
 				$field_id = 'wpss-offline-method-' . $i;
 				?>
@@ -1762,7 +1789,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 								name="<?php echo esc_attr( $name ); ?>[label]"
 								value="<?php echo esc_attr( $label ); ?>"
 								class="regular-text"
-								placeholder="<?php esc_attr_e( 'Bank Transfer', 'wp-sell-services' ); ?>"
+								placeholder="<?php echo esc_attr( $example ); ?>"
 							>
 						</p>
 						<p>
@@ -1774,7 +1801,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 								name="<?php echo esc_attr( $name ); ?>[instructions]"
 								rows="4"
 								class="large-text code"
-								placeholder="<?php esc_attr_e( 'Account name, sort code, account number, and the reference to quote.', 'wp-sell-services' ); ?>"
+								placeholder="<?php echo '' !== $example ? esc_attr__( 'Account name, sort code, account number, and the reference to quote.', 'wp-sell-services' ) : ''; ?>"
 							><?php echo esc_textarea( $instr ); ?></textarea>
 						</p>
 						<p>

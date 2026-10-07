@@ -214,11 +214,7 @@ class Frontend {
 		);
 
 		// Primary 'wpssData' object used by frontend.js.
-		$cart_count = 0;
-		if ( is_user_logged_in() ) {
-			$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
-			$cart_count = is_array( $cart ) ? count( $cart ) : 0;
-		}
+		$cart_count = is_user_logged_in() ? wpss_get_cart_count( get_current_user_id() ) : 0;
 
 		wp_localize_script(
 			'wpss-frontend',
@@ -226,6 +222,10 @@ class Frontend {
 			array(
 				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
 				'apiUrl'           => rest_url( 'wpss/v1/' ),
+				// The site's own sign-in address. frontend.js reads this for a
+				// logged-out click on the favourite heart; it was never sent,
+				// so the script fell back to /wp-login.php (Basecamp 10352980066).
+				'loginUrl'         => wp_login_url(),
 				'nonce'            => wp_create_nonce( 'wpss_proposal_action' ),
 				'proposalNonce'    => wp_create_nonce( 'wpss_proposal_action' ),
 				'orderNonce'       => wp_create_nonce( 'wpss_order_action' ),
@@ -260,14 +260,6 @@ class Frontend {
 				'stickyTopOffset'  => (int) apply_filters( 'wpss_sticky_top_offset', 0 ),
 				'i18n'             => array(
 					'loading'                     => __( 'Loading...', 'wp-sell-services' ),
-
-					// Buyer-request form validation and success, rendered by
-					// frontend.js. Without these the messages stay English in every
-					// locale - the JS fallbacks were carrying them.
-					'requestTitleRequired'        => __( 'Please enter a title for your request.', 'wp-sell-services' ),
-					'requestDescriptionRequired'  => __( 'Please describe what you need.', 'wp-sell-services' ),
-					'requestBudgetRange'          => __( 'Maximum budget must be greater than or equal to the minimum.', 'wp-sell-services' ),
-					'requestPosted'               => __( 'Request posted successfully.', 'wp-sell-services' ),
 					'error'                       => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'tipAmountRequired'           => __( 'Enter a tip amount greater than zero.', 'wp-sell-services' ),
 					'tipRedirecting'              => __( 'Redirecting to payment…', 'wp-sell-services' ),
@@ -353,8 +345,6 @@ class Frontend {
 					'favoriteSavedLabel'          => __( 'Saved to favorites', 'wp-sell-services' ),
 					'favoriteAddLabel'            => __( 'Add to favorites', 'wp-sell-services' ),
 					'favoriteRemoveLabel'         => __( 'Remove from favorites', 'wp-sell-services' ),
-					// Buyer-request submission failure.
-					'requestFailed'               => __( 'Failed to post request. Please try again.', 'wp-sell-services' ),
 				),
 			)
 		);
@@ -431,8 +421,7 @@ class Frontend {
 			return;
 		}
 
-		$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
-		$cart_count = is_array( $cart ) ? count( $cart ) : 0;
+		$cart_count = wpss_get_cart_count( get_current_user_id() );
 
 		if ( $cart_count > 0 ) {
 			wpss_enqueue_frontend_assets();

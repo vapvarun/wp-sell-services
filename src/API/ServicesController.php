@@ -208,6 +208,33 @@ class ServicesController extends RestController {
 			)
 		);
 
+		// GET /services/{id}/quote - What a selection costs, priced by the server.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/quote',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_quote' ),
+					'permission_callback' => '__return_true',
+					'args'                => array(
+						'package'  => array(
+							'type'              => 'integer',
+							'default'           => 0,
+							'sanitize_callback' => 'absint',
+						),
+						'quantity' => array(
+							'type'              => 'integer',
+							'default'           => 1,
+							'minimum'           => 1,
+							'maximum'           => 10,
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+			)
+		);
+
 		// GET /services/{id}/faqs - Get service FAQs.
 		register_rest_route(
 			$this->namespace,
@@ -271,22 +298,7 @@ class ServicesController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_addon' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
-					'args'                => array(
-						'title'       => array(
-							'description' => __( 'Addon title.', 'wp-sell-services' ),
-							'type'        => 'string',
-							'required'    => true,
-						),
-						'description' => array(
-							'description' => __( 'Addon description.', 'wp-sell-services' ),
-							'type'        => 'string',
-						),
-						'price'       => array(
-							'description' => __( 'Addon price.', 'wp-sell-services' ),
-							'type'        => 'number',
-							'required'    => true,
-						),
-					),
+					'args'                => $this->addon_args( true ),
 				),
 			)
 		);
@@ -300,20 +312,7 @@ class ServicesController extends RestController {
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_addon' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
-					'args'                => array(
-						'title'       => array(
-							'description' => __( 'Addon title.', 'wp-sell-services' ),
-							'type'        => 'string',
-						),
-						'description' => array(
-							'description' => __( 'Addon description.', 'wp-sell-services' ),
-							'type'        => 'string',
-						),
-						'price'       => array(
-							'description' => __( 'Addon price.', 'wp-sell-services' ),
-							'type'        => 'number',
-						),
-					),
+					'args'                => $this->addon_args( false ),
 				),
 			)
 		);
@@ -349,6 +348,23 @@ class ServicesController extends RestController {
 			'orderby'        => $request->get_param( 'orderby' ) ?: 'date',
 			'order'          => $request->get_param( 'order' ) ?: 'DESC',
 		);
+
+		// price / rating / popular are stored numbers, not WP_Query orderby values
+		// (they silently fell back to newest-first). One shared sort that also
+		// keeps services without the value.
+		$sort = (string) $request->get_param( 'orderby' );
+		if ( 'price' === $sort ) {
+			$sort = self::SORT_ASC === strtoupper( (string) $request->get_param( 'order' ) ) ? 'price_low' : 'price_high';
+		}
+		if ( isset( wpss_service_meta_sorts()[ $sort ] ) ) {
+			$args = wpss_apply_service_sort( $args, $sort );
+		}
+
+		// Same catalog rule as the storefront: vendors on vacation are not listed.
+		$vacation_vendors = wpss_get_vacation_vendor_ids();
+		if ( ! empty( $vacation_vendors ) ) {
+			$args['author__not_in'] = $vacation_vendors;
+		}
 
 		// Filter by category.
 		$category = $request->get_param( 'category' );
@@ -490,27 +506,12 @@ class ServicesController extends RestController {
 	 */
 	public function get_item( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
-		$service    = get_post( $service_id );
 
-		if ( ! $service || 'wpss_service' !== $service->post_type ) {
-			return new WP_Error(
-				'not_found',
-				__( 'Service not found.', 'wp-sell-services' ),
-				array( 'status' => 404 )
-			);
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return $this->service_not_found();
 		}
 
-		// Only show published services publicly; authors and admins can see their own.
-		if ( 'publish' !== $service->post_status ) {
-			$current_user_id = get_current_user_id();
-			if ( (int) $service->post_author !== $current_user_id && ! current_user_can( 'manage_options' ) ) {
-				return new WP_Error(
-					'not_found',
-					__( 'Service not found.', 'wp-sell-services' ),
-					array( 'status' => 404 )
-				);
-			}
-		}
+		$service = get_post( $service_id );
 
 		// The detail response is the LIST shape plus the fields a service page
 		// needs. Both routes share prepare_item_for_response(), which is exactly
@@ -585,8 +586,8 @@ class ServicesController extends RestController {
 			'country'          => $profile ? (string) $profile->country : '',
 			'is_verified'      => $profile ? (bool) $profile->is_verified : false,
 			'completed_orders' => $profile ? (int) $profile->orders_completed : 0,
-			'rating_average'   => (float) get_user_meta( $vendor_id, '_wpss_rating_average', true ),
-			'rating_count'     => (int) get_user_meta( $vendor_id, '_wpss_rating_count', true ),
+			'rating_average'   => $profile ? (float) $profile->rating : 0.0,
+			'rating_count'     => $profile ? (int) $profile->review_count : 0,
 			'response_time'    => (string) ( get_user_meta( $vendor_id, '_wpss_vendor_response_time', true ) ?: '' ),
 		);
 	}
@@ -716,7 +717,7 @@ class ServicesController extends RestController {
 			'post_title'   => sanitize_text_field( $request->get_param( 'title' ) ),
 			'post_content' => wp_kses_post( $request->get_param( 'description' ) ),
 			'post_excerpt' => sanitize_textarea_field( $request->get_param( 'excerpt' ) ?: '' ),
-			'post_status'  => $post_status,
+			'post_status'  => 'draft', // Settled after the meta is written, see wpss_settle_service_status().
 			'post_author'  => get_current_user_id(),
 		);
 
@@ -739,6 +740,7 @@ class ServicesController extends RestController {
 			wp_set_object_terms( $service_id, $tags, 'wpss_service_tag' );
 		}
 
+		wpss_settle_service_status( $service_id, $post_status );
 		$service = get_post( $service_id );
 
 		/**
@@ -975,6 +977,10 @@ class ServicesController extends RestController {
 	public function get_packages( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
 
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return $this->service_not_found();
+		}
+
 		// Publish a STABLE id with every package.
 		//
 		// This response carried no id at all, while POST /cart/add required
@@ -993,6 +999,80 @@ class ServicesController extends RestController {
 	}
 
 	/**
+	 * Quote a package and add-on selection: the numbers checkout will charge.
+	 *
+	 * Every screen that shows a price before checkout - the order modal, the
+	 * cart, the admin Create Order preview, the app - asks here instead of
+	 * adding prices up itself, so a percentage add-on, a per-quantity add-on
+	 * or tax can never read one way on screen and charge another (Basecamp
+	 * 10336467507). Takes `package` (stable id or index), `quantity`, and the
+	 * add-on selection as `addon_sel` (JSON), `addons` or `addon_ids` - never
+	 * a price.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_quote( $request ) {
+		$service_id = (int) $request->get_param( 'id' );
+
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return $this->service_not_found();
+		}
+
+		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line(
+			$service_id,
+			(int) $request->get_param( 'package' ),
+			max( 1, (int) $request->get_param( 'quantity' ) ),
+			\WPSellServices\Checkout\CheckoutIntentService::request_selection( $request->get_params() )
+		);
+
+		if ( is_wp_error( $line ) ) {
+			return $line;
+		}
+
+		$currency = wpss_get_currency();
+		$addons   = array();
+
+		foreach ( $line['addons'] as $addon ) {
+			$addons[] = array(
+				'id'       => (int) $addon['id'],
+				'title'    => (string) $addon['title'],
+				'quantity' => (int) $addon['quantity'],
+				'option'   => (string) $addon['option'],
+				'text'     => (string) $addon['text'],
+			) + wpss_rest_money( 'price', (float) $addon['price'], $currency ) + array(
+				'price_formatted' => wpss_format_price( (float) $addon['price'] ),
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'service_id'    => $service_id,
+				'package_id'    => (int) ( $line['package']['id'] ?? $line['package_id'] ),
+				'package_name'  => (string) ( $line['package']['name'] ?? '' ),
+				'quantity'      => (int) $line['quantity'],
+				'addons'        => $addons,
+				'delivery_days' => (int) $line['delivery_days'],
+				'tax_label'     => (string) $line['tax_label'],
+				'tax_rate'      => (float) $line['tax_rate'],
+				'tax_included'  => (bool) $line['tax_included'],
+				'formatted'     => array(
+					'subtotal'     => wpss_format_price( (float) $line['subtotal'] ),
+					'addons_total' => wpss_format_price( (float) $line['addons_total'] ),
+					'tax'          => wpss_format_price( (float) $line['tax'] ),
+					'total'        => wpss_format_price( (float) $line['total'] ),
+				),
+			) + wpss_rest_money( 'subtotal', (float) $line['subtotal'], $currency )
+				+ wpss_rest_money( 'addons_total', (float) $line['addons_total'], $currency )
+				+ wpss_rest_money( 'tax', (float) $line['tax'], $currency )
+				+ wpss_rest_money( 'total', (float) $line['total'], $currency ),
+			200
+		);
+	}
+
+	/**
 	 * Get service FAQs.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -1000,7 +1080,12 @@ class ServicesController extends RestController {
 	 */
 	public function get_faqs( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
-		$faqs       = get_post_meta( $service_id, '_wpss_faqs', true );
+
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return $this->service_not_found();
+		}
+
+		$faqs = get_post_meta( $service_id, '_wpss_faqs', true );
 
 		if ( ! is_array( $faqs ) ) {
 			$faqs = array();
@@ -1017,6 +1102,10 @@ class ServicesController extends RestController {
 	 */
 	public function get_reviews( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
+
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return $this->service_not_found();
+		}
 		$pagination = $this->get_pagination_args( $request );
 
 		global $wpdb;
@@ -1066,12 +1155,83 @@ class ServicesController extends RestController {
 	public function get_addons( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
 
+		if ( ! wpss_can_view_service( $service_id ) ) {
+			return $this->service_not_found();
+		}
+
 		$data = array();
 		foreach ( wpss_get_service_extras( $service_id ) as $index => $addon ) {
 			$data[] = $this->format_addon( $service_id, $index, $addon );
 		}
 
 		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * What an add-on write may set: every field the admin metabox and the
+	 * vendor wizard offer, so the app can create a percentage, per-quantity,
+	 * dropdown or text add-on too. Stored through wpss_save_service_addons(),
+	 * which normalises every key.
+	 */
+	private const ADDON_KEYS = array( 'title', 'description', 'price', 'delivery_days_extra', 'field_type', 'price_type', 'options', 'min_quantity', 'max_quantity', 'is_required' );
+
+	/**
+	 * REST args for creating or updating an add-on.
+	 *
+	 * @param bool $create Whether title and price are required.
+	 * @return array<string, array<string, mixed>>
+	 */
+	private function addon_args( bool $create ): array {
+		return array(
+			'title'               => array(
+				'description' => __( 'Addon title.', 'wp-sell-services' ),
+				'type'        => 'string',
+				'required'    => $create,
+			),
+			'description'         => array(
+				'description' => __( 'Addon description.', 'wp-sell-services' ),
+				'type'        => 'string',
+			),
+			'price'               => array(
+				'description' => __( 'Addon price: an amount, or a percent of the package when price_type is percentage.', 'wp-sell-services' ),
+				'type'        => 'number',
+				'minimum'     => 0,
+				'required'    => $create,
+			),
+			'delivery_days_extra' => array(
+				'description' => __( 'Days the add-on adds to delivery.', 'wp-sell-services' ),
+				'type'        => 'integer',
+				'minimum'     => 0,
+			),
+			'field_type'          => array(
+				'description' => __( 'How the buyer chooses it.', 'wp-sell-services' ),
+				'type'        => 'string',
+				'enum'        => array_keys( wpss_get_addon_field_types() ),
+			),
+			'price_type'          => array(
+				'description' => __( 'How it is priced.', 'wp-sell-services' ),
+				'type'        => 'string',
+				'enum'        => array_keys( wpss_get_addon_price_types() ),
+			),
+			'options'             => array(
+				'description' => __( 'Dropdown choices, comma separated.', 'wp-sell-services' ),
+				'type'        => 'string',
+			),
+			'min_quantity'        => array(
+				'description' => __( 'Smallest quantity (quantity add-ons).', 'wp-sell-services' ),
+				'type'        => 'integer',
+				'minimum'     => 1,
+			),
+			'max_quantity'        => array(
+				'description' => __( 'Largest quantity (quantity add-ons).', 'wp-sell-services' ),
+				'type'        => 'integer',
+				'minimum'     => 1,
+			),
+			'is_required'         => array(
+				'description' => __( 'Every order includes it.', 'wp-sell-services' ),
+				'type'        => 'boolean',
+			),
+		);
 	}
 
 	/**
@@ -1092,6 +1252,14 @@ class ServicesController extends RestController {
 				'title'               => $addon['title'],
 				'description'         => $addon['description'],
 				'delivery_days_extra' => $addon['delivery_days_extra'],
+				'field_type'          => $addon['field_type'],
+				'price_type'          => $addon['price_type'],
+				'options'             => $addon['options'],
+				'min_quantity'        => (int) $addon['min_quantity'],
+				'max_quantity'        => (int) $addon['max_quantity'],
+				'is_required'         => (bool) $addon['is_required'],
+				// A percentage is not money: "+10%" / "$5.00 each" / "+$20.00".
+				'price_label'         => wpss_addon_price_label( $addon ),
 			),
 			wpss_rest_money( 'price', (float) $addon['price'] )
 		);
@@ -1106,12 +1274,13 @@ class ServicesController extends RestController {
 	public function create_addon( $request ) {
 		$service_id = (int) $request->get_param( 'id' );
 		$addons     = wpss_get_service_extras( $service_id );
-		$addons[]   = array(
-			'title'               => $request->get_param( 'title' ),
-			'description'         => $request->get_param( 'description' ),
-			'price'               => $request->get_param( 'price' ),
-			'delivery_days_extra' => $request->get_param( 'delivery_days_extra' ),
-		);
+		$addon      = array();
+		foreach ( self::ADDON_KEYS as $key ) {
+			if ( $request->has_param( $key ) ) {
+				$addon[ $key ] = $request->get_param( $key );
+			}
+		}
+		$addons[] = $addon;
 
 		$capped = wpss_enforce_service_limits( array( 'extras' => $addons ) );
 		if ( ! empty( $capped['truncated'] ) ) {
@@ -1144,7 +1313,7 @@ class ServicesController extends RestController {
 			return new WP_Error( 'addon_not_found', __( 'Addon not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		foreach ( array( 'title', 'description', 'price', 'delivery_days_extra' ) as $key ) {
+		foreach ( self::ADDON_KEYS as $key ) {
 			if ( $request->has_param( $key ) ) {
 				$addons[ $index ][ $key ] = $request->get_param( $key );
 			}
@@ -1376,15 +1545,14 @@ class ServicesController extends RestController {
 					if ( is_array( $pkg ) && array_key_exists( 'enabled', $pkg ) && ! $pkg['enabled'] ) {
 						continue;
 					}
-					$packages[] = array(
-						'id'            => sanitize_key( $pkg['id'] ?? '' ),
+					$packages[] = wpss_package_id_from_input( (array) $pkg ) + array(
 						'name'          => sanitize_text_field( $pkg['name'] ?? '' ),
 						'description'   => sanitize_textarea_field( $pkg['description'] ?? '' ),
 						'price'         => (float) ( $pkg['price'] ?? 0 ),
 						'delivery_days' => absint( $pkg['delivery_days'] ?? 7 ),
 						'revisions'     => absint( $pkg['revisions'] ?? 0 ),
 						'features'      => isset( $pkg['features'] ) && is_array( $pkg['features'] ) ? array_map( 'sanitize_text_field', $pkg['features'] ) : array(),
-					);
+					) + wpss_sanitize_package_express( (array) $pkg );
 				}
 			}
 			update_post_meta( $service_id, '_wpss_packages', $packages );
@@ -1489,7 +1657,7 @@ class ServicesController extends RestController {
 			'orderby'           => array(
 				'description' => __( 'Order by field.', 'wp-sell-services' ),
 				'type'        => 'string',
-				'enum'        => array( 'date', 'title', 'price', 'rating' ),
+				'enum'        => array( 'date', 'title', 'price', 'rating', 'popular' ),
 				'default'     => 'date',
 			),
 			'order'             => array(
@@ -1581,5 +1749,22 @@ class ServicesController extends RestController {
 		unset( $request );
 
 		return rest_ensure_response( wpss_get_service_limits() );
+	}
+
+	/**
+	 * The 404 every service route answers for a service the caller may not see.
+	 *
+	 * Deliberately the same as "does not exist", so an id cannot be probed.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return WP_Error
+	 */
+	private function service_not_found(): WP_Error {
+		return new WP_Error(
+			'not_found',
+			__( 'Service not found.', 'wp-sell-services' ),
+			array( 'status' => 404 )
+		);
 	}
 }

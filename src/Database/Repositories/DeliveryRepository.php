@@ -123,7 +123,7 @@ class DeliveryRepository extends AbstractRepository {
 			[
 				'status'           => $status,
 				'response_message' => $response_message,
-				'responded_at'     => current_time( 'mysql' ),
+				'responded_at'     => current_time( 'mysql', true ),
 			]
 		);
 	}

@@ -247,11 +247,14 @@
 /* Overview Panel - Status + Stats Grid */
 .wpss-overview-grid {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	/* Sized by the box, not the viewport: beside the classic editor's
+	   sidebar the two columns overflowed at 1024px. */
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
 	gap: 24px;
 }
 
 .wpss-overview-section {
+	min-width: 0;
 	background: var(--wpss-admin-bg-light);
 	border: 1px solid var(--wpss-admin-border);
 	border-radius: 4px;
@@ -297,10 +300,13 @@
 		flex-direction: column;
 	}
 
+	/* Tabs wrap onto a second row rather than scrolling sideways: at 390px the
+	   strip clipped at "Add..." with no cue, so the tabs after Media looked
+	   unreachable (Basecamp 10337190248). */
 	.wpss-service-tabs {
 		flex: none;
 		display: flex;
-		overflow-x: auto;
+		flex-wrap: wrap;
 		border-right: none;
 		border-bottom: 1px solid var(--wpss-admin-border);
 	}
@@ -358,4 +364,36 @@
 		opacity: 1;
 		transform: translateY(0);
 	}
+}
+
+/* Service editor on a phone: Statistics as a 2x2 grid of plain tiles. The
+   shared grid dropped to one column while each item kept the admin
+   dashboard's right-hand divider, so the dividers ran ragged
+   (Basecamp 10337190248). */
+@media screen and (max-width: 782px) {
+	.wpss-overview-section .wpss-stats-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 8px;
+	}
+
+	.wpss-overview-section .wpss-stat-item {
+		border: 0;
+		border-radius: var(--wpss-admin-radius-md, 6px);
+		background: var(--wpss-surface, #fff);
+		padding: 12px 8px;
+	}
+}
+
+/* "Not ready yet" notice: a heading then a list, read top to bottom. The
+   shared .wpss-notice is a flex row (icon + text), which put the heading and
+   the list side by side in two narrow columns on a phone
+   (Basecamp 10337190248). */
+.wpss-notice.wpss-service-invalid-notice {
+	display: block;
+	margin: 0 0 16px;
+}
+
+.wpss-service-invalid-notice ul {
+	list-style: disc;
+	margin-inline-start: 20px;
 }

@@ -213,8 +213,9 @@ function wpss_filter_enabled_billing_fields( array $fields ): array {
 /**
  * The shorter field set that suits a marketplace selling digital work.
  *
- * Offered as a one-click preset rather than imposed as a default, so the choice
- * stays the owner's and is visible in the settings after they make it.
+ * Name, email and country (owner decision, Basecamp 10337204220): the default
+ * on a new install, and a one-click preset in the settings for existing sites,
+ * which keep the fields they saved.
  *
  * @since 1.6.0
  *
@@ -225,8 +226,6 @@ function wpss_get_digital_billing_field_preset(): array {
 		'billing_first_name',
 		'billing_last_name',
 		'billing_email',
-		'billing_phone',
-		'billing_company',
 		'billing_country',
 	);
 }
@@ -857,6 +856,13 @@ function wpss_save_member_profile( array $data, int $user_id = 0 ): bool {
 	// The same helper checkout saves through, so both surfaces write the same
 	// WooCommerce-compatible keys with the same sanitising.
 	wpss_save_billing_from_request( $data, $user_id );
+
+	// Email preferences are part of the one profile form (one Save Changes,
+	// owner decision 2026-09-25). The marker says the checkboxes were on the
+	// form, so an unchecked set means "all muted", not "not sent".
+	if ( ! empty( $data['email_prefs_submitted'] ) ) {
+		wpss_save_email_preferences( $user_id, is_array( $data['prefs'] ?? null ) ? $data['prefs'] : array() );
+	}
 
 	if ( array_key_exists( 'display_name', $data ) ) {
 		$display_name = sanitize_text_field( (string) $data['display_name'] );

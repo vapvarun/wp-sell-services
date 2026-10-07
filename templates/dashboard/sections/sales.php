@@ -111,11 +111,9 @@ $per_page  = 20;
 $date_from = '';
 
 /*
- * Site time, not UTC. Orders are written with current_time( 'mysql' ), so a
- * window built from gmdate()/time() is offset by the site's timezone on every
- * non-UTC install - the totals are then quietly wrong rather than obviously
- * missing. 'today' and 'all' both carry days = 0, so they are told apart by
- * the key, not by the number.
+ * The window is the vendor's calendar, so it is built in site time; the
+ * readers it reaches convert it to UTC for the columns. 'today' and 'all'
+ * both carry days = 0, so they are told apart by the key, not by the number.
  */
 $sales_today = current_time( 'Y-m-d' );
 
@@ -174,7 +172,7 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 		</div>
 		<div class="wpss-stat-card wpss-stat-card--highlight">
 			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $total_revenue ) ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Revenue', 'wp-sell-services' ); ?></span>
+			<span class="wpss-stat-card__label"><?php esc_html_e( 'Earnings after commission, including tips', 'wp-sell-services' ); ?></span>
 		</div>
 	</div>
 
@@ -184,7 +182,8 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 		$filter_prefix = 'sales';
 		$filter_group  = $sales_group;
 		$filter_search = $sales_search;
-		require WPSS_PLUGIN_DIR . 'templates/dashboard/partials/order-filters.php';
+		// Through the template loader so a theme can override it (Basecamp 10372723832).
+		wpss_get_template( 'dashboard/partials/order-filters.php', compact( 'filter_prefix', 'status_groups', 'status_counts', 'filter_group', 'filter_search' ) );
 		?>
 		<div class="wpss-sales-filter">
 			<form method="get" class="wpss-sales-filter__form">
@@ -259,141 +258,17 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 		</div>
 	<?php else : ?>
 		<div class="wpss-orders-list">
-			<?php foreach ( $orders as $order_item ) : ?>
-				<?php
-				$order_platform = $order_item->platform ?? '';
-				$is_tip         = \WPSellServices\Services\TippingService::ORDER_TYPE === $order_platform;
-				$is_extension   = \WPSellServices\Services\ExtensionOrderService::ORDER_TYPE === $order_platform;
-				$is_milestone   = \WPSellServices\Services\MilestoneService::ORDER_TYPE === $order_platform;
-				$is_sub_order   = $is_tip || $is_extension || $is_milestone;
-				$service        = $order_item->service_id ? get_post( $order_item->service_id ) : null;
-				$customer       = get_userdata( $order_item->customer_id );
-				$status_class   = 'wpss-status--' . sanitize_html_class( $order_item->status );
-				$status_labels  = wpss_get_order_status_labels();
-
-				// For request-based orders, use the request title.
-				if ( ! $service && 'request' === $order_platform && $order_item->platform_order_id ) {
-					$request_post = get_post( $order_item->platform_order_id );
-				}
-
-				if ( $is_sub_order ) {
-					// Tip / extension / milestone rows reference the parent
-					// service order via platform_order_id; fall back gracefully
-					// when the parent has been deleted.
-					$parent_order = $order_item->platform_order_id ? wpss_get_order( (int) $order_item->platform_order_id ) : null;
-					$parent_title = '';
-					if ( $parent_order ) {
-						$parent_service = $parent_order->service_id ? get_post( $parent_order->service_id ) : null;
-						$parent_title   = $parent_service ? $parent_service->post_title : $parent_order->order_number;
-					}
-					if ( $is_tip ) {
-						$order_title = $parent_title
-							? sprintf( /* translators: %s: original service / order title */ __( 'Tip for %s', 'wp-sell-services' ), $parent_title )
-							: __( 'Tip', 'wp-sell-services' );
-					} elseif ( $is_extension ) {
-						$order_title = $parent_title
-							? sprintf( /* translators: %s: original service / order title */ __( 'Extension for %s', 'wp-sell-services' ), $parent_title )
-							: __( 'Extension', 'wp-sell-services' );
-					} else {
-						// Milestone: prefer the phase title from the meta JSON,
-						// fall back to the parent title if the meta was dropped.
-						$ms_meta        = is_string( $order_item->meta ?? '' ) && '' !== $order_item->meta ? json_decode( $order_item->meta, true ) : array();
-						$ms_phase_title = is_array( $ms_meta ) && ! empty( $ms_meta['title'] ) ? (string) $ms_meta['title'] : '';
-						if ( '' !== $ms_phase_title && '' !== $parent_title ) {
-							$order_title = sprintf( /* translators: 1: milestone phase title, 2: parent service title */ __( 'Milestone: %1$s (for %2$s)', 'wp-sell-services' ), $ms_phase_title, $parent_title );
-						} elseif ( '' !== $ms_phase_title ) {
-							$order_title = sprintf( /* translators: %s: milestone phase title */ __( 'Milestone: %s', 'wp-sell-services' ), $ms_phase_title );
-						} elseif ( '' !== $parent_title ) {
-							$order_title = sprintf( /* translators: %s: parent service title */ __( 'Milestone for %s', 'wp-sell-services' ), $parent_title );
-						} else {
-							$order_title = __( 'Milestone', 'wp-sell-services' );
-						}
-					}
-				} else {
-					$order_title = $service ? $service->post_title : ( ! empty( $request_post ) ? $request_post->post_title : __( 'Deleted Service', 'wp-sell-services' ) );
-				}
-				?>
-				<div class="wpss-order-card<?php echo $is_tip ? ' wpss-order-card--tip' : ''; ?><?php echo $is_extension ? ' wpss-order-card--extension' : ''; ?><?php echo $is_milestone ? ' wpss-order-card--milestone' : ''; ?>">
-					<div class="wpss-order-card__main">
-						<?php if ( ! $is_sub_order && $service && has_post_thumbnail( $service ) ) : ?>
-							<div class="wpss-order-card__image">
-								<?php echo get_the_post_thumbnail( $service, 'thumbnail' ); ?>
-							</div>
-						<?php elseif ( $is_tip ) : ?>
-							<div class="wpss-order-card__tip-icon" aria-hidden="true">
-								<i data-lucide="heart" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
-							</div>
-						<?php elseif ( $is_extension ) : ?>
-							<div class="wpss-order-card__tip-icon wpss-order-card__extension-icon" aria-hidden="true">
-								<i data-lucide="clock" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
-							</div>
-						<?php elseif ( $is_milestone ) : ?>
-							<div class="wpss-order-card__tip-icon wpss-order-card__milestone-icon" aria-hidden="true">
-								<i data-lucide="flag" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
-							</div>
-						<?php endif; ?>
-						<div class="wpss-order-card__info">
-							<h4 class="wpss-order-card__title">
-								<?php if ( $is_tip ) : ?>
-									<span class="wpss-badge wpss-badge--tip"><?php esc_html_e( 'Tip', 'wp-sell-services' ); ?></span>
-									<?php echo esc_html( $order_title ); ?>
-								<?php elseif ( $is_extension ) : ?>
-									<span class="wpss-badge wpss-badge--extension"><?php esc_html_e( 'Extension', 'wp-sell-services' ); ?></span>
-									<?php echo esc_html( $order_title ); ?>
-								<?php elseif ( $is_milestone ) : ?>
-									<span class="wpss-badge wpss-badge--milestone"><?php esc_html_e( 'Milestone', 'wp-sell-services' ); ?></span>
-									<?php echo esc_html( $order_title ); ?>
-								<?php elseif ( $service ) : ?>
-									<a href="<?php echo esc_url( get_permalink( $service ) ); ?>">
-										<?php echo esc_html( $order_title ); ?>
-									</a>
-								<?php else : ?>
-									<?php echo esc_html( $order_title ); ?>
-								<?php endif; ?>
-							</h4>
-							<p class="wpss-order-card__meta">
-								<?php
-								printf(
-									/* translators: %s: customer name */
-									esc_html__( 'Buyer: %s', 'wp-sell-services' ),
-									esc_html( $customer ? $customer->display_name : __( 'Unknown', 'wp-sell-services' ) )
-								);
-								?>
-								<span class="wpss-order-card__sep">&bull;</span>
-								<?php
-								// Vendor sees the NET take-home (post-commission) so the sum of
-								// rows matches the Revenue stat above and the wallet balance.
-								// Falls back to $total for legacy rows where vendor_earnings is
-								// NULL (orders created before CommissionService populated it).
-								$row_net_amount = isset( $order_item->vendor_earnings ) && null !== $order_item->vendor_earnings
-									? (float) $order_item->vendor_earnings
-									: (float) $order_item->total;
-								$row_gross      = (float) $order_item->total;
-								?>
-								<span class="wpss-order-card__amount" title="<?php echo esc_attr( sprintf( /* translators: %s: gross amount the buyer paid */ __( 'Buyer paid %s (gross). You earn the net amount after platform fee.', 'wp-sell-services' ), wpss_format_price( $row_gross ) ) ); ?>">
-									<?php echo esc_html( wpss_format_price( $row_net_amount ) ); ?>
-									<?php if ( abs( $row_gross - $row_net_amount ) > 0.005 ) : ?>
-										<small class="wpss-order-card__gross">
-										<?php
-										/* translators: %s: buyer-paid amount */
-										printf( esc_html__( '(buyer paid %s)', 'wp-sell-services' ), esc_html( wpss_format_price( $row_gross ) ) );
-										?>
-										</small>
-									<?php endif; ?>
-								</span>
-							</p>
-						</div>
-					</div>
-					<div class="wpss-order-card__actions">
-						<span class="wpss-status <?php echo esc_attr( $status_class ); ?>">
-							<?php echo esc_html( $status_labels[ $order_item->status ] ?? $order_item->status ); ?>
-						</span>
-						<a href="<?php echo esc_url( wpss_get_order_url( $order_item->id, 'sales' ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
-							<?php echo esc_html( $is_sub_order ? __( 'View', 'wp-sell-services' ) : __( 'Manage', 'wp-sell-services' ) ); ?>
-						</a>
-					</div>
-				</div>
-			<?php endforeach; ?>
+			<?php wpss_get_credited_order_ids( wp_list_pluck( $orders, 'id' ) ); // One query for the page's revenue rows. ?>
+			<?php
+			// One query each for the page's services and people, not one per row.
+			_prime_post_caches( array_filter( array_map( 'intval', wp_list_pluck( $orders, 'service_id' ) ) ), false, false );
+			cache_users( array_map( 'intval', array_merge( wp_list_pluck( $orders, 'customer_id' ), wp_list_pluck( $orders, 'vendor_id' ) ) ) );
+			$status_labels = wpss_get_order_status_labels();
+			$wpss_side     = 'seller';
+			foreach ( $orders as $order_item ) {
+				wpss_get_template( 'dashboard/partials/order-row.php', compact( 'order_item', 'wpss_side', 'status_labels' ) );
+			}
+			?>
 		</div>
 
 		<?php if ( $total_pages > 1 ) : ?>

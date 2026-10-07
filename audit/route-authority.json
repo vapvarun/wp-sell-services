@@ -492,28 +492,35 @@
       "permission_callback": "__return_true",
       "object_id": true,
       "writes": false,
-      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+      "reason": "Public marketplace catalogue, by product design. The service must pass wpss_can_view_service(): an unpublished service (draft, pending, private) answers 404 not_found to anyone but its author and admins, never 403, so an id cannot be probed. Until 1.8.0 this route skipped that check and served unpublished listings (Basecamp 10336370426); RouteAuthorityTest::test_public_object_routes_do_not_serve_unpublished_services now treats any success as a leak."
     },
     "GET /wpss/v1/services/(?P<id>[\\d]+)/faqs": {
       "audience": "public",
       "permission_callback": "__return_true",
       "object_id": true,
       "writes": false,
-      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+      "reason": "Public marketplace catalogue, by product design. The service must pass wpss_can_view_service(): an unpublished service (draft, pending, private) answers 404 not_found to anyone but its author and admins, never 403, so an id cannot be probed. Until 1.8.0 this route skipped that check and served unpublished listings (Basecamp 10336370426); RouteAuthorityTest::test_public_object_routes_do_not_serve_unpublished_services now treats any success as a leak."
     },
     "GET /wpss/v1/services/(?P<id>[\\d]+)/packages": {
       "audience": "public",
       "permission_callback": "__return_true",
       "object_id": true,
       "writes": false,
-      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+      "reason": "Public marketplace catalogue, by product design. The service must pass wpss_can_view_service(): an unpublished service (draft, pending, private) answers 404 not_found to anyone but its author and admins, never 403, so an id cannot be probed. Until 1.8.0 this route skipped that check and served unpublished listings (Basecamp 10336370426); RouteAuthorityTest::test_public_object_routes_do_not_serve_unpublished_services now treats any success as a leak."
+    },
+    "GET /wpss/v1/services/(?P<id>[\\d]+)/quote": {
+      "audience": "public",
+      "permission_callback": "__return_true",
+      "object_id": true,
+      "writes": false,
+      "reason": "Public price quote, by product design: the same numbers the service page, cart and checkout show anyone who can see the service. It reads a package, a quantity and an add-on selection, never a price, and prices them server-side; it writes nothing. The service must pass wpss_can_view_service(), so an unpublished listing answers 404 like its sibling routes."
     },
     "GET /wpss/v1/services/(?P<id>[\\d]+)/reviews": {
       "audience": "public",
       "permission_callback": "__return_true",
       "object_id": true,
       "writes": false,
-      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+      "reason": "Public marketplace catalogue, by product design. The service must pass wpss_can_view_service(): an unpublished service (draft, pending, private) answers 404 not_found to anyone but its author and admins, never 403, so an id cannot be probed. Until 1.8.0 this route skipped that check and served unpublished listings (Basecamp 10336370426); RouteAuthorityTest::test_public_object_routes_do_not_serve_unpublished_services now treats any success as a leak."
     },
     "GET /wpss/v1/services/(?P<service_id>[\\d]+)/favorited": {
       "audience": "guarded",
@@ -526,7 +533,7 @@
       "permission_callback": "__return_true",
       "object_id": true,
       "writes": false,
-      "reason": "Public marketplace catalogue. A signed-out buyer browses before registering, so this is public by product design rather than by omission. Verified signed out on 2026-09-21: draft, pending and private services (ids 886/887/888) each answer 404 not_found, never 403 - so the route does not confirm that an unpublished listing exists."
+      "reason": "Public marketplace catalogue, by product design. The service must pass wpss_can_view_service(): an unpublished service (draft, pending, private) answers 404 not_found to anyone but its author and admins, never 403, so an id cannot be probed. Until 1.8.0 this route skipped that check and served unpublished listings (Basecamp 10336370426); RouteAuthorityTest::test_public_object_routes_do_not_serve_unpublished_services now treats any success as a leak."
     },
     "GET /wpss/v1/services/grid": {
       "audience": "public",
@@ -863,7 +870,7 @@
       "object_id": false,
       "writes": true
     },
-    "POST /wpss/v1/orders/(?P<id>[\\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation)": {
+    "POST /wpss/v1/orders/(?P<id>[\\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund)": {
       "audience": "guarded",
       "permission_callback": "WPSellServices\\API\\OrdersController::check_action_permissions",
       "object_id": true,
@@ -1122,6 +1129,24 @@
       "audience": "admin",
       "permission_callback": "WPSellServices\\API\\EarningsController::check_admin_permissions",
       "object_id": true,
+      "writes": true
+    },
+    "DELETE /wpss/v1/withdrawals/(?P<id>[\\d]+)": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": true,
+      "writes": true
+    },
+    "GET /wpss/v1/withdrawals/profile": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": false,
+      "writes": false
+    },
+    "POST,PUT,PATCH /wpss/v1/withdrawals/profile": {
+      "audience": "guarded",
+      "permission_callback": "WPSellServices\\API\\EarningsController::check_vendor_permissions",
+      "object_id": false,
       "writes": true
     }
   }

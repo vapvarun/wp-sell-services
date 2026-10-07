@@ -78,7 +78,7 @@ class NotificationService {
 			'message'    => $stored_message,
 			'data'       => wp_json_encode( $data ),
 			'is_read'    => 0,
-			'created_at' => current_time( 'mysql' ),
+			'created_at' => current_time( 'mysql', true ),
 		);
 
 		$formats = array( '%d', '%s', '%s', '%s', '%s', '%d', '%s' );
@@ -595,17 +595,9 @@ class NotificationService {
 
 			case 'cancellation_requested':
 				// Parse cancellation reason.
-				$cancel_data   = json_decode( $order->vendor_notes ?? '', true );
-				$reason        = $cancel_data['reason'] ?? '';
-				$reason_labels = array(
-					'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
-					'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
-					'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
-					'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
-					'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
-					'other'                => __( 'Other', 'wp-sell-services' ),
-				);
-				$reason_label  = $reason_labels[ $reason ] ?? $reason;
+				$cancel_data  = \WPSellServices\Models\ServiceOrder::find( (int) $order->id )?->get_cancellation_request() ?? array();
+				$reason       = $cancel_data['reason'] ?? '';
+				$reason_label = wpss_get_cancellation_reason_label( (string) $reason );
 
 				// Notify vendor.
 				$this->create(
@@ -843,7 +835,7 @@ class NotificationService {
 			);
 		}
 
-		$notification->paragraph( __( 'Log in to your dashboard to view the full conversation and reply.', 'wp-sell-services' ) );
+		$notification->paragraph( __( 'Open the conversation to read it in full and reply.', 'wp-sell-services' ) );
 
 		$this->create(
 			$recipient_id,
@@ -1185,7 +1177,7 @@ class NotificationService {
 					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), (string) $data['reason'] );
 				}
 				if ( ! empty( $data['response_deadline'] ) ) {
-					$deadline = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $data['response_deadline'] ) );
+					$deadline = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $data['response_deadline'] . ' UTC' ) );
 					$message->paragraph(
 						/* translators: %s: deadline date */
 						__( 'Please respond by %s to avoid automatic escalation.', 'wp-sell-services' ),
@@ -1204,7 +1196,7 @@ class NotificationService {
 					NotificationMessage::strong( $from_name ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
-				$message->paragraph( __( 'Please log in to your dashboard to view the response and continue the discussion if needed.', 'wp-sell-services' ) );
+				$message->paragraph( __( 'Open the dispute to read the response and reply if needed.', 'wp-sell-services' ) );
 				break;
 
 			case 'dispute_resolved':
@@ -1223,7 +1215,7 @@ class NotificationService {
 					__( 'This is a reminder that you have a pending dispute for Order #%s that requires your response.', 'wp-sell-services' ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
-				$message->paragraph( __( 'Please log in to your dashboard to respond to the dispute to avoid automatic escalation.', 'wp-sell-services' ) );
+				$message->paragraph( __( 'Respond to the dispute to avoid automatic escalation.', 'wp-sell-services' ) );
 				break;
 
 			case 'deadline_warning':
@@ -1267,10 +1259,10 @@ class NotificationService {
 				break;
 
 			case 'milestone_paid':
-				$title = __( 'Milestone paid — start work', 'wp-sell-services' );
+				$title = __( 'Milestone paid - start work', 'wp-sell-services' );
 				$message->line(
 					/* translators: 1: net amount, 2: parent order ID */
-					__( 'Buyer paid the phase on Order #%2$s. %1$s credited to your wallet — you can start work and submit when delivered.', 'wp-sell-services' ),
+					__( 'Buyer paid the phase on Order #%2$s, so you can start work. %1$s is credited to your wallet when the buyer approves it.', 'wp-sell-services' ),
 					function_exists( 'wpss_format_price' ) ? wpss_format_price( (float) ( $data['net_amount'] ?? 0 ) ) : (string) ( $data['net_amount'] ?? 0 ),
 					$this->order_ref( $data['order_id'] ?? 0 )
 				);
@@ -1423,7 +1415,7 @@ class NotificationService {
 
 			default:
 				$title = __( 'Notification', 'wp-sell-services' );
-				$message->line( __( 'You have a new notification. Please check your dashboard for details.', 'wp-sell-services' ) );
+				$message->line( __( 'You have a new notification.', 'wp-sell-services' ) );
 				break;
 		}
 
@@ -1446,7 +1438,9 @@ class NotificationService {
 			return;
 		}
 
-		$platform_name = wpss_get_option( 'general', 'platform_name', get_bloginfo( 'name' ) );
+		// The helper, not the raw option: a saved-but-empty name sent
+		// "Welcome to  - Your Vendor Account is Ready!".
+		$platform_name = wpss_get_platform_name();
 		$display_name  = $profile_data['display_name'] ?? $user->display_name;
 		$is_pending    = 'pending' === ( $profile_data['status'] ?? 'active' );
 
@@ -2019,15 +2013,9 @@ class NotificationService {
 		 */
 		$message = apply_filters( 'wpss_notification_email_content', $message, $subject, $user_id, $data );
 
-		$button_url  = '';
-		$button_text = '';
-		if ( ! empty( $data['order_id'] ) ) {
-			$button_url  = wpss_get_order_url( (int) $data['order_id'] );
-			$button_text = __( 'View Order Details', 'wp-sell-services' );
-		} elseif ( ! empty( $data['action_url'] ) ) {
-			$button_url  = (string) $data['action_url'];
-			$button_text = __( 'View Details', 'wp-sell-services' );
-		}
+		// Same target the in-app row links to (wpss_get_notification_url()).
+		$button_url  = wpss_get_notification_url( $data );
+		$button_text = '' === $button_url ? '' : ( ! empty( $data['order_id'] ) && empty( $data['action_url'] ) ? __( 'View Order Details', 'wp-sell-services' ) : __( 'View Details', 'wp-sell-services' ) );
 
 		return ( new EmailService() )->send(
 			$user->user_email,

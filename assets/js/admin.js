@@ -543,6 +543,55 @@
 	});
 
 	/**
+	 * Dispute resolution: show the refund amount only for a partial refund,
+	 * and say what the money does before the admin saves (Basecamp
+	 * 10337171525). Moved out of an inline <script> in Admin.php.
+	 */
+	function updateDisputeOutcome(form) {
+		var select = form.querySelector('.wpss-dispute-resolution');
+		var outcome = form.querySelector('.wpss-dispute-outcome');
+		var amountRow = form.querySelector('.wpss-dispute-refund-amount');
+
+		if (!select || !outcome) {
+			return;
+		}
+
+		var option = select.options[select.selectedIndex];
+		var kind = option ? option.getAttribute('data-refund') : null;
+		var total = parseFloat(outcome.dataset.total) || 0;
+		var money = function (value) {
+			try {
+				return new Intl.NumberFormat(document.documentElement.lang || undefined, { style: 'currency', currency: outcome.dataset.currency }).format(value);
+			} catch (e) {
+				return value.toFixed(2);
+			}
+		};
+
+		if (amountRow) {
+			amountRow.style.display = kind === 'partial' ? '' : 'none';
+		}
+
+		if (!select.value || !kind) {
+			outcome.textContent = '';
+			return;
+		}
+
+		var refund = kind === 'full' ? total : (kind === 'partial' ? Math.min(total, Math.max(0, parseFloat((form.querySelector('input[name="refund_amount"]') || {}).value) || 0)) : 0);
+
+		outcome.textContent = outcome.dataset[kind]
+			.replace('%1$s', money(refund))
+			.replace('%2$s', money(total - refund));
+	}
+
+	$(document).on('change input', '.wpss-dispute-resolution, input[name="refund_amount"]', function () {
+		updateDisputeOutcome(this.form);
+	});
+
+	$('.wpss-dispute-resolution').each(function () {
+		updateDisputeOutcome(this.form);
+	});
+
+	/**
 	 * Replay the onboarding tour.
 	 *
 	 * Replaces an inline onclick="" attribute on the dashboard heading button.
@@ -559,3 +608,115 @@
 	$(document).ready(init);
 
 })(jQuery);
+
+/**
+ * Category icon field: show the Lucide icon beside the name as it is typed
+ * (Basecamp 10337190248). An unknown name renders nothing, which is the hint.
+ */
+( function () {
+	var input = document.getElementById( 'wpss-category-icon' );
+	var preview = document.querySelector( '[data-wpss-icon-preview]' );
+
+	if ( ! input || ! preview ) {
+		return;
+	}
+
+	var timer;
+
+	input.addEventListener( 'input', function () {
+		clearTimeout( timer );
+		timer = setTimeout( function () {
+			var name = input.value.trim().toLowerCase().replace( /[^a-z0-9-]/g, '' );
+			preview.textContent = '';
+			if ( name ) {
+				var icon = document.createElement( 'i' );
+				icon.setAttribute( 'data-lucide', name );
+				icon.className = 'wpss-icon';
+				preview.appendChild( icon );
+				document.dispatchEvent( new CustomEvent( 'wpss:icons:refresh' ) );
+			}
+		}, 250 );
+	} );
+}() );
+
+/**
+ * Search pickers (wpss_admin_search_select()): typing refills the select with
+ * up to 20 matches from wpss_admin_search, shown as an open list; choosing one
+ * closes it. The select keeps its current choice across searches, so the form
+ * always posts what the admin picked (Basecamp 10337161480).
+ */
+( function () {
+	if ( ! window.wpssAdmin ) {
+		return;
+	}
+
+	document.querySelectorAll( '[data-wpss-search]' ).forEach( function ( wrap ) {
+		var input = wrap.querySelector( '.wpss-search-select__input' );
+		var select = wrap.querySelector( 'select' );
+		var timer;
+		var request = 0;
+
+		function closeList() {
+			select.size = 0;
+			select.classList.remove( 'is-open' );
+			select.classList.toggle( 'has-value', '' !== select.value );
+		}
+
+		closeList();
+
+		input.addEventListener( 'input', function () {
+			clearTimeout( timer );
+			timer = setTimeout( function () {
+				var mine = ++request;
+				var url = wpssAdmin.ajaxUrl + '?' + new URLSearchParams( {
+					action: 'wpss_admin_search',
+					nonce: wpssAdmin.nonce,
+					type: wrap.getAttribute( 'data-wpss-search' ),
+					term: input.value.trim()
+				} );
+
+				fetch( url, { credentials: 'same-origin' } )
+					.then( function ( response ) { return response.json(); } )
+					.then( function ( body ) {
+						if ( mine !== request || ! body || ! body.success ) {
+							return;
+						}
+
+						// Keep the placeholder and the current choice; replace the rest.
+						Array.prototype.slice.call( select.options ).forEach( function ( option ) {
+							if ( option.value && ! option.selected ) {
+								option.remove();
+							}
+						} );
+
+						body.data.forEach( function ( item ) {
+							if ( select.querySelector( 'option[value="' + item.id + '"]' ) ) {
+								return;
+							}
+							var option = new Option( item.label, item.id );
+							Object.keys( item.data || {} ).forEach( function ( key ) {
+								option.setAttribute( 'data-' + key, item.data[ key ] );
+							} );
+							select.add( option );
+						} );
+
+						select.size = Math.min( Math.max( select.options.length, 2 ), 8 );
+						select.classList.add( 'is-open' );
+					} );
+			}, 250 );
+		} );
+
+		select.addEventListener( 'change', closeList );
+		select.addEventListener( 'blur', closeList );
+	} );
+}() );
+
+/**
+ * A select whose options are URLs navigates on change (the Orders tabs on a
+ * phone).
+ */
+document.querySelectorAll( 'select[data-wpss-nav]' ).forEach( function ( select ) {
+	select.addEventListener( 'change', function () {
+		window.location.href = select.value;
+	} );
+} );

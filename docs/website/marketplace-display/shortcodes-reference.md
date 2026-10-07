@@ -54,6 +54,15 @@ The main browsing page of your marketplace.
 | `order` | `DESC` | `ASC` or `DESC` |
 | `featured` | *(empty)* | `true` to show featured only |
 
+Sorting never hides a service. With `orderby="rating"` or `orderby="sales"`,
+services that have no rating or no completed order yet are listed after the
+ones that do, newest first. `orderby="price"` uses the starting price: cheapest
+first with `order="ASC"`, most expensive first otherwise.
+
+Services from a vendor who is on vacation are left out, the same as in the
+catalog and search. The exception is a grid limited to one vendor with
+`vendor="..."`, which always shows that vendor's services.
+
 ```
 [wpss_services category="design" limit="8" columns="4" orderby="rating"]
 ```
@@ -137,10 +146,17 @@ works as a compact sidebar listing -- just lower the `limit`.
 [wpss_buyer_requests limit="5" budget_min="500"]
 ```
 
+The request cards carry their own styling, so the board looks the same on any
+page, in any theme, as it does on the buyer requests archive.
+
 ### `[wpss_post_request]` -- Post a request form
 
-The form buyers use to submit a new request. Requires the user to be logged in.
-No attributes.
+The same Post a Request form as the dashboard (title, description, category,
+budget, deadline, skills, attachments). Requires the user to be logged in. A theme
+override of `dashboard/sections/create-request.php` changes both. No attributes.
+
+The form loads its own styles and script wherever it is placed, including inside
+a synced pattern, a widget, or a page builder.
 
 ## Vendor elements
 
@@ -220,6 +236,16 @@ The multi-step form vendors use to create a service.
 |-----------|---------|
 | `redirect` | *(empty)* |
 
+A sign-in card styled like the registration form. After signing in, visitors
+go back to the page they came from (`?redirect_to=`), else to `redirect`, else
+the home page. A wrong password returns to this card with a message.
+
+Map the page under **Settings > Pages > Log In** and every Sign in link on the
+site (the plugin's and the theme's) goes to it instead of `wp-login.php`.
+wp-admin sign-in stays on `wp-login.php`. Choose **None (use this site's own
+login)** there to switch it off. The page is created automatically on new
+installs only; see [Pages Setup](../platform-settings/pages-setup.md).
+
 Shows an "already logged in" message to authenticated users.
 
 ### `[wpss_register]` -- Registration form
@@ -250,6 +276,9 @@ e-commerce platform handles checkout. No attributes.
 
 Account management for standalone mode: profile, saved addresses, settings.
 Separate from the vendor dashboard. No attributes.
+
+A logged-out visitor sees a sign-in prompt with a **Log in** button that leads to
+the site's sign-in page and returns them here afterwards.
 
 ## Pro
 

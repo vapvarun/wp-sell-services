@@ -220,7 +220,7 @@ class ExtensionOrderService {
 						'reason'          => $reason,
 					)
 				),
-				'created_at'        => current_time( 'mysql' ),
+				'created_at'        => current_time( 'mysql', true ),
 			),
 			array( '%s', '%d', '%d', '%d', '%s', '%d', '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
@@ -252,7 +252,7 @@ class ExtensionOrderService {
 				'status'            => ExtensionRequestService::STATUS_PENDING,
 				'original_due_date' => $original_due,
 				'new_due_date'      => $new_due,
-				'created_at'        => current_time( 'mysql' ),
+				'created_at'        => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%d', '%f', '%d', '%s', '%s', '%s', '%s', '%s' )
 		);
@@ -378,7 +378,7 @@ class ExtensionOrderService {
 				'reference_type' => 'order',
 				'reference_id'   => $pay_order_id,
 				'status'         => 'completed',
-				'created_at'     => current_time( 'mysql' ),
+				'created_at'     => current_time( 'mysql', true ),
 			),
 		);
 
@@ -397,7 +397,7 @@ class ExtensionOrderService {
 		if ( $parent && $extra_days > 0 ) {
 			$source       = $parent->delivery_deadline instanceof \DateTimeImmutable
 				? $parent->delivery_deadline->format( 'Y-m-d H:i:s' )
-				: current_time( 'mysql' );
+				: current_time( 'mysql', true );
 			$new_deadline = gmdate( 'Y-m-d H:i:s', strtotime( $source . ' +' . $extra_days . ' days' ) );
 
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -405,7 +405,7 @@ class ExtensionOrderService {
 				$orders_table,
 				array(
 					'delivery_deadline' => $new_deadline,
-					'updated_at'        => current_time( 'mysql' ),
+					'updated_at'        => current_time( 'mysql', true ),
 				),
 				array( 'id' => $parent_order_id )
 			);
@@ -419,8 +419,8 @@ class ExtensionOrderService {
 			$orders_table,
 			array(
 				'status'          => 'completed',
-				'completed_at'    => current_time( 'mysql' ),
-				'updated_at'      => current_time( 'mysql' ),
+				'completed_at'    => current_time( 'mysql', true ),
+				'updated_at'      => current_time( 'mysql', true ),
 				'commission_rate' => $commission_rate,
 				'platform_fee'    => $platform_fee,
 				'vendor_earnings' => $vendor_earnings,
@@ -437,7 +437,7 @@ class ExtensionOrderService {
 				array(
 					'status'       => ExtensionRequestService::STATUS_APPROVED,
 					'responded_by' => (int) $sub->customer_id,
-					'responded_at' => current_time( 'mysql' ),
+					'responded_at' => current_time( 'mysql', true ),
 				),
 				array( 'id' => (int) $request_row->id )
 			);
@@ -544,7 +544,7 @@ class ExtensionOrderService {
 			array(
 				'status'           => ExtensionRequestService::STATUS_REJECTED,
 				'responded_by'     => $customer_id,
-				'responded_at'     => current_time( 'mysql' ),
+				'responded_at'     => current_time( 'mysql', true ),
 				'response_message' => sanitize_textarea_field( $response_note ),
 			),
 			array( 'id' => $request_id )
@@ -556,7 +556,7 @@ class ExtensionOrderService {
 				$orders_table,
 				array(
 					'status'     => 'cancelled',
-					'updated_at' => current_time( 'mysql' ),
+					'updated_at' => current_time( 'mysql', true ),
 				),
 				array(
 					'id'     => (int) $row->pay_order_id,
@@ -624,7 +624,7 @@ class ExtensionOrderService {
 				$orders_table,
 				array(
 					'status'     => 'cancelled',
-					'updated_at' => current_time( 'mysql' ),
+					'updated_at' => current_time( 'mysql', true ),
 				),
 				array(
 					'id'     => $sub_id,
@@ -638,7 +638,7 @@ class ExtensionOrderService {
 					$extensions_table,
 					array(
 						'status'       => ExtensionRequestService::STATUS_REJECTED,
-						'responded_at' => current_time( 'mysql' ),
+						'responded_at' => current_time( 'mysql', true ),
 					),
 					array(
 						'pay_order_id' => $sub_id,

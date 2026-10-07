@@ -443,6 +443,8 @@
 	background: var(--wpss-surface, #fff);
 	border-radius: 16px 16px 16px 4px;
 	box-shadow: var(--wpss-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+	/* Break only a word too long for the bubble (a pasted URL), never a normal one. */
+	overflow-wrap: break-word;
 }
 
 .wpss-messaging__message--sent .wpss-messaging__bubble {
@@ -1059,8 +1061,12 @@ body.wpss-modal-open {
 		padding: 16px;
 	}
 
-	.wpss-messaging__bubble {
-		max-width: 85%;
+	/* The row caps the message, not the bubble inside it: the wrapper stayed
+	   at 70% while the bubble was capped at 85% of that, so on a 390px phone
+	   a message had 165px and broke words mid-way (Basecamp 10345275760,
+	   customer report). One cap, on the wrapper, on every thread. */
+	.wpss-messaging__message-content {
+		max-width: 88%;
 	}
 
 	.wpss-messaging__composer {
@@ -1304,10 +1310,6 @@ body.wpss-modal-open {
 
 	.wpss-messaging--order {
 		height: 500px;
-	}
-
-	.wpss-messaging--order .wpss-messaging__bubble {
-		max-width: 85%;
 	}
 
 	/* Popup: full-width sheet on small phones; tighten padding for legibility. */

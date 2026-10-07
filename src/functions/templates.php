@@ -200,6 +200,31 @@ function wpss_get_template( string $template_name, array $args = array(), string
 }
 
 /**
+ * Breadcrumb on a buyer request: Home > Buyer Requests > the request.
+ *
+ * The template documented this as hooked at wpss_single_request_header 5,
+ * but no such function existed, so a request page had no way back to the
+ * list (Basecamp 10337197376). Same markup as the service breadcrumb.
+ *
+ * @since 1.8.0
+ *
+ * @param int $request_id Request post ID.
+ * @return void
+ */
+function wpss_request_breadcrumb( int $request_id ): void {
+	?>
+	<nav class="wpss-breadcrumb" aria-label="<?php esc_attr_e( 'Breadcrumb', 'wp-sell-services' ); ?>">
+		<ol class="wpss-breadcrumb-list">
+			<li class="wpss-breadcrumb-item"><a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Home', 'wp-sell-services' ); ?></a></li>
+			<li class="wpss-breadcrumb-item"><a href="<?php echo esc_url( (string) get_post_type_archive_link( 'wpss_request' ) ); ?>"><?php esc_html_e( 'Buyer Requests', 'wp-sell-services' ); ?></a></li>
+			<li class="wpss-breadcrumb-item wpss-breadcrumb-current" aria-current="page"><?php echo esc_html( (string) get_post_field( 'post_title', $request_id ) ); ?></li>
+		</ol>
+	</nav>
+	<?php
+}
+add_action( 'wpss_single_request_header', 'wpss_request_breadcrumb', 5 );
+
+/**
  * Calculate time difference in human readable format.
  *
  * Both sides of the comparison must be real UTC timestamps. The stored
@@ -502,7 +527,7 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 
 	if ( $is_system ) :
 		?>
-		<div class="wpss-messaging__system">
+		<div class="wpss-messaging__system" data-message-id="<?php echo esc_attr( (string) ( $message->id ?? 0 ) ); ?>">
 			<span class="wpss-messaging__system-text">
 				<?php echo wp_kses_post( $content ); ?>
 				<span class="wpss-messaging__message-time">
@@ -623,4 +648,152 @@ function wpss_register_design_system( bool $enqueue = false ): void {
 	if ( $enqueue ) {
 		wp_enqueue_style( 'wpss-design-system' );
 	}
+}
+
+/**
+ * Enqueue the order view stylesheet (assets/css/order-view.css).
+ *
+ * The buyer/seller order page and the admin order screen render the same
+ * blocks (timeline, deliveries, requirements), so both load the same rules.
+ * Called from the order routes before the head prints, and from the template
+ * as a fallback for a shortcode render, where WordPress prints it late.
+ *
+ * @since 1.8.0
+ *
+ * @return void
+ */
+function wpss_enqueue_order_view_style(): void {
+	wpss_register_design_system();
+	wpss_enqueue_style( 'wpss-order-view', 'assets/css/order-view.css' );
+}
+
+/**
+ * WordPress core's list-table pager, for admin lists built without WP_List_Table.
+ *
+ * Orders and Disputes use WP_List_Table and get core's pager (first, previous,
+ * page input, next, last); the hand-built lists printed a bare "1 2 3 >>" row.
+ * This reuses core's own pagination() rather than copying its markup, so the
+ * lists stay identical as core changes it. Reads and writes the `paged` arg.
+ *
+ * @since 1.8.0
+ *
+ * @param int $total    Total items.
+ * @param int $per_page Items per page.
+ * @return void
+ */
+function wpss_admin_list_pager( int $total, int $per_page ): void {
+	if ( $total <= $per_page ) {
+		return;
+	}
+
+	if ( ! class_exists( 'WP_List_Table' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+	}
+
+	$pager = new class() extends \WP_List_Table {
+		/**
+		 * Print the bottom pager for the given totals.
+		 *
+		 * @param int $total    Total items.
+		 * @param int $per_page Items per page.
+		 * @return void
+		 */
+		public function print_pager( int $total, int $per_page ): void {
+			$this->set_pagination_args(
+				array(
+					'total_items' => $total,
+					'per_page'    => $per_page,
+				)
+			);
+			echo '<div class="tablenav bottom">';
+			$this->pagination( 'bottom' );
+			echo '<br class="clear"></div>';
+		}
+
+		/**
+		 * No columns: only the pager is used.
+		 *
+		 * @return array<string, string>
+		 */
+		public function get_columns() {
+			return array();
+		}
+	};
+
+	$pager->print_pager( $total, $per_page );
+}
+
+/**
+ * A sortable column's <th> for an admin list built without WP_List_Table.
+ *
+ * WordPress core's list-table CSS keys the arrows off the <th>'s own
+ * sortable/sorted classes, so the whole <th> is printed here. Links keep the
+ * rest of the current query (filters, search) and flip the order.
+ *
+ * @since 1.8.0
+ *
+ * @param string $slug    Column class slug (column-{slug}).
+ * @param string $column  Orderby key.
+ * @param string $label   Column label.
+ * @param string $current Current orderby.
+ * @param string $order   Current order, ASC or DESC.
+ * @param string $extra   Optional pre-escaped markup after the label (a screen-reader note).
+ * @param string $title   Optional tooltip.
+ * @return void
+ */
+function wpss_admin_sortable_th( string $slug, string $column, string $label, string $current, string $order, string $extra = '', string $title = '' ): void {
+	$is_sorted = $current === $column;
+
+	printf(
+		'<th scope="col" class="manage-column column-%1$s %2$s"%6$s><a href="%3$s"><span>%4$s</span><span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span class="sorting-indicator desc" aria-hidden="true"></span></span>%5$s</a></th>',
+		esc_attr( $slug ),
+		esc_attr( $is_sorted ? 'sorted ' . strtolower( $order ) : 'sortable asc' ),
+		esc_url(
+			add_query_arg(
+				array(
+					'orderby' => $column,
+					'order'   => $is_sorted && 'ASC' === $order ? 'DESC' : 'ASC',
+					'paged'   => false,
+				)
+			)
+		),
+		esc_html( $label ),
+		$extra, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- caller passes escaped markup.
+		'' !== $title ? ' title="' . esc_attr( $title ) . '"' : ''
+	);
+}
+
+/**
+ * A search picker for admin selects that would otherwise list every user or
+ * service.
+ *
+ * Create Order rendered 399 services and two lists of 355 users on load
+ * (Basecamp 10337161480); a 10k-user site renders a page of options. The
+ * picker is a real <select> - so the form posts it and existing scripts read
+ * its selected option as before - holding only the current choice, with a
+ * search box above it that refills the options from wpss_admin_search
+ * (Admin::ajax_admin_search) as the admin types. admin.js wires every
+ * [data-wpss-search] on the page.
+ *
+ * @since 1.8.0
+ *
+ * @param array{type: string, name: string, id: string, placeholder: string, selected?: int, selected_label?: string, required?: bool, search_label?: string} $args Picker options. type: 'user', 'seller' or 'service'; placeholder: the empty option.
+ * @return void
+ */
+function wpss_admin_search_select( array $args ): void {
+	$selected = (int) ( $args['selected'] ?? 0 );
+	?>
+	<span class="wpss-search-select" data-wpss-search="<?php echo esc_attr( $args['type'] ); ?>">
+		<input type="search" class="wpss-search-select__input" autocomplete="off"
+			aria-controls="<?php echo esc_attr( $args['id'] ); ?>"
+			aria-label="<?php echo esc_attr( $args['search_label'] ?? __( 'Search', 'wp-sell-services' ) ); ?>"
+			placeholder="<?php echo esc_attr( $args['search_label'] ?? __( 'Search', 'wp-sell-services' ) ); ?>">
+		<select name="<?php echo esc_attr( $args['name'] ); ?>" id="<?php echo esc_attr( $args['id'] ); ?>"<?php echo empty( $args['required'] ) ? '' : ' required'; ?>>
+			<option value=""><?php echo esc_html( $args['placeholder'] ); ?></option>
+			<?php if ( $selected ) : ?>
+				<option value="<?php echo esc_attr( (string) $selected ); ?>" selected><?php echo esc_html( $args['selected_label'] ?? '#' . $selected ); ?></option>
+			<?php endif; ?>
+		</select>
+	</span>
+	<?php
 }

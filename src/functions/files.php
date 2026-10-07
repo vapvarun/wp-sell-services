@@ -236,6 +236,54 @@ function wpss_order_files_are_public( bool $force = false ): ?bool {
 }
 
 /**
+ * The file extensions an upload may use: the owner's Settings > Advanced list,
+ * through the wpss_allowed_file_types filter.
+ *
+ * Read by wpss_check_upload() and by wpss_upload_accept(), so a file picker
+ * offers exactly what the server will take. The pickers carried their own
+ * hardcoded lists and offered .txt, .zip and .rar the server then refused
+ * (Basecamp 10337171525).
+ *
+ * @since 1.8.0
+ *
+ * @param string              $context Upload context (see the filter).
+ * @param array<string,mixed> $file    The $_FILES entry, when checking one.
+ * @return string[] Lower-case extensions, no dots.
+ */
+function wpss_get_allowed_file_types( string $context = '', array $file = array() ): array {
+	$allowed = array_map( 'trim', explode( ',', strtolower( (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ) ) );
+
+	/**
+	 * Filter the file extensions any WPSS upload may use.
+	 *
+	 * The owner's Settings > Advanced list is the default. This filter is the
+	 * seam for a site that needs a type the settings screen does not offer, or
+	 * needs to narrow the list for one context - $context tells you which
+	 * surface is asking.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string[]            $allowed Lower-case extensions, no dots.
+	 * @param array<string,mixed> $file    The $_FILES entry being checked.
+	 * @param string              $context Upload context: requirements, delivery,
+	 *                                     message, dispute, media, portfolio, ''.
+	 */
+	return (array) apply_filters( 'wpss_allowed_file_types', $allowed, $file, $context );
+}
+
+/**
+ * The accept="" value for a file input in an upload context.
+ *
+ * @since 1.8.0
+ *
+ * @param string $context Upload context.
+ * @return string e.g. ".jpg,.png,.pdf".
+ */
+function wpss_upload_accept( string $context ): string {
+	return implode( ',', array_map( static fn( $ext ) => '.' . $ext, array_filter( wpss_get_allowed_file_types( $context ) ) ) );
+}
+
+/**
  * Validate an upload against the plugin's size and type settings.
  *
  * ONE reading of `wpss_max_file_size` and `wpss_allowed_file_types`. Message,
@@ -281,24 +329,26 @@ function wpss_check_upload( array $file, string $context = '' ): ?WP_Error {
 		return new WP_Error( 'invalid_type', __( 'File type could not be verified.', 'wp-sell-services' ), array( 'status' => 400 ) );
 	}
 
-	$allowed = array_map( 'trim', explode( ',', strtolower( (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ) ) );
+	$allowed = wpss_get_allowed_file_types( $context, $file );
 
-	/**
-	 * Filter the file extensions any WPSS upload may use.
-	 *
-	 * The owner's Settings > Advanced list is the default. This filter is the
-	 * seam for a site that needs a type the settings screen does not offer, or
-	 * needs to narrow the list for one context - $context tells you which
-	 * surface is asking.
-	 *
-	 * @since 1.7.1
-	 *
-	 * @param string[]            $allowed Lower-case extensions, no dots.
-	 * @param array<string,mixed> $file    The $_FILES entry being checked.
-	 * @param string              $context Upload context: requirements, delivery,
-	 *                                     message, dispute, media, portfolio, ''.
+	/*
+	 * Public profile media is capped to what it is: images, plus video for a
+	 * portfolio. The owner's list is written for PRIVATE order files (pdf, zip,
+	 * psd...), and applying it here let any member host an archive publicly as
+	 * an "avatar" (Basecamp 10336370704). Intersected, so an owner who narrows
+	 * the list narrows these too, but nothing can widen them past the cap.
 	 */
-	$allowed = (array) apply_filters( 'wpss_allowed_file_types', $allowed, $file, $context );
+	$images        = array( 'jpg', 'jpeg', 'png', 'gif', 'webp' );
+	$public_limits = array(
+		'avatar'    => $images,
+		'profile'   => $images,
+		'service'   => $images,
+		'portfolio' => array_merge( $images, array( 'mp4', 'webm', 'mov' ) ),
+	);
+
+	if ( isset( $public_limits[ $context ] ) ) {
+		$allowed = array_values( array_intersect( $allowed, $public_limits[ $context ] ) );
+	}
 
 	/*
 	 * The per-flow filters from before uploads shared one check.
@@ -870,14 +920,24 @@ function wpss_migrate_legacy_order_file( array $record, int $order_id ): ?array 
 		return null;
 	}
 
+	$attachment_id = ctype_digit( $file_id ) && 'attachment' === get_post_type( (int) $file_id ) ? (int) $file_id : 0;
+
+	// The same upload can also be the brief of a buyer request a seller has
+	// proposed on. That request still links the public copy, so it stays; the
+	// order now reads its own private copy either way.
+	if ( $attachment_id && ( new \WPSellServices\Services\BuyerRequestService() )->is_file_locked( $attachment_id ) ) {
+		delete_transient( $lock );
+		return $updated;
+	}
+
 	// Only now is the public copy safe to remove - the record points at the
 	// private one and the bytes are there.
 	wp_delete_file( $source );
 
 	// If the id was an attachment post, drop it too. Leaving it behind means a
 	// media-library row pointing at a file that is no longer there.
-	if ( ctype_digit( $file_id ) && 'attachment' === get_post_type( (int) $file_id ) ) {
-		wp_delete_attachment( (int) $file_id, true );
+	if ( $attachment_id ) {
+		wp_delete_attachment( $attachment_id, true );
 	}
 
 	delete_transient( $lock );
@@ -1400,3 +1460,214 @@ function wpss_obfuscate_public_upload_name( array $file ): array {
 
 	return $file;
 }
+
+/**
+ * Let a member upload an image through the media modal.
+ *
+ * The dashboard (avatar, cover, portfolio) and the service wizard open the
+ * WordPress media modal, which uploads to wp-admin/async-upload.php. Two things
+ * stopped that (Basecamp 10340613689):
+ *
+ * - Buyers have no upload_files. The dashboard granted it only while its own
+ *   page rendered, so the upload request itself was refused and no buyer could
+ *   ever set a profile photo. It is now granted for that one request too, for
+ *   images only - a member who does not already hold upload_files gets the
+ *   image types and nothing else.
+ * - WooCommerce sends anyone without edit_posts away from wp-admin to My
+ *   Account, so on every WooCommerce site the upload got that page back instead
+ *   of JSON ("An error occurred in the upload") - vendors included, so no
+ *   vendor could add the main image a service needs to go live.
+ *
+ * Only async-upload.php; the rest of wp-admin stays closed. admin-ajax (the
+ * modal's library) is already outside WooCommerce's check.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, bool> $allcaps All capabilities of the user.
+ * @return array<string, bool>
+ */
+function wpss_grant_member_image_upload( array $allcaps ): array {
+	if ( empty( $allcaps['upload_files'] ) && is_user_logged_in() ) {
+		$allcaps['upload_files'] = true;
+		add_filter( 'upload_mimes', 'wpss_image_mimes_only' );
+	}
+
+	return $allcaps;
+}
+
+/**
+ * The image types from the site's allowed list, for members granted uploads.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, string> $mimes Allowed mime types.
+ * @return array<string, string>
+ */
+function wpss_image_mimes_only( array $mimes ): array {
+	return array_filter( $mimes, static fn( $type ) => str_starts_with( $type, 'image/' ) );
+}
+
+add_action(
+	'init',
+	static function () {
+		global $pagenow;
+
+		// The modal's Library tab asks admin-ajax for query-attachments, which
+		// checks upload_files too, so a buyer could upload a photo but never
+		// pick one they uploaded before. That listing is limited to their own
+		// files by wpss_limit_media_library_to_own().
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- routing only; core checks the request.
+		$is_library = 'admin-ajax.php' === $pagenow && isset( $_REQUEST['action'] ) && 'query-attachments' === $_REQUEST['action'];
+
+		if ( 'async-upload.php' !== $pagenow && ! $is_library ) {
+			return;
+		}
+
+		add_filter( 'user_has_cap', 'wpss_grant_member_image_upload' );
+		add_filter(
+			'woocommerce_prevent_admin_access',
+			static fn( $prevent ) => $prevent && ! current_user_can( 'upload_files' )
+		);
+	}
+);
+
+/**
+ * The media library a member browses holds only their own uploads.
+ *
+ * The wizard and dashboard open the WordPress media modal, whose Library tab
+ * listed every attachment on the site - other vendors' service images,
+ * buyers' delivery files - to anyone who could upload (Basecamp 10340613689).
+ * Someone who cannot edit other people's posts now sees their own files only;
+ * editors and admins keep the whole library.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, mixed> $query Attachment query args.
+ * @return array<string, mixed>
+ */
+function wpss_limit_media_library_to_own( array $query ): array {
+	if ( ! current_user_can( 'edit_others_posts' ) ) {
+		$query['author'] = get_current_user_id();
+	}
+
+	return $query;
+}
+add_filter( 'ajax_query_attachments_args', 'wpss_limit_media_library_to_own' );
+
+/**
+ * Whether the current visitor may see a buyer request's attachments.
+ *
+ * Signed-in members only: briefs and mockups can carry a client's private
+ * details, and anyone who can act on a request (quote, review) is signed in
+ * already. Owner decision on Basecamp 10337217098. The website and REST both
+ * ask here.
+ *
+ * @since 1.8.0
+ *
+ * @param int $request_id Buyer request post ID.
+ * @return bool
+ */
+function wpss_can_view_request_attachments( int $request_id ): bool {
+	/**
+	 * Filter who may see a buyer request's attachments.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param bool $can        Default: the visitor is signed in.
+	 * @param int  $request_id Buyer request post ID.
+	 */
+	return (bool) apply_filters( 'wpss_can_view_request_attachments', is_user_logged_in(), $request_id );
+}
+
+/**
+ * Keep a member from deleting a file that a buyer request still needs.
+ *
+ * A request's files are locked once a seller has proposed on it
+ * (BuyerRequestService::is_file_locked()). Checking that in each route that
+ * deletes media left a door open every time: the media route had the check,
+ * the order requirement-file route and its AJAX twin did not, and each
+ * deletes any file its caller uploaded (Basecamp 10377676994). This sits on
+ * WordPress's own delete, so every door goes through it, including ones
+ * added later and the Media Library.
+ *
+ * Site administrators, WP-CLI and background jobs are not stopped: closing an
+ * account or clearing demo content must still be able to remove files.
+ *
+ * @since 1.8.0
+ *
+ * @param mixed    $delete Short-circuit value; non-null stops the delete.
+ * @param \WP_Post $post   The attachment.
+ * @return mixed False to refuse the delete, otherwise $delete unchanged.
+ */
+function wpss_guard_locked_request_file( $delete, $post ) {
+	if ( null !== $delete || ! $post instanceof \WP_Post || ! is_user_logged_in() || current_user_can( 'manage_options' ) ) {
+		return $delete;
+	}
+
+	// Asked for every file, whatever it was uploaded as: a request lists any
+	// file its author owns, so the upload context says nothing about the lock.
+	return ( new \WPSellServices\Services\BuyerRequestService() )->is_file_locked( (int) $post->ID ) ? false : $delete;
+}
+add_filter( 'pre_delete_attachment', 'wpss_guard_locked_request_file', 10, 2 );
+
+/**
+ * Keep a member from trashing or deleting a buyer request a seller has proposed on.
+ *
+ * The rule lived in BuyerRequestService::delete() only. The request is a
+ * post type WordPress exposes itself (wp/v2 REST, the posts screen), so a
+ * member whose role may delete posts had a door that never asked. Deleting
+ * the request also unlocks its files. On WordPress's own trash and delete,
+ * every door asks.
+ *
+ * Site administrators, WP-CLI and background jobs are not stopped. Closing an
+ * account lifts it for its own requests (AccountDeletionService).
+ *
+ * @since 1.8.0
+ *
+ * @param mixed    $check Short-circuit value; non-null stops the trash or delete.
+ * @param \WP_Post $post  The post.
+ * @return mixed False to refuse, otherwise $check unchanged.
+ */
+function wpss_guard_proposed_request( $check, $post ) {
+	if ( null !== $check || ! $post instanceof \WP_Post || 'wpss_request' !== $post->post_type || ! is_user_logged_in() || current_user_can( 'manage_options' ) ) {
+		return $check;
+	}
+
+	return ( new \WPSellServices\Services\BuyerRequestService() )->is_untouched( (int) $post->ID ) ? $check : false;
+}
+add_filter( 'pre_trash_post', 'wpss_guard_proposed_request', 10, 2 );
+add_filter( 'pre_delete_post', 'wpss_guard_proposed_request', 10, 2 );
+
+/**
+ * The same rule for a request changed out from under the guard above.
+ *
+ * Saving a post with the status "trash" never calls wp_trash_post(), and
+ * saving it as another post type leaves a post neither the guard nor the file
+ * lock recognises as a request (XML-RPC, a bulk edit, any wp_update_post()).
+ * Asked of the post as it is stored, not as the save describes it: the
+ * request keeps its status and its type.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, mixed> $data    Post data about to be saved.
+ * @param array<string, mixed> $postarr Raw post array, with the ID on an update.
+ * @return array<string, mixed>
+ */
+function wpss_guard_proposed_request_status( $data, $postarr ) {
+	$post = empty( $postarr['ID'] ) ? null : get_post( (int) $postarr['ID'] );
+
+	if ( ! $post || 'wpss_request' !== $post->post_type || false !== wpss_guard_proposed_request( null, $post ) ) {
+		return $data;
+	}
+
+	// The type is kept whatever the stored status, a request already in the
+	// trash included; only the move INTO the trash is a status question.
+	$data['post_type'] = $post->post_type;
+
+	if ( 'trash' === ( $data['post_status'] ?? '' ) && 'trash' !== $post->post_status ) {
+		$data['post_status'] = $post->post_status;
+	}
+
+	return $data;
+}
+add_filter( 'wp_insert_post_data', 'wpss_guard_proposed_request_status', 10, 2 );

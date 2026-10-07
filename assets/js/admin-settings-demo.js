@@ -71,7 +71,7 @@
 					success: function( response ) {
 						if ( response.success ) {
 							$status.css( 'color', '#00a32a' ).text( response.data.message || ( l10n.deleteSuccess || 'Demo content deleted successfully!' ) );
-							setTimeout( function() { location.reload(); }, 1500 );
+							setTimeout( function() { location.reload(); }, 4000 );
 						} else {
 							$status.css( 'color', '#d63638' ).text( response.data.message || ( l10n.deleteFailed || 'Deletion failed.' ) );
 							$btn.prop( 'disabled', false ).text( l10n.deleteBtn || 'Delete Demo Content' );

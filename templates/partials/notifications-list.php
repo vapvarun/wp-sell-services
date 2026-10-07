@@ -115,6 +115,7 @@ $wpss_has_unread = wpss_count_user_notifications( $wpss_notif_user, array( 'unre
 .wpss-notif-center__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .wpss-notif-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .wpss-notif-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px solid var( --wpss-border, #e5e7eb ); border-radius: var( --wpss-radius, 8px ); background: var( --wpss-bg, #fff ); }
+.wpss-notif-row:has( .wpss-notif-row__link ) { cursor: pointer; }
 .wpss-notif-row--unread { background: var( --wpss-primary-light, #eef2ff ); border-color: var( --wpss-primary, #4f46e5 ); }
 /* Icon, title and the mark-read control share ONE first-line band so they sit
 	on the same optical line. The icon is a replaced SVG whose box does not match
@@ -162,6 +163,8 @@ $wpss_has_unread = wpss_count_user_notifications( $wpss_notif_user, array( 'unre
 			foreach ( $wpss_notifications as $wpss_n ) :
 				$wpss_unread = empty( $wpss_n->is_read );
 				$wpss_icon   = $wpss_notif_icons[ $wpss_n->type ] ?? 'bell';
+				$wpss_data   = is_string( $wpss_n->data ?? null ) ? json_decode( $wpss_n->data, true ) : (array) ( $wpss_n->data ?? array() );
+				$wpss_url    = wpss_get_notification_url( is_array( $wpss_data ) ? $wpss_data : array(), $wpss_n->action_url ?? null );
 				$wpss_when   = ! empty( $wpss_n->created_at )
 					? sprintf(
 						/* translators: %s: human-readable time difference, e.g. "2 hours" */
@@ -183,16 +186,23 @@ $wpss_has_unread = wpss_count_user_notifications( $wpss_notif_user, array( 'unre
 								// and left you to go find it. Linked only when
 								// the row actually carries one, so older rows
 								// render exactly as before.
-								if ( ! empty( $wpss_n->action_url ) ) :
+								if ( '' !== $wpss_url ) :
 									?>
-									<a class="wpss-notif-row__link" href="<?php echo esc_url( (string) $wpss_n->action_url ); ?>"><?php echo esc_html( $wpss_n->title ); ?></a>
+									<a class="wpss-notif-row__link" href="<?php echo esc_url( $wpss_url ); ?>"><?php echo esc_html( $wpss_n->title ); ?></a>
 								<?php else : ?>
 									<?php echo esc_html( $wpss_n->title ); ?>
 								<?php endif; ?>
 							</span>
 						<?php endif; ?>
 						<?php if ( ! empty( $wpss_n->message ) ) : ?>
-							<span class="wpss-notif-row__message"><?php echo esc_html( wp_strip_all_tags( (string) $wpss_n->message ) ); ?></span>
+							<?php
+							// Plain text with real line breaks since 1.2.3; older rows are
+							// HTML. Breaks and block ends become newlines before the tags go,
+							// or every field ran into the next.
+							$wpss_msg = preg_replace( '#<br\s*/?>|</(p|div|li)>#i', "\n", (string) $wpss_n->message );
+							$wpss_msg = preg_replace( "/\n{3,}/", "\n\n", trim( wp_strip_all_tags( $wpss_msg ) ) );
+							?>
+							<span class="wpss-notif-row__message"><?php echo nl2br( esc_html( $wpss_msg ) ); ?></span>
 						<?php endif; ?>
 						<?php if ( '' !== $wpss_when ) : ?>
 							<span class="wpss-notif-row__time"><?php echo esc_html( $wpss_when ); ?></span>
@@ -261,7 +271,8 @@ $wpss_has_unread = wpss_count_user_notifications( $wpss_notif_user, array( 'unre
 				body.append( k, extra[ k ] );
 			} );
 		}
-		return fetch( ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body } );
+		// keepalive: a row click navigates away while its mark-read is in flight.
+		return fetch( ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body, keepalive: true } );
 	}
 
 	root.addEventListener( 'click', function ( e ) {
@@ -275,6 +286,18 @@ $wpss_has_unread = wpss_count_user_notifications( $wpss_notif_user, array( 'unre
 				} );
 				allBtn.remove();
 			} );
+			return;
+		}
+		// The whole row opens what it is about, and opening it reads it.
+		var row  = e.target.closest( '.wpss-notif-row' );
+		var link = row ? row.querySelector( '.wpss-notif-row__link' ) : null;
+		if ( link && ! e.target.closest( '.wpss-notif-row__mark' ) ) {
+			if ( row.classList.contains( 'wpss-notif-row--unread' ) ) {
+				post( 'wpss_mark_notification_read', { notification_id: row.getAttribute( 'data-id' ) } );
+			}
+			if ( ! e.target.closest( 'a' ) ) {
+				window.location.href = link.href;
+			}
 			return;
 		}
 		var oneBtn = e.target.closest( '.wpss-notif-row__mark' );

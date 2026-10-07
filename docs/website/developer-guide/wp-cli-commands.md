@@ -37,6 +37,15 @@ buyer requests with proposals, and conversations. Use `marketplace` for staging
 sites, theme testing, and client demos; use `create` when you just need catalog
 volume.
 
+`demo delete` and **Settings > Advanced > Delete Demo Content** run the same
+routine (`wpss_delete_demo_content()`): flagged services, buyer requests and
+media, the demo vendor accounts with their profile rows, and any category the
+demo created that is now empty. A demo service that a real buyer has ordered
+is kept, with its seller, because deleting a service deletes its orders; the
+result says how many were kept. Whether demo content is installed is decided
+from the content itself (`wpss_has_demo_content()`), so the wizard can import
+again straight after a delete.
+
 Demo content is flagged internally (`_wpss_demo_content`), so `demo delete` never
 touches real customer data unless you pass `--all`, which also requires `--yes`
 and still confirms the site-wide count. Every command that writes rows (`create`,
@@ -97,6 +106,57 @@ matching row on the current dataset, or not readable as the chosen user -- an
 unaudited route is exactly where the last gaps hid, so the command names them
 rather than passing over them silently. Seeding the missing data, or re-running
 with `--user`, shrinks the list.
+
+## Repairs
+
+```bash
+wp wpss utc-migrate --dry-run   # rows per column and three "old -> new" samples
+wp wpss utc-migrate             # convert now instead of waiting for the background job
+```
+
+1.8.0 stores every datetime in UTC. On upgrade, rows written before it are
+converted once in the background (Action Scheduler hook
+`wpss_utc_migrate_batch`). This command runs the same conversion in the
+foreground. A site on UTC whose database server is also on UTC has nothing to
+convert. Rows are converted once only, so running it again changes nothing.
+
+`updated_at` is decided row by row, because two things wrote it before 1.8.0:
+PHP (site time) when a writer set it, MySQL (the database server's clock) when
+a writer left it out. A value stamped in the same second as another date on the
+row (created, paid, started, completed) is treated as site time. Otherwise it is
+treated as the database server's clock, unless that reading would put the update
+before the row was created. On a site whose WordPress time zone and database
+time zone match, both readings are identical. Always read the `--dry-run`
+output first on a site where they differ: it lists `updated_at` separately for
+each table and prints nothing for a value that would not change.
+
+The conversion is safe to interrupt. Each batch and its progress marker are
+saved together, so a batch that dies is redone from its start, and only one
+batch runs at a time. If the background job stalls, the next visit to wp-admin
+by an administrator queues it again; you can also just run the command.
+
+```bash
+wp wpss repair:stripe-tax           # dry run: lists what would change, writes nothing
+wp wpss repair:stripe-tax --apply   # writes the changes the dry run listed
+```
+
+Before 1.8.0, when Stripe's payment webhook reached the site before the buyer's
+browser, the order was recorded with tax counted twice: a $23.60 charge could be
+stored as a $27.85 order, and the vendor's earning was sized on the inflated
+amount. This affects only sites that charge tax and use Stripe.
+
+The command reads each taxed Stripe order's payment from Stripe once and changes
+only orders with that exact shape: the stored subtotal equals what Stripe
+captured and the total is higher. It sets the subtotal, tax and total back to
+what was charged and re-splits the fee and earning at the order's own
+commission rate. If the vendor was already credited, it adds one **Order
+Correction** row to their earnings for the difference. Stripe Connect orders
+get the order row only, because Stripe paid the vendor from the real charge.
+
+Any other mismatch, and any affected order with a refund, is listed for review
+and left unchanged. Run the dry run first and read both tables. Running
+`--apply` twice changes nothing the second time. Every corrected order is
+written to the audit log as `order.repair`.
 
 ## Scale benchmarking
 

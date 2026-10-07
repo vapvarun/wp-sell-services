@@ -16,6 +16,7 @@ namespace WPSellServices\Admin\Pages;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Checkout\CheckoutIntentService;
 use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\ConversationService;
 use WPSellServices\Assets\ScriptRegistry;
@@ -36,6 +37,7 @@ class ManualOrderPage {
 		// Priority 20 to ensure parent menu is registered first (default is 10).
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ), 20 );
 		add_action( 'wp_ajax_wpss_create_manual_order', array( $this, 'handle_create_order' ) );
+		add_action( 'wp_ajax_wpss_manual_order_quote', array( $this, 'ajax_quote' ) );
 		add_action( 'wp_ajax_wpss_get_service_addons', array( $this, 'ajax_get_service_addons' ) );
 		// Priority 20 ensures this runs after Admin::enqueue_scripts registers wpss-admin.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
@@ -55,6 +57,21 @@ class ManualOrderPage {
 			'manage_options',
 			'wpss-create-order',
 			array( $this, 'render_page' )
+		);
+
+		// The registration above is what grants access and names the page hook.
+		// The submenu entry itself never renders (wpss-orders is not a top-level
+		// menu), and leaving it in place made core's get_admin_page_parent()
+		// reset the parent to wpss-orders, so the Sell Services menu collapsed
+		// on this page (Basecamp 10337161480). Admin::set_parent_menu() names it.
+		remove_submenu_page( 'wpss-orders', 'wpss-create-order' );
+
+		// Core read the page title from that submenu entry too.
+		add_action(
+			'load-admin_page_wpss-create-order',
+			static function (): void {
+				$GLOBALS['title'] = __( 'Create Order', 'wp-sell-services' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- the admin page title core would have set.
+			}
 		);
 	}
 
@@ -102,6 +119,8 @@ class ManualOrderPage {
 					'loadingPackages'     => __( 'Loading packages...', 'wp-sell-services' ),
 					'loadingAddons'       => __( 'Loading addons...', 'wp-sell-services' ),
 					'noAddons'            => __( 'No addons available for this service.', 'wp-sell-services' ),
+					'chooseOne'           => __( 'Choose one', 'wp-sell-services' ),
+					'none'                => __( 'None', 'wp-sell-services' ),
 					/* translators: 1: order number, 2: order ID */
 					'orderCreated'        => __( 'Order #%1$s has been created. Order ID: %2$d', 'wp-sell-services' ),
 					'requirementsSkipped' => __( 'Note: This service has no requirements defined. Order was set to "In Progress" automatically.', 'wp-sell-services' ),
@@ -118,24 +137,9 @@ class ManualOrderPage {
 	 * @return void
 	 */
 	public function render_page(): void {
-		// Get all published services.
-		$services = get_posts(
-			array(
-				'post_type'      => 'wpss_service',
-				'post_status'    => 'publish',
-				'posts_per_page' => -1,
-				'orderby'        => 'title',
-				'order'          => 'ASC',
-			)
-		);
-
-		// Get users.
-		$users = get_users(
-			array(
-				'orderby' => 'display_name',
-				'order'   => 'ASC',
-			)
-		);
+		// Service, customer and vendor are search pickers (wpss_admin_search_select()),
+		// so nothing here loads every service or user.
+		$has_services = (int) wp_count_posts( 'wpss_service' )->publish > 0;
 
 		$default_commission = CommissionService::get_global_commission_rate();
 		$default_currency   = wpss_get_currency();
@@ -145,7 +149,7 @@ class ManualOrderPage {
 		<div class="wrap wpss-manual-order-wrap">
 			<h1><?php esc_html_e( 'Create Order', 'wp-sell-services' ); ?></h1>
 
-			<?php if ( empty( $services ) ) : ?>
+			<?php if ( ! $has_services ) : ?>
 				<div class="wpss-no-services-notice">
 					<p>
 						<?php esc_html_e( 'No services found. Please create at least one service before creating an order.', 'wp-sell-services' ); ?>
@@ -174,27 +178,18 @@ class ManualOrderPage {
 											<?php esc_html_e( 'Service', 'wp-sell-services' ); ?>
 											<span class="required">*</span>
 										</label>
-										<select name="service_id" id="wpss-service-id" required>
-											<option value=""><?php esc_html_e( '-- Select a Service --', 'wp-sell-services' ); ?></option>
-											<?php foreach ( $services as $service ) : ?>
-												<?php
-												$vendor_id = (int) $service->post_author;
-												$vendor    = get_userdata( $vendor_id );
-												$price     = get_post_meta( $service->ID, '_wpss_starting_price', true );
-												?>
-												<option value="<?php echo esc_attr( $service->ID ); ?>"
-														data-vendor="<?php echo esc_attr( $vendor_id ); ?>"
-														data-price="<?php echo esc_attr( $price ); ?>">
-													<?php echo esc_html( $service->post_title ); ?>
-													<?php if ( $vendor ) : ?>
-														(<?php echo esc_html( $vendor->display_name ); ?>)
-													<?php endif; ?>
-													<?php if ( $price ) : ?>
-														- <?php echo esc_html( wpss_format_price( (float) $price ) ); ?>
-													<?php endif; ?>
-												</option>
-											<?php endforeach; ?>
-										</select>
+										<?php
+										wpss_admin_search_select(
+											array(
+												'type'     => 'service',
+												'name'     => 'service_id',
+												'id'       => 'wpss-service-id',
+												'placeholder' => __( '-- Select a Service --', 'wp-sell-services' ),
+												'search_label' => __( 'Search services by title', 'wp-sell-services' ),
+												'required' => true,
+											)
+										);
+										?>
 									</div>
 
 									<!-- Package -->
@@ -221,29 +216,34 @@ class ManualOrderPage {
 											<?php esc_html_e( 'Customer (Buyer)', 'wp-sell-services' ); ?>
 											<span class="required">*</span>
 										</label>
-										<select name="customer_id" id="wpss-customer-id" required>
-											<option value=""><?php esc_html_e( '-- Select Customer --', 'wp-sell-services' ); ?></option>
-											<?php foreach ( $users as $user ) : ?>
-												<option value="<?php echo esc_attr( $user->ID ); ?>">
-													<?php echo esc_html( $user->display_name ); ?>
-													(<?php echo esc_html( $user->user_email ); ?>)
-												</option>
-											<?php endforeach; ?>
-										</select>
+										<?php
+										wpss_admin_search_select(
+											array(
+												'type'     => 'user',
+												'name'     => 'customer_id',
+												'id'       => 'wpss-customer-id',
+												'placeholder' => __( '-- Select Customer --', 'wp-sell-services' ),
+												'search_label' => __( 'Search users by name or email', 'wp-sell-services' ),
+												'required' => true,
+											)
+										);
+										?>
 									</div>
 
 									<!-- Vendor Override -->
 									<div class="wpss-form-row">
 										<label for="wpss-vendor-id"><?php esc_html_e( 'Vendor (Override)', 'wp-sell-services' ); ?></label>
-										<select name="vendor_id" id="wpss-vendor-id">
-											<option value=""><?php esc_html_e( '-- Use Service Author --', 'wp-sell-services' ); ?></option>
-											<?php foreach ( $users as $user ) : ?>
-												<option value="<?php echo esc_attr( $user->ID ); ?>">
-													<?php echo esc_html( $user->display_name ); ?>
-													(<?php echo esc_html( $user->user_email ); ?>)
-												</option>
-											<?php endforeach; ?>
-										</select>
+										<?php
+										wpss_admin_search_select(
+											array(
+												'type' => 'seller',
+												'name' => 'vendor_id',
+												'id'   => 'wpss-vendor-id',
+												'placeholder' => __( '-- Use Service Author --', 'wp-sell-services' ),
+												'search_label' => __( 'Search sellers by name or email', 'wp-sell-services' ),
+											)
+										);
+										?>
 										<p class="description"><?php esc_html_e( 'Leave empty to use the service author as vendor.', 'wp-sell-services' ); ?></p>
 									</div>
 								</div>
@@ -261,6 +261,10 @@ class ManualOrderPage {
 										<tr id="wpss-pricing-addons-row" style="display: none;">
 											<td><?php esc_html_e( 'Addons Total', 'wp-sell-services' ); ?></td>
 											<td id="wpss-summary-addons"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
+										</tr>
+										<tr id="wpss-pricing-tax-row" style="display: none;">
+											<td id="wpss-summary-tax-label"><?php esc_html_e( 'Tax', 'wp-sell-services' ); ?></td>
+											<td id="wpss-summary-tax"><?php echo esc_html( wpss_format_price( 0.00 ) ); ?></td>
 										</tr>
 										<tr class="wpss-pricing-editable">
 											<td colspan="2">
@@ -307,7 +311,8 @@ class ManualOrderPage {
 										</tr>
 									</table>
 
-									<!-- Currency -->
+									<?php if ( count( $currencies ) > 1 ) : ?>
+										<?php // One currency (the store's, by default) needs no choice; a multi-currency add-on widens the list through wpss_manual_order_currencies. ?>
 									<div class="wpss-form-row" style="margin-top: 16px;">
 										<label for="wpss-currency"><?php esc_html_e( 'Currency', 'wp-sell-services' ); ?></label>
 										<select name="currency" id="wpss-currency">
@@ -318,13 +323,13 @@ class ManualOrderPage {
 											<?php endforeach; ?>
 										</select>
 									</div>
+									<?php else : ?>
+										<input type="hidden" name="currency" value="<?php echo esc_attr( (string) key( $currencies ) ); ?>">
+									<?php endif; ?>
 
 									<!-- Hidden calculated fields -->
+									<?php // The package price is the base; everything else is priced by the server (price_manual_order()). ?>
 									<input type="hidden" name="subtotal" id="wpss-calculated-subtotal" value="0">
-									<input type="hidden" name="addons_total" id="wpss-calculated-addons-total" value="0">
-									<input type="hidden" name="total" id="wpss-calculated-total" value="0">
-									<input type="hidden" name="platform_fee" id="wpss-calculated-platform-fee" value="0">
-									<input type="hidden" name="vendor_earnings" id="wpss-calculated-vendor-earnings" value="0">
 								</div>
 							</div>
 						</div>
@@ -346,6 +351,8 @@ class ManualOrderPage {
 												</option>
 											<?php endforeach; ?>
 										</select>
+										<?php // The labels used to carry this in brackets and were cut off on a phone. ?>
+										<p class="description"><?php esc_html_e( 'Pending Requirements asks the buyer for their brief first; In Progress skips it.', 'wp-sell-services' ); ?></p>
 									</div>
 
 									<div class="wpss-form-row">
@@ -472,6 +479,7 @@ class ManualOrderPage {
 				array(
 					'id'              => $index,
 					'formatted_price' => wpss_format_price( $addon['price'] ),
+					'price_label'     => wpss_addon_price_label( $addon ),
 				)
 			);
 		}
@@ -492,8 +500,10 @@ class ManualOrderPage {
 		}
 
 		// --- 1. Collect and sanitize inputs ---
-		$service_id      = absint( $_POST['service_id'] ?? 0 );
-		$package_id      = absint( $_POST['package_id'] ?? 0 );
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		// '' means "no package" and 0 is the FIRST package; absint() cannot
+		// tell them apart, which is how index 0 went unrecorded.
+		$package_raw     = isset( $_POST['package_id'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['package_id'] ) ) ) : '';
 		$customer_id     = absint( $_POST['customer_id'] ?? 0 );
 		$vendor_id_input = absint( $_POST['vendor_id'] ?? 0 );
 		$status          = sanitize_key( $_POST['status'] ?? 'pending_requirements' );
@@ -501,14 +511,14 @@ class ManualOrderPage {
 		$payment_method  = sanitize_key( $_POST['payment_method'] ?? 'manual' );
 		$transaction_id  = isset( $_POST['transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['transaction_id'] ) ) : '';
 		$delivery_days   = absint( $_POST['delivery_days'] ?? 7 );
-		$revisions_input = absint( $_POST['revisions_included'] ?? 2 );
+		$revisions_input = isset( $_POST['revisions_included'] ) && '' !== $_POST['revisions_included'] ? absint( $_POST['revisions_included'] ) : null;
 		$currency        = isset( $_POST['currency'] ) ? sanitize_text_field( wp_unslash( $_POST['currency'] ) ) : wpss_get_currency();
 		$commission_rate = isset( $_POST['commission_rate'] ) ? (float) $_POST['commission_rate'] : CommissionService::get_global_commission_rate();
 		$notes           = isset( $_POST['notes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['notes'] ) ) : '';
 
-		// Pricing from JS calculations (hidden fields).
+		// An admin may type the price for a bespoke order, or override the
+		// total; otherwise the total is computed here, never taken from the form.
 		$subtotal_input = isset( $_POST['subtotal'] ) ? (float) $_POST['subtotal'] : 0;
-		$total_input    = isset( $_POST['total'] ) ? (float) $_POST['total'] : 0;
 
 		// Addons from form.
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
@@ -524,101 +534,60 @@ class ManualOrderPage {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
 		}
 
+		if ( ! isset( $this->get_currencies()[ $currency ] ) ) {
+			wp_send_json_error( array( 'message' => __( 'That currency is not offered on this site.', 'wp-sell-services' ) ) );
+		}
+
 		// --- 3. Determine vendor ---
+		// The override picker offers sellers only; the server holds the same line.
+		if ( $vendor_id_input && ! wpss_is_vendor( $vendor_id_input ) ) {
+			wp_send_json_error( array( 'message' => __( 'The vendor override must be an active seller.', 'wp-sell-services' ) ) );
+		}
 		$vendor_id = $vendor_id_input ? $vendor_id_input : (int) $service->post_author;
+
+		// Every order needs a seller who can deliver it and be paid: a blank
+		// override falls back to the author, who must be an active seller too.
+		if ( ! $vendor_id_input && ! wpss_is_vendor( $vendor_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'This service\'s author is not an active seller. Choose an active seller as the vendor.', 'wp-sell-services' ) ) );
+		}
 
 		if ( $customer_id === $vendor_id ) {
 			wp_send_json_error( array( 'message' => __( 'Customer cannot be the same as the vendor.', 'wp-sell-services' ) ) );
 		}
 
-		// --- 4. Load package data ---
-		$revisions_included = $revisions_input;
-		$subtotal           = $subtotal_input;
-
-		if ( $package_id ) {
-			$packages = get_post_meta( $service_id, '_wpss_packages', true );
-			if ( is_array( $packages ) && isset( $packages[ $package_id ] ) ) {
-				$package = $packages[ $package_id ];
-				if ( ! $subtotal ) {
-					$subtotal      = (float) ( $package['price'] ?? 0 );
-					$delivery_days = (int) ( $package['delivery_days'] ?? $delivery_days );
-				}
-				if ( ! $revisions_input ) {
-					$revisions_included = (int) ( $package['revisions'] ?? 2 );
-				}
-			}
-		}
-
-		// Fallback to starting price.
-		if ( ! $subtotal ) {
-			$subtotal = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-		}
-
-		// --- 5. Process addons (ids are indices into the service's add-on list) ---
-		$all_addons      = wpss_get_service_extras( $service_id );
-		$selected_addons = array();
-		$addons_total    = 0;
-
-		foreach ( $addons_raw as $addon_id => $addon_data ) {
-			$addon_id = absint( $addon_id );
-			$addon    = $all_addons[ $addon_id ] ?? null;
-			if ( empty( $addon_data['selected'] ) || ! $addon ) {
-				continue;
-			}
-
-			$quantity    = max( 1, absint( $addon_data['quantity'] ?? 1 ) );
-			$addon_price = 'percentage' === $addon['price_type'] ? $subtotal * $addon['price'] / 100 : (float) $addon['price'];
-			if ( 'quantity' === $addon['field_type'] ) {
-				$addon_price *= $quantity;
-			}
-
-			$selected_addons[] = array(
-				'id'       => $addon_id,
-				'title'    => $addon['title'],
-				'price'    => $addon_price,
-				'quantity' => $quantity,
-			);
-
-			$addons_total += $addon_price;
-		}
-
-		// --- 6. Calculate total ---
-		$total = $total_input;
-		if ( ! $total || $total <= 0 ) {
-			$total = $subtotal + $addons_total;
-		}
-
-		if ( ! $total || $total <= 0 ) {
-			$total = 10.00; // Minimum fallback.
-		}
-
-		// --- 7. Calculate commission ---
-		// The admin picks the rate for a manual order, so that choice stays
-		// authoritative — but the arithmetic goes through the single authority
-		// rather than being hand-rolled here. The rate is pinned for this call
-		// only, so tiered rules / plan overrides cannot silently replace what the
-		// admin explicitly entered.
-		$commission_rate = max( 0, min( 100, $commission_rate ) );
-
-		$pin_manual_rate = static function () use ( $commission_rate ): float {
-			return (float) $commission_rate;
-		};
-
-		add_filter( 'wpss_commission_rate', $pin_manual_rate, PHP_INT_MAX );
-
-		$manual_breakdown = CommissionService::compute_breakdown(
-			(float) $total,
-			(object) array(
-				'id'         => 0,
-				'vendor_id'  => (int) $vendor_id,
-				'service_id' => (int) $service_id,
-			)
+		// --- 4-7. Package, price, add-ons, tax and commission ---
+		// One method, shared with the live preview (ajax_quote()), so the
+		// screen shows exactly what this saves.
+		$priced = $this->price_manual_order(
+			$service_id,
+			$package_raw,
+			(int) $vendor_id,
+			$subtotal_input,
+			$addons_raw,
+			isset( $_POST['total_override'] ) ? (float) $_POST['total_override'] : 0.0,
+			$commission_rate
 		);
 
-		remove_filter( 'wpss_commission_rate', $pin_manual_rate, PHP_INT_MAX );
+		if ( is_wp_error( $priced ) ) {
+			wp_send_json_error( array( 'message' => $priced->get_error_message() ) );
+		}
 
-		$platform_fee    = $manual_breakdown['platform_fee'];
-		$vendor_earnings = $manual_breakdown['vendor_earnings'];
+		$package_id      = $priced['package_id'];
+		$package         = $priced['package'];
+		$subtotal        = $priced['subtotal'];
+		$selected_addons = $priced['addons'];
+		$addons_total    = $priced['addons_total'];
+		$line            = $priced['line'];
+		$total           = $priced['total'];
+		$commission_rate = $priced['commission_rate'];
+		$platform_fee    = $priced['platform_fee'];
+		$vendor_earnings = $priced['vendor_earnings'];
+
+		if ( $package && ! isset( $_POST['delivery_days'] ) ) {
+			$delivery_days = (int) ( $package['delivery_days'] ?? $delivery_days );
+		}
+
+		$revisions_included = $revisions_input ?? (int) ( $package['revisions'] ?? 2 );
 
 		// --- 8. Smart status ---
 		$service_has_requirements = ! empty( wpss_get_service_requirements( $service_id ) );
@@ -663,8 +632,15 @@ class ManualOrderPage {
 			'vendor_earnings'    => $vendor_earnings,
 			'revisions_included' => $revisions_included,
 			'revisions_used'     => 0,
-			'created_at'         => current_time( 'mysql' ),
-			'updated_at'         => current_time( 'mysql' ),
+			'meta'               => wp_json_encode(
+				array(
+					'tax_rate'     => (float) $line['tax_rate'],
+					'tax_amount'   => round( (float) $line['tax'], 2 ),
+					'tax_included' => (bool) $line['tax_included'],
+				)
+			),
+			'created_at'         => current_time( 'mysql', true ),
+			'updated_at'         => current_time( 'mysql', true ),
 		);
 		$format = array(
 			'%s', // order_number.
@@ -685,12 +661,13 @@ class ManualOrderPage {
 			'%f', // vendor_earnings.
 			'%d', // revisions_included.
 			'%d', // revisions_used.
+			'%s', // meta.
 			'%s', // created_at.
 			'%s', // updated_at.
 		);
 
 		// Only include nullable columns when they have non-null values.
-		if ( $package_id ) {
+		if ( null !== $package_id ) {
 			$data['package_id'] = $package_id;
 			$format[]           = '%d';
 		}
@@ -783,6 +760,154 @@ class ManualOrderPage {
 	}
 
 	/**
+	 * Price a manual order: the one calculation behind Create Order and its
+	 * live preview.
+	 *
+	 * The base is what the admin typed, else the package, else the service's
+	 * starting price; add-ons and tax follow the checkout rules; "Override
+	 * total" is the exact amount charged, with no tax on top; commission uses
+	 * the rate the admin entered. The preview used to add this up in the
+	 * browser without tax, so the screen said $55.00 and the order charged
+	 * $64.90 (Basecamp 10340505963).
+	 *
+	 * @param int          $service_id      Service ID.
+	 * @param string       $package_raw     Package id or index; '' for none.
+	 * @param int          $vendor_id       Vendor ID.
+	 * @param float        $subtotal_input  Price the admin typed, 0 for none.
+	 * @param array<mixed> $addons_raw      Add-on selection as posted.
+	 * @param float        $total_override  Exact total, 0 for none.
+	 * @param float        $commission_rate Rate the admin entered.
+	 * @return array<string, mixed>|\WP_Error
+	 */
+	private function price_manual_order( int $service_id, string $package_raw, int $vendor_id, float $subtotal_input, array $addons_raw, float $total_override, float $commission_rate ) {
+		// Package: by stable id or index, '' for none.
+		$resolved   = '' === $package_raw ? null : wpss_resolve_service_package( $service_id, (int) $package_raw );
+		$package_id = $resolved ? (int) $resolved['index'] : null;
+		$package    = $resolved ? $resolved['package'] : array();
+
+		if ( $subtotal_input > 0 ) {
+			$subtotal = $subtotal_input;
+		} elseif ( $package ) {
+			$subtotal = (float) ( $package['price'] ?? 0 );
+		} else {
+			$subtotal = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
+		}
+
+		$priced_addons = wpss_price_addons( $service_id, $addons_raw, $subtotal );
+
+		if ( is_wp_error( $priced_addons ) ) {
+			return $priced_addons;
+		}
+
+		$addons_total = (float) $priced_addons['addons_total'];
+		$line         = CheckoutIntentService::price_line( $service_id, $subtotal, $addons_total, $vendor_id );
+
+		if ( $total_override > 0 ) {
+			$line = array(
+				'total'        => $total_override,
+				'net'          => $total_override,
+				'tax'          => 0.0,
+				'tax_rate'     => 0.0,
+				'tax_included' => false,
+			) + $line;
+		}
+
+		if ( (float) $line['total'] <= 0 ) {
+			return new \WP_Error( 'wpss_manual_order_no_price', __( 'Enter a price for this order: the package and service have none.', 'wp-sell-services' ) );
+		}
+
+		// The admin picks the rate for a manual order, so that choice stays
+		// authoritative, but the arithmetic goes through the single authority.
+		// The rate is pinned for this call only, so tiered rules or plan
+		// overrides cannot silently replace what the admin entered.
+		$commission_rate = max( 0, min( 100, $commission_rate ) );
+		$pin_manual_rate = static function () use ( $commission_rate ): float {
+			return (float) $commission_rate;
+		};
+
+		add_filter( 'wpss_commission_rate', $pin_manual_rate, PHP_INT_MAX );
+
+		$breakdown = CommissionService::compute_breakdown(
+			(float) $line['net'],
+			(object) array(
+				'id'         => 0,
+				'vendor_id'  => $vendor_id,
+				'service_id' => $service_id,
+			)
+		);
+
+		remove_filter( 'wpss_commission_rate', $pin_manual_rate, PHP_INT_MAX );
+
+		return array(
+			'package_id'      => $package_id,
+			'package'         => $package,
+			'subtotal'        => $subtotal,
+			'addons'          => $priced_addons['addons'],
+			'addons_total'    => $addons_total,
+			'line'            => $line,
+			'total'           => (float) $line['total'],
+			'commission_rate' => $commission_rate,
+			'platform_fee'    => $breakdown['platform_fee'],
+			'vendor_earnings' => $breakdown['vendor_earnings'],
+		);
+	}
+
+	/**
+	 * AJAX: the live Create Order summary, priced by price_manual_order().
+	 *
+	 * @return void
+	 */
+	public function ajax_quote(): void {
+		check_ajax_referer( 'wpss_create_manual_order', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
+		}
+
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$service    = get_post( $service_id );
+
+		if ( ! $service || 'wpss_service' !== $service->post_type ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
+		}
+
+		$vendor_id = absint( $_POST['vendor_id'] ?? 0 );
+		$priced    = $this->price_manual_order(
+			$service_id,
+			isset( $_POST['package_id'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['package_id'] ) ) ) : '',
+			$vendor_id ? $vendor_id : (int) $service->post_author,
+			isset( $_POST['subtotal'] ) ? (float) $_POST['subtotal'] : 0.0,
+			isset( $_POST['addons'] ) ? (array) wp_unslash( $_POST['addons'] ) : array(), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- normalised by wpss_price_addons().
+			isset( $_POST['total_override'] ) ? (float) $_POST['total_override'] : 0.0,
+			isset( $_POST['commission_rate'] ) ? (float) $_POST['commission_rate'] : CommissionService::get_global_commission_rate()
+		);
+
+		if ( is_wp_error( $priced ) ) {
+			wp_send_json_error( array( 'message' => $priced->get_error_message() ) );
+		}
+
+		$line = $priced['line'];
+
+		wp_send_json_success(
+			array(
+				'subtotal'        => wpss_format_price( $priced['subtotal'] ),
+				'addons_total'    => wpss_format_price( $priced['addons_total'] ),
+				'has_addons'      => $priced['addons_total'] > 0,
+				'tax'             => wpss_format_price( (float) $line['tax'] ),
+				'has_tax'         => (float) $line['tax'] > 0,
+				'tax_label'       => ! empty( $line['tax_included'] )
+					/* translators: %s: tax label, e.g. VAT. */
+					? sprintf( __( '%s (included)', 'wp-sell-services' ), $line['tax_label'] ?? __( 'Tax', 'wp-sell-services' ) )
+					: ( $line['tax_label'] ?? __( 'Tax', 'wp-sell-services' ) ),
+				'total'           => wpss_format_price( $priced['total'] ),
+				'platform_fee'    => wpss_format_price( (float) $priced['platform_fee'] ),
+				'vendor_earnings' => wpss_format_price( (float) $priced['vendor_earnings'] ),
+			)
+		);
+	}
+
+
+	/**
 	 * Get initial order statuses available for manual creation.
 	 *
 	 * @return array<string, string>
@@ -790,8 +915,8 @@ class ManualOrderPage {
 	private function get_initial_statuses(): array {
 		return array(
 			'pending_payment'      => __( 'Pending Payment', 'wp-sell-services' ),
-			'pending_requirements' => __( 'Pending Requirements (Payment Complete)', 'wp-sell-services' ),
-			'in_progress'          => __( 'In Progress (Skip Requirements)', 'wp-sell-services' ),
+			'pending_requirements' => __( 'Pending Requirements', 'wp-sell-services' ),
+			'in_progress'          => __( 'In Progress', 'wp-sell-services' ),
 			'delivered'            => __( 'Delivered', 'wp-sell-services' ),
 			'completed'            => __( 'Completed', 'wp-sell-services' ),
 		);
@@ -803,20 +928,20 @@ class ManualOrderPage {
 	 * @return array<string, string>
 	 */
 	private function get_currencies(): array {
-		// Derive from the single canonical currency list so the Manual Order
-		// dropdown offers every supported currency out of the box - no code
-		// snippet required.
-		$currencies = array();
-		foreach ( wpss_get_currencies() as $code => $name ) {
-			$currencies[ $code ] = sprintf( '%1$s (%2$s)', $code, wpss_get_currency_symbol( $code ) );
-		}
+		// The store currency only: the site charges in one currency, and a
+		// 148-option dropdown invited orders in a currency nothing else on the
+		// site reads (Basecamp 10337161480). A multi-currency add-on adds its
+		// currencies through the filter, and the dropdown appears.
+		$code       = wpss_get_currency();
+		$currencies = array( $code => sprintf( '%1$s (%2$s)', $code, wpss_get_currency_symbol( $code ) ) );
 
 		/**
 		 * Filter the currencies available on the Manual Order page dropdown.
 		 *
-		 * The default list already covers every supported currency; this is
-		 * an optional developer extension point.
+		 * Defaults to the store currency alone, in which case no dropdown is
+		 * shown. Return more than one to offer a choice.
 		 *
+		 * @since 1.8.0 Defaults to the store currency instead of every currency.
 		 * @since 1.2.1
 		 *
 		 * @param array<string, string> $currencies Currency code => label map.

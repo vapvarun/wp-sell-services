@@ -180,6 +180,11 @@ class PayPalGateway implements PaymentGatewayInterface {
 					// custom_id is capped at 127 chars by PayPal; the description
 					// has its own field and would push a cart or add-on list over.
 					'custom_id'   => wp_json_encode( array_diff_key( $metadata, array( 'description' => 1 ) ) ),
+					// This site's mark, read back by is_own_order(). In the
+					// invoice number because custom_id is full: it holds 127
+					// characters and already carries the order's details.
+					// PayPal wants the number unique per payment.
+					'invoice_id'  => $this->invoice_prefix() . strtoupper( wp_generate_password( 12, false, false ) ),
 				),
 			),
 			'payment_source' => array(
@@ -236,13 +241,49 @@ class PayPalGateway implements PaymentGatewayInterface {
 	 * @return array Payment result.
 	 */
 	public function process_payment( string $payment_id ): array {
+		// Ours, or not captured. Here, in the capture itself, so every caller
+		// gets it - the website return, the webhook-less REST confirm, the
+		// pay-order confirm - and before any money moves. The check used to
+		// live in one caller, and the REST pay-order route captured a payment
+		// another site had started (Basecamp 10379479185).
+		$order = $this->api_request( "v2/checkout/orders/{$payment_id}", array(), 'GET' );
+
+		if ( isset( $order['error'] ) || ! $this->is_own_order( (string) ( $order['purchase_units'][0]['invoice_id'] ?? '' ) ) ) {
+			return array(
+				'success' => false,
+				'error'   => __( 'This payment was not made on this site.', 'wp-sell-services' ),
+			);
+		}
+
 		$response = $this->api_request( "v2/checkout/orders/{$payment_id}/capture", array() );
 
 		if ( isset( $response['error'] ) ) {
-			return array(
-				'success' => false,
-				'error'   => $response['error']['message'] ?? __( 'Failed to capture payment.', 'wp-sell-services' ),
-			);
+			// PayPal's own text ("semantically incorrect, or failed business
+			// validation") is for the owner's log, not the buyer's screen.
+			$issue = (string) ( $response['error']['details']['details'][0]['issue'] ?? '' );
+			wpss_log( sprintf( 'PayPal capture of %s refused (%s): %s', $payment_id, '' !== $issue ? $issue : 'no issue code', (string) ( $response['error']['message'] ?? 'unknown' ) ), 'warning' );
+
+			// Already captured (a retry, a double click, the webhook first): the
+			// money was taken, so carry on with the captured order instead of
+			// telling the buyer they were not charged. settle() returns the
+			// existing order if one was already made.
+			if ( 'ORDER_ALREADY_CAPTURED' === $issue ) {
+				$response = $this->api_request( "v2/checkout/orders/{$payment_id}", array(), 'GET' );
+			}
+
+			if ( isset( $response['error'] ) ) {
+				// Only a refusal PayPal names moved no money. A timeout or an
+				// unknown error may have captured, so do not say "not charged"
+				// (Basecamp 10375174837).
+				$declined = in_array( $issue, array( 'INSTRUMENT_DECLINED', 'PAYER_ACTION_REQUIRED', 'PAYER_CANNOT_PAY', 'TRANSACTION_REFUSED', 'PAYEE_NOT_ENABLED_FOR_CARD_PROCESSING' ), true );
+
+				return array(
+					'success' => false,
+					'error'   => $declined
+						? __( 'PayPal could not complete this payment and you have not been charged. Please try again or choose another payment method.', 'wp-sell-services' )
+						: __( 'We could not confirm this PayPal payment. Check My Orders before paying again; if nothing is there, try again or choose another payment method.', 'wp-sell-services' ),
+				);
+			}
 		}
 
 		$status = $response['status'] ?? '';
@@ -531,8 +572,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		// Only on checkout pages.
-		if ( ! is_page() && ! get_query_var( 'wpss_checkout' ) ) {
+		if ( ! wpss_is_payment_page() ) {
 			return;
 		}
 
@@ -596,7 +636,23 @@ class PayPalGateway implements PaymentGatewayInterface {
 			);
 		}
 
-		return $this->create_payment( $intent->amount, $intent->currency, $this->paypal_metadata( $intent ) );
+		$metadata = $this->paypal_metadata( $intent );
+
+		// custom_id holds at most 127 characters, too few for add-on quantities,
+		// options and text. The full selection waits in a transient keyed by the
+		// PayPal order for capture; if it is gone by then, capture re-prices from
+		// the compact addon_ids and settle() refuses a charge that no longer
+		// matches, so nothing is ever charged for what was not bought.
+		$selection = (string) ( $metadata['addon_sel'] ?? '' );
+		unset( $metadata['addon_sel'] );
+
+		$result = $this->create_payment( $intent->amount, $intent->currency, $metadata );
+
+		if ( '' !== $selection && ! empty( $result['id'] ) ) {
+			set_transient( 'wpss_pp_sel_' . sanitize_key( (string) $result['id'] ), $selection, DAY_IN_SECONDS );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -622,9 +678,8 @@ class PayPalGateway implements PaymentGatewayInterface {
 	private function paypal_metadata( \WPSellServices\Checkout\CheckoutIntent $intent ): array {
 		$metadata = $intent->metadata;
 
-		if ( ! empty( $intent->addons ) ) {
-			$metadata['addon_ids'] = implode( ',', array_column( $intent->addons, 'id' ) );
-		}
+		// addon_ids / addon_sel come from the intent's own metadata
+		// (CheckoutIntentService::selection_metadata()).
 
 		switch ( $intent->kind ) {
 			case \WPSellServices\Checkout\CheckoutIntent::KIND_CART:
@@ -684,6 +739,8 @@ class PayPalGateway implements PaymentGatewayInterface {
 				'is_multi_checkout' => ! empty( $metadata['is_multi_checkout'] ),
 				'service_id'        => (int) ( $metadata['service_id'] ?? 0 ),
 				'package_id'        => (int) ( $metadata['package_id'] ?? 0 ),
+				'quantity'          => max( 1, (int) ( $metadata['quantity'] ?? 1 ) ),
+				'addon_sel'         => (string) get_transient( 'wpss_pp_sel_' . sanitize_key( $paypal_order_id ) ),
 				'addon_ids'         => (string) ( $metadata['addon_ids'] ?? '' ),
 			),
 			$buyer_id
@@ -710,7 +767,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 		if ( strtoupper( (string) $payment['currency'] ) !== strtoupper( $intent->currency )
 			|| ! wpss_amounts_match( (float) $payment['amount'], $intent->amount, $intent->currency ) ) {
 			wpss_log( sprintf( 'PayPal capture %s took %s %s but the checkout intent is %s %s. Refunding.', $txn, $payment['currency'], $payment['amount'], $intent->currency, $intent->amount ), 'error' );
-			$this->process_refund( $txn );
+			$checkout->refund_unsettled( 'paypal', $txn, fn(): bool => ! empty( $this->process_refund( $txn )['success'] ) );
 
 			return array(
 				'success' => false,
@@ -721,8 +778,18 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$settle = $checkout->settle( $intent, 'paypal', $txn, (float) $payment['amount'], (string) $payment['currency'] );
 
 		if ( empty( $settle['success'] ) ) {
-			$refund = $this->process_refund( $txn );
-			if ( empty( $refund['success'] ) ) {
+			$refunded = false;
+			$asked    = $checkout->refund_unsettled(
+				'paypal',
+				$txn,
+				function () use ( $txn, &$refunded ): bool {
+					$refunded = ! empty( $this->process_refund( $txn )['success'] );
+
+					return $refunded;
+				}
+			);
+
+			if ( $asked && ! $refunded ) {
 				wpss_log( "CRITICAL: PayPal capture {$txn} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
 			}
 		}
@@ -736,7 +803,10 @@ class PayPalGateway implements PaymentGatewayInterface {
 	 * @return void
 	 */
 	public function ajax_create_order(): void {
-		check_ajax_referer( 'wpss_paypal', 'nonce' );
+		// The PayPal nonce, or the fresh checkout nonce after the guest account step.
+		if ( ! wpss_verify_gateway_nonce( array( 'wpss_paypal' ) ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ), 403 );
+		}
 
 		// A disabled gateway does not start new money. Refunds and webhooks
 		// stay registered for historical orders; this does not.
@@ -771,14 +841,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 		// Pricing + routing (single / multi-cart / pay-order) is resolved once,
 		// server-side, by CheckoutIntentService - the same call Stripe makes,
 		// so the two rails charge the same number for the same checkout.
-		$result = $this->create_order(
-			array(
-				'pay_order'         => absint( $_POST['pay_order'] ?? 0 ),
-				'is_multi_checkout' => ! empty( $_POST['is_multi_checkout'] ),
-				'service_id'        => absint( $_POST['service_id'] ?? 0 ),
-				'package_id'        => absint( $_POST['package_id'] ?? 0 ),
-			)
-		);
+		$result = $this->create_order( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked above.
 
 		if ( $result['success'] ) {
 			wp_send_json_success( $result );
@@ -794,14 +857,13 @@ class PayPalGateway implements PaymentGatewayInterface {
 	 */
 	public function ajax_capture_order(): void {
 		// Handle both GET (return URL) and POST (AJAX).
-		$nonce           = sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$paypal_order_id = sanitize_text_field( wp_unslash( $_REQUEST['token'] ?? $_REQUEST['paypal_order_id'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		// A disabled gateway does not start new money. Refunds and webhooks
 		// stay registered for historical orders; this does not.
 		wpss_gateway_require_enabled( $this );
 
-		if ( ! wp_verify_nonce( $nonce, 'wpss_paypal_capture' ) && ! wp_verify_nonce( $nonce, 'wpss_paypal' ) ) {
+		if ( ! wpss_verify_gateway_nonce( array( 'wpss_paypal_capture', 'wpss_paypal' ) ) ) {
 			$this->capture_fail( __( 'Invalid request.', 'wp-sell-services' ) );
 		}
 
@@ -811,12 +873,30 @@ class PayPalGateway implements PaymentGatewayInterface {
 			$this->capture_fail( $settle['error'] ?? __( 'Failed to create order.', 'wp-sell-services' ) );
 		}
 
-		if ( wp_doing_ajax() ) {
+		if ( ! $this->is_return_leg() ) {
 			wp_send_json_success( $settle );
 		}
 
 		wp_safe_redirect( $settle['redirect_url'] );
 		exit;
+	}
+
+	/**
+	 * Whether this capture is PayPal sending the buyer's browser back (GET
+	 * with ?token=), rather than the checkout script's AJAX call.
+	 *
+	 * Both arrive on admin-ajax.php, where wp_doing_ajax() is always true, so
+	 * it cannot tell them apart: the return leg printed raw JSON at the buyer
+	 * instead of redirecting them to their order.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return bool
+	 */
+	private function is_return_leg(): bool {
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_key( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '';
+
+		return 'get' === $method && isset( $_GET['token'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- presence check only; the caller verifies the nonce.
 	}
 
 	/**
@@ -829,7 +909,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 	 * @return void
 	 */
 	private function capture_fail( string $message ): void {
-		if ( wp_doing_ajax() ) {
+		if ( ! $this->is_return_leg() ) {
 			wp_send_json_error( array( 'message' => $message ) );
 		}
 
@@ -852,6 +932,36 @@ class PayPalGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * The start of every invoice number this site gives PayPal.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return string
+	 */
+	private function invoice_prefix(): string {
+		return 'WPSS-' . wpss_payment_site_hash() . '-';
+	}
+
+	/**
+	 * Whether this site started a PayPal order or capture.
+	 *
+	 * PayPal sends an account's events to every site that listens on it: a
+	 * live site, a staging copy, a second store. Only a payment carrying this
+	 * site's invoice prefix is ours. One with another prefix, or with none, is
+	 * not acted on. A payment started on 1.7.x and still unfinished at the
+	 * moment of updating has none, and the buyer is asked to pay again; the
+	 * check runs before the capture, so nothing is charged.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $invoice_id invoice_id from the PayPal order, capture or refund.
+	 * @return bool
+	 */
+	private function is_own_order( string $invoice_id ): bool {
+		return 0 === strpos( $invoice_id, $this->invoice_prefix() );
+	}
+
+	/**
 	 * Handle capture completed webhook.
 	 *
 	 * @param array<string, mixed> $resource_data Capture resource from the webhook payload.
@@ -861,13 +971,13 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$custom_id = $resource_data['custom_id'] ?? '';
 		$metadata  = json_decode( $custom_id, true ) ?: array();
 
-		if ( ! empty( $metadata['order_id'] ) ) {
-			$order_provider = wpss_get_order_provider();
-
-			$order_provider->mark_as_paid(
+		if ( ! empty( $metadata['order_id'] ) && $this->is_own_order( (string) ( $resource_data['invoice_id'] ?? '' ) ) ) {
+			( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order(
 				(int) $metadata['order_id'],
-				$resource_data['id'],
-				'paypal'
+				'paypal',
+				(string) $resource_data['id'],
+				(float) ( $resource_data['amount']['value'] ?? 0 ),
+				(string) ( $resource_data['amount']['currency_code'] ?? '' )
 			);
 		}
 
@@ -897,6 +1007,12 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		$metadata = json_decode( (string) ( $resource_data['custom_id'] ?? '' ), true ) ?: array();
 		$amount   = (float) ( $resource_data['amount']['value'] ?? 0 );
+
+		// Another site's refund must not name one of our orders by id. Its
+		// capture id matches nothing here, so it then resolves to no order.
+		if ( ! $this->is_own_order( (string) ( $resource_data['invoice_id'] ?? '' ) ) ) {
+			$metadata = array();
+		}
 
 		if ( '' === $capture_id && empty( $metadata['order_id'] ) ) {
 			return array(

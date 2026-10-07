@@ -89,8 +89,8 @@ class ConversationService {
 				'message_count' => 0,
 				'unread_counts' => wp_json_encode( array() ),
 				'is_closed'     => 0,
-				'created_at'    => current_time( 'mysql' ),
-				'updated_at'    => current_time( 'mysql' ),
+				'created_at'    => current_time( 'mysql', true ),
+				'updated_at'    => current_time( 'mysql', true ),
 			),
 			array( '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s' )
 		);
@@ -132,8 +132,8 @@ class ConversationService {
 			'message_count' => 0,
 			'unread_counts' => wp_json_encode( array() ),
 			'is_closed'     => 0,
-			'created_at'    => current_time( 'mysql' ),
-			'updated_at'    => current_time( 'mysql' ),
+			'created_at'    => current_time( 'mysql', true ),
+			'updated_at'    => current_time( 'mysql', true ),
 		);
 		$formats = array( '%d', '%d', '%s', '%s', '%d', '%s', '%d', '%s', '%s' );
 
@@ -290,8 +290,8 @@ class ConversationService {
 				'metadata'        => wp_json_encode( array() ),
 				'read_by'         => wp_json_encode( array( $message_data['sender_id'] => true ) ),
 				'is_edited'       => 0,
-				'created_at'      => current_time( 'mysql' ),
-				'updated_at'      => current_time( 'mysql' ),
+				'created_at'      => current_time( 'mysql', true ),
+				'updated_at'      => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s' )
 		);
@@ -316,8 +316,8 @@ class ConversationService {
 			array(
 				'message_count'   => $conversation->message_count + 1,
 				'unread_counts'   => wp_json_encode( $unread_counts ),
-				'last_message_at' => current_time( 'mysql' ),
-				'updated_at'      => current_time( 'mysql' ),
+				'last_message_at' => current_time( 'mysql', true ),
+				'updated_at'      => current_time( 'mysql', true ),
 			),
 			array( 'id' => $conversation_id )
 		);
@@ -386,8 +386,8 @@ class ConversationService {
 				'metadata'        => wp_json_encode( $metadata ),
 				'read_by'         => wp_json_encode( array() ),
 				'is_edited'       => 0,
-				'created_at'      => current_time( 'mysql' ),
-				'updated_at'      => current_time( 'mysql' ),
+				'created_at'      => current_time( 'mysql', true ),
+				'updated_at'      => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s' )
 		);
@@ -400,8 +400,8 @@ class ConversationService {
 			$conversations_table,
 			array(
 				'message_count'   => $conversation->message_count + 1,
-				'last_message_at' => current_time( 'mysql' ),
-				'updated_at'      => current_time( 'mysql' ),
+				'last_message_at' => current_time( 'mysql', true ),
+				'updated_at'      => current_time( 'mysql', true ),
 			),
 			array( 'id' => $conversation_id )
 		);

@@ -319,6 +319,13 @@
 	font-size: 15px;
 }
 
+.wpss-dashboard-login__actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--wpss-space-3, 12px);
+}
+
 /* ==========================================================================
    Stats Grid
    ========================================================================== */
@@ -332,6 +339,41 @@
 
 .wpss-stats-grid--4 {
 	grid-template-columns: repeat(4, 1fr);
+}
+
+/*
+ * Desktop: up to four stat cards share one row. frontend.css's auto-fit 200px
+ * tracks gave three per row in the ~740px content column, so four cards split
+ * 3+1 (Basecamp 10350553561). Five or more stay three to a row: six in one
+ * row left each Earnings card 83-107px wide and broke amounts and labels
+ * inside a word. Phones keep the two-column rule further down.
+ */
+@media (min-width: 1025px) {
+	.wpss-dashboard .wpss-stats-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.wpss-dashboard .wpss-stats-grid:not(:has(> :nth-child(5))) {
+		grid-template-columns: none;
+		grid-auto-flow: column;
+		grid-auto-columns: minmax(min-content, 1fr);
+	}
+
+	/* In that row a card is never narrower than its figure or its longest
+	   word: equal 134px tracks broke "$2,005.50" after the 5. break-word,
+	   unlike anywhere, leaves that full width as the track's minimum. */
+	.wpss-dashboard .wpss-stats-grid:not(:has(> :nth-child(5))) .wpss-stat-card__value,
+	.wpss-dashboard .wpss-stats-grid:not(:has(> :nth-child(5))) .wpss-stat-card__label {
+		overflow-wrap: break-word;
+	}
+}
+
+/* The content column is at its narrowest just above the drawer breakpoint:
+   a 186px card holds "$123,456.78" at 22px, not at 28px. */
+@media (min-width: 1025px) and (max-width: 1279px) {
+	.wpss-dashboard .wpss-stat-card__value {
+		font-size: 1.375rem;
+	}
 }
 
 .wpss-stat-card {
@@ -432,6 +474,21 @@
 	object-fit: cover;
 }
 
+.wpss-order-card__placeholder {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	background: var(--wpss-gray-100);
+	color: var(--wpss-gray-400);
+}
+
+.wpss-order-card__number {
+	font-variant-numeric: tabular-nums;
+	color: var(--wpss-gray-700);
+}
+
 .wpss-order-card__info {
 	min-width: 0;
 }
@@ -527,12 +584,6 @@
 	object-fit: cover;
 }
 
-.wpss-service-card__placeholder {
-	width: 100%;
-	height: 100%;
-	background: linear-gradient(135deg, var(--wpss-gray-100) 0%, var(--wpss-gray-200) 100%);
-}
-
 .wpss-service-card__status {
 	position: absolute;
 	top: 8px;
@@ -594,6 +645,7 @@
 
 .wpss-service-card__actions {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 8px;
 	padding: 12px 16px;
 	border-top: 1px solid var(--wpss-gray-100);
@@ -609,7 +661,7 @@
 	gap: 12px;
 }
 
-.wpss-request-card {
+.wpss-dashboard .wpss-request-card {
 	/* Column layout: content block on top, a dedicated action FOOTER row at the
 	   bottom (Basecamp #9985554351). Side-by-side never fit — five actions want
 	   ~400px next to a title that needs its own width — so the actions used to
@@ -625,30 +677,30 @@
 	border: 1px solid var(--wpss-gray-200);
 }
 
-.wpss-request-card__main {
+.wpss-dashboard .wpss-request-card__main {
 	min-width: 0;
 }
 
-.wpss-request-card__title {
+.wpss-dashboard .wpss-request-card__title {
 	margin: 0 0 8px;
 	font-size: 15px;
 	font-weight: 600;
 	color: var(--wpss-gray-900);
 }
 
-.wpss-request-card__excerpt {
+.wpss-dashboard .wpss-request-card__excerpt {
 	margin: 0 0 12px;
 	font-size: 14px;
 	color: var(--wpss-gray-600);
 	line-height: 1.5;
 }
 
-.wpss-request-card__meta {
+.wpss-dashboard .wpss-request-card__meta {
 	font-size: 13px;
 	color: var(--wpss-gray-500);
 }
 
-.wpss-request-card__actions {
+.wpss-dashboard .wpss-request-card__actions {
 	/* Footer action row: a hairline separates it from the content above; the
 	   status badge pins to the start and the icon buttons flow to the end. */
 	display: flex;
@@ -661,7 +713,7 @@
 
 /* Status is state, not an action — hold the left edge so the icon buttons
    collect at the right of the footer. */
-.wpss-request-card__actions > .wpss-status {
+.wpss-dashboard .wpss-request-card__actions > .wpss-status {
 	margin-inline-end: auto;
 }
 
@@ -673,7 +725,7 @@
    (~40px) keeps the whole set on ONE tidy line at every width — desktop, iPad,
    and mobile alike — while the label survives in the DOM for assistive tech and
    as a hover tooltip (title attr). */
-.wpss-request-card__actions .wpss-btn--action {
+.wpss-dashboard .wpss-request-card__actions .wpss-btn--action {
 	gap: 0;
 	padding-inline: 0;
 	min-width: 40px;
@@ -682,14 +734,14 @@
 	flex-shrink: 0;
 }
 
-.wpss-request-card__actions .wpss-btn--action .wpss-icon {
+.wpss-dashboard .wpss-request-card__actions .wpss-btn--action .wpss-icon {
 	width: 18px;
 	height: 18px;
 }
 
 /* Visually hide the label but keep it for screen readers (the icon carries the
    meaning visually; aria-label + title name the control for AT and on hover). */
-.wpss-request-card__actions .wpss-btn--action .wpss-btn__label {
+.wpss-dashboard .wpss-request-card__actions .wpss-btn--action .wpss-btn__label {
 	position: absolute;
 	width: 1px;
 	height: 1px;
@@ -1155,7 +1207,9 @@
 	margin-bottom: 0;
 }
 
-.wpss-form-row label {
+.wpss-form-row label,
+.wpss-payout-fields label,
+.wpss-review-reply-form label {
 	display: block;
 	margin-bottom: 6px;
 	font-size: 13px;
@@ -1372,7 +1426,7 @@
 
 .wpss-status--pending_approval {
 	background: var(--wpss-status-pending-approval-bg, #c6e1c6);
-	color: var(--wpss-status-pending-approval-fg, #5b841b);
+	color: var(--wpss-status-pending-approval-fg, #3f5c13);
 }
 
 .wpss-status--in_progress {
@@ -1859,7 +1913,11 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
 .wpss-textarea {
 	display: block;
 	width: 100%;
+	/* Not every theme resets box-sizing; without it 100% plus padding ran past the card. */
+	box-sizing: border-box;
 	padding: 10px 12px;
+	/* Browsers give a textarea a monospace font unless told otherwise. */
+	font-family: inherit;
 	font-size: 14px;
 	color: var(--wpss-gray-900);
 	background: var(--wpss-surface, #fff);
@@ -1991,8 +2049,20 @@ select.wpss-input option,
 .wpss-portfolio__actions {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 4px;
 	flex-wrap: wrap;
+}
+
+.wpss-portfolio__actions .wpss-btn {
+	padding-inline: var(--wpss-space-2);
+}
+
+.wpss-portfolio__actions .wpss-portfolio-delete {
+	margin-inline-start: auto;
+}
+
+.wpss-portfolio__badge {
+	margin-bottom: 6px;
 }
 
 .wpss-portfolio-media-thumb {
@@ -2078,38 +2148,89 @@ select.wpss-input option,
 	margin-top: 16px;
 }
 
+/*
+ * Stack the value above its label, and let the label wrap - at every width.
+ * At 1440 the Earnings labels sat beside the number and wrapped to 3-4
+ * lines ("Clearing / from / open / orders"), so this is not phone-only.
+ *
+ * Same specificity story as the stats-grid rule in the 768px block:
+ * frontend.css sets a bare `.wpss-stat-card { display: flex;
+ * align-items: center }` and loads after this sheet, so the value and the
+ * label sat SIDE BY SIDE. In a 125px column at 390px the 28px value took
+ * almost all of it and the label was squeezed into what was left -
+ * "Withdrawal in progress" rendered as "With / in pr", "Total earned so
+ * far" as "Tota / earn / so fa", and one label was reduced to single
+ * letters. A vendor on a phone could not tell what most of the numbers
+ * meant.
+ *
+ * Scoped to .wpss-dashboard so it outranks the unscoped rule, exactly as
+ * the stats-grid fix has to be. min-width: 0 because a flex item will not
+ * shrink below its content width without it, which is what made the label
+ * overflow rather than wrap in the first place.
+ */
+.wpss-dashboard .wpss-stat-card {
+	display: block;
+}
+
+.wpss-dashboard .wpss-stat-card__value,
+.wpss-dashboard .wpss-stat-card__label {
+	display: block;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+/* Post a Request: uploaded attachments. */
+.wpss-request-files {
+	list-style: none;
+	margin: var(--wpss-space-2) 0 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--wpss-space-2);
+}
+
+.wpss-request-files__item {
+	display: flex;
+	align-items: center;
+	gap: var(--wpss-space-3);
+	padding: var(--wpss-space-2) var(--wpss-space-3);
+	border: 1px solid var(--wpss-gray-200);
+	border-radius: var(--wpss-radius);
+	font-size: 13px;
+}
+
+.wpss-request-files__name {
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.wpss-request-files__state {
+	color: var(--wpss-gray-500);
+}
+
 /* ==========================================================================
    Responsive
    ========================================================================== */
 
-/* Under 480px the sidebar collapses to one bar - current section title plus a
-   Menu toggle - so the section content is the first thing on screen instead of
-   a dozen nav links (F27). The toggle flips .wpss-dashboard__sidebar--open;
-   nothing animates, so prefers-reduced-motion needs no override. */
-.wpss-dashboard__nav-bar {
+/* At 1024px and below the sidebar collapses to one bar - current section
+   title plus a Menu toggle - so the section gets the full width (an iPad in
+   portrait kept a 250px sidebar and cut the wallet table's Amount column).
+   The toggle opens the drawer as an off-canvas panel over a backdrop; the
+   panel keeps the desktop nav layout. Owner decision 2026-09-25, shared by
+   the buyer and vendor dashboards. */
+.wpss-dashboard__nav-bar,
+.wpss-dashboard__drawer-close {
 	display: none;
 }
 
-@media (max-width: 480px) {
-	.wpss-dashboard__nav-bar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--wpss-space-3);
-		padding: var(--wpss-space-3) var(--wpss-space-4);
-	}
-
-	.wpss-dashboard__nav-bar-title {
-		font-weight: 600;
-		color: var(--wpss-gray-900);
-	}
-
-	.wpss-dashboard__sidebar:not(.wpss-dashboard__sidebar--open) > :not(.wpss-dashboard__nav-bar) {
-		display: none;
-	}
+.wpss-dashboard__drawer {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
 	.wpss-dashboard {
 		flex-direction: column;
 	}
@@ -2120,70 +2241,85 @@ select.wpss-input option,
 		border-bottom: 1px solid var(--wpss-gray-200);
 	}
 
-	.wpss-dashboard__nav {
-		display: block;
-		padding: 12px 16px;
-	}
-
-	.wpss-dashboard__nav-group {
-		margin-bottom: 12px;
-	}
-
-	.wpss-dashboard__nav-group:last-child {
-		margin-bottom: 0;
-	}
-
-	.wpss-dashboard__nav-label {
-		display: block;
-		padding: 0 4px;
-		margin-bottom: 6px;
-		font-size: 11px;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--wpss-gray-500);
-	}
-
-	.wpss-dashboard__nav-list {
+	.wpss-dashboard__nav-bar {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-	}
-
-	.wpss-dashboard__nav-item {
-		display: inline-flex;
 		align-items: center;
-		gap: 8px;
-		min-height: 40px;
-		padding: 8px 12px;
-		border: 1px solid var(--wpss-gray-200);
-		border-radius: var(--wpss-radius);
-		background: var(--wpss-surface, #fff);
-		font-size: 13px;
-		font-weight: 500;
+		justify-content: space-between;
+		gap: var(--wpss-space-3);
+		padding: var(--wpss-space-3) var(--wpss-space-4);
+	}
+
+	.wpss-dashboard__nav-bar-title {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
 		white-space: nowrap;
+		font-weight: 600;
+		color: var(--wpss-gray-900);
 	}
 
-	.wpss-dashboard__nav-item--active {
-		border-right: 1px solid var(--wpss-primary);
-		border-color: var(--wpss-primary);
-		background: var(--wpss-primary);
-		color: var(--wpss-white, #fff);
+	.wpss-dashboard__nav-toggle {
+		flex-shrink: 0;
 	}
 
-	.wpss-dashboard__nav-item--active:hover {
-		background: var(--wpss-primary);
-		color: var(--wpss-white, #fff);
-	}
-
-	.wpss-dashboard__nav-item span {
-		display: inline;
-	}
-
-	.wpss-dashboard__become-vendor {
+	.wpss-dashboard__sidebar:not(.wpss-dashboard__sidebar--open) .wpss-dashboard__drawer {
 		display: none;
 	}
 
+	.wpss-dashboard__sidebar--open::after {
+		content: "";
+		position: fixed;
+		inset: 0;
+		z-index: 100000;
+		background: rgba(15, 23, 42, 0.5);
+	}
+
+	.wpss-dashboard__sidebar--open .wpss-dashboard__drawer {
+		position: fixed;
+		inset-block: 0;
+		inset-inline-start: 0;
+		z-index: 100001;
+		width: min(320px, 85vw);
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		background: var(--wpss-surface, #fff);
+		box-shadow: var(--wpss-shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.2));
+	}
+
+	.wpss-dashboard__drawer-close {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		align-self: flex-end;
+		width: 44px;
+		height: 44px;
+		margin: var(--wpss-space-2) var(--wpss-space-2) 0;
+		padding: 0;
+		border: 0;
+		border-radius: var(--wpss-radius);
+		background: transparent;
+		color: var(--wpss-gray-700);
+		cursor: pointer;
+	}
+
+	.wpss-dashboard__drawer-close:hover,
+	.wpss-dashboard__drawer-close:focus-visible {
+		background: var(--wpss-gray-100);
+		color: var(--wpss-gray-900);
+	}
+
+	html.wpss-drawer-open {
+		overflow: hidden;
+	}
+
+	/* The shell isolates its own stacking context (design-system.css), which
+	   would keep the drawer under the theme header; lift it while open. */
+	html.wpss-drawer-open .wpss-app-shell {
+		z-index: 100000;
+	}
+}
+
+@media (max-width: 768px) {
 	.wpss-dashboard__body {
 		padding: 16px;
 	}
@@ -2202,39 +2338,6 @@ select.wpss-input option,
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
-	/*
-	 * Stack the value above its label, and let the label wrap.
-	 *
-	 * Same specificity story as the grid rule above, one property along:
-	 * frontend.css sets a bare `.wpss-stat-card { display: flex;
-	 * align-items: center }` and loads after this sheet, so the value and the
-	 * label sat SIDE BY SIDE. In a 125px column at 390px the 28px value took
-	 * almost all of it and the label was squeezed into what was left -
-	 * "Withdrawal in progress" rendered as "With / in pr", "Total earned so
-	 * far" as "Tota / earn / so fa", and one label was reduced to single
-	 * letters. A vendor on a phone could not tell what most of the numbers
-	 * meant.
-	 *
-	 * Scoped to .wpss-dashboard so it outranks the unscoped rule, exactly as
-	 * the grid fix above has to be. min-width: 0 because a flex item will not
-	 * shrink below its content width without it, which is what made the label
-	 * overflow rather than wrap in the first place.
-	 */
-	.wpss-dashboard .wpss-stat-card {
-		display: block;
-	}
-
-	.wpss-dashboard .wpss-stat-card__value,
-	.wpss-dashboard .wpss-stat-card__label {
-		display: block;
-		min-width: 0;
-		overflow-wrap: anywhere;
-	}
-
-	.wpss-dashboard .wpss-stat-card__value {
-		font-size: 22px;
-	}
-
 	.wpss-order-card {
 		flex-direction: column;
 		align-items: flex-start;
@@ -2247,6 +2350,8 @@ select.wpss-input option,
 	.wpss-order-card__actions {
 		width: 100%;
 		justify-content: space-between;
+		flex-wrap: wrap; /* A long action ("Complete payment") overflowed the card at 390 (Basecamp 10350547818). */
+		row-gap: 8px;
 		margin-top: 12px;
 		padding-top: 12px;
 		border-top: 1px solid var(--wpss-gray-100);
@@ -2260,6 +2365,94 @@ select.wpss-input option,
 		grid-template-columns: 1fr;
 	}
 }
+
+
+/* On a phone the shell and theme already give 27px of gutter; the body's own
+   padding and the messages card's stacked on top left a message 165px of a
+   390px screen (Basecamp 10345275760). */
+@media (max-width: 640px) {
+	.wpss-dashboard__body {
+		padding-inline: 0;
+	}
+
+	.wpss-section--messages {
+		padding-inline: 8px;
+	}
+
+	.wpss-section--messages .wpss-conversation-thread__messages {
+		padding: 12px 8px;
+	}
+
+	/* Tables with .wpss-table--stack become one labelled card per row: the
+	   Amount and Status columns sat off-screen in a sideways scroll with no
+	   hint (Basecamp 10337227125). Each cell names itself via data-label. */
+	.wpss-table--stack thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+	}
+
+	.wpss-table--stack,
+	.wpss-table--stack tbody,
+	.wpss-table--stack tr,
+	.wpss-table--stack td {
+		display: block;
+		width: 100%;
+	}
+
+	.wpss-table--stack tr {
+		padding: 10px 0;
+		border-bottom: 1px solid var(--wpss-gray-100);
+	}
+
+	.wpss-table--stack td,
+	.wpss-dashboard .wpss-table.wpss-table--stack td {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: 12px;
+		padding: 6px 12px;
+		border: 0;
+		text-align: end;
+	}
+
+	/* An action cell has no label: its button sits at the row's end. */
+	.wpss-table--stack td:not([data-label]),
+	.wpss-dashboard .wpss-table.wpss-table--stack td:not([data-label]) {
+		justify-content: flex-end;
+	}
+
+	.wpss-table--stack td::before {
+		content: attr(data-label);
+		flex-shrink: 0;
+		color: var(--wpss-gray-500);
+		font-size: 13px;
+		text-align: start;
+	}
+
+	.wpss-table--stack td:not([data-label])::before {
+		content: none;
+	}
+
+	.wpss-table--stack td:empty {
+		display: none;
+	}
+
+	/* A money figure is read whole: $113.40 split over two lines (Basecamp
+	   10337227125). Smaller type and a tighter card keep six figures on one
+	   line in a 141px card; only a figure too long for the card wraps, where
+	   nowrap used to push it out through the border. */
+	.wpss-dashboard .wpss-stat-card {
+		padding: var(--wpss-space-3, 12px);
+	}
+
+	.wpss-dashboard .wpss-stat-card__value {
+		font-size: 1.0625rem;
+	}
+}
+
 
 /* ==========================================================================
    Favorites section (Dashboard → Buying → Favorites)
@@ -2543,7 +2736,7 @@ select.wpss-input option,
 	margin: 0;
 }
 
-.wpss-pagination {
+.wpss-dashboard .wpss-pagination {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -2553,7 +2746,7 @@ select.wpss-input option,
 	border-top: 1px solid var(--wpss-border, #e5e7eb);
 }
 
-.wpss-pagination__link {
+.wpss-dashboard .wpss-pagination__link {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
@@ -2567,16 +2760,16 @@ select.wpss-input option,
 	transition: background-color 0.15s ease;
 }
 
-.wpss-pagination__link:hover {
+.wpss-dashboard .wpss-pagination__link:hover {
 	background: var(--wpss-bg-muted, #f3f4f6);
 }
 
-.wpss-pagination__link .wpss-icon {
+.wpss-dashboard .wpss-pagination__link .wpss-icon {
 	width: 14px;
 	height: 14px;
 }
 
-.wpss-pagination__current {
+.wpss-dashboard .wpss-pagination__current {
 	font-size: 13px;
 	color: var(--wpss-text-muted, #6b7280);
 }
@@ -3753,34 +3946,12 @@ select.wpss-input option,
 }
 
 /* Dispute evidence thread + reply form (frontend party messaging, since 1.2.2). */
-.wpss-dispute-detail__evidence{margin-top:24px}
-.wpss-dispute-detail__evidence>h3{margin:0 0 8px}
-.wpss-evidence-thread{display:flex;flex-direction:column;gap:12px;margin:12px 0 16px}
-.wpss-evidence-empty{color:var(--wpss-gray-500,#6b7280);font-size:14px;margin:0}
-.wpss-evidence-item{display:flex;max-width:100%}
-.wpss-evidence-item.wpss-evidence-own{justify-content:flex-end}
-.wpss-evidence-bubble{max-width:82%;padding:10px 14px;border-radius:14px;background:var(--wpss-gray-100,#f3f4f6);border:1px solid var(--wpss-border,#e5e7eb)}
-.wpss-evidence-own .wpss-evidence-bubble{background:var(--wpss-primary-light,#eef2ff);border-color:var(--wpss-primary,#4f46e5)}
-.wpss-evidence-author{display:block;font-size:12px;color:var(--wpss-gray-600,#4b5563);margin-bottom:2px}
-.wpss-evidence-text{font-size:14px;line-height:1.5;color:var(--wpss-gray-800,#1f2937);white-space:pre-wrap;word-break:break-word}
-.wpss-evidence-image img{max-width:220px;border-radius:8px;margin-top:6px}
-.wpss-evidence-file{margin-top:6px}
-.wpss-evidence-file .wpss-file-link{display:inline-flex;align-items:center;gap:6px;font-size:13px}
-.wpss-evidence-time{display:block;font-size:11px;color:var(--wpss-gray-400,#9ca3af);margin-top:4px}
-.wpss-add-evidence-form{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--wpss-border,#e5e7eb);padding-top:14px}
-.wpss-add-evidence-form .wpss-form-label{font-weight:600;font-size:14px}
-.wpss-add-evidence-form__row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:auto}
-.wpss-evidence-attach{cursor:pointer}
-.wpss-evidence-filename{font-size:12px;color:var(--wpss-gray-500,#6b7280)}
-.wpss-evidence-locked{font-size:13px;color:var(--wpss-gray-500,#6b7280);margin:12px 0 0}
 /* The detail footer. The class was in the template from the start and had no rule
    anywhere, so its <p> kept whatever margin the theme gave it - on Reign that is 0,
    which left View order touching the Attach file row with no gap at all, and stacked
    three flush buttons at 390px. Space it, and make it a row so a second action can be
    added without repeating this. */
 .wpss-dispute-detail__actions{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 0}
-@media (max-width:480px){.wpss-evidence-bubble{max-width:100%}.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:0;width:100%}}
 
 /* ==========================================================================
    Reviews section (vendor)
@@ -3798,6 +3969,18 @@ select.wpss-input option,
 
 .wpss-review-reply-form {
 	margin-top: var(--wpss-space-3, 12px);
+}
+
+/* The payout details sit outside the form row the fields above them use, so
+   they had no spacing or label style of their own: the submit button touched
+   the last field and the labels took the theme's size. */
+.wpss-payout-fields:not([hidden]) {
+	margin-top: 16px;
+}
+
+.wpss-payout-fields .wpss-form-group,
+.wpss-payout-fields .wpss-form-group:last-child {
+	margin-bottom: 16px;
 }
 
 .wpss-review-reply-form__row {

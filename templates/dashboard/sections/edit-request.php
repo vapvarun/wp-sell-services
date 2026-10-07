@@ -46,8 +46,8 @@ if ( ! $budget_min && ! $budget_max ) {
 $expires_at = get_post_meta( $request_id, '_wpss_expires_at', true );
 $deadline   = '';
 if ( $expires_at ) {
-	$deadline_date = new DateTime( $expires_at );
-	$deadline      = $deadline_date->format( 'Y-m-d' );
+	// Stored in UTC; the date input shows the site's calendar day.
+	$deadline = get_date_from_gmt( (string) $expires_at, 'Y-m-d' );
 }
 $skills_required = get_post_meta( $request_id, '_wpss_skills_required', true );
 $skills_string   = is_array( $skills_required ) ? implode( ', ', $skills_required ) : ( $skills_required ?: '' );
@@ -219,6 +219,16 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 					placeholder="<?php esc_attr_e( 'e.g., WordPress, PHP, JavaScript (comma-separated)', 'wp-sell-services' ); ?>"
 				>
 			</div>
+
+			<?php
+			wpss_get_template(
+				'partials/request-attachments.php',
+				array(
+					'wpss_attachment_ids' => (array) get_post_meta( $request_id, '_wpss_attachments', true ),
+					'wpss_files_locked'   => ! ( new \WPSellServices\Services\BuyerRequestService() )->is_untouched( (int) $request_id ),
+				)
+			);
+			?>
 		</div>
 
 		<!-- Submit Section -->

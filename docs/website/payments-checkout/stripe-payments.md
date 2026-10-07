@@ -59,6 +59,23 @@ Webhooks let Stripe tell your site when a payment succeeds or fails.
 7. Paste it into **Sell Services > Settings > Payment Gateways**
 8. Click **Save Changes**
 
+### Sharing One Stripe Account Between Sites
+
+Stripe sends every payment event on an account to every site connected to it. If
+your live site, a staging copy, or a second store all use the same Stripe
+account, each of them hears about the others' payments.
+
+Since 1.8.0 each site acts only on payments it created itself. Every payment
+carries the address of the site that started it, and a site ignores a payment
+that names a different address. A payment made on your staging copy cannot mark
+an order paid, or trigger a refund, on your live site.
+
+What this means for you:
+
+- You can safely share one Stripe account between a live site and its staging copy.
+- If you move the site to a new domain, payments started on the old address are no longer recognised by webhooks, so let open checkouts finish first. Switching `http` to `https` on the same domain changes nothing.
+- All sites sharing the account should run 1.8.0 or later. A site on an older version still reacts to payments from the others.
+
 ## How Checkout Works with Stripe
 
 When a buyer chooses to pay by card:
@@ -111,6 +128,16 @@ To refund an order:
 
 Refunds appear in the buyer's account within 5-10 business days. Stripe refunds the percentage fee but keeps the fixed fee (typically $0.30 per transaction).
 
+### Automatic Refund When an Order Cannot Be Created
+
+Occasionally a buyer is charged but the order cannot be created: the vendor paused
+or deleted the service while the buyer was paying, or the price changed. The
+charge is then refunded automatically, whether the buyer's browser or Stripe's
+webhook reports the payment. If Stripe says the charge was already refunded, that
+counts as done. Only when the refund itself fails is an error written to the log
+(`CRITICAL: Stripe charge ... Manual intervention required`) and Stripe asked to
+try again.
+
 ## Transaction Fees
 
 Stripe charges per transaction (rates vary by country):
@@ -134,6 +161,8 @@ Your site never stores or processes card data. Stripe handles all PCI compliance
 | "No such payment_intent" error | You are mixing test and live keys. Ensure both publishable and secret keys are from the same mode. |
 | Webhook signature verification failed | The webhook signing secret must match the specific endpoint. Re-copy it from Stripe Dashboard > Developers > Webhooks > your endpoint > Signing secret. |
 | Apple Pay / Google Pay not showing | These require HTTPS and domain verification in Stripe Dashboard > Settings > Payment methods. |
+| Test payments are refunded within seconds | Another site on the same Stripe account is running a version older than 1.8.0 and is refunding payments it did not make. Update that site, or give it its own Stripe account. |
+| A payment succeeded in Stripe but the site ignores the webhook | The payment was started on a different site address. See "Sharing One Stripe Account Between Sites" above. |
 
 ## Related Docs
 

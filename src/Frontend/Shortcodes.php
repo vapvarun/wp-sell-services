@@ -382,6 +382,25 @@ class Shortcodes {
 		);
 
 		ob_start();
+
+		// The mapped Vendors page gets the same plugin header as /services/ (one
+		// directory style); ShellHeader then suppresses the theme's title band
+		// there. Raw post_title: get_the_title() is blanked by that suppression.
+		static $wpss_vendors_header = false;
+		if ( ! $wpss_vendors_header && $toolbar && wpss_is_page( 'vendors_page' ) ) {
+			$wpss_vendors_header = true;
+			ShellHeader::render(
+				array(
+					'title'    => (string) get_post_field( 'post_title', (int) wpss_get_page_id( 'vendors_page' ) ),
+					'subtitle' => sprintf(
+						/* translators: %s: platform name */
+						__( 'Find sellers on %s', 'wp-sell-services' ),
+						wpss_get_platform_name()
+					),
+				)
+			);
+		}
+
 		if ( $toolbar ) :
 			// Option values are URLs: .wpss-url-select navigates on change (frontend.js).
 			$link = static fn ( array $args ): string => add_query_arg( $args + array( 'vpage' => false ) );
@@ -512,7 +531,7 @@ class Shortcodes {
 		$vendor_id = absint( $atts['id'] );
 
 		if ( ! $vendor_id ) {
-			return '<p class="wpss-error">' . esc_html__( 'Vendor not found.', 'wp-sell-services' ) . '</p>';
+			return '<p class="wpss-notice wpss-notice--error">' . esc_html__( 'Vendor not found.', 'wp-sell-services' ) . '</p>';
 		}
 
 		// "No profile row" is not "no such vendor". A member can hold the vendor
@@ -523,7 +542,7 @@ class Shortcodes {
 		$profile = wpss_get_vendor_profile_or_default( $vendor_id );
 
 		if ( ! $profile ) {
-			return '<p class="wpss-error">' . esc_html__( 'Vendor not found.', 'wp-sell-services' ) . '</p>';
+			return '<p class="wpss-notice wpss-notice--error">' . esc_html__( 'Vendor not found.', 'wp-sell-services' ) . '</p>';
 		}
 
 		$template = locate_template( 'wp-sell-services/vendor/profile.php' );
@@ -677,123 +696,21 @@ class Shortcodes {
 			) . '</div>';
 		}
 
-		// Where to send the buyer after a successful post. Buyer requests
-		// archive when one exists, otherwise the requests page, otherwise home.
-		$success_redirect = get_post_type_archive_link( 'wpss_request' );
-		if ( ! $success_redirect ) {
-			$success_redirect = wpss_get_page_url( 'requests' );
-		}
+		/*
+		 * The dashboard's Post a Request form, not a second copy of it. This
+		 * shortcode carried its own form and its own REST submit script in
+		 * frontend.js; it drifted (no attachments) and its classes were styled
+		 * only in sheets a plain page never loads (Basecamp 10375004244). The
+		 * dashboard assets are asked for here, at render, so the form also
+		 * works in a pattern or widget, where the page's content does not
+		 * name the shortcode.
+		 */
+		do_action( 'wpss_enqueue_dashboard_assets' );
 
 		ob_start();
-		?>
-		<div class="wpss-post-request" data-wpss-post-request>
-			<form id="wpss-post-request-form" class="wpss-form" novalidate
-				data-success-redirect="<?php echo esc_url( $success_redirect ); ?>">
-				<?php wp_nonce_field( 'wpss_post_request', 'wpss_request_nonce' ); ?>
-
-				<div
-					class="wpss-form-feedback wpss-form-feedback--error"
-					data-request-form-error
-					role="alert"
-					aria-live="assertive"
-					hidden></div>
-
-				<div class="wpss-form-row">
-					<label for="request_title"><?php esc_html_e( 'Title', 'wp-sell-services' ); ?> <span class="required">*</span></label>
-					<input type="text" name="title" id="request_title" required maxlength="100" placeholder="<?php esc_attr_e( 'e.g., I need a WordPress website designed', 'wp-sell-services' ); ?>" data-field="title" aria-describedby="request_title_error">
-					<p class="wpss-field-error" id="request_title_error" data-field-error="title" role="alert" hidden></p>
-				</div>
-
-				<div class="wpss-form-row">
-					<label for="request_description"><?php esc_html_e( 'Description', 'wp-sell-services' ); ?> <span class="required">*</span></label>
-					<textarea name="description" id="request_description" rows="5" required placeholder="<?php esc_attr_e( 'Describe what you need in detail...', 'wp-sell-services' ); ?>" data-field="description" aria-describedby="request_description_error"></textarea>
-					<p class="wpss-field-error" id="request_description_error" data-field-error="description" role="alert" hidden></p>
-				</div>
-
-				<div class="wpss-form-row">
-					<label for="request_category"><?php esc_html_e( 'Category', 'wp-sell-services' ); ?></label>
-					<select name="category" id="request_category" data-field="category">
-						<option value=""><?php esc_html_e( 'Select a category', 'wp-sell-services' ); ?></option>
-						<?php
-						$categories = get_terms(
-							array(
-								'taxonomy'   => 'wpss_service_category',
-								'hide_empty' => false,
-							)
-						);
-
-						if ( ! is_wp_error( $categories ) ) :
-							foreach ( $categories as $category ) :
-								?>
-								<option value="<?php echo esc_attr( (string) $category->term_id ); ?>"><?php echo esc_html( $category->name ); ?></option>
-								<?php
-							endforeach;
-						endif;
-						?>
-					</select>
-				</div>
-
-				<div class="wpss-form-row wpss-form-row-double">
-					<div class="wpss-form-col">
-						<label for="request_budget_min"><?php esc_html_e( 'Budget Min', 'wp-sell-services' ); ?></label>
-						<input type="number" name="budget_min" id="request_budget_min" min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="0" data-field="budget_min" aria-describedby="request_budget_error">
-					</div>
-					<div class="wpss-form-col">
-						<label for="request_budget_max"><?php esc_html_e( 'Budget Max', 'wp-sell-services' ); ?></label>
-						<input type="number" name="budget_max" id="request_budget_max" min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="0" data-field="budget_max" aria-describedby="request_budget_error">
-					</div>
-					<p class="wpss-field-error" id="request_budget_error" data-field-error="budget_max" role="alert" hidden></p>
-				</div>
-
-				<div class="wpss-form-row">
-					<label for="request_deadline"><?php esc_html_e( 'Deadline', 'wp-sell-services' ); ?></label>
-					<?php
-					/*
-					 * `wpss-input` so the color-scheme declaration reaches it. A
-					 * native date input draws its picker panel from that property,
-					 * and the rule that sets it targets `.wpss-app input` and
-					 * `input.wpss-input`. This form wraps its output in
-					 * `.wpss-post-request`, not `.wpss-app`, and the field carried
-					 * no class, so it matched neither and the picker kept
-					 * following the visitor's OS - the exact symptom fixed
-					 * everywhere else. The dashboard's copy of this field already
-					 * carries the class, which is why only the shortcode route
-					 * showed it. See Basecamp 10304261682.
-					 */
-					?>
-					<input type="date" name="deadline" id="request_deadline" class="wpss-input" min="<?php echo esc_attr( wp_date( 'Y-m-d', strtotime( '+1 day' ) ) ); ?>" data-field="deadline">
-				</div>
-
-				<div class="wpss-form-row">
-					<label for="request_skills"><?php esc_html_e( 'Required Skills', 'wp-sell-services' ); ?></label>
-					<input type="text" name="skills_required" id="request_skills" placeholder="<?php esc_attr_e( 'e.g., WordPress, PHP, JavaScript (comma-separated)', 'wp-sell-services' ); ?>" data-field="skills_required">
-					<p class="wpss-form-hint"><?php esc_html_e( 'Separate multiple skills with commas.', 'wp-sell-services' ); ?></p>
-				</div>
-
-				<div class="wpss-form-actions">
-					<button type="submit" class="wpss-btn wpss-btn-primary" data-request-submit><?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?></button>
-				</div>
-			</form>
-
-			<div class="wpss-post-request__success wpss-empty-state" data-request-success hidden>
-				<div class="wpss-empty-state__icon">
-					<?php
-					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns hand-built SVG with internally-escaped attributes.
-					echo \WPSellServices\Services\Icon::render(
-						'badge-check',
-						array(
-							'width'  => '48',
-							'height' => '48',
-						)
-					);
-					?>
-				</div>
-				<h3 class="wpss-empty-state__title"><?php esc_html_e( 'Request posted', 'wp-sell-services' ); ?></h3>
-				<p class="wpss-empty-state__body"><?php esc_html_e( 'Your request is now live. Vendors can browse it and send you proposals.', 'wp-sell-services' ); ?></p>
-				<a href="#" class="wpss-btn wpss-btn-primary" data-request-success-link><?php esc_html_e( 'View buyer requests', 'wp-sell-services' ); ?></a>
-			</div>
-		</div>
-		<?php
+		echo '<div class="wpss-app">';
+		wpss_get_template( 'dashboard/sections/create-request.php', array( 'user_id' => get_current_user_id() ) );
+		echo '</div>';
 		return ob_get_clean();
 	}
 
@@ -869,7 +786,9 @@ class Shortcodes {
 		?>
 		<div class="wpss-my-orders">
 			<?php if ( ! empty( $orders ) ) : ?>
-				<table class="wpss-orders-table">
+				<?php // Design-system table and pills: the old classes were styled only in sheets a plain page never loads (Basecamp 10375004244). ?>
+				<div class="wpss-table-wrap">
+				<table class="wpss-table">
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'Order', 'wp-sell-services' ); ?></th>
@@ -886,7 +805,7 @@ class Shortcodes {
 								<td>#<?php echo esc_html( $order->order_number ?: $order->id ); ?></td>
 								<td><?php echo esc_html( get_the_title( $order->service_id ) ); ?></td>
 								<td><?php echo wp_kses_post( function_exists( 'wpss_format_currency' ) ? wpss_format_currency( (float) $order->total, $order->currency ) : '$' . number_format( (float) $order->total, 2 ) ); ?></td>
-								<td><span class="wpss-status wpss-status-<?php echo esc_attr( $order->status ); ?>"><?php echo esc_html( ucwords( str_replace( '_', ' ', $order->status ) ) ); ?></span></td>
+								<td><span class="<?php echo esc_attr( wpss_status_class( (string) $order->status ) ); ?>"><?php echo esc_html( wpss_get_order_status_label( (string) $order->status ) ); ?></span></td>
 								<td>
 									<?php
 									// ServiceOrder hydrates created_at to a DateTimeImmutable, so
@@ -897,11 +816,12 @@ class Shortcodes {
 										: '&mdash;';
 									?>
 								</td>
-								<td><a href="<?php echo esc_url( wpss_get_order_url( (int) $order->id ) ?: '#' ); ?>" class="button button-small"><?php esc_html_e( 'View', 'wp-sell-services' ); ?></a></td>
+								<td><a href="<?php echo esc_url( wpss_get_order_url( (int) $order->id ) ?: '#' ); ?>" class="wpss-btn wpss-btn--secondary wpss-btn--sm"><?php esc_html_e( 'View', 'wp-sell-services' ); ?></a></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+				</div>
 
 				<?php
 				// The route to orders 21+, which did not exist before.
@@ -953,7 +873,7 @@ class Shortcodes {
 		$order_id = function_exists( 'wpss_resolve_request_order_id' ) ? wpss_resolve_request_order_id() : 0;
 
 		if ( ! $order_id ) {
-			return '<div class="wpss-error">' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</div>';
+			return '<div class="wpss-notice wpss-notice--error">' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</div>';
 		}
 
 		global $wpdb;
@@ -966,14 +886,14 @@ class Shortcodes {
 		);
 
 		if ( ! $order ) {
-			return '<div class="wpss-error">' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</div>';
+			return '<div class="wpss-notice wpss-notice--error">' . esc_html__( 'Order not found.', 'wp-sell-services' ) . '</div>';
 		}
 
 		$user_id = get_current_user_id();
 
 		// Check permission.
 		if ( (int) $order->customer_id !== $user_id && (int) $order->vendor_id !== $user_id && ! current_user_can( 'manage_options' ) ) {
-			return '<div class="wpss-error">' . esc_html__( 'You do not have permission to view this order.', 'wp-sell-services' ) . '</div>';
+			return '<div class="wpss-notice wpss-notice--error">' . esc_html__( 'You do not have permission to view this order.', 'wp-sell-services' ) . '</div>';
 		}
 
 		// Render the canonical full order view. order-view.php is self-contained
@@ -986,11 +906,7 @@ class Shortcodes {
 		}
 
 		ob_start();
-		if ( file_exists( $template ) ) {
-			include $template;
-		} else {
-			$this->render_order_details_fallback( $order, $user_id );
-		}
+		include $template;
 		return ob_get_clean();
 	}
 
@@ -1017,14 +933,62 @@ class Shortcodes {
 			'wpss_login'
 		);
 
-		$redirect = $atts['redirect'] ?: home_url();
+		// Where they came from wins (every Sign in link carries redirect_to),
+		// then the shortcode's own attribute, then home.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a return address, validated below.
+		$requested = isset( $_GET['redirect_to'] ) ? esc_url_raw( wp_unslash( $_GET['redirect_to'] ) ) : '';
+		$redirect  = wp_validate_redirect( $requested, '' ) ?: ( $atts['redirect'] ?: home_url() );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display flag set by wpss_login_failed_redirect().
+		$failed = isset( $_GET['login'] ) && 'failed' === $_GET['login'];
 
-		return wp_login_form(
-			array(
-				'echo'     => false,
-				'redirect' => $redirect,
-			)
-		);
+		/*
+		 * Core's wp_login_form() came out bare: tiny unstyled inputs beside the
+		 * styled [wpss_register] card (Basecamp 10352980066). Same card, same
+		 * field classes, so dark mode, mobile and Pro's brand colour apply here
+		 * too. It still posts to wp-login.php, so core and any 2FA / captcha
+		 * plugin hooked into login run unchanged (login_form fires below).
+		 */
+		ob_start();
+		$this->render_vendor_registration_styles();
+		?>
+		<div class="wpss-vr">
+			<div class="wpss-vr__card wpss-signup-card">
+				<h2 class="wpss-vr__card-title"><?php esc_html_e( 'Welcome back', 'wp-sell-services' ); ?></h2>
+				<p class="wpss-vr__card-sub"><?php esc_html_e( 'Sign in to your orders, messages and services.', 'wp-sell-services' ); ?></p>
+				<form class="wpss-signup-form" method="post" action="<?php echo esc_url( site_url( 'wp-login.php', 'login_post' ) ); ?>">
+					<?php if ( $failed ) : ?>
+						<div class="wpss-form-error-summary" role="alert">
+							<p class="wpss-form-error-summary__title"><?php esc_html_e( 'That email or password is not right. Please try again.', 'wp-sell-services' ); ?></p>
+						</div>
+					<?php endif; ?>
+					<div class="wpss-form-group">
+						<label class="wpss-form-label" for="wpss-login-user"><?php esc_html_e( 'Email or username', 'wp-sell-services' ); ?></label>
+						<input type="text" id="wpss-login-user" name="log" class="wpss-form-input" autocomplete="username" required>
+					</div>
+					<div class="wpss-form-group">
+						<label class="wpss-form-label" for="wpss-login-pass"><?php esc_html_e( 'Password', 'wp-sell-services' ); ?></label>
+						<input type="password" id="wpss-login-pass" name="pwd" class="wpss-form-input" autocomplete="current-password" required>
+					</div>
+					<?php do_action( 'login_form' ); ?>
+					<p class="wpss-signup-form__row">
+						<label class="wpss-signup-form__remember"><input type="checkbox" name="rememberme" value="forever"> <?php esc_html_e( 'Remember me', 'wp-sell-services' ); ?></label>
+						<a href="<?php echo esc_url( wp_lostpassword_url( $redirect ) ); ?>"><?php esc_html_e( 'Forgot password?', 'wp-sell-services' ); ?></a>
+					</p>
+					<input type="hidden" name="redirect_to" value="<?php echo esc_url( $redirect ); ?>">
+					<input type="hidden" name="wpss_login" value="1">
+					<input type="hidden" name="wpss_login_page" value="<?php echo esc_url( (string) get_permalink() ); ?>">
+					<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-signup-form__submit"><?php esc_html_e( 'Sign in', 'wp-sell-services' ); ?></button>
+					<?php if ( get_option( 'users_can_register' ) ) : ?>
+						<p class="wpss-signup-form__signin">
+							<?php esc_html_e( 'New here?', 'wp-sell-services' ); ?>
+							<a href="<?php echo esc_url( wp_registration_url() ); ?>"><?php esc_html_e( 'Create an account', 'wp-sell-services' ); ?></a>
+						</p>
+					<?php endif; ?>
+				</form>
+			</div>
+		</div>
+		<?php
+		return (string) ob_get_clean();
 	}
 
 	/**
@@ -1043,7 +1007,7 @@ class Shortcodes {
 		}
 
 		if ( ! get_option( 'users_can_register' ) ) {
-			return '<div class="wpss-error">' . esc_html__( 'Registration is currently disabled.', 'wp-sell-services' ) . '</div>';
+			return '<div class="wpss-notice wpss-notice--error">' . esc_html__( 'Registration is currently disabled.', 'wp-sell-services' ) . '</div>';
 		}
 
 		/*
@@ -1061,13 +1025,18 @@ class Shortcodes {
 		 * been used: [wpss_vendor_registration] only ever asked for 'vendor'.
 		 */
 		ob_start();
+		// The same card as the seller sign-up on Become a Vendor: one form, one
+		// look. This page wrapped it in a generic card that never received the
+		// sign-up styles, so it read as a different, unfinished form - small
+		// button, no spacing, theme-sized hints (Basecamp 10337197376).
+		$this->render_vendor_registration_styles();
 		?>
-		<div class="wpss-card wpss-signup-card">
-			<h2 class="wpss-heading-2"><?php esc_html_e( 'Create your account', 'wp-sell-services' ); ?></h2>
-			<p class="wpss-caption">
-				<?php esc_html_e( 'Buy services, message sellers, and follow your orders.', 'wp-sell-services' ); ?>
-			</p>
-			<?php ( new \WPSellServices\Frontend\PublicSignup() )->render_form( 'buyer' ); ?>
+		<div class="wpss-vr">
+			<div class="wpss-vr__card wpss-signup-card">
+				<h2 class="wpss-vr__card-title"><?php esc_html_e( 'Create your account', 'wp-sell-services' ); ?></h2>
+				<p class="wpss-vr__card-sub"><?php esc_html_e( 'Buy services, message sellers, and follow your orders.', 'wp-sell-services' ); ?></p>
+				<?php ( new \WPSellServices\Frontend\PublicSignup() )->render_form( 'buyer' ); ?>
+			</div>
 		</div>
 		<?php
 		return ob_get_clean();
@@ -1112,30 +1081,6 @@ class Shortcodes {
 	}
 
 	/**
-	 * Render order details fallback.
-	 *
-	 * @param object $order Order data.
-	 * @param int    $user_id Current user ID.
-	 * @return void
-	 */
-	private function render_order_details_fallback( object $order, int $user_id ): void {
-		$is_vendor = (int) $order->vendor_id === $user_id;
-		?>
-		<div class="wpss-order-details">
-			<h2><?php printf( esc_html__( 'Order #%s', 'wp-sell-services' ), esc_html( $order->order_number ?: $order->id ) ); ?></h2>
-			<div class="wpss-order-status wpss-status-<?php echo esc_attr( $order->status ); ?>">
-				<?php echo esc_html( ucwords( str_replace( '_', ' ', $order->status ) ) ); ?>
-			</div>
-			<div class="wpss-order-info">
-				<p><strong><?php esc_html_e( 'Service:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( get_the_title( $order->service_id ) ); ?></p>
-				<p><strong><?php esc_html_e( 'Total:', 'wp-sell-services' ); ?></strong> <?php echo wp_kses_post( function_exists( 'wpss_format_currency' ) ? wpss_format_currency( (float) $order->total, $order->currency ) : '$' . number_format( (float) $order->total, 2 ) ); ?></p>
-				<p><strong><?php esc_html_e( 'Date:', 'wp-sell-services' ); ?></strong> <?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $order->created_at ) ) ); ?></p>
-			</div>
-		</div>
-		<?php
-	}
-
-	/**
 	 * Vendor registration shortcode.
 	 *
 	 * Renders a standalone "Become a Vendor" form. If the user is already a vendor,
@@ -1151,6 +1096,23 @@ class Shortcodes {
 
 		ob_start();
 		$this->render_vendor_registration_styles();
+
+		// Closed registration is the same card for everyone, signed in or not;
+		// the logged-out form used to render before this check (Basecamp 10351455160).
+		if ( 'closed' === wpss_get_option( 'vendor', 'vendor_registration' ) && ! wpss_is_vendor() ) {
+			?>
+			<div class="wpss-vr">
+				<div class="wpss-vr__card">
+					<div class="wpss-vr__hero-icon wpss-vr__hero-icon--muted">
+						<i data-lucide="lock" class="wpss-icon" aria-hidden="true"></i>
+					</div>
+					<h2 class="wpss-vr__title"><?php esc_html_e( 'Registration is closed', 'wp-sell-services' ); ?></h2>
+					<p class="wpss-vr__desc"><?php esc_html_e( 'We\'re not accepting new vendors at the moment. Please check back later.', 'wp-sell-services' ); ?></p>
+				</div>
+			</div>
+			<?php
+			return ob_get_clean();
+		}
 
 		if ( ! is_user_logged_in() ) {
 			?>
@@ -1225,23 +1187,7 @@ class Shortcodes {
 			return ob_get_clean();
 		}
 
-		// Check if registration is open.
 		$registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
-
-		if ( 'closed' === $registration_mode ) {
-			?>
-			<div class="wpss-vr">
-				<div class="wpss-vr__card">
-					<div class="wpss-vr__hero-icon wpss-vr__hero-icon--muted">
-						<i data-lucide="lock" class="wpss-icon" aria-hidden="true"></i>
-					</div>
-					<h2 class="wpss-vr__title"><?php esc_html_e( 'Registration is closed', 'wp-sell-services' ); ?></h2>
-					<p class="wpss-vr__desc"><?php esc_html_e( 'We\'re not accepting new vendors at the moment. Please check back later.', 'wp-sell-services' ); ?></p>
-				</div>
-			</div>
-			<?php
-			return ob_get_clean();
-		}
 
 		$approval_required = 'approval' === $registration_mode;
 		?>
@@ -1347,7 +1293,8 @@ class Shortcodes {
 		?>
 		<section class="wpss-vr__hero">
 			<p class="wpss-vr__eyebrow"><?php esc_html_e( 'Sell on this marketplace', 'wp-sell-services' ); ?></p>
-			<h1 class="wpss-vr__hero-title"><?php esc_html_e( 'Turn what you are good at into income', 'wp-sell-services' ); ?></h1>
+			<?php // H2: the page's H1 is the theme's title band (see ShellHeader::is_shell_surface()). ?>
+			<h2 class="wpss-vr__hero-title"><?php esc_html_e( 'Turn what you are good at into income', 'wp-sell-services' ); ?></h2>
 			<p class="wpss-vr__hero-sub">
 				<?php esc_html_e( 'List a service, set your own prices and delivery times, and get paid once the work is approved. You choose what you take on.', 'wp-sell-services' ); ?>
 			</p>
@@ -1549,8 +1496,11 @@ class Shortcodes {
 			text-align: center; font-size: 13px; color: var(--wpss-text-muted, #6b7280);
 			margin: 16px 0 0; padding-top: 16px; border-top: 1px solid var(--wpss-border, #e5e7eb);
 		}
-		.wpss-signup-form__signin a { color: var(--wpss-primary, #4f46e5); font-weight: 600; text-decoration: none; }
-		.wpss-signup-form__signin a:hover { text-decoration: underline; }
+		/* !important as for the button pin in design-system.css: BuddyX's .entry-content a:not(...) (0,5,1) turned these #111. */
+		.wpss-signup-form a { color: var(--wpss-primary-accent, #4f46e5) !important; font-weight: 600; text-decoration: none; }
+		.wpss-signup-form a:hover { text-decoration: underline; }
+		.wpss-signup-form__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; margin: 0 0 8px; }
+		.wpss-signup-form__remember { display: inline-flex; align-items: center; gap: 6px; color: var(--wpss-text-secondary, #374151); }
 
 		/* Pitch layout: hero + two columns. The narrow single-card branches
 			(already a vendor, registration closed) keep the 560px width above. */
@@ -1669,7 +1619,7 @@ class Shortcodes {
 				}
 
 				return self::cart_heading()
-					. '<div class="wpss-cart-redirect"><p>'
+					. '<div class="wpss-notice wpss-notice--info wpss-cart-redirect"><p>'
 					. wp_kses_post(
 						sprintf(
 							/* translators: %s: cart page link */
@@ -1681,14 +1631,19 @@ class Shortcodes {
 			}
 		}
 
-		if ( ! is_user_logged_in() ) {
-			return self::cart_heading()
-				. '<p class="wpss-alert">' . esc_html__( 'Please log in to view your cart.', 'wp-sell-services' ) . '</p>';
-		}
-
-		$cart_items = wpss_get_user_cart( get_current_user_id(), true );
+		// The cart belongs to an account (owner decision, Basecamp 10337197376):
+		// a visitor buys straight from the service page, and the cart page
+		// offers sign-in or sign-up instead of a bare sentence with no link.
+		$is_guest   = ! is_user_logged_in();
+		$cart_items = $is_guest ? array() : wpss_get_user_cart( get_current_user_id(), true );
 		ob_start();
-		wpss_get_template( 'cart/cart.php', array( 'cart_items' => $cart_items ) );
+		wpss_get_template(
+			'cart/cart.php',
+			array(
+				'cart_items' => $cart_items,
+				'wpss_guest' => $is_guest,
+			)
+		);
 		return ob_get_clean();
 	}
 
@@ -1761,7 +1716,7 @@ class Shortcodes {
 					exit;
 				}
 
-				return '<div class="wpss-checkout-redirect"><p>'
+				return '<div class="wpss-notice wpss-notice--info wpss-checkout-redirect"><p>'
 					. wp_kses_post(
 						sprintf(
 							/* translators: %s: checkout page link */
@@ -1774,7 +1729,7 @@ class Shortcodes {
 		}
 
 		// For any other adapter or misconfigured state.
-		return '<div class="wpss-notice wpss-checkout-notice"><p>'
+		return '<div class="wpss-notice wpss-notice--warning wpss-checkout-notice"><p>'
 			. __( 'Checkout is not available. Please configure an e-commerce platform in settings.', 'wp-sell-services' )
 			. '</p></div>';
 	}

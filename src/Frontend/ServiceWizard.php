@@ -258,6 +258,14 @@ class ServiceWizard {
 		<div class="wpss-wizard" id="wpss-service-wizard" data-service-id="<?php echo esc_attr( $service_id ); ?>" x-data="wpssServiceWizard(<?php echo $service_id ? esc_attr( wp_json_encode( $this->get_service_data( $service_id ) ) ) : '{}'; ?>)">
 			<?php wp_nonce_field( 'wpss_service_wizard', 'wpss_wizard_nonce' ); ?>
 
+			<?php
+			// A rejected service opens with the reviewer's feedback on top, so
+			// the vendor fixing it can see what to fix (Basecamp 10340661636).
+			if ( $service_id ) {
+				wpss_get_template( 'partials/service-rejection-notice.php', array( 'service_id' => $service_id ) );
+			}
+			?>
+
 			<!-- Progress Steps -->
 			<div class="wpss-wizard__progress">
 				<?php $this->render_progress_steps(); ?>
@@ -309,10 +317,17 @@ class ServiceWizard {
 					</button>
 				</div>
 				<div class="wpss-wizard__nav-center">
-					<button type="button" class="wpss-btn wpss-btn--ghost wpss-wizard__btn-save" @click="saveDraft()" :disabled="saving">
-						<i data-lucide="upload-cloud" class="wpss-icon" aria-hidden="true"></i>
-						<span><?php esc_html_e( 'Save Draft', 'wp-sell-services' ); ?></span>
-					</button>
+					<?php
+					// A live or pending service is saved with Update Service, which
+					// validates it. "Save Draft" there took the listing offline
+					// (Basecamp 10342028458), so it is offered only while it is a draft.
+					?>
+					<?php if ( ! $service_id || ! in_array( get_post_status( $service_id ), array( 'publish', 'pending' ), true ) ) : ?>
+						<button type="button" class="wpss-btn wpss-btn--ghost wpss-wizard__btn-save" @click="saveDraft()" :disabled="saving">
+							<i data-lucide="upload-cloud" class="wpss-icon" aria-hidden="true"></i>
+							<span><?php esc_html_e( 'Save Draft', 'wp-sell-services' ); ?></span>
+						</button>
+					<?php endif; ?>
 					<?php
 					// Autosave indicator pill — driven by the WpssAutosave primitive in
 					// service-wizard.js. Replaces the in-button "Saving..." state so
@@ -694,6 +709,45 @@ class ServiceWizard {
 							</div>
 						</div>
 
+						<?php
+						/*
+						 * Express delivery (Basecamp 10337201764): the buyer pays extra
+						 * and this delivery time replaces the package's own. Optional;
+						 * blank price means not offered.
+						 */
+						?>
+						<div class="wpss-form-row wpss-form-row--2col">
+							<div class="wpss-form-group">
+								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-express-price"><?php esc_html_e( 'Express delivery price', 'wp-sell-services' ); ?></label>
+								<div class="wpss-input-group">
+									<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
+									<input type="number"
+										id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-express-price"
+										class="wpss-form-input"
+										x-model="data.packages.<?php echo esc_attr( $tier ); ?>.express_price"
+										min="0"
+										step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>">
+								</div>
+								<div class="wpss-form-hint"><?php esc_html_e( 'Optional. Leave blank to not offer Express.', 'wp-sell-services' ); ?></div>
+							</div>
+
+							<div class="wpss-form-group">
+								<label class="wpss-form-label" for="wpss-pkg-<?php echo esc_attr( $tier ); ?>-express-days"><?php esc_html_e( 'Express delivery time', 'wp-sell-services' ); ?></label>
+								<select id="wpss-pkg-<?php echo esc_attr( $tier ); ?>-express-days" class="wpss-form-select" x-model="data.packages.<?php echo esc_attr( $tier ); ?>.express_days">
+									<option value=""><?php esc_html_e( 'Select', 'wp-sell-services' ); ?></option>
+									<?php foreach ( array( 1, 2, 3, 5, 7, 14, 21 ) as $wpss_express_days ) : ?>
+										<option value="<?php echo esc_attr( $wpss_express_days ); ?>">
+											<?php
+											/* translators: %d: number of days */
+											echo esc_html( sprintf( _n( '%d day', '%d days', $wpss_express_days, 'wp-sell-services' ), $wpss_express_days ) );
+											?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+								<div class="wpss-form-hint"><?php esc_html_e( 'Replaces the delivery time above; must be shorter.', 'wp-sell-services' ); ?></div>
+							</div>
+						</div>
+
 						<?php /* Features list — vendors describe what's included via bullets, not prose. */ ?>
 						<?php
 						/*
@@ -997,9 +1051,41 @@ class ServiceWizard {
 								</div>
 								<div class="wpss-form-row wpss-form-row--2col">
 									<div class="wpss-form-group">
+										<label class="wpss-form-label" :for="'wpss-extra-field-' + index"><?php esc_html_e( 'How buyers choose it', 'wp-sell-services' ); ?></label>
+										<select class="wpss-form-select" x-model="extra.field_type" :id="'wpss-extra-field-' + index">
+											<?php foreach ( wpss_get_addon_field_types() as $wpss_type => $wpss_type_label ) : ?>
+												<option value="<?php echo esc_attr( $wpss_type ); ?>"><?php echo esc_html( $wpss_type_label ); ?></option>
+											<?php endforeach; ?>
+										</select>
+									</div>
+									<div class="wpss-form-group">
+										<label class="wpss-form-label" :for="'wpss-extra-pricing-' + index"><?php esc_html_e( 'How it is priced', 'wp-sell-services' ); ?></label>
+										<select class="wpss-form-select" x-model="extra.price_type" :id="'wpss-extra-pricing-' + index" @change="if ( 'quantity_based' === extra.price_type ) { extra.field_type = 'quantity'; }">
+											<?php foreach ( wpss_get_addon_price_types() as $wpss_type => $wpss_type_label ) : ?>
+												<option value="<?php echo esc_attr( $wpss_type ); ?>"><?php echo esc_html( $wpss_type_label ); ?></option>
+											<?php endforeach; ?>
+										</select>
+									</div>
+								</div>
+								<div class="wpss-form-group" x-show="'dropdown' === extra.field_type" x-cloak>
+									<label class="wpss-form-label" :for="'wpss-extra-options-' + index"><?php esc_html_e( 'Options (comma separated)', 'wp-sell-services' ); ?></label>
+									<input type="text" class="wpss-form-input" x-model="extra.options" :id="'wpss-extra-options-' + index" placeholder="<?php esc_attr_e( 'e.g., Small, Medium, Large', 'wp-sell-services' ); ?>">
+								</div>
+								<div class="wpss-form-row wpss-form-row--2col" x-show="'quantity' === extra.field_type" x-cloak>
+									<div class="wpss-form-group">
+										<label class="wpss-form-label" :for="'wpss-extra-min-' + index"><?php esc_html_e( 'Minimum quantity', 'wp-sell-services' ); ?></label>
+										<input type="number" class="wpss-form-input" x-model="extra.min_quantity" :id="'wpss-extra-min-' + index" min="1" max="100">
+									</div>
+									<div class="wpss-form-group">
+										<label class="wpss-form-label" :for="'wpss-extra-max-' + index"><?php esc_html_e( 'Maximum quantity', 'wp-sell-services' ); ?></label>
+										<input type="number" class="wpss-form-input" x-model="extra.max_quantity" :id="'wpss-extra-max-' + index" min="1" max="100">
+									</div>
+								</div>
+								<div class="wpss-form-row wpss-form-row--2col">
+									<div class="wpss-form-group">
 										<label class="wpss-form-label" :for="'wpss-extra-price-' + index"><?php esc_html_e( 'Price', 'wp-sell-services' ); ?></label>
 										<div class="wpss-input-group">
-											<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
+											<span class="wpss-input-prefix" x-text="'percentage' === extra.price_type ? '%' : '<?php echo esc_js( wpss_get_currency_symbol() ); ?>'"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
 											<input type="number"
 												class="wpss-form-input"
 												x-model="extra.price"
@@ -1018,6 +1104,10 @@ class ServiceWizard {
 											placeholder="0">
 									</div>
 								</div>
+								<label class="wpss-form-checkbox">
+									<input type="checkbox" x-model="extra.is_required">
+									<span><?php esc_html_e( 'Required: every order includes it', 'wp-sell-services' ); ?></span>
+								</label>
 								<div class="wpss-form-group">
 									<label class="wpss-form-label" :for="'wpss-extra-desc-' + index"><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
 									<textarea class="wpss-form-textarea"
@@ -1354,6 +1444,8 @@ class ServiceWizard {
 				'price'         => '',
 				'delivery_time' => '',
 				'revisions'     => '1',
+				'express_price' => '',
+				'express_days'  => '',
 				'features'      => array(),
 			),
 			'standard' => array(
@@ -1363,6 +1455,8 @@ class ServiceWizard {
 				'price'         => '',
 				'delivery_time' => '',
 				'revisions'     => '2',
+				'express_price' => '',
+				'express_days'  => '',
 				'features'      => array(),
 			),
 			'premium'  => array(
@@ -1372,6 +1466,8 @@ class ServiceWizard {
 				'price'         => '',
 				'delivery_time' => '',
 				'revisions'     => '3',
+				'express_price' => '',
+				'express_days'  => '',
 				'features'      => array(),
 			),
 		);
@@ -1393,6 +1489,11 @@ class ServiceWizard {
 			$package['delivery_time']   = $package['delivery_time'] ?? $package['delivery_days'] ?? '';
 			$mapped[ $tier ]            = array_merge( $defaults[ $tier ], $package );
 			$mapped[ $tier ]['enabled'] = true;
+			// Not offered reads as an empty field, not "0".
+			if ( (float) $mapped[ $tier ]['express_price'] <= 0 ) {
+				$mapped[ $tier ]['express_price'] = '';
+				$mapped[ $tier ]['express_days']  = '';
+			}
 		}
 
 		return $mapped;
@@ -1613,6 +1714,13 @@ class ServiceWizard {
 			if ( ! $service || $user_id !== (int) $service->post_author ) {
 				wp_send_json_error( array( 'message' => __( 'You do not have permission to edit this service.', 'wp-sell-services' ) ) );
 			}
+
+			// Saving a draft would take a live listing offline (Basecamp
+			// 10342028458); a live or pending service is saved by Update Service,
+			// which also validates it. The wizard no longer offers the button there.
+			if ( in_array( $service->post_status, array( 'publish', 'pending' ), true ) ) {
+				wp_send_json_error( array( 'message' => __( 'This service is live. Use Update Service to save your changes.', 'wp-sell-services' ) ) );
+			}
 		}
 
 		// Sanitize data.
@@ -1773,12 +1881,14 @@ class ServiceWizard {
 		// Determine post status based on moderation setting.
 		$post_status = ModerationService::is_enabled() ? 'pending' : 'publish';
 
-		// Create or update post.
+		// Create or update post. A new service starts as a draft and an existing
+		// one keeps its status until its meta is written; the status is settled
+		// last, by wpss_settle_service_status() below.
 		$post_data = array(
 			'post_type'    => 'wpss_service',
 			'post_title'   => $sanitized['title'],
 			'post_content' => $sanitized['description'],
-			'post_status'  => $post_status,
+			'post_status'  => $service_id ? (string) get_post_status( $service_id ) : 'draft',
 			'post_author'  => $user_id,
 		);
 
@@ -1832,6 +1942,21 @@ class ServiceWizard {
 		 * @param array $sanitized  Sanitized form data.
 		 */
 		do_action( 'wpss_service_wizard_saved', $service_id, $sanitized );
+
+		// Never report "published" for a service that is not.
+		if ( wpss_settle_service_status( $service_id, $post_status ) !== $post_status ) {
+			delete_transient( $lock_key );
+			$publish_errors = wpss_get_service_publish_errors( $service_id );
+			wp_send_json_error(
+				array(
+					'message'    => $publish_errors
+						? implode( ' ', $publish_errors )
+						: __( 'The service was saved as a draft but could not be published. Check it and try again.', 'wp-sell-services' ),
+					'errors'     => array_values( $publish_errors ),
+					'service_id' => $service_id,
+				)
+			);
+		}
 
 		// Prepare success response based on post status.
 		if ( 'pending' === $post_status ) {
@@ -2032,7 +2157,7 @@ class ServiceWizard {
 				'delivery_time' => absint( $pkg['delivery_time'] ?? 0 ),
 				'revisions'     => intval( $pkg['revisions'] ?? 0 ),
 				'features'      => array_map( 'sanitize_text_field', $pkg['features'] ?? array() ),
-			);
+			) + wpss_sanitize_package_express( (array) $pkg ) + wpss_package_id_from_input( (array) $pkg );
 		}
 
 		return $sanitized;
@@ -2196,14 +2321,14 @@ class ServiceWizard {
 			if ( empty( $pkg['enabled'] ) ) {
 				continue;
 			}
-			$numeric_packages[] = array(
+			$numeric_packages[] = wpss_package_id_from_input( (array) $pkg ) + array(
 				'name'          => $pkg['name'] ?? '',
 				'description'   => $pkg['description'] ?? '',
 				'price'         => (float) ( $pkg['price'] ?? 0 ),
 				'delivery_days' => (int) ( $pkg['delivery_days'] ?? $pkg['delivery_time'] ?? 7 ),
 				'revisions'     => (int) ( $pkg['revisions'] ?? 0 ),
 				'features'      => $pkg['features'] ?? array(),
-			);
+			) + wpss_sanitize_package_express( (array) $pkg );
 		}
 		update_post_meta( $service_id, '_wpss_packages', $numeric_packages );
 
@@ -2222,9 +2347,6 @@ class ServiceWizard {
 		// wizard-created services.
 		$revision_values = array_map( 'intval', wp_list_pluck( $numeric_packages, 'revisions' ) );
 		update_post_meta( $service_id, '_wpss_max_revisions', ! empty( $revision_values ) ? max( $revision_values ) : (int) ( $basic['revisions'] ?? 0 ) );
-
-		// Save starting price (from first/basic package).
-		update_post_meta( $service_id, '_wpss_starting_price', $basic['price'] ?? 0 );
 
 		// Save gallery images.
 		// Collect additional gallery image IDs, filtering out invalid attachments.

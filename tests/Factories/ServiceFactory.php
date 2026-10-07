@@ -388,6 +388,13 @@ class ServiceFactory {
 	private static array $created_ids = array();
 
 	/**
+	 * The shared fixture image, deleted by cleanup().
+	 *
+	 * @var int
+	 */
+	private static int $thumbnail_id = 0;
+
+	/**
 	 * Delete everything this factory created.
 	 *
 	 * The suite runs against the LIVE Local site whenever the WordPress test
@@ -406,6 +413,13 @@ class ServiceFactory {
 		}
 
 		self::$created_ids = array();
+
+		// The shared fixture image too, or every run leaves one behind.
+		if ( self::$thumbnail_id && function_exists( 'wp_delete_attachment' ) ) {
+			wp_delete_attachment( self::$thumbnail_id, true );
+		}
+
+		self::$thumbnail_id = 0;
 	}
 
 	/**
@@ -462,10 +476,8 @@ class ServiceFactory {
 	 * @return int
 	 */
 	private static function fixture_thumbnail_id(): int {
-		static $id = 0;
-
-		if ( $id ) {
-			return $id;
+		if ( self::$thumbnail_id ) {
+			return self::$thumbnail_id;
 		}
 
 		$attachment = wp_insert_post(
@@ -477,9 +489,9 @@ class ServiceFactory {
 			)
 		);
 
-		$id = is_wp_error( $attachment ) ? 0 : (int) $attachment;
+		self::$thumbnail_id = is_wp_error( $attachment ) ? 0 : (int) $attachment;
 
-		return $id;
+		return self::$thumbnail_id;
 	}
 
 	private static function create( array $data ): Service|array {

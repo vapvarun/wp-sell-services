@@ -49,11 +49,12 @@
 				const selected = document.querySelector('input[name="payment_method"]:checked');
 				const isPayPal = selected && selected.value === 'paypal';
 
-				const submitBtn = this.form
-					? this.form.querySelector('button[type="submit"], .wpss-checkout-button')
-					: null;
-				if (submitBtn) {
-					submitBtn.style.display = isPayPal ? 'none' : '';
+				// Every Pay button: the checkout renders one under the payment
+				// method and one in the summary.
+				if (this.form) {
+					this.form.querySelectorAll('button[type="submit"], .wpss-checkout-button').forEach((btn) => {
+						btn.style.display = isPayPal ? 'none' : '';
+					});
 				}
 
 				if (isPayPal) {
@@ -189,7 +190,6 @@
 			const payOrder = document.querySelector('input[name="pay_order"]')?.value || '';
 			const isMulti = (this.form && this.form.id === 'wpss-multi-checkout-form') ? 1 : '';
 			const addonIds = document.querySelector('input[name="addon_ids"]')?.value || '';
-			const addonsData = document.querySelector('input[name="addons_data"], [name="addons_data"]')?.value || '';
 			return new Promise((resolve) => {
 				$.ajax({
 					url: wpssPayPal.ajaxUrl,
@@ -197,6 +197,8 @@
 					data: {
 						action: 'wpss_paypal_create_order',
 						nonce: wpssPayPal.nonce,
+						// Fresh after the guest account step; the page nonce was the visitor's.
+						wpss_checkout_nonce: document.querySelector('[name="wpss_checkout_nonce"]')?.value || '',
 						amount: amount,
 						currency: currency,
 						service_id: serviceId,
@@ -204,7 +206,6 @@
 						pay_order: payOrder,
 						is_multi_checkout: isMulti,
 						addon_ids: addonIds,
-						addons_data: addonsData,
 					},
 					success: resolve,
 					error: () => {
@@ -225,6 +226,8 @@
 					data: {
 						action: 'wpss_paypal_capture',
 						nonce: wpssPayPal.nonce,
+						// Fresh after the guest account step; the page nonce was the visitor's.
+						wpss_checkout_nonce: document.querySelector('[name="wpss_checkout_nonce"]')?.value || '',
 						paypal_order_id: orderId,
 						service_id: serviceId,
 						package_id: packageId,

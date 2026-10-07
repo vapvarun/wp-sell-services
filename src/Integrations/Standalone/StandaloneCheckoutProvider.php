@@ -13,6 +13,7 @@ namespace WPSellServices\Integrations\Standalone;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPSellServices\Checkout\CheckoutIntentService;
 use WPSellServices\Integrations\Contracts\CheckoutProviderInterface;
 use WPSellServices\Models\ServiceOrder;
 
@@ -237,6 +238,61 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * @return string
 	 */
 	public function render_checkout_shortcode( array $atts ): string {
+		// The page's own heading on every checkout state (form, pay-order,
+		// payment return, empty, sign-in): the shared page header the cart and
+		// dashboard use (ShellHeader), so the
+		// theme's page title is suppressed here (ShellHeader) and the page does
+		// not open on a 64px "Service Checkout" (Basecamp 10337204220).
+		return \WPSellServices\Frontend\ShellHeader::render(
+			array(
+				'title' => __( 'Checkout', 'wp-sell-services' ),
+				'echo'  => false,
+			)
+		) . $this->render_checkout_body( $atts );
+	}
+
+	/**
+	 * The checkout body for the current request.
+	 *
+	 * @param array<string, mixed> $atts Shortcode attributes.
+	 * @return string
+	 */
+	private function render_checkout_body( array $atts ): string {
+		return $this->gateway_return_notice() . $this->render_checkout_inner( $atts );
+	}
+
+	/**
+	 * Notice for a buyer sent back from a gateway's own page.
+	 *
+	 * PayPal returns a cancelled approval to ?step=cancelled and a failed
+	 * capture to ?step=error; nothing read the parameter, so the buyer landed
+	 * on a silent checkout (Basecamp 10346279564).
+	 *
+	 * @return string Notice HTML, or '' when there is nothing to say.
+	 */
+	private function gateway_return_notice(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display flag.
+		$step = isset( $_GET['step'] ) ? sanitize_key( wp_unslash( $_GET['step'] ) ) : '';
+
+		$messages = array(
+			'cancelled' => __( 'Payment was cancelled. You have not been charged. You can try again below.', 'wp-sell-services' ),
+			'error'     => __( 'We could not confirm your payment. Check My Orders before paying again; if nothing is there, try again below.', 'wp-sell-services' ),
+		);
+
+		if ( ! isset( $messages[ $step ] ) ) {
+			return '';
+		}
+
+		return '<div class="wpss-notice wpss-notice--' . ( 'error' === $step ? 'error' : 'warning' ) . '" role="alert">' . esc_html( $messages[ $step ] ) . '</div>';
+	}
+
+	/**
+	 * The checkout body itself, without the gateway return notice.
+	 *
+	 * @param array<string, mixed> $atts Shortcode attributes.
+	 * @return string
+	 */
+	private function render_checkout_inner( array $atts ): string {
 		// Enqueue frontend assets for proper styling and functionality.
 		wpss_enqueue_frontend_assets();
 
@@ -294,6 +350,13 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$addon_ids_raw = isset( $_GET['addons'] ) ? sanitize_text_field( wp_unslash( $_GET['addons'] ) ) : '';
+		// The full selection (quantity, option, text) when the order modal sent
+		// one; ids alone otherwise. Normalised by the pricer, never a price.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- normalised by wpss_normalize_addon_selection().
+		$addon_sel = isset( $_GET['addon_sel'] ) ? wp_unslash( $_GET['addon_sel'] ) : '';
+		if ( is_string( $addon_sel ) && '' !== $addon_sel ) {
+			$addon_ids_raw = $addon_sel;
+		}
 
 		// If no service_id in URL, try to load from user's cart.
 		if ( ! $service_id ) {
@@ -316,7 +379,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				// add-on, and a truthiness test here discarded that selection in
 				// favour of the cart's - see the comment at the resolve site below.
 				if ( '' === $addon_ids_raw && ! empty( $cart_item['addons'] ) ) {
-					$addon_ids_raw = implode( ',', array_column( $cart_item['addons'], 'id' ) );
+					$addon_ids_raw = $cart_item['addons'];
 				}
 			}
 		}
@@ -376,36 +439,8 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return '<p>' . esc_html__( 'Service not found.', 'wp-sell-services' ) . '</p>';
 		}
 
-		/*
-		 * Resolve selected addons from URL param (comma-separated indices).
-		 *
-		 * The indices are 0-based, so selecting ONLY the first add-on sends
-		 * "0" - falsy in PHP. `if ( $addon_ids_raw )` skipped this whole block,
-		 * and the Order Summary and Pay button both showed the un-added price
-		 * while the hidden addon_ids / addons_data fields went out empty. The
-		 * buyer was charged without the add-on they had selected.
-		 * "1" and "0,1" both worked, which is how it went unnoticed.
-		 */
-		$selected_addons = array();
-		if ( '' !== $addon_ids_raw ) {
-			$addon_ids  = array_map( 'absint', explode( ',', $addon_ids_raw ) );
-			$all_extras = wpss_get_service_extras( $service->id );
-
-			foreach ( $addon_ids as $addon_index ) {
-				if ( isset( $all_extras[ $addon_index ] ) ) {
-					$extra             = $all_extras[ $addon_index ];
-					$selected_addons[] = (object) [
-						'id'                  => $addon_index,
-						'title'               => $extra['title'] ?? '',
-						'price'               => (float) ( $extra['price'] ?? 0 ),
-						'delivery_days_extra' => (int) $extra['delivery_days_extra'],
-					];
-				}
-			}
-		}
-
 		ob_start();
-		$this->render_checkout_form( $service, $package_id, $quantity, null, $selected_addons );
+		$this->render_checkout_form( $service, $package_id, $quantity, null, $addon_ids_raw );
 		return ob_get_clean();
 	}
 
@@ -538,10 +573,10 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * @param int                                      $package_id Selected package ID (ignored when $pay_order is set).
 	 * @param int                                      $quantity   Quantity (ignored when $pay_order is set).
 	 * @param \WPSellServices\Models\ServiceOrder|null $pay_order       Existing order to pay (from proposal acceptance).
-	 * @param array                                    $selected_addons Validated addon objects from the addons table.
+	 * @param mixed                                    $selection       Add-on selection (see wpss_normalize_addon_selection()).
 	 * @return void
 	 */
-	private function render_checkout_form( $service, int $package_id = 0, int $quantity = 1, ?ServiceOrder $pay_order = null, array $selected_addons = array() ): void {
+	private function render_checkout_form( $service, int $package_id = 0, int $quantity = 1, ?ServiceOrder $pay_order = null, $selection = array() ): void {
 		$is_pay_order = null !== $pay_order;
 
 		// Sub-orders (tip, extension, milestone) skip the 5-step "Pay →
@@ -570,47 +605,26 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$vendor           = get_user_by( 'id', $pay_order->vendor_id );
 			$vendor_name      = $vendor ? $vendor->display_name : '';
 		} else {
-			// Regular checkout flow: calculate price from package.
-			$packages         = get_post_meta( $service->id, '_wpss_packages', true ) ?: [];
-			$selected_package = null;
+			// Regular checkout flow: priced by the one pricer the gateways charge through.
+			$line = CheckoutIntentService::price_service_line( (int) $service->id, $package_id, $quantity, $selection );
 
-			if ( isset( $packages[ $package_id ] ) ) {
-				$selected_package = $packages[ $package_id ];
+			if ( is_wp_error( $line ) ) {
+				echo '<p class="wpss-alert wpss-alert-error">' . esc_html( $line->get_error_message() ) . '</p>';
+				return;
 			}
 
-			if ( ! $selected_package && ! empty( $packages ) ) {
-				$selected_package = reset( $packages );
-				$package_id       = (int) array_key_first( $packages );
-			}
-
-			$unit_price   = (float) ( $selected_package['price'] ?? 0 );
-			$price        = $unit_price * $quantity;
-			$addons_total = 0;
-			$addons_data  = array();
-
-			foreach ( $selected_addons as $addon ) {
-				$addon_price   = (float) $addon->price;
-				$addons_total += $addon_price;
-				$addons_data[] = array(
-					'id'                  => (int) $addon->id,
-					'name'                => $addon->title ?? $addon->name ?? '',
-					'price'               => $addon_price,
-					'delivery_days_extra' => (int) ( $addon->delivery_days_extra ?? 0 ),
-				);
-			}
-
-			$price   += $addons_total;
-			$currency = wpss_get_currency();
-
-			// Tax through the shared helper, so the figure on the Pay button is
-			// the same arithmetic the gateway charges and the order row records.
-			$tax = wpss_calculate_tax( (float) $price, (int) $service->vendor_id, (int) $service->id );
-
-			$tax_rate    = (float) $tax['rate'];
-			$tax_amount  = (float) $tax['amount'];
-			$tax_label   = (string) $tax['label'];
-			$total       = (float) $tax['total'];
-			$vendor_name = '';
+			$selected_package = $line['package'];
+			$package_id       = (int) $line['package_id'];
+			$addon_lines      = $line['addons'];
+			$addons_total     = (float) $line['addons_total'];
+			$price            = (float) $line['subtotal'] + $addons_total;
+			$currency         = wpss_get_currency();
+			$tax_rate         = (float) $line['tax_rate'];
+			$tax_amount       = (float) $line['tax'];
+			$tax_label        = (string) $line['tax_label'];
+			$tax_included     = ! empty( $line['tax_included'] );
+			$total            = (float) $line['total'];
+			$vendor_name      = '';
 		}
 
 		// Get available payment gateways.
@@ -626,18 +640,48 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$vendor_avatar_url = get_avatar_url( $pay_order->vendor_id, array( 'size' => 48 ) );
 		}
 
-		// Delivery and revision info from the selected package.
-		$delivery_days = $selected_package['delivery_days'] ?? 0;
+		// Delivery as the order will count it - Express and add-on days
+		// included - so Service Details and the reassurance row promise the day
+		// the deadline will say (Basecamp 10337201764).
+		$delivery_days = $is_pay_order ? (int) ( $selected_package['delivery_days'] ?? 0 ) : (int) $line['delivery_days'];
 		$revisions     = $selected_package['revisions'] ?? 0;
 
-		// Review stats from actual reviews table (not post meta which may be stale).
-		$review_repo    = new \WPSellServices\Database\Repositories\ReviewRepository();
-		$rating_summary = $review_repo->get_service_rating_summary( $service->id );
-		$review_count   = (int) ( $rating_summary['total_reviews'] ?? 0 );
-		$review_avg     = round( (float) ( $rating_summary['average_rating'] ?? 0 ), 1 );
+		$rating       = wpss_get_service_rating( (int) $service->id );
+		$review_count = $rating['count'];
+		$review_avg   = $rating['average'];
+
+		// Summary lines for templates/checkout/summary.php.
+		$summary_lines = array();
+		if ( $is_pay_order ) {
+			$summary_lines[] = array(
+				'label'  => __( 'Order Total', 'wp-sell-services' ),
+				'amount' => $total,
+				'strong' => true,
+			);
+		} else {
+			if ( $selected_package ) {
+				$summary_lines[] = array(
+					'label'  => (string) ( $selected_package['name'] ?? '' ),
+					'note'   => $quantity > 1 ? "\u{00D7} " . $quantity : '',
+					'amount' => $price - $addons_total,
+				);
+			}
+			foreach ( $addon_lines as $addon_item ) {
+				$summary_lines[] = array(
+					'label'  => $addon_item['title'],
+					'note'   => $addon_item['quantity'] > 1 ? "\u{00D7} " . $addon_item['quantity'] : (string) $addon_item['option'],
+					'amount' => $addon_item['price'],
+					'type'   => 'addon',
+				);
+			}
+			if ( $tax_amount > 0 ) {
+				$summary_lines[] = $this->tax_summary_line( $tax_label, $tax_rate, $tax_amount, ! empty( $tax_included ) );
+			}
+		}
+
+		$this->enqueue_checkout_script();
 		?>
 
-		<script>document.body.classList.add('wpss-checkout-page');</script>
 		<style>
 			/* Force full-width checkout — hide theme sidebar. */
 			body.wpss-checkout-page #secondary,
@@ -739,6 +783,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				font-size: var(--wpss-text-base); color: var(--wpss-text-secondary);
 			}
 			.wpss-co-summary-line--addon { font-size: var(--wpss-text-sm); color: var(--wpss-text-muted); }
+			.wpss-co-summary-subheading { margin-top: var(--wpss-space-2); font-size: var(--wpss-text-xs); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--wpss-text-muted); }
 			.wpss-co-summary-line--tax { font-size: var(--wpss-text-sm); color: var(--wpss-text-muted); }
 			.wpss-co-summary-total {
 				display: flex; justify-content: space-between; align-items: center;
@@ -807,6 +852,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			}
 			.wpss-co-guarantee > span:first-child {
 				font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 2px;
+				color: var(--wpss-primary);
 			}
 			.wpss-co-guarantee strong {
 				display: block; font-size: var(--wpss-text-sm); font-weight: 600;
@@ -861,10 +907,20 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			 * column has nothing to stick to at this width, so losing position:
 			 * sticky here is the intent, not a side effect.
 			 */
+			/*
+			 * Only the Order Summary sticks (Basecamp 10337204220). The whole
+			 * column used to, and it is taller than a laptop screen, so its top
+			 * scrolled out of view (-17px) with the total and Pay button in it.
+			 * The column stretches to the form's height to give the card room to
+			 * stick; the cards below it pass underneath.
+			 */
+			.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { z-index: 2; }
+
 			@media (max-width: 1024px) {
 				.wpss-checkout-page .wpss-layout--sidebar-right { display: flex; flex-direction: column; }
 				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack,
-				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky { display: contents; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-co-aside { display: contents; }
+				.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { position: static; align-self: stretch; }
 				/*
 				 * Service details, the total, what happens next, then the form.
 				 *
@@ -877,9 +933,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				 */
 				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack > * { order: 4; }
 				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-stack > :first-child { order: 1; }
-				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > * { order: 5; }
-				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > .wpss-co-card--summary { order: 2; }
-				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-sticky > .wpss-co-steps { order: 3; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-co-aside > * { order: 5; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-co-aside > .wpss-co-card--summary { order: 2; }
+				.wpss-checkout-page .wpss-layout--sidebar-right > .wpss-co-aside > .wpss-co-steps { order: 3; }
 			}
 
 			/* Responsive */
@@ -890,6 +946,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				.wpss-co-steps__track { flex-wrap: wrap; gap: var(--wpss-space-3); }
 				.wpss-co-steps__track::before { display: none; }
 				.wpss-co-step { flex-direction: row; text-align: left; }
+				.wpss-co-guarantees-bar { flex-direction: column; gap: var(--wpss-space-4); }
 			}
 		</style>
 
@@ -981,7 +1038,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				<!-- Notice area -->
 				<div id="wpss-checkout-notice" class="wpss-notice wpss-notice--error" style="display:none;" role="alert"></div>
 
-				<form method="post" class="wpss-checkout-form" id="wpss-checkout-form">
+				<form method="post" class="wpss-checkout-form" id="wpss-checkout-form" data-wpss-checkout-notice="wpss-checkout-notice">
 					<?php wp_nonce_field( 'wpss_checkout', 'wpss_checkout_nonce' ); ?>
 					<input type="hidden" name="service_id" value="<?php echo esc_attr( $service->id ); ?>">
 					<?php if ( $is_pay_order ) : ?>
@@ -990,10 +1047,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 						<input type="hidden" name="package_id" value="<?php echo esc_attr( $package_id ); ?>">
 						<input type="hidden" name="quantity" value="<?php echo esc_attr( $quantity ); ?>">
 						<input type="hidden" name="tax_amount" value="<?php echo esc_attr( round( $tax_amount, 2 ) ); ?>">
-						<?php if ( ! empty( $addons_data ) ) : ?>
-							<input type="hidden" name="addon_ids" value="<?php echo esc_attr( implode( ',', array_column( $addons_data, 'id' ) ) ); ?>">
+						<?php if ( ! empty( $addon_lines ) ) : ?>
+							<?php foreach ( CheckoutIntentService::selection_metadata( $addon_lines ) as $sel_key => $sel_value ) : ?>
+								<input type="hidden" name="<?php echo esc_attr( $sel_key ); ?>" value="<?php echo esc_attr( $sel_value ); ?>">
+							<?php endforeach; ?>
 							<input type="hidden" name="addons_total" value="<?php echo esc_attr( round( $addons_total, 2 ) ); ?>">
-							<input type="hidden" name="addons_data" value="<?php echo esc_attr( wp_json_encode( $addons_data ) ); ?>">
 						<?php endif; ?>
 					<?php endif; ?>
 					<input type="hidden" name="amount" value="<?php echo esc_attr( $total ); ?>">
@@ -1097,131 +1155,34 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							?>
 
 
-							<!-- Payment methods -->
-							<div class="wpss-card">
-								<div class="wpss-card__header">
-									<h3 class="wpss-card__title"><?php esc_html_e( 'Payment Method', 'wp-sell-services' ); ?></h3>
-								</div>
-								<div class="wpss-card__body">
-									<div class="wpss-co-methods">
-										<?php foreach ( $enabled_gateways as $gateway_id => $gateway ) : ?>
-											<div class="wpss-co-method" data-method="<?php echo esc_attr( $gateway_id ); ?>">
-												<label class="wpss-co-method__label">
-													<input type="radio" name="payment_method" value="<?php echo esc_attr( $gateway_id ); ?>" required>
-													<?php echo esc_html( $gateway->get_name() ); ?>
-												</label>
-												<div class="wpss-co-method__form wpss-gateway-form" data-gateway="<?php echo esc_attr( $gateway_id ); ?>" style="display: none;">
-													<?php
-													$gateway_order_id = $is_pay_order ? $pay_order->id : 0;
-													echo $gateway->render_payment_form( $total, $currency, $gateway_order_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-													?>
-												</div>
-											</div>
-										<?php endforeach; ?>
-									</div>
-								</div>
-							</div>
+							<?php
+							wpss_get_template(
+								'checkout/payment-methods.php',
+								array(
+									'wpss_gateways' => $enabled_gateways,
+									'wpss_amount'   => $total,
+									'wpss_currency' => $currency,
+									'wpss_order_id' => $is_pay_order ? (int) $pay_order->id : 0,
+								)
+							);
+							?>
 
 						</div><!-- /left column -->
 
-						<!-- RIGHT COLUMN: Order summary (sticky) -->
-						<div class="wpss-sticky">
-							<div class="wpss-card wpss-co-card--summary">
-								<div class="wpss-card__header">
-									<h3 class="wpss-card__title">
-										<?php echo $is_pay_order ? esc_html__( 'Order Payment', 'wp-sell-services' ) : esc_html__( 'Order Summary', 'wp-sell-services' ); ?>
-									</h3>
-								</div>
-								<div class="wpss-card__body">
-
-									<?php if ( $is_pay_order ) : ?>
-										<!-- Pay-order: just the total -->
-										<div class="wpss-co-summary-line">
-											<span><?php esc_html_e( 'Order Total', 'wp-sell-services' ); ?></span>
-											<span><strong><?php echo esc_html( wpss_format_price( $total, $currency ) ); ?></strong></span>
-										</div>
-									<?php else : ?>
-										<!-- Package line -->
-										<?php if ( $selected_package ) : ?>
-											<div class="wpss-co-summary-line">
-												<span>
-													<?php echo esc_html( $selected_package['name'] ?? '' ); ?>
-													<?php if ( $quantity > 1 ) : ?>
-														<span class="wpss-caption">&times; <?php echo esc_html( $quantity ); ?></span>
-													<?php endif; ?>
-												</span>
-												<span><?php echo esc_html( wpss_format_price( $price - ( $addons_total ?? 0 ), $currency ) ); ?></span>
-											</div>
-										<?php endif; ?>
-
-										<!-- Addon lines -->
-										<?php if ( ! empty( $addons_data ) ) : ?>
-											<?php foreach ( $addons_data as $addon_item ) : ?>
-												<div class="wpss-co-summary-line wpss-co-summary-line--addon">
-													<span><?php echo esc_html( $addon_item['name'] ); ?></span>
-													<span><?php echo esc_html( wpss_format_price( $addon_item['price'], $currency ) ); ?></span>
-												</div>
-											<?php endforeach; ?>
-										<?php endif; ?>
-
-										<!-- Tax line -->
-										<?php if ( $tax_amount > 0 ) : ?>
-											<div class="wpss-co-summary-line wpss-co-summary-line--tax">
-												<span><?php echo esc_html( $tax_label ); ?> (<?php echo esc_html( $tax_rate ); ?>%)</span>
-												<span><?php echo esc_html( wpss_format_price( $tax_amount, $currency ) ); ?></span>
-											</div>
-										<?php endif; ?>
-									<?php endif; ?>
-
-									<!-- Total -->
-									<div class="wpss-co-summary-total">
-										<span><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></span>
-										<span><?php echo esc_html( wpss_format_price( $total, $currency ) ); ?></span>
-									</div>
-								</div>
-
-								<?php
-								/**
-								 * Fires after the payable total, before the Pay button.
-								 *
-								 * Placed where the pay-order and normal branches rejoin, so a
-								 * consumer runs once on either path. Same hook the cart summary
-								 * fires — see templates/cart/cart.php.
-								 *
-								 * @since 1.5.1
-								 *
-								 * @param float  $total   Payable total in the store base currency.
-								 * @param string $context Surface identifier ('cart', 'checkout').
-								 */
-								do_action( 'wpss_payable_total_after', (float) $total, 'checkout' );
-								?>
-
-								<div class="wpss-card__footer" style="flex-direction:column;align-items:stretch;">
-									<!-- CTA button -->
-									<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-btn--full wpss-checkout-button">
-										<span class="wpss-checkout-button__text">
-											<?php
-											/* translators: %s: formatted price */
-											printf( esc_html__( 'Pay %s', 'wp-sell-services' ), esc_html( wpss_format_price( $total, $currency ) ) );
-											?>
-										</span>
-									</button>
-
-									<!-- Trust section -->
-									<?php wpss_get_template_part( 'partials/legal', 'links' ); ?>
-
-									<div class="wpss-co-trust">
-										<div class="wpss-co-trust__item">
-											<i data-lucide="lock" class="wpss-icon wpss-co-trust__icon" aria-hidden="true"></i>
-											<span><?php esc_html_e( 'Secure payment', 'wp-sell-services' ); ?></span>
-										</div>
-										<div class="wpss-co-trust__item">
-											<i data-lucide="shield-check" class="wpss-icon wpss-co-trust__icon" aria-hidden="true"></i>
-											<span><?php esc_html_e( 'Order protection', 'wp-sell-services' ); ?></span>
-										</div>
-									</div>
-								</div>
-							</div>
+						<!-- RIGHT COLUMN: only the Order Summary card sticks (summary.php). -->
+						<div class="wpss-co-aside">
+							<?php
+							wpss_get_template(
+								'checkout/summary.php',
+								array(
+									'wpss_title'        => $is_pay_order ? __( 'Order Payment', 'wp-sell-services' ) : __( 'Order Summary', 'wp-sell-services' ),
+									'wpss_lines'        => $summary_lines,
+									'wpss_total'        => $total,
+									'wpss_currency'     => $currency,
+									'wpss_button_label' => $enabled_gateways ? wpss_checkout_button_label( reset( $enabled_gateways ), (float) $total, (string) $currency ) : '',
+								)
+							);
+							?>
 							<?php
 							// Seller stats card.
 							$vendor_id_for_stats = $is_pay_order ? $pay_order->vendor_id : ( $service->vendor_id ?? 0 );
@@ -1372,13 +1333,18 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				 * the package being bought, so a badge can never contradict the order
 				 * beside it.
 				 */
-				$badges = wpss_get_checkout_badges( is_array( $selected_package ) ? $selected_package : array() );
+				$badges = wpss_get_checkout_badges( array( 'delivery_days' => $delivery_days ) + ( is_array( $selected_package ) ? $selected_package : array() ) );
 				?>
 				<?php if ( ! empty( $badges ) ) : ?>
 				<div class="wpss-co-guarantees-bar">
 					<?php foreach ( $badges as $badge ) : ?>
 						<div class="wpss-co-guarantee">
-							<span aria-hidden="true"><?php echo esc_html( $badge['icon'] ); ?></span>
+							<?php // A filter may still pass text (an emoji) rather than a Lucide name. ?>
+							<?php if ( preg_match( '/^[a-z0-9-]+$/', (string) $badge['icon'] ) ) : ?>
+								<span aria-hidden="true"><i data-lucide="<?php echo esc_attr( $badge['icon'] ); ?>" class="wpss-icon"></i></span>
+							<?php else : ?>
+								<span aria-hidden="true"><?php echo esc_html( $badge['icon'] ); ?></span>
+							<?php endif; ?>
 							<div>
 								<strong><?php echo esc_html( $badge['title'] ); ?></strong>
 								<span><?php echo esc_html( $badge['note'] ); ?></span>
@@ -1389,216 +1355,6 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				<?php endif; ?>
 
 
-				<script>
-				(function() {
-					var form = document.getElementById('wpss-checkout-form');
-					if (!form) return;
-
-					var submitBtn = form.querySelector('.wpss-checkout-button');
-					var submitBtnText = submitBtn.querySelector('.wpss-checkout-button__text');
-					var originalText = submitBtnText.textContent;
-					var noticeEl = document.getElementById('wpss-checkout-notice');
-
-					// Server-rendered, so the client never decides policy: true only
-					// when the visitor is logged out AND the owner enabled
-					// account-at-checkout.
-					var needsAccount = <?php echo ( ! is_user_logged_in() && wpss_checkout_creates_accounts() ) ? 'true' : 'false'; ?>;
-
-					function showNotice(msg, type) {
-						noticeEl.className = 'wpss-notice wpss-notice--' + (type || 'error');
-						noticeEl.textContent = msg;
-						noticeEl.style.display = 'flex';
-						noticeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-					}
-
-					function hideNotice() {
-						noticeEl.style.display = 'none';
-					}
-
-					/*
-					 * Create the buyer's account BEFORE paying, when they are
-					 * logged out and the owner has enabled account-at-checkout.
-					 *
-					 * The order matters. Every gateway handler requires a
-					 * logged-in user and the order row needs a real customer_id,
-					 * so the account has to exist first — not after a successful
-					 * charge, which would leave money taken against nobody if
-					 * creation then failed.
-					 *
-					 * The fresh nonce also matters: WordPress nonces are bound to
-					 * the user, so the checkout nonce rendered for a logged-out
-					 * visitor stops verifying the instant they are signed in.
-					 * Without swapping it, the payment request would fail its own
-					 * security check with the account already created.
-					 */
-					function ensureAccount() {
-						if (!needsAccount) {
-							return Promise.resolve();
-						}
-
-						var accountData = new FormData();
-						accountData.append('action', 'wpss_checkout_create_account');
-						accountData.append('nonce', form.querySelector('[name="wpss_checkout_nonce"]').value);
-						accountData.append('checkout_url', window.location.href);
-
-						['billing_first_name', 'billing_last_name', 'billing_email'].forEach(function(name) {
-							var field = form.querySelector('[name="' + name + '"]');
-							accountData.append(name, field ? field.value : '');
-						});
-
-						return fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
-							method: 'POST',
-							body: accountData,
-							credentials: 'same-origin'
-						})
-						.then(function(response) { return response.json(); })
-						.then(function(data) {
-							if (data.success && data.data && data.data.checkout_nonce) {
-								form.querySelector('[name="wpss_checkout_nonce"]').value = data.data.checkout_nonce;
-								needsAccount = false;
-								return;
-							}
-
-							var payload = data.data || {};
-
-							if (payload.code === 'account_exists' && payload.login_url) {
-								// A link, not a redirect: bouncing the buyer away
-								// from a filled-in checkout without asking is worse
-								// than telling them what to do next.
-								noticeEl.className = 'wpss-notice wpss-notice--error';
-								noticeEl.textContent = payload.message + ' ';
-								var link = document.createElement('a');
-								link.href = payload.login_url;
-								link.textContent = '<?php echo esc_js( __( 'Log in', 'wp-sell-services' ) ); ?>';
-								noticeEl.appendChild(link);
-								noticeEl.style.display = 'flex';
-								noticeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-								throw new Error('wpss_account_handled');
-							}
-
-							showNotice(payload.message || '<?php echo esc_js( __( 'We could not create your account. Please check your details.', 'wp-sell-services' ) ); ?>');
-							throw new Error('wpss_account_handled');
-						});
-					}
-
-					// Published so gateways that own their own submit (Stripe,
-					// PayPal) can await the same account step instead of each
-					// re-implementing it. Assigned at IIFE scope, not inside the
-					// submit handler — that handler returns early for exactly
-					// those gateways, so publishing from in there would define the
-					// seam only for the buyers who never need it.
-					window.wpssEnsureCheckoutAccount = ensureAccount;
-
-					// Show/hide gateway forms + active state on radio change.
-					document.querySelectorAll('input[name="payment_method"]').forEach(function(radio) {
-						radio.addEventListener('change', function() {
-							hideNotice();
-							document.querySelectorAll('.wpss-co-method').forEach(function(m) {
-								m.classList.remove('wpss-co-method--active');
-							});
-							document.querySelectorAll('.wpss-gateway-form').forEach(function(gform) {
-								gform.style.display = 'none';
-							});
-							var method = this.closest('.wpss-co-method');
-							if (method) method.classList.add('wpss-co-method--active');
-							var selected = document.querySelector('.wpss-gateway-form[data-gateway="' + this.value + '"]');
-							if (selected) selected.style.display = 'block';
-						});
-					});
-
-					// Click anywhere on method card to select radio.
-					document.querySelectorAll('.wpss-co-method').forEach(function(method) {
-						method.addEventListener('click', function(e) {
-							if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
-							var radio = this.querySelector('input[type="radio"]');
-							if (radio && !radio.checked) {
-								radio.checked = true;
-								radio.dispatchEvent(new Event('change', { bubbles: true }));
-							}
-						});
-					});
-
-					// Handle form submission.
-					form.addEventListener('submit', function(e) {
-						e.preventDefault();
-						hideNotice();
-
-						var paymentMethod = form.querySelector('input[name="payment_method"]:checked');
-						if (!paymentMethod) {
-							showNotice('<?php echo esc_js( __( 'Please select a payment method.', 'wp-sell-services' ) ); ?>');
-							return;
-						}
-
-						// Gateways that mount their own payment UI (Stripe Elements)
-						// declare data-wpss-own-submit and are bound to this same
-						// form by their own script. They MUST confirm the card with
-						// the PSP before an order is created, so this generic handler
-						// stands down — otherwise it races them and posts an
-						// unconfirmed payment intent (card never charged).
-						//
-						// Standing down does NOT mean skipping the account step. A
-						// logged-out buyer paying by Stripe or PayPal still needs an
-						// account before their gateway posts, so the seam is
-						// published on window and those scripts await it themselves
-						// (see WPSS.ensureCheckoutAccount below). Returning here
-						// without it is what left guest + Stripe dead-ending on a
-						// handler that has no nopriv registration.
-						var ownSubmit = form.querySelector('.wpss-gateway-form[data-gateway="' + paymentMethod.value + '"] [data-wpss-own-submit], [data-gateway="' + paymentMethod.value + '"][data-wpss-own-submit]');
-						if (ownSubmit) {
-							return;
-						}
-
-						submitBtn.disabled = true;
-						submitBtnText.textContent = '<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>';
-
-						function restoreButton() {
-							submitBtn.disabled = false;
-							submitBtnText.textContent = originalText;
-						}
-
-						ensureAccount().then(function() {
-							var formData = new FormData(form);
-							formData.append('action', 'wpss_' + paymentMethod.value + '_process_payment');
-							// Use gateway-specific nonce if available (e.g., wpss_test_nonce), otherwise checkout nonce.
-							var gatewayNonce = form.querySelector('[name="wpss_' + paymentMethod.value + '_nonce"]');
-							if (gatewayNonce) {
-								formData.append('nonce', gatewayNonce.value);
-							} else {
-								formData.append('nonce', form.querySelector('[name="wpss_checkout_nonce"]').value);
-							}
-
-							return fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
-								method: 'POST',
-								body: formData,
-								credentials: 'same-origin'
-							})
-							.then(function(response) { return response.json(); })
-							.then(function(data) {
-								if (data.success && data.data && data.data.redirect_url) {
-									window.location.href = data.data.redirect_url;
-								} else if (data.success && data.data && data.data.redirect) {
-									window.location.href = data.data.redirect;
-								} else {
-									var msg = (data.data && data.data.message) ? data.data.message : '<?php echo esc_js( __( 'Payment failed. Please try again.', 'wp-sell-services' ) ); ?>';
-									showNotice(msg);
-									restoreButton();
-								}
-							});
-						})
-						.catch(function(error) {
-							// The account step shows its own message; do not talk over
-							// it with a generic payment error.
-							if (error && 'wpss_account_handled' === error.message) {
-								restoreButton();
-								return;
-							}
-							console.error('Checkout error:', error);
-							showNotice('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>');
-							restoreButton();
-						});
-					});
-				})();
-				</script>
 			<?php endif; ?>
 		</div>
 		<?php
@@ -1640,33 +1396,19 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				continue;
 			}
 
-			$packages         = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
-			$selected_package = $packages[ $package_id ] ?? ( ! empty( $packages ) ? reset( $packages ) : null );
-
-			if ( ! $selected_package ) {
+			// The same pricer resolve_cart() charges through, so the page and the charge agree.
+			$line = CheckoutIntentService::price_service_line( $service_id, $package_id, $quantity, $item['addons'] ?? array() );
+			if ( is_wp_error( $line ) ) {
 				continue;
 			}
 
-			$unit_price   = (float) ( $selected_package['price'] ?? 0 );
-			$line_price   = $unit_price * $quantity;
-			$addons_total = 0.0;
-			$addons_data  = array();
-
-			foreach ( $item['addons'] ?? array() as $addon ) {
-				$addon_price   = (float) ( $addon['price'] ?? 0 );
-				$addons_total += $addon_price;
-				$addons_data[] = $addon;
-			}
-
-			$line_total = $line_price + $addons_total;
-
-			// Per item, through the same helper - the rate filter is applied
-			// inside it, so a per-vendor rate still works here.
-			$item_tax_data = wpss_calculate_tax( (float) $line_total, (int) $service->vendor_id, (int) $service->id );
-			$item_tax      = (float) $item_tax_data['amount'];
-			$line_total    = (float) $item_tax_data['total'];
-
-			$tax_amount += $item_tax;
+			$selected_package = $line['package'];
+			$unit_price       = (float) ( $selected_package['price'] ?? 0 );
+			$line_price       = (float) $line['subtotal'];
+			$addon_lines      = $line['addons'];
+			$addons_total     = (float) $line['addons_total'];
+			$line_total       = (float) $line['total'];
+			$tax_amount      += (float) $line['tax'];
 
 			$vendor        = get_userdata( $service->vendor_id );
 			$vendor_name   = $vendor ? $vendor->display_name : '';
@@ -1681,8 +1423,12 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				'package'       => $selected_package,
 				'unit_price'    => $unit_price,
 				'line_price'    => $line_price,
-				'addons'        => $addons_data,
+				'addons'        => $addon_lines,
 				'addons_total'  => $addons_total,
+				// Before tax, as the cart page shows it: tax is its own
+				// summary line, so a tax-inclusive line counted it twice
+				// on screen (the total was always right).
+				'line_subtotal' => $line_price + $addons_total,
 				'line_total'    => $line_total,
 				'vendor_name'   => $vendor_name,
 				'vendor_avatar' => $vendor_avatar,
@@ -1695,9 +1441,22 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			return '<p class="wpss-alert wpss-alert-error">' . esc_html__( 'Your cart contains no valid services.', 'wp-sell-services' ) . '</p>';
 		}
 
+		// Summary lines for templates/checkout/summary.php: one per cart item.
+		$summary_lines = array();
+		foreach ( $enriched_items as $ei ) {
+			$summary_lines[] = array(
+				'label'  => wp_trim_words( $ei['service']->title, 6 ),
+				'amount' => $ei['line_subtotal'],
+			);
+		}
+		if ( $tax_amount > 0 ) {
+			$summary_lines[] = $this->tax_summary_line( (string) $tax_label, $tax_rate, $tax_amount, $tax_included );
+		}
+
+		$this->enqueue_checkout_script();
+
 		ob_start();
 		?>
-		<script>document.body.classList.add('wpss-checkout-page');</script>
 		<style>
 			/* Inherit base checkout page styles. */
 			body.wpss-checkout-page #secondary,
@@ -1880,7 +1639,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				<!-- Notice area -->
 				<div id="wpss-multi-checkout-notice" class="wpss-notice wpss-notice--error" style="display:none;" role="alert"></div>
 
-				<form method="post" class="wpss-checkout-form" id="wpss-multi-checkout-form">
+				<form method="post" class="wpss-checkout-form" id="wpss-multi-checkout-form" data-wpss-checkout-notice="wpss-multi-checkout-notice">
 					<?php wp_nonce_field( 'wpss_checkout', 'wpss_checkout_nonce' ); ?>
 					<input type="hidden" name="is_multi_checkout" value="1">
 					<input type="hidden" name="amount" value="<?php echo esc_attr( round( $grand_total, 2 ) ); ?>">
@@ -1944,7 +1703,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 											</div>
 
 											<div class="wpss-co-multi-item__price">
-												<?php echo esc_html( wpss_format_price( $ei['line_total'], $currency ) ); ?>
+												<?php echo esc_html( wpss_format_price( $ei['line_subtotal'], $currency ) ); ?>
 											</div>
 										</div>
 									<?php endforeach; ?>
@@ -1966,200 +1725,98 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 							?>
 
 
-							<!-- Payment methods -->
-							<div class="wpss-card">
-								<div class="wpss-card__header">
-									<h3 class="wpss-card__title"><?php esc_html_e( 'Payment Method', 'wp-sell-services' ); ?></h3>
-								</div>
-								<div class="wpss-card__body">
-									<div class="wpss-co-methods">
-										<?php foreach ( $enabled_gateways as $gateway_id => $gateway ) : ?>
-											<div class="wpss-co-method" data-method="<?php echo esc_attr( $gateway_id ); ?>">
-												<label class="wpss-co-method__label">
-													<input type="radio" name="payment_method" value="<?php echo esc_attr( $gateway_id ); ?>" required>
-													<?php echo esc_html( $gateway->get_name() ); ?>
-												</label>
-												<div class="wpss-co-method__form wpss-gateway-form" data-gateway="<?php echo esc_attr( $gateway_id ); ?>" style="display: none;">
-													<?php
-													echo $gateway->render_payment_form( $grand_total, $currency, 0 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-													?>
-												</div>
-											</div>
-										<?php endforeach; ?>
-									</div>
-								</div>
-							</div>
+							<?php
+							wpss_get_template(
+								'checkout/payment-methods.php',
+								array(
+									'wpss_gateways' => $enabled_gateways,
+									'wpss_amount'   => $grand_total,
+									'wpss_currency' => $currency,
+									'wpss_order_id' => 0,
+								)
+							);
+							?>
 
 						</div><!-- /left column -->
 
 						<!-- RIGHT COLUMN: Order summary -->
-						<div class="wpss-sticky">
-							<div class="wpss-card wpss-co-card--summary">
-								<div class="wpss-card__header">
-									<h3 class="wpss-card__title"><?php esc_html_e( 'Order Summary', 'wp-sell-services' ); ?></h3>
-								</div>
-								<div class="wpss-card__body">
-
-									<!-- Per-item subtotals -->
-									<?php foreach ( $enriched_items as $ei ) : ?>
-										<div class="wpss-co-summary-line">
-											<span><?php echo esc_html( wp_trim_words( $ei['service']->title, 6 ) ); ?></span>
-											<span><?php echo esc_html( wpss_format_price( $ei['line_total'], $currency ) ); ?></span>
-										</div>
-									<?php endforeach; ?>
-
-									<!-- Tax line -->
-									<?php if ( $tax_amount > 0 ) : ?>
-										<div class="wpss-co-summary-line wpss-co-summary-line--tax">
-											<span><?php echo esc_html( $tax_label ); ?> (<?php echo esc_html( $tax_rate ); ?>%)</span>
-											<span><?php echo esc_html( wpss_format_price( $tax_amount, $currency ) ); ?></span>
-										</div>
-									<?php endif; ?>
-
-									<!-- Total -->
-									<div class="wpss-co-summary-total">
-										<span><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></span>
-										<span><?php echo esc_html( wpss_format_price( $grand_total, $currency ) ); ?></span>
-									</div>
-								</div>
-
-								<div class="wpss-card__footer" style="flex-direction:column;align-items:stretch;">
-									<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--lg wpss-btn--full wpss-checkout-button">
-										<span class="wpss-checkout-button__text">
-											<?php
-											/* translators: %s: formatted price */
-											printf( esc_html__( 'Pay %s', 'wp-sell-services' ), esc_html( wpss_format_price( $grand_total, $currency ) ) );
-											?>
-										</span>
-									</button>
-
-									<?php wpss_get_template_part( 'partials/legal', 'links' ); ?>
-
-									<div class="wpss-co-trust">
-										<div class="wpss-co-trust__item">
-											<i data-lucide="lock" class="wpss-icon wpss-co-trust__icon" aria-hidden="true"></i>
-											<span><?php esc_html_e( 'Secure payment', 'wp-sell-services' ); ?></span>
-										</div>
-										<div class="wpss-co-trust__item">
-											<i data-lucide="shield-check" class="wpss-icon wpss-co-trust__icon" aria-hidden="true"></i>
-											<span><?php esc_html_e( 'Order protection', 'wp-sell-services' ); ?></span>
-										</div>
-									</div>
-								</div>
-							</div>
+						<div class="wpss-co-aside">
+							<?php
+							wpss_get_template(
+								'checkout/summary.php',
+								array(
+									'wpss_lines'        => $summary_lines,
+									'wpss_total'        => $grand_total,
+									'wpss_currency'     => $currency,
+									'wpss_button_label' => $enabled_gateways ? wpss_checkout_button_label( reset( $enabled_gateways ), (float) $grand_total, (string) $currency ) : '',
+								)
+							);
+							?>
 						</div><!-- /right column -->
 
 					</div><!-- /layout -->
 				</form>
 
-				<script>
-				(function() {
-					var form = document.getElementById('wpss-multi-checkout-form');
-					if (!form) return;
-
-					var submitBtn    = form.querySelector('.wpss-checkout-button');
-					var submitBtnTxt = submitBtn.querySelector('.wpss-checkout-button__text');
-					var originalTxt  = submitBtnTxt.textContent;
-					var noticeEl     = document.getElementById('wpss-multi-checkout-notice');
-
-					function showNotice(msg, type) {
-						noticeEl.className = 'wpss-notice wpss-notice--' + (type || 'error');
-						noticeEl.textContent = msg;
-						noticeEl.style.display = 'flex';
-						noticeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-					}
-
-					function hideNotice() { noticeEl.style.display = 'none'; }
-
-					// Show/hide gateway forms.
-					document.querySelectorAll('input[name="payment_method"]').forEach(function(radio) {
-						radio.addEventListener('change', function() {
-							hideNotice();
-							document.querySelectorAll('.wpss-co-method').forEach(function(m) { m.classList.remove('wpss-co-method--active'); });
-							document.querySelectorAll('.wpss-gateway-form').forEach(function(gf) { gf.style.display = 'none'; });
-							var method = this.closest('.wpss-co-method');
-							if (method) method.classList.add('wpss-co-method--active');
-							var sel = document.querySelector('.wpss-gateway-form[data-gateway="' + this.value + '"]');
-							if (sel) sel.style.display = 'block';
-						});
-					});
-
-					// Click on method card selects radio.
-					document.querySelectorAll('.wpss-co-method').forEach(function(method) {
-						method.addEventListener('click', function(e) {
-							if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
-							var radio = this.querySelector('input[type="radio"]');
-							if (radio && !radio.checked) {
-								radio.checked = true;
-								radio.dispatchEvent(new Event('change', { bubbles: true }));
-							}
-						});
-					});
-
-					form.addEventListener('submit', function(e) {
-						e.preventDefault();
-						hideNotice();
-
-						var paymentMethod = form.querySelector('input[name="payment_method"]:checked');
-						if (!paymentMethod) {
-							showNotice('<?php echo esc_js( __( 'Please select a payment method.', 'wp-sell-services' ) ); ?>');
-							return;
-						}
-
-						// Gateways that mount their own payment UI (Stripe Elements)
-						// declare data-wpss-own-submit and are bound to this same
-						// form by their own script. They MUST confirm the card with
-						// the PSP before an order is created, so this generic handler
-						// stands down — otherwise it races them and posts an
-						// unconfirmed payment intent (card never charged).
-						var ownSubmit = form.querySelector('.wpss-gateway-form[data-gateway="' + paymentMethod.value + '"] [data-wpss-own-submit], [data-gateway="' + paymentMethod.value + '"][data-wpss-own-submit]');
-						if (ownSubmit) {
-							return;
-						}
-
-						submitBtn.disabled = true;
-						submitBtnTxt.textContent = '<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>';
-
-						var formData = new FormData(form);
-						formData.append('action', 'wpss_' + paymentMethod.value + '_process_payment');
-						var gatewayNonce = form.querySelector('[name="wpss_' + paymentMethod.value + '_nonce"]');
-						if (gatewayNonce) {
-							formData.append('nonce', gatewayNonce.value);
-						} else {
-							formData.append('nonce', form.querySelector('[name="wpss_checkout_nonce"]').value);
-						}
-
-						fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
-							method: 'POST',
-							body: formData,
-							credentials: 'same-origin'
-						})
-						.then(function(r) { return r.json(); })
-						.then(function(data) {
-							if (data.success && data.data && data.data.redirect_url) {
-								window.location.href = data.data.redirect_url;
-							} else if (data.success && data.data && data.data.redirect) {
-								window.location.href = data.data.redirect;
-							} else {
-								var msg = (data.data && data.data.message) ? data.data.message : '<?php echo esc_js( __( 'Payment failed. Please try again.', 'wp-sell-services' ) ); ?>';
-								showNotice(msg);
-								submitBtn.disabled = false;
-								submitBtnTxt.textContent = originalTxt;
-							}
-						})
-						.catch(function(err) {
-							console.error('Multi-checkout error:', err);
-							showNotice('<?php echo esc_js( __( 'An error occurred. Please try again.', 'wp-sell-services' ) ); ?>');
-							submitBtn.disabled = false;
-							submitBtnTxt.textContent = originalTxt;
-						});
-					});
-				})();
-				</script>
 			<?php endif; ?>
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Build the tax line for templates/checkout/summary.php.
+	 *
+	 * Prices that already include tax show it as "(18%, included)", as the cart
+	 * does: listed as a plain line it read as an extra charge, and the lines no
+	 * longer added up to the total (Basecamp 10346279564).
+	 *
+	 * @param string $label    Tax label.
+	 * @param float  $rate     Tax rate in percent.
+	 * @param float  $amount   Tax amount.
+	 * @param bool   $included Whether the prices above already include it.
+	 * @return array
+	 */
+	private function tax_summary_line( string $label, float $rate, float $amount, bool $included = false ): array {
+		return array(
+			'label'  => $included
+				/* translators: 1: tax label, e.g. VAT. 2: tax rate in percent. */
+				? sprintf( __( '%1$s (%2$s%%, included)', 'wp-sell-services' ), $label, $rate )
+				: sprintf( '%s (%s%%)', $label, $rate ),
+			'amount' => $amount,
+			'type'   => 'tax',
+		);
+	}
+
+	/**
+	 * Enqueue the one checkout script shared by both checkout forms.
+	 *
+	 * Called from each renderer rather than on wp_enqueue_scripts, so it only
+	 * loads where a checkout actually renders; enqueued mid-content it prints
+	 * in the footer, after the form markup it binds to.
+	 *
+	 * @return void
+	 */
+	private function enqueue_checkout_script(): void {
+		\WPSellServices\Assets\ScriptRegistry::enqueue( 'wpss-checkout', 'assets/js/checkout.js' );
+
+		wp_localize_script(
+			'wpss-checkout',
+			'wpssCheckout',
+			array(
+				'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+				// Server decides, never the client: true only when the visitor
+				// is logged out AND the owner enabled account-at-checkout.
+				'needsAccount' => ! is_user_logged_in() && wpss_checkout_creates_accounts(),
+				'i18n'         => array(
+					'selectMethod'  => __( 'Please select a payment method.', 'wp-sell-services' ),
+					'processing'    => __( 'Processing...', 'wp-sell-services' ),
+					'paymentFailed' => __( 'Payment failed. Please try again.', 'wp-sell-services' ),
+					'genericError'  => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
+					'logIn'         => __( 'Log in', 'wp-sell-services' ),
+					'accountFailed' => __( 'We could not create your account. Please check your details.', 'wp-sell-services' ),
+				),
+			)
+		);
 	}
 
 	/**

@@ -163,7 +163,7 @@ class VendorService {
 				update_user_meta( $user_id, '_wpss_is_vendor', true );
 			}
 
-			update_user_meta( $user_id, '_wpss_vendor_since', current_time( 'mysql' ) );
+			update_user_meta( $user_id, '_wpss_vendor_since', current_time( 'mysql', true ) );
 
 			// Save skills to user meta (not in vendor_profiles DB table).
 			if ( ! empty( $data['skills'] ) ) {
@@ -743,7 +743,7 @@ class VendorService {
 	 * @return void
 	 */
 	public function update_last_active( int $user_id ): void {
-		update_user_meta( $user_id, '_wpss_last_active', current_time( 'mysql' ) );
+		update_user_meta( $user_id, '_wpss_last_active', current_time( 'mysql', true ) );
 	}
 
 	/**

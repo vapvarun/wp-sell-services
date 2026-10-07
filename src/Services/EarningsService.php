@@ -31,6 +31,7 @@ class EarningsService {
 	public const WITHDRAWAL_APPROVED  = 'approved';
 	public const WITHDRAWAL_COMPLETED = 'completed';
 	public const WITHDRAWAL_REJECTED  = 'rejected';
+	public const WITHDRAWAL_CANCELLED = 'cancelled';
 
 	/**
 	 * Earnings grouping periods (consumed by get_by_period() and the REST
@@ -115,24 +116,17 @@ class EarningsService {
 			)
 		);
 
-		// Get pending earnings (orders in progress) — show vendor's expected share after commission.
-		// Use CommissionService::get_global_commission_rate() for consistency with actual commission calculation.
-		$commission_rate = CommissionService::get_global_commission_rate();
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$pending = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COALESCE(SUM(
-					CASE WHEN vendor_earnings IS NOT NULL THEN vendor_earnings
-					ELSE total * (1 - %f / 100) END
-				), 0) FROM {$orders_table}
-				WHERE vendor_id = %d AND status IN (%s, %s, %s)",
-				$commission_rate,
-				$vendor_id,
-				ServiceOrder::STATUS_IN_PROGRESS,
-				ServiceOrder::STATUS_PENDING_APPROVAL,
-				ServiceOrder::STATUS_REVISION_REQUESTED
+		// Clearing: the vendor's share of paid orders not credited yet, by the
+		// one revenue definition - so Total earned + Clearing equals the Sales
+		// earnings figure. It listed three statuses by hand and read $0 for
+		// delivered, awaiting-requirements, late and disputed work (Basecamp
+		// 10336467813).
+		$pending = (float) ( wpss_get_revenue(
+			array(
+				'vendor_id'  => $vendor_id,
+				'uncredited' => true,
 			)
-		);
+		)[0]->vendor_earnings ?? 0 );
 
 		// Get withdrawn amount.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -383,7 +377,7 @@ class EarningsService {
 				'reference_type' => 'withdrawal',
 				'reference_id'   => $withdrawal_id,
 				'status'         => 'completed',
-				'created_at'     => current_time( 'mysql' ),
+				'created_at'     => current_time( 'mysql', true ),
 			),
 		);
 
@@ -492,7 +486,7 @@ class EarningsService {
 			array(
 				'status'       => self::WITHDRAWAL_COMPLETED,
 				'admin_note'   => sanitize_textarea_field( $note ),
-				'processed_at' => current_time( 'mysql' ),
+				'processed_at' => current_time( 'mysql', true ),
 				'processed_by' => get_current_user_id(),
 			),
 			array( 'id' => $withdrawal_id ),
@@ -594,14 +588,15 @@ class EarningsService {
 			$params[] = $args['status'];
 		}
 
+		// Site-time bounds against the UTC column.
 		if ( $args['start_date'] ) {
 			$where[]  = 'completed_at >= %s';
-			$params[] = $args['start_date'];
+			$params[] = get_gmt_from_date( (string) $args['start_date'] );
 		}
 
 		if ( $args['end_date'] ) {
 			$where[]  = 'completed_at <= %s';
-			$params[] = $args['end_date'];
+			$params[] = get_gmt_from_date( (string) $args['end_date'] );
 		}
 
 		$where_clause = implode( ' AND ', $where );
@@ -652,6 +647,28 @@ class EarningsService {
 	 * @return array Result with success status.
 	 */
 	public function request_withdrawal( int $vendor_id, float $amount, string $method, array $details = array() ): array {
+		// Where the money goes. Details sent with the request are checked and
+		// become the payout profile; otherwise the saved profile is used. A
+		// request with neither is refused, so the admin is never handed a
+		// payout with no destination (Basecamp 10336467884).
+		if ( $details ) {
+			$details = self::save_payout_profile( $vendor_id, $method, $details );
+		} else {
+			$profile = self::get_payout_profile( $vendor_id );
+			$method  = '' !== $method ? $method : $profile['method'];
+			$details = $profile['method'] === $method
+				? self::validate_payout_details( $method, $profile['details'] )
+				: self::validate_payout_details( $method, array() );
+		}
+
+		if ( is_wp_error( $details ) ) {
+			return array(
+				'success' => false,
+				'code'    => $details->get_error_code(),
+				'message' => $details->get_error_message(),
+			);
+		}
+
 		// Check minimum withdrawal.
 		$min_withdrawal = self::get_min_withdrawal_amount();
 		if ( $amount < $min_withdrawal ) {
@@ -733,7 +750,7 @@ class EarningsService {
 				'method'     => sanitize_key( $method ),
 				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
 				'status'     => self::WITHDRAWAL_PENDING,
-				'created_at' => current_time( 'mysql' ),
+				'created_at' => current_time( 'mysql', true ),
 			),
 			array( '%d', '%f', '%s', '%s', '%s', '%s' )
 		);
@@ -858,6 +875,7 @@ class EarningsService {
 					'id'           => (int) $row->id,
 					'amount'       => (float) $row->amount,
 					'method'       => $row->method,
+					'is_auto'      => ! empty( $row->is_auto ),
 					// Cast: the column is nullable, and under strict_types a NULL here
 					// is a TypeError that fatals the whole earnings page.
 					'details'      => json_decode( wpss_decrypt_secret( (string) ( $row->details ?? '' ) ), true ) ?: array(),
@@ -936,7 +954,7 @@ class EarningsService {
 			array(
 				'status'       => $status,
 				'admin_note'   => sanitize_textarea_field( $note ),
-				'processed_at' => current_time( 'mysql' ),
+				'processed_at' => current_time( 'mysql', true ),
 				'processed_by' => get_current_user_id(),
 			),
 			array( 'id' => $withdrawal_id ),
@@ -1056,6 +1074,188 @@ class EarningsService {
 	}
 
 	/**
+	 * The fields a payout method needs, keyed by detail name.
+	 *
+	 * PayPal needs an email; a bank transfer needs holder, bank and account.
+	 * A method added by filter gets one free-text field unless it declares its
+	 * own through wpss_payout_fields.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $method Withdrawal method key.
+	 * @return array<string, array{label: string, type: string, required: bool}>
+	 */
+	public static function get_payout_fields( string $method ): array {
+		$fields = array(
+			'paypal'        => array(
+				'email' => array(
+					'label'    => __( 'PayPal email', 'wp-sell-services' ),
+					'type'     => 'email',
+					'required' => true,
+				),
+			),
+			'bank_transfer' => array(
+				'account_name'   => array(
+					'label'    => __( 'Account holder name', 'wp-sell-services' ),
+					'type'     => 'text',
+					'required' => true,
+				),
+				'bank_name'      => array(
+					'label'    => __( 'Bank name', 'wp-sell-services' ),
+					'type'     => 'text',
+					'required' => true,
+				),
+				'account_number' => array(
+					'label'    => __( 'Account number or IBAN', 'wp-sell-services' ),
+					'type'     => 'text',
+					'required' => true,
+				),
+				'routing_number' => array(
+					'label'    => __( 'Routing, SWIFT or IFSC code', 'wp-sell-services' ),
+					'type'     => 'text',
+					'required' => false,
+				),
+			),
+		);
+
+		$method_fields = $fields[ $method ] ?? array(
+			'details' => array(
+				'label'    => __( 'Payout details', 'wp-sell-services' ),
+				'type'     => 'textarea',
+				'required' => true,
+			),
+		);
+
+		/**
+		 * Filter the details a payout method collects.
+		 *
+		 * @since 1.8.0
+		 *
+		 * @param array  $method_fields Fields: key => {label, type, required}.
+		 * @param string $method        Withdrawal method key.
+		 */
+		return (array) apply_filters( 'wpss_payout_fields', $method_fields, $method );
+	}
+
+	/**
+	 * Clean payout details to the method's fields and check they are complete.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string               $method  Withdrawal method key.
+	 * @param array<string, mixed> $details Submitted details.
+	 * @return array<string, string>|\WP_Error The clean details, or what is missing.
+	 */
+	public static function validate_payout_details( string $method, array $details ) {
+		if ( ! isset( self::get_withdrawal_methods()[ $method ] ) ) {
+			return new \WP_Error( 'wpss_invalid_payout_method', __( 'Choose a payout method this marketplace offers.', 'wp-sell-services' ), array( 'status' => 400 ) );
+		}
+
+		$clean = array();
+
+		foreach ( self::get_payout_fields( $method ) as $key => $field ) {
+			$value = is_scalar( $details[ $key ] ?? null ) ? (string) $details[ $key ] : '';
+			$value = 'textarea' === $field['type'] ? sanitize_textarea_field( $value ) : sanitize_text_field( $value );
+
+			if ( 'email' === $field['type'] && '' !== $value && ! is_email( $value ) ) {
+				/* translators: %s: field label */
+				return new \WP_Error( 'wpss_invalid_payout_details', sprintf( __( '%s is not a valid email address.', 'wp-sell-services' ), $field['label'] ), array( 'status' => 400 ) );
+			}
+
+			if ( ! empty( $field['required'] ) && '' === $value ) {
+				/* translators: %s: field label */
+				return new \WP_Error( 'wpss_payout_details_missing', sprintf( __( 'Add your %s to receive payouts.', 'wp-sell-services' ), $field['label'] ), array( 'status' => 400 ) );
+			}
+
+			if ( '' !== $value ) {
+				$clean[ $key ] = $value;
+			}
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * The vendor's payout profile: where their money goes.
+	 *
+	 * One store for every rail - the withdrawal form, REST, automatic
+	 * withdrawals and Pro's PayPal payouts (owner decision, Basecamp
+	 * 10336467884). Details are encrypted at rest; rows saved as a plain
+	 * array before 1.8.0 are still read.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $vendor_id Vendor user ID.
+	 * @return array{method: string, details: array<string, string>}
+	 */
+	public static function get_payout_profile( int $vendor_id ): array {
+		$stored  = get_user_meta( $vendor_id, 'wpss_payout_details', true );
+		$details = is_array( $stored ) ? $stored : ( json_decode( wpss_decrypt_secret( (string) $stored ), true ) ?: array() );
+
+		return array(
+			'method'  => (string) get_user_meta( $vendor_id, 'wpss_payout_method', true ),
+			'details' => array_map( 'strval', array_filter( (array) $details, 'is_scalar' ) ),
+		);
+	}
+
+	/**
+	 * Save the vendor's payout profile after checking it is complete.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int                  $vendor_id Vendor user ID.
+	 * @param string               $method    Withdrawal method key.
+	 * @param array<string, mixed> $details   Details for that method.
+	 * @return array<string, string>|\WP_Error The saved details.
+	 */
+	public static function save_payout_profile( int $vendor_id, string $method, array $details ) {
+		$clean = self::validate_payout_details( $method, $details );
+
+		if ( is_wp_error( $clean ) ) {
+			return $clean;
+		}
+
+		update_user_meta( $vendor_id, 'wpss_payout_method', $method );
+		update_user_meta( $vendor_id, 'wpss_payout_details', wpss_encrypt_secret( (string) wp_json_encode( $clean ) ) );
+
+		/**
+		 * Fires after a vendor's payout profile is saved.
+		 *
+		 * @since 1.8.0
+		 *
+		 * @param int                   $vendor_id Vendor user ID.
+		 * @param string                $method    Withdrawal method key.
+		 * @param array<string, string> $clean     Saved details.
+		 */
+		do_action( 'wpss_payout_profile_saved', $vendor_id, $method, $clean );
+
+		return $clean;
+	}
+
+	/**
+	 * Where a payout goes, in one line.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string               $method  Withdrawal method key.
+	 * @param array<string, mixed> $details Details.
+	 * @param bool                 $mask    Show only the last 4 of an account number (vendor-facing).
+	 * @return string
+	 */
+	public static function format_payout_destination( string $method, array $details, bool $mask = true ): string {
+		$parts = array( self::get_withdrawal_methods()[ $method ] ?? $method );
+
+		foreach ( $details as $key => $value ) {
+			if ( '' === (string) $value || ! is_scalar( $value ) ) {
+				continue;
+			}
+			$parts[] = $mask && 'account_number' === $key ? '***' . substr( (string) $value, -4 ) : (string) $value;
+		}
+
+		return implode( ' · ', $parts );
+	}
+
+	/**
 	 * Get withdrawal statuses.
 	 *
 	 * @return array Status labels.
@@ -1066,7 +1266,66 @@ class EarningsService {
 			self::WITHDRAWAL_APPROVED  => __( 'Approved', 'wp-sell-services' ),
 			self::WITHDRAWAL_COMPLETED => __( 'Completed', 'wp-sell-services' ),
 			self::WITHDRAWAL_REJECTED  => __( 'Rejected', 'wp-sell-services' ),
+			self::WITHDRAWAL_CANCELLED => __( 'Cancelled', 'wp-sell-services' ),
 		);
+	}
+
+	/**
+	 * A vendor withdraws their own pending request.
+	 *
+	 * Nothing to put back: the available balance is the ledger minus open
+	 * requests, so leaving 'pending' releases the amount by itself. The old
+	 * AJAX handler wrote columns that do not exist, changed nothing and
+	 * reported "Balance restored" (Basecamp 10336467746). One conditional
+	 * UPDATE, so a double click or an admin approving at the same moment
+	 * cannot both win.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $withdrawal_id Withdrawal ID.
+	 * @param int $vendor_id     Vendor who must own it.
+	 * @return true|\WP_Error
+	 */
+	public function cancel_withdrawal( int $withdrawal_id, int $vendor_id ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'wpss_withdrawals';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$changed = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table} SET status = %s WHERE id = %d AND vendor_id = %d AND status = %s AND is_auto = 0", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				self::WITHDRAWAL_CANCELLED,
+				$withdrawal_id,
+				$vendor_id,
+				self::WITHDRAWAL_PENDING
+			)
+		);
+
+		if ( 1 === $changed ) {
+			/**
+			 * Fires after a vendor cancels their pending withdrawal.
+			 *
+			 * @since 1.8.0
+			 *
+			 * @param int $withdrawal_id Withdrawal ID.
+			 * @param int $vendor_id     Vendor user ID.
+			 */
+			do_action( 'wpss_withdrawal_cancelled', $withdrawal_id, $vendor_id );
+			return true;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT status, is_auto FROM {$table} WHERE id = %d AND vendor_id = %d", $withdrawal_id, $vendor_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		if ( ! $row ) {
+			return new \WP_Error( 'wpss_withdrawal_not_found', __( 'Withdrawal not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		}
+
+		if ( ! empty( $row->is_auto ) ) {
+			return new \WP_Error( 'wpss_withdrawal_auto', __( 'Automatic withdrawals cannot be cancelled.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		}
+
+		return new \WP_Error( 'wpss_withdrawal_not_pending', __( 'Only a pending withdrawal can be cancelled. This one has already been processed.', 'wp-sell-services' ), array( 'status' => 409 ) );
 	}
 
 	/**
@@ -1198,8 +1457,9 @@ class EarningsService {
 
 			if ( $summary['available_balance'] >= $threshold ) {
 				// Check if vendor has payout method configured.
-				$payout_method  = get_user_meta( (int) $vendor_id, 'wpss_payout_method', true );
-				$payout_details = get_user_meta( (int) $vendor_id, 'wpss_payout_details', true );
+				$profile        = self::get_payout_profile( (int) $vendor_id );
+				$payout_method  = $profile['method'];
+				$payout_details = $profile['details'];
 
 				if ( $payout_method && $payout_details ) {
 					$eligible[] = array(
@@ -1272,7 +1532,7 @@ class EarningsService {
 		update_option(
 			'wpss_last_auto_withdrawal_run',
 			array(
-				'timestamp' => current_time( 'mysql' ),
+				'timestamp' => current_time( 'mysql', true ),
 				'processed' => $processed,
 				'failed'    => $failed,
 			)
@@ -1334,7 +1594,7 @@ class EarningsService {
 				'details'    => wpss_encrypt_secret( (string) wp_json_encode( $details ) ),
 				'status'     => self::WITHDRAWAL_PENDING,
 				'is_auto'    => 1,
-				'created_at' => current_time( 'mysql' ),
+				'created_at' => current_time( 'mysql', true ),
 			),
 			array( '%d', '%f', '%s', '%s', '%s', '%d', '%s' )
 		);

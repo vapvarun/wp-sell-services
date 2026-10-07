@@ -60,9 +60,7 @@ Child theme overrides take priority over parent theme, which takes priority over
 | `email-header.php` | Shared header with logo and branding |
 | `email-footer.php` | Shared footer with links |
 
-**10 plain text templates** in `templates/emails/plain/`:
-
-Plain text versions are used by email clients that do not support HTML. They follow the same naming convention and override path.
+Emails are sent as HTML only; there are no plain-text templates.
 
 ### Example: Customizing the Order Completed Email
 

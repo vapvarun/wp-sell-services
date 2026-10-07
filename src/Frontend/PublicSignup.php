@@ -372,6 +372,14 @@ class PublicSignup {
 		$last_name  = sanitize_text_field( (string) ( $args['last_name'] ?? '' ) );
 		$intent     = sanitize_key( (string) ( $args['intent'] ?? 'buyer' ) );
 
+		// Closed vendor registration refuses a vendor sign-up before any account
+		// is made - the form, the AJAX handler and REST all land here. Only the
+		// signed-in path checked it, so a visitor got an account and a "vendor
+		// promotion failed" notice (Basecamp 10351455160).
+		if ( 'vendor' === $intent && 'closed' === wpss_get_option( 'vendor', 'vendor_registration' ) ) {
+			return new \WP_Error( 'wpss_vendor_registration_closed', __( 'We\'re not accepting new vendors at the moment. Please check back later.', 'wp-sell-services' ), array( 'status' => 403 ) );
+		}
+
 		if ( '' === $email || ! is_email( $email ) ) {
 			return new \WP_Error( 'wpss_invalid_email', __( 'Enter a valid email address.', 'wp-sell-services' ) );
 		}

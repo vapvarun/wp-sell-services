@@ -319,6 +319,14 @@ is `pending_approval`.
 | POST | `/proposals/(?P<id>[\d]+)/withdraw` |
 | GET | `/proposals/stats` |
 
+**Request attachments.** `PUT /buyer-requests/{id}` accepts `attachments`, an
+array of media IDs uploaded with `POST /media` and `context=request`. The array
+replaces the list; leave the field out to keep the attachments as they are.
+While the request has no proposal, a file left out of the list is deleted.
+Once any proposal exists, files already on the request stay whatever the
+array says, new IDs are added, and `DELETE /media/{id}` on such a file answers
+`409 wpss_file_in_use`.
+
 ### Conversations
 
 | Method | Route |
@@ -359,6 +367,8 @@ is `pending_approval`.
 | GET | `/wallet/transactions` |
 | GET, POST | `/withdrawals` |
 | POST/PUT/PATCH | `/withdrawals/(?P<id>[\d]+)` |
+| DELETE | `/withdrawals/(?P<id>[\d]+)` (vendor cancels their own pending request) |
+| GET, PUT | `/withdrawals/profile` (the vendor's payout profile) |
 | GET | `/withdrawals/methods` |
 
 ### Payments (free) -- standalone rail only
@@ -371,6 +381,12 @@ is `pending_approval`.
 
 These are the **standalone checkout** payment routes shipped in free. Pro
 replaces them with a wider, gateway-specific set -- see [Payments (Pro)](#payments-pro).
+
+`POST /payments/create-intent` takes `service_id`, `package_id` (stable id or
+legacy index), `quantity` and `addons` (ids, or `{id, quantity, option, text}`
+objects), or `pay_order` for an existing order, plus `gateway`. It is priced on
+the server exactly like the web checkout - package, quantity, add-ons and tax -
+and never reads a price from the request.
 
 > **These routes do not exist on every site.** As of 1.4.0 the whole controller
 > is skipped unless `wpss_uses_standalone_payments()` is true
@@ -394,6 +410,12 @@ replaces them with a wider, gateway-specific set -- see [Payments (Pro)](#paymen
 
 Cart items are addressed by **`item_key`**, not by service id -- one service can
 appear more than once with different packages and add-ons.
+
+**`GET /cart`** prices every line the way checkout will charge it. Since 1.8.0
+each line also carries `unavailable` (boolean) and `unavailable_reason`
+(string). A line is unavailable when its service was deleted, unpublished or
+paused after it was added. Such a line is returned at `0` and is left out of
+`subtotal`, `tax` and `total`; show the reason and offer to remove it.
 
 ### Authentication
 
@@ -457,6 +479,9 @@ block the person who posted it.
 `POST /reports` files a report against any target type; the vocabulary of
 target types is filterable, so the same controller serves services, orders,
 vendors and messages. `GET /reports` is the owner's queue and is admin-only.
+On the website, members reach `POST /reports` through the Report link on the
+service page and the vendor profile; see
+[Member Reports](../admin-tools/member-reports.md).
 
 Reporting asks the owner to act. **Blocking lets a member act immediately**,
 which is the one that actually ends a bad interaction, so the two are separate

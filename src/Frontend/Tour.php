@@ -240,20 +240,18 @@ final class Tour {
 			$completed = (bool) get_user_meta( $user_id, self::USER_META_COMPLETED, true );
 		}
 
-		// Screen-gate which step set to ship. The admin walkthrough is only
-		// useful on the WPSS dashboard or on the setup wizard success screen
-		// (so admins who finish the wizard can kick the tour off). Frontend
-		// steps are reserved for the `[wpss_dashboard]` shortcode.
+		// Screen-gate which step set to ship. The admin walkthrough runs on the
+		// WPSS dashboard only. It used to ship on the setup wizard too, where it
+		// auto-opened UNDER the full-screen wizard, pointing at an admin menu the
+		// wizard covers (Basecamp 10350891599). The wizard is the first-run
+		// guide; the tour opens on the admin's first visit to the dashboard.
+		// Frontend steps are reserved for the `[wpss_dashboard]` shortcode.
 		$steps = array();
 
 		if ( is_admin() && function_exists( 'get_current_screen' ) ) {
 			$screen = get_current_screen();
-			if ( $screen instanceof \WP_Screen ) {
-				$id = (string) $screen->id;
-				if ( 0 === strpos( $id, 'toplevel_page_wp-sell-services' )
-					|| wpss_is_admin_page( $id, 'wpss-setup-wizard' ) ) {
-					$steps = $this->get_admin_tour_steps();
-				}
+			if ( $screen instanceof \WP_Screen && 0 === strpos( (string) $screen->id, 'toplevel_page_wp-sell-services' ) ) {
+				$steps = $this->get_admin_tour_steps();
 			}
 		} elseif ( ! is_admin() ) {
 			$steps = $this->get_frontend_tour_steps();

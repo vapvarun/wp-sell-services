@@ -95,6 +95,12 @@ $restore    = static function () use ( $orders_option, $orders_table, $original_
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->delete( $reviews_table, array( 'id' => (int) $rid ) );
 	}
+	// The reviews were posted through the API, which stored the service and
+	// seller rating; deleting the rows directly must recount them too.
+	$fixture = wpss_get_order( $order_id );
+	if ( $fixture ) {
+		\WPSellServices\API\ReviewsController::update_rating_cache( (int) $fixture->service_id, (int) $fixture->vendor_id );
+	}
 	remove_all_filters( 'wpss_review_window_days' );
 	wp_set_current_user( 0 );
 };

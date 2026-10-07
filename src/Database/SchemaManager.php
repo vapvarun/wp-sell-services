@@ -35,7 +35,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.7.3';
+	const DB_VERSION = '1.8.0';
 
 	/**
 	 * Option name for storing DB version.
@@ -255,6 +255,7 @@ class SchemaManager {
 		$this->run_column_migrations();
 		$this->run_precision_migrations();
 		$this->add_1_7_1_indexes();
+		$this->run_1_8_0_data_migrations();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
 	}
@@ -371,6 +372,8 @@ class SchemaManager {
 		$this->maybe_add_index( 'vendor_profiles', 'availability', 'is_available, vacation_mode' );
 		$this->maybe_add_index( 'vendor_profiles', 'country', 'country' );
 		$this->maybe_add_index( 'orders', 'customer_status_created', 'customer_id, status, created_at' );
+		// Revenue is counted by the date money was paid (wpss_get_revenue()).
+		$this->maybe_add_index( 'orders', 'idx_paid', 'paid_at' );
 	}
 
 	/**
@@ -865,19 +868,32 @@ class SchemaManager {
 			return;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-		$service_ids = $this->wpdb->get_col(
-			"SELECT p.ID FROM `{$this->wpdb->posts}` p
-			 INNER JOIN `{$this->wpdb->postmeta}` m ON m.post_id = p.ID AND m.meta_key = '_wpss_packages'
-			 LEFT JOIN `{$this->wpdb->postmeta}` n ON n.post_id = p.ID AND n.meta_key = '_wpss_package_next_id'
-			 WHERE p.post_type = 'wpss_service'
-			   AND n.post_id IS NULL
-			 LIMIT 200"
-		);
+		// Every service with packages, in id-ordered chunks. It used to pick only
+		// services with no id counter yet (LIMIT 200), so a package added after
+		// the counter existed never got an id and REST returned it as null
+		// (Basecamp 10372724117). wpss_assign_package_ids() writes only when a
+		// package is missing an id, so a full pass is safe to repeat.
+		$last_id = 0;
 
-		foreach ( (array) $service_ids as $service_id ) {
-			wpss_assign_package_ids( (int) $service_id );
-		}
+		do {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			$service_ids = $this->wpdb->get_col(
+				$this->wpdb->prepare(
+					"SELECT p.ID FROM `{$this->wpdb->posts}` p
+					 INNER JOIN `{$this->wpdb->postmeta}` m ON m.post_id = p.ID AND m.meta_key = '_wpss_packages'
+					 WHERE p.post_type = 'wpss_service' AND p.ID > %d
+					 ORDER BY p.ID ASC LIMIT 200",
+					$last_id
+				)
+			);
+
+			$batch_size = count( (array) $service_ids );
+
+			foreach ( (array) $service_ids as $service_id ) {
+				$last_id = (int) $service_id;
+				wpss_assign_package_ids( $last_id );
+			}
+		} while ( 200 === $batch_size );
 	}
 
 	/**
@@ -1235,6 +1251,7 @@ class SchemaManager {
 			KEY idx_platform (platform,platform_order_id),
 			KEY idx_platform_ref (platform,platform_order_ref),
 			KEY idx_deadline (delivery_deadline),
+			KEY idx_paid (paid_at),
 			KEY idx_transaction (transaction_id(191))
 		) {$charset_collate};";
 	}
@@ -1700,8 +1717,193 @@ class SchemaManager {
 		$this->run_column_migrations();
 		$this->run_precision_migrations();
 		$this->add_1_7_1_indexes();
+		$this->run_1_8_0_data_migrations();
 
 		update_option( self::VERSION_OPTION, self::DB_VERSION );
+	}
+
+	/**
+	 * Replace email-only sentences in stored notification text (1.8.0).
+	 *
+	 * The in-app list and the REST payload show the stored body, which told a
+	 * member already on the dashboard to "log in to your dashboard". The
+	 * senders now write wording that reads right in both places; this rewords
+	 * rows written before, in English and in the site's language.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return int Rows changed.
+	 */
+	public function reword_stored_notifications(): int {
+		// phpcs:disable WordPress.WP.I18n.NonSingularStringLiteralText -- the old msgids, looked up so translated rows match too.
+		$map     = array(
+			'Log in to your dashboard to view the full conversation and reply.' => 'Open the conversation to read it in full and reply.',
+			'Please log in to your dashboard to view the response and continue the discussion if needed.' => 'Open the dispute to read the response and reply if needed.',
+			'Please log in to your dashboard to respond to the dispute to avoid automatic escalation.' => 'Respond to the dispute to avoid automatic escalation.',
+			'You have a new notification. Please check your dashboard for details.' => 'You have a new notification.',
+			// A gateway error already ends in a full stop, and a blank payment
+			// method left "via , which" (Basecamp 10337159668).
+			'.. Please process the refund manually' => '. Please process the refund manually',
+			'was paid via , which cannot refund automatically' => 'was paid via a payment method, which cannot refund automatically',
+		);
+		$changed = 0;
+
+		foreach ( $map as $old => $new ) {
+			foreach ( array_unique( array( $old, __( $old, 'wp-sell-services' ) ) ) as $needle ) {
+				$sql      = $this->wpdb->prepare( "UPDATE {$this->prefix}notifications SET message = REPLACE( message, %s, %s ) WHERE message LIKE %s", $needle, __( $new, 'wp-sell-services' ), '%' . $this->wpdb->esc_like( $needle ) . '%' ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$changed += (int) $this->wpdb->query( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+			}
+		}
+		// phpcs:enable
+
+		return $changed;
+	}
+
+	/**
+	 * Data moves for 1.8.0. Every step is idempotent.
+	 *
+	 * 1. Cancellation requests move from vendor_notes to the order's meta
+	 *    (Basecamp 10336370631). Only orders still waiting on one are touched -
+	 *    the status is indexed, and nothing reads the JSON on closed orders.
+	 * 2. wpss_tax.tax_on_commission is removed: no code ever read it, and the
+	 *    tax settings sanitiser already drops it on the next save.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return void
+	 */
+	private function run_1_8_0_data_migrations(): void {
+		$this->reword_stored_notifications();
+
+		$this->backfill_package_ids();
+
+		// Deliveries sent back for revision before 1.8.0 have no responded_at,
+		// so the timeline left the revision out. Date them by the order's own
+		// move to revision_requested in the audit log (the first one after the
+		// delivery); rows with no such entry stay as they are.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only, no input.
+		$this->wpdb->query(
+			"UPDATE {$this->prefix}deliveries d
+			SET d.responded_at = (
+				SELECT MIN( a.created_at ) FROM {$this->prefix}audit_log a
+				WHERE a.object_type = 'order' AND a.object_id = d.order_id
+				AND a.event_type = 'order.status_change' AND a.to_value = 'revision_requested'
+				AND a.created_at >= d.created_at
+			)
+			WHERE d.status = 'revision_requested' AND d.responded_at IS NULL"
+		);
+
+		// Seller levels follow stats unless an admin chose them. Pro is
+		// admin-only, so existing Pro rows are marked admin-set before the
+		// first recalculation; everyone else is recalculated from their stats.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		foreach ( $this->wpdb->get_col( "SELECT user_id FROM {$this->prefix}vendor_profiles WHERE verification_tier = 'pro'" ) as $wpss_pro_id ) {
+			update_user_meta( (int) $wpss_pro_id, \WPSellServices\Services\SellerLevelService::ADMIN_SET_META, 1 );
+		}
+		( new \WPSellServices\Services\SellerLevelService() )->recalculate_all_levels();
+
+		// Proposal counts come from the proposals table now; this meta was only
+		// ever written by the demo seeder and read by the request card.
+		delete_post_meta_by_key( '_wpss_proposal_count' );
+
+		// _wpss_order_count was never written by a sale; recount it once from
+		// the orders table (wpss_sync_service_order_count() keeps it after).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$counted = $this->wpdb->get_col( "SELECT DISTINCT service_id FROM {$this->prefix}orders WHERE service_id > 0 AND status = 'completed'" );
+		foreach ( array_unique( array_merge( array_map( 'intval', $counted ), array_map( 'intval', $this->wpdb->get_col( "SELECT post_id FROM {$this->wpdb->postmeta} WHERE meta_key = '_wpss_order_count'" ) ) ) ) as $service_id ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			wpss_sync_service_order_count( $service_id );
+		}
+
+		// The stored service rating could drift from the reviews behind it (a
+		// deleted review, seeded figures); every surface now reads it, so
+		// recount it once. wpss_recount_service_rating() keeps it after.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only, no input.
+		$rated = $this->wpdb->get_col( "SELECT DISTINCT service_id FROM {$this->prefix}reviews WHERE service_id > 0" );
+		foreach ( array_unique( array_merge( array_map( 'intval', $rated ), array_map( 'intval', $this->wpdb->get_col( "SELECT post_id FROM {$this->wpdb->postmeta} WHERE meta_key IN ( '_wpss_rating_average', '_wpss_rating_count', '_wpss_review_count' )" ) ) ) ) as $service_id ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			wpss_recount_service_rating( $service_id );
+		}
+
+		// _wpss_starting_price now follows every package write; recompute it
+		// once for services last edited somewhere other than the wizard. Those
+		// with no _wpss_packages meta (packages only in the packages table) keep
+		// the price they have.
+		$service_ids = get_posts(
+			array(
+				'post_type'      => 'wpss_service',
+				'post_status'    => 'any',
+				'fields'         => 'ids',
+				'posts_per_page' => -1,
+				'no_found_rows'  => true,
+			)
+		);
+
+		foreach ( $service_ids as $service_id ) {
+			$packages = get_post_meta( $service_id, '_wpss_packages', true );
+			if ( is_array( $packages ) && $packages ) {
+				update_post_meta( $service_id, '_wpss_starting_price', \WPSellServices\PostTypes\ServicePostType::starting_price( $packages ) );
+			}
+		}
+
+		// Services are edited in the classic editor from 1.8.0 (one content
+		// format with the vendor wizard's plain description). A service an admin
+		// saved in the block editor carries <!-- wp: --> comments that the
+		// wizard would show as text; convert those once (Basecamp 10337190248).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$blocky = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT ID, post_content FROM {$this->wpdb->posts} WHERE post_type = %s AND post_content LIKE %s",
+				'wpss_service',
+				'%' . $this->wpdb->esc_like( '<!-- wp:' ) . '%'
+			)
+		);
+
+		foreach ( (array) $blocky as $post ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$this->wpdb->update( $this->wpdb->posts, array( 'post_content' => \WPSellServices\PostTypes\ServicePostType::strip_block_markup( (string) $post->post_content ) ), array( 'ID' => (int) $post->ID ) );
+			clean_post_cache( (int) $post->ID );
+		}
+
+		$table = $this->prefix . 'orders';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT id, vendor_notes, meta FROM {$table} WHERE status = %s AND vendor_notes IS NOT NULL AND vendor_notes <> ''",
+				'cancellation_requested'
+			)
+		);
+
+		foreach ( (array) $rows as $row ) {
+			$request = json_decode( (string) $row->vendor_notes, true );
+
+			if ( ! is_array( $request ) || empty( $request['requested_at'] ) ) {
+				continue;
+			}
+
+			$meta = json_decode( (string) $row->meta, true );
+			$meta = is_array( $meta ) ? $meta : array();
+
+			if ( empty( $meta['cancellation_request'] ) ) {
+				$meta['cancellation_request'] = $request;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$this->wpdb->update(
+				$table,
+				array(
+					'meta'         => wp_json_encode( $meta ),
+					'vendor_notes' => null,
+				),
+				array( 'id' => (int) $row->id )
+			);
+		}
+
+		$tax = get_option( 'wpss_tax' );
+
+		if ( is_array( $tax ) && array_key_exists( 'tax_on_commission', $tax ) ) {
+			unset( $tax['tax_on_commission'] );
+			update_option( 'wpss_tax', $tax );
+		}
 	}
 
 	/**

@@ -960,7 +960,7 @@
 
 .wpss-details-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
 	gap: 15px;
 	max-width: 400px;
 }
@@ -984,7 +984,11 @@
 	flex-shrink: 0;
 	width: 40px;
 	height: 40px;
-	background: linear-gradient(-135deg, var(--wpss-admin-primary), var(--wpss-success-dark, #19a463));
+	/* A tint with the glyph in the accent: the old dark gradient left the
+	   Lucide glyphs (which inherit currentColor, not the white set on
+	   .dashicons) nearly invisible (Basecamp 10337190248). */
+	background: color-mix(in srgb, var(--wpss-admin-primary) 12%, transparent);
+	color: var(--wpss-admin-primary-dark);
 	border-radius: 8px;
 	display: flex;
 	align-items: center;
@@ -992,7 +996,7 @@
 }
 
 .wpss-detail-icon .dashicons {
-	color: var(--wpss-white, #fff);
+	color: inherit;
 	font-size: 20px;
 	width: 20px;
 	height: 20px;
@@ -1906,12 +1910,28 @@
    used to repeat them (and 20 other shared rules) in an inline <style>, so two
    sets fought and load order decided. Joined folded under the vendor name and
    Actions became row-actions, so those two widths are gone. */
-.wpss-vendors-table .column-vendor { width: 42%; }
+.wpss-vendors-table .column-vendor { width: 38%; }
 .wpss-vendors-table .column-services { width: 9%; text-align: center; }
-.wpss-vendors-table .column-orders { width: 9%; text-align: center; }
+/* Wide enough for "Orders" plus its sort arrows on one line at 820px. */
+.wpss-vendors-table .column-orders { width: 13%; text-align: center; }
 .wpss-vendors-table .column-rating { width: 12%; text-align: center; }
 .wpss-vendors-table .column-earnings { width: 14%; text-align: left; }
 .wpss-vendors-table .column-status { width: 14%; }
+
+/* A sortable header is a block link holding floated spans, which ignore the
+   cell's text-align: "Earned" sat 100px left of the amounts under it
+   (Basecamp 10375549075). As a flex row the link can be aligned like the
+   values below it. */
+.wpss-vendors-table th.column-orders a,
+.wpss-vendors-table th.column-rating a,
+.wpss-vendors-table th.column-earnings a {
+	display: flex;
+	justify-content: center;
+}
+
+.wpss-vendors-table th.column-earnings a {
+	justify-content: flex-end;
+}
 
 .wpss-vendor-joined {
 	font-size: 12px;
@@ -1963,15 +1983,34 @@
 	display: flex;
 	align-items: center;
 	gap: 10px;
+	min-width: 0;
+}
+
+/* The text column must be able to shrink, so a long name or email wraps
+   inside its cell instead of running over the next column. */
+.wpss-vendor-info > div {
+	min-width: 0;
 }
 
 .wpss-vendor-avatar {
 	width: 40px;
 	height: 40px;
 	border-radius: 50%;
+	flex-shrink: 0;
 }
 
 .wpss-vendor-name {
+	font-weight: 500;
+}
+
+.wpss-vendor-name,
+.wpss-vendor-email {
+	overflow-wrap: anywhere;
+}
+
+/* Withdrawals: a request with no payout destination says so beside Mark paid. */
+.wpss-withdrawal-details--missing {
+	color: var(--wpss-admin-danger, #b32d2e);
 	font-weight: 500;
 }
 
@@ -2018,12 +2057,20 @@
    .wpss-moderation-table. */
 .wpss-moderation-table .column-cb { width: 30px; }
 .wpss-moderation-table .column-thumbnail { width: 60px; }
-.wpss-moderation-table .column-title { width: 25%; }
-.wpss-moderation-table .column-vendor { width: 12%; }
-.wpss-moderation-table .column-category { width: 12%; }
-.wpss-moderation-table .column-price { width: 8%; }
-.wpss-moderation-table .column-date { width: 10%; }
-.wpss-moderation-table .column-status { width: 10%; }
+.wpss-moderation-table .column-title { width: 22%; }
+.wpss-moderation-table .column-vendor { width: 13%; }
+.wpss-moderation-table .column-category { width: 14%; }
+/* Fixed widths: core's break-word splits "$50.00", dates and status badges
+   mid-word once a percentage column gets narrow (820px). */
+.wpss-moderation-table .column-price { width: 5em; }
+.wpss-moderation-table .column-date { width: 6.5em; }
+.wpss-moderation-table .column-status { width: 6.5em; }
+
+/* Eight columns do not fit a tablet; the thumbnail is the one that says
+   least, so it gives its width to the vendor and service names. */
+@media screen and (max-width: 1024px) {
+	.wpss-moderation-table .column-thumbnail { display: none; }
+}
 .wpss-moderation-table .column-actions { width: 15%; }
 
 .wpss-moderation-table .service-thumb {
@@ -2052,13 +2099,20 @@
 .inline-edit-row .inline-edit-status { display: none !important; }
 
 /* Withdrawals (Payouts) page */
-.wpss-withdrawals-table .column-id { width: 6%; }
+/* Fixed widths: the label, its sort arrows and a 5-digit id stay on one line at 820px (ID, Amount, Status). */
+.wpss-withdrawals-table .column-id { width: 5em; }
 .wpss-withdrawals-table .column-vendor { width: 20%; }
-.wpss-withdrawals-table .column-amount { width: 12%; text-align: end; }
+.wpss-withdrawals-table .column-amount { width: 7.5em; text-align: end; }
 .wpss-withdrawals-table .column-method { width: 12%; }
-.wpss-withdrawals-table .column-status { width: 12%; }
+.wpss-withdrawals-table .column-status { width: 7.5em; }
 .wpss-withdrawals-table .column-date { width: 15%; }
 .wpss-withdrawals-table .column-actions { width: 18%; }
+
+/* Tablet: seven columns leave the vendor column too narrow to carry the
+   avatar as well as the name and email. */
+@media screen and (min-width: 783px) and (max-width: 1024px) {
+	.wpss-withdrawals-table .wpss-vendor-avatar { display: none; }
+}
 
 .wpss-withdrawals-filters {
 	display: flex;
@@ -2347,6 +2401,7 @@
 /* Tab Navigation */
 .wpss-detail-tabs {
 	display: flex;
+	flex-wrap: wrap; /* Eight tabs overflowed an 820px screen by 41px; wrapping only started at 640px. */
 	gap: 0;
 	background: var(--wpss-admin-white);
 	border: 1px solid var(--wpss-admin-border);
@@ -2930,10 +2985,6 @@
 		grid-template-columns: repeat(2, 1fr);
 	}
 
-	.wpss-details-grid {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
 	.wpss-detail-stats-row {
 		grid-template-columns: repeat(3, 1fr);
 	}
@@ -3491,4 +3542,504 @@ button.wpss-change-status:focus {
 .button[class*="wpss-"]:not(.button-primary):focus {
 	color: var(--wpss-admin-accent-hover, #135e96);
 	border-color: var(--wpss-admin-accent-hover, #135e96);
+}
+
+/* All Services list (ServiceListScreen). */
+.post-type-wpss_service .column-wpss_thumb {
+	width: 56px;
+}
+
+.wpss-list-thumb {
+	display: block;
+	width: 48px;
+	height: 48px;
+	border-radius: 6px;
+	object-fit: cover;
+}
+
+.wpss-list-thumb--empty {
+	background: var(--wpss-admin-border, #e2e8f0);
+}
+
+.post-type-wpss_service .column-wpss_price {
+	width: 7em;
+}
+
+/* 7em wrapped "Moderation" beside its sort arrows onto two lines, lifting it
+   above the other headers (Basecamp 10375195782). */
+.post-type-wpss_service .column-wpss_moderation,
+.post-type-wpss_service .column-wpss_orders {
+	width: 9em;
+}
+
+/* iPad widths: the title needs the room more than the thumbnail and the
+   category list do (the category filter above the table still works). */
+@media screen and (max-width: 1100px) {
+	.post-type-wpss_service .column-wpss_thumb,
+	.post-type-wpss_service .column-taxonomy-wpss_service_category {
+		display: none;
+	}
+}
+
+/* Category icon field preview (ServiceCategoryTaxonomy). */
+.wpss-icon-preview {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	margin-inline-start: 8px;
+	vertical-align: middle;
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: 6px;
+	color: var(--wpss-admin-primary-dark);
+}
+
+.wpss-icon-preview:empty {
+	display: none;
+}
+
+.column-wpss_icon .wpss-icon {
+	color: var(--wpss-admin-primary-dark);
+}
+
+/* ==========================================================================
+   Stacked list tables (782px and below)
+   The plugin's hand-built admin tables carry no core "primary column", so
+   WordPress's own mobile list-table rules half-applied: every header stayed
+   (wrapping mid-word), and the data-colname labels were absolutely placed
+   over the values. One rule for all of them: no header row, each cell a
+   label/value pair, identity cells (no data-colname) full width.
+   The selector mirrors core's and adds a class, so it wins on specificity.
+   ========================================================================== */
+.wpss-moderation-thumb-placeholder {
+	width: 40px;
+	height: 40px;
+	color: var(--wpss-admin-text-muted, #a7aaad);
+}
+
+@media screen and (max-width: 782px) {
+	.wpss-stacked-table thead,
+	.wpss-stacked-table tfoot {
+		display: none;
+	}
+
+	/* A row with no image shows no placeholder on a phone (Basecamp 10337190248). */
+	/* Mirrors the stacked cell selector below, plus the empty class, so it wins. */
+	.wpss-stacked-table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td.column-thumbnail--empty:not(.check-column) {
+		display: none;
+	}
+
+	/* The desktop minimum width (for sideways scrolling) would keep a stacked
+	   table 720px wide inside a 390px screen, hiding every value past the edge. */
+	.wpss-stacked-table.wp-list-table,
+	.wpss-stacked-table.wp-list-table tbody {
+		display: block;
+		width: 100%;
+		min-width: 0;
+	}
+
+	.wpss-stacked-table.wp-list-table tbody tr {
+		display: block;
+		position: relative;
+		padding: 12px 44px 12px 12px;
+		border-bottom: 1px solid var(--wpss-admin-border, #dcdcde);
+	}
+
+	.wpss-stacked-table.wp-list-table tbody .check-column {
+		position: absolute;
+		top: 12px;
+		right: 8px;
+		width: auto;
+		padding: 0;
+	}
+
+	.wpss-stacked-table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column),
+	.wpss-stacked-table.wp-list-table tr:not(.inline-edit-row):not(.no-items) th:not(.check-column) {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		width: auto;
+		padding: 4px 0;
+		position: static;
+		text-align: start;
+		overflow-wrap: anywhere;
+	}
+
+	.wpss-stacked-table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td[data-colname] {
+		grid-template-columns: 7.5rem minmax(0, 1fr);
+		column-gap: 12px;
+		align-items: start;
+	}
+
+	.wpss-stacked-table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column)::before {
+		content: none;
+	}
+
+	.wpss-stacked-table.wp-list-table tr:not(.inline-edit-row):not(.no-items) td[data-colname]::before {
+		content: attr(data-colname);
+		position: static;
+		width: auto;
+		font-weight: 600;
+		color: var(--wpss-admin-text-muted, #646970);
+	}
+
+	/* A label cell's value may be several nodes; keep them in the value column. */
+	.wpss-stacked-table.wp-list-table td[data-colname] > * {
+		grid-column: 2;
+	}
+
+	.wpss-stacked-table .row-actions {
+		position: static;
+		right: auto;
+	}
+}
+
+/* Search picker (wpss_admin_search_select): search box over a select that
+   lists the matches while open. */
+.wpss-search-select {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	max-width: 100%;
+	width: 25rem;
+}
+
+.wpss-search-select__input,
+.wpss-search-select select {
+	width: 100%;
+	max-width: 100%;
+}
+
+.wpss-search-select select.is-open {
+	height: auto;
+	padding-block: 4px;
+}
+
+/* Orders list (Basecamp 10337161480): payment under the total, due/late under
+   the status; a status + total line in the primary cell and a tab select on
+   a phone, where core shows only the primary column. */
+.wpss-order-row-sub {
+	display: block;
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-order-row-sub--late {
+	color: var(--wpss-admin-danger, #b32d2e);
+	font-weight: 500;
+}
+
+.wpss-order-row-mobile,
+.wpss-orders-group-select {
+	display: none;
+}
+
+/* In a list toolbar the picker is just its search box: the matches open
+   underneath it, and the select stays in the row only once something is
+   chosen. */
+.tablenav .wpss-search-select,
+.wpss-audit-filters .wpss-search-select {
+	position: relative;
+	display: inline-flex;
+	flex-direction: row;
+	width: auto;
+	vertical-align: middle;
+	margin-inline-end: 6px;
+}
+
+.tablenav .wpss-search-select__input,
+.tablenav .wpss-search-select select,
+.wpss-audit-filters .wpss-search-select__input,
+.wpss-audit-filters .wpss-search-select select {
+	width: 11rem;
+}
+
+.tablenav .wpss-search-select select:not(.is-open):not(.has-value),
+.wpss-audit-filters .wpss-search-select select:not(.is-open):not(.has-value) {
+	display: none;
+}
+
+.tablenav .wpss-search-select select.is-open,
+.wpss-audit-filters .wpss-search-select select.is-open {
+	position: absolute;
+	z-index: 10;
+	top: 100%;
+	inset-inline-start: 0;
+	width: 18rem;
+}
+
+@media screen and (max-width: 782px) {
+	.wpss-order-row-mobile {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 4px 8px;
+		margin-top: 4px;
+	}
+
+	.wpss-order-row-mobile .wpss-order-row-sub {
+		display: inline;
+	}
+
+	.wpss-list-card__filters .subsubsub {
+		display: none;
+	}
+
+	/* Core keeps the row actions' height at this width but shows them only on
+	   touch or hover, which read as a blank band under every row. */
+	.wp-list-table.orders .row-actions,
+	.wp-list-table.disputes .row-actions {
+		right: 0;
+	}
+
+	.wpss-orders-group-select {
+		display: block;
+		width: 100%;
+		max-width: none;
+		margin-block: 8px;
+	}
+
+	.tablenav .wpss-search-select {
+		display: flex;
+		width: 100%;
+		margin-block: 4px;
+	}
+
+	.tablenav .wpss-search-select__input,
+	.tablenav .wpss-search-select select {
+		width: 50%;
+	}
+}
+
+/* Order numbers such as #WPSS-20260816-0004 need their own width; core gave
+   every column the same share and split them mid-word at 1024 and 820. */
+.wp-list-table.orders .column-order_number { width: 12em; }
+.wp-list-table.orders .column-total { width: 8em; }
+.wp-list-table.orders .column-status { width: 10em; }
+.wp-list-table.orders .column-date { width: 7em; }
+
+@media screen and (min-width: 783px) and (max-width: 1024px) {
+	/* Tablet: the order date gives way to the names; the due date is under Status. */
+	.wp-list-table.orders .column-date { display: none; }
+}
+
+/* Admin order detail (Basecamp 10337161480): main column (details, money,
+   the order view's blocks, activity, messages) beside the controls; one
+   column on a tablet and phone, money before the messages. */
+.wpss-admin-order__layout {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+	gap: 20px;
+	align-items: start;
+	margin-top: 20px;
+}
+
+.wpss-admin-order .postbox > .hndle {
+	margin: 0;
+	padding: 8px 12px;
+}
+
+.wpss-admin-order__figures {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.wpss-admin-order__figures td {
+	padding-block: 6px;
+}
+
+.wpss-admin-order__figures td:last-child {
+	text-align: end;
+	white-space: nowrap;
+}
+
+.wpss-admin-order__blocks {
+	margin-bottom: 20px;
+}
+
+.wpss-admin-order__activity {
+	margin: 0;
+	list-style: none;
+}
+
+.wpss-admin-order__activity li {
+	display: grid;
+	grid-template-columns: 11em 10em minmax(0, 1fr);
+	gap: 8px;
+	padding-block: 6px;
+	border-bottom: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-admin-order__activity li:last-child {
+	border-bottom: 0;
+}
+
+.wpss-admin-order__activity time,
+.wpss-admin-order__activity li > span:nth-child(2) {
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-admin-order__effects {
+	margin: 0 0 12px;
+	color: var(--wpss-admin-text-light);
+}
+
+@media screen and (max-width: 1024px) {
+	.wpss-admin-order__layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+@media screen and (max-width: 600px) {
+	.wpss-admin-order__activity li {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 2px;
+	}
+}
+
+/* Disputes list (Basecamp 10337171525). */
+.wp-list-table.disputes .column-id { width: 13em; }
+.wp-list-table.disputes .column-amount { width: 7em; }
+.wp-list-table.disputes .column-status { width: 11em; }
+.wp-list-table.disputes .column-age { width: 7em; }
+
+/* Admin dispute detail (Basecamp 10337171525). Two columns; below 1024px the
+   columns dissolve and the boxes take the order an owner works in. */
+.wpss-admin-dispute__layout {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+	gap: 20px;
+	align-items: start;
+	margin-top: 20px;
+}
+
+.wpss-admin-dispute .postbox > .hndle {
+	margin: 0;
+	padding: 8px 12px;
+}
+
+.wpss-admin-dispute__statement {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-admin-dispute__thread .wpss-dispute-detail__evidence {
+	margin-top: 0;
+}
+
+.wpss-admin-dispute__party {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding-block: 8px;
+	overflow-wrap: anywhere;
+}
+
+.wpss-admin-dispute__party + .wpss-admin-dispute__party {
+	border-top: 1px solid var(--wpss-admin-border);
+}
+
+.wpss-admin-dispute__party small,
+.wpss-admin-dispute__email {
+	color: var(--wpss-admin-text-light);
+}
+
+.wpss-dispute-outcome {
+	margin: 0 0 12px;
+	font-weight: 600;
+}
+
+.wpss-dispute-outcome:empty {
+	display: none;
+}
+
+@media screen and (max-width: 1024px) {
+	.wpss-admin-dispute__layout {
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+	}
+
+	.wpss-admin-dispute__main,
+	.wpss-admin-dispute__side {
+		display: contents;
+	}
+
+	.wpss-admin-dispute__details { order: 1; }
+	.wpss-admin-dispute__decide { order: 2; }
+	.wpss-admin-dispute__thread { order: 3; }
+	.wpss-admin-dispute__order { order: 4; }
+	.wpss-admin-dispute__parties { order: 5; }
+}
+
+/* Dashboard (Basecamp 10337159668): five owner queues fill the row at any
+   width; Content Overview is the one box left in its row. */
+.wpss-stats-row.wpss-stats-row--queues {
+	grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.wpss-dashboard-wrap .wpss-dashboard-columns {
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.wpss-recent-orders h2 {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 12px;
+}
+
+.wpss-recent-orders__all {
+	font-size: 13px;
+	font-weight: 400;
+}
+
+/* Audit Log (Basecamp 10337159668). */
+.wpss-audit-table .column-date { width: 10em; }
+.wpss-audit-table .column-forced { width: 5em; }
+
+/* Member Reports: account actions in one menu (Basecamp 10337159668). */
+.wpss-reports-account {
+	position: relative;
+	display: inline-block;
+}
+
+.wpss-reports-account > summary {
+	list-style: none;
+}
+
+.wpss-reports-account > summary::-webkit-details-marker {
+	display: none;
+}
+
+.wpss-reports-account__menu {
+	position: absolute;
+	z-index: 10;
+	inset-inline-end: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-top: 4px;
+	padding: 8px;
+	background: var(--wpss-admin-white);
+	border: 1px solid var(--wpss-admin-border);
+	border-radius: var(--wpss-admin-radius-md);
+	box-shadow: var(--wpss-admin-shadow-md);
+	white-space: nowrap;
+}
+
+.wpss-reports-account__menu .wpss-inline-form {
+	margin: 0;
+}
+
+.wpss-reports-account__menu .button.button-link-delete {
+	color: var(--wpss-admin-danger);
+	border-color: var(--wpss-admin-danger);
+	background: var(--wpss-admin-white);
+}
+
+.wpss-reports-account__menu .button.button-link-delete:hover,
+.wpss-reports-account__menu .button.button-link-delete:focus {
+	color: var(--wpss-admin-white);
+	background: var(--wpss-admin-danger);
 }

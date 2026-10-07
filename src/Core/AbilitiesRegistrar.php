@@ -249,6 +249,14 @@ class AbilitiesRegistrar {
 									'price'         => array( 'type' => 'number' ),
 									'delivery_days' => array( 'type' => 'integer' ),
 									'revisions'     => array( 'type' => 'integer' ),
+									'express_price' => array(
+										'type'        => 'number',
+										'description' => __( 'Optional Express delivery price; 0 means not offered.', 'wp-sell-services' ),
+									),
+									'express_days'  => array(
+										'type'        => 'integer',
+										'description' => __( 'Express delivery time in days; replaces delivery_days and must be shorter.', 'wp-sell-services' ),
+									),
 								),
 							),
 						),
@@ -808,7 +816,14 @@ class AbilitiesRegistrar {
 				'category'  => $input['category'] ?? '',
 				'min_price' => $input['min_price'] ?? '',
 				'max_price' => $input['max_price'] ?? '',
-				'sort_by'   => $input['sort_by'] ?? 'newest',
+				// REST reads orderby/order, not sort_by: translate the ability's names.
+				'orderby'   => array(
+					'price_low'  => 'price',
+					'price_high' => 'price',
+					'rating'     => 'rating',
+					'popular'    => 'popular',
+				)[ $input['sort_by'] ?? 'newest' ] ?? 'date',
+				'order'     => 'price_low' === ( $input['sort_by'] ?? '' ) ? 'ASC' : 'DESC',
 				'page'      => $input['page'] ?? 1,
 				'per_page'  => $input['per_page'] ?? 10,
 			)

@@ -151,7 +151,7 @@ class PaymentReceiptService {
 				'attachments'   => (string) wp_json_encode( array( $first ) ),
 				'note'          => $note,
 				'status'        => 'submitted',
-				'created_at'    => current_time( 'mysql' ),
+				'created_at'    => current_time( 'mysql', true ),
 			)
 		);
 

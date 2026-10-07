@@ -74,7 +74,25 @@ class DisputeService {
 		ServiceOrder::STATUS_LATE,
 		ServiceOrder::STATUS_DELIVERED,
 		ServiceOrder::STATUS_CANCELLATION_REQUESTED,
+		// The buyer's way out of a hold only the vendor can lift
+		// (Basecamp 10336731826).
+		ServiceOrder::STATUS_ON_HOLD,
 	);
+
+	/**
+	 * Every order status a dispute may be opened from.
+	 *
+	 * DISPUTABLE_ORDER_STATUSES plus completed, which open_guard() admits only
+	 * inside the dispute window. OrderService builds its -> disputed edges from
+	 * this list, so the guard and the state machine read the same thing.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return string[]
+	 */
+	public static function dispute_source_statuses(): array {
+		return array_merge( self::DISPUTABLE_ORDER_STATUSES, array( ServiceOrder::STATUS_COMPLETED ) );
+	}
 
 	/**
 	 * Why the last open()/transition()/resolve() call returned false.
@@ -289,8 +307,8 @@ class DisputeService {
 			'description'   => sanitize_textarea_field( $description ),
 			'status'        => self::STATUS_OPEN,
 			'evidence'      => ! empty( $meta ) ? wp_json_encode( $meta ) : null,
-			'created_at'    => current_time( 'mysql' ),
-			'updated_at'    => current_time( 'mysql' ),
+			'created_at'    => current_time( 'mysql', true ),
+			'updated_at'    => current_time( 'mysql', true ),
 		);
 
 		/**
@@ -502,7 +520,7 @@ class DisputeService {
 				'message_type' => $sanitized_type,
 				'description'  => sanitize_textarea_field( $description ),
 				'attachments'  => $attachments ? wp_json_encode( $attachments ) : null,
-				'created_at'   => current_time( 'mysql' ),
+				'created_at'   => current_time( 'mysql', true ),
 			),
 			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
@@ -513,7 +531,7 @@ class DisputeService {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$this->table,
-				array( 'updated_at' => current_time( 'mysql' ) ),
+				array( 'updated_at' => current_time( 'mysql', true ) ),
 				array( 'id' => $dispute_id )
 			);
 		}
@@ -585,7 +603,7 @@ class DisputeService {
 						'type'        => 'file',
 						'content'     => $item,
 						'description' => '',
-						'created_at'  => current_time( 'mysql' ),
+						'created_at'  => current_time( 'mysql', true ),
 					);
 				}
 
@@ -600,7 +618,7 @@ class DisputeService {
 
 				$user_id    = (int) ( $item['user_id'] ?? 0 );
 				$content    = (string) ( $item['content'] ?? '' );
-				$created_at = (string) ( $item['created_at'] ?? current_time( 'mysql' ) );
+				$created_at = (string) ( $item['created_at'] ?? current_time( 'mysql', true ) );
 
 				// Already carried over by an earlier partial run.
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -765,7 +783,7 @@ class DisputeService {
 			(array) ( $context['fields'] ?? array() ),
 			array(
 				'status'     => $to,
-				'updated_at' => current_time( 'mysql' ),
+				'updated_at' => current_time( 'mysql', true ),
 			)
 		);
 
@@ -778,7 +796,7 @@ class DisputeService {
 				'type'       => 'status_note',
 				'note'       => sanitize_textarea_field( $note ),
 				'status'     => $to,
-				'created_at' => current_time( 'mysql' ),
+				'created_at' => current_time( 'mysql', true ),
 			);
 			$data['evidence'] = wp_json_encode( $evidence );
 		}
@@ -826,6 +844,56 @@ class DisputeService {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Resolve an order's open dispute because the order was refunded in full.
+	 *
+	 * The money has already moved (a rail refund, an admin refund, a cancel), so
+	 * this only records the outcome: full_refund, resolved, notification sent.
+	 * It never calls resolve(), which would try to refund again. A rail refund
+	 * used to leave the dispute open or escalated beside a refunded order
+	 * (Basecamp 10372723332).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int    $order_id Order ID.
+	 * @param string $source   Where the refund came from (gateway slug or origin), for the note.
+	 * @return bool Whether a dispute was resolved.
+	 */
+	public function close_for_refund( int $order_id, string $source ): bool {
+		$dispute = $this->get_by_order( $order_id );
+
+		if ( ! $dispute || ! in_array( (string) $dispute->status, array( self::STATUS_OPEN, self::STATUS_PENDING, self::STATUS_ESCALATED ), true ) ) {
+			return false;
+		}
+
+		$order = wpss_get_order( $order_id );
+		$total = $order ? round( (float) $order->total, 2 ) : null;
+		/* translators: %s: where the refund came from, e.g. stripe or admin. */
+		$notes = sprintf( __( 'Order refunded in full (%s). No further money was moved.', 'wp-sell-services' ), $source );
+
+		$resolved = $this->transition(
+			(int) $dispute->id,
+			self::STATUS_RESOLVED,
+			array(
+				'fields' => array(
+					'resolution'       => self::RESOLUTION_REFUND,
+					'resolution_notes' => $notes,
+					'refund_amount'    => $total,
+					'resolved_by'      => get_current_user_id(),
+					'resolved_at'      => current_time( 'mysql', true ),
+				),
+				'note'   => $notes,
+			)
+		);
+
+		if ( $resolved ) {
+			/** This action is documented in src/Services/DisputeService.php */
+			do_action( 'wpss_dispute_resolved', (int) $dispute->id, self::RESOLUTION_REFUND, $dispute, (float) $total );
+		}
+
+		return $resolved;
 	}
 
 	/**
@@ -899,11 +967,26 @@ class DisputeService {
 				'id'            => uniqid( 'refund_' ),
 				'type'          => 'refund_info',
 				'refund_amount' => $refund_amount,
-				'created_at'    => current_time( 'mysql' ),
+				'created_at'    => current_time( 'mysql', true ),
 			);
 		}
 
-		$wpdb->query( 'START TRANSACTION' );
+		/*
+		 * A refund ruling moves money, so it runs OUTSIDE the transaction.
+		 *
+		 * It used to run inside it, which was wrong twice over: a ROLLBACK
+		 * cannot un-send a refund the gateway already made, and the earnings
+		 * reversal opens its own transaction, which in MySQL silently COMMITs
+		 * this one - so the rollback below never rolled anything back. The
+		 * refund now records itself only when the money moved, and the
+		 * transaction covers just the dispute row (Basecamp 10331363649).
+		 */
+		$is_refund_ruling = in_array( $resolution, array( self::RESOLUTION_REFUND, self::RESOLUTION_FAVOR_BUYER, self::RESOLUTION_PARTIAL_REFUND ), true );
+		$this->last_error = '';
+
+		if ( ! $is_refund_ruling ) {
+			$wpdb->query( 'START TRANSACTION' );
+		}
 
 		try {
 			$moved = $this->handle_resolution( $dispute, $resolution, $refund_amount );
@@ -912,9 +995,19 @@ class DisputeService {
 		}
 
 		if ( ! $moved ) {
-			$wpdb->query( 'ROLLBACK' );
-			$this->last_error = __( 'The order could not be moved for this resolution, so the dispute stays open. Check the order status and try again.', 'wp-sell-services' );
+			if ( ! $is_refund_ruling ) {
+				$wpdb->query( 'ROLLBACK' );
+			}
+
+			if ( '' === $this->last_error ) {
+				$this->last_error = __( 'The order could not be moved for this resolution, so the dispute stays open. Check the order status and try again.', 'wp-sell-services' );
+			}
+
 			return false;
+		}
+
+		if ( $is_refund_ruling ) {
+			$wpdb->query( 'START TRANSACTION' );
 		}
 
 		$resolved = $this->transition(
@@ -926,7 +1019,7 @@ class DisputeService {
 					'resolution_notes' => sanitize_textarea_field( $notes ),
 					'refund_amount'    => $refund_amount > 0 ? round( $refund_amount, 2 ) : null,
 					'resolved_by'      => $resolved_by,
-					'resolved_at'      => current_time( 'mysql' ),
+					'resolved_at'      => current_time( 'mysql', true ),
 					'evidence'         => wp_json_encode( $evidence ),
 				),
 			)
@@ -969,12 +1062,41 @@ class DisputeService {
 		switch ( $resolution ) {
 			case self::RESOLUTION_REFUND:
 			case self::RESOLUTION_FAVOR_BUYER:
-				// Ruling for the buyer returns everything they paid; NULL asks
-				// apply_refund_status() to resolve that to the order total.
-				return $this->order_service->apply_refund_status( $order_id, null, ServiceOrder::STATUS_REFUNDED );
-
 			case self::RESOLUTION_PARTIAL_REFUND:
-				return $this->order_service->apply_refund_status( $order_id, $refund_amount, ServiceOrder::STATUS_PARTIALLY_REFUNDED );
+				$partial = self::RESOLUTION_PARTIAL_REFUND === $resolution;
+				$order   = $this->order_service->get( $order_id );
+
+				// Resolving again after the money already went back (the
+				// dispute row write failed last time) must close the dispute,
+				// not try to refund a fully refunded order a second time.
+				if ( ! $partial && $order && ServiceOrder::STATUS_REFUNDED === $order->status ) {
+					return true;
+				}
+
+				// Ruling for the buyer returns everything they paid; NULL asks
+				// refund() to resolve that to the order total.
+				$refund = $this->order_service->refund(
+					$order_id,
+					$partial ? $refund_amount : null,
+					$partial ? ServiceOrder::STATUS_PARTIALLY_REFUNDED : ServiceOrder::STATUS_REFUNDED,
+					array(
+						'origin'     => 'dispute',
+						'dispute_id' => (int) $dispute->id,
+						'resolution' => $resolution,
+					)
+				);
+
+				if ( ! $refund['ok'] ) {
+					$this->last_error = 'failed' === $refund['outcome']
+						? sprintf(
+							/* translators: %s: message from the payment gateway. */
+							__( 'The refund did not go through, so the dispute stays open: %s The order is flagged for retry.', 'wp-sell-services' ),
+							$refund['message']
+						)
+						: $refund['message'];
+				}
+
+				return $refund['ok'];
 
 			case self::RESOLUTION_FAVOR_VENDOR:
 			case self::RESOLUTION_MUTUAL:
@@ -1110,6 +1232,30 @@ class DisputeService {
 		// by any consumer of these two methods (verified: DisputesController is
 		// the only caller, and DisputesListTable runs its own queries).
 		return array_map( array( Dispute::class, 'from_db' ), $rows ?: array() );
+	}
+
+	/**
+	 * How many disputes a member has been party to, as buyer or vendor.
+	 *
+	 * Shown beside each party on the admin dispute screen - the history a
+	 * judge wants before ruling (Basecamp 10337171525).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $user_id User ID.
+	 * @return int
+	 */
+	public function count_for_user( int $user_id ): int {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$this->table} d INNER JOIN {$wpdb->prefix}wpss_orders o ON o.id = d.order_id WHERE o.customer_id = %d OR o.vendor_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$user_id,
+				$user_id
+			)
+		);
 	}
 
 	/**

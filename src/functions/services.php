@@ -338,10 +338,16 @@ function wpss_normalize_service_addons( array $raw ): array {
 		$field_type = sanitize_key( (string) ( $addon['field_type'] ?? 'checkbox' ) );
 		$price_type = sanitize_key( (string) ( $addon['price_type'] ?? 'flat' ) );
 
+		// "Per Quantity" pricing means nothing without a quantity to multiply.
+		if ( 'quantity_based' === $price_type ) {
+			$field_type = 'quantity';
+		}
+
 		$out[] = array(
 			'title'               => $title,
 			'description'         => sanitize_textarea_field( (string) ( $addon['description'] ?? '' ) ),
-			'price'               => (float) ( $addon['price'] ?? 0 ),
+			// A negative add-on is a discount the buyer can stack; never store one.
+			'price'               => max( 0.0, (float) ( $addon['price'] ?? 0 ) ),
 
 			/*
 			 * Clamp, never absint().
@@ -359,8 +365,8 @@ function wpss_normalize_service_addons( array $raw ): array {
 			 * no extra days - which is the closest honest reading of it.
 			 */
 			'delivery_days_extra' => max( 0, (int) ( $addon['delivery_days_extra'] ?? $addon['extra_days'] ?? $addon['delivery_time'] ?? 0 ) ),
-			'field_type'          => in_array( $field_type, array( 'checkbox', 'quantity', 'dropdown', 'text' ), true ) ? $field_type : 'checkbox',
-			'price_type'          => in_array( $price_type, array( 'flat', 'percentage', 'quantity_based' ), true ) ? $price_type : 'flat',
+			'field_type'          => isset( wpss_get_addon_field_types()[ $field_type ] ) ? $field_type : 'checkbox',
+			'price_type'          => isset( wpss_get_addon_price_types()[ $price_type ] ) ? $price_type : 'flat',
 			'min_quantity'        => max( 1, absint( $addon['min_quantity'] ?? 1 ) ),
 			'max_quantity'        => max( 1, absint( $addon['max_quantity'] ?? 10 ) ),
 			'options'             => sanitize_text_field( is_array( $addon['options'] ?? null ) ? implode( ', ', $addon['options'] ) : (string) ( $addon['options'] ?? '' ) ),
@@ -469,91 +475,462 @@ function wpss_get_service_revisions( int $service_id ): int {
 }
 
 /**
- * Resolve addon data from checkout POST data.
+ * Add-on field types: how the buyer answers an add-on (value => label).
  *
- * Reads addon_ids from $_POST, validates each addon belongs to the service
- * and is active, then returns addon details and total for create_order().
+ * @since 1.8.0
  *
- * @since 1.1.0
- *
- * @param int    $service_id Service post ID.
- * @param string $addon_ids  Optional. Comma-separated add-on indices; overrides the request.
- * @return array{addons: array, addons_total: float, delivery_days_extra: int}
+ * @return array<string, string>
  */
-function wpss_resolve_checkout_addons( int $service_id, string $addon_ids = '' ): array {
-	$result = array(
-		'addons'              => array(),
-		'addons_total'        => 0,
-		'delivery_days_extra' => 0,
+function wpss_get_addon_field_types(): array {
+	return array(
+		'checkbox' => __( 'Checkbox (Yes/No)', 'wp-sell-services' ),
+		'quantity' => __( 'Quantity Selector', 'wp-sell-services' ),
+		'dropdown' => __( 'Dropdown Select', 'wp-sell-services' ),
+		'text'     => __( 'Text Input', 'wp-sell-services' ),
 	);
+}
 
-	// Try pre-resolved addons_data first (sent by checkout form as JSON).
-	// Skipped when the caller names the ids itself (a gateway return leg
-	// re-resolving from its own metadata): those are priced from post meta.
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
-	$addons_json = ( '' === $addon_ids && isset( $_POST['addons_data'] ) ) ? sanitize_text_field( wp_unslash( $_POST['addons_data'] ) ) : '';
-	if ( $addons_json ) {
-		$addons_array = json_decode( $addons_json, true );
-		if ( is_array( $addons_array ) ) {
-			foreach ( $addons_array as $addon ) {
-				$addon_price                    = (float) ( $addon['price'] ?? 0 );
-				$extra_days                     = (int) ( $addon['delivery_days_extra'] ?? $addon['extra_days'] ?? 0 );
-				$result['addons_total']        += $addon_price;
-				$result['delivery_days_extra'] += $extra_days;
-				$result['addons'][]             = array(
-					'id'                  => (int) ( $addon['id'] ?? 0 ),
-					'name'                => sanitize_text_field( $addon['name'] ?? $addon['title'] ?? '' ),
-					'price'               => $addon_price,
-					'delivery_days_extra' => $extra_days,
-				);
+/**
+ * Add-on price types: how an add-on is priced (value => label).
+ *
+ * @since 1.8.0
+ *
+ * @return array<string, string>
+ */
+function wpss_get_addon_price_types(): array {
+	return array(
+		'flat'           => __( 'Flat Price', 'wp-sell-services' ),
+		'percentage'     => __( 'Percentage of Order', 'wp-sell-services' ),
+		'quantity_based' => __( 'Per Quantity', 'wp-sell-services' ),
+	);
+}
+
+/**
+ * How an add-on's price reads to a buyer: "+$20", "+10%" or "$5 each".
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, mixed> $addon Normalised add-on (wpss_get_service_extras()).
+ * @return string Plain text.
+ */
+function wpss_addon_price_label( array $addon ): string {
+	$amount = (float) ( $addon['price'] ?? 0 );
+
+	if ( 'percentage' === ( $addon['price_type'] ?? 'flat' ) ) {
+		/* translators: %s: percentage number */
+		return sprintf( __( '+%s%%', 'wp-sell-services' ), number_format_i18n( $amount, floor( $amount ) === $amount ? 0 : 2 ) );
+	}
+
+	$money = wp_strip_all_tags( wpss_format_price( $amount ) );
+
+	if ( 'quantity_based' === ( $addon['price_type'] ?? 'flat' ) ) {
+		/* translators: %s: price per unit */
+		return sprintf( __( '%s each', 'wp-sell-services' ), $money );
+	}
+
+	/* translators: %s: price */
+	return sprintf( __( '+%s', 'wp-sell-services' ), $money );
+}
+
+/**
+ * Normalise what a buyer picked into one shape, from any shape a surface sends.
+ *
+ * Accepts a CSV of ids ("0,2"), a list of ids, a list of {id, quantity, option,
+ * text}, the manual-order map {id: {selected, quantity, option, text}}, legacy
+ * cart rows {id, title, price} (the price is IGNORED - add-ons are priced from
+ * the service, never from what a request says), or a JSON string of any of
+ * these. Ids are indices into the service's add-ons.
+ *
+ * @since 1.8.0
+ *
+ * @param mixed $raw Selection in any supported shape.
+ * @return array<int, array{id: int, quantity: int, option: string, text: string}> Keyed by add-on id.
+ */
+function wpss_normalize_addon_selection( $raw ): array {
+	if ( is_string( $raw ) ) {
+		$raw     = trim( $raw );
+		$decoded = ( '' !== $raw && ( '[' === $raw[0] || '{' === $raw[0] ) ) ? json_decode( $raw, true ) : null;
+		$raw     = is_array( $decoded ) ? $decoded : ( '' === $raw ? array() : explode( ',', $raw ) );
+	}
+
+	$out = array();
+
+	foreach ( (array) $raw as $key => $entry ) {
+		if ( is_array( $entry ) && array_key_exists( 'selected', $entry ) ) {
+			// Manual-order map: {id: {selected, quantity, option, text}}.
+			if ( empty( $entry['selected'] ) ) {
+				continue;
 			}
-			return $result;
+			$entry['id'] = $key;
 		}
-	}
 
-	// Fallback: resolve from addon_ids (indices into _wpss_addons post meta).
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by calling gateway.
-	$addon_ids_raw = '' !== $addon_ids ? $addon_ids : ( isset( $_POST['addon_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['addon_ids'] ) ) : '' );
+		$row = is_array( $entry ) ? $entry : array( 'id' => $entry );
 
-	/*
-	 * '' means "no add-ons", "0" means "the FIRST add-on".
-	 *
-	 * Add-on ids here are 0-based indices into _wpss_addons, so a buyer who
-	 * selects only the first add-on sends the string "0" - which PHP treats as
-	 * falsy. `if ( ! $addon_ids_raw )` therefore returned an empty result and
-	 * the charge silently dropped that add-on: the buyer saw it in the UI, was
-	 * billed without it, and the vendor lost the revenue. It only ever broke
-	 * for the FIRST add-on selected alone, which is the most commonly selected
-	 * one, and never for "1" or "0,1" - which is why it survived.
-	 *
-	 * Compare against '' explicitly. Same reason the line above already uses
-	 * `'' !== $addon_ids` rather than a truthiness test.
-	 */
-	if ( '' === $addon_ids_raw ) {
-		return $result;
-	}
-
-	$addon_indices = array_map( 'intval', explode( ',', $addon_ids_raw ) );
-	$all_extras    = wpss_get_service_extras( $service_id );
-
-	foreach ( $addon_indices as $index ) {
-		if ( $index < 0 || ! isset( $all_extras[ $index ] ) ) {
+		if ( ! isset( $row['id'] ) || ! is_numeric( $row['id'] ) || ( (int) $row['id'] < 0 && WPSS_EXPRESS_ADDON_ID !== (int) $row['id'] ) ) {
 			continue;
 		}
-		$extra                          = $all_extras[ $index ];
-		$addon_price                    = (float) ( $extra['price'] ?? 0 );
-		$extra_days                     = (int) $extra['delivery_days_extra'];
-		$result['addons_total']        += $addon_price;
-		$result['delivery_days_extra'] += $extra_days;
-		$result['addons'][]             = array(
-			'id'                  => $index,
-			'name'                => sanitize_text_field( $extra['title'] ?? '' ),
-			'price'               => $addon_price,
-			'delivery_days_extra' => $extra_days,
+
+		$id         = (int) $row['id'];
+		$out[ $id ] = array(
+			'id'       => $id,
+			'quantity' => max( 1, absint( $row['quantity'] ?? 1 ) ),
+			'option'   => sanitize_text_field( (string) ( $row['option'] ?? '' ) ),
+			'text'     => sanitize_textarea_field( (string) ( $row['text'] ?? '' ) ),
 		);
 	}
 
+	return $out;
+}
+
+/**
+ * Price the add-ons a buyer picked - THE one add-on pricer.
+ *
+ * Every surface that shows or charges an add-on reads this: the order modal's
+ * quote, the cart, checkout, the app's payment intent, the admin manual order
+ * and Pro's store rails. Flat add-ons cost their price; percentage add-ons are
+ * that percent of the package subtotal; a quantity add-on is its unit price
+ * times the quantity, clamped to its min and max. Required add-ons are always
+ * included. Before 1.8.0 five surfaces priced add-ons on their own and all but
+ * one treated every add-on as flat (Basecamp 10336467507).
+ *
+ * @since 1.8.0
+ *
+ * @param int   $service_id       Service post ID.
+ * @param mixed $selection        What the buyer picked (any shape wpss_normalize_addon_selection() takes).
+ * @param float $package_subtotal Package price x quantity, the base for percentage add-ons.
+ * @param array $package          The package bought; needed to price its Express delivery
+ *                                (wpss_get_package_express()). Without it Express is not offered.
+ * @return array{addons: array<int, array<string, mixed>>, addons_total: float, delivery_days_extra: int}|WP_Error
+ */
+function wpss_price_addons( int $service_id, $selection, float $package_subtotal, array $package = array() ) {
+	$definitions = wpss_get_service_extras( $service_id );
+	$normalized  = wpss_normalize_addon_selection( $selection );
+	$picked      = array_intersect_key( $normalized, $definitions );
+	$decimals    = wpss_get_currency_decimals();
+
+	foreach ( $definitions as $index => $definition ) {
+		if ( ! empty( $definition['is_required'] ) && ! isset( $picked[ $index ] ) ) {
+			$picked[ $index ] = array(
+				'id'       => $index,
+				'quantity' => 1,
+				'option'   => '',
+				'text'     => '',
+			);
+		}
+	}
+
+	ksort( $picked );
+
+	$result = array(
+		'addons'              => array(),
+		'addons_total'        => 0.0,
+		'delivery_days_extra' => 0,
+	);
+
+	foreach ( $picked as $index => $choice ) {
+		$definition = $definitions[ $index ];
+		$field_type = (string) $definition['field_type'];
+		$quantity   = 1;
+		$option     = '';
+		$text       = '';
+
+		if ( 'quantity' === $field_type ) {
+			$quantity = min( max( $choice['quantity'], (int) $definition['min_quantity'] ), max( (int) $definition['min_quantity'], (int) $definition['max_quantity'] ) );
+		} elseif ( 'dropdown' === $field_type ) {
+			$options = array_values( array_filter( array_map( 'trim', explode( ',', (string) $definition['options'] ) ), 'strlen' ) );
+			$option  = in_array( $choice['option'], $options, true ) ? $choice['option'] : '';
+		} elseif ( 'text' === $field_type ) {
+			$text = mb_substr( trim( $choice['text'] ), 0, 500 );
+		}
+
+		// A dropdown needs a real option and a text add-on needs text; without
+		// one it was not really chosen.
+		if ( ( 'dropdown' === $field_type && '' === $option ) || ( 'text' === $field_type && '' === $text ) ) {
+			if ( ! empty( $definition['is_required'] ) ) {
+				return new WP_Error(
+					'wpss_addon_required',
+					/* translators: %s: add-on title */
+					sprintf( __( 'Please complete the required add-on "%s".', 'wp-sell-services' ), $definition['title'] ),
+					array( 'status' => 400 )
+				);
+			}
+			continue;
+		}
+
+		$rate  = (float) $definition['price'];
+		$unit  = 'percentage' === $definition['price_type'] ? round( $package_subtotal * $rate / 100, $decimals ) : $rate;
+		$price = round( $unit * $quantity, $decimals );
+
+		$result['addons'][]             = array(
+			'id'                  => (int) $index,
+			'title'               => (string) $definition['title'],
+			'name'                => (string) $definition['title'],
+			'field_type'          => $field_type,
+			'price_type'          => (string) $definition['price_type'],
+			'rate'                => $rate,
+			'unit_price'          => $unit,
+			'quantity'            => $quantity,
+			'option'              => $option,
+			'text'                => $text,
+			'price'               => $price,
+			'delivery_days_extra' => (int) $definition['delivery_days_extra'],
+		);
+		$result['addons_total']        += $price;
+		$result['delivery_days_extra'] += (int) $definition['delivery_days_extra'];
+	}
+
+	// Express delivery: a flat price for the package's faster delivery time,
+	// which replaces the package's days rather than adding to them. It rides
+	// as an add-on row so every rail that carries add-ons carries it.
+	$express = wpss_get_package_express( $package );
+	if ( $express && isset( $normalized[ WPSS_EXPRESS_ADDON_ID ] ) ) {
+		$price                   = round( $express['price'], $decimals );
+		$result['addons'][]      = array(
+			'id'                  => WPSS_EXPRESS_ADDON_ID,
+			'title'               => __( 'Express delivery', 'wp-sell-services' ),
+			'name'                => __( 'Express delivery', 'wp-sell-services' ),
+			'field_type'          => 'express',
+			'price_type'          => 'flat',
+			'rate'                => $price,
+			'unit_price'          => $price,
+			'quantity'            => 1,
+			'option'              => '',
+			'text'                => '',
+			'price'               => $price,
+			'delivery_days_extra' => 0,
+			'delivery_days'       => $express['days'],
+		);
+		$result['addons_total'] += $price;
+	}
+
+	$result['addons_total'] = round( $result['addons_total'], $decimals );
+
 	return $result;
+}
+
+/**
+ * A package's stable id, as a saver should keep it.
+ *
+ * The wizard and the wp-admin editor rebuilt each package from a list of keys
+ * that left `id` out, so every save stripped the ids and the next read handed
+ * out new ones - a saved cart or an app link to package 1000 then pointed at
+ * nothing (Basecamp 10342028625). Every package saver adds this to the row it
+ * builds; wpss_assign_package_ids() numbers any package still without one.
+ *
+ * @since 1.8.0
+ *
+ * @param array $raw Package input.
+ * @return array{id?: int} The id, or nothing for a new package.
+ */
+function wpss_package_id_from_input( array $raw ): array {
+	$id = absint( $raw['id'] ?? 0 );
+
+	return $id > 0 ? array( 'id' => $id ) : array();
+}
+
+/**
+ * A package's Express delivery, when it offers one.
+ *
+ * Express is set per package (Basecamp 10337201764): a price and a delivery
+ * time that REPLACES the package's own, which an add-on cannot express - an
+ * add-on only adds days, so an "Express 24h" add-on made the order slower.
+ * Offered only when it is actually faster than the package.
+ *
+ * @since 1.8.0
+ *
+ * @param array $package Package row.
+ * @return array{price: float, days: int}|null
+ */
+function wpss_get_package_express( array $package ): ?array {
+	$price = (float) ( $package['express_price'] ?? 0 );
+	$days  = (int) ( $package['express_days'] ?? 0 );
+	$base  = (int) ( $package['delivery_days'] ?? 0 );
+
+	if ( $price <= 0 || $days < 1 || ( $base > 0 && $days >= $base ) ) {
+		return null;
+	}
+
+	return array(
+		'price' => $price,
+		'days'  => $days,
+	);
+}
+
+/**
+ * Meta key behind each service sort that orders by a stored number.
+ *
+ * @since 1.8.0
+ *
+ * @return array<string,array{key:string,order:string}> Sort slug => meta key and direction.
+ */
+function wpss_service_meta_sorts(): array {
+	return array(
+		'price_low'  => array(
+			'key'   => '_wpss_starting_price',
+			'order' => 'ASC',
+		),
+		'price_high' => array(
+			'key'   => '_wpss_starting_price',
+			'order' => 'DESC',
+		),
+		'rating'     => array(
+			'key'   => '_wpss_rating_average',
+			'order' => 'DESC',
+		),
+		'popular'    => array(
+			'key'   => '_wpss_order_count',
+			'order' => 'DESC',
+		),
+	);
+}
+
+/**
+ * Apply a catalog sort to WP_Query args without dropping services.
+ *
+ * Ordering by `meta_key` INNER JOINs the meta, so a service with no rating or
+ * no completed order vanished from the list: "Highest Rated" showed 31 of 402.
+ * (An EXISTS / NOT EXISTS meta clause cannot fix it - WP_Query then orders by an
+ * arbitrary unrelated meta row for the services that lack the key.) This tags
+ * the query with `wpss_service_sort`; wpss_service_sort_clauses() LEFT JOINs the
+ * one key, so every service stays and those without the value sort last, newest
+ * first among them. Every surface that sorts services - storefront, search,
+ * REST, shortcodes - calls this one function; do not write another meta_key sort.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string,mixed> $args WP_Query args.
+ * @param string              $sort newest, price_low, price_high, rating or popular. Anything else leaves $args untouched.
+ * @return array<string,mixed> The args with the sort applied.
+ */
+function wpss_apply_service_sort( array $args, string $sort ): array {
+	if ( 'newest' === $sort ) {
+		$args['orderby'] = array( 'date' => 'DESC' );
+		unset( $args['meta_key'], $args['order'], $args['wpss_service_sort'] );
+		return $args;
+	}
+
+	if ( ! isset( wpss_service_meta_sorts()[ $sort ] ) ) {
+		return $args;
+	}
+
+	if ( ! has_filter( 'posts_clauses', 'wpss_service_sort_clauses' ) ) {
+		add_filter( 'posts_clauses', 'wpss_service_sort_clauses', 10, 2 );
+	}
+
+	$args['wpss_service_sort'] = $sort;
+	$args['orderby']           = array( 'date' => 'DESC' ); // Fallback only; the clause below leads.
+	unset( $args['meta_key'], $args['order'] );
+
+	return $args;
+}
+
+/**
+ * `posts_clauses` half of wpss_apply_service_sort().
+ *
+ * @since 1.8.0
+ *
+ * @param array<string,string> $clauses SQL clauses.
+ * @param \WP_Query            $query   The query.
+ * @return array<string,string>
+ */
+function wpss_service_sort_clauses( array $clauses, \WP_Query $query ): array {
+	global $wpdb;
+
+	$sorts = wpss_service_meta_sorts();
+	$sort  = (string) $query->get( 'wpss_service_sort' );
+
+	if ( ! isset( $sorts[ $sort ] ) ) {
+		return $clauses;
+	}
+
+	$clauses['join'] .= $wpdb->prepare( " LEFT JOIN {$wpdb->postmeta} AS wpss_sort ON ( wpss_sort.post_id = {$wpdb->posts}.ID AND wpss_sort.meta_key = %s )", $sorts[ $sort ]['key'] ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	// A service holding the key twice must still list once.
+	if ( false === strpos( $clauses['groupby'], 'ID' ) ) {
+		$clauses['groupby'] = trim( "{$wpdb->posts}.ID " . ( '' !== $clauses['groupby'] ? ', ' . $clauses['groupby'] : '' ) );
+	}
+	$clauses['orderby'] = 'wpss_sort.meta_value IS NULL, CAST( wpss_sort.meta_value AS DECIMAL( 12, 2 ) ) ' . $sorts[ $sort ]['order'] . ", {$wpdb->posts}.post_date DESC";
+
+	return $clauses;
+}
+
+/**
+ * The Express fields of a package, sanitised - the one reader of them for
+ * every package saver (wizard, wp-admin editor, REST), each of which rebuilds
+ * a package from its own list of keys.
+ *
+ * @since 1.8.0
+ *
+ * @param array $raw Package input.
+ * @return array{express_price: float, express_days: int}
+ */
+function wpss_sanitize_package_express( array $raw ): array {
+	$price = max( 0.0, round( (float) ( $raw['express_price'] ?? 0 ), wpss_get_currency_decimals() ) );
+
+	return array(
+		'express_price' => $price,
+		'express_days'  => $price > 0 ? absint( $raw['express_days'] ?? 0 ) : 0,
+	);
+}
+
+/**
+ * How many days an order line takes: the package's time, or its Express time
+ * when bought, plus any add-on days. At least one.
+ *
+ * The one count for the order modal, checkout, the order's deadline and a
+ * revision's deadline.
+ *
+ * @since 1.8.0
+ *
+ * @param array $package Package row (or the order's package snapshot).
+ * @param array $addons  Priced add-on rows (wpss_price_addons(), or the order's addons).
+ * @return int Days.
+ */
+function wpss_line_delivery_days( array $package, array $addons ): int {
+	$days = (int) ( $package['delivery_days'] ?? 0 );
+	$days = $days > 0 ? $days : 7;
+
+	foreach ( $addons as $addon ) {
+		if ( ! empty( $addon['delivery_days'] ) ) {
+			$days = (int) $addon['delivery_days'];
+		}
+	}
+
+	foreach ( $addons as $addon ) {
+		$days += (int) ( $addon['delivery_days_extra'] ?? 0 );
+	}
+
+	return max( 1, $days );
+}
+
+/**
+ * Whether a person may see a service at all.
+ *
+ * Published services are public; an unpublished one (draft, pending, private,
+ * rejected) is visible only to its author and site admins. The single rule for
+ * every route that resolves a service by id - GET /services/{id} had it inline
+ * and its /packages, /faqs, /addons, /reviews and review-summary siblings did
+ * not, so they served unpublished listings to anyone (Basecamp 10336370426).
+ *
+ * @since 1.8.0
+ *
+ * @param int      $service_id Service post ID.
+ * @param int|null $user_id    Viewer; null for the current user.
+ * @return bool
+ */
+function wpss_can_view_service( int $service_id, ?int $user_id = null ): bool {
+	$service = get_post( $service_id );
+
+	if ( ! $service || 'wpss_service' !== $service->post_type ) {
+		return false;
+	}
+
+	if ( 'publish' === $service->post_status ) {
+		return true;
+	}
+
+	$user_id = null === $user_id ? get_current_user_id() : $user_id;
+
+	return $user_id > 0 && ( (int) $service->post_author === $user_id || user_can( $user_id, 'manage_options' ) );
 }
 
 /**
@@ -692,18 +1069,26 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 		);
 	}
 
-	// Sort vocabulary. "rating", "sales" and "price" are not columns WP_Query
-	// understands; without this remap they fall through to post_date and the
-	// grid silently ignores the sort the caller asked for.
-	$orderby_meta = array(
-		'rating' => '_wpss_rating_average',
-		'sales'  => '_wpss_total_sales',
-		'price'  => '_wpss_starting_price',
+	// "rating", "sales" and "price" are stored numbers, sorted by the one
+	// function every listing uses. This grid ordered by meta_key instead, which
+	// drops a service that has no such row: "rating" listed 5 of 12, and
+	// "sales" none at all, because it read _wpss_total_sales, a key nothing
+	// writes (Basecamp 10375174916).
+	$sorts = array(
+		'rating' => 'rating',
+		'sales'  => 'popular',
+		'price'  => 'ASC' === $args['order'] ? 'price_low' : 'price_high',
 	);
 
-	if ( isset( $orderby_meta[ $args['orderby'] ] ) ) {
-		$args['meta_key'] = $orderby_meta[ $args['orderby'] ]; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- ordering by a service stat is the documented behaviour of these surfaces.
-		$args['orderby']  = 'meta_value_num';
+	if ( isset( $sorts[ $args['orderby'] ] ) ) {
+		$args = wpss_apply_service_sort( $args, $sorts[ $args['orderby'] ] );
+	}
+
+	// Same catalog rule as the storefront, search and REST: a vendor on
+	// vacation is not listed. A grid of one named vendor is that vendor's own
+	// page and keeps their services (Basecamp 10375176013).
+	if ( empty( $args['author'] ) ) {
+		$args['author__not_in'] = wpss_get_vacation_vendor_ids();
 	}
 
 	$query = new \WP_Query( $args );
@@ -1260,6 +1645,22 @@ function wpss_validate_service_publishable( array $service ): array {
 							$position
 						);
 				}
+
+				// Express is optional, but once priced it must be a real, faster
+				// time - otherwise the buyer pays extra for nothing.
+				if ( (float) ( $package['express_price'] ?? 0 ) > 0 && null === wpss_get_package_express( wpss_sanitize_package_express( $package ) + array( 'delivery_days' => (int) ( $package['delivery_days'] ?? 0 ) ) ) ) {
+					$errors[] = '' !== $label
+						? sprintf(
+							/* translators: %s: package name or tier (e.g. Standard). */
+							__( 'Express delivery on the %s package must be faster than its delivery time.', 'wp-sell-services' ),
+							$label
+						)
+						: sprintf(
+							/* translators: %d: position of the package in the list, starting at 1. */
+							__( 'Express delivery on package %d must be faster than its delivery time.', 'wp-sell-services' ),
+							$position
+						);
+				}
 			}
 		}
 	}
@@ -1277,6 +1678,66 @@ function wpss_validate_service_publishable( array $service ): array {
 	 * @param array<string,mixed> $service The validated input.
 	 */
 	return apply_filters( 'wpss_service_publish_errors', $errors, $service );
+}
+
+/**
+ * Move a newly written service to the status it was meant to have.
+ *
+ * Every creator must insert the post as a draft, write its packages, gallery,
+ * terms and thumbnail, and only then call this. Inserting straight as
+ * 'publish' ran the publish rules (ServiceMetabox::enforce_publish_rules) on a
+ * post with no meta yet, which demoted it to draft, and nothing published it
+ * again - the wizard said "published" while the service stayed a draft
+ * (Basecamp 10350940481, 10350889943).
+ *
+ * @since 1.8.0
+ *
+ * @param int    $service_id Service post ID.
+ * @param string $status     Intended status: publish, pending or draft.
+ * @return string The status the service actually has afterwards.
+ */
+function wpss_settle_service_status( int $service_id, string $status ): string {
+	if ( get_post_status( $service_id ) !== $status ) {
+		wp_update_post(
+			array(
+				'ID'          => $service_id,
+				'post_status' => $status,
+			)
+		);
+		clean_post_cache( $service_id );
+	}
+
+	return (string) get_post_status( $service_id );
+}
+
+/**
+ * What stands between a saved service and going live, read from the post.
+ *
+ * The same check as {@see wpss_validate_service_publishable()} for a service
+ * that already exists, so every "make it live" path - the editor, moderation
+ * approval, REST - asks one question and gets one answer.
+ *
+ * @since 1.8.0
+ *
+ * @param int $service_id Service post ID.
+ * @return string[] User-facing error sentences; empty when the service may go live.
+ */
+function wpss_get_service_publish_errors( int $service_id ): array {
+	$post = get_post( $service_id );
+
+	if ( ! $post ) {
+		return array( __( 'Service not found.', 'wp-sell-services' ) );
+	}
+
+	return wpss_validate_service_publishable(
+		array(
+			'title'        => $post->post_title,
+			'category_ids' => wp_get_post_terms( $post->ID, 'wpss_service_category', array( 'fields' => 'ids' ) ),
+			'description'  => $post->post_content,
+			'packages'     => (array) get_post_meta( $post->ID, '_wpss_packages', true ),
+			'thumbnail_id' => get_post_thumbnail_id( $post->ID ),
+		)
+	);
 }
 
 /**
@@ -1468,6 +1929,47 @@ function wpss_get_user_cart( int $user_id, bool $keep_paused = false ): array {
 }
 
 /**
+ * How many lines of a member's cart can be bought now.
+ *
+ * The number on the header cart. It counted the stored rows, so a service the
+ * vendor trashed or paused still showed as an item to check out (Basecamp
+ * 10330917388).
+ *
+ * @since 1.8.0
+ *
+ * @param int $user_id Member.
+ * @return int
+ */
+function wpss_get_cart_count( int $user_id ): int {
+	return count( array_filter( wpss_get_user_cart( $user_id, true ), static fn( $item ) => empty( $item['unavailable'] ) ) );
+}
+
+/**
+ * Price one cart line the way checkout will charge it.
+ *
+ * A cart item stores what the buyer chose - service, package, quantity and
+ * the add-on selection (id, quantity, option, text) - never a price. Every
+ * screen that shows a cart total (the cart page, GET /cart, checkout) prices
+ * the line here through CheckoutIntentService::price_service_line(), so a
+ * percentage or per-quantity add-on, or tax, cannot read one way in the cart
+ * and charge another (Basecamp 10336467507, 10336467589). Older items that
+ * stored add-on prices still work: any price in the selection is ignored.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, mixed> $item Cart item.
+ * @return array<string, mixed>|\WP_Error The priced line (see price_service_line()).
+ */
+function wpss_price_cart_item( array $item ) {
+	return \WPSellServices\Checkout\CheckoutIntentService::price_service_line(
+		(int) ( $item['service_id'] ?? 0 ),
+		(int) ( $item['package_id'] ?? 0 ),
+		max( 1, (int) ( $item['quantity'] ?? 1 ) ),
+		$item['addons'] ?? array()
+	);
+}
+
+/**
  * Why a service cannot be bought right now, or '' when it can.
  *
  * The ONE place either rail asks "is this still purchasable". The standalone
@@ -1494,6 +1996,22 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 		return __( 'This service is not currently available.', 'wp-sell-services' );
 	}
 
+	// Paused: still listed, not sold. The cart, the Woo rail and the order
+	// provider all ask here; only the standalone pricer checked it before
+	// (Basecamp 10375174747). Same words as CheckoutIntentService's refusal.
+	if ( 'paused' === wpss_get_service_status( $service_id ) ) {
+		return __( 'This service is not taking new orders right now.', 'wp-sell-services' );
+	}
+
+	// Seller away: the service page says so and disables its button, but a
+	// line already in the cart, a saved checkout link or a REST call still
+	// sold it (Basecamp 10379595852).
+	$seller = \WPSellServices\Models\VendorProfile::get_by_user_id( (int) $service->post_author );
+
+	if ( $seller && $seller->is_on_vacation() ) {
+		return __( 'This seller is away and not taking new orders right now.', 'wp-sell-services' );
+	}
+
 	/**
 	 * Let an integration refuse a service for its own reason.
 	 *
@@ -1503,4 +2021,264 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 	 * @param int    $service_id Service post ID.
 	 */
 	return (string) apply_filters( 'wpss_service_unavailable_reason', '', $service_id );
+}
+
+/**
+ * A service's rating: the average and count of its approved reviews.
+ *
+ * The one read for the service page header, the reviews block, checkout and
+ * the service card. They used to read three ways - stored meta in the header,
+ * a live query in the reviews block, a repository summary at checkout - and
+ * showed "4.8 (4)" above "4.7 / 3 reviews" once the stored figure went stale
+ * (Basecamp 10337201764). It stays a stored number because the "top rated"
+ * sort and every card in a grid need it without a query each.
+ *
+ * @since 1.8.0
+ *
+ * @param int $service_id Service ID.
+ * @return array{average: float, count: int} Average to one decimal, and count.
+ */
+function wpss_get_service_rating( int $service_id ): array {
+	$count = (int) get_post_meta( $service_id, '_wpss_rating_count', true );
+
+	return array(
+		'average' => $count > 0 ? round( (float) get_post_meta( $service_id, '_wpss_rating_average', true ), 1 ) : 0.0,
+		'count'   => $count,
+	);
+}
+
+/**
+ * Recount a service's rating from its approved reviews.
+ *
+ * The only writer of the stored rating; every review create, moderation and
+ * delete calls it.
+ *
+ * @since 1.8.0
+ *
+ * @param int $service_id Service ID.
+ * @return array{average: float, count: int} The stored rating.
+ */
+function wpss_recount_service_rating( int $service_id ): array {
+	global $wpdb;
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$stats = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT COUNT(*) AS count, AVG(rating) AS average FROM {$wpdb->prefix}wpss_reviews WHERE service_id = %d AND status = 'approved'",
+			$service_id
+		)
+	);
+
+	$count = (int) ( $stats->count ?? 0 );
+
+	update_post_meta( $service_id, '_wpss_rating_average', $count > 0 ? round( (float) $stats->average, 2 ) : 0 );
+	update_post_meta( $service_id, '_wpss_rating_count', $count );
+	update_post_meta( $service_id, '_wpss_review_count', $count );
+
+	return wpss_get_service_rating( $service_id );
+}
+
+/**
+ * Recount a service's completed orders into _wpss_order_count.
+ *
+ * The stored count feeds the admin list, the editor stats, the service page,
+ * schema markup and the "most orders" sort, but its only writer
+ * (ServiceManager::increment_order_count()) was never called, so every real
+ * sale read 0 (Basecamp 10337190248). It is now recounted from the orders
+ * table whenever one of the service's orders changes status - the count
+ * stays a stored number because the popularity sort needs one.
+ *
+ * @since 1.8.0
+ *
+ * @param int $service_id Service ID.
+ * @return int The count.
+ */
+function wpss_sync_service_order_count( int $service_id ): int {
+	global $wpdb;
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$count = (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}wpss_orders WHERE service_id = %d AND status = 'completed' AND COALESCE( platform, '' ) NOT IN ( 'tip', 'extension', 'milestone' )",
+			$service_id
+		)
+	);
+
+	update_post_meta( $service_id, '_wpss_order_count', $count );
+
+	return $count;
+}
+
+add_action(
+	'wpss_order_status_changed',
+	static function ( $order_id ) {
+		$order = wpss_get_order( (int) $order_id );
+
+		if ( $order && (int) $order->service_id > 0 ) {
+			wpss_sync_service_order_count( (int) $order->service_id );
+		}
+
+		// A seller's level follows completed orders now, not a week later.
+		if ( $order && 'completed' === $order->status && (int) $order->vendor_id > 0 ) {
+			( new \WPSellServices\Services\SellerLevelService() )->recalculate( (int) $order->vendor_id );
+		}
+	},
+	30
+);
+
+// ...and follows the rating as soon as a review lands.
+add_action(
+	'wpss_review_created',
+	static function ( $review_id, $order_id ) {
+		$order = wpss_get_order( (int) $order_id );
+
+		if ( $order && (int) $order->vendor_id > 0 ) {
+			( new \WPSellServices\Services\SellerLevelService() )->recalculate( (int) $order->vendor_id );
+		}
+	},
+	30,
+	2
+);
+
+/**
+ * Whether demo content is on the site: any post or member carrying the marker.
+ *
+ * Asked of the content itself, not of a flag. The wizard refused to import
+ * because an option still said "imported" after the CLI had deleted
+ * everything (Basecamp 10378021873).
+ *
+ * @since 1.8.0
+ *
+ * @return bool
+ */
+function wpss_has_demo_content(): bool {
+	$marker = array(
+		'meta_key'   => '_wpss_demo_content', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		'meta_value' => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+		'fields'     => 'ids',
+	);
+
+	return (bool) get_posts(
+		$marker + array(
+			'post_type'      => array( 'wpss_service', 'wpss_request', 'attachment' ),
+			'post_status'    => 'any',
+			'posts_per_page' => 1,
+		)
+	) || (bool) get_users( $marker + array( 'number' => 1 ) );
+}
+
+/**
+ * Delete demo content: marked services, requests and media, demo vendors, and
+ * the categories the demo created that nothing uses any more.
+ *
+ * The one routine behind Settings > Delete Demo Content and `wp wpss demo
+ * delete`. They were two: the admin one removed services and vendors, the CLI
+ * one removed posts and left the vendors and the "imported" flag.
+ *
+ * Categories: only one the demo created (marked at creation) and only when no
+ * post of any status is in it and it has no child. The admin routine used to
+ * delete every category whose published count was zero, demo or not - an
+ * owner's own unused categories, and parents whose services sat in children.
+ *
+ * A demo service a real buyer has ordered is kept, with its seller and its
+ * image: deleting a service deletes its orders, and "delete the samples" must
+ * never erase a sale (Basecamp 10379596258). Orders the demo importer made
+ * itself do not count. 'kept' says how many services stayed.
+ *
+ * @since 1.8.0
+ *
+ * @return array{posts:int,services:int,vendors:int,categories:int,kept:int} What was deleted, and what was kept.
+ */
+function wpss_delete_demo_content(): array {
+	global $wpdb;
+
+	$marker  = array(
+		'meta_key'   => '_wpss_demo_content', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		'meta_value' => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+		'fields'     => 'ids',
+	);
+	$deleted = array(
+		'posts'      => 0,
+		'services'   => 0,
+		'vendors'    => 0,
+		'categories' => 0,
+		'kept'       => 0,
+	);
+
+	$posts = get_posts(
+		$marker + array(
+			'post_type'      => array( 'wpss_service', 'wpss_request', 'attachment' ),
+			'post_status'    => 'any',
+			'posts_per_page' => -1,
+		)
+	);
+
+	// Demo services with an order the importer did not make.
+	$ordered = array();
+
+	if ( $posts ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are integers from get_posts().
+		$ordered = array_map( 'intval', $wpdb->get_col( "SELECT DISTINCT service_id FROM {$wpdb->prefix}wpss_orders WHERE service_id IN (" . implode( ',', array_map( 'intval', $posts ) ) . ") AND ( meta IS NULL OR meta NOT LIKE '%Seeded demo order.%' )" ) );
+	}
+
+	$keep_users = array();
+	$keep_media = array();
+
+	foreach ( $ordered as $service_id ) {
+		$keep_users[] = (int) get_post_field( 'post_author', $service_id );
+		$keep_media[] = (int) get_post_thumbnail_id( $service_id );
+	}
+
+	$deleted['kept'] = count( $ordered );
+
+	foreach ( $posts as $post_id ) {
+		// ponytail: keeps the featured image and attached files of a kept
+		// service; a gallery image stored only by ID in meta is not traced.
+		if ( in_array( (int) $post_id, $ordered, true ) || in_array( (int) $post_id, $keep_media, true ) || in_array( (int) get_post_field( 'post_parent', $post_id ), $ordered, true ) ) {
+			continue;
+		}
+
+		$is_service = 'wpss_service' === get_post_type( $post_id );
+
+		if ( wp_delete_post( (int) $post_id, true ) ) {
+			++$deleted['posts'];
+			$deleted['services'] += $is_service ? 1 : 0;
+		}
+	}
+
+	require_once ABSPATH . 'wp-admin/includes/user.php';
+
+	foreach ( array_diff( array_map( 'intval', get_users( $marker ) ), $keep_users ) as $user_id ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->delete( $wpdb->prefix . 'wpss_vendor_profiles', array( 'user_id' => (int) $user_id ), array( '%d' ) );
+
+		if ( wp_delete_user( (int) $user_id ) ) {
+			++$deleted['vendors'];
+		}
+	}
+
+	$demo_terms = get_terms(
+		array(
+			'taxonomy'   => 'wpss_service_category',
+			'hide_empty' => false,
+			'fields'     => 'ids',
+			'meta_key'   => '_wpss_demo_content', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			'orderby'    => 'term_id',
+			'order'      => 'DESC', // Children were created after their parents.
+		)
+	);
+
+	foreach ( is_array( $demo_terms ) ? $demo_terms : array() as $term_id ) {
+		$in_use = get_objects_in_term( (int) $term_id, 'wpss_service_category' );
+		$kids   = get_term_children( (int) $term_id, 'wpss_service_category' );
+
+		if ( empty( $in_use ) && empty( $kids ) && true === wp_delete_term( (int) $term_id, 'wpss_service_category' ) ) {
+			++$deleted['categories'];
+		}
+	}
+
+	// Written by 1.7.x and earlier; nothing reads it any more.
+	delete_option( 'wpss_demo_content_imported' );
+
+	return $deleted;
 }

@@ -61,6 +61,28 @@ class TemplateLoader {
 		if ( 'reign-theme' === get_template() ) {
 			add_filter( 'get_post_metadata', array( $this, 'reign_force_fullwidth_layout' ), 10, 4 );
 		}
+
+		add_filter( 'body_class', array( $this, 'fullwidth_body_class' ) );
+	}
+
+	/**
+	 * Tell BuddyX a plugin page is on its full-width template.
+	 *
+	 * BuddyX lays the page out as content + sidebar columns unless the body
+	 * carries page-template-full-width-container, which WordPress adds only
+	 * for a template picked in the editor. Handing the page that template
+	 * from template_include left the sidebar column reserved and empty: Become
+	 * a Vendor and the cart sat in the left two-thirds (Basecamp 10337197376).
+	 *
+	 * @param string[] $classes Body classes.
+	 * @return string[]
+	 */
+	public function fullwidth_body_class( array $classes ): array {
+		if ( 'full-width-container.php' === basename( $this->fullwidth_template() ) ) {
+			$classes[] = 'page-template-full-width-container';
+		}
+
+		return $classes;
 	}
 
 	/**
@@ -241,7 +263,7 @@ class TemplateLoader {
 	 * Resolve the full-width template for app-like plugin pages.
 	 *
 	 * Returns the sidebar-free template when the current request is one of
-	 * the mapped plugin pages (dashboard, cart, checkout, become vendor),
+	 * the mapped plugin pages (dashboard, cart, checkout, become vendor, create account),
 	 * the page has no explicit page template selected, and the
 	 * `wpss_use_fullwidth_template` filter allows it.
 	 *
@@ -262,7 +284,7 @@ class TemplateLoader {
 		 * Filter whether plugin pages use the full-width template.
 		 *
 		 * Return false to keep the active theme's page template (including
-		 * its sidebar) on dashboard, cart, checkout, and become-vendor pages.
+		 * its sidebar) on dashboard, cart, checkout, become-vendor and create-account pages.
 		 *
 		 * @since 1.2.0
 		 *
@@ -315,7 +337,7 @@ class TemplateLoader {
 			 */
 			$page_keys = apply_filters(
 				'wpss_fullwidth_page_keys',
-				array( 'dashboard', 'cart', 'checkout', 'become_vendor' )
+				array( 'dashboard', 'cart', 'checkout', 'become_vendor', 'registration', 'login' )
 			);
 
 			$page_ids = array();
@@ -413,6 +435,8 @@ class TemplateLoader {
 
 		// Determine action (requirements, delivery, review, etc.).
 		$action = get_query_var( 'wpss_order_action' );
+
+		wpss_enqueue_order_view_style();
 
 		// Load appropriate template.
 		switch ( $action ) {

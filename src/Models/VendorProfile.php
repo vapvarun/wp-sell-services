@@ -141,13 +141,6 @@ class VendorProfile {
 	public int $orders_completed = 0;
 
 	/**
-	 * Response rate percentage.
-	 *
-	 * @var float
-	 */
-	public float $response_rate = 0.0;
-
-	/**
 	 * Average response time in hours.
 	 *
 	 * @var float
@@ -309,7 +302,8 @@ class VendorProfile {
 
 		// Properties not in DB schema (remain as defaults):
 		// - languages, skills, certifications, education - future feature.
-		// - response_rate, completion_rate - not tracked yet.
+		// - completion_rate - not tracked yet.
+		// response_rate was removed in 1.8.0: never measured (10369343671).
 
 		return $profile;
 	}
@@ -514,9 +508,12 @@ class VendorProfile {
 	 * @return bool
 	 */
 	public function is_on_vacation(): bool {
-		// Manual toggle — no date-based expiry.
-		// Filter allows Pro or custom code to add auto-expiry logic later.
-		return (bool) apply_filters( 'wpss_vendor_is_on_vacation', $this->vacation_mode, $this );
+		// Away while the toggle is on and the return date (if any) has not
+		// passed - the same rule as VendorProfileRepository::on_vacation_sql().
+		$away = $this->vacation_mode
+			&& ( null === $this->vacation_return_date || $this->vacation_return_date >= current_time( 'Y-m-d' ) );
+
+		return (bool) apply_filters( 'wpss_vendor_is_on_vacation', $away, $this );
 	}
 
 	/**

@@ -304,3 +304,13 @@
 .wpss-shepherd--frontend.shepherd-has-title .shepherd-content .shepherd-header {
 	background: var(--wpss-surface, #fff);
 }
+
+/* The dashboard drawer (unified-dashboard.css) sits at z-index 100001; a tour
+   step pointing into it must render above it, not under its backdrop. */
+html.wpss-drawer-open .shepherd-modal-overlay-container {
+	z-index: 100002;
+}
+
+html.wpss-drawer-open .shepherd-element {
+	z-index: 100003;
+}

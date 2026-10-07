@@ -148,6 +148,25 @@
 	gap: 1.5rem;
 }
 
+/* At most --wpss-archive-columns cards per row (wpss_archive_service_columns,
+   default 3), each at least 240px: three at 1440 and 1024, two on an iPad in
+   portrait, one on a phone, with no breakpoint of its own. The template used
+   to print a wpss-grid-columns-3 class no stylesheet defined, so the grid fell
+   back to 280px auto-fill and showed two cards beside the filters (Basecamp
+   10337201764). */
+.wpss-services-archive .wpss-services-grid {
+	grid-template-columns: repeat(
+		auto-fill,
+		minmax(
+			max(
+				min(240px, 100%),
+				calc((100% - (var(--wpss-archive-columns, 3) - 1) * var(--wpss-space-6)) / var(--wpss-archive-columns, 3))
+			),
+			1fr
+		)
+	);
+}
+
 /* ==========================================================================
    Archive Header
    ----------------------------------------------------------------------------
@@ -253,7 +272,6 @@
 	flex-shrink: 0;
 }
 
-.wpss-category-filter,
 .wpss-sort-filter {
 	/* 40px tap-target floor for the filter selects (Rule 13). */
 	min-height: 40px;
@@ -268,7 +286,6 @@
 
 /* Rule 14: keyboard focus must show a visible ring, never a bare outline:none.
    :focus-visible keeps the ring off mouse clicks but on for keyboard users. */
-.wpss-category-filter:focus-visible,
 .wpss-sort-filter:focus-visible {
 	outline: 2px solid var(--wpss-primary);
 	outline-offset: 2px;
@@ -657,7 +674,9 @@ body.wpss-sidebar-open::after {
    Responsive
    ========================================================================== */
 
-@media (min-width: 1024px) {
+/* Filters beside the grid from 1025px; at 1024 and below they are the drawer
+   behind the Filters button, like every sidebar at the tablet breakpoint. */
+@media (min-width: 1025px) {
 	.wpss-services-archive .wpss-container {
 		display: grid;
 		grid-template-columns: 280px 1fr;
@@ -720,8 +739,14 @@ body.wpss-sidebar-open::after {
 		align-items: stretch;
 	}
 
-	.wpss-search-form {
+	/* Full width like the controls below it. Themes style form[role=search]
+	   (BuddyX centres it at a fixed width), so the plugin sets every property
+	   that decides the box's width rather than inheriting one. */
+	.wpss-services-archive .wpss-search-form {
 		min-width: 0;
+		width: 100%;
+		max-width: none;
+		margin: 0;
 	}
 
 	.wpss-filters-bar-controls {
@@ -729,7 +754,6 @@ body.wpss-sidebar-open::after {
 		margin-inline-start: 0;
 	}
 
-	.wpss-category-filter,
 	.wpss-sort-filter {
 		width: 100%;
 	}

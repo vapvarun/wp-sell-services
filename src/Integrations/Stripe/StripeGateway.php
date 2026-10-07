@@ -257,11 +257,13 @@ class StripeGateway implements PaymentGatewayInterface {
 			 */
 			'description'               => apply_filters( 'wpss_stripe_payment_description', $description, $order_id, $metadata ),
 			'metadata'                  => array_merge(
+				$metadata,
+				// Last, so nothing passed in can overwrite the marks
+				// is_own_intent() reads back.
 				array(
-					'site_url' => home_url(),
+					'site_url' => wpss_payment_site_mark(),
 					'platform' => 'wp-sell-services',
-				),
-				$metadata
+				)
 			),
 		);
 
@@ -340,12 +342,25 @@ class StripeGateway implements PaymentGatewayInterface {
 		$status = $response['status'] ?? '';
 
 		if ( 'succeeded' === $status ) {
+			// A real, paid intent on this Stripe account that another site or
+			// plugin created. Confirming it here would hand out an order for
+			// someone else's sale, or refund it when the price does not match.
+			if ( ! $this->is_own_intent( (array) ( $response['metadata'] ?? array() ) ) ) {
+				return array(
+					'success' => false,
+					'error'   => __( 'This payment was not made on this site.', 'wp-sell-services' ),
+				);
+			}
+
 			return array(
 				'success'        => true,
 				'transaction_id' => $response['id'],
 				'status'         => 'completed',
-				'amount'         => $this->parse_amount( $response['amount'], $response['currency'] ),
+				'amount'         => $this->parse_amount( (int) ( $response['amount'] ?? 0 ), (string) ( $response['currency'] ?? wpss_get_currency() ) ),
 				'currency'       => strtoupper( $response['currency'] ),
+				// Set by resolve() on this server when the intent was created;
+				// lets a return leg re-price exactly what was charged.
+				'metadata'       => (array) ( $response['metadata'] ?? array() ),
 			);
 		}
 
@@ -492,6 +507,7 @@ class StripeGateway implements PaymentGatewayInterface {
 			return array(
 				'success'           => false,
 				'error'             => $response['error']['message'] ?? __( 'Refund failed.', 'wp-sell-services' ),
+				'code'              => (string) ( $response['error']['code'] ?? '' ),
 				'transfer_reversed' => $expected_reversal ? false : null,
 			);
 		}
@@ -513,7 +529,7 @@ class StripeGateway implements PaymentGatewayInterface {
 			'transaction_id'    => (string) $response['id'],
 			'status'            => $response['status'],
 			'message'           => '',
-			'amount'            => $this->parse_amount( $response['amount'], $response['currency'] ),
+			'amount'            => $this->parse_amount( (int) ( $response['amount'] ?? 0 ), (string) ( $response['currency'] ?? wpss_get_currency() ) ),
 			'transfer_reversed' => $transfer_reversed,
 		);
 	}
@@ -663,6 +679,64 @@ class StripeGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * Refund a successful charge that could not be turned into an order.
+	 *
+	 * The one path for browser confirm, AJAX confirm and webhook recovery.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $payment_intent_id Stripe PaymentIntent ID.
+	 * @return bool Whether Stripe accepted the refund.
+	 */
+	private function refund_unsettled_charge( string $payment_intent_id ): bool {
+		$refund = array();
+		$asked  = ( new \WPSellServices\Checkout\CheckoutIntentService() )->refund_unsettled(
+			'stripe',
+			$payment_intent_id,
+			function () use ( $payment_intent_id, &$refund ): bool {
+				$refund = $this->process_refund( $payment_intent_id );
+
+				return ! empty( $refund['success'] ) || 'charge_already_refunded' === ( $refund['code'] ?? '' );
+			}
+		);
+
+		// The charge has already paid an order: there is nothing to give back.
+		if ( ! $asked ) {
+			return true;
+		}
+
+		// The buyer already has the money back (browser and webhook both tried):
+		// done, not a failure to retry for days.
+		if ( 'charge_already_refunded' === ( $refund['code'] ?? '' ) ) {
+			return true;
+		}
+
+		if ( empty( $refund['success'] ) ) {
+			wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Whether this site created a PaymentIntent.
+	 *
+	 * Stripe sends every payment_intent.succeeded on the account to this
+	 * endpoint, so a second site, a staging copy or another plugin sharing the
+	 * account all arrive here. Acting on those refunded good sales that were
+	 * never ours (Basecamp 10375174172).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param array<string, mixed> $metadata The intent's metadata.
+	 * @return bool
+	 */
+	private function is_own_intent( array $metadata ): bool {
+		return 'wp-sell-services' === ( $metadata['platform'] ?? '' ) && wpss_is_own_payment_site( (string) ( $metadata['site_url'] ?? '' ) );
+	}
+
+	/**
 	 * Handle webhook callback via URL.
 	 *
 	 * @return void
@@ -699,6 +773,14 @@ class StripeGateway implements PaymentGatewayInterface {
 		}
 
 		$result = $this->handle_webhook( $event );
+
+		// A charge we could neither settle nor refund: answer non-2xx and leave
+		// the event unmarked, so Stripe delivers it again.
+		if ( ! empty( $result['retry'] ) ) {
+			status_header( 500 );
+			echo wp_json_encode( $result );
+			exit;
+		}
 
 		// Mark event as processed (48-hour dedup window).
 		if ( $event_id ) {
@@ -880,12 +962,7 @@ class StripeGateway implements PaymentGatewayInterface {
 			return;
 		}
 
-		// Only on checkout page or single service page (for order modal).
-		$checkout_page_id = (int) ( get_option( 'wpss_pages', array() )['checkout'] ?? 0 );
-		$is_checkout      = ( $checkout_page_id && is_page( $checkout_page_id ) ) || get_query_var( 'wpss_checkout' );
-		$is_service       = is_singular( 'wpss_service' );
-
-		if ( ! $is_checkout && ! $is_service ) {
+		if ( ! wpss_is_payment_page() ) {
 			return;
 		}
 
@@ -910,6 +987,11 @@ class StripeGateway implements PaymentGatewayInterface {
 				'publishableKey' => $this->get_publishable_key(),
 				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 				'nonce'          => wp_create_nonce( 'wpss_stripe' ),
+				// A logged-out buyer (account-at-checkout sites) gets the card
+				// field without an intent; the intent is made once the account
+				// exists, on Pay (stripe.js, deferred mode).
+				'isGuest'        => ! is_user_logged_in(),
+				'decimals'       => wpss_get_currency_decimals(),
 				'returnUrl'      => add_query_arg( 'step', 'complete', wpss_get_page_url( 'checkout' ) ),
 				// Prefill the Address Element from the buyer's saved profile so
 				// a returning customer enters card details and nothing else.
@@ -1022,15 +1104,21 @@ class StripeGateway implements PaymentGatewayInterface {
 		 * carries the one-charge-one-order dedupe (Basecamp 10321653385).
 		 */
 		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
+		$meta     = (array) ( $payment['metadata'] ?? array() );
 		$intent   = $checkout->resolve(
 			array(
 				'service_id' => $service_id,
 				'package_id' => $package_id,
+				// Quantity and add-ons as charged, from the intent's own metadata:
+				// without them a purchase with add-ons never matched its charge.
+				'quantity'   => max( 1, (int) ( $meta['quantity'] ?? 1 ) ),
+				'addon_sel'  => (string) ( $meta['addon_sel'] ?? '' ),
+				'addon_ids'  => (string) ( $meta['addon_ids'] ?? '' ),
 			)
 		);
 
 		if ( is_wp_error( $intent ) ) {
-			$this->process_refund( $payment_intent_id );
+			$this->refund_unsettled_charge( $payment_intent_id );
 
 			return array(
 				'success' => false,
@@ -1047,11 +1135,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		);
 
 		if ( empty( $settle['success'] ) ) {
-			$refund = $this->process_refund( $payment_intent_id );
-
-			if ( empty( $refund['success'] ) ) {
-				wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
-			}
+			$this->refund_unsettled_charge( $payment_intent_id );
 
 			return array(
 				'success' => false,
@@ -1071,7 +1155,14 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return void
 	 */
 	public function ajax_create_payment_intent(): void {
-		check_ajax_referer( 'wpss_stripe', 'nonce' );
+		// The Stripe nonce, or the checkout nonce the account-at-checkout step
+		// hands back once it has signed a new buyer in - the page's Stripe nonce
+		// was issued to the logged-out visitor and no longer verifies
+		// (Basecamp 10341174356). Same rule as ajax_confirm_payment().
+		if ( ! wpss_verify_gateway_nonce( array( 'wpss_stripe' ) ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
+			return;
+		}
 
 		// A disabled gateway does not start new money. Refunds and webhooks
 		// stay registered for historical orders; this does not.
@@ -1085,12 +1176,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		// Pricing + routing (single / multi-cart / pay-order) is resolved once,
 		// server-side, by the gateway-agnostic CheckoutIntentService — the client
 		// amount is never trusted. See audit/PAYMENT-ARCHITECTURE-RND.md.
-		$request = array(
-			'pay_order'         => absint( $_POST['pay_order'] ?? 0 ),
-			'is_multi_checkout' => ! empty( $_POST['is_multi_checkout'] ),
-			'service_id'        => absint( $_POST['service_id'] ?? 0 ),
-			'package_id'        => absint( $_POST['package_id'] ?? 0 ),
-		);
+		$request = \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked above.
 
 		$intent = ( new \WPSellServices\Checkout\CheckoutIntentService() )->resolve( $request );
 		if ( is_wp_error( $intent ) ) {
@@ -1115,10 +1201,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		// Accept the Stripe nonce (stripe.js flow) OR the checkout nonce (the
 		// standalone checkout form, which posts wpss_stripe_process_payment and
 		// carries wpss_checkout_nonce). Mirrors OfflineGateway::ajax_create_order.
-		$posted_nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ?? '' ) );
-		if ( ! wp_verify_nonce( $posted_nonce, 'wpss_stripe' )
-			&& ! wp_verify_nonce( $posted_nonce, 'wpss_checkout' )
-			&& ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpss_checkout_nonce'] ?? '' ) ), 'wpss_checkout' ) ) {
+		if ( ! wpss_verify_gateway_nonce( array( 'wpss_stripe' ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'wp-sell-services' ) ) );
 			return;
 		}
@@ -1134,7 +1217,7 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		// stripe.js sends `payment_intent_id`; the checkout form sends
 		// `stripe_payment_intent_id`. Accept both.
-		$payment_intent_id = sanitize_text_field( wp_unslash( $_POST['payment_intent_id'] ?? $_POST['stripe_payment_intent_id'] ?? '' ) );
+		$payment_intent_id = sanitize_text_field( wp_unslash( $_POST['payment_intent_id'] ?? $_POST['stripe_payment_intent_id'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- wpss_verify_gateway_nonce() above.
 
 		if ( ! $payment_intent_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid payment.', 'wp-sell-services' ) ) );
@@ -1159,18 +1242,11 @@ class StripeGateway implements PaymentGatewayInterface {
 		wpss_save_billing_from_request( $_POST );
 
 		$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
-		$intent   = $checkout->resolve(
-			array(
-				'pay_order'         => absint( $_POST['pay_order'] ?? 0 ),
-				'is_multi_checkout' => ! empty( $_POST['is_multi_checkout'] ),
-				'service_id'        => absint( $_POST['service_id'] ?? 0 ),
-				'package_id'        => absint( $_POST['package_id'] ?? 0 ),
-			)
-		);
+		$intent   = $checkout->resolve( \WPSellServices\Checkout\CheckoutIntentService::request_from_post( $_POST ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce checked above.
 
 		// Resolve failed after a successful charge — refund and bail.
 		if ( is_wp_error( $intent ) ) {
-			$this->process_refund( $payment_intent_id );
+			$this->refund_unsettled_charge( $payment_intent_id );
 			wp_send_json_error( array( 'message' => $intent->get_error_message() ) );
 			return;
 		}
@@ -1178,10 +1254,7 @@ class StripeGateway implements PaymentGatewayInterface {
 		$settle = $checkout->settle( $intent, 'stripe', $payment_intent_id, (float) $payment['amount'], (string) $payment['currency'] );
 
 		if ( empty( $settle['success'] ) ) {
-			$refund = $this->process_refund( $payment_intent_id );
-			if ( empty( $refund['success'] ) ) {
-				wpss_log( "CRITICAL: Stripe charge {$payment_intent_id} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
-			}
+			$this->refund_unsettled_charge( $payment_intent_id );
 			wp_send_json_error( array( 'message' => $settle['error'] ?? __( 'Failed to create order.', 'wp-sell-services' ) ) );
 			return;
 		}
@@ -1361,8 +1434,17 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return array
 	 */
 	private function handle_payment_succeeded( array $payment_intent ): array {
-		$metadata       = $payment_intent['metadata'] ?? array();
-		$order_provider = wpss_get_order_provider();
+		$metadata = $payment_intent['metadata'] ?? array();
+
+		// Not ours unless it carries this site's mark or already paid one of
+		// our orders. Checked before either path: Path 1 would mark a local
+		// order paid from a foreign order_id, Path 2 would refund the charge.
+		if ( ! $this->is_own_intent( (array) $metadata ) && 0 === $this->find_order_by_transaction( (string) $payment_intent['id'], (string) ( $payment_intent['latest_charge'] ?? '' ) ) ) {
+			return array(
+				'success' => true,
+				'message' => 'Not a payment this site created; ignored.',
+			);
+		}
 
 		// The browser confirm stamps order_id on the intent only AFTER settle,
 		// so a webhook that races it carries no order_id yet while the order
@@ -1379,10 +1461,12 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		// Path 1: Order already created via AJAX — just confirm payment.
 		if ( ! empty( $metadata['order_id'] ) ) {
-			$order_provider->mark_as_paid(
+			( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order(
 				(int) $metadata['order_id'],
-				$payment_intent['id'],
-				'stripe'
+				'stripe',
+				(string) $payment_intent['id'],
+				$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ?? 0 ), (string) ( $payment_intent['currency'] ?? 'usd' ) ),
+				(string) ( $payment_intent['currency'] ?? '' )
 			);
 
 			return array(
@@ -1391,32 +1475,47 @@ class StripeGateway implements PaymentGatewayInterface {
 			);
 		}
 
-		// Path 2: AJAX path failed — recover by creating the order from metadata.
-		if ( ! empty( $metadata['service_id'] ) && ! empty( $metadata['customer_id'] ) ) {
-			$amount   = $this->parse_amount( (int) $payment_intent['amount'], $payment_intent['currency'] ?? 'usd' );
-			$currency = strtoupper( $payment_intent['currency'] ?? 'usd' );
-
-			$order = $order_provider->create_order(
+		// Path 2: no order yet - the webhook beat the browser, or the browser
+		// never came back. Build it exactly as checkout does: priced on the
+		// server from the intent's own metadata, refused unless the charge
+		// matches, one order per charge. This used to create the order itself
+		// from the charged amount, which already includes tax, so the tax was
+		// added twice and add-ons and Express were lost - whenever the webhook
+		// won the race with the browser.
+		if ( ! empty( $metadata['customer_id'] ) ) {
+			$checkout = new \WPSellServices\Checkout\CheckoutIntentService();
+			$intent   = $checkout->resolve(
 				array(
-					'service_id'     => (int) $metadata['service_id'],
-					'package_id'     => (int) ( $metadata['package_id'] ?? 0 ),
-					'customer_id'    => (int) $metadata['customer_id'],
-					'subtotal'       => $amount,
-					'currency'       => $currency,
-					'payment_method' => 'stripe',
-				)
+					'is_multi_checkout' => ! empty( $metadata['is_multi_checkout'] ),
+					'service_id'        => (int) ( $metadata['service_id'] ?? 0 ),
+					'package_id'        => (int) ( $metadata['package_id'] ?? 0 ),
+					'quantity'          => max( 1, (int) ( $metadata['quantity'] ?? 1 ) ),
+					'addon_sel'         => (string) ( $metadata['addon_sel'] ?? '' ),
+					'addon_ids'         => (string) ( $metadata['addon_ids'] ?? '' ),
+				),
+				(int) $metadata['customer_id']
 			);
 
-			if ( $order ) {
-				$order_provider->mark_as_paid( $order->id, $payment_intent['id'], 'stripe' );
-
-				// Store order_id back on PaymentIntent for future webhook deliveries.
-				$this->api_request(
-					"payment_intents/{$payment_intent['id']}",
-					array( 'metadata' => array( 'order_id' => $order->id ) )
+			$settle = is_wp_error( $intent )
+				? array( 'error' => $intent->get_error_message() )
+				: $checkout->settle(
+					$intent,
+					'stripe',
+					(string) $payment_intent['id'],
+					$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ), $payment_intent['currency'] ?? 'usd' ),
+					strtoupper( $payment_intent['currency'] ?? 'usd' )
 				);
 
-				wpss_log( "Webhook recovery: Created order {$order->id} for Stripe payment {$payment_intent['id']}.", 'info' );
+			if ( ! empty( $settle['success'] ) ) {
+				$ids = ! empty( $settle['order_ids'] ) ? array_map( 'intval', (array) $settle['order_ids'] ) : array( (int) ( $settle['order_id'] ?? 0 ) );
+
+				// Store the order id(s) back on the intent for later deliveries.
+				$this->api_request(
+					"payment_intents/{$payment_intent['id']}",
+					array( 'metadata' => count( $ids ) > 1 ? array( 'order_ids' => implode( ',', $ids ) ) : array( 'order_id' => $ids[0] ) )
+				);
+
+				wpss_log( 'Webhook recovery: settled order(s) ' . implode( ',', $ids ) . " for Stripe payment {$payment_intent['id']}.", 'info' );
 
 				return array(
 					'success' => true,
@@ -1424,11 +1523,17 @@ class StripeGateway implements PaymentGatewayInterface {
 				);
 			}
 
-			wpss_log( "Webhook recovery FAILED: Could not create order for Stripe payment {$payment_intent['id']}.", 'error' );
+			wpss_log( "Webhook recovery FAILED for Stripe payment {$payment_intent['id']}: " . ( $settle['error'] ?? 'unknown' ), 'error' );
+
+			// Same as the browser path: a charge that cannot become an order is
+			// given back. Only if the refund fails too is the event left
+			// unprocessed, so Stripe retries it (Basecamp 10375174172).
+			$refunded = $this->refund_unsettled_charge( (string) $payment_intent['id'] );
 
 			return array(
 				'success' => false,
-				'message' => 'Order creation failed in webhook recovery.',
+				'message' => $refunded ? 'Order creation failed in webhook recovery; the charge was refunded.' : 'Order creation and refund both failed in webhook recovery.',
+				'retry'   => ! $refunded,
 			);
 		}
 

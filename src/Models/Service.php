@@ -215,8 +215,9 @@ class Service {
 		$service->packages = self::hydrate_packages( get_post_meta( $post->ID, '_wpss_packages', true ) );
 
 		// Stats.
-		$service->rating           = (float) get_post_meta( $post->ID, '_wpss_rating_average', true );
-		$service->review_count     = (int) get_post_meta( $post->ID, '_wpss_review_count', true );
+		$rating                    = wpss_get_service_rating( (int) $post->ID );
+		$service->rating           = $rating['average'];
+		$service->review_count     = $rating['count'];
 		$service->orders_completed = (int) get_post_meta( $post->ID, '_wpss_order_count', true );
 
 		return $service;

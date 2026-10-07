@@ -201,7 +201,6 @@ class AjaxHandlers {
 
 		// Dashboard.
 		add_action( 'wp_ajax_wpss_get_dashboard_tab', array( $this, 'get_dashboard_tab' ) );
-		add_action( 'wp_ajax_wpss_get_dashboard_stats', array( $this, 'get_dashboard_stats' ) );
 		add_action( 'wp_ajax_wpss_service_action', array( $this, 'service_action' ) );
 		add_action( 'wp_ajax_wpss_order_action', array( $this, 'order_action' ) );
 		add_action( 'wp_ajax_wpss_filter_dashboard', array( $this, 'filter_dashboard' ) );
@@ -211,13 +210,11 @@ class AjaxHandlers {
 		add_action( 'wp_ajax_wpss_export_data', array( $this, 'export_data' ) );
 
 		// Withdrawals.
-		add_action( 'wp_ajax_wpss_cancel_withdrawal', array( $this, 'cancel_withdrawal' ) );
 
 		// Profile.
 		add_action( 'wp_ajax_wpss_update_vendor_profile', array( $this, 'update_vendor_profile' ) );
 
 		// Per-vendor email preferences (VS11 from plans/ORDER-FLOW-AUDIT.md).
-		add_action( 'wp_ajax_wpss_save_email_preferences', array( $this, 'save_email_preferences' ) );
 
 		// Portfolio (AJAX fallback for non-REST contexts).
 		add_action( 'wp_ajax_wpss_add_portfolio_item', array( $this, 'add_portfolio_item' ) );
@@ -422,11 +419,11 @@ class AjaxHandlers {
 		}
 
 		// Buyer on in_progress orders must go through request_cancellation (24h window + delivery check).
+		$note = sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) );
 		if ( (int) $order->customer_id === $user_id && 'in_progress' === $order->status ) {
-			$note   = sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) );
 			$result = $order_service->request_cancellation( $order_id, $user_id, $reason, $note );
 		} else {
-			$result = $order_service->cancel( $order_id, $user_id, $reason );
+			$result = $order_service->cancel( $order_id, $user_id, $reason, $note );
 		}
 
 		if ( $result['success'] ) {
@@ -1114,7 +1111,7 @@ class AjaxHandlers {
 
 		// Build unique vote identifier.
 		$user_id    = get_current_user_id();
-		$ip_address = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) );
+		$ip_address = wpss_client_ip();
 		$vote_key   = '_wpss_vote_' . $review_id . '_' . ( $user_id ? 'u' . $user_id : 'ip' . md5( $ip_address ) );
 
 		// Use atomic INSERT IGNORE to prevent race condition.
@@ -1258,7 +1255,7 @@ class AjaxHandlers {
 		if ( ! empty( $_FILES['evidence_file'] ) && ! empty( $_FILES['evidence_file']['name'] ) ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			$file    = $_FILES['evidence_file'];
-			$refused = wpss_check_upload( $file );
+			$refused = wpss_check_upload( $file, 'dispute' );
 
 			if ( $refused ) {
 				wp_send_json_error( array( 'message' => $refused->get_error_message() ) );
@@ -1295,44 +1292,21 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Failed to add evidence.', 'wp-sell-services' ) ) );
 		}
 
-		// Generate HTML for the new evidence item.
-		$evidence_user = get_userdata( $user_id );
-		$is_own        = true;
+		// The new message, rendered by the thread's own item partial.
+		$wpss_items = $dispute_service->get_evidence( $dispute_id );
 
 		ob_start();
-		?>
-		<div class="wpss-evidence-item wpss-evidence-own">
-			<div class="wpss-evidence-bubble">
-				<span class="wpss-evidence-author"><strong><?php echo esc_html( $evidence_user ? $evidence_user->display_name : '' ); ?></strong></span>
-				<div class="wpss-evidence-content">
-					<?php if ( ! empty( $description ) ) : ?>
-						<div class="wpss-evidence-text">
-							<?php echo wp_kses_post( nl2br( $description ) ); ?>
-						</div>
-					<?php endif; ?>
-
-					<?php if ( $evidence_type === 'image' && ! empty( $evidence_content ) ) : ?>
-						<div class="wpss-evidence-image">
-							<a href="<?php echo esc_url( $evidence_content ); ?>" target="_blank">
-								<img src="<?php echo esc_url( $evidence_content ); ?>" alt="<?php esc_attr_e( 'Evidence image', 'wp-sell-services' ); ?>">
-							</a>
-						</div>
-					<?php elseif ( $evidence_type === 'file' && ! empty( $evidence_content ) ) : ?>
-						<div class="wpss-evidence-file">
-							<a href="<?php echo esc_url( $evidence_content ); ?>" target="_blank" class="wpss-file-link">
-								<i data-lucide="file" class="wpss-icon" aria-hidden="true"></i>
-								<span><?php echo esc_html( wpss_format_attachment_name( $evidence_files ? (string) $evidence_files[0]['name'] : basename( (string) wp_parse_url( $evidence_content, PHP_URL_PATH ) ) ) ); ?></span>
-							</a>
-						</div>
-					<?php endif; ?>
-				</div>
-				<span class="wpss-evidence-time">
-					<?php echo esc_html( wp_date( get_option( 'time_format' ), time() ) ); ?>
-				</span>
-			</div>
-		</div>
-		<?php
-		$html = ob_get_clean();
+		wpss_get_template_part(
+			'partials/dispute-evidence-item',
+			'',
+			array(
+				'wpss_item'        => (array) end( $wpss_items ),
+				'wpss_viewer_id'   => $user_id,
+				'wpss_customer_id' => (int) $order->customer_id,
+				'wpss_vendor_id'   => (int) $order->vendor_id,
+			)
+		);
+		$html = (string) ob_get_clean();
 
 		wp_send_json_success(
 			array(
@@ -1368,11 +1342,15 @@ class AjaxHandlers {
 			'budget_min'      => floatval( $_POST['budget_min'] ?? 0 ),
 			'budget_max'      => floatval( $_POST['budget_max'] ?? 0 ),
 			'skills_required' => $skills_raw ? array_map( 'trim', explode( ',', $skills_raw ) ) : array(),
+			// Uploaded through POST /media (context request); ownership is
+			// checked where they are saved (BuyerRequestService::save_meta).
+			'attachments'     => array_map( 'absint', (array) wp_unslash( $_POST['attachments'] ?? array() ) ),
 		);
 
 		// Calculate delivery_days and expires_at from the deadline date.
 		if ( $deadline ) {
-			$deadline_timestamp = strtotime( $deadline );
+			// The date is typed on the site's calendar; expires_at is UTC.
+			$deadline_timestamp = strtotime( get_gmt_from_date( $deadline . ' 00:00:00' ) . ' UTC' );
 			if ( $deadline_timestamp && $deadline_timestamp > time() ) {
 				$days_until_deadline   = max( 1, (int) ceil( ( $deadline_timestamp - time() ) / DAY_IN_SECONDS ) );
 				$data['delivery_days'] = $days_until_deadline;
@@ -1436,8 +1414,16 @@ class AjaxHandlers {
 			'skills_required' => $skills_raw ? array_map( 'trim', explode( ',', $skills_raw ) ) : array(),
 		);
 
+		// The edit form now carries the attachment list (Basecamp 10337217098).
+		// Only when it says so: a caller without the field must not wipe them.
+		// BuyerRequestService keeps only files this buyer uploaded.
+		if ( ! empty( $_POST['attachments_present'] ) ) {
+			$data['attachments'] = array_map( 'absint', (array) wp_unslash( $_POST['attachments'] ?? array() ) );
+		}
+
 		if ( $deadline ) {
-			$deadline_timestamp = strtotime( $deadline );
+			// The date is typed on the site's calendar; expires_at is UTC.
+			$deadline_timestamp = strtotime( get_gmt_from_date( $deadline . ' 00:00:00' ) . ' UTC' );
 			if ( $deadline_timestamp && $deadline_timestamp > time() ) {
 				$days_until_deadline   = max( 1, (int) ceil( ( $deadline_timestamp - time() ) / DAY_IN_SECONDS ) );
 				$data['delivery_days'] = $days_until_deadline;
@@ -1533,7 +1519,18 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
-		wp_delete_post( $request_id, true );
+		// Through the service, as the REST route does: to the trash, and never a
+		// request a seller has proposed on. This used to delete for good, with
+		// no check, and the two entry points disagreed.
+		$service = new \WPSellServices\Services\BuyerRequestService();
+
+		if ( ! $service->is_untouched( $request_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'This request has proposals, so it cannot be deleted. You can close it instead.', 'wp-sell-services' ) ) );
+		}
+
+		if ( ! $service->delete( $request_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete request.', 'wp-sell-services' ) ) );
+		}
 
 		wp_send_json_success( array( 'message' => __( 'Request deleted.', 'wp-sell-services' ) ) );
 	}
@@ -1745,7 +1742,7 @@ class AjaxHandlers {
 		$service_id = absint( $_POST['service_id'] ?? 0 );
 		$user_id    = get_current_user_id();
 
-		if ( ! $service_id || ! $user_id ) {
+		if ( ! $service_id || ! $user_id || ! wpss_can_view_service( $service_id, $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
 		}
 
@@ -1922,17 +1919,13 @@ class AjaxHandlers {
 		// Only show approved services in search results.
 		$services = new \WP_Query(
 			array(
-				'post_type'      => 'wpss_service',
-				'post_status'    => 'publish',
-				's'              => $query,
-				'posts_per_page' => 5,
-				'meta_query'     => array(
-					array(
-						'key'     => '_wpss_moderation_status',
-						'value'   => 'approved',
-						'compare' => '=',
-					),
-				),
+				'post_type'             => 'wpss_service',
+				'post_status'           => 'publish',
+				's'                     => $query,
+				'posts_per_page'        => 5,
+				'author__not_in'        => wpss_get_vacation_vendor_ids(),
+				// Effective state: a live service with no moderation meta is approved.
+				'wpss_moderation_state' => 'approved',
 			)
 		);
 
@@ -2139,18 +2132,14 @@ class AjaxHandlers {
 		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
 		$service_id = absint( $_POST['service_id'] ?? 0 );
-		$package_id = absint( $_POST['package_index'] ?? 0 );
 		$quantity   = max( 1, absint( $_POST['quantity'] ?? 1 ) );
-		// Both keys are accepted here for the same reason as below: 'extras' is
-		// the legacy name and single-service.js posts 'addons'.
-		$addons_raw = wp_unslash( $_POST['extras'] ?? $_POST['addons'] ?? array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- values are sanitized with absint() on the next line.
-		$addons     = ! empty( $addons_raw ) ? array_map( 'absint', (array) $addons_raw ) : array();
 
 		$checkout_url = '';
 		if ( $service_id && 'publish' === get_post_status( $service_id ) ) {
 			// Exits with the honest refusal when the rail cannot check out, so
 			// the guest is told now rather than after a round trip to log in.
-			$checkout_url = $this->require_checkout_url( $service_id, $package_id, $addons, $quantity );
+			$line         = $this->price_posted_selection( $service_id, $quantity );
+			$checkout_url = $this->checkout_url_for_line( $service_id, $line, $quantity );
 		}
 
 		if ( $checkout_url && wpss_checkout_creates_accounts() ) {
@@ -2171,6 +2160,57 @@ class AjaxHandlers {
 				'login_url' => wp_login_url( $checkout_url ?: ( wp_get_referer() ?: home_url() ) ),
 			)
 		);
+	}
+
+	/**
+	 * Read and price the order modal's POSTed package and add-on selection.
+	 *
+	 * The one reader for both the cart and the guest path. What the buyer chose
+	 * - never a price: addon_sel (the full selection, JSON), else addons /
+	 * extras (ids, legacy clients). Priced by the pricer checkout charges
+	 * through, which also refuses an invalid package or a required add-on left
+	 * empty - here, not at checkout. Exits with the error.
+	 *
+	 * @param int $service_id Service ID.
+	 * @param int $quantity   Package quantity.
+	 * @return array<string, mixed> The priced line.
+	 */
+	private function price_posted_selection( int $service_id, int $quantity ): array {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- both callers verified the nonce; normalised by wpss_normalize_addon_selection().
+		$selection = \WPSellServices\Checkout\CheckoutIntentService::request_selection(
+			array(
+				'addon_sel' => wp_unslash( $_POST['addon_sel'] ?? '' ),
+				'addons'    => wp_unslash( $_POST['addons'] ?? $_POST['extras'] ?? array() ),
+			)
+		);
+		$package   = absint( $_POST['package_index'] ?? 0 );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, $package, $quantity, $selection );
+
+		if ( is_wp_error( $line ) ) {
+			wp_send_json_error( array( 'message' => $line->get_error_message() ) );
+		}
+
+		return $line;
+	}
+
+	/**
+	 * The checkout URL for a priced line, carrying the whole selection.
+	 *
+	 * Ids travel in the URL; a quantity, option or text needs the full
+	 * selection beside them or checkout would drop it.
+	 *
+	 * @param int                  $service_id Service ID.
+	 * @param array<string, mixed> $line       Priced line.
+	 * @param int                  $quantity   Package quantity.
+	 * @return string
+	 */
+	private function checkout_url_for_line( int $service_id, array $line, int $quantity ): string {
+		$url  = $this->require_checkout_url( $service_id, (int) $line['package_id'], array_map( 'intval', array_column( $line['addons'], 'id' ) ), $quantity );
+		$meta = \WPSellServices\Checkout\CheckoutIntentService::selection_metadata( $line['addons'] );
+
+		return empty( $meta['addon_sel'] ) ? $url : add_query_arg( 'addon_sel', rawurlencode( $meta['addon_sel'] ), $url );
 	}
 
 	/**
@@ -2229,12 +2269,8 @@ class AjaxHandlers {
 
 		check_ajax_referer( 'wpss_service_nonce', 'nonce' );
 
-		$service_id    = absint( $_POST['service_id'] ?? 0 );
-		$package_index = sanitize_text_field( wp_unslash( $_POST['package_index'] ?? '0' ) );
-		$quantity      = absint( $_POST['quantity'] ?? 1 );
-		// Accept both 'extras' (legacy) and 'addons' (single-service.js sends this key).
-		$extras_raw = wp_unslash( $_POST['extras'] ?? $_POST['addons'] ?? array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- values are sanitized with absint() on the next line.
-		$extras     = ! empty( $extras_raw ) ? array_map( 'absint', (array) $extras_raw ) : array();
+		$service_id = absint( $_POST['service_id'] ?? 0 );
+		$quantity   = max( 1, absint( $_POST['quantity'] ?? 1 ) );
 
 		if ( ! $service_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid service.', 'wp-sell-services' ) ) );
@@ -2257,57 +2293,19 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You cannot purchase your own service.', 'wp-sell-services' ) ) );
 		}
 
-		// Get packages.
-		$packages_raw = get_post_meta( $service_id, '_wpss_packages', true );
-		$packages     = $packages_raw ? $packages_raw : array();
-
-		// If no packages defined, create a default one.
-		if ( empty( $packages ) ) {
-			$starting_price = (float) get_post_meta( $service_id, '_wpss_starting_price', true );
-			$packages       = array(
-				array(
-					'name'          => __( 'Standard', 'wp-sell-services' ),
-					'price'         => $starting_price,
-					'delivery_time' => wpss_get_service_delivery_days( $service_id ),
-				),
-			);
-		}
-
-		// Validate package index.
-		if ( ! isset( $packages[ $package_index ] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid package selected.', 'wp-sell-services' ) ) );
-		}
-
-		$selected_package = $packages[ $package_index ];
-		$package_price    = (float) ( $selected_package['price'] ?? 0 );
-
-		// Calculate extras price.
-		$all_extras      = wpss_get_service_extras( $service_id );
-		$extras_price    = 0;
-		$extras_days     = 0;
-		$selected_extras = array();
-
-		foreach ( $extras as $extra_index ) {
-			if ( isset( $all_extras[ $extra_index ] ) ) {
-				$extras_price     += (float) ( $all_extras[ $extra_index ]['price'] ?? 0 );
-				$extras_days      += (int) $all_extras[ $extra_index ]['delivery_days_extra'];
-				$selected_extras[] = array(
-					'id'    => $extra_index,
-					'title' => $all_extras[ $extra_index ]['title'] ?? '',
-					'price' => (float) ( $all_extras[ $extra_index ]['price'] ?? 0 ),
-				);
-			}
-		}
-
-		$total = ( $package_price + $extras_price ) * $quantity;
-
+		$line      = $this->price_posted_selection( $service_id, $quantity );
 		$cart_item = array(
 			'service_id' => $service_id,
-			'package_id' => $package_index,
-			'package'    => $selected_package,
-			'addons'     => $selected_extras,
+			'package_id' => (int) $line['package_id'],
+			'package'    => $line['package'],
+			// The selection only: the cart prices it again on every read
+			// (wpss_price_cart_item()), so a price can never go stale here.
+			'addons'     => array_map(
+				static fn( $addon ) => array_intersect_key( $addon, array_flip( array( 'id', 'quantity', 'option', 'text' ) ) ),
+				$line['addons']
+			),
 			'quantity'   => $quantity,
-			'total'      => $total,
+			'total'      => (float) $line['total'],
 		);
 
 		/**
@@ -2329,7 +2327,7 @@ class AjaxHandlers {
 		// Resolved before anything is written to any cart: a rail that cannot
 		// check this service out refuses here instead of leaving the buyer with
 		// a cart row and a Checkout button that goes nowhere.
-		$checkout_url = $this->require_checkout_url( $service_id, (int) $package_index, $extras, $quantity );
+		$checkout_url = $this->checkout_url_for_line( $service_id, $line, $quantity );
 
 		$adapter_result = apply_filters( 'wpss_add_service_to_cart', false, $cart_item, $adapter );
 
@@ -2363,7 +2361,7 @@ class AjaxHandlers {
 			$cart = array();
 		}
 
-		$item_key              = md5( $service_id . '-' . $package_index . '-' . wp_json_encode( $extras ) );
+		$item_key              = md5( $service_id . '-' . $line['package_id'] . '-' . wp_json_encode( $cart_item['addons'] ) );
 		$cart_item['added_at'] = current_time( 'mysql', true );
 		$cart[ $item_key ]     = $cart_item;
 
@@ -2372,7 +2370,7 @@ class AjaxHandlers {
 		wp_send_json_success(
 			array(
 				'message'      => __( 'Added to cart!', 'wp-sell-services' ),
-				'cart_count'   => count( $cart ),
+				'cart_count'   => wpss_get_cart_count( $user_id ),
 				'checkout_url' => $checkout_url,
 			)
 		);
@@ -2450,7 +2448,7 @@ class AjaxHandlers {
 			$wpdb->prefix . 'wpss_notifications',
 			array(
 				'is_read' => 1,
-				'read_at' => current_time( 'mysql' ),
+				'read_at' => current_time( 'mysql', true ),
 			),
 			array(
 				'id'      => $notification_id,
@@ -2479,7 +2477,7 @@ class AjaxHandlers {
 			$wpdb->prefix . 'wpss_notifications',
 			array(
 				'is_read' => 1,
-				'read_at' => current_time( 'mysql' ),
+				'read_at' => current_time( 'mysql', true ),
 			),
 			array(
 				'user_id' => $user_id,
@@ -2556,8 +2554,11 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
-		// Delete attachment.
-		wp_delete_attachment( $file_id, true );
+		// A refused delete is reported, not answered as "File removed"
+		// (wpss_guard_locked_request_file()).
+		if ( ! wp_delete_attachment( $file_id, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'This file cannot be deleted. It may belong to a request that already has proposals.', 'wp-sell-services' ) ) );
+		}
 
 		wp_send_json_success( array( 'message' => __( 'File removed.', 'wp-sell-services' ) ) );
 	}
@@ -2657,155 +2658,6 @@ class AjaxHandlers {
 		wp_send_json_success( array( 'html' => $html ) );
 	}
 
-	/**
-	 * Get dashboard statistics.
-	 *
-	 * @return void
-	 */
-	public function get_dashboard_stats(): void {
-		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
-
-		$range   = sanitize_key( $_POST['range'] ?? 'month' );
-		$user_id = get_current_user_id();
-
-		if ( ! $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
-		}
-
-		global $wpdb;
-
-		// Calculate date range.
-		$end_date   = current_time( 'Y-m-d 23:59:59' );
-		$start_date = match ( $range ) {
-			'day'   => current_time( 'Y-m-d 00:00:00' ),
-			'week'  => gmdate( 'Y-m-d 00:00:00', strtotime( '-7 days' ) ),
-			'year'  => gmdate( 'Y-01-01 00:00:00' ),
-			default => gmdate( 'Y-m-01 00:00:00' ), // month
-		};
-
-		$orders_table = $wpdb->prefix . 'wpss_orders';
-
-		// Get stats.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$stats_row = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT
-					COUNT(*) as total_orders,
-					SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-					SUM(CASE WHEN status IN ('in_progress', 'pending_requirements') THEN 1 ELSE 0 END) as active,
-					COALESCE(SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END), 0) as earnings
-				FROM {$orders_table}
-				WHERE vendor_id = %d AND created_at BETWEEN %s AND %s",
-				$user_id,
-				$start_date,
-				$end_date
-			)
-		);
-
-		$stats = array(
-			'total_orders' => array(
-				'value'  => (int) ( $stats_row->total_orders ?? 0 ),
-				'change' => 0,
-			),
-			'completed'    => array(
-				'value'  => (int) ( $stats_row->completed ?? 0 ),
-				'change' => 0,
-			),
-			'active'       => array(
-				'value'  => (int) ( $stats_row->active ?? 0 ),
-				'change' => 0,
-			),
-			'earnings'     => array(
-				'value'  => wpss_format_price( (float) ( $stats_row->earnings ?? 0 ) ),
-				'change' => 0,
-			),
-		);
-
-		// Chart data (simple daily aggregation).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$chart_data = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT
-					DATE(created_at) as date,
-					COUNT(*) as orders,
-					COALESCE(SUM(total), 0) as earnings
-				FROM {$orders_table}
-				WHERE vendor_id = %d AND created_at BETWEEN %s AND %s
-				GROUP BY DATE(created_at)
-				ORDER BY date ASC",
-				$user_id,
-				$start_date,
-				$end_date
-			)
-		);
-
-		$labels        = array();
-		$earnings_data = array();
-		$orders_data   = array();
-
-		foreach ( $chart_data as $row ) {
-			$labels[]        = wp_date( 'M j', strtotime( $row->date ) );
-			$earnings_data[] = (float) $row->earnings;
-			$orders_data[]   = (int) $row->orders;
-		}
-
-		// Status distribution for doughnut chart.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$status_data = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT
-					CASE
-						WHEN status IN ('pending_requirements', 'accepted') THEN 'active'
-						WHEN status = 'in_progress' THEN 'in_progress'
-						WHEN status = 'completed' THEN 'completed'
-						WHEN status IN ('cancelled', 'refunded') THEN 'cancelled'
-						ELSE 'other'
-					END as status_group,
-					COUNT(*) as count
-				FROM {$orders_table}
-				WHERE vendor_id = %d
-				GROUP BY status_group",
-				$user_id
-			)
-		);
-
-		$status_counts = array( 0, 0, 0, 0 ); // active, in_progress, completed, cancelled
-		foreach ( $status_data as $row ) {
-			switch ( $row->status_group ) {
-				case 'active':
-					$status_counts[0] = (int) $row->count;
-					break;
-				case 'in_progress':
-					$status_counts[1] = (int) $row->count;
-					break;
-				case 'completed':
-					$status_counts[2] = (int) $row->count;
-					break;
-				case 'cancelled':
-					$status_counts[3] = (int) $row->count;
-					break;
-			}
-		}
-
-		wp_send_json_success(
-			array(
-				'stats'  => $stats,
-				'charts' => array(
-					'earnings' => array(
-						'labels' => $labels,
-						'data'   => $earnings_data,
-					),
-					'orders'   => array(
-						'labels' => $labels,
-						'data'   => $orders_data,
-					),
-					'status'   => array(
-						'data' => $status_counts,
-					),
-				),
-			)
-		);
-	}
 
 	/**
 	 * Handle service action from dashboard.
@@ -2984,14 +2836,20 @@ class AjaxHandlers {
 					// — the refund handlers read it there to size both the buyer
 					// refund and the vendor's reversal. Writing it here and
 					// transitioning separately left the column claiming a refund
-					// whenever the transition was refused; apply_refund_status()
-					// owns that ordering and undoes the write if the order does
-					// not actually move.
-					$result['success'] = $order_service->apply_refund_status(
+					// whenever the transition was refused; refund() owns that
+					// ordering, asks the gateway first, and records nothing when
+					// the gateway refuses (the order is flagged for the admin).
+					$wpss_refund       = $order_service->refund(
 						$order_id,
 						$wpss_is_partial ? round( $wpss_refund_amount, wpss_get_currency_decimals( $order->currency ?? '' ) ) : $wpss_order_total,
-						$wpss_is_partial ? 'partially_refunded' : 'refunded'
+						$wpss_is_partial ? 'partially_refunded' : 'refunded',
+						array( 'origin' => 'vendor' )
 					);
+					$result['success'] = $wpss_refund['ok'];
+
+					if ( ! $wpss_refund['ok'] ) {
+						$result['message'] = $wpss_refund['message'];
+					}
 				} else {
 					wp_send_json_error( array( 'message' => __( 'Order cannot be refunded in its current status.', 'wp-sell-services' ) ) );
 				}
@@ -3206,14 +3064,18 @@ class AjaxHandlers {
 
 		global $wpdb;
 
-		// Calculate date range.
-		$end_date   = current_time( 'Y-m-d 23:59:59' );
-		$start_date = match ( $range ) {
-			'day'   => current_time( 'Y-m-d 00:00:00' ),
-			'week'  => gmdate( 'Y-m-d 00:00:00', strtotime( '-7 days' ) ),
-			'year'  => gmdate( 'Y-01-01 00:00:00' ),
-			default => gmdate( 'Y-m-01 00:00:00' ),
-		};
+		// The vendor's calendar (site time), converted to UTC for the columns.
+		// The week/year/month starts used gmdate() while the end used site
+		// time, one range in two zones.
+		$end_date   = get_gmt_from_date( current_time( 'Y-m-d 23:59:59' ) );
+		$start_date = get_gmt_from_date(
+			match ( $range ) {
+				'day'   => current_time( 'Y-m-d 00:00:00' ),
+				'week'  => wp_date( 'Y-m-d 00:00:00', strtotime( '-7 days' ) ),
+				'year'  => current_time( 'Y-01-01 00:00:00' ),
+				default => current_time( 'Y-m-01 00:00:00' ),
+			}
+		);
 
 		$filename = sanitize_file_name( "wpss-{$type}-export-" . gmdate( 'Y-m-d' ) . '.csv' );
 
@@ -3266,82 +3128,6 @@ class AjaxHandlers {
 	}
 
 	/**
-	 * Cancel withdrawal request.
-	 *
-	 * @return void
-	 */
-	public function cancel_withdrawal(): void {
-		check_ajax_referer( 'wpss_dashboard_nonce', 'nonce' );
-
-		$withdrawal_id = absint( $_POST['withdrawal_id'] ?? 0 );
-		$user_id       = get_current_user_id();
-
-		if ( ! $withdrawal_id || ! $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'wp-sell-services' ) ) );
-		}
-
-		global $wpdb;
-
-		$withdrawals_table = $wpdb->prefix . 'wpss_withdrawals';
-
-		// Lock the withdrawal row to prevent double-cancel race conditions.
-		$wpdb->query( 'START TRANSACTION' );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$withdrawal = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT * FROM {$withdrawals_table} WHERE id = %d AND vendor_id = %d FOR UPDATE",
-				$withdrawal_id,
-				$user_id
-			)
-		);
-
-		if ( ! $withdrawal ) {
-			$wpdb->query( 'ROLLBACK' );
-			wp_send_json_error( array( 'message' => __( 'Withdrawal not found.', 'wp-sell-services' ) ) );
-		}
-
-		if ( ! empty( $withdrawal->is_auto ) ) {
-			$wpdb->query( 'ROLLBACK' );
-			wp_send_json_error( array( 'message' => __( 'Auto-withdrawals cannot be cancelled manually.', 'wp-sell-services' ) ) );
-		}
-
-		if ( 'pending' !== $withdrawal->status ) {
-			$wpdb->query( 'ROLLBACK' );
-			wp_send_json_error( array( 'message' => __( 'Only pending withdrawals can be cancelled.', 'wp-sell-services' ) ) );
-		}
-
-		// Cancel withdrawal.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->update(
-			$withdrawals_table,
-			array(
-				'status'     => 'cancelled',
-				'updated_at' => current_time( 'mysql' ),
-			),
-			array( 'id' => $withdrawal_id ),
-			array( '%s', '%s' ),
-			array( '%d' )
-		);
-
-		// Restore balance atomically using SQL arithmetic.
-		$vendor_table = $wpdb->prefix . 'wpss_vendor_profiles';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$vendor_table} SET pending_balance = GREATEST(0, pending_balance - %f), available_balance = available_balance + %f WHERE user_id = %d",
-				(float) $withdrawal->amount,
-				(float) $withdrawal->amount,
-				$user_id
-			)
-		);
-
-		$wpdb->query( 'COMMIT' );
-
-		wp_send_json_success( array( 'message' => __( 'Withdrawal cancelled. Balance restored.', 'wp-sell-services' ) ) );
-	}
-
-	/**
 	 * Sanitize a CSV cell value to prevent CSV injection.
 	 *
 	 * Prefixes cells starting with dangerous characters (=, +, -, @, |, %)
@@ -3361,81 +3147,6 @@ class AjaxHandlers {
 		}
 
 		return $value;
-	}
-
-	/**
-	 * Update vendor/customer profile from the unified dashboard.
-	 *
-	 * Handles both vendor profiles (with vendor-specific fields like tagline, bio)
-	 * and regular customer profiles (display name only).
-	 *
-	 * @return void
-	 */
-	/**
-	 * Save per-vendor email preferences.
-	 *
-	 * Stores a key=>bool array in user meta `wpss_email_preferences`. Missing
-	 * key OR true means "send"; explicit false means "mute". Categories map
-	 * to email types in EmailService::is_email_type_enabled().
-	 *
-	 * VS11 from plans/ORDER-FLOW-AUDIT.md.
-	 *
-	 * @since 1.1.0
-	 * @return void
-	 */
-	public function save_email_preferences(): void {
-		check_ajax_referer( 'wpss_save_email_prefs', 'wpss_email_prefs_nonce' );
-
-		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
-			wp_send_json_error( array( 'message' => __( 'Please log in.', 'wp-sell-services' ) ) );
-		}
-
-		// Only the categories this user was actually OFFERED.
-		//
-		// The list is role-aware now (Basecamp #10159633379), so a buyer's form
-		// carries no tips / withdrawals / proposals checkboxes. This used to
-		// iterate a hardcoded list of all eight and read "checkbox absent" as
-		// "explicitly muted" - which would have recorded those three as OFF for
-		// every buyer who ever saved the form, and left them silently muted if
-		// that person later became a vendor, with nothing in the UI to explain
-		// why their sales mail had stopped.
-		//
-		// Preferences the form did not show are preserved as they were stored.
-		$valid_keys = array_keys( wpss_get_email_preference_categories( $user_id ) );
-
-		$existing = get_user_meta( $user_id, 'wpss_email_preferences', true );
-		$existing = is_array( $existing ) ? $existing : array();
-
-		$submitted   = isset( $_POST['prefs'] ) && is_array( $_POST['prefs'] ) ? wp_unslash( $_POST['prefs'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Whitelisted booleans below.
-		$preferences = $existing;
-		foreach ( $valid_keys as $key ) {
-			// Checkbox is present only if checked. Absence = explicit false (muted).
-			$preferences[ $key ] = isset( $submitted[ $key ] );
-		}
-
-		update_user_meta( $user_id, 'wpss_email_preferences', $preferences );
-
-		// Verify persistence instead of trusting update_user_meta()'s return
-		// (false also means "value unchanged"). Read back and compare so a
-		// DB-level failure surfaces as an error, not a fake success
-		// (Basecamp #9983538201).
-		wp_cache_delete( $user_id, 'user_meta' );
-		$persisted = get_user_meta( $user_id, 'wpss_email_preferences', true );
-
-		if ( $persisted !== $preferences ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Your preferences could not be saved. Please try again.', 'wp-sell-services' ) ),
-				500
-			);
-		}
-
-		wp_send_json_success(
-			array(
-				'message'     => __( 'Preferences saved.', 'wp-sell-services' ),
-				'preferences' => $preferences,
-			)
-		);
 	}
 
 	/**
@@ -3709,7 +3420,7 @@ class AjaxHandlers {
 		wp_send_json_success(
 			array(
 				'message'    => __( 'Item removed from cart.', 'wp-sell-services' ),
-				'cart_count' => count( $cart ),
+				'cart_count' => wpss_get_cart_count( $user_id ),
 			)
 		);
 	}

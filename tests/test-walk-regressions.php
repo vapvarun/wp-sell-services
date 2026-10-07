@@ -65,6 +65,30 @@ foreach ( get_users( array( 'role' => 'wpss_vendor', 'number' => 20 ) ) as $cand
 		break;
 	}
 }
+// A fresh install (CI) has no vendor and no vendor directory page: make both,
+// before anything resolves the directory page (wpss_get_vendors_page_id()
+// caches its first answer for the request).
+if ( ! $vendor_user ) {
+	require_once __DIR__ . '/Factories/UserFactory.php';
+	$vendor_user = \WPSellServices\Tests\Factories\UserFactory::vendor(
+		array(
+			'user_login' => 'wpss_walk_vendor_' . wp_rand( 1000, 9999 ),
+			'user_email' => 'wpss_walk_vendor_' . wp_rand( 1000, 9999 ) . '@example.test',
+		)
+	);
+}
+$seeded_vendors_page = 0;
+if ( ! wpss_discover_vendors_page_id() && ! wpss_get_page_id( 'vendors_page' ) ) {
+	$seeded_vendors_page = (int) wp_insert_post(
+		array(
+			'post_type'    => 'page',
+			'post_status'  => 'publish',
+			'post_title'   => 'Walk regression vendors',
+			'post_content' => '[wpss_vendors]',
+		)
+	);
+	add_filter( 'wpss_vendors_page_id', static fn() => $seeded_vendors_page );
+}
 $vendor_id = $vendor_user ? (int) $vendor_user->ID : 0;
 
 // --- 1. front-page services archive filter ------------------------------------------
@@ -355,5 +379,9 @@ wp_delete_post( (int) $service, true );
 wp_delete_user( (int) $prop_vendor );
 wp_delete_user( $buyer );
 wp_set_current_user( 0 );
+
+if ( $seeded_vendors_page ) {
+	wp_delete_post( $seeded_vendors_page, true );
+}
 
 echo $fails ? "\n{$fails} FAILED\n" : "\nall passed\n";

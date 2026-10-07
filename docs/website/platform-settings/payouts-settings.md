@@ -26,8 +26,8 @@ paid -- happens on **Sell Services > Withdrawals**, which this tab links to.
 ### Wallet Provider
 
 Where vendor balances live. The built-in **Internal Wallet** needs nothing else
-installed. Pro adds TeraWallet, WooWallet and MyCred, and each appears in this
-list only while its plugin is active.
+installed and is the only choice the plugin ships. A developer can add another
+provider with the `wpss_wallet_providers` filter.
 
 Pick this once, at setup. Switching provider later does not migrate balances.
 

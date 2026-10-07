@@ -28,6 +28,7 @@ use WPSellServices\Models\VendorProfile;
 use WPSellServices\PostTypes\BuyerRequestPostType;
 use WPSellServices\Services\CommissionService;
 use WPSellServices\Services\ConversationService;
+use WPSellServices\Services\DisputeService;
 use WPSellServices\Services\EarningsService;
 
 defined( 'ABSPATH' ) || exit;
@@ -279,6 +280,7 @@ class MarketplaceSeeder {
 			'messages'      => 0,
 			'favorites'     => 0,
 			'withdrawals'   => 0,
+			'disputes'      => 0,
 		);
 
 		// A seeder writes demo rows, not site settings: it used to flip
@@ -343,7 +345,16 @@ class MarketplaceSeeder {
 		$summary['withdrawals'] = $this->seed_withdrawals( $vendors, $available );
 		$this->log( 'Withdrawals created: ' . $summary['withdrawals'] );
 
+		$summary['disputes'] = $this->seed_disputes( $orders );
+		$this->log( 'Disputes opened: ' . $summary['disputes'] );
+
 		$this->refresh_vendor_stats( $vendors );
+
+		// Rows went in with $wpdb->insert, which fires no status hook, so the
+		// "N orders" figure was never written (Basecamp 10350812405).
+		foreach ( $services as $service ) {
+			wpss_sync_service_order_count( (int) $service['id'] );
+		}
 
 		return $summary;
 	}
@@ -366,6 +377,7 @@ class MarketplaceSeeder {
 
 			$created = wp_insert_term( $name, 'wpss_service_category' );
 			if ( ! is_wp_error( $created ) ) {
+				add_term_meta( (int) $created['term_id'], '_wpss_demo_content', 1, true );
 				$ids[ $name ] = (int) $created['term_id'];
 			}
 		}
@@ -390,6 +402,7 @@ class MarketplaceSeeder {
 				);
 
 				if ( ! is_wp_error( $created ) ) {
+					add_term_meta( (int) $created['term_id'], '_wpss_demo_content', 1, true );
 					$ids[ $child_name ] = (int) $created['term_id'];
 				}
 			}
@@ -578,7 +591,7 @@ class MarketplaceSeeder {
 						'post_title'   => $title,
 						'post_content' => 'Professional, reliable delivery with clear communication and unlimited collaboration. I have shipped this work for clients across many industries and stand behind every order.',
 						'post_excerpt' => 'High-quality work, on time, every time.',
-						'post_status'  => 'publish',
+						'post_status'  => 'draft', // Published below once the meta is in.
 						'post_author'  => $vendor['user_id'],
 					),
 					true
@@ -617,7 +630,6 @@ class MarketplaceSeeder {
 				$revisions = wp_list_pluck( $packages, 'revisions' );
 
 				update_post_meta( $post_id, '_wpss_packages', $packages );
-				update_post_meta( $post_id, '_wpss_starting_price', min( $prices ) );
 				update_post_meta( $post_id, '_wpss_fastest_delivery', min( $delivery ) );
 				update_post_meta( $post_id, '_wpss_delivery_days', min( $delivery ) );
 				// Both revision meta keys are kept in sync so the wizard key
@@ -644,6 +656,8 @@ class MarketplaceSeeder {
 					update_post_meta( $post_id, '_wpss_gallery', $gallery );
 					set_post_thumbnail( $post_id, $gallery[0] );
 				}
+
+				wpss_settle_service_status( (int) $post_id, 'publish' );
 
 				$services[] = array(
 					'id'             => (int) $post_id,
@@ -806,6 +820,7 @@ class MarketplaceSeeder {
 
 			$is_paid      = ! in_array( $status, array( ServiceOrder::STATUS_PENDING_PAYMENT ), true );
 			$is_completed = ServiceOrder::STATUS_COMPLETED === $status;
+			$db_status    = ServiceOrder::STATUS_DISPUTED === $status ? ServiceOrder::STATUS_IN_PROGRESS : $status;
 
 			$data = array(
 				'order_number'       => sprintf( 'WPSS-%s-%04d', gmdate( 'Ymd', strtotime( $created_at ) ), $i + 1 ),
@@ -822,7 +837,10 @@ class MarketplaceSeeder {
 				'commission_rate'    => $commission_rate,
 				'platform_fee'       => $platform_fee,
 				'vendor_earnings'    => $earnings,
-				'status'             => $status,
+				// A disputed order is seeded in progress and opened through
+				// DisputeService::open() (seed_disputes) - a bare `disputed` row had no
+				// dispute behind it (Basecamp 10350812405).
+				'status'             => $db_status,
 				'delivery_deadline'  => $deadline,
 				'original_deadline'  => $deadline,
 				'payment_method'     => $is_paid ? 'standalone' : null,
@@ -838,7 +856,7 @@ class MarketplaceSeeder {
 					array(
 						'status_history' => array(
 							array(
-								'status'    => $status,
+								'status'    => $db_status,
 								'timestamp' => $created_at,
 								'note'      => 'Seeded demo order.',
 							),
@@ -1038,7 +1056,6 @@ class MarketplaceSeeder {
 
 			// Each request gets 2-3 proposals from different vendors.
 			$proposal_total    = 2 + ( $r_index % 2 );
-			$request_props     = 0;
 			$proposal_statuses = array(
 				Proposal::STATUS_PENDING,
 				Proposal::STATUS_ACCEPTED,
@@ -1071,11 +1088,8 @@ class MarketplaceSeeder {
 
 				if ( $inserted ) {
 					++$proposal_count;
-					++$request_props;
 				}
 			}
-
-			update_post_meta( $post_id, '_wpss_proposal_count', $request_props );
 		}
 
 		return array(
@@ -1211,7 +1225,7 @@ class MarketplaceSeeder {
 			}
 
 			$balances[ $vendor_id ] = round( ( $balances[ $vendor_id ] ?? 0 ) + $earnings, 2 );
-			$created_at             = $row->completed_at ? $row->completed_at : current_time( 'mysql' );
+			$created_at             = $row->completed_at ? $row->completed_at : current_time( 'mysql', true );
 
 			// Only credits OLDER than the clearance window count as withdrawable.
 			if ( PHP_INT_MAX === $clearance_cut || strtotime( $created_at ) <= $clearance_cut ) {
@@ -1381,6 +1395,39 @@ class MarketplaceSeeder {
 	}
 
 	/**
+	 * Open a real dispute on every order seeded as disputed.
+	 *
+	 * Through DisputeService::open(), the production writer, so the order gets
+	 * its thread, opening statement and status_before_dispute. Mail is muted:
+	 * a seeder must not email its demo people.
+	 *
+	 * @param array<int, array{id: int, status: string, customer_id: int}> $orders Seeded orders.
+	 * @return int Disputes opened.
+	 */
+	private function seed_disputes( array $orders ): int {
+		$disputes = new DisputeService();
+		$opened   = 0;
+
+		add_filter( 'pre_wp_mail', '__return_false' );
+
+		foreach ( $orders as $order ) {
+			if ( ServiceOrder::STATUS_DISPUTED !== $order['status'] ) {
+				continue;
+			}
+
+			if ( $disputes->open( (int) $order['id'], (int) $order['customer_id'], 'other', __( 'Demo dispute: the delivery does not match what we agreed.', 'wp-sell-services' ) ) ) {
+				++$opened;
+			} else {
+				$this->log( 'Dispute not opened for order ' . $order['id'] . ': ' . $disputes->last_error() );
+			}
+		}
+
+		remove_filter( 'pre_wp_mail', '__return_false' );
+
+		return $opened;
+	}
+
+	/**
 	 * Ensure a user exists with the given login + role, returning the user ID.
 	 *
 	 * @param string $login Login (also used to derive a demo email).
@@ -1492,7 +1539,7 @@ class MarketplaceSeeder {
 	 * @param string $label  Human label used for alt text + placeholder fallback.
 	 * @return int Attachment ID, or 0 when images are disabled or all paths fail.
 	 */
-	private function sideload_image( string $seed, int $width, int $height, int $parent_id, string $label ): int {
+	public function sideload_image( string $seed, int $width, int $height, int $parent_id, string $label ): int {
 		if ( ! $this->seed_images ) {
 			return 0;
 		}

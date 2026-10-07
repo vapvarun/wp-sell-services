@@ -89,6 +89,7 @@ try {
 	$check( 'named order is partially refunded for 30', 'partially_refunded' === $ra->status && 30.0 === (float) $ra->refunded_amount );
 	$check( '  and the sibling order sharing the transaction is untouched', 'completed' === $rb->status && (float) $rb->refunded_amount <= 0 );
 	$check( '  and no gateway call was attempted (settled at rail)', null === $last_result( $a ) );
+	$check( '  and a partial leaves the payment paid', 'paid' === $ra->payment_status );
 
 	// --- A replayed refund id is ignored ----------------------------------------
 	do_action( 'wpss_gateway_refund_received', 'paypal', $txn, 30.0, array( 'order_id' => $a, 'refund_id' => 'r1', 'currency' => 'USD' ) );
@@ -100,6 +101,7 @@ try {
 	$rb = $row( $b );
 	$check( 'full charge refund lands 100 on the 100 order', 'refunded' === $ra->status && ( null === $ra->refunded_amount || 100.0 === (float) $ra->refunded_amount ) );
 	$check( '  and 50 on the 50 order', 'refunded' === $rb->status && ( null === $rb->refunded_amount || 50.0 === (float) $rb->refunded_amount ) );
+	$check( '  and a full rail refund closes both payments', 'refunded' === $ra->payment_status && 'refunded' === $rb->payment_status );
 
 	// --- Offline refund is pending manual payment, never "successful" ------------
 	file_put_contents( $log_file, '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents

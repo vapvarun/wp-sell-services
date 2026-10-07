@@ -627,7 +627,7 @@ class API {
 		$settings = [
 			'currency'            => wpss_get_currency(),
 			'currency_symbol'     => wpss_get_currency_symbol(),
-			'currency_position'   => wpss_get_option( 'advanced', 'currency_position' ),
+			'currency_position'   => wpss_get_currency_position(),
 			'decimal_places'      => wpss_get_decimal_places(),
 			'min_order_amount'    => (float) get_option( 'wpss_min_order_amount', 5 ),
 			'max_order_amount'    => (float) get_option( 'wpss_max_order_amount', 10000 ),
@@ -1012,8 +1012,9 @@ class API {
 		if ( $data['is_vendor'] ) {
 			// Canonical profile status — _wpss_vendor_status was never written.
 			$data['vendor_status'] = wpss_get_vendor_status( $user_id ) ?: 'active';
-			$data['rating']        = (float) get_user_meta( $user_id, '_wpss_rating_average', true ) ?: 0;
-			$data['review_count']  = (int) get_user_meta( $user_id, '_wpss_rating_count', true ) ?: 0;
+			$vendor_profile        = wpss_get_vendor( $user_id );
+			$data['rating']        = $vendor_profile ? (float) $vendor_profile->rating : 0.0;
+			$data['review_count']  = $vendor_profile ? (int) $vendor_profile->review_count : 0;
 		}
 
 		return new \WP_REST_Response( $data );
@@ -1159,8 +1160,7 @@ class API {
 						COUNT(*) as total,
 						SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
 						SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-						SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
-						SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END) as earnings
+						SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress
 					FROM {$orders_table}
 					WHERE vendor_id = %d",
 					$user_id
@@ -1168,6 +1168,7 @@ class API {
 			);
 
 			$services_count = wpss_count_vendor_services( (int) $user_id, 'any' );
+			$wpss_vp        = wpss_get_vendor( (int) $user_id );
 
 			$data['as_vendor'] = [
 				'services_count'   => $services_count,
@@ -1175,9 +1176,11 @@ class API {
 				'pending_orders'   => (int) $vendor_orders->pending,
 				'active_orders'    => (int) $vendor_orders->in_progress,
 				'completed_orders' => (int) $vendor_orders->completed,
-				'total_earnings'   => (float) $vendor_orders->earnings,
-				'rating'           => (float) get_user_meta( $user_id, '_wpss_rating_average', true ) ?: 0,
-				'review_count'     => (int) get_user_meta( $user_id, '_wpss_rating_count', true ) ?: 0,
+				// Paid orders, net of refunds and commission: the same figure as
+				// the web dashboard's Sales tile (wpss_get_revenue()).
+				'total_earnings'   => (float) ( wpss_get_revenue( array( 'vendor_id' => (int) $user_id ) )[0]->vendor_earnings ?? 0 ),
+				'rating'           => $wpss_vp ? (float) $wpss_vp->rating : 0.0,
+				'review_count'     => $wpss_vp ? (int) $wpss_vp->review_count : 0,
 			];
 
 			// Recent orders needing action.
@@ -1200,7 +1203,7 @@ class API {
 						'order_number' => $order->order_number,
 						'service'      => $service ? $service->post_title : __( 'Deleted Service', 'wp-sell-services' ),
 						'total'        => wpss_format_currency( (float) $order->total, $order->currency ),
-						'created_at'   => $order->created_at,
+						'created_at'   => wpss_rest_date( $order->created_at ),
 					];
 				},
 				$pending_orders
@@ -1240,6 +1243,8 @@ class API {
 					's'              => $query,
 					'posts_per_page' => $per_page,
 					'offset'         => $offset,
+					// Vendors on vacation are not listed, as in the storefront.
+					'author__not_in' => wpss_get_vacation_vendor_ids(),
 				]
 			);
 
@@ -1296,7 +1301,7 @@ class API {
 					'display_name' => $user->display_name,
 					'avatar'       => get_avatar_url( $user->ID, [ 'size' => 48 ] ),
 					'tagline'      => $vendor_profile ? $vendor_profile->title : '',
-					'rating'       => (float) get_user_meta( $user->ID, '_wpss_rating_average', true ) ?: 0,
+					'rating'       => $vendor_profile ? (float) $vendor_profile->rating : 0.0,
 					'url'          => wpss_get_vendor_url( $user->ID ),
 				];
 			}
@@ -1318,6 +1323,40 @@ class API {
 	 * @return \WP_REST_Response
 	 */
 	public function handle_batch( \WP_REST_Request $request ): \WP_REST_Response {
+		// A batch inside a batch is refused. The path check below admits
+		// /wpss/v1/batch itself, and each level had its own 25-request cap, so
+		// one call fanned out to 625+ dispatches (Basecamp 10336370365). A depth
+		// counter also catches path spellings a string match would miss.
+		static $depth = 0;
+
+		if ( $depth > 0 ) {
+			return new \WP_REST_Response(
+				array(
+					'code'    => 'nested_batch_not_allowed',
+					'message' => __( 'A batch request cannot contain another batch request.', 'wp-sell-services' ),
+				),
+				400
+			);
+		}
+
+		++$depth;
+
+		try {
+			return $this->run_batch( $request );
+		} finally {
+			--$depth;
+		}
+	}
+
+	/**
+	 * Dispatch the sub-requests of one (non-nested) batch.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param \WP_REST_Request $request Batch request.
+	 * @return \WP_REST_Response
+	 */
+	private function run_batch( \WP_REST_Request $request ): \WP_REST_Response {
 		$requests  = $request->get_param( 'requests' );
 		$responses = [];
 		$server    = rest_get_server();

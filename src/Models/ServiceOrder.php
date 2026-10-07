@@ -97,7 +97,7 @@ class ServiceOrder {
 	/**
 	 * Selected add-ons.
 	 *
-	 * @var array<int, array{id: int, quantity: int}>
+	 * @var array<int, array{id: int, quantity: int, option?: string, text?: string}>
 	 */
 	public array $addons = array();
 
@@ -497,7 +497,7 @@ class ServiceOrder {
 		}
 
 		// Add updated timestamp.
-		$data['updated_at'] = current_time( 'mysql' );
+		$data['updated_at'] = current_time( 'mysql', true );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update( $table, $data, array( 'id' => $this->id ) );
@@ -517,7 +517,7 @@ class ServiceOrder {
 
 			$history[] = array(
 				'status'    => $data['status'],
-				'timestamp' => current_time( 'mysql' ),
+				'timestamp' => current_time( 'mysql', true ),
 				'note'      => '',
 			);
 
@@ -677,15 +677,7 @@ class ServiceOrder {
 	 * @return bool
 	 */
 	public function is_late(): bool {
-		if ( ! $this->delivery_deadline ) {
-			return false;
-		}
-
-		if ( in_array( $this->status, array( self::STATUS_COMPLETED, self::STATUS_CANCELLED ), true ) ) {
-			return false;
-		}
-
-		return $this->delivery_deadline < new \DateTimeImmutable();
+		return wpss_is_order_late( $this );
 	}
 
 	/**
@@ -1141,17 +1133,40 @@ class ServiceOrder {
 			'total'       => $this->subtotal,
 		);
 
-		// Add-on items.
+		// Add-on items. 1.8.0 lines carry title, quantity, unit_price and the
+		// buyer's option or text; older rows carry name and price only.
 		if ( ! empty( $this->addons ) ) {
 			foreach ( $this->addons as $addon ) {
+				$detail = '';
+
+				if ( '' !== (string) ( $addon['option'] ?? '' ) ) {
+					$detail = (string) $addon['option'];
+				} elseif ( '' !== (string) ( $addon['text'] ?? '' ) ) {
+					$detail = (string) $addon['text'];
+				}
+
 				$items[] = array(
-					'name'        => $addon['name'] ?? __( 'Add-on', 'wp-sell-services' ),
-					'description' => $addon['description'] ?? '',
-					'quantity'    => $addon['quantity'] ?? 1,
-					'price'       => (float) ( $addon['price'] ?? 0 ),
+					'name'        => (string) ( $addon['title'] ?? $addon['name'] ?? __( 'Add-on', 'wp-sell-services' ) ),
+					'description' => '' !== $detail ? $detail : (string) ( $addon['description'] ?? '' ),
+					'quantity'    => max( 1, (int) ( $addon['quantity'] ?? 1 ) ),
+					'price'       => (float) ( $addon['unit_price'] ?? $addon['price'] ?? 0 ),
 					'total'       => (float) ( $addon['total'] ?? $addon['price'] ?? 0 ),
 				);
 			}
+		}
+
+		// addons_total with no (or partial) itemised add-ons - orders written
+		// before the add-on lines were stored. Show the rest as one line so the
+		// rows still add up to the total instead of dropping money.
+		$unlisted = round( $this->addons_total - array_sum( array_column( array_slice( $items, 1 ), 'total' ) ), 2 );
+		if ( $unlisted > 0 ) {
+			$items[] = array(
+				'name'        => __( 'Add-ons', 'wp-sell-services' ),
+				'description' => '',
+				'quantity'    => 1,
+				'price'       => $unlisted,
+				'total'       => $unlisted,
+			);
 		}
 
 		return $items;
@@ -1163,24 +1178,39 @@ class ServiceOrder {
 	 * @return array<string, mixed>
 	 */
 	public function get_requirements(): array {
+		return $this->get_submitted_requirements()['data'];
+	}
+
+	/**
+	 * The buyer's submitted requirements: answers, attached files and when.
+	 *
+	 * The one read of wpss_order_requirements for display, shared by the order
+	 * view and the admin order screen (Basecamp 10337161480).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return array{data: array<string, mixed>, attachments: array<int, array<string, mixed>>, submitted_at: ?string}
+	 */
+	public function get_submitted_requirements(): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_order_requirements';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT field_data FROM {$table} WHERE order_id = %d ORDER BY id DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT field_data, attachments, submitted_at FROM {$table} WHERE order_id = %d ORDER BY id DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$this->id
 			)
 		);
 
-		if ( ! $row || ! $row->field_data ) {
-			return array();
-		}
+		$data        = $row ? json_decode( (string) $row->field_data, true ) : array();
+		$attachments = $row ? json_decode( (string) $row->attachments, true ) : array();
 
-		$data = json_decode( $row->field_data, true );
-
-		return is_array( $data ) ? $data : array();
+		return array(
+			'data'         => is_array( $data ) ? $data : array(),
+			'attachments'  => is_array( $attachments ) ? $attachments : array(),
+			'submitted_at' => $row && $row->submitted_at ? (string) $row->submitted_at : null,
+		);
 	}
 
 	/**
@@ -1190,6 +1220,23 @@ class ServiceOrder {
 	 */
 	public function get_admin_notes(): array {
 		return $this->meta['admin_notes'] ?? array();
+	}
+
+	/**
+	 * The buyer's pending cancellation request, or null.
+	 *
+	 * Stored in meta since 1.8.0. It used to be JSON in vendor_notes, a column
+	 * REST let the buyer write - and the 48-hour auto-cancel timer reads
+	 * requested_at from it (Basecamp 10336370631).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return array{reason?: string, note?: string, requested_by?: int, requested_at?: string}|null
+	 */
+	public function get_cancellation_request(): ?array {
+		$request = $this->meta['cancellation_request'] ?? null;
+
+		return is_array( $request ) ? $request : null;
 	}
 
 	/**

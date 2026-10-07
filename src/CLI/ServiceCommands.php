@@ -213,18 +213,26 @@ class ServiceCommands extends WP_CLI_Command {
 		$posts = get_posts( $query );
 		$count = count( $posts );
 
-		if ( 0 === $count ) {
-			WP_CLI::success( $all ? 'No services to delete.' : 'No demo content to delete (no post carries _wpss_demo_content).' );
+		if ( 0 === $count && ( $all || ! wpss_has_demo_content() ) ) {
+			WP_CLI::success( $all ? 'No services to delete.' : 'No demo content to delete (nothing carries _wpss_demo_content).' );
 			return;
 		}
 
 		// --all is acknowledged with --yes but never skips the prompt: the
 		// site-wide count is always shown before the first delete.
 		Guard::writes(
-			$all ? 'services (EVERY service on the site, --all)' : 'demo posts (services, requests and attachments marked _wpss_demo_content)',
+			$all ? 'services (EVERY service on the site, --all)' : 'demo posts (services, requests and attachments marked _wpss_demo_content), plus the demo vendors',
 			$count,
 			$all ? array_diff_key( $assoc_args, array( 'yes' => true ) ) : $assoc_args
 		);
+
+		// Demo content goes through the one routine the admin button uses, so
+		// the demo vendors go too and the wizard can import again.
+		if ( ! $all ) {
+			$deleted = wpss_delete_demo_content();
+			WP_CLI::success( sprintf( 'Deleted %d demo posts and %d demo vendors.', $deleted['posts'], $deleted['vendors'] ) . ( $deleted['kept'] ? sprintf( ' Kept %d demo service(s), with their sellers, because buyers have ordered them.', $deleted['kept'] ) : '' ) );
+			return;
+		}
 
 		$progress = \WP_CLI\Utils\make_progress_bar( 'Deleting', $count );
 
@@ -235,7 +243,7 @@ class ServiceCommands extends WP_CLI_Command {
 
 		$progress->finish();
 
-		WP_CLI::success( "Deleted {$count} " . ( $all ? 'services.' : 'demo posts.' ) );
+		WP_CLI::success( "Deleted {$count} services." );
 	}
 
 	/**
@@ -504,7 +512,7 @@ class ServiceCommands extends WP_CLI_Command {
 				'post_title'   => $data['title'],
 				'post_content' => $data['content'],
 				'post_excerpt' => $data['excerpt'] ?? '',
-				'post_status'  => 'publish',
+				'post_status'  => 'draft', // Published below once the meta is in.
 				'post_author'  => get_current_user_id() ?: 1,
 			)
 		);
@@ -558,12 +566,11 @@ class ServiceCommands extends WP_CLI_Command {
 		// Save stats.
 		if ( ! empty( $data['stats'] ) ) {
 			update_post_meta( $post_id, '_wpss_views', $data['stats']['views'] );
-			update_post_meta( $post_id, '_wpss_order_count', $data['stats']['orders'] );
-			update_post_meta( $post_id, '_wpss_rating_average', $data['stats']['rating'] );
-			update_post_meta( $post_id, '_wpss_rating_count', $data['stats']['reviews'] );
-			update_post_meta( $post_id, '_wpss_review_count', $data['stats']['reviews'] );
 
-			// Insert actual rows into wpss_reviews so the table matches post meta.
+			// Seed real review rows, then count them the way a live review is
+			// counted. Writing the stat figures straight into meta left demo
+			// services claiming "198 reviews" over two rows (Basecamp 10337201764).
+			// Orders are counted from the orders table, so a demo service has none.
 			if ( $data['stats']['reviews'] > 0 ) {
 				$this->insert_demo_reviews(
 					$post_id,
@@ -572,12 +579,27 @@ class ServiceCommands extends WP_CLI_Command {
 					(int) $data['stats']['reviews']
 				);
 			}
+			wpss_recount_service_rating( $post_id );
 		}
 
 		// Set featured.
 		if ( ! empty( $data['featured'] ) ) {
 			update_post_meta( $post_id, '_wpss_featured', 1 );
 		}
+
+		// A live service needs a main image (the publish rules refuse one
+		// without), and no template carries one, so every demo service landed
+		// in Draft (Basecamp 10350889943, 10375511072). Same bundled demo
+		// media the marketplace seeder uses.
+		if ( ! has_post_thumbnail( $post_id ) ) {
+			$image = ( new \WPSellServices\Demo\MarketplaceSeeder() )->sideload_image( 'wpss-demo-service-' . $post_id, 800, 600, (int) $post_id, (string) $data['title'] );
+			if ( $image ) {
+				update_post_meta( $post_id, '_wpss_gallery', array( $image ) );
+				set_post_thumbnail( $post_id, $image );
+			}
+		}
+
+		wpss_settle_service_status( (int) $post_id, 'publish' );
 
 		return $post_id;
 	}
@@ -781,6 +803,9 @@ class ServiceCommands extends WP_CLI_Command {
 		$updated  = 0;
 
 		foreach ( $services as $post_id ) {
+			// The "N orders" figure, which nothing rewrote when rows were inserted directly.
+			wpss_sync_service_order_count( (int) $post_id );
+
 			$packages = get_post_meta( $post_id, '_wpss_packages', true );
 
 			if ( ! empty( $packages ) && is_array( $packages ) ) {
@@ -2132,4 +2157,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'wpss scale', ScaleCommand::class, array( 'shortdesc' => 'Seed, benchmark and teardown a production-shape scale dataset.' ) );
 	WP_CLI::add_command( 'wpss rest:contract', RestContractCommand::class, array( 'shortdesc' => 'Assert the REST 401/403/404 contract the client depends on.' ) );
 	WP_CLI::add_command( 'wpss api:shapes', array( ApiShapeCommand::class, 'shapes' ), array( 'shortdesc' => 'Audit every GET payload for ISO dates and the shared actor shape.' ) );
+	WP_CLI::add_command( 'wpss utc-migrate', UtcMigrateCommand::class, array( 'shortdesc' => 'Convert pre-1.8.0 datetimes to UTC (--dry-run to preview).' ) );
+	WP_CLI::add_command( 'wpss repair:stripe-tax', array( RepairCommand::class, 'stripe_tax' ), array( 'shortdesc' => 'Correct Stripe orders whose tax was counted twice (dry run unless --apply).' ) );
 }

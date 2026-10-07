@@ -38,7 +38,8 @@
 
 		event.preventDefault();
 
-		window.wpssConfirm( message ).then( function( ok ) {
+		// Only suspending and closing an account ask first; both are destructive.
+		window.wpssConfirm( message, { tone: 'danger' } ).then( function( ok ) {
 			if ( ! ok ) {
 				return;
 			}

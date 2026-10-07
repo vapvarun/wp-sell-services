@@ -102,6 +102,26 @@ Request expiration runs on WordPress cron, which requires site traffic to trigge
 
 ---
 
+### The update did not create a Log In page
+
+That is intended. Updating never changes how your site signs in. To use the marketplace's own sign-in page, go to **Settings > Pages > Log In** and click **Create Page**. See [Pages Setup](../platform-settings/pages-setup.md).
+
+### Log in links go to a page I do not want
+
+Go to **Settings > Pages > Log In** and choose **None (use this site's own login)**. The plugin then leaves every login link alone.
+
+### A buyer cannot remove a file from their request
+
+A seller has already sent a proposal on it. Files attached before a proposal stay on the request so every seller and the admin can see the brief the proposals were priced against. The buyer can still add files.
+
+### A service is missing from a services grid
+
+Check whether its vendor is on vacation. Services of a vendor on vacation are left out of the catalog, search and every services grid until vacation ends. Their direct link still works.
+
+### Test payments are refunded by themselves
+
+Another site that shares your Stripe account is running a version older than 1.8.0. See [Stripe Payments](../payments-checkout/stripe-payments.md).
+
 ## Getting Help
 
 **Enable debug mode** for troubleshooting: Go to **Sell Services > Settings > Advanced** and enable Debug Mode. Check `wp-content/debug.log` for detailed error messages.

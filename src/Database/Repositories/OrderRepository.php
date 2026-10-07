@@ -219,7 +219,7 @@ class OrderRepository extends AbstractRepository {
 			'status__in' => array(),
 			'search'     => '',
 			'platform'   => '',
-			'date_from'  => '', // Y-m-d H:i:s — orders created at or after this timestamp (VS10 from plans/ORDER-FLOW-AUDIT.md).
+			'date_from'  => '', // Y-m-d H:i:s site time - orders created at or after (VS10 from plans/ORDER-FLOW-AUDIT.md).
 			'orderby'    => 'created_at',
 			'order'      => 'DESC',
 			'limit'      => 20,
@@ -286,7 +286,7 @@ class OrderRepository extends AbstractRepository {
 
 		if ( ! empty( $args['date_from'] ) ) {
 			$sql     .= ' AND created_at >= %s';
-			$params[] = $args['date_from'];
+			$params[] = get_gmt_from_date( (string) $args['date_from'] ); // Site time in, UTC column.
 		}
 
 		if ( ! empty( $args['search'] ) ) {
@@ -536,7 +536,7 @@ class OrderRepository extends AbstractRepository {
 	 * @return array<object> Array of overdue orders.
 	 */
 	public function get_overdue(): array {
-		$now = current_time( 'mysql' );
+		$now = current_time( 'mysql', true );
 
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
@@ -561,10 +561,10 @@ class OrderRepository extends AbstractRepository {
 		// Add timestamps based on status.
 		switch ( $new_status ) {
 			case 'in_progress':
-				$data['started_at'] = current_time( 'mysql' );
+				$data['started_at'] = current_time( 'mysql', true );
 				break;
 			case 'completed':
-				$data['completed_at'] = current_time( 'mysql' );
+				$data['completed_at'] = current_time( 'mysql', true );
 				break;
 		}
 
@@ -619,14 +619,11 @@ class OrderRepository extends AbstractRepository {
 		$sub_sql       = $this->status_in_placeholders( $sub_platforms );
 		$is_order      = "COALESCE(platform, '') NOT IN {$sub_sql}";
 
-		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
-
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the interpolated parts are %s placeholder lists built from fixed status/platform maps.
 		$sql = "SELECT
 					SUM(CASE WHEN {$is_order} THEN 1 ELSE 0 END) as total_orders,
 					SUM(CASE WHEN {$is_order} AND status IN {$completed_sql} THEN 1 ELSE 0 END) as completed_orders,
 					SUM(CASE WHEN {$is_order} AND status IN {$active_sql} THEN 1 ELSE 0 END) as active_orders,
-					SUM(CASE WHEN COALESCE(platform, '') != %s AND status IN {$completed_sql} THEN COALESCE(vendor_earnings, total) ELSE 0 END) as total_earnings,
 					AVG(CASE WHEN {$is_order} AND status IN {$completed_sql} THEN TIMESTAMPDIFF(HOUR, started_at, completed_at) END) as avg_completion_hours
 				FROM {$this->table}
 				WHERE vendor_id = %d";
@@ -637,8 +634,6 @@ class OrderRepository extends AbstractRepository {
 			$completed_statuses,
 			$sub_platforms,
 			$active_statuses,
-			array( $tip_platform ),
-			$completed_statuses,
 			$sub_platforms,
 			$completed_statuses,
 			array( $vendor_id )
@@ -673,7 +668,9 @@ class OrderRepository extends AbstractRepository {
 			'total_orders'         => (int) ( $stats['total_orders'] ?? 0 ),
 			'completed_orders'     => (int) ( $stats['completed_orders'] ?? 0 ),
 			'active_orders'        => (int) ( $stats['active_orders'] ?? 0 ),
-			'total_earnings'       => (float) ( $stats['total_earnings'] ?? 0 ),
+			// The vendor's share of what buyers paid, net of refunds and
+			// commission, by the one revenue definition (get_revenue()).
+			'total_earnings'       => $this->get_revenue( array( 'vendor_id' => $vendor_id ) )[0]->vendor_earnings ?? 0.0,
 			'avg_completion_hours' => (float) ( $stats['avg_completion_hours'] ?? 0 ),
 		);
 	}
@@ -690,8 +687,6 @@ class OrderRepository extends AbstractRepository {
 	 * @return array<string, mixed> Keys: tips_received, tips_total_gross, tips_total_net.
 	 */
 	public function get_vendor_tip_stats( int $vendor_id ): array {
-		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
-
 		$row = $this->wpdb->get_row(
 			$this->wpdb->prepare(
 				"SELECT
@@ -701,7 +696,7 @@ class OrderRepository extends AbstractRepository {
 				FROM {$this->table}
 				WHERE vendor_id = %d AND platform = %s AND status = 'completed'",
 				$vendor_id,
-				$tip_platform
+				\WPSellServices\Services\TippingService::ORDER_TYPE
 			),
 			ARRAY_A
 		);
@@ -731,15 +726,13 @@ class OrderRepository extends AbstractRepository {
 			return self::$last_completed_memo[ $vendor_id ];
 		}
 
-		$tip_platform = \WPSellServices\Services\TippingService::ORDER_TYPE;
-
 		$date = $this->wpdb->get_var(
 			$this->wpdb->prepare(
 				"SELECT MAX(completed_at)
 				FROM {$this->table}
 				WHERE vendor_id = %d AND status = 'completed' AND platform != %s",
 				$vendor_id,
-				$tip_platform
+				\WPSellServices\Services\TippingService::ORDER_TYPE
 			)
 		);
 
@@ -962,10 +955,34 @@ class OrderRepository extends AbstractRepository {
 		return $this->wpdb->get_results(
 			$this->wpdb->prepare(
 				"SELECT * FROM {$this->table}
-				WHERE DATE(created_at) BETWEEN %s AND %s
+				WHERE created_at BETWEEN %s AND %s
 				ORDER BY created_at DESC",
-				$start_date,
-				$end_date
+				get_gmt_from_date( $start_date . ' 00:00:00' ),
+				get_gmt_from_date( $end_date . ' 23:59:59' )
+			)
+		);
+	}
+
+	/**
+	 * Paid tips and extensions on an order.
+	 *
+	 * They are orders of their own, so the parent's Financial Summary never
+	 * listed them and the owner could not see an order's full money from the
+	 * order page (Basecamp 10337161480). Milestone phases are not included -
+	 * they are the contract itself and have their own view.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $parent_id Parent order ID.
+	 * @return object[] Rows (id, order_number, platform, total, currency, status), oldest first.
+	 */
+	public function get_paid_extras( int $parent_id ): array {
+		return (array) $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT id, order_number, platform, total, currency, status FROM {$this->table} WHERE platform IN (%s, %s) AND platform_order_id = %d AND payment_status = 'paid' ORDER BY id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_EXTENSION,
+				\WPSellServices\Models\ServiceOrder::SUB_ORDER_TYPE_TIP,
+				$parent_id
 			)
 		);
 	}
@@ -1031,7 +1048,7 @@ class OrderRepository extends AbstractRepository {
 	 *
 	 * @since 1.7.1
 	 *
-	 * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float}
+	 * @return object{total:int,in_progress:int,completed:int,pending:int,revenue:float,commission:float}
 	 */
 	public function get_aggregates(): object {
 		$row = $this->wpdb->get_row(
@@ -1039,17 +1056,164 @@ class OrderRepository extends AbstractRepository {
 				COUNT(*) AS total,
 				SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS in_progress,
 				SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
-				SUM(CASE WHEN status IN ('pending_payment', 'pending_requirements') THEN 1 ELSE 0 END) AS pending,
-				SUM(CASE WHEN status = 'completed' THEN total ELSE 0 END) AS revenue
+				SUM(CASE WHEN status IN ('pending_payment', 'pending_requirements') THEN 1 ELSE 0 END) AS pending
 			FROM {$this->table}"
 		);
+
+		$revenue = $this->get_revenue()[0] ?? null;
 
 		return (object) array(
 			'total'       => (int) ( $row->total ?? 0 ),
 			'in_progress' => (int) ( $row->in_progress ?? 0 ),
 			'completed'   => (int) ( $row->completed ?? 0 ),
 			'pending'     => (int) ( $row->pending ?? 0 ),
-			'revenue'     => (float) ( $row->revenue ?? 0 ),
+			'revenue'     => $revenue->revenue ?? 0.0,
+			'commission'  => $revenue->commission ?? 0.0,
+		);
+	}
+
+	/**
+	 * Revenue: what buyers paid, net of refunds - the one definition.
+	 *
+	 * Owner decision (Basecamp 10337156274): revenue is paid GMV minus
+	 * refunds; unpaid, cancelled and pending-payment orders never count, and
+	 * platform commission is a second figure. Every revenue figure a person
+	 * sees - admin Dashboard and Analytics, the CSV, vendor Sales and
+	 * Analytics, the REST analytics routes - is this query; call it through
+	 * wpss_get_revenue().
+	 *
+	 * An order counts once it is paid (paid_at, or a paid payment_status on
+	 * rows older than paid_at) and is not cancelled or rejected. Refunds come
+	 * off at their recorded amount, or in full on legacy rows marked refunded
+	 * without one. Commission and vendor earnings are scaled by the share of
+	 * the order that was not refunded. The date is when the money was paid.
+	 * Sub-orders (tips, extensions, milestone phases) are real money and
+	 * count; a milestone parent carries a total of 0, so nothing counts twice.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param array<string, mixed> $args {
+	 *     Filters.
+	 *
+	 *     @type string $from      Paid on or after (site time, Y-m-d H:i:s; compared in UTC). Optional.
+	 *     @type string $to        Paid on or before. Optional.
+	 *     @type int    $vendor_id One vendor. Optional.
+	 *     @type string $platform  Only this order platform (e.g. 'tip', 'milestone'). Optional.
+	 *     @type bool   $uncredited Only orders the vendor has not been credited for yet (no
+	 *                              ledger credit): the vendor's Clearing. Optional.
+	 *     @type string $group_by  '' (one row), 'day', 'vendor', 'service' or 'currency'.
+	 *     @type int    $limit     Rows to return when grouped, largest revenue first. 0 = all.
+	 * }
+	 * @return array<int, object{key:string,orders:int,gross:float,refunded:float,revenue:float,commission:float,vendor_earnings:float}>
+	 */
+	public function get_revenue( array $args = array() ): array {
+		$args = wp_parse_args(
+			$args,
+			array(
+				'from'       => '',
+				'to'         => '',
+				'vendor_id'  => 0,
+				'platform'   => '',
+				'uncredited' => false,
+				'group_by'   => '',
+				'limit'      => 0,
+			)
+		);
+
+		$refund   = "LEAST( total, COALESCE( refunded_amount, CASE WHEN status = 'refunded' OR ( payment_status = 'refunded' AND status <> 'partially_refunded' ) THEN total ELSE 0 END ) )";
+		$credited = "EXISTS ( SELECT 1 FROM {$this->wpdb->prefix}wpss_wallet_transactions t WHERE t.reference_type = 'order' AND t.reference_id = {$this->table}.id AND t.amount > 0 )";
+		// Once the vendor has been credited, a refund's reversal writes the
+		// net back into vendor_earnings and platform_fee, so those are scaled
+		// only while nothing was credited. Scaling a reversed row again took
+		// the refund off twice (a $22.50 share with $10 of $29.50 refunded
+		// read $9.83 instead of $14.87).
+		$share = "CASE WHEN {$credited} THEN 1 WHEN total > 0 THEN ( total - {$refund} ) / total ELSE 0 END";
+
+		$where  = array(
+			"status NOT IN ( 'pending_payment', 'pending', 'cancelled', 'rejected' )",
+			"( paid_at IS NOT NULL OR payment_status IN ( 'paid', 'completed', 'refunded' ) )",
+		);
+		$values = array();
+
+		// Written as an OR over the two indexed columns rather than a
+		// COALESCE, so a period stays an index range at 100k orders. The
+		// bounds arrive in site time and the columns are UTC (10351460106).
+		if ( '' !== (string) $args['from'] ) {
+			$from     = get_gmt_from_date( (string) $args['from'] );
+			$where[]  = '( paid_at >= %s OR ( paid_at IS NULL AND created_at >= %s ) )';
+			$values[] = $from;
+			$values[] = $from;
+		}
+
+		if ( '' !== (string) $args['to'] ) {
+			$to       = get_gmt_from_date( (string) $args['to'] );
+			$where[]  = '( paid_at <= %s OR ( paid_at IS NULL AND created_at <= %s ) )';
+			$values[] = $to;
+			$values[] = $to;
+		}
+
+		if ( (int) $args['vendor_id'] > 0 ) {
+			$where[]  = 'vendor_id = %d';
+			$values[] = (int) $args['vendor_id'];
+		}
+
+		if ( '' !== (string) $args['platform'] ) {
+			$where[]  = "COALESCE( platform, '' ) = %s";
+			$values[] = (string) $args['platform'];
+		}
+
+		// Earned but not yet in the wallet: no credit row for the order. On
+		// the ledger's (reference_type, reference_id, type) unique index.
+		if ( ! empty( $args['uncredited'] ) ) {
+			$where[] = "NOT {$credited}";
+		}
+
+		$groups = array(
+			''         => "''",
+			'day'      => wpss_site_day_sql( 'COALESCE( paid_at, created_at )' ),
+			'vendor'   => 'vendor_id',
+			'service'  => 'service_id',
+			'currency' => 'currency',
+		);
+		$key    = $groups[ (string) $args['group_by'] ] ?? "''";
+
+		$sql = "SELECT {$key} AS group_key,
+				COUNT(*) AS orders,
+				COALESCE( SUM( total ), 0 ) AS gross,
+				COALESCE( SUM( {$refund} ), 0 ) AS refunded,
+				COALESCE( SUM( total - {$refund} ), 0 ) AS revenue,
+				COALESCE( SUM( COALESCE( platform_fee, 0 ) * {$share} ), 0 ) AS commission,
+				COALESCE( SUM( COALESCE( vendor_earnings, 0 ) * {$share} ), 0 ) AS vendor_earnings
+			FROM {$this->table}
+			WHERE " . implode( ' AND ', $where );
+
+		if ( "''" !== $key ) {
+			$sql .= ' GROUP BY group_key ORDER BY ' . ( 'day' === $args['group_by'] ? 'group_key ASC' : 'revenue DESC' );
+		}
+
+		if ( (int) $args['limit'] > 0 ) {
+			$sql     .= ' LIMIT %d';
+			$values[] = (int) $args['limit'];
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is assembled from fixed fragments; values are bound here.
+		$rows = $this->wpdb->get_results( $values ? $this->wpdb->prepare( $sql, ...$values ) : $sql );
+
+		$decimals = wpss_get_currency_decimals();
+
+		return array_map(
+			static function ( $row ) use ( $decimals ): object {
+				return (object) array(
+					'key'             => (string) $row->group_key,
+					'orders'          => (int) $row->orders,
+					'gross'           => round( (float) $row->gross, $decimals ),
+					'refunded'        => round( (float) $row->refunded, $decimals ),
+					'revenue'         => round( (float) $row->revenue, $decimals ),
+					'commission'      => round( (float) $row->commission, $decimals ),
+					'vendor_earnings' => round( (float) $row->vendor_earnings, $decimals ),
+				);
+			},
+			(array) $rows
 		);
 	}
 

@@ -162,6 +162,7 @@ class SetupWizardPage {
 					'allCreated'   => __( 'All Created', 'wp-sell-services' ),
 					'importing'    => __( 'Importing...', 'wp-sell-services' ),
 					'demoImported' => __( 'Demo Imported!', 'wp-sell-services' ),
+					'demoAlready'  => __( 'Already imported', 'wp-sell-services' ),
 					'importFailed' => __( 'Import Failed', 'wp-sell-services' ),
 				),
 			)
@@ -457,7 +458,7 @@ class SetupWizardPage {
 		$pages      = get_option( 'wpss_pages', array() );
 		$currencies = wpss_get_currencies();
 
-		$platform_name   = $general['platform_name'] ?? get_bloginfo( 'name' );
+		$platform_name   = wpss_get_platform_name();
 		$currency        = $general['currency'] ?? 'USD';
 		$commission_rate = $commission['commission_rate'] ?? 10;
 

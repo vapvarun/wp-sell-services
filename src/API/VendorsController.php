@@ -284,38 +284,36 @@ class VendorsController extends RestController {
 			);
 		}
 
-		// Order by rating or orders (uses custom query modifier to LEFT JOIN).
+		// Order by rating or orders, read from the vendor profile row.
 		$orderby = $request->get_param( 'orderby' );
+		$sort    = null;
 		if ( 'rating' === $orderby || 'orders' === $orderby ) {
-			add_action(
-				'pre_user_query',
-				function ( $query ) use ( $orderby ) {
-					global $wpdb;
+			$sort = static function ( $query ) use ( $orderby ) {
+				global $wpdb;
 
-					if ( 'orders' === $orderby ) {
-						// completed_orders lives in the vendor profiles table. The
-						// _wpss_completed_orders user meta was never written, so the
-						// old meta join sorted every vendor as 0 (BC #10110742943).
-						$profiles             = $wpdb->prefix . 'wpss_vendor_profiles';
-						$query->query_from   .= " LEFT JOIN {$profiles} AS sort_prof ON ( {$wpdb->users}.ID = sort_prof.user_id )";
-						$query->query_orderby = 'ORDER BY COALESCE(sort_prof.completed_orders, 0) DESC';
-						return;
-					}
-
-					// Rating still comes from the _wpss_rating_average user meta,
-					// which does have a writer.
-					$query->query_from   .= $wpdb->prepare(
-						" LEFT JOIN {$wpdb->usermeta} AS sort_meta ON ( {$wpdb->users}.ID = sort_meta.user_id AND sort_meta.meta_key = %s )",
-						'_wpss_rating_average'
-					);
-					$query->query_orderby = 'ORDER BY COALESCE(sort_meta.meta_value+0, 0) DESC';
-				}
-			);
+				// Both live on the vendor profiles table, the one store the
+				// website reads (BC #10110742943, 10337212282). A subquery, not
+				// a JOIN: the profiles table has its own display_name, so a join
+				// made core's unqualified `display_name LIKE` search ambiguous
+				// and /vendors?search= returned nothing.
+				$profiles             = $wpdb->prefix . 'wpss_vendor_profiles';
+				$column               = 'orders' === $orderby ? 'completed_orders' : 'avg_rating';
+				$query->query_orderby = "ORDER BY COALESCE( ( SELECT sort_prof.{$column} FROM {$profiles} AS sort_prof WHERE sort_prof.user_id = {$wpdb->users}.ID LIMIT 1 ), 0 ) DESC";
+			};
+			add_action( 'pre_user_query', $sort );
 		}
 
 		$user_query = new WP_User_Query( $args );
-		$vendors    = $user_query->get_results();
-		$total      = $user_query->get_total();
+
+		// This query only. Left in place, every later user query in the same
+		// request (a second /vendors call, a /batch sub-request) took this
+		// ORDER BY too.
+		if ( $sort ) {
+			remove_action( 'pre_user_query', $sort );
+		}
+
+		$vendors = $user_query->get_results();
+		$total   = $user_query->get_total();
 
 		// Prime user meta cache to avoid N+1 queries.
 		$vendor_ids = wp_list_pluck( $vendors, 'ID' );
@@ -825,6 +823,8 @@ class VendorsController extends RestController {
 		);
 		$on_time_rate       = $completed_orders > 0 ? round( ( $on_time_deliveries / $completed_orders ) * 100, 1 ) : 0;
 
+		$wpss_vp = wpss_get_vendor( $vendor_id );
+
 		return new WP_REST_Response(
 			array(
 				'vendor_id'         => $vendor_id,
@@ -838,7 +838,7 @@ class VendorsController extends RestController {
 				'total_reviews'     => (int) $review_stats->total,
 				'average_rating'    => round( (float) $review_stats->average, 1 ),
 				'avg_response_time' => $avg_response_time,
-				'member_since'      => $this->format_datetime( get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: null ),
+				'member_since'      => $this->format_datetime( $wpss_vp && $wpss_vp->member_since ? $wpss_vp->member_since->format( 'Y-m-d H:i:s' ) : null ),
 			)
 		);
 	}
@@ -874,10 +874,10 @@ class VendorsController extends RestController {
 			'languages'        => get_user_meta( $vendor_id, '_wpss_vendor_languages', true ) ?: array(),
 			'response_time'    => get_user_meta( $vendor_id, '_wpss_vendor_response_time', true ) ?: '',
 			'social_links'     => $profile ? $profile->social_links : array(),
-			'rating_average'   => (float) get_user_meta( $vendor_id, '_wpss_rating_average', true ) ?: 0,
-			'rating_count'     => (int) get_user_meta( $vendor_id, '_wpss_rating_count', true ) ?: 0,
+			'rating_average'   => $profile ? (float) $profile->rating : 0.0,
+			'rating_count'     => $profile ? (int) $profile->review_count : 0,
 			'completed_orders' => $profile ? $profile->orders_completed : 0,
-			'member_since'     => $this->format_datetime( get_user_meta( $vendor_id, '_wpss_vendor_since', true ) ?: $vendor->user_registered ),
+			'member_since'     => $this->format_datetime( $profile && $profile->member_since ? $profile->member_since->format( 'Y-m-d H:i:s' ) : $vendor->user_registered ),
 			'is_verified'      => $profile ? $profile->is_verified : false,
 			'country'          => $profile ? $profile->country : '',
 		);

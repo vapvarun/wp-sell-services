@@ -95,6 +95,8 @@ $check( 'a full refund still means the total', 200.0 === $refunded() );
 
 $wpdb->delete( $table, array( 'id' => $order_id ) );
 
+$wpdb->delete( $wpdb->prefix . 'wpss_order_meta', array( 'order_id' => $order_id ) );
+
 // --- 1.7.1 (F10 / F23): locked commission, cumulative partials, one refund math ---
 //
 // Throwaway vendor 999998 has no profile row and no real ledger; every row
@@ -230,6 +232,7 @@ update_option( 'wpss_tax', $saved_tax );
 foreach ( array( $locked, $admin_side, $dispute_side, $guarded, $prop_order ) as $id ) {
 	if ( $id ) {
 		$wpdb->delete( $table, array( 'id' => $id ) );
+		$wpdb->delete( $wpdb->prefix . 'wpss_order_meta', array( 'order_id' => $id ) );
 		$wpdb->delete( $wpdb->prefix . 'wpss_order_requirements', array( 'order_id' => $id ) );
 		$wpdb->delete( $wpdb->prefix . 'wpss_conversations', array( 'order_id' => $id ) );
 		$wpdb->delete( $wpdb->prefix . 'wpss_disputes', array( 'order_id' => $id ) );

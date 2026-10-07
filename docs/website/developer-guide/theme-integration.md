@@ -128,20 +128,7 @@ All email templates are theme-overridable at `yourtheme/wp-sell-services/emails/
 | `emails/email-header.php` | Shared email header with logo and branding |
 | `emails/email-footer.php` | Shared email footer |
 
-**10 plain text variants** at `emails/plain/`:
-
-| Template | Purpose |
-|----------|---------|
-| `emails/plain/new-order.php` | Plain text new order |
-| `emails/plain/order-in-progress.php` | Plain text order started |
-| `emails/plain/order-completed.php` | Plain text order completed |
-| `emails/plain/order-cancelled.php` | Plain text order cancelled |
-| `emails/plain/delivery-ready.php` | Plain text delivery submitted |
-| `emails/plain/requirements-submitted.php` | Plain text requirements submitted |
-| `emails/plain/requirements-reminder.php` | Plain text requirements reminder |
-| `emails/plain/revision-requested.php` | Plain text revision requested |
-| `emails/plain/new-message.php` | Plain text new message |
-| `emails/plain/dispute-opened.php` | Plain text dispute opened |
+Emails are sent as HTML only; there are no plain-text templates to override.
 
 See [Email Customization](email-customization.md) for how to override email content, headers, footers, and sender details using filters.
 

@@ -41,6 +41,9 @@
 
 			// Delete service
 			$(document).on('click', '.wpss-delete-service', this.handleDeleteService.bind(this));
+			$(document).on('click', '[data-wpss-rest-action]', this.handleRestAction.bind(this));
+			$(document).on('change', '#withdrawal_method', this.handlePayoutMethod.bind(this));
+			$(document).on('submit', '#wpss-withdrawal-form', this.handleWithdrawalSubmit.bind(this));
 
 			// Avatar upload
 			$(document).on('click', '#wpss-avatar-upload-btn', this.handleAvatarUpload.bind(this));
@@ -72,7 +75,40 @@
 
 			// Collapsed nav (under 480px): Menu opens the list, picking a section closes it.
 			$(document).on('click', '.wpss-dashboard__nav-toggle', this.handleNavToggle);
-			$(document).on('click', '.wpss-dashboard__nav-item', this.closeNav);
+			$(document).on('click', '.wpss-dashboard__nav-item, .wpss-dashboard__drawer-close', this.closeNav);
+			// The open drawer's backdrop is the sidebar's ::after, so a click on
+			// it lands on the sidebar itself.
+			$(document).on('click', '.wpss-dashboard__sidebar--open', function (e) {
+				if (e.target === e.currentTarget) {
+					this.closeNav();
+				}
+			}.bind(this));
+			$(document).on('keydown', function (e) {
+				var $drawer = $('.wpss-dashboard__sidebar--open .wpss-dashboard__drawer');
+				if (!$drawer.length) {
+					return;
+				}
+				if ('Escape' === e.key) {
+					this.closeNav();
+					return;
+				}
+				// Keep Tab inside the open drawer: it is a modal panel.
+				if ('Tab' === e.key) {
+					var $f = $drawer.find('a[href], button:not([disabled])').filter(':visible');
+					var first = $f.get(0);
+					var last = $f.get($f.length - 1);
+					if (e.shiftKey && document.activeElement === first) {
+						e.preventDefault();
+						last.focus();
+					} else if (!e.shiftKey && document.activeElement === last) {
+						e.preventDefault();
+						first.focus();
+					} else if (!$.contains($drawer.get(0), document.activeElement)) {
+						e.preventDefault();
+						first.focus();
+					}
+				}
+			}.bind(this));
 
 			// Reviews section: vendor reply, through the same REST route the app uses.
 			$(document).on('submit', '.wpss-review-reply-form', this.handleReviewReply.bind(this));
@@ -89,16 +125,22 @@
 
 			$btn.attr('aria-expanded', open ? 'true' : 'false');
 			$btn.closest('.wpss-dashboard__sidebar').toggleClass('wpss-dashboard__sidebar--open', open);
+			$('html').toggleClass('wpss-drawer-open', open);
+			if (open) {
+				$('#wpss-dashboard-drawer .wpss-dashboard__drawer-close').trigger('focus');
+			}
 		},
 
 		/**
 		 * Close the collapsed dashboard nav.
 		 */
 		closeNav: function () {
-			$('.wpss-dashboard__sidebar--open')
+			var $toggle = $('.wpss-dashboard__sidebar--open')
 				.removeClass('wpss-dashboard__sidebar--open')
 				.find('.wpss-dashboard__nav-toggle')
 				.attr('aria-expanded', 'false');
+			$('html').removeClass('wpss-drawer-open');
+			$toggle.trigger('focus');
 		},
 
 		// Current page already loaded into the wallet ledger.
@@ -207,7 +249,7 @@
 			if (page === 1) {
 				var $table = $(
 					'<div class="wpss-table-responsive">' +
-						'<table class="wpss-table wpss-wallet__table">' +
+						'<table class="wpss-table wpss-table--stack wpss-wallet__table">' +
 							'<thead><tr>' +
 								'<th>' + (i18n.walletColDate) + '</th>' +
 								'<th>' + (i18n.walletColType) + '</th>' +
@@ -263,8 +305,10 @@
 				return c.toUpperCase();
 			});
 
-			$('<td>').text(dateText).appendTo($row);
-			$('<td>').append(
+			// data-label: the column name each cell shows when the table stacks
+			// into rows on a phone (.wpss-table--stack).
+			$('<td>').attr('data-label', i18n.walletColDate).text(dateText).appendTo($row);
+			$('<td>').attr('data-label', i18n.walletColType).append(
 				$('<span>').addClass('wpss-badge wpss-badge--' + (txn.type || 'neutral')).text(typeLabel || i18n.walletTypeUnknown)
 			).appendTo($row);
 
@@ -272,7 +316,7 @@
 			// "View Tip" / ...). The server resolves reference_url (empty when the
 			// reference is not a linkable order), so vendors get a real link to the
 			// related order instead of an opaque internal ID.
-			var $descCell = $('<td>');
+			var $descCell = $('<td>').attr('data-label', i18n.walletColDescription);
 			$('<span>').addClass('wpss-wallet__desc').text(txn.description || '').appendTo($descCell);
 			if (txn.reference_url && txn.reference_label) {
 				$('<a>')
@@ -283,16 +327,10 @@
 			}
 			$descCell.appendTo($row);
 
-			var symbol = isDebit ? '-' : '+';
-			// Decimals depend on the transaction's own currency (the ledger can
-			// mix currencies), so resolve per-row against the zero-decimal set.
-			var cfg = window.wpssUnifiedDashboard || {};
-			var zeroDecimal = cfg.zeroDecimalCurrencies || [];
-			var txnDecimals = (txn.currency && zeroDecimal.indexOf(txn.currency) !== -1) ? 0
-				: (typeof cfg.currencyDecimals !== 'undefined' ? cfg.currencyDecimals : 2);
 			$('<td>')
+				.attr('data-label', i18n.walletColAmount)
 				.addClass('wpss-wallet__amount-col wpss-wallet__amount')
-				.text(symbol + Math.abs(amount).toFixed(txnDecimals) + ' ' + (txn.currency || ''))
+				.text((isDebit ? '-' : '+') + (txn.amount_formatted || Math.abs(amount).toFixed(2)))
 				.appendTo($row);
 
 			return $row;
@@ -550,6 +588,113 @@
 		 *
 		 * @param {Event} e Click event.
 		 */
+		/**
+		 * Show the detail fields of the chosen payout method.
+		 *
+		 * @param {Event} e Change event.
+		 */
+		handlePayoutMethod: function (e) {
+			var method = $(e.currentTarget).val();
+			$('.wpss-payout-fields').each(function () {
+				this.hidden = this.getAttribute('data-payout-method') !== method;
+			});
+		},
+
+		/**
+		 * Request a withdrawal (POST /withdrawals). The details sent become
+		 * the vendor's payout profile; the server checks they are complete.
+		 *
+		 * @param {Event} e Submit event.
+		 */
+		handleWithdrawalSubmit: function (e) {
+			e.preventDefault();
+
+			var $form = $(e.currentTarget);
+			var $button = $form.find('#wpss-withdrawal-submit');
+			var $message = $form.find('#wpss-withdrawal-message');
+			var method = $form.find('#withdrawal_method').val();
+			var amount = parseFloat($form.find('#withdrawal_amount').val());
+			var details = {};
+			var missing = !amount || !method;
+
+			$form.find('.wpss-payout-fields[data-payout-method="' + method + '"] [data-detail]').each(function () {
+				var value = $.trim($(this).val());
+				details[$(this).data('detail')] = value;
+				if (!value && $(this).data('required')) {
+					missing = true;
+				}
+			});
+
+			var show = function (text, type) {
+				$message.removeClass('wpss-notice--success wpss-notice--error').addClass('wpss-notice--' + type).text(text).show();
+			};
+
+			if (missing) {
+				show(wpssUnifiedDashboard.i18n.withdrawalFillRequired, 'error');
+				return;
+			}
+
+			$button.prop('disabled', true);
+
+			$.ajax({
+				url: wpssUnifiedDashboard.restUrl + 'withdrawals',
+				method: 'POST',
+				contentType: 'application/json',
+				data: JSON.stringify({ amount: amount, method: method, details: details }),
+				beforeSend: function (xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
+				},
+				success: function () {
+					show(wpssUnifiedDashboard.i18n.withdrawalSubmitted, 'success');
+					window.location.reload();
+				},
+				error: function (xhr) {
+					show((xhr.responseJSON && xhr.responseJSON.message) || wpssUnifiedDashboard.i18n.errorOccurred, 'error');
+					$button.prop('disabled', false);
+				}
+			});
+		},
+
+		/**
+		 * Cancel a pending withdrawal (DELETE /withdrawals/{id}).
+		 *
+		 * @param {Event} e Click event.
+		 */
+		/**
+		 * A confirmed one-click REST action that changes the section's numbers
+		 * (cancel a withdrawal, withdraw a proposal). The button names the
+		 * route and method; the section reloads on success.
+		 *
+		 * Markup: data-wpss-rest-action="withdrawals/12" data-method="DELETE"
+		 *         data-confirm="Question shown in the confirm dialog"
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleRestAction: function (e) {
+			e.preventDefault();
+
+			const $button = $(e.currentTarget);
+
+			WPSS.showConfirm($button.data('confirm'), function () {
+				$button.prop('disabled', true);
+
+				$.ajax({
+					url: wpssUnifiedDashboard.restUrl + $button.data('wpss-rest-action'),
+					method: $button.data('method') || 'POST',
+					beforeSend: function (xhr) {
+						xhr.setRequestHeader('X-WP-Nonce', wpssUnifiedDashboard.restNonce);
+					},
+					success: function () {
+						window.location.reload();
+					},
+					error: function (xhr) {
+						WPSS.showNotification((xhr.responseJSON && xhr.responseJSON.message) || wpssUnifiedDashboard.i18n.errorOccurred, 'error');
+						$button.prop('disabled', false);
+					}
+				});
+			});
+		},
+
 		handleDeleteService: function (e) {
 			e.preventDefault();
 

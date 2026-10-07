@@ -45,7 +45,6 @@ Here are some real-world examples of what people are building:
 | Video embeds | 1 | 1 |
 | WooCommerce, EDD, FluentCart | -- | **[PRO]** |
 | Razorpay payment gateway | -- | **[PRO]** |
-| Wallet integrations (TeraWallet, MyCred, etc.) | -- | **[PRO]** |
 | Analytics dashboards (CSV export on the admin screen) | -- | **[PRO]** |
 | Cloud storage (Amazon S3, Google Cloud, DO) | -- | **[PRO]** |
 

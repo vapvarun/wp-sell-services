@@ -87,7 +87,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		// time) already reflects per-vendor rates, tiered rules, plan overrides
 		// and flat fees — instead of a divergent local round( base * rate / 100 ).
 		// Pre-tax base so vendors aren't charged fees on tax.
-		$commission_base = $subtotal + $addons_total;
+		$commission_base = (float) $tax['net'];
 		$order_context   = (object) array(
 			'id'         => 0,
 			'vendor_id'  => (int) $service->vendor_id,
@@ -135,13 +135,14 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 				'commission_rate'    => $commission_rate,
 				'platform_fee'       => $platform_fee,
 				'vendor_earnings'    => $vendor_earnings,
-				'created_at'         => current_time( 'mysql' ),
-				'updated_at'         => current_time( 'mysql' ),
+				'created_at'         => current_time( 'mysql', true ),
+				'updated_at'         => current_time( 'mysql', true ),
 				'meta'               => wp_json_encode(
 					array_filter(
 						[
 							'tax_rate'         => $tax_rate,
 							'tax_amount'       => round( $tax_amount, 2 ),
+							'tax_included'     => (bool) $tax['included'],
 							'package_snapshot' => $package_snapshot,
 						]
 					)
@@ -210,19 +211,18 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			}
 
 			// Determine package price from live post meta so we never trust client-side values.
-			$packages = get_post_meta( $service_id, '_wpss_packages', true ) ?: array();
-			$pkg      = $packages[ $package_id ] ?? ( ! empty( $packages ) ? reset( $packages ) : null );
+			// Priced from ids by the one line pricer - never from the prices
+			// the cart stored when the item was added.
+			$line = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, $package_id, $quantity, $item['addons'] ?? array() );
 
-			if ( ! $pkg ) {
+			if ( is_wp_error( $line ) ) {
 				continue;
 			}
 
-			$subtotal     = (float) ( $pkg['price'] ?? 0 ) * $quantity;
-			$addons_total = (float) array_reduce(
-				$item['addons'] ?? array(),
-				static fn( float $carry, array $addon ) => $carry + (float) ( $addon['price'] ?? 0 ),
-				0.0
-			);
+			$package_id   = (int) $line['package_id'];
+			$subtotal     = (float) $line['subtotal'];
+			$addons_total = (float) $line['addons_total'];
+			$item_addons  = $line['addons'];
 
 			$order = $this->create_order(
 				array(
@@ -231,7 +231,7 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 					'quantity'       => $quantity,
 					'customer_id'    => $customer_id,
 					'subtotal'       => $subtotal,
-					'addons'         => $item['addons'] ?? array(),
+					'addons'         => $item_addons,
 					'addons_total'   => $addons_total,
 					'currency'       => wpss_get_currency(),
 					'payment_method' => $payment_method,
@@ -342,8 +342,10 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 		// Gateways retry webhooks. A second mark-as-paid on an already-paid
 		// order must not reset paid_at / transaction_id, re-fire the status
 		// hooks, or resend the "new order" notifications.
-		if ( 'paid' === ( $order->payment_status ?? '' ) ) {
-			wpss_log( sprintf( 'mark_as_paid ignored for order #%d: already paid (incoming transaction %s)', $order_id, $transaction_id ) );
+		// A refunded payment is final too: a replayed "succeeded" event must not
+		// reopen a refunded order and credit the vendor again (Basecamp 10372723087).
+		if ( in_array( $order->payment_status ?? '', array( 'paid', 'refunded', 'partially_refunded' ), true ) ) {
+			wpss_log( sprintf( 'mark_as_paid ignored for order #%d: payment already %s (incoming transaction %s)', $order_id, $order->payment_status, $transaction_id ) );
 			return true;
 		}
 
@@ -376,8 +378,8 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			'payment_status' => 'paid',
 			'payment_method' => $payment_method,
 			'transaction_id' => $transaction_id,
-			'paid_at'        => current_time( 'mysql' ),
-			'updated_at'     => current_time( 'mysql' ),
+			'paid_at'        => current_time( 'mysql', true ),
+			'updated_at'     => current_time( 'mysql', true ),
 		);
 
 		// Snapshot the buyer's billing address AT PAYMENT TIME. The profile
@@ -401,14 +403,10 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 
 			// Calculate delivery deadline only if not already set (e.g., by convert_to_order).
 			if ( empty( $order->delivery_deadline ) ) {
-				$delivery_days = 7;
-				$service       = $order->get_service();
-				if ( $service ) {
-					$packages = get_post_meta( $service->id, '_wpss_packages', true ) ?: array();
-					if ( isset( $packages[ $order->package_id ] ) ) {
-						$delivery_days = (int) ( $packages[ $order->package_id ]['delivery_days'] ?? 7 );
-					}
-				}
+				// The same count the real deadline uses once requirements are in,
+				// so the placeholder shown until then does not promise a
+				// different day (Express, add-on days).
+				$delivery_days = ( new \WPSellServices\Services\OrderService() )->get_delivery_days( $order );
 
 				$deadline                         = new \DateTimeImmutable( '+' . $delivery_days . ' days' );
 				$update_data['delivery_deadline'] = $deadline->format( 'Y-m-d H:i:s' );

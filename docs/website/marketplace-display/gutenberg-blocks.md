@@ -21,6 +21,8 @@ Display a grid of services with visual controls for layout, filtering, and sorti
 - Sort by date, title, menu order, or random
 - Show or hide pagination, rating, price, and seller
 
+Services from a vendor who is on vacation are left out of the grid, the same as in the catalog and search.
+
 **Best for:** Service showcase pages, category-specific displays, homepage service sections.
 
 To filter by **tag** or by a specific **vendor**, use the
@@ -68,6 +70,8 @@ Highlight services you have marked as featured in a grid layout.
 - Category filter
 - Sort order
 
+Featured services are shown best rated first. A featured service with no rating yet is still shown, after the rated ones. Services from a vendor who is on vacation are left out.
+
 **Best for:** Homepage spotlights, promotional sections, editor's picks.
 
 ---
@@ -79,6 +83,8 @@ Display a vendor's profile information -- name, avatar, rating, and bio.
 **What you can configure:**
 - Select a specific vendor by ID
 - Or auto-detect from the page context (URL parameter)
+
+When the card lists the vendor's services it shows up to three, best rated first, and includes services that have no rating yet.
 
 **Best for:** Vendor spotlight pages, team profiles, featured vendor sections.
 
@@ -144,7 +150,7 @@ programmatically, building patterns, or setting defaults in `theme.json`.
 | `columns` | number | `3` | 2-5 |
 | `perPage` | number | `9` | 3-24 |
 | `category` | number | `0` | term id, `0` = all |
-| `orderBy` | string | `date` | `date`, `title`, `menu_order`, `rand` |
+| `orderBy` | string | `date` | `date`, `title`, `menu_order`, `rand`. Also `rating`, `sales`, `price` when set in the block markup; none of them hides a service that lacks the value |
 | `order` | string | `DESC` | `ASC`, `DESC` |
 | `featured` | boolean | `false` | |
 | `showPagination` | boolean | `true` | |

@@ -44,8 +44,20 @@ From the vendor dashboard:
 3. Click **Request Withdrawal**
 4. Enter the amount (or click **Withdraw All** for the full balance)
 5. Select payment method: **Bank Transfer** or **PayPal**
-6. Enter payment details
+6. Fill in that method's details. PayPal needs your PayPal email; a bank
+   transfer needs the account holder, bank name and account number or IBAN
+   (routing, SWIFT or IFSC is optional)
 7. Review and click **Submit Request**
+
+The details you enter are saved as your **payout profile** and filled in
+next time, so you only change them when your account changes. A request
+without complete details for its method is refused, so the site owner is
+never handed a payout with nowhere to send it. The admin withdrawals screen
+shows each request's full destination.
+
+You can cancel a request while it is still **Pending** with **Cancel** in
+your withdrawal history; the amount goes straight back to your available
+balance.
 
 The vendor sees a confirmation with a request ID and status. They also receive an email confirming the submission.
 

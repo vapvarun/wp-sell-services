@@ -53,6 +53,8 @@ The order is finished. The platform commission is calculated, the vendor's earni
 
 The order has been stopped. This can happen for several reasons -- payment failure, requirement timeout, mutual agreement, or an admin decision. If payment was received, a refund is processed. Cancelled orders cannot be reopened.
 
+When someone cancels an order they choose a reason and can add details. Both are kept with the order and shown as **Cancellation reason** and **Cancellation details** in the order summary, to the buyer, the vendor, and the admin on the wp-admin order screen. The Audit Log shows them next to the status change. Orders cancelled before 1.8.0 have no stored reason and show nothing.
+
 ### Disputed
 
 A formal dispute has been opened. The order is paused while both parties submit evidence and the admin mediates. See [Opening a Dispute](../disputes-resolution/opening-a-dispute.md) for details.

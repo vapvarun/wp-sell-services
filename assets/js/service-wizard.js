@@ -71,6 +71,8 @@ function wpssServiceWizard(existingData = {}) {
 					price: '',
 					delivery_time: '',
 					revisions: '1',
+					express_price: '',
+					express_days: '',
 					features: []
 				},
 				standard: {
@@ -80,6 +82,8 @@ function wpssServiceWizard(existingData = {}) {
 					price: '',
 					delivery_time: '',
 					revisions: '2',
+					express_price: '',
+					express_days: '',
 					features: []
 				},
 				premium: {
@@ -89,6 +93,8 @@ function wpssServiceWizard(existingData = {}) {
 					price: '',
 					delivery_time: '',
 					revisions: '3',
+					express_price: '',
+					express_days: '',
 					features: []
 				}
 			},
@@ -588,7 +594,13 @@ function wpssServiceWizard(existingData = {}) {
 				title: '',
 				description: '',
 				price: '',
-				delivery_days_extra: 0
+				delivery_days_extra: 0,
+				field_type: 'checkbox',
+				price_type: 'flat',
+				options: '',
+				min_quantity: 1,
+				max_quantity: 10,
+				is_required: false
 			});
 			this.refreshIcons();
 		},

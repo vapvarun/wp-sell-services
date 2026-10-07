@@ -154,7 +154,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 	public function create( array $data ) {
 		$defaults = [
 			'status'     => 'pending',
-			'created_at' => current_time( 'mysql' ),
+			'created_at' => current_time( 'mysql', true ),
 		];
 
 		$data = wp_parse_args( $data, $defaults );
@@ -179,7 +179,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 				'responded_by'     => $responder_id,
 				'new_due_date'     => $new_due_date,
 				'response_message' => $message,
-				'responded_at'     => current_time( 'mysql' ),
+				'responded_at'     => current_time( 'mysql', true ),
 			]
 		);
 	}
@@ -199,7 +199,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 				'status'           => 'rejected',
 				'responded_by'     => $responder_id,
 				'response_message' => $message,
-				'responded_at'     => current_time( 'mysql' ),
+				'responded_at'     => current_time( 'mysql', true ),
 			]
 		);
 	}
@@ -220,7 +220,7 @@ class ExtensionRequestRepository extends AbstractRepository {
 				"UPDATE {$this->table}
 				SET status = 'expired', responded_at = %s
 				WHERE status = 'pending' AND created_at < %s",
-				current_time( 'mysql' ),
+				current_time( 'mysql', true ),
 				$cutoff
 			)
 		);

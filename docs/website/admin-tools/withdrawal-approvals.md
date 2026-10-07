@@ -38,6 +38,8 @@ Click the status tabs above the table to view only pending, approved, completed,
 
 Click **Approve** on a pending withdrawal. A confirmation popup shows the vendor name, amount, and payment method. You can add an optional admin note.
 
+Every confirmation popup in the plugin opens with **Cancel** selected, so pressing Enter by reflex cancels. This applies to bulk Approve and Mark as paid too. Click the action button, or Tab to it, to go ahead.
+
 Before approving, verify:
 - The vendor has sufficient available balance
 - Payment details look complete and correct

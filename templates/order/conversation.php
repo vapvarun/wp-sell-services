@@ -552,7 +552,9 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 
 	// Poll for new messages (simple polling, can be replaced with WebSockets).
-	var lastMessageId = $messagesContainer.find('.wpss-messaging__message:last').data('message-id') || 0;
+	// System rows count too: they carry an id, and reading only chat bubbles
+	// made the first poll re-append every status note already on the page.
+	var lastMessageId = $messagesContainer.find('[data-message-id]:last').data('message-id') || 0;
 
 	function pollMessages() {
 		if (!$conversation.length || $conversation.is(':hidden') || !conversationId) {

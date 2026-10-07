@@ -53,7 +53,9 @@ class Activator {
 	public static function activate(): void {
 		self::check_dependencies();
 		self::install();
-		self::create_pages();
+		// wpss_version is written by the first normal load after this, so it is
+		// empty only on a site that has never run the plugin.
+		self::create_pages( '' === (string) get_option( 'wpss_version', '' ) );
 		self::schedule_cron_events();
 		self::flush_rewrite_rules();
 	}
@@ -439,9 +441,17 @@ class Activator {
 				array(
 					'enabled'      => '1',
 					'title'        => __( 'Manual / Offline Payment', 'wp-sell-services' ),
-					'instructions' => __( 'The site owner will contact you with payment instructions after you place your order.', 'wp-sell-services' ),
+					'instructions' => __( 'The site owner will send you payment instructions by email.', 'wp-sell-services' ),
 				)
 			);
+		}
+
+		// First-run only: a new marketplace starts with the digital billing
+		// set - name, email, country - not a 13-field postal address for work
+		// delivered online (owner decision, Basecamp 10337204220). Same gate as
+		// above, so an existing site keeps exactly what it saved.
+		if ( false === get_option( 'wpss_billing_field_settings' ) && false === get_option( 'wpss_activated_at' ) ) {
+			add_option( 'wpss_billing_field_settings', array( 'enabled' => wpss_get_digital_billing_field_preset() ) );
 		}
 
 		// Set activation timestamp.
@@ -529,14 +539,24 @@ class Activator {
 	 * it lives. Maps page IDs in the wpss_pages option.
 	 *
 	 * @since 1.0.0
+	 *
+	 * @param bool $fresh_install True on a site that has never run the plugin.
 	 * @return void
 	 */
-	public static function create_pages(): void {
+	public static function create_pages( bool $fresh_install = false ): void {
 		$pages = wpss_get_page_definitions();
 
 		$saved_pages = get_option( 'wpss_pages', array() );
 
 		foreach ( $pages as $key => $page_data ) {
+			// A page that changes sign-in for the whole site is never created
+			// or adopted by an update, and not on a fresh install either when
+			// something else already owns the site's login. A mapping the
+			// owner made is left as it is.
+			if ( ! empty( $page_data['takes_over'] ) && ! ( $fresh_install && self::site_uses_core_login() ) ) {
+				continue;
+			}
+
 			// Skip if already mapped to a valid published page.
 			if ( ! empty( $saved_pages[ $key ] ) ) {
 				$existing = get_post( $saved_pages[ $key ] );
@@ -586,6 +606,36 @@ class Activator {
 		update_option( 'wpss_pages', $saved_pages );
 
 		self::map_existing_terms_page();
+	}
+
+	/**
+	 * Whether the site's sign-in link is still WordPress's own wp-login.php.
+	 *
+	 * Asked with our own redirect out of the way. A membership plugin, a theme
+	 * or a security plugin that moved the login answers something else, and
+	 * then the site already has a login we must not replace.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return bool
+	 */
+	public static function site_uses_core_login(): bool {
+		$ours = has_filter( 'login_url', 'wpss_marketplace_login_url' );
+
+		if ( false !== $ours ) {
+			remove_filter( 'login_url', 'wpss_marketplace_login_url', $ours );
+		}
+
+		$url = (string) strtok( wp_login_url(), '?' );
+
+		if ( false !== $ours ) {
+			add_filter( 'login_url', 'wpss_marketplace_login_url', $ours, 3 );
+		}
+
+		// Against the address as stored, not site_url(): a hide-login plugin
+		// renames wp-login.php through the site_url filter, and site_url() on
+		// both sides of this comparison always agreed with itself.
+		return untrailingslashit( $url ) === untrailingslashit( set_url_scheme( (string) get_option( 'siteurl' ), 'login' ) ) . '/wp-login.php';
 	}
 
 	/**

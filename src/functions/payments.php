@@ -58,6 +58,54 @@ function wpss_uses_standalone_payments(): bool {
 }
 
 /**
+ * This site's mark on the payments it starts at a gateway.
+ *
+ * A gateway account is often shared: a live site, its staging copy, a second
+ * store. The gateway sends every event on the account to each of them, so a
+ * payment has to say which site made it before a webhook may act on it
+ * (Basecamp 10375174172). The stored home option, not home_url(): a
+ * multilingual plugin filters the latter per request and a webhook carries no
+ * language.
+ *
+ * @since 1.8.0
+ *
+ * @return string
+ */
+function wpss_payment_site_mark(): string {
+	return (string) get_option( 'home' );
+}
+
+/**
+ * Whether a site address written on a payment is this site's.
+ *
+ * Scheme, case and a trailing slash are ignored. An empty address is not ours.
+ *
+ * @since 1.8.0
+ *
+ * @param string $site_url Address read back from the gateway.
+ * @return bool
+ */
+function wpss_is_own_payment_site( string $site_url ): bool {
+	$bare = static fn( string $url ): string => untrailingslashit( strtolower( (string) preg_replace( '#^https?://#i', '', trim( $url ) ) ) );
+
+	return '' !== $bare( $site_url ) && $bare( $site_url ) === $bare( wpss_payment_site_mark() );
+}
+
+/**
+ * The same mark, short enough for a gateway field with a tight limit.
+ *
+ * PayPal's custom_id holds 127 characters and already carries the order's
+ * details as JSON, so the address itself does not fit.
+ *
+ * @since 1.8.0
+ *
+ * @return string Ten hex characters.
+ */
+function wpss_payment_site_hash(): string {
+	return substr( md5( untrailingslashit( strtolower( (string) preg_replace( '#^https?://#i', '', trim( wpss_payment_site_mark() ) ) ) ) ), 0, 10 );
+}
+
+/**
  * Whether the active rail can take a payment for ONE existing order.
  *
  * Tips, milestones, extensions and accepted proposals all need this. Standalone
@@ -159,10 +207,11 @@ function wpss_get_checkout_badges( array $package ): array {
 				: sprintf( _n( '%d revision included', '%d revisions included', $revisions, 'wp-sell-services' ), $revisions ) ),
 	);
 
+	// Lucide icon names; the checkout renders them as icons, not emoji.
 	$icons = array(
-		'delivery'      => "\xE2\x8F\xB1",
-		'communication' => "\xF0\x9F\x92\xAC",
-		'revisions'     => "\xE2\x9C\x85",
+		'delivery'      => 'timer',
+		'communication' => 'message-circle',
+		'revisions'     => 'circle-check',
 	);
 
 	$badges = array();
@@ -191,7 +240,7 @@ function wpss_get_checkout_badges( array $package ): array {
 	 *
 	 * @since 1.4.0
 	 *
-	 * @param array $badges  Each entry: icon, title, note.
+	 * @param array $badges  Each entry: icon (Lucide name, or text), title, note.
 	 * @param array $package Package being purchased.
 	 */
 	return (array) apply_filters( 'wpss_checkout_badges', $badges, $package );
@@ -402,6 +451,55 @@ function wpss_record_pending_payment_method( int $order_id, string $method ): bo
 }
 
 /**
+ * Whether the current page can take a payment: the mapped checkout page, the
+ * /service-checkout/ route, or a service page (its order modal).
+ *
+ * The one rule for loading a gateway's script. PayPal and Razorpay tested
+ * "! is_page() && ! checkout", which is true on every page, so PayPal's SDK
+ * loaded site-wide (Basecamp 10372723578).
+ *
+ * @since 1.8.0
+ *
+ * @return bool
+ */
+function wpss_is_payment_page(): bool {
+	$checkout_page_id = (int) ( get_option( 'wpss_pages', array() )['checkout'] ?? 0 );
+
+	return ( $checkout_page_id && is_page( $checkout_page_id ) )
+		|| (bool) get_query_var( 'wpss_checkout' )
+		|| is_singular( 'wpss_service' );
+}
+
+/**
+ * Verify the nonce on a gateway's checkout AJAX call.
+ *
+ * Accepts the gateway's own nonce, or the checkout nonce. The account-at-checkout
+ * step signs a new buyer in and hands back a fresh checkout nonce; the gateway
+ * nonce printed on the page belonged to the logged-out visitor and no longer
+ * verifies, so guests could not pay (Basecamp 10341174356, 10375174373). One
+ * rule for every gateway: Stripe, PayPal, Razorpay.
+ *
+ * @since 1.8.0
+ *
+ * @param array<int,string> $actions The gateway's own nonce actions.
+ * @return bool
+ */
+function wpss_verify_gateway_nonce( array $actions ): bool {
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- this IS the nonce check.
+	$posted   = sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ?? '' ) );
+	$checkout = sanitize_text_field( wp_unslash( $_REQUEST['wpss_checkout_nonce'] ?? '' ) );
+	// phpcs:enable
+
+	foreach ( array_merge( $actions, array( 'wpss_checkout' ) ) as $action ) {
+		if ( wp_verify_nonce( $posted, $action ) ) {
+			return true;
+		}
+	}
+
+	return (bool) wp_verify_nonce( $checkout, 'wpss_checkout' );
+}
+
+/**
  * Refuse an AJAX action on a gateway the owner has switched off.
  *
  * A gateway's init() registers its hooks unconditionally, and deliberately so:
@@ -477,4 +575,41 @@ function wpss_stripe_api_version(): string {
 	 * @param string $version Stripe API version string.
 	 */
 	return (string) apply_filters( 'wpss_stripe_api_version', '2026-08-26.dahlia' );
+}
+
+/**
+ * The checkout button's words for a gateway.
+ *
+ * "Pay $X" is right when the gateway takes the money now. It is wrong for a
+ * pay-later method - an offline order charges nothing at checkout, and a
+ * buyer told "Pay $280.00" expects a charge that never comes (Basecamp
+ * 10336467932). A gateway supplies its own label with
+ * get_checkout_button_label(); the Offline gateway says "Place order".
+ *
+ * @since 1.8.0
+ *
+ * @param object $gateway  Payment gateway.
+ * @param float  $total    Payable total.
+ * @param string $currency Currency code.
+ * @return string
+ */
+function wpss_checkout_button_label( object $gateway, float $total, string $currency ): string {
+	/* translators: %s: formatted total */
+	$label = sprintf( __( 'Pay %s', 'wp-sell-services' ), wp_strip_all_tags( wpss_format_price( $total, $currency ) ) );
+
+	if ( method_exists( $gateway, 'get_checkout_button_label' ) ) {
+		$label = (string) $gateway->get_checkout_button_label( $total, $currency );
+	}
+
+	/**
+	 * Filter the checkout button label for a gateway.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $label    Button label.
+	 * @param string $gateway  Gateway id.
+	 * @param float  $total    Payable total.
+	 * @param string $currency Currency code.
+	 */
+	return (string) apply_filters( 'wpss_gateway_checkout_button_label', $label, method_exists( $gateway, 'get_id' ) ? (string) $gateway->get_id() : '', $total, $currency );
 }

@@ -137,7 +137,7 @@ class BuyerRequest {
 		$request->budget_max     = (float) get_post_meta( $post->ID, '_wpss_budget_max', true );
 		$request->deadline       = get_post_meta( $post->ID, '_wpss_deadline', true ) ?: null;
 		$request->attachments    = get_post_meta( $post->ID, '_wpss_attachments', true ) ?: [];
-		$request->proposal_count = (int) get_post_meta( $post->ID, '_wpss_proposal_count', true );
+		$request->proposal_count = ( new \WPSellServices\Services\BuyerRequestService() )->get_proposal_count( $post->ID );
 		$request->created_at     = $post->post_date;
 		$request->updated_at     = $post->post_modified;
 
@@ -227,6 +227,11 @@ class BuyerRequest {
 				wpss_format_currency( $this->budget_min ),
 				wpss_format_currency( $this->budget_max )
 			);
+		}
+
+		// A fixed budget is stored in budget_min alone.
+		if ( $this->budget_min ) {
+			return wpss_format_currency( $this->budget_min );
 		}
 
 		if ( $this->budget_max ) {

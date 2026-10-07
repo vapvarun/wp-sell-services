@@ -38,7 +38,6 @@ class SellerLevelService {
 			'min_orders'        => 0,
 			'min_rating'        => 0,
 			'min_reviews'       => 0,
-			'min_response_rate' => 0,
 			'min_delivery_rate' => 0,
 			'min_days_active'   => 0,
 		),
@@ -46,7 +45,6 @@ class SellerLevelService {
 			'min_orders'        => 5,
 			'min_rating'        => 4.0,
 			'min_reviews'       => 3,
-			'min_response_rate' => 80,
 			'min_delivery_rate' => 80,
 			'min_days_active'   => 30,
 		),
@@ -54,7 +52,6 @@ class SellerLevelService {
 			'min_orders'        => 25,
 			'min_rating'        => 4.7,
 			'min_reviews'       => 10,
-			'min_response_rate' => 90,
 			'min_delivery_rate' => 90,
 			'min_days_active'   => 90,
 		),
@@ -113,10 +110,6 @@ class SellerLevelService {
 		}
 
 		if ( $stats->total_reviews < $reqs['min_reviews'] ) {
-			return false;
-		}
-
-		if ( $stats->response_rate < $reqs['min_response_rate'] ) {
 			return false;
 		}
 
@@ -197,16 +190,12 @@ class SellerLevelService {
 			$delivery_rate = ( $order_stats->on_time_orders / $order_stats->completed_orders ) * 100;
 		}
 
-		// Response rate from profile (default to 100 if not tracked).
-		$response_rate = $profile->response_rate ?? 100;
-
 		return (object) array(
 			'user_id'          => $user_id,
 			'total_orders'     => (int) $order_stats->total_orders,
 			'completed_orders' => (int) $order_stats->completed_orders,
 			'total_reviews'    => (int) $review_stats->total_reviews,
 			'avg_rating'       => (float) $review_stats->avg_rating,
-			'response_rate'    => (float) $response_rate,
 			'delivery_rate'    => (float) $delivery_rate,
 			'days_active'      => $days_active,
 		);
@@ -267,7 +256,7 @@ class SellerLevelService {
 			$table,
 			array(
 				'verification_tier' => $level,
-				'updated_at'        => current_time( 'mysql' ),
+				'updated_at'        => current_time( 'mysql', true ),
 			),
 			array( 'user_id' => $user_id ),
 			array( '%s', '%s' ),
@@ -290,36 +279,127 @@ class SellerLevelService {
 	}
 
 	/**
-	 * Recalculate and update all vendor levels.
+	 * User meta flag: an admin chose this vendor's level, so it is not recalculated.
+	 */
+	public const ADMIN_SET_META = '_wpss_level_set_by_admin';
+
+	/**
+	 * Whether the vendor's level was set by an admin rather than computed.
 	 *
-	 * Intended to be run via cron job.
+	 * Pro is admin-only by definition, so a Pro level counts as admin-set even
+	 * without the flag (every Pro row predating it was granted by hand).
 	 *
-	 * @return int Number of vendors updated.
+	 * @param int $user_id Vendor user ID.
+	 * @return bool
+	 */
+	public function is_admin_set( int $user_id ): bool {
+		return self::level_is_admin_set( $user_id, $this->get_current_level( $user_id ) );
+	}
+
+	/**
+	 * The same check for a caller that already has the level (a card, a list row).
+	 *
+	 * @param int    $user_id Vendor user ID.
+	 * @param string $level   The vendor's current level.
+	 * @return bool
+	 */
+	public static function level_is_admin_set( int $user_id, string $level ): bool {
+		return VendorProfile::TIER_PRO === $level || (bool) get_user_meta( $user_id, self::ADMIN_SET_META, true );
+	}
+
+	/**
+	 * Admin sets a vendor's level, or hands it back to the calculation.
+	 *
+	 * @param int    $user_id Vendor user ID.
+	 * @param string $level   A tier key, or '' for automatic.
+	 * @return string The level now in effect.
+	 */
+	public function set_admin_level( int $user_id, string $level ): string {
+		if ( '' === $level ) {
+			delete_user_meta( $user_id, self::ADMIN_SET_META );
+			$level = $this->calculate_level( $user_id );
+		} else {
+			update_user_meta( $user_id, self::ADMIN_SET_META, 1 );
+		}
+
+		$this->update_vendor_level( $user_id, $level );
+
+		return $level;
+	}
+
+	/**
+	 * Recalculate one vendor's level from their stats.
+	 *
+	 * The one recalculation: the weekly sweep, order completion and new
+	 * reviews all come here. An admin-set level is left alone; a promotion
+	 * notifies the vendor.
+	 *
+	 * @param int $user_id Vendor user ID.
+	 * @return string The level now in effect.
+	 */
+	public function recalculate( int $user_id ): string {
+		$current = $this->get_current_level( $user_id );
+
+		if ( $this->is_admin_set( $user_id ) ) {
+			return $current;
+		}
+
+		$new = $this->calculate_level( $user_id );
+
+		if ( $new === $current ) {
+			return $current;
+		}
+
+		$this->update_vendor_level( $user_id, $new );
+
+		$order = array( VendorProfile::TIER_NEW, VendorProfile::TIER_RISING, VendorProfile::TIER_TOP_RATED );
+		if ( array_search( $new, $order, true ) > array_search( $current, $order, true ) ) {
+			( new NotificationService() )->create(
+				$user_id,
+				'seller_level_promotion',
+				__( 'Congratulations! Level Up!', 'wp-sell-services' ),
+				sprintf(
+					/* translators: %s: new seller level */
+					__( 'You have been promoted to %s! Keep up the great work.', 'wp-sell-services' ),
+					self::get_level_label( $new )
+				),
+				array( 'new_level' => $new )
+			);
+
+			/**
+			 * Fires when a vendor is promoted to a higher level.
+			 *
+			 * @since 1.0.0
+			 *
+			 * @param int    $user_id       Vendor user ID.
+			 * @param string $new_level     New seller level.
+			 * @param string $current_level Previous seller level.
+			 */
+			do_action( 'wpss_vendor_level_promoted', $user_id, $new, $current );
+		}
+
+		return $new;
+	}
+
+	/**
+	 * Recalculate every vendor (the weekly sweep).
+	 *
+	 * @return int Number of vendors whose level changed.
 	 */
 	public function recalculate_all_levels(): int {
 		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_vendor_profiles';
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$vendors = $wpdb->get_col(
-			"SELECT user_id FROM {$table}"
-		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows    = $wpdb->get_results( "SELECT user_id, verification_tier FROM {$wpdb->prefix}wpss_vendor_profiles" );
+		$changed = 0;
 
-		$updated = 0;
-
-		foreach ( $vendors as $user_id ) {
-			$new_level     = $this->calculate_level( (int) $user_id );
-			$current_level = $this->get_current_level( (int) $user_id );
-
-			if ( $new_level !== $current_level ) {
-				if ( $this->update_vendor_level( (int) $user_id, $new_level ) ) {
-					++$updated;
-				}
+		foreach ( $rows as $row ) {
+			if ( $this->recalculate( (int) $row->user_id ) !== $row->verification_tier ) {
+				++$changed;
 			}
 		}
 
-		return $updated;
+		return $changed;
 	}
 
 	/**
@@ -394,10 +474,6 @@ class SellerLevelService {
 			'reviews'       => array(
 				'current'  => $stats->total_reviews,
 				'required' => $next_reqs['min_reviews'],
-			),
-			'response_rate' => array(
-				'current'  => $stats->response_rate,
-				'required' => $next_reqs['min_response_rate'],
 			),
 			'delivery_rate' => array(
 				'current'  => $stats->delivery_rate,

@@ -68,6 +68,28 @@ do_action( 'wpss_email_content_before', 'order_cancelled', $order, $recipient );
 	</tbody>
 </table>
 
+<?php
+// Where the buyer's money stands, for the buyer only (Basecamp 10336731713).
+$wpss_refund = ( $recipient && (int) $recipient->ID === (int) $order->customer_id ) ? wpss_get_order_refund_state( $order ) : array( 'state' => '' );
+if ( '' !== $wpss_refund['state'] ) :
+	$wpss_refund_amount = wpss_format_price( (float) $wpss_refund['amount'], (string) $order->currency );
+	if ( 'refunded' === $wpss_refund['state'] ) {
+		/* translators: %s: refunded amount */
+		$wpss_refund_copy = sprintf( __( 'Your payment of %s has been refunded to your original payment method. It can take a few days to show on your statement.', 'wp-sell-services' ), $wpss_refund_amount );
+	} elseif ( 'pending' === $wpss_refund['state'] ) {
+		/* translators: %s: amount to be refunded */
+		$wpss_refund_copy = sprintf( __( 'Your payment of %s will be refunded. It is sent back to you by hand, and your order page will show when it has gone out.', 'wp-sell-services' ), $wpss_refund_amount );
+	} else {
+		/* translators: %s: amount to be refunded */
+		$wpss_refund_copy = sprintf( __( 'Your payment of %s will be refunded. We are completing the refund and your order page will show when it has gone out.', 'wp-sell-services' ), $wpss_refund_amount );
+	}
+	?>
+<div style="background: #e8f4fd; padding: 16px; border-radius: 4px; margin: 20px 0;">
+	<strong style="color: #0c5460;"><?php esc_html_e( 'Your refund', 'wp-sell-services' ); ?></strong>
+	<p style="margin: 8px 0 0; color: #0c5460;"><?php echo esc_html( $wpss_refund_copy ); ?></p>
+</div>
+<?php endif; ?>
+
 <?php if ( ! empty( $reason ) ) : ?>
 <div style="background: #fff3cd; padding: 16px; border-radius: 4px; margin: 20px 0;">
 	<strong style="color: #856404;"><?php esc_html_e( 'Reason:', 'wp-sell-services' ); ?></strong>

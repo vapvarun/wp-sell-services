@@ -69,9 +69,11 @@ When the buyer pays a phase:
 3. When you're done, hit **Submit Delivery** on that phase row. Attach
    files or notes the buyer needs.
 4. The phase moves to **Awaiting approval**.
-5. On approval, the money is already in your wallet — approval confirms
-   delivery, it doesn't trigger the payout (payment happened when the
-   buyer paid the phase).
+5. On approval, your earnings for the phase are credited to your wallet.
+   Until then they show as **Clearing** on your earnings page: the buyer
+   has paid, but a phase is earned when it is approved, the same as an
+   order on completion. A phase completed another way (a dispute ruling or
+   an admin) is credited the same way, once.
 
 If the buyer wants changes, the phase comes back to you marked
 **Changes requested — over to you**, with their notes on the phase and in
@@ -263,7 +265,8 @@ Cancellation rules follow what's actually fair for split-phase work:
 - **Unpaid phases are auto-cancelled** when the parent is cancelled —
   no money has moved so there's nothing to unwind.
 - **Paid but still open phases** (the vendor is mid-work or the
-  delivery is awaiting your approval) don't cancel automatically.
+  delivery is awaiting your approval) have not been credited to the vendor
+  yet, and don't cancel automatically.
   They route through the dispute flow so both parties can agree on
   what's fair (full or partial refund, extra revision, or mutual
   agreement that the work delivered was complete).
@@ -335,9 +338,11 @@ than a fault. Developers: the `code` column is the machine-readable
 | The parent order does not exist | `wpss_order_not_found` | 404 |
 | You are not a party to the order | `wpss_forbidden` | 403 |
 
-**Things that fail silently, by design.** Paying a phase twice does not
-double-credit the vendor: the crediting step recognises the existing
-wallet entry and does nothing. A zero-value phase, or one whose commission
+**Things that fail silently, by design.** Approving a phase twice, or
+completing it by approval and again by a ruling, does not double-credit the
+vendor: the crediting step recognises the existing wallet entry and does
+nothing. A payment notification that arrives twice does not start the phase
+twice. A zero-value phase, or one whose commission
 leaves nothing for the vendor, records no wallet entry either. None of
 these surface an error, because in each case the correct outcome already
 holds.

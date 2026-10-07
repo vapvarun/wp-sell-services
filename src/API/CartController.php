@@ -59,9 +59,15 @@ class CartController extends RestController {
 							'required'    => true,
 						),
 						'addons'     => array(
-							'description' => __( 'Selected addon IDs.', 'wp-sell-services' ),
+							'description' => __( 'Selected add-ons: ids, or objects {id, quantity, option, text} for quantity, dropdown and text add-ons. Never a price.', 'wp-sell-services' ),
 							'type'        => 'array',
-							'items'       => array( 'type' => 'integer' ),
+						),
+						'quantity'   => array(
+							'description' => __( 'How many of the package.', 'wp-sell-services' ),
+							'type'        => 'integer',
+							'default'     => 1,
+							'minimum'     => 1,
+							'maximum'     => 10,
 						),
 					),
 				),
@@ -143,48 +149,28 @@ class CartController extends RestController {
 			return new WP_Error( 'service_paused', __( 'This service is not accepting orders right now.', 'wp-sell-services' ), array( 'status' => 400 ) );
 		}
 
-		// Get package, by STABLE ID or by legacy index.
-		//
-		// GET /services/{id}/packages now publishes a stable `id`, but shipped
-		// clients still send the array index and saved carts may hold either.
-		// The resolver tries the stable id first and falls back to the index, so
-		// old and new clients both work during the transition
-		// (Basecamp #10154919857).
-		$resolved = wpss_resolve_service_package( $service_id, $package_id );
+		// Priced by the pricer checkout charges through: it resolves the package
+		// (stable id or legacy index), validates the selection and prices every
+		// add-on type. A price in the request is never read.
+		$quantity = max( 1, (int) $request->get_param( 'quantity' ) );
+		$line     = \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $service_id, $package_id, $quantity, wpss_normalize_addon_selection( $addon_ids ) );
 
-		if ( null === $resolved ) {
-			return new WP_Error( 'invalid_package', __( 'Package not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
+		if ( is_wp_error( $line ) ) {
+			return $line;
 		}
 
-		$package = $resolved['package'];
-		$total   = (float) $package['price'];
+		$package = $line['package'];
+		$total   = (float) $line['total'];
 
 		// Store the POSITION, because that is what the rest of the order
-		// pipeline and every historical row still mean by package_id. The stable
-		// id is how the client NAMES a package; converting it here keeps that
-		// change at the edge instead of rewriting the storage format mid-release.
-		$package_id = $resolved['index'];
+		// pipeline and every historical row still mean by package_id.
+		$package_id = (int) $line['package_id'];
 
-		// Calculate addon totals.
-		$selected_addons = array();
-		if ( ! empty( $addon_ids ) ) {
-			// Add-on ids are indices into the service's `_wpss_addons` meta, the
-			// same ones the order modal and checkout use.
-			$all_addons = wpss_get_service_extras( $service_id );
-
-			foreach ( $addon_ids as $addon_id ) {
-				$addon = $all_addons[ (int) $addon_id ] ?? null;
-
-				if ( $addon ) {
-					$total            += (float) $addon['price'];
-					$selected_addons[] = array(
-						'id'    => (int) $addon_id,
-						'title' => $addon['title'],
-						'price' => (float) $addon['price'],
-					);
-				}
-			}
-		}
+		// The selection only; the cart prices it again on every read.
+		$selected_addons = array_map(
+			static fn( $addon ) => array_intersect_key( $addon, array_flip( array( 'id', 'quantity', 'option', 'text' ) ) ),
+			$line['addons']
+		);
 
 		// Standalone cart (stored in user meta).
 		$user_id = get_current_user_id();
@@ -208,12 +194,13 @@ class CartController extends RestController {
 
 		$cart = wpss_get_user_cart( (int) $user_id, true );
 
-		$item_key  = md5( $service_id . '-' . $package_id . '-' . wp_json_encode( $addon_ids ) );
+		$item_key  = md5( $service_id . '-' . $package_id . '-' . wp_json_encode( $selected_addons ) );
 		$cart_item = array(
 			'service_id' => $service_id,
 			'package_id' => $package_id,
 			'package'    => $package,
 			'addons'     => $selected_addons,
+			'quantity'   => $quantity,
 			'total'      => $total,
 			'added_at'   => current_time( 'mysql', true ),
 		);
@@ -255,75 +242,117 @@ class CartController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_cart( WP_REST_Request $request ): WP_REST_Response {
-		// Standalone cart.
-		$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
+		// Through the one reader the cart page and checkout use, not the raw
+		// meta: it flags a line whose service was trashed, unpublished or
+		// paused. Read raw, such a line was listed, totalled and counted here
+		// while checkout refused it (Basecamp 10330917388).
+		$cart       = wpss_get_user_cart( get_current_user_id(), true );
 		$items      = array();
-		$cart_total = 0;
+		$cart_total = 0.0;
+		$subtotal   = 0.0;
+		$tax_total  = 0.0;
 
-		if ( is_array( $cart ) ) {
-			foreach ( $cart as $key => $item ) {
-				$service = get_post( $item['service_id'] );
+		foreach ( $cart as $key => $item ) {
+			$service = get_post( $item['service_id'] );
 
-				// Resolve package name from stored package data or from service meta.
-				$package_name = '';
-				if ( ! empty( $item['package']['name'] ) ) {
-					$package_name = $item['package']['name'];
-				} else {
-					$packages = get_post_meta( $item['service_id'], '_wpss_packages', true );
-					if ( is_array( $packages ) && isset( $packages[ $item['package_id'] ] ) ) {
-						$package_name = $packages[ $item['package_id'] ]['name'] ?? '';
-					}
+			// Resolve package name from stored package data or from service meta.
+			$package_name = '';
+			if ( ! empty( $item['package']['name'] ) ) {
+				$package_name = $item['package']['name'];
+			} else {
+				$packages = get_post_meta( $item['service_id'], '_wpss_packages', true );
+				if ( is_array( $packages ) && isset( $packages[ $item['package_id'] ] ) ) {
+					$package_name = $packages[ $item['package_id'] ]['name'] ?? '';
 				}
-
-				// Report the package the way /services/{id} does.
-				//
-				// The cart ACCEPTS a stable id, then stored and returned the
-				// array position, so a client that round-tripped what we handed
-				// back was sending a positional value: fine today, wrong the
-				// moment a vendor reorders their tiers. Service detail taught
-				// the stable id and cart taught the index.
-				//
-				// Only the RESPONSE changes. The stored value stays positional
-				// because the pipeline genuinely still means position -- notably
-				// CheckoutIntentService does `$packages[ (int) $item['package_id'] ]`,
-				// a direct positional lookup that would fall through to
-				// reset($packages) and silently charge the FIRST tier if this
-				// were switched underneath it. Migrating storage is a separate,
-				// larger change; misreporting the contract is the bug here.
-				$stable_id = 0;
-				if ( isset( $item['package']['id'] ) ) {
-					$stable_id = (int) $item['package']['id'];
-				} else {
-					$service_packages = get_post_meta( $item['service_id'], '_wpss_packages', true );
-					if ( is_array( $service_packages ) && isset( $service_packages[ $item['package_id'] ]['id'] ) ) {
-						$stable_id = (int) $service_packages[ $item['package_id'] ]['id'];
-					}
-				}
-
-				$items[] = array(
-					'key'           => $key,
-					'service_id'    => $item['service_id'],
-					'service'       => $service ? $service->post_title : '',
-					// Stable id when the service has one; falls back to the
-					// position for a service whose packages predate ids, so this
-					// never reports an id that cannot be resolved.
-					'package_id'    => $stable_id ?: (int) $item['package_id'],
-					// The positional value, named for what it is. Published so
-					// the transition is visible rather than implied.
-					'package_index' => (int) $item['package_id'],
-					'package_name'  => $package_name,
-					'addons'        => $item['addons'] ?? array(),
-					'total'         => (float) $item['total'],
-				);
-
-				$cart_total += (float) $item['total'];
 			}
+
+			// Report the package the way /services/{id} does.
+			//
+			// The cart ACCEPTS a stable id, then stored and returned the
+			// array position, so a client that round-tripped what we handed
+			// back was sending a positional value: fine today, wrong the
+			// moment a vendor reorders their tiers. Service detail taught
+			// the stable id and cart taught the index.
+			//
+			// Only the RESPONSE changes. The stored value stays positional
+			// because the pipeline genuinely still means position -- notably
+			// CheckoutIntentService does `$packages[ (int) $item['package_id'] ]`,
+			// a direct positional lookup that would fall through to
+			// reset($packages) and silently charge the FIRST tier if this
+			// were switched underneath it. Migrating storage is a separate,
+			// larger change; misreporting the contract is the bug here.
+			$stable_id = 0;
+			if ( isset( $item['package']['id'] ) ) {
+				$stable_id = (int) $item['package']['id'];
+			} else {
+				$service_packages = get_post_meta( $item['service_id'], '_wpss_packages', true );
+				if ( is_array( $service_packages ) && isset( $service_packages[ $item['package_id'] ]['id'] ) ) {
+					$stable_id = (int) $service_packages[ $item['package_id'] ]['id'];
+				}
+			}
+
+			// Priced now, the way checkout will charge it (wpss_price_cart_item()).
+			// A line that cannot be bought is listed at nothing.
+			$unavailable = ! empty( $item['unavailable'] );
+			$line        = $unavailable ? new \WP_Error( 'wpss_unavailable' ) : wpss_price_cart_item( (array) $item );
+			if ( is_wp_error( $line ) ) {
+				$line = array(
+					'addons'       => array(),
+					'subtotal'     => 0.0,
+					'addons_total' => 0.0,
+					'tax'          => 0.0,
+					'total'        => 0.0,
+				);
+			}
+
+			$addons = array();
+			foreach ( $line['addons'] as $addon ) {
+				$addons[] = array(
+					'id'       => (int) $addon['id'],
+					'title'    => (string) $addon['title'],
+					'quantity' => (int) $addon['quantity'],
+					'option'   => (string) $addon['option'],
+					'text'     => (string) $addon['text'],
+					'price'    => (float) $addon['price'],
+				);
+			}
+
+			$items[] = array(
+				'key'                => $key,
+				'service_id'         => $item['service_id'],
+				'service'            => $service ? $service->post_title : '',
+				// Stable id when the service has one; falls back to the
+				// position for a service whose packages predate ids, so this
+				// never reports an id that cannot be resolved.
+				'package_id'         => $stable_id ?: (int) $item['package_id'],
+				// The positional value, named for what it is. Published so
+				// the transition is visible rather than implied.
+				'package_index'      => (int) $item['package_id'],
+				'package_name'       => $package_name,
+				'quantity'           => max( 1, (int) ( $item['quantity'] ?? 1 ) ),
+				'addons'             => $addons,
+				'subtotal'           => (float) $line['subtotal'] + (float) $line['addons_total'],
+				'tax'                => (float) $line['tax'],
+				'total'              => (float) $line['total'],
+				// True when the service was trashed, unpublished or paused
+				// after it was added; the reason is ready to show. Such a
+				// line is in neither the totals nor a checkout.
+				'unavailable'        => $unavailable,
+				'unavailable_reason' => (string) ( $item['unavailable_reason'] ?? '' ),
+			);
+
+			$subtotal   += (float) $line['subtotal'] + (float) $line['addons_total'];
+			$tax_total  += (float) $line['tax'];
+			$cart_total += (float) $line['total'];
 		}
 
 		return new WP_REST_Response(
 			array(
 				'items'    => $items,
-				'total'    => $cart_total,
+				'subtotal' => round( $subtotal, wpss_get_currency_decimals() ),
+				'tax'      => round( $tax_total, wpss_get_currency_decimals() ),
+				// What checkout will charge, tax included (Basecamp 10336467589).
+				'total'    => round( $cart_total, wpss_get_currency_decimals() ),
 				'currency' => wpss_get_currency(),
 			)
 		);

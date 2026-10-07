@@ -73,33 +73,47 @@ class UnifiedDashboard {
 		add_shortcode( 'wpss_dashboard', array( $this, 'render' ) );
 		add_action( 'wp_ajax_wpss_become_vendor', array( $this, 'ajax_become_vendor' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+
+		/**
+		 * Load the dashboard assets from wherever a dashboard surface renders.
+		 *
+		 * The page check in enqueue_assets() reads the page's own content, so
+		 * a shortcode placed in a synced pattern, a widget or a page builder
+		 * rendered with no stylesheet and no script.
+		 *
+		 * @since 1.8.0
+		 */
+		add_action(
+			'wpss_enqueue_dashboard_assets',
+			function (): void {
+				$this->enqueue_assets( true );
+			}
+		);
 	}
 
 	/**
 	 * Enqueue dashboard assets.
 	 *
+	 * @param mixed $force True to load without the page check. Untyped: WordPress
+	 *                     passes an empty string to wp_enqueue_scripts callbacks.
 	 * @return void
 	 */
-	public function enqueue_assets(): void {
-		if ( ! $this->is_dashboard_page() ) {
+	public function enqueue_assets( $force = false ): void {
+		static $done = false;
+
+		// Once per request: on wp_enqueue_scripts when the page's content names
+		// a dashboard shortcode, otherwise when one renders ($force).
+		if ( $done || ( true !== $force && ! $this->is_dashboard_page() ) ) {
 			return;
 		}
 
+		$done = true;
+
 		// Media library for profile avatar/portfolio uploads.
 		if ( is_user_logged_in() ) {
-			// Grant upload_files capability temporarily for non-vendor users on the dashboard
-			// so customers can upload profile images via the WP Media Library.
-			// Uses a filter instead of $user->add_cap() to avoid persisting to the database.
-			$user = wp_get_current_user();
-			if ( $user->exists() && ! $user->has_cap( 'upload_files' ) ) {
-				add_filter(
-					'user_has_cap',
-					static function ( array $allcaps ) use ( $user ): array {
-						$allcaps['upload_files'] = true;
-						return $allcaps;
-					}
-				);
-			}
+			// Members without upload_files get it for images while the dashboard
+			// renders (so the modal offers Upload) and on the upload request itself.
+			add_filter( 'user_has_cap', 'wpss_grant_member_image_upload' );
 			wp_enqueue_media();
 		}
 
@@ -132,6 +146,11 @@ class UnifiedDashboard {
 		);
 		wp_style_add_data( 'wpss-messaging', 'rtl', 'replace' );
 
+		// A single order (orders/{id} or sales/{id}) renders templates/order/order-view.php.
+		if ( wpss_resolve_request_order_id() ) {
+			wpss_enqueue_order_view_style();
+		}
+
 		// wpss-ui provides window.wpssToast. The dashboard reports a saved
 		// profile through it, so declare the dependency rather than relying on
 		// some other surface having registered the handle first.
@@ -147,18 +166,16 @@ class UnifiedDashboard {
 			'wpss-unified-dashboard',
 			'wpssUnifiedDashboard',
 			array(
-				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
-				'nonce'                 => wp_create_nonce( 'wpss_dashboard_nonce' ),
-				'serviceNonce'          => wp_create_nonce( 'wpss_service_nonce' ),
-				'restUrl'               => esc_url_raw( rest_url( 'wpss/v1/' ) ),
-				'restNonce'             => wp_create_nonce( 'wp_rest' ),
+				'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+				'nonce'        => wp_create_nonce( 'wpss_dashboard_nonce' ),
+				'serviceNonce' => wp_create_nonce( 'wpss_service_nonce' ),
+				'restUrl'      => esc_url_raw( rest_url( 'wpss/v1/' ) ),
+				'restNonce'    => wp_create_nonce( 'wp_rest' ),
 				// Which profile route Save Changes should use. Buyers own a
 				// billing address and a display name but no vendor profile, and
 				// PUT /vendors/me refuses them outright.
-				'isVendor'              => wpss_is_vendor( get_current_user_id() ),
-				'currencyDecimals'      => wpss_get_currency_decimals(),
-				'zeroDecimalCurrencies' => wpss_get_zero_decimal_currencies(),
-				'i18n'                  => array(
+				'isVendor'     => wpss_is_vendor( get_current_user_id() ),
+				'i18n'         => array(
 					'becomeVendorConfirm'    => __( 'Start selling services on this marketplace?', 'wp-sell-services' ),
 
 					// Wallet transactions table. These are rendered entirely in JS,
@@ -174,6 +191,8 @@ class UnifiedDashboard {
 					'walletTypeUnknown'      => __( 'Other', 'wp-sell-services' ),
 					'processing'             => __( 'Processing...', 'wp-sell-services' ),
 					'confirmDelete'          => __( 'Are you sure you want to delete this service? This action cannot be undone.', 'wp-sell-services' ),
+					'withdrawalFillRequired' => __( 'Enter an amount, choose a payout method and fill in its details.', 'wp-sell-services' ),
+					'withdrawalSubmitted'    => __( 'Withdrawal request submitted.', 'wp-sell-services' ),
 					'pause'                  => __( 'Pause', 'wp-sell-services' ),
 					// The same button toggles between these two labels, but only
 					// 'pause' was ever sent -- so it read translated when paused and
@@ -240,7 +259,8 @@ class UnifiedDashboard {
 		// the wrapper rendering correct markup with no stylesheet: nav and stats
 		// came out as bare bullet lists. Caught in the browser; no PHP-level
 		// check would have shown it.
-		$shortcodes = array( 'wpss_dashboard', 'wpss_account' );
+		// [wpss_post_request] renders the dashboard's create-request section.
+		$shortcodes = array( 'wpss_dashboard', 'wpss_account', 'wpss_post_request' );
 
 		/**
 		 * Filters the shortcodes that make a page load the dashboard assets.
@@ -267,6 +287,9 @@ class UnifiedDashboard {
 	 * @return string Dashboard HTML.
 	 */
 	public function render( array $atts = array() ): string {
+		// Before the sign-in prompt too: it is styled by the same sheet.
+		$this->enqueue_assets( true );
+
 		if ( ! is_user_logged_in() ) {
 			return $this->render_login_prompt();
 		}
@@ -319,7 +342,11 @@ class UnifiedDashboard {
 
 		$section = wpss_normalize_dashboard_section( $section );
 
-		if ( '' !== $section ) {
+		// On an order URL the order decides buying vs selling, even when the
+		// path says /orders/: wpss_get_order_url() without a section (wallet
+		// "View Order", notifications, emails) sends a vendor to
+		// /dashboard/orders/<sale>/, which titled a sale "My Orders".
+		if ( '' !== $section && ! in_array( $section, array( 'orders', 'sales' ), true ) ) {
 			return $section;
 		}
 
@@ -332,7 +359,11 @@ class UnifiedDashboard {
 		// sale. Deciding from the order keeps buying and selling honest.
 		$section_for_order = $this->section_for_order( $this->resolve_requested_order_id() );
 
-		return '' !== $section_for_order ? $section_for_order : $this->default_section();
+		if ( '' !== $section_for_order ) {
+			return $section_for_order;
+		}
+
+		return '' !== $section ? $section : $this->default_section();
 	}
 
 	/**
@@ -556,36 +587,38 @@ class UnifiedDashboard {
 		$login_url = wp_login_url( get_permalink() ?: home_url() );
 
 		/*
-		 * The heading is an H1, not an H2, and it has to be here.
+		 * The page's H1 is the theme's title band: logged out, the dashboard is
+		 * not a shell surface (ShellHeader::is_shell_surface()), so the theme
+		 * title is kept and this prompt carries an H2. Printing a ShellHeader
+		 * H1 here as well would make two (Basecamp 10208511245, 10337197376).
 		 *
-		 * The dashboard is a plugin-shell surface, so ShellHeader suppresses the
-		 * theme's own <h1> in favour of the plugin's. The signed-in dashboard
-		 * renders one; this prompt did not, so once suppression started working a
-		 * logged-out visitor got a page with NO H1 at all — worse than the
-		 * duplicate that was reported (Basecamp 10208511245).
-		 *
-		 * Rendered through ShellHeader::render() rather than a hand-written <h1>,
-		 * so it is the same component, class names and styling as every other
-		 * plugin heading.
+		 * A visitor with no account got only "Log In"; sign-up is offered
+		 * beside it whenever the site takes registrations.
 		 */
-		return \WPSellServices\Frontend\ShellHeader::render(
-			array(
-				'title' => __( 'Access Your Dashboard', 'wp-sell-services' ),
-				'echo'  => false,
-			)
-		) . sprintf(
+		$signup = get_option( 'users_can_register' )
+			? sprintf( '<a href="%s" class="wpss-btn wpss-btn--outline">%s</a>', esc_url( wp_registration_url() ), esc_html__( 'Create account', 'wp-sell-services' ) )
+			: '';
+
+		return sprintf(
 			'<div class="wpss-dashboard-login">
 				<div class="wpss-dashboard-login__icon">
 					<i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
 				</div>
+				<h2 class="wpss-dashboard-login__title">%s</h2>
 				<p>%s</p>
-				<a href="%s" class="wpss-btn wpss-btn--primary">%s</a>
+				<div class="wpss-dashboard-login__actions">
+					<a href="%s" class="wpss-btn wpss-btn--primary">%s</a>
+					%s
+				</div>
 			</div>',
-			esc_html__( 'Please log in to view your orders, messages, and manage your services.', 'wp-sell-services' ),
+			esc_html__( 'Access your dashboard', 'wp-sell-services' ),
+			esc_html__( 'Log in to view your orders, messages, and manage your services.', 'wp-sell-services' ),
 			esc_url( $login_url ),
-			esc_html__( 'Log In', 'wp-sell-services' )
+			esc_html__( 'Log in', 'wp-sell-services' ),
+			$signup // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above.
 		);
 	}
+
 
 	/**
 	 * Render the dashboard shell.
@@ -601,22 +634,32 @@ class UnifiedDashboard {
 		$is_pending    = 'pending' === $vendor_status;
 		$section_data  = $this->get_section_data( $this->current_section );
 		?>
-		<div class="wpss-app-shell">
+		<?php
+		// A block theme holds page content to its reading width (645px on
+		// Twenty Twenty-Five), which left the dashboard 344px beside its own
+		// menu. alignwide is the theme's own way to ask for its wide width.
+		?>
+		<div class="wpss-app-shell<?php echo wp_is_block_theme() ? ' alignwide' : ''; ?>">
 			<div class="wpss-app-shell__container">
 				<div class="wpss-dashboard">
 					<aside class="wpss-dashboard__sidebar">
 				<?php
-				// Under 480px the sidebar collapses to this bar (see the CSS), so
-				// the section content is the first thing on screen; the toggle
-				// reveals the nav below it. Hidden on wider viewports.
+				// At 1024px and below the sidebar collapses to this bar (see the
+				// CSS), so the section content gets the full width; the toggle
+				// opens the drawer below as an off-canvas panel. Hidden on wider
+				// viewports, where the drawer is the plain sidebar.
 				?>
 				<div class="wpss-dashboard__nav-bar">
 					<span class="wpss-dashboard__nav-bar-title"><?php echo esc_html( $section_data['title'] ); ?></span>
-					<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-dashboard__nav-toggle" aria-expanded="false" aria-controls="wpss-dashboard-nav">
+					<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--sm wpss-dashboard__nav-toggle" aria-expanded="false" aria-controls="wpss-dashboard-drawer">
 						<?php $this->render_icon( 'menu' ); ?>
 						<span><?php esc_html_e( 'Menu', 'wp-sell-services' ); ?></span>
 					</button>
 				</div>
+				<div id="wpss-dashboard-drawer" class="wpss-dashboard__drawer">
+				<button type="button" class="wpss-dashboard__drawer-close" aria-label="<?php esc_attr_e( 'Close menu', 'wp-sell-services' ); ?>">
+					<?php $this->render_icon( 'x' ); ?>
+				</button>
 				<div class="wpss-dashboard__user">
 					<?php echo get_avatar( $user_id, 48, '', '', array( 'class' => 'wpss-dashboard__avatar' ) ); ?>
 					<div class="wpss-dashboard__user-info">
@@ -699,6 +742,7 @@ class UnifiedDashboard {
 					</div>
 					<?php endif; ?>
 				<?php endif; ?>
+				</div>
 			</aside>
 
 			<main class="wpss-dashboard__content">
@@ -722,20 +766,16 @@ class UnifiedDashboard {
 					 */
 					do_action( 'wpss_dashboard_header' );
 					?>
-					<h1 class="wpss-dashboard__title wpss-page-header__title">
+					<?php
+					// An open order carries its own H1 ("Order #..."); the section name
+					// is then context, not a second page heading.
+					$title_tag = $this->resolve_requested_order_id() ? 'p' : 'h1';
+					?>
+					<<?php echo esc_attr( $title_tag ); ?> class="wpss-dashboard__title wpss-page-header__title">
 						<?php
-						$id = isset( $_GET['id'] ) ? sanitize_text_field( wp_unslash( $_GET['id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only URL parameter for display.
-						// Service edit reuses the `create` section with ?id=<service_id>, so
-						// an editing context is `create` section + a present id. The guard was
-						// inverted (`!== 'create'`), so editing a service always fell through to
-						// the "Create Service" title.
-						if ( $id && 'create' === $this->current_section ) {
-							esc_html_e( 'Update Service', 'wp-sell-services' );
-						} else {
-							echo esc_html( $section_data['title'] );
-						}
+						echo esc_html( $section_data['title'] );
 						?>
-					</h1>
+					</<?php echo esc_attr( $title_tag ); ?>>
 					<?php
 					// F4 (baseline-2026-04-25.md): show the top "Create Service" button
 					// only when the vendor already has at least one service. On the empty
@@ -751,10 +791,13 @@ class UnifiedDashboard {
 							<?php esc_html_e( 'Post Request', 'wp-sell-services' ); ?>
 						</a>
 					<?php endif; ?>
-					<button type="button" class="wpss-dashboard__tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
-						<i data-lucide="help-circle" class="wpss-icon" aria-hidden="true"></i>
-						<span><?php esc_html_e( 'Replay tour', 'wp-sell-services' ); ?></span>
-					</button>
+					<?php // The tour does not load on an order URL (Tour::should_load), so neither does its button. ?>
+					<?php if ( 'h1' === $title_tag ) : ?>
+						<button type="button" class="wpss-dashboard__tour-replay" onclick="if(window.wpssTour&&window.wpssTour.start){window.wpssTour.start();}return false;">
+							<i data-lucide="help-circle" class="wpss-icon" aria-hidden="true"></i>
+							<span><?php esc_html_e( 'Replay tour', 'wp-sell-services' ); ?></span>
+						</button>
+					<?php endif; ?>
 				</header>
 
 				<div class="wpss-dashboard__body">
@@ -835,7 +878,12 @@ class UnifiedDashboard {
 			'disputes'       => __( 'Disputes', 'wp-sell-services' ),
 			'notifications'  => __( 'Notifications', 'wp-sell-services' ),
 			'profile'        => __( 'Profile', 'wp-sell-services' ),
-			'create'         => __( 'Create Service', 'wp-sell-services' ),
+			// Editing a service reuses the create section with ?id=; the page
+			// heading and the phone bar both read this one title, so they can no
+			// longer say "Update Service" and "Create Service" at once
+			// (Basecamp 10337227125).
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only URL parameter for display.
+			'create'         => ! empty( $_GET['id'] ) ? __( 'Update Service', 'wp-sell-services' ) : __( 'Create Service', 'wp-sell-services' ),
 			'create-request' => __( 'Post a Request', 'wp-sell-services' ),
 			'edit-request'   => __( 'Edit Request', 'wp-sell-services' ),
 		);
@@ -880,24 +928,9 @@ class UnifiedDashboard {
 	 * @return void
 	 */
 	private function render_section( string $section ): void {
-		// `wallet` and `earnings` are one screen ("Wallet & Earnings"):
-		// earnings.php renders both the earnings summary and the wallet ledger
-		// (#wpss-wallet-transactions). The wallet slug is kept as a friendly
-		// URL/nav entry but resolves to the single earnings template - no
-		// duplicate template, one source of truth.
-		$template_section = ( 'wallet' === $section ) ? 'earnings' : $section;
-		$template_path    = WPSS_PLUGIN_DIR . "templates/dashboard/sections/{$template_section}.php";
-
-		/**
-		 * Filter the template path for a dashboard section.
-		 *
-		 * Allows pro or third-party plugins to provide custom templates for sections.
-		 *
-		 * @since 1.1.0
-		 * @param string $template_path Full path to section template.
-		 * @param string $section       Section slug.
-		 */
-		$template_path = apply_filters( 'wpss_dashboard_section_template', $template_path, $section );
+		// One resolver: Free's file, Pro's via the filter, then a theme copy
+		// (Basecamp 10340929957, 10372723832).
+		$template_path = wpss_get_dashboard_section_template( $section );
 
 		$user_id        = get_current_user_id();
 		$vendor_service = $this->vendor_service;
@@ -910,7 +943,7 @@ class UnifiedDashboard {
 			return;
 		}
 
-		if ( file_exists( $template_path ) ) {
+		if ( '' !== $template_path ) {
 			/**
 			 * Fires before the dashboard section content is rendered.
 			 *

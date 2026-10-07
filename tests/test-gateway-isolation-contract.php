@@ -48,7 +48,28 @@ $expected = array(
 	'src/Integrations/Stripe/StripeGateway.php'      => 2,
 	'src/Integrations/PayPal/PayPalGateway.php'      => 2,
 	'src/Integrations/Gateways/OfflineGateway.php'   => 1,
+	'src/Integrations/Gateways/TestGateway.php'      => 1,
 );
+
+// The Test gateway checked nonce, login and WP_DEBUG but never its own
+// switch, so on any WP_DEBUG site a buyer could mark a real order paid with
+// the gateway turned off (Basecamp 10336397941). Prove it end to end: debug
+// on, setting off, demo mode off - the handler must refuse before any work.
+$test_off = 'add_filter( "pre_option_wpss_test_gateway_settings", fn() => array( "enabled" => "" ) ); '
+	. 'add_filter( "pre_option_wpss_demo_payments", fn() => "no" ); '
+	. '$u = get_users( array( "role" => "subscriber", "number" => 1, "fields" => "ID" ) ); wp_set_current_user( (int) ( $u[0] ?? 0 ) ); '
+	. '$_POST["nonce"] = wp_create_nonce( "wpss_test_payment" ); '
+	. '$g = new \WPSellServices\Integrations\Gateways\TestGateway(); '
+	. 'echo $g->is_enabled() ? "ENABLED " : "DISABLED "; '
+	. '$g->ajax_process_payment(); echo "REACHED";';
+$test_off_out = $run( $test_off );
+
+if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+	$check( 'Test gateway reports disabled when its setting is off', false !== strpos( $test_off_out, 'DISABLED' ) );
+	$check( 'Test gateway handler refuses when disabled (WP_DEBUG on)', false !== strpos( $test_off_out, 'wpss_gateway_disabled' ) );
+} else {
+	echo "SKIP  Test gateway runtime check - needs WP_DEBUG on to exercise the debug path\n";
+}
 
 foreach ( $expected as $rel => $count ) {
 	$body = (string) file_get_contents( WPSS_PLUGIN_DIR . $rel );

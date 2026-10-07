@@ -476,7 +476,7 @@ final class Plugin {
 			add_action(
 				'init',
 				static function () use ( $installed_version ): void {
-					Activator::create_pages();
+					Activator::create_pages( '' === (string) $installed_version );
 					// Re-run cron scheduling so new hooks shipped in this
 					// version get registered without a deactivate / reactivate.
 					// Idempotent — Scheduler::has_pending() gates every insert.
@@ -722,6 +722,11 @@ final class Plugin {
 		// Keep those dormant pages out of search results and the sitemap.
 		add_filter( 'wp_robots', array( $this, 'filter_dormant_store_page_robots' ) );
 		add_filter( 'wp_sitemaps_posts_query_args', array( $this, 'exclude_dormant_store_pages_from_sitemap' ), 10, 2 );
+
+		// Proposal counts for any list of buyer requests, in one query per list.
+		// Per-request only: a persistent object cache would show stale counts.
+		wp_cache_add_non_persistent_groups( \WPSellServices\Services\BuyerRequestService::PROPOSAL_COUNT_GROUP );
+		add_filter( 'the_posts', array( \WPSellServices\Services\BuyerRequestService::class, 'prime_proposal_counts_for_posts' ) );
 
 		// Flush rewrite rules once after activation (consumes transient set by Activator).
 		add_action(
@@ -1364,7 +1369,7 @@ final class Plugin {
 					return;
 				}
 
-				update_user_meta( $user_id, '_wpss_last_active', current_time( 'mysql' ) );
+				update_user_meta( $user_id, '_wpss_last_active', current_time( 'mysql', true ) );
 			}
 		);
 
@@ -1793,8 +1798,8 @@ final class Plugin {
 			3
 		);
 
-		// Milestone paid — buyer's payment cleared, vendor credited,
-		// milestone is in_progress. Notify vendor to start work.
+		// Milestone paid - buyer's payment cleared, the phase is in_progress.
+		// The vendor is credited on approval (MilestoneService::credit_phase()).
 		$this->loader->add_action(
 			'wpss_milestone_paid',
 			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id, float $net_amount ) use ( $notification_service, $email_service ): void {
@@ -1842,8 +1847,8 @@ final class Plugin {
 			4
 		);
 
-		// Milestone approved — buyer accepted the delivery.
-		// Notify the vendor (money already landed at payment time).
+		// Milestone approved - buyer accepted the delivery; the phase has just
+		// been credited to the vendor. Notify them.
 		$this->loader->add_action(
 			'wpss_milestone_approved',
 			function ( int $milestone_id, int $parent_order_id, int $vendor_id, int $customer_id ) use ( $notification_service, $email_service ): void {
@@ -1950,7 +1955,7 @@ final class Plugin {
 						"UPDATE {$wpdb->prefix}wpss_orders
 						SET status = 'cancelled', updated_at = %s
 						WHERE platform = %s AND platform_order_id = %d AND status = %s",
-						current_time( 'mysql' ),
+						current_time( 'mysql', true ),
 						\WPSellServices\Services\MilestoneService::ORDER_TYPE,
 						$order_id,
 						'pending_payment'
@@ -2636,7 +2641,7 @@ final class Plugin {
 				'display_name'      => $user->display_name,
 				'status'            => 'active',
 				'verification_tier' => 'new',
-				'created_at'        => current_time( 'mysql' ),
+				'created_at'        => current_time( 'mysql', true ),
 			),
 			array( '%d', '%s', '%s', '%s', '%s' )
 		);
@@ -3043,6 +3048,7 @@ final class Plugin {
 		// Email hook map: hook => [ method, priority, accepted_args ].
 		$email_hooks = array(
 			'wpss_order_status_changed'             => array( 'handle_status_change', 20, 3 ),
+			'wpss_order_cancelled'                  => array( 'handle_order_cancelled', 20, 1 ),
 			'wpss_requirements_submitted'           => array( 'send_requirements_submitted', 20, 3 ),
 			'wpss_delivery_submitted'               => array( 'send_delivery_ready', 20, 2 ),
 			'wpss_new_order_message'                => array( 'send_new_message', 20, 3 ),

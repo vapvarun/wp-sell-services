@@ -11,6 +11,7 @@ define( 'WPSS_PLUGIN_FILE', __DIR__ . '/wp-sell-services.php' );
 define( 'WPSS_PLUGIN_DIR', __DIR__ . '/' );
 define( 'WPSS_PLUGIN_URL', 'https://example.com/wp-content/plugins/wp-sell-services/' );
 define( 'WPSS_PLUGIN_BASENAME', 'wp-sell-services/wp-sell-services.php' );
+define( 'WPSS_EXPRESS_ADDON_ID', -1 );
 
 // WordPress config constant (set in wp-config.php at runtime; declared here so
 // static analysis knows it exists).

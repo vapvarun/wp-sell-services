@@ -31,6 +31,9 @@ class PublishRuleTest extends TestCase {
 	/** @var int[] */
 	private array $created = array();
 
+	/** @var int[] */
+	private array $terms = array();
+
 	protected function set_up(): void {
 		parent::set_up();
 
@@ -44,6 +47,10 @@ class PublishRuleTest extends TestCase {
 			wp_delete_post( $id, true );
 		}
 		$this->created = array();
+		foreach ( $this->terms as $term_id ) {
+			wp_delete_term( $term_id, 'wpss_service_category' );
+		}
+		$this->terms = array();
 		unset( $_POST['wpss_service_nonce'] );
 
 		parent::tear_down();
@@ -248,6 +255,7 @@ class PublishRuleTest extends TestCase {
 		wp_update_post( array( 'ID' => $id, 'post_content' => str_repeat( 'Long enough. ', 20 ) ) );
 		$term = wp_insert_term( 'Publish rule cat ' . wp_generate_password( 6, false ), 'wpss_service_category' );
 		if ( ! is_wp_error( $term ) ) {
+			$this->terms[] = (int) $term['term_id'];
 			wp_set_object_terms( $id, $term['term_id'], 'wpss_service_category' );
 		}
 		update_post_meta( $id, '_wpss_packages', array( array( 'name' => 'Basic', 'price' => 20, 'delivery_days' => 2, 'enabled' => true ) ) );

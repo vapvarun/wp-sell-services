@@ -8,6 +8,7 @@
  * @since   1.6.0
  *
  * @var array $cart_items Cart items from _wpss_cart user meta.
+ * @var bool  $wpss_guest Whether the visitor is logged out (the cart needs an account).
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -18,13 +19,6 @@ defined( 'ABSPATH' ) || exit;
 	margin: 0 auto;
 	padding: var(--wpss-space-6, 24px) var(--wpss-space-4, 16px);
 	font-family: var(--wpss-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
-}
-
-.wpss-cart-page__heading {
-	font-size: 1.75rem;
-	font-weight: 700;
-	color: var(--wpss-text, #0f172a);
-	margin: 0 0 var(--wpss-space-6, 24px);
 }
 
 .wpss-cart-page__layout {
@@ -121,6 +115,15 @@ defined( 'ABSPATH' ) || exit;
 	flex-shrink: 0;
 }
 
+/* Below the base rule so it wins: the image kept its 88px width in the 72px
+	column and ran 16px into the gap, touching the title (Basecamp 10337197376). */
+@media (max-width: 540px) {
+	.wpss-cart-item__image {
+		width: 72px;
+		height: 54px;
+	}
+}
+
 .wpss-cart-item__image img {
 	width: 100%;
 	height: 100%;
@@ -212,6 +215,13 @@ defined( 'ABSPATH' ) || exit;
 	font-size: 0.8125rem;
 	color: var(--wpss-text, #0f172a);
 	padding: 2px 0;
+}
+
+.wpss-cart-item__line-total {
+	margin-top: 4px;
+	padding-top: 4px;
+	border-top: 1px dashed var(--wpss-border, #e2e8f0);
+	font-weight: 700;
 }
 
 .wpss-cart-item__addon-price {
@@ -319,6 +329,13 @@ defined( 'ABSPATH' ) || exit;
 	margin: 0 0 var(--wpss-space-5, 20px);
 }
 
+.wpss-cart-empty__actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--wpss-space-3, 12px);
+}
+
 /* Removing animation */
 .wpss-cart-item.is-removing {
 	opacity: 0.4;
@@ -328,9 +345,27 @@ defined( 'ABSPATH' ) || exit;
 </style>
 
 <div class="wpss-cart-page">
-	<h1 class="wpss-cart-page__heading"><?php esc_html_e( 'Your Cart', 'wp-sell-services' ); ?></h1>
+	<?php
+	// The shared page header (ShellHeader), the same band as checkout and the
+	// dashboard - and the same one the cart's logged-out branch prints.
+	\WPSellServices\Frontend\ShellHeader::render( array( 'title' => __( 'Your Cart', 'wp-sell-services' ) ) );
+	?>
 
-	<?php if ( empty( $cart_items ) ) : ?>
+	<?php if ( ! empty( $wpss_guest ) ) : ?>
+		<div class="wpss-cart-empty">
+			<div class="wpss-cart-empty__icon">
+				<i data-lucide="user" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
+			</div>
+			<h2 class="wpss-cart-empty__title"><?php esc_html_e( 'Log in to use your cart', 'wp-sell-services' ); ?></h2>
+			<p class="wpss-cart-empty__text"><?php esc_html_e( 'Your cart is saved to your account. You can also buy any service straight from its page.', 'wp-sell-services' ); ?></p>
+			<div class="wpss-cart-empty__actions">
+				<a href="<?php echo esc_url( wp_login_url( wpss_get_cart_url() ) ); ?>" class="wpss-btn wpss-btn--primary"><?php esc_html_e( 'Log in', 'wp-sell-services' ); ?></a>
+				<?php if ( get_option( 'users_can_register' ) ) : ?>
+					<a href="<?php echo esc_url( wp_registration_url() ); ?>" class="wpss-btn wpss-btn--outline"><?php esc_html_e( 'Create account', 'wp-sell-services' ); ?></a>
+				<?php endif; ?>
+			</div>
+		</div>
+	<?php elseif ( empty( $cart_items ) ) : ?>
 		<div class="wpss-cart-empty">
 			<div class="wpss-cart-empty__icon">
 				<i data-lucide="shopping-cart" class="wpss-icon wpss-icon--lg" aria-hidden="true"></i>
@@ -347,13 +382,40 @@ defined( 'ABSPATH' ) || exit;
 			<!-- Cart Items -->
 			<div class="wpss-cart-items">
 				<?php
-				$subtotal = 0.0;
+				$subtotal    = 0.0;
+				$tax_total   = 0.0;
+				$grand_total = 0.0;
+				$tax_label   = '';
+				$tax_incl    = false;
 
 				foreach ( $cart_items as $item_key => $item ) :
 					$service_id = absint( $item['service_id'] ?? 0 );
-					$package    = is_array( $item['package'] ?? null ) ? $item['package'] : array();
-					$addons     = is_array( $item['addons'] ?? null ) ? $item['addons'] : array();
-					$item_total = (float) ( $item['total'] ?? 0 );
+
+					// Priced now, the way checkout will charge it - a cart stores
+					// the buyer's choices, never prices (wpss_price_cart_item()).
+					$line = wpss_price_cart_item( $item );
+					if ( is_wp_error( $line ) ) {
+						$item['unavailable']        = true;
+						$item['unavailable_reason'] = $item['unavailable_reason'] ?? $line->get_error_message();
+						// Written back: the checkout button below counts what is buyable.
+						$cart_items[ $item_key ] = $item;
+						// Shown struck through, at what it costs - not $0.00 - and
+						// kept out of the totals below.
+						$wpss_resolved = wpss_resolve_service_package( $service_id, (int) ( $item['package_id'] ?? 0 ) );
+						$line          = array(
+							'package'      => $wpss_resolved['package'] ?? ( is_array( $item['package'] ?? null ) ? $item['package'] : array() ),
+							'addons'       => array(),
+							'subtotal'     => (float) ( $wpss_resolved['package']['price'] ?? 0 ) * max( 1, (int) ( $item['quantity'] ?? 1 ) ),
+							'addons_total' => 0.0,
+							'tax'          => 0.0,
+							'total'        => 0.0,
+						);
+					}
+
+					$package    = (array) $line['package'];
+					$addons     = (array) $line['addons'];
+					$item_total = (float) $line['subtotal'] + (float) $line['addons_total'];
+					$item_qty   = max( 1, (int) ( $item['quantity'] ?? 1 ) );
 
 					/*
 					 * An item whose service has been paused stays visible so the
@@ -364,7 +426,11 @@ defined( 'ABSPATH' ) || exit;
 					$unavailable = ! empty( $item['unavailable'] );
 
 					if ( ! $unavailable ) {
-						$subtotal += $item_total;
+						$subtotal    += $item_total;
+						$tax_total   += (float) $line['tax'];
+						$grand_total += (float) $line['total'];
+						$tax_label    = (string) ( $line['tax_label'] ?? $tax_label );
+						$tax_incl     = ! empty( $line['tax_included'] );
 					}
 
 					$service_title = $service_id ? get_the_title( $service_id ) : __( 'Service', 'wp-sell-services' );
@@ -384,16 +450,6 @@ defined( 'ABSPATH' ) || exit;
 					$thumb_alt = $thumb_id ? get_post_meta( $thumb_id, '_wp_attachment_image_alt', true ) : '';
 					?>
 					<div class="wpss-cart-item<?php echo $unavailable ? ' wpss-cart-item--unavailable' : ''; ?>" data-item-key="<?php echo esc_attr( $item_key ); ?>">
-
-						<?php if ( $unavailable ) : ?>
-							<p class="wpss-cart-item__unavailable" role="status">
-								<?php
-								echo esc_html(
-									(string) ( $item['unavailable_reason'] ?? __( 'This service is not currently available.', 'wp-sell-services' ) )
-								);
-								?>
-							</p>
-						<?php endif; ?>
 
 
 						<!-- Thumbnail -->
@@ -435,14 +491,28 @@ defined( 'ABSPATH' ) || exit;
 								</p>
 							<?php endif; ?>
 
+							<?php
+							// Under the title: as the item's first child it took the
+							// thumbnail column (QA, Basecamp 10337190248).
+							if ( $unavailable ) :
+								?>
+								<p class="wpss-cart-item__unavailable" role="status">
+									<?php
+									echo esc_html(
+										(string) ( $item['unavailable_reason'] ?? __( 'This service is not currently available.', 'wp-sell-services' ) )
+									);
+									?>
+								</p>
+							<?php endif; ?>
+
 							<div class="wpss-cart-item__meta">
 								<?php if ( ! empty( $package['name'] ) ) : ?>
 									<span class="wpss-cart-item__package">
-										<?php echo esc_html( $package['name'] ); ?>
+										<?php echo esc_html( $package['name'] . ( $item_qty > 1 ? " \u{00D7} {$item_qty}" : '' ) ); ?>
 									</span>
 								<?php endif; ?>
 								<span class="wpss-cart-item__price">
-									<?php echo wp_kses_post( wpss_catalog_price_html( (float) $item_total, 'cart-item' ) ); ?>
+									<?php echo wp_kses_post( wpss_catalog_price_html( (float) $line['subtotal'], 'cart-item' ) ); ?>
 								</span>
 							</div>
 
@@ -453,16 +523,21 @@ defined( 'ABSPATH' ) || exit;
 									</div>
 									<?php foreach ( $addons as $addon ) : ?>
 										<?php
-										$addon_title = sanitize_text_field( $addon['title'] ?? '' );
+										$addon_title = (string) ( $addon['title'] ?? '' );
 										$addon_price = (float) ( $addon['price'] ?? 0 );
+										$addon_note  = (int) ( $addon['quantity'] ?? 1 ) > 1 ? "\u{00D7} " . (int) $addon['quantity'] : (string) ( $addon['option'] ?? '' );
 										?>
 										<div class="wpss-cart-item__addon">
-											<span><?php echo esc_html( $addon_title ); ?></span>
+											<span><?php echo esc_html( trim( $addon_title . ' ' . $addon_note ) ); ?></span>
 											<span class="wpss-cart-item__addon-price">
 												+<?php echo wp_kses_post( wpss_catalog_price_html( $addon_price, 'cart-addon' ) ); ?>
 											</span>
 										</div>
 									<?php endforeach; ?>
+									<div class="wpss-cart-item__addon wpss-cart-item__line-total">
+										<span><?php esc_html_e( 'Item total', 'wp-sell-services' ); ?></span>
+										<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $item_total, 'cart-item-total' ) ); ?></span>
+									</div>
 								</div>
 							<?php endif; ?>
 						</div>
@@ -489,19 +564,38 @@ defined( 'ABSPATH' ) || exit;
 				<div class="wpss-cart-summary__line">
 					<span>
 						<?php
+						// The lines that can be bought: the total beside it leaves
+						// an unavailable service out, so the count does too.
+						$wpss_buyable = count( array_filter( (array) $cart_items, static fn( $wpss_line ) => empty( $wpss_line['unavailable'] ) ) );
 						printf(
 							/* translators: %d: number of items */
-							esc_html( _n( '%d item', '%d items', count( $cart_items ), 'wp-sell-services' ) ),
-							count( $cart_items )
+							esc_html( _n( '%d item', '%d items', $wpss_buyable, 'wp-sell-services' ) ),
+							(int) $wpss_buyable
 						);
 						?>
 					</span>
 					<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $subtotal, 'cart-subtotal' ) ); ?></span>
 				</div>
 
+				<?php if ( $tax_total > 0 ) : ?>
+					<div class="wpss-cart-summary__line">
+						<span>
+							<?php
+							echo esc_html(
+								$tax_incl
+									/* translators: %s: tax label, e.g. VAT. */
+									? sprintf( __( '%s (included)', 'wp-sell-services' ), $tax_label ? $tax_label : __( 'Tax', 'wp-sell-services' ) )
+									: ( $tax_label ? $tax_label : __( 'Tax', 'wp-sell-services' ) )
+							);
+							?>
+						</span>
+						<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $tax_total, 'cart-tax' ) ); ?></span>
+					</div>
+				<?php endif; ?>
+
 				<div class="wpss-cart-summary__total">
 					<span><?php esc_html_e( 'Total', 'wp-sell-services' ); ?></span>
-					<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $subtotal, 'cart-total' ) ); ?></span>
+					<span><?php echo wp_kses_post( wpss_catalog_price_html( (float) $grand_total, 'cart-total' ) ); ?></span>
 				</div>
 
 				<?php
@@ -522,7 +616,7 @@ defined( 'ABSPATH' ) || exit;
 				 * @param float  $total   Payable total in the store base currency.
 				 * @param string $context Surface identifier ('cart', 'checkout').
 				 */
-				do_action( 'wpss_payable_total_after', (float) $subtotal, 'cart' );
+				do_action( 'wpss_payable_total_after', (float) $grand_total, 'cart' );
 				?>
 
 				<?php

@@ -102,12 +102,7 @@ class ServiceMetabox {
 	 * @return array<string, string>
 	 */
 	private function get_addon_field_types(): array {
-		return array(
-			'checkbox' => __( 'Checkbox (Yes/No)', 'wp-sell-services' ),
-			'quantity' => __( 'Quantity Selector', 'wp-sell-services' ),
-			'dropdown' => __( 'Dropdown Select', 'wp-sell-services' ),
-			'text'     => __( 'Text Input', 'wp-sell-services' ),
-		);
+		return wpss_get_addon_field_types();
 	}
 
 	/**
@@ -116,11 +111,7 @@ class ServiceMetabox {
 	 * @return array<string, string>
 	 */
 	private function get_addon_price_types(): array {
-		return array(
-			'flat'           => __( 'Flat Price', 'wp-sell-services' ),
-			'percentage'     => __( 'Percentage of Order', 'wp-sell-services' ),
-			'quantity_based' => __( 'Per Quantity', 'wp-sell-services' ),
-		);
+		return wpss_get_addon_price_types();
 	}
 
 	/**
@@ -175,99 +166,12 @@ class ServiceMetabox {
 				),
 			)
 		);
-
-		$this->enqueue_status_sync();
-	}
-
-	/**
-	 * Keep the block editor's status indicator honest when a publish is refused.
-	 *
-	 * Gutenberg saves the post over REST first and posts the metaboxes second.
-	 * enforce_publish_rules() only has the metabox data in that second request,
-	 * so it demotes the post back to draft after the editor has already been
-	 * told "publish" by the first response - and Gutenberg discards the metabox
-	 * response entirely (apiFetch parse: false), so the server cannot correct
-	 * the label through it. The only remaining seam is the client: re-read the
-	 * status once the metabox request settles and reload if it disagrees with
-	 * what the editor is showing. Reloading is deliberate - it also surfaces
-	 * render_invalid_notice(), which lists why the publish was refused.
-	 *
-	 * @return void
-	 */
-	private function enqueue_status_sync(): void {
-		global $post;
-
-		if ( ! $post instanceof \WP_Post || ! use_block_editor_for_post( $post ) ) {
-			return;
-		}
-
-		$js = sprintf(
-			'( function ( wp, path ) {
-	if ( ! wp || ! wp.apiFetch || ! wp.data ) { return; }
-	wp.apiFetch.use( function ( options, next ) {
-		var result = next( options );
-		if ( ! window._wpMetaBoxUrl || options.url !== window._wpMetaBoxUrl ) { return result; }
-		return result.then( function ( response ) {
-			var shown = wp.data.select( "core/editor" ).getCurrentPostAttribute( "status" );
-			wp.apiFetch( { path: path } ).then( function ( saved ) {
-				if ( saved && saved.status && saved.status !== shown ) { window.location.reload(); }
-			} ).catch( function () {} );
-			return response;
-		} );
-	} );
-}( window.wp, %s ) );',
-			wp_json_encode( '/wp/v2/wpss-services/' . $post->ID . '?context=edit&_fields=status' )
-		);
-
-		wp_add_inline_script( 'wp-edit-post', $js );
-	}
-
-	/**
-	 * Render service details metabox.
-	 *
-	 * @param \WP_Post $post Post object.
-	 * @return void
-	 */
-	public function render_details_metabox( \WP_Post $post ): void {
-		wp_nonce_field( 'wpss_service_meta', 'wpss_service_nonce' );
-
-		$status = get_post_meta( $post->ID, '_wpss_status', true );
-		$status = ! empty( $status ) ? $status : 'active';
-		?>
-		<div class="wpss-details-wrapper">
-			<div class="wpss-details-grid">
-				<div class="wpss-detail-card">
-					<div class="wpss-detail-icon">
-						<i data-lucide="eye" class="wpss-icon" aria-hidden="true"></i>
-					</div>
-					<div class="wpss-detail-content">
-						<label for="wpss_status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></label>
-						<div class="wpss-detail-input">
-							<select id="wpss_status" name="wpss_status" class="wpss-status-select">
-								<option value="active" <?php selected( $status, 'active' ); ?>><?php esc_html_e( 'Active', 'wp-sell-services' ); ?></option>
-								<option value="paused" <?php selected( $status, 'paused' ); ?>><?php esc_html_e( 'Paused', 'wp-sell-services' ); ?></option>
-								<option value="draft" <?php selected( $status, 'draft' ); ?>><?php esc_html_e( 'Draft', 'wp-sell-services' ); ?></option>
-							</select>
-						</div>
-						<p class="description"><?php esc_html_e( 'Control service visibility', 'wp-sell-services' ); ?></p>
-					</div>
-				</div>
-			</div>
-			<p class="wpss-details-note">
-				<i data-lucide="info" class="wpss-icon" aria-hidden="true"></i>
-				<?php esc_html_e( 'Delivery time and revisions are configured per package below.', 'wp-sell-services' ); ?>
-			</p>
-
-			<?php $this->render_extra_fields( $post ); ?>
-		</div>
-		<?php
 	}
 
 	/**
 	 * Apply the `wpss_service_meta_fields` filter and render the returned fields.
 	 *
-	 * Shared by the active Overview panel and the legacy details metabox so the
-	 * extension surface renders identically wherever it is used.
+	 * Rendered by the Overview panel.
 	 *
 	 * @param \WP_Post $post Post object.
 	 * @return void
@@ -386,11 +290,11 @@ class ServiceMetabox {
 	/**
 	 * Render a single package item.
 	 *
-	 * @param int   $index   Package index.
-	 * @param array $package Package data.
+	 * @param int|string $index   Package index.
+	 * @param array      $package Package data.
 	 * @return void
 	 */
-	private function render_package_item( int $index, array $package ): void {
+	private function render_package_item( $index, array $package ): void {
 		$is_first     = ( 0 === $index );
 		$package_name = ! empty( $package['name'] ) ? $package['name'] : __( 'New Package', 'wp-sell-services' );
 		$price        = ! empty( $package['price'] ) ? (float) $package['price'] : 0;
@@ -416,6 +320,8 @@ class ServiceMetabox {
 				</div>
 			</div>
 			<div class="wpss-package-body">
+				<?php // The stable id travels with the row, so saving or reordering keeps it. ?>
+				<input type="hidden" name="wpss_packages[<?php echo esc_attr( $index ); ?>][id]" value="<?php echo esc_attr( (string) ( $package['id'] ?? '' ) ); ?>">
 				<div class="wpss-package-row">
 					<div class="wpss-package-field wpss-package-field-wide">
 						<label><?php esc_html_e( 'Package Name', 'wp-sell-services' ); ?></label>
@@ -470,6 +376,35 @@ class ServiceMetabox {
 									min="0" max="20" placeholder="2">
 							<span class="wpss-input-suffix"><?php esc_html_e( 'times', 'wp-sell-services' ); ?></span>
 						</div>
+					</div>
+				</div>
+				<?php $express = wpss_sanitize_package_express( $package ); ?>
+				<div class="wpss-package-row wpss-package-row-grid">
+					<div class="wpss-package-field">
+						<label>
+							<i data-lucide="zap" class="wpss-icon" aria-hidden="true"></i>
+							<?php esc_html_e( 'Express price', 'wp-sell-services' ); ?>
+						</label>
+						<div class="wpss-input-with-prefix">
+							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
+							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][express_price]" aria-label="<?php esc_attr_e( 'Express delivery price', 'wp-sell-services' ); ?>"
+									value="<?php echo esc_attr( $express['express_price'] > 0 ? $express['express_price'] : '' ); ?>"
+									min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>">
+						</div>
+						<p class="description"><?php esc_html_e( 'Optional. Blank means not offered.', 'wp-sell-services' ); ?></p>
+					</div>
+					<div class="wpss-package-field">
+						<label>
+							<i data-lucide="timer" class="wpss-icon" aria-hidden="true"></i>
+							<?php esc_html_e( 'Express delivery', 'wp-sell-services' ); ?>
+						</label>
+						<div class="wpss-input-with-suffix">
+							<input type="number" name="wpss_packages[<?php echo esc_attr( $index ); ?>][express_days]" aria-label="<?php esc_attr_e( 'Express delivery time in days', 'wp-sell-services' ); ?>"
+									value="<?php echo esc_attr( $express['express_days'] > 0 ? $express['express_days'] : '' ); ?>"
+									min="1" max="364">
+							<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
+						</div>
+						<p class="description"><?php esc_html_e( 'Replaces the delivery time; must be shorter.', 'wp-sell-services' ); ?></p>
 					</div>
 				</div>
 				<div class="wpss-package-row">
@@ -599,7 +534,7 @@ class ServiceMetabox {
 					</div>
 				</div>
 				<div class="wpss-stat-item">
-					<i data-lucide="star" class="wpss-icon wpss-stat-icon" style="color: #f5a623;" aria-hidden="true"></i>
+					<i data-lucide="star" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 					<div class="wpss-stat-data">
 						<span class="wpss-stat-value"><?php echo esc_html( number_format( (float) $average_rating, 1 ) ); ?></span>
 						<span class="wpss-stat-label"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></span>
@@ -816,8 +751,10 @@ class ServiceMetabox {
 			}
 		}
 
+		// Only active / paused: visibility belongs to the post status, so the
+		// old "Draft" choice here was a third status control nothing read.
 		if ( isset( $_POST['wpss_status'] ) ) {
-			update_post_meta( $post_id, '_wpss_status', sanitize_key( $_POST['wpss_status'] ) );
+			update_post_meta( $post_id, '_wpss_status', 'paused' === sanitize_key( $_POST['wpss_status'] ) ? 'paused' : 'active' );
 		}
 
 		// Save packages (indexed array format).
@@ -832,16 +769,34 @@ class ServiceMetabox {
 					$revisions_raw = isset( $package['revisions'] ) ? (int) $package['revisions'] : 0;
 					$revisions_val = $revisions_raw < 0 ? -1 : $revisions_raw;
 
-					$packages[] = array(
+					$packages[] = wpss_package_id_from_input( (array) $package ) + array(
 						'name'          => sanitize_text_field( $package['name'] ?? '' ),
 						'description'   => sanitize_textarea_field( $package['description'] ?? '' ),
 						'price'         => (float) ( $package['price'] ?? 0 ),
 						'delivery_days' => absint( $package['delivery_days'] ?? 0 ),
 						'revisions'     => $revisions_val,
 						'features'      => array_filter( array_map( 'sanitize_text_field', explode( "\n", $package['features'] ?? '' ) ) ),
-					);
+					) + wpss_sanitize_package_express( (array) $package );
 				}
 			}
+			// A live service must not keep an Express price buyers can never be
+			// offered (Express has to be faster than the package). Same rule as
+			// the wizard and REST; here the service stays live, the Express
+			// fields are cleared and the owner is told which package.
+			if ( 'publish' === $post->post_status ) {
+				$express_cleared = array();
+				foreach ( $packages as $package_index => $saved_package ) {
+					if ( (float) $saved_package['express_price'] > 0 && null === wpss_get_package_express( $saved_package ) ) {
+						$packages[ $package_index ]['express_price'] = 0.0;
+						$packages[ $package_index ]['express_days']  = 0;
+						$express_cleared[]                           = '' !== (string) $saved_package['name'] ? (string) $saved_package['name'] : (string) ( $package_index + 1 );
+					}
+				}
+				if ( $express_cleared ) {
+					set_transient( 'wpss_express_cleared_' . $post_id, $express_cleared, 5 * MINUTE_IN_SECONDS );
+				}
+			}
+
 			update_post_meta( $post_id, '_wpss_packages', $packages );
 
 			// Update computed meta values from packages.
@@ -1119,15 +1074,7 @@ class ServiceMetabox {
 			return;
 		}
 
-		$errors = wpss_validate_service_publishable(
-			array(
-				'title'        => $post->post_title,
-				'category_ids' => wp_get_post_terms( $post_id, 'wpss_service_category', array( 'fields' => 'ids' ) ),
-				'description'  => $post->post_content,
-				'packages'     => (array) get_post_meta( $post_id, '_wpss_packages', true ),
-				'thumbnail_id' => get_post_thumbnail_id( $post_id ),
-			)
-		);
+		$errors = wpss_get_service_publish_errors( $post_id );
 
 		if ( empty( $errors ) ) {
 			return;
@@ -1203,15 +1150,19 @@ class ServiceMetabox {
 			return;
 		}
 
-		$errors = wpss_validate_service_publishable(
-			array(
-				'title'        => $post->post_title,
-				'category_ids' => wp_get_post_terms( $post->ID, 'wpss_service_category', array( 'fields' => 'ids' ) ),
-				'description'  => $post->post_content,
-				'packages'     => (array) get_post_meta( $post->ID, '_wpss_packages', true ),
-				'thumbnail_id' => get_post_thumbnail_id( $post->ID ),
-			)
-		);
+		$express_cleared = get_transient( 'wpss_express_cleared_' . $post->ID );
+		if ( is_array( $express_cleared ) && $express_cleared ) {
+			delete_transient( 'wpss_express_cleared_' . $post->ID );
+			echo '<div class="wpss-notice warning"><p>' . esc_html(
+				sprintf(
+					/* translators: %s: package names, comma separated. */
+					__( 'Express delivery was not saved for: %s. Express must be faster than the package delivery time, so buyers could never have been offered it. Set a shorter Express time and save again.', 'wp-sell-services' ),
+					implode( ', ', $express_cleared )
+				)
+			) . '</p></div>';
+		}
+
+		$errors = wpss_get_service_publish_errors( $post->ID );
 
 		if ( empty( $errors ) ) {
 			return;
@@ -1248,15 +1199,17 @@ class ServiceMetabox {
 		 * enforced at save time, not retroactively - a row published before a
 		 * rule existed, or imported, keeps its status.
 		 */
-		$is_live = in_array( $post->post_status, array( 'publish', 'pending' ), true );
-
-		echo '<div class="wpss-notice warning wpss-service-invalid-notice" style="margin:0 0 16px;"><p><strong>';
-		if ( $is_live ) {
+		// Pending is held for review, not live: buyers do not see it, so it
+		// gets its own sentence rather than the live one (Basecamp 10337190248).
+		echo '<div class="wpss-notice warning wpss-service-invalid-notice"><p><strong>';
+		if ( 'publish' === $post->post_status ) {
 			esc_html_e( 'This service is live and buyers see it as it is. It is still missing:', 'wp-sell-services' );
+		} elseif ( 'pending' === $post->post_status ) {
+			esc_html_e( 'Waiting for review. It cannot go live until:', 'wp-sell-services' );
 		} else {
 			esc_html_e( 'Not ready for the marketplace yet. This service stays a draft until:', 'wp-sell-services' );
 		}
-		echo '</strong></p><ul style="list-style:disc;margin-left:20px;">';
+		echo '</strong></p><ul>';
 		foreach ( $errors as $message ) {
 			echo '<li>' . esc_html( $message ) . '</li>';
 		}
@@ -1470,22 +1423,21 @@ class ServiceMetabox {
 
 		<div class="wpss-overview-grid">
 			<div class="wpss-overview-section">
-				<h4><?php esc_html_e( 'Service Status', 'wp-sell-services' ); ?></h4>
+				<h4><?php esc_html_e( 'Availability', 'wp-sell-services' ); ?></h4>
 				<div class="wpss-details-grid">
 					<div class="wpss-detail-card">
 						<div class="wpss-detail-icon">
 							<i data-lucide="eye" class="wpss-icon" aria-hidden="true"></i>
 						</div>
 						<div class="wpss-detail-content">
-							<label for="wpss_status"><?php esc_html_e( 'Status', 'wp-sell-services' ); ?></label>
+							<label for="wpss_status"><?php esc_html_e( 'Orders', 'wp-sell-services' ); ?></label>
 							<div class="wpss-detail-input">
 								<select id="wpss_status" name="wpss_status" class="wpss-status-select">
-									<option value="active" <?php selected( $status, 'active' ); ?>><?php esc_html_e( 'Active', 'wp-sell-services' ); ?></option>
+									<option value="active" <?php selected( $status, 'active' ); ?>><?php esc_html_e( 'Accepting orders', 'wp-sell-services' ); ?></option>
 									<option value="paused" <?php selected( $status, 'paused' ); ?>><?php esc_html_e( 'Paused', 'wp-sell-services' ); ?></option>
-									<option value="draft" <?php selected( $status, 'draft' ); ?>><?php esc_html_e( 'Draft', 'wp-sell-services' ); ?></option>
 								</select>
 							</div>
-							<p class="description"><?php esc_html_e( 'Control service visibility', 'wp-sell-services' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Paused keeps the page visible but stops new orders. Whether the service is live is set by Publish and Moderation.', 'wp-sell-services' ); ?></p>
 						</div>
 					</div>
 
@@ -1515,7 +1467,7 @@ class ServiceMetabox {
 										<?php esc_html_e( 'Show in featured listings', 'wp-sell-services' ); ?>
 									</label>
 								</div>
-								<p class="description"><?php esc_html_e( 'Included by the Featured Services block and the [wpss_featured_services] shortcode.', 'wp-sell-services' ); ?></p>
+								<p class="description"><?php esc_html_e( 'Shows it in the featured row on your homepage (the Featured Services block and the [wpss_featured_services] shortcode).', 'wp-sell-services' ); ?></p>
 							<?php else : ?>
 								<?php
 								// Read-only for a vendor. Silence would be worse than a
@@ -1549,10 +1501,14 @@ class ServiceMetabox {
 						</div>
 					</div>
 					<div class="wpss-stat-item">
-						<i data-lucide="star" class="wpss-icon wpss-stat-icon" style="color: #f5a623;" aria-hidden="true"></i>
+						<i data-lucide="star" class="wpss-icon wpss-stat-icon wpss-stat-icon--pending" aria-hidden="true"></i>
 						<div class="wpss-stat-data">
-							<span class="wpss-stat-value"><?php echo esc_html( number_format( $average_rating, 1 ) ); ?></span>
-							<span class="wpss-stat-label"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></span>
+							<?php if ( $review_count > 0 ) : ?>
+								<span class="wpss-stat-value"><?php echo esc_html( number_format_i18n( $average_rating, 1 ) ); ?></span>
+								<span class="wpss-stat-label"><?php esc_html_e( 'Rating', 'wp-sell-services' ); ?></span>
+							<?php else : ?>
+								<span class="wpss-stat-label"><?php esc_html_e( 'No reviews yet', 'wp-sell-services' ); ?></span>
+							<?php endif; ?>
 						</div>
 					</div>
 					<div class="wpss-stat-item">
@@ -1784,98 +1740,15 @@ class ServiceMetabox {
 	 * @return void
 	 */
 	private function render_package_template(): void {
-		?>
-		<?php
 		/*
 		 * A package the owner just added opens ready to fill in. It used to render
 		 * collapsed, so "Add Package" appeared to do nothing but add a grey bar the
 		 * owner then had to find and click. Packages loaded from saved data still
-		 * render collapsed (render_package above) - that is a list to scan, this is
-		 * a form to complete. See Basecamp 10286092451.
+		 * render collapsed - that is a list to scan, this is a form to complete.
+		 * See Basecamp 10286092451. The markup is the saved package's own, so a
+		 * field added there (Express, Basecamp 10337201764) is here too.
 		 */
-		?>
-		<div class="wpss-package-item" data-index="{{data.index}}">
-			<div class="wpss-package-header">
-				<i data-lucide="grip-vertical" class="wpss-icon wpss-sortable-handle" title="<?php esc_attr_e( 'Drag to reorder', 'wp-sell-services' ); ?>" aria-hidden="true"></i>
-				<span class="wpss-package-title"><?php esc_html_e( 'New Package', 'wp-sell-services' ); ?></span>
-				<span class="wpss-package-price-display"></span>
-				<div class="wpss-package-actions">
-					<button type="button" class="wpss-package-toggle" title="<?php esc_attr_e( 'Expand/Collapse', 'wp-sell-services' ); ?>">
-						<i data-lucide="chevron-down" class="wpss-icon" aria-hidden="true"></i>
-					</button>
-					<button type="button" class="wpss-remove-package" title="<?php esc_attr_e( 'Remove', 'wp-sell-services' ); ?>">
-						<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
-					</button>
-				</div>
-			</div>
-			<div class="wpss-package-body">
-				<div class="wpss-package-row">
-					<div class="wpss-package-field wpss-package-field-wide">
-						<label><?php esc_html_e( 'Package Name', 'wp-sell-services' ); ?></label>
-						<input type="text" name="wpss_packages[{{data.index}}][name]" aria-label="<?php esc_attr_e( 'Package name', 'wp-sell-services' ); ?>"
-								class="widefat wpss-package-name-input"
-								placeholder="<?php esc_attr_e( 'e.g., Standard, Premium, Enterprise', 'wp-sell-services' ); ?>">
-					</div>
-					<div class="wpss-package-field">
-						<label>
-							<i data-lucide="banknote" class="wpss-icon" aria-hidden="true"></i>
-							<?php esc_html_e( 'Price', 'wp-sell-services' ); ?>
-						</label>
-						<div class="wpss-input-with-prefix">
-							<span class="wpss-input-prefix"><?php echo esc_html( wpss_get_currency_symbol() ); ?></span>
-							<input type="number" name="wpss_packages[{{data.index}}][price]" aria-label="<?php esc_attr_e( 'Package price', 'wp-sell-services' ); ?>"
-									class="wpss-package-price-input"
-									min="0" step="<?php echo esc_attr( wpss_get_price_input_attrs()['step'] ); ?>" placeholder="<?php echo esc_attr( wpss_get_price_input_attrs()['placeholder'] ); ?>">
-						</div>
-					</div>
-				</div>
-				<div class="wpss-package-row">
-					<div class="wpss-package-field wpss-package-field-full">
-						<label><?php esc_html_e( 'Description', 'wp-sell-services' ); ?></label>
-						<textarea name="wpss_packages[{{data.index}}][description]" aria-label="<?php esc_attr_e( 'Package description', 'wp-sell-services' ); ?>"
-								rows="2" class="widefat"
-								placeholder="<?php esc_attr_e( 'Describe what\'s included in this package...', 'wp-sell-services' ); ?>"></textarea>
-					</div>
-				</div>
-				<div class="wpss-package-row wpss-package-row-grid">
-					<div class="wpss-package-field">
-						<label>
-							<i data-lucide="clock" class="wpss-icon" aria-hidden="true"></i>
-							<?php esc_html_e( 'Delivery', 'wp-sell-services' ); ?>
-						</label>
-						<div class="wpss-input-with-suffix">
-							<input type="number" name="wpss_packages[{{data.index}}][delivery_days]" aria-label="<?php esc_attr_e( 'Delivery time in days', 'wp-sell-services' ); ?>"
-									min="1" max="365" placeholder="7">
-							<span class="wpss-input-suffix"><?php esc_html_e( 'days', 'wp-sell-services' ); ?></span>
-						</div>
-					</div>
-					<div class="wpss-package-field">
-						<label>
-							<i data-lucide="refresh-cw" class="wpss-icon" aria-hidden="true"></i>
-							<?php esc_html_e( 'Revisions', 'wp-sell-services' ); ?>
-						</label>
-						<div class="wpss-input-with-suffix">
-							<input type="number" name="wpss_packages[{{data.index}}][revisions]" aria-label="<?php esc_attr_e( 'Number of revisions', 'wp-sell-services' ); ?>"
-									min="0" max="20" placeholder="2">
-							<span class="wpss-input-suffix"><?php esc_html_e( 'times', 'wp-sell-services' ); ?></span>
-						</div>
-					</div>
-				</div>
-				<div class="wpss-package-row">
-					<div class="wpss-package-field wpss-package-field-full">
-						<label>
-							<i data-lucide="check-circle-2" class="wpss-icon" aria-hidden="true"></i>
-							<?php esc_html_e( 'Features Included', 'wp-sell-services' ); ?>
-						</label>
-						<textarea name="wpss_packages[{{data.index}}][features]" aria-label="<?php esc_attr_e( 'Features included', 'wp-sell-services' ); ?>"
-								rows="3" class="widefat"
-								placeholder="<?php esc_attr_e( "Feature 1\nFeature 2\nFeature 3", 'wp-sell-services' ); ?>"></textarea>
-						<p class="description"><?php esc_html_e( 'Enter one feature per line', 'wp-sell-services' ); ?></p>
-					</div>
-				</div>
-			</div>
-		</div>
-		<?php
+		$this->render_package_item( '{{data.index}}', array() );
 	}
 
 	/**
