@@ -299,6 +299,7 @@ class AccountDeletionService {
 		// A member closing their own account takes their requests with them,
 		// proposals or not; the guard is for a request deleted on its own.
 		remove_filter( 'pre_trash_post', 'wpss_guard_proposed_request', 10 );
+		remove_filter( 'wp_insert_post_data', 'wpss_guard_proposed_request_status', 10 );
 
 		do {
 			$post_ids = get_posts(
@@ -320,6 +321,7 @@ class AccountDeletionService {
 		} while ( 100 === $found );
 
 		add_filter( 'pre_trash_post', 'wpss_guard_proposed_request', 10, 2 );
+		add_filter( 'wp_insert_post_data', 'wpss_guard_proposed_request_status', 10, 2 );
 	}
 
 	/**

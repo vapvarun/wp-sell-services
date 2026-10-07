@@ -189,6 +189,9 @@ try {
 	// The request is a post type WordPress exposes itself, so its own trash
 	// and delete ask too (security review of the first fix).
 	$check( '  nor by WordPress\'s own trash or delete, as that member', ! wp_trash_post( $request_id ) && ! wp_delete_post( $request_id, true ) && null !== get_post( $request_id ) && 'trash' !== get_post_status( $request_id ) );
+	wp_update_post( array( 'ID' => $request_id, 'post_status' => 'trash' ) );
+	clean_post_cache( $request_id );
+	$check( '  nor by saving it with the status trash', 'trash' !== get_post_status( $request_id ) );
 
 	// With the proposal gone the request is untouched again and the file is free.
 	$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $proposal ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

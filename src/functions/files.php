@@ -1637,3 +1637,31 @@ function wpss_guard_proposed_request( $check, $post ) {
 }
 add_filter( 'pre_trash_post', 'wpss_guard_proposed_request', 10, 2 );
 add_filter( 'pre_delete_post', 'wpss_guard_proposed_request', 10, 2 );
+
+/**
+ * The same rule for a request sent to the trash by a status change.
+ *
+ * Saving a post with the status "trash" never calls wp_trash_post(), so the
+ * guard above is not asked (XML-RPC, a bulk edit, any wp_update_post()).
+ * The request keeps the status it had.
+ *
+ * @since 1.8.0
+ *
+ * @param array<string, mixed> $data    Post data about to be saved.
+ * @param array<string, mixed> $postarr Raw post array, with the ID on an update.
+ * @return array<string, mixed>
+ */
+function wpss_guard_proposed_request_status( $data, $postarr ) {
+	if ( 'trash' !== ( $data['post_status'] ?? '' ) || 'wpss_request' !== ( $data['post_type'] ?? '' ) || empty( $postarr['ID'] ) ) {
+		return $data;
+	}
+
+	$post = get_post( (int) $postarr['ID'] );
+
+	if ( $post && 'trash' !== $post->post_status && false === wpss_guard_proposed_request( null, $post ) ) {
+		$data['post_status'] = $post->post_status;
+	}
+
+	return $data;
+}
+add_filter( 'wp_insert_post_data', 'wpss_guard_proposed_request_status', 10, 2 );
