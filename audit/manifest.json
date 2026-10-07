@@ -559,6 +559,15 @@
       "authority": "WPSellServices\\Checkout\\CheckoutIntentService::settle_webhook_order( order_id, gateway, transaction_id, amount, currency )",
       "rule": "A webhook that names an order marks it paid only through this method: same per-transaction lock and transaction lookup as settle(), plus an amount and currency match. Never call mark_as_paid() from a webhook handler. REST pay-order confirm goes through settle() (PaymentController::settle_pay_order); a payment already spent answers 409 wpss_payment_already_used.",
       "since": "1.8.0"
+    },
+    "pay_order_binding": {
+      "rule": "A gateway payment pays only the order it was started for, by the member who started it.",
+      "paypal": "PaymentController::confirm_paypal_payment sends new purchases and pay_order through PayPalGateway::capture_order() -> capture_and_settle(), which reads customer_id and order_id from the PayPal order's custom_id, checks site ownership inside process_payment(), and refunds on an amount mismatch.",
+      "stripe": "PaymentController::confirm_stripe_payment (pay_order) refuses when intent metadata customer_id or order_id is not the order being paid: 409 wpss_payment_not_for_order. Then settle_pay_order() (amount, currency, one payment one order).",
+      "tests": [
+        "tests/test-rest-pay-order-confirm-contract.php",
+        "tests/test-gateway-site-ownership-contract.php"
+      ]
     }
   },
   "capabilities": {
@@ -993,7 +1002,8 @@
       "reader": "ServiceOrder::get_cancellation_request(); rendered by templates/order/cancellation.php (both order pages once cancelled, admin order screen)",
       "labels": "wpss_get_cancellation_reason_label() - the one reason list (order page, notification, email, status note)",
       "since": "1.8.0"
-    }
+    },
+    "cancellation_email": "EmailService::send_order_cancelled() passes the cancellation record's reason label and note to templates/emails/order-cancelled.php. OrdersController admin cancel passes the note. OrderService::cancel() replaces a record left by a turned-down request unless the order is in cancellation_requested."
   },
   "reviews": {
     "_note": "The order page's review block was `if ( ! $review_exists )` with no else, so the moment a buyer submitted a review the order went silent about it - the buyer's own review was invisible to the buyer on the only page they would look for it. The same seven lines also ran a raw $wpdb query for a question ReviewService already owns, and gated the CTA WITHOUT the review window, so after the window closed the button still invited a review the server would then refuse. can_review() is now the single authority on both the CTA and the modal, and its `reason` string is rendered when the CTA is withheld.",
@@ -1195,12 +1205,40 @@
     "_note": "Seams added during the 1.8.0 card fixes. Reuse these; do not write a second copy.",
     "services_grid": "wpss_render_services_grid() sorts through wpss_apply_service_sort() and excludes wpss_get_vacation_vendor_ids() unless one vendor is named. FeaturedServices and SellerCard blocks use the same sort.",
     "cart": "wpss_get_user_cart( $user_id, true ) is the one cart reader (flags unavailable lines); wpss_get_cart_count() is the one count. GET /cart, the cart page and the header badge all use them.",
-    "demo_content": "wpss_delete_demo_content() is the one delete routine (Settings button and wp wpss demo delete); wpss_has_demo_content() replaces the wpss_demo_content_imported option. Demo-created categories carry term meta _wpss_demo_content.",
-    "request_files": "BuyerRequestService::save_meta() is the one writer of _wpss_attachments; it stamps _wpss_request_id on each media item. is_untouched() = no proposal ever; is_file_locked() reads the stamp. After a proposal existing files cannot leave the list; DELETE /media/{id} answers 409 wpss_file_in_use.",
+    "demo_content": {
+      "note": "wpss_delete_demo_content() is the one delete routine (Settings button and wp wpss demo delete); wpss_has_demo_content() replaces the wpss_demo_content_imported option. Demo-created categories carry term meta _wpss_demo_content.",
+      "kept_when_ordered": "wpss_delete_demo_content() keeps a demo service that has an order the importer did not make (order meta without 'Seeded demo order.'), with its author and featured image, and returns the count as 'kept'. Deleting a service deletes its orders (DataCascadeHandler)."
+    },
+    "request_files": "BuyerRequestService::save_meta() is the one writer of _wpss_attachments; it stamps _wpss_request_id on each media item. is_untouched() = no proposal ever; is_file_locked() reads the stamp. After a proposal existing files cannot leave the list; DELETE /media/{id} answers 409 wpss_file_in_use. The lock is enforced on WordPress's own delete (wpss_guard_locked_request_file on pre_delete_attachment, src/functions/files.php), whatever the file was uploaded as, so every route obeys it; wpss_migrate_legacy_order_file() keeps the public copy of a locked file.",
     "reports_entry_point": "wpss_render_report_link( type, id, owner_id, label ) + templates/partials/report-modal.php, hooked on wpss_single_service_sidebar and wpss_vendor_profile_sidebar; posts to POST wpss/v1/reports.",
     "login_page": "Page definitions with takes_over => true are created by Activator::create_pages( $fresh_install ) only on a fresh install where Activator::site_uses_core_login() is true; never on update.",
     "confirm_dialog": "wpssConfirm() focuses Cancel for every dialog; pass tone: 'danger' for a destructive action.",
     "dashboard_assets": "do_action( 'wpss_enqueue_dashboard_assets' ) loads dashboard CSS/JS at render time; UnifiedDashboard::render() does it itself.",
-    "utc_migration": "UtcMigration::step() is the one chunk runner (named lock + transaction); updated_at on ON_UPDATE_TABLES is decided per row by updated_at_utc()."
+    "utc_migration": {
+      "note": "UtcMigration::step() is the one chunk runner (named lock + transaction); updated_at on ON_UPDATE_TABLES is decided per row by updated_at_utc().",
+      "late_values": "UtcMigration::plan() records every stored value that already reads later than the plan (state key 'late', keyed table:id:column, table:id:blob, metakey:id). written_since_plan() treats a value between the plan and now as a 1.8.0 write unless it is the recorded one. Replaces the audit/notification/message lookup."
+    },
+    "request_delete": {
+      "rule": "A buyer request a seller has proposed on can be closed, not deleted. A request with no proposal is moved to the trash.",
+      "authority": "BuyerRequestService::delete() (refuses when ! is_untouched()).",
+      "callers": [
+        "AjaxHandlers::delete_request (wp_ajax_wpss_delete_request)",
+        "BuyerRequestsController::delete_item (DELETE wpss/v1/buyer-requests/{id}, 409 wpss_request_has_proposals)"
+      ],
+      "core_hooks": "wpss_guard_proposed_request() on pre_trash_post and pre_delete_post; wpss_guard_proposed_request_status() on wp_insert_post_data keeps the stored status and post type. Both in src/functions/files.php. Administrators, WP-CLI and background jobs are not stopped; AccountDeletionService lifts both for a member's own requests.",
+      "known_gap": "The post type uses WordPress's post capabilities, so a member with an editing role can still change other fields (author) through core routes. Planned: own capability type in the version after 1.8.0."
+    },
+    "service_availability": {
+      "authority": "wpss_service_unavailable_reason( $service_id ) in src/functions/services.php: missing, unpublished, paused, seller on vacation, then the wpss_service_unavailable_reason filter.",
+      "callers": [
+        "CheckoutIntentService::price_service_line (every purchase path prices through it; WP_Error wpss_service_paused or wpss_service_unavailable, 409)",
+        "wpss_get_user_cart",
+        "CartController",
+        "StandaloneCheckoutProvider",
+        "StandaloneOrderProvider",
+        "Pro WCCheckoutProvider cart re-check"
+      ],
+      "listing_rule": "Vendors on vacation are left out with author__not_in = wpss_get_vacation_vendor_ids(): catalog, search, REST services, services grid, featured block, Related services (SingleServiceView), live search (AjaxHandlers)."
+    }
   }
 }
