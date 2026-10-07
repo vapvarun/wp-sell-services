@@ -913,7 +913,13 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$metadata  = json_decode( $custom_id, true ) ?: array();
 
 		if ( ! empty( $metadata['order_id'] ) ) {
-			( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order( (int) $metadata['order_id'], 'paypal', (string) $resource_data['id'] );
+			( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order(
+				(int) $metadata['order_id'],
+				'paypal',
+				(string) $resource_data['id'],
+				(float) ( $resource_data['amount']['value'] ?? 0 ),
+				(string) ( $resource_data['amount']['currency_code'] ?? '' )
+			);
 		}
 
 		return array(

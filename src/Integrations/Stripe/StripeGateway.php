@@ -1464,7 +1464,13 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		// Path 1: Order already created via AJAX — just confirm payment.
 		if ( ! empty( $metadata['order_id'] ) ) {
-			( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order( (int) $metadata['order_id'], 'stripe', (string) $payment_intent['id'] );
+			( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order(
+				(int) $metadata['order_id'],
+				'stripe',
+				(string) $payment_intent['id'],
+				$this->parse_amount( (int) ( $payment_intent['amount_received'] ?? $payment_intent['amount'] ?? 0 ), (string) ( $payment_intent['currency'] ?? 'usd' ) ),
+				(string) ( $payment_intent['currency'] ?? '' )
+			);
 
 			return array(
 				'success' => true,

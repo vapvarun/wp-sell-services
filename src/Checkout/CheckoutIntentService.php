@@ -493,24 +493,40 @@ class CheckoutIntentService {
 	 * confirmed that payment against a different order of the same price, and
 	 * the webhook then paid the named one as well: two orders, one payment
 	 * (Basecamp 10375173905). Same lock and same lookup as settle(), so a
-	 * payment that already paid other orders pays nothing more.
+	 * payment that already paid other orders pays nothing more. And the same
+	 * amount check: an order this payment has not paid yet is marked paid only
+	 * when the payment is for its total.
+	 *
+	 * ponytail: a mismatch is logged and left for the owner; the gateway-side
+	 * refund lives in each gateway and is not called from here.
 	 *
 	 * @since 1.8.0
 	 *
 	 * @param int    $order_id       Order the webhook names.
 	 * @param string $gateway_id     Gateway slug.
 	 * @param string $transaction_id Gateway payment id, as settle() stamps it.
-	 * @return bool False when the payment was already spent on other orders.
+	 * @param float  $amount         Amount the gateway reports as paid.
+	 * @param string $currency       Currency the gateway reports.
+	 * @return bool False when the payment was spent elsewhere or does not match.
 	 */
-	public function settle_webhook_order( int $order_id, string $gateway_id, string $transaction_id ): bool {
+	public function settle_webhook_order( int $order_id, string $gateway_id, string $transaction_id, float $amount, string $currency ): bool {
 		return $this->locked(
 			$gateway_id,
 			$transaction_id,
-			static function () use ( $order_id, $gateway_id, $transaction_id ): bool {
+			static function () use ( $order_id, $gateway_id, $transaction_id, $amount, $currency ): bool {
 				$paid = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_by_transaction_ids( array( $transaction_id ) );
 
 				if ( $paid && ! in_array( $order_id, array_map( static fn( $row ) => (int) $row->id, $paid ), true ) ) {
 					wpss_log( sprintf( '%s webhook names order #%d, but transaction %s already paid %d other order(s). Not marking it paid.', $gateway_id, $order_id, $transaction_id, count( $paid ) ), 'warning' );
+					return false;
+				}
+
+				$order = wpss_get_order( $order_id );
+
+				// A cart stamps one payment on several orders, so the total is
+				// compared only for an order this payment has not paid yet.
+				if ( ! $paid && $order && ( strtoupper( $currency ) !== strtoupper( (string) $order->currency ) || ! wpss_amounts_match( $amount, (float) $order->total, (string) $order->currency ) ) ) {
+					wpss_log( sprintf( '%s webhook: transaction %s paid %s %s but order #%d is %s %s. Not marking it paid; review this payment.', $gateway_id, $transaction_id, $currency, $amount, $order_id, $order->currency, $order->total ), 'error' );
 					return false;
 				}
 

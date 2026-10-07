@@ -141,6 +141,21 @@ try {
 	$r = $confirm( $pi_id . 'b', $dearer );
 	$check( 'a payment for less than the order total is refused', is_wp_error( $r ) && 'pending' === $payment_status( $dearer ) );
 
+	( new StripeGateway() )->handle_webhook(
+		array(
+			'type' => 'payment_intent.succeeded',
+			'data' => array(
+				'object' => array(
+					'id'       => $pi_id . 'd',
+					'amount'   => wpss_amount_to_minor_units( 23.60, $currency ),
+					'currency' => strtolower( $currency ),
+					'metadata' => array( 'order_id' => $dearer, 'site_url' => get_option( 'home' ), 'platform' => 'wp-sell-services' ),
+				),
+			),
+		)
+	);
+	$check( 'a webhook for less than the order total does not pay it', 'pending' === $payment_status( $dearer ) );
+
 	wp_set_current_user( $seller->ID );
 	$r = $confirm( $pi_id . 'c', $second );
 	$check( 'someone else cannot pay the order', is_wp_error( $r ) && 'pending' === $payment_status( $second ) );
