@@ -61,33 +61,34 @@ try {
 	$check( 'this site recognises its own address, with or without scheme and slash', wpss_is_own_payment_site( home_url( '/' ) ) && wpss_is_own_payment_site( (string) preg_replace( '#^https?://#', '', (string) get_option( 'home' ) ) ) );
 	$check( '  and not another site\'s, nor an empty one', ! wpss_is_own_payment_site( 'https://another-store.example' ) && ! wpss_is_own_payment_site( '' ) );
 
-	// PayPal: custom_id is 127 characters, so the mark is a short hash, "s".
+	// PayPal: custom_id is full, so the mark is the start of the invoice number.
 	$paypal  = new \WPSellServices\Integrations\PayPal\PayPalGateway();
-	$capture = static function ( int $order_id, ?string $mark ) use ( $paypal, $currency ) {
-		$custom = array( 'order_id' => $order_id ) + ( null === $mark ? array() : array( 's' => $mark ) );
-
+	$ours    = 'WPSS-' . wpss_payment_site_hash() . '-';
+	$capture = static function ( int $order_id, ?string $invoice ) use ( $paypal, $currency ) {
 		return $paypal->handle_webhook(
 			array(
 				'event_type' => 'PAYMENT.CAPTURE.COMPLETED',
 				'resource'   => array(
 					'id'        => 'CAP' . strtoupper( wp_generate_password( 12, false, false ) ),
-					'custom_id' => wp_json_encode( $custom ),
+					'custom_id' => wp_json_encode( array( 'order_id' => $order_id ) ),
 					'amount'    => array( 'value' => '23.60', 'currency_code' => $currency ),
-				),
+				) + ( null === $invoice ? array() : array( 'invoice_id' => $invoice ) ),
 			)
 		);
 	};
 
 	$a = $seed();
-	$capture( $a, 'ffffffffff' );
+	$capture( $a, 'WPSS-ffffffffff-ABCDEF123456' );
 	$check( 'PayPal: a capture made on another site does not pay a local order', 'pending' === $state( $a ) );
 
-	$capture( $a, wpss_payment_site_hash() );
-	$check( 'PayPal: this site\'s own capture pays it', 'paid' === $state( $a ) );
+	$capture( $a, null );
+	$check( 'PayPal: nor does one carrying no mark at all', 'pending' === $state( $a ) );
 
-	$b = $seed();
-	$capture( $b, null );
-	$check( 'PayPal: a capture started before this version, with no mark, still pays', 'paid' === $state( $b ) );
+	$capture( $a, 'X' . $ours . 'ABCDEF123456' );
+	$check( 'PayPal: nor one that only contains our mark somewhere', 'pending' === $state( $a ) );
+
+	$capture( $a, $ours . 'ABCDEF123456' );
+	$check( 'PayPal: this site\'s own capture pays it', 'paid' === $state( $a ) );
 
 	if ( class_exists( '\WPSellServicesPro\Integrations\Razorpay\RazorpayGateway' ) ) {
 		$razorpay = new \WPSellServicesPro\Integrations\Razorpay\RazorpayGateway();
