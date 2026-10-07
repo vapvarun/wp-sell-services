@@ -17,6 +17,9 @@
  *   time, MySQL wrote the server's clock (see updated_at_utc()).
  * - A chunk and its cursor commit together, so a chunk that dies is redone
  *   from where it started, not from halfway. One chunk runs at a time.
+ * - A value 1.8.0 itself wrote after the plan was made is already UTC and is
+ *   left alone (see written_since_plan()): an old order paid while the
+ *   conversion was still queued had its new paid_at shifted a second time.
  * - Every UPDATE assigns updated_at explicitly, so ON UPDATE CURRENT_TIMESTAMP
  *   does not overwrite it.
  * - Chunked through Action Scheduler; `wp wpss utc-migrate` runs it in the
@@ -223,6 +226,7 @@ class UtcMigration {
 	 * Convert the next chunk and save progress.
 	 *
 	 * @return bool True when everything is converted.
+	 * @throws \Throwable When a row could not be written; the chunk is rolled back first.
 	 */
 	public static function step(): bool {
 		global $wpdb;
@@ -250,7 +254,19 @@ class UtcMigration {
 			// transaction, a chunk that died midway converted its first rows twice.
 			$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$samples = array();
-			$done    = self::advance( $state, false, $samples );
+
+			try {
+				$done = self::advance( $state, false, $samples );
+			} catch ( \Throwable $e ) {
+				// Nothing of this chunk is kept, cursor included. Thrown on, so
+				// the background action is recorded as failed and queues no
+				// successor; requeue() or the CLI starts it again.
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				wp_cache_delete( self::OPTION, 'options' );
+				wpss_log( $e->getMessage(), 'error' );
+				throw $e;
+			}
+
 			update_option( self::OPTION, $state, false );
 			$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
@@ -283,7 +299,7 @@ class UtcMigration {
 		}
 
 		if ( empty( $state['meta_done'] ) ) {
-			self::convert_meta( $dry_run, $samples );
+			self::convert_meta( $dry_run, $samples, $state );
 			$state['meta_done'] = true;
 			return false;
 		}
@@ -328,6 +344,7 @@ class UtcMigration {
 	 * @param bool                 $dry_run Collect samples only.
 	 * @param array<string, mixed> $samples Samples, by table.column.
 	 * @return void
+	 * @throws \RuntimeException When a row could not be written.
 	 */
 	private static function convert_table( array &$state, string $table, array $columns, string $from, bool $dry_run, array &$samples ): void {
 		global $wpdb;
@@ -357,9 +374,15 @@ class UtcMigration {
 				if ( in_array( $column, $skip, true ) || empty( $row[ $column ] ) || '0000-00-00 00:00:00' === $row[ $column ] ) {
 					continue;
 				}
+				$mysql_stamped = 'updated_at' === $column && in_array( $table, self::ON_UPDATE_TABLES, true );
+
+				if ( self::written_since_plan( (string) $row[ $column ], $state, 'server' === $from || $mysql_stamped ) ) {
+					continue;
+				}
+
 				if ( 'server' === $from ) {
 					$value = gmdate( 'Y-m-d H:i:s', strtotime( $row[ $column ] . ' UTC' ) - (int) $state['server_offset'] );
-				} elseif ( 'updated_at' === $column && in_array( $table, self::ON_UPDATE_TABLES, true ) ) {
+				} elseif ( $mysql_stamped ) {
 					$value = self::updated_at_utc( $row, $columns, $state );
 				} else {
 					$value = get_gmt_from_date( (string) $row[ $column ] );
@@ -374,7 +397,7 @@ class UtcMigration {
 				if ( 'platform' === $blob || empty( $row[ $blob ] ) ) {
 					continue;
 				}
-				$converted = self::convert_json( (string) $row[ $blob ], $blob );
+				$converted = self::convert_json( (string) $row[ $blob ], $blob, $state );
 				if ( null !== $converted ) {
 					$data[ $blob ] = $converted;
 				}
@@ -395,7 +418,14 @@ class UtcMigration {
 					if ( in_array( $table, self::ON_UPDATE_TABLES, true ) && ! isset( $data['updated_at'] ) ) {
 						$data['updated_at'] = $row['updated_at'];
 					}
-					$wpdb->update( $name, $data, array( 'id' => (int) $row['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					// A write that fails must not be stepped over: the cursor would
+					// move on and the row would stay unconverted for good. Abort
+					// the chunk; step() rolls it back and it is tried again.
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					if ( false === $wpdb->update( $name, $data, array( 'id' => (int) $row['id'] ) ) ) {
+						// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- an exception message for the log, never printed.
+						throw new \RuntimeException( sprintf( 'UTC conversion could not write %s row %d: %s', $table, (int) $row['id'], $wpdb->last_error ) );
+					}
 				}
 			}
 
@@ -404,6 +434,67 @@ class UtcMigration {
 
 		// An empty chunk means nothing at or below the cutover is left.
 		$state['cursor'][ $table ] = $rows ? $cursor : $cutover;
+	}
+
+	/**
+	 * Whether 1.8.0 itself wrote a value, after the plan was made.
+	 *
+	 * The cutover ids protect rows CREATED since the update. An older row the
+	 * new code has since touched - an order paid, started, messaged or
+	 * completed while the conversion was still queued - carries a UTC value in
+	 * a row the conversion still visits, and shifting it again put paid_at
+	 * hours into the future.
+	 *
+	 * Such a value reads between the plan's start and now, in UTC. On a site
+	 * (or database server) at or behind UTC nothing written before the plan
+	 * can read that late, so the test is exact. Ahead of UTC, a value written
+	 * in the hours just before the update reads that late too; there the value
+	 * counts as new only when a row created since the plan (an audit entry, a
+	 * notification, a message) was stamped in the same two seconds, which is
+	 * what a 1.8.0 write leaves behind.
+	 *
+	 * ponytail: ahead of UTC, a post-plan write that created no such row
+	 * (marking a notification read) is still read as old and converted. A
+	 * per-row marker would close it; that is a schema change across 18 tables.
+	 *
+	 * @param string               $value         Stored datetime.
+	 * @param array<string, mixed> $state         State: started, cutover, server_offset.
+	 * @param bool                 $mysql_stamped Whether MySQL may have stamped the column.
+	 * @return bool
+	 */
+	private static function written_since_plan( string $value, array $state, bool $mysql_stamped ): bool {
+		global $wpdb;
+
+		$started = (string) ( $state['started'] ?? '' );
+
+		if ( '' === $started || ! self::is_datetime( $value ) || $value < $started || $value > gmdate( 'Y-m-d H:i:s', time() + MINUTE_IN_SECONDS ) ) {
+			return false;
+		}
+
+		$stamp  = (int) strtotime( $value . ' UTC' );
+		$offset = $stamp - (int) strtotime( get_gmt_from_date( $value ) . ' UTC' );
+
+		if ( $mysql_stamped ) {
+			$offset = max( $offset, (int) ( $state['server_offset'] ?? 0 ) );
+		}
+
+		if ( $offset <= 0 ) {
+			return true;
+		}
+
+		foreach ( array( 'audit_log', 'notifications', 'messages' ) as $table ) {
+			if ( ! isset( $state['cutover'][ $table ] ) ) {
+				continue;
+			}
+
+			$name = $wpdb->prefix . 'wpss_' . $table;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			if ( $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$name} WHERE id > %d AND created_at BETWEEN %s AND %s LIMIT 1", (int) $state['cutover'][ $table ], gmdate( 'Y-m-d H:i:s', $stamp - 2 ), gmdate( 'Y-m-d H:i:s', $stamp + 2 ) ) ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -476,11 +567,12 @@ class UtcMigration {
 	/**
 	 * Convert the site-time datetimes inside a JSON column.
 	 *
-	 * @param string $json JSON text.
-	 * @param string $blob Column name.
+	 * @param string               $json  JSON text.
+	 * @param string               $blob  Column name.
+	 * @param array<string, mixed> $state State, for written_since_plan().
 	 * @return string|null New JSON, or null when nothing changed.
 	 */
-	private static function convert_json( string $json, string $blob ): ?string {
+	private static function convert_json( string $json, string $blob, array $state = array() ): ?string {
 		$data = json_decode( $json, true );
 
 		if ( ! is_array( $data ) ) {
@@ -492,15 +584,15 @@ class UtcMigration {
 		if ( 'read_by' === $blob ) {
 			// { user_id: datetime }.
 			foreach ( $data as $user => $when ) {
-				if ( is_string( $when ) && self::is_datetime( $when ) ) {
+				if ( is_string( $when ) && self::is_datetime( $when ) && ! self::written_since_plan( $when, $state, false ) ) {
 					$data[ $user ] = get_gmt_from_date( $when );
 				}
 			}
 		} else {
 			array_walk_recursive(
 				$data,
-				static function ( &$value, $key ) use ( $keys ) {
-					if ( in_array( $key, $keys, true ) && is_string( $value ) && self::is_datetime( $value ) ) {
+				static function ( &$value, $key ) use ( $keys, $state ) {
+					if ( in_array( $key, $keys, true ) && is_string( $value ) && self::is_datetime( $value ) && ! self::written_since_plan( $value, $state, false ) ) {
 						$value = get_gmt_from_date( $value );
 					}
 				}
@@ -530,9 +622,10 @@ class UtcMigration {
 	 *
 	 * @param bool                 $dry_run Collect samples only.
 	 * @param array<string, mixed> $samples Samples.
+	 * @param array<string, mixed> $state   State, for written_since_plan().
 	 * @return void
 	 */
-	private static function convert_meta( bool $dry_run, array &$samples ): void {
+	private static function convert_meta( bool $dry_run, array &$samples, array $state = array() ): void {
 		global $wpdb;
 
 		$sets = array(
@@ -545,7 +638,7 @@ class UtcMigration {
 			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT {$id_column} AS id, meta_value FROM {$table} WHERE meta_key = %s", $key ), ARRAY_A );
 
 			foreach ( $rows as $row ) {
-				if ( ! self::is_datetime( (string) $row['meta_value'] ) ) {
+				if ( ! self::is_datetime( (string) $row['meta_value'] ) || self::written_since_plan( (string) $row['meta_value'], $state, false ) ) {
 					continue;
 				}
 				$new = get_gmt_from_date( (string) $row['meta_value'] );

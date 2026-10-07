@@ -161,6 +161,44 @@ try {
 	$run( array( 'cutover' => array( 'orders' => $by_mysql ), 'cursor' => array( 'orders' => $by_mysql - 1 ) ) + $state );
 	$check( 'site +05:30, database UTC: an updated_at MySQL stamped is already UTC and stays', '2026-03-10 06:00:00' === $row( $by_mysql )->updated_at && '2026-03-10 04:30:00' === $row( $by_mysql )->created_at );
 
+	// A value 1.8.0 wrote itself, after the plan and before the conversion
+	// reached the row, is already UTC. An old order paid in that window had
+	// its new paid_at shifted a second time (QA, Basecamp 10351460106).
+	$audit     = $wpdb->prefix . 'wpss_audit_log';
+	$audit_max = (int) $wpdb->get_var( "SELECT COALESCE( MAX( id ), 0 ) FROM {$audit}" );
+	$now       = time();
+	$paid_at   = static fn( int $id ): string => (string) $wpdb->get_var( $wpdb->prepare( "SELECT paid_at FROM {$orders} WHERE id = %d", $id ) );
+	$plan      = static fn( int $first, int $last ): array => array(
+		'started' => gmdate( 'Y-m-d H:i:s', $now - 120 ),
+		'cutover' => array( 'orders' => $last, 'audit_log' => $audit_max ),
+		'cursor'  => array( 'orders' => $first - 1 ),
+	) + $state;
+
+	// Site ahead of UTC (+05:30). A value this recent could be either, so it
+	// counts as new only with a row created since the plan beside it.
+	$recent      = gmdate( 'Y-m-d H:i:s', $now - 60 );
+	$old_in_band = $seed( 'standalone', '2026-03-10 10:00:00', array( 'started_at' => $recent ) );
+	$paid_since  = $seed( 'standalone', '2026-03-10 10:00:00', array( 'paid_at' => $recent ) );
+	$wpdb->query( $wpdb->prepare( "UPDATE {$orders} SET paid_at = %s WHERE id = %d", gmdate( 'Y-m-d H:i:s', $now - 30 ), $paid_since ) );
+	$wpdb->insert( $audit, array( 'event_type' => 'order.status_change', 'object_type' => 'order', 'object_id' => $paid_since, 'created_at' => gmdate( 'Y-m-d H:i:s', $now - 30 ) ) );
+	$audit_row = (int) $wpdb->insert_id;
+	$run( $plan( $old_in_band, $paid_since ) );
+	$check( 'site +05:30: a paid_at written since the plan, with its audit entry, is left alone', gmdate( 'Y-m-d H:i:s', $now - 30 ) === $paid_at( $paid_since ) && '2026-03-10 04:30:00' === $row( $paid_since )->created_at );
+	$check( '  a recent site-time value with nothing new beside it still converts', gmdate( 'Y-m-d H:i:s', $now - 60 - 19800 ) === $row( $old_in_band )->started_at );
+	$wpdb->delete( $audit, array( 'id' => $audit_row ) );
+
+	// Site behind UTC (New York): nothing written before the plan can read
+	// later than the plan, so the value alone decides.
+	remove_all_filters( 'pre_option_timezone_string' );
+	remove_all_filters( 'pre_option_gmt_offset' );
+	add_filter( 'pre_option_timezone_string', static fn() => 'America/New_York' );
+	add_filter( 'pre_option_gmt_offset', static fn() => -4 );
+	$west = $seed( 'standalone', '2026-03-10 10:00:00' );
+	$wpdb->query( $wpdb->prepare( "UPDATE {$orders} SET paid_at = %s, updated_at = %s WHERE id = %d", gmdate( 'Y-m-d H:i:s', $now - 30 ), gmdate( 'Y-m-d H:i:s', $now - 30 ), $west ) );
+	$run( $plan( $west, $west ) );
+	$check( 'site behind UTC: an old order paid since the plan keeps its paid_at and updated_at', gmdate( 'Y-m-d H:i:s', $now - 30 ) === $paid_at( $west ) && gmdate( 'Y-m-d H:i:s', $now - 30 ) === $row( $west )->updated_at );
+	$check( '  and its older dates still convert (10:00 New York = 14:00 UTC)', '2026-03-10 14:00:00' === $row( $west )->created_at && '2026-03-10 14:00:00' === $row( $west )->started_at );
+
 	// Site on UTC, database server on +05:30: the setup the card was filed on.
 	remove_all_filters( 'pre_option_timezone_string' );
 	remove_all_filters( 'pre_option_gmt_offset' );
