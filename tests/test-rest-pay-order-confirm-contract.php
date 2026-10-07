@@ -64,7 +64,9 @@ $payment_status = static function ( int $id ) use ( $wpdb, $table ): string {
 };
 
 // Stripe answers "succeeded, 23.60, made on this site" for any intent.
-$stub = static function ( $pre, $args, $url ) use ( $currency ) {
+// $made_for is the order the payment was started for, as the checkout wrote it.
+$made_for = 0;
+$stub     = static function ( $pre, $args, $url ) use ( $currency, $buyer, &$made_for ) {
 	if ( false === strpos( (string) $url, 'api.stripe.com' ) ) {
 		return $pre;
 	}
@@ -77,7 +79,7 @@ $stub = static function ( $pre, $args, $url ) use ( $currency ) {
 				'status'   => 'succeeded',
 				'amount'   => wpss_amount_to_minor_units( 23.60, $currency ),
 				'currency' => strtolower( $currency ),
-				'metadata' => array( 'site_url' => get_option( 'home' ), 'platform' => 'wp-sell-services' ),
+				'metadata' => array( 'site_url' => get_option( 'home' ), 'platform' => 'wp-sell-services', 'customer_id' => $buyer->ID, 'order_id' => $made_for ),
 			)
 		),
 		'headers'  => array(),
@@ -109,11 +111,20 @@ try {
 
 	wp_set_current_user( $buyer->ID );
 
-	$r = $confirm( $pi_id, $first );
+	$made_for = $second;
+	$r        = $confirm( $pi_id . 'x', $first );
+	$check( 'a payment started for another order is refused', is_wp_error( $r ) && 'wpss_payment_not_for_order' === $r->get_error_code() && 'pending' === $payment_status( $first ) );
+
+	$made_for = $first;
+	$r        = $confirm( $pi_id, $first );
 	$check( 'a payment confirms the order it paid', ! is_wp_error( $r ) && 'paid' === $payment_status( $first ) );
 
-	$r = $confirm( $pi_id, $second );
-	$check( 'the same payment is refused for a second order of the same price', is_wp_error( $r ) );
+	// Even if the payment's own record named the second order, a spent
+	// payment pays nothing else.
+	$made_for = $second;
+	$r        = $confirm( $pi_id, $second );
+	$check( 'the same payment is refused for a second order of the same price', is_wp_error( $r ) && 'wpss_payment_already_used' === $r->get_error_code() );
+	$made_for = $first;
 	$check( '  and that order stays unpaid', 'pending' === $payment_status( $second ) );
 	$check( '  and wpss_order_paid fired once', 1 === $paid_fired );
 
@@ -138,7 +149,8 @@ try {
 	$r = $confirm( $pi_id, $first );
 	$check( 'repeating the confirm for the order it paid still answers paid', ! is_wp_error( $r ) && 'paid' === ( $r->get_data()['status'] ?? '' ) );
 
-	$r = $confirm( $pi_id . 'b', $dearer );
+	$made_for = $dearer;
+	$r        = $confirm( $pi_id . 'b', $dearer );
 	$check( 'a payment for less than the order total is refused', is_wp_error( $r ) && 'pending' === $payment_status( $dearer ) );
 
 	( new StripeGateway() )->handle_webhook(
@@ -157,7 +169,8 @@ try {
 	$check( 'a webhook for less than the order total does not pay it', 'pending' === $payment_status( $dearer ) );
 
 	wp_set_current_user( $seller->ID );
-	$r = $confirm( $pi_id . 'c', $second );
+	$made_for = $second;
+	$r        = $confirm( $pi_id . 'c', $second );
 	$check( 'someone else cannot pay the order', is_wp_error( $r ) && 'pending' === $payment_status( $second ) );
 } finally {
 	wp_set_current_user( 0 );

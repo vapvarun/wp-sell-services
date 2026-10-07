@@ -95,7 +95,8 @@ try {
 	// directly (QA bounce). PayPal is stubbed; a capture request is counted.
 	$captures = 0;
 	$invoice  = '';
-	$stub     = static function ( $pre, $args, $url ) use ( &$captures, &$invoice, $currency ) {
+	$custom   = '{}';
+	$stub     = static function ( $pre, $args, $url ) use ( &$captures, &$invoice, &$custom, $currency ) {
 		if ( false === strpos( (string) $url, 'paypal.com' ) ) {
 			return $pre;
 		}
@@ -103,7 +104,7 @@ try {
 			$body = array( 'access_token' => 'stub', 'expires_in' => 3600 );
 		} else {
 			$captures += false !== strpos( (string) $url, '/capture' ) ? 1 : 0;
-			$unit      = array( 'custom_id' => '{}', 'payments' => array( 'captures' => array( array( 'id' => 'CAPSTUB', 'amount' => array( 'value' => '23.60', 'currency_code' => $currency ) ) ) ) ) + ( '' === $invoice ? array() : array( 'invoice_id' => $invoice ) );
+			$unit      = array( 'custom_id' => $custom, 'payments' => array( 'captures' => array( array( 'id' => 'CAPSTUB', 'amount' => array( 'value' => '23.60', 'currency_code' => $currency ) ) ) ) ) + ( '' === $invoice ? array() : array( 'invoice_id' => $invoice ) );
 			$body      = array( 'id' => 'ORDERSTUB', 'status' => 'COMPLETED', 'purchase_units' => array( $unit ) );
 		}
 
@@ -122,6 +123,23 @@ try {
 	$invoice = $ours . 'ABCDEF123456';
 	$result  = $paypal->process_payment( 'ORDERSTUB' );
 	$check( 'PayPal: this site\'s own payment is captured', ! empty( $result['success'] ) && 1 === $captures );
+
+	// The REST pay-order confirm had its own capture: any payment made on this
+	// site, by anyone, paid the order the caller named. It now goes through
+	// the website's path, which reads the buyer and the order off the payment.
+	$rest    = static function ( int $pay_order ) use ( $paypal ) {
+		$method = new ReflectionMethod( \WPSellServices\API\PaymentController::class, 'confirm_paypal_payment' );
+		return $method->invoke( new \WPSellServices\API\PaymentController(), $paypal, 'ORDERSTUB', 0, 0, $pay_order );
+	};
+	$mine    = $seed();
+	$started = $seed();
+	wp_set_current_user( 1 );
+	$custom = wp_json_encode( array( 'customer_id' => 999999, 'order_id' => $mine ) );
+	$check( 'PayPal REST pay-order: a payment another member started is not captured', is_wp_error( $rest( $mine ) ) && 1 === $captures && 'pending' === $state( $mine ) );
+	$custom = wp_json_encode( array( 'customer_id' => 1, 'order_id' => $started ) );
+	$answer = $rest( $mine );
+	$check( 'PayPal REST pay-order: a payment pays the order it was started for, not the one named', ! is_wp_error( $answer ) && $started === (int) $answer->get_data()['order_id'] && 'paid' === $state( $started ) && 'pending' === $state( $mine ) );
+	wp_set_current_user( 0 );
 	remove_filter( 'pre_http_request', $stub, 10 );
 
 	if ( class_exists( '\WPSellServicesPro\Integrations\Razorpay\RazorpayGateway' ) ) {

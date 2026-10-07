@@ -502,6 +502,16 @@ class PaymentController extends RestController {
 				return new WP_Error( 'stripe_confirm_error', $payment['error'] ?? __( 'Payment confirmation failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
 			}
 
+			// The payment names the member who started it and the order it was
+			// started for. Amount and reuse alone let a member confirm someone
+			// else's paid, not yet settled payment of the same price against
+			// their own order.
+			$meta = (array) ( $payment['metadata'] ?? array() );
+
+			if ( (int) ( $meta['customer_id'] ?? 0 ) !== (int) $order->customer_id || (int) ( $meta['order_id'] ?? 0 ) !== $pay_order ) {
+				return new WP_Error( 'wpss_payment_not_for_order', __( 'This payment was not made for this order.', 'wp-sell-services' ), array( 'status' => 409 ) );
+			}
+
 			$settled = $this->settle_pay_order( $order, 'stripe', $payment_id, (float) ( $payment['amount'] ?? 0 ), (string) ( $payment['currency'] ?? '' ) );
 
 			if ( is_wp_error( $settled ) ) {
@@ -554,22 +564,16 @@ class PaymentController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	private function confirm_paypal_payment( object $gateway, string $payment_id, int $service_id, int $package_id, int $pay_order ) {
-		// For existing orders (pay_order), capture the payment directly without creating
-		// a new WPSS order. capture_order() creates an order internally, so we use
-		// process_payment() for the capture-only path.
+		// Paying an existing order: answer the plain refusals before PayPal is
+		// asked for anything.
 		if ( $pay_order ) {
 			$order = wpss_get_order( $pay_order );
 
-			// Same three guards as the Stripe twin (see confirm_stripe_payment).
-			// Without them a buyer could capture a small PayPal payment (e.g. $5)
-			// against someone else's $500 order and have it marked paid. This hole
-			// was closed on Stripe but left open here — fixing the class, not just
-			// the instance.
 			if ( ! $order ) {
 				return new WP_Error( 'rest_order_not_found', __( 'Order not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 			}
 
-			if ( get_current_user_id() !== (int) $order->customer_id && ! current_user_can( 'manage_options' ) ) {
+			if ( get_current_user_id() !== (int) $order->customer_id ) {
 				return new WP_Error( 'wpss_not_owner', __( 'You can only pay for your own order.', 'wp-sell-services' ), array( 'status' => 403 ) );
 			}
 
@@ -584,32 +588,13 @@ class PaymentController extends RestController {
 					)
 				);
 			}
-
-			$capture = $gateway->process_payment( $payment_id );
-
-			if ( empty( $capture['success'] ) ) {
-				return new WP_Error( 'paypal_confirm_error', $capture['error'] ?? __( 'Payment capture failed.', 'wp-sell-services' ), array( 'status' => 400 ) );
-			}
-
-			$settled = $this->settle_pay_order( $order, 'paypal', (string) ( $capture['transaction_id'] ?? $payment_id ), (float) ( $capture['amount'] ?? 0 ), (string) ( $capture['currency'] ?? '' ) );
-
-			if ( is_wp_error( $settled ) ) {
-				return $settled;
-			}
-
-			$order = wpss_get_order( $pay_order );
-
-			return new WP_REST_Response(
-				array(
-					'gateway'      => 'paypal',
-					'order_id'     => $pay_order,
-					'order_number' => $order ? $order->order_number : '',
-					'status'       => 'paid',
-				)
-			);
 		}
 
-		// New order: capture + create order via gateway.
+		// One capture path for a new purchase and an existing order, the one the
+		// website uses. It reads the buyer and the order from the PayPal payment
+		// itself, so a payment pays what it was started for and only for the
+		// member who started it. This route used to capture whatever PayPal
+		// payment it was handed and mark the named order paid.
 		$result = $gateway->capture_order(
 			array(
 				'paypal_order_id' => $payment_id,

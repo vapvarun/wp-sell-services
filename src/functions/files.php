@@ -920,14 +920,24 @@ function wpss_migrate_legacy_order_file( array $record, int $order_id ): ?array 
 		return null;
 	}
 
+	$attachment_id = ctype_digit( $file_id ) && 'attachment' === get_post_type( (int) $file_id ) ? (int) $file_id : 0;
+
+	// The same upload can also be the brief of a buyer request a seller has
+	// proposed on. That request still links the public copy, so it stays; the
+	// order now reads its own private copy either way.
+	if ( $attachment_id && ( new \WPSellServices\Services\BuyerRequestService() )->is_file_locked( $attachment_id ) ) {
+		delete_transient( $lock );
+		return $updated;
+	}
+
 	// Only now is the public copy safe to remove - the record points at the
 	// private one and the bytes are there.
 	wp_delete_file( $source );
 
 	// If the id was an attachment post, drop it too. Leaving it behind means a
 	// media-library row pointing at a file that is no longer there.
-	if ( ctype_digit( $file_id ) && 'attachment' === get_post_type( (int) $file_id ) ) {
-		wp_delete_attachment( (int) $file_id, true );
+	if ( $attachment_id ) {
+		wp_delete_attachment( $attachment_id, true );
 	}
 
 	delete_transient( $lock );
@@ -1594,10 +1604,8 @@ function wpss_guard_locked_request_file( $delete, $post ) {
 		return $delete;
 	}
 
-	if ( 'request' !== get_post_meta( $post->ID, '_wpss_upload_context', true ) ) {
-		return $delete;
-	}
-
+	// Asked for every file, whatever it was uploaded as: a request lists any
+	// file its author owns, so the upload context says nothing about the lock.
 	return ( new \WPSellServices\Services\BuyerRequestService() )->is_file_locked( (int) $post->ID ) ? false : $delete;
 }
 add_filter( 'pre_delete_attachment', 'wpss_guard_locked_request_file', 10, 2 );

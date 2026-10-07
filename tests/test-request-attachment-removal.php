@@ -155,6 +155,11 @@ try {
 	$check( 'the order requirement-file route, on the member\'s own order, cannot delete it (' . $answer->get_status() . ')', 409 === $answer->get_status() && null !== get_post( $third ) );
 	$wpdb->delete( $wpdb->prefix . 'wpss_orders', array( 'id' => $own_order ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$check( '  nor a plain wp_delete_attachment() as that member', ! wp_delete_attachment( $third, true ) && null !== get_post( $third ) );
+	// A request lists any file its author owns, so the lock cannot depend on
+	// what the file was uploaded as (security review of the first fix).
+	$elsewhere = $media( 'requirement' );
+	$service->update( $request_id, array( 'attachments' => array( $third, $elsewhere ) ) );
+	$check( '  nor a file uploaded for something else and then added to the request', in_array( $elsewhere, $listed(), true ) && ! wp_delete_attachment( $elsewhere, true ) && null !== get_post( $elsewhere ) );
 	wp_set_current_user( 1 );
 	$check( '  the lock does not stop a site administrator', false === wpss_guard_locked_request_file( null, get_post( $third ) ) ? false : true );
 	wp_set_current_user( $buyer->ID );
