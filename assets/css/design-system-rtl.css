@@ -1480,8 +1480,10 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-order-detail-item__label { color: var(--wpss-text-secondary); text-transform: uppercase; letter-spacing: .04em; font-size: var(--wpss-text-xs, .75rem); }
 .wpss-order-detail-item__value { color: var(--wpss-text); font-weight: 600; text-align: start; min-width: 0; overflow-wrap: anywhere; }
 /* Order numbers are long and hyphenated but are identifiers, not prose: keep
-   them whole rather than breaking mid-token. */
-.wpss-order-detail-item__value--id { font-variant-numeric: tabular-nums; overflow-wrap: normal; }
+   them whole rather than breaking mid-token. break-word, not normal: a token
+   wider than the cell (a 62-character offline transaction id) breaks instead
+   of running over the next column (Basecamp 10375931857). */
+.wpss-order-detail-item__value--id { font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
 /* The payment rail's receipt number: secondary to the order number, not a peer. */
 .wpss-order-detail-item__sub { color: var(--wpss-text-secondary); font-size: var(--wpss-text-xs, .75rem); overflow-wrap: anywhere; }
 .wpss-order-detail-item__sub a { color: inherit; text-decoration: underline; }
