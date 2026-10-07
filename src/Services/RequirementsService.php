@@ -472,6 +472,18 @@ class RequirementsService {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_order_requirements';
 
+		// A buyer-request order already holds the brief from conversion: the
+		// request text, the proposal cover and the request's files. The buyer's
+		// submission adds to it; replacing the row dropped the brief and its
+		// files from every order surface (1.8.0 smoke, order 8288).
+		$previous = $this->get( $order_id );
+
+		if ( $previous ) {
+			$customer_id = (int) ( wpss_get_order( $order_id )->customer_id ?? 0 );
+			$field_data  = array_merge( $previous['field_data'], $field_data );
+			$attachments = array_merge( wpss_normalize_requirement_attachments( $previous['attachments'], $customer_id ), $attachments );
+		}
+
 		// Use transaction to prevent data loss if insert fails after delete.
 		$wpdb->query( 'START TRANSACTION' );
 

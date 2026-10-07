@@ -9,7 +9,7 @@
  * the order page fataled (Basecamp 10380173025, 10380395139) and the REST
  * reads dropped the file (Basecamp 10380601755). Also asserts an id naming
  * someone else's media never becomes a record on the order. Uses an existing
- * order, adds its own newest requirements row and media, and removes them.
+ * order that has no requirements, adds a row and media, and removes them.
  *
  * @package WPSellServices
  */
@@ -26,10 +26,11 @@ $check = static function ( string $label, bool $ok ) use ( &$fails ) {
 
 global $wpdb;
 $table    = $wpdb->prefix . 'wpss_order_requirements';
-$order_id = (int) $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}wpss_orders WHERE customer_id > 0 AND customer_id <> 1 ORDER BY id DESC LIMIT 1" ); // phpcs:ignore WordPress.DB
+// An order with no requirements of its own: save() replaces every row it has.
+$order_id = (int) $wpdb->get_var( "SELECT o.id FROM {$wpdb->prefix}wpss_orders o LEFT JOIN {$table} r ON r.order_id = o.id WHERE o.customer_id > 0 AND o.customer_id <> 1 AND r.id IS NULL ORDER BY o.id DESC LIMIT 1" ); // phpcs:ignore WordPress.DB
 
 if ( ! $order_id ) {
-	echo "SKIP  no order with a buyer to attach a fixture to\n";
+	echo "SKIP  no order without requirements to attach a fixture to\n";
 	return;
 }
 
@@ -86,6 +87,17 @@ try {
 
 	$stored = wpss_normalize_requirement_attachments( array( $own, $foreign, 'x', 0 ), (int) $order->customer_id );
 	$check( 'writer normaliser keeps only the buyer\'s media', 1 === count( $stored ) && (string) $own === $stored[0]['id'] );
+
+	// The buyer's submission on a request order must not drop the brief the
+	// conversion stored (request text and files).
+	$wpdb->update( $table, array( 'field_data' => wp_json_encode( array( 'request_title' => 'Brief' ) ) ), array( 'id' => $row ) ); // phpcs:ignore WordPress.DB
+	$save = new ReflectionMethod( \WPSellServices\Services\RequirementsService::class, 'save' );
+	$save->setAccessible( true );
+	$save->invoke( new \WPSellServices\Services\RequirementsService(), $order_id, array( 'description' => 'Later answers' ), array( array( 'id' => 'new-upload', 'name' => 'later.pdf' ) ) );
+	$row   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE order_id = %d ORDER BY id DESC LIMIT 1", $order_id ) ); // phpcs:ignore WordPress.DB
+	$after = $order->get_submitted_requirements();
+	$check( 'submission keeps the request brief text', 'Brief' === ( $after['data']['request_title'] ?? '' ) && 'Later answers' === ( $after['data']['description'] ?? '' ) );
+	$check( 'submission keeps the request file beside the new one', array( (string) $own, 'new-upload' ) === array_column( $after['attachments'], 'id' ) );
 } finally {
 	if ( $row ) {
 		$wpdb->delete( $table, array( 'id' => $row ) ); // phpcs:ignore WordPress.DB
