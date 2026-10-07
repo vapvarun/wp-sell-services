@@ -28,6 +28,29 @@ const { execFileSync } = require( 'child_process' );
  */
 const RENDERED = [ 'src/', 'templates/', 'assets/', 'blocks/', 'wp-sell-services.php' ];
 
+// Pro's rendered surfaces. Pro changes shared surfaces in combo mode, so a Pro
+// commit after the combo walk makes that evidence as stale as a Free one -
+// and this gate used to diff Free alone (a blind spot recorded in 1.7.2).
+const PRO_RENDERED = [ 'src/', 'templates/', 'assets/', 'wp-sell-services-pro.php' ];
+
+/**
+ * Rendered files changed in a checkout since a recorded SHA.
+ *
+ * @param {string}   dir      Checkout to diff.
+ * @param {string}   sha      Validated hex SHA the walk ran against.
+ * @param {string[]} rendered Path prefixes that render.
+ * @return {string[]|null} Changed rendered files, or null when the SHA is not in that history.
+ */
+function staleSince( dir, sha, rendered ) {
+	try {
+		return execFileSync( 'git', [ 'diff', '--name-only', sha + '..HEAD' ], { cwd: dir, encoding: 'utf8', stdio: [ 'ignore', 'pipe', 'pipe' ] } )
+			.split( '\n' )
+			.filter( ( f ) => f && rendered.some( ( p ) => f.startsWith( p ) ) );
+	} catch ( e ) {
+		return null;
+	}
+}
+
 /*
  * Sections a walk CANNOT run, which is not the same as a walk that did not.
  *
@@ -72,9 +95,10 @@ const REPORTS = [
  * @param {Object} opts
  * @param {string} opts.version The version being built. Free and Pro are lockstep, so it is the same string on both sides.
  * @param {string} opts.freeDir Absolute path to the FREE plugin checkout, which holds the evidence and the git history the staleness check reads.
+ * @param {string} [opts.proDir] Absolute path to the PRO checkout. Defaults to the sibling directory; the combo walk is dated against it too.
  * @return {{ok: boolean, message: string}} Verdict.
  */
-module.exports = function smokeGate( { version, freeDir } ) {
+module.exports = function smokeGate( { version, freeDir, proDir = path.resolve( freeDir, '../wp-sell-services-pro' ) } ) {
 	const at = ( rel ) => path.join( freeDir, rel );
 	const fail = ( message ) => ( { ok: false, message: 'verify:smoke-gate — ' + message } );
 
@@ -212,21 +236,14 @@ module.exports = function smokeGate( { version, freeDir } ) {
 			);
 		}
 
-		let changed;
-		try {
-			changed = execFileSync(
-				'git',
-				[ 'diff', '--name-only', data.ran_against + '..HEAD' ],
-				{ cwd: freeDir, encoding: 'utf8', stdio: [ 'ignore', 'pipe', 'pipe' ] }
-			).split( '\n' ).filter( Boolean );
-		} catch ( e ) {
+		const stale = staleSince( freeDir, data.ran_against, RENDERED );
+
+		if ( null === stale ) {
 			return fail(
 				'cannot diff ' + data.ran_against + '..HEAD (' + mode + ').\n' +
 				'The recorded SHA is not in this repository, so the evidence cannot be dated. Re-run the smoke.'
 			);
 		}
-
-		const stale = changed.filter( ( f ) => RENDERED.some( ( dir ) => f.startsWith( dir ) ) );
 
 		if ( stale.length ) {
 			return fail(
@@ -236,6 +253,26 @@ module.exports = function smokeGate( { version, freeDir } ) {
 				( stale.length > 10 ? '\n  …and ' + ( stale.length - 10 ) + ' more' : '' ) +
 				'\nThe evidence does not describe the code being shipped. Re-run the smoke.'
 			);
+		}
+
+		if ( 'combo' === mode ) {
+			if ( ! /^[0-9a-f]{7,40}$/.test( String( data.pro_ran_against || '' ) ) ) {
+				return fail( rel + ' has no usable "pro_ran_against" SHA; the combo walk cannot be dated against Pro. Re-run the smoke.' );
+			}
+
+			const proStale = fs.existsSync( proDir ) ? staleSince( proDir, data.pro_ran_against, PRO_RENDERED ) : null;
+
+			if ( null === proStale ) {
+				return fail( 'cannot diff Pro at ' + proDir + ' from ' + data.pro_ran_against + '. Check out wp-sell-services-pro beside Free, or re-run the smoke.' );
+			}
+
+			if ( proStale.length ) {
+				return fail(
+					'the combo walk ran at Pro ' + data.pro_ran_against.slice( 0, 8 ) + ', and ' + proStale.length +
+					' rendered Pro file(s) have changed since:\n  ' + proStale.slice( 0, 10 ).join( '\n  ' ) +
+					'\nThe evidence does not describe the Pro code being shipped. Re-run the smoke.'
+				);
+			}
 		}
 
 		/*

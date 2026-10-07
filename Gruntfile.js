@@ -475,8 +475,10 @@ module.exports = function ( grunt ) {
 			freeDir: __dirname,
 		} );
 
+		// fatal, not warn: `grunt release --force` skipped a failed gate, so
+		// a stale smoke could still reach a published zip.
 		if ( ! verdict.ok ) {
-			grunt.fail.warn( verdict.message );
+			grunt.fail.fatal( verdict.message );
 			return;
 		}
 
