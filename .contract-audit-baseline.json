@@ -43,6 +43,10 @@
     {
       "id": "hook-consumed-never-fired:wpss_email_retry",
       "reason": "Fired through Action Scheduler, not do_action: EmailService::on_mail_failed() queues it via Scheduler::schedule_single( self::RETRY_HOOK, ... ) at src/Services/EmailService.php:2149, and Action Scheduler calls the hook when the job runs. The audit only matches a literal do_action. Verified 2026-09-17"
+    },
+    {
+      "id": "hook-consumed-never-fired:wpss_utc_migrate_batch",
+      "reason": "Fired by Action Scheduler: UtcMigration::maybe_start(), run_chunk() and requeue() queue it with Scheduler::schedule_single( self::HOOK, ... ), where HOOK is a class constant the scan cannot resolve; verified 2026-10-07"
     }
   ]
 }

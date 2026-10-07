@@ -2,7 +2,7 @@
     "openapi": "3.1.0",
     "info": {
         "title": "WP Sell Services REST API",
-        "version": "1.7.2",
+        "version": "1.8.0",
         "description": "REST API for the WP Sell Services marketplace (Free + Pro). Every entity is reachable through these endpoints - the same surface the mobile app and integrations use. Namespaced under `wpss/v1` (Free) and `wpss-pro/v1` (Pro).\n\nThis document is generated from the live route registrations, scoped to the WP Sell Services namespaces only, so it never includes routes from other plugins on the same install.\n\nGenerated on the **standalone** rail, which is the default. Two routes under `wpss-pro/v1` are registered only by the FluentCart adapter and therefore only exist when `wpss_general[ecommerce_platform]` is `fluentcart`; regenerate on the standalone rail so the committed spec stays stable, or the freshness check will flip-flop with whatever rail was last active.\n\nEvery path carries `x-wpss-tier`: `free` routes ship with WP Sell Services, `pro` routes exist only when WP Sell Services Pro is active and licensed.",
         "contact": {
             "name": "Wbcom Designs",
@@ -1707,6 +1707,13 @@
                                     "deadline": {
                                         "type": "string"
                                     },
+                                    "attachments": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "description": "Media IDs from POST /media with context \"request\". Replaces the list; a file left out is deleted. Omit to leave attachments unchanged."
+                                    },
                                     "status": {
                                         "type": "string",
                                         "enum": [
@@ -1782,6 +1789,13 @@
                                     "deadline": {
                                         "type": "string"
                                     },
+                                    "attachments": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "description": "Media IDs from POST /media with context \"request\". Replaces the list; a file left out is deleted. Omit to leave attachments unchanged."
+                                    },
                                     "status": {
                                         "type": "string",
                                         "enum": [
@@ -1856,6 +1870,13 @@
                                     },
                                     "deadline": {
                                         "type": "string"
+                                    },
+                                    "attachments": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "description": "Media IDs from POST /media with context \"request\". Replaces the list; a file left out is deleted. Omit to leave attachments unchanged."
                                     },
                                     "status": {
                                         "type": "string",
@@ -2238,9 +2259,16 @@
                                     "addons": {
                                         "type": "array",
                                         "items": {
-                                            "type": "integer"
+                                            "type": "string"
                                         },
-                                        "description": "Selected addon IDs."
+                                        "description": "Selected add-ons: ids, or objects {id, quantity, option, text} for quantity, dropdown and text add-ons. Never a price."
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10,
+                                        "default": 1,
+                                        "description": "How many of the package."
                                     }
                                 },
                                 "required": [
@@ -5595,15 +5623,6 @@
                                     "status": {
                                         "type": "string",
                                         "description": "Order status."
-                                    },
-                                    "vendor_notes": {
-                                        "type": "string",
-                                        "description": "Vendor notes."
-                                    },
-                                    "due_date": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "description": "Due date."
                                     }
                                 }
                             }
@@ -5660,15 +5679,6 @@
                                     "status": {
                                         "type": "string",
                                         "description": "Order status."
-                                    },
-                                    "vendor_notes": {
-                                        "type": "string",
-                                        "description": "Vendor notes."
-                                    },
-                                    "due_date": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "description": "Due date."
                                     }
                                 }
                             }
@@ -5725,15 +5735,6 @@
                                     "status": {
                                         "type": "string",
                                         "description": "Order status."
-                                    },
-                                    "vendor_notes": {
-                                        "type": "string",
-                                        "description": "Vendor notes."
-                                    },
-                                    "due_date": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "description": "Due date."
                                     }
                                 }
                             }
@@ -7365,7 +7366,21 @@
                                     "package_id": {
                                         "type": "integer",
                                         "default": 0,
-                                        "description": "Package index."
+                                        "description": "Package: stable id or legacy index."
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "default": 1,
+                                        "description": "How many of the package."
+                                    },
+                                    "addons": {
+                                        "type": "array",
+                                        "default": [],
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "Add-on selection: ids, or {id, quantity, option, text} objects. Prices are never read."
                                     },
                                     "gateway": {
                                         "type": "string",
@@ -10622,7 +10637,8 @@
                                 "date",
                                 "title",
                                 "price",
-                                "rating"
+                                "rating",
+                                "popular"
                             ],
                             "default": "date"
                         },
@@ -11296,7 +11312,50 @@
                                     },
                                     "price": {
                                         "type": "number",
-                                        "description": "Addon price."
+                                        "minimum": 0,
+                                        "description": "Addon price: an amount, or a percent of the package when price_type is percentage."
+                                    },
+                                    "delivery_days_extra": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "description": "Days the add-on adds to delivery."
+                                    },
+                                    "field_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "checkbox",
+                                            "quantity",
+                                            "dropdown",
+                                            "text"
+                                        ],
+                                        "description": "How the buyer chooses it."
+                                    },
+                                    "price_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "flat",
+                                            "percentage",
+                                            "quantity_based"
+                                        ],
+                                        "description": "How it is priced."
+                                    },
+                                    "options": {
+                                        "type": "string",
+                                        "description": "Dropdown choices, comma separated."
+                                    },
+                                    "min_quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "Smallest quantity (quantity add-ons)."
+                                    },
+                                    "max_quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "Largest quantity (quantity add-ons)."
+                                    },
+                                    "is_required": {
+                                        "type": "boolean",
+                                        "description": "Every order includes it."
                                     }
                                 },
                                 "required": [
@@ -11376,7 +11435,50 @@
                                     },
                                     "price": {
                                         "type": "number",
-                                        "description": "Addon price."
+                                        "minimum": 0,
+                                        "description": "Addon price: an amount, or a percent of the package when price_type is percentage."
+                                    },
+                                    "delivery_days_extra": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "description": "Days the add-on adds to delivery."
+                                    },
+                                    "field_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "checkbox",
+                                            "quantity",
+                                            "dropdown",
+                                            "text"
+                                        ],
+                                        "description": "How the buyer chooses it."
+                                    },
+                                    "price_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "flat",
+                                            "percentage",
+                                            "quantity_based"
+                                        ],
+                                        "description": "How it is priced."
+                                    },
+                                    "options": {
+                                        "type": "string",
+                                        "description": "Dropdown choices, comma separated."
+                                    },
+                                    "min_quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "Smallest quantity (quantity add-ons)."
+                                    },
+                                    "max_quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "Largest quantity (quantity add-ons)."
+                                    },
+                                    "is_required": {
+                                        "type": "boolean",
+                                        "description": "Every order includes it."
                                     }
                                 }
                             }
@@ -11449,7 +11551,50 @@
                                     },
                                     "price": {
                                         "type": "number",
-                                        "description": "Addon price."
+                                        "minimum": 0,
+                                        "description": "Addon price: an amount, or a percent of the package when price_type is percentage."
+                                    },
+                                    "delivery_days_extra": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "description": "Days the add-on adds to delivery."
+                                    },
+                                    "field_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "checkbox",
+                                            "quantity",
+                                            "dropdown",
+                                            "text"
+                                        ],
+                                        "description": "How the buyer chooses it."
+                                    },
+                                    "price_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "flat",
+                                            "percentage",
+                                            "quantity_based"
+                                        ],
+                                        "description": "How it is priced."
+                                    },
+                                    "options": {
+                                        "type": "string",
+                                        "description": "Dropdown choices, comma separated."
+                                    },
+                                    "min_quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "Smallest quantity (quantity add-ons)."
+                                    },
+                                    "max_quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "Largest quantity (quantity add-ons)."
+                                    },
+                                    "is_required": {
+                                        "type": "boolean",
+                                        "description": "Every order includes it."
                                     }
                                 }
                             }
@@ -11522,7 +11667,50 @@
                                     },
                                     "price": {
                                         "type": "number",
-                                        "description": "Addon price."
+                                        "minimum": 0,
+                                        "description": "Addon price: an amount, or a percent of the package when price_type is percentage."
+                                    },
+                                    "delivery_days_extra": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "description": "Days the add-on adds to delivery."
+                                    },
+                                    "field_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "checkbox",
+                                            "quantity",
+                                            "dropdown",
+                                            "text"
+                                        ],
+                                        "description": "How the buyer chooses it."
+                                    },
+                                    "price_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "flat",
+                                            "percentage",
+                                            "quantity_based"
+                                        ],
+                                        "description": "How it is priced."
+                                    },
+                                    "options": {
+                                        "type": "string",
+                                        "description": "Dropdown choices, comma separated."
+                                    },
+                                    "min_quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "Smallest quantity (quantity add-ons)."
+                                    },
+                                    "max_quantity": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "Largest quantity (quantity add-ons)."
+                                    },
+                                    "is_required": {
+                                        "type": "boolean",
+                                        "description": "Every order includes it."
                                     }
                                 }
                             }
@@ -11630,6 +11818,63 @@
                         "required": true,
                         "schema": {
                             "type": "string"
+                        },
+                        "description": ""
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                }
+            }
+        },
+        "/wpss/v1/services/{id}/quote": {
+            "x-wpss-tier": "free",
+            "get": {
+                "tags": [
+                    "Services"
+                ],
+                "operationId": "get_wpss_v1_services_id_quote",
+                "security": [],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": ""
+                    },
+                    {
+                        "name": "package",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 0
+                        },
+                        "description": ""
+                    },
+                    {
+                        "name": "quantity",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10,
+                            "default": 1
                         },
                         "description": ""
                     }
@@ -14633,7 +14878,8 @@
                                 "pending",
                                 "approved",
                                 "completed",
-                                "rejected"
+                                "rejected",
+                                "cancelled"
                             ]
                         },
                         "description": "Filter by status."
@@ -14683,6 +14929,191 @@
                     },
                     "404": {
                         "description": "Not found."
+                    }
+                }
+            }
+        },
+        "/wpss/v1/withdrawals/profile": {
+            "x-wpss-tier": "free",
+            "get": {
+                "tags": [
+                    "Withdrawals"
+                ],
+                "operationId": "get_wpss_v1_withdrawals_profile",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Withdrawals"
+                ],
+                "operationId": "post_wpss_v1_withdrawals_profile",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "method": {
+                                        "type": "string"
+                                    },
+                                    "details": {
+                                        "type": "object"
+                                    }
+                                },
+                                "required": [
+                                    "method",
+                                    "details"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Withdrawals"
+                ],
+                "operationId": "put_wpss_v1_withdrawals_profile",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "method": {
+                                        "type": "string"
+                                    },
+                                    "details": {
+                                        "type": "object"
+                                    }
+                                },
+                                "required": [
+                                    "method",
+                                    "details"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Withdrawals"
+                ],
+                "operationId": "patch_wpss_v1_withdrawals_profile",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "method": {
+                                        "type": "string"
+                                    },
+                                    "details": {
+                                        "type": "object"
+                                    }
+                                },
+                                "required": [
+                                    "method",
+                                    "details"
+                                ]
+                            }
+                        }
                     }
                 }
             }
@@ -14890,6 +15321,46 @@
                                 ]
                             }
                         }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Withdrawals"
+                ],
+                "operationId": "delete_wpss_v1_withdrawals_id",
+                "security": [
+                    {
+                        "basicAuth": []
+                    },
+                    {
+                        "cookieAuth": [],
+                        "wpNonce": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": ""
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Authentication required or invalid."
+                    },
+                    "403": {
+                        "description": "Not permitted."
+                    },
+                    "404": {
+                        "description": "Not found."
                     }
                 }
             }
