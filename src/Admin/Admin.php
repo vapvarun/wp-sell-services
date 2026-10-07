@@ -2464,6 +2464,7 @@ class Admin {
 									</div>
 								<?php endif; ?>
 								<?php wpss_get_template_part( 'order/payment', '', array( 'wpss_order' => $order ) ); ?>
+								<?php wpss_get_template_part( 'order/cancellation', '', array( 'wpss_order' => $order ) ); ?>
 								<?php
 								// `platform_order_id` holds a WooCommerce order id only when
 								// the platform really is woocommerce: on a sub-order the same

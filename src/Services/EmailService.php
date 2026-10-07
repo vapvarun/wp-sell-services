@@ -1357,16 +1357,7 @@ class EmailService {
 		$reason_key  = $cancel_data['reason'] ?? '';
 		$note        = $cancel_data['note'] ?? '';
 
-		$reason_labels = array(
-			'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
-			'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
-			'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
-			'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
-			'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
-			'other'                => __( 'Other', 'wp-sell-services' ),
-		);
-
-		$reason_label = $reason_labels[ $reason_key ] ?? $reason_key;
+		$reason_label = wpss_get_cancellation_reason_label( (string) $reason_key );
 
 		// Use the stored requested_at time for deadline, not current time.
 		try {

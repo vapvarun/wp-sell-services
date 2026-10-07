@@ -649,6 +649,13 @@ do_action( 'wpss_before_order_view', $order );
 					<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) : '—' ); ?></span>
 				</div>
 				<?php wpss_get_template_part( 'order/payment', '', array( 'wpss_order' => $order ) ); ?>
+				<?php
+				// While a cancellation is only requested, the banner below carries
+				// the reason and the countdown; once cancelled, the summary keeps them.
+				if ( 'cancelled' === $order->status ) {
+					wpss_get_template_part( 'order/cancellation', '', array( 'wpss_order' => $order ) );
+				}
+				?>
 				<?php if ( $order->delivery_deadline ) : ?>
 					<div class="wpss-order-detail-item">
 						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
@@ -1011,15 +1018,7 @@ do_action( 'wpss_before_order_view', $order );
 		$cancel_reason = $cancel_data['reason'] ?? '';
 		$cancel_note   = $cancel_data['note'] ?? '';
 
-		$reason_labels = array(
-			'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
-			'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
-			'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
-			'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
-			'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
-			'other'                => __( 'Other', 'wp-sell-services' ),
-		);
-		$reason_label  = $reason_labels[ $cancel_reason ] ?? $cancel_reason;
+		$reason_label = wpss_get_cancellation_reason_label( (string) $cancel_reason );
 
 		// CB5 + VS7 (plans/ORDER-FLOW-AUDIT.md): visible auto-cancel countdown.
 		// Both buyer and vendor see exactly when the cancellation_requested

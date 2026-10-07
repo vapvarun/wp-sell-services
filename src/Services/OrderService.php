@@ -1213,13 +1213,32 @@ class OrderService {
 			);
 		}
 
-		// The details typed with an immediate cancel used to be dropped; only the
-		// request path kept them (Basecamp 10351457462). Kept with the reason in
-		// the status history, which the order timeline shows.
-		$note    = sanitize_textarea_field( $note );
-		$updated = $this->update_status( $order_id, ServiceOrder::STATUS_CANCELLED, '' !== $note ? $reason . ' - ' . $note : $reason );
+		// The reason and details typed with an immediate cancel go where a
+		// cancellation REQUEST keeps them - the order's own cancellation record,
+		// which both order screens and the admin screen read. They used to reach
+		// only the audit row, as a raw key, and were shown nowhere (Basecamp
+		// 10351457462). A record already there is the buyer's request being
+		// accepted; that one is kept.
+		global $wpdb;
+		$note     = sanitize_textarea_field( $note );
+		$reason   = sanitize_text_field( $reason );
+		$old_meta = '';
+		$stored   = false;
+
+		if ( ( '' !== $reason || '' !== $note ) && null === $order->get_cancellation_request() ) {
+			$old_meta = $this->store_cancellation( $order_id, $reason, $note, $user_id );
+			$stored   = null !== $old_meta;
+		}
+
+		$label   = wpss_get_cancellation_reason_label( $reason );
+		$updated = $this->update_status( $order_id, ServiceOrder::STATUS_CANCELLED, '' !== $note ? trim( $label . ' - ' . $note, ' -' ) : $label );
 
 		if ( ! $updated ) {
+			if ( $stored ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->update( $wpdb->prefix . 'wpss_orders', array( 'meta' => '' === $old_meta ? null : $old_meta ), array( 'id' => $order_id ) );
+			}
+
 			return array(
 				'success' => false,
 				'message' => __( 'Failed to cancel order.', 'wp-sell-services' ),
@@ -1227,6 +1246,41 @@ class OrderService {
 		}
 
 		return array( 'success' => true );
+	}
+
+	/**
+	 * Write an order's cancellation record: who, why, the details, when.
+	 *
+	 * The one writer, for a cancellation request and for an immediate cancel.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int    $order_id Order ID.
+	 * @param string $reason   Reason key, or free text.
+	 * @param string $note     Details typed with it.
+	 * @param int    $user_id  Who is cancelling.
+	 * @return string|null The meta JSON as it was, to put back if the status
+	 *                     change is refused; null when the write failed.
+	 */
+	private function store_cancellation( int $order_id, string $reason, string $note, int $user_id ): ?string {
+		global $wpdb;
+
+		$table    = $wpdb->prefix . 'wpss_orders';
+		$old_meta = (string) $wpdb->get_var( $wpdb->prepare( "SELECT meta FROM {$table} WHERE id = %d", $order_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$meta     = json_decode( $old_meta, true );
+		$meta     = is_array( $meta ) ? $meta : array();
+
+		$meta['cancellation_request'] = array(
+			'reason'       => $reason,
+			'note'         => sanitize_textarea_field( $note ),
+			'requested_by' => $user_id,
+			'requested_at' => current_time( 'mysql', true ),
+		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$written = $wpdb->update( $table, array( 'meta' => wp_json_encode( $meta ) ), array( 'id' => $order_id ) );
+
+		return false === $written ? null : $old_meta;
 	}
 
 	/**
@@ -1293,25 +1347,9 @@ class OrderService {
 		// (Basecamp 10336370631).
 		global $wpdb;
 		$table    = $wpdb->prefix . 'wpss_orders';
-		$old_meta = (string) $wpdb->get_var( $wpdb->prepare( "SELECT meta FROM {$table} WHERE id = %d", $order_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$meta     = json_decode( $old_meta, true );
-		$meta     = is_array( $meta ) ? $meta : array();
+		$old_meta = $this->store_cancellation( $order_id, sanitize_key( $reason ), $note, $user_id );
 
-		$meta['cancellation_request'] = array(
-			'reason'       => sanitize_key( $reason ),
-			'note'         => sanitize_textarea_field( $note ),
-			'requested_by' => $user_id,
-			'requested_at' => current_time( 'mysql', true ),
-		);
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$meta_written = $wpdb->update(
-			$table,
-			array( 'meta' => wp_json_encode( $meta ) ),
-			array( 'id' => $order_id )
-		);
-
-		if ( false === $meta_written ) {
+		if ( null === $old_meta ) {
 			return array(
 				'success' => false,
 				'message' => __( 'Failed to save cancellation details.', 'wp-sell-services' ),

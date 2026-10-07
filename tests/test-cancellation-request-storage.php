@@ -112,6 +112,29 @@ try {
 
 	$migrate->invoke( new \WPSellServices\Database\SchemaManager() );
 	$check( '  and running it again changes nothing', 'taking_too_long' === ( json_decode( (string) $row( $b )->meta, true )['cancellation_request']['reason'] ?? '' ) );
+
+	// An immediate cancel keeps its reason and details in the same record a
+	// request does; it used to reach only the audit row (Basecamp 10351457462).
+	$service = new \WPSellServices\Services\OrderService();
+	$record  = static fn( int $id ): array => (array) ( json_decode( (string) $row( $id )->meta, true )['cancellation_request'] ?? array() );
+
+	$c     = $seed( 'pending_payment' );
+	$ids[] = $c;
+	$wpdb->update( $orders, array( 'payment_status' => 'pending' ), array( 'id' => $c ) );
+	wp_set_current_user( $buyer->ID );
+	$done = $service->cancel( $c, $buyer->ID, 'changed_mind', 'plans changed' );
+	$check( 'an immediate cancel succeeds', ! empty( $done['success'] ) && 'cancelled' === $row( $c )->status );
+	$check( '  and keeps the reason and the details on the order', 'changed_mind' === ( $record( $c )['reason'] ?? '' ) && 'plans changed' === ( $record( $c )['note'] ?? '' ) && $buyer->ID === (int) ( $record( $c )['requested_by'] ?? 0 ) );
+	$check( '  and the audit row carries the label, not the key', false !== strpos( (string) $wpdb->get_var( $wpdb->prepare( "SELECT context FROM {$wpdb->prefix}wpss_audit_log WHERE object_type = 'order' AND object_id = %d AND event_type = 'order.status_change' ORDER BY id DESC LIMIT 1", $c ) ), 'Changed my mind - plans changed' ) );
+	$check( '  a free-text reason is returned as written', 'Buyer asked by phone' === wpss_get_cancellation_reason_label( 'Buyer asked by phone' ) );
+
+	// Accepting a buyer's request cancels the order; the buyer's record stays.
+	$d     = $seed( 'in_progress' );
+	$ids[] = $d;
+	$service->request_cancellation( $d, $buyer->ID, 'taking_too_long', 'three days late' );
+	wp_set_current_user( $vendor->ID );
+	$service->cancel( $d, $vendor->ID, 'Accepted', '' );
+	$check( 'accepting a request keeps the buyer\'s reason and details', 'cancelled' === $row( $d )->status && 'taking_too_long' === ( $record( $d )['reason'] ?? '' ) && 'three days late' === ( $record( $d )['note'] ?? '' ) );
 } catch ( ReflectionException $e ) {
 	echo 'FAIL  the 1.8.0 migration step does not exist: ' . $e->getMessage() . "\n";
 	++$fails;

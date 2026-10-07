@@ -491,7 +491,11 @@ class AuditLogPage {
 			return ucfirst( str_replace( '_', ' ', $value ) );
 		};
 
-		return $label( $from ) . ' → ' . $label( $to );
+		// The note typed with the change (a cancellation reason and details,
+		// a rejection reason). It was stored on the row and printed nowhere.
+		$note = trim( (string) ( $context['note'] ?? '' ) );
+
+		return $label( $from ) . ' → ' . $label( $to ) . ( '' !== $note ? ': ' . $note : '' );
 	}
 
 	/**

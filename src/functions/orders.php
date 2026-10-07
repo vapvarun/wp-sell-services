@@ -81,6 +81,33 @@ function wpss_generate_order_number(): string {
 
 
 /**
+ * The words for a cancellation reason.
+ *
+ * The one list: the order screens, the notification, the email and the status
+ * history each carried their own copy, and an immediate cancel stored the raw
+ * key ("changed_mind") where a person would read it (Basecamp 10351457462).
+ * A reason that is not one of the keys - free text from a vendor or an app -
+ * is returned as written.
+ *
+ * @since 1.8.0
+ *
+ * @param string $reason Reason key, or free text.
+ * @return string
+ */
+function wpss_get_cancellation_reason_label( string $reason ): string {
+	$labels = array(
+		'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
+		'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
+		'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
+		'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
+		'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
+		'other'                => __( 'Other', 'wp-sell-services' ),
+	);
+
+	return $labels[ $reason ] ?? $reason;
+}
+
+/**
  * Get order status label.
  *
  * @param string $status Status key.

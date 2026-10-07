@@ -595,17 +595,9 @@ class NotificationService {
 
 			case 'cancellation_requested':
 				// Parse cancellation reason.
-				$cancel_data   = \WPSellServices\Models\ServiceOrder::find( (int) $order->id )?->get_cancellation_request() ?? array();
-				$reason        = $cancel_data['reason'] ?? '';
-				$reason_labels = array(
-					'changed_mind'         => __( 'Changed my mind', 'wp-sell-services' ),
-					'found_alternative'    => __( 'Found an alternative', 'wp-sell-services' ),
-					'taking_too_long'      => __( 'Taking too long', 'wp-sell-services' ),
-					'wrong_order'          => __( 'Ordered by mistake', 'wp-sell-services' ),
-					'communication_issues' => __( 'Communication issues with vendor', 'wp-sell-services' ),
-					'other'                => __( 'Other', 'wp-sell-services' ),
-				);
-				$reason_label  = $reason_labels[ $reason ] ?? $reason;
+				$cancel_data  = \WPSellServices\Models\ServiceOrder::find( (int) $order->id )?->get_cancellation_request() ?? array();
+				$reason       = $cancel_data['reason'] ?? '';
+				$reason_label = wpss_get_cancellation_reason_label( (string) $reason );
 
 				// Notify vendor.
 				$this->create(
