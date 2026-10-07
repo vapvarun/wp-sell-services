@@ -168,7 +168,6 @@ class WithdrawalsPage {
 				'currencySymbol'   => wpss_get_currency_symbol(),
 				'currencyDecimals' => wpss_get_currency_decimals(),
 				'i18n'             => array(
-					'loading'      => __( 'Processing…', 'wp-sell-services' ),
 					'error'        => __( 'An error occurred. Please try again.', 'wp-sell-services' ),
 					'selectFirst'  => __( 'Select at least one withdrawal first.', 'wp-sell-services' ),
 					/* translators: %action%: bulk action label, %count%: number of selected withdrawals. Placeholders are replaced in JS. */
@@ -185,6 +184,7 @@ class WithdrawalsPage {
 						'complete' => __( 'Mark as paid', 'wp-sell-services' ),
 						'reject'   => __( 'Reject', 'wp-sell-services' ),
 					),
+					'noteLabel'    => __( 'Admin Note (Optional)', 'wp-sell-services' ),
 					'titles'       => array(
 						'approve'  => __( 'Approve Withdrawal', 'wp-sell-services' ),
 						'complete' => __( 'Mark as Paid', 'wp-sell-services' ),
@@ -551,32 +551,6 @@ class WithdrawalsPage {
 			<?php endif; // withdrawals empty check. ?>
 				</div><!-- .wpss-list-card__body -->
 			</div><!-- .wpss-list-card -->
-		</div>
-
-		<!-- Process Withdrawal Modal -->
-		<div id="wpss-withdrawal-modal" class="wpss-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="wpss-modal-title">
-			<div class="wpss-modal-content wpss-modal-small">
-				<span class="wpss-modal-close" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Close', 'wp-sell-services' ); ?>">&times;</span>
-				<h2 id="wpss-modal-title"><?php esc_html_e( 'Process Withdrawal', 'wp-sell-services' ); ?></h2>
-				<form id="wpss-process-withdrawal-form">
-					<input type="hidden" name="withdrawal_id" id="wpss-withdrawal-id">
-					<input type="hidden" name="action_type" id="wpss-action-type">
-
-					<p id="wpss-modal-description"></p>
-
-					<div class="wpss-form-field">
-						<label for="wpss-admin-note"><?php esc_html_e( 'Admin Note (Optional)', 'wp-sell-services' ); ?></label>
-						<textarea name="admin_note" id="wpss-admin-note" rows="3" class="large-text"></textarea>
-					</div>
-
-					<div class="wpss-modal-actions">
-						<button type="button" class="button wpss-modal-cancel"><?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?></button>
-						<button type="submit" class="button button-primary" id="wpss-modal-submit">
-							<?php esc_html_e( 'Confirm', 'wp-sell-services' ); ?>
-						</button>
-					</div>
-				</form>
-			</div>
 		</div>
 
 		<?php

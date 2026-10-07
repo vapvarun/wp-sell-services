@@ -1,7 +1,7 @@
 /**
  * Admin Withdrawals (Payouts) page.
  *
- * Single mark-paid / approve / reject via the note modal, bulk actions via
+ * Single mark-paid / approve / reject via the shared confirm dialog, bulk actions via
  * wpssConfirm, feedback via wpssToast. All state changes route through the
  * wpss_process_withdrawal / wpss_bulk_process_withdrawals AJAX handlers,
  * which delegate to EarningsService — mark-paid is idempotent server-side.
@@ -21,9 +21,6 @@
 		if ( ! settings || ! $( '.wpss-withdrawals-page' ).length ) {
 			return;
 		}
-
-		var $modal = $( '#wpss-withdrawal-modal' );
-		var $form  = $( '#wpss-process-withdrawal-form' );
 
 		function notify( message, type ) {
 			if ( window.wpssToast ) {
@@ -65,68 +62,49 @@
 			return $( 'input[name="withdrawal_ids[]"]:checked' ).not( ':disabled' );
 		}
 
-		/* ---- Single actions: open the note modal ---- */
+		/* ---- Single actions: confirm with an optional note ---- */
 
+		// The plugin's own dialog, not a second hand-built one: it moves focus
+		// inside, keeps Tab there, closes on Esc and returns focus to the row.
 		$( '.wpss-process-withdrawal' ).on( 'click', function( e ) {
 			e.preventDefault();
 
 			var $btn   = $( this );
 			var action = $btn.data( 'action' );
 
-			$( '#wpss-withdrawal-id' ).val( $btn.data( 'withdrawal-id' ) );
-			$( '#wpss-action-type' ).val( action );
-			$( '#wpss-admin-note' ).val( '' );
-
-			$( '#wpss-modal-title' ).text( settings.i18n.titles[ action ] || settings.i18n.titles.fallback );
-			$( '#wpss-modal-description' ).text(
+			window.wpssConfirm(
 				( settings.i18n.descriptions[ action ] || '' )
 					.replace( '%amount%', $btn.data( 'amount' ) )
-					.replace( '%vendor%', $btn.data( 'vendor' ) )
-			);
-
-			if ( 'reject' === action ) {
-				$( '#wpss-modal-submit' ).removeClass( 'button-primary' ).addClass( 'button-link-delete' );
-			} else {
-				$( '#wpss-modal-submit' ).addClass( 'button-primary' ).removeClass( 'button-link-delete' );
-			}
-
-			$modal.show();
-		} );
-
-		$( '.wpss-modal-close, .wpss-modal-cancel' ).on( 'click', function() {
-			$modal.hide();
-		} );
-
-		$modal.on( 'click', function( e ) {
-			if ( e.target === this ) {
-				$modal.hide();
-			}
-		} );
-
-		$form.on( 'submit', function( e ) {
-			e.preventDefault();
-
-			var $submit      = $( '#wpss-modal-submit' );
-			var originalText = $submit.text();
-
-			$submit.prop( 'disabled', true ).text( settings.i18n.loading );
-
-			$.post( settings.ajaxUrl, {
-				action: 'wpss_process_withdrawal',
-				nonce: settings.nonce,
-				withdrawal_id: $( '#wpss-withdrawal-id' ).val(),
-				action_type: $( '#wpss-action-type' ).val(),
-				admin_note: $( '#wpss-admin-note' ).val()
-			} ).done( function( response ) {
-				if ( response.success ) {
-					window.location.reload();
+					.replace( '%vendor%', $btn.data( 'vendor' ) ),
+				{
+					title: settings.i18n.titles[ action ] || settings.i18n.titles.fallback,
+					tone: 'reject' === action ? 'danger' : '',
+					prompt: { label: settings.i18n.noteLabel }
+				}
+			).then( function( note ) {
+				if ( false === note ) {
 					return;
 				}
-				notify( ( response.data && response.data.message ) || settings.i18n.error );
-				$submit.prop( 'disabled', false ).text( originalText );
-			} ).fail( function() {
-				notify( settings.i18n.error );
-				$submit.prop( 'disabled', false ).text( originalText );
+
+				$btn.prop( 'disabled', true );
+
+				$.post( settings.ajaxUrl, {
+					action: 'wpss_process_withdrawal',
+					nonce: settings.nonce,
+					withdrawal_id: $btn.data( 'withdrawal-id' ),
+					action_type: action,
+					admin_note: note
+				} ).done( function( response ) {
+					if ( response.success ) {
+						window.location.reload();
+						return;
+					}
+					notify( ( response.data && response.data.message ) || settings.i18n.error );
+					$btn.prop( 'disabled', false );
+				} ).fail( function() {
+					notify( settings.i18n.error );
+					$btn.prop( 'disabled', false );
+				} );
 			} );
 		} );
 

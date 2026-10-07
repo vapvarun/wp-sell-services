@@ -1004,9 +1004,9 @@ class OfflineGateway implements PaymentGatewayInterface {
 				var nonce = $btn.data('nonce');
 				var transactionId = $('#wpss-transaction-id').val();
 
-				if (!confirm('<?php echo esc_js( __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ) ); ?>')) {
-					return;
-				}
+				// A money action: the plugin's own dialog, which opens on Cancel.
+				( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Are you sure you want to mark this order as paid?', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
+					if (!ok) return;
 
 				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Processing...', 'wp-sell-services' ) ); ?>');
 
@@ -1026,6 +1026,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 				}).fail(function() {
 					wpssAdminNotice('<?php echo esc_js( __( 'Request failed. Please try again.', 'wp-sell-services' ) ); ?>', 'error');
 					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Mark as Paid', 'wp-sell-services' ) ); ?>');
+				});
 				});
 			});
 		});

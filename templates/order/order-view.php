@@ -1536,7 +1536,8 @@ do_action( 'wpss_before_order_view', $order );
 			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_milestone_action' ) ); ?>';
 			document.querySelectorAll('.wpss-milestone-decline-btn').forEach(function (btn) {
 				btn.addEventListener('click', function () {
-					if (!confirm('<?php echo esc_js( __( 'Decline this phase? Your seller can propose a revised one.', 'wp-sell-services' ) ); ?>')) return;
+					( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Decline this phase? Your seller can propose a revised one.', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Decline this phase? Your seller can propose a revised one.', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
+						if (!ok) return;
 					btn.disabled = true;
 					var data = new FormData();
 					data.append('action', 'wpss_decline_milestone');
@@ -1548,6 +1549,7 @@ do_action( 'wpss_before_order_view', $order );
 							if (res && res.success) window.location.reload();
 							else { btn.disabled = false; alert((res && res.data && res.data.message) || 'Error'); }
 						});
+					});
 				});
 			});
 		}());
@@ -1561,7 +1563,8 @@ do_action( 'wpss_before_order_view', $order );
 			var nonce = '<?php echo esc_js( wp_create_nonce( 'wpss_milestone_action' ) ); ?>';
 			document.querySelectorAll('.wpss-milestone-delete-btn').forEach(function (btn) {
 				btn.addEventListener('click', function () {
-					if (!confirm('<?php echo esc_js( __( 'Cancel this phase proposal?', 'wp-sell-services' ) ); ?>')) return;
+					( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Cancel this phase proposal?', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Cancel this phase proposal?', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
+						if (!ok) return;
 					btn.disabled = true;
 					var data = new FormData();
 					data.append('action', 'wpss_delete_milestone');
@@ -1573,6 +1576,7 @@ do_action( 'wpss_before_order_view', $order );
 							if (res && res.success) window.location.reload();
 							else { btn.disabled = false; alert((res && res.data && res.data.message) || 'Error'); }
 						});
+					});
 				});
 			});
 		}());
@@ -2362,7 +2366,8 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 		if (!buttons.length) return;
 		buttons.forEach(function (btn) {
 			btn.addEventListener('click', function () {
-				if (!confirm('<?php echo esc_js( __( 'Decline this extra-work quote?', 'wp-sell-services' ) ); ?>')) return;
+				( window.wpssConfirm ? window.wpssConfirm( '<?php echo esc_js( __( 'Decline this extra-work quote?', 'wp-sell-services' ) ); ?>', { tone: 'danger' } ) : Promise.resolve( window.confirm( '<?php echo esc_js( __( 'Decline this extra-work quote?', 'wp-sell-services' ) ); ?>' ) ) ).then(function (ok) {
+					if (!ok) return;
 				btn.disabled = true;
 				var data = new FormData();
 				data.append('action', 'wpss_decline_extension');
@@ -2382,6 +2387,7 @@ $can_cancel = $can_cancel_immediate || $can_cancel_request;
 				}).catch(function () {
 					btn.disabled = false;
 					alert('<?php echo esc_js( __( 'Network error.', 'wp-sell-services' ) ); ?>');
+				});
 				});
 			});
 		});
