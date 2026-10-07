@@ -689,7 +689,21 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return bool Whether Stripe accepted the refund.
 	 */
 	private function refund_unsettled_charge( string $payment_intent_id ): bool {
-		$refund = $this->process_refund( $payment_intent_id );
+		$refund = array();
+		$asked  = ( new \WPSellServices\Checkout\CheckoutIntentService() )->refund_unsettled(
+			'stripe',
+			$payment_intent_id,
+			function () use ( $payment_intent_id, &$refund ): bool {
+				$refund = $this->process_refund( $payment_intent_id );
+
+				return ! empty( $refund['success'] ) || 'charge_already_refunded' === ( $refund['code'] ?? '' );
+			}
+		);
+
+		// The charge has already paid an order: there is nothing to give back.
+		if ( ! $asked ) {
+			return true;
+		}
 
 		// The buyer already has the money back (browser and webhook both tried):
 		// done, not a failure to retry for days.

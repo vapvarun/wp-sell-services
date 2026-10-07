@@ -3,7 +3,7 @@
 Buyer-level truth for the store listing and for anyone deciding whether this
 plugin fits. Written to be read before purchase, not after.
 
-**Version**: 1.7.1-dev · **Last verified**: 2026-09-03 (every row checked against source)
+**Version**: 1.8.0 · **Last verified**: 2026-10-07 (rows changed in 1.8.0 checked against source and tests)
 
 `YES` — ships and is exercised · `PARTIAL` — ships with a stated limit ·
 `NO` — does not ship, whatever a roadmap says.
@@ -23,7 +23,7 @@ FluentCart.** Those two rails ship but are in beta and are not purchase-tested:
 neither can take a catalog checkout yet, so they are not offered in the platform
 list at all. A site owner who wants to work on them can turn them on with the
 `wpss_pro_beta_rails` filter, and the settings screen then labels them "Beta, not
-purchase-tested" rather than "Available". Finishing them is 1.8.0 work.
+purchase-tested" rather than "Available". They were not finished in 1.8.0.
 
 SureCart was removed in 1.6.0: a hosted catalogue cannot act as a payment rail the
 way the others do, and shipping it as though it could was worse than not shipping
@@ -94,6 +94,30 @@ money reaches the vendor's wallet before delivery.
 ## Can I moderate what vendors publish?
 
 **YES.** Service moderation and review moderation, both optional.
+
+## Can members report a service or a seller?
+
+**YES** since 1.8.0, from the service page and the vendor profile. Each report
+reaches the Member Reports screen in wp-admin. **NO** for reporting a single
+review or message from the website; those are not in 1.8.0.
+
+## Are dates right for a site in any time zone?
+
+**YES** since 1.8.0. Every date is stored in UTC and shown in the site's time
+zone. Dates written by earlier versions are converted once, in the background,
+after updating; `wp wpss utc-migrate --dry-run` previews it.
+
+## Can two sites share one Stripe, PayPal or Razorpay account?
+
+**YES** since 1.8.0. Each site marks the payments it starts and ignores the
+rest, so a staging copy or a second store on the same gateway account cannot
+pay, refund or cancel this site's orders.
+
+## Does it take over my site's login?
+
+**NO.** A new install gets a Log In page with the marketplace's own form,
+unless the site already has its own login. An update never creates one, and
+Settings > Pages has a "None" choice.
 
 ## Is there an API?
 

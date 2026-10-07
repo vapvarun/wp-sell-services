@@ -581,6 +581,104 @@ class CheckoutIntentService {
 	}
 
 	/**
+	 * The order(s) a transaction has already paid, as a settle() result.
+	 *
+	 * One charge, one set of orders: a client retrying a settle it never saw
+	 * the response to gets the order it already paid for, not a second one
+	 * (Basecamp 10321653385).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $gateway_id     Gateway slug.
+	 * @param string $transaction_id Gateway transaction / intent ID.
+	 * @return array<string,mixed>|null Null when the transaction has paid nothing.
+	 */
+	private function existing_result( string $gateway_id, string $transaction_id ): ?array {
+		$existing = ( new \WPSellServices\Database\Repositories\OrderRepository() )
+			->get_by_transaction_ids( array( $transaction_id ) );
+
+		if ( empty( $existing ) ) {
+			return null;
+		}
+
+		$first = $existing[0];
+
+		wpss_log(
+			sprintf(
+				'%s transaction %s has already settled into %d order(s); returning the existing order instead of creating another.',
+				$gateway_id,
+				$transaction_id,
+				count( $existing )
+			),
+			'warning'
+		);
+
+		return array(
+			'success'      => true,
+			'order_id'     => (int) $first->id,
+			'order_ids'    => array_map( static fn( $row ) => (int) $row->id, $existing ),
+			'order_number' => (string) $first->order_number,
+			'redirect_url' => wpss_get_post_checkout_url( (int) $first->id, wpss_get_order_requirements_url( (int) $first->id ), 'intent' ),
+			'duplicate'    => true,
+		);
+	}
+
+	/**
+	 * Give back a charge that could not become an order - unless it already did.
+	 *
+	 * Every gateway refunds when a verified charge cannot be settled. None of
+	 * them asked first whether that charge had ALREADY paid an order, so a
+	 * buyer could re-send the confirm for a settled payment with a request
+	 * that fails (a service that does not exist, an order now paid, a cart
+	 * since changed) and be refunded while the order stood.
+	 *
+	 * Under the same per-transaction lock as settle(), so a refund and a
+	 * settle of one charge cannot pass each other; a charge given back here
+	 * is remembered and settle() refuses it afterwards.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string   $gateway_id     Gateway slug.
+	 * @param string   $transaction_id Gateway transaction / intent ID.
+	 * @param callable $refund         Asks the gateway for the refund; returns whether the money went back.
+	 * @return bool Whether the gateway was asked. False means the charge has paid an order and was left alone.
+	 */
+	public function refund_unsettled( string $gateway_id, string $transaction_id, callable $refund ): bool {
+		return (bool) $this->locked(
+			$gateway_id,
+			$transaction_id,
+			function () use ( $gateway_id, $transaction_id, $refund ): bool {
+				if ( null !== $this->existing_result( $gateway_id, $transaction_id ) ) {
+					wpss_log( sprintf( '%s transaction %s has paid an order; a failed confirm for it is not refunded.', $gateway_id, $transaction_id ), 'warning' );
+
+					return false;
+				}
+
+				// Remembered only once the money has gone back: a refund the
+				// gateway refused leaves the charge free to settle on a retry.
+				if ( $refund() ) {
+					set_transient( self::refunded_key( $gateway_id, $transaction_id ), 1, WEEK_IN_SECONDS );
+				}
+
+				return true;
+			}
+		);
+	}
+
+	/**
+	 * Transient name remembering a charge given back as unsettled.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $gateway_id     Gateway slug.
+	 * @param string $transaction_id Gateway transaction / intent ID.
+	 * @return string
+	 */
+	private static function refunded_key( string $gateway_id, string $transaction_id ): string {
+		return 'wpss_unsettled_' . md5( $gateway_id . '|' . $transaction_id );
+	}
+
+	/**
 	 * Body of settle(), run while holding the per-transaction lock.
 	 *
 	 * @since 1.8.0
@@ -593,6 +691,24 @@ class CheckoutIntentService {
 	 * @return array<string,mixed>
 	 */
 	private function settle_once( CheckoutIntent $intent, string $gateway_id, string $transaction_id, float $charged_amount, string $charged_currency ): array {
+		// A charge that already paid an order answers with that order, before
+		// anything about THIS request is judged. Checked after the amount
+		// used to mean a replay whose cart had since changed failed the amount
+		// check and was refunded, although the order it paid stood.
+		$existing = $this->existing_result( $gateway_id, $transaction_id );
+
+		if ( null !== $existing ) {
+			return $existing;
+		}
+
+		// Given back as unsettled (refund_unsettled()): it pays nothing now.
+		if ( get_transient( self::refunded_key( $gateway_id, $transaction_id ) ) ) {
+			return array(
+				'success' => false,
+				'error'   => __( 'This payment was refunded and cannot pay for an order.', 'wp-sell-services' ),
+			);
+		}
+
 		/*
 		 * Bind the charge to the intent it is paying for, before anything is
 		 * created or marked paid.
@@ -634,48 +750,6 @@ class CheckoutIntentService {
 			return array(
 				'success' => false,
 				'error'   => __( 'The paid amount does not match the order total.', 'wp-sell-services' ),
-			);
-		}
-
-		/*
-		 * One charge, one set of orders.
-		 *
-		 * mark_as_paid() is idempotent per order, but create_order() had no
-		 * transaction_id dedupe and neither settle path consulted
-		 * get_by_transaction_ids() - only the webhook did
-		 * (OrderWorkflowManager.php:875). So re-posting the same succeeded
-		 * pi_... minted a fresh paid order every time, and on the AJAX rail
-		 * each one was priced from the intent (Basecamp 10321653385).
-		 *
-		 * Returning the existing order rather than an error: a client retrying
-		 * a settle it never saw the response to is doing the right thing, and
-		 * should get the order it already paid for. KIND_ORDER is already safe
-		 * through resolve_order()'s 'pending_payment' check, but it costs
-		 * nothing to cover it here too.
-		 */
-		$existing = ( new \WPSellServices\Database\Repositories\OrderRepository() )
-			->get_by_transaction_ids( array( $transaction_id ) );
-
-		if ( ! empty( $existing ) ) {
-			$first = $existing[0];
-
-			wpss_log(
-				sprintf(
-					'%s transaction %s has already settled into %d order(s); returning the existing order instead of creating another.',
-					$gateway_id,
-					$transaction_id,
-					count( $existing )
-				),
-				'warning'
-			);
-
-			return array(
-				'success'      => true,
-				'order_id'     => (int) $first->id,
-				'order_ids'    => array_map( static fn( $row ) => (int) $row->id, $existing ),
-				'order_number' => (string) $first->order_number,
-				'redirect_url' => wpss_get_post_checkout_url( (int) $first->id, wpss_get_order_requirements_url( (int) $first->id ), 'intent' ),
-				'duplicate'    => true,
 			);
 		}
 

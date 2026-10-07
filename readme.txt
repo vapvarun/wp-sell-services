@@ -143,8 +143,6 @@ Upgrade to [WP Sell Services Pro](https://wbcomdesigns.com/downloads/wp-sell-ser
 * **PayPal Mass Payouts**: Automated batch vendor payouts via PayPal
 * **Stripe Connect**: Direct vendor payments with Express onboarding
 * **Vendor Subscription Plans**: Paid vendor tiers with service limits and feature gating
-* **Recurring Services**: Subscription billing for services with automated renewals
-* **Wallet Integrations**: Internal wallet, TeraWallet, WooWallet, MyCred
 * **Cloud Storage**: Amazon S3, Google Cloud Storage, DigitalOcean Spaces for file storage
 * **Advanced Analytics**: Revenue charts, order analytics, service performance, vendor statistics with CSV/Excel export
 * **Expanded Service Limits**: Unlimited gallery images, FAQs, add-ons, and requirements
@@ -324,6 +322,9 @@ Payments, refunds and dates made consistent across every checkout path, a rebuil
 * Security - Batch API requests cannot contain another batch.
 * Security - Guest rate limits can no longer be reset with a spoofed address header.
 * Security - Public profile and portfolio uploads accept images only, and request attachments require a signed-in member.
+* Security - A payment that has already paid an order is no longer refunded when a repeated confirm request for it fails, on Stripe and PayPal.
+* Security - The app's pay-an-existing-order route only accepts a payment started by that buyer for that order.
+* Security - A buyer request with a proposal, and the files attached to it, can no longer be deleted by the buyer.
 * Dev      - New filters and actions are listed in the hook reference, including wpss_enqueue_dashboard_assets for loading dashboard assets where a shortcode is placed outside page content.
 * Dev      - REST date fields are ISO 8601 with a +00:00 offset, where about 20 fields previously returned a bare date and time.
 * Dev      - GET /cart marks lines that can no longer be bought with unavailable and unavailable_reason.

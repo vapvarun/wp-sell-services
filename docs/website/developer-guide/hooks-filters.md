@@ -152,13 +152,13 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_stripe_webhook_received` | `string $event_type, object $data, string $payload` | `src/Integrations/Stripe/StripeGateway.php:660` |
-| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1609` |
+| `wpss_stripe_refund_processed` | `string $payment_intent_id, object $charge` | `src/Integrations/Stripe/StripeGateway.php:1623` |
 
 ### PayPal Gateway
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_paypal_refund_processed` | `string $url, array $resource` | `src/Integrations/PayPal/PayPalGateway.php:1044` |
+| `wpss_paypal_refund_processed` | `string $url, array $resource` | `src/Integrations/PayPal/PayPalGateway.php:1054` |
 
 ### Payment REST API
 
@@ -913,7 +913,7 @@ WooCommerce or standalone checkout.
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `src/Integrations/Razorpay/RazorpayGateway.php:883` |
+| `wpss_razorpay_refund_processed` | `string $payment_id, array $refund` | `src/Integrations/Razorpay/RazorpayGateway.php:885` |
 
 ### Stripe Connect Actions
 

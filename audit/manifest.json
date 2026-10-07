@@ -568,6 +568,16 @@
         "tests/test-rest-pay-order-confirm-contract.php",
         "tests/test-gateway-site-ownership-contract.php"
       ]
+    },
+    "refund_unsettled": {
+      "authority": "CheckoutIntentService::refund_unsettled( gateway, transaction, callable ) - the one way a gateway gives back a verified charge that could not become an order.",
+      "rule": "Under the per-transaction settle lock: a charge that already paid an order is not refunded; a charge given back is remembered (transient wpss_unsettled_{md5}) and settle() refuses it afterwards. settle_once() answers with the existing order before the amount check.",
+      "callers": [
+        "StripeGateway::refund_unsettled_charge",
+        "PayPalGateway::capture_and_settle (both refund branches)",
+        "Pro RazorpayGateway::settle_verified_payment (both refund branches)"
+      ],
+      "test": "tests/test-refund-unsettled-guard.php"
     }
   },
   "capabilities": {

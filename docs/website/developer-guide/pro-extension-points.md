@@ -54,7 +54,7 @@ See [Tiered Commission Rules](../earnings-wallet/tiered-commission.md).
 | `wpss_wallet_providers` | `array $providers` |
 
 Register `wpss_wallet_providers` to add your own wallet backend alongside the
-built-in Internal Wallet, TeraWallet, WooWallet, and MyCred providers.
+built-in Internal Wallet, the only provider the plugin ships.
 
 The provider layer is read-only. It answers what a vendor holds; it does not
 move money. Earnings are credited by the free plugin's `CommissionService` on

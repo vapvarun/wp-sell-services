@@ -767,7 +767,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 		if ( strtoupper( (string) $payment['currency'] ) !== strtoupper( $intent->currency )
 			|| ! wpss_amounts_match( (float) $payment['amount'], $intent->amount, $intent->currency ) ) {
 			wpss_log( sprintf( 'PayPal capture %s took %s %s but the checkout intent is %s %s. Refunding.', $txn, $payment['currency'], $payment['amount'], $intent->currency, $intent->amount ), 'error' );
-			$this->process_refund( $txn );
+			$checkout->refund_unsettled( 'paypal', $txn, fn(): bool => ! empty( $this->process_refund( $txn )['success'] ) );
 
 			return array(
 				'success' => false,
@@ -778,8 +778,18 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$settle = $checkout->settle( $intent, 'paypal', $txn, (float) $payment['amount'], (string) $payment['currency'] );
 
 		if ( empty( $settle['success'] ) ) {
-			$refund = $this->process_refund( $txn );
-			if ( empty( $refund['success'] ) ) {
+			$refunded = false;
+			$asked    = $checkout->refund_unsettled(
+				'paypal',
+				$txn,
+				function () use ( $txn, &$refunded ): bool {
+					$refunded = ! empty( $this->process_refund( $txn )['success'] );
+
+					return $refunded;
+				}
+			);
+
+			if ( $asked && ! $refunded ) {
 				wpss_log( "CRITICAL: PayPal capture {$txn} succeeded but order creation AND refund both failed. Manual intervention required.", 'error' );
 			}
 		}
