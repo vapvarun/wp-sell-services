@@ -213,18 +213,26 @@ class ServiceCommands extends WP_CLI_Command {
 		$posts = get_posts( $query );
 		$count = count( $posts );
 
-		if ( 0 === $count ) {
-			WP_CLI::success( $all ? 'No services to delete.' : 'No demo content to delete (no post carries _wpss_demo_content).' );
+		if ( 0 === $count && ( $all || ! wpss_has_demo_content() ) ) {
+			WP_CLI::success( $all ? 'No services to delete.' : 'No demo content to delete (nothing carries _wpss_demo_content).' );
 			return;
 		}
 
 		// --all is acknowledged with --yes but never skips the prompt: the
 		// site-wide count is always shown before the first delete.
 		Guard::writes(
-			$all ? 'services (EVERY service on the site, --all)' : 'demo posts (services, requests and attachments marked _wpss_demo_content)',
+			$all ? 'services (EVERY service on the site, --all)' : 'demo posts (services, requests and attachments marked _wpss_demo_content), plus the demo vendors',
 			$count,
 			$all ? array_diff_key( $assoc_args, array( 'yes' => true ) ) : $assoc_args
 		);
+
+		// Demo content goes through the one routine the admin button uses, so
+		// the demo vendors go too and the wizard can import again.
+		if ( ! $all ) {
+			$deleted = wpss_delete_demo_content();
+			WP_CLI::success( sprintf( 'Deleted %d demo posts and %d demo vendors.', $deleted['posts'], $deleted['vendors'] ) );
+			return;
+		}
 
 		$progress = \WP_CLI\Utils\make_progress_bar( 'Deleting', $count );
 
@@ -235,7 +243,7 @@ class ServiceCommands extends WP_CLI_Command {
 
 		$progress->finish();
 
-		WP_CLI::success( "Deleted {$count} " . ( $all ? 'services.' : 'demo posts.' ) );
+		WP_CLI::success( "Deleted {$count} services." );
 	}
 
 	/**

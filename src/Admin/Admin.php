@@ -3394,8 +3394,13 @@ class Admin {
 		}
 
 		// One import at a time: a second click added 20 more services.
-		if ( get_option( 'wpss_demo_content_imported' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Demo content is already imported. Delete it first if you want to import it again.', 'wp-sell-services' ) ) );
+		if ( wpss_has_demo_content() ) {
+			wp_send_json_error(
+				array(
+					'code'    => 'already_imported',
+					'message' => __( 'Demo content is already imported. Delete it first if you want to import it again.', 'wp-sell-services' ),
+				)
+			);
 		}
 
 		$cli_file = WPSS_PLUGIN_DIR . 'src/CLI/ServiceCommands.php';
@@ -3460,8 +3465,6 @@ class Admin {
 
 		// Create demo vendor profiles.
 		$vendors_created = $this->create_demo_vendors();
-
-		update_option( 'wpss_demo_content_imported', true );
 
 		wp_send_json_success(
 			array(
@@ -3605,47 +3608,9 @@ class Admin {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
-		// Delete demo services.
-		$demo_services = get_posts(
-			array(
-				'post_type'      => 'wpss_service',
-				'posts_per_page' => -1,
-				'post_status'    => 'any',
-				'meta_key'       => '_wpss_demo_content',
-				'meta_value'     => '1',
-				'fields'         => 'ids',
-			)
-		);
-
-		$services_deleted = 0;
-		foreach ( $demo_services as $post_id ) {
-			if ( wp_delete_post( $post_id, true ) ) {
-				++$services_deleted;
-			}
-		}
-
-		// Delete demo vendor users.
-		$demo_users = get_users(
-			array(
-				'meta_key'   => '_wpss_demo_content',
-				'meta_value' => '1',
-				'fields'     => 'ids',
-			)
-		);
-
-		global $wpdb;
-		$profiles_table  = $wpdb->prefix . 'wpss_vendor_profiles';
-		$vendors_deleted = 0;
-
-		foreach ( $demo_users as $user_id ) {
-			// Remove vendor profile.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->delete( $profiles_table, array( 'user_id' => $user_id ), array( '%d' ) );
-
-			if ( wp_delete_user( $user_id ) ) {
-				++$vendors_deleted;
-			}
-		}
+		$deleted          = wpss_delete_demo_content();
+		$services_deleted = $deleted['services'];
+		$vendors_deleted  = $deleted['vendors'];
 
 		// Clean up empty demo categories.
 		$categories = get_terms(
@@ -3666,8 +3631,6 @@ class Admin {
 				}
 			}
 		}
-
-		delete_option( 'wpss_demo_content_imported' );
 
 		wp_send_json_success(
 			array(

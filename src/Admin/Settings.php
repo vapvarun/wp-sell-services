@@ -2668,7 +2668,7 @@ class Settings {
 	 * @return void
 	 */
 	public function render_demo_content_section(): void {
-		$demo_imported = get_option( 'wpss_demo_content_imported', false );
+		$demo_imported = wpss_has_demo_content();
 		$nonce         = wp_create_nonce( 'wpss_demo_content' );
 		?>
 		<div class="wpss-demo-content-actions" style="margin-top: 15px;">

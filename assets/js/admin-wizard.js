@@ -255,7 +255,13 @@
 					card.find('strong').text(wpssWizard.i18n.demoImported);
 					card.find('span:last').text(response.data.message);
 				} else {
-					card.find('strong').text(wpssWizard.i18n.importFailed);
+					// Refused because the demo content is already there: that is
+					// not a failure, and the card used to say "Import Failed".
+					var already = response.data && 'already_imported' === response.data.code;
+					card.find('strong').text(already ? wpssWizard.i18n.demoAlready : wpssWizard.i18n.importFailed);
+					if (response.data && response.data.message) {
+						card.find('span:last').text(response.data.message);
+					}
 				}
 			}).fail(function() {
 				card.find('strong').text(wpssWizard.i18n.importFailed);

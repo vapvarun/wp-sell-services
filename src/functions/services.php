@@ -2114,3 +2114,89 @@ add_action(
 	30,
 	2
 );
+
+/**
+ * Whether demo content is on the site: any post or member carrying the marker.
+ *
+ * Asked of the content itself, not of a flag. The wizard refused to import
+ * because an option still said "imported" after the CLI had deleted
+ * everything (Basecamp 10378021873).
+ *
+ * @since 1.8.0
+ *
+ * @return bool
+ */
+function wpss_has_demo_content(): bool {
+	$marker = array(
+		'meta_key'   => '_wpss_demo_content', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		'meta_value' => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+		'fields'     => 'ids',
+	);
+
+	return (bool) get_posts(
+		$marker + array(
+			'post_type'      => array( 'wpss_service', 'wpss_request', 'attachment' ),
+			'post_status'    => 'any',
+			'posts_per_page' => 1,
+		)
+	) || (bool) get_users( $marker + array( 'number' => 1 ) );
+}
+
+/**
+ * Delete demo content: marked services, requests and media, and demo vendors.
+ *
+ * The one routine behind Settings > Delete Demo Content and `wp wpss demo
+ * delete`. They were two: the admin one removed services and vendors, the CLI
+ * one removed posts and left the vendors and the "imported" flag.
+ *
+ * @since 1.8.0
+ *
+ * @return array{posts:int,services:int,vendors:int} What was deleted.
+ */
+function wpss_delete_demo_content(): array {
+	global $wpdb;
+
+	$marker  = array(
+		'meta_key'   => '_wpss_demo_content', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		'meta_value' => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+		'fields'     => 'ids',
+	);
+	$deleted = array(
+		'posts'    => 0,
+		'services' => 0,
+		'vendors'  => 0,
+	);
+
+	$posts = get_posts(
+		$marker + array(
+			'post_type'      => array( 'wpss_service', 'wpss_request', 'attachment' ),
+			'post_status'    => 'any',
+			'posts_per_page' => -1,
+		)
+	);
+
+	foreach ( $posts as $post_id ) {
+		$is_service = 'wpss_service' === get_post_type( $post_id );
+
+		if ( wp_delete_post( (int) $post_id, true ) ) {
+			++$deleted['posts'];
+			$deleted['services'] += $is_service ? 1 : 0;
+		}
+	}
+
+	require_once ABSPATH . 'wp-admin/includes/user.php';
+
+	foreach ( get_users( $marker ) as $user_id ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->delete( $wpdb->prefix . 'wpss_vendor_profiles', array( 'user_id' => (int) $user_id ), array( '%d' ) );
+
+		if ( wp_delete_user( (int) $user_id ) ) {
+			++$deleted['vendors'];
+		}
+	}
+
+	// Written by 1.7.x and earlier; nothing reads it any more.
+	delete_option( 'wpss_demo_content_imported' );
+
+	return $deleted;
+}

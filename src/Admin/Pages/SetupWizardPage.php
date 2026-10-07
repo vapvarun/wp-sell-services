@@ -162,6 +162,7 @@ class SetupWizardPage {
 					'allCreated'   => __( 'All Created', 'wp-sell-services' ),
 					'importing'    => __( 'Importing...', 'wp-sell-services' ),
 					'demoImported' => __( 'Demo Imported!', 'wp-sell-services' ),
+					'demoAlready'  => __( 'Already imported', 'wp-sell-services' ),
 					'importFailed' => __( 'Import Failed', 'wp-sell-services' ),
 				),
 			)
