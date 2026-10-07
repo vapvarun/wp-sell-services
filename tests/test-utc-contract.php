@@ -221,6 +221,16 @@ try {
 		remove_filter( 'query', $die );
 		$check( 'a chunk that dies leaves its first row unconverted', '2026-03-12 15:30:00' === $row( $first )->updated_at );
 
+		// A second runner waits for the first; it does not read the same cursor.
+		$other = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		$other->get_var( "SELECT GET_LOCK( 'wpss_utc_migration', 0 )" );
+		$before = get_option( UtcMigration::OPTION );
+		add_filter( 'query', static fn( $q ) => str_replace( "'wpss_utc_migration', 10", "'wpss_utc_migration', 0", $q ) );
+		$check( 'a chunk does nothing while another runner holds the lock', false === UtcMigration::step() && '2026-03-12 15:30:00' === $row( $first )->updated_at && $before === get_option( UtcMigration::OPTION ) );
+		$other->get_var( "SELECT RELEASE_LOCK( 'wpss_utc_migration' )" );
+		$other->close();
+		remove_all_filters( 'query' );
+
 		while ( ! UtcMigration::step() ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedWhile
 		}
 		$check( '  and the retry converts each row once', '2026-03-12 10:00:00' === $row( $first )->updated_at && '2026-03-12 10:00:00' === $row( $second )->updated_at );

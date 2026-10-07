@@ -16,7 +16,7 @@
  * - updated_at on the ON UPDATE tables is decided per row: PHP wrote site
  *   time, MySQL wrote the server's clock (see updated_at_utc()).
  * - A chunk and its cursor commit together, so a chunk that dies is redone
- *   from where it started, not from halfway.
+ *   from where it started, not from halfway. One chunk runs at a time.
  * - Every UPDATE assigns updated_at explicitly, so ON UPDATE CURRENT_TIMESTAMP
  *   does not overwrite it.
  * - Chunked through Action Scheduler; `wp wpss utc-migrate` runs it in the
@@ -103,6 +103,7 @@ class UtcMigration {
 	 */
 	public static function init(): void {
 		add_action( self::HOOK, array( self::class, 'run_chunk' ) );
+		add_action( 'admin_init', array( self::class, 'requeue' ) );
 		// Called from wpss_init() before Plugin::init(), so the cutover is
 		// recorded before anything in this request can write a row.
 		self::maybe_start();
@@ -114,19 +115,37 @@ class UtcMigration {
 	 * @return void
 	 */
 	public static function maybe_start(): void {
-		$state = get_option( self::OPTION );
-
-		if ( false === $state ) {
-			$state = self::plan();
-			update_option( self::OPTION, $state, false );
-		} elseif ( ! is_admin() || wp_doing_ajax() || 'pending' !== ( $state['status'] ?? '' ) ) {
+		if ( false !== get_option( self::OPTION ) ) {
 			return;
 		}
 
-		// Also reached on a later admin page load while still pending: a chunk
-		// that failed queued no successor, and nothing else would start it
-		// again. schedule_single() does nothing when one is already waiting.
+		$state = self::plan();
+		update_option( self::OPTION, $state, false );
+
 		if ( 'pending' === $state['status'] ) {
+			\WPSellServices\Services\Scheduler::schedule_single( self::HOOK, time() + 30 );
+		}
+	}
+
+	/**
+	 * Queue a chunk again when the conversion is pending and none is queued.
+	 *
+	 * A chunk that failed queued no successor, and maybe_start() only acts
+	 * once, so the conversion stayed pending until someone ran the CLI. Only
+	 * for an administrator: admin_init also fires for logged-out requests to
+	 * admin-ajax.php and admin-post.php. Asked with no args so a numbered or
+	 * running chunk counts as queued.
+	 *
+	 * @return void
+	 */
+	public static function requeue(): void {
+		$state = get_option( self::OPTION );
+
+		if ( ! is_array( $state ) || 'pending' !== ( $state['status'] ?? '' ) || ! current_user_can( 'manage_options' ) || ! function_exists( 'as_has_scheduled_action' ) ) {
+			return;
+		}
+
+		if ( ! \as_has_scheduled_action( self::HOOK ) ) {
 			\WPSellServices\Services\Scheduler::schedule_single( self::HOOK, time() + 30 );
 		}
 	}
@@ -208,24 +227,37 @@ class UtcMigration {
 	public static function step(): bool {
 		global $wpdb;
 
-		// From the database, not a persistent object cache: a chunk that died
-		// was rolled back there, and the cache may still hold its cursor.
-		wp_cache_delete( self::OPTION, 'options' );
-		$state = get_option( self::OPTION );
-
-		if ( ! is_array( $state ) ) {
-			return true;
+		// One chunk at a time. Converting is not repeatable, so two runners
+		// (two queued chains, or the CLI beside the background job) reading the
+		// same cursor would shift the same rows twice. The cursor is read only
+		// once the lock is held. Not acquired in 10s: nothing done, try later.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( '1' !== (string) $wpdb->get_var( "SELECT GET_LOCK( 'wpss_utc_migration', 10 )" ) ) {
+			return false;
 		}
 
-		// Rows and cursor commit together. Saved once per chunk with no
-		// transaction, a chunk that died midway converted its first rows twice.
-		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$samples = array();
-		$done    = self::advance( $state, false, $samples );
-		update_option( self::OPTION, $state, false );
-		$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		try {
+			// From the database, not a persistent object cache: a chunk that died
+			// was rolled back there, and the cache may still hold its cursor.
+			wp_cache_delete( self::OPTION, 'options' );
+			$state = get_option( self::OPTION );
 
-		return $done;
+			if ( ! is_array( $state ) ) {
+				return true;
+			}
+
+			// Rows and cursor commit together. Saved once per chunk with no
+			// transaction, a chunk that died midway converted its first rows twice.
+			$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$samples = array();
+			$done    = self::advance( $state, false, $samples );
+			update_option( self::OPTION, $state, false );
+			$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+			return $done;
+		} finally {
+			$wpdb->query( "SELECT RELEASE_LOCK( 'wpss_utc_migration' )" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		}
 	}
 
 	/**
