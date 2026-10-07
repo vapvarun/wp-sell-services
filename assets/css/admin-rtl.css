@@ -1918,6 +1918,21 @@
 .wpss-vendors-table .column-earnings { width: 14%; text-align: left; }
 .wpss-vendors-table .column-status { width: 14%; }
 
+/* A sortable header is a block link holding floated spans, which ignore the
+   cell's text-align: "Earned" sat 100px left of the amounts under it
+   (Basecamp 10375549075). As a flex row the link can be aligned like the
+   values below it. */
+.wpss-vendors-table th.column-orders a,
+.wpss-vendors-table th.column-rating a,
+.wpss-vendors-table th.column-earnings a {
+	display: flex;
+	justify-content: center;
+}
+
+.wpss-vendors-table th.column-earnings a {
+	justify-content: flex-end;
+}
+
 .wpss-vendor-joined {
 	font-size: 12px;
 	color: var(--wpss-admin-text-light);
