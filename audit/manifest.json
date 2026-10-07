@@ -549,6 +549,16 @@
     "delivery_days": {
       "authority": "wpss_line_delivery_days( $package, $addon_rows )",
       "rule": "Package days, replaced by an Express row's delivery_days when bought, plus every add-on's delivery_days_extra, minimum 1. Used by price_service_line (quote, checkout, badges), OrderService::get_delivery_days (deadline, revision deadline), the mark_as_paid placeholder and Pro WCOrderProvider. Never add package + add-on days inline."
+    },
+    "payment_site_ownership": {
+      "authority": "wpss_payment_site_mark() / wpss_is_own_payment_site() / wpss_payment_site_hash() - src/functions/payments.php",
+      "rule": "A gateway sends an account's events to every site on it. Every gateway marks the payments it starts and acts only on its own: Stripe metadata site_url+platform (StripeGateway::is_own_intent), PayPal invoice_id prefix WPSS-{hash}- (PayPalGateway::is_own_order), Razorpay notes site_url+platform (Pro RazorpayGateway::is_own_order). A new gateway must mark and check the same way; never act on a webhook without it.",
+      "since": "1.8.0"
+    },
+    "webhook_settlement": {
+      "authority": "WPSellServices\\Checkout\\CheckoutIntentService::settle_webhook_order( order_id, gateway, transaction_id, amount, currency )",
+      "rule": "A webhook that names an order marks it paid only through this method: same per-transaction lock and transaction lookup as settle(), plus an amount and currency match. Never call mark_as_paid() from a webhook handler. REST pay-order confirm goes through settle() (PaymentController::settle_pay_order); a payment already spent answers 409 wpss_payment_already_used.",
+      "since": "1.8.0"
     }
   },
   "capabilities": {
@@ -976,7 +986,14 @@
     "pending_payment_method_writer": "wpss_record_pending_payment_method( int $order_id, string $method ) in src/functions/payments.php",
     "pending_payment_method_note": "Gateways normally write payment_method as a side effect of mark_as_paid(). Offline does not settle in-request, so both of its pay-an-existing-order entry points (OfflineGateway::ajax_create_order and PaymentController::create_offline_order) go through this one guarded, idempotent writer. Leaving it NULL was a dead end, not a cosmetic gap: OfflineGateway::render_admin_order_actions(), PaymentReceiptService::can_submit() and the payment instructions all key off payment_method === 'offline', so the order could never be confirmed by anyone.",
     "payment_settlement_authority": "StandaloneOrderProvider::mark_as_paid -- the only writer of payment_status/paid_at; wpss_record_pending_payment_method never touches them",
-    "earnings_credit_timing": "CommissionService::record() on transition to completed, not at payment (escrow model)"
+    "earnings_credit_timing": "CommissionService::record() on transition to completed, not at payment (escrow model)",
+    "cancellation_record": {
+      "writer": "WPSellServices\\Services\\OrderService::store_cancellation() - the one writer, used by request_cancellation() and cancel()",
+      "store": "orders.meta.cancellation_request {reason, note, requested_by, requested_at}",
+      "reader": "ServiceOrder::get_cancellation_request(); rendered by templates/order/cancellation.php (both order pages once cancelled, admin order screen)",
+      "labels": "wpss_get_cancellation_reason_label() - the one reason list (order page, notification, email, status note)",
+      "since": "1.8.0"
+    }
   },
   "reviews": {
     "_note": "The order page's review block was `if ( ! $review_exists )` with no else, so the moment a buyer submitted a review the order went silent about it - the buyer's own review was invisible to the buyer on the only page they would look for it. The same seven lines also ran a raw $wpdb query for a question ReviewService already owns, and gated the CTA WITHOUT the review window, so after the window closed the button still invited a review the server would then refuse. can_review() is now the single authority on both the CTA and the modal, and its `reason` string is rendered when the CTA is withheld.",
@@ -1173,5 +1190,17 @@
     "vendor_rating_source": "Vendor rating, review count and member-since come from the profile row via wpss_get_vendor() on every REST surface; ReviewsController::update_rating_cache() refreshes the row through VendorProfileRepository::update_stats(). The _wpss_rating_* and _wpss_vendor_since user meta are no longer read.",
     "vendor_signup_closed": "PublicSignup::create_account() refuses intent=vendor when vendor_registration is closed (wpss_vendor_registration_closed, 403) for the form AJAX and REST /auth/register.",
     "data_migrations_1_8_0": "run_1_8_0_data_migrations() also backfills package ids for every service with packages (chunked) and dates pre-1.8.0 revision_requested deliveries from the audit log."
+  },
+  "shared_helpers_1_8_0": {
+    "_note": "Seams added during the 1.8.0 card fixes. Reuse these; do not write a second copy.",
+    "services_grid": "wpss_render_services_grid() sorts through wpss_apply_service_sort() and excludes wpss_get_vacation_vendor_ids() unless one vendor is named. FeaturedServices and SellerCard blocks use the same sort.",
+    "cart": "wpss_get_user_cart( $user_id, true ) is the one cart reader (flags unavailable lines); wpss_get_cart_count() is the one count. GET /cart, the cart page and the header badge all use them.",
+    "demo_content": "wpss_delete_demo_content() is the one delete routine (Settings button and wp wpss demo delete); wpss_has_demo_content() replaces the wpss_demo_content_imported option. Demo-created categories carry term meta _wpss_demo_content.",
+    "request_files": "BuyerRequestService::save_meta() is the one writer of _wpss_attachments; it stamps _wpss_request_id on each media item. is_untouched() = no proposal ever; is_file_locked() reads the stamp. After a proposal existing files cannot leave the list; DELETE /media/{id} answers 409 wpss_file_in_use.",
+    "reports_entry_point": "wpss_render_report_link( type, id, owner_id, label ) + templates/partials/report-modal.php, hooked on wpss_single_service_sidebar and wpss_vendor_profile_sidebar; posts to POST wpss/v1/reports.",
+    "login_page": "Page definitions with takes_over => true are created by Activator::create_pages( $fresh_install ) only on a fresh install where Activator::site_uses_core_login() is true; never on update.",
+    "confirm_dialog": "wpssConfirm() focuses Cancel for every dialog; pass tone: 'danger' for a destructive action.",
+    "dashboard_assets": "do_action( 'wpss_enqueue_dashboard_assets' ) loads dashboard CSS/JS at render time; UnifiedDashboard::render() does it itself.",
+    "utc_migration": "UtcMigration::step() is the one chunk runner (named lock + transaction); updated_at on ON_UPDATE_TABLES is decided per row by updated_at_utc()."
   }
 }
