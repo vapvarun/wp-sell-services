@@ -242,8 +242,11 @@ class CartController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_cart( WP_REST_Request $request ): WP_REST_Response {
-		// Standalone cart.
-		$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
+		// Through the one reader the cart page and checkout use, not the raw
+		// meta: it flags a line whose service was trashed, unpublished or
+		// paused. Read raw, such a line was listed, totalled and counted here
+		// while checkout refused it (Basecamp 10330917388).
+		$cart       = wpss_get_user_cart( get_current_user_id(), true );
 		$items      = array();
 		$cart_total = 0.0;
 		$subtotal   = 0.0;
@@ -290,7 +293,9 @@ class CartController extends RestController {
 				}
 
 				// Priced now, the way checkout will charge it (wpss_price_cart_item()).
-				$line = wpss_price_cart_item( (array) $item );
+				// A line that cannot be bought is listed at nothing.
+				$unavailable = ! empty( $item['unavailable'] );
+				$line        = $unavailable ? new \WP_Error( 'wpss_unavailable' ) : wpss_price_cart_item( (array) $item );
 				if ( is_wp_error( $line ) ) {
 					$line = array(
 						'addons'       => array(),
@@ -314,22 +319,27 @@ class CartController extends RestController {
 				}
 
 				$items[] = array(
-					'key'           => $key,
-					'service_id'    => $item['service_id'],
-					'service'       => $service ? $service->post_title : '',
+					'key'                => $key,
+					'service_id'         => $item['service_id'],
+					'service'            => $service ? $service->post_title : '',
 					// Stable id when the service has one; falls back to the
 					// position for a service whose packages predate ids, so this
 					// never reports an id that cannot be resolved.
-					'package_id'    => $stable_id ?: (int) $item['package_id'],
+					'package_id'         => $stable_id ?: (int) $item['package_id'],
 					// The positional value, named for what it is. Published so
 					// the transition is visible rather than implied.
-					'package_index' => (int) $item['package_id'],
-					'package_name'  => $package_name,
-					'quantity'      => max( 1, (int) ( $item['quantity'] ?? 1 ) ),
-					'addons'        => $addons,
-					'subtotal'      => (float) $line['subtotal'] + (float) $line['addons_total'],
-					'tax'           => (float) $line['tax'],
-					'total'         => (float) $line['total'],
+					'package_index'      => (int) $item['package_id'],
+					'package_name'       => $package_name,
+					'quantity'           => max( 1, (int) ( $item['quantity'] ?? 1 ) ),
+					'addons'             => $addons,
+					'subtotal'           => (float) $line['subtotal'] + (float) $line['addons_total'],
+					'tax'                => (float) $line['tax'],
+					'total'              => (float) $line['total'],
+					// True when the service was trashed, unpublished or paused
+					// after it was added; the reason is ready to show. Such a
+					// line is in neither the totals nor a checkout.
+					'unavailable'        => $unavailable,
+					'unavailable_reason' => (string) ( $item['unavailable_reason'] ?? '' ),
 				);
 
 				$subtotal   += (float) $line['subtotal'] + (float) $line['addons_total'];

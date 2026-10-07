@@ -564,10 +564,13 @@ defined( 'ABSPATH' ) || exit;
 				<div class="wpss-cart-summary__line">
 					<span>
 						<?php
+						// The lines that can be bought: the total beside it leaves
+						// an unavailable service out, so the count does too.
+						$wpss_buyable = count( array_filter( (array) $cart_items, static fn( $wpss_line ) => empty( $wpss_line['unavailable'] ) ) );
 						printf(
 							/* translators: %d: number of items */
-							esc_html( _n( '%d item', '%d items', count( $cart_items ), 'wp-sell-services' ) ),
-							count( $cart_items )
+							esc_html( _n( '%d item', '%d items', $wpss_buyable, 'wp-sell-services' ) ),
+							(int) $wpss_buyable
 						);
 						?>
 					</span>

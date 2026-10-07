@@ -2358,7 +2358,7 @@ class AjaxHandlers {
 		wp_send_json_success(
 			array(
 				'message'      => __( 'Added to cart!', 'wp-sell-services' ),
-				'cart_count'   => count( $cart ),
+				'cart_count'   => wpss_get_cart_count( $user_id ),
 				'checkout_url' => $checkout_url,
 			)
 		);
@@ -3405,7 +3405,7 @@ class AjaxHandlers {
 		wp_send_json_success(
 			array(
 				'message'    => __( 'Item removed from cart.', 'wp-sell-services' ),
-				'cart_count' => count( $cart ),
+				'cart_count' => wpss_get_cart_count( $user_id ),
 			)
 		);
 	}

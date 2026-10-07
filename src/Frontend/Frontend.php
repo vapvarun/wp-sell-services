@@ -214,11 +214,7 @@ class Frontend {
 		);
 
 		// Primary 'wpssData' object used by frontend.js.
-		$cart_count = 0;
-		if ( is_user_logged_in() ) {
-			$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
-			$cart_count = is_array( $cart ) ? count( $cart ) : 0;
-		}
+		$cart_count = is_user_logged_in() ? wpss_get_cart_count( get_current_user_id() ) : 0;
 
 		wp_localize_script(
 			'wpss-frontend',
@@ -425,8 +421,7 @@ class Frontend {
 			return;
 		}
 
-		$cart       = get_user_meta( get_current_user_id(), '_wpss_cart', true );
-		$cart_count = is_array( $cart ) ? count( $cart ) : 0;
+		$cart_count = wpss_get_cart_count( get_current_user_id() );
 
 		if ( $cart_count > 0 ) {
 			wpss_enqueue_frontend_assets();

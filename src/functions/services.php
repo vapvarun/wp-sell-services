@@ -1929,6 +1929,22 @@ function wpss_get_user_cart( int $user_id, bool $keep_paused = false ): array {
 }
 
 /**
+ * How many lines of a member's cart can be bought now.
+ *
+ * The number on the header cart. It counted the stored rows, so a service the
+ * vendor trashed or paused still showed as an item to check out (Basecamp
+ * 10330917388).
+ *
+ * @since 1.8.0
+ *
+ * @param int $user_id Member.
+ * @return int
+ */
+function wpss_get_cart_count( int $user_id ): int {
+	return count( array_filter( wpss_get_user_cart( $user_id, true ), static fn( $item ) => empty( $item['unavailable'] ) ) );
+}
+
+/**
  * Price one cart line the way checkout will charge it.
  *
  * A cart item stores what the buyer chose - service, package, quantity and
