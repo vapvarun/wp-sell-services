@@ -126,10 +126,11 @@ $is_working = in_array( $order_item->status, array( 'in_progress', 'revision_req
 					<?php
 					// The vendor's net take-home, counted the way the Earnings stat
 					// counts it (wpss_get_order_revenue()): nothing until the buyer
-					// pays, and a refund takes its share off.
-					$row_money = wpss_get_order_revenue(
-						(object) ( array( 'vendor_earnings' => $order_item->vendor_earnings ?? $order_item->total ) + (array) $order_item )
-					);
+					// pays, and a refund takes its share off. The row as stored:
+					// an empty vendor_earnings is nothing earned, as the stat reads
+					// it. Standing the order total in for it showed $70.00 on a
+					// fully refunded order (Basecamp 10337227125).
+					$row_money = wpss_get_order_revenue( $order_item );
 					$row_gross = (float) $order_item->total;
 					?>
 					<?php if ( ! $row_money->counts ) : ?>

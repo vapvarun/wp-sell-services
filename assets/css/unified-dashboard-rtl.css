@@ -342,17 +342,37 @@
 }
 
 /*
- * Desktop: every stat card in one row, whatever the section's count (3, 4 or
- * 5). frontend.css's auto-fit 200px tracks gave three per row in the ~740px
- * content column, so four cards split 3+1 and five 3+2 (Basecamp 10350553561).
- * Phones keep the two-column rule further down.
+ * Desktop: up to four stat cards share one row. frontend.css's auto-fit 200px
+ * tracks gave three per row in the ~740px content column, so four cards split
+ * 3+1 (Basecamp 10350553561). Five or more stay three to a row: six in one
+ * row left each Earnings card 83-107px wide and broke amounts and labels
+ * inside a word. Phones keep the two-column rule further down.
  */
 @media (min-width: 1025px) {
-	.wpss-dashboard .wpss-stats-grid,
-	.wpss-dashboard .wpss-stats-grid--4 {
+	.wpss-dashboard .wpss-stats-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.wpss-dashboard .wpss-stats-grid:not(:has(> :nth-child(5))) {
 		grid-template-columns: none;
 		grid-auto-flow: column;
-		grid-auto-columns: minmax(0, 1fr);
+		grid-auto-columns: minmax(min-content, 1fr);
+	}
+
+	/* In that row a card is never narrower than its figure or its longest
+	   word: equal 134px tracks broke "$2,005.50" after the 5. break-word,
+	   unlike anywhere, leaves that full width as the track's minimum. */
+	.wpss-dashboard .wpss-stats-grid:not(:has(> :nth-child(5))) .wpss-stat-card__value,
+	.wpss-dashboard .wpss-stats-grid:not(:has(> :nth-child(5))) .wpss-stat-card__label {
+		overflow-wrap: break-word;
+	}
+}
+
+/* The content column is at its narrowest just above the drawer breakpoint:
+   a 186px card holds "$123,456.78" at 22px, not at 28px. */
+@media (min-width: 1025px) and (max-width: 1279px) {
+	.wpss-dashboard .wpss-stat-card__value {
+		font-size: 1.375rem;
 	}
 }
 
@@ -2312,10 +2332,6 @@ select.wpss-input option,
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
-	.wpss-dashboard .wpss-stat-card__value {
-		font-size: 22px;
-	}
-
 	.wpss-order-card {
 		flex-direction: column;
 		align-items: flex-start;
@@ -2419,11 +2435,15 @@ select.wpss-input option,
 	}
 
 	/* A money figure is read whole: $113.40 split over two lines (Basecamp
-	   10337227125). Smaller, never broken. */
+	   10337227125). Smaller type and a tighter card keep six figures on one
+	   line in a 141px card; only a figure too long for the card wraps, where
+	   nowrap used to push it out through the border. */
+	.wpss-dashboard .wpss-stat-card {
+		padding: var(--wpss-space-3, 12px);
+	}
+
 	.wpss-dashboard .wpss-stat-card__value {
-		overflow-wrap: normal;
-		white-space: nowrap;
-		font-size: 1.25rem;
+		font-size: 1.0625rem;
 	}
 }
 

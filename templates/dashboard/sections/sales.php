@@ -172,7 +172,7 @@ $total_revenue   = (float) ( $stats['total_earnings'] ?? 0 );
 		</div>
 		<div class="wpss-stat-card wpss-stat-card--highlight">
 			<span class="wpss-stat-card__value"><?php echo esc_html( wpss_format_price( $total_revenue ) ); ?></span>
-			<span class="wpss-stat-card__label"><?php esc_html_e( 'Earnings (paid orders, after commission)', 'wp-sell-services' ); ?></span>
+			<span class="wpss-stat-card__label"><?php esc_html_e( 'Earnings after commission, including tips', 'wp-sell-services' ); ?></span>
 		</div>
 	</div>
 
