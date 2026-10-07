@@ -72,6 +72,35 @@ try {
 	$check( '  and deleted', null === get_post( $first ) );
 	$check( '  the file still listed is kept', null !== get_post( $second ) );
 	$check( '  a file not uploaded for a request is unlisted but never deleted', null !== get_post( $portfolio ) );
+
+	// Once a vendor has proposed, the files are the brief that proposal was
+	// written against: taking one off the list hides it, and destroys nothing.
+	global $wpdb;
+	$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$wpdb->prefix . 'wpss_proposals',
+		array(
+			'request_id'     => $request_id,
+			'vendor_id'      => 1,
+			'cover_letter'   => 'Fixture proposal.',
+			'proposed_price' => 50,
+			'proposed_days'  => 3,
+			'status'         => 'withdrawn',
+			'created_at'     => current_time( 'mysql', true ),
+		)
+	);
+	$proposal = (int) $wpdb->insert_id;
+	$check( 'fixture: a proposal exists on the request', $proposal > 0 );
+
+	$service->update( $request_id, array( 'attachments' => array() ) );
+	$check( 'after a proposal, a removed file is unlisted', array() === $listed() );
+	$check( '  but kept', null !== get_post( $second ) );
+	$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $proposal ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+	$third = $media( 'request' );
+	$service->update( $request_id, array( 'attachments' => array( $third ) ) );
+	update_post_meta( $request_id, '_wpss_status', BuyerRequestService::STATUS_HIRED );
+	$service->update( $request_id, array( 'attachments' => array() ) );
+	$check( 'on a hired request a removed file is kept too', null !== get_post( $third ) );
 } finally {
 	wp_set_current_user( 0 );
 	if ( $request_id ) {

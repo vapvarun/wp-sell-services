@@ -178,6 +178,29 @@ class BuyerRequestService {
 	}
 
 	/**
+	 * Whether a request is still only its author's: open, with no proposal ever made.
+	 *
+	 * Counts withdrawn proposals too - the vendor read the brief either way.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $request_id Request post ID.
+	 * @return bool
+	 */
+	private function is_untouched( int $request_id ): bool {
+		global $wpdb;
+
+		$status = (string) get_post_meta( $request_id, '_wpss_status', true );
+
+		if ( '' !== $status && self::STATUS_OPEN !== $status ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- a destructive step must not trust a cached count.
+		return ! $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$wpdb->prefix}wpss_proposals WHERE request_id = %d LIMIT 1", $request_id ) );
+	}
+
+	/**
 	 * Save request meta.
 	 *
 	 * @param int                  $request_id Request post ID.
@@ -213,10 +236,18 @@ class BuyerRequestService {
 			// A file taken off the request is deleted, not just unlisted: it sat
 			// in the public uploads folder and its link kept working (Basecamp
 			// 10377676994). Only a file uploaded for a request by this author -
-			// never a profile photo or portfolio image passed in by ID.
-			foreach ( array_diff( $before, $files ) as $removed ) {
-				if ( $owned( $removed ) && 'request' === get_post_meta( $removed, '_wpss_upload_context', true ) ) {
-					wp_delete_attachment( $removed, true );
+			// never a profile photo or portfolio image passed in by ID - and only
+			// while nobody else has acted on the request. Once a vendor has
+			// proposed, or the request is hired, closed or expired, the files are
+			// the brief the proposals and the order were written against; taking
+			// one off the list then hides it but does not destroy it.
+			$removed = array_diff( $before, $files );
+
+			if ( $removed && $this->is_untouched( $request_id ) ) {
+				foreach ( $removed as $file ) {
+					if ( $owned( $file ) && 'request' === get_post_meta( $file, '_wpss_upload_context', true ) ) {
+						wp_delete_attachment( $file, true );
+					}
 				}
 			}
 		}
