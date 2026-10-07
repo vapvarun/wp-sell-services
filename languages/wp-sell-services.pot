@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-07T07:23:47+00:00\n"
+"POT-Creation-Date: 2026-10-07T07:38:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-sell-services\n"
@@ -1097,7 +1097,7 @@ msgstr ""
 #: src/functions/orders.php:143
 #: src/functions/orders.php:892
 #: src/Models/ServiceOrder.php:638
-#: src/Services/BuyerRequestService.php:1367
+#: src/Services/BuyerRequestService.php:1369
 #: src/Services/EarningsService.php:1269
 #: templates/emails/order-cancelled.php:66
 #: templates/order/order-view.php:1339
@@ -10217,7 +10217,7 @@ msgid "Service navigation"
 msgstr ""
 
 #: src/Frontend/ServiceArchiveView.php:412
-#: src/Services/BuyerRequestService.php:1379
+#: src/Services/BuyerRequestService.php:1381
 msgid "Price Range"
 msgstr ""
 
@@ -15350,20 +15350,20 @@ msgstr ""
 
 #: src/Models/BuyerRequest.php:275
 #: src/Models/Dispute.php:240
-#: src/Services/BuyerRequestService.php:1363
+#: src/Services/BuyerRequestService.php:1365
 #: src/Services/DisputeService.php:1297
 msgid "Open"
 msgstr ""
 
 #: src/Models/BuyerRequest.php:277
-#: src/Services/BuyerRequestService.php:1365
+#: src/Services/BuyerRequestService.php:1367
 msgid "Hired"
 msgstr ""
 
 #: src/Models/BuyerRequest.php:278
 #: src/Models/ExtensionRequest.php:245
 #: src/Models/ExtensionRequest.php:285
-#: src/Services/BuyerRequestService.php:1366
+#: src/Services/BuyerRequestService.php:1368
 #: templates/content-request-card.php:86
 msgid "Expired"
 msgstr ""
@@ -16186,7 +16186,7 @@ msgid "Your account could not be deleted. Please try again, or contact the site 
 msgstr ""
 
 #. translators: 1: number of orders, 2: number of withdrawals.
-#: src/Services/AccountDeletionService.php:386
+#: src/Services/AccountDeletionService.php:394
 #, php-format
 msgid "You have %1$d order still in progress and %2$d withdrawal being processed. Finish or cancel them, and wait for the payout to clear, before deleting your account."
 msgid_plural "You have %1$d orders still in progress and %2$d withdrawals being processed. Finish or cancel them, and wait for the payouts to clear, before deleting your account."
@@ -16194,7 +16194,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of orders still in progress.
-#: src/Services/AccountDeletionService.php:400
+#: src/Services/AccountDeletionService.php:408
 #, php-format
 msgid "You have %d order still in progress. Finish or cancel it before deleting your account."
 msgid_plural "You have %d orders still in progress. Finish or cancel them before deleting your account."
@@ -16202,7 +16202,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of withdrawals being processed.
-#: src/Services/AccountDeletionService.php:412
+#: src/Services/AccountDeletionService.php:420
 #, php-format
 msgid "You have %d withdrawal being processed. Please wait for it to clear before deleting your account."
 msgid_plural "You have %d withdrawals being processed. Please wait for them to clear before deleting your account."
@@ -16345,11 +16345,11 @@ msgstr ""
 msgid "Order created successfully. Proceed to payment."
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1364
+#: src/Services/BuyerRequestService.php:1366
 msgid "In Review"
 msgstr ""
 
-#: src/Services/BuyerRequestService.php:1378
+#: src/Services/BuyerRequestService.php:1380
 msgid "Fixed Price"
 msgstr ""
 
