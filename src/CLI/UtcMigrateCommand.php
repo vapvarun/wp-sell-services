@@ -66,13 +66,10 @@ class UtcMigrateCommand {
 		$samples = array();
 		$guard   = 0;
 
-		while ( ! UtcMigration::advance( $state, $dry_run, $samples ) && ++$guard < 100000 ) {
-			if ( ! $dry_run ) {
-				update_option( UtcMigration::OPTION, $state, false );
-			}
-		}
-
 		if ( $dry_run ) {
+			while ( ! UtcMigration::advance( $state, true, $samples ) && ++$guard < 100000 ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedWhile
+			}
+
 			foreach ( $samples as $key => $value ) {
 				if ( '#rows' === substr( $key, -5 ) ) {
 					continue;
@@ -86,7 +83,12 @@ class UtcMigrateCommand {
 			return;
 		}
 
+		// The same chunk the background job runs: rows and cursor commit together.
 		update_option( UtcMigration::OPTION, $state, false );
+		while ( ! UtcMigration::step() && ++$guard < 100000 ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedWhile
+		}
+
+		$state = get_option( UtcMigration::OPTION );
 		\WPSellServices\Services\Scheduler::unschedule_all( UtcMigration::HOOK );
 		WP_CLI::success( 'Converted. Status: ' . $state['status'] . '.' );
 	}

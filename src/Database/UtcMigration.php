@@ -13,6 +13,10 @@
  *   recorded before anything can write, and newer rows are already UTC.
  * - Site time converts per value with get_gmt_from_date(), so a row keeps the
  *   offset that applied on its own date (DST).
+ * - updated_at on the ON UPDATE tables is decided per row: PHP wrote site
+ *   time, MySQL wrote the server's clock (see updated_at_utc()).
+ * - A chunk and its cursor commit together, so a chunk that dies is redone
+ *   from where it started, not from halfway.
  * - Every UPDATE assigns updated_at explicitly, so ON UPDATE CURRENT_TIMESTAMP
  *   does not overwrite it.
  * - Chunked through Action Scheduler; `wp wpss utc-migrate` runs it in the
@@ -110,13 +114,18 @@ class UtcMigration {
 	 * @return void
 	 */
 	public static function maybe_start(): void {
-		if ( false !== get_option( self::OPTION ) ) {
+		$state = get_option( self::OPTION );
+
+		if ( false === $state ) {
+			$state = self::plan();
+			update_option( self::OPTION, $state, false );
+		} elseif ( ! is_admin() || wp_doing_ajax() || 'pending' !== ( $state['status'] ?? '' ) ) {
 			return;
 		}
 
-		$state = self::plan();
-		update_option( self::OPTION, $state, false );
-
+		// Also reached on a later admin page load while still pending: a chunk
+		// that failed queued no successor, and nothing else would start it
+		// again. schedule_single() does nothing when one is already waiting.
 		if ( 'pending' === $state['status'] ) {
 			\WPSellServices\Services\Scheduler::schedule_single( self::HOOK, time() + 30 );
 		}
@@ -197,15 +206,24 @@ class UtcMigration {
 	 * @return bool True when everything is converted.
 	 */
 	public static function step(): bool {
+		global $wpdb;
+
+		// From the database, not a persistent object cache: a chunk that died
+		// was rolled back there, and the cache may still hold its cursor.
+		wp_cache_delete( self::OPTION, 'options' );
 		$state = get_option( self::OPTION );
 
 		if ( ! is_array( $state ) ) {
 			return true;
 		}
 
+		// Rows and cursor commit together. Saved once per chunk with no
+		// transaction, a chunk that died midway converted its first rows twice.
+		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$samples = array();
 		$done    = self::advance( $state, false, $samples );
 		update_option( self::OPTION, $state, false );
+		$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		return $done;
 	}
@@ -223,19 +241,19 @@ class UtcMigration {
 			return true;
 		}
 
-		if ( empty( $state['site_is_utc'] ) ) {
-			foreach ( self::LOCAL_COLUMNS as $table => $columns ) {
-				if ( ! self::table_done( $state, $table ) ) {
-					self::convert_table( $state, $table, $columns, 'site', $dry_run, $samples );
-					return false;
-				}
-			}
-
-			if ( empty( $state['meta_done'] ) ) {
-				self::convert_meta( $dry_run, $samples );
-				$state['meta_done'] = true;
+		// On a UTC site these values do not move, except updated_at where
+		// MySQL stamped it with a server clock that is not UTC.
+		foreach ( self::LOCAL_COLUMNS as $table => $columns ) {
+			if ( ! self::table_done( $state, $table ) ) {
+				self::convert_table( $state, $table, $columns, 'site', $dry_run, $samples );
 				return false;
 			}
+		}
+
+		if ( empty( $state['meta_done'] ) ) {
+			self::convert_meta( $dry_run, $samples );
+			$state['meta_done'] = true;
+			return false;
 		}
 
 		if ( 0 !== (int) $state['server_offset'] ) {
@@ -307,9 +325,17 @@ class UtcMigration {
 				if ( in_array( $column, $skip, true ) || empty( $row[ $column ] ) || '0000-00-00 00:00:00' === $row[ $column ] ) {
 					continue;
 				}
-				$data[ $column ] = 'server' === $from
-					? gmdate( 'Y-m-d H:i:s', strtotime( $row[ $column ] . ' UTC' ) - (int) $state['server_offset'] )
-					: get_gmt_from_date( (string) $row[ $column ] );
+				if ( 'server' === $from ) {
+					$value = gmdate( 'Y-m-d H:i:s', strtotime( $row[ $column ] . ' UTC' ) - (int) $state['server_offset'] );
+				} elseif ( 'updated_at' === $column && in_array( $table, self::ON_UPDATE_TABLES, true ) ) {
+					$value = self::updated_at_utc( $row, $columns, $state );
+				} else {
+					$value = get_gmt_from_date( (string) $row[ $column ] );
+				}
+
+				if ( $value !== $row[ $column ] ) {
+					$data[ $column ] = $value;
+				}
 			}
 
 			foreach ( $extra as $blob ) {
@@ -346,6 +372,50 @@ class UtcMigration {
 
 		// An empty chunk means nothing at or below the cutover is left.
 		$state['cursor'][ $table ] = $rows ? $cursor : $cutover;
+	}
+
+	/**
+	 * UTC for an updated_at on a table with ON UPDATE CURRENT_TIMESTAMP.
+	 *
+	 * Two writers filled this column before 1.8.0. A writer that set it wrote
+	 * site time; one that left it out got the database server's clock from
+	 * MySQL. Nothing on the row says which, so:
+	 *
+	 * - the same second as another site-time column of the row (created,
+	 *   paid, completed...) is one PHP write, so site time;
+	 * - otherwise the server's clock, unless that reading puts the update
+	 *   before the row existed or after the conversion began and the site
+	 *   reading does not.
+	 *
+	 * ponytail: a PHP write that touched no other date column and passes both
+	 * bounds is read as the server's clock, off by the gap between the two
+	 * zones (nothing when they match). Only a per-write log could tell them apart.
+	 *
+	 * @param array<string, mixed> $row     Row, with every column in $columns.
+	 * @param string[]             $columns The table's site-time columns.
+	 * @param array<string, mixed> $state   State: server_offset, started.
+	 * @return string
+	 */
+	private static function updated_at_utc( array $row, array $columns, array $state ): string {
+		$stored = (string) $row['updated_at'];
+		$site   = get_gmt_from_date( $stored );
+		$server = gmdate( 'Y-m-d H:i:s', strtotime( $stored . ' UTC' ) - (int) $state['server_offset'] );
+
+		if ( $site === $server ) {
+			return $site;
+		}
+
+		foreach ( $columns as $column ) {
+			if ( 'updated_at' !== $column && ! empty( $row[ $column ] ) && abs( strtotime( $row[ $column ] . ' UTC' ) - strtotime( $stored . ' UTC' ) ) <= 2 ) {
+				return $site;
+			}
+		}
+
+		$created  = empty( $row['created_at'] ) ? '' : get_gmt_from_date( (string) $row['created_at'] );
+		$started  = (string) ( $state['started'] ?? gmdate( 'Y-m-d H:i:s' ) );
+		$possible = static fn( string $utc ): bool => $utc >= $created && $utc <= $started;
+
+		return ! $possible( $server ) && $possible( $site ) ? $site : $server;
 	}
 
 	/**

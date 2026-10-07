@@ -83,10 +83,10 @@ try {
 	$plan = UtcMigration::plan();
 	$check( 'a +05:30 site is planned for conversion', false === $plan['site_is_utc'] && 'pending' === $plan['status'] );
 
-	$seed = static function ( string $platform, string $local ) use ( $wpdb, $orders, &$ids ): int {
+	$seed = static function ( string $platform, string $local, array $over = array() ) use ( $wpdb, $orders, &$ids ): int {
 		$wpdb->insert(
 			$orders,
-			array(
+			$over + array(
 				'order_number' => 'WPSS-UTCM-' . wp_generate_password( 6, false ),
 				'customer_id'  => 999995,
 				'vendor_id'    => 999994,
@@ -142,6 +142,92 @@ try {
 	while ( ! UtcMigration::advance( $again, false, $samples ) ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedWhile
 	}
 	$check( 'running again does not shift rows twice', '2026-03-10 04:30:00' === $row( $standalone )->created_at );
+
+	// updated_at on the ON UPDATE tables: MySQL stamped it with the database
+	// server's clock whenever a writer left it out, PHP with site time when it
+	// did not. Site +05:30, database on UTC.
+	$by_mysql = $seed( 'standalone', '2026-03-10 10:00:00', array( 'updated_at' => '2026-03-10 06:00:00' ) ); // 11:30 site time, stored as UTC.
+	$run      = static function ( array $state ) use ( &$samples ): array {
+		$state['status'] = 'pending';
+		$samples         = array();
+		$dry     = $state;
+		while ( ! UtcMigration::advance( $dry, true, $samples ) ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedWhile
+		}
+		$listed = $samples;
+		while ( ! UtcMigration::advance( $state, false, $samples ) ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedWhile
+		}
+		return $listed;
+	};
+	$run( array( 'cutover' => array( 'orders' => $by_mysql ), 'cursor' => array( 'orders' => $by_mysql - 1 ) ) + $state );
+	$check( 'site +05:30, database UTC: an updated_at MySQL stamped is already UTC and stays', '2026-03-10 06:00:00' === $row( $by_mysql )->updated_at && '2026-03-10 04:30:00' === $row( $by_mysql )->created_at );
+
+	// Site on UTC, database server on +05:30: the setup the card was filed on.
+	remove_all_filters( 'pre_option_timezone_string' );
+	remove_all_filters( 'pre_option_gmt_offset' );
+	add_filter( 'pre_option_timezone_string', static fn() => 'UTC' );
+	add_filter( 'pre_option_gmt_offset', static fn() => 0 );
+
+	$by_mysql  = $seed( 'standalone', '2026-03-10 10:00:00', array( 'updated_at' => '2026-03-12 15:30:00' ) ); // 10:00 UTC on the 12th, on the server's clock.
+	$by_php    = $seed( 'standalone', '2026-03-10 10:00:00', array( 'updated_at' => '2026-03-11 09:00:00', 'completed_at' => '2026-03-11 09:00:00' ) );
+	$too_early = $seed( 'standalone', '2026-03-10 10:00:00', array( 'updated_at' => '2026-03-10 12:00:00' ) ); // Server reading is 06:30, before it existed.
+	$listed    = $run(
+		array(
+			'site_is_utc'   => true,
+			'server_offset' => 19800,
+			'cutover'       => array( 'orders' => $too_early ),
+			'cursor'        => array( 'orders' => $by_mysql - 1 ),
+			'started'       => gmdate( 'Y-m-d H:i:s' ),
+		) + $state
+	);
+	$check( 'site UTC, database +05:30: the dry run lists orders.updated_at', 1 === (int) ( $listed['orders.updated_at#rows'] ?? 0 ) && '2026-03-12 15:30:00 -> 2026-03-12 10:00:00' === ( $listed['orders.updated_at'][0] ?? '' ) );
+	$check( '  and lists nothing that would not change', ! isset( $listed['orders.created_at'] ) );
+	$check( '  and the MySQL-stamped updated_at loses the server offset', '2026-03-12 10:00:00' === $row( $by_mysql )->updated_at && '2026-03-10 10:00:00' === $row( $by_mysql )->created_at );
+	$check( '  an updated_at written with completed_at is PHP\'s and stays', '2026-03-11 09:00:00' === $row( $by_php )->updated_at );
+	$check( '  one the server reading would put before the order existed stays', '2026-03-10 12:00:00' === $row( $too_early )->updated_at );
+
+	// A chunk that dies midway is redone from its start, not from halfway:
+	// rows and cursor commit together. The second row's write is made to throw.
+	$first  = $seed( 'standalone', '2026-03-10 10:00:00', array( 'updated_at' => '2026-03-12 15:30:00' ) );
+	$second = $seed( 'standalone', '2026-03-10 10:00:00', array( 'updated_at' => '2026-03-12 15:30:00' ) );
+	$saved  = get_option( UtcMigration::OPTION );
+	$die    = static function ( $query ) use ( $orders, $second ) {
+		if ( 0 === strpos( $query, "UPDATE `{$orders}`" ) && preg_match( "/`id` = '?{$second}'?$/", $query ) ) {
+			throw new RuntimeException( 'chunk died' );
+		}
+		return $query;
+	};
+
+	try {
+		update_option(
+			UtcMigration::OPTION,
+			array(
+				'status'        => 'pending',
+				'site_is_utc'   => true,
+				'server_offset' => 19800,
+				'cutover'       => array( 'orders' => $second ),
+				'cursor'        => array( 'orders' => $first - 1 ),
+				'started'       => gmdate( 'Y-m-d H:i:s' ),
+			) + $state,
+			false
+		);
+
+		add_filter( 'query', $die );
+		try {
+			UtcMigration::step();
+		} catch ( RuntimeException $e ) {
+			// What MySQL does with the open transaction when the process is gone.
+			$wpdb->query( 'ROLLBACK' );
+		}
+		remove_filter( 'query', $die );
+		$check( 'a chunk that dies leaves its first row unconverted', '2026-03-12 15:30:00' === $row( $first )->updated_at );
+
+		while ( ! UtcMigration::step() ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedWhile
+		}
+		$check( '  and the retry converts each row once', '2026-03-12 10:00:00' === $row( $first )->updated_at && '2026-03-12 10:00:00' === $row( $second )->updated_at );
+	} finally {
+		remove_filter( 'query', $die );
+		false === $saved ? delete_option( UtcMigration::OPTION ) : update_option( UtcMigration::OPTION, $saved, false );
+	}
 } finally {
 	foreach ( $ids as $id ) {
 		$wpdb->delete( $orders, array( 'id' => $id ) );
