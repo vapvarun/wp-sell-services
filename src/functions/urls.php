@@ -450,7 +450,7 @@ function wpss_get_dashboard_section_template( string $section ): string {
  *
  * @since 1.6.0
  *
- * @return array<string, array{title: string, shortcode: string, slug: string, required: bool}>
+ * @return array<string, array{title: string, shortcode: string, slug: string, required: bool, takes_over?: bool}>
  */
 function wpss_get_page_definitions(): array {
 	$definitions = array(

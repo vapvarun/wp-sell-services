@@ -715,7 +715,7 @@ class StripeGateway implements PaymentGatewayInterface {
 	 *
 	 * @since 1.8.0
 	 *
-	 * @param array $metadata The intent's metadata.
+	 * @param array<string, mixed> $metadata The intent's metadata.
 	 * @return bool
 	 */
 	private function is_own_intent( array $metadata ): bool {

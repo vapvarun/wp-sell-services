@@ -530,7 +530,10 @@ class CheckoutIntentService {
 					return false;
 				}
 
-				return (bool) wpss_get_order_provider()->mark_as_paid( $order_id, $transaction_id, $gateway_id );
+				// mark_as_paid() is the standalone provider's, not the interface's.
+				$provider = wpss_get_order_provider();
+
+				return method_exists( $provider, 'mark_as_paid' ) && (bool) $provider->mark_as_paid( $order_id, $transaction_id, $gateway_id );
 			}
 		);
 	}

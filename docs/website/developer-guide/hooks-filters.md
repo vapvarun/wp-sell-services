@@ -788,7 +788,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:482` |
 | `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:792` |
-| `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:437` |
+| `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:435` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:263` |
 | `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1499` |
 | `wpss_rest_order_data` | `$data, $order, $request` | `OrdersController.php` |
