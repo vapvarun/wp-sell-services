@@ -1390,8 +1390,16 @@ class OrdersController extends RestController {
 			);
 		}
 
-		// Delete attachment.
-		wp_delete_attachment( $file_id, true );
+		// A refused delete is reported, not answered as "File removed". The
+		// commonest refusal: the file is locked to a buyer request that has a
+		// proposal (wpss_guard_locked_request_file()).
+		if ( ! wp_delete_attachment( $file_id, true ) ) {
+			return new WP_Error(
+				'wpss_file_in_use',
+				__( 'This file cannot be deleted. It may belong to a request that already has proposals.', 'wp-sell-services' ),
+				array( 'status' => 409 )
+			);
+		}
 
 		return new WP_REST_Response(
 			array(

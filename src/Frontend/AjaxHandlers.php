@@ -2542,8 +2542,11 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
-		// Delete attachment.
-		wp_delete_attachment( $file_id, true );
+		// A refused delete is reported, not answered as "File removed"
+		// (wpss_guard_locked_request_file()).
+		if ( ! wp_delete_attachment( $file_id, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'This file cannot be deleted. It may belong to a request that already has proposals.', 'wp-sell-services' ) ) );
+		}
 
 		wp_send_json_success( array( 'message' => __( 'File removed.', 'wp-sell-services' ) ) );
 	}

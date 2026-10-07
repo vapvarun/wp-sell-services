@@ -1568,3 +1568,36 @@ function wpss_can_view_request_attachments( int $request_id ): bool {
 	 */
 	return (bool) apply_filters( 'wpss_can_view_request_attachments', is_user_logged_in(), $request_id );
 }
+
+/**
+ * Keep a member from deleting a file that a buyer request still needs.
+ *
+ * A request's files are locked once a seller has proposed on it
+ * (BuyerRequestService::is_file_locked()). Checking that in each route that
+ * deletes media left a door open every time: the media route had the check,
+ * the order requirement-file route and its AJAX twin did not, and each
+ * deletes any file its caller uploaded (Basecamp 10377676994). This sits on
+ * WordPress's own delete, so every door goes through it, including ones
+ * added later and the Media Library.
+ *
+ * Site administrators, WP-CLI and background jobs are not stopped: closing an
+ * account or clearing demo content must still be able to remove files.
+ *
+ * @since 1.8.0
+ *
+ * @param mixed    $delete Short-circuit value; non-null stops the delete.
+ * @param \WP_Post $post   The attachment.
+ * @return mixed False to refuse the delete, otherwise $delete unchanged.
+ */
+function wpss_guard_locked_request_file( $delete, $post ) {
+	if ( null !== $delete || ! $post instanceof \WP_Post || ! is_user_logged_in() || current_user_can( 'manage_options' ) ) {
+		return $delete;
+	}
+
+	if ( 'request' !== get_post_meta( $post->ID, '_wpss_upload_context', true ) ) {
+		return $delete;
+	}
+
+	return ( new \WPSellServices\Services\BuyerRequestService() )->is_file_locked( (int) $post->ID ) ? false : $delete;
+}
+add_filter( 'pre_delete_attachment', 'wpss_guard_locked_request_file', 10, 2 );

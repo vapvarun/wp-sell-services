@@ -132,6 +132,33 @@ try {
 	$answer = rest_do_request( new WP_REST_Request( 'DELETE', '/wpss/v1/media/' . $third ) );
 	$check( 'DELETE /media/{id} refuses a file of a request with a proposal (' . $answer->get_status() . ')', 409 === $answer->get_status() && null !== get_post( $third ) );
 
+	// The lock sits on WordPress's own delete, so every door obeys it: the
+	// order requirement-file route deletes any file its caller uploaded and
+	// had no check of its own (QA bounce).
+	$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$wpdb->prefix . 'wpss_orders',
+		array(
+			'order_number'   => 'WPSS-REQFILE-' . $suffix,
+			'customer_id'    => $buyer->ID,
+			'vendor_id'      => 1,
+			'service_id'     => 0,
+			'platform'       => 'standalone',
+			'total'          => 10,
+			'currency'       => 'USD',
+			'status'         => 'pending_requirements',
+			'payment_status' => 'paid',
+			'created_at'     => current_time( 'mysql', true ),
+		)
+	);
+	$own_order = (int) $wpdb->insert_id;
+	$answer    = rest_do_request( new WP_REST_Request( 'DELETE', '/wpss/v1/orders/' . $own_order . '/requirements/files/' . $third ) );
+	$check( 'the order requirement-file route, on the member\'s own order, cannot delete it (' . $answer->get_status() . ')', 409 === $answer->get_status() && null !== get_post( $third ) );
+	$wpdb->delete( $wpdb->prefix . 'wpss_orders', array( 'id' => $own_order ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$check( '  nor a plain wp_delete_attachment() as that member', ! wp_delete_attachment( $third, true ) && null !== get_post( $third ) );
+	wp_set_current_user( 1 );
+	$check( '  the lock does not stop a site administrator', false === wpss_guard_locked_request_file( null, get_post( $third ) ) ? false : true );
+	wp_set_current_user( $buyer->ID );
+
 	// With the proposal gone the request is untouched again and the file is free.
 	$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $proposal ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$answer = rest_do_request( new WP_REST_Request( 'DELETE', '/wpss/v1/media/' . $third ) );
