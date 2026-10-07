@@ -314,6 +314,8 @@ class MarketplaceSeeder {
 		$summary['orders'] = count( $orders );
 		$this->log( 'Orders created: ' . count( $orders ) );
 
+		$this->log( 'Order briefs with files: ' . $this->seed_requirements( $orders ) );
+
 		// Fund the wallet ledger from the completed orders BEFORE seeding
 		// withdrawals. The ledger is the money authority every earnings surface
 		// reads (available balance, "Total Earned", the wallet table); a real
@@ -885,6 +887,66 @@ class MarketplaceSeeder {
 	}
 
 	/**
+	 * Seed a submitted brief with a buyer file on every third paid order.
+	 *
+	 * Without it every seeded order rendered the requirements partial's empty
+	 * branch, so a fatal on the populated branch passed every browser check
+	 * (Basecamp 10380173025). Stored through the same normaliser real
+	 * submissions use.
+	 *
+	 * @param array<int, array{id: int, status: string, customer_id: int, vendor_id: int, service_id: int}> $orders Orders.
+	 * @return int Number of briefs written.
+	 */
+	private function seed_requirements( array $orders ): int {
+		global $wpdb;
+
+		$count = 0;
+
+		foreach ( $orders as $i => $order ) {
+			if ( 0 !== $i % 3 || in_array( $order['status'], array( ServiceOrder::STATUS_PENDING_PAYMENT, ServiceOrder::STATUS_PENDING_REQUIREMENTS ), true ) ) {
+				continue;
+			}
+
+			$file = $this->seed_buyer_file( (int) $order['customer_id'], 'Order brief ' . $order['id'] );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$count += (int) $wpdb->insert(
+				$wpdb->prefix . 'wpss_order_requirements',
+				array(
+					'order_id'     => $order['id'],
+					'field_data'   => wp_json_encode( array( 'description' => 'Brand colours are navy and coral. The attached file has the reference layout.' ) ),
+					'attachments'  => wp_json_encode( wpss_normalize_requirement_attachments( $file ? array( $file ) : array(), (int) $order['customer_id'] ) ),
+					'submitted_at' => current_time( 'mysql', true ),
+				)
+			);
+		}
+
+		return $count;
+	}
+
+	/**
+	 * A demo file uploaded by a buyer: a placeholder image they own.
+	 *
+	 * @param int    $buyer_id Owner.
+	 * @param string $label    Drawn on the image and used as its title.
+	 * @return int Attachment ID, or 0 when GD is unavailable.
+	 */
+	private function seed_buyer_file( int $buyer_id, string $label ): int {
+		$file = $this->generate_placeholder_image( $label, 800, 500, 0 );
+
+		if ( $file ) {
+			wp_update_post(
+				array(
+					'ID'          => $file,
+					'post_author' => $buyer_id,
+				)
+			);
+		}
+
+		return $file;
+	}
+
+	/**
 	 * Seed reviews for completed orders.
 	 *
 	 * @param array<int, array{id: int, status: string, customer_id: int, vendor_id: int, service_id: int}> $orders Orders.
@@ -1041,6 +1103,15 @@ class MarketplaceSeeder {
 
 			update_post_meta( $post_id, '_wpss_demo_content', 1 );
 			++$request_count;
+
+			// Half the requests carry a brief file, the way a buyer attaches one,
+			// so the request page and the order it converts into are exercised
+			// with files, not only the empty branch (1.8.0 shipped a fatal there).
+			$brief = 0 === $r_index % 2 ? $this->seed_buyer_file( $buyer, 'Request brief ' . ( $r_index + 1 ) ) : 0;
+			if ( $brief ) {
+				update_post_meta( $post_id, '_wpss_attachments', array( $brief ) );
+				add_post_meta( $brief, '_wpss_request_id', $post_id );
+			}
 
 			$budget_min = 100 + ( $r_index * 50 );
 			$budget_max = $budget_min * 3;
