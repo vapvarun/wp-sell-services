@@ -241,6 +241,14 @@ jobs:
           done
           exit $FAIL
 
+      # Every route, AJAX action, shortcode, block, admin page, CLI command,
+      # template and fired hook against the checks that name it. Fails when a
+      # new artefact arrives with no check, or the baseline of known gaps goes
+      # stale, so coverage can only ratchet up (bin/coverage-map.php).
+      - name: Coverage map
+        working-directory: ${{ env.PLUGIN_DIR }}
+        run: wp --exec="define('WP_ADMIN', true);" eval-file bin/coverage-map.php check
+
   # The three python gates below already existed in bin/ and already exit
   # non-zero on failure, but nothing ran them automatically - they fired only
   # when a developer remembered. i18n-verify is the one that catches version
