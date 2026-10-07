@@ -1519,7 +1519,18 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-sell-services' ) ) );
 		}
 
-		wp_delete_post( $request_id, true );
+		// Through the service, as the REST route does: to the trash, and never a
+		// request a seller has proposed on. This used to delete for good, with
+		// no check, and the two entry points disagreed.
+		$service = new \WPSellServices\Services\BuyerRequestService();
+
+		if ( ! $service->is_untouched( $request_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'This request has proposals, so it cannot be deleted. You can close it instead.', 'wp-sell-services' ) ) );
+		}
+
+		if ( ! $service->delete( $request_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete request.', 'wp-sell-services' ) ) );
+		}
 
 		wp_send_json_success( array( 'message' => __( 'Request deleted.', 'wp-sell-services' ) ) );
 	}

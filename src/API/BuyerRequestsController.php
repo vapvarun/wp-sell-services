@@ -623,6 +623,10 @@ class BuyerRequestsController extends RestController {
 	public function delete_item( $request ) {
 		$request_id = (int) $request->get_param( 'id' );
 
+		if ( ! $this->request_service->is_untouched( $request_id ) ) {
+			return new WP_Error( 'wpss_request_has_proposals', __( 'This request has proposals, so it cannot be deleted. You can close it instead.', 'wp-sell-services' ), [ 'status' => 409 ] );
+		}
+
 		$result = $this->request_service->delete( $request_id );
 
 		if ( ! $result ) {

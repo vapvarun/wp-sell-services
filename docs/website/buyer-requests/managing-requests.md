@@ -102,6 +102,10 @@ If you no longer need the work done, click **Close Request** on your request pag
 
 Closing does not affect any orders that were already created from accepted proposals.
 
+### Deleting a Request
+
+**Delete** is offered on a request only while no seller has sent a proposal. It moves the request to the trash. Once a proposal exists, the request can be closed but not deleted, because the proposal and the files attached to the request belong to that seller's work too.
+
 ---
 
 ## Request Expiration

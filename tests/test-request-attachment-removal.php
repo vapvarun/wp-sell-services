@@ -164,6 +164,29 @@ try {
 	$check( '  the lock does not stop a site administrator', false === wpss_guard_locked_request_file( null, get_post( $third ) ) ? false : true );
 	wp_set_current_user( $buyer->ID );
 
+	// The request itself: with a proposal on it, it can be closed, not deleted,
+	// from the website and from REST alike. Deleting it used to unlock its
+	// files as well (Basecamp 10379690155).
+	$check( 'a request with a proposal cannot be deleted through the service', false === $service->delete( $request_id ) && 'trash' !== get_post_status( $request_id ) );
+	$answer = rest_do_request( new WP_REST_Request( 'DELETE', '/wpss/v1/buyer-requests/' . $request_id ) );
+	$check( '  nor through REST (' . $answer->get_status() . ')', 409 === $answer->get_status() && null !== get_post( $request_id ) && 'trash' !== get_post_status( $request_id ) );
+	$_POST = array( 'request_id' => $request_id, 'nonce' => wp_create_nonce( 'wpss_dashboard_nonce' ) );
+	$_REQUEST = $_POST;
+	add_filter( 'wp_doing_ajax', '__return_true' );
+	add_filter( 'wp_die_ajax_handler', static fn() => static function () { throw new RuntimeException( 'ajax end' ); } );
+	ob_start();
+	try {
+		( new \WPSellServices\Frontend\AjaxHandlers() )->delete_request();
+	} catch ( RuntimeException $e ) {
+		unset( $e );
+	}
+	$said = json_decode( (string) ob_get_clean(), true );
+	remove_all_filters( 'wp_die_ajax_handler' );
+	remove_filter( 'wp_doing_ajax', '__return_true' );
+	$_POST = array();
+	$_REQUEST = array();
+	$check( '  nor from the dashboard button\'s request', false === ( $said['success'] ?? null ) && null !== get_post( $request_id ) && 'trash' !== get_post_status( $request_id ) );
+
 	// With the proposal gone the request is untouched again and the file is free.
 	$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $proposal ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$answer = rest_do_request( new WP_REST_Request( 'DELETE', '/wpss/v1/media/' . $third ) );

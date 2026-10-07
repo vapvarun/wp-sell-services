@@ -1331,6 +1331,13 @@ class BuyerRequestService {
 			return false;
 		}
 
+		// A request a seller has proposed on is that seller's work too, and the
+		// brief an order may have been made from: it can be closed, not deleted.
+		// Deleting it also unlocked its files (Basecamp 10379690155).
+		if ( ! $this->is_untouched( $request_id ) ) {
+			return false;
+		}
+
 		$result = wp_trash_post( $request_id );
 
 		if ( $result ) {

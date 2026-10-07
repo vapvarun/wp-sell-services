@@ -188,11 +188,17 @@ $active_count = (int) ( new WP_Query(
 							<i data-lucide="pencil" class="wpss-icon" aria-hidden="true"></i>
 							<span class="wpss-btn__label"><?php esc_html_e( 'Edit', 'wp-sell-services' ); ?></span>
 						</a>
-						<?php $delete_label = __( 'Delete', 'wp-sell-services' ); ?>
+						<?php
+						// Delete is offered only while no seller has proposed; after
+						// that the request can be closed with the control above.
+						if ( ( new \WPSellServices\Services\BuyerRequestService() )->is_untouched( $request_id ) ) :
+							$delete_label = __( 'Delete', 'wp-sell-services' );
+							?>
 						<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-btn--danger wpss-btn--action wpss-delete-request" data-request-id="<?php echo esc_attr( $request_id ); ?>" aria-label="<?php echo esc_attr( $delete_label ); ?>" title="<?php echo esc_attr( $delete_label ); ?>">
 							<i data-lucide="trash-2" class="wpss-icon" aria-hidden="true"></i>
 							<span class="wpss-btn__label"><?php esc_html_e( 'Delete', 'wp-sell-services' ); ?></span>
 						</button>
+						<?php endif; ?>
 					</div>
 				</div>
 			<?php endwhile; ?>

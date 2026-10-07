@@ -89,7 +89,7 @@ Choose **None (use this site's own login)** to switch it off. See
 - A paused or deleted service in a buyer's cart is marked as unavailable and left out of the total.
 - The reason and details entered when cancelling an order are shown to the buyer, the vendor and you, and are included in the Order Cancelled email.
 - On a block theme the member dashboard takes the theme's wide width.
-- Buyers can add and remove files when editing a request. Once a seller has sent a proposal, the files already attached stay.
+- Buyers can add and remove files when editing a request. Once a seller has sent a proposal, the files already attached stay, and the request can be closed but not deleted.
 - Vendors can cancel a pending withdrawal request, and sellers can withdraw a pending proposal.
 - Deleting demo content removes the demo vendors too, and never removes your own categories. A demo service that a buyer has ordered is kept, with its seller, so the order is not lost.
 - Commission is taken on the price without tax, in tax-inclusive mode too.
