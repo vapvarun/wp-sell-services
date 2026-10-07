@@ -187,7 +187,7 @@ class BuyerRequestService {
 	 * @param int $request_id Request post ID.
 	 * @return bool
 	 */
-	private function is_untouched( int $request_id ): bool {
+	public function is_untouched( int $request_id ): bool {
 		global $wpdb;
 
 		$status = (string) get_post_meta( $request_id, '_wpss_status', true );
@@ -201,6 +201,38 @@ class BuyerRequestService {
 	}
 
 	/**
+	 * Whether a file belongs to a request somebody else has already acted on.
+	 *
+	 * For anything that deletes media: such a file is the brief a proposal or
+	 * an order was written against, and must outlive the buyer's change of mind.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $attachment_id Media ID.
+	 * @return bool
+	 */
+	public function is_file_locked( int $attachment_id ): bool {
+		// ponytail: scans the uploader's 100 newest requests; index the list in a table if buyers ever hold more.
+		$requests = get_posts(
+			array(
+				'post_type'      => BuyerRequestPostType::POST_TYPE,
+				'post_status'    => 'any',
+				'author'         => (int) get_post_field( 'post_author', $attachment_id ),
+				'posts_per_page' => 100,
+				'fields'         => 'ids',
+			)
+		);
+
+		foreach ( $requests as $request_id ) {
+			if ( in_array( $attachment_id, array_map( 'absint', (array) get_post_meta( $request_id, '_wpss_attachments', true ) ), true ) && ! $this->is_untouched( (int) $request_id ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Save request meta.
 	 *
 	 * @param int                  $request_id Request post ID.
@@ -208,6 +240,10 @@ class BuyerRequestService {
 	 * @return void
 	 */
 	private function save_meta( int $request_id, array $data ): void {
+		// Read before this call writes anything: the same update can carry a
+		// status, and a gate must not be answered by the request it is gating.
+		$untouched = $this->is_untouched( $request_id );
+
 		$meta_fields = array(
 			'budget_type'   => 'sanitize_key',
 			'budget_min'    => 'floatval',
@@ -243,7 +279,7 @@ class BuyerRequestService {
 			// one off the list then hides it but does not destroy it.
 			$removed = array_diff( $before, $files );
 
-			if ( $removed && $this->is_untouched( $request_id ) ) {
+			if ( $removed && $untouched ) {
 				foreach ( $removed as $file ) {
 					if ( $owned( $file ) && 'request' === get_post_meta( $file, '_wpss_upload_context', true ) ) {
 						wp_delete_attachment( $file, true );
@@ -701,7 +737,7 @@ class BuyerRequestService {
 			 * and 200 with `fields => ids` is the batch size, not a page size - a
 			 * smaller number would just mean more ticks to drain the same backlog.
 			 */
-			'posts_per_page' => 200, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- Cron batch size, not a query for display.
+			'posts_per_page' => 100, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- Cron batch size, not a query for display.
 			'orderby'        => 'ID',
 			'order'          => 'ASC',
 			'fields'         => 'ids',

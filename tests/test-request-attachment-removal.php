@@ -101,6 +101,25 @@ try {
 	update_post_meta( $request_id, '_wpss_status', BuyerRequestService::STATUS_HIRED );
 	$service->update( $request_id, array( 'attachments' => array() ) );
 	$check( 'on a hired request a removed file is kept too', null !== get_post( $third ) );
+
+	// The gate is read before the update is applied: reopening the request in
+	// the same call that empties the list must not unlock the delete.
+	$fourth = $media( 'request' );
+	update_post_meta( $request_id, '_wpss_attachments', array( $fourth ) );
+	$service->update( $request_id, array( 'status' => BuyerRequestService::STATUS_OPEN, 'attachments' => array() ) );
+	$check( 'reopening and emptying the list in one update does not delete the file', null !== get_post( $fourth ) );
+
+	// The same rule on DELETE /media/{id}, the other way to delete it.
+	update_post_meta( $request_id, '_wpss_status', BuyerRequestService::STATUS_HIRED );
+	update_post_meta( $request_id, '_wpss_attachments', array( $fourth ) );
+	wp_set_current_user( $buyer->ID );
+	$delete = new WP_REST_Request( 'DELETE', '/wpss/v1/media/' . $fourth );
+	$answer = rest_do_request( $delete );
+	$check( 'DELETE /media/{id} refuses a file of a hired request (' . $answer->get_status() . ')', 409 === $answer->get_status() && null !== get_post( $fourth ) );
+
+	update_post_meta( $request_id, '_wpss_status', BuyerRequestService::STATUS_OPEN );
+	$answer = rest_do_request( new WP_REST_Request( 'DELETE', '/wpss/v1/media/' . $fourth ) );
+	$check( '  and deletes it while the request is open with no proposals (' . $answer->get_status() . ')', 200 === $answer->get_status() && null === get_post( $fourth ) );
 } finally {
 	wp_set_current_user( 0 );
 	if ( $request_id ) {

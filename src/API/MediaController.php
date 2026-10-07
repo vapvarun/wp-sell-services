@@ -239,6 +239,13 @@ class MediaController extends RestController {
 	public function delete_item( $request ) {
 		$attachment_id = (int) $request->get_param( 'id' );
 
+		// The same rule as removing it on the request's edit form: once a
+		// vendor has proposed on the request, or it is hired or closed, its
+		// files stay (Basecamp 10377676994).
+		if ( ( new \WPSellServices\Services\BuyerRequestService() )->is_file_locked( $attachment_id ) ) {
+			return new WP_Error( 'wpss_file_in_use', __( 'This file belongs to a request that already has proposals or has been closed, so it cannot be deleted.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		}
+
 		$result = wp_delete_attachment( $attachment_id, true );
 
 		if ( ! $result ) {
