@@ -67,6 +67,22 @@ class BuyerRequestArchiveView {
 			return;
 		}
 
+		self::enqueue_style();
+	}
+
+	/**
+	 * Enqueue the request card stylesheet.
+	 *
+	 * Called by whatever renders a request card, so the card looks the same on
+	 * the archive, in the Buyer Requests block and in [wpss_buyer_requests].
+	 * Tied to the archive URL only, the block and shortcode rendered the card
+	 * with no sheet at all (Basecamp 10375004244).
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return void
+	 */
+	public static function enqueue_style(): void {
 		wp_enqueue_style(
 			'wpss-request',
 			\WPSS_PLUGIN_URL . 'assets/css/buyer-request.css',

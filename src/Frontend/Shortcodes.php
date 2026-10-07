@@ -701,9 +701,12 @@ class Shortcodes {
 		 * shortcode carried its own form and its own REST submit script in
 		 * frontend.js; it drifted (no attachments) and its classes were styled
 		 * only in sheets a plain page never loads (Basecamp 10375004244). The
-		 * dashboard assets load for this shortcode via
-		 * UnifiedDashboard::is_dashboard_page().
+		 * dashboard assets are asked for here, at render, so the form also
+		 * works in a pattern or widget, where the page's content does not
+		 * name the shortcode.
 		 */
+		do_action( 'wpss_enqueue_dashboard_assets' );
+
 		ob_start();
 		echo '<div class="wpss-app">';
 		wpss_get_template( 'dashboard/sections/create-request.php', array( 'user_id' => get_current_user_id() ) );

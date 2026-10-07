@@ -133,6 +133,7 @@ class BuyerRequests extends AbstractBlock {
 	 */
 	public function render( array $attributes, string $content = '' ): string {
 		wpss_enqueue_frontend_assets();
+		\WPSellServices\Frontend\BuyerRequestArchiveView::enqueue_style();
 
 		$this->start_render();
 

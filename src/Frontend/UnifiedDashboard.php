@@ -73,17 +73,41 @@ class UnifiedDashboard {
 		add_shortcode( 'wpss_dashboard', array( $this, 'render' ) );
 		add_action( 'wp_ajax_wpss_become_vendor', array( $this, 'ajax_become_vendor' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+
+		/**
+		 * Load the dashboard assets from wherever a dashboard surface renders.
+		 *
+		 * The page check in enqueue_assets() reads the page's own content, so
+		 * a shortcode placed in a synced pattern, a widget or a page builder
+		 * rendered with no stylesheet and no script.
+		 *
+		 * @since 1.8.0
+		 */
+		add_action(
+			'wpss_enqueue_dashboard_assets',
+			function (): void {
+				$this->enqueue_assets( true );
+			}
+		);
 	}
 
 	/**
 	 * Enqueue dashboard assets.
 	 *
+	 * @param mixed $force True to load without the page check. Untyped: WordPress
+	 *                     passes an empty string to wp_enqueue_scripts callbacks.
 	 * @return void
 	 */
-	public function enqueue_assets(): void {
-		if ( ! $this->is_dashboard_page() ) {
+	public function enqueue_assets( $force = false ): void {
+		static $done = false;
+
+		// Once per request: on wp_enqueue_scripts when the page's content names
+		// a dashboard shortcode, otherwise when one renders ($force).
+		if ( $done || ( true !== $force && ! $this->is_dashboard_page() ) ) {
 			return;
 		}
+
+		$done = true;
 
 		// Media library for profile avatar/portfolio uploads.
 		if ( is_user_logged_in() ) {
@@ -266,6 +290,8 @@ class UnifiedDashboard {
 		if ( ! is_user_logged_in() ) {
 			return $this->render_login_prompt();
 		}
+
+		$this->enqueue_assets( true );
 
 		$this->current_section = $this->resolve_current_section();
 		$this->sections        = $this->get_sections();

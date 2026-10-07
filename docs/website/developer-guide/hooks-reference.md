@@ -10,9 +10,9 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**539 hooks** across **743** firing sites.
+**540 hooks** across **744** firing sites.
 
-## Actions (275)
+## Actions (276)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -120,6 +120,7 @@ guide; this is the complete index.
 | `wpss_email_content_before` | 3 | `templates/emails/cancellation-requested.php` *(+35 more)* | Fires before the email content for the cancellation requested email. |
 | `wpss_email_footer` | 0 | `templates/emails/email-footer.php` | Fires before the email footer. |
 | `wpss_email_header` | 1 | `templates/emails/email-header.php` | Fires after the email header. |
+| `wpss_enqueue_dashboard_assets` | 0 | `src/Frontend/Shortcodes.php` |  |
 | `wpss_extension_approved` | 7 | `src/Services/ExtensionOrderService.php` | Fires after a paid extension has been credited and the parent order extended. |
 | `wpss_extension_rejected` | 4 | `src/Services/ExtensionOrderService.php` | Fires when a buyer declines a pending extension request. |
 | `wpss_extension_request_approved` | 2 | `src/Services/ExtensionRequestService.php` | Fires after extension request is approved. |

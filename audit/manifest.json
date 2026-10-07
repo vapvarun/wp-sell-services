@@ -715,6 +715,11 @@
         "name": "wpss_payable_total_after",
         "type": "action",
         "purpose": "Fires wherever a payable total is shown, before its pay/continue CTA - cart summary and standalone checkout, with (float $total, string $context). The last surface WPSS owns before payment hands off. Args are base currency; consumers state the charge, never replace it. NOT fired on a host platform's own checkout by design (see ecommerce_adapter_boundary)."
+      },
+      {
+        "name": "wpss_enqueue_dashboard_assets",
+        "type": "action",
+        "purpose": "Ask for the dashboard CSS/JS at render time (fired by [wpss_post_request]); for a dashboard surface placed where the page content does not name the shortcode: pattern, widget, page builder"
       }
     ],
     "_note": "Full hook enumeration deferred. Re-run with refresh+rebuild to enumerate all 237 hook firings. 1.6.0: wpss_offline_order_created now fires from BOTH offline entry points (cart checkout and pay-an-existing-order), so listeners no longer need to know which one the buyer used."
