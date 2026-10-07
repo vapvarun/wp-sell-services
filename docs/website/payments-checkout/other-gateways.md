@@ -52,6 +52,22 @@ Buyers see a PayPal button on your checkout page. They can:
 
 PayPal's Smart Payment Buttons automatically show the most relevant options for each buyer.
 
+### Invoice Numbers and Shared PayPal Accounts
+
+Every PayPal payment started by your site carries an invoice number that begins
+with `WPSS-`, followed by a short code for your site and a unique reference, for
+example `WPSS-2dcd2f2eff-AB12CD34EF56`. Buyers see it on their PayPal receipt.
+
+The site code is how your site recognises its own payments. PayPal sends every
+event on an account to every site connected to it, so since 1.8.0 a site acts
+only on payments whose invoice number carries its own code. A payment made on a
+staging copy or a second store that shares your PayPal account cannot mark an
+order paid or refunded on this site.
+
+A PayPal payment that was started before you updated to 1.8.0 and not yet
+completed has no invoice number. The buyer is asked to pay again; nothing is
+charged for the unfinished attempt.
+
 ### PayPal Transaction Fees
 
 | Type | Fee |
@@ -94,6 +110,11 @@ Razorpay provides test mode keys for development.
 2. Add endpoint: `https://yoursite.com/wpss-payment/razorpay/callback`
 3. Select events: `payment.authorized`, `payment.captured`, `payment.failed`, `refund.created`
 4. Copy the Webhook Secret to your WP Sell Services settings
+
+Razorpay sends every event on an account to every site connected to it. Since
+1.8.0 your site acts only on Razorpay orders it created itself, so a staging
+copy or a second store on the same Razorpay account cannot mark an order paid
+here.
 
 ### Payment Methods Available
 
@@ -196,6 +217,7 @@ Once enabled, "Test Gateway" appears as a payment option at checkout with a "Dev
 | Test Gateway not showing | Enable `WP_DEBUG` in wp-config.php. The Test Gateway is hidden on production sites. |
 | Gateway not appearing at checkout | Go to Settings > Payment Gateways and verify the gateway is checked as "Enabled". |
 | Currency not supported | Check your gateway's supported currencies. Some gateways (Razorpay) only support certain currencies. |
+| "This payment was not made on this site" | The payment was started on a different site that shares the gateway account, or (PayPal) before the site was updated to 1.8.0. Ask the buyer to start the payment again on this site. |
 
 ## Related Docs
 

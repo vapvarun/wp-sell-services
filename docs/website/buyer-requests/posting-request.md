@@ -60,6 +60,8 @@ List specific skills or technologies the project requires (e.g., "WordPress", "L
 
 Upload reference files, mockups, design briefs, or any documents that help explain what you need.
 
+Each file uploads as soon as you pick it. Request files are visible to sellers browsing your request, so do not attach anything private.
+
 ![Public buyer requests listing](../images/frontend-buyer-requests-listing.png)
 
 ---
@@ -106,6 +108,8 @@ You can only accept one proposal per request. If you need multiple vendors, post
 ### Editing
 
 You can edit your request (title, description, budget, attachments) at any time while it is still open and no proposal has been accepted.
+
+Attachments follow one extra rule. Until a seller sends a proposal you can add and remove files freely, and a file you remove is deleted. Once a seller has sent a proposal, the files already on the request stay: sellers priced their proposals against them. You can still add more files.
 
 ### Closing
 

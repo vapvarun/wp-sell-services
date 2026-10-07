@@ -103,6 +103,12 @@ The cart page shows everything you are about to purchase:
 
 You can remove items from your cart or go back to add more services before proceeding.
 
+If a seller pauses or removes a service while it is in your cart, the cart shows it with a short note ("This service is not currently available"). It is not counted in the total or in the cart number at the top of the page, and you are not charged for it. A paused service becomes available again if the seller brings it back.
+
+### Reporting a Service or a Seller
+
+If a listing looks like spam, a scam, or breaks the marketplace's rules, use the **Report this service** link at the bottom of the service page's sidebar, or **Report this seller** on the seller's profile. Choose a reason, add details if you can, and send. The marketplace team reviews every report, and the seller is not told who sent it. You need to be logged in, and you can report each service or seller once.
+
 ---
 
 ## Step 5: Complete Checkout

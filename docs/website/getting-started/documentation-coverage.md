@@ -2,6 +2,8 @@
 
 **As of WP Sell Services 1.7.0 and WP Sell Services Pro 1.7.0.** Last full source-to-docs resync: **2026-08-26**, when all 107 pages were checked against the code rather than against each other.
 
+**1.8.0 update (2026-10-07):** the pages affected by the 1.8.0 fixes were updated against the code, and one page was added (Member Reports), for 110 pages. This was a targeted update, not a second full resync.
+
 This page exists so you never have to guess whether something is missing or you
 just cannot find it. It states what is documented, and -- more usefully -- what
 is not.
@@ -36,7 +38,7 @@ run of `bin/docs-audit.py`.
 | **Display and SEO** | Shortcodes, Gutenberg blocks, search and filters, template overrides, JSON-LD schema |
 | **Analytics** | Vendor analytics, admin analytics **[PRO]**, data export **[PRO]** |
 | **Cloud storage** **[PRO]** | Overview and setup (S3, Google Cloud Storage, DigitalOcean Spaces) |
-| **Admin tools** | Service moderation, vendor management, withdrawal approvals, manual orders, the guided tour |
+| **Admin tools** | Service moderation, vendor management, withdrawal approvals, manual orders, **member reports**, the guided tour |
 | **Platform settings** | General, Pages, **Payment Gateways**, **Commission & Tax**, **Payouts**, White Label **[PRO]**, Advanced |
 | **Developer guide** | REST API overview, REST controller reference, hooks and filters, capabilities, database schema, template and theme integration, email customization, Action Scheduler, WP-CLI, Abilities API, Pro extension points, custom integrations |
 

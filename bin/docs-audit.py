@@ -74,6 +74,7 @@ VALID_MENU_ITEMS = {
     "Moderation", "Review Moderation", "Disputes", "Vendors", "Orders",
     "Create Order", "Subscriptions", "Withdrawals", "Analytics",
     "Audit Log", "My Notifications", "Settings", "License", "Upgrade to Pro",
+    "Member Reports",
 }
 
 # Menu labels that used to exist, or that docs keep inventing.
@@ -170,6 +171,16 @@ for orphan in sorted(on_disk - listed):
     fail("config", f"page on disk but not in docs_config.json (will not publish): {orphan}")
 if listed == on_disk:
     ok("config", f"docs_config.json is 1:1 with disk ({len(listed)} pages)")
+
+# The docs hub reads `sections` (name + folder); this audit reads `categories`.
+# Two lists of the same thing, so they are held together here: one section per
+# category, in the same order, pointing at the folder its pages live in.
+want = [(c["name"], c["docs"][0]["file"].split("/")[0]) for c in sorted(cfg["categories"], key=lambda c: c.get("order", 0))]
+have = [(s.get("name"), s.get("folder")) for s in cfg.get("sections", [])]
+if want != have:
+    fail("config", "docs_config.json `sections` does not match `categories` (name, folder, order)")
+else:
+    ok("config", f"`sections` matches `categories` ({len(have)} sections)")
 
 # --- 2 & 3. broken images and links ------------------------------------------
 img_re = re.compile(r"!\[[^\]]*\]\(([^)\s]+)")

@@ -69,6 +69,8 @@ Subfolders are preserved: `templates/order/order-view.php` becomes
 | `partials/notifications-list.php` | Notification list markup |
 | `partials/billing-fields.php` | Billing form fields |
 | `partials/billing-summary.php` | Billing recap at checkout |
+| `partials/report-modal.php` | The Report dialog opened from a service page or vendor profile |
+| `partials/request-attachments.php` | The attachments field on the post and edit request forms |
 
 ### Vendor
 
@@ -87,6 +89,8 @@ Subfolders are preserved: `templates/order/order-view.php` becomes
 | `order/milestone-view.php` | A milestone phase |
 | `order/extension-view.php` | A paid extension |
 | `order/tip-view.php` | A tip receipt |
+| `order/payment.php` | Payment method, status and transaction ID in the order summary |
+| `order/cancellation.php` | Cancellation reason and details in the order summary |
 
 ### Dashboard
 

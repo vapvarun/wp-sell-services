@@ -127,6 +127,10 @@ Quickly populate your marketplace with sample services, vendors, and categories 
 
 When you are done testing, click **Delete Demo Content** to remove all sample data without affecting your real marketplace content.
 
+Deleting removes the demo services, the demo vendor accounts, and any category the demo created that nothing uses any more. Your own categories are never removed, even empty ones. The button appears whenever demo content is actually on the site, so after deleting you can import again. `wp wpss demo delete` does exactly the same thing from the command line.
+
+In the setup wizard, clicking **Import Demo Content** when it is already installed shows **Already imported** rather than importing a second copy.
+
 ---
 
 ## Automated Background Tasks

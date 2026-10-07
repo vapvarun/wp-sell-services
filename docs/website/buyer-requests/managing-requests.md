@@ -81,6 +81,13 @@ You can edit your request at any time while it is still open and no proposal has
 **What you cannot change:**
 - Requests that already have an accepted proposal
 - Expired requests
+- Files already attached, once a seller has sent a proposal (see below)
+
+### Attachments After a Proposal
+
+Before any seller has sent a proposal, you can add and remove attachments freely. Removing a file deletes it, and its link stops working.
+
+After the first proposal arrives, the **Remove** button disappears from the files already on the request and a note explains why: sellers priced their proposals against that brief. You can still add new files. Check a file before attaching it at this stage, because it cannot be taken off afterwards.
 
 ---
 

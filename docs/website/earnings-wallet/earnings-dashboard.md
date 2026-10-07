@@ -11,6 +11,8 @@ When a vendor goes to **Dashboard > Earnings & Payouts**, they see these key num
 | Metric | What It Means |
 |--------|-------------|
 | **Total Earned** | Lifetime earnings from all completed orders (after commission) |
+
+The **Sales Orders** screen has its own earnings tile, labelled "Earnings after commission, including tips". It is higher than the sum of the order rows whenever you have received tips, because tips have no row in that list. A refunded order shows $0.00 on its row and adds nothing to the tile.
 | **Available Balance** | Money ready to withdraw right now |
 | **Pending Clearance** | Earnings from recent orders still in the clearance period |
 | **Withdrawn** | Total amount successfully paid out over time |

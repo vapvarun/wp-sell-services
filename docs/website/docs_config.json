@@ -1,8 +1,85 @@
 {
+  "product": "WP Sell Services",
+  "productType": "plugin",
+  "shortId": "wpss",
+  "sections": [
+    {
+      "name": "Getting Started",
+      "folder": "getting-started"
+    },
+    {
+      "name": "Buyer Guide",
+      "folder": "buyer-guide"
+    },
+    {
+      "name": "Service Creation",
+      "folder": "service-creation"
+    },
+    {
+      "name": "Buyer Requests & Proposals",
+      "folder": "buyer-requests"
+    },
+    {
+      "name": "Order Management",
+      "folder": "order-management"
+    },
+    {
+      "name": "Vendor System",
+      "folder": "vendor-system"
+    },
+    {
+      "name": "Reviews & Ratings",
+      "folder": "reviews-ratings"
+    },
+    {
+      "name": "Disputes & Resolution",
+      "folder": "disputes-resolution"
+    },
+    {
+      "name": "Payments & Checkout",
+      "folder": "payments-checkout"
+    },
+    {
+      "name": "Earnings & Wallet",
+      "folder": "earnings-wallet"
+    },
+    {
+      "name": "Analytics & Reporting",
+      "folder": "analytics-reporting"
+    },
+    {
+      "name": "Notifications & Emails",
+      "folder": "notifications-emails"
+    },
+    {
+      "name": "Cloud Storage",
+      "folder": "cloud-storage"
+    },
+    {
+      "name": "Marketplace Display & SEO",
+      "folder": "marketplace-display"
+    },
+    {
+      "name": "Admin Tools & Moderation",
+      "folder": "admin-tools"
+    },
+    {
+      "name": "Platform Settings",
+      "folder": "platform-settings"
+    },
+    {
+      "name": "Developer Guide",
+      "folder": "developer-guide"
+    },
+    {
+      "name": "FAQ & Troubleshooting",
+      "folder": "faq"
+    }
+  ],
   "product_name": "WP Sell Services",
   "product_slug": "wp-sell-services",
   "short_id": "wpss",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "categories": [
     {
       "name": "Getting Started",
@@ -628,6 +705,12 @@
           "slug": "admin-guided-tour-wpss",
           "file": "admin-tools/guided-tour.md",
           "order": 5
+        },
+        {
+          "title": "Member Reports",
+          "slug": "member-reports-wpss",
+          "file": "admin-tools/member-reports.md",
+          "order": 6
         }
       ]
     },

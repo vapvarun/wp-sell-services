@@ -6,8 +6,8 @@ WP Sell Services needs a few dedicated pages to run your marketplace. The good n
 
 ## The Pages the Installer Creates
 
-Activating the plugin creates six pages and maps each one in **Sell Services >
-Settings > Pages**. You do not have to create any of them by hand.
+Activating the plugin creates the pages below and maps each one in **Sell
+Services > Settings > Pages**. You do not have to create any of them by hand.
 
 | Page | Slug | What It Does | Required |
 |------|------|-------------|----------|
@@ -17,11 +17,28 @@ Settings > Pages**. You do not have to create any of them by hand.
 | **Service Checkout** | `service-checkout` | The checkout page for standalone mode purchases | Yes |
 | **Vendors** | `vendors` | A directory of every approved seller, sorted by rating | No |
 | **Service Cart** | `service-cart` | Where buyers review selected services before checkout | No |
+| **Create Account** | `create-account` | The marketplace's own registration form. When mapped, every Register link on the site goes to it | No |
+| **Log In** | `login` | The marketplace's own sign-in form. When mapped, every Log in link on the site goes to it. Created on new installs only, see below | No |
 
 "Required" means the marketplace cannot run without the page mapped, so a
-missing one raises a setup notice. The other two are created for you as well;
+missing one raises a setup notice. The others are created for you as well;
 they are marked optional only because you can unmap or delete them and the rest
 of the marketplace still works.
+
+### The Log In Page Changes Sign-In for the Whole Site
+
+The Log In page is different from the others. Once it is mapped, **every** Log
+in link on your site goes to it: the plugin's, your theme's, and other plugins'.
+Signing in to wp-admin stays on `wp-login.php`.
+
+Because that affects the whole site, the plugin is careful about creating it:
+
+- **Updating the plugin never creates or maps a Log In page.** Your site keeps signing in the way it did before.
+- **A brand-new install creates it only if your site still uses the standard WordPress login.** If a membership, security, or two-factor plugin (or your theme) has already moved the login, nothing is created.
+- **You are always in control.** Under **Settings > Pages > Log In**, choose a page to use it, or choose **None (use this site's own login)** to switch it off. With None selected the plugin does not touch any login link.
+
+To add the page later, click **Create Page** next to the Log In dropdown, or
+make a page containing `[wpss_login]` and select it.
 
 **Why the cart and checkout slugs are prefixed.** They are `service-cart` and
 `service-checkout` rather than `cart` and `checkout` because WooCommerce and

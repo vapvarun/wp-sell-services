@@ -22,9 +22,11 @@ That is it. Your services are now paused.
 - Buyers can still view your services and send you messages.
 
 **For your services:**
-- They remain published and searchable, so you do not lose your SEO position or presence in search results.
-- They display an "On Vacation" indicator.
+- They stay published. Anyone with a direct link, and anyone visiting your profile, can still open them and see the vacation notice.
+- They are **left out of listings while you are away**: the services catalog, search results, the services and featured-services grids placed on other pages, and the mobile app. They come back the moment vacation ends.
 - They stay in buyers' favorites lists.
+
+Vacation ends when you switch it off, or automatically once your return date has passed.
 
 **For your existing orders:**
 - Orders placed before vacation mode are **not affected**. You are still expected to complete them.
