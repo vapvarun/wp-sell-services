@@ -226,6 +226,10 @@ class Frontend {
 			array(
 				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
 				'apiUrl'           => rest_url( 'wpss/v1/' ),
+				// The site's own sign-in address. frontend.js reads this for a
+				// logged-out click on the favourite heart; it was never sent,
+				// so the script fell back to /wp-login.php (Basecamp 10352980066).
+				'loginUrl'         => wp_login_url(),
 				'nonce'            => wp_create_nonce( 'wpss_proposal_action' ),
 				'proposalNonce'    => wp_create_nonce( 'wpss_proposal_action' ),
 				'orderNonce'       => wp_create_nonce( 'wpss_order_action' ),

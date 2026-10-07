@@ -287,11 +287,12 @@ class UnifiedDashboard {
 	 * @return string Dashboard HTML.
 	 */
 	public function render( array $atts = array() ): string {
+		// Before the sign-in prompt too: it is styled by the same sheet.
+		$this->enqueue_assets( true );
+
 		if ( ! is_user_logged_in() ) {
 			return $this->render_login_prompt();
 		}
-
-		$this->enqueue_assets( true );
 
 		$this->current_section = $this->resolve_current_section();
 		$this->sections        = $this->get_sections();

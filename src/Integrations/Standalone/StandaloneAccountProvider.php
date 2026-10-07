@@ -230,8 +230,11 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 	 * @return string
 	 */
 	public function render_account_shortcode( array $atts ): string {
+		// Logged out, the dashboard shows its own sign-in prompt, which leads to
+		// the site's sign-in page. This wrapper printed core's bare
+		// wp_login_form() instead (Basecamp 10352980066).
 		if ( ! is_user_logged_in() ) {
-			return $this->render_login_form();
+			return $this->render_dashboard_section( '' );
 		}
 
 		// [wpss_account] is a WRAPPER around the one dashboard, not a second
@@ -286,49 +289,5 @@ class StandaloneAccountProvider implements AccountProviderInterface {
 		// Only set when the legacy URL actually named a page; otherwise leave the
 		// dashboard to its own role-aware default.
 		return $this->render_dashboard_section( $section );
-	}
-
-	/**
-	 * Render login form for non-logged-in users.
-	 *
-	 * @return string
-	 */
-	private function render_login_form(): string {
-		ob_start();
-		?>
-		<div class="wpss-account-login">
-			<h2><?php esc_html_e( 'Account Login', 'wp-sell-services' ); ?></h2>
-			<p><?php esc_html_e( 'Please log in to access your account.', 'wp-sell-services' ); ?></p>
-
-			<?php wp_login_form( array( 'redirect' => $this->get_account_url() ) ); ?>
-
-			<p class="wpss-register-link">
-				<?php esc_html_e( "Don't have an account?", 'wp-sell-services' ); ?>
-				<a href="<?php echo esc_url( wp_registration_url() ); ?>">
-					<?php esc_html_e( 'Register', 'wp-sell-services' ); ?>
-				</a>
-			</p>
-		</div>
-
-		<style>
-			.wpss-account-login {
-				max-width: 400px;
-				margin: 40px auto;
-				padding: 30px;
-				/* Surface token, not the literal white - see design-system.css. */
-				background: var(--wpss-surface, #fff);
-				border: 1px solid var(--wpss-border, #e5e5e5);
-				border-radius: 8px;
-			}
-			.wpss-account-login h2 {
-				margin-top: 0;
-			}
-			.wpss-register-link {
-				text-align: center;
-				margin-top: 20px;
-			}
-		</style>
-		<?php
-		return ob_get_clean();
 	}
 }
