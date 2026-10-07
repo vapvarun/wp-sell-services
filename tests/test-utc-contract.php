@@ -174,18 +174,31 @@ try {
 		'cursor'  => array( 'orders' => $first - 1 ),
 	) + $state;
 
-	// Site ahead of UTC (+05:30). A value this recent could be either, so it
-	// counts as new only with a row created since the plan beside it.
+	// Site ahead of UTC (+05:30). A value this recent could be old site time
+	// or new UTC. The plan writes down the ones that exist before 1.8.0 writes
+	// anything, so afterwards only those are converted. The earlier rule
+	// looked for an audit entry beside the value: a vendor note, a deadline
+	// extension or a profile save leaves none, and was shifted (QA bounce).
 	$recent      = gmdate( 'Y-m-d H:i:s', $now - 60 );
 	$old_in_band = $seed( 'standalone', '2026-03-10 10:00:00', array( 'started_at' => $recent ) );
-	$paid_since  = $seed( 'standalone', '2026-03-10 10:00:00', array( 'paid_at' => $recent ) );
+	$paid_since  = $seed( 'standalone', '2026-03-10 10:00:00' );
+	$noted       = $seed( 'standalone', '2026-03-10 10:00:00' );
+	$late_values = new ReflectionMethod( UtcMigration::class, 'late_values' );
+	$late_values->setAccessible( true );
+	$ahead         = $plan( $old_in_band, $noted );
+	$ahead['late'] = array_filter(
+		$late_values->invoke( null, array( 'orders' ), $ahead['started'] ),
+		static fn( $key ) => in_array( (int) explode( ':', $key )[1], array( $old_in_band, $paid_since, $noted ), true ),
+		ARRAY_FILTER_USE_KEY
+	);
+	// Now 1.8.0 writes: one order is paid, another only gets a vendor note.
 	$wpdb->query( $wpdb->prepare( "UPDATE {$orders} SET paid_at = %s WHERE id = %d", gmdate( 'Y-m-d H:i:s', $now - 30 ), $paid_since ) );
-	$wpdb->insert( $audit, array( 'event_type' => 'order.status_change', 'object_type' => 'order', 'object_id' => $paid_since, 'created_at' => gmdate( 'Y-m-d H:i:s', $now - 30 ) ) );
-	$audit_row = (int) $wpdb->insert_id;
-	$run( $plan( $old_in_band, $paid_since ) );
-	$check( 'site +05:30: a paid_at written since the plan, with its audit entry, is left alone', gmdate( 'Y-m-d H:i:s', $now - 30 ) === $paid_at( $paid_since ) && '2026-03-10 04:30:00' === $row( $paid_since )->created_at );
-	$check( '  a recent site-time value with nothing new beside it still converts', gmdate( 'Y-m-d H:i:s', $now - 60 - 19800 ) === $row( $old_in_band )->started_at );
-	$wpdb->delete( $audit, array( 'id' => $audit_row ) );
+	$wpdb->query( $wpdb->prepare( "UPDATE {$orders} SET vendor_notes = 'note', updated_at = %s WHERE id = %d", gmdate( 'Y-m-d H:i:s', $now - 20 ), $noted ) );
+	$run( $ahead );
+	$check( 'site +05:30: the plan recorded the one value that already read late', array( "orders:{$old_in_band}:started_at" ) === array_keys( $ahead['late'] ) );
+	$check( '  a paid_at written since the plan is left alone', gmdate( 'Y-m-d H:i:s', $now - 30 ) === $paid_at( $paid_since ) && '2026-03-10 04:30:00' === $row( $paid_since )->created_at );
+	$check( '  an updated_at written since the plan with no audit entry is left alone', gmdate( 'Y-m-d H:i:s', $now - 20 ) === $row( $noted )->updated_at && '2026-03-10 04:30:00' === $row( $noted )->created_at );
+	$check( '  the recent site-time value the plan recorded still converts', gmdate( 'Y-m-d H:i:s', $now - 60 - 19800 ) === $row( $old_in_band )->started_at );
 
 	// Site behind UTC (New York): nothing written before the plan can read
 	// later than the plan, so the value alone decides.

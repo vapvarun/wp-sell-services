@@ -176,6 +176,7 @@ class UtcMigration {
 		}
 
 		$nothing_to_do = $site_is_utc && 0 === $server_offset;
+		$started       = gmdate( 'Y-m-d H:i:s' );
 
 		return array(
 			'status'        => $nothing_to_do ? 'done' : 'pending',
@@ -184,7 +185,101 @@ class UtcMigration {
 			'cutover'       => $cutover,
 			'cursor'        => array(),
 			'meta_done'     => $site_is_utc,
-			'started'       => gmdate( 'Y-m-d H:i:s' ),
+			'started'       => $started,
+			'late'          => $nothing_to_do ? array() : self::late_values( array_keys( $cutover ), $started ),
+		);
+	}
+
+	/**
+	 * Every stored value that already reads later than now, recorded at the plan.
+	 *
+	 * Where the site or the database server runs ahead of UTC, a value written
+	 * in the last few hours reads, in UTC, as a time that has not come yet.
+	 * Once 1.8.0 starts writing, its own (correct) values land in that same
+	 * band, and nothing on a row says which is which. Guessing from other
+	 * tables converted a 1.8.0 write a second time (Basecamp 10351460106).
+	 *
+	 * So the old ones are written down here, before 1.8.0 writes anything:
+	 * afterwards a value in the band is old only if it is the value this list
+	 * holds for that row and column. Behind UTC the list is empty.
+	 *
+	 * ponytail: kept in the state option. It holds only rows touched in the
+	 * hours before the update (at most the UTC offset), so it stays small; a
+	 * side table if a site ever proves otherwise.
+	 *
+	 * @param string[] $tables  Tables that exist, without prefix.
+	 * @param string   $started The plan's start, UTC.
+	 * @return array<string, string[]> "table:id:column" => values.
+	 */
+	private static function late_values( array $tables, string $started ): array {
+		global $wpdb;
+
+		$late = array();
+		$maps = self::LOCAL_COLUMNS + self::SERVER_COLUMNS;
+
+		foreach ( $tables as $table ) {
+			$columns = $maps[ $table ];
+			$blobs   = self::blob_columns( $table );
+			$name    = $wpdb->prefix . 'wpss_' . $table;
+			$where   = implode( ' OR ', array_map( static fn( $column ) => "{$column} >= %s", $columns ) );
+			$select  = implode( ', ', array_merge( array( 'id' ), $columns, $blobs ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- columns are class constants; one placeholder per column.
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT {$select} FROM {$name} WHERE {$where}", array_fill( 0, count( $columns ), $started ) ), ARRAY_A );
+
+			foreach ( $rows as $row ) {
+				foreach ( $columns as $column ) {
+					if ( (string) $row[ $column ] >= $started ) {
+						$late[ "{$table}:{$row['id']}:{$column}" ] = array( (string) $row[ $column ] );
+					}
+				}
+
+				// A row touched that recently may carry recent times in its JSON too.
+				foreach ( $blobs as $blob ) {
+					preg_match_all( '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/', (string) $row[ $blob ], $found );
+					$recent = array_values( array_filter( array_unique( $found[0] ), static fn( $value ) => $value >= $started ) );
+
+					if ( $recent ) {
+						$late[ "{$table}:{$row['id']}:{$blob}" ] = $recent;
+					}
+				}
+			}
+		}
+
+		foreach ( self::meta_sets() as list( $meta_table, $id_column, $key ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT {$id_column} AS id, meta_value FROM {$meta_table} WHERE meta_key = %s AND meta_value >= %s", $key, $started ), ARRAY_A ) as $row ) {
+				$late[ "{$key}:{$row['id']}" ] = array( (string) $row['meta_value'] );
+			}
+		}
+
+		return $late;
+	}
+
+	/**
+	 * JSON columns of a table that hold site-time datetimes.
+	 *
+	 * @param string $table Table without prefix.
+	 * @return string[]
+	 */
+	private static function blob_columns( string $table ): array {
+		return array(
+			'orders'   => array( 'meta' ),
+			'disputes' => array( 'meta', 'evidence' ),
+			'messages' => array( 'read_by' ),
+		)[ $table ] ?? array();
+	}
+
+	/**
+	 * Plugin meta written in site time: table, id column, meta key.
+	 *
+	 * @return array<int, array{0:string,1:string,2:string}>
+	 */
+	private static function meta_sets(): array {
+		global $wpdb;
+
+		return array(
+			array( $wpdb->usermeta, 'umeta_id', '_wpss_vendor_since' ),
+			array( $wpdb->postmeta, 'meta_id', '_wpss_moderated_at' ),
 		);
 	}
 
@@ -352,15 +447,7 @@ class UtcMigration {
 		$name    = $wpdb->prefix . 'wpss_' . $table;
 		$cursor  = (int) ( $state['cursor'][ $table ] ?? 0 );
 		$cutover = (int) $state['cutover'][ $table ];
-		$extra   = array();
-
-		if ( 'orders' === $table ) {
-			$extra = array( 'platform', 'meta' );
-		} elseif ( 'disputes' === $table ) {
-			$extra = array( 'meta', 'evidence' );
-		} elseif ( 'messages' === $table ) {
-			$extra = array( 'read_by' );
-		}
+		$extra   = array_merge( 'orders' === $table ? array( 'platform' ) : array(), self::blob_columns( $table ) );
 
 		$keep   = in_array( $table, self::ON_UPDATE_TABLES, true ) && ! in_array( 'updated_at', $columns, true ) ? array( 'updated_at' ) : array();
 		$select = implode( ', ', array_merge( array( 'id' ), $columns, $extra, $keep ) );
@@ -376,7 +463,7 @@ class UtcMigration {
 				}
 				$mysql_stamped = 'updated_at' === $column && in_array( $table, self::ON_UPDATE_TABLES, true );
 
-				if ( self::written_since_plan( (string) $row[ $column ], $state, 'server' === $from || $mysql_stamped ) ) {
+				if ( self::written_since_plan( (string) $row[ $column ], $state, "{$table}:{$row['id']}:{$column}" ) ) {
 					continue;
 				}
 
@@ -397,7 +484,7 @@ class UtcMigration {
 				if ( 'platform' === $blob || empty( $row[ $blob ] ) ) {
 					continue;
 				}
-				$converted = self::convert_json( (string) $row[ $blob ], $blob, $state );
+				$converted = self::convert_json( (string) $row[ $blob ], $blob, $state, "{$table}:{$row['id']}:{$blob}" );
 				if ( null !== $converted ) {
 					$data[ $blob ] = $converted;
 				}
@@ -440,61 +527,29 @@ class UtcMigration {
 	 * Whether 1.8.0 itself wrote a value, after the plan was made.
 	 *
 	 * The cutover ids protect rows CREATED since the update. An older row the
-	 * new code has since touched - an order paid, started, messaged or
-	 * completed while the conversion was still queued - carries a UTC value in
-	 * a row the conversion still visits, and shifting it again put paid_at
-	 * hours into the future.
+	 * new code has since touched - an order paid, noted, messaged or completed
+	 * while the conversion was still queued - carries a UTC value in a row the
+	 * conversion still visits, and shifting it again moved it by the offset.
 	 *
-	 * Such a value reads between the plan's start and now, in UTC. On a site
-	 * (or database server) at or behind UTC nothing written before the plan
-	 * can read that late, so the test is exact. Ahead of UTC, a value written
-	 * in the hours just before the update reads that late too; there the value
-	 * counts as new only when a row created since the plan (an audit entry, a
-	 * notification, a message) was stamped in the same two seconds, which is
-	 * what a 1.8.0 write leaves behind.
+	 * Such a value reads between the plan's start and now, in UTC. At or
+	 * behind UTC nothing written before the plan can read that late, so that
+	 * alone decides it. Ahead of UTC a value from the hours before the update
+	 * reads that late too: those were recorded at the plan (late_values()),
+	 * and a value in the band is new unless it is the recorded one.
 	 *
-	 * ponytail: ahead of UTC, a post-plan write that created no such row
-	 * (marking a notification read) is still read as old and converted. A
-	 * per-row marker would close it; that is a schema change across 18 tables.
-	 *
-	 * @param string               $value         Stored datetime.
-	 * @param array<string, mixed> $state         State: started, cutover, server_offset.
-	 * @param bool                 $mysql_stamped Whether MySQL may have stamped the column.
+	 * @param string               $value Stored datetime.
+	 * @param array<string, mixed> $state State: started, late.
+	 * @param string               $key   The value's place, as late_values() names it.
 	 * @return bool
 	 */
-	private static function written_since_plan( string $value, array $state, bool $mysql_stamped ): bool {
-		global $wpdb;
-
+	private static function written_since_plan( string $value, array $state, string $key ): bool {
 		$started = (string) ( $state['started'] ?? '' );
 
 		if ( '' === $started || ! self::is_datetime( $value ) || $value < $started || $value > gmdate( 'Y-m-d H:i:s', time() + MINUTE_IN_SECONDS ) ) {
 			return false;
 		}
 
-		$stamp  = (int) strtotime( $value . ' UTC' );
-		$offset = $stamp - (int) strtotime( get_gmt_from_date( $value ) . ' UTC' );
-
-		if ( $mysql_stamped ) {
-			$offset = max( $offset, (int) ( $state['server_offset'] ?? 0 ) );
-		}
-
-		if ( $offset <= 0 ) {
-			return true;
-		}
-
-		foreach ( array( 'audit_log', 'notifications', 'messages' ) as $table ) {
-			if ( ! isset( $state['cutover'][ $table ] ) ) {
-				continue;
-			}
-
-			$name = $wpdb->prefix . 'wpss_' . $table;
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			if ( $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$name} WHERE id > %d AND created_at BETWEEN %s AND %s LIMIT 1", (int) $state['cutover'][ $table ], gmdate( 'Y-m-d H:i:s', $stamp - 2 ), gmdate( 'Y-m-d H:i:s', $stamp + 2 ) ) ) ) {
-				return true;
-			}
-		}
-
-		return false;
+		return ! in_array( $value, (array) ( $state['late'][ $key ] ?? array() ), true );
 	}
 
 	/**
@@ -570,9 +625,10 @@ class UtcMigration {
 	 * @param string               $json  JSON text.
 	 * @param string               $blob  Column name.
 	 * @param array<string, mixed> $state State, for written_since_plan().
+	 * @param string               $place The blob's place, as late_values() names it.
 	 * @return string|null New JSON, or null when nothing changed.
 	 */
-	private static function convert_json( string $json, string $blob, array $state = array() ): ?string {
+	private static function convert_json( string $json, string $blob, array $state, string $place ): ?string {
 		$data = json_decode( $json, true );
 
 		if ( ! is_array( $data ) ) {
@@ -584,15 +640,15 @@ class UtcMigration {
 		if ( 'read_by' === $blob ) {
 			// { user_id: datetime }.
 			foreach ( $data as $user => $when ) {
-				if ( is_string( $when ) && self::is_datetime( $when ) && ! self::written_since_plan( $when, $state, false ) ) {
+				if ( is_string( $when ) && self::is_datetime( $when ) && ! self::written_since_plan( $when, $state, $place ) ) {
 					$data[ $user ] = get_gmt_from_date( $when );
 				}
 			}
 		} else {
 			array_walk_recursive(
 				$data,
-				static function ( &$value, $key ) use ( $keys, $state ) {
-					if ( in_array( $key, $keys, true ) && is_string( $value ) && self::is_datetime( $value ) && ! self::written_since_plan( $value, $state, false ) ) {
+				static function ( &$value, $key ) use ( $keys, $state, $place ) {
+					if ( in_array( $key, $keys, true ) && is_string( $value ) && self::is_datetime( $value ) && ! self::written_since_plan( $value, $state, $place ) ) {
 						$value = get_gmt_from_date( $value );
 					}
 				}
@@ -624,21 +680,17 @@ class UtcMigration {
 	 * @param array<string, mixed> $samples Samples.
 	 * @param array<string, mixed> $state   State, for written_since_plan().
 	 * @return void
+	 * @throws \RuntimeException When a meta row could not be written.
 	 */
 	private static function convert_meta( bool $dry_run, array &$samples, array $state = array() ): void {
 		global $wpdb;
 
-		$sets = array(
-			array( $wpdb->usermeta, 'umeta_id', '_wpss_vendor_since' ),
-			array( $wpdb->postmeta, 'meta_id', '_wpss_moderated_at' ),
-		);
-
-		foreach ( $sets as list( $table, $id_column, $key ) ) {
+		foreach ( self::meta_sets() as list( $table, $id_column, $key ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT {$id_column} AS id, meta_value FROM {$table} WHERE meta_key = %s", $key ), ARRAY_A );
 
 			foreach ( $rows as $row ) {
-				if ( ! self::is_datetime( (string) $row['meta_value'] ) || self::written_since_plan( (string) $row['meta_value'], $state, false ) ) {
+				if ( ! self::is_datetime( (string) $row['meta_value'] ) || self::written_since_plan( (string) $row['meta_value'], $state, "{$key}:{$row['id']}" ) ) {
 					continue;
 				}
 				$new = get_gmt_from_date( (string) $row['meta_value'] );
@@ -647,8 +699,10 @@ class UtcMigration {
 						$samples[ $key ][] = $row['meta_value'] . ' -> ' . $new;
 					}
 					$samples[ $key . '#rows' ] = ( $samples[ $key . '#rows' ] ?? 0 ) + 1;
-				} else {
-					$wpdb->update( $table, array( 'meta_value' => $new ), array( $id_column => (int) $row['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_query_meta_value
+				} elseif ( false === $wpdb->update( $table, array( 'meta_value' => $new ), array( $id_column => (int) $row['id'] ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_query_meta_value
+					// As for a table row: abort, so the pass is rolled back and retried.
+					// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- an exception message for the log, never printed.
+					throw new \RuntimeException( sprintf( 'UTC conversion could not write %s %d: %s', $key, (int) $row['id'], $wpdb->last_error ) );
 				}
 			}
 		}
