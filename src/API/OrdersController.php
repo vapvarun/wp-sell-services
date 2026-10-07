@@ -1226,30 +1226,18 @@ class OrdersController extends RestController {
 
 		$requirements = wpss_get_service_requirements( (int) $order->service_id );
 
-		// Get submitted requirements from database table.
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_order_requirements';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$row = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT field_data, attachments, submitted_at FROM {$table} WHERE order_id = %d ORDER BY id DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
-				$order_id
-			)
-		);
-
-		$submitted = array();
-		if ( $row && ! empty( $row->field_data ) ) {
-			$decoded   = json_decode( $row->field_data, true );
-			$submitted = is_array( $decoded ) ? $decoded : array();
-		}
+		// The same read the order page uses, so attachments come back as
+		// records and a files-only submission counts as submitted
+		// (Basecamp 10380601755).
+		$submitted = $order->get_submitted_requirements();
 
 		return new WP_REST_Response(
 			array(
 				'template'     => $requirements,
-				'submitted'    => $submitted,
-				'status'       => empty( $submitted ) ? 'pending' : 'submitted',
-				'submitted_at' => $this->format_datetime( $row->submitted_at ?? null ),
+				'submitted'    => $submitted['data'],
+				'attachments'  => array_map( fn( $record ) => $this->prepare_file_for_response( $record, $order_id ), $submitted['attachments'] ),
+				'status'       => null === $submitted['submitted_at'] ? 'pending' : 'submitted',
+				'submitted_at' => $this->format_datetime( $submitted['submitted_at'] ),
 			)
 		);
 	}

@@ -725,14 +725,21 @@ function wpss_get_order_file_records( int $order_id ): array {
 		$wpdb->get_col( $wpdb->prepare( "SELECT attachments FROM {$wpdb->prefix}wpss_payment_receipts WHERE order_id = %d", $order_id ) ),
 	);
 
-	$records = array();
+	$records     = array();
+	$customer_id = null;
 
-	foreach ( $sets as $rows ) {
+	foreach ( $sets as $set => $rows ) {
 		foreach ( (array) $rows as $raw ) {
 			$decoded = json_decode( (string) $raw, true );
 
 			if ( ! is_array( $decoded ) ) {
 				continue;
+			}
+
+			// Requirement rows may hold bare media ids (see the normaliser).
+			if ( 1 === $set ) {
+				$customer_id ??= (int) ( wpss_get_order( $order_id )->customer_id ?? 0 );
+				$decoded       = wpss_normalize_requirement_attachments( $decoded, $customer_id );
 			}
 
 			foreach ( $decoded as $record ) {
@@ -742,6 +749,58 @@ function wpss_get_order_file_records( int $order_id ): array {
 				}
 			}
 		}
+	}
+
+	return $records;
+}
+
+/**
+ * A buyer's requirement attachments as file records, whatever shape was stored.
+ *
+ * Two writers stored bare media-library ids instead of records - a buyer
+ * request converted to an order, and REST POST /orders/{id}/requirements -
+ * while every reader indexes into each entry, so one int fatalled the order
+ * page (Basecamp 10380173025, 10380395139) and the REST reads dropped the
+ * file (Basecamp 10380601755). An id becomes the pre-1.7.0 record shape
+ * (id, name, url, type, size), which the readers and the file endpoint
+ * already serve, and migrate into the private store when opened.
+ *
+ * Only the buyer's own uploads are accepted: that migration deletes the
+ * public copy, so an id naming someone else's media must never become a
+ * record on this order.
+ *
+ * @since 1.8.0
+ *
+ * @param array<int,mixed> $entries     Stored entries: records or media ids.
+ * @param int              $customer_id The order's buyer.
+ * @return array<int,array<string,mixed>> Records only.
+ */
+function wpss_normalize_requirement_attachments( array $entries, int $customer_id ): array {
+	$records = array();
+
+	foreach ( $entries as $entry ) {
+		if ( is_array( $entry ) ) {
+			$records[] = $entry;
+			continue;
+		}
+
+		$attachment_id = is_numeric( $entry ) ? (int) $entry : 0;
+
+		if ( $attachment_id <= 0 || $customer_id <= 0
+			|| 'attachment' !== get_post_type( $attachment_id )
+			|| (int) get_post_field( 'post_author', $attachment_id ) !== $customer_id ) {
+			continue;
+		}
+
+		$path = (string) get_attached_file( $attachment_id );
+
+		$records[] = array(
+			'id'   => (string) $attachment_id,
+			'name' => '' !== $path ? wp_basename( $path ) : (string) get_post_field( 'post_title', $attachment_id ),
+			'url'  => (string) wp_get_attachment_url( $attachment_id ),
+			'type' => (string) get_post_mime_type( $attachment_id ),
+			'size' => '' !== $path && is_readable( $path ) ? (int) filesize( $path ) : 0,
+		);
 	}
 
 	return $records;
@@ -1024,7 +1083,12 @@ function wpss_rewrite_order_file_record( int $order_id, string $file_id, array $
 			$changed = false;
 
 			foreach ( $decoded as $i => $entry ) {
-				if ( is_array( $entry ) && isset( $entry['id'] ) && (string) $entry['id'] === $file_id ) {
+				// A requirement row may still hold the bare media id the
+				// record was built from; replacing it is what persists the
+				// migration.
+				$entry_id = is_array( $entry ) ? ( $entry['id'] ?? null ) : $entry;
+
+				if ( is_scalar( $entry_id ) && (string) $entry_id === $file_id ) {
 					$decoded[ $i ] = $updated;
 					$changed       = true;
 				}
