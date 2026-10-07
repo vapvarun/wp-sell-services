@@ -517,6 +517,14 @@ class CheckoutIntentService {
 			$gateway_id,
 			$transaction_id,
 			static function () use ( $order_id, $gateway_id, $transaction_id, $amount, $currency ): bool {
+				// Given back as unsettled (refund_unsettled()): the same rule as
+				// settle(), so a late webhook cannot mark an order paid with money
+				// the buyer already has back.
+				if ( get_transient( self::refunded_key( $gateway_id, $transaction_id ) ) ) {
+					wpss_log( sprintf( '%s webhook names order #%d, but transaction %s was refunded as unsettled. Not marking it paid.', $gateway_id, $order_id, $transaction_id ), 'warning' );
+					return false;
+				}
+
 				$paid = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_by_transaction_ids( array( $transaction_id ) );
 
 				if ( $paid && ! in_array( $order_id, array_map( static fn( $row ) => (int) $row->id, $paid ), true ) ) {

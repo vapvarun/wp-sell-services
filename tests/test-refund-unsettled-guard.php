@@ -85,6 +85,9 @@ try {
 	$intent = CheckoutIntent::order( $order_id, 23.60, $currency, 1, array() );
 	$result = $service->settle( $intent, 'stripe', $loose, 23.60, $currency );
 	$check( '  and cannot settle an order afterwards', empty( $result['success'] ) );
+	$wpdb->update( $table, array( 'payment_status' => 'pending', 'status' => 'pending_payment', 'transaction_id' => null ), array( 'id' => $order_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$check( '  nor through the webhook settle path', false === $service->settle_webhook_order( $order_id, 'stripe', $loose, 23.60, $currency ) && 'pending' === (string) $wpdb->get_var( $wpdb->prepare( "SELECT payment_status FROM {$table} WHERE id = %d", $order_id ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$wpdb->update( $table, array( 'payment_status' => 'paid', 'status' => 'in_progress', 'transaction_id' => $settled ), array( 'id' => $order_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 	// A refund the gateway refused leaves the charge free to settle on a retry.
 	$refused = 'pi_test_refused_' . wp_generate_password( 10, false, false );
