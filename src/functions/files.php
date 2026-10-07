@@ -1639,11 +1639,13 @@ add_filter( 'pre_trash_post', 'wpss_guard_proposed_request', 10, 2 );
 add_filter( 'pre_delete_post', 'wpss_guard_proposed_request', 10, 2 );
 
 /**
- * The same rule for a request sent to the trash by a status change.
+ * The same rule for a request changed out from under the guard above.
  *
- * Saving a post with the status "trash" never calls wp_trash_post(), so the
- * guard above is not asked (XML-RPC, a bulk edit, any wp_update_post()).
- * The request keeps the status it had.
+ * Saving a post with the status "trash" never calls wp_trash_post(), and
+ * saving it as another post type leaves a post neither the guard nor the file
+ * lock recognises as a request (XML-RPC, a bulk edit, any wp_update_post()).
+ * Asked of the post as it is stored, not as the save describes it: the
+ * request keeps its status and its type.
  *
  * @since 1.8.0
  *
@@ -1652,13 +1654,15 @@ add_filter( 'pre_delete_post', 'wpss_guard_proposed_request', 10, 2 );
  * @return array<string, mixed>
  */
 function wpss_guard_proposed_request_status( $data, $postarr ) {
-	if ( 'trash' !== ( $data['post_status'] ?? '' ) || 'wpss_request' !== ( $data['post_type'] ?? '' ) || empty( $postarr['ID'] ) ) {
+	$post = empty( $postarr['ID'] ) ? null : get_post( (int) $postarr['ID'] );
+
+	if ( ! $post || 'wpss_request' !== $post->post_type || 'trash' === $post->post_status || false !== wpss_guard_proposed_request( null, $post ) ) {
 		return $data;
 	}
 
-	$post = get_post( (int) $postarr['ID'] );
+	$data['post_type'] = $post->post_type;
 
-	if ( $post && 'trash' !== $post->post_status && false === wpss_guard_proposed_request( null, $post ) ) {
+	if ( 'trash' === ( $data['post_status'] ?? '' ) ) {
 		$data['post_status'] = $post->post_status;
 	}
 

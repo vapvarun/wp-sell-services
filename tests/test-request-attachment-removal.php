@@ -192,6 +192,9 @@ try {
 	wp_update_post( array( 'ID' => $request_id, 'post_status' => 'trash' ) );
 	clean_post_cache( $request_id );
 	$check( '  nor by saving it with the status trash', 'trash' !== get_post_status( $request_id ) );
+	wp_update_post( array( 'ID' => $request_id, 'post_type' => 'post' ) );
+	clean_post_cache( $request_id );
+	$check( '  nor turned into another post type to slip the rule', 'wpss_request' === get_post_type( $request_id ) && true === $service->is_file_locked( $third ) );
 
 	// With the proposal gone the request is untouched again and the file is free.
 	$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $proposal ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
