@@ -1207,7 +1207,9 @@
 	margin-bottom: 0;
 }
 
-.wpss-form-row label {
+.wpss-form-row label,
+.wpss-payout-fields label,
+.wpss-review-reply-form label {
 	display: block;
 	margin-bottom: 6px;
 	font-size: 13px;
@@ -1914,6 +1916,8 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
 	/* Not every theme resets box-sizing; without it 100% plus padding ran past the card. */
 	box-sizing: border-box;
 	padding: 10px 12px;
+	/* Browsers give a textarea a monospace font unless told otherwise. */
+	font-family: inherit;
 	font-size: 14px;
 	color: var(--wpss-gray-900);
 	background: var(--wpss-surface, #fff);
@@ -3965,6 +3969,18 @@ select.wpss-input option,
 
 .wpss-review-reply-form {
 	margin-top: var(--wpss-space-3, 12px);
+}
+
+/* The payout details sit outside the form row the fields above them use, so
+   they had no spacing or label style of their own: the submit button touched
+   the last field and the labels took the theme's size. */
+.wpss-payout-fields:not([hidden]) {
+	margin-top: 16px;
+}
+
+.wpss-payout-fields .wpss-form-group,
+.wpss-payout-fields .wpss-form-group:last-child {
+	margin-bottom: 16px;
 }
 
 .wpss-review-reply-form__row {

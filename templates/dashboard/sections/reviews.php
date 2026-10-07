@@ -75,10 +75,10 @@ $avg_rating   = $profile ? (float) $profile->rating : 0.0;
 					<?php include WPSS_PLUGIN_DIR . 'templates/partials/review-body.php'; ?>
 					<?php if ( ! $wpss_review->has_response() ) : ?>
 						<form class="wpss-review-reply-form" data-review-id="<?php echo esc_attr( (string) $wpss_review->id ); ?>">
-							<label class="wpss-form-label" for="wpss-review-reply-<?php echo esc_attr( (string) $wpss_review->id ); ?>">
+							<label for="wpss-review-reply-<?php echo esc_attr( (string) $wpss_review->id ); ?>">
 								<?php esc_html_e( 'Reply to this review', 'wp-sell-services' ); ?>
 							</label>
-							<textarea id="wpss-review-reply-<?php echo esc_attr( (string) $wpss_review->id ); ?>" name="reply" class="wpss-form-textarea" rows="3" required
+							<textarea id="wpss-review-reply-<?php echo esc_attr( (string) $wpss_review->id ); ?>" name="reply" class="wpss-textarea" rows="3" required
 								placeholder="<?php esc_attr_e( 'Thank the buyer or add context. Your reply is public.', 'wp-sell-services' ); ?>"></textarea>
 							<div class="wpss-review-reply-form__row">
 								<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--sm">
