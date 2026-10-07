@@ -635,6 +635,7 @@
         "template:partials/service-reviews",
         "template:partials/vendor-card",
         "template:partials/vendor-portfolio",
-        "template:wpss-fullwidth-template"
+        "template:wpss-fullwidth-template",
+        "admin_page:wpss-upgrade"
     ]
 }

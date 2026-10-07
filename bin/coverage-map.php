@@ -237,6 +237,19 @@ foreach ( $artefacts as $kind => $list ) {
 // Report, write, gate.
 // ---------------------------------------------------------------------------
 
+// Some artefacts exist only in some setups: the Free upgrade page when Pro is
+// inactive, the tip routes when tipping is on. An artefact this run cannot see
+// is neither stale nor newly covered - it belongs to another environment, so
+// the baseline keeps it and is the union of every setup it was written in.
+$wpss_cov_baseline = (array) ( json_decode( (string) @file_get_contents( $wpss_cov_dir . 'audit/coverage-baseline.json' ), true )['uncovered'] ?? array() );
+$wpss_cov_present  = array();
+foreach ( $map as $kind => $items ) {
+	foreach ( array_keys( $items ) as $name ) {
+		$wpss_cov_present[ $kind . ':' . $name ] = true;
+	}
+}
+$wpss_cov_elsewhere = array_values( array_filter( $wpss_cov_baseline, static fn( $id ) => ! isset( $wpss_cov_present[ $id ] ) ) );
+
 $uncovered = array();
 $total     = 0;
 $hit       = 0;
@@ -254,20 +267,19 @@ printf( "%-11s %4d / %4d covered  (%5.1f%%)\n", 'TOTAL', $hit, $total, $total ? 
 
 if ( 'write' === $wpss_cov_mode ) {
 	file_put_contents( $wpss_cov_dir . 'audit/coverage.json', wp_json_encode( array( 'artefacts' => $map ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n" );
-	file_put_contents( $wpss_cov_dir . 'audit/coverage-baseline.json', wp_json_encode( array( '_doc' => 'Artefacts no check names yet. bin/coverage-map.php check fails when this list grows or goes stale. Shrink it by adding checks; never add to it by hand.', 'uncovered' => $uncovered ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n" );
+	file_put_contents( $wpss_cov_dir . 'audit/coverage-baseline.json', wp_json_encode( array( '_doc' => 'Artefacts no check names yet. bin/coverage-map.php check fails when this list grows or goes stale. Shrink it by adding checks; never add to it by hand.', 'uncovered' => array_values( array_unique( array_merge( $uncovered, $wpss_cov_elsewhere ) ) ) ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n" );
 	echo "Wrote audit/coverage.json and audit/coverage-baseline.json\n";
 }
 
 if ( 'check' === $wpss_cov_mode ) {
-	$baseline = (array) ( json_decode( (string) @file_get_contents( $wpss_cov_dir . 'audit/coverage-baseline.json' ), true )['uncovered'] ?? array() );
-	$new      = array_diff( $uncovered, $baseline );
-	$stale    = array_diff( $baseline, $uncovered );
+	$new   = array_diff( $uncovered, $wpss_cov_baseline );
+	$stale = array_diff( $wpss_cov_baseline, $uncovered, $wpss_cov_elsewhere );
 
 	foreach ( $new as $id ) {
 		echo "FAIL  uncovered and not in the baseline: {$id} (add a check that names it)\n";
 	}
 	foreach ( $stale as $id ) {
-		echo "FAIL  baseline lists {$id}, which is now covered or gone (run it with write to shrink the baseline)\n";
+		echo "FAIL  baseline lists {$id}, which is now covered (run it with write to shrink the baseline)\n";
 	}
 
 	if ( $new || $stale ) {
