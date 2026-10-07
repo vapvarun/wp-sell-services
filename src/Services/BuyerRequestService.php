@@ -178,9 +178,11 @@ class BuyerRequestService {
 	}
 
 	/**
-	 * Whether a request is still only its author's: open, with no proposal ever made.
+	 * Whether nobody but its author has acted on a request: no proposal was ever made on it.
 	 *
-	 * Counts withdrawn proposals too - the vendor read the brief either way.
+	 * Deliberately not the request's status: the author can change that, and a
+	 * gate must rest on something they cannot. A hired request always has a
+	 * proposal behind it. Withdrawn proposals count - the vendor read the brief.
 	 *
 	 * @since 1.8.0
 	 *
@@ -189,12 +191,6 @@ class BuyerRequestService {
 	 */
 	public function is_untouched( int $request_id ): bool {
 		global $wpdb;
-
-		$status = (string) get_post_meta( $request_id, '_wpss_status', true );
-
-		if ( '' !== $status && self::STATUS_OPEN !== $status ) {
-			return false;
-		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- a destructive step must not trust a cached count.
 		return ! $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM {$wpdb->prefix}wpss_proposals WHERE request_id = %d LIMIT 1", $request_id ) );
@@ -205,6 +201,8 @@ class BuyerRequestService {
 	 *
 	 * For anything that deletes media: such a file is the brief a proposal or
 	 * an order was written against, and must outlive the buyer's change of mind.
+	 * Looked up from the file, across every request that lists it, whoever
+	 * wrote the request and however old it is.
 	 *
 	 * @since 1.8.0
 	 *
@@ -212,19 +210,19 @@ class BuyerRequestService {
 	 * @return bool
 	 */
 	public function is_file_locked( int $attachment_id ): bool {
-		// ponytail: scans the uploader's 100 newest requests; index the list in a table if buyers ever hold more.
-		$requests = get_posts(
-			array(
-				'post_type'      => BuyerRequestPostType::POST_TYPE,
-				'post_status'    => 'any',
-				'author'         => (int) get_post_field( 'post_author', $attachment_id ),
-				'posts_per_page' => 100,
-				'fields'         => 'ids',
+		global $wpdb;
+
+		// The list is a serialized array of integers, so one file is `i:ID;`.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- a destructive step must not trust a cache.
+		$requests = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wpss_attachments' AND meta_value LIKE %s",
+				'%' . $wpdb->esc_like( 'i:' . $attachment_id . ';' ) . '%'
 			)
 		);
 
 		foreach ( $requests as $request_id ) {
-			if ( in_array( $attachment_id, array_map( 'absint', (array) get_post_meta( $request_id, '_wpss_attachments', true ) ), true ) && ! $this->is_untouched( (int) $request_id ) ) {
+			if ( ! $this->is_untouched( (int) $request_id ) ) {
 				return true;
 			}
 		}
@@ -240,8 +238,6 @@ class BuyerRequestService {
 	 * @return void
 	 */
 	private function save_meta( int $request_id, array $data ): void {
-		// Read before this call writes anything: the same update can carry a
-		// status, and a gate must not be answered by the request it is gating.
 		$untouched = $this->is_untouched( $request_id );
 
 		$meta_fields = array(
@@ -274,14 +270,14 @@ class BuyerRequestService {
 			// 10377676994). Only a file uploaded for a request by this author -
 			// never a profile photo or portfolio image passed in by ID - and only
 			// while nobody else has acted on the request. Once a vendor has
-			// proposed, or the request is hired, closed or expired, the files are
-			// the brief the proposals and the order were written against; taking
-			// one off the list then hides it but does not destroy it.
+			// proposed, the files are the brief the proposals and any order were
+			// written against; taking one off the list then hides it but does
+			// not destroy it. Nor is a file another request still lists.
 			$removed = array_diff( $before, $files );
 
 			if ( $removed && $untouched ) {
 				foreach ( $removed as $file ) {
-					if ( $owned( $file ) && 'request' === get_post_meta( $file, '_wpss_upload_context', true ) ) {
+					if ( $owned( $file ) && 'request' === get_post_meta( $file, '_wpss_upload_context', true ) && ! $this->is_file_locked( (int) $file ) ) {
 						wp_delete_attachment( $file, true );
 					}
 				}
