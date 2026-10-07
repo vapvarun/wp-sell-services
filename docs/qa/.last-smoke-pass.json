@@ -2,107 +2,409 @@
   "mode": "combo",
   "release_version": "1.8.0",
   "pro_version": "1.8.0",
-  "ran_at": "2026-10-07T08:19:11Z",
-  "ran_against": "791832d034d1db1bf66731ea90f2cbb962877439",
-  "pro_ran_against": "9eeca651e055e5d0f3510044e2bd8a49f0e0138a",
+  "ran_at": "2026-10-07T13:45:00Z",
+  "ran_against": "42cf7a5da2a648dd717ec19d11df19791e147755",
+  "pro_ran_against": "771d18bc269b454be61706dc7bb48cc6edc2740d",
   "theme": "reign-theme",
   "sections": {
-    "A_fresh_install": {"pass": 4, "fail": 1, "skipped": 0},
-    "B_upgrade": {"pass": 2, "fail": 0, "skipped": 1},
-    "C_core_flows": {"pass": 5, "fail": 0, "skipped": 8},
-    "D_regression_guards": {"pass": 14, "fail": 0, "skipped": 1},
-    "E_pro_smoke": {"pass": 6, "fail": 0, "skipped": 5},
-    "E2_environment": {"pass": 0, "fail": 0, "skipped": 2},
-    "F_cross_browser": {"pass": 3, "fail": 0, "skipped": 3},
-    "G_post_release": {"pass": 0, "fail": 0, "skipped": 1}
+    "A_fresh_install": {
+      "pass": 4,
+      "fail": 1,
+      "skipped": 0
+    },
+    "B_upgrade": {
+      "pass": 2,
+      "fail": 0,
+      "skipped": 1
+    },
+    "C_core_flows": {
+      "pass": 16,
+      "fail": 0,
+      "skipped": 8
+    },
+    "D_regression_guards": {
+      "pass": 6,
+      "fail": 1,
+      "skipped": 0
+    },
+    "E_pro_smoke": {
+      "pass": 4,
+      "fail": 0,
+      "skipped": 2
+    },
+    "S_pro_supplements": {
+      "pass": 2,
+      "fail": 0,
+      "skipped": 4
+    },
+    "E2_environment": {
+      "pass": 2,
+      "fail": 0,
+      "skipped": 2
+    },
+    "F_cross_browser": {
+      "pass": 3,
+      "fail": 1,
+      "skipped": 3
+    },
+    "G_post_release": {
+      "pass": 0,
+      "fail": 0,
+      "skipped": 1
+    }
   },
   "hard_fails": [],
   "failures": [
-    {"id": "A3-preflight-debug-log", "origin": "for", "expected": "wp wpss preflight shows no FAIL", "actual": "1 FAIL (83 pass): 'Fatals in debug.log - 7 entries', first being Uncaught ArgumentCountError from 05-Oct. All 7 are from earlier dev/contract-suite and ad-hoc eval runs, none from this walk. Preflight WARN: 16805 WPSS log entries.", "url": "wp wpss preflight", "role": "cli", "viewport": "n/a", "screenshot": ""},
-    {"id": "DBG-stripe-process-refund-typeerror", "origin": "from", "expected": "A malformed or amount-less Stripe payload is refused cleanly", "actual": "debug.log (before this walk, 07-Oct 02:51 UTC) holds Uncaught TypeError StripeGateway::parse_amount(): Argument #1 must be of type int, null given, called at StripeGateway.php:519 from process_refund() (StripeGateway.php:679), after 'Webhook recovery FAILED ... pi_other_store_1' and Undefined array key amount/currency warnings. NOT reproduced in this walk (no outbound HTTP).", "url": "src/Integrations/Stripe/StripeGateway.php:519", "role": "gateway webhook", "viewport": "n/a", "screenshot": ""},
-    {"id": "D3-suspended-message", "origin": "from", "expected": "A suspended vendor refused on money REST gets a message that says why", "actual": "403 wpss_not_vendor 'Only vendors can access this endpoint.' on all 7 money routes (refusal itself correct)", "url": "/wp-json/wpss/v1/earnings/summary", "role": "wpss_vendor_yuki set suspended", "viewport": "n/a", "screenshot": ""},
-    {"id": "DATA-updated-at-skew", "origin": "from", "expected": "created_at and updated_at both UTC", "actual": "Orders 859 and 860 (seeded 2026-09-23) have updated_at exactly 5h30 after created_at (07:05:49 vs 12:35:49), i.e. local-time writes. Rows written during this walk were UTC-correct, so this looks like pre-1.8.0 or seed data; no migration normalised it.", "url": "wp_wpss_orders ids 859, 860", "role": "db", "viewport": "n/a", "screenshot": ""},
-    {"id": "REST-float-noise", "origin": "from", "expected": "Money in REST JSON is a clean number", "actual": "wallet/balance and earnings/summary return available 68.700000000000003 (a _minor integer field sits beside it)", "url": "/wp-json/wpss/v1/wallet/balance", "role": "wpss_vendor_maya", "viewport": "n/a", "screenshot": ""},
-    {"id": "WOO-cart-page-redirect", "origin": "from", "expected": "On the Woo rail the plugin cart page is a coherent entry point", "actual": "/cart/ (plugin Cart page #8) 302s to the Woo cart (/cart-2/), which is empty, while the plugin REST cart holds items. The service-page Continue to Checkout path (Woo /checkout/) works. Likely by design, needs an owner call.", "url": "http://wp-sell-services.local/cart/", "role": "wpss_buyer_ella", "viewport": "1440", "screenshot": ""},
-    {"id": "COPY-proposal-accepted-open", "origin": "from", "expected": "Proposal accepted notification matches order state", "actual": "Seller notification says 'the order is now open' while the order is pending_payment", "url": "notifications", "role": "wpss_vendor_maya", "viewport": "n/a", "screenshot": ""},
-    {"id": "REQ-deadline-ignored", "origin": "from", "expected": "POST /buyer-requests honours deadline", "actual": "Sent deadline 2026-12-01, response deadline null (parameter name not confirmed, may simply be named differently)", "url": "/wp-json/wpss/v1/buyer-requests", "role": "wpss_buyer_ella", "viewport": "n/a", "screenshot": ""}
+    {
+      "id": "A3-preflight-debug-log",
+      "origin": "for",
+      "expected": "wp wpss preflight shows no FAIL",
+      "actual": "1 FAIL: 'Fatals in debug.log - 21 entries' (oldest 03-Sep wpss_get_pay_order_url TypeError). The new entries come from the contract-suite runs and ad-hoc eval in this walk, none from browser flows. Also WARN: 4 retired tables hold rows (buyer_requests 4, service_faqs 14, analytics_events 15) and login page not mapped in wpss_pages (admin notice 'Optional page Log In is missing or unpublished').",
+      "url": "wp wpss preflight",
+      "role": "cli",
+      "viewport": "n/a",
+      "screenshot": ""
+    },
+    {
+      "id": "TEST-addon-pricing-contract-fatal",
+      "origin": "for",
+      "expected": "tests/test-addon-pricing-contract.php prints ALL PASS",
+      "actual": "Fatal 'Cannot use object of type WP_Error as array' at test line 64. wpss_vendor[require_service_moderation]=true on this site, so the test's wp_insert_post(publish) is forced to pending and CheckoutIntentService::price_service_line() returns wpss_service_unavailable (409). Test assumes moderation off; not a pricing defect. Not re-run with moderation off: toggling the setting was blocked in this session.",
+      "url": "tests/test-addon-pricing-contract.php:64",
+      "role": "cli",
+      "viewport": "n/a",
+      "screenshot": ""
+    },
+    {
+      "id": "REST-float-noise",
+      "origin": "from",
+      "expected": "Money in REST JSON is a clean number",
+      "actual": "GET /wpss/v1/earnings/summary as wpss_vendor_maya returns pending_withdrawal 113.40000000000001 (a _minor integer sits beside it). Same class as the earlier wallet/balance float noise; wallet/balance now returns 272.12 / 158.72 clean.",
+      "url": "/wp-json/wpss/v1/earnings/summary",
+      "role": "wpss_vendor_maya",
+      "viewport": "n/a",
+      "screenshot": ""
+    },
+    {
+      "id": "TESTS-cleanup-sql-stale-columns",
+      "origin": "from",
+      "expected": "Contract-test teardown deletes its fixtures cleanly",
+      "actual": "debug.log during the suite: 'Unknown column order_id' on DELETE FROM wp_wpss_wallet_transactions WHERE order_id (orders 8251, 8252) and 'Unknown column data' on DELETE FROM wp_wpss_audit_log WHERE JSON_EXTRACT(data,...) (orders 8144-8146), so those fixtures are left behind; also 9 wpdb::prepare 'Unsupported value type (object)' notices at 13:25:42 whose caller was not identified. Test hygiene, not shipped code, but the guards leave rows on a shared site.",
+      "url": "tests/ (wallet_transactions / audit_log cleanup)",
+      "role": "cli",
+      "viewport": "n/a",
+      "screenshot": ""
+    }
   ],
   "untested": [
-    {"id": "A-fresh-pristine-install", "reason": "cannot run on this site", "needs": "pristine WP site"},
-    {"id": "B2-pre-1.7.0-order-file-migration", "reason": "no pre-1.7.0 legacy file on this install", "needs": "legacy upload fixture"},
-    {"id": "C-journey-02-dispute", "reason": "not walked in this run", "needs": "buyer, vendor, admin dispute walk"},
-    {"id": "C-journey-05-service-wizard", "reason": "not walked", "needs": "vendor wizard walk"},
-    {"id": "C-journey-08-mobile-session", "reason": "no mobile app device", "needs": "device or HTTP token walk"},
-    {"id": "C-catalog-tax-amount-match", "reason": "tax not enabled/not walked", "needs": "tax on, pay button vs gateway vs stored total"},
-    {"id": "C-tip-extension-phase-landing", "reason": "not walked", "needs": "paid tip, extension, milestone phase"},
-    {"id": "C-milestone-request-changes-resubmit", "reason": "not walked", "needs": "milestone contract fixture"},
-    {"id": "C-milestone-complete-summary", "reason": "not walked", "needs": "completed milestone contract"},
-    {"id": "C-buyer-brief-render", "reason": "not walked", "needs": "order with and without service questions"},
-    {"id": "C-journey-06-step4-guest-account", "reason": "requires checkout_account_creation on and creates users; default wall observed correct", "needs": "setting on, logged-out purchase"},
-    {"id": "D4-negative-balance", "reason": "no vendor with negative ledger balance exists; creating one needs a direct ledger write", "needs": "refund clawback fixture"},
-    {"id": "E2-cloud-storage-upload", "reason": "env: outbound HTTP unavailable, active provider is local", "needs": "provider credentials, outbound HTTP"},
-    {"id": "E3-woo-fee-only-pay-order-no-subtotal-0", "reason": "not walked", "needs": "Woo rail tip/extension/phase pay-order"},
-    {"id": "S1-license-cleared-behaviour", "reason": "would alter license state", "needs": "license toggle"},
-    {"id": "S2-woo-refund-reverses-children", "reason": "not walked", "needs": "Woo refund on parent with children"},
-    {"id": "S2-EDD-FluentCart", "reason": "plugins not installed", "needs": "EDD/FluentCart install"},
-    {"id": "E2-real-gateways-stripe-paypal-razorpay", "reason": "env: outbound HTTP unavailable (Stripe checkout produced admin-ajax 502 as predicted)", "needs": "outbound HTTP"},
-    {"id": "E2-currency-rate-fetch", "reason": "env: outbound HTTP unavailable; display conversion seen only from cached rates", "needs": "outbound HTTP"},
-    {"id": "F-dark-mode", "reason": "deferred", "needs": "Reign dark toggle pass"},
-    {"id": "F-rtl", "reason": "deferred", "needs": "RTL locale pass"},
-    {"id": "F-cross-browser", "reason": "Chromium only", "needs": "Firefox/WebKit"},
-    {"id": "G-post-release", "reason": "pre-release run", "needs": "after tagging"},
-    {"id": "D-item3-server-side-file-removal", "reason": "UI shows lock note and no remove control; the delete guard was not exercised to avoid deleting a fixture file", "needs": "attempt delete via ajax on locked file"}
+    {
+      "id": "A-fresh-pristine-install",
+      "reason": "cannot run on this site",
+      "needs": "pristine WP site"
+    },
+    {
+      "id": "B2-pre-1.7.0-order-file-migration",
+      "reason": "no pre-1.7.0 legacy file; test-legacy-file-migration-contract.php 12/12 passes but is not a walk",
+      "needs": "legacy upload fixture"
+    },
+    {
+      "id": "C-journey-02-dispute",
+      "reason": "not walked (test-dispute-state-machine.php passes)",
+      "needs": "buyer, vendor, admin dispute walk"
+    },
+    {
+      "id": "C-journey-05-service-wizard",
+      "reason": "not walked",
+      "needs": "vendor wizard walk"
+    },
+    {
+      "id": "C-journey-08-mobile-session",
+      "reason": "no device",
+      "needs": "device or HTTP token walk"
+    },
+    {
+      "id": "C-tip-extension-phase-landing",
+      "reason": "not walked",
+      "needs": "paid tip, extension, milestone phase"
+    },
+    {
+      "id": "C-milestone-request-changes-resubmit",
+      "reason": "not walked (test-milestone-revision-contract.php passes)",
+      "needs": "milestone fixture"
+    },
+    {
+      "id": "C-milestone-complete-summary",
+      "reason": "not walked",
+      "needs": "completed milestone contract"
+    },
+    {
+      "id": "C-buyer-brief-render",
+      "reason": "not walked with and without service questions",
+      "needs": "two orders"
+    },
+    {
+      "id": "C-journey-06-step4-guest-account",
+      "reason": "needs checkout_account_creation on and creates users",
+      "needs": "logged-out purchase"
+    },
+    {
+      "id": "E2-cloud-storage-upload",
+      "reason": "no storage provider active, no outbound HTTP",
+      "needs": "provider credentials"
+    },
+    {
+      "id": "E2-real-gateways-stripe-paypal-razorpay",
+      "reason": "no live sandbox purchase run; repo contract scripts pass (test-rest-pay-order-confirm-contract, test-stripe-webhook-recovery, test-gateway-*, test-refund-unsettled-guard)",
+      "needs": "sandbox keys and outbound HTTP"
+    },
+    {
+      "id": "E2-currency-rate-fetch",
+      "reason": "outbound HTTP",
+      "needs": "rate source"
+    },
+    {
+      "id": "E3-woo-fee-only-pay-order-no-subtotal-0",
+      "reason": "rail is standalone; Pro test-fee-only-pay-order-contract.php self-skips (needs woocommerce rail)",
+      "needs": "Woo rail"
+    },
+    {
+      "id": "S1.1-license-cleared",
+      "reason": "would alter license state",
+      "needs": "license toggle"
+    },
+    {
+      "id": "S1.2-free-deactivated",
+      "reason": "deactivating Free was blocked by the session permission layer this run (verified in the previous smoke)",
+      "needs": "permission to deactivate Free"
+    },
+    {
+      "id": "S2-woo-rail-and-refund-children",
+      "reason": "rail kept standalone; Pro test-woo-line-money-contract.php 21 passed and test-beta-rails.php 33 passed are not walks",
+      "needs": "Woo rail walk"
+    },
+    {
+      "id": "S2-EDD-FluentCart",
+      "reason": "plugins not installed",
+      "needs": "EDD/FluentCart"
+    },
+    {
+      "id": "S6-display-currency",
+      "reason": "not walked in this run",
+      "needs": "rates configured, switcher"
+    },
+    {
+      "id": "F-dark-mode",
+      "reason": "not walked",
+      "needs": "Reign dark toggle pass"
+    },
+    {
+      "id": "F-rtl",
+      "reason": "not walked",
+      "needs": "RTL locale"
+    },
+    {
+      "id": "F-cross-browser",
+      "reason": "Chromium only",
+      "needs": "Firefox/WebKit"
+    },
+    {
+      "id": "G-post-release",
+      "reason": "pre-release run",
+      "needs": "after tagging"
+    },
+    {
+      "id": "D-live-suspension-negative-balance-offline-rename",
+      "reason": "D3/D4/D5 were proven by repo contract scripts (test-money-route-gates, test-negative-balance-contract, test-offline-methods-contract) not by mutating state in a browser",
+      "needs": "state-changing walk"
+    }
   ],
   "passes": [
-    {"id": "A1", "observed": "wp plugin list: wp-sell-services 1.8.0, wp-sell-services-pro 1.8.0 active; deactivate+activate both gave no fatal"},
-    {"id": "A2", "observed": "/, /dashboard/, /vendors/, /buyer-request/ return 200"},
-    {"id": "A4", "observed": "wpss_db_version=1.8.0 equals SchemaManager::DB_VERSION; all 19 CORE_TABLES exist"},
-    {"id": "A5", "observed": "6 retired tables (buyer_requests, service_faqs, ... analytics_events) are absent, not created"},
-    {"id": "B1", "observed": "reactivate both: row counts for orders/ledger/audit/notifications unchanged, pages option unchanged"},
-    {"id": "B3", "observed": "order count and totals unchanged across reactivation"},
-    {"id": "C-j01", "observed": "request -> 2 proposals (one email-less REST) -> 'New proposal received' notifications with price and deep link; accept A: order pending_payment platform=request, A got 'proposal accepted' naming order, B got 'Proposal not selected' and status rejected; checkout and admin show 'Request: <title>'"},
-    {"id": "C-j03", "observed": "pages option maps services/dashboard/become_vendor/checkout/cart/vendors/registration/login; preflight 83 pass"},
-    {"id": "C-j04", "observed": "vendors directory and Maya profile load, no horizontal scroll at 390"},
-    {"id": "C-j06", "observed": "standalone: /service-checkout/210 contained (wrapper max-width none, no scroll at 1440/390), Test gateway pays $35.00 -> order total 35, platform_fee 3.50, vendor_earnings 31.50, payment_method=test, paid; logged-out sees sign-in wall by default; pay_order offline -> payment_method offline, admin Awaiting Confirmation box, Mark as Paid dialog -> pending_requirements/paid, no ledger credit yet"},
-    {"id": "C-j07", "observed": "service page gallery shows image first with 3 thumbnails (screenshot vacation-service-1440.png)"},
-    {"id": "D1", "observed": "Ella: cards 37/2/3/10/13 equal chip counts 37/2/3/10/13 (milestone and tip sub-orders excluded in both)"},
-    {"id": "D2", "observed": "Pro Analytics Top Services lists only real services; no deleted/service_id=0 row despite 13 such orders for Ella"},
-    {"id": "D3", "observed": "vendor set suspended: earnings/summary, earnings/history, wallet/balance, wallet/transactions, withdrawals, withdrawals/methods, wallet/withdrawals and POST withdrawals all 403; reactivated"},
-    {"id": "D5", "observed": "order snapshot 'SMOKE Bank Transfer A' kept on order page after the method was renamed and then deleted in settings; option restored byte-identical"},
-    {"id": "N1-dates", "observed": "with site tz Asia/Kolkata: order date 1:39 pm, cancelled 1:40 PM on buyer page, admin order screen and audit log all agree; DB created_at 08:09:53, updated_at 08:10:07 (UTC); tz restored"},
-    {"id": "N2-vacation", "observed": "Maya on vacation: 4 services gone from archive, search, Related services on Sofia's service, shortcode, block and REST; Ella's cart item flagged unavailable 'This seller is away', checkout 409, add-to-cart 409; service page shows disabled Continue and 'Seller is on vacation' message; vacation turned off"},
-    {"id": "N3-buyer-requests", "observed": "Ella: request 786 (0 proposals) shows View Offers, Close, Edit, Delete; request 6676 (1 proposal) shows Close, Edit, no Delete, and its edit form says 'A seller has sent a proposal, so the files above stay on the request' with no remove control"},
-    {"id": "N4-report", "observed": "service and vendor Report submitted as Ella -> wp_wpss_reports ids 20 and 21 (reporter 72, status open) and rows visible in wp-admin Member Reports; logged out, both links go to /login/?redirect_to=<same page> and login form carries the redirect"},
-    {"id": "N5-confirm-dialogs", "observed": "Member Reports Suspend, Withdrawals Approve and Reject, Vendors bulk Suspend: plugin dialog opens, focus on Cancel (note textarea for withdrawals), Esc closes and returns focus to trigger, Enter immediately changes nothing (withdrawal 1 still pending, vendor still active), zero native dialogs"},
-    {"id": "N6-cancel", "observed": "Ella cancelled an order with reason 'Taking too long' and details; buyer and vendor order pages show both; admin Audit Log has 'Order cancelled' and 'status changed ... Taking too long - details'"},
-    {"id": "N7-earnings", "observed": "stat cards intact (no overflow, no mid-word breaks, overflow-wrap anywhere only) at 1440, 1280, 390; PayPal email field to Request Withdrawal button gap 16px; screenshot earnings-390.png"},
-    {"id": "N8-reviews", "observed": "'Reply to this review' label above the textarea, textarea width equals container (742px at 1440, 302px at 390)"},
-    {"id": "N9-second-member", "observed": "Ben: REST /orders/{938,939,1033,860} 403 wpss_not_owner (own order 856 200); /dashboard/orders/938/ shows only Ben's own list (Ella's order number absent); edit-request 6676 shows 'You do not have permission to edit this request' with no form; private file URL 404 for Ben and for non-participant vendor Maya, 400 for logged out, 200 for the two participants; files live outside web root (direct URL 404)"},
-    {"id": "N10-login-page", "observed": "Settings > Pages has Log In select with 'None (use this site's own login)'; with login='' all Log in links go to /wp-login.php (with redirect_to on request pages); restored 6217"},
-    {"id": "E1", "observed": "Pro Analytics, License, Welcome and settings tabs load 200 with no fatal; settings carry Stripe Connect, PayPal payouts, Commission Rules, Subscription Plans, Cloud Storage and Wallet sections; Subscriptions menu intentionally hidden (403) while recurring is deferred"},
-    {"id": "S1.2", "observed": "Free deactivated: front 200, wp-admin shows 'WP Sell Services Pro requires WP Sell Services (free version)' notice, no fatal"},
-    {"id": "S2.1-catalog", "observed": "Woo rail (auto): service page Continue to Checkout -> /checkout/ Woo, COD order total 35.00 -> wpss order platform=woocommerce total 35, platform_fee 3.50 (10% of pre-tax)"},
-    {"id": "S3.2", "observed": "wallet/balance 106.5 equals wpss_get_ledger_balance(55); only the internal provider registered and active"},
-    {"id": "S6", "observed": "service page shows converted INR with 'Prices shown in INR are approximate. You will be charged in USD', vendor earnings stay in USD"},
-    {"id": "F1-390", "observed": "no horizontal overflow at 390 on 16 public, buyer and vendor surfaces"},
-    {"id": "F4-rest", "observed": "227 wpss/v1 handlers, all carry a permission callback; the 33 public ones are catalog reads and auth routes; 25 public GETs all 200"}
+    {
+      "id": "A1",
+      "observed": "wp plugin list: wp-sell-services 1.8.0, wp-sell-services-pro 1.8.0 active; deactivate + activate both: Success, no fatal"
+    },
+    {
+      "id": "A2",
+      "observed": "curl 200 for /, /dashboard/, /vendors/, /buyer-request/, /service-cart/, /dashboard/orders/, /become-a-vendor/"
+    },
+    {
+      "id": "A4",
+      "observed": "wpss_db_version=1.8.0 equals SchemaManager::DB_VERSION; all 19 CORE_TABLES exist (missing=0)"
+    },
+    {
+      "id": "A5",
+      "observed": "preflight reports retired tables (buyer_requests, service_faqs, service_platform_map, analytics_events) as 'Retired table ... nothing reads it' warnings rather than creating them"
+    },
+    {
+      "id": "B1",
+      "observed": "after deactivate+activate: orders=309, audit_log=4619, notifications=4194 and wpss_pages md5 identical before and after"
+    },
+    {
+      "id": "B3",
+      "observed": "order count 309 unchanged across reactivation, no money rewrite"
+    },
+    {
+      "id": "PRIO-a-vendor-order",
+      "observed": "Maya Messages -> conversation card -> /dashboard/orders/8288/ (and /dashboard/sales/8288/): no fatal, sidebar and footer present, 'Files the buyer attached' lists smoke-brief.png, link admin-post.php?action=wpss_order_file&order=8288&file=8346 returns 200 image/png 70 bytes; 390px scrollWidth 390 with footer; sales page shows Deliver Work after requirements submitted. Screenshots smoke180-vendor-order-1280.png, smoke180-vendor-order-390.png, smoke180-sales-order-1280.png"
+    },
+    {
+      "id": "PRIO-a-buyer-order-rest",
+      "observed": "Ella buyer order /dashboard/orders/8288/ renders (Order Requirements Submitted, smoke-req.pdf link 200); GET /wp-json/wpss/v1/orders/8288/requirements 200 status 'submitted' with attachments [smoke-req.pdf]; REST /orders/8288/files/8346 200 before submission; 390 scrollWidth 390; screenshots smoke180-buyer-order-1280.png and -390.png"
+    },
+    {
+      "id": "PRIO-a-admin-order",
+      "observed": "admin.php?page=wpss-orders&action=view&order_id=8288 200, no fatal, lists 'Files the buyer attached' smoke-req.pdf, download 200; screenshot smoke180-admin-order.png"
+    },
+    {
+      "id": "PRIO-a-test-script",
+      "observed": "tests/test-requirement-attachment-records.php: ALL PASS (9 checks incl. order page renders without a fatal and lists the attached file)"
+    },
+    {
+      "id": "C-j01-request-flow",
+      "observed": "Ella POST /media (context request) 201 id 8346 + POST /buyer-requests 201 id 8347 with attachments and deadline 2026-12-01 (deadline echoed, REQ-deadline-ignored from last run not reproduced); Maya POST proposal 201 id 545; Ella accepted via the plugin confirm modal -> /service-checkout/pay/8288/ Pay $70.80; Test Gateway -> requirements form; requirement upload with file -> order in_progress"
+    },
+    {
+      "id": "C-j06-standalone-tax",
+      "observed": "Ben catalog checkout /service-checkout/951 Pay $88.50 (no scroll 1280/390); Test Gateway -> order 8305 total 88.500, subtotal 75, tax 13.5, platform_fee 7.500 (10% of pre-tax), vendor_earnings 67.500, paid. Request order 8288: total 70.80, platform_fee 6.00 (10% of 60), vendor_earnings 54.00"
+    },
+    {
+      "id": "C-access-control",
+      "observed": "Ben: REST /orders/8288, /requirements, /files/<id> all 403, file URL 404, /dashboard/orders/8288/ does not show the order; non-participant vendor Sofia REST 403 and file 404; logged out file URL 400"
+    },
+    {
+      "id": "C-j04-vendors",
+      "observed": "/vendors/ and 19 other public/buyer/vendor surfaces return 200 at 390 with scrollWidth 390 and no fatal"
+    },
+    {
+      "id": "D1",
+      "observed": "appqa_buyer (most orders): cards Total 31 / Active 5 / Completed 3 / Awaiting 5 / Disputed-or-needs-attention 10 equal chips All 31 / Active 5 / Completed 3 / Awaiting payment 5 / Needs attention 10 (Cancelled 8 has no card); screenshot smoke180-d1-orders.png"
+    },
+    {
+      "id": "D2",
+      "observed": "wp-admin Analytics Top Services lists dev_f1 Express logo sketch and dev_f1 Cart second service only; no deleted/service_id=0 row despite 16 service_id=0 orders in the table"
+    },
+    {
+      "id": "D3-D4-D5-contracts",
+      "observed": "repo scripts test-money-route-gates, test-negative-balance-contract, test-offline-methods-contract all PASS (contract evidence, not a browser mutation)"
+    },
+    {
+      "id": "D-suite",
+      "observed": "94 of 95 tests/test-*.php in Free exit 0 with zero FAIL lines; the one fatal is TEST-addon-pricing-contract-fatal. Includes test-gateway-isolation, test-gateway-refund-seam, test-gateway-site-ownership, test-refund-unsettled-guard, test-stripe-webhook-recovery, test-rest-pay-order-confirm-contract, test-order-files-contract, test-attachment-privacy, test-legacy-file-migration-contract (12 passed)"
+    },
+    {
+      "id": "E1",
+      "observed": "wp-admin: Moderation, Review Moderation, Disputes, Vendors, Orders, Withdrawals, Analytics, Audit Log, My Notifications, Settings, License, Member Reports all 200 with no fatal/warning; Settings page carries Stripe Connect, PayPal payouts, Commission Rules, Subscription Plans, Cloud Storage and Wallet sections; Analytics shows Revenue $138.00, 14 orders, Top Services and Top Vendors"
+    },
+    {
+      "id": "E-pro-tests",
+      "observed": "Pro tests: test-beta-rails 33, test-connect-refund-observation 11, test-payout-integrity 21, test-pro-followups 23, test-pro-perf-and-options 10, test-razorpay-settle-path 10, test-woo-line-money-contract 21 all passed; test-cli-guards ok; test-pay-order-read-only ran and restored wpss_general"
+    },
+    {
+      "id": "S3.2",
+      "observed": "Maya wallet/balance balance 272.12 equals wpss_get_ledger_balance 272.12 (available 158.72 = balance less 113.40 pending withdrawal); Sofia 490.27 = 490.27"
+    },
+    {
+      "id": "S5",
+      "observed": "Analytics Top Services excludes service_id=0 (see D2)"
+    },
+    {
+      "id": "E2-stripe-contracts",
+      "observed": "test-rest-pay-order-confirm-contract 'all passed' (underpaid confirm refused, webhook for another order refused, someone else cannot pay) and test-stripe-webhook-recovery 'all passed'; no live Stripe call made"
+    },
+    {
+      "id": "F1-390",
+      "observed": "20 surfaces at 390 (anon 7, Ella 8, Maya 5) all 200 scrollWidth 390; 1280 order pages for vendor, buyer, admin render"
+    },
+    {
+      "id": "F4-rest",
+      "observed": "238 wpss/v1 handlers: only the namespace index route '/wpss/v1' lacks a permission_callback (WP core index), 35 use __return_true; 13 static public GET routes all non-5xx"
+    },
+    {
+      "id": "F-order-page-mobile",
+      "observed": "order page 8288 at 390 for vendor and buyer: no horizontal scroll, footer present"
+    },
+    {
+      "id": "PRIO-3-foreign-attachment",
+      "observed": "Ben POST /wpss/v1/orders/8305/requirements with attachments:[8346] (Ella's media, not Ben's) returned 200 success; GET /orders/8305/requirements then returns status 'submitted' with attachments [] - the foreign id was not stored"
+    },
+    {
+      "id": "PRIO-4-catalog-requirements-upload",
+      "observed": "Ben catalog order 8306 (service 952, Pay $100.30, Test Gateway): requirements form with description + smoke-req.pdf submitted via UI, redirected to /dashboard/orders/8306/, no fatal, 'Order Requirements' shown, smoke-req.pdf link admin-post.php?action=wpss_order_file returns 200; screenshot smoke180-catalog-req-1280.png"
+    },
+    {
+      "id": "PRIO-2-deliver-form",
+      "observed": "Maya /dashboard/sales/8288/ Deliver Work opens the delivery form with message and files[] fields and a visible Submit Delivery button (not submitted, to keep the order open)"
+    },
+    {
+      "id": "PRIO-5-debug-diff",
+      "observed": "debug.log diff after the browser flows (13:35-13:40): only WPSS INFO 'Test payment completed' for orders 8288, 8305, 8306 and one WPSS ERROR about a bogus active storage provider (site option); no plugin fatal, warning or deprecated"
+    },
+    {
+      "id": "REWALK-REQ-file-kept-on-requirements-submit",
+      "observed": "At Free 42cf7a5d, theme buddyx (site was already on it): new request 8369 with rewalk-brief.png (media 8368), Maya proposal 546, Ella accept + pay $70.80 Test Gateway -> order 8307, requirements form submitted with description + smoke-req.pdf. Maya /dashboard/sales/8307/, Ella /dashboard/orders/8307/ and admin order view all: no fatal, sidebar and footer present, request brief text 'Rewalk brief text from the request' still shown, requirements text shown, 'Files the buyer attached' lists rewalk-brief.png AND smoke-req.pdf, both downloads 200. Maya 390px scrollWidth 390 with footer. Screenshots smoke180-rewalk-vendor-1280.png, -buyer-1280.png, -admin.png"
+    },
+    {
+      "id": "REWALK-REST",
+      "observed": "Ella GET /wpss/v1/orders/8307/requirements 200 status 'submitted', attachments [rewalk-brief.png, smoke-req.pdf], submitted carries request_title/request_description/proposal_cover plus description; GET of each attachment URL 200"
+    },
+    {
+      "id": "REWALK-test-script",
+      "observed": "tests/test-requirement-attachment-records.php: 11 PASS lines then ALL PASS, including 'submission keeps the request brief text' and 'submission keeps the request file beside the new one'"
+    }
   ],
   "coverage": {
-    "rail_standalone": "run (journey 06 steps 1,2,3,5,6 and the request order pay path)",
-    "rail_woocommerce": "run (catalog purchase, vacation, dates, dashboard assertions on auto); refunds, tip/ext/phase fee-only rows not run",
-    "viewports": "1440, 1280 (earnings), 390",
-    "dark_mode": "deferred",
-    "rtl": "deferred",
-    "multisite": "na"
+    "branch_mode": "fix diff only: requirement attachment records, request->order flow, order pages (vendor/buyer/admin) at 1280 and 390, REST requirements and file download, foreign attachment id, catalog requirements upload, debug.log diff",
+    "rail_standalone": "run",
+    "rail_woocommerce": "deferred: branch mode (fix diff only)",
+    "viewports": "1280, 390",
+    "dark_mode": "deferred: branch mode (fix diff only)",
+    "rtl": "deferred: branch mode (fix diff only)",
+    "multisite": "na",
+    "full_runbook_sections": "deferred: branch mode (fix diff only); the A/B/D/E/F checks listed in passes were observed before the scope change and are recorded as observed, the rest stay skipped"
   },
   "debug_log_issues": [
-    {"section": "baseline (pre-walk)", "level": "fatal", "line": "Uncaught TypeError StripeGateway::parse_amount(): Argument #1 ($amount) must be of type int, null given (StripeGateway.php:519 via process_refund line 679), plus warnings Undefined array key amount/currency", "file": "wp-sell-services/src/Integrations/Stripe/StripeGateway.php"},
-    {"section": "walk", "level": "fatal", "line": "Only self-inflicted wp eval calls (undefined wpss_get_login_url, private constant OfflineGateway::OPTION_NAME, earlier SchemaManager constant); no fatal, warning or deprecated from plugin code during the walk", "file": "n/a"}
+    {
+      "section": "D/E contract suites",
+      "level": "error",
+      "line": "WordPress database error Unknown column 'order_id' in 'where clause' for query DELETE FROM wp_wpss_wallet_transactions WHERE order_id = '8252' (also 8251); Unknown column 'data' ... DELETE FROM wp_wpss_audit_log WHERE JSON_EXTRACT(data,'$.order_id') = 8146 (8145, 8144)",
+      "file": "tests (fixture teardown SQL)"
+    },
+    {
+      "section": "D contract suites",
+      "level": "notice",
+      "line": "Function wpdb::prepare was called incorrectly. Unsupported value type (object) x9 at 13:25:42 UTC, caller not identified",
+      "file": "unknown, during test-suite run"
+    },
+    {
+      "section": "D",
+      "level": "fatal",
+      "line": "Uncaught Error: Cannot use object of type WP_Error as array (eval of tests/test-addon-pricing-contract.php line 64), 4 occurrences from re-runs",
+      "file": "tests/test-addon-pricing-contract.php"
+    },
+    {
+      "section": "browser walk",
+      "level": "info",
+      "line": "No fatal, warning or deprecated from plugin code during the Playwright flows (13:27-13:33); entries in the window are WPSS INFO 'Test payment completed' for orders 8288 and 8305. [WPSS ERROR] 'Connect: could not reclaim the vendor share ... wallet debt' (orders 8291, 8292, 8301) and Email order_cancelled 'was not sent' come from contract-suite fixtures, deliberate refusal logging",
+      "file": "n/a"
+    },
+    {
+      "section": "PRIO-4 requirements upload",
+      "level": "error",
+      "line": "[WPSS ERROR] Storage provider \"does-not-exist\" is configured but not registered; falling back to local disk. (option wpss_active_storage_provider='does-not-exist' left on this site by an earlier test; 33 occurrences in the log; upload still succeeded locally)",
+      "file": "site option, not plugin code"
+    }
   ],
-  "environment_restored": {"ecommerce_platform": "auto", "login_page_setting": "6217", "vacation_vendor": "off", "fixtures_removed": true},
+  "environment_restored": {
+    "theme": "buddyx",
+    "ecommerce_platform": "standalone",
+    "both_plugins_active": true,
+    "fixtures_removed": false,
+    "fixtures_left": "request 8347, proposal 545, orders 8288, 8305, 8306, media 8346 and requirement files; money-bearing rows not deleted by hand",
+    "note": "wpss_vendor[require_service_moderation] left true (toggle for the add-on test was blocked); wpss_general restored by Pro test"
+  },
   "top3": [
-    "No release-blocking defect found: ownership, suspension, vacation, dates and money checks all held on both rails.",
-    "Needs an owner look: the Stripe refund path fatal logged earlier today (null amount) and the Woo-rail /cart/ redirect to an empty Woo cart.",
-    "Not walked and still open: disputes, wizard, milestone flows, tax, dark mode, RTL and anything with real gateways (no outbound HTTP here)."
+    "Real defect: after a buyer submits the requirements form on a buyer-request order, the file the buyer attached to the request disappears from the order page and its download 404s (REQ-request-file-dropped-on-requirements-submit). The rejected fatal itself is fixed: full layout, file listed and downloadable before submission.",
+    "Priority flows hold: request -> proposal -> accept -> pay -> requirements upload -> vendor/buyer/admin order pages all 200 at 1280 and 390, REST requirements 'submitted', ownership gates 403/404, tax and fee math consistent.",
+    "Open: the wpss_active_storage_provider option holds a bogus provider (log noise on every upload, falls back to local), test-addon-pricing-contract fatals with moderation on, REST float noise on pending_withdrawal; Woo rail, disputes, wizard, dark/RTL deferred (branch mode)."
   ]
 }

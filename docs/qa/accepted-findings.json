@@ -25,72 +25,87 @@
     "was not run, the entry must say exactly how the fix was verified instead, so a",
     "reader can weigh that evidence rather than assume a walk covered it."
   ],
-  "version": "1.7.2",
+  "version": "1.8.0",
   "accepted": [
     {
-      "id": "wpss-dispute-refund-marked-but-not-executed",
-      "card": "10331363649",
-      "severity": "P0",
-      "scheduled": "1.7.3",
-      "reason": "A dispute resolved for the buyer records a completed refund even when the gateway refund fails. src/Services/OrderService.php is UNCHANGED since the v1.7.1 tag (2026-09-18), so this behaviour ships in production today: 1.7.2 neither introduces it nor, by being held, fixes it. The correct fix has to tell a failed gateway refund apart from a rail that has no automatic refund (offline, bank transfer), where a refunded status is legitimate while a human sends the money - getting that wrong breaks every offline refund, so it is not a same-day change. Admins are notified and an audit row exists; it is the order record that is wrong, not the whole system."
+      "id": "A3-preflight-debug-log",
+      "card": "10380882200",
+      "severity": "low",
+      "scheduled": "1.8.1",
+      "reason": "Environment, not code. wp wpss preflight counts every historical fatal in wss.local's debug.log (oldest 03-Sep), and the entries come from contract-test runs and ad-hoc eval. No fatal came from the browser flows of this walk."
     },
     {
-      "id": "wpss-pro-storage-test-connection-silent",
-      "card": "10331371292",
-      "severity": "medium",
-      "scheduled": "1.7.3",
-      "reason": "The Cloud Storage Test Connection button renders no result. The AJAX round trip and the server reply are both correct; only the notice fails to appear. StorageSettingsRenderer is unchanged since v1.7.1, so it is pre-existing. It costs a site owner configuring cloud storage an answer they need, but it blocks no purchase, no payout and no data."
+      "id": "TEST-addon-pricing-contract-fatal",
+      "card": "10380882200",
+      "severity": "low",
+      "scheduled": "1.8.1",
+      "reason": "Test hygiene. The test assumes service moderation is off; on this site it is on, so its publish is forced to pending and the price lookup returns WP_Error. The add-on pricing code path is untouched in 1.8.0, and the other 94 Free contract scripts pass."
+    },
+    {
+      "id": "REST-float-noise",
+      "card": "10380882200",
+      "severity": "low",
+      "scheduled": "1.8.1",
+      "reason": "Pre-existing and environment-driven. EarningsController already rounds to 2 places, unchanged since v1.7.2. The trailing digits appear only because wss.local's php.ini sets serialize_precision=17 instead of PHP's default -1, verified with wp_json_encode(round(113.4,2)). The _minor integer beside the field is exact."
+    },
+    {
+      "id": "TESTS-cleanup-sql-stale-columns",
+      "card": "10380882200",
+      "severity": "low",
+      "scheduled": "1.8.1",
+      "reason": "Test hygiene. Fixture teardown SQL names columns that no longer exist, so test rows are left behind on the dev site. It does not ship to customers and is not a plugin runtime path."
+    },
+    {
+      "id": "REQ-disallowed-file-silent-drop",
+      "card": "10380882200",
+      "severity": "low",
+      "scheduled": "1.8.1",
+      "reason": "Pre-existing since v1.7.2: RequirementsService::process_uploads() skips a file that wpss_check_upload() refuses, without telling the buyer. The file input's accept list stops this in normal use; the walk reached it only by forcing a .txt in with setInputFiles. The allowed files on the same submission save correctly."
     }
   ],
   "debug_log_accepted": [
     {
-      "match": "Auto-refund FAILED",
-      "card": "10331363649",
-      "reason": "The log output OF the accepted finding above, not a separate defect. The line is the system correctly shouting that a money step was skipped, which is the behaviour the standard asks for."
+      "match": "Unknown column",
+      "card": "10380882200",
+      "reason": "Log output of TESTS-cleanup-sql-stale-columns: the contract suite's teardown SQL, not plugin runtime."
+    },
+    {
+      "match": "Unsupported value type (object)",
+      "card": "10380882200",
+      "reason": "Nine wpdb::prepare notices that recur when the full contract suite runs (seen in both the combo and free walks). They did not appear when each script was run alone, and no browser flow emitted one in either walk. The caller is not yet identified; tracked on the card."
+    },
+    {
+      "match": "Cannot use object of type WP_Error as array",
+      "card": "10380882200",
+      "reason": "Log output of TEST-addon-pricing-contract-fatal, raised inside the test script (eval line 64), not plugin code."
+    },
+    {
+      "match": "Storage provider \"does-not-exist\"",
+      "card": "10380882200",
+      "reason": "Environment: an earlier test left the wpss_active_storage_provider option set to a provider that does not exist. The plugin correctly logs the problem and falls back to local disk, and every upload in the walk succeeded."
+    },
+    {
+      "match": "No fatal, warning or deprecated from plugin code",
+      "card": "10380882200",
+      "reason": "Not a defect: this is the walker's note that the browser-flow window was clean. The money lines it mentions are deliberate refusal logging from contract-suite fixtures."
+    },
+    {
+      "match": "woo-order-test",
+      "card": "10380882200",
+      "reason": "Third-party dev plugin (woo-order-test) PHP 8.2 dynamic-property deprecations, emitted on every boot. Not WPSS code."
+    },
+    {
+      "match": "test-addon-pricing-contract",
+      "card": "10380882200",
+      "reason": "Log output of TEST-addon-pricing-contract-fatal, inside the test's own eval, not plugin runtime."
     },
     {
       "match": "Manual refund required",
-      "card": "10331363649",
-      "reason": "Same finding: the offline-rail branch telling an administrator to send the refund by hand."
-    },
-    {
-      "match": "no completed wallet credit found for the vendor",
-      "card": "10331363649",
-      "reason": "Second log line of the same accepted dispute-refund finding: the earnings reversal is skipped because the credit it would reverse was never completed. The system is correctly announcing a skipped money step rather than performing a wrong one."
+      "card": "10380882200",
+      "reason": "Deliberate refund-guard refusals driven by contract-suite fixtures (offline rail, already-settled charge, partial refund). The system is correctly refusing and announcing a skipped money step; none came from the browser flows."
     }
   ],
-  "resolved": [
-    {
-      "id": "wpss-cart-delete-no-notice",
-      "fixed_in": "wp-sell-services-pro 388984c",
-      "verified_by": "Direct probe on the WooCommerce rail with a real buyer and a real cart, not a re-walk: paused -> 1 item + 1 checkout-blocking error naming the service; deleted -> 1 item + 1 blocking error 'no longer offered'; healthy -> 1 item, 0 errors, buys normally.",
-      "note": "The walk reported that deleting a cart item emptied the cart with no explanation. Fixed by no longer auto-removing: deleted and paused now behave identically - the line stays, says why, and checkout is refused until the buyer removes it. The fix is in PRO only, which this gate's staleness check does not see because it diffs Free's tree alone - a real blind spot in the gate, recorded on its own card rather than relied upon."
-    },
-    {
-      "id": "wpss-free-cart-delete-silent-removal",
-      "fixed_in": "wp-sell-services d2a49ef1",
-      "verified_by": "Targeted probes on BOTH rails, not a re-walk. STANDALONE (free mode): a 2-item cart whose second service is then deleted outright returns 2 items to the cart screen with the dead line flagged unavailable and explained, and 1 item to the checkout path. COMBO (free+Pro+WooCommerce active): the same seed returns the same 2 / 1 split with the same reason string. Mutation-proven: restore the drop and the cart screen silently returns 1 item.",
-      "note": "The free walk found this. It is the same defect the WooCommerce rail had, and the same mistake made twice in one day - fixing one rail and leaving the other. Both rails now behave identically: deleted and paused lines stay visible with a reason, are kept out of the subtotal, and are refused at checkout until the buyer removes them.\nSTALENESS: this commit touches src/functions/services.php, a rendered file, so verify:smoke-gate correctly reports the COMBO walk (9b0909ec) as stale and the build was run with --force. The combo probe above is the evidence offered in place of a re-walk, and it is weaker than a walk: it exercises wpss_get_user_cart() directly rather than through the cart screen. What limits the blast radius is that the only callers are the standalone cart shortcode, CheckoutIntentService and the REST cart route - the WooCommerce cart does not read this function at all - so no combo-mode checkout surface changed behaviour."
-    },
-    {
-      "id": "wpss-free-rest-edit-blocked-on-grandfathered-incomplete-service",
-      "fixed_in": "wp-sell-services (this release, src/API/ServicesController.php)",
-      "verified_by": "Direct dispatch probe through rest_get_server(), as a real vendor, not a re-walk. The fixture is a listing that is live AND short of the bar - written straight to wp_posts, because wp_insert_post correctly downgrades a new incomplete service and that is not the state under test. Results: an unrelated title-only PUT now returns 200, applies the title and leaves the listing published; repricing a COMPLETE live listing from 50 to 2, under the 5 floor, still returns 400 wpss_not_publishable and changes nothing (the Basecamp 10320551446 exploit stays closed); a draft asking to go live while incomplete still returns 400. Mutation-proven: force the new branch off and the title-only PUT returns 400 again.",
-      "note": "The gate validated the merged result, which closed the repricing hole and locked out every listing that was already live and already incomplete - a pre-rule dataset, or a force-publish outside the wizard. Those could not be edited at all, not even in the field that was missing, while the admin screen and wp-cli saved the same edit happily: two save paths for one object, enforcing different rules. An edit to an already-live listing is now refused only for the errors it INTRODUCES; errors the listing already had pass through. Going live is unchanged."
-    },
-    {
-      "id": "wpss-free-setup-wizard-epoch-date",
-      "fixed_in": "wp-sell-services (this release, src/Admin/Settings.php)",
-      "verified_by": "Rendered the section at all three values a site can hold and read the line back: a legacy '1' now says 'Setup wizard has been completed.', a real timestamp says 'Setup wizard was completed on September 22, 2026.', and an unset option says 'The setup wizard has not been completed yet.' Before the fix the first case printed January 1, 1970.",
-      "note": "wpss_setup_wizard_completed is a timestamp now and was not always one, so any truthy value took the completed branch and went through (int) + wp_date(). A date is printed only when the value can be one: after the plugin existed, and not in the future."
-    },
-    {
-      "id": "wpss-free-standalone-checkout-sells-unavailable-line",
-      "fixed_in": "wp-sell-services (this release, StandaloneCheckoutProvider / StandaloneOrderProvider / CartController / OfflineGateway / TestGateway)",
-      "verified_by": "Found by a scoped browser walk in standalone mode, then fixed and re-probed. Browser evidence of the defect: a cart holding one live service and one the seller had paused rendered BOTH at /service-checkout/ as 'Your Order (2 Services)', $45.00 each, Total $90.00, under an active 'Pay $90.00' button - the cart screen one click earlier had already said one of them could not be bought. After the fix, rendering the same mixed cart returns no Pay button and a notice naming the service and the reason ('QA Addon Wizard Test 0923 - This service is not currently available.') with a link back to the cart. A healthy two-item cart still renders 'Your Order (2 Services)' with no notice, so the guard does not fire on good carts. Handed the RAW cart directly, order creation produces 1 order from 2 lines and logs the refusal. Mutation-proven: force the checkout guard off and the notice disappears.",
-      "note": "The third time this cycle that one flow was implemented twice and only one copy got the fix. wpss_get_user_cart() is the cart reader, and the cart SCREEN called it - while the standalone checkout renderer, the REST checkout route and both offline/test payment rails each read the _wpss_cart meta row directly. My own earlier probe missed it because it called the function instead of driving the flow. All four now read through wpss_get_user_cart(); the checkout screen refuses to show a Pay button at all while an unsellable line is in the cart, the REST route answers 409 with the reasons, and create_orders_from_cart() refuses per line as a last backstop before a paid order exists, logging any rail that still reaches it."
-    }
-  ],
+  "resolved": [],
   "coverage_verified_elsewhere": [
     {
       "mode": "free",
