@@ -2,7 +2,7 @@
 
 **As of WP Sell Services 1.7.0 and WP Sell Services Pro 1.7.0.** Last full source-to-docs resync: **2026-08-26**, when all 107 pages were checked against the code rather than against each other.
 
-**1.8.0 update (2026-10-07):** the pages affected by the 1.8.0 fixes were updated against the code, and one page was added (Member Reports), for 110 pages. This was a targeted update, not a second full resync.
+**1.8.0 update (2026-10-07):** the pages affected by the 1.8.0 fixes were updated against the code, and two pages were added (Member Reports, What's New in 1.8.0), for 111 pages. This was a targeted update, not a second full resync.
 
 This page exists so you never have to guess whether something is missing or you
 just cannot find it. It states what is documented, and -- more usefully -- what
