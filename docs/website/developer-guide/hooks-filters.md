@@ -306,7 +306,7 @@ tip. Tips are excluded from commission by default, so the two usually match.
 | `wpss_proposal_withdrawn` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:503` |
 | `wpss_proposal_deleted` | `int $proposal_id, object $proposal` | `src/Services/ProposalService.php:895` |
 | `wpss_proposal_status_updated` | `int $proposal_id, string $status` | `src/Services/ProposalService.php:593` |
-| `wpss_buyer_request_deleted` | `int $request_id` | `src/Services/BuyerRequestService.php:1349` |
+| `wpss_buyer_request_deleted` | `int $request_id` | `src/Services/BuyerRequestService.php:1351` |
 | `wpss_buyer_request_meta_saved` | `int $post_id, WP_Post $post` | `src/Admin/Metaboxes/BuyerRequestMetabox.php:349` |
 
 ## Milestone and Extension Actions

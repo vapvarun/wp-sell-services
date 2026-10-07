@@ -1333,7 +1333,9 @@ class BuyerRequestService {
 
 		// A request a seller has proposed on is that seller's work too, and the
 		// brief an order may have been made from: it can be closed, not deleted.
-		// Deleting it also unlocked its files (Basecamp 10379690155).
+		// Deleting it also unlocked its files (Basecamp 10379690155). Refused
+		// for everyone here; wpss_guard_proposed_request() holds the same rule
+		// on WordPress's own trash and delete for the doors that skip this.
 		if ( ! $this->is_untouched( $request_id ) ) {
 			return false;
 		}

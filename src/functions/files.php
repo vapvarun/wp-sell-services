@@ -1609,3 +1609,31 @@ function wpss_guard_locked_request_file( $delete, $post ) {
 	return ( new \WPSellServices\Services\BuyerRequestService() )->is_file_locked( (int) $post->ID ) ? false : $delete;
 }
 add_filter( 'pre_delete_attachment', 'wpss_guard_locked_request_file', 10, 2 );
+
+/**
+ * Keep a member from trashing or deleting a buyer request a seller has proposed on.
+ *
+ * The rule lived in BuyerRequestService::delete() only. The request is a
+ * post type WordPress exposes itself (wp/v2 REST, the posts screen), so a
+ * member whose role may delete posts had a door that never asked. Deleting
+ * the request also unlocks its files. On WordPress's own trash and delete,
+ * every door asks.
+ *
+ * Site administrators, WP-CLI and background jobs are not stopped. Closing an
+ * account lifts it for its own requests (AccountDeletionService).
+ *
+ * @since 1.8.0
+ *
+ * @param mixed    $check Short-circuit value; non-null stops the trash or delete.
+ * @param \WP_Post $post  The post.
+ * @return mixed False to refuse, otherwise $check unchanged.
+ */
+function wpss_guard_proposed_request( $check, $post ) {
+	if ( null !== $check || ! $post instanceof \WP_Post || 'wpss_request' !== $post->post_type || ! is_user_logged_in() || current_user_can( 'manage_options' ) ) {
+		return $check;
+	}
+
+	return ( new \WPSellServices\Services\BuyerRequestService() )->is_untouched( (int) $post->ID ) ? $check : false;
+}
+add_filter( 'pre_trash_post', 'wpss_guard_proposed_request', 10, 2 );
+add_filter( 'pre_delete_post', 'wpss_guard_proposed_request', 10, 2 );

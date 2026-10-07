@@ -296,6 +296,10 @@ class AccountDeletionService {
 		 * trashes what it reads, so the next 'publish,draft,pending' page is
 		 * always fresh work.
 		 */
+		// A member closing their own account takes their requests with them,
+		// proposals or not; the guard is for a request deleted on its own.
+		remove_filter( 'pre_trash_post', 'wpss_guard_proposed_request', 10 );
+
 		do {
 			$post_ids = get_posts(
 				array(
@@ -314,6 +318,8 @@ class AccountDeletionService {
 				wp_trash_post( (int) $post_id );
 			}
 		} while ( 100 === $found );
+
+		add_filter( 'pre_trash_post', 'wpss_guard_proposed_request', 10, 2 );
 	}
 
 	/**
