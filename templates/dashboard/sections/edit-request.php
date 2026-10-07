@@ -220,7 +220,15 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 				>
 			</div>
 
-			<?php wpss_get_template( 'partials/request-attachments.php', array( 'wpss_attachment_ids' => (array) get_post_meta( $request_id, '_wpss_attachments', true ) ) ); ?>
+			<?php
+			wpss_get_template(
+				'partials/request-attachments.php',
+				array(
+					'wpss_attachment_ids' => (array) get_post_meta( $request_id, '_wpss_attachments', true ),
+					'wpss_files_locked'   => ! ( new \WPSellServices\Services\BuyerRequestService() )->is_untouched( (int) $request_id ),
+				)
+			);
+			?>
 		</div>
 
 		<!-- Submit Section -->

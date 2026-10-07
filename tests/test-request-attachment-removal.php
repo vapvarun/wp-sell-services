@@ -92,8 +92,11 @@ try {
 	$check( 'fixture: a proposal exists on the request', $proposal > 0 );
 
 	$service->update( $request_id, array( 'attachments' => array() ) );
-	$check( 'after a proposal, a removed file is unlisted', array() === $listed() );
-	$check( '  but kept', null !== get_post( $second ) );
+	$check( 'after a proposal, a file cannot be taken off the request', array( $second ) === $listed() );
+	$check( '  and is kept', null !== get_post( $second ) );
+	$extra = $media( 'request' );
+	$service->update( $request_id, array( 'attachments' => array( $extra ) ) );
+	$check( '  a new file can still be added beside it', array( $second, $extra ) === $listed() );
 	$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $proposal ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 	// The file is attached while the request is still untouched, through the
@@ -125,9 +128,9 @@ try {
 	// and it holds after the file has been taken off the list: unlisting it
 	// first must not unlock the delete.
 	wp_set_current_user( $buyer->ID );
-	$check( 'the file is off the list after that update', array() === $listed() );
+	$check( 'the file is still on the list after that update', in_array( $third, $listed(), true ) );
 	$answer = rest_do_request( new WP_REST_Request( 'DELETE', '/wpss/v1/media/' . $third ) );
-	$check( 'DELETE /media/{id} refuses a file once attached to a request with a proposal, even unlisted (' . $answer->get_status() . ')', 409 === $answer->get_status() && null !== get_post( $third ) );
+	$check( 'DELETE /media/{id} refuses a file of a request with a proposal (' . $answer->get_status() . ')', 409 === $answer->get_status() && null !== get_post( $third ) );
 
 	// With the proposal gone the request is untouched again and the file is free.
 	$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $proposal ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

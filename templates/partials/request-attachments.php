@@ -12,10 +12,12 @@
  * @package WPSellServices
  *
  * @var array<int> $wpss_attachment_ids Attachment IDs already on the request (edit). Optional.
+ * @var bool       $wpss_files_locked   A vendor has proposed: the files already on the request stay. Optional.
  */
 
 defined( 'ABSPATH' ) || exit;
 
+$wpss_files_locked   = ! empty( $wpss_files_locked );
 $wpss_attachment_ids = array_filter( array_map( 'absint', (array) ( $wpss_attachment_ids ?? array() ) ) );
 $wpss_file_types     = array_filter( array_map( 'trim', explode( ',', strtolower( (string) wpss_get_option( 'advanced', 'allowed_file_types' ) ) ) ) );
 $wpss_file_max       = (int) wpss_get_option( 'advanced', 'max_file_size' );
@@ -35,10 +37,15 @@ $wpss_file_max       = (int) wpss_get_option( 'advanced', 'max_file_size' );
 			<li class="wpss-request-files__item">
 				<span class="wpss-request-files__name"><?php echo esc_html( basename( (string) get_attached_file( $wpss_attachment_id ) ) ); ?></span>
 				<input type="hidden" name="attachments[]" value="<?php echo esc_attr( (string) $wpss_attachment_id ); ?>">
-				<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-request-files__remove"><?php esc_html_e( 'Remove', 'wp-sell-services' ); ?></button>
+				<?php if ( ! $wpss_files_locked ) : ?>
+					<button type="button" class="wpss-btn wpss-btn--ghost wpss-btn--sm wpss-request-files__remove"><?php esc_html_e( 'Remove', 'wp-sell-services' ); ?></button>
+				<?php endif; ?>
 			</li>
 		<?php endforeach; ?>
 	</ul>
+	<?php if ( $wpss_files_locked && $wpss_attachment_ids ) : ?>
+		<p class="wpss-form-hint"><?php esc_html_e( 'A seller has sent a proposal, so the files above stay on the request. You can still add more.', 'wp-sell-services' ); ?></p>
+	<?php endif; ?>
 	<p class="wpss-form-hint">
 		<?php
 		printf(

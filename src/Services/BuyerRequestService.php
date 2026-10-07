@@ -279,6 +279,13 @@ class BuyerRequestService {
 			$before = array_map( 'absint', (array) get_post_meta( $request_id, '_wpss_attachments', true ) );
 			$files  = array_values( array_filter( array_unique( array_map( 'absint', $data['attachments'] ) ), $owned ) );
 
+			// Once a vendor has proposed, the files already on the request are
+			// the brief that proposal was priced against: they stay on it. New
+			// files can still be added (owner decision, Basecamp 10377676994).
+			if ( ! $this->is_untouched( $request_id ) ) {
+				$files = array_values( array_unique( array_merge( $before, $files ) ) );
+			}
+
 			// Stamp the request on each file, kept and leaving alike, before the
 			// list changes: is_file_locked() reads the stamp, not the list.
 			foreach ( array_unique( array_merge( $before, $files ) ) as $file ) {
@@ -292,12 +299,8 @@ class BuyerRequestService {
 			// A file taken off the request is deleted, not just unlisted: it sat
 			// in the public uploads folder and its link kept working (Basecamp
 			// 10377676994). Only a file uploaded for a request by this author -
-			// never a profile photo or portfolio image passed in by ID - and only
-			// while nobody else has acted on the request. Once a vendor has
-			// proposed, the files are the brief the proposals and any order were
-			// written against; taking one off the list then hides it but does
-			// not destroy it. The same holds for any other request the file was
-			// ever attached to.
+			// never a profile photo or portfolio image passed in by ID - and never
+			// one that was ever attached to a request a vendor has proposed on.
 			// The lock is asked per file, at the moment of deleting it.
 			foreach ( array_diff( $before, $files ) as $file ) {
 				if ( $owned( $file ) && 'request' === get_post_meta( $file, '_wpss_upload_context', true ) && ! $this->is_file_locked( (int) $file ) ) {
