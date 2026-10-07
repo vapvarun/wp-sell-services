@@ -304,15 +304,18 @@ class SellerCard extends AbstractBlock {
 	 * @return void
 	 */
 	private function render_seller_services( int $user_id ): void {
+		// The shared sort keeps a service that has no rating yet; ordering by
+		// meta_key left a new seller's card with no services at all.
 		$services = get_posts(
-			array(
-				'post_type'      => 'wpss_service',
-				'post_status'    => 'publish',
-				'author'         => $user_id,
-				'posts_per_page' => 3,
-				'orderby'        => 'meta_value_num',
-				'meta_key'       => '_wpss_rating_average',
-				'order'          => 'DESC',
+			wpss_apply_service_sort(
+				array(
+					'post_type'        => 'wpss_service',
+					'post_status'      => 'publish',
+					'author'           => $user_id,
+					'posts_per_page'   => 3,
+					'suppress_filters' => false, // The sort is a posts_clauses filter.
+				),
+				'rating'
 			)
 		);
 

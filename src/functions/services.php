@@ -1069,18 +1069,26 @@ function wpss_render_services_grid( array $attributes, int $page = 1, string $ba
 		);
 	}
 
-	// Sort vocabulary. "rating", "sales" and "price" are not columns WP_Query
-	// understands; without this remap they fall through to post_date and the
-	// grid silently ignores the sort the caller asked for.
-	$orderby_meta = array(
-		'rating' => '_wpss_rating_average',
-		'sales'  => '_wpss_total_sales',
-		'price'  => '_wpss_starting_price',
+	// "rating", "sales" and "price" are stored numbers, sorted by the one
+	// function every listing uses. This grid ordered by meta_key instead, which
+	// drops a service that has no such row: "rating" listed 5 of 12, and
+	// "sales" none at all, because it read _wpss_total_sales, a key nothing
+	// writes (Basecamp 10375174916).
+	$sorts = array(
+		'rating' => 'rating',
+		'sales'  => 'popular',
+		'price'  => 'ASC' === $args['order'] ? 'price_low' : 'price_high',
 	);
 
-	if ( isset( $orderby_meta[ $args['orderby'] ] ) ) {
-		$args['meta_key'] = $orderby_meta[ $args['orderby'] ]; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- ordering by a service stat is the documented behaviour of these surfaces.
-		$args['orderby']  = 'meta_value_num';
+	if ( isset( $sorts[ $args['orderby'] ] ) ) {
+		$args = wpss_apply_service_sort( $args, $sorts[ $args['orderby'] ] );
+	}
+
+	// Same catalog rule as the storefront, search and REST: a vendor on
+	// vacation is not listed. A grid of one named vendor is that vendor's own
+	// page and keeps their services (Basecamp 10375176013).
+	if ( empty( $args['author'] ) ) {
+		$args['author__not_in'] = wpss_get_vacation_vendor_ids();
 	}
 
 	$query = new \WP_Query( $args );
