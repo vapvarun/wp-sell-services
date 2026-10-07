@@ -377,6 +377,7 @@ class MarketplaceSeeder {
 
 			$created = wp_insert_term( $name, 'wpss_service_category' );
 			if ( ! is_wp_error( $created ) ) {
+				add_term_meta( (int) $created['term_id'], '_wpss_demo_content', 1, true );
 				$ids[ $name ] = (int) $created['term_id'];
 			}
 		}
@@ -401,6 +402,7 @@ class MarketplaceSeeder {
 				);
 
 				if ( ! is_wp_error( $created ) ) {
+					add_term_meta( (int) $created['term_id'], '_wpss_demo_content', 1, true );
 					$ids[ $child_name ] = (int) $created['term_id'];
 				}
 			}

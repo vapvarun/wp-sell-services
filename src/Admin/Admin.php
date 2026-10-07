@@ -3433,7 +3433,11 @@ class Admin {
 		$categories = array_unique( array_column( $templates, 'category' ) );
 		foreach ( $categories as $cat_name ) {
 			if ( ! term_exists( $cat_name, 'wpss_service_category' ) ) {
-				wp_insert_term( $cat_name, 'wpss_service_category' );
+				$demo_term = wp_insert_term( $cat_name, 'wpss_service_category' );
+				// Marked, so deleting demo content removes this category and no other.
+				if ( ! is_wp_error( $demo_term ) ) {
+					add_term_meta( (int) $demo_term['term_id'], '_wpss_demo_content', 1, true );
+				}
 			}
 		}
 
@@ -3611,26 +3615,6 @@ class Admin {
 		$deleted          = wpss_delete_demo_content();
 		$services_deleted = $deleted['services'];
 		$vendors_deleted  = $deleted['vendors'];
-
-		// Clean up empty demo categories.
-		$categories = get_terms(
-			array(
-				'taxonomy'   => 'wpss_service_category',
-				'hide_empty' => false,
-				'fields'     => 'ids',
-			)
-		);
-
-		$cats_deleted = 0;
-		if ( is_array( $categories ) ) {
-			foreach ( $categories as $term_id ) {
-				$term = get_term( $term_id, 'wpss_service_category' );
-				if ( $term && 0 === $term->count ) {
-					wp_delete_term( $term_id, 'wpss_service_category' );
-					++$cats_deleted;
-				}
-			}
-		}
 
 		wp_send_json_success(
 			array(

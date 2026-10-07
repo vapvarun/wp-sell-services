@@ -2143,15 +2143,21 @@ function wpss_has_demo_content(): bool {
 }
 
 /**
- * Delete demo content: marked services, requests and media, and demo vendors.
+ * Delete demo content: marked services, requests and media, demo vendors, and
+ * the categories the demo created that nothing uses any more.
  *
  * The one routine behind Settings > Delete Demo Content and `wp wpss demo
  * delete`. They were two: the admin one removed services and vendors, the CLI
  * one removed posts and left the vendors and the "imported" flag.
  *
+ * Categories: only one the demo created (marked at creation) and only when no
+ * post of any status is in it and it has no child. The admin routine used to
+ * delete every category whose published count was zero, demo or not - an
+ * owner's own unused categories, and parents whose services sat in children.
+ *
  * @since 1.8.0
  *
- * @return array{posts:int,services:int,vendors:int} What was deleted.
+ * @return array{posts:int,services:int,vendors:int,categories:int} What was deleted.
  */
 function wpss_delete_demo_content(): array {
 	global $wpdb;
@@ -2162,9 +2168,10 @@ function wpss_delete_demo_content(): array {
 		'fields'     => 'ids',
 	);
 	$deleted = array(
-		'posts'    => 0,
-		'services' => 0,
-		'vendors'  => 0,
+		'posts'      => 0,
+		'services'   => 0,
+		'vendors'    => 0,
+		'categories' => 0,
 	);
 
 	$posts = get_posts(
@@ -2192,6 +2199,26 @@ function wpss_delete_demo_content(): array {
 
 		if ( wp_delete_user( (int) $user_id ) ) {
 			++$deleted['vendors'];
+		}
+	}
+
+	$demo_terms = get_terms(
+		array(
+			'taxonomy'   => 'wpss_service_category',
+			'hide_empty' => false,
+			'fields'     => 'ids',
+			'meta_key'   => '_wpss_demo_content', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			'orderby'    => 'term_id',
+			'order'      => 'DESC', // Children were created after their parents.
+		)
+	);
+
+	foreach ( is_array( $demo_terms ) ? $demo_terms : array() as $term_id ) {
+		$in_use = get_objects_in_term( (int) $term_id, 'wpss_service_category' );
+		$kids   = get_term_children( (int) $term_id, 'wpss_service_category' );
+
+		if ( empty( $in_use ) && empty( $kids ) && true === wp_delete_term( (int) $term_id, 'wpss_service_category' ) ) {
+			++$deleted['categories'];
 		}
 	}
 
