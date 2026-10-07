@@ -241,6 +241,20 @@ class PayPalGateway implements PaymentGatewayInterface {
 	 * @return array Payment result.
 	 */
 	public function process_payment( string $payment_id ): array {
+		// Ours, or not captured. Here, in the capture itself, so every caller
+		// gets it - the website return, the webhook-less REST confirm, the
+		// pay-order confirm - and before any money moves. The check used to
+		// live in one caller, and the REST pay-order route captured a payment
+		// another site had started (Basecamp 10379479185).
+		$order = $this->api_request( "v2/checkout/orders/{$payment_id}", array(), 'GET' );
+
+		if ( isset( $order['error'] ) || ! $this->is_own_order( (string) ( $order['purchase_units'][0]['invoice_id'] ?? '' ) ) ) {
+			return array(
+				'success' => false,
+				'error'   => __( 'This payment was not made on this site.', 'wp-sell-services' ),
+			);
+		}
+
 		$response = $this->api_request( "v2/checkout/orders/{$payment_id}/capture", array() );
 
 		if ( isset( $response['error'] ) ) {
@@ -710,15 +724,6 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$order_details = $this->api_request( "v2/checkout/orders/{$paypal_order_id}", array(), 'GET' );
 		$metadata      = json_decode( (string) ( $order_details['purchase_units'][0]['custom_id'] ?? '' ), true ) ?: array();
 		$buyer_id      = (int) ( $metadata['customer_id'] ?? 0 );
-
-		// A PayPal order another site on this account started: not ours to
-		// capture, whatever buyer id it carries.
-		if ( ! $this->is_own_order( (string) ( $order_details['purchase_units'][0]['invoice_id'] ?? '' ) ) ) {
-			return array(
-				'success' => false,
-				'error'   => __( 'This payment was not made on this site.', 'wp-sell-services' ),
-			);
-		}
 
 		if ( ! $buyer_id || $buyer_id !== get_current_user_id() ) {
 			return array(

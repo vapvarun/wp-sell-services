@@ -90,6 +90,40 @@ try {
 	$capture( $a, $ours . 'ABCDEF123456' );
 	$check( 'PayPal: this site\'s own capture pays it', 'paid' === $state( $a ) );
 
+	// The capture itself refuses a payment that is not ours, so every caller
+	// is covered - including the REST pay-order confirm, which captures
+	// directly (QA bounce). PayPal is stubbed; a capture request is counted.
+	$captures = 0;
+	$invoice  = '';
+	$stub     = static function ( $pre, $args, $url ) use ( &$captures, &$invoice, $currency ) {
+		if ( false === strpos( (string) $url, 'paypal.com' ) ) {
+			return $pre;
+		}
+		if ( false !== strpos( (string) $url, 'oauth2/token' ) ) {
+			$body = array( 'access_token' => 'stub', 'expires_in' => 3600 );
+		} else {
+			$captures += false !== strpos( (string) $url, '/capture' ) ? 1 : 0;
+			$unit      = array( 'custom_id' => '{}', 'payments' => array( 'captures' => array( array( 'id' => 'CAPSTUB', 'amount' => array( 'value' => '23.60', 'currency_code' => $currency ) ) ) ) ) + ( '' === $invoice ? array() : array( 'invoice_id' => $invoice ) );
+			$body      = array( 'id' => 'ORDERSTUB', 'status' => 'COMPLETED', 'purchase_units' => array( $unit ) );
+		}
+
+		return array( 'response' => array( 'code' => 200, 'message' => 'OK' ), 'body' => wp_json_encode( $body ), 'headers' => array(), 'cookies' => array() );
+	};
+	add_filter( 'pre_http_request', $stub, 10, 3 );
+
+	$invoice = 'WPSS-deadbeef00-ABCDEF123456';
+	$result  = $paypal->process_payment( 'ORDERSTUB' );
+	$check( 'PayPal: the capture refuses a payment another site started, before capturing', empty( $result['success'] ) && 0 === $captures );
+
+	$invoice = '';
+	$result  = $paypal->process_payment( 'ORDERSTUB' );
+	$check( 'PayPal: and one with no invoice number', empty( $result['success'] ) && 0 === $captures );
+
+	$invoice = $ours . 'ABCDEF123456';
+	$result  = $paypal->process_payment( 'ORDERSTUB' );
+	$check( 'PayPal: this site\'s own payment is captured', ! empty( $result['success'] ) && 1 === $captures );
+	remove_filter( 'pre_http_request', $stub, 10 );
+
 	if ( class_exists( '\WPSellServicesPro\Integrations\Razorpay\RazorpayGateway' ) ) {
 		$razorpay = new \WPSellServicesPro\Integrations\Razorpay\RazorpayGateway();
 		$paid     = static function ( int $order_id, array $notes ) use ( $razorpay, $currency ) {
