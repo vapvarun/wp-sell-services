@@ -479,6 +479,57 @@ class CheckoutIntentService {
 	 * @return array<string,mixed> { success:bool, ... }
 	 */
 	public function settle( CheckoutIntent $intent, string $gateway_id, string $transaction_id, float $charged_amount, string $charged_currency ): array {
+		return $this->locked(
+			$gateway_id,
+			$transaction_id,
+			fn() => $this->settle_once( $intent, $gateway_id, $transaction_id, $charged_amount, $charged_currency )
+		);
+	}
+
+	/**
+	 * Mark the order a gateway webhook names as paid.
+	 *
+	 * A webhook names the order its payment was CREATED for. The buyer may have
+	 * confirmed that payment against a different order of the same price, and
+	 * the webhook then paid the named one as well: two orders, one payment
+	 * (Basecamp 10375173905). Same lock and same lookup as settle(), so a
+	 * payment that already paid other orders pays nothing more.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int    $order_id       Order the webhook names.
+	 * @param string $gateway_id     Gateway slug.
+	 * @param string $transaction_id Gateway payment id, as settle() stamps it.
+	 * @return bool False when the payment was already spent on other orders.
+	 */
+	public function settle_webhook_order( int $order_id, string $gateway_id, string $transaction_id ): bool {
+		return $this->locked(
+			$gateway_id,
+			$transaction_id,
+			static function () use ( $order_id, $gateway_id, $transaction_id ): bool {
+				$paid = ( new \WPSellServices\Database\Repositories\OrderRepository() )->get_by_transaction_ids( array( $transaction_id ) );
+
+				if ( $paid && ! in_array( $order_id, array_map( static fn( $row ) => (int) $row->id, $paid ), true ) ) {
+					wpss_log( sprintf( '%s webhook names order #%d, but transaction %s already paid %d other order(s). Not marking it paid.', $gateway_id, $order_id, $transaction_id, count( $paid ) ), 'warning' );
+					return false;
+				}
+
+				return (bool) wpss_get_order_provider()->mark_as_paid( $order_id, $transaction_id, $gateway_id );
+			}
+		);
+	}
+
+	/**
+	 * Run a callback while holding the per-transaction lock.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string   $gateway_id     Gateway slug.
+	 * @param string   $transaction_id Gateway transaction / intent ID.
+	 * @param callable $run            Work to do under the lock.
+	 * @return mixed Whatever $run returns.
+	 */
+	private function locked( string $gateway_id, string $transaction_id, callable $run ) {
 		global $wpdb;
 
 		/*
@@ -498,7 +549,7 @@ class CheckoutIntentService {
 		}
 
 		try {
-			return $this->settle_once( $intent, $gateway_id, $transaction_id, $charged_amount, $charged_currency );
+			return $run();
 		} finally {
 			if ( $locked ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

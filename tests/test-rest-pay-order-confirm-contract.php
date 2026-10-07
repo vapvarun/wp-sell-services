@@ -117,6 +117,24 @@ try {
 	$check( '  and that order stays unpaid', 'pending' === $payment_status( $second ) );
 	$check( '  and wpss_order_paid fired once', 1 === $paid_fired );
 
+	// The webhook for that payment names the order it was CREATED for. If the
+	// buyer confirmed it against a different order, the webhook must not pay
+	// the named one as well.
+	( new StripeGateway() )->handle_webhook(
+		array(
+			'type' => 'payment_intent.succeeded',
+			'data' => array(
+				'object' => array(
+					'id'       => $pi_id,
+					'amount'   => wpss_amount_to_minor_units( 23.60, $currency ),
+					'currency' => strtolower( $currency ),
+					'metadata' => array( 'order_id' => $second, 'site_url' => get_option( 'home' ), 'platform' => 'wp-sell-services' ),
+				),
+			),
+		)
+	);
+	$check( 'a webhook naming another order does not pay it with a spent payment', 'pending' === $payment_status( $second ) && 1 === $paid_fired );
+
 	$r = $confirm( $pi_id, $first );
 	$check( 'repeating the confirm for the order it paid still answers paid', ! is_wp_error( $r ) && 'paid' === ( $r->get_data()['status'] ?? '' ) );
 

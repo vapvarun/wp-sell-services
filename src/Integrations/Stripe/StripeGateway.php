@@ -1437,8 +1437,7 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return array
 	 */
 	private function handle_payment_succeeded( array $payment_intent ): array {
-		$metadata       = $payment_intent['metadata'] ?? array();
-		$order_provider = wpss_get_order_provider();
+		$metadata = $payment_intent['metadata'] ?? array();
 
 		// Not ours unless it carries this site's mark or already paid one of
 		// our orders. Checked before either path: Path 1 would mark a local
@@ -1465,11 +1464,7 @@ class StripeGateway implements PaymentGatewayInterface {
 
 		// Path 1: Order already created via AJAX — just confirm payment.
 		if ( ! empty( $metadata['order_id'] ) ) {
-			$order_provider->mark_as_paid(
-				(int) $metadata['order_id'],
-				$payment_intent['id'],
-				'stripe'
-			);
+			( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order( (int) $metadata['order_id'], 'stripe', (string) $payment_intent['id'] );
 
 			return array(
 				'success' => true,
