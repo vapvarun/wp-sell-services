@@ -206,6 +206,11 @@ class BuyerRequestsController extends RestController {
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
 						],
+						'attachments' => [
+							'description' => __( 'Media IDs from POST /media with context "request". Replaces the list; a file left out is deleted. Omit to leave attachments unchanged.', 'wp-sell-services' ),
+							'type'        => 'array',
+							'items'       => [ 'type' => 'integer' ],
+						],
 						'status'      => [
 							'type' => 'string',
 							'enum' => BuyerRequest::get_filterable_statuses(),
@@ -580,6 +585,13 @@ class BuyerRequestsController extends RestController {
 		// Normalize 'category' to 'category_id' for BuyerRequestService::update().
 		if ( $request->get_param( 'category' ) !== null ) {
 			$data['category_id'] = (int) $request->get_param( 'category' );
+		}
+
+		// Only when the caller sends the list, as the website's edit form does:
+		// a client that omits it must not wipe the files. This route ignored
+		// attachments, so an app could add files on create and never change them.
+		if ( null !== $request->get_param( 'attachments' ) ) {
+			$data['attachments'] = array_map( 'absint', (array) $request->get_param( 'attachments' ) );
 		}
 
 		$result = $this->request_service->update( $request_id, $data );

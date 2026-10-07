@@ -205,13 +205,20 @@ class BuyerRequestService {
 			// Only files the request's author uploaded: an ID is just a number,
 			// and the request page links whatever is listed here.
 			$author = (int) get_post_field( 'post_author', $request_id );
-			$files  = array_values(
-				array_filter(
-					array_unique( array_map( 'absint', $data['attachments'] ) ),
-					static fn( int $id ) => $id && 'attachment' === get_post_type( $id ) && (int) get_post_field( 'post_author', $id ) === $author
-				)
-			);
+			$owned  = static fn( int $id ) => $id && 'attachment' === get_post_type( $id ) && (int) get_post_field( 'post_author', $id ) === $author;
+			$before = array_map( 'absint', (array) get_post_meta( $request_id, '_wpss_attachments', true ) );
+			$files  = array_values( array_filter( array_unique( array_map( 'absint', $data['attachments'] ) ), $owned ) );
 			update_post_meta( $request_id, '_wpss_attachments', $files );
+
+			// A file taken off the request is deleted, not just unlisted: it sat
+			// in the public uploads folder and its link kept working (Basecamp
+			// 10377676994). Only a file uploaded for a request by this author -
+			// never a profile photo or portfolio image passed in by ID.
+			foreach ( array_diff( $before, $files ) as $removed ) {
+				if ( $owned( $removed ) && 'request' === get_post_meta( $removed, '_wpss_upload_context', true ) ) {
+					wp_delete_attachment( $removed, true );
+				}
+			}
 		}
 
 		if ( isset( $data['skills_required'] ) && is_array( $data['skills_required'] ) ) {
