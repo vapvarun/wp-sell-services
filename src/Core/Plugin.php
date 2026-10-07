@@ -476,7 +476,7 @@ final class Plugin {
 			add_action(
 				'init',
 				static function () use ( $installed_version ): void {
-					Activator::create_pages();
+					Activator::create_pages( '' === (string) $installed_version );
 					// Re-run cron scheduling so new hooks shipped in this
 					// version get registered without a deactivate / reactivate.
 					// Idempotent — Scheduler::has_pending() gates every insert.

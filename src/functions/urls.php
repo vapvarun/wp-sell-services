@@ -513,11 +513,18 @@ function wpss_get_page_definitions(): array {
 		),
 		// Same shape as registration: optional, and when mapped every Sign in
 		// link follows it through core's login_url (wpss_marketplace_login_url).
+		//
+		// 'takes_over': mapping this page changes how the WHOLE site signs in,
+		// theme and other plugins included. So the installer creates it only on
+		// a fresh install whose login is still core's; an update never creates
+		// or adopts one, and the owner maps or unmaps it in Settings > Pages
+		// (owner decision, Basecamp 10352980066).
 		'login'         => array(
-			'title'     => __( 'Log In', 'wp-sell-services' ),
-			'shortcode' => '[wpss_login]',
-			'slug'      => 'login',
-			'required'  => false,
+			'title'      => __( 'Log In', 'wp-sell-services' ),
+			'shortcode'  => '[wpss_login]',
+			'slug'       => 'login',
+			'required'   => false,
+			'takes_over' => true,
 		),
 	);
 

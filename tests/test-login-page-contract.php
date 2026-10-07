@@ -29,6 +29,7 @@ $check( 'login is an optional page using [wpss_login]', isset( $defs['login'] ) 
 $saved   = get_option( 'wpss_pages', array() );
 $target  = home_url( '/some-service/' );
 $page_id = 0;
+$made    = 0;
 
 try {
 	// Unmapped: core's URL, untouched.
@@ -66,8 +67,44 @@ try {
 	$html                = do_shortcode( '[wpss_login]' );
 	unset( $_GET['redirect_to'] );
 	$check( '  but never to another site', false === strpos( $html, 'evil.example' ) );
+
+	// The installer. Mapping this page changes sign-in for the whole site, so
+	// an update never does it, and a fresh install only where login is still
+	// WordPress's own (owner decision, Basecamp 10352980066).
+	$mapped = static fn(): int => (int) ( get_option( 'wpss_pages', array() )['login'] ?? 0 );
+	$unmap  = static function () use ( $saved ): void {
+		$pages = $saved;
+		unset( $pages['login'] );
+		update_option( 'wpss_pages', $pages );
+	};
+
+	$unmap();
+	\WPSellServices\Core\Activator::create_pages( false );
+	$check( 'an update does not create or map a Log In page', 0 === $mapped() );
+
+	$theirs = static fn() => home_url( '/members/sign-in/' );
+	add_filter( 'login_url', $theirs, 5 );
+	$check( 'a site whose login link was moved is not on core login', false === \WPSellServices\Core\Activator::site_uses_core_login() );
+	\WPSellServices\Core\Activator::create_pages( true );
+	$check( 'a fresh install on a site with its own login creates none', 0 === $mapped() );
+	remove_filter( 'login_url', $theirs, 5 );
+
+	$check( 'with our own redirect set aside, this site is on core login', true === \WPSellServices\Core\Activator::site_uses_core_login() );
+	\WPSellServices\Core\Activator::create_pages( true );
+	$made = $mapped();
+	$check( 'a fresh install on core login maps a Log In page', $made > 0 );
+
+	$pages          = get_option( 'wpss_pages', array() );
+	$pages['login'] = $page_id;
+	update_option( 'wpss_pages', $pages );
+	\WPSellServices\Core\Activator::create_pages( false );
+	$check( 'an update leaves the page the owner mapped', $page_id === $mapped() );
 } finally {
 	update_option( 'wpss_pages', $saved );
+	// A page the installer published for this test, never one it adopted.
+	if ( ! empty( $made ) && $made !== $page_id && $made !== (int) ( $saved['login'] ?? 0 ) && 'login' === get_post_meta( $made, '_wpss_created_page', true ) ) {
+		wp_delete_post( $made, true );
+	}
 	if ( $page_id ) {
 		wp_delete_post( $page_id, true );
 	}

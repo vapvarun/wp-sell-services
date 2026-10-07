@@ -3509,6 +3509,8 @@ class Settings {
 		$options    = get_option( $args['option_name'], array() );
 		$value      = $options[ $args['field'] ] ?? '';
 		$page_title = $args['page_title'] ?? '';
+		// A page that changes sign-in for the whole site: say what "none" means.
+		$takes_over = ! empty( wpss_get_page_definitions()[ $args['field'] ]['takes_over'] );
 
 		echo '<div class="wpss-page-select-wrap">';
 
@@ -3516,7 +3518,7 @@ class Settings {
 			array(
 				'name'              => esc_attr( $args['option_name'] . '[' . $args['field'] . ']' ),
 				'id'                => esc_attr( $args['field'] ),
-				'show_option_none'  => esc_html__( '— Select —', 'wp-sell-services' ),
+				'show_option_none'  => $takes_over ? esc_html__( "None (use this site's own login)", 'wp-sell-services' ) : esc_html__( '— Select —', 'wp-sell-services' ),
 				'option_none_value' => '',
 				'selected'          => esc_attr( $value ),
 				'class'             => 'wpss-page-dropdown',
@@ -3548,6 +3550,13 @@ class Settings {
 		}
 
 		echo '</div>';
+
+		if ( $takes_over ) {
+			printf(
+				'<p class="description">%s</p>',
+				esc_html__( 'When a page is chosen, every Log in link on the site (the theme and other plugins included) goes to it. Choose None if a membership, security or two-factor plugin already provides your login page.', 'wp-sell-services' )
+			);
+		}
 	}
 
 	/**
