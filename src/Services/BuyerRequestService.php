@@ -1137,7 +1137,7 @@ class BuyerRequestService {
 						'proposal_cover'      => $proposal->cover_letter ?? '',
 					)
 				),
-				'attachments'  => wp_json_encode( $request->attachments ),
+				'attachments'  => wp_json_encode( wpss_normalize_requirement_attachments( (array) $request->attachments, (int) $request->author_id ) ),
 				'submitted_at' => current_time( 'mysql', true ),
 			),
 			array( '%d', '%s', '%s', '%s' )

@@ -1208,7 +1208,7 @@ class ServiceOrder {
 
 		return array(
 			'data'         => is_array( $data ) ? $data : array(),
-			'attachments'  => is_array( $attachments ) ? $attachments : array(),
+			'attachments'  => is_array( $attachments ) ? wpss_normalize_requirement_attachments( $attachments, $this->customer_id ) : array(),
 			'submitted_at' => $row && $row->submitted_at ? (string) $row->submitted_at : null,
 		);
 	}

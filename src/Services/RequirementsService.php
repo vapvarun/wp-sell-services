@@ -124,6 +124,9 @@ class RequirementsService {
 			);
 		}
 
+		// Stored as records, and only the buyer's own uploads.
+		$attachments = wpss_normalize_requirement_attachments( $attachments, (int) $order->customer_id );
+
 		// Get service requirements.
 		$service = $order->get_service();
 
