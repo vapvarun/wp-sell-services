@@ -1,0 +1,1124 @@
+{
+    "artefacts": {
+        "admin_page": {
+            "wpss-audit-log": [],
+            "wpss-disputes": [],
+            "wpss-moderation": [],
+            "wpss-notifications": [],
+            "wpss-orders": [],
+            "wpss-reports": [],
+            "wpss-review-moderation": [],
+            "wpss-settings": [],
+            "wpss-setup-wizard": [],
+            "wpss-vendors": [
+                "tests/test-seller-migration.php"
+            ],
+            "wpss-withdrawals": []
+        },
+        "ajax": {
+            "wpss_accept_cancellation": [],
+            "wpss_accept_delivery": [],
+            "wpss_accept_proposal": [],
+            "wpss_add_dispute_evidence": [],
+            "wpss_add_portfolio_item": [],
+            "wpss_add_service_to_cart": [],
+            "wpss_admin_add_order_note": [],
+            "wpss_admin_mark_order_paid": [],
+            "wpss_admin_search": [],
+            "wpss_admin_update_order_status": [],
+            "wpss_approve_milestone": [],
+            "wpss_approve_review": [],
+            "wpss_approve_service": [],
+            "wpss_become_vendor": [],
+            "wpss_bulk_action": [],
+            "wpss_bulk_moderate_services": [],
+            "wpss_bulk_process_withdrawals": [],
+            "wpss_bulk_update_vendor_status": [],
+            "wpss_cancel_order": [],
+            "wpss_checkout_create_account": [],
+            "wpss_contact_vendor": [],
+            "wpss_create_manual_order": [
+                "tests/test-manual-order-package-contract.php"
+            ],
+            "wpss_create_page": [],
+            "wpss_decline_extension": [],
+            "wpss_decline_milestone": [],
+            "wpss_delete_demo_content": [
+                "tests/test-demo-delete-contract.php",
+                "tests/test-demo-seeds-briefs.php"
+            ],
+            "wpss_delete_milestone": [],
+            "wpss_delete_portfolio_item": [],
+            "wpss_delete_request": [],
+            "wpss_delete_service": [],
+            "wpss_deliver_order": [],
+            "wpss_dismiss_notice": [
+                "tests/test-launch-notices-contract.php",
+                "tests/test-setup-health.php"
+            ],
+            "wpss_export_data": [],
+            "wpss_favorite_service": [],
+            "wpss_filter_dashboard": [],
+            "wpss_get_dashboard_tab": [],
+            "wpss_get_favorites": [],
+            "wpss_get_messages": [],
+            "wpss_get_new_messages": [],
+            "wpss_get_notifications": [],
+            "wpss_get_service_addons": [],
+            "wpss_get_service_packages": [],
+            "wpss_import_demo_content": [],
+            "wpss_live_search": [],
+            "wpss_load_reviews": [],
+            "wpss_load_services": [],
+            "wpss_manual_order_quote": [],
+            "wpss_mark_all_notifications_read": [],
+            "wpss_mark_messages_read": [],
+            "wpss_mark_notification_read": [],
+            "wpss_mark_review_helpful": [],
+            "wpss_moderate_portfolio_item": [],
+            "wpss_offline_process_payment": [],
+            "wpss_open_dispute": [],
+            "wpss_order_action": [
+                "tests/test-order-action-gates.php"
+            ],
+            "wpss_paginate_dashboard": [],
+            "wpss_paypal_capture": [],
+            "wpss_paypal_create_order": [
+                "tests/test-guest-checkout-contract.php"
+            ],
+            "wpss_post_request": [],
+            "wpss_process_withdrawal": [],
+            "wpss_propose_milestone": [],
+            "wpss_public_signup": [
+                "tests/test-registration-page-contract.php"
+            ],
+            "wpss_reject_cancellation": [],
+            "wpss_reject_proposal": [],
+            "wpss_reject_review": [],
+            "wpss_reject_service": [],
+            "wpss_remove_cart_item": [],
+            "wpss_remove_requirement_file": [],
+            "wpss_request_extension": [],
+            "wpss_request_milestone_revision": [],
+            "wpss_request_revision": [],
+            "wpss_review_payment_receipt": [],
+            "wpss_search_dashboard": [],
+            "wpss_send_direct_message": [],
+            "wpss_send_message": [],
+            "wpss_send_test_email": [],
+            "wpss_service_action": [],
+            "wpss_skip_requirements": [],
+            "wpss_start_work": [],
+            "wpss_stripe_confirm_payment": [],
+            "wpss_stripe_create_payment_intent": [
+                "tests/test-guest-checkout-contract.php"
+            ],
+            "wpss_stripe_process_payment": [],
+            "wpss_submit_milestone": [],
+            "wpss_submit_proposal": [],
+            "wpss_submit_requirements": [],
+            "wpss_submit_review": [],
+            "wpss_test_process_payment": [],
+            "wpss_unfavorite_service": [],
+            "wpss_update_cart_item": [],
+            "wpss_update_portfolio_item": [],
+            "wpss_update_request": [],
+            "wpss_update_request_status": [],
+            "wpss_update_vendor_availability": [],
+            "wpss_update_vendor_commission": [],
+            "wpss_update_vendor_level": [],
+            "wpss_update_vendor_profile": [],
+            "wpss_update_vendor_status": [],
+            "wpss_update_vendor_vacation": [],
+            "wpss_upload_file": [],
+            "wpss_vendor_tab_content": [],
+            "wpss_withdraw_proposal": [],
+            "wpss_wizard_complete": [],
+            "wpss_wizard_create_categories": [],
+            "wpss_wizard_publish": [],
+            "wpss_wizard_remove_gallery": [],
+            "wpss_wizard_save_draft": [],
+            "wpss_wizard_save_step": [],
+            "wpss_wizard_upload_gallery": []
+        },
+        "block": {
+            "wpss/buyer-requests": [],
+            "wpss/featured-services": [],
+            "wpss/seller-card": [],
+            "wpss/service-categories": [],
+            "wpss/service-grid": [],
+            "wpss/service-search": []
+        },
+        "cli": {
+            "wpss api:shapes": [
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "wpss demo": [
+                "tests/test-cli-guards.php",
+                "audit/journeys/05-vendor-creates-a-service.md"
+            ],
+            "wpss preflight": [
+                "audit/journeys/03-install-and-upgrade.md",
+                "docs/qa/AGENT_SMOKE_RUNBOOK.md"
+            ],
+            "wpss repair:stripe-tax": [
+                "tests/test-cli-guards.php"
+            ],
+            "wpss rest:contract": [],
+            "wpss scale": [
+                "tests/test-cli-guards.php"
+            ],
+            "wpss service": [
+                "tests/test-cli-guards.php"
+            ],
+            "wpss test:flow": [
+                "tests/test-cli-guards.php"
+            ],
+            "wpss utc-migrate": [
+                "tests/test-cli-guards.php"
+            ],
+            "wpss validate": []
+        },
+        "hook": {
+            "wpss_account_page_section": [],
+            "wpss_account_status": [],
+            "wpss_account_status_changed": [],
+            "wpss_adapter_initialized": [],
+            "wpss_add_service_to_cart": [],
+            "wpss_admin_menu_label": [
+                "tests/Integration/ProExtensionHooksTest.php"
+            ],
+            "wpss_admin_notification_email": [],
+            "wpss_admin_order_actions": [],
+            "wpss_admin_vendor_notification_content": [],
+            "wpss_advanced_settings_sections": [],
+            "wpss_after_account_deletion": [],
+            "wpss_after_become_vendor_redirect": [],
+            "wpss_after_cascade_delete_request": [],
+            "wpss_after_cascade_delete_service": [],
+            "wpss_after_cascade_delete_user": [],
+            "wpss_after_status_change_notification": [],
+            "wpss_allow_late_requirements_submission": [],
+            "wpss_allowed_file_types": [
+                "tests/test-public-upload-context-contract.php"
+            ],
+            "wpss_analytics_widgets": [],
+            "wpss_api_controllers": [],
+            "wpss_api_cors_origins": [],
+            "wpss_api_public_settings": [],
+            "wpss_app_abuse_contact": [],
+            "wpss_app_branding": [],
+            "wpss_app_enabled": [],
+            "wpss_app_features": [],
+            "wpss_app_min_version": [],
+            "wpss_app_session_revoked": [],
+            "wpss_app_sessions_revoked": [],
+            "wpss_app_token_lifetime": [],
+            "wpss_attachment_display_name": [],
+            "wpss_auth_login_challenge": [],
+            "wpss_auto_approve_reviews": [],
+            "wpss_auto_approve_vendors": [],
+            "wpss_auto_withdrawal_created": [],
+            "wpss_batch_max_requests": [],
+            "wpss_before_account_deletion": [],
+            "wpss_before_cascade_delete_request": [],
+            "wpss_before_cascade_delete_service": [],
+            "wpss_before_cascade_delete_user": [],
+            "wpss_before_service_deleted": [],
+            "wpss_billing_address": [],
+            "wpss_billing_address_saved": [],
+            "wpss_billing_fields": [],
+            "wpss_blocks": [],
+            "wpss_breadcrumbs": [],
+            "wpss_buyer_request_created": [],
+            "wpss_buyer_request_deleted": [],
+            "wpss_buyer_request_meta_saved": [],
+            "wpss_buyer_request_post_type_args": [],
+            "wpss_buyer_request_slug": [],
+            "wpss_buyer_request_status_changed": [
+                "tests/test-notification-matrix.php"
+            ],
+            "wpss_buyer_request_updated": [],
+            "wpss_can_access_dashboard_section": [],
+            "wpss_can_view_request_attachments": [],
+            "wpss_cancellation_requested": [],
+            "wpss_cart_checkout": [],
+            "wpss_cart_item_data": [],
+            "wpss_cascade_preserve_shared_records": [],
+            "wpss_catalog_price_html": [
+                "tests/test-display-currency-surfaces-contract.php"
+            ],
+            "wpss_category_schema": [],
+            "wpss_category_terms_limit": [],
+            "wpss_check_order_limits": [],
+            "wpss_checkout_badges": [],
+            "wpss_checkout_creates_accounts": [
+                "tests/test-guest-checkout-contract.php"
+            ],
+            "wpss_checkout_slug": [],
+            "wpss_checkout_tax_rate": [],
+            "wpss_cloudflare_ip_ranges": [],
+            "wpss_commission_base_amount": [],
+            "wpss_commission_fee": [],
+            "wpss_commission_rate": [],
+            "wpss_commission_recorded": [],
+            "wpss_countries": [],
+            "wpss_cron_daily": [],
+            "wpss_currencies": [],
+            "wpss_currency": [],
+            "wpss_currency_decimals": [],
+            "wpss_currency_format": [],
+            "wpss_currency_registry": [],
+            "wpss_currency_symbols": [],
+            "wpss_dashboard_asset_shortcodes": [],
+            "wpss_dashboard_default_section": [],
+            "wpss_dashboard_header": [],
+            "wpss_dashboard_section_aliases": [],
+            "wpss_dashboard_section_before_content": [],
+            "wpss_dashboard_section_template": [],
+            "wpss_dashboard_section_titles": [],
+            "wpss_dashboard_sections": [],
+            "wpss_default_page_slugs": [],
+            "wpss_default_service_categories": [],
+            "wpss_delivery_accepted": [],
+            "wpss_delivery_allowed_file_types": [],
+            "wpss_delivery_submitted": [],
+            "wpss_dispute_cancelled": [],
+            "wpss_dispute_escalated": [],
+            "wpss_dispute_evidence_added": [],
+            "wpss_dispute_opened": [],
+            "wpss_dispute_reasons": [],
+            "wpss_dispute_resolved": [],
+            "wpss_dispute_response_submitted": [],
+            "wpss_dispute_status_changed": [],
+            "wpss_docs_url": [],
+            "wpss_ecommerce_adapters": [],
+            "wpss_ecommerce_platform_description": [],
+            "wpss_ecommerce_platform_status": [],
+            "wpss_email_before_send": [],
+            "wpss_email_from_name": [
+                "tests/Integration/ProExtensionHooksTest.php"
+            ],
+            "wpss_email_header_vars": [
+                "tests/Integration/ProExtensionHooksTest.php"
+            ],
+            "wpss_email_preference_categories": [],
+            "wpss_email_providers": [],
+            "wpss_email_subject": [],
+            "wpss_enqueue_dashboard_assets": [],
+            "wpss_ensure_pay_order": [],
+            "wpss_extension_approved": [],
+            "wpss_extension_rejected": [],
+            "wpss_extension_request_approved": [],
+            "wpss_extension_request_created": [],
+            "wpss_extension_request_rejected": [],
+            "wpss_foreign_page_map": [],
+            "wpss_format_price": [
+                "tests/test-display-currency-surfaces-contract.php",
+                "tests/test-milestone-parent-total-contract.php",
+                "tests/test-settings-defaults.php"
+            ],
+            "wpss_fullwidth_page_keys": [],
+            "wpss_gallery_max_upload_size_mb": [],
+            "wpss_gateway_cards": [],
+            "wpss_gateway_checkout_button_label": [],
+            "wpss_gateway_refund_received": [
+                "tests/test-gateway-refund-seam.php"
+            ],
+            "wpss_gateway_settings_owned_by_rail": [],
+            "wpss_get_template": [],
+            "wpss_get_template_part": [
+                "tests/test-demo-seeds-briefs.php",
+                "tests/test-requirement-attachment-records.php",
+                "tests/test-title-suppression-scope.php"
+            ],
+            "wpss_is_vendor": [
+                "tests/Factories/UserFactory.php",
+                "tests/test-copy-sweep.php",
+                "tests/test-order-action-gates.php",
+                "tests/test-seller-migration.php",
+                "tests/test-vendor-identity-queries.php",
+                "tests/test-vendor-profile-contract.php",
+                "tests/test-walk-regressions.php",
+                "audit/journeys/04-vendor-discovery.md"
+            ],
+            "wpss_known_dashboard_sections": [],
+            "wpss_ledger_debit_types": [],
+            "wpss_loaded": [],
+            "wpss_locate_template": [],
+            "wpss_locked_billing_fields": [],
+            "wpss_manual_order_currencies": [],
+            "wpss_max_order_quantity": [],
+            "wpss_max_upload_size": [],
+            "wpss_max_upload_size_mb": [],
+            "wpss_member_bypasses_limits": [],
+            "wpss_member_display_name": [],
+            "wpss_message_email_delay_minutes": [],
+            "wpss_message_sent": [],
+            "wpss_milestone_approved": [],
+            "wpss_milestone_cancelled": [],
+            "wpss_milestone_declined": [],
+            "wpss_milestone_paid": [],
+            "wpss_milestone_proposed": [],
+            "wpss_milestone_revision_requested": [
+                "tests/test-milestone-revision-contract.php"
+            ],
+            "wpss_milestone_submitted": [],
+            "wpss_min_service_price": [],
+            "wpss_new_order_message": [],
+            "wpss_notification_created": [],
+            "wpss_notification_email_content": [],
+            "wpss_notification_types": [],
+            "wpss_offline_method_slots": [],
+            "wpss_offline_methods": [],
+            "wpss_offline_multi_orders_created": [],
+            "wpss_offline_order_created": [
+                "tests/test-offline-methods-contract.php"
+            ],
+            "wpss_offline_order_paid": [],
+            "wpss_open_graph_data": [],
+            "wpss_order_auto_refunded": [],
+            "wpss_order_cancelled": [],
+            "wpss_order_completed": [],
+            "wpss_order_created": [
+                "tests/Integration/ProExtensionHooksTest.php"
+            ],
+            "wpss_order_disputed": [],
+            "wpss_order_is_refundable": [
+                "tests/test-partial-refund-contract.php"
+            ],
+            "wpss_order_message_created": [],
+            "wpss_order_number_prefix": [],
+            "wpss_order_paid": [
+                "tests/Rest/MilestonesUpworkFlowTest.php",
+                "tests/test-mark-as-paid-idempotent.php",
+                "tests/test-rest-pay-order-confirm-contract.php",
+                "tests/test-scale-surfaces.php",
+                "tests/test-wallet-provider-contract.php"
+            ],
+            "wpss_order_partially_refunded": [],
+            "wpss_order_payment_reference": [],
+            "wpss_order_refund_processed": [],
+            "wpss_order_refunded": [],
+            "wpss_order_started": [],
+            "wpss_order_status_changed": [],
+            "wpss_order_status_groups": [],
+            "wpss_order_status_pending_requirements": [],
+            "wpss_order_status_transitions": [],
+            "wpss_order_statuses": [],
+            "wpss_organization_schema": [],
+            "wpss_package_id_base": [],
+            "wpss_page_definitions": [
+                "tests/test-uninstall-scope.php"
+            ],
+            "wpss_pay_order_url_lookup": [],
+            "wpss_payment_action_required_message": [],
+            "wpss_payment_callback": [],
+            "wpss_payment_declined_message": [],
+            "wpss_payment_gateways": [],
+            "wpss_payment_receipt_rejected": [],
+            "wpss_payment_receipt_submitted": [],
+            "wpss_payment_receipt_verified": [],
+            "wpss_payout_fields": [],
+            "wpss_payout_profile_saved": [],
+            "wpss_paypal_refund_processed": [],
+            "wpss_person_schema": [],
+            "wpss_platform_name": [],
+            "wpss_portfolio_item_created": [],
+            "wpss_portfolio_item_deleted": [],
+            "wpss_portfolio_item_moderated": [],
+            "wpss_portfolio_item_updated": [],
+            "wpss_post_checkout_url": [],
+            "wpss_pre_create_order": [],
+            "wpss_pre_create_review": [],
+            "wpss_pre_create_service": [],
+            "wpss_pre_open_dispute": [],
+            "wpss_pre_order_status_change": [
+                "tests/test-dispute-state-machine.php"
+            ],
+            "wpss_pre_process_gateway_refund": [
+                "tests/test-refund-cascade-contract.php",
+                "tests/test-refund-dedupe-contract.php",
+                "tests/test-refund-outcome-contract.php"
+            ],
+            "wpss_pre_send_message": [],
+            "wpss_pre_submit_delivery": [],
+            "wpss_pre_update_service": [],
+            "wpss_pre_vendor_register": [],
+            "wpss_presence_window": [],
+            "wpss_pro_upgrade_url": [],
+            "wpss_proposal_accepted": [],
+            "wpss_proposal_deleted": [],
+            "wpss_proposal_order_revisions": [],
+            "wpss_proposal_rejected": [],
+            "wpss_proposal_status_updated": [],
+            "wpss_proposal_submitted": [],
+            "wpss_proposal_updated": [],
+            "wpss_proposal_withdrawn": [],
+            "wpss_public_signup_complete": [],
+            "wpss_rail_status_map": [],
+            "wpss_rate_limits": [],
+            "wpss_realtime_settings": [],
+            "wpss_register_tipping_settings": [],
+            "wpss_related_services_args": [],
+            "wpss_render_secret_field": [],
+            "wpss_report_filed": [],
+            "wpss_report_reasons": [],
+            "wpss_report_target_types": [],
+            "wpss_request_converted_to_order": [],
+            "wpss_require_service_moderation": [],
+            "wpss_requirement_field_label": [
+                "tests/test-requirements-display-contract.php"
+            ],
+            "wpss_requirements_allowed_file_types": [],
+            "wpss_requirements_file_inputs": [],
+            "wpss_requirements_submitted": [],
+            "wpss_requirements_timeout": [],
+            "wpss_rest_confirm_payment": [],
+            "wpss_rest_create_payment_intent": [],
+            "wpss_rest_offline_order_created": [],
+            "wpss_rest_order_data": [],
+            "wpss_rest_review_data": [],
+            "wpss_rest_service_created": [],
+            "wpss_rest_service_data": [],
+            "wpss_rest_service_deleted": [],
+            "wpss_rest_service_updated": [],
+            "wpss_rest_vendor_data": [],
+            "wpss_review_created": [
+                "tests/test-notification-matrix.php"
+            ],
+            "wpss_review_moderated": [],
+            "wpss_review_reply_created": [
+                "tests/test-notification-matrix.php"
+            ],
+            "wpss_review_window_days": [
+                "tests/test-review-window-and-reply.php"
+            ],
+            "wpss_revision_requested": [
+                "tests/test-auto-complete-latest-delivery.php"
+            ],
+            "wpss_search_categories_limit": [],
+            "wpss_search_query_args": [],
+            "wpss_search_results": [],
+            "wpss_search_suggestions": [],
+            "wpss_seller_levels": [],
+            "wpss_send_requirements_reminder_email": [],
+            "wpss_service_approved": [
+                "tests/test-notification-matrix.php"
+            ],
+            "wpss_service_card_display": [],
+            "wpss_service_category_taxonomy_args": [],
+            "wpss_service_created": [],
+            "wpss_service_editor_url": [],
+            "wpss_service_is_featured": [],
+            "wpss_service_limit_error_message": [],
+            "wpss_service_list_schema": [],
+            "wpss_service_manager_enforce_publishable": [
+                "tests/Integration/ServiceCreationTest.php"
+            ],
+            "wpss_service_max_extras": [],
+            "wpss_service_max_faq": [],
+            "wpss_service_max_gallery": [],
+            "wpss_service_max_packages": [],
+            "wpss_service_max_requirements": [],
+            "wpss_service_max_tags": [],
+            "wpss_service_max_videos": [],
+            "wpss_service_meta_fields": [
+                "tests/Integration/ProExtensionHooksTest.php"
+            ],
+            "wpss_service_meta_saved": [],
+            "wpss_service_order_slug": [],
+            "wpss_service_pending_moderation": [
+                "tests/test-scale-surfaces.php"
+            ],
+            "wpss_service_post_type_args": [],
+            "wpss_service_publish_errors": [],
+            "wpss_service_rejected": [
+                "tests/test-notification-matrix.php"
+            ],
+            "wpss_service_schema": [],
+            "wpss_service_slug": [],
+            "wpss_service_tag_args": [],
+            "wpss_service_tag_taxonomy_args": [],
+            "wpss_service_unavailable_reason": [],
+            "wpss_service_updated": [],
+            "wpss_service_wizard_saved": [],
+            "wpss_services_per_page": [],
+            "wpss_settings_currencies": [],
+            "wpss_settings_sections": [],
+            "wpss_settings_sections_gateways": [
+                "tests/Integration/SettingsHooksTest.php"
+            ],
+            "wpss_settings_sections_payments": [
+                "tests/Integration/SettingsHooksTest.php"
+            ],
+            "wpss_settings_tab_": [],
+            "wpss_settings_tabs": [
+                "tests/Integration/ProExtensionHooksTest.php"
+            ],
+            "wpss_should_reverse_vendor_earnings": [],
+            "wpss_show_mini_cart": [],
+            "wpss_show_powered_by": [],
+            "wpss_sitemap_post_types": [],
+            "wpss_skip_message_email_when_online": [],
+            "wpss_standalone_adapter_init": [],
+            "wpss_standalone_checkout_processed": [],
+            "wpss_standalone_order_complete": [],
+            "wpss_status_class": [],
+            "wpss_sticky_top_offset": [],
+            "wpss_storage_providers": [],
+            "wpss_stripe_api_version": [],
+            "wpss_stripe_customer_shipping": [],
+            "wpss_stripe_payment_description": [],
+            "wpss_stripe_payment_intent_args": [
+                "tests/Integration/ProExtensionHooksTest.php"
+            ],
+            "wpss_stripe_refund_args": [],
+            "wpss_stripe_refund_processed": [],
+            "wpss_stripe_webhook_received": [
+                "tests/Integration/ProExtensionHooksTest.php"
+            ],
+            "wpss_suppress_theme_title": [],
+            "wpss_template_args": [],
+            "wpss_terms_page_slugs": [],
+            "wpss_three_decimal_currencies": [],
+            "wpss_tip_commission_rate": [],
+            "wpss_tip_order_created": [],
+            "wpss_tip_sent": [
+                "tests/test-notification-matrix.php"
+            ],
+            "wpss_tipping_enabled": [
+                "tests/test-notification-matrix.php"
+            ],
+            "wpss_token_recovery_routes": [],
+            "wpss_tour_should_enqueue": [],
+            "wpss_tour_steps": [],
+            "wpss_trusted_proxies": [
+                "tests/test-client-ip-contract.php"
+            ],
+            "wpss_updated": [],
+            "wpss_use_fullwidth_template": [],
+            "wpss_user_blocked": [],
+            "wpss_user_can_feature_service": [],
+            "wpss_user_unblocked": [],
+            "wpss_validate_add_to_cart": [],
+            "wpss_vendor_access_granted": [],
+            "wpss_vendor_access_revoked": [],
+            "wpss_vendor_can_create_service": [
+                "tests/Integration/ProExtensionHooksTest.php",
+                "audit/journeys/05-vendor-creates-a-service.md"
+            ],
+            "wpss_vendor_commission_updated": [],
+            "wpss_vendor_contacted": [],
+            "wpss_vendor_is_on_vacation": [],
+            "wpss_vendor_level_promoted": [],
+            "wpss_vendor_level_updated": [],
+            "wpss_vendor_max_services": [],
+            "wpss_vendor_page_schema": [],
+            "wpss_vendor_pending_email_content": [],
+            "wpss_vendor_pitch_stats": [],
+            "wpss_vendor_pitch_steps": [],
+            "wpss_vendor_profile_allowed_fields": [],
+            "wpss_vendor_profile_saved": [],
+            "wpss_vendor_profile_updated": [],
+            "wpss_vendor_registered": [],
+            "wpss_vendor_registration_open": [],
+            "wpss_vendor_slug": [],
+            "wpss_vendor_status_updated": [
+                "tests/test-notification-matrix.php"
+            ],
+            "wpss_vendor_tier_changed": [],
+            "wpss_vendor_vacation_mode_changed": [],
+            "wpss_vendor_vacation_notice": [],
+            "wpss_vendor_welcome_email_content": [],
+            "wpss_vendors_page_id": [
+                "tests/test-walk-regressions.php"
+            ],
+            "wpss_vendors_url": [],
+            "wpss_video_thumbnail_cache_ttl": [],
+            "wpss_wallet_manager": [],
+            "wpss_wallet_providers": [],
+            "wpss_web_login_lock": [
+                "tests/test-login-lockout.php"
+            ],
+            "wpss_withdrawal_cancelled": [],
+            "wpss_withdrawal_methods": [],
+            "wpss_withdrawal_processed": [],
+            "wpss_withdrawal_requested": [],
+            "wpss_wizard_pricing_after": [],
+            "wpss_wizard_sanitize_service_data": [],
+            "wpss_wizard_save_service_meta": [],
+            "wpss_wizard_service_data": [],
+            "wpss_zero_decimal_currencies": []
+        },
+        "rest": {
+            "/wpss/v1/audit-log": [],
+            "/wpss/v1/auth/change-password": [
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "/wpss/v1/auth/devices": [
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "/wpss/v1/auth/devices/(?P<device_id>[a-zA-Z0-9_-]+)": [],
+            "/wpss/v1/auth/forgot-password": [
+                "tests/test-rest-app-surface.php",
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "/wpss/v1/auth/login": [
+                "tests/test-login-lockout.php",
+                "tests/test-rest-app-surface.php",
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "/wpss/v1/auth/logout": [
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "/wpss/v1/auth/me": [],
+            "/wpss/v1/auth/register": [
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "/wpss/v1/auth/sessions": [
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "/wpss/v1/auth/sessions/(?P<uuid>[a-zA-Z0-9\\-]+)": [
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "/wpss/v1/batch": [
+                "tests/test-batch-nesting-contract.php",
+                "tests/test-vendor-identity-queries.php"
+            ],
+            "/wpss/v1/blocks": [],
+            "/wpss/v1/blocks/(?P<user_id>[\\d]+)": [],
+            "/wpss/v1/buyer-requests": [
+                "tests/test-proposal-count-contract.php"
+            ],
+            "/wpss/v1/buyer-requests/(?P<id>[\\d]+)": [
+                "tests/test-proposal-count-contract.php",
+                "tests/test-request-attachment-removal.php"
+            ],
+            "/wpss/v1/buyer-requests/(?P<id>[\\d]+)/proposals": [],
+            "/wpss/v1/buyer-requests/(?P<id>[\\d]+)/proposals/(?P<proposal_id>[\\d]+)/accept": [],
+            "/wpss/v1/buyer-requests/(?P<id>[\\d]+)/proposals/(?P<proposal_id>[\\d]+)/reject": [],
+            "/wpss/v1/buyer-requests/mine": [],
+            "/wpss/v1/cart": [
+                "tests/test-cart-pricing-contract.php",
+                "tests/test-cart-unavailable-contract.php",
+                "tests/test-design-token-integrity.php",
+                "tests/test-display-currency-surfaces-contract.php",
+                "audit/journeys/03-install-and-upgrade.md"
+            ],
+            "/wpss/v1/cart/(?P<item_key>[a-z0-9]+)": [],
+            "/wpss/v1/cart/add": [
+                "tests/test-cart-pricing-contract.php"
+            ],
+            "/wpss/v1/cart/checkout": [],
+            "/wpss/v1/categories": [
+                "tests/test-batch-nesting-contract.php"
+            ],
+            "/wpss/v1/conversations": [],
+            "/wpss/v1/conversations/(?P<id>[\\d]+)": [],
+            "/wpss/v1/conversations/(?P<id>[\\d]+)/messages": [],
+            "/wpss/v1/conversations/(?P<id>[\\d]+)/read": [],
+            "/wpss/v1/conversations/unread-count": [],
+            "/wpss/v1/dashboard": [],
+            "/wpss/v1/disputes": [
+                "tests/test-walk-regressions.php"
+            ],
+            "/wpss/v1/disputes/(?P<id>[\\d]+)": [
+                "tests/test-copy-sweep.php"
+            ],
+            "/wpss/v1/disputes/(?P<id>[\\d]+)/assign": [],
+            "/wpss/v1/disputes/(?P<id>[\\d]+)/cancel": [],
+            "/wpss/v1/disputes/(?P<id>[\\d]+)/escalate": [],
+            "/wpss/v1/disputes/(?P<id>[\\d]+)/evidence": [],
+            "/wpss/v1/disputes/(?P<id>[\\d]+)/resolve": [],
+            "/wpss/v1/disputes/(?P<id>[\\d]+)/respond": [],
+            "/wpss/v1/disputes/(?P<id>[\\d]+)/timeline": [],
+            "/wpss/v1/disputes/options": [],
+            "/wpss/v1/earnings/history": [
+                "tests/test-money-route-gates.php"
+            ],
+            "/wpss/v1/earnings/summary": [
+                "tests/test-money-route-gates.php"
+            ],
+            "/wpss/v1/extensions/(?P<id>[\\d]+)/decline": [],
+            "/wpss/v1/favorites": [
+                "tests/test-scale-surfaces.php"
+            ],
+            "/wpss/v1/favorites/(?P<service_id>[\\d]+)": [],
+            "/wpss/v1/me": [
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "/wpss/v1/media": [
+                "tests/audit/rest-reachability.php",
+                "tests/test-attachment-privacy.php",
+                "tests/test-public-upload-context-contract.php"
+            ],
+            "/wpss/v1/media/(?P<id>[\\d]+)": [
+                "tests/test-attachment-privacy.php",
+                "tests/test-request-attachment-removal.php"
+            ],
+            "/wpss/v1/milestones/(?P<id>[\\d]+)": [],
+            "/wpss/v1/milestones/(?P<id>[\\d]+)/approve": [],
+            "/wpss/v1/milestones/(?P<id>[\\d]+)/decline": [],
+            "/wpss/v1/milestones/(?P<id>[\\d]+)/pay": [],
+            "/wpss/v1/milestones/(?P<id>[\\d]+)/request-revision": [],
+            "/wpss/v1/milestones/(?P<id>[\\d]+)/submit": [],
+            "/wpss/v1/moderation/(?P<service_id>[\\d]+)": [],
+            "/wpss/v1/moderation/(?P<service_id>[\\d]+)/approve": [
+                "tests/test-moderation-state-contract.php"
+            ],
+            "/wpss/v1/moderation/(?P<service_id>[\\d]+)/reject": [],
+            "/wpss/v1/moderation/count": [
+                "tests/test-moderation-state-contract.php"
+            ],
+            "/wpss/v1/moderation/pending": [
+                "tests/test-moderation-state-contract.php"
+            ],
+            "/wpss/v1/notifications": [
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "/wpss/v1/notifications/(?P<id>[\\d]+)": [],
+            "/wpss/v1/notifications/(?P<id>[\\d]+)/read": [],
+            "/wpss/v1/notifications/read-all": [],
+            "/wpss/v1/notifications/unread-count": [],
+            "/wpss/v1/orders": [
+                "tests/test-orders-schema-contract.php",
+                "tests/test-rest-app-surface.php",
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "/wpss/v1/orders/(?P<id>[\\d]+)": [
+                "tests/test-order-write-integrity.php",
+                "tests/test-revisions-from-snapshot.php"
+            ],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/(?P<action>start|deliver|complete|revision|cancel|dispute|hold|resume|accept-cancellation|reject-cancellation|retry-refund)": [],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/deliverables": [],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/files/(?P<file_id>[A-Za-z0-9\\-]+)": [
+                "audit/journeys/09-request-files-to-order.md"
+            ],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/messages": [
+                "tests/test-orders-schema-contract.php"
+            ],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/pay": [],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/receipts": [
+                "tests/test-receipt-privacy.php"
+            ],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/requirements": [
+                "tests/test-requirement-attachment-records.php",
+                "audit/journeys/09-request-files-to-order.md"
+            ],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/requirements/files/(?P<file_id>[\\d]+)": [
+                "tests/test-request-attachment-removal.php"
+            ],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/requirements/skip": [],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/sub-orders": [],
+            "/wpss/v1/orders/(?P<id>[\\d]+)/timeline": [],
+            "/wpss/v1/orders/(?P<order_id>[\\d]+)/conversation": [],
+            "/wpss/v1/orders/(?P<order_id>[\\d]+)/conversation/messages": [],
+            "/wpss/v1/orders/(?P<order_id>[\\d]+)/dispute": [
+                "tests/test-hold-and-revision-clock.php"
+            ],
+            "/wpss/v1/orders/(?P<order_id>[\\d]+)/extension": [],
+            "/wpss/v1/orders/(?P<order_id>[\\d]+)/extensions": [],
+            "/wpss/v1/orders/(?P<order_id>[\\d]+)/milestones": [],
+            "/wpss/v1/orders/(?P<order_id>[\\d]+)/review": [],
+            "/wpss/v1/orders/(?P<order_id>[\\d]+)/tip": [],
+            "/wpss/v1/payments/confirm": [
+                "tests/test-rest-pay-order-confirm-contract.php"
+            ],
+            "/wpss/v1/payments/create-intent": [],
+            "/wpss/v1/payments/methods": [
+                "tests/test-license-gate-and-storage.php"
+            ],
+            "/wpss/v1/portfolio": [],
+            "/wpss/v1/portfolio/(?P<id>[\\d]+)": [],
+            "/wpss/v1/portfolio/(?P<id>[\\d]+)/featured": [],
+            "/wpss/v1/portfolio/reorder": [],
+            "/wpss/v1/proposals": [
+                "tests/Rest/MilestonesUpworkFlowTest.php"
+            ],
+            "/wpss/v1/proposals/(?P<id>[\\d]+)": [],
+            "/wpss/v1/proposals/(?P<id>[\\d]+)/withdraw": [],
+            "/wpss/v1/proposals/stats": [],
+            "/wpss/v1/realtime/auth": [],
+            "/wpss/v1/reports": [
+                "tests/test-report-link-contract.php"
+            ],
+            "/wpss/v1/reports/(?P<id>[\\d]+)/resolve": [],
+            "/wpss/v1/reviews": [
+                "tests/Integration/RouteAuthorityTest.php",
+                "tests/test-review-window-and-reply.php",
+                "audit/journeys/08-mobile-app-session.md"
+            ],
+            "/wpss/v1/reviews/(?P<id>[\\d]+)": [],
+            "/wpss/v1/reviews/(?P<id>[\\d]+)/helpful": [],
+            "/wpss/v1/reviews/(?P<id>[\\d]+)/reply": [
+                "tests/test-review-window-and-reply.php"
+            ],
+            "/wpss/v1/search": [
+                "tests/test-vendor-identity-queries.php"
+            ],
+            "/wpss/v1/seller-levels": [],
+            "/wpss/v1/seller-levels/(?P<level>[a-z_]+)": [],
+            "/wpss/v1/services": [
+                "tests/test-scale-surfaces.php",
+                "tests/test-service-limits-and-accept-lock.php",
+                "audit/journeys/05-vendor-creates-a-service.md"
+            ],
+            "/wpss/v1/services/(?P<id>[\\d]+)": [],
+            "/wpss/v1/services/(?P<id>[\\d]+)/addons": [
+                "tests/test-requirements-one-store.php"
+            ],
+            "/wpss/v1/services/(?P<id>[\\d]+)/addons/(?P<addon_id>[\\d]+)": [],
+            "/wpss/v1/services/(?P<id>[\\d]+)/faqs": [],
+            "/wpss/v1/services/(?P<id>[\\d]+)/packages": [],
+            "/wpss/v1/services/(?P<id>[\\d]+)/quote": [
+                "tests/test-cart-pricing-contract.php"
+            ],
+            "/wpss/v1/services/(?P<id>[\\d]+)/reviews": [],
+            "/wpss/v1/services/(?P<service_id>[\\d]+)/favorited": [],
+            "/wpss/v1/services/(?P<service_id>[\\d]+)/reviews/summary": [],
+            "/wpss/v1/services/grid": [],
+            "/wpss/v1/services/limits": [],
+            "/wpss/v1/settings": [
+                "tests/test-legal-links-contract.php"
+            ],
+            "/wpss/v1/tags": [],
+            "/wpss/v1/tour/complete": [],
+            "/wpss/v1/vendors": [
+                "tests/test-vendor-benefits-contract.php",
+                "tests/test-vendor-identity-queries.php"
+            ],
+            "/wpss/v1/vendors/(?P<id>[\\d]+)": [],
+            "/wpss/v1/vendors/(?P<id>[\\d]+)/reviews": [],
+            "/wpss/v1/vendors/(?P<id>[\\d]+)/services": [],
+            "/wpss/v1/vendors/(?P<id>[\\d]+)/stats": [],
+            "/wpss/v1/vendors/(?P<vendor_id>[\\d]+)/level": [],
+            "/wpss/v1/vendors/(?P<vendor_id>[\\d]+)/portfolio": [],
+            "/wpss/v1/vendors/(?P<vendor_id>[\\d]+)/reviews/summary": [],
+            "/wpss/v1/vendors/(?P<vendor_id>[\\d]+)/tips": [],
+            "/wpss/v1/vendors/(?P<vendor_id>[\\d]+)/tips/total": [],
+            "/wpss/v1/vendors/me": [],
+            "/wpss/v1/vendors/me/level": [],
+            "/wpss/v1/vendors/me/vacation": [],
+            "/wpss/v1/vendors/register": [],
+            "/wpss/v1/wallet/transactions": [
+                "tests/test-license-gate-and-storage.php",
+                "tests/test-money-route-gates.php"
+            ],
+            "/wpss/v1/withdrawals": [
+                "tests/test-money-route-gates.php",
+                "tests/test-payout-profile-contract.php"
+            ],
+            "/wpss/v1/withdrawals/(?P<id>[\\d]+)": [],
+            "/wpss/v1/withdrawals/methods": [
+                "tests/test-money-route-gates.php"
+            ],
+            "/wpss/v1/withdrawals/profile": []
+        },
+        "shortcode": {
+            "wpss_account": [],
+            "wpss_buyer_requests": [
+                "tests/test-retired-tables-contract.php"
+            ],
+            "wpss_cart": [],
+            "wpss_checkout": [
+                "tests/test-guest-checkout-contract.php"
+            ],
+            "wpss_dashboard": [
+                "tests/test-vendor-dashboard-sections.php"
+            ],
+            "wpss_featured_services": [],
+            "wpss_login": [
+                "tests/test-login-page-contract.php"
+            ],
+            "wpss_my_orders": [],
+            "wpss_order_details": [],
+            "wpss_post_request": [],
+            "wpss_register": [
+                "tests/test-login-page-contract.php",
+                "tests/test-registration-page-contract.php"
+            ],
+            "wpss_seller_card": [],
+            "wpss_service_categories": [],
+            "wpss_service_search": [],
+            "wpss_service_wizard": [],
+            "wpss_services": [],
+            "wpss_top_vendors": [],
+            "wpss_vendor_profile": [
+                "tests/test-vendor-profile-contract.php"
+            ],
+            "wpss_vendor_registration": [],
+            "wpss_vendors": [
+                "tests/test-scale-surfaces.php",
+                "tests/test-walk-regressions.php",
+                "audit/journeys/04-vendor-discovery.md"
+            ]
+        },
+        "template": {
+            "archive-request": [],
+            "archive-service": [],
+            "cart/cart": [
+                "tests/test-design-token-integrity.php",
+                "tests/test-display-currency-surfaces-contract.php"
+            ],
+            "checkout/payment-methods": [],
+            "checkout/summary": [],
+            "content-no-requests": [],
+            "content-no-services": [],
+            "content-request-card": [
+                "tests/test-display-currency-surfaces-contract.php"
+            ],
+            "content-service-card": [
+                "tests/test-display-currency-surfaces-contract.php"
+            ],
+            "dashboard/partials/order-filters": [],
+            "dashboard/partials/order-row": [],
+            "dashboard/sections/create": [],
+            "dashboard/sections/create-request": [],
+            "dashboard/sections/disputes": [
+                "tests/test-walk-regressions.php"
+            ],
+            "dashboard/sections/earnings": [
+                "tests/test-display-currency-surfaces-contract.php",
+                "tests/test-negative-balance-contract.php"
+            ],
+            "dashboard/sections/edit-request": [],
+            "dashboard/sections/favorites": [
+                "tests/test-scale-surfaces.php"
+            ],
+            "dashboard/sections/messages": [],
+            "dashboard/sections/notifications": [],
+            "dashboard/sections/orders": [],
+            "dashboard/sections/portfolio": [],
+            "dashboard/sections/profile": [],
+            "dashboard/sections/proposals": [],
+            "dashboard/sections/requests": [
+                "tests/test-display-currency-surfaces-contract.php"
+            ],
+            "dashboard/sections/reviews": [],
+            "dashboard/sections/sales": [
+                "tests/test-display-currency-surfaces-contract.php"
+            ],
+            "dashboard/sections/services": [
+                "tests/test-scale-surfaces.php"
+            ],
+            "emails/cancellation-requested": [],
+            "emails/delivery-ready": [],
+            "emails/dispute-escalated": [],
+            "emails/dispute-opened": [],
+            "emails/email-footer": [],
+            "emails/email-header": [],
+            "emails/extension-approved": [],
+            "emails/extension-declined": [],
+            "emails/extension-proposed": [],
+            "emails/generic": [],
+            "emails/milestone-approved": [],
+            "emails/milestone-paid": [],
+            "emails/milestone-proposed": [],
+            "emails/milestone-submitted": [],
+            "emails/moderation-approved": [],
+            "emails/moderation-pending": [],
+            "emails/moderation-rejected": [],
+            "emails/moderation-response": [],
+            "emails/new-message": [],
+            "emails/new-order": [],
+            "emails/order-cancelled": [],
+            "emails/order-completed": [
+                "tests/test-display-currency-surfaces-contract.php"
+            ],
+            "emails/order-in-progress": [],
+            "emails/requirements-reminder": [],
+            "emails/requirements-submitted": [],
+            "emails/review-received": [],
+            "emails/revision-requested": [],
+            "emails/seller-level-promotion": [
+                "tests/test-copy-sweep.php"
+            ],
+            "emails/test-email": [],
+            "emails/tip-received": [
+                "tests/test-display-currency-surfaces-contract.php"
+            ],
+            "emails/vendor-approved": [],
+            "emails/vendor-contact": [],
+            "emails/vendor-rejected": [],
+            "emails/vendor-suspended": [],
+            "emails/withdrawal-approved": [],
+            "emails/withdrawal-auto": [],
+            "emails/withdrawal-rejected": [],
+            "emails/withdrawal-requested": [],
+            "myaccount/notifications": [],
+            "myaccount/service-orders": [],
+            "myaccount/vendor-dashboard": [],
+            "myaccount/vendor-services": [],
+            "order/cancellation": [],
+            "order/conversation": [
+                "tests/test-conversation-states-contract.php"
+            ],
+            "order/deliveries": [],
+            "order/extension-view": [],
+            "order/line-items": [],
+            "order/milestone-view": [],
+            "order/order-requirements": [
+                "tests/test-requirements-one-store.php"
+            ],
+            "order/order-view": [
+                "tests/test-copy-sweep.php",
+                "tests/test-milestone-parent-total-contract.php",
+                "tests/test-requirements-display-contract.php",
+                "tests/test-requirements-one-store.php",
+                "tests/test-walk-regressions.php"
+            ],
+            "order/payment": [],
+            "order/requirements": [
+                "tests/test-demo-seeds-briefs.php",
+                "tests/test-requirement-attachment-records.php",
+                "tests/test-requirements-display-contract.php",
+                "audit/journeys/09-request-files-to-order.md"
+            ],
+            "order/requirements-form": [
+                "tests/test-requirements-one-store.php"
+            ],
+            "order/timeline": [],
+            "order/tip-view": [],
+            "partials/billing-fields": [],
+            "partials/billing-summary": [],
+            "partials/category-card": [],
+            "partials/dispute-evidence-item": [],
+            "partials/dispute-thread": [],
+            "partials/legal-links": [],
+            "partials/notifications-list": [],
+            "partials/report-modal": [],
+            "partials/request-attachments": [],
+            "partials/requirement-answer": [],
+            "partials/review-body": [],
+            "partials/service-faqs": [],
+            "partials/service-gallery": [
+                "tests/test-gallery-lightbox.php",
+                "tests/test-title-suppression-scope.php"
+            ],
+            "partials/service-packages": [
+                "tests/test-display-currency-surfaces-contract.php"
+            ],
+            "partials/service-rejection-notice": [],
+            "partials/service-reviews": [],
+            "partials/vendor-benefits": [
+                "tests/test-vendor-benefits-contract.php"
+            ],
+            "partials/vendor-card": [],
+            "partials/vendor-portfolio": [],
+            "single-request": [
+                "tests/test-display-currency-surfaces-contract.php"
+            ],
+            "single-service": [
+                "tests/test-gallery-lightbox.php",
+                "tests/test-guest-checkout-contract.php",
+                "tests/test-title-suppression-scope.php",
+                "audit/journeys/04-vendor-discovery.md"
+            ],
+            "vendor/profile": [
+                "tests/test-walk-regressions.php"
+            ],
+            "wpss-fullwidth-template": []
+        }
+    }
+}
