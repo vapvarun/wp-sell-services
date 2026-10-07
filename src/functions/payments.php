@@ -58,6 +58,54 @@ function wpss_uses_standalone_payments(): bool {
 }
 
 /**
+ * This site's mark on the payments it starts at a gateway.
+ *
+ * A gateway account is often shared: a live site, its staging copy, a second
+ * store. The gateway sends every event on the account to each of them, so a
+ * payment has to say which site made it before a webhook may act on it
+ * (Basecamp 10375174172). The stored home option, not home_url(): a
+ * multilingual plugin filters the latter per request and a webhook carries no
+ * language.
+ *
+ * @since 1.8.0
+ *
+ * @return string
+ */
+function wpss_payment_site_mark(): string {
+	return (string) get_option( 'home' );
+}
+
+/**
+ * Whether a site address written on a payment is this site's.
+ *
+ * Scheme, case and a trailing slash are ignored. An empty address is not ours.
+ *
+ * @since 1.8.0
+ *
+ * @param string $site_url Address read back from the gateway.
+ * @return bool
+ */
+function wpss_is_own_payment_site( string $site_url ): bool {
+	$bare = static fn( string $url ): string => untrailingslashit( strtolower( (string) preg_replace( '#^https?://#i', '', trim( $url ) ) ) );
+
+	return '' !== $bare( $site_url ) && $bare( $site_url ) === $bare( wpss_payment_site_mark() );
+}
+
+/**
+ * The same mark, short enough for a gateway field with a tight limit.
+ *
+ * PayPal's custom_id holds 127 characters and already carries the order's
+ * details as JSON, so the address itself does not fit.
+ *
+ * @since 1.8.0
+ *
+ * @return string Ten hex characters.
+ */
+function wpss_payment_site_hash(): string {
+	return substr( md5( untrailingslashit( strtolower( (string) preg_replace( '#^https?://#i', '', trim( wpss_payment_site_mark() ) ) ) ) ), 0, 10 );
+}
+
+/**
  * Whether the active rail can take a payment for ONE existing order.
  *
  * Tips, milestones, extensions and accepted proposals all need this. Standalone

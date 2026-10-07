@@ -261,7 +261,7 @@ class StripeGateway implements PaymentGatewayInterface {
 				// Last, so nothing passed in can overwrite the marks
 				// is_own_intent() reads back.
 				array(
-					'site_url' => $this->site_marker(),
+					'site_url' => wpss_payment_site_mark(),
 					'platform' => 'wp-sell-services',
 				)
 			),
@@ -706,20 +706,6 @@ class StripeGateway implements PaymentGatewayInterface {
 	}
 
 	/**
-	 * This site's mark on the intents it creates.
-	 *
-	 * The stored home option, not home_url(): a multilingual plugin filters the
-	 * latter per request, and a webhook carries no language.
-	 *
-	 * @since 1.8.0
-	 *
-	 * @return string
-	 */
-	private function site_marker(): string {
-		return (string) get_option( 'home' );
-	}
-
-	/**
 	 * Whether this site created a PaymentIntent.
 	 *
 	 * Stripe sends every payment_intent.succeeded on the account to this
@@ -733,10 +719,7 @@ class StripeGateway implements PaymentGatewayInterface {
 	 * @return bool
 	 */
 	private function is_own_intent( array $metadata ): bool {
-		$bare = static fn ( $url ): string => untrailingslashit( strtolower( (string) preg_replace( '#^https?://#i', '', trim( (string) $url ) ) ) );
-
-		return 'wp-sell-services' === ( $metadata['platform'] ?? '' )
-			&& $bare( $metadata['site_url'] ?? '' ) === $bare( $this->site_marker() );
+		return 'wp-sell-services' === ( $metadata['platform'] ?? '' ) && wpss_is_own_payment_site( (string) ( $metadata['site_url'] ?? '' ) );
 	}
 
 	/**

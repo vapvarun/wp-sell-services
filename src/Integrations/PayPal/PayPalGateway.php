@@ -179,7 +179,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 					'description' => $metadata['description'] ?? __( 'Service Purchase', 'wp-sell-services' ),
 					// custom_id is capped at 127 chars by PayPal; the description
 					// has its own field and would push a cart or add-on list over.
-					'custom_id'   => wp_json_encode( array_diff_key( $metadata, array( 'description' => 1 ) ) ),
+					'custom_id'   => $this->build_custom_id( $metadata ),
 				),
 			),
 			'payment_source' => array(
@@ -706,6 +706,15 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$metadata      = json_decode( (string) ( $order_details['purchase_units'][0]['custom_id'] ?? '' ), true ) ?: array();
 		$buyer_id      = (int) ( $metadata['customer_id'] ?? 0 );
 
+		// A PayPal order another site on this account started: not ours to
+		// capture, whatever buyer id it carries.
+		if ( ! $this->is_own_order( $metadata ) ) {
+			return array(
+				'success' => false,
+				'error'   => __( 'This payment was not made on this site.', 'wp-sell-services' ),
+			);
+		}
+
 		if ( ! $buyer_id || $buyer_id !== get_current_user_id() ) {
 			return array(
 				'success' => false,
@@ -903,6 +912,43 @@ class PayPalGateway implements PaymentGatewayInterface {
 	}
 
 	/**
+	 * The JSON this site writes on a PayPal order, with its mark.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param array<string, mixed> $metadata Order details.
+	 * @return string
+	 */
+	private function build_custom_id( array $metadata ): string {
+		$metadata = array_diff_key( $metadata, array( 'description' => 1 ) );
+		$marked   = (string) wp_json_encode( $metadata + array( 's' => wpss_payment_site_hash() ) );
+
+		// custom_id is capped at 127 characters and PayPal refuses the whole
+		// order above that. A payment that cannot carry the mark goes without
+		// it rather than fail; is_own_order() accepts an unmarked one.
+		return strlen( $marked ) <= 127 ? $marked : (string) wp_json_encode( $metadata );
+	}
+
+	/**
+	 * Whether this site started a PayPal order.
+	 *
+	 * PayPal sends an account's events to every site that listens on it. An
+	 * order marked by another site is theirs.
+	 *
+	 * ponytail: an order with NO mark is accepted - payments started before
+	 * 1.8.0, and carts whose details fill custom_id, carry none. Require the
+	 * mark once the details move out of custom_id.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param array<string, mixed> $metadata Decoded custom_id.
+	 * @return bool
+	 */
+	private function is_own_order( array $metadata ): bool {
+		return ! isset( $metadata['s'] ) || wpss_payment_site_hash() === (string) $metadata['s'];
+	}
+
+	/**
 	 * Handle capture completed webhook.
 	 *
 	 * @param array<string, mixed> $resource_data Capture resource from the webhook payload.
@@ -912,7 +958,7 @@ class PayPalGateway implements PaymentGatewayInterface {
 		$custom_id = $resource_data['custom_id'] ?? '';
 		$metadata  = json_decode( $custom_id, true ) ?: array();
 
-		if ( ! empty( $metadata['order_id'] ) ) {
+		if ( ! empty( $metadata['order_id'] ) && $this->is_own_order( $metadata ) ) {
 			( new \WPSellServices\Checkout\CheckoutIntentService() )->settle_webhook_order(
 				(int) $metadata['order_id'],
 				'paypal',
@@ -948,6 +994,12 @@ class PayPalGateway implements PaymentGatewayInterface {
 
 		$metadata = json_decode( (string) ( $resource_data['custom_id'] ?? '' ), true ) ?: array();
 		$amount   = (float) ( $resource_data['amount']['value'] ?? 0 );
+
+		// Another site's refund must not name one of our orders by id. Its
+		// capture id matches nothing here, so it then resolves to no order.
+		if ( ! $this->is_own_order( $metadata ) ) {
+			$metadata = array();
+		}
 
 		if ( '' === $capture_id && empty( $metadata['order_id'] ) ) {
 			return array(
