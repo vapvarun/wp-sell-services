@@ -2278,6 +2278,11 @@ function wpss_delete_demo_content(): array {
 	}
 
 	// Written by 1.7.x and earlier; nothing reads it any more.
+	// Seeded order briefs point at demo media deleted above; a brief left
+	// behind would link to a file that is gone.
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$wpdb->query( "DELETE r FROM {$wpdb->prefix}wpss_order_requirements r INNER JOIN {$wpdb->prefix}wpss_orders o ON o.id = r.order_id WHERE o.meta LIKE '%Seeded demo order.%'" );
+
 	delete_option( 'wpss_demo_content_imported' );
 
 	return $deleted;

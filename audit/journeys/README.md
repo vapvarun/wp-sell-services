@@ -60,6 +60,7 @@ check. `wpss_user_can_view_order()` is the correct participant check; there are
 | `06-standalone-checkout.md` | container, 390px, guest account, offline method | passes |
 | `07-service-page-media.md` | gallery: image first, video thumb, no render writes | passes |
 | `08-mobile-app-session.md` | login, token expiry, revoke, payload contract | passes |
+| `09-request-files-to-order.md` | request file → order page, requirements merge, REST, another buyer | passes |
 
 ## Not yet written
 

@@ -32,7 +32,11 @@ the wrong rail is what produced a whole round of false bounces on 2026-08-31.
 
 ## C — Core flows
 
-Walk every journey in `audit/journeys/` (01-08). Each states its own
+Walk every journey in `audit/journeys/` (01-09). Journey 09 (a request's
+files follow it into the order) is never skipped on the standalone rail: it
+is the flow that shipped a fatal in the first 1.8.0 build. Attach a real file
+wherever a step offers one, because an empty brief only exercises the empty
+branch. Each states its own
 preconditions, steps and expectations. A journey that cannot run on the current
 rail is `skipped`, not `pass`.
 
