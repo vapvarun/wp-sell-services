@@ -212,26 +212,34 @@ class BuyerRequestService {
 	public function is_file_locked( int $attachment_id ): bool {
 		global $wpdb;
 
-		// The list is a serialized array of integers, so one file is `i:ID;`.
+		// Every request this file was ever attached to, stamped on the file by
+		// save_meta(). Taking the file off a request's list does not remove the
+		// stamp, so unlisting it first cannot unlock a delete.
+		$requests = array_map( 'absint', (array) get_post_meta( $attachment_id, '_wpss_request_id', false ) );
+
+		// Files attached before the stamp existed: found through the list.
+		// The LIKE only narrows - in the serialized list an array position is
+		// written the same way as a file ID, and a request lists its own
+		// author's files only - so both are confirmed below.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- a destructive step must not trust a cache.
-		$requests = $wpdb->get_col(
+		$listing = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wpss_attachments' AND meta_value LIKE %s",
 				'%' . $wpdb->esc_like( 'i:' . $attachment_id . ';' ) . '%'
 			)
 		);
+		$owner   = (int) get_post_field( 'post_author', $attachment_id );
 
-		$owner = (int) get_post_field( 'post_author', $attachment_id );
-
-		foreach ( $requests as $request_id ) {
-			// The LIKE only narrows: in the serialized list an array position
-			// is written the same way as a file ID, and a request lists its own
-			// author's files only. Confirm both before a request can lock a file.
+		foreach ( $listing as $request_id ) {
 			$listed = array_map( 'absint', (array) get_post_meta( (int) $request_id, '_wpss_attachments', true ) );
 
-			if ( in_array( $attachment_id, $listed, true )
-				&& (int) get_post_field( 'post_author', (int) $request_id ) === $owner
-				&& ! $this->is_untouched( (int) $request_id ) ) {
+			if ( in_array( $attachment_id, $listed, true ) && (int) get_post_field( 'post_author', (int) $request_id ) === $owner ) {
+				$requests[] = (int) $request_id;
+			}
+		}
+
+		foreach ( array_unique( array_filter( $requests ) ) as $request_id ) {
+			if ( BuyerRequestPostType::POST_TYPE === get_post_type( $request_id ) && ! $this->is_untouched( (int) $request_id ) ) {
 				return true;
 			}
 		}
@@ -247,8 +255,6 @@ class BuyerRequestService {
 	 * @return void
 	 */
 	private function save_meta( int $request_id, array $data ): void {
-		$untouched = $this->is_untouched( $request_id );
-
 		$meta_fields = array(
 			'budget_type'   => 'sanitize_key',
 			'budget_min'    => 'floatval',
@@ -272,6 +278,15 @@ class BuyerRequestService {
 			$owned  = static fn( int $id ) => $id && 'attachment' === get_post_type( $id ) && (int) get_post_field( 'post_author', $id ) === $author;
 			$before = array_map( 'absint', (array) get_post_meta( $request_id, '_wpss_attachments', true ) );
 			$files  = array_values( array_filter( array_unique( array_map( 'absint', $data['attachments'] ) ), $owned ) );
+
+			// Stamp the request on each file, kept and leaving alike, before the
+			// list changes: is_file_locked() reads the stamp, not the list.
+			foreach ( array_unique( array_merge( $before, $files ) ) as $file ) {
+				if ( $owned( $file ) && ! in_array( $request_id, array_map( 'absint', (array) get_post_meta( $file, '_wpss_request_id', false ) ), true ) ) {
+					add_post_meta( $file, '_wpss_request_id', $request_id );
+				}
+			}
+
 			update_post_meta( $request_id, '_wpss_attachments', $files );
 
 			// A file taken off the request is deleted, not just unlisted: it sat
@@ -281,14 +296,12 @@ class BuyerRequestService {
 			// while nobody else has acted on the request. Once a vendor has
 			// proposed, the files are the brief the proposals and any order were
 			// written against; taking one off the list then hides it but does
-			// not destroy it. Nor is a file another request still lists.
-			$removed = array_diff( $before, $files );
-
-			if ( $removed && $untouched ) {
-				foreach ( $removed as $file ) {
-					if ( $owned( $file ) && 'request' === get_post_meta( $file, '_wpss_upload_context', true ) && ! $this->is_file_locked( (int) $file ) ) {
-						wp_delete_attachment( $file, true );
-					}
+			// not destroy it. The same holds for any other request the file was
+			// ever attached to.
+			// The lock is asked per file, at the moment of deleting it.
+			foreach ( array_diff( $before, $files ) as $file ) {
+				if ( $owned( $file ) && 'request' === get_post_meta( $file, '_wpss_upload_context', true ) && ! $this->is_file_locked( (int) $file ) ) {
+					wp_delete_attachment( $file, true );
 				}
 			}
 		}

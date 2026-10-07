@@ -96,8 +96,10 @@ try {
 	$check( '  but kept', null !== get_post( $second ) );
 	$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $proposal ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-	// The author controls the request's status, so the gate must not read it:
-	// with a proposal on it, no status makes the files deletable.
+	// The file is attached while the request is still untouched, through the
+	// service, the way the edit form and REST do it. Then a vendor proposes.
+	$third = $media( 'request' );
+	$service->update( $request_id, array( 'attachments' => array( $third ) ) );
 	$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$wpdb->prefix . 'wpss_proposals',
 		array(
@@ -111,22 +113,23 @@ try {
 		)
 	);
 	$proposal = (int) $wpdb->insert_id;
-	$third    = $media( 'request' );
-	update_post_meta( $request_id, '_wpss_attachments', array( $third ) );
 	update_post_meta( $request_id, '_wpss_status', BuyerRequestService::STATUS_HIRED );
 
+	// The author controls the request's status, so the gate must not read it:
+	// with a proposal on it, no status makes the files deletable.
 	$service->update( $request_id, array( 'status' => BuyerRequestService::STATUS_OPEN ) );
 	$service->update( $request_id, array( 'attachments' => array() ) );
 	$check( 'reopening a request with a proposal, then emptying the list, deletes nothing', null !== get_post( $third ) );
 
-	// The same rule on DELETE /media/{id}, the other way to delete the file.
-	update_post_meta( $request_id, '_wpss_attachments', array( $third ) );
+	// The same rule on DELETE /media/{id}, the other way to delete the file -
+	// and it holds after the file has been taken off the list: unlisting it
+	// first must not unlock the delete.
 	wp_set_current_user( $buyer->ID );
+	$check( 'the file is off the list after that update', array() === $listed() );
 	$answer = rest_do_request( new WP_REST_Request( 'DELETE', '/wpss/v1/media/' . $third ) );
-	$check( 'DELETE /media/{id} refuses a file of a request with a proposal (' . $answer->get_status() . ')', 409 === $answer->get_status() && null !== get_post( $third ) );
+	$check( 'DELETE /media/{id} refuses a file once attached to a request with a proposal, even unlisted (' . $answer->get_status() . ')', 409 === $answer->get_status() && null !== get_post( $third ) );
 
-	// A second request by the same buyer lists the same file: removing it from
-	// the untouched one must not delete what the other still shows.
+	// With the proposal gone the request is untouched again and the file is free.
 	$wpdb->delete( $wpdb->prefix . 'wpss_proposals', array( 'id' => $proposal ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$answer = rest_do_request( new WP_REST_Request( 'DELETE', '/wpss/v1/media/' . $third ) );
 	$check( '  and deletes it once no request with a proposal lists it (' . $answer->get_status() . ')', 200 === $answer->get_status() && null === get_post( $third ) );
