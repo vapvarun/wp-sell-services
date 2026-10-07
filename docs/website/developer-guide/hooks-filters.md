@@ -120,7 +120,7 @@ add_action( 'wpss_loaded', function( $plugin ) {
 | `wpss_delivery_accepted` | `int $order_id` | `src/Services/DeliveryService.php:206` |
 | `wpss_revision_requested` | `int $order_id, string $reason` | `src/Services/DeliveryService.php:276` |
 | `wpss_requirements_submitted` | `int $order_id, array $field_data, array $attachments` | `src/Services/RequirementsService.php:506` |
-| `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:1387` |
+| `wpss_cancellation_requested` | `int $order_id, int $user_id, string $reason, string $note` | `src/Services/OrderService.php:1389` |
 | `wpss_order_auto_refunded` | `int $order_id, object $order, mixed $refund_result` | `src/Services/OrderWorkflowManager.php:1591` |
 | `wpss_new_order_message` | `int $order_id, int $sender_id, string $content` | `src/Services/ConversationService.php:351` |
 
@@ -158,7 +158,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_paypal_refund_processed` | `string $url, array $resource` | `src/Integrations/PayPal/PayPalGateway.php:1039` |
+| `wpss_paypal_refund_processed` | `string $url, array $resource` | `src/Integrations/PayPal/PayPalGateway.php:1044` |
 
 ### Payment REST API
 
@@ -238,7 +238,7 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | `wpss_vendor_level_updated` | `int $user_id, string $level` | `src/Services/SellerLevelService.php:274` |
 | `wpss_vendor_status_updated` | `int $vendor_id, string $status` | `src/Services/VendorService.php:377` |
 | `wpss_vendor_commission_updated` | `int $vendor_id, float $rate` | `src/Admin/Pages/VendorsPage.php:1405` |
-| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2083` |
+| `wpss_vendor_contacted` | `int $vendor_id, int $user_id, int $service_id, string $message, array $attachments` | `src/Frontend/AjaxHandlers.php:2084` |
 | `wpss_vendor_access_granted` | `int $user_id` | `src/Services/VendorService.php:442` |
 | `wpss_vendor_access_revoked` | `int $user_id` | `src/Services/VendorService.php:494` |
 
@@ -486,7 +486,7 @@ add_action( 'wpss_wizard_save_service_meta', function( $service_id, $data ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:952` |
+| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:957` |
 
 ### Dashboard Filters
 
@@ -516,7 +516,7 @@ add_filter( 'wpss_dashboard_default_section', function( $section, $user_id ) {
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2319` |
+| `wpss_add_service_to_cart` | `bool $added, array $cart_item, object $adapter` | `src/Frontend/AjaxHandlers.php:2320` |
 | `wpss_pay_order_url_lookup` | `string $url, int $order_id, ?object $order` | `src/functions/urls.php` |
 | `wpss_ensure_pay_order` | `string $url, int $order_id` | `src/functions/urls.php` |
 
@@ -606,8 +606,8 @@ These filters let you customize outgoing email content without modifying templat
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2098` |
-| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2074` |
+| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2106` |
+| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2082` |
 | `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1570` |
 
 ```php
@@ -764,7 +764,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1025` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:362` |
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:1006` |
-| `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:958` |
+| `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:960` |
 | `wpss_api_controllers` | `$controllers` | `src/API/API.php:183` |
 | `wpss_api_public_settings` | `$settings` | `src/API/API.php:659` |
 | `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1363` |
@@ -787,7 +787,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_withdrawal_methods` | `$methods` | `src/API/EarningsController.php:705` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:482` |
-| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:792` |
+| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:794` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:435` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:263` |
 | `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1499` |
@@ -796,7 +796,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
 | `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:478` |
 | `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:577` |
-| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:891` |
+| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:896` |
 
 **`wpss_realtime_settings`** — filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
 

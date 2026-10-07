@@ -76,6 +76,26 @@ try {
 	$check( '  and is left out of the total', wpss_amounts_match( (float) $after['total'], $one, wpss_get_currency() ) );
 	$check( '  and out of the cart count', 1 === wpss_get_cart_count( $buyer->ID ) );
 
+	// The seller goes on vacation with the other service still in the cart
+	// (Basecamp 10379595852). One row in the profile table.
+	global $wpdb;
+	$profiles = $wpdb->prefix . 'wpss_vendor_profiles';
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	if ( ! $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$profiles} WHERE user_id = %d", $seller->ID ) ) ) {
+		$wpdb->insert( $profiles, array( 'user_id' => $seller->ID ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+	}
+	$wpdb->update( $profiles, array( 'vacation_mode' => 1, 'vacation_return_date' => null ), array( 'user_id' => $seller->ID ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	wp_cache_flush();
+	\WPSellServices\Models\VendorProfile::flush_memo();
+	$away = $cart();
+	$kept = current( array_filter( (array) $away['items'], static fn( $row ) => (int) $row['service_id'] === $ids['kept'] ) );
+	$check( 'a service whose seller went on vacation is marked unavailable in the cart', ! empty( $kept['unavailable'] ) && 0 === wpss_get_cart_count( $buyer->ID ) );
+	$check( '  and cannot be priced for checkout', is_wp_error( \WPSellServices\Checkout\CheckoutIntentService::price_service_line( $ids['kept'], 0, 1, array() ) ) );
+	$wpdb->update( $profiles, array( 'vacation_mode' => 0 ), array( 'user_id' => $seller->ID ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	wp_cache_flush();
+	\WPSellServices\Models\VendorProfile::flush_memo();
+	$check( '  and is buyable again when the seller is back', 1 === wpss_get_cart_count( $buyer->ID ) );
+
 	wp_trash_post( $ids['gone'] );
 	$after = $cart();
 	$check( 'a trashed service is left out of the total and the count too', wpss_amounts_match( (float) $after['total'], $one, wpss_get_currency() ) && 1 === wpss_get_cart_count( $buyer->ID ) );

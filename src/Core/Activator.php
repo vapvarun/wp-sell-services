@@ -632,7 +632,10 @@ class Activator {
 			add_filter( 'login_url', 'wpss_marketplace_login_url', $ours, 3 );
 		}
 
-		return untrailingslashit( $url ) === untrailingslashit( (string) strtok( site_url( 'wp-login.php', 'login' ), '?' ) );
+		// Against the address as stored, not site_url(): a hide-login plugin
+		// renames wp-login.php through the site_url filter, and site_url() on
+		// both sides of this comparison always agreed with itself.
+		return untrailingslashit( $url ) === untrailingslashit( set_url_scheme( (string) get_option( 'siteurl' ), 'login' ) ) . '/wp-login.php';
 	}
 
 	/**

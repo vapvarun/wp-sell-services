@@ -42,6 +42,7 @@ try {
 	$check( 'the owner gets nothing on their own profile', '' === $render( $owner->ID ) );
 
 	$html = $render( 0 );
+	$check( '  that returns to the seller\'s profile, not the vendors directory', false !== strpos( html_entity_decode( $html ), rawurlencode( wpss_get_vendor_url( $owner->ID ) ) ) );
 	$check( 'a visitor gets a link to sign in, not a button', false !== strpos( $html, '<a ' ) && false === strpos( $html, '<button' ) && false === strpos( $html, 'data-report-id' ) );
 
 	$check( 'a type members may not report prints nothing', '' === $render( $member->ID, 'order' ) );

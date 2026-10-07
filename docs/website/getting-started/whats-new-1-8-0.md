@@ -85,12 +85,13 @@ Choose **None (use this site's own login)** to switch it off. See
 
 ## Smaller changes worth knowing
 
-- A vendor on vacation is left out of the catalog, search, and every services grid until they return. See [Vacation Mode](../vendor-system/vacation-mode.md).
+- A vendor on vacation is left out of the catalog, search, Related services and every services grid until they return, and a service of theirs already in a buyer's cart cannot be paid for. See [Vacation Mode](../vendor-system/vacation-mode.md).
 - A paused or deleted service in a buyer's cart is marked as unavailable and left out of the total.
-- The reason and details entered when cancelling an order are shown to the buyer, the vendor and you.
+- The reason and details entered when cancelling an order are shown to the buyer, the vendor and you, and are included in the Order Cancelled email.
+- On a block theme the member dashboard takes the theme's wide width.
 - Buyers can add and remove files when editing a request. Once a seller has sent a proposal, the files already attached stay.
 - Vendors can cancel a pending withdrawal request, and sellers can withdraw a pending proposal.
-- Deleting demo content removes the demo vendors too, and never removes your own categories.
+- Deleting demo content removes the demo vendors too, and never removes your own categories. A demo service that a buyer has ordered is kept, with its seller, so the order is not lost.
 - Commission is taken on the price without tax, in tax-inclusive mode too.
 - If you charge tax and take payments through Stripe, some earlier orders may have recorded the tax twice when Stripe's webhook arrived before the buyer's browser. `wp wpss repair:stripe-tax` lists them, and corrects them with `--apply`.
 

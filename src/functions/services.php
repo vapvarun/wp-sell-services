@@ -2003,6 +2003,15 @@ function wpss_service_unavailable_reason( int $service_id ): string {
 		return __( 'This service is not taking new orders right now.', 'wp-sell-services' );
 	}
 
+	// Seller away: the service page says so and disables its button, but a
+	// line already in the cart, a saved checkout link or a REST call still
+	// sold it (Basecamp 10379595852).
+	$seller = \WPSellServices\Models\VendorProfile::get_by_user_id( (int) $service->post_author );
+
+	if ( $seller && $seller->is_on_vacation() ) {
+		return __( 'This seller is away and not taking new orders right now.', 'wp-sell-services' );
+	}
+
 	/**
 	 * Let an integration refuse a service for its own reason.
 	 *
@@ -2171,9 +2180,14 @@ function wpss_has_demo_content(): bool {
  * delete every category whose published count was zero, demo or not - an
  * owner's own unused categories, and parents whose services sat in children.
  *
+ * A demo service a real buyer has ordered is kept, with its seller and its
+ * image: deleting a service deletes its orders, and "delete the samples" must
+ * never erase a sale (Basecamp 10379596258). Orders the demo importer made
+ * itself do not count. 'kept' says how many services stayed.
+ *
  * @since 1.8.0
  *
- * @return array{posts:int,services:int,vendors:int,categories:int} What was deleted.
+ * @return array{posts:int,services:int,vendors:int,categories:int,kept:int} What was deleted, and what was kept.
  */
 function wpss_delete_demo_content(): array {
 	global $wpdb;
@@ -2188,6 +2202,7 @@ function wpss_delete_demo_content(): array {
 		'services'   => 0,
 		'vendors'    => 0,
 		'categories' => 0,
+		'kept'       => 0,
 	);
 
 	$posts = get_posts(
@@ -2198,7 +2213,31 @@ function wpss_delete_demo_content(): array {
 		)
 	);
 
+	// Demo services with an order the importer did not make.
+	$ordered = array();
+
+	if ( $posts ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are integers from get_posts().
+		$ordered = array_map( 'intval', $wpdb->get_col( "SELECT DISTINCT service_id FROM {$wpdb->prefix}wpss_orders WHERE service_id IN (" . implode( ',', array_map( 'intval', $posts ) ) . ") AND ( meta IS NULL OR meta NOT LIKE '%Seeded demo order.%' )" ) );
+	}
+
+	$keep_users = array();
+	$keep_media = array();
+
+	foreach ( $ordered as $service_id ) {
+		$keep_users[] = (int) get_post_field( 'post_author', $service_id );
+		$keep_media[] = (int) get_post_thumbnail_id( $service_id );
+	}
+
+	$deleted['kept'] = count( $ordered );
+
 	foreach ( $posts as $post_id ) {
+		// ponytail: keeps the featured image and attached files of a kept
+		// service; a gallery image stored only by ID in meta is not traced.
+		if ( in_array( (int) $post_id, $ordered, true ) || in_array( (int) $post_id, $keep_media, true ) || in_array( (int) get_post_field( 'post_parent', $post_id ), $ordered, true ) ) {
+			continue;
+		}
+
 		$is_service = 'wpss_service' === get_post_type( $post_id );
 
 		if ( wp_delete_post( (int) $post_id, true ) ) {
@@ -2209,7 +2248,7 @@ function wpss_delete_demo_content(): array {
 
 	require_once ABSPATH . 'wp-admin/includes/user.php';
 
-	foreach ( get_users( $marker ) as $user_id ) {
+	foreach ( array_diff( array_map( 'intval', get_users( $marker ) ), $keep_users ) as $user_id ) {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->delete( $wpdb->prefix . 'wpss_vendor_profiles', array( 'user_id' => (int) $user_id ), array( '%d' ) );
 

@@ -1912,6 +1912,7 @@ class AjaxHandlers {
 				'post_status'           => 'publish',
 				's'                     => $query,
 				'posts_per_page'        => 5,
+				'author__not_in'        => wpss_get_vacation_vendor_ids(),
 				// Effective state: a live service with no moderation meta is approved.
 				'wpss_moderation_state' => 'approved',
 			)

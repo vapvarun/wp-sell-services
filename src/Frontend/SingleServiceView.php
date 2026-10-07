@@ -780,6 +780,8 @@ class SingleServiceView {
 			'post_status'    => 'publish',
 			'posts_per_page' => 4,
 			'post__not_in'   => array( $service_id ),
+			// Same rule as the catalog: a seller who is away is not offered.
+			'author__not_in' => wpss_get_vacation_vendor_ids(),
 			'orderby'        => 'rand',
 			'tax_query'      => $tax_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 		);

@@ -1667,7 +1667,7 @@ class Admin {
 					'importSuccess' => __( 'Demo content imported successfully!', 'wp-sell-services' ),
 					'importFailed'  => __( 'Import failed.', 'wp-sell-services' ),
 					'importBtn'     => __( 'Import Demo Content', 'wp-sell-services' ),
-					'confirmDelete' => __( 'Delete all demo content? This will permanently remove demo services, vendors, and empty categories.', 'wp-sell-services' ),
+					'confirmDelete' => __( 'Delete all demo content? This will permanently remove demo services, vendors, and empty categories. A demo service that a buyer has ordered is kept, with its seller.', 'wp-sell-services' ),
 					'deleting'      => __( 'Deleting...', 'wp-sell-services' ),
 					'removing'      => __( 'Removing demo content...', 'wp-sell-services' ),
 					'deleteSuccess' => __( 'Demo content deleted successfully!', 'wp-sell-services' ),
@@ -3616,15 +3616,21 @@ class Admin {
 		$services_deleted = $deleted['services'];
 		$vendors_deleted  = $deleted['vendors'];
 
-		wp_send_json_success(
-			array(
-				'message' => sprintf(
-					/* translators: 1: services count, 2: vendors count */
-					__( 'Deleted %1$d demo services and %2$d demo vendors.', 'wp-sell-services' ),
-					$services_deleted,
-					$vendors_deleted
-				),
-			)
+		$message = sprintf(
+			/* translators: 1: services count, 2: vendors count */
+			__( 'Deleted %1$d demo services and %2$d demo vendors.', 'wp-sell-services' ),
+			$services_deleted,
+			$vendors_deleted
 		);
+
+		if ( $deleted['kept'] ) {
+			$message .= ' ' . sprintf(
+				/* translators: %d: number of demo services kept */
+				_n( '%d demo service was kept, with its seller, because a buyer has ordered it.', '%d demo services were kept, with their sellers, because buyers have ordered them.', $deleted['kept'], 'wp-sell-services' ),
+				$deleted['kept']
+			);
+		}
+
+		wp_send_json_success( array( 'message' => $message ) );
 	}
 }

@@ -1057,7 +1057,7 @@ class OrdersController extends RestController {
 					if ( empty( $reason ) ) {
 						$error = __( 'Reason is required for cancellation.', 'wp-sell-services' );
 					} else {
-						$cancel_result = $order_service->cancel( $order_id, $user_id, $reason );
+						$cancel_result = $order_service->cancel( $order_id, $user_id, $reason, sanitize_textarea_field( $request->get_param( 'note' ) ?? '' ) );
 						$result        = $cancel_result['success'] ?? false;
 						if ( ! $result ) {
 							$error = $cancel_result['message'] ?? __( 'Failed to cancel order.', 'wp-sell-services' );

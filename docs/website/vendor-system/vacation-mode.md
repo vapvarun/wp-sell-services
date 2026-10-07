@@ -17,13 +17,13 @@ That is it. Your services are now paused.
 
 **For buyers visiting your profile:**
 - A vacation notice is displayed on your profile and services.
-- Order buttons are disabled -- nobody can purchase your services.
+- Order buttons are disabled -- nobody can purchase your services. A service a buyer had already put in their cart is marked unavailable there and cannot be paid for until you are back.
 - Your custom vacation message is shown (if you wrote one).
 - Buyers can still view your services and send you messages.
 
 **For your services:**
 - They stay published. Anyone with a direct link, and anyone visiting your profile, can still open them and see the vacation notice.
-- They are **left out of listings while you are away**: the services catalog, search results, the services and featured-services grids placed on other pages, and the mobile app. They come back the moment vacation ends.
+- They are **left out of listings while you are away**: the services catalog, search results, Related services on other sellers' pages, the services and featured-services grids placed on other pages, and the mobile app. They come back the moment vacation ends.
 - They stay in buyers' favorites lists.
 
 Vacation ends when you switch it off, or automatically once your return date has passed.

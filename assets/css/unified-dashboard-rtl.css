@@ -661,7 +661,7 @@
 	gap: 12px;
 }
 
-.wpss-request-card {
+.wpss-dashboard .wpss-request-card {
 	/* Column layout: content block on top, a dedicated action FOOTER row at the
 	   bottom (Basecamp #9985554351). Side-by-side never fit — five actions want
 	   ~400px next to a title that needs its own width — so the actions used to
@@ -677,30 +677,30 @@
 	border: 1px solid var(--wpss-gray-200);
 }
 
-.wpss-request-card__main {
+.wpss-dashboard .wpss-request-card__main {
 	min-width: 0;
 }
 
-.wpss-request-card__title {
+.wpss-dashboard .wpss-request-card__title {
 	margin: 0 0 8px;
 	font-size: 15px;
 	font-weight: 600;
 	color: var(--wpss-gray-900);
 }
 
-.wpss-request-card__excerpt {
+.wpss-dashboard .wpss-request-card__excerpt {
 	margin: 0 0 12px;
 	font-size: 14px;
 	color: var(--wpss-gray-600);
 	line-height: 1.5;
 }
 
-.wpss-request-card__meta {
+.wpss-dashboard .wpss-request-card__meta {
 	font-size: 13px;
 	color: var(--wpss-gray-500);
 }
 
-.wpss-request-card__actions {
+.wpss-dashboard .wpss-request-card__actions {
 	/* Footer action row: a hairline separates it from the content above; the
 	   status badge pins to the start and the icon buttons flow to the end. */
 	display: flex;
@@ -713,7 +713,7 @@
 
 /* Status is state, not an action — hold the left edge so the icon buttons
    collect at the right of the footer. */
-.wpss-request-card__actions > .wpss-status {
+.wpss-dashboard .wpss-request-card__actions > .wpss-status {
 	margin-inline-end: auto;
 }
 
@@ -725,7 +725,7 @@
    (~40px) keeps the whole set on ONE tidy line at every width — desktop, iPad,
    and mobile alike — while the label survives in the DOM for assistive tech and
    as a hover tooltip (title attr). */
-.wpss-request-card__actions .wpss-btn--action {
+.wpss-dashboard .wpss-request-card__actions .wpss-btn--action {
 	gap: 0;
 	padding-inline: 0;
 	min-width: 40px;
@@ -734,14 +734,14 @@
 	flex-shrink: 0;
 }
 
-.wpss-request-card__actions .wpss-btn--action .wpss-icon {
+.wpss-dashboard .wpss-request-card__actions .wpss-btn--action .wpss-icon {
 	width: 18px;
 	height: 18px;
 }
 
 /* Visually hide the label but keep it for screen readers (the icon carries the
    meaning visually; aria-label + title name the control for AT and on hover). */
-.wpss-request-card__actions .wpss-btn--action .wpss-btn__label {
+.wpss-dashboard .wpss-request-card__actions .wpss-btn--action .wpss-btn__label {
 	position: absolute;
 	width: 1px;
 	height: 1px;
@@ -1911,6 +1911,8 @@ a.wpss-btn.wpss-btn--danger-outline:focus-visible {
 .wpss-textarea {
 	display: block;
 	width: 100%;
+	/* Not every theme resets box-sizing; without it 100% plus padding ran past the card. */
+	box-sizing: border-box;
 	padding: 10px 12px;
 	font-size: 14px;
 	color: var(--wpss-gray-900);

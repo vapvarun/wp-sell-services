@@ -89,6 +89,13 @@ try {
 	$check( 'a fresh install on a site with its own login creates none', 0 === $mapped() );
 	remove_filter( 'login_url', $theirs, 5 );
 
+	// A hide-login plugin renames wp-login.php through site_url instead
+	// (Basecamp 10379596006).
+	$renamed = static fn( $url ) => str_replace( 'wp-login.php', 'secret-door', (string) $url );
+	add_filter( 'site_url', $renamed, 5 );
+	$check( 'nor is a site whose wp-login.php was renamed', false === \WPSellServices\Core\Activator::site_uses_core_login() );
+	remove_filter( 'site_url', $renamed, 5 );
+
 	$check( 'with our own redirect set aside, this site is on core login', true === \WPSellServices\Core\Activator::site_uses_core_login() );
 	\WPSellServices\Core\Activator::create_pages( true );
 	$made = $mapped();

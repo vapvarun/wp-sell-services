@@ -465,7 +465,9 @@ function wpss_render_report_link( string $target_type, int $target_id, int $owne
 	if ( ! is_user_logged_in() ) {
 		printf(
 			'<p class="wpss-report"><a class="wpss-report-link" href="%s"><i data-lucide="flag" class="wpss-icon" aria-hidden="true"></i> %s</a></p>',
-			esc_url( wp_login_url( (string) get_permalink() ) ),
+			// Back to what was being reported. A seller's profile is an address
+			// on the vendors page, so get_permalink() there is the directory.
+			esc_url( wp_login_url( 'user' === $target_type ? wpss_get_vendor_url( $target_id ) : (string) get_permalink( $target_id ) ) ),
 			esc_html( $label )
 		);
 		return;

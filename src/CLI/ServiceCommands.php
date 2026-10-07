@@ -230,7 +230,7 @@ class ServiceCommands extends WP_CLI_Command {
 		// the demo vendors go too and the wizard can import again.
 		if ( ! $all ) {
 			$deleted = wpss_delete_demo_content();
-			WP_CLI::success( sprintf( 'Deleted %d demo posts and %d demo vendors.', $deleted['posts'], $deleted['vendors'] ) );
+			WP_CLI::success( sprintf( 'Deleted %d demo posts and %d demo vendors.', $deleted['posts'], $deleted['vendors'] ) . ( $deleted['kept'] ? sprintf( ' Kept %d demo service(s), with their sellers, because buyers have ordered them.', $deleted['kept'] ) : '' ) );
 			return;
 		}
 

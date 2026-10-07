@@ -40,7 +40,9 @@ volume.
 `demo delete` and **Settings > Advanced > Delete Demo Content** run the same
 routine (`wpss_delete_demo_content()`): flagged services, buyer requests and
 media, the demo vendor accounts with their profile rows, and any category the
-demo created that is now empty. Whether demo content is installed is decided
+demo created that is now empty. A demo service that a real buyer has ordered
+is kept, with its seller, because deleting a service deletes its orders; the
+result says how many were kept. Whether demo content is installed is decided
 from the content itself (`wpss_has_demo_content()`), so the wizard can import
 again straight after a delete.
 

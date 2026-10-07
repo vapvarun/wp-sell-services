@@ -289,10 +289,11 @@ Payments, refunds and dates made consistent across every checkout path, a rebuil
 * Improve  - The admin order screen shows the payment, the activity and the money first, using the same blocks as the member order view.
 * Improve  - The Audit Log reads in plain language and shows the note entered with a status change.
 * Improve  - Every confirmation dialog opens with Cancel selected, so pressing Enter cannot approve a payout or suspend an account by reflex.
-* Improve  - The reason and details entered when cancelling an order are shown to the buyer, the vendor and the site owner.
+* Improve  - The reason and details entered when cancelling an order are shown to the buyer, the vendor and the site owner, and in the Order Cancelled email.
+* Improve  - On block themes the member dashboard uses the theme's wide width instead of its reading width.
 * Improve  - Order lists show the order number, amount, due date, late badge and next action on each row.
 * Improve  - Shortcodes and blocks carry their own styling, so they look the same on a plain page in any theme, including inside a pattern or widget.
-* Improve  - Deleting demo content removes the demo vendors as well, from Settings and from the command line alike.
+* Improve  - Deleting demo content removes the demo vendors as well, from Settings and from the command line alike, and keeps any demo service a buyer has ordered.
 * Improve  - Gateway scripts load only on pages where a payment can happen.
 * Improve  - The earnings cards on the vendor dashboard stay readable at every screen width.
 * Fix      - One payment can pay only one order on every path, including the REST API and gateway webhooks.
@@ -305,7 +306,8 @@ Payments, refunds and dates made consistent across every checkout path, a rebuil
 * Fix      - Add-on prices come from the service on every checkout path, never from the checkout request.
 * Fix      - Revenue has one definition on every screen: paid orders minus refunds.
 * Fix      - A paused or unpublished service cannot be ordered through any route, and is left out of the cart total and the cart count.
-* Fix      - Services from a vendor on vacation are left out of the services shortcode and blocks, as they are in the catalog and search.
+* Fix      - Services from a vendor on vacation are left out of the services shortcode, blocks, Related services and live search, as they are in the catalog and search.
+* Fix      - A service whose seller is on vacation can no longer be paid for from a cart, a saved checkout link or the app.
 * Fix      - Sorting the services shortcode or block by rating, sales or price no longer hides services that have no rating or sales yet.
 * Fix      - A refunded order shows no earnings on the vendor's Sales list, and the earnings total says that it includes tips.
 * Fix      - Milestone phases are credited when the buyer approves them, and the requirements clock starts at payment.

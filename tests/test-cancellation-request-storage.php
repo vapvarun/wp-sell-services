@@ -135,6 +135,36 @@ try {
 	wp_set_current_user( $vendor->ID );
 	$service->cancel( $d, $vendor->ID, 'Accepted', '' );
 	$check( 'accepting a request keeps the buyer\'s reason and details', 'cancelled' === $row( $d )->status && 'taking_too_long' === ( $record( $d )['reason'] ?? '' ) && 'three days late' === ( $record( $d )['note'] ?? '' ) );
+
+	// A request that was turned down leaves its record behind; a later cancel
+	// must show its own reason, not that one (Basecamp 10379596128).
+	$e     = $seed( 'pending_payment' );
+	$ids[] = $e;
+	$wpdb->update( $orders, array( 'payment_status' => 'pending', 'meta' => wp_json_encode( array( 'cancellation_request' => array( 'reason' => 'taking_too_long', 'note' => 'old request' ) ) ) ), array( 'id' => $e ) );
+	wp_set_current_user( $buyer->ID );
+	$service->cancel( $e, $buyer->ID, 'wrong_order', 'ordered twice' );
+	$check( 'a later cancel replaces the record of a request that was turned down', 'wrong_order' === ( $record( $e )['reason'] ?? '' ) && 'ordered twice' === ( $record( $e )['note'] ?? '' ) );
+
+	// The cancelled email says why.
+	$mails   = array();
+	$capture = static function ( $pre, $atts ) use ( &$mails ) {
+		$mails[] = (string) $atts['message'];
+		return true;
+	};
+	add_filter( 'pre_wp_mail', $capture, 10, 2 );
+	( new \WPSellServices\Services\EmailService() )->send_order_cancelled( \WPSellServices\Models\ServiceOrder::find( $e ) );
+	remove_filter( 'pre_wp_mail', $capture, 10 );
+	$check( 'the cancelled email carries the reason and the details (' . count( $mails ) . ' sent)', count( $mails ) >= 1 && false !== strpos( $mails[0], 'Ordered by mistake - ordered twice' ) );
+
+	// An administrator's REST cancel keeps the note as the buyer's does.
+	$f     = $seed( 'in_progress' );
+	$ids[] = $f;
+	wp_set_current_user( 1 );
+	$call = new WP_REST_Request( 'POST', '/wpss/v1/orders/' . $f . '/cancel' );
+	$call->set_param( 'reason', 'Vendor unreachable' );
+	$call->set_param( 'note', 'refund agreed by phone' );
+	$answer = rest_do_request( $call );
+	$check( 'an administrator\'s REST cancel keeps the note (' . $answer->get_status() . ')', 'cancelled' === $row( $f )->status && 'refund agreed by phone' === ( $record( $f )['note'] ?? '' ) );
 } catch ( ReflectionException $e ) {
 	echo 'FAIL  the 1.8.0 migration step does not exist: ' . $e->getMessage() . "\n";
 	++$fails;

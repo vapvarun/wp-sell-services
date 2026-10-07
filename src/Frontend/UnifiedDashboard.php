@@ -634,7 +634,12 @@ class UnifiedDashboard {
 		$is_pending    = 'pending' === $vendor_status;
 		$section_data  = $this->get_section_data( $this->current_section );
 		?>
-		<div class="wpss-app-shell">
+		<?php
+		// A block theme holds page content to its reading width (645px on
+		// Twenty Twenty-Five), which left the dashboard 344px beside its own
+		// menu. alignwide is the theme's own way to ask for its wide width.
+		?>
+		<div class="wpss-app-shell<?php echo wp_is_block_theme() ? ' alignwide' : ''; ?>">
 			<div class="wpss-app-shell__container">
 				<div class="wpss-dashboard">
 					<aside class="wpss-dashboard__sidebar">

@@ -237,9 +237,12 @@ class CheckoutIntentService {
 		// only hid its button, so /service-checkout/{id}/ still sold a paused
 		// service (Basecamp 10337190248, order 6962). Every purchase path prices
 		// through here - checkout, cart, REST cart and quote, the gateways - so
-		// the refusal is here once.
-		if ( 'paused' === wpss_get_service_status( $service_id ) ) {
-			return new \WP_Error( 'wpss_service_paused', __( 'This service is not taking new orders right now.', 'wp-sell-services' ), array( 'status' => 409 ) );
+		// the refusal is here once, and it is the shared rule (deleted,
+		// unpublished, paused, seller on vacation), not a copy of part of it.
+		$unavailable = wpss_service_unavailable_reason( $service_id );
+
+		if ( '' !== $unavailable ) {
+			return new \WP_Error( 'paused' === wpss_get_service_status( $service_id ) ? 'wpss_service_paused' : 'wpss_service_unavailable', $unavailable, array( 'status' => 409 ) );
 		}
 
 		$resolved = wpss_resolve_service_package( $service_id, $package_ref );

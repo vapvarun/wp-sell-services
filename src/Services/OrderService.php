@@ -1217,15 +1217,17 @@ class OrderService {
 		// cancellation REQUEST keeps them - the order's own cancellation record,
 		// which both order screens and the admin screen read. They used to reach
 		// only the audit row, as a raw key, and were shown nowhere (Basecamp
-		// 10351457462). A record already there is the buyer's request being
-		// accepted; that one is kept.
+		// 10351457462). While the order is waiting on a cancellation request,
+		// the record is that request being accepted and is kept. A record left
+		// by a request that was turned down earlier is replaced: it used to
+		// win, so a later cancel showed the old reason.
 		global $wpdb;
 		$note     = sanitize_textarea_field( $note );
 		$reason   = sanitize_text_field( $reason );
 		$old_meta = '';
 		$stored   = false;
 
-		if ( ( '' !== $reason || '' !== $note ) && null === $order->get_cancellation_request() ) {
+		if ( ( '' !== $reason || '' !== $note ) && ( ServiceOrder::STATUS_CANCELLATION_REQUESTED !== $order->status || null === $order->get_cancellation_request() ) ) {
 			$old_meta = $this->store_cancellation( $order_id, $reason, $note, $user_id );
 			$stored   = null !== $old_meta;
 		}

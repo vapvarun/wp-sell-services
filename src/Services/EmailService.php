@@ -1479,9 +1479,17 @@ class EmailService {
 			$order->order_number
 		);
 
+		// Why it was cancelled, read fresh from the order's cancellation record:
+		// the template has always had a Reason block and nothing ever filled it,
+		// so the seller had to open the order to learn why.
+		$cancellation = (array) ( ServiceOrder::find( (int) $order->id )?->get_cancellation_request() ?? array() );
+		$label        = wpss_get_cancellation_reason_label( (string) ( $cancellation['reason'] ?? '' ) );
+		$note         = (string) ( $cancellation['note'] ?? '' );
+
 		$template_vars = array(
 			'order'         => $order,
 			'email_heading' => __( 'Order Cancelled', 'wp-sell-services' ),
+			'reason'        => '' !== $note ? trim( $label . ' - ' . $note, ' -' ) : $label,
 		);
 
 		// Send to both parties.
