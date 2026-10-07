@@ -307,6 +307,7 @@ Payments, refunds and dates made consistent across every checkout path, a rebuil
 * Fix      - Services from a vendor on vacation are left out of the services shortcode, blocks, Related services and live search, as they are in the catalog and search.
 * Fix      - A service whose seller is on vacation can no longer be paid for from a cart, a saved checkout link or the app.
 * Fix      - A buyer request that has a proposal can be closed but no longer deleted, and deleting a request from the dashboard moves it to the trash.
+* Fix      - The buyer request API returns the request's deadline and saves a changed one.
 * Fix      - Sorting the services shortcode or block by rating, sales or price no longer hides services that have no rating or sales yet.
 * Fix      - A refunded order shows no earnings on the vendor's Sales list, and the earnings total says that it includes tips.
 * Fix      - Milestone phases are credited when the buyer approves them, and the requirements clock starts at payment.

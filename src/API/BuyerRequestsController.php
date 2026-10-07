@@ -575,7 +575,8 @@ class BuyerRequestsController extends RestController {
 		}
 
 		if ( $request->get_param( 'deadline' ) ) {
-			$data['deadline'] = $request->get_param( 'deadline' );
+			// Stored as expires_at; under 'deadline' the service ignored it.
+			$data['expires_at'] = $request->get_param( 'deadline' );
 		}
 
 		if ( $request->get_param( 'status' ) ) {
@@ -788,7 +789,8 @@ class BuyerRequestsController extends RestController {
 			'budget_max'       => $budget_max,
 			'budget_max_minor' => wpss_amount_to_minor_units( $budget_max, $currency ),
 			'currency'         => $currency,
-			'deadline'         => $buyer_request->deadline ?? null,
+			// The request object carries it as expires_at; 'deadline' was never set, so this was always null.
+			'deadline'         => ( $buyer_request->expires_at ?? '' ) ?: null,
 			'category'         => $buyer_request->category ?? null,
 			'proposal_count'   => (int) ( $buyer_request->proposal_count ?? 0 ),
 			'author'           => wpss_rest_user( (int) $author_id ),

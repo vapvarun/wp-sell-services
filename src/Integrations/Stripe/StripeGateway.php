@@ -356,7 +356,7 @@ class StripeGateway implements PaymentGatewayInterface {
 				'success'        => true,
 				'transaction_id' => $response['id'],
 				'status'         => 'completed',
-				'amount'         => $this->parse_amount( $response['amount'], $response['currency'] ),
+				'amount'         => $this->parse_amount( (int) ( $response['amount'] ?? 0 ), (string) ( $response['currency'] ?? wpss_get_currency() ) ),
 				'currency'       => strtoupper( $response['currency'] ),
 				// Set by resolve() on this server when the intent was created;
 				// lets a return leg re-price exactly what was charged.
@@ -529,7 +529,7 @@ class StripeGateway implements PaymentGatewayInterface {
 			'transaction_id'    => (string) $response['id'],
 			'status'            => $response['status'],
 			'message'           => '',
-			'amount'            => $this->parse_amount( $response['amount'], $response['currency'] ),
+			'amount'            => $this->parse_amount( (int) ( $response['amount'] ?? 0 ), (string) ( $response['currency'] ?? wpss_get_currency() ) ),
 			'transfer_reversed' => $transfer_reversed,
 		);
 	}

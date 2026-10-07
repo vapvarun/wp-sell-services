@@ -571,7 +571,7 @@
     },
     "refund_unsettled": {
       "authority": "CheckoutIntentService::refund_unsettled( gateway, transaction, callable ) - the one way a gateway gives back a verified charge that could not become an order.",
-      "rule": "Under the per-transaction settle lock: a charge that already paid an order is not refunded; a charge given back is remembered (transient wpss_unsettled_{md5}) and settle() refuses it afterwards. settle_once() answers with the existing order before the amount check.",
+      "rule": "Under the per-transaction settle lock: a charge that already paid an order is not refunded; a charge given back is remembered (transient wpss_unsettled_{md5}) and settle() refuses it afterwards. settle_once() answers with the existing order before the amount check. settle_webhook_order() refuses a charge given back the same way.",
       "callers": [
         "StripeGateway::refund_unsettled_charge",
         "PayPalGateway::capture_and_settle (both refund branches)",
@@ -1249,6 +1249,7 @@
         "Pro WCCheckoutProvider cart re-check"
       ],
       "listing_rule": "Vendors on vacation are left out with author__not_in = wpss_get_vacation_vendor_ids(): catalog, search, REST services, services grid, featured block, Related services (SingleServiceView), live search (AjaxHandlers)."
-    }
+    },
+    "request_deadline": "A request's deadline is stored as _wpss_expires_at (service key expires_at). REST create and update both map the 'deadline' parameter to it, and the response's 'deadline' field reads it back."
   }
 }

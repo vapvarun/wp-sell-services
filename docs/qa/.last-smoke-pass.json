@@ -1,104 +1,108 @@
 {
   "mode": "combo",
-  "release_version": "1.7.2",
-  "pro_version": "1.7.2",
-  "ran_at": "2026-09-23T06:49:55Z",
-  "ran_against": "9b0909ecc737df3e84a42fbd9d52506f262aa73f",
+  "release_version": "1.8.0",
+  "pro_version": "1.8.0",
+  "ran_at": "2026-10-07T08:19:11Z",
+  "ran_against": "791832d034d1db1bf66731ea90f2cbb962877439",
+  "pro_ran_against": "9eeca651e055e5d0f3510044e2bd8a49f0e0138a",
+  "theme": "reign-theme",
   "sections": {
-    "A_fresh_install": { "pass": 4, "fail": 0, "skipped": 1 },
-    "B_upgrade": { "pass": 2, "fail": 0, "skipped": 1 },
-    "C_core_flows": { "pass": 10, "fail": 1, "skipped": 5 },
-    "D_regression_guards": { "pass": 3, "fail": 0, "skipped": 2 },
-    "E_pro_smoke": { "pass": 4, "fail": 1, "skipped": 3 },
-    "E2_environment": { "pass": 3, "fail": 0, "skipped": 0 },
-    "F_cross_browser": { "pass": 3, "fail": 0, "skipped": 1 },
-    "G_post_release": { "pass": 0, "fail": 0, "skipped": 2 }
+    "A_fresh_install": {"pass": 4, "fail": 1, "skipped": 0},
+    "B_upgrade": {"pass": 2, "fail": 0, "skipped": 1},
+    "C_core_flows": {"pass": 5, "fail": 0, "skipped": 8},
+    "D_regression_guards": {"pass": 14, "fail": 0, "skipped": 1},
+    "E_pro_smoke": {"pass": 6, "fail": 0, "skipped": 5},
+    "E2_environment": {"pass": 0, "fail": 0, "skipped": 2},
+    "F_cross_browser": {"pass": 3, "fail": 0, "skipped": 3},
+    "G_post_release": {"pass": 0, "fail": 0, "skipped": 1}
   },
-  "hard_fails": [
-    {
-      "id": "wpss-dispute-refund-marked-but-not-executed",
-      "invariant": "money-flow-integrity",
-      "actual": "Resolving a dispute as 'In Favor of Buyer' (or 'Full Refund') writes the order to status=refunded with refunded_amount = full order total BEFORE the actual gateway refund is attempted. On order #36 (payment_method=standalone), the gateway refund call failed ('Auto-refund FAILED for order 36: gateway standalone not available or missing process_refund(). The buyer has NOT been refunded.' - debug.log 06:34:34) and the vendor earnings reversal was also skipped ('no completed wallet credit found for the vendor, so the earnings reversal is skipped'). The order and dispute both now read as fully resolved/refunded in the admin UI - Dispute #8 shows status Resolved, resolution favor_buyer - with no visible error anywhere, while the buyer never received their money back. Root cause: WPSellServices\\Services\\OrderService::apply_refund_status() (src/Services/OrderService.php:281) writes `refunded_amount` to the DB unconditionally before the status transition/gateway hook runs, and DisputeService::resolve()/handle_resolution() treats apply_refund_status()'s return value (which reflects only the DB write + status transition, not the gateway call) as success."
-    }
+  "hard_fails": [],
+  "failures": [
+    {"id": "A3-preflight-debug-log", "origin": "for", "expected": "wp wpss preflight shows no FAIL", "actual": "1 FAIL (83 pass): 'Fatals in debug.log - 7 entries', first being Uncaught ArgumentCountError from 05-Oct. All 7 are from earlier dev/contract-suite and ad-hoc eval runs, none from this walk. Preflight WARN: 16805 WPSS log entries.", "url": "wp wpss preflight", "role": "cli", "viewport": "n/a", "screenshot": ""},
+    {"id": "DBG-stripe-process-refund-typeerror", "origin": "from", "expected": "A malformed or amount-less Stripe payload is refused cleanly", "actual": "debug.log (before this walk, 07-Oct 02:51 UTC) holds Uncaught TypeError StripeGateway::parse_amount(): Argument #1 must be of type int, null given, called at StripeGateway.php:519 from process_refund() (StripeGateway.php:679), after 'Webhook recovery FAILED ... pi_other_store_1' and Undefined array key amount/currency warnings. NOT reproduced in this walk (no outbound HTTP).", "url": "src/Integrations/Stripe/StripeGateway.php:519", "role": "gateway webhook", "viewport": "n/a", "screenshot": ""},
+    {"id": "D3-suspended-message", "origin": "from", "expected": "A suspended vendor refused on money REST gets a message that says why", "actual": "403 wpss_not_vendor 'Only vendors can access this endpoint.' on all 7 money routes (refusal itself correct)", "url": "/wp-json/wpss/v1/earnings/summary", "role": "wpss_vendor_yuki set suspended", "viewport": "n/a", "screenshot": ""},
+    {"id": "DATA-updated-at-skew", "origin": "from", "expected": "created_at and updated_at both UTC", "actual": "Orders 859 and 860 (seeded 2026-09-23) have updated_at exactly 5h30 after created_at (07:05:49 vs 12:35:49), i.e. local-time writes. Rows written during this walk were UTC-correct, so this looks like pre-1.8.0 or seed data; no migration normalised it.", "url": "wp_wpss_orders ids 859, 860", "role": "db", "viewport": "n/a", "screenshot": ""},
+    {"id": "REST-float-noise", "origin": "from", "expected": "Money in REST JSON is a clean number", "actual": "wallet/balance and earnings/summary return available 68.700000000000003 (a _minor integer field sits beside it)", "url": "/wp-json/wpss/v1/wallet/balance", "role": "wpss_vendor_maya", "viewport": "n/a", "screenshot": ""},
+    {"id": "WOO-cart-page-redirect", "origin": "from", "expected": "On the Woo rail the plugin cart page is a coherent entry point", "actual": "/cart/ (plugin Cart page #8) 302s to the Woo cart (/cart-2/), which is empty, while the plugin REST cart holds items. The service-page Continue to Checkout path (Woo /checkout/) works. Likely by design, needs an owner call.", "url": "http://wp-sell-services.local/cart/", "role": "wpss_buyer_ella", "viewport": "1440", "screenshot": ""},
+    {"id": "COPY-proposal-accepted-open", "origin": "from", "expected": "Proposal accepted notification matches order state", "actual": "Seller notification says 'the order is now open' while the order is pending_payment", "url": "notifications", "role": "wpss_vendor_maya", "viewport": "n/a", "screenshot": ""},
+    {"id": "REQ-deadline-ignored", "origin": "from", "expected": "POST /buyer-requests honours deadline", "actual": "Sent deadline 2026-12-01, response deadline null (parameter name not confirmed, may simply be named differently)", "url": "/wp-json/wpss/v1/buyer-requests", "role": "wpss_buyer_ella", "viewport": "n/a", "screenshot": ""}
   ],
   "untested": [
-    "Journey 05 (vendor creates a service, full wizard) - not walked fresh this run; only the publish-rule guard was exercised in isolation via a throwaway draft post.",
-    "Journey 06 (standalone checkout) - unreachable: wpss_general[ecommerce_platform]=auto resolves to WooCommerce on this install (WooCommerce is the only cart plugin active), so standalone gateways never register.",
-    "Journey 07 (service page media) - not walked this run.",
-    "Journey 08 (mobile app session / Application Passwords) - not walked this run.",
-    "Buyer's brief rendering for a service with no configured questions - not walked this run.",
-    "D1 stats-vs-chips (buyer with most orders, summary cards vs filter-chip counts) - not walked this run, time-boxed out in favour of Priority A depth.",
-    "D5 offline-method-identity (rename/delete a named offline method does not change what a past order says) - not exercised; the active rail is WooCommerce so the offline gateway's admin settings were not the focus this pass.",
-    "E4 cloud storage real upload round trip (real S3/GCS/DO credentials, local-copy removal, signed-URL download) - no real credentials configured in this dev environment; the settings screen itself was verified, and the Test Connection AJAX round-trip was independently confirmed working server-side (see failures[]).",
-    "S2.2 Woo refund reversing tip/extension/milestone sub-orders - not exercised as its own scenario (a real refund WAS triggered incidentally by the dispute-resolution hard_fail above, but that order had no sub-orders to reverse).",
-    "S6 display currency switcher live behaviour (rate conversion in the browser) - settings screen loads (verified) but the live switcher was not exercised.",
-    "RTL - no margin-left/right regression check performed; would require switching the site to an RTL locale.",
-    "Multisite, concurrency (two actors racing the same action) - not applicable / not set up this run.",
-    "Contract-audit pre-gate (wp-contract-audit skill Step 0) - not run this session; recommend running before tagging.",
-    "G_post_release: post-tag artifact verification (zip contents, sha256 compare) - structurally not applicable before a release has been cut."
+    {"id": "A-fresh-pristine-install", "reason": "cannot run on this site", "needs": "pristine WP site"},
+    {"id": "B2-pre-1.7.0-order-file-migration", "reason": "no pre-1.7.0 legacy file on this install", "needs": "legacy upload fixture"},
+    {"id": "C-journey-02-dispute", "reason": "not walked in this run", "needs": "buyer, vendor, admin dispute walk"},
+    {"id": "C-journey-05-service-wizard", "reason": "not walked", "needs": "vendor wizard walk"},
+    {"id": "C-journey-08-mobile-session", "reason": "no mobile app device", "needs": "device or HTTP token walk"},
+    {"id": "C-catalog-tax-amount-match", "reason": "tax not enabled/not walked", "needs": "tax on, pay button vs gateway vs stored total"},
+    {"id": "C-tip-extension-phase-landing", "reason": "not walked", "needs": "paid tip, extension, milestone phase"},
+    {"id": "C-milestone-request-changes-resubmit", "reason": "not walked", "needs": "milestone contract fixture"},
+    {"id": "C-milestone-complete-summary", "reason": "not walked", "needs": "completed milestone contract"},
+    {"id": "C-buyer-brief-render", "reason": "not walked", "needs": "order with and without service questions"},
+    {"id": "C-journey-06-step4-guest-account", "reason": "requires checkout_account_creation on and creates users; default wall observed correct", "needs": "setting on, logged-out purchase"},
+    {"id": "D4-negative-balance", "reason": "no vendor with negative ledger balance exists; creating one needs a direct ledger write", "needs": "refund clawback fixture"},
+    {"id": "E2-cloud-storage-upload", "reason": "env: outbound HTTP unavailable, active provider is local", "needs": "provider credentials, outbound HTTP"},
+    {"id": "E3-woo-fee-only-pay-order-no-subtotal-0", "reason": "not walked", "needs": "Woo rail tip/extension/phase pay-order"},
+    {"id": "S1-license-cleared-behaviour", "reason": "would alter license state", "needs": "license toggle"},
+    {"id": "S2-woo-refund-reverses-children", "reason": "not walked", "needs": "Woo refund on parent with children"},
+    {"id": "S2-EDD-FluentCart", "reason": "plugins not installed", "needs": "EDD/FluentCart install"},
+    {"id": "E2-real-gateways-stripe-paypal-razorpay", "reason": "env: outbound HTTP unavailable (Stripe checkout produced admin-ajax 502 as predicted)", "needs": "outbound HTTP"},
+    {"id": "E2-currency-rate-fetch", "reason": "env: outbound HTTP unavailable; display conversion seen only from cached rates", "needs": "outbound HTTP"},
+    {"id": "F-dark-mode", "reason": "deferred", "needs": "Reign dark toggle pass"},
+    {"id": "F-rtl", "reason": "deferred", "needs": "RTL locale pass"},
+    {"id": "F-cross-browser", "reason": "Chromium only", "needs": "Firefox/WebKit"},
+    {"id": "G-post-release", "reason": "pre-release run", "needs": "after tagging"},
+    {"id": "D-item3-server-side-file-removal", "reason": "UI shows lock note and no remove control; the delete guard was not exercised to avoid deleting a fixture file", "needs": "attempt delete via ajax on locked file"}
+  ],
+  "passes": [
+    {"id": "A1", "observed": "wp plugin list: wp-sell-services 1.8.0, wp-sell-services-pro 1.8.0 active; deactivate+activate both gave no fatal"},
+    {"id": "A2", "observed": "/, /dashboard/, /vendors/, /buyer-request/ return 200"},
+    {"id": "A4", "observed": "wpss_db_version=1.8.0 equals SchemaManager::DB_VERSION; all 19 CORE_TABLES exist"},
+    {"id": "A5", "observed": "6 retired tables (buyer_requests, service_faqs, ... analytics_events) are absent, not created"},
+    {"id": "B1", "observed": "reactivate both: row counts for orders/ledger/audit/notifications unchanged, pages option unchanged"},
+    {"id": "B3", "observed": "order count and totals unchanged across reactivation"},
+    {"id": "C-j01", "observed": "request -> 2 proposals (one email-less REST) -> 'New proposal received' notifications with price and deep link; accept A: order pending_payment platform=request, A got 'proposal accepted' naming order, B got 'Proposal not selected' and status rejected; checkout and admin show 'Request: <title>'"},
+    {"id": "C-j03", "observed": "pages option maps services/dashboard/become_vendor/checkout/cart/vendors/registration/login; preflight 83 pass"},
+    {"id": "C-j04", "observed": "vendors directory and Maya profile load, no horizontal scroll at 390"},
+    {"id": "C-j06", "observed": "standalone: /service-checkout/210 contained (wrapper max-width none, no scroll at 1440/390), Test gateway pays $35.00 -> order total 35, platform_fee 3.50, vendor_earnings 31.50, payment_method=test, paid; logged-out sees sign-in wall by default; pay_order offline -> payment_method offline, admin Awaiting Confirmation box, Mark as Paid dialog -> pending_requirements/paid, no ledger credit yet"},
+    {"id": "C-j07", "observed": "service page gallery shows image first with 3 thumbnails (screenshot vacation-service-1440.png)"},
+    {"id": "D1", "observed": "Ella: cards 37/2/3/10/13 equal chip counts 37/2/3/10/13 (milestone and tip sub-orders excluded in both)"},
+    {"id": "D2", "observed": "Pro Analytics Top Services lists only real services; no deleted/service_id=0 row despite 13 such orders for Ella"},
+    {"id": "D3", "observed": "vendor set suspended: earnings/summary, earnings/history, wallet/balance, wallet/transactions, withdrawals, withdrawals/methods, wallet/withdrawals and POST withdrawals all 403; reactivated"},
+    {"id": "D5", "observed": "order snapshot 'SMOKE Bank Transfer A' kept on order page after the method was renamed and then deleted in settings; option restored byte-identical"},
+    {"id": "N1-dates", "observed": "with site tz Asia/Kolkata: order date 1:39 pm, cancelled 1:40 PM on buyer page, admin order screen and audit log all agree; DB created_at 08:09:53, updated_at 08:10:07 (UTC); tz restored"},
+    {"id": "N2-vacation", "observed": "Maya on vacation: 4 services gone from archive, search, Related services on Sofia's service, shortcode, block and REST; Ella's cart item flagged unavailable 'This seller is away', checkout 409, add-to-cart 409; service page shows disabled Continue and 'Seller is on vacation' message; vacation turned off"},
+    {"id": "N3-buyer-requests", "observed": "Ella: request 786 (0 proposals) shows View Offers, Close, Edit, Delete; request 6676 (1 proposal) shows Close, Edit, no Delete, and its edit form says 'A seller has sent a proposal, so the files above stay on the request' with no remove control"},
+    {"id": "N4-report", "observed": "service and vendor Report submitted as Ella -> wp_wpss_reports ids 20 and 21 (reporter 72, status open) and rows visible in wp-admin Member Reports; logged out, both links go to /login/?redirect_to=<same page> and login form carries the redirect"},
+    {"id": "N5-confirm-dialogs", "observed": "Member Reports Suspend, Withdrawals Approve and Reject, Vendors bulk Suspend: plugin dialog opens, focus on Cancel (note textarea for withdrawals), Esc closes and returns focus to trigger, Enter immediately changes nothing (withdrawal 1 still pending, vendor still active), zero native dialogs"},
+    {"id": "N6-cancel", "observed": "Ella cancelled an order with reason 'Taking too long' and details; buyer and vendor order pages show both; admin Audit Log has 'Order cancelled' and 'status changed ... Taking too long - details'"},
+    {"id": "N7-earnings", "observed": "stat cards intact (no overflow, no mid-word breaks, overflow-wrap anywhere only) at 1440, 1280, 390; PayPal email field to Request Withdrawal button gap 16px; screenshot earnings-390.png"},
+    {"id": "N8-reviews", "observed": "'Reply to this review' label above the textarea, textarea width equals container (742px at 1440, 302px at 390)"},
+    {"id": "N9-second-member", "observed": "Ben: REST /orders/{938,939,1033,860} 403 wpss_not_owner (own order 856 200); /dashboard/orders/938/ shows only Ben's own list (Ella's order number absent); edit-request 6676 shows 'You do not have permission to edit this request' with no form; private file URL 404 for Ben and for non-participant vendor Maya, 400 for logged out, 200 for the two participants; files live outside web root (direct URL 404)"},
+    {"id": "N10-login-page", "observed": "Settings > Pages has Log In select with 'None (use this site's own login)'; with login='' all Log in links go to /wp-login.php (with redirect_to on request pages); restored 6217"},
+    {"id": "E1", "observed": "Pro Analytics, License, Welcome and settings tabs load 200 with no fatal; settings carry Stripe Connect, PayPal payouts, Commission Rules, Subscription Plans, Cloud Storage and Wallet sections; Subscriptions menu intentionally hidden (403) while recurring is deferred"},
+    {"id": "S1.2", "observed": "Free deactivated: front 200, wp-admin shows 'WP Sell Services Pro requires WP Sell Services (free version)' notice, no fatal"},
+    {"id": "S2.1-catalog", "observed": "Woo rail (auto): service page Continue to Checkout -> /checkout/ Woo, COD order total 35.00 -> wpss order platform=woocommerce total 35, platform_fee 3.50 (10% of pre-tax)"},
+    {"id": "S3.2", "observed": "wallet/balance 106.5 equals wpss_get_ledger_balance(55); only the internal provider registered and active"},
+    {"id": "S6", "observed": "service page shows converted INR with 'Prices shown in INR are approximate. You will be charged in USD', vendor earnings stay in USD"},
+    {"id": "F1-390", "observed": "no horizontal overflow at 390 on 16 public, buyer and vendor surfaces"},
+    {"id": "F4-rest", "observed": "227 wpss/v1 handlers, all carry a permission callback; the 33 public ones are catalog reads and auth routes; 25 public GETs all 200"}
   ],
   "coverage": {
-    "multisite": "Not tested. Single-site install; no multisite network available in this environment.",
-    "rtl": "Not tested this pass - would require switching the site to an RTL locale and re-walking the touched surfaces.",
-    "concurrency": "Not tested. No multi-actor race condition was set up this run.",
-    "uninstall": "Not run live. Verified via `wp wpss preflight`'s Uninstall Completeness section: role removal, WP_UNINSTALL_PLUGIN guard, delete_data respect, table drops, wpss_* option cleanup, cron-hook clearing, rewrite-rule flush, offline auto-cancel cron - 8/8 PASS.",
-    "mobile_390": "Real 390x844 coverage on the cart-unavailable-item notice (checkout-unavailable-390.png) and the vendor Earnings & Payouts tiles (earnings-390-recheck.png, labels fully readable; the previously-known cosmetic 3-digit value line-wrap on 'Available to withdraw'/'Total earned so far' is unchanged, not a regression). Milestone order-summary page also incidentally captured at 390px (milestone-order-summary-1280.png - mislabelled, actually 390px) and stacks cleanly with no horizontal scroll.",
-    "code_to_live": "Not run as a full owner-inventory sweep this pass; spot-checked artefacts (Disputes admin screen, Moderation admin screen, Analytics dashboard, Payouts/Payment Gateways/Advanced settings tabs, Cloud Storage section) all verified-working except Cloud Storage's Test Connection control, which is present-but-broken (see failures[])."
+    "rail_standalone": "run (journey 06 steps 1,2,3,5,6 and the request order pay path)",
+    "rail_woocommerce": "run (catalog purchase, vacation, dates, dashboard assertions on auto); refunds, tip/ext/phase fee-only rows not run",
+    "viewports": "1440, 1280 (earnings), 390",
+    "dark_mode": "deferred",
+    "rtl": "deferred",
+    "multisite": "na"
   },
-  "verdict": "BLOCK",
-  "top3": [
-    "BLOCK: Resolving a dispute in favor of the buyer (or Full Refund) marks the order 'refunded' with the full amount recorded in refunded_amount, even when the underlying gateway refund silently fails - debug.log proves 'Auto-refund FAILED ... The buyer has NOT been refunded' on order #36, yet the admin UI and DB both show a clean resolved/refunded state with no error surfaced anywhere. A site owner would believe every dispute they resolve this way has actually paid the buyer back when it may not have.",
-    "Priority A is now HALF fixed. Unpublishing a service already in a buyer's cart now shows a clear, correctly-named notice ('...cannot be ordered right now: This service is not currently available. Remove it to continue.') and checkout is genuinely refused server-side (WooCommerce Store API returns 409, verified via network trace, no wpss_orders row created) - this closes last cycle's hard_fail cleanly, at both 1280 and 390. But deleting the same cart item instead produces NO notice at all - the item just vanishes and the cart reads 'Your cart is currently empty!' with zero explanation, which a real buyer would read as a bug, not as 'that service is gone.'",
-    "The Cloud Storage 'Test Connection' button (Settings -> Advanced) never shows the admin anything. Instrumentation proves the click handler fires, the AJAX round-trip completes, the server returns a correct message either way ('This provider does not support connection testing.' for S3, or a client-side guard for Local), and the JS response handler calls showNotice() with the right arguments - but no toast or notice ever appears in the DOM. An admin configuring cloud storage gets no feedback whatsoever from this button, success or failure."
-  ],
-  "failures": [
-    {
-      "id": "wpss-cart-delete-no-notice",
-      "origin": "from",
-      "triage_note": "Half-regression of the same feature area as last cycle's hard_fail. The unpublish path (StandaloneProductProvider/WooCommerceAdapter's new availability check) fires a clear cart notice; the delete path removes the WooCommerce cart item (product post presumably force-deleted alongside, or the line silently drops on cart validation) but never routes through the same 'this service is not currently available' notice path, so the buyer gets no explanation at all.",
-      "expected": "Per this release's own spec: when the underlying service is deleted, the item is removed from the cart with a notice saying it is no longer offered.",
-      "actual": "As wpss_buyer_ella: after force-deleting service 238 while it sat alone in her cart, /cart-2/ rendered the generic empty-cart state ('Your cart is currently empty!') with no notice of any kind, at 1280px. The header mini-cart briefly showed a stale ghost line item ('Service Order', $65.00, qty 1) that self-corrected on a full page reload - a secondary, minor inconsistency.",
-      "url": "http://wp-sell-services.local/cart-2/",
-      "screenshot": "cart-deleted-service-1280.png",
-      "viewport": "1280"
-    },
-    {
-      "id": "wpss-pro-storage-test-connection-silent",
-      "origin": "from",
-      "triage_note": "wp-sell-services-pro/assets/js/admin.js:632-661 binds #wpss-test-storage-connection's click handler, correctly early-guards on provider==='local' (calling showStorageNotice('error', ...)), and otherwise posts action=wpss_pro_test_storage via $.post, routing the response through showStorageNotice() -> WPSSPro.showNotice() -> window.wpssToast(). Confirmed via a runtime spy that showNotice IS invoked with the correct (type, message) pair in both the local-guard case and the real S3 AJAX-response case (server correctly replies {success:false, data:{message:'This provider does not support connection testing.'}}), and confirmed window.wpssToast works fine when invoked directly from the console (creates a visible .wpss-toast element) - but no .wpss-toast element, and no legacy .notice fallback element, ever appears in the DOM when the real call chain runs. Needs a JS-side debugging session to find where the toast call is being lost between showNotice() and DOM insertion in this specific call path.",
-      "expected": "Per S4.1: the connection test result (pass or a clear failure reason) is shown to the admin.",
-      "actual": "Clicking Test Connection with Storage Provider = Local (WordPress Media Library) produces zero visible feedback. Switching to Amazon S3 (no credentials) and clicking Test Connection completes a real AJAX round trip with a correct error message server-side, but again zero visible feedback in the browser - no toast, no notice, nothing changes on screen.",
-      "url": "http://wp-sell-services.local/wp-admin/admin.php?page=wpss-settings#advanced",
-      "screenshot": "admin-settings-advanced.png",
-      "viewport": "1280"
-    }
-  ],
   "debug_log_issues": [
-    {
-      "section": "C_core_flows (dispute resolution)",
-      "level": "error",
-      "line": "[23-Sep-2026 06:34:34 UTC] [WPSS ERROR] Auto-refund FAILED for order 36: gateway 'standalone' not available or missing process_refund(). The buyer has NOT been refunded.",
-      "file": "src/Services/DisputeService.php / OrderService.php (auto-refund path)"
-    },
-    {
-      "section": "C_core_flows (dispute resolution)",
-      "level": "warning",
-      "line": "[23-Sep-2026 06:34:34 UTC] [WPSS WARNING] Order 36 refund: no completed wallet credit found for the vendor, so the earnings reversal is skipped - a reversal here would debit money never credited. The credit written at completion is netted by the refunded amount instead.",
-      "file": "src/Services/OrderService.php (refund/earnings-reversal path)"
-    }
+    {"section": "baseline (pre-walk)", "level": "fatal", "line": "Uncaught TypeError StripeGateway::parse_amount(): Argument #1 ($amount) must be of type int, null given (StripeGateway.php:519 via process_refund line 679), plus warnings Undefined array key amount/currency", "file": "wp-sell-services/src/Integrations/Stripe/StripeGateway.php"},
+    {"section": "walk", "level": "fatal", "line": "Only self-inflicted wp eval calls (undefined wpss_get_login_url, private constant OfflineGateway::OPTION_NAME, earlier SchemaManager constant); no fatal, warning or deprecated from plugin code during the walk", "file": "n/a"}
   ],
-  "manual_required": [
-    "Service 242 ('I will produce social media motion graphics') was unpublished (draft) to verify the Priority A unpublish scenario, then restored to publish and re-verified live in the catalog and on the service page - no action needed.",
-    "Service 238 ('I will optimize your store for higher conversions') was PERMANENTLY force-deleted per Priority A test 2 - the wpss_service post type does not support trash, so this could not be reversed. Full post + postmeta were captured before deletion to /private/tmp/.../scratchpad/service-238-backup.json and service-238-meta-backup.json for re-seeding if desired. The live catalog count is permanently down by 1 (was 12 published test/demo services, now 11).",
-    "Two WooCommerce orders were placed as real data and left in place: #5071 / wpss_orders #855 (wpss_buyer_ella, service 234, $65.00, status manually forced from pending_requirements to in_progress via wp-cli to enable dispute-flow testing) and #5074 / wpss_orders #856 (wpss_buyer_ben, service 2028 + Priority Support add-on, $84.99).",
-    "Milestone phase 2 (wpss_orders #842, parent #840/#841, wpss_rest_buyer_tUdjLNgW / wpss_rest_vendor_tUdjLNgW) was paid for real ($200.00 via order-pay #4896) to verify the WooCommerce fee-only pay-order subtotal fix. A QA test message was also posted to that order's conversation thread - both left in place as real data, harmless.",
-    "Dispute #8 (Ella Fixed vs Sofia Rossi, order #WPSS-20260409-0036 / wpss_orders id 36) was resolved end-to-end via the admin UI (status Escalated -> Resolved, resolution=favor_buyer) to verify the resolution workflow. This is what surfaced the hard_fail above: order 36 is now permanently marked status=refunded / refunded_amount=$255.00 in the DB even though the real gateway refund failed. This was NOT reverted - it stands as live evidence of the bug for whoever fixes it. The dispute's Admin Notes field contains a QA note explaining this.",
-    "wpss_vendor_maya's vendor_profiles.status was set to 'suspended' to verify D3 (suspended-vendor REST refusal via GET /wpss/v1/earnings/summary -> 403 wpss_not_vendor), then restored to 'active' and re-verified - no action needed.",
-    "A temporary $1,252.00 debit wallet_transactions row was inserted for wpss_vendor_sofia to produce a -$700.00 balance and verify D4 (negative-balance explanation on the Earnings & Payouts page), then deleted - balance restored to $552.00 and re-verified via wpss_get_ledger_balance() - no action needed.",
-    "A throwaway QA service post (ID 5072, draft, incomplete) was created to re-verify the publish-rule guard via the block editor's native Publish button (correctly blocked, 'Draft saved.' with the same 'Not ready for the marketplace yet' banner as last cycle), then force-deleted - no action needed.",
-    "Service 250 ('I will build a custom WordPress plugin to spec') had its title re-saved via wp-cli (same value) to confirm an unrelated-field save does not unpublish an already-live incomplete-by-current-rules service - no data changed, no action needed.",
-    "Both plugins were deactivated then reactivated to exercise Section B; both are active at v1.7.2 afterward with zero fatals and no duplicate wpss_orders rows.",
-    "The site's own background jobs (Action Scheduler) appear to have pruned some pre-existing pending/abandoned test orders during this session - wpss_orders total count dropped from 388 (session start) to 384 before any of my new orders were added; this looks like legitimate scheduled cleanup of old test data, not something I did, but is noted for the record since it was unexpected.",
-    "18 screenshots were saved as bare relative filenames into the site's public document root per this run's instructions (caller relocates them): admin-analytics-1280.png, admin-dispute-detail-8.png, admin-disputes-1280.png, admin-moderation-1280.png, admin-settings-advanced.png, admin-settings-gateways.png, admin-settings-payment-gateways.png, admin-settings-payouts.png, cart-deleted-service-1280.png, cart-unpublished-1280.png, checkout-place-order-blocked-1280.png, checkout-unavailable-390.png, checkout-unpublished-1280.png, earnings-390-recheck.png, milestone-order-summary-1280.png (actually captured at 390px, not 1280 - viewport was left at 390 from the earlier earnings check), pay-for-order-phase2-1280.png, vendor-profile-maya-1280.png, vendors-directory-1280.png."
+  "environment_restored": {"ecommerce_platform": "auto", "login_page_setting": "6217", "vacation_vendor": "off", "fixtures_removed": true},
+  "top3": [
+    "No release-blocking defect found: ownership, suspension, vacation, dates and money checks all held on both rails.",
+    "Needs an owner look: the Stripe refund path fatal logged earlier today (null amount) and the Woo-rail /cart/ redirect to an empty Woo cart.",
+    "Not walked and still open: disputes, wizard, milestone flows, tax, dark mode, RTL and anything with real gateways (no outbound HTTP here)."
   ]
 }
