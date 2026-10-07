@@ -1656,13 +1656,15 @@ add_filter( 'pre_delete_post', 'wpss_guard_proposed_request', 10, 2 );
 function wpss_guard_proposed_request_status( $data, $postarr ) {
 	$post = empty( $postarr['ID'] ) ? null : get_post( (int) $postarr['ID'] );
 
-	if ( ! $post || 'wpss_request' !== $post->post_type || 'trash' === $post->post_status || false !== wpss_guard_proposed_request( null, $post ) ) {
+	if ( ! $post || 'wpss_request' !== $post->post_type || false !== wpss_guard_proposed_request( null, $post ) ) {
 		return $data;
 	}
 
+	// The type is kept whatever the stored status, a request already in the
+	// trash included; only the move INTO the trash is a status question.
 	$data['post_type'] = $post->post_type;
 
-	if ( 'trash' === ( $data['post_status'] ?? '' ) ) {
+	if ( 'trash' === ( $data['post_status'] ?? '' ) && 'trash' !== $post->post_status ) {
 		$data['post_status'] = $post->post_status;
 	}
 
