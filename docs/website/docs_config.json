@@ -5,75 +5,551 @@
   "sections": [
     {
       "name": "Getting Started",
-      "folder": "getting-started"
+      "folder": "getting-started",
+      "pages": [
+        {
+          "slug": "intro",
+          "title": "Welcome to WP Sell Services"
+        },
+        {
+          "slug": "installation",
+          "title": "Installing WP Sell Services"
+        },
+        {
+          "slug": "initial-setup",
+          "title": "Initial Setup Guide"
+        },
+        {
+          "slug": "free-vs-pro",
+          "title": "Free vs Pro: Feature Comparison"
+        },
+        {
+          "slug": "pro-overview",
+          "title": "WP Sell Services Pro Overview"
+        },
+        {
+          "slug": "dashboard-tour",
+          "title": "Buyer & Seller Dashboard Tour"
+        },
+        {
+          "slug": "pro-license",
+          "title": "License Activation & Updates [PRO]"
+        },
+        {
+          "slug": "whats-new-1-8-0",
+          "title": "What's New in 1.8.0"
+        },
+        {
+          "slug": "whats-new-1-6-0",
+          "title": "What's New in 1.6.0"
+        },
+        {
+          "slug": "whats-new-1-3-0",
+          "title": "What's New in 1.3.0"
+        },
+        {
+          "slug": "launch-checklist",
+          "title": "Launch Checklist"
+        },
+        {
+          "slug": "documentation-coverage",
+          "title": "Documentation Coverage"
+        }
+      ]
     },
     {
       "name": "Buyer Guide",
-      "folder": "buyer-guide"
+      "folder": "buyer-guide",
+      "pages": [
+        {
+          "slug": "browsing-and-purchasing",
+          "title": "How to Find and Purchase a Service"
+        },
+        {
+          "slug": "choosing-the-right-package",
+          "title": "Choosing the Right Package"
+        },
+        {
+          "slug": "buyer-dashboard",
+          "title": "Buyer Dashboard"
+        },
+        {
+          "slug": "buyer-order-tracking",
+          "title": "Order Tracking for Buyers"
+        },
+        {
+          "slug": "buyer-tips-best-practices",
+          "title": "Tips for Getting Great Results"
+        },
+        {
+          "slug": "favorites-saved-services",
+          "title": "Favorites: Save Services for Later"
+        },
+        {
+          "slug": "buyer-faq",
+          "title": "Buyer FAQ"
+        }
+      ]
     },
     {
       "name": "Service Creation",
-      "folder": "service-creation"
+      "folder": "service-creation",
+      "pages": [
+        {
+          "slug": "service-wizard",
+          "title": "Creating a Service: The 6-Step Wizard"
+        },
+        {
+          "slug": "pricing-packages",
+          "title": "Pricing and Packages"
+        },
+        {
+          "slug": "service-addons",
+          "title": "Service Add-ons (Extras)"
+        },
+        {
+          "slug": "service-media",
+          "title": "Service Gallery and Media"
+        },
+        {
+          "slug": "service-requirements-faqs",
+          "title": "Requirements and FAQs"
+        },
+        {
+          "slug": "publishing-moderation",
+          "title": "Publishing and Moderation"
+        },
+        {
+          "slug": "editing-pausing-services",
+          "title": "Managing Your Services: Edit, Pause, and Delete"
+        }
+      ]
     },
     {
       "name": "Buyer Requests & Proposals",
-      "folder": "buyer-requests"
+      "folder": "buyer-requests",
+      "pages": [
+        {
+          "slug": "posting-request",
+          "title": "Posting a Buyer Request"
+        },
+        {
+          "slug": "submitting-proposals",
+          "title": "Submitting Proposals"
+        },
+        {
+          "slug": "managing-requests",
+          "title": "Managing Requests"
+        },
+        {
+          "slug": "proposal-contracts-wpss",
+          "title": "Proposal Contracts: Fixed vs Milestone"
+        }
+      ]
     },
     {
       "name": "Order Management",
-      "folder": "order-management"
+      "folder": "order-management",
+      "pages": [
+        {
+          "slug": "order-lifecycle",
+          "title": "How Orders Work"
+        },
+        {
+          "slug": "requirements-collection",
+          "title": "Buyer Requirements"
+        },
+        {
+          "slug": "order-messaging",
+          "title": "Built-in Messaging"
+        },
+        {
+          "slug": "deliveries-revisions",
+          "title": "Deliveries & Revisions"
+        },
+        {
+          "slug": "milestones-wpss",
+          "title": "Milestone Contracts"
+        },
+        {
+          "slug": "extensions-wpss",
+          "title": "Paid Extensions"
+        },
+        {
+          "slug": "tipping-extensions",
+          "title": "Tips & Deadline Extensions"
+        },
+        {
+          "slug": "order-settings",
+          "title": "Order Settings"
+        },
+        {
+          "slug": "recurring-services",
+          "title": "Recurring Services & Subscriptions [PRO]"
+        }
+      ]
     },
     {
       "name": "Vendor System",
-      "folder": "vendor-system"
+      "folder": "vendor-system",
+      "pages": [
+        {
+          "slug": "becoming-a-vendor",
+          "title": "Becoming a Vendor"
+        },
+        {
+          "slug": "vendor-dashboard",
+          "title": "The Vendor Dashboard"
+        },
+        {
+          "slug": "vendor-profile-portfolio",
+          "title": "Vendor Profile & Portfolio"
+        },
+        {
+          "slug": "seller-levels",
+          "title": "Seller Levels & Badges"
+        },
+        {
+          "slug": "vacation-mode",
+          "title": "Vacation Mode"
+        },
+        {
+          "slug": "vendor-settings",
+          "title": "Vendor Settings (Admin)"
+        },
+        {
+          "slug": "vendor-subscription-plans",
+          "title": "Vendor Subscription Plans [PRO]"
+        }
+      ]
     },
     {
       "name": "Reviews & Ratings",
-      "folder": "reviews-ratings"
+      "folder": "reviews-ratings",
+      "pages": [
+        {
+          "slug": "review-system",
+          "title": "Reviews & Ratings"
+        },
+        {
+          "slug": "reputation-moderation",
+          "title": "Reputation & Moderation"
+        }
+      ]
     },
     {
       "name": "Disputes & Resolution",
-      "folder": "disputes-resolution"
+      "folder": "disputes-resolution",
+      "pages": [
+        {
+          "slug": "opening-a-dispute",
+          "title": "Opening a Dispute"
+        },
+        {
+          "slug": "dispute-process",
+          "title": "The Dispute Process"
+        },
+        {
+          "slug": "admin-dispute-mediation",
+          "title": "Resolving Disputes (Admin Guide)"
+        }
+      ]
     },
     {
       "name": "Payments & Checkout",
-      "folder": "payments-checkout"
+      "folder": "payments-checkout",
+      "pages": [
+        {
+          "slug": "woocommerce-checkout",
+          "title": "WooCommerce Checkout Integration **[PRO]**"
+        },
+        {
+          "slug": "alternative-platforms",
+          "title": "Alternative E-commerce Platforms **[PRO]**"
+        },
+        {
+          "slug": "standalone-mode",
+          "title": "Standalone Checkout Mode"
+        },
+        {
+          "slug": "stripe-payments",
+          "title": "Stripe Payments"
+        },
+        {
+          "slug": "other-gateways",
+          "title": "PayPal, Razorpay, and Offline Payments"
+        },
+        {
+          "slug": "currency-tax-config",
+          "title": "Currency and Tax Settings"
+        },
+        {
+          "slug": "stripe-connect",
+          "title": "Stripe Connect Split Payments [PRO]"
+        },
+        {
+          "slug": "display-currency",
+          "title": "Display Currency [PRO]"
+        },
+        {
+          "slug": "offline-payment-proof",
+          "title": "Offline Payment Proof and Receipts"
+        }
+      ]
     },
     {
       "name": "Earnings & Wallet",
-      "folder": "earnings-wallet"
+      "folder": "earnings-wallet",
+      "pages": [
+        {
+          "slug": "commission-system",
+          "title": "How Commissions Work"
+        },
+        {
+          "slug": "earnings-dashboard",
+          "title": "Vendor Earnings Dashboard"
+        },
+        {
+          "slug": "withdrawals",
+          "title": "Vendor Withdrawals"
+        },
+        {
+          "slug": "wallet-system",
+          "title": "Wallet System"
+        },
+        {
+          "slug": "automated-payouts",
+          "title": "Automated Payouts"
+        },
+        {
+          "slug": "ledger-csv-wpss",
+          "title": "Earnings Ledger & CSV Export"
+        },
+        {
+          "slug": "tiered-commission",
+          "title": "Tiered Commission Rules [PRO]"
+        },
+        {
+          "slug": "vendor-payouts",
+          "title": "Paying Your Vendors"
+        }
+      ]
     },
     {
       "name": "Analytics & Reporting",
-      "folder": "analytics-reporting"
+      "folder": "analytics-reporting",
+      "pages": [
+        {
+          "slug": "vendor-analytics",
+          "title": "Vendor Analytics **[PRO]**"
+        },
+        {
+          "slug": "admin-analytics",
+          "title": "Admin Analytics **[PRO]**"
+        },
+        {
+          "slug": "data-export",
+          "title": "Data Export **[PRO]**"
+        }
+      ]
     },
     {
       "name": "Notifications & Emails",
-      "folder": "notifications-emails"
+      "folder": "notifications-emails",
+      "pages": [
+        {
+          "slug": "email-types",
+          "title": "Email Notifications"
+        },
+        {
+          "slug": "in-app-notifications",
+          "title": "In-App Notifications"
+        },
+        {
+          "slug": "email-configuration",
+          "title": "Email Configuration"
+        },
+        {
+          "slug": "realtime-updates",
+          "title": "Real-Time Updates (Live Messages & Notifications)"
+        }
+      ]
     },
     {
       "name": "Cloud Storage",
-      "folder": "cloud-storage"
+      "folder": "cloud-storage",
+      "pages": [
+        {
+          "slug": "cloud-overview",
+          "title": "Cloud Storage **[PRO]**"
+        },
+        {
+          "slug": "cloud-setup",
+          "title": "Setting Up Cloud Storage **[PRO]**"
+        }
+      ]
     },
     {
       "name": "Marketplace Display & SEO",
-      "folder": "marketplace-display"
+      "folder": "marketplace-display",
+      "pages": [
+        {
+          "slug": "shortcodes-reference",
+          "title": "Shortcodes Reference"
+        },
+        {
+          "slug": "gutenberg-blocks",
+          "title": "Block Editor Elements"
+        },
+        {
+          "slug": "search-filters",
+          "title": "Search and Filtering"
+        },
+        {
+          "slug": "template-overrides",
+          "title": "Template Overrides"
+        },
+        {
+          "slug": "seo-schema",
+          "title": "SEO Features"
+        }
+      ]
     },
     {
       "name": "Admin Tools & Moderation",
-      "folder": "admin-tools"
+      "folder": "admin-tools",
+      "pages": [
+        {
+          "slug": "service-moderation",
+          "title": "Service Moderation"
+        },
+        {
+          "slug": "vendor-management",
+          "title": "Managing Vendors"
+        },
+        {
+          "slug": "withdrawal-approvals",
+          "title": "Processing Withdrawals"
+        },
+        {
+          "slug": "manual-orders",
+          "title": "Creating Orders Manually"
+        },
+        {
+          "slug": "guided-tour",
+          "title": "Guided Admin Tour"
+        },
+        {
+          "slug": "member-reports",
+          "title": "Member Reports"
+        }
+      ]
     },
     {
       "name": "Platform Settings",
-      "folder": "platform-settings"
+      "folder": "platform-settings",
+      "pages": [
+        {
+          "slug": "general-settings",
+          "title": "General Settings"
+        },
+        {
+          "slug": "pages-setup",
+          "title": "Pages Setup"
+        },
+        {
+          "slug": "payment-gateways-settings",
+          "title": "Payment Gateways Settings"
+        },
+        {
+          "slug": "commission-tax-settings",
+          "title": "Commission & Tax Settings"
+        },
+        {
+          "slug": "payouts-settings",
+          "title": "Payouts Settings"
+        },
+        {
+          "slug": "white-label",
+          "title": "White Label Branding [PRO]"
+        },
+        {
+          "slug": "advanced-settings",
+          "title": "Advanced Settings"
+        }
+      ]
     },
     {
       "name": "Developer Guide",
-      "folder": "developer-guide"
+      "folder": "developer-guide",
+      "pages": [
+        {
+          "slug": "rest-api-overview",
+          "title": "REST API Overview"
+        },
+        {
+          "slug": "rest-api-controllers",
+          "title": "REST API Controllers Reference"
+        },
+        {
+          "slug": "hooks-filters",
+          "title": "Hooks and Filters Reference"
+        },
+        {
+          "slug": "hooks-reference",
+          "title": "Hook reference (generated)"
+        },
+        {
+          "slug": "custom-integrations",
+          "title": "Custom Integrations Guide"
+        },
+        {
+          "slug": "theme-integration",
+          "title": "Theme Integration Guide"
+        },
+        {
+          "slug": "email-customization",
+          "title": "Email Customization Guide"
+        },
+        {
+          "slug": "action-scheduler",
+          "title": "Action Scheduler Integration"
+        },
+        {
+          "slug": "wp-cli-commands",
+          "title": "WP-CLI Commands"
+        },
+        {
+          "slug": "pro-extension-points",
+          "title": "Pro Extension Points [PRO]"
+        },
+        {
+          "slug": "database-schema",
+          "title": "Database Schema"
+        },
+        {
+          "slug": "capabilities",
+          "title": "Capabilities & Roles"
+        },
+        {
+          "slug": "abilities-api",
+          "title": "Abilities API"
+        },
+        {
+          "slug": "rest-error-codes",
+          "title": "REST error codes"
+        }
+      ]
     },
     {
       "name": "FAQ & Troubleshooting",
-      "folder": "faq"
+      "folder": "faq",
+      "pages": [
+        {
+          "slug": "faq-troubleshooting",
+          "title": "FAQ and Troubleshooting"
+        }
+      ]
     }
   ],
   "product_name": "WP Sell Services",
