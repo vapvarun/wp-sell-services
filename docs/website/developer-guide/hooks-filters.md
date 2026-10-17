@@ -641,8 +641,8 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_message_sent` | `object $message, object $conversation` | `src/Services/ConversationService.php:342` |
 | `wpss_notification_created` | `int $notification_id, int $user_id, string $type, array $data` | `src/Services/NotificationService.php:112` |
 | `wpss_portfolio_item_created` | `int $item_id, int $vendor_id, array $data` | `src/Services/PortfolioService.php:199` |
-| `wpss_portfolio_item_updated` | `int $item_id, array $data` | `src/Services/PortfolioService.php:294` |
-| `wpss_portfolio_item_deleted` | `int $item_id, object $item` | `src/Services/PortfolioService.php:344` |
+| `wpss_portfolio_item_updated` | `int $item_id, array $data` | `src/Services/PortfolioService.php:302` |
+| `wpss_portfolio_item_deleted` | `int $item_id, object $item` | `src/Services/PortfolioService.php:352` |
 | `wpss_settings_tab_{tab}` | *(none)* | `Settings.php:985` |
 | `wpss_advanced_settings_sections` | *(none)* | `src/Admin/Settings.php:2173` |
 

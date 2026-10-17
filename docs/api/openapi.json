@@ -598,7 +598,7 @@
                         "schema": {
                             "type": "integer"
                         },
-                        "description": "Filter by object ID. Requires object_type."
+                        "description": "Filter by object ID. Pair it with object_type, since IDs repeat across types."
                     },
                     {
                         "name": "actor_id",

@@ -85,7 +85,7 @@ class AuditLogController extends RestController {
 				'type'        => 'string',
 			),
 			'object_id'   => array(
-				'description' => __( 'Filter by object ID. Requires object_type.', 'wp-sell-services' ),
+				'description' => __( 'Filter by object ID. Pair it with object_type, since IDs repeat across types.', 'wp-sell-services' ),
 				'type'        => 'integer',
 			),
 			'actor_id'    => array(

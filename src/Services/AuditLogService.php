@@ -421,7 +421,7 @@ class AuditLogService {
 	 *     Optional. Query filters.
 	 *
 	 *     @type string $object_type Filter by object type.
-	 *     @type int    $object_id   Filter by object ID (requires object_type).
+	 *     @type int    $object_id   Filter by object ID (pair with object_type; IDs repeat across types).
 	 *     @type int    $actor_id    Filter by actor ID.
 	 *     @type string $event_type  Filter by event type.
 	 *     @type bool   $is_forced   Return only forced (bypass) events if true.
@@ -445,11 +445,12 @@ class AuditLogService {
 		if ( ! empty( $args['object_type'] ) ) {
 			$where[]  = 'object_type = %s';
 			$values[] = (string) $args['object_type'];
+		}
 
-			if ( ! empty( $args['object_id'] ) ) {
-				$where[]  = 'object_id = %d';
-				$values[] = (int) $args['object_id'];
-			}
+		// Applied on its own: dropping it without object_type returned the whole log to a caller who asked for one object.
+		if ( ! empty( $args['object_id'] ) ) {
+			$where[]  = 'object_id = %d';
+			$values[] = (int) $args['object_id'];
 		}
 
 		if ( ! empty( $args['actor_id'] ) ) {

@@ -137,6 +137,14 @@ class PortfolioController extends RestController {
 							'type'        => 'string',
 							'format'      => 'uri',
 						),
+						'tags'         => array(
+							'description' => __( 'Tags, as a list or a comma-separated string.', 'wp-sell-services' ),
+							'type'        => array( 'array', 'string' ),
+						),
+						'is_featured'  => array(
+							'description' => __( 'Feature this item (limited by the featured cap).', 'wp-sell-services' ),
+							'type'        => 'boolean',
+						),
 					),
 				),
 			)
@@ -275,88 +283,14 @@ class PortfolioController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_portfolio_items';
+		// The service is the one writer: item cap, featured cap, sort order, tags and the created hook.
+		$result = $this->service()->create( get_current_user_id(), $this->item_data( $request ) );
 
-		$vendor_id = get_current_user_id();
-		$media     = $request->get_param( 'media' );
-
-		$wpdb->insert(
-			$table,
-			array(
-				'vendor_id'    => $vendor_id,
-				'title'        => sanitize_text_field( $request->get_param( 'title' ) ),
-				'description'  => sanitize_textarea_field( $request->get_param( 'description' ) ?: '' ),
-				'media'        => wp_json_encode( is_array( $media ) ? array_map( 'intval', $media ) : array() ),
-				'service_id'   => (int) $request->get_param( 'service_id' ),
-				'external_url' => esc_url_raw( $request->get_param( 'external_url' ) ?: '' ),
-
-				/*
-				 * Read from the form's "Mark as Featured" checkbox rather than
-				 * written as a hardcoded zero. The portfolio service has always
-				 * honoured this field; the route ignored it and stored zero every
-				 * time, so the checkbox in the Add Portfolio modal did nothing at
-				 * all (Basecamp 10300287069). The owner's featured limit still
-				 * applies.
-				 */
-				'is_featured'  => ( $request->get_param( 'is_featured' ) && $this->can_feature_another( $vendor_id ) ) ? 1 : 0,
-				'sort_order'   => 0,
-				'created_at'   => current_time( 'mysql', true ),
-			),
-			array( '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%d', '%s' )
-		);
-
-		$item_id = (int) $wpdb->insert_id;
-
-		if ( ! $item_id ) {
-			return new WP_Error( 'create_failed', __( 'Failed to create portfolio item.', 'wp-sell-services' ), array( 'status' => 500 ) );
+		if ( empty( $result['success'] ) ) {
+			return new WP_Error( 'wpss_portfolio_create_failed', (string) $result['message'], array( 'status' => 400 ) );
 		}
 
-		$item = $this->get_portfolio_item( $item_id );
-
-		return new WP_REST_Response( $this->format_item( $item ), 201 );
-	}
-
-	/**
-	 * Update portfolio item.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	/**
-	 * Whether this vendor may feature one more item.
-	 *
-	 * Both create_item() and update_item() write is_featured directly, so the
-	 * limit PortfolioService::toggle_featured() enforces has to be applied here
-	 * too - otherwise the cap holds on the toggle and not on the form beside it.
-	 *
-	 * @since 1.7.1
-	 *
-	 * @param int $vendor_id Vendor user ID.
-	 * @param int $exclude_id Item being edited, excluded from the count.
-	 * @return bool
-	 */
-	private function can_feature_another( int $vendor_id, int $exclude_id = 0 ): bool {
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'wpss_portfolio_items';
-		$max   = (int) get_option( 'wpss_max_featured_portfolio', 6 );
-
-		if ( $max <= 0 ) {
-			return true;
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$count = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is a trusted $wpdb->prefix concat, as everywhere else in this class.
-				"SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND is_featured = 1 AND id <> %d",
-				$vendor_id,
-				$exclude_id
-			)
-		);
-
-		return $count < $max;
+		return new WP_REST_Response( $this->format_item( $this->get_portfolio_item( (int) $result['item_id'] ) ), 201 );
 	}
 
 	/**
@@ -368,67 +302,68 @@ class PortfolioController extends RestController {
 	public function update_item( $request ) {
 		$item_id = (int) $request->get_param( 'id' );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_portfolio_items';
+		// Only the fields the client sent: an absent field is left alone, never reset to a default.
+		$data = $this->item_data( $request, true );
 
-		$update = array();
-		$format = array();
+		if ( $data ) {
+			$result = $this->service()->update( $item_id, $data );
 
-		if ( $request->has_param( 'title' ) ) {
-			$update['title'] = sanitize_text_field( $request->get_param( 'title' ) );
-			$format[]        = '%s';
+			if ( empty( $result['success'] ) ) {
+				return new WP_Error( 'wpss_portfolio_update_failed', (string) $result['message'], array( 'status' => 400 ) );
+			}
 		}
 
-		if ( $request->has_param( 'description' ) ) {
-			$update['description'] = sanitize_textarea_field( $request->get_param( 'description' ) );
-			$format[]              = '%s';
+		return new WP_REST_Response( $this->format_item( $this->get_portfolio_item( $item_id ) ) );
+	}
+
+	/**
+	 * The writable fields of a request, ready for PortfolioService.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @param bool            $partial True on update: include only the fields that were sent.
+	 * @return array<string, mixed>
+	 */
+	private function item_data( WP_REST_Request $request, bool $partial = false ): array {
+		$data = array();
+
+		foreach ( array( 'title', 'description', 'external_url', 'service_id', 'is_featured', 'media', 'tags' ) as $field ) {
+			if ( $partial && ! $request->has_param( $field ) ) {
+				continue;
+			}
+
+			$value = $request->get_param( $field );
+
+			$data[ $field ] = match ( $field ) {
+				'media'      => is_array( $value ) ? array_map( 'intval', $value ) : array(),
+				'tags'       => $this->normalise_tags( $value ),
+				'service_id' => (int) $value,
+				default      => $value,
+			};
 		}
 
-		if ( $request->has_param( 'media' ) ) {
-			$media           = $request->get_param( 'media' );
-			$update['media'] = wp_json_encode( is_array( $media ) ? array_map( 'intval', $media ) : array() );
-			$format[]        = '%s';
-		}
+		return $data;
+	}
 
-		if ( $request->has_param( 'service_id' ) ) {
-			$update['service_id'] = (int) $request->get_param( 'service_id' );
-			$format[]             = '%d';
-		}
+	/**
+	 * Tags arrive as a list from an API client and as "a, b, c" from the dashboard form.
+	 *
+	 * @param mixed $value Raw tags.
+	 * @return string[]
+	 */
+	private function normalise_tags( $value ): array {
+		$list = is_array( $value ) ? $value : explode( ',', (string) $value );
+		$list = array_map( static fn( $tag ) => sanitize_text_field( (string) $tag ), $list );
 
-		/*
-		 * Editing an existing item could not change its featured state either -
-		 * the modal populates the checkbox correctly on open and then discarded
-		 * whatever the vendor did with it (Basecamp 10300287069). Unfeaturing is
-		 * always allowed; featuring is capped, with the item itself excluded
-		 * from the count so re-saving an already-featured item is not blocked by
-		 * its own row.
-		 */
-		if ( $request->has_param( 'is_featured' ) ) {
-			$wants_featured = (bool) $request->get_param( 'is_featured' );
+		return array_values( array_unique( array_filter( $list, static fn( $tag ) => '' !== $tag ) ) );
+	}
 
-			// $item is not fetched until after this block, so resolve the owner
-			// directly rather than reaching for a variable that does not exist yet.
-			// The cast binds tighter than ??, so `(int) $x['vendor_id'] ?? 0`
-			// never reaches the fallback and reads an offset on a possible null.
-			$portfolio_item = $this->get_portfolio_item( $item_id );
-			$owner_id       = isset( $portfolio_item['vendor_id'] ) ? (int) $portfolio_item['vendor_id'] : 0;
-
-			$update['is_featured'] = ( $wants_featured && $this->can_feature_another( $owner_id, $item_id ) ) ? 1 : 0;
-			$format[]              = '%d';
-		}
-
-		if ( $request->has_param( 'external_url' ) ) {
-			$update['external_url'] = esc_url_raw( $request->get_param( 'external_url' ) );
-			$format[]               = '%s';
-		}
-
-		if ( ! empty( $update ) ) {
-			$wpdb->update( $table, $update, array( 'id' => $item_id ), $format, array( '%d' ) );
-		}
-
-		$item = $this->get_portfolio_item( $item_id );
-
-		return new WP_REST_Response( $this->format_item( $item ) );
+	/**
+	 * The portfolio service, the one writer of portfolio rows.
+	 *
+	 * @return \WPSellServices\Services\PortfolioService
+	 */
+	private function service(): \WPSellServices\Services\PortfolioService {
+		return new \WPSellServices\Services\PortfolioService();
 	}
 
 	/**
@@ -439,11 +374,14 @@ class PortfolioController extends RestController {
 	 */
 	public function delete_item( $request ) {
 		$item_id = (int) $request->get_param( 'id' );
+		$item    = $this->get_portfolio_item( $item_id );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_portfolio_items';
+		// The permission callback already allowed the owner or an administrator; the service gets the owner's id.
+		$result = $this->service()->delete( $item_id, (int) ( $item['vendor_id'] ?? 0 ) );
 
-		$wpdb->delete( $table, array( 'id' => $item_id ), array( '%d' ) );
+		if ( empty( $result['success'] ) ) {
+			return new WP_Error( 'wpss_portfolio_delete_failed', (string) $result['message'], array( 'status' => 400 ) );
+		}
 
 		return new WP_REST_Response( array( 'deleted' => true ) );
 	}
@@ -468,7 +406,7 @@ class PortfolioController extends RestController {
 		 * 10304836976). The vendor-ownership check it was also missing matters
 		 * more than the limit.
 		 */
-		$result = ( new \WPSellServices\Services\PortfolioService() )->toggle_featured(
+		$result = $this->service()->toggle_featured(
 			$item_id,
 			get_current_user_id()
 		);
@@ -499,28 +437,10 @@ class PortfolioController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function reorder( WP_REST_Request $request ) {
-		$order = $request->get_param( 'order' );
-
-		global $wpdb;
-		$table     = $wpdb->prefix . 'wpss_portfolio_items';
-		$vendor_id = get_current_user_id();
-
-		foreach ( $order as $position => $item_id ) {
-			$wpdb->update(
-				$table,
-				array( 'sort_order' => $position ),
-				array(
-					'id'        => (int) $item_id,
-					'vendor_id' => $vendor_id,
-				),
-				array( '%d' ),
-				array( '%d', '%d' )
-			);
-		}
+		$this->service()->reorder( get_current_user_id(), (array) $request->get_param( 'order' ) );
 
 		return new WP_REST_Response( array( 'success' => true ) );
 	}
-
 
 	/**
 	 * Check owner permissions.
@@ -596,6 +516,7 @@ class PortfolioController extends RestController {
 			'media'        => $media_urls,
 			'service_id'   => (int) ( $item['service_id'] ?? 0 ),
 			'external_url' => $item['external_url'] ?? '',
+			'tags'         => json_decode( $item['tags'] ?? '[]', true ) ?: array(),
 			'is_featured'  => (bool) ( $item['is_featured'] ?? false ),
 			'sort_order'   => (int) ( $item['sort_order'] ?? 0 ),
 			'created_at'   => $this->format_datetime( $item['created_at'] ?? null ),

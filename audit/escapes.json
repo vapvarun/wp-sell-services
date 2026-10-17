@@ -56,6 +56,22 @@
       "fails_on": "pre-fix NotificationService/AjaxHandlers (4 FAIL)",
       "journey": "audit/journeys/11-api-write-parity.md#2",
       "now_dead_or_duplicate": "two direct $wpdb->update blocks in AjaxHandlers"
+    },
+    {
+      "card": "10402964352",
+      "class": "a filter nested inside another filter's condition is silently dropped",
+      "check": "tests/test-audit-log-object-filter.php",
+      "fails_on": "pre-fix AuditLogService (3 FAIL)",
+      "journey": "audit/journeys/11-api-write-parity.md#3",
+      "now_dead_or_duplicate": "none"
+    },
+    {
+      "card": "10403565741",
+      "class": "a REST route re-implements a service's writes and drops fields, caps and hooks",
+      "check": "tests/test-portfolio-rest-service.php",
+      "fails_on": "pre-fix PortfolioController (9 FAIL)",
+      "journey": "audit/journeys/11-api-write-parity.md#4",
+      "now_dead_or_duplicate": "PortfolioController raw INSERT/UPDATE/DELETE/reorder and its own can_feature_another (moved to the service)"
     }
   ]
 }

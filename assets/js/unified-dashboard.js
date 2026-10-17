@@ -1101,7 +1101,9 @@
 				title: $form.find('[name="title"]').val(),
 				description: $form.find('[name="description"]').val(),
 				external_url: $form.find('[name="external_url"]').val() || '',
-				media: mediaVal ? JSON.parse(mediaVal) : []
+				media: mediaVal ? JSON.parse(mediaVal) : [],
+				// Sent as typed ("logo, branding"); the route splits it. Sent empty on edit so clearing the field clears the tags.
+				tags: $form.find('[name="tags"]').val() || ''
 			};
 			var serviceId = $form.find('[name="service_id"]').val();
 			if (serviceId) {
