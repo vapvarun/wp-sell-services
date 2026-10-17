@@ -173,7 +173,7 @@ These hooks fire during payment processing, gateway interactions, and checkout f
 | `wpss_stripe_payment_intent_args` | `array $params, int $order_id, int $vendor_id` | `src/Integrations/Stripe/StripeGateway.php:299` |
 | `wpss_rest_create_payment_intent` | `null, object $gateway, float $amount, string $currency, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:270` |
 | `wpss_rest_confirm_payment` | `null, object $gateway, string $payment_id, int $service_id, int $package_id, object $pay_order` | `src/API/PaymentController.php:319` |
-| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:831` |
+| `wpss_checkout_tax_rate` | `float $tax_rate, int $vendor_id, int $service_id` | `src/functions/money.php:832` |
 
 **`wpss_stripe_payment_intent_args`** lets you modify Stripe PaymentIntent parameters before creation:
 
@@ -253,9 +253,9 @@ add_action( 'wpss_before_cascade_delete_service', function( $service_id ) {
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_commission_recorded` | `int $order_id, array $commission, int $vendor_id` | `src/Services/CommissionService.php:297` |
-| `wpss_withdrawal_requested` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:788` |
-| `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `src/Services/EarningsService.php:524` |
-| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:1634` |
+| `wpss_withdrawal_requested` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:791` |
+| `wpss_withdrawal_processed` | `int $withdrawal_id, string $status, object $withdrawal` | `src/Services/EarningsService.php:527` |
+| `wpss_auto_withdrawal_created` | `int $withdrawal_id, int $vendor_id, float $amount` | `src/Services/EarningsService.php:1637` |
 | `wpss_tip_order_created` | `int $tip_order_id, int $parent_order_id, int $customer_id, float $amount` | `TippingService.php:290` |
 | `wpss_tip_sent` | `int $tip_txn_id, int $parent_order_id, int $vendor_id, int $customer_id, float $vendor_earnings, string $vendor_notes` | `src/Services/TippingService.php:490` |
 
@@ -675,17 +675,17 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | Filter | Parameters | File |
 |--------|-----------|------|
 | `wpss_format_price` | `$formatted, $price, $currency` | `src/functions/money.php:57` |
-| `wpss_currency` | `$currency` | `src/functions/money.php:1089` |
+| `wpss_currency` | `$currency` | `src/functions/money.php:1090` |
 | `wpss_platform_name` | `$platform_name` | `src/functions/misc.php:36` |
 | `wpss_is_vendor` | `$is_vendor, $user_id` | `src/functions/vendors.php:147` |
 | `wpss_order_number_prefix` | `$prefix` (default `'WPSS-'`) | `src/Database/Repositories/OrderRepository.php:92` |
-| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:1124` |
-| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:1151` |
-| `wpss_currencies` | `$currencies` | `src/functions/money.php:1946` |
+| `wpss_currency_symbols` | `$symbols` | `src/functions/money.php:1125` |
+| `wpss_currency_format` | `$format, $symbol, $currency` | `src/functions/money.php:1152` |
+| `wpss_currencies` | `$currencies` | `src/functions/money.php:1947` |
 | `wpss_order_statuses` | `$statuses` | `src/functions/orders.php:153` |
 | `wpss_max_upload_size` | `$upload_max` | `src/functions/misc.php:126` |
 | `wpss_allow_late_requirements_submission` | `$allow_late` | `src/functions/orders.php:820` |
-| `wpss_wallet_manager` | `null` | `src/functions/money.php:1968` |
+| `wpss_wallet_manager` | `null` | `src/functions/money.php:1969` |
 
 ### Currency System Filters (1.2.1)
 
@@ -693,10 +693,10 @@ As of 1.2.1, currencies are driven by a single canonical registry (code → name
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1925` |
+| `wpss_currency_registry` | `array<string, array{name:string, symbol:string, decimals:int}> $registry` | `src/functions/money.php:1926` |
 | `wpss_currency_decimals` | `int $decimals, string $currency` | `src/functions/money.php:205` |
-| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:1051` |
-| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:3998` |
+| `wpss_zero_decimal_currencies` | `string[] $codes` | `src/functions/money.php:1052` |
+| `wpss_settings_currencies` | `array $currencies` | `src/Admin/Settings.php:4002` |
 | `wpss_manual_order_currencies` | `array $currencies` | `src/Admin/Pages/ManualOrderPage.php:948` |
 
 **`wpss_currency_registry`** is the preferred, single-place override — add, remove, or adjust a currency (name / symbol / decimals) and every currency surface updates. Prefer it over the older per-surface currency filters (`wpss_currency_symbols`, `wpss_currency_format`, `wpss_currencies`):

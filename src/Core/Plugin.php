@@ -3136,9 +3136,17 @@ final class Plugin {
 		// Auto-withdrawal processing.
 		$this->loader->add_action(
 			'wpss_process_auto_withdrawals',
-			function (): void {
-				$earnings_service = new \WPSellServices\Services\EarningsService();
-				$earnings_service->process_auto_withdrawals();
+			array( \WPSellServices\Services\EarningsService::class, 'run_scheduled_auto_withdrawals' )
+		);
+
+		// Moves a site that upgraded with the old recurring action onto the dated chain,
+		// and re-arms it if a run ever died; cheap, and only when auto-withdrawal is on.
+		add_action(
+			'action_scheduler_init',
+			static function (): void {
+				if ( \WPSellServices\Services\EarningsService::is_auto_withdrawal_enabled() ) {
+					\WPSellServices\Services\EarningsService::schedule_auto_withdrawal_cron();
+				}
 			}
 		);
 	}

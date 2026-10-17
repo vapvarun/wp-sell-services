@@ -33,6 +33,9 @@ class EarningsService {
 	public const WITHDRAWAL_REJECTED  = 'rejected';
 	public const WITHDRAWAL_CANCELLED = 'cancelled';
 
+	/** Marks that the auto-withdrawal schedule is the single-action chain, not a recurring action. */
+	private const AUTO_WITHDRAWAL_CHAIN = 'single';
+
 	/**
 	 * Earnings grouping periods (consumed by get_by_period() and the REST
 	 * `period` filter). Canonical source for both.
@@ -1658,7 +1661,13 @@ class EarningsService {
 	}
 
 	/**
-	 * Schedule auto withdrawal cron job.
+	 * Arm the next auto-withdrawal run.
+	 *
+	 * One single action at the next calendar anchor (Monday, the 1st/15th, the
+	 * 1st), re-armed by run_scheduled_auto_withdrawals() after each run. A
+	 * recurring action with a 14/30 day interval drifts off the date the settings
+	 * screen promises: Action Scheduler adds N seconds to the last run, so a
+	 * "1st of month" payout slid to the 31st, the 30th, and on (Basecamp 10403479953).
 	 *
 	 * @return void
 	 */
@@ -1670,40 +1679,34 @@ class EarningsService {
 			return;
 		}
 
-		$schedule         = self::get_auto_withdrawal_schedule();
-		$desired_interval = self::schedule_interval( $schedule );
-		$stored_schedule  = (string) get_option( 'wpss_auto_withdrawal_schedule_type', '' );
+		$schedule = self::get_auto_withdrawal_schedule();
 
-		// Reschedule only when the admin-selected schedule changes — AS
-		// recurring actions persist across requests so we don't want to
-		// cancel-and-reinsert on every bootstrap.
-		if ( $stored_schedule === $schedule && Scheduler::has_pending( $hook ) ) {
+		// Pending, on this schedule, and a single action (not a pre-1.9.0 recurring one): nothing to do.
+		if ( (string) get_option( 'wpss_auto_withdrawal_schedule_type', '' ) === $schedule
+			&& self::AUTO_WITHDRAWAL_CHAIN === get_option( 'wpss_auto_withdrawal_chain', '' )
+			&& Scheduler::has_pending( $hook ) ) {
 			return;
 		}
 
 		Scheduler::unschedule_all( $hook );
-		\as_schedule_recurring_action(
-			self::get_next_schedule_time( $schedule ),
-			$desired_interval,
-			$hook,
-			array(),
-			Scheduler::GROUP_FREE
-		);
+		Scheduler::schedule_single( $hook, self::get_next_schedule_time( $schedule ) );
 		update_option( 'wpss_auto_withdrawal_schedule_type', $schedule, false );
+		update_option( 'wpss_auto_withdrawal_chain', self::AUTO_WITHDRAWAL_CHAIN, false );
 	}
 
 	/**
-	 * Map the admin-selected cadence to the AS interval in seconds.
+	 * Action Scheduler callback: run the payouts, then arm the next date.
 	 *
-	 * @param string $schedule Cadence identifier: weekly | biweekly | monthly.
-	 * @return int Interval seconds.
+	 * The re-arm sits in a finally so a failed run cannot end the chain.
+	 *
+	 * @return void
 	 */
-	private static function schedule_interval( string $schedule ): int {
-		return match ( $schedule ) {
-			'monthly'  => 30 * DAY_IN_SECONDS,
-			'biweekly' => 14 * DAY_IN_SECONDS,
-			default    => WEEK_IN_SECONDS,
-		};
+	public static function run_scheduled_auto_withdrawals(): void {
+		try {
+			( new self() )->process_auto_withdrawals();
+		} finally {
+			self::schedule_auto_withdrawal_cron();
+		}
 	}
 
 	/**
@@ -1743,6 +1746,7 @@ class EarningsService {
 	public static function unschedule_auto_withdrawal_cron(): void {
 		Scheduler::unschedule_all( 'wpss_process_auto_withdrawals' );
 		delete_option( 'wpss_auto_withdrawal_schedule_type' );
+		delete_option( 'wpss_auto_withdrawal_chain' );
 		// Also clear any WP-Cron residue from pre-1.1.0.
 		wp_clear_scheduled_hook( 'wpss_process_auto_withdrawals' );
 	}

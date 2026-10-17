@@ -38,17 +38,16 @@ This is the minimum available balance a vendor must have for an auto-payout to t
 
 ### Schedule Options
 
-| Schedule | First run | Then every |
-|----------|-----------|------------|
-| **Weekly** | Next Monday | 7 days |
-| **Bi-weekly** | Next 1st or 15th | 14 days |
-| **Monthly** | Next 1st | 30 days |
+| Schedule | Runs at 02:00 site time on |
+|----------|-----------|
+| **Weekly** | Every Monday |
+| **Bi-weekly** | The 1st and the 15th of each month |
+| **Monthly** | The 1st of each month |
 
-**The schedule is an interval, not a calendar date.** Only the first run lands on
-the day in the middle column. After that each run is the fixed interval later, so
-a monthly schedule that starts on 1 February next runs on 3 March, then 2 April,
-and drifts off the 1st permanently. If you need payouts on an exact date, run
-them manually from the Withdrawals screen.
+Each run schedules the next one on the calendar date, so a monthly schedule
+stays on the 1st (it does not slide by 30 days). The time follows the site
+timezone in **Settings > General**. Changing the schedule re-dates the next run
+straight away.
 
 Processing runs on **Action Scheduler**, not WP-Cron. To check whether a run is
 queued, go to **Tools > Scheduled Actions** and filter by the `wpss` group -- the

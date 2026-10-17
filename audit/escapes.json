@@ -24,6 +24,22 @@
       "fails_on": "pre-fix StandaloneCheckoutProvider/money.php/Settings.php (4 FAIL)",
       "journey": "audit/journeys/06-standalone-checkout.md#8",
       "now_dead_or_duplicate": "removed the option re-read in render_multi_checkout_form"
+    },
+    {
+      "card": "10403479953",
+      "class": "a calendar promise implemented as a fixed-seconds recurring action",
+      "check": "tests/test-auto-withdrawal-schedule.php",
+      "fails_on": "pre-fix EarningsService/Plugin (recurring action, fatal on run_scheduled_auto_withdrawals)",
+      "journey": "audit/journeys/10-vendor-withdrawal-payout.md#5",
+      "now_dead_or_duplicate": "schedule_interval() removed; docs paragraph that documented the drift removed"
+    },
+    {
+      "card": "10403454753",
+      "class": "absint() on a field where a negative is a typo flips it to its positive twin",
+      "check": "tests/test-settings-no-negative-numbers.php",
+      "fails_on": "pre-fix Settings.php (4 FAIL)",
+      "journey": "audit/journeys/10-vendor-withdrawal-payout.md#6",
+      "now_dead_or_duplicate": "none"
     }
   ]
 }

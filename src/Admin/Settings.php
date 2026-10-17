@@ -3719,16 +3719,16 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['min_withdrawal'] = absint( $input['min_withdrawal'] ?? 50 );
+		$sanitized['min_withdrawal'] = max( 0, (int) ( $input['min_withdrawal'] ?? 50 ) );
 
 		// 0 is a legitimate, supported value: pay vendors out the moment an
 		// order completes (owner decision 2026-07-23 — see the field definition
 		// for why the wallet ledger makes that safe). Capped at 90 to match the
 		// field, enforced HERE and not just by the max attribute, which is only
 		// a browser hint a posted value can sail straight past.
-		$sanitized['clearance_days']            = min( 90, absint( $input['clearance_days'] ?? 0 ) );
+		$sanitized['clearance_days']            = min( 90, max( 0, (int) ( $input['clearance_days'] ?? 0 ) ) );
 		$sanitized['auto_withdrawal_enabled']   = ! empty( $input['auto_withdrawal_enabled'] );
-		$sanitized['auto_withdrawal_threshold'] = absint( $input['auto_withdrawal_threshold'] ?? 500 );
+		$sanitized['auto_withdrawal_threshold'] = max( 0, (int) ( $input['auto_withdrawal_threshold'] ?? 500 ) );
 		$sanitized['auto_withdrawal_schedule']  = sanitize_key( $input['auto_withdrawal_schedule'] ?? 'monthly' );
 
 		// Validate schedule.
@@ -3750,8 +3750,8 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['enable_tax']   = ! empty( $input['enable_tax'] );
-		$sanitized['tax_label']    = sanitize_text_field( $input['tax_label'] ?? '' );
+		$sanitized['enable_tax'] = ! empty( $input['enable_tax'] );
+		$sanitized['tax_label']  = sanitize_text_field( $input['tax_label'] ?? '' );
 		// A blank label would print as " (20%)" on checkout; keep the default instead.
 		if ( '' === trim( $sanitized['tax_label'] ) ) {
 			$sanitized['tax_label'] = __( 'Tax', 'wp-sell-services' );
@@ -3773,7 +3773,7 @@ class Settings {
 		$sanitized = array();
 
 		$sanitized['vendor_registration']     = sanitize_key( $input['vendor_registration'] ?? 'open' );
-		$sanitized['max_services_per_vendor'] = absint( $input['max_services_per_vendor'] ?? 20 );
+		$sanitized['max_services_per_vendor'] = max( 0, (int) ( $input['max_services_per_vendor'] ?? 20 ) );
 		// Vendor verification is not yet implemented — setting removed to avoid confusion.
 		$sanitized['require_service_moderation'] = ! empty( $input['require_service_moderation'] );
 		$sanitized['moderate_reviews']           = ! empty( $input['moderate_reviews'] );
@@ -3791,16 +3791,16 @@ class Settings {
 		$input     = $input ?? array();
 		$sanitized = array();
 
-		$sanitized['auto_complete_days'] = absint( $input['auto_complete_days'] ?? 3 );
+		$sanitized['auto_complete_days'] = max( 0, (int) ( $input['auto_complete_days'] ?? 3 ) );
 		// Revision limits are defined per-package in service packages, not as a global setting.
 		$sanitized['allow_disputes']            = ! empty( $input['allow_disputes'] );
 		$sanitized['allow_vendor_refunds']      = ! empty( $input['allow_vendor_refunds'] );
-		$sanitized['dispute_window_days']       = absint( $input['dispute_window_days'] ?? 14 );
-		$sanitized['auto_dispute_late_days']    = absint( $input['auto_dispute_late_days'] ?? 3 );
+		$sanitized['dispute_window_days']       = max( 0, (int) ( $input['dispute_window_days'] ?? 14 ) );
+		$sanitized['auto_dispute_late_days']    = max( 0, (int) ( $input['auto_dispute_late_days'] ?? 3 ) );
 		$sanitized['allow_late_requirements']   = ! empty( $input['allow_late_requirements'] );
-		$sanitized['requirements_timeout_days'] = absint( $input['requirements_timeout_days'] ?? 0 );
+		$sanitized['requirements_timeout_days'] = max( 0, (int) ( $input['requirements_timeout_days'] ?? 0 ) );
 		$sanitized['auto_start_on_timeout']     = ! empty( $input['auto_start_on_timeout'] );
-		$sanitized['review_window_days']        = absint( $input['review_window_days'] ?? 30 );
+		$sanitized['review_window_days']        = max( 0, (int) ( $input['review_window_days'] ?? 30 ) );
 
 		return $sanitized;
 	}
@@ -3827,7 +3827,7 @@ class Settings {
 			// rather than the key going missing - the reader treats a missing
 			// key as "on", which is how this defaulted unreachable before.
 			'skip_message_email_when_online' => ! empty( $input['skip_message_email_when_online'] ),
-			'message_email_delay_minutes'    => min( 120, max( 0, absint( $input['message_email_delay_minutes'] ?? 0 ) ) ),
+			'message_email_delay_minutes'    => min( 120, max( 0, (int) ( $input['message_email_delay_minutes'] ?? 0 ) ) ),
 		);
 	}
 
@@ -3925,7 +3925,7 @@ class Settings {
 		$sanitized['delete_data_on_uninstall'] = ! empty( $input['delete_data_on_uninstall'] );
 		$sanitized['enable_debug_mode']        = ! empty( $input['enable_debug_mode'] );
 
-		$sanitized['max_file_size']      = absint( $input['max_file_size'] ?? 10 );
+		$sanitized['max_file_size']      = max( 0, (int) ( $input['max_file_size'] ?? 10 ) );
 		$sanitized['allowed_file_types'] = sanitize_text_field( $input['allowed_file_types'] ?? 'jpg,jpeg,png,gif,pdf,doc,docx' );
 
 		// Keep stored keys this form does not own. currency_position moved to
