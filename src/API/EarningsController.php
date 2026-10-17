@@ -454,6 +454,9 @@ class EarningsController extends RestController {
 				'reference_url'    => $reference_url,
 				'status'           => $row['status'],
 				'created_at'       => $this->format_datetime( $row['created_at'] ),
+				// The date the way every other screen prints it, in the display timezone, so the
+				// ledger does not show the browser's day (an evening entry would land on tomorrow).
+				'created_at_label' => wpss_date_label( $row['created_at'], '', 'M j, Y' ),
 			);
 		}
 

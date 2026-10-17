@@ -124,7 +124,7 @@ do_action( 'wpss_before_requirements_form', $order );
 								$deadline = $order->delivery_deadline instanceof \DateTimeImmutable
 									? $order->delivery_deadline->format( 'Y-m-d H:i:s' )
 									: $order->delivery_deadline;
-								echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $deadline ) ) );
+								echo esc_html( wpss_deadline_label( $deadline ) );
 								?>
 							</dd>
 						<?php endif; ?>

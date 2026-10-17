@@ -168,6 +168,14 @@
       "fails_on": "pre-fix docs (11 admin-paths FAILs once the audit knows the Integrations and System tabs)",
       "journey": "audit/journeys/18-forms-state-feedback.md",
       "now_dead_or_duplicate": "AuditLogService::EVENT_TYPES deleted; get_event_labels() is the one list"
+    },
+    {
+      "card": "time sweep (owner decision 14); QA leads 81h wallet dates, REST date normaliser",
+      "class": "each screen picking its own timezone: wp_date/date_i18n/get_gmt_from_date at ~90 call sites, calendar dates treated as instants, deadlines without a zone, a browser-zone ledger, REST dates formatted per controller",
+      "check": "tests/test-time-sweep.php + tests/test-time-helpers.php + bin/check-time-formatter.php (baseline now empty)",
+      "fails_on": "pre-sweep tree (helpers, REST filter and zone labels absent; gate baseline had 90 calls)",
+      "journey": "audit/journeys/19-time-zones.md#1",
+      "now_dead_or_duplicate": "none; the baseline file is empty and every raw call is gone or carries a time-ok comment"
     }
   ]
 }

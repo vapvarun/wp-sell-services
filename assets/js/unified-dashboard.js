@@ -294,13 +294,8 @@
 			var isDebit = ( typeof txn.is_debit !== 'undefined' ) ? !! txn.is_debit : ( amount < 0 );
 			var $row = $('<tr>').addClass(isDebit ? 'wpss-wallet__row--debit' : 'wpss-wallet__row--credit');
 
-			var dateText = txn.created_at || '';
-			if (dateText && window.Date) {
-				var d = new Date(dateText);
-				if (!isNaN(d.getTime())) {
-					dateText = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-				}
-			}
+			// Formatted by the server in the display timezone; never the browser's.
+			var dateText = txn.created_at_label || '';
 
 			var typeLabel = (txn.type || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, function (c) {
 				return c.toUpperCase();

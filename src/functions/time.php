@@ -57,21 +57,122 @@ function wpss_display_timezone( int $user_id = 0 ): \DateTimeZone {
  * @return string
  */
 function wpss_date_label( $utc, string $fallback = '—', ?string $format = null, int $user_id = 0 ): string {
-	if ( is_int( $utc ) ) {
-		$timestamp = $utc;
-	} else {
-		$utc = null === $utc ? '' : trim( (string) $utc );
-		if ( '' === $utc || 0 === strncmp( $utc, '0000-00-00', 10 ) ) {
-			return $fallback;
-		}
-		$timestamp = strtotime( $utc . ( preg_match( '/(Z|[+-]\d{2}:?\d{2}|UTC|GMT)$/i', $utc ) ? '' : ' UTC' ) );
-	}
+	$timestamp = wpss_utc_timestamp( $utc );
 
-	if ( false === $timestamp || $timestamp <= 0 ) {
+	if ( null === $timestamp ) {
 		return $fallback;
 	}
 
 	return (string) wp_date( $format ?? (string) get_option( 'date_format' ), $timestamp, wpss_display_timezone( $user_id ) );
+}
+
+/**
+ * A stored UTC time as a Unix timestamp; null for NULL, empty, the zero date and anything unparseable.
+ *
+ * A naive datetime string is read as UTC. Used by wpss_date_label() and its siblings so
+ * every one of them agrees on what "no usable time" means.
+ *
+ * @since 1.9.0
+ *
+ * @param string|int|null $utc A stored UTC datetime, or a Unix timestamp.
+ * @return int|null
+ */
+function wpss_utc_timestamp( $utc ): ?int {
+	if ( is_int( $utc ) ) {
+		return $utc > 0 ? $utc : null;
+	}
+
+	$utc = null === $utc ? '' : trim( (string) $utc );
+	if ( '' === $utc || 0 === strncmp( $utc, '0000-00-00', 10 ) ) {
+		return null;
+	}
+
+	$timestamp = strtotime( $utc . ( preg_match( '/(Z|[+-]\d{2}:?\d{2}|UTC|GMT)$/i', $utc ) ? '' : ' UTC' ) );
+
+	return false === $timestamp || $timestamp <= 0 ? null : $timestamp;
+}
+
+/**
+ * A stored UTC time shown as date and time, in the site's date and time formats.
+ *
+ * @since 1.9.0
+ *
+ * @param string|int|null $utc      A stored UTC datetime or Unix timestamp.
+ * @param string          $fallback Shown when there is no usable time.
+ * @param int             $user_id  Who it is shown to (see wpss_display_timezone()).
+ * @return string
+ */
+function wpss_datetime_label( $utc, string $fallback = '—', int $user_id = 0 ): string {
+	return wpss_date_label( $utc, $fallback, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $user_id );
+}
+
+/**
+ * The display timezone as the buyer and seller read it: "UTC", "UTC+5:30", "UTC-4".
+ *
+ * The offset at that moment, so a time in daylight saving shows the offset in force then.
+ *
+ * @since 1.9.0
+ *
+ * @param string|int|null $utc     The moment the zone applies to; now by default.
+ * @param int             $user_id Who it is shown to.
+ * @return string
+ */
+function wpss_timezone_label( $utc = null, int $user_id = 0 ): string {
+	$timestamp = wpss_utc_timestamp( $utc ) ?? time();
+	$offset    = wpss_display_timezone( $user_id )->getOffset( new \DateTimeImmutable( '@' . $timestamp ) );
+
+	if ( 0 === $offset ) {
+		return 'UTC';
+	}
+
+	$abs     = abs( $offset );
+	$minutes = intdiv( $abs % 3600, 60 );
+
+	return sprintf( 'UTC%s%d%s', $offset < 0 ? '-' : '+', intdiv( $abs, 3600 ), $minutes ? ':' . sprintf( '%02d', $minutes ) : '' );
+}
+
+/**
+ * A deadline: date, time and the zone it is in ("Oct 21, 3:00 PM (UTC+5:30)").
+ *
+ * Time standard decision 15: a deadline is the one time two people must agree on, so it
+ * always names its zone. Everyday timestamps stay plain (wpss_datetime_label()).
+ *
+ * @since 1.9.0
+ *
+ * @param string|int|null $utc      A stored UTC datetime or Unix timestamp.
+ * @param string          $fallback Shown when there is no usable time.
+ * @param int             $user_id  Who it is shown to.
+ * @return string
+ */
+function wpss_deadline_label( $utc, string $fallback = '—', int $user_id = 0 ): string {
+	if ( null === wpss_utc_timestamp( $utc ) ) {
+		return $fallback;
+	}
+
+	return sprintf( '%s (%s)', wpss_datetime_label( $utc, $fallback, $user_id ), wpss_timezone_label( $utc, $user_id ) );
+}
+
+/**
+ * A calendar date with no time of day (a vacation return date, a birthday), printed as stored.
+ *
+ * A date such as 2026-10-21 is not an instant, so it must not move with the display
+ * timezone; wpss_date_label() would show the 20th west of UTC.
+ *
+ * @since 1.9.0
+ *
+ * @param string|null $ymd      `Y-m-d` (a time part is ignored).
+ * @param string      $fallback Shown when there is no usable date.
+ * @param string|null $format   PHP date format; the site's date format by default.
+ * @return string
+ */
+function wpss_calendar_date_label( ?string $ymd, string $fallback = '—', ?string $format = null ): string {
+	$timestamp = null === $ymd || '' === trim( $ymd ) || 0 === strncmp( trim( $ymd ), '0000-00-00', 10 ) ? false : strtotime( substr( trim( $ymd ), 0, 10 ) . ' 00:00:00 UTC' );
+
+	if ( false === $timestamp ) {
+		return $fallback;
+	}
+
+	return (string) wp_date( $format ?? (string) get_option( 'date_format' ), $timestamp, new \DateTimeZone( 'UTC' ) );
 }
 
 /**
@@ -126,9 +227,9 @@ function wpss_datetime_local_input( ?string $utc ): string {
  * by day, week or month: wrap it in DATE() or DATE_FORMAT(). A numeric offset
  * needs no MySQL timezone tables.
  *
- * shortcut: uses today's offset for the whole range, so near a daylight-saving
- * change rows within an hour of midnight can land in the next or previous day;
- * group in PHP with wpss_date_label() when a report needs exact days.
+ * Shortcut: it uses today's offset for the whole range, so near a daylight-saving
+ * change, rows within an hour of midnight can land in the next or previous day.
+ * Group in PHP with wpss_date_label() when a report needs exact days.
  *
  * @since 1.9.0
  *

@@ -69,6 +69,7 @@ check. `wpss_user_can_view_order()` is the correct participant check; there are
 | `16-dark-mode-and-icons.md` | favorites X, attachment X, dark scrollbars, pager hover, modal text buttons | written 2026-10-18, walk pending |
 | `17-layout-per-surface.md` | checkout sidebar, breadcrumb, report/deliver dialogs, milestones, empty state, vacation, review search | written 2026-10-18, walk pending |
 | `18-forms-state-feedback.md` | commission rule state, order notice, wizard messages, dispute note, add-on ids, portfolio remove, Earnings commission, Push save, avatar by email | written 2026-10-18, walk pending |
+| `19-time-zones.md` | deadline zone label, one moment on every screen, calendar dates, typed ranges, wallet dates, REST ISO dates, email zones | written 2026-10-18, walk pending |
 | `12-account-standing.md` | hold/resume admin only, suspended seller finishes paid work and starts nothing new, plugin menu is admin only | written 2026-10-18, walk pending |
 | `13-notification-center.md` | notification badge, unread/type filter, stable paging, 90-day cleanup | written 2026-10-18, walk pending |
 | `14-woo-rail-and-plans.md` | guest add-to-cart on Woo, site cart link, carrier product, plan upgrade link and Max featured, requirements panel in dark | written 2026-10-18, walk pending |

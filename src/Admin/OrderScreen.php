@@ -286,7 +286,7 @@ class OrderScreen {
 				'note'    => array(
 					'content'    => $note,
 					'author'     => wp_get_current_user()->display_name,
-					'created_at' => wp_date( 'M j, g:i a' ),
+					'created_at' => wpss_date_label( time(), '', 'M j, g:i a' ),
 				),
 			)
 		);

@@ -40,7 +40,7 @@ $format_date = static function ( string $iso ): string {
 	if ( ! $ts ) {
 		return '';
 	}
-	return wp_date( get_option( 'date_format', 'F j, Y' ), $ts );
+	return wpss_deadline_label( $ts );
 };
 
 $platform_fee = max( 0.0, $gross_amount - $net_amount );

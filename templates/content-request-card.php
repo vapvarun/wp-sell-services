@@ -238,7 +238,7 @@ do_action( 'wpss_before_request_card', $request_id );
 					<span class="wpss-request-card__meta-value">
 						<?php
 						if ( $expires_at ) {
-							echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $expires_at . ' UTC' ) ) );
+							echo esc_html( wpss_deadline_label( $expires_at ) );
 						} else {
 							printf(
 								/* translators: %d: number of days */

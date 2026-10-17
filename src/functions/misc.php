@@ -101,8 +101,8 @@ function wpss_log( $message, string $level = 'info' ): void {
 	}
 
 	$log_message = sprintf(
-		'[%s] [WPSS %s] %s',
-		wp_date( 'Y-m-d H:i:s' ),
+		'[%s UTC] [WPSS %s] %s',
+		gmdate( 'Y-m-d H:i:s' ),
 		strtoupper( $level ),
 		$message
 	);

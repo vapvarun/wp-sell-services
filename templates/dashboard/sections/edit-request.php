@@ -47,7 +47,7 @@ $expires_at = get_post_meta( $request_id, '_wpss_expires_at', true );
 $deadline   = '';
 if ( $expires_at ) {
 	// Stored in UTC; the date input shows the site's calendar day.
-	$deadline = get_date_from_gmt( (string) $expires_at, 'Y-m-d' );
+	$deadline = substr( wpss_datetime_local_input( (string) $expires_at ), 0, 10 );
 }
 $skills_required = get_post_meta( $request_id, '_wpss_skills_required', true );
 $skills_string   = is_array( $skills_required ) ? implode( ', ', $skills_required ) : ( $skills_required ?: '' );

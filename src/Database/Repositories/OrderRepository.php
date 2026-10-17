@@ -286,7 +286,7 @@ class OrderRepository extends AbstractRepository {
 
 		if ( ! empty( $args['date_from'] ) ) {
 			$sql     .= ' AND created_at >= %s';
-			$params[] = get_gmt_from_date( (string) $args['date_from'] ); // Site time in, UTC column.
+			$params[] = (string) wpss_datetime_input_to_utc( (string) $args['date_from'] ); // Display time in, UTC column.
 		}
 
 		if ( ! empty( $args['search'] ) ) {
@@ -957,8 +957,8 @@ class OrderRepository extends AbstractRepository {
 				"SELECT * FROM {$this->table}
 				WHERE created_at BETWEEN %s AND %s
 				ORDER BY created_at DESC",
-				get_gmt_from_date( $start_date . ' 00:00:00' ),
-				get_gmt_from_date( $end_date . ' 23:59:59' )
+				(string) wpss_datetime_input_to_utc( $start_date . ' 00:00:00' ),
+				(string) wpss_datetime_input_to_utc( $end_date . ' 23:59:59' )
 			)
 		);
 	}
@@ -1139,14 +1139,14 @@ class OrderRepository extends AbstractRepository {
 		// COALESCE, so a period stays an index range at 100k orders. The
 		// bounds arrive in site time and the columns are UTC (10351460106).
 		if ( '' !== (string) $args['from'] ) {
-			$from     = get_gmt_from_date( (string) $args['from'] );
+			$from     = (string) wpss_datetime_input_to_utc( (string) $args['from'] );
 			$where[]  = '( paid_at >= %s OR ( paid_at IS NULL AND created_at >= %s ) )';
 			$values[] = $from;
 			$values[] = $from;
 		}
 
 		if ( '' !== (string) $args['to'] ) {
-			$to       = get_gmt_from_date( (string) $args['to'] );
+			$to       = (string) wpss_datetime_input_to_utc( (string) $args['to'] );
 			$where[]  = '( paid_at <= %s OR ( paid_at IS NULL AND created_at <= %s ) )';
 			$values[] = $to;
 			$values[] = $to;

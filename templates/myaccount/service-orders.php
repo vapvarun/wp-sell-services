@@ -86,7 +86,7 @@ do_action( 'wpss_service_orders_before', $user_id );
 									#<?php echo esc_html( $order->order_number ); ?>
 								</a>
 								<span class="wpss-order-date">
-									<?php echo esc_html( wp_date( get_option( 'date_format' ), $order->created_at->getTimestamp() ) ); ?>
+									<?php echo esc_html( wpss_date_label( $order->created_at->getTimestamp() ) ); ?>
 								</span>
 							</td>
 							<td class="wpss-table__col--service" data-label="<?php esc_attr_e( 'Service', 'wp-sell-services' ); ?>">
@@ -121,7 +121,7 @@ do_action( 'wpss_service_orders_before', $user_id );
 								<?php if ( $order->delivery_deadline ) : ?>
 									<div class="wpss-deadline">
 										<span class="wpss-deadline__date">
-											<?php echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) ); ?>
+											<?php echo esc_html( wpss_deadline_label( $order->delivery_deadline->getTimestamp() ) ); ?>
 										</span>
 										<?php
 										$time_remaining = $order->get_time_remaining();

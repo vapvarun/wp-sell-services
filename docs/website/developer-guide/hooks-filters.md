@@ -764,11 +764,11 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_order_status_transitions` | `$transitions, $from, $to` | `src/Services/OrderService.php:1025` |
 | `wpss_commission_rate` | `$rate, $order, $vendor_id, $service_id` | `src/Services/CommissionService.php:362` |
 | `wpss_proposal_order_revisions` | `$revisions, $proposal, $request` | `src/Services/BuyerRequestService.php:1006` |
-| `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:960` |
-| `wpss_api_controllers` | `$controllers` | `src/API/API.php:183` |
-| `wpss_api_public_settings` | `$settings` | `src/API/API.php:659` |
-| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1363` |
-| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1436` |
+| `wpss_max_order_quantity` | `$max` | `src/Frontend/SingleServiceView.php:954` |
+| `wpss_api_controllers` | `$controllers` | `src/API/API.php:215` |
+| `wpss_api_public_settings` | `$settings` | `src/API/API.php:691` |
+| `wpss_batch_max_requests` | `$max` (default 25) | `src/API/API.php:1395` |
+| `wpss_api_cors_origins` | `$origins` | `src/API/API.php:1468` |
 | `wpss_settings_tabs` | `$tabs` | `src/Admin/Settings.php:239` |
 | `wpss_blocks` | `$blocks` | `src/Blocks/BlocksManager.php:95` |
 | `wpss_rate_limits` | `$limits, $action` | `src/Core/RateLimiter.php:289` |
@@ -784,10 +784,10 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_auto_approve_vendors` | `$auto_approve` (default true) | `src/Services/VendorService.php:112` |
 | `wpss_delivery_allowed_file_types` | `$allowed` | `src/functions/files.php:373` |
 | `wpss_requirements_allowed_file_types` | `$allowed` | `src/functions/files.php:383` |
-| `wpss_withdrawal_methods` | `$methods` | `src/API/EarningsController.php:705` |
+| `wpss_withdrawal_methods` | `$methods` | `src/API/EarningsController.php:708` |
 | `wpss_search_results` | `$results, $query, $args` | `SearchService.php:121` |
 | `wpss_search_suggestions` | `$suggestions, $query` | `src/Services/SearchService.php:482` |
-| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:794` |
+| `wpss_related_services_args` | `$args, $service` | `src/Frontend/SingleServiceView.php:788` |
 | `wpss_cart_checkout` | `$result, $cart, $user_id, $payment_method` | `src/API/CartController.php:435` |
 | `wpss_seller_levels` | `$levels` | `src/API/SellerLevelsController.php:263` |
 | `wpss_rest_service_data` | `$data, $service, $request` | `src/API/ServicesController.php:1499` |

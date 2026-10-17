@@ -148,7 +148,7 @@ $categories = wpss_get_category_terms( array( 'hide_empty' => false ) );
 					name="deadline"
 					id="request_deadline"
 					class="wpss-input"
-					min="<?php echo esc_attr( wp_date( 'Y-m-d', strtotime( '+1 day' ) ) ); ?>"
+					min="<?php echo esc_attr( wpss_date_label( time() + DAY_IN_SECONDS, '', 'Y-m-d' ) ); ?>"
 				>
 				<p class="wpss-form-hint"><?php esc_html_e( 'When do you need this completed?', 'wp-sell-services' ); ?></p>
 			</div>

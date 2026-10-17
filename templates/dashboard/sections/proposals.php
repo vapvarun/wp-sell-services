@@ -88,7 +88,7 @@ if ( $request_ids ) {
 				$status        = (string) $proposal->status;
 				$status_text   = $status_labels[ $status ] ?? ucfirst( $status );
 				$request_title = get_the_title( $request_id );
-				$sent_on       = $proposal->created_at ? wp_date( get_option( 'date_format' ), strtotime( (string) $proposal->created_at ) ) : '';
+				$sent_on       = $proposal->created_at ? wpss_date_label( (string) $proposal->created_at ) : '';
 				?>
 				<div class="wpss-request-card">
 					<div class="wpss-request-card__main">

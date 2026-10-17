@@ -330,7 +330,7 @@ class AuditLogPage {
 		if ( '' !== $created_at ) {
 			$timestamp = strtotime( $created_at );
 			if ( false !== $timestamp ) {
-				$when = wp_date( 'M j, Y g:i a', $timestamp );
+				$when = wpss_date_label( $timestamp, '—', 'M j, Y g:i a' );
 			}
 		}
 

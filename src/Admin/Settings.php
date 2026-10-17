@@ -2730,7 +2730,7 @@ class Settings {
 					printf(
 						/* translators: %s: completion date */
 						esc_html__( 'Setup wizard was completed on %s.', 'wp-sell-services' ),
-						esc_html( wp_date( get_option( 'date_format' ), $completed_at ) )
+						esc_html( wpss_date_label( $completed_at ) )
 					);
 					?>
 				</p>

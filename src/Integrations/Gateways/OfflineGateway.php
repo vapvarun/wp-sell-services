@@ -1082,7 +1082,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 						/* translators: 1: uploader name, 2: date */
 						__( 'uploaded by %1$s on %2$s', 'wp-sell-services' ),
 						$who ? $who->display_name : __( 'a buyer', 'wp-sell-services' ),
-						wp_date( get_option( 'date_format' ), strtotime( (string) $receipt->created_at ) )
+						wpss_date_label( (string) $receipt->created_at )
 					)
 				)
 			);
@@ -1542,7 +1542,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 						<?php if ( $paid_ts ) : ?>
 							<tr>
 								<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Paid on', 'wp-sell-services' ); ?></th>
-								<td style="text-align:right;"><?php echo esc_html( wp_date( get_option( 'date_format' ), $paid_ts ) ); ?></td>
+								<td style="text-align:right;"><?php echo esc_html( wpss_date_label( $paid_ts ) ); ?></td>
 							</tr>
 						<?php endif; ?>
 						<?php
@@ -1556,7 +1556,7 @@ class OfflineGateway implements PaymentGatewayInterface {
 						<?php if ( $verified_ts ) : ?>
 							<tr>
 								<th style="text-align:left;padding:6px 0;"><?php esc_html_e( 'Verified on', 'wp-sell-services' ); ?></th>
-								<td style="text-align:right;"><?php echo esc_html( wp_date( get_option( 'date_format' ), $verified_ts ) ); ?></td>
+								<td style="text-align:right;"><?php echo esc_html( wpss_date_label( $verified_ts ) ); ?></td>
 							</tr>
 						<?php endif; ?>
 					</tbody>

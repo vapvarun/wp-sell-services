@@ -437,7 +437,7 @@ JS;
 		if ( '' !== $created_at ) {
 			$timestamp = strtotime( $created_at );
 			if ( false !== $timestamp ) {
-				$when = (string) wp_date( get_option( 'date_format' ), $timestamp );
+				$when = (string) wpss_date_label( $timestamp );
 			}
 		}
 

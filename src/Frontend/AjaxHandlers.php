@@ -1355,7 +1355,7 @@ class AjaxHandlers {
 		// Calculate delivery_days and expires_at from the deadline date.
 		if ( $deadline ) {
 			// The date is typed on the site's calendar; expires_at is UTC.
-			$deadline_timestamp = strtotime( get_gmt_from_date( $deadline . ' 00:00:00' ) . ' UTC' );
+			$deadline_timestamp = strtotime( wpss_datetime_input_to_utc( $deadline . ' 00:00:00' ) . ' UTC' );
 			if ( $deadline_timestamp && $deadline_timestamp > time() ) {
 				$days_until_deadline   = max( 1, (int) ceil( ( $deadline_timestamp - time() ) / DAY_IN_SECONDS ) );
 				$data['delivery_days'] = $days_until_deadline;
@@ -1428,7 +1428,7 @@ class AjaxHandlers {
 
 		if ( $deadline ) {
 			// The date is typed on the site's calendar; expires_at is UTC.
-			$deadline_timestamp = strtotime( get_gmt_from_date( $deadline . ' 00:00:00' ) . ' UTC' );
+			$deadline_timestamp = strtotime( wpss_datetime_input_to_utc( $deadline . ' 00:00:00' ) . ' UTC' );
 			if ( $deadline_timestamp && $deadline_timestamp > time() ) {
 				$days_until_deadline   = max( 1, (int) ceil( ( $deadline_timestamp - time() ) / DAY_IN_SECONDS ) );
 				$data['delivery_days'] = $days_until_deadline;
@@ -3069,16 +3069,17 @@ class AjaxHandlers {
 
 		global $wpdb;
 
-		// The vendor's calendar (site time), converted to UTC for the columns.
+		// The vendor's calendar (display time), converted to UTC for the columns.
 		// The week/year/month starts used gmdate() while the end used site
 		// time, one range in two zones.
-		$end_date   = get_gmt_from_date( current_time( 'Y-m-d 23:59:59' ) );
-		$start_date = get_gmt_from_date(
+		$now        = time();
+		$end_date   = (string) wpss_datetime_input_to_utc( wpss_date_label( $now, '', 'Y-m-d 23:59:59' ) );
+		$start_date = (string) wpss_datetime_input_to_utc(
 			match ( $range ) {
-				'day'   => current_time( 'Y-m-d 00:00:00' ),
-				'week'  => wp_date( 'Y-m-d 00:00:00', strtotime( '-7 days' ) ),
-				'year'  => current_time( 'Y-01-01 00:00:00' ),
-				default => current_time( 'Y-m-01 00:00:00' ),
+				'day'   => wpss_date_label( $now, '', 'Y-m-d 00:00:00' ),
+				'week'  => wpss_date_label( $now - 7 * DAY_IN_SECONDS, '', 'Y-m-d 00:00:00' ),
+				'year'  => wpss_date_label( $now, '', 'Y-01-01 00:00:00' ),
+				default => wpss_date_label( $now, '', 'Y-m-01 00:00:00' ),
 			}
 		);
 

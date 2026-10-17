@@ -219,13 +219,13 @@ do_action( 'wpss_before_conversation', $order );
 			// for older messages. Replaces the previous "April 25, 2026"
 			// repeated across every divider.
 			$current_date_key  = '';
-			$today_key         = wp_date( 'Y-m-d' );
-			$yesterday_key     = wp_date( 'Y-m-d', strtotime( '-1 day' ) );
+			$today_key         = wpss_date_label( time(), '', 'Y-m-d' );
+			$yesterday_key     = wpss_date_label( time() - DAY_IN_SECONDS, '', 'Y-m-d' );
 			$week_threshold_ts = strtotime( '-6 days', strtotime( $today_key ) );
 			$weekday_format    = 'l'; // e.g. "Monday".
 
 			$format_divider = static function ( int $message_ts ) use ( $today_key, $yesterday_key, $week_threshold_ts, $weekday_format ): string {
-				$message_key = wp_date( 'Y-m-d', $message_ts );
+				$message_key = wpss_date_label( $message_ts, '—', 'Y-m-d' );
 				if ( $message_key === $today_key ) {
 					return __( 'Today', 'wp-sell-services' );
 				}
@@ -233,14 +233,14 @@ do_action( 'wpss_before_conversation', $order );
 					return __( 'Yesterday', 'wp-sell-services' );
 				}
 				if ( $message_ts >= $week_threshold_ts ) {
-					return wp_date( $weekday_format, $message_ts );
+					return wpss_date_label( $message_ts, '—', $weekday_format );
 				}
-				return wp_date( get_option( 'date_format', 'F j, Y' ), $message_ts );
+				return wpss_date_label( $message_ts, '—', get_option( 'date_format', 'F j, Y' ) );
 			};
 
 	foreach ( $messages as $message ) :
 		$message_ts   = strtotime( $message->created_at );
-		$divider_key  = wp_date( 'Y-m-d', $message_ts );
+		$divider_key  = wpss_date_label( $message_ts, '—', 'Y-m-d' );
 		$divider_text = $format_divider( $message_ts );
 		$is_own       = (int) $message->sender_id === $user_id;
 		$is_system    = 'system' === ( isset( $message->type ) ? $message->type : ( isset( $message->content_type ) ? $message->content_type : 'text' ) );

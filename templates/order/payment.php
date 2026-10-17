@@ -30,7 +30,7 @@ $wpss_payment = wpss_get_payment_status_label( (string) $wpss_order->payment_sta
 <?php if ( $wpss_order->paid_at ) : ?>
 	<div class="wpss-order-detail-item">
 		<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Paid On', 'wp-sell-services' ); ?></span>
-		<span class="wpss-order-detail-item__value"><?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $wpss_order->paid_at->getTimestamp() ) ); ?></span>
+		<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_datetime_label( $wpss_order->paid_at->getTimestamp() ) ); ?></span>
 	</div>
 <?php endif; ?>
 <?php if ( '' !== (string) $wpss_order->transaction_id ) : ?>

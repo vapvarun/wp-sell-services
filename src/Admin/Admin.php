@@ -2060,7 +2060,7 @@ class Admin {
 												<?php echo esc_html( wpss_get_order_status_label( (string) $order->status ) ); ?>
 											</span>
 										</td>
-										<td data-colname="<?php esc_attr_e( 'Date', 'wp-sell-services' ); ?>"><?php echo esc_html( wp_date( 'M j, Y', strtotime( $order->created_at ) ) ); ?></td>
+										<td data-colname="<?php esc_attr_e( 'Date', 'wp-sell-services' ); ?>"><?php echo esc_html( wpss_date_label( $order->created_at, '—', 'M j, Y' ) ); ?></td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>
@@ -2480,12 +2480,12 @@ class Admin {
 								<?php endif; ?>
 								<div class="wpss-order-detail-item">
 									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Created', 'wp-sell-services' ); ?></span>
-									<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) : '—' ); ?></span>
+									<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wpss_datetime_label( $order->created_at->getTimestamp() ) : '—' ); ?></span>
 								</div>
 								<?php if ( $order->delivery_deadline ) : ?>
 									<div class="wpss-order-detail-item">
 										<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
-										<span class="wpss-order-detail-item__value"><?php echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) ); ?></span>
+										<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_deadline_label( $order->delivery_deadline->getTimestamp() ) ); ?></span>
 									</div>
 								<?php endif; ?>
 								<?php wpss_get_template_part( 'order/payment', '', array( 'wpss_order' => $order ) ); ?>
@@ -2591,7 +2591,7 @@ class Admin {
 								<ol class="wpss-admin-order__activity">
 									<?php foreach ( $wpss_activity as $wpss_event ) : ?>
 										<li>
-											<time datetime="<?php echo esc_attr( (string) $wpss_event['created_at'] ); ?>"><?php echo esc_html( $wpss_event['created_at'] ? wp_date( 'M j, Y g:i a', (int) strtotime( (string) $wpss_event['created_at'] ) ) : '—' ); ?></time>
+											<time datetime="<?php echo esc_attr( (string) $wpss_event['created_at'] ); ?>"><?php echo esc_html( $wpss_event['created_at'] ? wpss_date_label( (string) $wpss_event['created_at'], '—', 'M j, Y g:i a' ) : '—' ); ?></time>
 											<span><?php echo esc_html( $wpss_event['actor']['name'] ?? __( 'System', 'wp-sell-services' ) ); ?></span>
 											<span><?php echo esc_html( (string) $wpss_event['message'] ); ?></span>
 										</li>
@@ -2616,7 +2616,7 @@ class Admin {
 												<?php // No sender means the plugin wrote it (a status change, a note) - not an "Unknown" person. ?>
 												<strong><?php echo esc_html( $msg_user ? $msg_user->display_name : ( empty( $message->sender_id ) ? __( 'System', 'wp-sell-services' ) : __( 'Deleted user', 'wp-sell-services' ) ) ); ?></strong>
 												<span style="color: #666; margin-left: 10px;">
-													<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $message->created_at ) ) ); ?>
+													<?php echo esc_html( wpss_datetime_label( $message->created_at ) ); ?>
 												</span>
 											</div>
 											<div><?php echo wp_kses_post( wpautop( $message->content ?? '' ) ); ?></div>
@@ -3192,7 +3192,7 @@ class Admin {
 									<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Opened', 'wp-sell-services' ); ?></span>
 									<span class="wpss-order-detail-item__value">
 										<?php
-										echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dispute->created_at ) ) );
+										echo esc_html( wpss_datetime_label( $dispute->created_at ) );
 										if ( $initiated_by ) {
 											/* translators: %s: member name */
 											echo '<br><small>' . esc_html( sprintf( __( 'by %s', 'wp-sell-services' ), wpss_get_member_display_name( (int) $initiated_by->ID ) ) ) . '</small>';
@@ -3373,7 +3373,7 @@ class Admin {
 								<?php if ( ! empty( $dispute->resolved_at ) ) : ?>
 									<p>
 										<strong><?php esc_html_e( 'Resolved At:', 'wp-sell-services' ); ?></strong><br>
-										<?php echo esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dispute->resolved_at ) ) ); ?>
+										<?php echo esc_html( wpss_datetime_label( $dispute->resolved_at ) ); ?>
 									</p>
 								<?php endif; ?>
 								<p class="description"><?php esc_html_e( 'A resolved or closed dispute is final: the order has already moved, and money moves once.', 'wp-sell-services' ); ?></p>

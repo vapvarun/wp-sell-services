@@ -594,12 +594,12 @@ class EarningsService {
 		// Site-time bounds against the UTC column.
 		if ( $args['start_date'] ) {
 			$where[]  = 'completed_at >= %s';
-			$params[] = get_gmt_from_date( (string) $args['start_date'] );
+			$params[] = (string) wpss_datetime_input_to_utc( (string) $args['start_date'] );
 		}
 
 		if ( $args['end_date'] ) {
 			$where[]  = 'completed_at <= %s';
-			$params[] = get_gmt_from_date( (string) $args['end_date'] );
+			$params[] = (string) wpss_datetime_input_to_utc( (string) $args['end_date'] );
 		}
 
 		$where_clause = implode( ' AND ', $where );

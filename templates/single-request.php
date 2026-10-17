@@ -469,7 +469,7 @@ do_action( 'wpss_before_single_request', $request_id );
 								<div class="wpss-detail-item">
 									<span class="wpss-detail-label"><?php esc_html_e( 'Deadline', 'wp-sell-services' ); ?></span>
 									<span class="wpss-detail-value">
-										<?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $expires_at . ' UTC' ) ) ); ?>
+										<?php echo esc_html( wpss_deadline_label( $expires_at ) ); ?>
 									</span>
 								</div>
 							<?php endif; ?>
@@ -533,7 +533,7 @@ do_action( 'wpss_before_single_request', $request_id );
 										printf(
 											/* translators: %s: date when user registered */
 											esc_html__( 'Member since %s', 'wp-sell-services' ),
-											esc_html( date_i18n( 'M Y', strtotime( $buyer->user_registered ) ) )
+											esc_html( wpss_date_label( $buyer->user_registered, '', 'M Y' ) )
 										);
 									endif;
 									?>

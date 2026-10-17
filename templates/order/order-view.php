@@ -566,7 +566,7 @@ do_action( 'wpss_before_order_view', $order );
 							printf(
 								/* translators: %s: completion date */
 								esc_html__( 'Finished %s.', 'wp-sell-services' ),
-								esc_html( wp_date( get_option( 'date_format' ), $order->completed_at->getTimestamp() ) )
+								esc_html( wpss_date_label( $order->completed_at->getTimestamp() ) )
 							);
 						}
 						?>
@@ -646,7 +646,7 @@ do_action( 'wpss_before_order_view', $order );
 				</div>
 				<div class="wpss-order-detail-item">
 					<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Order Date', 'wp-sell-services' ); ?></span>
-					<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $order->created_at->getTimestamp() ) : '—' ); ?></span>
+					<span class="wpss-order-detail-item__value"><?php echo esc_html( $order->created_at ? wpss_datetime_label( $order->created_at->getTimestamp() ) : '—' ); ?></span>
 				</div>
 				<?php wpss_get_template_part( 'order/payment', '', array( 'wpss_order' => $order ) ); ?>
 				<?php
@@ -659,7 +659,7 @@ do_action( 'wpss_before_order_view', $order );
 				<?php if ( $order->delivery_deadline ) : ?>
 					<div class="wpss-order-detail-item">
 						<span class="wpss-order-detail-item__label"><?php esc_html_e( 'Due Date', 'wp-sell-services' ); ?></span>
-						<span class="wpss-order-detail-item__value"><?php echo esc_html( wp_date( get_option( 'date_format' ), $order->delivery_deadline->getTimestamp() ) ); ?></span>
+						<span class="wpss-order-detail-item__value"><?php echo esc_html( wpss_deadline_label( $order->delivery_deadline->getTimestamp() ) ); ?></span>
 					</div>
 				<?php endif; ?>
 				<?php

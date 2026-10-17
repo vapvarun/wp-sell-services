@@ -504,7 +504,7 @@ function wpss_render_message_row( object $message, int $current_user_id ): strin
 	} else {
 		$created_ts = $created ? strtotime( (string) $created ) : time();
 	}
-	$time_text = wp_date( get_option( 'time_format' ), $created_ts );
+	$time_text = wpss_date_label( $created_ts, '—', get_option( 'time_format' ) );
 
 	// Normalise attachments + read_by to arrays.
 	$attachments = $message->attachments ?? array();

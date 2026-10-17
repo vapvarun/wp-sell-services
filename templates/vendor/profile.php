@@ -251,7 +251,7 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 							printf(
 								/* translators: %s: date */
 								esc_html__( 'Member since %s', 'wp-sell-services' ),
-								esc_html( wp_date( 'F Y', strtotime( $member_since ) ) )
+								esc_html( wpss_date_label( $member_since, '—', 'F Y' ) )
 							);
 							?>
 						</span>

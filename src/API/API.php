@@ -56,6 +56,38 @@ class API {
 
 		// Filter REST response.
 		add_filter( 'rest_pre_serve_request', [ $this, 'serve_request' ], 10, 4 );
+
+		// One place that guarantees ISO 8601 on every wpss route, so a new endpoint
+		// cannot ship a bare MySQL datetime (Time Standard rule 7).
+		add_filter( 'rest_post_dispatch', [ $this, 'normalise_response_dates' ], 10, 3 );
+	}
+
+	/**
+	 * Turn a stored UTC datetime in any wpss/ response into ISO 8601.
+	 *
+	 * Controllers that already format a date are untouched (the value is no longer a
+	 * MySQL datetime). Only keys ending _at, _on or _deadline are converted, so a
+	 * filter echoed back to the caller (start_date) keeps the value it was sent.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param \WP_HTTP_Response $response Response.
+	 * @param \WP_REST_Server   $server   Server.
+	 * @param \WP_REST_Request  $request  Request.
+	 * @return \WP_HTTP_Response
+	 */
+	public function normalise_response_dates( $response, $server, $request ) {
+		if ( ! $response instanceof \WP_REST_Response || 0 !== strpos( $request->get_route(), '/wpss/' ) || $response->is_error() ) {
+			return $response;
+		}
+
+		$data = $response->get_data();
+
+		if ( is_array( $data ) ) {
+			$response->set_data( wpss_rest_normalise_dates( $data, '/(_at|_on|_deadline)$/i' ) );
+		}
+
+		return $response;
 	}
 
 	/**

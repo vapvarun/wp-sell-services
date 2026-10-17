@@ -440,13 +440,13 @@ class AuditLogService {
 		if ( ! empty( $args['from_date'] ) ) {
 			$from     = (string) $args['from_date'];
 			$where[]  = 'created_at >= %s';
-			$values[] = get_gmt_from_date( 10 === strlen( $from ) ? $from . ' 00:00:00' : $from );
+			$values[] = (string) wpss_datetime_input_to_utc( 10 === strlen( $from ) ? $from . ' 00:00:00' : $from );
 		}
 
 		if ( ! empty( $args['to_date'] ) ) {
 			$to       = (string) $args['to_date'];
 			$where[]  = 'created_at <= %s';
-			$values[] = get_gmt_from_date( 10 === strlen( $to ) ? $to . ' 23:59:59' : $to );
+			$values[] = (string) wpss_datetime_input_to_utc( 10 === strlen( $to ) ? $to . ' 23:59:59' : $to );
 		}
 
 		$where_sql = implode( ' AND ', $where );

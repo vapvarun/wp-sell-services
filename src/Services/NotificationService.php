@@ -1226,7 +1226,7 @@ class NotificationService {
 					$message->block()->field( __( 'Reason:', 'wp-sell-services' ), (string) $data['reason'] );
 				}
 				if ( ! empty( $data['response_deadline'] ) ) {
-					$deadline = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $data['response_deadline'] . ' UTC' ) );
+					$deadline = wpss_deadline_label( $data['response_deadline'], '—', $user_id );
 					$message->paragraph(
 						/* translators: %s: deadline date */
 						__( 'Please respond by %s to avoid automatic escalation.', 'wp-sell-services' ),

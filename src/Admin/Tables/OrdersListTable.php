@@ -296,13 +296,14 @@ class OrdersListTable extends \WP_List_Table {
 		if ( $working && ! empty( $item->delivery_deadline ) ) {
 			$late  = wpss_is_order_late( $item );
 			$html .= sprintf(
-				'<small class="wpss-order-row-sub%s">%s</small>',
+				'<small class="wpss-order-row-sub%s" title="%s">%s</small>',
 				$late ? ' wpss-order-row-sub--late' : '',
+				esc_attr( wpss_deadline_label( $item->delivery_deadline ) ),
 				esc_html(
 					sprintf(
 						/* translators: %s: due date. */
 						$late ? __( 'Was due %s', 'wp-sell-services' ) : __( 'Due %s', 'wp-sell-services' ),
-						wp_date( 'M j', strtotime( $item->delivery_deadline . ' UTC' ) ) // Stored in UTC (10351460106).
+						wpss_date_label( $item->delivery_deadline, '—', 'M j' ) // Stored in UTC (10351460106).
 					)
 				)
 			);
@@ -323,8 +324,8 @@ class OrdersListTable extends \WP_List_Table {
 		return sprintf(
 			'<time datetime="%s" title="%s">%s</time>',
 			esc_attr( gmdate( 'c', $date ) ),
-			esc_attr( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $date ) ),
-			esc_html( wp_date( 'M j, Y', $date ) )
+			esc_attr( wpss_datetime_label( $date ) ),
+			esc_html( wpss_date_label( $date, '—', 'M j, Y' ) )
 		);
 	}
 
@@ -475,7 +476,7 @@ class OrdersListTable extends \WP_List_Table {
 					<option value=""><?php esc_html_e( 'All dates', 'wp-sell-services' ); ?></option>
 					<?php foreach ( $months as $month ) : ?>
 						<option value="<?php echo esc_attr( $month->month ); ?>" <?php selected( $selected_month, $month->month ); ?>>
-							<?php echo esc_html( wp_date( 'F Y', strtotime( $month->month . '-01' ) ) ); ?>
+							<?php echo esc_html( wpss_calendar_date_label( $month->month . '-01', '', 'F Y' ) ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>

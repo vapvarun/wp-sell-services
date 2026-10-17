@@ -488,7 +488,7 @@ $show_payout_banner = empty( $payout_method ) && 'none' !== $payout_banner_state
 					<tbody>
 						<?php foreach ( $withdrawals as $withdrawal ) : ?>
 							<tr>
-								<td data-label="<?php esc_attr_e( 'Date', 'wp-sell-services' ); ?>"><?php echo esc_html( wp_date( get_option( 'date_format' ), strtotime( $withdrawal['created_at'] ) ) ); ?></td>
+								<td data-label="<?php esc_attr_e( 'Date', 'wp-sell-services' ); ?>"><?php echo esc_html( wpss_date_label( $withdrawal['created_at'] ) ); ?></td>
 								<td data-label="<?php esc_attr_e( 'Amount', 'wp-sell-services' ); ?>"><?php echo esc_html( wpss_format_price( $withdrawal['amount'] ) ); ?></td>
 								<td data-label="<?php esc_attr_e( 'Method', 'wp-sell-services' ); ?>"><?php echo esc_html( $methods[ $withdrawal['method'] ] ?? ucfirst( $withdrawal['method'] ) ); ?></td>
 								<td data-label="<?php esc_attr_e( 'Status', 'wp-sell-services' ); ?>">

@@ -116,7 +116,7 @@ class RequestListScreen {
 
 			case 'wpss_deadline':
 				$deadline = (string) get_post_meta( $post_id, '_wpss_deadline', true );
-				echo $deadline ? esc_html( wp_date( get_option( 'date_format' ), strtotime( $deadline ) ) ) : '&mdash;';
+				echo esc_html( wpss_calendar_date_label( $deadline ) );
 				break;
 		}
 	}

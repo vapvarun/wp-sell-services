@@ -6,7 +6,7 @@ WP Sell Services follows the Wbcom Time Standard (reference: Learnomy 2.1.2). On
 
 1. Every stored time is UTC. Write it with `gmdate()` or `current_time( 'mysql', true )`, never the site clock.
 2. Compare in UTC. Build the bound in PHP; do not rely on the database session zone.
-3. Show a time with `wpss_date_label( $utc, $fallback, $format, $user_id )`. Admin tables, member pages, emails, PDFs and exports all use it, so the same moment reads the same everywhere. A deadline prints its zone (format `T`) so a buyer in another country is not misled.
+3. Show a time with `wpss_date_label( $utc, $fallback, $format, $user_id )`. Admin tables, member pages, emails, PDFs and exports all use it, so the same moment reads the same everywhere. A deadline is shown with `wpss_deadline_label()`, which appends the zone as `(UTC+5:30)` so a buyer in another country is not misled; everyday times use `wpss_datetime_label()` and stay plain. A calendar date with no time of day (a vacation return date) uses `wpss_calendar_date_label()` so it never moves with the zone. Typed ranges and inputs go through `wpss_datetime_input_to_utc()`, never `get_gmt_from_date()`. Every `wpss/` REST response is normalised to ISO 8601 by one `rest_post_dispatch` filter (`API::normalise_response_dates()`); a controller never formats its own dates.
 4. Edit fields round-trip through `wpss_datetime_input_to_utc()` and `wpss_datetime_local_input()`. They are an exact pair; change both or neither.
 5. Report days use `wpss_display_time_sql( $column )` or `wpss_site_day_sql( $column )`, never `DATE( column )` on a UTC value.
 6. REST dates use `wpss_rest_date()` (ISO 8601 with offset). One normaliser covers every route.

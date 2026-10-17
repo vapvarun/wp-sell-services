@@ -1368,8 +1368,8 @@ class EmailService {
 		} catch ( \Exception $e ) {
 			$requested_at = new \DateTimeImmutable();
 		}
-		$deadline     = $requested_at->modify( '+48 hours' );
-		$deadline_str = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $deadline->getTimestamp() );
+		$deadline    = $requested_at->modify( '+48 hours' );
+		$deadline_ts = $deadline->getTimestamp();
 
 		// Send to vendor.
 		if ( $vendor ) {
@@ -1391,7 +1391,7 @@ class EmailService {
 					'buyer_name'     => $this->get_customer_name( $order->customer_id ),
 					'reason'         => $reason_label,
 					'note'           => $note,
-					'deadline'       => $deadline_str,
+					'deadline'       => wpss_deadline_label( $deadline_ts, '—', (int) $vendor->ID ),
 					'is_customer'    => false,
 					'reply_to_email' => $customer ? $customer->user_email : '',
 					'reply_to_name'  => $customer ? $customer->display_name : '',
@@ -1420,7 +1420,7 @@ class EmailService {
 					'vendor_name'    => $this->get_vendor_name( $order->vendor_id ),
 					'reason'         => $reason_label,
 					'note'           => $note,
-					'deadline'       => $deadline_str,
+					'deadline'       => wpss_deadline_label( $deadline_ts, '—', (int) $customer->ID ),
 					'is_customer'    => true,
 					'reply_to_email' => $vendor ? $vendor->user_email : '',
 					'reply_to_name'  => $vendor ? $vendor->display_name : '',

@@ -875,16 +875,7 @@ function wpss_render_vendor_vacation_notice( int $vendor_id ): void {
 		$message = __( 'This seller is currently on vacation.', 'wp-sell-services' );
 	}
 
-	$return_display = '';
-	$return_date    = $profile->vacation_return_date ?? null;
-
-	if ( $return_date ) {
-		$timestamp = strtotime( (string) $return_date );
-
-		if ( $timestamp ) {
-			$return_display = date_i18n( get_option( 'date_format' ), $timestamp );
-		}
-	}
+	$return_display = wpss_calendar_date_label( $profile->vacation_return_date ?? null, '' );
 
 	/**
 	 * Filter the vendor vacation notice before it renders.

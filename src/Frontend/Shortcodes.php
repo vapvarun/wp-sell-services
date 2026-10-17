@@ -812,7 +812,7 @@ class Shortcodes {
 									// strtotime() - which this used while it read raw $wpdb rows -
 									// throws a TypeError. Same accessor the admin order screen uses.
 									echo $order->created_at
-										? esc_html( wp_date( get_option( 'date_format' ), $order->created_at->getTimestamp() ) )
+										? esc_html( wpss_date_label( $order->created_at->getTimestamp() ) )
 										: '&mdash;';
 									?>
 								</td>

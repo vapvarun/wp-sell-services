@@ -143,7 +143,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 				<i data-lucide="calendar" class="wpss-icon" aria-hidden="true"></i>
 			</span>
 			<span class="wpss-detail-label"><?php esc_html_e( 'Member since', 'wp-sell-services' ); ?></span>
-			<span class="wpss-detail-value"><?php echo esc_html( wp_date( 'M Y', strtotime( $member_since ) ) ); ?></span>
+			<span class="wpss-detail-value"><?php echo esc_html( wpss_date_label( $member_since, '—', 'M Y' ) ); ?></span>
 		</li>
 
 		<?php if ( $response_time ) : ?>

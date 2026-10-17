@@ -535,7 +535,7 @@ class SingleServiceView {
 
 					<div class="wpss-vendor-meta-item">
 						<span class="wpss-meta-label"><?php esc_html_e( 'Member since', 'wp-sell-services' ); ?></span>
-						<span class="wpss-meta-value"><?php echo esc_html( wp_date( 'M Y', strtotime( $vendor->user_registered ) ) ); ?></span>
+						<span class="wpss-meta-value"><?php echo esc_html( wpss_date_label( $vendor->user_registered, '—', 'M Y' ) ); ?></span>
 					</div>
 
 					<?php
@@ -644,13 +644,7 @@ class SingleServiceView {
 		}
 
 		$return_date         = $profile->vacation_return_date ?? null;
-		$return_date_display = '';
-		if ( $return_date ) {
-			$timestamp = strtotime( $return_date );
-			if ( $timestamp ) {
-				$return_date_display = date_i18n( get_option( 'date_format' ), $timestamp );
-			}
-		}
+		$return_date_display = wpss_calendar_date_label( $return_date, '' );
 
 		return array(
 			'message'             => $message,

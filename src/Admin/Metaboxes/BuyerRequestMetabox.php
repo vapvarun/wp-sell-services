@@ -140,7 +140,7 @@ class BuyerRequestMetabox {
 				<th><label for="wpss_expires_at"><?php esc_html_e( 'Expires On', 'wp-sell-services' ); ?></label></th>
 				<td>
 					<input type="datetime-local" id="wpss_expires_at" name="wpss_expires_at"
-							value="<?php echo esc_attr( $expires_at ? get_date_from_gmt( $expires_at, 'Y-m-d\TH:i' ) : '' ); ?>">
+							value="<?php echo esc_attr( $expires_at ? wpss_datetime_local_input( $expires_at ) : '' ); ?>">
 				</td>
 			</tr>
 			<tr>
@@ -221,7 +221,7 @@ class BuyerRequestMetabox {
 							);
 							?>
 						</td>
-						<td><?php echo esc_html( wp_date( 'M j, Y', strtotime( $proposal->created_at . ' UTC' ) ) ); ?></td>
+						<td><?php echo esc_html( wpss_date_label( $proposal->created_at, '—', 'M j, Y' ) ); ?></td>
 					</tr>
 				<?php endforeach; ?>
 			</tbody>
@@ -320,7 +320,7 @@ class BuyerRequestMetabox {
 		// Save expiry date.
 		if ( isset( $_POST['wpss_expires_at'] ) && ! empty( $_POST['wpss_expires_at'] ) ) {
 			$expires_at = sanitize_text_field( wp_unslash( $_POST['wpss_expires_at'] ) );
-			update_post_meta( $post_id, '_wpss_expires_at', get_gmt_from_date( $expires_at ) ); // Typed in the site timezone, stored in UTC.
+			update_post_meta( $post_id, '_wpss_expires_at', wpss_datetime_input_to_utc( $expires_at ) ); // Typed in the display timezone, stored in UTC.
 		}
 
 		// Save skills.
