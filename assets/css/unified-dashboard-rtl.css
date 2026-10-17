@@ -169,6 +169,24 @@
 	flex-shrink: 0;
 }
 
+/* Unread count on the Notifications item. Logical margin so RTL needs no override. */
+.wpss-dashboard__nav-badge {
+	margin-inline-start: auto;
+	min-width: 20px;
+	padding: 0 6px;
+	border-radius: 10px;
+	background: var(--wpss-primary);
+	color: var(--wpss-white, #fff);
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 20px;
+	text-align: center;
+}
+
+.wpss-dashboard__nav-badge[hidden] {
+	display: none;
+}
+
 /* Become Vendor CTA */
 .wpss-dashboard__become-vendor {
 	padding: 16px 20px;

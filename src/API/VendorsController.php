@@ -298,7 +298,7 @@ class VendorsController extends RestController {
 				// and /vendors?search= returned nothing.
 				$profiles             = $wpdb->prefix . 'wpss_vendor_profiles';
 				$column               = 'orders' === $orderby ? 'completed_orders' : 'avg_rating';
-				$query->query_orderby = "ORDER BY COALESCE( ( SELECT sort_prof.{$column} FROM {$profiles} AS sort_prof WHERE sort_prof.user_id = {$wpdb->users}.ID LIMIT 1 ), 0 ) DESC";
+				$query->query_orderby = "ORDER BY COALESCE( ( SELECT sort_prof.{$column} FROM {$profiles} AS sort_prof WHERE sort_prof.user_id = {$wpdb->users}.ID LIMIT 1 ), 0 ) DESC, {$wpdb->users}.ID DESC";
 			};
 			add_action( 'pre_user_query', $sort );
 		}

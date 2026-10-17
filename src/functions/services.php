@@ -848,7 +848,7 @@ function wpss_service_sort_clauses( array $clauses, \WP_Query $query ): array {
 	if ( false === strpos( $clauses['groupby'], 'ID' ) ) {
 		$clauses['groupby'] = trim( "{$wpdb->posts}.ID " . ( '' !== $clauses['groupby'] ? ', ' . $clauses['groupby'] : '' ) );
 	}
-	$clauses['orderby'] = 'wpss_sort.meta_value IS NULL, CAST( wpss_sort.meta_value AS DECIMAL( 12, 2 ) ) ' . $sorts[ $sort ]['order'] . ", {$wpdb->posts}.post_date DESC";
+	$clauses['orderby'] = 'wpss_sort.meta_value IS NULL, CAST( wpss_sort.meta_value AS DECIMAL( 12, 2 ) ) ' . $sorts[ $sort ]['order'] . ", {$wpdb->posts}.post_date DESC, {$wpdb->posts}.ID DESC";
 
 	return $clauses;
 }

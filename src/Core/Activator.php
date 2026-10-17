@@ -503,6 +503,7 @@ class Activator {
 			// Abandoned sub-order cleanups (tips, extensions, milestones) and
 			// audit log retention.
 			\WPSellServices\Services\AuditLogService::CLEANUP_HOOK => DAY_IN_SECONDS,
+			\WPSellServices\Services\NotificationService::CLEANUP_HOOK => DAY_IN_SECONDS,
 			\WPSellServices\Services\TippingService::CLEANUP_HOOK => DAY_IN_SECONDS,
 			\WPSellServices\Services\ExtensionOrderService::CLEANUP_HOOK => DAY_IN_SECONDS,
 			\WPSellServices\Services\MilestoneService::CLEANUP_HOOK => DAY_IN_SECONDS,

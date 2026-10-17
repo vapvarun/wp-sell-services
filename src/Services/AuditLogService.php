@@ -534,8 +534,8 @@ class AuditLogService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$deleted = $wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM {$this->table} WHERE created_at < DATE_SUB( NOW(), INTERVAL %d DAY )",
-				$retention_days
+				"DELETE FROM {$this->table} WHERE created_at < %s",
+				gmdate( 'Y-m-d H:i:s', time() - $retention_days * DAY_IN_SECONDS )
 			)
 		);
 

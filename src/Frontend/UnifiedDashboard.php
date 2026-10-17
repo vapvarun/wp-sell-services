@@ -724,6 +724,12 @@ class UnifiedDashboard {
 											class="wpss-dashboard__nav-item <?php echo $this->current_section === $item_key ? 'wpss-dashboard__nav-item--active' : ''; ?>">
 											<?php $this->render_icon( $item['icon'] ); ?>
 											<span><?php echo esc_html( $item['label'] ); ?></span>
+											<?php
+											if ( 'notifications' === $item_key ) :
+												$unread = wpss_count_user_notifications( get_current_user_id(), array( 'unread_only' => true ) );
+												?>
+												<span class="wpss-dashboard__nav-badge" data-wpss-notification-count <?php echo $unread ? '' : 'hidden'; ?>><?php echo esc_html( (string) $unread ); ?></span>
+											<?php endif; ?>
 										</a>
 									</li>
 								<?php endforeach; ?>

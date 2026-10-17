@@ -27,7 +27,7 @@ add_filter( 'wpss_review_window_days', fn( $days ) => 14 );
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_loaded` | `Plugin $plugin` | `src/Core/Plugin.php:303` |
+| `wpss_loaded` | `Plugin $plugin` | `src/Core/Plugin.php:311` |
 | `wpss_adapter_initialized` | `EcommerceAdapterInterface $adapter` | `src/Integrations/IntegrationManager.php:136` |
 
 **`wpss_loaded`** is the primary extension hook. All Pro features register here:
@@ -486,7 +486,7 @@ add_action( 'wpss_wizard_save_service_meta', function( $service_id, $data ) {
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:981` |
+| `wpss_dashboard_section_before_content` | `string $section, int $user_id` | `src/Frontend/UnifiedDashboard.php:987` |
 
 ### Dashboard Filters
 
@@ -608,7 +608,7 @@ These filters let you customize outgoing email content without modifying templat
 |--------|-----------|------|
 | `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2108` |
 | `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2084` |
-| `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1584` |
+| `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1619` |
 
 ```php
 // Change the "From" name on all marketplace emails
@@ -639,7 +639,7 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | Hook | Parameters | File |
 |------|-----------|------|
 | `wpss_message_sent` | `object $message, object $conversation` | `src/Services/ConversationService.php:367` |
-| `wpss_notification_created` | `int $notification_id, int $user_id, string $type, array $data` | `src/Services/NotificationService.php:112` |
+| `wpss_notification_created` | `int $notification_id, int $user_id, string $type, array $data` | `src/Services/NotificationService.php:122` |
 | `wpss_portfolio_item_created` | `int $item_id, int $vendor_id, array $data` | `src/Services/PortfolioService.php:199` |
 | `wpss_portfolio_item_updated` | `int $item_id, array $data` | `src/Services/PortfolioService.php:302` |
 | `wpss_portfolio_item_deleted` | `int $item_id, object $item` | `src/Services/PortfolioService.php:352` |
@@ -796,7 +796,7 @@ add_filter( 'wpss_settings_currencies', function( $currencies ) {
 | `wpss_rest_vendor_data` | `$data, $vendor, $request` | `VendorsController.php` |
 | `wpss_can_access_dashboard_section` | `$allowed, $section, $user_id` | `src/Frontend/UnifiedDashboard.php:490` |
 | `wpss_dashboard_sections` | `$sections, $user_id, $is_vendor` | `src/Frontend/UnifiedDashboard.php:601` |
-| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:920` |
+| `wpss_dashboard_section_titles` | `$titles` | `src/Frontend/UnifiedDashboard.php:926` |
 
 **`wpss_realtime_settings`** — filter the resolved real-time/WebSocket connection settings before they are used. The `$settings` array includes: `enabled`, `app_id`, `key`, `secret`, `host`, `cluster`, `port`, `use_tls`. The `secret` field is server-only; it is never sent to the browser:
 
@@ -843,9 +843,9 @@ add_filter( 'wpss_fullwidth_page_keys', function( $keys ) {
 | `wpss_open_graph_data` | `$data, $service_id` | `src/SEO/SEO.php:270` |
 | `wpss_sitemap_post_types` | `$post_types` | `src/SEO/SEO.php:334` |
 | `wpss_breadcrumbs` | `$breadcrumbs, $service_id` | `src/SEO/SEO.php:402` |
-| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2027` |
-| `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1535` |
-| `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1637` |
+| `wpss_notification_email_content` | `$content, $subject, $user_id, $data` | `src/Services/NotificationService.php:2062` |
+| `wpss_vendor_welcome_email_content` | `$content, $user, $platform_name` | `src/Services/NotificationService.php:1570` |
+| `wpss_admin_vendor_notification_content` | `$content, $user` | `src/Services/NotificationService.php:1672` |
 
 ## Pro Plugin Actions **[PRO]**
 

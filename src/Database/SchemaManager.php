@@ -35,7 +35,7 @@ class SchemaManager {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION = '1.8.0';
+	const DB_VERSION = '1.9.0';
 
 	/**
 	 * Option name for storing DB version.
@@ -1162,7 +1162,8 @@ class SchemaManager {
 			KEY idx_object (object_type, object_id, created_at),
 			KEY idx_actor (actor_id, created_at),
 			KEY idx_event (event_type, created_at),
-			KEY idx_forced (is_forced, created_at)
+			KEY idx_forced (is_forced, created_at),
+			KEY idx_created (created_at)
 		) {$charset_collate};";
 	}
 
@@ -1632,6 +1633,8 @@ class SchemaManager {
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY idx_user_unread (user_id,is_read),
+			KEY idx_user_created (user_id,created_at),
+			KEY idx_retention (is_read,created_at),
 			KEY idx_type (type)
 		) {$charset_collate};";
 	}

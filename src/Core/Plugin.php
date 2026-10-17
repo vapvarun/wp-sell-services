@@ -283,6 +283,14 @@ final class Plugin {
 		// no listener, so the retention setting never trimmed the table.
 		( new \WPSellServices\Services\AuditLogService() )->init();
 
+		// Notification retention: read rows older than 90 days (UTC cutoff).
+		add_action(
+			\WPSellServices\Services\NotificationService::CLEANUP_HOOK,
+			static function (): void {
+				( new \WPSellServices\Services\NotificationService() )->cleanup_expired();
+			}
+		);
+
 		// Guided onboarding tour — registers its own admin/front hooks and
 		// the REST completion endpoint internally.
 		( new Tour() )->init();

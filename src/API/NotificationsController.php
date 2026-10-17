@@ -124,35 +124,23 @@ class NotificationsController extends RestController {
 		$pagination = $this->get_pagination_args( $request );
 		$user_id    = get_current_user_id();
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_notifications';
-
-		$where = $wpdb->prepare( 'WHERE user_id = %d', $user_id );
-
-		// Filter by type.
-		$type = $request->get_param( 'type' );
-		if ( $type ) {
-			$where .= $wpdb->prepare( ' AND type = %s', sanitize_text_field( $type ) );
-		}
-
-		// Filter by read status.
+		// Same query as the dashboard list, so the two can never disagree.
+		$args    = array( 'type' => (string) $request->get_param( 'type' ) );
 		$is_read = $request->get_param( 'is_read' );
+
 		if ( null !== $is_read ) {
-			$where .= $wpdb->prepare( ' AND is_read = %d', (int) $is_read );
+			$args['is_read'] = (int) $is_read;
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is prepared above.
-		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} {$where}" );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is prepared above.
-		$items = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$table} {$where} ORDER BY created_at DESC LIMIT %d OFFSET %d",
-				$pagination['per_page'],
-				$pagination['offset']
-			),
-			ARRAY_A
+		$total = wpss_count_user_notifications( $user_id, $args );
+		$items = wpss_get_user_notifications(
+			$user_id,
+			$args + array(
+				'limit'  => $pagination['per_page'],
+				'offset' => $pagination['offset'],
+			)
 		);
+		$items = array_map( static fn( $row ) => (array) $row, $items );
 
 		$notifications = array_map( array( $this, 'format_notification' ), $items ?: array() );
 
@@ -171,15 +159,7 @@ class NotificationsController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_unread_count( WP_REST_Request $request ): WP_REST_Response {
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_notifications';
-
-		$count = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND is_read = 0",
-				get_current_user_id()
-			)
-		);
+		$count = wpss_count_user_notifications( get_current_user_id(), array( 'unread_only' => true ) );
 
 		return new WP_REST_Response( array( 'unread_count' => $count ) );
 	}

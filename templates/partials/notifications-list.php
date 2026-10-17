@@ -58,8 +58,19 @@ if ( $wpss_notif_user <= 0 ) {
 $wpss_notif_per_page = (int) apply_filters( 'wpss_notifications_per_page', 20 );
 $wpss_notif_per_page = max( 1, min( 200, $wpss_notif_per_page ) );
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination param.
-$wpss_notif_page  = isset( $_GET['notifications_page'] ) ? max( 1, absint( wp_unslash( $_GET['notifications_page'] ) ) ) : 1;
-$wpss_notif_total = wpss_count_user_notifications( $wpss_notif_user );
+$wpss_notif_page = isset( $_GET['notifications_page'] ) ? max( 1, absint( wp_unslash( $_GET['notifications_page'] ) ) ) : 1;
+
+// Filter: unread only, and/or one type. Read-only GET params, whitelisted below.
+// phpcs:disable WordPress.Security.NonceVerification.Recommended
+$wpss_filter_unread = isset( $_GET['notifications_status'] ) && 'unread' === sanitize_key( wp_unslash( $_GET['notifications_status'] ) );
+$wpss_filter_type   = isset( $_GET['notifications_type'] ) ? sanitize_key( wp_unslash( $_GET['notifications_type'] ) ) : '';
+// phpcs:enable WordPress.Security.NonceVerification.Recommended
+$wpss_filter_args = array(
+	'unread_only' => $wpss_filter_unread,
+	'type'        => $wpss_filter_type,
+);
+$wpss_filtered    = $wpss_filter_unread || '' !== $wpss_filter_type;
+$wpss_notif_total = wpss_count_user_notifications( $wpss_notif_user, $wpss_filter_args );
 $wpss_notif_pages = $wpss_notif_per_page > 0 ? (int) ceil( $wpss_notif_total / $wpss_notif_per_page ) : 1;
 
 // A deep link past the end lands on the last real page rather than showing an
@@ -70,7 +81,7 @@ if ( $wpss_notif_pages > 0 && $wpss_notif_page > $wpss_notif_pages ) {
 
 $wpss_notifications = wpss_get_user_notifications(
 	$wpss_notif_user,
-	array(
+	$wpss_filter_args + array(
 		'limit'  => $wpss_notif_per_page,
 		'offset' => ( $wpss_notif_page - 1 ) * $wpss_notif_per_page,
 	)
@@ -113,6 +124,10 @@ $wpss_has_unread = wpss_count_user_notifications( $wpss_notif_user, array( 'unre
 ?>
 <style>
 .wpss-notif-center__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.wpss-notif-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+.wpss-notif-filter select { min-width: 0; max-width: 100%; }
+.wpss-notif-filter__reset { font-size: 13px; }
+@media (max-width: 480px) { .wpss-notif-filter select { flex: 1 1 100%; } }
 .wpss-notif-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .wpss-notif-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px solid var( --wpss-border, #e5e7eb ); border-radius: var( --wpss-radius, 8px ); background: var( --wpss-bg, #fff ); }
 .wpss-notif-row:has( .wpss-notif-row__link ) { cursor: pointer; }
@@ -153,9 +168,53 @@ $wpss_has_unread = wpss_count_user_notifications( $wpss_notif_user, array( 'unre
 		<?php endif; ?>
 	</div>
 
+	<?php if ( $wpss_notif_total > 0 || $wpss_filtered ) : ?>
+		<?php
+		// Carry every other query var (the dashboard section, a page id) through the GET form.
+		$wpss_form_keep = array();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		foreach ( (array) $_GET as $wpss_k => $wpss_v ) {
+			if ( is_string( $wpss_v ) && ! in_array( $wpss_k, array( 'notifications_status', 'notifications_type', 'notifications_page' ), true ) ) {
+				$wpss_form_keep[ sanitize_key( (string) $wpss_k ) ] = sanitize_text_field( wp_unslash( $wpss_v ) );
+			}
+		}
+		?>
+		<form class="wpss-notif-filter" method="get" action="<?php echo esc_url( remove_query_arg( array_keys( (array) $_GET ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>">
+			<?php foreach ( $wpss_form_keep as $wpss_k => $wpss_v ) : ?>
+				<input type="hidden" name="<?php echo esc_attr( $wpss_k ); ?>" value="<?php echo esc_attr( $wpss_v ); ?>">
+			<?php endforeach; ?>
+			<label>
+				<span class="screen-reader-text"><?php esc_html_e( 'Show', 'wp-sell-services' ); ?></span>
+				<select name="notifications_status" class="wpss-input">
+					<option value=""><?php esc_html_e( 'All notifications', 'wp-sell-services' ); ?></option>
+					<option value="unread" <?php selected( $wpss_filter_unread ); ?>><?php esc_html_e( 'Unread only', 'wp-sell-services' ); ?></option>
+				</select>
+			</label>
+			<label>
+				<span class="screen-reader-text"><?php esc_html_e( 'Type', 'wp-sell-services' ); ?></span>
+				<select name="notifications_type" class="wpss-input">
+					<option value=""><?php esc_html_e( 'All types', 'wp-sell-services' ); ?></option>
+					<?php foreach ( array_keys( $wpss_notif_icons ) as $wpss_type ) : ?>
+						<option value="<?php echo esc_attr( $wpss_type ); ?>" <?php selected( $wpss_filter_type, $wpss_type ); ?>><?php echo esc_html( ucfirst( str_replace( '_', ' ', $wpss_type ) ) ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</label>
+			<button type="submit" class="wpss-btn wpss-btn--outline wpss-btn--sm"><?php esc_html_e( 'Filter', 'wp-sell-services' ); ?></button>
+			<?php if ( $wpss_filtered ) : ?>
+				<a class="wpss-notif-filter__reset" href="<?php echo esc_url( add_query_arg( $wpss_form_keep, remove_query_arg( array_keys( (array) $_GET ) ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>"><?php esc_html_e( 'Clear filter', 'wp-sell-services' ); ?></a>
+			<?php endif; ?>
+		</form>
+	<?php endif; ?>
+
 	<?php if ( empty( $wpss_notifications ) ) : ?>
 		<div class="wpss-dashboard__empty">
-			<p><?php esc_html_e( 'You have no notifications yet.', 'wp-sell-services' ); ?></p>
+			<p>
+				<?php
+				echo $wpss_filtered
+					? esc_html__( 'No notifications match this filter.', 'wp-sell-services' )
+					: esc_html__( 'You have no notifications yet.', 'wp-sell-services' );
+				?>
+			</p>
 		</div>
 	<?php else : ?>
 		<ul class="wpss-notif-list">
@@ -275,6 +334,15 @@ $wpss_has_unread = wpss_count_user_notifications( $wpss_notif_user, array( 'unre
 		return fetch( ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body, keepalive: true } );
 	}
 
+	// Keep the sidebar badge (server-rendered) in step with what was just read.
+	function adjustBadge( by ) {
+		document.querySelectorAll( '[data-wpss-notification-count]' ).forEach( function ( badge ) {
+			var n = by === null ? 0 : Math.max( 0, ( parseInt( badge.textContent, 10 ) || 0 ) + by );
+			badge.textContent = String( n );
+			if ( ! n ) { badge.setAttribute( 'hidden', '' ); }
+		} );
+	}
+
 	root.addEventListener( 'click', function ( e ) {
 		var allBtn = e.target.closest( '.wpss-notif-mark-all' );
 		if ( allBtn ) {
@@ -285,6 +353,7 @@ $wpss_has_unread = wpss_count_user_notifications( $wpss_notif_user, array( 'unre
 					if ( m ) { m.remove(); }
 				} );
 				allBtn.remove();
+				adjustBadge( null );
 			} );
 			return;
 		}
@@ -294,6 +363,7 @@ $wpss_has_unread = wpss_count_user_notifications( $wpss_notif_user, array( 'unre
 		if ( link && ! e.target.closest( '.wpss-notif-row__mark' ) ) {
 			if ( row.classList.contains( 'wpss-notif-row--unread' ) ) {
 				post( 'wpss_mark_notification_read', { notification_id: row.getAttribute( 'data-id' ) } );
+				adjustBadge( -1 );
 			}
 			if ( ! e.target.closest( 'a' ) ) {
 				window.location.href = link.href;
@@ -307,6 +377,7 @@ $wpss_has_unread = wpss_count_user_notifications( $wpss_notif_user, array( 'unre
 			post( 'wpss_mark_notification_read', { notification_id: id } ).then( function () {
 				if ( li ) { li.classList.remove( 'wpss-notif-row--unread' ); }
 				oneBtn.remove();
+				adjustBadge( -1 );
 			} );
 		}
 	} );

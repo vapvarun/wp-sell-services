@@ -113,9 +113,9 @@ class EarningsService {
 				WHERE user_id = %d AND status = 'completed'
 				AND type NOT IN ({$debit_types})
 				AND amount > 0
-				AND created_at > DATE_SUB(NOW(), INTERVAL %d DAY)",
+				AND created_at > %s",
 				$vendor_id,
-				$clearance_days
+				gmdate( 'Y-m-d H:i:s', time() - $clearance_days * DAY_IN_SECONDS )
 			)
 		);
 

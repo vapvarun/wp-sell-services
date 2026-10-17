@@ -21,6 +21,16 @@ defined( 'ABSPATH' ) || exit;
 class NotificationService {
 
 	/**
+	 * Daily retention job (scheduled in Activator::schedule_cron_events()).
+	 */
+	public const CLEANUP_HOOK = 'wpss_notification_cleanup';
+
+	/**
+	 * Types kept for a year instead of 90 days: the record a dispute or a completed order leaves behind.
+	 */
+	private const LONG_RETENTION_TYPES = array( 'dispute_opened', 'dispute_resolved', 'delivery_accepted' );
+
+	/**
 	 * Notification types.
 	 */
 	public const TYPE_ORDER_CREATED      = 'order_created';
@@ -135,33 +145,58 @@ class NotificationService {
 	 * @return array
 	 */
 	public function get_user_notifications( int $user_id, array $args = array() ): array {
+		return wpss_get_user_notifications( $user_id, $args );
+	}
+
+	/**
+	 * Delete READ notifications past their retention.
+	 *
+	 * 90 days by default (filter `wpss_notification_retention_days`, 0 keeps everything);
+	 * dispute and completion notices keep 365. Unread rows are never touched. The cutoff is a
+	 * UTC string computed here, deletes run in batches so a large table never holds a long lock.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @return int Rows deleted.
+	 */
+	public function cleanup_expired(): int {
 		global $wpdb;
-		$table = $wpdb->prefix . 'wpss_notifications';
 
-		$defaults = array(
-			'unread_only' => false,
-			'limit'       => 20,
-			'offset'      => 0,
-		);
+		/**
+		 * Days to keep a read notification. 0 disables the cleanup.
+		 *
+		 * @since 1.9.0
+		 *
+		 * @param int $days Default 90.
+		 */
+		$days = (int) apply_filters( 'wpss_notification_retention_days', 90 );
 
-		$args = wp_parse_args( $args, $defaults );
-
-		$where  = array( 'user_id = %d' );
-		$params = array( $user_id );
-
-		if ( $args['unread_only'] ) {
-			$where[] = 'is_read = 0';
+		if ( $days <= 0 ) {
+			return 0;
 		}
 
-		$where_clause = implode( ' AND ', $where );
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE {$where_clause} ORDER BY created_at DESC LIMIT %d OFFSET %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				array_merge( $params, array( $args['limit'], $args['offset'] ) )
-			)
+		$table   = $wpdb->prefix . 'wpss_notifications';
+		$long    = "'" . implode( "','", self::LONG_RETENTION_TYPES ) . "'";
+		$cutoffs = array(
+			"type NOT IN ({$long})" => gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS ),
+			"type IN ({$long})"     => gmdate( 'Y-m-d H:i:s', time() - max( $days, 365 ) * DAY_IN_SECONDS ),
 		);
+		$deleted = 0;
+
+		foreach ( $cutoffs as $type_clause => $cutoff ) {
+			// 20 x 1000 rows a run; the rest waits for tomorrow rather than hogging the table.
+			for ( $batch = 0; $batch < 20; $batch++ ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $type_clause is built from constants.
+				$rows     = (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE is_read = 1 AND created_at < %s AND {$type_clause} LIMIT 1000", $cutoff ) );
+				$deleted += $rows;
+
+				if ( $rows < 1000 ) {
+					break;
+				}
+			}
+		}
+
+		return $deleted;
 	}
 
 	/**

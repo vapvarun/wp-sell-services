@@ -231,38 +231,63 @@ function wpss_get_notification_url( array $data, ?string $action_url = null ): s
 }
 
 /**
- * Get notifications for a user.
+ * WHERE clause for a member's notifications: the one place list, count and pager agree.
+ *
+ * @since 1.9.0
+ *
+ * @param int   $user_id User ID.
+ * @param array $args    unread_only (bool), is_read (0|1), type (string notification type).
+ * @return array{0: string, 1: array} SQL fragment starting at "user_id = %d", and its params.
+ */
+function wpss_notifications_where( int $user_id, array $args ): array {
+	$sql    = 'user_id = %d';
+	$params = array( $user_id );
+
+	if ( ! empty( $args['unread_only'] ) ) {
+		$sql .= ' AND is_read = 0';
+	} elseif ( isset( $args['is_read'] ) ) {
+		$sql     .= ' AND is_read = %d';
+		$params[] = (int) (bool) $args['is_read'];
+	}
+
+	if ( ! empty( $args['type'] ) ) {
+		$sql     .= ' AND type = %s';
+		$params[] = sanitize_key( (string) $args['type'] );
+	}
+
+	return array( $sql, $params );
+}
+
+/**
+ * Get notifications for a user, newest first.
+ *
+ * Ordered by created_at then id so rows written in the same second page
+ * without repeats or gaps.
  *
  * @since 1.2.0
  *
  * @param int   $user_id User ID.
- * @param array $args    Query arguments (limit, offset, unread_only).
+ * @param array $args    Query arguments (limit, offset, unread_only, type).
  * @return array Array of notification objects.
  */
 function wpss_get_user_notifications( int $user_id, array $args = array() ): array {
 	global $wpdb;
 	$table = $wpdb->prefix . 'wpss_notifications';
 
-	$defaults = array(
-		'limit'       => 20,
-		'offset'      => 0,
-		'unread_only' => false,
+	$args = wp_parse_args(
+		$args,
+		array(
+			'limit'  => 20,
+			'offset' => 0,
+		)
 	);
-	$args     = wp_parse_args( $args, $defaults );
 
-	$sql    = "SELECT * FROM {$table} WHERE user_id = %d";
-	$params = array( $user_id );
+	list( $where, $params ) = wpss_notifications_where( $user_id, $args );
+	$params[]               = max( 1, (int) $args['limit'] );
+	$params[]               = max( 0, (int) $args['offset'] );
 
-	if ( $args['unread_only'] ) {
-		$sql .= ' AND is_read = 0';
-	}
-
-	$sql     .= ' ORDER BY created_at DESC LIMIT %d OFFSET %d';
-	$params[] = $args['limit'];
-	$params[] = $args['offset'];
-
-	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is hardcoded fragments with %d/%s placeholders; values come via prepare().
-	return $wpdb->get_results( $wpdb->prepare( $sql, $params ) );
+	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is hardcoded fragments with placeholders; values come via prepare().
+	return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE {$where} ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d", $params ) );
 }
 
 /**
@@ -273,25 +298,18 @@ function wpss_get_user_notifications( int $user_id, array $args = array() ): arr
  *
  * @since 1.7.2
  *
- * @param int                  $user_id User ID.
- * @param array<string, mixed> $args    Query arguments (unread_only).
- * @return int Total matching notifications.
+ * @param int   $user_id User ID.
+ * @param array $args    Query arguments (unread_only, type).
+ * @return int
  */
 function wpss_count_user_notifications( int $user_id, array $args = array() ): int {
 	global $wpdb;
 	$table = $wpdb->prefix . 'wpss_notifications';
 
-	$args = wp_parse_args( $args, array( 'unread_only' => false ) );
+	list( $where, $params ) = wpss_notifications_where( $user_id, $args );
 
-	$sql    = "SELECT COUNT(*) FROM {$table} WHERE user_id = %d";
-	$params = array( $user_id );
-
-	if ( $args['unread_only'] ) {
-		$sql .= ' AND is_read = 0';
-	}
-
-	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared -- $sql is hardcoded fragments with %d placeholders; values come via prepare().
-	return (int) $wpdb->get_var( $wpdb->prepare( $sql, $params ) );
+	// phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is hardcoded fragments with placeholders; values come via prepare().
+	return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$where}", $params ) );
 }
 
 /**

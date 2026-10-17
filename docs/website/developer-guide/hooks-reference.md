@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**541 hooks** across **747** firing sites.
+**542 hooks** across **748** firing sites.
 
 ## Actions (276)
 
@@ -293,7 +293,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (265)
+## Filters (266)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -408,6 +408,7 @@ guide; this is the complete index.
 | `wpss_no_requests_message` | 1 | `templates/content-no-requests.php` | Template: No Requests Found |
 | `wpss_no_services_message` | 1 | `templates/content-no-services.php` |  |
 | `wpss_notification_email_content` | 4 | `src/Services/NotificationService.php` | Filter email content before sending. |
+| `wpss_notification_retention_days` | 1 | `src/Services/NotificationService.php` | Days to keep a read notification. 0 disables the cleanup. |
 | `wpss_notification_types` | 1 | `src/Admin/Settings.php` | Filter the switchable notification types. |
 | `wpss_notifications_per_page` | 1 | `templates/partials/notifications-list.php` |  |
 | `wpss_offline_method_slots` | 1 | `src/Integrations/Gateways/OfflineGateway.php` | Named offline methods. |
