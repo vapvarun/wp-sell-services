@@ -104,6 +104,14 @@
       "fails_on": "pre-fix Admin::add_admin_menu cap",
       "journey": "audit/journeys/12-account-standing.md#4",
       "now_dead_or_duplicate": "none"
+    },
+    {
+      "card": "10398957993,10398958911,10398959570,10398686546",
+      "class": "several doors wrote post_status and the moderation meta separately (Quick Edit select, editor, wizard Skip), so they disagreed",
+      "check": "tests/test-service-moderation-admin-publish.php",
+      "fails_on": "pre-fix ServiceModerationPage / admin.css / service-edit.js (4 FAIL)",
+      "journey": "audit/journeys/05-vendor-creates-a-service.md#M1",
+      "now_dead_or_duplicate": "removed quick_edit_fields(), hide_quick_edit_status() and the .inline-edit-status CSS rule"
     }
   ]
 }

@@ -102,7 +102,7 @@ When rejected:
 
 ## Who Bypasses Moderation?
 
-Admins and shop managers always bypass the moderation queue. Services they create publish immediately.
+Administrators (anyone with `manage_options`) bypass the moderation queue: services they create publish immediately, and publishing a pending service from the editor, Quick Edit or bulk edit approves it. Shop managers are not administrators and go through the queue like any other seller.
 
 ## Notifications
 

@@ -2094,10 +2094,6 @@
 
 .wpss-moderation-metabox select { margin-top: 5px; }
 
-/* Quick Edit: the core status dropdown is hidden because moderation status is
-   driven by the queue's own approve/reject actions, not by post status. */
-.inline-edit-row .inline-edit-status { display: none !important; }
-
 /* Withdrawals (Payouts) page */
 /* Fixed widths: the label, its sort arrows and a 5-digit id stay on one line at 820px (ID, Amount, Status). */
 .wpss-withdrawals-table .column-id { width: 5em; }

@@ -78,16 +78,10 @@ class ServiceModerationPage {
 		add_action( 'manage_wpss_service_posts_custom_column', array( $this, 'render_moderation_column' ), 10, 2 );
 		add_filter( 'manage_edit-wpss_service_sortable_columns', array( $this, 'sortable_columns' ) );
 
-		// Add quick edit support.
-		add_action( 'quick_edit_custom_box', array( $this, 'quick_edit_fields' ), 10, 2 );
-
-		// Save quick edit and bulk edit moderation status.
+		// Save the editor's moderation decision. Quick Edit keeps core's Status
+		// dropdown and carries no moderation field of its own: a shared select
+		// has no per-row value, so a title edit used to unpublish a live service.
 		add_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10, 2 );
-
-		// Hide native Status dropdown in Quick Edit when moderation is active.
-		if ( ModerationService::is_enabled() ) {
-			add_action( 'admin_head-edit.php', array( $this, 'hide_quick_edit_status' ) );
-		}
 
 		// Add metabox to service edit screen.
 		add_action( 'add_meta_boxes', array( $this, 'add_moderation_metabox' ) );
@@ -125,6 +119,10 @@ class ServiceModerationPage {
 
 		// Hide non-approved services from public queries.
 		add_action( 'pre_get_posts', array( $this, 'filter_frontend_queries' ) );
+
+		// An administrator publishing from any admin door (editor, Quick Edit,
+		// bulk edit, REST) is the approval. Runs after save_moderation_status().
+		add_action( 'save_post_wpss_service', array( $this, 'approve_admin_publish' ), 20, 2 );
 
 		// Hold a vendor's publish at pending until it is approved.
 		add_filter( 'wp_insert_post_data', array( $this, 'intercept_publish' ), 10, 2 );
@@ -982,47 +980,6 @@ class ServiceModerationPage {
 	}
 
 	/**
-	 * Quick edit fields.
-	 *
-	 * @param string $column_name Column name.
-	 * @param string $post_type   Post type.
-	 * @return void
-	 */
-	public function quick_edit_fields( string $column_name, string $post_type ): void {
-		if ( 'wpss_moderation' !== $column_name || 'wpss_service' !== $post_type ) {
-			return;
-		}
-		?>
-		<fieldset class="inline-edit-col-right">
-			<div class="inline-edit-col">
-				<label>
-					<span class="title"><?php esc_html_e( 'Moderation', 'wp-sell-services' ); ?></span>
-					<select name="wpss_moderation_status">
-						<option value="<?php echo esc_attr( self::STATUS_PENDING ); ?>"><?php esc_html_e( 'Pending', 'wp-sell-services' ); ?></option>
-						<option value="<?php echo esc_attr( self::STATUS_APPROVED ); ?>"><?php esc_html_e( 'Approved', 'wp-sell-services' ); ?></option>
-						<option value="<?php echo esc_attr( self::STATUS_REJECTED ); ?>"><?php esc_html_e( 'Rejected', 'wp-sell-services' ); ?></option>
-					</select>
-				</label>
-			</div>
-		</fieldset>
-		<?php
-	}
-
-	/**
-	 * Hide native Status dropdown in Quick Edit for services when moderation is active.
-	 *
-	 * @return void
-	 */
-	public function hide_quick_edit_status(): void {
-		$screen = get_current_screen();
-		if ( ! $screen || 'wpss_service' !== $screen->post_type ) {
-			return;
-		}
-		?>
-		<?php
-	}
-
-	/**
 	 * Save moderation status from quick edit, bulk edit, or admin edit screen.
 	 *
 	 * @param int      $post_id Post ID.
@@ -1105,6 +1062,43 @@ class ServiceModerationPage {
 		}
 
 		add_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10, 2 );
+
+		if ( is_wp_error( $result ) ) {
+			$key      = 'wpss_service_limit_notice_' . get_current_user_id();
+			$messages = get_transient( $key );
+			$messages = is_array( $messages ) ? $messages : array();
+			set_transient( $key, array_merge( $messages, array( $result->get_error_message() ) ), MINUTE_IN_SECONDS );
+		}
+	}
+
+	/**
+	 * Treat an administrator's Publish as the approval.
+	 *
+	 * Without this a service published by an admin while its state was pending
+	 * went live but stayed "pending" (hidden from public queries, counted in the
+	 * queue). Goes through ModerationService::approve() so history, the vendor
+	 * email and the completeness check all apply.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param \WP_Post $post    Post object (may be stale; the status is re-read).
+	 * @return void
+	 */
+	public function approve_admin_publish( int $post_id, \WP_Post $post ): void {
+		if ( wp_is_post_revision( $post_id ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( 'publish' !== get_post_status( $post_id ) || self::STATUS_APPROVED === wpss_get_service_moderation_state( $post_id ) ) {
+			return;
+		}
+
+		remove_action( 'save_post_wpss_service', array( $this, 'approve_admin_publish' ), 20 );
+		remove_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10 );
+		$result = ( new ModerationService() )->approve( $post_id );
+		add_action( 'save_post_wpss_service', array( $this, 'save_moderation_status' ), 10, 2 );
+		add_action( 'save_post_wpss_service', array( $this, 'approve_admin_publish' ), 20, 2 );
 
 		if ( is_wp_error( $result ) ) {
 			$key      = 'wpss_service_limit_notice_' . get_current_user_id();

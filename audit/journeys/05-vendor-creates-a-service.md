@@ -115,3 +115,20 @@ limits are off for everybody and that is a worse bug than the one being guarded.
   enforcer at priority 20. `PlanEnforcer::can_create_service()` can answer
   `true` while the filter still answers `false`.
 - 390px on every step that renders UI.
+
+## Admin moderation doors (added 2026-10-18)
+
+### M1. Quick Edit never changes moderation (card:10398957993, card:10398959570)
+With service moderation on, Services > Quick Edit on an approved, live service: change only the title, Update.
+
+**Expect** the service stays published and Approved; the Moderation column is unchanged; there is no Moderation dropdown in Quick Edit and core's Status dropdown is visible. On Buyer Requests Quick Edit the Status dropdown is visible too.
+
+### M2. An admin Publish is the approval (card:10398958911)
+Open a Pending service in the editor and click Publish (also: Quick Edit > Status Published).
+
+**Expect** the Moderation column says Approved, the Pending count drops, the service shows on /services/, and the vendor gets the approved email.
+
+### M3. Skip to full editor saves a draft (card:10398686546)
+New Service wizard (admin), fill step 1, click Skip to full editor.
+
+**Expect** the service is a draft in the normal tabbed editor, nothing appears on /services/ until Publish is clicked.
