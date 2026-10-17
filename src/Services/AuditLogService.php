@@ -48,41 +48,6 @@ class AuditLogService {
 	public const RETENTION_DEFAULT = 365;
 
 	/**
-	 * Every event type the plugin writes. The admin filter lists these;
-	 * add the name here when adding a log() call.
-	 *
-	 * @since 1.7.1
-	 * @var string[]
-	 */
-	public const EVENT_TYPES = array(
-		'order.status_change',
-		'order.paid',
-		'order.cancel',
-		'order.refund',
-		'order.refund_pending',
-		'order.refund_failed',
-		'order.earnings_reversal_failed',
-		'withdrawal.requested',
-		'withdrawal.approved',
-		'withdrawal.rejected',
-		'withdrawal.paid',
-		'dispute.transition',
-		'vendor.approved',
-		'vendor.rejected',
-		'vendor.suspended',
-		'vendor.pending',
-		'vendor.migrated',
-		'vendor.role_removed',
-		'vendor.role_restored',
-		'commission.rate_changed',
-		'service.approved',
-		'service.rejected',
-		'review.approved',
-		'review.rejected',
-		'ledger.insert',
-	);
-
-	/**
 	 * What each event means, in the owner's words (Basecamp 10337159668).
 	 *
 	 * The Audit Log showed the raw keys. A key missing here reads as words
@@ -119,6 +84,8 @@ class AuditLogService {
 			'review.approved'                => __( 'Review approved', 'wp-sell-services' ),
 			'review.rejected'                => __( 'Review rejected', 'wp-sell-services' ),
 			'ledger.insert'                  => __( 'Wallet entry', 'wp-sell-services' ),
+			'ledger.duplicate_removed'       => __( 'Duplicate wallet entry removed', 'wp-sell-services' ),
+			'review.duplicate_removed'       => __( 'Duplicate review removed', 'wp-sell-services' ),
 			'email.failed'                   => __( 'Email not sent', 'wp-sell-services' ),
 		);
 	}

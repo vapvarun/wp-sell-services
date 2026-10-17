@@ -48,8 +48,8 @@ For each requirement, vendors provide:
 
 When a requirement uses the file upload type, the accepted formats and size are **set by the site owner**, not fixed by the plugin.
 
-- **Allowed types** -- Settings > Advanced > Allowed File Types. Default: `jpg, jpeg, png, gif, pdf, doc, docx`.
-- **Maximum size** -- Settings > Advanced > Max File Size. Default: 10 MB.
+- **Allowed types** -- Settings > System > Allowed File Types. Default: `jpg, jpeg, png, gif, pdf, doc, docx`.
+- **Maximum size** -- Settings > System > Max File Size. Default: 10 MB.
 
 Add the formats your vendors need before launch; a buyer cannot upload a ZIP or a PSD on the default list.
 

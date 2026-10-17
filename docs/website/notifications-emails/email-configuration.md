@@ -53,8 +53,17 @@ By default the plugin does not email a member about a new message while they are
 actively using the site - they are already looking at it, and the email arrives
 as noise a few seconds later.
 
-There is no setting screen for this. It is on unless a developer turns it off,
-and the behaviour is adjustable with the `wpss_skip_message_email_when_online`
+Two settings under **Sell Services > Settings > Emails > Message Email Delivery**
+control this:
+
+- **Do not email a message to someone who is browsing the site right now** - on by
+  default. Turn it off on a quiet site where presence data is sparse and members
+  report missing message emails.
+- **Hold message emails for** - minutes to wait before sending. When the wait is
+  over the email goes out only if the conversation is still unread. `0` sends
+  immediately.
+
+Developers can also change the behaviour with the `wpss_skip_message_email_when_online`
 and `wpss_presence_window` filters - see the
 [Hooks & Filters reference](../developer-guide/hooks-filters.md).
 

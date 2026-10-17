@@ -6,7 +6,7 @@ Keep your marketplace quality high by reviewing vendor services before they go l
 
 ## Turning On Moderation
 
-1. Go to **Sell Services > Settings > Vendors**
+1. Go to **Sell Services > Settings > Vendor Settings**
 2. Check **Require Service Moderation**
 3. Click **Save Changes**
 

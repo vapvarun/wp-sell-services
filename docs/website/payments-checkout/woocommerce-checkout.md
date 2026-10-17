@@ -51,7 +51,7 @@ When a buyer clicks "Add to Cart" on a service, the plugin does not add the carr
 Cart Item
 ├── Product: "Service Order" (carrier)
 ├── Meta: wpss_service_id = 1234
-├── Meta: wpss_package_id = 1 (Standard)
+├── Meta: wpss_package_id = 1001 (Standard; stable ids start at 1000)
 ├── Meta: wpss_addons = [0, 2] (Extra Fast Delivery, Source Files)
 └── Price: $180 (calculated from package $150 + addon $20 + addon $10)
 ```
@@ -277,11 +277,12 @@ Orders stay connected between WooCommerce and your marketplace with **bidirectio
 
 | WC Status | WPSS Status | What Happens |
 |-----------|-------------|-------------|
-| Processing | Pending Payment | Awaiting payment confirmation |
-| Completed | Pending Requirements | Payment confirmed, buyer needs to submit details |
-| Cancelled | Cancelled | Order stopped, refund processed |
+| Pending payment | Pending Payment | Awaiting payment confirmation |
+| Processing | Marked paid | Payment confirmed; the order moves on to requirements or work |
+| Completed | Marked paid | Same as Processing: WooCommerce completing its order does not complete the service order |
+| Cancelled | Cancelled | Order stopped |
 | Failed | Cancelled | Payment failed |
-| Refunded | Cancelled | Full refund processed |
+| Refunded | Refunded | Full refund recorded |
 | On Hold | On Hold | Order paused pending investigation |
 
 ### Marketplace → WooCommerce
@@ -373,7 +374,7 @@ For developers building custom integrations or debugging the WC integration:
 | Key | Purpose |
 |-----|---------|
 | `_wpss_service_id` | Links cart/order item to the service CPT |
-| `_wpss_package_id` | Index of the selected package (0, 1, or 2) |
+| `_wpss_package_id` | Stable id of the selected package (ids start at 1000 and do not change when packages are reordered) |
 | `_wpss_addons` | Array of selected add-on indices |
 
 ### Pay-order link keys

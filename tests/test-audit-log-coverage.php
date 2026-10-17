@@ -159,7 +159,7 @@ $check( 'order.paid with gateway and transaction', null !== $r && 'offline' === 
 
 // --- retention default and filter list ------------------------------------------
 $check( 'retention defaults to one year when never saved', defined( 'WPSellServices\Services\AuditLogService::RETENTION_DEFAULT' ) && 365 === \WPSellServices\Services\AuditLogService::RETENTION_DEFAULT );
-$check( 'every event written here is in the filter list', empty( array_diff( array( 'withdrawal.requested', 'withdrawal.approved', 'withdrawal.paid', 'dispute.transition', 'vendor.approved', 'vendor.suspended', 'commission.rate_changed', 'service.approved', 'review.approved', 'order.paid', 'ledger.insert' ), (array) ( defined( 'WPSellServices\Services\AuditLogService::EVENT_TYPES' ) ? \WPSellServices\Services\AuditLogService::EVENT_TYPES : array() ) ) ) );
+$check( 'every event written here is in the filter list', empty( array_diff( array( 'withdrawal.requested', 'withdrawal.approved', 'withdrawal.paid', 'dispute.transition', 'vendor.approved', 'vendor.suspended', 'commission.rate_changed', 'service.approved', 'review.approved', 'order.paid', 'ledger.insert', 'ledger.duplicate_removed', 'review.duplicate_removed', 'email.failed' ), array_keys( \WPSellServices\Services\AuditLogService::get_event_labels() ) ) ) );
 
 // --- cleanup ----------------------------------------------------------------
 update_option( 'wpss_orders', $saved_orders );

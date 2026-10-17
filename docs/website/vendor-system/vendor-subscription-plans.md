@@ -12,7 +12,7 @@ site.
 ## Setting up
 
 1. Add your Stripe keys under **Sell Services > Settings > Payment Gateways**.
-2. Go to **Sell Services > Settings > Vendors** and find the **Vendor Subscriptions** card.
+2. Go to **Sell Services > Settings > Vendor Settings** and find the **Vendor Subscriptions** card.
 3. Turn the feature on, and decide whether a subscription is **required** to sell (see the matrix below).
 4. Create one or more plans.
 

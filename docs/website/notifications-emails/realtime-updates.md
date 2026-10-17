@@ -18,7 +18,7 @@ When disabled, the marketplace behaves exactly as before -- messages and notific
 ## Enabling Real-Time Updates
 
 1. Go to **Sell Services > Settings**
-2. Click the **Advanced** tab
+2. Click the **Integrations** tab
 3. Find the **Real-time (WebSockets)** card
 4. Toggle **Enable** to on
 5. Fill in the connection fields (see below)
@@ -122,4 +122,4 @@ When real-time is enabled, message and notification metadata transits the config
 
 - [In-App Notification System](in-app-notifications.md) -- Dashboard bell and notification list
 - [Order Messaging & File Sharing](../order-management/order-messaging.md) -- How order conversations work
-- [Advanced Settings](../platform-settings/advanced-settings.md) -- Full Advanced tab reference
+- [System Settings](../platform-settings/advanced-settings.md) -- Full System tab reference

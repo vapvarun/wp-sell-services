@@ -12,7 +12,7 @@ When you first activate the plugin, the Setup Wizard walks you through the essen
 This is the name of your marketplace -- it appears in emails, notifications, and on the frontend. It defaults to your WordPress site name, but you can change it to something like "DesignHub" or "FreelanceMarket."
 
 ### Currency
-Choose the currency for your entire marketplace. All service prices, earnings, and payouts use this currency. Options include USD, EUR, GBP, CAD, AUD, INR, JPY, CNY, BRL, and MXN.
+Choose the currency for your entire marketplace. All service prices, earnings, and payouts use this currency. Over 140 currencies are available, including USD, EUR, GBP, CAD, AUD, INR, JPY, CNY, BRL, MXN, and ZAR.
 
 **Tip:** Set your currency before vendors start listing services. Changing it later can cause pricing confusion.
 
@@ -68,7 +68,7 @@ Go to **Sell Services > Settings > Payouts**:
 If you want a buffer against refunds and chargebacks, raise the clearance period. It ships at 0 so a new marketplace does not hold vendor money by surprise.
 
 ### Vendor Settings
-Go to **Sell Services > Settings > Vendors**:
+Go to **Sell Services > Settings > Vendor Settings**:
 
 - **Max services per vendor** -- How many active services each vendor can have (default: 20)
 - **Require verification** -- Whether vendors must verify their identity before selling (default: off)

@@ -77,7 +77,7 @@ Until you enable cloud storage, files are stored locally:
 - Storage is limited by your hosting plan
 
 **Tips for managing local storage:**
-- Set reasonable file size limits in **Settings > Advanced**
+- Set reasonable file size limits in **Settings > System**
 - Monitor your disk usage through your hosting panel
 - Consider upgrading your hosting storage if it fills up
 

@@ -49,7 +49,7 @@ Click the tabs above the table to filter:
 
 If you want to screen vendors before they can sell, enable vendor verification:
 
-1. Go to **Sell Services > Settings > Vendors**
+1. Go to **Sell Services > Settings > Vendor Settings**
 2. Check **Require Verification**
 3. Click **Save Changes**
 

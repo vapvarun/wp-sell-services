@@ -53,7 +53,7 @@ Your entire marketplace operates in one currency. All service prices, order tota
 
 **Tip:** Set your currency during initial setup. Changing it later can create confusion since existing service prices stay at their original numbers.
 
-**[PRO]** Multi-currency support is available in the Pro version -- automatic currency detection by buyer location, live exchange rates, and localized price displays.
+**[PRO]** Multi-currency support is available in the Pro version -- currency detected from the shopper's timezone, live exchange rates, and localized price displays.
 
 ---
 

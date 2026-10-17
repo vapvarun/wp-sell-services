@@ -34,7 +34,7 @@ already have most of these in place. See [Pages Setup](../platform-settings/page
 | `[wpss_cart]` | Shopping cart |
 | `[wpss_checkout]` | Standalone checkout |
 | `[wpss_account]` | Standalone account page |
-| `[wpss_currency_switcher]` **[PRO]** | Shopper currency picker |
+| `[wpss_currency_switcher]` **[PRO]** | Optional shopper currency selector (off by default) |
 
 ## Marketplace pages
 
@@ -284,7 +284,8 @@ the site's sign-in page and returns them here afterwards.
 
 ### `[wpss_currency_switcher]` **[PRO]**
 
-A currency picker for shoppers. The selection is a **display-only** hint -- every
+An optional currency selector for shoppers; nothing shows one unless you place
+this shortcode. The currency is otherwise detected from the shopper's timezone. The selection is a **display-only** hint -- every
 order and payout stays in your base currency. See
 [Display Currency](../payments-checkout/display-currency.md). No attributes.
 

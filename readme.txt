@@ -234,7 +234,7 @@ Yes. Vendors can enable "Vacation Mode" which automatically pauses all their ser
 
 = Does it support multiple currencies? =
 
-Yes. The plugin supports 10 currencies: USD, EUR, GBP, AUD, CAD, INR, JPY, BRL, MXN, and ZAR. You configure one primary currency for your marketplace in settings.
+Yes. The plugin supports 148 currencies, including USD, EUR, GBP, AUD, CAD, INR, JPY, CNY, BRL, MXN, and ZAR. You configure one primary currency for your marketplace in settings.
 
 = Is it translation ready? =
 

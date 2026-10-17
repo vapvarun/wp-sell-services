@@ -47,8 +47,8 @@ ADMIN_PATH_ROOTS = [
 # The Settings tabs that actually exist (src/Admin/Settings.php::init_tabs,
 # plus Branding added by Pro). Anything else in a "Settings > X" path is stale.
 VALID_TABS = {
-    "General", "Pages", "Payment Gateways", "Commission & Tax", "Payouts",
-    "Vendors", "Orders & Disputes", "Emails", "Advanced", "Branding",
+    "General", "Checkout", "Pages", "Payment Gateways", "Commission & Tax", "Payouts",
+    "Vendor Settings", "Orders & Disputes", "Emails", "Integrations", "System", "Branding",
 }
 
 # Tab names retired by the July 2026 settings regroup. They read as plausible,
@@ -56,7 +56,9 @@ VALID_TABS = {
 # each one has a specific successor and the message should say which.
 RETIRED_TABS = {
     "Payments": "Payment Gateways (gateways) / Payouts (withdrawals, clearance)",
-    "Vendor": "Vendors",
+    "Vendor": "Vendor Settings",
+    "Vendors": "Vendor Settings",
+    "Advanced": "System (site plumbing) or Integrations (outside services)",
     "Orders": "Orders & Disputes",
     "Gateways": "Payment Gateways",
     "Commission": "Commission & Tax",

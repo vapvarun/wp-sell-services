@@ -60,7 +60,7 @@ Yes. WP Sell Services works on WordPress multisite. Each site in the network run
 ### Vendor registration not working
 
 1. **Enable WordPress registration** -- Go to **Settings > General** and check "Anyone can register"
-2. **Enable vendor registration** -- Go to **Sell Services > Settings > Vendors** and enable it
+2. **Enable vendor registration** -- Go to **Sell Services > Settings > Vendor Settings** and enable it
 3. **Check approval mode** -- If admin approval is required, approve pending vendors at **Sell Services > Vendors > Pending**
 
 ### Pages showing 404 errors
@@ -88,7 +88,7 @@ Request expiration runs on WordPress cron, which requires site traffic to trigge
 
 ### Delivery files not uploading
 
-1. **Check file size limits** -- The default max is 10 MB. Increase in **Settings > Advanced** if needed
+1. **Check file size limits** -- The default max is 10 MB. Increase in **Settings > System** if needed
 2. **Check allowed file types** -- Make sure the file extension is permitted
 3. **Check server limits** -- Your hosting may have lower PHP upload limits than the plugin setting
 4. **Verify disk space** -- Make sure your server has available storage
@@ -124,7 +124,7 @@ Another site that shares your Stripe account is running a version older than 1.8
 
 ## Getting Help
 
-**Enable debug mode** for troubleshooting: Go to **Sell Services > Settings > Advanced** and enable Debug Mode. Check `wp-content/debug.log` for detailed error messages.
+**Enable debug mode** for troubleshooting: Go to **Sell Services > Settings > System** and enable Debug Mode. Check `wp-content/debug.log` for detailed error messages.
 
 **Have your details ready** when contacting support:
 - WordPress version and PHP version

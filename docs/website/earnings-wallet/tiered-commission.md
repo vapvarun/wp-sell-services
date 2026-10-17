@@ -16,10 +16,10 @@ specific vendor you hand-picked.
 |------|-----------|-------------|
 | **Category** | The service's category | Design pays 15%, Writing pays 20% |
 | **Seller level** | The vendor's level (New, Rising, Top Rated) | Reward Top Rated sellers with 10% instead of 20% |
-| **Volume** | The vendor's sales volume | Vendors over $10k/month drop to 12% |
+| **Volume** | The vendor's lifetime completed sales | Vendors over $10k in lifetime sales drop to 12% |
 
 Every rule needs its condition: a category rule needs at least one category, a
-seller-level rule a level, and a volume rule an earnings threshold above zero.
+seller-level rule a level, and a volume rule a lifetime-sales threshold above zero.
 A rule without one is refused when you save it, instead of being saved and never
 applying.
 
@@ -42,7 +42,7 @@ The default priority is 10, so give your most specific rules a lower number.
 ```
 priority 5   Seller level = Top Rated       ->  10%
 priority 10  Category = Design              ->  15%
-priority 20  Volume over $10,000/month      ->  12%
+priority 20  Volume over $10,000 lifetime  ->  12%
 ```
 
 A Top Rated designer in the example above pays **10%**, because the seller-level
@@ -80,7 +80,7 @@ rate rather than today's.
 
 - Top Rated sellers pay 10 percent instead of 20.
 - The Design category pays 15 percent.
-- Vendors over $10k in monthly sales drop to 12 percent.
+- Vendors with over $10k in lifetime completed sales drop to 12 percent. The total is every completed order, not a monthly figure, so a vendor who passes the threshold stays on the lower rate.
 - A specific enterprise vendor pays a flat 5 percent -- use a **per-vendor rate** (free), not a tiered rule. Tiered rules are for classes of sale, not individuals.
 
 ## For developers

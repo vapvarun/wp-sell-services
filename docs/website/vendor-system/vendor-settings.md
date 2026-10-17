@@ -1,6 +1,6 @@
 # Vendor Settings (Admin)
 
-These settings control how vendors join your marketplace, how many services they can create, and whether their services need your approval before going live. Find them at **Sell Services > Settings > Vendors**.
+These settings control how vendors join your marketplace, how many services they can create, and whether their services need your approval before going live. Find them at **Sell Services > Settings > Vendor Settings**.
 
 ![Vendor Settings Tab](../images/settings-vendors-tab.png)
 

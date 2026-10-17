@@ -183,7 +183,7 @@ the first match wins. See [Tiered Commission](../earnings-wallet/tiered-commissi
 ## Uninstall
 
 Tables are **kept** on plugin deletion unless the site owner enables
-*Delete data on uninstall* in **Sell Services > Settings > Advanced**.
+*Delete data on uninstall* in **Sell Services > Settings > System**.
 
 ## Related
 

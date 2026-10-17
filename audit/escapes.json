@@ -160,6 +160,14 @@
       "fails_on": "pre-fix Free (fatal on the missing order notice) and pre-fix Pro (5 FAIL)",
       "journey": "audit/journeys/18-forms-state-feedback.md#1",
       "now_dead_or_duplicate": "none"
+    },
+    {
+      "card": "10411923530,10408376355,10407727864,10403937289,10403453238,10403452847,10399464603,10399043338,10407788033,10402964464",
+      "class": "docs that name a screen, count, status or feature the code no longer matches; a constant that duplicated a list the admin actually reads",
+      "check": "bin/docs-audit.py [admin-paths] (tab names now match Settings::init_tabs) + tests/test-audit-log-coverage.php",
+      "fails_on": "pre-fix docs (11 admin-paths FAILs once the audit knows the Integrations and System tabs)",
+      "journey": "audit/journeys/18-forms-state-feedback.md",
+      "now_dead_or_duplicate": "AuditLogService::EVENT_TYPES deleted; get_event_labels() is the one list"
     }
   ]
 }

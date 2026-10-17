@@ -4,7 +4,7 @@ Anyone on your marketplace can apply to become a vendor and start selling servic
 
 ## Three Registration Modes
 
-You control how vendors join your marketplace from **Settings > Vendors**:
+You control how vendors join your marketplace from **Settings > Vendor Settings**:
 
 ### Open Registration
 
