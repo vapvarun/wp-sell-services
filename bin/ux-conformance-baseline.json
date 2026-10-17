@@ -1,0 +1,29 @@
+{
+    "inline-style": {
+        "src/Frontend/Shortcodes.php": 1,
+        "src/Integrations/Gateways/OfflineGateway.php": 1,
+        "src/Integrations/Standalone/StandaloneCheckoutProvider.php": 2,
+        "templates/cart/cart.php": 1,
+        "templates/order/requirements-form.php": 1,
+        "templates/partials/notifications-list.php": 1,
+        "templates/partials/vendor-portfolio.php": 1
+    },
+    "inline-onclick": {
+        "src/Frontend/UnifiedDashboard.php": 1
+    },
+    "dashicons": [],
+    "js-dialogs": [],
+    "outline-none": {
+        "assets/css/admin.css": 1,
+        "assets/css/archive-service.css": 2,
+        "assets/css/blocks.css": 3,
+        "assets/css/buyer-request.css": 1,
+        "assets/css/design-system.css": 2,
+        "assets/css/frontend.css": 5,
+        "assets/css/messaging.css": 2,
+        "assets/css/order-view.css": 1,
+        "assets/css/orders.css": 1,
+        "assets/css/single-service.css": 2,
+        "assets/css/wpss-tour.css": 2
+    }
+}

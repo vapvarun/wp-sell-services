@@ -249,6 +249,13 @@ if [ -n "$STAGED_PHP_FILES" ] && ! php bin/check-time-formatter.php; then
     exit 1
 fi
 
+# UX Foundation gate: inline <style>, onclick, Dashicons, JS dialogs and outline:none
+# may not grow past bin/ux-conformance-baseline.json.
+if [ -n "$STAGED_PHP_FILES" ] && ! php bin/check-ux-conformance.php; then
+    echo "✗ BLOCKED: a UX Foundation rule got worse. Fix it, or mark a deliberate line with ux-ok:."
+    exit 1
+fi
+
 echo ""
 echo "✓ All pre-commit checks passed!"
 exit 0
