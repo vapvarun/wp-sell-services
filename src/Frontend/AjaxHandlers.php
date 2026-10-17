@@ -2167,9 +2167,31 @@ class AjaxHandlers {
 		wp_send_json_error(
 			array(
 				'message'   => __( 'Please log in to continue to checkout.', 'wp-sell-services' ),
-				'login_url' => wp_login_url( $checkout_url ?: ( wp_get_referer() ?: home_url() ) ),
+				'login_url' => wp_login_url( $this->guest_return_url( $service_id, $checkout_url ) ),
 			)
 		);
+	}
+
+	/**
+	 * Where a guest lands after logging in.
+	 *
+	 * Only the standalone checkout rebuilds the selection from its URL. Any other rail's
+	 * checkout (WooCommerce, EDD, FluentCart) reads a cart, and nothing was put in one for
+	 * a guest, so sending them there after login showed an empty checkout and the sale was
+	 * lost. They go back to the service page to choose again.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @param int    $service_id   Service the guest was adding.
+	 * @param string $checkout_url Checkout URL built for the selection, or ''.
+	 * @return string
+	 */
+	private function guest_return_url( int $service_id, string $checkout_url ): string {
+		if ( $checkout_url && wpss_uses_standalone_payments() ) {
+			return $checkout_url;
+		}
+
+		return ( $service_id ? (string) get_permalink( $service_id ) : '' ) ?: ( wp_get_referer() ?: home_url() );
 	}
 
 	/**

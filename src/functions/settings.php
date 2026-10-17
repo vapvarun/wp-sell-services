@@ -37,7 +37,7 @@ function wpss_settings_defaults(): array {
 			'currency'                  => wpss_detect_currency_from_locale(),
 			'ecommerce_platform'        => 'auto',
 			'checkout_badges_enabled'   => true,
-			'use_marketplace_cart_link' => false,
+			'use_marketplace_cart_link' => '',
 			'checkout_account_creation' => false,
 		),
 		'wpss_commission'    => array(

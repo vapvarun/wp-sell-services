@@ -120,6 +120,14 @@
       "fails_on": "pre-fix code (type filter FAIL, then fatal: no cleanup_expired)",
       "journey": "audit/journeys/13-notification-center.md#1",
       "now_dead_or_duplicate": "NotificationService list query and the REST list/count queries now call wpss_get_user_notifications() and wpss_count_user_notifications()"
+    },
+    {
+      "card": "10407576066,10407576283,10407726798,10408190581,10408191922,10407649116",
+      "class": "a rail-specific or plan-specific seam registered in one adapter/place only, or documented and never wired",
+      "check": "tests/test-woo-rail-guest-and-cart-link.php + wp-sell-services-pro/tests/test-seams-subscriptions-carrier.php",
+      "fails_on": "pre-fix Free and Pro (guest return, cart-link default, carrier query, max_featured filter, subscribe duplicate key)",
+      "journey": "audit/journeys/14-woo-rail-and-plans.md#1",
+      "now_dead_or_duplicate": "none; woocommerce.css loses its OS-preference dark block and every hard-coded grey"
     }
   ]
 }

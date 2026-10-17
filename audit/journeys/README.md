@@ -64,8 +64,10 @@ check. `wpss_user_can_view_order()` is the correct participant check; there are
 | `11-api-write-parity.md` | the same change through the screen and the API: reviews, notifications, audit log, portfolio, Pro plans and rules | written 2026-10-18, walk pending |
 | `12-account-standing.md` | hold/resume admin only, a suspended seller finishes paid work and starts nothing new, plugin menu is admin only | written 2026-10-18, walk pending |
 | `13-notification-center.md` | notification badge, unread/type filter, stable paging, 90-day cleanup | written 2026-10-18, walk pending |
+| `14-woo-rail-and-plans.md` | guest add-to-cart on Woo, site cart link, carrier product, plan upgrade link and Max featured, requirements panel in dark | written 2026-10-18, walk pending |
 | `12-account-standing.md` | hold/resume admin only, suspended seller finishes paid work and starts nothing new, plugin menu is admin only | written 2026-10-18, walk pending |
 | `13-notification-center.md` | notification badge, unread/type filter, stable paging, 90-day cleanup | written 2026-10-18, walk pending |
+| `14-woo-rail-and-plans.md` | guest add-to-cart on Woo, site cart link, carrier product, plan upgrade link and Max featured, requirements panel in dark | written 2026-10-18, walk pending |
 | `10-vendor-withdrawal-payout.md` | request → approve → mark paid, one email per step, ledger once, 390px | written 2026-10-18, walk pending |
 
 ## Not yet written

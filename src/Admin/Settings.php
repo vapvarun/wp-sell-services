@@ -639,10 +639,10 @@ class Settings {
 			)
 		);
 
-		// Only worth showing when a second cart actually exists to be confused
-		// with — on a site without WooCommerce there is only one cart and the
-		// option would be noise.
-		if ( class_exists( 'WooCommerce' ) ) {
+		// Only worth showing when a second cart exists to be confused with AND the
+		// marketplace is the one taking payment. When WooCommerce owns checkout its
+		// cart holds the order, the link is never redirected, and the box would be inert.
+		if ( class_exists( 'WooCommerce' ) && wpss_uses_standalone_payments() ) {
 			add_settings_field(
 				'use_marketplace_cart_link',
 				__( 'Site cart link', 'wp-sell-services' ),
@@ -652,7 +652,7 @@ class Settings {
 				array(
 					'option_name' => 'wpss_general',
 					'field'       => 'use_marketplace_cart_link',
-					'label'       => __( 'Point the theme\'s cart link at the marketplace cart. Turn this on for a marketplace-only site; leave it off if you also sell WooCommerce products, or their cart link will send buyers to the wrong place.', 'wp-sell-services' ),
+					'label'       => __( 'Always point the theme\'s cart link at the marketplace cart. Left unticked, the plugin decides: marketplace cart when you sell no WooCommerce products, WooCommerce\'s cart when you do.', 'wp-sell-services' ),
 				)
 			);
 		}
@@ -3640,7 +3640,8 @@ class Settings {
 		// The checkbox sends a hidden 0, so present means "this form"; the
 		// General form no longer carries it since the Checkout tab split.
 		if ( array_key_exists( 'use_marketplace_cart_link', $input ) ) {
-			$sanitized['use_marketplace_cart_link'] = ! empty( $input['use_marketplace_cart_link'] );
+			// '' (not false) when unticked, so the derived default stays in charge.
+			$sanitized['use_marketplace_cart_link'] = empty( $input['use_marketplace_cart_link'] ) ? '' : true;
 		}
 
 		if ( array_key_exists( 'checkout_account_creation', $input ) ) {

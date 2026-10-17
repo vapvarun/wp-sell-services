@@ -98,7 +98,7 @@ You can change platforms at any time under **Settings > General**. Keep in mind:
 
 ## Site cart link
 
-Only appears when WooCommerce is active, because it only means anything then.
+Only appears when WooCommerce is active and the marketplace takes payment itself. When WooCommerce handles checkout its cart holds the order, so there is nothing to choose.
 
 With WooCommerce installed there are genuinely two carts: WooCommerce's `/cart/`
 and the marketplace's `/service-cart/`. That split is deliberate -- the
@@ -113,9 +113,10 @@ setting answers is which one your **theme's cart icon** points at.
 | Marketplace checkout, and you sell no WooCommerce products | The marketplace cart |
 | Marketplace checkout, and you *do* sell WooCommerce products | WooCommerce's cart -- two real shops, so you decide |
 
-Tick or untick it to override that in either direction. The third row is the one
-worth knowing about: if you sell both services and WooCommerce products, only
-you can say which cart the header should serve, so the plugin leaves it alone.
+Tick it to always use the marketplace cart. Left unticked, the plugin decides as
+in the table. The third row is the one worth knowing about: if you sell both
+services and WooCommerce products, only you can say which cart the header should
+serve, so the plugin leaves it alone until you tick the box.
 
 If buyers report adding a service and then finding an empty cart, this is the
 setting -- turn it on.
