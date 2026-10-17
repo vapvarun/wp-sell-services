@@ -3751,7 +3751,11 @@ class Settings {
 		$sanitized = array();
 
 		$sanitized['enable_tax']   = ! empty( $input['enable_tax'] );
-		$sanitized['tax_label']    = sanitize_text_field( $input['tax_label'] ?? __( 'Tax', 'wp-sell-services' ) );
+		$sanitized['tax_label']    = sanitize_text_field( $input['tax_label'] ?? '' );
+		// A blank label would print as " (20%)" on checkout; keep the default instead.
+		if ( '' === trim( $sanitized['tax_label'] ) ) {
+			$sanitized['tax_label'] = __( 'Tax', 'wp-sell-services' );
+		}
 		$sanitized['tax_rate']     = min( 50, max( 0, (float) ( $input['tax_rate'] ?? 0 ) ) );
 		$sanitized['tax_included'] = ! empty( $input['tax_included'] );
 

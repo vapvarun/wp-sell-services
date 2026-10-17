@@ -16,6 +16,14 @@
       "fails_on": "98d9d2bc (completed sends Approved)",
       "journey": "audit/journeys/10-vendor-withdrawal-payout.md#3",
       "now_dead_or_duplicate": "none"
+    },
+    {
+      "card": "10403205865,10403205035",
+      "class": "checkout summary re-reads the settings option instead of the priced lines; blank label falls through ?? only",
+      "check": "tests/test-multi-checkout-tax-label.php",
+      "fails_on": "pre-fix StandaloneCheckoutProvider/money.php/Settings.php (4 FAIL)",
+      "journey": "audit/journeys/06-standalone-checkout.md#8",
+      "now_dead_or_duplicate": "removed the option re-read in render_multi_checkout_form"
     }
   ]
 }

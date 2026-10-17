@@ -825,7 +825,8 @@ function wpss_calculate_tax( float $base, int $vendor_id = 0, int $service_id = 
 	$settings = get_option( 'wpss_tax', array() );
 	$enabled  = ! empty( $settings['enable_tax'] );
 	$included = ! empty( $settings['tax_included'] );
-	$label    = (string) ( $settings['tax_label'] ?? __( 'Tax', 'wp-sell-services' ) );
+	$label    = trim( (string) ( $settings['tax_label'] ?? '' ) );
+	$label    = '' !== $label ? $label : __( 'Tax', 'wp-sell-services' );
 	$rate     = $enabled ? (float) ( $settings['tax_rate'] ?? 0 ) : 0.0;
 
 	/** This filter is documented in StandaloneOrderProvider::create_order() */

@@ -1378,12 +1378,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 		$enriched_items = array();
 		$grand_total    = 0.0;
 
-		// Tax settings.
-		$tax_settings = get_option( 'wpss_tax', array() );
-		$tax_enabled  = ! empty( $tax_settings['enable_tax'] );
-		$tax_rate     = $tax_enabled ? (float) ( $tax_settings['tax_rate'] ?? 0 ) : 0;
-		$tax_included = ! empty( $tax_settings['tax_included'] );
-		$tax_label    = $tax_settings['tax_label'] ?? __( 'Tax', 'wp-sell-services' );
+		// Tax comes from the priced lines (the amount charged), never re-read from the option:
+		// a wpss_checkout_tax_rate filter changes the rate per line.
+		$tax_rates    = array();
+		$tax_included = false;
+		$tax_label    = '';
 		$tax_amount   = 0.0;
 
 		foreach ( $cart_items as $key => $item ) {
@@ -1409,6 +1408,11 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			$addons_total     = (float) $line['addons_total'];
 			$line_total       = (float) $line['total'];
 			$tax_amount      += (float) $line['tax'];
+			if ( (float) $line['tax'] > 0 ) {
+				$tax_rates[]  = (float) $line['tax_rate'];
+				$tax_included = ! empty( $line['tax_included'] );
+				$tax_label    = (string) $line['tax_label'];
+			}
 
 			$vendor        = get_userdata( $service->vendor_id );
 			$vendor_name   = $vendor ? $vendor->display_name : '';
@@ -1450,7 +1454,9 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			);
 		}
 		if ( $tax_amount > 0 ) {
-			$summary_lines[] = $this->tax_summary_line( (string) $tax_label, $tax_rate, $tax_amount, $tax_included );
+			// One rate shows as "(20%)"; lines taxed at different rates show the label alone.
+			$tax_rate        = 1 === count( array_unique( $tax_rates ) ) ? $tax_rates[0] : null;
+			$summary_lines[] = $this->tax_summary_line( $tax_label, $tax_rate, $tax_amount, $tax_included );
 		}
 
 		$this->enqueue_checkout_script();
@@ -1770,13 +1776,26 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 	 * does: listed as a plain line it read as an extra charge, and the lines no
 	 * longer added up to the total (Basecamp 10346279564).
 	 *
-	 * @param string $label    Tax label.
-	 * @param float  $rate     Tax rate in percent.
-	 * @param float  $amount   Tax amount.
-	 * @param bool   $included Whether the prices above already include it.
+	 * @param string     $label    Tax label.
+	 * @param float|null $rate  Tax rate in percent; null when the lines carry different rates.
+	 * @param float      $amount   Tax amount.
+	 * @param bool       $included Whether the prices above already include it.
 	 * @return array
 	 */
-	private function tax_summary_line( string $label, float $rate, float $amount, bool $included = false ): array {
+	private function tax_summary_line( string $label, ?float $rate, float $amount, bool $included = false ): array {
+		$label = '' !== trim( $label ) ? $label : __( 'Tax', 'wp-sell-services' );
+
+		if ( null === $rate ) {
+			return array(
+				'label'  => $included
+					/* translators: %s: tax label, e.g. VAT. */
+					? sprintf( __( '%s (included)', 'wp-sell-services' ), $label )
+					: $label,
+				'amount' => $amount,
+				'type'   => 'tax',
+			);
+		}
+
 		return array(
 			'label'  => $included
 				/* translators: 1: tax label, e.g. VAT. 2: tax rate in percent. */
