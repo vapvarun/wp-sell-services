@@ -1257,5 +1257,12 @@
     "recorder": "bin/coverage-run.sh runs every tests/test-*.php with tests/coverage/recorder.php loaded (wp --require for CLI, a temporary mu-plugin for HTTP) and writes what actually executed to audit/render-coverage.json. Run it with Pro active and again with --merge with Pro inactive.",
     "matrices": "tests/test-rest-matrix.php (every route and method: logged out, buyer, and admin inside a rolled-back transaction with outbound HTTP and mail blocked), tests/test-ajax-matrix.php (every action over real HTTP with no nonce), tests/test-render-matrix.php (every page and dashboard section per role, must reach </html>), tests/test-shortcode-block-matrix.php (every shortcode and block per viewer, no PHP warning from plugin code).",
     "rest_conversation_missing_order": "POST /orders/{order_id}/conversation/messages answers 404 rest_order_not_found for an order that does not exist; an administrator passes the permission check for any id, so it used to report a 500 conversation_unavailable."
+  },
+  "shared_helpers_1_9_0": {
+    "_note": "Time Standard helpers (src/functions/time.php). Reuse; never call wp_date/date_i18n/mysql2date/get_date_from_gmt directly (bin/check-time-formatter.php).",
+    "show": "wpss_date_label( $utc, $fallback, $format, $user_id ) is the one formatter; wpss_display_timezone() is filterable via wpss_display_timezone.",
+    "edit_fields": "wpss_datetime_input_to_utc() and wpss_datetime_local_input() are an exact pair.",
+    "reports": "wpss_display_time_sql() and wpss_site_day_sql() group report days in the display timezone.",
+    "rest": "Use the existing wpss_rest_date(); no second REST date helper."
   }
 }

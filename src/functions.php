@@ -34,6 +34,7 @@ $wpss_function_files = array(
 	'moderation',
 	'notifications',
 	'payments',
+	'time',
 	'misc',
 );
 
