@@ -227,16 +227,6 @@ class ReviewRepository extends AbstractRepository {
 		);
 	}
 
-	/**
-	 * Update review status.
-	 *
-	 * @param int    $review_id Review ID.
-	 * @param string $status    New status.
-	 * @return bool True on success.
-	 */
-	public function update_status( int $review_id, string $status ): bool {
-		return $this->update( $review_id, array( 'status' => $status ) );
-	}
 
 	/**
 	 * Increment helpful count.

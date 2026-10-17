@@ -490,7 +490,8 @@ class ReviewsController extends RestController {
 			);
 		}
 
-		$updates = array();
+		$updates    = array();
+		$new_status = null;
 
 		// Customers can update rating and review text.
 		if ( (int) $review->customer_id === get_current_user_id() ) {
@@ -510,7 +511,7 @@ class ReviewsController extends RestController {
 		if ( current_user_can( 'manage_options' ) && $request->has_param( 'status' ) ) {
 			$status = $request->get_param( 'status' );
 			if ( in_array( $status, array_keys( \WPSellServices\Models\Review::get_statuses() ), true ) ) {
-				$updates['status'] = $status;
+				$new_status = (string) $status;
 			}
 		}
 
@@ -538,6 +539,15 @@ class ReviewsController extends RestController {
 			if ( isset( $updates['rating'] ) ) {
 				self::update_rating_cache( (int) $review->service_id, (int) $review->vendor_id );
 			}
+		}
+
+		// A status change goes through the one moderation writer: star averages, audit row, hook.
+		if ( null !== $new_status && ! ( new \WPSellServices\Services\ReviewService() )->moderate( $review_id, $new_status ) ) {
+			return new WP_Error(
+				'rest_review_status_failed',
+				__( 'The review status could not be changed.', 'wp-sell-services' ),
+				array( 'status' => 500 )
+			);
 		}
 
 		$updated_review = $this->get_review( $review_id );

@@ -2442,21 +2442,8 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid notification.', 'wp-sell-services' ) ) );
 		}
 
-		global $wpdb;
-
-		$wpdb->update(
-			$wpdb->prefix . 'wpss_notifications',
-			array(
-				'is_read' => 1,
-				'read_at' => current_time( 'mysql', true ),
-			),
-			array(
-				'id'      => $notification_id,
-				'user_id' => $user_id,
-			),
-			array( '%d', '%s' ),
-			array( '%d', '%d' )
-		);
+		// The service owns the write, the read_at stamp and the unread-badge cache.
+		( new \WPSellServices\Services\NotificationService() )->mark_as_read( $notification_id, $user_id );
 
 		wp_send_json_success();
 	}
@@ -2471,21 +2458,7 @@ class AjaxHandlers {
 
 		$user_id = get_current_user_id();
 
-		global $wpdb;
-
-		$wpdb->update(
-			$wpdb->prefix . 'wpss_notifications',
-			array(
-				'is_read' => 1,
-				'read_at' => current_time( 'mysql', true ),
-			),
-			array(
-				'user_id' => $user_id,
-				'is_read' => 0,
-			),
-			array( '%d', '%s' ),
-			array( '%d', '%d' )
-		);
+		( new \WPSellServices\Services\NotificationService() )->mark_all_as_read( $user_id );
 
 		wp_send_json_success( array( 'message' => __( 'All notifications marked as read.', 'wp-sell-services' ) ) );
 	}

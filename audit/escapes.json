@@ -40,6 +40,22 @@
       "fails_on": "pre-fix Settings.php (4 FAIL)",
       "journey": "audit/journeys/10-vendor-withdrawal-payout.md#6",
       "now_dead_or_duplicate": "none"
+    },
+    {
+      "card": "10399042982",
+      "class": "a side effect lives in a listener that only loads on admin screens, so any other door skips it",
+      "check": "tests/test-review-status-rest.php",
+      "fails_on": "pre-fix ReviewsController/ReviewService (4 FAIL)",
+      "journey": "audit/journeys/11-api-write-parity.md#1",
+      "now_dead_or_duplicate": "ReviewModerationPage::recompute_rating_on_moderation and its listener, ReviewRepository::update_status (no caller)"
+    },
+    {
+      "card": "10403105565",
+      "class": "one flow, two implementations: AJAX wrote the table directly and skipped the service",
+      "check": "tests/test-notification-read-at.php",
+      "fails_on": "pre-fix NotificationService/AjaxHandlers (4 FAIL)",
+      "journey": "audit/journeys/11-api-write-parity.md#2",
+      "now_dead_or_duplicate": "two direct $wpdb->update blocks in AjaxHandlers"
     }
   ]
 }

@@ -206,9 +206,10 @@ class NotificationService {
 	 * Mark notification as read.
 	 *
 	 * @param int $notification_id Notification ID.
+	 * @param int $owner_id        Only touch this member's row; 0 when the caller already checked ownership.
 	 * @return bool
 	 */
-	public function mark_as_read( int $notification_id ): bool {
+	public function mark_as_read( int $notification_id, int $owner_id = 0 ): bool {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpss_notifications';
 
@@ -219,10 +220,20 @@ class NotificationService {
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$where = array( 'id' => $notification_id );
+
+		// A caller acting for one member (AJAX) passes them, so it can only touch their own rows.
+		if ( $owner_id > 0 ) {
+			$where['user_id'] = $owner_id;
+		}
+
 		$result = (bool) $wpdb->update(
 			$table,
-			array( 'is_read' => 1 ),
-			array( 'id' => $notification_id )
+			array(
+				'is_read' => 1,
+				'read_at' => gmdate( 'Y-m-d H:i:s' ),
+			),
+			$where
 		);
 
 		if ( $result && $user_id ) {
@@ -245,7 +256,10 @@ class NotificationService {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = (bool) $wpdb->update(
 			$table,
-			array( 'is_read' => 1 ),
+			array(
+				'is_read' => 1,
+				'read_at' => gmdate( 'Y-m-d H:i:s' ),
+			),
 			array(
 				'user_id' => $user_id,
 				'is_read' => 0,
