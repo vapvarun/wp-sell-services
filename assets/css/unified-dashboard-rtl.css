@@ -2815,6 +2815,7 @@ select.wpss-input option,
 	border-top: 1px solid var(--wpss-border, #e5e7eb);
 	width: 100%;
 	max-width: 480px;
+	margin-inline: auto;
 }
 
 .wpss-empty-state__categories-label {

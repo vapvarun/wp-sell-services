@@ -915,6 +915,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			 * stick; the cards below it pass underneath.
 			 */
 			.wpss-checkout-page .wpss-co-card--summary.wpss-sticky { z-index: 2; }
+			.wpss-checkout-page .wpss-co-aside > :not(.wpss-co-card--summary) { position: relative; z-index: 3; background: var(--wpss-surface, var(--wpss-bg, #fff)); }
 
 			@media (max-width: 1024px) {
 				.wpss-checkout-page .wpss-layout--sidebar-right { display: flex; flex-direction: column; }

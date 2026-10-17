@@ -144,6 +144,14 @@
       "fails_on": "pre-fix CSS/JS/templates (9 FAIL) and the .wpss-btn modal-close scan (2 offenders)",
       "journey": "audit/journeys/16-dark-mode-and-icons.md#1",
       "now_dead_or_duplicate": "none; new hook class wpss-modal-dismiss for text buttons"
+    },
+    {
+      "card": "10411948180,10384469084,10398652904,10384248570,10379783717,10380369422,10384895523,10384766482",
+      "class": "CSS written on one surface but needed on another, hidden state that depends on a late stylesheet, modals centred in the full viewport under a sticky theme header, grid children that widen their track",
+      "check": "tests/test-layout-surface-css.php",
+      "fails_on": "pre-fix CSS/JS/templates (12 FAIL)",
+      "journey": "audit/journeys/17-layout-per-surface.md#1",
+      "now_dead_or_duplicate": "breadcrumb rules removed from single-service.css (now in design-system.css)"
     }
   ]
 }

@@ -2618,6 +2618,16 @@ h2.wpss-settings-subhead__title {
 	margin-top: 10px;
 }
 
+.wpss-vacation-message label,
+.wpss-vacation-return-date label {
+	display: block;
+	margin-bottom: 4px;
+}
+
+.wpss-vacation-return-date {
+	margin-top: 10px;
+}
+
 .wpss-vacation-message textarea {
 	width: 100%;
 	max-width: 400px;
@@ -4054,4 +4064,16 @@ button.wpss-change-status:focus {
 .wpss-reports-account__menu .button.button-link-delete:focus {
 	color: var(--wpss-admin-white);
 	background: var(--wpss-admin-danger);
+}
+
+/* Review moderation search: the placeholder must fit. */
+.wpss-review-search input[type="search"] {
+	min-width: 240px;
+}
+
+@media (max-width: 640px) {
+	.wpss-review-search input[type="search"] {
+		min-width: 0;
+		width: 100%;
+	}
 }

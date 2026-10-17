@@ -1700,3 +1700,55 @@ input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="
 .wpss-evidence-filename{font-size:12px;color:var(--wpss-gray-500,#6b7280)}
 .wpss-evidence-locked{font-size:13px;color:var(--wpss-gray-500,#6b7280);margin:12px 0 0}
 @media (max-width:480px){.wpss-evidence-bubble{max-width:100%}.wpss-add-evidence-form__row .wpss-btn--primary{margin-inline-start:0;width:100%}}
+
+/* ==========================================================================
+   Breadcrumb
+   ========================================================================== */
+
+.wpss-breadcrumb {
+	margin-bottom: 1rem;
+}
+
+.wpss-breadcrumb-list {
+	display: flex;
+	flex-wrap: wrap;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	font-size: 0.875rem;
+}
+
+.wpss-breadcrumb-item {
+	display: flex;
+	align-items: center;
+}
+
+.wpss-breadcrumb-item:not(:last-child)::after {
+	content: "/";
+	margin: 0 0.5rem;
+	color: var(--wpss-text-muted);
+}
+
+.wpss-breadcrumb-item a {
+	color: var(--wpss-text-muted);
+	text-decoration: none;
+}
+
+.wpss-breadcrumb-item a:hover {
+	color: var(--wpss-primary-accent);
+}
+
+.wpss-breadcrumb-current {
+	color: var(--wpss-text);
+	font-weight: 500;
+}
+
+/* Modals clear a fixed/sticky theme header. WPSS.showModal measures what covers the
+   top edge into --wpss-modal-offset. Two classes beat every dialog's own
+   max-height: 90vh, whichever stylesheet loads last. */
+.wpss-modal .wpss-modal__dialog,
+.wpss-modal .wpss-modal-dialog,
+.wpss-modal .wpss-modal-content {
+	margin-top: var(--wpss-modal-offset, 0px);
+	max-height: calc(100vh - var(--wpss-modal-offset, 0px) - 2 * var(--wpss-space-5, 20px));
+}

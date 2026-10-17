@@ -665,8 +665,9 @@
 		const $modal = $('#' + modalId);
 		if ($modal.length) {
 			WPSS._lastFocused = document.activeElement;
-			$modal.addClass('wpss-modal-open');
+			$modal.prop('hidden', false).addClass('wpss-modal-open');
 			$('body').addClass('wpss-modal-active');
+			WPSS.offsetModalFromHeader($modal[0]);
 
 			// Packet H: rehydrate any <i data-lucide="…"> inside the modal. The
 			// modal body may have been rendered hidden (display:none) at load
@@ -700,11 +701,31 @@
 	};
 
 	/**
+	 * Keep a modal clear of a fixed/sticky theme header: find what covers the
+	 * top edge and hand its height to the CSS as --wpss-modal-offset.
+	 */
+	WPSS.offsetModalFromHeader = function(modal) {
+		var offset = 0;
+		var probe = document.elementsFromPoint(Math.round(window.innerWidth / 2), 2);
+		probe.forEach(function(el) {
+			if (modal.contains(el) || el === document.body || el === document.documentElement) {
+				return;
+			}
+			var pos = window.getComputedStyle(el).position;
+			if (pos === 'fixed' || pos === 'sticky') {
+				offset = Math.max(offset, Math.ceil(el.getBoundingClientRect().bottom));
+			}
+		});
+		modal.style.setProperty('--wpss-modal-offset', offset + 'px');
+	};
+
+	/**
 	 * Hide modal utility and restore focus.
 	 */
 	WPSS.hideModal = function(modalId) {
 		const $modal = modalId ? $('#' + modalId) : $('.wpss-modal.wpss-modal-open');
 		$modal.removeClass('wpss-modal-open').off('keydown.wpss-trap');
+		$modal.filter('#wpss-report-modal').prop('hidden', true);
 		$('body').removeClass('wpss-modal-active');
 
 		// Restore focus.
