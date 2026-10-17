@@ -444,10 +444,20 @@ class UnifiedDashboard {
 	}
 
 	/**
+	 * Whether a user is a vendor whose vendor account is suspended.
+	 *
+	 * @param int $user_id User ID.
+	 * @return bool
+	 */
+	private function is_suspended_vendor( int $user_id ): bool {
+		return $this->vendor_service->is_vendor( $user_id ) && 'suspended' === $this->vendor_service->get_vendor_status( $user_id );
+	}
+
+	/**
 	 * Check if user can access a section.
 	 *
-	 * Vendor-only sections require the user to be an active (approved) vendor.
-	 * Pending vendors are not granted access to selling sections.
+	 * Vendor-only sections require an active (approved) vendor. Pending vendors
+	 * are refused; a suspended vendor keeps Sales Orders to finish paid work.
 	 *
 	 * @param string $section Section slug.
 	 * @return bool True if accessible.
@@ -457,10 +467,12 @@ class UnifiedDashboard {
 		$user_id              = get_current_user_id();
 
 		// A vendor-only section requires an active (approved) vendor — pending
-		// vendors and non-vendors are refused outright.
+		// vendors and non-vendors are refused outright. A suspended vendor keeps
+		// Sales Orders only: paid work in flight must still be finishable.
 		if ( in_array( $section, $vendor_only_sections, true )
 			&& ! ( $this->vendor_service->is_vendor( $user_id )
-				&& 'active' === $this->vendor_service->get_vendor_status( $user_id ) ) ) {
+				&& 'active' === $this->vendor_service->get_vendor_status( $user_id ) )
+			&& ! ( 'sales' === $section && $this->is_suspended_vendor( $user_id ) ) ) {
 			return false;
 		}
 
@@ -512,6 +524,18 @@ class UnifiedDashboard {
 				),
 			),
 		);
+
+		if ( ! $is_active && $this->is_suspended_vendor( $user_id ) ) {
+			$sections['selling'] = array(
+				'label' => __( 'Selling', 'wp-sell-services' ),
+				'items' => array(
+					'sales' => array(
+						'icon'  => 'receipt',
+						'label' => __( 'Sales Orders', 'wp-sell-services' ),
+					),
+				),
+			);
+		}
 
 		if ( $is_active ) {
 			$sections['selling'] = array(

@@ -80,6 +80,30 @@
       "fails_on": "pre-fix Pro controllers (13 + 3 FAIL)",
       "journey": "audit/journeys/11-api-write-parity.md#5",
       "now_dead_or_duplicate": "none; also fixed the same defect on PUT /stripe-connect/settings (fee alone switched Connect off)"
+    },
+    {
+      "card": "10399370449",
+      "class": "a transition the docs reserve for the site owner was open to the seller",
+      "check": "tests/test-account-standing.php",
+      "fails_on": "pre-fix OrdersController (hold/resume vendor grant)",
+      "journey": "audit/journeys/12-account-standing.md#1",
+      "now_dead_or_duplicate": "vendor hold/resume branches in get_available_actions removed"
+    },
+    {
+      "card": "10384354109",
+      "class": "standing checked at a few call sites, not in the service that does the work",
+      "check": "tests/test-account-standing.php",
+      "fails_on": "pre-fix ProposalService / ConversationService (no standing_block)",
+      "journey": "audit/journeys/12-account-standing.md#3",
+      "now_dead_or_duplicate": "none; REST send_message comment rewritten to the pre-sale-only rule"
+    },
+    {
+      "card": "10379867128",
+      "class": "top-level menu offered to every edit_posts user while every page behind it needs manage_options",
+      "check": "tests/test-account-standing.php",
+      "fails_on": "pre-fix Admin::add_admin_menu cap",
+      "journey": "audit/journeys/12-account-standing.md#4",
+      "now_dead_or_duplicate": "none"
     }
   ]
 }

@@ -62,6 +62,8 @@ check. `wpss_user_can_view_order()` is the correct participant check; there are
 | `08-mobile-app-session.md` | login, token expiry, revoke, payload contract | passes |
 | `09-request-files-to-order.md` | request file → order page, requirements merge, REST, another buyer | passes |
 | `11-api-write-parity.md` | the same change through the screen and the API: reviews, notifications, audit log, portfolio, Pro plans and rules | written 2026-10-18, walk pending |
+| `12-account-standing.md` | hold/resume admin only, a suspended seller finishes paid work and starts nothing new, plugin menu is admin only | written 2026-10-18, walk pending |
+| `12-account-standing.md` | hold/resume admin only, suspended seller finishes paid work and starts nothing new, plugin menu is admin only | written 2026-10-18, walk pending |
 | `10-vendor-withdrawal-payout.md` | request → approve → mark paid, one email per step, ledger once, 390px | written 2026-10-18, walk pending |
 
 ## Not yet written

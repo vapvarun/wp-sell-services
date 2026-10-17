@@ -41,6 +41,8 @@ $fresh    = static function (): void {
 $buyer    = wp_insert_user( array( 'user_login' => 'dev_f1_req_buyer', 'user_pass' => wp_generate_password(), 'user_email' => 'dev_f1_req_buyer@example.test' ) );
 $vendor   = wp_insert_user( array( 'user_login' => 'dev_f1_req_vendor', 'user_pass' => wp_generate_password(), 'user_email' => 'dev_f1_req_vendor@example.test' ) );
 $vendor2  = wp_insert_user( array( 'user_login' => 'dev_f1_req_vendor2', 'user_pass' => wp_generate_password(), 'user_email' => 'dev_f1_req_vendor2@example.test' ) );
+wpss_test_activate_vendor( (int) $vendor );
+wpss_test_activate_vendor( (int) $vendor2 );
 $seeded   = array();
 foreach ( array( 'dev_f1 proposal count seed A', 'dev_f1 proposal count seed B' ) as $title ) {
 	$seeded[] = wp_insert_post( array( 'post_type' => 'wpss_request', 'post_status' => 'publish', 'post_title' => $title, 'post_content' => 'Need a logo.', 'post_author' => $buyer ) );

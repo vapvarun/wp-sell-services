@@ -498,11 +498,14 @@ class ConversationsController extends RestController {
 			return $blocked;
 		}
 
-		// Standing is deliberately NOT checked here. Messaging is how a member
-		// finishes an order someone already paid for, and cutting it off would
-		// strand the counterparty mid-delivery with no way to reach the person
-		// holding their money. Suspension stops new supply; it does not sever a
-		// conversation about work in flight.
+		// Standing is checked only for pre-sale threads. Messaging inside an order
+		// is how a member finishes work someone already paid for; cutting it off
+		// would strand the counterparty mid-delivery. Suspension stops new
+		// activity, not work in flight (ConversationService::standing_block()).
+		$standing = $this->conversation_service->standing_block( $conversation_id, $user_id );
+		if ( $standing ) {
+			return $standing;
+		}
 
 		// Multipart file uploads (the order/dashboard composer posts raw files
 		// as attachments[]). Validate + ingest them through the shared helper so

@@ -101,6 +101,13 @@ class ProposalService {
 	public function submit( int $request_id, int $vendor_id, array $data ): int|false|\WP_Error {
 		global $wpdb;
 
+		// Bidding is taking on new work: suspended, pending and rejected sellers are refused here so
+		// every caller (AJAX, REST, Pro) inherits it. See wpss_vendor_status_block().
+		$standing = wpss_vendor_status_block( $vendor_id );
+		if ( $standing ) {
+			return $standing;
+		}
+
 		// Check if request exists and is open.
 		$request_service = new BuyerRequestService();
 		$request         = $request_service->get( $request_id );

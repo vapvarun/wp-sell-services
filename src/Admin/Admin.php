@@ -1713,7 +1713,7 @@ class Admin {
 		add_menu_page(
 			__( 'WP Sell Services', 'wp-sell-services' ),
 			$menu_label,
-			'edit_posts',
+			'manage_options',
 			'wp-sell-services',
 			array( $this, 'render_dashboard_page' ),
 			$menu_icon,

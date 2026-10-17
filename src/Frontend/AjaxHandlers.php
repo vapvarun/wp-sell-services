@@ -757,6 +757,11 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'You do not have access to this conversation.', 'wp-sell-services' ) ) );
 		}
 
+		$standing = $conversation_service->standing_block( $conversation_id, $user_id );
+		if ( $standing ) {
+			wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
+		}
+
 		$message = $conversation_service->send_message( $conversation_id, $user_id, $content );
 
 		if ( ! $message ) {
@@ -1958,6 +1963,11 @@ class AjaxHandlers {
 
 		if ( ! $user_id ) {
 			wp_send_json_error( array( 'message' => __( 'You must be logged in to contact vendors.', 'wp-sell-services' ) ) );
+		}
+
+		$standing = wpss_account_status_block( $user_id );
+		if ( $standing ) {
+			wp_send_json_error( array( 'message' => $standing->get_error_message() ) );
 		}
 
 		// Rate limiting.

@@ -1018,8 +1018,9 @@ class OrdersController extends RestController {
 				break;
 
 			case 'hold':
-				if ( ! $is_vendor && ! $is_admin ) {
-					$error = __( 'Only the vendor or admin can put an order on hold.', 'wp-sell-services' );
+				// Admin only: a seller pausing their own deadline clock is a loophole (see order-lifecycle docs).
+				if ( ! $is_admin ) {
+					$error = __( 'Only an administrator can put an order on hold.', 'wp-sell-services' );
 				} elseif ( 'in_progress' !== $order->status ) {
 					$error = __( 'Only in-progress orders can be put on hold.', 'wp-sell-services' );
 				} else {
@@ -1042,8 +1043,8 @@ class OrdersController extends RestController {
 				break;
 
 			case 'resume':
-				if ( ! $is_vendor && ! $is_admin ) {
-					$error = __( 'Only the vendor or admin can resume an order.', 'wp-sell-services' );
+				if ( ! $is_admin ) {
+					$error = __( 'Only an administrator can resume an order.', 'wp-sell-services' );
 				} elseif ( 'on_hold' !== $order->status ) {
 					$error = __( 'Only on-hold orders can be resumed.', 'wp-sell-services' );
 				} else {
@@ -2134,7 +2135,7 @@ class OrdersController extends RestController {
 				if ( $is_vendor || $is_admin ) {
 					$actions[] = 'deliver';
 				}
-				if ( ( $is_vendor || $is_admin ) && 'in_progress' === $order->status ) {
+				if ( $is_admin && 'in_progress' === $order->status ) {
 					$actions[] = 'hold';
 				}
 				if ( $is_customer && 'in_progress' === $order->status && $this->can_buyer_cancel_in_progress( $order ) ) {
@@ -2181,7 +2182,7 @@ class OrdersController extends RestController {
 				break;
 
 			case 'on_hold':
-				if ( $is_vendor || $is_admin ) {
+				if ( $is_admin ) {
 					$actions[] = 'resume';
 				}
 				if ( $is_admin ) {

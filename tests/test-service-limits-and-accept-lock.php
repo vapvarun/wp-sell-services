@@ -120,6 +120,7 @@ $vendor_id = wp_insert_user(
 		'role'       => 'subscriber',
 	)
 );
+wpss_test_activate_vendor( (int) $vendor_id );
 $requests  = new BuyerRequestService();
 $proposals = new ProposalService();
 $req_id    = $requests->create(
