@@ -72,6 +72,14 @@
       "fails_on": "pre-fix PortfolioController (9 FAIL)",
       "journey": "audit/journeys/11-api-write-parity.md#4",
       "now_dead_or_duplicate": "PortfolioController raw INSERT/UPDATE/DELETE/reorder and its own can_feature_another (moved to the service)"
+    },
+    {
+      "card": "10408191220,10407786815,10407787331,10407787480",
+      "class": "a REST schema default makes has_param() true, so an update treats every default as sent; whole-object validation on PUT",
+      "check": "wp-sell-services-pro/tests/test-rest-partial-update.php + tests/test-no-defaults-on-update-routes.php",
+      "fails_on": "pre-fix Pro controllers (13 + 3 FAIL)",
+      "journey": "audit/journeys/11-api-write-parity.md#5",
+      "now_dead_or_duplicate": "none; also fixed the same defect on PUT /stripe-connect/settings (fee alone switched Connect off)"
     }
   ]
 }

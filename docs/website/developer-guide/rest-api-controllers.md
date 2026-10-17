@@ -36,6 +36,14 @@ The four `wpss-pro/v1` routes are:
 Build every client against `wpss/v1`. Prefixing a Pro endpoint with
 `wpss-pro/v1` returns `rest_no_route` on every single one.
 
+## Updating with PUT
+
+A `PUT` changes only the fields you send; everything else keeps its stored
+value. `PUT /subscription-plans/{id}` with `{"is_active": false}` switches a plan
+off and leaves its name, price and limits alone. Send a field to change it, and
+send `null` or an empty value to clear one that can be cleared (a plan's
+`commission_override`). Defaults apply on create only.
+
 ## Route presence is conditional
 
 Two things change which routes exist on a given site, so enumerate rather than

@@ -18,6 +18,11 @@ specific vendor you hand-picked.
 | **Seller level** | The vendor's level (New, Rising, Top Rated) | Reward Top Rated sellers with 10% instead of 20% |
 | **Volume** | The vendor's sales volume | Vendors over $10k/month drop to 12% |
 
+Every rule needs its condition: a category rule needs at least one category, a
+seller-level rule a level, and a volume rule an earnings threshold above zero.
+A rule without one is refused when you save it, instead of being saved and never
+applying.
+
 ## Creating rules
 
 1. Go to **Sell Services > Settings > Commission & Tax**.
