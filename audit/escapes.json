@@ -1,5 +1,21 @@
 {
   "_note": "One row per fixed card. A card does not go to Done without a row. 'check' must fail on the pre-fix commit (proof in 'fails_on'); 'journey' is the audit/journeys file and check line that walks it in the browser.",
-  "_schema": { "card": "Basecamp card id", "class": "root-cause shape fixed (not the instance)", "check": "tests/ or bin/ script, or journey check id", "fails_on": "commit where the check was shown red", "journey": "audit/journeys/NN-*.md#check", "now_dead_or_duplicate": "code removed in the same change, or 'none'" },
-  "escapes": []
+  "_schema": {
+    "card": "Basecamp card id",
+    "class": "root-cause shape fixed (not the instance)",
+    "check": "tests/ or bin/ script, or journey check id",
+    "fails_on": "commit where the check was shown red",
+    "journey": "audit/journeys/NN-*.md#check",
+    "now_dead_or_duplicate": "code removed in the same change, or 'none'"
+  },
+  "escapes": [
+    {
+      "card": "10402904790",
+      "class": "a status change reuses another status's message instead of owning its own",
+      "check": "tests/test-withdrawal-status-emails.php",
+      "fails_on": "98d9d2bc (completed sends Approved)",
+      "journey": "audit/journeys/10-vendor-withdrawal-payout.md#3",
+      "now_dead_or_duplicate": "none"
+    }
+  ]
 }

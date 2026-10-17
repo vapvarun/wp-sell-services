@@ -44,6 +44,7 @@ class EmailService {
 	public const TYPE_WITHDRAWAL_AUTO        = 'withdrawal_auto';
 	public const TYPE_VENDOR_CONTACT         = 'vendor_contact';
 	public const TYPE_WITHDRAWAL_APPROVED    = 'withdrawal_approved';
+	public const TYPE_WITHDRAWAL_COMPLETED   = 'withdrawal_completed';
 	public const TYPE_WITHDRAWAL_REJECTED    = 'withdrawal_rejected';
 	public const TYPE_PROPOSAL_SUBMITTED     = 'proposal_submitted';
 	public const TYPE_PROPOSAL_ACCEPTED      = 'proposal_accepted';
@@ -1813,26 +1814,27 @@ class EmailService {
 		$amount = wpss_format_price( (float) $withdrawal->amount );
 
 		if ( 'rejected' === $status ) {
-			$subject = sprintf(
-				/* translators: 1: platform name, 2: amount */
-				__( '[%1$s] Withdrawal Request for %2$s Rejected', 'wp-sell-services' ),
-				wpss_get_platform_name(),
-				$amount
-			);
-			$type = self::TYPE_WITHDRAWAL_REJECTED;
+			$type    = self::TYPE_WITHDRAWAL_REJECTED;
+			$heading = __( 'Withdrawal Rejected', 'wp-sell-services' );
+			/* translators: 1: platform name, 2: amount */
+			$subject = __( '[%1$s] Withdrawal Request for %2$s Rejected', 'wp-sell-services' );
+		} elseif ( 'completed' === $status ) {
+			$type    = self::TYPE_WITHDRAWAL_COMPLETED;
+			$heading = __( 'Withdrawal Paid', 'wp-sell-services' );
+			/* translators: 1: platform name, 2: amount */
+			$subject = __( '[%1$s] Withdrawal of %2$s Paid', 'wp-sell-services' );
 		} else {
-			$subject = sprintf(
-				/* translators: 1: platform name, 2: amount */
-				__( '[%1$s] Withdrawal of %2$s Approved', 'wp-sell-services' ),
-				wpss_get_platform_name(),
-				$amount
-			);
-			$type = self::TYPE_WITHDRAWAL_APPROVED;
+			$type    = self::TYPE_WITHDRAWAL_APPROVED;
+			$heading = __( 'Withdrawal Approved', 'wp-sell-services' );
+			/* translators: 1: platform name, 2: amount */
+			$subject = __( '[%1$s] Withdrawal of %2$s Approved', 'wp-sell-services' );
 		}
+
+		$subject = sprintf( $subject, wpss_get_platform_name(), $amount );
 
 		$template_vars = array(
 			'recipient'     => $vendor,
-			'email_heading' => 'rejected' === $status ? __( 'Withdrawal Rejected', 'wp-sell-services' ) : __( 'Withdrawal Approved', 'wp-sell-services' ),
+			'email_heading' => $heading,
 			'amount'        => $amount,
 			'withdrawal_id' => $withdrawal_id,
 			'status'        => $status,
@@ -2316,6 +2318,7 @@ class EmailService {
 			self::TYPE_WITHDRAWAL_AUTO        => 'withdrawal-auto.php',
 			self::TYPE_VENDOR_CONTACT         => 'vendor-contact.php',
 			self::TYPE_WITHDRAWAL_APPROVED    => 'withdrawal-approved.php',
+			self::TYPE_WITHDRAWAL_COMPLETED   => 'withdrawal-completed.php',
 			self::TYPE_WITHDRAWAL_REJECTED    => 'withdrawal-rejected.php',
 			self::TYPE_PROPOSAL_SUBMITTED     => 'generic.php',
 			self::TYPE_PROPOSAL_ACCEPTED      => 'generic.php',
@@ -2451,6 +2454,7 @@ class EmailService {
 			self::TYPE_WITHDRAWAL_REQUESTED   => 'withdrawals',
 			self::TYPE_WITHDRAWAL_AUTO        => 'withdrawals',
 			self::TYPE_WITHDRAWAL_APPROVED    => 'withdrawals',
+			self::TYPE_WITHDRAWAL_COMPLETED   => 'withdrawals',
 			self::TYPE_WITHDRAWAL_REJECTED    => 'withdrawals',
 			self::TYPE_PROPOSAL_SUBMITTED     => 'proposals',
 			self::TYPE_PROPOSAL_ACCEPTED      => 'proposals',

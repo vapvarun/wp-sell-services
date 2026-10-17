@@ -61,11 +61,12 @@ check. `wpss_user_can_view_order()` is the correct participant check; there are
 | `07-service-page-media.md` | gallery: image first, video thumb, no render writes | passes |
 | `08-mobile-app-session.md` | login, token expiry, revoke, payload contract | passes |
 | `09-request-files-to-order.md` | request file → order page, requirements merge, REST, another buyer | passes |
+| `10-vendor-withdrawal-payout.md` | request → approve → mark paid, one email per step, ledger once, 390px | written 2026-10-18, walk pending |
 
 ## Not yet written
 
 Worth adding as the remaining cards are cleared: messages/unread, review
-submission and display, withdrawal + payout, milestone contracts, extensions,
+submission and display, milestone contracts, extensions,
 and the three non-standalone rails (WooCommerce, EDD, FluentCart).
 
 ## Two things these journeys have taught, the hard way

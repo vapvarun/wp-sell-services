@@ -606,8 +606,8 @@ These filters let you customize outgoing email content without modifying templat
 
 | Filter | Parameters | File |
 |--------|-----------|------|
-| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2106` |
-| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2082` |
+| `wpss_email_from_name` | `string $from_name` | `src/Services/EmailService.php:2108` |
+| `wpss_email_header_vars` | `array $template_vars, string $type` | `src/Services/EmailService.php:2084` |
 | `wpss_vendor_pending_email_content` | `string $content, object $user, string $platform_name` | `src/Services/NotificationService.php:1570` |
 
 ```php

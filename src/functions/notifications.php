@@ -316,6 +316,7 @@ function wpss_notification_type_settings(): array {
 		'withdrawal_requested'       => 'notify_withdrawal_requested',
 		'withdrawal_auto'            => 'notify_withdrawal_requested',
 		'withdrawal_approved'        => 'notify_withdrawal_approved',
+		'withdrawal_completed'       => 'notify_withdrawal_completed',
 		'withdrawal_rejected'        => 'notify_withdrawal_rejected',
 		// Proposals, milestones, extensions.
 		'proposal_submitted'         => 'notify_proposal_submitted',

@@ -93,31 +93,32 @@ class Notification {
 	/**
 	 * Notification types.
 	 */
-	public const TYPE_ORDER_NEW           = 'order_new';
-	public const TYPE_ORDER_ACCEPTED      = 'order_accepted';
-	public const TYPE_ORDER_IN_PROGRESS   = 'order_in_progress';
-	public const TYPE_ORDER_DELIVERED     = 'order_delivered';
-	public const TYPE_ORDER_COMPLETED     = 'order_completed';
-	public const TYPE_ORDER_CANCELLED     = 'order_cancelled';
-	public const TYPE_ORDER_REVISION      = 'order_revision';
-	public const TYPE_ORDER_LATE          = 'order_late';
-	public const TYPE_MESSAGE_NEW         = 'message_new';
-	public const TYPE_REVIEW_RECEIVED     = 'review_received';
-	public const TYPE_DISPUTE_OPENED      = 'dispute_opened';
-	public const TYPE_DISPUTE_RESPONSE    = 'dispute_response';
-	public const TYPE_DISPUTE_RESOLVED    = 'dispute_resolved';
-	public const TYPE_PROPOSAL_RECEIVED   = 'proposal_received';
-	public const TYPE_PROPOSAL_ACCEPTED   = 'proposal_accepted';
-	public const TYPE_PROPOSAL_REJECTED   = 'proposal_rejected';
-	public const TYPE_EARNINGS_CLEARED    = 'earnings_cleared';
-	public const TYPE_WITHDRAWAL_APPROVED = 'withdrawal_approved';
-	public const TYPE_WITHDRAWAL_REJECTED = 'withdrawal_rejected';
-	public const TYPE_SERVICE_APPROVED    = 'service_approved';
-	public const TYPE_SERVICE_REJECTED    = 'service_rejected';
-	public const TYPE_DEADLINE_REMINDER   = 'deadline_reminder';
-	public const TYPE_EXTENSION_REQUESTED = 'extension_requested';
-	public const TYPE_EXTENSION_APPROVED  = 'extension_approved';
-	public const TYPE_EXTENSION_REJECTED  = 'extension_rejected';
+	public const TYPE_ORDER_NEW            = 'order_new';
+	public const TYPE_ORDER_ACCEPTED       = 'order_accepted';
+	public const TYPE_ORDER_IN_PROGRESS    = 'order_in_progress';
+	public const TYPE_ORDER_DELIVERED      = 'order_delivered';
+	public const TYPE_ORDER_COMPLETED      = 'order_completed';
+	public const TYPE_ORDER_CANCELLED      = 'order_cancelled';
+	public const TYPE_ORDER_REVISION       = 'order_revision';
+	public const TYPE_ORDER_LATE           = 'order_late';
+	public const TYPE_MESSAGE_NEW          = 'message_new';
+	public const TYPE_REVIEW_RECEIVED      = 'review_received';
+	public const TYPE_DISPUTE_OPENED       = 'dispute_opened';
+	public const TYPE_DISPUTE_RESPONSE     = 'dispute_response';
+	public const TYPE_DISPUTE_RESOLVED     = 'dispute_resolved';
+	public const TYPE_PROPOSAL_RECEIVED    = 'proposal_received';
+	public const TYPE_PROPOSAL_ACCEPTED    = 'proposal_accepted';
+	public const TYPE_PROPOSAL_REJECTED    = 'proposal_rejected';
+	public const TYPE_EARNINGS_CLEARED     = 'earnings_cleared';
+	public const TYPE_WITHDRAWAL_APPROVED  = 'withdrawal_approved';
+	public const TYPE_WITHDRAWAL_COMPLETED = 'withdrawal_completed';
+	public const TYPE_WITHDRAWAL_REJECTED  = 'withdrawal_rejected';
+	public const TYPE_SERVICE_APPROVED     = 'service_approved';
+	public const TYPE_SERVICE_REJECTED     = 'service_rejected';
+	public const TYPE_DEADLINE_REMINDER    = 'deadline_reminder';
+	public const TYPE_EXTENSION_REQUESTED  = 'extension_requested';
+	public const TYPE_EXTENSION_APPROVED   = 'extension_approved';
+	public const TYPE_EXTENSION_REJECTED   = 'extension_rejected';
 
 	/**
 	 * Create from database row.
@@ -193,31 +194,32 @@ class Notification {
 	 */
 	public function get_icon_class(): string {
 		$icons = [
-			self::TYPE_ORDER_NEW           => 'shopping-cart',
-			self::TYPE_ORDER_ACCEPTED      => 'check-circle-2',
-			self::TYPE_ORDER_IN_PROGRESS   => 'refresh-cw',
-			self::TYPE_ORDER_DELIVERED     => 'check',
-			self::TYPE_ORDER_COMPLETED     => 'party-popper',
-			self::TYPE_ORDER_CANCELLED     => 'x-circle',
-			self::TYPE_ORDER_REVISION      => 'undo',
-			self::TYPE_ORDER_LATE          => 'triangle-alert',
-			self::TYPE_MESSAGE_NEW         => 'mail',
-			self::TYPE_REVIEW_RECEIVED     => 'star',
-			self::TYPE_DISPUTE_OPENED      => 'flag',
-			self::TYPE_DISPUTE_RESPONSE    => 'message-square',
-			self::TYPE_DISPUTE_RESOLVED    => 'check',
-			self::TYPE_PROPOSAL_RECEIVED   => 'briefcase',
-			self::TYPE_PROPOSAL_ACCEPTED   => 'thumbs-up',
-			self::TYPE_PROPOSAL_REJECTED   => 'thumbs-down',
-			self::TYPE_EARNINGS_CLEARED    => 'banknote',
-			self::TYPE_WITHDRAWAL_APPROVED => 'landmark',
-			self::TYPE_WITHDRAWAL_REJECTED => 'x-circle',
-			self::TYPE_SERVICE_APPROVED    => 'check-circle-2',
-			self::TYPE_SERVICE_REJECTED    => 'x-circle',
-			self::TYPE_DEADLINE_REMINDER   => 'calendar-clock',
-			self::TYPE_EXTENSION_REQUESTED => 'clock-alert',
-			self::TYPE_EXTENSION_APPROVED  => 'calendar',
-			self::TYPE_EXTENSION_REJECTED  => 'x',
+			self::TYPE_ORDER_NEW            => 'shopping-cart',
+			self::TYPE_ORDER_ACCEPTED       => 'check-circle-2',
+			self::TYPE_ORDER_IN_PROGRESS    => 'refresh-cw',
+			self::TYPE_ORDER_DELIVERED      => 'check',
+			self::TYPE_ORDER_COMPLETED      => 'party-popper',
+			self::TYPE_ORDER_CANCELLED      => 'x-circle',
+			self::TYPE_ORDER_REVISION       => 'undo',
+			self::TYPE_ORDER_LATE           => 'triangle-alert',
+			self::TYPE_MESSAGE_NEW          => 'mail',
+			self::TYPE_REVIEW_RECEIVED      => 'star',
+			self::TYPE_DISPUTE_OPENED       => 'flag',
+			self::TYPE_DISPUTE_RESPONSE     => 'message-square',
+			self::TYPE_DISPUTE_RESOLVED     => 'check',
+			self::TYPE_PROPOSAL_RECEIVED    => 'briefcase',
+			self::TYPE_PROPOSAL_ACCEPTED    => 'thumbs-up',
+			self::TYPE_PROPOSAL_REJECTED    => 'thumbs-down',
+			self::TYPE_EARNINGS_CLEARED     => 'banknote',
+			self::TYPE_WITHDRAWAL_APPROVED  => 'landmark',
+			self::TYPE_WITHDRAWAL_COMPLETED => 'landmark',
+			self::TYPE_WITHDRAWAL_REJECTED  => 'x-circle',
+			self::TYPE_SERVICE_APPROVED     => 'check-circle-2',
+			self::TYPE_SERVICE_REJECTED     => 'x-circle',
+			self::TYPE_DEADLINE_REMINDER    => 'calendar-clock',
+			self::TYPE_EXTENSION_REQUESTED  => 'clock-alert',
+			self::TYPE_EXTENSION_APPROVED   => 'calendar',
+			self::TYPE_EXTENSION_REJECTED   => 'x',
 		];
 
 		return $icons[ $this->type ] ?? 'bell';
@@ -261,31 +263,32 @@ class Notification {
 	 */
 	public static function get_types(): array {
 		return [
-			self::TYPE_ORDER_NEW           => __( 'New Order', 'wp-sell-services' ),
-			self::TYPE_ORDER_ACCEPTED      => __( 'Order Accepted', 'wp-sell-services' ),
-			self::TYPE_ORDER_IN_PROGRESS   => __( 'Order In Progress', 'wp-sell-services' ),
-			self::TYPE_ORDER_DELIVERED     => __( 'Order Delivered', 'wp-sell-services' ),
-			self::TYPE_ORDER_COMPLETED     => __( 'Order Completed', 'wp-sell-services' ),
-			self::TYPE_ORDER_CANCELLED     => __( 'Order Cancelled', 'wp-sell-services' ),
-			self::TYPE_ORDER_REVISION      => __( 'Revision Requested', 'wp-sell-services' ),
-			self::TYPE_ORDER_LATE          => __( 'Order Late', 'wp-sell-services' ),
-			self::TYPE_MESSAGE_NEW         => __( 'New Message', 'wp-sell-services' ),
-			self::TYPE_REVIEW_RECEIVED     => __( 'Review Received', 'wp-sell-services' ),
-			self::TYPE_DISPUTE_OPENED      => __( 'Dispute Opened', 'wp-sell-services' ),
-			self::TYPE_DISPUTE_RESPONSE    => __( 'Dispute Response', 'wp-sell-services' ),
-			self::TYPE_DISPUTE_RESOLVED    => __( 'Dispute Resolved', 'wp-sell-services' ),
-			self::TYPE_PROPOSAL_RECEIVED   => __( 'Proposal Received', 'wp-sell-services' ),
-			self::TYPE_PROPOSAL_ACCEPTED   => __( 'Proposal Accepted', 'wp-sell-services' ),
-			self::TYPE_PROPOSAL_REJECTED   => __( 'Proposal Rejected', 'wp-sell-services' ),
-			self::TYPE_EARNINGS_CLEARED    => __( 'Earnings Cleared', 'wp-sell-services' ),
-			self::TYPE_WITHDRAWAL_APPROVED => __( 'Withdrawal Approved', 'wp-sell-services' ),
-			self::TYPE_WITHDRAWAL_REJECTED => __( 'Withdrawal Rejected', 'wp-sell-services' ),
-			self::TYPE_SERVICE_APPROVED    => __( 'Service Approved', 'wp-sell-services' ),
-			self::TYPE_SERVICE_REJECTED    => __( 'Service Rejected', 'wp-sell-services' ),
-			self::TYPE_DEADLINE_REMINDER   => __( 'Deadline Reminder', 'wp-sell-services' ),
-			self::TYPE_EXTENSION_REQUESTED => __( 'Extension Requested', 'wp-sell-services' ),
-			self::TYPE_EXTENSION_APPROVED  => __( 'Extension Approved', 'wp-sell-services' ),
-			self::TYPE_EXTENSION_REJECTED  => __( 'Extension Rejected', 'wp-sell-services' ),
+			self::TYPE_ORDER_NEW            => __( 'New Order', 'wp-sell-services' ),
+			self::TYPE_ORDER_ACCEPTED       => __( 'Order Accepted', 'wp-sell-services' ),
+			self::TYPE_ORDER_IN_PROGRESS    => __( 'Order In Progress', 'wp-sell-services' ),
+			self::TYPE_ORDER_DELIVERED      => __( 'Order Delivered', 'wp-sell-services' ),
+			self::TYPE_ORDER_COMPLETED      => __( 'Order Completed', 'wp-sell-services' ),
+			self::TYPE_ORDER_CANCELLED      => __( 'Order Cancelled', 'wp-sell-services' ),
+			self::TYPE_ORDER_REVISION       => __( 'Revision Requested', 'wp-sell-services' ),
+			self::TYPE_ORDER_LATE           => __( 'Order Late', 'wp-sell-services' ),
+			self::TYPE_MESSAGE_NEW          => __( 'New Message', 'wp-sell-services' ),
+			self::TYPE_REVIEW_RECEIVED      => __( 'Review Received', 'wp-sell-services' ),
+			self::TYPE_DISPUTE_OPENED       => __( 'Dispute Opened', 'wp-sell-services' ),
+			self::TYPE_DISPUTE_RESPONSE     => __( 'Dispute Response', 'wp-sell-services' ),
+			self::TYPE_DISPUTE_RESOLVED     => __( 'Dispute Resolved', 'wp-sell-services' ),
+			self::TYPE_PROPOSAL_RECEIVED    => __( 'Proposal Received', 'wp-sell-services' ),
+			self::TYPE_PROPOSAL_ACCEPTED    => __( 'Proposal Accepted', 'wp-sell-services' ),
+			self::TYPE_PROPOSAL_REJECTED    => __( 'Proposal Rejected', 'wp-sell-services' ),
+			self::TYPE_EARNINGS_CLEARED     => __( 'Earnings Cleared', 'wp-sell-services' ),
+			self::TYPE_WITHDRAWAL_APPROVED  => __( 'Withdrawal Approved', 'wp-sell-services' ),
+			self::TYPE_WITHDRAWAL_COMPLETED => __( 'Withdrawal Paid', 'wp-sell-services' ),
+			self::TYPE_WITHDRAWAL_REJECTED  => __( 'Withdrawal Rejected', 'wp-sell-services' ),
+			self::TYPE_SERVICE_APPROVED     => __( 'Service Approved', 'wp-sell-services' ),
+			self::TYPE_SERVICE_REJECTED     => __( 'Service Rejected', 'wp-sell-services' ),
+			self::TYPE_DEADLINE_REMINDER    => __( 'Deadline Reminder', 'wp-sell-services' ),
+			self::TYPE_EXTENSION_REQUESTED  => __( 'Extension Requested', 'wp-sell-services' ),
+			self::TYPE_EXTENSION_APPROVED   => __( 'Extension Approved', 'wp-sell-services' ),
+			self::TYPE_EXTENSION_REJECTED   => __( 'Extension Rejected', 'wp-sell-services' ),
 		];
 	}
 }

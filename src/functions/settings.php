@@ -95,6 +95,7 @@ function wpss_settings_defaults(): array {
 			'notify_dispute_opened'         => true,
 			'notify_withdrawal_requested'   => true,
 			'notify_withdrawal_approved'    => true,
+			'notify_withdrawal_completed'   => true,
 			'notify_withdrawal_rejected'    => true,
 			'notify_proposal_submitted'     => true,
 			'notify_proposal_accepted'      => true,
