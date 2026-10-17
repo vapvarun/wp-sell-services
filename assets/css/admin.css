@@ -14,8 +14,8 @@
 	--wpss-admin-primary-dark: var(--wpss-vendor-green-dark);
 	--wpss-admin-secondary: var(--wpss-gray-700, #404145);
 	--wpss-admin-text: var(--wpss-gray-800, #1e1e1e);
-	--wpss-admin-text-light: var(--wpss-text-muted, #757575);
-	--wpss-admin-text-tertiary: var(--wpss-text-hint, #9ca3af);
+	--wpss-admin-text-light: #50575e; /* AA on wp-admin's #f0f0f1 grey (the design-system muted grey is 4.24:1 there) */
+	--wpss-admin-text-tertiary: #646970; /* AA on white and on #f0f0f1; the hint grey was 2.4:1 */
 	--wpss-admin-border: var(--wpss-border, #e2e8f0);
 	--wpss-admin-border-heavy: rgba(0, 0, 0, 0.12);
 	--wpss-admin-bg: var(--wpss-wp-admin-bg, #f0f0f1);
@@ -193,6 +193,22 @@
 	letter-spacing: 0.04em;
 	color: var(--wpss-admin-text);
 	margin: 0 0 2px;
+}
+
+/* Real headings inside cards keep the card look; WP core's ".wrap h2" padding must not apply. */
+h2.wpss-card__title,
+h2.wpss-settings-subhead__title {
+	padding: 0;
+	line-height: 1.4;
+}
+
+.wpss-card__body h3,
+.wpss-card h3 {
+	margin: 16px 0 8px;
+	padding: 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--wpss-admin-text);
 }
 
 .wpss-card__desc {

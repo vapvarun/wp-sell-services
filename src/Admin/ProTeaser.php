@@ -156,10 +156,10 @@ class ProTeaser {
 		?>
 		<div class="wpss-card" data-section="pro-vendor-features">
 			<div class="wpss-card__head">
-				<p class="wpss-card__title">
+				<h2 class="wpss-card__title">
 					<?php esc_html_e( 'ADVANCED VENDOR FEATURES', 'wp-sell-services' ); ?>
 					<span class="wpss-pro-badge"><?php esc_html_e( 'Pro', 'wp-sell-services' ); ?></span>
-				</p>
+				</h2>
 			</div>
 			<div class="wpss-card__body">
 				<div class="wpss-pro-teaser" style="border-left-width:0;margin:0;">

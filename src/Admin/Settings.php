@@ -1887,7 +1887,7 @@ class Settings {
 	 */
 	private function render_payments_tab(): void {
 		echo '<div class="wpss-settings-subhead">';
-		echo '<p class="wpss-settings-subhead__title">' . esc_html__( 'Payment Gateways', 'wp-sell-services' ) . '</p>';
+		echo '<h2 class="wpss-settings-subhead__title">' . esc_html__( 'Payment Gateways', 'wp-sell-services' ) . '</h2>';
 		echo '<p class="wpss-settings-subhead__desc">' . esc_html__( 'Configure how buyers pay for services. Each gateway can be enabled independently.', 'wp-sell-services' ) . '</p>';
 		echo '</div>';
 
@@ -2094,7 +2094,7 @@ class Settings {
 		<div class="wpss-card<?php echo esc_attr( $collapsed ); ?>" data-gateway="<?php echo esc_attr( $gateway_id ); ?>">
 			<div class="wpss-card__head wpss-card__head--with-badge">
 				<div>
-					<p class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></p>
+					<h2 class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></h2>
 					<p class="wpss-card__desc"><?php echo esc_html( $description ); ?></p>
 				</div>
 				<span class="wpss-gateway-badge <?php echo esc_attr( $badge_class ); ?>">
@@ -2520,7 +2520,7 @@ class Settings {
 		<div class="wpss-card" data-section="<?php echo esc_attr( $section['id'] ?? '' ); ?>">
 			<?php if ( empty( $section['option_group'] ) || ! $this->page_leads_with( (string) ( $section['settings_id'] ?? $section['option_group'] ), $title ) ) : ?>
 				<div class="wpss-card__head">
-					<p class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></p>
+					<h2 class="wpss-card__title"><?php echo esc_html( strtoupper( $title ) ); ?></h2>
 					<?php if ( ! empty( $section['description'] ) ) : ?>
 						<p class="wpss-card__desc"><?php echo esc_html( $section['description'] ); ?></p>
 					<?php endif; ?>

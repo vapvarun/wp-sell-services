@@ -4440,7 +4440,7 @@ body.wpss-modal-active {
 	gap: 6px;
 	margin: 0 0 12px;
 	font-size: 13px;
-	color: var(--wpss-text-muted, #757575);
+	color: var(--wpss-text-secondary, #4b5563);
 }
 
 /* ==========================================================================

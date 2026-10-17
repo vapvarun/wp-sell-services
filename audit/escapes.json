@@ -128,6 +128,14 @@
       "fails_on": "pre-fix Free and Pro (guest return, cart-link default, carrier query, max_featured filter, subscribe duplicate key)",
       "journey": "audit/journeys/14-woo-rail-and-plans.md#1",
       "now_dead_or_duplicate": "none; woocommerce.css loses its OS-preference dark block and every hard-coded grey"
+    },
+    {
+      "card": "10412306674,10412156185,10412156063,10412155855,10412155759,10384448877",
+      "class": "card titles written as <p> and skipped heading levels; tokens meant for decoration (hint, muted) used for real text",
+      "check": "tests/test-settings-heading-outline.php",
+      "fails_on": "pre-fix Free (p titles, hint grey)",
+      "journey": "audit/journeys/15-admin-accessibility.md#1",
+      "now_dead_or_duplicate": "none"
     }
   ]
 }
