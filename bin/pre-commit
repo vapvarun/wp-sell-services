@@ -242,6 +242,13 @@ if [ -n "$STAGED_DOCS_OR_PHP" ]; then
     fi
 fi
 
+# Time Standard gate: no new raw wp_date()/date_i18n()/get_date_from_gmt(); use the
+# wpss_*_label() helpers in src/functions/time.php.
+if [ -n "$STAGED_PHP_FILES" ] && ! php bin/check-time-formatter.php; then
+    echo "✗ BLOCKED: a raw date formatter was added. See docs/standards/time.md."
+    exit 1
+fi
+
 echo ""
 echo "✓ All pre-commit checks passed!"
 exit 0
