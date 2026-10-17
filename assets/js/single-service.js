@@ -501,7 +501,7 @@
             });
 
             // Close button.
-            $(document).on('click', '.wpss-modal-close', function(e) {
+            $(document).on('click', '.wpss-modal-close, .wpss-modal-dismiss', function(e) {
                 e.preventDefault();
                 self.closeModals();
             });

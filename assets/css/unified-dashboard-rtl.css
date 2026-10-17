@@ -2575,8 +2575,8 @@ select.wpss-input option,
 	height: 30px;
 	border: 0;
 	border-radius: 50%;
-	background: rgba(255, 255, 255, 0.95);
-	color: var(--wpss-gray-800);
+	background: var(--wpss-surface, #fff);
+	color: var(--wpss-text, #1f2937);
 	font-size: 18px;
 	line-height: 1;
 	cursor: pointer;
@@ -2778,8 +2778,12 @@ select.wpss-input option,
 	transition: background-color 0.15s ease;
 }
 
-.wpss-dashboard .wpss-pagination__link:hover {
+.wpss-dashboard .wpss-pagination__link:hover,
+.wpss-dashboard .wpss-pagination__link:focus-visible {
 	background: var(--wpss-bg-muted, #f3f4f6);
+	/* Set the colour with the background: a theme's a:hover (white on many) and the archive
+	   pagination's filled-primary hover otherwise win, giving white text on light grey. */
+	color: var(--wpss-text, #1f2937);
 }
 
 .wpss-dashboard .wpss-pagination__link .wpss-icon {

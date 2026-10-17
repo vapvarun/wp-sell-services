@@ -136,6 +136,14 @@
       "fails_on": "pre-fix Free (p titles, hint grey)",
       "journey": "audit/journeys/15-admin-accessibility.md#1",
       "now_dead_or_duplicate": "none"
+    },
+    {
+      "card": "10384321636,10384209485,10411858243,10399252183,10408125397",
+      "class": "literal colours beside inverted tokens, icons inserted by JS after the one-time Lucide swap, and a JS-hook class that also carries icon-button styling",
+      "check": "tests/test-dark-mode-and-icon-hooks.php",
+      "fails_on": "pre-fix CSS/JS/templates (9 FAIL) and the .wpss-btn modal-close scan (2 offenders)",
+      "journey": "audit/journeys/16-dark-mode-and-icons.md#1",
+      "now_dead_or_duplicate": "none; new hook class wpss-modal-dismiss for text buttons"
     }
   ]
 }

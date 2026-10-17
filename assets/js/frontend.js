@@ -810,7 +810,7 @@
 		});
 
 		// Close modal on close button click (support both naming conventions).
-		$(document).on('click', '.wpss-modal-close, .wpss-modal-close-btn, .wpss-modal__close, .wpss-modal__close-btn', function() {
+		$(document).on('click', '.wpss-modal-close, .wpss-modal-dismiss, .wpss-modal-close-btn, .wpss-modal__close, .wpss-modal__close-btn', function() {
 			WPSS.hideModal();
 		});
 
@@ -943,7 +943,7 @@
 		});
 
 		// Close modal on close button.
-		$modal.on('click', '.wpss-modal-close', function(e) {
+		$modal.on('click', '.wpss-modal-close, .wpss-modal-dismiss', function(e) {
 			e.preventDefault();
 			$modal.prop('hidden', true).removeClass('wpss-modal-open');
 			$('body').removeClass('wpss-modal-active');

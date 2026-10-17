@@ -452,10 +452,14 @@ document.addEventListener('DOMContentLoaded', function() {
 		$attachmentsPreview.empty();
 		selectedFiles.forEach(function(file, index) {
 			var $preview = $('<div class="wpss-messaging__composer-attachment">')
-				.append('<span class="wpss-messaging__composer-attachment-name">' + file.name + '</span>')
-				.append('<button type="button" class="wpss-messaging__composer-attachment-remove" data-index="' + index + '"><i data-lucide="x" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i></button>');
+				.append($('<span class="wpss-messaging__composer-attachment-name">').text(file.name))
+				.append('<button type="button" class="wpss-messaging__composer-attachment-remove" data-index="' + index + '" aria-label="' + <?php echo wp_json_encode( esc_attr__( 'Remove attachment', 'wp-sell-services' ) ); ?> + '"><i data-lucide="x" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i></button>');
 			$attachmentsPreview.append($preview);
 		});
+		// The icons are inserted after Lucide's one-time swap at load, so hydrate them here.
+		if (window.lucide && typeof window.lucide.createIcons === 'function') {
+			window.lucide.createIcons();
+		}
 	}
 
 	// Remove attachment.

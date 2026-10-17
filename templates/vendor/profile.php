@@ -712,7 +712,7 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 						<button type="submit" class="wpss-btn wpss-btn-primary">
 							<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
 						</button>
-						<button type="button" class="wpss-btn wpss-btn-secondary wpss-modal-close">							
+						<button type="button" class="wpss-btn wpss-btn-secondary wpss-modal-dismiss">							
 							&times;
 						</button>
 					</div>
