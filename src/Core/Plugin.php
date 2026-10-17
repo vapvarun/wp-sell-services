@@ -2183,6 +2183,10 @@ final class Plugin {
 					$user_id = (int) $id_or_email->post_author;
 				} elseif ( $id_or_email instanceof \WP_Comment ) {
 					$user_id = (int) $id_or_email->user_id;
+				} elseif ( is_string( $id_or_email ) && is_email( $id_or_email ) ) {
+					// Themes pass the current user's email (BuddyX and Reign headers).
+					$by_email = get_user_by( 'email', $id_or_email );
+					$user_id  = $by_email ? (int) $by_email->ID : 0;
 				}
 
 				if ( ! $user_id ) {

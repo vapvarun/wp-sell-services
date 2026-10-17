@@ -308,6 +308,11 @@
 					$(this).attr('name', name.replace(/wpss_addons\[\d+\]/, 'wpss_addons[' + index + ']'));
 				}
 			});
+			// ids and label[for] carry the index too; left alone they collide with the next added row.
+			$(this).find('[id^="wpss_addon_"], label[for^="wpss_addon_"]').each(function() {
+				var attr = this.tagName === 'LABEL' ? 'for' : 'id';
+				$(this).attr(attr, $(this).attr(attr).replace(/^wpss_addon_\d+_/, 'wpss_addon_' + index + '_'));
+			});
 		});
 	}
 

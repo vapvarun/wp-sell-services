@@ -71,8 +71,7 @@ do_action( 'wpss_dashboard_section_before', 'edit_request', $user_id );
 ?>
 
 <div class="wpss-request-wizard">
-	<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-		<h2 style="margin: 0;"><?php esc_html_e( 'Edit Request', 'wp-sell-services' ); ?></h2>
+	<div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px;">
 		<a href="<?php echo esc_url( wpss_append_dashboard_section( wpss_get_page_url( 'dashboard' ), 'requests' ) ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--sm">
 			<?php esc_html_e( 'Back to Requests', 'wp-sell-services' ); ?>
 		</a>

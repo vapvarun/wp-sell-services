@@ -2091,6 +2091,57 @@ select.wpss-input option,
 	margin: 0 0 4px 4px;
 }
 
+.wpss-portfolio-media-item {
+	position: relative;
+	display: inline-block;
+	margin: 0 0 4px 4px;
+}
+
+.wpss-portfolio-media-item .wpss-portfolio-media-thumb {
+	display: block;
+	margin: 0;
+}
+
+.wpss-portfolio-media-remove {
+	position: absolute;
+	top: -6px;
+	inset-inline-end: -6px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: 1px solid var(--wpss-border, #e5e7eb);
+	border-radius: 50%;
+	background: var(--wpss-surface, #fff);
+	color: var(--wpss-text, #1f2937);
+	font-size: 14px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.wpss-portfolio-media-remove:hover,
+.wpss-portfolio-media-remove:focus-visible {
+	background: var(--wpss-error, #dc2626);
+	border-color: var(--wpss-error, #dc2626);
+	color: #fff;
+}
+
+@media (max-width: 640px) {
+	.wpss-portfolio-media-remove {
+		width: 28px;
+		height: 28px;
+	}
+
+	/* 44px touch area around the 28px visible control. */
+	.wpss-portfolio-media-remove::after {
+		content: "";
+		position: absolute;
+		inset: -8px;
+	}
+}
+
 /* ==========================================================================
    Modal
    ========================================================================== */

@@ -65,6 +65,7 @@
 			$(document).on('click', '.wpss-portfolio-toggle-featured', this.handlePortfolioToggleFeatured.bind(this));
 			$(document).on('submit', '#wpss-portfolio-form', this.handlePortfolioSave.bind(this));
 			$(document).on('click', '#wpss-portfolio-upload-media', this.handlePortfolioMediaUpload.bind(this));
+			$(document).on('click', '.wpss-portfolio-media-remove', this.handlePortfolioMediaRemove.bind(this));
 			$(document).on('click', '.wpss-modal__close, .wpss-modal__close-btn, .wpss-modal__overlay', this.handleModalClose.bind(this));
 
 			// Favorites — unfavorite from the saved grid.
@@ -1003,9 +1004,9 @@
 			if (mediaIds.length) {
 				var $preview = $('#wpss-portfolio-media-preview');
 				$preview.empty();
-				mediaThumbs.forEach(function (thumbUrl) {
-					$preview.append('<img src="' + thumbUrl + '" class="wpss-portfolio-media-thumb">');
-				});
+				mediaThumbs.forEach(function (thumbUrl, i) {
+					$preview.append(this.portfolioThumb(mediaIds[i], thumbUrl));
+				}, this);
 				$('#wpss-portfolio-media').val(JSON.stringify(mediaIds));
 			}
 
@@ -1168,8 +1169,8 @@
 				$preview.empty();
 				attachments.forEach(function (att) {
 					var url = att.sizes && att.sizes.thumbnail ? att.sizes.thumbnail.url : att.url;
-					$preview.append('<img src="' + url + '" class="wpss-portfolio-media-thumb">');
-				});
+					$preview.append(this.portfolioThumb(att.id, url));
+				}, this);
 				$('#wpss-portfolio-media').val(JSON.stringify(ids));
 			}.bind(this));
 
@@ -1224,6 +1225,43 @@
 		handleModalClose: function (e) {
 			e.preventDefault();
 			$(e.currentTarget).closest('.wpss-modal').removeClass('wpss-modal-open');
+		},
+
+		/**
+		 * One staged portfolio image: the thumbnail plus a control to drop it.
+		 *
+		 * @param {number} id  Attachment ID.
+		 * @param {string} url Thumbnail URL.
+		 * @return {jQuery} Thumb wrapper.
+		 */
+		portfolioThumb: function (id, url) {
+			var $item = $('<span class="wpss-portfolio-media-item"></span>').attr('data-id', id);
+			$('<img class="wpss-portfolio-media-thumb" alt="">').attr('src', url).appendTo($item);
+			$('<button type="button" class="wpss-portfolio-media-remove"><span aria-hidden="true">&times;</span></button>')
+				.attr('aria-label', wpssUnifiedDashboard.i18n.removeImage)
+				.appendTo($item);
+			return $item;
+		},
+
+		/**
+		 * Drop one staged image and keep the hidden id list in step.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handlePortfolioMediaRemove: function (e) {
+			e.preventDefault();
+			var $item = $(e.currentTarget).closest('.wpss-portfolio-media-item');
+			var id = parseInt($item.attr('data-id'), 10);
+			var ids = [];
+
+			try {
+				ids = JSON.parse($('#wpss-portfolio-media').val() || '[]');
+			} catch (ex) {
+				ids = [];
+			}
+
+			$('#wpss-portfolio-media').val(JSON.stringify(ids.filter(function (v) { return parseInt(v, 10) !== id; })));
+			$item.remove();
 		},
 
 		/**

@@ -152,6 +152,14 @@
       "fails_on": "pre-fix CSS/JS/templates (12 FAIL)",
       "journey": "audit/journeys/17-layout-per-surface.md#1",
       "now_dead_or_duplicate": "breadcrumb rules removed from single-service.css (now in design-system.css)"
+    },
+    {
+      "card": "10407616413,10399369371,10399020562,10398958589,10398584633,10398686846,10403821351,10403187415,10384898745,10408271874,10411862427",
+      "class": "state a form shows but never reads back from the record, redirects with a result nobody renders, a handler bound on one tab for a block rendered on two, an out-of-scope variable, ids not rewritten with names, a lookup that ignores one of the ways callers pass a user",
+      "check": "tests/test-form-state-and-feedback.php + wp-sell-services-pro/tests/test-form-state-js.php",
+      "fails_on": "pre-fix Free (fatal on the missing order notice) and pre-fix Pro (5 FAIL)",
+      "journey": "audit/journeys/18-forms-state-feedback.md#1",
+      "now_dead_or_duplicate": "none"
     }
   ]
 }

@@ -2258,6 +2258,30 @@ class Admin {
 	}
 
 	/**
+	 * Result notice after the order status form posts back with ?updated=.
+	 *
+	 * @since 1.9.0
+	 *
+	 * @return void
+	 */
+	private function render_order_update_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$result = isset( $_GET['updated'] ) ? sanitize_key( wp_unslash( $_GET['updated'] ) ) : '';
+
+		$notices = array(
+			'1'         => array( 'notice-success', __( 'Order status updated.', 'wp-sell-services' ) ),
+			'unchanged' => array( 'notice-info', __( 'The order already has that status. Nothing changed.', 'wp-sell-services' ) ),
+			'error'     => array( 'notice-error', __( 'The status could not be changed. The order may not be allowed to move to that status from where it is.', 'wp-sell-services' ) ),
+		);
+
+		if ( ! isset( $notices[ $result ] ) ) {
+			return;
+		}
+
+		printf( '<div class="notice %s is-dismissible"><p>%s</p></div>', esc_attr( $notices[ $result ][0] ), esc_html( $notices[ $result ][1] ) );
+	}
+
+	/**
 	 * Render order detail view.
 	 *
 	 * @param int $order_id Order ID.
@@ -2325,6 +2349,7 @@ class Admin {
 		}
 		?>
 		<div class="wrap wpss-admin-order">
+			<?php $this->render_order_update_notice(); ?>
 			<h1 class="wp-heading-inline">
 				<?php
 				printf(

@@ -231,6 +231,7 @@ class UnifiedDashboard {
 					'addPortfolioItem'       => __( 'Add Portfolio Item', 'wp-sell-services' ),
 					'editPortfolioItem'      => __( 'Edit Portfolio Item', 'wp-sell-services' ),
 					'selectPortfolioImages'  => __( 'Select Portfolio Images', 'wp-sell-services' ),
+					'removeImage'            => __( 'Remove image', 'wp-sell-services' ),
 					'addToPortfolio'         => __( 'Add to Portfolio', 'wp-sell-services' ),
 					'remove'                 => __( 'Remove', 'wp-sell-services' ),
 					'reviewReplySent'        => __( 'Your reply has been posted.', 'wp-sell-services' ),
