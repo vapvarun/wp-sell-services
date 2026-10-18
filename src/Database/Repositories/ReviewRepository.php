@@ -229,27 +229,120 @@ class ReviewRepository extends AbstractRepository {
 
 
 	/**
-	 * Increment helpful count.
+	 * Option name that records one reader's "Helpful" vote on one review.
 	 *
-	 * @param int $review_id Review ID.
-	 * @return bool True on success.
+	 * @param int    $review_id Review ID.
+	 * @param int    $user_id   Voter, or 0 for a signed-out reader.
+	 * @param string $ip        Reader IP, used only when signed out.
+	 * @return string
 	 */
-	public function increment_helpful( int $review_id ): bool {
-		$result = $this->wpdb->query(
-			$this->wpdb->prepare(
-				"UPDATE {$this->table} SET helpful_count = helpful_count + 1 WHERE id = %d",
-				$review_id
-			)
-		);
-
-		return false !== $result;
+	public static function helpful_vote_key( int $review_id, int $user_id, string $ip = '' ): string {
+		return '_wpss_vote_' . $review_id . '_' . ( $user_id ? 'u' . $user_id : 'ip' . md5( $ip ) );
 	}
 
 	/**
-	 * Sweep expired guest "marked review helpful" idempotency rows from
-	 * `wp_options`.
+	 * Toggle a reader's "Helpful" vote: first call adds it, the next removes it.
 	 *
-	 * `AjaxHandlers::mark_review_helpful()` writes a row per (review × user/IP)
+	 * The one writer behind the REST route and the AJAX action, so the two doors
+	 * cannot disagree. The vote row is claimed or released atomically (INSERT
+	 * IGNORE / DELETE on a unique option name) and the counter moves only when
+	 * a row actually changed, so a double click or a retry never double counts.
+	 * A signed-in voter's row has no expiry: it is the record that lets the
+	 * reader take the vote back, and it must outlive the daily sweep. Signed-out
+	 * rows expire after a week.
+	 *
+	 * @param int    $review_id Review ID.
+	 * @param int    $user_id   Voter, or 0 for a signed-out reader.
+	 * @param string $ip        Reader IP, used only when signed out.
+	 * @return array{count:int, marked:bool}|string Result, or 'not_found' / 'own_review'.
+	 */
+	public function toggle_helpful( int $review_id, int $user_id, string $ip = '' ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table.
+		$author = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT reviewer_id FROM {$this->table} WHERE id = %d", $review_id ) );
+
+		if ( null === $author ) {
+			return 'not_found';
+		}
+
+		if ( $user_id && (int) $author === $user_id ) {
+			return 'own_review';
+		}
+
+		$key = self::helpful_vote_key( $review_id, $user_id, $ip );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic claim of a unique option name.
+		$this->wpdb->query(
+			$this->wpdb->prepare(
+				"INSERT IGNORE INTO {$this->wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s)",
+				$key,
+				$user_id ? 0 : time() + WEEK_IN_SECONDS,
+				'no'
+			)
+		);
+
+		$marked = 1 === (int) $this->wpdb->rows_affected;
+		$delta  = $marked ? '+ 1' : '- 1';
+
+		if ( ! $marked ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic release of a unique option name.
+			$released = (int) $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$this->wpdb->options} WHERE option_name = %s", $key ) );
+
+			if ( ! $released ) {
+				// A concurrent request already took it back; nothing to move.
+				$delta = '+ 0';
+			}
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table; $delta is one of three literals above.
+		$this->wpdb->query( $this->wpdb->prepare( "UPDATE {$this->table} SET helpful_count = GREATEST( helpful_count {$delta}, 0 ) WHERE id = %d", $review_id ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table.
+		$count = (int) $this->wpdb->get_var( $this->wpdb->prepare( "SELECT helpful_count FROM {$this->table} WHERE id = %d", $review_id ) );
+
+		return array(
+			'count'  => $count,
+			'marked' => $marked,
+		);
+	}
+
+	/**
+	 * Which of these reviews a signed-in reader has already marked helpful.
+	 *
+	 * One query for the whole page, so a list of reviews costs one lookup, not one per row.
+	 *
+	 * @param int[] $review_ids Review IDs on the page.
+	 * @param int   $user_id    Reader.
+	 * @return int[] The subset the reader has voted on.
+	 */
+	public function helpful_voted_ids( array $review_ids, int $user_id ): array {
+		$review_ids = array_values( array_unique( array_filter( array_map( 'intval', $review_ids ) ) ) );
+
+		if ( ! $user_id || ! $review_ids ) {
+			return array();
+		}
+
+		$keys = array_map( fn( int $id ): string => self::helpful_vote_key( $id, $user_id ), $review_ids );
+		$in   = implode( ',', array_fill( 0, count( $keys ), '%s' ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Exact option_name lookup; placeholders built from the key count.
+		$found = $this->wpdb->get_col( $this->wpdb->prepare( "SELECT option_name FROM {$this->wpdb->options} WHERE option_name IN ({$in})", ...$keys ) );
+
+		$voted = array();
+		foreach ( $review_ids as $id ) {
+			if ( in_array( self::helpful_vote_key( $id, $user_id ), $found, true ) ) {
+				$voted[] = $id;
+			}
+		}
+
+		return $voted;
+	}
+
+	/**
+	 * Sweep expired signed-out "marked review helpful" idempotency rows from
+	 * `wp_options`. Signed-in voters' rows are never swept: they are what lets a
+	 * reader undo a vote.
+	 *
+	 * `toggle_helpful()` writes a row per (review × user/IP)
 	 * with the `option_value` set to `time() + WEEK_IN_SECONDS` so a guest
 	 * can't double-vote within a week. The rows are stored as `autoload=no`
 	 * options (so they don't bloat the autoloaded set), but without a sweep
@@ -269,8 +362,10 @@ class ReviewRepository extends AbstractRepository {
 			$this->wpdb->prepare(
 				"DELETE FROM {$this->wpdb->options}
 				 WHERE option_name LIKE %s
+				 AND option_name LIKE %s
 				 AND CAST(option_value AS UNSIGNED) < %d",
 				$this->wpdb->esc_like( '_wpss_vote_' ) . '%',
+				'%' . $this->wpdb->esc_like( '_ip' ) . '%',
 				$now
 			)
 		);

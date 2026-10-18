@@ -349,16 +349,18 @@
                 }, 500);
             });
 
-            // Helpful button — REST POST /reviews/{id}/helpful.
+            // Helpful button: REST POST /reviews/{id}/helpful toggles the vote.
             $reviews.on('click', '.wpss-review-helpful-btn', function(e) {
                 e.preventDefault();
 
                 const $btn = $(this);
                 const reviewId = $btn.data('review');
 
-                if ($btn.hasClass('marked')) {
+                // One request at a time, so a double click cannot flip it twice.
+                if ($btn.prop('disabled')) {
                     return;
                 }
+                $btn.prop('disabled', true);
 
                 $.ajax({
                     url: wpssService.apiUrl + '/reviews/' + reviewId + '/helpful',
@@ -367,15 +369,23 @@
                         xhr.setRequestHeader('X-WP-Nonce', wpssService.restNonce);
                     },
                     success: function(response) {
-                        if (response && typeof response.count !== 'undefined') {
-                            let $count = $btn.find('.wpss-helpful-count');
+                        if (!response || typeof response.count === 'undefined') {
+                            return;
+                        }
+                        let $count = $btn.find('.wpss-helpful-count');
+                        if (response.count > 0) {
                             if (!$count.length) {
                                 // Server omits the count span at zero; add it now.
                                 $count = $('<span class="wpss-helpful-count"></span>').appendTo($btn);
                             }
                             $count.text('(' + response.count + ')');
-                            $btn.addClass('marked');
+                        } else {
+                            $count.remove();
                         }
+                        $btn.toggleClass('marked', !!response.marked).attr('aria-pressed', response.marked ? 'true' : 'false');
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false);
                     }
                 });
             });
@@ -438,11 +448,12 @@
                     '<div class="wpss-review-content">' + (review.review_html || '') + '</div>' +
                     reply +
                     '<div class="wpss-review-actions">' +
-                        '<button type="button" class="wpss-review-helpful-btn" data-review="' + esc(review.id) + '">' +
+                        (!review.viewer_can_vote ? '' :
+                        '<button type="button" class="wpss-review-helpful-btn' + (review.viewer_marked ? ' marked' : '') + '" data-review="' + esc(review.id) + '" aria-pressed="' + (review.viewer_marked ? 'true' : 'false') + '">' +
                             '<span class="wpss-helpful-icon"><i data-lucide="thumbs-up" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i></span>' +
                             '<span class="wpss-helpful-text">' + esc(i18n.helpful) + '</span>' +
                             count +
-                        '</button>' +
+                        '</button>') +
                     '</div>' +
                 '</div>'
             );

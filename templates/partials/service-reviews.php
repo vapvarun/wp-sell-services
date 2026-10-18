@@ -123,6 +123,10 @@ do_action( 'wpss_before_service_reviews', $service_id );
 
 	<?php if ( ! empty( $reviews ) ) : ?>
 		<div class="wpss-reviews-list">
+			<?php
+			// One lookup for every vote on this page.
+			$wpss_voted = ( new \WPSellServices\Database\Repositories\ReviewRepository() )->helpful_voted_ids( wp_list_pluck( $reviews, 'id' ), get_current_user_id() );
+			?>
 			<?php foreach ( $reviews as $review ) : ?>
 				<?php
 				// Through the model, so this surface and the order page agree on
@@ -136,28 +140,15 @@ do_action( 'wpss_before_service_reviews', $service_id );
 					<?php require wpss_locate_template( 'partials/review-body.php' ); ?>
 
 					<div class="wpss-review-helpful">
-						<?php if ( is_user_logged_in() && (int) ( $review->reviewer_id ?? 0 ) !== get_current_user_id() ) : ?>
-							<button type="button" class="wpss-review-helpful-btn" data-review="<?php echo esc_attr( $review->id ); ?>">
-								<span class="wpss-helpful-icon">
-									<i data-lucide="thumbs-up" class="wpss-icon wpss-icon--sm" aria-hidden="true"></i>
-								</span>
-								<span class="wpss-helpful-text"><?php esc_html_e( 'Helpful', 'wp-sell-services' ); ?></span>
-								<?php if ( isset( $review->helpful_count ) && $review->helpful_count > 0 ) : ?>
-									<span class="wpss-helpful-count">(<?php echo esc_html( $review->helpful_count ); ?>)</span>
-								<?php endif; ?>
-							</button>
-						<?php endif; ?>
-						<?php if ( ( ! is_user_logged_in() || (int) ( $review->reviewer_id ?? 0 ) === get_current_user_id() ) && isset( $review->helpful_count ) && $review->helpful_count > 0 ) : ?>
-							<span class="wpss-text-muted" style="font-size:13px;">
-								<?php
-								printf(
-									/* translators: %d: number of people */
-									esc_html( _n( '%d person found this helpful', '%d people found this helpful', $review->helpful_count, 'wp-sell-services' ) ),
-									absint( $review->helpful_count )
-								);
-								?>
-							</span>
-						<?php endif; ?>
+						<?php
+						$wpss_helpful = array(
+							'review_id'     => (int) $review->id,
+							'helpful_count' => (int) ( $review->helpful_count ?? 0 ),
+							'reviewer_id'   => (int) ( $review->reviewer_id ?? 0 ),
+							'voted'         => in_array( (int) $review->id, $wpss_voted, true ),
+						);
+						require wpss_locate_template( 'partials/review-helpful.php' );
+						?>
 					</div>
 				</div>
 

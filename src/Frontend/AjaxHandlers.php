@@ -1036,6 +1036,8 @@ class AjaxHandlers {
 		$has_more     = $total_loaded < $rating_count;
 
 		// Generate HTML for reviews.
+		$wpss_voted = ( new \WPSellServices\Database\Repositories\ReviewRepository() )->helpful_voted_ids( wp_list_pluck( $reviews, 'id' ), get_current_user_id() );
+
 		ob_start();
 		foreach ( $reviews as $review ) {
 			?>
@@ -1048,18 +1050,15 @@ class AjaxHandlers {
 				?>
 
 				<div class="wpss-review-actions">
-					<button type="button" class="wpss-review-helpful-btn" data-review="<?php echo esc_attr( $review->id ); ?>">
-						<span class="wpss-helpful-icon">
-							<?php
-							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Icon::render() returns hand-built SVG with internally-escaped attributes.
-							echo \WPSellServices\Services\Icon::render( 'thumbs-up', array( 'class' => 'wpss-icon--sm' ) );
-							?>
-						</span>
-						<span class="wpss-helpful-text"><?php esc_html_e( 'Helpful', 'wp-sell-services' ); ?></span>
-						<?php if ( $review->helpful_count > 0 ) : ?>
-							<span class="wpss-helpful-count">(<?php echo esc_html( $review->helpful_count ); ?>)</span>
-						<?php endif; ?>
-					</button>
+					<?php
+					$wpss_helpful = array(
+						'review_id'     => (int) $review->id,
+						'helpful_count' => (int) $review->helpful_count,
+						'reviewer_id'   => (int) $review->reviewer_id,
+						'voted'         => in_array( (int) $review->id, $wpss_voted, true ),
+					);
+					require wpss_locate_template( 'partials/review-helpful.php' );
+					?>
 				</div>
 			</div>
 			<?php
@@ -1075,10 +1074,10 @@ class AjaxHandlers {
 	}
 
 	/**
-	 * Mark a review as helpful.
+	 * Toggle a reader's "Helpful" vote on a review.
 	 *
-	 * Uses atomic database operations to prevent race conditions where
-	 * concurrent requests could both pass the duplicate vote check.
+	 * Same writer as the REST route (ReviewRepository::toggle_helpful()), kept
+	 * for signed-out readers and older clients.
 	 *
 	 * @return void
 	 */
@@ -1098,66 +1097,21 @@ class AjaxHandlers {
 			wp_send_json_error( array( 'message' => __( 'Invalid review.', 'wp-sell-services' ) ) );
 		}
 
-		global $wpdb;
-		$reviews_table = $wpdb->prefix . 'wpss_reviews';
+		$result = ( new \WPSellServices\Database\Repositories\ReviewRepository() )->toggle_helpful( $review_id, $current_user_id, wpss_client_ip() );
 
-		// Verify review exists.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$review_exists = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT id FROM {$reviews_table} WHERE id = %d",
-				$review_id
-			)
-		);
-
-		if ( ! $review_exists ) {
+		if ( 'not_found' === $result ) {
 			wp_send_json_error( array( 'message' => __( 'Review not found.', 'wp-sell-services' ) ) );
 		}
 
-		// Build unique vote identifier.
-		$user_id    = get_current_user_id();
-		$ip_address = wpss_client_ip();
-		$vote_key   = '_wpss_vote_' . $review_id . '_' . ( $user_id ? 'u' . $user_id : 'ip' . md5( $ip_address ) );
-
-		// Use atomic INSERT IGNORE to prevent race condition.
-		// If two concurrent requests try to insert the same key, only one will succeed.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->query(
-			$wpdb->prepare(
-				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s)",
-				$vote_key,
-				time() + WEEK_IN_SECONDS,
-				'no'
-			)
-		);
-
-		// Check if our insert succeeded (rows_affected = 1) or row already existed (rows_affected = 0).
-		if ( 0 === $wpdb->rows_affected ) {
-			wp_send_json_error( array( 'message' => __( 'You have already marked this review as helpful.', 'wp-sell-services' ) ) );
+		if ( 'own_review' === $result ) {
+			wp_send_json_error( array( 'message' => __( 'You cannot mark your own review as helpful.', 'wp-sell-services' ) ) );
 		}
-
-		// Increment helpful count atomically.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$reviews_table} SET helpful_count = helpful_count + 1 WHERE id = %d",
-				$review_id
-			)
-		);
-
-		// Get updated count.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$new_count = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT helpful_count FROM {$reviews_table} WHERE id = %d",
-				$review_id
-			)
-		);
 
 		wp_send_json_success(
 			array(
-				'count'   => $new_count,
-				'message' => __( 'Thanks for your feedback!', 'wp-sell-services' ),
+				'count'   => $result['count'],
+				'marked'  => $result['marked'],
+				'message' => $result['marked'] ? __( 'Thanks for your feedback!', 'wp-sell-services' ) : __( 'Vote removed.', 'wp-sell-services' ),
 			)
 		);
 	}

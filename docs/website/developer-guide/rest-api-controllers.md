@@ -308,7 +308,7 @@ is `pending_approval`.
 | GET, POST/PUT/PATCH, DELETE | `/reviews/(?P<id>[\d]+)` |
 | POST | `/orders/(?P<order_id>[\d]+)/review` |
 | POST | `/reviews/(?P<id>[\d]+)/reply` |
-| POST | `/reviews/(?P<id>[\d]+)/helpful` |
+| POST | `/reviews/(?P<id>[\d]+)/helpful` (toggles the reader's vote; returns `count` and `marked`) |
 | GET | `/services/(?P<service_id>[\d]+)/reviews/summary` |
 | GET | `/vendors/(?P<vendor_id>[\d]+)/reviews/summary` |
 

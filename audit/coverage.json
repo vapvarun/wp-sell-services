@@ -823,6 +823,7 @@
                 "audit/render-coverage.json"
             ],
             "wpss_locate_template": [
+                "tests/test-review-helpful-toggle.php",
                 "tests/test-template-contract.php",
                 "tests/test-template-override.php",
                 "audit/render-coverage.json"
@@ -1763,17 +1764,6 @@
             "/wpss/v1/orders/(?P<order_id>[\\d]+)/tip": [
                 "audit/render-coverage.json"
             ],
-            "/wpss/v1/payments/confirm": [
-                "tests/test-rest-pay-order-confirm-contract.php"
-            ],
-            "/wpss/v1/payments/create-intent": [
-                "tests/test-product-neutral-payment.php",
-                "audit/journeys/08-api-client-acts-as-each-role.md"
-            ],
-            "/wpss/v1/payments/methods": [
-                "tests/test-license-gate-and-storage.php",
-                "audit/render-coverage.json"
-            ],
             "/wpss/v1/portfolio": [
                 "tests/test-portfolio-rest-service.php",
                 "audit/journeys/08-api-client-acts-as-each-role.md",
@@ -1821,11 +1811,13 @@
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/reviews/(?P<id>[\\d]+)": [
+                "tests/test-review-helpful-toggle.php",
                 "tests/test-review-status-rest.php",
                 "audit/journeys/08-api-client-acts-as-each-role.md",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/reviews/(?P<id>[\\d]+)/helpful": [
+                "tests/test-review-helpful-toggle.php",
                 "audit/render-coverage.json"
             ],
             "/wpss/v1/reviews/(?P<id>[\\d]+)/reply": [
@@ -1845,6 +1837,7 @@
             "/wpss/v1/services": [
                 "tests/test-scale-surfaces.php",
                 "tests/test-service-limits-and-accept-lock.php",
+                "tests/test-vendor-services-status-filter.php",
                 "audit/journeys/05-vendor-creates-a-service.md",
                 "audit/render-coverage.json"
             ],
@@ -1961,9 +1954,6 @@
             ]
         },
         "shortcode": {
-            "wpss_account": [
-                "audit/render-coverage.json"
-            ],
             "wpss_buyer_requests": [
                 "tests/test-retired-tables-contract.php",
                 "audit/render-coverage.json"
@@ -2123,6 +2113,7 @@
             ],
             "dashboard/sections/services": [
                 "tests/test-scale-surfaces.php",
+                "tests/test-vendor-services-status-filter.php",
                 "audit/render-coverage.json"
             ],
             "emails/cancellation-requested": [
@@ -2346,6 +2337,9 @@
             ],
             "partials/review-body": [
                 "audit/render-coverage.json"
+            ],
+            "partials/review-helpful": [
+                "tests/test-review-helpful-toggle.php"
             ],
             "partials/service-faqs": [
                 "audit/journeys/14-member-reviews-favorites-messages.md"

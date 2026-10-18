@@ -17,6 +17,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use WPSellServices\Database\Repositories\ReviewRepository;
 use WPSellServices\Models\Review;
 use WPSellServices\Models\ServiceOrder;
 use WPSellServices\Services\ReviewService;
@@ -27,6 +28,13 @@ use WPSellServices\Services\ReviewService;
  * @since 1.0.0
  */
 class ReviewsController extends RestController {
+
+	/**
+	 * Review IDs on the page being built that the viewer marked helpful (null outside a list).
+	 *
+	 * @var int[]|null
+	 */
+	private ?array $viewer_votes = null;
 
 	/**
 	 * Route base.
@@ -289,6 +297,9 @@ class ReviewsController extends RestController {
 		$args  = array_merge( $values, array( $pagination['per_page'], $pagination['offset'] ) );
 
 		$reviews = $wpdb->get_results( $wpdb->prepare( $query, ...$args ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+
+		// One lookup for the page's votes, not one per review.
+		$this->viewer_votes = ( new ReviewRepository() )->helpful_voted_ids( wp_list_pluck( $reviews, 'id' ), get_current_user_id() );
 
 		$data = array();
 		foreach ( $reviews as $review ) {
@@ -638,10 +649,10 @@ class ReviewsController extends RestController {
 	}
 
 	/**
-	 * Mark a review as helpful.
+	 * Toggle the reader's "Helpful" vote on a review.
 	 *
-	 * Uses atomic database operations to prevent race conditions where
-	 * concurrent requests could both pass the duplicate vote check.
+	 * First call adds the vote, the next takes it back. All the work is in
+	 * ReviewRepository::toggle_helpful(), shared with the AJAX action.
 	 *
 	 * @since 1.1.0
 	 *
@@ -649,77 +660,22 @@ class ReviewsController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function mark_helpful( $request ) {
-		global $wpdb;
+		$result = ( new ReviewRepository() )->toggle_helpful( (int) $request->get_param( 'id' ), get_current_user_id(), wpss_client_ip() );
 
-		$review_id = (int) $request->get_param( 'id' );
-
-		// Verify review exists.
-		$reviews_table = $wpdb->prefix . 'wpss_reviews';
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$review_exists = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT id FROM {$reviews_table} WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
-				$review_id
-			)
-		);
-
-		if ( ! $review_exists ) {
-			return new WP_Error(
-				'rest_review_not_found',
-				__( 'Review not found.', 'wp-sell-services' ),
-				array( 'status' => 404 )
-			);
+		if ( 'not_found' === $result ) {
+			return new WP_Error( 'rest_review_not_found', __( 'Review not found.', 'wp-sell-services' ), array( 'status' => 404 ) );
 		}
 
-		// Build unique vote identifier.
-		$user_id  = get_current_user_id();
-		$vote_key = '_wpss_vote_' . $review_id . '_u' . $user_id;
-
-		// Use atomic INSERT IGNORE to prevent race condition.
-		// If two concurrent requests try to insert the same key, only one will succeed.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->query(
-			$wpdb->prepare(
-				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s)",
-				$vote_key,
-				time() + WEEK_IN_SECONDS,
-				'no'
-			)
-		);
-
-		// Check if our insert succeeded (rows_affected = 1) or row already existed (rows_affected = 0).
-		if ( 0 === $wpdb->rows_affected ) {
-			return new WP_Error(
-				'rest_already_voted',
-				__( 'You have already marked this review as helpful.', 'wp-sell-services' ),
-				array( 'status' => 400 )
-			);
+		if ( 'own_review' === $result ) {
+			return new WP_Error( 'rest_own_review', __( 'You cannot mark your own review as helpful.', 'wp-sell-services' ), array( 'status' => 403 ) );
 		}
-
-		// Increment helpful count atomically.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$reviews_table} SET helpful_count = helpful_count + 1 WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
-				$review_id
-			)
-		);
-
-		// Get updated count.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$new_count = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT helpful_count FROM {$reviews_table} WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe.
-				$review_id
-			)
-		);
 
 		return new WP_REST_Response(
 			array(
 				'success' => true,
-				'count'   => $new_count,
-				'message' => __( 'Thanks for your feedback!', 'wp-sell-services' ),
+				'count'   => $result['count'],
+				'marked'  => $result['marked'],
+				'message' => $result['marked'] ? __( 'Thanks for your feedback!', 'wp-sell-services' ) : __( 'Vote removed.', 'wp-sell-services' ),
 			)
 		);
 	}
@@ -1038,6 +994,8 @@ class ReviewsController extends RestController {
 			'review'             => $review->review,
 			'status'             => $review->status,
 			'helpful_count'      => (int) ( $review->helpful_count ?? 0 ),
+			'viewer_can_vote'    => is_user_logged_in() && (int) ( $review->reviewer_id ?? 0 ) !== get_current_user_id(),
+			'viewer_marked'      => in_array( (int) $review->id, $this->viewer_votes ?? ( new ReviewRepository() )->helpful_voted_ids( array( (int) $review->id ), get_current_user_id() ), true ),
 			'vendor_reply'       => $review->vendor_reply ?? null,
 			// ISO-8601 through the shared formatter (Basecamp 10154919636).
 			'vendor_reply_at'    => $this->format_datetime( $review->vendor_reply_at ?? null ),

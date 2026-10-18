@@ -993,6 +993,20 @@
 	border-color: var(--wpss-primary-accent);
 }
 
+.wpss-review-helpful-btn.marked {
+	color: var(--wpss-primary-accent);
+	border-color: var(--wpss-primary-accent);
+}
+
+.wpss-review-helpful-btn:disabled {
+	opacity: 0.6;
+	cursor: progress;
+}
+
+.wpss-helpful-note {
+	font-size: 13px;
+}
+
 .wpss-no-reviews {
 	display: block !important;
 	visibility: visible !important;

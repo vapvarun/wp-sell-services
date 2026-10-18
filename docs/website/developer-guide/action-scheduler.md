@@ -22,7 +22,7 @@ All free-plugin jobs use the `wpss` group; Pro uses `wpss-pro`. The group conven
 | `wpss_cleanup_abandoned_tips` | Daily | Clears unpaid tip sub-orders past the abandon window |
 | `wpss_cleanup_abandoned_extensions` | Daily | Same contract for extension sub-orders |
 | `wpss_cleanup_abandoned_milestones` | Daily | Same contract for non-contract milestones |
-| `wpss_cleanup_review_votes` | Daily | Expires guest "marked review helpful" idempotency rows from `wp_options` |
+| `wpss_cleanup_review_votes` | Daily | Expires signed-out "marked review helpful" idempotency rows from `wp_options` |
 | `wpss_recalculate_seller_levels` | Weekly | Seller level progression recalculation |
 | `wpss_process_auto_withdrawals` | Single action on the next Monday / 1st / 15th, re-armed after each run | Auto-payout run if enabled in Settings |
 
