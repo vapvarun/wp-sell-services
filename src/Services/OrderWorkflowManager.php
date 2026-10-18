@@ -786,6 +786,12 @@ class OrderWorkflowManager {
 			);
 		}
 
+		// The buyer's money is back, so a dispute on this order has nothing left to decide. A refund
+		// the gateway refused leaves it open: the retry closes it through refund().
+		if ( is_array( $refund ) && ( ! empty( $refund['success'] ) || ! empty( $refund['manual'] ) ) ) {
+			( new DisputeService() )->close_for_refund( $order_id, 'cancel' );
+		}
+
 		// Cancelling a paid order gives the buyer their money back, so its paid
 		// extensions and tips go back too, as on a full refund (Basecamp
 		// 10336467671). A cancel that started at the rail is left to the review
@@ -987,14 +993,20 @@ class OrderWorkflowManager {
 
 			// apply_refund_status() accumulates: hand it this event's slice,
 			// not the running total. Each slice reverses its own vendor share.
-			$moved = $service->apply_refund_status( $oid, round( $target - $already, $decimals ), $status, true );
+			// The origin names the rail in the dispute's closing note; refund() closes a dispute on
+			// a full refund itself.
+			$moved = $service->refund(
+				$oid,
+				round( $target - $already, $decimals ),
+				$status,
+				array(
+					'settled_at_rail' => true,
+					'origin'          => $gateway,
+				)
+			)['ok'];
 
 			if ( $moved ) {
 				self::remember_gateway_refund( $oid, $refund_id );
-
-				if ( ServiceOrder::STATUS_REFUNDED === $status ) {
-					( new DisputeService() )->close_for_refund( $oid, $gateway );
-				}
 			}
 
 			wpss_log(
