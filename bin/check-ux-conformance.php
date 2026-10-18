@@ -8,6 +8,7 @@
  *   12  inline onclick= in PHP output
  *    5  Dashicons in new markup
  *    8  alert( / confirm( / prompt( in plugin JS
+ *   10  an inline <script> block in PHP output (enqueue a file or wp_add_inline_script)
  *    9  a shared primitive (.wpss-btn and its modifiers) declared outside design-system.css
  *   14  `outline: none|0` in source CSS (each needs a :focus-visible replacement)
  *
@@ -24,6 +25,7 @@ $update   = in_array( '--update', $argv, true );
 $rules = array(
 	'inline-style'   => array( array( 'src', 'templates' ), 'php', '/<style[\s>]/i' ),
 	'inline-onclick' => array( array( 'src', 'templates' ), 'php', '/\sonclick\s*=/i' ),
+	'inline-script'  => array( array( 'src', 'templates' ), 'php', '/<script\b(?![^>]*\bsrc=)(?![^>]*type=["\']application\/(ld\+)?json)/i' ),
 	'dashicons'      => array( array( 'src', 'templates' ), 'php', '/dashicons-/' ),
 	'js-dialogs'     => array( array( 'assets/js' ), 'js', '/(?<![\w.])(alert|confirm|prompt)\s*\(/' ),
 	'outline-none'   => array( array( 'assets/css' ), 'css', '/outline\s*:\s*(none|0)\b/' ),

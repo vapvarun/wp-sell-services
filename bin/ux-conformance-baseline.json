@@ -10,6 +10,28 @@
     "inline-onclick": {
         "src/Frontend/UnifiedDashboard.php": 1
     },
+    "inline-script": {
+        "src/Admin/Metaboxes/ServiceMetabox.php": 4,
+        "src/Frontend/PublicSignup.php": 1,
+        "src/Frontend/ServiceWizard.php": 1,
+        "src/Frontend/Shortcodes.php": 1,
+        "src/Frontend/SingleServiceView.php": 1,
+        "src/Frontend/TemplateLoader.php": 1,
+        "src/Integrations/Gateways/OfflineGateway.php": 4,
+        "src/Integrations/Standalone/StandaloneCheckoutProvider.php": 1,
+        "src/Services/FAQService.php": 1,
+        "templates/cart/cart.php": 1,
+        "templates/dashboard/sections/create-request.php": 1,
+        "templates/dashboard/sections/edit-request.php": 1,
+        "templates/dashboard/sections/messages.php": 1,
+        "templates/dashboard/sections/portfolio.php": 1,
+        "templates/order/conversation.php": 1,
+        "templates/order/milestone-view.php": 1,
+        "templates/order/order-view.php": 6,
+        "templates/order/requirements-form.php": 1,
+        "templates/partials/notifications-list.php": 1,
+        "templates/partials/request-attachments.php": 1
+    },
     "dashicons": [],
     "js-dialogs": [],
     "outline-none": {

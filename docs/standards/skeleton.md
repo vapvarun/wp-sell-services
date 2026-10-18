@@ -74,7 +74,7 @@ Colours, spacing and radii are tokens (`var(--wpss-*)`), never raw values.
 | An admin screen | `admin-<screen>.js` |
 | A third-party library | `vendor/` (never edited) |
 
-No inline `<script>`; enqueue a file or use `wp_add_inline_script`.
+No new inline `<script>`; enqueue a file or use `wp_add_inline_script`. `bin/check-ux-conformance.php` counts the existing ones (baselined) and fails if the count grows.
 
 ## Hooks
 
