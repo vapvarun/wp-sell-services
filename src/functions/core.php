@@ -232,3 +232,42 @@ function wpss_enqueue_style( string $handle, string $relative, array $deps = arr
 	wp_enqueue_style( $handle, WPSS_PLUGIN_URL . $relative, $deps, WPSS_VERSION );
 	wp_style_add_data( $handle, 'rtl', 'replace' );
 }
+
+/**
+ * Keep only the registry entries that satisfy a seam's contract.
+ *
+ * Every integration seam (wallets, storage, e-commerce rails, and the rest listed in
+ * docs/standards/integration-seams.md) is filled by a `wpss_*` filter. A third-party entry that is
+ * not an instance of the seam's interface or has a non-string id would fail much later and far
+ * from its cause, so it is dropped here with a developer notice naming the filter.
+ *
+ * @since 1.9.0
+ *
+ * @param mixed  $items    What the filter returned; id => provider instance.
+ * @param string $contract Interface or base class every provider must implement.
+ * @param string $filter   The filter name, for the notice.
+ * @return array<string, object>
+ */
+function wpss_validate_registry( $items, string $contract, string $filter ): array {
+	$valid = array();
+
+	foreach ( (array) $items as $id => $provider ) {
+		if ( is_string( $id ) && '' !== $id && $provider instanceof $contract ) {
+			$valid[ $id ] = $provider;
+			continue;
+		}
+
+		_doing_it_wrong(
+			esc_html( $filter ),
+			sprintf(
+				/* translators: 1: registry id, 2: contract class. */
+				esc_html__( 'The entry "%1$s" was ignored: it must be an instance of %2$s, keyed by a string id.', 'wp-sell-services' ),
+				esc_html( (string) $id ),
+				esc_html( $contract )
+			),
+			'1.9.0'
+		);
+	}
+
+	return $valid;
+}

@@ -27,7 +27,7 @@ add_filter( 'wpss_review_window_days', fn( $days ) => 14 );
 
 | Hook | Parameters | File |
 |------|-----------|------|
-| `wpss_loaded` | `Plugin $plugin` | `src/Core/Plugin.php:311` |
+| `wpss_loaded` | `Plugin $plugin` | `src/Core/Plugin.php:303` |
 | `wpss_adapter_initialized` | `EcommerceAdapterInterface $adapter` | `src/Integrations/IntegrationManager.php:136` |
 
 **`wpss_loaded`** is the primary extension hook. All Pro features register here:
@@ -656,7 +656,6 @@ add_filter( 'wpss_vendor_pending_email_content', function( $content, $user, $pla
 | `wpss_payment_gateways` | `Plugin.php:813` | Test gateway (debug) |
 | `wpss_wallet_providers` **[PRO]** | `Plugin.php:825` | Empty |
 | `wpss_storage_providers` **[PRO]** | `Plugin.php:837` | Empty |
-| `wpss_email_providers` **[PRO]** | `Plugin.php:849` | Empty |
 | `wpss_analytics_widgets` **[PRO]** | `Plugin.php:861` | Empty |
 
 ### Service Wizard Limits

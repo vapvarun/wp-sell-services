@@ -550,7 +550,6 @@ BuddyPress notifications: 0 · WooCommerce emails: 32 · mail filters: 57
 - `wpss_payment_gateways` — src/Core/Plugin.php
 - `wpss_wallet_providers` — src/Core/Plugin.php
 - `wpss_storage_providers` — src/Core/Plugin.php
-- `wpss_email_providers` — src/Core/Plugin.php
 - `wpss_analytics_widgets` — src/Core/Plugin.php
 - `wpss_terms_page_slugs` — src/Core/Activator.php
 - `wpss_default_service_categories` — src/PostTypes/ServicePostType.php

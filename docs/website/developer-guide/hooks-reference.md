@@ -10,7 +10,7 @@ Every hook fired by WP Sell Services and WP Sell Services Pro, taken from
 source rather than maintained by hand. `hooks-filters.md` is the readable
 guide; this is the complete index.
 
-**542 hooks** across **748** firing sites.
+**541 hooks** across **747** firing sites.
 
 ## Actions (276)
 
@@ -293,7 +293,7 @@ guide; this is the complete index.
 | `wpss_wizard_pricing_after` | 1 | `src/Frontend/ServiceWizard.php` | Fires after the pricing tiers in the wizard's Pricing step. |
 | `wpss_wizard_save_service_meta` | 2 | `src/Frontend/ServiceWizard.php` | Fires after the wizard persists service meta. |
 
-## Filters (266)
+## Filters (265)
 
 | Hook | Args | Fired from | Description |
 |---|---|---|---|
@@ -380,7 +380,6 @@ guide; this is the complete index.
 | `wpss_email_from_name` | 1 | `src/Services/EmailService.php` | Filter the email "from" name for white-labelling. |
 | `wpss_email_header_vars` | 2 | `src/Services/EmailService.php` | Filter email header/template variables for white-labelling. |
 | `wpss_email_preference_categories` | 3 | `src/functions/notifications.php` | Filters the email preference categories offered to a user. |
-| `wpss_email_providers` | 1 | `src/Core/Plugin.php` | Filter the registered email providers. |
 | `wpss_email_subject` | 3 | `src/Services/EmailService.php` | Filters the email subject line before sending. |
 | `wpss_ensure_pay_order` | 2 | `src/functions/urls.php` | Filter the pay URL after the rail has made sure its store order exists. |
 | `wpss_foreign_page_map` | 1 | `src/Admin/PageDropdownWalker.php` | Filter the pages shown as belonging to another plugin. |

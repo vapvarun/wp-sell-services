@@ -10,8 +10,7 @@ WP Sell Services provides six contract interfaces in `src/Integrations/Contracts
 |---------------|-----------------|------|-----|
 | E-commerce Platform | `EcommerceAdapterInterface` | Standalone (built-in) | WooCommerce, EDD, FluentCart **[PRO]** |
 | Payment Gateway | `PaymentGatewayInterface` | Stripe, PayPal, Offline | Razorpay **[PRO]** |
-| Storage Provider | `wpss_storage_providers` | Local uploads | S3, GCS, DigitalOcean Spaces **[PRO]** |
-| Email Provider | `wpss_email_providers` | WordPress mail | SendGrid, Mailgun, SES |
+| Storage Provider | `StorageProviderInterface` + `wpss_storage_providers` | Local uploads | S3, GCS, DigitalOcean Spaces **[PRO]** |
 | REST API Controller | `wpss_api_controllers` | 23 controllers | Additional endpoints |
 | Analytics Widget | `wpss_analytics_widgets` | Basic stats | Revenue, conversion, vendor analytics **[PRO]** |
 
@@ -196,15 +195,9 @@ add_filter( 'wpss_api_controllers', function( $controllers ) {
 ## Provider Registration Filters **[PRO]**
 
 ```php
-// Storage providers (Plugin.php:837)
+// Storage providers 
 add_filter( 'wpss_storage_providers', function( $providers ) {
     $providers['custom_storage'] = new \MyPlugin\CustomStorageProvider();
-    return $providers;
-} );
-
-// Email providers (Plugin.php:849)
-add_filter( 'wpss_email_providers', function( $providers ) {
-    $providers['custom_email'] = new \MyPlugin\CustomEmailProvider();
     return $providers;
 } );
 

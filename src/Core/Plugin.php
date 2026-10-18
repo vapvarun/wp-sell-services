@@ -144,14 +144,6 @@ final class Plugin {
 	private array $storage_providers = array();
 
 	/**
-	 * Registered email providers.
-	 *
-	 * @var array
-	 * @since 1.1.0
-	 */
-	private array $email_providers = array();
-
-	/**
 	 * Registered analytics widgets.
 	 *
 	 * @var array
@@ -2755,7 +2747,7 @@ final class Plugin {
 		 *
 		 * @param array $providers Array of wallet provider instances.
 		 */
-		$this->wallet_providers = apply_filters( 'wpss_wallet_providers', $this->wallet_providers );
+		$this->wallet_providers = wpss_validate_registry( apply_filters( 'wpss_wallet_providers', $this->wallet_providers ), \WPSellServices\Integrations\Contracts\WalletProviderInterface::class, 'wpss_wallet_providers' );
 
 		/**
 		 * Filter the registered storage providers.
@@ -2767,19 +2759,8 @@ final class Plugin {
 		 *
 		 * @param array $providers Array of storage provider instances.
 		 */
-		$this->storage_providers = apply_filters( 'wpss_storage_providers', $this->storage_providers );
+		$this->storage_providers = wpss_validate_registry( apply_filters( 'wpss_storage_providers', $this->storage_providers ), \WPSellServices\Integrations\Contracts\StorageProviderInterface::class, 'wpss_storage_providers' );
 
-		/**
-		 * Filter the registered email providers.
-		 *
-		 * Allows Pro or third-party plugins to register email services
-		 * (SendGrid, Mailgun, SES, etc.).
-		 *
-		 * @since 1.1.0
-		 *
-		 * @param array $providers Array of email provider instances.
-		 */
-		$this->email_providers = apply_filters( 'wpss_email_providers', $this->email_providers );
 
 		/**
 		 * Filter the registered analytics widgets.
@@ -3355,15 +3336,6 @@ final class Plugin {
 		return $this->storage_providers;
 	}
 
-	/**
-	 * Get registered email providers.
-	 *
-	 * @since 1.1.0
-	 * @return array
-	 */
-	public function get_email_providers(): array {
-		return $this->email_providers;
-	}
 
 	/**
 	 * Get registered analytics widgets.

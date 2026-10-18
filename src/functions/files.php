@@ -86,7 +86,7 @@ function wpss_get_storage_provider( string $id ): ?object {
 	$providers = (array) apply_filters( 'wpss_storage_providers', array() );
 	$provider  = $providers[ $id ] ?? null;
 
-	return is_object( $provider ) ? $provider : null;
+	return $provider instanceof \WPSellServices\Integrations\Contracts\StorageProviderInterface ? $provider : null;
 }
 
 /**
