@@ -51,6 +51,13 @@ $check( 'the editor lists what is missing', substr_count( $editor, '<li>' ) >= 1
 $list = $notice( 'edit' );
 $check( 'the list says it too, with a way back to the service', false !== strpos( $list, 'saved as a draft' ) && false !== strpos( $list, 'Finish this service' ) );
 
+// A user who may not edit the service never reads its title or what it is missing.
+$other = (int) wp_insert_user( array( 'user_login' => 'qa_pb_' . wp_generate_password( 5, false ), 'user_pass' => wp_generate_password(), 'role' => 'subscriber' ) );
+wp_set_current_user( $other );
+$check( 'a user who cannot edit the service sees no notice for it', '' === $notice( 'edit' ) && '' === $notice( 'post', $id ) );
+wp_set_current_user( 1 );
+wp_delete_user( $other );
+
 delete_post_meta( $id, ServiceMetabox::PUBLISH_BLOCKED_META );
 $check( 'with no refused publish on record there is no notice', '' === $notice( 'post', $id ) );
 

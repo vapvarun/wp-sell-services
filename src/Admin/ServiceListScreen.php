@@ -80,6 +80,10 @@ class ServiceListScreen {
 		}
 
 		foreach ( $ids as $id ) {
+			if ( ! current_user_can( 'edit_post', (int) $id ) ) {
+				continue;
+			}
+
 			$errors = wpss_get_service_publish_errors( (int) $id );
 
 			if ( ! $errors ) {
