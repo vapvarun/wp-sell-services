@@ -54,8 +54,8 @@ By default, every review is published as soon as the buyer submits it. The vendo
 
 If you want to review submissions before they go public:
 
-1. Go to **Settings > General**.
-2. Enable **Moderate Reviews**.
+1. Go to **Settings > Vendor Settings**.
+2. Enable **Review Moderation** ("Hold new reviews for admin approval before they are published").
 3. Save changes.
 
 With moderation enabled, new reviews go into "Pending" status. They are hidden from the public until you approve them.

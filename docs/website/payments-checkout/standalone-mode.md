@@ -36,7 +36,7 @@ By default a buyer must sign in before paying. On a marketplace selling to peopl
 who have never visited before, that sign-in wall is where a good number of them
 leave.
 
-Turn on **Sell Services > Settings > General > Account at checkout** and
+Turn on **Sell Services > Settings > Checkout > Account at checkout** and
 the wall goes away: the buyer fills in the billing details they were going to
 fill in anyway, and their account is created from those when they pay. They are
 signed in immediately afterwards.

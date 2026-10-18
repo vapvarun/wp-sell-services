@@ -74,7 +74,7 @@ By default, reviews are published immediately after submission. If you want to r
 
 ### Enabling Moderation
 
-Go to **Settings > General** and enable **Moderate Reviews**. Once enabled:
+Go to **Settings > Vendor Settings** and enable **Review Moderation**. Once enabled:
 
 - New reviews go into "Pending" status instead of publishing immediately.
 - You review them from **Sell Services > Review Moderation**.

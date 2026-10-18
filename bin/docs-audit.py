@@ -684,7 +684,26 @@ WRONG_LABELS = {
     # If the STATUS ever gets described that way, catch it with the status name
     # rather than a substring that also matches the notification.
     "Recurring Subscriptions page": "the Subscriptions page",
+    # The review-moderation switch is on the Vendor Settings tab, labelled "Review Moderation".
+    "Settings > General** and enable **Moderate Reviews": "Settings > Vendor Settings > Review Moderation",
+    "Enable **Moderate Reviews**": "Review Moderation (Settings > Vendor Settings)",
 }
+# "Settings > <Tab> > <Field>" must name a field registered on that tab. Fields are read from
+# Settings.php (add_settings_field label + settings page), so a field that lives on another tab -
+# "Account at checkout" documented under General - fails here.
+SETTINGS_PAGE_TAB = {"wpss_general": "General", "wpss_checkout": "Checkout", "wpss_pages": "Pages"}
+settings_src = open(os.path.join(FREE, "src/Admin/Settings.php"), encoding="utf-8").read()
+field_tab = {}
+for label, page in re.findall(r"add_settings_field\(\s*'[^']+',\s*__\( '((?:[^'\\]|\\.)+)',[^;]*?'(wpss_[a-z_]+)',\s*'wpss_", settings_src, re.S):
+    field_tab.setdefault(label.replace("\\'", "'"), set()).add(SETTINGS_PAGE_TAB.get(page, page))
+field_tab_re = re.compile(r"Settings > (General|Checkout|Pages) > \*{0,2}([A-Za-z][\w &'/-]*)")
+for p in md_files(DOCS):
+    rel = os.path.relpath(p, DOCS)
+    for i, line in enumerate(open(p), 1):
+        for tab, tail in field_tab_re.findall(line):
+            for field, tabs in field_tab.items():
+                if tail.startswith(field) and tab not in tabs:
+                    fail("labels", f"{rel}:{i} puts '{field}' under Settings > {tab}; it is on {', '.join(sorted(tabs))}")
 drift = 0
 for p in md_files(DOCS):
     rel = os.path.relpath(p, DOCS)
