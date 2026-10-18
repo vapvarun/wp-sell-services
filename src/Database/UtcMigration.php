@@ -113,6 +113,56 @@ class UtcMigration {
 	}
 
 	/**
+	 * Re-read the buyer-request deadlines typed before 1.8.0 as the site's calendar day.
+	 *
+	 * Until 1.8.0 a typed deadline was stored as `YYYY-MM-DD 00:00:00` with no zone; 1.8.0 reads
+	 * `_wpss_expires_at` as UTC and shows the site's day, so west of UTC the deadline showed a
+	 * day early and an untouched edit-save stored that early day. The default expiry (now plus N
+	 * days) carries a time of day, so a value at exactly midnight is a typed date. Run once, on
+	 * the upgrade to 1.9.0; a repeat finds nothing left to change.
+	 *
+	 * @return int Deadlines rewritten.
+	 */
+	public static function repair_request_deadlines(): int {
+		global $wpdb;
+
+		if ( get_option( 'wpss_request_deadlines_utc' ) ) {
+			return 0;
+		}
+
+		$changed = 0;
+		$cursor  = 0;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		do {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT meta_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_wpss_expires_at' AND meta_id > %d AND meta_value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2} 00:00:00$' ORDER BY meta_id LIMIT 500", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$cursor
+				)
+			);
+
+			$batch = count( $rows );
+
+			foreach ( $rows as $row ) {
+				$cursor = (int) $row->meta_id;
+				$utc    = wpss_datetime_input_to_utc( $row->meta_value );
+
+				if ( null !== $utc && $utc !== $row->meta_value ) {
+					$wpdb->update( $wpdb->postmeta, array( 'meta_value' => $utc ), array( 'meta_id' => $row->meta_id ) );
+					++$changed;
+				}
+			}
+		} while ( 500 === $batch );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		wp_cache_flush_group( 'post_meta' );
+		update_option( 'wpss_request_deadlines_utc', gmdate( 'Y-m-d H:i:s' ), false );
+
+		return $changed;
+	}
+
+	/**
 	 * Record the cutover and queue the work, once.
 	 *
 	 * @return void

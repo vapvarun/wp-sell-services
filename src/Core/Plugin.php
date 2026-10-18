@@ -476,6 +476,12 @@ final class Plugin {
 				self::migrate_unapproved_published_services();
 			}
 
+			// 1.9.0 stores a buyer request's deadline in UTC through every door; the dates typed
+			// before 1.8.0 are still midnight with no zone.
+			if ( $installed_version && version_compare( $installed_version, '1.9.0', '<' ) ) {
+				\WPSellServices\Database\UtcMigration::repair_request_deadlines();
+			}
+
 			// Note: the wallet-ledger reconciliation is NOT here. It runs off its
 			// own wpss_ledger_reconciled flag at the top of this method, so it
 			// cannot be missed by a release that forgets to bump the version.

@@ -501,19 +501,47 @@ class BuyerRequestsController extends RestController {
 	}
 
 	/**
+	 * Turn a client's deadline into the UTC string the request stores.
+	 *
+	 * A date alone is a day on the site's calendar; a value with an offset keeps that offset. The
+	 * raw string used to be stored, so the same deadline read a day early west of UTC.
+	 *
+	 * @param mixed $deadline Raw `deadline` parameter.
+	 * @return string|WP_Error UTC `Y-m-d H:i:s`, '' when none was sent, or a 400 for an unreadable value.
+	 */
+	private function deadline_to_utc( $deadline ) {
+		if ( null === $deadline || '' === $deadline ) {
+			return '';
+		}
+
+		$utc = wpss_datetime_input_to_utc( (string) $deadline );
+
+		return $utc ?? new WP_Error(
+			'invalid_deadline',
+			__( 'The deadline is not a valid date.', 'wp-sell-services' ),
+			[ 'status' => 400 ]
+		);
+	}
+
+	/**
 	 * Create buyer request.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function create_item( $request ) {
+		$deadline = $this->deadline_to_utc( $request->get_param( 'deadline' ) );
+		if ( is_wp_error( $deadline ) ) {
+			return $deadline;
+		}
+
 		$data = [
 			'title'           => $request->get_param( 'title' ),
 			'description'     => $request->get_param( 'description' ),
 			'category_id'     => $request->get_param( 'category' ),
 			'budget_min'      => $request->get_param( 'budget_min' ),
 			'budget_max'      => $request->get_param( 'budget_max' ),
-			'expires_at'      => $request->get_param( 'deadline' ),
+			'expires_at'      => $deadline,
 			'attachments'     => $request->get_param( 'attachments' ),
 			'skills_required' => $request->get_param( 'skills_required' ),
 		];
@@ -576,7 +604,11 @@ class BuyerRequestsController extends RestController {
 
 		if ( $request->get_param( 'deadline' ) ) {
 			// Stored as expires_at; under 'deadline' the service ignored it.
-			$data['expires_at'] = $request->get_param( 'deadline' );
+			$deadline = $this->deadline_to_utc( $request->get_param( 'deadline' ) );
+			if ( is_wp_error( $deadline ) ) {
+				return $deadline;
+			}
+			$data['expires_at'] = $deadline;
 		}
 
 		if ( $request->get_param( 'status' ) ) {
@@ -790,7 +822,7 @@ class BuyerRequestsController extends RestController {
 			'budget_max_minor' => wpss_amount_to_minor_units( $budget_max, $currency ),
 			'currency'         => $currency,
 			// The request object carries it as expires_at; 'deadline' was never set, so this was always null.
-			'deadline'         => ( $buyer_request->expires_at ?? '' ) ?: null,
+			'deadline'         => wpss_rest_date( $buyer_request->expires_at ?? '' ),
 			'category'         => $buyer_request->category ?? null,
 			'proposal_count'   => (int) ( $buyer_request->proposal_count ?? 0 ),
 			'author'           => wpss_rest_user( (int) $author_id ),
