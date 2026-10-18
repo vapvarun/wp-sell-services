@@ -1730,27 +1730,28 @@ class EarningsService {
 	/**
 	 * Get next schedule time for auto withdrawal.
 	 *
-	 * @param string $schedule Schedule type (weekly, biweekly, or monthly).
+	 * @param string                  $schedule Schedule type (weekly, biweekly, or monthly).
+	 * @param \DateTimeInterface|null $from     Moment to count from; now when omitted.
 	 * @return int Unix timestamp for next run.
 	 */
-	private static function get_next_schedule_time( string $schedule ): int {
+	private static function get_next_schedule_time( string $schedule, ?\DateTimeInterface $from = null ): int {
 		$timezone = wp_timezone();
-		$now      = new \DateTime( 'now', $timezone );
+		$now      = $from ? \DateTime::createFromInterface( $from )->setTimezone( $timezone ) : new \DateTime( 'now', $timezone );
+		$next     = clone $now;
 
 		if ( 'monthly' === $schedule ) {
 			// First day of next month at 2 AM.
-			$next = new \DateTime( 'first day of next month 02:00:00', $timezone );
+			$next->modify( 'first day of next month' )->setTime( 2, 0 );
 		} elseif ( 'biweekly' === $schedule ) {
 			// Next 1st or 15th of the month at 2 AM.
-			$day = (int) $now->format( 'j' );
-			if ( $day < 15 ) {
-				$next = new \DateTime( $now->format( 'Y-m' ) . '-15 02:00:00', $timezone );
+			if ( (int) $now->format( 'j' ) < 15 ) {
+				$next->setDate( (int) $now->format( 'Y' ), (int) $now->format( 'n' ), 15 )->setTime( 2, 0 );
 			} else {
-				$next = new \DateTime( 'first day of next month 02:00:00', $timezone );
+				$next->modify( 'first day of next month' )->setTime( 2, 0 );
 			}
 		} else {
 			// Next Monday at 2 AM.
-			$next = new \DateTime( 'next monday 02:00:00', $timezone );
+			$next->modify( 'next monday' )->setTime( 2, 0 );
 		}
 
 		return $next->getTimestamp();
