@@ -424,7 +424,9 @@ class EmailService {
 				array(
 					'order'         => $order,
 					'recipient'     => $vendor,
-					'email_heading' => __( 'Requirements Received - Start Working', 'wp-sell-services' ),
+					'email_heading' => wpss_order_needs_requirements( $order )
+						? __( 'Requirements Received - Start Working', 'wp-sell-services' )
+						: __( 'New Order - Start Working', 'wp-sell-services' ),
 					'customer_name' => $this->get_customer_name( $order->customer_id ),
 					'is_customer'   => false,
 				)

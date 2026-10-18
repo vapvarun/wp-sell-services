@@ -927,7 +927,7 @@ class OfflineGateway extends AbstractPaymentGateway {
 		wp_send_json_success(
 			array(
 				'message'    => __( 'Order marked as paid successfully.', 'wp-sell-services' ),
-				'new_status' => 'pending_requirements',
+				'new_status' => (string) ( wpss_get_order( $order_id )->status ?? 'pending_requirements' ),
 			)
 		);
 	}

@@ -249,6 +249,28 @@ function wpss_get_service_requirements( int $service_id ): array {
 }
 
 /**
+ * Whether a paid order has to wait for the buyer's requirements.
+ *
+ * A service with no requirement questions has nothing to wait for, so its order starts the moment it
+ * is paid (docs: "Skipping Requirements"). Buyer-request orders keep their own flow: the brief was
+ * collected with the proposal.
+ *
+ * @since 1.9.0
+ *
+ * @param object $order Order row or model (needs platform and service_id).
+ * @return bool True when the order waits in pending_requirements.
+ */
+function wpss_order_needs_requirements( object $order ): bool {
+	$service_id = (int) ( $order->service_id ?? 0 );
+
+	if ( ! $service_id || 'request' === (string) ( $order->platform ?? '' ) ) {
+		return true;
+	}
+
+	return ! empty( wpss_get_service_requirements( $service_id ) );
+}
+
+/**
  * Save a service's requirements, normalised.
  *
  * The one writer. Callers cap the list with wpss_enforce_service_limits()

@@ -1965,11 +1965,11 @@ class OrderWorkflowManager {
 			return;
 		}
 
-		// Transition to pending requirements.
+		// Transition to pending requirements, or straight to in progress when the service asks for none.
 		// This fires wpss_order_status_changed → Plugin.php handles notifications.
 		$this->order_service->update_status(
 			$order_id,
-			ServiceOrder::STATUS_PENDING_REQUIREMENTS,
+			wpss_order_needs_requirements( $order ) ? ServiceOrder::STATUS_PENDING_REQUIREMENTS : ServiceOrder::STATUS_IN_PROGRESS,
 			__( 'Payment received', 'wp-sell-services' )
 		);
 	}

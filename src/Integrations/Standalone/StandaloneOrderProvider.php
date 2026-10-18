@@ -398,8 +398,16 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			}
 		}
 
+		// A service with no requirement questions starts at once; the others wait for the buyer.
+		$paid_status = ServiceOrder::STATUS_PENDING_REQUIREMENTS;
+
+		if ( ! $is_sub_order && ! wpss_order_needs_requirements( $order ) ) {
+			$paid_status               = ServiceOrder::STATUS_IN_PROGRESS;
+			$update_data['started_at'] = $update_data['paid_at'];
+		}
+
 		if ( ! $is_sub_order ) {
-			$update_data['status'] = ServiceOrder::STATUS_PENDING_REQUIREMENTS;
+			$update_data['status'] = $paid_status;
 
 			// Calculate delivery deadline only if not already set (e.g., by convert_to_order).
 			if ( empty( $order->delivery_deadline ) ) {
@@ -425,8 +433,8 @@ class StandaloneOrderProvider implements OrderProviderInterface {
 			// Fire status-change hooks only for real service orders. Sub-orders
 			// manage their own lifecycle via their service handler on wpss_order_paid.
 			if ( ! $is_sub_order ) {
-				do_action( 'wpss_order_status_changed', $order_id, ServiceOrder::STATUS_PENDING_REQUIREMENTS, ServiceOrder::STATUS_PENDING_PAYMENT );
-				do_action( 'wpss_order_status_pending_requirements', $order_id, ServiceOrder::STATUS_PENDING_PAYMENT );
+				do_action( 'wpss_order_status_changed', $order_id, $paid_status, ServiceOrder::STATUS_PENDING_PAYMENT );
+				do_action( "wpss_order_status_{$paid_status}", $order_id, ServiceOrder::STATUS_PENDING_PAYMENT );
 			}
 
 			/**
