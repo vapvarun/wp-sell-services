@@ -771,7 +771,6 @@
 	border: 0;
 }
 
-
 /* ==========================================================================
    Conversation Cards
    ========================================================================== */
@@ -1763,11 +1762,6 @@
 	margin-bottom: 24px;
 }
 
-.wpss-btn--lg {
-	padding: 14px 32px;
-	font-size: 16px;
-}
-
 /* Alerts */
 .wpss-alert {
 	padding: 12px 16px;
@@ -1798,129 +1792,6 @@
 	background: var(--wpss-status-late-bg, #fef9c3);
 	color: var(--wpss-status-late-fg, #854d0e);
 	border: 1px solid var(--wpss-warning-border, #fde68a);
-}
-
-/* ==========================================================================
-   Buttons
-   ========================================================================== */
-
-.wpss-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	padding: 10px 20px;
-	font-size: 14px;
-	font-weight: 500;
-	border-radius: var(--wpss-radius);
-	border: none;
-	cursor: pointer;
-	text-decoration: none;
-	transition: all 0.15s ease;
-	white-space: nowrap;
-}
-
-/* .wpss-btn--primary and .wpss-btn--outline: see design-system.css (single
-   owner). The copy that used to live here painted the button --wpss-gray-700
-   on --wpss-gray-300, neither of which flips for dark mode, and it won on the
-   live page purely by enqueue order. */
-
-.wpss-btn--ghost {
-	background: transparent;
-	color: var(--wpss-gray-600);
-}
-
-.wpss-btn--ghost:hover {
-	background: var(--wpss-gray-100);
-	color: var(--wpss-gray-900);
-}
-
-.wpss-btn--secondary {
-	background: var(--wpss-secondary, #1e293b);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-btn--success {
-	background: var(--wpss-success, #10b981);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-btn--danger {
-	background: var(--wpss-danger, #ef4444);
-	color: var(--wpss-white, #fff);
-}
-
-.wpss-btn--danger-outline {
-	background: transparent;
-	border: 1px solid var(--wpss-danger, #ef4444);
-	color: var(--wpss-danger, #ef4444);
-}
-
-.wpss-btn--danger-outline:hover {
-	background: var(--wpss-danger, #ef4444);
-	color: var(--wpss-white, #fff);
-}
-
-/* Order actions rendered as links rather than buttons.
-   Themes style anchors far more aggressively than buttons — BuddyX puts
-   `border: 2px solid transparent` on its anchor buttons, which outranks the
-   1px border above and left "View Dispute" as floating red text with no
-   outline. Pinning the anchor states keeps a link action looking like the
-   button beside it, including :visited, which themes recolour by default. */
-a.wpss-btn.wpss-btn--danger-outline,
-a.wpss-btn.wpss-btn--danger-outline:visited {
-	border: 1px solid var(--wpss-danger, #ef4444);
-	color: var(--wpss-danger, #ef4444);
-	background: transparent;
-	text-decoration: none;
-}
-
-/* Both classes repeated deliberately: the theme's own anchor-hover rule sits at
-   the same specificity as a single class, and won — the link went to a pale
-   tint while the identical <button> beside it fills solid. */
-a.wpss-btn.wpss-btn--danger-outline:hover,
-a.wpss-btn.wpss-btn--danger-outline:focus-visible {
-	border-color: var(--wpss-danger, #ef4444);
-	background: var(--wpss-danger, #ef4444);
-	color: var(--wpss-white, #fff);
-	text-decoration: none;
-}
-
-.wpss-btn--sm {
-	padding: 6px 12px;
-	font-size: 13px;
-}
-
-.wpss-btn--full {
-	width: 100%;
-}
-
-.wpss-btn--lg {
-	padding: 0.75rem 1.5rem;
-	font-size: 1rem;
-}
-
-.wpss-btn--disabled,
-.wpss-btn.wpss-btn--disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
-	pointer-events: none;
-}
-
-.wpss-btn--icon {
-	padding: 0.5rem;
-	width: 36px;
-	height: 36px;
-}
-
-.wpss-btn--block {
-	display: flex;
-	width: 100%;
-}
-
-.wpss-btn:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
 }
 
 /* ==========================================================================
@@ -2435,7 +2306,6 @@ select.wpss-input option,
 	}
 }
 
-
 /* On a phone the shell and theme already give 27px of gutter; the body's own
    padding and the messages card's stacked on top left a message 165px of a
    390px screen (Basecamp 10345275760). */
@@ -2521,7 +2391,6 @@ select.wpss-input option,
 		font-size: 1.0625rem;
 	}
 }
-
 
 /* ==========================================================================
    Favorites section (Dashboard → Buying → Favorites)
@@ -3538,11 +3407,6 @@ select.wpss-input option,
 .wpss-status-closed {
 	background: var(--wpss-wp-admin-bg, #f0f0f1);
 	color: var(--wpss-wp-admin-text-muted, #50575e);
-}
-
-.wpss-btn-sm {
-	padding: 6px 12px;
-	font-size: 13px;
 }
 
 /* ==========================================================================

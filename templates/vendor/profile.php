@@ -260,12 +260,12 @@ do_action( 'wpss_before_vendor_profile', $vendor_id );
 
 				<div class="wpss-profile-actions">
 					<?php if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) : ?>
-						<button type="button" class="wpss-btn wpss-btn-primary wpss-contact-btn"
+						<button type="button" class="wpss-btn wpss-btn--primary wpss-contact-btn"
 							data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
 							<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
 						</button>
 					<?php elseif ( ! is_user_logged_in() ) : ?>
-						<a href="<?php echo esc_url( wp_login_url( wpss_get_vendor_url( $vendor_id ) ) ); ?>" class="wpss-btn wpss-btn-primary">
+						<a href="<?php echo esc_url( wp_login_url( wpss_get_vendor_url( $vendor_id ) ) ); ?>" class="wpss-btn wpss-btn--primary">
 							<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
 						</a>
 					<?php endif; ?>
@@ -709,10 +709,10 @@ if ( is_user_logged_in() && get_current_user_id() !== $vendor_id ) :
 					</div>
 
 					<div class="wpss-form-actions">
-						<button type="submit" class="wpss-btn wpss-btn-primary">
+						<button type="submit" class="wpss-btn wpss-btn--primary">
 							<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
 						</button>
-						<button type="button" class="wpss-btn wpss-btn-secondary wpss-modal-dismiss">							
+						<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal-dismiss">							
 							&times;
 						</button>
 					</div>

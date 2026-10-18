@@ -173,7 +173,7 @@ do_action( 'wpss_before_service_reviews', $service_id );
 		<?php if ( $rating_count > $reviews_per_page ) : ?>
 			<div class="wpss-reviews-pagination">
 				<button type="button"
-						class="wpss-btn wpss-btn-outline wpss-load-more-reviews"
+						class="wpss-btn wpss-btn--outline wpss-load-more-reviews"
 						data-service="<?php echo esc_attr( $service_id ); ?>"
 						data-page="2">
 					<?php esc_html_e( 'Load More Reviews', 'wp-sell-services' ); ?>

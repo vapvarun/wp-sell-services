@@ -24,5 +24,6 @@
         "assets/css/orders.css": 1,
         "assets/css/single-service.css": 2,
         "assets/css/wpss-tour.css": 2
-    }
+    },
+    "duplicate-primitive": []
 }

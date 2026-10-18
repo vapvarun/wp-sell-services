@@ -827,12 +827,12 @@
             // now, so this only ever drops a button it cannot point anywhere.
             let actions = '';
             if (cartUrl) {
-                actions += '<a href="' + cartUrl + '" class="wpss-btn wpss-btn-outline">' +
+                actions += '<a href="' + cartUrl + '" class="wpss-btn wpss-btn--outline">' +
                     wpssService.i18n.viewCart +
                     '</a>';
             }
             if (checkoutUrl) {
-                actions += '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn-primary">' +
+                actions += '<a href="' + checkoutUrl + '" class="wpss-btn wpss-btn--primary">' +
                     wpssService.i18n.checkout +
                     '</a>';
             }

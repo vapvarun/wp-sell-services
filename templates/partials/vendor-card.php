@@ -169,7 +169,7 @@ do_action( 'wpss_before_vendor_card', $vendor_id );
 
 	<div class="wpss-vendor-actions">
 		<a href="<?php echo esc_url( wpss_get_vendor_url( $vendor_id ) ); ?>"
-			class="wpss-btn wpss-btn-outline wpss-btn-block">
+			class="wpss-btn wpss-btn--outline wpss-btn--block">
 			<?php esc_html_e( 'View Profile', 'wp-sell-services' ); ?>
 		</a>
 	</div>

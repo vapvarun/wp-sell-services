@@ -216,6 +216,14 @@
       "fails_on": "pre-fix CSS (ghost danger #dc2626 on dark card 3.04, stat captions hint 3.04, wallet credit #10b981 on white 2.54)",
       "journey": "audit/journeys/16-dark-mode-and-icons.md#meaningful-text-clears-45-1-in-both-modes",
       "now_dead_or_duplicate": "none"
+    },
+    {
+      "card": "consolidation: .wpss-btn declared in six sheets (no card)",
+      "class": "one component declared in several stylesheets that disagree, so the rendered result depended on which sheets a page loaded (modifier overrides lost to a later base, --sm never rendered small, --link rendered as a box, two class-name schemes)",
+      "check": "tests/test-primitive-single-source.php + bin/check-ux-conformance.php (duplicate-primitive, baseline 0)",
+      "fails_on": "pre-consolidation tree (frontend.css and service-wizard.css redeclared the base; 55+ legacy single-dash classes in source)",
+      "journey": "audit/journeys/17-layout-per-surface.md#11",
+      "now_dead_or_duplicate": "55 duplicate button rules deleted from frontend, single-service, unified-dashboard and vendor-dashboard; legacy single-dash alias blocks deleted from design-system.css"
     }
   ]
 }

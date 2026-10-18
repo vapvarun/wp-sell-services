@@ -146,7 +146,7 @@ class ServiceArchiveView {
 		?>
 		<?php $current_search = $this->current_search(); ?>
 		<div class="wpss-filters-bar">
-			<button type="button" class="wpss-btn wpss-btn-outline wpss-filter-toggle" aria-expanded="false" aria-controls="wpss-sidebar">
+			<button type="button" class="wpss-btn wpss-btn--outline wpss-filter-toggle" aria-expanded="false" aria-controls="wpss-sidebar">
 				<span class="wpss-icon-filter"></span>
 				<?php esc_html_e( 'Filters', 'wp-sell-services' ); ?>
 			</button>
@@ -309,7 +309,7 @@ class ServiceArchiveView {
 		<aside class="wpss-archive-sidebar" id="wpss-sidebar">
 			<div class="wpss-sidebar-header">
 				<h3><?php esc_html_e( 'Filters', 'wp-sell-services' ); ?></h3>
-				<button type="button" class="wpss-sidebar-close wpss-btn-icon" aria-label="<?php esc_attr_e( 'Close filters', 'wp-sell-services' ); ?>">
+				<button type="button" class="wpss-sidebar-close wpss-btn--icon" aria-label="<?php esc_attr_e( 'Close filters', 'wp-sell-services' ); ?>">
 					&times;
 				</button>
 			</div>
@@ -462,14 +462,14 @@ class ServiceArchiveView {
 
 				<div class="wpss-filter-actions">
 					<?php // Filters apply as soon as they are picked, like sort (frontend.js); this stays for keyboard and no-JS use and shows when focused. ?>
-					<button type="submit" class="wpss-btn wpss-btn-primary wpss-btn-block screen-reader-text">
+					<button type="submit" class="wpss-btn wpss-btn--primary wpss-btn--block screen-reader-text">
 						<?php esc_html_e( 'Apply Filters', 'wp-sell-services' ); ?>
 					</button>
 					<?php
 					$services_page_url = wpss_get_page_url( 'services_page' );
 					$clear_url         = $services_page_url ? $services_page_url : get_post_type_archive_link( 'wpss_service' );
 					?>
-					<a href="<?php echo esc_url( $clear_url ); ?>" class="wpss-btn wpss-btn-outline wpss-btn-block">
+					<a href="<?php echo esc_url( $clear_url ); ?>" class="wpss-btn wpss-btn--outline wpss-btn--block">
 						<?php esc_html_e( 'Clear All', 'wp-sell-services' ); ?>
 					</a>
 				</div>

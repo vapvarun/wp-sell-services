@@ -147,105 +147,6 @@
    so the token-driven .wpss-container there is the one definition. Nested
    containers collapse to fluid width via the rule in design-system.css. */
 
-/* ==========================================================================
-   Buttons
-   ========================================================================== */
-
-.wpss-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	padding: 10px 20px;
-	font-size: 14px;
-	font-weight: 600;
-	line-height: 1.4;
-	text-decoration: none;
-	border: 2px solid transparent;
-	border-radius: var(--wpss-radius);
-	cursor: pointer;
-	transition: all var(--wpss-transition);
-}
-
-.wpss-btn:hover {
-	text-decoration: none;
-}
-
-.wpss-btn-primary {
-	background: var(--wpss-primary);
-	color: var(--wpss-white);
-	border-color: var(--wpss-primary);
-}
-
-.wpss-btn-primary:hover {
-	background: var(--wpss-primary-dark);
-	border-color: var(--wpss-primary-dark);
-	color: var(--wpss-white);
-}
-
-.wpss-btn-secondary {
-	background: var(--wpss-secondary);
-	color: var(--wpss-white);
-	border-color: var(--wpss-secondary);
-}
-
-.wpss-btn-outline {
-	background: transparent;
-	color: var(--wpss-secondary-accent);
-	border-color: var(--wpss-border);
-}
-
-.wpss-btn-outline:hover {
-	background: var(--wpss-background);
-	border-color: var(--wpss-secondary);
-}
-
-.wpss-btn-success {
-	background: var(--wpss-success);
-	color: var(--wpss-white);
-	border-color: var(--wpss-success);
-}
-
-.wpss-btn-danger {
-	background: var(--wpss-danger);
-	color: var(--wpss-white);
-	border-color: var(--wpss-danger);
-}
-
-.wpss-btn-sm {
-	padding: 6px 12px;
-	font-size: 13px;
-}
-
-.wpss-btn-block {
-	display: flex;
-	width: 100%;
-}
-
-.wpss-btn-icon {
-	padding: 8px;
-	border-radius: 50%;
-}
-
-/* Disabled & Loading States */
-.wpss-btn:disabled,
-.wpss-btn[aria-disabled="true"],
-.wpss-btn--loading {
-	opacity: 0.6;
-	cursor: not-allowed;
-	pointer-events: none;
-}
-
-.wpss-btn:active:not(:disabled) {
-	transform: scale(0.97);
-}
-
-/* Focus Indicators */
-.wpss-btn:focus-visible {
-	outline: 2px solid var(--wpss-primary);
-	outline-offset: 2px;
-}
-
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
@@ -1157,7 +1058,7 @@ article.wpss-service-card:hover {
 	margin-top: 0.25rem;
 }
 
-.wpss-contact-form .wpss-btn-block {
+.wpss-contact-form .wpss-btn--block {
 	width: 100%;
 }
 
@@ -2906,11 +2807,6 @@ a.wpss-back-link:focus {
 	text-align: center;
 	padding-top: 20px;
 	border-top: 1px solid var(--wpss-border);
-}
-
-.wpss-btn-lg {
-	padding: 15px 40px;
-	font-size: 16px;
 }
 
 .wpss-requirements-note {

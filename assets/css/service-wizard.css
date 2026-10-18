@@ -449,7 +449,7 @@ select.wpss-form-input::-ms-expand {
 	flex: 1;
 }
 
-.wpss-btn--icon {
+.wpss-wizard .wpss-btn--icon {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -463,8 +463,8 @@ select.wpss-form-input::-ms-expand {
 	transition: all var(--wpss-transition, 0.2s ease);
 }
 
-.wpss-btn--icon:hover {
-	color: var(--wpss-danger, #ef4444);
+.wpss-wizard .wpss-btn--icon:hover {
+	color: var(--wpss-danger-text, var(--wpss-danger));
 	background: var(--wpss-danger-light, #fee2e2);
 }
 

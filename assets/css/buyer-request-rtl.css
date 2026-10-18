@@ -340,38 +340,38 @@
 	transition: all 0.2s ease;
 }
 
-.wpss-requests-archive .wpss-btn-primary,
-.wpss-requests-archive .wpss-btn-primary:visited,
-.wpss-single-request .wpss-btn-primary,
-.wpss-single-request .wpss-btn-primary:visited {
+.wpss-requests-archive .wpss-btn--primary,
+.wpss-requests-archive .wpss-btn--primary:visited,
+.wpss-single-request .wpss-btn--primary,
+.wpss-single-request .wpss-btn--primary:visited {
 	background: var(--wpss-primary, #4f46e5) !important;
 	color: var(--wpss-white, #ffffff) !important;
 	border-color: var(--wpss-primary, #4f46e5) !important;
 }
 
-.wpss-requests-archive .wpss-btn-primary:hover,
-.wpss-requests-archive .wpss-btn-primary:focus,
-.wpss-single-request .wpss-btn-primary:hover,
-.wpss-single-request .wpss-btn-primary:focus {
+.wpss-requests-archive .wpss-btn--primary:hover,
+.wpss-requests-archive .wpss-btn--primary:focus,
+.wpss-single-request .wpss-btn--primary:hover,
+.wpss-single-request .wpss-btn--primary:focus {
 	background: var(--wpss-primary-dark, #4338ca) !important;
 	color: var(--wpss-white, #ffffff) !important;
 	border-color: var(--wpss-primary-dark, #4338ca) !important;
 }
 
 /* Outline button variant */
-.wpss-requests-archive .wpss-btn-outline,
-.wpss-requests-archive .wpss-btn-outline:visited,
-.wpss-single-request .wpss-btn-outline,
-.wpss-single-request .wpss-btn-outline:visited {
+.wpss-requests-archive .wpss-btn--outline,
+.wpss-requests-archive .wpss-btn--outline:visited,
+.wpss-single-request .wpss-btn--outline,
+.wpss-single-request .wpss-btn--outline:visited {
 	background: transparent !important;
 	color: var(--wpss-text, #1f2937) !important;
 	border-color: var(--wpss-border, #e5e7eb) !important;
 }
 
-.wpss-requests-archive .wpss-btn-outline:hover,
-.wpss-requests-archive .wpss-btn-outline:focus,
-.wpss-single-request .wpss-btn-outline:hover,
-.wpss-single-request .wpss-btn-outline:focus {
+.wpss-requests-archive .wpss-btn--outline:hover,
+.wpss-requests-archive .wpss-btn--outline:focus,
+.wpss-single-request .wpss-btn--outline:hover,
+.wpss-single-request .wpss-btn--outline:focus {
 	background: var(--wpss-bg, #f9fafb) !important;
 	color: var(--wpss-text, #1f2937) !important;
 	border-color: var(--wpss-border, #e5e7eb) !important;

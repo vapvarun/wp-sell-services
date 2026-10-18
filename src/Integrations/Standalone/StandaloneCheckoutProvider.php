@@ -195,7 +195,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 			<div class="wpss-checkout-return wpss-checkout-return--paid">
 				<h2><?php esc_html_e( 'Payment received', 'wp-sell-services' ); ?></h2>
 				<p><?php esc_html_e( 'Thank you. Your payment is confirmed and your order is on its way to the seller.', 'wp-sell-services' ); ?></p>
-				<p><a class="wpss-btn wpss-btn-primary" href="<?php echo esc_url( $order_url ); ?>"><?php esc_html_e( 'View your order', 'wp-sell-services' ); ?></a></p>
+				<p><a class="wpss-btn wpss-btn--primary" href="<?php echo esc_url( $order_url ); ?>"><?php esc_html_e( 'View your order', 'wp-sell-services' ); ?></a></p>
 			</div>
 			<?php
 		} elseif ( 'processing' === $result['status'] ) {
@@ -219,7 +219,7 @@ class StandaloneCheckoutProvider implements CheckoutProviderInterface {
 				<h2><?php esc_html_e( 'Payment not completed', 'wp-sell-services' ); ?></h2>
 				<p><?php echo esc_html( $result['message'] ); ?></p>
 				<?php if ( $continue ) : ?>
-					<p><a class="wpss-btn wpss-btn-primary" href="<?php echo esc_url( $continue ); ?>"><?php esc_html_e( 'Try another payment method', 'wp-sell-services' ); ?></a></p>
+					<p><a class="wpss-btn wpss-btn--primary" href="<?php echo esc_url( $continue ); ?>"><?php esc_html_e( 'Try another payment method', 'wp-sell-services' ); ?></a></p>
 				<?php endif; ?>
 			</div>
 			<?php

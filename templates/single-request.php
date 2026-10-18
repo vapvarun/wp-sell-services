@@ -412,14 +412,14 @@ do_action( 'wpss_before_single_request', $request_id );
 
 										<?php if ( 'pending' === $proposal->status && 'open' === $request_status ) : ?>
 											<div class="wpss-proposal-actions">
-												<button type="button" class="wpss-btn wpss-btn-primary wpss-accept-proposal"
+												<button type="button" class="wpss-btn wpss-btn--primary wpss-accept-proposal"
 													data-proposal="<?php echo esc_attr( $proposal->id ); ?>"
 													data-contract-type="<?php echo esc_attr( $proposal_contract ); ?>"
 													data-phase-count="<?php echo esc_attr( count( $proposal_milestones ) ); ?>"
 													data-total-formatted="<?php echo esc_attr( wpss_format_price( (float) ( $proposal->proposed_price ?? 0 ) ) ); ?>">
 													<?php esc_html_e( 'Accept Proposal', 'wp-sell-services' ); ?>
 												</button>
-												<button type="button" class="wpss-btn wpss-btn-outline wpss-reject-proposal" data-proposal="<?php echo esc_attr( $proposal->id ); ?>">
+												<button type="button" class="wpss-btn wpss-btn--outline wpss-reject-proposal" data-proposal="<?php echo esc_attr( $proposal->id ); ?>">
 													<?php esc_html_e( 'Decline', 'wp-sell-services' ); ?>
 												</button>
 												<a href="<?php echo esc_url( wpss_get_vendor_url( $proposal->vendor_id ) ); ?>" class="wpss-btn wpss-btn-text">
@@ -486,18 +486,18 @@ do_action( 'wpss_before_single_request', $request_id );
 									<div class="wpss-proposal-submitted-icon">&#10003;</div>
 									<p><?php esc_html_e( 'You have already submitted a proposal for this request.', 'wp-sell-services' ); ?></p>
 									<?php if ( $vendor_proposal && 'pending' === $vendor_proposal->status ) : ?>
-										<button type="button" class="wpss-btn wpss-btn-outline wpss-btn-block wpss-withdraw-proposal" data-proposal-id="<?php echo esc_attr( $vendor_proposal->id ); ?>">
+										<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--block wpss-withdraw-proposal" data-proposal-id="<?php echo esc_attr( $vendor_proposal->id ); ?>">
 											<?php esc_html_e( 'Withdraw Proposal', 'wp-sell-services' ); ?>
 										</button>
 									<?php endif; ?>
 								</div>
 							<?php else : ?>
-								<button type="button" class="wpss-btn wpss-btn-primary wpss-btn-block wpss-submit-proposal-btn" data-request-id="<?php echo esc_attr( $request_id ); ?>">
+								<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--block wpss-submit-proposal-btn" data-request-id="<?php echo esc_attr( $request_id ); ?>">
 									<?php esc_html_e( 'Submit Proposal', 'wp-sell-services' ); ?>
 								</button>
 							<?php endif; ?>
 						<?php elseif ( ! is_user_logged_in() ) : ?>
-							<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn-primary wpss-btn-block">
+							<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--block">
 								<?php esc_html_e( 'Log in to send a proposal', 'wp-sell-services' ); ?>
 							</a>
 							<?php
@@ -505,7 +505,7 @@ do_action( 'wpss_before_single_request', $request_id );
 							$tpl_registration_mode = wpss_get_option( 'vendor', 'vendor_registration' );
 							if ( 'closed' !== $tpl_registration_mode ) :
 								?>
-							<a href="<?php echo esc_url( wpss_get_become_vendor_url() ); ?>" class="wpss-btn wpss-btn-primary wpss-btn-block">
+							<a href="<?php echo esc_url( wpss_get_become_vendor_url() ); ?>" class="wpss-btn wpss-btn--primary wpss-btn--block">
 								<?php esc_html_e( 'Become a Vendor', 'wp-sell-services' ); ?>
 							</a>
 							<?php endif; ?>
@@ -636,7 +636,7 @@ do_action( 'wpss_before_single_request', $request_id );
 						<div class="wpss-milestone-rows" data-milestone-rows>
 							<!-- rows injected by JS -->
 						</div>
-						<button type="button" class="wpss-btn wpss-btn-outline wpss-btn--sm" data-add-milestone>
+						<button type="button" class="wpss-btn wpss-btn--outline wpss-btn--sm" data-add-milestone>
 							<?php esc_html_e( '+ Add another phase', 'wp-sell-services' ); ?>
 						</button>
 						<div class="wpss-milestones-summary">
@@ -686,10 +686,10 @@ do_action( 'wpss_before_single_request', $request_id );
 				</template>
 
 				<div class="wpss-modal-footer">
-					<button type="button" class="wpss-btn wpss-btn-outline wpss-modal-close-btn">
+					<button type="button" class="wpss-btn wpss-btn--outline wpss-modal-close-btn">
 						<?php esc_html_e( 'Cancel', 'wp-sell-services' ); ?>
 					</button>
-					<button type="submit" class="wpss-btn wpss-btn-primary">
+					<button type="submit" class="wpss-btn wpss-btn--primary">
 						<?php esc_html_e( 'Submit Proposal', 'wp-sell-services' ); ?>
 					</button>
 				</div>

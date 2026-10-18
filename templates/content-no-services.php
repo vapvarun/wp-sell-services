@@ -58,14 +58,14 @@ $message = apply_filters( 'wpss_no_services_message', $default_message );
 		<div class="wpss-empty-actions">
 			<?php if ( is_search() || is_tax() ) : ?>
 				<a href="<?php echo esc_url( get_post_type_archive_link( 'wpss_service' ) ); ?>"
-					class="wpss-btn wpss-btn-primary">
+					class="wpss-btn wpss-btn--primary">
 					<?php esc_html_e( 'Browse All Services', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>
 
 			<?php if ( wpss_is_vendor() ) : ?>
 				<a href="<?php echo esc_url( wpss_get_service_editor_url() ); ?>"
-					class="wpss-btn wpss-btn-outline">
+					class="wpss-btn wpss-btn--outline">
 					<?php esc_html_e( 'Create a Service', 'wp-sell-services' ); ?>
 				</a>
 			<?php endif; ?>

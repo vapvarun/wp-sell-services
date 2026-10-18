@@ -8,6 +8,7 @@
  *   12  inline onclick= in PHP output
  *    5  Dashicons in new markup
  *    8  alert( / confirm( / prompt( in plugin JS
+ *    9  a shared primitive (.wpss-btn and its modifiers) declared outside design-system.css
  *   14  `outline: none|0` in source CSS (each needs a :focus-visible replacement)
  *
  * Run: php bin/check-ux-conformance.php [--update]
@@ -26,6 +27,8 @@ $rules = array(
 	'dashicons'      => array( array( 'src', 'templates' ), 'php', '/dashicons-/' ),
 	'js-dialogs'     => array( array( 'assets/js' ), 'js', '/(?<![\w.])(alert|confirm|prompt)\s*\(/' ),
 	'outline-none'   => array( array( 'assets/css' ), 'css', '/outline\s*:\s*(none|0)\b/' ),
+	// Selector line of a rule that opens with the owned base; admin.css is the wp-admin chrome surface.
+	'duplicate-primitive' => array( array( 'assets/css' ), 'css', '/^(a\.)?\.wpss-btn(--(primary|secondary|outline|success|danger|sm|lg|block|icon|ghost|disabled|full|danger-outline))?\s*[,{]/' ),
 );
 
 $counts = array();
@@ -39,7 +42,7 @@ foreach ( $rules as $name => list( $dirs, $ext, $re ) ) {
 		foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $path, FilesystemIterator::SKIP_DOTS ) ) as $file ) {
 			$rel = ltrim( str_replace( $root, '', $file->getPathname() ), '/' );
 			// Minified and RTL copies are generated from the source file.
-			if ( $file->getExtension() !== $ext || str_contains( $rel, '.min.' ) || str_contains( $rel, '-rtl.' ) || str_contains( $rel, 'vendor/' ) || str_contains( $rel, 'assets/js/vendor' ) ) {
+			if ( $file->getExtension() !== $ext || str_contains( $rel, '.min.' ) || str_contains( $rel, '-rtl.' ) || ( 'duplicate-primitive' === $name && in_array( basename( $rel ), array( 'design-system.css', 'admin.css' ), true ) ) || str_contains( $rel, 'vendor/' ) || str_contains( $rel, 'assets/js/vendor' ) ) {
 				continue;
 			}
 			foreach ( file( $file->getPathname() ) as $line ) {

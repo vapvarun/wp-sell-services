@@ -56,3 +56,8 @@ Tab through the contact form, the request requirements form, checkout form group
 Service page at 390, tap Continue on a package.
 
 **Expect** the Order Options sheet is as tall as its rows (about 300px), anchored at the bottom, not a full-height white panel. check: tests/test-layout-surface-css.php (modal content height at <=768px is auto)
+
+### 11. A button looks the same on every surface (1.9.0 consolidation)
+Vendor dashboard (Services, Portfolio, Proposals), the service page order sheet, checkout and My Account, 1440 and 390, light and dark.
+
+**Expect** Primary, outline, ghost, small and link buttons share one size, weight, border and radius everywhere; `--sm` is visibly smaller than the default; a `--link` button reads as a link, not a boxed button; nothing overflows at 390. check: tests/test-primitive-single-source.php and bin/check-ux-conformance.php (duplicate-primitive)

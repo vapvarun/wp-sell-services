@@ -493,7 +493,7 @@ class SingleServiceView {
 					</div>
 
 					<?php // Opens a modal, it does not navigate - so a button, not an anchor with href="#" (Basecamp 10240020534). ?>
-					<button type="button" class="wpss-btn wpss-btn-outline wpss-contact-btn"
+					<button type="button" class="wpss-btn wpss-btn--outline wpss-contact-btn"
 						data-vendor="<?php echo esc_attr( $vendor_id ); ?>">
 						<?php esc_html_e( 'Contact Me', 'wp-sell-services' ); ?>
 					</button>
@@ -991,7 +991,7 @@ class SingleServiceView {
 						</div>
 					</div>
 
-					<button type="button" class="wpss-btn wpss-btn-primary wpss-btn-block wpss-add-to-cart-btn">
+					<button type="button" class="wpss-btn wpss-btn--primary wpss-btn--block wpss-add-to-cart-btn">
 						<?php esc_html_e( 'Continue to Checkout', 'wp-sell-services' ); ?>
 					</button>
 				</div>
@@ -1100,10 +1100,10 @@ class SingleServiceView {
 							</div>
 
 							<div class="wpss-form-actions">
-								<button type="submit" class="wpss-btn wpss-btn-primary">
+								<button type="submit" class="wpss-btn wpss-btn--primary">
 									<?php esc_html_e( 'Send Message', 'wp-sell-services' ); ?>
 								</button>
-								<button type="button" class="wpss-btn wpss-btn-secondary wpss-modal-dismiss">									
+								<button type="button" class="wpss-btn wpss-btn--secondary wpss-modal-dismiss">									
 									&times;
 								</button>
 							</div>

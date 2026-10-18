@@ -79,12 +79,12 @@
 	color: var(--wpss-primary-hover);
 }
 
-.wpss-single-service a.wpss-btn-secondary {
+.wpss-single-service a.wpss-btn--secondary {
     background: var(--wpss-secondary);
     color: var(--wpss-white);
 }
 
-.wpss-single-service a.wpss-btn-secondary:hover {
+.wpss-single-service a.wpss-btn--secondary:hover {
     background: var(--wpss-secondary);
     color: var(--wpss-white);
 }
@@ -121,27 +121,27 @@
 	border: none;
 }
 
-.wpss-single-service .wpss-btn-primary,
-.wpss-single-service .wpss-btn-primary:visited {
+.wpss-single-service .wpss-btn--primary,
+.wpss-single-service .wpss-btn--primary:visited {
 	background-color: var(--wpss-primary);
 	color: var(--wpss-white);
 }
 
-.wpss-single-service .wpss-btn-primary:hover,
-.wpss-single-service .wpss-btn-primary:focus {
+.wpss-single-service .wpss-btn--primary:hover,
+.wpss-single-service .wpss-btn--primary:focus {
 	background-color: var(--wpss-primary-hover);
 	color: var(--wpss-white);
 }
 
-.wpss-single-service .wpss-btn-outline,
-.wpss-single-service .wpss-btn-outline:visited {
+.wpss-single-service .wpss-btn--outline,
+.wpss-single-service .wpss-btn--outline:visited {
 	background-color: transparent;
 	color: var(--wpss-text);
 	border: 1px solid var(--wpss-border);
 }
 
-.wpss-single-service .wpss-btn-outline:hover,
-.wpss-single-service .wpss-btn-outline:focus {
+.wpss-single-service .wpss-btn--outline:hover,
+.wpss-single-service .wpss-btn--outline:focus {
 	background-color: var(--wpss-bg);
 	color: var(--wpss-text);
 	border-color: var(--wpss-border);
@@ -1323,60 +1323,6 @@
    card title force horizontal overflow — where the canonical modifier uses
    repeat(4, minmax(0, 1fr)); the canonical version and its responsive step-down
    are strictly better, so the copy here is removed. */
-
-/* ==========================================================================
-   Buttons
-   ========================================================================== */
-
-.wpss-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	padding: 0.75rem 1.5rem;
-	font-size: 0.9375rem;
-	font-weight: 500;
-	border-radius: var(--wpss-radius);
-	border: none;
-	cursor: pointer;
-	text-decoration: none;
-	transition: all var(--wpss-transition);
-}
-
-.wpss-btn-primary {
-	background: var(--wpss-primary);
-	color: var(--wpss-white);
-}
-
-.wpss-btn-primary:hover {
-	background: var(--wpss-primary-hover);
-}
-
-.wpss-btn-secondary {
-	background: var(--wpss-secondary);
-	color: var(--wpss-white);
-}
-
-.wpss-btn-outline {
-	background: transparent;
-	border: 1px solid var(--wpss-border);
-	color: var(--wpss-text);
-}
-
-.wpss-btn-outline:hover {
-	border-color: var(--wpss-primary);
-	color: var(--wpss-primary-accent);
-}
-
-.wpss-btn-block {
-	display: flex;
-	width: 100%;
-}
-
-.wpss-btn:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
 
 .wpss-btn-price {
 	font-weight: 400;

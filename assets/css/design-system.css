@@ -558,7 +558,8 @@ textarea.wpss-form-textarea {
 	display: inline-flex; align-items: center; justify-content: center;
 	gap: var(--wpss-space-2);
 	min-height: var(--wpss-space-10); /* 40px tap-target floor */
-	padding: var(--wpss-space-3) var(--wpss-space-5);
+	/* 10px, not space-3: every live surface rendered 10px 20px, a 44px button with the 2px border. */
+	padding: calc(var(--wpss-space-3) - 2px) var(--wpss-space-5);
 	font-size: var(--wpss-text-base); font-weight: 600; line-height: 1.4;
 	text-decoration: none; border: 2px solid transparent;
 	border-radius: var(--wpss-radius); cursor: pointer;
@@ -575,12 +576,9 @@ textarea.wpss-form-textarea {
 .wpss-btn--primary:hover { background: var(--wpss-primary-hover); border-color: var(--wpss-primary-hover); color: var(--wpss-white, #fff); }
 .wpss-btn--secondary { background: var(--wpss-bg-muted); color: var(--wpss-text-secondary); }
 .wpss-btn--secondary:hover { background: var(--wpss-border); color: var(--wpss-text); }
-/* Two classes, and the full border shorthand, on purpose. `.wpss-btn` is
-   declared in four stylesheets - here, frontend.css, unified-dashboard.css and
-   Pro's dashboard.css - and two of those say `border: none`. At one class each
-   the base wins on load order alone, so a single-class modifier here could
-   never paint a border. Consolidating those four is 1.8.0 work; until then this
-   is what makes the owner actually own the component. */
+/* Two classes, and the full border shorthand, on purpose: a theme's bare `button` or `a`
+   rule would otherwise beat a one-class modifier and strip the border. `.wpss-btn` is
+   declared here only; bin/check-ux-conformance.php fails if another sheet redeclares it. */
 .wpss-btn.wpss-btn--outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border); }
 /* The background matters as much as the colour here. Declaring only border and
    text left the background to whatever the theme gives a hovered control, and
@@ -589,24 +587,12 @@ textarea.wpss-form-textarea {
    surface, so hover looks the same on every theme. */
 .wpss-btn.wpss-btn--outline:hover { background: var(--wpss-bg-subtle); border-color: var(--wpss-text-muted); color: var(--wpss-text); }
 
-/* Legacy single-dash aliases, carrying the same two-class weight on purpose.
-   The one-class `.wpss-btn-outline` in frontend.css scores (0,1,0) and loses to
-   a theme's anchor rule, so an <a class="wpss-btn wpss-btn-outline"> took the
-   theme link colour: #4f46e5 measured 3.34 on white and 2.33 on the dark
-   surface, against the same class on a <button> at 14.68. Matching the BEM
-   selector's (0,2,0) is enough on its own - no !important, unlike the filled
-   variants, because nothing here has to beat BuddyX's (0,5,1) content-wrapper
-   rule for a foreground ON a fill.
-
-   `.wpss-btn-ghost` is defined in no stylesheet at all, so the favourites
-   toggle on the packages widget has been rendering unstyled; it gets the ghost
-   treatment here rather than staying a dead class. */
-.wpss-btn.wpss-btn-outline { background: transparent; color: var(--wpss-text-secondary); border: 2px solid var(--wpss-border); }
-.wpss-btn.wpss-btn-outline:hover { border-color: var(--wpss-text-muted); color: var(--wpss-text); }
-.wpss-btn.wpss-btn-ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
-.wpss-btn.wpss-btn-ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
-.wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
-.wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
+/* Ghost, with the same two-class weight as outline above: the one-class rule loses to a
+   theme's anchor colour, so an <a class="wpss-btn wpss-btn--ghost"> would take the theme
+   link colour. The old one-dash modifier names are gone: every template, script and Pro
+   screen uses the double-dash BEM modifier. */
+.wpss-btn.wpss-btn--ghost { background: transparent; color: var(--wpss-text-muted); padding: var(--wpss-space-2) var(--wpss-space-3); }
+.wpss-btn.wpss-btn--ghost:hover { background: var(--wpss-bg-muted); color: var(--wpss-text); }
 
 /* Ghost + danger = a low-emphasis destructive action: transparent like a ghost,
    but danger-coloured text so it still reads as "delete". Defines what the two
@@ -695,30 +681,7 @@ a.wpss-btn--danger:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline),
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):link,
 a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):visited,
-a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover,
-/* Legacy single-dash variants. Templates predating the BEM rename still ship
-   `wpss-btn-primary` (55 call sites across 13 files as of 1.7.1), and they were
-   never given the protection above, so an ANCHOR carrying one took the theme's
-   link colour while a <button> carrying the same class rendered correctly.
-   Measured on the empty category archive: "Browse All Services" came out
-   #4f46e5 on a #4f46e5 fill - contrast 1.00, the label invisible - beside an
-   "Apply Filters" <button> at 6.29 with the identical class. Reported as poor
-   dark-mode visibility, but it fails in both modes and for the same reason.
-   Guarding the alias here fixes every one of those call sites at once; the
-   template migration to BEM is 1.8.0 work alongside the .wpss-btn
-   consolidation noted above. */
-a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline),
-a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):link,
-a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):visited,
-a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
-a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline),
-a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):link,
-a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):visited,
-a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
-a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline),
-a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline):link,
-a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline):visited,
-a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover {
+a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline):hover {
 	color: var(--wpss-white, #fff) !important;
 }
 
@@ -752,32 +715,30 @@ a.wpss-btn--success:not(.wpss-btn--ghost):not(.wpss-btn--outline) {
 	background: var(--wpss-success) !important; border-color: var(--wpss-success) !important;
 }
 
-/* Legacy single-dash variants, same reasoning as the colour block above: the
-   fill has to be pinned too, or a themed submit button keeps the theme's
-   background under the now-white label. */
-button.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline),
-a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
-	background: var(--wpss-primary) !important; border-color: var(--wpss-primary) !important;
-}
-button.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
-a.wpss-btn-primary:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover {
-	background: var(--wpss-primary-hover) !important; border-color: var(--wpss-primary-hover) !important;
-}
-button.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline),
-a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
-	background: var(--wpss-danger) !important; border-color: var(--wpss-danger) !important;
-}
-button.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover,
-a.wpss-btn-danger:not(.wpss-btn-ghost):not(.wpss-btn-outline):hover {
-	background: var(--wpss-danger-dark, #b91c1c) !important; border-color: var(--wpss-danger-dark, #b91c1c) !important;
-}
-button.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline),
-a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
-	background: var(--wpss-success) !important; border-color: var(--wpss-success) !important;
-}
-
 .wpss-btn--sm { min-height: 34px; padding: var(--wpss-space-2) var(--wpss-space-4); font-size: var(--wpss-text-sm); }
 .wpss-btn--lg { padding: var(--wpss-space-4) var(--wpss-space-8); font-size: var(--wpss-text-lg); }
+.wpss-btn--block { display: flex; width: 100%; }
+.wpss-btn--disabled, .wpss-btn.wpss-btn--disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+/* Outlined destructive action. Anchors repeat both classes and the :visited state: a theme
+   styles anchor buttons harder than <button> (BuddyX puts a 2px transparent border on them,
+   which left "View Dispute" as floating red text) and recolours :visited. */
+.wpss-btn--danger-outline,
+a.wpss-btn.wpss-btn--danger-outline,
+a.wpss-btn.wpss-btn--danger-outline:visited {
+	background: transparent;
+	border: 1px solid var(--wpss-danger-text, var(--wpss-danger));
+	color: var(--wpss-danger-text, var(--wpss-danger));
+	text-decoration: none;
+}
+.wpss-btn--danger-outline:hover,
+a.wpss-btn.wpss-btn--danger-outline:hover,
+a.wpss-btn.wpss-btn--danger-outline:focus-visible {
+	background: var(--wpss-danger);
+	border-color: var(--wpss-danger);
+	color: var(--wpss-white, #fff);
+	text-decoration: none;
+}
 .wpss-btn--xl { padding: var(--wpss-space-4) var(--wpss-space-10); font-size: var(--wpss-text-xl); }
 .wpss-btn--full { width: 100%; }
 .wpss-btn--icon { padding: var(--wpss-space-2); border-radius: var(--wpss-radius-full); }
@@ -1109,7 +1070,7 @@ a.wpss-btn-success:not(.wpss-btn-ghost):not(.wpss-btn-outline) {
 /* Text-only button. Lived only in vendor-dashboard.css, which the member
    dashboard does not load - so the Remove control under the profile photo had
    NO rule at all and fell through to the theme: pure black on the dark card,
-   measured 1.18:1 (Basecamp 10300330443). Same shape as wpss-btn-ghost and the
+   measured 1.18:1 (Basecamp 10300330443). Same shape as wpss-btn--ghost and the
    toast: a class the markup uses that the loaded stylesheets never define.
    --wpss-primary-accent carries a dark value, so it follows the mode. */
 .wpss-btn--link { background: none; border: none; padding: 0; color: var(--wpss-primary-accent, #4f46e5); text-decoration: none; }

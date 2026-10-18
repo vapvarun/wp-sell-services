@@ -222,7 +222,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 						}
 						?>
 						<a href="<?php echo esc_url( $dashboard_edit_url ); ?>"
-							class="wpss-btn wpss-btn-secondary wpss-btn-block">
+							class="wpss-btn wpss-btn--secondary wpss-btn--block">
 							<?php esc_html_e( 'Edit Service', 'wp-sell-services' ); ?>
 						</a>
 					<?php else : ?>
@@ -249,7 +249,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 							$wpss_vacation_label_id = 'wpss-vacation-cta-note-' . esc_attr( $index );
 							?>
 							<button type="button"
-									class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn--disabled"
+									class="wpss-btn wpss-btn--primary wpss-btn--block wpss-order-btn--disabled"
 									disabled
 									aria-disabled="true"
 									aria-describedby="<?php echo esc_attr( $wpss_vacation_label_id ); ?>">
@@ -278,7 +278,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 							$wpss_paused_note_id = 'wpss-paused-cta-note-' . esc_attr( $index );
 							?>
 							<button type="button"
-									class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn--disabled"
+									class="wpss-btn wpss-btn--primary wpss-btn--block wpss-order-btn--disabled"
 									disabled
 									aria-disabled="true"
 									aria-describedby="<?php echo esc_attr( $wpss_paused_note_id ); ?>">
@@ -297,7 +297,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 							$wpss_price_note_id = 'wpss-price-cta-note-' . esc_attr( $index );
 							?>
 							<button type="button"
-									class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn--disabled"
+									class="wpss-btn wpss-btn--primary wpss-btn--block wpss-order-btn--disabled"
 									disabled
 									aria-disabled="true"
 									aria-describedby="<?php echo esc_attr( $wpss_price_note_id ); ?>">
@@ -308,7 +308,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 							</p>
 						<?php else : ?>
 							<button type="button"
-									class="wpss-btn wpss-btn-primary wpss-btn-block wpss-order-btn"
+									class="wpss-btn wpss-btn--primary wpss-btn--block wpss-order-btn"
 									data-service="<?php echo esc_attr( $service_id ); ?>"
 									data-package="<?php echo esc_attr( $index ); ?>"
 									data-price="<?php echo esc_attr( $package['price'] ?? 0 ); ?>">
@@ -394,7 +394,7 @@ do_action( 'wpss_before_service_packages', $service_id );
 		<div class="wpss-package-actions">
 			<button
 				type="button"
-				class="wpss-btn wpss-btn-ghost wpss-btn-block wpss-fav-toggle wpss-fav-toggle--inline wpss-package-fav<?php echo $wpss_pkg_favorited ? ' is-favorited' : ''; ?>"
+				class="wpss-btn wpss-btn--ghost wpss-btn--block wpss-fav-toggle wpss-fav-toggle--inline wpss-package-fav<?php echo $wpss_pkg_favorited ? ' is-favorited' : ''; ?>"
 				data-service-id="<?php echo esc_attr( (string) $service_id ); ?>"
 				data-logged-in="<?php echo $wpss_pkg_logged_in ? '1' : '0'; ?>"
 				aria-pressed="<?php echo $wpss_pkg_favorited ? 'true' : 'false'; ?>"

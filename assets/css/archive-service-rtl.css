@@ -84,27 +84,27 @@
 	border: none;
 }
 
-.wpss-services-archive .wpss-btn-primary,
-.wpss-services-archive .wpss-btn-primary:visited {
+.wpss-services-archive .wpss-btn--primary,
+.wpss-services-archive .wpss-btn--primary:visited {
 	background-color: var(--wpss-primary);
 	color: var(--wpss-white);
 }
 
-.wpss-services-archive .wpss-btn-primary:hover,
-.wpss-services-archive .wpss-btn-primary:focus {
+.wpss-services-archive .wpss-btn--primary:hover,
+.wpss-services-archive .wpss-btn--primary:focus {
 	background-color: var(--wpss-primary-hover);
 	color: var(--wpss-white);
 }
 
-.wpss-services-archive .wpss-btn-outline,
-.wpss-services-archive .wpss-btn-outline:visited {
+.wpss-services-archive .wpss-btn--outline,
+.wpss-services-archive .wpss-btn--outline:visited {
 	background-color: transparent;
 	color: var(--wpss-text);
 	border: 1px solid var(--wpss-border);
 }
 
-.wpss-services-archive .wpss-btn-outline:hover,
-.wpss-services-archive .wpss-btn-outline:focus {
+.wpss-services-archive .wpss-btn--outline:hover,
+.wpss-services-archive .wpss-btn--outline:focus {
 	background-color: var(--wpss-bg-subtle);
 	color: var(--wpss-text);
 	border-color: var(--wpss-secondary);
@@ -114,17 +114,17 @@
    <button>/<input type=submit> with its own bg/colour; re-assert ours with the
    submit-element selector so the Apply button keeps its brand fill and the
    Clear link keeps its outline treatment regardless of theme. */
-.wpss-services-archive button.wpss-btn-primary,
-.wpss-services-archive input[type="submit"].wpss-btn-primary {
+.wpss-services-archive button.wpss-btn--primary,
+.wpss-services-archive input[type="submit"].wpss-btn--primary {
 	background-color: var(--wpss-primary);
 	color: var(--wpss-white);
 	border-color: var(--wpss-primary);
 }
 
-.wpss-services-archive button.wpss-btn-primary:hover,
-.wpss-services-archive button.wpss-btn-primary:focus,
-.wpss-services-archive input[type="submit"].wpss-btn-primary:hover,
-.wpss-services-archive input[type="submit"].wpss-btn-primary:focus {
+.wpss-services-archive button.wpss-btn--primary:hover,
+.wpss-services-archive button.wpss-btn--primary:focus,
+.wpss-services-archive input[type="submit"].wpss-btn--primary:hover,
+.wpss-services-archive input[type="submit"].wpss-btn--primary:focus {
 	background-color: var(--wpss-primary-hover);
 	color: var(--wpss-white);
 	border-color: var(--wpss-primary-hover);
